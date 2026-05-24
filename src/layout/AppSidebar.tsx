@@ -13,6 +13,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarSeparator,
 } from '@/components/ui/sidebar'
 import {
   Collapsible,
@@ -41,7 +42,9 @@ export function AppSidebar() {
             location.pathname.startsWith(item.to)
           )
           return (
-            <SidebarGroup key={group.label}>
+            <div key={group.label}>
+              {group.dividerBefore && <SidebarSeparator />}
+            <SidebarGroup>
               <Collapsible defaultOpen={group.defaultOpen ?? isGroupActive} className="group/collapsible">
                 <SidebarGroupLabel asChild>
                   <CollapsibleTrigger className="flex w-full items-center justify-between">
@@ -70,6 +73,7 @@ export function AppSidebar() {
                 </CollapsibleContent>
               </Collapsible>
             </SidebarGroup>
+            </div>
           )
         })}
       </SidebarContent>

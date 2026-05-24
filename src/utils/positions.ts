@@ -103,7 +103,42 @@ export function fmtExecDaysAgo(days: number | null | undefined): string {
 
 export function pnlColorClass(n: number | null | undefined): string {
   if (n == null) return ''
-  if (n > 0) return 'text-success'
-  if (n < 0) return 'text-danger'
+  if (n > 0) return 'text-green-600 dark:text-green-400'
+  if (n < 0) return 'text-red-600 dark:text-red-400'
   return ''
+}
+
+export function daysUntilExpiry(expiry: string | undefined): number | null {
+  if (!expiry) return null
+  const digits = expiry.replace(/\D/g, '')
+  if (digits.length < 8) return null
+  const y = parseInt(digits.slice(0, 4))
+  const m = parseInt(digits.slice(4, 6)) - 1
+  const d = parseInt(digits.slice(6, 8))
+  const target = new Date(y, m, d)
+  target.setHours(16, 0, 0, 0)
+  const now = new Date()
+  const diff = target.getTime() - now.getTime()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
+
+export function fmtDate(epoch: number | null | undefined): string {
+  if (epoch == null || !Number.isFinite(epoch)) return '—'
+  return new Date(epoch * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+export function fmtDaysAgo(epoch: number | null | undefined): string | null {
+  if (epoch == null || !Number.isFinite(epoch)) return null
+  const secs = Math.floor(Date.now() / 1000 - epoch)
+  if (secs < 60) return 'just now'
+  const days = Math.floor(secs / 86400)
+  if (days === 0) return 'today'
+  if (days === 1) return '1d ago'
+  if (days < 365) return `${days}d ago`
+  return null
+}
+
+export function fmtSignedPct(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return '—'
+  return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`
 }

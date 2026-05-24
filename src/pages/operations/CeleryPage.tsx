@@ -152,17 +152,19 @@ export default function CeleryPage() {
       ) : queuesData && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Queues</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <StatusLamp lamp={queuesData.db_connected ? 'green' : 'red'} />
+              Queues
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {queuesData.rows.length === 0 ? (
+            {queuesData.queues.length === 0 ? (
               <p className="px-4 pb-4 text-sm text-muted-foreground">No queues found</p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Queue</TableHead>
-                    <TableHead>Pipeline</TableHead>
                     <TableHead className="text-right">Pending</TableHead>
                     <TableHead className="text-right">Running</TableHead>
                     <TableHead className="text-right">Done</TableHead>
@@ -170,35 +172,34 @@ export default function CeleryPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {queuesData.rows.map((row) => (
-                    <TableRow key={row.profile_key}>
+                  {queuesData.queues.map((row) => (
+                    <TableRow key={row.name}>
                       <TableCell>
                         <div>
-                          <p className="text-sm">{row.label}</p>
-                          <p className="text-xs font-mono text-muted-foreground">{row.celery_queue}</p>
+                          <p className="text-sm">{row.display_name}</p>
+                          <p className="text-xs font-mono text-muted-foreground">{row.name}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{row.pipeline}</TableCell>
                       <TableCell className="text-right font-mono text-xs">
-                        {row.counts.pending > 0 ? (
-                          <Badge variant="secondary">{row.counts.pending}</Badge>
+                        {row.pending_broker > 0 ? (
+                          <Badge variant="secondary">{row.pending_broker}</Badge>
                         ) : (
                           <span className="text-muted-foreground">0</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs">
-                        {row.counts.running > 0 ? (
-                          <Badge variant="default">{row.counts.running}</Badge>
+                        {row.running_celery > 0 ? (
+                          <Badge variant="default">{row.running_celery}</Badge>
                         ) : (
                           <span className="text-muted-foreground">0</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs text-muted-foreground">
-                        {row.counts.done}
+                        {row.done_db}{row.db_totals_shared && <span className="text-[10px] ml-0.5">*</span>}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs">
-                        {row.counts.failed > 0 ? (
-                          <Badge variant="destructive">{row.counts.failed}</Badge>
+                        {row.failed_db > 0 ? (
+                          <Badge variant="destructive">{row.failed_db}</Badge>
                         ) : (
                           <span className="text-muted-foreground">0</span>
                         )}

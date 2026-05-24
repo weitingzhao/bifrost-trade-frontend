@@ -5,48 +5,78 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { fmtUsd, fmtExpiry, rightLabel, pnlColorClass } from '@/utils/positions'
-import { formatRiskLabel } from '@/utils/riskProfile'
-import { ExecutionRow } from './ExecutionRow'
-import type { InstanceAllGroup, Execution } from '@/types/positions'
-import type { QuoteItem } from '@/types/market'
+import { fmtUsd, fmtDate, fmtDaysAgo, pnlColorClass } from '@/utils/positions'
+import { InstanceOptionSubTable } from './InstanceOptionSubTable'
+import { InstanceCoverageSubTable } from './InstanceCoverageSubTable'
+import type { InstanceAllGroup, Execution, LivePositionRow, StrategyOpportunity } from '@/types/positions'
+import type { QuoteItem, DailyBenchmark } from '@/types/market'
 
 interface Props {
   groups: InstanceAllGroup[]
   quotesBySymbol: Record<string, QuoteItem>
-  filterSymbol?: string
-  executionsFinal?: Execution[]
-  executionsTws?: Execution[]
+  benchBySymbol: Record<string, DailyBenchmark>
+  liveStocks: LivePositionRow[]
+  executionsFinal: Execution[]
+  executionsTws: Execution[]
+  opportunities: StrategyOpportunity[]
   onEditExec?: (exec: Execution) => void
   onLinkExec?: (exec: Execution) => void
   onDeleteExec?: (exec: Execution) => void
   onRefreshExecs?: () => void
+  onOpenStrategy?: (instanceId: number) => void
+  onOpenStock?: (symbol: string, accountId: string) => void
+  onOpenOption?: (contractKey: string) => void
 }
 
-function colorClass(n: number | null | undefined) {
-  return pnlColorClass(n)
+function coverageBadge(coverage: InstanceAllGroup['stock_coverage'], liveStocks: LivePositionRow[]) {
+  if (coverage.length === 0) return <span className="text-muted-foreground text-xs">—</span>
+  let allCovered = true
+  let anyNaked = false
+  for (const sc of coverage) {
+    const held = liveStocks
+      .filter((s) => (s.symbol ?? '').toUpperCase() === sc.symbol.toUpperCase() && s.account_id === sc.account_id)
+      .reduce((sum, s) => sum + Math.abs(s.position ?? 0), 0)
+    if (held >= sc.required_shares) continue
+    allCovered = false
+    if (held === 0) anyNaked = true
+  }
+  if (allCovered) return <Badge variant="default" className="text-[10px]">Covered</Badge>
+  if (anyNaked) return <Badge variant="destructive" className="text-[10px]">Naked</Badge>
+  return <Badge variant="secondary" className="text-[10px] border-yellow-500 text-yellow-600">Partial</Badge>
+}
+
+function execQtySummary(options: InstanceAllGroup['options'], execsFinal: Execution[]): string {
+  const parts: string[] = []
+  for (const opt of options) {
+    const matched = execsFinal.filter(
+      (e) => e.contract_key === opt.contract_key && e.account_id === opt.account_id && e.sec_type?.toUpperCase() === 'OPT'
+    )
+    if (matched.length === 0) { parts.push('—'); continue }
+    const qtys = matched.map((e) => String(e.qty))
+    parts.push(qtys.join(','))
+  }
+  return parts.join(' | ') || '—'
 }
 
 export function InstanceTab({
   groups,
   quotesBySymbol,
-  filterSymbol,
-  executionsFinal = [],
-  executionsTws = [],
+  benchBySymbol,
+  liveStocks,
+  executionsFinal,
+  executionsTws,
+  opportunities,
   onEditExec,
   onLinkExec,
   onDeleteExec,
   onRefreshExecs,
+  onOpenStrategy,
+  onOpenStock,
+  onOpenOption,
 }: Props) {
   const [expandedIds, setExpandedIds] = useState<Set<number | null>>(new Set())
 
-  const filtered = filterSymbol
-    ? groups.filter((g) =>
-        g.options.some((o) => o.symbol.includes(filterSymbol.toUpperCase()))
-      )
-    : groups
-
-  if (filtered.length === 0) {
+  if (groups.length === 0) {
     return (
       <div>
         <p className="text-sm font-medium mb-2">Strategy Instances</p>
@@ -64,29 +94,46 @@ export function InstanceTab({
     })
   }
 
+  const oppMap = new Map(opportunities.map((o) => [o.strategy_opportunity_id, o]))
+
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium">Strategy Instances</p>
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-8" />
-              <TableHead>Instance</TableHead>
-              <TableHead>Opportunity</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">Options</TableHead>
-              <TableHead className="text-right">Unrealized PnL</TableHead>
+              <TableHead className="w-7" />
+              <TableHead>Opp / Instance</TableHead>
+              <TableHead>Contract Type</TableHead>
+              <TableHead>Symbols</TableHead>
+              <TableHead>Opened</TableHead>
+              <TableHead>Exec Qty</TableHead>
+              <TableHead>Underlying</TableHead>
+              <TableHead className="text-right">Opt PNL</TableHead>
+              <TableHead className="text-right">Max Gain</TableHead>
+              <TableHead className="text-right">Max Loss</TableHead>
               <TableHead>Risk</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((group) => {
+            {groups.map((group) => {
               const id = group.strategy_instance_id
               const isExpanded = expandedIds.has(id)
-              const riskLabel = group.risk_profile
-                ? formatRiskLabel(group.risk_profile)
+              const firstOpt = group.options[0]
+              const unlinkedLabel = firstOpt
+                ? `${firstOpt.symbol ?? '?'} ${firstOpt.right === 'C' ? 'Call' : firstOpt.right === 'P' ? 'Put' : ''} ${firstOpt.strike ?? ''} (unlinked)`.trim()
+                : 'Unlinked'
+              const instLabel = group.strategy_instance_label ?? (id != null ? `Strategy #${id}` : unlinkedLabel)
+              const oppName = group.strategy_opportunity_name ?? null
+              const structLabel = group.structure_type
+                ? group.structure_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
                 : '—'
+
+              const opp = group.strategy_opportunity_id != null ? oppMap.get(group.strategy_opportunity_id) : undefined
+              const scopeType = group.scope_type
+              const scopeSymbols = opp?.symbols?.length ? opp.symbols : []
+
+              const rp = group.risk_profile
 
               return [
                 <TableRow
@@ -95,147 +142,141 @@ export function InstanceTab({
                   onClick={() => toggleExpand(id)}
                 >
                   <TableCell className="px-2">
-                    <ChevronDown
-                      className={cn(
-                        'h-4 w-4 text-muted-foreground transition-transform',
-                        isExpanded && 'rotate-180'
+                    <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <div className="space-y-0.5">
+                      {oppName && <div className="text-muted-foreground">{oppName}</div>}
+                      {id != null && onOpenStrategy ? (
+                        <button
+                          type="button"
+                          className="font-mono font-medium text-primary hover:underline"
+                          onClick={(e) => { e.stopPropagation(); onOpenStrategy(id) }}
+                        >
+                          {instLabel}
+                        </button>
+                      ) : (
+                        <span className="font-mono font-medium">{instLabel}</span>
                       )}
-                    />
-                  </TableCell>
-                  <TableCell className="font-mono text-xs font-medium">
-                    {group.strategy_instance_label ?? 'Unassigned'}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {group.strategy_opportunity_name ?? '—'}
+                    </div>
                   </TableCell>
                   <TableCell className="text-xs">
                     {group.structure_type ? (
-                      <Badge variant="secondary" className="text-xs">{group.structure_type}</Badge>
+                      <Badge variant="secondary" className="text-[10px]">{structLabel}</Badge>
                     ) : '—'}
                   </TableCell>
-                  <TableCell className="text-right font-mono text-xs">
-                    {group.options.length}
+                  <TableCell className="text-xs">
+                    {scopeType === 'watchlist_stk' ? (
+                      <Badge variant="secondary" className="text-[10px]">Watchlist</Badge>
+                    ) : scopeSymbols.length > 0 ? (
+                      <span className="space-x-1">
+                        {scopeSymbols.map((sym) => (
+                          onOpenStock ? (
+                            <button
+                              key={sym}
+                              type="button"
+                              className="font-mono text-primary hover:underline"
+                              onClick={(e) => { e.stopPropagation(); onOpenStock(sym, group.options[0]?.account_id ?? '') }}
+                            >
+                              {sym}
+                            </button>
+                          ) : (
+                            <span key={sym} className="font-mono">{sym}</span>
+                          )
+                        ))}
+                      </span>
+                    ) : '—'}
                   </TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(group.options_unrealized_pnl))}>
+                  <TableCell className="text-xs">
+                    {group.strategy_instance_opened_at_epoch != null ? (
+                      <>
+                        <div>{fmtDate(group.strategy_instance_opened_at_epoch)}</div>
+                        {fmtDaysAgo(group.strategy_instance_opened_at_epoch) && (
+                          <div className="text-[10px] text-muted-foreground">{fmtDaysAgo(group.strategy_instance_opened_at_epoch)}</div>
+                        )}
+                      </>
+                    ) : '—'}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground max-w-[100px] truncate">
+                    {execQtySummary(group.options, executionsFinal)}
+                  </TableCell>
+                  <TableCell>{coverageBadge(group.stock_coverage, liveStocks)}</TableCell>
+                  <TableCell className={cn('text-right font-mono text-xs font-semibold', pnlColorClass(group.options_unrealized_pnl))}>
                     {fmtUsd(group.options_unrealized_pnl)}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {riskLabel}
+                  <TableCell className={cn('text-right font-mono text-xs', pnlColorClass(rp?.max_gain))}>
+                    {rp?.max_gain != null ? fmtUsd(rp.max_gain) : '—'}
+                  </TableCell>
+                  <TableCell className={cn('text-right font-mono text-xs', pnlColorClass(rp?.max_loss))}>
+                    {rp?.max_loss != null ? fmtUsd(rp.max_loss) : '—'}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {rp ? (
+                      <Badge
+                        variant={rp.risk_type === 'defined' ? 'default' : 'destructive'}
+                        className="text-[10px]"
+                      >
+                        {rp.risk_type === 'defined' ? 'Defined' : 'Unlimited'}
+                      </Badge>
+                    ) : '—'}
                   </TableCell>
                 </TableRow>,
 
-                ...(isExpanded
-                  ? [
-                      <TableRow key={`inst-detail-${id}`} className="bg-muted/20 hover:bg-muted/20">
-                        <TableCell colSpan={7} className="p-3">
-                          <div className="rounded border bg-card p-3">
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                              Option Contracts
-                            </p>
-                            <div className="space-y-1">
-                              {group.options.map((opt, i) => {
-                                const spot = quotesBySymbol[opt.symbol]?.last ?? null
-                                return (
-                                  <div key={opt.contract_key || i} className="flex items-center gap-3 text-xs">
-                                    <span className="font-mono font-medium w-12">{opt.symbol}</span>
-                                    <span className="w-8">{rightLabel(opt.right)}</span>
-                                    <span className="font-mono w-16">{fmtExpiry(opt.expiry)}</span>
-                                    <span className="font-mono w-14 text-right">{fmtUsd(opt.strike)}</span>
-                                    <span className="font-mono w-8 text-right">{opt.qty}</span>
-                                    <span className="font-mono w-16 text-right">{fmtUsd(opt.mark_price)}</span>
-                                    <span className={cn('font-mono w-16 text-right font-semibold', colorClass(opt.unrealized_pnl))}>
-                                      {fmtUsd(opt.unrealized_pnl)}
-                                    </span>
-                                    {spot != null && (
-                                      <span className="text-muted-foreground">
-                                        spot {fmtUsd(spot)}
-                                      </span>
-                                    )}
-                                  </div>
-                                )
-                              })}
+                ...(isExpanded ? [
+                  <TableRow key={`inst-detail-${id}`} className="bg-muted/10 hover:bg-muted/10">
+                    <TableCell colSpan={11} className="p-3">
+                      <InstanceOptionSubTable
+                        options={group.options}
+                        quotesBySymbol={quotesBySymbol}
+                        executionsFinal={executionsFinal}
+                        executionsTws={executionsTws}
+                        onOpenOption={onOpenOption}
+                        onEditExec={onEditExec}
+                        onLinkExec={onLinkExec}
+                        onDeleteExec={onDeleteExec}
+                        onRefreshExecs={onRefreshExecs}
+                      />
+                      <InstanceCoverageSubTable
+                        coverage={group.stock_coverage}
+                        liveStocks={liveStocks}
+                        quotesBySymbol={quotesBySymbol}
+                        benchBySymbol={benchBySymbol}
+                        onOpenStock={onOpenStock}
+                      />
+                      {rp && (
+                        <div className="mt-3 pt-3 border-t">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Risk Profile</p>
+                          <div className="grid grid-cols-4 gap-3 text-xs">
+                            <div>
+                              <span className="text-muted-foreground">Max Gain: </span>
+                              <span className={cn('font-mono font-semibold', pnlColorClass(rp.max_gain))}>
+                                {rp.max_gain != null ? fmtUsd(rp.max_gain) : '∞'}
+                              </span>
                             </div>
-                            {(executionsFinal.length > 0 || executionsTws.length > 0) && group.options.length > 0 && (
-                              <div className="mt-3 pt-3 border-t">
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                                  Executions
-                                </p>
-                                {group.options.map((opt) => {
-                                  const finalForOpt = executionsFinal.filter(
-                                    (e) => e.contract_key === opt.contract_key && e.account_id === opt.account_id && e.sec_type?.toUpperCase() === 'OPT'
-                                  )
-                                  const twsForOpt = executionsTws.filter(
-                                    (e) => e.contract_key === opt.contract_key && e.account_id === opt.account_id && e.sec_type?.toUpperCase() === 'OPT'
-                                  )
-                                  if (finalForOpt.length === 0 && twsForOpt.length === 0) return null
-                                  return (
-                                    <div key={opt.contract_key} className="mb-2">
-                                      <p className="text-[10px] text-muted-foreground font-mono mb-1">
-                                        {opt.symbol} {rightLabel(opt.right)} {fmtExpiry(opt.expiry)} {fmtUsd(opt.strike)}
-                                      </p>
-                                      <ExecutionRow
-                                        finalExecs={finalForOpt}
-                                        twsExecs={twsForOpt}
-                                        onEdit={onEditExec ?? (() => {})}
-                                        onLink={onLinkExec ?? (() => {})}
-                                        onDelete={onDeleteExec ?? (() => {})}
-                                        onRefresh={onRefreshExecs ?? (() => {})}
-                                      />
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )}
-                            {group.stock_coverage.length > 0 && (
-                              <div className="mt-3 pt-3 border-t">
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                                  Stock Coverage
-                                </p>
-                                {group.stock_coverage.map((sc, i) => (
-                                  <div key={i} className="flex items-center gap-3 text-xs">
-                                    <span className="font-mono font-medium">{sc.symbol}</span>
-                                    <span className="text-muted-foreground">
-                                      {sc.direction} {sc.required_shares} shares
-                                    </span>
-                                    <span className="text-muted-foreground font-mono">{sc.account_id}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            {group.risk_profile && (
-                              <div className="mt-3 pt-3 border-t">
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                                  Risk Profile
-                                </p>
-                                <div className="grid grid-cols-3 gap-2 text-xs">
-                                  <div>
-                                    <span className="text-muted-foreground">Max Gain: </span>
-                                    <span className={cn('font-mono font-semibold', colorClass(group.risk_profile.max_gain))}>
-                                      {group.risk_profile.max_gain != null ? fmtUsd(group.risk_profile.max_gain) : '∞'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Max Loss: </span>
-                                    <span className={cn('font-mono font-semibold', colorClass(group.risk_profile.max_loss))}>
-                                      {group.risk_profile.max_loss != null ? fmtUsd(group.risk_profile.max_loss) : '∞'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Breakeven: </span>
-                                    <span className="font-mono">
-                                      {group.risk_profile.breakeven_points.length > 0
-                                        ? group.risk_profile.breakeven_points.map((b) => fmtUsd(b)).join(', ')
-                                        : '—'}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
+                            <div>
+                              <span className="text-muted-foreground">Max Loss: </span>
+                              <span className={cn('font-mono font-semibold', pnlColorClass(rp.max_loss))}>
+                                {rp.max_loss != null ? fmtUsd(rp.max_loss) : '∞'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Risk: </span>
+                              <Badge variant={rp.risk_type === 'defined' ? 'default' : 'destructive'} className="text-[10px]">
+                                {rp.risk_type === 'defined' ? 'Defined' : rp.risk_type === 'unlimited' ? 'Unlimited' : 'Unknown'}
+                              </Badge>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Breakeven: </span>
+                              <span className="font-mono">
+                                {rp.breakeven_points.length > 0 ? rp.breakeven_points.map((b) => fmtUsd(b)).join(', ') : '—'}
+                              </span>
+                            </div>
                           </div>
-                        </TableCell>
-                      </TableRow>,
-                    ]
-                  : []),
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>,
+                ] : []),
               ]
             })}
           </TableBody>

@@ -34,23 +34,18 @@ export interface WorkersResponse {
   error: string | null
 }
 
-export interface QueueCounts {
-  pending: number
-  running: number
-  done: number
-  failed: number
-}
-
 export interface QueueSummaryRow {
-  profile_key: string
-  label: string
-  celery_queue: string
-  pipeline: string
-  counts: QueueCounts
+  name: string
+  display_name: string
+  pending_broker: number
+  running_celery: number
+  done_db: number
+  failed_db: number
+  db_totals_shared?: boolean
 }
 
 export interface QueuesResponse {
   ok: boolean
-  rows: QueueSummaryRow[]
-  error: string | null
+  queues: QueueSummaryRow[]
+  db_connected: boolean
 }

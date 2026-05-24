@@ -1,4 +1,4 @@
-import type { QuotesResponse, BenchmarkResponse } from '@/types/market'
+import type { QuotesResponse, BenchmarkResponse, WatchlistResponse } from '@/types/market'
 
 const BASE = import.meta.env.VITE_API_MARKET as string
 
@@ -19,4 +19,35 @@ export async function fetchBenchmarks(symbols: string[]): Promise<BenchmarkRespo
   const res = await fetch(`${BASE}/bars/benchmark?${params}`)
   if (!res.ok) throw new Error(`Market /bars/benchmark: ${res.status}`)
   return res.json() as Promise<BenchmarkResponse>
+}
+
+export async function fetchWatchlist(): Promise<WatchlistResponse> {
+  const res = await fetch(`${BASE}/watchlist`)
+  if (!res.ok) throw new Error(`Market /watchlist: ${res.status}`)
+  return res.json() as Promise<WatchlistResponse>
+}
+
+export async function postWatchlistItem(item: {
+  contract_key: string
+  symbol?: string
+  sec_type?: string
+  optionable?: boolean | null
+  source?: string
+  category_id?: number | null
+}): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(`${BASE}/watchlist`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(item),
+  })
+  if (!res.ok) throw new Error(`Market POST /watchlist: ${res.status}`)
+  return res.json()
+}
+
+export async function deleteWatchlistItem(contractKey: string): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(`${BASE}/watchlist?contract_key=${encodeURIComponent(contractKey)}`, {
+    method: 'DELETE',
+  })
+  if (!res.ok) throw new Error(`Market DELETE /watchlist: ${res.status}`)
+  return res.json()
 }

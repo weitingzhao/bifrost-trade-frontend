@@ -47,3 +47,34 @@ export interface FlexUploadResponse {
   message?: string
   error?: string
 }
+
+export interface PerformanceSummary {
+  net_pnl: number
+  total_commission: number
+  trade_count: number
+  win_count: number
+  loss_count: number
+  win_rate: number
+  total_unrealized_pnl: number
+}
+
+export interface PerformanceResponse {
+  summary: PerformanceSummary
+}
+
+export interface RawExecution {
+  account_executions_id: number
+  side: string
+  quantity: number
+  price: number
+  commission: number
+  sec_type: string
+  strike: number | null
+  option_right: string | null
+  realized_pnl: number | null
+  net_cash: number | null
+}
+
+export interface RawExecutionsResponse {
+  executions: RawExecution[]
+}

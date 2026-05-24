@@ -101,20 +101,27 @@ export function buildOpenOptionPositions(
 }
 
 export function groupByInstance(positions: OpenOptionPosition[]): InstanceAllGroup[] {
-  const groups = new Map<number | null, OpenOptionPosition[]>()
+  // Positions with a real instance ID → group by instance
+  const linked = new Map<number, OpenOptionPosition[]>()
+  const unlinked: OpenOptionPosition[] = []
 
   for (const pos of positions) {
     const instId = pos.strategy_instance_id ?? null
-    const arr = groups.get(instId)
-    if (arr) arr.push(pos)
-    else groups.set(instId, [pos])
+    if (instId != null) {
+      const arr = linked.get(instId)
+      if (arr) arr.push(pos)
+      else linked.set(instId, [pos])
+    } else {
+      unlinked.push(pos)
+    }
   }
 
   const result: InstanceAllGroup[] = []
-  for (const [instId, opts] of groups) {
+
+  // Linked instance groups
+  for (const [instId, opts] of linked) {
     const first = opts[0]
     const totalPnl = opts.reduce((sum, o) => sum + o.unrealized_pnl, 0)
-
     result.push({
       strategy_instance_id: instId,
       strategy_instance_label: first?.strategy_instance_label ?? null,
@@ -124,6 +131,23 @@ export function groupByInstance(positions: OpenOptionPosition[]): InstanceAllGro
       options: opts,
       stock_coverage: [],
       options_unrealized_pnl: totalPnl,
+      structure_type: null,
+      scope_type: null,
+      risk_profile: null,
+    })
+  }
+
+  // Unlinked positions: each contract becomes its own row (not all merged under "Uncategorized")
+  for (const pos of unlinked) {
+    result.push({
+      strategy_instance_id: null,
+      strategy_instance_label: null,
+      strategy_opportunity_name: null,
+      strategy_opportunity_id: null,
+      strategy_instance_opened_at_epoch: null,
+      options: [pos],
+      stock_coverage: [],
+      options_unrealized_pnl: pos.unrealized_pnl,
       structure_type: null,
       scope_type: null,
       risk_profile: null,

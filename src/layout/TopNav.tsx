@@ -113,8 +113,8 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages }: Props) {
         Bifrost
       </span>
 
-      {/* Scrollable nav groups */}
-      <nav className="flex flex-1 items-center gap-0.5 overflow-x-auto scrollbar-none min-w-0">
+      {/* Nav groups — no overflow container so absolute dropdowns are not clipped */}
+      <nav className="flex flex-1 items-center gap-0.5 min-w-0 flex-wrap">
         {NAV_GROUPS.map((group) => (
           <GroupMenu
             key={group.label}

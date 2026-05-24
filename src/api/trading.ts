@@ -3,6 +3,8 @@ import type {
   TwsFetchResponse,
   FlexFetchResponse,
   FlexUploadResponse,
+  PerformanceResponse,
+  RawExecutionsResponse,
 } from '@/types/trading'
 import type {
   ExecutionsResponse,
@@ -80,4 +82,18 @@ export async function deleteExecution(id: number): Promise<{ ok: boolean; error?
   const res = await fetch(`${BASE}/executions/${id}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(`DELETE /executions/${id}: ${res.status}`)
   return res.json()
+}
+
+export async function fetchInstancePerformance(instanceId: number): Promise<PerformanceResponse> {
+  const res = await fetch(`${BASE}/performance?strategy_instance_id=${instanceId}&summary_only=true`)
+  if (!res.ok) throw new Error(`Trading /performance [${instanceId}]: ${res.status}`)
+  return res.json() as Promise<PerformanceResponse>
+}
+
+export async function fetchInstanceExecutions(instanceId: number): Promise<RawExecutionsResponse> {
+  const res = await fetch(
+    `${BASE}/executions?strategy_instance_id=${instanceId}&source_scope=performance_book&limit=500`,
+  )
+  if (!res.ok) throw new Error(`Trading /executions [${instanceId}]: ${res.status}`)
+  return res.json() as Promise<RawExecutionsResponse>
 }

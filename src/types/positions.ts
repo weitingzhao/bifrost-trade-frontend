@@ -168,8 +168,16 @@ export interface StrategyInstance {
   strategy_opportunity_id: number
   account_id: string
   label: string | null
-  opened_at: number | null
-  closed_at: number | null
+  notes: string | null
+  opened_at: string | null
+  opened_at_epoch: number | null
+  created_at: string | null
+  created_at_epoch: number | null
+  updated_at: string | null
+  strategy_opportunity_name: string | null
+  strategy_structure_id: number | null
+  strategy_structure_name: string | null
+  executions_count: number
 }
 
 export interface StrategyInstancesResponse {
@@ -181,16 +189,27 @@ export interface CreateStrategyInstanceBody {
   account_id: string
   opened_at?: string
   label?: string
+  notes?: string
+}
+
+export interface PatchStrategyInstanceBody {
+  label?: string | null
+  notes?: string | null
+  opened_at?: string
 }
 
 export interface StrategyOpportunity {
   strategy_opportunity_id: number
   name: string
-  symbol: string
+  strategy_structure_id: number | null
+  default_gate_safety_strategy_id: number | null
   scope_type: string | null
-  structure_type_id: number | null
-  status: string
-  created_at: number | null
+  is_active: boolean
+  created_at: string | null
+  updated_at: string | null
+  structure_name: string | null
+  gate_safety_name: string | null
+  symbols: string[]
 }
 
 export interface StrategyStructure {

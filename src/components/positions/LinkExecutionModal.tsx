@@ -30,7 +30,7 @@ export function LinkExecutionModal({ open, exec, opportunities, onClose, onSucce
 
   useEffect(() => {
     if (!oppId) { setInstances([]); return }
-    fetchStrategyInstances(Number(oppId))
+    fetchStrategyInstances({ opportunityId: Number(oppId) })
       .then((r) => setInstances(r.items ?? []))
       .catch(() => setInstances([]))
   }, [oppId])
@@ -48,7 +48,7 @@ export function LinkExecutionModal({ open, exec, opportunities, onClose, onSucce
   const filteredOpps = exec
     ? opportunities.filter((o) => {
         const sym = exec.symbol.toUpperCase()
-        return o.symbol.toUpperCase() === sym || o.scope_type === 'watchlist_stk'
+        return (o.symbols ?? []).some((s) => s.toUpperCase() === sym) || o.scope_type === 'watchlist_stk'
       })
     : opportunities
 
@@ -67,7 +67,7 @@ export function LinkExecutionModal({ open, exec, opportunities, onClose, onSucce
           label: newLabel.trim() || undefined,
         })
         if (!res.ok) throw new Error(res.error ?? 'Failed to create instance')
-        finalInstanceId = res.id ?? null
+        finalInstanceId = res.strategy_instance_id ?? null
       } else if (instanceId) {
         finalInstanceId = Number(instanceId)
       }

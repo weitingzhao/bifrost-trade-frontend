@@ -7,6 +7,8 @@ import type {
 import type {
   ExecutionsResponse,
   PositionAttributionResponse,
+  CreateExecutionBody,
+  UpdateExecutionBody,
 } from '@/types/positions'
 
 const BASE = import.meta.env.VITE_API_TRADING as string
@@ -49,4 +51,33 @@ export async function fetchPositionAttribution(): Promise<PositionAttributionRes
   const res = await fetch(`${BASE}/position-attribution`)
   if (!res.ok) throw new Error(`Trading /position-attribution: ${res.status}`)
   return res.json() as Promise<PositionAttributionResponse>
+}
+
+export async function createExecution(body: CreateExecutionBody): Promise<{ ok: boolean; id?: number; error?: string }> {
+  const res = await fetch(`${BASE}/executions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`POST /executions: ${res.status}`)
+  return res.json()
+}
+
+export async function updateExecution(
+  id: number,
+  body: UpdateExecutionBody,
+): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(`${BASE}/executions/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`PUT /executions/${id}: ${res.status}`)
+  return res.json()
+}
+
+export async function deleteExecution(id: number): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(`${BASE}/executions/${id}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error(`DELETE /executions/${id}: ${res.status}`)
+  return res.json()
 }

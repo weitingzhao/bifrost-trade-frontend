@@ -5,25 +5,39 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { fmtUsd, fmtExpiry, rightLabel } from '@/utils/positions'
+import { fmtUsd, fmtExpiry, rightLabel, pnlColorClass } from '@/utils/positions'
 import { formatRiskLabel } from '@/utils/riskProfile'
-import type { InstanceAllGroup } from '@/types/positions'
+import { ExecutionRow } from './ExecutionRow'
+import type { InstanceAllGroup, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 
 interface Props {
   groups: InstanceAllGroup[]
   quotesBySymbol: Record<string, QuoteItem>
   filterSymbol?: string
+  executionsFinal?: Execution[]
+  executionsTws?: Execution[]
+  onEditExec?: (exec: Execution) => void
+  onLinkExec?: (exec: Execution) => void
+  onDeleteExec?: (exec: Execution) => void
+  onRefreshExecs?: () => void
 }
 
 function colorClass(n: number | null | undefined) {
-  if (n == null) return ''
-  if (n > 0) return 'text-green-600 dark:text-green-400'
-  if (n < 0) return 'text-red-600 dark:text-red-400'
-  return ''
+  return pnlColorClass(n)
 }
 
-export function InstanceTab({ groups, quotesBySymbol, filterSymbol }: Props) {
+export function InstanceTab({
+  groups,
+  quotesBySymbol,
+  filterSymbol,
+  executionsFinal = [],
+  executionsTws = [],
+  onEditExec,
+  onLinkExec,
+  onDeleteExec,
+  onRefreshExecs,
+}: Props) {
   const [expandedIds, setExpandedIds] = useState<Set<number | null>>(new Set())
 
   const filtered = filterSymbol
@@ -141,6 +155,37 @@ export function InstanceTab({ groups, quotesBySymbol, filterSymbol }: Props) {
                                 )
                               })}
                             </div>
+                            {(executionsFinal.length > 0 || executionsTws.length > 0) && group.options.length > 0 && (
+                              <div className="mt-3 pt-3 border-t">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                                  Executions
+                                </p>
+                                {group.options.map((opt) => {
+                                  const finalForOpt = executionsFinal.filter(
+                                    (e) => e.contract_key === opt.contract_key && e.account_id === opt.account_id && e.sec_type?.toUpperCase() === 'OPT'
+                                  )
+                                  const twsForOpt = executionsTws.filter(
+                                    (e) => e.contract_key === opt.contract_key && e.account_id === opt.account_id && e.sec_type?.toUpperCase() === 'OPT'
+                                  )
+                                  if (finalForOpt.length === 0 && twsForOpt.length === 0) return null
+                                  return (
+                                    <div key={opt.contract_key} className="mb-2">
+                                      <p className="text-[10px] text-muted-foreground font-mono mb-1">
+                                        {opt.symbol} {rightLabel(opt.right)} {fmtExpiry(opt.expiry)} {fmtUsd(opt.strike)}
+                                      </p>
+                                      <ExecutionRow
+                                        finalExecs={finalForOpt}
+                                        twsExecs={twsForOpt}
+                                        onEdit={onEditExec ?? (() => {})}
+                                        onLink={onLinkExec ?? (() => {})}
+                                        onDelete={onDeleteExec ?? (() => {})}
+                                        onRefresh={onRefreshExecs ?? (() => {})}
+                                      />
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
                             {group.stock_coverage.length > 0 && (
                               <div className="mt-3 pt-3 border-t">
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
@@ -155,6 +200,35 @@ export function InstanceTab({ groups, quotesBySymbol, filterSymbol }: Props) {
                                     <span className="text-muted-foreground font-mono">{sc.account_id}</span>
                                   </div>
                                 ))}
+                              </div>
+                            )}
+                            {group.risk_profile && (
+                              <div className="mt-3 pt-3 border-t">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                                  Risk Profile
+                                </p>
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                  <div>
+                                    <span className="text-muted-foreground">Max Gain: </span>
+                                    <span className={cn('font-mono font-semibold', colorClass(group.risk_profile.max_gain))}>
+                                      {group.risk_profile.max_gain != null ? fmtUsd(group.risk_profile.max_gain) : '∞'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">Max Loss: </span>
+                                    <span className={cn('font-mono font-semibold', colorClass(group.risk_profile.max_loss))}>
+                                      {group.risk_profile.max_loss != null ? fmtUsd(group.risk_profile.max_loss) : '∞'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">Breakeven: </span>
+                                    <span className="font-mono">
+                                      {group.risk_profile.breakeven_points.length > 0
+                                        ? group.risk_profile.breakeven_points.map((b) => fmtUsd(b)).join(', ')
+                                        : '—'}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>

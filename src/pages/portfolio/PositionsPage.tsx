@@ -1,8 +1,12 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { usePositionAttribution } from '@/hooks/usePositionAttribution'
+import { useExecutionsFinal, useExecutionsTws } from '@/hooks/useExecutions'
+import { useOpportunities } from '@/hooks/useStrategies'
+import { deleteExecution } from '@/api/trading'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -14,20 +18,46 @@ import { CashLikeTab } from '@/components/positions/CashLikeTab'
 import { OptionsTab } from '@/components/positions/OptionsTab'
 import { InstanceTab } from '@/components/positions/InstanceTab'
 import { PositionsChartsRow } from '@/components/positions/PositionsChartsRow'
+import { ExecutionFormModal } from '@/components/positions/ExecutionFormModal'
+import { LinkExecutionModal } from '@/components/positions/LinkExecutionModal'
+import { QuickCloseModal } from '@/components/positions/QuickCloseModal'
+import { DeleteConfirmDialog } from '@/components/positions/DeleteConfirmDialog'
 import { buildQuoteMap, uniqueSymbols, uniqueContractKeys } from '@/utils/positions'
-import { flattenPositions, splitBySecType, filterStocksByBucket, buildOpenOptionPositions, groupByInstance } from '@/utils/positionsGrouping'
+import { flattenPositions, splitBySecType, filterStocksByBucket, buildOpenOptionPositions, groupByInstance, positionMatchesAccountFilter } from '@/utils/positionsGrouping'
+import { buildStockCoverageItems } from '@/utils/stockCoverage'
+import { buildOffTrackPositions } from '@/utils/offTrackPositions'
+import { StockCoverageTable } from '@/components/positions/StockCoverageTable'
+import type { AccountFilter } from '@/components/positions/PositionsFilterBar'
+import type { Execution } from '@/types/positions'
 
 type OpenTab = 'instance' | 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 
 export default function PositionsPage() {
+  const queryClient = useQueryClient()
   const { data, isLoading, isError, error } = useMonitorStatus()
   const { data: attrData } = usePositionAttribution()
+  const { data: execFinalData } = useExecutionsFinal()
+  const { data: execTwsData } = useExecutionsTws()
+  const { data: oppsData } = useOpportunities()
+
   const [openTab, setOpenTab] = useState<OpenTab>('instance')
   const [filterSymbol, setFilterSymbol] = useState('')
   const [filterExpiry, setFilterExpiry] = useState('')
+  const [accountFilter, setAccountFilter] = useState<AccountFilter>({ host: true, secondary: true })
+
+  const [editExec, setEditExec] = useState<Execution | null>(null)
+  const [linkExec, setLinkExec] = useState<Execution | null>(null)
+  const [closeExec, setCloseExec] = useState<Execution | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
 
   const accounts = data?.portfolio.accounts ?? []
-  const allPositions = flattenPositions(accounts)
+  const hostAccountId = data?.config?.ib_client?.account?.event_host ?? ''
+  const secondaryAccountId = data?.config?.ib_client?.account?.event_secondary ?? ''
+
+  const allPositionsRaw = flattenPositions(accounts)
+  const allPositions = allPositionsRaw.filter((p) =>
+    positionMatchesAccountFilter(p.account_id, accountFilter, hostAccountId, secondaryAccountId)
+  )
   const { stocks: allStocks, options: allOptions } = splitBySecType(allPositions)
 
   const stkSymbols = uniqueSymbols(accounts)
@@ -42,17 +72,33 @@ export default function PositionsPage() {
   const fixedIncomeStocks = filterStocksByBucket(allStocks, 'fixed_income')
   const cashLikeStocks = filterStocksByBucket(allStocks, 'cash_like')
 
+  const executionsFinal = execFinalData?.items ?? []
+  const executionsTws = execTwsData?.items ?? []
+  const opportunities = oppsData?.items ?? []
+
   const attributions = attrData?.items ?? []
-  const openOptions = buildOpenOptionPositions(allOptions, attributions)
+  const liveOptions = buildOpenOptionPositions(allOptions, attributions)
+
+  const showOffTrack = accountFilter.host && accountFilter.secondary
+  const offTrackPositions = showOffTrack ? buildOffTrackPositions(executionsFinal, filterSymbol, filterExpiry) : []
+  const openOptions = [...liveOptions, ...offTrackPositions]
+
   const instanceGroups = groupByInstance(openOptions)
+
+  const accountOptions = [...new Set(accounts.map((a) => a.account_id ?? '').filter(Boolean))]
+  const stockCoverageItems = buildStockCoverageItems(instanceGroups, allStocks)
 
   const hasInstances = instanceGroups.some((g) => g.strategy_instance_id != null)
   const hasCoreStocks = coreStocks.length > 0
   const hasFixedIncome = fixedIncomeStocks.length > 0
   const hasCashLike = cashLikeStocks.length > 0
   const hasOptions = allOptions.length > 0
-
   const totalPositions = allPositions.length
+
+  function refreshExecData() {
+    queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
+    queryClient.invalidateQueries({ queryKey: ['trading', 'position-attribution'] })
+  }
 
   if (isLoading) {
     return (
@@ -93,6 +139,13 @@ export default function PositionsPage() {
         stocks={allStocks}
         options={allOptions}
         totalCash={accounts.reduce((s, a) => s + (parseFloat(a.summary?.TotalCashValue ?? '0') || 0), 0)}
+        activeSymbol={filterSymbol}
+        onSymbolClick={(sym) => setFilterSymbol(sym ?? '')}
+        onOptionClick={(sym) => {
+          setFilterSymbol(sym ?? '')
+          if (sym) setOpenTab('options')
+        }}
+        onCategoryClick={(cat) => setOpenTab(cat)}
       />
 
       {/* Filter Bar */}
@@ -101,6 +154,10 @@ export default function PositionsPage() {
         onFilterSymbolChange={setFilterSymbol}
         filterExpiry={filterExpiry}
         onFilterExpiryChange={setFilterExpiry}
+        hostAccountId={hostAccountId}
+        secondaryAccountId={secondaryAccountId}
+        accountFilter={accountFilter}
+        onAccountFilterChange={setAccountFilter}
       />
 
       {/* Tab Content */}
@@ -136,6 +193,12 @@ export default function PositionsPage() {
               groups={instanceGroups}
               quotesBySymbol={quotesBySymbol}
               filterSymbol={filterSymbol}
+              executionsFinal={executionsFinal}
+              executionsTws={executionsTws}
+              onEditExec={setEditExec}
+              onLinkExec={setLinkExec}
+              onDeleteExec={setDeleteTarget}
+              onRefreshExecs={refreshExecData}
             />
           </TabsContent>
 
@@ -145,6 +208,13 @@ export default function PositionsPage() {
               quotesBySymbol={quotesBySymbol}
               filterSymbol={filterSymbol}
               filterExpiry={filterExpiry}
+              executionsFinal={executionsFinal}
+              executionsTws={executionsTws}
+              onEditExec={setEditExec}
+              onLinkExec={setLinkExec}
+              onDeleteExec={setDeleteTarget}
+              onCloseExec={setCloseExec}
+              onRefreshExecs={refreshExecData}
             />
           </TabsContent>
 
@@ -176,6 +246,47 @@ export default function PositionsPage() {
           </TabsContent>
         </Tabs>
       )}
+
+      {/* Stock Coverage Summary */}
+      {stockCoverageItems.length > 0 && (
+        <StockCoverageTable items={stockCoverageItems} />
+      )}
+
+      {/* Execution Modals */}
+      <ExecutionFormModal
+        open={!!editExec}
+        exec={editExec}
+        accountOptions={accountOptions}
+        onClose={() => setEditExec(null)}
+        onSuccess={refreshExecData}
+      />
+
+      <LinkExecutionModal
+        open={!!linkExec}
+        exec={linkExec}
+        opportunities={opportunities}
+        onClose={() => setLinkExec(null)}
+        onSuccess={refreshExecData}
+      />
+
+      <QuickCloseModal
+        exec={closeExec}
+        onClose={() => setCloseExec(null)}
+        onSuccess={refreshExecData}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        title="Delete execution"
+        message="This will permanently remove this execution from the trade ledger. This cannot be undone."
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (deleteTarget?.account_executions_id != null) {
+            await deleteExecution(deleteTarget.account_executions_id)
+            refreshExecData()
+          }
+        }}
+      />
     </div>
   )
 }

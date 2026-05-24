@@ -122,6 +122,67 @@ export interface ExecutionsResponse {
   items: Execution[]
 }
 
+export interface CreateExecutionBody {
+  account_id: string
+  time: number
+  symbol: string
+  sec_type: 'STK' | 'OPT'
+  side: 'BUY' | 'SELL'
+  quantity: number
+  price: number
+  source?: string
+  expiry?: string
+  strike?: number
+  option_right?: string
+  contract_key?: string
+  commission?: number
+  realized_pnl?: number
+  currency?: string
+  strategy_opportunity_id?: number | null
+  strategy_instance_id?: number | null
+  instance_allocations?: { strategy_instance_id: number; allocated_quantity: number }[]
+}
+
+export interface UpdateExecutionBody {
+  account_id?: string
+  exec_time?: number
+  symbol?: string
+  sec_type?: string
+  side?: string
+  quantity?: number
+  price?: number
+  expiry?: string
+  strike?: number
+  option_right?: string
+  contract_key?: string
+  commission?: number
+  realized_pnl?: number
+  currency?: string
+  strategy_opportunity_id?: number | null
+  strategy_instance_id?: number | null
+  instance_allocations?: { strategy_instance_id: number; allocated_quantity: number }[]
+}
+
+export interface StrategyInstance {
+  strategy_instance_id: number
+  strategy_opportunity_id: number
+  account_id: string
+  label: string | null
+  opened_at: number | null
+  closed_at: number | null
+}
+
+export interface StrategyInstancesResponse {
+  items: StrategyInstance[]
+}
+
+export interface CreateStrategyInstanceBody {
+  strategy_opportunity_id: number
+  account_id: string
+  opened_at?: string
+  label?: string
+}
+
 export interface StrategyOpportunity {
   strategy_opportunity_id: number
   name: string

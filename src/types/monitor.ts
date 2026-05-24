@@ -74,6 +74,15 @@ export interface StatusResponse {
     worker_ib_connected: boolean
     worker_ib_client_id: number | null
   }
+  config?: {
+    ib_client?: {
+      account?: {
+        event_host?: string
+        event_secondary?: string
+        trading?: string
+      }
+    }
+  }
   account_sync_daemon: {
     heartbeat: AccountSyncHeartbeat
   } | null

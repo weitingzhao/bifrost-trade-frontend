@@ -2,6 +2,29 @@ import type { IbPositionRow } from '@/types/monitor'
 import type { LivePositionRow, OpenOptionPosition, InstanceAllGroup, PositionAttribution } from '@/types/positions'
 import { isLedgerFixedIncomeCategory, isLedgerCashLikeCategory } from './stockCategories'
 
+export interface AccountFilter {
+  host: boolean
+  secondary: boolean
+}
+
+export function positionMatchesAccountFilter(
+  accountId: string,
+  filter: AccountFilter,
+  hostId: string,
+  secondaryId: string,
+): boolean {
+  if (!hostId && !secondaryId) return true
+  const trimmed = accountId.trim()
+  const hOn = filter.host
+  const sOn = filter.secondary
+  if (!hOn && !sOn) return false
+  const isHost = !!hostId && trimmed === hostId
+  const isSec = !!secondaryId && trimmed === secondaryId
+  if (isHost) return hOn
+  if (isSec) return sOn
+  return hOn && sOn
+}
+
 export type StockBucket = 'core' | 'fixed_income' | 'cash_like'
 
 export function classifyStockBucket(category: string | null | undefined): StockBucket {

@@ -100,3 +100,10 @@ export function fmtExecDaysAgo(days: number | null | undefined): string {
   if (days < 1.5) return '1 day ago'
   return `${Math.round(days)} days ago`
 }
+
+export function pnlColorClass(n: number | null | undefined): string {
+  if (n == null) return ''
+  if (n > 0) return 'text-success'
+  if (n < 0) return 'text-danger'
+  return ''
+}

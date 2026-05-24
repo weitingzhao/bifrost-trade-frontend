@@ -1,9 +1,12 @@
+import { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
+import { ChevronDown, ArrowUpDown } from 'lucide-react'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { fmtUsd, fmtExpiry, rightLabel } from '@/utils/positions'
-import type { OpenOptionPosition } from '@/types/positions'
+import { fmtUsd, fmtExpiry, rightLabel, pnlColorClass } from '@/utils/positions'
+import { ExecutionRow } from './ExecutionRow'
+import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 
 interface Props {
@@ -11,13 +14,17 @@ interface Props {
   quotesBySymbol: Record<string, QuoteItem>
   filterSymbol?: string
   filterExpiry?: string
+  executionsFinal?: Execution[]
+  executionsTws?: Execution[]
+  onEditExec?: (exec: Execution) => void
+  onLinkExec?: (exec: Execution) => void
+  onDeleteExec?: (exec: Execution) => void
+  onCloseExec?: (exec: Execution) => void
+  onRefreshExecs?: () => void
 }
 
 function colorClass(n: number | null | undefined) {
-  if (n == null) return ''
-  if (n > 0) return 'text-green-600 dark:text-green-400'
-  if (n < 0) return 'text-red-600 dark:text-red-400'
-  return ''
+  return pnlColorClass(n)
 }
 
 function optionIntrinsic(right: string, strike: number, spot: number | null): number | null {
@@ -43,17 +50,68 @@ function expiryMatchesFilter(expiry: string, filter: string): boolean {
   return ex.startsWith(f) || f.startsWith(ex)
 }
 
-export function OptionsTab({ positions, quotesBySymbol, filterSymbol, filterExpiry }: Props) {
-  let filtered = positions
+function matchExecsForContract(
+  contractKey: string,
+  accountId: string,
+  execs: Execution[],
+): Execution[] {
+  return execs.filter((e) =>
+    e.contract_key === contractKey && e.account_id === accountId && e.sec_type?.toUpperCase() === 'OPT'
+  )
+}
 
+type SortKey = 'symbol' | 'expiry' | 'strike' | 'qty' | 'pnl' | null
+type SortDir = 'asc' | 'desc'
+
+export function OptionsTab({
+  positions,
+  quotesBySymbol,
+  filterSymbol,
+  filterExpiry,
+  executionsFinal = [],
+  executionsTws = [],
+  onEditExec,
+  onLinkExec,
+  onDeleteExec,
+  onCloseExec,
+  onRefreshExecs,
+}: Props) {
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
+  const [sortKey, setSortKey] = useState<SortKey>(null)
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  let filtered = positions
   if (filterSymbol) {
     const upper = filterSymbol.toUpperCase()
     filtered = filtered.filter((p) => p.symbol.includes(upper))
   }
-
   if (filterExpiry) {
     filtered = filtered.filter((p) => expiryMatchesFilter(p.expiry, filterExpiry))
   }
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered
+    const mult = sortDir === 'asc' ? 1 : -1
+    return [...filtered].sort((a, b) => {
+      switch (sortKey) {
+        case 'symbol': return mult * a.symbol.localeCompare(b.symbol)
+        case 'expiry': return mult * a.expiry.localeCompare(b.expiry)
+        case 'strike': return mult * (a.strike - b.strike)
+        case 'qty': return mult * (a.qty - b.qty)
+        case 'pnl': return mult * (a.unrealized_pnl - b.unrealized_pnl)
+        default: return 0
+      }
+    })
+  }, [filtered, sortKey, sortDir])
 
   if (filtered.length === 0) {
     return (
@@ -64,10 +122,21 @@ export function OptionsTab({ positions, quotesBySymbol, filterSymbol, filterExpi
     )
   }
 
+  function toggleExpand(key: string) {
+    setExpandedKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
   let totalPremium = 0
-  for (const pos of filtered) {
+  for (const pos of sorted) {
     if (pos.avg_cost != null) totalPremium += -(pos.qty * pos.avg_cost)
   }
+
+  const hasExecData = executionsFinal.length > 0 || executionsTws.length > 0
 
   return (
     <div>
@@ -76,23 +145,36 @@ export function OptionsTab({ positions, quotesBySymbol, filterSymbol, filterExpi
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[60px]">Symbol</TableHead>
+              {hasExecData && <TableHead className="w-8" />}
+              <TableHead className="min-w-[60px] cursor-pointer select-none" onClick={() => toggleSort('symbol')}>
+                <span className="inline-flex items-center gap-1">Symbol <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
+              </TableHead>
               <TableHead>Right</TableHead>
-              <TableHead>Expiry</TableHead>
-              <TableHead className="text-right">Strike</TableHead>
-              <TableHead className="text-right">Qty</TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('expiry')}>
+                <span className="inline-flex items-center gap-1">Expiry <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
+              </TableHead>
+              <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('strike')}>
+                <span className="inline-flex items-center gap-1 justify-end">Strike <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
+              </TableHead>
+              <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('qty')}>
+                <span className="inline-flex items-center gap-1 justify-end">Qty <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
+              </TableHead>
               <TableHead>Side</TableHead>
               <TableHead>Moneyness</TableHead>
               <TableHead className="text-right">Cost</TableHead>
               <TableHead className="text-right">Premium</TableHead>
               <TableHead className="text-right">Mark</TableHead>
               <TableHead className="text-right">Intrinsic</TableHead>
-              <TableHead className="text-right">PnL</TableHead>
+              <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('pnl')}>
+                <span className="inline-flex items-center gap-1 justify-end">PnL <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
+              </TableHead>
               <TableHead>Strategy</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((pos, i) => {
+            {sorted.map((pos, i) => {
+              const key = pos.contract_key || String(i)
+              const isExpanded = expandedKeys.has(key)
               const spot = quotesBySymbol[pos.symbol]?.last ?? null
               const intrinsic = optionIntrinsic(pos.right, pos.strike, spot)
               const money = moneyness(pos.right, pos.strike, spot)
@@ -103,8 +185,17 @@ export function OptionsTab({ positions, quotesBySymbol, filterSymbol, filterExpi
                   ? ((pos.mark_price - pos.avg_cost) / pos.avg_cost) * 100
                   : null
 
-              return (
-                <TableRow key={pos.contract_key || i}>
+              return [
+                <TableRow
+                  key={key}
+                  className={cn(hasExecData && 'cursor-pointer hover:bg-muted/50')}
+                  onClick={hasExecData ? () => toggleExpand(key) : undefined}
+                >
+                  {hasExecData && (
+                    <TableCell className="px-2">
+                      <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
+                    </TableCell>
+                  )}
                   <TableCell className="font-mono text-xs font-medium">{pos.symbol}</TableCell>
                   <TableCell className="text-xs">{rightLabel(pos.right)}</TableCell>
                   <TableCell className="text-xs font-mono">{fmtExpiry(pos.expiry)}</TableCell>
@@ -128,10 +219,30 @@ export function OptionsTab({ positions, quotesBySymbol, filterSymbol, filterExpi
                   <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">
                     {pos.strategy_opportunity_name ?? '—'}
                   </TableCell>
-                </TableRow>
-              )
+                </TableRow>,
+
+                ...(isExpanded && hasExecData
+                  ? [
+                      <TableRow key={`${key}-execs`} className="bg-muted/10 hover:bg-muted/10">
+                        <TableCell colSpan={hasExecData ? 15 : 14} className="p-2">
+                          <ExecutionRow
+                            finalExecs={matchExecsForContract(pos.contract_key, pos.account_id, executionsFinal)}
+                            twsExecs={matchExecsForContract(pos.contract_key, pos.account_id, executionsTws)}
+                            onEdit={onEditExec ?? (() => {})}
+                            onLink={onLinkExec ?? (() => {})}
+                            onDelete={onDeleteExec ?? (() => {})}
+                            onClose={pos.pool_label === 'Off' ? onCloseExec : undefined}
+                            onRefresh={onRefreshExecs ?? (() => {})}
+                            showPoolOff={pos.pool_label === 'Off'}
+                          />
+                        </TableCell>
+                      </TableRow>,
+                    ]
+                  : []),
+              ]
             })}
             <TableRow className="border-t-2 bg-muted/30 hover:bg-muted/30">
+              {hasExecData && <TableCell />}
               <TableCell colSpan={8} className="text-xs font-medium py-1.5">
                 Option Premium Total
               </TableCell>

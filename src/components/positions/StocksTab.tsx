@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { fmtUsd, fmtPct, formatLastUpdate, resolveBasePrice } from '@/utils/positions'
+import { fmtUsd, fmtPct, formatLastUpdate, resolveBasePrice, pnlColorClass } from '@/utils/positions'
 import type { LivePositionRow } from '@/types/positions'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 
@@ -15,10 +15,7 @@ interface Props {
 }
 
 function colorClass(n: number | null | undefined) {
-  if (n == null) return ''
-  if (n > 0) return 'text-green-600 dark:text-green-400'
-  if (n < 0) return 'text-red-600 dark:text-red-400'
-  return ''
+  return pnlColorClass(n)
 }
 
 interface RowCalc {

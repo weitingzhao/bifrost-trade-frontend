@@ -8,9 +8,9 @@ export interface DonutSegment {
 }
 
 const PALETTE = [
-  '#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6',
-  '#ef4444', '#06b6d4', '#ec4899', '#14b8a6',
-  '#f97316', '#6366f1', '#84cc16', '#a855f7',
+  '#38bdf8', '#76b900', '#fbbf24', '#ef4444',
+  '#a855f7', '#f97316', '#4ade80', '#ec4899',
+  '#84cc16', '#14b8a6', '#06b6d4', '#6366f1',
 ]
 
 export function assignColor(index: number): string {
@@ -40,11 +40,11 @@ export function buildAssetMixSegments(
   }
 
   const segments: DonutSegment[] = []
-  if (coreMV > 0) segments.push({ label: 'Stock', value: coreMV, color: '#22c55e' })
-  if (fiMV > 0) segments.push({ label: 'Fixed Income', value: fiMV, color: '#f59e0b' })
+  if (coreMV > 0) segments.push({ label: 'Stock', value: coreMV, color: '#38bdf8' })
+  if (fiMV > 0) segments.push({ label: 'Fixed Income', value: fiMV, color: '#fbbf24' })
   const cashTotal = Math.max(0, totalCash) + cashLikeMV
-  if (cashTotal > 0) segments.push({ label: 'Cash + Cash-like', value: cashTotal, color: '#3b82f6' })
-  if (optMV > 0) segments.push({ label: 'Options', value: optMV, color: '#8b5cf6' })
+  if (cashTotal > 0) segments.push({ label: 'Cash + Cash-like', value: cashTotal, color: '#2dd4bf' })
+  if (optMV > 0) segments.push({ label: 'Options', value: optMV, color: '#c084fc' })
 
   return segments
 }

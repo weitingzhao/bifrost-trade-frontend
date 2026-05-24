@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import { resolve } from 'path'
 
 // API 域端口映射
 const API_PORTS: Record<string, number> = {
@@ -26,7 +28,12 @@ const apiProxies = Object.fromEntries(
 )
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
   server: {
     port: 5173,
     proxy: apiProxies,

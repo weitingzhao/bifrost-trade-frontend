@@ -12,6 +12,7 @@ interface Props {
   benchBySymbol: Record<string, DailyBenchmark>
   title?: string
   filterSymbol?: string
+  onInspect?: (symbol: string, accountId: string, pos: LivePositionRow) => void
 }
 
 function colorClass(n: number | null | undefined) {
@@ -56,7 +57,7 @@ function calcRow(
   return { currPrice, totalCost, totalMarket, dailyPct, dailyUsd, changePct, changeUsd, updTs }
 }
 
-export function StocksTab({ positions, quotesBySymbol, benchBySymbol, title = 'Stock Positions', filterSymbol }: Props) {
+export function StocksTab({ positions, quotesBySymbol, benchBySymbol, title = 'Stock Positions', filterSymbol, onInspect }: Props) {
   const filtered = filterSymbol
     ? positions.filter((p) => (p.symbol ?? '').toUpperCase().includes(filterSymbol.toUpperCase()))
     : positions
@@ -70,10 +71,20 @@ export function StocksTab({ positions, quotesBySymbol, benchBySymbol, title = 'S
     )
   }
 
-  let grandTotalCost = 0
-  let grandTotalMarket = 0
-  let grandDailyUsd = 0
-  let grandChangeUsd = 0
+  const rows = filtered.map((pos) => {
+    const sym = (pos.symbol ?? '').toUpperCase()
+    return { pos, r: calcRow(pos, quotesBySymbol[sym], benchBySymbol[sym]) }
+  })
+
+  const totals = rows.reduce(
+    (acc, { r }) => ({
+      cost: acc.cost + (r.totalCost ?? 0),
+      market: acc.market + (r.totalMarket ?? 0),
+      dailyUsd: acc.dailyUsd + (r.dailyUsd ?? 0),
+      changeUsd: acc.changeUsd + (r.changeUsd ?? 0),
+    }),
+    { cost: 0, market: 0, dailyUsd: 0, changeUsd: 0 },
+  )
 
   return (
     <div>
@@ -97,58 +108,50 @@ export function StocksTab({ positions, quotesBySymbol, benchBySymbol, title = 'S
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((pos, i) => {
-              const sym = (pos.symbol ?? '').toUpperCase()
-              const quote = quotesBySymbol[sym]
-              const bench = benchBySymbol[sym]
-              const r = calcRow(pos, quote, bench)
-
-              if (r.totalCost != null) grandTotalCost += r.totalCost
-              if (r.totalMarket != null) grandTotalMarket += r.totalMarket
-              if (r.dailyUsd != null) grandDailyUsd += r.dailyUsd
-              if (r.changeUsd != null) grandChangeUsd += r.changeUsd
-
-              return (
-                <TableRow key={`${pos.account_id}-${pos.contract_key ?? pos.symbol}-${i}`}>
-                  <TableCell className="text-xs text-muted-foreground font-mono">{pos.account_id}</TableCell>
-                  <TableCell className="font-mono text-xs font-medium">{pos.symbol ?? '—'}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{pos.position ?? '—'}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(pos.avgCost)}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(r.totalCost)}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(r.totalMarket)}</TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(r.currPrice && pos.avgCost ? r.currPrice - pos.avgCost : null))}>
-                    {fmtUsd(r.currPrice)}
-                  </TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs', colorClass(r.dailyPct))}>
-                    {fmtPct(r.dailyPct)}
-                  </TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs', colorClass(r.dailyUsd))}>
-                    {fmtUsd(r.dailyUsd)}
-                  </TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs', colorClass(r.changePct))}>
-                    {fmtPct(r.changePct)}
-                  </TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(r.changeUsd))}>
-                    {fmtUsd(r.changeUsd)}
-                  </TableCell>
-                  <TableCell className="text-right text-xs text-muted-foreground">
-                    {formatLastUpdate(r.updTs)}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+            {rows.map(({ pos, r }, i) => (
+              <TableRow
+                key={`${pos.account_id}-${pos.contract_key ?? pos.symbol}-${i}`}
+                className={cn(onInspect && 'cursor-pointer hover:bg-muted/40')}
+                onClick={onInspect ? () => onInspect((pos.symbol ?? '').toUpperCase(), pos.account_id, pos) : undefined}
+              >
+                <TableCell className="text-xs text-muted-foreground font-mono">{pos.account_id}</TableCell>
+                <TableCell className="font-mono text-xs font-medium">{pos.symbol ?? '—'}</TableCell>
+                <TableCell className="text-right font-mono text-xs">{pos.position ?? '—'}</TableCell>
+                <TableCell className="text-right font-mono text-xs">{fmtUsd(pos.avgCost)}</TableCell>
+                <TableCell className="text-right font-mono text-xs">{fmtUsd(r.totalCost)}</TableCell>
+                <TableCell className="text-right font-mono text-xs">{fmtUsd(r.totalMarket)}</TableCell>
+                <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(r.currPrice && pos.avgCost ? r.currPrice - pos.avgCost : null))}>
+                  {fmtUsd(r.currPrice)}
+                </TableCell>
+                <TableCell className={cn('text-right font-mono text-xs', colorClass(r.dailyPct))}>
+                  {fmtPct(r.dailyPct)}
+                </TableCell>
+                <TableCell className={cn('text-right font-mono text-xs', colorClass(r.dailyUsd))}>
+                  {fmtUsd(r.dailyUsd)}
+                </TableCell>
+                <TableCell className={cn('text-right font-mono text-xs', colorClass(r.changePct))}>
+                  {fmtPct(r.changePct)}
+                </TableCell>
+                <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(r.changeUsd))}>
+                  {fmtUsd(r.changeUsd)}
+                </TableCell>
+                <TableCell className="text-right text-xs text-muted-foreground">
+                  {formatLastUpdate(r.updTs)}
+                </TableCell>
+              </TableRow>
+            ))}
             <TableRow className="border-t-2 font-semibold bg-muted/30 hover:bg-muted/30">
               <TableCell className="text-xs py-1.5" colSpan={4}>Total</TableCell>
-              <TableCell className="text-right font-mono text-xs">{fmtUsd(grandTotalCost)}</TableCell>
-              <TableCell className="text-right font-mono text-xs">{fmtUsd(grandTotalMarket)}</TableCell>
+              <TableCell className="text-right font-mono text-xs">{fmtUsd(totals.cost)}</TableCell>
+              <TableCell className="text-right font-mono text-xs">{fmtUsd(totals.market)}</TableCell>
               <TableCell />
               <TableCell />
-              <TableCell className={cn('text-right font-mono text-xs', colorClass(grandDailyUsd))}>
-                {fmtUsd(grandDailyUsd)}
+              <TableCell className={cn('text-right font-mono text-xs', colorClass(totals.dailyUsd))}>
+                {fmtUsd(totals.dailyUsd)}
               </TableCell>
               <TableCell />
-              <TableCell className={cn('text-right font-mono text-xs', colorClass(grandChangeUsd))}>
-                {fmtUsd(grandChangeUsd)}
+              <TableCell className={cn('text-right font-mono text-xs', colorClass(totals.changeUsd))}>
+                {fmtUsd(totals.changeUsd)}
               </TableCell>
               <TableCell />
             </TableRow>

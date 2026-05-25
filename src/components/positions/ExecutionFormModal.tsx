@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -19,36 +19,21 @@ interface Props {
 }
 
 export function ExecutionFormModal({ open, exec, accountOptions, onClose, onSuccess }: Props) {
-  const [accountId, setAccountId] = useState('')
-  const [symbol, setSymbol] = useState('')
-  const [secType, setSecType] = useState<'STK' | 'OPT'>('STK')
-  const [side, setSide] = useState<'BUY' | 'SELL'>('BUY')
-  const [quantity, setQuantity] = useState('')
-  const [price, setPrice] = useState('')
-  const [execTime, setExecTime] = useState('')
-  const [expiry, setExpiry] = useState('')
-  const [strike, setStrike] = useState('')
-  const [right, setRight] = useState<'C' | 'P'>('C')
+  const [accountId, setAccountId] = useState(exec?.account_id ?? '')
+  const [symbol, setSymbol] = useState(exec?.symbol ?? '')
+  const [secType, setSecType] = useState<'STK' | 'OPT'>(exec?.sec_type === 'OPT' ? 'OPT' : 'STK')
+  const [side, setSide] = useState<'BUY' | 'SELL'>(exec?.side === 'Sell' ? 'SELL' : 'BUY')
+  const [quantity, setQuantity] = useState(exec ? String(Math.abs(exec.qty)) : '')
+  const [price, setPrice] = useState(exec ? String(exec.price) : '')
+  const [execTime, setExecTime] = useState(
+    exec?.time ? new Date(exec.time * 1000).toISOString().slice(0, 16) : '',
+  )
+  const [expiry, setExpiry] = useState(exec?.expiry ?? '')
+  const [strike, setStrike] = useState(exec?.strike != null ? String(exec.strike) : '')
+  const [right, setRight] = useState<'C' | 'P'>((exec?.right ?? 'C') as 'C' | 'P')
   const [commission, setCommission] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (open && exec) {
-      setAccountId(exec.account_id)
-      setSymbol(exec.symbol)
-      setSecType(exec.sec_type === 'OPT' ? 'OPT' : 'STK')
-      setSide(exec.side === 'Sell' ? 'SELL' : 'BUY')
-      setQuantity(String(Math.abs(exec.qty)))
-      setPrice(String(exec.price))
-      setExecTime(exec.time ? new Date(exec.time * 1000).toISOString().slice(0, 16) : '')
-      setExpiry(exec.expiry ?? '')
-      setStrike(exec.strike != null ? String(exec.strike) : '')
-      setRight((exec.right ?? 'C') as 'C' | 'P')
-      setCommission('')
-      setError(null)
-    }
-  }, [open, exec])
 
   async function handleSubmit() {
     if (!exec?.account_executions_id) return

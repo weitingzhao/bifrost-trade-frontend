@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -9,7 +10,7 @@ import {
 } from '@/components/ui/select'
 import { updateExecution } from '@/api/trading'
 import { fetchStrategyInstances, createStrategyInstance } from '@/api/strategy'
-import type { Execution, StrategyOpportunity, StrategyInstance } from '@/types/positions'
+import type { Execution, StrategyOpportunity } from '@/types/positions'
 
 interface Props {
   open: boolean
@@ -23,27 +24,17 @@ export function LinkExecutionModal({ open, exec, opportunities, onClose, onSucce
   const [oppId, setOppId] = useState<string>('')
   const [instanceMode, setInstanceMode] = useState<'existing' | 'new'>('existing')
   const [instanceId, setInstanceId] = useState<string>('')
-  const [instances, setInstances] = useState<StrategyInstance[]>([])
   const [newLabel, setNewLabel] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!oppId) { setInstances([]); return }
-    fetchStrategyInstances({ opportunityId: Number(oppId) })
-      .then((r) => setInstances(r.items ?? []))
-      .catch(() => setInstances([]))
-  }, [oppId])
-
-  useEffect(() => {
-    if (!open) {
-      setOppId('')
-      setInstanceId('')
-      setInstanceMode('existing')
-      setNewLabel('')
-      setError(null)
-    }
-  }, [open])
+  const { data: instancesData } = useQuery({
+    queryKey: ['strategy', 'instances', oppId || null],
+    queryFn: () => fetchStrategyInstances({ opportunityId: Number(oppId) }),
+    enabled: !!oppId,
+    staleTime: 30_000,
+  })
+  const instances = instancesData?.items ?? []
 
   const filteredOpps = exec
     ? opportunities.filter((o) => {

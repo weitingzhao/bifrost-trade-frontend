@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchOpportunities, fetchStructures, fetchStrategyInstances } from '@/api/strategy'
+import { fetchOpportunities, fetchStructures, fetchStrategyInstances, fetchGateSafety } from '@/api/strategy'
 
 export function useOpportunities() {
   return useQuery({
@@ -13,6 +13,14 @@ export function useStructures() {
   return useQuery({
     queryKey: ['strategy', 'structures'],
     queryFn: fetchStructures,
+    staleTime: 60_000,
+  })
+}
+
+export function useGateSafety() {
+  return useQuery({
+    queryKey: ['strategy', 'gate-safety'],
+    queryFn: fetchGateSafety,
     staleTime: 60_000,
   })
 }

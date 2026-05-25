@@ -45,33 +45,36 @@ function DonutRing({
     )
   }
 
-  let offset = 0
-  const circles = segments.map((seg) => {
-    const frac = seg.value / total
-    const len = Math.max(0, frac) * CIRC
-    if (len < 0.5) { offset += len; return null }
-    const isActive = activeLabel === seg.label
-    const el = (
-      <circle
-        key={seg.label}
-        cx={CX}
-        cy={CY}
-        r={R_MID}
-        fill="none"
-        stroke={seg.color}
-        strokeWidth={RING_STROKE}
-        strokeLinecap="butt"
-        strokeDasharray={`${len} ${CIRC}`}
-        strokeDashoffset={-offset}
-        transform={`rotate(-90 ${CX} ${CY})`}
-        opacity={activeLabel && !isActive ? 0.35 : 1}
-        className={onSegmentClick ? 'cursor-pointer' : ''}
-        onClick={onSegmentClick ? (e) => { e.stopPropagation(); onSegmentClick(seg.label) } : undefined}
-      />
-    )
-    offset += len
-    return el
-  })
+  const circles = segments.reduce<{ els: React.ReactNode[]; off: number }>(
+    ({ els, off }, seg) => {
+      const len = Math.max(0, seg.value / total) * CIRC
+      if (len < 0.5) return { els, off: off + len }
+      const isActive = activeLabel === seg.label
+      return {
+        els: [
+          ...els,
+          <circle
+            key={seg.label}
+            cx={CX}
+            cy={CY}
+            r={R_MID}
+            fill="none"
+            stroke={seg.color}
+            strokeWidth={RING_STROKE}
+            strokeLinecap="butt"
+            strokeDasharray={`${len} ${CIRC}`}
+            strokeDashoffset={-off}
+            transform={`rotate(-90 ${CX} ${CY})`}
+            opacity={activeLabel && !isActive ? 0.35 : 1}
+            className={onSegmentClick ? 'cursor-pointer' : ''}
+            onClick={onSegmentClick ? (e) => { e.stopPropagation(); onSegmentClick(seg.label) } : undefined}
+          />,
+        ],
+        off: off + len,
+      }
+    },
+    { els: [], off: 0 },
+  ).els
 
   return (
     <svg width={112} height={112} viewBox="0 0 112 112" role="img">

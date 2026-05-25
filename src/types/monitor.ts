@@ -49,6 +49,41 @@ export interface AccountSyncHeartbeat {
   stream_lag: number
 }
 
+export interface StrategyActiveRef {
+  id?: number | null
+  name?: string | null
+}
+
+export interface StatusStrategyActive {
+  structure?: StrategyActiveRef
+  gate_safety?: StrategyActiveRef
+  allocation?: StrategyActiveRef
+}
+
+export interface StatusStrategy {
+  active?: StatusStrategyActive
+}
+
+export interface StatusMarketData {
+  quotes_redis_reader_ok?: boolean
+}
+
+export interface StatusSocketIbIngestor {
+  connected?: boolean
+  last_msg_age_s?: number | null
+  reconnects?: number | null
+  msg_count?: number | null
+}
+
+export interface StatusSocket {
+  ib_ingestor?: StatusSocketIbIngestor | null
+}
+
+export interface StatusLiveUi {
+  subscribed_tickers?: string[]
+  reference_indices?: { symbol: string; label?: string; polygon_ticker?: string }[]
+}
+
 export interface StatusResponse {
   status_schema_version: number
   health: {
@@ -66,7 +101,7 @@ export interface StatusResponse {
   portfolio: {
     accounts: IbAccountSnapshot[] | null
     accounts_fetched_at: number | null
-    open_orders: unknown[]
+    open_orders: OpenOrderRow[]
   }
   celery: {
     broker_connected: boolean
@@ -86,4 +121,24 @@ export interface StatusResponse {
   account_sync_daemon: {
     heartbeat: AccountSyncHeartbeat
   } | null
+  strategy?: StatusStrategy
+  market_data?: StatusMarketData
+  socket?: StatusSocket
+  live_ui?: StatusLiveUi
+}
+
+export interface OpenOrderRow {
+  order_id?: number | null
+  perm_id?: number | null
+  account_id?: string | null
+  symbol?: string | null
+  sec_type?: string | null
+  action?: string | null
+  total_quantity?: number | null
+  filled?: number | null
+  remaining?: number | null
+  limit_price?: number | null
+  status?: string | null
+  contract_key?: string | null
+  updated_ts?: number | null
 }

@@ -46,7 +46,7 @@ export default function InstancesPage() {
   const [since, setSince] = useState<SinceFilter>('3m')
   const [structureFilter, setStructureFilter] = useState<string>('all')
 
-  const allInstances = data?.items ?? []
+  const allInstances = useMemo(() => data?.items ?? [], [data])
 
   const metricsMap = useInstanceMetrics(allInstances)
 

@@ -5,11 +5,11 @@ export function computeInstanceStockCoverage(
   structure: StrategyStructure | undefined,
 ): InstanceStockCoverage[] {
   if (!structure?.legs?.length) return []
-  const underlyingLeg = structure.legs.find((l) => l.role.toLowerCase() === 'underlying')
+  const underlyingLeg = structure.legs.find((l) => l.role?.toLowerCase() === 'underlying')
   if (!underlyingLeg) return []
 
-  const legQty = underlyingLeg.qty_multiplier ?? 1
-  const legDir = (underlyingLeg.sec_type ?? 'long').toLowerCase().includes('short') ? 'short' : 'long'
+  const legQty = underlyingLeg.quantity ?? 1
+  const legDir = (underlyingLeg.direction ?? 'long').toLowerCase().includes('short') ? 'short' : 'long'
 
   const bySymbolAccount = new Map<string, { symbol: string; account_id: string; contracts: number }>()
 

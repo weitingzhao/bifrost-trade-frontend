@@ -96,6 +96,13 @@ export interface PositionAttributionResponse {
   items: PositionAttribution[]
 }
 
+export interface InstanceAllocation {
+  strategy_instance_id: number
+  allocated_quantity: number
+  strategy_instance_label?: string | null
+  strategy_opportunity_name?: string | null
+}
+
 export interface Execution {
   account_executions_id: number | null
   account_id: string
@@ -107,15 +114,23 @@ export interface Execution {
   expiry?: string
   side: 'Buy' | 'Sell'
   qty: number
+  quantity?: number
   price: number
   time: number | null
+  trade_date?: string | null
   exec_id?: string
   source?: string
+  commission?: number | null
+  realized_pnl?: number | null
+  net_cash?: number | null
+  taxes?: number | null
+  option_right?: string | null
   strategy_instance_id?: number | null
   strategy_opportunity_id?: number | null
   strategy_opportunity_name?: string | null
   strategy_instance_label?: string | null
   unrealized_pnl?: number | null
+  instance_allocations?: InstanceAllocation[]
 }
 
 export interface ExecutionsResponse {
@@ -212,18 +227,159 @@ export interface StrategyOpportunity {
   symbols: string[]
 }
 
-export interface StrategyStructure {
-  structure_type_id: number
+export interface EntryCondition {
+  condition_type: string
+  value_text: string | null
+  value_numeric: number | null
+}
+
+export interface StrategyOpportunityDetail extends StrategyOpportunity {
+  entry_conditions: EntryCondition[]
+}
+
+export interface CreateOpportunityBody {
   name: string
-  code: string
+  strategy_structure_id: number
+  default_gate_safety_strategy_id?: number | null
+  scope_type?: string | null
+  symbols?: string[]
+  entry_conditions?: EntryCondition[]
+  is_active?: boolean
+}
+
+export interface StrategyStructure {
+  strategy_structure_id: number
+  name: string
+  structure_type: string | null
+  structure_subtype: string | null
+  structure_subtype_label: string | null
+  strategy_template_id: number | null
+  template_code: string | null
+  template_display_name: string | null
+  dim_direction: string | null
+  dim_structure: string | null
+  dim_coverage: string | null
+  dim_risk: string | null
+  dim_volatility: string | null
+  dim_time: string | null
+  version: number
+  is_active: boolean
+  created_at: string | null
+  updated_at: string | null
+  notes: string | null
   legs: StructureLeg[]
+  constraints: StructureConstraint[]
 }
 
 export interface StructureLeg {
-  role: string
-  sec_type: string
-  right?: string
-  qty_multiplier: number
+  role: string | null
+  direction: string | null
+  option_right: string | null
+  quantity: number
+  strike: number | null
+  expiration: string | null
+}
+
+export interface StructureConstraint {
+  constraint_type: string
+  constraint_value_text: string | null
+  constraint_value_int: number | null
+}
+
+export interface GateSafetyItem {
+  gate_safety_strategy_id: number
+  name: string
+  version: number
+  is_active: boolean
+  dim_direction?: string | null
+  dim_structure?: string | null
+  dim_coverage?: string | null
+  dim_risk?: string | null
+  dim_volatility?: string | null
+  dim_time?: string | null
+}
+
+export interface GateSafetyGates {
+  strategy?: {
+    structure?: { min_dte?: number; max_dte?: number; atm_band_pct?: number }
+    earnings?: { blackout_days_before?: number; blackout_days_after?: number }
+    trading_hours_only?: boolean
+  }
+  state?: {
+    delta?: { epsilon_band?: number; threshold_hedge_shares?: number; max_delta_limit?: number }
+    market?: { vol_window_min?: number; stale_ts_threshold_ms?: number }
+    liquidity?: { wide_spread_pct?: number; extreme_spread_pct?: number }
+    system?: { data_lag_threshold_ms?: number }
+  }
+  intent?: {
+    hedge?: {
+      min_hedge_shares?: number
+      cooldown_seconds?: number
+      max_hedge_shares_per_order?: number
+      min_price_move_pct?: number
+    }
+  }
+  guard?: {
+    risk?: {
+      max_daily_hedge_count?: number
+      max_position_shares?: number
+      max_daily_loss_usd?: number
+      max_net_delta_shares?: number
+      max_spread_pct?: number
+      paper_trade?: boolean
+    }
+  }
+}
+
+export interface GateSafetyFull {
+  gate_safety_strategy_id: number
+  name: string
+  version: number
+  is_active: boolean
+  dim_direction?: string | null
+  dim_structure?: string | null
+  dim_coverage?: string | null
+  dim_risk?: string | null
+  dim_volatility?: string | null
+  dim_time?: string | null
+  gates: GateSafetyGates
+  earnings_dates: string[]
+}
+
+export interface GateSafetyPayload {
+  name: string
+  version?: number
+  dim_direction?: string | null
+  dim_structure?: string | null
+  dim_coverage?: string | null
+  dim_risk?: string | null
+  dim_volatility?: string | null
+  dim_time?: string | null
+  is_active?: boolean
+  gates: GateSafetyGates
+  earnings_dates?: string[]
+}
+
+export interface StrategyDimRow {
+  strategy_dim_id: number
+  dim_type: string
+  code: string
+  display_label: string
+  sort_order: number
+}
+
+export interface DimsGroupedResponse {
+  by_type: Record<string, StrategyDimRow[]>
+}
+
+export interface GateSafetyResponse {
+  items: GateSafetyItem[]
+}
+
+export interface ActiveStrategyPayload {
+  active_strategy_structure_id: number | null
+  active_gate_safety_strategy_id: number | null
+  active_strategy_allocation_id: number | null
 }
 
 export interface OpportunitiesResponse {

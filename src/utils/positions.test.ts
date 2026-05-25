@@ -14,6 +14,7 @@ import {
 } from './positions'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { QuotesResponse, DailyBenchmark } from '@/types/market'
+import type { LivePositionRow } from '@/types/positions'
 
 describe('fmtUsd', () => {
   it('formats numbers as USD currency', () => {
@@ -163,12 +164,12 @@ describe('uniqueContractKeys', () => {
 
 describe('resolveBasePrice', () => {
   it('prefers pos.daily_prev_close', () => {
-    const pos = { daily_prev_close: 145 } as any
+    const pos = { daily_prev_close: 145 } as LivePositionRow
     expect(resolveBasePrice(pos, undefined)).toBe(145)
   })
 
   it('uses benchmark prev_close when is_today', () => {
-    const pos = {} as any
+    const pos = {} as LivePositionRow
     const bench: DailyBenchmark = {
       bar_time: null,
       close: 150,
@@ -180,7 +181,7 @@ describe('resolveBasePrice', () => {
   })
 
   it('uses benchmark close when not today', () => {
-    const pos = {} as any
+    const pos = {} as LivePositionRow
     const bench: DailyBenchmark = {
       bar_time: null,
       close: 150,
@@ -192,7 +193,7 @@ describe('resolveBasePrice', () => {
   })
 
   it('returns null when no data', () => {
-    expect(resolveBasePrice({} as any, undefined)).toBeNull()
+    expect(resolveBasePrice({} as LivePositionRow, undefined)).toBeNull()
   })
 })
 

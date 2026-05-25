@@ -4,7 +4,11 @@ import type {
   FlexFetchResponse,
   FlexUploadResponse,
   PerformanceResponse,
+  PerformanceParams,
+  ExecutionsRangeParams,
   RawExecutionsResponse,
+  OptionStockLinkBatch,
+  OptionStockLinksResponse,
 } from '@/types/trading'
 import type {
   ExecutionsResponse,
@@ -96,4 +100,50 @@ export async function fetchInstanceExecutions(instanceId: number): Promise<RawEx
   )
   if (!res.ok) throw new Error(`Trading /executions [${instanceId}]: ${res.status}`)
   return res.json() as Promise<RawExecutionsResponse>
+}
+
+export async function fetchPerformance(params: PerformanceParams = {}): Promise<PerformanceResponse> {
+  const qs = new URLSearchParams()
+  if (params.since_ts != null) qs.set('since_ts', String(params.since_ts))
+  if (params.until_ts != null) qs.set('until_ts', String(params.until_ts))
+  if (params.account_id) qs.set('account_id', params.account_id)
+  if (params.granularity) qs.set('granularity', params.granularity)
+  if (params.strategy_opportunity_id != null)
+    qs.set('strategy_opportunity_id', String(params.strategy_opportunity_id))
+  if (params.strategy_instance_id != null)
+    qs.set('strategy_instance_id', String(params.strategy_instance_id))
+  if (params.source_scope) qs.set('source_scope', params.source_scope)
+  if (params.summary_only) qs.set('summary_only', 'true')
+  const res = await fetch(`${BASE}/performance?${qs}`)
+  if (!res.ok) throw new Error(`Trading /performance: ${res.status}`)
+  return res.json() as Promise<PerformanceResponse>
+}
+
+export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): Promise<ExecutionsResponse> {
+  const qs = new URLSearchParams()
+  if (params.since_ts != null) qs.set('since_ts', String(params.since_ts))
+  if (params.until_ts != null) qs.set('until_ts', String(params.until_ts))
+  if (params.limit != null) qs.set('limit', String(params.limit))
+  if (params.include_opt_pairs) qs.set('include_opt_pairs', 'true')
+  if (params.strategy_opportunity_id != null)
+    qs.set('strategy_opportunity_id', String(params.strategy_opportunity_id))
+  if (params.strategy_instance_id != null)
+    qs.set('strategy_instance_id', String(params.strategy_instance_id))
+  if (params.source_scope) qs.set('source_scope', params.source_scope)
+  if (params.account_id) qs.set('account_id', params.account_id)
+  const res = await fetch(`${BASE}/executions?${qs}`)
+  if (!res.ok) throw new Error(`Trading /executions range: ${res.status}`)
+  return res.json() as Promise<ExecutionsResponse>
+}
+
+export async function postOptionStockLinksQuery(
+  batches: OptionStockLinkBatch[],
+): Promise<OptionStockLinksResponse> {
+  const res = await fetch(`${BASE}/executions/option-stock-links/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ batches }),
+  })
+  if (!res.ok) throw new Error(`POST /option-stock-links/query: ${res.status}`)
+  return res.json() as Promise<OptionStockLinksResponse>
 }

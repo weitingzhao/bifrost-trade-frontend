@@ -1,26 +1,32 @@
 import { describe, it, expect } from 'vitest'
 import { computeInstanceStockCoverage, buildStockCoverageItems, coverageStatus } from './stockCoverage'
-import type { StrategyStructure, OpenOptionPosition, InstanceAllGroup, StockCoverageItem } from '@/types/positions'
+import type { StrategyStructure, OpenOptionPosition, InstanceAllGroup, StockCoverageItem, LivePositionRow } from '@/types/positions'
 
 describe('computeInstanceStockCoverage', () => {
   it('returns empty when no underlying leg', () => {
     const structure: StrategyStructure = {
-      structure_type_id: 1,
-      name: 'Iron Condor',
-      code: 'iron_condor',
-      legs: [{ role: 'option', sec_type: 'OPT', qty_multiplier: 1 }],
+      strategy_structure_id: 1, name: 'Iron Condor',
+      structure_type: null, structure_subtype: null, structure_subtype_label: null,
+      strategy_template_id: null, template_code: null, template_display_name: null,
+      dim_direction: null, dim_structure: null, dim_coverage: null, dim_risk: null,
+      dim_volatility: null, dim_time: null, version: 1, is_active: true,
+      created_at: null, updated_at: null, notes: null, constraints: [],
+      legs: [{ role: 'option', direction: null, option_right: null, quantity: 1, strike: null, expiration: null }],
     }
     expect(computeInstanceStockCoverage([], structure)).toHaveLength(0)
   })
 
   it('computes required shares from options + underlying leg', () => {
     const structure: StrategyStructure = {
-      structure_type_id: 2,
-      name: 'Covered Call',
-      code: 'covered_call',
+      strategy_structure_id: 2, name: 'Covered Call',
+      structure_type: null, structure_subtype: null, structure_subtype_label: null,
+      strategy_template_id: null, template_code: null, template_display_name: null,
+      dim_direction: null, dim_structure: null, dim_coverage: null, dim_risk: null,
+      dim_volatility: null, dim_time: null, version: 1, is_active: true,
+      created_at: null, updated_at: null, notes: null, constraints: [],
       legs: [
-        { role: 'underlying', sec_type: 'STK', qty_multiplier: 1 },
-        { role: 'option', sec_type: 'OPT', right: 'C', qty_multiplier: -1 },
+        { role: 'underlying', direction: 'long', option_right: null, quantity: 1, strike: null, expiration: null },
+        { role: 'option', direction: 'short', option_right: 'C', quantity: 1, strike: null, expiration: null },
       ],
     }
     const options: OpenOptionPosition[] = [
@@ -53,7 +59,7 @@ describe('buildStockCoverageItems', () => {
     ]
     const stocks = [
       { account_id: 'U001', symbol: 'AAPL', position: 300, avgCost: 150, price: 155, secType: 'STK' },
-    ] as any[]
+    ] as LivePositionRow[]
 
     const items = buildStockCoverageItems(groups, stocks)
     expect(items).toHaveLength(1)

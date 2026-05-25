@@ -213,6 +213,17 @@ VITE_API_MASSIVE=http://localhost:8741
 
 ---
 
+## ⚠️ 前端先行、API 后迁（阶段 1 约束）
+
+**当前处于阶段 1：New Frontend + Legacy API。** 在新前端所有页面业务等价于 Legacy 之前，不迁移后端 API。
+
+- `src/api/*.ts` 中的 fetch 函数**全部指向 Legacy API**（通过 `VITE_API_*` 环境变量连接 bifrost-trader-engine 后端）
+- 每完成一个页面，需与 Legacy Frontend 在同一 Legacy API 上对比验证业务行为
+- **禁止**在此阶段修改 API 响应格式或迁移 `bifrost-trade-api` 的实现
+- 详见 `.cursor/rules/migration-protocol.mdc` 中「前端先行、API 后迁」章节
+
+---
+
 ## 页面迁移顺序
 
 从 `bifrost-trader-engine/frontend/` 参考旧逻辑，按以下顺序迁移到本 repo：
@@ -231,6 +242,7 @@ VITE_API_MASSIVE=http://localhost:8741
 - 用 TanStack Query hook 重新实现数据获取
 - SSE 封装成独立 hook，带正确 cleanup
 - 无 console.log、无 any 类型
+- 与 Legacy Frontend 在同一 API 上对比确认业务等价
 
 ---
 

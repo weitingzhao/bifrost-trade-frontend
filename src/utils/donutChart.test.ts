@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { assignColor, buildAssetMixSegments, buildSymbolDonutSegments } from './donutChart'
+import type { LivePositionRow } from '@/types/positions'
 
 describe('assignColor', () => {
   it('cycles through palette', () => {
@@ -16,10 +17,10 @@ describe('buildAssetMixSegments', () => {
       { position: 10, price: 100, avgCost: 90, category: 'Tech' },
       { position: 5, price: 50, avgCost: 45, category: 'Fixed Income' },
       { position: 20, price: 10, avgCost: 10, category: 'Money Market' },
-    ] as any[]
+    ] as LivePositionRow[]
     const options = [
       { position: -2, price: 5, avgCost: 3 },
-    ] as any[]
+    ] as LivePositionRow[]
 
     const segs = buildAssetMixSegments(stocks, options, 5000)
     expect(segs.length).toBeGreaterThanOrEqual(3)
@@ -45,7 +46,7 @@ describe('buildSymbolDonutSegments', () => {
       { symbol: 'AAPL', position: 10, price: 150, avgCost: 130 },
       { symbol: 'AAPL', position: 5, price: 150, avgCost: 130 },
       { symbol: 'NVDA', position: 2, price: 900, avgCost: 800 },
-    ] as any[]
+    ] as LivePositionRow[]
 
     const segs = buildSymbolDonutSegments(stocks)
     expect(segs).toHaveLength(2)

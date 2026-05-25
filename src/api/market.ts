@@ -1,4 +1,4 @@
-import type { QuotesResponse, BenchmarkResponse, WatchlistResponse } from '@/types/market'
+import type { QuoteItem, QuotesResponse, BenchmarkResponse, WatchlistResponse, OpenOrder } from '@/types/market'
 
 const BASE = import.meta.env.VITE_API_MARKET as string
 
@@ -50,4 +50,46 @@ export async function deleteWatchlistItem(contractKey: string): Promise<{ ok: bo
   })
   if (!res.ok) throw new Error(`Market DELETE /watchlist: ${res.status}`)
   return res.json()
+}
+
+function parseQuoteFromSSE(raw: string): QuoteItem | null {
+  try {
+    const d = JSON.parse(raw)
+    return {
+      symbol: d.symbol ?? undefined,
+      contract_key: d.contract_key ?? undefined,
+      last: d.last ?? null,
+      bid: d.bid ?? null,
+      ask: d.ask ?? null,
+      mid: d.mid ?? null,
+      ts: d.ts ?? undefined,
+      timestamp: d.ts ?? undefined,
+      change: d.change ?? null,
+      sec_type: d.sec_type ?? null,
+      expiry: d.expiry ?? null,
+      strike: d.strike ?? null,
+      option_right: d.option_right ?? null,
+    }
+  } catch {
+    return null
+  }
+}
+
+export function subscribeQuotes(onQuote: (q: QuoteItem) => void): () => void {
+  const url = `${BASE}/quotes/stream`
+  const es = new EventSource(url)
+  es.onmessage = (e) => {
+    const q = parseQuoteFromSSE(e.data)
+    if (q) onQuote(q)
+  }
+  return () => es.close()
+}
+
+const MONITOR_BASE = import.meta.env.VITE_API_MONITOR as string
+
+export async function fetchOpenOrders(): Promise<OpenOrder[]> {
+  const res = await fetch(`${MONITOR_BASE}/open-orders`)
+  if (!res.ok) throw new Error(`Monitor /open-orders: ${res.status}`)
+  const data = await res.json()
+  return data.orders ?? data.items ?? data ?? []
 }

@@ -7,6 +7,7 @@ import {
   buildOpenOptionPositions,
   groupByInstance,
 } from './positionsGrouping'
+import type { LivePositionRow, OpenOptionPosition } from '@/types/positions'
 
 describe('classifyStockBucket', () => {
   it('returns core for regular categories', () => {
@@ -52,7 +53,7 @@ describe('splitBySecType', () => {
       { account_id: 'U1', symbol: 'AAPL', secType: 'STK' },
       { account_id: 'U1', symbol: 'AAPL', secType: 'OPT' },
       { account_id: 'U1', symbol: 'NVDA', secType: 'STK' },
-    ] as any[]
+    ] as LivePositionRow[]
     const { stocks, options } = splitBySecType(positions)
     expect(stocks).toHaveLength(2)
     expect(options).toHaveLength(1)
@@ -65,7 +66,7 @@ describe('filterStocksByBucket', () => {
       { account_id: 'U1', category: 'Tech' },
       { account_id: 'U1', category: 'Fixed Income' },
       { account_id: 'U1', category: 'Money Market' },
-    ] as any[]
+    ] as LivePositionRow[]
     expect(filterStocksByBucket(stocks, 'core')).toHaveLength(1)
     expect(filterStocksByBucket(stocks, 'fixed_income')).toHaveLength(1)
     expect(filterStocksByBucket(stocks, 'cash_like')).toHaveLength(1)
@@ -87,7 +88,7 @@ describe('buildOpenOptionPositions', () => {
         price: 6.0,
         unrealized_pnl: 200,
       },
-    ] as any[]
+    ] as LivePositionRow[]
 
     const attributions = [
       {
@@ -116,7 +117,7 @@ describe('groupByInstance', () => {
       { strategy_instance_id: 1, strategy_instance_label: 'A', unrealized_pnl: 100 },
       { strategy_instance_id: 1, strategy_instance_label: 'A', unrealized_pnl: 50 },
       { strategy_instance_id: null, strategy_instance_label: null, unrealized_pnl: -20 },
-    ] as any[]
+    ] as OpenOptionPosition[]
 
     const groups = groupByInstance(positions)
     expect(groups).toHaveLength(2)
@@ -133,7 +134,7 @@ describe('groupByInstance', () => {
     const positions = [
       { strategy_instance_id: null, unrealized_pnl: 0 },
       { strategy_instance_id: 5, strategy_instance_label: 'B', unrealized_pnl: 0 },
-    ] as any[]
+    ] as OpenOptionPosition[]
 
     const groups = groupByInstance(positions)
     expect(groups[0].strategy_instance_id).toBe(5)

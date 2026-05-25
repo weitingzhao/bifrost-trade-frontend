@@ -59,15 +59,20 @@ export default function PositionsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
 
-  const accounts = data?.portfolio.accounts ?? []
+  const accounts = useMemo(() => data?.portfolio.accounts ?? [], [data])
   const hostAccountId = data?.config?.ib_client?.account?.event_host ?? ''
   const secondaryAccountId = data?.config?.ib_client?.account?.event_secondary ?? ''
 
-  const allPositionsRaw = flattenPositions(accounts)
-  const allPositions = allPositionsRaw.filter((p) =>
-    positionMatchesAccountFilter(p.account_id, accountFilter, hostAccountId, secondaryAccountId)
+  const allPositions = useMemo(
+    () => flattenPositions(accounts).filter((p) =>
+      positionMatchesAccountFilter(p.account_id, accountFilter, hostAccountId, secondaryAccountId)
+    ),
+    [accounts, accountFilter, hostAccountId, secondaryAccountId],
   )
-  const { stocks: allStocks, options: allOptions } = splitBySecType(allPositions)
+  const { stocks: allStocks, options: allOptions } = useMemo(
+    () => splitBySecType(allPositions),
+    [allPositions],
+  )
 
   const stkSymbols = uniqueSymbols(accounts)
   const optCks = uniqueContractKeys(accounts)
@@ -81,44 +86,40 @@ export default function PositionsPage() {
   const fixedIncomeStocks = filterStocksByBucket(allStocks, 'fixed_income')
   const cashLikeStocks = filterStocksByBucket(allStocks, 'cash_like')
 
-  const executionsFinal = execFinalData?.items ?? []
+  const executionsFinal = useMemo(() => execFinalData?.items ?? [], [execFinalData])
   const executionsTws = execTwsData?.items ?? []
   const opportunities = oppsData?.items ?? []
   void structsData
 
-  const attributions = attrData?.items ?? []
-  const liveOptions = buildOpenOptionPositions(allOptions, attributions)
+  const attributions = useMemo(() => attrData?.items ?? [], [attrData])
+  const liveOptions = useMemo(
+    () => buildOpenOptionPositions(allOptions, attributions),
+    [allOptions, attributions],
+  )
   const showOffTrack = accountFilter.host && accountFilter.secondary
-  const offTrackPositions = showOffTrack ? buildOffTrackPositions(executionsFinal, filterSymbol, filterExpiry) : []
-  const openOptions = [...liveOptions, ...offTrackPositions]
+  const offTrackPositions = useMemo(
+    () => showOffTrack ? buildOffTrackPositions(executionsFinal, filterSymbol, filterExpiry) : [],
+    [showOffTrack, executionsFinal, filterSymbol, filterExpiry],
+  )
+  const openOptions = useMemo(
+    () => [...liveOptions, ...offTrackPositions],
+    [liveOptions, offTrackPositions],
+  )
 
-  const instanceGroups = groupByInstance(openOptions)
+  const instanceGroups = useMemo(() => groupByInstance(openOptions), [openOptions])
 
   const filteredInstanceGroups = useMemo(() => {
-    let groups = instanceGroups
-    if (filterSymbol) {
-      const upper = filterSymbol.toUpperCase()
-      groups = groups.filter((g) => g.options.some((o) => o.symbol.includes(upper)))
-    }
-    if (instanceFilters.structureType !== 'all') {
-      groups = groups.filter((g) => g.structure_type === instanceFilters.structureType)
-    }
-    if (instanceFilters.oppName !== 'all') {
-      groups = groups.filter((g) => g.strategy_opportunity_name === instanceFilters.oppName)
-    }
-    if (instanceFilters.scopeType !== 'all') {
-      if (instanceFilters.scopeType === '__none__') {
-        groups = groups.filter((g) => !g.scope_type)
-      } else {
-        groups = groups.filter((g) => g.scope_type === instanceFilters.scopeType)
-      }
-    }
-    if (instanceFilters.attributionType !== 'all') {
-      groups = groups.filter((g) =>
-        g.options.some((o) => o.attribution_type === instanceFilters.attributionType)
-      )
-    }
-    return groups
+    const upper = filterSymbol.toUpperCase()
+    return instanceGroups
+      .filter((g) => !filterSymbol || g.options.some((o) => o.symbol.includes(upper)))
+      .filter((g) => instanceFilters.structureType === 'all' || g.structure_type === instanceFilters.structureType)
+      .filter((g) => instanceFilters.oppName === 'all' || g.strategy_opportunity_name === instanceFilters.oppName)
+      .filter((g) => {
+        if (instanceFilters.scopeType === 'all') return true
+        if (instanceFilters.scopeType === '__none__') return !g.scope_type
+        return g.scope_type === instanceFilters.scopeType
+      })
+      .filter((g) => instanceFilters.attributionType === 'all' || g.options.some((o) => o.attribution_type === instanceFilters.attributionType))
   }, [instanceGroups, filterSymbol, instanceFilters])
 
   const instanceFilterOptions = useMemo(() => {
@@ -253,11 +254,18 @@ export default function PositionsPage() {
               onDeleteExec={setDeleteTarget}
               onCloseExec={setCloseExec}
               onRefreshExecs={refreshExecData}
+              onInspect={(pos) => setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })}
             />
           </TabsContent>
 
           <TabsContent value="stocks" className="mt-4">
-            <StocksTab positions={coreStocks} quotesBySymbol={quotesBySymbol} benchBySymbol={benchBySymbol} filterSymbol={filterSymbol} />
+            <StocksTab
+              positions={coreStocks}
+              quotesBySymbol={quotesBySymbol}
+              benchBySymbol={benchBySymbol}
+              filterSymbol={filterSymbol}
+              onInspect={(symbol, accountId, pos) => setInspector({ type: 'stock', symbol, accountId, livePosition: pos })}
+            />
           </TabsContent>
 
           <TabsContent value="fixed_income" className="mt-4">
@@ -272,8 +280,8 @@ export default function PositionsPage() {
 
       {stockCoverageItems.length > 0 && <StockCoverageTable items={stockCoverageItems} />}
 
-      <ExecutionFormModal open={!!editExec} exec={editExec} accountOptions={accountOptions} onClose={() => setEditExec(null)} onSuccess={refreshExecData} />
-      <LinkExecutionModal open={!!linkExec} exec={linkExec} opportunities={opportunities} onClose={() => setLinkExec(null)} onSuccess={refreshExecData} />
+      <ExecutionFormModal key={editExec?.account_executions_id ?? 'exec-form'} open={!!editExec} exec={editExec} accountOptions={accountOptions} onClose={() => setEditExec(null)} onSuccess={refreshExecData} />
+      <LinkExecutionModal key={linkExec?.account_executions_id ?? 'link-form'} open={!!linkExec} exec={linkExec} opportunities={opportunities} onClose={() => setLinkExec(null)} onSuccess={refreshExecData} />
       <QuickCloseModal exec={closeExec} onClose={() => setCloseExec(null)} onSuccess={refreshExecData} />
       <DeleteConfirmDialog
         open={!!deleteTarget}

@@ -6,6 +6,32 @@ export interface QuoteItem {
   ask: number | null
   mid?: number | null
   timestamp?: number | null
+  ts?: number
+  change?: number | null
+  sec_type?: string | null
+  expiry?: string | null
+  strike?: number | null
+  option_right?: string | null
+}
+
+export interface OpenOrder {
+  order_id?: number | null
+  perm_id?: number | null
+  account_id?: string | null
+  symbol?: string | null
+  sec_type?: string | null
+  action?: string | null
+  total_quantity?: number | null
+  filled?: number | null
+  remaining?: number | null
+  limit_price?: number | null
+  status?: string | null
+  contract_key?: string | null
+  updated_ts?: number | null
+}
+
+export interface OpenOrdersResponse {
+  orders: OpenOrder[]
 }
 
 export interface WatchlistItem {

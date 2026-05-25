@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
-import { ChevronDown, ArrowUpDown } from 'lucide-react'
+import { ChevronDown, ArrowUpDown, ScanSearch } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -21,6 +22,7 @@ interface Props {
   onDeleteExec?: (exec: Execution) => void
   onCloseExec?: (exec: Execution) => void
   onRefreshExecs?: () => void
+  onInspect?: (pos: OpenOptionPosition) => void
 }
 
 function colorClass(n: number | null | undefined) {
@@ -75,6 +77,7 @@ export function OptionsTab({
   onDeleteExec,
   onCloseExec,
   onRefreshExecs,
+  onInspect,
 }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
   const [sortKey, setSortKey] = useState<SortKey>(null)
@@ -169,6 +172,7 @@ export function OptionsTab({
                 <span className="inline-flex items-center gap-1 justify-end">PnL <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
               </TableHead>
               <TableHead>Strategy</TableHead>
+              {onInspect && <TableHead className="w-8" />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -219,12 +223,24 @@ export function OptionsTab({
                   <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">
                     {pos.strategy_opportunity_name ?? '—'}
                   </TableCell>
+                  {onInspect && (
+                    <TableCell className="px-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); onInspect(pos) }}
+                      >
+                        <ScanSearch className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>,
 
                 ...(isExpanded && hasExecData
                   ? [
                       <TableRow key={`${key}-execs`} className="bg-muted/10 hover:bg-muted/10">
-                        <TableCell colSpan={hasExecData ? 15 : 14} className="p-2">
+                        <TableCell colSpan={(hasExecData ? 15 : 14) + (onInspect ? 1 : 0)} className="p-2">
                           <ExecutionRow
                             finalExecs={matchExecsForContract(pos.contract_key, pos.account_id, executionsFinal)}
                             twsExecs={matchExecsForContract(pos.contract_key, pos.account_id, executionsTws)}
@@ -249,7 +265,7 @@ export function OptionsTab({
               <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(totalPremium))}>
                 {fmtUsd(totalPremium)}
               </TableCell>
-              <TableCell colSpan={4} />
+              <TableCell colSpan={4 + (onInspect ? 1 : 0)} />
             </TableRow>
           </TableBody>
         </Table>

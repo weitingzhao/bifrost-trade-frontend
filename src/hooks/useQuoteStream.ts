@@ -2,8 +2,8 @@ import { useEffect } from 'react'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { fetchQuotes, subscribeQuotes } from '@/api/market'
 import type { QuoteItem } from '@/types/market'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
-const QUOTES_KEY = ['market', 'quotes-live'] as const
 const FALLBACK_POLL_MS = 8_000
 
 function mergeQuoteIntoMap(
@@ -17,7 +17,11 @@ function mergeQuoteIntoMap(
 
 /**
  * SSE-powered quote stream with initial snapshot + optional fallback poll.
- * Writes to QueryClient cache so any component can read via the shared key.
+ *
+ * Bug fix (P0): previously read quotesMap via `getQueryData()` which does NOT
+ * subscribe to cache updates, so SSE-pushed `setQueryData` calls never caused
+ * a re-render. Now we subscribe via `useQuery({ queryKey: QUOTES_KEY })` so
+ * every `setQueryData` on this key triggers a re-render in all consumers.
  */
 export function useQuoteStream(
   symbols: string[],
@@ -31,8 +35,9 @@ export function useQuoteStream(
   const symbolsKey = symbols.join(',')
   const contractKeysKey = contractKeys.join(',')
 
+  // Snapshot fetch — writes merged result into the shared QUOTES_KEY cache.
   const snapshotQuery = useQuery({
-    queryKey: [...QUOTES_KEY, 'snapshot', symbolsKey, contractKeysKey],
+    queryKey: [...QUERY_KEYS.market.quotesSnapshot, symbolsKey, contractKeysKey],
     queryFn: async () => {
       const resp = await fetchQuotes(symbols, contractKeys)
       const map: Record<string, QuoteItem> = {}
@@ -40,7 +45,7 @@ export function useQuoteStream(
         const key = q.contract_key ?? q.symbol
         if (key) map[key] = q
       }
-      queryClient.setQueryData<Record<string, QuoteItem>>(QUOTES_KEY, (prev) => ({
+      queryClient.setQueryData<Record<string, QuoteItem>>(QUERY_KEYS.market.quotesLive, (prev) => ({
         ...(prev ?? {}),
         ...map,
       }))
@@ -48,21 +53,31 @@ export function useQuoteStream(
     },
     refetchInterval: enableFallbackPoll ? FALLBACK_POLL_MS : false,
     enabled: symbols.length > 0 || contractKeys.length > 0,
+    staleTime: FALLBACK_POLL_MS,
   })
 
+  // Subscribe to the shared quotes map.
+  // Using useQuery here (not getQueryData) means this component re-renders
+  // whenever setQueryData(QUOTES_KEY, ...) is called — including from SSE events.
+  const { data: quotesMap = {} } = useQuery<Record<string, QuoteItem>>({
+    queryKey: QUERY_KEYS.market.quotesLive,
+    queryFn: () => ({}),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
+
+  // SSE subscription — pushes individual quote updates into the shared cache.
   useEffect(() => {
     if (!enableSse) return
-
     const unsub = subscribeQuotes((q) => {
-      queryClient.setQueryData<Record<string, QuoteItem>>(QUOTES_KEY, (prev) =>
+      queryClient.setQueryData<Record<string, QuoteItem>>(QUERY_KEYS.market.quotesLive, (prev) =>
         mergeQuoteIntoMap(prev ?? {}, q),
       )
     })
-
     return unsub
   }, [enableSse, queryClient])
-
-  const quotesMap = queryClient.getQueryData<Record<string, QuoteItem>>(QUOTES_KEY) ?? {}
 
   return {
     quotesMap,
@@ -71,10 +86,15 @@ export function useQuoteStream(
   }
 }
 
-/** Read-only consumer: get quote map from cache without starting a new stream. */
+/** Read-only reactive consumer: subscribes to the shared quotes cache. */
 export function useQuotesMap(): Record<string, QuoteItem> {
-  const queryClient = useQueryClient()
-  return queryClient.getQueryData<Record<string, QuoteItem>>(QUOTES_KEY) ?? {}
+  const { data = {} } = useQuery<Record<string, QuoteItem>>({
+    queryKey: QUERY_KEYS.market.quotesLive,
+    queryFn: () => ({}),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
+  return data
 }
-
-export { QUOTES_KEY }

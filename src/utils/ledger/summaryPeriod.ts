@@ -154,3 +154,17 @@ export function executionMatchesLedgerTradePeriod(
   if (!d) return false
   return d >= range.start && d <= range.end
 }
+
+export function executionMatchesExpiryYearMonth(
+  expiry: string | undefined,
+  year: string,
+  month: string,
+): boolean {
+  const y = year.trim()
+  if (!y) return true
+  const ex = (expiry ?? '').replace(/-/g, '')
+  const ys = y.slice(0, 4)
+  if (!month.trim()) return ex.length >= 4 && ex.slice(0, 4) === ys
+  const mm = month.trim().padStart(2, '0').slice(0, 2)
+  return ex.length >= 6 && ex.slice(0, 6) === `${ys}${mm}`
+}

@@ -43,3 +43,171 @@ export function realizedPnlFifoMatchPlusStock(
 
   return anyMatched ? pairNetSum + stockAdj : pairNetSum
 }
+
+/**
+ * PnL display for a single option execution row (full quantity).
+ * option economic = signed cash flow (buy negative, sell positive) based on
+ * qty * price * 100 - commission. When linked-stock data is present, adds
+ * slippage adjustment.
+ */
+export function ledgerOptDetailRowPnl(
+  ex: Execution,
+  linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
+): { displayPnl: number; hasCombinedStock: boolean; stockAdj: number } {
+  const s = (ex.side ?? '').toUpperCase()
+  const isBuy = s === 'BUY' || s === 'BOT' || s === 'B'
+  const q = Number(ex.quantity ?? ex.qty) || 0
+  const p = Number(ex.price) || 0
+  const c = Number(ex.commission) || 0
+  const value = q * p * 100 - c
+  const optionEconomic = isBuy ? -value : value
+  const oid = ex.account_executions_id
+  const stockAdj = stockSlippageTotalForOptionExecution(oid, linkByOptionId)
+  const linkCount =
+    oid != null && linkByOptionId ? (linkByOptionId[oid]?.links?.length ?? 0) : 0
+  const hasCombinedStock =
+    oid != null && linkByOptionId != null && (linkCount > 0 || stockAdj !== 0)
+  let displayPnl: number
+  if (hasCombinedStock) {
+    displayPnl = optionEconomic + stockAdj
+  } else {
+    displayPnl = !isBuy ? Math.abs(optionEconomic) : optionEconomic
+  }
+  return { displayPnl, hasCombinedStock, stockAdj }
+}
+
+/**
+ * Same as {@link ledgerOptDetailRowPnl} but scales option cash flow and stock
+ * slippage by `ratio` (e.g. matched qty / full |qty| on Performance realized
+ * execution rows).
+ */
+export function scaledLedgerOptDetailRowPnl(
+  ex: Execution,
+  ratio: number,
+  linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
+): { displayPnl: number; hasCombinedStock: boolean } {
+  if (ratio <= 0 || !Number.isFinite(ratio)) return { displayPnl: 0, hasCombinedStock: false }
+  const s = (ex.side ?? '').toUpperCase()
+  const isBuy = s === 'BUY' || s === 'BOT' || s === 'B'
+  const q = Number(ex.quantity ?? ex.qty) || 0
+  const p = Number(ex.price) || 0
+  const c = Number(ex.commission) || 0
+  const value = q * p * 100 - c
+  const optionEconomic = isBuy ? -value : value
+  const oid = ex.account_executions_id
+  const slipFull = stockSlippageTotalForOptionExecution(oid, linkByOptionId)
+  const linkCount = oid != null && linkByOptionId ? (linkByOptionId[oid]?.links?.length ?? 0) : 0
+  const hasCombinedStock =
+    oid != null && linkByOptionId != null && (linkCount > 0 || slipFull !== 0)
+  if (hasCombinedStock) {
+    return { displayPnl: optionEconomic * ratio + slipFull * ratio, hasCombinedStock: true }
+  }
+  const pnl = optionEconomic * ratio
+  const displayPnl = !isBuy ? Math.abs(pnl) : pnl
+  return { displayPnl, hasCombinedStock: false }
+}
+
+/**
+ * Per-option-fill linked stock detail: link IDs, link rows, and total slippage.
+ */
+export function getOptionStockLinkDetailForExecution(
+  ex: Execution,
+  linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
+): { linkIds: number[]; links: OptionStockLinkSummary['links']; slippageTotal: number | null } {
+  const oid = ex.account_executions_id
+  if (oid == null || !linkByOptionId) return { linkIds: [], links: [], slippageTotal: null }
+  const s = linkByOptionId[oid]
+  const links = s?.links ?? []
+  if (links.length === 0) return { linkIds: [], links: [], slippageTotal: null }
+  const linkIds = links
+    .map((r) => (r as unknown as Record<string, unknown>).link_id as number | undefined)
+    .filter((id): id is number => id != null && Number.isFinite(Number(id)))
+    .sort((a, b) => a - b)
+  return {
+    linkIds,
+    links,
+    slippageTotal: s?.slippage_total ?? null,
+  }
+}
+
+export function executionStrategyInstanceIds(e: import('@/types/positions').Execution): number[] {
+  const allocs = e.instance_allocations ?? []
+  if (allocs.length > 0) return allocs.map((a) => a.strategy_instance_id)
+  if (e.strategy_instance_id != null) return [e.strategy_instance_id]
+  return []
+}
+
+export function sliceExecutionForInstanceOptView(
+  e: import('@/types/positions').Execution,
+  instanceId: number,
+): import('@/types/positions').Execution | null {
+  const allocs = e.instance_allocations ?? []
+  if (allocs.length === 0) return e.strategy_instance_id === instanceId ? e : null
+  const alloc = allocs.find((a) => a.strategy_instance_id === instanceId)
+  if (!alloc) return null
+  const totalQty = Math.abs(Number(e.quantity ?? e.qty) || 0)
+  if (totalQty <= 1e-9) return null
+  const ratio = alloc.allocated_quantity / totalQty
+  return {
+    ...e,
+    qty: e.qty * ratio,
+    quantity: (e.quantity ?? e.qty) * ratio,
+    strategy_instance_id: instanceId,
+    strategy_instance_label: alloc.strategy_instance_label ?? e.strategy_instance_label,
+    strategy_opportunity_name: alloc.strategy_opportunity_name ?? e.strategy_opportunity_name,
+  }
+}
+
+export function expandExecutionRowsForStrategyOptView(
+  e: import('@/types/positions').Execution,
+): import('@/types/positions').Execution[] {
+  const allocs = e.instance_allocations ?? []
+  if (allocs.length === 0) return [e]
+  const totalQty = Math.abs(Number(e.quantity ?? e.qty) || 0)
+  if (totalQty <= 1e-9) return [e]
+  return allocs.map((alloc) => ({
+    ...e,
+    qty: e.qty * (alloc.allocated_quantity / totalQty),
+    quantity: (e.quantity ?? e.qty) * (alloc.allocated_quantity / totalQty),
+    strategy_instance_id: alloc.strategy_instance_id,
+    strategy_instance_label: alloc.strategy_instance_label ?? e.strategy_instance_label,
+    strategy_opportunity_name: alloc.strategy_opportunity_name ?? e.strategy_opportunity_name,
+  }))
+}
+
+export function groupExecutionsByStrategyInstanceId(
+  execs: import('@/types/positions').Execution[],
+): Map<number | 'none', import('@/types/positions').Execution[]> {
+  const map = new Map<number | 'none', import('@/types/positions').Execution[]>()
+  for (const e of execs) {
+    const key: number | 'none' = e.strategy_instance_id ?? 'none'
+    const arr = map.get(key) ?? []
+    arr.push(e)
+    map.set(key, arr)
+  }
+  return map
+}
+
+export function adjustedRealizedPnlForOptGroup(
+  g: import('@/utils/ledger/optExecutionGroups').OptExecutionGroup,
+  linkByOptionId: Record<number, OptionStockLinkSummary>,
+): number {
+  let stockAdj = 0
+  for (const e of g.trades) {
+    const oid = e.account_executions_id
+    if (oid == null) continue
+    stockAdj += linkByOptionId[oid]?.slippage_total ?? 0
+  }
+  return g.realized_pnl + stockAdj
+}
+
+/**
+ * PnL tone class for an execution leg in Unrealized tab.
+ */
+export function executionLegPnlToneClass(e: Execution, ep: number): string {
+  if (Math.abs(ep) < 0.005) return ''
+  const s = (e.side ?? '').toUpperCase()
+  const isBuy = s === 'BUY' || s === 'BOT' || s === 'B'
+  if (isBuy) return ep >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+  return 'text-blue-500 dark:text-blue-400'
+}

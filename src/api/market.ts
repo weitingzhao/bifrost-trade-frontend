@@ -91,5 +91,6 @@ export async function fetchOpenOrders(): Promise<OpenOrder[]> {
   const res = await fetch(`${MONITOR_BASE}/open-orders`)
   if (!res.ok) throw new Error(`Monitor /open-orders: ${res.status}`)
   const data = await res.json()
-  return data.orders ?? data.items ?? data ?? []
+  const result = data.orders ?? data.items ?? data
+  return Array.isArray(result) ? result : []
 }

@@ -1,10 +1,10 @@
-import { Bell, Moon, Sun, SunMoon } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Bell, Moon, PanelTop, Sun, SunMoon } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 
 const PAGE_TITLES: Record<string, string> = {
   '/market/live': 'Live',
@@ -14,16 +14,17 @@ const PAGE_TITLES: Record<string, string> = {
   '/portfolio/performance': 'Performance',
   '/portfolio/model-analysis': 'Model Analysis',
   '/portfolio/ledger': 'Trade Ledger',
-  '/research/screener': 'Screener',
-  '/research/discovery': 'Discovery',
-  '/research/greeks': 'Greeks',
-  '/research/sepa': 'SEPA',
-  '/research/stock-data': 'Stock Data',
+  '/portfolio/transfer': 'Transfer & Pay',
+  '/research/sepa': 'Stock Screener',
+  '/research/screener': 'Option Screener',
+  '/research/stock-data': 'Stock Data Readiness',
+  '/research/discovery': 'Option Discovery',
+  '/research/greeks': 'IV & Greeks',
   '/research/risk': 'Risk Model',
   '/research/backtest': 'Backtest',
   '/strategy/instances': 'Instances',
-  '/strategy/structures': 'Structures',
-  '/strategy/opportunities': 'Opportunities',
+  '/strategy/structures': 'Structure',
+  '/strategy/opportunities': 'Opportunity',
   '/strategy/gates': 'Gates',
   '/strategy/win-rate': 'Win Rate',
   '/strategy/allocations': 'Allocations',
@@ -31,67 +32,43 @@ const PAGE_TITLES: Record<string, string> = {
   '/operations/daemon': 'System · Daemon',
   '/operations/celery': 'System · Celery',
   '/operations/logs': 'System · Logs',
-  '/settings/daemon': 'Settings · Daemon',
+  '/settings/daemon': 'Settings · Status',
   '/settings/daemon-app': 'Settings · Daemon App',
   '/settings/ib': 'Settings · IB Configure',
-}
-
-type ThemeMode = 'auto' | 'light' | 'dark'
-const THEME_KEY = 'bifrost-theme'
-const THEME_CYCLE: Record<ThemeMode, ThemeMode> = { auto: 'light', light: 'dark', dark: 'auto' }
-const THEME_LABEL: Record<ThemeMode, string> = {
-  auto: 'Auto (System)',
-  light: 'Light',
-  dark: 'Dark',
-}
-
-function applyTheme(mode: ThemeMode) {
-  const dark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  document.documentElement.classList.toggle('dark', dark)
 }
 
 interface AppHeaderProps {
   activeMsgCount?: number
   onOpenMessages?: () => void
+  onToggleNavMode?: () => void
 }
 
-export function AppHeader({ activeMsgCount = 0, onOpenMessages }: AppHeaderProps) {
+export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: AppHeaderProps) {
   const location = useLocation()
-
-  const [mode, setMode] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem(THEME_KEY)
-    return saved === 'light' || saved === 'dark' || saved === 'auto' ? saved : 'auto'
-  })
-
-  useEffect(() => {
-    applyTheme(mode)
-    localStorage.setItem(THEME_KEY, mode)
-    if (mode !== 'auto') return
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const handler = () => applyTheme('auto')
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [mode])
-
+  const { mode, cycleMode } = useThemeMode()
   const title = PAGE_TITLES[location.pathname] ?? 'Bifrost Trade'
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
-      <SidebarTrigger className="-ml-1" />
+      <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />
       <Separator orientation="vertical" className="h-4" />
       <span className="font-medium text-sm">{title}</span>
 
       <div className="ml-auto flex items-center gap-1">
-        {/* Message Center bell */}
+        {onToggleNavMode && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggleNavMode} aria-label="Switch to top navigation">
+                <PanelTop className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Switch to top navigation</TooltipContent>
+          </Tooltip>
+        )}
+
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-8 w-8"
-              onClick={onOpenMessages}
-              aria-label="Messages"
-            >
+            <Button variant="ghost" size="icon" className="relative h-8 w-8" onClick={onOpenMessages} aria-label="Open messages">
               <Bell className="h-4 w-4" />
               {activeMsgCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white leading-none">
@@ -105,24 +82,15 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages }: AppHeaderProps
           </TooltipContent>
         </Tooltip>
 
-        {/* Theme toggle */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setMode(m => THEME_CYCLE[m])}
-              aria-label="Toggle theme"
-            >
-              {mode === 'auto' && <SunMoon className="h-4 w-4" />}
-              {mode === 'light' && <Sun className="h-4 w-4" />}
-              {mode === 'dark' && <Moon className="h-4 w-4" />}
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={cycleMode} aria-label="Toggle theme">
+              {mode === 'auto'  && <SunMoon className="h-4 w-4" />}
+              {mode === 'light' && <Sun    className="h-4 w-4" />}
+              {mode === 'dark'  && <Moon   className="h-4 w-4" />}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {THEME_LABEL[mode]}
-          </TooltipContent>
+          <TooltipContent side="bottom">{THEME_LABELS[mode]}</TooltipContent>
         </Tooltip>
       </div>
     </header>

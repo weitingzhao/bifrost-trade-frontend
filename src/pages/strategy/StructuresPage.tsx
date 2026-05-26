@@ -166,7 +166,9 @@ export default function StructuresPage() {
                   <TableCell><DimBadges s={s} /></TableCell>
                   <TableCell>
                     <div className="flex flex-wrap">
-                      {s.legs.map((leg, i) => <LegBadge key={i} leg={leg} />)}
+                      {s.legs.map((leg, i) => (
+                        <LegBadge key={`${leg.option_right ?? ''}-${leg.role ?? ''}-${leg.strike ?? ''}-${i}`} leg={leg} />
+                      ))}
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">

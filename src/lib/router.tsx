@@ -10,6 +10,7 @@ import PositionsPage from '@/pages/portfolio/PositionsPage'
 import PerformancePage from '@/pages/portfolio/PerformancePage'
 import ModelAnalysisPage from '@/pages/portfolio/ModelAnalysisPage'
 import TradeLedgerPage from '@/pages/portfolio/TradeLedgerPage'
+import TransferPayPage from '@/pages/portfolio/TransferPayPage'
 
 import ScreenerPage from '@/pages/research/ScreenerPage'
 import DiscoveryPage from '@/pages/research/DiscoveryPage'
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
       { path: 'portfolio/performance', element: <PerformancePage /> },
       { path: 'portfolio/model-analysis', element: <ModelAnalysisPage /> },
       { path: 'portfolio/ledger', element: <TradeLedgerPage /> },
+      { path: 'portfolio/transfer', element: <TransferPayPage /> },
 
       { path: 'research/screener', element: <ScreenerPage /> },
       { path: 'research/discovery', element: <DiscoveryPage /> },

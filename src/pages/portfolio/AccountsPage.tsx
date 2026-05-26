@@ -234,7 +234,7 @@ export default function AccountsPage() {
             >
               <TabsList>
                 {accounts.map((a, i) => (
-                  <TabsTrigger key={i} value={String(i)}>
+                  <TabsTrigger key={a.account_id ?? i} value={String(i)}>
                     {a.account_id ?? `Account ${i + 1}`}
                     <span className="ml-1.5 text-xs opacity-60">
                       ({a.positions?.length ?? 0})

@@ -16,6 +16,7 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { cn } from '@/lib/utils'
 
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { useOpenOrders } from '@/hooks/useOpenOrders'
@@ -123,7 +124,7 @@ export default function LivePage() {
     }
   }, [stkPositions, watchlistData, status?.live_ui?.subscribed_tickers])
 
-  const { quotesMap, isLoading: quotesLoading } = useQuoteStream(
+  const { quotesMap, isLoading: quotesLoading, isError: quotesError } = useQuoteStream(
     allSymbols,
     allContractKeys,
   )
@@ -349,6 +350,9 @@ export default function LivePage() {
 
   return (
     <div className="flex flex-col gap-4 p-6">
+      {quotesError && (
+        <QueryErrorAlert error="Failed to load live quotes — check Market API connection." />
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

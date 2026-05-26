@@ -1,26 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, Moon, Sun, SunMoon } from 'lucide-react'
+import { Bell, ChevronDown, Moon, PanelLeft, Sun, SunMoon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { NAV_GROUPS, SETTINGS_ITEM } from './navConfig'
+import { getAllItems, NAV_GROUPS, SETTINGS_ITEM } from './navConfig'
 import type { NavGroup } from './navConfig'
-
-type ThemeMode = 'auto' | 'light' | 'dark'
-const THEME_KEY = 'bifrost-theme'
-const THEME_CYCLE: Record<ThemeMode, ThemeMode> = { auto: 'light', light: 'dark', dark: 'auto' }
-const THEME_LABEL: Record<ThemeMode, string> = { auto: 'Auto (System)', light: 'Light', dark: 'Dark' }
-
-function applyTheme(mode: ThemeMode) {
-  const dark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  document.documentElement.classList.toggle('dark', dark)
-}
-
-function readTheme(): ThemeMode {
-  const saved = localStorage.getItem(THEME_KEY)
-  return saved === 'light' || saved === 'dark' || saved === 'auto' ? saved : 'auto'
-}
+import { BifrostLogoMark } from '@/components/BifrostLogo'
+import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 
 interface GroupMenuProps {
   group: NavGroup
@@ -32,7 +19,8 @@ interface GroupMenuProps {
 function GroupMenu({ group, isOpen, onToggle, onClose }: GroupMenuProps) {
   const location = useLocation()
   const ref = useRef<HTMLDivElement>(null)
-  const isActive = group.items.some((i) => location.pathname.startsWith(i.to))
+  const allItems = getAllItems(group)
+  const isActive = allItems.some((i) => location.pathname.startsWith(i.to))
 
   useEffect(() => {
     if (!isOpen) return
@@ -61,8 +49,9 @@ function GroupMenu({ group, isOpen, onToggle, onClose }: GroupMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 z-50 mt-1 min-w-36 rounded-md border border-border bg-popover shadow-lg py-1">
-          {group.items.map((item) => (
+        <div className="absolute top-full left-0 z-50 mt-1 min-w-40 rounded-md border border-border bg-popover shadow-lg py-1">
+          {/* Flat items */}
+          {group.items?.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -78,6 +67,32 @@ function GroupMenu({ group, isOpen, onToggle, onClose }: GroupMenuProps) {
               {item.label}
             </NavLink>
           ))}
+
+          {/* Sub-grouped items with section labels */}
+          {group.subGroups?.map((sg, idx) => (
+            <div key={sg.label}>
+              {idx > 0 && <div className="my-1 border-t border-border/50" />}
+              <p className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
+                {sg.label}
+              </p>
+              {sg.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={onClose}
+                  className={({ isActive: a }) =>
+                    cn(
+                      'flex items-center gap-2 px-3 py-1.5 text-xs transition-colors hover:bg-muted',
+                      a ? 'text-foreground font-medium' : 'text-muted-foreground',
+                    )
+                  }
+                >
+                  <item.icon className="h-3.5 w-3.5 shrink-0" />
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -87,31 +102,29 @@ function GroupMenu({ group, isOpen, onToggle, onClose }: GroupMenuProps) {
 interface Props {
   activeMsgCount?: number
   onOpenMessages?: () => void
+  /** Provided only when screen is wide enough to switch; absent on narrow screens. */
+  onToggleNavMode?: () => void
 }
 
-export function TopNav({ activeMsgCount = 0, onOpenMessages }: Props) {
+export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: Props) {
   const [openGroup, setOpenGroup] = useState<string | null>(null)
-  const [mode, setMode] = useState<ThemeMode>(readTheme)
-
-  // Apply theme
-  useEffect(() => {
-    applyTheme(mode)
-    localStorage.setItem(THEME_KEY, mode)
-    if (mode !== 'auto') return
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const handler = () => applyTheme('auto')
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [mode])
-
+  const { mode, cycleMode } = useThemeMode()
   const handleClose = () => setOpenGroup(null)
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-1 border-b border-border bg-sidebar px-2">
       {/* Brand mark */}
-      <span className="text-xs font-bold text-sidebar-foreground px-1.5 mr-1 shrink-0">
-        Bifrost
-      </span>
+      <div className="flex items-center gap-2 px-1 mr-1 shrink-0">
+        <BifrostLogoMark size={26} />
+        <div className="flex flex-col leading-tight">
+          <span className="text-[12px] font-bold tracking-tight text-sidebar-primary leading-none">
+            Bifrost
+          </span>
+          <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40 leading-none mt-0.5">
+            Trade
+          </span>
+        </div>
+      </div>
 
       {/* Nav groups — no overflow container so absolute dropdowns are not clipped */}
       <nav className="flex flex-1 items-center gap-0.5 min-w-0 flex-wrap">
@@ -143,6 +156,18 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages }: Props) {
 
       {/* Controls */}
       <div className="flex items-center gap-0.5 shrink-0 ml-1">
+        {/* Nav mode toggle: switch to Sidebar */}
+        {onToggleNavMode && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggleNavMode} aria-label="Switch to sidebar navigation">
+                <PanelLeft className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Switch to sidebar navigation</TooltipContent>
+          </Tooltip>
+        )}
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -171,15 +196,15 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages }: Props) {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => setMode((m) => THEME_CYCLE[m])}
+              onClick={cycleMode}
               aria-label="Toggle theme"
             >
-              {mode === 'auto' && <SunMoon className="h-4 w-4" />}
-              {mode === 'light' && <Sun className="h-4 w-4" />}
-              {mode === 'dark' && <Moon className="h-4 w-4" />}
+              {mode === 'auto'  && <SunMoon className="h-4 w-4" />}
+              {mode === 'light' && <Sun     className="h-4 w-4" />}
+              {mode === 'dark'  && <Moon    className="h-4 w-4" />}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">{THEME_LABEL[mode]}</TooltipContent>
+          <TooltipContent side="bottom">{THEME_LABELS[mode]}</TooltipContent>
         </Tooltip>
       </div>
     </header>

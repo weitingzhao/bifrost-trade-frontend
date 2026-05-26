@@ -67,7 +67,7 @@ export async function fetchPerformanceExecutionsMerged(
     source_scope: sourceScope,
   })
 
-  let rows = res.items ?? (res as unknown as { executions?: Execution[] }).executions ?? []
+  const rows = res.items ?? (res as unknown as { executions?: Execution[] }).executions ?? []
   if (rows.length < FETCH_LIMIT) {
     return dedupeExecutionsById(rows)
   }

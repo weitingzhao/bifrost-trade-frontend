@@ -114,3 +114,41 @@ export function sumStkPositionMarketValueForBucket(
   }
   return found ? total : null
 }
+
+export function buildStkPositionSnapshotMap(
+  status: StatusResponse | null | undefined,
+): Map<string, { position: number; avgCost: number; price: number | null }> {
+  const map = new Map<string, { position: number; avgCost: number; price: number | null }>()
+  for (const acct of status?.portfolio?.accounts ?? []) {
+    const aid = (acct.account_id ?? '').trim()
+    for (const pos of acct.positions ?? []) {
+      if ((pos.secType ?? '').toUpperCase() !== 'STK') continue
+      const ck = pos.contract_key?.trim()
+      if (!ck || !aid) continue
+      const position = Number(pos.position ?? 0)
+      const avgCost = Number(pos.avgCost ?? 0)
+      const price = pos.price != null ? Number(pos.price) : null
+      if (Number.isFinite(position) && Number.isFinite(avgCost)) {
+        map.set(`${aid}|${ck}`, { position, avgCost, price })
+      }
+    }
+  }
+  return map
+}
+
+export function buildStkUnrealizedBySymbolAccount(
+  status: StatusResponse | null | undefined,
+): Map<string, number> {
+  const map = new Map<string, number>()
+  for (const acct of status?.portfolio?.accounts ?? []) {
+    const aid = (acct.account_id ?? '').trim()
+    for (const pos of acct.positions ?? []) {
+      if ((pos.secType ?? '').toUpperCase() !== 'STK') continue
+      const sym = pos.symbol?.trim().toUpperCase()
+      if (!sym || !aid) continue
+      const u = Number(pos.unrealized_pnl ?? 0)
+      if (Number.isFinite(u)) map.set(`${aid}|${sym}`, u)
+    }
+  }
+  return map
+}

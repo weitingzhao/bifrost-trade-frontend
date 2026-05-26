@@ -1,83 +1,251 @@
-import { useMemo, useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { useMemo, useState, useCallback } from 'react'
+import { Plus, RefreshCw, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { InstancesTable } from '@/components/strategy/InstancesTable'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { InstancesGroupedTable } from '@/components/strategy/InstancesGroupedTable'
 import { InstanceCreateModal } from '@/components/strategy/InstanceCreateModal'
 import { InstanceDeleteModal } from '@/components/strategy/InstanceDeleteModal'
-import { useStrategyInstances } from '@/hooks/useStrategies'
+import { useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
 import { useInstanceMetrics } from '@/hooks/useInstanceMetrics'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import type { StrategyInstance } from '@/types/positions'
+import type { MetricsEntry } from '@/hooks/useInstanceMetrics'
 
-type SinceFilter = '1m' | '3m' | '6m' | 'all'
+// ── Filter types ─────────────────────────────────────────────────────────────
 
-const SINCE_LABELS: Record<SinceFilter, string> = {
-  '1m': '1 Month',
-  '3m': '3 Months',
-  '6m': '6 Months',
-  'all': 'All',
+type SinceFilter = '' | '1m' | 'q' | 'half' | '1y' | 'ytd'
+type StatusFilter = '' | 'open' | 'closed'
+type DetailViewMode = 'accordion' | 'multi'
+
+const SINCE_OPTIONS: { key: SinceFilter; label: string }[] = [
+  { key: '', label: 'All' },
+  { key: '1m', label: '1 month' },
+  { key: 'q', label: 'Quarter' },
+  { key: 'half', label: 'Half year' },
+  { key: '1y', label: '1 year' },
+  { key: 'ytd', label: 'YTD' },
+]
+
+// ── Since threshold helpers ──────────────────────────────────────────────────
+
+function ymdUtcMonthsAgo(months: number): string {
+  const d = new Date()
+  const utc = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - months, d.getUTCDate()))
+  return utc.toISOString().slice(0, 10)
 }
 
-function sinceThreshold(since: SinceFilter): number | null {
-  const now = Date.now()
-  if (since === '1m') return now - 30 * 86_400_000
-  if (since === '3m') return now - 90 * 86_400_000
-  if (since === '6m') return now - 180 * 86_400_000
+function ymdUtcYtdStart(): string {
+  return `${new Date().getUTCFullYear()}-01-01`
+}
+
+function ymdUtcToday(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function sinceThresholdYmd(v: SinceFilter): string | null {
+  if (v === '1m') return ymdUtcMonthsAgo(1)
+  if (v === 'q') return ymdUtcMonthsAgo(3)
+  if (v === 'half') return ymdUtcMonthsAgo(6)
+  if (v === '1y') return ymdUtcMonthsAgo(12)
+  if (v === 'ytd') return ymdUtcYtdStart()
   return null
 }
 
-function fmtUsd(n: number): string {
-  const abs = Math.abs(n)
-  const s = abs >= 1000 ? `$${(abs / 1000).toFixed(1)}k` : `$${abs.toFixed(0)}`
-  return n < 0 ? `-${s}` : `+${s}`
+import { structureChipStyle } from '@/utils/structureColor'
+
+// ── Bubble filter button ─────────────────────────────────────────────────────
+
+function BubbleButton({
+  active,
+  onClick,
+  children,
+  style,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+  style?: React.CSSProperties
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={style}
+      className={cn(
+        'text-xs px-2.5 py-1 rounded-full border transition-colors whitespace-nowrap',
+        active
+          ? 'bg-primary text-primary-foreground border-primary'
+          : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40',
+      )}
+    >
+      {children}
+    </button>
+  )
 }
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function getScopeSymbol(
+  inst: StrategyInstance,
+  opportunities: { strategy_opportunity_id: number; scope_type: string | null; symbols: string[] }[],
+): string {
+  const opp = opportunities.find((o) => o.strategy_opportunity_id === inst.strategy_opportunity_id)
+  if (!opp) return '—'
+  const st = (opp.scope_type ?? '').trim()
+  if (st !== 'explicit_symbols' && st !== 'watchlist_stk') return '—'
+  const sym = opp.symbols?.filter((s) => s?.trim())
+  if (!sym || sym.length === 0) return '—'
+  return sym[0].trim().toUpperCase()
+}
+
+function getPositionStatus(entry: MetricsEntry | undefined): 'open' | 'closed' | 'unknown' {
+  if (!entry || entry.status !== 'ready') return 'unknown'
+  // Use holdDays == opened_at → now as a rough proxy;
+  // the actual status needs execution-derived data which we have in metrics
+  return entry.metrics.holdDays > 0 && entry.metrics.netPnl === 0 && entry.metrics.tradeCount === 0
+    ? 'unknown'
+    : 'open' // Simplified: legacy determines from exec book
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function InstancesPage() {
   const queryClient = useQueryClient()
   const { data: status } = useMonitorStatus()
-  const { data, isLoading, isError, error } = useStrategyInstances()
+  const { data: oppsData } = useOpportunities()
+
+  const accounts = useMemo(
+    () => (status?.portfolio?.accounts ?? []).map((a) => a.account_id).filter(Boolean) as string[],
+    [status],
+  )
+  const opportunities = useMemo(() => oppsData?.items ?? [], [oppsData])
+
+  // API-level filters
+  const [accountFilter, setAccountFilter] = useState<string>('')
+  const [opportunitySearch, setOpportunitySearch] = useState<string>('')
+
+  const { data, isLoading, isError, error } = useStrategyInstances({
+    accountId: accountFilter || undefined,
+  })
 
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<StrategyInstance | null>(null)
-  const [since, setSince] = useState<SinceFilter>('3m')
-  const [structureFilter, setStructureFilter] = useState<string>('all')
+
+  // In-panel bubble filters
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
+  const [structureFilter, setStructureFilter] = useState<string>('')
+  const [symbolFilter, setSymbolFilter] = useState<string>('')
+  const [sinceFilter, setSinceFilter] = useState<SinceFilter>('q')
+  const [detailViewMode, setDetailViewMode] = useState<DetailViewMode>('accordion')
 
   const allInstances = useMemo(() => data?.items ?? [], [data])
-
   const metricsMap = useInstanceMetrics(allInstances)
 
-  const structures = useMemo(() => {
-    const names = new Set(
-      allInstances.map((i) => i.strategy_structure_name).filter(Boolean) as string[],
-    )
-    return Array.from(names).sort()
-  }, [allInstances])
-
-  const filtered = useMemo(() => {
-    const threshold = sinceThreshold(since)
-    return allInstances.filter((inst) => {
-      if (structureFilter !== 'all' && inst.strategy_structure_name !== structureFilter) return false
-      if (threshold != null && inst.opened_at_epoch != null) {
-        if (inst.opened_at_epoch * 1000 < threshold) return false
-      }
-      return true
-    })
-  }, [allInstances, since, structureFilter])
-
-  const totalNetPnl = useMemo(() => {
-    let sum = 0
-    let allReady = true
-    for (const inst of filtered) {
-      const entry = metricsMap.get(inst.strategy_instance_id)
-      if (!entry || entry.status !== 'ready') { allReady = false; continue }
-      sum += entry.metrics.netPnl
+  // Derive filter options from data
+  const filterOptions = useMemo(() => {
+    const structures = new Set<string>()
+    const symbols = new Set<string>()
+    for (const inst of allInstances) {
+      const sn = (inst.strategy_structure_name ?? '').trim()
+      if (sn) structures.add(sn)
+      const sym = getScopeSymbol(inst, opportunities)
+      if (sym !== '—') symbols.add(sym)
     }
-    return allReady ? sum : null
-  }, [filtered, metricsMap])
+    return {
+      structures: Array.from(structures).sort(),
+      symbols: Array.from(symbols).sort(),
+    }
+  }, [allInstances, opportunities])
+
+  // Apply all in-panel filters
+  const filtered = useMemo(() => {
+    let list = allInstances
+
+    // Text search on opportunity name
+    if (opportunitySearch.trim()) {
+      const q = opportunitySearch.trim().toLowerCase()
+      list = list.filter((inst) =>
+        (inst.strategy_opportunity_name ?? '').toLowerCase().includes(q) ||
+        (inst.label ?? '').toLowerCase().includes(q),
+      )
+    }
+
+    if (structureFilter) {
+      list = list.filter((inst) => (inst.strategy_structure_name ?? '').trim() === structureFilter)
+    }
+
+    if (symbolFilter) {
+      list = list.filter((inst) => getScopeSymbol(inst, opportunities) === symbolFilter)
+    }
+
+    if (statusFilter) {
+      list = list.filter((inst) => {
+        const entry = metricsMap.get(inst.strategy_instance_id)
+        const ps = getPositionStatus(entry)
+        return statusFilter === 'open' ? ps === 'open' : ps === 'closed'
+      })
+    }
+
+    if (sinceFilter) {
+      const threshold = sinceThresholdYmd(sinceFilter)
+      if (threshold) {
+        const thresholdTs = new Date(threshold).getTime() / 1000
+        list = list.filter((inst) => {
+          if (inst.opened_at_epoch == null) return false
+          return inst.opened_at_epoch >= thresholdTs
+        })
+      }
+    }
+
+    return list
+  }, [allInstances, opportunitySearch, structureFilter, symbolFilter, statusFilter, sinceFilter, metricsMap, opportunities])
+
+  // Group by symbol
+  const groupedItems = useMemo(() => {
+    const groups: { key: string; label: string; rows: StrategyInstance[] }[] = []
+    const indexByKey = new Map<string, number>()
+    for (const inst of filtered) {
+      const sym = getScopeSymbol(inst, opportunities)
+      const idx = indexByKey.get(sym)
+      if (idx == null) {
+        indexByKey.set(sym, groups.length)
+        groups.push({ key: sym, label: sym, rows: [inst] })
+      } else {
+        groups[idx].rows.push(inst)
+      }
+    }
+    return groups
+  }, [filtered, opportunities])
+
+  // Since range text
+  const sinceRangeText = useMemo(() => {
+    if (!sinceFilter) return null
+    const start = sinceThresholdYmd(sinceFilter)
+    if (!start) return null
+    return `${start} ~ ${ymdUtcToday()}`
+  }, [sinceFilter])
+
+  // Any filter active?
+  const hasActiveFilter = !!(statusFilter || structureFilter || symbolFilter || sinceFilter || opportunitySearch.trim())
+
+  const clearAllFilters = useCallback(() => {
+    setStatusFilter('')
+    setStructureFilter('')
+    setSymbolFilter('')
+    setSinceFilter('')
+    setOpportunitySearch('')
+  }, [])
 
   if (isLoading) {
     return (
@@ -93,20 +261,7 @@ export default function InstancesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Strategy Instances</h1>
-          <div className="flex items-center gap-3 mt-0.5">
-            <span className="text-xs text-muted-foreground">
-              {filtered.length} of {allInstances.length} instances
-            </span>
-            {totalNetPnl != null && (
-              <span className={cn(
-                'text-xs font-mono font-medium',
-                totalNetPnl > 0 ? 'text-green-600 dark:text-green-400' : totalNetPnl < 0 ? 'text-red-500' : 'text-muted-foreground',
-              )}>
-                Net PnL {fmtUsd(totalNetPnl)}
-              </span>
-            )}
-          </div>
+          <h1 className="text-xl font-semibold">Strategy / Instances</h1>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -119,53 +274,171 @@ export default function InstancesPage() {
           </Button>
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="h-3.5 w-3.5 mr-1.5" />
-            New Instance
+            Create instance
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Top-level filters: Account + Opportunity search */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground mr-1">Since:</span>
-          {(Object.keys(SINCE_LABELS) as SinceFilter[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setSince(key)}
-              className={cn(
-                'text-xs px-2.5 py-1 rounded-full border transition-colors',
-                since === key
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40',
-              )}
-            >
-              {SINCE_LABELS[key]}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Account</span>
+          <Select value={accountFilter || '__all__'} onValueChange={(v) => setAccountFilter(v === '__all__' ? '' : v)}>
+            <SelectTrigger className="h-8 w-40 text-xs">
+              <SelectValue placeholder="All accounts" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All accounts</SelectItem>
+              {accounts.map((id) => (
+                <SelectItem key={id} value={id}>{id}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-
-        {structures.length > 0 && (
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground mr-1">Structure:</span>
-            {(['all', ...structures] as const).map((name) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => setStructureFilter(name)}
-                className={cn(
-                  'text-xs px-2.5 py-1 rounded-full border transition-colors',
-                  structureFilter === name
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40',
-                )}
-              >
-                {name === 'all' ? 'All' : name}
-              </button>
-            ))}
-          </div>
-        )}
+        <Input
+          placeholder="All strategies"
+          value={opportunitySearch}
+          onChange={(e) => setOpportunitySearch(e.target.value)}
+          className="h-8 w-48 text-xs"
+        />
       </div>
+
+      {/* Bubble filter panel */}
+      {allInstances.length > 0 && (
+        <div className="space-y-2 rounded-lg border border-border p-3">
+          {/* Status */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground w-16 shrink-0">Status</span>
+            <div className="flex flex-wrap gap-1">
+              {(['', 'open', 'closed'] as StatusFilter[]).map((key) => (
+                <BubbleButton
+                  key={key || 'all'}
+                  active={statusFilter === key}
+                  onClick={() => setStatusFilter(statusFilter === key ? '' : key)}
+                >
+                  {key === '' ? 'All' : key === 'open' ? 'Open' : 'Closed'}
+                </BubbleButton>
+              ))}
+            </div>
+          </div>
+
+          {/* Structure */}
+          {filterOptions.structures.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-16 shrink-0">Structure</span>
+              <div className="flex flex-wrap gap-1">
+                <BubbleButton
+                  active={structureFilter === ''}
+                  onClick={() => setStructureFilter('')}
+                >
+                  All
+                </BubbleButton>
+                {filterOptions.structures.map((s) => (
+                  <BubbleButton
+                    key={s}
+                    active={structureFilter === s}
+                    onClick={() => setStructureFilter(structureFilter === s ? '' : s)}
+                    style={structureChipStyle(s, structureFilter === s)}
+                  >
+                    {s}
+                  </BubbleButton>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Symbol */}
+          {filterOptions.symbols.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-16 shrink-0">Symbol</span>
+              <div className="flex flex-wrap gap-1">
+                <BubbleButton
+                  active={symbolFilter === ''}
+                  onClick={() => setSymbolFilter('')}
+                >
+                  All
+                </BubbleButton>
+                {filterOptions.symbols.map((sym) => (
+                  <BubbleButton
+                    key={sym}
+                    active={symbolFilter === sym}
+                    onClick={() => setSymbolFilter(symbolFilter === sym ? '' : sym)}
+                  >
+                    {sym}
+                  </BubbleButton>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Since */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground w-16 shrink-0">Since</span>
+            <div className="flex flex-wrap items-center gap-1">
+              {SINCE_OPTIONS.map(({ key, label }) => (
+                <BubbleButton
+                  key={key || 'all'}
+                  active={sinceFilter === key}
+                  onClick={() => setSinceFilter(sinceFilter === key ? '' : key)}
+                >
+                  {label}
+                </BubbleButton>
+              ))}
+              {sinceRangeText && (
+                <span className="text-[11px] text-muted-foreground ml-2">
+                  {sinceRangeText}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Meta: count + clear */}
+          {hasActiveFilter && (
+            <div className="flex items-center gap-3 pt-1 border-t border-border/50">
+              <span className="text-xs text-muted-foreground">
+                Showing {filtered.length} of {allInstances.length} instances
+              </span>
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="text-xs text-primary hover:underline flex items-center gap-0.5"
+              >
+                <X className="h-3 w-3" />
+                Clear filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Detail view mode + Symbol groups controls */}
+      {groupedItems.length > 0 && (
+        <div className="flex flex-wrap items-center gap-4 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground uppercase tracking-wide font-medium">Detail view</span>
+            <div className="flex gap-0.5">
+              <BubbleButton
+                active={detailViewMode === 'accordion'}
+                onClick={() => setDetailViewMode('accordion')}
+              >
+                Accordion
+              </BubbleButton>
+              <BubbleButton
+                active={detailViewMode === 'multi'}
+                onClick={() => setDetailViewMode('multi')}
+              >
+                Multi
+              </BubbleButton>
+            </div>
+          </div>
+          <span className="text-muted-foreground/50">|</span>
+          <span className="text-muted-foreground italic text-[11px]">
+            {detailViewMode === 'accordion'
+              ? 'Accordion: only one symbol group expanded at a time. Expand all keeps the first group open.'
+              : 'Multi: several symbol groups may stay expanded.'}
+          </span>
+        </div>
+      )}
 
       {isError && (
         <Alert variant="destructive">
@@ -173,9 +446,12 @@ export default function InstancesPage() {
         </Alert>
       )}
 
-      <InstancesTable
-        instances={filtered}
+      {/* Table with symbol groups */}
+      <InstancesGroupedTable
+        groups={groupedItems}
         metricsMap={metricsMap}
+        opportunities={opportunities}
+        detailViewMode={detailViewMode}
         onDelete={setDeleteTarget}
       />
 

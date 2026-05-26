@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchOpportunities, fetchStructures, fetchStrategyInstances, fetchGateSafety } from '@/api/strategy'
+import { fetchOpportunities, fetchStructures, fetchStrategyInstances, fetchGateSafety, fetchAllocations } from '@/api/strategy'
 
 export function useOpportunities() {
   return useQuery({
@@ -25,10 +25,18 @@ export function useGateSafety() {
   })
 }
 
-export function useStrategyInstances(opportunityId?: number) {
+export function useStrategyInstances(params?: { opportunityId?: number; accountId?: string }) {
   return useQuery({
-    queryKey: ['strategy', 'instances', opportunityId ?? null],
-    queryFn: () => fetchStrategyInstances({ opportunityId }),
+    queryKey: ['strategy', 'instances', params?.opportunityId ?? null, params?.accountId ?? null],
+    queryFn: () => fetchStrategyInstances(params),
     refetchInterval: 30_000,
+  })
+}
+
+export function useAllocations() {
+  return useQuery({
+    queryKey: ['strategy', 'allocations'],
+    queryFn: () => fetchAllocations(),
+    staleTime: 30_000,
   })
 }

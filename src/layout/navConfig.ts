@@ -17,7 +17,6 @@ import {
   ListFilter,
   Network,
   PieChart,
-  ScrollText,
   Server,
   Settings,
   Shield,
@@ -139,32 +138,11 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'System',
     icon: Terminal,
     dividerBefore: true,
-    subGroups: [
-      {
-        label: 'Services',
-        items: [
-          {
-            label: 'API',
-            to: '/settings/api',
-            icon: Server,
-            children: [
-              { label: 'Architecture', to: '/settings/api/architecture', icon: Layers },
-              { label: 'Account',      to: '/settings/api/account',      icon: Cpu },
-              { label: 'Research',     to: '/settings/api/research',     icon: BarChart2 },
-              { label: 'Massive',      to: '/settings/api/massive',      icon: Database },
-            ],
-          },
-          { label: 'Daemon', to: '/operations/daemon', icon: Cpu },
-          { label: 'Celery', to: '/operations/celery', icon: Terminal },
-          { label: 'Socket', to: '/settings/socket',   icon: Network },
-        ],
-      },
-      {
-        label: 'Activity',
-        items: [
-          { label: 'Logs', to: '/operations/logs', icon: ScrollText },
-        ],
-      },
+    items: [
+      { label: 'API',    to: '/settings/api',      icon: Server   },
+      { label: 'Daemon', to: '/operations/daemon',  icon: Cpu      },
+      { label: 'Celery', to: '/operations/celery',  icon: Terminal },
+      { label: 'Socket', to: '/settings/socket',    icon: Network  },
     ],
   },
 ]

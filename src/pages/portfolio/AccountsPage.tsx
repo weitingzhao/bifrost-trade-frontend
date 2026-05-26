@@ -226,13 +226,13 @@ export default function AccountsPage() {
         <EmptyState />
       ) : (
         <>
-          {/* Multi-account tabs */}
+          {/* Multi-account selector — no TabsContent; segment style for compact selectors */}
           {accounts.length > 1 && (
             <Tabs
               value={String(clampedIdx)}
               onValueChange={(v) => setSelectedIdx(Number(v))}
             >
-              <TabsList>
+              <TabsList variant="segment">
                 {accounts.map((a, i) => (
                   <TabsTrigger key={a.account_id ?? i} value={String(i)}>
                     {a.account_id ?? `Account ${i + 1}`}

@@ -303,7 +303,7 @@ export default function PerformancePage() {
 
   // Data hooks
   const oppQuery = useOpportunities()
-  const instQuery = useStrategyInstances(selectedOppId ?? undefined)
+  const instQuery = useStrategyInstances(selectedOppId != null ? { opportunityId: selectedOppId } : undefined)
 
   const perfQuery = useQuery({
     queryKey: ['trading', 'performance', sinceTs, untilTs, selectedOppId, selectedInstId],

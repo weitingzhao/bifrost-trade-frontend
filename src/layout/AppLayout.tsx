@@ -6,6 +6,8 @@ import { AppHeader } from './AppHeader'
 import { TopNav } from './TopNav'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
 import { MessageDrawer } from '@/components/MessageCenter/MessageDrawer'
+import { LogPanel } from '@/components/LogPanel'
+import { LogPanelProvider } from '@/context/LogPanelContext'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useNavMode } from '@/hooks/useNavMode'
 
@@ -39,34 +41,41 @@ export function AppLayout() {
 
   if (effectiveMode === 'topnav') {
     return (
-      <div className="flex flex-col h-svh bg-background">
-        <TopNav
-          activeMsgCount={activeMsgCount}
-          onOpenMessages={() => setDrawerOpen(true)}
-          onToggleNavMode={isTooNarrow ? undefined : toggle}
-        />
-        <main className="flex-1 overflow-auto min-w-0">
-          <Outlet />
-        </main>
-        {msgCenter}
-      </div>
+      <LogPanelProvider>
+        <div className="flex flex-col h-svh bg-background">
+          <TopNav
+            activeMsgCount={activeMsgCount}
+            onOpenMessages={() => setDrawerOpen(true)}
+            onToggleNavMode={isTooNarrow ? undefined : toggle}
+          />
+          <main className="flex-1 overflow-auto min-w-0">
+            <Outlet />
+          </main>
+          <LogPanel />
+          {msgCenter}
+        </div>
+      </LogPanelProvider>
     )
   }
 
   return (
-    <SidebarProvider defaultOpen={readSidebarCookie()}>
-      <AppSidebar />
-      <SidebarInset>
-        <AppHeader
-          activeMsgCount={activeMsgCount}
-          onOpenMessages={() => setDrawerOpen(true)}
-          onToggleNavMode={toggle}
-        />
-        <main className="flex-1 overflow-auto min-w-0">
-          <Outlet />
-        </main>
-      </SidebarInset>
-      {msgCenter}
-    </SidebarProvider>
+    <LogPanelProvider>
+      <SidebarProvider defaultOpen={readSidebarCookie()}>
+        <AppSidebar />
+        {/* h-svh + overflow-hidden keeps LogPanel inside the viewport */}
+        <SidebarInset className="h-svh overflow-hidden">
+          <AppHeader
+            activeMsgCount={activeMsgCount}
+            onOpenMessages={() => setDrawerOpen(true)}
+            onToggleNavMode={toggle}
+          />
+          <main className="flex-1 overflow-auto min-w-0">
+            <Outlet />
+          </main>
+          <LogPanel />
+        </SidebarInset>
+        {msgCenter}
+      </SidebarProvider>
+    </LogPanelProvider>
   )
 }

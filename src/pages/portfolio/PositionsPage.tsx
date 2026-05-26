@@ -10,7 +10,7 @@ import { deleteExecution } from '@/api/trading'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger, TabsContent, TabsPanel, TabsPanelContent } from '@/components/ui/tabs'
 import { PositionsFilterBar } from '@/components/positions/PositionsFilterBar'
 import { InstanceFilters } from '@/components/positions/InstanceFilters'
 import type { InstanceFilterValues } from '@/components/positions/InstanceFilters'
@@ -207,74 +207,78 @@ export default function PositionsPage() {
         </div>
       ) : (
         <Tabs value={openTab} onValueChange={(v) => setOpenTab(v as OpenTab)}>
-          <TabsList>
-            <TabsTrigger value="instance" disabled={!hasInstances && !hasOptions}>Strategy</TabsTrigger>
-            <TabsTrigger value="options" disabled={!hasOptions}>Options</TabsTrigger>
-            <TabsTrigger value="stocks" disabled={!hasCoreStocks}>Stocks</TabsTrigger>
-            <TabsTrigger value="fixed_income" disabled={!hasFixedIncome}>Fixed Income</TabsTrigger>
-            <TabsTrigger value="cash_like" disabled={!hasCashLike}>Cash-like</TabsTrigger>
-          </TabsList>
+          <TabsPanel>
+            <TabsList variant="line" className="bg-muted/20 px-2">
+              <TabsTrigger value="instance" disabled={!hasInstances && !hasOptions}>Strategy</TabsTrigger>
+              <TabsTrigger value="options" disabled={!hasOptions}>Options</TabsTrigger>
+              <TabsTrigger value="stocks" disabled={!hasCoreStocks}>Stocks</TabsTrigger>
+              <TabsTrigger value="fixed_income" disabled={!hasFixedIncome}>Fixed Income</TabsTrigger>
+              <TabsTrigger value="cash_like" disabled={!hasCashLike}>Cash-like</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="instance" className="mt-4">
-            <InstanceFilters
-              structureTypes={instanceFilterOptions.structureTypes}
-              oppNames={instanceFilterOptions.oppNames}
-              scopeTypes={instanceFilterOptions.scopeTypes}
-              values={instanceFilters}
-              onChange={setInstanceFilters}
-            />
-            <InstanceTab
-              groups={filteredInstanceGroups}
-              quotesBySymbol={quotesBySymbol}
-              benchBySymbol={benchBySymbol}
-              liveStocks={allStocks}
-              executionsFinal={executionsFinal}
-              executionsTws={executionsTws}
-              opportunities={opportunities}
-              onEditExec={setEditExec}
-              onLinkExec={setLinkExec}
-              onDeleteExec={setDeleteTarget}
-              onRefreshExecs={refreshExecData}
-              onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
-              onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
-              onOpenOption={(contractKey) => setInspector({ type: 'option', contractKey })}
-            />
-          </TabsContent>
+            <TabsPanelContent>
+              <TabsContent value="instance">
+                <InstanceFilters
+                  structureTypes={instanceFilterOptions.structureTypes}
+                  oppNames={instanceFilterOptions.oppNames}
+                  scopeTypes={instanceFilterOptions.scopeTypes}
+                  values={instanceFilters}
+                  onChange={setInstanceFilters}
+                />
+                <InstanceTab
+                  groups={filteredInstanceGroups}
+                  quotesBySymbol={quotesBySymbol}
+                  benchBySymbol={benchBySymbol}
+                  liveStocks={allStocks}
+                  executionsFinal={executionsFinal}
+                  executionsTws={executionsTws}
+                  opportunities={opportunities}
+                  onEditExec={setEditExec}
+                  onLinkExec={setLinkExec}
+                  onDeleteExec={setDeleteTarget}
+                  onRefreshExecs={refreshExecData}
+                  onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
+                  onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
+                  onOpenOption={(contractKey) => setInspector({ type: 'option', contractKey })}
+                />
+              </TabsContent>
 
-          <TabsContent value="options" className="mt-4">
-            <OptionsTab
-              positions={openOptions}
-              quotesBySymbol={quotesBySymbol}
-              filterSymbol={filterSymbol}
-              filterExpiry={filterExpiry}
-              executionsFinal={executionsFinal}
-              executionsTws={executionsTws}
-              onEditExec={setEditExec}
-              onLinkExec={setLinkExec}
-              onDeleteExec={setDeleteTarget}
-              onCloseExec={setCloseExec}
-              onRefreshExecs={refreshExecData}
-              onInspect={(pos) => setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })}
-            />
-          </TabsContent>
+              <TabsContent value="options">
+                <OptionsTab
+                  positions={openOptions}
+                  quotesBySymbol={quotesBySymbol}
+                  filterSymbol={filterSymbol}
+                  filterExpiry={filterExpiry}
+                  executionsFinal={executionsFinal}
+                  executionsTws={executionsTws}
+                  onEditExec={setEditExec}
+                  onLinkExec={setLinkExec}
+                  onDeleteExec={setDeleteTarget}
+                  onCloseExec={setCloseExec}
+                  onRefreshExecs={refreshExecData}
+                  onInspect={(pos) => setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })}
+                />
+              </TabsContent>
 
-          <TabsContent value="stocks" className="mt-4">
-            <StocksTab
-              positions={coreStocks}
-              quotesBySymbol={quotesBySymbol}
-              benchBySymbol={benchBySymbol}
-              filterSymbol={filterSymbol}
-              onInspect={(symbol, accountId, pos) => setInspector({ type: 'stock', symbol, accountId, livePosition: pos })}
-            />
-          </TabsContent>
+              <TabsContent value="stocks">
+                <StocksTab
+                  positions={coreStocks}
+                  quotesBySymbol={quotesBySymbol}
+                  benchBySymbol={benchBySymbol}
+                  filterSymbol={filterSymbol}
+                  onInspect={(symbol, accountId, pos) => setInspector({ type: 'stock', symbol, accountId, livePosition: pos })}
+                />
+              </TabsContent>
 
-          <TabsContent value="fixed_income" className="mt-4">
-            <FixedIncomeTab positions={fixedIncomeStocks} quotesBySymbol={quotesBySymbol} benchBySymbol={benchBySymbol} filterSymbol={filterSymbol} />
-          </TabsContent>
+              <TabsContent value="fixed_income">
+                <FixedIncomeTab positions={fixedIncomeStocks} quotesBySymbol={quotesBySymbol} benchBySymbol={benchBySymbol} filterSymbol={filterSymbol} />
+              </TabsContent>
 
-          <TabsContent value="cash_like" className="mt-4">
-            <CashLikeTab positions={cashLikeStocks} quotesBySymbol={quotesBySymbol} benchBySymbol={benchBySymbol} filterSymbol={filterSymbol} />
-          </TabsContent>
+              <TabsContent value="cash_like">
+                <CashLikeTab positions={cashLikeStocks} quotesBySymbol={quotesBySymbol} benchBySymbol={benchBySymbol} filterSymbol={filterSymbol} />
+              </TabsContent>
+            </TabsPanelContent>
+          </TabsPanel>
         </Tabs>
       )}
 

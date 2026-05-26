@@ -448,3 +448,32 @@ export interface StructureTypeConfigOption {
 export interface StrategyTemplatesResponse {
   items: StrategyTemplateRow[]
 }
+
+// ── Allocation ────────────────────────────────────────────────────────────────
+
+export interface StrategyAllocation {
+  strategy_allocation_id: number
+  name: string
+  strategy_opportunity_ids: number[]
+  gate_safety_strategy_id?: number | null
+  gate_safety_name?: string | null
+  max_positions?: number | null
+  max_bp_pct?: number | null
+  allocation_limits?: Record<string, unknown> | null
+  is_active: boolean
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface AllocationPayload {
+  name: string
+  strategy_opportunity_ids: number[]
+  gate_safety_strategy_id?: number | null
+  max_positions?: number | null
+  max_bp_pct?: number | null
+  is_active?: boolean
+}
+
+export interface AllocationsResponse {
+  items: StrategyAllocation[]
+}

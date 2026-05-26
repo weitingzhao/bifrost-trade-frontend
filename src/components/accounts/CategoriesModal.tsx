@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger, TabsContent, TabsPanel, TabsPanelContent } from '@/components/ui/tabs'
 import {
   Select,
   SelectContent,
@@ -168,23 +168,27 @@ export function CategoriesModal({ open, onOpenChange, accounts, onRefreshed }: P
             />
           ) : (
             <Tabs defaultValue={stkAccounts[0].account_id ?? '0'}>
-              <TabsList>
-                {stkAccounts.map((a, i) => (
-                  <TabsTrigger key={i} value={a.account_id ?? String(i)}>
-                    {a.account_id ?? `Account ${i + 1}`}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              {stkAccounts.map((a, i) => (
-                <TabsContent key={i} value={a.account_id ?? String(i)}>
-                  <AssignTab
-                    account={a}
-                    categories={categories}
-                    taggingCk={taggingCk}
-                    onTag={handleTag}
-                  />
-                </TabsContent>
-              ))}
+              <TabsPanel>
+                <TabsList variant="line" className="bg-muted/20 px-2">
+                  {stkAccounts.map((a, i) => (
+                    <TabsTrigger key={i} value={a.account_id ?? String(i)}>
+                      {a.account_id ?? `Account ${i + 1}`}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                <TabsPanelContent className="p-4">
+                  {stkAccounts.map((a, i) => (
+                    <TabsContent key={i} value={a.account_id ?? String(i)}>
+                      <AssignTab
+                        account={a}
+                        categories={categories}
+                        taggingCk={taggingCk}
+                        onTag={handleTag}
+                      />
+                    </TabsContent>
+                  ))}
+                </TabsPanelContent>
+              </TabsPanel>
             </Tabs>
           )}
         </div>

@@ -15,6 +15,9 @@ import type {
   StructureTypeLegPayload,
   MetaParamPayload,
   StructureTypeConfigOption,
+  AllocationsResponse,
+  StrategyAllocation,
+  AllocationPayload,
 } from '@/types/positions'
 
 const BASE = import.meta.env.VITE_API_STRATEGY as string
@@ -33,11 +36,13 @@ export async function fetchStructures(): Promise<StructuresResponse> {
 
 export async function fetchStrategyInstances(params?: {
   opportunityId?: number
+  accountId?: string
 }): Promise<StrategyInstancesResponse> {
-  const qs = params?.opportunityId != null
-    ? `?opportunity_id=${params.opportunityId}`
-    : ''
-  const res = await fetch(`${BASE}/strategies/instances${qs}`)
+  const sp = new URLSearchParams()
+  if (params?.opportunityId != null) sp.set('opportunity_id', String(params.opportunityId))
+  if (params?.accountId) sp.set('account_id', params.accountId)
+  const qs = sp.toString()
+  const res = await fetch(`${BASE}/strategies/instances${qs ? `?${qs}` : ''}`)
   if (!res.ok) throw new Error(`Strategy /instances: ${res.status}`)
   return res.json() as Promise<StrategyInstancesResponse>
 }
@@ -289,4 +294,66 @@ export async function fetchMetaValueOptions(
   )
   if (!res.ok) return { options: [] }
   return res.json()
+}
+
+// ── Allocations ───────────────────────────────────────────────────────────────
+
+const MONITOR_BASE = import.meta.env.VITE_API_MONITOR as string
+
+export async function fetchAllocations(activeOnly = false): Promise<AllocationsResponse> {
+  const qs = `?active_only=${activeOnly}`
+  const res = await fetch(`${BASE}/strategies/allocations${qs}`)
+  if (!res.ok) throw new Error(`GET /strategies/allocations: ${res.status}`)
+  return res.json() as Promise<AllocationsResponse>
+}
+
+export async function fetchAllocation(id: number): Promise<StrategyAllocation> {
+  const res = await fetch(`${BASE}/strategies/allocations/${id}`)
+  if (!res.ok) throw new Error(`GET /strategies/allocations/${id}: ${res.status}`)
+  return res.json() as Promise<StrategyAllocation>
+}
+
+export async function createAllocation(
+  payload: AllocationPayload,
+): Promise<{ strategy_allocation_id: number }> {
+  const res = await fetch(`${BASE}/strategies/allocations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const j = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? String(res.status))
+  return j as { strategy_allocation_id: number }
+}
+
+export async function updateAllocation(
+  id: number,
+  payload: Partial<AllocationPayload>,
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${BASE}/strategies/allocations/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const j = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? String(res.status))
+  return j as { ok: boolean }
+}
+
+export async function setActiveAllocation(
+  allocationId: number | null,
+  opts?: { structureId?: number | null; gateSafetyId?: number | null },
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${MONITOR_BASE}/config/active-strategy`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      active_strategy_structure_id: opts?.structureId ?? null,
+      active_gate_safety_strategy_id: opts?.gateSafetyId ?? null,
+      active_strategy_allocation_id: allocationId,
+    }),
+  })
+  const j = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? String(res.status))
+  return j as { ok: boolean }
 }

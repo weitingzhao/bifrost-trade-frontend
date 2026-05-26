@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { ChevronDown, PanelLeftClose, PanelLeftOpen, ScrollText } from 'lucide-react'
+import { useLogPanel } from '@/context/LogPanelContext'
 import { cn } from '@/lib/utils'
 import {
   Sidebar,
@@ -10,8 +11,6 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
@@ -246,6 +245,86 @@ function CollapsedGroupButton({ group }: { group: NavGroup }) {
   )
 }
 
+// ─── Expanded footer: Logs + Settings on one row ───
+
+function LogAndSettingsFooter() {
+  const location = useLocation()
+  const { open, toggle, errorCount } = useLogPanel()
+  const settingsActive = location.pathname.startsWith('/settings')
+
+  const iconBtn = 'flex h-7 w-7 items-center justify-center rounded-md transition-colors'
+  const btnActive = 'bg-sidebar-accent text-sidebar-accent-foreground'
+  const btnIdle = 'text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+
+  return (
+    <div className="flex items-center px-2 py-1.5">
+      {/* Settings — icon + text, left */}
+      <NavLink
+        to={SETTINGS_ITEM.to}
+        className={cn(
+          'flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium transition-colors',
+          settingsActive ? btnActive : btnIdle,
+        )}
+      >
+        <SETTINGS_ITEM.icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
+        <span>{SETTINGS_ITEM.label}</span>
+      </NavLink>
+
+      <div className="flex-1" />
+
+      {/* Logs — icon only, right */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button onClick={toggle} className={cn(iconBtn, open ? btnActive : btnIdle)}>
+            <div className="relative">
+              <ScrollText className="h-3.5 w-3.5 opacity-70" />
+              {errorCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-red-500 text-[7px] font-bold text-white leading-none">
+                  {errorCount > 9 ? '9+' : errorCount}
+                </span>
+              )}
+            </div>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs font-medium">
+          {open ? 'Close logs' : 'Logs'}{errorCount > 0 ? ` · ${errorCount} error${errorCount > 1 ? 's' : ''}` : ''}
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  )
+}
+
+// ─── Log toggle button (collapsed) ───
+
+function CollapsedLogButton() {
+  const { open, toggle, errorCount } = useLogPanel()
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={toggle}
+          className={cn(
+            'relative flex h-8 w-8 items-center justify-center rounded-md transition-colors mx-auto',
+            open
+              ? 'bg-sidebar-accent text-sidebar-primary'
+              : 'text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+          )}
+        >
+          <ScrollText className="h-4 w-4 shrink-0" />
+          {errorCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
+              {errorCount > 9 ? '9+' : errorCount}
+            </span>
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right" className="text-xs font-medium">
+        Logs {errorCount > 0 ? `· ${errorCount} error${errorCount > 1 ? 's' : ''}` : ''}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 // ─── Settings flyout (collapsed) ───
 
 function CollapsedSettingsButton() {
@@ -459,27 +538,15 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      {/* ── Footer: Settings ── */}
+      {/* ── Footer: Logs + Settings ── */}
       <SidebarFooter className="border-t border-sidebar-border">
         {isCollapsed ? (
-          <div className="flex justify-center py-1">
+          <div className="flex items-center justify-center gap-1 py-1">
+            <CollapsedLogButton />
             <CollapsedSettingsButton />
           </div>
         ) : (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={location.pathname.startsWith('/settings')}
-                className="text-sidebar-foreground/60 data-[active=true]:text-sidebar-accent-foreground hover:text-sidebar-foreground"
-              >
-                <NavLink to={SETTINGS_ITEM.to}>
-                  <SETTINGS_ITEM.icon className="h-4 w-4 shrink-0 opacity-70" />
-                  <span className="text-xs font-medium">{SETTINGS_ITEM.label}</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <LogAndSettingsFooter />
         )}
       </SidebarFooter>
     </Sidebar>

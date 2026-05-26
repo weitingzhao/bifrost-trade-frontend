@@ -95,21 +95,19 @@ export const router = createBrowserRouter([
       { path: 'operations/celery', element: <CeleryPage /> },
       { path: 'operations/logs',   element: <LogsPage /> },
 
+      // System operational pages — no secondary sidebar
+      { path: 'settings/daemon', element: <DaemonStatusPage /> },
+      { path: 'settings/api',    element: <ApiHealthPage /> },
+      { path: 'settings/socket', element: <SocketPage /> },
+
+      // Settings — Coverage / Feed / Config (secondary sidebar via SettingsLayout)
       {
         path: 'settings',
         element: <SettingsLayout />,
         children: [
-          { index: true, element: <Navigate to="/settings/daemon" replace /> },
+          { index: true, element: <Navigate to="/settings/coverage/overview" replace /> },
 
-          // Status > Daemon (existing)
-          { path: 'daemon',     element: <DaemonStatusPage /> },
-
-          // Status > API
-          { path: 'api', element: <ApiHealthPage /> },
-
-          // Status > App
           { path: 'subscribe', element: <SubscribePage /> },
-          { path: 'socket',    element: <SocketPage /> },
 
           // Data Coverage
           { path: 'coverage/overview',        element: <CoverageOverviewPage /> },
@@ -125,7 +123,7 @@ export const router = createBrowserRouter([
           { path: 'feed/massive-option',element: <FeedMassiveOptionPage /> },
           { path: 'feed/massive-comm',  element: <FeedMassiveCommPage /> },
 
-          // Configuration (existing)
+          // Configuration
           { path: 'daemon-app', element: <DaemonAppPage /> },
           { path: 'ib',         element: <IbConnectionPage /> },
         ],

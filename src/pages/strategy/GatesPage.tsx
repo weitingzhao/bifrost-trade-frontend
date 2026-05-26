@@ -165,6 +165,7 @@ export default function GatesPage() {
 
   useEffect(() => {
     if (sheetMode.kind === 'create') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm(buildEmptyPayload())
       setEarningsDates([])
     }
@@ -186,6 +187,7 @@ export default function GatesPage() {
         gates: deepClone(d.gates),
         earnings_dates: [...d.earnings_dates],
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm(payload)
       setEarningsDates([...d.earnings_dates])
     }

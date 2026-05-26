@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { LogSourceDef } from '@/api/logs'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ function normalizeLevel(raw: string): LogLevel {
 
 // Matches Python standard logging: "2024-01-15 12:34:56,123 [INFO] ..."
 // Also handles no-brackets variant: "2024-01-15 12:34:56,123 INFO ..."
-const LINE_RE = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})(?:[,\.]\d+)?\s+\[?(ERROR|WARN(?:ING)?|INFO|DEBUG)\]?\s+(.*)/i
+const LINE_RE = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})(?:[,.]\d+)?\s+\[?(ERROR|WARN(?:ING)?|INFO|DEBUG)\]?\s+(.*)/i
 
 export function parseLine(service: string, raw: string): LogEntry {
   const m = raw.match(LINE_RE)
@@ -60,11 +60,10 @@ export function useLogStream(sources: LogSourceDef[], enabled: boolean) {
   const [status, setStatus] = useState<StreamStatus>('idle')
   // Stable key so the effect only re-runs when the source set changes
   const sourcesKey = sources.map(s => s.key).join(',')
-  const sourcesRef = useRef(sources)
-  sourcesRef.current = sources
 
   useEffect(() => {
     if (!enabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('idle')
       return
     }
@@ -77,7 +76,7 @@ export function useLogStream(sources: LogSourceDef[], enabled: boolean) {
 
     // 1. Fetch initial tail from all sources concurrently
     void Promise.all(
-      sourcesRef.current.map(src =>
+      sources.map(src =>
         src.api.fetch(150).then(({ lines }) => ({ key: src.key, lines })),
       ),
     ).then(results => {
@@ -94,7 +93,7 @@ export function useLogStream(sources: LogSourceDef[], enabled: boolean) {
       setStatus('live')
 
       // 2. Subscribe SSE for each source
-      for (const src of sourcesRef.current) {
+      for (const src of sources) {
         const unsub = src.api.subscribe(
           line => {
             if (cancelled) return

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { ChevronDown, PanelLeftClose, PanelLeftOpen, ScrollText } from 'lucide-react'
-import { useLogPanel } from '@/context/LogPanelContext'
+import { useLogPanel } from '@/hooks/useLogPanel'
 import { cn } from '@/lib/utils'
 import {
   Sidebar,
@@ -50,7 +50,7 @@ function readOpenGroups(defaultLabels: string[]): Set<string> {
   try {
     const raw = localStorage.getItem(OPEN_GROUPS_KEY)
     if (raw) return new Set(JSON.parse(raw) as string[])
-  } catch {}
+  } catch { /* ignore corrupted localStorage value */ }
   return new Set(defaultLabels)
 }
 

@@ -1,13 +1,14 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useState, type ReactNode } from 'react'
 
-interface LogPanelContextValue {
+export interface LogPanelContextValue {
   open: boolean
   toggle: () => void
   errorCount: number
   reportErrorCount: (n: number) => void
 }
 
-const LogPanelContext = createContext<LogPanelContextValue | null>(null)
+// eslint-disable-next-line react-refresh/only-export-components
+export const LogPanelContext = createContext<LogPanelContextValue | null>(null)
 
 export function LogPanelProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
@@ -23,10 +24,4 @@ export function LogPanelProvider({ children }: { children: ReactNode }) {
       {children}
     </LogPanelContext.Provider>
   )
-}
-
-export function useLogPanel() {
-  const ctx = useContext(LogPanelContext)
-  if (!ctx) throw new Error('useLogPanel must be inside LogPanelProvider')
-  return ctx
 }

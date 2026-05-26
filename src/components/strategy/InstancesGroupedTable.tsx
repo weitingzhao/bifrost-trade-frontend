@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { ChevronRight, ChevronDown, Trash2, Eye, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { ChevronRight, ChevronDown, Trash2, Eye, ArrowUpDown, ArrowUp, ArrowDown, Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,6 +26,11 @@ interface Props {
   opportunities: StrategyOpportunity[]
   detailViewMode: 'accordion' | 'multi'
   onDelete: (instance: StrategyInstance) => void
+  onViewDetail?: (instance: StrategyInstance) => void
+  onCompare?: (instance: StrategyInstance) => void
+  activeDetailId?: number | null
+  compareId?: number | null
+  compact?: boolean
 }
 // ── Format helpers ───────────────────────────────────────────────────────────
 
@@ -136,7 +141,7 @@ function SortableHead({
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDelete }: Omit<Props, 'opportunities'> & { opportunities?: StrategyOpportunity[] }) {
+export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDelete, onViewDetail, onCompare, activeDetailId, compareId, compact }: Omit<Props, 'opportunities'> & { opportunities?: StrategyOpportunity[] }) {
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
   const [sort, setSort] = useState<{ column: SortColumn; dir: SortDir } | null>(null)
 
@@ -219,17 +224,17 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">ID</TableHead>
-              <TableHead className="min-w-[200px]">Opportunity</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Period</TableHead>
-              <SortableHead column="net" sort={sort} onSort={toggleSort}>Net PnL</SortableHead>
-              <SortableHead column="npd" sort={sort} onSort={toggleSort}>/ day</SortableHead>
-              <SortableHead column="und" sort={sort} onSort={toggleSort}>Underlying</SortableHead>
-              <SortableHead column="ann" sort={sort} onSort={toggleSort}>Annual %</SortableHead>
-              <SortableHead column="ret" sort={sort} onSort={toggleSort}>Return</SortableHead>
-              <SortableHead column="comm" sort={sort} onSort={toggleSort}>Comm.</SortableHead>
-              <SortableHead column="exec" sort={sort} onSort={toggleSort}>Exec</SortableHead>
-              <TableHead className="w-16" />
+              <TableHead className={compact ? '' : 'min-w-[200px]'}>Opportunity</TableHead>
+              {!compact && <TableHead>Status</TableHead>}
+              {!compact && <TableHead className="text-right">Period</TableHead>}
+              {!compact && <SortableHead column="net" sort={sort} onSort={toggleSort}>Net PnL</SortableHead>}
+              {!compact && <SortableHead column="npd" sort={sort} onSort={toggleSort}>/ day</SortableHead>}
+              {!compact && <SortableHead column="und" sort={sort} onSort={toggleSort}>Underlying</SortableHead>}
+              {!compact && <SortableHead column="ann" sort={sort} onSort={toggleSort}>Annual %</SortableHead>}
+              {!compact && <SortableHead column="ret" sort={sort} onSort={toggleSort}>Return</SortableHead>}
+              {!compact && <SortableHead column="comm" sort={sort} onSort={toggleSort}>Comm.</SortableHead>}
+              {!compact && <SortableHead column="exec" sort={sort} onSort={toggleSort}>Exec</SortableHead>}
+              <TableHead className="w-20">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -282,14 +287,20 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
                 const loading = !entry || entry.status === 'loading'
 
                 return (
-                  <TableRow key={inst.strategy_instance_id}>
+                  <TableRow
+                    key={inst.strategy_instance_id}
+                    className={cn(
+                      activeDetailId === inst.strategy_instance_id && 'bg-primary/5',
+                      compareId === inst.strategy_instance_id && 'bg-blue-500/5',
+                    )}
+                  >
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {inst.strategy_instance_id}
                     </TableCell>
 
                     <TableCell>
                       <div className="space-y-0.5">
-                        <div className="text-sm font-medium leading-tight">
+                        <div className={cn('font-medium leading-tight', compact ? 'text-xs' : 'text-sm')}>
                           {inst.strategy_opportunity_name ?? '—'}
                         </div>
                         {inst.strategy_structure_name && (
@@ -303,6 +314,7 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
                       </div>
                     </TableCell>
 
+                    {!compact && (
                     <TableCell>
                       {loading ? (
                         <span className="text-xs text-muted-foreground">…</span>
@@ -320,55 +332,46 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
+                    )}
 
+                    {!compact && (
                     <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
                       <span>{fmtDate(inst.opened_at)}</span>
                       {' '}
                       <span className="font-medium">{holdDaysDisplay(inst.opened_at)}</span>
                     </TableCell>
+                    )}
 
-                    <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(m?.netPnl))}>
-                      {loading ? '…' : fmtUsd(m?.netPnl)}
-                    </TableCell>
-
-                    <TableCell className={cn('text-right font-mono text-xs', pnlClass(m?.netPnlPerDay))}>
-                      {loading ? '…' : fmtUsd(m?.netPnlPerDay)}
-                    </TableCell>
-
-                    <TableCell className="text-right font-mono text-xs text-muted-foreground">
-                      {loading ? '…' : fmtUsd(m?.underlyingCost)}
-                    </TableCell>
-
-                    <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(m?.annualPct))}>
-                      {loading ? '…' : fmtPct(m?.annualPct)}
-                    </TableCell>
-
-                    <TableCell className={cn('text-right font-mono text-xs', pnlClass(m?.returnPct))}>
-                      {loading ? '…' : fmtPct(m?.returnPct)}
-                    </TableCell>
-
-                    <TableCell className="text-right font-mono text-xs text-muted-foreground">
-                      {loading ? '…' : m ? fmtUsd(-m.commission) : '—'}
-                    </TableCell>
-
-                    <TableCell className="text-right text-xs">
-                      {inst.executions_count > 0 ? (
-                        <span className="tabular-nums">{inst.executions_count}</span>
-                      ) : (
-                        <span className="text-muted-foreground">0</span>
-                      )}
-                    </TableCell>
+                    {!compact && <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(m?.netPnl))}>{loading ? '…' : fmtUsd(m?.netPnl)}</TableCell>}
+                    {!compact && <TableCell className={cn('text-right font-mono text-xs', pnlClass(m?.netPnlPerDay))}>{loading ? '…' : fmtUsd(m?.netPnlPerDay)}</TableCell>}
+                    {!compact && <TableCell className="text-right font-mono text-xs text-muted-foreground">{loading ? '…' : fmtUsd(m?.underlyingCost)}</TableCell>}
+                    {!compact && <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(m?.annualPct))}>{loading ? '…' : fmtPct(m?.annualPct)}</TableCell>}
+                    {!compact && <TableCell className={cn('text-right font-mono text-xs', pnlClass(m?.returnPct))}>{loading ? '…' : fmtPct(m?.returnPct)}</TableCell>}
+                    {!compact && <TableCell className="text-right font-mono text-xs text-muted-foreground">{loading ? '…' : m ? fmtUsd(-m.commission) : '—'}</TableCell>}
+                    {!compact && <TableCell className="text-right text-xs">{inst.executions_count > 0 ? <span className="tabular-nums">{inst.executions_count}</span> : <span className="text-muted-foreground">0</span>}</TableCell>}
 
                     <TableCell className="p-1">
                       <div className="flex items-center gap-0.5">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          className={cn('h-7 w-7', activeDetailId === inst.strategy_instance_id ? 'text-primary' : 'text-muted-foreground hover:text-foreground')}
                           title="View instance detail"
+                          onClick={() => onViewDetail?.(inst)}
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
+                        {activeDetailId != null && activeDetailId !== inst.strategy_instance_id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn('h-7 w-7', compareId === inst.strategy_instance_id ? 'text-blue-500' : 'text-muted-foreground hover:text-foreground')}
+                            title={compareId === inst.strategy_instance_id ? 'Remove comparison' : 'Compare side-by-side'}
+                            onClick={() => onCompare?.(inst)}
+                          >
+                            <Columns2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"

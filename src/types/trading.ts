@@ -210,6 +210,15 @@ export interface RawExecution {
   option_right: string | null
   realized_pnl: number | null
   net_cash: number | null
+  symbol?: string | null
+  contract_key?: string | null
+  expiry?: string | null
+  trade_date?: string | null
+  report_date?: string | null
+  time?: number | null
+  account_id?: string | null
+  strategy_instance_id?: number | null
+  instance_allocations?: { strategy_instance_id: number; allocated_quantity: number }[]
 }
 
 export interface RawExecutionsResponse {

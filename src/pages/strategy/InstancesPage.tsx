@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { InstancesGroupedTable } from '@/components/strategy/InstancesGroupedTable'
 import { InstanceCreateModal } from '@/components/strategy/InstanceCreateModal'
 import { InstanceDeleteModal } from '@/components/strategy/InstanceDeleteModal'
+import { InstanceDetailPanel } from '@/components/strategy/InstanceDetailPanel'
 import { useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
 import { useInstanceMetrics } from '@/hooks/useInstanceMetrics'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -141,6 +142,8 @@ export default function InstancesPage() {
 
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<StrategyInstance | null>(null)
+  const [detailTarget, setDetailTarget] = useState<StrategyInstance | null>(null)
+  const [compareTarget, setCompareTarget] = useState<StrategyInstance | null>(null)
 
   // In-panel bubble filters
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
@@ -446,14 +449,49 @@ export default function InstancesPage() {
         </Alert>
       )}
 
-      {/* Table with symbol groups */}
-      <InstancesGroupedTable
-        groups={groupedItems}
-        metricsMap={metricsMap}
-        opportunities={opportunities}
-        detailViewMode={detailViewMode}
-        onDelete={setDeleteTarget}
-      />
+      {/* Split layout: list (left, compressed when detail open) + detail (right) */}
+      <div className={cn(
+        'flex gap-0 transition-all',
+        detailTarget != null && 'items-start',
+      )}>
+        {/* Table pane */}
+        <div className={cn(
+          'transition-all shrink-0 overflow-auto',
+          detailTarget != null ? 'w-[280px] max-h-[calc(100vh-220px)]' : 'w-full',
+        )}>
+          <InstancesGroupedTable
+            groups={groupedItems}
+            metricsMap={metricsMap}
+            opportunities={opportunities}
+            detailViewMode={detailViewMode}
+            onDelete={setDeleteTarget}
+            onViewDetail={setDetailTarget}
+            onCompare={(inst) => setCompareTarget(compareTarget?.strategy_instance_id === inst.strategy_instance_id ? null : inst)}
+            activeDetailId={detailTarget?.strategy_instance_id ?? null}
+            compareId={compareTarget?.strategy_instance_id ?? null}
+            compact={detailTarget != null}
+          />
+        </div>
+
+        {/* Detail panel (docked sidebar) */}
+        {detailTarget != null && (
+          <div className={cn(
+            'flex-1 min-w-0 border-l border-border overflow-auto max-h-[calc(100vh-220px)]',
+            compareTarget != null && 'grid grid-cols-2 gap-0 divide-x divide-border',
+          )}>
+            <InstanceDetailPanel
+              instance={detailTarget}
+              onClose={() => { setDetailTarget(null); setCompareTarget(null) }}
+            />
+            {compareTarget != null && (
+              <InstanceDetailPanel
+                instance={compareTarget}
+                onClose={() => setCompareTarget(null)}
+              />
+            )}
+          </div>
+        )}
+      </div>
 
       <InstanceCreateModal
         open={createOpen}

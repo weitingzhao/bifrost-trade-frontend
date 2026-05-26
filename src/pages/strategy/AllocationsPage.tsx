@@ -33,6 +33,7 @@ import { Switch } from '@/components/ui/switch'
 import { useAllocations, useOpportunities, useGateSafety } from '@/hooks/useStrategies'
 import { createAllocation, updateAllocation, fetchAllocation } from '@/api/strategy'
 import type { AllocationPayload, StrategyAllocation } from '@/types/positions'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 // ── Form state ────────────────────────────────────────────────────────────────
 
@@ -102,6 +103,7 @@ function AllocationFormDialog({ mode, editId, open, onClose, onSaved }: FormDial
   // controlled Dialog, so useEffect is the correct place to react to it.
   useEffect(() => {
     if (!open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null)
     if (mode === 'edit' && editId != null) {
       setLoadingEdit(true)
@@ -125,7 +127,7 @@ function AllocationFormDialog({ mode, editId, open, onClose, onSaved }: FormDial
       return { strategy_allocation_id: editId! }
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['strategy', 'allocations'] })
+      void qc.invalidateQueries({ queryKey: QUERY_KEYS.strategy.allocations })
       onSaved()
       onClose()
     },
@@ -309,7 +311,7 @@ export default function AllocationsPage() {
       setToggleError(null)
     },
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['strategy', 'allocations'] })
+      void qc.invalidateQueries({ queryKey: QUERY_KEYS.strategy.allocations })
     },
     onError: e => {
       setToggleError(e instanceof Error ? e.message : String(e))
@@ -491,7 +493,7 @@ export default function AllocationsPage() {
         editId={editId}
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        onSaved={() => void qc.invalidateQueries({ queryKey: ['strategy', 'allocations'] })}
+        onSaved={() => void qc.invalidateQueries({ queryKey: QUERY_KEYS.strategy.allocations })}
       />
     </div>
   )

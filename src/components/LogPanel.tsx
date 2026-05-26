@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useLogPanel } from '@/context/LogPanelContext'
+import { useLogPanel } from '@/hooks/useLogPanel'
 import { LOG_SOURCES } from '@/api/logs'
 import { useLogStream, type LogLevel, type LogEntry } from '@/hooks/useLogStream'
 
@@ -62,8 +62,7 @@ export function LogPanel() {
 
   const activeSources = useMemo(
     () => LOG_SOURCES.filter(s => enabledSources[s.key]),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(enabledSources)],
+    [enabledSources],
   )
 
   const { entries, status, errorCount, clear } = useLogStream(activeSources, open)

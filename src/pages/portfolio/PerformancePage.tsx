@@ -355,7 +355,7 @@ export default function PerformancePage() {
       growthUnit,
       layersVisible: growthLayersVisible,
     })
-  }, [bulk?.byDayRangeData, perf?.transaction, growthUnit, growthLayersVisible])
+  }, [bulk, perf, growthUnit, growthLayersVisible])
 
   // FI bar chart data
   const fiBarData = useMemo(() => {
@@ -368,7 +368,7 @@ export default function PerformancePage() {
       calendarMonth,
       growthUnit,
     })
-  }, [bulk?.byDayRangeData, monitorStatus, timeRange, calendarMonth, growthUnit])
+  }, [bulk, monitorStatus, timeRange, calendarMonth, growthUnit])
 
   // Calendar data
   const monthKeys = useMemo(() => listMonthKeysInRange(sinceStr, untilStr), [sinceStr, untilStr])
@@ -379,7 +379,7 @@ export default function PerformancePage() {
       return buildDayMapFromBulk(bulk.calendarDayPnLByAsset, bulk.calendarStkNotionalByBucket)
     }
     return buildDayMapFromApi(perf)
-  }, [bulk?.calendarDayPnLByAsset, bulk?.calendarStkNotionalByBucket, perf])
+  }, [bulk, perf])
 
   const activeDayMap = useMemo(
     () => dayMapByTab[calendarAssetTab],
@@ -410,7 +410,7 @@ export default function PerformancePage() {
   const selectedDayCalendar = useMemo((): PerformanceCalendarEntry | undefined => {
     if (!selectedDay || !perf?.calendar) return undefined
     return perf.calendar.find((e) => e.period_label === selectedDay)
-  }, [selectedDay, perf?.calendar])
+  }, [selectedDay, perf])
 
   // Sec type breakdown
   const secTypeBreakdown = useMemo(() => {

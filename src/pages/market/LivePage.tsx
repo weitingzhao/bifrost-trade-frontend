@@ -134,7 +134,7 @@ export default function LivePage() {
     [allSymbols],
   )
   const { data: benchmarkData } = useBenchmarks(benchmarkSymbols)
-  const benchmarks = benchmarkData?.benchmarks ?? {}
+  const benchmarks = useMemo(() => benchmarkData?.benchmarks ?? {}, [benchmarkData])
 
   // ─── Market Streams Rows ────────────────────────────────────────────────
 

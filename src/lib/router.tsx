@@ -32,9 +32,31 @@ import DaemonPage from '@/pages/operations/DaemonPage'
 import CeleryPage from '@/pages/operations/CeleryPage'
 import LogsPage from '@/pages/operations/LogsPage'
 
+// Settings — existing
 import DaemonStatusPage from '@/pages/settings/DaemonStatusPage'
 import DaemonAppPage from '@/pages/settings/DaemonAppPage'
 import IbConnectionPage from '@/pages/settings/IbConnectionPage'
+
+// Settings — Status > API
+import ApiHealthPage from '@/pages/settings/ApiHealthPage'
+
+// Settings — Status > App
+import SubscribePage from '@/pages/settings/SubscribePage'
+import SocketPage from '@/pages/settings/SocketPage'
+
+// Settings — Data Coverage
+import CoverageOverviewPage from '@/pages/settings/CoverageOverviewPage'
+import CoverageOverviewDetailPage from '@/pages/settings/CoverageOverviewDetailPage'
+import CoverageOptionPage from '@/pages/settings/CoverageOptionPage'
+import CoverageStockIbPage from '@/pages/settings/CoverageStockIbPage'
+import CoverageStockMassivePage from '@/pages/settings/CoverageStockMassivePage'
+
+// Settings — Feed
+import FeedIbPage from '@/pages/settings/FeedIbPage'
+import FeedMassiveOverviewPage from '@/pages/settings/FeedMassiveOverviewPage'
+import FeedMassiveStockPage from '@/pages/settings/FeedMassiveStockPage'
+import FeedMassiveOptionPage from '@/pages/settings/FeedMassiveOptionPage'
+import FeedMassiveCommPage from '@/pages/settings/FeedMassiveCommPage'
 
 export const router = createBrowserRouter([
   {
@@ -43,45 +65,69 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/market/live" replace /> },
 
-      { path: 'market/live', element: <LivePage /> },
+      { path: 'market/live',      element: <LivePage /> },
       { path: 'market/watchlist', element: <WatchlistPage /> },
 
-      { path: 'portfolio/accounts', element: <AccountsPage /> },
-      { path: 'portfolio/positions', element: <PositionsPage /> },
-      { path: 'portfolio/performance', element: <PerformancePage /> },
-      { path: 'portfolio/model-analysis', element: <ModelAnalysisPage /> },
-      { path: 'portfolio/ledger', element: <TradeLedgerPage /> },
-      { path: 'portfolio/transfer', element: <TransferPayPage /> },
+      { path: 'portfolio/accounts',      element: <AccountsPage /> },
+      { path: 'portfolio/positions',     element: <PositionsPage /> },
+      { path: 'portfolio/performance',   element: <PerformancePage /> },
+      { path: 'portfolio/model-analysis',element: <ModelAnalysisPage /> },
+      { path: 'portfolio/ledger',        element: <TradeLedgerPage /> },
+      { path: 'portfolio/transfer',      element: <TransferPayPage /> },
 
-      { path: 'research/screener', element: <ScreenerPage /> },
-      { path: 'research/discovery', element: <DiscoveryPage /> },
-      { path: 'research/greeks', element: <GreeksPage /> },
-      { path: 'research/sepa', element: <SepaPage /> },
+      { path: 'research/sepa',       element: <SepaPage /> },
+      { path: 'research/screener',   element: <ScreenerPage /> },
       { path: 'research/stock-data', element: <StockDataPage /> },
-      { path: 'research/risk', element: <RiskModelPage /> },
-      { path: 'research/backtest', element: <BacktestPage /> },
+      { path: 'research/discovery',  element: <DiscoveryPage /> },
+      { path: 'research/greeks',     element: <GreeksPage /> },
+      { path: 'research/risk',       element: <RiskModelPage /> },
+      { path: 'research/backtest',   element: <BacktestPage /> },
 
-      { path: 'strategy/instances', element: <InstancesPage /> },
-      { path: 'strategy/structures', element: <StructuresPage /> },
-      { path: 'strategy/opportunities', element: <OpportunitiesPage /> },
-      { path: 'strategy/gates', element: <GatesPage /> },
-      { path: 'strategy/win-rate', element: <WinRatePage /> },
-      { path: 'strategy/allocations', element: <AllocationsPage /> },
-      { path: 'strategy/option-category', element: <OptionCategoryPage /> },
+      { path: 'strategy/instances',      element: <InstancesPage /> },
+      { path: 'strategy/win-rate',       element: <WinRatePage /> },
+      { path: 'strategy/structures',     element: <StructuresPage /> },
+      { path: 'strategy/opportunities',  element: <OpportunitiesPage /> },
+      { path: 'strategy/allocations',    element: <AllocationsPage /> },
+      { path: 'strategy/gates',          element: <GatesPage /> },
+      { path: 'strategy/option-category',element: <OptionCategoryPage /> },
 
       { path: 'operations/daemon', element: <DaemonPage /> },
       { path: 'operations/celery', element: <CeleryPage /> },
-      { path: 'operations/logs', element: <LogsPage /> },
+      { path: 'operations/logs',   element: <LogsPage /> },
 
-      // Settings — nested layout with its own secondary left nav
       {
         path: 'settings',
         element: <SettingsLayout />,
         children: [
           { index: true, element: <Navigate to="/settings/daemon" replace /> },
-          { path: 'daemon', element: <DaemonStatusPage /> },
+
+          // Status > Daemon (existing)
+          { path: 'daemon',     element: <DaemonStatusPage /> },
+
+          // Status > API
+          { path: 'api', element: <ApiHealthPage /> },
+
+          // Status > App
+          { path: 'subscribe', element: <SubscribePage /> },
+          { path: 'socket',    element: <SocketPage /> },
+
+          // Data Coverage
+          { path: 'coverage/overview',        element: <CoverageOverviewPage /> },
+          { path: 'coverage/overview-detail', element: <CoverageOverviewDetailPage /> },
+          { path: 'coverage/option',          element: <CoverageOptionPage /> },
+          { path: 'coverage/stock-ib',        element: <CoverageStockIbPage /> },
+          { path: 'coverage/stock-massive',   element: <CoverageStockMassivePage /> },
+
+          // Feed
+          { path: 'feed/ib',            element: <FeedIbPage /> },
+          { path: 'feed/massive',       element: <FeedMassiveOverviewPage /> },
+          { path: 'feed/massive-stock', element: <FeedMassiveStockPage /> },
+          { path: 'feed/massive-option',element: <FeedMassiveOptionPage /> },
+          { path: 'feed/massive-comm',  element: <FeedMassiveCommPage /> },
+
+          // Configuration (existing)
           { path: 'daemon-app', element: <DaemonAppPage /> },
-          { path: 'ib', element: <IbConnectionPage /> },
+          { path: 'ib',         element: <IbConnectionPage /> },
         ],
       },
     ],

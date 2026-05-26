@@ -148,6 +148,10 @@ export default function TradeLedgerPage() {
   // Instance tab filter
   const [instanceContainOpenFilter, setInstanceContainOpenFilter] = useState<'all' | 'yes' | 'no'>('all')
 
+  // Phase 4a: Structure / Wishlist Symbol filter
+  const [filterStructure, setFilterStructure] = useState('')
+  const [filterWishlistSymbol, setFilterWishlistSymbol] = useState('')
+
   // Expansion state
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [strategyOppExpanded, setStrategyOppExpanded] = useState<Set<string>>(new Set())
@@ -171,6 +175,33 @@ export default function TradeLedgerPage() {
     for (const o of oppData?.items ?? []) m.set(o.strategy_opportunity_id, o)
     return m
   }, [oppData])
+
+  // Phase 4a: allowed opportunity IDs for structure/symbol filter (null = no filter)
+  const allowedOpportunityIds = useMemo((): Set<number> | null => {
+    if (!filterStructure && !filterWishlistSymbol) return null
+    const ids = new Set<number>()
+    for (const o of oppData?.items ?? []) {
+      if (filterStructure && o.structure_name !== filterStructure) continue
+      if (filterWishlistSymbol && !(o.symbols ?? []).includes(filterWishlistSymbol)) continue
+      ids.add(o.strategy_opportunity_id)
+    }
+    return ids
+  }, [oppData, filterStructure, filterWishlistSymbol])
+
+  const structureOptions = useMemo((): string[] => {
+    const names = new Set<string>()
+    for (const o of oppData?.items ?? []) if (o.structure_name) names.add(o.structure_name)
+    return Array.from(names).sort()
+  }, [oppData])
+
+  const wishlistSymbolOptions = useMemo((): string[] => {
+    const syms = new Set<string>()
+    for (const o of oppData?.items ?? []) {
+      if (filterStructure && o.structure_name !== filterStructure) continue
+      for (const s of o.symbols ?? []) syms.add(s)
+    }
+    return Array.from(syms).sort()
+  }, [oppData, filterStructure])
 
   // Expiry dropdowns derived from raw (unfiltered) book to avoid circular dep
   const expiryYearOptions = useMemo(() => {
@@ -201,12 +232,16 @@ export default function TradeLedgerPage() {
   const filterExec = useCallback((e: Execution): boolean => {
     if (accountFilter !== 'all' && e.account_id !== accountFilter) return false
     if (symbolFilter && !e.symbol.toLowerCase().includes(symbolFilter.toLowerCase())) return false
+    if (allowedOpportunityIds !== null) {
+      const oppId = e.strategy_opportunity_id
+      if (oppId == null || !allowedOpportunityIds.has(oppId)) return false
+    }
     const isOpt = (e.sec_type ?? '').toUpperCase() === 'OPT'
     if (isOpt && expiryFilterYear) {
       return executionMatchesExpiryYearMonth(e.expiry, expiryFilterYear, expiryFilterMonth)
     }
     return executionMatchesLedgerTradePeriod(e.trade_date ?? null, e.time, dateRange)
-  }, [dateRange, accountFilter, symbolFilter, expiryFilterYear, expiryFilterMonth])
+  }, [dateRange, accountFilter, symbolFilter, expiryFilterYear, expiryFilterMonth, allowedOpportunityIds])
 
   const canonFiltered = useMemo(() => (canonData?.items ?? []).filter(filterExec), [canonData, filterExec])
   const bookFiltered = useMemo(() => (bookData?.items ?? []).filter(filterExec), [bookData, filterExec])
@@ -472,6 +507,20 @@ export default function TradeLedgerPage() {
       : { col, dir: 'desc' })
   }
 
+  function handleAddJournal(accountId: string, symbol: string) {
+    setEditExec({
+      account_executions_id: undefined as unknown as number,
+      account_id: accountId,
+      symbol,
+      sec_type: 'STK',
+      side: 'Buy',
+      qty: 0,
+      quantity: 0,
+      price: 0,
+      time: null,
+    } as unknown as Execution)
+  }
+
   async function handleDelete() {
     if (!deleteTarget?.account_executions_id) return
     await deleteExecution(deleteTarget.account_executions_id)
@@ -528,6 +577,36 @@ export default function TradeLedgerPage() {
             onChange={e => setSymbolFilter(e.target.value)}
             className="h-7 w-36 text-xs"
           />
+
+          {/* Structure filter */}
+          {structureOptions.length > 0 && (
+            <select
+              className="h-7 text-xs rounded border border-input bg-background px-2 focus:outline-none max-w-[160px]"
+              value={filterStructure}
+              onChange={e => { setFilterStructure(e.target.value); setFilterWishlistSymbol('') }}
+            >
+              <option value="">All structures</option>
+              {structureOptions.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+
+          {/* Wishlist symbol filter */}
+          {wishlistSymbolOptions.length > 0 && (
+            <select
+              className="h-7 text-xs rounded border border-input bg-background px-2 focus:outline-none"
+              value={filterWishlistSymbol}
+              onChange={e => setFilterWishlistSymbol(e.target.value)}
+            >
+              <option value="">All symbols</option>
+              {wishlistSymbolOptions.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+
+          {(filterStructure || filterWishlistSymbol) && (
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setFilterStructure(''); setFilterWishlistSymbol('') }}>
+              Clear
+            </Button>
+          )}
         </div>
 
         {/* Expiry filter — only for OPT-related tabs */}
@@ -690,6 +769,7 @@ export default function TradeLedgerPage() {
           setPage={setStkPage}
           onEdit={setEditExec}
           onDelete={setDeleteTarget}
+          onAddJournal={handleAddJournal}
         />
       )}
 
@@ -961,6 +1041,15 @@ function OptGroupRow({
   )
 }
 
+// ── ExecSourceBadge ───────────────────────────────────────────────────────────
+
+function ExecSourceBadge({ source }: { source?: string | null }) {
+  if (!source) return <span className="text-muted-foreground">—</span>
+  const s = source.toLowerCase()
+  const variant = s === 'manual' ? 'secondary' : s === 'tws' ? 'outline' : s === 'flex' ? 'default' : 'outline'
+  return <Badge variant={variant} className="text-[10px] px-1 py-0">{source}</Badge>
+}
+
 // ── STK tab ───────────────────────────────────────────────────────────────────
 
 type StkPositionGroup = {
@@ -975,7 +1064,7 @@ type StkPositionGroup = {
 
 function StkTabContent({
   executions, positionGroups, groupByPosition, stkSort, toggleStkSort,
-  page, setPage, onEdit, onDelete,
+  page, setPage, onEdit, onDelete, onAddJournal,
 }: {
   executions: Execution[]
   positionGroups: StkPositionGroup[] | null
@@ -986,6 +1075,7 @@ function StkTabContent({
   setPage: (p: number) => void
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
+  onAddJournal: (accountId: string, symbol: string) => void
 }) {
   const [posGroupExpanded, setPosGroupExpanded] = useState<Set<string>>(new Set())
 
@@ -1030,11 +1120,16 @@ function StkTabContent({
                   {pg.unrealized != null && (
                     <span className="font-semibold">T: <span className={cn('font-mono', pnlClass(totalPnl))}>{fmtCcy(totalPnl)}</span></span>
                   )}
+                  <Button
+                    variant="ghost" size="sm"
+                    className="h-5 text-[10px] px-1 text-blue-500 ml-1"
+                    onClick={ev => { ev.stopPropagation(); onAddJournal(pg.accountId, pg.symbol) }}
+                  >+J</Button>
                 </div>
               </div>
               {exp && (
                 <div className="border-t">
-                  <StkFlatTable executions={pg.fills} stkSort={stkSort} toggleStkSort={toggleStkSort} onEdit={onEdit} onDelete={onDelete} compact />
+                  <StkFlatTable executions={pg.fills} stkSort={stkSort} toggleStkSort={toggleStkSort} onEdit={onEdit} onDelete={onDelete} onAddJournal={onAddJournal} compact />
                 </div>
               )}
             </div>
@@ -1049,7 +1144,7 @@ function StkTabContent({
 
   return (
     <div className="space-y-2">
-      <StkFlatTable executions={pageExecs} stkSort={stkSort} toggleStkSort={toggleStkSort} onEdit={onEdit} onDelete={onDelete} />
+      <StkFlatTable executions={pageExecs} stkSort={stkSort} toggleStkSort={toggleStkSort} onEdit={onEdit} onDelete={onDelete} onAddJournal={onAddJournal} />
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{executions.length} executions</span>
@@ -1065,13 +1160,14 @@ function StkTabContent({
 }
 
 function StkFlatTable({
-  executions, stkSort, toggleStkSort, onEdit, onDelete, compact = false,
+  executions, stkSort, toggleStkSort, onEdit, onDelete, onAddJournal, compact = false,
 }: {
   executions: Execution[]
   stkSort: { col: StkSortCol; dir: 'asc' | 'desc' }
   toggleStkSort: (col: StkSortCol) => void
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
+  onAddJournal: (accountId: string, symbol: string) => void
   compact?: boolean
 }) {
   const rowClass = compact ? 'py-0.5' : 'py-1'
@@ -1116,11 +1212,12 @@ function StkFlatTable({
               <TableCell className={cn(rowClass, 'text-right font-mono', pnlClass(e.realized_pnl ?? 0))}>
                 {e.realized_pnl != null ? fmtCcy(e.realized_pnl) : '—'}
               </TableCell>
-              <TableCell className={cn(rowClass, 'text-muted-foreground')}>{e.source ?? '—'}</TableCell>
+              <TableCell className={rowClass}><ExecSourceBadge source={e.source} /></TableCell>
               <TableCell className={rowClass}>
                 <div className="flex gap-0.5">
                   <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1" onClick={() => onEdit(e)}>Edit</Button>
                   <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1 text-red-500" onClick={() => onDelete(e)}>Del</Button>
+                  <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1 text-blue-500" onClick={() => onAddJournal(e.account_id, e.symbol)}>+J</Button>
                 </div>
               </TableCell>
             </TableRow>

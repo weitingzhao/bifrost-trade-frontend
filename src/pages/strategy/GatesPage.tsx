@@ -418,9 +418,9 @@ export default function GatesPage() {
       <Sheet open={sheetOpen} onOpenChange={(open) => { if (!open) closeSheet() }}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-2xl overflow-y-auto"
+          className="w-full sm:max-w-[860px] flex flex-col p-0 gap-0"
         >
-          <SheetHeader>
+          <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0">
             <SheetTitle>
               {sheetMode.kind === 'edit' ? 'Edit Gate Safety Set' : 'Create Gate Safety Set'}
             </SheetTitle>
@@ -434,13 +434,13 @@ export default function GatesPage() {
           </SheetHeader>
 
           {detailLoading ? (
-            <div className="p-4 space-y-3">
+            <div className="flex-1 p-6 space-y-3">
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-32 w-full" />
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               {submitError && (
                 <Alert variant="destructive">
                   <AlertDescription>{(submitError as Error).message}</AlertDescription>
@@ -452,9 +452,9 @@ export default function GatesPage() {
                 <CardHeader className="py-2.5 px-4">
                   <CardTitle className="text-sm">Metadata</CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 pt-0 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="sm:col-span-2 space-y-1">
+                <CardContent className="px-4 pb-4 pt-0 space-y-4">
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="col-span-3 space-y-1">
                       <Label className="text-xs">Name *</Label>
                       <Input
                         value={form.name}
@@ -472,7 +472,7 @@ export default function GatesPage() {
 
                   <Separator />
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     {DIM_TYPES.map((dim) => (
                       <div key={dim} className="space-y-1">
                         <Label className="text-xs">{DIM_LABELS[dim]}</Label>
@@ -511,16 +511,17 @@ export default function GatesPage() {
                 <CardHeader className="py-2.5 px-4">
                   <CardTitle className="text-sm">Strategy — Structure &amp; Earnings</CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 pt-0 space-y-3">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <CardContent className="px-4 pb-4 pt-0 space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <NumberField label="min_dte" value={gateNum('strategy.structure.min_dte')} onChange={(v) => setGateValue('strategy.structure.min_dte', v)} />
                     <NumberField label="max_dte" value={gateNum('strategy.structure.max_dte')} onChange={(v) => setGateValue('strategy.structure.max_dte', v)} />
                     <NumberField label="atm_band_pct" value={gateNum('strategy.structure.atm_band_pct')} onChange={(v) => setGateValue('strategy.structure.atm_band_pct', v)} step={0.01} />
                   </div>
                   <Separator />
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-4">
                     <NumberField label="blackout_days_before" value={gateNum('strategy.earnings.blackout_days_before')} onChange={(v) => setGateValue('strategy.earnings.blackout_days_before', v)} />
                     <NumberField label="blackout_days_after" value={gateNum('strategy.earnings.blackout_days_after')} onChange={(v) => setGateValue('strategy.earnings.blackout_days_after', v)} />
+                    <div />
                   </div>
                   <SwitchField
                     label="trading_hours_only"
@@ -533,31 +534,35 @@ export default function GatesPage() {
               {/* Group 3: State */}
               <Card>
                 <CardHeader className="py-2.5 px-4">
-                  <CardTitle className="text-sm">State — Delta, Market, Liquidity, System</CardTitle>
+                  <CardTitle className="text-sm">State — Delta / Market / Liquidity / System</CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 pt-0 space-y-3">
-                  <p className="text-xs text-muted-foreground font-medium">Delta</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <CardContent className="px-4 pb-4 pt-0 space-y-4">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Delta</p>
+                  <div className="grid grid-cols-3 gap-4">
                     <NumberField label="epsilon_band" value={gateNum('state.delta.epsilon_band')} onChange={(v) => setGateValue('state.delta.epsilon_band', v)} />
                     <NumberField label="threshold_hedge_shares" value={gateNum('state.delta.threshold_hedge_shares')} onChange={(v) => setGateValue('state.delta.threshold_hedge_shares', v)} />
                     <NumberField label="max_delta_limit" value={gateNum('state.delta.max_delta_limit')} onChange={(v) => setGateValue('state.delta.max_delta_limit', v)} />
                   </div>
                   <Separator />
-                  <p className="text-xs text-muted-foreground font-medium">Market</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Market</p>
+                  <div className="grid grid-cols-3 gap-4">
                     <NumberField label="vol_window_min" value={gateNum('state.market.vol_window_min')} onChange={(v) => setGateValue('state.market.vol_window_min', v)} />
                     <NumberField label="stale_ts_threshold_ms" value={gateNum('state.market.stale_ts_threshold_ms')} onChange={(v) => setGateValue('state.market.stale_ts_threshold_ms', v)} />
+                    <div />
                   </div>
                   <Separator />
-                  <p className="text-xs text-muted-foreground font-medium">Liquidity</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Liquidity</p>
+                  <div className="grid grid-cols-3 gap-4">
                     <NumberField label="wide_spread_pct" value={gateNum('state.liquidity.wide_spread_pct')} onChange={(v) => setGateValue('state.liquidity.wide_spread_pct', v)} step={0.01} />
                     <NumberField label="extreme_spread_pct" value={gateNum('state.liquidity.extreme_spread_pct')} onChange={(v) => setGateValue('state.liquidity.extreme_spread_pct', v)} step={0.01} />
+                    <div />
                   </div>
                   <Separator />
-                  <p className="text-xs text-muted-foreground font-medium">System</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">System</p>
+                  <div className="grid grid-cols-3 gap-4">
                     <NumberField label="data_lag_threshold_ms" value={gateNum('state.system.data_lag_threshold_ms')} onChange={(v) => setGateValue('state.system.data_lag_threshold_ms', v)} />
+                    <div />
+                    <div />
                   </div>
                 </CardContent>
               </Card>
@@ -567,8 +572,8 @@ export default function GatesPage() {
                 <CardHeader className="py-2.5 px-4">
                   <CardTitle className="text-sm">Intent — Hedge</CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 pt-0">
-                  <div className="grid grid-cols-2 gap-3">
+                <CardContent className="px-4 pb-4 pt-0">
+                  <div className="grid grid-cols-4 gap-4">
                     <NumberField label="min_hedge_shares" value={gateNum('intent.hedge.min_hedge_shares')} onChange={(v) => setGateValue('intent.hedge.min_hedge_shares', v)} />
                     <NumberField label="cooldown_seconds" value={gateNum('intent.hedge.cooldown_seconds')} onChange={(v) => setGateValue('intent.hedge.cooldown_seconds', v)} />
                     <NumberField label="max_hedge_shares_per_order" value={gateNum('intent.hedge.max_hedge_shares_per_order')} onChange={(v) => setGateValue('intent.hedge.max_hedge_shares_per_order', v)} />
@@ -582,13 +587,14 @@ export default function GatesPage() {
                 <CardHeader className="py-2.5 px-4">
                   <CardTitle className="text-sm">Guard — Risk</CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 pt-0 space-y-3">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <CardContent className="px-4 pb-4 pt-0 space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <NumberField label="max_daily_hedge_count" value={gateNum('guard.risk.max_daily_hedge_count')} onChange={(v) => setGateValue('guard.risk.max_daily_hedge_count', v)} />
                     <NumberField label="max_position_shares" value={gateNum('guard.risk.max_position_shares')} onChange={(v) => setGateValue('guard.risk.max_position_shares', v)} />
                     <NumberField label="max_daily_loss_usd" value={gateNum('guard.risk.max_daily_loss_usd')} onChange={(v) => setGateValue('guard.risk.max_daily_loss_usd', v)} />
                     <NumberField label="max_net_delta_shares" value={gateNum('guard.risk.max_net_delta_shares')} onChange={(v) => setGateValue('guard.risk.max_net_delta_shares', v)} />
                     <NumberField label="max_spread_pct" value={gateNum('guard.risk.max_spread_pct')} onChange={(v) => setGateValue('guard.risk.max_spread_pct', v)} step={0.01} />
+                    <div />
                   </div>
                   <SwitchField
                     label="paper_trade"
@@ -607,33 +613,35 @@ export default function GatesPage() {
                     Add date
                   </Button>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 pt-0 space-y-2">
+                <CardContent className="px-4 pb-4 pt-0">
                   {earningsDates.length === 0 && (
                     <p className="text-xs text-muted-foreground">No earnings dates configured.</p>
                   )}
-                  {earningsDates.map((d, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <Input
-                        value={d}
-                        onChange={(e) => updateEarningsDate(idx, e.target.value)}
-                        placeholder="YYYY-MM-DD"
-                        className="h-8 text-sm font-mono flex-1"
-                      />
-                      <Button
-                        variant="ghost" size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => removeEarningsDate(idx)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ))}
+                  <div className="grid grid-cols-3 gap-2">
+                    {earningsDates.map((d, idx) => (
+                      <div key={idx} className="flex items-center gap-1">
+                        <Input
+                          value={d}
+                          onChange={(e) => updateEarningsDate(idx, e.target.value)}
+                          placeholder="YYYY-MM-DD"
+                          className="h-8 text-sm font-mono flex-1"
+                        />
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                          onClick={() => removeEarningsDate(idx)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
           )}
 
-          <SheetFooter className="border-t px-4 py-3">
+          <SheetFooter className="border-t px-6 py-3 shrink-0">
             <div className="flex items-center justify-end gap-2 w-full">
               <Button variant="outline" size="sm" onClick={closeSheet} disabled={submitting}>
                 Cancel

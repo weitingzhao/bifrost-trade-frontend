@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { updateExecution } from '@/api/trading'
+import { updateExecution, createExecution } from '@/api/trading'
 import type { Execution } from '@/types/positions'
 
 interface Props {
@@ -35,29 +35,49 @@ export function ExecutionFormModal({ open, exec, accountOptions, onClose, onSucc
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const isCreate = !exec?.account_executions_id
+
   async function handleSubmit() {
-    if (!exec?.account_executions_id) return
     setSubmitting(true)
     setError(null)
-
+    const timeEpoch = execTime ? Math.floor(new Date(execTime).getTime() / 1000) : Math.floor(Date.now() / 1000)
     try {
-      const timeEpoch = execTime ? Math.floor(new Date(execTime).getTime() / 1000) : undefined
-      const res = await updateExecution(exec.account_executions_id, {
-        account_id: accountId,
-        symbol: symbol.toUpperCase(),
-        sec_type: secType,
-        side,
-        quantity: parseFloat(quantity) || 0,
-        price: parseFloat(price) || 0,
-        exec_time: timeEpoch,
-        ...(secType === 'OPT' ? {
-          expiry,
-          strike: parseFloat(strike) || undefined,
-          option_right: right,
-        } : {}),
-        ...(commission ? { commission: parseFloat(commission) } : {}),
-      })
-      if (!res.ok) throw new Error(res.error ?? 'Update failed')
+      if (isCreate) {
+        const res = await createExecution({
+          account_id: accountId,
+          symbol: symbol.toUpperCase(),
+          sec_type: secType,
+          side,
+          quantity: parseFloat(quantity) || 0,
+          price: parseFloat(price) || 0,
+          time: timeEpoch,
+          source: 'manual',
+          ...(secType === 'OPT' ? {
+            expiry,
+            strike: parseFloat(strike) || undefined,
+            option_right: right,
+          } : {}),
+          ...(commission ? { commission: parseFloat(commission) } : {}),
+        })
+        if (!res.ok) throw new Error(res.error ?? 'Create failed')
+      } else {
+        const res = await updateExecution(exec!.account_executions_id!, {
+          account_id: accountId,
+          symbol: symbol.toUpperCase(),
+          sec_type: secType,
+          side,
+          quantity: parseFloat(quantity) || 0,
+          price: parseFloat(price) || 0,
+          exec_time: timeEpoch,
+          ...(secType === 'OPT' ? {
+            expiry,
+            strike: parseFloat(strike) || undefined,
+            option_right: right,
+          } : {}),
+          ...(commission ? { commission: parseFloat(commission) } : {}),
+        })
+        if (!res.ok) throw new Error(res.error ?? 'Update failed')
+      }
       onSuccess()
       onClose()
     } catch (e) {
@@ -71,7 +91,7 @@ export function ExecutionFormModal({ open, exec, accountOptions, onClose, onSucc
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Execution</DialogTitle>
+          <DialogTitle>{isCreate ? 'Add Journal Entry' : 'Edit Execution'}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-3 text-sm pt-2">

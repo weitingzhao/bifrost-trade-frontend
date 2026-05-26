@@ -61,14 +61,65 @@ function saveOpenGroups(groups: Set<string>) {
 
 // ─── Sub-item (expanded mode) ───
 
-function SubItem({ item }: { item: NavItem }) {
+function SubItem({ item, depth = 0 }: { item: NavItem; depth?: number }) {
   const location = useLocation()
+  const isActive = location.pathname.startsWith(item.to)
+  const hasChildren = item.children && item.children.length > 0
+  const childActive = hasChildren
+    ? item.children!.some((c) => location.pathname.startsWith(c.to))
+    : false
+  const [childOpen, setChildOpen] = useState(isActive || childActive)
+
+  const indent = depth > 0 ? 'pl-4' : ''
+
+  if (hasChildren) {
+    return (
+      <SidebarMenuSubItem>
+        {/* Root link + toggle chevron side by side */}
+        <div className="flex items-center gap-0.5">
+          <SidebarMenuSubButton
+            asChild
+            isActive={isActive || childActive}
+            className={cn(
+              'flex-1 text-sidebar-foreground/60 data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden',
+              indent,
+            )}
+          >
+            <NavLink to={item.to}>
+              <item.icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              <span>{item.label}</span>
+            </NavLink>
+          </SidebarMenuSubButton>
+          <button
+            onClick={() => setChildOpen((o) => !o)}
+            className="group-data-[collapsible=icon]:hidden shrink-0 flex h-6 w-5 items-center justify-center rounded text-sidebar-foreground/30 hover:text-sidebar-foreground/70 transition-colors"
+            aria-label={childOpen ? `Collapse ${item.label}` : `Expand ${item.label}`}
+          >
+            <ChevronDown className={cn('h-3 w-3 transition-transform', childOpen && 'rotate-180')} />
+          </button>
+        </div>
+        {childOpen && (
+          <SidebarMenu className="group-data-[collapsible=icon]:hidden">
+            <SidebarMenuSub>
+              {item.children!.map((child) => (
+                <SubItem key={child.to} item={child} depth={depth + 1} />
+              ))}
+            </SidebarMenuSub>
+          </SidebarMenu>
+        )}
+      </SidebarMenuSubItem>
+    )
+  }
+
   return (
     <SidebarMenuSubItem>
       <SidebarMenuSubButton
         asChild
-        isActive={location.pathname.startsWith(item.to)}
-        className="text-sidebar-foreground/60 data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium hover:text-sidebar-foreground"
+        isActive={isActive}
+        className={cn(
+          'text-sidebar-foreground/60 data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium hover:text-sidebar-foreground',
+          indent,
+        )}
       >
         <NavLink to={item.to}>
           <item.icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
@@ -81,23 +132,50 @@ function SubItem({ item }: { item: NavItem }) {
 
 // ─── Flyout item (collapsed mode popover) ───
 
-function FlyoutItem({ item, onClose }: { item: NavItem; onClose: () => void }) {
+function FlyoutItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: () => void; depth?: number }) {
   const location = useLocation()
   const isActive = location.pathname.startsWith(item.to)
+  const hasChildren = item.children && item.children.length > 0
+  const childActive = hasChildren
+    ? item.children!.some((c) => location.pathname.startsWith(c.to))
+    : false
+  const [open, setOpen] = useState(isActive || childActive)
+  const pl = depth > 0 ? 'pl-5 pr-2' : 'px-2.5'
+
   return (
-    <NavLink
-      to={item.to}
-      onClick={onClose}
-      className={cn(
-        'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors',
-        isActive
-          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-          : 'text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+    <div>
+      <div className="flex items-center">
+        <NavLink
+          to={item.to}
+          onClick={onClose}
+          className={cn(
+            `flex flex-1 items-center gap-2 rounded-md ${pl} py-1.5 text-xs transition-colors`,
+            (isActive || childActive)
+              ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+              : 'text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+          )}
+        >
+          <item.icon className="h-3.5 w-3.5 shrink-0 opacity-75" />
+          {item.label}
+        </NavLink>
+        {hasChildren && (
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="shrink-0 flex h-6 w-5 items-center justify-center text-sidebar-foreground/30 hover:text-sidebar-foreground/70 transition-colors"
+            aria-label={open ? `Collapse ${item.label}` : `Expand ${item.label}`}
+          >
+            <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180')} />
+          </button>
+        )}
+      </div>
+      {hasChildren && open && (
+        <div className="mt-0.5 space-y-0.5">
+          {item.children!.map((child) => (
+            <FlyoutItem key={child.to} item={child} onClose={onClose} depth={depth + 1} />
+          ))}
+        </div>
       )}
-    >
-      <item.icon className="h-3.5 w-3.5 shrink-0 opacity-75" />
-      {item.label}
-    </NavLink>
+    </div>
   )
 }
 
@@ -255,7 +333,17 @@ export function AppSidebar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setAccordion((p) => !p)}
+                  onClick={() => {
+                    const next = !accordion
+                    setAccordion(next)
+                    if (next) {
+                      // Switching to single-expand: immediately collapse all except the active group
+                      const active = NAV_GROUPS.find((g) =>
+                        getAllItems(g).some((item) => location.pathname.startsWith(item.to)),
+                      )
+                      setOpenGroups(active ? new Set([active.label]) : new Set())
+                    }
+                  }}
                   className="flex h-6 w-6 items-center justify-center rounded text-sidebar-foreground/35 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                   aria-label={accordion ? 'Switch to multi-expand' : 'Switch to single-expand'}
                 >
@@ -266,8 +354,8 @@ export function AppSidebar() {
               </TooltipTrigger>
               <TooltipContent side="right" className="text-xs">
                 {accordion
-                  ? 'Single-expand — click to allow multiple'
-                  : 'Multi-expand — click to allow only one'}
+                  ? 'Single expand — click to allow multiple open'
+                  : 'Multi expand — click to allow only one open'}
               </TooltipContent>
             </Tooltip>
           </div>

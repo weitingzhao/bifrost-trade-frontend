@@ -389,3 +389,62 @@ export interface OpportunitiesResponse {
 export interface StructuresResponse {
   items: StrategyStructure[]
 }
+
+// ── Option Category / Strategy Template types ────────────────────────────────
+
+export interface StrategyTemplateRow {
+  strategy_template_id: number
+  template_code: string
+  display_name: string
+  dim_direction: string | null
+  dim_structure: string | null
+  dim_coverage: string | null
+  dim_risk: string | null
+  dim_volatility: string | null
+  dim_time: string | null
+  explanation: string | null
+  typical_use: string | null
+  example: string | null
+  nature: string | null
+  sort_order: number
+  is_active: boolean
+}
+
+export interface MetaParamItem {
+  meta_key: string
+  display_label: string | null
+  default_value_text: string | null
+  param_kind: string | null
+  sort_order: number
+}
+
+export interface StrategyTemplateDetail extends StrategyTemplateRow {
+  legs: StructureLeg[]
+  meta_params: MetaParamItem[]
+  characteristics: string[]
+}
+
+export interface StructureTypeLegPayload {
+  role: string | null
+  direction: string | null
+  option_right: string
+  quantity_default: number
+  sort_order: number
+}
+
+export interface MetaParamPayload {
+  meta_key: string
+  display_label: string | null
+  default_value_text: string | null
+  param_kind: string
+  sort_order: number
+}
+
+export interface StructureTypeConfigOption {
+  value: string
+  label: string
+}
+
+export interface StrategyTemplatesResponse {
+  items: StrategyTemplateRow[]
+}

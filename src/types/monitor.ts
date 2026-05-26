@@ -47,6 +47,10 @@ export interface AccountSyncHeartbeat {
   heartbeat_interval_sec: number
   last_sync_version: number
   stream_lag: number
+  accounts_synced?: number
+  positions_synced?: number
+  executions_synced?: number
+  open_orders_synced?: number
 }
 
 export interface StrategyActiveRef {
@@ -75,8 +79,37 @@ export interface StatusSocketIbIngestor {
   msg_count?: number | null
 }
 
+export interface StatusSocketIbOperator {
+  service_alive?: boolean
+  connected?: boolean
+  msg_count?: number | null
+  last_msg_age_s?: number | null
+  reconnects?: number | null
+}
+
+export interface StatusSocketIbAccountAgent {
+  connected?: boolean
+  service_alive?: boolean
+  last_msg_age_s?: number | null
+  reconnects?: number | null
+  msg_count?: number | null
+  client_id?: number | null
+}
+
 export interface StatusSocket {
   ib_ingestor?: StatusSocketIbIngestor | null
+  ib_operator?: StatusSocketIbOperator | null
+  ib_account_agent?: StatusSocketIbAccountAgent | null
+}
+
+export interface Operation {
+  daemon_auto_operations_id?: number
+  ts: number
+  type?: string
+  side?: string
+  quantity?: number
+  price?: number
+  state_reason?: string
 }
 
 export interface StatusLiveUi {
@@ -94,8 +127,19 @@ export interface StatusResponse {
     heartbeat: DaemonHeartbeat | null
     lamp: string
     block_reasons: string[]
+    self_check?: string
     trading: {
       trading_suspended: boolean
+      auto_status?: {
+        ts?: number
+        daemon_state?: string
+        trading_state?: string
+        spot?: number
+        stock_position?: number
+        daily_hedge_count?: number
+        account_id?: string | null
+        account_net_liquidation?: number | null
+      } | null
     }
   }
   portfolio: {

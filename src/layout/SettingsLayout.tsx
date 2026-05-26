@@ -1,73 +1,200 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
-import { Activity, Cpu, Plug } from 'lucide-react'
+import {
+  BarChart2, ChevronDown, ChevronRight,
+  Cpu, Database, HardDrive, Globe,
+  Layers, Plug, Radio, Wifi,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Separator } from '@/components/ui/separator'
 
-const settingsNav = [
+// ─── Nav tree ────────────────────────────────────────────────────────────────
+
+interface NavLeaf {
+  kind: 'leaf'
+  label: string
+  to: string
+  icon: React.ElementType
+}
+
+interface NavBranch {
+  kind: 'branch'
+  label: string
+  icon: React.ElementType
+  children: NavLeaf[]
+}
+
+interface NavSection {
+  section: string
+  items: (NavLeaf | NavBranch)[]
+}
+
+interface NavGroup {
+  group: string
+  sections: NavSection[]
+}
+
+function leaf(label: string, to: string, icon: React.ElementType): NavLeaf {
+  return { kind: 'leaf', label, to, icon }
+}
+
+function branch(label: string, icon: React.ElementType, children: NavLeaf[]): NavBranch {
+  return { kind: 'branch', label, icon, children }
+}
+
+const NAV: NavGroup[] = [
   {
-    group: 'Status',
-    items: [
-      { label: 'Daemon', to: '/settings/daemon', icon: Activity, description: 'Process heartbeat & FSM state' },
+    group: 'Data & Feed',
+    sections: [
+      {
+        section: 'Data Coverage',
+        items: [
+          branch('Overview', BarChart2, [
+            leaf('Summary', '/settings/coverage/overview',        BarChart2),
+            leaf('Detail',  '/settings/coverage/overview-detail', Layers),
+          ]),
+          leaf('Option', '/settings/coverage/option', Layers),
+          branch('Stock', HardDrive, [
+            leaf('IB Live (Redis)',    '/settings/coverage/stock-ib',      Wifi),
+            leaf('Massive Delay (DB)', '/settings/coverage/stock-massive', Database),
+          ]),
+        ],
+      },
+      {
+        section: 'Feed',
+        items: [
+          leaf('Subscribe',           '/settings/subscribe', Radio),
+          leaf('Interactive Brokers', '/settings/feed/ib',   Plug),
+          branch('Massive', Globe, [
+            leaf('Overview', '/settings/feed/massive',         Globe),
+            leaf('Stock',    '/settings/feed/massive-stock',   HardDrive),
+            leaf('Option',   '/settings/feed/massive-option',  Layers),
+            leaf('Common',   '/settings/feed/massive-comm',    BarChart2),
+          ]),
+        ],
+      },
     ],
   },
   {
     group: 'Configuration',
-    items: [
-      { label: 'Daemon App', to: '/settings/daemon-app', icon: Cpu, description: 'Runtime config (heartbeat interval, etc.)' },
-      { label: 'IB Configure', to: '/settings/ib', icon: Plug, description: 'IB account, port & Client ID' },
+    sections: [
+      {
+        section: 'Configuration',
+        items: [
+          leaf('Daemon App', '/settings/daemon-app', Cpu),
+          branch('IB Configure', Plug, [
+            leaf('User (YAML)',       '/settings/ib#ib-users',       Plug),
+            leaf('Client ID (YAML)',  '/settings/ib#ib-client-ids',  Cpu),
+            leaf('Account',          '/settings/ib#ib-account',      Layers),
+            leaf('Flex Query',       '/settings/ib#ib-flex-query',   Database),
+            leaf('Flex Preference',  '/settings/ib#flex-preference', BarChart2),
+          ]),
+        ],
+      },
     ],
   },
 ]
+
+// ─── Nav components ───────────────────────────────────────────────────────────
+
+function LeafItem({ item, depth = 0 }: { item: NavLeaf; depth?: number }) {
+  const location = useLocation()
+  const basePath = item.to.split('#')[0]
+  const isActive = location.pathname === basePath
+
+  return (
+    <NavLink
+      to={item.to}
+      className={cn(
+        'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
+        depth > 0 && 'pl-6',
+        isActive
+          ? 'bg-background text-foreground font-medium shadow-sm'
+          : 'text-muted-foreground hover:bg-background/60 hover:text-foreground',
+      )}
+    >
+      <item.icon className="h-3.5 w-3.5 shrink-0" />
+      <span>{item.label}</span>
+    </NavLink>
+  )
+}
+
+function BranchItem({ item }: { item: NavBranch }) {
+  const location = useLocation()
+  const hasActive = item.children.some(
+    (c) => location.pathname === c.to.split('#')[0],
+  )
+  const [open, setOpen] = useState(hasActive)
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
+          hasActive
+            ? 'text-foreground font-medium'
+            : 'text-muted-foreground hover:bg-background/60 hover:text-foreground',
+        )}
+      >
+        <item.icon className="h-3.5 w-3.5 shrink-0" />
+        <span className="flex-1 text-left">{item.label}</span>
+        {open
+          ? <ChevronDown  className="h-3 w-3 shrink-0 opacity-50" />
+          : <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />
+        }
+      </button>
+      {open && (
+        <div className="mt-0.5 space-y-0.5">
+          {item.children.map((child) => (
+            <LeafItem key={child.to} item={child} depth={1} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Layout ───────────────────────────────────────────────────────────────────
 
 export function SettingsLayout() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Redirect /settings to the first child page
-  useEffect(() => {
-    if (location.pathname === '/settings' || location.pathname === '/settings/') {
-      navigate('/settings/daemon', { replace: true })
-    }
-  }, [location.pathname, navigate])
+  if (location.pathname === '/settings' || location.pathname === '/settings/') {
+    navigate('/settings/coverage/overview', { replace: true })
+  }
 
   return (
     <div className="flex h-full">
-      {/* Secondary nav panel */}
-      <aside className="w-52 shrink-0 border-r border-border bg-muted/30 overflow-y-auto">
-        <div className="px-3 py-4 space-y-4">
-          {settingsNav.map((group, i) => (
+      <aside className="w-56 shrink-0 border-r border-border bg-muted/20 overflow-y-auto">
+        <div className="px-3 py-4 space-y-5">
+          {NAV.map((group, gi) => (
             <div key={group.group}>
-              {i > 0 && <Separator className="mb-4" />}
-              <p className="px-2 mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              {gi > 0 && <div className="border-t border-border/60 mb-5" />}
+
+              <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60 select-none">
                 {group.group}
               </p>
-              <ul className="space-y-0.5">
-                {group.items.map((item) => (
-                  <li key={item.to}>
-                    <NavLink
-                      to={item.to}
-                      className={({ isActive }) =>
-                        cn(
-                          'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors',
-                          isActive
-                            ? 'bg-background text-foreground font-medium shadow-sm'
-                            : 'text-muted-foreground hover:bg-background/60 hover:text-foreground'
-                        )
-                      }
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span>{item.label}</span>
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
+
+              {group.sections.map((section) => (
+                <div key={section.section} className="mb-3">
+                  <p className="px-2 mb-1 text-[11px] font-semibold text-muted-foreground/80 select-none">
+                    {section.section}
+                  </p>
+                  <div className="space-y-0.5">
+                    {section.items.map((item) =>
+                      item.kind === 'leaf'
+                        ? <LeafItem key={item.to} item={item} />
+                        : <BranchItem key={item.label} item={item} />
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>
       </aside>
 
-      {/* Content area */}
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>

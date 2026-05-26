@@ -15,8 +15,10 @@ import {
   LayoutDashboard,
   LineChart,
   ListFilter,
+  Network,
   PieChart,
   ScrollText,
+  Server,
   Settings,
   Shield,
   Star,
@@ -30,6 +32,8 @@ export interface NavItem {
   label: string
   to: string
   icon: LucideIcon
+  /** Optional nested children — renders as collapsible sub-list under this item */
+  children?: NavItem[]
 }
 
 export interface NavSubGroup {
@@ -135,15 +139,37 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'System',
     icon: Terminal,
     dividerBefore: true,
-    items: [
-      { label: 'Daemon', to: '/operations/daemon', icon: Cpu },
-      { label: 'Celery', to: '/operations/celery', icon: Terminal },
-      { label: 'Logs', to: '/operations/logs', icon: ScrollText },
+    subGroups: [
+      {
+        label: 'Services',
+        items: [
+          {
+            label: 'API',
+            to: '/settings/api',
+            icon: Server,
+            children: [
+              { label: 'Architecture', to: '/settings/api/architecture', icon: Layers },
+              { label: 'Account',      to: '/settings/api/account',      icon: Cpu },
+              { label: 'Research',     to: '/settings/api/research',     icon: BarChart2 },
+              { label: 'Massive',      to: '/settings/api/massive',      icon: Database },
+            ],
+          },
+          { label: 'Daemon', to: '/operations/daemon', icon: Cpu },
+          { label: 'Celery', to: '/operations/celery', icon: Terminal },
+          { label: 'Socket', to: '/settings/socket',   icon: Network },
+        ],
+      },
+      {
+        label: 'Activity',
+        items: [
+          { label: 'Logs', to: '/operations/logs', icon: ScrollText },
+        ],
+      },
     ],
   },
 ]
 
-export const SETTINGS_ITEM: NavItem = { label: 'Settings', to: '/settings/daemon', icon: Settings }
+export const SETTINGS_ITEM: NavItem = { label: 'Settings', to: '/settings/coverage/overview', icon: Settings }
 
 /** Flatten all items from a group (across subGroups or items) — used for active-state detection */
 export function getAllItems(group: NavGroup): NavItem[] {

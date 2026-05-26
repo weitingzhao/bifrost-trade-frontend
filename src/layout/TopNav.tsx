@@ -5,9 +5,56 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getAllItems, NAV_GROUPS, SETTINGS_ITEM } from './navConfig'
-import type { NavGroup } from './navConfig'
+import type { NavGroup, NavItem } from './navConfig'
 import { BifrostLogoMark } from '@/components/BifrostLogo'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
+
+// Renders a single dropdown item; if it has children shows them indented below.
+function DropdownItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: () => void; depth?: number }) {
+  const location = useLocation()
+  const hasChildren = item.children && item.children.length > 0
+  const childActive = hasChildren
+    ? item.children!.some((c) => location.pathname.startsWith(c.to))
+    : false
+  const [open, setOpen] = useState(location.pathname.startsWith(item.to) || childActive)
+  const pl = depth === 0 ? 'px-3' : 'pl-6 pr-3'
+
+  return (
+    <div>
+      <div className="flex items-center">
+        <NavLink
+          to={item.to}
+          onClick={onClose}
+          className={({ isActive: a }) =>
+            cn(
+              `flex flex-1 items-center gap-2 ${pl} py-1.5 text-xs transition-colors hover:bg-muted`,
+              (a || childActive) ? 'text-foreground font-medium' : 'text-muted-foreground',
+            )
+          }
+        >
+          <item.icon className="h-3.5 w-3.5 shrink-0" />
+          {item.label}
+        </NavLink>
+        {hasChildren && (
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="shrink-0 flex h-6 w-6 items-center justify-center text-muted-foreground/50 hover:text-muted-foreground"
+            aria-label={open ? `Collapse ${item.label}` : `Expand ${item.label}`}
+          >
+            <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180')} />
+          </button>
+        )}
+      </div>
+      {hasChildren && open && (
+        <div>
+          {item.children!.map((child) => (
+            <DropdownItem key={child.to} item={child} onClose={onClose} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface GroupMenuProps {
   group: NavGroup
@@ -49,23 +96,10 @@ function GroupMenu({ group, isOpen, onToggle, onClose }: GroupMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 z-50 mt-1 min-w-40 rounded-md border border-border bg-popover shadow-lg py-1">
-          {/* Flat items */}
+        <div className="absolute top-full left-0 z-50 mt-1 min-w-44 rounded-md border border-border bg-popover shadow-lg py-1">
+          {/* Flat items (with optional nested children) */}
           {group.items?.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={onClose}
-              className={({ isActive: a }) =>
-                cn(
-                  'flex items-center gap-2 px-3 py-1.5 text-xs transition-colors hover:bg-muted',
-                  a ? 'text-foreground font-medium' : 'text-muted-foreground',
-                )
-              }
-            >
-              <item.icon className="h-3.5 w-3.5 shrink-0" />
-              {item.label}
-            </NavLink>
+            <DropdownItem key={item.to} item={item} onClose={onClose} />
           ))}
 
           {/* Sub-grouped items with section labels */}
@@ -76,20 +110,7 @@ function GroupMenu({ group, isOpen, onToggle, onClose }: GroupMenuProps) {
                 {sg.label}
               </p>
               {sg.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={onClose}
-                  className={({ isActive: a }) =>
-                    cn(
-                      'flex items-center gap-2 px-3 py-1.5 text-xs transition-colors hover:bg-muted',
-                      a ? 'text-foreground font-medium' : 'text-muted-foreground',
-                    )
-                  }
-                >
-                  <item.icon className="h-3.5 w-3.5 shrink-0" />
-                  {item.label}
-                </NavLink>
+                <DropdownItem key={item.to} item={item} onClose={onClose} />
               ))}
             </div>
           ))}

@@ -10,6 +10,11 @@ import type {
   GateSafetyFull,
   GateSafetyPayload,
   DimsGroupedResponse,
+  StrategyTemplatesResponse,
+  StrategyTemplateDetail,
+  StructureTypeLegPayload,
+  MetaParamPayload,
+  StructureTypeConfigOption,
 } from '@/types/positions'
 
 const BASE = import.meta.env.VITE_API_STRATEGY as string
@@ -157,4 +162,131 @@ export async function fetchDimsGrouped(): Promise<DimsGroupedResponse> {
   const res = await fetch(`${BASE}/strategies/dims`)
   if (!res.ok) throw new Error(`Strategy /dims: ${res.status}`)
   return res.json() as Promise<DimsGroupedResponse>
+}
+
+// ── Template API ─────────────────────────────────────────────────────────────
+
+export async function fetchTemplates(activeOnly = true): Promise<StrategyTemplatesResponse> {
+  const qs = activeOnly ? '?active_only=true' : ''
+  const res = await fetch(`${BASE}/strategies/templates${qs}`)
+  if (!res.ok) throw new Error(`Strategy /templates: ${res.status}`)
+  return res.json() as Promise<StrategyTemplatesResponse>
+}
+
+export async function fetchTemplateDetail(id: number): Promise<StrategyTemplateDetail> {
+  const res = await fetch(`${BASE}/strategies/templates/${id}`)
+  if (!res.ok) throw new Error(`Strategy /templates/${id}: ${res.status}`)
+  return res.json() as Promise<StrategyTemplateDetail>
+}
+
+export async function createTemplate(
+  payload: Record<string, unknown>,
+): Promise<{ strategy_template_id: number }> {
+  const res = await fetch(`${BASE}/strategies/templates`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(`POST /strategies/templates: ${res.status}`)
+  return res.json()
+}
+
+export async function updateTemplate(
+  id: number,
+  payload: Record<string, unknown>,
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${BASE}/strategies/templates/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(`PUT /strategies/templates/${id}: ${res.status}`)
+  return res.json()
+}
+
+export async function deleteTemplate(id: number): Promise<{ ok: boolean }> {
+  const res = await fetch(`${BASE}/strategies/templates/${id}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error(`DELETE /strategies/templates/${id}: ${res.status}`)
+  return res.json()
+}
+
+export async function replaceTemplateLegs(
+  id: number,
+  legs: StructureTypeLegPayload[],
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${BASE}/strategies/templates/${id}/legs`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ legs }),
+  })
+  if (!res.ok) throw new Error(`PUT /strategies/templates/${id}/legs: ${res.status}`)
+  return res.json()
+}
+
+export async function replaceTemplateParams(
+  id: number,
+  items: MetaParamPayload[],
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${BASE}/strategies/templates/${id}/params`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items }),
+  })
+  if (!res.ok) throw new Error(`PUT /strategies/templates/${id}/params: ${res.status}`)
+  return res.json()
+}
+
+export async function replaceTemplateCharacteristics(
+  id: number,
+  items: string[],
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${BASE}/strategies/templates/${id}/characteristics`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items }),
+  })
+  if (!res.ok) throw new Error(`PUT /strategies/templates/${id}/characteristics: ${res.status}`)
+  return res.json()
+}
+
+export async function createDim(
+  dimType: string,
+  body: { code: string; display_label: string; sort_order: number },
+): Promise<{ strategy_dim_id: number }> {
+  const res = await fetch(`${BASE}/strategies/dims`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dim_type: dimType, ...body }),
+  })
+  if (!res.ok) throw new Error(`POST /strategies/dims: ${res.status}`)
+  return res.json()
+}
+
+export async function deleteDim(id: number): Promise<{ ok: boolean }> {
+  const res = await fetch(`${BASE}/strategies/dims/${id}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error(`DELETE /strategies/dims/${id}: ${res.status}`)
+  return res.json()
+}
+
+async function fetchConfigOptions(path: string): Promise<{ options: StructureTypeConfigOption[] }> {
+  const res = await fetch(`${BASE}/strategies/templates/options/${path}`)
+  if (!res.ok) throw new Error(`Strategy /templates/options/${path}: ${res.status}`)
+  return res.json()
+}
+
+export function fetchParamKindOptions() { return fetchConfigOptions('param-kinds') }
+export function fetchLegRoleOptions() { return fetchConfigOptions('leg-roles') }
+export function fetchLegDirectionOptions() { return fetchConfigOptions('leg-directions') }
+export function fetchLegOptionRightOptions() { return fetchConfigOptions('leg-option-rights') }
+export function fetchMetaKeyOptions() { return fetchConfigOptions('meta-keys') }
+
+export async function fetchMetaValueOptions(
+  templateCode: string,
+  metaKey: string,
+): Promise<{ options: StructureTypeConfigOption[] }> {
+  const res = await fetch(
+    `${BASE}/strategies/templates/options/meta-values?template_code=${encodeURIComponent(templateCode)}&meta_key=${encodeURIComponent(metaKey)}`,
+  )
+  if (!res.ok) return { options: [] }
+  return res.json()
 }

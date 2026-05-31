@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/refs -- Legacy discovery workflow; incremental hook extraction */
-import '@/styles/discoveryScoped.css'
-import '@/styles/discoveryShell.css'
+import '@/styles/discoveryCharts.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { bsComputeDetail } from '@/utils/optionDiscovery/bsCalc'
 import type { WatchlistItem } from '@/types/market'
@@ -10,6 +9,7 @@ import {
   postMassiveSync,
   fetchOptionSnapshotsPg,
   pollMassiveJobUntilDone,
+  resolveMassiveSyncJobId,
   fetchMassiveJob,
   fetchGreeksCoverage,
   fetchMassiveDailyChecklist,
@@ -25,13 +25,12 @@ import type {
 } from '@/types/optionDiscovery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import { TableCell } from '@/components/ui/table'
 import { PageShell } from '@/components/layout'
 import { cn } from '@/lib/utils'
 import { useDiscoveryNav } from '@/hooks/useDiscoveryNav'
 import { DiscoveryPageHeader } from '@/components/optionDiscovery/DiscoveryPageHeader'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
-import { DiscoveryIconButton } from '@/components/optionDiscovery/DiscoveryIconButton'
 import { DiscoverySection } from '@/components/optionDiscovery/DiscoverySection'
 import { fmtUsd } from '@/lib/format'
 import { OptionDiscoveryMaxPainPanel } from '@/components/optionDiscovery/OptionDiscoveryMaxPainPanel'
@@ -45,6 +44,8 @@ import { OptionDiscoveryIvTermSection } from '@/components/optionDiscovery/Optio
 import { OptionDiscoveryCompareDrawer } from '@/components/optionDiscovery/OptionDiscoveryCompareDrawer'
 import { OptionContractDrawer } from '@/components/optionDiscovery/OptionContractDrawer'
 import { OptionContractDetailPanel } from '@/components/optionDiscovery/OptionContractDetailPanel'
+import { StrikeLadderPanel, type StrikeOiPair } from '@/components/optionDiscovery/StrikeLadderPanel'
+import { OptionChainQuotesSection } from '@/components/optionDiscovery/OptionChainQuotesSection'
 import { useOptionContractLiquidity } from '@/components/optionDiscovery/useOptionContractLiquidity'
 import { useDiscoverySession } from '@/hooks/useDiscoverySession'
 import { useDiscoveryCompare } from '@/hooks/useDiscoveryCompare'
@@ -69,13 +70,9 @@ import {
   computeStrikesFromPreset,
   debounce,
   nyCalendarDateIso,
-  STRIKE_COUNT_OPTIONS,
   IV_TERM_DEFAULT_EXPIRATIONS,
   IV_TERM_MAX_EXPIRATIONS,
   CHAIN_COLUMN_LABEL,
-  type StrikeCountOption,
-  type StdDevOption,
-  STD_DEV_OPTIONS,
 } from '@/utils/optionDiscovery/strikePresets'
 
 type ChainColumnId = keyof typeof CHAIN_COLUMN_LABEL
@@ -98,63 +95,6 @@ function useWatchlistStkSymbols(): string[] {
       .filter(Boolean)
     return [...new Set(syms)].sort()
   }, [items])
-}
-
-function fmtOiCompact(n: number | null): string {
-  if (n == null || !Number.isFinite(n)) return '—'
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 100_000) return `${Math.round(n / 1000)}k`
-  if (n >= 10_000) return `${(n / 1000).toFixed(1)}k`
-  if (n >= 1000) return `${(n / 1000).toFixed(2)}k`
-  return String(Math.round(n))
-}
-
-interface StrikeOiPair {
-  c: number | null
-  p: number | null
-}
-
-/** Strike cell: center line, Call OI bar left, Put OI bar right; compact C/P numbers below. */
-function StrikeLadderOiStrikeCell({
-  strike,
-  oiMax,
-  oiByStrike,
-  showOi,
-}: {
-  strike: number
-  oiMax: number
-  oiByStrike: Map<number, StrikeOiPair>
-  showOi: boolean
-}) {
-  if (!showOi) {
-    return <td className="strike-ladder-cell-strike">{strike.toFixed(1)}</td>
-  }
-  const o = oiByStrike.get(strike)
-  const c = o?.c ?? null
-  const p = o?.p ?? null
-  const denom = oiMax > 0 ? oiMax : 1
-  const cw = c != null ? Math.min(100, (c / denom) * 100) : 0
-  const pw = p != null ? Math.min(100, (p / denom) * 100) : 0
-  return (
-    <td className="strike-ladder-cell-strike strike-ladder-cell-strike--oi">
-      <div className="strike-ladder-oi-cell">
-        <div className="strike-ladder-oi-strike">{strike.toFixed(1)}</div>
-        <div className="strike-ladder-oi-bar" aria-hidden="true">
-          <div className="strike-ladder-oi-bar-half strike-ladder-oi-bar-half--call">
-            <div className="strike-ladder-oi-bar-fill strike-ladder-oi-bar-fill--call" style={{ width: `${cw}%` }} />
-          </div>
-          <div className="strike-ladder-oi-bar-center" />
-          <div className="strike-ladder-oi-bar-half strike-ladder-oi-bar-half--put">
-            <div className="strike-ladder-oi-bar-fill strike-ladder-oi-bar-fill--put" style={{ width: `${pw}%` }} />
-          </div>
-        </div>
-        <div className="strike-ladder-oi-nums" aria-label={`Call OI ${fmtOiCompact(c)}, Put OI ${fmtOiCompact(p)}`}>
-          <span className="strike-ladder-oi-nums-c">C {fmtOiCompact(c)}</span>
-          <span className="strike-ladder-oi-nums-p">P {fmtOiCompact(p)}</span>
-        </div>
-      </div>
-    </td>
-  )
 }
 
 export default function DiscoveryPage() {
@@ -632,11 +572,12 @@ export default function DiscoveryPage() {
           massiveChainPayload.strike_price_lte = Math.max(...effectiveStrikes)
         }
         const sync = await postMassiveSync('feed_option_snapshots', massiveChainPayload)
-        if (!sync.ok || !sync.job_id) {
+        const jobId = resolveMassiveSyncJobId(sync)
+        if (!sync.ok || !jobId) {
           setTermError(sync.error ?? sync.message ?? `Massive sync failed for ${exp}`)
           return
         }
-        const polled = await pollMassiveJobUntilDone(sync.job_id, { maxAttempts: 120, intervalMs: 1000 })
+        const polled = await pollMassiveJobUntilDone(jobId, { maxAttempts: 120, intervalMs: 1000 })
         if (!polled.ok) {
           setTermError(polled.error ?? `Massive job failed for ${exp}`)
           return
@@ -744,13 +685,14 @@ export default function DiscoveryPage() {
         massiveChainPayload.strike_price_lte = mx
       }
       const sync = await postMassiveSync('feed_option_snapshots', massiveChainPayload)
-      if (!sync.ok || !sync.job_id) {
+      const jobId = resolveMassiveSyncJobId(sync)
+      if (!sync.ok || !jobId) {
         setSnapshotFeedback({ level: 'error', title: 'Sync failed', body: sync.error ?? sync.message ?? 'Massive sync failed' })
         setSnapshotRows([])
         setUnderlyingPrice(null)
         return
       }
-      const polled = await pollMassiveJobUntilDone(sync.job_id, { maxAttempts: 120, intervalMs: 1000 })
+      const polled = await pollMassiveJobUntilDone(jobId, { maxAttempts: 120, intervalMs: 1000 })
       if (!polled.ok) {
         setSnapshotFeedback({ level: 'error', title: 'Job failed', body: polled.error ?? 'Massive job failed' })
         setSnapshotRows([])
@@ -787,7 +729,7 @@ export default function DiscoveryPage() {
       }
 
       // Neither error nor warning from backend — inspect job result
-      const jobRes = await fetchMassiveJob(sync.job_id)
+      const jobRes = await fetchMassiveJob(jobId)
       const result = jobRes.job?.result as Record<string, unknown> | undefined
       const rw = result?.rows_written
       if (typeof rw === 'number' && rw === 0) {
@@ -1020,9 +962,12 @@ export default function DiscoveryPage() {
           }
         }
         return (
-          <td
+          <TableCell
             key={key}
-            className={`od-chain-td od-chain-td-data${sideSelected ? ' od-chain-td--selected' : ''}`}
+            className={cn(
+              'cursor-pointer py-1 text-right font-mono text-xs tabular-nums',
+              sideSelected && 'bg-accent/20',
+            )}
             onClick={e => {
               e.stopPropagation()
               if (rowIdx != null) {
@@ -1033,7 +978,7 @@ export default function DiscoveryPage() {
             }}
           >
             {cell}
-          </td>
+          </TableCell>
         )
       }),
     [chainColumnList, selectedContractKey, greeksSource, bsRowValues, snapshotRows],
@@ -1255,309 +1200,40 @@ export default function DiscoveryPage() {
               lockedHint="Select symbol and chain expiry in section 2."
             >
           {/* Strike window (collapsible) */}
-          <details className="option-discovery-strike-window" open aria-label="Strike window">
-            <summary className="option-discovery-strike-window-summary">
-              Strike window
-              <DiscoveryHint as="span" className="mt-0 option-discovery-strike-window-count">
-                {effectiveStrikes.length} selected · {computedStrikes.length} in range
-              </DiscoveryHint>
+          <details className="group rounded-lg border border-border bg-card/50 open:pb-2" open aria-label="Strike window">
+            <summary className="cursor-pointer list-none px-3 py-2 font-medium [&::-webkit-details-marker]:hidden">
+              <span className="inline-flex flex-wrap items-baseline gap-2">
+                Strike window
+                <DiscoveryHint as="span" className="mt-0 text-xs font-normal">
+                  {effectiveStrikes.length} selected · {computedStrikes.length} in range
+                </DiscoveryHint>
+              </span>
             </summary>
-            <DiscoveryHint className=" option-discovery-strike-window-hint">
-              Select strikes for the option chain table and window-scoped charts below.
-            </DiscoveryHint>
-            <div className="option-discovery-strikes-content">
-        {strikesLoading ? (
-          <DiscoveryHint className=" strike-ladder-hint-below" style={{ marginTop: '0.35rem', marginBottom: 0 }}>Loading strikes for selected expiration…</DiscoveryHint>
-        ) : computedStrikes.length > 0 ? (() => {
-          const spot = stockDayLastPrice ?? undefined
-          const below = spot != null ? computedStrikes.filter(s => s < spot).sort((a, b) => b - a) : []
-          const at = spot != null ? computedStrikes.filter(s => s === spot) : []
-          const above = spot != null ? computedStrikes.filter(s => s > spot).sort((a, b) => a - b) : []
-          const aboveReversed = [...above].sort((a, b) => b - a)
-          const hasZones = below.length > 0 || at.length > 0 || above.length > 0
-          return (
-            <div className="option-discovery-list-with-header option-discovery-strikes-with-header">
-              <div className="strike-ladder-layout">
-              <div className="strike-ladder-col strike-ladder-col-range">
-                <div className="strike-ladder-col-header">Strikes Range</div>
-                <div className="strike-ladder-controls">
-                <div className="strike-ladder-controls-row">
-                  <label htmlFor="option-discovery-strike-count">Count</label>
-                  <select
-                    id="option-discovery-strike-count"
-                    value={String(strikeCountOption)}
-                    onChange={e => setStrikeCountOption(e.target.value === 'all' ? 'all' : (Number(e.target.value) as StrikeCountOption))}
-                    aria-label="Strike count"
-                  >
-                    {STRIKE_COUNT_OPTIONS.map(c => (
-                      <option key={String(c)} value={String(c)}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="strike-ladder-controls-row">
-                  <label htmlFor="option-discovery-std-dev">Std dev</label>
-                  <select
-                    id="option-discovery-std-dev"
-                    value={String(stdDevOption)}
-                    onChange={e => setStdDevOption(e.target.value === 'custom' ? 'custom' : (Number(e.target.value) as StdDevOption))}
-                    aria-label="Standard deviations"
-                  >
-                    {STD_DEV_OPTIONS.map(d => (
-                      <option key={String(d)} value={String(d)}>{d}</option>
-                    ))}
-                  </select>
-                  {stdDevOption === 'custom' && (
-                    <input
-                      type="number"
-                      min={0.1}
-                      step={0.1}
-                      value={customStdDev}
-                      onChange={e => setCustomStdDev(e.target.value)}
-                      aria-label="Custom std dev"
-                    />
-                  )}
-                </div>
-                {spot != null && (below.length > 0 || above.length > 0 || at.length > 0) && (
-                  <div className="strike-ladder-controls-price">
-                    Current price: {fmtUsd(spot)}
-                  </div>
-                )}
-                <div className="strike-ladder-toolbar">
-                  <DiscoveryIconButton
-                    className="od-strike-range-icon-btn"
-                    onClick={() => setMultiSelectStrikes([...computedStrikes])}
-                    aria-label="Select all"
-                    title="Select all strikes in range"
-                  >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M9 12l2 2 4-4" />
-                      <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9" />
-                    </svg>
-                  </DiscoveryIconButton>
-                  <DiscoveryIconButton
-                    className="od-strike-range-icon-btn"
-                    onClick={() => setMultiSelectStrikes([])}
-                    aria-label="Clear"
-                    title="Clear selected strikes"
-                  >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M3 6h18" />
-                      <path d="M8 6V4h8v2" />
-                      <path d="M19 6l-1 14H6L5 6" />
-                    </svg>
-                  </DiscoveryIconButton>
-                </div>
-                <div className="strike-ladder-controls-summary">
-                  <div>{effectiveStrikes.length} selected{multiSelectStrikes.length > 0 ? ' (custom)' : ' (preset)'}</div>
-                  <div>{computedStrikes.length} in range</div>
-                </div>
-                <div className="strike-ladder-controls-row strike-ladder-side-mode-row">
-                  <span className="strike-ladder-side-mode-label" id="option-discovery-strike-sides-label">
-                    Sides
-                  </span>
-                  <div
-                    className="replay-bubble-switch"
-                    role="group"
-                    aria-labelledby="option-discovery-strike-sides-label"
-                  >
-                    <button
-                      type="button"
-                      className={`replay-bubble-switch-btn ${strikeSideMode === 'all' ? 'active' : ''}`}
-                      onClick={() => setStrikeSideMode('all')}
-                      aria-pressed={strikeSideMode === 'all'}
-                    >
-                      All
-                    </button>
-                    <button
-                      type="button"
-                      className={`replay-bubble-switch-btn ${strikeSideMode === 'call' ? 'active' : ''}`}
-                      onClick={() => setStrikeSideMode('call')}
-                      aria-pressed={strikeSideMode === 'call'}
-                    >
-                      Call
-                    </button>
-                    <button
-                      type="button"
-                      className={`replay-bubble-switch-btn ${strikeSideMode === 'put' ? 'active' : ''}`}
-                      onClick={() => setStrikeSideMode('put')}
-                      aria-pressed={strikeSideMode === 'put'}
-                    >
-                      Put
-                    </button>
-                  </div>
-                </div>
-              </div>
-              </div>
-              <div
-                className={`strike-ladder-two-cols${strikeSideMode !== 'all' ? ' strike-ladder-two-cols--single-side' : ''}`}
-              >
-                {showCallSide && (
-                <div className="strike-ladder-col">
-                  <div className="strike-ladder-col-header strike-ladder-col-header-call">
-                    <label className="strike-ladder-col-header-check">
-                      <input
-                        type="checkbox"
-                        checked={aboveReversed.length + at.length > 0 && [...aboveReversed, ...at].every(s => multiSelectStrikes.includes(s))}
-                        onChange={e => {
-                          if (e.target.checked) setMultiSelectStrikes(prev => [...new Set([...prev, ...aboveReversed, ...at])].sort((a, b) => a - b))
-                          else setMultiSelectStrikes(prev => prev.filter(x => !aboveReversed.includes(x) && !at.includes(x)))
-                        }}
-                        aria-label="Check all OTM Call"
-                      />
-                      <span>OTM Call</span>
-                    </label>
-                  </div>
-                  <div className="strike-ladder-wrap" ref={otmCallWrapRef}>
-                    <table className="strike-ladder-table" role="grid" aria-label="OTM Call strikes">
-                      <thead>
-                        <tr>
-                          <th scope="col">Select</th>
-                          <th scope="col">{strikeLadderShowOi ? 'Strike / OI' : 'Strike'}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {aboveReversed.length > 0 && aboveReversed.map(s => (
-                          <tr key={s} className="strike-ladder-row-otm-call">
-                            <td className="strike-ladder-cell-check">
-                              <input
-                                type="checkbox"
-                                checked={multiSelectStrikes.includes(s)}
-                                onChange={() => {
-                                  if (multiSelectStrikes.includes(s)) setMultiSelectStrikes(prev => prev.filter(x => x !== s))
-                                  else setMultiSelectStrikes(prev => [...prev, s].sort((a, b) => a - b))
-                                }}
-                                aria-label={`Select strike ${s}`}
-                              />
-                            </td>
-                            <StrikeLadderOiStrikeCell
-                              strike={s}
-                              oiMax={ladderOiMax}
-                              oiByStrike={strikeOiByStrike}
-                              showOi={strikeLadderShowOi}
-                            />
-                          </tr>
-                        ))}
-                        {at.length > 0 && at.map(s => (
-                          <tr key={s} className="strike-ladder-row-atm">
-                            <td className="strike-ladder-cell-check">
-                              <input
-                                type="checkbox"
-                                checked={multiSelectStrikes.includes(s)}
-                                onChange={() => {
-                                  if (multiSelectStrikes.includes(s)) setMultiSelectStrikes(prev => prev.filter(x => x !== s))
-                                  else setMultiSelectStrikes(prev => [...prev, s].sort((a, b) => a - b))
-                                }}
-                                aria-label={`Select strike ${s}`}
-                              />
-                            </td>
-                            <StrikeLadderOiStrikeCell
-                              strike={s}
-                              oiMax={ladderOiMax}
-                              oiByStrike={strikeOiByStrike}
-                              showOi={strikeLadderShowOi}
-                            />
-                          </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                  </div>
-                </div>
-                )}
-                {showPutSide && (
-                <div className="strike-ladder-col">
-                  <div className="strike-ladder-col-header strike-ladder-col-header-put">
-                    <label className="strike-ladder-col-header-check">
-                      <input
-                        type="checkbox"
-                        checked={below.length > 0 && below.every(s => multiSelectStrikes.includes(s))}
-                        onChange={e => {
-                          if (e.target.checked) setMultiSelectStrikes(prev => [...new Set([...prev, ...below])].sort((a, b) => a - b))
-                          else setMultiSelectStrikes(prev => prev.filter(x => !below.includes(x)))
-                        }}
-                        aria-label="Check all OTM Put"
-                      />
-                      <span>OTM Put</span>
-                    </label>
-                  </div>
-                  <div className="strike-ladder-wrap">
-                    <table className="strike-ladder-table" role="grid" aria-label="OTM Put strikes">
-                      <thead>
-                        <tr>
-                          <th scope="col">Select</th>
-                          <th scope="col">{strikeLadderShowOi ? 'Strike / OI' : 'Strike'}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {below.length > 0 && below.map(s => (
-                          <tr key={s} className="strike-ladder-row-otm-put">
-                            <td className="strike-ladder-cell-check">
-                              <input
-                                type="checkbox"
-                                checked={multiSelectStrikes.includes(s)}
-                                onChange={() => {
-                                  if (multiSelectStrikes.includes(s)) setMultiSelectStrikes(prev => prev.filter(x => x !== s))
-                                  else setMultiSelectStrikes(prev => [...prev, s].sort((a, b) => a - b))
-                                }}
-                                aria-label={`Select strike ${s}`}
-                              />
-                            </td>
-                            <StrikeLadderOiStrikeCell
-                              strike={s}
-                              oiMax={ladderOiMax}
-                              oiByStrike={strikeOiByStrike}
-                              showOi={strikeLadderShowOi}
-                            />
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                )}
-              </div>
-              </div>
-              {!hasZones && (
-                <div className="strike-ladder-wrap" style={{ marginTop: '0.25rem' }}>
-                  <table className="strike-ladder-table" role="grid" aria-label="Strikes">
-                    <thead>
-                      <tr>
-                        <th scope="col">Select</th>
-                        <th scope="col">{strikeLadderShowOi ? 'Strike / OI' : 'Strike'}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...computedStrikes].sort((a, b) => a - b).map(s => (
-                        <tr key={s}>
-                          <td className="strike-ladder-cell-check">
-                            <input
-                              type="checkbox"
-                              checked={multiSelectStrikes.includes(s)}
-                              onChange={() => {
-                                if (multiSelectStrikes.includes(s)) setMultiSelectStrikes(prev => prev.filter(x => x !== s))
-                                else setMultiSelectStrikes(prev => [...prev, s].sort((a, b) => a - b))
-                              }}
-                              aria-label={`Select strike ${s}`}
-                            />
-                          </td>
-                          <StrikeLadderOiStrikeCell
-                            strike={s}
-                            oiMax={ladderOiMax}
-                            oiByStrike={strikeOiByStrike}
-                            showOi={strikeLadderShowOi}
-                          />
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )
-        })() : strikes.length > 0 ? (
-          <DiscoveryHint className=" strike-ladder-hint-below" style={{ marginTop: '0.35rem', marginBottom: 0 }}>Select symbol with daily data or adjust count/std dev.</DiscoveryHint>
-        ) : (
-          <DiscoveryHint className=" strike-ladder-hint-below" style={{ marginTop: '0.35rem', marginBottom: 0 }}>Select symbol and expiration to see strikes.</DiscoveryHint>
-        )}
+            <div className="px-3 pb-2">
+              <DiscoveryHint className="mb-2">
+                Select strikes for the option chain table and window-scoped charts below.
+              </DiscoveryHint>
+              <StrikeLadderPanel
+                strikesLoading={strikesLoading}
+                computedStrikes={computedStrikes}
+                effectiveStrikes={effectiveStrikes}
+                multiSelectStrikes={multiSelectStrikes}
+                setMultiSelectStrikes={setMultiSelectStrikes}
+                stockDayLastPrice={stockDayLastPrice}
+                strikeCountOption={strikeCountOption}
+                setStrikeCountOption={setStrikeCountOption}
+                stdDevOption={stdDevOption}
+                setStdDevOption={setStdDevOption}
+                customStdDev={customStdDev}
+                setCustomStdDev={setCustomStdDev}
+                strikeSideMode={strikeSideMode}
+                setStrikeSideMode={setStrikeSideMode}
+                strikeLadderShowOi={strikeLadderShowOi}
+                ladderOiMax={ladderOiMax}
+                strikeOiByStrike={strikeOiByStrike}
+                strikesAvailable={strikes.length > 0}
+                otmCallWrapRef={otmCallWrapRef}
+              />
             </div>
           </details>
 
@@ -1597,265 +1273,34 @@ export default function DiscoveryPage() {
               enabled={selectedSymbol.trim() !== '' && selectedExpiration.trim() !== ''}
               lockedHint="Select symbol and chain expiry in section 2."
             >
-          {/* ── Option quotes ── */}
-          <DiscoverySection
-            aria-labelledby="option-discovery-table-head"
-            aria-describedby="option-discovery-view-scope-hint"
-          >
-            <div className="od-option-quotes-head-row">
-              <h3 id="option-discovery-table-head" className="od-option-quotes-head-title">
-                Option quotes
-                <InfoTooltip text="Massive: enqueue sync job (REST), then read snapshots from PostgreSQL; 15 min delayed." />
-              </h3>
-              {/* Greeks source toggle — always visible once section 4 is unlocked */}
-              <span className="od-quotes-refresh-meta">
-                {lastQuotesLoadTs != null && (
-                  <span className="od-quotes-refresh-ts" title={`Data loaded at ${lastQuotesLoadTs.toLocaleString()}`}>
-                    {lastQuotesLoadTs.toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </span>
-                )}
-                <span className="od-greeks-source-toggle" title="Switch IV & Greeks columns between Massive snapshot data and local Black-Scholes calculation">
-                  <button
-                    type="button"
-                    className={`od-greeks-source-btn${greeksSource === 'snapshot' ? ' od-greeks-source-btn--active' : ''}`}
-                    onClick={() => setGreeksSource('snapshot')}
-                  >Snapshot</button>
-                  <button
-                    type="button"
-                    className={`od-greeks-source-btn${greeksSource === 'bs' ? ' od-greeks-source-btn--active' : ''}`}
-                    onClick={() => setGreeksSource('bs')}
-                  >BS</button>
-                </span>
-              </span>
-              <DiscoveryIconButton
-                className="od-option-quotes-refresh-btn"
-                onClick={() => void loadQuotes()}
-                disabled={!canLoadQuotes}
-                aria-label="Refresh option quotes"
-                title={snapshotLoading ? 'Loading option quotes' : 'Refresh option quotes'}
-              >
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                  <path d="M3 3v5h5" />
-                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-                  <path d="M16 21h5v-5" />
-                </svg>
-              </DiscoveryIconButton>
-              {underlyingPrice != null && (
-                <DiscoveryHint as="span" className="mt-0 od-option-quotes-underlying">
-                  Underlying: {fmtUsd(underlyingPrice)}
-                </DiscoveryHint>
-              )}
-            </div>
-            {addWatchlistFeedback != null && (
-              <div style={{ marginBottom: '0.5rem' }}>
-                <DiscoveryHint as="span" className="mt-0" role="status">
-                  {addWatchlistFeedback.includes('|') ? 'Added to Watchlist.' : addWatchlistFeedback}
-                </DiscoveryHint>
-              </div>
-            )}
-        {snapshotLoading && (
-          <DiscoveryHint className="">Fetching option quotes (may take ~10s)…</DiscoveryHint>
-        )}
-        {snapshotFeedback != null && !snapshotLoading && (
-          <div
-            className={`od-snapshot-feedback od-snapshot-feedback--${snapshotFeedback.level}`}
-            role={snapshotFeedback.level === 'error' ? 'alert' : 'status'}
-          >
-            {snapshotFeedback.title && <strong>{snapshotFeedback.title}</strong>}
-            <span>{snapshotFeedback.body}</span>
-            {snapshotFeedback.level !== 'error' && (
-              <div className="od-feedback-actions">
-                <button
-                  type="button"
-                  className="button button-secondary button-sm"
-                  onClick={() => void loadQuotes()}
-                  disabled={!canLoadQuotes}
-                  aria-label="Enqueue Massive snapshot job and reload quotes from PostgreSQL"
-                >
-                  Pull now
-                </button>
-                {openMassiveFeed && (
-                  <button type="button" className="button-feedback-nav" onClick={openMassiveFeed}>
-                    Open Massive Option
-                  </button>
-                )}
-              </div>
-            )}
-            {snapshotPgWatching && (
-              <DiscoveryHint className="mt-2 od-snapshot-watch-hint" role="status">
-                Watching PostgreSQL for new snapshots… ~{snapshotPgWatchSecondsLeft ?? 0}s left. Matching rows will appear
-                automatically when data is available. Use Pull now to enqueue another chain snapshot if the worker was not
-                running.
-              </DiscoveryHint>
-            )}
-          </div>
-        )}
-        {snapshotRows.length > 0 && !snapshotLoading && (
-          <>
-            <div className="od-chain-column-filter" role="group" aria-label="Column visibility">
-              <span className="od-chain-column-filter-label">Columns</span>
-              <div className="od-chain-column-filter-list">
-                <span className="od-chain-col-group-label">Day</span>
-                {(['day_open', 'day_high', 'day_low', 'day_close', 'day_vol'] as const).map(id => (
-                  <label key={id} className="od-chain-column-filter-item">
-                    <input type="checkbox" checked={chainColumnVisibility[id] !== false} onChange={() => toggleChainColumn(id)} />
-                    {CHAIN_COLUMN_LABEL[id]}
-                  </label>
-                ))}
-                <span className="od-chain-col-group-sep" aria-hidden="true" />
-                {(['iv', 'delta', 'gamma', 'theta', 'vega', 'oi'] as const).map(id => (
-                  <label key={id} className="od-chain-column-filter-item">
-                    <input type="checkbox" checked={chainColumnVisibility[id] !== false} onChange={() => toggleChainColumn(id)} />
-                    {CHAIN_COLUMN_LABEL[id]}
-                  </label>
-                ))}
-              </div>
-            </div>
-            {chainColumnList.length === 0 ? (
-              <DiscoveryHint className="" role="status">
-                Select at least one column in Columns filter.
-              </DiscoveryHint>
-            ) : (
-              <div className="table-wrapper od-chain-table-wrap">
-                <table className="data-table od-chain-table" aria-label="Option chain: calls, strike, puts">
-                  <thead>
-                    {strikeSideMode === 'put' ? (
-                      <>
-                        <tr className="od-chain-group-row">
-                          <th rowSpan={2} className="od-chain-strike-col" scope="col">
-                            Strike
-                          </th>
-                          <th
-                            colSpan={chainColumnList.length}
-                            className="od-chain-group-put"
-                            scope="colgroup"
-                          >
-                            Puts
-                          </th>
-                        </tr>
-                        <tr>
-                          {chainColumnList.map(col => (
-                            <th key={`put-h-${col}`} className="od-chain-th-put" scope="col">
-                              {CHAIN_COLUMN_LABEL[col]}
-                            </th>
-                          ))}
-                        </tr>
-                      </>
-                    ) : (
-                      <>
-                        <tr className="od-chain-group-row">
-                          {showCallSide && (
-                            <th
-                              colSpan={chainColumnList.length}
-                              className="od-chain-group-call"
-                              scope="colgroup"
-                            >
-                              Calls
-                            </th>
-                          )}
-                          <th rowSpan={2} className="od-chain-strike-col" scope="col">
-                            Strike
-                          </th>
-                          {showPutSide && strikeSideMode === 'all' && (
-                            <th
-                              colSpan={chainColumnList.length}
-                              className="od-chain-group-put"
-                              scope="colgroup"
-                            >
-                              Puts
-                            </th>
-                          )}
-                        </tr>
-                        <tr>
-                          {showCallSide &&
-                            chainColumnList.map(col => (
-                              <th key={`call-h-${col}`} className="od-chain-th-call" scope="col">
-                                {CHAIN_COLUMN_LABEL[col]}
-                              </th>
-                            ))}
-                          {showPutSide &&
-                            strikeSideMode === 'all' &&
-                            chainColumnList.map(col => (
-                              <th key={`put-h-${col}`} className="od-chain-th-put" scope="col">
-                                {CHAIN_COLUMN_LABEL[col]}
-                              </th>
-                            ))}
-                        </tr>
-                      </>
-                    )}
-                  </thead>
-                  <tbody>
-                    {chainStrikesSorted.map(strike => {
-                      const callIdx = rowIndexByStrikeRight.get(`${strike}|C`) ?? null
-                      const putIdx = rowIndexByStrikeRight.get(`${strike}|P`) ?? null
-                      const callRow = callIdx != null ? snapshotRows[callIdx] : undefined
-                      const putRow = putIdx != null ? snapshotRows[putIdx] : undefined
-                      const callKey = callRow ? optionContractKey(callRow) : null
-                      const putKey = putRow ? optionContractKey(putRow) : null
-                      const callSel = callKey != null && selectedContractKey === callKey
-                      const putSel = putKey != null && selectedContractKey === putKey
-                      const rowHighlight =
-                        (callIdx != null && callSel) || (putIdx != null && putSel)
-                      const atm = underlyingPrice != null && Number.isFinite(underlyingPrice) && Math.abs(strike - underlyingPrice) < 0.021
-                      const itm = !atm && underlyingPrice != null && Number.isFinite(underlyingPrice) && strike < underlyingPrice
-                      const moneyClass = atm ? ' od-chain-row-atm' : itm ? ' od-chain-row-itm' : ' od-chain-row-otm'
-                      return (
-                        <tr
-                          key={strike}
-                          className={`od-chain-row od-quote-row${rowHighlight ? ' od-quote-row--selected' : ''}${moneyClass}`}
-                          onClick={() => {
-                            if (callIdx != null && callKey) setSelectedContractKey(callSel ? null : callKey)
-                            else if (putIdx != null && putKey) setSelectedContractKey(putSel ? null : putKey)
-                          }}
-                        >
-                          {strikeSideMode === 'put' ? (
-                            <>
-                              <td
-                                className={`od-chain-strike-cell${callSel || putSel ? ' od-chain-strike-cell--selected' : ''}`}
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  if (putIdx != null && putKey) setSelectedContractKey(putSel ? null : putKey)
-                                  else if (callIdx != null && callKey) setSelectedContractKey(callSel ? null : callKey)
-                                }}
-                              >
-                                {strike.toFixed(2)}
-                              </td>
-                              {renderChainSideCells('put', putRow, putIdx, putSel)}
-                            </>
-                          ) : (
-                            <>
-                              {showCallSide && renderChainSideCells('call', callRow, callIdx, callSel)}
-                              <td
-                                className={`od-chain-strike-cell${callSel || putSel ? ' od-chain-strike-cell--selected' : ''}`}
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  if (callIdx != null && callKey) setSelectedContractKey(callSel ? null : callKey)
-                                  else if (putIdx != null && putKey) setSelectedContractKey(putSel ? null : putKey)
-                                }}
-                              >
-                                {strike.toFixed(2)}
-                              </td>
-                              {showPutSide && strikeSideMode === 'all' && renderChainSideCells('put', putRow, putIdx, putSel)}
-                            </>
-                          )}
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
-        )}
-        {snapshotRows.length === 0 && !snapshotLoading && !snapshotFeedback && (
-          <DiscoveryHint className="" role="status">
-            {!snapshotLoadAttempted
-              ? 'Select symbol and expiration to load quotes automatically.'
-              : 'No quotes returned. Check Massive job queue, Celery worker, and PostgreSQL option_snapshots.'}
-          </DiscoveryHint>
-        )}
-      </DiscoverySection>
+          <OptionChainQuotesSection
+            lastQuotesLoadTs={lastQuotesLoadTs}
+            greeksSource={greeksSource}
+            onGreeksSourceChange={setGreeksSource}
+            onRefreshQuotes={() => void loadQuotes()}
+            canLoadQuotes={canLoadQuotes}
+            snapshotLoading={snapshotLoading}
+            underlyingPrice={underlyingPrice}
+            addWatchlistFeedback={addWatchlistFeedback}
+            snapshotFeedback={snapshotFeedback}
+            snapshotPgWatching={snapshotPgWatching}
+            snapshotPgWatchSecondsLeft={snapshotPgWatchSecondsLeft}
+            onPullNow={() => void loadQuotes()}
+            openMassiveFeed={openMassiveFeed}
+            chainColumnVisibility={chainColumnVisibility}
+            onToggleChainColumn={toggleChainColumn}
+            chainColumnList={chainColumnList}
+            strikeSideMode={strikeSideMode}
+            showCallSide={showCallSide}
+            showPutSide={showPutSide}
+            chainStrikesSorted={chainStrikesSorted}
+            rowIndexByStrikeRight={rowIndexByStrikeRight}
+            snapshotRows={snapshotRows}
+            selectedContractKey={selectedContractKey}
+            onSelectContractKey={setSelectedContractKey}
+            snapshotLoadAttempted={snapshotLoadAttempted}
+            renderChainSideCells={renderChainSideCells}
+          />
 
             </OdLayerSection>
 

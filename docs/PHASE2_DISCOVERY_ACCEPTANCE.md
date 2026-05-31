@@ -9,7 +9,8 @@
 | `DiscoveryPage` uses `PageHeader` via `DiscoveryPageHeader` + Research breadcrumb → `/research/screener` | Done |
 | No `legacy-monitoring-shell`; root class `option-discovery-root` | Done |
 | No global `legacyMonitoringShell.css` in `index.css` | Done |
-| `optionDiscovery.css` removed; styles in `discoveryScoped.css` + `discoveryShell.css` (page-only import) | Done |
+| `optionDiscovery.css` removed; page import `discoveryCharts.css` only (~27 kB raw, **gzip ~4.7 kB**) | Done (Phase 2b) |
+| Phase 2b: `StrikeLadderPanel`, `OptionChainQuotesSection`, shadcn Checkbox/ToggleGroup, Tailwind strike/chain/drawers | Done |
 | `SectionPageTitle` removed; `useDiscoveryNav` in `hooks/useDiscoveryNav.ts` | Done |
 | Legacy primitives replaced: `DiscoveryHint`, `DiscoveryIconButton`, `DiscoverySection` | Done |
 | Layout / session / TOC / underlying / expiry: Tailwind + shadcn where noted in plan | Done |
@@ -37,14 +38,27 @@ npm run lint
 ```
 
 ```bash
-# No legacy global shell or old discovery CSS file
+# No legacy global shell or old discovery CSS files
 test ! -f src/styles/optionDiscovery.css
 test ! -f src/styles/legacyMonitoringShell.css
-rg 'legacyMonitoringShell|optionDiscovery\.css|SectionPageTitle|legacy-monitoring-shell' src
+test ! -f src/styles/discoveryScoped.css
+test ! -f src/styles/discoveryStrikeLadder.css
+test ! -f src/styles/discoveryShell.css
+test -f src/styles/discoveryCharts.css
+rg 'legacyMonitoringShell|optionDiscovery\.css|discoveryScoped|discoveryStrikeLadder|discoveryShell' src
 # Expected: no matches (except comments in docs)
 ```
+
+## Dev environment notes (2026-05-31 fix)
+
+- Vite must proxy `/research/massive` and `/ops` (same as Legacy engine) when `massiveUrl` uses same-origin paths in dev.
+
+## Phase 2b done (2026-05-31)
+
+- Deleted `discoveryScoped.css`, `discoveryStrikeLadder.css`, `discoveryShell.css`.
+- Strike ladder / chain quotes / contract drawer shells → Tailwind + shadcn; SVG + IV-term data tables remain in `discoveryCharts.css`.
 
 ## Sign-off
 
 - [ ] Owner verified functional table above (date: ________)
-- [ ] Optional follow-up: shrink `discoveryScoped.css` by Tailwind-migrating strike ladder / chain tables (Phase 2b)
+- [x] Phase 2b CSS shrink (code complete; build chunk gzip &lt; 5 kB)

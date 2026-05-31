@@ -24,22 +24,15 @@ import {
   GreeksCoverageResponseSchema,
 } from '@/lib/schemas/optionDiscovery'
 
-const RESEARCH_BASE = import.meta.env.VITE_API_RESEARCH as string
-const MASSIVE_BASE = import.meta.env.VITE_API_MASSIVE as string
-const OPS_BASE = import.meta.env.VITE_API_OPS as string
+import { massiveUrl, opsUrl, researchUrl } from '@/lib/devApiUrl'
 
-function massiveUrl(path: string): string {
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  if (import.meta.env.DEV && typeof window !== 'undefined') {
-    const b = MASSIVE_BASE.replace(/\/$/, '')
-    if (!b) return normalizedPath
-    try {
-      if (new URL(b).origin !== window.location.origin) return normalizedPath
-    } catch {
-      /* fall through */
-    }
-  }
-  return `${MASSIVE_BASE.replace(/\/$/, '')}${normalizedPath}`
+/** Massive sync may return job_ids[] without job_id (fan-out). */
+export function resolveMassiveSyncJobId(sync: {
+  job_id?: string
+  job_ids?: string[]
+}): string | undefined {
+  if (sync.job_id) return sync.job_id
+  return sync.job_ids?.[0]
 }
 
 function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
@@ -94,7 +87,7 @@ export async function fetchOptionExpirations(
   if (!s) return { symbol: '', expirations: [], error: 'symbol is required' }
   const exp = options?.expiration ? `&expiration=${encodeURIComponent(options.expiration)}` : ''
   const r = await fetch(
-    `${RESEARCH_BASE}/research/option-expirations?symbol=${encodeURIComponent(s)}&provider=${encodeURIComponent(provider)}${exp}`,
+    `${researchUrl('/research/option-expirations')}?symbol=${encodeURIComponent(s)}&provider=${encodeURIComponent(provider)}${exp}`,
   )
   const j = await r.json().catch(() => ({}))
   withValidation(OptionExpirationsResponseSchema, 'fetchOptionExpirations')(j)
@@ -123,7 +116,7 @@ export async function fetchOptionSnapshotsPg(
   const e = (expiration || '').trim()
   const q = new URLSearchParams({ symbol: s, expiration: e, source })
   if (strikesCsv?.trim()) q.set('strikes', strikesCsv.trim())
-  const r = await fetch(`${RESEARCH_BASE}/research/option-snapshots?${q.toString()}`)
+  const r = await fetch(`${researchUrl('/research/option-snapshots')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   withValidation(OptionSnapshotsPgResponseSchema, 'fetchOptionSnapshotsPg')(j)
   const rows: OptionSnapshotRow[] = Array.isArray(j.rows)
@@ -204,6 +197,13 @@ export async function postMassiveSync(
     signal: options?.signal,
   })
   const j = await r.json().catch(() => ({}))
+  if (!r.ok) {
+    return {
+      ok: false,
+      error: typeof j.error === 'string' ? j.error : `HTTP ${r.status}`,
+      message: typeof j.message === 'string' ? j.message : undefined,
+    }
+  }
   if (r.status === 403) {
     return { ok: false, message: typeof j.message === 'string' ? j.message : 'Forbidden' }
   }
@@ -212,9 +212,11 @@ export async function postMassiveSync(
     Array.isArray(rawIds) && rawIds.length > 0
       ? rawIds.map((x: unknown) => String(x)).filter(Boolean)
       : undefined
+  const job_id =
+    typeof j.job_id === 'string' ? j.job_id : job_ids?.[0]
   return {
     ok: Boolean(j.ok),
-    job_id: typeof j.job_id === 'string' ? j.job_id : undefined,
+    job_id,
     job_ids,
     error: typeof j.error === 'string' ? j.error : undefined,
     message: typeof j.message === 'string' ? j.message : undefined,
@@ -227,7 +229,7 @@ export async function fetchMassiveJob(jobId: string): Promise<{
   error?: string
   job?: MassiveJobDetail
 }> {
-  const r = await fetch(`${OPS_BASE}/ops/research/massive/jobs/${encodeURIComponent(jobId)}`)
+  const r = await fetch(opsUrl(`/research/massive/jobs/${encodeURIComponent(jobId)}`))
   const j = await r.json().catch(() => ({}))
   if (!j.ok) {
     return { ok: false, error: typeof j.error === 'string' ? j.error : 'Unknown error' }
@@ -257,7 +259,7 @@ export async function fetchMaxPainCompute(params: {
   if (!sym || !exp) return { ok: false, error: 'symbol and expiry are required' }
   const q = new URLSearchParams({ symbol: sym, expiry: exp })
   if (params.tradeDate?.trim()) q.set('trade_date', params.tradeDate.trim())
-  const r = await fetch(`${RESEARCH_BASE}/research/max-pain/compute?${q.toString()}`)
+  const r = await fetch(`${researchUrl('/research/max-pain/compute')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   if (!j.ok) {
     return { ok: false, error: typeof j.error === 'string' ? j.error : 'Request failed' }
@@ -302,7 +304,7 @@ export async function fetchMaxPainComputeHistory(params: {
   if (!sym || !exp) return { ok: false, error: 'symbol and expiry are required', series: [] }
   const q = new URLSearchParams({ symbol: sym, expiry: exp })
   if (params.lookbackDays != null && params.lookbackDays > 0) q.set('lookback_days', String(params.lookbackDays))
-  const r = await fetch(`${RESEARCH_BASE}/research/max-pain/compute/history?${q.toString()}`)
+  const r = await fetch(`${researchUrl('/research/max-pain/compute/history')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   if (!j.ok) {
     return { ok: false, error: typeof j.error === 'string' ? j.error : 'Request failed', series: [] }
@@ -333,7 +335,7 @@ export async function fetchIvTermStructure(
     expirations: expirations.join(','),
     source,
   })
-  const r = await fetch(`${RESEARCH_BASE}/research/iv-term-structure?${params}`)
+  const r = await fetch(`${researchUrl('/research/iv-term-structure')}?${params}`)
   const j = await r.json().catch(() => ({}))
   const pts: IvTermStructurePoint[] = Array.isArray(j.points)
     ? j.points.map((p: Record<string, unknown>) => ({
@@ -371,7 +373,7 @@ export async function fetchIvVolatilityCone(
     source,
     lookback_days: String(lookbackDays),
   })
-  const r = await fetch(`${RESEARCH_BASE}/research/iv-volatility-cone?${params}`)
+  const r = await fetch(`${researchUrl('/research/iv-volatility-cone')}?${params}`)
   const j = await r.json().catch(() => ({}))
   const numOrNull = (v: unknown): number | null => {
     if (v == null || v === '') return null
@@ -448,7 +450,7 @@ export async function fetchLiquiditySummary(
     right: (right || '').trim(),
     source,
   })
-  const r = await fetch(`${RESEARCH_BASE}/research/option-contract/liquidity-summary?${q.toString()}`)
+  const r = await fetch(`${researchUrl('/research/option-contract/liquidity-summary')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   return {
     ok: Boolean(j.ok),
@@ -481,7 +483,7 @@ export async function fetchRelativeValue(
     right: (right || '').trim(),
     source,
   })
-  const r = await fetch(`${RESEARCH_BASE}/research/option-contract/relative-value?${q.toString()}`)
+  const r = await fetch(`${researchUrl('/research/option-contract/relative-value')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   return {
     ok: Boolean(j.ok),

@@ -3,6 +3,7 @@ import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 /* eslint-disable react-hooks/set-state-in-effect -- chart layout measures DOM on mount */
 import type { Bar } from '@/types/market'
 import { fmtTs, fmtTsForPeriod, fmtUsd } from '@/lib/format'
+import { chartSurfaceFill } from '@/lib/chartTokens'
 import {
   bollingerSeries,
   macdSeries,
@@ -447,7 +448,7 @@ export function BarsCandlestickChart({
         y={macdTop}
         width={innerWidth}
         height={innerMacdHeight}
-        fill="var(--color-surface)"
+        fill={chartSurfaceFill}
         stroke="var(--color-border)"
         strokeWidth={1}
         rx={6}
@@ -542,7 +543,7 @@ export function BarsCandlestickChart({
         y={rsiTop}
         width={innerWidth}
         height={innerRsiHeight}
-        fill="var(--color-surface)"
+        fill={chartSurfaceFill}
         stroke="var(--color-border)"
         strokeWidth={1}
         rx={6}
@@ -677,7 +678,7 @@ export function BarsCandlestickChart({
         <defs>
           <linearGradient id="data-bars-bg" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--color-surface-elevated)" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="var(--color-surface)" stopOpacity="0.9" />
+            <stop offset="100%" stopColor={chartSurfaceFill} stopOpacity="0.9" />
           </linearGradient>
         </defs>
 
@@ -781,7 +782,7 @@ export function BarsCandlestickChart({
               y={volumeTop}
               width={innerWidth}
               height={innerVolumeHeight}
-              fill="var(--color-surface)"
+              fill={chartSurfaceFill}
               stroke="var(--color-border)"
               strokeWidth={1}
               rx={6}

@@ -4,6 +4,7 @@ import {
   fetchOptionSnapshotsPg,
   pollMassiveJobUntilDone,
   postMassiveSync,
+  resolveMassiveSyncJobId,
 } from '@/api/research/optionDiscovery'
 import type { GreeksCoverageResponse, OptionSnapshotRow } from '@/types/optionDiscovery'
 
@@ -120,7 +121,8 @@ export function useOptionChainQuotes() {
 
         if (gen !== loadGenRef.current) return
 
-        if (!sync.ok || !sync.job_id) {
+        const jobId = resolveMassiveSyncJobId(sync)
+        if (!sync.ok || !jobId) {
           setSnapshotFeedback({
             level: 'error',
             title: 'Sync failed',
@@ -131,7 +133,7 @@ export function useOptionChainQuotes() {
           return
         }
 
-        const poll = await pollMassiveJobUntilDone(sync.job_id, { maxAttempts: 120, intervalMs: 1000 })
+        const poll = await pollMassiveJobUntilDone(jobId, { maxAttempts: 120, intervalMs: 1000 })
         if (gen !== loadGenRef.current) return
         if (!poll.ok) {
           setSnapshotFeedback({

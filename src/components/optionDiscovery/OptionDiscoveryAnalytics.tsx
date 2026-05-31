@@ -4,7 +4,9 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { OdChartExpandOnHover } from './OdChartExpandOnHover'
 import { DiscoveryHint } from './DiscoveryHint'
 import { DiscoveryIconButton } from './DiscoveryIconButton'
+import { cn } from '@/lib/utils'
 import { DiscoverySection } from './DiscoverySection'
+import { chartAxisTitleFill, chartSurfaceFill } from '@/lib/chartTokens'
 import {
   OD_ANALYTICS_AXIS_TICK_FILL,
   OD_ANALYTICS_AXIS_TITLE_FILL,
@@ -112,7 +114,7 @@ export function IvSmileChart({
     <svg className="od-max-pain-svg od-chart-svg" viewBox={`0 0 ${w} ${h}`}
       aria-label="IV smile chart showing implied volatility by strike for calls and puts">
       <rect x={pad.l} y={pad.t} width={innerW} height={innerH}
-        fill="var(--color-surface)" rx={4} />
+        fill={chartSurfaceFill} rx={4} />
 
       {Array.from({ length: yTicks + 1 }, (_, i) => {
         const val = ivLo + yStep * i
@@ -147,7 +149,7 @@ export function IvSmileChart({
 
       {ucX != null && (
         <line x1={ucX} x2={ucX} y1={pad.t} y2={pad.t + innerH}
-          stroke="var(--color-text-main, #e0e0e0)" strokeWidth={1.2} strokeDasharray="2 2" />
+          stroke={chartAxisTitleFill} strokeWidth={1.2} strokeDasharray="2 2" />
       )}
 
       {xTickIdxs.map(i => {
@@ -169,22 +171,22 @@ export function IvSmileChart({
 
 export function IvSmileLegend({ side = 'both', underlying }: { side?: 'call' | 'put' | 'both'; underlying: number | null }) {
   return (
-    <div className="mp-legend" role="presentation">
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] text-muted-foreground" role="presentation">
       {(side === 'call' || side === 'both') && (
-        <span className="mp-legend-item">
-          <span className="mp-legend-swatch" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
           Call IV
         </span>
       )}
       {(side === 'put' || side === 'both') && (
-        <span className="mp-legend-item">
-          <span className="mp-legend-swatch" style={{ background: 'var(--color-lamp-red, #ef5350)' }} />
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-red, #ef5350)' }} />
           Put IV
         </span>
       )}
       {underlying != null && Number.isFinite(underlying) && (
-        <span className="mp-legend-item">
-          <span className="mp-legend-swatch mp-legend-line" style={{ borderColor: 'var(--color-text-main, #e0e0e0)' }} />
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-0 w-3.5 shrink-0 border-t-2 border-dashed" style={{ borderColor: chartAxisTitleFill }} />
           Spot {underlying.toFixed(2)}
         </span>
       )}
@@ -249,7 +251,7 @@ export function OiProfileChart({ rows, underlying }: {
     <svg className="od-max-pain-svg od-chart-svg" viewBox={`0 0 ${w} ${h}`}
       aria-label="Open interest distribution by strike showing Call and Put OI as stacked bars">
       <rect x={pad.l} y={pad.t} width={innerW} height={innerH}
-        fill="var(--color-surface)" rx={4} />
+        fill={chartSurfaceFill} rx={4} />
 
       {Array.from({ length: yTicks + 1 }, (_, i) => {
         const val = yStep * i
@@ -281,7 +283,7 @@ export function OiProfileChart({ rows, underlying }: {
 
       {ucX != null && (
         <line x1={ucX} x2={ucX} y1={pad.t - 2} y2={pad.t + innerH + 2}
-          stroke="var(--color-text-main, #e0e0e0)" strokeWidth={1.2} strokeDasharray="2 2" />
+          stroke={chartAxisTitleFill} strokeWidth={1.2} strokeDasharray="2 2" />
       )}
 
       {xTickIdxs.map(i => {
@@ -303,18 +305,18 @@ export function OiProfileChart({ rows, underlying }: {
 
 export function OiProfileLegend({ underlying }: { underlying: number | null }) {
   return (
-    <div className="mp-legend" role="presentation">
-      <span className="mp-legend-item">
-        <span className="mp-legend-swatch" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] text-muted-foreground" role="presentation">
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
         Call OI
       </span>
-      <span className="mp-legend-item">
-        <span className="mp-legend-swatch" style={{ background: 'var(--color-lamp-red, #ef5350)' }} />
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-red, #ef5350)' }} />
         Put OI
       </span>
       {underlying != null && Number.isFinite(underlying) && (
-        <span className="mp-legend-item">
-          <span className="mp-legend-swatch mp-legend-line" style={{ borderColor: 'var(--color-text-main, #e0e0e0)' }} />
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-0 w-3.5 shrink-0 border-t-2 border-dashed" style={{ borderColor: chartAxisTitleFill }} />
           Spot {underlying.toFixed(2)}
         </span>
       )}
@@ -396,7 +398,7 @@ export function GammaExposureChart({ rows, underlying }: {
     <svg className="od-max-pain-svg od-chart-svg" viewBox={`0 0 ${w} ${h}`}
       aria-label="Gamma exposure by strike: call and put gamma times open interest times 100 shares per contract">
       <rect x={pad.l} y={pad.t} width={innerW} height={innerH}
-        fill="var(--color-surface)" rx={4} />
+        fill={chartSurfaceFill} rx={4} />
 
       {Array.from({ length: yTicks + 1 }, (_, i) => {
         const val = yStep * i
@@ -428,7 +430,7 @@ export function GammaExposureChart({ rows, underlying }: {
 
       {ucX != null && (
         <line x1={ucX} x2={ucX} y1={pad.t - 2} y2={pad.t + innerH + 2}
-          stroke="var(--color-text-main, #e0e0e0)" strokeWidth={1.2} strokeDasharray="2 2" />
+          stroke={chartAxisTitleFill} strokeWidth={1.2} strokeDasharray="2 2" />
       )}
 
       {xTickIdxs.map(i => {
@@ -450,18 +452,18 @@ export function GammaExposureChart({ rows, underlying }: {
 
 export function GammaExposureLegend({ underlying }: { underlying: number | null }) {
   return (
-    <div className="mp-legend" role="presentation">
-      <span className="mp-legend-item">
-        <span className="mp-legend-swatch" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] text-muted-foreground" role="presentation">
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
         Call G×OI×100
       </span>
-      <span className="mp-legend-item">
-        <span className="mp-legend-swatch" style={{ background: 'var(--color-lamp-red, #ef5350)' }} />
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-red, #ef5350)' }} />
         Put G×OI×100
       </span>
       {underlying != null && Number.isFinite(underlying) && (
-        <span className="mp-legend-item">
-          <span className="mp-legend-swatch mp-legend-line" style={{ borderColor: 'var(--color-text-main, #e0e0e0)' }} />
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-0 w-3.5 shrink-0 border-t-2 border-dashed" style={{ borderColor: chartAxisTitleFill }} />
           Spot {underlying.toFixed(2)}
         </span>
       )}
@@ -497,10 +499,10 @@ export function SkewSummary({ rows, underlying }: {
 
   if (!result) {
     return (
-      <div className="od-analytics-skew">
-        <span className="od-analytics-skew-label">Put–Call IV Skew</span>
-        <span className="od-analytics-skew-val">—</span>
-        <span className="od-analytics-skew-hint">Need spot and OTM contracts with IV.</span>
+    <div className="mb-3 flex flex-wrap items-baseline gap-2 text-sm">
+      <span className="text-muted-foreground">Put–Call IV Skew</span>
+      <span className="font-semibold tabular-nums">—</span>
+      <span className="text-xs text-muted-foreground">Need spot and OTM contracts with IV.</span>
       </div>
     )
   }
@@ -508,15 +510,21 @@ export function SkewSummary({ rows, underlying }: {
   const skewSign = result.spread > 0 ? 'put-heavy' : result.spread < -0.005 ? 'call-heavy' : 'neutral'
 
   return (
-    <div className="od-analytics-skew">
-      <span className="od-analytics-skew-label">
+    <div className="mb-3 flex flex-wrap items-baseline gap-2 text-sm">
+      <span className="text-muted-foreground">
         Put–Call IV Skew
         <InfoTooltip text="Approx. difference between average OTM Put IV and OTM Call IV (nearest 4 strikes each side). Positive = put skew (downside premium)." />
       </span>
-      <span className={`od-analytics-skew-val od-analytics-skew-val--${skewSign}`}>
+      <span
+        className={cn(
+          'font-semibold tabular-nums',
+          skewSign === 'put-heavy' && 'text-destructive',
+          skewSign === 'call-heavy' && 'text-green-600 dark:text-green-500',
+        )}
+      >
         {result.spread >= 0 ? '+' : ''}{(result.spread * 100).toFixed(2)} pts
       </span>
-      <span className="od-analytics-skew-detail">
+      <span className="text-xs text-muted-foreground">
         Put IV avg {fmtIv(result.putIvAvg)} ({result.putCount}) · Call IV avg {fmtIv(result.callIvAvg)} ({result.callCount})
         {result.ratio != null && ` · P/C ratio ${result.ratio.toFixed(2)}`}
       </span>
@@ -575,14 +583,14 @@ export function IvTermStructureChart({ points }: { points: IvTermPoint[] }) {
   const yTicks = 4
   const yStep = (ivHi - ivLo) / yTicks
   /** Plot axes: use main text for titles; payoff tick color reads better on dark plot surfaces than --color-text-muted */
-  const axisFill = 'var(--color-text-main)'
+  const axisFill = chartAxisTitleFill
   const axisTickFill = 'var(--risk-payoff-tick)'
 
   return (
     <svg className="od-max-pain-svg od-chart-svg" viewBox={`0 0 ${w} ${h}`}
       aria-label="IV term structure showing ATM implied volatility across expiration dates">
       <rect x={pad.l} y={pad.t} width={innerW} height={innerH}
-        fill="var(--color-surface)" rx={4} />
+        fill={chartSurfaceFill} rx={4} />
 
       {Array.from({ length: yTicks + 1 }, (_, i) => {
         const val = ivLo + yStep * i
@@ -686,14 +694,14 @@ export function IvVolConeChart({ points }: { points: IvVolConePoint[] }) {
   const yTicks = 4
   const yStep = (ivHi - ivLo) / yTicks
   /** Plot axes: use main text for titles; payoff tick color reads better on dark plot surfaces than --color-text-muted */
-  const axisFill = 'var(--color-text-main)'
+  const axisFill = chartAxisTitleFill
   const axisTickFill = 'var(--risk-payoff-tick)'
 
   return (
     <svg className="od-max-pain-svg od-chart-svg" viewBox={`0 0 ${w} ${h}`}
       aria-label="IV volatility cone: historical ATM IV p10–p90 band per expiration vs days to expiration; current ATM IV overlaid">
       <rect x={pad.l} y={pad.t} width={innerW} height={innerH}
-        fill="var(--color-surface)" rx={4} />
+        fill={chartSurfaceFill} rx={4} />
 
       {Array.from({ length: yTicks + 1 }, (_, i) => {
         const val = ivLo + yStep * i
@@ -907,7 +915,7 @@ export function IvParametricConeChart({ points }: { points: IvVolatilityConePoin
 
   const yTicks = 4
   const yStep = (ivHi - ivLo) / yTicks
-  const axisFill = 'var(--color-text-main)'
+  const axisFill = chartAxisTitleFill
   const axisTickFill = 'var(--risk-payoff-tick)'
 
   const jitter = 5
@@ -917,7 +925,7 @@ export function IvParametricConeChart({ points }: { points: IvVolatilityConePoin
       <svg className="od-max-pain-svg od-chart-svg" viewBox={`0 0 ${w} ${h}`}
         aria-label="Parametric IV cone: historical daily ATM IV mean, standard deviation bands, min and max, with latest Call and Put IV markers">
         <rect x={pad.l} y={pad.t} width={innerW} height={innerH}
-          fill="var(--color-surface)" rx={4} />
+          fill={chartSurfaceFill} rx={4} />
 
         {Array.from({ length: yTicks + 1 }, (_, i) => {
           const val = ivLo + yStep * i
@@ -1020,13 +1028,34 @@ export function IvParametricConeChart({ points }: { points: IvVolatilityConePoin
           </g>
         )}
       </svg>
-      <div className="od-iv-param-legend" aria-label="Chart legend">
-        <span className="od-iv-param-legend-item"><span className="od-iv-param-swatch od-iv-param-swatch--minmax" />Min / Max</span>
-        <span className="od-iv-param-legend-item"><span className="od-iv-param-swatch od-iv-param-swatch--sd2" />Mean ±2 SD</span>
-        <span className="od-iv-param-legend-item"><span className="od-iv-param-swatch od-iv-param-swatch--sd1" />Mean ±1 SD</span>
-        <span className="od-iv-param-legend-item"><span className="od-iv-param-swatch od-iv-param-swatch--mean" />Mean</span>
-        <span className="od-iv-param-legend-item"><span className="od-iv-param-swatch od-iv-param-swatch--call" />Call (latest)</span>
-        <span className="od-iv-param-legend-item"><span className="od-iv-param-swatch od-iv-param-swatch--put" />Put (latest)</span>
+      <div
+        className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] leading-snug text-muted-foreground"
+        aria-label="Chart legend"
+      >
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-0.5 w-3.5 shrink-0 rounded-sm bg-[repeating-linear-gradient(90deg,var(--muted-foreground)_0_3px,transparent_3px_6px)]" />
+          Min / Max
+        </span>
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-0.5 w-3.5 shrink-0 rounded-sm bg-[repeating-linear-gradient(90deg,#64748b_0_2px,transparent_2px_5px)]" />
+          Mean ±2 SD
+        </span>
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-0.5 w-3.5 shrink-0 rounded-sm bg-[repeating-linear-gradient(90deg,var(--primary)_0_4px,transparent_4px_7px)]" />
+          Mean ±1 SD
+        </span>
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-0.5 w-3.5 shrink-0 rounded-sm bg-primary" />
+          Mean
+        </span>
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block size-2 shrink-0 rounded-full border border-border bg-primary" />
+          Call (latest)
+        </span>
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block size-2 shrink-0 rounded-full border border-border bg-amber-500" />
+          Put (latest)
+        </span>
       </div>
     </>
   )
@@ -1063,18 +1092,26 @@ export function OptionDiscoveryAnalyticsPanel({
   const chartCount = [hasIv, hasOi, hasGex].filter(Boolean).length
 
   return (
-    <DiscoverySection className="od-analytics-section" aria-label="Option analytics">
-      <h3 className="od-analytics-title">
+    <DiscoverySection className="w-full" aria-label="Option analytics">
+      <h3 className="mb-2 flex items-center gap-2 text-base font-medium">
         Option Analytics
         <InfoTooltip text="Derived from current-expiry snapshot data (Massive, ~15 min delayed). IV Smile and OI by strike for loaded contracts. Scoped to the selected strike window." />
       </h3>
 
-      <div className="od-analytics-charts-scroll">
-        <div className="od-analytics-charts-row" data-chart-count={chartCount}>
+      <div className="mb-3 w-full min-w-0 overflow-x-auto overflow-y-hidden">
+        <div
+          className={cn(
+            'grid w-full gap-2',
+            chartCount === 1 && 'grid-cols-1',
+            chartCount === 2 && 'grid-cols-2',
+            chartCount === 3 && 'min-w-[48rem] grid-cols-3',
+          )}
+          data-chart-count={chartCount}
+        >
         {hasIv && (
-          <div className="mp-chart-pane od-analytics-chart-cell">
-            <div className="od-analytics-chart-head">
-              <h4 className="mp-chart-subtitle">IV Smile</h4>
+          <div className="od-analytics-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <h4 className="m-0 text-xs font-semibold text-muted-foreground">IV Smile</h4>
               <DiscoveryIconButton
                 className="od-analytics-chart-toggle-btn"
                 onClick={() => setIvCollapsed(v => !v)}
@@ -1100,9 +1137,9 @@ export function OptionDiscoveryAnalyticsPanel({
         )}
 
         {hasOi && (
-          <div className="mp-chart-pane od-analytics-chart-cell">
-            <div className="od-analytics-chart-head">
-              <h4 className="mp-chart-subtitle">Open Interest Profile</h4>
+          <div className="od-analytics-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <h4 className="m-0 text-xs font-semibold text-muted-foreground">Open Interest Profile</h4>
               <DiscoveryIconButton
                 className="od-analytics-chart-toggle-btn"
                 onClick={() => setOiCollapsed(v => !v)}
@@ -1127,9 +1164,9 @@ export function OptionDiscoveryAnalyticsPanel({
         )}
 
         {hasGex && (
-          <div className="mp-chart-pane od-analytics-chart-cell">
-            <div className="od-analytics-chart-head">
-              <h4 className="mp-chart-subtitle">
+          <div className="od-analytics-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <h4 className="m-0 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
                 Gamma exposure (dealer-style)
                 <InfoTooltip text="Stacked |gamma × open interest × 100| per strike (US equity contract size). Magnitude only; not a forecast of dealer hedging flow. Delayed snapshot data." />
               </h4>

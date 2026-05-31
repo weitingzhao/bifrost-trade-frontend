@@ -8,6 +8,7 @@ import {
   fetchMaxPainComputeHistory,
   pollMassiveJobUntilDone,
   postMassiveSync,
+  resolveMassiveSyncJobId,
 } from '@/api/research/optionDiscovery'
 import type { MaxPainComputeResponse, MaxPainHistoryPoint, MaxPainStrikePoint } from '@/types/optionDiscovery'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
@@ -19,8 +20,9 @@ import {
   OD_MAX_PAIN_VIEWBOX_W,
 } from './odChartConstants'
 import { OdChartExpandOnHover } from './OdChartExpandOnHover'
+import { chartAxisTitleFill, chartSurfaceFill } from '@/lib/chartTokens'
 
-const AXIS_FILL = 'var(--od-max-pain-axis-fill, var(--color-text-muted))'
+const AXIS_FILL = 'var(--od-max-pain-axis-fill, var(--muted-foreground))'
 
 /** X-axis tick row (below plot, above axis title) */
 function mpPainXTickY(viewH: number) {
@@ -123,7 +125,7 @@ function LiabilityByStrikeSvg({
     <svg className="od-max-pain-svg od-chart-svg" viewBox={`0 0 ${w} ${h}`}
       aria-label="Seller liability by strike — stacked Call (green) and Put (red) with Max Pain and spot price markers">
       <rect x={pad.l} y={pad.t} width={innerW} height={innerH}
-        fill="var(--color-surface)" rx={4} />
+        fill={chartSurfaceFill} rx={4} />
 
       {gridLines}
       {yLabels}
@@ -155,7 +157,7 @@ function LiabilityByStrikeSvg({
       )}
       {ucX != null && (
         <line x1={ucX} x2={ucX} y1={pad.t} y2={pad.t + innerH}
-          stroke="var(--color-text-main, #e0e0e0)" strokeWidth={1.2} strokeDasharray="2 2" />
+          stroke={chartAxisTitleFill} strokeWidth={1.2} strokeDasharray="2 2" />
       )}
 
       {xTickIdxs.map(i => {
@@ -208,22 +210,22 @@ function LiabilityLegend({ underlyingClose, maxPainStrike }: {
   maxPainStrike: number
 }) {
   return (
-    <div className="mp-legend" role="presentation">
-      <span className="mp-legend-item">
-        <span className="mp-legend-swatch" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] text-muted-foreground" role="presentation">
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
         Call liability
       </span>
-      <span className="mp-legend-item">
-        <span className="mp-legend-swatch" style={{ background: 'var(--color-lamp-red, #ef5350)' }} />
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-red, #ef5350)' }} />
         Put liability
       </span>
-      <span className="mp-legend-item mp-legend-item-max-pain">
-        <span className="mp-legend-swatch mp-legend-line" style={{ borderColor: 'var(--color-accent, #6ea8fe)' }} />
-        Max Pain <strong className="mp-legend-max-pain-value">{maxPainStrike.toFixed(2)}</strong>
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium">
+        <span className="inline-block h-0 w-3.5 shrink-0 border-t-2 border-dashed" style={{ borderColor: 'var(--primary)' }} />
+        Max Pain <strong className="tabular-nums text-foreground">{maxPainStrike.toFixed(2)}</strong>
       </span>
       {underlyingClose != null && Number.isFinite(underlyingClose) && (
-        <span className="mp-legend-item">
-          <span className="mp-legend-swatch mp-legend-line" style={{ borderColor: 'var(--color-text-main, #e0e0e0)' }} />
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="inline-block h-0 w-3.5 shrink-0 border-t-2 border-dashed" style={{ borderColor: chartAxisTitleFill }} />
           Spot {underlyingClose.toFixed(2)}
         </span>
       )}
@@ -262,7 +264,7 @@ function OiBarsSvg({
   return (
     <svg className="od-max-pain-svg od-chart-svg" viewBox={`0 0 ${w} ${h}`} aria-label="Open interest by strike">
       <rect x={pad.l} y={pad.t} width={innerW} height={innerH}
-        fill="var(--color-surface)" rx={4} />
+        fill={chartSurfaceFill} rx={4} />
       <line x1={pad.l} x2={pad.l + innerW} y1={pad.t + innerH} y2={pad.t + innerH}
         stroke="var(--od-max-pain-axis-line, var(--color-border-strong))" strokeWidth={1} />
       <line x1={pad.l} x2={pad.l} y1={pad.t} y2={pad.t + innerH}
@@ -372,7 +374,7 @@ function TrendSvg({ series }: { series: MaxPainHistoryPoint[] }) {
   return (
     <svg className="od-max-pain-svg od-chart-svg" viewBox={`0 0 ${w} ${h}`} aria-label="Max pain vs underlying price trend over time">
       <rect x={pad.l} y={pad.t} width={innerW} height={innerH}
-        fill="var(--color-surface)" rx={4} />
+        fill={chartSurfaceFill} rx={4} />
       <line x1={pad.l} x2={pad.l + innerW} y1={pad.t + innerH} y2={pad.t + innerH}
         stroke="var(--od-max-pain-axis-line, var(--color-border-strong))" strokeWidth={1} />
       <line x1={pad.l} x2={pad.l} y1={pad.t} y2={pad.t + innerH}
@@ -511,12 +513,13 @@ export function OptionDiscoveryMaxPainPanel({
         mode: 'watchlist_eod',
         symbols: [sym],
       })
-      if (!sync.ok || !sync.job_id) {
+      const jobId = resolveMassiveSyncJobId(sync)
+      if (!sync.ok || !jobId) {
         setErr(sync.error ?? sync.message ?? 'Failed to enqueue OI backfill')
         setOiBackfillMsg(null)
         return
       }
-      const polled = await pollMassiveJobUntilDone(sync.job_id, { maxAttempts: 180, intervalMs: 1000 })
+      const polled = await pollMassiveJobUntilDone(jobId, { maxAttempts: 180, intervalMs: 1000 })
       if (!polled.ok) {
         setErr(polled.error ?? 'OI backfill job failed')
         setOiBackfillMsg(null)
@@ -642,29 +645,33 @@ export function OptionDiscoveryMaxPainPanel({
           ) : null}
 
           {live?.ok && points.length > 0 && (
-            <div className="od-max-pain-layout">
-              <div className="od-max-pain-metrics-bar">
-                <div className="od-max-pain-metrics-inner" role="group" aria-label="Max Pain summary">
-                  <div className="od-max-pain-metric-cell">
-                    <span className="od-max-pain-card-label">Max Pain</span>
+            <div className="mb-3 w-full">
+              <div className="mb-3 w-full">
+                <div
+                  className="flex flex-nowrap items-end gap-x-4 gap-y-2 overflow-x-auto rounded-lg border border-primary/20 bg-gradient-to-b from-accent/10 to-card p-2 shadow-sm"
+                  role="group"
+                  aria-label="Max Pain summary"
+                >
+                  <div className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                    <span className="text-xs text-muted-foreground">Max Pain</span>
                     <strong>{live.max_pain_strike != null ? live.max_pain_strike.toFixed(2) : '—'}</strong>
                   </div>
-                  <div className="od-max-pain-metric-cell">
-                    <span className="od-max-pain-card-label">Spot</span>
+                  <div className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                    <span className="text-xs text-muted-foreground">Spot</span>
                     <strong>{live.underlying_close != null ? live.underlying_close.toFixed(2) : '—'}</strong>
                   </div>
-                  <div className="od-max-pain-metric-cell">
-                    <span className="od-max-pain-card-label">Distance</span>
+                  <div className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                    <span className="text-xs text-muted-foreground">Distance</span>
                     <strong>
                       {live.distance_to_max_pain_pct != null ? `${(live.distance_to_max_pain_pct * 100).toFixed(2)}%` : '—'}
                     </strong>
                   </div>
-                  <div className="od-max-pain-metric-cell">
-                    <span className="od-max-pain-card-label">Total OI</span>
+                  <div className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                    <span className="text-xs text-muted-foreground">Total OI</span>
                     <strong>{live.total_oi != null ? live.total_oi.toLocaleString() : '—'}</strong>
                   </div>
-                  <div className="od-max-pain-metric-cell">
-                    <span className="od-max-pain-card-label">OI as-of</span>
+                  <div className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                    <span className="text-xs text-muted-foreground">OI as-of</span>
                     <strong>{live.trade_date ?? '—'}</strong>
                   </div>
                 </div>
@@ -675,12 +682,12 @@ export function OptionDiscoveryMaxPainPanel({
                 )}
               </div>
 
-              <div className="od-max-pain-charts-scroll">
-                <div className="od-max-pain-charts-row">
-                  <div className="mp-chart-pane od-max-pain-chart-cell">
+              <div className="w-full min-w-0 overflow-x-auto">
+                <div className="grid w-max min-w-full max-w-none grid-cols-3 gap-2 sm:min-w-[48rem]">
+                  <div className="od-max-pain-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
                     <OdChartExpandOnHover title="Seller Liability by Strike">
                       <>
-                        <h4 className="mp-chart-subtitle mp-chart-subtitle--pane">Seller Liability by Strike</h4>
+                        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Seller Liability by Strike</h4>
                         <LiabilityLegend underlyingClose={live.underlying_close ?? null} maxPainStrike={live.max_pain_strike ?? 0} />
                         <LiabilityByStrikeSvg points={points} maxPainStrike={live.max_pain_strike ?? 0}
                           underlyingClose={live.underlying_close ?? null} />
@@ -688,18 +695,18 @@ export function OptionDiscoveryMaxPainPanel({
                     </OdChartExpandOnHover>
                   </div>
 
-                  <div className="mp-chart-pane od-max-pain-chart-cell">
+                  <div className="od-max-pain-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
                     <OdChartExpandOnHover title="Open Interest by Strike">
                       <>
-                        <h4 className="mp-chart-subtitle mp-chart-subtitle--pane">Open Interest by Strike</h4>
+                        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Open Interest by Strike</h4>
                         <OiBarsSvg points={points} showCall showPut />
                       </>
                     </OdChartExpandOnHover>
                   </div>
 
-                  <div className="mp-chart-pane od-max-pain-chart-cell od-max-pain-trend-pane" aria-label="Max Pain and underlying trend">
-                    <div className="mp-chart-pane-head">
-                      <h4 className="mp-chart-subtitle mp-chart-subtitle--pane">Max Pain · Underlying</h4>
+                  <div className="od-max-pain-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2" aria-label="Max Pain and underlying trend">
+                    <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+                      <h4 className="m-0 text-xs font-semibold text-muted-foreground">Max Pain · Underlying</h4>
                       <DiscoveryIconButton
                         className="od-max-pain-refresh-icon-btn"
                         onClick={() => setTrendCollapsed(v => !v)}

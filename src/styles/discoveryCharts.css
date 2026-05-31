@@ -1,0 +1,168 @@
+/* Option Discovery — SVG chart sizing & hover-expand overlay (Legacy CSS cutoff). */
+
+.option-discovery-root {
+  --od-max-pain-axis-fill: var(--muted-foreground);
+  --od-max-pain-grid-stroke: var(--border);
+  --od-max-pain-axis-line: var(--border);
+}
+
+.option-discovery-root .od-chart-expand-trigger {
+  cursor: pointer;
+  min-width: 0;
+}
+
+.option-discovery-root .od-chart-expand-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10060;
+  pointer-events: none;
+}
+
+.option-discovery-root .od-chart-expand-panel {
+  position: fixed;
+  z-index: 1;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 420px;
+  min-height: 220px;
+  overflow: hidden;
+  padding: 0.5rem 0.75rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, var(--primary));
+  background: var(--card);
+  box-shadow: 0 20px 50px color-mix(in srgb, #000 35%, transparent);
+  pointer-events: auto;
+}
+
+.option-discovery-root .od-chart-expand-panel-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  user-select: none;
+}
+
+.option-discovery-root .od-chart-expand-panel-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.option-discovery-root .od-chart-expand-panel-drag {
+  cursor: grab;
+}
+
+.option-discovery-root .od-chart-expand-panel-drag:active {
+  cursor: grabbing;
+}
+
+.option-discovery-root .od-chart-expand-panel-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.option-discovery-root .od-chart-expand-panel-close:hover {
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.option-discovery-root .od-chart-expand-panel-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  width: 100%;
+}
+
+.option-discovery-root .od-chart-expand-panel-body .od-max-pain-svg,
+.option-discovery-root .od-chart-expand-panel-body .od-chart-svg {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.option-discovery-root .od-chart-expand-panel-hint {
+  flex-shrink: 0;
+  margin: 0.5rem 2rem 0 0;
+  font-size: 0.65rem;
+  color: var(--muted-foreground);
+}
+
+.option-discovery-root .od-chart-expand-resize-grip {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 22px;
+  height: 22px;
+  z-index: 2;
+  cursor: nwse-resize;
+  touch-action: none;
+  border-radius: 0 0 10px 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    transparent 45%,
+    color-mix(in srgb, var(--border) 70%, transparent) 45%,
+    color-mix(in srgb, var(--border) 70%, transparent) 50%,
+    transparent 50%,
+    transparent 58%,
+    color-mix(in srgb, var(--border) 70%, transparent) 58%,
+    color-mix(in srgb, var(--border) 70%, transparent) 64%,
+    transparent 64%
+  );
+}
+
+.option-discovery-root .od-chart-expand-resize-grip:hover {
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    transparent 45%,
+    color-mix(in srgb, var(--primary) 55%, var(--border)) 45%,
+    color-mix(in srgb, var(--primary) 55%, var(--border)) 50%,
+    transparent 50%,
+    transparent 58%,
+    color-mix(in srgb, var(--primary) 55%, var(--border)) 58%,
+    color-mix(in srgb, var(--primary) 55%, var(--border)) 64%,
+    transparent 64%
+  );
+}
+
+.option-discovery-root .od-max-pain-svg,
+.option-discovery-root .od-chart-svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.option-discovery-root .od-max-pain-chart-cell .od-max-pain-svg {
+  aspect-ratio: 640 / 260;
+  min-height: 0;
+}
+
+.option-discovery-root .od-analytics-chart-cell .od-max-pain-svg {
+  aspect-ratio: 640 / 240;
+  min-height: 0;
+}

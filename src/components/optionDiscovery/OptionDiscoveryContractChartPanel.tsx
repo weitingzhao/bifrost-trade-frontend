@@ -3,10 +3,12 @@ import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { DiscoveryIconButton } from '@/components/optionDiscovery/DiscoveryIconButton'
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/purity -- contract chart sync/load */
 import type { Bar } from '@/types/market'
-import { pollMassiveJobUntilDone, postMassiveSync } from '@/api/research/optionDiscovery'
+import { pollMassiveJobUntilDone, postMassiveSync, resolveMassiveSyncJobId } from '@/api/research/optionDiscovery'
 import { fetchOptionBars } from '@/api/market'
 import { BarsCandlestickChart, finiteVwap } from '@/components/charts/BarsCandlestickChart'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { cn } from '@/lib/utils'
 import { OdChartExpandOnHover } from './OdChartExpandOnHover'
 import { buildPolygonOptionsTicker } from '@/utils/polygonOptionsTicker'
 import { OPTION_BAR_PERIODS } from '@/utils/optionBarPeriods'
@@ -124,11 +126,12 @@ export function OptionDiscoveryContractChartPanel({
         start_ms: startMs,
         end_ms: endMs,
       })
-      if (!res.ok || !res.job_id) {
+      const jobId = resolveMassiveSyncJobId(res)
+      if (!res.ok || !jobId) {
         setError(res.error ?? res.message ?? 'Failed to enqueue Massive aggregates job')
         return
       }
-      const polled = await pollMassiveJobUntilDone(res.job_id, { maxAttempts: 120, intervalMs: 1000 })
+      const polled = await pollMassiveJobUntilDone(jobId, { maxAttempts: 120, intervalMs: 1000 })
       if (!polled.ok) {
         setError(polled.error ?? 'Massive job failed')
         return
@@ -156,29 +159,29 @@ export function OptionDiscoveryContractChartPanel({
   )
 
   return (
-    <div className="od-contract-chart">
-      <div className="od-contract-chart-toolbar">
-        <div className="od-contract-chart-period-cluster">
-          <span className="od-contract-chart-toolbar-label">Period</span>
-          <div className="od-contract-chart-periods" role="group" aria-label="Bar period">
+    <div className="min-w-0">
+      <div className="mb-2 flex w-full flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Period</span>
+          <ToggleGroup
+            type="single"
+            size="sm"
+            variant="outline"
+            value={period}
+            onValueChange={v => {
+              if (v) setPeriod(v)
+            }}
+            aria-label="Bar period"
+          >
             {OPTION_BAR_PERIODS.map(p => (
-              <label key={p.value} className="od-contract-chart-period-item">
-                <input
-                  className="od-contract-chart-period-input"
-                  type="radio"
-                  name="od-opt-bar-period"
-                  value={p.value}
-                  checked={period === p.value}
-                  onChange={() => setPeriod(p.value)}
-                />
-                <span className="od-contract-chart-period-item-text">{p.label}</span>
-              </label>
+              <ToggleGroupItem key={p.value} value={p.value} aria-label={p.label}>
+                {p.label}
+              </ToggleGroupItem>
             ))}
-          </div>
+          </ToggleGroup>
         </div>
-        <div className="od-contract-chart-toolbar-right">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <DiscoveryIconButton
-            className="od-contract-chart-icon-btn"
             disabled={loading || syncBusy}
             onClick={() => void load()}
             title={loading ? 'Loading bars' : 'Reload bars'}
@@ -192,7 +195,6 @@ export function OptionDiscoveryContractChartPanel({
             </svg>
           </DiscoveryIconButton>
           <DiscoveryIconButton
-            className="od-contract-chart-icon-btn"
             disabled={loading || syncBusy}
             title={
               syncBusy
@@ -211,11 +213,14 @@ export function OptionDiscoveryContractChartPanel({
               <path d="M16 14l3 3-3 3" />
             </svg>
           </DiscoveryIconButton>
-          <span className="page-title-with-tooltip" style={{ marginLeft: '0.25rem' }}>
-            <InfoTooltip text="Reads OHLC from PostgreSQL (option_day for Daily, option_min for intraday). Backfill enqueues Massive /v2/aggs on the Celery queue: daily bars upsert option_day (~2y window); intraday upserts option_min (7 days). You can also use Feed → Massive Option → Aggregate Bars (OHLC)." />
-          </span>
+          <InfoTooltip text="Reads OHLC from PostgreSQL (option_day for Daily, option_min for intraday). Backfill enqueues Massive /v2/aggs on the Celery queue: daily bars upsert option_day (~2y window); intraday upserts option_min (7 days). You can also use Feed → Massive Option → Aggregate Bars (OHLC)." />
           <label
-            className="od-contract-chart-vwap-toggle"
+            className={cn(
+              'inline-flex cursor-pointer select-none items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+              'border-border bg-card hover:border-border',
+              showVwap && !(chartBars.length === 0 || !chartHasVwap) && 'border-primary/60 bg-primary/10 shadow-[0_0_0_1px] shadow-primary/35',
+              (chartBars.length === 0 || !chartHasVwap) && 'cursor-not-allowed opacity-55',
+            )}
             title={
               chartBars.length > 0 && !chartHasVwap
                 ? 'No VWAP in loaded bars'
@@ -224,6 +229,7 @@ export function OptionDiscoveryContractChartPanel({
           >
             <input
               type="checkbox"
+              className="size-3.5 accent-primary"
               checked={showVwap}
               disabled={chartBars.length === 0 || !chartHasVwap}
               onChange={e => setShowVwap(e.target.checked)}

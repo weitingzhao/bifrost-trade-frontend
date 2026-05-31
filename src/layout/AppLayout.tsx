@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from './AppSidebar'
@@ -11,6 +11,7 @@ import { LogPanelProvider } from '@/context/LogPanelContext'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useNavMode } from '@/hooks/useNavMode'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { PageRouteFallback } from '@/components/layout'
 
 function readSidebarCookie(): boolean {
   const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
@@ -22,7 +23,9 @@ function BoundedOutlet() {
   return (
     // key=pathname resets the boundary when navigating to a different page
     <ErrorBoundary key={pathname}>
-      <Outlet />
+      <Suspense fallback={<PageRouteFallback />}>
+        <Outlet />
+      </Suspense>
     </ErrorBoundary>
   )
 }
@@ -53,7 +56,7 @@ export function AppLayout() {
   if (effectiveMode === 'topnav') {
     return (
       <LogPanelProvider>
-        <div className="flex flex-col h-svh bg-background">
+        <div className="flex flex-col h-svh bg-card">
           <TopNav
             activeMsgCount={activeMsgCount}
             onOpenMessages={() => setDrawerOpen(true)}
@@ -74,13 +77,13 @@ export function AppLayout() {
       <SidebarProvider defaultOpen={readSidebarCookie()}>
         <AppSidebar />
         {/* h-svh + overflow-hidden keeps LogPanel inside the viewport */}
-        <SidebarInset className="h-svh overflow-hidden">
+        <SidebarInset className="h-svh overflow-hidden bg-card">
           <AppHeader
             activeMsgCount={activeMsgCount}
             onOpenMessages={() => setDrawerOpen(true)}
             onToggleNavMode={toggle}
           />
-          <main className="flex-1 overflow-auto min-w-0">
+          <main className="flex-1 overflow-auto min-w-0 bg-card">
             <BoundedOutlet />
           </main>
           <LogPanel />

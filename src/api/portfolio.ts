@@ -18,12 +18,13 @@ export async function fetchPositionCategories(): Promise<PositionCategoriesRespo
 }
 
 export async function createPositionCategory(
-  name: string
+  name: string,
+  sort_order?: number,
 ): Promise<{ ok: boolean; id: number | null; error?: string }> {
   const res = await fetch(`${BASE}/position-categories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, ...(sort_order != null ? { sort_order } : {}) }),
   })
   if (!res.ok) throw new Error(`Create category: ${res.status}`)
   return res.json()

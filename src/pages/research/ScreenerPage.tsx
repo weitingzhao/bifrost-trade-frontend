@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Play, Download, ChevronDown, ChevronRight, Bookmark } from 'lucide-react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -309,18 +310,14 @@ export default function ScreenerPage() {
   } : undefined
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Option Screener</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Screen options contracts by structure type and filters
-          </p>
-        </div>
-      </div>
+    <PageShell className="space-y-4">
+      <PageHeader
+        title="Option Screener"
+        description="Screen options contracts by structure type and filters"
+      />
 
       {/* Filter Panel */}
-      <div className="border border-border rounded-lg p-4 space-y-4 bg-card">
+      <div className="border border-border rounded-lg p-4 space-y-4 bg-secondary">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           <div className="space-y-1 col-span-2 sm:col-span-1">
             <Label className="text-xs">Structure Type</Label>
@@ -471,6 +468,6 @@ export default function ScreenerPage() {
         onOpenChange={(v) => { if (!v) setSaveSymbol(null) }}
         prefill={prefillData}
       />
-    </div>
+    </PageShell>
   )
 }

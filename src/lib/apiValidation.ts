@@ -17,8 +17,8 @@ export function withValidation<TExpected>(schema: z.ZodSchema, endpointName: str
     const result = schema.safeParse(data)
     if (!result.success) {
       if (import.meta.env.DEV) {
-        // Show first 3 issues to avoid flooding the console
         const sample = result.error.issues.slice(0, 3)
+        // eslint-disable-next-line no-console -- dev-only schema drift warning
         console.warn(`[api-schema] ${endpointName} — ${result.error.issues.length} issue(s):`, sample)
       }
       return data as TExpected

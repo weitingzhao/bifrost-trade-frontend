@@ -8,7 +8,8 @@ import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 
 const PAGE_TITLES: Record<string, string> = {
   '/market/live': 'Live',
-  '/market/watchlist': 'Watchlist',
+  '/market/watchlist': 'Stock Watchlist',
+  '/research/watchlist': 'Stock Watchlist',
   '/portfolio/accounts': 'Accounts',
   '/portfolio/positions': 'Positions',
   '/portfolio/performance': 'Performance',
@@ -66,7 +67,7 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
   const title = PAGE_TITLES[location.pathname] ?? 'Bifrost Trade'
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card px-4">
       <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />
       <Separator orientation="vertical" className="h-4" />
       <span className="font-medium text-sm">{title}</span>

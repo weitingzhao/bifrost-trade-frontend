@@ -1,0 +1,2279 @@
+/* Option Discovery — scoped component styles (Phase 2). Import only from DiscoveryPage. */
+.option-discovery-root .strike-ladder-layout{
+  display: flex;
+  gap: var(--space-3);
+  align-items: stretch;
+  margin-top: var(--space-1);
+}.option-discovery-root .strike-ladder-controls{
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-elevated);
+}.option-discovery-root .strike-ladder-controls-row{
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}.option-discovery-root .strike-ladder-controls-row label{
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}.option-discovery-root .strike-ladder-controls-row select{
+  min-width: 4rem;
+}.option-discovery-root .strike-ladder-controls-row input[type="number"]{
+  width: 3.5rem;
+}/* Option Discovery: full-width main + sticky controls stack *//* Option Discovery: manual symbol + Apply (no default load until Apply / chip) *//* Underlying: compact horizontal chips (replaces table) */.option-discovery-root .option-discovery-main{
+  width: 100%;
+  min-width: 0;
+}.option-discovery-root .option-discovery-main-inner{
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}/* Sticky context + in-page TOC (Option Discovery layers) *//* Inside option-discovery-sticky-stack: parent is sticky; flatten inner card chrome */.option-discovery-root .od-compare-icon-btn{
+  position: relative;
+  flex-shrink: 0;
+}.option-discovery-root .od-compare-icon-btn.section-header-icon-btn:hover, .option-discovery-root .od-compare-icon-btn.section-header-icon-btn:active{
+  transform: none;
+}.option-discovery-root .od-compare-icon-btn-count{
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.2rem;
+  border-radius: 999px;
+  background: var(--color-accent, #6ea8fe);
+  color: #fff;
+  border: 1px solid var(--color-surface);
+  font-size: 0.62rem;
+  line-height: 1rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}/* Layer sections: anchor scroll + visual separation */.option-discovery-root .od-layer-section{
+  scroll-margin-top: 6rem;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}.option-discovery-root .od-layer-section:last-of-type{
+  border-bottom: none;
+}.option-discovery-root .od-layer-section--locked .od-layer-section-header{
+  opacity: 0.75;
+}.option-discovery-root .od-layer-section-header{
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}.option-discovery-root .od-layer-toggle-btn{
+  flex-shrink: 0;
+}.option-discovery-root .od-layer-toggle-btn.section-header-icon-btn:hover, .option-discovery-root .od-layer-toggle-btn.section-header-icon-btn:active{
+  transform: none;
+}.option-discovery-root .od-layer-section-body{
+  min-width: 0;
+}.option-discovery-root .od-layer-step{
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+}.option-discovery-root .od-layer-section-head-text{
+  min-width: 0;
+  flex: 1;
+}.option-discovery-root .od-layer-section-title{
+  margin: 0;
+  font-size: var(--text-h3, 1.1rem);
+  font-weight: 600;
+  color: var(--color-text-main);
+}.option-discovery-root .od-layer-section-subtitle{
+  margin: 0.25rem 0 0;
+}.option-discovery-root .od-layer-locked-hint{
+  margin: 0;
+}.option-discovery-root .od-iv-term-section{
+  margin-top: 0;
+}.option-discovery-root .od-data-state{
+  padding: var(--space-2);
+  border-radius: 6px;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+}.option-discovery-root .od-data-state-title{
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}/* Compare drawer (above contract detail drawer when both open) */.option-discovery-root .od-compare-drawer-backdrop{
+  position: fixed;
+  inset: 0;
+  z-index: 201;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+}.option-discovery-root .od-compare-drawer{
+  width: min(32rem, 100vw);
+  max-width: 100%;
+  background: var(--color-bg, var(--color-surface));
+  border-left: 1px solid var(--color-border);
+  padding: var(--space-4);
+  overflow-y: auto;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+}/* Right inspector drawer (Option contract, Stock inspector, reuse anywhere) */.option-discovery-root .riv-inspector-backdrop{
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: transparent;
+  pointer-events: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+}.option-discovery-root .riv-inspector-panel{
+  width: min(72rem, 96vw);
+  max-width: 100%;
+  background: var(--color-bg, var(--color-surface));
+  border-left: 1px solid var(--color-border);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  pointer-events: auto;
+}.option-discovery-root .riv-inspector-panel--instance-detail{
+  width: min(var(--instance-detail-sidebar-width, 960px), 100vw);
+}.option-discovery-root .riv-inspector-inner{
+  padding: var(--space-3);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}/* Positions / tables: symbol opens stock inspector */.option-discovery-root .riv-stock-symbol-btn{
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}.option-discovery-root .riv-stock-symbol-btn:hover, .option-discovery-root .riv-stock-symbol-btn:focus-visible{
+  text-decoration: underline;
+  outline: none;
+}.option-discovery-root .riv-stock-symbol-btn--compact{
+  font-size: 0.85em;
+  vertical-align: baseline;
+}.option-discovery-root .instance-sheet-symbols--buttons{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.35rem;
+}.option-discovery-root .instance-sheet-symbols-sep{
+  color: var(--color-text-muted);
+  user-select: none;
+}/* Positions: option contract column opens option inspector */.option-discovery-root .riv-opt-contract-btn{
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}.option-discovery-root .riv-opt-contract-btn:hover, .option-discovery-root .riv-opt-contract-btn:focus-visible{
+  text-decoration: underline;
+  outline: none;
+}.option-discovery-root .od-event-warnings--drawer{
+  margin-bottom: var(--space-2);
+}.option-discovery-root .od-contract-detail--drawer{
+  margin-top: 0;
+}.option-discovery-root .od-compare-drawer-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}.option-discovery-root .od-compare-drawer-title{
+  margin: 0;
+  font-size: var(--text-h3, 1.1rem);
+}.option-discovery-root .od-compare-drawer-meta{
+  margin: 0 0 var(--space-3);
+}.option-discovery-root .od-compare-table-wrap{
+  max-height: 60vh;
+  overflow: auto;
+}.option-discovery-root .od-compare-drawer-actions{
+  margin-top: var(--space-3);
+}.option-discovery-root #od-layer-4 .od-chain-table-wrap{
+  max-height: min(70vh, 32rem);
+  overflow: auto;
+}/* Sticky two-row header inside the scrollable chain table */.option-discovery-root #od-layer-4 .od-chain-table thead tr:first-child th{
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}.option-discovery-root #od-layer-4 .od-chain-table thead tr:nth-child(2) th{
+  position: sticky;
+  top: 1.85rem;   /* approximate height of the group header row */
+  z-index: 3;
+}/* Sticky headers must be opaque — override semi-transparent class backgrounds */.option-discovery-root #od-layer-4 .od-chain-table thead .od-chain-group-call{ background: color-mix(in srgb, #4ade80 10%, var(--color-surface)); }.option-discovery-root #od-layer-4 .od-chain-table thead .od-chain-group-put{ background: color-mix(in srgb, #f87171 8%,  var(--color-surface)); }.option-discovery-root #od-layer-4 .od-chain-table thead .od-chain-th-call{ background: color-mix(in srgb, #4ade80 6%,  var(--color-surface)); }.option-discovery-root #od-layer-4 .od-chain-table thead .od-chain-th-put{ background: color-mix(in srgb, #f87171 6%,  var(--color-surface)); }.option-discovery-root #od-layer-4 .od-chain-table thead .od-chain-strike-col{ background: var(--color-surface); }/* Chain / quotes expiry (step 2) — horizontal chip strip */.option-discovery-root .od-chain-expiry-bar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+}.option-discovery-root .od-chain-expiry-label{
+  font-size: var(--text-caption, 0.75rem);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}.option-discovery-root .od-chain-expiry-strip{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}.option-discovery-root .od-chain-expiry-chip{
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font: inherit;
+  cursor: pointer;
+  line-height: 1.2;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}.option-discovery-root .od-chain-expiry-chip:hover:not(:disabled){
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 40%, var(--color-surface-elevated));
+}.option-discovery-root .od-chain-expiry-chip:focus-visible{
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}.option-discovery-root .od-chain-expiry-chip:disabled{
+  cursor: not-allowed;
+  opacity: 0.55;
+}.option-discovery-root .od-chain-expiry-chip--active{
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 70%, var(--color-surface-elevated));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent);
+}.option-discovery-root .od-chain-expiry-chip-line{
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 0;
+  white-space: nowrap;
+  min-width: 0;
+}.option-discovery-root .od-chain-expiry-chip-date{
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}.option-discovery-root .od-chain-expiry-chip-sep{
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-size: 0.7rem;
+}.option-discovery-root .od-chain-expiry-chip-dte{
+  font-size: 0.68rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}.option-discovery-root .od-chain-expiry-chip-kinds{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}.option-discovery-root .od-chain-expiry-hint{
+  margin: 0;
+  flex: 1 1 100%;
+}/* Full-chain block (EOD OI / Max Pain) — above Strike window */.option-discovery-root .option-discovery-full-chain{
+  width: 100%;
+  min-width: 0;
+}/* Strike-window scope: analytics + quotes (snapshot / selected strikes, not full chain) */.option-discovery-root .option-discovery-view-scope{
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}.option-discovery-root .option-discovery-view-scope-hint{
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}/* One separator: view-scope border; drop stack’s own top rule when nested */.option-discovery-root .option-discovery-view-scope>.od-option-structure-stack{
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}/* Strike window collapsible panel */.option-discovery-root .option-discovery-strike-window{
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  margin-bottom: var(--space-4);
+}.option-discovery-root .option-discovery-strike-window-summary{
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--color-text-main);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  user-select: none;
+  list-style: revert;
+}.option-discovery-root .option-discovery-strike-window-count{
+  font-weight: 400;
+  margin-left: auto;
+}.option-discovery-root .option-discovery-strike-window-hint{
+  margin: 0 var(--space-3) var(--space-2);
+}.option-discovery-root .option-discovery-strike-window>.option-discovery-strikes-content{
+  padding: 0 var(--space-3) var(--space-3);
+}.option-discovery-root .option-discovery-strike-window .option-discovery-strikes-with-header{
+  display: flex;
+  flex-direction: column;
+}.option-discovery-root .option-discovery-strike-window .strike-ladder-layout{
+  display: flex;
+}.option-discovery-root .option-discovery-strike-window .strike-ladder-wrap, .option-discovery-root .option-discovery-strike-window .strike-ladder-col .strike-ladder-wrap{
+  max-height: 18rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}.option-discovery-root .option-discovery-conditions-head-row{
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex-shrink: 0;
+  margin-bottom: var(--space-2);
+  min-width: 0;
+}.option-discovery-root .option-discovery-conditions-head-row h3{
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+}.option-discovery-root .option-discovery-quote-source-inline{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  flex-shrink: 0;
+}.option-discovery-root .option-discovery-quote-source-label{
+  margin: 0;
+}.option-discovery-root .option-discovery-daily-summary{
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: var(--space-2);
+}/* Chain title + daily status on one line; long status scrolls horizontally */.option-discovery-root .option-discovery-daily-summary.option-discovery-daily-summary--inline{
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
+  flex-wrap: nowrap;
+  gap: 0.35rem 0.6rem;
+}.option-discovery-root .option-discovery-daily-summary-label{
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}.option-discovery-root .option-discovery-daily-summary-bits{
+  flex: 1 1 14rem;
+  min-width: 0;
+}.option-discovery-root .option-discovery-daily-summary--inline .option-discovery-daily-summary-bits{
+  flex: 1 1 auto;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}.option-discovery-root .option-discovery-daily-summary--inline .od-daily-data-open-btn{
+  flex-shrink: 0;
+}/* Match section-header-icon-btn but no rotate (navigation, not refresh) */.option-discovery-root .option-discovery-daily-summary--inline .od-daily-data-open-btn.section-header-icon-btn:hover{
+  transform: none;
+}.option-discovery-root .option-discovery-daily-summary--inline .od-daily-data-open-btn.section-header-icon-btn:active{
+  transform: none;
+}.option-discovery-root .od-iv-term-error{
+  color: var(--color-danger, #c62828);
+  margin-bottom: 0.35rem;
+}/* IV term: expiration picker — compact card, grid chips */.option-discovery-root .od-iv-term-exp-card{
+  margin: 0 0 0.85rem;
+  min-width: 0;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  background: linear-gradient(165deg,
+      color-mix(in srgb, var(--color-surface-elevated) 92%, var(--color-accent-soft) 8%) 0%,
+      var(--color-surface) 100%);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--color-border) 55%, transparent);
+}.option-discovery-root .od-iv-term-exp-card-header{
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding: 0.55rem 0.65rem 0.5rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+}.option-discovery-root .od-iv-term-exp-toolbar{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.55rem;
+  width: 100%;
+  min-width: 0;
+}.option-discovery-root .od-iv-term-exp-toolbar .option-discovery-expiration-filters{
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 0.2rem;
+  margin: 0;
+  width: auto;
+  grid-template-columns: none;
+}.option-discovery-root .od-iv-term-exp-toolbar .option-discovery-exp-filter-btn{
+  width: auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.28rem 0.55rem;
+  border-radius: 8px;
+}.option-discovery-root .od-iv-term-exp-filter-row{
+  width: auto;
+  flex: 0 1 auto;
+  justify-content: flex-start;
+  min-width: 0;
+}.option-discovery-root .od-iv-term-exp-card-header .od-iv-term-exp-card-actions{
+  width: auto;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+}.option-discovery-root .od-iv-term-exp-card-heading{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+  width: 100%;
+}.option-discovery-root .od-iv-term-exp-card-title{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}.option-discovery-root .od-iv-term-exp-card-badge{
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-main);
+}.option-discovery-root .od-iv-term-exp-card-badge--warn{
+  border-color: color-mix(in srgb, var(--color-warning, #b45309) 45%, var(--color-border));
+  color: var(--color-warning, #b45309);
+}.option-discovery-root .od-iv-term-quick-select-btn{
+  flex-shrink: 0;
+  padding: 0.28rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 55%, var(--color-surface-elevated));
+  color: var(--color-text-main);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}.option-discovery-root .od-iv-term-quick-select-btn:hover:not(:disabled){
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent-soft) 85%, var(--color-surface-elevated));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 25%, transparent);
+}.option-discovery-root .od-iv-term-quick-select-btn:focus-visible{
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}.option-discovery-root .od-iv-term-quick-select-btn:disabled{
+  opacity: 0.45;
+  cursor: not-allowed;
+}.option-discovery-root .od-iv-term-quick-select-btn--muted{
+  border-color: color-mix(in srgb, var(--color-border) 90%, var(--color-text-muted));
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-elevated));
+  color: var(--color-text-muted);
+}.option-discovery-root .od-iv-term-quick-select-btn--muted:hover:not(:disabled){
+  border-color: var(--color-border);
+  color: var(--color-text-main);
+  background: var(--color-surface-elevated);
+  box-shadow: none;
+}.option-discovery-root .od-iv-term-exp-card-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+}.option-discovery-root .od-iv-term-exp-list{
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.55rem 0.55rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 0.35rem;
+  max-height: 12rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}.option-discovery-root .od-iv-term-exp-li{
+  margin: 0;
+  min-width: 0;
+}.option-discovery-root .od-iv-term-exp-item{
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.38rem 0.45rem 0.38rem 0.4rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
+  background: var(--color-surface-elevated);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}.option-discovery-root .od-iv-term-exp-item:has(input:not(:disabled)):hover{
+  border-color: color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 35%, var(--color-surface-elevated));
+}.option-discovery-root .od-iv-term-exp-item--checked{
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 65%, var(--color-surface-elevated));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent);
+}.option-discovery-root .od-iv-term-exp-item:has(input:disabled){
+  cursor: not-allowed;
+  opacity: 0.5;
+}.option-discovery-root .od-iv-term-exp-checkbox{
+  flex-shrink: 0;
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  accent-color: var(--color-accent, #6ea8fe);
+  cursor: inherit;
+}.option-discovery-root .od-iv-term-exp-date-block{
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+  line-height: 1.2;
+}.option-discovery-root .od-iv-term-exp-date-dte-sep{
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  flex-shrink: 0;
+}.option-discovery-root .od-iv-term-exp-date{
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  color: var(--color-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}.option-discovery-root .od-iv-term-exp-dte{
+  font-size: 0.68rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}.option-discovery-root .od-iv-term-exp-badges{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  margin-left: 0.15rem;
+}/* W / Q kind pills in IV chart list + chain expiry menu */.option-discovery-root .od-iv-term-exp-kind-bubble{
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.12rem 0.42rem;
+  line-height: 1.15;
+  min-width: 1.35rem;
+  justify-content: center;
+  box-shadow: 0 1px 2px color-mix(in srgb, #000 12%, transparent);
+}.option-discovery-root .od-iv-term-quality{
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}.option-discovery-root .od-iv-term-quality svg{
+  display: block;
+}.option-discovery-root .od-iv-term-quality--good{
+  color: var(--color-lamp-green, #66bb6a);
+}.option-discovery-root .od-iv-term-quality--limited{
+  color: var(--color-warning, #b45309);
+}.option-discovery-root .od-iv-term-quality--unknown{
+  color: var(--color-text-dim);
+}.option-discovery-root .od-analytics-term-actions{
+  margin: 0.35rem 0 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}.option-discovery-root .od-iv-term-action-icon-btn{
+  flex-shrink: 0;
+}.option-discovery-root .od-iv-term-action-icon-btn.section-header-icon-btn:hover, .option-discovery-root .od-iv-term-action-icon-btn.section-header-icon-btn:active{
+  transform: none;
+}.option-discovery-root .od-iv-term-backfill-hint{
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}.option-discovery-root .od-iv-term-sync-status{
+  margin: 0.35rem 0 0.5rem;
+}.option-discovery-root .od-iv-term-chart-caption{
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+  font-size: var(--text-caption);
+  word-break: break-word;
+}/* IV term + cone (+ parametric when data ok): one row — 2 or 3 columns; data tables below */.option-discovery-root .od-iv-term-cone-charts-row{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.5rem;
+}.option-discovery-root .od-iv-term-cone-charts-row.od-iv-term-cone-charts-row--triple{
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}@media (max-width: 960px){
+  .od-iv-term-cone-charts-row,
+  .od-iv-term-cone-charts-row.od-iv-term-cone-charts-row--triple {
+    grid-template-columns: 1fr;
+  }
+}.option-discovery-root .od-iv-term-chart-pane{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-elevated, var(--color-surface));
+}.option-discovery-root .od-iv-term-chart-pane-title{
+  margin-top: 0;
+  margin-bottom: 0.35rem;
+}.option-discovery-root .od-iv-term-chart-svg-wrap{
+  width: 100%;
+  min-width: 0;
+}.option-discovery-root .od-iv-term-chart-svg-wrap .od-chart-svg{
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  /* Matches OD_IV_TERM_VIEWBOX_W / OD_IV_TERM_VIEWBOX_H — IV Term + Cone same aspect, equal height in row */
+  aspect-ratio: 640 / 260;
+}.option-discovery-root .od-iv-term-chart-svg-wrap--parametric{
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}.option-discovery-root .od-iv-param-legend{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  font-size: var(--text-tiny);
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}.option-discovery-root .od-iv-param-legend-item{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}.option-discovery-root .od-iv-param-swatch{
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}.option-discovery-root .od-iv-param-swatch--minmax{
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-text-muted) 0 3px,
+    transparent 3px 6px
+  );
+  height: 2px;
+}.option-discovery-root .od-iv-param-swatch--sd2{
+  background: repeating-linear-gradient(90deg, #64748b 0 2px, transparent 2px 5px);
+  height: 2px;
+}.option-discovery-root .od-iv-param-swatch--sd1{
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-link, #7dd3fc) 0 4px,
+    transparent 4px 7px
+  );
+  height: 2px;
+}.option-discovery-root .od-iv-param-swatch--mean{
+  background: var(--color-accent, #a3e635);
+  height: 3px;
+}.option-discovery-root .od-iv-param-swatch--call{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent, #6ea8fe);
+  border: 1px solid var(--color-border);
+}.option-discovery-root .od-iv-param-swatch--put{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-warning, #e8a849);
+  border: 1px solid var(--color-border);
+}.option-discovery-root .od-iv-data-table-sheet{
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  overflow: visible;
+}.option-discovery-root .od-iv-combined-details{
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--space-3);
+}.option-discovery-root .od-iv-combined-summary{
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-elevated);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  user-select: none;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}.option-discovery-root .od-iv-combined-summary:hover{
+  border-color: color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
+}.option-discovery-root .od-iv-combined-summary::-webkit-details-marker{
+  display: none;
+}.option-discovery-root .od-iv-combined-summary-text{
+  flex: 1;
+  min-width: 0;
+}.option-discovery-root .od-iv-combined-details[open] .od-iv-combined-summary{
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+}.option-discovery-root .od-iv-data-table-sheet--in-details{
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}/* Combined IV sheet: hover detail on cells (same pattern as .info-tooltip) */.option-discovery-root .od-iv-sheet-hover{
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  cursor: help;
+  max-width: 100%;
+}.option-discovery-root .od-iv-sheet-hover-target{
+  border-bottom: 1px dotted var(--color-text-dim);
+}.option-discovery-root .od-iv-sheet-hover--warn .od-iv-sheet-hover-target{
+  color: var(--color-warning, #c98a2a);
+  font-weight: 600;
+  border-bottom-color: var(--color-warning, #c98a2a);
+}.option-discovery-root .od-iv-sheet-hover-popup{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(100% + 0.35rem);
+  z-index: 120;
+  min-width: 14rem;
+  max-width: 22rem;
+  padding: 0.5rem 0.75rem;
+  font-size: var(--text-caption);
+  font-weight: normal;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}.option-discovery-root .od-iv-sheet-hover:hover .od-iv-sheet-hover-popup{
+  opacity: 1;
+  pointer-events: auto;
+}.option-discovery-root .od-iv-data-row--cone-warn{
+  background: rgba(201, 138, 42, 0.08);
+}.option-discovery-root .od-iv-data-cell--warn{
+  font-variant-numeric: tabular-nums;
+}.option-discovery-root .od-iv-data-cell--muted{
+  color: var(--color-text-dim);
+}.option-discovery-root .od-iv-samples-pair{
+  font-variant-numeric: tabular-nums;
+}.option-discovery-root .od-iv-samples-actual{
+  font-weight: 600;
+}.option-discovery-root .od-iv-sheet-hover--warn .od-iv-samples-actual{
+  color: var(--color-warning, #c98a2a);
+}.option-discovery-root .od-iv-band-incomplete{
+  font-weight: 600;
+  color: var(--color-warning, #c98a2a);
+}.option-discovery-root .od-iv-data-table th .info-tooltip-wrap{
+  margin-left: 0.2rem;
+  vertical-align: middle;
+}.option-discovery-root .od-iv-data-table-heading{
+  margin: 0 0 0.35rem;
+  font-size: var(--text-small, 0.875rem);
+  font-weight: 600;
+  color: var(--color-text);
+}.option-discovery-root .od-iv-data-source{
+  margin: 0 0 0.5rem !important;
+  font-size: var(--text-caption) !important;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}.option-discovery-root .od-iv-data-code{
+  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--color-surface-elevated, rgba(128, 128, 128, 0.12));
+}.option-discovery-root .od-iv-data-table-scroll{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}/* IV term & cone sheet: no scrollbars — table fits main column width */.option-discovery-root .od-iv-data-table-wrap--iv-sheet{
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}.option-discovery-root .od-iv-data-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-caption);
+}.option-discovery-root .od-iv-data-table th, .option-discovery-root .od-iv-data-table td{
+  padding: 0.35rem 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}.option-discovery-root .od-iv-data-table th:first-child, .option-discovery-root .od-iv-data-table td:first-child{
+  text-align: left;
+}.option-discovery-root .od-iv-data-table thead th{
+  font-weight: 600;
+  color: var(--color-text-dim);
+  background: var(--color-surface-elevated, rgba(128, 128, 128, 0.06));
+}.option-discovery-root .od-iv-data-table-empty{
+  text-align: center !important;
+  color: var(--color-text-dim);
+  font-style: italic;
+}.option-discovery-root .od-iv-data-table--merged{
+  min-width: 0;
+  max-width: 100%;
+  table-layout: fixed;
+  /* Slightly larger than body caption so the combined sheet stays readable */
+  font-size: 0.875rem;
+  line-height: 1.35;
+}.option-discovery-root .od-iv-data-table--merged th, .option-discovery-root .od-iv-data-table--merged td{
+  padding: 0.28rem 0.22rem;
+}.option-discovery-root .od-iv-data-table--merged td:first-child{
+  font-variant-numeric: tabular-nums;
+}.option-discovery-root .od-max-pain-section{
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}/* Max Pain first in main column — sits above Strike window; no extra top rule */.option-discovery-root .option-discovery-main>.option-discovery-full-chain:first-child .od-max-pain-section{
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}/* Option Analytics stack (below Strike window); was also used with Max Pain inside */.option-discovery-root .od-option-structure-stack{
+  width: 100%;
+  min-width: 0;
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}.option-discovery-root .od-option-structure-stack .od-max-pain-section{
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}/* Analytics below Max Pain inside same stack (legacy) */.option-discovery-root .od-option-structure-stack .od-analytics-section.replay-section{
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}/* Analytics is sole child in stack — separator is the stack border only */.option-discovery-root .od-option-structure-stack>.od-analytics-section.replay-section:first-child{
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}.option-discovery-root .mp-header-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+  width: 100%;
+}.option-discovery-root .od-max-pain-title{
+  margin: 0;
+  font-size: var(--text-body);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}.option-discovery-root .od-max-pain-title-exp{
+  font-weight: 500;
+  font-size: 0.92em;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}.option-discovery-root .od-max-pain-refresh-icon-btn.section-header-icon-btn:hover, .option-discovery-root .od-max-pain-refresh-icon-btn.section-header-icon-btn:active{
+  transform: none;
+}.option-discovery-root .od-max-pain-header-actions{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}.option-discovery-root .od-max-pain-layout{
+  width: 100%;
+  max-width: none;
+  margin-bottom: var(--space-3);
+}/* Summary metrics — single horizontal row above charts *//* Option Discovery — hover to enlarge chart (portal overlay) */.option-discovery-root .od-chart-expand-trigger{
+  cursor: pointer;
+  min-width: 0;
+}/* Shell: clicks pass through to the page; only .od-chart-expand-panel receives events */.option-discovery-root .od-chart-expand-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 10060;
+  pointer-events: none;
+}.option-discovery-root .od-chart-expand-panel{
+  position: fixed;
+  z-index: 1;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 420px;
+  min-height: 220px;
+  overflow: hidden;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, var(--color-accent));
+  background: var(--color-surface-elevated);
+  box-shadow: 0 20px 50px color-mix(in srgb, #000 35%, transparent);
+  pointer-events: auto;
+}.option-discovery-root .od-chart-expand-panel-head{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  user-select: none;
+}.option-discovery-root .od-chart-expand-panel-title{
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}.option-discovery-root .od-chart-expand-panel-drag{
+  cursor: grab;
+}.option-discovery-root .od-chart-expand-panel-drag:active{
+  cursor: grabbing;
+}.option-discovery-root .od-chart-expand-panel-close{
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}.option-discovery-root .od-chart-expand-panel-close:hover{
+  color: var(--color-text-main);
+  border-color: var(--color-border-strong);
+}.option-discovery-root .od-chart-expand-panel-body{
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  width: 100%;
+}.option-discovery-root .od-chart-expand-panel-body .od-max-pain-svg, .option-discovery-root .od-chart-expand-panel-body .od-chart-svg{
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}.option-discovery-root .od-chart-expand-panel-body .data-bars-chart-container{
+  max-width: 100%;
+}.option-discovery-root .od-chart-expand-panel-hint{
+  flex-shrink: 0;
+  margin: var(--space-2) 2rem 0 0;
+  font-size: 0.65rem;
+  color: var(--color-text-dim);
+}.option-discovery-root .od-chart-expand-resize-grip{
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 22px;
+  height: 22px;
+  z-index: 2;
+  cursor: nwse-resize;
+  touch-action: none;
+  border-radius: 0 0 10px 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    transparent 45%,
+    color-mix(in srgb, var(--color-border-strong) 70%, transparent) 45%,
+    color-mix(in srgb, var(--color-border-strong) 70%, transparent) 50%,
+    transparent 50%,
+    transparent 58%,
+    color-mix(in srgb, var(--color-border-strong) 70%, transparent) 58%,
+    color-mix(in srgb, var(--color-border-strong) 70%, transparent) 64%,
+    transparent 64%
+  );
+}.option-discovery-root .od-chart-expand-resize-grip:hover{
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    transparent 45%,
+    color-mix(in srgb, var(--color-accent) 55%, var(--color-border)) 45%,
+    color-mix(in srgb, var(--color-accent) 55%, var(--color-border)) 50%,
+    transparent 50%,
+    transparent 58%,
+    color-mix(in srgb, var(--color-accent) 55%, var(--color-border)) 58%,
+    color-mix(in srgb, var(--color-accent) 55%, var(--color-border)) 64%,
+    transparent 64%
+  );
+}.option-discovery-root .od-max-pain-metrics-bar{
+  width: 100%;
+  margin-bottom: var(--space-3);
+  min-width: 0;
+}.option-discovery-root .od-max-pain-metrics-inner{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 0.75rem 1.5rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, var(--color-border));
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--color-accent-soft) 35%, var(--color-surface-elevated)) 0%,
+      var(--color-surface-elevated) 100%);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--color-border) 55%, transparent);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}.option-discovery-root .od-max-pain-metric-cell{
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  min-width: 0;
+  white-space: nowrap;
+}.option-discovery-root .od-max-pain-metric-cell strong{
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-main);
+}.option-discovery-root .od-max-pain-card-label{
+  font-size: var(--text-caption);
+  color: var(--color-text-dim);
+  flex-shrink: 0;
+}.option-discovery-root .od-max-pain-corp-warn{
+  margin: 0;
+  font-size: var(--text-caption);
+  color: #c9a227;
+}.option-discovery-root .od-max-pain-corp-warn--below-metrics{
+  margin-top: var(--space-2);
+}/* Three charts: liability | OI | Max Pain vs underlying — one row (scroll on narrow viewports) */.option-discovery-root .od-max-pain-charts-scroll{
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}.option-discovery-root .od-max-pain-charts-row{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  align-items: stretch;
+  /* Keep three columns side by side; parent scrolls horizontally when viewport is narrow */
+  width: max(100%, 48rem);
+  min-width: 48rem;
+}.option-discovery-root .od-max-pain-chart-cell{
+  display: flex;
+  flex-direction: column;
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
+  border-radius: 10px;
+  padding: var(--space-1) var(--space-2) 0.35rem;
+  background: color-mix(in srgb, var(--color-surface-elevated) 92%, var(--color-surface));
+  min-width: 0;
+}.option-discovery-root .mp-chart-subtitle--pane{
+  margin: 0 0 var(--space-1);
+}.option-discovery-root .od-max-pain-trend-pane{
+  margin-top: 0;
+}/* Tab bar */.option-discovery-root .mp-tabs{
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-2);
+}.option-discovery-root .mp-tab{
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}.option-discovery-root .mp-tab:hover{
+  color: var(--color-text);
+}.option-discovery-root .mp-tab--active{
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}.option-discovery-root .mp-chart-area{
+  margin-bottom: var(--space-3);
+}.option-discovery-root .mp-chart-stack{
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}/* Option Discovery — Option Analytics: IV Smile | OI profile | GEX (same row when all three) */.option-discovery-root .od-analytics-charts-scroll{
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  /* overflow-x:auto implies overflow-y:auto in CSS; hide vertical bar — this strip only scrolls horizontally */
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  margin-bottom: var(--space-3);
+}.option-discovery-root .od-analytics-charts-row{
+  display: grid;
+  gap: var(--space-2);
+  align-items: stretch;
+  width: 100%;
+}.option-discovery-root .od-analytics-charts-row[data-chart-count="1"]{
+  grid-template-columns: minmax(0, 1fr);
+}.option-discovery-root .od-analytics-charts-row[data-chart-count="2"]{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}.option-discovery-root .od-analytics-charts-row[data-chart-count="3"]{
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: max(100%, 48rem);
+  min-width: 48rem;
+}.option-discovery-root .od-analytics-chart-cell{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
+  border-radius: 10px;
+  padding: var(--space-1) var(--space-2) 0.35rem;
+  background: color-mix(in srgb, var(--color-surface-elevated) 92%, var(--color-surface));
+}@media (max-width: 52rem){
+  .od-max-pain-layout {
+    max-width: 100%;
+  }
+}.option-discovery-root .mp-chart-pane{
+  min-width: 0;
+}.option-discovery-root .mp-chart-subtitle{
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}.option-discovery-root .mp-chart-pane-head{
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-1);
+  width: 100%;
+}.option-discovery-root .mp-chart-pane-head .mp-chart-subtitle{
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}.option-discovery-root .mp-chart-inline-trend-hint{
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}/* Legend row */.option-discovery-root .mp-legend{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}.option-discovery-root .mp-legend-item{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}.option-discovery-root .mp-legend-item-max-pain{
+  color: var(--color-accent, #6ea8fe);
+  font-weight: 600;
+}.option-discovery-root .mp-legend-max-pain-value{
+  display: inline-block;
+  padding: 0.04rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 70%, var(--color-surface-elevated));
+  color: var(--color-text-main);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}.option-discovery-root .mp-legend-swatch{
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}.option-discovery-root .mp-legend-swatch.mp-legend-line{
+  width: 16px;
+  height: 0;
+  border-top: 2px dashed;
+  border-radius: 0;
+}.option-discovery-root .od-max-pain-svg{
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}/* Max Pain trio: fixed viewBox 640×260 */.option-discovery-root .od-max-pain-chart-cell .od-max-pain-svg{
+  aspect-ratio: 640 / 260;
+  min-height: 0;
+}/* Option Analytics trio: IV Smile / OI / GEX share 640×240 viewBox */.option-discovery-root .od-analytics-chart-cell .od-max-pain-svg{
+  aspect-ratio: 640 / 240;
+  min-height: 0;
+}.option-discovery-root .od-max-pain-disclaimer-details{
+  margin: var(--space-3) 0 0;
+  max-width: 52rem;
+}.option-discovery-root .od-max-pain-disclaimer-summary{
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  user-select: none;
+}.option-discovery-root .od-max-pain-disclaimer-summary::-webkit-details-marker{
+  display: none;
+}.option-discovery-root .od-max-pain-disclaimer-body{
+  margin: var(--space-2) 0 0;
+  padding-left: 0.15rem;
+  font-size: var(--text-caption);
+  color: var(--color-text-dim);
+  line-height: 1.45;
+}/* ── Option analytics (IV smile / OI profile / skew / term structure) ── */.option-discovery-root .od-analytics-section{
+  width: 100%;
+  max-width: none;
+}.option-discovery-root .od-analytics-title{
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+}.option-discovery-root .od-analytics-chart-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}.option-discovery-root .od-analytics-chart-head .mp-chart-subtitle{
+  margin: 0;
+}.option-discovery-root .od-analytics-chart-toggle-btn.section-header-icon-btn:hover, .option-discovery-root .od-analytics-chart-toggle-btn.section-header-icon-btn:active{
+  transform: none;
+}.option-discovery-root .od-detail-action-icon-btn.section-header-icon-btn:hover, .option-discovery-root .od-detail-action-icon-btn.section-header-icon-btn:active, .option-discovery-root .od-contract-chart-icon-btn.section-header-icon-btn:hover, .option-discovery-root .od-contract-chart-icon-btn.section-header-icon-btn:active{
+  transform: none;
+}.option-discovery-root .od-strike-range-icon-btn.section-header-icon-btn:hover, .option-discovery-root .od-strike-range-icon-btn.section-header-icon-btn:active{
+  transform: none;
+}.option-discovery-root .od-option-quotes-head-row{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.45rem;
+  margin-bottom: 0.65rem;
+}.option-discovery-root .od-option-quotes-head-title{
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}.option-discovery-root .od-option-quotes-refresh-btn.section-header-icon-btn:hover, .option-discovery-root .od-option-quotes-refresh-btn.section-header-icon-btn:active{
+  transform: none;
+}.option-discovery-root .od-option-quotes-underlying{
+  white-space: nowrap;
+}.option-discovery-root .od-analytics-skew{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+}.option-discovery-root .od-analytics-skew-label{
+  color: var(--color-text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}.option-discovery-root .od-analytics-skew-val{
+  font-weight: 600;
+  color: var(--color-text);
+}.option-discovery-root .od-analytics-skew-val--put-heavy{
+  color: var(--color-lamp-red, #ef5350);
+}.option-discovery-root .od-analytics-skew-val--call-heavy{
+  color: var(--color-lamp-green, #66bb6a);
+}.option-discovery-root .od-analytics-skew-val--neutral{
+  color: var(--color-text-dim);
+}.option-discovery-root .od-analytics-skew-detail{
+  color: var(--color-text-dim);
+  font-size: var(--text-caption);
+}.option-discovery-root .od-analytics-skew-hint{
+  color: var(--color-text-dim);
+  font-size: var(--text-caption);
+}.option-discovery-root .od-analytics-term-prompt{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+}.option-discovery-root .od-gex-disclaimer{
+  margin-top: var(--space-2);
+  margin-bottom: 0;
+  max-width: 42rem;
+}/* (legacy .option-discovery-top-row rules removed — replaced by sidebar/main layout) */.option-discovery-root .option-discovery-underlying-body{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+}.option-discovery-root .option-discovery-underlying-price{
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}/* Option Discovery: Underlying & Expiration list (same style as Strikes) */.option-discovery-root .option-discovery-list-with-header{
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+}.option-discovery-root .option-discovery-list-header{
+  padding: 0.25rem var(--space-2);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+}/* Expiration list: xx days in table row and header, highlighted */.option-discovery-root .option-discovery-expiration-col-days{
+  font-weight: 600;
+  color: var(--color-text-muted);
+}.option-discovery-root .option-discovery-expiration-days-header{
+  font-weight: 700;
+  color: var(--color-accent);
+}.option-discovery-root .option-discovery-expiration-col-days .option-discovery-expiration-days-header{
+  margin-left: 0.15rem;
+}.option-discovery-root .option-discovery-expiration-days-cell{
+  font-weight: 700;
+  color: var(--color-accent);
+  white-space: nowrap;
+}.option-discovery-root .option-discovery-list-table tbody td.option-discovery-expiration-col-date{
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}.option-discovery-root .option-discovery-list-table tbody td.option-discovery-expiration-col-date>span:first-child{
+  display: inline-block;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}.option-discovery-root .option-discovery-expiration-kind-badge{
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0.02rem 0.28rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  font-size: 0.56rem;
+  font-weight: 700;
+  line-height: 1.2;
+  flex-shrink: 0;
+}.option-discovery-root .option-discovery-expiration-kind-badge--weeklies{
+  border-color: #2f8f6b;
+  color: #c6f6e7;
+  background: rgba(47, 143, 107, 0.22);
+}.option-discovery-root .option-discovery-expiration-kind-badge--quarterlies{
+  border-color: #8a6a2b;
+  color: #ffe4a3;
+  background: rgba(138, 106, 43, 0.24);
+}.option-discovery-root .option-discovery-expiration-filters{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.2rem;
+  margin: 0.1rem 0 0.25rem;
+}.option-discovery-root .option-discovery-exp-filter-btn{
+  width: 100%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-dim);
+  border-radius: 7px;
+  font-size: 0.62rem;
+  line-height: 1;
+  padding: 0.16rem 0.24rem;
+  cursor: pointer;
+}.option-discovery-root .option-discovery-exp-filter-btn:hover{
+  border-color: var(--color-border-strong);
+  color: var(--color-text-main);
+}.option-discovery-root .option-discovery-exp-filter-btn.active{
+  border-color: var(--color-accent, #6ea8fe);
+  color: var(--color-accent, #6ea8fe);
+  background: var(--color-accent-soft);
+}.option-discovery-root .option-discovery-expiration-empty-cell{
+  text-align: center;
+  color: var(--color-text-dim);
+  font-size: var(--text-caption);
+  padding: 0.8rem var(--space-2);
+}.option-discovery-root .option-discovery-list-row-selected .option-discovery-expiration-days-cell{
+  color: var(--color-accent);
+  font-weight: 700;
+}.option-discovery-root .option-discovery-list-with-header .option-discovery-list-wrap{
+  border-radius: 0 0 8px 8px;
+}.option-discovery-root .option-discovery-strikes-with-header .strike-ladder-layout{
+  margin-top: 0;
+}.option-discovery-root .option-discovery-list-wrap{
+  height: 14rem;
+  min-height: 14rem;
+  max-height: 14rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-elevated);
+  min-width: 10rem;
+}.option-discovery-root .option-discovery-list-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}.option-discovery-root .option-discovery-list-table thead th{
+  padding: 0.25rem var(--space-2);
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: 0 1px 0 var(--color-border);
+}.option-discovery-root .option-discovery-list-table tbody td{
+  padding: 0.2rem var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}.option-discovery-root .option-discovery-list-table tbody tr{
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}.option-discovery-root .option-discovery-list-table tbody tr:hover{
+  background: var(--color-accent-soft);
+}.option-discovery-root .option-discovery-list-table tbody tr.option-discovery-list-row-selected{
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}.option-discovery-root .option-discovery-list-table tbody tr.option-discovery-list-row-selected td{
+  font-weight: 500;
+}.option-discovery-root .option-discovery-list-table td:nth-child(2){
+  text-align: right;
+  min-width: 4rem;
+}.option-discovery-root .option-discovery-list-empty{
+  padding: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+  text-align: center;
+}/* ── Option Discovery: Contract Detail Panel (P0–P3) ── */.option-discovery-root .od-quotes-table tbody tr.od-quote-row{
+  cursor: pointer;
+  transition: background 0.1s;
+}.option-discovery-root .od-quotes-table tbody tr.od-quote-row:hover{
+  background: var(--color-surface-elevated);
+}.option-discovery-root .od-quotes-table tbody tr.od-quote-row--selected{
+  background: var(--color-accent-soft);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}/* Option Discovery: TD-style chain (calls | strike | puts) */.option-discovery-root .od-chain-column-filter{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-elevated);
+}.option-discovery-root .od-chain-column-filter-label{
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}/* "Day" group label in Columns filter */.option-discovery-root .od-chain-col-group-label{
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-dim);
+  background: var(--color-border);
+  border-radius: 3px;
+  padding: 0.05rem 0.35rem;
+  align-self: center;
+  user-select: none;
+}/* Visual separator between Day group and Greeks group */.option-discovery-root .od-chain-col-group-sep{
+  display: inline-block;
+  width: 1px;
+  height: 1rem;
+  background: var(--color-border-strong);
+  align-self: center;
+  margin: 0 0.2rem;
+}.option-discovery-root .od-chain-column-filter-list{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+  align-items: center;
+}.option-discovery-root .od-chain-column-filter-item{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.2rem 0.55rem 0.22rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
+  background: var(--color-surface);
+  font-size: var(--text-caption);
+  color: var(--color-text-main);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}.option-discovery-root .od-chain-column-filter-item input{
+  width: 0.9rem;
+  height: 0.9rem;
+  margin: 0;
+  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid color-mix(in srgb, var(--color-border) 85%, var(--color-text-muted));
+  border-radius: 3px;
+  background: var(--color-surface-elevated);
+  position: relative;
+}.option-discovery-root .od-chain-column-filter-item input::after{
+  content: '';
+  position: absolute;
+  left: 0.26rem;
+  top: 0.06rem;
+  width: 0.22rem;
+  height: 0.48rem;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transform-origin: center;
+  transition: transform var(--transition-fast);
+}.option-discovery-root .od-chain-column-filter-item input:checked{
+  background: var(--color-accent, #6ea8fe);
+  border-color: var(--color-accent, #6ea8fe);
+}.option-discovery-root .od-chain-column-filter-item input:checked::after{
+  transform: rotate(45deg) scale(1);
+}.option-discovery-root .od-chain-column-filter-item:has(input:checked){
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 72%, var(--color-surface-elevated));
+  color: var(--color-accent, #6ea8fe);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}.option-discovery-root .od-chain-column-filter-item:hover{
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-soft) 42%, var(--color-surface-elevated));
+}.option-discovery-root .od-chain-column-filter-item input:focus-visible{
+  outline: 2px solid var(--color-accent, #6ea8fe);
+  outline-offset: 1px;
+}.option-discovery-root .od-chain-table-wrap{
+  overflow-x: auto;
+}.option-discovery-root .od-chain-table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}.option-discovery-root .od-chain-table thead .od-chain-group-row th{
+  padding: 0.35rem var(--space-2);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--color-border);
+}.option-discovery-root .od-chain-group-call{
+  text-align: center;
+  background: rgba(52, 199, 89, 0.08);
+  color: var(--color-success);
+  border-right: 1px solid var(--color-border);
+}.option-discovery-root .od-chain-group-put{
+  text-align: center;
+  background: rgba(220, 53, 69, 0.07);
+  color: var(--color-danger);
+  border-left: 1px solid var(--color-border);
+}.option-discovery-root .od-chain-strike-col{
+  vertical-align: middle;
+  text-align: center;
+  min-width: 4.5rem;
+  background: var(--color-bg);
+  color: var(--color-text-main);
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+}.option-discovery-root .od-chain-th-call{
+  background: rgba(52, 199, 89, 0.05);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-align: right;
+  border-right: 1px solid var(--color-border);
+}.option-discovery-root .od-chain-th-put{
+  background: rgba(220, 53, 69, 0.05);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-align: right;
+  border-left: 1px solid var(--color-border);
+}.option-discovery-root .od-chain-table tbody td{
+  padding: 0.28rem var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  text-align: right;
+}.option-discovery-root .od-chain-strike-cell{
+  text-align: center !important;
+  font-weight: 700;
+  background: var(--color-bg);
+  cursor: pointer;
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+}.option-discovery-root .od-chain-strike-cell--selected{
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}.option-discovery-root .od-chain-td--selected{
+  background: var(--color-accent-soft) !important;
+}/* ITM / ATM / OTM row background — industry-style visual */.option-discovery-root .od-chain-row-itm{
+  background: rgba(52, 199, 89, 0.06);
+}.option-discovery-root .od-chain-row-otm{
+  background: transparent;
+}.option-discovery-root .od-chain-row-atm{
+  background: var(--color-accent-soft, rgba(88, 166, 255, 0.10));
+  border-top: 2px solid var(--color-accent, #58a6ff);
+}.option-discovery-root .od-chain-row-atm .od-chain-strike-cell{
+  color: var(--color-accent);
+  font-weight: 800;
+}.option-discovery-root .od-chain-row.od-quote-row{
+  cursor: pointer;
+}.option-discovery-root .od-chain-row.od-quote-row:hover{
+  background: var(--color-surface-elevated);
+}.option-discovery-root .od-chain-row.od-quote-row--selected{
+  background: var(--color-accent-soft);
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}.option-discovery-root .od-chain-td{
+  cursor: pointer;
+}/* Moneyness badge (used in contract detail header) */.option-discovery-root .od-moneyness-badge{
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}.option-discovery-root .od-moneyness-badge--itm{
+  background: var(--color-success-soft, rgba(52, 199, 89, .15));
+  color: var(--color-success);
+}.option-discovery-root .od-moneyness-badge--atm{
+  background: var(--color-accent-soft, rgba(88, 166, 255, .15));
+  color: var(--color-accent);
+}.option-discovery-root .od-moneyness-badge--otm{
+  background: var(--color-surface-elevated);
+  color: var(--color-text-muted);
+}/* Event context warnings (P3) *//* Snapshot feedback blocks (error / warning / info) */.option-discovery-root .od-snapshot-feedback{
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  font-size: var(--text-caption);
+  line-height: 1.5;
+}.option-discovery-root .od-snapshot-feedback strong{
+  font-weight: 600;
+}.option-discovery-root .od-snapshot-feedback--error{
+  background: rgba(204, 0, 0, 0.07);
+  border: 1px solid rgba(204, 0, 0, 0.3);
+  color: var(--color-danger, #c00);
+}.option-discovery-root .od-snapshot-feedback--warning{
+  background: rgba(210, 153, 34, 0.08);
+  border: 1px solid rgba(210, 153, 34, 0.3);
+  color: #d29922;
+}.option-discovery-root .od-snapshot-feedback--info{
+  background: rgba(56, 132, 244, 0.06);
+  border: 1px solid rgba(56, 132, 244, 0.2);
+  color: #3884f4;
+}.option-discovery-root .od-snapshot-feedback .od-feedback-actions{
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}.option-discovery-root .od-snapshot-feedback .button-feedback-nav{
+  font-size: var(--text-caption);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}.option-discovery-root .od-snapshot-feedback .button-feedback-nav:hover{
+  opacity: 1;
+}.option-discovery-root .od-snapshot-watch-hint{
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--color-text-muted, #888);
+  border: 0;
+}.option-discovery-root .od-event-warnings{
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(210, 153, 34, 0.08);
+  border: 1px solid rgba(210, 153, 34, 0.3);
+  border-radius: 8px;
+  font-size: var(--text-caption);
+  color: #d29922;
+}.option-discovery-root .od-event-warning-item::before{
+  content: '⚠ ';
+}.option-discovery-root .od-event-warning-item+.od-event-warning-item{
+  margin-top: 0.2rem;
+}/* Contract detail panel */.option-discovery-root .od-contract-detail{
+  margin-top: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  overflow: hidden;
+}.option-discovery-root .od-detail-header{
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}.option-discovery-root .od-detail-title{
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+  flex: 1;
+  min-width: 0;
+}.option-discovery-root .od-detail-expiry{
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}.option-discovery-root .od-detail-delayed{
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #d29922;
+  white-space: nowrap;
+}.option-discovery-root .od-detail-close{
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1;
+}.option-discovery-root .od-detail-close:hover{
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+}/* Tabs */.option-discovery-root .od-detail-tabs{
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  overflow-x: auto;
+}.option-discovery-root .od-detail-tab{
+  padding: 0.45rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}.option-discovery-root .od-detail-tab:hover{
+  color: var(--color-text);
+}.option-discovery-root .od-detail-tab--active{
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}/* Tab body */.option-discovery-root .od-detail-body{
+  padding: var(--space-3);
+}/* Contract detail: stacked sections (replaces tab bar) */.option-discovery-root .od-contract-detail-stack{
+  display: flex;
+  flex-direction: column;
+}.option-discovery-root .od-detail-section{
+  padding: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}.option-discovery-root .od-contract-detail-stack > .od-detail-section:first-child{
+  border-top: none;
+}.option-discovery-root .od-detail-section-title{
+  margin: 0 0 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}/* Option Discovery: contract OHLC from option_day / option_min */.option-discovery-root .od-contract-chart-toolbar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.25rem;
+  width: 100%;
+}.option-discovery-root .od-contract-chart-period-cluster{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex: 0 1 auto;
+  min-width: 0;
+}.option-discovery-root .od-contract-chart-toolbar-right{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem 0.75rem;
+  flex: 0 1 auto;
+  margin-left: auto;
+}.option-discovery-root .od-contract-chart-toolbar-label{
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}.option-discovery-root .od-contract-chart-periods{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}.option-discovery-root .od-contract-chart-period-input{
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}.option-discovery-root .od-contract-chart-period-item{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: var(--text-caption);
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  user-select: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}.option-discovery-root .od-contract-chart-period-item:hover{
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}.option-discovery-root .od-contract-chart-period-item:has(.od-contract-chart-period-input:checked){
+  border-color: var(--color-accent, #0ea5e9);
+  background: rgba(14, 165, 233, 0.12);
+  color: var(--color-text);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.35);
+}.option-discovery-root .od-contract-chart-period-item:has(.od-contract-chart-period-input:focus-visible){
+  outline: 2px solid var(--color-accent, #0ea5e9);
+  outline-offset: 2px;
+}.option-discovery-root .od-contract-chart-period-item-text{
+  line-height: 1.2;
+}.option-discovery-root .od-contract-chart-vwap-toggle{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-text);
+  user-select: none;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}.option-discovery-root .od-contract-chart-vwap-toggle:hover:not(:has(input:disabled)){
+  border-color: var(--color-border-strong);
+}.option-discovery-root .od-contract-chart-vwap-toggle:has(input:checked):not(:has(input:disabled)){
+  border-color: var(--color-accent, #0ea5e9);
+  background: rgba(14, 165, 233, 0.12);
+  box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.35);
+}.option-discovery-root .od-contract-chart-vwap-toggle:has(input:disabled){
+  opacity: 0.55;
+  cursor: not-allowed;
+}.option-discovery-root .od-contract-chart-vwap-toggle input[type='checkbox']{
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  accent-color: var(--color-accent, #0ea5e9);
+  cursor: inherit;
+}.option-discovery-root .od-contract-chart-vwap-toggle:has(input:focus-visible){
+  outline: 2px solid var(--color-accent, #0ea5e9);
+  outline-offset: 2px;
+}.option-discovery-root .od-contract-chart-source{
+  min-width: 8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}.option-discovery-root .od-chart-vwap-missing{
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.5rem 0.65rem;
+  font-size: var(--text-caption, 0.8125rem);
+  line-height: 1.45;
+  color: var(--danger, #b91c1c);
+  background: rgba(185, 28, 28, 0.1);
+  border: 1px solid rgba(185, 28, 28, 0.35);
+  border-radius: 6px;
+}.option-discovery-root .od-chart-vwap-missing code{
+  font-size: 0.92em;
+}/* Card grid: 2-4 columns responsive */.option-discovery-root .od-card-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}.option-discovery-root .od-card-section{
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-elevated);
+}.option-discovery-root .od-card-section-title{
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}.option-discovery-root .od-card-section-title--with-hint{
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}/* "Day" source tag next to Price card title */.option-discovery-root .od-card-section-source{
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-dim);
+  background: var(--color-border);
+  border-radius: 3px;
+  padding: 0 0.3rem;
+  line-height: 1.5;
+}/* Refresh timestamp + toggle wrapper */.option-discovery-root .od-quotes-refresh-meta{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}.option-discovery-root .od-quotes-refresh-ts{
+  font-size: 0.68rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--color-text-dim);
+  white-space: nowrap;
+}/* Greeks source toggle (Snapshot / BS bubble) */.option-discovery-root .od-greeks-source-toggle{
+  display: inline-flex;
+  margin-left: auto;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 4px;
+  overflow: hidden;
+  gap: 0;
+}.option-discovery-root .od-greeks-source-btn{
+  background: transparent;
+  border: none;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  line-height: 1.6;
+}.option-discovery-root .od-greeks-source-btn:hover{
+  color: var(--color-text-muted);
+  background: var(--color-border);
+}.option-discovery-root .od-greeks-source-btn--active{
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}.option-discovery-root .od-kv-grid{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.75rem;
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}.option-discovery-root .od-kv-k{
+  color: var(--color-text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}.option-discovery-root .od-kv-v{
+  color: var(--color-text);
+  font-weight: 600;
+}.option-discovery-root .od-kv-dim{
+  color: var(--color-text-muted);
+  font-weight: 400;
+  font-size: 0.7rem;
+}/* Quality badge */.option-discovery-root .od-quality-badge{
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 6px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  font-size: 0.7rem;
+}.option-discovery-root .od-quality-badge-title{
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}.option-discovery-root .od-quality-item{
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+  font-weight: 600;
+}/* Tradability score */.option-discovery-root .od-tradability-score{
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-bottom: var(--space-2);
+}.option-discovery-root .od-tradability-value{
+  font-size: 1.8rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}.option-discovery-root .od-tradability-good{
+  color: var(--color-success);
+}.option-discovery-root .od-tradability-fair{
+  color: #d29922;
+}.option-discovery-root .od-tradability-poor{
+  color: var(--color-danger);
+}.option-discovery-root .od-tradability-label{
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}.option-discovery-root .od-tradability-factors{
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}.option-discovery-root .od-tradability-factor{
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-caption);
+}/* Scenario table */.option-discovery-root .od-scenario-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}.option-discovery-root .od-scenario-table th{
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}.option-discovery-root .od-scenario-table td{
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}.option-discovery-root .od-pnl-pos{
+  color: var(--color-success);
+  font-weight: 700;
+}.option-discovery-root .od-pnl-neg{
+  color: var(--color-danger);
+  font-weight: 700;
+}/* Relative Value label */.option-discovery-root .od-rv-label{
+  font-weight: 800 !important;
+}.option-discovery-root .od-rv-label--rich{
+  color: var(--color-danger) !important;
+}.option-discovery-root .od-rv-label--cheap{
+  color: var(--color-success) !important;
+}.option-discovery-root .od-rv-label--neutral{
+  color: var(--color-accent) !important;
+}.option-discovery-root .od-rv-label--—{
+  color: var(--color-text-muted) !important;
+}/* IV Curve mini chart */.option-discovery-root .od-iv-curve{
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 6rem;
+  padding-top: var(--space-1);
+}.option-discovery-root .od-iv-bar-wrap{
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}.option-discovery-root .od-iv-bar-wrap--active .od-iv-bar{
+  background: var(--color-accent);
+}.option-discovery-root .od-iv-bar{
+  width: 100%;
+  max-width: 1.2rem;
+  background: var(--color-border-strong);
+  border-radius: 2px 2px 0 0;
+  transition: height 0.2s;
+}.option-discovery-root .od-iv-bar-label{
+  font-size: 0.55rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  max-height: 2.5rem;
+  overflow: hidden;
+}.option-discovery-root .od-iv-bar-wrap--active .od-iv-bar-label{
+  color: var(--color-accent);
+  font-weight: 700;
+}/* Execution guidance chips (P3) */.option-discovery-root .od-exec-guidance{
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 6px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  font-size: 0.7rem;
+}.option-discovery-root .od-exec-guidance-title{
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+  margin-right: var(--space-1);
+}.option-discovery-root .od-exec-chip{
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}.option-discovery-root .od-exec-chip--ok{
+  background: rgba(52, 199, 89, .12);
+  color: var(--color-success);
+}.option-discovery-root .od-exec-chip--warn{
+  background: rgba(210, 153, 34, .12);
+  color: #d29922;
+}.option-discovery-root .od-exec-chip--danger{
+  background: rgba(248, 81, 73, .12);
+  color: var(--color-danger);
+}/* ==========================================================================
+   OD BS vs Snapshot comparison panel
+   ========================================================================== */.option-discovery-root .od-bs-compare .od-detail-section-title{
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}.option-discovery-root .od-bs-compare__note{
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--color-text-dim, #5c6572);
+}.option-discovery-root .od-bs-compare__meta{
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--color-text-muted, #7a8492);
+  margin-bottom: 0.6rem;
+}.option-discovery-root .od-bs-compare__noiv{
+  font-size: 0.8rem;
+  color: var(--color-warning, #eab308);
+  padding: 0.4rem 0;
+}.option-discovery-root .od-bs-compare__table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  font-family: var(--font-mono, monospace);
+}.option-discovery-root .od-bs-compare__table th, .option-discovery-root .od-bs-compare__table td{
+  padding: 0.25rem 0.6rem;
+  text-align: right;
+  border-bottom: 1px solid var(--color-border, #2a313c);
+  white-space: nowrap;
+}.option-discovery-root .od-bs-compare__table th:first-child, .option-discovery-root .od-bs-compare__table td:first-child{
+  text-align: left;
+  font-family: var(--font-sans, sans-serif);
+  color: var(--color-text-muted, #7a8492);
+  font-size: 0.75rem;
+}.option-discovery-root .od-bs-compare__table thead th{
+  font-size: 0.72rem;
+  font-family: var(--font-sans, sans-serif);
+  font-weight: 600;
+  color: var(--color-text-muted, #7a8492);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--color-border-strong, #3d4754);
+}.option-discovery-root .od-bs-compare__table tfoot td{
+  font-size: 0.7rem;
+  color: var(--color-text-dim, #5c6572);
+  font-family: var(--font-sans, sans-serif);
+  border-bottom: none;
+  padding-top: 0.4rem;
+}.option-discovery-root .od-bs-compare__legend{
+  text-align: left !important;
+}.option-discovery-root .od-bs-diff{
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+}.option-discovery-root .od-bs-diff--ok{
+  color: var(--color-text-dim, #5c6572);
+}.option-discovery-root .od-bs-diff--warn{
+  color: var(--color-warning, #eab308);
+}.option-discovery-root .od-bs-diff--alert{
+  color: var(--color-lamp-red, #f87171);
+}.option-discovery-root .od-bs-diff__hint{
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--color-text-dim, #5c6572);
+  margin-left: 0.3rem;
+}

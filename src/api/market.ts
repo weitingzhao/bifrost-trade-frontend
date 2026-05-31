@@ -1,4 +1,11 @@
-import type { QuoteItem, QuotesResponse, BenchmarkResponse, WatchlistResponse, OpenOrder } from '@/types/market'
+import type {
+  QuoteItem,
+  QuotesResponse,
+  BenchmarkResponse,
+  WatchlistResponse,
+  OpenOrder,
+  BarsResponse,
+} from '@/types/market'
 import { withValidation } from '@/lib/apiValidation'
 import { QuotesResponseSchema, WatchlistResponseSchema } from '@/lib/schemas/market'
 import { openSseWithBackoff } from '@/lib/sse'
@@ -33,10 +40,53 @@ export async function fetchWatchlist(): Promise<WatchlistResponse> {
   return validateWatchlist(await res.json())
 }
 
+export async function fetchBars(
+  symbol: string,
+  period = '1 D',
+  limit = 100,
+): Promise<BarsResponse> {
+  const params = new URLSearchParams({
+    symbol,
+    period,
+    limit: String(limit),
+  })
+  const res = await fetch(`${BASE}/bars?${params}`)
+  if (!res.ok) throw new Error(`Market /bars: ${res.status}`)
+  return res.json() as Promise<BarsResponse>
+}
+
+export async function fetchOptionBars(params: {
+  symbol: string
+  expiry: string
+  strike: number
+  option_right: string
+  period?: string
+  limit?: number
+  source?: string
+}): Promise<BarsResponse> {
+  const q = new URLSearchParams({
+    asset: 'option',
+    symbol: params.symbol,
+    expiry: params.expiry,
+    strike: String(params.strike),
+    option_right: params.option_right,
+    period: params.period ?? '1 D',
+    limit: String(params.limit ?? 100),
+    source: params.source ?? 'massive',
+  })
+  const res = await fetch(`${BASE}/bars?${q}`)
+  if (!res.ok) throw new Error(`Market /bars (option): ${res.status}`)
+  return res.json() as Promise<BarsResponse>
+}
+
 export async function postWatchlistItem(item: {
   contract_key: string
   symbol?: string
   sec_type?: string
+  expiry?: string
+  strike?: number
+  option_right?: string
+  display_label?: string
   optionable?: boolean | null
   source?: string
   category_id?: number | null

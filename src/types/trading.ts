@@ -61,6 +61,8 @@ export interface PerformanceSummary {
   return_pct?: number
   profit_factor?: number
   max_drawdown?: number
+  max_win?: number
+  max_loss?: number
   avg_win?: number
   avg_loss?: number
 }

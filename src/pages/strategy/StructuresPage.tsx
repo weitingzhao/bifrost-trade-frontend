@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useQueryClient } from '@tanstack/react-query'
 import { RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -83,29 +84,31 @@ export default function StructuresPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-3">
+      <PageShell className="space-y-3">
         <Skeleton className="h-6 w-36" />
         <Skeleton className="h-48 rounded-lg" />
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold">Structures</h1>
-          <Badge variant="secondary">{items.length}</Badge>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: ['strategy', 'structures'] })}
-        >
-          <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-          Refresh
-        </Button>
-      </div>
+    <PageShell className="space-y-4">
+      <PageHeader
+        title="Structures"
+        actions={
+          <>
+            <Badge variant="secondary">{items.length}</Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['strategy', 'structures'] })}
+            >
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              Refresh
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex items-center gap-1">
         {(['all', 'active', 'inactive'] as ActiveFilter[]).map((f) => (
@@ -195,6 +198,6 @@ export default function StructuresPage() {
           </Table>
         </div>
       )}
-    </div>
+    </PageShell>
   )
 }

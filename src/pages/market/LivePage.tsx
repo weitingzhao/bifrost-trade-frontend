@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { PageHeader, PageShell } from '@/components/layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
@@ -349,38 +350,38 @@ export default function LivePage() {
   // ─── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <PageShell className="flex flex-col gap-4">
       {quotesError && (
         <QueryErrorAlert error="Failed to load live quotes — check Market API connection." />
       )}
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Live</h1>
-          {strategyActive && (
-            <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-              {strategyActive.structure?.name && (
-                <Badge variant="secondary" className="font-normal">
-                  S: {strategyActive.structure.name}
-                </Badge>
-              )}
-              {strategyActive.gate_safety?.name && (
-                <Badge variant="secondary" className="font-normal">
-                  G: {strategyActive.gate_safety.name}
-                </Badge>
-              )}
-              {strategyActive.allocation?.name && (
-                <Badge variant="secondary" className="font-normal">
-                  A: {strategyActive.allocation.name}
-                </Badge>
-              )}
-            </div>
+      <PageHeader
+        title="Live"
+        titleSize="large"
+        actions={
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            Refresh
+          </Button>
+        }
+      />
+      {strategyActive && (
+        <div className="-mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+          {strategyActive.structure?.name && (
+            <Badge variant="secondary" className="font-normal">
+              S: {strategyActive.structure.name}
+            </Badge>
+          )}
+          {strategyActive.gate_safety?.name && (
+            <Badge variant="secondary" className="font-normal">
+              G: {strategyActive.gate_safety.name}
+            </Badge>
+          )}
+          {strategyActive.allocation?.name && (
+            <Badge variant="secondary" className="font-normal">
+              A: {strategyActive.allocation.name}
+            </Badge>
           )}
         </div>
-        <Button variant="outline" size="sm" onClick={handleRefresh}>
-          Refresh
-        </Button>
-      </div>
+      )}
 
       {/* Summary Bar */}
       <div className="flex items-center gap-6 rounded-md border px-4 py-2 text-sm">
@@ -739,6 +740,6 @@ export default function LivePage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   )
 }

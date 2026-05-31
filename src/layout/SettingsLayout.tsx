@@ -195,7 +195,7 @@ export function SettingsLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto bg-card">
         <Outlet />
       </main>
     </div>

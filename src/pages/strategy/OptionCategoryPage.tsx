@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -327,38 +328,40 @@ export default function OptionCategoryPage() {
 
   if (templatesLoading && templates.length === 0) {
     return (
-      <div className="p-6 space-y-3">
+      <PageShell className="space-y-3">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-64 w-full" />
-      </div>
+      </PageShell>
     )
   }
 
   if (templatesError && templates.length === 0) {
     return (
-      <div className="p-6">
-        <h1 className="text-xl font-semibold mb-2">Option Category</h1>
+      <PageShell>
+        <PageHeader title="Option Category" />
         <p className="text-sm text-red-500">Failed to load templates.</p>
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Page header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <h1 className="text-xl font-semibold">Option Category</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setDimsDialogOpen(true)}>
-            <Settings2 className="h-4 w-4 mr-1" />
-            Dimensions
-          </Button>
-          <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            New Template
-          </Button>
-        </div>
-      </div>
+    <PageShell padding="none" className="flex flex-col h-full">
+      <PageHeader
+        className="px-6 py-4 border-b shrink-0"
+        title="Option Category"
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setDimsDialogOpen(true)}>
+              <Settings2 className="h-4 w-4 mr-1" />
+              Dimensions
+            </Button>
+            <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              New Template
+            </Button>
+          </>
+        }
+      />
 
       {/* Two-pane layout */}
       <div className="flex flex-1 overflow-hidden">
@@ -854,7 +857,7 @@ export default function OptionCategoryPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   )
 }
 

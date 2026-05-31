@@ -7,6 +7,7 @@ import { usePositionAttribution } from '@/hooks/usePositionAttribution'
 import { useExecutionsFinal, useExecutionsTws } from '@/hooks/useExecutions'
 import { useOpportunities, useStructures } from '@/hooks/useStrategies'
 import { deleteExecution } from '@/api/trading'
+import { PageHeader, PageShell } from '@/components/layout'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -146,36 +147,38 @@ export default function PositionsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
+      <PageShell className="space-y-4">
         <Skeleton className="h-6 w-40" />
         <div className="grid grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 rounded-lg" />)}
         </div>
         <Skeleton className="h-64 rounded-lg" />
-      </div>
+      </PageShell>
     )
   }
 
   if (isError) {
     return (
-      <div className="p-6">
+      <PageShell>
         <Alert variant="destructive">
           <AlertDescription>{(error as Error).message}</AlertDescription>
         </Alert>
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-xl font-semibold">Positions</h1>
-        {totalPositions > 0 && (
-          <Badge variant="secondary" className="text-xs">
-            {totalPositions} position{totalPositions > 1 ? 's' : ''}
-          </Badge>
-        )}
-      </div>
+    <PageShell className="space-y-6">
+      <PageHeader
+        title="Positions"
+        actions={
+          totalPositions > 0 ? (
+            <Badge variant="secondary" className="text-xs">
+              {totalPositions} position{totalPositions > 1 ? 's' : ''}
+            </Badge>
+          ) : undefined
+        }
+      />
 
       <PositionsChartsRow
         stocks={allStocks}
@@ -300,6 +303,6 @@ export default function PositionsPage() {
         }}
       />
       <InspectorDrawer state={inspector} onClose={() => setInspector({ type: null })} />
-    </div>
+    </PageShell>
   )
 }

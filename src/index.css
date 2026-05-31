@@ -2,7 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -122,6 +121,33 @@
     --color-border-strong: #d1d5db;
     --color-text-dim: #9ca3af;
     --color-accent-soft: rgba(14, 165, 233, 0.12);
+
+    /* Legacy monitoring aliases (Option Discovery + migrated pages) */
+    --color-bg: var(--background);
+    --color-surface: var(--card);
+    --color-text: var(--foreground);
+    --color-text-main: var(--foreground);
+    --color-text-muted: var(--muted-foreground);
+    --color-accent: var(--primary);
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+    --space-8: 3rem;
+
+    --text-caption: clamp(0.75rem, 1vw, 0.8125rem);
+    --text-body: clamp(0.8125rem, 1.2vw, 0.875rem);
+    --text-title: clamp(0.95rem, 1.5vw, 1.05rem);
+    --text-headline: clamp(1.25rem, 2.5vw, 1.5rem);
+    --text-h3: 1.1rem;
+    --text-tiny: 0.6875rem;
+
+    --transition-fast: 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    --transition-normal: 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dark {
@@ -189,6 +215,33 @@
     --color-border-strong: #3d4754;
     --color-text-dim: #5c6572;
     --color-accent-soft: rgba(163, 230, 53, 0.12);
+
+    /* Legacy monitoring aliases — lime accent, NOT shadcn --accent surface gray */
+    --color-bg: var(--background);
+    --color-surface: var(--card);
+    --color-text: var(--foreground);
+    --color-text-main: var(--foreground);
+    --color-text-muted: var(--muted-foreground);
+    --color-accent: var(--primary);
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+    --space-8: 3rem;
+
+    --text-caption: clamp(0.75rem, 1vw, 0.8125rem);
+    --text-body: clamp(0.8125rem, 1.2vw, 0.875rem);
+    --text-title: clamp(0.95rem, 1.5vw, 1.05rem);
+    --text-headline: clamp(1.25rem, 2.5vw, 1.5rem);
+    --text-h3: 1.1rem;
+    --text-tiny: 0.6875rem;
+
+    --transition-fast: 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    --transition-normal: 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer base {

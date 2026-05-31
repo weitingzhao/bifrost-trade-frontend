@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import type { ReactNode } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/badge'
@@ -718,19 +719,18 @@ export default function ApiHealthPage() {
   }
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">API Services</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Health status for all 9 FastAPI microservices · auto-refresh every 20 s
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={refreshAll} className="gap-1.5 shrink-0">
-          <RefreshCw className="h-4 w-4" />
-          Refresh All
-        </Button>
-      </div>
+    <PageShell className="space-y-5">
+      <PageHeader
+        title="API Services"
+        titleSize="large"
+        description="Health status for all 9 FastAPI microservices · auto-refresh every 20 s"
+        actions={
+          <Button variant="outline" size="sm" onClick={refreshAll} className="gap-1.5 shrink-0">
+            <RefreshCw className="h-4 w-4" />
+            Refresh All
+          </Button>
+        }
+      />
 
       <ServiceTopologyPanel />
 
@@ -783,6 +783,6 @@ export default function ApiHealthPage() {
           </TabsPanelContent>
         </TabsPanel>
       </Tabs>
-    </div>
+    </PageShell>
   )
 }

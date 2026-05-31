@@ -150,7 +150,7 @@ export function ExecutionImport({ accountsFetchedAt }: Props) {
   const accountIds = [...new Set(freshnessItems.map((i) => i.account_id))]
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-4 text-sm">
+    <div className="rounded-lg border border-border bg-secondary p-4 space-y-4 text-sm">
       {/* Data freshness table */}
       {accountIds.length > 0 && (
         <div>

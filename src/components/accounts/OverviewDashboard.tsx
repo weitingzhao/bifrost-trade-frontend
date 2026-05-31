@@ -17,7 +17,7 @@ function Tile({
   valueClass?: string
 }) {
   return (
-    <Card>
+    <Card variant="elevated">
       <CardContent className="pt-4 pb-4">
         <p className="text-xs text-muted-foreground mb-1">{label}</p>
         <p className={cn('text-lg font-semibold font-mono', valueClass)}>{value}</p>

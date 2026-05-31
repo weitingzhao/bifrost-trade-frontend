@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { Plus, RefreshCw, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLocation } from 'react-router-dom'
@@ -253,35 +254,35 @@ export default function InstancesPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-3">
+      <PageShell className="space-y-3">
         <Skeleton className="h-6 w-40" />
         <Skeleton className="h-64 rounded-lg" />
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="p-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Strategy / Instances</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['strategy', 'instances'] })}
-          >
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Create instance
-          </Button>
-        </div>
-      </div>
+    <PageShell className="space-y-4">
+      <PageHeader
+        title="Strategy / Instances"
+        titleSize="large"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['strategy', 'instances'] })}
+            >
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Create instance
+            </Button>
+          </>
+        }
+      />
 
       {/* Top-level filters: Account + Opportunity search */}
       <div className="flex flex-wrap items-center gap-3">
@@ -503,6 +504,6 @@ export default function InstancesPage() {
         instance={deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
       />
-    </div>
+    </PageShell>
   )
 }

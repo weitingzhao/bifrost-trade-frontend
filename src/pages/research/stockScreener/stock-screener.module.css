@@ -1,0 +1,225 @@
+/* Grid layouts */
+.ssTechRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.4fr) minmax(200px, 1.2fr) minmax(160px, 0.9fr);
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.ssFundRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(200px, 1.1fr) minmax(160px, 0.85fr) minmax(160px, 0.85fr) minmax(160px, 0.85fr);
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.ssStackCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+@media (max-width: 1279px) {
+  .ssTechRow,
+  .ssFundRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Segment card shell — matches Legacy .ssp-card density */
+.ssCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  height: 100%;
+}
+
+.ssCardStacked {
+  padding: 0.5rem 0.75rem;
+}
+
+.ssCardStacked .ssChipRow {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.ssCardTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim, #5c6572);
+  margin: 0;
+}
+
+/* Dist cards — top accent */
+.ssCardDistTech {
+  border-top: 2px solid rgba(167, 139, 250, 0.35);
+}
+
+.ssCardDistFund {
+  border-top: 2px solid rgba(52, 211, 153, 0.35);
+}
+
+/* Tier cards — left accent + title */
+.ssCardTierMomentum {
+  border-left: 3px solid rgba(245, 158, 11, 0.55);
+}
+
+.ssCardTierStructure {
+  border-left: 3px solid rgba(52, 211, 153, 0.55);
+}
+
+.ssCardTierSentiment {
+  border-left: 3px solid rgba(244, 114, 182, 0.55);
+}
+
+.ssTitleMomentum { color: #f59e0b; }
+.ssTitleStructure { color: #34d399; }
+.ssTitleSentiment { color: #f472b6; }
+
+/* Extended fund group cards — left accent + title */
+.ssCardGroupQuality { border-left: 3px solid rgba(125, 211, 252, 0.55); }
+.ssCardGroupBalance { border-left: 3px solid rgba(132, 204, 22, 0.55); }
+.ssCardGroupCashflow { border-left: 3px solid rgba(52, 211, 153, 0.55); }
+.ssCardGroupValuation { border-left: 3px solid rgba(251, 191, 36, 0.55); }
+.ssCardGroupProfitability { border-left: 3px solid rgba(167, 139, 250, 0.55); }
+.ssCardGroupEfficiency { border-left: 3px solid rgba(249, 115, 22, 0.55); }
+.ssCardGroupSentiment { border-left: 3px solid rgba(244, 114, 182, 0.55); }
+
+.ssTitleQuality { color: #7dd3fc; }
+.ssTitleBalance { color: #84cc16; }
+.ssTitleCashflow { color: #34d399; }
+.ssTitleValuation { color: #fbbf24; }
+.ssTitleProfitability { color: #a78bfa; }
+.ssTitleEfficiency { color: #fb923c; }
+.ssTitleExtSentiment { color: #f472b6; }
+
+/* Group sub-headers */
+.ssGroupHeader {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.ssGroupVol { color: #a78bfa; border-bottom-color: rgba(167, 139, 250, 0.35); }
+.ssGroupPrice52 { color: #34d399; border-bottom-color: rgba(52, 211, 153, 0.35); }
+.ssGroupSma { color: #63b3ed; border-bottom-color: rgba(99, 179, 237, 0.35); }
+.ssGroupPrice { color: #fbbf24; border-bottom-color: rgba(251, 191, 36, 0.35); }
+
+.ssGroupEps { color: #7dd3fc; border-bottom-color: rgba(125, 211, 252, 0.35); }
+.ssGroupRev { color: #84cc16; border-bottom-color: rgba(132, 204, 22, 0.35); }
+
+.ssGroupMomOscillator { color: #f59e0b; border-bottom-color: rgba(245, 158, 11, 0.35); }
+.ssGroupMomRoc { color: #fb923c; border-bottom-color: rgba(251, 146, 60, 0.35); }
+.ssGroupMomRs { color: #fbbf24; border-bottom-color: rgba(251, 191, 36, 0.35); }
+.ssGroupMomTrend { color: #34d399; border-bottom-color: rgba(52, 211, 153, 0.35); }
+
+/* Condition chips — left hue accent */
+.ssChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.625rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: rgba(26, 31, 38, 0.6);
+  color: var(--muted-foreground);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.ssChip:hover {
+  background: rgba(26, 31, 38, 0.9);
+  color: var(--foreground);
+}
+
+.ssChipCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid var(--color-border-strong, #3d4754);
+  border-radius: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: transparent;
+}
+
+.ssChipActive {
+  background: rgba(163, 230, 53, 0.12);
+  border-color: #a3e635;
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.ssChipActive .ssChipCheck {
+  background: #a3e635;
+  border-color: #a3e635;
+  color: #0a0c0f;
+}
+
+.ssChipTechVol { border-left: 2px solid rgba(167, 139, 250, 0.6); }
+.ssChipTechPrice52 { border-left: 2px solid rgba(52, 211, 153, 0.6); }
+.ssChipTechSma { border-left: 2px solid rgba(99, 179, 237, 0.6); }
+.ssChipTechPrice { border-left: 2px solid rgba(251, 191, 36, 0.6); }
+
+.ssChipEps { border-left: 2px solid rgba(125, 211, 252, 0.55); }
+.ssChipRev { border-left: 2px solid rgba(132, 204, 22, 0.55); }
+
+.ssChipExtQuality { border-left: 2px solid rgba(125, 211, 252, 0.5); }
+.ssChipExtBalance { border-left: 2px solid rgba(132, 204, 22, 0.5); }
+.ssChipExtCashflow { border-left: 2px solid rgba(52, 211, 153, 0.5); }
+.ssChipExtValuation { border-left: 2px solid rgba(251, 191, 36, 0.5); }
+.ssChipExtProfitability { border-left: 2px solid rgba(167, 139, 250, 0.5); }
+.ssChipExtEfficiency { border-left: 2px solid rgba(249, 115, 22, 0.5); }
+.ssChipExtSentiment { border-left: 2px solid rgba(244, 114, 182, 0.5); }
+
+.ssChipTierMomentum { border-left: 2px solid rgba(245, 158, 11, 0.6); }
+.ssChipTierStructure { border-left: 2px solid rgba(52, 211, 153, 0.6); }
+.ssChipTierSentiment { border-left: 2px solid rgba(244, 114, 182, 0.6); }
+
+.ssChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Score slider — lime thumb like Legacy */
+.ssScoreSlider {
+  flex: 1;
+  height: 4px;
+  accent-color: #a3e635;
+  cursor: pointer;
+}
+
+.ssScoreValMomentum { color: #f59e0b; }
+.ssScoreValStructure { color: #34d399; }
+.ssScoreValSentiment { color: #f472b6; }
+
+.ssTierCountMomentum { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.ssTierCountStructure { background: rgba(52, 211, 153, 0.2); color: #34d399; }
+.ssTierCountSentiment { background: rgba(244, 114, 182, 0.2); color: #f472b6; }
+
+.ssFilterBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 3px;
+  border-radius: 9999px;
+  background: #a3e635;
+  color: #0a0c0f;
+  font-size: 0.58rem;
+  font-weight: 700;
+}

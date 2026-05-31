@@ -92,7 +92,7 @@ export const NAV_GROUPS: NavGroup[] = [
           { label: 'Stock Screener', to: '/research/sepa', icon: BookOpen },
           { label: 'Stock Data Readiness', to: '/research/stock-data', icon: Database },
           { label: 'Option Screener', to: '/research/screener', icon: ListFilter },
-          { label: 'Watchlist', to: '/market/watchlist', icon: Star },
+          { label: 'Stock Watchlist', to: '/research/watchlist', icon: Star },
         ],
       },
       {

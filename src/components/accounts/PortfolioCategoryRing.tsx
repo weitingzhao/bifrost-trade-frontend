@@ -206,7 +206,7 @@ export function PortfolioCategoryRing({ accounts }: Props) {
   }
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-secondary p-4 space-y-3">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         Portfolio by Category
       </p>

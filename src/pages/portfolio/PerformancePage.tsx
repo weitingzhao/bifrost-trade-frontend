@@ -19,6 +19,7 @@ import type {
   PerformanceDayPnLBulkResult,
   PerformanceResponse,
 } from '@/types/trading'
+import { PageHeader, PageShell } from '@/components/layout'
 import { EquityGrowthCard } from '@/components/performance/EquityGrowthCard'
 import MonthlyPnLTable from '@/components/performance/MonthlyPnLTable'
 import { CalendarDayDetail } from '@/components/performance/CalendarDayDetail'
@@ -452,14 +453,11 @@ export default function PerformancePage() {
   }, [])
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Performance</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Flex Trades + journal-closed only
-        </p>
-      </div>
+    <PageShell className="flex flex-col gap-6">
+      <PageHeader
+        title="Performance"
+        description="Flex Trades + journal-closed only"
+      />
 
       {perfQuery.isError && (
         <QueryErrorAlert
@@ -894,7 +892,7 @@ export default function PerformancePage() {
         />
       )}
 
-    </div>
+    </PageShell>
   )
 }
 

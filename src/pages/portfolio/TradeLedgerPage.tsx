@@ -6,6 +6,7 @@ import { useOpportunities } from '@/hooks/useStrategies'
 import { useLedgerExecutions, useLedgerExecutionsBook } from '@/hooks/useLedgerExecutions'
 import { deleteExecution, updateExecution } from '@/api/trading'
 import { DeleteConfirmDialog } from '@/components/positions/DeleteConfirmDialog'
+import { PageHeader, PageShell } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { ExecutionFormModal } from '@/components/positions/ExecutionFormModal'
 import { LinkExecutionModal } from '@/components/positions/LinkExecutionModal'
@@ -687,21 +688,23 @@ export default function TradeLedgerPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="p-4 space-y-3">
-      {/* ── Page header ── */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold tracking-tight">Trade Ledger</h1>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 gap-1.5 text-xs text-muted-foreground"
-          onClick={() => { void refetchCanon(); void refetchBook() }}
-          disabled={isLoading}
-        >
-          <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
-          Refresh
-        </Button>
-      </div>
+    <PageShell padding="compact" className="space-y-3">
+      <PageHeader
+        title="Trade Ledger"
+        className="[&_h1]:text-lg [&_h1]:tracking-tight"
+        actions={
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 gap-1.5 text-xs text-muted-foreground"
+            onClick={() => { void refetchCanon(); void refetchBook() }}
+            disabled={isLoading}
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
+            Refresh
+          </Button>
+        }
+      />
 
       {(canonError || bookError) && (
         <QueryErrorAlert
@@ -1222,7 +1225,7 @@ export default function TradeLedgerPage() {
           </Dialog>
         )
       })()}
-    </div>
+    </PageShell>
   )
 }
 

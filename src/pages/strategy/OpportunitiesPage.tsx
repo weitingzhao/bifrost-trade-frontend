@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useQueryClient, useQueries } from '@tanstack/react-query'
 import { RefreshCw, Plus, Pencil, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -145,35 +146,35 @@ export default function OpportunitiesPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-3">
+      <PageShell className="space-y-3">
         <Skeleton className="h-6 w-40" />
         <Skeleton className="h-48 rounded-lg" />
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold">Opportunities</h1>
-          <Badge variant="secondary">{items.length}</Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['strategy', 'opportunities'] })}
-          >
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={handleNew}>
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            New Opportunity
-          </Button>
-        </div>
-      </div>
+    <PageShell className="space-y-4">
+      <PageHeader
+        title="Opportunities"
+        actions={
+          <>
+            <Badge variant="secondary">{items.length}</Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['strategy', 'opportunities'] })}
+            >
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              Refresh
+            </Button>
+            <Button size="sm" onClick={handleNew}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              New Opportunity
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex items-center gap-1">
         {(['all', 'active', 'inactive'] as ActiveFilter[]).map((f) => (
@@ -308,6 +309,6 @@ export default function OpportunitiesPage() {
         initial={editTarget}
         prefill={prefillData}
       />
-    </div>
+    </PageShell>
   )
 }

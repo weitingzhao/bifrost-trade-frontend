@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { ChevronDown, ArrowUpDown, ScanSearch } from 'lucide-react'
+import { ChevronDown, ArrowUpDown, ScanSearch, Compass } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -172,7 +174,7 @@ export function OptionsTab({
                 <span className="inline-flex items-center gap-1 justify-end">PnL <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
               </TableHead>
               <TableHead>Strategy</TableHead>
-              {onInspect && <TableHead className="w-8" />}
+              {onInspect && <TableHead className="w-16" />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -225,14 +227,32 @@ export function OptionsTab({
                   </TableCell>
                   {onInspect && (
                     <TableCell className="px-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={(e) => { e.stopPropagation(); onInspect(pos) }}
-                      >
-                        <ScanSearch className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Button>
+                      <div className="flex items-center gap-0.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          asChild
+                          title="Open in Discovery"
+                        >
+                          <Link
+                            to={buildDiscoveryUrl(pos.symbol, pos.expiry)}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`Open ${pos.symbol} in Option Discovery`}
+                          >
+                            <Compass className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={(e) => { e.stopPropagation(); onInspect(pos) }}
+                          title="Inspect contract"
+                        >
+                          <ScanSearch className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>,

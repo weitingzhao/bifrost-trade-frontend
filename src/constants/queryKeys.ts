@@ -26,7 +26,28 @@ export const QUERY_KEYS = {
     greeks:         ['research', 'greeks']           as const,
     screener:       ['research', 'screener']         as const,
     stockData:      ['research', 'stock-data']       as const,
+    watchlist:      ['research', 'watchlist']        as const,
+    performanceKelly: ['research', 'performance-kelly'] as const,
+    stockDataReadiness: {
+      summary:       ['research', 'stock-data-readiness', 'summary'] as const,
+      criteriaStats: ['research', 'stock-data-readiness', 'criteria-stats'] as const,
+    },
     celeryBeat:     ['research', 'celery-beat']      as const,
+    stockScreener: {
+      criteriaStats:    ['research', 'stock-screener', 'criteria-stats'] as const,
+      fundDistSymbols:  (n: number) => ['research', 'stock-screener', 'fund-dist', n] as const,
+      techDistSymbols:  (n: number) => ['research', 'stock-screener', 'tech-dist', n] as const,
+      readinessSnapshot: (key: string) => ['research', 'stock-screener', 'snapshot', key] as const,
+    },
+    discovery: {
+      expirations:    ['research', 'discovery', 'expirations']    as const,
+      snapshots:      ['research', 'discovery', 'snapshots']      as const,
+      ivTerm:         ['research', 'discovery', 'iv-term']        as const,
+      maxPain:        ['research', 'discovery', 'max-pain']       as const,
+      greeksCoverage: ['research', 'discovery', 'greeks-coverage'] as const,
+      massiveStatus:  ['research', 'discovery', 'massive-status']  as const,
+      dailyChecklist: ['research', 'discovery', 'daily-checklist'] as const,
+    },
   },
   strategy: {
     instances:      ['strategy', 'instances']        as const,

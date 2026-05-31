@@ -10,18 +10,21 @@ export default function RouteErrorPage() {
   const error = useRouteError()
   const navigate = useNavigate()
 
-  let title = '发生错误'
-  let detail = '页面加载时遇到意外问题。'
+  let title = 'Something went wrong'
+  let detail = 'An unexpected error occurred while loading this page.'
 
   if (isRouteErrorResponse(error)) {
     title = `${error.status} ${error.statusText}`
-    detail = error.status === 404 ? '找不到该页面。' : (error.data?.message ?? detail)
+    detail =
+      error.status === 404
+        ? 'Page not found.'
+        : String((error.data as { message?: string } | undefined)?.message ?? detail)
   } else if (error instanceof Error) {
     detail = error.message
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-svh gap-5 p-8 text-center bg-background">
+    <div className="flex flex-col items-center justify-center h-svh gap-5 p-8 text-center bg-card text-card-foreground">
       <AlertTriangle className="size-12 text-destructive" />
       <div className="space-y-1">
         <h1 className="text-lg font-semibold">{title}</h1>
@@ -30,11 +33,11 @@ export default function RouteErrorPage() {
       <div className="flex gap-2">
         <Button variant="outline" onClick={() => navigate(-1)}>
           <RotateCcw className="size-4 mr-2" />
-          返回
+          Go back
         </Button>
         <Button onClick={() => navigate('/', { replace: true })}>
           <Home className="size-4 mr-2" />
-          首页
+          Home
         </Button>
       </div>
     </div>

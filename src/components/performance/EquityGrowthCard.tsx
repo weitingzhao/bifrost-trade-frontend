@@ -116,7 +116,7 @@ export function EquityGrowthCard({
 
   return (
     <section
-      className="rounded-lg border border-border bg-card shadow-sm"
+      className="rounded-lg border border-border bg-secondary shadow-sm"
       aria-label="Portfolio equity growth"
     >
       {/* ─── Header ─── */}

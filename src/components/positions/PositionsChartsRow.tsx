@@ -107,7 +107,7 @@ function ChartCard({
   const total = segments.reduce((s, seg) => s + seg.value, 0)
 
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-2">
+    <div className="rounded-lg border border-border bg-secondary p-4 space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{title}</p>
         {headerRight}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { PlusCircle, Pencil, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -339,20 +340,18 @@ export default function AllocationsPage() {
   )
 
   return (
-    <div className="p-6 space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Allocations</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Combine multiple opportunities into an allocation with optional gate safety and position limits.
-          </p>
-        </div>
-        <Button onClick={openCreate} className="gap-1.5 shrink-0">
-          <PlusCircle className="h-4 w-4" />
-          New allocation
-        </Button>
-      </div>
+    <PageShell className="space-y-5">
+      <PageHeader
+        title="Allocations"
+        titleSize="large"
+        description="Combine multiple opportunities into an allocation with optional gate safety and position limits."
+        actions={
+          <Button onClick={openCreate} className="gap-1.5 shrink-0">
+            <PlusCircle className="h-4 w-4" />
+            New allocation
+          </Button>
+        }
+      />
 
       {/* Active banner */}
       <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 flex items-center gap-3 text-sm flex-wrap">
@@ -495,6 +494,6 @@ export default function AllocationsPage() {
         onClose={() => setDialogOpen(false)}
         onSaved={() => void qc.invalidateQueries({ queryKey: QUERY_KEYS.strategy.allocations })}
       />
-    </div>
+    </PageShell>
   )
 }

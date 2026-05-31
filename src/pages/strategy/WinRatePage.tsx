@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useNavigate } from 'react-router-dom'
 import { RefreshCw, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -175,7 +176,7 @@ function WinRateCard({
 
   const cardInner = (
     <div className={cn(
-      'rounded-lg border border-border bg-card p-4 space-y-4 text-sm h-full',
+      'rounded-lg border border-border bg-secondary p-4 space-y-4 text-sm h-full',
       isTotal && 'bg-muted/30',
       onClick && 'hover:border-foreground/30 hover:bg-accent/20 transition-colors',
     )}>
@@ -352,27 +353,24 @@ export default function WinRatePage() {
   }
 
   return (
-    <div className="p-6 space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold">Win Rate</h1>
-          <p className="text-sm text-muted-foreground">
-            Aggregated results per strategy structure — closed instances only.
-            Click a card to drill into its instances.
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0 gap-1.5"
-          onClick={() => void refetch()}
-          disabled={isFetching}
-        >
-          <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
-          Refresh
-        </Button>
-      </div>
+    <PageShell className="space-y-5">
+      <PageHeader
+        title="Win Rate"
+        titleSize="large"
+        description="Aggregated results per strategy structure — closed instances only. Click a card to drill into its instances."
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
+            Refresh
+          </Button>
+        }
+      />
 
       {/* Time filter chips */}
       <div className="flex items-center gap-1.5 flex-wrap">
@@ -437,6 +435,6 @@ export default function WinRatePage() {
           ))}
         </div>
       )}
-    </div>
+    </PageShell>
   )
 }

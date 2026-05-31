@@ -1,3 +1,9 @@
+import { PageHeader, PageShell } from '@/components/layout'
+
 export default function LogsPage() {
-  return <div className="p-6"><h1 className="text-2xl font-semibold">Logs</h1><p className="text-muted-foreground mt-1">System logs</p></div>
+  return (
+    <PageShell>
+      <PageHeader title="Logs" description="System logs" />
+    </PageShell>
+  )
 }

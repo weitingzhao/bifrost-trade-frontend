@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { StatusLamp } from '@/components/StatusLamp'
+import { PageHeader, PageShell } from '@/components/layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -540,8 +541,8 @@ export default function CeleryPage() {
 
   return (
     <TooltipProvider>
-      <div className="p-6 space-y-6">
-        <h1 className="text-xl font-semibold">Celery</h1>
+      <PageShell className="space-y-6">
+        <PageHeader title="Celery" />
 
         <Tabs value={mainTab} onValueChange={setMainTab}>
           <TabsList>
@@ -600,7 +601,7 @@ export default function CeleryPage() {
             <CeleryBeatScheduleCard />
           </TabsContent>
         </Tabs>
-      </div>
+      </PageShell>
     </TooltipProvider>
   )
 }

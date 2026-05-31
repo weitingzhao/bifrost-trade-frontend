@@ -94,3 +94,52 @@ export function fmtOptionRight(r: string | undefined): 'Call' | 'Put' | '—' {
   if (r === 'P') return 'Put'
   return '—'
 }
+
+export function getContractLabelParts(contract_key: string): { symbol: string; rightLabel: string } {
+  const parts = contract_key.split('|')
+  const symbol = parts[0]?.trim() || ''
+  const right = (parts[4] ?? parts[parts.length - 1] ?? '').toString().toUpperCase()
+  const rightLabel = right === 'C' ? 'CALL' : right === 'P' ? 'PUT' : right || ''
+  return { symbol, rightLabel }
+}
+
+export function parseOptionContractKey(contract_key: string | null | undefined): {
+  expiry: string
+  strike: string
+  right: string
+  rightLabel: string
+} {
+  if (!contract_key || !contract_key.trim()) {
+    return { expiry: '—', strike: '—', right: '—', rightLabel: '—' }
+  }
+  const parts = contract_key.split('|')
+  const expiry = (parts[2] ?? '').trim() || '—'
+  const strike = (parts[3] ?? '').trim() || '—'
+  const right = ((parts[4] ?? '').toString().toUpperCase().slice(0, 1)) || '—'
+  const rightLabel = right === 'C' ? 'CALL' : right === 'P' ? 'PUT' : right
+  return { expiry, strike, right, rightLabel }
+}
+
+export function fmtTs(ts: number | null | undefined): string {
+  if (ts == null) return '—'
+  return new Date(ts * 1000).toLocaleString()
+}
+
+export function fmtTsForPeriod(ts: number | null | undefined, period: string): string {
+  if (ts == null || !Number.isFinite(ts)) return '—'
+  const d = new Date(ts * 1000)
+  if (period === '1 D') {
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  }
+  if (period === '1 min' || period === '5 mins') {
+    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
+  }
+  if (period === '1 hour') {
+    return (
+      d.toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }) +
+      ' ' +
+      d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
+    )
+  }
+  return d.toLocaleString()
+}

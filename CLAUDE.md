@@ -146,6 +146,20 @@ function useQuoteStream(symbols: string[]) {
 - **CSS Modules**（`*.module.css`）处理页面特定的复杂样式
 - **禁止**：全局单文件 CSS、魔法数字（直接写 `padding: 6px`）、`!important`
 
+### 页面画布（三层 surface，与 Sidebar 对齐）
+
+| 层级 | Tailwind | 用途 |
+|------|----------|------|
+| Canvas | `bg-card` | 页面根、`PageShell`、与侧栏同色 |
+| Elevated | `bg-secondary` 或 `Card variant="elevated"` | KPI、筛选条、嵌套面板 |
+| Inset | `bg-background` | 刻意凹进的图表/深坑区域 |
+
+- 每个页面根必须使用 [`PageShell`](src/components/layout/PageShell.tsx)（`padding`: `default` / `compact` / `none`）
+- 每个 `PageShell` 业务页必须使用 [`PageHeader`](src/components/layout/PageHeader.tsx)（`titleSize`: `default` | `large`）；禁止手写页面级 `<h1>`
+- 铺在 canvas 上的 KPI/图表面板使用 `Card variant="elevated"` 或 `bg-secondary`，禁止与画布同色的 `bg-card` 块
+- **禁止**在新页面使用 Legacy 全局类 `.card`、`.process-section`、`.legacy-monitoring-shell` 作为页面外壳
+- Option Discovery 样式仅限页面 import：`discoveryScoped.css` + `discoveryShell.css`（`option-discovery-root` 作用域）；**不得**在新页面 import 或复用全局 Legacy shell
+
 ### 文件组织规范
 
 ```
@@ -173,6 +187,7 @@ src/
 │   ├── market.ts
 │   └── ...
 ├── components/           ← 可复用 UI 组件
+│   └── layout/           ← PageShell, PageHeader, PageSection
 ├── lib/
 │   ├── queryClient.ts    ← TanStack Query 全局配置
 │   └── router.tsx        ← React Router 路由定义

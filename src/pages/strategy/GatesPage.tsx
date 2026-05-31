@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { Plus, Copy, Pencil, Star, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -274,12 +275,8 @@ export default function GatesPage() {
   // -------------------------------------------------------------------------
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-xl font-semibold">Gates</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Risk gate configuration</p>
-      </div>
+    <PageShell className="space-y-6">
+      <PageHeader title="Gates" description="Risk gate configuration" />
 
       {/* Current active section */}
       <Card>
@@ -659,6 +656,6 @@ export default function GatesPage() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
-    </div>
+    </PageShell>
   )
 }

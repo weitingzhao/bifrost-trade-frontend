@@ -5,4 +5,5 @@ export const STORAGE_KEYS = {
   sidebarAccordion: 'bifrost-sidebar-accordion',
   sidebarOpenGroups: 'bifrost-sidebar-open-groups',
   optionScreenerFilters: 'optionScreenerFilters',
+  optionDiscoveryPrefs: 'optionDiscoveryPrefs',
 } as const

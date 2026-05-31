@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { postSetHeartbeatInterval, postSetAccountSyncInterval } from '@/api/monitor'
 import { useMonitorStatus, useInvalidateStatus } from '@/hooks/useMonitorStatus'
 import type { StatusResponse } from '@/types/monitor'
@@ -49,30 +50,28 @@ function DaemonAppForm({ status }: { status: StatusResponse }) {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">Daemon App</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Configure daemon heartbeat intervals — takes effect on next heartbeat
-          </p>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {saveMsg.text && (
-            <span
-              className={cn(
-                'text-sm',
-                saveMsg.isErr ? 'text-destructive' : 'text-green-600 dark:text-green-400',
-              )}
-            >
-              {saveMsg.text}
-            </span>
-          )}
-          <Button onClick={handleSave} disabled={saving}>
-            Save settings
-          </Button>
-        </div>
-      </div>
+    <PageShell className="space-y-6">
+      <PageHeader
+        title="Daemon App"
+        description="Configure daemon heartbeat intervals — takes effect on next heartbeat"
+        actions={
+          <>
+            {saveMsg.text && (
+              <span
+                className={cn(
+                  'text-sm',
+                  saveMsg.isErr ? 'text-destructive' : 'text-green-600 dark:text-green-400',
+                )}
+              >
+                {saveMsg.text}
+              </span>
+            )}
+            <Button onClick={handleSave} disabled={saving}>
+              Save settings
+            </Button>
+          </>
+        }
+      />
 
       <div id="settings-heartbeat" className="grid gap-4 sm:grid-cols-2">
         <Card>
@@ -122,7 +121,7 @@ function DaemonAppForm({ status }: { status: StatusResponse }) {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageShell>
   )
 }
 
@@ -133,14 +132,14 @@ export default function DaemonAppPage() {
 
   if (!status) {
     return (
-      <div className="p-6 space-y-4">
+      <PageShell className="space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-72" />
         <div className="grid gap-4 sm:grid-cols-2">
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
         </div>
-      </div>
+      </PageShell>
     )
   }
 

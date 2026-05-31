@@ -43,6 +43,30 @@ export interface WatchlistItem {
   category_id: number | null
   source: string
   created_at: number
+  expiry?: string | null
+  strike?: number | null
+  option_right?: string | null
+  display_label?: string | null
+}
+
+export interface OhlcBar {
+  time?: number
+  open: number
+  high: number
+  low: number
+  close: number
+  volume?: number
+  vwap?: number | null
+}
+
+/** Normalized bar for candlestick charts (Market /bars API). */
+export interface Bar extends OhlcBar {
+  ts?: number
+}
+
+export interface BarsResponse {
+  bars?: OhlcBar[]
+  message?: string
 }
 
 export interface WatchlistResponse {

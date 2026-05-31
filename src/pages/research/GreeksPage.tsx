@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useQuery } from '@tanstack/react-query'
 import { Search, ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -252,13 +253,12 @@ export default function GreeksPage() {
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold">IV & Greeks</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          View server-computed Greeks with client-side Black-Scholes validation
-        </p>
-      </div>
+    <PageShell className="space-y-4">
+      <PageHeader
+        title="IV & Greeks"
+        description="View server-computed Greeks with client-side Black-Scholes validation"
+        className="[&_p]:text-xs"
+      />
 
       <div className="flex items-end gap-3 flex-wrap">
         <div className="space-y-1 w-28">
@@ -378,6 +378,6 @@ export default function GreeksPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageShell>
   )
 }

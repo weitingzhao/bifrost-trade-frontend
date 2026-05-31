@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus, useOperations } from '@/hooks/useMonitorStatus'
@@ -196,52 +197,53 @@ export default function DaemonStatusPage() {
   const operations = opsData?.operations ?? []
 
   if (isLoading) return (
-    <div className="p-6 space-y-4">
+    <PageShell className="space-y-4">
       <Skeleton className="h-8 w-64" />
       <div className="space-y-4">
         {[0, 1, 2].map(i => <Skeleton key={i} className="h-48 rounded-lg" />)}
       </div>
-    </div>
+    </PageShell>
   )
 
   if (isError) return (
-    <div className="p-6">
+    <PageShell>
       <Alert variant="destructive">
         <AlertDescription>{(error as Error).message}</AlertDescription>
       </Alert>
-    </div>
+    </PageShell>
   )
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Page header + controls */}
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold">Daemon Status</h1>
-        {data && <StatusLamp lamp={data.health.status_lamp} />}
-        <div className="ml-auto flex items-center gap-2 flex-wrap">
-          <Button
-            size="sm" variant="outline"
-            className="h-8 text-xs border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950"
-            onClick={() => ctrl.run(postSuspend, { loading: 'Setting suspend…', success: 'Suspend set — daemon will pause hedging on next heartbeat.' })}
-          >
-            Suspend
-          </Button>
-          <Button
-            size="sm" variant="outline"
-            className="h-8 text-xs border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
-            onClick={() => ctrl.run(postResume, { loading: 'Setting resume…', success: 'Resume set — daemon will resume hedging on next heartbeat.' })}
-          >
-            Resume
-          </Button>
-          <Button
-            size="sm" variant="outline"
-            className="h-8 text-xs border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-            onClick={() => ctrl.run(postFlatten, { loading: 'Requesting flatten…', success: 'Flatten sent — hedge process will consume and execute.' })}
-          >
-            Flatten
-          </Button>
-        </div>
-      </div>
+    <PageShell className="space-y-6">
+      <PageHeader
+        title="Daemon Status"
+        actions={
+          <>
+            {data && <StatusLamp lamp={data.health.status_lamp} />}
+            <Button
+              size="sm" variant="outline"
+              className="h-8 text-xs border-yellow-400 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950"
+              onClick={() => ctrl.run(postSuspend, { loading: 'Setting suspend…', success: 'Suspend set — daemon will pause hedging on next heartbeat.' })}
+            >
+              Suspend
+            </Button>
+            <Button
+              size="sm" variant="outline"
+              className="h-8 text-xs border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+              onClick={() => ctrl.run(postResume, { loading: 'Setting resume…', success: 'Resume set — daemon will resume hedging on next heartbeat.' })}
+            >
+              Resume
+            </Button>
+            <Button
+              size="sm" variant="outline"
+              className="h-8 text-xs border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+              onClick={() => ctrl.run(postFlatten, { loading: 'Requesting flatten…', success: 'Flatten sent — hedge process will consume and execute.' })}
+            >
+              Flatten
+            </Button>
+          </>
+        }
+      />
 
       {ctrl.msg.text && (
         <Alert variant={ctrl.msg.isErr ? 'destructive' : 'default'} className="py-2">
@@ -564,6 +566,6 @@ export default function DaemonStatusPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   )
 }

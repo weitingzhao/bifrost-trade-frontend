@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, ArrowDownToLine, ArrowUpFromLine, Landmark, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getTransactions, postTransactionsFetch } from '@/api/trading'
@@ -186,41 +187,39 @@ export default function TransferPayPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      {/* ── Header ── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Transfer &amp; Pay</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Cash transfers and dividends from IB Flex — stored in account_transactions.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-3 py-1.5">
-            <span className="text-xs text-muted-foreground font-medium">Range</span>
-            <Select value={rangePreset} onValueChange={(v) => { setRangePreset(v as RangePreset); setPage(1) }}>
-              <SelectTrigger className="h-7 w-[200px] border-0 bg-transparent shadow-none text-xs focus:ring-0 px-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RANGE_PRESET_OPTIONS.map(o => (
-                  <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={fetchMutation.isPending}
-            onClick={() => { setFetchMsg(null); fetchMutation.mutate() }}
-            className="h-8 gap-1.5 text-xs"
-          >
-            <RefreshCw className={cn('h-3.5 w-3.5', fetchMutation.isPending && 'animate-spin')} />
-            {fetchMutation.isPending ? 'Fetching…' : 'Fetch from IB'}
-          </Button>
-        </div>
-      </div>
+    <PageShell className="flex flex-col gap-6">
+      <PageHeader
+        title="Transfer & Pay"
+        titleSize="large"
+        description="Cash transfers and dividends from IB Flex — stored in account_transactions."
+        actions={
+          <>
+            <div className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-3 py-1.5">
+              <span className="text-xs text-muted-foreground font-medium">Range</span>
+              <Select value={rangePreset} onValueChange={(v) => { setRangePreset(v as RangePreset); setPage(1) }}>
+                <SelectTrigger className="h-7 w-[200px] border-0 bg-transparent shadow-none text-xs focus:ring-0 px-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RANGE_PRESET_OPTIONS.map(o => (
+                    <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={fetchMutation.isPending}
+              onClick={() => { setFetchMsg(null); fetchMutation.mutate() }}
+              className="h-8 gap-1.5 text-xs"
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5', fetchMutation.isPending && 'animate-spin')} />
+              {fetchMutation.isPending ? 'Fetching…' : 'Fetch from IB'}
+            </Button>
+          </>
+        }
+      />
 
       {fetchMsg && (
         <div className={cn(
@@ -502,6 +501,6 @@ export default function TransferPayPage() {
           </div>
         )}
       </section>
-    </div>
+    </PageShell>
   )
 }

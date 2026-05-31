@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, RefreshCw, Eye, EyeOff, Play, Square, RotateCcw, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -496,20 +497,18 @@ export default function SocketPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6 space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">Socket Services</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Market ingest · IB connections · Redis health · auto-refresh every 15 s
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={refreshAll} className="gap-1.5 shrink-0">
-          <RefreshCw className="h-4 w-4" />
-          Refresh All
-        </Button>
-      </div>
+    <PageShell className="space-y-5">
+      <PageHeader
+        title="Socket Services"
+        titleSize="large"
+        description="Market ingest · IB connections · Redis health · auto-refresh every 15 s"
+        actions={
+          <Button variant="outline" size="sm" onClick={refreshAll} className="gap-1.5 shrink-0">
+            <RefreshCw className="h-4 w-4" />
+            Refresh All
+          </Button>
+        }
+      />
 
       {/* Ops Environment + Token */}
       <Card>
@@ -840,6 +839,6 @@ export default function SocketPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   )
 }

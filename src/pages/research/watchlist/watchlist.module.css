@@ -1,0 +1,141 @@
+.stepper {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--card);
+}
+
+.step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.step:hover:not(:disabled) {
+  background: var(--muted);
+}
+
+.stepActive {
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+  color: var(--foreground);
+}
+
+.stepDone {
+  color: var(--foreground);
+}
+
+.stepIndex {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.stepActive .stepIndex {
+  border-color: var(--primary);
+  background: color-mix(in oklch, var(--primary) 20%, transparent);
+  color: var(--primary);
+}
+
+.stepTitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: block;
+}
+
+.stepDesc {
+  font-size: 0.65rem;
+  color: var(--muted-foreground);
+  display: block;
+}
+
+.stepBadge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  background: var(--muted);
+}
+
+.stepConnector {
+  width: 1.5rem;
+  align-self: center;
+  height: 2px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.stepConnectorDone {
+  background: color-mix(in oklch, var(--primary) 50%, var(--border));
+}
+
+.compactTable {
+  font-size: 0.8rem;
+}
+
+.compactTable th {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.quoteLast {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.quoteBa {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  margin-left: 0.35rem;
+}
+
+.rangeTrack {
+  accent-color: var(--primary);
+  width: 100%;
+}
+
+.pieRing {
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pieHole {
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  text-align: center;
+  line-height: 1.2;
+}

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useState } from 'react'
+import { PageHeader, PageShell } from '@/components/layout'
 import { useLocation } from 'react-router-dom'
 import { postIbConfig, postFlexConfig } from '@/api/monitor'
 import type { FlexAccountItem, StatusIbFlex, StatusResponse } from '@/types/monitor'
@@ -140,31 +141,28 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">IB Connection</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Configure Interactive Brokers connection and Flex Query
-          </p>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {saveMsg.text && (
-            <span
-              className={cn(
-                'text-sm max-w-xs text-right',
-                saveMsg.isErr ? 'text-destructive' : 'text-green-600 dark:text-green-400',
-              )}
-            >
-              {saveMsg.text}
-            </span>
-          )}
-          <Button onClick={handleSave} disabled={saving}>
-            Save settings
-          </Button>
-        </div>
-      </div>
+    <PageShell className="space-y-6">
+      <PageHeader
+        title="IB Connection"
+        description="Configure Interactive Brokers connection and Flex Query"
+        actions={
+          <>
+            {saveMsg.text && (
+              <span
+                className={cn(
+                  'text-sm max-w-xs text-right',
+                  saveMsg.isErr ? 'text-destructive' : 'text-green-600 dark:text-green-400',
+                )}
+              >
+                {saveMsg.text}
+              </span>
+            )}
+            <Button onClick={handleSave} disabled={saving}>
+              Save settings
+            </Button>
+          </>
+        }
+      />
 
       {/* ── Connection ────────────────────────────────────────────────────── */}
       <Card id="ib-users">
@@ -474,7 +472,7 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   )
 }
 
@@ -487,13 +485,13 @@ export default function IbConnectionPage() {
 
   if (!status) {
     return (
-      <div className="p-6 space-y-4">
+      <PageShell className="space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-96" />
         <Skeleton className="h-48 w-full rounded-lg" />
         <Skeleton className="h-64 w-full rounded-lg" />
         <Skeleton className="h-32 w-full rounded-lg" />
-      </div>
+      </PageShell>
     )
   }
 

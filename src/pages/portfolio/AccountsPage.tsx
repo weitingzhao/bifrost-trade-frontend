@@ -6,11 +6,13 @@ import { useQuotes } from '@/hooks/useQuotes'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StatusLamp } from '@/components/StatusLamp'
+import { PageHeader, PageShell } from '@/components/layout'
 import { formatLastUpdate, fmtExecDaysAgo } from '@/utils/positions'
 import { OverviewDashboard } from '@/components/accounts/OverviewDashboard'
 import { PortfolioCategoryRing } from '@/components/accounts/PortfolioCategoryRing'
@@ -62,10 +64,12 @@ function AccountSummary({
           ['TotalCashValue', 'Cash'],
           ['BuyingPower', 'Buying Power'],
         ] as const).map(([key, label]) => (
-          <div key={key} className="rounded-lg border bg-card p-3">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="text-base font-semibold font-mono mt-0.5">{fmtSummaryUsd(s[key])}</p>
-          </div>
+          <Card key={key} variant="elevated" size="sm" className="py-0">
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className="text-base font-semibold font-mono mt-0.5">{fmtSummaryUsd(s[key])}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
       {(flexItem != null || streamBest != null) && (
@@ -146,7 +150,7 @@ export default function AccountsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
+      <PageShell className="space-y-4">
         <div className="flex justify-between items-center">
           <Skeleton className="h-6 w-32" />
           <Skeleton className="h-8 w-48" />
@@ -155,68 +159,64 @@ export default function AccountsPage() {
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
         </div>
         <Skeleton className="h-48 rounded-lg" />
-      </div>
+      </PageShell>
     )
   }
 
   if (isError) {
     return (
-      <div className="p-6">
+      <PageShell>
         <Alert variant="destructive">
           <AlertDescription>{(error as Error).message}</AlertDescription>
         </Alert>
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold">Accounts</h1>
-          {data?.account_sync_daemon && (
-            <SyncDaemonBadge hb={data.account_sync_daemon.heartbeat} />
-          )}
-          {accounts.length > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {accounts.length} account{accounts.length > 1 ? 's' : ''}
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {data?.portfolio.accounts_fetched_at != null && (
-            <span className="text-xs text-muted-foreground">
-              Updated {fmtTs(data.portfolio.accounts_fetched_at)}
-            </span>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCw className={cn('h-3.5 w-3.5 mr-1.5', isRefreshing && 'animate-spin')} />
-            Refresh
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCategoriesOpen(true)}
-          >
-            <Tag className="h-3.5 w-3.5 mr-1.5" />
-            Categories
-          </Button>
-        </div>
-      </div>
+    <PageShell className="space-y-6">
+      <PageHeader
+        title="Accounts"
+        actions={
+          <>
+            {data?.account_sync_daemon && (
+              <SyncDaemonBadge hb={data.account_sync_daemon.heartbeat} />
+            )}
+            {accounts.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {accounts.length} account{accounts.length > 1 ? 's' : ''}
+              </Badge>
+            )}
+            {data?.portfolio.accounts_fetched_at != null && (
+              <span className="text-xs text-muted-foreground">
+                Updated {fmtTs(data.portfolio.accounts_fetched_at)}
+              </span>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5 mr-1.5', isRefreshing && 'animate-spin')} />
+              Refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCategoriesOpen(true)}
+            >
+              <Tag className="h-3.5 w-3.5 mr-1.5" />
+              Categories
+            </Button>
+          </>
+        }
+      />
 
-      {/* Execution import + data freshness — immediately below header, matching legacy layout */}
       <ExecutionImport accountsFetchedAt={data?.portfolio.accounts_fetched_at} />
 
-      {/* Cross-account overview */}
       <OverviewDashboard accounts={accounts} />
 
-      {/* Charts row — Portfolio Category Ring + Net Liq, between overview and positions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <PortfolioCategoryRing accounts={accounts} />
         <NetLiqChart accounts={accounts} />
@@ -226,7 +226,6 @@ export default function AccountsPage() {
         <EmptyState />
       ) : (
         <>
-          {/* Multi-account selector — no TabsContent; segment style for compact selectors */}
           {accounts.length > 1 && (
             <Tabs
               value={String(clampedIdx)}
@@ -245,10 +244,8 @@ export default function AccountsPage() {
             </Tabs>
           )}
 
-          {/* Account summary metrics */}
           {account && <AccountSummary account={account} freshnessItems={freshnessData?.items ?? []} />}
 
-          {/* Positions */}
           <StockPositionsTable
             positions={stkPositions}
             quotesBySymbol={quotesBySymbol}
@@ -270,6 +267,6 @@ export default function AccountsPage() {
         accounts={accounts}
         onRefreshed={() => queryClient.invalidateQueries({ queryKey: ['monitor', 'status'] })}
       />
-    </div>
+    </PageShell>
   )
 }

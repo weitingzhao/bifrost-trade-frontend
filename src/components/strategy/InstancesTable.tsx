@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { fmtUsd, fmtUsdRound } from '@/lib/format'
 import type { StrategyInstance } from '@/types/positions'
 import type { MetricsEntry } from '@/hooks/useInstanceMetrics'
 
@@ -23,15 +24,6 @@ function holdDays(openedAt: string | null): string {
   if (!openedAt) return '—'
   const days = Math.floor((Date.now() - new Date(openedAt).getTime()) / 86_400_000)
   return days <= 0 ? '<1d' : `${days}d`
-}
-
-function fmtUsd(n: number | null | undefined): string {
-  if (n == null) return '—'
-  const abs = Math.abs(n)
-  const formatted = abs >= 1000
-    ? `$${(abs / 1000).toFixed(1)}k`
-    : `$${abs.toFixed(0)}`
-  return n < 0 ? `-${formatted}` : formatted
 }
 
 function fmtPct(n: number | null | undefined): string {
@@ -163,7 +155,7 @@ export function InstancesTable({ instances, metricsMap, onDelete }: Props) {
                 <MetricCell
                   entry={entry}
                   value={m?.underlyingCost}
-                  fmt={fmtUsd}
+                  fmt={fmtUsdRound}
                   className="text-muted-foreground"
                 />
                 <MetricCell

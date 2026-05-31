@@ -72,31 +72,74 @@ export interface StatusMarketData {
   quotes_redis_reader_ok?: boolean
 }
 
+/** One IB API connection slot in Redis health (host or secondary TWS connection). */
+export interface SocketIbSlot {
+  connected?: boolean
+  client_id?: number | null
+  last_error?: string | null
+  reconnects?: number | null
+  last_ib_probe_at?: number | null
+  ib_probe_interval_sec?: number | null
+  ib_probe_ok?: boolean
+  next_ib_probe_in_s?: number | null
+  ib_probe_stale?: boolean
+}
+
+/** GET /status `socket.massive` — Massive WS ingest Redis meta. */
+export interface StatusSocketMassive {
+  ws_connected?: boolean
+  last_msg_age_s?: number | null
+  ws_reconnects?: number | null
+}
+
 export interface StatusSocketIbIngestor {
   connected?: boolean
   last_msg_age_s?: number | null
   reconnects?: number | null
   msg_count?: number | null
+  client_id?: number | null
+  last_ib_probe_at?: number | null
+  ib_probe_interval_sec?: number | null
+  ib_probe_ok?: boolean
+  next_ib_probe_in_s?: number | null
+  ib_probe_stale?: boolean
+  next_service_heartbeat_in_s?: number | null
+  service_heartbeat_reconnect_in_progress?: string | null
 }
 
 export interface StatusSocketIbOperator {
   service_alive?: boolean
+  /** Legacy alias for service_alive. */
+  operator_alive?: boolean
   connected?: boolean
   msg_count?: number | null
   last_msg_age_s?: number | null
   reconnects?: number | null
+  next_service_heartbeat_in_s?: number | null
+  service_heartbeat_reconnect_in_progress?: string | null
+  host?: SocketIbSlot
+  secondary?: SocketIbSlot
+  account?: SocketIbSlot
+  market?: SocketIbSlot
 }
 
 export interface StatusSocketIbAccountAgent {
   connected?: boolean
   service_alive?: boolean
+  /** Legacy alias for service_alive. */
+  operator_alive?: boolean
   last_msg_age_s?: number | null
   reconnects?: number | null
   msg_count?: number | null
   client_id?: number | null
+  next_service_heartbeat_in_s?: number | null
+  service_heartbeat_reconnect_in_progress?: string | null
+  host?: SocketIbSlot | null
+  secondary?: SocketIbSlot | null
 }
 
 export interface StatusSocket {
+  massive?: StatusSocketMassive | null
   ib_ingestor?: StatusSocketIbIngestor | null
   ib_operator?: StatusSocketIbOperator | null
   ib_account_agent?: StatusSocketIbAccountAgent | null
@@ -116,6 +159,63 @@ export interface StatusLiveUi {
   subscribed_tickers?: string[]
   reference_indices?: { symbol: string; label?: string; polygon_ticker?: string }[]
 }
+
+// ─── IB Config types (from GET /status config.ib_client + YAML) ──────────────
+
+export interface IbClientNetwork {
+  host_ip?: string
+  host_port_type?: 'tws_live' | 'tws_paper' | 'gateway'
+  host_port?: number | null
+  secondary_host_ip?: string | null
+  secondary_port_type?: 'tws_live' | 'tws_paper' | 'gateway' | string | null
+  secondary_port?: number | null
+}
+
+/** IB API client_id slots from YAML (read-only in Settings). JSON key `port`. */
+export interface IbClientPort {
+  trading?: number
+  listener_host?: number
+  listener_secondary?: number
+  operator_host?: number
+  operator_secondary?: number
+  ingestor?: number
+  account_agent?: number
+  account_agent_secondary?: number
+  market_data_worker?: number
+}
+
+/** Trading / event stream account IDs from DB settings (editable). */
+export interface IbClientAccount {
+  trading?: string | null
+  event_host?: string | null
+  event_secondary?: string | null
+}
+
+export interface IbClient {
+  client?: IbClientNetwork
+  port?: IbClientPort
+  account?: IbClientAccount
+  timeout_sec?: number
+}
+
+/** One row of Flex Query config (cash_transactions or trades). */
+export interface FlexAccountItem {
+  query_host_id: string
+  query_secondary_id?: string | null
+  query_label?: string | null
+  purpose?: string | null
+}
+
+/** GET /status `config.ib_flex` — Flex tokens + query rows + range day preferences. */
+export interface StatusIbFlex {
+  host_token?: string | null
+  secondary_token?: string | null
+  rows?: FlexAccountItem[]
+  default_range_days?: number | null
+  init_range_days?: number | null
+}
+
+// ─── Status response ──────────────────────────────────────────────────────────
 
 export interface StatusResponse {
   status_schema_version: number
@@ -154,13 +254,8 @@ export interface StatusResponse {
     worker_ib_client_id: number | null
   }
   config?: {
-    ib_client?: {
-      account?: {
-        event_host?: string
-        event_secondary?: string
-        trading?: string
-      }
-    }
+    ib_client?: IbClient
+    ib_flex?: StatusIbFlex
   }
   account_sync_daemon: {
     heartbeat: AccountSyncHeartbeat

@@ -112,6 +112,29 @@ export interface PerformanceResponse {
   unrealized_by_sec_type?: { sec_type: string; total_pnl: number }[]
 }
 
+export interface AccountTransaction {
+  account_transactions_id?: number
+  account_id: string
+  ts: number
+  amount: number
+  type: string
+  currency?: string | null
+  description?: string | null
+  created_at?: number
+}
+
+export interface AccountTransactionsResponse {
+  transactions: AccountTransaction[]
+}
+
+export interface TransactionsFetchResponse {
+  ok: boolean
+  count?: number
+  message?: string
+  error?: string
+  by_account?: number
+}
+
 export interface PerformanceParams {
   since_ts?: number
   until_ts?: number

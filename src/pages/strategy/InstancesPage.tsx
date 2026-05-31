@@ -1,6 +1,7 @@
 import { useMemo, useState, useCallback } from 'react'
 import { Plus, RefreshCw, X } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -112,11 +113,7 @@ function getScopeSymbol(
 
 function getPositionStatus(entry: MetricsEntry | undefined): 'open' | 'closed' | 'unknown' {
   if (!entry || entry.status !== 'ready') return 'unknown'
-  // Use holdDays == opened_at → now as a rough proxy;
-  // the actual status needs execution-derived data which we have in metrics
-  return entry.metrics.holdDays > 0 && entry.metrics.netPnl === 0 && entry.metrics.tradeCount === 0
-    ? 'unknown'
-    : 'open' // Simplified: legacy determines from exec book
+  return entry.metrics.positionStatus === 'no_fills' ? 'unknown' : entry.metrics.positionStatus
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -145,9 +142,13 @@ export default function InstancesPage() {
   const [detailTarget, setDetailTarget] = useState<StrategyInstance | null>(null)
   const [compareTarget, setCompareTarget] = useState<StrategyInstance | null>(null)
 
+  // Support drill-down from Win Rate page via location.state
+  const location = useLocation()
+  const locationStructureFilter = (location.state as { structureFilter?: string } | null)?.structureFilter ?? ''
+
   // In-panel bubble filters
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
-  const [structureFilter, setStructureFilter] = useState<string>('')
+  const [structureFilter, setStructureFilter] = useState<string>(locationStructureFilter)
   const [symbolFilter, setSymbolFilter] = useState<string>('')
   const [sinceFilter, setSinceFilter] = useState<SinceFilter>('q')
   const [detailViewMode, setDetailViewMode] = useState<DetailViewMode>('accordion')

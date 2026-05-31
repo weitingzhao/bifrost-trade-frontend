@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchOpportunities, fetchStructures, fetchStrategyInstances, fetchGateSafety, fetchAllocations } from '@/api/strategy'
+import { fetchOpportunities, fetchStructures, fetchStrategyInstances, fetchGateSafety, fetchAllocations, fetchWinRate } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
 export function useOpportunities() {
@@ -39,5 +39,13 @@ export function useAllocations() {
     queryKey: QUERY_KEYS.strategy.allocations,
     queryFn: () => fetchAllocations(),
     staleTime: 30_000,
+  })
+}
+
+export function useWinRate(params?: { sinceTs?: number; untilTs?: number }) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.strategy.winRate, params?.sinceTs ?? null, params?.untilTs ?? null],
+    queryFn: () => fetchWinRate(params),
+    staleTime: 60_000,
   })
 }

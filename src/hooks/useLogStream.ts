@@ -97,6 +97,7 @@ export function useLogStream(sources: LogSourceDef[], enabled: boolean) {
         const unsub = src.api.subscribe(
           line => {
             if (cancelled) return
+            setStatus('live')  // no-op if already live; resets 'error' after reconnect
             setEntries(prev => [...prev, parseLine(src.key, line)].slice(-MAX_ENTRIES))
           },
           () => {

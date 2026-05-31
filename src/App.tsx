@@ -4,14 +4,17 @@ import { RouterProvider } from 'react-router-dom'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { queryClient } from '@/lib/queryClient'
 import { router } from '@/lib/router'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <RouterProvider router={router} />
-      </TooltipProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <RouterProvider router={router} />
+        </TooltipProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }

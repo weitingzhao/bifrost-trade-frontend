@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { fmtUsd, fmtUsdRound } from '@/lib/format'
 import { structureChipStyle } from '@/utils/structureColor'
 import type { StrategyInstance, StrategyOpportunity } from '@/types/positions'
 import type { MetricsEntry } from '@/hooks/useInstanceMetrics'
@@ -33,17 +34,6 @@ interface Props {
   compact?: boolean
 }
 // ── Format helpers ───────────────────────────────────────────────────────────
-
-function fmtUsd(n: number | null | undefined): string {
-  if (n == null) return '—'
-  const abs = Math.abs(n)
-  const formatted = abs >= 10000
-    ? `$${(abs / 1000).toFixed(1)}k`
-    : abs >= 1000
-      ? `$${(abs / 1000).toFixed(2)}k`
-      : `$${abs.toFixed(0)}`
-  return n < 0 ? `-${formatted}` : formatted
-}
 
 function fmtPct(n: number | null | undefined): string {
   if (n == null) return '—'
@@ -267,7 +257,7 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
                   </TableCell>
                   <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
                   <TableCell className="text-right font-mono text-xs">
-                    {rollup.sumUnderlying != null ? fmtUsd(rollup.sumUnderlying) : '—'}
+                    {rollup.sumUnderlying != null ? fmtUsdRound(rollup.sumUnderlying) : '—'}
                   </TableCell>
                   <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(rollup.groupAnnualPct))}>
                     {rollup.groupAnnualPct != null ? fmtPct(rollup.groupAnnualPct) : '—'}
@@ -322,11 +312,13 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
                         <span className={cn(
                           'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
                           'border',
-                          m.tradeCount === 0
-                            ? 'border-muted text-muted-foreground'
-                            : 'border-green-500/40 text-green-600 dark:text-green-400',
+                          m.positionStatus === 'open'
+                            ? 'border-green-500/40 text-green-600 dark:text-green-400'
+                            : m.positionStatus === 'closed'
+                              ? 'border-muted text-muted-foreground'
+                              : 'border-muted text-muted-foreground',
                         )}>
-                          {m.tradeCount === 0 ? 'No fills' : 'Open'}
+                          {m.positionStatus === 'open' ? 'Open' : m.positionStatus === 'closed' ? 'Closed' : 'No fills'}
                         </span>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
@@ -344,7 +336,7 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
 
                     {!compact && <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(m?.netPnl))}>{loading ? '…' : fmtUsd(m?.netPnl)}</TableCell>}
                     {!compact && <TableCell className={cn('text-right font-mono text-xs', pnlClass(m?.netPnlPerDay))}>{loading ? '…' : fmtUsd(m?.netPnlPerDay)}</TableCell>}
-                    {!compact && <TableCell className="text-right font-mono text-xs text-muted-foreground">{loading ? '…' : fmtUsd(m?.underlyingCost)}</TableCell>}
+                    {!compact && <TableCell className="text-right font-mono text-xs text-muted-foreground">{loading ? '…' : fmtUsdRound(m?.underlyingCost)}</TableCell>}
                     {!compact && <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(m?.annualPct))}>{loading ? '…' : fmtPct(m?.annualPct)}</TableCell>}
                     {!compact && <TableCell className={cn('text-right font-mono text-xs', pnlClass(m?.returnPct))}>{loading ? '…' : fmtPct(m?.returnPct)}</TableCell>}
                     {!compact && <TableCell className="text-right font-mono text-xs text-muted-foreground">{loading ? '…' : m ? fmtUsd(-m.commission) : '—'}</TableCell>}

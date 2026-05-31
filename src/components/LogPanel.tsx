@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { X, Trash2 } from 'lucide-react'
+import { X, Trash2, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLogPanel } from '@/hooks/useLogPanel'
-import { LOG_SOURCES } from '@/api/logs'
+import { LOG_SOURCES, LOG_SOURCE_GROUPS } from '@/api/logs'
 import { useLogStream, type LogLevel, type LogEntry } from '@/hooks/useLogStream'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ function LogRow({ entry }: { entry: LogEntry }) {
       <span className={cn('shrink-0 rounded px-1 font-mono font-semibold text-[10px] leading-4 w-[34px] text-center', s.badge)}>
         {LEVEL_LABELS[entry.level]}
       </span>
-      <span className="shrink-0 w-[60px] text-muted-foreground/70 truncate">{entry.service}</span>
+      <span className="shrink-0 w-[120px] text-muted-foreground/70 truncate">{entry.service}</span>
       <span className="font-mono text-foreground/85 break-all leading-4">{entry.message}</span>
     </div>
   )
@@ -101,6 +101,35 @@ export function LogPanel() {
     return result
   }, [entries, levelFilter, search])
 
+  // Export filtered entries as LLM-friendly plain text
+  const handleExport = () => {
+    const now = new Date()
+    const levelLabel = levelFilter === 'ALL' ? 'ALL' : LEVEL_LABELS[levelFilter as LogLevel]
+    const header = [
+      '# Bifrost Trade — Log Export',
+      `# Exported:      ${now.toISOString()}`,
+      `# Level filter:  ${levelLabel}`,
+      `# Search filter: ${search || '(none)'}`,
+      `# Sources:       ${activeSources.map(s => s.label).join(', ')}`,
+      `# Entries:       ${filtered.length}`,
+      '',
+    ].join('\n')
+
+    const body = filtered
+      .map(e => `${e.ts} [${e.level.padEnd(5)}] [${e.service.padEnd(16)}] ${e.message}`)
+      .join('\n')
+
+    const blob = new Blob([header + body], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `bifrost-logs-${now.toISOString().slice(0, 19).replace(/:/g, '-')}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   // Resize handle
   const onResizeStart = (e: React.MouseEvent) => {
     if (e.button !== 0) return
@@ -138,36 +167,8 @@ export function LogPanel() {
         title="Drag to resize"
       />
 
-      {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border shrink-0 flex-wrap">
-        {/* Status */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', STATUS_DOT[status])} />
-          <span className="text-[11px] text-muted-foreground font-medium">{STATUS_LABEL[status]}</span>
-        </div>
-
-        <div className="w-px h-3 bg-border shrink-0" />
-
-        {/* Source chips */}
-        <div className="flex items-center gap-1 flex-wrap">
-          {LOG_SOURCES.map(src => (
-            <button
-              key={src.key}
-              onClick={() => setEnabledSources(prev => ({ ...prev, [src.key]: !prev[src.key] }))}
-              className={cn(
-                'px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors',
-                enabledSources[src.key]
-                  ? 'bg-primary/10 text-primary border border-primary/20'
-                  : 'bg-muted text-muted-foreground/50 border border-transparent',
-              )}
-            >
-              {src.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="w-px h-3 bg-border shrink-0" />
-
+      {/* Header — Row 1: toolbar */}
+      <div className="flex items-center gap-2 px-3 py-1 border-b border-border/50 shrink-0">
         {/* Level filter */}
         <div className="flex items-center gap-0.5">
           {LEVELS.map(lv => (
@@ -188,6 +189,8 @@ export function LogPanel() {
           ))}
         </div>
 
+        <div className="w-px h-3 bg-border shrink-0" />
+
         {/* Search */}
         <input
           value={search}
@@ -202,6 +205,26 @@ export function LogPanel() {
         <span className="text-[10px] text-muted-foreground/50 shrink-0">
           {filtered.length} / {entries.length}
         </span>
+
+        <div className="w-px h-3 bg-border shrink-0" />
+
+        {/* Status — right side */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', STATUS_DOT[status])} />
+          <span className="text-[11px] text-muted-foreground font-medium">{STATUS_LABEL[status]}</span>
+        </div>
+
+        <div className="w-px h-3 bg-border shrink-0" />
+
+        {/* Export */}
+        <button
+          onClick={handleExport}
+          title="Export filtered logs as .txt"
+          disabled={filtered.length === 0}
+          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          <Download className="h-3 w-3" />
+        </button>
 
         {/* Clear */}
         <button
@@ -220,6 +243,55 @@ export function LogPanel() {
         >
           <X className="h-3 w-3" />
         </button>
+      </div>
+
+      {/* Header — Row 2: source chips (full width, wraps freely) */}
+      <div className="flex items-center gap-2 px-3 py-1 border-b border-border shrink-0 flex-wrap">
+        {LOG_SOURCE_GROUPS.map((group, gi) => {
+          const groupSources = LOG_SOURCES.filter(s => s.group === group.key)
+          const allEnabled = groupSources.every(s => enabledSources[s.key])
+          const someEnabled = groupSources.some(s => enabledSources[s.key])
+          return (
+            <div key={group.key} className="flex items-center gap-1 flex-wrap">
+              {gi > 0 && <div className="w-px h-3 bg-border shrink-0" />}
+              {/* Group label — click to toggle all in group */}
+              <button
+                onClick={() => {
+                  const enable = !allEnabled
+                  setEnabledSources(prev => {
+                    const u = { ...prev }
+                    groupSources.forEach(s => { u[s.key] = enable })
+                    return u
+                  })
+                }}
+                title={allEnabled ? `Disable all ${group.label}` : `Enable all ${group.label}`}
+                className={cn(
+                  'px-1.5 py-0.5 rounded text-[10px] font-semibold transition-colors select-none',
+                  someEnabled
+                    ? 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    : 'text-muted-foreground/35 hover:text-muted-foreground hover:bg-muted',
+                )}
+              >
+                {group.label}
+              </button>
+              {/* Individual source chips */}
+              {groupSources.map(src => (
+                <button
+                  key={src.key}
+                  onClick={() => setEnabledSources(prev => ({ ...prev, [src.key]: !prev[src.key] }))}
+                  className={cn(
+                    'px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors',
+                    enabledSources[src.key]
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'bg-muted text-muted-foreground/50 border border-transparent',
+                  )}
+                >
+                  {src.label}
+                </button>
+              ))}
+            </div>
+          )
+        })}
       </div>
 
       {/* Log body */}

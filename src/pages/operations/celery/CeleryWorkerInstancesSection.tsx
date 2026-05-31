@@ -1,0 +1,552 @@
+import { useMemo, useState } from 'react'
+import { RotateCcw, Trash2, Plus, Layers, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { ConfirmDialog } from './ConfirmDialog'
+import type { WorkerProfileInfo, SystemdInstance } from '@/types/ops'
+import { formatQueueLabel } from '@/utils/celeryQueueLabels'
+import { useScaleWorker, useWorkerInstances, useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function instanceIdFromUnit(unit: string): string | null {
+  const m = unit.trim().match(/^bifrost-celery-worker@(.+)\.service$/i)
+  return m ? m[1] : null
+}
+
+function parseCeleryWorkerInstanceId(id: string): { profileKey: string; cycle: number } | null {
+  const m = id.trim().match(/^([a-zA-Z0-9_]+)-(\d+)$/)
+  if (!m) return null
+  return { profileKey: m[1], cycle: parseInt(m[2], 10) }
+}
+
+function workerIdToInstanceId(workerId: string): string | null {
+  const node = workerId.split('@')[0]?.trim() ?? ''
+  if (node.startsWith('worker') && node.length > 'worker'.length) return node.slice('worker'.length)
+  return null
+}
+
+function profileForUnit(unit: string, profiles: WorkerProfileInfo[]): WorkerProfileInfo | undefined {
+  const iid = instanceIdFromUnit(unit)
+  if (!iid) return undefined
+  const parts = parseCeleryWorkerInstanceId(iid)
+  if (parts) {
+    const found = profiles.find(p => p.key === parts.profileKey)
+    if (found) return found
+  }
+  return profiles.find(p => p.key === iid)
+}
+
+function unitConsumesQueue(unit: string, queue: string, profiles: WorkerProfileInfo[]): boolean {
+  const p = profileForUnit(unit, profiles)
+  return p?.queues?.includes(queue) ?? false
+}
+
+function dedupeProfiles(profiles: WorkerProfileInfo[]): WorkerProfileInfo[] {
+  const seen = new Set<string>()
+  return profiles.filter(p => { if (seen.has(p.key)) return false; seen.add(p.key); return true })
+}
+
+function countInstancesForProfile(instances: SystemdInstance[], profileKey: string): number {
+  const seen = new Set<string>()
+  let n = 0
+  for (const inst of instances) {
+    const iid = instanceIdFromUnit(inst.unit)
+    if (!iid || seen.has(iid)) continue
+    const parts = parseCeleryWorkerInstanceId(iid)
+    if (parts?.profileKey !== profileKey) continue
+    seen.add(iid); n++
+  }
+  return n
+}
+
+function countWorkerStackByProfile(workers: { worker_id: string; worker_config_profile: string | null }[], profileKey: string) {
+  const z = { dev: 0, prod: 0 }
+  for (const w of workers) {
+    const iid = workerIdToInstanceId(w.worker_id)
+    if (!iid) continue
+    const parts = parseCeleryWorkerInstanceId(iid)
+    if (parts?.profileKey !== profileKey) continue
+    const cp = (w.worker_config_profile ?? '').toLowerCase().trim()
+    if (cp === 'dev') z.dev++
+    else if (cp === 'prod') z.prod++
+  }
+  return z
+}
+
+function profileMaxInstances(p: WorkerProfileInfo): number {
+  const raw = p.max_worker_instances
+  if (typeof raw === 'number' && Number.isFinite(raw)) return Math.max(1, Math.min(64, Math.floor(raw)))
+  return 1
+}
+
+const ALL_KEY = '__all__'
+
+// ── Confirm state ─────────────────────────────────────────────────────────────
+
+interface ConfirmState {
+  title: string
+  message: string
+  action: () => Promise<void>
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export interface CeleryWorkerInstancesSectionProps {
+  queueFilter?: string | null
+  onClearQueueFilter?: () => void
+}
+
+export function CeleryWorkerInstancesSection({
+  queueFilter = null,
+  onClearQueueFilter,
+}: CeleryWorkerInstancesSectionProps) {
+  const { data: instancesData, isLoading: instancesLoading } = useWorkerInstances()
+  const { data: profilesData } = useWorkerProfiles()
+  const { data: workersData } = useOpsWorkers()
+  const scaleWorker = useScaleWorker()
+
+  const [selectedProfile, setSelectedProfile] = useState<string>(ALL_KEY)
+  const [addMaxMode, setAddMaxMode] = useState(true)
+  const [scaleMsg, setScaleMsg] = useState<{ text: string; isErr: boolean } | null>(null)
+  const [confirm, setConfirm] = useState<ConfirmState | null>(null)
+  const [removeAllForce, setRemoveAllForce] = useState(false)
+
+  const instances = useMemo(() => instancesData?.instances ?? [], [instancesData])
+  const profiles = useMemo(() => dedupeProfiles(profilesData?.profiles ?? []), [profilesData])
+  const workers = workersData?.workers ?? []
+  const scaleBusy = scaleWorker.isPending
+
+  const filteredInstances = useMemo(() => {
+    const q = queueFilter?.trim()
+    if (!q) return instances
+    return instances.filter(inst => unitConsumesQueue(inst.unit, q, profiles))
+  }, [instances, queueFilter, profiles])
+
+  async function doScale(action: () => Promise<void>) {
+    try {
+      await action()
+    } catch (e) {
+      setScaleMsg({ text: e instanceof Error ? e.message : 'Scale operation failed', isErr: true })
+    }
+  }
+
+  async function handleAdd() {
+    if (!selectedProfile || selectedProfile === ALL_KEY) return
+    const prof = profiles.find(p => p.key === selectedProfile)
+    if (!prof) return
+    const maxN = profileMaxInstances(prof)
+    const cur = countInstancesForProfile(instances, selectedProfile)
+    const stack = countWorkerStackByProfile(workers, selectedProfile)
+
+    await doScale(async () => {
+      if (!addMaxMode) {
+        if (cur >= maxN) {
+          setScaleMsg({ text: `Already at configured maximum (${maxN}) for ${selectedProfile}`, isErr: true })
+          return
+        }
+        const r = await scaleWorker.mutateAsync({ action: 'add', worker_type: selectedProfile })
+        if (!r.ok) throw new Error(r.error ?? 'Add failed')
+        setScaleMsg({ text: `Instance ${r.instance_id ?? r.unit ?? selectedProfile} started`, isErr: false })
+      } else {
+        const fleet = stack.dev + stack.prod
+        const remaining = Math.max(0, maxN - fleet)
+        const onHost = Math.max(0, maxN - cur)
+        const toStart = Math.min(remaining, onHost)
+        if (toStart <= 0) {
+          if (fleet >= maxN) {
+            setScaleMsg({ text: `No capacity left (Dev+Prod=${fleet} vs max ${maxN}) for ${selectedProfile}`, isErr: true })
+          } else {
+            setScaleMsg({ text: `Already at max on this host for ${selectedProfile}`, isErr: true })
+          }
+          return
+        }
+        const started: string[] = []
+        const failed: string[] = []
+        for (let i = 0; i < toStart; i++) {
+          const r = await scaleWorker.mutateAsync({ action: 'add', worker_type: selectedProfile })
+          if (r.ok) started.push(r.instance_id ?? r.unit ?? selectedProfile)
+          else failed.push(r.error ?? 'failed')
+        }
+        const msg = started.length > 0 ? `Started ${started.length}: ${started.join(', ')}` : 'Nothing started'
+        setScaleMsg({ text: failed.length > 0 ? `${msg}. Errors: ${failed.join('; ')}` : msg, isErr: failed.length > 0 })
+      }
+    })
+  }
+
+  async function handleAddAll() {
+    await doScale(async () => {
+      const started: string[] = []
+      const failed: string[] = []
+      for (const p of profiles) {
+        const maxN = profileMaxInstances(p)
+        const cur = countInstancesForProfile(instances, p.key)
+        const toStart = Math.max(0, maxN - cur)
+        for (let i = 0; i < toStart; i++) {
+          const r = await scaleWorker.mutateAsync({ action: 'add', worker_type: p.key })
+          if (r.ok) started.push(r.instance_id ?? r.unit ?? p.key)
+          else failed.push(`${p.key}: ${r.error ?? 'failed'}`)
+        }
+      }
+      const msg = started.length > 0 ? `Started ${started.length}: ${started.join(', ')}` : 'Nothing started'
+      setScaleMsg({ text: failed.length > 0 ? `${msg}. Errors: ${failed.join('; ')}` : msg, isErr: failed.length > 0 })
+    })
+  }
+
+  function handleResetAll() {
+    const instIds = instances.map(i => instanceIdFromUnit(i.unit)).filter(Boolean) as string[]
+    setConfirm({
+      title: 'Reset all worker instances?',
+      message: instIds.length > 0
+        ? `Force-remove ${instIds.length} unit(s) on this host, then fill to max_worker_instances per profile.${removeAllForce ? ' Force (SIGKILL).' : ''}`
+        : 'No units on this host. Will start workers up to max_worker_instances per profile.',
+      action: async () => {
+        for (const iid of instIds) {
+          await scaleWorker.mutateAsync({ action: 'remove', instance_id: iid, force: removeAllForce })
+        }
+        for (const p of profiles) {
+          const maxN = profileMaxInstances(p)
+          for (let i = 0; i < maxN; i++) {
+            await scaleWorker.mutateAsync({ action: 'add', worker_type: p.key })
+          }
+        }
+        setScaleMsg({ text: 'Reset complete', isErr: false })
+      },
+    })
+  }
+
+  function handleRemoveAll() {
+    const instIds = instances.map(i => instanceIdFromUnit(i.unit)).filter(Boolean) as string[]
+    if (instIds.length === 0) { setScaleMsg({ text: 'No instances to remove', isErr: true }); return }
+    setConfirm({
+      title: `Remove all ${instIds.length} worker instance(s)?`,
+      message: `Stop every listed worker unit on this host.${removeAllForce ? ' Force (SIGKILL after graceful).' : ''}`,
+      action: async () => {
+        const removed: string[] = []
+        const errors: string[] = []
+        for (const iid of instIds) {
+          const r = await scaleWorker.mutateAsync({ action: 'remove', instance_id: iid, force: removeAllForce })
+          if (r.ok) removed.push(iid)
+          else errors.push(`${iid}: ${r.error ?? 'failed'}`)
+        }
+        setScaleMsg({
+          text: `Removed ${removed.length}${errors.length ? `; Errors: ${errors.join(' | ')}` : ''}`,
+          isErr: errors.length > 0,
+        })
+      },
+    })
+  }
+
+  function handleRecreate(iid: string, workerTypeKey: string) {
+    setConfirm({
+      title: `Recreate worker ${iid}?`,
+      message: `Force-remove this unit, then start a new worker of type ${workerTypeKey}.`,
+      action: async () => {
+        const r1 = await scaleWorker.mutateAsync({ action: 'remove', instance_id: iid, force: true })
+        if (!r1.ok) throw new Error(r1.error ?? 'Remove failed')
+        const r2 = await scaleWorker.mutateAsync({ action: 'add', worker_type: workerTypeKey })
+        if (!r2.ok) throw new Error(r2.error ?? 'Add failed')
+        setScaleMsg({ text: `Recreated ${r2.instance_id ?? workerTypeKey}`, isErr: false })
+      },
+    })
+  }
+
+  function handleRemove(iid: string) {
+    setConfirm({
+      title: `Remove worker ${iid}?`,
+      message: 'Stop this worker unit on this host.',
+      action: async () => {
+        const r = await scaleWorker.mutateAsync({ action: 'remove', instance_id: iid })
+        if (!r.ok) throw new Error(r.error ?? 'Remove failed')
+        setScaleMsg({ text: `Removed ${iid}`, isErr: false })
+      },
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Queue filter banner */}
+      {queueFilter && (
+        <div className="flex items-center gap-2 text-sm bg-muted/50 rounded px-3 py-1.5">
+          <span>Showing instances for queue</span>
+          <Badge variant="secondary" className="font-mono text-xs">{formatQueueLabel(queueFilter)}</Badge>
+          <code className="text-[10px] text-muted-foreground">{queueFilter}</code>
+          {onClearQueueFilter && (
+            <Button size="sm" variant="ghost" className="h-6 text-xs ml-auto" onClick={onClearQueueFilter}>
+              Show all
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Scale message */}
+      {scaleMsg && (
+        <p
+          className={`text-xs px-2 py-1 rounded ${scaleMsg.isErr ? 'text-destructive bg-destructive/10' : 'text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950'}`}
+          role={scaleMsg.isErr ? 'alert' : 'status'}
+        >
+          {scaleMsg.text}
+        </p>
+      )}
+
+      {/* Instances table */}
+      {instancesLoading ? (
+        <p className="text-sm text-muted-foreground">Loading instances…</p>
+      ) : instances.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No worker instances on this host.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Profile</TableHead>
+                <TableHead>Queue</TableHead>
+                <TableHead className="w-16 text-right">Cycle</TableHead>
+                <TableHead className="w-24 text-center">State</TableHead>
+                <TableHead className="w-28">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredInstances.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-4 text-sm">
+                    No instances for queue &quot;{queueFilter}&quot;. Clear the filter or start an instance consuming this queue.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredInstances.map(inst => {
+                  const profile = profileForUnit(inst.unit, profiles)
+                  const iid = instanceIdFromUnit(inst.unit)
+                  const idParts = iid ? parseCeleryWorkerInstanceId(iid) : null
+                  const rawQueues = profile?.queues ?? []
+                  const queueDisplay = rawQueues.length > 0 ? formatQueueLabel(rawQueues[0]) : '—'
+                  const profileKey = idParts?.profileKey ?? profile?.key ?? null
+                  const cycle = idParts ? String(idParts.cycle) : '—'
+                  const workerTypeKey = idParts?.profileKey ?? profile?.key ?? null
+
+                  return (
+                    <TableRow key={inst.unit}>
+                      <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <p className="text-xs font-medium">{profile?.label ?? profileKey ?? '—'}</p>
+                              <p className="text-[10px] font-mono text-muted-foreground">{profileKey ?? inst.unit}</p>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="font-mono text-xs">{inst.unit}</TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <span title={rawQueues.join(', ')}>{queueDisplay}</span>
+                        {rawQueues.length > 1 && (
+                          <span className="text-muted-foreground ml-1 text-[10px]">+{rawQueues.length - 1}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-xs">{cycle}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge
+                          variant={
+                            inst.active === 'active' && inst.sub === 'running'
+                              ? 'default'
+                              : inst.active === 'activating'
+                                ? 'secondary'
+                                : 'destructive'
+                          }
+                          className="text-[10px]"
+                        >
+                          {inst.sub || inst.active}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0"
+                                disabled={scaleBusy || !iid || !workerTypeKey}
+                                onClick={() => iid && workerTypeKey && handleRecreate(iid, workerTypeKey)}
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Recreate (force-remove + add)</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                disabled={scaleBusy || !iid}
+                                onClick={() => iid && handleRemove(iid)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove instance</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Scale controls */}
+      <div className="space-y-3 pt-1 border-t">
+        {/* Profile selector bubbles */}
+        <div className="flex flex-wrap gap-1 items-center">
+          <span className="text-xs text-muted-foreground mr-1">Profile</span>
+          <button
+            type="button"
+            onClick={() => setSelectedProfile(ALL_KEY)}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+              selectedProfile === ALL_KEY
+                ? 'bg-foreground text-background border-foreground'
+                : 'border-border hover:bg-muted'
+            }`}
+          >
+            ALL
+          </button>
+          {profiles.map(p => (
+            <button
+              key={p.key}
+              type="button"
+              title={`${p.key} — ${p.queues.join(', ') || '—'}`}
+              onClick={() => setSelectedProfile(p.key)}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                selectedProfile === p.key
+                  ? 'bg-foreground text-background border-foreground'
+                  : 'border-border hover:bg-muted'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Per-profile: Add controls */}
+        {selectedProfile !== ALL_KEY && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">Count</span>
+              {([false, true] as const).map(isMax => (
+                <button
+                  key={String(isMax)}
+                  type="button"
+                  onClick={() => setAddMaxMode(isMax)}
+                  className={`text-xs px-2 py-0.5 rounded border transition-colors ${
+                    addMaxMode === isMax
+                      ? 'bg-foreground text-background border-foreground'
+                      : 'border-border hover:bg-muted'
+                  }`}
+                  title={isMax ? 'Add up to remaining capacity (max − Dev − Prod)' : 'Add exactly one instance'}
+                >
+                  {isMax ? 'Max' : '1'}
+                </button>
+              ))}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1"
+              disabled={scaleBusy}
+              onClick={() => void handleAdd()}
+            >
+              <Plus className="h-3 w-3" />
+              Add Instance
+            </Button>
+          </div>
+        )}
+
+        {/* ALL: bulk controls */}
+        {selectedProfile === ALL_KEY && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1"
+              disabled={scaleBusy || profiles.length === 0}
+              title="Fill all profiles to max_worker_instances on this host"
+              onClick={() => void handleAddAll()}
+            >
+              <Layers className="h-3 w-3" />
+              Add All
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1"
+              disabled={scaleBusy || profiles.length === 0}
+              title={instances.length > 0 ? 'Remove all then fill to max per profile' : 'Fill to max per profile'}
+              onClick={handleResetAll}
+            >
+              <RotateCcw className="h-3 w-3" />
+              Reset All
+            </Button>
+            {instances.length > 0 && (
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-7 text-xs gap-1"
+                disabled={scaleBusy}
+                title="Stop every listed worker unit on this host"
+                onClick={handleRemoveAll}
+              >
+                <Trash2 className="h-3 w-3" />
+                Remove All
+              </Button>
+            )}
+            {instances.length > 0 && (
+              <div className="flex items-center gap-1 ml-1">
+                <span className="text-xs text-muted-foreground">Force</span>
+                {([false, true] as const).map(f => (
+                  <button
+                    key={String(f)}
+                    type="button"
+                    onClick={() => setRemoveAllForce(f)}
+                    className={`text-xs px-2 py-0.5 rounded border transition-colors ${
+                      removeAllForce === f
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'border-border hover:bg-muted'
+                    }`}
+                  >
+                    {f ? 'Yes' : 'No'}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={confirm !== null}
+        title={confirm?.title ?? ''}
+        message={confirm?.message ?? ''}
+        onConfirm={async () => { await confirm?.action(); setConfirm(null) }}
+        onCancel={() => setConfirm(null)}
+      />
+    </div>
+  )
+}

@@ -281,6 +281,32 @@ export interface StrategyTemplatesResponse {
   items: StrategyTemplateRow[]
 }
 
+// ── Win Rate ──────────────────────────────────────────────────────────────────
+
+export interface WinRateStructureRow {
+  structure_name: string
+  total_instances: number
+  profit_trades: number
+  loss_trades: number
+  total_profit: number | null
+  total_loss: number | null
+  profit_investment: number | null
+  loss_investment: number | null
+  total_investment: number | null
+  total_max_risk: number | null
+  structure_return_pct: number | null
+  profit_avg_pct: number | null
+  loss_avg_pct: number | null
+  single_max_loss_pct: number | null
+  profit_avg_usd: number | null
+  loss_avg_usd: number | null
+}
+
+export interface WinRateResponse {
+  structures: WinRateStructureRow[]
+  totals_all?: WinRateStructureRow | null
+}
+
 // ── Allocation ────────────────────────────────────────────────────────────────
 
 export interface StrategyAllocation {

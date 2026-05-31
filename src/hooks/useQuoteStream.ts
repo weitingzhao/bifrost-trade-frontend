@@ -6,7 +6,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 
 const FALLBACK_POLL_MS = 8_000
 
-function mergeQuoteIntoMap(
+export function mergeQuoteIntoMap(
   prev: Record<string, QuoteItem>,
   q: QuoteItem,
 ): Record<string, QuoteItem> {

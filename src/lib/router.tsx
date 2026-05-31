@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/layout/AppLayout'
 import { SettingsLayout } from '@/layout/SettingsLayout'
+import RouteErrorPage from '@/pages/RouteErrorPage'
 
 import LivePage from '@/pages/market/LivePage'
 import WatchlistPage from '@/pages/market/WatchlistPage'
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <AppLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <Navigate to="/market/live" replace /> },
 

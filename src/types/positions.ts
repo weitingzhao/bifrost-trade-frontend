@@ -212,4 +212,6 @@ export type {
   StrategyAllocation,
   AllocationPayload,
   AllocationsResponse,
+  WinRateStructureRow,
+  WinRateResponse,
 } from './strategy'

@@ -201,6 +201,48 @@ export function adjustedRealizedPnlForOptGroup(
   return g.realized_pnl + stockAdj
 }
 
+/** Stable group key for an option contract group (used as expand/collapse dict key). */
+export function getOptGroupKey(g: import('@/utils/ledger/optExecutionGroups').OptExecutionGroup): string {
+  return `${g.contract_key}-${g.strike}-${g.expiry}`
+}
+
+/** Stable key for grouping ledger rows by strategy opportunity (null/invalid → 'none'). */
+export function executionStrategyOpportunityKey(ex: Execution): number | 'none' {
+  const oid = ex.strategy_opportunity_id
+  if (oid != null && Number.isFinite(Number(oid))) return Number(oid)
+  return 'none'
+}
+
+/** Resolved label for a specific instance on this execution. */
+export function executionInstanceLabel(ex: Execution, instanceId: number): string | null {
+  const allocs = ex.instance_allocations
+  if (allocs && allocs.length > 0) {
+    const m = allocs.find(a => a.strategy_instance_id === instanceId)
+    const fromAlloc = m?.strategy_instance_label?.trim()
+    if (fromAlloc) return fromAlloc
+  }
+  const col = ex.strategy_instance_label?.trim()
+  if (ex.strategy_instance_id === instanceId && col) return col
+  return null
+}
+
+/** Attribution consistency across all trades in a closed option group. */
+export type InstanceConsistencyState = 'none' | 'mixed' | 'same' | 'multiple'
+
+/**
+ * 'none' = no fill has instance, 'mixed' = some do/some don't,
+ * 'same' = all same single id, 'multiple' = all attributed but to different ids.
+ */
+export function getInstanceConsistencyState(trades: Execution[]): InstanceConsistencyState {
+  if (trades.length === 0) return 'none'
+  const ids: number[] = []
+  for (const t of trades) ids.push(...executionStrategyInstanceIds(t))
+  if (ids.length === 0) return 'none'
+  const allHave = trades.every(t => executionStrategyInstanceIds(t).length > 0)
+  if (!allHave) return 'mixed'
+  return new Set(ids).size === 1 ? 'same' : 'multiple'
+}
+
 /**
  * PnL tone class for an execution leg in Unrealized tab.
  */

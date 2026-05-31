@@ -1,4 +1,5 @@
 import type { SystemMessagesResponse, SystemMessage } from '@/types/messages'
+import { openSseWithBackoff } from '@/lib/sse'
 
 const BASE = import.meta.env.VITE_API_MONITOR as string
 
@@ -11,13 +12,11 @@ export async function fetchSystemMessages(limit = 50): Promise<SystemMessagesRes
 export function subscribeSystemMessages(
   onMessage: (msg: SystemMessage) => void,
 ): () => void {
-  const es = new EventSource(`${BASE}/api/messages/stream`)
-  es.onmessage = (e: MessageEvent<string>) => {
+  return openSseWithBackoff(`${BASE}/api/messages/stream`, (raw) => {
     try {
-      onMessage(JSON.parse(e.data) as SystemMessage)
+      onMessage(JSON.parse(raw) as SystemMessage)
     } catch {
       // ignore malformed frames
     }
-  }
-  return () => es.close()
+  })
 }

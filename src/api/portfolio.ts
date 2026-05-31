@@ -2,13 +2,19 @@ import type {
   PositionCategoriesResponse,
   TagPositionRequest,
 } from '@/types/portfolio'
+import { withValidation } from '@/lib/apiValidation'
+import { PositionCategoriesResponseSchema } from '@/lib/schemas/portfolio'
 
 const BASE = import.meta.env.VITE_API_PORTFOLIO as string
+
+const validateCategories = withValidation<PositionCategoriesResponse>(
+  PositionCategoriesResponseSchema, 'portfolio/position-categories'
+)
 
 export async function fetchPositionCategories(): Promise<PositionCategoriesResponse> {
   const res = await fetch(`${BASE}/position-categories`)
   if (!res.ok) throw new Error(`Portfolio /position-categories: ${res.status}`)
-  return res.json() as Promise<PositionCategoriesResponse>
+  return validateCategories(await res.json())
 }
 
 export async function createPositionCategory(

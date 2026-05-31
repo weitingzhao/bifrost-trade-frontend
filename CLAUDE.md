@@ -34,7 +34,7 @@
 | 方向 | 选型 | 选用原因 |
 |------|------|---------|
 | 框架 | **React 18 + TypeScript + Vite** | 纯 SPA，无 SEO 需求，Vite 构建最快 |
-| 路由 | **React Router v6** | 替代旧代码的 hash + window.location 手工管理，URL 路由更清晰 |
+| 路由 | **React Router v7**（`react-router-dom@7.x`） | 替代旧代码的 hash + window.location 手工管理；使用 Data Router 模式（`createBrowserRouter` + `RouterProvider`），与 v6.4+ API 完全兼容 |
 | 服务端状态 | **TanStack Query v5** | 统一替代所有手写 useEffect+fetch+useState 模式 |
 | UI 组件库 | **shadcn/ui + Tailwind CSS** | 免费开源，组件质量高，样式可定制 |
 | 布局 | **左侧折叠 Sidebar + 顶部 Header** | 见下方布局规范 |

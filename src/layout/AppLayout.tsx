@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
@@ -10,10 +10,21 @@ import { LogPanel } from '@/components/LogPanel'
 import { LogPanelProvider } from '@/context/LogPanelContext'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useNavMode } from '@/hooks/useNavMode'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 function readSidebarCookie(): boolean {
   const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
   return match ? match[1] === 'true' : true
+}
+
+function BoundedOutlet() {
+  const { pathname } = useLocation()
+  return (
+    // key=pathname resets the boundary when navigating to a different page
+    <ErrorBoundary key={pathname}>
+      <Outlet />
+    </ErrorBoundary>
+  )
 }
 
 export function AppLayout() {
@@ -49,7 +60,7 @@ export function AppLayout() {
             onToggleNavMode={isTooNarrow ? undefined : toggle}
           />
           <main className="flex-1 overflow-auto min-w-0">
-            <Outlet />
+            <BoundedOutlet />
           </main>
           <LogPanel />
           {msgCenter}
@@ -70,7 +81,7 @@ export function AppLayout() {
             onToggleNavMode={toggle}
           />
           <main className="flex-1 overflow-auto min-w-0">
-            <Outlet />
+            <BoundedOutlet />
           </main>
           <LogPanel />
         </SidebarInset>

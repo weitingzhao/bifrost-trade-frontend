@@ -11,8 +11,10 @@ import type {
   TechnicalConditionsData,
   FundRawData,
 } from '@/types/research'
+import type { MassiveCeleryBeatScheduleResponse } from '@/types/ops'
 
 const BASE = import.meta.env.VITE_API_RESEARCH as string
+const MASSIVE_BASE = import.meta.env.VITE_API_MASSIVE as string
 
 export async function fetchScreenerResults(filters: ScreenerFilters): Promise<ScreenerResponse> {
   const controller = new AbortController()
@@ -116,4 +118,18 @@ export async function fetchSymbolFundRawData(symbol: string): Promise<FundRawDat
     throw new Error(`GET /research/data/readiness/symbol-fundamental-raw-data: ${res.status} — ${detail}`)
   }
   return res.json() as Promise<FundRawData>
+}
+
+// ── Celery Beat schedule (Massive API) ────────────────────────────────────────
+
+export async function fetchMassiveCeleryBeatSchedule(): Promise<MassiveCeleryBeatScheduleResponse> {
+  const r = await fetch(`${MASSIVE_BASE}/research/massive/celery-beat-schedule`)
+  const j = await r.json().catch(() => ({})) as Record<string, unknown>
+  if (!r.ok) {
+    return {
+      ok: false,
+      error: typeof j.error === 'string' ? j.error : `HTTP ${r.status}`,
+    }
+  }
+  return j as unknown as MassiveCeleryBeatScheduleResponse
 }

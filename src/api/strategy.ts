@@ -18,9 +18,14 @@ import type {
   AllocationsResponse,
   StrategyAllocation,
   AllocationPayload,
+  WinRateResponse,
 } from '@/types/positions'
+import { withValidation } from '@/lib/apiValidation'
+import { StrategyInstancesResponseSchema } from '@/lib/schemas/strategy'
 
 const BASE = import.meta.env.VITE_API_STRATEGY as string
+
+const validateInstances = withValidation<StrategyInstancesResponse>(StrategyInstancesResponseSchema, 'strategy/instances')
 
 export async function fetchOpportunities(): Promise<OpportunitiesResponse> {
   const res = await fetch(`${BASE}/strategies/opportunities`)
@@ -44,7 +49,7 @@ export async function fetchStrategyInstances(params?: {
   const qs = sp.toString()
   const res = await fetch(`${BASE}/strategies/instances${qs ? `?${qs}` : ''}`)
   if (!res.ok) throw new Error(`Strategy /instances: ${res.status}`)
-  return res.json() as Promise<StrategyInstancesResponse>
+  return validateInstances(await res.json())
 }
 
 export async function createStrategyInstance(
@@ -294,6 +299,21 @@ export async function fetchMetaValueOptions(
   )
   if (!res.ok) return { options: [] }
   return res.json()
+}
+
+// ── Win Rate ──────────────────────────────────────────────────────────────────
+
+export async function fetchWinRate(params?: {
+  sinceTs?: number
+  untilTs?: number
+}): Promise<WinRateResponse> {
+  const sp = new URLSearchParams()
+  if (params?.sinceTs != null) sp.set('since_ts', String(params.sinceTs))
+  if (params?.untilTs != null) sp.set('until_ts', String(params.untilTs))
+  const qs = sp.toString()
+  const res = await fetch(`${BASE}/strategies/win-rate${qs ? `?${qs}` : ''}`)
+  if (!res.ok) throw new Error(`GET /strategies/win-rate: ${res.status}`)
+  return res.json() as Promise<WinRateResponse>
 }
 
 // ── Allocations ───────────────────────────────────────────────────────────────

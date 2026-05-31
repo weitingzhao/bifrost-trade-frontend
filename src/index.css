@@ -224,4 +224,16 @@
   ::-webkit-scrollbar-corner {
     background: transparent;
   }
+
+  /* Hide the ugly native spinner buttons on number inputs.
+     Users can still type or use ↑/↓ keys to step. */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }

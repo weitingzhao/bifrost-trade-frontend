@@ -1,6 +1,12 @@
 import type { QuoteItem, QuotesResponse, BenchmarkResponse, WatchlistResponse, OpenOrder } from '@/types/market'
+import { withValidation } from '@/lib/apiValidation'
+import { QuotesResponseSchema, WatchlistResponseSchema } from '@/lib/schemas/market'
+import { openSseWithBackoff } from '@/lib/sse'
 
 const BASE = import.meta.env.VITE_API_MARKET as string
+
+const validateQuotes = withValidation<QuotesResponse>(QuotesResponseSchema, 'market/quotes')
+const validateWatchlist = withValidation<WatchlistResponse>(WatchlistResponseSchema, 'market/watchlist')
 
 export async function fetchQuotes(
   symbols: string[],
@@ -11,7 +17,7 @@ export async function fetchQuotes(
   if (contractKeys.length > 0) params.set('contract_keys', contractKeys.join(','))
   const res = await fetch(`${BASE}/quotes?${params}`)
   if (!res.ok) throw new Error(`Market /quotes: ${res.status}`)
-  return res.json() as Promise<QuotesResponse>
+  return validateQuotes(await res.json())
 }
 
 export async function fetchBenchmarks(symbols: string[]): Promise<BenchmarkResponse> {
@@ -24,7 +30,7 @@ export async function fetchBenchmarks(symbols: string[]): Promise<BenchmarkRespo
 export async function fetchWatchlist(): Promise<WatchlistResponse> {
   const res = await fetch(`${BASE}/watchlist`)
   if (!res.ok) throw new Error(`Market /watchlist: ${res.status}`)
-  return res.json() as Promise<WatchlistResponse>
+  return validateWatchlist(await res.json())
 }
 
 export async function postWatchlistItem(item: {
@@ -76,13 +82,10 @@ function parseQuoteFromSSE(raw: string): QuoteItem | null {
 }
 
 export function subscribeQuotes(onQuote: (q: QuoteItem) => void): () => void {
-  const url = `${BASE}/quotes/stream`
-  const es = new EventSource(url)
-  es.onmessage = (e) => {
-    const q = parseQuoteFromSSE(e.data)
+  return openSseWithBackoff(`${BASE}/quotes/stream`, (raw) => {
+    const q = parseQuoteFromSSE(raw)
     if (q) onQuote(q)
-  }
-  return () => es.close()
+  })
 }
 
 const MONITOR_BASE = import.meta.env.VITE_API_MONITOR as string

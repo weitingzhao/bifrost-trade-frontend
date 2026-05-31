@@ -36,7 +36,7 @@ export function executionDateStr(e: Execution): string {
   if (e.time != null && e.time > 0) {
     return unixTimeToChicagoDateStr(e.time)
   }
-  return ''
+  return '—'
 }
 
 export function sortExecByTradeDateThenTime(a: Execution, b: Execution): number {

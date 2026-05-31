@@ -9,6 +9,8 @@ import type {
   RawExecutionsResponse,
   OptionStockLinkBatch,
   OptionStockLinksResponse,
+  AccountTransactionsResponse,
+  TransactionsFetchResponse,
 } from '@/types/trading'
 import type {
   ExecutionsResponse,
@@ -16,8 +18,12 @@ import type {
   CreateExecutionBody,
   UpdateExecutionBody,
 } from '@/types/positions'
+import { withValidation } from '@/lib/apiValidation'
+import { ExecutionsResponseSchema } from '@/lib/schemas/positions'
 
 const BASE = import.meta.env.VITE_API_TRADING as string
+
+const validateExecutions = withValidation<ExecutionsResponse>(ExecutionsResponseSchema, 'trading/executions')
 
 export async function fetchExecutionsFreshness(): Promise<ExecutionsFreshnessResponse> {
   const res = await fetch(`${BASE}/executions/freshness`)
@@ -48,9 +54,14 @@ export async function postFlexUpload(xml: string): Promise<FlexUploadResponse> {
 }
 
 export async function fetchExecutions(source: 'final' | 'tws' | 'canonical' = 'final'): Promise<ExecutionsResponse> {
-  const res = await fetch(`${BASE}/executions?source=${source}`)
-  if (!res.ok) throw new Error(`Trading /executions?source=${source}: ${res.status}`)
-  return res.json() as Promise<ExecutionsResponse>
+  // Backend uses source_scope; map our internal alias to the correct backend value
+  const scopeMap: Record<string, string> = { final: 'performance_book', tws: 'tws_raw', canonical: '' }
+  const scope = scopeMap[source] ?? ''
+  const url = scope ? `${BASE}/executions?limit=0&source_scope=${scope}` : `${BASE}/executions?limit=0`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Trading /executions (${source}): ${res.status}`)
+  const raw = await res.json() as { executions?: import('@/types/positions').Execution[] }
+  return validateExecutions({ items: raw.executions ?? [] })
 }
 
 export async function fetchPositionAttribution(): Promise<PositionAttributionResponse> {
@@ -133,7 +144,37 @@ export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): 
   if (params.account_id) qs.set('account_id', params.account_id)
   const res = await fetch(`${BASE}/executions?${qs}`)
   if (!res.ok) throw new Error(`Trading /executions range: ${res.status}`)
-  return res.json() as Promise<ExecutionsResponse>
+  const json = await res.json() as { executions?: import('@/types/positions').Execution[] }
+  return { items: json.executions ?? [] }
+}
+
+export async function getTransactions(params?: {
+  since_ts?: number
+  until_ts?: number
+  account_id?: string
+  limit?: number
+}): Promise<AccountTransactionsResponse> {
+  const qs = new URLSearchParams()
+  if (params?.since_ts != null) qs.set('since_ts', String(params.since_ts))
+  if (params?.until_ts != null) qs.set('until_ts', String(params.until_ts))
+  if (params?.account_id) qs.set('account_id', params.account_id)
+  if (params?.limit != null) qs.set('limit', String(params.limit))
+  const res = await fetch(`${BASE}/transactions?${qs}`)
+  if (!res.ok) throw new Error(`Trading /transactions: ${res.status}`)
+  return res.json() as Promise<AccountTransactionsResponse>
+}
+
+export async function postTransactionsFetch(body?: {
+  from_date?: string
+  to_date?: string
+}): Promise<TransactionsFetchResponse> {
+  const res = await fetch(`${BASE}/transactions/fetch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) throw new Error(`POST /transactions/fetch: ${res.status}`)
+  return res.json() as Promise<TransactionsFetchResponse>
 }
 
 export async function postOptionStockLinksQuery(

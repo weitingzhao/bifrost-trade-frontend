@@ -15,7 +15,7 @@ import { gapAckTypeForFinKind } from '@/api/research/stockDataReadiness'
 import type { FinDrawerKind, SepaReadinessSummaryResponse, SepaRunStep } from '@/types/stockDataReadiness'
 import type { RunbookDerivedState } from '@/utils/stockDataReadiness/runbook'
 import { fmt } from '@/utils/stockDataReadiness/format'
-import type { MassiveRefJobSessionApi } from '@/components/massive/MassiveRefJobProvider'
+import type { MassiveRefJobSessionApi } from '@/components/massive/massiveRefJobContext'
 
 function Code({ children }: { children: React.ReactNode }) {
   return <code className="text-[11px] font-mono text-sky-300/90">{children}</code>

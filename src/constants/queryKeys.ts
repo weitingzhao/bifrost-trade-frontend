@@ -15,12 +15,15 @@ export const QUERY_KEYS = {
   },
   monitor: {
     status:         ['monitor', 'status']            as const,
+    openOrders:     ['monitor', 'open-orders']       as const,
     heartbeat:      ['monitor', 'heartbeat']         as const,
     operations:     ['monitor', 'operations']        as const,
   },
   portfolio: {
-    accounts:       ['portfolio', 'accounts']        as const,
-    positions:      ['portfolio', 'positions']       as const,
+    accounts:              ['portfolio', 'accounts']              as const,
+    positions:             ['portfolio', 'positions']             as const,
+    positionCategories:    ['portfolio', 'position-categories']   as const,
+    marketStreamsSymbolOrder: ['portfolio', 'market-streams-symbol-order'] as const,
   },
   research: {
     greeks:         ['research', 'greeks']           as const,
@@ -53,6 +56,8 @@ export const QUERY_KEYS = {
     instances:      ['strategy', 'instances']        as const,
     opportunities:  ['strategy', 'opportunities']    as const,
     structures:     ['strategy', 'structures']       as const,
+    structureDetail:['strategy', 'structure-detail'] as const,
+    history:        ['strategy', 'history']          as const,
     gates:          ['strategy', 'gates']            as const,
     gateSafety:     ['strategy', 'gate-safety']      as const,
     allocations:    ['strategy', 'allocations']      as const,

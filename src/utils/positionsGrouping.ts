@@ -1,5 +1,5 @@
 import type { IbPositionRow } from '@/types/monitor'
-import type { LivePositionRow, OpenOptionPosition, InstanceAllGroup, PositionAttribution } from '@/types/positions'
+import type { LivePositionRow, OpenOptionPosition, InstanceAllGroup, PositionInstanceAttribution } from '@/types/positions'
 import { isLedgerFixedIncomeCategory, isLedgerCashLikeCategory } from './stockCategories'
 
 export interface AccountFilter {
@@ -65,9 +65,9 @@ export function filterStocksByBucket(stocks: LivePositionRow[], bucket: StockBuc
 
 export function buildOpenOptionPositions(
   optionPositions: LivePositionRow[],
-  attributions: PositionAttribution[],
+  attributions: PositionInstanceAttribution[],
 ): OpenOptionPosition[] {
-  const attrMap = new Map<string, PositionAttribution>()
+  const attrMap = new Map<string, PositionInstanceAttribution>()
   for (const a of attributions) {
     attrMap.set(`${a.account_id}|${a.contract_key}`, a)
   }
@@ -91,7 +91,13 @@ export function buildOpenOptionPositions(
       pool_label: 'On' as const,
       account_id: pos.account_id,
       position: pos,
-      attribution_type: attr?.attribution_type,
+      attribution_type: attr
+        ? attr.strategy_instance_id == null
+          ? 'unassigned'
+          : attr.is_mixed
+            ? 'mixed'
+            : 'single'
+        : undefined,
       attribution_ratio: attr?.attribution_ratio,
       strategy_instance_id: attr?.strategy_instance_id,
       strategy_instance_label: attr?.strategy_instance_label,

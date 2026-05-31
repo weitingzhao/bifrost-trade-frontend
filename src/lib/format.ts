@@ -50,6 +50,23 @@ export function fmtPctSigned(v: number | null | undefined): string {
   return `${sign}${v.toFixed(2)}%`
 }
 
+/** Legacy dashboard strip: signed % with "--" placeholder. */
+export function fmtPctCompact(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return '--'
+  return `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
+}
+
+/** Legacy dashboard strip: USD 0dp with "--" placeholder. */
+export function fmtUsdCompact(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return '--'
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(v)
+}
+
 // ─── Numbers ───
 
 /** Integer or "—" */
@@ -123,6 +140,17 @@ export function parseOptionContractKey(contract_key: string | null | undefined):
 export function fmtTs(ts: number | null | undefined): string {
   if (ts == null) return '—'
   return new Date(ts * 1000).toLocaleString()
+}
+
+/** Elapsed since ts (Unix sec): e.g. "5m", "2h", "1d". */
+export function fmtSince(ts: number | null | undefined): string {
+  if (ts == null || !Number.isFinite(ts)) return '—'
+  const nowSec = Date.now() / 1000
+  const elapsed = Math.max(0, Math.floor(nowSec - ts))
+  if (elapsed < 60) return `${elapsed}s`
+  if (elapsed < 3600) return `${Math.floor(elapsed / 60)}m`
+  if (elapsed < 86400) return `${Math.floor(elapsed / 3600)}h`
+  return `${Math.floor(elapsed / 86400)}d`
 }
 
 export function fmtTsForPeriod(ts: number | null | undefined, period: string): string {

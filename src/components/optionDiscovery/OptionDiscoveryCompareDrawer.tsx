@@ -12,7 +12,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-const MAX_SLOTS = 4
+import { COMPARE_MAX_SLOTS } from '@/utils/optionDiscovery/compareRows'
+
+const MAX_SLOTS = COMPARE_MAX_SLOTS
 
 function fmtOptNum(v: number | null | undefined, digits = 4): string {
   if (v == null || !Number.isFinite(v)) return '—'
@@ -115,15 +117,4 @@ export function OptionDiscoveryCompareDrawer({
       </aside>
     </div>
   )
-}
-
-export function canAddCompareRow(current: OptionSnapshotRow[], row: OptionSnapshotRow): boolean {
-  if (current.length >= MAX_SLOTS) return false
-  const k = (r: OptionSnapshotRow) => `${r.strike}|${(r.right || '').trim().toUpperCase()}`
-  return !current.some(r => k(r) === k(row))
-}
-
-export function addCompareRow(current: OptionSnapshotRow[], row: OptionSnapshotRow): OptionSnapshotRow[] {
-  if (!canAddCompareRow(current, row)) return current
-  return [...current, row]
 }

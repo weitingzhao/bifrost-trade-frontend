@@ -7,11 +7,18 @@ import {
 } from '@/components/ui/table'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
 import type { StrategyInstance } from '@/types/positions'
-import type { MetricsEntry } from '@/hooks/useInstanceMetrics'
+import type { InstanceListMetricsEntry } from '@/hooks/useInstanceMetrics'
+import {
+  computeInstancePositionStatus,
+  netPnlUsdPerDayFromNetAndExecutions,
+  annualReturnDetailFromNetAndExecutions,
+  computeReturnPct,
+  underlyingCostSellOptUsd,
+} from '@/utils/instanceListMetrics'
 
 interface Props {
   instances: StrategyInstance[]
-  metricsMap: Map<number, MetricsEntry>
+  metricsMap: Map<number, InstanceListMetricsEntry>
   onDelete: (instance: StrategyInstance) => void
 }
 
@@ -44,7 +51,7 @@ function structureColor(name: string | null): string {
 }
 
 function MetricCell({ entry, value, fmt, className }: {
-  entry: MetricsEntry | undefined
+  entry: InstanceListMetricsEntry | undefined
   value: number | null | undefined
   fmt: (n: number | null) => string
   className?: string
@@ -64,6 +71,22 @@ function MetricCell({ entry, value, fmt, className }: {
       {fmt(value ?? null)}
     </TableCell>
   )
+}
+
+function rowDisplayMetrics(entry: InstanceListMetricsEntry | undefined) {
+  if (!entry || entry.status !== 'ready') return null
+  const { summary, sliced, execDerivedNetPnl, maxRiskUsd } = entry
+  const positionStatus = computeInstancePositionStatus(sliced)
+  const netPnlPerDay = netPnlUsdPerDayFromNetAndExecutions(execDerivedNetPnl, sliced, positionStatus)
+  const annual = annualReturnDetailFromNetAndExecutions(execDerivedNetPnl, sliced, maxRiskUsd, positionStatus)
+  return {
+    netPnl: execDerivedNetPnl,
+    netPnlPerDay,
+    underlyingCost: underlyingCostSellOptUsd(sliced),
+    returnPct: computeReturnPct(execDerivedNetPnl, sliced, maxRiskUsd),
+    annualPct: annual?.annualReturnPct ?? null,
+    commission: summary?.total_commission ?? null,
+  }
 }
 
 export function InstancesTable({ instances, metricsMap, onDelete }: Props) {
@@ -94,7 +117,7 @@ export function InstancesTable({ instances, metricsMap, onDelete }: Props) {
         <TableBody>
           {instances.map((inst) => {
             const entry = metricsMap.get(inst.strategy_instance_id)
-            const m = entry?.status === 'ready' ? entry.metrics : null
+            const m = rowDisplayMetrics(entry)
 
             return (
               <TableRow key={inst.strategy_instance_id}>

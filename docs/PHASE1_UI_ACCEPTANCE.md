@@ -10,7 +10,8 @@
 | `/research/discovery` | Outer shell same canvas color; **function** matches Legacy (Phase 2 CSS/页头见 `PHASE2_DISCOVERY_ACCEPTANCE.md`) |
 | `/market/live` | `PageHeader` + strategy badges; table/summary bar hierarchy |
 | `/operations/celery` | `PageHeader`; queue cards readable on canvas |
-| `/strategy/instances` | Large title + filters + table / inspector |
+| `/strategy/instances` | Large title + filters + table / inspector; **global market status bar** under header (Open orders, Streams, Daily %/$, symbols Popover vs Legacy marquee) |
+| `/portfolio/positions` | Global status bar visible; strip hidden on `/settings/*` and `/operations/*` |
 | `/settings/ib-connection` | Header actions; connection / Flex sections |
 | `/research/sepa` (Stock Screener) | Filter elevated block (`bg-secondary`); table vs canvas |
 
@@ -20,6 +21,8 @@
 - No major content panel is indistinguishable from canvas (same `bg-card` flat merge).
 - Primary actions in page header still reachable (refresh, save, create, etc.).
 - No regression in data loading or navigation vs Legacy on the same API.
+- **Global market strip** (market/portfolio/strategy/research routes): Open orders count, Streams Online/Offline lamp, Daily %/$ totals, and Popover symbol list match Legacy dashboard-strip (no CSS marquee).
+- Sidebar **Live** nav item shows IB/daemon health lamp consistent with Legacy.
 
 ## Mechanical checks (automated in CI / local)
 

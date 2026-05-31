@@ -1,18 +1,29 @@
 import { useState, useMemo } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
-import { useQueryClient, useQueries } from '@tanstack/react-query'
-import { RefreshCw, Plus, Pencil, Copy } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Switch } from '@/components/ui/switch'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { AvailabilityFilterPills, type AvailabilityFilter } from '@/components/strategy/AvailabilityFilterPills'
 import { useOpportunities } from '@/hooks/useStrategies'
 import { putOpportunity, fetchOpportunityDetail } from '@/api/strategy'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
+import { getScopeDisplay, opportunityDetailToPayload } from '@/utils/strategyFormUtils'
 import type { StrategyOpportunity, EntryCondition } from '@/types/positions'
 
 interface PrefillData {
@@ -24,87 +35,44 @@ interface PrefillData {
   conditions: EntryCondition[]
 }
 
-type ActiveFilter = 'all' | 'active' | 'inactive'
-
-function structureColor(name: string | null): string {
-  if (!name) return 'hsl(0 0% 60%)'
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360
-  return `hsl(${h} 65% 55%)`
-}
-
-function ScopeLabel({ scope }: { scope: string | null }) {
-  if (!scope) return <span className="text-muted-foreground text-xs">—</span>
-  const label = scope === 'watchlist_stk' ? 'watchlist' : scope === 'explicit_symbols' ? 'explicit' : scope
-  return (
-    <span className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground font-mono">
-      {label}
-    </span>
-  )
-}
-
-function SymbolPills({ symbols }: { symbols: string[] }) {
-  const MAX = 3
-  if (symbols.length === 0) return <span className="text-xs text-muted-foreground">—</span>
-  const visible = symbols.slice(0, MAX)
-  const rest = symbols.length - MAX
-  return (
-    <div className="flex flex-wrap gap-1">
-      {visible.map((s) => (
-        <span key={s} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-foreground">
-          {s}
-        </span>
-      ))}
-      {rest > 0 && <span className="text-[10px] text-muted-foreground">+{rest}</span>}
-    </div>
-  )
-}
+const TABLE_HEAD_CLASS = 'text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'
 
 export default function OpportunitiesPage() {
   const queryClient = useQueryClient()
-  const { data, isLoading, isError, error } = useOpportunities()
+  const { data, isLoading, isError, error, refetch } = useOpportunities()
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set())
-  const [filter, setFilter] = useState<ActiveFilter>('all')
+  const [filter, setFilter] = useState<AvailabilityFilter>('active')
   const [modalOpen, setModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<StrategyOpportunity | undefined>(undefined)
   const [prefillData, setPrefillData] = useState<PrefillData | undefined>(undefined)
   const [copyLoadingId, setCopyLoadingId] = useState<number | null>(null)
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null)
 
   const allItems = useMemo(() => data?.items ?? [], [data])
 
   const items = useMemo(() => {
-    const base = filter === 'active'
-      ? allItems.filter((o) => o.is_active)
-      : filter === 'inactive'
-        ? allItems.filter((o) => !o.is_active)
-        : allItems
-    return [...base].sort((a, b) => Number(b.is_active) - Number(a.is_active))
+    if (filter === 'active') return allItems.filter((o) => o.is_active)
+    if (filter === 'inactive') return allItems.filter((o) => !o.is_active)
+    return allItems
   }, [allItems, filter])
 
-  const detailQueries = useQueries({
-    queries: allItems.map((opp) => ({
-      queryKey: ['strategy', 'opportunity-detail', opp.strategy_opportunity_id],
-      queryFn: () => fetchOpportunityDetail(opp.strategy_opportunity_id),
-      staleTime: 120_000,
-      enabled: allItems.length > 0,
-    })),
-  })
-
-  const ecCountMap = useMemo(() => {
-    const m = new Map<number, number>()
-    for (const q of detailQueries) {
-      if (q.data) m.set(q.data.strategy_opportunity_id, q.data.entry_conditions.length)
-    }
-    return m
-  }, [detailQueries])
-
   async function handleToggle(opp: StrategyOpportunity) {
-    setTogglingIds((prev) => new Set(prev).add(opp.strategy_opportunity_id))
+    const id = opp.strategy_opportunity_id
+    setTogglingIds((prev) => new Set(prev).add(id))
+    setAvailabilityError(null)
     try {
-      await putOpportunity(opp.strategy_opportunity_id, { is_active: !opp.is_active })
-      queryClient.invalidateQueries({ queryKey: ['strategy', 'opportunities'] })
+      const detail = await fetchOpportunityDetail(id)
+      const payload = opportunityDetailToPayload(detail)
+      await putOpportunity(id, { ...payload, is_active: !opp.is_active })
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategy.opportunities })
+    } catch (e) {
+      setAvailabilityError(e instanceof Error ? e.message : String(e))
     } finally {
-      setTogglingIds((prev) => { const n = new Set(prev); n.delete(opp.strategy_opportunity_id); return n })
+      setTogglingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
     }
   }
 
@@ -146,169 +114,147 @@ export default function OpportunitiesPage() {
 
   if (isLoading) {
     return (
-      <PageShell className="space-y-3">
-        <Skeleton className="h-6 w-40" />
-        <Skeleton className="h-48 rounded-lg" />
+      <PageShell className="space-y-4">
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-4 w-96 max-w-full" />
+        <Skeleton className="h-10 w-full max-w-xl" />
+        <Skeleton className="h-64 rounded-lg" />
       </PageShell>
     )
   }
 
   return (
-    <PageShell className="space-y-4">
+    <PageShell className="space-y-5">
       <PageHeader
-        title="Opportunities"
-        actions={
-          <>
-            <Badge variant="secondary">{items.length}</Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => queryClient.invalidateQueries({ queryKey: ['strategy', 'opportunities'] })}
-            >
-              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-              Refresh
-            </Button>
-            <Button size="sm" onClick={handleNew}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              New Opportunity
-            </Button>
-          </>
-        }
+        title="Strategy / Opportunity"
+        description="Define opportunity strategies linked to a structure; scope and entry conditions."
       />
 
-      <div className="flex items-center gap-1">
-        {(['all', 'active', 'inactive'] as ActiveFilter[]).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFilter(f)}
-            className={cn(
-              'text-xs px-2.5 py-1 rounded-full border transition-colors capitalize',
-              filter === f
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40',
-            )}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-
-      {isError && (
-        <Alert variant="destructive">
-          <AlertDescription>{(error as Error).message}</AlertDescription>
-        </Alert>
-      )}
-
-      {items.length === 0 && !isLoading && (
-        <p className="text-sm text-muted-foreground py-4">No opportunities found.</p>
-      )}
-
-      {items.length > 0 && (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-14">ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="w-32">Structure</TableHead>
-                <TableHead className="w-24">Scope</TableHead>
-                <TableHead>Symbols</TableHead>
-                <TableHead className="w-36">Gate Safety</TableHead>
-                <TableHead className="w-20 text-center">Conds</TableHead>
-                <TableHead className="w-24">Status</TableHead>
-                <TableHead className="w-20" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((opp) => (
-                <TableRow key={opp.strategy_opportunity_id} className={cn(!opp.is_active && 'opacity-60')}>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    #{opp.strategy_opportunity_id}
-                  </TableCell>
-                  <TableCell className="font-medium">{opp.name}</TableCell>
-                  <TableCell>
-                    {opp.structure_name ? (
-                      <span
-                        className="inline-block text-[10px] px-1.5 py-0.5 rounded font-medium"
-                        style={{
-                          color: structureColor(opp.structure_name),
-                          border: `1px solid ${structureColor(opp.structure_name)}`,
-                          opacity: 0.85,
-                        }}
-                      >
-                        {opp.structure_name}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell><ScopeLabel scope={opp.scope_type} /></TableCell>
-                  <TableCell><SymbolPills symbols={opp.symbols} /></TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {opp.gate_safety_name ?? '—'}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {(() => {
-                      const count = ecCountMap.get(opp.strategy_opportunity_id)
-                      if (count == null) return <span className="text-xs text-muted-foreground font-mono">…</span>
-                      if (count === 0) return <span className="text-xs text-muted-foreground font-mono">—</span>
-                      return <span className="text-xs font-mono text-foreground">{count}</span>
-                    })()}
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      type="button"
-                      disabled={togglingIds.has(opp.strategy_opportunity_id)}
-                      onClick={() => handleToggle(opp)}
-                      className={cn(
-                        'text-[10px] px-2.5 py-0.5 rounded-full border transition-colors disabled:opacity-50',
-                        opp.is_active
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40',
-                      )}
-                    >
-                      {opp.is_active ? 'Active' : 'Inactive'}
-                    </button>
-                  </TableCell>
-                  <TableCell className="p-1">
-                    <div className="flex items-center gap-0.5">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-50"
-                        disabled={copyLoadingId === opp.strategy_opportunity_id}
-                        onClick={() => handleCopy(opp)}
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleEdit(opp)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h2 className="text-base font-medium tracking-tight">Opportunity strategies</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <AvailabilityFilterPills value={filter} onChange={setFilter} />
+            <Button size="sm" onClick={handleNew}>
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Create opportunity
+            </Button>
+          </div>
         </div>
-      )}
+
+        {isError && (
+          <QueryErrorAlert error={error} onRetry={() => void refetch()} />
+        )}
+
+        {!isError && allItems.length === 0 && (
+          <p className="text-sm text-muted-foreground">No opportunity strategies in database.</p>
+        )}
+
+        {!isError && allItems.length > 0 && items.length === 0 && (
+          <p className="text-sm text-muted-foreground">No opportunities match the current filter.</p>
+        )}
+
+        {!isError && items.length > 0 && (
+          <div className="rounded-lg border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className={TABLE_HEAD_CLASS}>Name</TableHead>
+                  <TableHead className={TABLE_HEAD_CLASS}>Structure</TableHead>
+                  <TableHead className={TABLE_HEAD_CLASS}>Scope</TableHead>
+                  <TableHead className={TABLE_HEAD_CLASS}>Gate safety</TableHead>
+                  <TableHead className={cn(TABLE_HEAD_CLASS, 'w-[5.5rem] text-center')}>Available</TableHead>
+                  <TableHead className={cn(TABLE_HEAD_CLASS, 'w-36')} />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((opp) => {
+                  const scopeDisplay = getScopeDisplay(opp.scope_type, opp.symbols)
+                  const copying = copyLoadingId === opp.strategy_opportunity_id
+                  return (
+                    <TableRow key={opp.strategy_opportunity_id}>
+                      <TableCell className="font-medium">{opp.name}</TableCell>
+                      <TableCell className="text-sm">
+                        {opp.structure_name ?? opp.strategy_structure_id ?? '—'}
+                      </TableCell>
+                      <TableCell className="max-w-[14rem]">
+                        <span
+                          className="block truncate text-sm"
+                          title={scopeDisplay.title || undefined}
+                        >
+                          {scopeDisplay.text}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {opp.gate_safety_name ?? '—'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Switch
+                          checked={opp.is_active}
+                          disabled={togglingIds.size > 0}
+                          onCheckedChange={() => void handleToggle(opp)}
+                          aria-label={`Mark "${opp.name}" as ${opp.is_active ? 'unavailable' : 'available'}`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2.5 text-xs"
+                            onClick={() => handleEdit(opp)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2.5 text-xs"
+                            disabled={copying}
+                            onClick={() => void handleCopy(opp)}
+                          >
+                            Copy
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
 
       <OpportunityFormModal
         key={editTarget?.strategy_opportunity_id ?? (prefillData ? 'copy' : 'new')}
         open={modalOpen}
         onOpenChange={(v) => {
           setModalOpen(v)
-          if (!v) { setEditTarget(undefined); setPrefillData(undefined) }
+          if (!v) {
+            setEditTarget(undefined)
+            setPrefillData(undefined)
+          }
         }}
         initial={editTarget}
         prefill={prefillData}
       />
+
+      <Dialog open={availabilityError != null} onOpenChange={(open) => { if (!open) setAvailabilityError(null) }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Cannot change availability</DialogTitle>
+            <DialogDescription className="whitespace-pre-wrap pt-1">
+              {availabilityError}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setAvailabilityError(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   )
 }

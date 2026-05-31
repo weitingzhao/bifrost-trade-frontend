@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { fmtCcy, pnlClass } from './types'
+import { fmtCcy, pnlClass } from './ledgerFormat'
 
 type SummaryRow = {
   period: string

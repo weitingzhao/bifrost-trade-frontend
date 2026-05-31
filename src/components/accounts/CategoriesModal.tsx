@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -44,6 +45,8 @@ export function CategoriesModal({ open, onOpenChange, accounts, onRefreshed }: P
   const [newName, setNewName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [taggingCk, setTaggingCk] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; name: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   function invalidateCats() {
     queryClient.invalidateQueries({ queryKey: ['portfolio', 'position-categories'] })
@@ -67,10 +70,20 @@ export function CategoriesModal({ open, onOpenChange, accounts, onRefreshed }: P
   }
 
   async function handleDelete(id: number, name: string) {
-    if (!confirm(`Delete category "${name}"? Positions tagged with it will be untagged.`)) return
+    setDeleteConfirm({ id, name })
+  }
+
+  async function confirmDelete() {
+    if (!deleteConfirm) return
+    setDeleting(true)
     setError(null)
-    const r = await deletePositionCategory(id).catch((e: Error) => ({ ok: false, error: e.message }))
-    if (!r.ok) { setError(r.error ?? 'Failed'); return }
+    const r = await deletePositionCategory(deleteConfirm.id).catch((e: Error) => ({ ok: false, error: e.message }))
+    setDeleting(false)
+    if (!r.ok) {
+      setError(r.error ?? 'Failed')
+      return
+    }
+    setDeleteConfirm(null)
     invalidateCats()
   }
 
@@ -87,6 +100,7 @@ export function CategoriesModal({ open, onOpenChange, accounts, onRefreshed }: P
   const stkAccounts = accounts.filter((a) => (a.positions ?? []).some((p) => p.secType === 'STK'))
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
@@ -202,6 +216,21 @@ export function CategoriesModal({ open, onOpenChange, accounts, onRefreshed }: P
         </div>
       </DialogContent>
     </Dialog>
+
+      <ConfirmDialog
+        open={deleteConfirm != null}
+        title="Delete category"
+        message={
+          deleteConfirm
+            ? `This will remove "${deleteConfirm.name}". Positions tagged with it will be untagged.`
+            : ''
+        }
+        confirmLabel="Confirm delete"
+        confirming={deleting}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setDeleteConfirm(null)}
+      />
+    </>
   )
 }
 

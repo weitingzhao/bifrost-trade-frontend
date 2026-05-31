@@ -4,6 +4,7 @@ import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import type { Bar } from '@/types/market'
 import { fmtTs, fmtTsForPeriod, fmtUsd } from '@/lib/format'
 import { chartSurfaceFill } from '@/lib/chartTokens'
+import { finiteVwap } from '@/utils/chart/finiteVwap'
 import {
   bollingerSeries,
   macdSeries,
@@ -26,13 +27,6 @@ export interface BarsCandlestickChartProps {
   showRsi?: boolean
   /** Pivot (prev bar H/L/C) + 20-bar swing high/low as horizontal lines. */
   showSr?: boolean
-}
-
-/** API may send vwap as string; Number.isFinite rejects strings. */
-export function finiteVwap(raw: unknown): number | null {
-  if (raw == null) return null
-  const n = typeof raw === 'number' ? raw : Number(raw)
-  return Number.isFinite(n) ? n : null
 }
 
 const VWAP_STROKE = '#0ea5e9'

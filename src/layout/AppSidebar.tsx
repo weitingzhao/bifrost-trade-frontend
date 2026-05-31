@@ -33,7 +33,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { BifrostLogoFull, BifrostLogoMark } from '@/components/BifrostLogo'
+import { LiveNavLamp } from '@/components/layout/LiveNavLamp'
 import { getAllItems, NAV_GROUPS, SETTINGS_ITEM, type NavGroup, type NavItem } from './navConfig'
+
+const LIVE_NAV_PATH = '/market/live'
 
 // ─── Persistence ───
 
@@ -86,7 +89,8 @@ function SubItem({ item, depth = 0 }: { item: NavItem; depth?: number }) {
           >
             <NavLink to={item.to}>
               <item.icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
-              <span>{item.label}</span>
+              <span className="flex-1">{item.label}</span>
+              {item.to === LIVE_NAV_PATH && <LiveNavLamp />}
             </NavLink>
           </SidebarMenuSubButton>
           <button
@@ -120,9 +124,10 @@ function SubItem({ item, depth = 0 }: { item: NavItem; depth?: number }) {
           indent,
         )}
       >
-        <NavLink to={item.to}>
+        <NavLink to={item.to} className="flex items-center gap-2 w-full">
           <item.icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
-          <span>{item.label}</span>
+          <span className="flex-1">{item.label}</span>
+          {item.to === LIVE_NAV_PATH && <LiveNavLamp />}
         </NavLink>
       </SidebarMenuSubButton>
     </SidebarMenuSubItem>
@@ -155,7 +160,8 @@ function FlyoutItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: () =
           )}
         >
           <item.icon className="h-3.5 w-3.5 shrink-0 opacity-75" />
-          {item.label}
+          <span className="flex-1">{item.label}</span>
+          {item.to === LIVE_NAV_PATH && <LiveNavLamp />}
         </NavLink>
         {hasChildren && (
           <button

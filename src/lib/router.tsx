@@ -83,7 +83,7 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/BacktestPage')),
       },
 
-      { path: 'strategy/instances', element: <InstancesPage /> },
+      { path: 'strategy/instances/:instanceId?', element: <InstancesPage /> },
       {
         path: 'strategy/win-rate',
         lazy: lazyPage(() => import('@/pages/strategy/WinRatePage')),

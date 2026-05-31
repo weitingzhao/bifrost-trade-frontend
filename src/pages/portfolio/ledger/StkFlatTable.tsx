@@ -7,8 +7,9 @@ import { Pencil, Trash2, Eye } from 'lucide-react'
 import type { Execution } from '@/types/positions'
 import { executionDateStr } from '@/utils/ledger/performanceUtils'
 import { ExecSourceBadge } from './OptGroupRow'
-import { fmtCcy, fmtPrice, pnlClass, SortIcon } from './types'
-import type { StkSortCol } from './types'
+import { fmtCcy, fmtPrice, pnlClass } from './ledgerFormat'
+import { LedgerSortIcon as SortIcon } from './LedgerSortIcon'
+import type { StkSortCol } from './ledgerTypes'
 
 export function StkFlatTable({
   executions, stkSort, toggleStkSort, onEdit, onDelete, onAddJournal, compact = false,

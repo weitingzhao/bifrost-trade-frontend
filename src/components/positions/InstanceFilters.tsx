@@ -4,12 +4,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
-export interface InstanceFilterValues {
-  structureType: string
-  oppName: string
-  scopeType: string
-  attributionType: string
-}
+import type { InstanceFilterValues } from '@/utils/filterInstanceGroups'
+
+export type { InstanceFilterValues }
 
 interface Props {
   structureTypes: string[]
@@ -108,8 +105,14 @@ export function InstanceFilters({ structureTypes, oppNames, scopeTypes, values, 
       </Select>
 
       <BubbleRadio
-        label="Scope"
-        options={scopeOptions}
+        label="Symbol scope"
+        options={scopeOptions.map((o) =>
+          o.value === 'watchlist_stk'
+            ? { ...o, label: 'Watchlist (stocks)' }
+            : o.value === 'explicit_symbols'
+              ? { ...o, label: 'Explicit symbols' }
+              : o,
+        )}
         value={values.scopeType}
         onChange={(v) => update({ scopeType: v })}
       />

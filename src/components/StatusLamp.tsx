@@ -9,9 +9,10 @@ const COLOR: Record<string, string> = {
 interface StatusLampProps {
   lamp: string
   className?: string
+  title?: string
 }
 
-export function StatusLamp({ lamp, className }: StatusLampProps) {
+export function StatusLamp({ lamp, className, title }: StatusLampProps) {
   return (
     <span
       className={cn(
@@ -19,6 +20,8 @@ export function StatusLamp({ lamp, className }: StatusLampProps) {
         COLOR[lamp] ?? 'bg-lamp-gray',
         className
       )}
+      title={title}
+      aria-hidden={title ? undefined : true}
     />
   )
 }

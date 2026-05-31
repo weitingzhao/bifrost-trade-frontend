@@ -10,8 +10,8 @@ import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
 import { executionDateStr } from '@/utils/ledger/performanceUtils'
 import { OptGroupsTable } from './OptGroupsTable'
-import { fmtCcy, fmtPrice, pnlClass } from './types'
-import type { GroupBy, InstanceSubTab, InstGroup } from './types'
+import { fmtCcy, fmtPrice, pnlClass } from './ledgerFormat'
+import type { GroupBy, InstanceSubTab, InstGroup } from './ledgerTypes'
 
 export function InstanceTabContent({
   instanceSubTab, filteredGroups, noInstGroups, noInstExecs, linkByOptionId,

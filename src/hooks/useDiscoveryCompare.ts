@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
-import { addCompareRow } from '@/components/optionDiscovery/OptionDiscoveryCompareDrawer'
+import { addCompareRow } from '@/utils/optionDiscovery/compareRows'
 
 export function useDiscoveryCompare() {
   const [compareOpen, setCompareOpen] = useState(false)

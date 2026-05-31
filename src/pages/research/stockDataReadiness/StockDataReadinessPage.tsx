@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MassiveRefJobProvider, useMassiveRefJobSession } from '@/components/massive/MassiveRefJobProvider'
+import { MassiveRefJobProvider } from '@/components/massive/MassiveRefJobProvider'
+import { useMassiveRefJobSession } from '@/components/massive/massiveRefJobContext'
 import { ALL_SEPA_RUNBOOK_STEP_IDS, RUNBOOK_STAGE_LAYOUT } from '@/constants/stockDataReadiness'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { fetchSepaCriteriaStats } from '@/api/research/dataReadiness'
@@ -28,7 +29,7 @@ import {
   postSepaSyncHolidays,
   postSepaTechnicalBackfill,
 } from '@/api/research/stockDataReadiness'
-import type { TrackedMassiveDbJobKind } from '@/components/massive/MassiveRefJobProvider'
+import type { TrackedMassiveDbJobKind } from '@/components/massive/massiveRefJobContext'
 import type { FinDrawerKind, RunbookStageId, SepaRunStep } from '@/types/stockDataReadiness'
 import { deriveRunbookState } from '@/utils/stockDataReadiness/runbook'
 import { fmt } from '@/utils/stockDataReadiness/format'

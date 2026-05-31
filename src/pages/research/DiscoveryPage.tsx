@@ -356,7 +356,7 @@ export default function DiscoveryPage() {
     } finally {
       setExpirationsLoading(false)
     }
-  }, [])
+  }, [setSelectedExpiration])
 
   const loadStrikesForExpiration = useCallback(async (symbol: string, expiration: string) => {
     const s = (symbol || '').trim()
@@ -391,7 +391,7 @@ export default function DiscoveryPage() {
       setExpirationsError(null)
       setSelectedExpiration('')
     }
-  }, [selectedSymbol, loadExpirations])
+  }, [selectedSymbol, loadExpirations, setSelectedExpiration])
 
   useEffect(() => {
     setSnapshotLoadAttempted(false)
@@ -656,7 +656,7 @@ export default function DiscoveryPage() {
       return
     }
     setSelectedExpiration(prev => (visibleExpirations.includes(prev) ? prev : visibleExpirations[0]))
-  }, [visibleExpirations])
+  }, [visibleExpirations, setSelectedExpiration])
 
   const loadQuotes = useCallback(async () => {
     const sym = selectedSymbol.trim()
@@ -775,7 +775,7 @@ export default function DiscoveryPage() {
     if (!sym || !exp) return
     loadQuotesDebounced()
     return () => loadQuotesDebounced.cancel()
-  }, [selectedSymbol, selectedExpiration, effectiveStrikes.join(','), loadQuotesDebounced])
+  }, [selectedSymbol, selectedExpiration, strikesWatchKey, loadQuotesDebounced])
 
   const handleAddToWatchlist = useCallback(
     async (row: OptionSnapshotRow) => {

@@ -145,10 +145,11 @@ function computeCapital(executions: RawExecution[], summary: PerformanceSummary,
 
 interface Props {
   instance: StrategyInstance
-  onClose: () => void
+  onClose?: () => void
+  embedded?: boolean
 }
 
-export function InstanceDetailPanel({ instance, onClose }: Props) {
+export function InstanceDetailPanel({ instance, onClose, embedded = false }: Props) {
   const instanceId = instance.strategy_instance_id
   const [execTab, setExecTab] = useState<string>('performance_book')
 
@@ -198,16 +199,19 @@ export function InstanceDetailPanel({ instance, onClose }: Props) {
   const loading = perfLoading || execLoading
 
   return (
-    <div className="h-full overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 bg-background z-10 border-b px-4 py-2.5 flex items-center justify-between">
-        <span className="text-sm font-semibold">Instance #{instanceId}</span>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
-          <X className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+    <div className={cn('h-full overflow-y-auto', embedded && 'bg-background')}>
+      {!embedded && (
+        <div className="sticky top-0 bg-background z-10 border-b px-4 py-2.5 flex items-center justify-between">
+          <span className="text-sm font-semibold">Instance #{instanceId}</span>
+          {onClose && (
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+      )}
 
-      <div className="px-4 py-3 space-y-5">
+      <div className={cn('px-4 py-3 space-y-5', embedded && 'pt-3')}>
         {/* ─── Overview + PnL grid ─── */}
         <div className="grid grid-cols-[0.9fr_2.1fr] gap-4">
           {/* Overview */}

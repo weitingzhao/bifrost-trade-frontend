@@ -23,6 +23,8 @@ export interface OpenOptionPosition {
   strategy_instance_id?: number | null
   strategy_instance_label?: string | null
   strategy_opportunity_name?: string | null
+  filtered_exec_lists?: { final: Execution[]; tws: Execution[] }
+  trades?: Execution[]
 }
 
 export interface InstancePositionGroup {
@@ -81,19 +83,41 @@ export interface InstanceAllGroup {
   risk_profile: RiskProfile | null
 }
 
-export interface PositionAttribution {
-  contract_key: string
+/** One row from GET /position-attribution: one (position, instance). */
+export interface PositionInstanceAttribution {
   account_id: string
-  attribution_type: 'single' | 'mixed' | 'unassigned'
+  contract_key: string
+  symbol: string
+  sec_type: string
+  expiry: string
+  strike: number | null
+  option_right: string
+  position_qty: number
+  avg_cost: number | null
+  price_mid: number | null
+  price_last: number | null
   strategy_instance_id: number | null
   strategy_instance_label: string | null
   strategy_opportunity_id: number | null
   strategy_opportunity_name: string | null
+  strategy_instance_opened_at_epoch: number | null
+  structure_type: string | null
+  scope_type: string | null
+  strategy_structure_id: number | null
+  open_qty_est: number
   attribution_ratio: number
+  unrealized_pnl_est: number | null
+  source_exec_count: number
+  is_mixed: boolean
+  has_unassigned: boolean
+  method?: string
 }
 
+/** @deprecated Use PositionInstanceAttribution */
+export type PositionAttribution = PositionInstanceAttribution
+
 export interface PositionAttributionResponse {
-  items: PositionAttribution[]
+  items: PositionInstanceAttribution[]
 }
 
 export interface InstanceAllocation {
@@ -118,6 +142,7 @@ export interface Execution {
   price: number
   time: number | null
   trade_date?: string | null
+  report_date?: string | null
   exec_id?: string
   source?: string
   commission?: number | null
@@ -194,6 +219,11 @@ export type {
   StructureConstraint,
   StrategyStructure,
   StructuresResponse,
+  StructurePayload,
+  StructureMetaEntry,
+  StrategyHistoryRow,
+  StrategyHistoryParams,
+  StrategyHistoryResponse,
   GateSafetyItem,
   GateSafetyGates,
   GateSafetyFull,

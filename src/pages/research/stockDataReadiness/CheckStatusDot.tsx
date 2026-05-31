@@ -10,15 +10,6 @@ const STATUS_CLASS: Record<CheckStatus, string> = {
   void: 'bg-lamp-gray opacity-60',
 }
 
-const STAGE_BORDER: Record<CheckStatus, string> = {
-  ok: 'border-l-lamp-green',
-  warn: 'border-l-lamp-yellow',
-  error: 'border-l-lamp-red',
-  loading: 'border-l-sky-400',
-  unknown: 'border-l-border',
-  void: 'border-l-muted-foreground',
-}
-
 export function CheckStatusDot({
   status,
   className,
@@ -32,8 +23,4 @@ export function CheckStatusDot({
       aria-hidden
     />
   )
-}
-
-export function stageHeadBorderClass(status: CheckStatus): string {
-  return cn('border-l-[3px]', STAGE_BORDER[status])
 }

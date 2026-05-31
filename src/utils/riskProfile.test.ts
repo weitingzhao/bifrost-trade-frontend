@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeRiskProfile, formatRiskLabel } from './riskProfile'
+import { computeRiskProfile, formatRiskLabel, formatRiskDisplayLabels } from './riskProfile'
 import type { RiskPosition } from './riskProfile'
 
 describe('computeRiskProfile', () => {
@@ -46,6 +46,32 @@ describe('computeRiskProfile', () => {
     const be = result.breakeven_points[0]
     expect(be).toBeGreaterThan(85)
     expect(be).toBeLessThan(115)
+  })
+})
+
+describe('formatRiskDisplayLabels', () => {
+  it('shows Unlimited for null max gain/loss', () => {
+    const labels = formatRiskDisplayLabels({
+      risk_type: 'unlimited',
+      max_gain: null,
+      max_loss: null,
+      breakeven_points: [],
+    })
+    expect(labels.gainLabel).toBe('Unlimited')
+    expect(labels.lossLabel).toBe('Unlimited')
+    expect(labels.riskBadge).toBe('Unlimited')
+  })
+
+  it('formats finite gain and loss', () => {
+    const labels = formatRiskDisplayLabels({
+      risk_type: 'defined',
+      max_gain: 500,
+      max_loss: -200,
+      breakeven_points: [],
+    })
+    expect(labels.gainLabel).toBe('$500.00')
+    expect(labels.lossLabel).toBe('-$200.00')
+    expect(labels.riskBadge).toBe('Defined')
   })
 })
 

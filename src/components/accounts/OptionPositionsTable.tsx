@@ -36,7 +36,7 @@ export function OptionPositionsTable({ positions, quotesByCk, quotesBySymbol }: 
   if (positions.length === 0) {
     return (
       <div>
-        <p className="text-sm font-medium mb-2">Option Positions</p>
+        <p className="text-sm font-semibold mb-2">Option positions</p>
         <p className="text-sm text-muted-foreground">None</p>
       </div>
     )
@@ -61,7 +61,7 @@ export function OptionPositionsTable({ positions, quotesByCk, quotesBySymbol }: 
     <div>
       <p className="text-sm font-medium mb-2">Option Positions</p>
       <div className="rounded-md border overflow-x-auto">
-        <Table>
+        <Table className="text-xs">
           <TableHeader>
             <TableRow>
               <TableHead className="min-w-[70px]">Symbol</TableHead>

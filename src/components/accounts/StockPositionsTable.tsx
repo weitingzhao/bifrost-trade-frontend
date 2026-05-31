@@ -92,7 +92,7 @@ export function StockPositionsTable({ positions, quotesBySymbol, benchBySymbol, 
   if (positions.length === 0) {
     return (
       <div>
-        <p className="text-sm font-medium mb-2">Stock Positions</p>
+        <p className="text-sm font-semibold mb-2">Stock positions</p>
         <p className="text-sm text-muted-foreground">None</p>
       </div>
     )
@@ -117,9 +117,9 @@ export function StockPositionsTable({ positions, quotesBySymbol, benchBySymbol, 
 
   return (
     <div>
-      <p className="text-sm font-medium mb-2">Stock Positions</p>
+      <p className="text-sm font-semibold mb-2">Stock positions</p>
       <div className="rounded-md border overflow-x-auto">
-        <Table>
+        <Table className="text-xs">
           <TableHeader>
             <TableRow>
               <TableHead className="min-w-[80px]">Symbol</TableHead>
@@ -146,11 +146,14 @@ export function StockPositionsTable({ positions, quotesBySymbol, benchBySymbol, 
 
               return [
                 // Category header
-                <TableRow key={`cat-${cat}`} className="bg-muted/40 hover:bg-muted/40">
+                <TableRow
+                  key={`cat-${cat}`}
+                  className="bg-muted/40 hover:bg-muted/60 cursor-pointer"
+                  onClick={onCategoryClick}
+                >
                   <TableCell
                     colSpan={13}
-                    className="py-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide cursor-pointer hover:text-foreground"
-                    onClick={onCategoryClick}
+                    className="py-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide"
                   >
                     {cat}
                   </TableCell>

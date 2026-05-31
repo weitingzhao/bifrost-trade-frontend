@@ -130,6 +130,33 @@ export function getOptionStockLinkDetailForExecution(
   }
 }
 
+/**
+ * Prorated sum of option–stock link slippage attributed to this strategy instance.
+ * For split executions, slippage scales by (|instance qty| / |parent execution qty|).
+ */
+export function instanceOptionStockSlippageAdjustment(
+  executionsFinalRaw: Execution[],
+  strategyInstanceId: number,
+  linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
+): number {
+  if (!linkByOptionId || Object.keys(linkByOptionId).length === 0) return 0
+  let sum = 0
+  for (const ex of executionsFinalRaw) {
+    if ((ex.sec_type ?? '').toUpperCase() !== 'OPT') continue
+    const slice = sliceExecutionForInstanceOptView(ex, strategyInstanceId)
+    if (!slice) continue
+    const oid = ex.account_executions_id
+    if (oid == null) continue
+    const parentQty = Math.abs(Number(ex.quantity ?? ex.qty) || 0)
+    if (parentQty < 1e-9) continue
+    const sliceQty = Math.abs(Number(slice.quantity ?? slice.qty) || 0)
+    const ratio = sliceQty / parentQty
+    const slip = stockSlippageTotalForOptionExecution(oid, linkByOptionId)
+    if (slip !== 0) sum += slip * ratio
+  }
+  return sum
+}
+
 export function executionStrategyInstanceIds(e: import('@/types/positions').Execution): number[] {
   const allocs = e.instance_allocations ?? []
   if (allocs.length > 0) return allocs.map((a) => a.strategy_instance_id)

@@ -1,19 +1,11 @@
 import { useRef, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
 import { postTwsFetch, postFlexFetch, postFlexUpload } from '@/api/trading'
-import { fmtExecDaysAgo, formatLastUpdate } from '@/utils/positions'
+import { formatLastUpdate } from '@/utils/positions'
 import { cn } from '@/lib/utils'
 import type { FlexFetchPerQuery } from '@/types/trading'
 
@@ -23,11 +15,11 @@ interface FlexResult {
   summary: string
   isError: boolean
   perQuery?: FlexFetchPerQuery[]
-  dataSpan?: string
 }
 
 interface Props {
   accountsFetchedAt?: number | null
+  hasAccounts: boolean
 }
 
 function buildFlexSuccessMessage(r: {
@@ -65,9 +57,10 @@ function buildFlexSuccessMessage(r: {
   return parts.join(' ')
 }
 
-export function ExecutionImport({ accountsFetchedAt }: Props) {
-  const { data: freshnessData } = useExecutionsFreshness()
+const pillGroupClass =
+  'inline-flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-secondary/40 px-2.5 py-1.5 min-h-[30px]'
 
+export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
   const [twsDays, setTwsDays] = useState<TwsDays>(1)
   const [twsLoading, setTwsLoading] = useState(false)
   const [twsResult, setTwsResult] = useState<{ msg: string; isError: boolean } | null>(null)
@@ -76,6 +69,8 @@ export function ExecutionImport({ accountsFetchedAt }: Props) {
   const [flexLoading, setFlexLoading] = useState(false)
   const [flexResult, setFlexResult] = useState<FlexResult | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const busy = twsLoading || flexLoading
 
   async function handleTwsFetch() {
     setTwsLoading(true)
@@ -105,7 +100,6 @@ export function ExecutionImport({ accountsFetchedAt }: Props) {
           summary: buildFlexSuccessMessage(r),
           isError: false,
           perQuery: r.per_query?.length ? r.per_query : undefined,
-          dataSpan: r.data_from && r.data_to ? `${r.data_from} – ${r.data_to}` : undefined,
         })
       } else {
         const parts: string[] = [r.error ?? 'Failed to fetch from IB Flex.']
@@ -146,148 +140,118 @@ export function ExecutionImport({ accountsFetchedAt }: Props) {
     }
   }
 
-  const freshnessItems = freshnessData?.items ?? []
-  const accountIds = [...new Set(freshnessItems.map((i) => i.account_id))]
-
   return (
-    <div className="rounded-lg border border-border bg-secondary p-4 space-y-4 text-sm">
-      {/* Data freshness table */}
-      {accountIds.length > 0 && (
-        <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-            Data Freshness
-          </p>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Account</TableHead>
-                <TableHead>IB Flex</TableHead>
-                <TableHead>IB Stream</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {accountIds.map((aid) => {
-                const flexItem = freshnessItems.find(
-                  (i) => i.account_id === aid && i.source === 'flex_trades'
-                )
-                const streamItems = freshnessItems.filter(
-                  (i) => i.account_id === aid && i.source !== 'flex_trades'
-                )
-                const streamBest = streamItems.reduce<typeof streamItems[0] | null>(
-                  (best, r) => (best == null || (r.latest_exec_ts ?? 0) > (best.latest_exec_ts ?? 0) ? r : best),
-                  null
-                )
-                return (
-                  <TableRow key={aid}>
-                    <TableCell className="font-mono text-xs">{aid}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {fmtExecDaysAgo(flexItem?.days_since_latest)}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {fmtExecDaysAgo(streamBest?.days_since_latest)}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-          <Separator className="mt-4" />
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-6">
-        {/* TWS Fetch */}
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            TWS Execution Fetch
-          </p>
+    <section aria-label="Execution import from Tws and Flex" className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <div
+          className={pillGroupClass}
+          role="radiogroup"
+          aria-label="Execution fetch time range"
+        >
           <RadioGroup
             value={String(twsDays)}
             onValueChange={(v) => setTwsDays(Number(v) as TwsDays)}
-            className="flex gap-4"
-            disabled={twsLoading}
+            className="flex flex-wrap items-center gap-3"
+            disabled={busy}
           >
             {([1, 3, 7] as TwsDays[]).map((d) => (
-              <label key={d} className="flex items-center gap-1.5 cursor-pointer">
-                <RadioGroupItem value={String(d)} />
-                <span className="text-sm">{d === 1 ? 'Today' : `Last ${d} days`}</span>
+              <label key={d} className="flex items-center gap-1.5 cursor-pointer text-sm">
+                <RadioGroupItem value={String(d)} className="h-3 w-3" />
+                <span>{d === 1 ? 'Today' : `Last ${d} days`}</span>
               </label>
             ))}
           </RadioGroup>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={handleTwsFetch} disabled={twsLoading}>
-              {twsLoading ? 'Fetching…' : 'Tws Refresh'}
-            </Button>
-            {twsResult && (
-              <span className={cn('text-xs', twsResult.isError ? 'text-destructive' : 'text-success')}>
-                {twsResult.msg}
-              </span>
-            )}
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs gap-1.5"
+            onClick={handleTwsFetch}
+            disabled={busy}
+            aria-label="Fetch executions from IB Tws and write to DB"
+          >
+            <RefreshCw className={cn('h-3 w-3', twsLoading && 'animate-spin')} />
+            {twsLoading ? 'Fetching…' : 'Tws Refresh'}
+          </Button>
         </div>
 
-        <Separator orientation="vertical" className="h-auto" />
-
-        {/* Flex Fetch */}
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Flex Execution Import
-          </p>
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={flexUseUpload}
-              onCheckedChange={setFlexUseUpload}
-              disabled={flexLoading}
-              id="flex-upload-toggle"
-            />
-            <label htmlFor="flex-upload-toggle" className="text-sm cursor-pointer">
-              Use local Flex XML
-            </label>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={flexUseUpload ? handleFlexUploadClick : handleFlexFetch}
-              disabled={flexLoading}
+        {hasAccounts && (
+          <>
+            <Separator orientation="vertical" className="hidden sm:block h-7" />
+            <div
+              className={pillGroupClass}
+              role="group"
+              aria-label="Flex executions import"
             >
-              {flexLoading ? 'Fetching…' : 'Flex Refresh'}
-            </Button>
-          </div>
-          {flexResult && (
-            <div className="space-y-1 mt-1">
-              <p className={cn('text-xs', flexResult.isError ? 'text-destructive' : 'text-success')}>
-                {flexResult.summary}
-              </p>
-              {flexResult.perQuery && flexResult.perQuery.length > 0 && (
-                <div className="text-xs text-muted-foreground space-y-0.5 pl-2 border-l border-muted">
-                  {flexResult.perQuery.map((q) => {
-                    const role =
-                      q.role === 'host' || q.role === 'primary' ? 'Host'
-                      : q.role === 'secondary' ? 'Secondary'
-                      : 'Flex'
-                    const span = q.data_from && q.data_to ? ` · ${q.data_from} – ${q.data_to}` : ''
-                    return (
-                      <p key={q.query_id}>
-                        {role}{q.label ? ` ${q.label}` : ''} [{q.query_id}]: {q.rows} row(s){span}
-                      </p>
-                    )
-                  })}
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={flexUseUpload}
+                  onCheckedChange={setFlexUseUpload}
+                  disabled={busy}
+                  id="flex-upload-toggle"
+                  className="scale-90"
+                />
+                <label htmlFor="flex-upload-toggle" className="text-xs text-muted-foreground cursor-pointer whitespace-nowrap">
+                  Use local Flex XML
+                </label>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5"
+                onClick={flexUseUpload ? handleFlexUploadClick : handleFlexFetch}
+                disabled={busy}
+              >
+                <RefreshCw className={cn('h-3 w-3', flexLoading && 'animate-spin')} />
+                {flexLoading ? 'Fetching…' : 'Flex Refresh'}
+              </Button>
             </div>
-          )}
-          <input ref={fileRef} type="file" accept=".xml" className="hidden" onChange={handleFileSelected} />
-        </div>
+          </>
+        )}
       </div>
 
-      {/* Inline accounts data freshness timestamp */}
-      {accountsFetchedAt != null && (
-        <p className="text-xs text-muted-foreground">
-          Accounts data from {new Date(accountsFetchedAt * 1000).toLocaleString()}
-          {' · '}{formatLastUpdate(accountsFetchedAt)} ago
+      {twsLoading && (
+        <p className="text-xs text-muted-foreground">Fetching executions from IB…</p>
+      )}
+
+      {twsResult && (
+        <p className={cn('text-xs', twsResult.isError ? 'text-destructive' : 'text-success')}>
+          {twsResult.msg}
         </p>
       )}
-    </div>
+
+      {flexResult && (
+        <div className="space-y-1">
+          <p className={cn('text-xs', flexResult.isError ? 'text-destructive' : 'text-success')}>
+            {flexResult.summary}
+          </p>
+          {flexResult.perQuery && flexResult.perQuery.length > 0 && (
+            <div className="text-xs text-muted-foreground space-y-0.5 pl-2 border-l border-muted">
+              {flexResult.perQuery.map((q) => {
+                const role =
+                  q.role === 'host' || q.role === 'primary' ? 'Host'
+                  : q.role === 'secondary' ? 'Secondary'
+                  : 'Flex'
+                const span = q.data_from && q.data_to ? ` · ${q.data_from} – ${q.data_to}` : ''
+                return (
+                  <p key={q.query_id}>
+                    {role}{q.label ? ` ${q.label}` : ''} [{q.query_id}]: {q.rows} row(s){span}
+                  </p>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {accountsFetchedAt != null && (
+        <p className="text-xs text-muted-foreground">
+          Data from {new Date(accountsFetchedAt * 1000).toLocaleString()}
+          {', '}
+          {formatLastUpdate(accountsFetchedAt)}
+        </p>
+      )}
+
+      <input ref={fileRef} type="file" accept=".xml" className="hidden" onChange={handleFileSelected} />
+    </section>
   )
 }

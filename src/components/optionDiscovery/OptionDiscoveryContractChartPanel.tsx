@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { DiscoveryIconButton } from '@/components/optionDiscovery/DiscoveryIconButton'
-/* eslint-disable react-hooks/set-state-in-effect, react-hooks/purity -- contract chart sync/load */
+/* eslint-disable react-hooks/set-state-in-effect -- contract chart sync/load */
 import type { Bar } from '@/types/market'
 import { pollMassiveJobUntilDone, postMassiveSync, resolveMassiveSyncJobId } from '@/api/research/optionDiscovery'
 import { fetchOptionBars } from '@/api/market'
-import { BarsCandlestickChart, finiteVwap } from '@/components/charts/BarsCandlestickChart'
+import { BarsCandlestickChart } from '@/components/charts/BarsCandlestickChart'
+import { finiteVwap } from '@/utils/chart/finiteVwap'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'

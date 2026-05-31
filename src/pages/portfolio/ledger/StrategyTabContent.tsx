@@ -5,8 +5,8 @@ import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
 import { OptGroupsTable } from './OptGroupsTable'
-import { fmtCcy, pnlClass } from './types'
-import type { GroupBy, StratOppGroup } from './types'
+import { fmtCcy, pnlClass } from './ledgerFormat'
+import type { GroupBy, StratOppGroup } from './ledgerTypes'
 
 export function StrategyTabContent({
   displayBuckets, groupBy, linkByOptionId,

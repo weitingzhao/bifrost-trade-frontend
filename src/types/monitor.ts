@@ -31,6 +31,7 @@ export interface IbPositionRow {
   daily_prev_close?: number | null
   category_id?: number | null
   category?: string | null
+  optionable?: boolean
   strategy_opportunity_name?: string | null
   strategy_instance_label?: string | null
 }

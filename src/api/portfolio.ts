@@ -43,6 +43,42 @@ export async function updatePositionCategory(
   return res.json()
 }
 
+export async function patchPositionCategory(
+  id: number,
+  patch: { name?: string; description?: string; sort_order?: number },
+): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(`${BASE}/position-categories/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
+  if (!res.ok) throw new Error(`Patch category: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchMarketStreamsSymbolOrder(): Promise<{
+  ok: boolean
+  order?: Record<string, string[]>
+}> {
+  const res = await fetch(`${BASE}/position-categories/symbol-order`)
+  if (!res.ok) return { ok: false }
+  const j = await res.json()
+  return { ok: j.ok === true, order: j.order ?? {} }
+}
+
+export async function putMarketStreamsSymbolOrder(
+  category_name: string,
+  symbols: string[],
+): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(`${BASE}/position-categories/symbol-order`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category_name, symbols }),
+  })
+  if (!res.ok) throw new Error(`Put symbol order: ${res.status}`)
+  return res.json()
+}
+
 export async function deletePositionCategory(
   id: number
 ): Promise<{ ok: boolean; error?: string }> {

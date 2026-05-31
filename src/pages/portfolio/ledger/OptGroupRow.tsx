@@ -19,8 +19,8 @@ import { executionDateStr } from '@/utils/ledger/performanceUtils'
 import {
   adjustedRealizedPnlForOptGroup,
 } from '@/utils/ledger/ledgerOptHelpers'
-import { fmtCcy, fmtPrice, pnlClass } from './types'
-import type { OptGroupCallbacks } from './types'
+import { fmtCcy, fmtPrice, pnlClass } from './ledgerFormat'
+import type { OptGroupCallbacks } from './ledgerTypes'
 
 // ── InstBadge ─────────────────────────────────────────────────────────────────
 

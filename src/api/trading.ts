@@ -67,7 +67,11 @@ export async function fetchExecutions(source: 'final' | 'tws' | 'canonical' = 'f
 export async function fetchPositionAttribution(): Promise<PositionAttributionResponse> {
   const res = await fetch(`${BASE}/position-attribution`)
   if (!res.ok) throw new Error(`Trading /position-attribution: ${res.status}`)
-  return res.json() as Promise<PositionAttributionResponse>
+  const raw = (await res.json()) as {
+    items?: PositionAttributionResponse['items']
+    attributions?: PositionAttributionResponse['items']
+  }
+  return { items: raw.attributions ?? raw.items ?? [] }
 }
 
 export async function createExecution(body: CreateExecutionBody): Promise<{ ok: boolean; id?: number; error?: string }> {

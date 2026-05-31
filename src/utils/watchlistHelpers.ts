@@ -96,6 +96,15 @@ export function formatOptionRight(right: string | null | undefined): string {
   return right
 }
 
+/** Live Watching Options: C → CALL, P → PUT (Legacy display). */
+export function formatOptionRightLabel(right: string | null | undefined): string {
+  if (right == null || right === '') return '—'
+  const r = String(right).trim().toUpperCase()
+  if (r === 'C' || r === 'CALL') return 'CALL'
+  if (r === 'P' || r === 'PUT') return 'PUT'
+  return right
+}
+
 export function formatStrike(strike: number | null | undefined): string {
   if (strike == null) return '—'
   const n = Number(strike)

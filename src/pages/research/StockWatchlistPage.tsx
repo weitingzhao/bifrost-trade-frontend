@@ -286,7 +286,7 @@ export default function StockWatchlistPage() {
       })
       setShowPositionPicker(false)
     },
-    [addItem, watchingId, workflow.positions],
+    [addItem, watchingId, workflow],
   )
 
   const handleSymbolClick = useCallback(

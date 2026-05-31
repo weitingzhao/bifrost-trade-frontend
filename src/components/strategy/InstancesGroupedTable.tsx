@@ -1,16 +1,25 @@
 import { useState, useCallback, useMemo } from 'react'
-import { ChevronRight, ChevronDown, Trash2, Eye, ArrowUpDown, ArrowUp, ArrowDown, Columns2 } from 'lucide-react'
+import { ChevronRight, ChevronDown, Trash2, Eye, Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
 import { structureChipStyle } from '@/utils/structureColor'
-import type { StrategyInstance, StrategyOpportunity } from '@/types/positions'
-import type { MetricsEntry } from '@/hooks/useInstanceMetrics'
-
-// ── Types ────────────────────────────────────────────────────────────────────
+import {
+  computeInstancePositionStatus,
+  computeSymbolGroupRollup,
+  formatInstanceListPeriodCell,
+  instanceListEndDateColumn,
+  reportDateStartEnd,
+  holdSpanDaysForMetrics,
+  netPnlUsdPerDayFromNetAndExecutions,
+  annualReturnDetailFromNetAndExecutions,
+  underlyingCostSellOptUsd,
+  computeCostPerDay,
+  computeReturnPct,
+  type InstanceListMetricsEntry,
+} from '@/utils/instanceListMetrics'
+import type { StrategyInstance } from '@/types/positions'
+import styles from '@/pages/strategy/InstancesPage.module.css'
 
 interface SymbolGroup {
   key: string
@@ -18,155 +27,236 @@ interface SymbolGroup {
   rows: StrategyInstance[]
 }
 
-type SortColumn = 'net' | 'npd' | 'und' | 'ret' | 'ann' | 'comm' | 'hold' | 'exec'
+type SortColumn =
+  | 'start'
+  | 'net'
+  | 'npd'
+  | 'und'
+  | 'cday'
+  | 'ann'
+  | 'ret'
+  | 'comm'
+  | 'exec'
 type SortDir = 'asc' | 'desc'
 
 interface Props {
   groups: SymbolGroup[]
-  metricsMap: Map<number, MetricsEntry>
-  opportunities: StrategyOpportunity[]
+  metricsMap: Map<number, InstanceListMetricsEntry>
   detailViewMode: 'accordion' | 'multi'
+  collapsedGroups: Record<string, boolean>
+  onToggleGroup: (key: string) => void
   onDelete: (instance: StrategyInstance) => void
   onViewDetail?: (instance: StrategyInstance) => void
   onCompare?: (instance: StrategyInstance) => void
   activeDetailId?: number | null
   compareId?: number | null
-  compact?: boolean
 }
-// ── Format helpers ───────────────────────────────────────────────────────────
+
+function signedClass(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return styles.signedNeutral
+  if (n > 1e-9) return styles.signedPositive
+  if (n < -1e-9) return styles.signedNegative
+  return styles.signedNeutral
+}
 
 function fmtPct(n: number | null | undefined): string {
-  if (n == null) return '—'
+  if (n == null || !Number.isFinite(n)) return '—'
   return `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`
 }
 
-function pnlClass(n: number | null | undefined): string {
-  if (n == null) return 'text-muted-foreground'
-  return n > 0.001 ? 'text-green-600 dark:text-green-400' : n < -0.001 ? 'text-red-500' : 'text-muted-foreground'
-}
-
-function fmtDate(iso: string | null): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
-}
-
-function holdDaysDisplay(openedAt: string | null): string {
-  if (!openedAt) return '—'
-  const days = Math.floor((Date.now() - new Date(openedAt).getTime()) / 86_400_000)
-  return days <= 0 ? '<1d' : `${days}d`
-}
-
-// ── Sort logic ───────────────────────────────────────────────────────────────
-
-function getSortValue(inst: StrategyInstance, entry: MetricsEntry | undefined, col: SortColumn): number {
-  if (!entry || entry.status !== 'ready') return NaN
-  const m = entry.metrics
+function getSortValue(
+  row: StrategyInstance,
+  m: InstanceListMetricsEntry | undefined,
+  col: SortColumn,
+): number {
+  if (m == null || m.status !== 'ready') return NaN
+  const { summary, sliced, execDerivedNetPnl, maxRiskUsd } = m
+  const ps = computeInstancePositionStatus(sliced)
   switch (col) {
-    case 'net': return m.netPnl
-    case 'npd': return m.netPnlPerDay ?? NaN
-    case 'und': return m.underlyingCost ?? NaN
-    case 'ret': return m.returnPct ?? NaN
-    case 'ann': return m.annualPct ?? NaN
-    case 'comm': return m.commission
-    case 'hold': return m.holdDays
-    case 'exec': return inst.executions_count
+    case 'start': {
+      const s = reportDateStartEnd(sliced).start
+      if (s == null) return NaN
+      const t = Date.parse(`${s}T12:00:00.000Z`)
+      return Number.isFinite(t) ? t : NaN
+    }
+    case 'net':
+      return execDerivedNetPnl != null && Number.isFinite(execDerivedNetPnl) ? execDerivedNetPnl : NaN
+    case 'comm':
+      return summary?.total_commission != null ? Number(summary.total_commission) : NaN
+    case 'und': {
+      const u = underlyingCostSellOptUsd(sliced)
+      return Number.isFinite(u) ? u : NaN
+    }
+    case 'cday': {
+      const v = computeCostPerDay(sliced, maxRiskUsd, ps)
+      return v != null && Number.isFinite(v) ? v : NaN
+    }
+    case 'npd': {
+      const v = netPnlUsdPerDayFromNetAndExecutions(execDerivedNetPnl, sliced, ps)
+      return v != null && Number.isFinite(v) ? v : NaN
+    }
+    case 'ret': {
+      const v = computeReturnPct(execDerivedNetPnl, sliced, maxRiskUsd)
+      return v != null && Number.isFinite(v) ? v : NaN
+    }
+    case 'ann': {
+      const a = annualReturnDetailFromNetAndExecutions(execDerivedNetPnl, sliced, maxRiskUsd, ps)
+      return a != null && Number.isFinite(a.annualReturnPct) ? a.annualReturnPct : NaN
+    }
+    case 'exec': {
+      const n = row.executions_count
+      return n != null && Number.isFinite(Number(n)) ? Number(n) : NaN
+    }
+    default:
+      return NaN
   }
 }
 
-// ── Group Rollup ─────────────────────────────────────────────────────────────
-
-function computeGroupRollup(rows: StrategyInstance[], metricsMap: Map<number, MetricsEntry>) {
-  let totalNet = 0
-  let sumUnderlying = 0
-  let anyReady = false
-
-  for (const row of rows) {
-    const entry = metricsMap.get(row.strategy_instance_id)
-    if (!entry || entry.status !== 'ready') continue
-    anyReady = true
-    totalNet += entry.metrics.netPnl
-    if (entry.metrics.underlyingCost != null) sumUnderlying += entry.metrics.underlyingCost
-  }
-
-  const groupAnnualPct = sumUnderlying > 0 ? (totalNet / sumUnderlying) * 365.25 / 30 * 100 : null
-
-  return {
-    totalNet: anyReady ? totalNet : null,
-    sumUnderlying: sumUnderlying > 0 ? sumUnderlying : null,
-    groupAnnualPct: groupAnnualPct != null && isFinite(groupAnnualPct)
-      ? Math.min(999, Math.max(-999, groupAnnualPct))
-      : null,
-  }
-}
-
-// ── Sortable header ──────────────────────────────────────────────────────────
-
-function SortableHead({
+function SortableTh({
   column,
   sort,
   onSort,
   children,
   className,
+  rowSpan,
+  numeric,
 }: {
   column: SortColumn
   sort: { column: SortColumn; dir: SortDir } | null
   onSort: (col: SortColumn) => void
   children: React.ReactNode
   className?: string
+  rowSpan?: number
+  numeric?: boolean
 }) {
   const active = sort?.column === column
-  const Icon = active ? (sort.dir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown
   return (
-    <TableHead
-      className={cn('cursor-pointer select-none text-right', className)}
-      onClick={() => onSort(column)}
+    <th
+      rowSpan={rowSpan}
+      className={cn(className, numeric && styles.colNum, active && styles.thSortActive)}
+      aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
     >
-      <span className="inline-flex items-center gap-0.5">
-        {children}
-        <Icon className={cn('h-3 w-3', active ? 'text-foreground' : 'text-muted-foreground/40')} />
-      </span>
-    </TableHead>
+      <button
+        type="button"
+        className={cn(styles.thSortBtn, numeric && styles.thSortBtnNum)}
+        onClick={() => onSort(column)}
+        aria-pressed={active}
+      >
+        <span>{children}</span>
+        {active ? <span className={styles.sortCaret}>{sort!.dir === 'asc' ? '↑' : '↓'}</span> : null}
+      </button>
+    </th>
   )
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+function StatusChip({ status }: { status: 'open' | 'closed' | 'no_fills' }) {
+  const label = status === 'open' ? 'Open' : status === 'closed' ? 'Closed' : 'No fills'
+  const cls =
+    status === 'open'
+      ? styles.statusOpen
+      : status === 'closed'
+        ? styles.statusClosed
+        : styles.statusUnknown
+  const title =
+    status === 'closed'
+      ? 'All contracts flat (buy and sell quantities net to zero per contract).'
+      : status === 'open'
+        ? 'At least one contract has non-zero net quantity.'
+        : 'No fills attributed to this instance in the final book.'
+  return (
+    <span className={cn(styles.statusChip, cls)} title={title}>
+      {label}
+    </span>
+  )
+}
 
-export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDelete, onViewDetail, onCompare, activeDetailId, compareId, compact }: Omit<Props, 'opportunities'> & { opportunities?: StrategyOpportunity[] }) {
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+function MetricsCells({
+  instanceId,
+  metricsMap,
+}: {
+  instanceId: number
+  metricsMap: Map<number, InstanceListMetricsEntry>
+}) {
+  const m = metricsMap.get(instanceId)
+  if (m == null || m.status === 'loading') {
+    return Array.from({ length: 9 }, (_, i) => (
+      <td key={i} className={cn(styles.colNum, styles.signedNeutral)}>…</td>
+    ))
+  }
+  if (m.status === 'error') {
+    return Array.from({ length: 9 }, (_, i) => (
+      <td key={i} className={cn(styles.colNum, styles.signedNeutral)}>—</td>
+    ))
+  }
+
+  const { summary, sliced, execDerivedNetPnl, maxRiskUsd, linkedStockSlippage } = m
+  const positionStatus = computeInstancePositionStatus(sliced)
+  const { start } = reportDateStartEnd(sliced)
+  const endCol = instanceListEndDateColumn(sliced, positionStatus)
+  const holdSpanDays = holdSpanDaysForMetrics(sliced, positionStatus)
+  const periodCell = formatInstanceListPeriodCell(start, endCol.display, holdSpanDays, endCol.cellTitle)
+  const npd = netPnlUsdPerDayFromNetAndExecutions(execDerivedNetPnl, sliced, positionStatus)
+  const annual = annualReturnDetailFromNetAndExecutions(execDerivedNetPnl, sliced, maxRiskUsd, positionStatus)
+  const underlying = underlyingCostSellOptUsd(sliced)
+  const costPerDay = computeCostPerDay(sliced, maxRiskUsd, positionStatus)
+  const returnPct = computeReturnPct(execDerivedNetPnl, sliced, maxRiskUsd)
+  const linkSlipTitle =
+    Math.abs(linkedStockSlippage) > 1e-9
+      ? `Includes prorated option–stock link slippage (${fmtUsd(linkedStockSlippage)}).`
+      : undefined
+
+  return (
+    <>
+      <td>
+        <StatusChip status={positionStatus} />
+      </td>
+      <td className={cn(styles.colPeriod, styles.colNum)} title={periodCell.title}>
+        <span className={styles.periodYear}>{periodCell.yearLabel}</span>{' '}
+        <span>{periodCell.rangeLabel}</span>{' '}
+        {periodCell.dayLabel != null ? (
+          <strong className={styles.periodDays}>{periodCell.dayLabel}</strong>
+        ) : null}
+      </td>
+      <td
+        className={cn(styles.colNum, signedClass(execDerivedNetPnl))}
+        title={linkSlipTitle}
+      >
+        {execDerivedNetPnl != null ? fmtUsd(execDerivedNetPnl) : '—'}
+      </td>
+      <td className={cn(styles.colNum, signedClass(npd))}>
+        {npd != null ? fmtUsd(npd) : '—'}
+      </td>
+      <td className={cn(styles.colNum, styles.signedNeutral)}>
+        {underlying > 0 ? fmtUsdRound(underlying) : '—'}
+      </td>
+      <td className={cn(styles.colNum, styles.signedNeutral)}>
+        {costPerDay != null ? fmtUsdRound(costPerDay) : '—'}
+      </td>
+      <td className={cn(styles.colNum, signedClass(annual?.annualReturnPct))}>
+        {annual != null ? fmtPct(annual.annualReturnPct) : '—'}
+      </td>
+      <td className={cn(styles.colNum, signedClass(returnPct))}>
+        {returnPct != null ? fmtPct(returnPct) : '—'}
+      </td>
+      <td className={cn(styles.colNum, styles.signedNeutral)}>
+        {summary?.total_commission != null ? fmtUsd(-Number(summary.total_commission)) : '—'}
+      </td>
+    </>
+  )
+}
+
+export function InstancesGroupedTable({
+  groups,
+  metricsMap,
+  collapsedGroups,
+  onToggleGroup,
+  onDelete,
+  onViewDetail,
+  onCompare,
+  activeDetailId,
+  compareId,
+}: Props) {
   const [sort, setSort] = useState<{ column: SortColumn; dir: SortDir } | null>(null)
-
-  const toggleGroup = useCallback((key: string) => {
-    setCollapsedGroups((prev) => {
-      if (detailViewMode === 'accordion') {
-        const wasCollapsed = Boolean(prev[key])
-        if (wasCollapsed) {
-          const next: Record<string, boolean> = {}
-          for (const g of groups) next[g.key] = true
-          delete next[key]
-          return next
-        }
-        return { ...prev, [key]: true }
-      }
-      return { ...prev, [key]: !prev[key] }
-    })
-  }, [detailViewMode, groups])
-
-  const expandAll = useCallback(() => {
-    if (detailViewMode === 'accordion' && groups.length > 0) {
-      const next: Record<string, boolean> = {}
-      for (const g of groups) next[g.key] = true
-      delete next[groups[0].key]
-      setCollapsedGroups(next)
-    } else {
-      setCollapsedGroups({})
-    }
-  }, [detailViewMode, groups])
-
-  const collapseAll = useCallback(() => {
-    const next: Record<string, boolean> = {}
-    for (const g of groups) next[g.key] = true
-    setCollapsedGroups(next)
-  }, [groups])
 
   const toggleSort = useCallback((col: SortColumn) => {
     setSort((prev) => {
@@ -175,7 +265,6 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
     })
   }, [])
 
-  // Sort rows within each group
   const sortedGroups = useMemo(() => {
     if (!sort) return groups
     return groups.map((g) => ({
@@ -184,10 +273,11 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
         const va = getSortValue(a, metricsMap.get(a.strategy_instance_id), sort.column)
         const vb = getSortValue(b, metricsMap.get(b.strategy_instance_id), sort.column)
         const mul = sort.dir === 'asc' ? 1 : -1
-        if (isNaN(va) && isNaN(vb)) return 0
-        if (isNaN(va)) return 1
-        if (isNaN(vb)) return -1
-        return (va - vb) * mul
+        if (Number.isNaN(va) && Number.isNaN(vb)) return a.strategy_instance_id - b.strategy_instance_id
+        if (Number.isNaN(va)) return 1
+        if (Number.isNaN(vb)) return -1
+        if (va === vb) return a.strategy_instance_id - b.strategy_instance_id
+        return va < vb ? -mul : mul
       }),
     }))
   }, [groups, sort, metricsMap])
@@ -197,193 +287,174 @@ export function InstancesGroupedTable({ groups, metricsMap, detailViewMode, onDe
   }
 
   return (
-    <div className="space-y-0">
-      {/* Symbol groups toolbar */}
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Symbol groups</span>
-        <Button variant="outline" size="sm" className="h-6 text-[11px] px-2" onClick={expandAll}>
-          Expand all
-        </Button>
-        <Button variant="outline" size="sm" className="h-6 text-[11px] px-2" onClick={collapseAll}>
-          Collapse all
-        </Button>
-      </div>
+    <div className={styles.tableWrap}>
+      <table className={styles.instancesTable}>
+        <thead>
+          <tr>
+            <th rowSpan={2}>ID</th>
+            <th rowSpan={2} className={styles.colOpp}>Opportunity</th>
+            <th rowSpan={2}>Status</th>
+            <SortableTh column="start" sort={sort} onSort={toggleSort} rowSpan={2} className={styles.colPeriod}>
+              <span title="Window: min report date → end (open: latest open-leg expiry; closed: max report date). Hold = calendar days for metrics.">
+                Period
+              </span>
+            </SortableTh>
+            <th colSpan={2} className={styles.headGroup} scope="colgroup">Net PnL</th>
+            <th colSpan={2} className={styles.headGroup} scope="colgroup">Underlying Cost</th>
+            <th colSpan={2} className={styles.headGroup} scope="colgroup">Return %</th>
+            <SortableTh column="comm" sort={sort} onSort={toggleSort} rowSpan={2} numeric>
+              <abbr title="Commission">Comm.</abbr>
+            </SortableTh>
+            <SortableTh column="exec" sort={sort} onSort={toggleSort} rowSpan={2} numeric>
+              Exec
+            </SortableTh>
+            <th rowSpan={2} className={styles.actionsCell}>Actions</th>
+          </tr>
+          <tr>
+            <SortableTh column="net" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
+              PnL
+            </SortableTh>
+            <SortableTh column="npd" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
+              / day
+            </SortableTh>
+            <SortableTh column="und" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
+              Cost
+            </SortableTh>
+            <SortableTh column="cday" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
+              / day
+            </SortableTh>
+            <SortableTh column="ann" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
+              <abbr title="Annualized return from Net/day ÷ Cost/day × 365.25/hold days.">Annual %</abbr>
+            </SortableTh>
+            <SortableTh column="ret" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
+              <abbr title="Net PnL ÷ capital at risk × 100.">%</abbr>
+            </SortableTh>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedGroups.flatMap((group) => {
+            const collapsed = Boolean(collapsedGroups[group.key])
+            const rollup = computeSymbolGroupRollup(group.rows, metricsMap)
 
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">ID</TableHead>
-              <TableHead className={compact ? '' : 'min-w-[200px]'}>Opportunity</TableHead>
-              {!compact && <TableHead>Status</TableHead>}
-              {!compact && <TableHead className="text-right">Period</TableHead>}
-              {!compact && <SortableHead column="net" sort={sort} onSort={toggleSort}>Net PnL</SortableHead>}
-              {!compact && <SortableHead column="npd" sort={sort} onSort={toggleSort}>/ day</SortableHead>}
-              {!compact && <SortableHead column="und" sort={sort} onSort={toggleSort}>Underlying</SortableHead>}
-              {!compact && <SortableHead column="ann" sort={sort} onSort={toggleSort}>Annual %</SortableHead>}
-              {!compact && <SortableHead column="ret" sort={sort} onSort={toggleSort}>Return</SortableHead>}
-              {!compact && <SortableHead column="comm" sort={sort} onSort={toggleSort}>Comm.</SortableHead>}
-              {!compact && <SortableHead column="exec" sort={sort} onSort={toggleSort}>Exec</SortableHead>}
-              <TableHead className="w-20">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedGroups.flatMap((group) => {
-              const collapsed = Boolean(collapsedGroups[group.key])
-              const rollup = computeGroupRollup(group.rows, metricsMap)
-
-              const headerRow = (
-                <TableRow
-                  key={`group-header-${group.key}`}
-                  className="bg-muted/30 hover:bg-muted/50 cursor-pointer"
-                  onClick={() => toggleGroup(group.key)}
-                >
-                  <TableCell colSpan={2}>
-                    <div className="flex items-center gap-2 font-semibold text-sm">
-                      {collapsed
-                        ? <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        : <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      }
-                      <span>{group.label}</span>
-                      <span className="text-xs text-muted-foreground font-normal">
+            const headerRow = (
+              <tr key={`group-${group.key}`} className={styles.groupRow}>
+                <td colSpan={2}>
+                  <button
+                    type="button"
+                    className={styles.groupToggle}
+                    onClick={() => onToggleGroup(group.key)}
+                    aria-expanded={!collapsed}
+                  >
+                    {collapsed ? (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span>
+                      Symbol group: {group.label}
+                      <span className={styles.groupMuted}>
+                        {' '}
                         ({group.rows.length} instance{group.rows.length !== 1 ? 's' : ''})
                       </span>
-                    </div>
-                  </TableCell>
-                  <TableCell />
-                  <TableCell />
-                  <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(rollup.totalNet))}>
-                    {rollup.totalNet != null ? fmtUsd(rollup.totalNet) : '—'}
-                  </TableCell>
-                  <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
-                  <TableCell className="text-right font-mono text-xs">
-                    {rollup.sumUnderlying != null ? fmtUsdRound(rollup.sumUnderlying) : '—'}
-                  </TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(rollup.groupAnnualPct))}>
-                    {rollup.groupAnnualPct != null ? fmtPct(rollup.groupAnnualPct) : '—'}
-                  </TableCell>
-                  <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
-                  <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
-                  <TableCell className="text-right text-xs text-muted-foreground">—</TableCell>
-                  <TableCell />
-                </TableRow>
-              )
+                    </span>
+                  </button>
+                </td>
+                <td className={styles.signedNeutral}>—</td>
+                <td className={styles.signedNeutral}>—</td>
+                <td
+                  className={cn(styles.colNum, signedClass(rollup.totalNet))}
+                  title="Sum of execution-derived Net PnL for instances with loaded metrics."
+                >
+                  {rollup.totalNet != null ? fmtUsd(rollup.totalNet) : '—'}
+                </td>
+                <td className={styles.signedNeutral}>—</td>
+                <td
+                  className={cn(styles.colNum, rollup.sumUnderlying != null ? '' : styles.signedNeutral)}
+                  title="Sum of per-instance underlying cost (sell-side OPT)."
+                >
+                  {rollup.sumUnderlying != null ? fmtUsdRound(rollup.sumUnderlying) : '—'}
+                </td>
+                <td className={styles.signedNeutral}>—</td>
+                <td
+                  className={cn(styles.colNum, signedClass(rollup.groupAnnualPct))}
+                  title="Group annual return: total Net × 365.25 / Σ(denominator × hold days) × 100."
+                >
+                  {rollup.groupAnnualPct != null ? fmtPct(rollup.groupAnnualPct) : '—'}
+                </td>
+                <td className={styles.signedNeutral}>—</td>
+                <td className={styles.signedNeutral}>—</td>
+                <td className={styles.signedNeutral}>—</td>
+                <td />
+              </tr>
+            )
 
-              if (collapsed) return [headerRow]
+            if (collapsed) return [headerRow]
 
-              const dataRows = group.rows.map((inst) => {
-                const entry = metricsMap.get(inst.strategy_instance_id)
-                const m = entry?.status === 'ready' ? entry.metrics : null
-                const loading = !entry || entry.status === 'loading'
-
-                return (
-                  <TableRow
-                    key={inst.strategy_instance_id}
-                    className={cn(
-                      activeDetailId === inst.strategy_instance_id && 'bg-primary/5',
-                      compareId === inst.strategy_instance_id && 'bg-blue-500/5',
+            const dataRows = group.rows.map((inst) => (
+              <tr
+                key={inst.strategy_instance_id}
+                className={cn(
+                  activeDetailId === inst.strategy_instance_id && styles.rowSelected,
+                  compareId === inst.strategy_instance_id && 'bg-blue-500/5',
+                )}
+              >
+                <td className={cn(styles.colNum, styles.signedNeutral)}>{inst.strategy_instance_id}</td>
+                <td className={styles.colOpp}>
+                  <div>{inst.strategy_opportunity_name ?? '—'}</div>
+                  {inst.strategy_structure_name ? (
+                    <span
+                      className={styles.structureChip}
+                      style={structureChipStyle(inst.strategy_structure_name, false)}
+                      title={`Structure: ${inst.strategy_structure_name}`}
+                    >
+                      {inst.strategy_structure_name}
+                    </span>
+                  ) : null}
+                </td>
+                <MetricsCells instanceId={inst.strategy_instance_id} metricsMap={metricsMap} />
+                <td className={cn(styles.colNum, styles.signedNeutral)}>
+                  {inst.executions_count != null ? inst.executions_count : '—'}
+                </td>
+                <td className={styles.actionsCell}>
+                  <div className={styles.actionsInner}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="View instance detail"
+                      onClick={() => onViewDetail?.(inst)}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                    {activeDetailId != null && activeDetailId !== inst.strategy_instance_id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Compare side-by-side"
+                        onClick={() => onCompare?.(inst)}
+                      >
+                        <Columns2 className="h-3.5 w-3.5" />
+                      </Button>
                     )}
-                  >
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {inst.strategy_instance_id}
-                    </TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      title="Delete instance"
+                      onClick={() => onDelete(inst)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))
 
-                    <TableCell>
-                      <div className="space-y-0.5">
-                        <div className={cn('font-medium leading-tight', compact ? 'text-xs' : 'text-sm')}>
-                          {inst.strategy_opportunity_name ?? '—'}
-                        </div>
-                        {inst.strategy_structure_name && (
-                          <span
-                            className="inline-block text-[10px] px-1.5 py-0.5 rounded font-medium border"
-                            style={structureChipStyle(inst.strategy_structure_name, false)}
-                          >
-                            {inst.strategy_structure_name}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-
-                    {!compact && (
-                    <TableCell>
-                      {loading ? (
-                        <span className="text-xs text-muted-foreground">…</span>
-                      ) : m ? (
-                        <span className={cn(
-                          'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
-                          'border',
-                          m.positionStatus === 'open'
-                            ? 'border-green-500/40 text-green-600 dark:text-green-400'
-                            : m.positionStatus === 'closed'
-                              ? 'border-muted text-muted-foreground'
-                              : 'border-muted text-muted-foreground',
-                        )}>
-                          {m.positionStatus === 'open' ? 'Open' : m.positionStatus === 'closed' ? 'Closed' : 'No fills'}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    )}
-
-                    {!compact && (
-                    <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
-                      <span>{fmtDate(inst.opened_at)}</span>
-                      {' '}
-                      <span className="font-medium">{holdDaysDisplay(inst.opened_at)}</span>
-                    </TableCell>
-                    )}
-
-                    {!compact && <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(m?.netPnl))}>{loading ? '…' : fmtUsd(m?.netPnl)}</TableCell>}
-                    {!compact && <TableCell className={cn('text-right font-mono text-xs', pnlClass(m?.netPnlPerDay))}>{loading ? '…' : fmtUsd(m?.netPnlPerDay)}</TableCell>}
-                    {!compact && <TableCell className="text-right font-mono text-xs text-muted-foreground">{loading ? '…' : fmtUsdRound(m?.underlyingCost)}</TableCell>}
-                    {!compact && <TableCell className={cn('text-right font-mono text-xs font-medium', pnlClass(m?.annualPct))}>{loading ? '…' : fmtPct(m?.annualPct)}</TableCell>}
-                    {!compact && <TableCell className={cn('text-right font-mono text-xs', pnlClass(m?.returnPct))}>{loading ? '…' : fmtPct(m?.returnPct)}</TableCell>}
-                    {!compact && <TableCell className="text-right font-mono text-xs text-muted-foreground">{loading ? '…' : m ? fmtUsd(-m.commission) : '—'}</TableCell>}
-                    {!compact && <TableCell className="text-right text-xs">{inst.executions_count > 0 ? <span className="tabular-nums">{inst.executions_count}</span> : <span className="text-muted-foreground">0</span>}</TableCell>}
-
-                    <TableCell className="p-1">
-                      <div className="flex items-center gap-0.5">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={cn('h-7 w-7', activeDetailId === inst.strategy_instance_id ? 'text-primary' : 'text-muted-foreground hover:text-foreground')}
-                          title="View instance detail"
-                          onClick={() => onViewDetail?.(inst)}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        {activeDetailId != null && activeDetailId !== inst.strategy_instance_id && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn('h-7 w-7', compareId === inst.strategy_instance_id ? 'text-blue-500' : 'text-muted-foreground hover:text-foreground')}
-                            title={compareId === inst.strategy_instance_id ? 'Remove comparison' : 'Compare side-by-side'}
-                            onClick={() => onCompare?.(inst)}
-                          >
-                            <Columns2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => onDelete(inst)}
-                          title="Delete instance"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-
-              return [headerRow, ...dataRows]
-            })}
-          </TableBody>
-        </Table>
-      </div>
+            return [headerRow, ...dataRows]
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }

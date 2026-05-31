@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import { fmtUsd } from '@/utils/positions'
 import type { IbAccountSnapshot } from '@/types/monitor'
 
-const LINE_COLORS = ['#38bdf8', '#2dd4bf', '#fbbf24', '#c084fc']
+const LINE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6']
 
 interface Props {
   accounts: IbAccountSnapshot[]
@@ -9,109 +10,115 @@ interface Props {
 
 function getNetLiq(a: IbAccountSnapshot): number {
   const v = a.summary?.NetLiquidation
-  if (v == null) return 0
+  if (v == null) return NaN
   const n = parseFloat(String(v))
-  return Number.isFinite(n) ? n : 0
+  return Number.isFinite(n) ? n : NaN
 }
 
 export function NetLiqChart({ accounts }: Props) {
-  const series = accounts
-    .map((a, i) => ({
-      label: a.account_id ?? `Account ${i + 1}`,
-      netLiq: getNetLiq(a),
-    }))
-    .filter((s) => s.netLiq > 0)
+  const series = useMemo(() => {
+    const snapshotT = 1
+    return accounts
+      .map((a, i) => ({
+        accountId: a.account_id ?? '',
+        label: a.account_id ?? `Account ${i + 1}`,
+        points: [{ t: snapshotT, y: getNetLiq(a) }],
+      }))
+      .filter((s) => Number.isFinite(s.points[0].y))
+  }, [accounts])
 
-  const W = 300
-  const H = 96
-  const PAD = { left: 8, right: 8, top: 12, bottom: 8 }
-  const barH = 18
-  const gapY = 8
-  const maxVal = series.length > 0 ? Math.max(...series.map((s) => s.netLiq)) : 1
-  const innerW = W - PAD.left - PAD.right
+  const allTs = series.flatMap((s) => s.points.map((p) => p.t))
+  const minT = allTs.length ? Math.min(...allTs) : 0
+  const maxT = allTs.length ? Math.max(...allTs) : 1
+  const allY = series.flatMap((s) => s.points.map((p) => p.y))
+  const minY = allY.length ? Math.min(...allY, 0) : 0
+  const maxY = allY.length ? Math.max(...allY) * 1.05 : 1
+
+  const w = 480
+  const h = 120
+  const pad = { left: 40, right: 12, top: 6, bottom: 20 }
+  const x = (t: number) => pad.left + ((t - minT) / (maxT - minT || 1)) * (w - pad.left - pad.right)
+  const y = (v: number) => pad.top + (1 - (v - minY) / (maxY - minY || 1)) * (h - pad.top - pad.bottom)
 
   return (
-    <div className="rounded-lg border border-border bg-secondary p-4 space-y-3">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-        Net Liquidation
-      </p>
+    <div className="rounded-xl border border-border bg-secondary p-4 space-y-3">
+      <p className="text-sm font-medium">Net Liquidation over time</p>
       {series.length === 0 ? (
         <p className="text-sm text-muted-foreground">No account data.</p>
       ) : (
-        <svg
-          viewBox={`0 0 ${W} ${Math.max(H, PAD.top + series.length * (barH + gapY) - gapY + PAD.bottom)}`}
-          width={W}
-          className="overflow-visible"
-          aria-label="Net liquidation by account"
-          role="img"
-        >
-          {series.map((s, i) => {
-            const barW = Math.max(2, (s.netLiq / maxVal) * innerW)
-            const y = PAD.top + i * (barH + gapY)
-            const color = LINE_COLORS[i % LINE_COLORS.length]
-            return (
-              <g key={s.label}>
-                {/* Label */}
-                <text
-                  x={PAD.left}
-                  y={y + barH / 2 - 3}
-                  fill="currentColor"
-                  fontSize={9}
-                  dominantBaseline="auto"
-                  className="opacity-60 font-mono"
-                >
-                  {s.label}
-                </text>
-                {/* Bar track */}
-                <rect
-                  x={PAD.left}
-                  y={y + barH / 2 + 1}
-                  width={innerW}
-                  height={5}
-                  rx={2}
-                  fill="currentColor"
-                  opacity={0.1}
+        <>
+          <svg
+            className="w-full max-w-full"
+            viewBox={`0 0 ${w} ${h}`}
+            preserveAspectRatio="xMidYMid meet"
+            aria-label="Net liquidation over time"
+            role="img"
+          >
+            <defs>
+              <linearGradient id="netliq-fill" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {series.map((s, idx) => {
+              const pts = [...s.points].sort((a, b) => a.t - b.t)
+              const pathD = pts.length ? `M ${pts.map((p) => `${x(p.t)} ${y(p.y)}`).join(' L ')}` : ''
+              const pathFill =
+                pts.length >= 2
+                  ? `${pathD} L ${x(pts[pts.length - 1].t)} ${y(minY)} L ${x(pts[0].t)} ${y(minY)} Z`
+                  : ''
+              const color = LINE_COLORS[idx % LINE_COLORS.length]
+              return (
+                <g key={s.accountId}>
+                  {pathFill ? <path d={pathFill} fill="url(#netliq-fill)" /> : null}
+                  {pathD ? (
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke={color}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  ) : null}
+                  {pts.map((p, i) => (
+                    <circle key={i} cx={x(p.t)} cy={y(p.y)} r="4" fill={color} />
+                  ))}
+                </g>
+              )
+            })}
+            <line
+              x1={pad.left}
+              y1={h - pad.bottom}
+              x2={w - pad.right}
+              y2={h - pad.bottom}
+              stroke="var(--border)"
+              strokeWidth="1"
+            />
+            <line
+              x1={pad.left}
+              y1={pad.top}
+              x2={pad.left}
+              y2={h - pad.bottom}
+              stroke="var(--border)"
+              strokeWidth="1"
+            />
+          </svg>
+          <ul className="space-y-1.5">
+            {series.map((s, idx) => (
+              <li key={s.accountId} className="flex items-center gap-2 text-xs">
+                <span
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{ backgroundColor: LINE_COLORS[idx % LINE_COLORS.length] }}
                 />
-                {/* Bar fill */}
-                <rect
-                  x={PAD.left}
-                  y={y + barH / 2 + 1}
-                  width={barW}
-                  height={5}
-                  rx={2}
-                  fill={color}
-                />
-                {/* Value */}
-                <text
-                  x={PAD.left + barW + 4}
-                  y={y + barH / 2 + 5}
-                  fill="currentColor"
-                  fontSize={9}
-                  dominantBaseline="auto"
-                  fontFamily="ui-monospace, monospace"
-                  fontWeight="600"
-                >
-                  {fmtUsd(s.netLiq)}
-                </text>
-              </g>
-            )
-          })}
-        </svg>
-      )}
-      {/* Color legend */}
-      {series.length > 1 && (
-        <div className="flex flex-wrap gap-3 pt-1">
-          {series.map((s, i) => (
-            <div key={s.label} className="flex items-center gap-1.5 text-xs">
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: LINE_COLORS[i % LINE_COLORS.length] }}
-              />
-              <span className="font-mono text-muted-foreground">{s.label}</span>
-              <span className="font-mono font-semibold">{fmtUsd(s.netLiq)}</span>
-            </div>
-          ))}
-        </div>
+                <span className="font-mono text-muted-foreground">{s.label}</span>
+                <span className="font-mono font-semibold tabular-nums ml-auto">
+                  {fmtUsd(s.points[s.points.length - 1]?.y ?? 0)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   )

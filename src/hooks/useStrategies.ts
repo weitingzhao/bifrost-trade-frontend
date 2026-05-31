@@ -12,8 +12,8 @@ export function useOpportunities() {
 
 export function useStructures() {
   return useQuery({
-    queryKey: QUERY_KEYS.strategy.structures,
-    queryFn: fetchStructures,
+    queryKey: [...QUERY_KEYS.strategy.structures, 'active'],
+    queryFn: () => fetchStructures(true),
     staleTime: 60_000,
   })
 }

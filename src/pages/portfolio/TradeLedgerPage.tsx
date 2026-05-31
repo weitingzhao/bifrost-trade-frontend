@@ -61,10 +61,10 @@ import {
 } from '@/utils/ledger/ledgerOptHelpers'
 import type { InstanceConsistencyState } from '@/utils/ledger/ledgerOptHelpers'
 import { fetchOptionStockLinkMapForExecutions } from '@/utils/ledger/fetchOptionStockLinkMap'
-import {
-  TAB_GROUPS, MONTH_NAMES, fmtCcy, fmtPrice, fmtMdHint, pnlClass, execMonthKey, SortIcon,
-} from '@/pages/portfolio/ledger/types'
-import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/types'
+import { TAB_GROUPS, MONTH_NAMES } from '@/pages/portfolio/ledger/ledgerConstants'
+import { fmtCcy, fmtPrice, fmtMdHint, pnlClass, execMonthKey } from '@/pages/portfolio/ledger/ledgerFormat'
+import { LedgerSortIcon as SortIcon } from '@/pages/portfolio/ledger/LedgerSortIcon'
+import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
 import { SummaryTable } from '@/pages/portfolio/ledger/SummaryTable'
 import { OptionsTabContent } from '@/pages/portfolio/ledger/OptionsTabContent'
 import { StkTabContent } from '@/pages/portfolio/ledger/StkTabContent'

@@ -114,10 +114,50 @@ export interface StrategyStructure {
   notes: string | null
   legs: StructureLeg[]
   constraints: StructureConstraint[]
+  /** Present when fetched by id; map assembled from strategy_structure_meta rows. */
+  metadata?: Record<string, unknown> | null
+}
+
+export interface StructureMetaEntry {
+  meta_key: string
+  meta_value_text: string | null
+}
+
+/** Payload for create/update strategy structure. Dimensions come from the linked template. */
+export interface StructurePayload {
+  name: string
+  strategy_template_id?: number
+  structure_type?: string
+  structure_subtype?: string | null
+  legs: StructureLeg[]
+  constraints?: StructureConstraint[]
+  version?: number
+  is_active?: boolean
+  notes?: string
+  meta?: StructureMetaEntry[]
 }
 
 export interface StructuresResponse {
   items: StrategyStructure[]
+}
+
+export interface StrategyHistoryRow {
+  strategy_history_id: number
+  strategy_structure_id: number
+  ts: number | string
+  state_summary: unknown
+  created_at: string | null
+}
+
+export interface StrategyHistoryParams {
+  from_ts?: number
+  to_ts?: number
+  strategy_structure_id?: number
+  limit?: number
+}
+
+export interface StrategyHistoryResponse {
+  items: StrategyHistoryRow[]
 }
 
 // ── Gate Safety ───────────────────────────────────────────────────────────────

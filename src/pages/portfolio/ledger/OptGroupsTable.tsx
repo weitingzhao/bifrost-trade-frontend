@@ -6,7 +6,7 @@ import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
 import { getOptGroupKey } from '@/utils/ledger/ledgerOptHelpers'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { OptGroupRow } from './OptGroupRow'
-import type { OptGroupCallbacks } from './types'
+import type { OptGroupCallbacks } from './ledgerTypes'
 
 export function OptGroupsTable({
   groups, showNetQty, linkByOptionId, expandedGroups, toggleGroup, keyPrefix = '', ...cbs

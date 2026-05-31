@@ -94,12 +94,29 @@ describe('buildOpenOptionPositions', () => {
       {
         contract_key: 'AAPL|OPT|20250620|150|C',
         account_id: 'U1',
-        attribution_type: 'single' as const,
+        symbol: 'AAPL',
+        sec_type: 'OPT',
+        expiry: '20250620',
+        strike: 150,
+        option_right: 'C',
+        position_qty: 2,
+        avg_cost: 5,
+        price_mid: null,
+        price_last: null,
         strategy_instance_id: 42,
         strategy_instance_label: 'AAPL CC #1',
         strategy_opportunity_id: 10,
         strategy_opportunity_name: 'AAPL Covered Call',
+        strategy_instance_opened_at_epoch: null,
+        structure_type: null,
+        scope_type: null,
+        strategy_structure_id: null,
+        open_qty_est: 2,
         attribution_ratio: 1.0,
+        unrealized_pnl_est: null,
+        source_exec_count: 0,
+        is_mixed: false,
+        has_unassigned: false,
       },
     ]
 
@@ -107,6 +124,7 @@ describe('buildOpenOptionPositions', () => {
     expect(result).toHaveLength(1)
     expect(result[0].strategy_instance_id).toBe(42)
     expect(result[0].attribution_type).toBe('single')
+    expect(result[0].strategy_opportunity_name).toBe('AAPL Covered Call')
     expect(result[0].qty).toBe(2)
   })
 })

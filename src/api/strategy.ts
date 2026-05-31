@@ -1,7 +1,11 @@
 import type {
   OpportunitiesResponse,
   StructuresResponse,
+  StructurePayload,
+  StrategyHistoryParams,
+  StrategyHistoryResponse,
   StrategyInstancesResponse,
+  StrategyStructure,
   StrategyOpportunityDetail,
   CreateStrategyInstanceBody,
   PatchStrategyInstanceBody,
@@ -33,10 +37,60 @@ export async function fetchOpportunities(): Promise<OpportunitiesResponse> {
   return res.json() as Promise<OpportunitiesResponse>
 }
 
-export async function fetchStructures(): Promise<StructuresResponse> {
-  const res = await fetch(`${BASE}/strategies/structures`)
+export async function fetchStructures(activeOnly = false): Promise<StructuresResponse> {
+  const qs = `?active_only=${activeOnly}`
+  const res = await fetch(`${BASE}/strategies/structures${qs}`)
   if (!res.ok) throw new Error(`Strategy /structures: ${res.status}`)
   return res.json() as Promise<StructuresResponse>
+}
+
+export async function fetchStructure(id: number): Promise<StrategyStructure> {
+  const res = await fetch(`${BASE}/strategies/structures/${id}`)
+  if (!res.ok) throw new Error(`Strategy /structures/${id}: ${res.status}`)
+  return res.json() as Promise<StrategyStructure>
+}
+
+export async function createStructure(
+  payload: StructurePayload,
+): Promise<{ strategy_structure_id: number }> {
+  const res = await fetch(`${BASE}/strategies/structures`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const j = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `POST /structures: ${res.status}`)
+  return j as { strategy_structure_id: number }
+}
+
+export async function updateStructure(
+  id: number,
+  payload: StructurePayload,
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${BASE}/strategies/structures/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  const j = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `PUT /structures/${id}: ${res.status}`)
+  return j as { ok: boolean }
+}
+
+export async function fetchStrategyHistory(
+  params: StrategyHistoryParams = {},
+): Promise<StrategyHistoryResponse> {
+  const sp = new URLSearchParams()
+  if (params.from_ts != null) sp.set('from_ts', String(params.from_ts))
+  if (params.to_ts != null) sp.set('to_ts', String(params.to_ts))
+  if (params.strategy_structure_id != null) {
+    sp.set('strategy_structure_id', String(params.strategy_structure_id))
+  }
+  if (params.limit != null) sp.set('limit', String(Math.min(500, Math.max(1, params.limit))))
+  const qs = sp.toString()
+  const res = await fetch(`${BASE}/strategies/history${qs ? `?${qs}` : ''}`)
+  if (!res.ok) throw new Error(`Strategy /history: ${res.status}`)
+  return res.json() as Promise<StrategyHistoryResponse>
 }
 
 export async function fetchStrategyInstances(params?: {
@@ -124,17 +178,12 @@ export async function fetchGateSafety(): Promise<GateSafetyResponse> {
   return res.json() as Promise<GateSafetyResponse>
 }
 
+/** @deprecated Prefer updateStructure with full StructurePayload */
 export async function putStructure(
   id: number,
-  body: { is_active: boolean },
+  body: StructurePayload,
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/strategies/structures/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`PUT /strategies/structures/${id}: ${res.status}`)
-  return res.json()
+  return updateStructure(id, body)
 }
 
 export async function fetchGateSafetyFull(id: number): Promise<GateSafetyFull> {

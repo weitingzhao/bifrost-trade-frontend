@@ -82,8 +82,28 @@ export function computeRiskProfile(
   }
 }
 
+function formatApproxUsd(v: number): string {
+  const sign = v < 0 ? '-' : ''
+  return `${sign}$${Math.abs(v).toFixed(2)}`
+}
+
+export interface RiskDisplayLabels {
+  gainLabel: string
+  lossLabel: string
+  riskBadge: string
+}
+
+/** Main table Max Gain / Loss / Risk badge (Legacy formatRiskLabel). */
+export function formatRiskDisplayLabels(profile: RiskProfile): RiskDisplayLabels {
+  return {
+    gainLabel: profile.max_gain == null ? 'Unlimited' : formatApproxUsd(profile.max_gain),
+    lossLabel: profile.max_loss == null ? 'Unlimited' : formatApproxUsd(profile.max_loss),
+    riskBadge: profile.risk_type === 'defined' ? 'Defined' : profile.risk_type === 'unlimited' ? 'Unlimited' : 'Unknown',
+  }
+}
+
+/** Short summary line for expanded Risk Profile section. */
 export function formatRiskLabel(profile: RiskProfile): string {
-  if (profile.risk_type === 'unlimited') return 'Risk: Unlimited'
-  if (profile.risk_type === 'defined') return 'Risk: Defined'
-  return 'Risk: Unknown'
+  const { riskBadge } = formatRiskDisplayLabels(profile)
+  return `Risk: ${riskBadge}`
 }

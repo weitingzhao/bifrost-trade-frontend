@@ -2,8 +2,8 @@ import { cn } from '@/lib/utils'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { OptGroupsTable } from './OptGroupsTable'
-import { SortIcon } from './types'
-import type { OptSortCol, OptSubTab, OptGroupCallbacks } from './types'
+import { LedgerSortIcon as SortIcon } from './LedgerSortIcon'
+import type { OptSortCol, OptSubTab, OptGroupCallbacks } from './ledgerTypes'
 
 export function OptionsTabContent({
   optSubTab, closedGroups, openActiveGroups, openExpiredGroups,

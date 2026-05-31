@@ -7,14 +7,21 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { fmtUsd, fmtExpiry, rightLabel, fmtDate, fmtDaysAgo, daysUntilExpiry, pnlColorClass } from '@/utils/positions'
 import { ExecutionRow } from './ExecutionRow'
-import type { OpenOptionPosition, Execution } from '@/types/positions'
+import type { OpenOptionPosition, Execution, InstanceAllGroup } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
+import type { DetailViewMode } from './PositionsOpenControls'
+import { scopedExecListsForPosition } from '@/utils/instanceSheetExec'
 
 interface Props {
+  group: Pick<InstanceAllGroup, 'strategy_instance_id' | 'strategy_opportunity_id'>
   options: OpenOptionPosition[]
   quotesBySymbol: Record<string, QuoteItem>
+  quotesByCk: Record<string, QuoteItem>
   executionsFinal: Execution[]
   executionsTws: Execution[]
+  finalMap: Map<string, Execution[]>
+  twsMap: Map<string, Execution[]>
+  detailViewMode?: DetailViewMode
   onOpenOption?: (contractKey: string) => void
   onEditExec?: (exec: Execution) => void
   onLinkExec?: (exec: Execution) => void
@@ -32,17 +39,21 @@ function lastStrikePctClass(right: string, qty: number, pct: number): string {
   return isSell ? (positive ? 'text-green-600' : 'text-red-600') : (positive ? 'text-red-600' : 'text-green-600')
 }
 
-function matchExecs(contractKey: string, accountId: string, execs: Execution[]): Execution[] {
-  return execs.filter((e) =>
-    e.contract_key === contractKey && e.account_id === accountId && e.sec_type?.toUpperCase() === 'OPT'
-  )
+function optQuoteMid(quote: QuoteItem | undefined): number | null {
+  if (!quote) return null
+  if (quote.mid != null) return quote.mid
+  if (quote.bid != null && quote.ask != null) return (quote.bid + quote.ask) / 2
+  return quote.last ?? null
 }
 
 export function InstanceOptionSubTable({
+  group,
   options,
   quotesBySymbol,
-  executionsFinal,
-  executionsTws,
+  quotesByCk,
+  finalMap,
+  twsMap,
+  detailViewMode = 'accordion',
   onOpenOption,
   onEditExec,
   onLinkExec,
@@ -55,6 +66,10 @@ export function InstanceOptionSubTable({
 
   function toggleExpand(key: string) {
     setExpandedKeys((prev) => {
+      if (detailViewMode === 'accordion') {
+        if (prev.has(key)) return new Set()
+        return new Set([key])
+      }
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)
@@ -79,27 +94,27 @@ export function InstanceOptionSubTable({
               <TableHead>Qty</TableHead>
               <TableHead className="text-right">@</TableHead>
               <TableHead className="text-right">Value</TableHead>
-              <TableHead>Opt Quote</TableHead>
+              <TableHead title="Option live bid / mid / ask">Opt Quote</TableHead>
               <TableHead>Time</TableHead>
               <TableHead className="text-right">UN PNL</TableHead>
               <TableHead>Pool</TableHead>
               <TableHead>Attr</TableHead>
               <TableHead>Account</TableHead>
-              <TableHead>Opp</TableHead>
+              <TableHead title="Opportunity">Opp</TableHead>
               <TableHead className="w-8" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {options.map((pos) => {
-              const key = pos.contract_key || `${pos.symbol}-${pos.expiry}-${pos.strike}-${pos.right}`
+              const key = pos.contract_key || `${pos.symbol}-${pos.expiry}-${pos.strike}-${pos.right}-${pos.account_id}`
               const isExpanded = expandedKeys.has(key)
               const absQty = Math.abs(pos.qty)
               const sideLabel = pos.qty > 0 ? 'Long' : pos.qty < 0 ? 'Short' : '—'
               const value = (pos.avg_cost ?? 0) * absQty * 100
 
               const underlying = pos.symbol
-              const quote = quotesBySymbol[underlying]
-              const spot = quote?.last ?? null
+              const stkQuote = quotesBySymbol[underlying?.toUpperCase() ?? '']
+              const spot = stkQuote?.last ?? null
               const strikeNum = pos.strike
               const lastStrikePct = spot != null && strikeNum != null && spot !== 0
                 ? ((spot - strikeNum) / spot) * 100
@@ -109,16 +124,26 @@ export function InstanceOptionSubTable({
               const dte = daysUntilExpiry(pos.expiry)
               const dteLabel = dte != null ? (dte >= 0 ? (dte === 0 ? 'today' : `${dte}d`) : `${-dte}d ago`) : null
 
-              const finalExecs = matchExecs(pos.contract_key, pos.account_id, executionsFinal)
-              const twsExecs = matchExecs(pos.contract_key, pos.account_id, executionsTws)
-              const execCount = finalExecs.length + twsExecs.length
+              const { final: scopedFinalExecs, tws: scopedTwsExecs } = scopedExecListsForPosition(
+                pos,
+                group,
+                finalMap,
+                twsMap,
+              )
+              const execCount = scopedFinalExecs.length + scopedTwsExecs.length
               const hasExecs = execCount > 0
 
-              const latestExecTime = [...finalExecs, ...twsExecs]
-                .reduce<number | null>((best, e) => {
-                  if (e.time == null) return best
-                  return best == null || e.time > best ? e.time : best
-                }, null)
+              const latestExecTime = [...scopedFinalExecs, ...scopedTwsExecs].reduce<number | null>((best, e) => {
+                if (e.time == null) return best
+                return best == null || e.time > best ? e.time : best
+              }, null)
+
+              const optQuote = quotesByCk[pos.contract_key]
+              const liveMid = optQuoteMid(optQuote)
+              const livePnl =
+                liveMid != null && pos.avg_cost != null
+                  ? (liveMid - pos.avg_cost) * absQty * 100
+                  : null
 
               return [
                 <TableRow
@@ -139,6 +164,7 @@ export function InstanceOptionSubTable({
                         onClick={(e) => { e.stopPropagation(); onOpenOption(pos.contract_key) }}
                       >
                         <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
+                        {pos.strike != null ? ` ${pos.strike}` : ''}
                       </button>
                     ) : (
                       <span className="font-mono text-xs font-medium">
@@ -163,15 +189,17 @@ export function InstanceOptionSubTable({
                   <TableCell className="text-right font-mono text-xs">{fmtUsd(pos.avg_cost)}</TableCell>
                   <TableCell className="text-right font-mono text-xs">{fmtUsd(value)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {quote ? (
-                      <div className="leading-tight">
-                        <span>{quote.bid != null ? quote.bid.toFixed(2) : '—'}</span>
-                        {' / '}
-                        <strong>{quote.bid != null && quote.ask != null ? ((quote.bid + quote.ask) / 2).toFixed(2) : '—'}</strong>
-                        {' / '}
-                        <span>{quote.ask != null ? quote.ask.toFixed(2) : '—'}</span>
+                    {optQuote ? (
+                      <div className="leading-tight font-mono">
+                        <div>{optQuote.bid != null ? optQuote.bid.toFixed(2) : '—'}</div>
+                        <div className="font-semibold text-foreground">
+                          {liveMid != null ? liveMid.toFixed(2) : '—'}
+                        </div>
+                        <div>{optQuote.ask != null ? optQuote.ask.toFixed(2) : '—'}</div>
                       </div>
-                    ) : '—'}
+                    ) : (
+                      '—'
+                    )}
                   </TableCell>
                   <TableCell className="text-xs">
                     {latestExecTime != null ? (
@@ -183,26 +211,56 @@ export function InstanceOptionSubTable({
                       </>
                     ) : '—'}
                   </TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs font-semibold', pnlColorClass(pos.unrealized_pnl))}>
-                    {fmtUsd(pos.unrealized_pnl)}
+                  <TableCell className="text-right text-xs">
+                    {livePnl != null && (
+                      <div className={cn('font-mono font-semibold', pnlColorClass(livePnl))}>
+                        {fmtUsd(livePnl)}
+                        <span className="text-[10px] font-normal text-muted-foreground ml-1">live</span>
+                      </div>
+                    )}
+                    <div className={cn('font-mono font-semibold', pnlColorClass(pos.unrealized_pnl), livePnl != null && 'text-[11px] text-muted-foreground font-normal')}>
+                      {fmtUsd(pos.unrealized_pnl)}
+                      {livePnl != null && <span className="text-[10px] ml-1">snap</span>}
+                    </div>
                   </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{pos.pool_label}</TableCell>
                   <TableCell className="text-xs">
-                    <Badge variant={pos.pool_label === 'Off' ? 'secondary' : 'default'} className="text-[10px]">
-                      {pos.pool_label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {pos.attribution_type === 'single' ? (
-                      <Badge variant="default" className="text-[10px]">Single</Badge>
+                    {pos.filtered_exec_lists ? (
+                      <Badge variant="secondary" className="text-[10px]" title="Fills that do not match the instance row for this contract (Uncategorized)">
+                        Uncategorized
+                      </Badge>
                     ) : pos.attribution_type === 'mixed' ? (
-                      <Badge variant="secondary" className="text-[10px] border-yellow-500 text-yellow-600">Mixed</Badge>
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] border-yellow-500 text-yellow-600"
+                        title={`Estimated attribution (net): ${((pos.attribution_ratio ?? 0) * 100).toFixed(0)}%`}
+                      >
+                        Mixed
+                      </Badge>
+                    ) : pos.attribution_type === 'single' ? (
+                      <Badge variant="default" className="text-[10px]" title="Single instance attribution">
+                        Single
+                      </Badge>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">{pos.account_id || '—'}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {hasExecs ? <span>{execCount} exec{execCount > 1 ? 's' : ''}</span> : '—'}
+                    {execCount === 0 ? (
+                      '—'
+                    ) : (
+                      <span
+                        title={`${execCount} execution${execCount > 1 ? 's' : ''} — expand row`}
+                        className="inline-flex items-center gap-0.5"
+                      >
+                        {pos.filtered_exec_lists ? (
+                          <abbr title="Uncategorized fills" className="no-underline">Unct.</abbr>
+                        ) : null}
+                        {pos.filtered_exec_lists ? ' · ' : null}
+                        {execCount} exec{execCount > 1 ? 's' : ''} ↓
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell />
                 </TableRow>,
@@ -211,8 +269,8 @@ export function InstanceOptionSubTable({
                   <TableRow key={`${key}-execs`} className="bg-muted/10 hover:bg-muted/10">
                     <TableCell colSpan={16} className="p-2">
                       <ExecutionRow
-                        finalExecs={finalExecs}
-                        twsExecs={twsExecs}
+                        finalExecs={scopedFinalExecs}
+                        twsExecs={scopedTwsExecs}
                         onEdit={onEditExec ?? (() => {})}
                         onLink={onLinkExec ?? (() => {})}
                         onDelete={onDeleteExec ?? (() => {})}

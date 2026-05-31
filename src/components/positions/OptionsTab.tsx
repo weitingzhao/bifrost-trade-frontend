@@ -11,12 +11,14 @@ import { fmtUsd, fmtExpiry, rightLabel, pnlColorClass } from '@/utils/positions'
 import { ExecutionRow } from './ExecutionRow'
 import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
+import type { DetailViewMode } from './PositionsOpenControls'
 
 interface Props {
   positions: OpenOptionPosition[]
   quotesBySymbol: Record<string, QuoteItem>
   filterSymbol?: string
   filterExpiry?: string
+  detailViewMode?: DetailViewMode
   executionsFinal?: Execution[]
   executionsTws?: Execution[]
   onEditExec?: (exec: Execution) => void
@@ -72,6 +74,7 @@ export function OptionsTab({
   quotesBySymbol,
   filterSymbol,
   filterExpiry,
+  detailViewMode = 'accordion',
   executionsFinal = [],
   executionsTws = [],
   onEditExec,
@@ -129,6 +132,10 @@ export function OptionsTab({
 
   function toggleExpand(key: string) {
     setExpandedKeys((prev) => {
+      if (detailViewMode === 'accordion') {
+        if (prev.has(key)) return new Set()
+        return new Set([key])
+      }
       const next = new Set(prev)
       if (next.has(key)) next.delete(key)
       else next.add(key)

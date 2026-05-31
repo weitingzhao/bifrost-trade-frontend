@@ -2,7 +2,8 @@ import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { RunbookStageView, SepaRunStep } from '@/types/stockDataReadiness'
-import { CheckStatusDot, stageHeadBorderClass } from './CheckStatusDot'
+import { CheckStatusDot } from './CheckStatusDot'
+import { stageHeadBorderClass } from './stageHeadBorder'
 
 interface Props {
   stages: RunbookStageView[]

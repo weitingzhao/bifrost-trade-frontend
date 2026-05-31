@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { Execution } from '@/types/positions'
 import { StkFlatTable } from './StkFlatTable'
-import { fmtCcy, fmtPrice, pnlClass, PAGE_SIZE } from './types'
-import type { StkPositionGroup, StkSortCol } from './types'
+import { PAGE_SIZE } from './ledgerConstants'
+import { fmtCcy, fmtPrice, pnlClass } from './ledgerFormat'
+import type { StkPositionGroup, StkSortCol } from './ledgerTypes'
 
 export function StkTabContent({
   executions, positionGroups, groupByPosition, stkSort, toggleStkSort,

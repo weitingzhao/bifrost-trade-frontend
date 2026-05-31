@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 export type PageHeaderTitleSize = 'default' | 'large'
 
 export interface PageHeaderProps {
-  title: string
+  title: ReactNode
   description?: string
   /** Right-side toolbar (buttons, badges, meta). */
   actions?: ReactNode

@@ -1,5 +1,7 @@
 import { Suspense, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
+import { GlobalMarketStatusBar } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
@@ -31,6 +33,8 @@ function BoundedOutlet() {
 }
 
 export function AppLayout() {
+  const { pathname } = useLocation()
+  const showMarketStrip = shouldShowGlobalMarketStrip(pathname)
   const { effectiveMode, toggle, isTooNarrow } = useNavMode()
   const { messages, dismissedIds, activeMsgCount, dismissMessage, dismissAll } = useSystemMessages()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -62,6 +66,7 @@ export function AppLayout() {
             onOpenMessages={() => setDrawerOpen(true)}
             onToggleNavMode={isTooNarrow ? undefined : toggle}
           />
+          <GlobalMarketStatusBar enabled={showMarketStrip} />
           <main className="flex-1 overflow-auto min-w-0">
             <BoundedOutlet />
           </main>
@@ -83,6 +88,7 @@ export function AppLayout() {
             onOpenMessages={() => setDrawerOpen(true)}
             onToggleNavMode={toggle}
           />
+          <GlobalMarketStatusBar enabled={showMarketStrip} />
           <main className="flex-1 overflow-auto min-w-0 bg-card">
             <BoundedOutlet />
           </main>

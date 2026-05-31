@@ -1,127 +1,72 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { RefreshCw, Tag } from 'lucide-react'
+import { HelpCircle, RefreshCw, Tag } from 'lucide-react'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
+import { useAccountsRefresh } from '@/hooks/useAccountsRefresh'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { StatusLamp } from '@/components/StatusLamp'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { PageHeader, PageShell } from '@/components/layout'
-import { formatLastUpdate, fmtExecDaysAgo } from '@/utils/positions'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { OverviewDashboard } from '@/components/accounts/OverviewDashboard'
+import { OverviewCompact } from '@/components/accounts/OverviewCompact'
 import { PortfolioCategoryRing } from '@/components/accounts/PortfolioCategoryRing'
 import { NetLiqChart } from '@/components/accounts/NetLiqChart'
 import { StockPositionsTable } from '@/components/accounts/StockPositionsTable'
 import { OptionPositionsTable } from '@/components/accounts/OptionPositionsTable'
 import { CategoriesModal } from '@/components/accounts/CategoriesModal'
 import { ExecutionImport } from '@/components/accounts/ExecutionImport'
-import { postRefreshAccounts } from '@/api/monitor'
-import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys } from '@/utils/positions'
+import { AccountSummaryCard } from '@/components/accounts/AccountSummaryCard'
+import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys, formatLastUpdate } from '@/utils/positions'
 import { cn } from '@/lib/utils'
-import type { AccountSyncHeartbeat, IbAccountSnapshot } from '@/types/monitor'
-import type { ExecutionFreshnessItem } from '@/types/trading'
-
-function fmtSummaryUsd(raw: string | undefined): string {
-  if (!raw) return '—'
-  const n = parseFloat(raw)
-  return Number.isFinite(n)
-    ? n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
-    : '—'
-}
-
-function AccountSummary({
-  account,
-  freshnessItems,
-}: {
-  account: IbAccountSnapshot
-  freshnessItems: ExecutionFreshnessItem[]
-}) {
-  const aid = account.account_id ?? ''
-  const s = account.summary ?? {}
-
-  const forAcc = freshnessItems.filter((r) => r.account_id === aid)
-  const flexItem = forAcc.find((r) => r.source === 'flex_trades') ?? null
-  const streamItems = forAcc.filter((r) => r.source !== 'flex_trades')
-  const streamBest = streamItems.reduce<ExecutionFreshnessItem | null>(
-    (best, r) => (best == null || (r.latest_exec_ts ?? 0) > (best.latest_exec_ts ?? 0) ? r : best),
-    null
-  )
-
-  return (
-    <div className="space-y-2">
-      {aid && (
-        <p className="text-xs text-muted-foreground font-mono">{aid}</p>
-      )}
-      <div className="grid grid-cols-3 gap-3 text-sm">
-        {([
-          ['NetLiquidation', 'Net Liquidation'],
-          ['TotalCashValue', 'Cash'],
-          ['BuyingPower', 'Buying Power'],
-        ] as const).map(([key, label]) => (
-          <Card key={key} variant="elevated" size="sm" className="py-0">
-            <CardContent className="p-3">
-              <p className="text-xs text-muted-foreground">{label}</p>
-              <p className="text-base font-semibold font-mono mt-0.5">{fmtSummaryUsd(s[key])}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      {(flexItem != null || streamBest != null) && (
-        <div className="flex items-center gap-4 text-xs text-muted-foreground px-0.5">
-          <span className="font-medium text-foreground/70">IB data:</span>
-          <span>Flex {fmtExecDaysAgo(flexItem?.days_since_latest)}</span>
-          <span>Stream {fmtExecDaysAgo(streamBest?.days_since_latest)}</span>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function fmtTs(ts: number | null | undefined): string {
-  if (ts == null) return '—'
-  return new Date(ts * 1000).toLocaleString()
-}
-
-function EmptyState() {
-  return (
-    <div className="rounded-lg border border-dashed p-8 text-center space-y-1">
-      <p className="text-sm font-medium">No account data</p>
-      <p className="text-xs text-muted-foreground">
-        Ensure IB is connected and the Account Sync daemon is running, then click Refresh.
-      </p>
-    </div>
-  )
-}
+import type { AccountSyncHeartbeat } from '@/types/monitor'
 
 function SyncDaemonBadge({ hb }: { hb: AccountSyncHeartbeat }) {
-  const agoStr = formatLastUpdate(hb.last_ts)
+  const alive = hb.daemon_alive === true
+  const freshLabel = hb.last_ts != null ? formatLastUpdate(hb.last_ts) : ''
+
   return (
-    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-      <StatusLamp lamp={hb.daemon_alive ? 'green' : 'red'} />
-      <span>Sync {hb.daemon_alive ? 'running' : 'offline'}</span>
-      {hb.last_ts != null && <span className="opacity-60">{agoStr}</span>}
-    </div>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium',
+        alive
+          ? 'bg-success-soft text-success'
+          : 'bg-danger-soft text-danger',
+      )}
+      title={`Account Sync Daemon: ${alive ? 'running' : 'not running'}${freshLabel ? ` — last sync ${freshLabel}` : ''}`}
+    >
+      <span
+        className={cn('h-1.5 w-1.5 rounded-full shrink-0', alive ? 'bg-success' : 'bg-danger')}
+      />
+      {alive ? `Synced ${freshLabel}` : 'Sync offline'}
+    </span>
   )
 }
 
 export default function AccountsPage() {
-  const { data, isLoading, isError, error } = useMonitorStatus()
   const queryClient = useQueryClient()
+  const { data, isLoading, isError, error } = useMonitorStatus()
   const [selectedIdx, setSelectedIdx] = useState(0)
   const [categoriesOpen, setCategoriesOpen] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const accountsFetchedAt = data?.portfolio.accounts_fetched_at
+  const { refresh, isRefreshing, feedback } = useAccountsRefresh(accountsFetchedAt)
 
   const accounts = [...(data?.portfolio.accounts ?? [])].sort((a, b) => {
     const nlqA = parseFloat(a.summary?.NetLiquidation ?? '0') || 0
     const nlqB = parseFloat(b.summary?.NetLiquidation ?? '0') || 0
     return nlqB - nlqA
   })
+  const hasAccounts = accounts.length > 0
   const clampedIdx = Math.min(selectedIdx, Math.max(0, accounts.length - 1))
   const account = accounts[clampedIdx]
 
@@ -138,15 +83,6 @@ export default function AccountsPage() {
 
   const stkPositions = account?.positions?.filter((p) => p.secType?.toUpperCase() === 'STK') ?? []
   const optPositions = account?.positions?.filter((p) => p.secType?.toUpperCase() === 'OPT') ?? []
-
-  async function handleRefresh() {
-    setIsRefreshing(true)
-    const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 5_000)
-    await postRefreshAccounts(ctrl.signal).catch(() => null).finally(() => clearTimeout(timer))
-    setIsRefreshing(false)
-    void queryClient.invalidateQueries({ queryKey: ['monitor', 'status'] })
-  }
 
   if (isLoading) {
     return (
@@ -174,58 +110,99 @@ export default function AccountsPage() {
   }
 
   return (
-    <PageShell className="space-y-6">
+    <PageShell className="space-y-5">
       <PageHeader
+        breadcrumb={
+          <p className="text-xs text-primary/90 font-medium">Portfolio / Accounts</p>
+        }
         title="Accounts"
         actions={
           <>
             {data?.account_sync_daemon && (
               <SyncDaemonBadge hb={data.account_sync_daemon.heartbeat} />
             )}
-            {accounts.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {accounts.length} account{accounts.length > 1 ? 's' : ''}
-              </Badge>
-            )}
-            {data?.portfolio.accounts_fetched_at != null && (
-              <span className="text-xs text-muted-foreground">
-                Updated {fmtTs(data.portfolio.accounts_fetched_at)}
-              </span>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-            >
-              <RefreshCw className={cn('h-3.5 w-3.5 mr-1.5', isRefreshing && 'animate-spin')} />
-              Refresh
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCategoriesOpen(true)}
-            >
-              <Tag className="h-3.5 w-3.5 mr-1.5" />
-              Categories
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Page info"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-sm">
+                Multi-account summary &amp; positions from DB; auto-refresh every 1h.
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setCategoriesOpen(true)}
+                  aria-label="Manage position categories"
+                >
+                  <Tag className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Manage position categories</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => void refresh()}
+                  disabled={isRefreshing}
+                  aria-label="Refresh accounts and positions from IB"
+                  aria-busy={isRefreshing}
+                >
+                  <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Monitor Account Client fetches accounts &amp; positions from IB, writes to DB, then updates display
+              </TooltipContent>
+            </Tooltip>
           </>
         }
       />
 
-      <ExecutionImport accountsFetchedAt={data?.portfolio.accounts_fetched_at} />
+      <ExecutionImport
+        accountsFetchedAt={accountsFetchedAt}
+        hasAccounts={hasAccounts}
+      />
 
-      <OverviewDashboard accounts={accounts} />
+      {feedback != null && feedback !== '' && (
+        <p
+          className={cn(
+            'text-xs',
+            feedback.startsWith('Refreshed') ? 'text-success' : 'text-muted-foreground',
+          )}
+        >
+          {feedback}
+        </p>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <PortfolioCategoryRing accounts={accounts} />
-        <NetLiqChart accounts={accounts} />
-      </div>
-
-      {accounts.length === 0 ? (
-        <EmptyState />
+      {!hasAccounts ? (
+        <>
+          <OverviewCompact accounts={accounts} />
+          <p className="text-sm text-muted-foreground">
+            No account data (IB not connected or daemon has not written yet; after connection, data is pulled on heartbeat and written to accounts / account_positions)
+          </p>
+        </>
       ) : (
         <>
+          <OverviewDashboard accounts={accounts} />
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+            <PortfolioCategoryRing accounts={accounts} />
+            <NetLiqChart accounts={accounts} />
+          </div>
+
           {accounts.length > 1 && (
             <Tabs
               value={String(clampedIdx)}
@@ -244,7 +221,12 @@ export default function AccountsPage() {
             </Tabs>
           )}
 
-          {account && <AccountSummary account={account} freshnessItems={freshnessData?.items ?? []} />}
+          {account && (
+            <AccountSummaryCard
+              account={account}
+              freshnessItems={freshnessData?.items ?? []}
+            />
+          )}
 
           <StockPositionsTable
             positions={stkPositions}
@@ -265,7 +247,9 @@ export default function AccountsPage() {
         open={categoriesOpen}
         onOpenChange={setCategoriesOpen}
         accounts={accounts}
-        onRefreshed={() => queryClient.invalidateQueries({ queryKey: ['monitor', 'status'] })}
+        onRefreshed={() => {
+          void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status })
+        }}
       />
     </PageShell>
   )

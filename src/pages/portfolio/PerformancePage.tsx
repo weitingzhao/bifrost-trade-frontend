@@ -13,11 +13,7 @@ import { buildEquityGrowthChart, DEFAULT_LAYERS_VISIBLE, type GrowthLayer } from
 import { buildFiBarChart } from '@/utils/ledger/fiBarChart'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import type {
-  PerformanceCalendarEntry,
-  PerformanceDayPnLBulkResult,
-  PerformanceResponse,
-} from '@/types/trading'
+import type { PerformanceCalendarEntry } from '@/types/trading'
 import { PageHeader, PageShell } from '@/components/layout'
 import { EquityGrowthCard } from '@/components/performance/EquityGrowthCard'
 import MonthlyPnLTable from '@/components/performance/MonthlyPnLTable'
@@ -42,48 +38,17 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-
-// ─── Formatting helpers ───
-
-function fmtMoney(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return v.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-}
-
-function fmtMoneyFull(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return v.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
-
-function fmtRawPct(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return `${v.toFixed(1)}%`
-}
-
-function fmtPct2(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return `${v.toFixed(2)}%`
-}
-
-function fmtNum(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return String(v)
-}
-
-function fmtFactor(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return v.toFixed(2)
-}
+import { fmtMoney, fmtMoneyFull } from '@/pages/portfolio/performance/performanceFormatters'
+import { PerformanceSummaryStrip } from '@/pages/portfolio/performance/PerformanceSummaryStrip'
+import {
+  buildCalendarGrid,
+  buildDayMapFromApi,
+  buildDayMapFromBulk,
+  CALENDAR_ASSET_TABS,
+  WEEKDAY_LABELS,
+  type CalendarAssetTab,
+  type DayData,
+} from '@/pages/portfolio/performance/performanceCalendarModel'
 
 // ─── Constants ───
 
@@ -94,8 +59,6 @@ const TIME_RANGE_OPTIONS: { id: PerformanceTimeRange; label: string }[] = [
   { id: '3year', label: '3 Years' },
 ]
 
-const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-
 const SEC_TYPE_LABELS: Record<string, string> = {
   OPT: 'Options',
   STK: 'Stocks',
@@ -105,169 +68,6 @@ const SEC_TYPE_LABELS: Record<string, string> = {
 
 function secTypeLabel(t: string): string {
   return SEC_TYPE_LABELS[t] ?? t
-}
-
-// ─── Calendar helpers ───
-
-type CalendarAssetTab = 'all' | 'options' | 'stocks' | 'fixed_income' | 'cash_like'
-
-const CALENDAR_ASSET_TABS: { id: CalendarAssetTab; label: string }[] = [
-  { id: 'all',          label: 'All' },
-  { id: 'options',      label: 'Options' },
-  { id: 'stocks',       label: 'Stocks' },
-  { id: 'fixed_income', label: 'Fixed Income' },
-  { id: 'cash_like',    label: 'Cash-like' },
-]
-
-const SEC_TYPE_TAB: Record<string, Exclude<CalendarAssetTab, 'all'>> = {
-  OPT: 'options', STK: 'stocks', BOND: 'fixed_income', CASH: 'cash_like',
-}
-
-interface DayData { realized: number; unrealized: number; tradeCount: number; notional: number }
-
-interface CalendarWeek {
-  days: (CalendarDayCell | null)[]
-}
-
-interface CalendarDayCell {
-  date: string
-  dayNum: number
-  realized: number
-  unrealized: number
-  tradeCount: number
-  notional: number
-}
-
-function buildDayMapFromBulk(
-  calendarDayPnLByAsset: PerformanceDayPnLBulkResult['calendarDayPnLByAsset'],
-  calendarStkNotionalByBucket: PerformanceDayPnLBulkResult['calendarStkNotionalByBucket'],
-): Record<CalendarAssetTab, Map<string, DayData>> {
-  const maps: Record<CalendarAssetTab, Map<string, DayData>> = {
-    all: new Map(),
-    options: new Map(),
-    stocks: new Map(),
-    fixed_income: new Map(),
-    cash_like: new Map(),
-  }
-
-  const { options, stocks, fixed_income, cash_like } = calendarDayPnLByAsset
-  const stkTabs = ['stocks', 'fixed_income', 'cash_like'] as const
-
-  for (const tab of stkTabs) {
-    const pnlRec = calendarDayPnLByAsset[tab]
-    const notionalRec = calendarStkNotionalByBucket[tab]
-    for (const [date, cell] of Object.entries(pnlRec)) {
-      maps[tab].set(date, {
-        realized: cell.realized,
-        unrealized: cell.unrealized,
-        tradeCount: 0,
-        notional: notionalRec[date] ?? 0,
-      })
-    }
-  }
-
-  for (const [date, cell] of Object.entries(options)) {
-    maps.options.set(date, {
-      realized: cell.realized,
-      unrealized: cell.unrealized,
-      tradeCount: 0,
-      notional: 0,
-    })
-  }
-
-  const allDates = new Set([
-    ...Object.keys(options),
-    ...Object.keys(stocks),
-    ...Object.keys(fixed_income),
-    ...Object.keys(cash_like),
-  ])
-  for (const date of allDates) {
-    const opt = options[date] ?? { realized: 0, unrealized: 0 }
-    const stk = stocks[date] ?? { realized: 0, unrealized: 0 }
-    const fi = fixed_income[date] ?? { realized: 0, unrealized: 0 }
-    const cash = cash_like[date] ?? { realized: 0, unrealized: 0 }
-    maps.all.set(date, {
-      realized: opt.realized + stk.realized + fi.realized + cash.realized,
-      unrealized: opt.unrealized,
-      tradeCount: 0,
-      notional: 0,
-    })
-  }
-
-  return maps
-}
-
-function buildDayMapFromApi(perf: PerformanceResponse | undefined): Record<CalendarAssetTab, Map<string, DayData>> {
-  const maps: Record<CalendarAssetTab, Map<string, DayData>> = {
-    all: new Map(),
-    options: new Map(),
-    stocks: new Map(),
-    fixed_income: new Map(),
-    cash_like: new Map(),
-  }
-  for (const e of perf?.calendar ?? []) {
-    if (e.period_label) {
-      maps.all.set(e.period_label, {
-        realized: e.net_pnl,
-        unrealized: 0,
-        tradeCount: e.trade_count,
-        notional: 0,
-      })
-    }
-  }
-  for (const e of perf?.calendar_by_sec_type ?? []) {
-    if (!e.period_label) continue
-    const tab = SEC_TYPE_TAB[(e.sec_type ?? '').toUpperCase()]
-    if (!tab) continue
-    const prev = maps[tab].get(e.period_label) ?? { realized: 0, unrealized: 0, tradeCount: 0, notional: 0 }
-    maps[tab].set(e.period_label, {
-      realized: prev.realized + e.net_pnl,
-      unrealized: 0,
-      tradeCount: prev.tradeCount + e.trade_count,
-      notional: 0,
-    })
-  }
-  return maps
-}
-
-function buildCalendarGrid(
-  yearMonth: string,
-  dayMap: Map<string, DayData>,
-): CalendarWeek[] {
-  const [y, m] = yearMonth.split('-').map(Number)
-  const firstDay = new Date(y, m - 1, 1)
-  const daysInMonth = new Date(y, m, 0).getDate()
-
-  // Monday=0 ... Sunday=6 (ISO weekday)
-  let startDow = firstDay.getDay() - 1
-  if (startDow < 0) startDow = 6
-
-  const weeks: CalendarWeek[] = []
-  let currentWeek: (CalendarDayCell | null)[] = new Array(startDow).fill(null)
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${yearMonth}-${String(d).padStart(2, '0')}`
-    const data = dayMap.get(dateStr)
-    currentWeek.push({
-      date: dateStr,
-      dayNum: d,
-      realized: data?.realized ?? 0,
-      unrealized: data?.unrealized ?? 0,
-      tradeCount: data?.tradeCount ?? 0,
-      notional: data?.notional ?? 0,
-    })
-    if (currentWeek.length === 7) {
-      weeks.push({ days: currentWeek })
-      currentWeek = []
-    }
-  }
-
-  if (currentWeek.length > 0) {
-    while (currentWeek.length < 7) currentWeek.push(null)
-    weeks.push({ days: currentWeek })
-  }
-
-  return weeks
 }
 
 // ─── Component ───
@@ -539,42 +339,7 @@ export default function PerformancePage() {
         </p>
       </div>
 
-      {/* Summary Cards */}
-      {perfQuery.isLoading ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 lg:grid-cols-10">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="h-[88px] rounded-xl" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 lg:grid-cols-10">
-          <SummaryCard label="Total PnL" value={fmtMoney(summary?.net_pnl)} colorValue={summary?.net_pnl} />
-          <SummaryCard label="Realized" value={fmtMoney(summary?.realized)} colorValue={summary?.realized} />
-          <SummaryCard label="Unrealized" value={fmtMoney(summary?.total_unrealized_pnl)} colorValue={summary?.total_unrealized_pnl} />
-          <SummaryCard
-            label="Commission"
-            value={fmtMoney(summary?.total_commission != null ? -Math.abs(summary.total_commission) : undefined)}
-            colorValue={summary?.total_commission != null ? -Math.abs(summary.total_commission) : undefined}
-          />
-          <SummaryCard label="Trades" value={fmtNum(summary?.trade_count)} />
-          <SummaryCard label="Win Rate" value={fmtRawPct(summary?.win_rate)} />
-          <SummaryCard label="Profit Factor" value={fmtFactor(summary?.profit_factor)} />
-          <SummaryCard
-            label="Max Drawdown"
-            value={fmtMoney(summary?.max_drawdown)}
-            colorValue={summary?.max_drawdown != null ? -Math.abs(summary.max_drawdown) : undefined}
-          />
-          <SummaryCard label="Return%" value={fmtPct2(summary?.return_pct)} />
-          <SummaryCard
-            label="Avg W/L"
-            value={
-              summary?.avg_win != null || summary?.avg_loss != null
-                ? `${fmtMoney(summary?.avg_win)} / ${fmtMoney(summary?.avg_loss)}`
-                : '—'
-            }
-          />
-        </div>
-      )}
+      <PerformanceSummaryStrip summary={summary} isLoading={perfQuery.isLoading} />
 
       {/* Sec Type Breakdown */}
       {secTypeBreakdown.length > 0 && (
@@ -886,36 +651,6 @@ export default function PerformancePage() {
       )}
 
     </PageShell>
-  )
-}
-
-// ─── Sub-components ───
-
-function SummaryCard({
-  label,
-  value,
-  colorValue,
-}: {
-  label: string
-  value: string
-  colorValue?: number | null
-}) {
-  return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-3">
-        <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide mb-1">
-          {label}
-        </p>
-        <p
-          className={cn(
-            'text-lg font-semibold tabular-nums leading-tight truncate',
-            colorValue != null ? pnlColorClass(colorValue) : '',
-          )}
-        >
-          {value}
-        </p>
-      </CardContent>
-    </Card>
   )
 }
 

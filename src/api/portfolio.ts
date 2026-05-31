@@ -2,14 +2,27 @@ import type {
   PositionCategoriesResponse,
   TagPositionRequest,
 } from '@/types/portfolio'
+import type { ModelAnalysisResponse } from '@/types/modelAnalysis'
 import { withValidation } from '@/lib/apiValidation'
 import { PositionCategoriesResponseSchema } from '@/lib/schemas/portfolio'
+import { ModelAnalysisResponseSchema } from '@/lib/schemas/modelAnalysis'
 
 const BASE = import.meta.env.VITE_API_PORTFOLIO as string
 
 const validateCategories = withValidation<PositionCategoriesResponse>(
   PositionCategoriesResponseSchema, 'portfolio/position-categories'
 )
+
+const validateModelAnalysis = withValidation<ModelAnalysisResponse>(
+  ModelAnalysisResponseSchema, 'portfolio/model-analysis'
+)
+
+export async function fetchModelAnalysis(accountId: string): Promise<ModelAnalysisResponse> {
+  const params = new URLSearchParams({ account_id: accountId })
+  const res = await fetch(`${BASE}/portfolio/model-analysis?${params}`)
+  if (!res.ok) throw new Error(`Portfolio /portfolio/model-analysis: ${res.status}`)
+  return validateModelAnalysis(await res.json())
+}
 
 export async function fetchPositionCategories(): Promise<PositionCategoriesResponse> {
   const res = await fetch(`${BASE}/position-categories`)

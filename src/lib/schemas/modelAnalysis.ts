@@ -9,7 +9,7 @@ export const ModelAnalysisResponseSchema = z
       total_cash: z.number().nullable(),
       buying_power: z.number().nullable(),
     }),
-    per_underlying: z.array(z.record(z.unknown())),
+    per_underlying: z.array(z.record(z.string(), z.unknown())),
     account_rollups: z.object({
       total_car: z.number().nullable(),
       car_has_unbounded: z.boolean(),
@@ -21,7 +21,7 @@ export const ModelAnalysisResponseSchema = z
       .object({
         available: z.boolean(),
         iv_stress_available: z.boolean().optional(),
-        scenarios: z.array(z.record(z.unknown())).optional(),
+        scenarios: z.array(z.record(z.string(), z.unknown())).optional(),
       })
       .passthrough(),
     disclaimer: z.string(),

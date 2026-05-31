@@ -23,6 +23,7 @@ export const QUERY_KEYS = {
   portfolio: {
     accounts:              ['portfolio', 'accounts']              as const,
     positions:             ['portfolio', 'positions']             as const,
+    modelAnalysis:         ['portfolio', 'model-analysis']        as const,
     positionCategories:    ['portfolio', 'position-categories']   as const,
     marketStreamsSymbolOrder: ['portfolio', 'market-streams-symbol-order'] as const,
   },

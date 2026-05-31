@@ -24,6 +24,7 @@ import type {
 } from '@/types/ops'
 import { formatQueueLabel, brokerQueueKeyTitle } from '@/utils/celeryQueueLabels'
 import { queueCoverageLamp, dedupedQueueSummaryTotals, type CeleryRuntimeLamp } from '@/utils/celeryRuntime'
+import { dangerGhostBtnClass } from '@/lib/uiClasses'
 
 type ActionMode = 'pending' | 'running' | 'done' | 'failed'
 
@@ -87,25 +88,25 @@ function QueueActionCell({
         <Hourglass className="h-3 w-3" />,
         'Delete all pending',
         onDeletePending,
-        'text-muted-foreground hover:text-foreground',
+        dangerGhostBtnClass,
       )}
       {iconBtn(
         <Loader2 className="h-3 w-3" />,
         'Delete all running',
         onDeleteRunning,
-        'text-muted-foreground hover:text-foreground',
+        dangerGhostBtnClass,
       )}
       {iconBtn(
         <Trash2 className="h-3 w-3" />,
         'Delete all done',
         onDeleteDone,
-        'text-muted-foreground hover:text-foreground',
+        dangerGhostBtnClass,
       )}
       {iconBtn(
         <XCircle className="h-3 w-3" />,
         'Delete all failed',
         onDeleteFailed,
-        'text-destructive/70 hover:text-destructive',
+        dangerGhostBtnClass,
       )}
       {iconBtn(
         <RotateCcw className="h-3 w-3" />,

@@ -9,14 +9,14 @@ function FullPageFallback({ error, onReset }: { error: Error; onReset: () => voi
     <div className="flex flex-col items-center justify-center h-full min-h-64 gap-4 p-8 text-center">
       <AlertTriangle className="size-10 text-destructive" />
       <div>
-        <p className="font-semibold text-foreground">页面渲染出错</p>
+        <p className="font-semibold text-foreground">Page failed to render</p>
         <p className="mt-1 text-sm text-muted-foreground font-mono break-all max-w-md">
           {error.message}
         </p>
       </div>
       <Button variant="outline" size="sm" onClick={onReset}>
         <RotateCcw className="size-4 mr-2" />
-        重试
+        Retry
       </Button>
     </div>
   )
@@ -27,7 +27,7 @@ function InlineFallback({ error, onReset }: { error: Error; onReset: () => void 
     <div className="flex items-center gap-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">
       <AlertTriangle className="size-4 shrink-0 text-destructive" />
       <span className="text-muted-foreground font-mono truncate flex-1">{error.message}</span>
-      <Button variant="ghost" size="sm" className="shrink-0 h-7 px-2" onClick={onReset}>
+      <Button variant="ghost" size="sm" className="shrink-0 h-7 px-2" onClick={onReset} title="Retry" aria-label="Retry">
         <RotateCcw className="size-3" />
       </Button>
     </div>

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchExecutionsRange } from '@/api/trading'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { ExecutionsRangeParams } from '@/types/trading'
 
 export function useLedgerExecutions(
@@ -7,7 +8,7 @@ export function useLedgerExecutions(
 ) {
   const { enabled = true, ...fetchParams } = params
   return useQuery({
-    queryKey: ['trading', 'executions', 'ledger', fetchParams],
+    queryKey: [...QUERY_KEYS.trading.executions, 'ledger', fetchParams],
     queryFn: () => fetchExecutionsRange(fetchParams),
     enabled,
     staleTime: 30_000,
@@ -19,7 +20,7 @@ export function useLedgerExecutionsBook(
 ) {
   const { enabled = true, ...rest } = params
   return useQuery({
-    queryKey: ['trading', 'executions', 'ledger-book', rest],
+    queryKey: [...QUERY_KEYS.trading.executionsBook, 'ledger', rest],
     queryFn: () =>
       fetchExecutionsRange({ ...rest, source_scope: 'performance_book' }),
     enabled,

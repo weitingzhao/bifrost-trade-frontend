@@ -11,10 +11,10 @@ export type LedgerSincePreset = 'month' | 'quarter' | 'half_year' | 'year' | 'yt
 
 export const LEDGER_SINCE_PRESET_TABS: { id: LedgerSincePreset; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'month', label: '1 Month' },
-  { id: 'quarter', label: '1 Quarter' },
+  { id: 'month', label: '1 month' },
+  { id: 'quarter', label: '1 quarter' },
   { id: 'half_year', label: 'Half-year' },
-  { id: 'year', label: '1 Year' },
+  { id: 'year', label: '1 year' },
   { id: 'ytd', label: 'YTD' },
 ]
 
@@ -23,46 +23,57 @@ const MONTH_RE = /^(\d{4})-(\d{2})$/
 export function monthKeyToPeriodKey(monthKey: string, period: LedgerSummaryPeriod): string {
   const m = MONTH_RE.exec(monthKey)
   if (!m) return monthKey
-  const year = m[1]
-  const month = parseInt(m[2], 10) - 1
-
-  switch (period) {
-    case 'month':
-      return monthKey
-    case 'year':
-      return year
-    case 'quarter':
-      return `${year}-Q${Math.floor(month / 3) + 1}`
-    case 'half_year':
-      return month < 6 ? `${year}-H1` : `${year}-H2`
-  }
+  const y = Number(m[1])
+  const month = Number(m[2]) - 1
+  if (!Number.isFinite(y) || month < 0 || month > 11) return monthKey
+  if (period === 'month') return monthKey
+  if (period === 'year') return String(y)
+  if (period === 'quarter') return `${y}-Q${Math.floor(month / 3) + 1}`
+  return `${y}-H${month < 6 ? 1 : 2}`
 }
 
-function parsePeriodKey(key: string): [number, number] {
-  if (/^\d{4}$/.test(key)) return [parseInt(key, 10), 0]
-  const mm = MONTH_RE.exec(key)
-  if (mm) return [parseInt(mm[1], 10), parseInt(mm[2], 10)]
-  const qm = /^(\d{4})-Q(\d)$/.exec(key)
-  if (qm) return [parseInt(qm[1], 10), parseInt(qm[2], 10)]
-  const hm = /^(\d{4})-H(\d)$/.exec(key)
-  if (hm) return [parseInt(hm[1], 10), parseInt(hm[2], 10)]
+function parsePeriodSortKey(k: string, period: LedgerSummaryPeriod): number[] {
+  if (period === 'year') {
+    const n = Number(k)
+    return Number.isFinite(n) ? [n, 0] : [0, 0]
+  }
+  if (period === 'month') {
+    const m = MONTH_RE.exec(k)
+    if (m) return [Number(m[1]), Number(m[2])]
+    return [0, 0]
+  }
+  const q = /^(\d{4})-Q([1-4])$/.exec(k)
+  if (q) return [Number(q[1]), Number(q[2])]
+  const h = /^(\d{4})-H([12])$/.exec(k)
+  if (h) return [Number(h[1]), Number(h[2])]
   return [0, 0]
 }
 
-export function comparePeriodKeysDesc(a: string, b: string): number {
-  const [ay, as] = parsePeriodKey(a)
-  const [by, bs] = parsePeriodKey(b)
-  if (by !== ay) return by - ay
-  return bs - as
+export function comparePeriodKeysDesc(
+  a: string,
+  b: string,
+  period: LedgerSummaryPeriod,
+): number {
+  const ta = parsePeriodSortKey(a, period)
+  const tb = parsePeriodSortKey(b, period)
+  for (let i = 0; i < Math.max(ta.length, tb.length); i++) {
+    const va = ta[i] ?? 0
+    const vb = tb[i] ?? 0
+    if (vb !== va) return vb - va
+  }
+  return 0
 }
 
 export function formatPeriodLabel(key: string, period: LedgerSummaryPeriod): string {
-  if (period === 'year') return key
+  if (period === 'year') {
+    const n = Number(key)
+    return Number.isFinite(n) ? String(n) : key
+  }
   if (period === 'month') return key
-  const qm = /^(\d{4})-Q(\d)$/.exec(key)
-  if (qm) return `${qm[1]} Q${qm[2]}`
-  const hm = /^(\d{4})-H(\d)$/.exec(key)
-  if (hm) return `${hm[1]} H${hm[2]}`
+  const q = /^(\d{4})-Q([1-4])$/.exec(key)
+  if (q) return `${q[1]} Q${q[2]}`
+  const h = /^(\d{4})-H([12])$/.exec(key)
+  if (h) return `${h[1]} H${h[2]}`
   return key
 }
 
@@ -81,7 +92,9 @@ export function rollupOptionsFromMonthly(
     prev.realizedPnl += v.realizedPnl
     map.set(pk, prev)
   }
-  return Array.from(map.entries()).sort(([a], [b]) => comparePeriodKeysDesc(a, b))
+  const keys = Array.from(map.keys())
+  keys.sort((a, b) => comparePeriodKeysDesc(a, b, period))
+  return keys.map(k => [k, map.get(k)!])
 }
 
 export function rollupStocksFromMonthly(
@@ -97,7 +110,9 @@ export function rollupStocksFromMonthly(
     prev.realizedPnl += v.realizedPnl
     map.set(pk, prev)
   }
-  return Array.from(map.entries()).sort(([a], [b]) => comparePeriodKeysDesc(a, b))
+  const keys = Array.from(map.keys())
+  keys.sort((a, b) => comparePeriodKeysDesc(a, b, period))
+  return keys.map(k => [k, map.get(k)!])
 }
 
 function localYmd(d: Date): string {
@@ -105,6 +120,15 @@ function localYmd(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+/** Legacy: preset `null` / UI "All" disables trade-date filtering entirely (not a 2000-01-01 floor). */
+export function shouldApplySinceTradeFilter(
+  sincePreset: LedgerSincePreset,
+  expiryFilterYear: string,
+): boolean {
+  if (expiryFilterYear.trim()) return false
+  return sincePreset !== 'all'
 }
 
 export function getSinceTradeDateRange(

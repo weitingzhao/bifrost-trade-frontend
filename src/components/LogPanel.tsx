@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X, Trash2, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { dangerIconBtnClass } from '@/lib/uiClasses'
 import { useLogPanel } from '@/hooks/useLogPanel'
 import { LOG_SOURCES, LOG_SOURCE_GROUPS } from '@/api/logs'
 import { useLogStream, type LogLevel, type LogEntry } from '@/hooks/useLogStream'
@@ -230,7 +231,10 @@ export function LogPanel() {
         <button
           onClick={clear}
           title="Clear log buffer"
-          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
+          className={cn(
+            'flex h-5 w-5 items-center justify-center rounded transition-colors',
+            dangerIconBtnClass,
+          )}
         >
           <Trash2 className="h-3 w-3" />
         </button>

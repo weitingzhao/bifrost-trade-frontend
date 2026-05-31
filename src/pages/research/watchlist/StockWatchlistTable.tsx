@@ -1,5 +1,6 @@
 import { Trash2, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { dangerGhostBtnClass } from '@/lib/uiClasses'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -170,7 +171,7 @@ export function StockWatchlistTable({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      className={cn('h-7 w-7', dangerGhostBtnClass)}
                       onClick={() => onRemove(item)}
                       title="Remove from watchlist"
                     >
@@ -288,7 +289,7 @@ export function OptionWatchlistTable({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    className={cn('h-7 w-7', dangerGhostBtnClass)}
                     onClick={() => onRemove(item)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />

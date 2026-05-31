@@ -14,11 +14,19 @@ interface Props {
   open: boolean
   exec: Execution | null
   accountOptions: string[]
+  createSource?: 'manual' | 'journal_closed'
   onClose: () => void
   onSuccess: () => void
 }
 
-export function ExecutionFormModal({ open, exec, accountOptions, onClose, onSuccess }: Props) {
+export function ExecutionFormModal({
+  open,
+  exec,
+  accountOptions,
+  createSource = 'manual',
+  onClose,
+  onSuccess,
+}: Props) {
   const [accountId, setAccountId] = useState(exec?.account_id ?? '')
   const [symbol, setSymbol] = useState(exec?.symbol ?? '')
   const [secType, setSecType] = useState<'STK' | 'OPT'>(exec?.sec_type === 'OPT' ? 'OPT' : 'STK')
@@ -36,6 +44,7 @@ export function ExecutionFormModal({ open, exec, accountOptions, onClose, onSucc
   const [error, setError] = useState<string | null>(null)
 
   const isCreate = !exec?.account_executions_id
+  const isJournal = isCreate && createSource === 'journal_closed'
 
   async function handleSubmit() {
     setSubmitting(true)
@@ -51,7 +60,7 @@ export function ExecutionFormModal({ open, exec, accountOptions, onClose, onSucc
           quantity: parseFloat(quantity) || 0,
           price: parseFloat(price) || 0,
           time: timeEpoch,
-          source: 'manual',
+          source: isJournal ? 'journal_closed' : 'manual',
           ...(secType === 'OPT' ? {
             expiry,
             strike: parseFloat(strike) || undefined,
@@ -91,8 +100,14 @@ export function ExecutionFormModal({ open, exec, accountOptions, onClose, onSucc
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isCreate ? 'Add Journal Entry' : 'Edit Execution'}</DialogTitle>
+          <DialogTitle>{isCreate ? (isJournal ? 'Add journal' : 'Add Journal Entry') : 'Edit Execution'}</DialogTitle>
         </DialogHeader>
+
+        {isJournal && (
+          <p className="text-xs text-muted-foreground">
+            Manual journal entry stored as <code className="font-mono text-[11px]">journal_closed</code> in the journal table for reconciliation.
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-3 text-sm pt-2">
           <div>
@@ -231,7 +246,7 @@ export function ExecutionFormModal({ open, exec, accountOptions, onClose, onSucc
         <div className="flex justify-end gap-2 pt-4">
           <Button variant="outline" size="sm" onClick={onClose} disabled={submitting}>Cancel</Button>
           <Button size="sm" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? 'Saving…' : 'Save'}
+            {submitting ? 'Saving…' : isCreate ? (isJournal ? 'Add journal' : 'Save') : 'Save'}
           </Button>
         </div>
       </DialogContent>

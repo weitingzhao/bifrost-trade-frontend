@@ -53,6 +53,10 @@ export const router = createBrowserRouter([
         path: 'portfolio/transfer',
         lazy: lazyPage(() => import('@/pages/portfolio/TransferPayPage')),
       },
+      {
+        path: 'portfolio/trade-history',
+        element: <Navigate to="/portfolio/ledger" replace />,
+      },
 
       {
         path: 'research/sepa',

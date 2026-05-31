@@ -1,12 +1,9 @@
 import { cn } from '@/lib/utils'
 import {
-  TableCell, TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import {
   ChevronDown, ChevronRight,
   Pencil, Trash2, Link2, RotateCcw,
 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
@@ -21,8 +18,10 @@ import {
 } from '@/utils/ledger/ledgerOptHelpers'
 import { fmtCcy, fmtPrice, pnlClass } from './ledgerFormat'
 import type { OptGroupCallbacks } from './ledgerTypes'
+import { ExecSourceBadge } from './ExecSourceBadge'
+import styles from './TradeLedgerPage.module.css'
 
-// ── InstBadge ─────────────────────────────────────────────────────────────────
+export { ExecSourceBadge }
 
 const INST_STATE_CLASS: Record<string, string> = {
   same: 'bg-emerald-500',
@@ -40,17 +39,6 @@ export function InstBadge({ trades }: { trades: Execution[] }) {
     />
   )
 }
-
-// ── ExecSourceBadge ───────────────────────────────────────────────────────────
-
-export function ExecSourceBadge({ source }: { source?: string | null }) {
-  if (!source) return <span className="text-muted-foreground">—</span>
-  const s = source.toLowerCase()
-  const variant = s === 'manual' ? 'secondary' : s === 'tws' ? 'outline' : s === 'flex' ? 'default' : 'outline'
-  return <Badge variant={variant} className="text-[10px] px-1 py-0">{source}</Badge>
-}
-
-// ── findOppositeLegAttribution (internal helper) ──────────────────────────────
 
 function findOppositeLegAttribution(
   ex: Execution,
@@ -70,8 +58,6 @@ function findOppositeLegAttribution(
   }
   return null
 }
-
-// ── OptGroupRow ───────────────────────────────────────────────────────────────
 
 export function OptGroupRow({
   group, expanded, expired, showNetQty, linkByOptionId, onToggle, onEdit, onDelete,
@@ -96,17 +82,13 @@ export function OptGroupRow({
 
   return (
     <>
-      {/* ── Group summary row ── */}
-      <TableRow
-        className="text-xs cursor-pointer hover:bg-muted/50 group/row"
-        onClick={onToggle}
-      >
-        <TableCell className="py-1 px-2 text-muted-foreground">
-          {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-        </TableCell>
-        <TableCell className="py-1 font-mono font-medium">
+      <tr className={styles.ledgerGroupRow} onClick={onToggle}>
+        <td className={cn(styles.ledgerExpandCol, 'text-muted-foreground')}>
+          {expanded ? <ChevronDown className="h-3.5 w-3.5 mx-auto" /> : <ChevronRight className="h-3.5 w-3.5 mx-auto" />}
+        </td>
+        <td className="font-mono font-medium">
           <span className="inline-flex items-center gap-1.5">
-            <span className={cn(group.option_right?.toUpperCase() === 'P' ? 'text-rose-600 dark:text-rose-400' : 'text-sky-600 dark:text-sky-400', 'font-bold text-[10px]')}>
+            <span className={cn(group.option_right?.toUpperCase() === 'P' ? 'text-rose-600 dark:text-rose-400' : 'text-sky-600 dark:text-sky-400', 'font-bold', styles.ledgerMetaText)}>
               {group.option_right?.toUpperCase() === 'C' ? 'C' : 'P'}
             </span>
             <span>{group.symbol}</span>
@@ -114,14 +96,14 @@ export function OptGroupRow({
             <span>{group.strike}</span>
             {expired && <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">EXP</Badge>}
           </span>
-        </TableCell>
-        <TableCell className="py-1 text-center">
+        </td>
+        <td className={cn(styles.numCol, 'text-center')}>
           <InstBadge trades={group.trades} />
-        </TableCell>
-        <TableCell className="py-1 text-center">
+        </td>
+        <td className={cn(styles.numCol, 'text-center')}>
           {totalLinkCount > 0 && onViewLinks ? (
             <button
-              className="text-[10px] text-blue-500 hover:underline font-mono"
+              className={cn(styles.ledgerMetaText, 'text-blue-500 hover:underline font-mono')}
               onClick={ev => {
                 ev.stopPropagation()
                 const firstOid = group.trades.find(t => t.account_executions_id != null && (linkByOptionId?.[t.account_executions_id!]?.links?.length ?? 0) > 0)?.account_executions_id
@@ -133,36 +115,34 @@ export function OptGroupRow({
           ) : (
             <span className="text-muted-foreground/40">—</span>
           )}
-        </TableCell>
-        {!showNetQty && <TableCell className="py-1 text-right font-mono text-muted-foreground">{fmtPrice(group.buy_avg_price)}</TableCell>}
-        {!showNetQty && <TableCell className="py-1 text-right font-mono text-muted-foreground">{fmtPrice(group.sell_avg_price)}</TableCell>}
-        {showNetQty && <TableCell className="py-1 text-right font-mono">{group.net_qty.toFixed(0)}</TableCell>}
-        <TableCell className="py-1 text-right font-mono text-muted-foreground">{group.buy_volume + group.sell_volume}</TableCell>
-        <TableCell className={cn('py-1 text-right font-mono font-medium', pnlClass(adjPnl))}>
+        </td>
+        {!showNetQty && <td className={cn(styles.numCol, 'text-muted-foreground')}>{fmtPrice(group.buy_avg_price)}</td>}
+        {!showNetQty && <td className={cn(styles.numCol, 'text-muted-foreground')}>{fmtPrice(group.sell_avg_price)}</td>}
+        {showNetQty && <td className={styles.numCol}>{group.net_qty.toFixed(0)}</td>}
+        <td className={cn(styles.numCol, 'text-muted-foreground')}>{group.buy_volume + group.sell_volume}</td>
+        <td className={cn(styles.numCol, 'font-medium', pnlClass(adjPnl))}>
           {fmtCcy(adjPnl)}
           {hasAdj && (
-            <span className="ml-1 text-[10px] text-blue-500 dark:text-blue-400">
+            <span className={cn('ml-1', styles.ledgerMetaText, 'text-blue-500 dark:text-blue-400')}>
               {stockAdj >= 0 ? '+' : ''}{fmtCcy(stockAdj)}
             </span>
           )}
-        </TableCell>
-        <TableCell className="py-1 text-right text-muted-foreground">{group.trades.length}</TableCell>
-      </TableRow>
+        </td>
+        <td className={cn(styles.numCol, 'text-muted-foreground')}>{group.trades.length}</td>
+      </tr>
 
-      {/* ── Expanded detail header ── */}
       {expanded && (
-        <TableRow className="bg-muted/10 hover:bg-muted/10 border-t border-border/50">
-          <TableCell className="py-0 px-2" />
-          <TableCell className="py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider" colSpan={3}>Date / Time</TableCell>
-          <TableCell className="py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Side</TableCell>
-          <TableCell className="py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-right">Qty</TableCell>
-          <TableCell className="py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-right">Price</TableCell>
-          <TableCell className="py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-right">PnL</TableCell>
-          <TableCell className="py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-right">Actions</TableCell>
-        </TableRow>
+        <tr className={styles.ledgerDetailHeader}>
+          <td />
+          <td colSpan={3}>Date / Time</td>
+          <td className={styles.numCol}>Side</td>
+          <td className={styles.numCol}>Qty</td>
+          <td className={styles.numCol}>Price</td>
+          <td className={styles.numCol}>PnL</td>
+          <td className={styles.numCol}>Actions</td>
+        </tr>
       )}
 
-      {/* ── Detail rows ── */}
       {expanded && group.trades.map(t => {
         const oid = t.account_executions_id
         const linkCount = oid != null && linkByOptionId ? (linkByOptionId[oid]?.links?.length ?? 0) : 0
@@ -176,13 +156,13 @@ export function OptGroupRow({
         const fillPnl = isBuy ? -(q * p * 100 - c) : (q * p * 100 - c)
 
         return (
-          <TableRow key={oid ?? `${t.time}-${t.price}`} className="text-xs bg-muted/20 hover:bg-muted/30">
-            <TableCell className="py-0.5 px-2" />
-            <TableCell className="py-0.5 pl-5 font-mono text-muted-foreground" colSpan={3}>
+          <tr key={oid ?? `${t.time}-${t.price}`} className={styles.ledgerDetailRow}>
+            <td />
+            <td className="font-mono text-muted-foreground" colSpan={3}>
               <span>{executionDateStr(t)}</span>
               {linkCount > 0 && (
                 <button
-                  className="ml-2 text-[10px] text-blue-500 hover:underline"
+                  className={cn('ml-2', styles.ledgerMetaText, 'text-blue-500 hover:underline')}
                   onClick={ev => {
                     ev.stopPropagation()
                     if (oid != null && onViewLinks) onViewLinks({ title: `Fill #${oid} — stock links`, oid })
@@ -193,18 +173,18 @@ export function OptGroupRow({
               )}
               {t.account_id && <span className="ml-2 text-muted-foreground/60">{t.account_id}</span>}
               <ExecSourceBadge source={t.source} />
-            </TableCell>
-            <TableCell className="py-0.5 text-center">
+            </td>
+            <td className={cn(styles.numCol, 'text-center')}>
               <span className={cn('font-medium', isBuy ? 'text-sky-600 dark:text-sky-400' : 'text-amber-600 dark:text-amber-400')}>
                 {isBuy ? 'BUY' : 'SELL'}
               </span>
-            </TableCell>
-            <TableCell className="py-0.5 text-right font-mono">{q}</TableCell>
-            <TableCell className="py-0.5 text-right font-mono">{fmtPrice(p)}</TableCell>
-            <TableCell className={cn('py-0.5 text-right font-mono', pnlClass(fillPnl))}>
+            </td>
+            <td className={styles.numCol}>{q}</td>
+            <td className={styles.numCol}>{fmtPrice(p)}</td>
+            <td className={cn(styles.numCol, pnlClass(fillPnl))}>
               {!showNetQty ? fmtCcy(fillPnl) : '—'}
-            </TableCell>
-            <TableCell className="py-0.5 text-right" onClick={ev => ev.stopPropagation()}>
+            </td>
+            <td className={styles.numCol} onClick={ev => ev.stopPropagation()}>
               <div className="flex items-center justify-end gap-0.5">
                 {onExpiredClose && isOptionExpired(group.expiry) && (
                   <button
@@ -245,7 +225,7 @@ export function OptGroupRow({
                 )}
                 {onDelete && (
                   <button
-                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    className="h-5 w-5 rounded flex items-center justify-center text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
                     title="Delete execution"
                     onClick={() => onDelete(t)}
                   >
@@ -253,8 +233,8 @@ export function OptGroupRow({
                   </button>
                 )}
               </div>
-            </TableCell>
-          </TableRow>
+            </td>
+          </tr>
         )
       })}
     </>

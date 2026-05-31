@@ -58,8 +58,12 @@ export function isOptionExpired(expiryRaw: string | undefined | null): boolean {
   return Date.now() > expiryMs
 }
 
+function isOptExecution(e: Execution): boolean {
+  return (e.sec_type ?? '').toUpperCase() === 'OPT'
+}
+
 export function buildOptExecutionGroups(sourceExecutions: Execution[]): OptExecutionGroup[] {
-  const optExecs = sourceExecutions.filter((e) => e.sec_type === 'OPT')
+  const optExecs = sourceExecutions.filter(isOptExecution)
 
   const grouped = new Map<string, Execution[]>()
   for (const e of optExecs) {
@@ -133,4 +137,30 @@ export function buildOptExecutionGroups(sourceExecutions: Execution[]): OptExecu
   })
 
   return result
+}
+
+/** Sort closed/open option groups — matches Legacy LedgerView trade_date / expiry columns. */
+export function compareOptExecutionGroups(
+  a: OptExecutionGroup,
+  b: OptExecutionGroup,
+  column: 'expiry' | 'trade_date',
+  dir: 'asc' | 'desc',
+): number {
+  const mult = dir === 'asc' ? 1 : -1
+  if (column === 'expiry') {
+    const sa = (a.expiry ?? '').trim().replace(/-/g, '')
+    const sb = (b.expiry ?? '').trim().replace(/-/g, '')
+    return mult * sa.localeCompare(sb, undefined, { numeric: true })
+  }
+  const datesA = (a.trades ?? [])
+    .map(t => t.trade_date)
+    .filter((d): d is string => d != null && String(d).trim() !== '')
+  datesA.sort()
+  const datesB = (b.trades ?? [])
+    .map(t => t.trade_date)
+    .filter((d): d is string => d != null && String(d).trim() !== '')
+  datesB.sort()
+  const va = datesA.length > 0 ? datesA[0] : ''
+  const vb = datesB.length > 0 ? datesB[0] : ''
+  return mult * va.localeCompare(vb)
 }

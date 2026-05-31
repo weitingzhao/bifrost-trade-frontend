@@ -1,4 +1,19 @@
-import PlaceholderPage from './_PlaceholderPage'
+import { PageHeader, PageShell } from '@/components/layout'
+import { Card, CardContent } from '@/components/ui/card'
+
 export default function FeedMassiveStockPage() {
-  return <PlaceholderPage title="Massive — Stock" description="Polygon stock data capabilities: REST API, WebSocket, Flat Files." />
+  return (
+    <PageShell>
+      <PageHeader
+        title="Massive — Stock"
+        description="Polygon stock REST, WebSocket, and OHLCV backfill (see Celery stocks_massive queues)."
+      />
+      <Card>
+        <CardContent className="py-6 text-sm text-muted-foreground">
+          Detailed stock feed panels are being migrated from Legacy. Use Operations → Celery for
+          stocks_massive job queues and Settings → API for Massive service health.
+        </CardContent>
+      </Card>
+    </PageShell>
+  )
 }

@@ -1,0 +1,151 @@
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
+import { createPortal } from 'react-dom'
+import { cn } from '@/lib/utils'
+
+const PANEL_MAX_W = 820
+const PANEL_MARGIN = 10
+const ANCHOR_OFFSET = 10
+
+function clampToViewport(left: number, top: number, width: number, height: number) {
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 800
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 600
+  const maxL = Math.max(PANEL_MARGIN, vw - width - PANEL_MARGIN)
+  const maxT = Math.max(PANEL_MARGIN, vh - height - PANEL_MARGIN)
+  return {
+    left: Math.min(Math.max(PANEL_MARGIN, left), maxL),
+    top: Math.min(Math.max(PANEL_MARGIN, top), maxT),
+  }
+}
+
+export interface DraggableExplainPanelProps {
+  open: boolean
+  explanationId: string
+  anchor: { x: number; y: number }
+  onClose: () => void
+  title: string
+  children: ReactNode
+}
+
+export function DraggableExplainPanel({
+  open,
+  explanationId: _explanationId,
+  anchor,
+  onClose,
+  title,
+  children,
+}: DraggableExplainPanelProps) {
+  void _explanationId
+  const titleId = useId()
+  const panelRef = useRef<HTMLDivElement>(null)
+  const wasOpenRef = useRef(false)
+  const [pos, setPos] = useState({ left: 0, top: 0 })
+  const dragging = useRef(false)
+  const dragOffset = useRef({ x: 0, y: 0 })
+
+  useLayoutEffect(() => {
+    if (!open) {
+      wasOpenRef.current = false
+      return
+    }
+    const el = panelRef.current
+    const w = el?.offsetWidth ?? PANEL_MAX_W
+    const h = el?.offsetHeight ?? 420
+    if (!wasOpenRef.current) {
+      setPos(clampToViewport(anchor.x + ANCHOR_OFFSET, anchor.y + ANCHOR_OFFSET, w, h))
+    }
+    wasOpenRef.current = true
+  }, [open, anchor.x, anchor.y])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  const onHeaderMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return
+      dragging.current = true
+      dragOffset.current = { x: e.clientX - pos.left, y: e.clientY - pos.top }
+      e.preventDefault()
+    },
+    [pos.left, pos.top],
+  )
+
+  useEffect(() => {
+    if (!open) return
+    const onMove = (e: MouseEvent) => {
+      if (!dragging.current) return
+      const el = panelRef.current
+      const w = el?.offsetWidth ?? PANEL_MAX_W
+      const h = el?.offsetHeight ?? 300
+      setPos(clampToViewport(
+        e.clientX - dragOffset.current.x,
+        e.clientY - dragOffset.current.y,
+        w,
+        h,
+      ))
+    }
+    const onUp = () => { dragging.current = false }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [open])
+
+  if (!open) return null
+
+  const node = (
+    <div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby={titleId}
+      className={cn(
+        'fixed z-[10050] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl',
+        'flex flex-col max-h-[min(85vh,640px)] overflow-hidden',
+      )}
+      style={{
+        left: pos.left,
+        top: pos.top,
+        maxWidth: PANEL_MAX_W,
+        width: `min(calc(100vw - 1.5rem), ${PANEL_MAX_W}px)`,
+      }}
+    >
+      <div
+        className="flex items-start justify-between gap-2 border-b border-border px-3 py-2 cursor-move select-none bg-muted/40"
+        onMouseDown={onHeaderMouseDown}
+        role="presentation"
+      >
+        <h3 id={titleId} className="text-sm font-semibold leading-snug pr-2">{title}</h3>
+        <button
+          type="button"
+          className="shrink-0 h-6 w-6 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+      <div className="overflow-y-auto px-3 py-2 text-xs leading-relaxed">{children}</div>
+      <p className="border-t border-border px-3 py-1.5 text-[10px] text-muted-foreground">
+        Drag the header to move. Click × or press Escape to close.
+      </p>
+    </div>
+  )
+
+  return createPortal(node, document.body)
+}

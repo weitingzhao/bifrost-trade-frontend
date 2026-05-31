@@ -7,6 +7,7 @@ import {
   getSinceTradeDateRange,
   ledgerExecutionDateKey,
   executionMatchesLedgerTradePeriod,
+  shouldApplySinceTradeFilter,
 } from './summaryPeriod'
 
 describe('monthKeyToPeriodKey', () => {
@@ -39,16 +40,16 @@ describe('monthKeyToPeriodKey', () => {
 
 describe('comparePeriodKeysDesc', () => {
   it('sorts years descending', () => {
-    expect(comparePeriodKeysDesc('2024', '2023')).toBeLessThan(0)
-    expect(comparePeriodKeysDesc('2023', '2024')).toBeGreaterThan(0)
+    expect(comparePeriodKeysDesc('2024', '2023', 'year')).toBeLessThan(0)
+    expect(comparePeriodKeysDesc('2023', '2024', 'year')).toBeGreaterThan(0)
   })
 
   it('sorts months descending', () => {
-    expect(comparePeriodKeysDesc('2024-03', '2024-01')).toBeLessThan(0)
+    expect(comparePeriodKeysDesc('2024-03', '2024-01', 'month')).toBeLessThan(0)
   })
 
   it('sorts quarters descending', () => {
-    expect(comparePeriodKeysDesc('2024-Q2', '2024-Q1')).toBeLessThan(0)
+    expect(comparePeriodKeysDesc('2024-Q2', '2024-Q1', 'quarter')).toBeLessThan(0)
   })
 })
 
@@ -83,6 +84,22 @@ describe('rollupOptionsFromMonthly', () => {
     expect(q1).toBeDefined()
     expect(q1![1].count).toBe(5)
     expect(q1![1].realizedPnl).toBe(150)
+  })
+
+  it('changes bucket keys when summary period mode changes', () => {
+    const monthly: [string, { count: number; realizedPnl: number }][] = [
+      ['2026-05', { count: 1, realizedPnl: 1136 }],
+    ]
+    const monthRows = rollupOptionsFromMonthly(monthly, 'month')
+    const quarterRows = rollupOptionsFromMonthly(monthly, 'quarter')
+    const yearRows = rollupOptionsFromMonthly(monthly, 'year')
+
+    expect(monthRows[0]?.[0]).toBe('2026-05')
+    expect(formatPeriodLabel(monthRows[0]![0], 'month')).toBe('2026-05')
+    expect(quarterRows[0]?.[0]).toBe('2026-Q2')
+    expect(formatPeriodLabel(quarterRows[0]![0], 'quarter')).toBe('2026 Q2')
+    expect(yearRows[0]?.[0]).toBe('2026')
+    expect(formatPeriodLabel(yearRows[0]![0], 'year')).toBe('2026')
   })
 })
 
@@ -119,6 +136,21 @@ describe('ledgerExecutionDateKey', () => {
 
   it('returns null if both missing', () => {
     expect(ledgerExecutionDateKey(null, null)).toBeNull()
+  })
+})
+
+describe('shouldApplySinceTradeFilter', () => {
+  it('skips trade-date filter for preset all', () => {
+    expect(shouldApplySinceTradeFilter('all', '')).toBe(false)
+  })
+
+  it('skips trade-date filter when expiry year is set', () => {
+    expect(shouldApplySinceTradeFilter('month', '2025')).toBe(false)
+  })
+
+  it('applies trade-date filter for rolling presets without expiry filter', () => {
+    expect(shouldApplySinceTradeFilter('month', '')).toBe(true)
+    expect(shouldApplySinceTradeFilter('ytd', '')).toBe(true)
   })
 })
 

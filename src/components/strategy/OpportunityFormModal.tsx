@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { X, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { dangerTextBtnClass } from '@/lib/uiClasses'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -299,7 +300,7 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
                   {symbols.map((s) => (
                     <span key={s} className="flex items-center gap-1 text-xs font-mono bg-muted px-2 py-0.5 rounded">
                       {s}
-                      <button type="button" onClick={() => handleRemoveSymbol(s)} className="text-muted-foreground hover:text-destructive">
+                      <button type="button" onClick={() => handleRemoveSymbol(s)} className={dangerTextBtnClass}>
                         <X className="h-2.5 w-2.5" />
                       </button>
                     </span>
@@ -349,7 +350,7 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
                     value={cond.value_numeric ?? ''}
                     onChange={(e) => handleConditionValue(idx, e.target.value)}
                   />
-                  <button type="button" onClick={() => handleRemoveCondition(idx)} className="text-muted-foreground hover:text-destructive">
+                  <button type="button" onClick={() => handleRemoveCondition(idx)} className={dangerTextBtnClass}>
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>

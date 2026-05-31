@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { dangerOutlineBtnClass } from '@/lib/uiClasses'
+import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -182,7 +184,7 @@ function MassiveJobsPanel({ tab, statusFilter, limit, onConfirm, onMsg }: Massiv
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2 items-center">
         {show('pending') && (
-          <Button size="sm" variant="outline" className="h-7 text-xs"
+          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
             disabled={deleteAll.isPending}
             onClick={() => onConfirm({
               title: `Delete pending jobs (${tab.celeryQueue})`,
@@ -196,7 +198,7 @@ function MassiveJobsPanel({ tab, statusFilter, limit, onConfirm, onMsg }: Massiv
           </Button>
         )}
         {show('running') && (
-          <Button size="sm" variant="outline" className="h-7 text-xs"
+          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
             disabled={deleteAll.isPending}
             onClick={() => onConfirm({
               title: `Delete running jobs (${tab.celeryQueue})`,
@@ -210,7 +212,7 @@ function MassiveJobsPanel({ tab, statusFilter, limit, onConfirm, onMsg }: Massiv
           </Button>
         )}
         {show('done') && (
-          <Button size="sm" variant="secondary" className="h-7 text-xs"
+          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
             disabled={deleteAll.isPending}
             onClick={() => onConfirm({
               title: `Delete done jobs (${tab.celeryQueue})`,
@@ -391,7 +393,7 @@ function BarsJobsPanel({ statusFilter, limit, onConfirm, onMsg }: BarsJobsPanelP
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2 items-center">
         {show('pending') && (
-          <Button size="sm" variant="outline" className="h-7 text-xs"
+          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
             disabled={deleteAll.isPending}
             onClick={() => onConfirm({
               title: 'Delete pending bars jobs',
@@ -405,7 +407,7 @@ function BarsJobsPanel({ statusFilter, limit, onConfirm, onMsg }: BarsJobsPanelP
           </Button>
         )}
         {show('running') && (
-          <Button size="sm" variant="outline" className="h-7 text-xs"
+          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
             disabled={deleteAll.isPending}
             onClick={() => onConfirm({
               title: 'Delete running bars jobs',
@@ -419,7 +421,7 @@ function BarsJobsPanel({ statusFilter, limit, onConfirm, onMsg }: BarsJobsPanelP
           </Button>
         )}
         {show('done') && (
-          <Button size="sm" variant="secondary" className="h-7 text-xs"
+          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
             disabled={deleteAll.isPending}
             onClick={() => onConfirm({
               title: 'Delete done bars jobs',

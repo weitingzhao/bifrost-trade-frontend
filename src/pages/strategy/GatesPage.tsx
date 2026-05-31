@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { Plus, Copy, Pencil, Star, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { dangerGhostBtnClass } from '@/lib/uiClasses'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -627,7 +628,7 @@ export default function GatesPage() {
                         />
                         <Button
                           variant="ghost" size="sm"
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                          className={cn('h-7 w-7 p-0 shrink-0', dangerGhostBtnClass)}
                           onClick={() => removeEarningsDate(idx)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />

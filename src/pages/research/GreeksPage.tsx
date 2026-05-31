@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
-import { useQuery } from '@tanstack/react-query'
 import { Search, ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -11,7 +10,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { fetchGreeks, fetchGreeksAvailableDates } from '@/api/research'
+import { useGreeksAvailableDates, useGreeksHistory } from '@/hooks/useGreeksHistory'
 import { bsComputeDetail, impliedVolatility } from '@/utils/blackScholes'
 import type { GreeksRow } from '@/types/research'
 
@@ -198,26 +197,15 @@ export default function GreeksPage() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   // available-dates is a best-effort helper — retry:0 so failures don't block UI
-  const { data: availDates } = useQuery({
-    queryKey: ['research', 'greeks', 'available-dates', symbol],
-    queryFn: () => fetchGreeksAvailableDates(symbol),
-    enabled: !!symbol,
-    staleTime: 600_000,
-    retry: 0,
-  })
+  const { data: availDates } = useGreeksAvailableDates(symbol)
 
   const sortedDates = useMemo(
     () => (availDates?.length ? [...availDates].sort().reverse() : []),
     [availDates],
   )
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['research', 'greeks', symbol, tradeDate, expFilter === 'all' ? undefined : expFilter],
-    queryFn: () => fetchGreeks(symbol, tradeDate, expFilter === 'all' ? undefined : expFilter),
-    enabled: !!symbol && !!tradeDate,
-    staleTime: 300_000,
-    retry: 0,
-  })
+  const expArg = expFilter === 'all' ? undefined : expFilter
+  const { data, isLoading, isError, error } = useGreeksHistory(symbol, tradeDate || null, expArg)
 
   const groups = useMemo(() => {
     if (!data?.rows) return []

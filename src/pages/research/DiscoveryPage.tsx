@@ -1,28 +1,19 @@
-/* eslint-disable react-hooks/set-state-in-effect, react-hooks/refs -- Legacy discovery workflow; incremental hook extraction */
-import '@/styles/discoveryCharts.css'
+/* eslint-disable react-hooks/set-state-in-effect -- Discovery chain workflow: phased hook extraction (see useDiscoverySession) */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import discoveryStyles from './discoveryCharts.module.css'
 import { bsComputeDetail } from '@/utils/optionDiscovery/bsCalc'
-import type { WatchlistItem } from '@/types/market'
 import {
   fetchOptionExpirations,
-  fetchMassiveStatus,
   postMassiveSync,
   fetchOptionSnapshotsPg,
   pollMassiveJobUntilDone,
   resolveMassiveSyncJobId,
   fetchMassiveJob,
-  fetchGreeksCoverage,
-  fetchMassiveDailyChecklist,
   fetchIvTermStructure,
   fetchIvVolatilityCone,
 } from '@/api/research/optionDiscovery'
-import { fetchWatchlist, fetchBenchmarks, postWatchlistItem } from '@/api/market'
-import type {
-  MassiveStatusResponse,
-  GreeksCoverageResponse,
-  MassiveDailyChecklistDims,
-  OptionSnapshotRow,
-} from '@/types/optionDiscovery'
+import { postWatchlistItem } from '@/api/market'
+import type { OptionSnapshotRow } from '@/types/optionDiscovery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { TableCell } from '@/components/ui/table'
@@ -49,6 +40,10 @@ import { OptionChainQuotesSection } from '@/components/optionDiscovery/OptionCha
 import { useOptionContractLiquidity } from '@/components/optionDiscovery/useOptionContractLiquidity'
 import { useDiscoverySession } from '@/hooks/useDiscoverySession'
 import { useDiscoveryCompare } from '@/hooks/useDiscoveryCompare'
+import { useWatchlistStkSymbols } from '@/hooks/useWatchlistStkSymbols'
+import { useMassiveDiscoveryStatus, useMassiveDailyChecklist } from '@/hooks/useMassiveDiscoveryStatus'
+import { useDiscoverySymbolBenchmark } from '@/hooks/useDiscoverySymbolBenchmark'
+import { useDiscoveryGreeksCoverage } from '@/hooks/useDiscoveryGreeksCoverage'
 import {
   computeDerivedMetrics,
   defaultSnapshotContractKey,
@@ -68,8 +63,6 @@ import {
 } from '@/utils/optionDiscovery/expirationMeta'
 import {
   computeStrikesFromPreset,
-  debounce,
-  nyCalendarDateIso,
   IV_TERM_DEFAULT_EXPIRATIONS,
   IV_TERM_MAX_EXPIRATIONS,
   CHAIN_COLUMN_LABEL,
@@ -77,29 +70,10 @@ import {
 
 type ChainColumnId = keyof typeof CHAIN_COLUMN_LABEL
 
-/** STK symbols from Watchlist that are optionable (sec_type STK and optionable=true). */
-function useWatchlistStkSymbols(): string[] {
-  const [items, setItems] = useState<WatchlistItem[]>([])
-  useEffect(() => {
-    let cancelled = false
-    fetchWatchlist()
-      .then(res => { if (!cancelled) setItems(res.items || []) })
-      .catch(() => { if (!cancelled) setItems([]) })
-    return () => { cancelled = true }
-  }, [])
-  return useMemo(() => {
-    const syms = items
-      .filter(i => (i.sec_type || '').trim().toUpperCase() !== 'OPT')
-      .filter(i => i.optionable === true)
-      .map(i => (i.symbol || '').trim())
-      .filter(Boolean)
-    return [...new Set(syms)].sort()
-  }, [items])
-}
-
 export default function DiscoveryPage() {
   const { openMassiveFeed } = useDiscoveryNav()
-  const stkSymbols = useWatchlistStkSymbols()
+  const { symbols: stkSymbols } = useWatchlistStkSymbols()
+  const { data: massiveStatus } = useMassiveDiscoveryStatus()
   const session = useDiscoverySession()
   const {
     selectedSymbol,
@@ -122,6 +96,16 @@ export default function DiscoveryPage() {
     greeksSource,
     setGreeksSource,
   } = session
+  const dailyChecklistQuery = useMassiveDailyChecklist(
+    selectedSymbol,
+    massiveStatus?.configured,
+  )
+  const dailyDims = dailyChecklistQuery.data?.ok && selectedSymbol.trim()
+    ? dailyChecklistQuery.data.symbols?.[selectedSymbol.trim().toUpperCase()] ?? null
+    : null
+  const dailyDimsDate = dailyChecklistQuery.data?.trade_date ?? null
+  const dailyDimsLoading = dailyChecklistQuery.isLoading
+  const { data: symbolBenchmarkMap } = useDiscoverySymbolBenchmark(selectedSymbol)
   const {
     compareOpen,
     setCompareOpen,
@@ -129,7 +113,6 @@ export default function DiscoveryPage() {
     setCompareRows,
     addToCompare: handleAddToCompare,
   } = useDiscoveryCompare()
-  const [massiveStatus, setMassiveStatus] = useState<MassiveStatusResponse | null>(null)
   const [expirations, setExpirations] = useState<string[]>([])
   const [strikes, setStrikes] = useState<number[]>([])
   const [stockDayLastPrice, setStockDayLastPrice] = useState<number | null>(null)
@@ -154,7 +137,7 @@ export default function DiscoveryPage() {
   const [underlyingPrice, setUnderlyingPrice] = useState<number | null>(null)
   const [addWatchlistFeedback, setAddWatchlistFeedback] = useState<string | null>(null)
   const [multiSelectStrikes, setMultiSelectStrikes] = useState<number[]>([])
-  const [symbolDailyPrices, setSymbolDailyPrices] = useState<Record<string, number | null>>({})
+  const symbolDailyPrices = symbolBenchmarkMap ?? {}
   const otmCallWrapRef = useRef<HTMLDivElement>(null)
 
   // P0–P3: Contract detail panel state (stable `${strike}|C|P` key)
@@ -162,8 +145,11 @@ export default function DiscoveryPage() {
   /** Timestamp of last successful option quotes load */
   const [lastQuotesLoadTs, setLastQuotesLoadTs] = useState<Date | null>(null)
 
-  // P2: Greeks coverage for quality badge
-  const [greeksCoverage, setGreeksCoverage] = useState<GreeksCoverageResponse | null>(null)
+  const { data: greeksCoverage } = useDiscoveryGreeksCoverage(
+    selectedSymbol,
+    selectedExpiration,
+    snapshotRows.length,
+  )
 
   // IV term structure (Phase 2)
   const [termPoints, setTermPoints] = useState<IvTermPoint[]>([])
@@ -187,63 +173,6 @@ export default function DiscoveryPage() {
         : expirations.filter(exp => classifyExpiration(exp) === expirationFilterKind)
     return byKind.filter(exp => !isOptionExpirationPastNyClose(exp))
   }, [expirations, expirationFilterKind])
-
-  // P3: Event context
-  const [eventContextWarnings, setEventContextWarnings] = useState<string[]>([])
-
-  useEffect(() => {
-    let cancelled = false
-    fetchMassiveStatus()
-      .then(s => {
-        if (!cancelled) {
-          setMassiveStatus(s)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setMassiveStatus(null)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const [dailyDims, setDailyDims] = useState<MassiveDailyChecklistDims | null>(null)
-  const [dailyDimsDate, setDailyDimsDate] = useState<string | null>(null)
-  const [dailyDimsLoading, setDailyDimsLoading] = useState(false)
-
-  useEffect(() => {
-    const sym = selectedSymbol.trim().toUpperCase()
-    if (!sym || !massiveStatus?.configured) {
-      setDailyDims(null)
-      setDailyDimsDate(null)
-      return
-    }
-    let cancelled = false
-    setDailyDimsLoading(true)
-    fetchMassiveDailyChecklist({ symbols: [sym], tradeDate: nyCalendarDateIso() })
-      .then(res => {
-        if (cancelled) return
-        if (!res.ok || !res.symbols?.[sym]) {
-          setDailyDims(null)
-          setDailyDimsDate(null)
-          return
-        }
-        setDailyDims(res.symbols[sym])
-        setDailyDimsDate(res.trade_date ?? nyCalendarDateIso())
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setDailyDims(null)
-          setDailyDimsDate(null)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setDailyDimsLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [selectedSymbol, massiveStatus?.configured])
 
   const stdDevValue = useMemo(() => {
     if (stdDevOption === 'custom') {
@@ -304,28 +233,6 @@ export default function DiscoveryPage() {
     const el = otmCallWrapRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [computedStrikes, selectedSymbol])
-
-  useEffect(() => {
-    const sym = selectedSymbol.trim().toUpperCase()
-    if (!sym) {
-      setSymbolDailyPrices({})
-      return
-    }
-    let cancelled = false
-    fetchBenchmarks([sym])
-      .then(({ benchmarks }) => {
-        if (cancelled) return
-        const b = benchmarks[sym]
-        const close = b?.close != null && Number.isFinite(b.close) ? b.close : null
-        setSymbolDailyPrices({ [sym]: close ?? null })
-      })
-      .catch(() => {
-        if (!cancelled) setSymbolDailyPrices({})
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [selectedSymbol])
 
   const loadExpirations = useCallback(async (symbol: string) => {
     const s = (symbol || '').trim()
@@ -760,22 +667,13 @@ export default function DiscoveryPage() {
     }
   }, [selectedSymbol, selectedExpiration, effectiveStrikes, stopSnapshotPgWatch, startSnapshotPgWatch, stockDayLastPrice])
 
-  // Auto-load quotes when symbol / expiration / strikes / source change (debounced)
-  const loadQuotesRef = useRef(loadQuotes)
-  useEffect(() => {
-    loadQuotesRef.current = loadQuotes
-  }, [loadQuotes])
-  const loadQuotesDebounced = useMemo(
-    () => debounce(() => { void loadQuotesRef.current() }, 400),
-    [],
-  )
   useEffect(() => {
     const sym = selectedSymbol.trim()
     const exp = selectedExpiration.trim()
     if (!sym || !exp) return
-    loadQuotesDebounced()
-    return () => loadQuotesDebounced.cancel()
-  }, [selectedSymbol, selectedExpiration, strikesWatchKey, loadQuotesDebounced])
+    const timer = window.setTimeout(() => { void loadQuotes() }, 400)
+    return () => window.clearTimeout(timer)
+  }, [selectedSymbol, selectedExpiration, strikesWatchKey, loadQuotes])
 
   const handleAddToWatchlist = useCallback(
     async (row: OptionSnapshotRow) => {
@@ -799,24 +697,7 @@ export default function DiscoveryPage() {
     [selectedSymbol, selectedExpiration],
   )
 
-  // P2: Load greeks coverage when quotes arrive (Massive source only)
-  useEffect(() => {
-    if (snapshotRows.length === 0) {
-      setGreeksCoverage(null)
-      return
-    }
-    const sym = selectedSymbol.trim()
-    const exp = selectedExpiration.trim()
-    if (!sym) return
-    let cancelled = false
-    fetchGreeksCoverage(sym, exp, 'massive').then(r => {
-      if (!cancelled) setGreeksCoverage(r)
-    }).catch(() => { if (!cancelled) setGreeksCoverage(null) })
-    return () => { cancelled = true }
-  }, [snapshotRows.length, selectedSymbol, selectedExpiration])
-
-  // P3: Build event context warnings
-  useEffect(() => {
+  const eventContextWarnings = useMemo(() => {
     const warnings: string[] = []
     const dte = parseDteNumeric(selectedExpiration)
     if (dte != null && dte <= 3) warnings.push(`DTE is ${dte} — high theta decay, exercise/assignment risk.`)
@@ -824,7 +705,7 @@ export default function DiscoveryPage() {
     if (greeksCoverage?.freshness?.stale_rows != null && greeksCoverage.freshness.stale_rows > 0) {
       warnings.push(`${greeksCoverage.freshness.stale_rows} stale snapshot row(s) older than 24h.`)
     }
-    setEventContextWarnings(warnings)
+    return warnings
   }, [selectedExpiration, greeksCoverage])
 
   // Derived: selected row and its metrics
@@ -986,11 +867,11 @@ export default function DiscoveryPage() {
 
 
   return (
-    <PageShell padding="default" className="option-discovery-root">
-      <DiscoveryPageHeader massiveStatus={massiveStatus} />
+    <PageShell padding="default" className={discoveryStyles.discoveryRoot}>
+      <DiscoveryPageHeader massiveStatus={massiveStatus ?? null} />
 
       <OdSessionBar
-        massiveStatus={massiveStatus}
+        massiveStatus={massiveStatus ?? null}
         selectedSymbol={selectedSymbol}
         dailyDims={dailyDims}
         dailyDimsDate={dailyDimsDate}
@@ -1313,7 +1194,7 @@ export default function DiscoveryPage() {
                 selectedRow={selectedRow}
                 selectedDerived={selectedDerived}
                 snapshotRows={snapshotRows}
-                greeksCoverage={greeksCoverage}
+                greeksCoverage={greeksCoverage ?? null}
                 eventContextWarnings={eventContextWarnings}
                 greeksSource={greeksSource}
                 onGreeksSourceChange={setGreeksSource}

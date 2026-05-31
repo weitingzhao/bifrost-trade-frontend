@@ -1,5 +1,6 @@
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
 import { fmtUsd } from '@/lib/format'
+import { dangerTextBtnClass } from '@/lib/uiClasses'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { DiscoveryScrollArea } from '@/components/optionDiscovery/DiscoveryScrollArea'
 import { Button } from '@/components/ui/button'
@@ -94,8 +95,9 @@ export function OptionDiscoveryCompareDrawer({
                       <TableCell>
                         <Button
                           type="button"
-                          variant="secondary"
+                          variant="ghost"
                           size="sm"
+                          className={dangerTextBtnClass}
                           onClick={() => onRemove(i)}
                           aria-label={`Remove row ${i + 1}`}
                         >

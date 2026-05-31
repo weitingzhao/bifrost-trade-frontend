@@ -1,46 +1,36 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useOpportunities } from '@/hooks/useStrategies'
 import { useLedgerExecutions, useLedgerExecutionsBook } from '@/hooks/useLedgerExecutions'
+import { useLedgerOptionStockLinks } from '@/hooks/useLedgerOptionStockLinks'
+import { useLedgerUiSync } from '@/hooks/useLedgerUiSync'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { deleteExecution, updateExecution } from '@/api/trading'
-import { DeleteConfirmDialog } from '@/components/positions/DeleteConfirmDialog'
 import { PageHeader, PageShell } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { ExecutionFormModal } from '@/components/positions/ExecutionFormModal'
-import { LinkExecutionModal } from '@/components/positions/LinkExecutionModal'
-import { QuickCloseModal } from '@/components/positions/QuickCloseModal'
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from '@/components/ui/collapsible'
-import {
-  ChevronDown, ChevronRight, RefreshCw,
-} from 'lucide-react'
+import { RefreshCw, Plus } from 'lucide-react'
 import type { Execution, StrategyOpportunity } from '@/types/positions'
-import type { OptionStockLinkSummary } from '@/types/trading'
 import {
   LEDGER_SINCE_PRESET_TABS,
-  LEDGER_SUMMARY_PERIOD_TABS,
   getSinceTradeDateRange,
   executionMatchesLedgerTradePeriod,
   executionMatchesExpiryYearMonth,
-  rollupOptionsFromMonthly,
-  rollupStocksFromMonthly,
-  formatPeriodLabel,
+  shouldApplySinceTradeFilter,
 } from '@/utils/ledger/summaryPeriod'
+import {
+  buildOptionsSummaryByMonth,
+  buildStocksSummaryByMonth,
+  closedGroupsForLedgerSummary,
+} from '@/utils/ledger/ledgerSummaryGroups'
 import type { LedgerSincePreset, LedgerSummaryPeriod } from '@/utils/ledger/summaryPeriod'
 import {
   buildOptExecutionGroups,
+  compareOptExecutionGroups,
   isOptionExpired,
 } from '@/utils/ledger/optExecutionGroups'
 import {
@@ -60,25 +50,20 @@ import {
   getInstanceConsistencyState,
 } from '@/utils/ledger/ledgerOptHelpers'
 import type { InstanceConsistencyState } from '@/utils/ledger/ledgerOptHelpers'
-import { fetchOptionStockLinkMapForExecutions } from '@/utils/ledger/fetchOptionStockLinkMap'
-import { TAB_GROUPS, MONTH_NAMES } from '@/pages/portfolio/ledger/ledgerConstants'
-import { fmtCcy, fmtPrice, fmtMdHint, pnlClass, execMonthKey } from '@/pages/portfolio/ledger/ledgerFormat'
-import { LedgerSortIcon as SortIcon } from '@/pages/portfolio/ledger/LedgerSortIcon'
+import { LedgerTabToolbar } from '@/pages/portfolio/ledger/LedgerTabToolbar'
+import { TradeLedgerModals } from '@/pages/portfolio/ledger/TradeLedgerModals'
+import { LedgerFilterBar } from '@/pages/portfolio/ledger/LedgerFilterBar'
+import { LedgerSummarySection } from '@/pages/portfolio/ledger/LedgerSummarySection'
+import { getLedgerAccountTabs, getLedgerAccountIds } from '@/pages/portfolio/ledger/ledgerAccountTabs'
+import styles from '@/pages/portfolio/ledger/TradeLedgerPage.module.css'
 import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
-import { SummaryTable } from '@/pages/portfolio/ledger/SummaryTable'
 import { OptionsTabContent } from '@/pages/portfolio/ledger/OptionsTabContent'
 import { StkTabContent } from '@/pages/portfolio/ledger/StkTabContent'
 import { StrategyTabContent } from '@/pages/portfolio/ledger/StrategyTabContent'
 import { InstanceTabContent } from '@/pages/portfolio/ledger/InstanceTabContent'
 
-function getAccounts(status: import('@/types/monitor').StatusResponse | null | undefined): string[] {
-  const a: string[] = []
-  const host = status?.config?.ib_client?.account?.event_host
-  const sec = status?.config?.ib_client?.account?.event_secondary
-  if (host) a.push(host)
-  if (sec) a.push(sec)
-  return a
-}
+const LEDGER_HELP =
+  'Trade ledger is the workspace for open and closed trades, Flex/TWS imports, and manual journal entries (journal_closed) for reconciliation. Instance groups option trades by strategy opportunity and instance.'
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 
@@ -89,14 +74,14 @@ export default function TradeLedgerPage() {
 
   const { data: canonData, isLoading: canonLoading, isError: canonError, refetch: refetchCanon } = useLedgerExecutions({ limit: 0, enabled: true })
   const { data: bookData, isLoading: bookLoading, isError: bookError, refetch: refetchBook } = useLedgerExecutionsBook({ limit: 0, enabled: true })
+  const isLoading = canonLoading || bookLoading
 
   // ── Core filters ────────────────────────────────────────────────────────
-  const [sincePreset, setSincePreset] = useState<LedgerSincePreset>('all')
+  const [sincePreset, setSincePreset] = useState<LedgerSincePreset>('month')
   const [accountFilter, setAccountFilter] = useState('all')
   const [symbolFilter, setSymbolFilter] = useState('')
-  const [activeTab, setActiveTab] = useState<MainTab>('options')
+  const [activeTab, setActiveTab] = useState<MainTab>('strategy')
   const [summaryPeriod, setSummaryPeriod] = useState<LedgerSummaryPeriod>('month')
-  const [summaryOpen, setSummaryOpen] = useState(true)
 
   // Expiry filter (OPT only, mutually exclusive with sincePreset)
   const [expiryFilterYear, setExpiryFilterYear] = useState('')
@@ -120,7 +105,7 @@ export default function TradeLedgerPage() {
 
   // STK display
   const [stkSort, setStkSort] = useState<{ col: StkSortCol; dir: 'asc' | 'desc' }>({ col: 'trade_date', dir: 'desc' })
-  const [groupByPosition, setGroupByPosition] = useState(false)
+  const [groupByPosition, setGroupByPosition] = useState(true)
 
   // Instance tab filter
   const [instanceContainOpenFilter, setInstanceContainOpenFilter] = useState<'all' | 'yes' | 'no'>('all')
@@ -143,12 +128,11 @@ export default function TradeLedgerPage() {
   const [expiredCloseTarget, setExpiredCloseTarget] = useState<Execution | null>(null)
   const [viewLinksTarget, setViewLinksTarget] = useState<{ title: string; oid: number } | null>(null)
   const [syncingId, setSyncingId] = useState<number | null>(null)
-
-  // Option-stock link map (async)
-  const [linkByOptionId, setLinkByOptionId] = useState<Record<number, OptionStockLinkSummary>>({})
+  const [createSource, setCreateSource] = useState<'manual' | 'journal_closed'>('manual')
 
   // ── Derived config ───────────────────────────────────────────────────────
-  const accounts = useMemo(() => getAccounts(status), [status])
+  const accountTabs = useMemo(() => getLedgerAccountTabs(status), [status])
+  const accounts = useMemo(() => getLedgerAccountIds(status), [status])
   const dateRange = useMemo(() => getSinceTradeDateRange(sincePreset), [sincePreset])
   const catMap = useMemo(() => buildPositionCategoryByAccountContract(status ?? null), [status])
 
@@ -220,25 +204,13 @@ export default function TradeLedgerPage() {
     if (isOpt && expiryFilterYear) {
       return executionMatchesExpiryYearMonth(e.expiry, expiryFilterYear, expiryFilterMonth)
     }
+    if (!shouldApplySinceTradeFilter(sincePreset, expiryFilterYear)) return true
     return executionMatchesLedgerTradePeriod(e.trade_date ?? null, e.time, dateRange)
-  }, [dateRange, accountFilter, symbolFilter, expiryFilterYear, expiryFilterMonth, allowedOpportunityIds])
+  }, [dateRange, accountFilter, symbolFilter, expiryFilterYear, expiryFilterMonth, allowedOpportunityIds, sincePreset])
 
   const canonFiltered = useMemo(() => (canonData?.items ?? []).filter(filterExec), [canonData, filterExec])
   const bookFiltered = useMemo(() => (bookData?.items ?? []).filter(filterExec), [bookData, filterExec])
-
-  // Load option-stock link map when filtered executions change
-  const bookFilteredKey = useMemo(
-    () => bookFiltered.map(e => e.account_executions_id).join(','),
-    [bookFiltered],
-  )
-  useEffect(() => {
-    let cancelled = false
-    fetchOptionStockLinkMapForExecutions(bookFiltered)
-      .then(r => { if (!cancelled) setLinkByOptionId(r) })
-      .catch(() => { if (!cancelled) setLinkByOptionId({}) })
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookFilteredKey])
+  const { data: linkByOptionId = {} } = useLedgerOptionStockLinks(bookFiltered)
 
   // ── OPT groups ───────────────────────────────────────────────────────────
   const optGroups = useMemo(() => buildOptExecutionGroups(bookFiltered), [bookFiltered])
@@ -254,16 +226,7 @@ export default function TradeLedgerPage() {
     const list = optRightFilter
       ? closedOptGroups.filter(g => g.option_right.toUpperCase()[0] === optRightFilter)
       : closedOptGroups
-    return [...list].sort((a, b) => {
-      if (optSort.col === 'expiry') {
-        const ae = (a.expiry ?? '').replace(/-/g, '')
-        const be = (b.expiry ?? '').replace(/-/g, '')
-        return optSort.dir === 'desc' ? be.localeCompare(ae) : ae.localeCompare(be)
-      }
-      const at = a.trades[0]?.time ?? 0
-      const bt = b.trades[0]?.time ?? 0
-      return optSort.dir === 'desc' ? bt - at : at - bt
-    })
+    return [...list].sort((a, b) => compareOptExecutionGroups(a, b, optSort.col, optSort.dir))
   }, [closedOptGroups, optSort, optRightFilter])
 
   // Options tab attribution filter
@@ -282,16 +245,7 @@ export default function TradeLedgerPage() {
     const list = optRightFilter
       ? allOrphanGroups.filter(g => g.option_right.toUpperCase()[0] === optRightFilter)
       : allOrphanGroups
-    return [...list].sort((a, b) => {
-      if (optSort.col === 'expiry') {
-        const ae = (a.expiry ?? '').replace(/-/g, '')
-        const be = (b.expiry ?? '').replace(/-/g, '')
-        return optSort.dir === 'desc' ? be.localeCompare(ae) : ae.localeCompare(be)
-      }
-      const at = a.trades[0]?.time ?? 0
-      const bt = b.trades[0]?.time ?? 0
-      return optSort.dir === 'desc' ? bt - at : at - bt
-    })
+    return [...list].sort((a, b) => compareOptExecutionGroups(a, b, optSort.col, optSort.dir))
   }, [allOrphanGroups, optSort, optRightFilter])
 
   // ── STK buckets ──────────────────────────────────────────────────────────
@@ -332,14 +286,13 @@ export default function TradeLedgerPage() {
     return ['All', ...Array.from(cats).sort(), 'Uncategorized']
   }, [activeTab, stkByBucket, catMap])
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!stkCategoryOptions.includes(stkCategoryTab)) setStkCategoryTab('All')
-  }, [stkCategoryOptions, stkCategoryTab])
+  const effectiveStkCategoryTab = stkCategoryOptions.includes(stkCategoryTab)
+    ? stkCategoryTab
+    : 'All'
 
   const stkExecsForDisplay = useMemo(() => {
-    if (stkCategoryTab === 'All') return stkExecsSorted
-    if (stkCategoryTab === 'Uncategorized') {
+    if (effectiveStkCategoryTab === 'All') return stkExecsSorted
+    if (effectiveStkCategoryTab === 'Uncategorized') {
       return stkExecsSorted.filter(e => {
         const c = catMap.get(`${e.account_id}|${e.contract_key?.trim() ?? ''}`) ?? '—'
         return c === '—'
@@ -347,9 +300,9 @@ export default function TradeLedgerPage() {
     }
     return stkExecsSorted.filter(e => {
       const c = catMap.get(`${e.account_id}|${e.contract_key?.trim() ?? ''}`) ?? '—'
-      return c === stkCategoryTab
+      return c === effectiveStkCategoryTab
     })
-  }, [stkExecsSorted, stkCategoryTab, catMap])
+  }, [stkExecsSorted, effectiveStkCategoryTab, catMap])
 
   const stkPositionSnapshotMap = useMemo(() => buildStkPositionSnapshotMap(status), [status])
 
@@ -429,6 +382,74 @@ export default function TradeLedgerPage() {
       })
   }, [optionExecutionsBook, opportunitiesMap])
 
+  const filteredStrategyOpportunityGroups = useMemo(() => {
+    if (!optRightFilter) return strategyOpportunityGroups
+    return strategyOpportunityGroups.filter(og =>
+      og.instanceSubgroups.some(sg =>
+        sg.groups.some(g => {
+          const r = (g.contract_key?.split('|')[4] ?? '').toUpperCase().slice(0, 1)
+          return r === optRightFilter
+        }),
+      ),
+    )
+  }, [strategyOpportunityGroups, optRightFilter])
+
+  const strategyPanelOptionRights = useMemo((): ('C' | 'P')[] => {
+    const rights = new Set<'C' | 'P'>()
+    for (const og of strategyOpportunityGroups) {
+      for (const sg of og.instanceSubgroups) {
+        for (const g of sg.groups) {
+          const r = (g.contract_key?.split('|')[4] ?? '').toUpperCase().slice(0, 1)
+          if (r === 'C' || r === 'P') rights.add(r)
+        }
+      }
+    }
+    return Array.from(rights).sort()
+  }, [strategyOpportunityGroups])
+
+  const symbolSuggestions = useMemo(() => {
+    const syms = new Set<string>()
+    for (const e of bookData?.items ?? []) {
+      const s = (e.symbol ?? '').trim().toUpperCase()
+      if (s) syms.add(s)
+    }
+    return Array.from(syms).sort()
+  }, [bookData])
+
+  const activeFilterSummary = useMemo(() => {
+    const parts: string[] = []
+    if (symbolFilter.trim()) parts.push(`Symbol: ${symbolFilter.trim()}`)
+    if (sincePreset !== 'all' && !expiryFilterYear) {
+      const tab = LEDGER_SINCE_PRESET_TABS.find(t => t.id === sincePreset)
+      parts.push(`Since: ${tab?.label ?? sincePreset}`)
+    }
+    if (expiryFilterYear) {
+      parts.push(
+        expiryFilterMonth
+          ? `Expiry: ${expiryFilterYear}-${expiryFilterMonth}`
+          : `Expiry year: ${expiryFilterYear}`,
+      )
+    }
+    if (accountFilter !== 'all') {
+      const acc = accountTabs.find(t => t.id === accountFilter)
+      parts.push(`Account: ${acc?.label ?? accountFilter}`)
+    }
+    if (filterStructure) parts.push(`Structure: ${filterStructure}`)
+    if (filterWishlistSymbol) parts.push(`Wishlist: ${filterWishlistSymbol}`)
+    if (optRightFilter) parts.push(`Type: ${optRightFilter === 'C' ? 'Call' : 'Put'}`)
+    return parts
+  }, [
+    symbolFilter,
+    sincePreset,
+    expiryFilterYear,
+    expiryFilterMonth,
+    accountFilter,
+    accountTabs,
+    filterStructure,
+    filterWishlistSymbol,
+    optRightFilter,
+  ])
+
   // ── Instance groups ──────────────────────────────────────────────────────
   const instanceGroupsRaw = useMemo(() => {
     const byId = new Map<number, Execution[]>()
@@ -487,10 +508,10 @@ export default function TradeLedgerPage() {
   type InstGroupBase = typeof filteredInstanceGroups[number]
 
   const strategyDisplayBuckets = useMemo((): { key: string; label: string; groups: StratOppGroupBase[] }[] => {
-    if (groupBy === 'opportunity') return [{ key: '_all', label: '', groups: strategyOpportunityGroups }]
+    if (groupBy === 'opportunity') return [{ key: '_all', label: '', groups: filteredStrategyOpportunityGroups }]
     if (groupBy === 'structure') {
       const m = new Map<string, StratOppGroupBase[]>()
-      for (const og of strategyOpportunityGroups) {
+      for (const og of filteredStrategyOpportunityGroups) {
         const k = og.structure || '—'
         const arr = m.get(k) ?? []; arr.push(og); m.set(k, arr)
       }
@@ -499,7 +520,7 @@ export default function TradeLedgerPage() {
     }
     // watchlist_symbol
     const m = new Map<string, StratOppGroupBase[]>()
-    for (const og of strategyOpportunityGroups) {
+    for (const og of filteredStrategyOpportunityGroups) {
       const syms = og.symbols.length > 0 ? og.symbols : ['—']
       const seen = new Set<string>()
       for (const sym of syms) {
@@ -509,7 +530,7 @@ export default function TradeLedgerPage() {
     }
     return Array.from(m.entries()).sort(([a], [b]) => a.localeCompare(b))
       .map(([k, g]) => ({ key: `sym:${k}`, label: k === '—' ? 'No watchlist symbol' : k, groups: g }))
-  }, [groupBy, strategyOpportunityGroups])
+  }, [groupBy, filteredStrategyOpportunityGroups])
 
   const instanceDisplayBuckets = useMemo((): { key: string; label: string; groups: InstGroupBase[] }[] => {
     if (groupBy === 'opportunity') return [{ key: '_all', label: '', groups: filteredInstanceGroups }]
@@ -535,83 +556,110 @@ export default function TradeLedgerPage() {
       .map(([k, g]) => ({ key: `sym:${k}`, label: k === '—' ? 'No watchlist symbol' : k, groups: g }))
   }, [groupBy, filteredInstanceGroups])
 
-  // Auto-expand outer buckets when groupBy changes to non-opportunity mode
-  useEffect(() => {
-    if (groupBy === 'opportunity') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOuterStrategyExpanded(new Set())
-       
-      setOuterInstanceExpanded(new Set())
-    } else {
-       
-      setOuterStrategyExpanded(new Set(strategyDisplayBuckets.map(b => b.key)))
-       
-      setOuterInstanceExpanded(new Set(instanceDisplayBuckets.map(b => b.key)))
-    }
-  }, [groupBy, strategyDisplayBuckets, instanceDisplayBuckets])
-
-  // Auto-switch instance sub-tab when data changes
-  useEffect(() => {
-    if (activeTab !== 'instance') return
-    const hasWithInst = instanceGroupsRaw.withInst.length > 0
-    const hasNoInst = instanceGroupsRaw.noInst.length > 0
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (instanceSubTab === 'with_instance' && !hasWithInst && hasNoInst) setInstanceSubTab('no_instance')
-     
-    if (instanceSubTab === 'no_instance' && !hasNoInst && hasWithInst) setInstanceSubTab('with_instance')
-  }, [activeTab, instanceSubTab, instanceGroupsRaw])
-
   // ── Tab availability ─────────────────────────────────────────────────────
   const hasOptExecs = optGroups.length > 0
   const hasStkExecs = stkByBucket.stocks.length > 0
   const hasFixedIncomeExecs = stkByBucket.fixed_income.length > 0
   const hasCashLikeExecs = stkByBucket.cash_like.length > 0
 
-  // Auto-switch tab when data availability changes
-  useEffect(() => {
-    if ((activeTab === 'strategy' || activeTab === 'instance' || activeTab === 'options') && !hasOptExecs) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (hasStkExecs) setActiveTab('stocks')
-       
-      else if (hasFixedIncomeExecs) setActiveTab('fixed_income')
-       
-      else if (hasCashLikeExecs) setActiveTab('cash_like')
-    }
-     
-    if (activeTab === 'stocks' && !hasStkExecs && hasOptExecs) setActiveTab('strategy')
-     
-    if (activeTab === 'fixed_income' && !hasFixedIncomeExecs && hasOptExecs) setActiveTab('strategy')
-     
-    if (activeTab === 'cash_like' && !hasCashLikeExecs && hasOptExecs) setActiveTab('strategy')
-  }, [activeTab, hasOptExecs, hasStkExecs, hasFixedIncomeExecs, hasCashLikeExecs])
+  useLedgerUiSync({
+    stkCategoryOptions,
+    stkCategoryTab,
+    setStkCategoryTab,
+    groupBy,
+    strategyDisplayBuckets,
+    instanceDisplayBuckets,
+    setOuterStrategyExpanded,
+    setOuterInstanceExpanded,
+    activeTab,
+    instanceSubTab,
+    setInstanceSubTab,
+    instanceGroupsRaw,
+    hasOptExecs,
+    hasStkExecs,
+    hasFixedIncomeExecs,
+    hasCashLikeExecs,
+    isLoading,
+    setActiveTab,
+  })
 
   // ── Period summaries ─────────────────────────────────────────────────────
-  const optionSummaryRows = useMemo(() => {
-    const monthly = new Map<string, { count: number; realizedPnl: number }>()
-    for (const g of closedOptGroups) {
-      const mk = g.trades.length > 0 ? execMonthKey(g.trades[0]) : '0000-00'
-      const prev = monthly.get(mk) ?? { count: 0, realizedPnl: 0 }
-      prev.count += 1
-      prev.realizedPnl += adjustedRealizedPnlForOptGroup(g, linkByOptionId)
-      monthly.set(mk, prev)
-    }
-    return rollupOptionsFromMonthly(Array.from(monthly.entries()), summaryPeriod)
-  }, [closedOptGroups, summaryPeriod, linkByOptionId])
+  const summaryClosedGroups = useMemo(
+    () =>
+      closedGroupsForLedgerSummary({
+        activeTab,
+        closedOptGroups,
+        filteredClosedOptGroups,
+        filteredStrategyOpportunityGroups,
+        filteredInstanceGroups,
+        noInstanceOptGroups,
+      }),
+    [
+      activeTab,
+      closedOptGroups,
+      filteredClosedOptGroups,
+      filteredStrategyOpportunityGroups,
+      filteredInstanceGroups,
+      noInstanceOptGroups,
+    ],
+  )
 
-  const stkSummaryRows = useMemo(() => {
+  const optionsSummaryByMonth = useMemo(
+    () => buildOptionsSummaryByMonth(summaryClosedGroups, linkByOptionId),
+    [summaryClosedGroups, linkByOptionId],
+  )
+
+  const stocksSummaryByMonth = useMemo(() => {
     const tab = activeTab as StkLedgerBucket
     const execs = stkByBucket[tab] ?? []
-    const monthly = new Map<string, { count: number; notional: number; realizedPnl: number }>()
-    for (const e of execs) {
-      const mk = execMonthKey(e)
-      const prev = monthly.get(mk) ?? { count: 0, notional: 0, realizedPnl: 0 }
-      prev.count += 1
-      prev.notional += Math.abs(e.qty * e.price)
-      prev.realizedPnl += e.realized_pnl ?? 0
-      monthly.set(mk, prev)
+    return buildStocksSummaryByMonth(execs)
+  }, [activeTab, stkByBucket])
+
+  const closedOptGroupsPnlSum = useMemo(
+    () => summaryClosedGroups.reduce((s, g) => s + adjustedRealizedPnlForOptGroup(g, linkByOptionId), 0),
+    [summaryClosedGroups, linkByOptionId],
+  )
+
+  const stkUnrealizedByKey = useMemo(() => {
+    const m = new Map<string, number | null>()
+    for (const [key, snap] of stkPositionSnapshotMap.entries()) {
+      if (!snap || Math.abs(snap.position) < 1e-9 || snap.price == null) {
+        m.set(key, null)
+        continue
+      }
+      m.set(key, snap.position * (snap.price - snap.avgCost))
     }
-    return rollupStocksFromMonthly(Array.from(monthly.entries()), summaryPeriod)
-  }, [activeTab, stkByBucket, summaryPeriod])
+    return m
+  }, [stkPositionSnapshotMap])
+
+  const stkTotals = useMemo(() => {
+    const execs = stkExecsForDisplay
+    let notional = 0
+    let realized = 0
+    for (const e of execs) {
+      notional += Math.abs(Number(e.quantity ?? e.qty) || 0) * (Number(e.price) || 0)
+      realized += Number(e.realized_pnl) || 0
+    }
+    const seen = new Set<string>()
+    let unrealized: number | null = 0
+    let anyU = false
+    for (const e of execs) {
+      const ck = e.contract_key?.trim() ?? `${e.symbol.toUpperCase()}|STK|||`
+      const key = `${e.account_id}|${ck}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      if (!stkUnrealizedByKey.has(key)) continue
+      anyU = true
+      const u = stkUnrealizedByKey.get(key)
+      if (u != null && Number.isFinite(u)) unrealized = (unrealized ?? 0) + u
+    }
+    return {
+      count: execs.length,
+      notional,
+      realized,
+      unrealized: anyU ? unrealized : null,
+    }
+  }, [stkExecsForDisplay, stkUnrealizedByKey])
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   function toggleExpanded(key: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) {
@@ -630,7 +678,21 @@ export default function TradeLedgerPage() {
   function toggleGroup(key: string) { toggleExpanded(key, setExpandedGroups) }
   function toggleStrategyOpp(oppId: number | 'none') { toggleExpanded(String(oppId), setStrategyOppExpanded) }
   function toggleStrategyInst(oppId: number | 'none', instId: number | 'none') {
-    toggleExpanded(`${oppId}::${instId}`, setStrategyInstExpanded)
+    const key = `${oppId}::${instId}`
+    setStrategyInstExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) {
+        next.delete(key)
+        return next
+      }
+      if (accordionMode) {
+        for (const k of next) {
+          if (k.startsWith(`${oppId}::`) && k !== key) next.delete(k)
+        }
+      }
+      next.add(key)
+      return next
+    })
   }
   function toggleOuterStrategy(key: string) { toggleExpanded(key, setOuterStrategyExpanded) }
   function toggleOuterInstance(key: string) { toggleExpanded(key, setOuterInstanceExpanded) }
@@ -648,6 +710,7 @@ export default function TradeLedgerPage() {
   }
 
   function handleAddJournal(accountId: string, symbol: string) {
+    setCreateSource('journal_closed')
     setEditExec({
       account_executions_id: undefined as unknown as number,
       account_id: accountId,
@@ -661,10 +724,34 @@ export default function TradeLedgerPage() {
     } as unknown as Execution)
   }
 
+  function handleHeaderAddJournal() {
+    const accountId = accountFilter !== 'all'
+      ? accountFilter
+      : (accounts[0] ?? '')
+    setCreateSource('journal_closed')
+    setEditExec({
+      account_executions_id: undefined as unknown as number,
+      account_id: accountId,
+      symbol: '',
+      sec_type: 'STK',
+      side: 'Buy',
+      qty: 0,
+      quantity: 0,
+      price: 0,
+      time: null,
+    } as unknown as Execution)
+  }
+
+  function handleCloseEditModal() {
+    setEditExec(null)
+    setCreateSource('manual')
+  }
+
   async function handleDelete() {
     if (!deleteTarget?.account_executions_id) return
     await deleteExecution(deleteTarget.account_executions_id)
-    queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executionsBook })
   }
 
   async function handleSyncOppositeLeg(ex: Execution, source: { opportunity_id: number; instance_id: number }) {
@@ -676,555 +763,256 @@ export default function TradeLedgerPage() {
         strategy_opportunity_id: source.opportunity_id,
         strategy_instance_id: source.instance_id,
       })
-      queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executionsBook })
     } finally {
       setSyncingId(null)
     }
   }
 
-  const isLoading = canonLoading || bookLoading
-  const isOptTab = activeTab === 'options' || activeTab === 'strategy' || activeTab === 'instance'
   const isStkTab = activeTab === 'stocks' || activeTab === 'fixed_income' || activeTab === 'cash_like'
+  const sinceDisabled = sincePreset !== 'all'
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
-        title="Trade Ledger"
-        className="[&_h1]:text-lg [&_h1]:tracking-tight"
-        actions={
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 gap-1.5 text-xs text-muted-foreground"
-            onClick={() => { void refetchCanon(); void refetchBook() }}
-            disabled={isLoading}
-          >
-            <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
-            Refresh
-          </Button>
-        }
-      />
-
-      {(canonError || bookError) && (
-        <QueryErrorAlert
-          error="Failed to load executions — check Trading API connection."
-          onRetry={() => { void refetchCanon(); void refetchBook() }}
-        />
-      )}
-
-      {/* ── Filter bar ── */}
-      <div className="border rounded-lg bg-muted/20 p-3 space-y-2">
-        {/* Row 1: date presets + account + symbol + structure/wishlist */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {/* Since presets */}
-          <div className="flex items-center gap-0.5">
-            {LEDGER_SINCE_PRESET_TABS.map(t => (
-              <button
-                key={t.id}
-                className={cn(
-                  'h-6 px-2 text-[11px] rounded font-medium transition-colors',
-                  sincePreset === t.id && !expiryFilterYear
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-                )}
-                onClick={() => { setSincePreset(t.id); setExpiryFilterYear(''); setExpiryFilterMonth('') }}
-              >
-                {t.label}
-              </button>
-            ))}
-            {sincePreset !== 'all' && !expiryFilterYear && (
-              <span className="ml-1.5 text-[10px] text-muted-foreground tabular-nums">
-                {fmtMdHint(dateRange.start)}–{fmtMdHint(dateRange.end)}
-              </span>
-            )}
-          </div>
-
-          {/* Divider */}
-          {accounts.length > 0 && <div className="h-4 w-px bg-border" />}
-
-          {/* Account filter */}
-          {accounts.length > 0 && (
-            <div className="flex items-center gap-0.5">
-              <span className="text-[10px] text-muted-foreground mr-1">Acct:</span>
-              <button
-                className={cn('h-6 px-2 text-[11px] rounded font-medium transition-colors', accountFilter === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}
-                onClick={() => setAccountFilter('all')}
-              >All</button>
-              {accounts.map(a => (
-                <button
-                  key={a}
-                  className={cn('h-6 px-2 text-[11px] rounded font-medium font-mono transition-colors', accountFilter === a ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}
-                  onClick={() => setAccountFilter(a)}
-                >{a}</button>
-              ))}
-            </div>
-          )}
-
-          {/* Symbol search */}
-          <div className="h-4 w-px bg-border" />
-          <Input
-            placeholder="Symbol…"
-            value={symbolFilter}
-            onChange={e => setSymbolFilter(e.target.value)}
-            className="h-6 w-28 text-xs px-2 bg-background"
-          />
-
-          {/* Structure / Wishlist */}
-          {structureOptions.length > 0 && (
-            <select
-              className="h-6 text-xs rounded border border-input bg-background px-1.5 focus:outline-none max-w-[140px]"
-              value={filterStructure}
-              onChange={e => { setFilterStructure(e.target.value); setFilterWishlistSymbol('') }}
-            >
-              <option value="">All structures</option>
-              {structureOptions.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
-          {wishlistSymbolOptions.length > 0 && (
-            <select
-              className="h-6 text-xs rounded border border-input bg-background px-1.5 focus:outline-none"
-              value={filterWishlistSymbol}
-              onChange={e => setFilterWishlistSymbol(e.target.value)}
-            >
-              <option value="">All symbols</option>
-              {wishlistSymbolOptions.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
-          {(filterStructure || filterWishlistSymbol) && (
-            <button className="h-6 px-1.5 text-[11px] rounded text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => { setFilterStructure(''); setFilterWishlistSymbol('') }}>
-              Clear
-            </button>
-          )}
-
-          {/* Accordion/Multi toggle — far right */}
-          <div className="flex items-center gap-0.5 ml-auto">
-            <span className="text-[10px] text-muted-foreground mr-1">Detail:</span>
-            {(['accordion', 'multi'] as const).map(v => (
-              <button
-                key={v}
-                className={cn('h-6 px-2 text-[11px] rounded font-medium transition-colors', (accordionMode ? 'accordion' : 'multi') === v ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:bg-muted')}
-                onClick={() => setAccordionMode(v === 'accordion')}
-              >{v === 'accordion' ? 'Accordion' : 'Multi'}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* Row 2: OPT expiry + right filter */}
-        {isOptTab && (
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-muted-foreground">Expiry:</span>
-            <select
-              className="h-6 text-xs rounded border border-input bg-background px-1.5 focus:outline-none"
-              value={expiryFilterYear}
-              onChange={e => { setExpiryFilterYear(e.target.value); setExpiryFilterMonth('') }}
-            >
-              <option value="">All years</option>
-              {expiryYearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
-            </select>
-            <select
-              className="h-6 text-xs rounded border border-input bg-background px-1.5 focus:outline-none disabled:opacity-40"
-              value={expiryFilterMonth}
-              disabled={!expiryFilterYear}
-              onChange={e => setExpiryFilterMonth(e.target.value)}
-            >
-              <option value="">All months</option>
-              {expiryMonthOptions.map(m => (
-                <option key={m} value={String(m).padStart(2, '0')}>{MONTH_NAMES[m - 1]}</option>
-              ))}
-            </select>
-            {expiryFilterYear && (
-              <button className="h-6 px-1.5 text-[11px] rounded text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => { setExpiryFilterYear(''); setExpiryFilterMonth('') }}>Clear</button>
-            )}
-            <div className="h-4 w-px bg-border mx-1" />
-            <span className="text-[10px] text-muted-foreground">Right:</span>
-            {(['', 'C', 'P'] as const).map(r => (
-              <button
-                key={r}
-                className={cn('h-6 px-2 text-[11px] rounded font-medium transition-colors', optRightFilter === r ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}
-                onClick={() => setOptRightFilter(r)}
-              >{r === '' ? 'All' : r === 'C' ? 'Call' : 'Put'}</button>
-            ))}
-          </div>
-        )}
-
-        {/* Row 2: STK controls */}
-        {isStkTab && (
-          <div className="flex items-center gap-2">
-            <button
-              className={cn('h-6 px-2 text-[11px] rounded font-medium transition-colors', groupByPosition ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}
-              onClick={() => setGroupByPosition(v => !v)}
-            >By Position</button>
-          </div>
-        )}
-      </div>
-
-      {/* ── Tab bar ── */}
-      <div className="flex items-end gap-0 border-b">
-        {TAB_GROUPS.map((group, gi) => (
-          <div key={group.label} className={cn('flex items-end gap-0', gi > 0 && 'ml-4')}>
-            <span className="text-[10px] text-muted-foreground px-2 pb-1.5 self-end">{group.label}</span>
-            {group.tabs.map(t => {
-              const isDisabled =
-                ((t.id === 'strategy' || t.id === 'instance' || t.id === 'options') && !hasOptExecs) ||
-                (t.id === 'stocks' && !hasStkExecs) ||
-                (t.id === 'fixed_income' && !hasFixedIncomeExecs) ||
-                (t.id === 'cash_like' && !hasCashLikeExecs)
-              const isActive = activeTab === t.id
-              return (
-                <button
-                  key={t.id}
-                  disabled={isDisabled}
-                  onClick={() => { setActiveTab(t.id); setStkPage(0) }}
-                  className={cn(
-                    'px-3 pb-2 pt-1 text-xs font-medium border-b-2 transition-colors',
-                    isActive
-                      ? 'border-primary text-foreground'
-                      : 'border-transparent text-muted-foreground hover:text-foreground',
-                    isDisabled && 'opacity-30 cursor-not-allowed',
-                  )}
-                >
-                  {t.label}
-                </button>
-              )
-            })}
-          </div>
-        ))}
-      </div>
-
-      {/* ── Tab-level filters ── */}
-      {activeTab === 'strategy' && hasOptExecs && (
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-muted-foreground">Group:</span>
-          {(['opportunity', 'structure', 'watchlist_symbol'] as const).map(v => (
-            <Button key={v} size="sm" variant={groupBy === v ? 'secondary' : 'ghost'} className="h-6 text-xs px-2" onClick={() => setGroupBy(v)}>
-              {v === 'opportunity' ? 'Opportunity' : v === 'structure' ? 'Structure' : 'Watchlist symbol'}
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'instance' && hasOptExecs && (
-        <div className="flex flex-wrap items-center gap-3 text-xs">
-          {/* Sub-tab: With / No instance */}
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant={instanceSubTab === 'with_instance' ? 'default' : 'outline'}
-              className="h-7 text-xs"
-              disabled={instanceGroupsRaw.withInst.length === 0}
-              onClick={() => setInstanceSubTab('with_instance')}
-            >
-              With instance ({instanceGroupsRaw.withInst.length})
-            </Button>
-            <Button
-              size="sm"
-              variant={instanceSubTab === 'no_instance' ? 'default' : 'outline'}
-              className="h-7 text-xs"
-              disabled={instanceGroupsRaw.noInst.length === 0}
-              onClick={() => setInstanceSubTab('no_instance')}
-            >
-              No instance ({noInstanceOptGroups.length})
-            </Button>
-          </div>
-          {instanceSubTab === 'with_instance' && (
+      <div className={styles.pageCard}>
+        <PageHeader
+          breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Trade ledger</p>}
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              Trade ledger
+              <InfoTooltip text={LEDGER_HELP} />
+            </span>
+          }
+          actions={
             <>
-              <span className="text-muted-foreground">Group:</span>
-              {(['opportunity', 'structure', 'watchlist_symbol'] as const).map(v => (
-                <Button key={v} size="sm" variant={groupBy === v ? 'secondary' : 'ghost'} className="h-6 text-xs px-2" onClick={() => setGroupBy(v)}>
-                  {v === 'opportunity' ? 'Opportunity' : v === 'structure' ? 'Structure' : 'Watchlist symbol'}
-                </Button>
-              ))}
-              <span className="text-muted-foreground ml-2">Open positions:</span>
-              {(['all', 'yes', 'no'] as const).map(v => (
-                <Button key={v} size="sm" variant={instanceContainOpenFilter === v ? 'default' : 'outline'} className="h-7 text-xs"
-                  onClick={() => setInstanceContainOpenFilter(v)}>
-                  {v === 'all' ? 'All' : v === 'yes' ? 'Has Open' : 'All Closed'}
-                </Button>
-              ))}
-              <span className="text-muted-foreground">{filteredInstanceGroups.length} instances</span>
-            </>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'options' && hasOptExecs && (
-        <div className="flex flex-wrap items-center gap-3 text-xs">
-          {/* Sub-tab: Closed / Open */}
-          <div className="flex items-center gap-1">
-            <Button size="sm" variant={optSubTab === 'contracts' ? 'default' : 'outline'} className="h-7 text-xs"
-              onClick={() => setOptSubTab('contracts')}>
-              Closed Option ({filteredClosedOptGroups.length})
-            </Button>
-            <Button size="sm" variant={optSubTab === 'orphans' ? 'default' : 'outline'} className="h-7 text-xs"
-              disabled={allOrphanGroups.length === 0}
-              onClick={() => setOptSubTab('orphans')}>
-              Open Option ({allOrphanGroups.length})
-            </Button>
-          </div>
-          {optSubTab === 'contracts' && (
-            <>
-              <span className="text-muted-foreground ml-2">Attribution:</span>
-              {(['all', 'has_instance', 'no_instance', 'mixed'] as const).map(v => (
-                <Button key={v} size="sm" variant={optInstanceFilter === v ? 'secondary' : 'ghost'} className="h-6 text-xs px-2"
-                  onClick={() => setOptInstanceFilter(v)}>
-                  {v === 'all' ? 'All' : v === 'has_instance' ? 'Has Instance' : v === 'no_instance' ? 'No Instance' : 'Mixed'}
-                </Button>
-              ))}
-              <span className="text-muted-foreground ml-2">Sort:</span>
-              {(['expiry', 'trade_date'] as const).map(col => (
-                <Button key={col} size="sm" variant={optSort.col === col ? 'secondary' : 'ghost'} className="h-6 text-xs px-2"
-                  onClick={() => toggleOptSort(col)}>
-                  {col === 'expiry' ? 'Expiry' : 'Trade Date'} <SortIcon active={optSort.col === col} dir={optSort.dir} />
-                </Button>
-              ))}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* STK category tabs */}
-      {isStkTab && stkCategoryOptions.length > 2 && (
-        <div className="flex items-center gap-1 flex-wrap">
-          {stkCategoryOptions.map(cat => (
-            <Button key={cat} size="sm" variant={stkCategoryTab === cat ? 'secondary' : 'ghost'} className="h-6 text-xs px-2"
-              onClick={() => { setStkCategoryTab(cat); setStkPage(0) }}>
-              {cat}
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Period summary ── */}
-      <Collapsible open={summaryOpen} onOpenChange={setSummaryOpen}>
-        <div className="flex items-center gap-2">
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 px-2">
-              {summaryOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-              <span className="ml-1 text-xs font-medium">Period Summary</span>
-            </Button>
-          </CollapsibleTrigger>
-          <div className="flex gap-1">
-            {LEDGER_SUMMARY_PERIOD_TABS.map(p => (
-              <Button key={p.id} size="sm" variant={summaryPeriod === p.id ? 'secondary' : 'ghost'} className="h-6 text-xs px-2" onClick={() => setSummaryPeriod(p.id)}>
-                {p.label}
+              <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs" onClick={handleHeaderAddJournal}>
+                <Plus className="h-3.5 w-3.5" />
+                Add journal
               </Button>
-            ))}
-          </div>
-        </div>
-        <CollapsibleContent className="mt-2">
-          {activeTab === 'options' && (
-            <SummaryTable
-              rows={optionSummaryRows.map(([k, v]) => ({
-                period: formatPeriodLabel(k, summaryPeriod),
-                col1Label: 'Closed Groups',
-                col1: String(v.count),
-                pnl: v.realizedPnl,
-              }))}
-            />
-          )}
-          {isStkTab && (
-            <SummaryTable
-              rows={stkSummaryRows.map(([k, v]) => ({
-                period: formatPeriodLabel(k, summaryPeriod),
-                col1Label: 'Trades',
-                col1: String(v.count),
-                col2Label: 'Notional',
-                col2: fmtCcy(v.notional),
-                pnl: v.realizedPnl,
-              }))}
-            />
-          )}
-          {(activeTab === 'strategy' || activeTab === 'instance') && (
-            <p className="text-xs text-muted-foreground">Select Options or STK tab for period summary.</p>
-          )}
-        </CollapsibleContent>
-      </Collapsible>
-
-      {/* ── Loading ── */}
-      {isLoading && (
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-        </div>
-      )}
-
-      {/* ── Tab content ── */}
-      {!isLoading && activeTab === 'options' && (
-        <OptionsTabContent
-          optSubTab={optSubTab}
-          closedGroups={filteredClosedOptGroups}
-          openActiveGroups={sortedOpenOptGroups.filter(g => !isOptionExpired(g.expiry))}
-          openExpiredGroups={sortedOpenOptGroups.filter(g => isOptionExpired(g.expiry))}
-          linkByOptionId={linkByOptionId}
-          optSort={optSort}
-          toggleOptSort={toggleOptSort}
-          expandedGroups={expandedGroups}
-          toggleGroup={toggleGroup}
-          onEdit={setEditExec}
-          onDelete={setDeleteTarget}
-          onLinkStrategy={setLinkStrategyTarget}
-          onViewLinks={setViewLinksTarget}
-          onExpiredClose={setExpiredCloseTarget}
-          syncingId={syncingId}
-          onSyncOpposite={handleSyncOppositeLeg}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 gap-1.5 text-xs text-muted-foreground"
+                onClick={() => { void refetchCanon(); void refetchBook() }}
+                disabled={isLoading}
+              >
+                <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
+                Refresh
+              </Button>
+            </>
+          }
         />
-      )}
 
-      {!isLoading && isStkTab && (
-        <StkTabContent
-          executions={stkExecsForDisplay}
-          positionGroups={stkPositionGroups}
+        {(canonError || bookError) && (
+          <QueryErrorAlert
+            error="Failed to load executions — check Trading API connection."
+            onRetry={() => { void refetchCanon(); void refetchBook() }}
+          />
+        )}
+
+        <LedgerFilterBar
+          sincePreset={sincePreset}
+          onSincePreset={setSincePreset}
+          dateRange={dateRange}
+          accountTabs={accountTabs}
+          accountFilter={accountFilter}
+          onAccountFilter={setAccountFilter}
+          symbolFilter={symbolFilter}
+          onSymbolFilter={setSymbolFilter}
+          symbolSuggestions={symbolSuggestions}
+          structureOptions={structureOptions}
+          filterStructure={filterStructure}
+          onFilterStructure={setFilterStructure}
+          wishlistSymbolOptions={wishlistSymbolOptions}
+          filterWishlistSymbol={filterWishlistSymbol}
+          onFilterWishlistSymbol={setFilterWishlistSymbol}
+          expiryFilterYear={expiryFilterYear}
+          onExpiryFilterYear={setExpiryFilterYear}
+          expiryFilterMonth={expiryFilterMonth}
+          onExpiryFilterMonth={setExpiryFilterMonth}
+          expiryYearOptions={expiryYearOptions}
+          expiryMonthOptions={expiryMonthOptions}
+          sinceDisabled={sinceDisabled}
+          activeFilterSummary={activeFilterSummary}
           groupByPosition={groupByPosition}
-          stkSort={stkSort}
-          toggleStkSort={toggleStkSort}
-          page={stkPage}
-          setPage={setStkPage}
-          onEdit={setEditExec}
-          onDelete={setDeleteTarget}
-          onAddJournal={handleAddJournal}
+          onToggleGroupByPosition={() => setGroupByPosition(v => !v)}
+          showStkControls={false}
         />
-      )}
 
-      {!isLoading && activeTab === 'strategy' && (
-        <StrategyTabContent
-          displayBuckets={strategyDisplayBuckets}
-          groupBy={groupBy}
-          linkByOptionId={linkByOptionId}
-          outerExpanded={outerStrategyExpanded}
-          toggleOuter={toggleOuterStrategy}
-          strategyOppExpanded={strategyOppExpanded}
-          toggleStrategyOpp={toggleStrategyOpp}
-          strategyInstExpanded={strategyInstExpanded}
-          toggleStrategyInst={toggleStrategyInst}
-          innerExpanded={expandedGroups}
-          toggleInner={toggleGroup}
-          onEdit={setEditExec}
-          onDelete={setDeleteTarget}
-          onLinkStrategy={setLinkStrategyTarget}
-          onViewLinks={setViewLinksTarget}
-          syncingId={syncingId}
-          onSyncOpposite={handleSyncOppositeLeg}
-        />
-      )}
-
-      {!isLoading && activeTab === 'instance' && (
-        <InstanceTabContent
-          instanceSubTab={instanceSubTab}
-          filteredGroups={filteredInstanceGroups}
-          noInstGroups={noInstanceOptGroups}
-          noInstExecs={instanceGroupsRaw.noInst}
-          linkByOptionId={linkByOptionId}
-          groupBy={groupBy}
-          displayBuckets={instanceDisplayBuckets}
-          outerExpanded={outerInstanceExpanded}
-          toggleOuter={toggleOuterInstance}
-          expandedGroups={expandedGroups}
-          toggleGroup={toggleGroup}
-          onEdit={setEditExec}
-          onDelete={setDeleteTarget}
-          onLinkStrategy={setLinkStrategyTarget}
-          onViewLinks={setViewLinksTarget}
-          syncingId={syncingId}
-          onSyncOpposite={handleSyncOppositeLeg}
-        />
-      )}
-
-      {/* ── Modals ── */}
-      <DeleteConfirmDialog
-        open={!!deleteTarget}
-        title="Delete execution"
-        message={`Delete execution #${deleteTarget?.account_executions_id ?? ''} (${deleteTarget?.symbol ?? ''} ${deleteTarget?.side ?? ''})?`}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-      />
-      {editExec && (
-        <ExecutionFormModal
-          open
-          exec={editExec}
-          accountOptions={accounts.length > 0 ? accounts : [editExec.account_id]}
-          onClose={() => setEditExec(null)}
-          onSuccess={() => {
-            setEditExec(null)
-            queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
+        <LedgerTabToolbar
+          activeTab={activeTab}
+          onTabChange={tab => { setActiveTab(tab); setStkPage(0) }}
+          hasOptExecs={hasOptExecs}
+          hasStkExecs={hasStkExecs}
+          hasFixedIncomeExecs={hasFixedIncomeExecs}
+          hasCashLikeExecs={hasCashLikeExecs}
+          accordionMode={accordionMode}
+          onAccordionModeChange={setAccordionMode}
+          filters={{
+            activeTab,
+            hasOptExecs,
+            isStkTab,
+            groupBy,
+            setGroupBy,
+            optRightFilter,
+            setOptRightFilter,
+            strategyPanelOptionRights,
+            strategyOpportunityGroupsLength: strategyOpportunityGroups.length,
+            filteredStrategyOpportunityGroupsLength: filteredStrategyOpportunityGroups.length,
+            instanceSubTab,
+            setInstanceSubTab,
+            instanceGroupsWithCount: instanceGroupsRaw.withInst.length,
+            noInstanceOptGroupsLength: noInstanceOptGroups.length,
+            instanceContainOpenFilter,
+            setInstanceContainOpenFilter,
+            filteredInstanceGroupsLength: filteredInstanceGroups.length,
+            instanceGroupsLength: instanceGroupsRaw.withInst.length,
+            optSubTab,
+            setOptSubTab,
+            filteredClosedOptGroupsLength: filteredClosedOptGroups.length,
+            allOrphanGroupsLength: allOrphanGroups.length,
+            optInstanceFilter,
+            setOptInstanceFilter,
+            optSort,
+            toggleOptSort,
+            groupByPosition,
+            setGroupByPosition,
+            stkCategoryOptions,
+            effectiveStkCategoryTab,
+            setStkCategoryTab,
+            setStkPage,
           }}
         />
-      )}
-      {linkStrategyTarget && (
-        <LinkExecutionModal
-          open
-          exec={linkStrategyTarget}
-          opportunities={oppData?.items ?? []}
-          onClose={() => setLinkStrategyTarget(null)}
-          onSuccess={() => {
-            setLinkStrategyTarget(null)
-            queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
-          }}
-        />
-      )}
-      <QuickCloseModal
-        exec={expiredCloseTarget}
-        onClose={() => setExpiredCloseTarget(null)}
-        onSuccess={() => {
-          setExpiredCloseTarget(null)
-          queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
-        }}
+
+        {!isLoading && (canonFiltered.length > 0 || bookFiltered.length > 0) && (
+          <LedgerSummarySection
+            activeTab={activeTab}
+            summaryPeriod={summaryPeriod}
+            onSummaryPeriodChange={setSummaryPeriod}
+            optionsSummaryByMonth={optionsSummaryByMonth}
+            stocksSummaryByMonth={stocksSummaryByMonth}
+            summaryClosedGroups={summaryClosedGroups}
+            closedOptGroupsPnlSum={closedOptGroupsPnlSum}
+            stkFilteredExecutions={stkExecsForDisplay}
+            stkUnrealizedByKey={stkUnrealizedByKey}
+            stkTotals={stkTotals}
+          />
+        )}
+
+        {!isLoading && canonFiltered.length === 0 && bookFiltered.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            No execution data. Use Overview to fetch from IB (Refresh), or add a manual journal entry (Add journal).
+            {activeFilterSummary.length > 0 ? ' Filters applied.' : ''}
+          </p>
+        )}
+
+        {isLoading && (
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        )}
+
+        {!isLoading && activeTab === 'options' && (
+          <OptionsTabContent
+            optSubTab={optSubTab}
+            closedGroups={filteredClosedOptGroups}
+            openActiveGroups={sortedOpenOptGroups.filter(g => !isOptionExpired(g.expiry))}
+            openExpiredGroups={sortedOpenOptGroups.filter(g => isOptionExpired(g.expiry))}
+            linkByOptionId={linkByOptionId}
+            optSort={optSort}
+            toggleOptSort={toggleOptSort}
+            expandedGroups={expandedGroups}
+            toggleGroup={toggleGroup}
+            onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
+            onDelete={setDeleteTarget}
+            onLinkStrategy={setLinkStrategyTarget}
+            onViewLinks={setViewLinksTarget}
+            onExpiredClose={setExpiredCloseTarget}
+            syncingId={syncingId}
+            onSyncOpposite={handleSyncOppositeLeg}
+          />
+        )}
+
+        {!isLoading && isStkTab && (
+          <StkTabContent
+            executions={stkExecsForDisplay}
+            positionGroups={stkPositionGroups}
+            groupByPosition={groupByPosition}
+            stkSort={stkSort}
+            toggleStkSort={toggleStkSort}
+            page={stkPage}
+            setPage={setStkPage}
+            activeTab={activeTab}
+            catMap={catMap}
+            stkUnrealizedByKey={stkUnrealizedByKey}
+            onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
+            onDelete={setDeleteTarget}
+            onAddJournal={handleAddJournal}
+          />
+        )}
+
+        {!isLoading && activeTab === 'strategy' && (
+          filteredStrategyOpportunityGroups.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No opportunities match the current type filter.</p>
+          ) : (
+          <StrategyTabContent
+            displayBuckets={strategyDisplayBuckets}
+            groupBy={groupBy}
+            linkByOptionId={linkByOptionId}
+            outerExpanded={outerStrategyExpanded}
+            toggleOuter={toggleOuterStrategy}
+            strategyOppExpanded={strategyOppExpanded}
+            toggleStrategyOpp={toggleStrategyOpp}
+            strategyInstExpanded={strategyInstExpanded}
+            toggleStrategyInst={toggleStrategyInst}
+          />
+          )
+        )}
+
+        {!isLoading && activeTab === 'instance' && (
+          <InstanceTabContent
+            instanceSubTab={instanceSubTab}
+            filteredGroups={filteredInstanceGroups}
+            noInstGroups={noInstanceOptGroups}
+            noInstExecs={instanceGroupsRaw.noInst}
+            linkByOptionId={linkByOptionId}
+            groupBy={groupBy}
+            displayBuckets={instanceDisplayBuckets}
+            outerExpanded={outerInstanceExpanded}
+            toggleOuter={toggleOuterInstance}
+            expandedGroups={expandedGroups}
+            toggleGroup={toggleGroup}
+            onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
+            onDelete={setDeleteTarget}
+            onLinkStrategy={setLinkStrategyTarget}
+            onViewLinks={setViewLinksTarget}
+            syncingId={syncingId}
+            onSyncOpposite={handleSyncOppositeLeg}
+          />
+        )}
+      </div>
+
+      <TradeLedgerModals
+        accounts={accounts}
+        opportunities={oppData?.items ?? []}
+        linkByOptionId={linkByOptionId}
+        deleteTarget={deleteTarget}
+        setDeleteTarget={setDeleteTarget}
+        onDelete={handleDelete}
+        editExec={editExec}
+        setEditExec={e => { if (e === null) handleCloseEditModal(); else setEditExec(e) }}
+        linkStrategyTarget={linkStrategyTarget}
+        setLinkStrategyTarget={setLinkStrategyTarget}
+        expiredCloseTarget={expiredCloseTarget}
+        setExpiredCloseTarget={setExpiredCloseTarget}
+        viewLinksTarget={viewLinksTarget}
+        setViewLinksTarget={setViewLinksTarget}
+        createSource={createSource}
       />
-      {/* View Option-Stock Links modal */}
-      {viewLinksTarget && (() => {
-        const summary = linkByOptionId[viewLinksTarget.oid]
-        const links = summary?.links ?? []
-        return (
-          <Dialog open onOpenChange={v => { if (!v) setViewLinksTarget(null) }}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-sm">{viewLinksTarget.title}</DialogTitle>
-              </DialogHeader>
-              <div className="text-xs space-y-3">
-                {links.length === 0
-                  ? <p className="text-muted-foreground">No linked stock executions.</p>
-                  : (
-                    <div className="rounded border overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="text-xs">
-                            <TableHead className="h-7">Date</TableHead>
-                            <TableHead className="h-7">Side</TableHead>
-                            <TableHead className="h-7 text-right">Qty</TableHead>
-                            <TableHead className="h-7 text-right">Price</TableHead>
-                            <TableHead className="h-7 text-right">Slippage</TableHead>
-                            <TableHead className="h-7 text-right">Close</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {links.map((lk, i) => {
-                            const r = lk as unknown as Record<string, unknown>
-                            return (
-                              <TableRow key={i} className="text-xs">
-                                <TableCell className="py-1 font-mono">{String(r.trade_date ?? r.time ?? '—')}</TableCell>
-                                <TableCell className="py-1">{String(r.side ?? '—')}</TableCell>
-                                <TableCell className="py-1 text-right font-mono">{String(r.quantity ?? r.qty ?? '—')}</TableCell>
-                                <TableCell className="py-1 text-right font-mono">{r.price != null ? fmtPrice(Number(r.price)) : '—'}</TableCell>
-                                <TableCell className={cn('py-1 text-right font-mono', pnlClass(Number(r.slippage ?? 0)))}>{r.slippage != null ? fmtCcy(Number(r.slippage)) : '—'}</TableCell>
-                                <TableCell className="py-1 text-right font-mono">{r.close_price != null ? fmtPrice(Number(r.close_price)) : '—'}</TableCell>
-                              </TableRow>
-                            )
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                {summary?.slippage_total != null && (
-                  <div className="flex justify-end text-xs font-medium">
-                    Total slippage: <span className={cn('ml-2 font-mono', pnlClass(summary.slippage_total))}>{fmtCcy(summary.slippage_total)}</span>
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-        )
-      })()}
     </PageShell>
   )
 }

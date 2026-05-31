@@ -12,6 +12,7 @@ export const QUERY_KEYS = {
     executions:     ['trading', 'executions']        as const,
     executionsBook: ['trading', 'executions-book']   as const,
     optStockLinks:  ['trading', 'opt-stock-links']   as const,
+    transactions:   ['trading', 'transactions']      as const,
   },
   monitor: {
     status:         ['monitor', 'status']            as const,
@@ -62,6 +63,10 @@ export const QUERY_KEYS = {
     gateSafety:     ['strategy', 'gate-safety']      as const,
     allocations:    ['strategy', 'allocations']      as const,
     winRate:        ['strategy', 'win-rate']         as const,
+  },
+  settings: {
+    apiHealth:        ['settings', 'api-health']        as const,
+    apiHealthMassive: ['settings', 'api-health', 'massive-status'] as const,
   },
   ops: {
     workers:            ['ops', 'workers']                   as const,

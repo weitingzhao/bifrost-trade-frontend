@@ -1,12 +1,10 @@
-import {
-  Table, TableBody, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
 import { getOptGroupKey } from '@/utils/ledger/ledgerOptHelpers'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { OptGroupRow } from './OptGroupRow'
 import type { OptGroupCallbacks } from './ledgerTypes'
+import styles from './TradeLedgerPage.module.css'
 
 export function OptGroupsTable({
   groups, showNetQty, linkByOptionId, expandedGroups, toggleGroup, keyPrefix = '', ...cbs
@@ -19,23 +17,23 @@ export function OptGroupsTable({
   keyPrefix?: string
 } & OptGroupCallbacks) {
   return (
-    <div className="rounded-md border overflow-hidden text-xs">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/40 hover:bg-muted/40">
-            <TableHead className="h-7 w-7 px-2" />
-            <TableHead className="h-7 font-medium">Contract</TableHead>
-            <TableHead className="h-7 w-8 text-center">Inst</TableHead>
-            <TableHead className="h-7 text-center w-10">Links</TableHead>
-            {!showNetQty && <TableHead className="h-7 text-right">Buy Avg</TableHead>}
-            {!showNetQty && <TableHead className="h-7 text-right">Sell Avg</TableHead>}
-            {showNetQty && <TableHead className="h-7 text-right">Net Qty</TableHead>}
-            <TableHead className="h-7 text-right">Total Qty</TableHead>
-            <TableHead className="h-7 text-right min-w-[110px]">Realized PnL</TableHead>
-            <TableHead className="h-7 text-right w-12">#Fills</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <div className={styles.ledgerTableWrap}>
+      <table className={styles.ledgerTable}>
+        <thead>
+          <tr>
+            <th className={styles.ledgerExpandCol} aria-hidden />
+            <th>Contract</th>
+            <th className={styles.numCol} style={{ width: '2.5rem' }}>Inst</th>
+            <th className={styles.numCol} style={{ width: '3rem' }}>Links</th>
+            {!showNetQty && <th className={styles.numCol}>Buy Avg</th>}
+            {!showNetQty && <th className={styles.numCol}>Sell Avg</th>}
+            {showNetQty && <th className={styles.numCol}>Net Qty</th>}
+            <th className={styles.numCol}>Total Qty</th>
+            <th className={styles.numCol}>Realized PnL</th>
+            <th className={styles.numCol} style={{ width: '3rem' }}>#Fills</th>
+          </tr>
+        </thead>
+        <tbody>
           {groups.map(g => {
             const key = keyPrefix + getOptGroupKey(g)
             return (
@@ -51,8 +49,8 @@ export function OptGroupsTable({
               />
             )
           })}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   )
 }

@@ -1,9 +1,8 @@
 import { useState, useMemo, useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { fetchPerformance } from '@/api/trading'
 import { useOpportunities, useStrategyInstances } from '@/hooks/useStrategies'
 import { usePerformanceBulk } from '@/hooks/usePerformanceBulk'
+import { usePerformanceQuery } from '@/hooks/usePerformanceQuery'
 import {
   getTimeRangeDates,
   listMonthKeysInRange,
@@ -306,17 +305,11 @@ export default function PerformancePage() {
   const oppQuery = useOpportunities()
   const instQuery = useStrategyInstances(selectedOppId != null ? { opportunityId: selectedOppId } : undefined)
 
-  const perfQuery = useQuery({
-    queryKey: ['trading', 'performance', sinceTs, untilTs, selectedOppId, selectedInstId],
-    queryFn: () =>
-      fetchPerformance({
-        since_ts: sinceTs,
-        until_ts: untilTs,
-        granularity: 'day',
-        strategy_opportunity_id: selectedOppId ?? undefined,
-        strategy_instance_id: selectedInstId ?? undefined,
-        source_scope: 'performance_book',
-      }),
+  const perfQuery = usePerformanceQuery({
+    since_ts: sinceTs,
+    until_ts: untilTs,
+    strategy_opportunity_id: selectedOppId ?? undefined,
+    strategy_instance_id: selectedInstId ?? undefined,
   })
 
   const perf = perfQuery.data

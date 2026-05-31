@@ -142,6 +142,15 @@ export function fmtTs(ts: number | null | undefined): string {
   return new Date(ts * 1000).toLocaleString()
 }
 
+/** Format trade_date (YYYY-MM-DD string from API) for display. */
+export function fmtTradeDate(tradeDate: string | null | undefined): string {
+  if (tradeDate == null || String(tradeDate).trim() === '') return '—'
+  const s = String(tradeDate).trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  if (/^\d{8}$/.test(s)) return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`
+  return s
+}
+
 /** Elapsed since ts (Unix sec): e.g. "5m", "2h", "1d". */
 export function fmtSince(ts: number | null | undefined): string {
   if (ts == null || !Number.isFinite(ts)) return '—'

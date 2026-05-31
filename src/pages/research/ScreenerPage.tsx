@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useMutation } from '@tanstack/react-query'
 import { Play, Download, ChevronDown, ChevronRight, Bookmark } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { cn } from '@/lib/utils'
@@ -12,8 +11,9 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
 import type { PrefillData } from '@/components/strategy/OpportunityFormModal'
-import { fetchScreenerResults } from '@/api/research'
+import { useOptionScreener } from '@/hooks/useOptionScreener'
 import type { ScreenerFilters, ScreenerContractRow, ScreenerSymbolGroup } from '@/types/research'
+import { pnlColorClass } from '@/utils/dailyChange'
 
 const STRUCTURE_TYPES = [
   { value: 'cash_secured_put', label: 'Cash Secured Put' },
@@ -49,10 +49,10 @@ function loadSavedFilters(): ScreenerFilters {
 }
 
 function ratingClass(r: string): string {
-  if (r === 'A') return 'text-green-600 dark:text-green-400 font-semibold'
-  if (r === 'B') return 'text-blue-600 dark:text-blue-400 font-semibold'
-  if (r === 'C') return 'text-yellow-600 dark:text-yellow-400 font-semibold'
-  return 'text-red-500 font-semibold'
+  if (r === 'A') return cn(pnlColorClass(1), 'font-semibold')
+  if (r === 'B') return 'text-sky-600 dark:text-sky-400 font-semibold'
+  if (r === 'C') return 'text-warning font-semibold'
+  return cn(pnlColorClass(-1), 'font-semibold')
 }
 
 function riskClass(r: string): string {
@@ -267,7 +267,7 @@ export default function ScreenerPage() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [saveSymbol, setSaveSymbol] = useState<string | null>(null)
 
-  const mutation = useMutation({ mutationFn: fetchScreenerResults })
+  const mutation = useOptionScreener()
 
   useEffect(() => {
     localStorage.setItem('optionScreenerFilters', JSON.stringify(filters))

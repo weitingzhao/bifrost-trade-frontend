@@ -280,3 +280,42 @@ export function executionLegPnlToneClass(e: Execution, ep: number): string {
   if (isBuy) return ep >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
   return 'text-blue-500 dark:text-blue-400'
 }
+
+export function isExecutionBuySide(ex: Execution): boolean {
+  const s = (ex.side ?? '').toUpperCase()
+  return s === 'BUY' || s === 'BOT' || s === 'B'
+}
+
+export function executionAbsQuantity(ex: Execution): number {
+  return Math.abs(Number(ex.quantity ?? ex.qty) || 0)
+}
+
+/** Opposite-side same-qty fill in group that carries strategy attribution (for sync). */
+export function findOppositeLegAttributionSource(
+  trades: Execution[],
+  ex: Execution,
+): Execution | null {
+  const exId = ex.account_executions_id
+  const exBuy = isExecutionBuySide(ex)
+  const exQty = executionAbsQuantity(ex)
+  if (exQty <= 0) return null
+  const exCk = (ex.contract_key ?? '').trim()
+
+  for (const t of trades) {
+    if (exId != null && t.account_executions_id != null && t.account_executions_id === exId) continue
+    if (exId == null && t === ex) continue
+
+    const tCk = (t.contract_key ?? '').trim()
+    if (exCk && tCk && exCk !== tCk) continue
+    if (isExecutionBuySide(t) === exBuy) continue
+    if (executionAbsQuantity(t) !== exQty) continue
+
+    const opp = t.strategy_opportunity_id
+    const instIds = executionStrategyInstanceIds(t)
+    if (instIds.length !== 1) continue
+    const inst = instIds[0]
+    if (opp == null || !Number.isFinite(Number(opp)) || !Number.isFinite(Number(inst))) continue
+    return t
+  }
+  return null
+}

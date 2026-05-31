@@ -1,24 +1,24 @@
-/* Option Discovery — SVG chart sizing & hover-expand overlay (Legacy CSS cutoff). */
+/* Option Discovery — chart overlay + SVG sizing (page-scoped module). */
 
-.option-discovery-root {
+.discoveryRoot {
   --od-max-pain-axis-fill: var(--muted-foreground);
   --od-max-pain-grid-stroke: var(--border);
   --od-max-pain-axis-line: var(--border);
 }
 
-.option-discovery-root .od-chart-expand-trigger {
+.discoveryRoot :global(.od-chart-expand-trigger) {
   cursor: pointer;
   min-width: 0;
 }
 
-.option-discovery-root .od-chart-expand-overlay {
+.discoveryRoot :global(.od-chart-expand-overlay) {
   position: fixed;
   inset: 0;
   z-index: 10060;
   pointer-events: none;
 }
 
-.option-discovery-root .od-chart-expand-panel {
+.discoveryRoot :global(.od-chart-expand-panel) {
   position: fixed;
   z-index: 1;
   box-sizing: border-box;
@@ -35,7 +35,7 @@
   pointer-events: auto;
 }
 
-.option-discovery-root .od-chart-expand-panel-head {
+.discoveryRoot :global(.od-chart-expand-panel-head) {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -45,7 +45,7 @@
   user-select: none;
 }
 
-.option-discovery-root .od-chart-expand-panel-title {
+.discoveryRoot :global(.od-chart-expand-panel-title) {
   margin: 0;
   flex: 1;
   min-width: 0;
@@ -56,15 +56,15 @@
   color: var(--muted-foreground);
 }
 
-.option-discovery-root .od-chart-expand-panel-drag {
+.discoveryRoot :global(.od-chart-expand-panel-drag) {
   cursor: grab;
 }
 
-.option-discovery-root .od-chart-expand-panel-drag:active {
+.discoveryRoot :global(.od-chart-expand-panel-drag:active) {
   cursor: grabbing;
 }
 
-.option-discovery-root .od-chart-expand-panel-close {
+.discoveryRoot :global(.od-chart-expand-panel-close) {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -82,12 +82,12 @@
   cursor: pointer;
 }
 
-.option-discovery-root .od-chart-expand-panel-close:hover {
+.discoveryRoot :global(.od-chart-expand-panel-close:hover) {
   color: var(--foreground);
   border-color: var(--border);
 }
 
-.option-discovery-root .od-chart-expand-panel-body {
+.discoveryRoot :global(.od-chart-expand-panel-body) {
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -95,22 +95,22 @@
   width: 100%;
 }
 
-.option-discovery-root .od-chart-expand-panel-body .od-max-pain-svg,
-.option-discovery-root .od-chart-expand-panel-body .od-chart-svg {
+.discoveryRoot :global(.od-chart-expand-panel-body .od-max-pain-svg),
+.discoveryRoot :global(.od-chart-expand-panel-body .od-chart-svg) {
   width: 100%;
   max-width: 100%;
   height: auto;
   display: block;
 }
 
-.option-discovery-root .od-chart-expand-panel-hint {
+.discoveryRoot :global(.od-chart-expand-panel-hint) {
   flex-shrink: 0;
   margin: 0.5rem 2rem 0 0;
   font-size: 0.65rem;
   color: var(--muted-foreground);
 }
 
-.option-discovery-root .od-chart-expand-resize-grip {
+.discoveryRoot :global(.od-chart-expand-resize-grip) {
   position: absolute;
   right: 2px;
   bottom: 2px;
@@ -134,7 +134,7 @@
   );
 }
 
-.option-discovery-root .od-chart-expand-resize-grip:hover {
+.discoveryRoot :global(.od-chart-expand-resize-grip:hover) {
   background: linear-gradient(
     135deg,
     transparent 0%,
@@ -149,20 +149,20 @@
   );
 }
 
-.option-discovery-root .od-max-pain-svg,
-.option-discovery-root .od-chart-svg {
+.discoveryRoot :global(.od-max-pain-svg),
+.discoveryRoot :global(.od-chart-svg) {
   display: block;
   width: 100%;
   max-width: 100%;
   height: auto;
 }
 
-.option-discovery-root .od-max-pain-chart-cell .od-max-pain-svg {
+.discoveryRoot :global(.od-max-pain-chart-cell .od-max-pain-svg) {
   aspect-ratio: 640 / 260;
   min-height: 0;
 }
 
-.option-discovery-root .od-analytics-chart-cell .od-max-pain-svg {
+.discoveryRoot :global(.od-analytics-chart-cell .od-max-pain-svg) {
   aspect-ratio: 640 / 240;
   min-height: 0;
 }

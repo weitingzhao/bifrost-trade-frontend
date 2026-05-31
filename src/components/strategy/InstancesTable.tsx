@@ -6,6 +6,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
+import { dangerGhostBtnClass } from '@/lib/uiClasses'
 import type { StrategyInstance } from '@/types/positions'
 import type { InstanceListMetricsEntry } from '@/hooks/useInstanceMetrics'
 import {
@@ -204,7 +205,7 @@ export function InstancesTable({ instances, metricsMap, onDelete }: Props) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    className={cn('h-7 w-7', dangerGhostBtnClass)}
                     onClick={() => onDelete(inst)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />

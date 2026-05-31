@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { dangerTextBtnClass } from '@/lib/uiClasses'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -89,7 +90,7 @@ interface StructureFormSheetProps {
   onSaved: () => void
 }
 
-export function StructureFormSheet({ mode, onClose, onSaved }: StructureFormSheetProps) {
+function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetProps) {
   const open = mode.kind !== 'closed'
   const isCopy = mode.kind === 'copy'
   const sourceId = mode.kind === 'edit' || mode.kind === 'copy' ? mode.id : null
@@ -101,7 +102,11 @@ export function StructureFormSheet({ mode, onClose, onSaved }: StructureFormShee
 
   const isWizard = mode.kind === 'create' || mode.kind === 'edit' || mode.kind === 'copy'
 
-  const [formPayload, setFormPayload] = useState<StructurePayload>(DEFAULT_STRUCTURE_PAYLOAD)
+  const [formPayload, setFormPayload] = useState<StructurePayload>(() =>
+    mode.kind === 'create'
+      ? { ...DEFAULT_STRUCTURE_PAYLOAD, name: 'New structure', legs: [] }
+      : DEFAULT_STRUCTURE_PAYLOAD,
+  )
   const [formLegs, setFormLegs] = useState<StructureLeg[]>([])
   const [formConstraints, setFormConstraints] = useState<StructureConstraint[]>([])
   const [formNotes, setFormNotes] = useState('')
@@ -221,16 +226,16 @@ export function StructureFormSheet({ mode, onClose, onSaved }: StructureFormShee
   useEffect(() => {
     if (!open) return
     if (mode.kind === 'create' && !isCopy) {
-      resetForm()
-      setFormPayload({ ...DEFAULT_STRUCTURE_PAYLOAD, name: 'New structure', legs: [] })
-      setWizardStep(1)
       return
     }
     if (sourceId == null) return
 
     let cancelled = false
-    setFormLoading(true)
-    setFormError(null)
+    queueMicrotask(() => {
+      if (cancelled) return
+      setFormLoading(true)
+      setFormError(null)
+    })
     fetchStructure(sourceId)
       .then((row) => {
         if (cancelled) return
@@ -1023,7 +1028,7 @@ function StructureDetailsFields({
                   placeholder="Int"
                   className="h-8 w-20 font-mono"
                 />
-                <Button type="button" variant="ghost" size="sm" onClick={() => onRemoveConstraint(i)}>
+                <Button type="button" variant="ghost" size="sm" className={dangerTextBtnClass} onClick={() => onRemoveConstraint(i)}>
                   Remove
                 </Button>
               </div>
@@ -1047,4 +1052,16 @@ function StructureDetailsFields({
       </div>
     </div>
   )
+}
+
+function structureFormSheetKey(mode: StructureFormMode): string {
+  if (mode.kind === 'create') return 'create'
+  if (mode.kind === 'edit') return `edit-${mode.id}`
+  if (mode.kind === 'copy') return `copy-${mode.id}`
+  return 'closed'
+}
+
+export function StructureFormSheet(props: StructureFormSheetProps) {
+  if (props.mode.kind === 'closed') return null
+  return <StructureFormSheetInner key={structureFormSheetKey(props.mode)} {...props} />
 }

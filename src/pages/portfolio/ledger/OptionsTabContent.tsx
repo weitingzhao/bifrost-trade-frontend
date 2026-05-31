@@ -1,14 +1,25 @@
-import { cn } from '@/lib/utils'
-import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
+import { useMemo } from 'react'
 import type { OptionStockLinkSummary } from '@/types/trading'
-import { OptGroupsTable } from './OptGroupsTable'
-import { LedgerSortIcon as SortIcon } from './LedgerSortIcon'
-import type { OptSortCol, OptSubTab, OptGroupCallbacks } from './ledgerTypes'
+import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
+import {
+  adjustedRealizedPnlForOptGroup,
+  getOptGroupKey,
+  ledgerOptDetailRowPnl,
+} from '@/utils/ledger/ledgerOptHelpers'
+import { LedgerClosedOptionSection } from './LedgerClosedOptionSection'
+import { LedgerOpenOptionSection } from './LedgerOpenOptionSection'
+import type { OptGroupCallbacks, OptSortCol, OptSubTab } from './ledgerTypes'
 
 export function OptionsTabContent({
-  optSubTab, closedGroups, openActiveGroups, openExpiredGroups,
-  linkByOptionId, optSort, toggleOptSort,
-  expandedGroups, toggleGroup,
+  optSubTab,
+  closedGroups,
+  openActiveGroups,
+  openExpiredGroups,
+  linkByOptionId,
+  optSort,
+  toggleOptSort,
+  expandedGroups,
+  toggleGroup,
   ...cbs
 }: {
   optSubTab: OptSubTab
@@ -21,49 +32,59 @@ export function OptionsTabContent({
   expandedGroups: Set<string>
   toggleGroup: (k: string) => void
 } & OptGroupCallbacks) {
-  const sharedProps = { linkByOptionId, expandedGroups, toggleGroup, ...cbs }
+  const expandedDetailKeys = useMemo(() => [...expandedGroups], [expandedGroups])
+
+  const closedExpandedGroups = useMemo(
+    () => closedGroups.filter(g => expandedGroups.has(getOptGroupKey(g))),
+    [closedGroups, expandedGroups],
+  )
+
+  const openExpandedGroups = useMemo(
+    () => [...openActiveGroups, ...openExpiredGroups].filter(g => expandedGroups.has(getOptGroupKey(g))),
+    [openActiveGroups, openExpiredGroups, expandedGroups],
+  )
+
+  const closedPnlSum = useMemo(
+    () => closedGroups.reduce((s, g) => s + adjustedRealizedPnlForOptGroup(g, linkByOptionId), 0),
+    [closedGroups, linkByOptionId],
+  )
+
+  const detailsTotalPnl = useMemo(() => {
+    let sum = 0
+    for (const g of closedExpandedGroups) {
+      for (const ex of g.trades ?? []) {
+        sum += ledgerOptDetailRowPnl(ex, linkByOptionId).displayPnl
+      }
+    }
+    return sum
+  }, [closedExpandedGroups, linkByOptionId])
 
   if (optSubTab === 'contracts') {
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">Closed Contracts ({closedGroups.length})</span>
-          <div className="flex items-center gap-0.5">
-            {(['expiry', 'trade_date'] as const).map(col => (
-              <button
-                key={col}
-                className={cn('h-6 px-2 text-[11px] rounded font-medium transition-colors', optSort.col === col ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:bg-muted')}
-                onClick={() => toggleOptSort(col)}
-              >
-                {col === 'expiry' ? 'Expiry' : 'Trade Date'} <SortIcon active={optSort.col === col} dir={optSort.dir} />
-              </button>
-            ))}
-          </div>
-        </div>
-        {closedGroups.length === 0
-          ? <p className="text-xs text-muted-foreground py-4 text-center">No closed option groups for this period.</p>
-          : <OptGroupsTable groups={closedGroups} showNetQty={false} {...sharedProps} />}
-      </div>
+      <LedgerClosedOptionSection
+        sortedClosedGroups={closedGroups}
+        closedExpandedGroups={closedExpandedGroups}
+        closedPnlSum={closedPnlSum}
+        detailsTotalPnl={detailsTotalPnl}
+        expandedDetailKeys={expandedDetailKeys}
+        toggleDetailExpand={toggleGroup}
+        optSort={optSort}
+        toggleOptSort={toggleOptSort}
+        linkByOptionId={linkByOptionId}
+        {...cbs}
+      />
     )
   }
 
   return (
-    <div className="space-y-5">
-      {openActiveGroups.length > 0 && (
-        <section>
-          <p className="text-xs font-medium text-muted-foreground mb-2">Open ({openActiveGroups.length})</p>
-          <OptGroupsTable groups={openActiveGroups} showNetQty keyPrefix="active-" {...sharedProps} />
-        </section>
-      )}
-      {openExpiredGroups.length > 0 && (
-        <section>
-          <p className="text-xs font-medium text-orange-500 mb-2">Expired Unrealized ({openExpiredGroups.length})</p>
-          <OptGroupsTable groups={openExpiredGroups} showNetQty keyPrefix="expired-" {...sharedProps} />
-        </section>
-      )}
-      {openActiveGroups.length === 0 && openExpiredGroups.length === 0 && (
-        <p className="text-xs text-muted-foreground py-4 text-center">No open option groups.</p>
-      )}
-    </div>
+    <LedgerOpenOptionSection
+      openActiveGroups={openActiveGroups}
+      openExpiredGroups={openExpiredGroups}
+      openExpandedGroups={openExpandedGroups}
+      expandedDetailKeys={expandedDetailKeys}
+      toggleDetailExpand={toggleGroup}
+      linkByOptionId={linkByOptionId}
+      {...cbs}
+    />
   )
 }

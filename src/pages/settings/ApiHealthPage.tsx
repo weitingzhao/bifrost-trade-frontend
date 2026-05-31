@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import type { ReactNode } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { makeProbeQuery, useMassiveApiStatus } from '@/hooks/useApiHealthProbes'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -10,41 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger, TabsPanel, TabsPanelContent }
 import { StatusLamp } from '@/components/StatusLamp'
 import { ServiceTopologyOverview } from '@/components/settings/ServiceTopologyOverview'
 import { ExternalLink, RefreshCw } from 'lucide-react'
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface HealthBody {
-  status?: string
-  service?: string
-  ts?: number
-  config_profile?: 'dev' | 'prod'
-  port?: number
-  // Monitor-specific: sidecar listen ports from YAML config
-  massive_port?: number
-  ops_port?: number
-  docs_port?: number
-  trading_port?: number
-  strategy_port?: number
-  portfolio_port?: number
-  market_port?: number
-  research_port?: number
-  // Docs-specific: upstream OpenAPI source URLs
-  main_url?: string
-  massive_url?: string
-  research_url?: string
-}
-
-interface ProbeResult {
-  ms: number
-  body: HealthBody
-}
-
-interface MassiveStatus {
-  configured: boolean
-  tier: string
-  trades_enabled: boolean
-  delay_notice?: string
-}
 
 interface ServiceDef {
   key: string
@@ -97,66 +64,6 @@ const DOC_PATHS: Record<string, { swagger: string; redoc: string; openapi: strin
 }
 
 // ── Query factories ───────────────────────────────────────────────────────────
-
-function safeBody(raw: unknown): HealthBody {
-  if (!raw || typeof raw !== 'object') return {}
-  const b = raw as Record<string, unknown>
-  const n = (v: unknown): number | undefined =>
-    typeof v === 'number' && Number.isFinite(v) ? v : undefined
-  const s = (v: unknown): string | undefined =>
-    typeof v === 'string' ? v : undefined
-  const profile = b.config_profile
-  return {
-    status:         s(b.status),
-    service:        s(b.service),
-    ts:             n(b.ts),
-    config_profile: profile === 'dev' || profile === 'prod' ? profile : undefined,
-    port:           n(b.port),
-    massive_port:   n(b.massive_port),
-    ops_port:       n(b.ops_port),
-    docs_port:      n(b.docs_port),
-    trading_port:   n(b.trading_port),
-    strategy_port:  n(b.strategy_port),
-    portfolio_port: n(b.portfolio_port),
-    market_port:    n(b.market_port),
-    research_port:  n(b.research_port),
-    main_url:       s(b.main_url),
-    massive_url:    s(b.massive_url),
-    research_url:   s(b.research_url),
-  }
-}
-
-function makeProbeQuery(svc: ServiceDef) {
-  return {
-    queryKey: ['api-health', svc.key] as const,
-    queryFn: async (): Promise<ProbeResult> => {
-      const start = performance.now()
-      const res = await fetch(`${svc.base}${svc.healthPath}`, {
-        signal: AbortSignal.timeout(10_000),
-      })
-      const ms = Math.round(performance.now() - start)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const raw: unknown = await res.json().catch(() => null)
-      return { ms, body: safeBody(raw) }
-    },
-    refetchInterval: 20_000,
-    retry: 1,
-  }
-}
-
-const massiveStatusQuery = {
-  queryKey: ['api-health', 'massive-status'] as const,
-  queryFn: async (): Promise<MassiveStatus> => {
-    const base = MASSIVE_SERVICES[0].base
-    const res = await fetch(`${base}/research/massive/status`, {
-      signal: AbortSignal.timeout(10_000),
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    return res.json() as Promise<MassiveStatus>
-  },
-  refetchInterval: 30_000,
-  retry: 1,
-}
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 
@@ -227,7 +134,7 @@ function ServiceCard({ svc }: { svc: ServiceDef }) {
           <div className="flex items-center gap-2 min-w-0">
             <StatusLamp lamp={lamp} />
             <span className="font-semibold text-sm">{svc.name}</span>
-            {body?.config_profile && (
+            {(body?.config_profile === 'dev' || body?.config_profile === 'prod') && (
               <EnvBadge profile={body.config_profile} ok={ok} />
             )}
           </div>
@@ -239,16 +146,18 @@ function ServiceCard({ svc }: { svc: ServiceDef }) {
         {/* Details grid */}
         <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs items-baseline">
           <span className="text-muted-foreground">Port</span>
-          <span className="tabular-nums font-mono">{body?.port ?? svc.port}</span>
+          <span className="tabular-nums font-mono">
+            {typeof body?.port === 'number' ? body.port : svc.port}
+          </span>
 
-          {body?.service ? (
+          {typeof body?.service === 'string' ? (
             <>
               <span className="text-muted-foreground">Service</span>
               <span className="font-mono">{body.service}</span>
             </>
           ) : null}
 
-          {body?.ts ? (
+          {typeof body?.ts === 'number' ? (
             <>
               <span className="text-muted-foreground">Server time</span>
               <span className="tabular-nums">{new Date(body.ts * 1000).toLocaleString()}</span>
@@ -449,9 +358,9 @@ function ArchDetailsPanel() {
           {docsBody?.main_url ? (
             <Card>
               <CardContent className="px-4 py-0">
-                <DetailKV label="Main API"     mono>{docsBody.main_url}</DetailKV>
-                <DetailKV label="Massive API"  mono>{docsBody.massive_url || '–'}</DetailKV>
-                <DetailKV label="Research API" mono>{docsBody.research_url || '–'}</DetailKV>
+                <DetailKV label="Main API"     mono>{String(docsBody.main_url)}</DetailKV>
+                <DetailKV label="Massive API"  mono>{String(docsBody.massive_url ?? '–')}</DetailKV>
+                <DetailKV label="Research API" mono>{String(docsBody.research_url ?? '–')}</DetailKV>
               </CardContent>
             </Card>
           ) : (
@@ -618,7 +527,7 @@ const TIER_LABELS: Record<string, string> = {
 }
 
 function MassiveDetailsPanel() {
-  const { data, isPending, isError } = useQuery(massiveStatusQuery)
+  const { data, isPending, isError } = useMassiveApiStatus(MASSIVE_SERVICES[0].base)
 
   return (
     <div className="space-y-2">
@@ -632,13 +541,13 @@ function MassiveDetailsPanel() {
             {isPending ? '…' : isError ? '–' : (data!.configured ? 'Yes' : 'No')}
           </DetailKV>
           <DetailKV label="Tier">
-            {isPending ? '…' : isError ? '–' : (TIER_LABELS[data!.tier] ?? data!.tier)}
+            {isPending ? '…' : isError ? '–' : (TIER_LABELS[String(data!.tier ?? '')] ?? String(data!.tier ?? '–'))}
           </DetailKV>
           <DetailKV label="Trades enabled">
             {isPending ? '…' : isError ? '–' : (data!.trades_enabled ? 'Yes' : 'No')}
           </DetailKV>
           {data?.delay_notice ? (
-            <DetailKV label="Delay notice">{data.delay_notice}</DetailKV>
+            <DetailKV label="Delay notice">{String(data.delay_notice)}</DetailKV>
           ) : null}
         </CardContent>
       </Card>
@@ -697,13 +606,16 @@ function ServiceTopologyPanel() {
   const services = ALL_SERVICES.map((svc, i) => {
     const r = results[i]
     const lamp: Lamp = r.isPending ? 'yellow' : r.isError ? 'red' : 'green'
+    const rawProfile = r.isSuccess ? r.data.body?.config_profile : undefined
+    const profile: 'dev' | 'prod' | undefined =
+      rawProfile === 'dev' || rawProfile === 'prod' ? rawProfile : undefined
     return {
       key: svc.key,
       name: svc.name,
       port: svc.port,
       lamp,
       ms: r.isSuccess ? r.data.ms : undefined,
-      profile: r.isSuccess ? r.data.body.config_profile : undefined,
+      profile,
     }
   })
   return <ServiceTopologyOverview services={services} />
@@ -715,7 +627,8 @@ export default function ApiHealthPage() {
   const qc = useQueryClient()
 
   function refreshAll() {
-    void qc.invalidateQueries({ queryKey: ['api-health'] })
+    void qc.invalidateQueries({ queryKey: QUERY_KEYS.settings.apiHealth })
+    void qc.invalidateQueries({ queryKey: QUERY_KEYS.settings.apiHealthMassive })
   }
 
   return (

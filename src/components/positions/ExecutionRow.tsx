@@ -4,6 +4,7 @@ import { Pencil, Link2, Trash2, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { fmtUsd } from '@/utils/positions'
+import { dangerGhostBtnClass } from '@/lib/uiClasses'
 import { updateExecution } from '@/api/trading'
 import type { Execution } from '@/types/positions'
 
@@ -119,7 +120,7 @@ export function ExecutionRow({
           <Button variant="ghost" size="icon" className="h-5 w-5" title="Link strategy" onClick={() => onLink(exec)}>
             <Link2 className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" title="Delete" onClick={() => onDelete(exec)}>
+          <Button variant="ghost" size="icon" className={cn('h-5 w-5', dangerGhostBtnClass)} title="Delete" onClick={() => onDelete(exec)}>
             <Trash2 className="h-3 w-3" />
           </Button>
           {showPoolOff && onClose && (

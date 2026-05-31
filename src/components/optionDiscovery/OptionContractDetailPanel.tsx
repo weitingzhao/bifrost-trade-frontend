@@ -265,7 +265,7 @@ export function OptionContractDetailPanel({
                       return (
                         <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
                           <span className="od-kv-k od-kv-dim" style={{ gridColumn: '1/-1', fontSize: '0.75rem' }}>
-                            {bsDteDays === 0 ? '已到期，无法计算' : underlyingPrice == null ? '标的价格未知' : 'IV 求解失败'}
+                            {bsDteDays === 0 ? 'Expired; cannot compute' : underlyingPrice == null ? 'Underlying price unknown' : 'IV solve failed'}
                           </span>
                           <span className="text-xs text-muted-foreground">OI</span>
                           <span className="font-medium tabular-nums">{selectedRow.open_interest != null ? String(selectedRow.open_interest) : '—'}</span>
@@ -367,7 +367,7 @@ export function OptionContractDetailPanel({
               { label: 'IV', snap: selectedRow.iv != null ? (selectedRow.iv * 100).toFixed(2) + '%' : '—', bs: iv != null ? (iv * 100).toFixed(2) + '%' : '—', diff: ivDiff },
               { label: 'Delta', snap: selectedRow.delta != null ? selectedRow.delta.toFixed(4) : '—', bs: bsDetail.delta != null ? bsDetail.delta.toFixed(4) : '—', diff: deltaDiff },
               { label: 'Gamma', snap: selectedRow.gamma != null ? selectedRow.gamma.toFixed(4) : '—', bs: bsDetail.gamma != null ? bsDetail.gamma.toFixed(4) : '—', diff: gammaDiff },
-              { label: 'Theta/日', snap: selectedRow.theta != null ? selectedRow.theta.toFixed(4) : '—', bs: bsDetail.thetaPerDay != null ? bsDetail.thetaPerDay.toFixed(4) : '—', diff: thetaDiff },
+              { label: 'Theta/day', snap: selectedRow.theta != null ? selectedRow.theta.toFixed(4) : '—', bs: bsDetail.thetaPerDay != null ? bsDetail.thetaPerDay.toFixed(4) : '—', diff: thetaDiff },
               {
                 label: 'Vega/1%',
                 snap: selectedRow.vega != null ? selectedRow.vega.toFixed(4) : '—',
@@ -383,15 +383,15 @@ export function OptionContractDetailPanel({
                   BS vs Snapshot
                   <span className="font-normal normal-case text-muted-foreground">
                     {' '}
-                    · Black-Scholes 欧式近似（美式期权，ATM 误差通常 &lt;3%）
+                    · Black-Scholes European approx. (American options; ATM error usually &lt;3%)
                   </span>
                 </h4>
                 <DiscoveryHint className="mb-2 text-xs">
-                  S={`$${underlyingPrice.toFixed(2)}`} · K={selectedRow.strike.toFixed(2)} · DTE={dteDays} · 市场价=
+                  S={`$${underlyingPrice.toFixed(2)}`} · K={selectedRow.strike.toFixed(2)} · DTE={dteDays} · Mkt=
                   {mktPrice.toFixed(4)} ({mktSrc}) · r=4.50%
                 </DiscoveryHint>
                 {bsDetail.iv == null ? (
-                  <DiscoveryHint className="text-destructive">BS IV 求解失败（价格异常或深度 ITM/OTM）</DiscoveryHint>
+                  <DiscoveryHint className="text-destructive">BS IV solve failed (bad price or deep ITM/OTM)</DiscoveryHint>
                 ) : (
                   <div className="overflow-x-auto rounded-md border border-border">
                     <Table className="text-xs">
@@ -412,7 +412,7 @@ export function OptionContractDetailPanel({
                             <TableCell className={cn('tabular-nums font-medium', diffClass(row.diff))}>
                               {fmtDiff(row.diff)}
                               {'vegaHint' in row && row.vegaHint ? (
-                                <span className="text-muted-foreground"> 单位?</span>
+                                <span className="text-muted-foreground"> Units?</span>
                               ) : null}
                             </TableCell>
                           </TableRow>

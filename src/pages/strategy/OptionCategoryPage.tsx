@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
+import { dangerTextBtnClass } from '@/lib/uiClasses'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -16,42 +17,26 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Settings2, Plus, GripVertical, Search, X, LayoutGrid } from 'lucide-react'
 import type {
-  StrategyTemplateRow, StrategyTemplateDetail, StructureLeg, MetaParamItem,
-  StructureTypeLegPayload, MetaParamPayload, StructureTypeConfigOption, StrategyDimRow,
+  StrategyTemplateRow, StrategyTemplateDetail, StructureLeg,
+  StructureTypeLegPayload, MetaParamPayload, StrategyDimRow,
 } from '@/types/positions'
 import {
-  fetchTemplates, fetchTemplateDetail, createTemplate, updateTemplate, deleteTemplate,
+  createTemplate, updateTemplate, deleteTemplate,
   replaceTemplateLegs, replaceTemplateParams, replaceTemplateCharacteristics,
-  fetchDimsGrouped, createDim, deleteDim,
-  fetchParamKindOptions, fetchLegRoleOptions, fetchLegDirectionOptions,
-  fetchLegOptionRightOptions, fetchMetaKeyOptions, fetchMetaValueOptions,
+  createDim, deleteDim,
 } from '@/api/strategy'
-
-// ── Dimension constants ───────────────────────────────────────────────────────
-
-const DIM_TYPES = ['direction', 'structure', 'coverage', 'risk', 'volatility', 'time'] as const
-type DimType = typeof DIM_TYPES[number]
-
-const DIM_LABELS: Record<DimType, string> = {
-  direction: 'Direction', structure: 'Structure', coverage: 'Coverage',
-  risk: 'Risk', volatility: 'Volatility', time: 'Time',
-}
-
-const DIM_ICONS: Record<DimType, string> = {
-  direction: '↕', structure: '⬡', coverage: '◎',
-  risk: '⚡', volatility: '〰', time: '⏱',
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function SaveFeedback({ section, feedback }: { section: string; feedback: { section: string; ok: boolean } | null }) {
-  if (feedback?.section !== section) return null
-  return (
-    <span className={cn('text-xs font-medium', feedback.ok ? 'text-green-600' : 'text-red-500')}>
-      {feedback.ok ? 'Saved' : 'Error'}
-    </span>
-  )
-}
+import {
+  useOptionCategoryTemplates,
+  useOptionCategoryDims,
+  useOptionCategoryTemplateDetail,
+  useOptionCategoryFormOptions,
+  TEMPLATES_KEY,
+  TEMPLATE_DETAIL_KEY,
+  DIMS_KEY,
+} from '@/hooks/useOptionCategory'
+import { DIM_TYPES, DIM_LABELS, DIM_ICONS, type DimType } from '@/pages/strategy/optionCategory/constants'
+import { SaveFeedback } from '@/pages/strategy/optionCategory/SaveFeedback'
+import { TemplateMetaEditor } from '@/pages/strategy/optionCategory/TemplateMetaEditor'
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -90,53 +75,16 @@ export default function OptionCategoryPage() {
   const [detail, setDetail] = useState<StrategyTemplateDetail | null>(null)
 
   // ── Data queries ─────────────────────────────────────────────────────────
-  const { data: templatesData, isLoading: templatesLoading, isError: templatesError } = useQuery({
-    queryKey: ['strategy', 'templates', 'all'],
-    queryFn: () => fetchTemplates(false),
-    staleTime: 30_000,
-  })
+  const { data: templatesData, isLoading: templatesLoading, isError: templatesError } =
+    useOptionCategoryTemplates()
+  const { data: dimsData } = useOptionCategoryDims()
+  const { data: detailData, isLoading: detailLoading } = useOptionCategoryTemplateDetail(selectedId)
+  const { paramKinds, legRoles, legDirs, legOrs } = useOptionCategoryFormOptions()
 
-  const { data: dimsData } = useQuery({
-    queryKey: ['strategy', 'dims'],
-    queryFn: fetchDimsGrouped,
-    staleTime: 60_000,
-  })
-
-  const { data: detailData, isLoading: detailLoading } = useQuery({
-    queryKey: ['strategy', 'template', selectedId],
-    queryFn: () => fetchTemplateDetail(selectedId!),
-    enabled: selectedId != null,
-    staleTime: 10_000,
-  })
-
-  const { data: paramKindData } = useQuery({
-    queryKey: ['strategy', 'options', 'param-kinds'],
-    queryFn: fetchParamKindOptions,
-    staleTime: Infinity,
-  })
-
-  const { data: legRoleData } = useQuery({
-    queryKey: ['strategy', 'options', 'leg-roles'],
-    queryFn: fetchLegRoleOptions,
-    staleTime: Infinity,
-  })
-
-  const { data: legDirData } = useQuery({
-    queryKey: ['strategy', 'options', 'leg-dirs'],
-    queryFn: fetchLegDirectionOptions,
-    staleTime: Infinity,
-  })
-
-  const { data: legOrData } = useQuery({
-    queryKey: ['strategy', 'options', 'leg-or'],
-    queryFn: fetchLegOptionRightOptions,
-    staleTime: Infinity,
-  })
-
-  const paramKindOpts = paramKindData?.options ?? []
-  const legRoleOpts = legRoleData?.options ?? []
-  const legDirOpts = legDirData?.options ?? []
-  const legOrOpts = legOrData?.options ?? []
+  const paramKindOpts = paramKinds.data?.options ?? []
+  const legRoleOpts = legRoles.data?.options ?? []
+  const legDirOpts = legDirs.data?.options ?? []
+  const legOrOpts = legOrs.data?.options ?? []
   const dimsByType = dimsData?.by_type ?? {}
   const templates = templatesData?.items ?? []
 
@@ -193,7 +141,7 @@ export default function OptionCategoryPage() {
     if (updates.length === 0) return
     try {
       await Promise.all(updates)
-      await queryClient.invalidateQueries({ queryKey: ['strategy', 'templates', 'all'] })
+      await queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY })
       showFeedback('reorder', true)
     } catch {
       showFeedback('reorder', false)
@@ -222,8 +170,8 @@ export default function OptionCategoryPage() {
         sort_order: detail.sort_order,
         is_active: detail.is_active,
       })
-      await queryClient.invalidateQueries({ queryKey: ['strategy', 'templates', 'all'] })
-      await queryClient.invalidateQueries({ queryKey: ['strategy', 'template', detail.strategy_template_id] })
+      await queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY })
+      await queryClient.invalidateQueries({ queryKey: [...TEMPLATE_DETAIL_KEY, detail.strategy_template_id] })
       showFeedback('info', true)
     } catch {
       showFeedback('info', false)
@@ -241,7 +189,7 @@ export default function OptionCategoryPage() {
         sort_order: i,
       }))
       await replaceTemplateLegs(detail.strategy_template_id, legs)
-      await queryClient.invalidateQueries({ queryKey: ['strategy', 'template', detail.strategy_template_id] })
+      await queryClient.invalidateQueries({ queryKey: [...TEMPLATE_DETAIL_KEY, detail.strategy_template_id] })
       showFeedback('legs', true)
     } catch {
       showFeedback('legs', false)
@@ -259,7 +207,7 @@ export default function OptionCategoryPage() {
         sort_order: p.sort_order,
       }))
       await replaceTemplateParams(detail.strategy_template_id, items)
-      await queryClient.invalidateQueries({ queryKey: ['strategy', 'template', detail.strategy_template_id] })
+      await queryClient.invalidateQueries({ queryKey: [...TEMPLATE_DETAIL_KEY, detail.strategy_template_id] })
       showFeedback('params', true)
     } catch {
       showFeedback('params', false)
@@ -270,7 +218,7 @@ export default function OptionCategoryPage() {
     if (!detail) return
     try {
       await replaceTemplateCharacteristics(detail.strategy_template_id, detail.characteristics ?? [])
-      await queryClient.invalidateQueries({ queryKey: ['strategy', 'template', detail.strategy_template_id] })
+      await queryClient.invalidateQueries({ queryKey: [...TEMPLATE_DETAIL_KEY, detail.strategy_template_id] })
       showFeedback('chars', true)
     } catch {
       showFeedback('chars', false)
@@ -291,7 +239,7 @@ export default function OptionCategoryPage() {
       setCreateDialogOpen(false)
       setNewCode('')
       setNewName('')
-      await queryClient.invalidateQueries({ queryKey: ['strategy', 'templates', 'all'] })
+      await queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY })
       setSelectedId(strategy_template_id)
     } catch {
       showFeedback('create', false)
@@ -308,7 +256,7 @@ export default function OptionCategoryPage() {
     })
     setNewDimCode('')
     setNewDimLabel('')
-    await queryClient.invalidateQueries({ queryKey: ['strategy', 'dims'] })
+    await queryClient.invalidateQueries({ queryKey: DIMS_KEY })
   }
 
   // ── Delete template ───────────────────────────────────────────────────────
@@ -319,7 +267,7 @@ export default function OptionCategoryPage() {
       action: async () => {
         await deleteTemplate(detail.strategy_template_id)
         setSelectedId(null)
-        await queryClient.invalidateQueries({ queryKey: ['strategy', 'templates', 'all'] })
+        await queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY })
       },
     })
   }
@@ -512,7 +460,7 @@ export default function OptionCategoryPage() {
                   <div className="flex items-center gap-2">
                     <SaveFeedback section="info" feedback={feedback} />
                     <Button size="sm" className="h-7 text-xs" onClick={() => void saveInfo()}>Save</Button>
-                    <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:text-red-500" onClick={openDeleteTemplate}>Delete</Button>
+                    <Button size="sm" variant="ghost" className={cn('h-7 text-xs', dangerTextBtnClass)} onClick={openDeleteTemplate}>Delete</Button>
                   </div>
                 </div>
                 <div className="p-4 space-y-4">
@@ -668,7 +616,7 @@ export default function OptionCategoryPage() {
                             </TableCell>
                             <TableCell className="py-1">
                               <button
-                                className="text-muted-foreground hover:text-red-500 transition-colors"
+                                className={dangerTextBtnClass}
                                 onClick={() => {
                                   const legs = [...(detail.legs ?? [])]
                                   legs.splice(i, 1)
@@ -808,13 +756,13 @@ export default function OptionCategoryPage() {
                       <li key={row.strategy_dim_id} className="flex items-center gap-1 group">
                         <code className="text-[10px] font-mono bg-muted px-1 rounded flex-1 truncate">{row.code}</code>
                         <button
-                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 transition-colors shrink-0"
+                          className={cn('opacity-0 group-hover:opacity-100 shrink-0', dangerTextBtnClass)}
                           title={`Delete ${row.code}`}
                           onClick={() => setConfirmDialog({
                             msg: `Delete dimension value "${row.code}"?`,
                             action: async () => {
                               await deleteDim(row.strategy_dim_id)
-                              await queryClient.invalidateQueries({ queryKey: ['strategy', 'dims'] })
+                              await queryClient.invalidateQueries({ queryKey: DIMS_KEY })
                             },
                           })}
                         >
@@ -858,154 +806,5 @@ export default function OptionCategoryPage() {
         </DialogContent>
       </Dialog>
     </PageShell>
-  )
-}
-
-// ── Meta Parameter Editor ─────────────────────────────────────────────────────
-
-function TemplateMetaEditor({
-  detail, setDetail, paramKindOpts, onSave,
-}: {
-  detail: StrategyTemplateDetail
-  setDetail: (d: StrategyTemplateDetail) => void
-  paramKindOpts: StructureTypeConfigOption[]
-  onSave: () => void
-}) {
-  const [metaKeyOpts, setMetaKeyOpts] = useState<StructureTypeConfigOption[]>([])
-  const [valueOptsByKey, setValueOptsByKey] = useState<Record<string, StructureTypeConfigOption[]>>({})
-
-  useEffect(() => {
-    fetchMetaKeyOptions().then(r => setMetaKeyOpts(r.options)).catch(() => {})
-  }, [])
-
-  async function loadValueOpts(metaKey: string, templateCode: string) {
-    if (valueOptsByKey[metaKey]) return
-    const r = await fetchMetaValueOptions(templateCode, metaKey).catch(() => ({ options: [] }))
-    if (r.options.length > 0) {
-      setValueOptsByKey(prev => ({ ...prev, [metaKey]: r.options }))
-    }
-  }
-
-  const params = detail.meta_params ?? []
-
-  return (
-    <>
-      {params.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-4 text-center">No meta parameters defined.</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow className="text-xs">
-              <TableHead className="h-7">Key</TableHead>
-              <TableHead className="h-7">Label</TableHead>
-              <TableHead className="h-7">Default</TableHead>
-              <TableHead className="h-7">Kind</TableHead>
-              <TableHead className="h-7 w-8" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {params.map((p: MetaParamItem, i: number) => (
-              <TableRow key={i} className="text-xs">
-                <TableCell className="py-1">
-                  <select
-                    className="h-7 text-xs rounded border border-input bg-background px-2 focus:outline-none w-32"
-                    value={p.meta_key}
-                    onChange={e => {
-                      const mp = [...params]
-                      mp[i] = { ...mp[i], meta_key: e.target.value }
-                      setDetail({ ...detail, meta_params: mp })
-                      void loadValueOpts(e.target.value, detail.template_code)
-                    }}
-                  >
-                    {metaKeyOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    {!metaKeyOpts.some(o => o.value === p.meta_key) && (
-                      <option value={p.meta_key}>{p.meta_key}</option>
-                    )}
-                  </select>
-                </TableCell>
-                <TableCell className="py-1">
-                  <Input
-                    className="h-7 text-xs w-28"
-                    value={p.display_label ?? ''}
-                    onChange={e => {
-                      const mp = [...params]
-                      mp[i] = { ...mp[i], display_label: e.target.value }
-                      setDetail({ ...detail, meta_params: mp })
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="py-1">
-                  {(valueOptsByKey[p.meta_key]?.length ?? 0) > 0 ? (
-                    <select
-                      className="h-7 text-xs rounded border border-input bg-background px-2 focus:outline-none w-28"
-                      value={p.default_value_text ?? ''}
-                      onFocus={() => void loadValueOpts(p.meta_key, detail.template_code)}
-                      onChange={e => {
-                        const mp = [...params]
-                        mp[i] = { ...mp[i], default_value_text: e.target.value }
-                        setDetail({ ...detail, meta_params: mp })
-                      }}
-                    >
-                      <option value="">—</option>
-                      {(valueOptsByKey[p.meta_key] ?? []).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                  ) : (
-                    <Input
-                      className="h-7 text-xs w-28"
-                      value={p.default_value_text ?? ''}
-                      onFocus={() => void loadValueOpts(p.meta_key, detail.template_code)}
-                      onChange={e => {
-                        const mp = [...params]
-                        mp[i] = { ...mp[i], default_value_text: e.target.value }
-                        setDetail({ ...detail, meta_params: mp })
-                      }}
-                    />
-                  )}
-                </TableCell>
-                <TableCell className="py-1">
-                  <select
-                    className="h-7 text-xs rounded border border-input bg-background px-2 focus:outline-none w-24"
-                    value={p.param_kind ?? 'fixed'}
-                    onChange={e => {
-                      const mp = [...params]
-                      mp[i] = { ...mp[i], param_kind: e.target.value }
-                      setDetail({ ...detail, meta_params: mp })
-                    }}
-                  >
-                    {paramKindOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </TableCell>
-                <TableCell className="py-1">
-                  <button
-                    className="text-muted-foreground hover:text-red-500 transition-colors"
-                    onClick={() => {
-                      const mp = [...params]
-                      mp.splice(i, 1)
-                      setDetail({ ...detail, meta_params: mp })
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-      <div className="flex items-center justify-between mt-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => setDetail({
-            ...detail,
-            meta_params: [...params, { meta_key: 'otm_pct', display_label: 'OTM %', param_kind: 'percent', default_value_text: null, sort_order: params.length }],
-          })}
-        >
-          + Add parameter
-        </Button>
-        <Button size="sm" className="h-7 text-xs" onClick={onSave}>Save</Button>
-      </div>
-    </>
   )
 }

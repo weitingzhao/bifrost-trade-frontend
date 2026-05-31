@@ -3,6 +3,7 @@ import { ChevronRight, ChevronDown, Trash2, Eye, Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
+import { dangerGhostBtnClass } from '@/lib/uiClasses'
 import { structureChipStyle } from '@/utils/structureColor'
 import {
   computeInstancePositionStatus,
@@ -440,7 +441,7 @@ export function InstancesGroupedTable({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      className={cn('h-7 w-7', dangerGhostBtnClass)}
                       title="Delete instance"
                       onClick={() => onDelete(inst)}
                     >

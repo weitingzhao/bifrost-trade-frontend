@@ -2,35 +2,45 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.5rem 0.75rem;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .filterField {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
   min-width: 0;
 }
 
 .filterLabel {
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--muted-foreground);
 }
 
 .filterSelect {
   height: 2rem;
-  min-width: 8rem;
+  min-width: 10rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
   font-size: 0.8125rem;
+  padding: 0 0.5rem;
 }
 
 .filterPanel {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  padding: 0.5rem 0;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 92%, var(--muted));
 }
 
 .filterPanelRow {
@@ -41,76 +51,82 @@
 }
 
 .filterPanelLabel {
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted-foreground);
-  min-width: 3.5rem;
+  min-width: 4.5rem;
+  flex-shrink: 0;
 }
 
 .bubbleRow {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.25rem;
 }
 
 .bubbleBtn {
   appearance: none;
-  border: 1px solid var(--border);
+  border: none;
+  border-radius: 999px;
+  padding: 0.28rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
   background: transparent;
   color: var(--muted-foreground);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 0.2rem 0.45rem;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .bubbleBtn:hover {
   color: var(--foreground);
-  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .bubbleBtnActive {
-  background: color-mix(in srgb, var(--primary) 18%, transparent);
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  background: var(--card);
   color: var(--foreground);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .sinceHint {
-  font-size: 0.6875rem;
+  font-size: 0.72rem;
   color: var(--muted-foreground);
+  margin-left: 0.25rem;
 }
 
 .filterMeta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   font-size: 0.75rem;
   color: var(--muted-foreground);
+  padding-top: 0.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
 .clearBtn {
   appearance: none;
   border: none;
-  background: none;
-  color: var(--color-link, #0284c7);
+  background: transparent;
+  color: var(--primary);
   font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-.clearBtn:hover {
-  color: var(--color-link-hover, #0369a1);
 }
 
 .toolbar {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .toolbarRow {
@@ -121,14 +137,16 @@
 }
 
 .toolbarLabel {
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted-foreground);
+  min-width: 5.5rem;
 }
 
 .toolbarHint {
-  margin: 0;
-  font-size: 0.6875rem;
+  font-size: 0.72rem;
   color: var(--muted-foreground);
+  margin: 0;
 }

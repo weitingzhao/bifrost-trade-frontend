@@ -1,14 +1,11 @@
-import type { ComponentProps, ReactNode } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+
+const thBase =
+  'px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground border-b border-border bg-secondary/40 whitespace-nowrap'
+const tdBase =
+  'px-2 py-1.5 text-xs border-b border-border/60 align-middle'
 
 export function DenseDataTable({
   children,
@@ -18,43 +15,80 @@ export function DenseDataTable({
   wrapClassName?: string
 }) {
   return (
-    <div className={cn('rounded-md border overflow-x-auto', wrapClassName)}>
-      <Table className="text-xs [&_td]:py-1.5 [&_th]:h-8 [&_th]:py-1">{children}</Table>
+    <div className={cn('overflow-x-auto rounded-lg border border-border', wrapClassName)}>
+      <table className="w-full min-w-[320px] border-collapse text-[0.8125rem]">{children}</table>
     </div>
   )
 }
 
-export function DenseTableHeader(props: ComponentProps<typeof TableHeader>) {
-  return <TableHeader {...props} />
+export function DenseTableHeader({ children }: { children: ReactNode }) {
+  return <thead>{children}</thead>
 }
 
-export function DenseTableHeadRow(props: ComponentProps<typeof TableRow>) {
-  return <TableRow {...props} />
+export function DenseTableBody({ children }: { children: ReactNode }) {
+  return <tbody>{children}</tbody>
 }
 
-export function DenseTableHead({
-  align,
-  className,
-  ...props
-}: ComponentProps<typeof TableHead> & { align?: 'left' | 'right' }) {
+export function DenseTableHeadRow({ children }: { children: ReactNode }) {
+  return <tr>{children}</tr>
+}
+
+export function DenseTableRow({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <TableHead
-      className={cn(align === 'right' && 'text-right', className)}
-      {...props}
-    />
+    <tr className={cn('hover:bg-secondary/30 transition-colors', className)}>{children}</tr>
   )
 }
 
-export function DenseTableBody(props: ComponentProps<typeof TableBody>) {
-  return <TableBody {...props} />
+export function DenseTableHead({
+  children,
+  className,
+  align,
+  title,
+  role,
+  tabIndex,
+  'aria-sort': ariaSort,
+  onClick,
+  onKeyDown,
+}: {
+  children: ReactNode
+  className?: string
+  align?: 'left' | 'right'
+  title?: string
+  role?: string
+  tabIndex?: number
+  'aria-sort'?: 'ascending' | 'descending' | 'none' | undefined
+  onClick?: () => void
+  onKeyDown?: (e: KeyboardEvent) => void
+}) {
+  return (
+    <th
+      className={cn(thBase, align === 'right' && 'text-right', className)}
+      title={title}
+      role={role}
+      tabIndex={tabIndex}
+      aria-sort={ariaSort}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+    >
+      {children}
+    </th>
+  )
 }
 
-export function DenseTableRow(props: ComponentProps<typeof TableRow>) {
-  return <TableRow {...props} />
-}
-
-export function DenseTableCell({ className, ...props }: ComponentProps<typeof TableCell>) {
-  return <TableCell className={cn('tabular-nums', className)} {...props} />
+export function DenseTableCell({
+  children,
+  className,
+  title,
+}: {
+  children: ReactNode
+  className?: string
+  title?: string
+}) {
+  return (
+    <td className={cn(tdBase, className)} title={title}>
+      {children}
+    </td>
+  )
 }
 
 export function GroupHeaderRow({
@@ -65,11 +99,40 @@ export function GroupHeaderRow({
   label: ReactNode
 }) {
   return (
-    <TableRow className="bg-muted/40 hover:bg-muted/40">
-      <TableCell colSpan={colSpan} className="py-1.5 text-xs font-semibold text-foreground">
+    <tr className="bg-secondary/50">
+      <td colSpan={colSpan} className="px-2 py-1 text-xs font-semibold text-muted-foreground">
         {label}
-      </TableCell>
-    </TableRow>
+      </td>
+    </tr>
+  )
+}
+
+export function InlinePnl({
+  value,
+  children,
+}: {
+  value: number | null | undefined
+  children: ReactNode
+}) {
+  return <span className={pnlColorClass(value)}>{children}</span>
+}
+
+export function PnlCell({
+  dollar,
+  pct,
+  formatDollar,
+  formatPct,
+}: {
+  dollar: number | null | undefined
+  pct: number | null | undefined
+  formatDollar: (v: number | null | undefined) => string
+  formatPct: (v: number | null | undefined) => string
+}) {
+  return (
+    <div className="text-right leading-snug">
+      <div className={pnlColorClass(dollar)}>{formatDollar(dollar)}</div>
+      <div className={cn('text-[0.72rem]', pnlColorClass(pct))}>{formatPct(pct)}</div>
+    </div>
   )
 }
 
@@ -87,43 +150,16 @@ export function SymbolLinkButton({
   return (
     <button
       type="button"
-      className={cn(
-        'font-semibold text-left hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm',
-        variant === 'coverage' ? 'text-[var(--color-link)]' : 'text-primary',
-      )}
       onClick={onClick}
       aria-label={ariaLabel}
+      className={cn(
+        'font-semibold text-left hover:underline',
+        variant === 'coverage'
+          ? 'text-sky-600 dark:text-sky-400'
+          : 'text-primary',
+      )}
     >
       {label}
     </button>
   )
-}
-
-export function PnlCell({
-  dollar,
-  pct,
-  formatDollar,
-  formatPct,
-}: {
-  dollar: number | null | undefined
-  pct: number | null | undefined
-  formatDollar: (n: number | null | undefined) => string
-  formatPct: (n: number | null | undefined) => string
-}) {
-  return (
-    <div className="flex flex-col items-end gap-0.5 leading-tight">
-      <span className={cn('font-medium', pnlColorClass(dollar))}>{formatDollar(dollar)}</span>
-      <span className={cn('text-[0.85em]', pnlColorClass(pct))}>{formatPct(pct)}</span>
-    </div>
-  )
-}
-
-export function InlinePnl({
-  value,
-  children,
-}: {
-  value: number | null | undefined
-  children: ReactNode
-}) {
-  return <span className={cn('font-medium tabular-nums', pnlColorClass(value))}>{children}</span>
 }

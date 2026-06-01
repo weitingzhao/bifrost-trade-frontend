@@ -5,28 +5,31 @@ export type BubbleSwitchSize = 'sm' | 'md'
 /** Default bubble control size for Positions / charts toolbars. */
 export const POSITIONS_BUBBLE_SIZE: BubbleSwitchSize = 'sm'
 
-function resolvedSize(size?: BubbleSwitchSize): BubbleSwitchSize {
-  return size ?? POSITIONS_BUBBLE_SIZE
+const groupBySize: Record<BubbleSwitchSize, string> = {
+  sm: 'gap-0.5 p-[3px]',
+  md: 'gap-1 p-1',
 }
 
-/** Segmented control container (Legacy bubble group). */
-export function bubbleGroupClass(size?: BubbleSwitchSize): string {
-  const s = resolvedSize(size)
+const btnBySize: Record<BubbleSwitchSize, string> = {
+  sm: 'px-3 py-1 text-[0.78rem]',
+  md: 'px-3.5 py-1.5 text-sm',
+}
+
+/** Segmented pill group (legacy `.replay-bubble-switch`). */
+export function bubbleGroupClass(size: BubbleSwitchSize = 'sm'): string {
   return cn(
-    'inline-flex shrink-0 items-stretch rounded-md border border-border bg-muted/30 p-0.5',
-    s === 'md' ? 'gap-1 p-1' : 'gap-0.5',
+    'inline-flex items-center rounded-full border border-border bg-secondary/80',
+    groupBySize[size],
   )
 }
 
-/** Single segment button; pass `active` when selected. */
-export function bubbleButtonClass(active: boolean, size?: BubbleSwitchSize): string {
-  const s = resolvedSize(size)
+export function bubbleButtonClass(active: boolean, size: BubbleSwitchSize = 'sm'): string {
   return cn(
-    'inline-flex items-center justify-center font-semibold uppercase tracking-wide transition-colors',
-    'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-    s === 'sm' ? 'rounded px-2 py-0.5 text-[10px]' : 'rounded-md px-2.5 py-1 text-xs',
+    'rounded-full border-0 font-semibold leading-tight transition-colors cursor-pointer',
+    'disabled:cursor-not-allowed disabled:opacity-70',
+    btnBySize[size],
     active
-      ? 'bg-primary text-primary-foreground shadow-sm'
-      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+      ? 'bg-card text-foreground shadow-sm'
+      : 'bg-transparent text-muted-foreground hover:bg-card/60 hover:text-foreground',
   )
 }

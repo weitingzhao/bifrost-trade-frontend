@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { StrategyOpportunity } from '@/types/positions'
-import styles from '@/pages/strategy/InstancesPage.module.css'
+import styles from '@/components/strategy/instances/instancesCombobox.module.css'
 
 export interface StrategyOpportunityComboboxProps {
   opportunities: StrategyOpportunity[]

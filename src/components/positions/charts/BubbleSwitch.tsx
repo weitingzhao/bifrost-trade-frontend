@@ -1,38 +1,14 @@
 import { cn } from '@/lib/utils'
-import { POS_CTRL_ACTIVE, POS_CTRL_IDLE } from '../positionsControlClasses'
+import {
+  POSITIONS_BUBBLE_SIZE,
+  bubbleButtonClass,
+  bubbleGroupClass,
+  type BubbleSwitchSize,
+} from './bubbleSwitchStyles'
 
 interface Option {
   value: string
   label: string
-}
-
-const BUBBLE_SIZE = {
-  xs: { group: 'text-[10px]', btn: 'px-2 py-0.5 min-h-[1.35rem]' },
-  sm: { group: 'text-xs', btn: 'px-2.5 py-1 min-h-[1.55rem]' },
-  /** Between sm and md — default for Positions page bubbles */
-  chart: { group: 'text-xs', btn: 'px-3 py-1 min-h-[1.7rem]' },
-  md: { group: 'text-sm', btn: 'px-4 py-1.5 min-h-[2.125rem]' },
-} as const
-
-/** Positions charts + filter bars (compact but readable). */
-export const POSITIONS_BUBBLE_SIZE = 'chart' as const
-
-export type PositionsBubbleSize = keyof typeof BUBBLE_SIZE
-
-export function bubbleGroupClass(size: PositionsBubbleSize = POSITIONS_BUBBLE_SIZE): string {
-  return cn(
-    'inline-flex rounded-md border border-border bg-muted/30 p-px gap-px shrink-0',
-    BUBBLE_SIZE[size].group,
-  )
-}
-
-export function bubbleButtonClass(active: boolean, size: PositionsBubbleSize = POSITIONS_BUBBLE_SIZE): string {
-  const s = BUBBLE_SIZE[size]
-  return cn(
-    'rounded-[4px] transition-all duration-150 leading-none whitespace-nowrap',
-    s.btn,
-    active ? POS_CTRL_ACTIVE : POS_CTRL_IDLE,
-  )
 }
 
 interface Props {
@@ -40,7 +16,7 @@ interface Props {
   value: string
   onChange: (value: string) => void
   className?: string
-  size?: keyof typeof BUBBLE_SIZE
+  size?: BubbleSwitchSize
 }
 
 export function BubbleSwitch({ options, value, onChange, className, size = 'sm' }: Props) {

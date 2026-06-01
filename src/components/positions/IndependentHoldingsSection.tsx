@@ -5,7 +5,19 @@ import {
   computeIndependentHoldingMetrics,
 } from '@/utils/independentHoldings'
 import type { LivePositionRow } from '@/types/positions'
-import './independentHoldingsLegacy.css'
+import {
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  GroupHeaderRow,
+  InlinePnl,
+  SymbolLinkButton,
+  denseTable,
+} from './ui'
 
 interface Props {
   coreStocks: LivePositionRow[]
@@ -23,59 +35,46 @@ function filterBySymbol(rows: LivePositionRow[], filterSymbol: string): LivePosi
 
 function HoldingRow({
   position,
-  keyPrefix,
   onInspectStock,
 }: {
   position: LivePositionRow
-  keyPrefix: string
   onInspectStock?: (pos: LivePositionRow) => void
 }) {
   const accId = (position.account_id ?? '').trim() || '—'
   const qty = Number(position.position)
   const m = computeIndependentHoldingMetrics(position)
-  const ck = (position.contract_key ?? '').trim()
 
   return (
-    <tr key={`${keyPrefix}-${accId}-${position.symbol ?? ''}-${ck || 'stk'}`}>
-      <td>{accId}</td>
-      <td>
+    <DenseTableRow>
+      <DenseTableCell>{accId}</DenseTableCell>
+      <DenseTableCell>
         {onInspectStock ? (
-          <button
-            type="button"
-            className="independent-holdings-symbol-btn"
+          <SymbolLinkButton
+            label={position.symbol ?? '—'}
             onClick={() => onInspectStock(position)}
-            aria-label={`Open details for ${position.symbol ?? 'symbol'}`}
-          >
-            <strong>{position.symbol ?? '—'}</strong>
-          </button>
+            ariaLabel={`Open details for ${position.symbol ?? 'symbol'}`}
+            variant="stock"
+          />
         ) : (
           <strong>{position.symbol ?? '—'}</strong>
         )}
-      </td>
-      <td>{qty > 0 ? 'Long' : qty < 0 ? 'Short' : '—'}</td>
-      <td>{Number.isFinite(qty) ? qty : '—'}</td>
-      <td>{fmtUsd(position.avgCost)}</td>
-      <td>{fmtUsd(m.lastPrice)}</td>
-      <td>{fmtUsd(m.marketValue)}</td>
-      <td>
-        <span className={(m.dailyPnl ?? 0) >= 0 ? 'independent-holdings-pnl-positive' : 'independent-holdings-pnl-negative'}>
-          {fmtUsd(m.dailyPnl)}
-        </span>
+      </DenseTableCell>
+      <DenseTableCell>{qty > 0 ? 'Long' : qty < 0 ? 'Short' : '—'}</DenseTableCell>
+      <DenseTableCell>{Number.isFinite(qty) ? qty : '—'}</DenseTableCell>
+      <DenseTableCell>{fmtUsd(position.avgCost)}</DenseTableCell>
+      <DenseTableCell>{fmtUsd(m.lastPrice)}</DenseTableCell>
+      <DenseTableCell>{fmtUsd(m.marketValue)}</DenseTableCell>
+      <DenseTableCell>
+        <InlinePnl value={m.dailyPnl}>{fmtUsd(m.dailyPnl)}</InlinePnl>
         {' / '}
-        <span className={(m.dailyPct ?? 0) >= 0 ? 'independent-holdings-pnl-positive' : 'independent-holdings-pnl-negative'}>
-          {fmtSignedPct(m.dailyPct)}
-        </span>
-      </td>
-      <td>
-        <span className={(m.totalPnl ?? 0) >= 0 ? 'independent-holdings-pnl-positive' : 'independent-holdings-pnl-negative'}>
-          {fmtUsd(m.totalPnl)}
-        </span>
+        <InlinePnl value={m.dailyPct}>{fmtSignedPct(m.dailyPct)}</InlinePnl>
+      </DenseTableCell>
+      <DenseTableCell>
+        <InlinePnl value={m.totalPnl}>{fmtUsd(m.totalPnl)}</InlinePnl>
         {' / '}
-        <span className={(m.totalPct ?? 0) >= 0 ? 'independent-holdings-pnl-positive' : 'independent-holdings-pnl-negative'}>
-          {fmtSignedPct(m.totalPct)}
-        </span>
-      </td>
-    </tr>
+        <InlinePnl value={m.totalPct}>{fmtSignedPct(m.totalPct)}</InlinePnl>
+      </DenseTableCell>
+    </DenseTableRow>
   )
 }
 
@@ -96,46 +95,39 @@ export function IndependentHoldingsSection({
   if (sections.length === 0) return null
 
   return (
-    <div className="instance-sheet-stock-section">
-      <h4 className="instance-sheet-section-heading">Independent Holdings</h4>
-      <p className="independent-holdings-hint">
+    <div className="min-w-0 space-y-2">
+      <h4 className="text-sm font-semibold text-foreground">Independent Holdings</h4>
+      <p className={denseTable.emptyHint}>
         Positions without tradeable options (Index, ETF, etc.); not part of any option strategy. Grouped by
         position category (Stocks, Fixed income, Cash-like).
       </p>
-      <div className="overflow-x-auto">
-        <table className="independent-holdings-table">
-          <thead>
-            <tr>
-              <th>Account</th>
-              <th>Symbol</th>
-              <th>Side</th>
-              <th>Qty</th>
-              <th>Avg Cost</th>
-              <th>Last</th>
-              <th>Market Value</th>
-              <th>Daily ($ / %)</th>
-              <th>Total ($ / %)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sections.flatMap((section) => [
-              <tr key={`${section.key}-section`} className="independent-holdings-group-row">
-                <td colSpan={9}>
-                  <strong>{section.title}</strong>
-                </td>
-              </tr>,
-              ...section.rows.map((p) => (
-                <HoldingRow
-                  key={`${section.key}-${p.account_id}-${p.symbol}-${p.contract_key ?? 'stk'}`}
-                  position={p}
-                  keyPrefix={section.key}
-                  onInspectStock={onInspectStock}
-                />
-              )),
-            ])}
-          </tbody>
-        </table>
-      </div>
+      <DenseDataTable>
+        <DenseTableHeader>
+          <DenseTableHeadRow>
+            <DenseTableHead>Account</DenseTableHead>
+            <DenseTableHead>Symbol</DenseTableHead>
+            <DenseTableHead>Side</DenseTableHead>
+            <DenseTableHead>Qty</DenseTableHead>
+            <DenseTableHead>Avg Cost</DenseTableHead>
+            <DenseTableHead>Last</DenseTableHead>
+            <DenseTableHead>Market Value</DenseTableHead>
+            <DenseTableHead>Daily ($ / %)</DenseTableHead>
+            <DenseTableHead>Total ($ / %)</DenseTableHead>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
+          {sections.flatMap((section) => [
+            <GroupHeaderRow key={`${section.key}-section`} colSpan={9} label={<strong>{section.title}</strong>} />,
+            ...section.rows.map((p) => (
+              <HoldingRow
+                key={`${section.key}-${p.account_id}-${p.symbol}-${p.contract_key ?? 'stk'}`}
+                position={p}
+                onInspectStock={onInspectStock}
+              />
+            )),
+          ])}
+        </DenseTableBody>
+      </DenseDataTable>
     </div>
   )
 }

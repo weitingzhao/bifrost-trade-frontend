@@ -9,7 +9,7 @@ import {
 import { OpsAuthBar } from '@/pages/settings/socket/OpsAuthBar'
 import { useOpsWorkers } from '@/hooks/useOpsData'
 import { computeCeleryRuntimeLamp, runtimeLampText } from '@/utils/celeryRuntime'
-import { useCeleryOps } from './CeleryOpsContext'
+import { useCeleryOps } from './useCeleryOps'
 
 const PAGE_INFO =
   'Queue summary (above tabs): broker + PostgreSQL job counts for every queue; same on all tabs. Queues & Instances: PostgreSQL job queues plus systemd worker instances and Redis/broker. Console & Runtime: live consoles and Celery inspect snapshot.'

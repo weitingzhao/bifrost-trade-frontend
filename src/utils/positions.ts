@@ -101,7 +101,7 @@ export function fmtExecDaysAgo(days: number | null | undefined): string {
   return `${Math.round(days)} days ago`
 }
 
-/** Legacy PnL colors (#22c55e / #ef4444) — see positionsTheme + *Legacy.css for table overrides. */
+/** PnL display — use pnlColorClass() from @/utils/dailyChange in components. */
 export function pnlColorClass(n: number | null | undefined): string {
   if (n == null) return ''
   if (n > 0) return 'pnl-positive'

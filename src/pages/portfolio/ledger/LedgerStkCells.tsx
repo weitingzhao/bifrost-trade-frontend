@@ -7,12 +7,8 @@ import {
   stkNotionalTone,
   stkPctOf,
 } from '@/utils/ledger/stkDisplay'
-import styles from './TradeLedgerPage.module.css'
-
-export function ledgerStkPnlClass(v: number): string {
-  if (!Number.isFinite(v) || Math.abs(v) < 0.005) return styles.pnlZero
-  return v > 0 ? styles.pnlPositive : styles.pnlNegative
-}
+import { ledgerStkPnlClass } from './ledgerStkPnl'
+import styles from './ledgerStyles'
 
 export function LedgerStkNotionalCell({ ex }: { ex: Execution }) {
   const n = stkNotionalAbsUsd(ex)

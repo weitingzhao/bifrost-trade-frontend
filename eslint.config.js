@@ -23,4 +23,14 @@ export default tseslint.config(
       'no-console': 'error',
     },
   },
+  {
+    files: [
+      '**/socketIngestUi.tsx',
+      '**/daemonShared.tsx',
+      '**/apiHealthSections.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 )

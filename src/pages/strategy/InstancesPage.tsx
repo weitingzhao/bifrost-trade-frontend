@@ -39,7 +39,8 @@ import {
 } from '@/constants/instanceDetailSidebar'
 import { computeInstancePositionStatus } from '@/utils/instanceListMetrics'
 import type { StrategyInstance } from '@/types/positions'
-import styles from './InstancesPage.module.css'
+import filterStyles from '@/components/strategy/instances/instancesFilters.module.css'
+import layoutStyles from '@/components/strategy/instances/instancesLayout.module.css'
 
 const INSTANCES_INFO =
   'Running strategy instances per account; create from an opportunity, inspect PnL and executions, or open the instance sheet.'
@@ -349,7 +350,7 @@ export default function InstancesPage() {
 
   return (
     <PageShell>
-      <div className={styles.pageCard} style={pageCardStyle}>
+      <div className={layoutStyles.pageCard} style={pageCardStyle}>
         <PageHeader
           title={
             <span className="inline-flex items-center gap-1">
@@ -381,11 +382,11 @@ export default function InstancesPage() {
           }
         />
 
-        <div className={styles.filterRow}>
-          <label className={styles.filterField}>
-            <span className={styles.filterLabel}>Account</span>
+        <div className={filterStyles.filterRow}>
+          <label className={filterStyles.filterField}>
+            <span className={filterStyles.filterLabel}>Account</span>
             <select
-              className={styles.filterSelect}
+              className={filterStyles.filterSelect}
               value={accountFilter}
               onChange={(e) => setAccountFilter(e.target.value)}
               aria-label="Filter by account"
@@ -397,8 +398,8 @@ export default function InstancesPage() {
             </select>
           </label>
 
-          <label className={styles.filterField}>
-            <span className={styles.filterLabel}>Strategy</span>
+          <label className={filterStyles.filterField}>
+            <span className={filterStyles.filterLabel}>Strategy</span>
             <StrategyOpportunityCombobox
               opportunities={opportunities}
               value={opportunityIdFilter}
@@ -411,8 +412,8 @@ export default function InstancesPage() {
           </label>
 
           {opportunityIdFilter !== '' && (
-            <label className={styles.filterField}>
-              <span className={styles.filterLabel}>Instance</span>
+            <label className={filterStyles.filterField}>
+              <span className={filterStyles.filterLabel}>Instance</span>
               <Select
                 value={instanceIdFilter === '' ? '__all__' : String(instanceIdFilter)}
                 onValueChange={(v) => setInstanceIdFilter(v === '__all__' ? '' : Number(v))}
@@ -437,11 +438,11 @@ export default function InstancesPage() {
           <QueryErrorAlert error={error} onRetry={() => void refetch()} />
         )}
 
-        <div className={styles.workspace}>
+        <div className={layoutStyles.workspace}>
           <div
             className={cn(
-              styles.listPane,
-              urlInstanceId != null && !isNarrowViewport && styles.listPaneWithSidebar,
+              layoutStyles.listPane,
+              urlInstanceId != null && !isNarrowViewport && layoutStyles.listPaneWithSidebar,
             )}
           >
             {allInstances.length > 0 && (
@@ -484,7 +485,7 @@ export default function InstancesPage() {
           </div>
 
           {urlInstanceId != null && (
-            <div className={styles.inspectorPane}>
+            <div className={layoutStyles.inspectorPane}>
               <DetailSidebar
                 open
                 mode={isNarrowViewport ? 'modal' : 'docked'}
@@ -493,19 +494,19 @@ export default function InstancesPage() {
                 onClose={closeInstanceDetail}
               >
                 {detailMissing ? (
-                  <p className={styles.notFound}>Instance not found.</p>
+                  <p className={layoutStyles.notFound}>Instance not found.</p>
                 ) : detailTarget == null ? (
                   <div className="p-4 space-y-2">
                     <Skeleton className="h-6 w-48" />
                     <Skeleton className="h-32 w-full" />
                   </div>
                 ) : isCompareMode && compareTarget != null ? (
-                  <div className={styles.compareSplit}>
-                    <div className={styles.comparePane}>
+                  <div className={layoutStyles.compareSplit}>
+                    <div className={layoutStyles.comparePane}>
                       <InstanceDetailPanel instance={detailTarget} />
                     </div>
-                    <div className={styles.compareDivider} aria-hidden />
-                    <div className={styles.comparePane}>
+                    <div className={layoutStyles.compareDivider} aria-hidden />
+                    <div className={layoutStyles.comparePane}>
                       <InstanceDetailPanel instance={compareTarget} />
                     </div>
                   </div>

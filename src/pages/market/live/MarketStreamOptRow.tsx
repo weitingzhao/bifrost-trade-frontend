@@ -1,5 +1,6 @@
 import type { QuoteItem } from '@/types/market'
 import { cn } from '@/lib/utils'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import {
   computeOptMidAndLivePnl,
@@ -20,11 +21,6 @@ interface Props {
   hasStreamAccounts: boolean
   dragEnabled: boolean
   onOptRowReorder?: (fromBasisKey: string, toBasisKey: string) => void
-}
-
-function pnlClass(v: number | null | undefined): string {
-  if (v == null || v === 0) return ''
-  return v > 0 ? styles.pnlPositive : styles.pnlNegative
 }
 
 export function MarketStreamOptRow({
@@ -106,12 +102,12 @@ export function MarketStreamOptRow({
         <>
           <td className={styles.numCell}>{isHost ? qtyCell : '—'}</td>
           <td className={styles.numCell}>{isHost ? costCell : '—'}</td>
-          <td className={cn(styles.numCell, isHost ? pnlClass(livePnl) : '')}>
+          <td className={cn(styles.numCell, isHost ? pnlColorClass(livePnl) : '')}>
             {isHost && livePnl != null ? fmtUsd(livePnl, true) : '—'}
           </td>
           <td className={styles.numCell}>{isSecondary ? qtyCell : '—'}</td>
           <td className={styles.numCell}>{isSecondary ? costCell : '—'}</td>
-          <td className={cn(styles.numCell, isSecondary ? pnlClass(livePnl) : '')}>
+          <td className={cn(styles.numCell, isSecondary ? pnlColorClass(livePnl) : '')}>
             {isSecondary && livePnl != null ? fmtUsd(livePnl, true) : '—'}
           </td>
         </>
@@ -135,7 +131,7 @@ export function MarketStreamOptRow({
         )}
       </td>
       <td className={styles.numCell}>—</td>
-      <td className={cn(styles.numCell, pnlClass(livePnl))} title={mtmTooltip}>
+      <td className={cn(styles.numCell, pnlColorClass(livePnl))} title={mtmTooltip}>
         {livePnl != null ? fmtUsd(livePnl, true) : '—'}
       </td>
     </tr>

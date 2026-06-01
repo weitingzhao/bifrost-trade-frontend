@@ -5,7 +5,7 @@ import { LedgerInstanceNest } from './LedgerInstanceNest'
 import type { StratOppGroup } from './ledgerTypes'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 type Props = {
   og: StratOppGroup

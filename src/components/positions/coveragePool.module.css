@@ -1,0 +1,100 @@
+:global(.coverage-summary-section){
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+:global(.coverage-summary-intro){
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+:global(.coverage-pools-row){
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 0.65rem 1rem;
+  align-items: start;
+}
+
+:global(.coverage-pool-panel){
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0.35rem 0.5rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 88%, var(--muted));
+}
+
+:global(.coverage-section-hint){
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+:global(.coverage-section-hint--sm){
+  font-size: 0.68rem;
+}
+
+:global(.coverage-pool-empty-explanation){
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+:global(.coverage-account-id){
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  font-weight: 600;
+}
+
+:global(.coverage-account-host){
+  color: #5eead4;
+}
+
+:global(.coverage-account-secondary){
+  color: #c4b5fd;
+}
+
+:global(.coverage-account-other){
+  color: var(--muted-foreground);
+}
+
+.coverage-cost-avg-cell,
+:global(.coverage-mkt-value-price-cell){
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
+  line-height: 1.25;
+}
+
+.coverage-cost-avg-per-share,
+:global(.coverage-mkt-value-per-share){
+  font-size: 0.82em;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  margin-top: 0.06rem;
+}
+
+:global(.coverage-held-amt-underlying-narrow){
+  min-width: 0;
+  max-width: 2.75rem;
+  width: 2.65rem;
+  padding-left: 0.12rem;
+  padding-right: 0.12rem;
+  box-sizing: border-box;
+}
+
+:global(.coverage-available-contracts-only){
+  font-variant-numeric: tabular-nums;
+}
+
+:global(.coverage-shared-hint){
+  font-size: 0.78em;
+  color: var(--muted-foreground);
+}
+
+:global(.coverage-summary-placeholder-text){
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { structureChipStyle } from '@/utils/structureColor'
-import styles from '@/pages/strategy/InstancesPage.module.css'
+import styles from '@/components/strategy/instances/instancesFilters.module.css'
 
 export type StatusFilter = '' | 'open' | 'closed'
 export type SinceFilter = '' | '1m' | 'q' | 'half' | '1y' | 'ytd'

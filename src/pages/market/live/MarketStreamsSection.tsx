@@ -10,7 +10,16 @@ import type { OptionLiveBasis } from '@/utils/optionLiveBasis'
 import { LiveStreamsSummaryBar } from './LiveStreamsSummaryBar'
 import { FilterPillBar } from './FilterPillBar'
 import { MarketStreamsTable } from './MarketStreamsTable'
-import styles from './live.module.css'
+import {
+  liveCardClass,
+  liveCardHeaderRowClass,
+  liveCardTitleClass,
+  liveCardTitleRowClass,
+  liveFeedbackHintClass,
+  liveHeaderActionsClass,
+  liveIconBtnClass,
+  liveStreamsBlockClass,
+} from './liveUi'
 
 interface Props {
   marketStreamsOk: boolean
@@ -94,7 +103,7 @@ export function MarketStreamsSection({
     : 'Requires Market API Redis (quotes) and IB ingestor connected (see System status). Watching-category STK are in Watching Stocks on the Live split card.'
 
   return (
-    <div className={styles.streamsBlock}>
+    <div className={liveStreamsBlockClass}>
       <LiveStreamsSummaryBar
         sinceDollar={summarySinceDollar}
         sincePct={summarySincePct}
@@ -102,11 +111,11 @@ export function MarketStreamsSection({
         dailyPct={summaryDailyPct}
         visible={showSummaryBar}
       />
-      <div className={styles.card}>
-      <div className={styles.cardHeaderRow}>
-        <div className={styles.cardTitleRow}>
+      <div className={liveCardClass}>
+      <div className={liveCardHeaderRowClass}>
+        <div className={liveCardTitleRowClass}>
           <StatusLamp lamp={streamsLamp} />
-          <h2 className={cn(styles.cardTitle, 'inline-flex items-center gap-0')}>
+          <h2 className={cn(liveCardTitleClass, 'inline-flex items-center gap-0')}>
             Market Streams
             <InfoTooltip text={infoText} />
           </h2>
@@ -121,10 +130,10 @@ export function MarketStreamsSection({
           onCategoryDrop={onCategoryDrop}
           categoryOrderSaving={categoryOrderSaving}
         />
-        <div className={styles.headerActions}>
+        <div className={liveHeaderActionsClass}>
           <button
             type="button"
-            className={styles.iconBtn}
+            className={liveIconBtnClass}
             onClick={() => navigate('/settings/subscribe')}
             title="Open Subscribe page"
             aria-label="Open Subscribe page"
@@ -133,7 +142,7 @@ export function MarketStreamsSection({
           </button>
           <button
             type="button"
-            className={styles.iconBtn}
+            className={liveIconBtnClass}
             onClick={onRefresh}
             title="Refresh quotes and daily benchmarks"
             aria-label="Refresh quotes and daily benchmarks"
@@ -141,7 +150,7 @@ export function MarketStreamsSection({
             <RefreshCw className="h-4 w-4" />
           </button>
           {streamSyncFeedback != null && (
-            <span className={styles.feedbackHint} aria-live="polite">
+            <span className={liveFeedbackHintClass} aria-live="polite">
               {streamSyncFeedback}
             </span>
           )}

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { IbPositionRow } from '@/types/monitor'
@@ -15,7 +15,7 @@ import { DonutChart } from './DonutChart'
 import { ChartLegend } from './ChartLegend'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { PositionsChartCell, DonutChartRow } from './PositionsChartCell'
-import { bubbleButtonClass, bubbleGroupClass } from './BubbleSwitch'
+import { bubbleButtonClass, bubbleGroupClass } from './bubbleSwitchStyles'
 import styles from '../PositionsChartsSection.module.css'
 
 interface Props {
@@ -43,7 +43,10 @@ export function UnderlyingCategoryCard({
   activeCategoryWeight,
   onCategoryWeightClick,
 }: Props) {
-  const resolvePrice = (pos: IbPositionRow) => resolveDonutPrice(pos, quotesByCk, quotesBySymbol)
+  const resolvePrice = useCallback(
+    (pos: IbPositionRow) => resolveDonutPrice(pos, quotesByCk, quotesBySymbol),
+    [quotesByCk, quotesBySymbol],
+  )
 
   const symbolSegments = useMemo(
     () =>
@@ -53,7 +56,7 @@ export function UnderlyingCategoryCard({
         categoryFilter,
         resolvePrice,
       ),
-    [accounts, chartAccountId, categoryFilter, quotesByCk, quotesBySymbol],
+    [accounts, chartAccountId, categoryFilter, resolvePrice],
   )
 
   const detailGroups = useMemo(
@@ -65,12 +68,12 @@ export function UnderlyingCategoryCard({
         categoryFilter,
         resolvePrice,
       ),
-    [symbolSegments, accounts, chartAccountId, categoryFilter, quotesByCk, quotesBySymbol],
+    [symbolSegments, accounts, chartAccountId, categoryFilter, resolvePrice],
   )
 
   const weightSegments = useMemo(
     () => buildUnderlyingCategorySegments(accounts, chartAccountId as 'all' | string, resolvePrice),
-    [accounts, chartAccountId, quotesByCk, quotesBySymbol],
+    [accounts, chartAccountId, resolvePrice],
   )
 
   const anyEnabled = UNDERLYING_CATEGORY_ORDER.some((c) => categoryFilter[c])

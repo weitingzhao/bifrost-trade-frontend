@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import type { DailyBenchmark, QuoteItem } from '@/types/market'
 import { cn } from '@/lib/utils'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import type { MarketStreamsRow, OptPositionRow } from '@/utils/marketStreamsRows'
 import type { LiveSortGroup, MarketStreamsSortMode } from '@/utils/marketStreamsSort'
@@ -12,6 +13,7 @@ import type { OptionLiveBasis } from '@/utils/optionLiveBasis'
 import { MarketStreamStkRow } from './MarketStreamStkRow'
 import { MarketStreamOptRow } from './MarketStreamOptRow'
 import styles from './live.module.css'
+import { liveEmptyHintClass } from './liveUi'
 
 function marketStreamsColSpan(hasStreamAccounts: boolean): number {
   return hasStreamAccounts ? 12 : 6
@@ -36,11 +38,6 @@ interface Props {
   streamSecondaryId: string | null
   onSymbolReorder: (category: string, fromSymbol: string, toSymbol: string) => void
   onOptRowReorder: (fromBasisKey: string, toBasisKey: string) => void
-}
-
-function pnlClass(v: number | null | undefined): string {
-  if (v == null || v === 0) return ''
-  return v > 0 ? styles.pnlPositive : styles.pnlNegative
 }
 
 function SortHeaderButton({
@@ -141,7 +138,7 @@ export function MarketStreamsTable({
     if (filteredRows.length === 0 && optPositionRows.length === 0) {
       return (
         <tr>
-          <td colSpan={msColSpan} className={styles.emptyHint}>
+          <td colSpan={msColSpan} className={liveEmptyHintClass}>
             No market stream symbols
           </td>
         </tr>
@@ -278,14 +275,14 @@ export function MarketStreamsTable({
                 <>
                   <td className={styles.numCell}>—</td>
                   <td className={styles.numCell}>{hostCostSum !== 0 ? fmtUsd(hostCostSum, true) : '—'}</td>
-                  <td className={cn(styles.numCell, pnlClass(hostPnlSum))}>
+                  <td className={cn(styles.numCell, pnlColorClass(hostPnlSum))}>
                     {hostPnlSum !== 0 ? fmtUsd(hostPnlSum, true) : '—'}
                   </td>
                   <td className={styles.numCell}>—</td>
                   <td className={styles.numCell}>
                     {secondaryCostSum !== 0 ? fmtUsd(secondaryCostSum, true) : '—'}
                   </td>
-                  <td className={cn(styles.numCell, pnlClass(secondaryPnlSum))}>
+                  <td className={cn(styles.numCell, pnlColorClass(secondaryPnlSum))}>
                     {secondaryPnlSum !== 0 ? fmtUsd(secondaryPnlSum, true) : '—'}
                   </td>
                 </>
@@ -296,13 +293,13 @@ export function MarketStreamsTable({
               <td className={styles.numCell}>
                 <span className={styles.pnlStackedLine}>
                   {totalDailyPct != null && Number.isFinite(totalDailyPct) ? (
-                    <span className={pnlClass(totalDailyPct)}>{Math.abs(totalDailyPct).toFixed(2)}%</span>
+                    <span className={pnlColorClass(totalDailyPct)}>{Math.abs(totalDailyPct).toFixed(2)}%</span>
                   ) : (
                     '—'
                   )}
                 </span>
                 <span className={styles.pnlStackedLine}>
-                  <span className={pnlClass(totalDailyDollar)}>
+                  <span className={pnlColorClass(totalDailyDollar)}>
                     {totalDailyPct != null || totalDailyDollar !== 0 ? fmtUsd(totalDailyDollar, true) : '—'}
                   </span>
                 </span>
@@ -310,13 +307,13 @@ export function MarketStreamsTable({
               <td className={styles.numCell}>
                 <span className={styles.pnlStackedLine}>
                   {totalPct != null && Number.isFinite(totalPct) ? (
-                    <span className={pnlClass(totalPct)}>{Math.abs(totalPct).toFixed(2)}%</span>
+                    <span className={pnlColorClass(totalPct)}>{Math.abs(totalPct).toFixed(2)}%</span>
                   ) : (
                     '—'
                   )}
                 </span>
                 <span className={styles.pnlStackedLine}>
-                  <span className={pnlClass(totalCostPnl)}>
+                  <span className={pnlColorClass(totalCostPnl)}>
                     {totalCostPnl !== 0 ? fmtUsd(totalCostPnl, true) : '—'}
                   </span>
                 </span>

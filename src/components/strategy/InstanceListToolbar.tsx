@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import styles from '@/pages/strategy/InstancesPage.module.css'
+import styles from '@/components/strategy/instances/instancesFilters.module.css'
 
 export type DetailViewMode = 'accordion' | 'multi'
 

@@ -6,7 +6,17 @@ import type { InstanceDetailData } from '@/hooks/useInstanceDetailData'
 import type { Execution } from '@/types/positions'
 import { buildOptExecutionGroups, type OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
+import { pnlColorClass } from '@/utils/dailyChange'
 import styles from './InstanceDetail.module.css'
+import {
+  instanceDetailBlockClass,
+  instanceExecHintClass,
+  instanceExecTabActiveClass,
+  instanceExecTabClass,
+  instanceExecTabsClass,
+  instanceMutedClass,
+  instanceSectionTitleClass,
+} from './instanceDetailUi'
 
 type ExecTab = 'performance_book' | 'tws_raw'
 
@@ -39,11 +49,6 @@ function fmtFillDate(e: Execution, tab: ExecTab): string {
   return '—'
 }
 
-function signedClass(n: number): string {
-  if (n > 0.01) return styles.positive
-  if (n < -0.01) return styles.negative
-  return styles.neutral
-}
 
 function GroupBlock({
   group,
@@ -103,12 +108,12 @@ function GroupBlock({
               <div className={styles.thSell}>Qty {group.sell_volume || '—'}</div>
               <div>Avg {group.sell_avg_price != null ? group.sell_avg_price.toFixed(2) : '—'}</div>
               <div>{fmtUsd(sellRaw)}</div>
-              <div className={styles.muted}>Comm {fmtUsd(-comm)}</div>
+              <div className={instanceMutedClass}>Comm {fmtUsd(-comm)}</div>
             </td>
             <td className={cn(styles.tdNums, styles.tdSell)}>
               <div>Gross {fmtUsd(gross)}</div>
-              <div className={styles.muted}>Comm {fmtUsd(-comm)}</div>
-              <div className={cn('font-semibold', signedClass(net))}>Net {fmtUsd(net)}</div>
+              <div className={instanceMutedClass}>Comm {fmtUsd(-comm)}</div>
+              <div className={cn('font-semibold', pnlColorClass(net))}>Net {fmtUsd(net)}</div>
             </td>
           </tr>
         </tbody>
@@ -125,7 +130,7 @@ function GroupBlock({
                 <span>{fmtFillDate(f, tab)}</span>
                 <span style={{ textAlign: 'right' }}>{Math.abs(Number(f.quantity ?? f.qty) || 0)}</span>
                 <span style={{ textAlign: 'right' }}>{Number(f.price).toFixed(2)}</span>
-                <span style={{ textAlign: 'right' }} className={styles.muted}>
+                <span style={{ textAlign: 'right' }} className={instanceMutedClass}>
                   {fmtUsd(-(Number(f.commission) || 0))}
                 </span>
               </div>
@@ -140,7 +145,7 @@ function GroupBlock({
                 <span>{fmtFillDate(f, tab)}</span>
                 <span style={{ textAlign: 'right' }}>{Math.abs(Number(f.quantity ?? f.qty) || 0)}</span>
                 <span style={{ textAlign: 'right' }}>{Number(f.price).toFixed(2)}</span>
-                <span style={{ textAlign: 'right' }} className={styles.muted}>
+                <span style={{ textAlign: 'right' }} className={instanceMutedClass}>
                   {fmtUsd(-(Number(f.commission) || 0))}
                 </span>
               </div>
@@ -182,15 +187,15 @@ export function InstanceExecutionsSection({ data }: Props) {
   }, [groups, data.optionStockLinkByOptionId])
 
   return (
-    <section className={cn(styles.detailBlock, styles.executionsSection)} aria-label="Executions">
-      <h3 className={styles.sectionTitle}>Executions</h3>
+    <section className={instanceDetailBlockClass} aria-label="Executions">
+      <h3 className={instanceSectionTitleClass}>Executions</h3>
 
-      <div className={styles.execTabs} role="tablist" aria-label="Execution source">
+      <div className={instanceExecTabsClass} role="tablist" aria-label="Execution source">
         <button
           type="button"
           role="tab"
           aria-selected={tab === 'performance_book'}
-          className={cn(styles.execTab, tab === 'performance_book' && styles.execTabActive)}
+          className={cn(instanceExecTabClass, tab === 'performance_book' && instanceExecTabActiveClass)}
           onClick={() => setTab('performance_book')}
         >
           Performance book
@@ -199,14 +204,14 @@ export function InstanceExecutionsSection({ data }: Props) {
           type="button"
           role="tab"
           aria-selected={tab === 'tws_raw'}
-          className={cn(styles.execTab, tab === 'tws_raw' && styles.execTabActive)}
+          className={cn(instanceExecTabClass, tab === 'tws_raw' && instanceExecTabActiveClass)}
           onClick={() => setTab('tws_raw')}
         >
           TWS client
         </button>
       </div>
 
-      <p className={styles.execHint}>
+      <p className={instanceExecHintClass}>
         {tab === 'performance_book'
           ? 'Final book: contract buy/sell match; fill-level rows follow each contract.'
           : 'TWS raw: positive qty with Side; fills listed under each contract.'}
@@ -215,7 +220,7 @@ export function InstanceExecutionsSection({ data }: Props) {
       {data.execLoading ? (
         <Skeleton className="h-32 w-full rounded-lg" />
       ) : activeRows.length === 0 ? (
-        <p className={styles.muted}>No executions for this instance in this source.</p>
+        <p className={instanceMutedClass}>No executions for this instance in this source.</p>
       ) : (
         <div className="space-y-0">
           {groups.map((g) => (
@@ -237,7 +242,7 @@ export function InstanceExecutionsSection({ data }: Props) {
               </span>
               <span>
                 Net{' '}
-                <strong className={cn(styles.tdNums, signedClass(totals.net))}>{fmtUsd(totals.net)}</strong>
+                <strong className={cn(styles.tdNums, pnlColorClass(totals.net))}>{fmtUsd(totals.net)}</strong>
               </span>
             </div>
           )}

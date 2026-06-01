@@ -51,7 +51,6 @@ import { CoverageSummarySection } from '@/components/positions/CoverageSummarySe
 import { IndependentHoldingsSection } from '@/components/positions/IndependentHoldingsSection'
 import type { AccountFilter } from '@/components/positions/PositionsFilterBar'
 import type { Execution } from '@/types/positions'
-import '@/components/positions/positionsTheme.css'
 
 function optionExpiryMatchesFilter(expiryRaw: string, filterRaw: string): boolean {
   const f = filterRaw.replace(/\D/g, '')
@@ -125,9 +124,9 @@ export default function PositionsPage() {
   const cashLikeStocks = filterStocksByBucket(allStocks, 'cash_like')
 
   const executionsFinal = useMemo(() => execFinalData?.items ?? [], [execFinalData])
-  const executionsTws = execTwsData?.items ?? []
-  const opportunities = oppsData?.items ?? []
-  const structures = structsData?.items ?? []
+  const executionsTws = useMemo(() => execTwsData?.items ?? [], [execTwsData?.items])
+  const opportunities = useMemo(() => oppsData?.items ?? [], [oppsData?.items])
+  const structures = useMemo(() => structsData?.items ?? [], [structsData?.items])
   const attributions = useMemo(() => attrData?.items ?? [], [attrData])
 
   const liveOptions = useMemo(
@@ -321,7 +320,7 @@ export default function PositionsPage() {
 
   if (isLoading) {
     return (
-      <PageShell className="positions-page space-y-4">
+      <PageShell className="space-y-4">
         <Skeleton className="h-6 w-40" />
         <div className="grid grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
@@ -344,7 +343,7 @@ export default function PositionsPage() {
   }
 
   return (
-    <PageShell className="positions-page space-y-6">
+    <PageShell className="space-y-6">
       <PageHeader
         title="Positions"
         description="Open positions (Pool On and Off) and manual execution records."

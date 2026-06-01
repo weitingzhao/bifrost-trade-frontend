@@ -19,7 +19,7 @@ import {
 import { fmtCcy, fmtPrice, pnlClass } from './ledgerFormat'
 import type { OptGroupCallbacks } from './ledgerTypes'
 import { ExecSourceBadge } from './ExecSourceBadge'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 export { ExecSourceBadge }
 

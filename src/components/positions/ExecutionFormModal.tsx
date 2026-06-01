@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -19,52 +19,65 @@ interface Props {
   onSuccess: () => void
 }
 
-export function ExecutionFormModal({
-  open,
+function initFormFromExec(exec: Execution | null) {
+  if (!exec?.account_executions_id) {
+    return {
+      accountId: exec?.account_id ?? '',
+      symbol: exec?.symbol ?? '',
+      secType: (exec?.sec_type === 'OPT' ? 'OPT' : 'STK') as 'STK' | 'OPT',
+      side: (exec?.side === 'Sell' ? 'SELL' : 'BUY') as 'BUY' | 'SELL',
+      quantity: exec ? String(Math.abs(exec.qty)) : '',
+      price: exec ? String(exec.price) : '',
+      execTime: exec?.time ? new Date(exec.time * 1000).toISOString().slice(0, 16) : '',
+      expiry: exec?.expiry ?? '',
+      strike: exec?.strike != null ? String(exec.strike) : '',
+      right: (exec?.right ?? 'C') as 'C' | 'P',
+      commission: '',
+    }
+  }
+  const sideRaw = (exec.side ?? 'BUY').toUpperCase()
+  const isSell = sideRaw === 'SELL' || sideRaw === 'SLD' || sideRaw === 'S'
+  const qty = Math.abs(Number(exec.quantity ?? exec.qty) || 0)
+  const r = (exec.right ?? exec.option_right ?? 'C').toString().toUpperCase().slice(0, 1)
+  return {
+    accountId: exec.account_id ?? '',
+    symbol: exec.symbol ?? '',
+    secType: (exec.sec_type === 'OPT' ? 'OPT' : 'STK') as 'STK' | 'OPT',
+    side: (isSell ? 'SELL' : 'BUY') as 'BUY' | 'SELL',
+    quantity: qty > 0 ? String(qty) : '',
+    price: exec.price != null ? String(exec.price) : '',
+    execTime: exec.time ? new Date(exec.time * 1000).toISOString().slice(0, 16) : '',
+    expiry: exec.expiry ?? '',
+    strike: exec.strike != null ? String(exec.strike) : '',
+    right: (r === 'P' ? 'P' : 'C') as 'C' | 'P',
+    commission: exec.commission != null ? String(exec.commission) : '',
+  }
+}
+
+function ExecutionFormModalBody({
   exec,
   accountOptions,
   createSource = 'manual',
   onClose,
   onSuccess,
-}: Props) {
-  const [accountId, setAccountId] = useState(exec?.account_id ?? '')
-  const [symbol, setSymbol] = useState(exec?.symbol ?? '')
-  const [secType, setSecType] = useState<'STK' | 'OPT'>(exec?.sec_type === 'OPT' ? 'OPT' : 'STK')
-  const [side, setSide] = useState<'BUY' | 'SELL'>(exec?.side === 'Sell' ? 'SELL' : 'BUY')
-  const [quantity, setQuantity] = useState(exec ? String(Math.abs(exec.qty)) : '')
-  const [price, setPrice] = useState(exec ? String(exec.price) : '')
-  const [execTime, setExecTime] = useState(
-    exec?.time ? new Date(exec.time * 1000).toISOString().slice(0, 16) : '',
-  )
-  const [expiry, setExpiry] = useState(exec?.expiry ?? '')
-  const [strike, setStrike] = useState(exec?.strike != null ? String(exec.strike) : '')
-  const [right, setRight] = useState<'C' | 'P'>((exec?.right ?? 'C') as 'C' | 'P')
-  const [commission, setCommission] = useState('')
+}: Omit<Props, 'open'>) {
+  const init = initFormFromExec(exec)
+  const [accountId, setAccountId] = useState(init.accountId)
+  const [symbol, setSymbol] = useState(init.symbol)
+  const [secType, setSecType] = useState<'STK' | 'OPT'>(init.secType)
+  const [side, setSide] = useState<'BUY' | 'SELL'>(init.side)
+  const [quantity, setQuantity] = useState(init.quantity)
+  const [price, setPrice] = useState(init.price)
+  const [execTime, setExecTime] = useState(init.execTime)
+  const [expiry, setExpiry] = useState(init.expiry)
+  const [strike, setStrike] = useState(init.strike)
+  const [right, setRight] = useState<'C' | 'P'>(init.right)
+  const [commission, setCommission] = useState(init.commission)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const isCreate = !exec?.account_executions_id
   const isJournal = isCreate && createSource === 'journal_closed'
-
-  useEffect(() => {
-    if (!open || !exec?.account_executions_id) return
-    const sideRaw = (exec.side ?? 'BUY').toUpperCase()
-    const isSell = sideRaw === 'SELL' || sideRaw === 'SLD' || sideRaw === 'S'
-    const qty = Math.abs(Number(exec.quantity ?? exec.qty) || 0)
-    setAccountId(exec.account_id ?? '')
-    setSymbol(exec.symbol ?? '')
-    setSecType(exec.sec_type === 'OPT' ? 'OPT' : 'STK')
-    setSide(isSell ? 'SELL' : 'BUY')
-    setQuantity(qty > 0 ? String(qty) : '')
-    setPrice(exec.price != null ? String(exec.price) : '')
-    setExecTime(exec.time ? new Date(exec.time * 1000).toISOString().slice(0, 16) : '')
-    setExpiry(exec.expiry ?? '')
-    setStrike(exec.strike != null ? String(exec.strike) : '')
-    const r = (exec.right ?? exec.option_right ?? 'C').toString().toUpperCase().slice(0, 1)
-    setRight(r === 'P' ? 'P' : 'C')
-    setCommission(exec.commission != null ? String(exec.commission) : '')
-    setError(null)
-  }, [open, exec])
 
   async function handleSubmit() {
     setSubmitting(true)
@@ -117,7 +130,6 @@ export function ExecutionFormModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isCreate ? (isJournal ? 'Add journal' : 'Add Journal Entry') : 'Edit execution'}</DialogTitle>
@@ -270,6 +282,33 @@ export function ExecutionFormModal({
           </Button>
         </div>
       </DialogContent>
+  )
+}
+
+export function ExecutionFormModal({
+  open,
+  exec,
+  accountOptions,
+  createSource = 'manual',
+  onClose,
+  onSuccess,
+}: Props) {
+  const formKey = open
+    ? String(exec?.account_executions_id ?? createSource)
+    : 'closed'
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+      {open ? (
+        <ExecutionFormModalBody
+          key={formKey}
+          exec={exec}
+          accountOptions={accountOptions}
+          createSource={createSource}
+          onClose={onClose}
+          onSuccess={onSuccess}
+        />
+      ) : null}
     </Dialog>
   )
 }

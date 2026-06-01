@@ -13,7 +13,7 @@ import {
 import { fmtPnl, fmtUsd, formatRangeDate } from './performanceFormatters'
 import { computeByDayRangeTotals } from './performanceRangeTotals'
 import { TIME_RANGE_OPTIONS } from './performanceConstants'
-import styles from './PerformancePage.module.css'
+import styles from '@/components/performance/performanceCalendar.module.css'
 
 interface PerformanceFilterBarProps {
   timeRange: PerformanceTimeRange

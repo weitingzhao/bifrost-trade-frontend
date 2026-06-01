@@ -4,7 +4,7 @@ import type { StatusResponse } from '@/types/monitor'
 import type { MarketStreamsRow } from '@/utils/marketStreamsRows'
 import { OpenOrdersPane } from './OpenOrdersPane'
 import { WatchingOptionsPane, WatchingStocksPane } from './WatchingStocksPane'
-import styles from './live.module.css'
+import { liveSplitGridClass, liveSplitRightColClass, liveSplitWatchingColClass } from './liveUi'
 
 interface Props {
   watchingRows: MarketStreamsRow[]
@@ -36,8 +36,8 @@ export function LiveBottomSplit({
   status,
 }: Props) {
   return (
-    <div className={styles.splitGrid} role="group" aria-label="Watching stocks, Watching options, and open orders">
-      <div className={styles.splitWatchingCol}>
+    <div className={liveSplitGridClass} role="group" aria-label="Watching stocks, Watching options, and open orders">
+      <div className={liveSplitWatchingColClass}>
         <WatchingStocksPane
           rows={watchingRows}
           benchmarks={benchmarks}
@@ -46,7 +46,7 @@ export function LiveBottomSplit({
           hasStreamAccounts={hasStreamAccounts}
         />
       </div>
-      <div className={styles.splitRightCol}>
+      <div className={liveSplitRightColClass}>
         <WatchingOptionsPane
           items={watchingOptions}
           quotesByContractKey={quotesByContractKey}

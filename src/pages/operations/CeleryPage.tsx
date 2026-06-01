@@ -13,7 +13,8 @@ import { CelerySectionCard } from './celery/CelerySectionCard'
 import { CeleryConsoleRuntimeTab } from './celery/CeleryConsoleRuntimeTab'
 import { CelerySupportTasksSection } from './celery/supportTasks/CelerySupportTasksSection'
 import { CeleryScheduledJobsSection } from './celery/CeleryScheduledJobsSection'
-import { CeleryOpsProvider, useCeleryOps } from './celery/CeleryOpsContext'
+import { CeleryOpsProvider } from './celery/CeleryOpsProvider'
+import { useCeleryOps } from './celery/useCeleryOps'
 import type { ConsoleTarget } from './celery/CeleryRuntimeSnapshotSection'
 import {
   CELERY_MAIN_TABS,

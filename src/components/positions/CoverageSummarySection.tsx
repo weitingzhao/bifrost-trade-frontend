@@ -13,7 +13,7 @@ import type { IbAccountSnapshot } from '@/types/monitor'
 import type { InstanceAllGroup, StockCoverageItem } from '@/types/positions'
 import { CoveragePoolTable } from './CoveragePoolTable'
 import sheetStyles from './InstanceStrategyPanel.module.css'
-import './coverageSummaryLegacy.css'
+import './coveragePool.module.css'
 
 const COVERAGE_TOOLTIP =
   'The Account filter in the top composition row applies here too. Optionable symbols only; Independent Holdings are not listed in pools. Underlying pool = stock left after opportunity hedges.'

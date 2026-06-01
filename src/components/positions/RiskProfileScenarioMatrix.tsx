@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { cn } from '@/lib/utils'
+import { pnlColorClass } from '@/utils/dailyChange'
 import type { RiskProfile, RiskPosition, RiskScenarioBreakdown } from '@/utils/riskProfile'
 import {
   formatRiskUsd,
@@ -214,7 +216,7 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
                   active={isActive('gain', 'stk', g)}
                   onClick={() => pick('gain', 'stk', g)}
                 />
-                <td className="risk-scenario-matrix-num risk-value-gain">
+                <td className={cn('risk-scenario-matrix-num font-semibold text-success')}>
                   {formatRiskUsd(g.options_pnl + g.stock_pnl)}
                 </td>
               </>
@@ -234,7 +236,7 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
                 <td colSpan={2} className="risk-scenario-matrix-na">
                   Naked short call tail
                 </td>
-                <td className="risk-scenario-matrix-num risk-value-loss risk-value-unlimited">Unlimited</td>
+                <td className="risk-scenario-matrix-num font-semibold text-danger">Unlimited</td>
               </>
             ) : l ? (
               <>
@@ -249,7 +251,7 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
                   active={isActive('loss', 'stk', l)}
                   onClick={() => pick('loss', 'stk', l)}
                 />
-                <td className="risk-scenario-matrix-num risk-value-loss">
+                <td className={cn('risk-scenario-matrix-num font-semibold', pnlColorClass(l.options_pnl + l.stock_pnl))}>
                   {formatRiskUsd(l.options_pnl + l.stock_pnl)}
                 </td>
               </>
@@ -273,7 +275,7 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
                 active={isActive('hedged', 'stk', h)}
                 onClick={() => pick('hedged', 'stk', h)}
               />
-              <td className="risk-scenario-matrix-num risk-value-loss">
+              <td className={cn('risk-scenario-matrix-num font-semibold', pnlColorClass(h.options_pnl + h.stock_pnl))}>
                 {formatRiskUsd(h.options_pnl + h.stock_pnl)}
               </td>
             </tr>

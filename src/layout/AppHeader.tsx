@@ -8,6 +8,7 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 import { useCeleryHeaderMetrics } from '@/hooks/useCeleryHeaderMetrics'
 import { cn } from '@/lib/utils'
+import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
 const PAGE_TITLES: Record<string, string> = {
   '/market/live': 'Live',
@@ -79,7 +80,12 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
       : '—'
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card px-4">
+    <header
+      className={cn(
+        SHELL_TOP_BAR_HEIGHT_CLASS,
+        'flex items-center gap-2 border-b border-border bg-card px-4',
+      )}
+    >
       <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />
       <Separator orientation="vertical" className="h-4" />
       <span className="font-medium text-sm">{title}</span>

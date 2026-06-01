@@ -3,7 +3,7 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { TAB_GROUPS } from './ledgerConstants'
 import { LedgerTabFilterRow, type LedgerTabFilterProps } from './LedgerTabFilters'
 import type { MainTab } from './ledgerTypes'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 const DETAIL_VIEW_TOOLTIP =
   'Accordion keeps one expandable panel open (strategy group, instance card, option detail rows, or other sections on this tab). Multi allows several.'

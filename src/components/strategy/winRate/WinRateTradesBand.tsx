@@ -1,6 +1,6 @@
 import type { WinRateStructureRow } from '@/types/strategy'
 import { winPctLabel, winPctTone } from '@/utils/winRate'
-import styles from '@/pages/strategy/WinRatePage.module.css'
+import styles from './winRate.module.css'
 import { WinRateKpi } from './WinRateKpi'
 
 export function WinRateTradesBand({ row }: { row: WinRateStructureRow }) {

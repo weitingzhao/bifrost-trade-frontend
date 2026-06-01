@@ -1,15 +1,28 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { fmtUsd } from '@/lib/format'
+import { pnlColorClass } from '@/utils/dailyChange'
 import type { InstanceDetailData } from '@/hooks/useInstanceDetailData'
-import styles from './InstanceDetail.module.css'
-
-function signedClass(n: number | null | undefined): string {
-  if (n == null || !Number.isFinite(n)) return styles.neutral
-  if (n > 1e-9) return styles.positive
-  if (n < -1e-9) return styles.negative
-  return styles.neutral
-}
+import {
+  instanceCommissionClass,
+  instanceMutedClass,
+  instancePnlBandClass,
+  instancePnlBandHeadClass,
+  instancePnlBandHelpBtnClass,
+  instancePnlBandMetricsClass,
+  instancePnlBandTitleClass,
+  instancePnlBandsClass,
+  instancePnlColumnClass,
+  instancePnlInfoBtnClass,
+  instancePnlLabelClass,
+  instancePnlMetricClass,
+  instancePnlMetricSecondaryClass,
+  instancePnlPanelClass,
+  instancePnlPanelMutedClass,
+  instancePnlSectionHeadClass,
+  instancePnlValueClass,
+  instanceSectionTitleClass,
+} from './instanceDetailUi'
 
 function fmtSignedPct(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '—'
@@ -30,16 +43,16 @@ function PnlBand({
   helpLabel?: string
 }) {
   return (
-    <div className={styles.pnlBand} role="group" aria-label={title}>
-      <div className={styles.pnlBandHead}>
-        <div className={styles.pnlBandTitle}>{title}</div>
+    <div className={instancePnlBandClass} role="group" aria-label={title}>
+      <div className={instancePnlBandHeadClass}>
+        <div className={instancePnlBandTitleClass}>{title}</div>
         {helpLabel ? (
-          <button type="button" className={styles.pnlBandHelpBtn} aria-label={helpLabel} title={helpLabel}>
+          <button type="button" className={instancePnlBandHelpBtnClass} aria-label={helpLabel} title={helpLabel}>
             ?
           </button>
         ) : null}
       </div>
-      <div className={styles.pnlBandMetrics}>{children}</div>
+      <div className={instancePnlBandMetricsClass}>{children}</div>
     </div>
   )
 }
@@ -58,11 +71,11 @@ function PnlMetric({
   title?: string
 }) {
   return (
-    <div className={cn(styles.pnlMetric, secondary && styles.pnlMetricSecondary)}>
-      <span className={styles.pnlLabel} title={title}>
+    <div className={cn(instancePnlMetricClass, secondary && instancePnlMetricSecondaryClass)}>
+      <span className={instancePnlLabelClass} title={title}>
         {label}
       </span>
-      <span className={cn(styles.pnlValue, valueClass)} title={title}>
+      <span className={cn(instancePnlValueClass, valueClass)} title={title}>
         {value}
       </span>
     </div>
@@ -74,12 +87,12 @@ export function InstancePnLSection({ data }: Props) {
   const hasData = data.summary != null || data.displayNetPnl != null
 
   return (
-    <div className={styles.pnlColumn}>
-      <div className={styles.pnlSectionHead}>
-        <h3 className={styles.sectionTitle}>PnL</h3>
+    <div className={instancePnlColumnClass}>
+      <div className={instancePnlSectionHeadClass}>
+        <h3 className={instanceSectionTitleClass}>PnL</h3>
         <button
           type="button"
-          className={styles.pnlInfoBtn}
+          className={instancePnlInfoBtnClass}
           disabled={loading || !hasData}
           aria-label="How PnL metrics are calculated"
           title={loading || !hasData ? undefined : 'Calculation details — coming soon'}
@@ -89,55 +102,49 @@ export function InstancePnLSection({ data }: Props) {
       </div>
 
       {loading ? (
-        <div className={cn(styles.pnlPanel, styles.pnlPanelMuted)}>
-          <span className={styles.muted}>Loading performance…</span>
+        <div className={instancePnlPanelMutedClass}>
+          <span className={instanceMutedClass}>Loading performance…</span>
         </div>
       ) : !hasData ? (
-        <div className={cn(styles.pnlPanel, styles.pnlPanelMuted)}>
-          <span className={styles.muted}>No performance data for this instance.</span>
+        <div className={instancePnlPanelMutedClass}>
+          <span className={instanceMutedClass}>No performance data for this instance.</span>
         </div>
       ) : (
-        <div className={styles.pnlPanel} role="region" aria-label="PnL metrics">
-          <div className={styles.pnlBands}>
+        <div className={instancePnlPanelClass} role="region" aria-label="PnL metrics">
+          <div className={instancePnlBandsClass}>
             <PnlBand title="PnL & commission">
               <PnlMetric
                 label="Net PnL"
                 value={fmtUsd(data.displayNetPnl)}
-                valueClass={signedClass(data.displayNetPnl)}
+                valueClass={pnlColorClass(data.displayNetPnl)}
               />
-              <PnlMetric
-                label="Commission"
-                value={fmtUsd(data.totalCommission)}
-                valueClass={styles.commission}
-              />
+              <PnlMetric label="Commission" value={fmtUsd(data.totalCommission)} valueClass={instanceCommissionClass} />
               {data.netPnlPerDay != null && data.holdDays != null ? (
                 <PnlMetric
                   label="Net PnL / day"
                   value={`${fmtUsd(data.netPnlPerDay)}/day`}
-                  valueClass={signedClass(data.netPnlPerDay)}
+                  valueClass={pnlColorClass(data.netPnlPerDay)}
                   secondary
                 />
               ) : null}
             </PnlBand>
 
             <PnlBand title="Risk & cost" helpLabel="Risk and cost methodology — coming soon">
-              <PnlMetric label="Risk" value={fmtUsd(data.capitalAtRisk)} valueClass={styles.neutral} />
+              <PnlMetric label="Risk" value={fmtUsd(data.capitalAtRisk)} />
               {data.costPerDay != null ? (
                 <PnlMetric
                   label="Cost / day"
                   value={`${fmtUsd(data.costPerDay)}/day`}
-                  valueClass={styles.neutral}
                   secondary
                 />
               ) : null}
             </PnlBand>
 
             <PnlBand title="Times">
-              <PnlMetric label="Trades" value={String(data.tradeCount)} valueClass={styles.neutral} />
+              <PnlMetric label="Trades" value={String(data.tradeCount)} />
               <PnlMetric
                 label="Hold time"
                 value={data.holdDays != null ? `${Math.round(data.holdDays)} d` : '—'}
-                valueClass={styles.neutral}
               />
             </PnlBand>
 
@@ -145,12 +152,12 @@ export function InstancePnLSection({ data }: Props) {
               <PnlMetric
                 label="Return %"
                 value={fmtSignedPct(data.returnPct)}
-                valueClass={signedClass(data.returnPct)}
+                valueClass={pnlColorClass(data.returnPct)}
               />
               <PnlMetric
                 label="Annual return"
                 value={fmtSignedPct(data.annualReturnPct)}
-                valueClass={signedClass(data.annualReturnPct)}
+                valueClass={pnlColorClass(data.annualReturnPct)}
               />
             </PnlBand>
           </div>

@@ -1,5 +1,6 @@
 import type { DailyBenchmark } from '@/types/market'
 import { cn } from '@/lib/utils'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import { getDailyRefTooltip } from '@/utils/marketStreamsDailyTotals'
 import { getQuoteFreshness, quoteFreshnessTitle } from '@/utils/quoteFreshness'
@@ -16,11 +17,6 @@ interface Props {
   hasStreamAccounts: boolean
   benchmarks: Record<string, DailyBenchmark>
   onSymbolReorder?: (category: string, fromSymbol: string, toSymbol: string) => void
-}
-
-function pnlClass(v: number | null | undefined): string {
-  if (v == null || v === 0) return ''
-  return v > 0 ? styles.pnlPositive : styles.pnlNegative
 }
 
 export function MarketStreamStkRow({
@@ -116,7 +112,7 @@ export function MarketStreamStkRow({
           <td className={styles.numCell}>
             {hostAvgCost != null && Number.isFinite(hostAvgCost) ? fmtUsd(hostAvgCost) : '—'}
           </td>
-          <td className={cn(styles.numCell, pnlClass(hostPnlCost))}>
+          <td className={cn(styles.numCell, pnlColorClass(hostPnlCost))}>
             {hostPnlCost != null && Number.isFinite(hostPnlCost) ? fmtUsd(hostPnlCost, true) : '—'}
           </td>
           <td className={styles.numCell}>
@@ -125,7 +121,7 @@ export function MarketStreamStkRow({
           <td className={styles.numCell}>
             {secondaryAvgCost != null && Number.isFinite(secondaryAvgCost) ? fmtUsd(secondaryAvgCost) : '—'}
           </td>
-          <td className={cn(styles.numCell, pnlClass(secondaryPnlCost))}>
+          <td className={cn(styles.numCell, pnlColorClass(secondaryPnlCost))}>
             {secondaryPnlCost != null && Number.isFinite(secondaryPnlCost)
               ? fmtUsd(secondaryPnlCost, true)
               : '—'}
@@ -155,13 +151,11 @@ export function MarketStreamStkRow({
                 ? bench.close
                 : null
           const lastVsPrev =
-            displayLast != null && prevClose != null && prevClose > 0
-              ? displayLast > prevClose
-                ? styles.pnlPositive
-                : displayLast < prevClose
-                  ? styles.pnlNegative
-                  : ''
-              : ''
+            pnlColorClass(
+              displayLast != null && prevClose != null && prevClose > 0
+                ? displayLast - prevClose
+                : null,
+            )
           return (
             <>
               {displayLast != null ? (
@@ -170,13 +164,13 @@ export function MarketStreamStkRow({
                 '—'
               )}
               {bidDiff != null && (
-                <span className={cn(styles.spread, pnlClass(bidDiff))} title="Bid vs Last">
+                <span className={cn(styles.spread, pnlColorClass(bidDiff))} title="Bid vs Last">
                   {' '}
                   {Math.abs(bidDiff).toFixed(2)}
                 </span>
               )}
               {askDiff != null && (
-                <span className={cn(styles.spread, pnlClass(askDiff))} title="Ask vs Last">
+                <span className={cn(styles.spread, pnlColorClass(askDiff))} title="Ask vs Last">
                   {' '}
                   {Math.abs(askDiff).toFixed(2)}
                 </span>
@@ -189,14 +183,14 @@ export function MarketStreamStkRow({
       <td className={cn(styles.numCell, styles.dailyCalcCell)}>
         <span className={styles.pnlStackedLine}>
           {changePct != null && Number.isFinite(changePct) ? (
-            <span className={pnlClass(changePct)}>{Math.abs(changePct).toFixed(2)}%</span>
+            <span className={pnlColorClass(changePct)}>{Math.abs(changePct).toFixed(2)}%</span>
           ) : (
             '—'
           )}
         </span>
         <span className={styles.pnlStackedLine}>
           {pnlVsBench != null && Number.isFinite(pnlVsBench) ? (
-            <span className={pnlClass(pnlVsBench)}>{fmtUsd(Math.abs(pnlVsBench))}</span>
+            <span className={pnlColorClass(pnlVsBench)}>{fmtUsd(Math.abs(pnlVsBench))}</span>
           ) : (
             '—'
           )}
@@ -216,12 +210,12 @@ export function MarketStreamStkRow({
             const dl = quoteDisplayLast(q ?? undefined)
             if (avgCost == null || !Number.isFinite(avgCost) || avgCost <= 0 || dl == null) return '—'
             const sincePct = ((dl - avgCost) / avgCost) * 100
-            return <span className={pnlClass(sincePct)}>{Math.abs(sincePct).toFixed(2)}%</span>
+            return <span className={pnlColorClass(sincePct)}>{Math.abs(sincePct).toFixed(2)}%</span>
           })()}
         </span>
         <span className={styles.pnlStackedLine}>
           {pnlCost != null && Number.isFinite(pnlCost) ? (
-            <span className={pnlClass(pnlCost)}>{fmtUsd(pnlCost, true)}</span>
+            <span className={pnlColorClass(pnlCost)}>{fmtUsd(pnlCost, true)}</span>
           ) : (
             '—'
           )}

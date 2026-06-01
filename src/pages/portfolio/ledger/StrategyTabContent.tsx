@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { LedgerStrategyGroup } from './LedgerStrategyGroup'
 import type { GroupBy, StratOppGroup } from './ledgerTypes'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 export function StrategyTabContent({
   displayBuckets,

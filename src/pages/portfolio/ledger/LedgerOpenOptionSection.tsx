@@ -5,10 +5,11 @@ import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { findOppositeLegAttributionSource, getOptGroupKey, ledgerOptDetailRowPnl } from '@/utils/ledger/ledgerOptHelpers'
 import { ExecSourceBadge } from './ExecSourceBadge'
-import { LedgerOptActionButtons, sideLabel } from './LedgerOptActionButtons'
+import { LedgerOptActionButtons } from './LedgerOptActionButtons'
+import { sideLabel } from './ledgerOptSideLabel'
 import { LedgerStgInsCell } from './LedgerStgInsCell'
 import type { OptGroupCallbacks } from './ledgerTypes'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 function tradesSummary(g: OptExecutionGroup): string {
   return (g.trades ?? [])

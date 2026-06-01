@@ -5,7 +5,7 @@ import { fmtUsd } from '@/utils/positions'
 import { formatRiskHedgedBreakdown } from '@/utils/riskProfile'
 import { RiskProfilePayoffChart } from './RiskProfilePayoffChart'
 import { RiskProfileScenarioMatrix } from './RiskProfileScenarioMatrix'
-import './riskProfileLegacy.css'
+import './riskProfile.module.css'
 import { cn } from '@/lib/utils'
 import sheetStyles from './InstanceStrategyPanel.module.css'
 
@@ -55,28 +55,33 @@ export function RiskProfileDetail({ profile, hideHeading = false, variant = 'she
       {!hideHeading ? <h4 className={sheetStyles.subHeading}>Risk Profile</h4> : null}
 
       <div className={variant === 'sheet' ? sheetStyles.subSectionBody : undefined}>
-      <div className="risk-profile-top-line">
-        <div className="risk-profile-top-segment">
-          <span className="risk-profile-top-label">Risk Type</span>
+      <div className="risk-profile-top-line flex flex-wrap items-center gap-2 text-sm">
+        <div className="risk-profile-top-segment flex items-center gap-1.5">
+          <span className="risk-profile-top-label text-muted-foreground">Risk Type</span>
           <span
-            className={`coverage-status-badge ${profile.risk_type === 'defined' ? 'risk-badge-defined' : 'risk-badge-unlimited'}`}
+            className={cn(
+              'inline-block rounded px-1.5 py-0.5 text-xs font-semibold border',
+              profile.risk_type === 'defined'
+                ? 'text-success bg-success-soft border-success/30'
+                : 'text-warning bg-warning-soft border-warning/35',
+            )}
           >
             {profile.risk_type === 'defined' ? 'Defined' : 'Unlimited'}
           </span>
         </div>
-        <span className="risk-profile-top-divider" aria-hidden>
+        <span className="risk-profile-top-divider text-muted-foreground" aria-hidden>
           |
         </span>
-        <div className="risk-profile-top-segment">
-          <span className="risk-profile-top-label">Net Premium</span>
-          <span className="risk-profile-top-value">{fmtUsd(profile.net_premium)}</span>
+        <div className="risk-profile-top-segment flex items-center gap-1.5">
+          <span className="risk-profile-top-label text-muted-foreground">Net Premium</span>
+          <span className="risk-profile-top-value font-mono font-semibold">{fmtUsd(profile.net_premium)}</span>
         </div>
-        <span className="risk-profile-top-divider" aria-hidden>
+        <span className="risk-profile-top-divider text-muted-foreground" aria-hidden>
           |
         </span>
-        <div className="risk-profile-top-segment">
-          <span className="risk-profile-top-label">Breakeven</span>
-          <span className="risk-profile-top-value">
+        <div className="risk-profile-top-segment flex items-center gap-1.5">
+          <span className="risk-profile-top-label text-muted-foreground">Breakeven</span>
+          <span className="risk-profile-top-value font-mono">
             {profile.breakeven_prices.length > 0
               ? profile.breakeven_prices.map((p) => fmtUsd(p)).join(', ')
               : '—'}

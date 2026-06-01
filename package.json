@@ -11,7 +11,8 @@
     "lint": "eslint src",
     "format": "prettier --write src",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "check:legacy-css": "bash scripts/check-legacy-css.sh"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",

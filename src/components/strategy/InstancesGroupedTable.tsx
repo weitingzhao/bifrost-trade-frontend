@@ -20,7 +20,8 @@ import {
   type InstanceListMetricsEntry,
 } from '@/utils/instanceListMetrics'
 import type { StrategyInstance } from '@/types/positions'
-import styles from '@/pages/strategy/InstancesPage.module.css'
+import { pnlColorClass } from '@/utils/dailyChange'
+import styles from '@/components/strategy/instances/instancesTable.module.css'
 
 interface SymbolGroup {
   key: string
@@ -54,10 +55,8 @@ interface Props {
 }
 
 function signedClass(n: number | null | undefined): string {
-  if (n == null || !Number.isFinite(n)) return styles.signedNeutral
-  if (n > 1e-9) return styles.signedPositive
-  if (n < -1e-9) return styles.signedNegative
-  return styles.signedNeutral
+  if (n == null || !Number.isFinite(n)) return 'text-muted-foreground'
+  return pnlColorClass(n)
 }
 
 function fmtPct(n: number | null | undefined): string {
@@ -181,12 +180,12 @@ function MetricsCells({
   const m = metricsMap.get(instanceId)
   if (m == null || m.status === 'loading') {
     return Array.from({ length: 9 }, (_, i) => (
-      <td key={i} className={cn(styles.colNum, styles.signedNeutral)}>…</td>
+      <td key={i} className={cn(styles.colNum, 'text-muted-foreground')}>…</td>
     ))
   }
   if (m.status === 'error') {
     return Array.from({ length: 9 }, (_, i) => (
-      <td key={i} className={cn(styles.colNum, styles.signedNeutral)}>—</td>
+      <td key={i} className={cn(styles.colNum, 'text-muted-foreground')}>—</td>
     ))
   }
 
@@ -227,10 +226,10 @@ function MetricsCells({
       <td className={cn(styles.colNum, signedClass(npd))}>
         {npd != null ? fmtUsd(npd) : '—'}
       </td>
-      <td className={cn(styles.colNum, styles.signedNeutral)}>
+      <td className={cn(styles.colNum, 'text-muted-foreground')}>
         {underlying > 0 ? fmtUsdRound(underlying) : '—'}
       </td>
-      <td className={cn(styles.colNum, styles.signedNeutral)}>
+      <td className={cn(styles.colNum, 'text-muted-foreground')}>
         {costPerDay != null ? fmtUsdRound(costPerDay) : '—'}
       </td>
       <td className={cn(styles.colNum, signedClass(annual?.annualReturnPct))}>
@@ -239,7 +238,7 @@ function MetricsCells({
       <td className={cn(styles.colNum, signedClass(returnPct))}>
         {returnPct != null ? fmtPct(returnPct) : '—'}
       </td>
-      <td className={cn(styles.colNum, styles.signedNeutral)}>
+      <td className={cn(styles.colNum, 'text-muted-foreground')}>
         {summary?.total_commission != null ? fmtUsd(-Number(summary.total_commission)) : '—'}
       </td>
     </>
@@ -284,7 +283,7 @@ export function InstancesGroupedTable({
   }, [groups, sort, metricsMap])
 
   if (groups.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4">No instances found.</p>
+    return <p className="py-4 text-sm text-muted-foreground">No instances found.</p>
   }
 
   return (
@@ -360,31 +359,31 @@ export function InstancesGroupedTable({
                     </span>
                   </button>
                 </td>
-                <td className={styles.signedNeutral}>—</td>
-                <td className={styles.signedNeutral}>—</td>
+                <td className={'text-muted-foreground'}>—</td>
+                <td className={'text-muted-foreground'}>—</td>
                 <td
                   className={cn(styles.colNum, signedClass(rollup.totalNet))}
                   title="Sum of execution-derived Net PnL for instances with loaded metrics."
                 >
                   {rollup.totalNet != null ? fmtUsd(rollup.totalNet) : '—'}
                 </td>
-                <td className={styles.signedNeutral}>—</td>
+                <td className={'text-muted-foreground'}>—</td>
                 <td
-                  className={cn(styles.colNum, rollup.sumUnderlying != null ? '' : styles.signedNeutral)}
+                  className={cn(styles.colNum, rollup.sumUnderlying != null ? '' : 'text-muted-foreground')}
                   title="Sum of per-instance underlying cost (sell-side OPT)."
                 >
                   {rollup.sumUnderlying != null ? fmtUsdRound(rollup.sumUnderlying) : '—'}
                 </td>
-                <td className={styles.signedNeutral}>—</td>
+                <td className={'text-muted-foreground'}>—</td>
                 <td
                   className={cn(styles.colNum, signedClass(rollup.groupAnnualPct))}
                   title="Group annual return: total Net × 365.25 / Σ(denominator × hold days) × 100."
                 >
                   {rollup.groupAnnualPct != null ? fmtPct(rollup.groupAnnualPct) : '—'}
                 </td>
-                <td className={styles.signedNeutral}>—</td>
-                <td className={styles.signedNeutral}>—</td>
-                <td className={styles.signedNeutral}>—</td>
+                <td className={'text-muted-foreground'}>—</td>
+                <td className={'text-muted-foreground'}>—</td>
+                <td className={'text-muted-foreground'}>—</td>
                 <td />
               </tr>
             )
@@ -399,7 +398,7 @@ export function InstancesGroupedTable({
                   compareId === inst.strategy_instance_id && 'bg-blue-500/5',
                 )}
               >
-                <td className={cn(styles.colNum, styles.signedNeutral)}>{inst.strategy_instance_id}</td>
+                <td className={cn(styles.colNum, 'text-muted-foreground')}>{inst.strategy_instance_id}</td>
                 <td className={styles.colOpp}>
                   <div>{inst.strategy_opportunity_name ?? '—'}</div>
                   {inst.strategy_structure_name ? (
@@ -413,7 +412,7 @@ export function InstancesGroupedTable({
                   ) : null}
                 </td>
                 <MetricsCells instanceId={inst.strategy_instance_id} metricsMap={metricsMap} />
-                <td className={cn(styles.colNum, styles.signedNeutral)}>
+                <td className={cn(styles.colNum, 'text-muted-foreground')}>
                   {inst.executions_count != null ? inst.executions_count : '—'}
                 </td>
                 <td className={styles.actionsCell}>

@@ -68,22 +68,6 @@
 }
 
 .tabsList {
-  width: auto !important;
   flex: 1 1 auto;
   min-width: 0;
-  border-bottom: none !important;
-  flex-wrap: nowrap;
-  gap: 0.12rem 0.28rem;
-  justify-content: flex-start;
-  height: auto;
-  background: transparent;
-  padding: 0;
-}
-
-.tabTrigger {
-  height: 1.65rem !important;
-  padding: 0.18rem 0.48rem !important;
-  font-size: 0.76rem;
-  flex: none;
-  white-space: nowrap;
 }

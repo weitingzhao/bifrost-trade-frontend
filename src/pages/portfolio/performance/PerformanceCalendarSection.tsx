@@ -17,7 +17,7 @@ import {
 } from './performanceCalendarModel'
 import { CALENDAR_HELP } from './performanceConstants'
 import { fmtMoney, fmtMoneyFull, fmtUsd } from './performanceFormatters'
-import styles from './PerformancePage.module.css'
+import styles from '@/components/performance/performanceCalendar.module.css'
 
 const LOSS_DAY_THRESHOLD = -500
 

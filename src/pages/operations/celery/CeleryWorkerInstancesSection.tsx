@@ -24,7 +24,7 @@ import { formatQueueLabel } from '@/utils/celeryQueueLabels'
 import { opsHostEnvFromConfigProfile, socketServicesHostColumnDisplay } from '@/utils/ingestOpsShared'
 import { useScaleWorker, useWorkerInstances, useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
 import { useOpsHealth } from '@/hooks/useSocketServices'
-import { useCeleryOps } from './CeleryOpsContext'
+import { useCeleryOps } from './useCeleryOps'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

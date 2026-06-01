@@ -1,4 +1,4 @@
-/* Legacy: instance-sheet-filters + replay-portfolio-table-wrap / instance-sheet-table */
+/* Instance sheet filters + detail tables */
 
 .filters {
   display: flex;
@@ -57,15 +57,7 @@
   font-size: 0.8rem;
 }
 
-.sheetTable :global([data-slot='table-cell'].pnl-positive) {
-  color: #22c55e;
-  font-weight: 600;
-}
-
-.sheetTable :global([data-slot='table-cell'].pnl-negative) {
-  color: #ef4444;
-  font-weight: 600;
-}
+/* PnL colors: use pnlColorClass() on TableCell in TSX */
 
 /* Symbols column may wrap (Legacy td:nth-child(4)) */
 .sheetRow td:nth-child(4) {
@@ -115,25 +107,24 @@
 }
 
 /* Expanded detail row — no whole-row TableRow hover (sections handle their own) */
-.detailRow {
-  background: transparent !important;
+.detailRow:global([data-slot='table-row']) {
+  background: transparent;
   border-bottom: 1px solid hsl(var(--border) / 0.45);
 }
 
-.detailRow:hover {
-  background: transparent !important;
+.detailRow:global([data-slot='table-row']:hover) {
+  background: transparent;
 }
 
-/* Legacy instance-sheet-detail-row / instance-sheet-detail-cell */
-.detailCell {
-  padding: 0.5rem 0.75rem 0.75rem !important;
-  border-top: none !important;
+.detailCell:global([data-slot='table-cell']) {
+  padding: 0.5rem 0.75rem 0.75rem;
+  border-top: none;
   max-width: 0;
   overflow-x: auto;
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   vertical-align: top;
-  white-space: normal !important;
+  white-space: normal;
   background: hsl(var(--card));
 }
 
@@ -195,7 +186,7 @@
 
 /* Sub-table header rows: no row-wide hover chrome */
 .subTableWrap :global([data-slot='table-header'] [data-slot='table-row']:hover) {
-  background: transparent !important;
+  background-color: transparent;
 }
 
 /* Legacy replay-sub + instance-sheet-sub-heading (#7a8492) */
@@ -216,7 +207,7 @@
   background: transparent;
 }
 
-/* Legacy replay-portfolio-table-wrap inside detail — no extra chrome */
+/* Detail table wrap — no extra chrome */
 .subTableWrap {
   width: 100%;
   min-width: 0;
@@ -276,24 +267,24 @@
 }
 
 /* Legacy detail-position-row */
-.subDataRow {
+.subDataRow:global([data-slot='table-row']) {
   border-bottom: 1px solid hsl(var(--border) / 0.4);
-  background: hsl(var(--card)) !important;
+  background: hsl(var(--card));
   transition: background 0.15s ease;
 }
 
-.subDataRow:hover {
-  background: var(--color-accent-soft, rgba(163, 230, 53, 0.06)) !important;
+.subDataRow:global([data-slot='table-row']:hover) {
+  background: var(--color-accent-soft);
 }
 
-.subExecRow {
+.subExecRow:global([data-slot='table-row']) {
   border-bottom: 1px solid hsl(var(--border) / 0.35);
-  background: hsl(var(--secondary)) !important;
+  background: hsl(var(--secondary));
   font-size: 0.88em;
 }
 
-.subExecRow:hover {
-  background: color-mix(in srgb, hsl(var(--secondary)) 92%, #e4e9ef 8%) !important;
+.subExecRow:global([data-slot='table-row']:hover) {
+  background: color-mix(in srgb, hsl(var(--secondary)) 92%, hsl(var(--foreground)) 8%);
 }
 
 /* Legacy riv-opt-contract-btn / riv-stock-symbol-btn (dark) */

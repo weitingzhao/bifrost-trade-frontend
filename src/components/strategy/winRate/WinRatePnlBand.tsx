@@ -9,7 +9,7 @@ import {
   winRateTotalProfitTone,
 } from '@/utils/winRate'
 import { cn } from '@/lib/utils'
-import styles from '@/pages/strategy/WinRatePage.module.css'
+import styles from './winRate.module.css'
 import { kpiToneClass } from './toneClasses'
 
 function PnlMetric({

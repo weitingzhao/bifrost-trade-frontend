@@ -5,8 +5,19 @@ import {
   groupStockPositionsByAccount,
 } from '@/utils/openStockPositions'
 import type { LivePositionRow } from '@/types/positions'
-import './stocksTabLegacy.css'
-import './coverageSummaryLegacy.css'
+import {
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  GroupHeaderRow,
+  PnlCell,
+  SymbolLinkButton,
+  denseTable,
+} from './ui'
 
 interface Props {
   positions: LivePositionRow[]
@@ -15,10 +26,6 @@ interface Props {
   filterSymbol?: string
   rowKeyPrefix?: string
   onInspect?: (symbol: string, accountId: string, pos: LivePositionRow) => void
-}
-
-function pnlClass(n: number | null | undefined): string {
-  return (n ?? 0) >= 0 ? 'pnl-positive' : 'pnl-negative'
 }
 
 function StockRow({
@@ -33,40 +40,42 @@ function StockRow({
   const m = computeOpenStockPositionMetrics(position)
 
   return (
-    <tr>
-      <td>{accId}</td>
-      <td>
+    <DenseTableRow>
+      <DenseTableCell>{accId}</DenseTableCell>
+      <DenseTableCell>
         {onInspect ? (
-          <button
-            type="button"
-            className="riv-stock-symbol-btn"
+          <SymbolLinkButton
+            label={position.symbol ?? '—'}
             onClick={() => onInspect(sym, accId, position)}
-            aria-label={`Open details for ${position.symbol ?? 'symbol'}`}
-          >
-            <strong>{position.symbol ?? '—'}</strong>
-          </button>
+            ariaLabel={`Open details for ${position.symbol ?? 'symbol'}`}
+            variant="stock"
+          />
         ) : (
           <strong>{position.symbol ?? '—'}</strong>
         )}
-      </td>
-      <td>{m.sideLabel}</td>
-      <td>{Number.isFinite(m.qty) ? m.qty : '—'}</td>
-      <td>{fmtUsd(position.avgCost)}</td>
-      <td>{fmtUsd(m.lastPrice)}</td>
-      <td>{fmtUsd(m.marketValue)}</td>
-      <td className="coverage-pnl-stacked-cell">
-        <div className={pnlClass(m.dailyPnl)}>{m.dailyPnl != null ? fmtUsd(m.dailyPnl) : '—'}</div>
-        <div className={`coverage-pnl-stacked-pct ${pnlClass(m.dailyPct)}`}>
-          {m.dailyPct != null ? fmtSignedPct(m.dailyPct) : '—'}
-        </div>
-      </td>
-      <td className="coverage-pnl-stacked-cell">
-        <div className={pnlClass(m.sincePnl)}>{m.sincePnl != null ? fmtUsd(m.sincePnl) : '—'}</div>
-        <div className={`coverage-pnl-stacked-pct ${pnlClass(m.sincePct)}`}>
-          {m.sincePct != null ? fmtSignedPct(m.sincePct) : '—'}
-        </div>
-      </td>
-    </tr>
+      </DenseTableCell>
+      <DenseTableCell>{m.sideLabel}</DenseTableCell>
+      <DenseTableCell>{Number.isFinite(m.qty) ? m.qty : '—'}</DenseTableCell>
+      <DenseTableCell>{fmtUsd(position.avgCost)}</DenseTableCell>
+      <DenseTableCell>{fmtUsd(m.lastPrice)}</DenseTableCell>
+      <DenseTableCell>{fmtUsd(m.marketValue)}</DenseTableCell>
+      <DenseTableCell className="text-right">
+        <PnlCell
+          dollar={m.dailyPnl}
+          pct={m.dailyPct}
+          formatDollar={fmtUsd}
+          formatPct={fmtSignedPct}
+        />
+      </DenseTableCell>
+      <DenseTableCell className="text-right">
+        <PnlCell
+          dollar={m.sincePnl}
+          pct={m.sincePct}
+          formatDollar={fmtUsd}
+          formatPct={fmtSignedPct}
+        />
+      </DenseTableCell>
+    </DenseTableRow>
   )
 }
 
@@ -88,50 +97,44 @@ export function StocksTab({
 
   if (filtered.length === 0) {
     return (
-      <div className="positions-stocks-panel system-tab-panel">
-        <h5 className="replay-sub positions-stocks-heading">{title}</h5>
-        <p className="section-hint positions-stocks-empty">{emptyHint}</p>
+      <div className="min-w-0">
+        <h5 className={denseTable.sectionTitle}>{title}</h5>
+        <p className={denseTable.emptyHint}>{emptyHint}</p>
       </div>
     )
   }
 
   return (
-    <div className="positions-stocks-panel system-tab-panel">
-      <h5 className="replay-sub positions-stocks-heading">{title}</h5>
-      <div className="replay-portfolio-table-wrap positions-stocks-table-wrap">
-        <table className="table-operations positions-stocks-table">
-          <thead>
-            <tr>
-              <th>Account</th>
-              <th>Symbol</th>
-              <th>Side</th>
-              <th>Qty</th>
-              <th>Avg Cost</th>
-              <th>Last</th>
-              <th>Market Value</th>
-              <th className="coverage-pnl-stacked-th">Daily $ / %</th>
-              <th className="coverage-pnl-stacked-th">Since $ / %</th>
-            </tr>
-          </thead>
-          <tbody>
-            {accountGroups.flatMap(({ accountId, rows }) => {
-              const groupKey = `${rowKeyPrefix}-acc-${accountId}`
-              return [
-                <tr key={groupKey} className="replay-portfolio-group-header positions-stocks-group-row">
-                  <td colSpan={9}>
-                    <strong>{accountId}</strong>
-                  </td>
-                </tr>,
-                ...rows.map((position) => {
-                  const contractKey = position.contract_key ?? `${position.symbol ?? ''}|STK|||`
-                  const rowKey = `${rowKeyPrefix}-open-stk-${accountId}-${position.symbol ?? ''}-${contractKey}`
-                  return <StockRow key={rowKey} position={position} onInspect={onInspect} />
-                }),
-              ]
-            })}
-          </tbody>
-        </table>
-      </div>
+    <div className="min-w-0">
+      <h5 className={denseTable.sectionTitle}>{title}</h5>
+      <DenseDataTable>
+        <DenseTableHeader>
+          <DenseTableHeadRow>
+            <DenseTableHead>Account</DenseTableHead>
+            <DenseTableHead>Symbol</DenseTableHead>
+            <DenseTableHead>Side</DenseTableHead>
+            <DenseTableHead>Qty</DenseTableHead>
+            <DenseTableHead>Avg Cost</DenseTableHead>
+            <DenseTableHead>Last</DenseTableHead>
+            <DenseTableHead>Market Value</DenseTableHead>
+            <DenseTableHead align="right">Daily $ / %</DenseTableHead>
+            <DenseTableHead align="right">Since $ / %</DenseTableHead>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
+          {accountGroups.flatMap(({ accountId, rows }) => {
+            const groupKey = `${rowKeyPrefix}-acc-${accountId}`
+            return [
+              <GroupHeaderRow key={groupKey} colSpan={9} label={<strong>{accountId}</strong>} />,
+              ...rows.map((position) => {
+                const contractKey = position.contract_key ?? `${position.symbol ?? ''}|STK|||`
+                const rowKey = `${rowKeyPrefix}-open-stk-${accountId}-${position.symbol ?? ''}-${contractKey}`
+                return <StockRow key={rowKey} position={position} onInspect={onInspect} />
+              }),
+            ]
+          })}
+        </DenseTableBody>
+      </DenseDataTable>
     </div>
   )
 }

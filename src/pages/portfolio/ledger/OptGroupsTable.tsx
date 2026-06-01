@@ -4,7 +4,7 @@ import { getOptGroupKey } from '@/utils/ledger/ledgerOptHelpers'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { OptGroupRow } from './OptGroupRow'
 import type { OptGroupCallbacks } from './ledgerTypes'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 export function OptGroupsTable({
   groups, showNetQty, linkByOptionId, expandedGroups, toggleGroup, keyPrefix = '', ...cbs

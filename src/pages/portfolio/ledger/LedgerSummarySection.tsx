@@ -19,7 +19,7 @@ import {
   type LedgerMetricExplainPayload,
 } from '@/utils/ledger/ledgerSummaryExplainPayload'
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 type OptionMonthRow = [string, { count: number; realizedPnl: number }]
 type StockMonthRow = [string, { count: number; notional: number; realizedPnl: number }]

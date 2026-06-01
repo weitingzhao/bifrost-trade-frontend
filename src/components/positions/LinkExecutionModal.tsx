@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Dialog,
@@ -23,7 +23,7 @@ import {
   bubbleButtonClass,
   bubbleGroupClass,
   POSITIONS_BUBBLE_SIZE,
-} from '@/components/positions/charts/BubbleSwitch'
+} from '@/components/positions/charts/bubbleSwitchStyles'
 import {
   defaultOpenedAtFromExecution,
   executionQtyLabel,
@@ -73,13 +73,41 @@ function ExecSourceBadge({ source }: { source?: string | null }) {
   )
 }
 
-export function LinkExecutionModal({ open, context, opportunities, onClose, onSuccess }: Props) {
-  const [oppId, setOppId] = useState('')
-  const [instanceMode, setInstanceMode] = useState<'existing' | 'new'>('existing')
-  const [instanceId, setInstanceId] = useState('')
-  const [newOpenedAt, setNewOpenedAt] = useState('')
-  const [newLabel, setNewLabel] = useState('')
-  const [peerShortcut, setPeerShortcut] = useState('')
+function initLinkForm(context: LinkExecutionContext | null) {
+  const ex = context?.execution
+  const picks = context?.peer_instance_picks
+  const preOpp = ex?.strategy_opportunity_id != null ? String(ex.strategy_opportunity_id) : ''
+  const preInst = ex?.strategy_instance_id != null ? String(ex.strategy_instance_id) : ''
+  let peerShortcut = ''
+  if (picks?.length && preOpp && preInst) {
+    const hit = picks.find(
+      (p) => String(p.strategy_opportunity_id) === preOpp && String(p.strategy_instance_id) === preInst,
+    )
+    peerShortcut = hit ? `${hit.strategy_opportunity_id}::${hit.strategy_instance_id}` : ''
+  }
+  return {
+    oppId: preOpp,
+    instanceId: preInst,
+    instanceMode: 'existing' as const,
+    newOpenedAt: defaultOpenedAtFromExecution(ex),
+    newLabel: '',
+    peerShortcut,
+  }
+}
+
+function LinkExecutionModalBody({
+  context,
+  opportunities,
+  onClose,
+  onSuccess,
+}: Omit<Props, 'open'>) {
+  const init = initLinkForm(context)
+  const [oppId, setOppId] = useState(init.oppId)
+  const [instanceMode, setInstanceMode] = useState<'existing' | 'new'>(init.instanceMode)
+  const [instanceId, setInstanceId] = useState(init.instanceId)
+  const [newOpenedAt, setNewOpenedAt] = useState(init.newOpenedAt)
+  const [newLabel, setNewLabel] = useState(init.newLabel)
+  const [peerShortcut, setPeerShortcut] = useState(init.peerShortcut)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -87,32 +115,11 @@ export function LinkExecutionModal({ open, context, opportunities, onClose, onSu
   const execId = context?.account_executions_id
   const peerPicks = context?.peer_instance_picks
 
-  useEffect(() => {
-    if (!open || !context) return
-    setError(null)
-    const picks = context.peer_instance_picks
-    const preOpp = ex?.strategy_opportunity_id != null ? String(ex.strategy_opportunity_id) : ''
-    const preInst = ex?.strategy_instance_id != null ? String(ex.strategy_instance_id) : ''
-    setOppId(preOpp)
-    setInstanceId(preInst)
-    setInstanceMode('existing')
-    setNewOpenedAt(defaultOpenedAtFromExecution(ex))
-    setNewLabel('')
-    if (picks?.length && preOpp && preInst) {
-      const hit = picks.find(
-        (p) => String(p.strategy_opportunity_id) === preOpp && String(p.strategy_instance_id) === preInst,
-      )
-      setPeerShortcut(hit ? `${hit.strategy_opportunity_id}::${hit.strategy_instance_id}` : '')
-    } else {
-      setPeerShortcut('')
-    }
-  }, [open, context, ex])
-
   const oppIdNum = oppId.trim() ? Number(oppId) : null
   const { data: instancesData } = useQuery({
     queryKey: ['strategy', 'instances', 'link-modal', oppIdNum],
     queryFn: () => fetchStrategyInstances({ opportunityId: oppIdNum! }),
-    enabled: open && oppIdNum != null && Number.isFinite(oppIdNum),
+    enabled: oppIdNum != null && Number.isFinite(oppIdNum),
     staleTime: 30_000,
   })
   const instances = instancesData?.items ?? []
@@ -131,10 +138,10 @@ export function LinkExecutionModal({ open, context, opportunities, onClose, onSu
       return
     }
     const opp = Number(oppId)
-    let finalInstanceId: number | null = null
 
     setSubmitting(true)
     try {
+      let finalInstanceId: number | null
       if (instanceMode === 'new') {
         if (!executionAccountId) {
           throw new Error('This execution has no account; create instance is not available.')
@@ -173,7 +180,6 @@ export function LinkExecutionModal({ open, context, opportunities, onClose, onSu
   const eTs = ex?.time != null ? Number(ex.time) : null
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v && !submitting) onClose() }}>
       <DialogContent className="max-w-lg gap-0 p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-2 space-y-1">
           <DialogTitle>Assign strategy</DialogTitle>
@@ -396,6 +402,25 @@ export function LinkExecutionModal({ open, context, opportunities, onClose, onSu
           </div>
         </form>
       </DialogContent>
+  )
+}
+
+export function LinkExecutionModal({ open, context, opportunities, onClose, onSuccess }: Props) {
+  const formKey = open
+    ? String(context?.account_executions_id ?? 'closed')
+    : 'closed'
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+      {open && context ? (
+        <LinkExecutionModalBody
+          key={formKey}
+          context={context}
+          opportunities={opportunities}
+          onClose={onClose}
+          onSuccess={onSuccess}
+        />
+      ) : null}
     </Dialog>
   )
 }

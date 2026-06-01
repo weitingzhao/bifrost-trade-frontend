@@ -1,6 +1,6 @@
 import type { WinRateStructureRow } from '@/types/strategy'
 import { cn } from '@/lib/utils'
-import styles from '@/pages/strategy/WinRatePage.module.css'
+import styles from './winRate.module.css'
 import { WinRateTradesBand } from './WinRateTradesBand'
 import { WinRatePnlBand } from './WinRatePnlBand'
 import { WinRateUnderlyingBand } from './WinRateUnderlyingBand'

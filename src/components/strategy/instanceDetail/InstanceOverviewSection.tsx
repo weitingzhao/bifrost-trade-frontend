@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils'
 import {
   getStructureDisplayLabel,
   getStructureTypeLabel,
@@ -7,7 +6,17 @@ import {
 } from '@/utils/strategyFormUtils'
 import type { InstanceDetailData } from '@/hooks/useInstanceDetailData'
 import type { StrategyInstance } from '@/types/positions'
-import styles from './InstanceDetail.module.css'
+import {
+  instanceDetailBlockClass,
+  instanceErrorClass,
+  instanceInfoDlClass,
+  instanceMutedClass,
+  instanceOverviewHeadClass,
+  instanceSectionTitleClass,
+  instanceStatusClosedClass,
+  instanceStatusOpenClass,
+  instanceStatusUnknownClass,
+} from './instanceDetailUi'
 
 interface Props {
   instance: StrategyInstance
@@ -15,9 +24,9 @@ interface Props {
 }
 
 function statusChipClass(status: InstanceDetailData['positionStatus']): string {
-  if (status === 'open') return cn(styles.statusChip, styles.statusOpen)
-  if (status === 'closed') return cn(styles.statusChip, styles.statusClosed)
-  return cn(styles.statusChip, styles.statusUnknown)
+  if (status === 'open') return instanceStatusOpenClass
+  if (status === 'closed') return instanceStatusClosedClass
+  return instanceStatusUnknownClass
 }
 
 export function InstanceOverviewSection({ instance, data }: Props) {
@@ -30,26 +39,26 @@ export function InstanceOverviewSection({ instance, data }: Props) {
         : '—'
 
   return (
-    <section className={cn(styles.detailBlock, styles.summaryCard)} aria-label="Instance overview">
-      <div className={styles.overviewHead}>
-        <h3 className={styles.sectionTitle}>Overview</h3>
+    <section className={instanceDetailBlockClass} aria-label="Instance overview">
+      <div className={instanceOverviewHeadClass}>
+        <h3 className={instanceSectionTitleClass}>Overview</h3>
         <span className={statusChipClass(positionStatus)}>
           {positionStatus === 'open' ? 'Open' : positionStatus === 'closed' ? 'Closed' : 'No fills'}
         </span>
       </div>
 
-      <dl className={styles.infoDl}>
+      <dl className={instanceInfoDlClass}>
         <dt>Structure</dt>
         <dd>{structureName}</dd>
 
         <dt>Open → End</dt>
         <dd title={openEnd.title}>
           {data.execLoading ? (
-            <span className={styles.muted}>…</span>
+            <span className={instanceMutedClass}>…</span>
           ) : (
             <>
               {openEnd.openLabel}
-              <span className={styles.muted}> → </span>
+              <span className={instanceMutedClass}> → </span>
               {openEnd.endLabel}
             </>
           )}
@@ -65,12 +74,12 @@ export function InstanceOverviewSection({ instance, data }: Props) {
         {structureLoading ? (
           <>
             <dt>Details</dt>
-            <dd className={styles.muted}>Loading structure…</dd>
+            <dd className={instanceMutedClass}>Loading structure…</dd>
           </>
         ) : structureError ? (
           <>
             <dt>Details</dt>
-            <dd className={styles.error}>{structureError}</dd>
+            <dd className={instanceErrorClass}>{structureError}</dd>
           </>
         ) : structure ? (
           <>
@@ -86,7 +95,7 @@ export function InstanceOverviewSection({ instance, data }: Props) {
         ) : (
           <>
             <dt>Details</dt>
-            <dd className={styles.muted}>No linked structure details.</dd>
+            <dd className={instanceMutedClass}>No linked structure details.</dd>
           </>
         )}
       </dl>

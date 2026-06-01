@@ -1,4 +1,4 @@
-import { bubbleButtonClass, bubbleGroupClass } from './charts/BubbleSwitch'
+import { bubbleButtonClass, bubbleGroupClass } from './charts/bubbleSwitchStyles'
 import { Button } from '@/components/ui/button'
 import styles from './InstanceStrategyPanel.module.css'
 import {

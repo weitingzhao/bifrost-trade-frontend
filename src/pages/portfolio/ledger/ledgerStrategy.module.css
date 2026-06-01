@@ -1,0 +1,144 @@
+/* Auto-split from TradeLedgerPage.module.css */
+.strategyGroup {
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--card);
+}
+
+.strategyGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: var(--ledger-cell-py) var(--ledger-cell-px);
+  background: var(--ledger-surface-header);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--ledger-fs-section);
+  color: var(--foreground);
+}
+
+.strategyGroupHeader:hover {
+  background: color-mix(in srgb, var(--muted) 42%, var(--card));
+}
+
+.chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+  font-size: 0.625rem;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.strategyGroupTitle {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strategyGroupStats {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  font-size: var(--ledger-fs-meta);
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+
+.strategyGroupBody {
+  padding: 0.35rem 0.5rem 0.5rem;
+}
+
+.instanceNest {
+  border-top: 1px solid var(--border);
+}
+
+.instanceHeaderRow {
+  display: flex;
+  align-items: stretch;
+}
+
+.instanceHeader {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: var(--ledger-cell-py) var(--ledger-cell-px);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--ledger-fs-section);
+  color: var(--foreground);
+  min-width: 0;
+}
+
+.instanceHeader:hover {
+  background: var(--ledger-row-hover);
+}
+
+.instanceStats {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  font-size: var(--ledger-fs-meta);
+  color: var(--muted-foreground);
+}
+
+.instanceOpenLink {
+  flex-shrink: 0;
+  align-self: center;
+  margin-right: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--color-success) 40%, var(--border));
+  color: var(--color-success);
+  text-decoration: none;
+}
+
+.instanceOpenLink:hover {
+  background: var(--color-success-soft);
+}
+
+.instanceBody {
+  padding: 0 0.5rem 0.5rem 1.25rem;
+}
+
+.instanceNestBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.instanceBlock {
+  min-width: 0;
+}
+
+.instanceSubheading {
+  margin: 0.25rem 0 0.35rem;
+  font-size: var(--ledger-fs-meta);
+  font-weight: 600;
+  color: var(--muted-foreground);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.instanceEmptyHint {
+  margin: 0.25rem 0 0.5rem;
+  font-size: var(--ledger-fs);
+  color: var(--muted-foreground);
+}
+

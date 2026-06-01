@@ -13,10 +13,11 @@ import {
   ledgerOptDetailRowPnl,
 } from '@/utils/ledger/ledgerOptHelpers'
 import { ExecSourceBadge } from './ExecSourceBadge'
-import { LedgerOptActionButtons, sideLabel } from './LedgerOptActionButtons'
+import { LedgerOptActionButtons } from './LedgerOptActionButtons'
+import { sideLabel } from './ledgerOptSideLabel'
 import { LedgerStgInsCell } from './LedgerStgInsCell'
 import type { OptGroupCallbacks, OptSortCol } from './ledgerTypes'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 const CLOSED_PAGE_SIZE = 50
 

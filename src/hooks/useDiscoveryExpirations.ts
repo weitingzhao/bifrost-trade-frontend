@@ -37,7 +37,10 @@ export function useDiscoveryExpirations(
     staleTime: 30_000,
   })
 
-  const expirations = sym.length > 0 ? (listQuery.data?.expirations ?? []) : []
+  const expirations = useMemo(
+    () => (sym.length > 0 ? (listQuery.data?.expirations ?? []) : []),
+    [sym.length, listQuery.data?.expirations],
+  )
   const stockDayLastPrice =
     strikesQuery.data?.last_price ?? listQuery.data?.last_price ?? null
   const strikes = strikesQuery.data?.strikes ?? []

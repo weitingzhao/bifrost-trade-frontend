@@ -2,7 +2,7 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { LedgerSegmentBtn, LedgerSegmentSwitch } from './LedgerSegmentSwitch'
 import { LedgerSortIcon as SortIcon } from './LedgerSortIcon'
 import type { GroupBy, InstanceSubTab, MainTab, OptInstanceFilter, OptSortCol, OptSubTab } from './ledgerTypes'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 export type LedgerTabFilterProps = {
   activeTab: MainTab

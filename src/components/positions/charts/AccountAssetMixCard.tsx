@@ -10,8 +10,10 @@ import {
 } from '@/utils/positionsCharts'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { LivePositionRow } from '@/types/positions'
-import { DonutChart, donutCenterFromDenom } from './DonutChart'
-import { BubbleSwitch, IncludeExcludeToggle, POSITIONS_BUBBLE_SIZE } from './BubbleSwitch'
+import { DonutChart } from './DonutChart'
+import { donutCenterFromDenom } from './donutCenter'
+import { BubbleSwitch, IncludeExcludeToggle } from './BubbleSwitch'
+import { POSITIONS_BUBBLE_SIZE } from './bubbleSwitchStyles'
 import styles from '../PositionsChartsSection.module.css'
 
 interface Props {

@@ -11,7 +11,7 @@ npm run build
 npm run lint
 
 # No Legacy alias tokens in src (product tokens like --color-lamp-* are OK)
-rg '--color-text-main|--color-bg\b|--color-surface\b|--space-[0-9]' src
+grep -rE '(--color-text-main|--color-bg|--color-surface|--space-[0-9])' src --include='*.ts' --include='*.tsx' --include='*.css'
 
 # No removed Discovery scoped files or class names
 rg 'discoveryScoped|discoveryStrikeLadder|legacyMonitoringShell' src
@@ -38,3 +38,44 @@ Eager routes (see `src/lib/router.tsx`): Live, Watchlist, Positions, Strategy In
 All other top-level pages load via React Router `lazy` + `AppLayout` `Suspense` (`PageRouteFallback`).
 
 Build notes: `docs/BUILD.md`.
+
+## Paydown checks (Legacy CSS debt)
+
+Track progress in [`LEGACY_CSS_PAYDOWN.md`](./LEGACY_CSS_PAYDOWN.md).
+
+```bash
+cd bifrost-trade-frontend
+npm run check:legacy-css
+```
+
+### No new Legacy imports
+
+```bash
+# Must be empty: imports of Legacy/theme files from TS/TSX
+grep -rE "Legacy\.css|positionsTheme\.css" src --include='*.ts' --include='*.tsx' \
+  | grep -v Legacy.css || true
+```
+
+### `!important` budget (baseline 27 lines — decrease only)
+
+```bash
+grep -r '!important' src --include='*.css' | wc -l
+```
+
+### Ledger module line budget (baseline ~1388 — decrease each phase)
+
+```bash
+wc -l src/pages/portfolio/ledger/TradeLedgerPage.module.css
+```
+
+### Positions legacy class names (should trend to 0 in `components/positions`)
+
+```bash
+grep -rE 'pnl-positive|pnl-negative|replay-portfolio-group' src/components/positions --include='*.tsx' || true
+```
+
+### Freeze rules
+
+- Do **not** add new `*Legacy.css` files or extend `positionsTheme.css`.
+- New PnL coloring: `pnlColorClass()` from `@/utils/dailyChange`, not `pnl-positive` strings.
+- New tables: `@/components/positions/ui` dense table primitives + shadcn `Table`.

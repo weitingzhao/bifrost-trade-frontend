@@ -1,5 +1,14 @@
 import { cn } from '@/lib/utils'
-import styles from './live.module.css'
+import {
+  liveFeedbackHintClass,
+  liveFilterGroupClass,
+  liveFilterHintClass,
+  liveFilterPillActiveClass,
+  liveFilterPillClass,
+  liveFilterPillGripClass,
+  liveFilterPillsClass,
+  liveFiltersInlineClass,
+} from './liveUi'
 
 interface Props {
   hasStreamAccounts: boolean
@@ -23,16 +32,16 @@ export function FilterPillBar({
   categoryOrderSaving,
 }: Props) {
   return (
-    <div className={styles.filtersInline} role="toolbar" aria-label="Market Streams filters">
+    <div className={liveFiltersInlineClass} role="toolbar" aria-label="Market Streams filters">
       {hasStreamAccounts && (
-        <div className={styles.filterGroup}>
-          <span className={styles.filterHint}>Account:</span>
-          <div className={styles.filterPills} role="group" aria-label="Filter by stream account">
+        <div className={liveFilterGroupClass}>
+          <span className={liveFilterHintClass}>Account:</span>
+          <div className={liveFilterPillsClass} role="group" aria-label="Filter by stream account">
             {(['host', 'secondary'] as const).map(key => (
               <button
                 key={key}
                 type="button"
-                className={cn(styles.filterPill, streamAccountFilters.has(key) && styles.filterPillActive)}
+                className={cn(liveFilterPillClass, streamAccountFilters.has(key) && liveFilterPillActiveClass)}
                 onClick={() => onToggleAccount(key)}
                 aria-pressed={streamAccountFilters.has(key)}
               >
@@ -42,14 +51,14 @@ export function FilterPillBar({
           </div>
         </div>
       )}
-      <div className={styles.filterGroup}>
-        <span className={styles.filterHint}>Category:</span>
-        <div className={styles.filterPills} role="group" aria-label="Filter by position category">
+      <div className={liveFilterGroupClass}>
+        <span className={liveFilterHintClass}>Category:</span>
+        <div className={liveFilterPillsClass} role="group" aria-label="Filter by position category">
           {streamCategoryOrder.map(cat => (
             <button
               key={cat}
               type="button"
-              className={cn(styles.filterPill, positionCategoryFilters.has(cat) && styles.filterPillActive)}
+              className={cn(liveFilterPillClass, positionCategoryFilters.has(cat) && liveFilterPillActiveClass)}
               onClick={() => onToggleCategory(cat)}
               aria-pressed={positionCategoryFilters.has(cat)}
               draggable
@@ -67,12 +76,12 @@ export function FilterPillBar({
                 onCategoryDrop(dragged, cat)
               }}
             >
-              <span className={styles.filterPillGrip} aria-hidden>⋮⋮</span>
+              <span className={liveFilterPillGripClass} aria-hidden>⋮⋮</span>
               {cat}
             </button>
           ))}
         </div>
-        {categoryOrderSaving && <span className={styles.feedbackHint}>Saving order…</span>}
+        {categoryOrderSaving && <span className={liveFeedbackHintClass}>Saving order…</span>}
       </div>
     </div>
   )

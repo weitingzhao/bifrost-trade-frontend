@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import styles from '@/pages/strategy/WinRatePage.module.css'
+import styles from './winRate.module.css'
 import { kpiToneClass } from './toneClasses'
 import type { ProfitLossTone, WinPctTone } from '@/utils/winRate'
 

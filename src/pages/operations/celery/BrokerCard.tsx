@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/tooltip'
 import { ConfirmDialog } from './ConfirmDialog'
 import { CelerySectionCard } from './CelerySectionCard'
-import { useCeleryOps } from './CeleryOpsContext'
+import { useCeleryOps } from './useCeleryOps'
 import { useBrokerStatusExtended, useControlBroker } from '@/hooks/useOpsData'
 
 const BROKER_TOOLTIP =

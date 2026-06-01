@@ -1,4 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { cn } from '@/lib/utils'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { Link } from 'react-router-dom'
 import { Compass, ScanSearch } from 'lucide-react'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
@@ -28,7 +30,7 @@ import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import type { DetailViewMode } from './PositionsOpenControls'
 import { OpenOptionExecTableRow } from './OpenOptionExecTableRow'
-import './positionsOptionsLegacy.css'
+import './optionsTab.module.css'
 
 interface Props {
   positions: OpenOptionPosition[]
@@ -145,7 +147,7 @@ export function OptionsTab({
 
   if (sorted.length === 0) {
     return (
-      <div className="positions-options-panel">
+      <div className="optionsTabRoot positions-options-panel">
         <h4 className="positions-options-heading">Option positions</h4>
         <p className="positions-options-empty">No open option positions under the current filters.</p>
       </div>
@@ -153,7 +155,7 @@ export function OptionsTab({
   }
 
   return (
-    <div className="positions-options-panel">
+    <div className="optionsTabRoot positions-options-panel">
       <h4 className="positions-options-heading">Option positions</h4>
       <div className="positions-opt-table-wrap">
         <table className="positions-opt-main-table replay-opt-groups">
@@ -276,7 +278,7 @@ export function OptionsTab({
                       const label = days >= 0 ? (days === 0 ? 'today' : `${days}d`) : `${-days}d ago`
                       return (
                         <div className="positions-opt-expiry-line2">
-                          <span className="expiry-days-remaining">{label}</span>
+                          <span className="expiry-days-remaining text-warning font-semibold">{label}</span>
                         </div>
                       )
                     })()}
@@ -342,7 +344,7 @@ export function OptionsTab({
                   <td>
                     {livePnl != null && (
                       <div>
-                        <span className={`replay-pnl-unrealized ${livePnl >= 0 ? 'pos-opt-pnl-positive' : 'pos-opt-pnl-negative'}`}>
+                        <span className={cn('replay-pnl-unrealized font-semibold', pnlColorClass(livePnl))}>
                           {fmtUsd(livePnl)}
                         </span>
                         <span className="replay-muted" style={{ fontSize: '0.7em' }}>
@@ -353,7 +355,7 @@ export function OptionsTab({
                     )}
                     <div style={livePnl != null ? { fontSize: '0.75em' } : undefined}>
                       <span
-                        className={`replay-pnl-unrealized ${(pos.unrealized_pnl ?? 0) >= 0 ? 'pos-opt-pnl-positive' : 'pos-opt-pnl-negative'}`}
+                        className={cn('replay-pnl-unrealized font-semibold', pnlColorClass(pos.unrealized_pnl))}
                       >
                         {fmtUsd(pos.unrealized_pnl)}
                       </span>
@@ -449,7 +451,7 @@ export function OptionsTab({
                 Total
               </td>
               <td>
-                <span className={`replay-pnl-unrealized ${totalUnPnl >= 0 ? 'pos-opt-pnl-positive' : 'pos-opt-pnl-negative'}`}>
+                <span className={cn('replay-pnl-unrealized font-semibold', pnlColorClass(totalUnPnl))}>
                   {fmtUsd(totalUnPnl)}
                 </span>
               </td>

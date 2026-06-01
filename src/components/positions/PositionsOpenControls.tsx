@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { AccountFilter } from './PositionsFilterBar'
-import { bubbleButtonClass, bubbleGroupClass } from './charts/BubbleSwitch'
+import { bubbleButtonClass, bubbleGroupClass } from './charts/bubbleSwitchStyles'
 import styles from './PositionsOpenControls.module.css'
 
 export type DetailViewMode = 'accordion' | 'multi'
@@ -116,28 +116,61 @@ export function PositionsOpenControls({
         <>
           <span className={styles.sep} aria-hidden />
           <div className={styles.tabsWrap}>
-            <TabsList variant="line" className={styles.tabsList}>
+            <TabsList
+              variant="line"
+              className={cn(
+                'w-auto flex-1 min-w-0 border-b-0 flex-nowrap gap-x-1 gap-y-0.5 justify-start h-auto bg-transparent p-0',
+                styles.tabsList,
+              )}
+            >
               <TabsTrigger
                 value="instance"
                 disabled={!hasInstances && !hasOptions}
-                className={styles.tabTrigger}
+                className={cn(
+                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
+                )}
               >
                 Strategy
               </TabsTrigger>
-              <TabsTrigger value="options" disabled={!hasOptions} className={styles.tabTrigger}>
+              <TabsTrigger
+                value="options"
+                disabled={!hasOptions}
+                className={cn(
+                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
+                )}
+              >
                 Options
               </TabsTrigger>
-              <TabsTrigger value="stocks" disabled={!hasCoreStocks} className={styles.tabTrigger}>
+              <TabsTrigger
+                value="stocks"
+                disabled={!hasCoreStocks}
+                className={cn(
+                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
+                )}
+              >
                 Stocks
               </TabsTrigger>
               <TabsTrigger
                 value="fixed_income"
                 disabled={!hasFixedIncome}
-                className={styles.tabTrigger}
+                className={cn(
+                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
+                )}
               >
                 Fixed income
               </TabsTrigger>
-              <TabsTrigger value="cash_like" disabled={!hasCashLike} className={styles.tabTrigger}>
+              <TabsTrigger
+                value="cash_like"
+                disabled={!hasCashLike}
+                className={cn(
+                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
+                )}
+              >
                 Cash-like
               </TabsTrigger>
             </TabsList>

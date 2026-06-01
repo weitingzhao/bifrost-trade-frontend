@@ -11,7 +11,7 @@ import {
 import { CeleryQueueSummaryTable } from './CeleryQueueSummaryTable'
 import { CelerySectionCard } from './CelerySectionCard'
 import { ConfirmDialog } from './ConfirmDialog'
-import { useCeleryOps } from './CeleryOpsContext'
+import { useCeleryOps } from './useCeleryOps'
 import {
   useOpsWorkers,
   useOpsQueuesSummary,

@@ -1,6 +1,6 @@
 import type { WinRateStructureRow } from '@/types/strategy'
 import { fmtUsd } from '@/utils/positions'
-import styles from '@/pages/strategy/WinRatePage.module.css'
+import styles from './winRate.module.css'
 
 const UNDERLYING_TITLE =
   'Same as Instance detail: sum of sell OPT strike × |qty| × 100 per instance. Buckets follow net PnL > 0 vs ≤ 0.'

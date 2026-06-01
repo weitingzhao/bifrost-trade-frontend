@@ -1,5 +1,9 @@
 import type { Execution } from '@/types/positions'
-import styles from './InstanceDetail.module.css'
+import {
+  instanceKlineHintClass,
+  instanceKlinePanelClass,
+  instanceSectionTitleClass,
+} from './instanceDetailUi'
 
 interface Props {
   executions: Execution[]
@@ -16,10 +20,10 @@ export function InstanceKlinePlaceholder({ executions }: Props) {
     : (executions.find((e) => e.symbol)?.symbol ?? '').trim()
 
   return (
-    <section className={styles.klineSection} aria-label="K-line chart">
-      <h3 className={styles.sectionTitle}>K-line Chart</h3>
-      <div className={styles.klinePanel}>
-        <p className={styles.klineHint}>
+    <section aria-label="K-line chart">
+      <h3 className={instanceSectionTitleClass}>K-line Chart</h3>
+      <div className={instanceKlinePanelClass}>
+        <p className={instanceKlineHintClass}>
           {label ? `${label} — ` : ''}
           Interactive bars chart migration in progress.
         </p>

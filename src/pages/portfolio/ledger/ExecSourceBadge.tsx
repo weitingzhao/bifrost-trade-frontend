@@ -1,4 +1,4 @@
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 const CLASS_MAP: Record<string, string> = {
   flex_trades: styles.sourceFlex,

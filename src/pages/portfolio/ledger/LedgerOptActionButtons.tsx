@@ -1,6 +1,5 @@
 import { Link2, Pencil, RefreshCw, Trash2 } from 'lucide-react'
-import type { Execution } from '@/types/positions'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 export function LedgerOptActionButtons({
   onEdit,
@@ -62,9 +61,3 @@ export function LedgerOptActionButtons({
   )
 }
 
-export function sideLabel(ex: Execution): string {
-  const s = (ex.side ?? '').toUpperCase()
-  if (s === 'BUY' || s === 'BOT' || s === 'B') return 'Buy'
-  if (s === 'SELL' || s === 'SLD' || s === 'S') return 'Sell'
-  return ex.side ?? '—'
-}

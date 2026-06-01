@@ -3,7 +3,6 @@
  * Visual layout aligned with Legacy StrategyInstanceDetailPage (embedded).
  */
 import { RiskProfileDetail } from '@/components/positions/RiskProfileDetail'
-import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useInstanceDetailData } from '@/hooks/useInstanceDetailData'
 import type { StrategyInstance } from '@/types/positions'
@@ -11,7 +10,13 @@ import { InstanceOverviewSection } from './instanceDetail/InstanceOverviewSectio
 import { InstancePnLSection } from './instanceDetail/InstancePnLSection'
 import { InstanceExecutionsSection } from './instanceDetail/InstanceExecutionsSection'
 import { InstanceKlinePlaceholder } from './instanceDetail/InstanceKlinePlaceholder'
-import styles from './instanceDetail/InstanceDetail.module.css'
+import {
+  instanceDetailBlockClass,
+  instanceDetailPageClass,
+  instanceMainGridClass,
+  instanceRiskSectionBodyClass,
+  instanceSectionTitleClass,
+} from './instanceDetail/instanceDetailUi'
 
 interface Props {
   instance: StrategyInstance
@@ -25,8 +30,8 @@ export function InstanceDetailPanel({ instance }: Props) {
   if (!detail) return null
 
   return (
-    <div className={styles.page}>
-      <div className={styles.mainGrid}>
+    <div className={instanceDetailPageClass}>
+      <div className={instanceMainGridClass}>
         <InstanceOverviewSection instance={instance} data={detail} />
         <InstancePnLSection data={detail} />
       </div>
@@ -34,9 +39,9 @@ export function InstanceDetailPanel({ instance }: Props) {
       <InstanceKlinePlaceholder executions={detail.executionsFinal} />
 
       {detail.riskProfile ? (
-        <section className={cn(styles.detailBlock, styles.riskSection)} aria-label="Risk profile">
-          <h3 className={styles.sectionTitle}>Risk profile (at expiration)</h3>
-          <div className={styles.riskSectionBody}>
+        <section className={instanceDetailBlockClass} aria-label="Risk profile">
+          <h3 className={instanceSectionTitleClass}>Risk profile (at expiration)</h3>
+          <div className={instanceRiskSectionBodyClass}>
             <RiskProfileDetail profile={detail.riskProfile} hideHeading variant="instanceDetail" />
           </div>
         </section>

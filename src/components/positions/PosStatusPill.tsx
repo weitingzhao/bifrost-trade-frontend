@@ -1,16 +1,9 @@
 import type { ReactNode } from 'react'
-import { cn } from '@/lib/utils'
+import { PosStatusBadge, type PosStatusTone } from './ui/PosStatusBadge'
 
-export type PosStatusTone = 'ok' | 'brightOk' | 'warn' | 'bad' | 'neutral'
+export type { PosStatusTone }
 
-const toneClass: Record<PosStatusTone, string> = {
-  ok: 'pos-status--ok',
-  brightOk: 'pos-status--bright-ok',
-  warn: 'pos-status--warn',
-  bad: 'pos-status--bad',
-  neutral: 'pos-status--neutral',
-}
-
+/** @deprecated Use PosStatusBadge from ./ui — kept for existing imports */
 export function PosStatusPill({
   tone,
   children,
@@ -21,8 +14,8 @@ export function PosStatusPill({
   className?: string
 }) {
   return (
-    <span className={cn('pos-status', toneClass[tone], className)}>
+    <PosStatusBadge tone={tone} className={className}>
       {children}
-    </span>
+    </PosStatusBadge>
   )
 }

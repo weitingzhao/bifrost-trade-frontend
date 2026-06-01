@@ -10,7 +10,7 @@ import { executionDateStr } from '@/utils/ledger/performanceUtils'
 import { OptGroupsTable } from './OptGroupsTable'
 import { fmtCcy, fmtPrice, pnlClass } from './ledgerFormat'
 import type { GroupBy, InstanceSubTab, InstGroup } from './ledgerTypes'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 export function InstanceTabContent({
   instanceSubTab, filteredGroups, noInstGroups, noInstExecs, linkByOptionId,

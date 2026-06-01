@@ -3,7 +3,7 @@ import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { adjustedRealizedPnlForOptGroup, getOptGroupKey } from '@/utils/ledger/ledgerOptHelpers'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { fmtCcy, fmtLedgerExpiry, pnlClass } from './ledgerFormat'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 type Props = {
   closedGroups: OptExecutionGroup[]

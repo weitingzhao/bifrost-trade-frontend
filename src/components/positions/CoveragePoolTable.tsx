@@ -1,4 +1,5 @@
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, type KeyboardEvent, type ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 import { fmtUsd, fmtSignedPct } from '@/utils/positions'
 import type { StockCoverageItem } from '@/types/positions'
 import {
@@ -7,7 +8,20 @@ import {
   groupCoverageByAccount,
   fmtHeldSharesWhole,
 } from '@/utils/coveragePool'
-import './coverageSummaryLegacy.css'
+import {
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  GroupHeaderRow,
+  PnlCell,
+  SymbolLinkButton,
+  denseTable,
+} from './ui'
+import './coveragePool.module.css'
 
 export interface CoveragePoolSortState {
   column: CoveragePoolSortCol
@@ -45,9 +59,9 @@ export function CoveragePoolTable({
 
   const accountCellClass = (accountId: string) => {
     const a = (accountId ?? '').trim()
-    if (secondaryAccountId && a === secondaryAccountId) return 'coverage-account-id coverage-account-secondary'
-    if (hostAccountId && a === hostAccountId) return 'coverage-account-id coverage-account-host'
-    return 'coverage-account-id coverage-account-other'
+    if (secondaryAccountId && a === secondaryAccountId) return 'coverage-account-secondary'
+    if (hostAccountId && a === hostAccountId) return 'coverage-account-host'
+    return 'coverage-account-other'
   }
 
   const accountGroups =
@@ -65,17 +79,19 @@ export function CoveragePoolTable({
   const showHeldAmtColumn = slim || backingLayout
 
   const sortTh = (label: ReactNode, col: CoveragePoolSortCol, title?: string) => {
-    if (!poolSortOn || !poolSort) return <th title={title}>{label}</th>
+    if (!poolSortOn || !poolSort) {
+      return <DenseTableHead>{label}</DenseTableHead>
+    }
     const active = poolSort.column === col
     return (
-      <th
-        className="coverage-pool-sort-th"
+      <DenseTableHead
+        className={cn(denseTable.sortableHead, active && 'text-foreground')}
         title={title}
         role="button"
         tabIndex={0}
         aria-sort={active ? (poolSort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
         onClick={() => poolSort.onColumnClick(col)}
-        onKeyDown={(e) => {
+        onKeyDown={(e: KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             poolSort.onColumnClick(col)
@@ -84,41 +100,43 @@ export function CoveragePoolTable({
       >
         {label}
         {active ? (poolSort.dir === 'asc' ? ' ▲' : ' ▼') : ''}
-      </th>
+      </DenseTableHead>
     )
   }
 
   const renderRow = (ci: StockCoverageItem, rowKey: string) => {
     const acc = ci.account_id || '—'
     return (
-      <tr key={rowKey}>
-        <td>
+      <DenseTableRow key={rowKey}>
+        <DenseTableCell>
           {onInspectSymbol ? (
-            <button
-              type="button"
-              className="coverage-pool-symbol-btn"
+            <SymbolLinkButton
+              label={ci.symbol ?? '—'}
               onClick={() => onInspectSymbol(ci)}
-              aria-label={`Stock details for ${ci.symbol} in account ${acc}`}
-            >
-              <strong>{ci.symbol}</strong>
-            </button>
+              ariaLabel={`Stock details for ${ci.symbol} in account ${acc}`}
+              variant="coverage"
+            />
           ) : (
             <strong>{ci.symbol}</strong>
           )}
-        </td>
-        {!poolGroupByAccount && <td className="replay-muted">{acc}</td>}
+        </DenseTableCell>
+        {!poolGroupByAccount && (
+          <DenseTableCell className="text-muted-foreground">{acc}</DenseTableCell>
+        )}
         {showHeldColumn && (
-          <td className={slim ? 'coverage-held-shares-cell' : undefined}>
+          <DenseTableCell className="tabular-nums">
             {slim ? fmtHeldSharesWhole(ci.held_shares) : ci.held_shares}
-          </td>
+          </DenseTableCell>
         )}
         {showHeldAmtColumn &&
           (slim || backingLayout ? (
-            <td
-              className={`coverage-available-held-amt-cell${slim && !backingLayout ? ' coverage-held-amt-underlying-narrow' : ''}`}
+            <DenseTableCell
+              className={cn(
+                slim && !backingLayout && 'coverage-held-amt-underlying-narrow',
+              )}
             >
               <span
-                className={`coverage-available-contracts-only${slim && !backingLayout ? ' coverage-held-amt-underlying-contracts' : ''}`}
+                className="coverage-available-contracts-only"
                 title={
                   backingLayout
                     ? `${Math.floor(Math.max(0, Math.min(ci.held_shares, ci.required_shares)) / 100)} contracts`
@@ -132,124 +150,105 @@ export function CoveragePoolTable({
               {backingLayout && ci.instances_needing > 1 && (
                 <span className="coverage-shared-hint"> ({ci.instances_needing} strat.)</span>
               )}
-            </td>
+            </DenseTableCell>
           ) : null)}
         {slim || backingLayout ? (
-          <td className="coverage-cost-avg-cell" title="Cost basis (total) / avg cost per share">
-            <div className="coverage-cost-avg-basis">{fmtUsd(ci.cost_basis_total)}</div>
+          <DenseTableCell className="coverage-cost-avg-cell" title="Cost basis (total) / avg cost per share">
+            <div className="font-semibold">{fmtUsd(ci.cost_basis_total)}</div>
             <div className="coverage-cost-avg-per-share">{fmtUsd(ci.avg_cost_per_share)}</div>
-          </td>
+          </DenseTableCell>
         ) : null}
         {slim || backingLayout ? (
-          <td className="coverage-mkt-value-price-cell" title="Market value / price per share">
-            <div className="coverage-mkt-value-total">{fmtUsd(coverageRowMarketValueTotal(ci))}</div>
+          <DenseTableCell className="coverage-mkt-value-price-cell" title="Market value / price per share">
+            <div className="font-semibold">{fmtUsd(coverageRowMarketValueTotal(ci))}</div>
             <div className="coverage-mkt-value-per-share">{fmtUsd(ci.live_last_price)}</div>
-          </td>
+          </DenseTableCell>
         ) : null}
         {slim || backingLayout ? (
-          <td className="coverage-pnl-stacked-cell">
-            <div className={(ci.daily_pnl ?? 0) >= 0 ? 'pnl-positive' : 'pnl-negative'}>
-              {fmtUsd(ci.daily_pnl)}
-            </div>
-            <div
-              className={`coverage-pnl-stacked-pct ${(ci.daily_pct ?? 0) >= 0 ? 'pnl-positive' : 'pnl-negative'}`}
-            >
-              {fmtSignedPct(ci.daily_pct)}
-            </div>
-          </td>
+          <DenseTableCell className="text-right">
+            <PnlCell dollar={ci.daily_pnl} pct={ci.daily_pct} formatDollar={fmtUsd} formatPct={fmtSignedPct} />
+          </DenseTableCell>
         ) : null}
         {slim || backingLayout ? (
-          <td className="coverage-pnl-stacked-cell">
-            <div className={(ci.total_pnl ?? 0) >= 0 ? 'pnl-positive' : 'pnl-negative'}>
-              {fmtUsd(ci.total_pnl)}
-            </div>
-            <div
-              className={`coverage-pnl-stacked-pct ${(ci.total_pct ?? 0) >= 0 ? 'pnl-positive' : 'pnl-negative'}`}
-            >
-              {fmtSignedPct(ci.total_pct)}
-            </div>
-          </td>
+          <DenseTableCell className="text-right">
+            <PnlCell dollar={ci.total_pnl} pct={ci.total_pct} formatDollar={fmtUsd} formatPct={fmtSignedPct} />
+          </DenseTableCell>
         ) : null}
-      </tr>
+      </DenseTableRow>
     )
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table
-        className={`coverage-summary-table${poolSortOn ? ' coverage-underlying-pool-sortable' : ''}`}
-      >
-        <thead>
-          <tr>
-            {slim || backingLayout ? sortTh('Symbol', 'symbol') : <th>Symbol</th>}
-            {!poolGroupByAccount && <th>Account</th>}
-            {showHeldColumn &&
-              (slim ? sortTh('Held', 'held', 'Long share qty (whole shares).') : <th>Held</th>)}
-            {showHeldAmtColumn &&
-              (backingLayout ? (
-                sortTh(
-                  <span className="coverage-pool-th-backed-amt">
-                    Backed
-                    <br />
-                    Amt
-                  </span>,
-                  'backed_amt',
-                  'Contracts backing watchlist hedge: min(held, required) ÷ 100.',
-                )
-              ) : slim && poolSortOn ? (
-                sortTh(
-                  <span className="coverage-pool-th-held-amt">
-                    Held
-                    <br />
-                    Amt
-                  </span>,
-                  'held_amt',
-                  'Contracts ≈ max(0, long shares) ÷ 100.',
-                )
-              ) : (
-                <th title="Contracts ≈ max(0, long shares) ÷ 100.">
-                  <span className="coverage-pool-th-held-amt">
-                    Held
-                    <br />
-                    Amt
-                  </span>
-                </th>
-              ))}
-            {slim || backingLayout
-              ? sortTh('Basis / Avg', 'cost_basis', 'Total cost basis / avg per share.')
+    <DenseDataTable wrapClassName="border-0">
+      <DenseTableHeader>
+        <DenseTableHeadRow>
+          {slim || backingLayout ? sortTh('Symbol', 'symbol') : <DenseTableHead>Symbol</DenseTableHead>}
+          {!poolGroupByAccount && <DenseTableHead>Account</DenseTableHead>}
+          {showHeldColumn &&
+            (slim ? sortTh('Held', 'held', 'Long share qty (whole shares).') : <DenseTableHead>Held</DenseTableHead>)}
+          {showHeldAmtColumn &&
+            (backingLayout ? (
+              sortTh(
+                <span className="inline-block text-center text-[0.78rem] leading-tight">
+                  Backed
+                  <br />
+                  Amt
+                </span>,
+                'backed_amt',
+                'Contracts backing watchlist hedge: min(held, required) ÷ 100.',
+              )
+            ) : slim && poolSortOn ? (
+              sortTh(
+                <span className="inline-block text-center text-[0.78rem] leading-tight">
+                  Held
+                  <br />
+                  Amt
+                </span>,
+                'held_amt',
+                'Contracts ≈ max(0, long shares) ÷ 100.',
+              )
+            ) : (
+              <DenseTableHead title="Contracts ≈ max(0, long shares) ÷ 100.">
+                <span className="inline-block text-center text-[0.78rem] leading-tight">
+                  Held
+                  <br />
+                  Amt
+                </span>
+              </DenseTableHead>
+            ))}
+          {slim || backingLayout
+            ? sortTh('Basis / Avg', 'cost_basis', 'Total cost basis / avg per share.')
+            : null}
+          {backingLayout
+            ? sortTh('Mkt / Price', 'market_price', 'Market value / share price.')
+            : slim
+              ? sortTh('Mkt value / Price', 'market_price', 'Market value / share price.')
               : null}
-            {backingLayout
-              ? sortTh('Mkt / Price', 'market_price', 'Market value / share price.')
-              : slim
-                ? sortTh('Mkt value / Price', 'market_price', 'Market value / share price.')
-                : null}
-            {slim || backingLayout ? <th>Daily</th> : null}
-            {slim || backingLayout ? <th>Total</th> : null}
-          </tr>
-        </thead>
-        <tbody>
-          {accountGroups
-            ? accountGroups.map(({ accountId, items }) => (
-                <Fragment key={`${keyPrefix}-acc-${accountId}`}>
-                  <tr className="coverage-pool-account-group-row">
-                    <td
-                      colSpan={accountGroupColSpan}
-                      className={accountCellClass(accountId)}
-                      title="Host vs Secondary account IDs from monitor config."
-                    >
+          {slim || backingLayout ? <DenseTableHead>Daily</DenseTableHead> : null}
+          {slim || backingLayout ? <DenseTableHead>Total</DenseTableHead> : null}
+        </DenseTableHeadRow>
+      </DenseTableHeader>
+      <DenseTableBody>
+        {accountGroups
+          ? accountGroups.map(({ accountId, items }) => (
+              <Fragment key={`${keyPrefix}-acc-${accountId}`}>
+                <GroupHeaderRow
+                  colSpan={accountGroupColSpan}
+                  label={
+                    <span className={accountCellClass(accountId)} title="Host vs Secondary account IDs from monitor config.">
                       {accountId}
-                    </td>
-                  </tr>
-                  {items.map((ci) =>
-                    renderRow(ci, `${keyPrefix}-${accountId}-${ci.symbol}`),
-                  )}
-                </Fragment>
-              ))
-            : rows.map((ci) =>
-                renderRow(ci, `${keyPrefix}-${ci.symbol}-${ci.account_id || '—'}`),
-              )}
-        </tbody>
-      </table>
-    </div>
+                    </span>
+                  }
+                />
+                {items.map((ci) =>
+                  renderRow(ci, `${keyPrefix}-${accountId}-${ci.symbol}`),
+                )}
+              </Fragment>
+            ))
+          : rows.map((ci) =>
+              renderRow(ci, `${keyPrefix}-${ci.symbol}-${ci.account_id || '—'}`),
+            )}
+      </DenseTableBody>
+    </DenseDataTable>
   )
 }

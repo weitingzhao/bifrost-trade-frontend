@@ -26,7 +26,7 @@ import {
   buildDayMapFromBulk,
   type CalendarAssetTab,
 } from '@/pages/portfolio/performance/performanceCalendarModel'
-import styles from '@/pages/portfolio/performance/PerformancePage.module.css'
+import styles from '@/components/performance/performanceCalendar.module.css'
 
 export default function PerformancePage() {
   const [timeRange, setTimeRange] = useState<PerformanceTimeRange>('quarter')

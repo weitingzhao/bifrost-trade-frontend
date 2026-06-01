@@ -23,10 +23,10 @@ import {
   computeMarketStreamsLamp,
   computeOpenOrdersLamp,
 } from '@/utils/livePageLamps'
-import { partitionOpenOrders } from './OpenOrdersPane'
+import { partitionOpenOrders } from './openOrdersPartition'
 import { MarketStreamsSection } from './MarketStreamsSection'
 import { LiveBottomSplit } from './LiveBottomSplit'
-import styles from './live.module.css'
+import { livePageStackClass } from './liveUi'
 
 export default function LivePage() {
   const queryClient = useQueryClient()
@@ -205,7 +205,7 @@ export default function LivePage() {
 
   return (
     <PageShell padding="compact">
-      <div className={styles.pageStack}>
+      <div className={livePageStackClass}>
         {quotesError && (
           <QueryErrorAlert error="Failed to load live quotes — check Market API connection." />
         )}

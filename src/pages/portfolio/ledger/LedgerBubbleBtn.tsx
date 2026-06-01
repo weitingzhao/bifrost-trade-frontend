@@ -1,5 +1,4 @@
-import { cn } from '@/lib/utils'
-import styles from './TradeLedgerPage.module.css'
+import { ledgerBubbleBtn } from '@/lib/ledgerUi'
 
 type Props = {
   active: boolean
@@ -14,7 +13,7 @@ export function LedgerBubbleBtn({ active, onClick, children, disabled }: Props) 
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={cn(styles.bubbleBtn, active && styles.bubbleBtnActive)}
+      className={ledgerBubbleBtn(active)}
     >
       {children}
     </button>

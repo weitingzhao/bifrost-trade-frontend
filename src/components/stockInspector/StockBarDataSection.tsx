@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -18,10 +18,7 @@ interface Props {
 export function StockBarDataSection({ symbol }: Props) {
   const sym = symbol.trim().toUpperCase()
   const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('1 D')
-  const [chartBars, setChartBars] = useState<Bar[]>([])
-  const [chartLoading, setChartLoading] = useState(false)
-  const [chartError, setChartError] = useState<string | null>(null)
-  const [chartInfo, setChartInfo] = useState<string | null>(null)
+  const barLimit = chartPeriod === '1 D' ? 120 : 390
   const [fetchStep, setFetchStep] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [showVolume, setShowVolume] = useState(true)
@@ -38,55 +35,27 @@ export function StockBarDataSection({ symbol }: Props) {
     staleTime: 60_000,
   })
 
-  useEffect(() => {
-    if (!sym) return
-    let cancelled = false
-    const period = chartPeriod
-    setChartLoading(true)
-    setChartError(null)
-    ;(async () => {
-      try {
-        const limit = period === '1 D' ? 120 : 390
-        const res = await fetchBars(sym, period, limit)
-        if (cancelled) return
-        const rows = (res.bars ?? []) as Bar[]
-        setChartBars(rows)
-        if (rows.length === 0) {
-          setChartInfo(
-            res.message?.trim() ||
-              `No ${period} bars in database. Use Fetch, wait for the job, then reload.`,
-          )
-        } else {
-          setChartInfo(null)
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setChartBars([])
-          setChartError(e instanceof Error ? e.message : 'Load chart failed')
-        }
-      } finally {
-        if (!cancelled) setChartLoading(false)
-      }
-    })()
-    return () => { cancelled = true }
-  }, [sym, chartPeriod])
+  const {
+    data: barsRes,
+    isLoading: chartLoading,
+    error: chartQueryError,
+    refetch: refetchBars,
+  } = useQuery({
+    queryKey: ['market', 'bars', sym, chartPeriod, barLimit],
+    queryFn: () => fetchBars(sym, chartPeriod, barLimit),
+    enabled: !!sym,
+  })
+
+  const chartBars = useMemo(() => (barsRes?.bars ?? []) as Bar[], [barsRes?.bars])
+  const chartError = chartQueryError instanceof Error ? chartQueryError.message : chartQueryError ? String(chartQueryError) : null
+  const chartInfo =
+    !chartLoading && chartBars.length === 0
+      ? barsRes?.message?.trim() ||
+        `No ${chartPeriod} bars in database. Use Fetch, wait for the job, then reload.`
+      : null
 
   async function reloadChart() {
-    if (!sym) return
-    setChartLoading(true)
-    setChartError(null)
-    try {
-      const limit = chartPeriod === '1 D' ? 120 : 390
-      const res = await fetchBars(sym, chartPeriod, limit)
-      const rows = (res.bars ?? []) as Bar[]
-      setChartBars(rows)
-      setChartInfo(rows.length === 0 ? (res.message?.trim() ?? 'No bars in database.') : null)
-    } catch (e) {
-      setChartBars([])
-      setChartError(e instanceof Error ? e.message : 'Load chart failed')
-    } finally {
-      setChartLoading(false)
-    }
+    await refetchBars()
   }
 
   const chartBarsSorted = useMemo(

@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from './ConfirmDialog'
 import { CeleryQueueIconButton } from './CeleryQueueIconButton'
-import { useCeleryOps } from './CeleryOpsContext'
+import { useCeleryOps } from './useCeleryOps'
 import type { WorkerProfileInfo, MassiveJobApiRow, BarsJob } from '@/types/ops'
 import {
   BROKER_QUEUE_STOCKS_IB,

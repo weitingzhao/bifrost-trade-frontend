@@ -12,6 +12,13 @@ import {
 import { MarketStreamStkRow } from './MarketStreamStkRow'
 import { OptionQuoteLastBidAsk } from './OptionQuoteLastBidAsk'
 import styles from './live.module.css'
+import {
+  liveCardClass,
+  liveEmptyHintClass,
+  livePaneTitleClass,
+  livePaneTitleRowClass,
+  liveWatchingOptionsPaneClass,
+} from './liveUi'
 
 interface Props {
   rows: MarketStreamsRow[]
@@ -30,16 +37,16 @@ export function WatchingStocksPane({
   hasStreamAccounts,
 }: Props) {
   return (
-    <div className={styles.card}>
-      <div className={styles.paneTitleRow}>
+    <div className={liveCardClass}>
+      <div className={livePaneTitleRowClass}>
         <StatusLamp lamp={streamsLamp} />
-        <h2 className={styles.paneTitle}>
+        <h2 className={livePaneTitleClass}>
           Watching Stocks
           <InfoTooltip text='STK symbols whose Watchlist category is Watching. Stock quotes and daily % match Market Streams; Host/Secondary and position qty/cost are omitted here.' />
         </h2>
       </div>
       {rows.length === 0 ? (
-        <p className={styles.emptyHint}>No STK symbols with Watchlist category Watching</p>
+        <p className={liveEmptyHintClass}>No STK symbols with Watchlist category Watching</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table} aria-label="Watching stocks quotes">
@@ -85,19 +92,19 @@ interface WatchingOptionsProps {
 
 export function WatchingOptionsPane({ items, quotesByContractKey, streamsLamp }: WatchingOptionsProps) {
   return (
-    <div className={styles.watchingOptionsPane}>
-      <div className={styles.paneTitleRow}>
+    <div className={liveWatchingOptionsPaneClass}>
+      <div className={livePaneTitleRowClass}>
         <StatusLamp
           lamp={streamsLamp}
           title="Quotes: green when Market API can read Redis and IB ingestor is connected (OPT quotes via contract_quote_live)."
         />
-        <h2 className={styles.paneTitle}>
+        <h2 className={livePaneTitleClass}>
           Watching Options
           <InfoTooltip text="Option contracts from Watchlist; quotes from daemon (contract_quote_live). Same quote-path health as Market Streams." />
         </h2>
       </div>
       {items.length === 0 ? (
-        <p className={styles.emptyHint}>No option contracts on Watchlist</p>
+        <p className={liveEmptyHintClass}>No option contracts on Watchlist</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table} aria-label="Watching option quotes">

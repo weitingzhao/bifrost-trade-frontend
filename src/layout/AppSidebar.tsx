@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, PanelLeftClose, PanelLeftOpen, ScrollText } from 'lucide-react'
+import { ChevronDown, Layers2, ListTree, ScrollText } from 'lucide-react'
 import { useLogPanel } from '@/hooks/useLogPanel'
 import { cn } from '@/lib/utils'
 import {
@@ -33,6 +33,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { BifrostLogoFull, BifrostLogoMark } from '@/components/BifrostLogo'
+import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 import { LiveNavLamp } from '@/components/layout/LiveNavLamp'
 import { CeleryNavLamp } from '@/components/layout/CeleryNavLamp'
 import { getAllItems, NAV_GROUPS, SETTINGS_ITEM, type NavGroup, type NavItem } from './navConfig'
@@ -410,15 +411,20 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       {/* ── Header ── */}
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-2.5">
+      <SidebarHeader
+        className={cn(
+          SHELL_TOP_BAR_HEIGHT_CLASS,
+          'flex flex-row items-center gap-0 border-b border-sidebar-border p-0 px-3',
+        )}
+      >
         {isCollapsed ? (
           /* Collapsed: mark only, centered */
-          <div className="flex justify-center">
+          <div className="flex w-full items-center justify-center">
             <BifrostLogoMark size={28} />
           </div>
         ) : (
           /* Expanded: full lockup + accordion toggle */
-          <div className="flex items-center justify-between">
+          <div className="flex w-full min-h-0 items-center justify-between">
             <BifrostLogoFull />
             <Tooltip>
               <TooltipTrigger asChild>
@@ -435,17 +441,23 @@ export function AppSidebar() {
                     }
                   }}
                   className="flex h-6 w-6 items-center justify-center rounded text-sidebar-foreground/35 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                  aria-label={accordion ? 'Switch to multi-expand' : 'Switch to single-expand'}
+                  aria-label={
+                    accordion
+                      ? 'Nav groups: single expand (switch to multi)'
+                      : 'Nav groups: multi expand (switch to single)'
+                  }
                 >
-                  {accordion
-                    ? <PanelLeftClose className="h-3.5 w-3.5" />
-                    : <PanelLeftOpen className="h-3.5 w-3.5" />}
+                  {accordion ? (
+                    <ListTree className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Layers2 className="h-4 w-4" aria-hidden />
+                  )}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="text-xs">
                 {accordion
-                  ? 'Single expand — click to allow multiple open'
-                  : 'Multi expand — click to allow only one open'}
+                  ? 'Single expand — click for multi-open groups'
+                  : 'Multi expand — click for single-open groups'}
               </TooltipContent>
             </Tooltip>
           </div>

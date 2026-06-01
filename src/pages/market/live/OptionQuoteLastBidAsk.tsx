@@ -1,5 +1,6 @@
 import type { QuoteItem } from '@/types/market'
 import { cn } from '@/lib/utils'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import { quoteDisplayLast } from '@/utils/watchlistHelpers'
 import styles from './live.module.css'
@@ -25,7 +26,7 @@ export function OptionQuoteLastBidAsk({ quote }: Props) {
         <span
           className={cn(
             styles.quoteSpread,
-            bidDiff > 0 ? styles.pnlPositive : bidDiff < 0 ? styles.pnlNegative : '',
+            pnlColorClass(bidDiff),
           )}
           title="Bid vs Last"
         >
@@ -37,7 +38,7 @@ export function OptionQuoteLastBidAsk({ quote }: Props) {
         <span
           className={cn(
             styles.quoteSpread,
-            askDiff > 0 ? styles.pnlPositive : askDiff < 0 ? styles.pnlNegative : '',
+            pnlColorClass(askDiff),
           )}
           title="Ask vs Last"
         >

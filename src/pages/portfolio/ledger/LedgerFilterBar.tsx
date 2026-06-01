@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import {
   LEDGER_SINCE_PRESET_TABS,
@@ -8,8 +7,12 @@ import { MONTH_NAMES } from './ledgerConstants'
 import { fmtMdHint } from './ledgerFormat'
 import { LedgerSymbolCombobox } from './LedgerSymbolCombobox'
 import type { LedgerAccountTab } from './ledgerAccountTabs'
-import styles from './TradeLedgerPage.module.css'
-
+import {
+  ledgerBubbleBtn,
+  ledgerFilterPanelClass,
+  ledgerFilterRowClass,
+  ledgerFilterLabelClass,
+} from '@/lib/ledgerUi'
 const SINCE_TOOLTIP =
   'Include executions whose trade date falls in a rolling window ending today: 1 month, 1 quarter, half-year, or 1 year back from today\'s date, or year-to-date from Jan 1. Mutually exclusive with expiry year/month.'
 
@@ -63,7 +66,7 @@ function BubbleButton({
       title={title}
       disabled={disabled}
       onClick={onClick}
-      className={cn(styles.bubbleBtn, active && styles.bubbleBtnActive)}
+      className={ledgerBubbleBtn(active)}
       aria-pressed={active}
     >
       {children}
@@ -112,13 +115,13 @@ export function LedgerFilterBar({
   }
 
   return (
-    <div className={styles.filterPanel} aria-label="Trade ledger quick filters">
-      <div className={styles.filterRows}>
-        <div className={styles.filterRow}>
-          <div className={styles.sinceGroup} role="group" aria-label="Since (rolling trade date window)">
-            <span className={styles.filterInlineLabel}>Since</span>
+    <div className={ledgerFilterPanelClass} aria-label="Trade ledger quick filters">
+      <div className="flex flex-col gap-2.5">
+        <div className={ledgerFilterRowClass}>
+          <div className="inline-flex flex-wrap items-center gap-x-2 gap-y-1" role="group" aria-label="Since (rolling trade date window)">
+            <span className={ledgerFilterLabelClass}>Since</span>
             <InfoTooltip text={SINCE_TOOLTIP} />
-            <div className={styles.bubbleRow}>
+            <div className="inline-flex flex-wrap gap-0.5 items-center">
               <BubbleButton
                 active={sincePreset === 'all' && !expiryFilterYear}
                 onClick={() => { onSincePreset('all'); clearExpiryFilters() }}
@@ -138,7 +141,7 @@ export function LedgerFilterBar({
           </div>
 
           {accountTabs.length > 0 && (
-            <div className={styles.bubbleRow} role="group" aria-label="Account filter">
+            <div className="inline-flex flex-wrap gap-0.5 items-center" role="group" aria-label="Account filter">
               <BubbleButton
                 active={accountFilter === 'all'}
                 onClick={() => onAccountFilter('all')}
@@ -160,36 +163,36 @@ export function LedgerFilterBar({
 
           {sincePreset !== 'all' && !expiryFilterYear && (
             <span
-              className={styles.sinceCutoffInline}
+              className="inline-flex flex-wrap items-baseline text-[0.6875rem] text-muted-foreground"
               role="status"
               title={`Trade date window: ${dateRange.start} → ${dateRange.end}`}
             >
-              <span className={styles.sinceRangeMuted}>
+              <span>
                 {fmtMdHint(dateRange.start)}–{fmtMdHint(dateRange.end)}
               </span>
-              <span className={styles.sinceRangeMuted}> · </span>
-              <span className={styles.sincePresetLabel}>Since </span>
-              <span className={styles.sincePresetHighlight}>{sincePresetLabel}</span>
+              <span> · </span>
+              <span className="font-medium">Since </span>
+              <span className="font-bold text-sky-400 font-mono tabular-nums">{sincePresetLabel}</span>
             </span>
           )}
         </div>
 
-        <div className={styles.filterRow}>
-          <label className={styles.filterInlineField}>
-            <span className={styles.filterInlineLabel}>Symbol</span>
+        <div className={ledgerFilterRowClass}>
+          <label className="inline-flex items-center gap-1.5 min-w-0">
+            <span className={ledgerFilterLabelClass}>Symbol</span>
             <LedgerSymbolCombobox
               value={symbolFilter}
               onChange={onSymbolFilter}
               suggestions={symbolSuggestions}
-              className={styles.symbolFieldWide}
+              className="min-w-[7.5rem] flex-[1_1_7.5rem] max-w-[12rem]"
             />
           </label>
 
           {structureOptions.length > 0 && (
-            <label className={styles.filterInlineField}>
-              <span className={styles.filterInlineLabel}>Structure</span>
+            <label className="inline-flex items-center gap-1.5 min-w-0">
+              <span className={ledgerFilterLabelClass}>Structure</span>
               <select
-                className={styles.filterSelect}
+                className="h-[1.875rem] min-w-[6.5rem] rounded-sm border border-border bg-background text-[0.8125rem] px-2"
                 value={filterStructure}
                 onChange={e => {
                   onFilterStructure(e.target.value)
@@ -205,11 +208,11 @@ export function LedgerFilterBar({
             </label>
           )}
 
-          <div className={styles.filterInlineField} role="group" aria-label="Expiry filter">
-            <span className={styles.filterInlineLabel}>Expiry</span>
-            <div className={styles.expirySplit}>
+          <div className="inline-flex items-center gap-1.5 min-w-0" role="group" aria-label="Expiry filter">
+            <span className={ledgerFilterLabelClass}>Expiry</span>
+            <div className="inline-flex items-center gap-1.5">
               <select
-                className={cn(styles.filterSelect, styles.expiryYearSelect)}
+                className="h-[1.875rem] min-w-[5.5rem] rounded-sm border border-border bg-background text-[0.8125rem] px-2 disabled:opacity-45"
                 value={expiryFilterYear}
                 disabled={sinceDisabled}
                 onChange={e => {
@@ -225,7 +228,7 @@ export function LedgerFilterBar({
                 ))}
               </select>
               <select
-                className={cn(styles.filterSelect, styles.expiryMonthSelect)}
+                className="h-[1.875rem] min-w-[4.5rem] rounded-sm border border-border bg-background text-[0.8125rem] px-2 disabled:opacity-45"
                 value={expiryFilterMonth}
                 disabled={sinceDisabled || !expiryFilterYear}
                 onChange={e => {
@@ -243,10 +246,10 @@ export function LedgerFilterBar({
           </div>
 
           {wishlistSymbolOptions.length > 0 && (
-            <label className={styles.filterInlineField}>
-              <span className={styles.filterInlineLabel}>Wishlist</span>
+            <label className="inline-flex items-center gap-1.5 min-w-0">
+              <span className={ledgerFilterLabelClass}>Wishlist</span>
               <select
-                className={styles.filterSelect}
+                className="h-[1.875rem] min-w-[6.5rem] rounded-sm border border-border bg-background text-[0.8125rem] px-2"
                 value={filterWishlistSymbol}
                 onChange={e => onFilterWishlistSymbol(e.target.value)}
                 aria-label="Wishlist symbol filter"
@@ -260,7 +263,7 @@ export function LedgerFilterBar({
           )}
 
           {(filterStructure || filterWishlistSymbol) && (
-            <button type="button" className={styles.filterClearLink} onClick={clearStructureFilters}>
+            <button type="button" className="text-xs text-sky-400 underline underline-offset-2 bg-transparent border-0 p-0 cursor-pointer" onClick={clearStructureFilters}>
               Clear
             </button>
           )}
@@ -274,7 +277,7 @@ export function LedgerFilterBar({
       </div>
 
       {activeFilterSummary.length > 0 && (
-        <p className={styles.filterMeta} role="status" aria-label="Active filters">
+        <p className="m-0 text-[0.6875rem] text-muted-foreground leading-snug" role="status" aria-label="Active filters">
           {activeFilterSummary.join(' · ')}
         </p>
       )}

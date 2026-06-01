@@ -311,7 +311,7 @@
 
 .emptyCell {
   text-align: center;
-  padding: 2.5rem 1rem !important;
+  padding: 2.5rem 1rem;
   color: var(--muted-foreground);
 }
 

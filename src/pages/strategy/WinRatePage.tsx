@@ -10,7 +10,7 @@ import { useWinRate } from '@/hooks/useStrategies'
 import { WinRateStructureCard, WinRateTotalsCard } from '@/components/strategy/winRate'
 import { resolveWinRateTotals } from '@/utils/winRate'
 import { cn } from '@/lib/utils'
-import styles from './WinRatePage.module.css'
+import styles from '@/components/strategy/winRate/winRate.module.css'
 
 export type SinceFilter = '' | '1m' | 'q' | 'half' | '1y' | 'ytd'
 

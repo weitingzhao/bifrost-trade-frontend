@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { IbPositionRow } from '@/types/monitor'
@@ -11,7 +11,8 @@ import {
   type OptionStockMixCategory,
 } from '@/utils/positionsCharts'
 import { DonutChart } from './DonutChart'
-import { BubbleSwitch, POSITIONS_BUBBLE_SIZE } from './BubbleSwitch'
+import { BubbleSwitch } from './BubbleSwitch'
+import { POSITIONS_BUBBLE_SIZE } from './bubbleSwitchStyles'
 import { ChartLegend } from './ChartLegend'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { PositionsChartCell, DonutChartRow } from './PositionsChartCell'
@@ -43,11 +44,14 @@ export function OptionChartsCard({
   onOptionCategoryClick,
 }: Props) {
   const [legendMode, setLegendMode] = useState<'pct' | 'usd'>('pct')
-  const resolvePrice = (pos: IbPositionRow) => resolveDonutPrice(pos, quotesByCk, quotesBySymbol)
+  const resolvePrice = useCallback(
+    (pos: IbPositionRow) => resolveDonutPrice(pos, quotesByCk, quotesBySymbol),
+    [quotesByCk, quotesBySymbol],
+  )
 
   const detailSegments = useMemo(
     () => buildOptionDetailSegments(accounts, chartAccountId as 'all' | string, resolvePrice),
-    [accounts, chartAccountId, quotesByCk, quotesBySymbol],
+    [accounts, chartAccountId, resolvePrice],
   )
 
   const stockMix = useMemo(

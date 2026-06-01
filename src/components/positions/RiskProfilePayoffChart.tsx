@@ -18,20 +18,15 @@ function fmtAxisPrice(n: number): string {
 /** Pick a step size that yields ~targetCount ticks over [ymin, ymax] with nice round numbers. */
 function niceYStep(ymin: number, ymax: number, targetCount: number): number {
   const span = Math.max(ymax - ymin, 1)
-  let step = span / Math.max(targetCount - 1, 1)
-  const exp = Math.floor(Math.log10(step))
-  const base = step / Math.pow(10, exp)
+  const rawStep = span / Math.max(targetCount - 1, 1)
+  const exp = Math.floor(Math.log10(rawStep))
+  const base = rawStep / Math.pow(10, exp)
   const niceBase = base <= 1.2 ? 1 : base <= 2.5 ? 2 : base <= 6 ? 5 : 10
   return niceBase * Math.pow(10, exp)
 }
 
 /** Build Y ticks: 0 included when in range; at most maxTicks to avoid crowded labels. */
-function buildYTicks(
-  yMin: number,
-  yMax: number,
-  maxTicks: number,
-  _profile: { max_gain: number | null; max_loss: number | null },
-): number[] {
+function buildYTicks(yMin: number, yMax: number, maxTicks: number): number[] {
   const include0 = 0 >= yMin && 0 <= yMax
   const step = niceYStep(yMin, yMax, maxTicks)
   if (step <= 0) return include0 ? [0] : []
@@ -112,8 +107,8 @@ export function RiskProfilePayoffChart({
 
   const { points, xMin, xMax, yMin, yMax, unlimitedTail } = useMemo(() => {
     const strikes = Array.from(new Set(ctx.positions.map(p => p.strike))).sort((a, b) => a - b)
-    let x0 = 0
-    let x1 = 0
+    let x0: number
+    let x1: number
     if (strikes.length > 0) {
       x0 = 0
       x1 = strikes[strikes.length - 1] * 2
@@ -168,15 +163,16 @@ export function RiskProfilePayoffChart({
   const pw = W - padL - padR
   const ph = H - padT - padB
 
-  const sx = (x: number) => padL + ((x - xMin) / (xMax - xMin)) * pw
-  const sy = (y: number) => padT + ((yMax - y) / (yMax - yMin)) * ph
-
   const lineD = useMemo(() => {
+    const sx = (x: number) => padL + ((x - xMin) / (xMax - xMin)) * pw
+    const sy = (y: number) => padT + ((yMax - y) / (yMax - yMin)) * ph
     if (points.length === 0) return ''
     return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${sx(p.x)} ${sy(p.y)}`).join(' ')
   }, [points, xMin, xMax, yMin, yMax, padL, padT, pw, ph])
 
   const { greenPaths, redPaths } = useMemo(() => {
+    const sx = (x: number) => padL + ((x - xMin) / (xMax - xMin)) * pw
+    const sy = (y: number) => padT + ((yMax - y) / (yMax - yMin)) * ph
     const green: string[] = []
     const red: string[] = []
     for (let i = 0; i < points.length - 1; i++) {
@@ -189,6 +185,8 @@ export function RiskProfilePayoffChart({
     return { greenPaths: green, redPaths: red }
   }, [points, xMin, xMax, yMin, yMax, padL, padT, pw, ph])
 
+  const sx = (x: number) => padL + ((x - xMin) / (xMax - xMin)) * pw
+  const sy = (y: number) => padT + ((yMax - y) / (yMax - yMin)) * ph
   const y0 = sy(0)
   const xAxisLogical = 0 >= yMin && 0 <= yMax
 
@@ -207,8 +205,8 @@ export function RiskProfilePayoffChart({
 
   const maxYTicks = compact ? 5 : 6
   const yTicks = useMemo(
-    () => buildYTicks(yMin, yMax, maxYTicks, profile),
-    [yMin, yMax, maxYTicks, profile],
+    () => buildYTicks(yMin, yMax, maxYTicks),
+    [yMin, yMax, maxYTicks],
   )
 
   const rootClass =

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 export interface LedgerSymbolComboboxProps {
   value: string

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 export function LedgerSegmentSwitch({
   children,

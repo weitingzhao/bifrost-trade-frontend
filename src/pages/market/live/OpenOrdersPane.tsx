@@ -7,10 +7,20 @@ import type { StatusResponse } from '@/types/monitor'
 import { fmtSince, fmtTs, parseOptionContractKey } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import styles from './live.module.css'
-
-function secTypeNorm(o: OpenOrder): string {
-  return ((o.sec_type ?? '') as string).toString().toUpperCase()
-}
+import {
+  liveEmptyHintClass,
+  liveFreshnessBadgeClass,
+  liveIconBtnClass,
+  liveOpenOrdersPaneClass,
+  liveOpenOrdersSectionClass,
+  liveOpenOrdersSubtitleClass,
+  liveOpenOrdersWrapClass,
+  livePaneHeaderActionsClass,
+  livePaneHeaderRowClass,
+  livePaneTitleClass,
+  livePaneTitleRowClass,
+  liveSourceHintClass,
+} from './liveUi'
 
 interface Props {
   optOrders: OpenOrder[]
@@ -36,25 +46,25 @@ export function OpenOrdersPane({
   const total = optOrders.length + stkOrders.length
 
   return (
-    <div className={styles.openOrdersPane}>
-      <div className={styles.paneHeaderRow}>
-        <div className={styles.paneTitleRow}>
+    <div className={liveOpenOrdersPaneClass}>
+      <div className={livePaneHeaderRowClass}>
+        <div className={livePaneTitleRowClass}>
           <StatusLamp lamp={ordersLamp} title={lampTitle} />
-          <h2 className={styles.paneTitle}>
+          <h2 className={livePaneTitleClass}>
             Open Orders
             <InfoTooltip text="Unfilled orders from PostgreSQL (daemon_open_orders). The Account Sync Daemon writes this table from the IB account stream. This page polls GET /open-orders every few seconds for UI updates. Account ID is the IB account that placed each order." />
           </h2>
         </div>
-        <div className={styles.paneHeaderActions}>
+        <div className={livePaneHeaderActionsClass}>
           {openOrdersUpdatedAt != null && (
-            <span className={styles.freshnessBadge} title={`DB polled at ${fmtTs(openOrdersUpdatedAt)}`}>
+            <span className={liveFreshnessBadgeClass} title={`DB polled at ${fmtTs(openOrdersUpdatedAt)}`}>
               <Clock className="h-2.5 w-2.5 opacity-70" aria-hidden />
               <span>{fmtSince(openOrdersUpdatedAt)} ago</span>
             </span>
           )}
           <button
             type="button"
-            className={styles.iconBtn}
+            className={liveIconBtnClass}
             onClick={() => navigate('/settings/subscribe')}
             title="Open Subscribe page (IB Event Subscribe — account agent stream)"
             aria-label="Open Subscribe page"
@@ -63,15 +73,15 @@ export function OpenOrdersPane({
           </button>
         </div>
       </div>
-      <p className={styles.sourceHint}>Source: DB table daemon_open_orders</p>
+      <p className={liveSourceHintClass}>Source: DB table daemon_open_orders</p>
 
       {total === 0 ? (
-        <p className={styles.emptyHint}>No open orders</p>
+        <p className={liveEmptyHintClass}>No open orders</p>
       ) : (
-        <div className={styles.openOrdersWrap}>
+        <div className={liveOpenOrdersWrapClass}>
           {optOrders.length > 0 && (
-            <div className={styles.openOrdersSection}>
-              <h3 className={styles.openOrdersSubtitle}>Option (OPT)</h3>
+            <div className={liveOpenOrdersSectionClass}>
+              <h3 className={liveOpenOrdersSubtitleClass}>Option (OPT)</h3>
               <div className={styles.tableWrap}>
                 <table className={styles.openOrdersTable} aria-label="Open orders Option">
                   <thead>
@@ -135,8 +145,8 @@ export function OpenOrdersPane({
           )}
 
           {stkOrders.length > 0 && (
-            <div className={styles.openOrdersSection}>
-              <h3 className={styles.openOrdersSubtitle}>Stock (STK)</h3>
+            <div className={liveOpenOrdersSectionClass}>
+              <h3 className={liveOpenOrdersSubtitleClass}>Stock (STK)</h3>
               <div className={styles.tableWrap}>
                 <table className={styles.openOrdersTable} aria-label="Open orders Stock">
                   <thead>
@@ -195,12 +205,3 @@ export function OpenOrdersPane({
   )
 }
 
-export function partitionOpenOrders(orders: OpenOrder[]): {
-  optOrders: OpenOrder[]
-  stkOrders: OpenOrder[]
-} {
-  return {
-    optOrders: orders.filter(o => secTypeNorm(o) === 'OPT'),
-    stkOrders: orders.filter(o => secTypeNorm(o) === 'STK'),
-  }
-}

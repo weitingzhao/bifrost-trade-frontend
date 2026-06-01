@@ -1,5 +1,5 @@
 import type { ProfitLossTone, WinPctTone } from '@/utils/winRate'
-import styles from '@/pages/strategy/WinRatePage.module.css'
+import styles from './winRate.module.css'
 
 export function kpiToneClass(tone: WinPctTone | ProfitLossTone): string {
   switch (tone) {

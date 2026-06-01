@@ -92,11 +92,15 @@ export function useIngestControlPoll(services: MarketIngestServiceRow[]) {
   }, [services, stoppingIds, clearStopPoll])
 
   useEffect(() => {
+    const startTimers = startTimersRef.current
+    const stopTimers = stopTimersRef.current
+    const startTimeouts = startTimeoutRef.current
+    const stopTimeouts = stopTimeoutRef.current
     return () => {
-      for (const id of startTimersRef.current.values()) clearInterval(id)
-      for (const id of stopTimersRef.current.values()) clearInterval(id)
-      for (const id of startTimeoutRef.current.values()) clearTimeout(id)
-      for (const id of stopTimeoutRef.current.values()) clearTimeout(id)
+      for (const id of startTimers.values()) clearInterval(id)
+      for (const id of stopTimers.values()) clearInterval(id)
+      for (const id of startTimeouts.values()) clearTimeout(id)
+      for (const id of stopTimeouts.values()) clearTimeout(id)
     }
   }, [])
 

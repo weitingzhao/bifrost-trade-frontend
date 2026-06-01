@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Execution } from '@/types/positions'
 import { executionInstanceLabel } from '@/utils/ledger/ledgerOptHelpers'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 function formatAllocQty(q: number): string {
   const n = Number(q)

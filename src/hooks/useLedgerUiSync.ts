@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect -- ledger tab/bucket sync when filtered data changes */
 import { useEffect } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { GroupBy, InstanceSubTab, MainTab } from '@/pages/portfolio/ledger/ledgerTypes'

@@ -19,7 +19,7 @@ import {
 } from './LedgerStkCells'
 import { PAGE_SIZE } from './ledgerConstants'
 import type { MainTab, StkPositionGroup, StkSortCol } from './ledgerTypes'
-import styles from './TradeLedgerPage.module.css'
+import styles from './ledgerStyles'
 
 function sortPositionGroups(
   groups: StkPositionGroup[],

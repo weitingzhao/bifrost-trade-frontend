@@ -2,10 +2,11 @@ import { cn } from '@/lib/utils'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
+import { PosStatusPill } from './PosStatusPill'
 import { fmtUsd, fmtSignedPct, pnlColorClass } from '@/utils/positions'
 import type { InstanceStockCoverage, LivePositionRow } from '@/types/positions'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
+import sheetStyles from './InstanceStrategyPanel.module.css'
 
 interface Props {
   coverage: InstanceStockCoverage[]
@@ -78,19 +79,19 @@ function coverageStatusLabel(held: number, required: number): { label: string; v
 }
 
 function StatusBadge({ variant, label }: { variant: 'covered' | 'partial' | 'naked'; label: string }) {
-  if (variant === 'covered') return <Badge variant="default" className="text-[10px]">{label}</Badge>
-  if (variant === 'partial') return <Badge variant="secondary" className="text-[10px] border-yellow-500 text-yellow-600">{label}</Badge>
-  return <Badge variant="destructive" className="text-[10px]">{label}</Badge>
+  if (variant === 'covered') return <PosStatusPill tone="brightOk">{label}</PosStatusPill>
+  if (variant === 'partial') return <PosStatusPill tone="warn">{label}</PosStatusPill>
+  return <PosStatusPill tone="bad">{label}</PosStatusPill>
 }
 
 export function InstanceCoverageSubTable({ coverage, liveStocks, quotesBySymbol, benchBySymbol, onOpenStock }: Props) {
   if (coverage.length === 0) return null
 
   return (
-    <div className="mt-3 pt-3 border-t">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Underlying Coverage</p>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
+    <section className={cn(sheetStyles.subSection, sheetStyles.subSectionCoverage)}>
+      <h4 className={sheetStyles.subHeading}>Underlying Coverage</h4>
+      <div className={sheetStyles.subTableWrap}>
+        <Table className={sheetStyles.subTable}>
           <TableHeader>
             <TableRow>
               <TableHead>Symbol</TableHead>
@@ -116,21 +117,21 @@ export function InstanceCoverageSubTable({ coverage, liveStocks, quotesBySymbol,
               const status = coverageStatusLabel(Math.abs(m.held), sc.required_shares)
 
               return (
-                <TableRow key={`${sc.symbol}-${sc.account_id}-${i}`}>
+                <TableRow key={`${sc.symbol}-${sc.account_id}-${i}`} className={sheetStyles.subDataRow}>
                   <TableCell>
                     {onOpenStock ? (
                       <button
                         type="button"
-                        className="font-mono text-xs font-medium text-primary hover:underline"
+                        className={sheetStyles.subContractBtn}
                         onClick={() => onOpenStock(sc.symbol, sc.account_id)}
                       >
                         {sc.symbol}
                       </button>
                     ) : (
-                      <span className="font-mono text-xs font-medium">{sc.symbol}</span>
+                      <span className={sheetStyles.subContractBtn}>{sc.symbol}</span>
                     )}
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{sc.account_id}</TableCell>
+                  <TableCell className={cn('font-mono text-xs', sheetStyles.subMutedCell)}>{sc.account_id}</TableCell>
                   <TableCell className="text-right font-mono text-xs">{fmtUsd(m.cost_basis)}</TableCell>
                   <TableCell className="text-right font-mono text-xs">{fmtUsd(m.avg_cost)}</TableCell>
                   <TableCell className="text-right font-mono text-xs">{fmtUsd(m.live_last)}</TableCell>
@@ -159,6 +160,6 @@ export function InstanceCoverageSubTable({ coverage, liveStocks, quotesBySymbol,
           </TableBody>
         </Table>
       </div>
-    </div>
+    </section>
   )
 }

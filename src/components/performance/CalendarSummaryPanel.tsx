@@ -39,7 +39,7 @@ function fmtPF(v: number | null | undefined): string {
 
 // ─── Types ───
 
-type CalendarAssetTab = 'all' | 'options' | 'stocks' | 'fixed_income' | 'cash_like'
+type CalendarAssetTab = 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 
 interface CalendarSummaryPanelProps {
   summary: PerformanceSummary | undefined
@@ -243,7 +243,7 @@ export function CalendarSummaryPanel({
 
   const monthStats = useMemo(() => {
     if (!calendarDayPnLByAsset) return null
-    const tabKey = calendarAssetTab === 'all' ? 'options' : calendarAssetTab
+    const tabKey = calendarAssetTab
     const rec = calendarDayPnLByAsset[tabKey]
     if (!rec) return null
 

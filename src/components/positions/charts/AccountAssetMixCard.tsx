@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { fmtUsd } from '@/utils/positions'
 import {
+  ASSET_MIX_CHART_COLORS,
   buildCoverageAssetPieData,
   fmtMvAbbrev,
   type AssetMixIncludeFlags,
@@ -10,64 +11,53 @@ import {
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { LivePositionRow } from '@/types/positions'
 import { DonutChart, donutCenterFromDenom } from './DonutChart'
-import { BubbleSwitch, IncludeExcludeToggle } from './BubbleSwitch'
+import { BubbleSwitch, IncludeExcludeToggle, POSITIONS_BUBBLE_SIZE } from './BubbleSwitch'
+import styles from '../PositionsChartsSection.module.css'
 
 interface Props {
   accounts: IbAccountSnapshot[]
-  hostAccountId: string
-  secondaryAccountId: string
   coreStocks: LivePositionRow[]
   fixedIncomeStocks: LivePositionRow[]
   cashLikeStocks: LivePositionRow[]
   chartAccountId: string
-  onChartAccountIdChange: (id: string) => void
 }
 
-function ChartShell({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn('rounded-lg border border-border bg-secondary p-4 space-y-3 min-w-0', className)}>
-      {children}
-    </div>
-  )
-}
-
-function LegendRow({
+function LegendItem({
   label,
   pct,
   value,
-  mode,
-  excluded,
   dotClass,
+  excluded,
+  pctMode,
 }: {
   label: string
   pct: string
   value: string
-  mode: 'pct' | 'usd'
-  excluded?: boolean
   dotClass: string
+  excluded?: boolean
+  pctMode: boolean
 }) {
   return (
     <div
-      className={cn('flex items-center gap-1.5 text-xs', excluded && 'opacity-50')}
+      className={cn(styles.mixLegendItem, excluded && 'opacity-50')}
       title={excluded ? 'Not included in ring denominator' : undefined}
     >
-      <span className={cn('w-2 h-2 rounded-full shrink-0', dotClass)} />
-      <span className="text-muted-foreground flex-1">{label}</span>
-      <span className="font-mono text-muted-foreground w-10 text-right">{mode === 'pct' ? pct : '—'}</span>
-      <span className="font-mono w-14 text-right">{value}</span>
+      <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', dotClass)} />
+      <span className={styles.mixLegendItemLabel}>{label}</span>
+      <span className={styles.mixLegendItemPct}>{pctMode ? pct : '—'}</span>
+      <span className={styles.mixLegendItemValue} title={value}>
+        {value}
+      </span>
     </div>
   )
 }
 
 export function AccountAssetMixCard({
   accounts,
-  hostAccountId,
-  secondaryAccountId,
   coreStocks,
   fixedIncomeStocks,
   cashLikeStocks,
   chartAccountId,
-  onChartAccountIdChange,
 }: Props) {
   const [legendMode, setLegendMode] = useState<'pct' | 'usd'>('pct')
   const [flags, setFlags] = useState<AssetMixIncludeFlags>({
@@ -95,30 +85,15 @@ export function AccountAssetMixCard({
     pie.simpleCenterPct,
   )
 
-  const accountOptions = [
-    { id: 'all', label: 'All' },
-    ...(hostAccountId ? [{ id: hostAccountId, label: hostAccountId }] : []),
-    ...(secondaryAccountId && secondaryAccountId !== hostAccountId
-      ? [{ id: secondaryAccountId, label: secondaryAccountId }]
-      : []),
-  ]
+  const pctMode = legendMode === 'pct'
 
   return (
-    <ChartShell>
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Account</span>
+    <div className={cn(styles.accountPanelBody, 'gap-2')}>
+      <div className={cn(styles.chartSectionHeader, 'flex-wrap')}>
+        <span className={styles.chartSectionTitle}>Asset mix</span>
         <BubbleSwitch
-          size="xs"
-          options={accountOptions.map((o) => ({ value: o.id, label: o.label }))}
-          value={chartAccountId}
-          onChange={onChartAccountIdChange}
-        />
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Asset mix</span>
-        <BubbleSwitch
-          size="xs"
+          size={POSITIONS_BUBBLE_SIZE}
+          className="ml-auto shrink-0"
           options={[
             { value: 'pct', label: '%' },
             { value: 'usd', label: '$' },
@@ -128,86 +103,109 @@ export function AccountAssetMixCard({
         />
       </div>
 
-      <div className="flex gap-3 items-start">
-        <DonutChart
-          segments={[
-            { label: 'Stock', value: pie.coreStockMV, color: '#38bdf8' },
-            ...(pie.includeFiInChart ? [{ label: 'FI', value: pie.fixedIncomeMV, color: '#fbbf24' }] : []),
-            ...(pie.includeCashLikeInChart ? [{ label: 'CL', value: pie.cashLikeMV, color: '#2dd4bf' }] : []),
-            { label: 'Cash', value: pie.cash ?? 0, color: '#94a3b8' },
-            ...(pie.includeBpInChart && pie.bp ? [{ label: 'BP', value: pie.bp, color: '#a855f7' }] : []),
-          ].filter((s) => s.value > 0)}
-          centerMain={center.main}
-          centerSub={center.sub || undefined}
-        />
-        <div className="flex-1 space-y-2 min-w-0">
-          <div className="space-y-1">
+      <div className={styles.mixBody}>
+        <div className={styles.mixChartBlock}>
+          <DonutChart
+            segments={[
+              { label: 'Stock', value: pie.coreStockMV, color: ASSET_MIX_CHART_COLORS.stock },
+              ...(pie.includeFiInChart
+                ? [{ label: 'FI', value: pie.fixedIncomeMV, color: ASSET_MIX_CHART_COLORS.fi }]
+                : []),
+              ...(pie.includeCashLikeInChart
+                ? [{ label: 'CL', value: pie.cashLikeMV, color: ASSET_MIX_CHART_COLORS.cashLike }]
+                : []),
+              { label: 'Cash', value: pie.cash ?? 0, color: ASSET_MIX_CHART_COLORS.cash },
+              ...(pie.includeBpInChart && pie.bp
+                ? [{ label: 'BP', value: pie.bp, color: ASSET_MIX_CHART_COLORS.bp }]
+                : []),
+            ].filter((s) => s.value > 0)}
+            centerMain={center.main}
+            centerSub={center.sub || undefined}
+            centerVariant={center.variant}
+          />
+          <div className={styles.mixFilters}>
             <IncludeExcludeToggle
+              layout="stacked"
               label="Fixed income in chart"
               include={flags.includeFi}
               onChange={(v) => setFlags((f) => ({ ...f, includeFi: v }))}
             />
             <IncludeExcludeToggle
+              layout="stacked"
               label="Cash-like in chart"
               include={flags.includeCashLike}
               onChange={(v) => setFlags((f) => ({ ...f, includeCashLike: v }))}
             />
             <IncludeExcludeToggle
+              layout="stacked"
               label="Buying power in chart"
               include={flags.includeBp}
               onChange={(v) => setFlags((f) => ({ ...f, includeBp: v }))}
             />
           </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 pt-1 border-t border-border/60">
-            <LegendRow
+        </div>
+
+        <div className={styles.mixLegend}>
+          <div className={styles.mixLegendCol}>
+            <LegendItem
               label="Stock"
               dotClass="bg-[#38bdf8]"
               pct={pie.denom > 0 ? `${(pie.pStock * 100).toFixed(1)}%` : '—'}
-              value={legendMode === 'pct' ? fmtMvAbbrev(pie.coreStockMV) : fmtUsd(pie.coreStockMV)}
-              mode={legendMode}
+              value={pctMode ? fmtMvAbbrev(pie.coreStockMV) : fmtUsd(pie.coreStockMV)}
+              pctMode={pctMode}
             />
-            <LegendRow
+            <LegendItem
+              label="Fixed income"
+              dotClass="bg-[#4ade80]"
+              pct={
+                pie.includeFiInChart && pie.denom > 0 ? `${(pie.pFixedIncome * 100).toFixed(1)}%` : '—'
+              }
+              value={pctMode ? fmtMvAbbrev(pie.fixedIncomeMV) : fmtUsd(pie.fixedIncomeMV)}
+              excluded={!pie.includeFiInChart}
+              pctMode={pctMode}
+            />
+            <LegendItem
+              label="Buying power"
+              dotClass="bg-[#e879f9]"
+              pct={pie.includeBpInChart && pie.denom > 0 ? `${(pie.pBp * 100).toFixed(1)}%` : '—'}
+              value={pie.bp != null ? (pctMode ? fmtMvAbbrev(pie.bp) : fmtUsd(pie.bp)) : '—'}
+              excluded={!pie.includeBpInChart}
+              pctMode={pctMode}
+            />
+          </div>
+          <div className={styles.mixLegendCol}>
+            <LegendItem
               label="Cash-like"
               dotClass="bg-[#2dd4bf]"
-              pct={pie.includeCashLikeInChart && pie.denom > 0 ? `${(pie.pCashLike * 100).toFixed(1)}%` : '—'}
-              value={legendMode === 'pct' ? fmtMvAbbrev(pie.cashLikeMV) : fmtUsd(pie.cashLikeMV)}
-              mode={legendMode}
+              pct={
+                pie.includeCashLikeInChart && pie.denom > 0
+                  ? `${(pie.pCashLike * 100).toFixed(1)}%`
+                  : '—'
+              }
+              value={pctMode ? fmtMvAbbrev(pie.cashLikeMV) : fmtUsd(pie.cashLikeMV)}
               excluded={!pie.includeCashLikeInChart}
+              pctMode={pctMode}
             />
-            <LegendRow
-              label="Fixed income"
-              dotClass="bg-[#fbbf24]"
-              pct={pie.includeFiInChart && pie.denom > 0 ? `${(pie.pFixedIncome * 100).toFixed(1)}%` : '—'}
-              value={legendMode === 'pct' ? fmtMvAbbrev(pie.fixedIncomeMV) : fmtUsd(pie.fixedIncomeMV)}
-              mode={legendMode}
-              excluded={!pie.includeFiInChart}
-            />
-            <LegendRow
+            <LegendItem
               label="Net cash"
-              dotClass="bg-slate-400"
+              dotClass="bg-[#fbbf24]"
               pct={pie.denom > 0 ? `${(pie.pCash * 100).toFixed(1)}%` : '—'}
-              value={pie.cash != null ? (legendMode === 'pct' ? fmtMvAbbrev(pie.cash) : fmtUsd(pie.cash)) : '—'}
-              mode={legendMode}
-            />
-            <LegendRow
-              label="Buying power"
-              dotClass="bg-purple-500"
-              pct={pie.includeBpInChart && pie.denom > 0 ? `${(pie.pBp * 100).toFixed(1)}%` : '—'}
-              value={pie.bp != null ? (legendMode === 'pct' ? fmtMvAbbrev(pie.bp) : fmtUsd(pie.bp)) : '—'}
-              mode={legendMode}
-              excluded={!pie.includeBpInChart}
+              value={
+                pie.cash != null ? (pctMode ? fmtMvAbbrev(pie.cash) : fmtUsd(pie.cash)) : '—'
+              }
+              pctMode={pctMode}
             />
           </div>
           {pie.denom > 0 && (
-            <div className="flex items-center justify-between text-xs pt-1 border-t border-border/60 font-medium">
+            <div className={styles.mixLegendSum}>
               <span className="text-muted-foreground">Sum (chart basis)</span>
               <span className="font-mono" title={fmtUsd(pie.denom)}>
-                {legendMode === 'pct' ? fmtMvAbbrev(pie.denom) : fmtUsd(pie.denom)}
+                {pctMode ? fmtMvAbbrev(pie.denom) : fmtUsd(pie.denom)}
               </span>
             </div>
           )}
         </div>
       </div>
-    </ChartShell>
+    </div>
   )
 }

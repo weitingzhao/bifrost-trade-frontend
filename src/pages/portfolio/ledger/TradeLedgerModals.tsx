@@ -3,7 +3,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { DeleteConfirmDialog } from '@/components/positions/DeleteConfirmDialog'
 import { ExecutionFormModal } from '@/components/positions/ExecutionFormModal'
-import { LinkExecutionModal } from '@/components/positions/LinkExecutionModal'
+import {
+  LinkExecutionModal,
+  type LinkExecutionContext,
+} from '@/components/positions/LinkExecutionModal'
 import { QuickCloseModal } from '@/components/positions/QuickCloseModal'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -81,10 +84,13 @@ export function TradeLedgerModals({
           }}
         />
       )}
-      {linkStrategyTarget && (
+      {linkStrategyTarget?.account_executions_id != null && (
         <LinkExecutionModal
           open
-          exec={linkStrategyTarget}
+          context={{
+            account_executions_id: linkStrategyTarget.account_executions_id,
+            execution: linkStrategyTarget,
+          } satisfies LinkExecutionContext}
           opportunities={opportunities}
           onClose={() => setLinkStrategyTarget(null)}
           onSuccess={() => {

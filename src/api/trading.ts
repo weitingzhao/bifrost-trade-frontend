@@ -64,9 +64,17 @@ export async function fetchExecutions(source: 'final' | 'tws' | 'canonical' = 'f
   return validateExecutions({ items: raw.executions ?? [] })
 }
 
-export async function fetchPositionAttribution(): Promise<PositionAttributionResponse> {
-  const res = await fetch(`${BASE}/position-attribution`)
-  if (!res.ok) throw new Error(`Trading /position-attribution: ${res.status}`)
+/** Legacy: GET /executions/position-attribution → { attributions: PositionInstanceAttribution[] } */
+export async function fetchPositionAttribution(
+  accountId?: string,
+  secType?: string,
+): Promise<PositionAttributionResponse> {
+  const params = new URLSearchParams()
+  if (accountId?.trim()) params.set('account_id', accountId.trim())
+  if (secType?.trim()) params.set('sec_type', secType.trim())
+  const qs = params.toString()
+  const res = await fetch(`${BASE}/executions/position-attribution${qs ? `?${qs}` : ''}`)
+  if (!res.ok) throw new Error(`Trading /executions/position-attribution: ${res.status}`)
   const raw = (await res.json()) as {
     items?: PositionAttributionResponse['items']
     attributions?: PositionAttributionResponse['items']

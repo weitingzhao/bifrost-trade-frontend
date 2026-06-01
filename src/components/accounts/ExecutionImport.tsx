@@ -58,7 +58,7 @@ function buildFlexSuccessMessage(r: {
 }
 
 const pillGroupClass =
-  'inline-flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-secondary/40 px-2.5 py-1.5 min-h-[30px]'
+  'inline-flex flex-nowrap items-center gap-2 rounded-lg border border-border/60 bg-secondary/40 px-2.5 py-1.5 min-h-[30px] shrink-0'
 
 export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
   const [twsDays, setTwsDays] = useState<TwsDays>(1)
@@ -141,8 +141,15 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
   }
 
   return (
-    <section aria-label="Execution import from Tws and Flex" className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
+    <section aria-label="Execution import from Tws and Flex" className="w-full min-w-0 space-y-2">
+      <div
+        className={cn(
+          'flex w-full min-w-0 items-center gap-3',
+          hasAccounts
+            ? 'flex-col sm:flex-row sm:flex-nowrap sm:justify-between'
+            : 'flex-row flex-nowrap',
+        )}
+      >
         <div
           className={pillGroupClass}
           role="radiogroup"
@@ -151,7 +158,7 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
           <RadioGroup
             value={String(twsDays)}
             onValueChange={(v) => setTwsDays(Number(v) as TwsDays)}
-            className="flex flex-wrap items-center gap-3"
+            className="flex flex-nowrap items-center gap-4"
             disabled={busy}
           >
             {([1, 3, 7] as TwsDays[]).map((d) => (
@@ -175,8 +182,13 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
         </div>
 
         {hasAccounts && (
-          <>
-            <Separator orientation="vertical" className="hidden sm:block h-7" />
+          <div
+            className={cn(
+              'flex w-full min-w-0 items-center gap-3 sm:w-auto sm:shrink-0',
+              'max-sm:justify-between',
+            )}
+          >
+            <Separator orientation="vertical" className="hidden sm:block h-7 shrink-0" />
             <div
               className={pillGroupClass}
               role="group"
@@ -205,7 +217,7 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
                 {flexLoading ? 'Fetching…' : 'Flex Refresh'}
               </Button>
             </div>
-          </>
+          </div>
         )}
       </div>
 

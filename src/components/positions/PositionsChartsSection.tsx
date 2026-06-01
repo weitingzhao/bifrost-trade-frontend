@@ -7,6 +7,8 @@ import { filterStocksByBucket } from '@/utils/positionsGrouping'
 import { AccountAssetMixCard } from './charts/AccountAssetMixCard'
 import { UnderlyingCategoryCard } from './charts/UnderlyingCategoryCard'
 import { OptionChartsCard } from './charts/OptionChartsCard'
+import { BubbleSwitch, POSITIONS_BUBBLE_SIZE } from './charts/BubbleSwitch'
+import styles from './PositionsChartsSection.module.css'
 
 export type OpenTab = 'instance' | 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 
@@ -18,6 +20,8 @@ interface Props {
   quotesBySymbol: Record<string, QuoteItem>
   quotesByCk: Record<string, QuoteItem>
   watchlistCoverageItems: StockCoverageItem[]
+  chartAccountId: string
+  onChartAccountIdChange: (id: string) => void
   filterSymbol: string
   onFilterSymbolChange: (sym: string) => void
   onTabChange: (tab: OpenTab) => void
@@ -33,13 +37,14 @@ export function PositionsChartsSection({
   quotesBySymbol,
   quotesByCk,
   watchlistCoverageItems,
+  chartAccountId,
+  onChartAccountIdChange,
   filterSymbol,
   onFilterSymbolChange,
   onTabChange,
   optionStockMixFilter,
   onOptionStockMixFilterChange,
 }: Props) {
-  const [chartAccountId, setChartAccountId] = useState('all')
   const [underlyingCategoryFilter, setUnderlyingCategoryFilter] = useState<
     Record<UnderlyingCategoryFilter, boolean>
   >({
@@ -55,6 +60,17 @@ export function PositionsChartsSection({
   const cashLikeStocks = useMemo(() => filterStocksByBucket(allStocks, 'cash_like'), [allStocks])
 
   const activeSymbol = filterSymbol.trim().toUpperCase()
+
+  const accountOptions = useMemo(
+    () => [
+      { id: 'all', label: 'All' },
+      ...(hostAccountId ? [{ id: hostAccountId, label: hostAccountId }] : []),
+      ...(secondaryAccountId && secondaryAccountId !== hostAccountId
+        ? [{ id: secondaryAccountId, label: secondaryAccountId }]
+        : []),
+    ],
+    [hostAccountId, secondaryAccountId],
+  )
 
   function handleSymbolClick(sym: string) {
     const next = activeSymbol === sym ? '' : sym
@@ -106,43 +122,67 @@ export function PositionsChartsSection({
   if (!hasAnyData) return null
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <AccountAssetMixCard
-        accounts={accounts}
-        hostAccountId={hostAccountId}
-        secondaryAccountId={secondaryAccountId}
-        coreStocks={coreStocks}
-        fixedIncomeStocks={fixedIncomeStocks}
-        cashLikeStocks={cashLikeStocks}
-        chartAccountId={chartAccountId}
-        onChartAccountIdChange={setChartAccountId}
-      />
-      <UnderlyingCategoryCard
-        accounts={accounts}
-        chartAccountId={chartAccountId}
-        quotesBySymbol={quotesBySymbol}
-        quotesByCk={quotesByCk}
-        categoryFilter={underlyingCategoryFilter}
-        onCategoryFilterChange={(cat) =>
-          setUnderlyingCategoryFilter((prev) => ({ ...prev, [cat]: !prev[cat] }))
-        }
-        activeSymbol={activeSymbol}
-        onSymbolClick={handleSymbolClick}
-        activeCategoryWeight={activeCategoryWeight}
-        onCategoryWeightClick={handleCategoryWeight}
-      />
-      <OptionChartsCard
-        accounts={accounts}
-        chartAccountId={chartAccountId}
-        liveStocks={allStocks}
-        watchlistCoverageItems={watchlistCoverageItems}
-        quotesBySymbol={quotesBySymbol}
-        quotesByCk={quotesByCk}
-        activeOptionDetail={activeOptionDetail}
-        onOptionDetailClick={handleOptionDetail}
-        activeOptionCategory={optionStockMixFilter}
-        onOptionCategoryClick={handleOptionCategory}
-      />
-    </div>
+    <section className={styles.section} aria-label="Portfolio charts">
+      <div className={styles.row}>
+        <div className={styles.col}>
+          <div className={styles.panel}>
+            <div className={`${styles.toolbar} ${styles.accountToolbar}`}>
+              <span className={styles.toolbarLabel}>Account</span>
+              <div className={styles.accountFilter} role="group" aria-label="Account filter for charts">
+                <BubbleSwitch
+                  size={POSITIONS_BUBBLE_SIZE}
+                  options={accountOptions.map((o) => ({ value: o.id, label: o.label }))}
+                  value={chartAccountId}
+                  onChange={onChartAccountIdChange}
+                />
+              </div>
+            </div>
+            <AccountAssetMixCard
+              accounts={accounts}
+              coreStocks={coreStocks}
+              fixedIncomeStocks={fixedIncomeStocks}
+              cashLikeStocks={cashLikeStocks}
+              chartAccountId={chartAccountId}
+            />
+          </div>
+        </div>
+
+        <div className={styles.col}>
+          <div className={styles.panel}>
+            <UnderlyingCategoryCard
+              accounts={accounts}
+              chartAccountId={chartAccountId}
+              quotesBySymbol={quotesBySymbol}
+              quotesByCk={quotesByCk}
+              categoryFilter={underlyingCategoryFilter}
+              onCategoryFilterChange={(cat) =>
+                setUnderlyingCategoryFilter((prev) => ({ ...prev, [cat]: !prev[cat] }))
+              }
+              activeSymbol={activeSymbol}
+              onSymbolClick={handleSymbolClick}
+              activeCategoryWeight={activeCategoryWeight}
+              onCategoryWeightClick={handleCategoryWeight}
+            />
+          </div>
+        </div>
+
+        <div className={styles.col}>
+          <div className={styles.panel}>
+            <OptionChartsCard
+              accounts={accounts}
+              chartAccountId={chartAccountId}
+              liveStocks={allStocks}
+              watchlistCoverageItems={watchlistCoverageItems}
+              quotesBySymbol={quotesBySymbol}
+              quotesByCk={quotesByCk}
+              activeOptionDetail={activeOptionDetail}
+              onOptionDetailClick={handleOptionDetail}
+              activeOptionCategory={optionStockMixFilter}
+              onOptionCategoryClick={handleOptionCategory}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }

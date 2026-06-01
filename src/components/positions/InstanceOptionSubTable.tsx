@@ -11,6 +11,7 @@ import type { OpenOptionPosition, Execution, InstanceAllGroup } from '@/types/po
 import type { QuoteItem } from '@/types/market'
 import type { DetailViewMode } from './PositionsOpenControls'
 import { scopedExecListsForPosition } from '@/utils/instanceSheetExec'
+import sheetStyles from './InstanceStrategyPanel.module.css'
 
 interface Props {
   group: Pick<InstanceAllGroup, 'strategy_instance_id' | 'strategy_opportunity_id'>
@@ -24,7 +25,7 @@ interface Props {
   detailViewMode?: DetailViewMode
   onOpenOption?: (contractKey: string) => void
   onEditExec?: (exec: Execution) => void
-  onLinkExec?: (exec: Execution) => void
+  onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
   onDeleteExec?: (exec: Execution) => void
   onRefreshExecs?: () => void
 }
@@ -34,9 +35,9 @@ function lastStrikePctClass(right: string, qty: number, pct: number): string {
   const isSell = qty < 0
   const positive = pct > 0
   if (right === 'C') {
-    return isSell ? (positive ? 'text-red-600' : 'text-green-600') : (positive ? 'text-green-600' : 'text-red-600')
+    return isSell ? (positive ? 'pnl-negative' : 'pnl-positive') : (positive ? 'pnl-positive' : 'pnl-negative')
   }
-  return isSell ? (positive ? 'text-green-600' : 'text-red-600') : (positive ? 'text-red-600' : 'text-green-600')
+  return isSell ? (positive ? 'pnl-positive' : 'pnl-negative') : (positive ? 'pnl-negative' : 'pnl-positive')
 }
 
 function optQuoteMid(quote: QuoteItem | undefined): number | null {
@@ -78,12 +79,10 @@ export function InstanceOptionSubTable({
   }
 
   return (
-    <div className="mt-3 pt-3 border-t">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-        Options ({options.length})
-      </p>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
+    <section className={sheetStyles.subSection}>
+      <h4 className={sheetStyles.subHeading}>Options ({options.length})</h4>
+      <div className={sheetStyles.subTableWrap}>
+        <Table className={sheetStyles.subTable}>
           <TableHeader>
             <TableRow>
               <TableHead className="w-6" />
@@ -148,7 +147,7 @@ export function InstanceOptionSubTable({
               return [
                 <TableRow
                   key={key}
-                  className={cn(hasExecs && 'cursor-pointer hover:bg-muted/50')}
+                  className={cn(sheetStyles.subDataRow, hasExecs && 'cursor-pointer')}
                   onClick={hasExecs ? () => toggleExpand(key) : undefined}
                 >
                   <TableCell className="px-1">
@@ -160,7 +159,7 @@ export function InstanceOptionSubTable({
                     {onOpenOption ? (
                       <button
                         type="button"
-                        className="font-mono text-xs font-medium text-primary hover:underline"
+                        className={sheetStyles.subContractBtn}
                         onClick={(e) => { e.stopPropagation(); onOpenOption(pos.contract_key) }}
                       >
                         <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
@@ -174,7 +173,7 @@ export function InstanceOptionSubTable({
                   </TableCell>
                   <TableCell className="text-xs">
                     <div className="font-mono">{fmtExpiry(pos.expiry)}</div>
-                    {dteLabel && <div className="text-[10px] text-muted-foreground">{dteLabel}</div>}
+                    {dteLabel && <div className={sheetStyles.subExpiryDte}>{dteLabel}</div>}
                   </TableCell>
                   <TableCell className="text-right font-mono text-xs font-semibold">{fmtUsd(pos.strike)}</TableCell>
                   <TableCell className="text-right text-xs">
@@ -206,7 +205,7 @@ export function InstanceOptionSubTable({
                       <>
                         <div className="font-mono">{fmtDate(latestExecTime)}</div>
                         {fmtDaysAgo(latestExecTime) && (
-                          <div className="text-[10px] text-muted-foreground">{fmtDaysAgo(latestExecTime)}</div>
+                          <div className={sheetStyles.subTimeAgo}>{fmtDaysAgo(latestExecTime)}</div>
                         )}
                       </>
                     ) : '—'}
@@ -223,7 +222,7 @@ export function InstanceOptionSubTable({
                       {livePnl != null && <span className="text-[10px] ml-1">snap</span>}
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{pos.pool_label}</TableCell>
+                  <TableCell className={cn('text-xs', sheetStyles.subMutedCell)}>{pos.pool_label}</TableCell>
                   <TableCell className="text-xs">
                     {pos.filtered_exec_lists ? (
                       <Badge variant="secondary" className="text-[10px]" title="Fills that do not match the instance row for this contract (Uncategorized)">
@@ -245,8 +244,8 @@ export function InstanceOptionSubTable({
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{pos.account_id || '—'}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className={cn('font-mono text-xs', sheetStyles.subMutedCell)}>{pos.account_id || '—'}</TableCell>
+                  <TableCell className={cn('text-xs', sheetStyles.subMutedCell)}>
                     {execCount === 0 ? (
                       '—'
                     ) : (
@@ -266,7 +265,7 @@ export function InstanceOptionSubTable({
                 </TableRow>,
 
                 ...(isExpanded && hasExecs ? [
-                  <TableRow key={`${key}-execs`} className="bg-muted/10 hover:bg-muted/10">
+                  <TableRow key={`${key}-execs`} className={sheetStyles.subExecRow}>
                     <TableCell colSpan={16} className="p-2">
                       <ExecutionRow
                         finalExecs={scopedFinalExecs}
@@ -285,6 +284,6 @@ export function InstanceOptionSubTable({
           </TableBody>
         </Table>
       </div>
-    </div>
+    </section>
   )
 }

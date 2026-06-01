@@ -88,3 +88,8 @@ export interface DailyBenchmark {
 export interface BenchmarkResponse {
   benchmarks: Record<string, DailyBenchmark>
 }
+
+export interface BarStatsResponse {
+  stock_day: number
+  stock_min: Record<string, number>
+}

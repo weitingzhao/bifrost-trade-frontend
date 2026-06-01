@@ -1,0 +1,292 @@
+/* Legacy Coverage summary (Positions → Strategy tab) */
+
+.coverage-summary-section {
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+}
+
+.coverage-summary-intro {
+  margin-bottom: 0.55rem;
+}
+
+.coverage-summary-heading-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.coverage-summary-section--placeholder {
+  padding: 0.45rem 0.55rem 0.55rem;
+  border-radius: 6px;
+  border: 1px dashed #2a2f38;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.coverage-summary-placeholder-text {
+  margin: 0.35rem 0 0;
+  max-width: 52rem;
+  line-height: 1.45;
+  font-size: 0.82rem;
+  color: #7a8492;
+}
+
+.coverage-pools-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 0.65rem 1rem;
+  align-items: start;
+}
+
+.coverage-pool-panel {
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0.35rem 0.5rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #2a2f38;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.coverage-pool-panel .coverage-summary-table {
+  max-width: none;
+  width: 100%;
+}
+
+.coverage-pools-row:has(> .coverage-pool-panel:only-child) .coverage-pool-panel {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.coverage-pools-row:has(> .coverage-pool-panel:only-child) .coverage-pool-panel .coverage-summary-table {
+  max-width: 48rem;
+}
+
+.coverage-pool-account-group-row td {
+  font-weight: 700;
+  font-size: 0.84rem;
+  padding: 0.35rem 0.45rem 0.3rem;
+  border-top: 1px solid #2a2f38;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.coverage-summary-table tbody > tr.coverage-pool-account-group-row:first-child td {
+  border-top: none;
+}
+
+.coverage-summary-table {
+  max-width: 48rem;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.coverage-summary-table thead th {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7a8492;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border-bottom: 2px solid #2a313c;
+  background: #1a1f26;
+  white-space: nowrap;
+}
+
+.coverage-summary-table tbody td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid rgba(42, 47, 56, 0.6);
+  color: #e4e9ef;
+  font-weight: 500;
+}
+
+.coverage-summary-table tbody tr:hover td {
+  background: rgba(163, 230, 53, 0.04);
+}
+
+.coverage-pool-sort-th {
+  cursor: pointer;
+  user-select: none;
+}
+
+.coverage-cost-avg-cell {
+  text-align: right;
+  line-height: 1.25;
+  min-width: 4.5rem;
+}
+
+.coverage-cost-avg-basis {
+  font-weight: 600;
+}
+
+.coverage-cost-avg-per-share {
+  font-size: 0.82em;
+  font-weight: 500;
+  color: #7a8492;
+  margin-top: 0.06rem;
+}
+
+.coverage-mkt-value-price-cell {
+  text-align: right;
+  line-height: 1.25;
+  min-width: 5rem;
+}
+
+.coverage-mkt-value-total {
+  font-weight: 600;
+}
+
+.coverage-mkt-value-per-share {
+  font-size: 0.82em;
+  font-weight: 500;
+  color: #7a8492;
+  margin-top: 0.06rem;
+}
+
+.coverage-pool-th-held-amt,
+.coverage-pool-th-backed-amt {
+  display: inline-block;
+  line-height: 1.15;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: normal;
+}
+
+.coverage-held-amt-underlying-narrow {
+  min-width: 0 !important;
+  max-width: 2.75rem;
+  width: 2.65rem;
+  padding-left: 0.12rem !important;
+  padding-right: 0.12rem !important;
+}
+
+.coverage-held-amt-underlying-contracts {
+  font-size: 1.02rem !important;
+}
+
+.coverage-available-contracts-only {
+  font-size: 1.2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #7dd3fc;
+}
+
+.coverage-held-shares-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+.coverage-pnl-stacked-cell {
+  text-align: right;
+  line-height: 1.25;
+  min-width: 4rem;
+}
+
+.coverage-pnl-stacked-pct {
+  font-size: 0.82em;
+  font-weight: 500;
+  color: #7a8492;
+  margin-top: 0.06rem;
+}
+
+.coverage-shared-hint {
+  font-size: 0.82em;
+  color: #7a8492;
+}
+
+.coverage-account-id {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82em;
+  font-weight: 600;
+}
+
+.coverage-account-host {
+  color: #5eead4;
+}
+
+.coverage-account-secondary {
+  color: #c4b5fd;
+}
+
+.coverage-account-other {
+  color: #7a8492;
+}
+
+.option-underlying-pool-totals {
+  font-size: 0.88rem;
+  color: #c4cad4;
+}
+
+.option-underlying-pool-total-label {
+  color: #7a8492;
+  font-weight: 500;
+}
+
+.option-underlying-pool-total-sep {
+  color: #5c6570;
+}
+
+.option-underlying-pool-cash-bp {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.92em;
+  font-weight: 600;
+  color: #c4cad4;
+}
+
+.coverage-section-hint {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  color: #7a8492;
+  line-height: 1.4;
+}
+
+.coverage-section-hint--sm {
+  margin-bottom: 0.4rem;
+  font-size: 0.82em;
+}
+
+.coverage-pool-empty-explanation {
+  margin: 0 0 0.5rem;
+  font-size: 0.85em;
+  line-height: 1.45;
+  color: #7a8492;
+}
+
+.coverage-pool-symbol-btn {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #7dd3fc;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.coverage-pool-symbol-btn:hover {
+  color: #bae6fd;
+  text-decoration: underline;
+}
+
+.coverage-pool-symbol-btn strong {
+  font-weight: 700;
+}
+
+.coverage-summary-table tbody td .pnl-positive,
+.coverage-summary-table .pnl-positive {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.coverage-summary-table tbody td .pnl-negative,
+.coverage-summary-table .pnl-negative {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.replay-muted {
+  color: #7a8492;
+}

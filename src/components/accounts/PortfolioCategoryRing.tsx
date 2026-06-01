@@ -206,13 +206,12 @@ export function PortfolioCategoryRing({ accounts }: Props) {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-secondary p-4 space-y-3">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+    <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-secondary p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Portfolio by Category
       </p>
-      <div className="flex items-start gap-6">
-        {/* Ring SVG */}
-        <div className="flex flex-col items-center gap-3">
+      <div className="mt-3 flex min-h-0 flex-1 items-center gap-6">
+        <div className="flex shrink-0 flex-col items-center justify-center">
           <svg
             width={132}
             height={132}
@@ -220,7 +219,6 @@ export function PortfolioCategoryRing({ accounts }: Props) {
             aria-label="Portfolio by category ring chart"
             role="img"
           >
-            {/* Track */}
             <circle
               cx={CX}
               cy={CY}
@@ -231,7 +229,6 @@ export function PortfolioCategoryRing({ accounts }: Props) {
               className="opacity-10"
             />
             {ringCircles}
-            {/* Center text */}
             <text
               x={CX}
               y={CY - 4}
@@ -256,16 +253,9 @@ export function PortfolioCategoryRing({ accounts }: Props) {
               {centerSub}
             </text>
           </svg>
-
-          {/* Toggles */}
-          <div className="w-full space-y-1.5">
-            <ToggleGroup label="Fixed income" value={includeFi} onChange={setIncludeFi} />
-            <ToggleGroup label="Options" value={includeOpt} onChange={setIncludeOpt} />
-          </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex-1 space-y-2 pt-1">
+        <div className="flex min-h-0 flex-1 flex-col justify-center space-y-2">
           <LegendRow
             color={COLOR_STOCK}
             label="Stock"
@@ -295,6 +285,11 @@ export function PortfolioCategoryRing({ accounts }: Props) {
             tooltip={!includeOpt ? 'Excluded from ring denominator' : undefined}
           />
         </div>
+      </div>
+
+      <div className="mt-auto grid grid-cols-1 gap-2 border-t border-border/60 pt-3 sm:grid-cols-2">
+        <ToggleGroup label="Fixed income" value={includeFi} onChange={setIncludeFi} />
+        <ToggleGroup label="Options" value={includeOpt} onChange={setIncludeOpt} />
       </div>
     </div>
   )

@@ -4,9 +4,10 @@ import { ChevronDown } from 'lucide-react'
 import {
   Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { RiskProfileSummary } from '@/components/RiskProfileSummary'
+import { RiskProfileDetail } from './RiskProfileDetail'
 import type { DetailViewMode } from './PositionsOpenControls'
 import { Badge } from '@/components/ui/badge'
+import { PosStatusPill } from './PosStatusPill'
 import { fmtUsd, fmtDate, fmtDaysAgo, pnlColorClass } from '@/utils/positions'
 import { InstanceOptionSubTable } from './InstanceOptionSubTable'
 import { InstanceCoverageSubTable } from './InstanceCoverageSubTable'
@@ -19,6 +20,7 @@ import {
   instanceDefaultAccountForStockInspect,
   instanceGroupKey,
 } from '@/utils/instanceSheetExec'
+import styles from './InstanceStrategyPanel.module.css'
 
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
@@ -35,7 +37,7 @@ interface Props {
   opportunities: StrategyOpportunity[]
   detailViewMode?: DetailViewMode
   onEditExec?: (exec: Execution) => void
-  onLinkExec?: (exec: Execution) => void
+  onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
   onDeleteExec?: (exec: Execution) => void
   onRefreshExecs?: () => void
   onOpenStrategy?: (instanceId: number) => void
@@ -55,9 +57,9 @@ function coverageBadge(coverage: InstanceAllGroup['stock_coverage'], liveStocks:
     allCovered = false
     if (held === 0) anyNaked = true
   }
-  if (allCovered) return <Badge variant="default" className="text-[10px]">Covered</Badge>
-  if (anyNaked) return <Badge variant="destructive" className="text-[10px]">Naked</Badge>
-  return <Badge variant="secondary" className="text-[10px] border-yellow-500 text-yellow-600">Partial</Badge>
+  if (allCovered) return <PosStatusPill tone="brightOk">Covered</PosStatusPill>
+  if (anyNaked) return <PosStatusPill tone="bad">Naked</PosStatusPill>
+  return <PosStatusPill tone="warn">Partial</PosStatusPill>
 }
 
 export function InstanceTab({
@@ -114,9 +116,8 @@ export function InstanceTab({
   const oppMap = new Map(opportunities.map((o) => [o.strategy_opportunity_id, o]))
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
+    <div className={styles.tableWrap}>
+        <Table className={styles.sheetTable}>
           <TableHeader>
             <TableRow>
               <TableHead className="w-7" />
@@ -137,12 +138,10 @@ export function InstanceTab({
               const instKey = instanceGroupKey(group)
               const id = group.strategy_instance_id
               const isExpanded = expandedKeys.has(instKey)
-              const firstOpt = group.options[0]
-              const unlinkedLabel = firstOpt
-                ? `${firstOpt.symbol ?? '?'} ${firstOpt.right === 'C' ? 'Call' : firstOpt.right === 'P' ? 'Put' : ''} ${firstOpt.strike ?? ''} (unlinked)`.trim()
-                : 'Unlinked'
-              const instLabel = group.strategy_instance_label ?? (id != null ? `Strategy #${id}` : unlinkedLabel)
-              const oppName = group.strategy_opportunity_name ?? null
+              const instLabel =
+                group.strategy_instance_label ??
+                (id != null ? `Strategy #${id}` : 'Uncategorized')
+              const oppName = group.strategy_opportunity_name?.trim() || null
               const structLabel = group.structure_type
                 ? group.structure_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
                 : '—'
@@ -159,27 +158,35 @@ export function InstanceTab({
               return [
                 <TableRow
                   key={`inst-${instKey}`}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className={cn(styles.sheetRow, isExpanded && styles.sheetRowExpanded)}
                   onClick={() => toggleExpand(instKey)}
                 >
                   <TableCell className="px-2">
                     <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
                   </TableCell>
-                  <TableCell className="text-xs">
-                    <div className="space-y-0.5">
-                      {oppName && <div className="text-muted-foreground">{oppName}</div>}
-                      {id != null && onOpenStrategy ? (
-                        <button
-                          type="button"
-                          className="font-mono font-medium text-primary hover:underline"
-                          onClick={(e) => { e.stopPropagation(); onOpenStrategy(id) }}
-                        >
-                          {instLabel}
-                        </button>
-                      ) : (
-                        <span className="font-mono font-medium">{oppName || instLabel}</span>
-                      )}
-                    </div>
+                  <TableCell className="text-xs align-top">
+                    {id != null ? (
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        {oppName ? <span className={styles.oppPrimary}>{oppName}</span> : null}
+                        {onOpenStrategy ? (
+                          <button
+                            type="button"
+                            className={styles.oppSecondary}
+                            title={`View strategy instance: ${instLabel}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onOpenStrategy(id)
+                            }}
+                          >
+                            {instLabel}
+                          </button>
+                        ) : (
+                          <span className={styles.oppSecondary}>{instLabel}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={styles.oppPrimary}>{oppName || instLabel}</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs">
                     {group.structure_type ? (
@@ -221,7 +228,7 @@ export function InstanceTab({
                     ) : '—'}
                   </TableCell>
                   <TableCell
-                    className="font-mono text-xs text-muted-foreground max-w-[120px] truncate"
+                    className={cn('font-mono text-xs text-muted-foreground', styles.execQtyCell)}
                     title={EXEC_QTY_TITLE}
                   >
                     {optN > 0 ? optExecQty : '—'}
@@ -242,19 +249,17 @@ export function InstanceTab({
                   </TableCell>
                   <TableCell className="text-xs">
                     {rl ? (
-                      <Badge
-                        variant={rp!.risk_type === 'defined' ? 'default' : 'destructive'}
-                        className="text-[10px]"
-                      >
+                      <PosStatusPill tone={rp!.risk_type === 'defined' ? 'brightOk' : 'bad'}>
                         {rl.riskBadge}
-                      </Badge>
+                      </PosStatusPill>
                     ) : '—'}
                   </TableCell>
                 </TableRow>,
 
                 ...(isExpanded ? [
-                  <TableRow key={`inst-detail-${instKey}`} className="bg-muted/10 hover:bg-muted/10">
-                    <TableCell colSpan={11} className="p-3">
+                  <TableRow key={`inst-detail-${instKey}`} className={styles.detailRow}>
+                    <TableCell colSpan={11} className={styles.detailCell}>
+                      <div className={styles.detailStack}>
                       <InstanceOptionSubTable
                         group={group}
                         options={group.options}
@@ -278,14 +283,8 @@ export function InstanceTab({
                         benchBySymbol={benchBySymbol}
                         onOpenStock={onOpenStock}
                       />
-                      {rp && (
-                        <div className="mt-3 pt-3 border-t">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                            Risk Profile
-                          </p>
-                          <RiskProfileSummary profile={rp} />
-                        </div>
-                      )}
+                      {rp && <RiskProfileDetail profile={rp} />}
+                      </div>
                     </TableCell>
                   </TableRow>,
                 ] : []),
@@ -304,7 +303,6 @@ export function InstanceTab({
             </TableRow>
           </TableFooter>
         </Table>
-      </div>
     </div>
   )
 }

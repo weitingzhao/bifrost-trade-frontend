@@ -36,97 +36,168 @@ export function computeInstanceStockCoverage(
   return result
 }
 
+function covKey(sym: string, accountId: string): string {
+  return `${(sym ?? '').toUpperCase().trim()}\x1f${(accountId ?? '').trim()}`
+}
+
 export function buildStockCoverageItems(
   instanceGroups: InstanceAllGroup[],
   liveStocks: LivePositionRow[],
 ): StockCoverageItem[] {
-  const demandMap = new Map<string, {
+  type DemandMeta = {
     required: number
-    instances_needing: number
-    backing_opportunities: string[]
-  }>()
+    requiredWatchlist: number
+    instances: number
+    oppNames: Set<string>
+    watchlistScopeInstances: number
+  }
+  const demandMap = new Map<string, DemandMeta>()
 
-  for (const group of instanceGroups) {
-    for (const sc of group.stock_coverage) {
-      const key = `${sc.symbol}|${sc.account_id}`
-      const entry = demandMap.get(key)
-      if (entry) {
-        entry.required += sc.required_shares
-        entry.instances_needing += 1
-        if (group.strategy_opportunity_name && !entry.backing_opportunities.includes(group.strategy_opportunity_name)) {
-          entry.backing_opportunities.push(group.strategy_opportunity_name)
-        }
-      } else {
-        demandMap.set(key, {
-          required: sc.required_shares,
-          instances_needing: 1,
-          backing_opportunities: group.strategy_opportunity_name ? [group.strategy_opportunity_name] : [],
-        })
+  for (const g of instanceGroups) {
+    const oppName = (g.strategy_opportunity_name ?? '').trim()
+    const isWl = (g.scope_type ?? '').trim() === 'watchlist_stk'
+    for (const sc of g.stock_coverage) {
+      const sym = (sc.symbol ?? '').toUpperCase().trim()
+      if (!sym) continue
+      const k = covKey(sym, sc.account_id)
+      const prev = demandMap.get(k) ?? {
+        required: 0,
+        requiredWatchlist: 0,
+        instances: 0,
+        oppNames: new Set<string>(),
+        watchlistScopeInstances: 0,
       }
+      prev.required += sc.required_shares
+      if (isWl) prev.requiredWatchlist += sc.required_shares
+      prev.instances += 1
+      if (oppName) prev.oppNames.add(oppName)
+      if (isWl) prev.watchlistScopeInstances += 1
+      demandMap.set(k, prev)
     }
   }
 
-  const heldMap = new Map<string, { shares: number; costSum: number; lastPrice: number | null }>()
-  for (const stk of liveStocks) {
-    const sym = (stk.symbol ?? '').toUpperCase()
+  type HeldMeta = {
+    held: number
+    heldAbs: number
+    costBasisAbs: number
+    lastWeightedSum: number
+    lastWeight: number
+    dailyPnl: number
+    dailyBaseAbs: number
+    totalPnl: number
+    optionableTrue: number
+    optionableFalse: number
+    optionableUnknown: number
+  }
+  const heldMap = new Map<string, HeldMeta>()
+
+  for (const s of liveStocks) {
+    const sym = (s.symbol ?? '').toUpperCase().trim()
     if (!sym) continue
-    const key = `${sym}|${stk.account_id}`
-    const qty = stk.position ?? 0
-    const entry = heldMap.get(key)
-    if (entry) {
-      entry.shares += qty
-      if (stk.avgCost != null) entry.costSum += Math.abs(qty) * stk.avgCost
-      if (stk.price != null) entry.lastPrice = stk.price
-    } else {
-      heldMap.set(key, {
-        shares: qty,
-        costSum: stk.avgCost != null ? Math.abs(qty) * stk.avgCost : 0,
-        lastPrice: stk.price ?? null,
-      })
+    const k = covKey(sym, (s.account_id ?? '').trim())
+    const qty = Number(s.position)
+    if (!Number.isFinite(qty) || qty === 0) continue
+    const absQty = Math.abs(qty)
+    const avgCost = s.avgCost != null && Number.isFinite(Number(s.avgCost)) ? Number(s.avgCost) : null
+    const lastPrice = s.price != null && Number.isFinite(Number(s.price)) ? Number(s.price) : null
+    const dailyPrevClose =
+      s.daily_prev_close != null && Number.isFinite(Number(s.daily_prev_close))
+        ? Number(s.daily_prev_close)
+        : null
+    const unrealizedPnl =
+      s.unrealized_pnl != null && Number.isFinite(Number(s.unrealized_pnl))
+        ? Number(s.unrealized_pnl)
+        : lastPrice != null && avgCost != null
+          ? (lastPrice - avgCost) * qty
+          : 0
+
+    const prev = heldMap.get(k) ?? {
+      held: 0,
+      heldAbs: 0,
+      costBasisAbs: 0,
+      lastWeightedSum: 0,
+      lastWeight: 0,
+      dailyPnl: 0,
+      dailyBaseAbs: 0,
+      totalPnl: 0,
+      optionableTrue: 0,
+      optionableFalse: 0,
+      optionableUnknown: 0,
     }
+    prev.held += qty
+    prev.heldAbs += absQty
+    if (avgCost != null) prev.costBasisAbs += absQty * avgCost
+    if (lastPrice != null) {
+      prev.lastWeightedSum += absQty * lastPrice
+      prev.lastWeight += absQty
+    }
+    if (dailyPrevClose != null && lastPrice != null) {
+      prev.dailyPnl += (lastPrice - dailyPrevClose) * qty
+      prev.dailyBaseAbs += Math.abs(dailyPrevClose * qty)
+    }
+    prev.totalPnl += unrealizedPnl
+    if (s.optionable === true) prev.optionableTrue += 1
+    else if (s.optionable === false) prev.optionableFalse += 1
+    else prev.optionableUnknown += 1
+    heldMap.set(k, prev)
   }
 
   const allKeys = new Set([...demandMap.keys(), ...heldMap.keys()])
-  const items: StockCoverageItem[] = []
+  const result: StockCoverageItem[] = []
 
   for (const key of allKeys) {
-    const [symbol, account_id] = key.split('|')
+    const sep = key.indexOf('\x1f')
+    const symbol = sep >= 0 ? key.slice(0, sep) : key
+    const account_id = sep >= 0 ? key.slice(sep + 1) : ''
     const demand = demandMap.get(key)
-    const held = heldMap.get(key)
-
+    const heldMeta = heldMap.get(key)
     const required = demand?.required ?? 0
-    const heldShares = held?.shares ?? 0
+    const held = heldMeta?.held ?? 0
+    if (required === 0 && held === 0) continue
 
-    if (required === 0 && heldShares === 0) continue
+    const costBasis = heldMeta != null && heldMeta.costBasisAbs > 0 ? heldMeta.costBasisAbs : null
+    const totalPnl = heldMeta != null && Number.isFinite(heldMeta.totalPnl) ? heldMeta.totalPnl : null
+    const totalPct =
+      costBasis != null && costBasis > 0 && totalPnl != null ? (totalPnl / costBasis) * 100 : null
+    const dailyPct =
+      heldMeta != null && heldMeta.dailyBaseAbs > 0
+        ? (heldMeta.dailyPnl / heldMeta.dailyBaseAbs) * 100
+        : null
 
-    const costBasis = held?.costSum ?? null
-    const avgCost = heldShares !== 0 && costBasis != null ? costBasis / Math.abs(heldShares) : null
-    const lastPrice = held?.lastPrice ?? null
-    const totalPnl = avgCost != null && lastPrice != null && heldShares !== 0
-      ? (lastPrice - avgCost) * heldShares
-      : null
-    const totalPct = avgCost != null && avgCost !== 0 && lastPrice != null
-      ? ((lastPrice - avgCost) / avgCost) * 100
-      : null
+    let optionableSupported: boolean | null = null
+    if (heldMeta != null) {
+      if (heldMeta.optionableTrue > 0 && heldMeta.optionableFalse === 0) optionableSupported = true
+      else if (heldMeta.optionableFalse > 0 && heldMeta.optionableTrue === 0) optionableSupported = false
+    }
 
-    items.push({
+    result.push({
       symbol,
       account_id,
       required_shares: required,
-      held_shares: heldShares,
-      surplus_or_gap: heldShares - required,
-      instances_needing: demand?.instances_needing ?? 0,
-      backing_opportunities: demand?.backing_opportunities,
-      avg_cost_per_share: avgCost,
-      live_last_price: lastPrice,
+      required_watchlist_shares: demand?.requiredWatchlist ?? 0,
+      held_shares: held,
+      surplus_or_gap: held - required,
+      instances_needing: demand?.instances ?? 0,
+      backing_opportunities:
+        demand != null ? [...demand.oppNames].sort() : [],
+      watchlist_scope_instances: demand?.watchlistScopeInstances ?? 0,
+      optionable_supported: optionableSupported,
+      avg_cost_per_share:
+        heldMeta != null && heldMeta.heldAbs > 0 ? heldMeta.costBasisAbs / heldMeta.heldAbs : null,
+      live_last_price:
+        heldMeta != null && heldMeta.lastWeight > 0
+          ? heldMeta.lastWeightedSum / heldMeta.lastWeight
+          : null,
       cost_basis_total: costBasis,
+      daily_pnl: heldMeta != null ? heldMeta.dailyPnl : null,
+      daily_pct: dailyPct,
       total_pnl: totalPnl,
       total_pct: totalPct,
     })
   }
 
-  items.sort((a, b) => Math.abs(b.required_shares) - Math.abs(a.required_shares))
-  return items
+  result.sort((a, b) => a.symbol.localeCompare(b.symbol) || a.account_id.localeCompare(b.account_id))
+  return result
 }
 
 export function coverageStatus(item: StockCoverageItem): 'Covered' | 'Partial' | 'Naked' {

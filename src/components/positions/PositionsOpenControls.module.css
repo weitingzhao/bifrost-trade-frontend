@@ -1,0 +1,89 @@
+/* Legacy: .positions-open-controls-row — single toolbar row, no wrap at desktop width */
+
+.row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  min-width: 0;
+  padding: 0.35rem 0;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.filters {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.symbolInput {
+  width: 8.25rem;
+  max-width: 10rem;
+  min-width: 6.5rem;
+}
+
+.expiryInput {
+  width: 7.5rem;
+  max-width: 9rem;
+}
+
+.acctBubbles {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.detailGroup {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.28rem;
+  font-size: 0.76rem;
+}
+
+.detailLabel {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+
+.sep {
+  width: 1px;
+  align-self: stretch;
+  min-height: 1.55rem;
+  background: hsl(var(--border));
+  flex-shrink: 0;
+  margin: 0 0.05rem;
+}
+
+.tabsWrap {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+}
+
+.tabsList {
+  width: auto !important;
+  flex: 1 1 auto;
+  min-width: 0;
+  border-bottom: none !important;
+  flex-wrap: nowrap;
+  gap: 0.12rem 0.28rem;
+  justify-content: flex-start;
+  height: auto;
+  background: transparent;
+  padding: 0;
+}
+
+.tabTrigger {
+  height: 1.65rem !important;
+  padding: 0.18rem 0.48rem !important;
+  font-size: 0.76rem;
+  flex: none;
+  white-space: nowrap;
+}

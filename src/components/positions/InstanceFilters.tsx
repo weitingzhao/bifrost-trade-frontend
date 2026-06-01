@@ -1,5 +1,6 @@
-import { cn } from '@/lib/utils'
+import { bubbleButtonClass, bubbleGroupClass } from './charts/BubbleSwitch'
 import { Button } from '@/components/ui/button'
+import styles from './InstanceStrategyPanel.module.css'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -28,18 +29,15 @@ function BubbleRadio({
   onChange: (v: string) => void
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">{label}</span>
-      <div className="flex rounded-md border overflow-hidden text-xs">
+    <div className={styles.filterBubbleRow}>
+      <span className={styles.filterBubbleLabel}>{label}</span>
+      <div className={bubbleGroupClass()}>
         {options.map((opt) => (
           <button
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={cn(
-              'px-2.5 py-1 transition-colors',
-              value === opt.value ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-            )}
+            className={bubbleButtonClass(value === opt.value)}
           >
             {opt.label}
           </button>
@@ -77,9 +75,9 @@ export function InstanceFilters({ structureTypes, oppNames, scopeTypes, values, 
   ]
 
   return (
-    <div className="flex items-center gap-3 flex-wrap pb-3 border-b mb-3">
+    <div className={styles.filters}>
       <Select value={values.structureType} onValueChange={(v) => update({ structureType: v })}>
-        <SelectTrigger className="h-7 text-xs w-40">
+        <SelectTrigger className="h-7 text-xs w-40 shrink-0">
           <SelectValue placeholder="All Contract Types" />
         </SelectTrigger>
         <SelectContent>
@@ -93,7 +91,7 @@ export function InstanceFilters({ structureTypes, oppNames, scopeTypes, values, 
       </Select>
 
       <Select value={values.oppName} onValueChange={(v) => update({ oppName: v })}>
-        <SelectTrigger className="h-7 text-xs w-44">
+        <SelectTrigger className="h-7 text-xs w-44 shrink-0">
           <SelectValue placeholder="All Opportunities" />
         </SelectTrigger>
         <SelectContent>

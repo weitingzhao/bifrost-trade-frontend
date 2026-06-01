@@ -285,6 +285,103 @@ export function ledgerOptionExecutionCashFlowSigned(e: Execution): number {
   return buy ? -value : value
 }
 
+/** Per-row display PnL (ledger Details table): Sell uses abs for display. */
+export function ledgerOptionExecutionDisplayPnl(e: Execution): number {
+  const s = sideUpper(e)
+  const buy = s === 'BUY' || s === 'BOT' || s === 'B'
+  const sell = s === 'SELL' || s === 'SLD' || s === 'S'
+  const raw = ledgerOptionExecutionCashFlowSigned(e)
+  if (sell) return Math.abs(raw)
+  if (buy) return raw
+  return raw
+}
+
+/**
+ * On-the-fly STK row: per-fill Unrealized PnL = quantity × price.
+ * Sign: BUY positive, SELL negative.
+ */
+export function stockOnTheFlyUnrealizedPnlLeg(e: Execution): number | null {
+  if ((e.sec_type ?? '').toUpperCase() !== 'STK') return null
+  const q = execQty(e)
+  const p = Number(e.price) || 0
+  if (!Number.isFinite(q) || q <= 0 || !Number.isFinite(p)) return null
+  const s = sideUpper(e)
+  const buy = s === 'BUY' || s === 'BOT' || s === 'B'
+  const sell = s === 'SELL' || s === 'SLD' || s === 'S'
+  const gross = q * p
+  if (buy) return gross
+  if (sell) return -gross
+  return gross
+}
+
+export function computeDayRealizedUnrealizedStock(
+  executions: Execution[],
+  sortExec: (a: Execution, b: Execution) => number = sortExecByTradeDateThenTime,
+): { realized: number; unrealized: number } {
+  const stk = executions.filter((e) => (e.sec_type ?? '').toUpperCase() === 'STK')
+  const byKey: Record<string, Execution[]> = {}
+  for (const e of stk) {
+    const side = sideUpper(e)
+    if (side !== 'BUY' && side !== 'SELL' && side !== 'BOT' && side !== 'B' && side !== 'SLD' && side !== 'S') continue
+    const key = `${e.symbol ?? ''}\t${e.account_id ?? ''}`
+    if (!byKey[key]) byKey[key] = []
+    byKey[key].push(e)
+  }
+  let totalRealized = 0
+  let totalUnrealized = 0
+  for (const list of Object.values(byKey)) {
+    const sorted = [...list].sort(sortExec)
+    const buyQueue: { q: number; p: number; c: number }[] = []
+    const sellQueue: { q: number; p: number; c: number }[] = []
+
+    for (const x of sorted) {
+      const q = Number(x.quantity) || 0
+      const p = Number(x.price) || 0
+      const comm = Number(x.commission) || 0
+      if (!Number.isFinite(q) || q <= 0 || !Number.isFinite(p)) continue
+      const side = sideUpper(x)
+      const isBuy = side === 'BUY' || side === 'BOT' || side === 'B'
+
+      if (isBuy) {
+        let remaining = q
+        while (remaining > 0 && sellQueue.length > 0) {
+          const ss = sellQueue[0]!
+          const qMatch = Math.min(remaining, ss.q)
+          if (qMatch <= 0) break
+          const bAlloc = (qMatch / q) * comm
+          const sAlloc = (qMatch / ss.q) * ss.c
+          const legB = -qMatch * p - bAlloc
+          const legS = qMatch * ss.p - sAlloc
+          totalRealized += legB + legS
+          remaining -= qMatch
+          if (qMatch >= ss.q) sellQueue.shift()
+          else sellQueue[0] = { q: ss.q - qMatch, p: ss.p, c: ss.c * (1 - qMatch / ss.q) }
+        }
+        if (remaining > 0) buyQueue.push({ q: remaining, p, c: (remaining / q) * comm })
+      } else {
+        let remaining = q
+        while (remaining > 0 && buyQueue.length > 0) {
+          const bb = buyQueue[0]!
+          const qMatch = Math.min(remaining, bb.q)
+          if (qMatch <= 0) break
+          const bAlloc = (qMatch / bb.q) * bb.c
+          const sAlloc = (qMatch / q) * comm
+          const legB = -qMatch * bb.p - bAlloc
+          const legS = qMatch * p - sAlloc
+          totalRealized += legB + legS
+          remaining -= qMatch
+          if (qMatch >= bb.q) buyQueue.shift()
+          else buyQueue[0] = { q: bb.q - qMatch, p: bb.p, c: bb.c * (1 - qMatch / bb.q) }
+        }
+        if (remaining > 0) sellQueue.push({ q: remaining, p, c: (remaining / q) * comm })
+      }
+    }
+    for (const b of buyQueue) totalUnrealized += b.q * b.p + b.c
+    for (const s of sellQueue) totalUnrealized += -s.q * s.p + s.c
+  }
+  return { realized: totalRealized, unrealized: totalUnrealized }
+}
+
 export function matchPnl(p: {
   quantity: number
   c_side: string

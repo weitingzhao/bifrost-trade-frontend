@@ -12,7 +12,7 @@ interface Props {
   finalExecs: Execution[]
   twsExecs: Execution[]
   onEdit: (exec: Execution) => void
-  onLink: (exec: Execution) => void
+  onLink: (exec: Execution, sameContractTrades?: Execution[]) => void
   onDelete: (exec: Execution) => void
   onClose?: (exec: Execution) => void
   onRefresh: () => void
@@ -117,7 +117,14 @@ export function ExecutionRow({
           <Button variant="ghost" size="icon" className="h-5 w-5" title="Edit" onClick={() => onEdit(exec)}>
             <Pencil className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-5 w-5" title="Link strategy" onClick={() => onLink(exec)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5"
+            title="Assign strategy"
+            aria-label="Assign strategy"
+            onClick={() => onLink(exec, [...finalExecs, ...twsExecs])}
+          >
             <Link2 className="h-3 w-3" />
           </Button>
           <Button variant="ghost" size="icon" className={cn('h-5 w-5', dangerGhostBtnClass)} title="Delete" onClick={() => onDelete(exec)}>

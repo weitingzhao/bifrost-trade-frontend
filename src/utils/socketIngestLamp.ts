@@ -1,7 +1,106 @@
 import type { StatusResponse } from '@/types/monitor'
+import { fmtAge } from '@/utils/ingestOpsShared'
 
 export type IngestLamp = 'green' | 'yellow' | 'red' | 'gray'
 export type AggregateIngestLamp = IngestLamp | 'none'
+export type LocalControlAgentLamp = 'green' | 'yellow' | 'red'
+
+export type IngestCategory = 'Massive' | 'IB' | 'Engine' | 'Other'
+
+export const INGEST_CATEGORY_LABELS: Record<IngestCategory, string> = {
+  Massive: 'Massive Options WS',
+  IB: 'IB Broker Services',
+  Engine: 'Strategy Trading',
+  Other: 'Other',
+}
+
+export function categoryForServiceId(id: string): IngestCategory {
+  if (id === 'massive_ws') return 'Massive'
+  if (id === 'ib_ingestor' || id === 'ib_market' || id === 'ib_operator' || id === 'ib_account_agent') {
+    return 'IB'
+  }
+  if (id === 'account_sync_daemon') return 'Engine'
+  return 'Other'
+}
+
+export function buildUnifiedIngestRows(
+  services: MarketIngestServiceRow[],
+): { svc: MarketIngestServiceRow; category: IngestCategory }[] {
+  const filtered = marketIngestServicesForSocketAggregate(services)
+  const byCat: Record<IngestCategory, MarketIngestServiceRow[]> = {
+    Massive: [],
+    IB: [],
+    Engine: [],
+    Other: [],
+  }
+  for (const s of filtered) {
+    byCat[categoryForServiceId(s.id)].push(s)
+  }
+  const out: { svc: MarketIngestServiceRow; category: IngestCategory }[] = []
+  for (const s of byCat.Massive) out.push({ svc: s, category: 'Massive' })
+  for (const s of byCat.IB) out.push({ svc: s, category: 'IB' })
+  for (const s of byCat.Engine) out.push({ svc: s, category: 'Engine' })
+  for (const s of byCat.Other) out.push({ svc: s, category: 'Other' })
+  return out
+}
+
+export function localControlAgentLamp(reachable: boolean | null | undefined): LocalControlAgentLamp {
+  if (reachable === true) return 'green'
+  if (reachable === false) return 'red'
+  return 'yellow'
+}
+
+export function buildIngestLogicalSummary(
+  svc: MarketIngestServiceRow,
+  status: StatusResponse | null | undefined,
+): string {
+  const massive = status?.socket?.massive
+  const ibIngestor = status?.socket?.ib_ingestor
+  const ibAccountAgent = status?.socket?.ib_account_agent
+
+  if (svc.id === 'massive_ws' && massive) {
+    const ws = ingestRedisTruthyConnected(massive.ws_connected) ? 'connected' : 'disconnected'
+    const rc = massive.ws_reconnects != null ? String(massive.ws_reconnects) : '—'
+    return `WS ${ws}; last msg ${fmtAge(massive.last_msg_age_s ?? null)}; reconnects ${rc}`
+  }
+  if ((svc.id === 'ib_ingestor' || svc.id === 'ib_market') && ibIngestor) {
+    const c = ingestRedisTruthyConnected(ibIngestor.connected) ? 'connected' : 'disconnected'
+    const rc = ibIngestor.reconnects != null ? String(ibIngestor.reconnects) : '—'
+    const mc = ibIngestor.msg_count != null ? String(ibIngestor.msg_count) : '—'
+    return `IB ${c}; last msg ${fmtAge(ibIngestor.last_msg_age_s ?? null)}; reconnects ${rc}; msgs ${mc}`
+  }
+  if (svc.id === 'ib_account_agent' && ibAccountAgent) {
+    const hostUp =
+      ingestRedisTruthyConnected(ibAccountAgent.connected)
+      || ingestRedisTruthyConnected(ibAccountAgent.host?.connected)
+    const h = hostUp ? 'Host up' : 'Host down'
+    const sec = ibAccountAgent.secondary
+    const secBit =
+      sec != null
+        ? `; Sec ${ingestRedisTruthyConnected(sec.connected) ? 'up' : 'down'}`
+        : ''
+    const rc = ibAccountAgent.reconnects != null ? String(ibAccountAgent.reconnects) : '—'
+    const mc = ibAccountAgent.msg_count != null ? String(ibAccountAgent.msg_count) : '—'
+    return `${h}${secBit}; last msg ${fmtAge(ibAccountAgent.last_msg_age_s ?? null)}; reconnects ${rc}; msgs ${mc}`
+  }
+  if (svc.id === 'ib_operator' && status?.socket?.ib_operator) {
+    const op = status.socket.ib_operator
+    const hostUp =
+      ingestRedisTruthyConnected(op.connected)
+      || ingestRedisTruthyConnected(op.host?.connected)
+    const c = hostUp ? 'connected' : 'disconnected'
+    const rc = op.reconnects != null ? String(op.reconnects) : '—'
+    const mc = op.msg_count != null ? String(op.msg_count) : '—'
+    return `IB Operator ${c}; last activity ${fmtAge(op.last_msg_age_s ?? null)}; reconnects ${rc}; cmds ${mc}`
+  }
+  if (svc.redis_meta_key) return `Meta: ${svc.redis_meta_key}`
+  return '—'
+}
+
+export function ingestRowUsesConnectionColumn(svc: MarketIngestServiceRow, category: IngestCategory): boolean {
+  if (category === 'IB') return true
+  return svc.id === 'massive_ws'
+}
 
 export interface MarketIngestServiceRow {
   id: string

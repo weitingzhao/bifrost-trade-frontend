@@ -41,14 +41,16 @@ export function NetLiqChart({ accounts }: Props) {
   const y = (v: number) => pad.top + (1 - (v - minY) / (maxY - minY || 1)) * (h - pad.top - pad.bottom)
 
   return (
-    <div className="rounded-xl border border-border bg-secondary p-4 space-y-3">
-      <p className="text-sm font-medium">Net Liquidation over time</p>
+    <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-secondary p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Net Liquidation over time
+      </p>
       {series.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No account data.</p>
+        <p className="mt-3 flex flex-1 items-center text-sm text-muted-foreground">No account data.</p>
       ) : (
-        <>
+        <div className="mt-3 flex min-h-0 flex-1 flex-col justify-between gap-3">
           <svg
-            className="w-full max-w-full"
+            className="w-full min-h-[120px] flex-1 max-w-full"
             viewBox={`0 0 ${w} ${h}`}
             preserveAspectRatio="xMidYMid meet"
             aria-label="Net liquidation over time"
@@ -104,21 +106,21 @@ export function NetLiqChart({ accounts }: Props) {
               strokeWidth="1"
             />
           </svg>
-          <ul className="space-y-1.5">
+          <ul className="mt-auto shrink-0 space-y-1.5">
             {series.map((s, idx) => (
               <li key={s.accountId} className="flex items-center gap-2 text-xs">
                 <span
-                  className="h-2 w-2 rounded-full shrink-0"
+                  className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: LINE_COLORS[idx % LINE_COLORS.length] }}
                 />
                 <span className="font-mono text-muted-foreground">{s.label}</span>
-                <span className="font-mono font-semibold tabular-nums ml-auto">
+                <span className="ml-auto font-mono font-semibold tabular-nums">
                   {fmtUsd(s.points[s.points.length - 1]?.y ?? 0)}
                 </span>
               </li>
             ))}
           </ul>
-        </>
+        </div>
       )}
     </div>
   )

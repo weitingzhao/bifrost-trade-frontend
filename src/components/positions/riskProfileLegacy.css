@@ -1,0 +1,419 @@
+/* Legacy risk profile + instance sheet detail (Positions Strategy expand) */
+
+.pnl-positive {
+  color: var(--color-success, #22c55e);
+}
+
+.pnl-negative {
+  color: var(--color-danger, #ef4444);
+}
+
+.coverage-status-badge {
+  display: inline-block;
+  padding: 0.1em 0.55em;
+  border-radius: 4px;
+  font-size: 0.82em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.risk-badge-defined {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.risk-badge-unlimited {
+  background: rgba(248, 113, 113, 0.14);
+  color: #f87171;
+}
+
+.risk-value-gain {
+  color: #22c55e;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-value-loss {
+  color: #ef4444;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-value-unlimited {
+  letter-spacing: 0.02em;
+}
+
+.risk-profile-top-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.15);
+  font-size: 0.8125rem;
+}
+
+.risk-profile-top-segment {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.risk-profile-top-label {
+  color: #7a8492;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.risk-profile-top-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #e5e7eb;
+}
+
+.risk-profile-top-divider {
+  color: #4b5563;
+  user-select: none;
+  padding: 0 0.15rem;
+}
+
+.risk-profile-scenario-payoff-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.85rem 1.15rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+}
+
+.risk-profile-scenario-col {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.risk-profile-payoff-col {
+  flex: 0 1 17.5rem;
+  width: min(100%, 17.5rem);
+  max-width: 20rem;
+  align-self: stretch;
+}
+
+.risk-profile-payoff-col--dual {
+  flex: 1 1 28rem;
+  width: min(100%, 38rem);
+  max-width: 38rem;
+}
+
+.risk-profile-payoff-charts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem 0.85rem;
+  width: 100%;
+}
+
+.risk-profile-payoff-charts .risk-payoff-chart {
+  flex: 1 1 12.5rem;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .risk-profile-payoff-col {
+    flex: 1 1 100%;
+    max-width: none;
+    width: 100%;
+  }
+
+  .risk-profile-payoff-col--dual {
+    max-width: none;
+  }
+}
+
+.risk-profile-scenario-summary--embedded {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.risk-profile-scenario-summary-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.risk-profile-scenario-summary-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7a8492;
+}
+
+.risk-profile-scenario-summary-hint {
+  font-size: 0.72rem;
+  color: #5c6572;
+}
+
+.risk-profile-scenario-note {
+  margin: 0 0 0.45rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.35;
+}
+
+.risk-payoff-chart {
+  margin: 0;
+  padding: 0;
+}
+
+.risk-payoff-chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.45rem;
+  margin-bottom: 0;
+}
+
+.risk-payoff-chart-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7a8492;
+}
+
+.risk-payoff-chart-data {
+  font-size: 0.65rem;
+  color: #5c6572;
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-payoff-chart-sub {
+  font-size: 0.65rem;
+  color: hsl(var(--muted-foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-payoff-chart-svg {
+  display: block;
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: var(--risk-payoff-shadow);
+  border: 1px solid var(--risk-payoff-plot-border);
+}
+
+.risk-payoff-chart-axis-label {
+  font-size: 8.5px;
+  font-weight: 600;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  fill: var(--risk-payoff-axis);
+}
+
+.risk-payoff-chart-tick {
+  font-size: 8px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  fill: var(--risk-payoff-tick);
+}
+
+.risk-payoff-chart-caption {
+  margin: 0.35rem 0 0;
+  font-size: 0.65rem;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+.risk-payoff-chart--compact .risk-payoff-chart-caption {
+  margin-top: 0.25rem;
+  font-size: 0.62rem;
+}
+
+.risk-scenario-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-scenario-matrix thead th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #7a8492;
+  padding: 0.35rem 0.5rem 0.35rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.risk-scenario-matrix tbody th {
+  text-align: left;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  padding: 0.4rem 0.75rem 0.4rem 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.risk-scenario-matrix-scenario-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: normal;
+}
+
+.risk-scenario-matrix-scenario-label {
+  white-space: nowrap;
+}
+
+.risk-scenario-matrix tbody td {
+  padding: 0.4rem 0.5rem;
+  vertical-align: middle;
+}
+
+.risk-scenario-matrix-num {
+  text-align: right;
+}
+
+.risk-scenario-matrix-scenario {
+  min-width: 6.5rem;
+}
+
+.risk-scenario-matrix-na {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+}
+
+.risk-scenario-matrix-row-gain th[scope='row'] {
+  color: #86efac;
+}
+
+.risk-scenario-matrix-row-loss th[scope='row'] {
+  color: #fca5a5;
+}
+
+.risk-scenario-matrix-row-hedged th[scope='row'] {
+  color: #fdba74;
+  font-weight: 500;
+}
+
+.risk-scenario-matrix tbody tr:not(:last-child) td,
+.risk-scenario-matrix tbody tr:not(:last-child) th[scope='row'] {
+  border-bottom: 1px solid hsl(var(--border) / 0.35);
+}
+
+.risk-scenario-matrix-click-wrap {
+  padding: 0.15rem !important;
+  vertical-align: middle;
+}
+
+.risk-scenario-matrix-cell-btn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: hsl(var(--muted) / 0.25);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  text-align: right;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.risk-scenario-matrix-cell-btn:hover {
+  background: hsl(var(--muted) / 0.5);
+  border-color: hsl(var(--border));
+}
+
+.risk-scenario-matrix-cell-btn-active {
+  border-color: rgba(59, 130, 246, 0.55);
+  background: rgba(59, 130, 246, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+.risk-scenario-matrix-explain {
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border) / 0.6);
+  background: hsl(var(--card));
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: hsl(var(--foreground) / 0.85);
+}
+
+.risk-scenario-matrix-explain-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.risk-scenario-matrix-explain-close {
+  cursor: pointer;
+  padding: 0.15rem 0.45rem;
+  border: none;
+  border-radius: 4px;
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.risk-scenario-matrix-explain-close:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+.risk-scenario-matrix-explain-principle {
+  margin: 0 0 0.5rem;
+}
+
+.risk-scenario-matrix-explain-rules {
+  margin: 0 0 0.5rem;
+  padding-left: 1.1rem;
+}
+
+.risk-scenario-matrix-explain-note {
+  margin: 0 0 0.5rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.risk-scenario-matrix-explain-code {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: 4px;
+  background: hsl(var(--muted) / 0.4);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.risk-scenario-matrix-explain-sum {
+  margin: 0.5rem 0 0;
+}
+
+.risk-hedged-breakdown {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.risk-unlimited-warning {
+  color: #f87171;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0 0 0.35rem;
+}

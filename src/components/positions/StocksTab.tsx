@@ -1,162 +1,136 @@
-import { cn } from '@/lib/utils'
+import { useMemo } from 'react'
+import { fmtUsd, fmtSignedPct } from '@/utils/positions'
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import { fmtUsd, fmtPct, formatLastUpdate, resolveBasePrice, pnlColorClass } from '@/utils/positions'
+  computeOpenStockPositionMetrics,
+  groupStockPositionsByAccount,
+} from '@/utils/openStockPositions'
 import type { LivePositionRow } from '@/types/positions'
-import type { QuoteItem, DailyBenchmark } from '@/types/market'
+import './stocksTabLegacy.css'
+import './coverageSummaryLegacy.css'
 
 interface Props {
   positions: LivePositionRow[]
-  quotesBySymbol: Record<string, QuoteItem>
-  benchBySymbol: Record<string, DailyBenchmark>
   title?: string
+  emptyHint?: string
   filterSymbol?: string
+  rowKeyPrefix?: string
   onInspect?: (symbol: string, accountId: string, pos: LivePositionRow) => void
 }
 
-function colorClass(n: number | null | undefined) {
-  return pnlColorClass(n)
+function pnlClass(n: number | null | undefined): string {
+  return (n ?? 0) >= 0 ? 'pnl-positive' : 'pnl-negative'
 }
 
-interface RowCalc {
-  currPrice: number | null
-  totalCost: number | null
-  totalMarket: number | null
-  dailyPct: number | null
-  dailyUsd: number | null
-  changePct: number | null
-  changeUsd: number | null
-  updTs: number | null
+function StockRow({
+  position,
+  onInspect,
+}: {
+  position: LivePositionRow
+  onInspect?: (symbol: string, accountId: string, pos: LivePositionRow) => void
+}) {
+  const accId = (position.account_id ?? '').trim() || '—'
+  const sym = (position.symbol ?? '').toUpperCase()
+  const m = computeOpenStockPositionMetrics(position)
+
+  return (
+    <tr>
+      <td>{accId}</td>
+      <td>
+        {onInspect ? (
+          <button
+            type="button"
+            className="riv-stock-symbol-btn"
+            onClick={() => onInspect(sym, accId, position)}
+            aria-label={`Open details for ${position.symbol ?? 'symbol'}`}
+          >
+            <strong>{position.symbol ?? '—'}</strong>
+          </button>
+        ) : (
+          <strong>{position.symbol ?? '—'}</strong>
+        )}
+      </td>
+      <td>{m.sideLabel}</td>
+      <td>{Number.isFinite(m.qty) ? m.qty : '—'}</td>
+      <td>{fmtUsd(position.avgCost)}</td>
+      <td>{fmtUsd(m.lastPrice)}</td>
+      <td>{fmtUsd(m.marketValue)}</td>
+      <td className="coverage-pnl-stacked-cell">
+        <div className={pnlClass(m.dailyPnl)}>{m.dailyPnl != null ? fmtUsd(m.dailyPnl) : '—'}</div>
+        <div className={`coverage-pnl-stacked-pct ${pnlClass(m.dailyPct)}`}>
+          {m.dailyPct != null ? fmtSignedPct(m.dailyPct) : '—'}
+        </div>
+      </td>
+      <td className="coverage-pnl-stacked-cell">
+        <div className={pnlClass(m.sincePnl)}>{m.sincePnl != null ? fmtUsd(m.sincePnl) : '—'}</div>
+        <div className={`coverage-pnl-stacked-pct ${pnlClass(m.sincePct)}`}>
+          {m.sincePct != null ? fmtSignedPct(m.sincePct) : '—'}
+        </div>
+      </td>
+    </tr>
+  )
 }
 
-function calcRow(
-  pos: LivePositionRow,
-  quote: QuoteItem | undefined,
-  bench: DailyBenchmark | undefined,
-): RowCalc {
-  const qty = pos.position ?? 0
-  const avgCost = pos.avgCost ?? null
-  const currPrice = quote?.last ?? pos.price ?? null
-  const basePrice = resolveBasePrice(pos, bench)
-  const totalCost = avgCost != null ? qty * avgCost : null
-  const totalMarket = currPrice != null ? qty * currPrice : null
-  const dailyPct =
-    currPrice != null && basePrice != null && basePrice !== 0
-      ? ((currPrice - basePrice) / basePrice) * 100
-      : null
-  const dailyUsd =
-    currPrice != null && basePrice != null ? (currPrice - basePrice) * qty : null
-  const changePct =
-    currPrice != null && avgCost != null && avgCost !== 0
-      ? ((currPrice - avgCost) / avgCost) * 100
-      : null
-  const changeUsd =
-    pos.unrealized_pnl ?? (currPrice != null && avgCost != null ? (currPrice - avgCost) * qty : null)
-  const updTs = quote?.timestamp ?? pos.price_updated_at ?? null
-  return { currPrice, totalCost, totalMarket, dailyPct, dailyUsd, changePct, changeUsd, updTs }
-}
+export function StocksTab({
+  positions,
+  title = 'Stock positions',
+  emptyHint = 'No open stock positions under the current filters.',
+  filterSymbol = '',
+  rowKeyPrefix = 'stk',
+  onInspect,
+}: Props) {
+  const filtered = useMemo(() => {
+    const sym = filterSymbol.trim().toUpperCase()
+    if (!sym) return positions
+    return positions.filter((p) => (p.symbol ?? '').toUpperCase().includes(sym))
+  }, [positions, filterSymbol])
 
-export function StocksTab({ positions, quotesBySymbol, benchBySymbol, title = 'Stock Positions', filterSymbol, onInspect }: Props) {
-  const filtered = filterSymbol
-    ? positions.filter((p) => (p.symbol ?? '').toUpperCase().includes(filterSymbol.toUpperCase()))
-    : positions
+  const accountGroups = useMemo(() => groupStockPositionsByAccount(filtered), [filtered])
 
   if (filtered.length === 0) {
     return (
-      <div>
-        <p className="text-sm font-medium mb-2">{title}</p>
-        <p className="text-sm text-muted-foreground">None</p>
+      <div className="positions-stocks-panel system-tab-panel">
+        <h5 className="replay-sub positions-stocks-heading">{title}</h5>
+        <p className="section-hint positions-stocks-empty">{emptyHint}</p>
       </div>
     )
   }
 
-  const rows = filtered.map((pos) => {
-    const sym = (pos.symbol ?? '').toUpperCase()
-    return { pos, r: calcRow(pos, quotesBySymbol[sym], benchBySymbol[sym]) }
-  })
-
-  const totals = rows.reduce(
-    (acc, { r }) => ({
-      cost: acc.cost + (r.totalCost ?? 0),
-      market: acc.market + (r.totalMarket ?? 0),
-      dailyUsd: acc.dailyUsd + (r.dailyUsd ?? 0),
-      changeUsd: acc.changeUsd + (r.changeUsd ?? 0),
-    }),
-    { cost: 0, market: 0, dailyUsd: 0, changeUsd: 0 },
-  )
-
   return (
-    <div>
-      <p className="text-sm font-medium mb-2">{title}</p>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Account</TableHead>
-              <TableHead className="min-w-[70px]">Symbol</TableHead>
-              <TableHead className="text-right">Qty</TableHead>
-              <TableHead className="text-right">Cost</TableHead>
-              <TableHead className="text-right">Total Cost</TableHead>
-              <TableHead className="text-right">Total Mkt</TableHead>
-              <TableHead className="text-right">Last</TableHead>
-              <TableHead className="text-right">Daily %</TableHead>
-              <TableHead className="text-right">Daily $</TableHead>
-              <TableHead className="text-right">Chg %</TableHead>
-              <TableHead className="text-right">Chg $</TableHead>
-              <TableHead className="text-right">Upd</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map(({ pos, r }, i) => (
-              <TableRow
-                key={`${pos.account_id}-${pos.contract_key ?? pos.symbol}-${i}`}
-                className={cn(onInspect && 'cursor-pointer hover:bg-muted/40')}
-                onClick={onInspect ? () => onInspect((pos.symbol ?? '').toUpperCase(), pos.account_id, pos) : undefined}
-              >
-                <TableCell className="text-xs text-muted-foreground font-mono">{pos.account_id}</TableCell>
-                <TableCell className="font-mono text-xs font-medium">{pos.symbol ?? '—'}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{pos.position ?? '—'}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{fmtUsd(pos.avgCost)}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{fmtUsd(r.totalCost)}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{fmtUsd(r.totalMarket)}</TableCell>
-                <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(r.currPrice && pos.avgCost ? r.currPrice - pos.avgCost : null))}>
-                  {fmtUsd(r.currPrice)}
-                </TableCell>
-                <TableCell className={cn('text-right font-mono text-xs', colorClass(r.dailyPct))}>
-                  {fmtPct(r.dailyPct)}
-                </TableCell>
-                <TableCell className={cn('text-right font-mono text-xs', colorClass(r.dailyUsd))}>
-                  {fmtUsd(r.dailyUsd)}
-                </TableCell>
-                <TableCell className={cn('text-right font-mono text-xs', colorClass(r.changePct))}>
-                  {fmtPct(r.changePct)}
-                </TableCell>
-                <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(r.changeUsd))}>
-                  {fmtUsd(r.changeUsd)}
-                </TableCell>
-                <TableCell className="text-right text-xs text-muted-foreground">
-                  {formatLastUpdate(r.updTs)}
-                </TableCell>
-              </TableRow>
-            ))}
-            <TableRow className="border-t-2 font-semibold bg-muted/30 hover:bg-muted/30">
-              <TableCell className="text-xs py-1.5" colSpan={4}>Total</TableCell>
-              <TableCell className="text-right font-mono text-xs">{fmtUsd(totals.cost)}</TableCell>
-              <TableCell className="text-right font-mono text-xs">{fmtUsd(totals.market)}</TableCell>
-              <TableCell />
-              <TableCell />
-              <TableCell className={cn('text-right font-mono text-xs', colorClass(totals.dailyUsd))}>
-                {fmtUsd(totals.dailyUsd)}
-              </TableCell>
-              <TableCell />
-              <TableCell className={cn('text-right font-mono text-xs', colorClass(totals.changeUsd))}>
-                {fmtUsd(totals.changeUsd)}
-              </TableCell>
-              <TableCell />
-            </TableRow>
-          </TableBody>
-        </Table>
+    <div className="positions-stocks-panel system-tab-panel">
+      <h5 className="replay-sub positions-stocks-heading">{title}</h5>
+      <div className="replay-portfolio-table-wrap positions-stocks-table-wrap">
+        <table className="table-operations positions-stocks-table">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Symbol</th>
+              <th>Side</th>
+              <th>Qty</th>
+              <th>Avg Cost</th>
+              <th>Last</th>
+              <th>Market Value</th>
+              <th className="coverage-pnl-stacked-th">Daily $ / %</th>
+              <th className="coverage-pnl-stacked-th">Since $ / %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {accountGroups.flatMap(({ accountId, rows }) => {
+              const groupKey = `${rowKeyPrefix}-acc-${accountId}`
+              return [
+                <tr key={groupKey} className="replay-portfolio-group-header positions-stocks-group-row">
+                  <td colSpan={9}>
+                    <strong>{accountId}</strong>
+                  </td>
+                </tr>,
+                ...rows.map((position) => {
+                  const contractKey = position.contract_key ?? `${position.symbol ?? ''}|STK|||`
+                  const rowKey = `${rowKeyPrefix}-open-stk-${accountId}-${position.symbol ?? ''}-${contractKey}`
+                  return <StockRow key={rowKey} position={position} onInspect={onInspect} />
+                }),
+              ]
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )

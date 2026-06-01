@@ -1,0 +1,48 @@
+/* Legacy coverage-asset-pie-svg */
+.svg {
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.4));
+}
+
+.ringTrack {
+  stroke: rgba(255, 255, 255, 0.14);
+  opacity: 0.85;
+}
+
+.centerMain {
+  fill: var(--foreground, #e4e9ef);
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.centerMainBasis {
+  letter-spacing: -0.01em;
+}
+
+.centerMainTriplet {
+  letter-spacing: -0.02em;
+}
+
+.centerMainNetliq {
+  letter-spacing: 0;
+}
+
+.centerSub {
+  fill: #a0a8b5;
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.centerSubLong {
+  letter-spacing: 0.02em;
+}
+
+.centerEmpty {
+  fill: var(--color-text-dim, #5c6572);
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+}

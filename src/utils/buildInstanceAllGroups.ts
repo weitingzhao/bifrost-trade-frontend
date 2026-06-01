@@ -212,7 +212,7 @@ export function buildInstanceAllGroups(input: BuildInstanceAllGroupsInput): Inst
               strike: p.strike,
               right: r,
               qty: p.qty,
-              premium: p.avg_cost,
+              avg_cost: p.avg_cost!,
             })
           }
         }

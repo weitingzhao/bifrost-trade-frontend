@@ -172,7 +172,7 @@ export function buildInstanceGroups(input: BuildInstanceGroupsInput): InstancePo
     const expiry = pos.lastTradeDateOrContractMonth ?? pos.expiry ?? ''
     const strike = Number(pos.strike) || 0
     const symbol = (pos.symbol ?? '').toUpperCase()
-    if (symFilter && !symbol.includes(symFilter)) continue
+    if (symFilter && symbol !== symFilter) continue
     if (expFilter && !optionExpiryMatchesFilter(expiry, expFilter)) continue
 
     const qty = Number(pos.position) || 0

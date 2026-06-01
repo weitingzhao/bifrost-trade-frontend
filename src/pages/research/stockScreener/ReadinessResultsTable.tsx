@@ -22,7 +22,7 @@ interface Props {
   symbolCount: number
   activeSymbol: string | null
   onSort: (col: 'tech' | 'fund') => void
-  onOpenInspector: (symbol: string) => void
+  onOpenInspector: (symbol: string, row?: ReadinessSnapshotRow) => void
 }
 
 function BoolMark({ value }: { value: boolean | undefined | null }) {
@@ -177,7 +177,7 @@ export function ReadinessResultsTable({
                         <button
                           type="button"
                           className="font-mono font-semibold text-primary hover:underline"
-                          onClick={() => onOpenInspector(r.symbol)}
+                          onClick={() => onOpenInspector(r.symbol, r)}
                         >
                           {r.symbol}
                         </button>
@@ -210,7 +210,7 @@ export function ReadinessResultsTable({
                           'font-mono font-semibold hover:underline inline-flex items-center gap-0.5',
                           isActive ? 'text-primary' : 'text-foreground',
                         )}
-                        onClick={() => onOpenInspector(r.symbol)}
+                        onClick={() => onOpenInspector(r.symbol, r)}
                         title={isActive ? 'Close inspector' : `Open ${r.symbol} inspector`}
                       >
                         {r.symbol}

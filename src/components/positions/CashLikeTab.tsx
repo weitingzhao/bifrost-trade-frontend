@@ -1,22 +1,21 @@
 import { StocksTab } from './StocksTab'
 import type { LivePositionRow } from '@/types/positions'
-import type { QuoteItem, DailyBenchmark } from '@/types/market'
 
 interface Props {
   positions: LivePositionRow[]
-  quotesBySymbol: Record<string, QuoteItem>
-  benchBySymbol: Record<string, DailyBenchmark>
   filterSymbol?: string
+  onInspect?: (symbol: string, accountId: string, pos: LivePositionRow) => void
 }
 
-export function CashLikeTab({ positions, quotesBySymbol, benchBySymbol, filterSymbol }: Props) {
+export function CashLikeTab({ positions, filterSymbol, onInspect }: Props) {
   return (
     <StocksTab
       positions={positions}
-      quotesBySymbol={quotesBySymbol}
-      benchBySymbol={benchBySymbol}
-      title="Cash-like Positions"
+      title="Cash-like positions"
+      emptyHint="No open cash-like positions under the current filters."
       filterSymbol={filterSymbol}
+      rowKeyPrefix="cash"
+      onInspect={onInspect}
     />
   )
 }

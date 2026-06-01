@@ -1,0 +1,341 @@
+/* Legacy: instance-sheet-filters + replay-portfolio-table-wrap / instance-sheet-table */
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: nowrap;
+  min-width: 0;
+  margin-bottom: 0.75rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.filterBubbleRow {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  flex-shrink: 0;
+}
+
+.filterBubbleLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.tableWrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.sheetTable {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.sheetRow {
+  cursor: pointer;
+}
+
+.sheetRow:hover {
+  background: hsl(var(--muted) / 0.35);
+}
+
+.sheetRowExpanded {
+  background: hsl(var(--muted) / 0.25);
+}
+
+.sheetRow td {
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.sheetTable :global([data-slot='table-cell'].pnl-positive) {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.sheetTable :global([data-slot='table-cell'].pnl-negative) {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* Symbols column may wrap (Legacy td:nth-child(4)) */
+.sheetRow td:nth-child(4) {
+  white-space: normal;
+  vertical-align: top;
+}
+
+.execQtyCell {
+  font-variant-numeric: tabular-nums;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oppPrimary {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  line-height: 1.3;
+}
+
+/* Strategy #id — opens instance inspector (Legacy: instance-sheet-inst-link) */
+.oppSecondary {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-link, #7dd3fc);
+  text-decoration: none;
+  line-height: 1.25;
+  transition: color 0.15s ease;
+}
+
+.oppSecondary:hover {
+  color: var(--color-link-hover, #bae6fd);
+  text-decoration: underline;
+}
+
+.oppSecondary:focus-visible {
+  outline: 2px solid var(--color-link, #7dd3fc);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Expanded detail row — no whole-row TableRow hover (sections handle their own) */
+.detailRow {
+  background: transparent !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.45);
+}
+
+.detailRow:hover {
+  background: transparent !important;
+}
+
+/* Legacy instance-sheet-detail-row / instance-sheet-detail-cell */
+.detailCell {
+  padding: 0.5rem 0.75rem 0.75rem !important;
+  border-top: none !important;
+  max-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  vertical-align: top;
+  white-space: normal !important;
+  background: hsl(var(--card));
+}
+
+.detailStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+/* Per-section hover — only the block under the pointer highlights */
+.subSection {
+  margin: 0;
+  padding: 0.45rem 0.5rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.subSection:hover {
+  background: hsl(var(--muted) / 0.28);
+  border-color: hsl(var(--border) / 0.55);
+}
+
+.subSection:last-child {
+  margin-bottom: 0;
+}
+
+/* Underlying Coverage: lighter band (Legacy visual break between blocks) */
+.subSectionCoverage {
+  border-color: hsl(var(--border) / 0.65);
+  background: linear-gradient(
+    180deg,
+    hsl(var(--secondary) / 0.55) 0%,
+    hsl(var(--muted) / 0.35) 100%
+  );
+}
+
+.subSectionCoverage:hover {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--secondary) / 0.72) 0%,
+    hsl(var(--muted) / 0.48) 100%
+  );
+  border-color: hsl(var(--border) / 0.8);
+}
+
+.subSectionRisk:hover {
+  background: hsl(var(--muted) / 0.22);
+}
+
+.subSectionRisk {
+  overflow: visible;
+}
+
+/* Sub-table header rows: no row-wide hover chrome */
+.subTableWrap :global([data-slot='table-header'] [data-slot='table-row']:hover) {
+  background: transparent !important;
+}
+
+/* Legacy replay-sub + instance-sheet-sub-heading (#7a8492) */
+.subHeading {
+  margin: 0 0 0.35rem;
+  padding: 0;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #7a8492;
+}
+
+.subSectionBody {
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+/* Legacy replay-portfolio-table-wrap inside detail — no extra chrome */
+.subTableWrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: visible;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.subTableWrap :global([data-slot='table-container']) {
+  overflow-x: auto;
+}
+
+.subTable {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Global th + Legacy instance-sheet-sub-table thead */
+.subTableWrap :global([data-slot='table-header']) {
+  background: hsl(var(--secondary));
+}
+
+.subTableWrap :global([data-slot='table-header'] tr) {
+  border-bottom: 2px solid var(--color-border-strong, hsl(var(--border)));
+}
+
+.subTableWrap :global([data-slot='table-head']) {
+  height: auto;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7a8492;
+  background: transparent;
+}
+
+.subTableWrap :global([data-slot='table-cell']) {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #e4e9ef;
+}
+
+.subTableWrap :global([data-slot='table-cell'].pnl-positive),
+.subTableWrap :global([data-slot='table-cell'] .pnl-positive) {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.subTableWrap :global([data-slot='table-cell'].pnl-negative),
+.subTableWrap :global([data-slot='table-cell'] .pnl-negative) {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* Legacy detail-position-row */
+.subDataRow {
+  border-bottom: 1px solid hsl(var(--border) / 0.4);
+  background: hsl(var(--card)) !important;
+  transition: background 0.15s ease;
+}
+
+.subDataRow:hover {
+  background: var(--color-accent-soft, rgba(163, 230, 53, 0.06)) !important;
+}
+
+.subExecRow {
+  border-bottom: 1px solid hsl(var(--border) / 0.35);
+  background: hsl(var(--secondary)) !important;
+  font-size: 0.88em;
+}
+
+.subExecRow:hover {
+  background: color-mix(in srgb, hsl(var(--secondary)) 92%, #e4e9ef 8%) !important;
+}
+
+/* Legacy riv-opt-contract-btn / riv-stock-symbol-btn (dark) */
+.subContractBtn {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #7dd3fc;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.subContractBtn:hover {
+  color: #bae6fd;
+  text-decoration: underline;
+}
+
+.subContractBtn strong {
+  font-weight: 700;
+}
+
+.subMutedCell {
+  color: #7a8492;
+  font-weight: 400;
+}
+
+/* Legacy replay-time-ago + expiry-days-remaining */
+.subTimeAgo {
+  color: var(--color-lamp-yellow, #facc15);
+  font-weight: 500;
+}
+
+.subExpiryDte {
+  color: #facc15;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.subTableWrap :global([data-slot='table-cell'] .subExpiryDte) {
+  color: #facc15;
+  font-weight: 600;
+}

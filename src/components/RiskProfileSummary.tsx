@@ -39,12 +39,16 @@ export function RiskProfileSummary({ profile }: Props) {
       <div>
         <span className="text-muted-foreground">Breakeven</span>
         <p className="font-mono mt-0.5">
-          {profile.breakeven_points.length > 0
-            ? profile.breakeven_points.map((p) => fmtUsd(p)).join(', ')
+          {profile.breakeven_prices.length > 0
+            ? profile.breakeven_prices.map((p) => fmtUsd(p)).join(', ')
             : '—'}
         </p>
       </div>
-      <p className="col-span-full text-[10px] text-muted-foreground">{rl}</p>
+      {profile.naked_short_call_contracts > 0 && (
+        <p className="col-span-full text-[10px] text-muted-foreground">
+          {rl.lossLabel === 'Unlimited' ? 'Includes naked short call tail beyond hedge.' : ''}
+        </p>
+      )}
     </div>
   )
 }

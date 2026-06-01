@@ -44,6 +44,14 @@ export const QUERY_KEYS = {
       techDistSymbols:  (n: number) => ['research', 'stock-screener', 'tech-dist', n] as const,
       readinessSnapshot: (key: string) => ['research', 'stock-screener', 'snapshot', key] as const,
     },
+    stockInspector: (symbol: string) => ['research', 'stock-inspector', symbol] as const,
+    tickerOverview:   (symbol: string) => ['research', 'ticker-overview', symbol] as const,
+    fundConditions:   (symbol: string) => ['research', 'fundamental-conditions', symbol] as const,
+    techConditions:   (symbol: string) => ['research', 'technical-conditions', symbol] as const,
+    fundRaw:          (symbol: string) => ['research', 'fund-raw', symbol] as const,
+    statements:       (symbol: string) => ['research', 'statements', symbol] as const,
+    optionPcr:        (symbol: string) => ['research', 'option-pcr', symbol] as const,
+    barStats:         (symbol: string) => ['market', 'bar-stats', symbol] as const,
     discovery: {
       expirations:    ['research', 'discovery', 'expirations']    as const,
       snapshots:      ['research', 'discovery', 'snapshots']      as const,
@@ -56,6 +64,7 @@ export const QUERY_KEYS = {
   },
   strategy: {
     instances:      ['strategy', 'instances']        as const,
+    instanceDetail: ['strategy', 'instance-detail']  as const,
     opportunities:  ['strategy', 'opportunities']    as const,
     structures:     ['strategy', 'structures']       as const,
     structureDetail:['strategy', 'structure-detail'] as const,

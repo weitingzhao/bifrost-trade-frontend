@@ -1,9 +1,11 @@
 import { useState, useCallback, useRef, Fragment } from 'react'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import type { EquityGrowthChartData, GrowthLayer, GrowthPoint } from '@/utils/ledger/equityGrowthChart'
 import { GROWTH_LAYERS } from '@/utils/ledger/equityGrowthChart'
 import type { FiBarChartData } from '@/utils/ledger/fiBarChart'
+import { EQUITY_GROWTH_INFO } from '@/pages/portfolio/performance/performanceConstants'
 
 function fmtPnl(v: number): string {
   return v.toLocaleString('en-US', {
@@ -121,9 +123,12 @@ export function EquityGrowthCard({
     >
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-2.5">
-        <h3 className="text-sm font-semibold text-foreground tracking-wide">
-          Portfolio Equity Growth
-        </h3>
+        <div className="flex items-center gap-1.5">
+          <h3 className="text-sm font-semibold text-foreground tracking-wide">
+            Portfolio Equity Growth
+          </h3>
+          <InfoTooltip text={EQUITY_GROWTH_INFO} />
+        </div>
 
         <div className="flex items-center gap-4">
           {/* % / $ toggle */}

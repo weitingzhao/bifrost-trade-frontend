@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -45,6 +45,26 @@ export function ExecutionFormModal({
 
   const isCreate = !exec?.account_executions_id
   const isJournal = isCreate && createSource === 'journal_closed'
+
+  useEffect(() => {
+    if (!open || !exec?.account_executions_id) return
+    const sideRaw = (exec.side ?? 'BUY').toUpperCase()
+    const isSell = sideRaw === 'SELL' || sideRaw === 'SLD' || sideRaw === 'S'
+    const qty = Math.abs(Number(exec.quantity ?? exec.qty) || 0)
+    setAccountId(exec.account_id ?? '')
+    setSymbol(exec.symbol ?? '')
+    setSecType(exec.sec_type === 'OPT' ? 'OPT' : 'STK')
+    setSide(isSell ? 'SELL' : 'BUY')
+    setQuantity(qty > 0 ? String(qty) : '')
+    setPrice(exec.price != null ? String(exec.price) : '')
+    setExecTime(exec.time ? new Date(exec.time * 1000).toISOString().slice(0, 16) : '')
+    setExpiry(exec.expiry ?? '')
+    setStrike(exec.strike != null ? String(exec.strike) : '')
+    const r = (exec.right ?? exec.option_right ?? 'C').toString().toUpperCase().slice(0, 1)
+    setRight(r === 'P' ? 'P' : 'C')
+    setCommission(exec.commission != null ? String(exec.commission) : '')
+    setError(null)
+  }, [open, exec])
 
   async function handleSubmit() {
     setSubmitting(true)
@@ -100,7 +120,7 @@ export function ExecutionFormModal({
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isCreate ? (isJournal ? 'Add journal' : 'Add Journal Entry') : 'Edit Execution'}</DialogTitle>
+          <DialogTitle>{isCreate ? (isJournal ? 'Add journal' : 'Add Journal Entry') : 'Edit execution'}</DialogTitle>
         </DialogHeader>
 
         {isJournal && (

@@ -20,3 +20,5 @@ export const StrategyInstanceSchema = z.object({
 export const StrategyInstancesResponseSchema = z.object({
   items: z.array(StrategyInstanceSchema),
 }).passthrough()
+
+export const StrategyInstanceDetailSchema = StrategyInstanceSchema

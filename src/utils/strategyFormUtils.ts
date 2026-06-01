@@ -22,11 +22,27 @@ export const DEFAULT_STRUCTURE_PAYLOAD: StructurePayload = {
   meta: [],
 }
 
+/** Human-readable labels for structure types (Legacy parity). */
+export const STRUCTURE_TYPE_LABELS: Record<string, string> = {
+  straddle_strangle: 'Straddle / Strangle',
+  cash_secured_put: 'Cash Secured Put',
+  covered_call: 'Covered Call',
+  covered_call_otm: 'Covered Call OTM',
+  iron_condor: 'Iron Condor',
+  leaps: 'LEAPS',
+  calendar_spread: 'Calendar Spread',
+  custom: 'Custom',
+}
+
+export function getStructureTypeLabel(structureType: string | null | undefined): string {
+  if (structureType == null || structureType === '') return '—'
+  return STRUCTURE_TYPE_LABELS[structureType] ?? structureType.replace(/_/g, ' ')
+}
+
 export function getStructureDisplayLabel(row: StrategyStructure): string {
   if (row.template_display_name) return row.template_display_name
   if (row.structure_subtype_label) return row.structure_subtype_label
-  if (row.structure_type) return row.structure_type.replace(/_/g, ' ')
-  return '—'
+  return getStructureTypeLabel(row.structure_type)
 }
 
 export function summarizeDimensions(row: StrategyStructure): string {

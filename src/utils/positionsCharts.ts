@@ -8,6 +8,19 @@ import { fmtUsd } from '@/utils/positions'
 export type UnderlyingCategoryFilter = 'Stocks' | 'Fixed Income' | 'Cash-like'
 export const UNDERLYING_CATEGORY_ORDER: UnderlyingCategoryFilter[] = ['Stocks', 'Fixed Income', 'Cash-like']
 
+/** Asset-mix donut + legend — matches Legacy --coverage-pie-* tokens. */
+export const ASSET_MIX_CHART_COLORS = {
+  stock: '#38bdf8',
+  fi: '#4ade80',
+  cashLike: '#2dd4bf',
+  cash: '#fbbf24',
+  bp: '#e879f9',
+  options: '#c084fc',
+} as const
+
+/** Legacy coverage-asset-pie-ring-track stroke. */
+export const COVERAGE_PIE_EMPTY = 'rgba(255, 255, 255, 0.14)'
+
 export const UNDERLYING_CATEGORY_COLORS: Record<UnderlyingCategoryFilter, string> = {
   Stocks: '#38bdf8',
   'Fixed Income': '#fbbf24',

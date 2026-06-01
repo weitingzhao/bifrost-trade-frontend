@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -26,9 +27,12 @@ export function CeleryBeatScheduleCard() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium flex items-center justify-between">
-          <span>Celery Beat Schedule</span>
-          <span className="text-xs font-normal text-muted-foreground">Timezone: {tz}</span>
+        <CardTitle className="text-sm font-medium flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5">
+            Scheduled Celery Beat
+            <InfoTooltip text="Cron-style beat entries from Research API. Distinct from capabilities beat_tasks on the Scheduled Jobs tab." />
+          </span>
+          <span className="text-xs font-normal text-muted-foreground shrink-0">Timezone: {tz}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">

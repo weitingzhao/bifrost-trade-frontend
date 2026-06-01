@@ -7,14 +7,24 @@ export interface DonutSegment {
   color: string
 }
 
-const PALETTE = [
-  '#38bdf8', '#76b900', '#fbbf24', '#ef4444',
-  '#a855f7', '#f97316', '#4ade80', '#ec4899',
-  '#84cc16', '#14b8a6', '#06b6d4', '#6366f1',
-]
+/** Shared donut segment colors (Positions charts + other dashboards). */
+export const DONUT_CHART_PALETTE = [
+  '#38bdf8',
+  '#76b900',
+  '#fbbf24',
+  '#ef4444',
+  '#a855f7',
+  '#f97316',
+  '#4ade80',
+  '#ec4899',
+  '#84cc16',
+  '#14b8a6',
+  '#06b6d4',
+  '#6366f1',
+] as const
 
 export function assignColor(index: number): string {
-  return PALETTE[index % PALETTE.length]
+  return DONUT_CHART_PALETTE[index % DONUT_CHART_PALETTE.length]
 }
 
 export function buildAssetMixSegments(

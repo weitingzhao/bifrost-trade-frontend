@@ -3,33 +3,33 @@ import { computeRiskProfile, formatRiskLabel, formatRiskDisplayLabels } from './
 import type { RiskPosition } from './riskProfile'
 
 describe('computeRiskProfile', () => {
-  it('returns unknown for empty positions', () => {
-    const result = computeRiskProfile([])
-    expect(result.risk_type).toBe('unknown')
-    expect(result.max_gain).toBeNull()
-    expect(result.max_loss).toBeNull()
+  it('returns defined zero profile for empty positions', () => {
+    const result = computeRiskProfile([], 0, null)
+    expect(result.risk_type).toBe('defined')
+    expect(result.max_gain).toBe(0)
+    expect(result.max_loss).toBe(0)
   })
 
   it('computes defined risk for long call', () => {
     const positions: RiskPosition[] = [
-      { right: 'C', strike: 100, qty: 1, premium: 5 },
+      { right: 'C', strike: 100, qty: 1, avg_cost: 5 },
     ]
-    const result = computeRiskProfile(positions)
+    const result = computeRiskProfile(positions, 0, null)
     expect(result.risk_type).toBe('defined')
     expect(result.max_loss).toBeLessThan(0)
   })
 
   it('computes unlimited risk for naked short call', () => {
     const positions: RiskPosition[] = [
-      { right: 'C', strike: 100, qty: -1, premium: 5 },
+      { right: 'C', strike: 100, qty: -1, avg_cost: 5 },
     ]
-    const result = computeRiskProfile(positions)
+    const result = computeRiskProfile(positions, 0, null)
     expect(result.risk_type).toBe('unlimited')
   })
 
   it('computes defined risk for covered call', () => {
     const positions: RiskPosition[] = [
-      { right: 'C', strike: 110, qty: -1, premium: 3 },
+      { right: 'C', strike: 110, qty: -1, avg_cost: 3 },
     ]
     const result = computeRiskProfile(positions, 100, 100)
     expect(result.risk_type).toBe('defined')
@@ -38,12 +38,12 @@ describe('computeRiskProfile', () => {
 
   it('finds breakeven points for straddle', () => {
     const positions: RiskPosition[] = [
-      { right: 'C', strike: 100, qty: 1, premium: 5 },
-      { right: 'P', strike: 100, qty: 1, premium: 5 },
+      { right: 'C', strike: 100, qty: 1, avg_cost: 5 },
+      { right: 'P', strike: 100, qty: 1, avg_cost: 5 },
     ]
-    const result = computeRiskProfile(positions)
-    expect(result.breakeven_points.length).toBeGreaterThanOrEqual(1)
-    const be = result.breakeven_points[0]
+    const result = computeRiskProfile(positions, 0, null)
+    expect(result.breakeven_prices.length).toBeGreaterThanOrEqual(1)
+    const be = result.breakeven_prices[0]
     expect(be).toBeGreaterThan(85)
     expect(be).toBeLessThan(115)
   })
@@ -55,7 +55,8 @@ describe('formatRiskDisplayLabels', () => {
       risk_type: 'unlimited',
       max_gain: null,
       max_loss: null,
-      breakeven_points: [],
+      naked_short_call_contracts: 0,
+      hedged_max_loss: null,
     })
     expect(labels.gainLabel).toBe('Unlimited')
     expect(labels.lossLabel).toBe('Unlimited')
@@ -67,7 +68,8 @@ describe('formatRiskDisplayLabels', () => {
       risk_type: 'defined',
       max_gain: 500,
       max_loss: -200,
-      breakeven_points: [],
+      naked_short_call_contracts: 0,
+      hedged_max_loss: null,
     })
     expect(labels.gainLabel).toBe('$500.00')
     expect(labels.lossLabel).toBe('-$200.00')
@@ -76,18 +78,40 @@ describe('formatRiskDisplayLabels', () => {
 })
 
 describe('formatRiskLabel', () => {
-  it('formats unlimited', () => {
-    expect(formatRiskLabel({ risk_type: 'unlimited', max_gain: 100, max_loss: -Infinity, breakeven_points: [] }))
-      .toBe('Risk: Unlimited')
+  const base = {
+    breakeven_prices: [] as number[],
+    net_premium: 0,
+    naked_short_call_contracts: 0,
+    hedged_max_loss: null,
+    max_gain_scenario: null,
+    max_gain_sample_scenario: null,
+    max_loss_scenario: null,
+    hedged_max_loss_scenario: null,
+    stock_shares_modeled: 0,
+    stock_avg_cost_known: true,
+    calc_context: null,
+  }
+
+  it('formats unlimited loss label', () => {
+    expect(
+      formatRiskLabel({
+        ...base,
+        risk_type: 'unlimited',
+        max_gain: 100,
+        max_loss: null,
+      }).lossLabel,
+    ).toBe('Unlimited')
   })
 
-  it('formats defined', () => {
-    expect(formatRiskLabel({ risk_type: 'defined', max_gain: 500, max_loss: -200, breakeven_points: [] }))
-      .toBe('Risk: Defined')
-  })
-
-  it('formats unknown', () => {
-    expect(formatRiskLabel({ risk_type: 'unknown', max_gain: null, max_loss: null, breakeven_points: [] }))
-      .toBe('Risk: Unknown')
+  it('formats defined approx labels', () => {
+    const labels = formatRiskLabel({
+      ...base,
+      risk_type: 'defined',
+      max_gain: 500,
+      max_loss: -200,
+    })
+    expect(labels.gainLabel).toBe('$500')
+    expect(labels.lossLabel).toBe('-$200')
+    expect(labels.riskBadge).toBe('Defined')
   })
 })

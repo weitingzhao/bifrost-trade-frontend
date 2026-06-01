@@ -1,79 +1,80 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { cn } from '@/lib/utils'
-import { ChevronDown, ArrowUpDown, ScanSearch, Compass } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Compass, ScanSearch } from 'lucide-react'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
+import { getPositionExecLists } from '@/utils/buildInstanceAllGroups'
+import { buildLiveOptExecutionMap } from '@/utils/positionsExecutions'
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import { fmtUsd, fmtExpiry, rightLabel, pnlColorClass } from '@/utils/positions'
-import { ExecutionRow } from './ExecutionRow'
+  type OpenOptSortCol,
+  contractButtonLabel,
+  getOptionsTabPositionKey,
+  getPositionTime,
+  getPositionUnderlyingLast,
+  instanceIconFillFromMergedExecutions,
+  optionExpiryMatchesFilter,
+  optionLastStrikePctClass,
+  optQuoteMid,
+  sortOpenOptionPositions,
+} from '@/utils/openOptionsTab'
+import {
+  fmtUsd,
+  fmtExpiry,
+  fmtDate,
+  fmtDaysAgo,
+  daysUntilExpiry,
+  rightLabel,
+} from '@/utils/positions'
 import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import type { DetailViewMode } from './PositionsOpenControls'
+import { OpenOptionExecTableRow } from './OpenOptionExecTableRow'
+import './positionsOptionsLegacy.css'
 
 interface Props {
   positions: OpenOptionPosition[]
   quotesBySymbol: Record<string, QuoteItem>
+  quotesByCk: Record<string, QuoteItem>
   filterSymbol?: string
   filterExpiry?: string
   detailViewMode?: DetailViewMode
   executionsFinal?: Execution[]
   executionsTws?: Execution[]
   onEditExec?: (exec: Execution) => void
-  onLinkExec?: (exec: Execution) => void
+  onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
   onDeleteExec?: (exec: Execution) => void
   onCloseExec?: (exec: Execution) => void
-  onRefreshExecs?: () => void
   onInspect?: (pos: OpenOptionPosition) => void
+  onOpenStrategy?: (instanceId: number) => void
 }
 
-function colorClass(n: number | null | undefined) {
-  return pnlColorClass(n)
-}
-
-function optionIntrinsic(right: string, strike: number, spot: number | null): number | null {
-  if (spot == null) return null
-  if (right === 'C') return Math.max(0, spot - strike)
-  if (right === 'P') return Math.max(0, strike - spot)
-  return null
-}
-
-function moneyness(right: string, strike: number, spot: number | null): string {
-  if (spot == null) return '—'
-  if (Math.abs(spot - strike) < 0.5) return 'ATM'
-  if (right === 'C') return spot > strike ? 'ITM' : 'OTM'
-  if (right === 'P') return spot < strike ? 'ITM' : 'OTM'
-  return '—'
-}
-
-function expiryMatchesFilter(expiry: string, filter: string): boolean {
-  const f = filter.replace(/\D/g, '')
-  if (!f) return true
-  const ex = expiry.replace(/\D/g, '')
-  if (!ex) return false
-  return ex.startsWith(f) || f.startsWith(ex)
-}
-
-function matchExecsForContract(
-  contractKey: string,
-  accountId: string,
-  execs: Execution[],
-): Execution[] {
-  return execs.filter((e) =>
-    e.contract_key === contractKey && e.account_id === accountId && e.sec_type?.toUpperCase() === 'OPT'
+function InstanceIcon({ fill }: { fill: 'none' | 'all' | 'mixed' }) {
+  const cls =
+    fill === 'all'
+      ? 'positions-opt-instance-icon--same'
+      : fill === 'mixed'
+        ? 'positions-opt-instance-icon--mixed'
+        : 'positions-opt-instance-icon--none'
+  const title =
+    fill === 'all'
+      ? 'All matched executions have a strategy instance'
+      : fill === 'mixed'
+        ? 'Mixed strategy instance on matched executions'
+        : 'No strategy instance on matched executions'
+  return (
+    <span className={`positions-opt-instance-icon ${cls}`} title={title} role="img" aria-label={title}>
+      <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="5" y="5" width="14" height="14" rx="1" />
+      </svg>
+    </span>
   )
 }
-
-type SortKey = 'symbol' | 'expiry' | 'strike' | 'qty' | 'pnl' | null
-type SortDir = 'asc' | 'desc'
 
 export function OptionsTab({
   positions,
   quotesBySymbol,
-  filterSymbol,
-  filterExpiry,
+  quotesByCk,
+  filterSymbol = '',
+  filterExpiry = '',
   detailViewMode = 'accordion',
   executionsFinal = [],
   executionsTws = [],
@@ -81,221 +82,380 @@ export function OptionsTab({
   onLinkExec,
   onDeleteExec,
   onCloseExec,
-  onRefreshExecs,
   onInspect,
+  onOpenStrategy,
 }: Props) {
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
-  const [sortKey, setSortKey] = useState<SortKey>(null)
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([])
+  const [openOptSort, setOpenOptSort] = useState<{ column: OpenOptSortCol; dir: 'asc' | 'desc' }>({
+    column: 'expiry',
+    dir: 'desc',
+  })
 
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortKey(key)
-      setSortDir('asc')
-    }
-  }
+  const finalMap = useMemo(() => buildLiveOptExecutionMap(executionsFinal), [executionsFinal])
+  const twsMap = useMemo(() => buildLiveOptExecutionMap(executionsTws), [executionsTws])
 
   let filtered = positions
-  if (filterSymbol) {
-    const upper = filterSymbol.toUpperCase()
-    filtered = filtered.filter((p) => p.symbol.includes(upper))
-  }
-  if (filterExpiry) {
-    filtered = filtered.filter((p) => expiryMatchesFilter(p.expiry, filterExpiry))
+  const symUpper = filterSymbol.trim().toUpperCase()
+  if (symUpper) filtered = filtered.filter((p) => (p.symbol ?? '').toUpperCase().includes(symUpper))
+  if (filterExpiry) filtered = filtered.filter((p) => optionExpiryMatchesFilter(p.expiry, filterExpiry))
+
+  const sorted = useMemo(
+    () => sortOpenOptionPositions(filtered, openOptSort.column, openOptSort.dir, quotesBySymbol),
+    [filtered, openOptSort, quotesBySymbol],
+  )
+
+  function toggleSort(col: OpenOptSortCol) {
+    setOpenOptSort((prev) =>
+      prev.column === col ? { column: col, dir: prev.dir === 'desc' ? 'asc' : 'desc' } : { column: col, dir: 'desc' },
+    )
   }
 
-  const sorted = useMemo(() => {
-    if (!sortKey) return filtered
-    const mult = sortDir === 'asc' ? 1 : -1
-    return [...filtered].sort((a, b) => {
-      switch (sortKey) {
-        case 'symbol': return mult * a.symbol.localeCompare(b.symbol)
-        case 'expiry': return mult * a.expiry.localeCompare(b.expiry)
-        case 'strike': return mult * (a.strike - b.strike)
-        case 'qty': return mult * (a.qty - b.qty)
-        case 'pnl': return mult * (a.unrealized_pnl - b.unrealized_pnl)
-        default: return 0
-      }
+  function toggleExpand(posKey: string) {
+    setExpandedKeys((prev) => {
+      const isOpen = prev.includes(posKey)
+      if (detailViewMode === 'accordion') return isOpen ? [] : [posKey]
+      return isOpen ? prev.filter((k) => k !== posKey) : [...prev, posKey]
     })
-  }, [filtered, sortKey, sortDir])
+  }
 
-  if (filtered.length === 0) {
+  const sortTh = (label: ReactNode, col: OpenOptSortCol, title?: string) => {
+    const active = openOptSort.column === col
     return (
-      <div>
-        <p className="text-sm font-medium mb-2">Option Positions</p>
-        <p className="text-sm text-muted-foreground">None</p>
+      <th
+        className="replay-th-sortable"
+        title={title ?? `Sort by ${label}`}
+        role="button"
+        tabIndex={0}
+        aria-sort={active ? (openOptSort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+        onClick={() => toggleSort(col)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            toggleSort(col)
+          }
+        }}
+      >
+        {label}
+        {active ? (openOptSort.dir === 'asc' ? ' ▲' : ' ▼') : ''}
+      </th>
+    )
+  }
+
+  const totalUnPnl = sorted.reduce((acc, p) => acc + (p.unrealized_pnl ?? 0), 0)
+
+  if (sorted.length === 0) {
+    return (
+      <div className="positions-options-panel">
+        <h4 className="positions-options-heading">Option positions</h4>
+        <p className="positions-options-empty">No open option positions under the current filters.</p>
       </div>
     )
   }
 
-  function toggleExpand(key: string) {
-    setExpandedKeys((prev) => {
-      if (detailViewMode === 'accordion') {
-        if (prev.has(key)) return new Set()
-        return new Set([key])
-      }
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
-
-  let totalPremium = 0
-  for (const pos of sorted) {
-    if (pos.avg_cost != null) totalPremium += -(pos.qty * pos.avg_cost)
-  }
-
-  const hasExecData = executionsFinal.length > 0 || executionsTws.length > 0
-
   return (
-    <div>
-      <p className="text-sm font-medium mb-2">Option Positions</p>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {hasExecData && <TableHead className="w-8" />}
-              <TableHead className="min-w-[60px] cursor-pointer select-none" onClick={() => toggleSort('symbol')}>
-                <span className="inline-flex items-center gap-1">Symbol <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
-              </TableHead>
-              <TableHead>Right</TableHead>
-              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('expiry')}>
-                <span className="inline-flex items-center gap-1">Expiry <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
-              </TableHead>
-              <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('strike')}>
-                <span className="inline-flex items-center gap-1 justify-end">Strike <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
-              </TableHead>
-              <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('qty')}>
-                <span className="inline-flex items-center gap-1 justify-end">Qty <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
-              </TableHead>
-              <TableHead>Side</TableHead>
-              <TableHead>Moneyness</TableHead>
-              <TableHead className="text-right">Cost</TableHead>
-              <TableHead className="text-right">Premium</TableHead>
-              <TableHead className="text-right">Mark</TableHead>
-              <TableHead className="text-right">Intrinsic</TableHead>
-              <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('pnl')}>
-                <span className="inline-flex items-center gap-1 justify-end">PnL <ArrowUpDown className="h-3 w-3 opacity-40" /></span>
-              </TableHead>
-              <TableHead>Strategy</TableHead>
-              {onInspect && <TableHead className="w-16" />}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sorted.map((pos, i) => {
-              const key = pos.contract_key || String(i)
-              const isExpanded = expandedKeys.has(key)
-              const spot = quotesBySymbol[pos.symbol]?.last ?? null
-              const intrinsic = optionIntrinsic(pos.right, pos.strike, spot)
-              const money = moneyness(pos.right, pos.strike, spot)
-              const side = pos.qty > 0 ? 'Long' : pos.qty < 0 ? 'Short' : '—'
-              const premium = pos.avg_cost != null ? -(pos.qty * pos.avg_cost) : null
-              const changePct =
-                pos.mark_price != null && pos.avg_cost != null && pos.avg_cost !== 0
-                  ? ((pos.mark_price - pos.avg_cost) / pos.avg_cost) * 100
-                  : null
+    <div className="positions-options-panel">
+      <h4 className="positions-options-heading">Option positions</h4>
+      <div className="positions-opt-table-wrap">
+        <table className="positions-opt-main-table replay-opt-groups">
+          <colgroup>
+            <col className="pom-col-expand" style={{ width: '2.25rem' }} />
+            <col style={{ width: '11.25rem' }} />
+            <col style={{ width: '7.75rem' }} />
+            <col style={{ width: '5.25rem' }} />
+            <col style={{ width: '6.25rem' }} />
+            <col style={{ width: '4.75rem' }} />
+            <col style={{ width: '5.25rem' }} />
+            <col style={{ width: '7rem' }} />
+            <col style={{ width: '4.75rem' }} />
+            <col style={{ width: '4.5rem' }} />
+            <col style={{ width: '8.5rem' }} />
+            <col style={{ width: '5.5rem' }} />
+            <col style={{ width: '5.5rem' }} />
+          </colgroup>
+          <thead>
+            <tr>
+              <th className="replay-opt-expand-col" aria-label="Expand" />
+              {sortTh('Contract', 'contract')}
+              {sortTh('Expiry', 'expiry')}
+              {sortTh('Strike', 'strike')}
+              {sortTh('Last', 'last', 'Underlying last; (Last − Strike) / Last %')}
+              {sortTh('Qty', 'qty')}
+              {sortTh('@', 'avg_cost')}
+              {sortTh('Value', 'value')}
+              <th title="Option live bid / mid / ask">Opt Quote</th>
+              {sortTh('Time', 'time')}
+              {sortTh('UN PNL', 'un_pnl')}
+              <th title="Executions">Opp</th>
+              <th className="replay-opt-actions-cell">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.flatMap((pos) => {
+              const posKey = getOptionsTabPositionKey(pos)
+              const absQty = Math.abs(pos.qty)
+              const sideLabel = pos.qty > 0 ? 'Long' : pos.qty < 0 ? 'Short' : '—'
+              const value = (pos.avg_cost ?? 0) * absQty * 100
+              const ts = getPositionTime(pos)
+              const execLists = getPositionExecLists(pos, finalMap, twsMap)
+              const execCount = execLists.final.length + execLists.tws.length
+              const hasExecutions = execCount > 0
+              const isExpanded = expandedKeys.includes(posKey)
 
-              return [
-                <TableRow
-                  key={key}
-                  className={cn(hasExecData && 'cursor-pointer hover:bg-muted/50')}
-                  onClick={hasExecData ? () => toggleExpand(key) : undefined}
+              const last = getPositionUnderlyingLast(pos, quotesBySymbol)
+              const strikeNum = pos.strike
+              const pct =
+                last != null && strikeNum != null && last !== 0 ? ((last - strikeNum) / last) * 100 : null
+              const side: 'Buy' | 'Sell' = pos.qty > 0 ? 'Buy' : 'Sell'
+              const pctClass = pct != null ? optionLastStrikePctClass(pos.right, side, pct) : ''
+
+              const liveQ = quotesByCk[pos.contract_key]
+              const liveMid = optQuoteMid(liveQ)
+              const livePnl =
+                liveMid != null && pos.avg_cost != null ? (liveMid - pos.avg_cost) * absQty * 100 : null
+
+              const iconFill = instanceIconFillFromMergedExecutions(execLists.merged)
+
+              const posRow = (
+                <tr
+                  key={posKey}
+                  className="detail-position-row"
+                  onClick={
+                    hasExecutions
+                      ? (e) => {
+                          e.stopPropagation()
+                          toggleExpand(posKey)
+                        }
+                      : undefined
+                  }
+                  role={hasExecutions ? 'button' : undefined}
+                  tabIndex={hasExecutions ? 0 : undefined}
+                  onKeyDown={
+                    hasExecutions
+                      ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            toggleExpand(posKey)
+                          }
+                        }
+                      : undefined
+                  }
+                  aria-expanded={hasExecutions ? isExpanded : undefined}
                 >
-                  {hasExecData && (
-                    <TableCell className="px-2">
-                      <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
-                    </TableCell>
-                  )}
-                  <TableCell className="font-mono text-xs font-medium">{pos.symbol}</TableCell>
-                  <TableCell className="text-xs">{rightLabel(pos.right)}</TableCell>
-                  <TableCell className="text-xs font-mono">{fmtExpiry(pos.expiry)}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(pos.strike)}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{pos.qty || '—'}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{side}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{money}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(pos.avg_cost)}</TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs', colorClass(premium))}>
-                    {fmtUsd(premium)}
-                  </TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(changePct))}>
-                    {fmtUsd(pos.mark_price)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono text-xs">
-                    {intrinsic != null ? fmtUsd(intrinsic) : '—'}
-                  </TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(pos.unrealized_pnl))}>
-                    {fmtUsd(pos.unrealized_pnl)}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">
-                    {pos.strategy_opportunity_name ?? '—'}
-                  </TableCell>
-                  {onInspect && (
-                    <TableCell className="px-1">
-                      <div className="flex items-center gap-0.5">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          asChild
-                          title="Open in Discovery"
-                        >
-                          <Link
-                            to={buildDiscoveryUrl(pos.symbol, pos.expiry)}
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label={`Open ${pos.symbol} in Option Discovery`}
-                          >
-                            <Compass className="h-3.5 w-3.5 text-muted-foreground" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={(e) => { e.stopPropagation(); onInspect(pos) }}
-                          title="Inspect contract"
-                        >
-                          <ScanSearch className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
+                  <td className="replay-opt-expand-col">
+                    {hasExecutions ? (
+                      <span className={`replay-opt-expand-icon ${isExpanded ? 'expanded' : ''}`} aria-hidden>
+                        {isExpanded ? '▼' : '▶'}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="replay-opt-contract">
+                    {iconFill !== 'empty' && <InstanceIcon fill={iconFill} />}
+                    {onInspect ? (
+                      <button
+                        type="button"
+                        className="riv-opt-contract-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onInspect(pos)
+                        }}
+                        aria-label={`Option details for ${contractButtonLabel(pos)}`}
+                      >
+                        <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
+                        {pos.strike != null ? ` ${pos.strike}` : ''}
+                      </button>
+                    ) : (
+                      <strong>{contractButtonLabel(pos)}</strong>
+                    )}
+                  </td>
+                  <td className="positions-opt-expiry-cell">
+                    <div className="positions-opt-expiry-line1">{fmtExpiry(pos.expiry)}</div>
+                    {(() => {
+                      const days = daysUntilExpiry(pos.expiry)
+                      if (days == null) return null
+                      const label = days >= 0 ? (days === 0 ? 'today' : `${days}d`) : `${-days}d ago`
+                      return (
+                        <div className="positions-opt-expiry-line2">
+                          <span className="expiry-days-remaining">{label}</span>
+                        </div>
+                      )
+                    })()}
+                  </td>
+                  <td>
+                    <strong>{fmtUsd(pos.strike)}</strong>
+                  </td>
+                  <td className="positions-opt-last-cell">
+                    <div className="positions-opt-last-line1">{last != null ? fmtUsd(last) : '—'}</div>
+                    {pct != null && (
+                      <div className="positions-opt-last-line2">
+                        <span className={pctClass} title={`(Last − Strike) / Last = ${pct.toFixed(2)}%`}>
+                          {pct >= 0 ? '+' : ''}
+                          {pct.toFixed(2)}%
+                        </span>
                       </div>
-                    </TableCell>
-                  )}
-                </TableRow>,
+                    )}
+                  </td>
+                  <td>
+                    {sideLabel} {absQty}
+                  </td>
+                  <td>{fmtUsd(pos.avg_cost)}</td>
+                  <td>{fmtUsd(value)}</td>
+                  <td className="positions-opt-live-quote">
+                    {!liveQ ? (
+                      <span className="replay-muted">—</span>
+                    ) : (
+                      <>
+                        <div className="positions-opt-quote-line positions-opt-quote-line--bid">
+                          {liveQ.bid != null ? (
+                            <span className="positions-opt-quote-bid">{liveQ.bid.toFixed(2)}</span>
+                          ) : (
+                            <span className="replay-muted">—</span>
+                          )}
+                        </div>
+                        <div className="positions-opt-quote-line positions-opt-quote-line--mid">
+                          <strong>{liveMid != null ? liveMid.toFixed(2) : '—'}</strong>
+                        </div>
+                        <div className="positions-opt-quote-line">
+                          {liveQ.ask != null ? (
+                            <span className="positions-opt-quote-ask">{liveQ.ask.toFixed(2)}</span>
+                          ) : (
+                            <span className="replay-muted">—</span>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </td>
+                  <td className="positions-opt-time-cell">
+                    {ts != null ? (
+                      <>
+                        <div className="positions-opt-time-line1">{fmtDate(ts)}</div>
+                        {fmtDaysAgo(ts) && (
+                          <div className="positions-opt-time-line2">
+                            <span className="replay-time-ago">{fmtDaysAgo(ts)}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>
+                    {livePnl != null && (
+                      <div>
+                        <span className={`replay-pnl-unrealized ${livePnl >= 0 ? 'pos-opt-pnl-positive' : 'pos-opt-pnl-negative'}`}>
+                          {fmtUsd(livePnl)}
+                        </span>
+                        <span className="replay-muted" style={{ fontSize: '0.7em' }}>
+                          {' '}
+                          live
+                        </span>
+                      </div>
+                    )}
+                    <div style={livePnl != null ? { fontSize: '0.75em' } : undefined}>
+                      <span
+                        className={`replay-pnl-unrealized ${(pos.unrealized_pnl ?? 0) >= 0 ? 'pos-opt-pnl-positive' : 'pos-opt-pnl-negative'}`}
+                      >
+                        {fmtUsd(pos.unrealized_pnl)}
+                      </span>
+                      {livePnl != null && (
+                        <span className="replay-muted" style={{ fontSize: '0.7em' }}>
+                          {' '}
+                          snap
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="positions-opt-opp-hint-cell">
+                    {execCount === 0 ? (
+                      '—'
+                    ) : (
+                      <span className="replay-muted" title={`${execCount} execution${execCount > 1 ? 's' : ''} — expand row`}>
+                        {execCount} exec{execCount > 1 ? 's' : ''} ↓
+                      </span>
+                    )}
+                  </td>
+                  <td className="replay-opt-actions-cell">
+                    {onInspect && (
+                      <span className="pos-opt-action-btns">
+                        <Link
+                          to={buildDiscoveryUrl(pos.symbol, pos.expiry)}
+                          className="pos-opt-action-btn"
+                          title="Open in Discovery"
+                          aria-label={`Open ${pos.symbol} in Option Discovery`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Compass className="h-3.5 w-3.5" />
+                        </Link>
+                        <button
+                          type="button"
+                          className="pos-opt-action-btn"
+                          title="Inspect contract"
+                          aria-label="Inspect contract"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onInspect(pos)
+                          }}
+                        >
+                          <ScanSearch className="h-3.5 w-3.5" />
+                        </button>
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              )
 
-                ...(isExpanded && hasExecData
+              const execRows =
+                isExpanded && hasExecutions
                   ? [
-                      <TableRow key={`${key}-execs`} className="bg-muted/10 hover:bg-muted/10">
-                        <TableCell colSpan={(hasExecData ? 15 : 14) + (onInspect ? 1 : 0)} className="p-2">
-                          <ExecutionRow
-                            finalExecs={matchExecsForContract(pos.contract_key, pos.account_id, executionsFinal)}
-                            twsExecs={matchExecsForContract(pos.contract_key, pos.account_id, executionsTws)}
-                            onEdit={onEditExec ?? (() => {})}
-                            onLink={onLinkExec ?? (() => {})}
-                            onDelete={onDeleteExec ?? (() => {})}
-                            onClose={pos.pool_label === 'Off' ? onCloseExec : undefined}
-                            onRefresh={onRefreshExecs ?? (() => {})}
-                            showPoolOff={pos.pool_label === 'Off'}
-                          />
-                        </TableCell>
-                      </TableRow>,
+                      ...execLists.final.map((ex, ei) => (
+                        <OpenOptionExecTableRow
+                          key={`${posKey}-f-${ex.account_executions_id ?? ei}`}
+                          pos={pos}
+                          posKey={posKey}
+                          exec={ex}
+                          execIndex={ei}
+                          book="final"
+                          onEdit={onEditExec ?? (() => {})}
+                          onLink={(ex) => onLinkExec?.(ex, execLists.merged)}
+                          onDelete={onDeleteExec ?? (() => {})}
+                          onClose={pos.pool_label === 'Off' ? onCloseExec : undefined}
+                          onOpenStrategy={onOpenStrategy}
+                        />
+                      )),
+                      ...execLists.tws.map((ex, ei) => (
+                        <OpenOptionExecTableRow
+                          key={`${posKey}-t-${ex.account_executions_id ?? ei}`}
+                          pos={pos}
+                          posKey={posKey}
+                          exec={ex}
+                          execIndex={ei}
+                          book="tws"
+                          onEdit={onEditExec ?? (() => {})}
+                          onLink={(ex) => onLinkExec?.(ex, execLists.merged)}
+                          onDelete={onDeleteExec ?? (() => {})}
+                          onClose={pos.pool_label === 'Off' ? onCloseExec : undefined}
+                          onOpenStrategy={onOpenStrategy}
+                        />
+                      )),
                     ]
-                  : []),
-              ]
+                  : []
+
+              return [posRow, ...execRows]
             })}
-            <TableRow className="border-t-2 bg-muted/30 hover:bg-muted/30">
-              {hasExecData && <TableCell />}
-              <TableCell colSpan={8} className="text-xs font-medium py-1.5">
-                Option Premium Total
-              </TableCell>
-              <TableCell className={cn('text-right font-mono text-xs font-semibold', colorClass(totalPremium))}>
-                {fmtUsd(totalPremium)}
-              </TableCell>
-              <TableCell colSpan={4 + (onInspect ? 1 : 0)} />
-            </TableRow>
-          </TableBody>
-        </Table>
+          </tbody>
+          <tfoot>
+            <tr className="positions-opt-tfoot-total">
+              <td colSpan={12} className="positions-opt-tfoot-label">
+                Total
+              </td>
+              <td>
+                <span className={`replay-pnl-unrealized ${totalUnPnl >= 0 ? 'pos-opt-pnl-positive' : 'pos-opt-pnl-negative'}`}>
+                  {fmtUsd(totalUnPnl)}
+                </span>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   )

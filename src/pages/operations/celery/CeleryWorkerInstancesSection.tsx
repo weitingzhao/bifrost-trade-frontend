@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { ConfirmDialog } from './ConfirmDialog'
+import { BubbleSwitch } from '@/components/positions/charts/BubbleSwitch'
 import type { WorkerProfileInfo, SystemdInstance } from '@/types/ops'
 import { formatQueueLabel } from '@/utils/celeryQueueLabels'
 import { useScaleWorker, useWorkerInstances, useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
@@ -414,57 +415,36 @@ export function CeleryWorkerInstancesSection({
 
       {/* Scale controls */}
       <div className="space-y-3 pt-1 border-t">
-        {/* Profile selector bubbles */}
-        <div className="flex flex-wrap gap-1 items-center">
-          <span className="text-xs text-muted-foreground mr-1">Profile</span>
-          <button
-            type="button"
-            onClick={() => setSelectedProfile(ALL_KEY)}
-            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-              selectedProfile === ALL_KEY
-                ? 'bg-foreground text-background border-foreground'
-                : 'border-border hover:bg-muted'
-            }`}
-          >
-            ALL
-          </button>
-          {profiles.map(p => (
-            <button
-              key={p.key}
-              type="button"
-              title={`${p.key} — ${p.queues.join(', ') || '—'}`}
-              onClick={() => setSelectedProfile(p.key)}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                selectedProfile === p.key
-                  ? 'bg-foreground text-background border-foreground'
-                  : 'border-border hover:bg-muted'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs text-muted-foreground">Profile</span>
+          <BubbleSwitch
+            size="sm"
+            value={selectedProfile}
+            onChange={setSelectedProfile}
+            options={[
+              { value: ALL_KEY, label: 'ALL' },
+              ...profiles.map(p => ({
+                value: p.key,
+                label: p.label,
+              })),
+            ]}
+          />
         </div>
 
         {/* Per-profile: Add controls */}
         {selectedProfile !== ALL_KEY && (
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Count</span>
-              {([false, true] as const).map(isMax => (
-                <button
-                  key={String(isMax)}
-                  type="button"
-                  onClick={() => setAddMaxMode(isMax)}
-                  className={`text-xs px-2 py-0.5 rounded border transition-colors ${
-                    addMaxMode === isMax
-                      ? 'bg-foreground text-background border-foreground'
-                      : 'border-border hover:bg-muted'
-                  }`}
-                  title={isMax ? 'Add up to remaining capacity (max − Dev − Prod)' : 'Add exactly one instance'}
-                >
-                  {isMax ? 'Max' : '1'}
-                </button>
-              ))}
+              <BubbleSwitch
+                size="sm"
+                value={addMaxMode ? 'max' : 'one'}
+                onChange={v => setAddMaxMode(v === 'max')}
+                options={[
+                  { value: 'one', label: '1' },
+                  { value: 'max', label: 'Max' },
+                ]}
+              />
             </div>
             <Button
               size="sm"
@@ -518,22 +498,17 @@ export function CeleryWorkerInstancesSection({
               </Button>
             )}
             {instances.length > 0 && (
-              <div className="flex items-center gap-1 ml-1">
+              <div className="flex items-center gap-2 ml-1">
                 <span className="text-xs text-muted-foreground">Force</span>
-                {([false, true] as const).map(f => (
-                  <button
-                    key={String(f)}
-                    type="button"
-                    onClick={() => setRemoveAllForce(f)}
-                    className={`text-xs px-2 py-0.5 rounded border transition-colors ${
-                      removeAllForce === f
-                        ? 'bg-foreground text-background border-foreground'
-                        : 'border-border hover:bg-muted'
-                    }`}
-                  >
-                    {f ? 'Yes' : 'No'}
-                  </button>
-                ))}
+                <BubbleSwitch
+                  size="sm"
+                  value={removeAllForce ? 'yes' : 'no'}
+                  onChange={v => setRemoveAllForce(v === 'yes')}
+                  options={[
+                    { value: 'no', label: 'No' },
+                    { value: 'yes', label: 'Yes' },
+                  ]}
+                />
               </div>
             )}
           </div>

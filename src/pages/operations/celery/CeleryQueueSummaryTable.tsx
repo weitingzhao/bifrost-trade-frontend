@@ -229,7 +229,7 @@ export function CeleryQueueSummaryTable({
             <span className="text-xs text-yellow-600">PostgreSQL unavailable</span>
           )}
         </div>
-        <Table>
+        <Table className="table-fixed text-xs">
           <TableHeader>
             <TableRow>
               <TableHead className="w-8">St.</TableHead>

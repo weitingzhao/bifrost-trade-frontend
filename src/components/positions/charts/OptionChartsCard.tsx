@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { cn } from '@/lib/utils'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { IbPositionRow } from '@/types/monitor'
 import type { LivePositionRow, StockCoverageItem } from '@/types/positions'
@@ -10,9 +11,11 @@ import {
   type OptionStockMixCategory,
 } from '@/utils/positionsCharts'
 import { DonutChart } from './DonutChart'
-import { BubbleSwitch } from './BubbleSwitch'
+import { BubbleSwitch, POSITIONS_BUBBLE_SIZE } from './BubbleSwitch'
 import { ChartLegend } from './ChartLegend'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
+import { PositionsChartCell, DonutChartRow } from './PositionsChartCell'
+import styles from '../PositionsChartsSection.module.css'
 
 interface Props {
   accounts: IbAccountSnapshot[]
@@ -55,12 +58,17 @@ export function OptionChartsCard({
   const detailTotal = detailSegments.reduce((s, seg) => s + seg.value, 0)
   const mixTotal = stockMix.segments.reduce((s, seg) => s + seg.value, 0)
 
+  const mixSummary =
+    legendMode === 'pct'
+      ? `${stockMix.backingPct.toFixed(1)}% / ${stockMix.otherPct.toFixed(1)}% / ${stockMix.cashLikePct.toFixed(1)}%`
+      : `${fmtMvAbbrev(stockMix.segments.find((s) => s.label === 'Backing Pool')?.value ?? 0)} / ${fmtMvAbbrev(stockMix.segments.find((s) => s.label === 'Other Stock')?.value ?? 0)} / ${fmtMvAbbrev(stockMix.segments.find((s) => s.label === 'Cash-like')?.value ?? 0)}`
+
   return (
-    <div className="rounded-lg border border-border bg-secondary p-4 space-y-3 min-w-0">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide shrink-0">Option</span>
+    <PositionsChartCell>
+      <div className={cn(styles.chartSectionHeader, styles.optionHeader)}>
+        <span className={styles.chartSectionTitle}>Option</span>
         <BubbleSwitch
-          size="xs"
+          size={POSITIONS_BUBBLE_SIZE}
           options={[
             { value: 'pct', label: '%' },
             { value: 'usd', label: '$' },
@@ -68,60 +76,61 @@ export function OptionChartsCard({
           value={legendMode}
           onChange={(v) => setLegendMode(v as 'pct' | 'usd')}
         />
-        <span className="text-[10px] text-muted-foreground ml-auto truncate" title="Backing / Other / Cash-like">
-          Backing / Other / Cash-like{' '}
-          <span className="font-mono text-foreground font-semibold">
-            {legendMode === 'pct'
-              ? `${stockMix.backingPct.toFixed(1)}% / ${stockMix.otherPct.toFixed(1)}% / ${stockMix.cashLikePct.toFixed(1)}%`
-              : `${fmtMvAbbrev(stockMix.segments.find((s) => s.label === 'Backing Pool')?.value ?? 0)} / ${fmtMvAbbrev(stockMix.segments.find((s) => s.label === 'Other Stock')?.value ?? 0)} / ${fmtMvAbbrev(stockMix.segments.find((s) => s.label === 'Cash-like')?.value ?? 0)}`}
-          </span>
-        </span>
+        <div className={styles.optionHeaderSummary} title="Backing Pool / Other Stock / Cash-like">
+          <span className={styles.optionHeaderSummaryLabel}>Backing / Other / Cash-like</span>
+          <span className={styles.optionHeaderSummaryValues}>{mixSummary}</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-[140px_1fr] gap-3 items-start">
-        <DonutChart
-          segments={detailSegments}
-          centerMain={detailTotal > 0 ? (legendMode === 'usd' ? fmtMvAbbrev(detailTotal) : 'TOTAL') : undefined}
-          centerSub={detailTotal > 0 && legendMode === 'pct' ? fmtMvAbbrev(detailTotal) : undefined}
-          activeLabel={activeOptionDetail}
-          onSegmentClick={onOptionDetailClick}
-        />
-        <ChartLegend
-          segments={detailSegments}
-          total={detailTotal}
-          mode={legendMode}
-          activeLabel={activeOptionDetail}
-          onSegmentClick={(label) =>
-            onOptionDetailClick(activeOptionDetail === label ? null : label)
-          }
-          showFootnotes
-          layout="row"
-        />
-      </div>
+      <div className={styles.stack}>
+        <DonutChartRow title="Detail" alignStart>
+          <DonutChart
+            segments={detailSegments}
+            centerMain={detailTotal > 0 ? (legendMode === 'usd' ? fmtMvAbbrev(detailTotal) : '100.0%') : undefined}
+            centerSub={detailTotal > 0 && legendMode === 'pct' ? 'TOTAL' : legendMode === 'usd' && detailTotal > 0 ? 'TOTAL' : undefined}
+            activeLabel={activeOptionDetail}
+            onSegmentClick={onOptionDetailClick}
+          />
+          <ChartLegend
+            segments={detailSegments}
+            total={detailTotal}
+            mode={legendMode}
+            activeLabel={activeOptionDetail}
+            onSegmentClick={(label) =>
+              onOptionDetailClick(activeOptionDetail === label ? null : label)
+            }
+            showFootnotes
+            layout="row"
+          />
+        </DonutChartRow>
 
-      <div className="grid grid-cols-[140px_1fr] gap-3 items-center">
-        <DonutChart
-          segments={stockMix.segments}
-          centerMain={mixTotal > 0 ? '100.0%' : undefined}
-          centerSub={mixTotal > 0 ? 'TOTAL' : undefined}
-          activeLabel={activeOptionCategory}
-          onSegmentClick={(label) => {
-            if (label == null) onOptionCategoryClick(null)
-            else onOptionCategoryClick(activeOptionCategory === label ? null : (label as OptionStockMixCategory))
-          }}
-        />
-        <ChartLegend
-          segments={stockMix.segments}
-          total={mixTotal}
-          mode={legendMode}
-          activeLabel={activeOptionCategory}
-          onSegmentClick={(label) =>
-            onOptionCategoryClick(
-              activeOptionCategory === label ? null : (label as OptionStockMixCategory),
-            )
-          }
-        />
+        <DonutChartRow title="Category">
+          <DonutChart
+            segments={stockMix.segments}
+            centerMain={mixTotal > 0 ? '100.0%' : undefined}
+            centerSub={mixTotal > 0 ? 'TOTAL' : undefined}
+            activeLabel={activeOptionCategory}
+            onSegmentClick={(label) => {
+              if (label == null) onOptionCategoryClick(null)
+              else
+                onOptionCategoryClick(
+                  activeOptionCategory === label ? null : (label as OptionStockMixCategory),
+                )
+            }}
+          />
+          <ChartLegend
+            segments={stockMix.segments}
+            total={mixTotal}
+            mode={legendMode}
+            activeLabel={activeOptionCategory}
+            onSegmentClick={(label) =>
+              onOptionCategoryClick(
+                activeOptionCategory === label ? null : (label as OptionStockMixCategory),
+              )
+            }
+          />
+        </DonutChartRow>
       </div>
-    </div>
+    </PositionsChartCell>
   )
 }

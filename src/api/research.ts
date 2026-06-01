@@ -10,6 +10,8 @@ import type {
   FundamentalConditionsData,
   TechnicalConditionsData,
   FundRawData,
+  SymbolStatementsData,
+  SymbolOptionPcrData,
 } from '@/types/research'
 import type { MassiveCeleryBeatScheduleResponse } from '@/types/ops'
 
@@ -118,6 +120,38 @@ export async function fetchSymbolFundRawData(symbol: string): Promise<FundRawDat
     throw new Error(`GET /research/data/readiness/symbol-fundamental-raw-data: ${res.status} — ${detail}`)
   }
   return res.json() as Promise<FundRawData>
+}
+
+export async function fetchSymbolStatements(symbol: string): Promise<SymbolStatementsData> {
+  const sym = symbol.trim().toUpperCase()
+  const empty: SymbolStatementsData = {
+    ok: false,
+    balance_sheets: [],
+    cash_flows: [],
+    ratios: [],
+    short_interest: [],
+    short_volume: [],
+  }
+  if (!sym) return { ...empty, error: 'symbol is required' }
+  const res = await fetch(`${BASE}/research/data/readiness/symbol-statements?symbol=${encodeURIComponent(sym)}`)
+  const j = await res.json().catch(() => ({}))
+  if (!res.ok) return { ...empty, error: typeof j.error === 'string' ? j.error : `HTTP ${res.status}` }
+  return j as SymbolStatementsData
+}
+
+export async function fetchSymbolOptionPcr(
+  symbol: string,
+  lookbackDays = 365,
+): Promise<SymbolOptionPcrData> {
+  const sym = symbol.trim().toUpperCase()
+  const empty: SymbolOptionPcrData = { ok: false, trend: [], chain_by_expiry: [] }
+  if (!sym) return { ...empty, error: 'symbol is required' }
+  const res = await fetch(
+    `${BASE}/research/data/readiness/symbol-option-pcr?symbol=${encodeURIComponent(sym)}&lookback_days=${lookbackDays}`,
+  )
+  const j = await res.json().catch(() => ({}))
+  if (!res.ok) return { ...empty, error: typeof j.error === 'string' ? j.error : `HTTP ${res.status}` }
+  return j as SymbolOptionPcrData
 }
 
 // ── Celery Beat schedule (Massive API) ────────────────────────────────────────

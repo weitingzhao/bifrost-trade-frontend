@@ -404,7 +404,7 @@ export function computeInstanceMaxRiskUsd(sliced: Execution[], underlyingFallbac
   for (const v of netByKey.values()) {
     if (Math.abs(v.qty) < 1e-9) continue
     const avgCost = Math.abs(v.totalCost / v.qty)
-    positions.push({ strike: v.strike, right: v.right, qty: Math.round(v.qty), premium: avgCost })
+    positions.push({ strike: v.strike, right: v.right, qty: Math.round(v.qty), avg_cost: avgCost })
   }
   if (positions.length === 0) return underlyingFallback
 

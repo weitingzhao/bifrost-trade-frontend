@@ -5,6 +5,7 @@ import type {
   StrategyHistoryParams,
   StrategyHistoryResponse,
   StrategyInstancesResponse,
+  StrategyInstance,
   StrategyStructure,
   StrategyOpportunityDetail,
   CreateStrategyInstanceBody,
@@ -25,11 +26,12 @@ import type {
   WinRateResponse,
 } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
-import { StrategyInstancesResponseSchema } from '@/lib/schemas/strategy'
+import { StrategyInstancesResponseSchema, StrategyInstanceDetailSchema } from '@/lib/schemas/strategy'
 
 const BASE = import.meta.env.VITE_API_STRATEGY as string
 
 const validateInstances = withValidation<StrategyInstancesResponse>(StrategyInstancesResponseSchema, 'strategy/instances')
+const validateInstance = withValidation<StrategyInstance>(StrategyInstanceDetailSchema, 'strategy/instances/:id')
 
 export async function fetchOpportunities(): Promise<OpportunitiesResponse> {
   const res = await fetch(`${BASE}/strategies/opportunities`)
@@ -104,6 +106,12 @@ export async function fetchStrategyInstances(params?: {
   const res = await fetch(`${BASE}/strategies/instances${qs ? `?${qs}` : ''}`)
   if (!res.ok) throw new Error(`Strategy /instances: ${res.status}`)
   return validateInstances(await res.json())
+}
+
+export async function fetchStrategyInstance(id: number): Promise<StrategyInstance> {
+  const res = await fetch(`${BASE}/strategies/instances/${id}`)
+  if (!res.ok) throw new Error(`Strategy /instances/${id}: ${res.status}`)
+  return validateInstance(await res.json())
 }
 
 export async function createStrategyInstance(

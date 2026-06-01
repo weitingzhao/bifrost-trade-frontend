@@ -59,7 +59,7 @@ function fmtPnl(v: number): string {
 
 // ─── Types ───
 
-type CalendarAssetTab = 'all' | 'options' | 'stocks' | 'fixed_income' | 'cash_like'
+type CalendarAssetTab = 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 
 interface CalendarDayDetailProps {
   selectedDay: string
@@ -80,7 +80,7 @@ export function CalendarDayDetail({
   positionCategoryByAccountContract,
   onClose,
 }: CalendarDayDetailProps) {
-  if (calendarAssetTab === 'options' || calendarAssetTab === 'all') {
+  if (calendarAssetTab === 'options') {
     return (
       <OptionsDayDetail
         selectedDay={selectedDay}
@@ -96,7 +96,7 @@ export function CalendarDayDetail({
       selectedDay={selectedDay}
       rawExecsWindow={rawExecsWindow}
       positionCategoryByAccountContract={positionCategoryByAccountContract}
-      assetTab={calendarAssetTab as Exclude<CalendarAssetTab, 'all' | 'options'>}
+      assetTab={calendarAssetTab as Exclude<CalendarAssetTab, 'options'>}
       onClose={onClose}
     />
   )

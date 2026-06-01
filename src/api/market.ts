@@ -5,6 +5,7 @@ import type {
   WatchlistResponse,
   OpenOrder,
   BarsResponse,
+  BarStatsResponse,
 } from '@/types/market'
 import { withValidation } from '@/lib/apiValidation'
 import { QuotesResponseSchema, WatchlistResponseSchema } from '@/lib/schemas/market'
@@ -38,6 +39,13 @@ export async function fetchWatchlist(): Promise<WatchlistResponse> {
   const res = await fetch(`${BASE}/watchlist`)
   if (!res.ok) throw new Error(`Market /watchlist: ${res.status}`)
   return validateWatchlist(await res.json())
+}
+
+export async function fetchBarStats(symbol: string): Promise<BarStatsResponse> {
+  const params = new URLSearchParams({ symbol: symbol.trim().toUpperCase() })
+  const res = await fetch(`${BASE}/bars/stats?${params}`)
+  if (!res.ok) throw new Error(`Market /bars/stats: ${res.status}`)
+  return res.json() as Promise<BarStatsResponse>
 }
 
 export async function fetchBars(

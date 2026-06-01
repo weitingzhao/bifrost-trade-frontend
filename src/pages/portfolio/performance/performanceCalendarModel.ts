@@ -1,18 +1,17 @@
 import type { PerformanceDayPnLBulkResult, PerformanceResponse } from '@/types/trading'
 
-export type CalendarAssetTab = 'all' | 'options' | 'stocks' | 'fixed_income' | 'cash_like'
+export type CalendarAssetTab = 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 
 export const CALENDAR_ASSET_TABS: { id: CalendarAssetTab; label: string }[] = [
-  { id: 'all', label: 'All' },
   { id: 'options', label: 'Options' },
   { id: 'stocks', label: 'Stocks' },
-  { id: 'fixed_income', label: 'Fixed Income' },
+  { id: 'fixed_income', label: 'Fixed income' },
   { id: 'cash_like', label: 'Cash-like' },
 ]
 
 export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
-const SEC_TYPE_TAB: Record<string, Exclude<CalendarAssetTab, 'all'>> = {
+const SEC_TYPE_TAB: Record<string, CalendarAssetTab> = {
   OPT: 'options',
   STK: 'stocks',
   BOND: 'fixed_income',
@@ -44,14 +43,13 @@ export function buildDayMapFromBulk(
   calendarStkNotionalByBucket: PerformanceDayPnLBulkResult['calendarStkNotionalByBucket'],
 ): Record<CalendarAssetTab, Map<string, DayData>> {
   const maps: Record<CalendarAssetTab, Map<string, DayData>> = {
-    all: new Map(),
     options: new Map(),
     stocks: new Map(),
     fixed_income: new Map(),
     cash_like: new Map(),
   }
 
-  const { options, stocks, fixed_income, cash_like } = calendarDayPnLByAsset
+  const { options } = calendarDayPnLByAsset
   const stkTabs = ['stocks', 'fixed_income', 'cash_like'] as const
 
   for (const tab of stkTabs) {
@@ -76,25 +74,6 @@ export function buildDayMapFromBulk(
     })
   }
 
-  const allDates = new Set([
-    ...Object.keys(options),
-    ...Object.keys(stocks),
-    ...Object.keys(fixed_income),
-    ...Object.keys(cash_like),
-  ])
-  for (const date of allDates) {
-    const opt = options[date] ?? { realized: 0, unrealized: 0 }
-    const stk = stocks[date] ?? { realized: 0, unrealized: 0 }
-    const fi = fixed_income[date] ?? { realized: 0, unrealized: 0 }
-    const cash = cash_like[date] ?? { realized: 0, unrealized: 0 }
-    maps.all.set(date, {
-      realized: opt.realized + stk.realized + fi.realized + cash.realized,
-      unrealized: opt.unrealized,
-      tradeCount: 0,
-      notional: 0,
-    })
-  }
-
   return maps
 }
 
@@ -102,7 +81,6 @@ export function buildDayMapFromApi(
   perf: PerformanceResponse | undefined,
 ): Record<CalendarAssetTab, Map<string, DayData>> {
   const maps: Record<CalendarAssetTab, Map<string, DayData>> = {
-    all: new Map(),
     options: new Map(),
     stocks: new Map(),
     fixed_income: new Map(),
@@ -110,7 +88,7 @@ export function buildDayMapFromApi(
   }
   for (const e of perf?.calendar ?? []) {
     if (e.period_label) {
-      maps.all.set(e.period_label, {
+      maps.options.set(e.period_label, {
         realized: e.net_pnl,
         unrealized: 0,
         tradeCount: e.trade_count,

@@ -2,6 +2,9 @@ import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { AccountFilter } from './PositionsFilterBar'
+import { bubbleButtonClass, bubbleGroupClass } from './charts/BubbleSwitch'
+import styles from './PositionsOpenControls.module.css'
+
 export type DetailViewMode = 'accordion' | 'multi'
 
 interface Props {
@@ -20,6 +23,8 @@ interface Props {
   hasCoreStocks: boolean
   hasFixedIncome: boolean
   hasCashLike: boolean
+  /** Show Strategy/Options/… tabs when portfolio has data (not when account filter clears the list). */
+  showPositionTabs: boolean
 }
 
 export function PositionsOpenControls({
@@ -38,36 +43,39 @@ export function PositionsOpenControls({
   hasCoreStocks,
   hasFixedIncome,
   hasCashLike,
+  showPositionTabs,
 }: Props) {
   const showAccountBubbles = !!(hostAccountId || secondaryAccountId)
+  const showTabs = showPositionTabs
 
   return (
-    <div className="flex flex-wrap items-center gap-3 py-2 border-b border-border/60">
-      <Input
-        placeholder="Symbol"
-        value={filterSymbol}
-        onChange={(e) => onFilterSymbolChange(e.target.value)}
-        className="h-8 w-28 text-sm font-mono"
-      />
-      <Input
-        placeholder="YYYYMMDD"
-        value={filterExpiry}
-        onChange={(e) => onFilterExpiryChange(e.target.value.replace(/\D/g, '').slice(0, 8))}
-        className="h-8 w-28 text-sm font-mono"
-        maxLength={8}
-        title="Option expiry filter (YYYYMMDD prefix match)"
-      />
+    <div className={styles.row} role="toolbar" aria-label="Open position filters and tabs">
+      <div className={styles.filters} aria-label="Position filters">
+        <Input
+          placeholder="Symbol"
+          value={filterSymbol}
+          onChange={(e) => onFilterSymbolChange(e.target.value)}
+          className={cn('h-8 text-sm font-mono shrink-0', styles.symbolInput)}
+        />
+        <Input
+          placeholder="YYYYMMDD"
+          value={filterExpiry}
+          onChange={(e) => onFilterExpiryChange(e.target.value.replace(/\D/g, '').slice(0, 8))}
+          className={cn('h-8 text-sm font-mono shrink-0', styles.expiryInput)}
+          maxLength={8}
+          title="Option expiry filter (YYYYMMDD prefix match)"
+          aria-label="Filter by option expiry YYYYMMDD"
+        />
+      </div>
 
       {showAccountBubbles && (
-        <div className="flex rounded-md border overflow-hidden text-xs">
+        <div className={cn(bubbleGroupClass(), styles.acctBubbles)}>
           {hostAccountId && (
             <button
               type="button"
               onClick={() => onAccountFilterChange({ ...accountFilter, host: !accountFilter.host })}
-              className={cn(
-                'px-3 py-1 transition-colors font-medium',
-                accountFilter.host ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
-              )}
+              className={bubbleButtonClass(accountFilter.host)}
+              aria-pressed={accountFilter.host}
             >
               HOST
             </button>
@@ -78,10 +86,8 @@ export function PositionsOpenControls({
               onClick={() =>
                 onAccountFilterChange({ ...accountFilter, secondary: !accountFilter.secondary })
               }
-              className={cn(
-                'px-3 py-1 transition-colors font-medium',
-                accountFilter.secondary ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
-              )}
+              className={bubbleButtonClass(accountFilter.secondary)}
+              aria-pressed={accountFilter.secondary}
             >
               Secondary
             </button>
@@ -89,18 +95,16 @@ export function PositionsOpenControls({
         </div>
       )}
 
-      <div className="flex items-center gap-2 text-xs">
-        <span className="text-muted-foreground font-medium">Detail</span>
-        <div className="flex rounded-md border overflow-hidden">
+      <div className={styles.detailGroup} role="radiogroup" aria-label="Detail view mode">
+        <span className={styles.detailLabel}>Detail</span>
+        <div className={bubbleGroupClass()}>
           {(['accordion', 'multi'] as const).map((v) => (
             <button
               key={v}
               type="button"
-              className={cn(
-                'px-2.5 py-1 transition-colors font-medium capitalize',
-                detailViewMode === v ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
-              )}
+              className={bubbleButtonClass(detailViewMode === v)}
               onClick={() => onDetailViewModeChange(v)}
+              aria-pressed={detailViewMode === v}
             >
               {v === 'accordion' ? 'Accordion' : 'Multi'}
             </button>
@@ -108,25 +112,38 @@ export function PositionsOpenControls({
         </div>
       </div>
 
-      <span className="w-px h-6 bg-border hidden sm:block" aria-hidden />
-
-      <TabsList variant="line" className="h-8 bg-transparent p-0 gap-0">
-        <TabsTrigger value="instance" disabled={!hasInstances && !hasOptions} className="h-8 px-3 text-xs">
-          Strategy
-        </TabsTrigger>
-        <TabsTrigger value="options" disabled={!hasOptions} className="h-8 px-3 text-xs">
-          Options
-        </TabsTrigger>
-        <TabsTrigger value="stocks" disabled={!hasCoreStocks} className="h-8 px-3 text-xs">
-          Stocks
-        </TabsTrigger>
-        <TabsTrigger value="fixed_income" disabled={!hasFixedIncome} className="h-8 px-3 text-xs">
-          Fixed income
-        </TabsTrigger>
-        <TabsTrigger value="cash_like" disabled={!hasCashLike} className="h-8 px-3 text-xs">
-          Cash-like
-        </TabsTrigger>
-      </TabsList>
+      {showTabs && (
+        <>
+          <span className={styles.sep} aria-hidden />
+          <div className={styles.tabsWrap}>
+            <TabsList variant="line" className={styles.tabsList}>
+              <TabsTrigger
+                value="instance"
+                disabled={!hasInstances && !hasOptions}
+                className={styles.tabTrigger}
+              >
+                Strategy
+              </TabsTrigger>
+              <TabsTrigger value="options" disabled={!hasOptions} className={styles.tabTrigger}>
+                Options
+              </TabsTrigger>
+              <TabsTrigger value="stocks" disabled={!hasCoreStocks} className={styles.tabTrigger}>
+                Stocks
+              </TabsTrigger>
+              <TabsTrigger
+                value="fixed_income"
+                disabled={!hasFixedIncome}
+                className={styles.tabTrigger}
+              >
+                Fixed income
+              </TabsTrigger>
+              <TabsTrigger value="cash_like" disabled={!hasCashLike} className={styles.tabTrigger}>
+                Cash-like
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </>
+      )}
     </div>
   )
 }

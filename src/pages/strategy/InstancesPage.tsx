@@ -159,9 +159,9 @@ export default function InstancesPage() {
   }, [urlInstanceId, isNarrowViewport, sidebarWidth])
 
   const sidebarTitle = isCompareMode && compareTarget != null && urlInstanceId != null
-    ? `Instance #${urlInstanceId} vs #${compareTarget.strategy_instance_id}`
+    ? `Strategy Instance · #${urlInstanceId} vs #${compareTarget.strategy_instance_id}`
     : urlInstanceId != null
-      ? `Instance #${urlInstanceId}`
+      ? `Strategy Instance · #${urlInstanceId}`
       : 'Detail'
 
   const openInstanceDetail = useCallback((inst: StrategyInstance) => {
@@ -502,15 +502,15 @@ export default function InstancesPage() {
                 ) : isCompareMode && compareTarget != null ? (
                   <div className={styles.compareSplit}>
                     <div className={styles.comparePane}>
-                      <InstanceDetailPanel instance={detailTarget} embedded />
+                      <InstanceDetailPanel instance={detailTarget} />
                     </div>
                     <div className={styles.compareDivider} aria-hidden />
                     <div className={styles.comparePane}>
-                      <InstanceDetailPanel instance={compareTarget} embedded />
+                      <InstanceDetailPanel instance={compareTarget} />
                     </div>
                   </div>
                 ) : (
-                  <InstanceDetailPanel instance={detailTarget} embedded />
+                  <InstanceDetailPanel instance={detailTarget} />
                 )}
               </DetailSidebar>
             </div>

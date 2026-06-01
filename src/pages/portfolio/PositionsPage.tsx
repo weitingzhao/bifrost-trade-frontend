@@ -11,7 +11,7 @@ import { PageHeader, PageShell } from '@/components/layout'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Tabs, TabsContent, TabsPanel, TabsPanelContent } from '@/components/ui/tabs'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { InstanceFilters } from '@/components/positions/InstanceFilters'
 import type { InstanceFilterValues } from '@/components/positions/InstanceFilters'
 import { StocksTab } from '@/components/positions/StocksTab'
@@ -21,8 +21,13 @@ import { OptionsTab } from '@/components/positions/OptionsTab'
 import { InstanceTab } from '@/components/positions/InstanceTab'
 import { PositionsChartsSection, type OpenTab } from '@/components/positions/PositionsChartsSection'
 import { PositionsOpenControls, type DetailViewMode } from '@/components/positions/PositionsOpenControls'
+import { EditExecutionConfirmDialog } from '@/components/positions/EditExecutionConfirmDialog'
 import { ExecutionFormModal } from '@/components/positions/ExecutionFormModal'
-import { LinkExecutionModal } from '@/components/positions/LinkExecutionModal'
+import {
+  LinkExecutionModal,
+  type LinkExecutionContext,
+} from '@/components/positions/LinkExecutionModal'
+import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
 import { QuickCloseModal } from '@/components/positions/QuickCloseModal'
 import { DeleteConfirmDialog } from '@/components/positions/DeleteConfirmDialog'
 import { InspectorDrawer } from '@/components/positions/InspectorDrawer'
@@ -42,9 +47,11 @@ import { buildInstanceGroups } from '@/utils/buildInstanceGroups'
 import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
 import { buildOptionStockMix, liveStockRowCovKey, type OptionStockMixCategory } from '@/utils/positionsCharts'
-import { StockCoverageTable } from '@/components/positions/StockCoverageTable'
+import { CoverageSummarySection } from '@/components/positions/CoverageSummarySection'
+import { IndependentHoldingsSection } from '@/components/positions/IndependentHoldingsSection'
 import type { AccountFilter } from '@/components/positions/PositionsFilterBar'
 import type { Execution } from '@/types/positions'
+import '@/components/positions/positionsTheme.css'
 
 function optionExpiryMatchesFilter(expiryRaw: string, filterRaw: string): boolean {
   const f = filterRaw.replace(/\D/g, '')
@@ -70,6 +77,7 @@ export default function PositionsPage() {
   const [accountFilter, setAccountFilter] = useState<AccountFilter>({ host: true, secondary: true })
   const [detailViewMode, setDetailViewMode] = useState<DetailViewMode>('accordion')
   const [optionStockMixFilter, setOptionStockMixFilter] = useState<OptionStockMixCategory | null>(null)
+  const [chartAccountId, setChartAccountId] = useState('all')
   const [instanceFilters, setInstanceFilters] = useState<InstanceFilterValues>({
     structureType: 'all',
     oppName: 'all',
@@ -78,7 +86,11 @@ export default function PositionsPage() {
   })
 
   const [editExec, setEditExec] = useState<Execution | null>(null)
-  const [linkExec, setLinkExec] = useState<Execution | null>(null)
+  const [editExecConfirm, setEditExecConfirm] = useState<{ open: boolean; exec: Execution | null }>({
+    open: false,
+    exec: null,
+  })
+  const [linkContext, setLinkContext] = useState<LinkExecutionContext | null>(null)
   const [closeExec, setCloseExec] = useState<Execution | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
@@ -234,6 +246,36 @@ export default function PositionsPage() {
     return list.filter((p) => optionStockMixKeys.otherKeys.has(liveStockRowCovKey(p)))
   }, [coreStocks, filterSymbol, optionStockMixFilter, optionStockMixKeys])
 
+  const filteredFixedIncomeStocks = useMemo(() => {
+    const sym = filterSymbol.trim().toUpperCase()
+    if (!sym) return fixedIncomeStocks
+    return fixedIncomeStocks.filter((p) => (p.symbol ?? '').toUpperCase().includes(sym))
+  }, [fixedIncomeStocks, filterSymbol])
+
+  const filteredCashLikeStocks = useMemo(() => {
+    const sym = filterSymbol.trim().toUpperCase()
+    if (!sym) return cashLikeStocks
+    return cashLikeStocks.filter((p) => (p.symbol ?? '').toUpperCase().includes(sym))
+  }, [cashLikeStocks, filterSymbol])
+
+  const stocksTabEmptyHint = useMemo(() => {
+    if (
+      optionStockMixFilter &&
+      filteredCoreStocks.length === 0 &&
+      coreStocks.length > 0
+    ) {
+      return `No stock positions match the ${optionStockMixFilter} filter from the chart. Clear the filter or pick another slice.`
+    }
+    return 'No open stock positions under the current filters.'
+  }, [optionStockMixFilter, filteredCoreStocks.length, coreStocks.length])
+
+  const fixedIncomeTabEmptyHint = useMemo(() => {
+    if (filterSymbol.trim() && filteredFixedIncomeStocks.length === 0 && fixedIncomeStocks.length > 0) {
+      return 'No fixed income positions match the current symbol filter.'
+    }
+    return 'No open fixed income positions under the current filters.'
+  }, [filterSymbol, filteredFixedIncomeStocks.length, fixedIncomeStocks.length])
+
   const filteredOptions = useMemo(() => {
     let list = openOptions
     const sym = filterSymbol.trim().toUpperCase()
@@ -249,15 +291,37 @@ export default function PositionsPage() {
   const hasCashLike = cashLikeStocks.length > 0
   const hasOptions = allOptions.length > 0 || offTrackPositions.length > 0
   const totalPositions = allPositions.length
+  const portfolioPositionCount = useMemo(() => flattenPositions(accounts).length, [accounts])
+  const hasAccountSelection =
+    (!hostAccountId && !secondaryAccountId) || accountFilter.host || accountFilter.secondary
+  const showOpenPositionsPanel = accounts.length > 0
 
   function refreshExecData() {
     queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
     queryClient.invalidateQueries({ queryKey: ['trading', 'position-attribution'] })
   }
 
+  function requestEditExec(ex: Execution) {
+    setEditExecConfirm({ open: true, exec: ex })
+  }
+
+  function openLinkExec(ex: Execution, sameContractTrades?: Execution[]) {
+    const execId = ex.account_executions_id
+    if (execId == null) return
+    const peerPicks =
+      sameContractTrades?.length && sameContractTrades.length > 0
+        ? collectPeerInstancePicks(sameContractTrades, execId)
+        : []
+    setLinkContext({
+      account_executions_id: execId,
+      execution: ex,
+      ...(peerPicks.length > 0 ? { peer_instance_picks: peerPicks } : {}),
+    })
+  }
+
   if (isLoading) {
     return (
-      <PageShell className="space-y-4">
+      <PageShell className="positions-page space-y-4">
         <Skeleton className="h-6 w-40" />
         <div className="grid grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
@@ -280,14 +344,16 @@ export default function PositionsPage() {
   }
 
   return (
-    <PageShell className="space-y-6">
+    <PageShell className="positions-page space-y-6">
       <PageHeader
         title="Positions"
         description="Open positions (Pool On and Off) and manual execution records."
         actions={
-          totalPositions > 0 ? (
+          portfolioPositionCount > 0 ? (
             <Badge variant="secondary" className="text-xs">
-              {totalPositions} position{totalPositions > 1 ? 's' : ''}
+              {hasAccountSelection ? totalPositions : 0} position
+              {hasAccountSelection && totalPositions !== 1 ? 's' : ''}
+              {!hasAccountSelection ? ' (select account)' : ''}
             </Badge>
           ) : undefined
         }
@@ -301,6 +367,8 @@ export default function PositionsPage() {
         quotesBySymbol={quotesBySymbol}
         quotesByCk={quotesByCk}
         watchlistCoverageItems={watchlistCoverageItems}
+        chartAccountId={chartAccountId}
+        onChartAccountIdChange={setChartAccountId}
         filterSymbol={filterSymbol}
         onFilterSymbolChange={setFilterSymbol}
         onTabChange={setOpenTab}
@@ -308,7 +376,7 @@ export default function PositionsPage() {
         onOptionStockMixFilterChange={setOptionStockMixFilter}
       />
 
-      {totalPositions === 0 ? (
+      {!showOpenPositionsPanel ? (
         <div className="rounded-lg border border-dashed p-8 text-center space-y-1">
           <p className="text-sm font-medium">No open positions</p>
           <p className="text-xs text-muted-foreground">
@@ -333,11 +401,28 @@ export default function PositionsPage() {
             hasCoreStocks={hasCoreStocks}
             hasFixedIncome={hasFixedIncome}
             hasCashLike={hasCashLike}
+            showPositionTabs={portfolioPositionCount > 0}
           />
 
-          <TabsPanel>
-            <TabsPanelContent>
-              <TabsContent value="instance" className="mt-4">
+          <div className="min-w-0 w-full">
+            {!hasAccountSelection ? (
+              <div className="mt-3 rounded-lg border border-dashed p-6 text-center space-y-1">
+                <p className="text-sm font-medium">Select an account</p>
+                <p className="text-xs text-muted-foreground">
+                  Turn on HOST and/or Secondary above to show open positions for those accounts.
+                </p>
+              </div>
+            ) : totalPositions === 0 ? (
+              <div className="mt-3 rounded-lg border border-dashed p-6 text-center space-y-1">
+                <p className="text-sm font-medium">No positions match filters</p>
+                <p className="text-xs text-muted-foreground">
+                  No open positions under the current symbol, expiry, or account filters. Off-track options
+                  appear when both HOST and Secondary are enabled.
+                </p>
+              </div>
+            ) : (
+              <>
+              <TabsContent value="instance" className="mt-3 outline-none">
                 <InstanceFilters
                   structureTypes={instanceFilterOptions.structureTypes}
                   oppNames={instanceFilterOptions.oppNames}
@@ -356,30 +441,55 @@ export default function PositionsPage() {
                   executionsTws={executionsTws}
                   opportunities={opportunities}
                   detailViewMode={detailViewMode}
-                  onEditExec={setEditExec}
-                  onLinkExec={setLinkExec}
+                  onEditExec={requestEditExec}
+                  onLinkExec={openLinkExec}
                   onDeleteExec={setDeleteTarget}
                   onRefreshExecs={refreshExecData}
                   onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
                   onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
                   onOpenOption={(contractKey) => setInspector({ type: 'option', contractKey })}
                 />
+                <CoverageSummarySection
+                  instanceGroups={filteredInstanceGroups}
+                  stockCoverageItems={stockCoverageItems}
+                  chartAccountId={chartAccountId}
+                  hostAccountId={hostAccountId}
+                  secondaryAccountId={secondaryAccountId}
+                  accounts={accounts}
+                  onInspectSymbol={(symbol, accountId) =>
+                    setInspector({ type: 'stock', symbol, accountId })
+                  }
+                />
+                <IndependentHoldingsSection
+                  coreStocks={coreStocks}
+                  fixedIncomeStocks={fixedIncomeStocks}
+                  cashLikeStocks={cashLikeStocks}
+                  filterSymbol={filterSymbol}
+                  onInspectStock={(pos) =>
+                    setInspector({
+                      type: 'stock',
+                      symbol: (pos.symbol ?? '').toUpperCase(),
+                      accountId: pos.account_id,
+                      livePosition: pos,
+                    })
+                  }
+                />
               </TabsContent>
 
-              <TabsContent value="options" className="mt-4">
+              <TabsContent value="options" className="mt-3 outline-none">
                 <OptionsTab
                   positions={filteredOptions}
                   quotesBySymbol={quotesBySymbol}
+                  quotesByCk={quotesByCk}
                   filterSymbol={filterSymbol}
                   filterExpiry={filterExpiry}
                   executionsFinal={executionsFinal}
                   executionsTws={executionsTws}
                   detailViewMode={detailViewMode}
-                  onEditExec={setEditExec}
-                  onLinkExec={setLinkExec}
+                  onEditExec={requestEditExec}
+                  onLinkExec={openLinkExec}
                   onDeleteExec={setDeleteTarget}
                   onCloseExec={setCloseExec}
-                  onRefreshExecs={refreshExecData}
                   onInspect={(pos) =>
                     setInspector({
                       type: 'option',
@@ -387,14 +497,15 @@ export default function PositionsPage() {
                       optionPosition: pos,
                     })
                   }
+                  onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
                 />
               </TabsContent>
 
-              <TabsContent value="stocks" className="mt-4">
+              <TabsContent value="stocks" className="mt-3 outline-none">
                 <StocksTab
                   positions={filteredCoreStocks}
-                  quotesBySymbol={quotesBySymbol}
-                  benchBySymbol={benchBySymbol}
+                  title="Stock positions"
+                  emptyHint={stocksTabEmptyHint}
                   filterSymbol={filterSymbol}
                   onInspect={(symbol, accountId, pos) =>
                     setInspector({ type: 'stock', symbol, accountId, livePosition: pos })
@@ -402,30 +513,41 @@ export default function PositionsPage() {
                 />
               </TabsContent>
 
-              <TabsContent value="fixed_income" className="mt-4">
+              <TabsContent value="fixed_income" className="mt-3 outline-none">
                 <FixedIncomeTab
-                  positions={fixedIncomeStocks}
-                  quotesBySymbol={quotesBySymbol}
-                  benchBySymbol={benchBySymbol}
+                  positions={filteredFixedIncomeStocks}
+                  emptyHint={fixedIncomeTabEmptyHint}
                   filterSymbol={filterSymbol}
+                  onInspect={(symbol, accountId, pos) =>
+                    setInspector({ type: 'stock', symbol, accountId, livePosition: pos })
+                  }
                 />
               </TabsContent>
 
-              <TabsContent value="cash_like" className="mt-4">
+              <TabsContent value="cash_like" className="mt-3 outline-none">
                 <CashLikeTab
-                  positions={cashLikeStocks}
-                  quotesBySymbol={quotesBySymbol}
-                  benchBySymbol={benchBySymbol}
+                  positions={filteredCashLikeStocks}
                   filterSymbol={filterSymbol}
+                  onInspect={(symbol, accountId, pos) =>
+                    setInspector({ type: 'stock', symbol, accountId, livePosition: pos })
+                  }
                 />
               </TabsContent>
-            </TabsPanelContent>
-          </TabsPanel>
+              </>
+            )}
+          </div>
         </Tabs>
       )}
 
-      {stockCoverageItems.length > 0 && <StockCoverageTable items={stockCoverageItems} />}
-
+      <EditExecutionConfirmDialog
+        open={editExecConfirm.open}
+        onCancel={() => setEditExecConfirm({ open: false, exec: null })}
+        onContinue={() => {
+          const ex = editExecConfirm.exec
+          setEditExecConfirm({ open: false, exec: null })
+          if (ex) setEditExec(ex)
+        }}
+      />
       <ExecutionFormModal
         key={editExec?.account_executions_id ?? 'exec-form'}
         open={!!editExec}
@@ -435,11 +557,11 @@ export default function PositionsPage() {
         onSuccess={refreshExecData}
       />
       <LinkExecutionModal
-        key={linkExec?.account_executions_id ?? 'link-form'}
-        open={!!linkExec}
-        exec={linkExec}
+        key={linkContext?.account_executions_id ?? 'link-form'}
+        open={!!linkContext}
+        context={linkContext}
         opportunities={opportunities}
-        onClose={() => setLinkExec(null)}
+        onClose={() => setLinkContext(null)}
         onSuccess={refreshExecData}
       />
       <QuickCloseModal exec={closeExec} onClose={() => setCloseExec(null)} onSuccess={refreshExecData} />

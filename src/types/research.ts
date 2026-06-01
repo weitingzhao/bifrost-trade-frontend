@@ -163,15 +163,24 @@ export interface FundamentalConditionRow {
   reason: string | null
 }
 
+export interface FundGroupSummary {
+  total: number
+  pass_count: number
+  pass: boolean
+  insufficient: boolean
+}
+
 export interface FundamentalConditionsData {
   ok: boolean
   error?: string
   symbol?: string
+  found?: boolean
   as_of_date?: string
   pass_count?: number
   fundamental_pass?: boolean
   insufficient_data?: boolean
   conditions?: FundamentalConditionRow[]
+  groups?: Record<string, FundGroupSummary> | null
 }
 
 export interface TechnicalConditionRow {
@@ -182,16 +191,74 @@ export interface TechnicalConditionRow {
   reason: string | null
 }
 
+export interface TierMomentumIndicator {
+  id: string
+  pass: boolean
+  actual: number | null
+  threshold?: number | number[] | null
+  reason?: string
+}
+
+export interface TierMomentum {
+  score: number
+  max: number
+  indicators: TierMomentumIndicator[]
+}
+
+export interface TierStructureDiagnostic {
+  id: string
+  active: boolean
+  value: number | null
+  threshold?: number
+}
+
+export interface TierStructure {
+  diagnostics: TierStructureDiagnostic[]
+  metrics: Record<string, number | null>
+  patterns: { id: string }[]
+  pattern_metrics: Record<string, number | boolean | null>
+}
+
+export interface TierSentimentShort {
+  days_to_cover: number | null
+  si_pct_change_2w: number | null
+  sv_ratio_avg_4w: number | null
+  sv_ratio_trend_falling: boolean | null
+  staleness_days: number | null
+}
+
+export interface TierSentimentIndicator {
+  id: string
+  pass: boolean
+  actual: number | boolean | null
+  threshold: number | null
+  reason?: string
+}
+
+export interface TierSentiment {
+  short: TierSentimentShort
+  indicators: TierSentimentIndicator[]
+}
+
+export interface TechnicalTiers {
+  core: { pass: boolean; pass_count: number; fail_count: number }
+  momentum: TierMomentum
+  structure: TierStructure
+  sentiment: TierSentiment
+}
+
 export interface TechnicalConditionsData {
   ok: boolean
   error?: string
   symbol?: string
+  found?: boolean
   as_of_date?: string
   pass_count?: number
   technical_pass?: boolean
   insufficient_data?: boolean
   conditions?: TechnicalConditionRow[]
   metrics?: Record<string, number | null>
+  tiers?: TechnicalTiers
 }
 
 export interface FundRawQuarterRow {
@@ -214,4 +281,86 @@ export interface FundRawData {
   quarterly: FundRawQuarterRow[]
   annual: FundRawAnnualRow[]
   metrics: Record<string, number | null>
+}
+
+/** Pre-loaded fundamental snapshot from screener table row (before full API fetch). */
+export interface StockInspectorFundamentalSeed {
+  passCount: number
+  passedConditions?: string[]
+  insufficientData?: boolean
+}
+
+export interface SymbolStatementsData {
+  ok: boolean
+  error?: string
+  symbol?: string
+  balance_sheets: Array<{
+    fiscal_year: number
+    fiscal_quarter: number
+    total_assets: number | null
+    total_liabilities: number | null
+    total_equity: number | null
+    cash_and_equivalents: number | null
+  }>
+  cash_flows: Array<{
+    fiscal_year: number
+    fiscal_quarter: number
+    operating_cash_flow: number | null
+    free_cash_flow: number | null
+  }>
+  ratios: Array<{
+    fiscal_year: number
+    fiscal_quarter: number
+    pe: number | null
+    ps: number | null
+    pb: number | null
+    roe: number | null
+  }>
+  short_interest: Array<{
+    settlement_date: string
+    short_interest: number | null
+    days_to_cover: number | null
+  }>
+  short_volume: Array<{
+    trade_date: string
+    short_volume_ratio: number | null
+  }>
+}
+
+export interface SymbolOptionPcrTrendPoint {
+  trade_date: string
+  put_oi: number
+  call_oi: number
+  oi_ratio: number | null
+  put_vol: number | null
+  call_vol: number | null
+  vol_ratio: number | null
+}
+
+export interface SymbolOptionChainExpiryRow {
+  expiry: string
+  expiration_label: string
+  dte: number | null
+  put_vol: number
+  call_vol: number
+  total_vol: number
+  pc_vol: number | null
+  put_oi: number
+  call_oi: number
+  total_oi: number
+  pc_oi: number | null
+}
+
+export interface SymbolOptionPcrData {
+  ok: boolean
+  error?: string
+  symbol?: string
+  as_of_date?: string | null
+  stale_days?: number | null
+  oi_ratio?: number | null
+  vol_ratio?: number | null
+  avg_oi_5d?: number | null
+  lookback_days?: number
+  trend?: SymbolOptionPcrTrendPoint[]
+  chain_by_expiry?: SymbolOptionChainExpiryRow[]
 }

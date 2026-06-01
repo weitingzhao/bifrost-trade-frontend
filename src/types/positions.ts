@@ -1,4 +1,7 @@
 import type { IbPositionRow } from './monitor'
+import type { RiskProfile, RiskScenarioBreakdown, RiskCalcContext } from '@/utils/riskProfile'
+
+export type { RiskProfile, RiskScenarioBreakdown, RiskCalcContext }
 
 export type LivePositionRow = IbPositionRow & {
   account_id: string
@@ -48,10 +51,13 @@ export interface StockCoverageItem {
   symbol: string
   account_id: string
   required_shares: number
+  /** Watchlist-scoped hedge demand only (Legacy backing pool). */
+  required_watchlist_shares?: number
   held_shares: number
   surplus_or_gap: number
   instances_needing: number
   backing_opportunities?: string[]
+  watchlist_scope_instances?: number
   optionable_supported?: boolean | null
   avg_cost_per_share?: number | null
   live_last_price?: number | null
@@ -60,13 +66,6 @@ export interface StockCoverageItem {
   daily_pct?: number | null
   total_pnl?: number | null
   total_pct?: number | null
-}
-
-export interface RiskProfile {
-  max_gain: number | null
-  max_loss: number | null
-  risk_type: 'defined' | 'unlimited' | 'unknown'
-  breakeven_points: number[]
 }
 
 export interface InstanceAllGroup {
@@ -83,7 +82,7 @@ export interface InstanceAllGroup {
   risk_profile: RiskProfile | null
 }
 
-/** One row from GET /position-attribution: one (position, instance). */
+/** One row from GET /executions/position-attribution: one (position, instance). */
 export interface PositionInstanceAttribution {
   account_id: string
   contract_key: string

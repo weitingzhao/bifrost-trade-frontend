@@ -29,11 +29,15 @@ import { SEGMENT } from './stockScreener/segmentStyles'
 import { SymbolsStrip } from './stockScreener/SymbolsStrip'
 import { TierFilterCard } from './stockScreener/TierFilterCard'
 import styles from './stockScreener/stock-screener.module.css'
+import type { ReadinessSnapshotRow } from '@/types/stockScreener'
 import { formatCriteriaAsOf, prepareDistBuckets } from '@/utils/stockScreener'
 
 export default function StockScreenerPage() {
   const [symbolText, setSymbolText] = useState('')
-  const [inspectorSymbol, setInspectorSymbol] = useState<string | null>(null)
+  const [inspector, setInspector] = useState<{
+    symbol: string
+    seed?: { passCount: number; passedConditions?: string[]; insufficientData?: boolean }
+  } | null>(null)
 
   const { data: criteriaStats, isLoading: criteriaLoading, error: criteriaQueryError, refetch } = useStockScreenerCriteria()
 
@@ -89,9 +93,20 @@ export default function StockScreenerPage() {
     setSymbolText(filters.filterPreview.symbols.join(','))
   }, [filters.filterPreview, fundBucket, techBucket])
 
-  const toggleInspector = useCallback((symbol: string) => {
+  const toggleInspector = useCallback((symbol: string, row?: ReadinessSnapshotRow) => {
     const sym = symbol.trim().toUpperCase()
-    setInspectorSymbol((prev) => (prev === sym ? null : sym))
+    setInspector((prev) => {
+      if (prev?.symbol === sym) return null
+      if (!row) return { symbol: sym }
+      return {
+        symbol: sym,
+        seed: {
+          passCount: row.fundamental_pass_count ?? 0,
+          passedConditions: row.passed_conditions,
+          insufficientData: row.fundamental_insufficient,
+        },
+      }
+    })
   }, [])
 
   const techCondGroups = useMemo(() =>
@@ -320,14 +335,22 @@ export default function StockScreenerPage() {
         loading={readiness.isLoading}
         error={readiness.error}
         symbolCount={readiness.symbols.length}
-        activeSymbol={inspectorSymbol}
+        activeSymbol={inspector?.symbol ?? null}
         onSort={toggleSort}
         onOpenInspector={toggleInspector}
       />
 
       <InspectorDrawer
-        state={inspectorSymbol ? { type: 'stock', symbol: inspectorSymbol } : { type: null }}
-        onClose={() => setInspectorSymbol(null)}
+        state={
+          inspector
+            ? {
+                type: 'stock',
+                symbol: inspector.symbol,
+                fundamentalSeed: inspector.seed,
+              }
+            : { type: null }
+        }
+        onClose={() => setInspector(null)}
       />
     </PageShell>
   )

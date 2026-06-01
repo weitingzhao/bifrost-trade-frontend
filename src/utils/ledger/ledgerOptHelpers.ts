@@ -290,6 +290,46 @@ export function executionAbsQuantity(ex: Execution): number {
   return Math.abs(Number(ex.quantity ?? ex.qty) || 0)
 }
 
+/** Sibling fills on the same option contract that already have instance attribution (Assign strategy shortcut). */
+export interface PeerInstancePick {
+  strategy_opportunity_id: number
+  strategy_instance_id: number
+  label: string
+}
+
+/** Unique (opportunity, instance) pairs from other executions in the same contract group. */
+export function collectPeerInstancePicks(
+  sameContractTrades: Execution[],
+  currentAccountExecutionsId: number,
+): PeerInstancePick[] {
+  const seen = new Set<string>()
+  const out: PeerInstancePick[] = []
+  for (const peer of sameContractTrades) {
+    const pid = peer.account_executions_id
+    if (pid != null && pid === currentAccountExecutionsId) continue
+    const iids = executionStrategyInstanceIds(peer)
+    for (const iid of iids) {
+      const sliced = sliceExecutionForInstanceOptView(peer, iid)
+      const oppRaw = sliced?.strategy_opportunity_id ?? peer.strategy_opportunity_id
+      if (oppRaw == null || !Number.isFinite(Number(oppRaw))) continue
+      const oppId = Number(oppRaw)
+      const key = `${oppId}::${iid}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      const oppName =
+        (sliced?.strategy_opportunity_name?.trim() ||
+          peer.strategy_opportunity_name?.trim() ||
+          '') || `Opportunity #${oppId}`
+      const instLab =
+        (sliced?.strategy_instance_label?.trim() || peer.strategy_instance_label?.trim() || '') || ''
+      const label = instLab ? `${oppName} · ${instLab} (#${iid})` : `${oppName} · #${iid}`
+      out.push({ strategy_opportunity_id: oppId, strategy_instance_id: iid, label })
+    }
+  }
+  out.sort((a, b) => a.label.localeCompare(b.label))
+  return out
+}
+
 /** Opposite-side same-qty fill in group that carries strategy attribution (for sync). */
 export function findOppositeLegAttributionSource(
   trades: Execution[],

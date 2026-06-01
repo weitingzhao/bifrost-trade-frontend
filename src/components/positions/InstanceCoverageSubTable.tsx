@@ -6,7 +6,7 @@ import { PosStatusPill } from './PosStatusPill'
 import { fmtUsd, fmtSignedPct, pnlColorClass } from '@/utils/positions'
 import type { InstanceStockCoverage, LivePositionRow } from '@/types/positions'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
-import sheetStyles from './InstanceStrategyPanel.module.css'
+import { instancePanel } from './instancePanelClasses'
 
 interface Props {
   coverage: InstanceStockCoverage[]
@@ -88,24 +88,24 @@ export function InstanceCoverageSubTable({ coverage, liveStocks, quotesBySymbol,
   if (coverage.length === 0) return null
 
   return (
-    <section className={cn(sheetStyles.subSection, sheetStyles.subSectionCoverage)}>
-      <h4 className={sheetStyles.subHeading}>Underlying Coverage</h4>
-      <div className={sheetStyles.subTableWrap}>
-        <Table className={sheetStyles.subTable}>
-          <TableHeader>
+    <section className={cn(instancePanel.subSection, instancePanel.subSectionCoverage)}>
+      <h4 className={instancePanel.subHeading}>Underlying Coverage</h4>
+      <div className={instancePanel.subTableWrap}>
+        <Table className={instancePanel.subTable}>
+          <TableHeader className={instancePanel.subTableHeader}>
             <TableRow>
-              <TableHead>Symbol</TableHead>
-              <TableHead>Account</TableHead>
-              <TableHead className="text-right">Cost Basis</TableHead>
-              <TableHead className="text-right">Avg Cost</TableHead>
-              <TableHead className="text-right">Live Last</TableHead>
-              <TableHead className="text-right">Daily</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead>Direction</TableHead>
-              <TableHead className="text-right">Required</TableHead>
-              <TableHead className="text-right">Held</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Surplus/Gap</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Symbol</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Account</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Cost Basis</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Avg Cost</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Live Last</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Daily</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Total</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Direction</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Required</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Held</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Status</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Surplus/Gap</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -117,21 +117,21 @@ export function InstanceCoverageSubTable({ coverage, liveStocks, quotesBySymbol,
               const status = coverageStatusLabel(Math.abs(m.held), sc.required_shares)
 
               return (
-                <TableRow key={`${sc.symbol}-${sc.account_id}-${i}`} className={sheetStyles.subDataRow}>
+                <TableRow key={`${sc.symbol}-${sc.account_id}-${i}`} className={instancePanel.subDataRow}>
                   <TableCell>
                     {onOpenStock ? (
                       <button
                         type="button"
-                        className={sheetStyles.subContractBtn}
+                        className={instancePanel.subContractBtn}
                         onClick={() => onOpenStock(sc.symbol, sc.account_id)}
                       >
                         {sc.symbol}
                       </button>
                     ) : (
-                      <span className={sheetStyles.subContractBtn}>{sc.symbol}</span>
+                      <span className={instancePanel.subContractBtn}>{sc.symbol}</span>
                     )}
                   </TableCell>
-                  <TableCell className={cn('font-mono text-xs', sheetStyles.subMutedCell)}>{sc.account_id}</TableCell>
+                  <TableCell className={cn('font-mono text-xs', instancePanel.subMutedCell)}>{sc.account_id}</TableCell>
                   <TableCell className="text-right font-mono text-xs">{fmtUsd(m.cost_basis)}</TableCell>
                   <TableCell className="text-right font-mono text-xs">{fmtUsd(m.avg_cost)}</TableCell>
                   <TableCell className="text-right font-mono text-xs">{fmtUsd(m.live_last)}</TableCell>

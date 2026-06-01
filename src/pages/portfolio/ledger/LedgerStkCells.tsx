@@ -1,5 +1,6 @@
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { fmtPctCompact, fmtTradeDate, fmtTs, fmtUsd, fmtUsdRound } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import {
   stkCostBasisFromSnapshot,
@@ -7,41 +8,39 @@ import {
   stkNotionalTone,
   stkPctOf,
 } from '@/utils/ledger/stkDisplay'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { ledgerStkPnlClass } from './ledgerStkPnl'
-import styles from './ledgerStyles'
+import {
+  stkGroupBasisClass,
+  stkGroupMetaClass,
+  stkGroupSnapLabelClass,
+} from './ledgerSharedClasses'
+import { DenseTableCell, DenseTableHead, denseTable, denseTableNumCell } from '@/components/data-display'
 
 export function LedgerStkNotionalCell({ ex }: { ex: Execution }) {
   const n = stkNotionalAbsUsd(ex)
   const tone = stkNotionalTone(ex)
+  const toneClass =
+    tone === 'buy' ? pnlColorClass(1) : tone === 'sell' ? pnlColorClass(-1) : 'text-muted-foreground'
   return (
-    <td className={styles.stkNotionalTd}>
-      <span
-        className={
-          tone === 'buy'
-            ? styles.pnlPositive
-            : tone === 'sell'
-              ? styles.pnlNegative
-              : styles.pnlZero
-        }
-      >
-        {n != null ? fmtUsd(n) : '—'}
-      </span>
-    </td>
+    <DenseTableCell className={denseTableNumCell}>
+      <span className={toneClass}>{n != null ? fmtUsd(n) : '—'}</span>
+    </DenseTableCell>
   )
 }
 
 export function LedgerStkRowRealizedCell({ realized }: { realized: number }) {
   const isZero = !Number.isFinite(realized) || Math.abs(realized) < 0.005
   return (
-    <td className={styles.stkRealizedTd}>
+    <DenseTableCell className={denseTableNumCell}>
       {isZero ? (
-        <span className={`${styles.stkRealizedValue} ${styles.pnlZero}`}>—</span>
+        <span className="whitespace-nowrap text-muted-foreground">—</span>
       ) : (
-        <span className={`${styles.stkRealizedValue} ${ledgerStkPnlClass(realized)}`}>
+        <span className={cn('whitespace-nowrap', ledgerStkPnlClass(realized))}>
           {fmtUsdRound(realized)}
         </span>
       )}
-    </td>
+    </DenseTableCell>
   )
 }
 
@@ -54,21 +53,20 @@ export function LedgerStkUrPnlGroupInline({
 }) {
   const uFinite = unrealized != null && Number.isFinite(unrealized)
   return (
-    <span className={`${styles.stkGroupTotalPnl} ${styles.stkUrPnlGroupInline}`}>
-      <span className={styles.stkGroupTotalPnlLabel}>Group U/R PnL</span>
-      <span className={styles.stkUrPnlGroupMetrics}>
-        <span className={`${styles.stkUrPnlSeg} ${ledgerStkPnlClass(realized)}`}>
-          <span className={styles.stkUrPnlPrefix}>R</span> {fmtUsdRound(realized)}
+    <span className="inline-flex flex-wrap items-baseline gap-x-1.5 text-[0.88em] font-semibold tabular-nums">
+      <span className="text-[0.72em] font-semibold uppercase tracking-wide text-muted-foreground">
+        Group U/R PnL
+      </span>
+      <span className="inline-flex flex-wrap items-baseline gap-x-1">
+        <span className={ledgerStkPnlClass(realized)}>
+          <span className="mr-0.5 font-semibold opacity-90">R</span>
+          {fmtUsdRound(realized)}
         </span>
-        <span className={styles.stkUrPnlMetricSep} aria-hidden>
+        <span className="text-muted-foreground/60" aria-hidden>
           ·
         </span>
-        <span
-          className={`${styles.stkUrPnlSeg} ${
-            uFinite ? styles.stkUrUnrealized : styles.pnlZero
-          }`}
-        >
-          <span className={styles.stkUrPnlPrefix}>U</span>{' '}
+        <span className={uFinite ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}>
+          <span className="mr-0.5 font-semibold opacity-90">U</span>
           {uFinite ? fmtUsdRound(unrealized as number) : '—'}
         </span>
       </span>
@@ -90,8 +88,8 @@ export function LedgerStkSortableTh({
   tooltip?: string
 }) {
   return (
-    <th
-      className={styles.stkThSortable}
+    <DenseTableHead
+      className={denseTable.sortableHead}
       onClick={onClick}
       onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -111,15 +109,15 @@ export function LedgerStkSortableTh({
         </>
       ) : null}{' '}
       {active ? (dir === 'asc' ? '▲' : '▼') : ''}
-    </th>
+    </DenseTableHead>
   )
 }
 
 export function LedgerStkTimeCells({ ex }: { ex: Execution }) {
   return (
     <>
-      <td>{ex.time != null ? fmtTs(ex.time) : '—'}</td>
-      <td>{fmtTradeDate(ex.trade_date)}</td>
+      <DenseTableCell>{ex.time != null ? fmtTs(ex.time) : '—'}</DenseTableCell>
+      <DenseTableCell>{fmtTradeDate(ex.trade_date)}</DenseTableCell>
     </>
   )
 }
@@ -143,22 +141,26 @@ export function LedgerStkGroupBasisPct({
 
   return (
     <span
-      className={styles.stkGroupBasisPct}
+      className={stkGroupBasisClass}
       title="Cost basis = |position| × avg cost (from GET /status). R% and U% are realized and unrealized PnL as a percentage of that basis (not annualized)."
     >
-      <span className={styles.stkGroupSnapLabel}>Basis</span> {costBaseStr}
-      <span className={styles.stkGroupSnapSep} aria-hidden>
+      <span className={stkGroupSnapLabelClass}>Basis</span> {costBaseStr}
+      <span className="text-muted-foreground/60" aria-hidden>
         {' '}
         ·{' '}
       </span>
-      <span className={styles.stkGroupSnapLabel}>R%</span>{' '}
-      <span className={rPct != null ? ledgerStkPnlClass(rPct) : styles.pnlZero}>{rPctStr}</span>
-      <span className={styles.stkGroupSnapSep} aria-hidden>
+      <span className={stkGroupSnapLabelClass}>R%</span>{' '}
+      <span className={rPct != null ? ledgerStkPnlClass(rPct) : 'text-muted-foreground'}>
+        {rPctStr}
+      </span>
+      <span className="text-muted-foreground/60" aria-hidden>
         {' '}
         ·{' '}
       </span>
-      <span className={styles.stkGroupSnapLabel}>U%</span>{' '}
-      <span className={uPct != null ? ledgerStkPnlClass(uPct) : styles.pnlZero}>{uPctStr}</span>
+      <span className={stkGroupSnapLabelClass}>U%</span>{' '}
+      <span className={uPct != null ? ledgerStkPnlClass(uPct) : 'text-muted-foreground'}>
+        {uPctStr}
+      </span>
     </span>
   )
 }
@@ -179,20 +181,20 @@ export function LedgerStkGroupPositionSnap({
 
   return (
     <span
-      className={styles.stkGroupPositionSnap}
+      className={stkGroupMetaClass}
       title="Current position snapshot from GET /status (portfolio positions); same source as U."
     >
-      <span className={styles.stkGroupSnapLabel}>Pos</span> {posSnapStr}
-      <span className={styles.stkGroupSnapSep} aria-hidden>
+      <span className={stkGroupSnapLabelClass}>Pos</span> {posSnapStr}
+      <span className="text-muted-foreground/60" aria-hidden>
         {' '}
         ·{' '}
       </span>
-      <span className={styles.stkGroupSnapLabel}>Avg</span> {avgSnapStr}
-      <span className={styles.stkGroupSnapSep} aria-hidden>
+      <span className={stkGroupSnapLabelClass}>Avg</span> {avgSnapStr}
+      <span className="text-muted-foreground/60" aria-hidden>
         {' '}
         ·{' '}
       </span>
-      <span className={styles.stkGroupSnapLabel}>Mkt</span> {mktSnapStr}
+      <span className={stkGroupSnapLabelClass}>Mkt</span> {mktSnapStr}
     </span>
   )
 }

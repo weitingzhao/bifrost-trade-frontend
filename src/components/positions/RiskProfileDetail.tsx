@@ -5,9 +5,9 @@ import { fmtUsd } from '@/utils/positions'
 import { formatRiskHedgedBreakdown } from '@/utils/riskProfile'
 import { RiskProfilePayoffChart } from './RiskProfilePayoffChart'
 import { RiskProfileScenarioMatrix } from './RiskProfileScenarioMatrix'
-import './riskProfile.module.css'
 import { cn } from '@/lib/utils'
-import sheetStyles from './InstanceStrategyPanel.module.css'
+import { instancePanel } from './instancePanelClasses'
+import styles from './riskProfile.module.css'
 
 interface Props {
   profile: RiskProfile
@@ -47,134 +47,130 @@ export function RiskProfileDetail({ profile, hideHeading = false, variant = 'she
   return (
     <section
       className={cn(
-        variant === 'sheet' && sheetStyles.subSection,
-        variant === 'sheet' && sheetStyles.subSectionRisk,
+        variant === 'sheet' && instancePanel.subSection,
+        variant === 'sheet' && instancePanel.subSectionRisk,
       )}
       onClick={(e) => e.stopPropagation()}
     >
-      {!hideHeading ? <h4 className={sheetStyles.subHeading}>Risk Profile</h4> : null}
+      {!hideHeading ? <h4 className={instancePanel.subHeading}>Risk Profile</h4> : null}
 
-      <div className={variant === 'sheet' ? sheetStyles.subSectionBody : undefined}>
-      <div className="risk-profile-top-line flex flex-wrap items-center gap-2 text-sm">
-        <div className="risk-profile-top-segment flex items-center gap-1.5">
-          <span className="risk-profile-top-label text-muted-foreground">Risk Type</span>
-          <span
-            className={cn(
-              'inline-block rounded px-1.5 py-0.5 text-xs font-semibold border',
-              profile.risk_type === 'defined'
-                ? 'text-success bg-success-soft border-success/30'
-                : 'text-warning bg-warning-soft border-warning/35',
-            )}
-          >
-            {profile.risk_type === 'defined' ? 'Defined' : 'Unlimited'}
-          </span>
-        </div>
-        <span className="risk-profile-top-divider text-muted-foreground" aria-hidden>
-          |
-        </span>
-        <div className="risk-profile-top-segment flex items-center gap-1.5">
-          <span className="risk-profile-top-label text-muted-foreground">Net Premium</span>
-          <span className="risk-profile-top-value font-mono font-semibold">{fmtUsd(profile.net_premium)}</span>
-        </div>
-        <span className="risk-profile-top-divider text-muted-foreground" aria-hidden>
-          |
-        </span>
-        <div className="risk-profile-top-segment flex items-center gap-1.5">
-          <span className="risk-profile-top-label text-muted-foreground">Breakeven</span>
-          <span className="risk-profile-top-value font-mono">
-            {profile.breakeven_prices.length > 0
-              ? profile.breakeven_prices.map((p) => fmtUsd(p)).join(', ')
-              : '—'}
-          </span>
-        </div>
-      </div>
-
-      {hedgedLines.length > 0 ? (
-        <ul className="risk-hedged-breakdown">
-          {hedgedLines.map((line) => (
-            <li key={line} className="risk-unlimited-warning">
-              {line}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {showScenarioSummary && hasPayoffChart ? (
-        <div className="risk-profile-scenario-payoff-row">
-          <div className="risk-profile-scenario-col">
-            <div className="risk-profile-scenario-summary risk-profile-scenario-summary--embedded">
-              <div className="risk-profile-scenario-summary-head">
-                <span className="risk-profile-scenario-summary-label">
-                  Scenario P&amp;L (expiration, sampled)
-                </span>
-                <span className="risk-profile-scenario-summary-hint">
-                  · Click <strong>Option</strong> or <strong>Stk</strong> for breakdown.
-                </span>
-              </div>
-              {profile.max_gain == null && profile.max_gain_sample_scenario ? (
-                <p className="risk-profile-scenario-note">
-                  Max gain row = best total among sampled S; headline may still read{' '}
-                  <strong>Unlimited</strong> past last sample.
-                </p>
-              ) : null}
-              <RiskProfileScenarioMatrix profile={profile} />
-            </div>
-          </div>
-          <div
-            className={
-              'risk-profile-payoff-col' + (showDualPayoffCharts ? ' risk-profile-payoff-col--dual' : '')
-            }
-          >
-            {showDualPayoffCharts && ctxOptionsOnly && profileOptionsOnly ? (
-              <div className="risk-profile-payoff-charts">
-                <RiskProfilePayoffChart
-                  profile={profileOptionsOnly}
-                  ctx={ctxOptionsOnly}
-                  variant="compact"
-                  payoffScope="options_only"
-                />
-                <RiskProfilePayoffChart
-                  profile={profile}
-                  ctx={ctx!}
-                  variant="compact"
-                  payoffScope="with_coverage"
-                />
-              </div>
-            ) : (
-              <RiskProfilePayoffChart profile={profile} ctx={ctx!} variant="compact" />
-            )}
-          </div>
-        </div>
-      ) : showScenarioSummary ? (
-        <div className="risk-profile-scenario-summary">
-          <div className="risk-profile-scenario-summary-head">
-            <span className="risk-profile-scenario-summary-label">Scenario P&amp;L (expiration, sampled)</span>
-            <span className="risk-profile-scenario-summary-hint">
-              · Click <strong>Option</strong> or <strong>Stk</strong> for breakdown.
+      <div className={variant === 'sheet' ? instancePanel.subSectionBody : undefined}>
+        <div className={styles.topLine}>
+          <div className={styles.topSegment}>
+            <span className={styles.topLabel}>Risk Type</span>
+            <span
+              className={cn(
+                'inline-block rounded px-1.5 py-0.5 text-xs font-semibold border',
+                profile.risk_type === 'defined'
+                  ? 'text-success bg-success-soft border-success/30'
+                  : 'text-warning bg-warning-soft border-warning/35',
+              )}
+            >
+              {profile.risk_type === 'defined' ? 'Defined' : 'Unlimited'}
             </span>
           </div>
-          <RiskProfileScenarioMatrix profile={profile} />
-        </div>
-      ) : hasPayoffChart ? (
-        showDualPayoffCharts && ctxOptionsOnly && profileOptionsOnly ? (
-          <div className="risk-profile-payoff-charts">
-            <RiskProfilePayoffChart
-              profile={profileOptionsOnly}
-              ctx={ctxOptionsOnly}
-              variant="compact"
-              payoffScope="options_only"
-            />
-            <RiskProfilePayoffChart
-              profile={profile}
-              ctx={ctx!}
-              variant="compact"
-              payoffScope="with_coverage"
-            />
+          <span className={styles.topDivider} aria-hidden>
+            |
+          </span>
+          <div className={styles.topSegment}>
+            <span className={styles.topLabel}>Net Premium</span>
+            <span className={cn(styles.topValue, 'font-mono')}>{fmtUsd(profile.net_premium)}</span>
           </div>
-        ) : (
-          <RiskProfilePayoffChart profile={profile} ctx={ctx!} variant="compact" />
-        )
-      ) : null}
+          <span className={styles.topDivider} aria-hidden>
+            |
+          </span>
+          <div className={styles.topSegment}>
+            <span className={styles.topLabel}>Breakeven</span>
+            <span className={cn(styles.topValue, 'font-mono')}>
+              {profile.breakeven_prices.length > 0
+                ? profile.breakeven_prices.map((p) => fmtUsd(p)).join(', ')
+                : '—'}
+            </span>
+          </div>
+        </div>
+
+        {hedgedLines.length > 0 ? (
+          <ul className={styles.hedgedBreakdown}>
+            {hedgedLines.map((line) => (
+              <li key={line} className={styles.unlimitedWarning}>
+                {line}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {showScenarioSummary && hasPayoffChart ? (
+          <div className={styles.scenarioPayoffRow}>
+            <div className={styles.scenarioCol}>
+              <div className={styles.scenarioSummaryEmbedded}>
+                <div className={styles.scenarioSummaryHead}>
+                  <span className={styles.scenarioSummaryLabel}>
+                    Scenario P&amp;L (expiration, sampled)
+                  </span>
+                  <span className={styles.scenarioSummaryHint}>
+                    · Click <strong>Option</strong> or <strong>Stk</strong> for breakdown.
+                  </span>
+                </div>
+                {profile.max_gain == null && profile.max_gain_sample_scenario ? (
+                  <p className={styles.scenarioNote}>
+                    Max gain row = best total among sampled S; headline may still read{' '}
+                    <strong>Unlimited</strong> past last sample.
+                  </p>
+                ) : null}
+                <RiskProfileScenarioMatrix profile={profile} />
+              </div>
+            </div>
+            <div className={cn(styles.payoffCol, showDualPayoffCharts && styles.payoffColDual)}>
+              {showDualPayoffCharts && ctxOptionsOnly && profileOptionsOnly ? (
+                <div className={styles.payoffCharts}>
+                  <RiskProfilePayoffChart
+                    profile={profileOptionsOnly}
+                    ctx={ctxOptionsOnly}
+                    variant="compact"
+                    payoffScope="options_only"
+                  />
+                  <RiskProfilePayoffChart
+                    profile={profile}
+                    ctx={ctx!}
+                    variant="compact"
+                    payoffScope="with_coverage"
+                  />
+                </div>
+              ) : (
+                <RiskProfilePayoffChart profile={profile} ctx={ctx!} variant="compact" />
+              )}
+            </div>
+          </div>
+        ) : showScenarioSummary ? (
+          <div>
+            <div className={styles.scenarioSummaryHead}>
+              <span className={styles.scenarioSummaryLabel}>Scenario P&amp;L (expiration, sampled)</span>
+              <span className={styles.scenarioSummaryHint}>
+                · Click <strong>Option</strong> or <strong>Stk</strong> for breakdown.
+              </span>
+            </div>
+            <RiskProfileScenarioMatrix profile={profile} />
+          </div>
+        ) : hasPayoffChart ? (
+          showDualPayoffCharts && ctxOptionsOnly && profileOptionsOnly ? (
+            <div className={styles.payoffCharts}>
+              <RiskProfilePayoffChart
+                profile={profileOptionsOnly}
+                ctx={ctxOptionsOnly}
+                variant="compact"
+                payoffScope="options_only"
+              />
+              <RiskProfilePayoffChart
+                profile={profile}
+                ctx={ctx!}
+                variant="compact"
+                payoffScope="with_coverage"
+              />
+            </div>
+          ) : (
+            <RiskProfilePayoffChart profile={profile} ctx={ctx!} variant="compact" />
+          )
+        ) : null}
       </div>
     </section>
   )

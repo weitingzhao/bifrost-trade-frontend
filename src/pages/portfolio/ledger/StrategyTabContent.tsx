@@ -1,9 +1,8 @@
 import { cn } from '@/lib/utils'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { OptionStockLinkSummary } from '@/types/trading'
+import { CollapsibleBucketHeader, denseTable } from '@/components/data-display'
 import { LedgerStrategyGroup } from './LedgerStrategyGroup'
 import type { GroupBy, StratOppGroup } from './ledgerTypes'
-import styles from './ledgerStyles'
 
 export function StrategyTabContent({
   displayBuckets,
@@ -28,7 +27,7 @@ export function StrategyTabContent({
 }) {
   const allGroups = displayBuckets.flatMap(b => b.groups)
   if (allGroups.length === 0) {
-    return <p className={styles.ledgerEmptyHint}>No option trades under the current filters.</p>
+    return <p className={denseTable.emptyHint}>No option trades under the current filters.</p>
   }
 
   return (
@@ -39,15 +38,12 @@ export function StrategyTabContent({
         return (
           <div key={bucket.key}>
             {showOuter && (
-              <button
-                type="button"
-                className={styles.ledgerBucketHeader}
-                onClick={() => toggleOuter(bucket.key)}
-              >
-                {bucketExpanded ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
-                {bucket.label}
-                <span className={styles.ledgerBucketCount}>({bucket.groups.length})</span>
-              </button>
+              <CollapsibleBucketHeader
+                expanded={bucketExpanded}
+                onToggle={() => toggleOuter(bucket.key)}
+                label={bucket.label}
+                count={bucket.groups.length}
+              />
             )}
             {bucketExpanded && (
               <div className={cn('space-y-2', showOuter && 'ml-2 mt-1')}>

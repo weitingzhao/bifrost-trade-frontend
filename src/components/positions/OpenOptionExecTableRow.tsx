@@ -1,24 +1,33 @@
 import { Pencil, Link2, Trash2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  DenseTableRow,
+  DenseTableCell,
+  IconActionButton,
+  denseTable,
+} from '@/components/data-display'
 import { fmtUsd, fmtDate, fmtDaysAgo } from '@/utils/positions'
 import type { OpenOptionPosition, Execution } from '@/types/positions'
 
-function execSourceBadge(source: string | null | undefined) {
+function ExecSourceBadge({ source }: { source: string | null | undefined }) {
   const s = (source ?? '').trim()
-  if (!s) return <span className="replay-muted">—</span>
+  if (!s) return <span className={denseTable.mutedMeta}>—</span>
   const norm = s.toLowerCase()
-  let cls = 'pos-opt-source-unknown'
   let label = s
+  let className = 'border-border text-muted-foreground'
   if (norm === 'flex' || norm === 'flex_trades') {
-    cls = 'pos-opt-source-flex'
     label = 'flex'
+    className = 'border-sky-500/40 text-sky-600 dark:text-sky-400'
   } else if (norm === 'tws_event' || norm === 'tws_client') {
-    cls = 'pos-opt-source-tws'
     label = 'tws-client'
+    className = 'border-violet-500/40 text-violet-600 dark:text-violet-400'
   }
   return (
-    <span className={`pos-opt-source-badge ${cls}`} title={s}>
+    <Badge variant="outline" className={cn('text-[length:var(--text-dense-meta)] px-1.5 py-0 font-normal', className)} title={s}>
       {label}
-    </span>
+    </Badge>
   )
 }
 
@@ -37,9 +46,7 @@ interface Props {
 
 export function OpenOptionExecTableRow({
   pos,
-  posKey,
   exec,
-  execIndex,
   book,
   onEdit,
   onLink,
@@ -63,19 +70,19 @@ export function OpenOptionExecTableRow({
   const isOffTrack = pos.kind === 'offtrack'
 
   return (
-    <tr key={`${posKey}-exec-${book}-${exec.account_executions_id ?? execIndex}`} className="detail-execution-row">
-      <td className="replay-opt-expand-col" />
-      <td className="detail-exec-indent" colSpan={2}>
-        <div className="detail-exec-line-primary">
+    <DenseTableRow className="bg-secondary/15">
+      <DenseTableCell className="w-9">{null}</DenseTableCell>
+      <DenseTableCell colSpan={2} className="pl-6">
+        <div className="text-[length:var(--text-dense)]">
           ↳ {bookLabel} exec #{exec.account_executions_id ?? '?'}
           {execInstanceId != null ? (
             <>
               {' '}
-              <span className="replay-muted">·</span>{' '}
+              <span className={denseTable.mutedMeta}>·</span>{' '}
               <button
                 type="button"
-                className="detail-exec-strategy-link"
-                onClick={(e) => {
+                className="text-primary hover:underline font-medium"
+                onClick={e => {
                   e.stopPropagation()
                   onOpenStrategy?.(execInstanceId)
                 }}
@@ -85,85 +92,84 @@ export function OpenOptionExecTableRow({
             </>
           ) : null}
         </div>
-      </td>
-      <td>{execSourceBadge(exec.source)}</td>
-      <td />
-      <td>
+      </DenseTableCell>
+      <DenseTableCell>
+        <ExecSourceBadge source={exec.source} />
+      </DenseTableCell>
+      <DenseTableCell>{null}</DenseTableCell>
+      <DenseTableCell>
         {eSideLabel} {eQty || '—'}
-      </td>
-      <td>{fmtUsd(ePrice)}</td>
-      <td />
-      <td>
+      </DenseTableCell>
+      <DenseTableCell className="font-mono tabular-nums">{fmtUsd(ePrice)}</DenseTableCell>
+      <DenseTableCell>{null}</DenseTableCell>
+      <DenseTableCell>
         {eTs != null && Number.isFinite(eTs) ? (
           <>
             {fmtDate(eTs)}
             {fmtDaysAgo(eTs) ? (
-              <span className="replay-time-ago"> {fmtDaysAgo(eTs)}</span>
+              <span className={cn('ml-1', denseTable.mutedMeta)}>{fmtDaysAgo(eTs)}</span>
             ) : null}
           </>
         ) : (
           '—'
         )}
-      </td>
-      <td>{eComm ? fmtUsd(eComm) : '—'}</td>
-      <td className="replay-muted" />
-      <td className="positions-opt-opp-hint-cell replay-muted">
+      </DenseTableCell>
+      <DenseTableCell className="font-mono tabular-nums">{eComm ? fmtUsd(eComm) : '—'}</DenseTableCell>
+      <DenseTableCell className={denseTable.mutedMeta}>{null}</DenseTableCell>
+      <DenseTableCell className={cn('max-w-[8.5rem] truncate', denseTable.mutedMeta)}>
         {exec.strategy_opportunity_name?.trim() || '—'}
-      </td>
-      <td className="replay-opt-actions-cell">
-        <span className="replay-exec-row-actions">
-          <button
-            type="button"
-            className="replay-exec-icon-btn"
+      </DenseTableCell>
+      <DenseTableCell>
+        <span className="inline-flex items-center gap-0.5">
+          <IconActionButton
             title="Edit"
-            aria-label="Edit execution"
-            onClick={(e) => {
+            ariaLabel="Edit execution"
+            onClick={e => {
               e.stopPropagation()
               onEdit(exec)
             }}
           >
             <Pencil className="h-3.5 w-3.5" />
-          </button>
+          </IconActionButton>
           {exec.account_executions_id != null && (
-            <button
-              type="button"
-              className="replay-exec-icon-btn"
+            <IconActionButton
               title="Assign strategy"
-              aria-label="Assign strategy"
-              onClick={(e) => {
+              ariaLabel="Assign strategy"
+              onClick={e => {
                 e.stopPropagation()
                 onLink(exec)
               }}
             >
               <Link2 className="h-3.5 w-3.5" />
-            </button>
+            </IconActionButton>
           )}
           {isOffTrack && onClose && (
-            <button
+            <Button
               type="button"
-              className="replay-exec-icon-btn"
-              onClick={(e) => {
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={e => {
                 e.stopPropagation()
                 onClose(exec)
               }}
             >
               Close
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            className="replay-exec-icon-btn replay-exec-icon-btn--danger"
+          <IconActionButton
             title="Delete"
-            aria-label="Delete execution"
-            onClick={(e) => {
+            ariaLabel="Delete execution"
+            tone="danger"
+            onClick={e => {
               e.stopPropagation()
               onDelete(exec)
             }}
           >
             <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          </IconActionButton>
         </span>
-      </td>
-    </tr>
+      </DenseTableCell>
+    </DenseTableRow>
   )
 }

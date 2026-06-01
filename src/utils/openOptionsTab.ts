@@ -1,5 +1,6 @@
 import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { rightLabel } from '@/utils/positions'
 
 export type OpenOptSortCol =
@@ -63,25 +64,32 @@ export function instanceIconFillFromMergedExecutions(
   return 'mixed'
 }
 
-export function optionLastStrikePctClass(right: string, side: 'Buy' | 'Sell', pct: number): string {
-  if (pct === 0 || (right !== 'C' && right !== 'P')) return ''
+/** Signed color hint for last vs strike % (option position context). */
+function optionStrikePctSign(right: string, side: 'Buy' | 'Sell', pct: number): number | null {
+  if (pct === 0 || (right !== 'C' && right !== 'P')) return null
+  const isSell = side === 'Sell'
   const positive = pct > 0
-  if (right === 'C') {
-    return side === 'Sell'
-      ? positive
-        ? 'pos-opt-pnl-negative'
-        : 'pos-opt-pnl-positive'
-      : positive
-        ? 'pos-opt-pnl-positive'
-        : 'pos-opt-pnl-negative'
-  }
-  return side === 'Sell'
-    ? positive
-      ? 'pos-opt-pnl-positive'
-      : 'pos-opt-pnl-negative'
-    : positive
-      ? 'pos-opt-pnl-negative'
-      : 'pos-opt-pnl-positive'
+  const favorable =
+    right === 'C'
+      ? isSell
+        ? !positive
+        : positive
+      : isSell
+        ? positive
+        : !positive
+  return favorable ? 1 : -1
+}
+
+export function optionLastStrikePctClass(right: string, side: 'Buy' | 'Sell', pct: number): string {
+  const sign = optionStrikePctSign(right, side, pct)
+  if (sign == null) return ''
+  return pnlColorClass(sign)
+}
+
+/** Same as optionLastStrikePctClass but infers side from signed qty. */
+export function optionLastStrikePctClassFromQty(right: string, qty: number, pct: number): string {
+  const side: 'Buy' | 'Sell' = qty < 0 ? 'Sell' : 'Buy'
+  return optionLastStrikePctClass(right, side, pct)
 }
 
 export function optQuoteMid(quote: QuoteItem | undefined): number | null {

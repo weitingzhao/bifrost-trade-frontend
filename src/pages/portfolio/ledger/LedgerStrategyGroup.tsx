@@ -1,11 +1,20 @@
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { fmtCcy, pnlClass } from './ledgerFormat'
+import { pnlColorClass } from '@/utils/dailyChange'
+import {
+  CollapsibleChevron,
+  CollapsibleGroup,
+  CollapsibleGroupBody,
+  CollapsibleGroupHeader,
+  CollapsibleGroupStats,
+  CollapsibleGroupTitle,
+} from '@/components/data-display'
+import { fmtCcy } from './ledgerFormat'
+import { instanceOpenLinkClass } from './ledgerSharedClasses'
 import { LedgerInstanceNest } from './LedgerInstanceNest'
 import type { StratOppGroup } from './ledgerTypes'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
-import styles from './ledgerStyles'
 
 type Props = {
   og: StratOppGroup
@@ -15,7 +24,6 @@ type Props = {
   onToggleInst: (oppId: number | 'none', instId: number | 'none') => void
   linkByOptionId: Record<number, OptionStockLinkSummary>
 }
-
 export function LedgerStrategyGroup({
   og,
   expanded,
@@ -39,26 +47,21 @@ export function LedgerStrategyGroup({
   }
 
   return (
-    <div className={styles.strategyGroup}>
-      <button
-        type="button"
-        className={styles.strategyGroupHeader}
-        onClick={onToggle}
-        aria-expanded={expanded}
-      >
-        <span className={cn(styles.chevron, expanded && styles.chevronOpen)} aria-hidden>▶</span>
-        <span className={styles.strategyGroupTitle}>{og.title}</span>
-        <span className={styles.strategyGroupStats}>
+    <CollapsibleGroup variant="card">
+      <CollapsibleGroupHeader expanded={expanded} onToggle={onToggle}>
+        <CollapsibleChevron expanded={expanded} />
+        <CollapsibleGroupTitle>{og.title}</CollapsibleGroupTitle>
+        <CollapsibleGroupStats>
           <span>Instances: {og.instanceSubgroups.length}</span>
           <span>Closed: {closedCount}</span>
           <span>Open: {openCount}</span>
-          <span className={pnlClass(totalPnl)}>
+          <span className={cn('font-mono tabular-nums', pnlColorClass(totalPnl))}>
             PnL: {fmtCcy(totalPnl)}
           </span>
-        </span>
-      </button>
+        </CollapsibleGroupStats>
+      </CollapsibleGroupHeader>
       {expanded && (
-        <div className={styles.strategyGroupBody}>
+        <CollapsibleGroupBody className="pt-0">
           {og.instanceSubgroups.map(sg => {
             const instKey = `${og.opportunityId}::${sg.instanceId}`
             const instExpanded = strategyInstExpanded.has(instKey)
@@ -70,16 +73,15 @@ export function LedgerStrategyGroup({
               0,
             )
             return (
-              <div key={instKey} className={styles.instanceNest}>
-                <div className={styles.instanceHeaderRow}>
-                  <button
-                    type="button"
-                    className={styles.instanceHeader}
-                    onClick={() => onToggleInst(og.opportunityId, sg.instanceId)}
-                    aria-expanded={instExpanded}
+              <CollapsibleGroup key={instKey} variant="inset">
+                <div className="flex items-stretch">
+                  <CollapsibleGroupHeader
+                    expanded={instExpanded}
+                    onToggle={() => onToggleInst(og.opportunityId, sg.instanceId)}
+                    className="flex-1 bg-transparent hover:bg-muted/30"
                   >
-                    <span className={cn(styles.chevron, instExpanded && styles.chevronOpen)} aria-hidden>▶</span>
-                    <span>
+                    <CollapsibleChevron expanded={instExpanded} />
+                    <span className="min-w-0 truncate">
                       {sg.instanceId === 'none' ? (
                         'No instance'
                       ) : (
@@ -89,38 +91,44 @@ export function LedgerStrategyGroup({
                         </>
                       )}
                     </span>
-                    <span className={styles.instanceStats}>
+                    <CollapsibleGroupStats>
                       <span>Closed: {closedGs.length}</span>
                       <span>Open: {openCnt}</span>
-                      <span className={pnlClass(instPnl)}>PnL: {fmtCcy(instPnl)}</span>
-                    </span>
-                  </button>
+                      <span className={cn('font-mono tabular-nums', pnlColorClass(instPnl))}>
+                        PnL: {fmtCcy(instPnl)}
+                      </span>
+                    </CollapsibleGroupStats>
+                  </CollapsibleGroupHeader>
                   {sg.instanceId !== 'none' && (
                     <Link
                       to={`/strategy/instances?instance=${sg.instanceId}`}
-                      className={styles.instanceOpenLink}
+                      className={instanceOpenLinkClass}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title={sg.label ? `Open instance #${sg.instanceId} (${sg.label})` : `Open instance #${sg.instanceId}`}
+                      title={
+                        sg.label
+                          ? `Open instance #${sg.instanceId} (${sg.label})`
+                          : `Open instance #${sg.instanceId}`
+                      }
                     >
                       Open
                     </Link>
                   )}
                 </div>
                 {instExpanded && (
-                  <div className={styles.instanceBody}>
+                  <CollapsibleGroupBody className="pb-2 pl-5">
                     <LedgerInstanceNest
                       closedGroups={closedGs}
                       openGroups={openGs}
                       linkByOptionId={linkByOptionId}
                     />
-                  </div>
+                  </CollapsibleGroupBody>
                 )}
-              </div>
+              </CollapsibleGroup>
             )
           })}
-        </div>
+        </CollapsibleGroupBody>
       )}
-    </div>
+    </CollapsibleGroup>
   )
 }

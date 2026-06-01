@@ -6,12 +6,13 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { fmtUsd, fmtExpiry, rightLabel, fmtDate, fmtDaysAgo, daysUntilExpiry, pnlColorClass } from '@/utils/positions'
+import { optionLastStrikePctClassFromQty } from '@/utils/openOptionsTab'
 import { ExecutionRow } from './ExecutionRow'
 import type { OpenOptionPosition, Execution, InstanceAllGroup } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import type { DetailViewMode } from './PositionsOpenControls'
 import { scopedExecListsForPosition } from '@/utils/instanceSheetExec'
-import sheetStyles from './InstanceStrategyPanel.module.css'
+import { instancePanel } from './instancePanelClasses'
 
 interface Props {
   group: Pick<InstanceAllGroup, 'strategy_instance_id' | 'strategy_opportunity_id'>
@@ -28,16 +29,6 @@ interface Props {
   onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
   onDeleteExec?: (exec: Execution) => void
   onRefreshExecs?: () => void
-}
-
-function lastStrikePctClass(right: string, qty: number, pct: number): string {
-  if (pct === 0 || (right !== 'C' && right !== 'P')) return ''
-  const isSell = qty < 0
-  const positive = pct > 0
-  if (right === 'C') {
-    return isSell ? (positive ? 'pnl-negative' : 'pnl-positive') : (positive ? 'pnl-positive' : 'pnl-negative')
-  }
-  return isSell ? (positive ? 'pnl-positive' : 'pnl-negative') : (positive ? 'pnl-negative' : 'pnl-positive')
 }
 
 function optQuoteMid(quote: QuoteItem | undefined): number | null {
@@ -79,28 +70,28 @@ export function InstanceOptionSubTable({
   }
 
   return (
-    <section className={sheetStyles.subSection}>
-      <h4 className={sheetStyles.subHeading}>Options ({options.length})</h4>
-      <div className={sheetStyles.subTableWrap}>
-        <Table className={sheetStyles.subTable}>
-          <TableHeader>
+    <section className={instancePanel.subSection}>
+      <h4 className={instancePanel.subHeading}>Options ({options.length})</h4>
+      <div className={instancePanel.subTableWrap}>
+        <Table className={instancePanel.subTable}>
+          <TableHeader className={instancePanel.subTableHeader}>
             <TableRow>
-              <TableHead className="w-6" />
-              <TableHead>Contract</TableHead>
-              <TableHead>Expiry</TableHead>
-              <TableHead className="text-right">Strike</TableHead>
-              <TableHead className="text-right">Last</TableHead>
-              <TableHead>Qty</TableHead>
-              <TableHead className="text-right">@</TableHead>
-              <TableHead className="text-right">Value</TableHead>
-              <TableHead title="Option live bid / mid / ask">Opt Quote</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead className="text-right">UN PNL</TableHead>
-              <TableHead>Pool</TableHead>
-              <TableHead>Attr</TableHead>
-              <TableHead>Account</TableHead>
-              <TableHead title="Opportunity">Opp</TableHead>
-              <TableHead className="w-8" />
+              <TableHead className={cn('w-6', instancePanel.subTableHead)} />
+              <TableHead className={instancePanel.subTableHead}>Contract</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Expiry</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Strike</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Last</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Qty</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>@</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Value</TableHead>
+              <TableHead className={instancePanel.subTableHead} title="Option live bid / mid / ask">Opt Quote</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Time</TableHead>
+              <TableHead className={cn('text-right', instancePanel.subTableHead)}>UN PNL</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Pool</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Attr</TableHead>
+              <TableHead className={instancePanel.subTableHead}>Account</TableHead>
+              <TableHead className={instancePanel.subTableHead} title="Opportunity">Opp</TableHead>
+              <TableHead className={cn('w-8', instancePanel.subTableHead)} />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -118,7 +109,7 @@ export function InstanceOptionSubTable({
               const lastStrikePct = spot != null && strikeNum != null && spot !== 0
                 ? ((spot - strikeNum) / spot) * 100
                 : null
-              const pctClass = lastStrikePct != null ? lastStrikePctClass(pos.right, pos.qty, lastStrikePct) : ''
+              const pctClass = lastStrikePct != null ? optionLastStrikePctClassFromQty(pos.right, pos.qty, lastStrikePct) : ''
 
               const dte = daysUntilExpiry(pos.expiry)
               const dteLabel = dte != null ? (dte >= 0 ? (dte === 0 ? 'today' : `${dte}d`) : `${-dte}d ago`) : null
@@ -147,7 +138,7 @@ export function InstanceOptionSubTable({
               return [
                 <TableRow
                   key={key}
-                  className={cn(sheetStyles.subDataRow, hasExecs && 'cursor-pointer')}
+                  className={cn(instancePanel.subDataRow, hasExecs && 'cursor-pointer')}
                   onClick={hasExecs ? () => toggleExpand(key) : undefined}
                 >
                   <TableCell className="px-1">
@@ -159,7 +150,7 @@ export function InstanceOptionSubTable({
                     {onOpenOption ? (
                       <button
                         type="button"
-                        className={sheetStyles.subContractBtn}
+                        className={instancePanel.subContractBtn}
                         onClick={(e) => { e.stopPropagation(); onOpenOption(pos.contract_key) }}
                       >
                         <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
@@ -173,7 +164,7 @@ export function InstanceOptionSubTable({
                   </TableCell>
                   <TableCell className="text-xs">
                     <div className="font-mono">{fmtExpiry(pos.expiry)}</div>
-                    {dteLabel && <div className={sheetStyles.subExpiryDte}>{dteLabel}</div>}
+                    {dteLabel && <div className={instancePanel.subExpiryDte}>{dteLabel}</div>}
                   </TableCell>
                   <TableCell className="text-right font-mono text-xs font-semibold">{fmtUsd(pos.strike)}</TableCell>
                   <TableCell className="text-right text-xs">
@@ -205,7 +196,7 @@ export function InstanceOptionSubTable({
                       <>
                         <div className="font-mono">{fmtDate(latestExecTime)}</div>
                         {fmtDaysAgo(latestExecTime) && (
-                          <div className={sheetStyles.subTimeAgo}>{fmtDaysAgo(latestExecTime)}</div>
+                          <div className={instancePanel.subTimeAgo}>{fmtDaysAgo(latestExecTime)}</div>
                         )}
                       </>
                     ) : '—'}
@@ -222,7 +213,7 @@ export function InstanceOptionSubTable({
                       {livePnl != null && <span className="text-[10px] ml-1">snap</span>}
                     </div>
                   </TableCell>
-                  <TableCell className={cn('text-xs', sheetStyles.subMutedCell)}>{pos.pool_label}</TableCell>
+                  <TableCell className={cn('text-xs', instancePanel.subMutedCell)}>{pos.pool_label}</TableCell>
                   <TableCell className="text-xs">
                     {pos.filtered_exec_lists ? (
                       <Badge variant="secondary" className="text-[10px]" title="Fills that do not match the instance row for this contract (Uncategorized)">
@@ -244,8 +235,8 @@ export function InstanceOptionSubTable({
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell className={cn('font-mono text-xs', sheetStyles.subMutedCell)}>{pos.account_id || '—'}</TableCell>
-                  <TableCell className={cn('text-xs', sheetStyles.subMutedCell)}>
+                  <TableCell className={cn('font-mono text-xs', instancePanel.subMutedCell)}>{pos.account_id || '—'}</TableCell>
+                  <TableCell className={cn('text-xs', instancePanel.subMutedCell)}>
                     {execCount === 0 ? (
                       '—'
                     ) : (
@@ -265,7 +256,7 @@ export function InstanceOptionSubTable({
                 </TableRow>,
 
                 ...(isExpanded && hasExecs ? [
-                  <TableRow key={`${key}-execs`} className={sheetStyles.subExecRow}>
+                  <TableRow key={`${key}-execs`} className={instancePanel.subExecRow}>
                     <TableCell colSpan={16} className="p-2">
                       <ExecutionRow
                         finalExecs={scopedFinalExecs}

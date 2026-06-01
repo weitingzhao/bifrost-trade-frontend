@@ -20,7 +20,7 @@ import {
   instanceDefaultAccountForStockInspect,
   instanceGroupKey,
 } from '@/utils/instanceSheetExec'
-import styles from './InstanceStrategyPanel.module.css'
+import { instancePanel } from './instancePanelClasses'
 
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
@@ -116,8 +116,8 @@ export function InstanceTab({
   const oppMap = new Map(opportunities.map((o) => [o.strategy_opportunity_id, o]))
 
   return (
-    <div className={styles.tableWrap}>
-        <Table className={styles.sheetTable}>
+    <div className={instancePanel.tableWrap}>
+        <Table className={instancePanel.sheetTable}>
           <TableHeader>
             <TableRow>
               <TableHead className="w-7" />
@@ -158,7 +158,7 @@ export function InstanceTab({
               return [
                 <TableRow
                   key={`inst-${instKey}`}
-                  className={cn(styles.sheetRow, isExpanded && styles.sheetRowExpanded)}
+                  className={cn(instancePanel.sheetRow, isExpanded && instancePanel.sheetRowExpanded)}
                   onClick={() => toggleExpand(instKey)}
                 >
                   <TableCell className="px-2">
@@ -167,11 +167,11 @@ export function InstanceTab({
                   <TableCell className="text-xs align-top">
                     {id != null ? (
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        {oppName ? <span className={styles.oppPrimary}>{oppName}</span> : null}
+                        {oppName ? <span className={instancePanel.oppPrimary}>{oppName}</span> : null}
                         {onOpenStrategy ? (
                           <button
                             type="button"
-                            className={styles.oppSecondary}
+                            className={instancePanel.oppSecondary}
                             title={`View strategy instance: ${instLabel}`}
                             onClick={(e) => {
                               e.stopPropagation()
@@ -181,11 +181,11 @@ export function InstanceTab({
                             {instLabel}
                           </button>
                         ) : (
-                          <span className={styles.oppSecondary}>{instLabel}</span>
+                          <span className={instancePanel.oppSecondary}>{instLabel}</span>
                         )}
                       </div>
                     ) : (
-                      <span className={styles.oppPrimary}>{oppName || instLabel}</span>
+                      <span className={instancePanel.oppPrimary}>{oppName || instLabel}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-xs">
@@ -228,7 +228,7 @@ export function InstanceTab({
                     ) : '—'}
                   </TableCell>
                   <TableCell
-                    className={cn('font-mono text-xs text-muted-foreground', styles.execQtyCell)}
+                    className={cn('font-mono text-xs text-muted-foreground', instancePanel.execQtyCell)}
                     title={EXEC_QTY_TITLE}
                   >
                     {optN > 0 ? optExecQty : '—'}
@@ -257,9 +257,9 @@ export function InstanceTab({
                 </TableRow>,
 
                 ...(isExpanded ? [
-                  <TableRow key={`inst-detail-${instKey}`} className={styles.detailRow}>
-                    <TableCell colSpan={11} className={styles.detailCell}>
-                      <div className={styles.detailStack}>
+                  <TableRow key={`inst-detail-${instKey}`} className={instancePanel.detailRow}>
+                    <TableCell colSpan={11} className={instancePanel.detailCell}>
+                      <div className={instancePanel.detailStack}>
                       <InstanceOptionSubTable
                         group={group}
                         options={group.options}

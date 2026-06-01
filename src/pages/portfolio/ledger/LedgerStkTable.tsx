@@ -1,4 +1,5 @@
-import { FileText, Pencil, Trash2 } from 'lucide-react'
+import { FileText } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import { stkContractKey } from '@/utils/ledger/stkBuckets'
 import {
@@ -17,9 +18,28 @@ import {
   LedgerStkTimeCells,
   LedgerStkUrPnlGroupInline,
 } from './LedgerStkCells'
+import {
+  stkCellCategoryClass,
+  stkCellSymbolClass,
+  stkPillCategoryClass,
+  stkPillSymbolClass,
+} from './ledgerSharedClasses'
 import { PAGE_SIZE } from './ledgerConstants'
+import { LedgerOptActionButtons } from './LedgerOptActionButtons'
+import { ledgerPagination } from './ledgerPaginationClasses'
 import type { MainTab, StkPositionGroup, StkSortCol } from './ledgerTypes'
-import styles from './ledgerStyles'
+import {
+  denseTable,
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  IconActionButton,
+  denseTableNumCell,
+} from '@/components/data-display'
 
 function sortPositionGroups(
   groups: StkPositionGroup[],
@@ -46,30 +66,13 @@ function StkRowActions({
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
 }) {
-  if (ex.account_executions_id == null) return <td>—</td>
+  if (ex.account_executions_id == null) {
+    return <DenseTableCell>—</DenseTableCell>
+  }
   return (
-    <td>
-      <span className={styles.execRowActions}>
-        <button
-          type="button"
-          className={styles.iconBtn}
-          onClick={() => onEdit(ex)}
-          title="Edit"
-          aria-label="Edit execution"
-        >
-          <Pencil className="size-4" />
-        </button>
-        <button
-          type="button"
-          className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-          onClick={() => onDelete(ex)}
-          title="Delete"
-          aria-label="Delete execution"
-        >
-          <Trash2 className="size-4" />
-        </button>
-      </span>
-    </td>
+    <DenseTableCell className={denseTableNumCell}>
+      <LedgerOptActionButtons onEdit={() => onEdit(ex)} onDelete={() => onDelete(ex)} />
+    </DenseTableCell>
   )
 }
 
@@ -90,36 +93,38 @@ function StkFillRow({
 }) {
   const category = getExecCategory(ex, catMap)
   return (
-    <tr>
+    <DenseTableRow>
       <LedgerStkTimeCells ex={ex} />
       {showSymbolCol && (
-        <td>
+        <DenseTableCell>
           {showPills ? (
-            <span className={styles.stkCellSymbol}>{ex.symbol ?? '—'}</span>
+            <span className={stkCellSymbolClass}>{ex.symbol ?? '—'}</span>
           ) : (
             (ex.symbol ?? '—')
           )}
-        </td>
+        </DenseTableCell>
       )}
-      <td>{ex.account_id ?? '—'}</td>
-      <td>
+      <DenseTableCell>{ex.account_id ?? '—'}</DenseTableCell>
+      <DenseTableCell>
         {showPills ? (
-          <span className={styles.stkCellCategory}>{category}</span>
+          <span className={stkCellCategoryClass}>{category}</span>
         ) : (
           category
         )}
-      </td>
-      <td>{stkSideLabel(ex)}</td>
-      <td>{ex.quantity != null ? Number(ex.quantity ?? ex.qty) : '—'}</td>
-      <td>{fmtUsd(ex.price)}</td>
+      </DenseTableCell>
+      <DenseTableCell>{stkSideLabel(ex)}</DenseTableCell>
+      <DenseTableCell className={denseTableNumCell}>
+        {ex.quantity != null ? Number(ex.quantity ?? ex.qty) : '—'}
+      </DenseTableCell>
+      <DenseTableCell className={denseTableNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
       <LedgerStkNotionalCell ex={ex} />
       <LedgerStkRowRealizedCell realized={Number(ex.realized_pnl) || 0} />
-      <td>{fmtUsd(ex.commission ?? 0)}</td>
-      <td>
+      <DenseTableCell className={denseTableNumCell}>{fmtUsd(ex.commission ?? 0)}</DenseTableCell>
+      <DenseTableCell>
         <ExecSourceBadge source={ex.source} />
-      </td>
+      </DenseTableCell>
       <StkRowActions ex={ex} onEdit={onEdit} onDelete={onDelete} />
-    </tr>
+    </DenseTableRow>
   )
 }
 
@@ -133,22 +138,22 @@ function StkTableHead({
   toggleStkSort: (col: StkSortCol) => void
 }) {
   return (
-    <thead>
-      <tr>
-        <th>Time</th>
+    <DenseTableHeader>
+      <DenseTableHeadRow>
+        <DenseTableHead>Time</DenseTableHead>
         <LedgerStkSortableTh
           label="Trade date"
           active={stkSort.col === 'trade_date'}
           dir={stkSort.dir}
           onClick={() => toggleStkSort('trade_date')}
         />
-        {showSymbolCol ? <th>Symbol</th> : null}
-        <th>Account</th>
-        <th>Category</th>
-        <th>Side</th>
-        <th>Qty</th>
-        <th>Price</th>
-        <th>Notional</th>
+        {showSymbolCol ? <DenseTableHead>Symbol</DenseTableHead> : null}
+        <DenseTableHead>Account</DenseTableHead>
+        <DenseTableHead>Category</DenseTableHead>
+        <DenseTableHead>Side</DenseTableHead>
+        <DenseTableHead className={denseTableNumCell}>Qty</DenseTableHead>
+        <DenseTableHead className={denseTableNumCell}>Price</DenseTableHead>
+        <DenseTableHead className={denseTableNumCell}>Notional</DenseTableHead>
         <LedgerStkSortableTh
           label="Realized"
           active={stkSort.col === 'realized_pnl'}
@@ -156,11 +161,11 @@ function StkTableHead({
           onClick={() => toggleStkSort('realized_pnl')}
           tooltip="Realized on this fill (IB commission report). Zero shows as dash. Unrealized is position-level: see Group U/R PnL when grouped, or Total U in the summary."
         />
-        <th>Comm.</th>
-        <th>Source</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
+        <DenseTableHead className={denseTableNumCell}>Comm.</DenseTableHead>
+        <DenseTableHead>Source</DenseTableHead>
+        <DenseTableHead className={`${denseTableNumCell} w-20`}>Actions</DenseTableHead>
+      </DenseTableHeadRow>
+    </DenseTableHeader>
   )
 }
 
@@ -177,10 +182,10 @@ function LedgerStkPagination({
 }) {
   if (totalPages <= 1) return null
   return (
-    <div className={styles.stkPaginationBar} role="navigation" aria-label="Stocks pagination">
+    <div className={ledgerPagination.bar} role="navigation" aria-label="Stocks pagination">
       <button
         type="button"
-        className={styles.stkPaginationBtn}
+        className={ledgerPagination.btn}
         onClick={() => setPage(0)}
         disabled={page === 0}
         aria-label="First page"
@@ -189,20 +194,20 @@ function LedgerStkPagination({
       </button>
       <button
         type="button"
-        className={styles.stkPaginationBtn}
+        className={ledgerPagination.btn}
         onClick={() => setPage(Math.max(0, page - 1))}
         disabled={page === 0}
         aria-label="Previous page"
       >
         ‹
       </button>
-      <span className={styles.stkPaginationInfo}>
+      <span className={ledgerPagination.info}>
         {page + 1} / {totalPages}
-        <span className={styles.stkPaginationTotal}> ({totalItems})</span>
+        <span className={ledgerPagination.total}> ({totalItems})</span>
       </span>
       <button
         type="button"
-        className={styles.stkPaginationBtn}
+        className={ledgerPagination.btn}
         onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
         disabled={page >= totalPages - 1}
         aria-label="Next page"
@@ -211,7 +216,7 @@ function LedgerStkPagination({
       </button>
       <button
         type="button"
-        className={styles.stkPaginationBtn}
+        className={ledgerPagination.btn}
         onClick={() => setPage(totalPages - 1)}
         disabled={page >= totalPages - 1}
         aria-label="Last page"
@@ -260,43 +265,36 @@ export function LedgerStkTable({
     const pageGroups = sortedGroups.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
     if (sortedGroups.length === 0) {
-      return <p className={styles.sectionHint}>No executions found.</p>
+      return <p className={denseTable.emptyHint}>No executions found.</p>
     }
 
     return (
       <>
-        <div className={styles.stkTableWrap}>
-          <table className={styles.stkTable}>
-            <StkTableHead
-              showSymbolCol={false}
-              stkSort={stkSort}
-              toggleStkSort={toggleStkSort}
-            />
-            <tbody>
-              {pageGroups.map(pg => {
-                const category =
-                  catMap.get(stkContractKey(pg.symbol, pg.accountId)) ?? '—'
-                const uKey = `${pg.accountId}|${pg.fills[0]?.contract_key?.trim() ?? `${pg.symbol}|STK|||`}`
-                const groupUnrealized = stkUnrealizedByKey.get(uKey) ?? pg.unrealized
+        <DenseDataTable>
+          <StkTableHead showSymbolCol={false} stkSort={stkSort} toggleStkSort={toggleStkSort} />
+          <DenseTableBody>
+            {pageGroups.map(pg => {
+              const category = catMap.get(stkContractKey(pg.symbol, pg.accountId)) ?? '—'
+              const uKey = `${pg.accountId}|${pg.fills[0]?.contract_key?.trim() ?? `${pg.symbol}|STK|||`}`
+              const groupUnrealized = stkUnrealizedByKey.get(uKey) ?? pg.unrealized
 
-                return (
-                  <GroupBlock
-                    key={pg.key}
-                    pg={pg}
-                    category={category}
-                    groupUnrealized={groupUnrealized}
-                    showPills={showPills}
-                    showJournal={showPills}
-                    catMap={catMap}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onAddJournal={onAddJournal}
-                  />
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+              return (
+                <GroupBlock
+                  key={pg.key}
+                  pg={pg}
+                  category={category}
+                  groupUnrealized={groupUnrealized}
+                  showPills={showPills}
+                  showJournal={showPills}
+                  catMap={catMap}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onAddJournal={onAddJournal}
+                />
+              )
+            })}
+          </DenseTableBody>
+        </DenseDataTable>
         <LedgerStkPagination
           page={page}
           totalPages={totalPages}
@@ -311,33 +309,27 @@ export function LedgerStkTable({
   const pageExecs = executions.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   if (executions.length === 0) {
-    return <p className={styles.sectionHint}>No executions found.</p>
+    return <p className={denseTable.emptyHint}>No executions found.</p>
   }
 
   return (
     <>
-      <div className={styles.stkTableWrap}>
-        <table className={styles.stkTable}>
-          <StkTableHead
-            showSymbolCol={showSymbolCol}
-            stkSort={stkSort}
-            toggleStkSort={toggleStkSort}
-          />
-          <tbody>
-            {pageExecs.map(ex => (
-              <StkFillRow
-                key={ex.account_executions_id ?? `${ex.time}-${stkAccountContractKey(ex)}`}
-                ex={ex}
-                showSymbolCol={showSymbolCol}
-                showPills={showPills}
-                catMap={catMap}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DenseDataTable>
+        <StkTableHead showSymbolCol={showSymbolCol} stkSort={stkSort} toggleStkSort={toggleStkSort} />
+        <DenseTableBody>
+          {pageExecs.map(ex => (
+            <StkFillRow
+              key={ex.account_executions_id ?? `${ex.time}-${stkAccountContractKey(ex)}`}
+              ex={ex}
+              showSymbolCol={showSymbolCol}
+              showPills={showPills}
+              catMap={catMap}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))}
+        </DenseTableBody>
+      </DenseDataTable>
       <LedgerStkPagination
         page={page}
         totalPages={totalPages}
@@ -371,20 +363,14 @@ function GroupBlock({
 }) {
   return (
     <>
-      <tr className={styles.stkGroupHeader}>
-        <td colSpan={12}>
-          <div className={styles.stkGroupHeaderInner}>
-            <span
-              className={`${styles.stkGroupSymbol}${showPills ? ` ${styles.stkPillSymbol}` : ''}`}
-            >
+      <DenseTableRow className="bg-secondary/50 hover:bg-secondary/50">
+        <DenseTableCell colSpan={12} className="py-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-muted-foreground">
+            <span className={cn('font-bold text-foreground', showPills && stkPillSymbolClass)}>
               {pg.symbol || '—'}
             </span>
-            <span className={styles.stkGroupAccount}>{pg.accountId || '—'}</span>
-            <span
-              className={`${styles.stkGroupCategory}${showPills ? ` ${styles.stkPillCategory}` : ''}`}
-            >
-              {category}
-            </span>
+            <span className="text-foreground">{pg.accountId || '—'}</span>
+            <span className={cn('font-medium', showPills && stkPillCategoryClass)}>{category}</span>
             <LedgerStkGroupPositionSnap snap={pg.snap} />
             <LedgerStkGroupBasisPct
               snap={pg.snap}
@@ -393,19 +379,18 @@ function GroupBlock({
             />
             <LedgerStkUrPnlGroupInline realized={pg.realized} unrealized={groupUnrealized} />
             {showJournal && (
-              <button
-                type="button"
-                className={styles.iconBtn}
+              <IconActionButton
                 onClick={() => onAddJournal(pg.accountId, pg.symbol)}
                 title="Add journal"
-                aria-label="Add journal"
+                ariaLabel="Add journal"
+                size="dense"
               >
-                <FileText className="size-4" />
-              </button>
+                <FileText className="h-3.5 w-3.5" />
+              </IconActionButton>
             )}
           </div>
-        </td>
-      </tr>
+        </DenseTableCell>
+      </DenseTableRow>
       {pg.fills.map(ex => (
         <StkFillRow
           key={ex.account_executions_id ?? `${ex.time}-${stkAccountContractKey(ex)}`}

@@ -1,6 +1,6 @@
 import { bubbleButtonClass, bubbleGroupClass } from './charts/bubbleSwitchStyles'
 import { Button } from '@/components/ui/button'
-import styles from './InstanceStrategyPanel.module.css'
+import { instancePanel } from './instancePanelClasses'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -29,8 +29,8 @@ function BubbleRadio({
   onChange: (v: string) => void
 }) {
   return (
-    <div className={styles.filterBubbleRow}>
-      <span className={styles.filterBubbleLabel}>{label}</span>
+    <div className={instancePanel.filterBubbleRow}>
+      <span className={instancePanel.filterBubbleLabel}>{label}</span>
       <div className={bubbleGroupClass()}>
         {options.map((opt) => (
           <button
@@ -75,7 +75,7 @@ export function InstanceFilters({ structureTypes, oppNames, scopeTypes, values, 
   ]
 
   return (
-    <div className={styles.filters}>
+    <div className={instancePanel.filters}>
       <Select value={values.structureType} onValueChange={(v) => update({ structureType: v })}>
         <SelectTrigger className="h-7 text-xs w-40 shrink-0">
           <SelectValue placeholder="All Contract Types" />

@@ -4,7 +4,14 @@ import { getOptGroupKey } from '@/utils/ledger/ledgerOptHelpers'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { OptGroupRow } from './OptGroupRow'
 import type { OptGroupCallbacks } from './ledgerTypes'
-import styles from './ledgerStyles'
+import {
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  denseTableNumCell,
+} from '@/components/data-display'
 
 export function OptGroupsTable({
   groups, showNetQty, linkByOptionId, expandedGroups, toggleGroup, keyPrefix = '', ...cbs
@@ -17,40 +24,38 @@ export function OptGroupsTable({
   keyPrefix?: string
 } & OptGroupCallbacks) {
   return (
-    <div className={styles.ledgerTableWrap}>
-      <table className={styles.ledgerTable}>
-        <thead>
-          <tr>
-            <th className={styles.ledgerExpandCol} aria-hidden />
-            <th>Contract</th>
-            <th className={styles.numCol} style={{ width: '2.5rem' }}>Inst</th>
-            <th className={styles.numCol} style={{ width: '3rem' }}>Links</th>
-            {!showNetQty && <th className={styles.numCol}>Buy Avg</th>}
-            {!showNetQty && <th className={styles.numCol}>Sell Avg</th>}
-            {showNetQty && <th className={styles.numCol}>Net Qty</th>}
-            <th className={styles.numCol}>Total Qty</th>
-            <th className={styles.numCol}>Realized PnL</th>
-            <th className={styles.numCol} style={{ width: '3rem' }}>#Fills</th>
-          </tr>
-        </thead>
-        <tbody>
-          {groups.map(g => {
-            const key = keyPrefix + getOptGroupKey(g)
-            return (
-              <OptGroupRow
-                key={key}
-                group={g}
-                expanded={expandedGroups.has(key)}
-                expired={isOptionExpired(g.expiry)}
-                showNetQty={showNetQty}
-                linkByOptionId={linkByOptionId}
-                onToggle={() => toggleGroup(key)}
-                {...cbs}
-              />
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+    <DenseDataTable wrapClassName="mt-1">
+      <DenseTableHeader>
+        <DenseTableHeadRow>
+          <DenseTableHead className="w-8" aria-hidden />
+          <DenseTableHead>Contract</DenseTableHead>
+          <DenseTableHead className={`${denseTableNumCell} w-10 text-center`}>Inst</DenseTableHead>
+          <DenseTableHead className={`${denseTableNumCell} w-12 text-center`}>Links</DenseTableHead>
+          {!showNetQty && <DenseTableHead className={denseTableNumCell}>Buy Avg</DenseTableHead>}
+          {!showNetQty && <DenseTableHead className={denseTableNumCell}>Sell Avg</DenseTableHead>}
+          {showNetQty && <DenseTableHead className={denseTableNumCell}>Net Qty</DenseTableHead>}
+          <DenseTableHead className={denseTableNumCell}>Total Qty</DenseTableHead>
+          <DenseTableHead className={denseTableNumCell}>Realized PnL</DenseTableHead>
+          <DenseTableHead className={`${denseTableNumCell} w-12`}>#Fills</DenseTableHead>
+        </DenseTableHeadRow>
+      </DenseTableHeader>
+      <DenseTableBody>
+        {groups.map(g => {
+          const key = keyPrefix + getOptGroupKey(g)
+          return (
+            <OptGroupRow
+              key={key}
+              group={g}
+              expanded={expandedGroups.has(key)}
+              expired={isOptionExpired(g.expiry)}
+              showNetQty={showNetQty}
+              linkByOptionId={linkByOptionId}
+              onToggle={() => toggleGroup(key)}
+              {...cbs}
+            />
+          )
+        })}
+      </DenseTableBody>
+    </DenseDataTable>
   )
 }

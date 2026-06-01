@@ -1,15 +1,33 @@
+import { cn } from '@/lib/utils'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { fmtExpiry, fmtTradeDate, fmtTs, fmtUsd, getContractLabelParts } from '@/lib/format'
+import { pnlColorClass } from '@/utils/dailyChange'
 import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
-import { findOppositeLegAttributionSource, getOptGroupKey, ledgerOptDetailRowPnl } from '@/utils/ledger/ledgerOptHelpers'
+import {
+  findOppositeLegAttributionSource,
+  getOptGroupKey,
+  ledgerOptDetailRowPnl,
+} from '@/utils/ledger/ledgerOptHelpers'
 import { ExecSourceBadge } from './ExecSourceBadge'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { sideLabel } from './ledgerOptSideLabel'
 import { LedgerStgInsCell } from './LedgerStgInsCell'
 import type { OptGroupCallbacks } from './ledgerTypes'
-import styles from './ledgerStyles'
+import {
+  denseTable,
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  ExpandToggleCell,
+  IconActionButton,
+  denseTableNumCell,
+} from '@/components/data-display'
 
 function tradesSummary(g: OptExecutionGroup): string {
   return (g.trades ?? [])
@@ -40,21 +58,23 @@ function OpenGroupTable({
   onExpiredClose?: (ex: Execution) => void
 }) {
   return (
-    <table className={styles.optTable}>
-      <thead>
-        <tr>
-          <th className={styles.optExpandCol} />
-          <th>Contract</th>
-          <th>Account</th>
-          <th>Expiry</th>
-          <th>STRIKE</th>
-          <th>Net qty</th>
-          <th>Trades (side / qty / price / id)</th>
-          <th>Source</th>
-          {showExpiredClose && <th className={styles.optActionsCol}>Actions</th>}
-        </tr>
-      </thead>
-      <tbody>
+    <DenseDataTable>
+      <DenseTableHeader>
+        <DenseTableHeadRow>
+          <DenseTableHead className="w-8" aria-hidden />
+          <DenseTableHead>Contract</DenseTableHead>
+          <DenseTableHead>Account</DenseTableHead>
+          <DenseTableHead>Expiry</DenseTableHead>
+          <DenseTableHead>STRIKE</DenseTableHead>
+          <DenseTableHead className={denseTableNumCell}>Net qty</DenseTableHead>
+          <DenseTableHead>Trades (side / qty / price / id)</DenseTableHead>
+          <DenseTableHead>Source</DenseTableHead>
+          {showExpiredClose && (
+            <DenseTableHead className={`${denseTableNumCell} w-16`}>Actions</DenseTableHead>
+          )}
+        </DenseTableHeadRow>
+      </DenseTableHeader>
+      <DenseTableBody>
         {groups.map(g => {
           const p = getContractLabelParts(g.contract_key ?? '')
           const strikeStr = g.strike != null ? ` ${g.strike}` : ''
@@ -67,23 +87,28 @@ function OpenGroupTable({
             new Set((g.trades ?? []).map(ex => (ex.source ?? '').trim()).filter(Boolean)),
           )
           return (
-            <tr
+            <DenseTableRow
               key={groupKey}
-              className={styles.optGroupRow}
+              className="cursor-pointer"
               onClick={() => toggleDetailExpand(groupKey)}
               role="button"
               tabIndex={0}
               onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDetailExpand(groupKey) }
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  toggleDetailExpand(groupKey)
+                }
               }}
               aria-expanded={isExpanded}
             >
-              <td className={styles.optExpandCol}>
-                <span className={`${styles.optExpandIcon} ${isExpanded ? styles.optExpandIconOpen : ''}`} aria-hidden>
-                  {isExpanded ? '▼' : '▶'}
-                </span>
-              </td>
-              <td className={styles.optContract}>
+              <DenseTableCell className="w-8 p-0">
+                <ExpandToggleCell
+                  expanded={isExpanded}
+                  onToggle={() => toggleDetailExpand(groupKey)}
+                  label="Expand open group details"
+                />
+              </DenseTableCell>
+              <DenseTableCell className="font-mono text-[length:var(--text-dense-meta)] whitespace-nowrap">
                 {p.symbol ? (
                   <>
                     <strong>{p.symbol}</strong> {p.rightLabel}
@@ -92,37 +117,43 @@ function OpenGroupTable({
                 ) : (
                   g.contract_key
                 )}
-              </td>
-              <td>{uniqueAccounts.length > 0 ? uniqueAccounts.join(', ') : '—'}</td>
-              <td>{fmtExpiry(g.expiry)}</td>
-              <td><strong>{fmtUsd(g.strike)}</strong></td>
-              <td>{g.net_qty}</td>
-              <td>{tradesSummary(g) || '—'}</td>
-              <td>
+              </DenseTableCell>
+              <DenseTableCell>
+                {uniqueAccounts.length > 0 ? uniqueAccounts.join(', ') : '—'}
+              </DenseTableCell>
+              <DenseTableCell>{fmtExpiry(g.expiry)}</DenseTableCell>
+              <DenseTableCell>
+                <strong>{fmtUsd(g.strike)}</strong>
+              </DenseTableCell>
+              <DenseTableCell className={denseTableNumCell}>{g.net_qty}</DenseTableCell>
+              <DenseTableCell>{tradesSummary(g) || '—'}</DenseTableCell>
+              <DenseTableCell>
                 {uniqueSources.length > 0
                   ? uniqueSources.map(s => <ExecSourceBadge key={s} source={s} />)
                   : '—'}
-              </td>
+              </DenseTableCell>
               {showExpiredClose && (
-                <td className={styles.optActionsCol} onClick={e => e.stopPropagation()}>
-                  {onExpiredClose && (g.trades?.[0] != null) && (
-                    <button
-                      type="button"
-                      className={`${styles.iconBtn} ${styles.iconBtnWarn}`}
-                      onClick={() => onExpiredClose(g.trades[0])}
-                      title="Close expired position"
-                      aria-label="Close expired position"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </td>
+                <DenseTableCell className={denseTableNumCell}>
+                  <div onClick={e => e.stopPropagation()}>
+                    {onExpiredClose && g.trades?.[0] != null && (
+                      <IconActionButton
+                        onClick={() => onExpiredClose(g.trades[0])}
+                        title="Close expired position"
+                        ariaLabel="Close expired position"
+                        tone="warn"
+                        size="dense"
+                      >
+                        ✕
+                      </IconActionButton>
+                    )}
+                  </div>
+                </DenseTableCell>
               )}
-            </tr>
+            </DenseTableRow>
           )
         })}
-      </tbody>
-    </table>
+      </DenseTableBody>
+    </DenseDataTable>
   )
 }
 
@@ -150,14 +181,19 @@ export function LedgerOpenOptionSection({
   syncingId,
 }: Props) {
   if (openActiveGroups.length === 0 && openExpiredGroups.length === 0) {
-    return <p className={styles.optEmptyHint}>No open option groups.</p>
+    return <p className={denseTable.emptyHint}>No open option groups.</p>
   }
+
+  const sectionTitleClass = cn(
+    denseTable.sectionTitle,
+    'mb-2 mt-0 inline-flex items-center gap-1.5 text-[0.8125rem]',
+  )
 
   return (
     <>
       {openActiveGroups.length > 0 && (
-        <div className={styles.optTableWrap}>
-          <h5 className={styles.optDetailTitle}>
+        <div>
+          <h5 className={sectionTitleClass}>
             Open Option
             <InfoTooltip text="Option positions with non-zero net quantity and future expiry. They are excluded from the Summary (fully closed trades only) and the Closed Option table above." />
           </h5>
@@ -170,8 +206,8 @@ export function LedgerOpenOptionSection({
       )}
 
       {openExpiredGroups.length > 0 && (
-        <div className={styles.optTableWrap}>
-          <h5 className={styles.optDetailTitle}>
+        <div className="mt-4">
+          <h5 className={sectionTitleClass}>
             Expired but not closed
             <InfoTooltip text="These option contracts have expired but net quantity is not zero. Some executions may be missing in the trade ledger; add the missing trades to close the position." />
           </h5>
@@ -185,35 +221,38 @@ export function LedgerOpenOptionSection({
         </div>
       )}
 
-      <h5 className={styles.optDetailTitle}>
+      <h5 className={cn(sectionTitleClass, 'mt-4')}>
         Details (per trade)
         <InfoTooltip text="Click an open option row above to load its execution details." />
       </h5>
-      <table className={styles.optTable}>
-        <thead>
-          <tr>
-            <th>Contract</th>
-            <th>Expiry</th>
-            <th>STRIKE</th>
-            <th>Stg/Ins</th>
-            <th>Trade date</th>
-            <th>Side</th>
-            <th>Qty</th>
-            <th>Price</th>
-            <th>Comm.</th>
-            <th>PnL</th>
-            <th>Account</th>
-            <th>Source</th>
-            <th className={styles.optActionsCol}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <DenseDataTable>
+        <DenseTableHeader>
+          <DenseTableHeadRow>
+            <DenseTableHead>Contract</DenseTableHead>
+            <DenseTableHead>Expiry</DenseTableHead>
+            <DenseTableHead>STRIKE</DenseTableHead>
+            <DenseTableHead>Stg/Ins</DenseTableHead>
+            <DenseTableHead>Trade date</DenseTableHead>
+            <DenseTableHead>Side</DenseTableHead>
+            <DenseTableHead className={denseTableNumCell}>Qty</DenseTableHead>
+            <DenseTableHead className={denseTableNumCell}>Price</DenseTableHead>
+            <DenseTableHead className={denseTableNumCell}>Comm.</DenseTableHead>
+            <DenseTableHead className={denseTableNumCell}>PnL</DenseTableHead>
+            <DenseTableHead>Account</DenseTableHead>
+            <DenseTableHead>Source</DenseTableHead>
+            <DenseTableHead className={`${denseTableNumCell} w-24`}>Actions</DenseTableHead>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
           {openExpandedGroups.length === 0 ? (
-            <tr>
-              <td colSpan={13} className={styles.optDetailPlaceholder}>
+            <DenseTableRow className="hover:bg-transparent">
+              <DenseTableCell
+                colSpan={13}
+                className="py-4 text-center italic text-muted-foreground"
+              >
                 Click an open option row above to load details
-              </td>
-            </tr>
+              </DenseTableCell>
+            </DenseTableRow>
           ) : (
             openExpandedGroups.flatMap(g =>
               (g.trades ?? []).map((ex, ti) => {
@@ -222,43 +261,56 @@ export function LedgerOpenOptionSection({
                 const showSync =
                   onSyncOpposite &&
                   ex.account_executions_id != null &&
-                  (ex.strategy_instance_id == null || !Number.isFinite(Number(ex.strategy_instance_id))) &&
+                  (ex.strategy_instance_id == null ||
+                    !Number.isFinite(Number(ex.strategy_instance_id))) &&
                   oppositePeer != null
                 const { displayPnl } = ledgerOptDetailRowPnl(ex, linkByOptionId)
-                const pnlCls =
-                  displayPnl < 0 ? styles.pnlNegative : displayPnl > 0 ? styles.pnlPositive : styles.pnlZero
                 const p_ = getContractLabelParts(g.contract_key ?? '')
                 const strikeStr_ = g.strike != null ? ` ${g.strike}` : ''
 
                 return (
-                  <tr key={`${getOptGroupKey(g)}-${ti}-${ex.time ?? ti}`}>
-                    <td className={styles.optContract}>
+                  <DenseTableRow key={`${getOptGroupKey(g)}-${ti}-${ex.time ?? ti}`}>
+                    <DenseTableCell className="font-mono text-[length:var(--text-dense-meta)] whitespace-nowrap">
                       {p_.symbol ? (
                         <>
                           <strong>{p_.symbol}</strong> {p_.rightLabel}
                           {strikeStr_}
                           {ex.account_executions_id != null && (
-                            <span className={styles.contractExecId}>#{ex.account_executions_id}</span>
+                            <span className="ml-1.5 text-[0.72em] font-medium text-muted-foreground/75">
+                              #{ex.account_executions_id}
+                            </span>
                           )}
                         </>
                       ) : (
                         g.contract_key
                       )}
-                    </td>
-                    <td>{fmtExpiry(ex.expiry ?? g.expiry)}</td>
-                    <td><strong>{fmtUsd(g.strike)}</strong></td>
-                    <td><LedgerStgInsCell ex={ex} /></td>
-                    <td title={ex.time != null ? `Exec time: ${fmtTs(ex.time)}` : undefined}>
+                    </DenseTableCell>
+                    <DenseTableCell>{fmtExpiry(ex.expiry ?? g.expiry)}</DenseTableCell>
+                    <DenseTableCell>
+                      <strong>{fmtUsd(g.strike)}</strong>
+                    </DenseTableCell>
+                    <DenseTableCell>
+                      <LedgerStgInsCell ex={ex} />
+                    </DenseTableCell>
+                    <DenseTableCell title={ex.time != null ? `Exec time: ${fmtTs(ex.time)}` : undefined}>
                       {fmtTradeDate(ex.trade_date)}
-                    </td>
-                    <td>{sideLabel(ex)}</td>
-                    <td>{ex.quantity != null ? Number(ex.quantity) : '—'}</td>
-                    <td>{fmtUsd(ex.price)}</td>
-                    <td>{fmtUsd(ex.commission ?? 0)}</td>
-                    <td><span className={pnlCls}>{fmtUsd(displayPnl)}</span></td>
-                    <td>{ex.account_id ?? '—'}</td>
-                    <td><ExecSourceBadge source={ex.source} /></td>
-                    <td className={styles.optActionsCol}>
+                    </DenseTableCell>
+                    <DenseTableCell>{sideLabel(ex)}</DenseTableCell>
+                    <DenseTableCell className={denseTableNumCell}>
+                      {ex.quantity != null ? Number(ex.quantity) : '—'}
+                    </DenseTableCell>
+                    <DenseTableCell className={denseTableNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
+                    <DenseTableCell className={denseTableNumCell}>
+                      {fmtUsd(ex.commission ?? 0)}
+                    </DenseTableCell>
+                    <DenseTableCell className={cn(denseTableNumCell, pnlColorClass(displayPnl))}>
+                      {fmtUsd(displayPnl)}
+                    </DenseTableCell>
+                    <DenseTableCell>{ex.account_id ?? '—'}</DenseTableCell>
+                    <DenseTableCell>
+                      <ExecSourceBadge source={ex.source} />
+                    </DenseTableCell>
+                    <DenseTableCell className={denseTableNumCell}>
                       {ex.account_executions_id != null ? (
                         <LedgerOptActionButtons
                           onEdit={onEdit ? () => onEdit(ex) : undefined}
@@ -279,14 +331,14 @@ export function LedgerOpenOptionSection({
                       ) : (
                         '—'
                       )}
-                    </td>
-                  </tr>
+                    </DenseTableCell>
+                  </DenseTableRow>
                 )
               }),
             )
           )}
-        </tbody>
-      </table>
+        </DenseTableBody>
+      </DenseDataTable>
     </>
   )
 }

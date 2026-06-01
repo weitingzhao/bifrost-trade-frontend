@@ -1,9 +1,8 @@
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SegmentControl, segmentGroupClass, segmentButtonClass } from '@/components/data-display'
 import type { AccountFilter } from './PositionsFilterBar'
-import { bubbleButtonClass, bubbleGroupClass } from './charts/bubbleSwitchStyles'
-import styles from './PositionsOpenControls.module.css'
 
 export type DetailViewMode = 'accordion' | 'multi'
 
@@ -49,19 +48,23 @@ export function PositionsOpenControls({
   const showTabs = showPositionTabs
 
   return (
-    <div className={styles.row} role="toolbar" aria-label="Open position filters and tabs">
-      <div className={styles.filters} aria-label="Position filters">
+    <div
+      className="mb-2 flex min-w-0 flex-nowrap items-center gap-x-2 gap-y-1.5 overflow-x-auto border-b border-border/60 py-1.5 [scrollbar-width:thin]"
+      role="toolbar"
+      aria-label="Open position filters and tabs"
+    >
+      <div className="flex shrink-0 items-center gap-1.5" aria-label="Position filters">
         <Input
           placeholder="Symbol"
           value={filterSymbol}
           onChange={(e) => onFilterSymbolChange(e.target.value)}
-          className={cn('h-8 text-sm font-mono shrink-0', styles.symbolInput)}
+          className="h-8 w-32 min-w-[6.5rem] max-w-40 shrink-0 font-mono text-sm"
         />
         <Input
           placeholder="YYYYMMDD"
           value={filterExpiry}
           onChange={(e) => onFilterExpiryChange(e.target.value.replace(/\D/g, '').slice(0, 8))}
-          className={cn('h-8 text-sm font-mono shrink-0', styles.expiryInput)}
+          className="h-8 w-[7.5rem] max-w-36 shrink-0 font-mono text-sm"
           maxLength={8}
           title="Option expiry filter (YYYYMMDD prefix match)"
           aria-label="Filter by option expiry YYYYMMDD"
@@ -69,12 +72,12 @@ export function PositionsOpenControls({
       </div>
 
       {showAccountBubbles && (
-        <div className={cn(bubbleGroupClass(), styles.acctBubbles)}>
+        <div className={cn(segmentGroupClass(), 'shrink-0 flex-nowrap')}>
           {hostAccountId && (
             <button
               type="button"
               onClick={() => onAccountFilterChange({ ...accountFilter, host: !accountFilter.host })}
-              className={bubbleButtonClass(accountFilter.host)}
+              className={segmentButtonClass(accountFilter.host)}
               aria-pressed={accountFilter.host}
             >
               HOST
@@ -86,7 +89,7 @@ export function PositionsOpenControls({
               onClick={() =>
                 onAccountFilterChange({ ...accountFilter, secondary: !accountFilter.secondary })
               }
-              className={bubbleButtonClass(accountFilter.secondary)}
+              className={segmentButtonClass(accountFilter.secondary)}
               aria-pressed={accountFilter.secondary}
             >
               Secondary
@@ -95,39 +98,38 @@ export function PositionsOpenControls({
         </div>
       )}
 
-      <div className={styles.detailGroup} role="radiogroup" aria-label="Detail view mode">
-        <span className={styles.detailLabel}>Detail</span>
-        <div className={bubbleGroupClass()}>
-          {(['accordion', 'multi'] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              className={bubbleButtonClass(detailViewMode === v)}
-              onClick={() => onDetailViewModeChange(v)}
-              aria-pressed={detailViewMode === v}
-            >
-              {v === 'accordion' ? 'Accordion' : 'Multi'}
-            </button>
-          ))}
-        </div>
+      <div className="flex shrink-0 items-center gap-1" role="radiogroup" aria-label="Detail view mode">
+        <span className="whitespace-nowrap text-[0.76rem] font-semibold text-muted-foreground">
+          Detail
+        </span>
+        <SegmentControl
+          size="sm"
+          ariaLabel="Detail view mode"
+          options={[
+            { value: 'accordion', label: 'Accordion' },
+            { value: 'multi', label: 'Multi' },
+          ]}
+          value={detailViewMode}
+          onChange={(v) => onDetailViewModeChange(v as DetailViewMode)}
+        />
       </div>
 
       {showTabs && (
         <>
-          <span className={styles.sep} aria-hidden />
-          <div className={styles.tabsWrap}>
+          <span
+            className="mx-0.5 min-h-[1.55rem] w-px shrink-0 self-stretch bg-border"
+            aria-hidden
+          />
+          <div className="flex min-w-0 flex-1 items-center">
             <TabsList
               variant="line"
-              className={cn(
-                'w-auto flex-1 min-w-0 border-b-0 flex-nowrap gap-x-1 gap-y-0.5 justify-start h-auto bg-transparent p-0',
-                styles.tabsList,
-              )}
+              className="h-auto min-w-0 flex-1 flex-nowrap justify-start gap-x-1 gap-y-0.5 border-b-0 bg-transparent p-0"
             >
               <TabsTrigger
                 value="instance"
                 disabled={!hasInstances && !hasOptions}
                 className={cn(
-                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >
@@ -137,7 +139,7 @@ export function PositionsOpenControls({
                 value="options"
                 disabled={!hasOptions}
                 className={cn(
-                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >
@@ -147,7 +149,7 @@ export function PositionsOpenControls({
                 value="stocks"
                 disabled={!hasCoreStocks}
                 className={cn(
-                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >
@@ -157,7 +159,7 @@ export function PositionsOpenControls({
                 value="fixed_income"
                 disabled={!hasFixedIncome}
                 className={cn(
-                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >
@@ -167,7 +169,7 @@ export function PositionsOpenControls({
                 value="cash_like"
                 disabled={!hasCashLike}
                 className={cn(
-                  'h-[1.65rem] min-h-0 px-2 py-[0.18rem] text-[0.76rem] flex-none whitespace-nowrap',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >

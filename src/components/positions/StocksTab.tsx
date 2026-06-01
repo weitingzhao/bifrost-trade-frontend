@@ -16,8 +16,8 @@ import {
   GroupHeaderRow,
   PnlCell,
   SymbolLinkButton,
-} from './ui'
-import { denseTable } from './denseTableClasses'
+} from '@/components/data-display'
+import { denseTable } from '@/components/data-display'
 
 interface Props {
   positions: LivePositionRow[]

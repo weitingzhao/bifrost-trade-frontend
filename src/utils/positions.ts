@@ -101,13 +101,8 @@ export function fmtExecDaysAgo(days: number | null | undefined): string {
   return `${Math.round(days)} days ago`
 }
 
-/** PnL display — use pnlColorClass() from @/utils/dailyChange in components. */
-export function pnlColorClass(n: number | null | undefined): string {
-  if (n == null) return ''
-  if (n > 0) return 'pnl-positive'
-  if (n < 0) return 'pnl-negative'
-  return ''
-}
+/** @deprecated Import from `@/utils/dailyChange` in new code. Re-export for existing call sites. */
+export { pnlColorClass } from '@/utils/dailyChange'
 
 export function daysUntilExpiry(expiry: string | undefined): number | null {
   if (!expiry) return null

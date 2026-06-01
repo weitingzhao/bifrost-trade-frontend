@@ -12,8 +12,9 @@ import { fmtUsd } from '@/utils/positions'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { InstanceAllGroup, StockCoverageItem } from '@/types/positions'
 import { CoveragePoolTable } from './CoveragePoolTable'
-import sheetStyles from './InstanceStrategyPanel.module.css'
-import './coveragePool.module.css'
+import { instancePanel } from './instancePanelClasses'
+import { coveragePanel } from './coveragePanelClasses'
+import { cn } from '@/lib/utils'
 
 const COVERAGE_TOOLTIP =
   'The Account filter in the top composition row applies here too. Optionable symbols only; Independent Holdings are not listed in pools. Underlying pool = stock left after opportunity hedges.'
@@ -126,12 +127,12 @@ export function CoverageSummarySection({
 
   if (!hasInstances) {
     return (
-      <div className="coverage-summary-section coverage-summary-section--placeholder">
-        <h4 className={`${sheetStyles.subHeading} coverage-summary-heading-row`}>
+      <div className={coveragePanel.summarySection}>
+        <h4 className={cn(instancePanel.subHeading, coveragePanel.headingRow)}>
           Coverage summary
           <InfoTooltip text={PLACEHOLDER_TOOLTIP} />
         </h4>
-        <p className="coverage-summary-placeholder-text">
+        <p className={coveragePanel.placeholderText}>
           This section is computed from the instance table above. With no instances matching the current
           filters, there is nothing to show here—so the pools are hidden, not missing. Clear or widen
           filters to bring instances back and see Option underlying / backing pools.
@@ -141,65 +142,67 @@ export function CoverageSummarySection({
   }
 
   return (
-    <div className="coverage-summary-section">
-      <div className="coverage-summary-intro">
-        <h4 className={`${sheetStyles.subHeading} coverage-summary-heading-row`}>
+    <div className={coveragePanel.summarySection}>
+      <div className={coveragePanel.summaryIntro}>
+        <h4 className={cn(instancePanel.subHeading, coveragePanel.headingRow)}>
           Coverage summary
           <InfoTooltip text={COVERAGE_TOOLTIP} />
         </h4>
       </div>
-      <div className="coverage-pools-row">
-        <div className="coverage-pool-panel">
-          <p className="coverage-section-hint">Option underlying Pool</p>
-          <p className="coverage-section-hint coverage-section-hint--sm">
+      <div className={coveragePanel.poolsRow}>
+        <div className={coveragePanel.poolPanel}>
+          <p className={coveragePanel.sectionHint}>Option underlying Pool</p>
+          <p className={cn(coveragePanel.sectionHint, coveragePanel.sectionHintSm)}>
             Long shares not needed for existing opportunity hedges (all scopes); can back additional
             options.
           </p>
           {optionUnderlyingPoolItems.length === 0 && (
-            <p className="coverage-pool-empty-explanation">
+            <p className={coveragePanel.poolEmptyExplanation}>
               No rows when every long share is already counted toward instance hedges, or when your
               instances do not require separate underlying stock backup.
             </p>
           )}
-          <p className="option-underlying-pool-totals">
-            <span className="option-underlying-pool-total-item">
-              <span className="option-underlying-pool-total-label">Market Total</span>{' '}
+          <p className={coveragePanel.totalsLine}>
+            <span className={coveragePanel.totalItem}>
+              <span className={coveragePanel.totalLabel}>Market Total</span>{' '}
               <strong>{fmtUsd(marketTotal)}</strong>
             </span>
-            <span className="option-underlying-pool-total-sep" aria-hidden>
+            <span className={coveragePanel.totalSep} aria-hidden>
               {' · '}
             </span>
-            <span className="option-underlying-pool-total-item">
+            <span className={coveragePanel.totalItem}>
               {hostAccountId ? (
                 <>
-                  <strong className="coverage-account-id coverage-account-host">{hostAccountId}</strong>{' '}
-                  <span className="option-underlying-pool-cash-bp" title="Total cash / buying power">
+                  <strong className={cn(coveragePanel.accountId, coveragePanel.accountHost)}>
+                    {hostAccountId}
+                  </strong>{' '}
+                  <span className={coveragePanel.cashBp} title="Total cash / buying power">
                     {fmtUsd(hostSecondaryCashBp.host.cash)}
                     {' / '}
                     {fmtUsd(hostSecondaryCashBp.host.bp)}
                   </span>
                 </>
               ) : (
-                <strong className="replay-muted">—</strong>
+                <strong className="text-muted-foreground">—</strong>
               )}
             </span>
-            <span className="option-underlying-pool-total-sep" aria-hidden>
+            <span className={coveragePanel.totalSep} aria-hidden>
               {' · '}
             </span>
-            <span className="option-underlying-pool-total-item">
+            <span className={coveragePanel.totalItem}>
               {secondaryAccountId ? (
                 <>
-                  <strong className="coverage-account-id coverage-account-secondary">
+                  <strong className={cn(coveragePanel.accountId, coveragePanel.accountSecondary)}>
                     {secondaryAccountId}
                   </strong>{' '}
-                  <span className="option-underlying-pool-cash-bp" title="Total cash / buying power">
+                  <span className={coveragePanel.cashBp} title="Total cash / buying power">
                     {fmtUsd(hostSecondaryCashBp.secondary.cash)}
                     {' / '}
                     {fmtUsd(hostSecondaryCashBp.secondary.bp)}
                   </span>
                 </>
               ) : (
-                <strong className="replay-muted">—</strong>
+                <strong className="text-muted-foreground">—</strong>
               )}
             </span>
           </p>
@@ -223,9 +226,9 @@ export function CoverageSummarySection({
         </div>
 
         {watchlistBackingItems.length > 0 && (
-          <div className="coverage-pool-panel">
-            <p className="coverage-section-hint">Option backing Pool</p>
-            <p className="coverage-section-hint coverage-section-hint--sm">
+          <div className={coveragePanel.poolPanel}>
+            <p className={coveragePanel.sectionHint}>Option backing Pool</p>
+            <p className={cn(coveragePanel.sectionHint, coveragePanel.sectionHintSm)}>
               Watchlist-scoped opportunities: Required = hedge from those strategies only.
             </p>
             <CoveragePoolTable

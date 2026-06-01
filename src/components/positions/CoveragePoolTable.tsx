@@ -19,9 +19,9 @@ import {
   GroupHeaderRow,
   PnlCell,
   SymbolLinkButton,
-} from './ui'
-import { denseTable } from './denseTableClasses'
-import './coveragePool.module.css'
+} from '@/components/data-display'
+import { denseTable } from '@/components/data-display'
+import { coveragePanel, coverageAccountClass } from './coveragePanelClasses'
 
 export interface CoveragePoolSortState {
   column: CoveragePoolSortCol
@@ -57,12 +57,8 @@ export function CoveragePoolTable({
   const poolGroupByAccount = slim || backingLayout
   const accountGroupColSpan = poolGroupByAccount ? 7 : 0
 
-  const accountCellClass = (accountId: string) => {
-    const a = (accountId ?? '').trim()
-    if (secondaryAccountId && a === secondaryAccountId) return 'coverage-account-secondary'
-    if (hostAccountId && a === hostAccountId) return 'coverage-account-host'
-    return 'coverage-account-other'
-  }
+  const accountCellClass = (accountId: string) =>
+    coverageAccountClass(accountId, hostAccountId, secondaryAccountId)
 
   const accountGroups =
     poolGroupByAccount && poolSort
@@ -132,11 +128,11 @@ export function CoveragePoolTable({
           (slim || backingLayout ? (
             <DenseTableCell
               className={cn(
-                slim && !backingLayout && 'coverage-held-amt-underlying-narrow',
+                slim && !backingLayout && coveragePanel.heldAmtNarrow,
               )}
             >
               <span
-                className="coverage-available-contracts-only"
+                className={coveragePanel.availableContracts}
                 title={
                   backingLayout
                     ? `${Math.floor(Math.max(0, Math.min(ci.held_shares, ci.required_shares)) / 100)} contracts`
@@ -148,20 +144,20 @@ export function CoveragePoolTable({
                   : Math.floor(Math.max(0, ci.held_shares) / 100)}
               </span>
               {backingLayout && ci.instances_needing > 1 && (
-                <span className="coverage-shared-hint"> ({ci.instances_needing} strat.)</span>
+                <span className={coveragePanel.sharedHint}> ({ci.instances_needing} strat.)</span>
               )}
             </DenseTableCell>
           ) : null)}
         {slim || backingLayout ? (
-          <DenseTableCell className="coverage-cost-avg-cell" title="Cost basis (total) / avg cost per share">
+          <DenseTableCell className={coveragePanel.costAvgCell} title="Cost basis (total) / avg cost per share">
             <div className="font-semibold">{fmtUsd(ci.cost_basis_total)}</div>
-            <div className="coverage-cost-avg-per-share">{fmtUsd(ci.avg_cost_per_share)}</div>
+            <div className={coveragePanel.costAvgPerShare}>{fmtUsd(ci.avg_cost_per_share)}</div>
           </DenseTableCell>
         ) : null}
         {slim || backingLayout ? (
-          <DenseTableCell className="coverage-mkt-value-price-cell" title="Market value / price per share">
+          <DenseTableCell className={coveragePanel.mktValueCell} title="Market value / price per share">
             <div className="font-semibold">{fmtUsd(coverageRowMarketValueTotal(ci))}</div>
-            <div className="coverage-mkt-value-per-share">{fmtUsd(ci.live_last_price)}</div>
+            <div className={coveragePanel.mktValuePerShare}>{fmtUsd(ci.live_last_price)}</div>
           </DenseTableCell>
         ) : null}
         {slim || backingLayout ? (

@@ -1,50 +1,6 @@
-/* Legacy risk profile + instance sheet detail (Positions Strategy expand) */
+/* Risk profile layout, payoff chart, and scenario matrix (scoped — no :global) */
 
-:global(.pnl-positive){
-  color: var(--color-success, hsl(var(--color-success)));
-}
-
-:global(.pnl-negative){
-  color: var(--color-danger, hsl(var(--color-danger)));
-}
-
-:global(.coverage-status-badge){
-  display: inline-block;
-  padding: 0.1em 0.55em;
-  border-radius: 4px;
-  font-size: 0.82em;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-:global(.risk-badge-defined){
-  background: rgba(34, 197, 94, 0.15);
-  color: hsl(var(--color-success));
-}
-
-:global(.risk-badge-unlimited){
-  background: rgba(248, 113, 113, 0.14);
-  color: #f87171;
-}
-
-:global(.risk-value-gain){
-  color: hsl(var(--color-success));
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-:global(.risk-value-loss){
-  color: hsl(var(--color-danger));
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-:global(.risk-value-unlimited){
-  letter-spacing: 0.02em;
-}
-
-:global(.risk-profile-top-line){
+.topLine {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -57,32 +13,32 @@
   font-size: 0.8125rem;
 }
 
-:global(.risk-profile-top-segment){
+.topSegment {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
 }
 
-:global(.risk-profile-top-label){
+.topLabel {
   color: hsl(var(--muted-foreground));
   font-weight: 500;
   white-space: nowrap;
 }
 
-:global(.risk-profile-top-value){
+.topValue {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: #e5e7eb;
 }
 
-:global(.risk-profile-top-divider){
+.topDivider {
   color: #4b5563;
   user-select: none;
   padding: 0 0.15rem;
 }
 
-:global(.risk-profile-scenario-payoff-row){
+.scenarioPayoffRow {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -92,25 +48,25 @@
   border-bottom: 1px solid hsl(var(--border) / 0.5);
 }
 
-:global(.risk-profile-scenario-col){
+.scenarioCol {
   flex: 1 1 14rem;
   min-width: 0;
 }
 
-:global(.risk-profile-payoff-col){
+.payoffCol {
   flex: 0 1 17.5rem;
   width: min(100%, 17.5rem);
   max-width: 20rem;
   align-self: stretch;
 }
 
-:global(.risk-profile-payoff-col--dual){
+.payoffColDual {
   flex: 1 1 28rem;
   width: min(100%, 38rem);
   max-width: 38rem;
 }
 
-:global(.risk-profile-payoff-charts){
+.payoffCharts {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -118,30 +74,30 @@
   width: 100%;
 }
 
-:global(.risk-profile-payoff-charts .risk-payoff-chart){
+.payoffCharts .payoffChart {
   flex: 1 1 12.5rem;
   min-width: 0;
 }
 
 @media (max-width: 640px) {
-:global(.risk-profile-payoff-col){
+  .payoffCol {
     flex: 1 1 100%;
     max-width: none;
     width: 100%;
   }
 
-:global(.risk-profile-payoff-col--dual){
+  .payoffColDual {
     max-width: none;
   }
 }
 
-:global(.risk-profile-scenario-summary--embedded){
+.scenarioSummaryEmbedded {
   margin-bottom: 0;
   padding-bottom: 0;
   border-bottom: none;
 }
 
-:global(.risk-profile-scenario-summary-head){
+.scenarioSummaryHead {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -149,7 +105,7 @@
   margin-bottom: 0.45rem;
 }
 
-:global(.risk-profile-scenario-summary-label){
+.scenarioSummaryLabel {
   font-size: 0.76rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -157,24 +113,24 @@
   color: hsl(var(--muted-foreground));
 }
 
-:global(.risk-profile-scenario-summary-hint){
+.scenarioSummaryHint {
   font-size: 0.72rem;
   color: #5c6572;
 }
 
-:global(.risk-profile-scenario-note){
+.scenarioNote {
   margin: 0 0 0.45rem;
   font-size: 0.75rem;
   color: hsl(var(--muted-foreground));
   line-height: 1.35;
 }
 
-:global(.risk-payoff-chart){
+.payoffChart {
   margin: 0;
   padding: 0;
 }
 
-:global(.risk-payoff-chart-head){
+.payoffChartHead {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -182,7 +138,7 @@
   margin-bottom: 0;
 }
 
-:global(.risk-payoff-chart-title){
+.payoffChartTitle {
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -190,19 +146,19 @@
   color: hsl(var(--muted-foreground));
 }
 
-:global(.risk-payoff-chart-data){
+.payoffChartData {
   font-size: 0.65rem;
   color: #5c6572;
   font-variant-numeric: tabular-nums;
 }
 
-:global(.risk-payoff-chart-sub){
+.payoffChartSub {
   font-size: 0.65rem;
   color: hsl(var(--muted-foreground));
   font-variant-numeric: tabular-nums;
 }
 
-:global(.risk-payoff-chart-svg){
+.payoffChartSvg {
   display: block;
   max-width: 100%;
   border-radius: 8px;
@@ -210,40 +166,40 @@
   border: 1px solid var(--risk-payoff-plot-border);
 }
 
-:global(.risk-payoff-chart-axis-label){
+.payoffChartAxisLabel {
   font-size: 8.5px;
   font-weight: 600;
   font-family: var(--font-sans), system-ui, sans-serif;
   fill: var(--risk-payoff-axis);
 }
 
-:global(.risk-payoff-chart-tick){
+.payoffChartTick {
   font-size: 8px;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   fill: var(--risk-payoff-tick);
 }
 
-:global(.risk-payoff-chart-caption){
+.payoffChartCaption {
   margin: 0.35rem 0 0;
   font-size: 0.65rem;
   line-height: 1.35;
   color: hsl(var(--muted-foreground));
 }
 
-:global(.risk-payoff-chart--compact .risk-payoff-chart-caption){
+.payoffChartCompact .payoffChartCaption {
   margin-top: 0.25rem;
   font-size: 0.62rem;
 }
 
-:global(.risk-scenario-matrix){
+.scenarioMatrix {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
 }
 
-:global(.risk-scenario-matrix thead th){
+.scenarioMatrix thead th {
   text-align: left;
   font-weight: 600;
   font-size: 0.7rem;
@@ -254,7 +210,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-:global(.risk-scenario-matrix tbody th){
+.scenarioMatrix tbody th {
   text-align: left;
   font-weight: 600;
   color: hsl(var(--foreground));
@@ -263,7 +219,7 @@
   white-space: nowrap;
 }
 
-:global(.risk-scenario-matrix-scenario-cell){
+.scenarioCell {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -271,52 +227,52 @@
   white-space: normal;
 }
 
-:global(.risk-scenario-matrix-scenario-label){
+.scenarioLabel {
   white-space: nowrap;
 }
 
-:global(.risk-scenario-matrix tbody td){
+.scenarioMatrix tbody td {
   padding: 0.4rem 0.5rem;
   vertical-align: middle;
 }
 
-:global(.risk-scenario-matrix-num){
+.matrixNum {
   text-align: right;
 }
 
-:global(.risk-scenario-matrix-scenario){
+.matrixScenario {
   min-width: 6.5rem;
 }
 
-:global(.risk-scenario-matrix-na){
+.matrixNa {
   color: hsl(var(--muted-foreground));
   font-size: 0.75rem;
 }
 
-:global(.risk-scenario-matrix-row-gain th[scope='row']){
+.rowGain th[scope='row'] {
   color: #86efac;
 }
 
-:global(.risk-scenario-matrix-row-loss th[scope='row']){
+.rowLoss th[scope='row'] {
   color: #fca5a5;
 }
 
-:global(.risk-scenario-matrix-row-hedged th[scope='row']){
+.rowHedged th[scope='row'] {
   color: #fdba74;
   font-weight: 500;
 }
 
-:global(.risk-scenario-matrix tbody tr:not(:last-child) td),
-:global(.risk-scenario-matrix tbody tr:not(:last-child) th[scope='row']) {
+.scenarioMatrix tbody tr:not(:last-child) td,
+.scenarioMatrix tbody tr:not(:last-child) th[scope='row'] {
   border-bottom: 1px solid hsl(var(--border) / 0.35);
 }
 
-:global(.risk-scenario-matrix-click-wrap){
+.clickWrap {
   padding: 0.15rem;
   vertical-align: middle;
 }
 
-:global(.risk-scenario-matrix-cell-btn){
+.cellBtn {
   display: block;
   width: 100%;
   margin: 0;
@@ -331,18 +287,18 @@
   transition: background 0.12s, border-color 0.12s;
 }
 
-:global(.risk-scenario-matrix-cell-btn:hover){
+.cellBtn:hover {
   background: hsl(var(--muted) / 0.5);
   border-color: hsl(var(--border));
 }
 
-:global(.risk-scenario-matrix-cell-btn-active){
+.cellBtnActive {
   border-color: rgba(59, 130, 246, 0.55);
   background: rgba(59, 130, 246, 0.12);
   box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);
 }
 
-:global(.risk-scenario-matrix-explain){
+.explain {
   margin-top: 0.75rem;
   padding: 0.75rem 0.85rem;
   border-radius: 6px;
@@ -353,7 +309,7 @@
   color: hsl(var(--foreground) / 0.85);
 }
 
-:global(.risk-scenario-matrix-explain-head){
+.explainHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -361,7 +317,7 @@
   margin-bottom: 0.5rem;
 }
 
-:global(.risk-scenario-matrix-explain-close){
+.explainClose {
   cursor: pointer;
   padding: 0.15rem 0.45rem;
   border: none;
@@ -372,25 +328,15 @@
   line-height: 1;
 }
 
-:global(.risk-scenario-matrix-explain-close:hover){
+.explainClose:hover {
   background: hsl(var(--muted-foreground) / 0.3);
 }
 
-:global(.risk-scenario-matrix-explain-principle){
+.explainPrinciple {
   margin: 0 0 0.5rem;
 }
 
-:global(.risk-scenario-matrix-explain-rules){
-  margin: 0 0 0.5rem;
-  padding-left: 1.1rem;
-}
-
-:global(.risk-scenario-matrix-explain-note){
-  margin: 0 0 0.5rem;
-  color: hsl(var(--muted-foreground));
-}
-
-:global(.risk-scenario-matrix-explain-code){
+.explainCode {
   margin: 0.5rem 0;
   padding: 0.5rem 0.6rem;
   border-radius: 4px;
@@ -401,19 +347,68 @@
   overflow-x: auto;
 }
 
-:global(.risk-scenario-matrix-explain-sum){
+.explainSum {
   margin: 0.5rem 0 0;
 }
 
-:global(.risk-hedged-breakdown){
+.hedgedBreakdown {
   margin: 0.75rem 0 0;
   padding-left: 1.25rem;
   list-style: disc;
 }
 
-:global(.risk-unlimited-warning){
+.unlimitedWarning {
   color: #f87171;
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0 0 0.35rem;
+}
+
+.helpWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.helpTrigger {
+  cursor: help;
+  margin-left: 0.25rem;
+  padding: 0 0.35rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  background: hsl(var(--muted) / 0.35);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: hsl(var(--muted-foreground));
+}
+
+.helpTriggerActive {
+  border-color: rgba(59, 130, 246, 0.55);
+  background: rgba(59, 130, 246, 0.12);
+  color: hsl(var(--foreground));
+}
+
+.helpPanel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  min-width: 14rem;
+  max-width: 22rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--popover));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: hsl(var(--popover-foreground));
+}
+
+.helpPanelP {
+  margin: 0 0 0.35rem;
+}
+
+.helpPanelP:last-child {
+  margin-bottom: 0;
 }

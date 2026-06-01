@@ -8,6 +8,7 @@ import {
   payoffOptionsAtPrice,
   stripNakedShortCalls,
 } from '@/utils/riskProfile'
+import styles from './riskProfile.module.css'
 
 type MatrixExplainSelection = {
   row: 'gain' | 'loss' | 'hedged'
@@ -29,10 +30,10 @@ function ClickablePnlCell({
   active: boolean
 }) {
   return (
-    <td className="risk-scenario-matrix-click-wrap">
+    <td className={styles.clickWrap}>
       <button
         type="button"
-        className={`risk-scenario-matrix-cell-btn ${v >= 0 ? 'pnl-positive' : 'pnl-negative'}${active ? ' risk-scenario-matrix-cell-btn-active' : ''}`}
+        className={cn(styles.cellBtn, pnlColorClass(v), active && styles.cellBtnActive)}
         onClick={(e) => {
           e.stopPropagation()
           onClick()
@@ -72,30 +73,25 @@ function ScenarioMatrixExplainPanel({
     const lines = legs.map((l) => `${l.summary}\n  ${l.detail}`).join('\n\n')
     return (
       <div
-        className="risk-scenario-matrix-explain"
+        className={styles.explain}
         role="region"
         aria-label={`${rowTitle} option P and L`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="risk-scenario-matrix-explain-head">
+        <div className={styles.explainHead}>
           <strong>
             {rowTitle} — Option ({formatRiskUsd(selection.scenario.options_pnl)})
           </strong>
-          <button
-            type="button"
-            className="risk-scenario-matrix-explain-close"
-            onClick={onDismiss}
-            aria-label="Dismiss"
-          >
+          <button type="button" className={styles.explainClose} onClick={onDismiss} aria-label="Dismiss">
             ×
           </button>
         </div>
-        <p className="risk-scenario-matrix-explain-principle">
+        <p className={styles.explainPrinciple}>
           Expiration snapshot at <strong>S = {S.toFixed(2)}</strong> (sample grid: 0, strikes, 2× top strike).
           Intrinsic vs average cost per leg; × |contracts| × 100.
         </p>
-        <pre className="risk-scenario-matrix-explain-code">{lines || '(no option legs)'}</pre>
-        <p className="risk-scenario-matrix-explain-sum">
+        <pre className={styles.explainCode}>{lines || '(no option legs)'}</pre>
+        <p className={styles.explainSum}>
           Sum of legs = <strong>{formatRiskUsd(sumOpt)}</strong> — matches the Option cell.
         </p>
       </div>
@@ -106,27 +102,27 @@ function ScenarioMatrixExplainPanel({
   const stk = selection.scenario.stock_pnl
   if (covered_shares <= 0) {
     return (
-      <div className="risk-scenario-matrix-explain" role="region" onClick={(e) => e.stopPropagation()}>
-        <div className="risk-scenario-matrix-explain-head">
+      <div className={styles.explain} role="region" onClick={(e) => e.stopPropagation()}>
+        <div className={styles.explainHead}>
           <strong>{rowTitle} — Stk ({formatRiskUsd(stk)})</strong>
-          <button type="button" className="risk-scenario-matrix-explain-close" onClick={onDismiss} aria-label="Dismiss">
+          <button type="button" className={styles.explainClose} onClick={onDismiss} aria-label="Dismiss">
             ×
           </button>
         </div>
-        <p className="risk-scenario-matrix-explain-principle">No covered shares in this model → Stk is 0.</p>
+        <p className={styles.explainPrinciple}>No covered shares in this model → Stk is 0.</p>
       </div>
     )
   }
   if (avg == null) {
     return (
-      <div className="risk-scenario-matrix-explain" role="region" onClick={(e) => e.stopPropagation()}>
-        <div className="risk-scenario-matrix-explain-head">
+      <div className={styles.explain} role="region" onClick={(e) => e.stopPropagation()}>
+        <div className={styles.explainHead}>
           <strong>{rowTitle} — Stk ({formatRiskUsd(stk)})</strong>
-          <button type="button" className="risk-scenario-matrix-explain-close" onClick={onDismiss} aria-label="Dismiss">
+          <button type="button" className={styles.explainClose} onClick={onDismiss} aria-label="Dismiss">
             ×
           </button>
         </div>
-        <p className="risk-scenario-matrix-explain-principle">
+        <p className={styles.explainPrinciple}>
           Covered shares ({covered_shares}) but average cost missing → Stk treated as 0.
         </p>
       </div>
@@ -134,19 +130,19 @@ function ScenarioMatrixExplainPanel({
   }
 
   return (
-    <div className="risk-scenario-matrix-explain" role="region" onClick={(e) => e.stopPropagation()}>
-      <div className="risk-scenario-matrix-explain-head">
+    <div className={styles.explain} role="region" onClick={(e) => e.stopPropagation()}>
+      <div className={styles.explainHead}>
         <strong>
           {rowTitle} — Stk ({formatRiskUsd(stk)})
         </strong>
-        <button type="button" className="risk-scenario-matrix-explain-close" onClick={onDismiss} aria-label="Dismiss">
+        <button type="button" className={styles.explainClose} onClick={onDismiss} aria-label="Dismiss">
           ×
         </button>
       </div>
-      <p className="risk-scenario-matrix-explain-principle">
+      <p className={styles.explainPrinciple}>
         Mark-to-spot on <strong>{covered_shares}</strong> coverage share(s) at hypothetical S.
       </p>
-      <pre className="risk-scenario-matrix-explain-code">
+      <pre className={styles.explainCode}>
         {`(S − avgCost) × shares\n= (${S.toFixed(2)} − ${avg}) × ${covered_shares}\n= ${stk.toFixed(2)}`}
       </pre>
     </div>
@@ -178,34 +174,34 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
-      <table className="risk-scenario-matrix">
+      <table className={styles.scenarioMatrix}>
         <thead>
           <tr>
-            <th scope="col" className="risk-scenario-matrix-scenario">
+            <th scope="col" className={styles.matrixScenario}>
               Scenario
             </th>
-            <th scope="col" className="risk-scenario-matrix-num">
+            <th scope="col" className={styles.matrixNum}>
               Spot
             </th>
-            <th scope="col" className="risk-scenario-matrix-num" title="Click value for calculation">
+            <th scope="col" className={styles.matrixNum} title="Click value for calculation">
               Option
             </th>
-            <th scope="col" className="risk-scenario-matrix-num" title="Click value for calculation">
+            <th scope="col" className={styles.matrixNum} title="Click value for calculation">
               Stk
             </th>
-            <th scope="col" className="risk-scenario-matrix-num">
+            <th scope="col" className={styles.matrixNum}>
               Total
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr className="risk-scenario-matrix-row-gain">
-            <th scope="row" className="risk-scenario-matrix-scenario-cell">
-              <span className="risk-scenario-matrix-scenario-label">Max gain</span>
+          <tr className={styles.rowGain}>
+            <th scope="row" className={styles.scenarioCell}>
+              <span className={styles.scenarioLabel}>Max gain</span>
             </th>
             {g ? (
               <>
-                <td className="risk-scenario-matrix-num">{g.underlying_price.toFixed(2)}</td>
+                <td className={styles.matrixNum}>{g.underlying_price.toFixed(2)}</td>
                 <ClickablePnlCell
                   v={g.options_pnl}
                   active={isActive('gain', 'option', g)}
@@ -216,31 +212,31 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
                   active={isActive('gain', 'stk', g)}
                   onClick={() => pick('gain', 'stk', g)}
                 />
-                <td className={cn('risk-scenario-matrix-num font-semibold text-success')}>
+                <td className={cn(styles.matrixNum, 'font-semibold text-success')}>
                   {formatRiskUsd(g.options_pnl + g.stock_pnl)}
                 </td>
               </>
             ) : (
-              <td colSpan={4} className="risk-scenario-matrix-na">
+              <td colSpan={4} className={styles.matrixNa}>
                 —
               </td>
             )}
           </tr>
-          <tr className="risk-scenario-matrix-row-loss">
-            <th scope="row" className="risk-scenario-matrix-scenario-cell">
-              <span className="risk-scenario-matrix-scenario-label">Max loss</span>
+          <tr className={styles.rowLoss}>
+            <th scope="row" className={styles.scenarioCell}>
+              <span className={styles.scenarioLabel}>Max loss</span>
             </th>
             {lossUnlimited && !l ? (
               <>
-                <td className="risk-scenario-matrix-num risk-scenario-matrix-na">—</td>
-                <td colSpan={2} className="risk-scenario-matrix-na">
+                <td className={cn(styles.matrixNum, styles.matrixNa)}>—</td>
+                <td colSpan={2} className={styles.matrixNa}>
                   Naked short call tail
                 </td>
-                <td className="risk-scenario-matrix-num font-semibold text-danger">Unlimited</td>
+                <td className={cn(styles.matrixNum, 'font-semibold text-danger')}>Unlimited</td>
               </>
             ) : l ? (
               <>
-                <td className="risk-scenario-matrix-num">{l.underlying_price.toFixed(2)}</td>
+                <td className={styles.matrixNum}>{l.underlying_price.toFixed(2)}</td>
                 <ClickablePnlCell
                   v={l.options_pnl}
                   active={isActive('loss', 'option', l)}
@@ -251,20 +247,20 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
                   active={isActive('loss', 'stk', l)}
                   onClick={() => pick('loss', 'stk', l)}
                 />
-                <td className={cn('risk-scenario-matrix-num font-semibold', pnlColorClass(l.options_pnl + l.stock_pnl))}>
+                <td className={cn(styles.matrixNum, 'font-semibold', pnlColorClass(l.options_pnl + l.stock_pnl))}>
                   {formatRiskUsd(l.options_pnl + l.stock_pnl)}
                 </td>
               </>
             ) : (
-              <td colSpan={4} className="risk-scenario-matrix-na">
+              <td colSpan={4} className={styles.matrixNa}>
                 —
               </td>
             )}
           </tr>
           {lossUnlimited && h ? (
-            <tr className="risk-scenario-matrix-row-hedged">
+            <tr className={styles.rowHedged}>
               <th scope="row">Hedged worst</th>
-              <td className="risk-scenario-matrix-num">{h.underlying_price.toFixed(2)}</td>
+              <td className={styles.matrixNum}>{h.underlying_price.toFixed(2)}</td>
               <ClickablePnlCell
                 v={h.options_pnl}
                 active={isActive('hedged', 'option', h)}
@@ -275,7 +271,7 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
                 active={isActive('hedged', 'stk', h)}
                 onClick={() => pick('hedged', 'stk', h)}
               />
-              <td className={cn('risk-scenario-matrix-num font-semibold', pnlColorClass(h.options_pnl + h.stock_pnl))}>
+              <td className={cn(styles.matrixNum, 'font-semibold', pnlColorClass(h.options_pnl + h.stock_pnl))}>
                 {formatRiskUsd(h.options_pnl + h.stock_pnl)}
               </td>
             </tr>

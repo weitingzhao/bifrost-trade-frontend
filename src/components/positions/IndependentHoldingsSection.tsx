@@ -16,8 +16,8 @@ import {
   GroupHeaderRow,
   InlinePnl,
   SymbolLinkButton,
-} from './ui'
-import { denseTable } from './denseTableClasses'
+} from '@/components/data-display'
+import { denseTable } from '@/components/data-display'
 
 interface Props {
   coreStocks: LivePositionRow[]

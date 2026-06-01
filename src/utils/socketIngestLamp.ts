@@ -1,5 +1,4 @@
 import type { StatusResponse } from '@/types/monitor'
-import { fmtAge } from '@/utils/ingestOpsShared'
 
 export type IngestLamp = 'green' | 'yellow' | 'red' | 'gray'
 export type AggregateIngestLamp = IngestLamp | 'none'
@@ -20,6 +19,7 @@ export function categoryForServiceId(id: string): IngestCategory {
     return 'IB'
   }
   if (id === 'account_sync_daemon') return 'Engine'
+  if (id === 'trading_engine') return 'Engine'
   return 'Other'
 }
 
@@ -50,6 +50,13 @@ export function localControlAgentLamp(reachable: boolean | null | undefined): Lo
   return 'yellow'
 }
 
+function fmtAgeShort(s: number | null | undefined): string {
+  if (s == null || !Number.isFinite(s)) return '—'
+  if (s < 60) return `${Math.floor(s)}s`
+  if (s < 3600) return `${Math.floor(s / 60)}m`
+  return `${Math.floor(s / 3600)}h`
+}
+
 export function buildIngestLogicalSummary(
   svc: MarketIngestServiceRow,
   status: StatusResponse | null | undefined,
@@ -61,13 +68,13 @@ export function buildIngestLogicalSummary(
   if (svc.id === 'massive_ws' && massive) {
     const ws = ingestRedisTruthyConnected(massive.ws_connected) ? 'connected' : 'disconnected'
     const rc = massive.ws_reconnects != null ? String(massive.ws_reconnects) : '—'
-    return `WS ${ws}; last msg ${fmtAge(massive.last_msg_age_s ?? null)}; reconnects ${rc}`
+    return `WS ${ws}; last msg ${fmtAgeShort(massive.last_msg_age_s ?? null)}; reconnects ${rc}`
   }
   if ((svc.id === 'ib_ingestor' || svc.id === 'ib_market') && ibIngestor) {
     const c = ingestRedisTruthyConnected(ibIngestor.connected) ? 'connected' : 'disconnected'
     const rc = ibIngestor.reconnects != null ? String(ibIngestor.reconnects) : '—'
     const mc = ibIngestor.msg_count != null ? String(ibIngestor.msg_count) : '—'
-    return `IB ${c}; last msg ${fmtAge(ibIngestor.last_msg_age_s ?? null)}; reconnects ${rc}; msgs ${mc}`
+    return `IB ${c}; last msg ${fmtAgeShort(ibIngestor.last_msg_age_s ?? null)}; reconnects ${rc}; msgs ${mc}`
   }
   if (svc.id === 'ib_account_agent' && ibAccountAgent) {
     const hostUp =
@@ -81,7 +88,7 @@ export function buildIngestLogicalSummary(
         : ''
     const rc = ibAccountAgent.reconnects != null ? String(ibAccountAgent.reconnects) : '—'
     const mc = ibAccountAgent.msg_count != null ? String(ibAccountAgent.msg_count) : '—'
-    return `${h}${secBit}; last msg ${fmtAge(ibAccountAgent.last_msg_age_s ?? null)}; reconnects ${rc}; msgs ${mc}`
+    return `${h}${secBit}; last msg ${fmtAgeShort(ibAccountAgent.last_msg_age_s ?? null)}; reconnects ${rc}; msgs ${mc}`
   }
   if (svc.id === 'ib_operator' && status?.socket?.ib_operator) {
     const op = status.socket.ib_operator
@@ -91,7 +98,24 @@ export function buildIngestLogicalSummary(
     const c = hostUp ? 'connected' : 'disconnected'
     const rc = op.reconnects != null ? String(op.reconnects) : '—'
     const mc = op.msg_count != null ? String(op.msg_count) : '—'
-    return `IB Operator ${c}; last activity ${fmtAge(op.last_msg_age_s ?? null)}; reconnects ${rc}; cmds ${mc}`
+    return `IB Operator ${c}; last activity ${fmtAgeShort(op.last_msg_age_s ?? null)}; reconnects ${rc}; cmds ${mc}`
+  }
+  if (svc.id === 'trading_engine') {
+    const hb = status?.daemon?.heartbeat
+    if (hb?.daemon_alive && hb.last_ts != null) {
+      return `Daemon alive; last heartbeat ${fmtAgeShort(Date.now() / 1000 - hb.last_ts)} ago`
+    }
+    if (hb?.graceful_shutdown_at != null) {
+      return 'Graceful stop recorded (GET /status daemon.heartbeat)'
+    }
+    return 'Monitor /status heartbeat (not Redis ingest meta)'
+  }
+  if (svc.id === 'account_sync_daemon') {
+    const hb = status?.account_sync_daemon?.heartbeat
+    if (hb?.daemon_alive && hb.last_ts != null) {
+      return `Alive; last sync heartbeat ${fmtAgeShort(Date.now() / 1000 - hb.last_ts)} ago`
+    }
+    return 'GET /status account_sync_daemon (PostgreSQL heartbeat)'
   }
   if (svc.redis_meta_key) return `Meta: ${svc.redis_meta_key}`
   return '—'
@@ -323,6 +347,49 @@ export function ingestRedisHealthLamp(
     return { lamp: 'red', title: 'IB Operator Host not connected (Redis bifrost:health:ws_ib_operator).' }
   }
 
+  if (id === 'trading_engine') {
+    const hb = status.daemon?.heartbeat
+    if (hb == null) {
+      return { lamp: 'gray', title: 'Strategy Trading Daemon heartbeat not in GET /status yet.' }
+    }
+    if (hb.daemon_alive === true) {
+      return {
+        lamp: 'green',
+        title: 'Strategy Trading Daemon alive (Monitor GET /status daemon.heartbeat.daemon_alive).',
+      }
+    }
+    if (hb.graceful_shutdown_at != null && Number.isFinite(hb.graceful_shutdown_at)) {
+      return {
+        lamp: 'yellow',
+        title: 'Strategy Trading Daemon not running; graceful_shutdown_at set (SIGTERM or control stop).',
+      }
+    }
+    return {
+      lamp: 'red',
+      title: 'Strategy Trading Daemon not running or heartbeat stale (check systemd / local process).',
+    }
+  }
+
+  if (id === 'account_sync_daemon') {
+    const asd = status.account_sync_daemon?.heartbeat
+    if (asd == null) {
+      return {
+        lamp: 'gray',
+        title: 'Account Sync Daemon block missing from GET /status (PostgreSQL heartbeat or Redis health).',
+      }
+    }
+    if (asd.daemon_alive === true) {
+      return {
+        lamp: 'green',
+        title: 'Account Sync Daemon alive (GET /status account_sync_daemon.heartbeat).',
+      }
+    }
+    return {
+      lamp: 'red',
+      title: 'Account Sync Daemon not running or heartbeat stale (start systemd unit or run script).',
+    }
+  }
+
   return { lamp: 'gray', title: 'Unknown ingest service id for Redis health.' }
 }
 
@@ -371,4 +438,43 @@ export function aggregateIngestServicesLamp(
     return { lamp: 'gray', title: 'Process state unknown for all ingest services.' }
   }
   return { lamp: 'yellow', title: 'Mixed state: some services active, inactive, or unknown. See each row.' }
+}
+
+export const DAEMON_PAGE_SERVICE_IDS = ['trading_engine', 'account_sync_daemon'] as const
+
+export function marketIngestServicesForDaemonAggregate(
+  services: MarketIngestServiceRow[],
+): MarketIngestServiceRow[] {
+  return services.filter(s =>
+    (DAEMON_PAGE_SERVICE_IDS as readonly string[]).includes(s.id),
+  )
+}
+
+export function buildDaemonIngestRows(
+  services: MarketIngestServiceRow[],
+): { svc: MarketIngestServiceRow; category: IngestCategory }[] {
+  return marketIngestServicesForDaemonAggregate(services).map(svc => ({
+    svc,
+    category: categoryForServiceId(svc.id),
+  }))
+}
+
+function minimalMarketIngestRowForId(id: string): MarketIngestServiceRow {
+  return {
+    id,
+    label: '',
+    systemd_unit: '',
+    redis_meta_key: '',
+    process_active: '',
+  }
+}
+
+/** Worst-of roll-up when Ops service list is not loaded yet. */
+export function aggregateDaemonProcessesHealthFromStatus(
+  status: StatusResponse | null | undefined,
+): { lamp: AggregateIngestLamp; title: string } {
+  return aggregateIngestRedisHealthLamp(
+    DAEMON_PAGE_SERVICE_IDS.map(id => minimalMarketIngestRowForId(id)),
+    status,
+  )
 }

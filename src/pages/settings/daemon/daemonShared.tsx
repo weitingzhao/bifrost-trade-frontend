@@ -52,12 +52,13 @@ export function IbServiceRow({ label, svcId, status }: {
 }
 
 export function HeartbeatGroup({
-  hb, label, countdown, intervalSec,
+  hb, label, countdown, intervalSec, staleHint,
 }: {
-  hb: DaemonHeartbeat | { last_ts: number | null; daemon_alive: boolean; heartbeat_interval_sec: number } | null | undefined
+  hb: DaemonHeartbeat | { last_ts: number | null; daemon_alive: boolean; heartbeat_interval_sec: number; graceful_shutdown_at?: number | null } | null | undefined
   label: string
   countdown: number | null
   intervalSec: number
+  staleHint?: string
 }) {
   return (
     <div className="space-y-2">
@@ -69,6 +70,9 @@ export function HeartbeatGroup({
           <Row label="Last heartbeat">
             <span className="font-mono text-xs">{fmtTs(hb.last_ts)}</span>
           </Row>
+          {staleHint && (
+            <p className="text-xs text-muted-foreground">{staleHint}</p>
+          )}
           {hb.daemon_alive && countdown != null && (
             <Row label="Next heartbeat">
               <span className="font-mono text-xs tabular-nums">{countdown}s</span>

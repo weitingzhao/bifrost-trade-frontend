@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { RotateCcw, Trash2, Plus, Layers, RefreshCw } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -16,10 +16,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { ConfirmDialog } from './ConfirmDialog'
+import { CeleryQueueIconButton } from './CeleryQueueIconButton'
 import { BubbleSwitch } from '@/components/positions/charts/BubbleSwitch'
+import { OpsHostEnvPill } from '@/pages/settings/socket/OpsHostEnvPill'
 import type { WorkerProfileInfo, SystemdInstance } from '@/types/ops'
 import { formatQueueLabel } from '@/utils/celeryQueueLabels'
+import { opsHostEnvFromConfigProfile, socketServicesHostColumnDisplay } from '@/utils/ingestOpsShared'
 import { useScaleWorker, useWorkerInstances, useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
+import { useOpsHealth } from '@/hooks/useSocketServices'
+import { useCeleryOps } from './CeleryOpsContext'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -96,12 +101,38 @@ function profileMaxInstances(p: WorkerProfileInfo): number {
 
 const ALL_KEY = '__all__'
 
+function ForceRemoveCheckbox({
+  checked,
+  onChange,
+  disabled,
+}: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  disabled?: boolean
+}) {
+  return (
+    <label className="flex items-start gap-2 text-sm cursor-pointer">
+      <input
+        type="checkbox"
+        className="mt-0.5"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        disabled={disabled}
+      />
+      <span>
+        Force kill stuck worker (SIGKILL) if it is still active after graceful stop
+      </span>
+    </label>
+  )
+}
+
 // ── Confirm state ─────────────────────────────────────────────────────────────
 
 interface ConfirmState {
   title: string
   message: string
   action: () => Promise<void>
+  bodyExtra?: ReactNode
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -115,6 +146,8 @@ export function CeleryWorkerInstancesSection({
   queueFilter = null,
   onClearQueueFilter,
 }: CeleryWorkerInstancesSectionProps) {
+  const { canOperate, token } = useCeleryOps()
+  const { data: opsHealth } = useOpsHealth(token)
   const { data: instancesData, isLoading: instancesLoading } = useWorkerInstances()
   const { data: profilesData } = useWorkerProfiles()
   const { data: workersData } = useOpsWorkers()
@@ -124,7 +157,20 @@ export function CeleryWorkerInstancesSection({
   const [addMaxMode, setAddMaxMode] = useState(true)
   const [scaleMsg, setScaleMsg] = useState<{ text: string; isErr: boolean } | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
-  const [removeAllForce, setRemoveAllForce] = useState(false)
+  const [removeAllForce, setRemoveAllForce] = useState(true)
+
+  const hostColumn = useMemo(
+    () => socketServicesHostColumnDisplay({
+      configProfile: opsHealth?.config_profile ?? null,
+      localControl: opsHealth?.local_control ?? null,
+      marketIngestScriptControl: opsHealth?.market_ingest_script_control === true,
+    }),
+    [opsHealth],
+  )
+  const opsHostPill = useMemo(
+    () => opsHostEnvFromConfigProfile(opsHealth?.config_profile ?? null),
+    [opsHealth?.config_profile],
+  )
 
   const instances = useMemo(() => instancesData?.instances ?? [], [instancesData])
   const profiles = useMemo(() => dedupeProfiles(profilesData?.profiles ?? []), [profilesData])
@@ -136,6 +182,15 @@ export function CeleryWorkerInstancesSection({
     if (!q) return instances
     return instances.filter(inst => unitConsumesQueue(inst.unit, q, profiles))
   }, [instances, queueFilter, profiles])
+
+  function scaleRemoveBodyExtra() {
+    return (
+      <ForceRemoveCheckbox
+        checked={removeAllForce}
+        onChange={setRemoveAllForce}
+      />
+    )
+  }
 
   async function doScale(action: () => Promise<void>) {
     try {
@@ -214,6 +269,7 @@ export function CeleryWorkerInstancesSection({
       message: instIds.length > 0
         ? `Force-remove ${instIds.length} unit(s) on this host, then fill to max_worker_instances per profile.${removeAllForce ? ' Force (SIGKILL).' : ''}`
         : 'No units on this host. Will start workers up to max_worker_instances per profile.',
+      bodyExtra: scaleRemoveBodyExtra(),
       action: async () => {
         for (const iid of instIds) {
           await scaleWorker.mutateAsync({ action: 'remove', instance_id: iid, force: removeAllForce })
@@ -235,6 +291,7 @@ export function CeleryWorkerInstancesSection({
     setConfirm({
       title: `Remove all ${instIds.length} worker instance(s)?`,
       message: `Stop every listed worker unit on this host.${removeAllForce ? ' Force (SIGKILL after graceful).' : ''}`,
+      bodyExtra: scaleRemoveBodyExtra(),
       action: async () => {
         const removed: string[] = []
         const errors: string[] = []
@@ -269,8 +326,9 @@ export function CeleryWorkerInstancesSection({
     setConfirm({
       title: `Remove worker ${iid}?`,
       message: 'Stop this worker unit on this host.',
+      bodyExtra: scaleRemoveBodyExtra(),
       action: async () => {
-        const r = await scaleWorker.mutateAsync({ action: 'remove', instance_id: iid })
+        const r = await scaleWorker.mutateAsync({ action: 'remove', instance_id: iid, force: removeAllForce })
         if (!r.ok) throw new Error(r.error ?? 'Remove failed')
         setScaleMsg({ text: `Removed ${iid}`, isErr: false })
       },
@@ -279,7 +337,6 @@ export function CeleryWorkerInstancesSection({
 
   return (
     <div className="space-y-4">
-      {/* Queue filter banner */}
       {queueFilter && (
         <div className="flex items-center gap-2 text-sm bg-muted/50 rounded px-3 py-1.5">
           <span>Showing instances for queue</span>
@@ -293,7 +350,6 @@ export function CeleryWorkerInstancesSection({
         </div>
       )}
 
-      {/* Scale message */}
       {scaleMsg && (
         <p
           className={`text-xs px-2 py-1 rounded ${scaleMsg.isErr ? 'text-destructive bg-destructive/10' : 'text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950'}`}
@@ -303,7 +359,6 @@ export function CeleryWorkerInstancesSection({
         </p>
       )}
 
-      {/* Instances table */}
       {instancesLoading ? (
         <p className="text-sm text-muted-foreground">Loading instances…</p>
       ) : instances.length === 0 ? (
@@ -313,11 +368,11 @@ export function CeleryWorkerInstancesSection({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-16">Host</TableHead>
                 <TableHead>Profile</TableHead>
                 <TableHead>Queue</TableHead>
                 <TableHead className="w-16 text-right">Cycle</TableHead>
-                <TableHead className="w-24 text-center">State</TableHead>
-                <TableHead className="w-28">Actions</TableHead>
+                <TableHead className="w-20">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -343,6 +398,18 @@ export function CeleryWorkerInstancesSection({
                       <TableCell>
                         <Tooltip>
                           <TooltipTrigger asChild>
+                            <span>
+                              <OpsHostEnvPill pill={opsHostPill} title={hostColumn.title} />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs text-xs">
+                            Host chip = Ops API environment (GET /ops/health), not broker queue scope.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
                             <div>
                               <p className="text-xs font-medium">{profile?.label ?? profileKey ?? '—'}</p>
                               <p className="text-[10px] font-mono text-muted-foreground">{profileKey ?? inst.unit}</p>
@@ -358,50 +425,22 @@ export function CeleryWorkerInstancesSection({
                         )}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs">{cycle}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={
-                            inst.active === 'active' && inst.sub === 'running'
-                              ? 'default'
-                              : inst.active === 'activating'
-                                ? 'secondary'
-                                : 'destructive'
-                          }
-                          className="text-[10px]"
-                        >
-                          {inst.sub || inst.active}
-                        </Badge>
-                      </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0"
-                                disabled={scaleBusy || !iid || !workerTypeKey}
-                                onClick={() => iid && workerTypeKey && handleRecreate(iid, workerTypeKey)}
-                              >
-                                <RefreshCw className="h-3 w-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Recreate (force-remove + add)</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                disabled={scaleBusy || !iid}
-                                onClick={() => iid && handleRemove(iid)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Remove instance</TooltipContent>
-                          </Tooltip>
+                          <CeleryQueueIconButton
+                            variant="instance-recreate"
+                            title="Recreate (force-remove + add)"
+                            aria-label="Recreate worker instance"
+                            disabled={scaleBusy || !canOperate || !iid || !workerTypeKey}
+                            onClick={() => iid && workerTypeKey && handleRecreate(iid, workerTypeKey)}
+                          />
+                          <CeleryQueueIconButton
+                            variant="instance-remove"
+                            title="Remove instance"
+                            aria-label="Remove worker instance"
+                            disabled={scaleBusy || !canOperate || !iid}
+                            onClick={() => iid && handleRemove(iid)}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -413,7 +452,6 @@ export function CeleryWorkerInstancesSection({
         </div>
       )}
 
-      {/* Scale controls */}
       <div className="space-y-3 pt-1 border-t">
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs text-muted-foreground">Profile</span>
@@ -431,7 +469,6 @@ export function CeleryWorkerInstancesSection({
           />
         </div>
 
-        {/* Per-profile: Add controls */}
         {selectedProfile !== ALL_KEY && (
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
@@ -450,7 +487,7 @@ export function CeleryWorkerInstancesSection({
               size="sm"
               variant="outline"
               className="h-7 text-xs gap-1"
-              disabled={scaleBusy}
+              disabled={scaleBusy || !canOperate}
               onClick={() => void handleAdd()}
             >
               <Plus className="h-3 w-3" />
@@ -459,43 +496,30 @@ export function CeleryWorkerInstancesSection({
           </div>
         )}
 
-        {/* ALL: bulk controls */}
         {selectedProfile === ALL_KEY && (
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 text-xs gap-1"
-              disabled={scaleBusy || profiles.length === 0}
+            <CeleryQueueIconButton
+              variant="scale-add-all"
               title="Fill all profiles to max_worker_instances on this host"
+              aria-label="Add all worker instances"
+              disabled={scaleBusy || !canOperate || profiles.length === 0}
               onClick={() => void handleAddAll()}
-            >
-              <Layers className="h-3 w-3" />
-              Add All
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 text-xs gap-1"
-              disabled={scaleBusy || profiles.length === 0}
+            />
+            <CeleryQueueIconButton
+              variant="scale-reset"
               title={instances.length > 0 ? 'Remove all then fill to max per profile' : 'Fill to max per profile'}
+              aria-label="Reset all worker instances"
+              disabled={scaleBusy || !canOperate || profiles.length === 0}
               onClick={handleResetAll}
-            >
-              <RotateCcw className="h-3 w-3" />
-              Reset All
-            </Button>
+            />
             {instances.length > 0 && (
-              <Button
-                size="sm"
-                variant="destructive"
-                className="h-7 text-xs gap-1"
-                disabled={scaleBusy}
+              <CeleryQueueIconButton
+                variant="scale-remove-all"
                 title="Stop every listed worker unit on this host"
+                aria-label="Remove all worker instances"
+                disabled={scaleBusy || !canOperate}
                 onClick={handleRemoveAll}
-              >
-                <Trash2 className="h-3 w-3" />
-                Remove All
-              </Button>
+              />
             )}
             {instances.length > 0 && (
               <div className="flex items-center gap-2 ml-1">
@@ -519,6 +543,7 @@ export function CeleryWorkerInstancesSection({
         open={confirm !== null}
         title={confirm?.title ?? ''}
         message={confirm?.message ?? ''}
+        bodyExtra={confirm?.bodyExtra}
         onConfirm={async () => { await confirm?.action(); setConfirm(null) }}
         onCancel={() => setConfirm(null)}
       />

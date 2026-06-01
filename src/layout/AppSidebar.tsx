@@ -34,9 +34,11 @@ import {
 } from '@/components/ui/popover'
 import { BifrostLogoFull, BifrostLogoMark } from '@/components/BifrostLogo'
 import { LiveNavLamp } from '@/components/layout/LiveNavLamp'
+import { CeleryNavLamp } from '@/components/layout/CeleryNavLamp'
 import { getAllItems, NAV_GROUPS, SETTINGS_ITEM, type NavGroup, type NavItem } from './navConfig'
 
 const LIVE_NAV_PATH = '/market/live'
+const CELERY_NAV_PATH = '/operations/celery'
 
 // ─── Persistence ───
 
@@ -91,6 +93,7 @@ function SubItem({ item, depth = 0 }: { item: NavItem; depth?: number }) {
               <item.icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
               <span className="flex-1">{item.label}</span>
               {item.to === LIVE_NAV_PATH && <LiveNavLamp />}
+              {item.to === CELERY_NAV_PATH && <CeleryNavLamp />}
             </NavLink>
           </SidebarMenuSubButton>
           <button
@@ -128,6 +131,7 @@ function SubItem({ item, depth = 0 }: { item: NavItem; depth?: number }) {
           <item.icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
           <span className="flex-1">{item.label}</span>
           {item.to === LIVE_NAV_PATH && <LiveNavLamp />}
+          {item.to === CELERY_NAV_PATH && <CeleryNavLamp />}
         </NavLink>
       </SidebarMenuSubButton>
     </SidebarMenuSubItem>
@@ -162,6 +166,7 @@ function FlyoutItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: () =
           <item.icon className="h-3.5 w-3.5 shrink-0 opacity-75" />
           <span className="flex-1">{item.label}</span>
           {item.to === LIVE_NAV_PATH && <LiveNavLamp />}
+          {item.to === CELERY_NAV_PATH && <CeleryNavLamp />}
         </NavLink>
         {hasChildren && (
           <button

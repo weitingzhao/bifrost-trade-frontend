@@ -1,16 +1,15 @@
-import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { OpsAuthBar } from '@/pages/settings/socket/OpsAuthBar'
 import { useOpsWorkers } from '@/hooks/useOpsData'
 import { computeCeleryRuntimeLamp, runtimeLampText } from '@/utils/celeryRuntime'
+import { useCeleryOps } from './CeleryOpsContext'
 
 const PAGE_INFO =
   'Queue summary (above tabs): broker + PostgreSQL job counts for every queue; same on all tabs. Queues & Instances: PostgreSQL job queues plus systemd worker instances and Redis/broker. Console & Runtime: live consoles and Celery inspect snapshot.'
@@ -20,6 +19,7 @@ const PAGE_DESCRIPTION =
 
 export function CeleryPageHeader() {
   const { data: workersData } = useOpsWorkers()
+  const { token, caps, setToken, refreshAuth } = useCeleryOps()
   const workers = workersData?.workers ?? []
   const brokerConnected = workersData?.broker.connected
   const runtimeLamp = computeCeleryRuntimeLamp(brokerConnected ?? false, workers)
@@ -43,17 +43,7 @@ export function CeleryPageHeader() {
       }
       description={PAGE_DESCRIPTION}
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary" className="text-xs font-normal">
-            VIEWER
-          </Badge>
-          <span className="text-xs text-muted-foreground hidden sm:inline">
-            Token required for control
-          </span>
-          <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
-            <Link to="/settings/socket">Authenticate</Link>
-          </Button>
-        </div>
+        <OpsAuthBar token={token} caps={caps} onTokenChange={setToken} onRefresh={refreshAuth} />
       }
     />
   )

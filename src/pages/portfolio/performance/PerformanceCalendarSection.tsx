@@ -5,6 +5,7 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import type { PerformanceDayPnLBulkResult, PerformanceResponse } from '@/types/trading'
 import type { PerformanceSummary } from '@/types/trading'
 import { Button } from '@/components/ui/button'
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CalendarSummaryPanel } from '@/components/performance/CalendarSummaryPanel'
 import { CalendarDayDetail } from '@/components/performance/CalendarDayDetail'
@@ -14,6 +15,7 @@ import {
   WEEKDAY_LABELS,
   type CalendarAssetTab,
 } from './performanceCalendarModel'
+import { CALENDAR_HELP } from './performanceConstants'
 import { fmtMoney, fmtMoneyFull, fmtUsd } from './performanceFormatters'
 import styles from './PerformancePage.module.css'
 
@@ -61,6 +63,10 @@ export function PerformanceCalendarSection({
 
   return (
     <section className={cn(styles.sectionPane)} aria-label="Calendar">
+      <h3 className={styles.sectionSubtitle}>
+        Calendar
+        <InfoTooltip text={CALENDAR_HELP} />
+      </h3>
       <div className={styles.calendarWithSummary}>
         <div className={styles.calendarLeft}>
           <div className={styles.systemTabs} role="tablist" aria-label="Calendar asset class">

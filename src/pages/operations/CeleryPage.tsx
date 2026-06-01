@@ -1,7 +1,8 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { PageShell } from '@/components/layout'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { CeleryPageHeader } from './celery/CeleryPageHeader'
 import { CeleryTopSection } from './celery/CeleryTopSection'
@@ -9,7 +10,11 @@ import { CeleryJobQueuesSection } from './celery/CeleryJobQueuesSection'
 import { CeleryWorkerInstancesSection } from './celery/CeleryWorkerInstancesSection'
 import { CelerySidePanel } from './celery/CelerySidePanel'
 import { CelerySectionCard } from './celery/CelerySectionCard'
-import { CeleryTabPlaceholder } from './celery/CeleryTabPlaceholder'
+import { CeleryConsoleRuntimeTab } from './celery/CeleryConsoleRuntimeTab'
+import { CelerySupportTasksSection } from './celery/supportTasks/CelerySupportTasksSection'
+import { CeleryScheduledJobsSection } from './celery/CeleryScheduledJobsSection'
+import { CeleryOpsProvider, useCeleryOps } from './celery/CeleryOpsContext'
+import type { ConsoleTarget } from './celery/CeleryRuntimeSnapshotSection'
 import {
   CELERY_MAIN_TABS,
   isCeleryMainTab,
@@ -21,7 +26,15 @@ import {
   CELERY_MAIN_TABS_LIST,
   CELERY_SPLIT_GRID,
 } from './celery/celeryLayoutClasses'
-import { useWorkerProfiles } from '@/hooks/useOpsData'
+import {
+  applyCeleryUrlPatch,
+  legacyHashToCelerySearchParams,
+  parseCelerySearchParams,
+} from './celery/celeryUrlSync'
+import { resolveConsoleTargetForQueue } from './celery/celeryNavigation'
+import { CELERY_FLASH_ENTER } from './celery/celeryLayoutClasses'
+import { useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
+import { cn } from '@/lib/utils'
 
 const JOB_QUEUES_TOOLTIP =
   'PostgreSQL job rows per worker profile queue. Filter by status, trim old done rows, retry or delete in bulk. Click a queue name in Queue Summary above to jump here with filters.'
@@ -29,37 +42,133 @@ const JOB_QUEUES_TOOLTIP =
 const WORKER_INSTANCES_TOOLTIP =
   'Running systemd/Celery worker units on this Ops host. Instance IDs are profile_key-sequence (Cycle). Queue summary: click a queue cell to filter this list. Profile bubbles: Add Instance / ALL with Add all, Reset all, Remove all. Per row: Recreate / Remove.'
 
-export default function CeleryPage() {
+function CeleryPageContent() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const tabParam = searchParams.get('tab')
-  const initialTab: CeleryMainTab = isCeleryMainTab(tabParam) ? tabParam : 'queues_instances'
+  const urlState = parseCelerySearchParams(searchParams)
+  const mainTab = urlState.tab
+  const brokerQueueFilter = urlState.brokerQueue
 
-  const [mainTab, setMainTab] = useState<CeleryMainTab>(initialTab)
+  const { flash } = useCeleryOps()
+  const { data: workersData } = useOpsWorkers()
+  const workers = useMemo(() => workersData?.workers ?? [], [workersData?.workers])
+  const { data: profilesData } = useWorkerProfiles()
+
   const [jobQueueTarget, setJobQueueTarget] = useState<{
     queue: string
     status?: CeleryStatusFilter
     seq: number
   } | null>(null)
   const [queueFilter, setQueueFilter] = useState<string | null>(null)
-  const jobQueuesSectionRef = useRef<HTMLDivElement>(null)
-  const { data: profilesData } = useWorkerProfiles()
+  const [consoleTarget, setConsoleTarget] = useState<ConsoleTarget>('none')
 
+  const jobQueuesSectionRef = useRef<HTMLDivElement>(null)
+  const consoleSectionRef = useRef<HTMLDivElement>(null)
+  const urlSyncedRef = useRef<string>('')
+
+  // Legacy hash → search params (one-time)
   useEffect(() => {
-    if (isCeleryMainTab(tabParam) && tabParam !== mainTab) {
-      setMainTab(tabParam)
+    const converted = legacyHashToCelerySearchParams(window.location.hash)
+    if (!converted) return
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        converted.forEach((v, k) => next.set(k, v))
+        return next
+      },
+      { replace: true },
+    )
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
+  }, [setSearchParams])
+
+  // URL → local state
+  useEffect(() => {
+    const key = searchParams.toString()
+    if (urlSyncedRef.current === key) return
+    urlSyncedRef.current = key
+
+    const parsed = parseCelerySearchParams(searchParams)
+
+    if (parsed.queue) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync URL deep link to job queue target
+      setQueueFilter(parsed.queue)
+      setJobQueueTarget(prev => ({
+        queue: parsed.queue!,
+        status: parsed.status ?? 'all',
+        seq: (prev?.seq ?? 0) + 1,
+      }))
     }
-  }, [tabParam, mainTab])
+
+    if (parsed.console) {
+      setConsoleTarget(parsed.console)
+    }
+  }, [searchParams])
 
   const handleTabChange = useCallback(
     (value: string) => {
       if (!isCeleryMainTab(value)) return
-      setMainTab(value)
+      setSearchParams(
+        prev => applyCeleryUrlPatch(prev, { tab: value as CeleryMainTab }),
+        { replace: true },
+      )
+    },
+    [setSearchParams],
+  )
+
+  const scrollToConsole = useCallback(() => {
+    requestAnimationFrame(() => {
+      consoleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [])
+
+  const navigateToQueue = useCallback(
+    (queue: string, status?: CeleryStatusFilter) => {
+      setJobQueueTarget(prev => ({ queue, status, seq: (prev?.seq ?? 0) + 1 }))
+      setQueueFilter(queue)
+      setSearchParams(
+        prev =>
+          applyCeleryUrlPatch(prev, {
+            tab: 'queues_instances',
+            queue,
+            status: status ?? null,
+          }),
+        { replace: true },
+      )
+      setTimeout(() => {
+        jobQueuesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 80)
+    },
+    [setSearchParams],
+  )
+
+  const navigateToConsoleForQueue = useCallback(
+    (queue: string) => {
+      const target = resolveConsoleTargetForQueue(queue, workers)
+      setConsoleTarget(target)
+      setSearchParams(
+        prev =>
+          applyCeleryUrlPatch(prev, {
+            tab: 'console_runtime',
+            console: target,
+          }),
+        { replace: true },
+      )
+      scrollToConsole()
+    },
+    [workers, setSearchParams, scrollToConsole],
+  )
+
+  const toggleSupportTasksFilter = useCallback(
+    (brokerKey: string) => {
+      const q = brokerKey.trim()
+      if (!q) return
       setSearchParams(
         prev => {
-          const next = new URLSearchParams(prev)
-          if (value === 'queues_instances') next.delete('tab')
-          else next.set('tab', value)
-          return next
+          const cur = prev.get('broker_queue')
+          const nextFilter = cur === q ? null : q
+          return applyCeleryUrlPatch(prev, {
+            tab: 'support_tasks',
+            brokerQueue: nextFilter,
+          })
         },
         { replace: true },
       )
@@ -67,30 +176,68 @@ export default function CeleryPage() {
     [setSearchParams],
   )
 
-  function navigateToQueue(queue: string, status?: CeleryStatusFilter) {
-    setJobQueueTarget(prev => ({ queue, status, seq: (prev?.seq ?? 0) + 1 }))
-    setQueueFilter(queue)
-    handleTabChange('queues_instances')
-    setTimeout(() => {
-      jobQueuesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 80)
-  }
+  const clearBrokerQueueFilter = useCallback(() => {
+    setSearchParams(prev => applyCeleryUrlPatch(prev, { brokerQueue: null }), { replace: true })
+  }, [setSearchParams])
+
+  const clearWorkerQueueFilter = useCallback(() => {
+    setQueueFilter(null)
+    setSearchParams(
+      prev => applyCeleryUrlPatch(prev, { queue: null, status: null }),
+      { replace: true },
+    )
+  }, [setSearchParams])
+
+  const selectConsole = useCallback(
+    (target: ConsoleTarget) => {
+      setConsoleTarget(target)
+      if (target !== 'none') {
+        setSearchParams(
+          prev =>
+            applyCeleryUrlPatch(prev, {
+              tab: 'console_runtime',
+              console: target,
+            }),
+          { replace: true },
+        )
+      } else {
+        setSearchParams(prev => applyCeleryUrlPatch(prev, { console: 'none' }), { replace: true })
+      }
+    },
+    [setSearchParams],
+  )
 
   return (
     <TooltipProvider>
       <PageShell className="space-y-6">
         <CeleryPageHeader />
 
-        <CeleryTopSection onNavigateToQueue={navigateToQueue} />
+        {flash && (
+          <Alert
+            variant={flash.isErr ? 'destructive' : 'default'}
+            role={flash.isErr ? 'alert' : 'status'}
+            className={cn(
+              CELERY_FLASH_ENTER,
+              !flash.isErr && 'border-green-500/40 bg-green-50 text-green-900 dark:bg-green-950 dark:text-green-100',
+            )}
+          >
+            <AlertDescription>{flash.text}</AlertDescription>
+          </Alert>
+        )}
+
+        <CeleryTopSection
+          onNavigateToQueue={navigateToQueue}
+          onNavigateQueueConsole={navigateToConsoleForQueue}
+          onToggleSupportTasksFilter={toggleSupportTasksFilter}
+          onClearWorkerQueueFilter={clearWorkerQueueFilter}
+          queueFilter={queueFilter}
+          activeSupportTasksFilterKey={brokerQueueFilter}
+        />
 
         <Tabs value={mainTab} onValueChange={handleTabChange}>
           <TabsList className={CELERY_MAIN_TABS_LIST}>
             {CELERY_MAIN_TABS.map(t => (
-              <TabsTrigger
-                key={t.value}
-                value={t.value}
-                className={CELERY_MAIN_TAB_TRIGGER}
-              >
+              <TabsTrigger key={t.value} value={t.value} className={CELERY_MAIN_TAB_TRIGGER}>
                 {t.label}
               </TabsTrigger>
             ))}
@@ -101,68 +248,56 @@ export default function CeleryPage() {
               <CelerySectionCard title="Job Queues" tooltip={JOB_QUEUES_TOOLTIP}>
                 <CeleryJobQueuesSection
                   key={
-                    jobQueueTarget
-                      ? `${jobQueueTarget.queue}-${jobQueueTarget.seq}`
-                      : 'default'
+                    jobQueueTarget ? `${jobQueueTarget.queue}-${jobQueueTarget.seq}` : 'default'
                   }
                   profiles={profilesData?.profiles}
-                  initialQueue={jobQueueTarget?.queue ?? null}
-                  initialStatus={jobQueueTarget?.status ?? 'all'}
+                  initialQueue={jobQueueTarget?.queue ?? urlState.queue}
+                  initialStatus={jobQueueTarget?.status ?? urlState.status ?? 'all'}
                 />
               </CelerySectionCard>
             </div>
 
             <div className={CELERY_SPLIT_GRID}>
-              <CelerySectionCard
-                title="Worker Instances"
-                tooltip={WORKER_INSTANCES_TOOLTIP}
-              >
+              <CelerySectionCard title="Worker Instances" tooltip={WORKER_INSTANCES_TOOLTIP}>
                 <CeleryWorkerInstancesSection
                   queueFilter={queueFilter}
-                  onClearQueueFilter={() => setQueueFilter(null)}
+                  onClearQueueFilter={clearWorkerQueueFilter}
                 />
               </CelerySectionCard>
-
               <CelerySidePanel />
             </div>
           </TabsContent>
 
           <TabsContent value="console_runtime" className="mt-4">
-            <CeleryTabPlaceholder
-              title="Console & Runtime"
-              description="Live broker and worker log streams plus Celery inspect runtime snapshot."
-              plannedFeatures={[
-                'Broker SSE log console and per-worker Redis log subscriptions',
-                'Runtime snapshot cards with relative heartbeat and Dev/Prod pills',
-                'Click a worker card to open its console stream',
-              ]}
+            <CeleryConsoleRuntimeTab
+              consoleTarget={consoleTarget}
+              onSelectConsole={selectConsole}
+              onScrollToConsole={scrollToConsole}
+              consoleSectionRef={consoleSectionRef}
             />
           </TabsContent>
 
           <TabsContent value="support_tasks" className="mt-4">
-            <CeleryTabPlaceholder
-              title="Support Tasks"
-              description="Queue kind/mode matrix and registered Celery task registry from Ops capabilities."
-              plannedFeatures={[
-                'Sortable run_massive_job matrix with queue kind and mode filters',
-                'Registered Celery tasks table (task name, queue, notes)',
-                'Navigate from Queue Summary filter icon into this matrix',
-              ]}
+            <CelerySupportTasksSection
+              mainTab={mainTab}
+              brokerQueueFilter={brokerQueueFilter}
+              onClearBrokerFilter={clearBrokerQueueFilter}
             />
           </TabsContent>
 
           <TabsContent value="scheduled_jobs" className="mt-4">
-            <CeleryTabPlaceholder
-              title="Scheduled Jobs"
-              description="Beat task names from Ops capabilities (distinct from the cron schedule in Queues sidebar)."
-              plannedFeatures={[
-                'Capabilities beat_tasks table with task path and notes',
-                'Cross-reference with Research API cron entries in the sidebar',
-              ]}
-            />
+            <CeleryScheduledJobsSection mainTab={mainTab} />
           </TabsContent>
         </Tabs>
       </PageShell>
     </TooltipProvider>
+  )
+}
+
+export default function CeleryPage() {
+  return (
+    <CeleryOpsProvider>
+      <CeleryPageContent />
+    </CeleryOpsProvider>
   )
 }

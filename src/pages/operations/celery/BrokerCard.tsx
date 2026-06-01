@@ -3,15 +3,22 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { ConfirmDialog } from './ConfirmDialog'
 import { CelerySectionCard } from './CelerySectionCard'
-import { useOpsWorkers, useControlBroker } from '@/hooks/useOpsData'
+import { useCeleryOps } from './CeleryOpsContext'
+import { useBrokerStatusExtended, useControlBroker } from '@/hooks/useOpsData'
 
 const BROKER_TOOLTIP =
-  'Redis broker systemd control on this Ops host. Start / Restart / Stop require an Ops API token with operate permission.'
+  'Redis broker systemd control on this Ops host. Start / Restart / Stop require an Ops API token with admin permission and local systemd management.'
 
 export function BrokerCard() {
-  const { data, isLoading } = useOpsWorkers()
+  const { canAdmin, showFlash } = useCeleryOps()
+  const { data: extData, isLoading: extLoading } = useBrokerStatusExtended()
   const controlBroker = useControlBroker()
   const [confirm, setConfirm] = useState<{
     action: () => Promise<void>
@@ -19,27 +26,38 @@ export function BrokerCard() {
     message: string
   } | null>(null)
 
-  if (isLoading) return <Skeleton className="h-24 rounded-lg" />
-  if (!data) return null
+  if (extLoading) return <Skeleton className="h-24 rounded-lg" />
+  const broker = extData?.broker
+  if (!broker) return null
 
-  const { broker } = data
+  const locallyManaged = extData?.broker.locally_managed === true
+  const canControl = canAdmin && locallyManaged
 
   const brokerBtn = (label: string, action: () => Promise<void>) => (
-    <Button
-      size="sm"
-      variant="outline"
-      className="h-7 text-xs"
-      disabled={controlBroker.isPending}
-      onClick={() =>
-        setConfirm({
-          action,
-          title: `${label} broker`,
-          message: `Are you sure you want to ${label.toLowerCase()} the Redis broker?`,
-        })
-      }
-    >
-      {label}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 text-xs"
+          disabled={controlBroker.isPending || !canControl}
+          onClick={() =>
+            setConfirm({
+              action,
+              title: `${label} broker`,
+              message: `Are you sure you want to ${label.toLowerCase()} the Redis broker?`,
+            })
+          }
+        >
+          {label}
+        </Button>
+      </TooltipTrigger>
+      {!canAdmin ? (
+        <TooltipContent>Requires admin role</TooltipContent>
+      ) : !locallyManaged ? (
+        <TooltipContent>Redis not under local systemd on this Ops host</TooltipContent>
+      ) : null}
+    </Tooltip>
   )
 
   return (
@@ -53,11 +71,30 @@ export function BrokerCard() {
         }
         tooltip={BROKER_TOOLTIP}
         headerExtra={
-          <span className="flex gap-1">
-            {brokerBtn('Start', () => controlBroker.mutateAsync('start').then(() => {}))}
-            {brokerBtn('Restart', () => controlBroker.mutateAsync('restart').then(() => {}))}
-            {brokerBtn('Stop', () => controlBroker.mutateAsync('stop').then(() => {}))}
-          </span>
+          locallyManaged ? (
+            <span className="flex gap-1">
+              {brokerBtn('Start', () =>
+                controlBroker.mutateAsync('start').then(r => {
+                  if (!r.ok) throw new Error(r.error ?? 'Start failed')
+                  showFlash('Broker start sent')
+                }),
+              )}
+              {brokerBtn('Restart', () =>
+                controlBroker.mutateAsync('restart').then(r => {
+                  if (!r.ok) throw new Error(r.error ?? 'Restart failed')
+                  showFlash('Broker restart sent')
+                }),
+              )}
+              {brokerBtn('Stop', () =>
+                controlBroker.mutateAsync('stop').then(r => {
+                  if (!r.ok) throw new Error(r.error ?? 'Stop failed')
+                  showFlash('Broker stopped')
+                }),
+              )}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">Read-only: Redis not under local systemd.</span>
+          )
         }
       >
         <div className="flex flex-wrap gap-4 text-sm">
@@ -67,6 +104,12 @@ export function BrokerCard() {
               {broker.connected ? 'Connected' : 'Disconnected'}
             </Badge>
           </div>
+          {broker.url_masked && (
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">URL</p>
+              <p className="font-mono text-xs">{broker.url_masked}</p>
+            </div>
+          )}
           {broker.used_memory_human && (
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">Memory</p>
@@ -79,10 +122,6 @@ export function BrokerCard() {
               <p className="font-mono text-sm">{broker.connected_clients}</p>
             </div>
           )}
-          <div className="space-y-0.5">
-            <p className="text-xs text-muted-foreground">Workers</p>
-            <p className="font-mono text-sm">{data.count}</p>
-          </div>
         </div>
       </CelerySectionCard>
 
@@ -91,7 +130,11 @@ export function BrokerCard() {
         title={confirm?.title ?? ''}
         message={confirm?.message ?? ''}
         onConfirm={async () => {
-          await confirm?.action()
+          try {
+            await confirm?.action()
+          } catch (e) {
+            showFlash(e instanceof Error ? e.message : 'Broker control failed', true)
+          }
           setConfirm(null)
         }}
         onCancel={() => setConfirm(null)}

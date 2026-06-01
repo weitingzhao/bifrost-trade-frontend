@@ -1,9 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { dangerOutlineBtnClass } from '@/lib/uiClasses'
-import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Table,
@@ -16,6 +13,8 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from './ConfirmDialog'
+import { CeleryQueueIconButton } from './CeleryQueueIconButton'
+import { useCeleryOps } from './CeleryOpsContext'
 import type { WorkerProfileInfo, MassiveJobApiRow, BarsJob } from '@/types/ops'
 import {
   BROKER_QUEUE_STOCKS_IB,
@@ -150,6 +149,143 @@ interface ConfirmState {
   action: () => Promise<void>
 }
 
+// ── Shared bulk toolbar ───────────────────────────────────────────────────────
+
+interface JobQueueBulkToolbarProps {
+  statusFilter: StatusFilter
+  opDisabled: boolean
+  loading: boolean
+  onRefresh: () => void
+  onConfirm: (state: ConfirmState) => void
+  keepLast: string
+  onKeepLastChange: (v: string) => void
+  trimPending: boolean
+  onTrim: () => void
+  bulkActions: {
+    deletePending?: () => Promise<void>
+    deleteRunning?: () => Promise<void>
+    deleteDone?: () => Promise<void>
+    deleteFailed?: () => Promise<void>
+    retryFailed?: () => Promise<void>
+  }
+  trimLabel?: string
+}
+
+function JobQueueBulkToolbar({
+  statusFilter,
+  opDisabled,
+  loading,
+  onRefresh,
+  onConfirm,
+  keepLast,
+  onKeepLastChange,
+  trimPending,
+  onTrim,
+  bulkActions,
+  trimLabel = 'Trim jobs',
+}: JobQueueBulkToolbarProps) {
+  const show = (s: StatusFilter) => statusFilter === 'all' || statusFilter === s
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <CeleryQueueIconButton
+        variant="refresh"
+        title="Refresh job list"
+        aria-label="Refresh job list"
+        disabled={loading}
+        refreshing={loading}
+        onClick={onRefresh}
+      />
+      <div className="flex-1" />
+      {show('pending') && bulkActions.deletePending && (
+        <CeleryQueueIconButton
+          variant="delete-pending"
+          title="Delete all jobs with status pending in this queue slice"
+          aria-label="Delete all jobs with status pending in this queue slice"
+          disabled={opDisabled}
+          onClick={() => onConfirm({
+            title: 'Delete pending jobs',
+            message: 'Permanently delete all pending rows. Cannot be undone.',
+            action: bulkActions.deletePending!,
+          })}
+        />
+      )}
+      {show('running') && bulkActions.deleteRunning && (
+        <CeleryQueueIconButton
+          variant="delete-running"
+          title="Delete all jobs with status running in this queue slice"
+          aria-label="Delete all jobs with status running in this queue slice"
+          disabled={opDisabled}
+          onClick={() => onConfirm({
+            title: 'Delete running jobs',
+            message: 'Removes PostgreSQL rows only. Worker may still execute.',
+            action: bulkActions.deleteRunning!,
+          })}
+        />
+      )}
+      {show('done') && bulkActions.deleteDone && (
+        <CeleryQueueIconButton
+          variant="delete-done"
+          title="Delete all jobs with status done in this queue slice"
+          aria-label="Delete all jobs with status done in this queue slice"
+          disabled={opDisabled}
+          onClick={() => onConfirm({
+            title: 'Delete done jobs',
+            message: 'Permanently delete all done rows. Cannot be undone.',
+            action: bulkActions.deleteDone!,
+          })}
+        />
+      )}
+      {show('failed') && bulkActions.deleteFailed && (
+        <CeleryQueueIconButton
+          variant="delete-failed"
+          title="Delete all jobs with status failed in this queue slice"
+          aria-label="Delete all jobs with status failed in this queue slice"
+          disabled={opDisabled}
+          onClick={() => onConfirm({
+            title: 'Delete failed jobs',
+            message: 'Permanently delete all failed rows. Cannot be undone.',
+            action: bulkActions.deleteFailed!,
+          })}
+        />
+      )}
+      {show('failed') && bulkActions.retryFailed && (
+        <CeleryQueueIconButton
+          variant="refresh"
+          title="Reset up to 500 oldest failed jobs to pending and re-queue Celery"
+          aria-label="Reset failed jobs to pending and re-queue"
+          disabled={opDisabled}
+          onClick={() => onConfirm({
+            title: 'Retry failed jobs',
+            message: 'Reset up to 500 oldest failed jobs to pending and re-queue Celery.',
+            confirmLabel: 'Retry',
+            action: bulkActions.retryFailed!,
+          })}
+        />
+      )}
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-muted-foreground">Keep last</span>
+        <Input
+          type="number"
+          className="h-7 w-20 text-xs"
+          min={1}
+          max={50000}
+          value={keepLast}
+          onChange={e => onKeepLastChange(e.target.value)}
+          aria-label="Keep last N jobs when trimming"
+        />
+        <CeleryQueueIconButton
+          variant="trim"
+          title={trimLabel}
+          aria-label={trimLabel}
+          disabled={trimPending || opDisabled}
+          onClick={onTrim}
+        />
+      </div>
+    </div>
+  )
+}
+
 // ── Inner tab panels ──────────────────────────────────────────────────────────
 
 interface MassiveJobsPanelProps {
@@ -161,6 +297,8 @@ interface MassiveJobsPanelProps {
 }
 
 function MassiveJobsPanel({ tab, statusFilter, limit, onConfirm, onMsg }: MassiveJobsPanelProps) {
+  const { canOperate } = useCeleryOps()
+  const opDisabled = !canOperate
   const filter = useMemo(
     () => ({
       limit,
@@ -171,120 +309,63 @@ function MassiveJobsPanel({ tab, statusFilter, limit, onConfirm, onMsg }: Massiv
     [limit, statusFilter, tab.celeryQueue],
   )
 
-  const { data, isLoading, isError, error } = useMassiveJobs(filter)
+  const { data, isLoading, isError, error, refetch, isFetching } = useMassiveJobs(filter)
   const retryJob = useRetryMassiveJob()
   const deleteAll = useDeleteAllMassiveJobs()
   const retryFailed = useRetryFailedMassiveJobs()
   const trim = useTrimMassiveJobs()
   const [keepLast, setKeepLast] = useState('100')
 
-  const show = (s: StatusFilter) => statusFilter === 'all' || statusFilter === s
-
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2 items-center">
-        {show('pending') && (
-          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
-            disabled={deleteAll.isPending}
-            onClick={() => onConfirm({
-              title: `Delete pending jobs (${tab.celeryQueue})`,
-              message: 'Permanently delete all pending rows. Cannot be undone.',
-              action: async () => {
-                const r = await deleteAll.mutateAsync({ status: 'pending', celeryQueue: tab.celeryQueue })
-                onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
-              },
-            })}>
-            Del Pending
-          </Button>
-        )}
-        {show('running') && (
-          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
-            disabled={deleteAll.isPending}
-            onClick={() => onConfirm({
-              title: `Delete running jobs (${tab.celeryQueue})`,
-              message: 'Removes PostgreSQL rows only. Worker may still execute.',
-              action: async () => {
-                const r = await deleteAll.mutateAsync({ status: 'running', celeryQueue: tab.celeryQueue })
-                onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
-              },
-            })}>
-            Del Running
-          </Button>
-        )}
-        {show('done') && (
-          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
-            disabled={deleteAll.isPending}
-            onClick={() => onConfirm({
-              title: `Delete done jobs (${tab.celeryQueue})`,
-              message: 'Permanently delete all done rows. Cannot be undone.',
-              action: async () => {
-                const r = await deleteAll.mutateAsync({ status: 'done', celeryQueue: tab.celeryQueue })
-                onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
-              },
-            })}>
-            Del Done
-          </Button>
-        )}
-        {show('failed') && (
-          <>
-            <Button size="sm" variant="destructive" className="h-7 text-xs"
-              disabled={deleteAll.isPending}
-              onClick={() => onConfirm({
-                title: `Delete failed jobs (${tab.celeryQueue})`,
-                message: 'Permanently delete all failed rows. Cannot be undone.',
-                action: async () => {
-                  const r = await deleteAll.mutateAsync({ status: 'failed', celeryQueue: tab.celeryQueue })
-                  onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
-                },
-              })}>
-              Del Failed
-            </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs"
-              disabled={retryFailed.isPending}
-              onClick={() => onConfirm({
-                title: `Retry failed jobs (${tab.celeryQueue})`,
-                message: 'Reset up to 500 oldest failed jobs to pending and re-queue Celery.',
-                confirmLabel: 'Retry',
-                action: async () => {
-                  const r = await retryFailed.mutateAsync({ celeryQueue: tab.celeryQueue, limit: 500 })
-                  onMsg(
-                    `Reset ${r.reset ?? 0}, enqueued ${r.enqueued ?? 0}${r.enqueue_errors?.length ? ' (some enqueue errors)' : ''}.`,
-                    Boolean(r.enqueue_errors?.length),
-                  )
-                },
-              })}>
-              ↺ Retry Failed
-            </Button>
-          </>
-        )}
-        <div className="flex items-center gap-1 ml-auto">
-          <span className="text-xs text-muted-foreground">Keep last</span>
-          <Input
-            type="number"
-            className="h-7 w-20 text-xs"
-            min={1}
-            max={50000}
-            value={keepLast}
-            onChange={e => setKeepLast(e.target.value)}
-          />
-          <Button size="sm" variant="ghost" className="h-7 text-xs"
-            disabled={trim.isPending}
-            onClick={() => {
-              const n = parseInt(keepLast, 10)
-              if (!Number.isFinite(n) || n < 1) { onMsg('Enter a number between 1 and 50000.', true); return }
-              onConfirm({
-                title: `Trim jobs (${tab.celeryQueue})`,
-                message: `Keep only the newest ${n} rows. Older rows will be deleted.`,
-                action: async () => {
-                  const r = await trim.mutateAsync({ keep: n, celeryQueue: tab.celeryQueue })
-                  onMsg(`Removed ${r.deleted} older job(s); kept ${n} newest.`, !r.ok)
-                },
-              })
-            }}>
-            Trim
-          </Button>
-        </div>
-      </div>
+      <JobQueueBulkToolbar
+        statusFilter={statusFilter}
+        opDisabled={opDisabled}
+        loading={isFetching}
+        onRefresh={() => void refetch()}
+        onConfirm={onConfirm}
+        keepLast={keepLast}
+        onKeepLastChange={setKeepLast}
+        trimPending={trim.isPending}
+        trimLabel={`Trim jobs (${tab.celeryQueue})`}
+        onTrim={() => {
+          const n = parseInt(keepLast, 10)
+          if (!Number.isFinite(n) || n < 1) { onMsg('Enter a number between 1 and 50000.', true); return }
+          onConfirm({
+            title: `Trim jobs (${tab.celeryQueue})`,
+            message: `Keep only the newest ${n} rows. Older rows will be deleted.`,
+            action: async () => {
+              const r = await trim.mutateAsync({ keep: n, celeryQueue: tab.celeryQueue })
+              onMsg(`Removed ${r.deleted} older job(s); kept ${n} newest.`, !r.ok)
+            },
+          })
+        }}
+        bulkActions={{
+          deletePending: async () => {
+            const r = await deleteAll.mutateAsync({ status: 'pending', celeryQueue: tab.celeryQueue })
+            onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
+          },
+          deleteRunning: async () => {
+            const r = await deleteAll.mutateAsync({ status: 'running', celeryQueue: tab.celeryQueue })
+            onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
+          },
+          deleteDone: async () => {
+            const r = await deleteAll.mutateAsync({ status: 'done', celeryQueue: tab.celeryQueue })
+            onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
+          },
+          deleteFailed: async () => {
+            const r = await deleteAll.mutateAsync({ status: 'failed', celeryQueue: tab.celeryQueue })
+            onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
+          },
+          retryFailed: async () => {
+            const r = await retryFailed.mutateAsync({ celeryQueue: tab.celeryQueue, limit: 500 })
+            onMsg(
+              `Reset ${r.reset ?? 0}, enqueued ${r.enqueued ?? 0}${r.enqueue_errors?.length ? ' (some enqueue errors)' : ''}.`,
+              Boolean(r.enqueue_errors?.length),
+            )
+          },
+        }}
+      />
 
       {isError && (
         <Alert variant="destructive">
@@ -334,19 +415,17 @@ function MassiveJobsPanel({ tab, statusFilter, limit, onConfirm, onMsg }: Massiv
                       </TableCell>
                       <TableCell>
                         {(row.status || '').toLowerCase() === 'failed' ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 px-2 text-xs"
-                            disabled={retryJob.isPending}
+                          <CeleryQueueIconButton
+                            variant="refresh"
+                            title={`Retry job ${row.job_id}`}
+                            aria-label={`Retry job ${row.job_id}`}
+                            disabled={retryJob.isPending || opDisabled}
                             onClick={() => {
                               void retryJob.mutateAsync(row.job_id).then(r => {
                                 onMsg(r.ok ? `Job ${row.job_id} reset to pending.` : (r.error ?? 'Retry failed'), !r.ok)
                               })
                             }}
-                          >
-                            Retry
-                          </Button>
+                          />
                         ) : (
                           <span className="text-muted-foreground text-xs">—</span>
                         )}
@@ -371,6 +450,8 @@ interface BarsJobsPanelProps {
 }
 
 function BarsJobsPanel({ statusFilter, limit, onConfirm, onMsg }: BarsJobsPanelProps) {
+  const { canOperate } = useCeleryOps()
+  const opDisabled = !canOperate
   const filter = useMemo(
     () => ({
       limit,
@@ -380,120 +461,63 @@ function BarsJobsPanel({ statusFilter, limit, onConfirm, onMsg }: BarsJobsPanelP
     [limit, statusFilter],
   )
 
-  const { data, isLoading, isError, error } = useBarsJobs(filter)
+  const { data, isLoading, isError, error, refetch, isFetching } = useBarsJobs(filter)
   const retryJob = useRetryBarsJob()
   const deleteAll = useDeleteAllBarsJobs()
   const retryFailed = useRetryFailedBarsJobs()
   const trim = useTrimBarsJobs()
   const [keepLast, setKeepLast] = useState('100')
 
-  const show = (s: StatusFilter) => statusFilter === 'all' || statusFilter === s
-
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2 items-center">
-        {show('pending') && (
-          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
-            disabled={deleteAll.isPending}
-            onClick={() => onConfirm({
-              title: 'Delete pending bars jobs',
-              message: 'Permanently delete all pending bars backfill rows.',
-              action: async () => {
-                const r = await deleteAll.mutateAsync({ status: 'pending' })
-                onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
-              },
-            })}>
-            Del Pending
-          </Button>
-        )}
-        {show('running') && (
-          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
-            disabled={deleteAll.isPending}
-            onClick={() => onConfirm({
-              title: 'Delete running bars jobs',
-              message: 'Removes PostgreSQL rows only. Worker may still execute.',
-              action: async () => {
-                const r = await deleteAll.mutateAsync({ status: 'running' })
-                onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
-              },
-            })}>
-            Del Running
-          </Button>
-        )}
-        {show('done') && (
-          <Button size="sm" variant="outline" className={cn('h-7 text-xs', dangerOutlineBtnClass)}
-            disabled={deleteAll.isPending}
-            onClick={() => onConfirm({
-              title: 'Delete done bars jobs',
-              message: 'Permanently delete all done rows.',
-              action: async () => {
-                const r = await deleteAll.mutateAsync({ status: 'done' })
-                onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
-              },
-            })}>
-            Del Done
-          </Button>
-        )}
-        {show('failed') && (
-          <>
-            <Button size="sm" variant="destructive" className="h-7 text-xs"
-              disabled={deleteAll.isPending}
-              onClick={() => onConfirm({
-                title: 'Delete failed bars jobs',
-                message: 'Permanently delete all failed rows.',
-                action: async () => {
-                  const r = await deleteAll.mutateAsync({ status: 'failed' })
-                  onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
-                },
-              })}>
-              Del Failed
-            </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs"
-              disabled={retryFailed.isPending}
-              onClick={() => onConfirm({
-                title: 'Retry failed bars jobs',
-                message: 'Reset up to 500 oldest failed jobs to pending and re-queue.',
-                confirmLabel: 'Retry',
-                action: async () => {
-                  const r = await retryFailed.mutateAsync(500)
-                  onMsg(
-                    `Reset ${r.reset ?? 0}, enqueued ${r.enqueued ?? 0}.`,
-                    Boolean(r.enqueue_errors?.length),
-                  )
-                },
-              })}>
-              ↺ Retry Failed
-            </Button>
-          </>
-        )}
-        <div className="flex items-center gap-1 ml-auto">
-          <span className="text-xs text-muted-foreground">Keep last</span>
-          <Input
-            type="number"
-            className="h-7 w-20 text-xs"
-            min={1}
-            max={50000}
-            value={keepLast}
-            onChange={e => setKeepLast(e.target.value)}
-          />
-          <Button size="sm" variant="ghost" className="h-7 text-xs"
-            disabled={trim.isPending}
-            onClick={() => {
-              const n = parseInt(keepLast, 10)
-              if (!Number.isFinite(n) || n < 1) { onMsg('Enter a number between 1 and 50000.', true); return }
-              onConfirm({
-                title: 'Trim bars jobs',
-                message: `Keep only the newest ${n} rows by ID.`,
-                action: async () => {
-                  const r = await trim.mutateAsync(n)
-                  onMsg(`Removed ${r.deleted} older job(s); kept ${n} newest.`, !r.ok)
-                },
-              })
-            }}>
-            Trim
-          </Button>
-        </div>
-      </div>
+      <JobQueueBulkToolbar
+        statusFilter={statusFilter}
+        opDisabled={opDisabled}
+        loading={isFetching}
+        onRefresh={() => void refetch()}
+        onConfirm={onConfirm}
+        keepLast={keepLast}
+        onKeepLastChange={setKeepLast}
+        trimPending={trim.isPending}
+        trimLabel="Trim bars jobs"
+        onTrim={() => {
+          const n = parseInt(keepLast, 10)
+          if (!Number.isFinite(n) || n < 1) { onMsg('Enter a number between 1 and 50000.', true); return }
+          onConfirm({
+            title: 'Trim bars jobs',
+            message: `Keep only the newest ${n} rows by ID.`,
+            action: async () => {
+              const r = await trim.mutateAsync(n)
+              onMsg(`Removed ${r.deleted} older job(s); kept ${n} newest.`, !r.ok)
+            },
+          })
+        }}
+        bulkActions={{
+          deletePending: async () => {
+            const r = await deleteAll.mutateAsync({ status: 'pending' })
+            onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
+          },
+          deleteRunning: async () => {
+            const r = await deleteAll.mutateAsync({ status: 'running' })
+            onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
+          },
+          deleteDone: async () => {
+            const r = await deleteAll.mutateAsync({ status: 'done' })
+            onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
+          },
+          deleteFailed: async () => {
+            const r = await deleteAll.mutateAsync({ status: 'failed' })
+            onMsg(`Deleted ${r.deleted} job(s).`, !r.ok)
+          },
+          retryFailed: async () => {
+            const r = await retryFailed.mutateAsync(500)
+            onMsg(
+              `Reset ${r.reset ?? 0}, enqueued ${r.enqueued ?? 0}.`,
+              Boolean(r.enqueue_errors?.length),
+            )
+          },
+        }}
+      />
 
       {isError && (
         <Alert variant="destructive">
@@ -537,19 +561,17 @@ function BarsJobsPanel({ statusFilter, limit, onConfirm, onMsg }: BarsJobsPanelP
                     <TableCell className="text-xs text-muted-foreground">{fmtTs(row.updated_ts)}</TableCell>
                     <TableCell>
                       {(row.status || '').toLowerCase() === 'failed' ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-6 px-2 text-xs"
-                          disabled={retryJob.isPending}
+                        <CeleryQueueIconButton
+                          variant="refresh"
+                          title={`Retry job ${row.job_id}`}
+                          aria-label={`Retry job ${row.job_id}`}
+                          disabled={retryJob.isPending || opDisabled}
                           onClick={() => {
                             void retryJob.mutateAsync(row.job_id).then(r => {
                               onMsg(r.ok ? `Job ${row.job_id} reset to pending.` : (r.error ?? 'Retry failed'), !r.ok)
                             })
                           }}
-                        >
-                          Retry
-                        </Button>
+                        />
                       ) : (
                         <span className="text-muted-foreground text-xs">—</span>
                       )}

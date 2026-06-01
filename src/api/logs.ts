@@ -61,8 +61,15 @@ export const LOG_APIS = {
   massive_ws:       makeLogApi(monitor, '/api/massive-ws/logs'),
 } as const
 
+/** Redis console streams for long-running daemon processes (not in global LOG_APIS). */
+export const DAEMON_LOG_APIS = {
+  daemon_trading: makeLogApi(monitor, '/api/daemon/logs'),
+  account_sync:   makeLogApi(monitor, '/api/account-sync-daemon/logs'),
+} as const
+
 export type LogSourceKey = keyof typeof LOG_APIS
-export type LogSourceGroup = 'api' | 'edge'
+export type DaemonLogSourceKey = keyof typeof DAEMON_LOG_APIS
+export type LogSourceGroup = 'api' | 'edge' | 'daemon'
 
 export interface LogSourceGroupDef {
   key: LogSourceGroup
@@ -70,15 +77,16 @@ export interface LogSourceGroupDef {
 }
 
 export const LOG_SOURCE_GROUPS: LogSourceGroupDef[] = [
-  { key: 'api',  label: 'API Services' },
-  { key: 'edge', label: 'Edge Services' },
+  { key: 'api',    label: 'API Services' },
+  { key: 'edge',   label: 'Edge Services' },
+  { key: 'daemon', label: 'Daemon' },
 ]
 
 export interface LogSourceDef {
-  key: LogSourceKey
+  key: string
   label: string
   api: LogApi
-  group: LogSourceGroup
+  group?: LogSourceGroup
 }
 
 export const LOG_SOURCES: LogSourceDef[] = [
@@ -95,4 +103,89 @@ export const LOG_SOURCES: LogSourceDef[] = [
   { key: 'ib_account_agent', label: 'IB Acct Agent', api: LOG_APIS.ib_account_agent, group: 'edge' },
   { key: 'ib_operator',      label: 'IB Operator',   api: LOG_APIS.ib_operator,      group: 'edge' },
   { key: 'massive_ws',       label: 'Massive WS',    api: LOG_APIS.massive_ws,       group: 'edge' },
+  // Daemon — Redis console streams (Strategy Trading + Account Sync)
+  { key: 'daemon_trading', label: 'Strategy Trading', api: DAEMON_LOG_APIS.daemon_trading, group: 'daemon' },
+  { key: 'account_sync',   label: 'Account Sync',     api: DAEMON_LOG_APIS.account_sync,   group: 'daemon' },
 ]
+
+/** Socket Services page — fixed 4-source log console. */
+export const SOCKET_LOG_SOURCES: LogSourceDef[] = LOG_SOURCES.filter(s =>
+  (['massive_ws', 'ib_operator', 'ib_ingestor', 'ib_account_agent'] as LogSourceKey[]).includes(s.key as LogSourceKey),
+)
+
+/** Daemon Redis consoles (subset of global LOG_SOURCES). */
+export const DAEMON_LOG_SOURCES: LogSourceDef[] = LOG_SOURCES.filter(s => s.group === 'daemon')
+
+async function clearLogStream(path: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const r = await fetch(`${monitor()}${path}`, { method: 'DELETE' })
+    const j = await r.json().catch(() => ({})) as { ok?: boolean; error?: string }
+    return { ok: r.ok && j.ok !== false, error: j.error }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Clear failed' }
+  }
+}
+
+export async function clearMassiveWsLogs(): Promise<{ ok: boolean; error?: string }> {
+  return clearLogStream('/api/massive-ws/logs')
+}
+
+export async function clearIbOperatorLogs(): Promise<{ ok: boolean; error?: string }> {
+  return clearLogStream('/api/ib-operator/logs')
+}
+
+export async function clearIbIngestorLogs(): Promise<{ ok: boolean; error?: string }> {
+  return clearLogStream('/api/ib-ingestor/logs')
+}
+
+export async function clearIbAccountAgentLogs(): Promise<{ ok: boolean; error?: string }> {
+  return clearLogStream('/api/ib-account-agent/logs')
+}
+
+export async function clearDaemonTradingLogs(): Promise<{ ok: boolean; error?: string }> {
+  return clearLogStream('/api/daemon/logs')
+}
+
+export async function clearAccountSyncDaemonLogs(): Promise<{ ok: boolean; error?: string }> {
+  return clearLogStream('/api/account-sync-daemon/logs')
+}
+
+export async function clearAllDaemonLogs(): Promise<{ ok: boolean; errors: string[] }> {
+  const results = await Promise.allSettled([
+    clearDaemonTradingLogs(),
+    clearAccountSyncDaemonLogs(),
+  ])
+  const errors: string[] = []
+  let ok = true
+  for (const r of results) {
+    if (r.status === 'rejected') {
+      ok = false
+      errors.push(r.reason instanceof Error ? r.reason.message : String(r.reason))
+    } else if (!r.value.ok) {
+      ok = false
+      if (r.value.error) errors.push(r.value.error)
+    }
+  }
+  return { ok, errors }
+}
+
+export async function clearAllSocketServiceLogs(): Promise<{ ok: boolean; errors: string[] }> {
+  const results = await Promise.allSettled([
+    clearMassiveWsLogs(),
+    clearIbOperatorLogs(),
+    clearIbIngestorLogs(),
+    clearIbAccountAgentLogs(),
+  ])
+  const errors: string[] = []
+  let ok = true
+  for (const r of results) {
+    if (r.status === 'rejected') {
+      ok = false
+      errors.push(r.reason instanceof Error ? r.reason.message : String(r.reason))
+    } else if (!r.value.ok) {
+      ok = false
+      if (r.value.error) errors.push(r.value.error)
+    }
+  }
+  return { ok, errors }
+}

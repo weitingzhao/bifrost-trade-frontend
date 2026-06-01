@@ -118,6 +118,12 @@ export function dedupedQueueSummaryTotals(rows: QueueSummaryRow[]): {
   }
 }
 
+/** Header badge: deduped Redis pending_broker total (same as Queue summary Total R column). */
+export function celeryQueuePendingBadgeTotal(rows: QueueSummaryRow[]): number | null {
+  const t = dedupedQueueSummaryTotals(rows)
+  return t.pending_broker
+}
+
 /** Coverage lamp for a single queue. */
 export function queueCoverageLamp(
   queueName: string,

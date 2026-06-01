@@ -1,10 +1,13 @@
-import { Bell, Moon, PanelTop, Sun, SunMoon } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
+import { Bell, Moon, PanelTop, Sun, SunMoon, Terminal } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { StatusLamp } from '@/components/StatusLamp'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
+import { useCeleryHeaderMetrics } from '@/hooks/useCeleryHeaderMetrics'
+import { cn } from '@/lib/utils'
 
 const PAGE_TITLES: Record<string, string> = {
   '/market/live': 'Live',
@@ -63,8 +66,17 @@ interface AppHeaderProps {
 
 export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: AppHeaderProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const { mode, cycleMode } = useThemeMode()
+  const celeryMetrics = useCeleryHeaderMetrics(true)
   const title = PAGE_TITLES[location.pathname] ?? 'Bifrost Trade'
+  const onCeleryPage = location.pathname === '/operations/celery'
+  const pendingLabel =
+    celeryMetrics.pendingTotal != null
+      ? celeryMetrics.pendingTotal > 99
+        ? '99+'
+        : String(celeryMetrics.pendingTotal)
+      : '—'
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card px-4">
@@ -73,6 +85,27 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
       <span className="font-medium text-sm">{title}</span>
 
       <div className="ml-auto flex items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                'h-8 gap-1.5 px-2 font-mono text-xs tabular-nums',
+                onCeleryPage && 'bg-muted',
+              )}
+              onClick={() => navigate('/operations/celery')}
+              aria-label="Operations Celery"
+              title="Celery workers and queue pending — Operations → Celery"
+            >
+              <Terminal className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+              <StatusLamp lamp={celeryMetrics.lamp} className="h-2 w-2" />
+              <span className="text-muted-foreground">{pendingLabel}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{celeryMetrics.title}</TooltipContent>
+        </Tooltip>
+
         {onToggleNavMode && (
           <Tooltip>
             <TooltipTrigger asChild>

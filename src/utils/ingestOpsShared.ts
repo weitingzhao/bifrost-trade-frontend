@@ -188,3 +188,21 @@ export function ingestActionButtonsForState(processActive: string): { showStart:
   }
   return { showStart: true, showStop: false }
 }
+
+/** Richer Ops error text when Account Sync Daemon start/stop fails. */
+export function formatAccountSyncOpsError(raw: string): string {
+  const m = raw.trim()
+  if (m.includes('exited immediately')) {
+    return `${m} Open logs/account-sync-daemon.log under the project. Typical causes: PostgreSQL or Redis URL wrong, IB Account Agent stream unavailable, or import/config errors.`
+  }
+  if (m.includes('ingest_already_running')) {
+    return `${m} Use Stop first, or Restart instead of Start.`
+  }
+  if (m.includes('not found at') && m.includes('run_account_sync_daemon')) {
+    return `${m} Ensure you run Ops from the repo root and scripts/systemd/run_account_sync_daemon.py exists.`
+  }
+  if (m.includes('sudo') && m.includes('NOPASSWD')) {
+    return `${m} Linux Ops needs passwordless sudo for systemctl. On macOS, enable script-based control or start the daemon manually.`
+  }
+  return m
+}

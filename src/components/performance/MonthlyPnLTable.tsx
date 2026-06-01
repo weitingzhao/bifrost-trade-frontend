@@ -24,6 +24,18 @@ function unrealizedColorClass(value: number): string {
   return 'text-cyan-600 dark:text-cyan-400'
 }
 
+function signedNotionalClass(val: number): string {
+  if (Math.abs(val) < 0.005) return ''
+  if (val > 0) return styles.notionalPos
+  if (val < 0) return styles.notionalNeg
+  return ''
+}
+
+function cashNotionalClass(val: number): string {
+  if (Math.abs(val) < 0.005) return ''
+  return styles.notionalCashLike
+}
+
 interface DayRow {
   date: string
   optR: number
@@ -195,11 +207,11 @@ function MonthSection({
         </td>
         <td className={pnlColorClass(sums.optR)}>{fmtVal(sums.optR)}</td>
         <td className={unrealizedColorClass(sums.optU)}>{fmtVal(sums.optU)}</td>
-        <td className={pnlColorClass(sums.stocksN)}>{fmtVal(sums.stocksN)}</td>
+        <td className={signedNotionalClass(sums.stocksN)}>{fmtVal(sums.stocksN)}</td>
         <td className={pnlColorClass(sums.stocksR)}>{fmtVal(sums.stocksR)}</td>
-        <td className={pnlColorClass(sums.fiN)}>{fmtVal(sums.fiN)}</td>
+        <td className={signedNotionalClass(sums.fiN)}>{fmtVal(sums.fiN)}</td>
         <td className={pnlColorClass(sums.fiR)}>{fmtVal(sums.fiR)}</td>
-        <td className={pnlColorClass(sums.cashN)}>{fmtVal(sums.cashN)}</td>
+        <td className={cashNotionalClass(sums.cashN)}>{fmtVal(sums.cashN)}</td>
         <td className={pnlColorClass(sums.cashR)}>{fmtVal(sums.cashR)}</td>
       </tr>
       {expanded &&
@@ -208,11 +220,11 @@ function MonthSection({
             <td className="pl-7 whitespace-nowrap text-muted-foreground">{day.date}</td>
             <td className={pnlColorClass(day.optR)}>{fmtVal(day.optR)}</td>
             <td className={unrealizedColorClass(day.optU)}>{fmtVal(day.optU)}</td>
-            <td className={pnlColorClass(day.stocksN)}>{fmtVal(day.stocksN)}</td>
+            <td className={signedNotionalClass(day.stocksN)}>{fmtVal(day.stocksN)}</td>
             <td className={pnlColorClass(day.stocksR)}>{fmtVal(day.stocksR)}</td>
-            <td className={pnlColorClass(day.fiN)}>{fmtVal(day.fiN)}</td>
+            <td className={signedNotionalClass(day.fiN)}>{fmtVal(day.fiN)}</td>
             <td className={pnlColorClass(day.fiR)}>{fmtVal(day.fiR)}</td>
-            <td className={pnlColorClass(day.cashN)}>{fmtVal(day.cashN)}</td>
+            <td className={cashNotionalClass(day.cashN)}>{fmtVal(day.cashN)}</td>
             <td className={pnlColorClass(day.cashR)}>{fmtVal(day.cashR)}</td>
           </tr>
         ))}

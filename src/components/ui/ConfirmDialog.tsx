@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import type { ReactNode } from 'react'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -14,6 +15,7 @@ export interface ConfirmDialogProps {
   message: string
   confirmLabel?: string
   confirming?: boolean
+  bodyExtra?: ReactNode
   onConfirm: () => void
   onCancel: () => void
 }
@@ -24,6 +26,7 @@ export function ConfirmDialog({
   message,
   confirmLabel = 'Confirm',
   confirming = false,
+  bodyExtra,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -34,6 +37,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{message}</DialogDescription>
         </DialogHeader>
+        {bodyExtra ? <div className="py-1">{bodyExtra}</div> : null}
         <DialogFooter>
           <Button variant="outline" disabled={confirming} onClick={onCancel}>
             Cancel

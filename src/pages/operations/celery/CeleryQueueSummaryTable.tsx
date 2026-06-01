@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
-import { Hourglass, Loader2, Trash2, XCircle, RotateCcw } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Filter } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,7 +25,8 @@ import type {
 } from '@/types/ops'
 import { formatQueueLabel, brokerQueueKeyTitle } from '@/utils/celeryQueueLabels'
 import { queueCoverageLamp, dedupedQueueSummaryTotals, type CeleryRuntimeLamp } from '@/utils/celeryRuntime'
-import { dangerGhostBtnClass } from '@/lib/uiClasses'
+import { CeleryQueueIconButton } from './CeleryQueueIconButton'
+import { CELERY_QUEUE_ROW_FILTERED } from './celeryLayoutClasses'
 
 type ActionMode = 'pending' | 'running' | 'done' | 'failed'
 
@@ -42,77 +44,108 @@ function queueDisplayName(qs: QueueSummaryRow): string {
 // ── Icon action buttons ───────────────────────────────────────────────────────
 
 interface ActionCellProps {
+  mode: ActionMode
   onDeletePending: () => void
   onDeleteRunning: () => void
   onDeleteDone: () => void
   onDeleteFailed: () => void
   onResetFailed: () => void
   busy: boolean
+  canOperate: boolean
 }
 
 function QueueActionCell({
+  mode,
   onDeletePending,
   onDeleteRunning,
   onDeleteDone,
   onDeleteFailed,
   onResetFailed,
   busy,
+  canOperate,
 }: ActionCellProps) {
-  function iconBtn(
-    icon: React.ReactNode,
-    title: string,
-    onClick: () => void,
-    extraClass = '',
-  ) {
+  const disabled = busy || !canOperate
+  const deniedHint = !canOperate ? 'Requires operator role' : undefined
+
+  function wrap(node: React.ReactNode) {
+    if (deniedHint) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>{node}</TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">{deniedHint}</TooltipContent>
+        </Tooltip>
+      )
+    }
+    return node
+  }
+
+  if (mode === 'running') {
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="sm"
-            variant="ghost"
-            className={`h-6 w-6 p-0 ${extraClass}`}
-            disabled={busy}
-            onClick={onClick}
-          >
-            {icon}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">{title}</TooltipContent>
-      </Tooltip>
+      <div className="flex items-center justify-end gap-1">
+        {wrap(
+          <CeleryQueueIconButton
+            variant="delete-running"
+            title="Delete all jobs with status running in this queue slice"
+            aria-label="Delete all jobs with status running in this queue slice"
+            disabled={disabled}
+            onClick={onDeleteRunning}
+          />,
+        )}
+      </div>
+    )
+  }
+
+  if (mode === 'done') {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        {wrap(
+          <CeleryQueueIconButton
+            variant="delete-done"
+            title="Delete all jobs with status done in this queue slice"
+            aria-label="Delete all jobs with status done in this queue slice"
+            disabled={disabled}
+            onClick={onDeleteDone}
+          />,
+        )}
+      </div>
+    )
+  }
+
+  if (mode === 'failed') {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        {wrap(
+          <CeleryQueueIconButton
+            variant="delete-failed"
+            title="Delete all jobs with status failed in this queue slice"
+            aria-label="Delete all jobs with status failed in this queue slice"
+            disabled={disabled}
+            onClick={onDeleteFailed}
+          />,
+        )}
+        {wrap(
+          <CeleryQueueIconButton
+            variant="refresh"
+            title="Reset up to 500 oldest failed jobs to pending and re-queue Celery"
+            aria-label="Reset failed jobs for this queue"
+            disabled={disabled}
+            onClick={onResetFailed}
+          />,
+        )}
+      </div>
     )
   }
 
   return (
-    <div className="flex items-center gap-0.5">
-      {iconBtn(
-        <Hourglass className="h-3 w-3" />,
-        'Delete all pending',
-        onDeletePending,
-        dangerGhostBtnClass,
-      )}
-      {iconBtn(
-        <Loader2 className="h-3 w-3" />,
-        'Delete all running',
-        onDeleteRunning,
-        dangerGhostBtnClass,
-      )}
-      {iconBtn(
-        <Trash2 className="h-3 w-3" />,
-        'Delete all done',
-        onDeleteDone,
-        dangerGhostBtnClass,
-      )}
-      {iconBtn(
-        <XCircle className="h-3 w-3" />,
-        'Delete all failed',
-        onDeleteFailed,
-        dangerGhostBtnClass,
-      )}
-      {iconBtn(
-        <RotateCcw className="h-3 w-3" />,
-        'Retry failed (up to 500)',
-        onResetFailed,
-        'text-muted-foreground hover:text-primary',
+    <div className="flex items-center justify-end gap-1">
+      {wrap(
+        <CeleryQueueIconButton
+          variant="delete-pending"
+          title="Delete all jobs with status pending in this queue slice"
+          aria-label="Delete all jobs with status pending in this queue slice"
+          disabled={disabled}
+          onClick={onDeletePending}
+        />,
       )}
     </div>
   )
@@ -130,7 +163,13 @@ export interface CeleryQueueSummaryTableProps {
   runtimeLamp: CeleryRuntimeLamp
   runtimeLampText: string
   busyQueue: string | null
+  canOperate: boolean
+  highlightQueueName?: string | null
+  activeSupportTasksFilterKey?: string | null
   onNavigateToQueue?: (celeryQueue: string, status?: ActionMode) => void
+  onNavigateQueueConsole?: (celeryQueue: string) => void
+  onToggleSupportTasksFilter?: (brokerKey: string) => void
+  onClearWorkerQueueFilter?: () => void
   onDeletePending: (row: AggregatedJobQueueSummaryRow) => Promise<void>
   onDeleteRunning: (row: AggregatedJobQueueSummaryRow) => Promise<void>
   onDeleteDone: (row: AggregatedJobQueueSummaryRow) => Promise<void>
@@ -148,13 +187,21 @@ export function CeleryQueueSummaryTable({
   runtimeLamp,
   runtimeLampText,
   busyQueue,
+  canOperate,
+  highlightQueueName,
+  activeSupportTasksFilterKey,
   onNavigateToQueue,
+  onNavigateQueueConsole,
+  onToggleSupportTasksFilter,
+  onClearWorkerQueueFilter,
   onDeletePending,
   onDeleteRunning,
   onDeleteDone,
   onDeleteFailed,
   onResetFailed,
 }: CeleryQueueSummaryTableProps) {
+  const [actionModeByQueue, setActionModeByQueue] = useState<Record<string, ActionMode>>({})
+
   const aggByQueue = useMemo(
     () => new Map(aggregatedRows.map(r => [r.celery_queue, r])),
     [aggregatedRows],
@@ -204,12 +251,23 @@ export function CeleryQueueSummaryTable({
     colorVariant: 'secondary' | 'default' | 'destructive',
   ) {
     const active = n > 0
+    const altHint = onNavigateQueueConsole
+      ? ' (Alt+click: Console for this queue)'
+      : ''
     return (
       <button
         type="button"
         className="font-mono text-xs hover:underline"
-        title={`Open ${mode} jobs for queue ${queue}`}
-        onClick={() => onNavigateToQueue?.(queue, mode)}
+        title={`Open Queues & Instances: ${mode} filter${altHint}`}
+        onClick={e => {
+          setActionModeByQueue(prev => ({ ...prev, [queue]: mode }))
+          if (e.altKey && onNavigateQueueConsole) {
+            e.preventDefault()
+            onNavigateQueueConsole(queue)
+            return
+          }
+          onNavigateToQueue?.(queue, mode)
+        }}
       >
         {active
           ? <Badge variant={colorVariant}>{n}</Badge>
@@ -246,37 +304,80 @@ export function CeleryQueueSummaryTable({
             {merged.map(({ qs, agg }) => {
               const cov = queueCoverageLamp(qs.name, brokerConnected, workers)
               const busy = loading || busyQueue === qs.name
+              const rowHighlighted = highlightQueueName != null && highlightQueueName === qs.name
+              const actionMode: ActionMode = actionModeByQueue[qs.name] ?? 'pending'
               return (
-                <TableRow key={qs.name}>
+                <TableRow
+                  key={qs.name}
+                  className={cn(rowHighlighted && CELERY_QUEUE_ROW_FILTERED)}
+                >
                   <TableCell>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span>
-                          <StatusLamp lamp={cov.lamp} />
-                        </span>
+                        {onNavigateQueueConsole ? (
+                          <button
+                            type="button"
+                            className="inline-flex p-0.5 rounded hover:bg-muted/60 hover:scale-105 transition-transform"
+                            aria-label={`Open console for queue ${qs.name}`}
+                            onClick={() => onNavigateQueueConsole(qs.name)}
+                          >
+                            <StatusLamp lamp={cov.lamp} />
+                          </button>
+                        ) : (
+                          <span>
+                            <StatusLamp lamp={cov.lamp} />
+                          </span>
+                        )}
                       </TooltipTrigger>
-                      <TooltipContent>{cov.title}</TooltipContent>
+                      <TooltipContent>
+                        {cov.title}
+                        {onNavigateQueueConsole ? ' — click to open Console' : ''}
+                      </TooltipContent>
                     </Tooltip>
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <button
-                        type="button"
-                        className="text-sm hover:underline text-left"
-                        title={brokerQueueKeyTitle(qs.name)}
-                        onClick={() => onNavigateToQueue?.(qs.name)}
-                      >
-                        {queueDisplayName(qs)}
-                        {qs.db_totals_shared && (
-                          <span
-                            className="text-muted-foreground ml-0.5 text-[10px]"
-                            title="DB totals shared with Massive aggregates"
-                          >
-                            *
-                          </span>
-                        )}
-                      </button>
-                      <p className="text-[10px] font-mono text-muted-foreground">{qs.name}</p>
+                    <div className="flex items-start gap-1">
+                      <div className="min-w-0 flex-1">
+                        <button
+                          type="button"
+                          className="text-sm hover:underline text-left"
+                          title={brokerQueueKeyTitle(qs.name)}
+                          onClick={() => onNavigateToQueue?.(qs.name)}
+                        >
+                          {queueDisplayName(qs)}
+                          {qs.db_totals_shared && (
+                            <span
+                              className="text-muted-foreground ml-0.5 text-[10px]"
+                              title="DB totals shared with Massive aggregates"
+                            >
+                              *
+                            </span>
+                          )}
+                        </button>
+                        <p className="text-[10px] font-mono text-muted-foreground">{qs.name}</p>
+                      </div>
+                      {onToggleSupportTasksFilter && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={activeSupportTasksFilterKey === qs.name ? 'default' : 'ghost'}
+                              className="h-6 w-6 p-0 shrink-0"
+                              aria-label={`Filter Support Tasks by ${queueDisplayName(qs)}`}
+                              onClick={e => {
+                                e.stopPropagation()
+                                onToggleSupportTasksFilter(qs.name)
+                              }}
+                            >
+                              <Filter className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs">
+                            Open Support Tasks and filter by this queue; click again to clear
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-mono text-xs">
@@ -292,8 +393,10 @@ export function CeleryQueueSummaryTable({
                       ? pgBadge(agg.counts.running, 'running', qs.name, 'default')
                       : <span className="text-muted-foreground text-xs">—</span>}
                   </TableCell>
-                  <TableCell className="text-right font-mono text-xs text-muted-foreground">
-                    {loading ? '…' : agg ? agg.counts.done : '—'}
+                  <TableCell className="text-right">
+                    {loading ? '…' : agg
+                      ? pgBadge(agg.counts.done, 'done', qs.name, 'secondary')
+                      : <span className="text-muted-foreground text-xs">—</span>}
                   </TableCell>
                   <TableCell className="text-right">
                     {loading ? '…' : agg
@@ -303,7 +406,9 @@ export function CeleryQueueSummaryTable({
                   <TableCell>
                     {agg ? (
                       <QueueActionCell
+                        mode={actionMode}
                         busy={busy}
+                        canOperate={canOperate}
                         onDeletePending={() => void onDeletePending(agg)}
                         onDeleteRunning={() => void onDeleteRunning(agg)}
                         onDeleteDone={() => void onDeleteDone(agg)}
@@ -331,7 +436,20 @@ export function CeleryQueueSummaryTable({
                     <TooltipContent>{runtimeLampText}</TooltipContent>
                   </Tooltip>
                 </TableCell>
-                <TableCell className="font-semibold">Total</TableCell>
+                <TableCell className="font-semibold">
+                  {onClearWorkerQueueFilter ? (
+                    <button
+                      type="button"
+                      className="hover:underline"
+                      title="Show all worker instances (clear queue filter)"
+                      onClick={onClearWorkerQueueFilter}
+                    >
+                      Total
+                    </button>
+                  ) : (
+                    'Total'
+                  )}
+                </TableCell>
                 <TableCell className="text-right font-mono text-xs">
                   {`${fmtN(totals?.pending_broker)}/${fmtN(totals?.running_celery)}`}
                 </TableCell>

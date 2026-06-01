@@ -13,7 +13,7 @@ export function useMarketIngestServices(token: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.ops.ingestServices, token],
     queryFn: () => fetchMarketIngestServices(token),
-    refetchInterval: 15_000,
+    refetchInterval: 8_000,
     retry: 1,
   })
 }
@@ -22,7 +22,7 @@ export function useOpsHealth(token: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.ops.opsHealth, token],
     queryFn: () => fetchOpsHealth(token),
-    refetchInterval: 30_000,
+    refetchInterval: 8_000,
     retry: 1,
   })
 }

@@ -130,8 +130,34 @@ export async function controlBroker(action: BrokerAction): Promise<{
 // ── Celery capabilities ──────────────────────────────────────────────────────
 
 export async function fetchCeleryCapabilities(): Promise<CeleryCapabilitiesResponse> {
-  const r = await fetch(opsUrl('/ops/celery/capabilities'))
-  return parseJson(r)
+  const token = getOpsToken()
+  const r = await fetch(opsUrl('/ops/celery/capabilities'), {
+    headers: authHeaders(token),
+  })
+  const j = await parseJson<Record<string, unknown>>(r)
+  const matrixRaw = j.run_massive_job_matrix
+  const beatRaw = j.beat_tasks
+  return {
+    ok: r.ok && j.ok !== false,
+    registered_tasks: Array.isArray(j.registered_tasks)
+      ? (j.registered_tasks as CeleryCapabilitiesResponse['registered_tasks'])
+      : [],
+    count: typeof j.count === 'number' ? j.count : 0,
+    canonical_broker_queues: Array.isArray(j.canonical_broker_queues)
+      ? (j.canonical_broker_queues as string[])
+      : [],
+    run_massive_job_matrix: Array.isArray(matrixRaw)
+      ? (matrixRaw as CeleryCapabilitiesResponse['run_massive_job_matrix'])
+      : [],
+    beat_tasks: Array.isArray(beatRaw)
+      ? (beatRaw as CeleryCapabilitiesResponse['beat_tasks'])
+      : [],
+    broker_queue_labels:
+      j.broker_queue_labels && typeof j.broker_queue_labels === 'object'
+        ? (j.broker_queue_labels as Record<string, string>)
+        : undefined,
+    error: typeof j.error === 'string' ? j.error : undefined,
+  }
 }
 
 // ── Aggregated job queue summary (PG counts per queue) ───────────────────────

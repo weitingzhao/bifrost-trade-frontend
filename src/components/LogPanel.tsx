@@ -5,35 +5,16 @@ import { dangerIconBtnClass } from '@/lib/uiClasses'
 import { useLogPanel } from '@/hooks/useLogPanel'
 import { LOG_SOURCES, LOG_SOURCE_GROUPS } from '@/api/logs'
 import { useLogStream, type LogLevel, type LogEntry } from '@/hooks/useLogStream'
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const LEVEL_STYLE: Record<LogLevel, { badge: string; row: string }> = {
-  ERROR: { badge: 'bg-red-500/15 text-red-500',                                  row: 'bg-red-500/[0.04]' },
-  WARN:  { badge: 'bg-yellow-500/15 text-yellow-500 dark:text-yellow-400',        row: 'bg-yellow-500/[0.03]' },
-  INFO:  { badge: 'bg-blue-500/10 text-blue-500',                                 row: '' },
-  DEBUG: { badge: 'bg-zinc-500/10 text-zinc-500',                                 row: '' },
-  OTHER: { badge: 'bg-zinc-500/10 text-zinc-400',                                 row: '' },
-}
-
-const LEVEL_LABELS: Record<LogLevel, string> = {
-  ERROR: 'ERR', WARN: 'WARN', INFO: 'INFO', DEBUG: 'DBG', OTHER: '···',
-}
+import { LEVEL_LABELS, LEVEL_STYLE, STREAM_STATUS_LABEL } from '@/components/log/logConsoleShared'
 
 const STATUS_DOT: Record<string, string> = {
-  idle:       'bg-zinc-400',
+  idle: 'bg-zinc-400',
   connecting: 'bg-yellow-400 animate-pulse',
-  live:       'bg-green-500',
-  error:      'bg-red-500',
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  idle: 'Idle', connecting: 'Connecting…', live: 'Live', error: 'Disconnected',
+  live: 'bg-green-500',
+  error: 'bg-red-500',
 }
 
 type LevelFilter = LogLevel | 'ALL'
-
-// ── Log row ───────────────────────────────────────────────────────────────────
 
 function LogRow({ entry }: { entry: LogEntry }) {
   const s = LEVEL_STYLE[entry.level]
@@ -49,8 +30,7 @@ function LogRow({ entry }: { entry: LogEntry }) {
   )
 }
 
-// ── Main panel ────────────────────────────────────────────────────────────────
-
+/** Docked global log panel (sidebar toggle). Uses LogConsole shared styles; single SSE subscription. */
 export function LogPanel() {
   const { open, toggle, reportErrorCount } = useLogPanel()
 
@@ -68,12 +48,10 @@ export function LogPanel() {
 
   const { entries, status, errorCount, clear } = useLogStream(activeSources, open)
 
-  // Report error count up to context for the sidebar badge
   useEffect(() => {
     reportErrorCount(errorCount)
   }, [errorCount, reportErrorCount])
 
-  // Auto-scroll
   const scrollRef = useRef<HTMLDivElement>(null)
   const isAtBottom = useRef(true)
 
@@ -89,7 +67,6 @@ export function LogPanel() {
     }
   }, [entries.length])
 
-  // Filtered view
   const filtered = useMemo(() => {
     let result = entries
     if (levelFilter !== 'ALL') result = result.filter(e => e.level === levelFilter)
@@ -102,8 +79,7 @@ export function LogPanel() {
     return result
   }, [entries, levelFilter, search])
 
-  // Export filtered entries as LLM-friendly plain text
-  const handleExport = () => {
+  function handleExport() {
     const now = new Date()
     const levelLabel = levelFilter === 'ALL' ? 'ALL' : LEVEL_LABELS[levelFilter as LogLevel]
     const header = [
@@ -115,11 +91,9 @@ export function LogPanel() {
       `# Entries:       ${filtered.length}`,
       '',
     ].join('\n')
-
     const body = filtered
       .map(e => `${e.ts} [${e.level.padEnd(5)}] [${e.service.padEnd(16)}] ${e.message}`)
       .join('\n')
-
     const blob = new Blob([header + body], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -131,14 +105,12 @@ export function LogPanel() {
     URL.revokeObjectURL(url)
   }
 
-  // Resize handle
   const onResizeStart = (e: React.MouseEvent) => {
     if (e.button !== 0) return
     const startY = e.clientY
     const startH = height
     const onMove = (ev: MouseEvent) => {
-      const next = Math.min(600, Math.max(120, startH + (startY - ev.clientY)))
-      setHeight(next)
+      setHeight(Math.min(600, Math.max(120, startH + (startY - ev.clientY))))
     }
     const onUp = () => {
       document.removeEventListener('mousemove', onMove)
@@ -161,16 +133,12 @@ export function LogPanel() {
       className="shrink-0 border-t border-border bg-background flex flex-col overflow-hidden"
       style={{ height }}
     >
-      {/* Resize handle */}
       <div
         className="h-1 cursor-ns-resize bg-transparent hover:bg-primary/20 transition-colors shrink-0"
         onMouseDown={onResizeStart}
         title="Drag to resize"
       />
-
-      {/* Header — Row 1: toolbar */}
       <div className="flex items-center gap-2 px-3 py-1 border-b border-border/50 shrink-0">
-        {/* Level filter */}
         <div className="flex items-center gap-0.5">
           {LEVELS.map(lv => (
             <button
@@ -189,35 +157,23 @@ export function LogPanel() {
             </button>
           ))}
         </div>
-
         <div className="w-px h-3 bg-border shrink-0" />
-
-        {/* Search */}
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Filter…"
           className="h-5 rounded border border-border bg-muted/30 px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring w-32 placeholder:text-muted-foreground/40"
         />
-
         <div className="flex-1" />
-
-        {/* Entry count */}
         <span className="text-[10px] text-muted-foreground/50 shrink-0">
           {filtered.length} / {entries.length}
         </span>
-
         <div className="w-px h-3 bg-border shrink-0" />
-
-        {/* Status — right side */}
         <div className="flex items-center gap-1.5 shrink-0">
           <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', STATUS_DOT[status])} />
-          <span className="text-[11px] text-muted-foreground font-medium">{STATUS_LABEL[status]}</span>
+          <span className="text-[11px] text-muted-foreground font-medium">{STREAM_STATUS_LABEL[status]}</span>
         </div>
-
         <div className="w-px h-3 bg-border shrink-0" />
-
-        {/* Export */}
         <button
           onClick={handleExport}
           title="Export filtered logs as .txt"
@@ -226,20 +182,13 @@ export function LogPanel() {
         >
           <Download className="h-3 w-3" />
         </button>
-
-        {/* Clear */}
         <button
           onClick={clear}
           title="Clear log buffer"
-          className={cn(
-            'flex h-5 w-5 items-center justify-center rounded transition-colors',
-            dangerIconBtnClass,
-          )}
+          className={cn('flex h-5 w-5 items-center justify-center rounded transition-colors', dangerIconBtnClass)}
         >
           <Trash2 className="h-3 w-3" />
         </button>
-
-        {/* Close */}
         <button
           onClick={toggle}
           title="Close log panel"
@@ -248,8 +197,6 @@ export function LogPanel() {
           <X className="h-3 w-3" />
         </button>
       </div>
-
-      {/* Header — Row 2: source chips (full width, wraps freely) */}
       <div className="flex items-center gap-2 px-3 py-1 border-b border-border shrink-0 flex-wrap">
         {LOG_SOURCE_GROUPS.map((group, gi) => {
           const groupSources = LOG_SOURCES.filter(s => s.group === group.key)
@@ -258,7 +205,6 @@ export function LogPanel() {
           return (
             <div key={group.key} className="flex items-center gap-1 flex-wrap">
               {gi > 0 && <div className="w-px h-3 bg-border shrink-0" />}
-              {/* Group label — click to toggle all in group */}
               <button
                 onClick={() => {
                   const enable = !allEnabled
@@ -268,7 +214,6 @@ export function LogPanel() {
                     return u
                   })
                 }}
-                title={allEnabled ? `Disable all ${group.label}` : `Enable all ${group.label}`}
                 className={cn(
                   'px-1.5 py-0.5 rounded text-[10px] font-semibold transition-colors select-none',
                   someEnabled
@@ -278,7 +223,6 @@ export function LogPanel() {
               >
                 {group.label}
               </button>
-              {/* Individual source chips */}
               {groupSources.map(src => (
                 <button
                   key={src.key}
@@ -297,19 +241,13 @@ export function LogPanel() {
           )
         })}
       </div>
-
-      {/* Log body */}
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-auto font-mono"
-      >
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-auto font-mono">
         {filtered.length === 0 ? (
           <div className="flex items-center justify-center h-full text-xs text-muted-foreground/40">
             {status === 'connecting' ? 'Connecting to log streams…' : 'No entries'}
           </div>
         ) : (
-          filtered.map((entry: LogEntry) => <LogRow key={entry.id} entry={entry} />)
+          filtered.map(entry => <LogRow key={entry.id} entry={entry} />)
         )}
       </div>
     </div>

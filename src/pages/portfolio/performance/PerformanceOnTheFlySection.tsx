@@ -17,6 +17,7 @@ import {
   fmtPnl,
   fmtUsd,
 } from '@/pages/portfolio/performance/performanceFormatters'
+import { OTF_STK_UNREALIZED_HELP } from '@/pages/portfolio/performance/performanceConstants'
 import styles from './PerformancePage.module.css'
 
 type SecTab = 'all' | 'OPT' | 'STK'
@@ -31,6 +32,11 @@ interface PerformanceOnTheFlySectionProps {
 function kvToneClass(n: number): string {
   if (Math.abs(n) < 0.005) return ''
   return n >= 0 ? styles.tonePositive : styles.toneNegative
+}
+
+function stkUnrealizedToneClass(n: number): string {
+  if (Math.abs(n) < 0.005) return ''
+  return styles.otfStkUnrealized
 }
 
 export function PerformanceOnTheFlySection({
@@ -145,7 +151,8 @@ export function PerformanceOnTheFlySection({
                   </span>
                   <span className={styles.onTheFlySummaryKv}>
                     Unrealized (open){' '}
-                    <strong className={kvToneClass(sAg.unrealized)}>{fmtPnl(sAg.unrealized)}</strong>
+                    <strong className={stkUnrealizedToneClass(sAg.unrealized)}>{fmtPnl(sAg.unrealized)}</strong>
+                    <InfoTooltip text={OTF_STK_UNREALIZED_HELP} />
                   </span>
                   <span className={styles.onTheFlySummaryKv}>
                     Commission <strong>{fmtUsd(stkComm)}</strong>
@@ -249,7 +256,7 @@ function OnTheFlyRow({ exec: e }: { exec: Execution }) {
       <td>{e.quantity ?? '—'}</td>
       <td>{fmtUsd(e.price)}</td>
       <td><ExecSourceBadge source={e.source} /></td>
-      <td className={isOpt && ledgerPnl != null ? kvToneClass(ledgerPnl) : isStk && stkUnrealLeg != null ? styles.toneUnrealized : ''}>
+      <td className={isOpt && ledgerPnl != null ? kvToneClass(ledgerPnl) : isStk && stkUnrealLeg != null ? styles.otfStkTableUnreal : ''}>
         {isOpt && ledgerPnl != null
           ? fmtPnl(ledgerPnl)
           : isStk && stkUnrealLeg != null

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Play, Square, RotateCcw, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,7 +9,6 @@ import {
   type IngestLamp,
 } from '@/utils/socketIngestLamp'
 import {
-  fmtAge,
   ingestActionBlockMessage,
   ingestActionButtonsForState,
   type IngestActionBlock,
@@ -60,13 +60,48 @@ export function MassiveAgeBadge({ ageS }: { ageS: number }) {
     : isWarn
       ? 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30'
       : 'bg-red-500/15 text-red-500 border-red-500/30'
+  const label = ageS < 60 ? `${Math.floor(ageS)}s ago` : ageS < 3600 ? `${Math.floor(ageS / 60)}m ago` : `${Math.floor(ageS / 3600)}h ago`
   return (
     <span
       className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold tabular-nums border', cls)}
-      title={`Last Massive WS message. Green <5s, yellow <30s, red ≥30s.`}
+      title={`Last Massive WS message ${label}. Green <5s, yellow <30s, red ≥30s.`}
     >
-      {fmtAge(ageS)}
+      {label}
     </span>
+  )
+}
+
+export function ServiceHeartbeatBadge({ nextInS, overdue, critical }: {
+  nextInS: number
+  overdue?: boolean
+  critical?: boolean
+}) {
+  const isSoon = !overdue && !critical && nextInS <= 2
+  const cls = critical
+    ? 'bg-red-500/15 text-red-400 border-red-500/30'
+    : overdue
+      ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'
+      : isSoon
+        ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+        : 'bg-slate-500/20 text-slate-300 border-slate-500/35'
+  const label = critical
+    ? `Overdue ${Math.floor(nextInS)}s`
+    : overdue
+      ? `Late ~${Math.ceil(nextInS)}s`
+      : `~${Math.ceil(nextInS)}s`
+  return (
+    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold tabular-nums border min-w-[38px] justify-center', cls)}>
+      {label}
+    </span>
+  )
+}
+
+export function StartingStoppingIndicator({ mode }: { mode: 'starting' | 'stopping' }) {
+  return (
+    <div className="flex items-center gap-2 mb-1.5">
+      <span className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse" aria-hidden />
+      <span className="text-xs font-semibold text-yellow-400 capitalize">{mode}…</span>
+    </div>
   )
 }
 
@@ -181,48 +216,148 @@ export function buildIbSlots(svcId: string, status: StatusResponse | null | unde
   return []
 }
 
+function serviceHeartbeatLiveNextS(
+  svcId: string,
+  status: StatusResponse | null | undefined,
+  elapsed: number,
+): number | null {
+  const sid = svcId === 'ib_market' ? 'ib_ingestor' : svcId
+  const raw =
+    sid === 'ib_ingestor'
+      ? status?.socket?.ib_ingestor?.next_service_heartbeat_in_s
+      : sid === 'ib_account_agent'
+        ? status?.socket?.ib_account_agent?.next_service_heartbeat_in_s
+        : sid === 'ib_operator'
+          ? status?.socket?.ib_operator?.next_service_heartbeat_in_s
+          : null
+  if (raw == null || !Number.isFinite(Number(raw))) return null
+  return Math.max(0, Number(raw) - elapsed)
+}
+
+function serviceHeartbeatReconnectHint(
+  svcId: string,
+  status: StatusResponse | null | undefined,
+): string | null {
+  const sid = svcId === 'ib_market' ? 'ib_ingestor' : svcId
+  let raw: string | null | undefined
+  if (sid === 'ib_ingestor') raw = status?.socket?.ib_ingestor?.service_heartbeat_reconnect_in_progress
+  else if (sid === 'ib_account_agent') raw = status?.socket?.ib_account_agent?.service_heartbeat_reconnect_in_progress
+  else if (sid === 'ib_operator') raw = status?.socket?.ib_operator?.service_heartbeat_reconnect_in_progress
+  else return null
+  if (typeof raw !== 'string') return null
+  const t = raw.trim()
+  return t !== '' ? t : null
+}
+
+function ingestProcessRunningForIbClientId(processActive: string): boolean {
+  const a = (processActive || '').toLowerCase().trim()
+  return a === 'active' || a === 'activating' || a === 'reloading'
+}
+
 export function ConnectionCell({
   svc,
   status,
   elapsed,
+  category,
+  wallNowSec,
 }: {
   svc: MarketIngestServiceRow
   status: StatusResponse | null | undefined
   elapsed: number
+  category?: 'Massive' | 'IB' | 'Engine' | 'Other'
+  /** Unix seconds; updated once per second from parent (avoids Date.now during render). */
+  wallNowSec: number
 }) {
   if (svc.id === 'massive_ws') {
-    const ageS = status?.socket?.massive?.last_msg_age_s
-    if (ageS == null) return <span className="text-xs text-muted-foreground">—</span>
-    return <MassiveAgeBadge ageS={Math.max(0, ageS + elapsed)} />
+    const massive = status?.socket?.massive
+    const liveAgeS =
+      massive?.last_msg_age_s != null
+        ? Math.max(0, Math.floor(massive.last_msg_age_s + elapsed))
+        : null
+    const updAt = svc.redis_control_updated_at
+    let heartbeatEl: ReactNode = null
+    if (updAt != null && Number.isFinite(updAt) && updAt > 0) {
+      const HEARTBEAT_PERIOD = 30
+      const leaseAgeS = Math.max(0, wallNowSec - updAt)
+      const nextInS = Math.max(0, HEARTBEAT_PERIOD - leaseAgeS)
+      const overdue = leaseAgeS > HEARTBEAT_PERIOD + 10
+      const critical = leaseAgeS > 120
+      heartbeatEl = (
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="text-xs text-muted-foreground">Service heartbeat</span>
+          <ServiceHeartbeatBadge nextInS={critical ? leaseAgeS : nextInS} overdue={overdue} critical={critical} />
+        </div>
+      )
+    }
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs text-muted-foreground">Last msg</span>
+          {liveAgeS != null ? <MassiveAgeBadge ageS={liveAgeS} /> : <span className="text-xs text-muted-foreground">—</span>}
+          {massive?.ws_reconnects != null && massive.ws_reconnects > 0 && (
+            <span className="text-xs text-muted-foreground">· {massive.ws_reconnects} reconnects</span>
+          )}
+        </div>
+        {heartbeatEl}
+      </div>
+    )
+  }
+
+  if (category === 'IB' && !ingestProcessRunningForIbClientId(svc.process_active)) {
+    return <span className="text-xs text-muted-foreground">—</span>
   }
 
   const slots = buildIbSlots(svc.id, status)
-  if (slots.length === 0) return <span className="text-xs text-muted-foreground">—</span>
+  const liveHeartbeatS = category === 'IB' ? serviceHeartbeatLiveNextS(svc.id, status, elapsed) : null
+  const reconnectHint = category === 'IB' ? serviceHeartbeatReconnectHint(svc.id, status) : null
+
+  if (slots.length === 0 && liveHeartbeatS == null) {
+    return <span className="text-xs text-muted-foreground">—</span>
+  }
 
   return (
-    <div className="flex flex-col gap-1">
-      {slots.map((slot, i) => {
-        const nextInS = slot.nextProbeInS != null ? Math.max(0, slot.nextProbeInS - elapsed) : null
-        const connDot = slot.connected === true
-          ? 'bg-lamp-green'
-          : slot.connected === false
-            ? 'bg-lamp-red'
-            : 'bg-lamp-gray'
-        return (
-          <div key={i} className="flex items-center gap-1.5 text-xs">
-            <span className={cn('inline-block h-2 w-2 rounded-full shrink-0', connDot)} />
-            {slot.label && (
-              <span className="text-muted-foreground w-7 shrink-0">{slot.label}</span>
-            )}
-            <span className="font-mono tabular-nums">
-              {slot.clientId != null ? slot.clientId : '—'}
+    <div className="flex flex-col gap-1.5">
+      {liveHeartbeatS != null && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs text-muted-foreground">Service heartbeat</span>
+          <ServiceHeartbeatBadge nextInS={liveHeartbeatS} />
+          {reconnectHint && (
+            <span className="text-xs text-yellow-400" title="Reconnect in progress on current heartbeat tick">
+              {reconnectHint}
             </span>
-            {nextInS != null && (
-              <IbProbeBadge nextInS={nextInS} stale={slot.probeStale === true} />
-            )}
-          </div>
-        )
-      })}
+          )}
+        </div>
+      )}
+      {slots.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">IB Client ID</span>
+          {slots.map((slot, i) => {
+            const nextInS = slot.nextProbeInS != null ? Math.max(0, slot.nextProbeInS - elapsed) : null
+            const connDot = slot.connected === true
+              ? 'bg-lamp-green'
+              : slot.connected === false
+                ? 'bg-lamp-red'
+                : 'bg-lamp-gray'
+            return (
+              <div key={i} className="flex items-center gap-1.5 text-xs flex-wrap">
+                <span className={cn('inline-block h-2 w-2 rounded-full shrink-0', connDot)} />
+                {slot.label && (
+                  <span className="text-muted-foreground w-7 shrink-0">{slot.label}</span>
+                )}
+                <span className="font-mono tabular-nums bg-muted/50 px-1.5 py-0.5 rounded">
+                  {slot.clientId != null ? slot.clientId : '—'}
+                </span>
+                {nextInS != null && (
+                  <IbProbeBadge nextInS={nextInS} stale={slot.probeStale === true} />
+                )}
+                {slot.probeStale && nextInS == null && (
+                  <IbProbeBadge nextInS={0} stale />
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -230,69 +365,84 @@ export function ConnectionCell({
 export function ControlButtons({
   svc,
   actionBlock,
+  redisLamp,
+  isStarting,
+  isStopping,
   onAction,
 }: {
   svc: MarketIngestServiceRow
   actionBlock: IngestActionBlock
+  redisLamp: IngestLamp
+  isStarting?: boolean
+  isStopping?: boolean
   onAction: (svc: MarketIngestServiceRow, action: MarketIngestAction) => void
 }) {
-  const { showStart, showStop } = ingestActionButtonsForState(svc.process_active)
+  const rawButtons = ingestActionButtonsForState(svc.process_active)
+  const showStart = isStarting ? false : isStopping ? false : redisLamp === 'green' ? false : rawButtons.showStart
+  const showStop = isStarting ? true : isStopping ? false : redisLamp === 'green' ? true : rawButtons.showStop
   const blocked = actionBlock !== 'none'
   const blockMsg = ingestActionBlockMessage(actionBlock)
   const isIb = svc.id !== 'massive_ws'
+  const blockedBySibling = actionBlock === 'remote_env' && !svc.redis_control_env
+
+  if (blocked) {
+    return (
+      <span className="text-xs text-muted-foreground max-w-[220px]" title={blockedBySibling ? 'Peer service(s) held by other stack — stop them first.' : undefined}>
+        {blockedBySibling
+          ? 'Peer service(s) held by other stack — stop them first.'
+          : blockMsg}
+      </span>
+    )
+  }
 
   return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {showStart && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 px-2 gap-1 text-xs"
-          disabled={blocked}
-          title={blocked ? blockMsg : `Start ${svc.label}`}
-          onClick={() => onAction(svc, 'start')}
-        >
-          <Play className="h-3 w-3" />
-          Start
-        </Button>
-      )}
-      {showStop && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 px-2 gap-1 text-xs"
-          disabled={blocked}
-          title={blocked ? blockMsg : `Stop ${svc.label}`}
-          onClick={() => onAction(svc, 'stop')}
-        >
-          <Square className="h-3 w-3" />
-          Stop
-        </Button>
-      )}
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-7 px-2 gap-1 text-xs"
-        disabled={blocked}
-        title={blocked ? blockMsg : `Restart ${svc.label}`}
-        onClick={() => onAction(svc, 'restart')}
-      >
-        <RotateCcw className="h-3 w-3" />
-        Restart
-      </Button>
-      {isIb && (
+    <div>
+      {isStarting && <StartingStoppingIndicator mode="starting" />}
+      {isStopping && <StartingStoppingIndicator mode="stopping" />}
+      <div className="flex items-center gap-1 flex-wrap">
+        {showStart && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 w-7 p-0 text-green-500 hover:text-green-400"
+            title={`Start ${svc.label}`}
+            onClick={() => onAction(svc, 'start')}
+          >
+            <Play className="h-3.5 w-3.5" />
+          </Button>
+        )}
+        {showStop && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 w-7 p-0 text-red-500 hover:text-red-400"
+            title={`Stop ${svc.label}`}
+            onClick={() => onAction(svc, 'stop')}
+          >
+            <Square className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 px-2 gap-1 text-xs text-orange-500 hover:text-orange-400"
-          disabled={blocked}
-          title={blocked ? blockMsg : `Reset ${svc.label}`}
-          onClick={() => onAction(svc, 'reset')}
+          className="h-7 w-7 p-0"
+          title={`Restart ${svc.label}`}
+          onClick={() => onAction(svc, 'restart')}
         >
-          <Zap className="h-3 w-3" />
-          Reset
+          <RotateCcw className="h-3.5 w-3.5" />
         </Button>
-      )}
+        {isIb && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0 text-orange-500 hover:text-orange-400"
+            title={`Reset ${svc.label}`}
+            onClick={() => onAction(svc, 'reset')}
+          >
+            <Zap className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

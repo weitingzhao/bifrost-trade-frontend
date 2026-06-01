@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Tooltip,
@@ -13,6 +11,7 @@ import {
 import { CeleryQueueSummaryTable } from './CeleryQueueSummaryTable'
 import { CelerySectionCard } from './CelerySectionCard'
 import { ConfirmDialog } from './ConfirmDialog'
+import { useCeleryOps } from './CeleryOpsContext'
 import {
   useOpsWorkers,
   useOpsQueuesSummary,
@@ -27,13 +26,26 @@ import type { AggregatedJobQueueSummaryRow } from '@/types/ops'
 import type { CeleryStatusFilter } from './celeryTypes'
 
 const QUEUE_SUMMARY_TOOLTIP =
-  'Broker (R/C) and PostgreSQL job counts (P/R/D/F) for every queue. Click PG counts to jump to the job list with a status filter. Action icons delete or reset failed rows.'
+  'Broker (R/C) and PostgreSQL job counts (P/R/D/F) for every queue. Click PG counts to jump to the job list with a status filter. Filter icon opens Support Tasks matrix. Alt+click PG or St. lamp opens Console.'
 
 export interface QueueSummaryCardProps {
   onNavigateToQueue: (celeryQueue: string, status?: CeleryStatusFilter) => void
+  onNavigateQueueConsole: (celeryQueue: string) => void
+  onToggleSupportTasksFilter: (brokerKey: string) => void
+  onClearWorkerQueueFilter: () => void
+  highlightQueueName?: string | null
+  activeSupportTasksFilterKey?: string | null
 }
 
-export function QueueSummaryCard({ onNavigateToQueue }: QueueSummaryCardProps) {
+export function QueueSummaryCard({
+  onNavigateToQueue,
+  onNavigateQueueConsole,
+  onToggleSupportTasksFilter,
+  onClearWorkerQueueFilter,
+  highlightQueueName,
+  activeSupportTasksFilterKey,
+}: QueueSummaryCardProps) {
+  const { canOperate, showFlash } = useCeleryOps()
   const { data: workersData } = useOpsWorkers()
   const {
     data: queuesData,
@@ -74,27 +86,33 @@ export function QueueSummaryCard({ onNavigateToQueue }: QueueSummaryCardProps) {
     setBusyQueue(queue)
     try {
       await fn()
+    } catch (e) {
+      showFlash(e instanceof Error ? e.message : 'Operation failed', true)
     } finally {
       setBusyQueue(null)
     }
   }
 
-  function handleDeletePending(row: AggregatedJobQueueSummaryRow) {
+  function handleDeletePending(row: AggregatedJobQueueSummaryRow): Promise<void> {
     openConfirm(
       `Delete pending — ${row.celery_queue}`,
       'Permanently delete all pending rows in this queue. Cannot be undone.',
       () =>
         withBusyQueue(row.celery_queue, async () => {
           if (row.pipeline === 'massive_async') {
-            await deleteMassive.mutateAsync({ status: 'pending', celeryQueue: row.celery_queue })
+            const r = await deleteMassive.mutateAsync({ status: 'pending', celeryQueue: row.celery_queue })
+            if (!r.ok) throw new Error(r.error ?? 'Delete failed')
           } else {
-            await deleteBars.mutateAsync({ status: 'pending' })
+            const r = await deleteBars.mutateAsync({ status: 'pending' })
+            if (!r.ok) throw new Error(r.error ?? 'Delete failed')
           }
+          showFlash(`Deleted pending jobs for ${row.celery_queue}`)
         }),
     )
+    return Promise.resolve()
   }
 
-  function handleDeleteRunning(row: AggregatedJobQueueSummaryRow) {
+  function handleDeleteRunning(row: AggregatedJobQueueSummaryRow): Promise<void> {
     openConfirm(
       `Delete running — ${row.celery_queue}`,
       'Removes PostgreSQL rows only. Worker may still execute. Cannot be undone.',
@@ -107,9 +125,10 @@ export function QueueSummaryCard({ onNavigateToQueue }: QueueSummaryCardProps) {
           }
         }),
     )
+    return Promise.resolve()
   }
 
-  function handleDeleteDone(row: AggregatedJobQueueSummaryRow) {
+  function handleDeleteDone(row: AggregatedJobQueueSummaryRow): Promise<void> {
     openConfirm(
       `Delete done — ${row.celery_queue}`,
       'Permanently delete all done rows. Cannot be undone.',
@@ -122,9 +141,10 @@ export function QueueSummaryCard({ onNavigateToQueue }: QueueSummaryCardProps) {
           }
         }),
     )
+    return Promise.resolve()
   }
 
-  function handleDeleteFailed(row: AggregatedJobQueueSummaryRow) {
+  function handleDeleteFailed(row: AggregatedJobQueueSummaryRow): Promise<void> {
     openConfirm(
       `Delete failed — ${row.celery_queue}`,
       'Permanently delete all failed rows. Cannot be undone.',
@@ -137,9 +157,10 @@ export function QueueSummaryCard({ onNavigateToQueue }: QueueSummaryCardProps) {
           }
         }),
     )
+    return Promise.resolve()
   }
 
-  function handleResetFailed(row: AggregatedJobQueueSummaryRow) {
+  function handleResetFailed(row: AggregatedJobQueueSummaryRow): Promise<void> {
     openConfirm(
       `Reset failed — ${row.celery_queue}`,
       'Reset up to 500 oldest failed jobs to pending and re-queue Celery.',
@@ -152,6 +173,7 @@ export function QueueSummaryCard({ onNavigateToQueue }: QueueSummaryCardProps) {
           }
         }),
     )
+    return Promise.resolve()
   }
 
   if (queuesError) {
@@ -198,7 +220,13 @@ export function QueueSummaryCard({ onNavigateToQueue }: QueueSummaryCardProps) {
           runtimeLamp={runtimeLamp}
           runtimeLampText={lampText}
           busyQueue={busyQueue}
+          canOperate={canOperate}
+          highlightQueueName={highlightQueueName}
+          activeSupportTasksFilterKey={activeSupportTasksFilterKey}
           onNavigateToQueue={onNavigateToQueue}
+          onNavigateQueueConsole={onNavigateQueueConsole}
+          onToggleSupportTasksFilter={onToggleSupportTasksFilter}
+          onClearWorkerQueueFilter={onClearWorkerQueueFilter}
           onDeletePending={handleDeletePending}
           onDeleteRunning={handleDeleteRunning}
           onDeleteDone={handleDeleteDone}

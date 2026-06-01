@@ -1,0 +1,56 @@
+.combobox {
+  position: relative;
+  min-width: 10rem;
+}
+
+.comboboxInput {
+  width: 100%;
+  height: 2rem;
+  font-size: 0.8125rem;
+}
+
+.comboboxInputDim {
+  color: var(--muted-foreground);
+}
+
+.comboboxList {
+  position: absolute;
+  z-index: 50;
+  margin-top: 0.2rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  width: 100%;
+  min-width: 12rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--popover);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  padding: 0.25rem 0;
+  list-style: none;
+}
+
+.comboboxOption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.comboboxOption:hover,
+.comboboxOptionActive {
+  background: var(--accent);
+}
+
+.comboboxOptionSub {
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+.comboboxEmpty {
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+}

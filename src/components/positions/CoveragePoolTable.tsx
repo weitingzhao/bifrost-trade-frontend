@@ -19,8 +19,8 @@ import {
   GroupHeaderRow,
   PnlCell,
   SymbolLinkButton,
-  denseTable,
 } from './ui'
+import { denseTable } from './denseTableClasses'
 import './coveragePool.module.css'
 
 export interface CoveragePoolSortState {

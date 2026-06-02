@@ -1,41 +1,4 @@
-/* Stock inspector — layout aligned with legacy sip-* / riv-stock-inspector */
-
-.panel {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
-
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--card);
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-.headerTitle {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.125rem;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  letter-spacing: 0.02em;
-}
-
-.headerAccount {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--muted-foreground);
-  font-family: var(--font-sans);
-}
+/* Stock inspector — domain-specific styles (layout shell: rightInspectorShell.module.css) */
 
 .passBadge {
   display: inline-flex;
@@ -72,41 +35,10 @@
   border: 1px solid var(--border);
 }
 
-.stack {
-  display: flex;
-  flex-direction: column;
-}
-
-.section {
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.sectionTitle {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted-foreground);
-  margin-bottom: 0.65rem;
-}
-
-.sectionTitleAsOf {
-  font-size: 0.65rem;
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0.04em;
-  font-family: var(--font-mono);
-  color: var(--color-text-dim, var(--muted-foreground));
-}
-
 .conditionsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
 
@@ -129,10 +61,60 @@
   display: grid;
   grid-template-columns: 1.25rem minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.5rem;
-  padding: 5px 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  gap: 0.55rem;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
   font-size: 0.78rem;
+}
+
+.condRowWithChevron {
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto 16px;
+}
+
+.condIconBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.condIconBadgePass {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 35%, transparent);
+}
+
+.condIconBadgeFail {
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+  color: var(--color-danger);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent);
+}
+
+.condChevron {
+  color: var(--color-text-dim, var(--muted-foreground));
+  font-size: 0.6rem;
+  justify-self: center;
+  line-height: 1;
+}
+
+.condPillPass {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-success);
+}
+
+.condPillFail {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-danger);
 }
 
 .condRow:last-child {
@@ -185,6 +167,42 @@
   color: var(--color-warning);
 }
 
+.summaryRow {
+  margin-top: 0.4rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summaryOk {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 28%, transparent);
+}
+
+.summaryWarn {
+  background: color-mix(in srgb, var(--muted) 60%, transparent);
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+}
+
+.summaryLabel {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.summaryValue {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .extGroup {
   margin-top: 0.5rem;
   border: 1px solid var(--border);
@@ -218,6 +236,12 @@
 .extGroupBadgeFail {
   background: var(--color-danger-soft);
   color: var(--color-danger);
+}
+
+.extGroupBadgeInsuf {
+  background: color-mix(in srgb, var(--muted) 70%, transparent);
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
 }
 
 .tierDetails {
@@ -259,9 +283,34 @@
   font-family: var(--font-mono);
 }
 
+.chipSector {
+  background: color-mix(in srgb, #6366f1 10%, transparent);
+  border-color: color-mix(in srgb, #6366f1 25%, transparent);
+  color: color-mix(in srgb, #818cf8 95%, var(--foreground));
+}
+
 .chipExch {
+  background: color-mix(in srgb, #38bdf8 8%, transparent);
+  border-color: color-mix(in srgb, #38bdf8 20%, transparent);
   color: var(--color-link, hsl(var(--primary)));
-  border-color: color-mix(in srgb, var(--color-link, hsl(var(--primary))) 35%, transparent);
+  font-family: var(--font-mono);
+}
+
+.chipNum {
+  color: var(--foreground);
+}
+
+.chipDim {
+  color: var(--color-text-dim, var(--muted-foreground));
+}
+
+.chipLink {
+  color: var(--color-link, hsl(var(--primary)));
+  text-decoration: none;
+}
+
+.chipLink:hover {
+  text-decoration: underline;
 }
 
 .overviewDesc {
@@ -318,8 +367,91 @@
   background: color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
+.rawThActive {
+  color: var(--primary);
+  border-bottom-color: color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+.rawTableLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin: 0.5rem 0 0.35rem;
+}
+
+.rawPeriod {
+  font-weight: 500;
+}
+
+.rawCellHighlight {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.stmtsToggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.stmtsToggleArrow {
+  margin-left: 0.35rem;
+  font-size: 0.65rem;
+  color: var(--muted-foreground);
+}
+
+.stmtsTableWrap {
+  overflow-x: auto;
+  margin-top: 0.35rem;
+}
+
+.stmtDataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+}
+
+.stmtDataTable th,
+.stmtDataTable td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.stmtDataTable th:first-child,
+.stmtDataTable td:first-child {
+  text-align: left;
+}
+
+.stmtDataTable thead th {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.stmtsPos {
+  color: var(--color-success);
+}
+
+.stmtsNeg {
+  color: var(--color-danger);
+}
+
+.barSectionTitle {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
 .miniBarCell {
   position: relative;
+  padding-bottom: 5px;
 }
 
 .miniBar {
@@ -440,3 +572,427 @@
 .hintErr {
   color: var(--destructive);
 }
+
+.pcrBlock {
+  margin-bottom: 0.25rem;
+}
+
+.pcrTitleMark {
+  display: inline-block;
+  width: 3px;
+  height: 0.85rem;
+  border-radius: 1px;
+  background: #facc15;
+  flex-shrink: 0;
+}
+
+.pcrChartBlock {
+  margin-bottom: 1rem;
+}
+
+.pcrWindowRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.pcrWindowLabel {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.pcrWindowTabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pcrWindowTab {
+  appearance: none;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.62rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.pcrWindowTab:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  color: var(--foreground);
+}
+
+.pcrWindowTabActive {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  color: var(--foreground);
+}
+
+.pcrChartHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.pcrChartTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--foreground);
+}
+
+.pcrLegend {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.6rem;
+  color: var(--muted-foreground);
+}
+
+.pcrLegend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pcrLegendSwatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.pcrLegendSwatchOi {
+  background: #4ade80;
+}
+
+.pcrLegendSwatchVol {
+  background: #fbbf24;
+}
+
+.pcrLegendSwatchPut {
+  background: #f87171;
+}
+
+.pcrLegendSwatchCall {
+  background: #4ade80;
+}
+
+.pcrLegendRef {
+  color: var(--muted-foreground);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+}
+
+.pcrChartFrame {
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--card) 80%, black);
+}
+
+.pcrChart {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.pcrChartEmpty {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.pcrTrendFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.35rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  margin-top: 0.25rem;
+}
+
+.pcrShowDataBtn {
+  appearance: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: color-mix(in srgb, var(--primary) 80%, white);
+  font-size: 0.62rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+
+.pcrShowDataBtn:hover {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.pcrShowDataBtnOpen {
+  border-color: color-mix(in srgb, var(--primary) 70%, transparent);
+}
+
+.pcrHintItalic {
+  font-size: 0.58rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.pcrTrendTableWrap {
+  overflow-x: auto;
+  margin-bottom: 0.5rem;
+}
+
+.pcrTrendTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+}
+
+.pcrTrendTable th,
+.pcrTrendTable td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+.pcrTrendTable th:first-child,
+.pcrTrendTable td:first-child {
+  text-align: left;
+}
+
+.ratioHigh {
+  color: #f87171;
+}
+
+.ratioLow {
+  color: #4ade80;
+}
+
+.chainSection {
+  margin-top: 0.75rem;
+}
+
+.chainSectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.chainSectionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--foreground);
+}
+
+.chainNote {
+  font-size: 0.58rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.chainScroll {
+  overflow: auto;
+  max-height: min(634px, 58vh);
+}
+
+.chainTable {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+}
+
+.chainTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--muted) 50%, var(--card));
+}
+
+.chainTable th {
+  padding: 6px 8px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.chainThExp,
+.chainExp {
+  text-align: left !important;
+}
+
+.chainThDte,
+.chainDte {
+  text-align: center !important;
+}
+
+.chainThPut {
+  color: #f87171;
+}
+
+.chainThCall {
+  color: #4ade80;
+}
+
+.chainTable tbody tr {
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.chainRowAlt {
+  background: color-mix(in srgb, var(--muted) 25%, transparent);
+}
+
+.chainTable td {
+  padding: 5px 8px;
+  text-align: right;
+  position: relative;
+  white-space: nowrap;
+}
+
+.chainExp,
+.chainDte {
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.chainCellPut,
+.chainCellCall {
+  position: relative;
+  min-width: 84px;
+  text-align: right;
+}
+
+.chainCellPut {
+  background: color-mix(in srgb, #f87171 6%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+}
+
+.chainCellCall {
+  background: color-mix(in srgb, #4ade80 6%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+}
+
+.chainBarPut,
+.chainBarCall,
+.chainBarTotalVol,
+.chainBarTotalOi {
+  position: absolute;
+  top: 18%;
+  height: 64%;
+  min-width: 2px;
+  max-width: calc(100% - 8px);
+  pointer-events: none;
+}
+
+/* Put bars grow from center divider (right edge) toward the left */
+.chainBarPut {
+  right: 4px;
+  left: auto;
+  border-radius: 2px 0 0 2px;
+  background: rgba(190, 50, 70, 0.42);
+}
+
+/* Call bars grow from center divider (left edge) toward the right */
+.chainBarCall {
+  left: 4px;
+  right: auto;
+  border-radius: 0 2px 2px 0;
+  background: rgba(34, 120, 72, 0.42);
+}
+
+.chainBarTotalVol,
+.chainBarTotalOi {
+  left: 4px;
+  right: auto;
+  top: 20%;
+  height: 60%;
+  border-radius: 2px;
+  opacity: 0.55;
+}
+
+.chainBarTotalVol {
+  background: rgba(37, 99, 235, 0.55);
+}
+
+.chainBarTotalOi {
+  background: rgba(79, 70, 229, 0.5);
+}
+
+.chainNumPut,
+.chainNumCall,
+.chainNumTotal {
+  position: relative;
+  z-index: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.chainNumPut {
+  color: #fda4af;
+}
+
+.chainNumCall {
+  color: #86efac;
+}
+
+.chainTotalVol {
+  position: relative;
+  min-width: 72px;
+  background: color-mix(in srgb, #60a5fa 8%, transparent);
+}
+
+.chainTotalOi {
+  position: relative;
+  min-width: 72px;
+  background: color-mix(in srgb, #a78bfa 8%, transparent);
+}
+
+.chainPc {
+  font-weight: 600;
+  min-width: 48px;
+}
+
+.chainThPc,
+.chainThTotal {
+  text-align: right;
+}
+

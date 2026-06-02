@@ -42,6 +42,8 @@
 
 **明确排除 Next.js**：本项目是内部交易监控台，无 SEO 需求，SSE 密集，无需 SSR/RSC。Next.js 的核心价值与本项目需求完全错位。
 
+**权威文档（技术选型 + Dense UI + 治理）**：`docs/TECH_STACK.md`；应用内 **Settings → Configuration → Tech Stack**（`/settings/tech-stack`）。Dense UI 细节见 `docs/DENSE_UI.md`。
+
 ---
 
 ## 布局架构规范
@@ -145,6 +147,16 @@ function useQuoteStream(symbols: string[]) {
 - **shadcn/ui CSS 变量** 处理主题（亮/暗）
 - **CSS Modules**（`*.module.css`）处理页面特定的复杂样式
 - **禁止**：全局单文件 CSS、魔法数字（直接写 `padding: 6px`）、`!important`
+
+### Dense UI 设计系统（Agent 强制）
+
+相同交互必须复用 `@/components/data-display` 原语；改 token/组件一处，全站采纳者统一升级。Agent 必读：
+
+- `docs/DENSE_UI.md` · `AGENTS.md`
+- `.cursor/rules/dense-ui-system.mdc`（alwaysApply）
+- `.cursor/skills/dense-ui/SKILL.md`（表格/迁移任务）
+
+UI 改动后运行 `npm run check:legacy-css`。
 
 ### 页面画布（三层 surface，与 Sidebar 对齐）
 

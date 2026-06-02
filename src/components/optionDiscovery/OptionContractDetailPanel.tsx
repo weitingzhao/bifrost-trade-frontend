@@ -2,11 +2,11 @@ import { bsComputeDetail } from '@/utils/optionDiscovery/bsCalc'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { DiscoveryIconButton } from '@/components/optionDiscovery/DiscoveryIconButton'
 /* eslint-disable react-hooks/purity -- relative timestamps use Date.now() during render */
+import { useCallback, useState } from 'react'
 import type { GreeksCoverageResponse, LiquiditySummaryResponse, RelativeValueResponse, OptionSnapshotRow } from '@/types/optionDiscovery'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { fmtUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import {
   Table,
@@ -21,6 +21,21 @@ import { OptionDiscoveryContractChartPanel } from './OptionDiscoveryContractChar
 import { IvSmileChart, IvSmileLegend } from './OptionDiscoveryAnalytics'
 import { OdChartExpandOnHover } from './OdChartExpandOnHover'
 import { expirationDaysFromToday, parseExpirationDateParts } from '@/utils/optionDiscovery/expirationMeta'
+import { RightInspectorHeader } from '@/components/layout/RightInspectorHeader'
+import { InspectorSectionNav } from '@/components/layout/InspectorSectionNav'
+import { RightInspectorCollapsibleSection } from '@/components/layout/RightInspectorCollapsibleSection'
+import { inspectorShell } from '@/components/layout/rightInspectorUi'
+import {
+  defaultOptionExpandedSections,
+  focusOptionSection,
+  OPTION_INSPECTOR_NAV,
+  OPTION_INSPECTOR_NAV_BY_ID,
+  OPTION_INSPECTOR_SECTION_DOM_ID,
+  soleOptionExpandedSection,
+  type OptionInspectorSectionId,
+} from './optionInspectorSections'
+import { OptionDataQualityBadge } from './OptionDataQualityBadge'
+import odStyles from './optionContractDetail.module.css'
 import {
   computeRelativeValue,
   computeScenarios,
@@ -72,26 +87,39 @@ export function OptionContractDetailPanel({
   onAddToWatchlist,
   onAddToCompare,
 }: OptionContractDetailPanelProps) {
+  const [expandedSections, setExpandedSections] = useState(defaultOptionExpandedSections)
+
+  const toggleSection = useCallback((id: OptionInspectorSectionId) => {
+    setExpandedSections((prev) => ({ ...prev, [id]: !prev[id] }))
+  }, [])
+
+  const focusSection = useCallback((id: OptionInspectorSectionId) => {
+    setExpandedSections(focusOptionSection(id))
+    requestAnimationFrame(() => {
+      document.getElementById(OPTION_INSPECTOR_SECTION_DOM_ID[id])?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    })
+  }, [])
+
   return (
-    <>
+    <div className={cn(odStyles.optionContractDetail, inspectorShell.panel)} aria-label="Contract detail">
       {eventContextWarnings.length > 0 && (
-        <div className="mb-2 space-y-1 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-sm text-amber-900 dark:text-amber-100" role="alert">
+        <div className={inspectorShell.alertBanner} role="alert">
           {eventContextWarnings.map((w, i) => (
-            <div key={i}>
+            <div key={i} className={inspectorShell.alertBannerItem}>
               {w}
             </div>
           ))}
         </div>
       )}
 
-      <div className="min-w-0" aria-label="Contract detail">
-        <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border pb-2">
-          <h3 className="m-0 min-w-0 flex-1 text-base font-semibold">
+      <RightInspectorHeader
+        title={
+          <>
             {symbol}{' '}
             {selectedRow.right === 'C' ? 'Call' : 'Put'} {selectedRow.strike.toFixed(2)}
-            <span className="text-sm font-normal text-muted-foreground">
-              {expiration} · {expirationDaysFromToday(expiration)} DTE
-            </span>{' '}
             <span
               className={cn(
                 'rounded-full border px-1.5 py-0.5 text-xs font-semibold uppercase',
@@ -102,47 +130,58 @@ export function OptionContractDetailPanel({
             >
               {selectedDerived.moneynessLabel}
             </span>
-          </h3>
-          <DiscoveryIconButton
-            className="od-detail-action-icon-btn"
-            onClick={() => void onAddToWatchlist()}
-            aria-label={`Add ${selectedRow.right === 'C' ? 'Call' : 'Put'} ${selectedRow.strike} to Watchlist`}
-            title={`Add ${selectedRow.right === 'C' ? 'Call' : 'Put'} ${selectedRow.strike} to Watchlist`}
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M5 12h14" />
-              <path d="M12 5v14" />
-            </svg>
-          </DiscoveryIconButton>
-          <DiscoveryIconButton
-            className="od-detail-action-icon-btn"
-            onClick={onAddToCompare}
-            aria-label="Add current contract to compare"
-            title="Add current contract to compare"
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M6 4v16" />
-              <path d="M18 4v16" />
-              <path d="M9 7h6" />
-              <path d="M9 12h6" />
-              <path d="M9 17h6" />
-            </svg>
-          </DiscoveryIconButton>
-          <span className="text-xs text-muted-foreground">Massive · 15 min delayed</span>
-          <Button type="button" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close contract detail">
-            ✕
-          </Button>
-        </div>
+          </>
+        }
+        meta={`${expiration} · ${expirationDaysFromToday(expiration)} DTE`}
+        actions={
+          <>
+            <DiscoveryIconButton
+              onClick={() => void onAddToWatchlist()}
+              aria-label={`Add ${selectedRow.right === 'C' ? 'Call' : 'Put'} ${selectedRow.strike} to Watchlist`}
+              title={`Add ${selectedRow.right === 'C' ? 'Call' : 'Put'} ${selectedRow.strike} to Watchlist`}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+              </svg>
+            </DiscoveryIconButton>
+            <DiscoveryIconButton
+              onClick={onAddToCompare}
+              aria-label="Add current contract to compare"
+              title="Add current contract to compare"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M6 4v16" />
+                <path d="M18 4v16" />
+                <path d="M9 7h6" />
+                <path d="M9 12h6" />
+                <path d="M9 17h6" />
+              </svg>
+            </DiscoveryIconButton>
+            <span className={inspectorShell.headerMeta}>Massive · 15 min delayed</span>
+          </>
+        }
+        onClose={onClose}
+        closeLabel="Close contract detail"
+      />
 
-        <div className="flex flex-col gap-4">
-          <section aria-labelledby="od-contract-sec-overview">
-            <h4 id="od-contract-sec-overview" className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Overview
-            </h4>
+      <div className={inspectorShell.stack}>
+        <InspectorSectionNav
+          items={OPTION_INSPECTOR_NAV}
+          activeId={soleOptionExpandedSection(expandedSections)}
+          onFocus={focusSection}
+        />
+
+        <RightInspectorCollapsibleSection
+          sectionId={OPTION_INSPECTOR_SECTION_DOM_ID.overview}
+          navItem={OPTION_INSPECTOR_NAV_BY_ID.overview}
+          expanded={expandedSections.overview}
+          onToggle={() => toggleSection('overview')}
+        >
             <div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className={cn(inspectorShell.cardGrid, inspectorShell.cardGrid2, inspectorShell.cardGrid4)}>
+                <div className={inspectorShell.card}>
+                  <div className={cn(inspectorShell.cardLabel, 'normal-case')}>
                     Price
                     <span className="rounded bg-muted px-1 py-0.5 text-[0.65rem] font-medium normal-case">Day</span>
                     <InfoTooltip text="Day bar OHLC from Massive (chain snapshot, 15 min delayed). Underlying spot for decomposition uses stock_day daily close when available." />
@@ -170,8 +209,8 @@ export function OptionContractDetailPanel({
                     )}
                   </div>
                 </div>
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Value Decomposition</div>
+                <div className={inspectorShell.card}>
+                  <div className={inspectorShell.cardLabel}>Value Decomposition</div>
                   <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
                     <span className="text-xs text-muted-foreground">Intrinsic</span>
                     <span className="font-medium tabular-nums">{selectedDerived.intrinsic != null ? fmtUsd(selectedDerived.intrinsic) : '—'}</span>
@@ -187,8 +226,8 @@ export function OptionContractDetailPanel({
                     </span>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Underlying</div>
+                <div className={inspectorShell.card}>
+                  <div className={inspectorShell.cardLabel}>Underlying</div>
                   <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
                     <span className="text-xs text-muted-foreground">Symbol</span>
                     <span className="font-medium tabular-nums">{symbol}</span>
@@ -293,23 +332,29 @@ export function OptionContractDetailPanel({
               </div>
 
               {greeksCoverage?.ok && greeksCoverage.total != null && greeksCoverage.total > 0 && (
-                <div className="od-quality-badge">
-                  <span className="od-quality-badge-title">Data Quality</span>
-                  <span className="od-quality-item" title="Percentage of contracts with IV data">
-                    IV {greeksCoverage.coverage?.iv_pct ?? 0}%
-                  </span>
-                  <span className="od-quality-item" title="Percentage with full greeks (Δ,Γ,Θ,ν)">
-                    Greeks {greeksCoverage.coverage?.full_greeks_pct ?? 0}%
-                  </span>
-                  {greeksCoverage.freshness?.newest_ts && (
-                    <span className="od-quality-item" title="Most recent snapshot timestamp">
-                      Fresh: {new Date(greeksCoverage.freshness.newest_ts).toLocaleTimeString()}
-                    </span>
-                  )}
-                </div>
+                <OptionDataQualityBadge
+                  items={[
+                    {
+                      label: `IV ${greeksCoverage.coverage?.iv_pct ?? 0}%`,
+                      title: 'Percentage of contracts with IV data',
+                    },
+                    {
+                      label: `Greeks ${greeksCoverage.coverage?.full_greeks_pct ?? 0}%`,
+                      title: 'Percentage with full greeks (Δ,Γ,Θ,ν)',
+                    },
+                    ...(greeksCoverage.freshness?.newest_ts
+                      ? [
+                          {
+                            label: `Fresh: ${new Date(greeksCoverage.freshness.newest_ts).toLocaleTimeString()}`,
+                            title: 'Most recent snapshot timestamp',
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
               )}
             </div>
-          </section>
+        </RightInspectorCollapsibleSection>
 
           {(() => {
             const parts = parseExpirationDateParts(expiration)
@@ -378,14 +423,15 @@ export function OptionContractDetailPanel({
             ] as const
 
             return (
-              <section aria-labelledby="od-contract-sec-bs">
-                <h4 id="od-contract-sec-bs" className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  BS vs Snapshot
-                  <span className="font-normal normal-case text-muted-foreground">
-                    {' '}
-                    · Black-Scholes European approx. (American options; ATM error usually &lt;3%)
-                  </span>
-                </h4>
+              <RightInspectorCollapsibleSection
+                sectionId={OPTION_INSPECTOR_SECTION_DOM_ID.bs}
+                navItem={OPTION_INSPECTOR_NAV_BY_ID.bs}
+                expanded={expandedSections.bs}
+                onToggle={() => toggleSection('bs')}
+              >
+                <p className="mb-2 text-xs font-normal normal-case text-muted-foreground">
+                  Black-Scholes European approx. (American options; ATM error usually &lt;3%)
+                </p>
                 <DiscoveryHint className="mb-2 text-xs">
                   S={`$${underlyingPrice.toFixed(2)}`} · K={selectedRow.strike.toFixed(2)} · DTE={dteDays} · Mkt=
                   {mktPrice.toFixed(4)} ({mktSrc}) · r=4.50%
@@ -433,14 +479,16 @@ export function OptionContractDetailPanel({
                     </Table>
                   </div>
                 )}
-              </section>
+              </RightInspectorCollapsibleSection>
             )
           })()}
 
-          <section className="" aria-labelledby="od-contract-sec-chart">
-            <h4 id="od-contract-sec-chart" className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Chart (K-line)
-            </h4>
+          <RightInspectorCollapsibleSection
+            sectionId={OPTION_INSPECTOR_SECTION_DOM_ID.chart}
+            navItem={OPTION_INSPECTOR_NAV_BY_ID.chart}
+            expanded={expandedSections.chart}
+            onToggle={() => toggleSection('chart')}
+          >
             <DiscoveryHint className=" od-detail-chart-hint" style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               OHLC below uses contract history. If the chart is empty, click Backfill from Massive (Celery worker on the massive queue required).
             </DiscoveryHint>
@@ -450,7 +498,7 @@ export function OptionContractDetailPanel({
               strike={selectedRow.strike}
               optionRight={selectedRow.right === 'P' ? 'P' : 'C'}
             />
-          </section>
+          </RightInspectorCollapsibleSection>
 
           {(() => {
             const lastTradeTs =
@@ -475,14 +523,16 @@ export function OptionContractDetailPanel({
               spreadPercentile = (rank / spreadRows.length) * 100
             }
             return (
-              <section className="" aria-labelledby="od-contract-sec-liquidity">
-                <h4 id="od-contract-sec-liquidity" className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Liquidity
-                </h4>
+              <RightInspectorCollapsibleSection
+                sectionId={OPTION_INSPECTOR_SECTION_DOM_ID.liquidity}
+                navItem={OPTION_INSPECTOR_NAV_BY_ID.liquidity}
+                expanded={expandedSections.liquidity}
+                onToggle={() => toggleSection('liquidity')}
+              >
                 {liquidityLoading && <DiscoveryHint className="">Loading liquidity data…</DiscoveryHint>}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tradability Score</div>
+                <div className={inspectorShell.card}>
+                  <div className={inspectorShell.cardLabel}>Tradability Score</div>
                     <div className="od-tradability-score">
                       <span
                         className={`od-tradability-value od-tradability-${tradability.score >= 60 ? 'good' : tradability.score >= 30 ? 'fair' : 'poor'}`}
@@ -502,8 +552,8 @@ export function OptionContractDetailPanel({
                       ))}
                     </div>
                   </div>
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Spread Analysis</div>
+                <div className={inspectorShell.card}>
+                  <div className={inspectorShell.cardLabel}>Spread Analysis</div>
                     <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
                       <span className="text-xs text-muted-foreground">Spread ($)</span>
                       <span className="font-medium tabular-nums">{selectedDerived?.spread != null ? fmtUsd(selectedDerived.spread) : '—'}</span>
@@ -546,8 +596,8 @@ export function OptionContractDetailPanel({
                       )}
                     </div>
                   </div>
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Last Trade</div>
+                <div className={inspectorShell.card}>
+                  <div className={inspectorShell.cardLabel}>Last Trade</div>
                     {liquidityLastTrade ? (
                       <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
                         <span className="text-xs text-muted-foreground">Price</span>
@@ -569,8 +619,8 @@ export function OptionContractDetailPanel({
                       <DiscoveryHint className="">{liquidityLoading ? 'Loading…' : 'No last trade data available.'}</DiscoveryHint>
                     )}
                   </div>
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quote Activity</div>
+                <div className={inspectorShell.card}>
+                  <div className={inspectorShell.cardLabel}>Quote Activity</div>
                     <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
                       <span className="text-xs text-muted-foreground">Recent Quotes</span>
                       <span className="font-medium tabular-nums">{liquidityQuoteCount != null ? `${liquidityQuoteCount} updates` : '—'}</span>
@@ -602,7 +652,7 @@ export function OptionContractDetailPanel({
                     <span className="od-exec-chip od-exec-chip--ok">Good tradability</span>
                   )}
                 </div>
-              </section>
+              </RightInspectorCollapsibleSection>
             )
           })()}
 
@@ -610,33 +660,36 @@ export function OptionContractDetailPanel({
             const scenarios = computeScenarios(selectedRow, underlyingPrice)
             const hasGreeks = selectedRow.delta != null && Number.isFinite(selectedRow.delta!)
             return (
-              <section className="" aria-labelledby="od-contract-sec-risk">
-                <h4 id="od-contract-sec-risk" className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Risk
-                </h4>
+              <RightInspectorCollapsibleSection
+                sectionId={OPTION_INSPECTOR_SECTION_DOM_ID.risk}
+                navItem={OPTION_INSPECTOR_NAV_BY_ID.risk}
+                expanded={expandedSections.risk}
+                onToggle={() => toggleSection('risk')}
+              >
                 {!hasGreeks && (
                   <DiscoveryHint className="">Greeks not available for this contract. Risk scenarios require at least delta.</DiscoveryHint>
                 )}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Greeks (per contract)</div>
-                    <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
-                      <span className="text-xs text-muted-foreground">Delta (Δ)</span>
-                      <span className="font-medium tabular-nums">{fmtOptNum(selectedRow.delta, 4)}</span>
-                      <span className="text-xs text-muted-foreground">Gamma (Γ)</span>
-                      <span className="font-medium tabular-nums">{fmtOptNum(selectedRow.gamma, 4)}</span>
-                      <span className="text-xs text-muted-foreground">Theta (Θ)</span>
-                      <span className="font-medium tabular-nums">{fmtOptNum(selectedRow.theta, 4)}</span>
-                      <span className="text-xs text-muted-foreground">Vega (ν)</span>
-                      <span className="font-medium tabular-nums">{fmtOptNum(selectedRow.vega, 4)}</span>
-                      <span className="text-xs text-muted-foreground">IV</span>
-                      <span className="font-medium tabular-nums">{fmtIV(selectedRow.iv)}</span>
+                <div className="od-card-grid">
+                  <div className="od-card-section">
+                    <div className="od-card-section-title">Greeks (per contract)</div>
+                    <div className="od-kv-grid">
+                      <span className="od-kv-k">Delta (Δ)</span>
+                      <span className="od-kv-v">{fmtOptNum(selectedRow.delta, 4)}</span>
+                      <span className="od-kv-k">Gamma (Γ)</span>
+                      <span className="od-kv-v">{fmtOptNum(selectedRow.gamma, 4)}</span>
+                      <span className="od-kv-k">Theta (Θ)</span>
+                      <span className="od-kv-v">{fmtOptNum(selectedRow.theta, 4)}</span>
+                      <span className="od-kv-k">Vega (ν)</span>
+                      <span className="od-kv-v">{fmtOptNum(selectedRow.vega, 4)}</span>
+                      <span className="od-kv-k">IV</span>
+                      <span className="od-kv-v">{fmtIV(selectedRow.iv)}</span>
                     </div>
                   </div>
                   {scenarios.length > 0 && (
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Scenario Analysis (1 contract = 100 shares)</div>
-                      <table className="od-scenario-table">
+                    <div className="od-card-section">
+                      <div className="od-card-section-title">Scenario Analysis (1 contract = 100 shares)</div>
+                      <div className="od-scenario-table-wrap">
+                        <table className="od-scenario-table">
                         <thead>
                           <tr>
                             <th>Scenario</th>
@@ -656,25 +709,26 @@ export function OptionContractDetailPanel({
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     </div>
                   )}
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Exposure Summary</div>
-                    <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
-                      <span className="text-xs text-muted-foreground">Delta $ (per 1 lot)</span>
-                      <span className="font-medium tabular-nums">
+                  <div className="od-card-section">
+                    <div className="od-card-section-title">Exposure Summary</div>
+                    <div className="od-kv-grid">
+                      <span className="od-kv-k">Delta $ (per 1 lot)</span>
+                      <span className="od-kv-v">
                         {selectedRow.delta != null && underlyingPrice != null
                           ? fmtUsd(selectedRow.delta * underlyingPrice * 100)
                           : '—'}
                       </span>
-                      <span className="text-xs text-muted-foreground">Theta $ / day</span>
-                      <span className="font-medium tabular-nums">{selectedRow.theta != null ? fmtUsd(selectedRow.theta * 100) : '—'}</span>
-                      <span className="text-xs text-muted-foreground">Vega $ / 1pt IV</span>
-                      <span className="font-medium tabular-nums">{selectedRow.vega != null ? fmtUsd(selectedRow.vega * 100 * 0.01) : '—'}</span>
+                      <span className="od-kv-k">Theta $ / day</span>
+                      <span className="od-kv-v">{selectedRow.theta != null ? fmtUsd(selectedRow.theta * 100) : '—'}</span>
+                      <span className="od-kv-k">Vega $ / 1pt IV</span>
+                      <span className="od-kv-v">{selectedRow.vega != null ? fmtUsd(selectedRow.vega * 100 * 0.01) : '—'}</span>
                     </div>
                   </div>
                 </div>
-              </section>
+              </RightInspectorCollapsibleSection>
             )
           })()}
 
@@ -687,13 +741,15 @@ export function OptionContractDetailPanel({
             const rvCount = hasServer ? serverRelativeValue!.contracts_compared : clientRv.neighborCount
             const sameRight = snapshotRows.filter(r => r.right === selectedRow.right && r.iv != null && Number.isFinite(r.iv!))
             return (
-              <section className="" aria-labelledby="od-contract-sec-relative">
-                <h4 id="od-contract-sec-relative" className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Relative Value
-                </h4>
+              <RightInspectorCollapsibleSection
+                sectionId={OPTION_INSPECTOR_SECTION_DOM_ID.relative}
+                navItem={OPTION_INSPECTOR_NAV_BY_ID.relative}
+                expanded={expandedSections.relative}
+                onToggle={() => toggleSection('relative')}
+              >
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className={inspectorShell.card}>
+                  <div className={inspectorShell.cardLabel}>
                       IV Relative Value {hasServer && <span className="od-kv-dim">(server)</span>}
                     </div>
                     <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
@@ -726,8 +782,8 @@ export function OptionContractDetailPanel({
                     </div>
                   </div>
                   {sameRight.length >= 3 && (
-                <div className="rounded-lg border border-border bg-secondary/30 p-2">
-                  <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className={inspectorShell.card}>
+                  <div className={inspectorShell.cardLabel}>
                         IV Smile (same expiry, {selectedRow.right === 'C' ? 'Calls' : 'Puts'})
                       </div>
                       <OdChartExpandOnHover title={`IV Smile (same expiry, ${selectedRow.right === 'C' ? 'Calls' : 'Puts'})`}>
@@ -741,18 +797,18 @@ export function OptionContractDetailPanel({
                 </div>
 
                 {greeksCoverage?.ok && greeksCoverage.total != null && greeksCoverage.total > 0 && (
-                  <div className="od-quality-badge">
-                    <span className="od-quality-badge-title">Data Quality</span>
-                    <span className="od-quality-item">IV {greeksCoverage.coverage?.iv_pct ?? 0}%</span>
-                    <span className="od-quality-item">Greeks {greeksCoverage.coverage?.full_greeks_pct ?? 0}%</span>
-                    <span className="od-quality-item">OI {greeksCoverage.coverage?.with_oi ?? 0} contracts</span>
-                  </div>
+                  <OptionDataQualityBadge
+                    items={[
+                      { label: `IV ${greeksCoverage.coverage?.iv_pct ?? 0}%` },
+                      { label: `Greeks ${greeksCoverage.coverage?.full_greeks_pct ?? 0}%` },
+                      { label: `OI ${greeksCoverage.coverage?.with_oi ?? 0} contracts` },
+                    ]}
+                  />
                 )}
-              </section>
+              </RightInspectorCollapsibleSection>
             )
           })()}
         </div>
-      </div>
-    </>
+    </div>
   )
 }

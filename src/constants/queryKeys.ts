@@ -6,6 +6,7 @@ export const QUERY_KEYS = {
     quotesLive:     ['market', 'quotes-live']       as const,
     quotesSnapshot: ['market', 'quotes-snapshot']   as const,
     systemMessages: ['market', 'system-messages']   as const,
+    benchmark:      (symbol: string) => ['market', 'benchmark', symbol] as const,
   },
   trading: {
     performance:    ['trading', 'performance']       as const,

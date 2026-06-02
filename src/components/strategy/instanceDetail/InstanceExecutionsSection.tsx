@@ -159,9 +159,10 @@ function GroupBlock({
 
 interface Props {
   data: InstanceDetailData
+  hideSectionTitle?: boolean
 }
 
-export function InstanceExecutionsSection({ data }: Props) {
+export function InstanceExecutionsSection({ data, hideSectionTitle = false }: Props) {
   const [tab, setTab] = useState<ExecTab>('performance_book')
   const activeRows = tab === 'performance_book' ? data.executionsFinal : data.executionsTws
 
@@ -186,9 +187,14 @@ export function InstanceExecutionsSection({ data }: Props) {
     return { gross, comm, net }
   }, [groups, data.optionStockLinkByOptionId])
 
+  const Wrapper = hideSectionTitle ? 'div' : 'section'
+  const wrapperProps = hideSectionTitle
+    ? { 'aria-label': 'Executions' as const }
+    : { className: instanceDetailBlockClass, 'aria-label': 'Executions' as const }
+
   return (
-    <section className={instanceDetailBlockClass} aria-label="Executions">
-      <h3 className={instanceSectionTitleClass}>Executions</h3>
+    <Wrapper {...wrapperProps}>
+      {!hideSectionTitle ? <h3 className={instanceSectionTitleClass}>Executions</h3> : null}
 
       <div className={instanceExecTabsClass} role="tablist" aria-label="Execution source">
         <button
@@ -248,6 +254,6 @@ export function InstanceExecutionsSection({ data }: Props) {
           )}
         </div>
       )}
-    </section>
+    </Wrapper>
   )
 }

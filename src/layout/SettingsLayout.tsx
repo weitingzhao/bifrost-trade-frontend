@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   BarChart2, ChevronDown, ChevronRight,
   Cpu, Database, HardDrive, Globe,
-  Layers, Plug, Radio, Wifi,
+  Layers, Layers2, Plug, Radio, Wifi,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -81,6 +81,7 @@ const NAV: NavGroup[] = [
         section: 'Configuration',
         items: [
           leaf('Daemon App', '/settings/daemon-app', Cpu),
+          leaf('Tech Stack', '/settings/tech-stack', Layers2),
           branch('IB Configure', Plug, [
             leaf('User (YAML)',       '/settings/ib#ib-users',       Plug),
             leaf('Client ID (YAML)',  '/settings/ib#ib-client-ids',  Cpu),

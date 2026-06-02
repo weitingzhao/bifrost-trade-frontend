@@ -197,6 +197,10 @@ export const router = createBrowserRouter([
             lazy: lazyPage(() => import('@/pages/settings/DaemonAppPage')),
           },
           {
+            path: 'tech-stack',
+            lazy: lazyPage(() => import('@/pages/settings/TechStackPage')),
+          },
+          {
             path: 'ib',
             lazy: lazyPage(() => import('@/pages/settings/IbConnectionPage')),
           },

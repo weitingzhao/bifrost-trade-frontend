@@ -11,7 +11,7 @@ import { PosStatusPill } from './PosStatusPill'
 import { fmtUsd, fmtDate, fmtDaysAgo, pnlColorClass } from '@/utils/positions'
 import { InstanceOptionSubTable } from './InstanceOptionSubTable'
 import { InstanceCoverageSubTable } from './InstanceCoverageSubTable'
-import type { InstanceAllGroup, Execution, LivePositionRow, StrategyOpportunity } from '@/types/positions'
+import type { InstanceAllGroup, Execution, LivePositionRow, StrategyOpportunity, OpenOptionPosition } from '@/types/positions'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 import { buildLiveOptExecutionMap } from '@/utils/positionsExecutions'
 import { formatRiskDisplayLabels } from '@/utils/riskProfile'
@@ -42,7 +42,7 @@ interface Props {
   onRefreshExecs?: () => void
   onOpenStrategy?: (instanceId: number) => void
   onOpenStock?: (symbol: string, accountId: string) => void
-  onOpenOption?: (contractKey: string) => void
+  onOpenOption?: (position: OpenOptionPosition) => void
 }
 
 function coverageBadge(coverage: InstanceAllGroup['stock_coverage'], liveStocks: LivePositionRow[]) {

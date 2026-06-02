@@ -104,7 +104,6 @@ export function OptionChartsCard({
               onOptionDetailClick(activeOptionDetail === label ? null : label)
             }
             showFootnotes
-            layout="row"
           />
         </DonutChartRow>
 

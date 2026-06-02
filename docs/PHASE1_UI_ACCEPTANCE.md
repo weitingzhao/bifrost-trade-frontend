@@ -14,6 +14,7 @@
 | `/portfolio/positions` | Global status bar visible; strip hidden on `/settings/*` and `/operations/*` |
 | `/settings/ib-connection` | Header actions; connection / Flex sections |
 | `/research/sepa` (Stock Screener) | Filter elevated block (`bg-secondary`); table vs canvas |
+| Stock Inspector (drawer) | See [STOCK_INSPECTOR_ACCEPTANCE.md](./STOCK_INSPECTOR_ACCEPTANCE.md) — open from Positions / Watchlist / Screener |
 
 ## Pass criteria
 

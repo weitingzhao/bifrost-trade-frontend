@@ -31,6 +31,7 @@ function fmtSignedPct(n: number | null | undefined): string {
 
 interface Props {
   data: InstanceDetailData
+  hideSectionTitle?: boolean
 }
 
 function PnlBand({
@@ -82,14 +83,14 @@ function PnlMetric({
   )
 }
 
-export function InstancePnLSection({ data }: Props) {
+export function InstancePnLSection({ data, hideSectionTitle = false }: Props) {
   const loading = data.perfLoading || data.execLoading
   const hasData = data.summary != null || data.displayNetPnl != null
 
   return (
     <div className={instancePnlColumnClass}>
       <div className={instancePnlSectionHeadClass}>
-        <h3 className={instanceSectionTitleClass}>PnL</h3>
+        {!hideSectionTitle ? <h3 className={instanceSectionTitleClass}>PnL</h3> : null}
         <button
           type="button"
           className={instancePnlInfoBtnClass}

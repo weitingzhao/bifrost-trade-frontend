@@ -2,6 +2,8 @@
 
 Reusable styling for data-heavy monitoring pages (Positions, Trade Ledger, Performance, Live).
 
+**Parent doc:** [TECH_STACK.md](./TECH_STACK.md) (locked stack + governance). In-app: Settings → Configuration → Tech Stack.
+
 ## Layer stack
 
 | Layer | Location | Role |
@@ -129,3 +131,15 @@ Use `variant="inset"` for nested instance rows inside an opportunity group.
 ## Verification
 
 Compare against Legacy Frontend on the same Legacy API. Stocks tab is the visual baseline for table density.
+
+## Agent governance
+
+All coding agents (Cursor, Claude Code, Codex, GPT) working in this repo MUST follow:
+
+| Asset | Purpose |
+|-------|---------|
+| `AGENTS.md` | Cross-agent entry point |
+| `.cursor/rules/dense-ui-system.mdc` | Mandatory reuse rules (alwaysApply) |
+| `.cursor/skills/dense-ui/SKILL.md` | Implementation workflow for tables/migration |
+
+After UI changes: `npm run lint && npm run build && npm run check:legacy-css`.

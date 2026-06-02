@@ -24,7 +24,7 @@ interface Props {
   finalMap: Map<string, Execution[]>
   twsMap: Map<string, Execution[]>
   detailViewMode?: DetailViewMode
-  onOpenOption?: (contractKey: string) => void
+  onOpenOption?: (position: OpenOptionPosition) => void
   onEditExec?: (exec: Execution) => void
   onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
   onDeleteExec?: (exec: Execution) => void
@@ -151,7 +151,7 @@ export function InstanceOptionSubTable({
                       <button
                         type="button"
                         className={instancePanel.subContractBtn}
-                        onClick={(e) => { e.stopPropagation(); onOpenOption(pos.contract_key) }}
+                        onClick={(e) => { e.stopPropagation(); onOpenOption(pos) }}
                       >
                         <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
                         {pos.strike != null ? ` ${pos.strike}` : ''}

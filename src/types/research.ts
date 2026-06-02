@@ -151,6 +151,7 @@ export interface TickerOverview {
   address_state?: string | null
   list_date?: string | null
   exchange?: string | null
+  homepage_url?: string | null
   related_tickers?: string[]
 }
 
@@ -290,41 +291,76 @@ export interface StockInspectorFundamentalSeed {
   insufficientData?: boolean
 }
 
+export interface BalanceSheetRow {
+  period_end: string
+  fiscal_year: number
+  fiscal_quarter: number
+  cash_and_equivalents: number | null
+  total_current_assets: number | null
+  total_current_liabilities: number | null
+  total_assets: number | null
+  total_liabilities: number | null
+  total_equity: number | null
+  receivables: number | null
+  inventories: number | null
+  debt_current: number | null
+  long_term_debt_and_capital_lease_obligations: number | null
+  property_plant_equipment_net: number | null
+  retained_earnings_deficit: number | null
+}
+
+export interface CashFlowRow {
+  period_end: string
+  fiscal_year: number
+  fiscal_quarter: number
+  net_income: number | null
+  net_cash_from_operating_activities: number | null
+  net_cash_from_investing_activities: number | null
+  net_cash_from_financing_activities: number | null
+  depreciation_depletion_and_amortization: number | null
+  purchase_of_property_plant_and_equipment: number | null
+  change_in_cash_and_equivalents: number | null
+}
+
+export interface RatiosRow {
+  date: string
+  price_to_earnings: number | null
+  price_to_sales: number | null
+  price_to_book: number | null
+  price_to_free_cash_flow: number | null
+  debt_to_equity: number | null
+  return_on_equity: number | null
+  return_on_assets: number | null
+  market_cap: number | null
+  free_cash_flow: number | null
+  earnings_per_share: number | null
+  average_volume: number | null
+  dividend_yield: number | null
+}
+
+export interface ShortInterestRow {
+  settlement_date: string
+  short_interest: number | null
+  avg_daily_volume: number | null
+  days_to_cover: number | null
+}
+
+export interface ShortVolumeRow {
+  trade_date: string
+  short_volume: number | null
+  short_volume_ratio: number | null
+  total_volume: number | null
+}
+
 export interface SymbolStatementsData {
   ok: boolean
   error?: string
   symbol?: string
-  balance_sheets: Array<{
-    fiscal_year: number
-    fiscal_quarter: number
-    total_assets: number | null
-    total_liabilities: number | null
-    total_equity: number | null
-    cash_and_equivalents: number | null
-  }>
-  cash_flows: Array<{
-    fiscal_year: number
-    fiscal_quarter: number
-    operating_cash_flow: number | null
-    free_cash_flow: number | null
-  }>
-  ratios: Array<{
-    fiscal_year: number
-    fiscal_quarter: number
-    pe: number | null
-    ps: number | null
-    pb: number | null
-    roe: number | null
-  }>
-  short_interest: Array<{
-    settlement_date: string
-    short_interest: number | null
-    days_to_cover: number | null
-  }>
-  short_volume: Array<{
-    trade_date: string
-    short_volume_ratio: number | null
-  }>
+  balance_sheets: BalanceSheetRow[]
+  cash_flows: CashFlowRow[]
+  ratios: RatiosRow[]
+  short_interest: ShortInterestRow[]
+  short_volume: ShortVolumeRow[]
 }
 
 export interface SymbolOptionPcrTrendPoint {

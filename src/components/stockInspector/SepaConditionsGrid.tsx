@@ -1,11 +1,17 @@
-import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { FundamentalConditionRow, TechnicalConditionsData } from '@/types/research'
+import type {
+  FundamentalConditionRow,
+  FundGroupSummary,
+  TechnicalConditionsData,
+} from '@/types/research'
 import type { DisplayCondition } from '@/hooks/useStockInspector'
 import { FUND_EXT_GROUP_ORDER } from './stockInspectorCatalog'
+import { ConditionIcon } from './ConditionIcon'
 import { ConditionList } from './ConditionList'
+import { SummaryStrip } from './SummaryStrip'
 import styles from './stock-inspector.module.css'
+import { inspectorShell } from '@/components/layout/rightInspectorUi'
 import { fmtCondVal, humanizeId } from './stockInspectorUtils'
 
 interface FundProps {
@@ -17,7 +23,7 @@ interface FundProps {
   conditions: DisplayCondition[]
   overallPass: boolean | null
   passCount: number | null
-  groups: Record<string, { total: number; pass_count: number; pass: boolean }> | null | undefined
+  groups: Record<string, FundGroupSummary> | null | undefined
   extConditions: FundamentalConditionRow[]
   activeCond: string | null
   onActiveCond: (id: string | null) => void
@@ -41,9 +47,9 @@ function FundColumn({
 }: FundProps) {
   return (
     <div className={styles.conditionsCol}>
-      <div className={styles.sectionTitle}>
+      <div className={inspectorShell.sectionTitle}>
         <span>SEPA Fundamental Conditions</span>
-        {asOfDate && <span className={styles.sectionTitleAsOf}>{asOfDate}</span>}
+        {asOfDate && <span className={inspectorShell.sectionTitleAsOf}>{asOfDate}</span>}
       </div>
 
       {loading && !hasData && <p className={styles.hint}>Loading conditions…</p>}
@@ -71,15 +77,11 @@ function FundColumn({
             clickable={rawAvailable}
           />
           {overallPass != null && (
-            <div className={cn(
-              styles.condSummary,
-              overallPass ? styles.condSummaryOk : styles.condSummaryWarn,
-            )}>
-              <span>Overall</span>
-              <span className="font-mono font-semibold">
-                {overallPass ? 'PASS (8/8)' : `${passCount ?? 0} / 8`}
-              </span>
-            </div>
+            <SummaryStrip
+              label="Overall"
+              value={overallPass ? 'PASS (8/8)' : `${passCount ?? 0} / 8`}
+              ok={!!overallPass}
+            />
           )}
           {groups && extConditions.length > 0 && (
             <div className="mt-2 space-y-1">
@@ -88,25 +90,23 @@ function FundColumn({
                 if (!gs) return null
                 const groupConds = extConditions.filter((c) => c.group === key)
                 if (groupConds.length === 0) return null
+                const badgeClass = gs.pass
+                  ? styles.extGroupBadgePass
+                  : gs.insufficient
+                    ? styles.extGroupBadgeInsuf
+                    : styles.extGroupBadgeFail
                 return (
-                  <details key={key} className={styles.extGroup} open>
+                  <details key={key} className={styles.extGroup}>
                     <summary className={styles.extGroupSummary}>
                       <span>{label}</span>
-                      <span className={cn(
-                        styles.extGroupBadge,
-                        gs.pass ? styles.extGroupBadgePass : styles.extGroupBadgeFail,
-                      )}>
+                      <span className={cn(styles.extGroupBadge, badgeClass)}>
                         {gs.pass_count}/{gs.total}
                       </span>
                     </summary>
                     <ul className={cn(styles.condList, 'px-2 pb-1')}>
                       {groupConds.map((c) => (
                         <li key={c.id} className={styles.condRow}>
-                          {c.pass ? (
-                            <Check className={cn('h-3 w-3', styles.condIconPass)} />
-                          ) : (
-                            <X className={cn('h-3 w-3', styles.condIconFail)} />
-                          )}
+                          <ConditionIcon pass={c.pass} />
                           <span className="truncate">{humanizeId(c.id)}</span>
                           {(c.actual != null || c.threshold != null) && (
                             <span className={styles.condMetric}>
@@ -154,9 +154,9 @@ function TechColumn({
 
   return (
     <div className={styles.conditionsCol}>
-      <div className={styles.sectionTitle}>
+      <div className={inspectorShell.sectionTitle}>
         <span>SEPA Technical Conditions</span>
-        {asOfDate && <span className={styles.sectionTitleAsOf}>{asOfDate}</span>}
+        {asOfDate && <span className={inspectorShell.sectionTitleAsOf}>{asOfDate}</span>}
       </div>
 
       {loading && !hasData && <p className={styles.hint}>Loading conditions…</p>}
@@ -174,15 +174,11 @@ function TechColumn({
           )}
           <ConditionList conditions={conditions} />
           {overallPass != null && (
-            <div className={cn(
-              styles.condSummary,
-              overallPass ? styles.condSummaryOk : styles.condSummaryWarn,
-            )}>
-              <span>Overall</span>
-              <span className="font-mono font-semibold">
-                {overallPass ? 'PASS (11/11)' : `${passCount ?? 0} / 11`}
-              </span>
-            </div>
+            <SummaryStrip
+              label="Overall"
+              value={overallPass ? 'PASS (11/11)' : `${passCount ?? 0} / 11`}
+              ok={!!overallPass}
+            />
           )}
 
           {tiers?.momentum && tiers.momentum.indicators.length > 0 && (
@@ -256,11 +252,7 @@ function TierIndicatorList({
     <ul className={cn(styles.condList, 'px-2 pb-1')}>
       {indicators.map((ind) => (
         <li key={ind.id} className={styles.condRow}>
-          {ind.pass ? (
-            <Check className={cn('h-3 w-3', styles.condIconPass)} />
-          ) : (
-            <X className={cn('h-3 w-3', styles.condIconFail)} />
-          )}
+          <ConditionIcon pass={ind.pass} />
           <span>{humanizeId(ind.id)}</span>
           <span className={styles.condMetric} title={ind.reason}>
             {ind.actual != null ? String(ind.actual) : '—'}

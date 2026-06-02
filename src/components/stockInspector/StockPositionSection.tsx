@@ -2,13 +2,13 @@ import { cn } from '@/lib/utils'
 import type { LivePositionRow } from '@/types/positions'
 import { fmtUsd, pnlColorClass } from '@/utils/positions'
 import styles from './stock-inspector.module.css'
+import { inspectorShell } from '@/components/layout/rightInspectorUi'
 
 interface Props {
-  accountId?: string
   position: LivePositionRow
 }
 
-export function StockPositionSection({ accountId, position }: Props) {
+export function StockPositionSection({ position }: Props) {
   const qty = Number(position.position)
   const avgCost = position.avgCost != null ? Number(position.avgCost) : null
   const lastPrice = position.price != null ? Number(position.price) : null
@@ -38,9 +38,9 @@ export function StockPositionSection({ accountId, position }: Props) {
   ]
 
   return (
-    <section className={styles.section} aria-labelledby="stock-inspector-position">
-      <div id="stock-inspector-position" className={styles.sectionTitle}>
-        <span>Position{accountId ? ` · ${accountId}` : ''}</span>
+    <section className={inspectorShell.section} aria-labelledby="stock-inspector-position">
+      <div id="stock-inspector-position" className={inspectorShell.sectionTitle}>
+        <span>Position</span>
       </div>
       <div className={styles.kvGrid}>
         {rows.map(([k, v, colorClass]) => (

@@ -12,6 +12,8 @@ interface Props {
   dimmedUnlessActive?: boolean
   showFootnotes?: boolean
   layout?: 'row' | 'column' | 'grid2'
+  /** Slightly larger primary row (Category Detail, Option Detail footnotes). */
+  size?: 'compact' | 'comfortable'
 }
 
 export function ChartLegend({
@@ -23,9 +25,16 @@ export function ChartLegend({
   dimmedUnlessActive,
   showFootnotes,
   layout = 'column',
+  size = 'compact',
 }: Props) {
+  const comfortable = size === 'comfortable' || showFootnotes
+
   const gridClass =
-    layout === 'grid2' ? 'grid grid-cols-2 gap-x-2 gap-y-0.5' : layout === 'row' ? 'flex flex-wrap gap-1' : 'flex flex-col gap-0.5'
+    layout === 'grid2'
+      ? cn('grid grid-cols-2 gap-x-2', comfortable ? 'gap-y-1' : 'gap-y-0.5')
+      : layout === 'row'
+        ? cn('flex flex-wrap', comfortable ? 'gap-1.5' : 'gap-1')
+        : cn('flex flex-col', comfortable ? 'gap-1' : 'gap-0.5')
 
   return (
     <div className={cn('min-w-0 flex-1', gridClass)}>
@@ -37,7 +46,8 @@ export function ChartLegend({
           <div
             key={seg.label}
             className={cn(
-              'rounded px-1 py-0.5 text-xs transition-opacity',
+              'rounded px-1 py-0.5 transition-opacity',
+              !comfortable && 'text-xs',
               onSegmentClick && 'cursor-pointer hover:bg-muted/50',
               isActive && 'bg-muted',
               isDimmed && 'opacity-40',
@@ -45,13 +55,44 @@ export function ChartLegend({
             onClick={onSegmentClick ? () => onSegmentClick(seg.label) : undefined}
             title={seg.marketValueTooltip}
           >
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
-              <span className="text-muted-foreground truncate flex-1 min-w-0">{seg.label}</span>
+            <div
+              className={cn(
+                'grid w-full items-center gap-x-2',
+                comfortable
+                  ? 'grid-cols-[10px_minmax(0,1fr)_auto] text-sm leading-snug'
+                  : 'grid-cols-[8px_minmax(0,1fr)_auto]',
+              )}
+            >
+              <span
+                className={cn('rounded-full shrink-0', comfortable ? 'size-2.5' : 'size-2')}
+                style={{ backgroundColor: seg.color }}
+              />
+              <span
+                className={cn(
+                  'truncate min-w-0',
+                  comfortable ? 'text-foreground/90 font-medium' : 'text-muted-foreground',
+                )}
+              >
+                {seg.label}
+              </span>
               {mode === 'pct' ? (
-                <span className="font-mono text-muted-foreground w-10 text-right shrink-0">{pct.toFixed(1)}%</span>
+                <span
+                  className={cn(
+                    'font-mono min-w-[2.75rem] text-right shrink-0 tabular-nums',
+                    comfortable ? 'font-semibold text-muted-foreground' : 'text-muted-foreground',
+                  )}
+                >
+                  {pct.toFixed(1)}%
+                </span>
               ) : (
-                <span className="font-mono w-14 text-right shrink-0">{fmtMvAbbrev(seg.value)}</span>
+                <span
+                  className={cn(
+                    'font-mono min-w-[3.5rem] text-right shrink-0 tabular-nums',
+                    comfortable && 'font-semibold text-foreground',
+                  )}
+                >
+                  {fmtMvAbbrev(seg.value)}
+                </span>
               )}
             </div>
             {showFootnotes && seg.optionDetailFoot && (

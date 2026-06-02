@@ -41,9 +41,31 @@ export function fmtRev(v: number | null): string {
 
 export function fmtRatio(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v)) return '—'
-  return v.toFixed(3)
+  return v.toFixed(1)
 }
 
 export function humanizeId(id: string): string {
   return id.replace(/_/g, ' ')
+}
+
+export function fmtM(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  const abs = Math.abs(v)
+  const sign = v < 0 ? '-' : ''
+  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(2)}T`
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}B`
+  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(1)}M`
+  if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(0)}K`
+  return `${sign}$${abs.toFixed(0)}`
+}
+
+export function fmtPct2(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  return `${(v * 100).toFixed(1)}%`
+}
+
+export function colRange(vals: (number | null | undefined)[]): [number, number] {
+  const ns = vals.filter((v): v is number => v != null && Number.isFinite(v))
+  if (ns.length === 0) return [0, 0]
+  return [Math.min(...ns), Math.max(...ns)]
 }

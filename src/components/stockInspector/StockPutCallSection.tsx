@@ -1,29 +1,51 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { fetchSymbolOptionPcr } from '@/api/research'
 import { postMassiveSync } from '@/api/research/optionDiscovery'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { SectionCollapseToggle } from './SectionCollapseToggle'
+import { INSPECTOR_SECTION_NAV_BY_ID } from './stockInspectorSections'
 import styles from './stock-inspector.module.css'
+import { inspectorShell } from '@/components/layout/rightInspectorUi'
 import { fmtRatio } from './stockInspectorUtils'
-
-const LOOKBACK_DAYS = 365
+import { PcrDualLineChart } from './charts/PcrDualLineChart'
+import { OpenInterestTrendChart } from './charts/OpenInterestTrendChart'
+import { PcrChainTable } from './charts/PcrChainTable'
+import {
+  PCR_DEFAULT_WINDOW_DAYS,
+  PCR_FETCH_DAYS,
+  PCR_WINDOW_OPTIONS,
+  type PcrWindowDays,
+  filterTrendInWindow,
+  fmtCompact,
+  ratioToneClass,
+} from './charts/pcrChartUtils'
 
 interface Props {
   symbol: string
+  sectionId?: string
+  expanded?: boolean
+  onExpandedChange?: (expanded: boolean) => void
 }
 
-export function StockPutCallSection({ symbol }: Props) {
+export function StockPutCallSection({
+  symbol,
+  sectionId = 'stock-inspector-put-call',
+  expanded = true,
+  onExpandedChange,
+}: Props) {
   const sym = symbol.trim().toUpperCase()
-  const [expanded, setExpanded] = useState(true)
+  const [showTrendData, setShowTrendData] = useState(false)
+  const [chartWindowDays, setChartWindowDays] = useState<PcrWindowDays>(PCR_DEFAULT_WINDOW_DAYS)
   const [refreshing, setRefreshing] = useState(false)
   const qc = useQueryClient()
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: QUERY_KEYS.research.optionPcr(sym),
-    queryFn: () => fetchSymbolOptionPcr(sym, LOOKBACK_DAYS),
-    enabled: !!sym,
+    queryFn: () => fetchSymbolOptionPcr(sym, PCR_FETCH_DAYS),
+    enabled: !!sym && expanded,
     staleTime: 120_000,
   })
 
@@ -41,22 +63,29 @@ export function StockPutCallSection({ symbol }: Props) {
     }
   }
 
+  const trend = data?.trend ?? []
+  const chain = data?.chain_by_expiry ?? []
+  const asOfDate = data?.as_of_date
+
+  const trendInWindow = useMemo(
+    () => filterTrendInWindow(trend, chartWindowDays, asOfDate),
+    [trend, chartWindowDays, asOfDate],
+  )
+
   if (!sym) return null
 
   return (
-    <section className={styles.section}>
+    <section id={sectionId} className={inspectorShell.section}>
       <div className="flex items-center justify-between gap-2 mb-2">
-        <button
-          type="button"
-          className={cn(styles.sectionTitle, 'mb-0 cursor-pointer border-0 bg-transparent p-0')}
-          onClick={() => setExpanded((v) => !v)}
-        >
-          <span>Put/Call Ratio</span>
-          <span className="text-[10px] opacity-60" aria-hidden>{expanded ? '▴' : '▾'}</span>
-        </button>
+        <SectionCollapseToggle
+          navItem={INSPECTOR_SECTION_NAV_BY_ID.putCall}
+          expanded={expanded}
+          onToggle={() => onExpandedChange?.(!expanded)}
+        />
+        {expanded && (
         <div className="flex items-center gap-2 shrink-0">
-          {data?.as_of_date && (
-            <span className="text-[10px] text-muted-foreground font-mono">as of {data.as_of_date}</span>
+          {asOfDate && (
+            <span className="text-[10px] text-muted-foreground font-mono">as of {asOfDate}</span>
           )}
           {data?.stale_days != null && data.stale_days > 0 && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500">
@@ -74,59 +103,163 @@ export function StockPutCallSection({ symbol }: Props) {
             {refreshing ? 'Refreshing…' : 'Refresh'}
           </Button>
         </div>
+        )}
       </div>
 
       {expanded && (
         <>
           {isLoading && !data && <p className={styles.hint}>Loading put/call data…</p>}
           {error && <p className={cn(styles.hint, styles.hintErr)}>{(error as Error).message}</p>}
+
           {data?.ok && (
             <>
-              <div className={styles.pcrKpis}>
-                <div className={styles.pcrKpi}>
-                  <span className={styles.pcrKpiLabel}>OI Ratio</span>
-                  <span className={styles.pcrKpiVal}>{fmtRatio(data.oi_ratio)}</span>
+              <div className={styles.pcrBlock}>
+                <div className={styles.pcrKpis}>
+                  <div className={styles.pcrKpi}>
+                    <span className={styles.pcrKpiLabel}>OI Ratio</span>
+                    <span className={styles.pcrKpiVal}>{fmtRatio(data.oi_ratio)}</span>
+                  </div>
+                  <div className={styles.pcrKpi}>
+                    <span className={styles.pcrKpiLabel}>Vol Ratio</span>
+                    <span className={styles.pcrKpiVal}>{fmtRatio(data.vol_ratio)}</span>
+                  </div>
+                  <div className={styles.pcrKpi}>
+                    <span className={styles.pcrKpiLabel}>5D Avg OI</span>
+                    <span className={cn(styles.pcrKpiVal, 'text-foreground')}>
+                      {fmtRatio(data.avg_oi_5d)}
+                    </span>
+                  </div>
                 </div>
-                <div className={styles.pcrKpi}>
-                  <span className={styles.pcrKpiLabel}>Vol Ratio</span>
-                  <span className={styles.pcrKpiVal}>{fmtRatio(data.vol_ratio)}</span>
+
+                <div className={styles.pcrWindowRow}>
+                  <span className={styles.pcrWindowLabel}>Chart range</span>
+                  <div className={styles.pcrWindowTabs} role="group" aria-label="P/C chart time range">
+                    {PCR_WINDOW_OPTIONS.map(({ label, days }) => (
+                      <button
+                        key={days}
+                        type="button"
+                        className={cn(
+                          styles.pcrWindowTab,
+                          chartWindowDays === days && styles.pcrWindowTabActive,
+                        )}
+                        aria-pressed={chartWindowDays === days}
+                        onClick={() => setChartWindowDays(days)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className={styles.pcrKpi}>
-                  <span className={styles.pcrKpiLabel}>5D Avg OI</span>
-                  <span className={cn(styles.pcrKpiVal, 'text-foreground')}>{fmtRatio(data.avg_oi_5d)}</span>
+
+                <div className={styles.pcrChartBlock}>
+                  <div className={styles.pcrChartHead}>
+                    <span className={styles.pcrChartTitle}>
+                      <span className={styles.pcrTitleMark} aria-hidden />
+                      P/C Ratio Trend
+                    </span>
+                    <div className={styles.pcrLegend}>
+                      <span>
+                        <span className={cn(styles.pcrLegendSwatch, styles.pcrLegendSwatchOi)} />
+                        OI Ratio
+                      </span>
+                      <span>
+                        <span className={cn(styles.pcrLegendSwatch, styles.pcrLegendSwatchVol)} />
+                        Vol Ratio
+                      </span>
+                      <span className={styles.pcrLegendRef}>— — 1.0 ref</span>
+                    </div>
+                  </div>
+                  <div className={styles.pcrChartFrame}>
+                    <PcrDualLineChart
+                      points={trend}
+                      windowDays={chartWindowDays}
+                      asOfDate={asOfDate}
+                    />
+                  </div>
                 </div>
-              </div>
-              {(data.trend?.length ?? 0) > 0 && (
-                <p className={styles.hint}>
-                  P/C trend: {data.trend!.length} points over {data.lookback_days ?? LOOKBACK_DAYS} days.
-                </p>
-              )}
-              {(data.chain_by_expiry?.length ?? 0) > 0 && (
-                <div className="overflow-x-auto mt-2">
-                  <table className={styles.rawTable}>
-                    <thead>
-                      <tr>
-                        <th className="text-left">Expiry</th>
-                        <th>DTE</th>
-                        <th>P/C OI</th>
-                        <th>P/C Vol</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.chain_by_expiry!.slice(0, 12).map((row) => (
-                        <tr key={row.expiry}>
-                          <td className="text-left">{row.expiration_label || row.expiry}</td>
-                          <td>{row.dte ?? '—'}</td>
-                          <td>{fmtRatio(row.pc_oi)}</td>
-                          <td>{fmtRatio(row.pc_vol)}</td>
+
+                <div className={styles.pcrChartBlock}>
+                  <div className={styles.pcrChartHead}>
+                    <span className={styles.pcrChartTitle}>
+                      <span className={styles.pcrTitleMark} aria-hidden />
+                      Open Interest
+                    </span>
+                    <div className={styles.pcrLegend}>
+                      <span>
+                        <span className={cn(styles.pcrLegendSwatch, styles.pcrLegendSwatchPut)} />
+                        Put OI
+                      </span>
+                      <span>
+                        <span className={cn(styles.pcrLegendSwatch, styles.pcrLegendSwatchCall)} />
+                        Call OI
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.pcrChartFrame}>
+                    <OpenInterestTrendChart
+                      points={trend}
+                      windowDays={chartWindowDays}
+                      asOfDate={asOfDate}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.pcrTrendFoot}>
+                  <button
+                    type="button"
+                    className={cn(styles.pcrShowDataBtn, showTrendData && styles.pcrShowDataBtnOpen)}
+                    onClick={() => setShowTrendData((v) => !v)}
+                  >
+                    {showTrendData ? '▴' : '▾'} Show Data · {chartWindowDays}d
+                  </button>
+                  <span className={styles.pcrHintItalic}>OI ratio &gt; 1 = more puts (bearish lean)</span>
+                </div>
+
+                {showTrendData && trendInWindow.length > 0 && (
+                  <div className={styles.pcrTrendTableWrap}>
+                    <table className={styles.pcrTrendTable}>
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>OI Ratio</th>
+                          <th>Vol Ratio</th>
+                          <th>Put OI</th>
+                          <th>Call OI</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {[...trendInWindow].reverse().map((p) => (
+                          <tr key={p.trade_date}>
+                            <td>{p.trade_date}</td>
+                            <td className={ratioToneClass(p.oi_ratio, styles.ratioHigh, styles.ratioLow)}>
+                              {fmtRatio(p.oi_ratio)}
+                            </td>
+                            <td className={ratioToneClass(p.vol_ratio, styles.ratioHigh, styles.ratioLow)}>
+                              {fmtRatio(p.vol_ratio)}
+                            </td>
+                            <td>{fmtCompact(p.put_oi)}</td>
+                            <td>{fmtCompact(p.call_oi)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.chainSection} aria-labelledby="stock-pcr-chain-head">
+                <div className={styles.chainSectionHead}>
+                  <h4 id="stock-pcr-chain-head" className={styles.chainSectionTitle}>
+                    <span className={styles.pcrTitleMark} aria-hidden />
+                    Option Chain by Expiry
+                  </h4>
+                  <span className={styles.chainNote}>Refreshed via Put/Call Ratio</span>
                 </div>
-              )}
+                <PcrChainTable rows={chain} />
+              </div>
             </>
           )}
+
           {data && !data.ok && data.error && (
             <p className={cn(styles.hint, styles.hintErr)}>{data.error}</p>
           )}

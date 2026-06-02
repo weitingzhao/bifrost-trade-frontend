@@ -12,7 +12,8 @@ alwaysApply: false
 - **需求优先**：监控页面向局域网内操作者提供红绿灯、自检、状态摘要、操作列表与控制（R-M5/R-M3）；功能满足前提下再做视觉微调。
 - **布局约定**：守护程序、对冲程序、近期操作为**功能向**，集中在一块显示（监控与控制）；**IB 账户**为业务向，单独分区。
 - **Surface 层级**：页面画布 `PageShell`（`bg-card`，与侧栏同色）→ 抬高层 `Card variant="elevated"` / `bg-secondary` → 凹进 `bg-background`。禁止页面根直接落在最深 `bg-background` 上。
-- **Skill 协同**：若进行监控前端的大改版或新页面设计，应先阅读 `.cursor/skills/frontend-design/SKILL.md`，结合其中的「Bifrost Trader + Skote Theme」小节和本规则一起使用。
+- **Dense UI**：数据表、PnL、segment、折叠面板、行内操作必须遵循 `.cursor/rules/dense-ui-system.mdc` 与 `docs/DENSE_UI.md`；不得新建 page 级 table module CSS。
+- **Skill 协同**：若进行监控前端的大改版或新页面设计，应先阅读 `.cursor/skills/frontend-design/SKILL.md`，结合其中的「Bifrost Trader + Skote Theme」小节和本规则一起使用。表格/迁移任务读 `.cursor/skills/dense-ui/SKILL.md`。
 
 ## 参考资源：Skote 模板路径
 

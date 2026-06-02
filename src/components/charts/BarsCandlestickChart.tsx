@@ -3,7 +3,7 @@ import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 /* eslint-disable react-hooks/set-state-in-effect -- chart layout measures DOM on mount */
 import type { Bar } from '@/types/market'
 import { fmtTs, fmtTsForPeriod, fmtUsd } from '@/lib/format'
-import { chartSurfaceFill } from '@/lib/chartTokens'
+import { chartSurfaceFill, chartAxisTickFill, chartTokens } from '@/lib/chartTokens'
 import { finiteVwap } from '@/utils/chart/finiteVwap'
 import {
   bollingerSeries,
@@ -443,7 +443,7 @@ export function BarsCandlestickChart({
         width={innerWidth}
         height={innerMacdHeight}
         fill={chartSurfaceFill}
-        stroke="var(--color-border)"
+        stroke={chartTokens.grid}
         strokeWidth={1}
         rx={6}
       />,
@@ -455,7 +455,7 @@ export function BarsCandlestickChart({
         x2={paddingLeft + innerWidth}
         y1={yM(0)}
         y2={yM(0)}
-        stroke="var(--color-border-strong)"
+        stroke={chartTokens.axis}
         strokeDasharray="3 3"
         strokeWidth={0.75}
       />,
@@ -507,7 +507,7 @@ export function BarsCandlestickChart({
       )
     }
     els.push(
-      <text key="macd-lbl" x={paddingLeft + 4} y={macdTop + 12} fontSize="10" fill="var(--color-text-muted)">
+      <text key="macd-lbl" x={paddingLeft + 4} y={macdTop + 12} fontSize="10" fill={chartAxisTickFill}>
         MACD
       </text>,
     )
@@ -538,7 +538,7 @@ export function BarsCandlestickChart({
         width={innerWidth}
         height={innerRsiHeight}
         fill={chartSurfaceFill}
-        stroke="var(--color-border)"
+        stroke={chartTokens.grid}
         strokeWidth={1}
         rx={6}
       />,
@@ -551,7 +551,7 @@ export function BarsCandlestickChart({
           x2={paddingLeft + innerWidth}
           y1={yR(lvl)}
           y2={yR(lvl)}
-          stroke={lvl === 50 ? 'var(--color-border)' : 'var(--color-border-strong)'}
+          stroke={lvl === 50 ? chartTokens.grid : chartTokens.axis}
           strokeDasharray={lvl === 50 ? '2 4' : '3 3'}
           strokeWidth={0.6}
         />,
@@ -570,7 +570,7 @@ export function BarsCandlestickChart({
       )
     }
     els.push(
-      <text key="rsi-lbl" x={paddingLeft + 4} y={rsiTop + 12} fontSize="10" fill="var(--color-text-muted)">
+      <text key="rsi-lbl" x={paddingLeft + 4} y={rsiTop + 12} fontSize="10" fill={chartAxisTickFill}>
         RSI(14)
       </text>,
     )
@@ -682,7 +682,7 @@ export function BarsCandlestickChart({
           width={innerWidth}
           height={innerPriceHeight}
           fill="url(#data-bars-bg)"
-          stroke="var(--color-border)"
+          stroke={chartTokens.grid}
           strokeWidth={1}
           rx={8}
         />
@@ -696,7 +696,7 @@ export function BarsCandlestickChart({
                 x2={paddingLeft + innerWidth}
                 y1={y}
                 y2={y}
-                stroke={idx === 1 ? 'var(--color-border-strong)' : 'var(--color-border)'}
+                stroke={idx === 1 ? chartTokens.axis : chartTokens.grid}
                 strokeDasharray={idx === 1 ? '3 3' : '2 4'}
                 strokeWidth={0.5}
               />
@@ -705,7 +705,7 @@ export function BarsCandlestickChart({
                 y={y + 3}
                 textAnchor="end"
                 fontSize="10"
-                fill="var(--color-text-muted)"
+                fill={chartAxisTickFill}
               >
                 {fmtUsd(p)}
               </text>
@@ -723,7 +723,7 @@ export function BarsCandlestickChart({
           const openY = yForPrice(b.open)
           const closeY = yForPrice(b.close)
           const isUp = b.close >= b.open
-          const color = isUp ? 'var(--success, #16a34a)' : 'var(--danger, #b91c1c)'
+          const color = isUp ? 'var(--color-success)' : 'var(--color-danger)'
           const bodyTop = Math.min(openY, closeY)
           const bodyHeight = Math.max(Math.abs(closeY - openY), 2)
           const candleWidth = Math.max(
@@ -763,7 +763,7 @@ export function BarsCandlestickChart({
             y={height - 6}
             textAnchor="end"
             fontSize="10"
-            fill="var(--color-text-muted)"
+            fill={chartAxisTickFill}
           >
             {fmtTs(lastBar.time)}
           </text>
@@ -777,7 +777,7 @@ export function BarsCandlestickChart({
               width={innerWidth}
               height={innerVolumeHeight}
               fill={chartSurfaceFill}
-              stroke="var(--color-border)"
+              stroke={chartTokens.grid}
               strokeWidth={1}
               rx={6}
             />
@@ -787,7 +787,7 @@ export function BarsCandlestickChart({
                 if (v <= 0) return null
                 const x = xForIndex(i)
                 const isUp = b.close >= b.open
-                const color = isUp ? 'var(--success, #16a34a)' : 'var(--danger, #b91c1c)'
+                const color = isUp ? 'var(--color-success)' : 'var(--color-danger)'
                 const barW = Math.max(
                   volumeBarWidthMin,
                   Math.abs(xStep) > 0 ? Math.min(volumeBarWidthMax, Math.abs(xStep) * volumeBarWidthFactor) : 5,
@@ -829,7 +829,7 @@ export function BarsCandlestickChart({
               y={height - 6}
               textAnchor={anchor}
               fontSize="10"
-              fill="var(--color-text-muted)"
+              fill={chartAxisTickFill}
             >
               {fmtTsForPeriod(bar.time, period)}
             </text>

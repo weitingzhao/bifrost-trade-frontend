@@ -7,15 +7,25 @@ import { fetchBarStats, fetchBars } from '@/api/market'
 import { postMassiveSync, pollMassiveJobUntilDone, resolveMassiveSyncJobId } from '@/api/research/optionDiscovery'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { Bar } from '@/types/market'
+import { SectionCollapseToggle } from './SectionCollapseToggle'
+import { INSPECTOR_SECTION_NAV_BY_ID } from './stockInspectorSections'
 import styles from './stock-inspector.module.css'
 
 type ChartPeriod = '1 D' | '1 min'
 
 interface Props {
   symbol: string
+  sectionId?: string
+  expanded?: boolean
+  onExpandedChange?: (expanded: boolean) => void
 }
 
-export function StockBarDataSection({ symbol }: Props) {
+export function StockBarDataSection({
+  symbol,
+  sectionId = 'stock-inspector-bar-data',
+  expanded = true,
+  onExpandedChange,
+}: Props) {
   const sym = symbol.trim().toUpperCase()
   const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('1 D')
   const barLimit = chartPeriod === '1 D' ? 120 : 390
@@ -31,7 +41,7 @@ export function StockBarDataSection({ symbol }: Props) {
   const { data: stats } = useQuery({
     queryKey: QUERY_KEYS.research.barStats(sym),
     queryFn: () => fetchBarStats(sym),
-    enabled: !!sym,
+    enabled: !!sym && expanded,
     staleTime: 60_000,
   })
 
@@ -43,7 +53,7 @@ export function StockBarDataSection({ symbol }: Props) {
   } = useQuery({
     queryKey: ['market', 'bars', sym, chartPeriod, barLimit],
     queryFn: () => fetchBars(sym, chartPeriod, barLimit),
-    enabled: !!sym,
+    enabled: !!sym && expanded,
   })
 
   const chartBars = useMemo(() => (barsRes?.bars ?? []) as Bar[], [barsRes?.bars])
@@ -99,12 +109,16 @@ export function StockBarDataSection({ symbol }: Props) {
   if (!sym) return null
 
   return (
-    <section className={styles.barSection} aria-labelledby="stock-bar-data-head">
+    <section id={sectionId} className={styles.barSection} aria-labelledby="stock-bar-data-head">
       <div className={styles.barTopRow}>
-        <span id="stock-bar-data-head" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Bar Data
-        </span>
-        {stats != null && (
+        <SectionCollapseToggle
+          id="stock-bar-data-head"
+          navItem={INSPECTOR_SECTION_NAV_BY_ID.barData}
+          expanded={expanded}
+          onToggle={() => onExpandedChange?.(!expanded)}
+          className={styles.barSectionTitle}
+        />
+        {expanded && stats != null && (
           <div className="flex flex-wrap gap-1">
             <span className={styles.barKpiPill}>
               <span className="text-muted-foreground">Daily</span>
@@ -118,18 +132,22 @@ export function StockBarDataSection({ symbol }: Props) {
             ))}
           </div>
         )}
-        <Button
-          type="button"
-          size="sm"
-          variant="default"
-          className="h-7 text-xs ml-auto"
-          disabled={!!fetchStep}
-          onClick={() => void handleFetch()}
-        >
-          {fetchStep ?? 'Fetch'}
-        </Button>
+        {expanded && (
+          <Button
+            type="button"
+            size="sm"
+            variant="default"
+            className="h-7 text-xs ml-auto"
+            disabled={!!fetchStep}
+            onClick={() => void handleFetch()}
+          >
+            {fetchStep ?? 'Fetch'}
+          </Button>
+        )}
       </div>
 
+      {expanded && (
+        <>
       {fetchError && <p className={cn(styles.hint, styles.hintErr)}>{fetchError}</p>}
 
       <div className={styles.barControls}>
@@ -199,6 +217,8 @@ export function StockBarDataSection({ symbol }: Props) {
             showSr={showSr}
           />
         </div>
+      )}
+        </>
       )}
     </section>
   )

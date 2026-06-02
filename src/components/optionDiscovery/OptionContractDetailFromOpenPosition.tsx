@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
+import { RightInspectorHeader } from '@/components/layout/RightInspectorHeader'
+import { inspectorShell } from '@/components/layout/rightInspectorUi'
 /* eslint-disable react-hooks/set-state-in-effect -- loads contract snapshot on mount */
 import type { OptionSnapshotRow, GreeksCoverageResponse } from '@/types/optionDiscovery'
 import { fetchGreeksCoverage, fetchOptionSnapshotsPg } from '@/api/research/optionDiscovery'
@@ -245,24 +247,24 @@ export function OptionContractDetailFromOpenPosition({
 
   if (loading) {
     return (
-      <div className="od-contract-detail od-contract-detail--drawer" aria-busy="true" aria-label="Loading option contract">
-        <div className="od-detail-header">
-          <h3 className="od-detail-title">
-            {symbol || '—'} <span className="od-detail-expiry">· loading…</span>
-          </h3>
-          <button type="button" className="od-detail-close" onClick={onClose} aria-label="Close contract detail">
-            ✕
-          </button>
+      <div className={inspectorShell.panel} aria-busy="true" aria-label="Loading option contract">
+        <RightInspectorHeader
+          title={symbol || '—'}
+          meta="· loading…"
+          onClose={onClose}
+          closeLabel="Close contract detail"
+        />
+        <div className={inspectorShell.section}>
+          <DiscoveryHint className="" style={{ margin: 0 }}>
+            Loading contract detail (Massive snapshots)…
+          </DiscoveryHint>
         </div>
-        <DiscoveryHint className="" style={{ margin: '0.75rem 0 0' }}>
-          Loading contract detail (Massive snapshots)…
-        </DiscoveryHint>
       </div>
     )
   }
 
   return (
-    <>
+    <div className={inspectorShell.panel}>
       {loadError != null && (
         <DiscoveryHint className=" replay-form-error" style={{ margin: '0 0 0.75rem' }} role="alert">
           {loadError}
@@ -288,6 +290,6 @@ export function OptionContractDetailFromOpenPosition({
         onAddToWatchlist={() => void handleAddToWatchlist(selectedRow)}
         onAddToCompare={handleAddToCompare}
       />
-    </>
+    </div>
   )
 }

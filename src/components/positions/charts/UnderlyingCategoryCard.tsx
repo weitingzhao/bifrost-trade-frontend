@@ -115,7 +115,7 @@ export function UnderlyingCategoryCard({
           <div className="min-w-0 space-y-2">
             {detailGroups.map((group) => (
               <div key={group.category}>
-                <p className="text-[10px] text-muted-foreground font-medium mb-0.5">{group.category}</p>
+                <p className="text-xs text-muted-foreground font-medium mb-0.5">{group.category}</p>
                 <ChartLegend
                   segments={group.segments}
                   total={symbolTotal}
@@ -123,6 +123,7 @@ export function UnderlyingCategoryCard({
                   activeLabel={activeSymbol || null}
                   onSegmentClick={onSymbolClick}
                   dimmedUnlessActive
+                  size="comfortable"
                   layout={group.category === 'Stocks' ? 'grid2' : 'row'}
                 />
               </div>

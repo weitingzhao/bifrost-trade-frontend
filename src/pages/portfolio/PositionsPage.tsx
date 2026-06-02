@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
@@ -32,6 +33,9 @@ import { QuickCloseModal } from '@/components/positions/QuickCloseModal'
 import { DeleteConfirmDialog } from '@/components/positions/DeleteConfirmDialog'
 import { InspectorDrawer } from '@/components/positions/InspectorDrawer'
 import type { InspectorState } from '@/components/positions/InspectorDrawer'
+import { OptionContractDrawer } from '@/components/optionDiscovery/OptionContractDrawer'
+import { OptionContractDetailFromOpenPosition } from '@/components/optionDiscovery/OptionContractDetailFromOpenPosition'
+import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
 import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys } from '@/utils/positions'
 import {
   flattenPositions,
@@ -62,6 +66,7 @@ function optionExpiryMatchesFilter(expiryRaw: string, filterRaw: string): boolea
 }
 
 export default function PositionsPage() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data, isLoading, isError, error } = useMonitorStatus()
   const { data: attrData } = usePositionAttribution()
@@ -93,6 +98,7 @@ export default function PositionsPage() {
   const [closeExec, setCloseExec] = useState<Execution | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
+  const closeInspector = () => setInspector({ type: null })
 
   const accounts = useMemo(() => data?.portfolio.accounts ?? [], [data])
   const hostAccountId = data?.config?.ib_client?.account?.event_host ?? ''
@@ -118,6 +124,25 @@ export default function PositionsPage() {
   const quotesBySymbol = buildQuoteMap(quotesData)
   const quotesByCk = buildCkMap(quotesData)
   const benchBySymbol = benchData?.benchmarks ?? {}
+
+  const openOptionPosition =
+    inspector.type === 'option' ? inspector.optionPosition : undefined
+  const openOptionQuote = openOptionPosition
+    ? quotesByCk[openOptionPosition.contract_key]
+    : undefined
+  const openOptionUnderlyingHint = useMemo(() => {
+    if (!openOptionPosition) return null
+    const sym = (openOptionPosition.symbol ?? '').trim().toUpperCase()
+    const bench = benchBySymbol[sym]
+    if (bench?.close != null && Number.isFinite(bench.close)) return bench.close
+    const q = quotesBySymbol[sym]
+    if (q?.last != null && Number.isFinite(q.last)) return q.last
+    if (q?.mid != null && Number.isFinite(q.mid)) return q.mid
+    return null
+  }, [openOptionPosition, benchBySymbol, quotesBySymbol])
+
+  const inspectorDrawerState: InspectorState =
+    inspector.type === 'option' ? { type: null } : inspector
 
   const coreStocks = filterStocksByBucket(allStocks, 'core')
   const fixedIncomeStocks = filterStocksByBucket(allStocks, 'fixed_income')
@@ -446,7 +471,13 @@ export default function PositionsPage() {
                   onRefreshExecs={refreshExecData}
                   onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
                   onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
-                  onOpenOption={(contractKey) => setInspector({ type: 'option', contractKey })}
+                  onOpenOption={(pos) =>
+                    setInspector({
+                      type: 'option',
+                      contractKey: pos.contract_key,
+                      optionPosition: pos,
+                    })
+                  }
                 />
                 <CoverageSummarySection
                   instanceGroups={filteredInstanceGroups}
@@ -576,7 +607,22 @@ export default function PositionsPage() {
           }
         }}
       />
-      <InspectorDrawer state={inspector} onClose={() => setInspector({ type: null })} />
+      <InspectorDrawer state={inspectorDrawerState} onClose={closeInspector} />
+
+      <OptionContractDrawer open={Boolean(openOptionPosition)}>
+        {openOptionPosition ? (
+          <OptionContractDetailFromOpenPosition
+            position={openOptionPosition}
+            optionQuote={openOptionQuote}
+            underlyingHint={openOptionUnderlyingHint}
+            onClose={closeInspector}
+            onOpenOptionDiscovery={() => {
+              navigate(buildDiscoveryUrl(openOptionPosition.symbol, openOptionPosition.expiry))
+              closeInspector()
+            }}
+          />
+        ) : null}
+      </OptionContractDrawer>
     </PageShell>
   )
 }

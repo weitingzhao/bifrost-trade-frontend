@@ -1,9 +1,10 @@
 /** Tailwind layout tokens for embedded strategy instance detail panels. */
+import { inspectorShell } from '@/components/layout/rightInspectorUi'
 
-export const instanceDetailPageClass = 'min-w-0 text-sm'
+export const instanceDetailPageClass = inspectorShell.stack
 export const instanceMainGridClass = 'flex flex-col gap-4 min-w-0'
-export const instanceDetailBlockClass = 'min-w-0 space-y-2'
-export const instanceSectionTitleClass = 'text-sm font-semibold tracking-tight'
+export const instanceDetailBlockClass = inspectorShell.section
+export const instanceSectionTitleClass = inspectorShell.sectionTitle
 export const instanceRiskSectionBodyClass = 'min-w-0'
 
 export const instanceOverviewHeadClass = 'flex flex-wrap items-center justify-between gap-2'
@@ -22,12 +23,12 @@ export const instancePnlColumnClass = 'min-w-0'
 export const instancePnlSectionHeadClass = 'flex items-center gap-2 mb-2'
 export const instancePnlInfoBtnClass =
   'inline-flex h-5 w-5 items-center justify-center rounded border border-border text-muted-foreground text-[10px] hover:bg-secondary'
-export const instancePnlPanelClass = 'rounded-lg border border-border bg-card/50 p-2'
+export const instancePnlPanelClass = inspectorShell.card
 export const instancePnlPanelMutedClass = 'rounded-lg border border-dashed border-border p-3 text-center'
 export const instancePnlBandsClass = 'grid gap-2 sm:grid-cols-2'
-export const instancePnlBandClass = 'rounded-md border border-border/80 bg-secondary/30 p-2 min-w-0'
+export const instancePnlBandClass = inspectorShell.card
 export const instancePnlBandHeadClass = 'flex items-start justify-between gap-2 mb-1'
-export const instancePnlBandTitleClass = 'text-[11px] font-bold uppercase tracking-wide text-muted-foreground'
+export const instancePnlBandTitleClass = inspectorShell.cardLabel
 export const instancePnlBandHelpBtnClass =
   'text-muted-foreground hover:text-foreground text-xs leading-none'
 export const instancePnlBandMetricsClass = 'grid gap-1.5'

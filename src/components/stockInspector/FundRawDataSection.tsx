@@ -1,20 +1,11 @@
 import { useMemo } from 'react'
+import { cn } from '@/lib/utils'
 import type { FundRawData } from '@/types/research'
+import { computeFundRawHighlight } from './fundRawHighlight'
+import { MiniBar } from './MiniBar'
 import styles from './stock-inspector.module.css'
-import { fmtEps, fmtRev } from './stockInspectorUtils'
-
-function colRange(vals: (number | null)[]): [number, number] {
-  const ns = vals.filter((v): v is number => v != null && Number.isFinite(v))
-  if (ns.length === 0) return [0, 0]
-  return [Math.min(...ns), Math.max(...ns)]
-}
-
-function MiniBar({ value, min, max }: { value: number | null; min: number; max: number }) {
-  if (value == null || !Number.isFinite(value) || max === min) return null
-  const pct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100))
-  const color = value >= 0 ? 'rgba(74,222,128,0.35)' : 'rgba(248,113,113,0.35)'
-  return <div className={styles.miniBar} style={{ width: `${pct}%`, background: color }} />
-}
+import { inspectorShell } from '@/components/layout/rightInspectorUi'
+import { colRange, fmtEps, fmtRev } from './stockInspectorUtils'
 
 interface Props {
   loading: boolean
@@ -23,52 +14,43 @@ interface Props {
 }
 
 export function FundRawDataSection({ loading, data, activeCond }: Props) {
-  const highlight = useMemo(() => {
-    const qKeys = new Set<string>()
-    const aKeys = new Set<string>()
-    let col: 'eps' | 'revenues' | null = null
-    if (!activeCond || !data?.quarterly?.length) return { qKeys, aKeys, col }
-
-    const qRows = data.quarterly
-    const qKey = (r: { fiscal_year: number; fiscal_quarter: number }) =>
-      `${r.fiscal_year}-Q${r.fiscal_quarter}`
-
-    if (['eps_q2q_ge_25pct', 'rev_q2q_ge_25pct', 'eps_acc_2q', 'rev_acc_2q'].includes(activeCond)) {
-      if (qRows[0]) {
-        qKeys.add(qKey(qRows[0]))
-        col = activeCond.includes('rev') ? 'revenues' : 'eps'
-      }
-    }
-    return { qKeys, aKeys, col }
-  }, [activeCond, data])
+  const highlight = useMemo(
+    () => computeFundRawHighlight(activeCond, data),
+    [activeCond, data],
+  )
 
   if (!loading && (!data || (data.quarterly.length === 0 && data.annual.length === 0))) {
     return null
   }
 
   return (
-    <section className={styles.section}>
-      <div className={styles.sectionTitle}>
+    <section className={inspectorShell.section} aria-labelledby="stock-inspector-raw">
+      <div id="stock-inspector-raw" className={inspectorShell.sectionTitle}>
         <span>Source Data</span>
         {activeCond && highlight.col && (
-          <span className={styles.sectionTitleAsOf}>
+          <span className={inspectorShell.sectionTitleAsOf}>
             — {activeCond.replace(/_/g, ' ')} ({highlight.col === 'eps' ? 'EPS' : 'Revenue'})
           </span>
         )}
       </div>
       {loading && <p className={styles.hint}>Loading source data…</p>}
+
       {data && data.quarterly.length > 0 && (() => {
         const [minE, maxE] = colRange(data.quarterly.map((r) => r.eps))
         const [minR, maxR] = colRange(data.quarterly.map((r) => r.revenues))
         return (
           <>
-            <p className={cnLabel()}>Quarterly</p>
+            <p className={styles.rawTableLabel}>Quarterly</p>
             <table className={styles.rawTable}>
               <thead>
                 <tr>
                   <th>Period</th>
-                  <th>EPS</th>
-                  <th>Revenue</th>
+                  <th className={highlight.col === 'eps' ? styles.rawThActive : undefined}>
+                    EPS
+                  </th>
+                  <th className={highlight.col === 'revenues' ? styles.rawThActive : undefined}>
+                    Revenue
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -77,12 +59,24 @@ export function FundRawDataSection({ loading, data, activeCond }: Props) {
                   const hit = highlight.qKeys.has(k)
                   return (
                     <tr key={k} className={hit ? styles.rawRowHit : undefined}>
-                      <td>Q{r.fiscal_quarter}-{r.fiscal_year}</td>
-                      <td className={styles.miniBarCell}>
+                      <td className={styles.rawPeriod}>
+                        Q{r.fiscal_quarter}-{r.fiscal_year}
+                      </td>
+                      <td
+                        className={cn(
+                          styles.miniBarCell,
+                          hit && highlight.col === 'eps' ? styles.rawCellHighlight : undefined,
+                        )}
+                      >
                         {fmtEps(r.eps)}
                         <MiniBar value={r.eps} min={minE} max={maxE} />
                       </td>
-                      <td className={styles.miniBarCell}>
+                      <td
+                        className={cn(
+                          styles.miniBarCell,
+                          hit && highlight.col === 'revenues' ? styles.rawCellHighlight : undefined,
+                        )}
+                      >
                         {fmtRev(r.revenues)}
                         <MiniBar value={r.revenues} min={minR} max={maxR} />
                       </td>
@@ -94,10 +88,64 @@ export function FundRawDataSection({ loading, data, activeCond }: Props) {
           </>
         )
       })()}
+
+      {data && data.annual.length > 0 && (() => {
+        const [minE, maxE] = colRange(data.annual.map((r) => r.eps))
+        const [minR, maxR] = colRange(data.annual.map((r) => r.revenues))
+        return (
+          <>
+            <p className={styles.rawTableLabel} style={{ marginTop: 12 }}>
+              Annual
+            </p>
+            <table className={styles.rawTable}>
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th className={highlight.col === 'eps' ? styles.rawThActive : undefined}>
+                    EPS
+                  </th>
+                  <th className={highlight.col === 'revenues' ? styles.rawThActive : undefined}>
+                    Revenue
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.annual.map((r) => {
+                  const k = `${r.fiscal_year}`
+                  const hit = highlight.aKeys.has(k)
+                  return (
+                    <tr key={k} className={hit ? styles.rawRowHit : undefined}>
+                      <td className={styles.rawPeriod}>FY{r.fiscal_year}</td>
+                      <td
+                        className={cn(
+                          styles.miniBarCell,
+                          hit && highlight.col === 'eps' ? styles.rawCellHighlight : undefined,
+                        )}
+                      >
+                        {fmtEps(r.eps)}
+                        <MiniBar value={r.eps} min={minE} max={maxE} />
+                      </td>
+                      <td
+                        className={cn(
+                          styles.miniBarCell,
+                          hit && highlight.col === 'revenues' ? styles.rawCellHighlight : undefined,
+                        )}
+                      >
+                        {fmtRev(r.revenues)}
+                        <MiniBar value={r.revenues} min={minR} max={maxR} />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </>
+        )
+      })()}
+
+      {data && data.quarterly.length === 0 && data.annual.length === 0 && !loading && (
+        <p className={styles.hint}>No income statement data found for this symbol.</p>
+      )}
     </section>
   )
-}
-
-function cnLabel() {
-  return 'text-[10px] uppercase tracking-wide text-muted-foreground mb-1'
 }

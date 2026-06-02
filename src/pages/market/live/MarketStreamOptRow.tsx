@@ -1,6 +1,6 @@
 import type { QuoteItem } from '@/types/market'
 import { cn } from '@/lib/utils'
-import { pnlColorClass } from '@/utils/dailyChange'
+import { DenseTableCell, InlinePnl, denseTableNumCell } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import {
   computeOptMidAndLivePnl,
@@ -10,6 +10,7 @@ import {
   type OptionLiveBasis,
 } from '@/utils/optionLiveBasis'
 import { optBasisKey, type OptPositionRow } from '@/utils/marketStreamsRows'
+import { liveTable } from './liveTableClasses'
 import styles from './live.module.css'
 
 interface Props {
@@ -77,7 +78,7 @@ export function MarketStreamOptRow({
           : undefined
       }
     >
-      <td className={styles.symbolCell}>
+      <DenseTableCell className={liveTable.symbolCell}>
         {dragEnabled && (
           <span
             className={styles.dragHandle}
@@ -96,31 +97,39 @@ export function MarketStreamOptRow({
           </span>
         )}
         <strong>{contractLabel}</strong>
-      </td>
+      </DenseTableCell>
 
       {hasStreamAccounts && (
         <>
-          <td className={styles.numCell}>{isHost ? qtyCell : '—'}</td>
-          <td className={styles.numCell}>{isHost ? costCell : '—'}</td>
-          <td className={cn(styles.numCell, isHost ? pnlColorClass(livePnl) : '')}>
-            {isHost && livePnl != null ? fmtUsd(livePnl, true) : '—'}
-          </td>
-          <td className={styles.numCell}>{isSecondary ? qtyCell : '—'}</td>
-          <td className={styles.numCell}>{isSecondary ? costCell : '—'}</td>
-          <td className={cn(styles.numCell, isSecondary ? pnlColorClass(livePnl) : '')}>
-            {isSecondary && livePnl != null ? fmtUsd(livePnl, true) : '—'}
-          </td>
+          <DenseTableCell className={denseTableNumCell}>{isHost ? qtyCell : '—'}</DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>{isHost ? costCell : '—'}</DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>
+            {isHost && livePnl != null ? (
+              <InlinePnl value={livePnl}>{fmtUsd(livePnl, true)}</InlinePnl>
+            ) : (
+              '—'
+            )}
+          </DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>{isSecondary ? qtyCell : '—'}</DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>{isSecondary ? costCell : '—'}</DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>
+            {isSecondary && livePnl != null ? (
+              <InlinePnl value={livePnl}>{fmtUsd(livePnl, true)}</InlinePnl>
+            ) : (
+              '—'
+            )}
+          </DenseTableCell>
         </>
       )}
 
-      <td className={styles.numCell}>{qtyCell}</td>
-      <td className={styles.numCell}>{costCell}</td>
-      <td className={cn(styles.numCell, styles.lastBidAsk)}>
+      <DenseTableCell>{qtyCell}</DenseTableCell>
+      <DenseTableCell className={denseTableNumCell}>{costCell}</DenseTableCell>
+      <DenseTableCell className={cn(denseTableNumCell, liveTable.lastBidAsk)}>
         {quote ? (
           <>
             {mid != null ? fmtUsd(mid) : '—'}
             {quote.bid != null && quote.ask != null && (
-              <span className={styles.spread}>
+              <span className={liveTable.bidAskSpread}>
                 {' '}
                 {quote.bid.toFixed(2)}/{quote.ask.toFixed(2)}
               </span>
@@ -129,11 +138,15 @@ export function MarketStreamOptRow({
         ) : (
           '—'
         )}
-      </td>
-      <td className={styles.numCell}>—</td>
-      <td className={cn(styles.numCell, pnlColorClass(livePnl))} title={mtmTooltip}>
-        {livePnl != null ? fmtUsd(livePnl, true) : '—'}
-      </td>
+      </DenseTableCell>
+      <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
+      <DenseTableCell className={denseTableNumCell} title={mtmTooltip}>
+        {livePnl != null ? (
+          <InlinePnl value={livePnl}>{fmtUsd(livePnl, true)}</InlinePnl>
+        ) : (
+          '—'
+        )}
+      </DenseTableCell>
     </tr>
   )
 }

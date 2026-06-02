@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, type CSSProperties } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { Plus, RefreshCw } from 'lucide-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -14,14 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DetailSidebar } from '@/components/DetailSidebar'
 import {
   InstancesGroupedTable,
 } from '@/components/strategy/InstancesGroupedTable'
 import { createCollapsedGroupsState } from '@/utils/instanceGroupCollapse'
 import { InstanceCreateModal } from '@/components/strategy/InstanceCreateModal'
 import { InstanceDeleteModal } from '@/components/strategy/InstanceDeleteModal'
-import { InstanceDetailPanel } from '@/components/strategy/InstanceDetailPanel'
+import { InstanceDetailSidebar } from '@/components/strategy/InstanceDetailSidebar'
 import { StrategyOpportunityCombobox } from '@/components/strategy/StrategyOpportunityCombobox'
 import {
   InstanceListFilters,
@@ -32,11 +31,8 @@ import { InstanceListToolbar, type DetailViewMode } from '@/components/strategy/
 import { useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
 import { useInstanceMetrics } from '@/hooks/useInstanceMetrics'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { useIsNarrowViewport, useWindowWidth } from '@/hooks/useIsNarrowViewport'
-import {
-  INSTANCE_COMPARE_MAX_WIDTH_PX,
-  INSTANCE_DETAIL_SIDEBAR_WIDTH_PX,
-} from '@/constants/instanceDetailSidebar'
+import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
+import { INSTANCE_COMPARE_MAX_WIDTH_PX } from '@/constants/instanceDetailSidebar'
 import { computeInstancePositionStatus } from '@/utils/instanceListMetrics'
 import type { StrategyInstance } from '@/types/positions'
 import filterStyles from '@/components/strategy/instances/instancesFilters.module.css'
@@ -91,7 +87,6 @@ export default function InstancesPage() {
   const navigate = useNavigate()
   const { instanceId: instanceIdParam } = useParams()
   const urlInstanceId = useMemo(() => parseUrlInstanceId(instanceIdParam), [instanceIdParam])
-  const isNarrowViewport = useIsNarrowViewport()
   const windowWidth = useWindowWidth()
 
   const { data: status } = useMonitorStatus()
@@ -147,23 +142,9 @@ export default function InstancesPage() {
     urlInstanceId != null &&
     compareTarget.strategy_instance_id !== urlInstanceId
 
-  const sidebarWidth = isCompareMode
+  const comparePanelWidth = isCompareMode
     ? Math.min(INSTANCE_COMPARE_MAX_WIDTH_PX, windowWidth - 40)
-    : INSTANCE_DETAIL_SIDEBAR_WIDTH_PX
-
-  const pageCardStyle = useMemo((): CSSProperties | undefined => {
-    if (urlInstanceId == null || isNarrowViewport) return undefined
-    return {
-      ['--instances-floating-sidebar-width' as string]: `${sidebarWidth}px`,
-      ['--instances-floating-sidebar-reserve' as string]: `calc(${sidebarWidth}px + 4px)`,
-    }
-  }, [urlInstanceId, isNarrowViewport, sidebarWidth])
-
-  const sidebarTitle = isCompareMode && compareTarget != null && urlInstanceId != null
-    ? `Strategy Instance · #${urlInstanceId} vs #${compareTarget.strategy_instance_id}`
-    : urlInstanceId != null
-      ? `Strategy Instance · #${urlInstanceId}`
-      : 'Detail'
+    : undefined
 
   const openInstanceDetail = useCallback((inst: StrategyInstance) => {
     navigate(`/strategy/instances/${inst.strategy_instance_id}`)
@@ -350,7 +331,7 @@ export default function InstancesPage() {
 
   return (
     <PageShell>
-      <div className={layoutStyles.pageCard} style={pageCardStyle}>
+      <div className={layoutStyles.pageCard}>
         <PageHeader
           title={
             <span className="inline-flex items-center gap-1">
@@ -439,12 +420,7 @@ export default function InstancesPage() {
         )}
 
         <div className={layoutStyles.workspace}>
-          <div
-            className={cn(
-              layoutStyles.listPane,
-              urlInstanceId != null && !isNarrowViewport && layoutStyles.listPaneWithSidebar,
-            )}
-          >
+          <div className={layoutStyles.listPane}>
             {allInstances.length > 0 && (
               <InstanceListFilters
                 options={filterOptions}
@@ -483,41 +459,21 @@ export default function InstancesPage() {
               compareId={compareTarget?.strategy_instance_id ?? null}
             />
           </div>
-
-          {urlInstanceId != null && (
-            <div className={layoutStyles.inspectorPane}>
-              <DetailSidebar
-                open
-                mode={isNarrowViewport ? 'modal' : 'docked'}
-                width={sidebarWidth}
-                title={sidebarTitle}
-                onClose={closeInstanceDetail}
-              >
-                {detailMissing ? (
-                  <p className={layoutStyles.notFound}>Instance not found.</p>
-                ) : detailTarget == null ? (
-                  <div className="p-4 space-y-2">
-                    <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-32 w-full" />
-                  </div>
-                ) : isCompareMode && compareTarget != null ? (
-                  <div className={layoutStyles.compareSplit}>
-                    <div className={layoutStyles.comparePane}>
-                      <InstanceDetailPanel instance={detailTarget} />
-                    </div>
-                    <div className={layoutStyles.compareDivider} aria-hidden />
-                    <div className={layoutStyles.comparePane}>
-                      <InstanceDetailPanel instance={compareTarget} />
-                    </div>
-                  </div>
-                ) : (
-                  <InstanceDetailPanel instance={detailTarget} />
-                )}
-              </DetailSidebar>
-            </div>
-          )}
         </div>
       </div>
+
+      {urlInstanceId != null && (
+        <InstanceDetailSidebar
+          open
+          panelWidthPx={comparePanelWidth}
+          instanceId={urlInstanceId}
+          instance={detailTarget}
+          compareInstance={compareTarget}
+          listLoading={isLoading}
+          notFound={detailMissing}
+          onClose={closeInstanceDetail}
+        />
+      )}
 
       <InstanceCreateModal
         open={createOpen}

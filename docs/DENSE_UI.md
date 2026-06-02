@@ -88,9 +88,26 @@ Content tables (Instance, Options, Stocks / Fixed Income / Cash-like) use the sa
 | Options Closed / Open main views | [LedgerClosedOptionSection.tsx](../src/pages/portfolio/ledger/LedgerClosedOptionSection.tsx), [LedgerOpenOptionSection.tsx](../src/pages/portfolio/ledger/LedgerOpenOptionSection.tsx) |
 | Stocks position grouping + fills | [LedgerStkTable.tsx](../src/pages/portfolio/ledger/LedgerStkTable.tsx) |
 | Detail subhead / fill rows | `DenseTableSubheadRow`, `DenseTableDetailRow` in [DenseTable.tsx](../src/components/data-display/DenseTable.tsx) |
-| Pagination (page-local) | [ledgerPaginationClasses.ts](../src/pages/portfolio/ledger/ledgerPaginationClasses.ts) |
+| Pagination (page-local) | [ledgerPaginationClasses.tsx](../src/pages/portfolio/ledger/ledgerPaginationClasses.tsx) |
+| Page shell + split toolbar | [ledgerShellUi.ts](../src/pages/portfolio/ledger/ledgerShellUi.ts), [LedgerTabToolbar.tsx](../src/pages/portfolio/ledger/LedgerTabToolbar.tsx) |
+| Summary period KPI strip | [ledgerSummaryUi.ts](../src/pages/portfolio/ledger/ledgerSummaryUi.ts), [LedgerSummarySection.tsx](../src/pages/portfolio/ledger/LedgerSummarySection.tsx) |
+| Filter bar bubbles | [@/lib/ledgerUi.ts](../src/lib/ledgerUi.ts), [LedgerFilterBar.tsx](../src/pages/portfolio/ledger/LedgerFilterBar.tsx) |
+| Tab filter segments | `SegmentControl` in [LedgerTabFilters.tsx](../src/pages/portfolio/ledger/LedgerTabFilters.tsx) |
+| Instance Open link | `DenseTag variant="success"` in [LedgerStrategyGroup.tsx](../src/pages/portfolio/ledger/LedgerStrategyGroup.tsx) |
 
-Toolbar, summary bar, and filter segments still use `ledgerStyles.module.css` until a follow-up PR.
+No `ledgerStyles.module.css` — toolbar/summary use Tailwind token files above.
+
+## Transfer & Pay
+
+| Pattern | Reference |
+|---------|-----------|
+| Page shell + header | [transferPayUi.ts](../src/pages/portfolio/transferPay/transferPayUi.ts), [TransferPayPage.tsx](../src/pages/portfolio/TransferPayPage.tsx) |
+| Toolbar (account / type / pagination) | [TransferPayToolbar.tsx](../src/pages/portfolio/transferPay/TransferPayToolbar.tsx) — `SegmentControl` + `segmentButtonClass` multi-select |
+| Cash transactions table | [TransferPayTransactionsTable.tsx](../src/pages/portfolio/transferPay/TransferPayTransactionsTable.tsx) |
+| Summary by period table | [TransferPaySummaryTable.tsx](../src/pages/portfolio/transferPay/TransferPaySummaryTable.tsx) |
+| `% vs prev` subline | [TransferPayChangeVsPrev.tsx](../src/pages/portfolio/transferPay/TransferPayChangeVsPrev.tsx) |
+
+No `transferPay.module.css` — use `InlinePnl` / `denseTableNumCell` for amounts.
 
 ## PnL coloring
 
@@ -104,6 +121,30 @@ Always use `pnlColorClass` from `@/utils/dailyChange` or `InlinePnl` / `PnlCell`
 ## Segment controls
 
 Use `SegmentControl` / `IncludeExcludeToggle` from `data-display` instead of custom CSS pill groups.
+
+## Category / symbol tags
+
+Purple **position category** pills (Trade Ledger Stocks tab style) and blue **symbol highlight** pills are centralized in `DenseTag`:
+
+```tsx
+import { DenseTag, GroupHeaderRow } from '@/components/data-display'
+
+// Table cell
+<DenseTableCell>
+  <DenseTag variant="category" size="cell">{categoryName}</DenseTag>
+</DenseTableCell>
+
+// Group header row (Accounts, Live Market Streams, …)
+<GroupHeaderRow colSpan={n} label={category} variant="category" />
+
+// Larger pill in ledger group bars
+<DenseTag variant="category" size="pill">{category}</DenseTag>
+<DenseTag variant="symbol" size="pill">{symbol}</DenseTag>
+```
+
+Tokens: [denseTagClasses.ts](../src/components/data-display/denseTagClasses.ts) · component: [DenseTag.tsx](../src/components/data-display/DenseTag.tsx)
+
+**Reference:** [LedgerStkTable.tsx](../src/pages/portfolio/ledger/LedgerStkTable.tsx) · [StockPositionsTable.tsx](../src/components/accounts/StockPositionsTable.tsx) (via `GroupHeaderRow`)
 
 ## Table section layout
 
@@ -187,6 +228,70 @@ import {
 **Reference:** [StockPositionsTable.tsx](../src/components/accounts/StockPositionsTable.tsx) · metrics in [accountsStockPositions.ts](../src/utils/accountsStockPositions.ts)
 
 Use separate columns for Daily % / Daily $ ( `InlinePnl` per cell ), not stacked `PnlCell`, when matching Legacy Accounts layout.
+
+## Expandable instance rows (Positions Strategy)
+
+Main instance sheet uses `DenseDataTable` + `ExpandToggleCell` + detail row with `colSpan`:
+
+```tsx
+<DenseTableRow onClick={() => toggleExpand(key)} role="button" aria-expanded={isExpanded}>
+  <DenseTableCell><ExpandToggleCell expanded={isExpanded} onToggle={...} /></DenseTableCell>
+  {/* instance summary columns */}
+</DenseTableRow>
+<DenseTableRow>
+  <DenseTableCell colSpan={11} className={instancePanel.detailCell}>
+    <NestedDenseTable>{/* option / coverage subtables */}</NestedDenseTable>
+  </DenseTableCell>
+</DenseTableRow>
+<GrandTotalRow labelColSpan={7} label="Total (N strategies)">{/* Opt PNL */}</GrandTotalRow>
+```
+
+**Reference:** [InstanceTab.tsx](../src/components/positions/InstanceTab.tsx) · [OptionsTab.tsx](../src/components/positions/OptionsTab.tsx) (expand pattern)
+
+## NestedDenseTable (Instance detail subtables)
+
+Wrap nested option/coverage tables inside expanded instance rows:
+
+```tsx
+<NestedDenseTable>
+  <DenseTableHeader>...</DenseTableHeader>
+  <DenseTableBody>...</DenseTableBody>
+</NestedDenseTable>
+```
+
+**Reference:** [InstanceOptionSubTable.tsx](../src/components/positions/InstanceOptionSubTable.tsx) · [InstanceCoverageSubTable.tsx](../src/components/positions/InstanceCoverageSubTable.tsx)
+
+Accounts Option positions (flat list + premium total): [OptionPositionsTable.tsx](../src/components/accounts/OptionPositionsTable.tsx) · [accountsOptionPositions.ts](../src/utils/accountsOptionPositions.ts)
+
+## Live hybrid tables (Market Streams)
+
+Live keeps a native `<table>` shell for **sticky multi-row thead** (Host/Secondary) and drag-drop rows. Use Dense primitives for cells only:
+
+```tsx
+import { liveTable } from '@/pages/market/live/liveTableClasses'
+import { DenseTableHeader, DenseTableHead, DenseTableCell, GroupHeaderRow } from '@/components/data-display'
+
+<div className={liveTable.shell}>
+  <table className={liveTable.table}>
+    <DenseTableHeader className={liveTable.stickyThead}>...</DenseTableHeader>
+    <DenseTableBody>...</DenseTableBody>
+  </table>
+</div>
+```
+
+Daily/SINCE stacked columns (% then $): [LiveStackedPnlCell.tsx](../src/pages/market/live/LiveStackedPnlCell.tsx)
+
+**Reference:** [MarketStreamsTable.tsx](../src/pages/market/live/MarketStreamsTable.tsx) · [OpenOrdersPane.tsx](../src/pages/market/live/OpenOrdersPane.tsx) (full `DenseDataTable`)
+
+## Model Analysis (expand row + nested stress tables)
+
+Page tokens: [modelAnalysisUi.ts](../src/pages/portfolio/modelAnalysis/modelAnalysisUi.ts)
+
+- Main per-underlying table: hybrid shell + `ExpandToggleCell` + detail `colSpan` row
+- Account stress matrix: `CollapsibleGroup` + `NestedDenseTable`
+- Expanded symbol detail: 3× `NestedDenseTable` (CAR legs, option Greeks, per-symbol stress)
+
+**Reference:** [ModelAnalysisSections.tsx](../src/pages/portfolio/modelAnalysis/ModelAnalysisSections.tsx) · [UnderlyingDetailPanel.tsx](../src/pages/portfolio/modelAnalysis/UnderlyingDetailPanel.tsx)
 
 ## Allowed CSS exceptions
 

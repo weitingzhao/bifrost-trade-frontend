@@ -1,8 +1,8 @@
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { LedgerSegmentBtn, LedgerSegmentSwitch } from './LedgerSegmentSwitch'
+import { SegmentControl, segmentButtonClass, segmentGroupClass } from '@/components/data-display'
 import { LedgerSortIcon as SortIcon } from './LedgerSortIcon'
 import type { GroupBy, InstanceSubTab, MainTab, OptInstanceFilter, OptSortCol, OptSubTab } from './ledgerTypes'
-import styles from './ledgerStyles'
+import { ledgerShell } from './ledgerShellUi'
 
 export type LedgerTabFilterProps = {
   activeTab: MainTab
@@ -49,8 +49,8 @@ function FilterRow({
   children: React.ReactNode
 }) {
   return (
-    <div className={styles.filterSegmentRow} role="group">
-      <span className={styles.tabFilterLabel}>{label}</span>
+    <div className={ledgerShell.filterSegmentRow} role="group">
+      <span className={ledgerShell.tabFilterLabel}>{label}</span>
       {tooltip ? <InfoTooltip text={tooltip} /> : null}
       {children}
     </div>
@@ -69,17 +69,16 @@ function GroupSwitch({
       label="Group"
       tooltip="Group rows by opportunity (default), by strategy structure name, or by watchlist symbols on the opportunity."
     >
-      <LedgerSegmentSwitch>
-        {(['opportunity', 'structure', 'watchlist_symbol'] as const).map(v => (
-          <LedgerSegmentBtn
-            key={v}
-            active={groupBy === v}
-            onClick={() => setGroupBy(v)}
-          >
-            {v === 'opportunity' ? 'Opportunity' : v === 'structure' ? 'Structure' : 'Watchlist symbol'}
-          </LedgerSegmentBtn>
-        ))}
-      </LedgerSegmentSwitch>
+      <SegmentControl
+        size="sm"
+        value={groupBy}
+        onChange={v => setGroupBy(v as GroupBy)}
+        options={[
+          { value: 'opportunity', label: 'Opportunity' },
+          { value: 'structure', label: 'Structure' },
+          { value: 'watchlist_symbol', label: 'Watchlist symbol' },
+        ]}
+      />
     </FilterRow>
   )
 }
@@ -94,29 +93,38 @@ function TypeSwitch({
   optionRights: ('C' | 'P')[]
 }) {
   if (optionRights.length <= 1 && !optRightFilter) return null
+
+  const options: { value: string; label: string }[] = [{ value: '', label: 'All' }]
+  if (optionRights.includes('C') || optRightFilter === 'C') {
+    options.push({ value: 'C', label: 'Call' })
+  }
+  if (optionRights.includes('P') || optRightFilter === 'P') {
+    options.push({ value: 'P', label: 'Put' })
+  }
+
   return (
     <FilterRow label="Type">
-      <LedgerSegmentSwitch>
-        <LedgerSegmentBtn active={optRightFilter === ''} onClick={() => setOptRightFilter('')}>
-          All
-        </LedgerSegmentBtn>
-        {(optionRights.includes('C') || optRightFilter === 'C') && (
-          <LedgerSegmentBtn
-            active={optRightFilter === 'C'}
-            onClick={() => setOptRightFilter(prev => (prev === 'C' ? '' : 'C'))}
+      <div className={segmentGroupClass('sm')}>
+        {options.map(opt => (
+          <button
+            key={opt.value || 'all'}
+            type="button"
+            className={segmentButtonClass(optRightFilter === (opt.value as '' | 'C' | 'P'), 'sm')}
+            aria-pressed={optRightFilter === opt.value}
+            onClick={() => {
+              if (opt.value === '') {
+                setOptRightFilter('')
+              } else {
+                setOptRightFilter(prev =>
+                  prev === opt.value ? '' : (opt.value as 'C' | 'P'),
+                )
+              }
+            }}
           >
-            Call
-          </LedgerSegmentBtn>
-        )}
-        {(optionRights.includes('P') || optRightFilter === 'P') && (
-          <LedgerSegmentBtn
-            active={optRightFilter === 'P'}
-            onClick={() => setOptRightFilter(prev => (prev === 'P' ? '' : 'P'))}
-          >
-            Put
-          </LedgerSegmentBtn>
-        )}
-      </LedgerSegmentSwitch>
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </FilterRow>
   )
 }
@@ -136,7 +144,7 @@ function GroupTypeInlineRow({
 }) {
   const showType = optionRights.length > 1 || !!optRightFilter
   return (
-    <div className={styles.filterSegmentInlineRow}>
+    <div className={ledgerShell.filterSegmentInlineRow}>
       <GroupSwitch groupBy={groupBy} setGroupBy={setGroupBy} />
       {showType && (
         <TypeSwitch
@@ -193,8 +201,8 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
   if (!showStrategyInst && !showInstance && !showOptions && !showStk) return null
 
   return (
-    <div className={styles.ledgerToolbarFilters} aria-label="Tab filters">
-      <div className={styles.ledgerToolbarFiltersInner}>
+    <div className={ledgerShell.toolbarFilters} aria-label="Tab filters">
+      <div className={ledgerShell.toolbarFiltersInner}>
         {showStrategyInst && (
           <>
             <GroupTypeInlineRow
@@ -205,7 +213,7 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
               optionRights={strategyPanelOptionRights}
             />
             {optRightFilter ? (
-              <span className={styles.filterMetaInline}>
+              <span className={ledgerShell.filterMetaInline}>
                 Showing {filteredStrategyOpportunityGroupsLength} of {strategyOpportunityGroupsLength} opportunities
               </span>
             ) : null}
@@ -214,46 +222,41 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
 
         {showInstance && (
           <>
-            <div className={styles.filterSegmentInlineRow}>
-              <LedgerSegmentSwitch role="tablist" aria-label="With instance and No instance">
-                <LedgerSegmentBtn
-                  role="tab"
-                  aria-selected={instanceSubTab === 'with_instance'}
-                  active={instanceSubTab === 'with_instance'}
-                  disabled={instanceGroupsWithCount === 0}
-                  onClick={() => setInstanceSubTab('with_instance')}
-                >
-                  With instance ({instanceGroupsWithCount})
-                </LedgerSegmentBtn>
-                <LedgerSegmentBtn
-                  role="tab"
-                  aria-selected={instanceSubTab === 'no_instance'}
-                  active={instanceSubTab === 'no_instance'}
-                  disabled={noInstanceOptGroupsLength === 0}
-                  onClick={() => setInstanceSubTab('no_instance')}
-                >
-                  No instance ({noInstanceOptGroupsLength})
-                </LedgerSegmentBtn>
-              </LedgerSegmentSwitch>
-              <div className={instanceSubTab === 'no_instance' ? styles.containOpenDisabled : undefined}>
+            <div className={ledgerShell.filterSegmentInlineRow}>
+              <SegmentControl
+                size="sm"
+                ariaLabel="With instance and No instance"
+                value={instanceSubTab}
+                onChange={v => setInstanceSubTab(v as InstanceSubTab)}
+                options={[
+                  {
+                    value: 'with_instance',
+                    label: `With instance (${instanceGroupsWithCount})`,
+                    disabled: instanceGroupsWithCount === 0,
+                  },
+                  {
+                    value: 'no_instance',
+                    label: `No instance (${noInstanceOptGroupsLength})`,
+                    disabled: noInstanceOptGroupsLength === 0,
+                  },
+                ]}
+              />
+              <div className={instanceSubTab === 'no_instance' ? ledgerShell.containOpenDisabled : undefined}>
                 <FilterRow
                   label="Contain open"
                   tooltip="Filters the With instance list: Yes = at least one open (unrealized) option contract; No = only closed legs; All = every instance."
                 >
-                  <LedgerSegmentSwitch role="radiogroup" aria-label="Contain open">
-                    {(['all', 'yes', 'no'] as const).map(v => (
-                      <LedgerSegmentBtn
-                        key={v}
-                        role="radio"
-                        aria-checked={instanceContainOpenFilter === v}
-                        active={instanceContainOpenFilter === v}
-                        disabled={instanceSubTab === 'no_instance'}
-                        onClick={() => setInstanceContainOpenFilter(v)}
-                      >
-                        {v === 'all' ? 'All' : v === 'yes' ? 'Yes' : 'No'}
-                      </LedgerSegmentBtn>
-                    ))}
-                  </LedgerSegmentSwitch>
+                  <SegmentControl
+                    size="sm"
+                    ariaLabel="Contain open"
+                    value={instanceContainOpenFilter}
+                    onChange={v => setInstanceContainOpenFilter(v as 'all' | 'yes' | 'no')}
+                    options={[
+                      { value: 'all', label: 'All', disabled: instanceSubTab === 'no_instance' },
+                      { value: 'yes', label: 'Yes', disabled: instanceSubTab === 'no_instance' },
+                      { value: 'no', label: 'No', disabled: instanceSubTab === 'no_instance' },
+                    ]}
+                  />
                 </FilterRow>
               </div>
             </div>
@@ -269,7 +272,7 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
             {instanceSubTab === 'with_instance'
               && instanceContainOpenFilter !== 'all'
               && instanceGroupsLength > 0 && (
-              <span className={styles.filterMetaInline}>
+              <span className={ledgerShell.filterMetaInline}>
                 Showing {filteredInstanceGroupsLength} of {instanceGroupsLength}
               </span>
             )}
@@ -278,114 +281,93 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
 
         {showOptions && (
           <>
-            <LedgerSegmentSwitch role="tablist" aria-label="Closed Option and Open Option">
-              <LedgerSegmentBtn
-                role="tab"
-                aria-selected={optSubTab === 'contracts'}
-                active={optSubTab === 'contracts'}
-                onClick={() => setOptSubTab('contracts')}
-              >
-                Closed Option ({filteredClosedOptGroupsLength})
-              </LedgerSegmentBtn>
-              <LedgerSegmentBtn
-                role="tab"
-                aria-selected={optSubTab === 'orphans'}
-                active={optSubTab === 'orphans'}
-                disabled={allOrphanGroupsLength === 0}
-                onClick={() => setOptSubTab('orphans')}
-              >
-                Open Option ({allOrphanGroupsLength})
-              </LedgerSegmentBtn>
-            </LedgerSegmentSwitch>
-            <div className={styles.filterSegmentInlineRow}>
+            <SegmentControl
+              size="sm"
+              ariaLabel="Closed Option and Open Option"
+              value={optSubTab}
+              onChange={v => setOptSubTab(v as OptSubTab)}
+              options={[
+                { value: 'contracts', label: `Closed Option (${filteredClosedOptGroupsLength})` },
+                {
+                  value: 'orphans',
+                  label: `Open Option (${allOrphanGroupsLength})`,
+                  disabled: allOrphanGroupsLength === 0,
+                },
+              ]}
+            />
+            <div className={ledgerShell.filterSegmentInlineRow}>
               {optSubTab === 'contracts' && (
                 <>
                   <FilterRow label="Instance">
-                    <LedgerSegmentSwitch role="radiogroup" aria-label="Filter contracts by strategy instance status">
-                      {([
-                        { v: 'all' as const, label: 'All' },
-                        { v: 'has_instance' as const, label: 'Has instance' },
-                        { v: 'no_instance' as const, label: 'No instance' },
-                        { v: 'mixed' as const, label: 'Mixed' },
-                      ]).map(({ v, label }) => (
-                        <LedgerSegmentBtn
-                          key={v}
-                          role="radio"
-                          aria-checked={optInstanceFilter === v}
-                          active={optInstanceFilter === v}
-                          onClick={() => setOptInstanceFilter(v)}
-                        >
-                          {label}
-                        </LedgerSegmentBtn>
-                      ))}
-                    </LedgerSegmentSwitch>
+                    <SegmentControl
+                      size="sm"
+                      ariaLabel="Filter contracts by strategy instance status"
+                      value={optInstanceFilter}
+                      onChange={v => setOptInstanceFilter(v as OptInstanceFilter)}
+                      options={[
+                        { value: 'all', label: 'All' },
+                        { value: 'has_instance', label: 'Has instance' },
+                        { value: 'no_instance', label: 'No instance' },
+                        { value: 'mixed', label: 'Mixed' },
+                      ]}
+                    />
                   </FilterRow>
                   <FilterRow label="Sort">
-                    <LedgerSegmentSwitch>
+                    <div className={segmentGroupClass('sm')}>
                       {(['expiry', 'trade_date'] as const).map(col => (
-                        <LedgerSegmentBtn
+                        <button
                           key={col}
-                          active={optSort.col === col}
+                          type="button"
+                          className={segmentButtonClass(optSort.col === col, 'sm')}
+                          aria-pressed={optSort.col === col}
                           onClick={() => toggleOptSort(col)}
                         >
                           {col === 'expiry' ? 'Expiry' : 'Trade Date'}{' '}
                           <SortIcon active={optSort.col === col} dir={optSort.dir} />
-                        </LedgerSegmentBtn>
+                        </button>
                       ))}
-                    </LedgerSegmentSwitch>
+                    </div>
                   </FilterRow>
                 </>
               )}
               <FilterRow label="Type">
-                <LedgerSegmentSwitch>
-                  {(['', 'C', 'P'] as const).map(r => (
-                    <LedgerSegmentBtn
-                      key={r || 'all'}
-                      active={optRightFilter === r}
-                      onClick={() => setOptRightFilter(r)}
-                    >
-                      {r === '' ? 'All' : r === 'C' ? 'Call' : 'Put'}
-                    </LedgerSegmentBtn>
-                  ))}
-                </LedgerSegmentSwitch>
+                <SegmentControl
+                  size="sm"
+                  value={optRightFilter}
+                  onChange={v => setOptRightFilter(v as '' | 'C' | 'P')}
+                  options={[
+                    { value: '', label: 'All' },
+                    { value: 'C', label: 'Call' },
+                    { value: 'P', label: 'Put' },
+                  ]}
+                />
               </FilterRow>
             </div>
           </>
         )}
 
         {showStk && (
-          <div className={styles.filterSegmentInlineRow}>
-            <LedgerSegmentSwitch role="tablist" aria-label="Stock view mode">
-              <LedgerSegmentBtn
-                role="tab"
-                aria-selected={!groupByPosition}
-                active={!groupByPosition}
-                onClick={() => setGroupByPosition(false)}
-              >
-                Flat
-              </LedgerSegmentBtn>
-              <LedgerSegmentBtn
-                role="tab"
-                aria-selected={groupByPosition}
-                active={groupByPosition}
-                onClick={() => setGroupByPosition(true)}
-              >
-                Position
-              </LedgerSegmentBtn>
-            </LedgerSegmentSwitch>
-            <LedgerSegmentSwitch role="tablist" aria-label="Stock category">
-              {stkCategoryOptions.map(cat => (
-                <LedgerSegmentBtn
-                  key={cat}
-                  role="tab"
-                  aria-selected={effectiveStkCategoryTab === cat}
-                  active={effectiveStkCategoryTab === cat}
-                  onClick={() => { setStkCategoryTab(cat); setStkPage(0) }}
-                >
-                  {cat}
-                </LedgerSegmentBtn>
-              ))}
-            </LedgerSegmentSwitch>
+          <div className={ledgerShell.filterSegmentInlineRow}>
+            <SegmentControl
+              size="sm"
+              ariaLabel="Stock view mode"
+              value={groupByPosition ? 'position' : 'flat'}
+              onChange={v => setGroupByPosition(v === 'position')}
+              options={[
+                { value: 'flat', label: 'Flat' },
+                { value: 'position', label: 'Position' },
+              ]}
+            />
+            <SegmentControl
+              size="sm"
+              ariaLabel="Stock category"
+              value={effectiveStkCategoryTab}
+              onChange={v => {
+                setStkCategoryTab(v)
+                setStkPage(0)
+              }}
+              options={stkCategoryOptions.map(cat => ({ value: cat, label: cat }))}
+            />
           </div>
         )}
       </div>

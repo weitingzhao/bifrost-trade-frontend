@@ -4,7 +4,13 @@ import type { StatusResponse } from '@/types/monitor'
 import type { MarketStreamsRow } from '@/utils/marketStreamsRows'
 import { OpenOrdersPane } from './OpenOrdersPane'
 import { WatchingOptionsPane, WatchingStocksPane } from './WatchingStocksPane'
-import { liveSplitGridClass, liveSplitRightColClass, liveSplitWatchingColClass } from './liveUi'
+import {
+  liveSplitBodyClass,
+  liveSplitGridClass,
+  liveSplitOuterCardClass,
+  liveSplitRightColClass,
+  liveSplitWatchingColClass,
+} from './liveUi'
 
 interface Props {
   watchingRows: MarketStreamsRow[]
@@ -36,29 +42,37 @@ export function LiveBottomSplit({
   status,
 }: Props) {
   return (
-    <div className={liveSplitGridClass} role="group" aria-label="Watching stocks, Watching options, and open orders">
-      <div className={liveSplitWatchingColClass}>
-        <WatchingStocksPane
-          rows={watchingRows}
-          benchmarks={benchmarks}
-          quotesMap={quotesMap}
-          streamsLamp={streamsLamp}
-          hasStreamAccounts={hasStreamAccounts}
-        />
-      </div>
-      <div className={liveSplitRightColClass}>
-        <WatchingOptionsPane
-          items={watchingOptions}
-          quotesByContractKey={quotesByContractKey}
-          streamsLamp={streamsLamp}
-        />
-        <OpenOrdersPane
-          optOrders={optOrders}
-          stkOrders={stkOrders}
-          ordersLamp={ordersLamp}
-          openOrdersUpdatedAt={openOrdersUpdatedAt}
-          status={status}
-        />
+    <div className={liveSplitOuterCardClass}>
+      <div
+        className={liveSplitBodyClass}
+        role="group"
+        aria-label="Watching stocks, Watching options, and open orders"
+      >
+        <div className={liveSplitGridClass}>
+          <div className={liveSplitWatchingColClass}>
+            <WatchingStocksPane
+              rows={watchingRows}
+              benchmarks={benchmarks}
+              quotesMap={quotesMap}
+              streamsLamp={streamsLamp}
+              hasStreamAccounts={hasStreamAccounts}
+            />
+          </div>
+          <div className={liveSplitRightColClass}>
+            <WatchingOptionsPane
+              items={watchingOptions}
+              quotesByContractKey={quotesByContractKey}
+              streamsLamp={streamsLamp}
+            />
+            <OpenOrdersPane
+              optOrders={optOrders}
+              stkOrders={stkOrders}
+              ordersLamp={ordersLamp}
+              openOrdersUpdatedAt={openOrdersUpdatedAt}
+              status={status}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

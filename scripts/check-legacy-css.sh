@@ -103,21 +103,90 @@ if ledger_legacy=$(grep -rE 'styles\.(ledgerTable|optTable|stkTable|ledgerGroupR
   fi
 fi
 
-# Trade Ledger aggregated CSS budget (toolbar + summary + source badges only)
+# Trade Ledger: no ledgerStyles.module.css (shell/toolbar/summary → ledgerShellUi + ledgerSummaryUi)
+if ledger_styles=$(grep -rl "ledgerStyles" src/pages/portfolio/ledger --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+  if [[ -n "$ledger_styles" ]]; then
+    echo "$ledger_styles" >&2
+    report "ledgerStyles import under src/pages/portfolio/ledger (use ledgerShellUi / ledgerSummaryUi)"
+  fi
+fi
 ledger_css=src/pages/portfolio/ledger/ledgerStyles.module.css
 if [[ -f "$ledger_css" ]]; then
-  ledger_lines=$(wc -l < "$ledger_css")
-  if [[ "$ledger_lines" -gt 950 ]]; then
-    report "ledgerStyles.module.css line budget exceeded ($ledger_lines > 950)"
+  report "ledgerStyles.module.css must be deleted (Trade Ledger Dense shell migration)"
+fi
+
+# Transfer & Pay: Dense migration — no module CSS
+if tp_legacy=$(grep -rE 'styles\.(dataTable|tableWrap|appTab|typePill|pnlPositive|pnlNegative|pnlZero|amountCell)' \
+  src/pages/portfolio/TransferPayPage.tsx src/pages/portfolio/transferPay --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+  if [[ -n "$tp_legacy" ]]; then
+    echo "$tp_legacy" >&2
+    report "legacy transferPay.module.css class references under Transfer Pay"
+  fi
+fi
+if tp_styles=$(grep -rl "transferPay.module.css" src/pages/portfolio --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+  if [[ -n "$tp_styles" ]]; then
+    echo "$tp_styles" >&2
+    report "transferPay.module.css import under src/pages/portfolio"
+  fi
+fi
+tp_css=src/pages/portfolio/transferPay.module.css
+if [[ -f "$tp_css" ]]; then
+  report "transferPay.module.css must be deleted (Transfer Pay Dense migration)"
+fi
+
+# Accounts: Dense migration — no shadcn Table
+accounts_table=$(grep -rl "@/components/ui/table" src/components/accounts --include='*.tsx' 2>/dev/null || true)
+if [[ -n "$accounts_table" ]]; then
+  echo "$accounts_table" >&2
+  report "shadcn Table under src/components/accounts"
+fi
+
+# Positions Instance tab: Dense migration (Phase 1)
+for f in InstanceTab.tsx InstanceOptionSubTable.tsx InstanceCoverageSubTable.tsx; do
+  if grep -q "@/components/ui/table" "src/components/positions/$f" 2>/dev/null; then
+    echo "src/components/positions/$f" >&2
+    report "shadcn Table in src/components/positions/$f"
+  fi
+done
+
+# Live: no legacy table module class references in TSX
+live_legacy=$(grep -rE 'styles\.(numCell|tableWrap|openOrdersTable|groupHeader|sumRow|table|colGroup|pnlStacked|symbolCell|symbolFresh|lastBidAsk|quoteSpread)' \
+  src/pages/market/live --include='*.tsx' 2>/dev/null || true)
+if [[ -n "$live_legacy" ]]; then
+  echo "$live_legacy" >&2
+  report "legacy live.module.css table class references in src/pages/market/live"
+fi
+
+live_css=src/pages/market/live/live.module.css
+if [[ -f "$live_css" ]]; then
+  live_lines=$(wc -l < "$live_css")
+  if [[ "$live_lines" -gt 120 ]]; then
+    report "live.module.css line budget exceeded ($live_lines > 120)"
   fi
 fi
 
-# Accounts: Dense migration — no shadcn Table except Phase 1 allowlist
-accounts_table=$(grep -rl "@/components/ui/table" src/components/accounts --include='*.tsx' 2>/dev/null \
-  | grep -v OptionPositionsTable.tsx || true)
-if [[ -n "$accounts_table" ]]; then
-  echo "$accounts_table" >&2
-  report "shadcn Table under src/components/accounts (OptionPositionsTable allowlisted until Phase 1)"
+# Model Analysis: Dense migration — no legacy table module class references
+ma_legacy=$(grep -rE 'styles\.(compactTable|tableWrap|nestedTable|pnlPositive|pnlNegative|riskDefined|riskUnlimited|stressCollapsible|accountPill|summaryStrip|detailCell)' \
+  src/pages/portfolio/modelAnalysis --include='*.tsx' 2>/dev/null || true)
+if [[ -n "$ma_legacy" ]]; then
+  echo "$ma_legacy" >&2
+  report "legacy modelAnalysis.module.css class references in src/pages/portfolio/modelAnalysis"
+fi
+
+ma_css=src/pages/portfolio/modelAnalysis.module.css
+if [[ -f "$ma_css" ]]; then
+  ma_lines=$(wc -l < "$ma_css")
+  if [[ "$ma_lines" -gt 80 ]]; then
+    report "modelAnalysis.module.css line budget exceeded ($ma_lines > 80)"
+  fi
+fi
+
+# Category tags: use DenseTag, not ledger stkPill* class strings in TSX
+stk_tag_legacy=$(grep -rE 'stk(Pill|Cell)(Category|Symbol)Class' src --include='*.tsx' 2>/dev/null \
+  | grep -v 'ledgerSharedClasses.ts' || true)
+if [[ -n "$stk_tag_legacy" ]]; then
+  echo "$stk_tag_legacy" >&2
+  report "stkPill/stkCell Category/Symbol class strings in TSX (use DenseTag from data-display)"
 fi
 
 if [[ "$fail" -ne 0 ]]; then

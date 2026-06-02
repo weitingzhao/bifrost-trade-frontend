@@ -8,9 +8,9 @@ import {
   CollapsibleGroupHeader,
   CollapsibleGroupStats,
   CollapsibleGroupTitle,
+  DenseTag,
 } from '@/components/data-display'
 import { fmtCcy } from './ledgerFormat'
-import { instanceOpenLinkClass } from './ledgerSharedClasses'
 import { LedgerInstanceNest } from './LedgerInstanceNest'
 import type { StratOppGroup } from './ledgerTypes'
 import type { OptionStockLinkSummary } from '@/types/trading'
@@ -102,7 +102,7 @@ export function LedgerStrategyGroup({
                   {sg.instanceId !== 'none' && (
                     <Link
                       to={`/strategy/instances?instance=${sg.instanceId}`}
-                      className={instanceOpenLinkClass}
+                      className="mr-2 shrink-0 self-center no-underline"
                       target="_blank"
                       rel="noopener noreferrer"
                       title={
@@ -111,7 +111,9 @@ export function LedgerStrategyGroup({
                           : `Open instance #${sg.instanceId}`
                       }
                     >
-                      Open
+                      <DenseTag variant="success" size="pill">
+                        Open
+                      </DenseTag>
                     </Link>
                   )}
                 </div>

@@ -1,94 +1,4 @@
-.tableWrap {
-  overflow-x: auto;
-  margin-top: 0.5rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--border);
-}
-
-.table {
-  width: 100%;
-  min-width: 320px;
-  table-layout: fixed;
-  border-collapse: collapse;
-  font-size: 0.8125rem;
-}
-
-.table thead th {
-  background: var(--color-surface-elevated);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: 0.35rem 0.5rem;
-  text-align: right;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  border-bottom: 1px solid var(--border);
-}
-
-.table thead th:first-child,
-.table tbody td:first-child {
-  text-align: left;
-}
-
-.table th.colGroup {
-  text-align: center;
-  font-weight: 600;
-  background: color-mix(in oklch, var(--foreground) 3%, var(--color-surface-elevated));
-  border-bottom: 2px solid var(--color-border-strong);
-}
-
-.table td,
-.table th {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0.3rem 0.5rem;
-  vertical-align: middle;
-  border-bottom: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
-}
-
-.numCell {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 0.78rem;
-  white-space: nowrap;
-  text-align: right;
-}
-
-.groupHeader td {
-  background: linear-gradient(
-    90deg,
-    var(--color-surface-elevated) 0%,
-    color-mix(in oklch, var(--primary) 8%, transparent) 100%
-  );
-  color: var(--muted-foreground);
-  font-weight: 600;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.35rem 0.5rem;
-}
-
-.pnlStackedTh {
-  white-space: normal;
-  line-height: 1.2;
-}
-
-.pnlStackedSub {
-  display: block;
-  font-weight: 500;
-  font-size: 0.85em;
-  opacity: 0.85;
-}
-
-.pnlStackedLine {
-  display: block;
-  text-align: right;
-  line-height: 1.25;
-}
-
-.pnlStackedLine + .pnlStackedLine {
-  margin-top: 0.12rem;
-}
+/* Live-only: daily calc tooltip, sort cycle accents, drag handles */
 
 .dailyCalcCell {
   position: relative;
@@ -121,24 +31,6 @@
   visibility: visible;
 }
 
-.symbolCell {
-  font-weight: 700;
-}
-
-.symbolFresh {
-  color: var(--foreground);
-}
-
-.symbolStale {
-  color: var(--muted-foreground);
-  opacity: 0.85;
-}
-
-.symbolVeryStale {
-  color: var(--color-text-dim);
-  opacity: 0.6;
-}
-
 .dragHandle {
   display: inline-block;
   margin-right: 0.25rem;
@@ -146,58 +38,6 @@
   cursor: grab;
   font-size: 0.7rem;
   vertical-align: middle;
-}
-
-.lastBidAsk {
-  font-family: var(--font-mono);
-  white-space: nowrap;
-}
-
-.spread {
-  font-size: 0.8em;
-  margin-left: 0.25em;
-  opacity: 0.75;
-}
-
-.quoteSpread {
-  font-size: 0.85em;
-  margin-left: 0.2em;
-  opacity: 0.9;
-}
-
-.openOrdersTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.78rem;
-}
-
-.openOrdersTable th,
-.openOrdersTable td {
-  padding: 0.35rem 0.5rem;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-  white-space: nowrap;
-}
-
-.openOrdersTable thead th {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  position: sticky;
-  top: 0;
-  background: var(--card);
-  z-index: 1;
-}
-
-.openOrdersTable tbody tr:hover {
-  background: color-mix(in srgb, var(--muted) 35%, transparent);
-}
-
-.sumRow td {
-  border-top: 2px solid var(--color-border-strong);
-  font-weight: 600;
 }
 
 .sortHeader {

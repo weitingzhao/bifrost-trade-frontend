@@ -1,5 +1,5 @@
 /**
- * Strategy Instance detail — embedded in DetailSidebar, Positions inspector, or compare panes.
+ * Strategy instance detail body — same sections/nav as Stock/Option inspectors; shell is {@link InstanceDetailSidebar}.
  */
 import { useCallback, useState } from 'react'
 import { RiskProfileDetail } from '@/components/positions/RiskProfileDetail'

@@ -16,16 +16,6 @@ export function pnlClass(n: number | null | undefined): string {
   return n > 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'
 }
 
-/** @deprecated Prefer `pnlColorClass` from `@/utils/dailyChange` in new ledger table code. */
-export function pnlModuleClass(n: number | null | undefined, styles: {
-  pnlPositive: string
-  pnlNegative: string
-  pnlZero: string
-}): string {
-  if (n == null || n === 0) return styles.pnlZero
-  return n > 0 ? styles.pnlPositive : styles.pnlNegative
-}
-
 export function fmtTsShort(ts: number): string {
   const d = new Date(ts * 1000)
   return d.toLocaleString(undefined, {

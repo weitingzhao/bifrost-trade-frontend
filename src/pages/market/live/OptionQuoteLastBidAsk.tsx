@@ -1,9 +1,8 @@
 import type { QuoteItem } from '@/types/market'
-import { cn } from '@/lib/utils'
-import { pnlColorClass } from '@/utils/dailyChange'
+import { InlinePnl } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import { quoteDisplayLast } from '@/utils/watchlistHelpers'
-import styles from './live.module.css'
+import { liveTable } from './liveTableClasses'
 
 interface Props {
   quote: QuoteItem | undefined
@@ -23,27 +22,15 @@ export function OptionQuoteLastBidAsk({ quote }: Props) {
     <>
       {ref != null ? fmtUsd(ref) : '—'}
       {bidDiff != null && (
-        <span
-          className={cn(
-            styles.quoteSpread,
-            pnlColorClass(bidDiff),
-          )}
-          title="Bid vs Last"
-        >
+        <span className={liveTable.quoteSpread} title="Bid vs Last">
           {' '}
-          {Math.abs(bidDiff).toFixed(2)}
+          <InlinePnl value={bidDiff}>{Math.abs(bidDiff).toFixed(2)}</InlinePnl>
         </span>
       )}
       {askDiff != null && (
-        <span
-          className={cn(
-            styles.quoteSpread,
-            pnlColorClass(askDiff),
-          )}
-          title="Ask vs Last"
-        >
+        <span className={liveTable.quoteSpread} title="Ask vs Last">
           {' '}
-          {Math.abs(askDiff).toFixed(2)}
+          <InlinePnl value={askDiff}>{Math.abs(askDiff).toFixed(2)}</InlinePnl>
         </span>
       )}
     </>

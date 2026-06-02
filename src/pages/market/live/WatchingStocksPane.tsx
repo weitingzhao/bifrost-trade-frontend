@@ -2,6 +2,16 @@ import type { DailyBenchmark, QuoteItem, WatchlistItem } from '@/types/market'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import {
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  DenseTag,
+  denseTableNumCell,
+} from '@/components/data-display'
 import type { MarketStreamsRow } from '@/utils/marketStreamsRows'
 import {
   formatExpiry,
@@ -11,13 +21,12 @@ import {
 } from '@/utils/watchlistHelpers'
 import { MarketStreamStkRow } from './MarketStreamStkRow'
 import { OptionQuoteLastBidAsk } from './OptionQuoteLastBidAsk'
-import styles from './live.module.css'
+import { liveTable } from './liveTableClasses'
 import {
-  liveCardClass,
   liveEmptyHintClass,
+  livePaneClass,
   livePaneTitleClass,
   livePaneTitleRowClass,
-  liveWatchingOptionsPaneClass,
 } from './liveUi'
 
 interface Props {
@@ -37,7 +46,7 @@ export function WatchingStocksPane({
   hasStreamAccounts,
 }: Props) {
   return (
-    <div className={liveCardClass}>
+    <div className={livePaneClass}>
       <div className={livePaneTitleRowClass}>
         <StatusLamp lamp={streamsLamp} />
         <h2 className={livePaneTitleClass}>
@@ -48,23 +57,25 @@ export function WatchingStocksPane({
       {rows.length === 0 ? (
         <p className={liveEmptyHintClass}>No STK symbols with Watchlist category Watching</p>
       ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table} aria-label="Watching stocks quotes">
-            <thead>
-              <tr>
-                <th scope="col">Symbol</th>
-                <th title="Last price; Bid and Ask shown as spread vs Last">Last (Bid / Ask)</th>
-                <th className={styles.pnlStackedTh}>
+        <div className={liveTable.shell}>
+          <table className={liveTable.table} aria-label="Watching stocks quotes">
+            <DenseTableHeader className={liveTable.stickyThead}>
+              <DenseTableHeadRow>
+                <DenseTableHead scope="col">Symbol</DenseTableHead>
+                <DenseTableHead title="Last price; Bid and Ask shown as spread vs Last">
+                  Last (Bid / Ask)
+                </DenseTableHead>
+                <DenseTableHead align="right" className={liveTable.stackedPnlHead}>
                   Daily
-                  <span className={styles.pnlStackedSub}>% / $</span>
-                </th>
-                <th className={styles.pnlStackedTh}>
+                  <span className={liveTable.stackedPnlHeadSub}>% / $</span>
+                </DenseTableHead>
+                <DenseTableHead align="right" className={liveTable.stackedPnlHead}>
                   SINCE
-                  <span className={styles.pnlStackedSub}>% / $</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                  <span className={liveTable.stackedPnlHeadSub}>% / $</span>
+                </DenseTableHead>
+              </DenseTableHeadRow>
+            </DenseTableHeader>
+            <DenseTableBody>
               {rows.map(row => (
                 <MarketStreamStkRow
                   key={row.symbol}
@@ -76,7 +87,7 @@ export function WatchingStocksPane({
                   benchmarks={benchmarks}
                 />
               ))}
-            </tbody>
+            </DenseTableBody>
           </table>
         </div>
       )}
@@ -92,7 +103,7 @@ interface WatchingOptionsProps {
 
 export function WatchingOptionsPane({ items, quotesByContractKey, streamsLamp }: WatchingOptionsProps) {
   return (
-    <div className={liveWatchingOptionsPaneClass}>
+    <div className={livePaneClass}>
       <div className={livePaneTitleRowClass}>
         <StatusLamp
           lamp={streamsLamp}
@@ -106,38 +117,44 @@ export function WatchingOptionsPane({ items, quotesByContractKey, streamsLamp }:
       {items.length === 0 ? (
         <p className={liveEmptyHintClass}>No option contracts on Watchlist</p>
       ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table} aria-label="Watching option quotes">
-            <thead>
-              <tr>
-                <th scope="col">Symbol</th>
-                <th title="Last price; Bid and Ask shown as spread vs Last">Last (Bid / Ask)</th>
-                <th>Expiry</th>
-                <th>Right</th>
-                <th>Strike</th>
-                <th>Category</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className={liveTable.shell}>
+          <table className={liveTable.table} aria-label="Watching option quotes">
+            <DenseTableHeader className={liveTable.stickyThead}>
+              <DenseTableHeadRow>
+                <DenseTableHead scope="col">Symbol</DenseTableHead>
+                <DenseTableHead title="Last price; Bid and Ask shown as spread vs Last">
+                  Last (Bid / Ask)
+                </DenseTableHead>
+                <DenseTableHead>Expiry</DenseTableHead>
+                <DenseTableHead>Right</DenseTableHead>
+                <DenseTableHead align="right">Strike</DenseTableHead>
+                <DenseTableHead>Category</DenseTableHead>
+              </DenseTableHeadRow>
+            </DenseTableHeader>
+            <DenseTableBody>
               {items.map(item => {
                 const q = quotesByContractKey[item.contract_key]
                 const categoryName = (item.category ?? '').trim() || 'Uncategorized'
                 return (
-                  <tr key={item.contract_key}>
-                    <td className={styles.symbolCell} title={item.contract_key}>
+                  <DenseTableRow key={item.contract_key}>
+                    <DenseTableCell className={liveTable.symbolCell} title={item.contract_key}>
                       {watchlistItemLabel(item)}
-                    </td>
-                    <td className={cn(styles.numCell, styles.lastBidAsk)}>
+                    </DenseTableCell>
+                    <DenseTableCell className={cn(denseTableNumCell, liveTable.lastBidAsk)}>
                       <OptionQuoteLastBidAsk quote={q} />
-                    </td>
-                    <td>{formatExpiry(item.expiry)}</td>
-                    <td>{formatOptionRightLabel(item.option_right)}</td>
-                    <td className={styles.numCell}>{formatStrike(item.strike)}</td>
-                    <td>{categoryName}</td>
-                  </tr>
+                    </DenseTableCell>
+                    <DenseTableCell>{formatExpiry(item.expiry)}</DenseTableCell>
+                    <DenseTableCell>{formatOptionRightLabel(item.option_right)}</DenseTableCell>
+                    <DenseTableCell className={denseTableNumCell}>{formatStrike(item.strike)}</DenseTableCell>
+                    <DenseTableCell>
+                      <DenseTag variant="category" size="cell">
+                        {categoryName}
+                      </DenseTag>
+                    </DenseTableCell>
+                  </DenseTableRow>
                 )
               })}
-            </tbody>
+            </DenseTableBody>
           </table>
         </div>
       )}

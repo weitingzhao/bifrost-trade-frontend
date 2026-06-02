@@ -47,7 +47,7 @@ Copy and track:
 - [ ] Numeric columns use denseTableNumCell or PnlCell
 - [ ] PnL uses pnlColorClass (not module pnl classes)
 - [ ] Row actions use IconActionButton
-- [ ] Empty states use denseTable.emptyHint
+- [ ] Category labels use DenseTag variant="category" (not stkPillCategoryClass / inline purple CSS)
 - [ ] No window.confirm / window.alert
 - [ ] npm run lint && npm run build && npm run check:legacy-css pass
 ```
@@ -58,6 +58,13 @@ Copy and track:
 |---------|------|
 | Stock positions table | `src/components/positions/StocksTab.tsx` |
 | Accounts stock positions (category + subtotals) | `src/components/accounts/StockPositionsTable.tsx` |
+| Accounts option positions (premium total) | `src/components/accounts/OptionPositionsTable.tsx` |
+| Positions instance sheet (expand + nested subtables) | `src/components/positions/InstanceTab.tsx` |
+| Instance option / coverage subtables | `src/components/positions/InstanceOptionSubTable.tsx`, `InstanceCoverageSubTable.tsx` |
+| Live market streams (hybrid sticky table) | `src/pages/market/live/MarketStreamsTable.tsx` |
+| Live open orders | `src/pages/market/live/OpenOrdersPane.tsx` |
+| Model Analysis (expand + nested stress) | `src/pages/portfolio/modelAnalysis/ModelAnalysisSections.tsx`, `UnderlyingDetailPanel.tsx` |
+| Category / symbol tags | `DenseTag` in `LedgerStkTable.tsx`, `GroupHeaderRow variant="category"` |
 | Option exec row actions | `src/components/positions/OpenOptionExecTableRow.tsx` |
 | Ledger option groups | `src/pages/portfolio/ledger/OptGroupsTable.tsx` |
 | Collapsible strategy card | `src/pages/portfolio/ledger/LedgerStrategyGroup.tsx` |

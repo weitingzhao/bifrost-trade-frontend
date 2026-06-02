@@ -1,7 +1,25 @@
 import { Fragment, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
 import type { ModelAnalysisResponse } from '@/types/modelAnalysis'
 import { fmtUsd } from '@/lib/format'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import {
+  CollapsibleChevron,
+  CollapsibleGroup,
+  CollapsibleGroupBody,
+  CollapsibleGroupHeader,
+  CollapsibleGroupTitle,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  ExpandToggleCell,
+  InlinePnl,
+  NestedDenseTable,
+  denseTableNumCell,
+} from '@/components/data-display'
 import {
   fmtIvShockLabel,
   fmtModelDelta,
@@ -10,9 +28,16 @@ import {
   fmtSpotShockLabel,
   riskBadgeLabel,
 } from '@/utils/modelAnalysisFormat'
-import { cn } from '@/lib/utils'
 import { UnderlyingDetailPanel } from './UnderlyingDetailPanel'
-import styles from '../modelAnalysis.module.css'
+import {
+  MAIN_TABLE_COL_SPAN,
+  modelAnalysisStressNoteClass,
+  modelAnalysisSummaryItemClass,
+  modelAnalysisSummaryLabelClass,
+  modelAnalysisSummaryStripClass,
+  modelAnalysisSummaryValueClass,
+  modelAnalysisTable,
+} from './modelAnalysisUi'
 
 interface Props {
   data: ModelAnalysisResponse
@@ -24,72 +49,102 @@ export function ModelAnalysisMainTable({ data }: Props) {
 
   if (entries.length === 0) return null
 
+  const toggleExpanded = (symbol: string) => {
+    setExpandedSymbol(prev => (prev === symbol ? null : symbol))
+  }
+
   return (
-    <div className={styles.tableWrap}>
-      <table className={cn(styles.compactTable, 'w-full border-collapse')}>
-        <thead>
-          <tr>
-            <th>Symbol</th>
-            <th>Spot</th>
-            <th>DTE</th>
-            <th>Max Gain</th>
-            <th>Max Loss</th>
-            <th>Risk</th>
-            <th>CAR</th>
-            <th>Annual %</th>
-            <th>Delta</th>
-            <th>Delta $</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className={modelAnalysisTable.shell}>
+      <table className={modelAnalysisTable.table} aria-label="Model analysis per underlying">
+        <DenseTableHeader className={modelAnalysisTable.stickyThead}>
+          <DenseTableHeadRow>
+            <DenseTableHead scope="col" className="w-10" />
+            <DenseTableHead scope="col">Symbol</DenseTableHead>
+            <DenseTableHead align="right">Spot</DenseTableHead>
+            <DenseTableHead align="right">DTE</DenseTableHead>
+            <DenseTableHead align="right">Max Gain</DenseTableHead>
+            <DenseTableHead align="right">Max Loss</DenseTableHead>
+            <DenseTableHead>Risk</DenseTableHead>
+            <DenseTableHead align="right">CAR</DenseTableHead>
+            <DenseTableHead align="right">Annual %</DenseTableHead>
+            <DenseTableHead align="right">Delta</DenseTableHead>
+            <DenseTableHead align="right">Delta $</DenseTableHead>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
           {entries.map(u => {
             const expanded = expandedSymbol === u.symbol
             return (
               <Fragment key={u.symbol}>
-                <tr
-                  className={cn(styles.clickable, expanded && styles.expanded)}
-                  onClick={() => setExpandedSymbol(expanded ? null : u.symbol)}
+                <DenseTableRow
+                  className={cn(
+                    modelAnalysisTable.clickableRow,
+                    expanded && modelAnalysisTable.expandedRow,
+                  )}
+                  onClick={() => toggleExpanded(u.symbol)}
                   aria-expanded={expanded}
                 >
-                  <td className={styles.symbolCell}>{u.symbol}</td>
-                  <td>{fmtSpotPrice(u.spot)}</td>
-                  <td>{u.dte_days ?? '—'}</td>
-                  <td className={styles.pnlPositive}>
-                    {u.max_gain == null ? 'Unbounded' : fmtUsd(u.max_gain)}
-                  </td>
-                  <td className={styles.pnlNegative}>
-                    {u.max_loss == null ? 'Unbounded' : fmtUsd(u.max_loss)}
-                  </td>
-                  <td>
-                    <span
+                  <DenseTableCell className="w-10 px-1">
+                    <ExpandToggleCell
+                      expanded={expanded}
+                      onToggle={() => toggleExpanded(u.symbol)}
+                      label={`${expanded ? 'Collapse' : 'Expand'} ${u.symbol} details`}
+                    />
+                  </DenseTableCell>
+                  <DenseTableCell className={modelAnalysisTable.symbolCell}>{u.symbol}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{fmtSpotPrice(u.spot)}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{u.dte_days ?? '—'}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    {u.max_gain == null ? (
+                      'Unbounded'
+                    ) : (
+                      <InlinePnl value={u.max_gain}>{fmtUsd(u.max_gain)}</InlinePnl>
+                    )}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    {u.max_loss == null ? (
+                      'Unbounded'
+                    ) : (
+                      <InlinePnl value={-Math.abs(u.max_loss)}>{fmtUsd(u.max_loss)}</InlinePnl>
+                    )}
+                  </DenseTableCell>
+                  <DenseTableCell>
+                    <Badge
+                      variant={u.risk_type === 'defined' ? 'outline' : 'destructive'}
                       className={
-                        u.risk_type === 'defined' ? styles.riskDefined : styles.riskUnlimited
+                        u.risk_type === 'defined'
+                          ? 'border-success/40 bg-success-soft text-success'
+                          : undefined
                       }
                     >
                       {riskBadgeLabel(u.risk_type)}
-                    </span>
-                  </td>
-                  <td>
+                    </Badge>
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
                     {u.capital_at_risk.has_unbounded ? 'N/A' : fmtUsd(u.capital_at_risk.effective)}
-                  </td>
-                  <td>{fmtRatioAsPct(u.annualized_return_on_car)}</td>
-                  <td>
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    {fmtRatioAsPct(u.annualized_return_on_car)}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
                     {fmtModelDelta(u.greeks.delta)}
                     {u.greeks.degraded ? ' *' : ''}
-                  </td>
-                  <td>{fmtUsd(u.greeks.delta_dollars)}</td>
-                </tr>
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    {fmtUsd(u.greeks.delta_dollars)}
+                  </DenseTableCell>
+                </DenseTableRow>
                 {expanded && (
-                  <tr>
-                    <td colSpan={10} className={styles.detailCell}>
+                  <DenseTableRow className="hover:bg-secondary/15">
+                    <DenseTableCell colSpan={MAIN_TABLE_COL_SPAN} className={modelAnalysisTable.detailCell}>
                       <UnderlyingDetailPanel entry={u} />
-                    </td>
-                  </tr>
+                    </DenseTableCell>
+                  </DenseTableRow>
                 )}
               </Fragment>
             )
           })}
-        </tbody>
+        </DenseTableBody>
       </table>
     </div>
   )
@@ -106,49 +161,41 @@ export function AccountStressSection({ data }: AccountStressProps) {
   if (!data.account_stress.available || scenarios.length === 0) return null
 
   return (
-    <div className={styles.stressCollapsible}>
-      <button
-        type="button"
-        className={styles.stressCollapsibleTrigger}
-        onClick={() => setOpen(v => !v)}
-        aria-expanded={open}
-      >
-        <span>Account Stress Matrix</span>
-        <ChevronDown
-          className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-180')}
-        />
-      </button>
+    <CollapsibleGroup variant="card">
+      <CollapsibleGroupHeader expanded={open} onToggle={() => setOpen(v => !v)}>
+        <CollapsibleChevron expanded={open} />
+        <CollapsibleGroupTitle>Account Stress Matrix</CollapsibleGroupTitle>
+      </CollapsibleGroupHeader>
       {open && (
-        <div className={styles.stressCollapsibleBody}>
-          <p className={styles.stressNote}>
-            Values are the <strong>sum</strong> of per-symbol stress totals for the same (spot shock, IV shock) key.
-            Open any <strong>symbol</strong> row below for full CAR and stress methodology (formulas, Black–Scholes assumptions).
+        <CollapsibleGroupBody className="px-3 pb-3">
+          <p className={modelAnalysisStressNoteClass}>
+            Values are the <strong>sum</strong> of per-symbol stress totals for the same (spot shock,
+            IV shock) key. Open any <strong>symbol</strong> row below for full CAR and stress
+            methodology (formulas, Black–Scholes assumptions).
           </p>
-          <div className={styles.nestedTableWrap}>
-            <table className={styles.nestedTable}>
-              <thead>
-                <tr>
-                  <th>Spot shock</th>
-                  <th>IV shock</th>
-                  <th>P&amp;L</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scenarios.map((sc, i) => (
-                  <tr key={i}>
-                    <td>{fmtSpotShockLabel(sc.spot_shock)}</td>
-                    <td>{fmtIvShockLabel(sc.iv_shock)}</td>
-                    <td className={sc.total_pnl >= 0 ? styles.pnlPositive : styles.pnlNegative}>
-                      {fmtUsd(sc.total_pnl)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <NestedDenseTable>
+            <DenseTableHeader>
+              <DenseTableHeadRow>
+                <DenseTableHead>Spot shock</DenseTableHead>
+                <DenseTableHead>IV shock</DenseTableHead>
+                <DenseTableHead align="right">P&amp;L</DenseTableHead>
+              </DenseTableHeadRow>
+            </DenseTableHeader>
+            <DenseTableBody>
+              {scenarios.map((sc, i) => (
+                <DenseTableRow key={i}>
+                  <DenseTableCell>{fmtSpotShockLabel(sc.spot_shock)}</DenseTableCell>
+                  <DenseTableCell>{fmtIvShockLabel(sc.iv_shock)}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    <InlinePnl value={sc.total_pnl}>{fmtUsd(sc.total_pnl)}</InlinePnl>
+                  </DenseTableCell>
+                </DenseTableRow>
+              ))}
+            </DenseTableBody>
+          </NestedDenseTable>
+        </CollapsibleGroupBody>
       )}
-    </div>
+    </CollapsibleGroup>
   )
 }
 
@@ -174,11 +221,11 @@ export function ModelAnalysisSummaryStrip({ data }: SummaryProps) {
   ]
 
   return (
-    <div className={styles.summaryStrip}>
+    <div className={modelAnalysisSummaryStripClass} role="status" aria-label="Account summary">
       {items.map(item => (
-        <div key={item.label} className={styles.summaryItem}>
-          <span className={styles.summaryLabel}>{item.label}</span>
-          <span className={styles.summaryValue}>{item.value}</span>
+        <div key={item.label} className={modelAnalysisSummaryItemClass}>
+          <span className={modelAnalysisSummaryLabelClass}>{item.label}</span>
+          <span className={modelAnalysisSummaryValueClass}>{item.value}</span>
         </div>
       ))}
     </div>

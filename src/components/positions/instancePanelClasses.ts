@@ -8,7 +8,6 @@ export const instancePanel = {
   filterBubbleLabel:
     'shrink-0 whitespace-nowrap text-[0.72rem] font-semibold uppercase tracking-wide text-muted-foreground',
   tableWrap: cn('w-full min-w-0', 'dense-scroll-x'),
-  sheetTable: 'w-full min-w-[68rem] table-fixed',
   sheetRow:
     'cursor-pointer hover:bg-muted/35 [&_td]:whitespace-nowrap [&_td]:text-[0.8rem] [&_td:nth-child(2)]:whitespace-normal [&_td:nth-child(2)]:align-top [&_td:nth-child(3)]:whitespace-normal [&_td:nth-child(4)]:whitespace-normal [&_td:nth-child(4)]:align-top',
   sheetRowExpanded: 'bg-muted/25',
@@ -30,12 +29,6 @@ export const instancePanel = {
   subHeading: 'mb-1.5 border-none p-0 text-sm font-semibold leading-snug text-[#7a8492]',
   subSectionBody: 'min-w-0 border-none bg-transparent p-0',
   subTableWrap: 'm-0 w-full min-w-0 overflow-x-visible rounded-none border-none bg-transparent',
-  subTable: 'text-[0.82rem] tabular-nums',
-  subTableHeader: 'bg-secondary [&_tr]:border-b-2 [&_tr]:border-border-strong',
-  subTableHead:
-    'h-auto bg-transparent px-2 py-1.5 text-[0.72rem] font-semibold uppercase tracking-wide text-[#7a8492]',
-  subTableCell: 'px-2 py-1.5 text-[0.82rem] font-medium text-[#e4e9ef]',
-  subDataRow: 'border-b border-border/40 bg-card transition-colors hover:bg-accent-soft',
   subExecRow:
     'border-b border-border/35 bg-secondary text-[0.88em] hover:bg-[color-mix(in_srgb,hsl(var(--secondary))_92%,hsl(var(--foreground))_8%)]',
   subContractBtn:

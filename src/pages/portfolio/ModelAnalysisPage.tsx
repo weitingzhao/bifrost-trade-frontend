@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { PageShell } from '@/components/layout'
+import { PageHeader, PageShell } from '@/components/layout'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,7 +16,14 @@ import {
   ModelAnalysisMainTable,
   ModelAnalysisSummaryStrip,
 } from './modelAnalysis/ModelAnalysisSections'
-import styles from './modelAnalysis.module.css'
+import { ModelAnalysisAccountPills } from './modelAnalysis/ModelAnalysisAccountPills'
+import {
+  modelAnalysisConfigHintClass,
+  modelAnalysisDisclaimerClass,
+  modelAnalysisEmptyHintClass,
+  modelAnalysisHypotheticalBadgeClass,
+  modelAnalysisPageStackClass,
+} from './modelAnalysis/modelAnalysisUi'
 
 export default function ModelAnalysisPage() {
   const accounts = useModelAnalysisAccounts()
@@ -31,67 +38,33 @@ export default function ModelAnalysisPage() {
     accounts.hasSnapshotAccounts
 
   return (
-    <PageShell>
-      <div className={styles.pageCard}>
-        <div className={styles.headerRow}>
-          <div className="min-w-0 space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Portfolio / Model Analysis
-              </h1>
-              <InfoTooltip text={MODEL_ANALYSIS_INFO} />
-              <span
-                className={styles.hypotheticalBadge}
-                title="Hypothetical — not actual performance"
-              >
-                ⚠ Hypothetical
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.headerActions}>
-            <div
-              className={styles.accountPills}
-              role="group"
-              aria-label="IB account for model analysis"
+    <PageShell padding="compact" className={modelAnalysisPageStackClass}>
+      <PageHeader
+        breadcrumb={
+          <p className="text-xs text-primary/90 font-medium">Portfolio / Model Analysis</p>
+        }
+        title={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            Model Analysis
+            <InfoTooltip text={MODEL_ANALYSIS_INFO} />
+            <span
+              className={modelAnalysisHypotheticalBadgeClass}
+              title="Hypothetical — not actual performance"
             >
-              <button
-                type="button"
-                className={cn(
-                  styles.accountPill,
-                  accountId === accounts.hostId && styles.accountPillActive,
-                )}
-                disabled={!accounts.hostSelectable}
-                onClick={() => accounts.hostSelectable && setSelectedAccount(accounts.hostId)}
-                title={
-                  accounts.hostId
-                    ? `Host: ${accounts.hostId}${accounts.hostSelectable ? '' : ' (not in current account list)'}`
-                    : 'Host account ID not configured (Settings → IB / Event account)'
-                }
-                aria-pressed={accountId === accounts.hostId}
-              >
-                Host
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  styles.accountPill,
-                  accountId === accounts.secondaryId && styles.accountPillActive,
-                )}
-                disabled={!accounts.secondarySelectable}
-                onClick={() =>
-                  accounts.secondarySelectable && setSelectedAccount(accounts.secondaryId)
-                }
-                title={
-                  accounts.secondaryId
-                    ? `Secondary: ${accounts.secondaryId}${accounts.secondarySelectable ? '' : ' (not in current account list)'}`
-                    : 'Secondary account ID not configured (Settings → IB / Event account)'
-                }
-                aria-pressed={accountId === accounts.secondaryId}
-              >
-                Secondary
-              </button>
-            </div>
+              ⚠ Hypothetical
+            </span>
+          </span>
+        }
+        actions={
+          <>
+            <ModelAnalysisAccountPills
+              accountId={accountId}
+              hostId={accounts.hostId}
+              secondaryId={accounts.secondaryId}
+              hostSelectable={accounts.hostSelectable}
+              secondarySelectable={accounts.secondarySelectable}
+              onSelect={setSelectedAccount}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -101,51 +74,49 @@ export default function ModelAnalysisPage() {
               <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
               {isFetching ? 'Loading…' : 'Refresh'}
             </Button>
-          </div>
-        </div>
-
-        <div className={styles.disclaimer}>
-          {data?.disclaimer ?? MODEL_ANALYSIS_DEFAULT_DISCLAIMER}
-        </div>
-
-        {showConfigHint && (
-          <div className={styles.configHint}>
-            Host / Secondary account IDs from settings do not match any account in the current
-            snapshot. Check <strong>event_host</strong>, <strong>trading</strong>, or{' '}
-            <strong>event_secondary</strong> in GET /status{' '}
-            <code className="text-xs">config.ib_client.account</code> (Settings IB / Event account).
-          </div>
-        )}
-
-        {error != null && (
-          <QueryErrorAlert error={error} onRetry={() => void refetch()} />
-        )}
-
-        {isLoading && accountId && (
-          <div className="space-y-3">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-64 w-full rounded-lg" />
-          </div>
-        )}
-
-        {data && !isLoading && (
-          <>
-            <ModelAnalysisSummaryStrip data={data} />
-            <AccountStressSection data={data} />
-            <ModelAnalysisMainTable data={data} />
           </>
-        )}
+        }
+      />
 
-        {data && !isLoading && data.per_underlying.length === 0 && accountId && (
-          <div className={styles.emptyState}>No positions found for {accountId}</div>
-        )}
-
-        {!accounts.hasSnapshotAccounts && !isLoading && (
-          <div className={styles.emptyState}>
-            No accounts in status. Ensure GET /status returns accounts (e.g. open Live or refresh).
-          </div>
-        )}
+      <div className={modelAnalysisDisclaimerClass}>
+        {data?.disclaimer ?? MODEL_ANALYSIS_DEFAULT_DISCLAIMER}
       </div>
+
+      {showConfigHint && (
+        <div className={modelAnalysisConfigHintClass}>
+          Host / Secondary account IDs from settings do not match any account in the current
+          snapshot. Check <strong>event_host</strong>, <strong>trading</strong>, or{' '}
+          <strong>event_secondary</strong> in GET /status{' '}
+          <code className="text-xs">config.ib_client.account</code> (Settings IB / Event account).
+        </div>
+      )}
+
+      {error != null && <QueryErrorAlert error={error} onRetry={() => void refetch()} />}
+
+      {isLoading && accountId && (
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-64 w-full rounded-lg" />
+        </div>
+      )}
+
+      {data && !isLoading && (
+        <>
+          <ModelAnalysisSummaryStrip data={data} />
+          <AccountStressSection data={data} />
+          <ModelAnalysisMainTable data={data} />
+        </>
+      )}
+
+      {data && !isLoading && data.per_underlying.length === 0 && accountId && (
+        <div className={modelAnalysisEmptyHintClass}>No positions found for {accountId}</div>
+      )}
+
+      {!accounts.hasSnapshotAccounts && !isLoading && (
+        <div className={modelAnalysisEmptyHintClass}>
+          No accounts in status. Ensure GET /status returns accounts (e.g. open Live or refresh).
+        </div>
+      )}
     </PageShell>
   )
 }

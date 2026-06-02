@@ -58,6 +58,9 @@ export function DetailSidebar({
     <aside
       ref={panelRef}
       className={cn(
+        'detail-sidebar-panel',
+        `detail-sidebar-panel-${mode}`,
+        open && 'is-open',
         styles.panel,
         mode === 'docked' ? styles.panelDocked : styles.panelModal,
         mode === 'modal' && open && styles.panelModalOpen,
@@ -69,11 +72,11 @@ export function DetailSidebar({
       style={panelStyle}
       onClick={(evt) => evt.stopPropagation()}
     >
-      <header className={styles.header}>
-        <h2 className={styles.title}>{title ?? 'Detail'}</h2>
+      <header className={cn('detail-sidebar-header', styles.header)}>
+        <h2 className={cn('detail-sidebar-title', styles.title)}>{title ?? 'Detail'}</h2>
         <button
           type="button"
-          className={styles.closeBtn}
+          className={cn('detail-sidebar-close-btn', styles.closeBtn)}
           onClick={onClose}
           aria-label="Close detail panel"
           title="Close (Esc)"
@@ -81,7 +84,7 @@ export function DetailSidebar({
           ×
         </button>
       </header>
-      <div className={styles.content}>
+      <div className={cn('detail-sidebar-content', styles.content)}>
         <div className={styles.contentInner}>{children}</div>
       </div>
     </aside>
@@ -89,12 +92,12 @@ export function DetailSidebar({
 
   if (mode === 'docked') {
     if (!open) return null
-    return <div className={styles.dockedRoot}>{panel}</div>
+    return <div className={cn('detail-sidebar-docked-root', styles.dockedRoot)}>{panel}</div>
   }
 
   return (
     <div
-      className={cn(styles.backdrop, open && styles.backdropOpen)}
+      className={cn('detail-sidebar-backdrop', open && 'is-open', styles.backdrop, open && styles.backdropOpen)}
       onClick={() => {
         if (open) onClose()
       }}

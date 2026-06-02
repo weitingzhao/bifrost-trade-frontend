@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Pencil, Link2, Trash2, RefreshCw } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DenseTag } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import { dangerGhostBtnClass } from '@/lib/uiClasses'
 import { updateExecution } from '@/api/trading'
@@ -83,9 +83,9 @@ export function ExecutionRow({
         key={`${source}-${id}`}
         className="flex items-center gap-2 py-1 px-1 text-xs border-b border-dashed last:border-b-0"
       >
-        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+        <DenseTag variant="neutral" size="cell" className="text-[10px] leading-none">
           {source}
-        </Badge>
+        </DenseTag>
         <span className="font-mono text-muted-foreground w-36 truncate">{fmtTime(exec.time)}</span>
         <span className="font-mono w-8">{exec.side === 'Buy' ? 'B' : 'S'}</span>
         <span className="font-mono w-8 text-right">{Math.abs(exec.qty)}</span>

@@ -19,7 +19,7 @@ import { LedgerTabToolbar } from '@/pages/portfolio/ledger/LedgerTabToolbar'
 import { TradeLedgerModals } from '@/pages/portfolio/ledger/TradeLedgerModals'
 import { LedgerFilterBar } from '@/pages/portfolio/ledger/LedgerFilterBar'
 import { LedgerSummarySection } from '@/pages/portfolio/ledger/LedgerSummarySection'
-import styles from '@/pages/portfolio/ledger/ledgerStyles'
+import { ledgerPageCardClass } from '@/pages/portfolio/ledger/ledgerShellUi'
 import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
 import { OptionsTabContent } from '@/pages/portfolio/ledger/OptionsTabContent'
 import { StkTabContent } from '@/pages/portfolio/ledger/StkTabContent'
@@ -218,7 +218,7 @@ export default function TradeLedgerPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className={styles.pageCard}>
+      <div className={ledgerPageCardClass}>
         <PageHeader
           breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Trade ledger</p>}
           title={

@@ -1,5 +1,4 @@
-import { cn } from '@/lib/utils'
-import { pnlColorClass } from '@/utils/dailyChange'
+import { InlinePnl } from '@/components/data-display'
 import {
   liveSummaryBarClass,
   liveSummaryDividerClass,
@@ -17,6 +16,10 @@ interface Props {
   visible: boolean
 }
 
+function fmtUsdCompact(n: number): string {
+  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+}
+
 export function LiveStreamsSummaryBar({ sinceDollar, sincePct, dailyDollar, dailyPct, visible }: Props) {
   if (!visible) return null
 
@@ -27,15 +30,18 @@ export function LiveStreamsSummaryBar({ sinceDollar, sincePct, dailyDollar, dail
       <span className={liveSummaryLabelClass}>STK Streams</span>
       <span className={liveSummarySegClass}>
         <span className={liveSummaryKeyClass}>SINCE $</span>
-        <span className={cn(liveSummaryValClass, pnlColorClass(sinceDollar))}>
-          {sinceDollar.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
+        <span className={liveSummaryValClass}>
+          <InlinePnl value={sinceDollar}>{fmtUsdCompact(sinceDollar)}</InlinePnl>
         </span>
       </span>
       {sincePct != null && Number.isFinite(sincePct) && (
         <span className={liveSummarySegClass}>
           <span className={liveSummaryKeyClass}>SINCE %</span>
-          <span className={cn(liveSummaryValClass, pnlColorClass(sincePct))}>
-            {sincePct >= 0 ? '+' : ''}{sincePct.toFixed(2)}%
+          <span className={liveSummaryValClass}>
+            <InlinePnl value={sincePct}>
+              {sincePct >= 0 ? '+' : ''}
+              {sincePct.toFixed(2)}%
+            </InlinePnl>
           </span>
         </span>
       )}
@@ -44,15 +50,18 @@ export function LiveStreamsSummaryBar({ sinceDollar, sincePct, dailyDollar, dail
           <span className={liveSummaryDividerClass} aria-hidden>|</span>
           <span className={liveSummarySegClass}>
             <span className={liveSummaryKeyClass}>DAILY $</span>
-            <span className={cn(liveSummaryValClass, pnlColorClass(dailyDollar))}>
-              {dailyDollar.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
+            <span className={liveSummaryValClass}>
+              <InlinePnl value={dailyDollar}>{fmtUsdCompact(dailyDollar)}</InlinePnl>
             </span>
           </span>
           {dailyPct != null && Number.isFinite(dailyPct) && (
             <span className={liveSummarySegClass}>
               <span className={liveSummaryKeyClass}>DAILY %</span>
-              <span className={cn(liveSummaryValClass, pnlColorClass(dailyPct))}>
-                {dailyPct >= 0 ? '+' : ''}{dailyPct.toFixed(2)}%
+              <span className={liveSummaryValClass}>
+                <InlinePnl value={dailyPct}>
+                  {dailyPct >= 0 ? '+' : ''}
+                  {dailyPct.toFixed(2)}%
+                </InlinePnl>
               </span>
             </span>
           )}

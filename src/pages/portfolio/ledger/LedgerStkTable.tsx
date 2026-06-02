@@ -1,5 +1,4 @@
 import { FileText } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import { stkContractKey } from '@/utils/ledger/stkBuckets'
 import {
@@ -18,12 +17,6 @@ import {
   LedgerStkTimeCells,
   LedgerStkUrPnlGroupInline,
 } from './LedgerStkCells'
-import {
-  stkCellCategoryClass,
-  stkCellSymbolClass,
-  stkPillCategoryClass,
-  stkPillSymbolClass,
-} from './ledgerSharedClasses'
 import { PAGE_SIZE } from './ledgerConstants'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { ledgerPagination } from './ledgerPaginationClasses'
@@ -37,6 +30,7 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
+  DenseTag,
   IconActionButton,
   denseTableNumCell,
 } from '@/components/data-display'
@@ -98,7 +92,9 @@ function StkFillRow({
       {showSymbolCol && (
         <DenseTableCell>
           {showPills ? (
-            <span className={stkCellSymbolClass}>{ex.symbol ?? '—'}</span>
+            <DenseTag variant="symbol" size="cell">
+              {ex.symbol ?? '—'}
+            </DenseTag>
           ) : (
             (ex.symbol ?? '—')
           )}
@@ -107,7 +103,9 @@ function StkFillRow({
       <DenseTableCell>{ex.account_id ?? '—'}</DenseTableCell>
       <DenseTableCell>
         {showPills ? (
-          <span className={stkCellCategoryClass}>{category}</span>
+          <DenseTag variant="category" size="cell">
+            {category}
+          </DenseTag>
         ) : (
           category
         )}
@@ -366,11 +364,21 @@ function GroupBlock({
       <DenseTableRow className="bg-secondary/50 hover:bg-secondary/50">
         <DenseTableCell colSpan={12} className="py-2">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-muted-foreground">
-            <span className={cn('font-bold text-foreground', showPills && stkPillSymbolClass)}>
-              {pg.symbol || '—'}
-            </span>
+            {showPills ? (
+              <DenseTag variant="symbol" size="pill">
+                {pg.symbol || '—'}
+              </DenseTag>
+            ) : (
+              <span className="font-bold text-foreground">{pg.symbol || '—'}</span>
+            )}
             <span className="text-foreground">{pg.accountId || '—'}</span>
-            <span className={cn('font-medium', showPills && stkPillCategoryClass)}>{category}</span>
+            {showPills ? (
+              <DenseTag variant="category" size="pill">
+                {category}
+              </DenseTag>
+            ) : (
+              <span className="font-medium text-foreground">{category}</span>
+            )}
             <LedgerStkGroupPositionSnap snap={pg.snap} />
             <LedgerStkGroupBasisPct
               snap={pg.snap}

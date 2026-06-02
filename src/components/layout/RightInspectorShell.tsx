@@ -6,19 +6,32 @@ interface Props {
   open: boolean
   ariaLabel?: string
   children: ReactNode
+  /** Override default `min(72rem, 96vw)` — e.g. instance compare mode. */
+  panelWidthPx?: number
 }
 
 /** Fixed right-hand inspector shell — unified width (72rem), opaque card surface. */
-export function RightInspectorShell({ open, ariaLabel = 'Inspector', children }: Props) {
+export function RightInspectorShell({
+  open,
+  ariaLabel = 'Inspector',
+  children,
+  panelWidthPx,
+}: Props) {
   if (!open) return null
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[200] flex justify-end" role="presentation">
       <aside
         className={cn(
-          'pointer-events-auto flex min-h-0 w-[min(72rem,96vw)] max-w-full flex-col',
+          'pointer-events-auto flex min-h-0 max-w-full flex-col',
           'border-l border-border bg-card shadow-[-4px_0_24px_rgba(0,0,0,0.15)]',
+          panelWidthPx == null && 'w-[min(72rem,96vw)]',
         )}
+        style={
+          panelWidthPx != null
+            ? { width: `min(${panelWidthPx}px, 96vw)` }
+            : undefined
+        }
         role="dialog"
         aria-modal="false"
         aria-label={ariaLabel}

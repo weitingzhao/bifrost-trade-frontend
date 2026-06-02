@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
+import { DenseTag } from '@/components/data-display'
 import { fmtUsd, pnlColorClass } from '@/utils/positions'
 import { coverageStatus } from '@/utils/stockCoverage'
 import type { StockCoverageItem } from '@/types/positions'
@@ -13,9 +13,9 @@ interface Props {
 }
 
 function statusBadge(status: 'Covered' | 'Partial' | 'Naked') {
-  if (status === 'Covered') return <Badge variant="default" className="text-[10px]">Covered</Badge>
-  if (status === 'Partial') return <Badge variant="secondary" className="text-[10px] border-yellow-500 text-yellow-600">Partial</Badge>
-  return <Badge variant="destructive" className="text-[10px]">Naked</Badge>
+  if (status === 'Covered') return <DenseTag variant="success" size="cell">Covered</DenseTag>
+  if (status === 'Partial') return <DenseTag variant="warning" size="cell">Partial</DenseTag>
+  return <DenseTag variant="danger" size="cell">Naked</DenseTag>
 }
 
 function colorClass(n: number | null | undefined) {

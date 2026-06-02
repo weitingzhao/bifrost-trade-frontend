@@ -1,9 +1,18 @@
 import { cn } from '@/lib/utils'
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import { PosStatusPill } from './PosStatusPill'
-import { fmtUsd, fmtSignedPct, pnlColorClass } from '@/utils/positions'
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  DenseTag,
+  DenseTagButton,
+  InlinePnl,
+  NestedDenseTable,
+  denseTableNumCell,
+} from '@/components/data-display'
+import { fmtUsd, fmtSignedPct } from '@/utils/positions'
 import type { InstanceStockCoverage, LivePositionRow } from '@/types/positions'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 import { instancePanel } from './instancePanelClasses'
@@ -36,7 +45,7 @@ function computeStockMetrics(
 ): StockMetrics {
   const sym = symbol.toUpperCase()
   const matches = liveStocks.filter(
-    (s) => (s.symbol ?? '').toUpperCase() === sym && s.account_id === accountId
+    (s) => (s.symbol ?? '').toUpperCase() === sym && s.account_id === accountId,
   )
 
   let held = 0
@@ -45,7 +54,10 @@ function computeStockMetrics(
   for (const s of matches) {
     const qty = s.position ?? 0
     held += qty
-    if (s.avgCost != null) { costSum += Math.abs(qty) * s.avgCost; qtyAbs += Math.abs(qty) }
+    if (s.avgCost != null) {
+      costSum += Math.abs(qty) * s.avgCost
+      qtyAbs += Math.abs(qty)
+    }
   }
 
   const avg_cost = qtyAbs > 0 ? costSum / qtyAbs : null
@@ -72,43 +84,52 @@ function computeStockMetrics(
   return { held, avg_cost, live_last, cost_basis, daily_pnl, daily_pct, total_pnl, total_pct }
 }
 
-function coverageStatusLabel(held: number, required: number): { label: string; variant: 'covered' | 'partial' | 'naked' } {
+function coverageStatusLabel(
+  held: number,
+  required: number,
+): { label: string; variant: 'covered' | 'partial' | 'naked' } {
   if (held >= required) return { label: 'Fully Covered', variant: 'covered' }
   if (held > 0) return { label: `Partial (${held}/${required})`, variant: 'partial' }
   return { label: 'Naked', variant: 'naked' }
 }
 
 function StatusBadge({ variant, label }: { variant: 'covered' | 'partial' | 'naked'; label: string }) {
-  if (variant === 'covered') return <PosStatusPill tone="brightOk">{label}</PosStatusPill>
-  if (variant === 'partial') return <PosStatusPill tone="warn">{label}</PosStatusPill>
-  return <PosStatusPill tone="bad">{label}</PosStatusPill>
+  if (variant === 'covered') return <DenseTag variant="success" size="cell">{label}</DenseTag>
+  if (variant === 'partial') return <DenseTag variant="warning" size="cell">{label}</DenseTag>
+  return <DenseTag variant="danger" size="cell">{label}</DenseTag>
 }
 
-export function InstanceCoverageSubTable({ coverage, liveStocks, quotesBySymbol, benchBySymbol, onOpenStock }: Props) {
+export function InstanceCoverageSubTable({
+  coverage,
+  liveStocks,
+  quotesBySymbol,
+  benchBySymbol,
+  onOpenStock,
+}: Props) {
   if (coverage.length === 0) return null
 
   return (
     <section className={cn(instancePanel.subSection, instancePanel.subSectionCoverage)}>
       <h4 className={instancePanel.subHeading}>Underlying Coverage</h4>
       <div className={instancePanel.subTableWrap}>
-        <Table className={instancePanel.subTable}>
-          <TableHeader className={instancePanel.subTableHeader}>
-            <TableRow>
-              <TableHead className={instancePanel.subTableHead}>Symbol</TableHead>
-              <TableHead className={instancePanel.subTableHead}>Account</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Cost Basis</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Avg Cost</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Live Last</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Daily</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Total</TableHead>
-              <TableHead className={instancePanel.subTableHead}>Direction</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Required</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Held</TableHead>
-              <TableHead className={instancePanel.subTableHead}>Status</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Surplus/Gap</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <NestedDenseTable>
+          <DenseTableHeader>
+            <DenseTableHeadRow>
+              <DenseTableHead>Symbol</DenseTableHead>
+              <DenseTableHead>Account</DenseTableHead>
+              <DenseTableHead align="right">Cost Basis</DenseTableHead>
+              <DenseTableHead align="right">Avg Cost</DenseTableHead>
+              <DenseTableHead align="right">Live Last</DenseTableHead>
+              <DenseTableHead align="right">Daily</DenseTableHead>
+              <DenseTableHead align="right">Total</DenseTableHead>
+              <DenseTableHead>Direction</DenseTableHead>
+              <DenseTableHead align="right">Required</DenseTableHead>
+              <DenseTableHead align="right">Held</DenseTableHead>
+              <DenseTableHead>Status</DenseTableHead>
+              <DenseTableHead align="right">Surplus/Gap</DenseTableHead>
+            </DenseTableHeadRow>
+          </DenseTableHeader>
+          <DenseTableBody>
             {coverage.map((sc, i) => {
               const quote = quotesBySymbol[sc.symbol.toUpperCase()]
               const bench = benchBySymbol[sc.symbol.toUpperCase()]
@@ -117,48 +138,62 @@ export function InstanceCoverageSubTable({ coverage, liveStocks, quotesBySymbol,
               const status = coverageStatusLabel(Math.abs(m.held), sc.required_shares)
 
               return (
-                <TableRow key={`${sc.symbol}-${sc.account_id}-${i}`} className={instancePanel.subDataRow}>
-                  <TableCell>
+                <DenseTableRow key={`${sc.symbol}-${sc.account_id}-${i}`}>
+                  <DenseTableCell>
                     {onOpenStock ? (
-                      <button
-                        type="button"
-                        className={instancePanel.subContractBtn}
+                      <DenseTagButton
+                        variant="symbol"
+                        size="cell"
+                        className="font-mono"
                         onClick={() => onOpenStock(sc.symbol, sc.account_id)}
                       >
                         {sc.symbol}
-                      </button>
+                      </DenseTagButton>
                     ) : (
-                      <span className={instancePanel.subContractBtn}>{sc.symbol}</span>
+                      <DenseTag variant="symbol" size="cell" className="font-mono">
+                        {sc.symbol}
+                      </DenseTag>
                     )}
-                  </TableCell>
-                  <TableCell className={cn('font-mono text-xs', instancePanel.subMutedCell)}>{sc.account_id}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(m.cost_basis)}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(m.avg_cost)}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(m.live_last)}</TableCell>
-                  <TableCell className="text-right text-xs">
-                    <span className={cn('font-mono', pnlColorClass(m.daily_pnl))}>{fmtUsd(m.daily_pnl)}</span>
+                  </DenseTableCell>
+                  <DenseTableCell className={cn('font-mono', instancePanel.subMutedCell)}>
+                    {sc.account_id}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{fmtUsd(m.cost_basis)}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{fmtUsd(m.avg_cost)}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{fmtUsd(m.live_last)}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    <InlinePnl value={m.daily_pnl}>{fmtUsd(m.daily_pnl)}</InlinePnl>
                     {m.daily_pct != null && (
-                      <span className={cn('ml-1 font-mono', pnlColorClass(m.daily_pct))}>{fmtSignedPct(m.daily_pct)}</span>
+                      <span className="ml-1">
+                        <InlinePnl value={m.daily_pct}>{fmtSignedPct(m.daily_pct)}</InlinePnl>
+                      </span>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right text-xs">
-                    <span className={cn('font-mono', pnlColorClass(m.total_pnl))}>{fmtUsd(m.total_pnl)}</span>
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    <InlinePnl value={m.total_pnl}>{fmtUsd(m.total_pnl)}</InlinePnl>
                     {m.total_pct != null && (
-                      <span className={cn('ml-1 font-mono', pnlColorClass(m.total_pct))}>{fmtSignedPct(m.total_pct)}</span>
+                      <span className="ml-1">
+                        <InlinePnl value={m.total_pct}>{fmtSignedPct(m.total_pct)}</InlinePnl>
+                      </span>
                     )}
-                  </TableCell>
-                  <TableCell className="text-xs">{sc.direction === 'long' ? 'Long' : 'Short'}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{sc.required_shares}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{Math.abs(m.held)}</TableCell>
-                  <TableCell><StatusBadge variant={status.variant} label={status.label} /></TableCell>
-                  <TableCell className={cn('text-right font-mono text-xs font-semibold', pnlColorClass(gap))}>
-                    {gap >= 0 ? '+' : ''}{gap}
-                  </TableCell>
-                </TableRow>
+                  </DenseTableCell>
+                  <DenseTableCell>{sc.direction === 'long' ? 'Long' : 'Short'}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{sc.required_shares}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{Math.abs(m.held)}</DenseTableCell>
+                  <DenseTableCell>
+                    <StatusBadge variant={status.variant} label={status.label} />
+                  </DenseTableCell>
+                  <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>
+                    <InlinePnl value={gap}>
+                      {gap >= 0 ? '+' : ''}
+                      {gap}
+                    </InlinePnl>
+                  </DenseTableCell>
+                </DenseTableRow>
               )
             })}
-          </TableBody>
-        </Table>
+          </DenseTableBody>
+        </NestedDenseTable>
       </div>
     </section>
   )

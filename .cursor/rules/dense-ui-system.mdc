@@ -33,6 +33,8 @@ alwaysApply: true
 | Detail fill rows | `DenseTableSubheadRow` / `DenseTableDetailRow` | `.ledgerDetailRow` module CSS |
 | Empty / section title | `denseTable.emptyHint` / `denseTable.sectionTitle` + `denseTable.sectionBlock` | Page-local empty hint CSS |
 | Execution source label | `ExecSourceBadge` | Hand-rolled Badge / ledger `sourceBadge` CSS per page |
+| Position category label | `DenseTag variant="category"` (+ `GroupHeaderRow variant="category"`) | `stkPillCategoryClass`, purple inline Tailwind, plain text in Category column |
+| Symbol highlight (non-link) | `DenseTag variant="symbol"` | `stkPillSymbolClass`, custom blue pill CSS |
 | Destructive confirm | App `ConfirmDialog` pattern | `window.confirm` / `window.alert` |
 
 ## Agent workflow (every UI change)

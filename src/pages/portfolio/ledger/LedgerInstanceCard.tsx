@@ -8,9 +8,9 @@ import {
   CollapsibleGroupBody,
   CollapsibleGroupHeader,
   CollapsibleGroupStats,
+  DenseTag,
 } from '@/components/data-display'
 import { fmtCcy } from './ledgerFormat'
-import { instanceOpenLinkClass } from './ledgerSharedClasses'
 
 type Props = {
   instanceId: number
@@ -59,12 +59,14 @@ export function LedgerInstanceCard({
         </CollapsibleGroupHeader>
         <Link
           to={`/strategy/instances?instance=${instanceId}`}
-          className={instanceOpenLinkClass}
+          className="mr-2 shrink-0 self-center no-underline"
           target="_blank"
           rel="noopener noreferrer"
           title={label ? `Open instance #${instanceId} (${label})` : `Open instance #${instanceId}`}
         >
-          Open
+          <DenseTag variant="success" size="pill">
+            Open
+          </DenseTag>
         </Link>
       </div>
       {expanded && <CollapsibleGroupBody>{children}</CollapsibleGroupBody>}

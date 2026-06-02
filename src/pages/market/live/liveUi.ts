@@ -37,22 +37,23 @@ export const liveIconBtnClass =
 
 export const liveEmptyHintClass = 'text-sm text-muted-foreground py-2'
 
+/** Bottom split: one card wraps Watching Stocks / Options / Open Orders (matches Legacy live-open-watchlist-split). */
+export const liveSplitOuterCardClass = liveCardClass
+export const liveSplitBodyClass = 'px-3 pb-3 pt-3'
 export const liveSplitGridClass =
   'grid gap-4 items-start min-w-0 lg:grid-cols-2'
-export const liveSplitWatchingColClass = 'min-w-0 flex flex-col gap-3'
+export const liveSplitWatchingColClass = 'min-w-0'
 export const liveSplitRightColClass = 'min-w-0 flex flex-col gap-3'
 
-export const livePaneHeaderRowClass = 'flex items-start justify-between gap-2 mb-1'
+export const livePaneClass = 'min-w-0'
+export const livePaneHeaderRowClass = 'flex flex-wrap items-start justify-between gap-2 mb-2'
 export const livePaneTitleRowClass = 'flex items-center gap-2 min-w-0'
-export const livePaneTitleClass = 'text-sm font-semibold'
+export const livePaneTitleClass = 'text-sm font-semibold tracking-tight'
 export const livePaneHeaderActionsClass = 'flex items-center gap-2 shrink-0'
 export const liveFreshnessBadgeClass =
   'inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground'
 export const liveSourceHintClass = 'text-[11px] text-muted-foreground mb-2'
 
-export const liveOpenOrdersPaneClass = 'min-w-0'
 export const liveOpenOrdersWrapClass = 'space-y-3'
 export const liveOpenOrdersSectionClass = 'min-w-0'
-export const liveOpenOrdersSubtitleClass = 'text-xs font-semibold text-muted-foreground mb-1'
-
-export const liveWatchingOptionsPaneClass = 'min-w-0'
+export const liveOpenOrdersSubtitleClass = 'text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1'

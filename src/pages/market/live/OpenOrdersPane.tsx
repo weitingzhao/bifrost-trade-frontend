@@ -2,19 +2,28 @@ import { Activity, Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { StatusLamp } from '@/components/StatusLamp'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import {
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  denseTableNumCell,
+} from '@/components/data-display'
 import type { OpenOrder } from '@/types/market'
 import type { StatusResponse } from '@/types/monitor'
 import { fmtSince, fmtTs, parseOptionContractKey } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
-import styles from './live.module.css'
+import { liveTable } from './liveTableClasses'
 import {
   liveEmptyHintClass,
   liveFreshnessBadgeClass,
   liveIconBtnClass,
-  liveOpenOrdersPaneClass,
   liveOpenOrdersSectionClass,
   liveOpenOrdersSubtitleClass,
   liveOpenOrdersWrapClass,
+  livePaneClass,
   livePaneHeaderActionsClass,
   livePaneHeaderRowClass,
   livePaneTitleClass,
@@ -46,7 +55,7 @@ export function OpenOrdersPane({
   const total = optOrders.length + stkOrders.length
 
   return (
-    <div className={liveOpenOrdersPaneClass}>
+    <div className={livePaneClass}>
       <div className={livePaneHeaderRowClass}>
         <div className={livePaneTitleRowClass}>
           <StatusLamp lamp={ordersLamp} title={lampTitle} />
@@ -82,63 +91,63 @@ export function OpenOrdersPane({
           {optOrders.length > 0 && (
             <div className={liveOpenOrdersSectionClass}>
               <h3 className={liveOpenOrdersSubtitleClass}>Option (OPT)</h3>
-              <div className={styles.tableWrap}>
-                <table className={styles.openOrdersTable} aria-label="Open orders Option">
-                  <thead>
-                    <tr>
-                      <th scope="col">Account ID</th>
-                      <th scope="col">Symbol</th>
-                      <th scope="col">Expiry</th>
-                      <th scope="col">Strike</th>
-                      <th scope="col">Opt side</th>
-                      <th scope="col">Side</th>
-                      <th scope="col">Qty</th>
-                      <th scope="col">Limit</th>
-                      <th scope="col">Status</th>
-                      <th scope="col">Filled / Rem</th>
-                      <th scope="col">Submit</th>
-                      <th scope="col">Since</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {optOrders.map((o, i) => {
-                      const optParts = parseOptionContractKey(o.contract_key)
-                      const submitTs =
-                        o.updated_ts != null && Number.isFinite(Number(o.updated_ts))
-                          ? Number(o.updated_ts)
-                          : null
-                      return (
-                        <tr key={o.order_id ?? o.perm_id ?? i}>
-                          <td>{o.account_id ?? '—'}</td>
-                          <td className={styles.symbolCell}>{o.symbol ?? '—'}</td>
-                          <td>{optParts.expiry}</td>
-                          <td className={styles.numCell}>
-                            {optParts.strike === '—' ? '—' : fmtUsd(Number(optParts.strike))}
-                          </td>
-                          <td>{optParts.rightLabel}</td>
-                          <td>{o.action ?? '—'}</td>
-                          <td className={styles.numCell}>
-                            {o.total_quantity != null ? Math.round(Number(o.total_quantity)) : '—'}
-                          </td>
-                          <td className={styles.numCell}>
-                            {o.limit_price != null ? fmtUsd(Number(o.limit_price)) : '—'}
-                          </td>
-                          <td>{o.status ?? '—'}</td>
-                          <td className={styles.numCell}>
-                            {o.filled != null && o.remaining != null
-                              ? `${Math.round(Number(o.filled))} / ${Math.round(Number(o.remaining))}`
-                              : '—'}
-                          </td>
-                          <td className={styles.numCell}>
-                            {submitTs != null ? fmtTs(submitTs) : '—'}
-                          </td>
-                          <td className={styles.numCell}>
-                            {submitTs != null ? `${fmtSince(submitTs)} ago` : '—'}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
+              <div className={liveTable.shell}>
+                <table className={liveTable.table} aria-label="Open orders Option">
+                  <DenseTableHeader className={liveTable.stickyThead}>
+                  <DenseTableHeadRow>
+                    <DenseTableHead>Account ID</DenseTableHead>
+                    <DenseTableHead>Symbol</DenseTableHead>
+                    <DenseTableHead>Expiry</DenseTableHead>
+                    <DenseTableHead align="right">Strike</DenseTableHead>
+                    <DenseTableHead>Opt side</DenseTableHead>
+                    <DenseTableHead>Side</DenseTableHead>
+                    <DenseTableHead align="right">Qty</DenseTableHead>
+                    <DenseTableHead align="right">Limit</DenseTableHead>
+                    <DenseTableHead>Status</DenseTableHead>
+                    <DenseTableHead align="right">Filled / Rem</DenseTableHead>
+                    <DenseTableHead align="right">Submit</DenseTableHead>
+                    <DenseTableHead align="right">Since</DenseTableHead>
+                  </DenseTableHeadRow>
+                </DenseTableHeader>
+                <DenseTableBody>
+                  {optOrders.map((o, i) => {
+                    const optParts = parseOptionContractKey(o.contract_key)
+                    const submitTs =
+                      o.updated_ts != null && Number.isFinite(Number(o.updated_ts))
+                        ? Number(o.updated_ts)
+                        : null
+                    return (
+                      <DenseTableRow key={o.order_id ?? o.perm_id ?? i}>
+                        <DenseTableCell>{o.account_id ?? '—'}</DenseTableCell>
+                        <DenseTableCell className={liveTable.symbolCell}>{o.symbol ?? '—'}</DenseTableCell>
+                        <DenseTableCell>{optParts.expiry}</DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {optParts.strike === '—' ? '—' : fmtUsd(Number(optParts.strike))}
+                        </DenseTableCell>
+                        <DenseTableCell>{optParts.rightLabel}</DenseTableCell>
+                        <DenseTableCell>{o.action ?? '—'}</DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {o.total_quantity != null ? Math.round(Number(o.total_quantity)) : '—'}
+                        </DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {o.limit_price != null ? fmtUsd(Number(o.limit_price)) : '—'}
+                        </DenseTableCell>
+                        <DenseTableCell>{o.status ?? '—'}</DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {o.filled != null && o.remaining != null
+                            ? `${Math.round(Number(o.filled))} / ${Math.round(Number(o.remaining))}`
+                            : '—'}
+                        </DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {submitTs != null ? fmtTs(submitTs) : '—'}
+                        </DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {submitTs != null ? `${fmtSince(submitTs)} ago` : '—'}
+                        </DenseTableCell>
+                      </DenseTableRow>
+                    )
+                  })}
+                </DenseTableBody>
                 </table>
               </div>
             </div>
@@ -147,54 +156,54 @@ export function OpenOrdersPane({
           {stkOrders.length > 0 && (
             <div className={liveOpenOrdersSectionClass}>
               <h3 className={liveOpenOrdersSubtitleClass}>Stock (STK)</h3>
-              <div className={styles.tableWrap}>
-                <table className={styles.openOrdersTable} aria-label="Open orders Stock">
-                  <thead>
-                    <tr>
-                      <th scope="col">Account ID</th>
-                      <th scope="col">Symbol</th>
-                      <th scope="col">Side</th>
-                      <th scope="col">Qty</th>
-                      <th scope="col">Limit</th>
-                      <th scope="col">Status</th>
-                      <th scope="col">Filled / Rem</th>
-                      <th scope="col">Submit</th>
-                      <th scope="col">Since</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stkOrders.map((o, i) => {
-                      const submitTs =
-                        o.updated_ts != null && Number.isFinite(Number(o.updated_ts))
-                          ? Number(o.updated_ts)
-                          : null
-                      return (
-                        <tr key={o.order_id ?? o.perm_id ?? i}>
-                          <td>{o.account_id ?? '—'}</td>
-                          <td className={styles.symbolCell}>{o.symbol ?? '—'}</td>
-                          <td>{o.action ?? '—'}</td>
-                          <td className={styles.numCell}>
-                            {o.total_quantity != null ? Math.round(Number(o.total_quantity)) : '—'}
-                          </td>
-                          <td className={styles.numCell}>
-                            {o.limit_price != null ? fmtUsd(Number(o.limit_price)) : '—'}
-                          </td>
-                          <td>{o.status ?? '—'}</td>
-                          <td className={styles.numCell}>
-                            {o.filled != null && o.remaining != null
-                              ? `${Math.round(Number(o.filled))} / ${Math.round(Number(o.remaining))}`
-                              : '—'}
-                          </td>
-                          <td className={styles.numCell}>
-                            {submitTs != null ? fmtTs(submitTs) : '—'}
-                          </td>
-                          <td className={styles.numCell}>
-                            {submitTs != null ? `${fmtSince(submitTs)} ago` : '—'}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
+              <div className={liveTable.shell}>
+                <table className={liveTable.table} aria-label="Open orders Stock">
+                  <DenseTableHeader className={liveTable.stickyThead}>
+                  <DenseTableHeadRow>
+                    <DenseTableHead>Account ID</DenseTableHead>
+                    <DenseTableHead>Symbol</DenseTableHead>
+                    <DenseTableHead>Side</DenseTableHead>
+                    <DenseTableHead align="right">Qty</DenseTableHead>
+                    <DenseTableHead align="right">Limit</DenseTableHead>
+                    <DenseTableHead>Status</DenseTableHead>
+                    <DenseTableHead align="right">Filled / Rem</DenseTableHead>
+                    <DenseTableHead align="right">Submit</DenseTableHead>
+                    <DenseTableHead align="right">Since</DenseTableHead>
+                  </DenseTableHeadRow>
+                </DenseTableHeader>
+                <DenseTableBody>
+                  {stkOrders.map((o, i) => {
+                    const submitTs =
+                      o.updated_ts != null && Number.isFinite(Number(o.updated_ts))
+                        ? Number(o.updated_ts)
+                        : null
+                    return (
+                      <DenseTableRow key={o.order_id ?? o.perm_id ?? i}>
+                        <DenseTableCell>{o.account_id ?? '—'}</DenseTableCell>
+                        <DenseTableCell className={liveTable.symbolCell}>{o.symbol ?? '—'}</DenseTableCell>
+                        <DenseTableCell>{o.action ?? '—'}</DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {o.total_quantity != null ? Math.round(Number(o.total_quantity)) : '—'}
+                        </DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {o.limit_price != null ? fmtUsd(Number(o.limit_price)) : '—'}
+                        </DenseTableCell>
+                        <DenseTableCell>{o.status ?? '—'}</DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {o.filled != null && o.remaining != null
+                            ? `${Math.round(Number(o.filled))} / ${Math.round(Number(o.remaining))}`
+                            : '—'}
+                        </DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {submitTs != null ? fmtTs(submitTs) : '—'}
+                        </DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {submitTs != null ? `${fmtSince(submitTs)} ago` : '—'}
+                        </DenseTableCell>
+                      </DenseTableRow>
+                    )
+                  })}
+                </DenseTableBody>
                 </table>
               </div>
             </div>
@@ -204,4 +213,3 @@ export function OpenOrdersPane({
     </div>
   )
 }
-

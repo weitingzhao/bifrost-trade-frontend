@@ -1,11 +1,28 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { ChevronDown } from 'lucide-react'
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { fmtUsd, fmtExpiry, rightLabel, fmtDate, fmtDaysAgo, daysUntilExpiry, unrealizedPnlColorClass } from '@/utils/positions'
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  ExpandToggleCell,
+  NestedDenseTable,
+  DenseTag,
+  DenseTagButton,
+  denseTable,
+  denseTableNumCell,
+} from '@/components/data-display'
+import {
+  fmtUsd,
+  fmtExpiry,
+  rightLabel,
+  fmtDate,
+  fmtDaysAgo,
+  daysUntilExpiry,
+  unrealizedPnlColorClass,
+} from '@/utils/positions'
 import { optionLastStrikePctClassFromQty } from '@/utils/openOptionsTab'
 import { ExecutionRow } from './ExecutionRow'
 import type { OpenOptionPosition, Execution, InstanceAllGroup } from '@/types/positions'
@@ -73,30 +90,32 @@ export function InstanceOptionSubTable({
     <section className={instancePanel.subSection}>
       <h4 className={instancePanel.subHeading}>Options ({options.length})</h4>
       <div className={instancePanel.subTableWrap}>
-        <Table className={instancePanel.subTable}>
-          <TableHeader className={instancePanel.subTableHeader}>
-            <TableRow>
-              <TableHead className={cn('w-6', instancePanel.subTableHead)} />
-              <TableHead className={instancePanel.subTableHead}>Contract</TableHead>
-              <TableHead className={instancePanel.subTableHead}>Expiry</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Strike</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Last</TableHead>
-              <TableHead className={instancePanel.subTableHead}>Qty</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>@</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>Value</TableHead>
-              <TableHead className={instancePanel.subTableHead} title="Option live bid / mid / ask">Opt Quote</TableHead>
-              <TableHead className={instancePanel.subTableHead}>Time</TableHead>
-              <TableHead className={cn('text-right', instancePanel.subTableHead)}>UN PNL</TableHead>
-              <TableHead className={instancePanel.subTableHead}>Pool</TableHead>
-              <TableHead className={instancePanel.subTableHead}>Attr</TableHead>
-              <TableHead className={instancePanel.subTableHead}>Account</TableHead>
-              <TableHead className={instancePanel.subTableHead} title="Opportunity">Opp</TableHead>
-              <TableHead className={cn('w-8', instancePanel.subTableHead)} />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {options.map((pos) => {
-              const key = pos.contract_key || `${pos.symbol}-${pos.expiry}-${pos.strike}-${pos.right}-${pos.account_id}`
+        <NestedDenseTable>
+          <DenseTableHeader>
+            <DenseTableHeadRow>
+              <DenseTableHead className="w-6" aria-label="Expand" />
+              <DenseTableHead>Contract</DenseTableHead>
+              <DenseTableHead>Expiry</DenseTableHead>
+              <DenseTableHead align="right">Strike</DenseTableHead>
+              <DenseTableHead align="right">Last</DenseTableHead>
+              <DenseTableHead>Qty</DenseTableHead>
+              <DenseTableHead align="right">@</DenseTableHead>
+              <DenseTableHead align="right">Value</DenseTableHead>
+              <DenseTableHead title="Option live bid / mid / ask">Opt Quote</DenseTableHead>
+              <DenseTableHead>Time</DenseTableHead>
+              <DenseTableHead align="right">UN PNL</DenseTableHead>
+              <DenseTableHead>Pool</DenseTableHead>
+              <DenseTableHead>Attr</DenseTableHead>
+              <DenseTableHead>Account</DenseTableHead>
+              <DenseTableHead title="Opportunity">Opp</DenseTableHead>
+              <DenseTableHead className="w-8" />
+            </DenseTableHeadRow>
+          </DenseTableHeader>
+          <DenseTableBody>
+            {options.flatMap((pos) => {
+              const key =
+                pos.contract_key ||
+                `${pos.symbol}-${pos.expiry}-${pos.strike}-${pos.right}-${pos.account_id}`
               const isExpanded = expandedKeys.has(key)
               const absQty = Math.abs(pos.qty)
               const sideLabel = pos.qty > 0 ? 'Long' : pos.qty < 0 ? 'Short' : '—'
@@ -106,13 +125,18 @@ export function InstanceOptionSubTable({
               const stkQuote = quotesBySymbol[underlying?.toUpperCase() ?? '']
               const spot = stkQuote?.last ?? null
               const strikeNum = pos.strike
-              const lastStrikePct = spot != null && strikeNum != null && spot !== 0
-                ? ((spot - strikeNum) / spot) * 100
-                : null
-              const pctClass = lastStrikePct != null ? optionLastStrikePctClassFromQty(pos.right, pos.qty, lastStrikePct) : ''
+              const lastStrikePct =
+                spot != null && strikeNum != null && spot !== 0
+                  ? ((spot - strikeNum) / spot) * 100
+                  : null
+              const pctClass =
+                lastStrikePct != null
+                  ? optionLastStrikePctClassFromQty(pos.right, pos.qty, lastStrikePct)
+                  : ''
 
               const dte = daysUntilExpiry(pos.expiry)
-              const dteLabel = dte != null ? (dte >= 0 ? (dte === 0 ? 'today' : `${dte}d`) : `${-dte}d ago`) : null
+              const dteLabel =
+                dte != null ? (dte >= 0 ? (dte === 0 ? 'today' : `${dte}d`) : `${-dte}d ago`) : null
 
               const { final: scopedFinalExecs, tws: scopedTwsExecs } = scopedExecListsForPosition(
                 pos,
@@ -123,10 +147,13 @@ export function InstanceOptionSubTable({
               const execCount = scopedFinalExecs.length + scopedTwsExecs.length
               const hasExecs = execCount > 0
 
-              const latestExecTime = [...scopedFinalExecs, ...scopedTwsExecs].reduce<number | null>((best, e) => {
-                if (e.time == null) return best
-                return best == null || e.time > best ? e.time : best
-              }, null)
+              const latestExecTime = [...scopedFinalExecs, ...scopedTwsExecs].reduce<number | null>(
+                (best, e) => {
+                  if (e.time == null) return best
+                  return best == null || e.time > best ? e.time : best
+                },
+                null,
+              )
 
               const optQuote = quotesByCk[pos.contract_key]
               const liveMid = optQuoteMid(optQuote)
@@ -135,50 +162,80 @@ export function InstanceOptionSubTable({
                   ? (liveMid - pos.avg_cost) * absQty * 100
                   : null
 
-              return [
-                <TableRow
+              const posRow = (
+                <DenseTableRow
                   key={key}
-                  className={cn(instancePanel.subDataRow, hasExecs && 'cursor-pointer')}
+                  className={cn(hasExecs && 'cursor-pointer')}
                   onClick={hasExecs ? () => toggleExpand(key) : undefined}
+                  role={hasExecs ? 'button' : undefined}
+                  tabIndex={hasExecs ? 0 : undefined}
+                  onKeyDown={
+                    hasExecs
+                      ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            toggleExpand(key)
+                          }
+                        }
+                      : undefined
+                  }
+                  aria-expanded={hasExecs ? isExpanded : undefined}
                 >
-                  <TableCell className="px-1">
-                    {hasExecs && (
-                      <ChevronDown className={cn('h-3 w-3 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
-                    )}
-                  </TableCell>
-                  <TableCell>
+                  <DenseTableCell className="w-6 px-1">
+                    {hasExecs ? (
+                      <ExpandToggleCell expanded={isExpanded} onToggle={() => toggleExpand(key)} />
+                    ) : null}
+                  </DenseTableCell>
+                  <DenseTableCell>
                     {onOpenOption ? (
-                      <button
-                        type="button"
-                        className={instancePanel.subContractBtn}
-                        onClick={(e) => { e.stopPropagation(); onOpenOption(pos) }}
+                      <DenseTagButton
+                        variant="symbol"
+                        size="cell"
+                        className="font-mono text-left whitespace-normal leading-snug"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onOpenOption(pos)
+                        }}
                       >
                         <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
                         {pos.strike != null ? ` ${pos.strike}` : ''}
-                      </button>
+                      </DenseTagButton>
                     ) : (
-                      <span className="font-mono text-xs font-medium">
+                      <DenseTag variant="symbol" size="cell" className="font-mono whitespace-normal">
                         <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
-                      </span>
+                        {pos.strike != null ? ` ${pos.strike}` : ''}
+                      </DenseTag>
                     )}
-                  </TableCell>
-                  <TableCell className="text-xs">
+                  </DenseTableCell>
+                  <DenseTableCell>
                     <div className="font-mono">{fmtExpiry(pos.expiry)}</div>
-                    {dteLabel && <div className={instancePanel.subExpiryDte}>{dteLabel}</div>}
-                  </TableCell>
-                  <TableCell className="text-right font-mono text-xs font-semibold">{fmtUsd(pos.strike)}</TableCell>
-                  <TableCell className="text-right text-xs">
-                    <div className="font-mono">{spot != null ? fmtUsd(spot) : '—'}</div>
+                    {dteLabel && (
+                      <div className={instancePanel.subExpiryDte}>{dteLabel}</div>
+                    )}
+                  </DenseTableCell>
+                  <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>
+                    {fmtUsd(pos.strike)}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    <div>{spot != null ? fmtUsd(spot) : '—'}</div>
                     {lastStrikePct != null && (
-                      <div className={cn('text-[10px] font-mono font-semibold', pctClass)}>
-                        {lastStrikePct >= 0 ? '+' : ''}{lastStrikePct.toFixed(2)}%
+                      <div
+                        className={cn(
+                          'text-[length:var(--text-dense-meta)] font-semibold',
+                          pctClass,
+                        )}
+                      >
+                        {lastStrikePct >= 0 ? '+' : ''}
+                        {lastStrikePct.toFixed(2)}%
                       </div>
                     )}
-                  </TableCell>
-                  <TableCell className="text-xs">{sideLabel} {absQty}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(pos.avg_cost)}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{fmtUsd(value)}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  </DenseTableCell>
+                  <DenseTableCell>
+                    {sideLabel} {absQty}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{fmtUsd(pos.avg_cost)}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{fmtUsd(value)}</DenseTableCell>
+                  <DenseTableCell className={denseTable.mutedMeta}>
                     {optQuote ? (
                       <div className="leading-tight font-mono">
                         <div>{optQuote.bid != null ? optQuote.bid.toFixed(2) : '—'}</div>
@@ -190,8 +247,8 @@ export function InstanceOptionSubTable({
                     ) : (
                       '—'
                     )}
-                  </TableCell>
-                  <TableCell className="text-xs">
+                  </DenseTableCell>
+                  <DenseTableCell>
                     {latestExecTime != null ? (
                       <>
                         <div className="font-mono">{fmtDate(latestExecTime)}</div>
@@ -199,44 +256,64 @@ export function InstanceOptionSubTable({
                           <div className={instancePanel.subTimeAgo}>{fmtDaysAgo(latestExecTime)}</div>
                         )}
                       </>
-                    ) : '—'}
-                  </TableCell>
-                  <TableCell className="text-right text-xs">
+                    ) : (
+                      '—'
+                    )}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
                     {livePnl != null && (
-                      <div className={cn('font-mono font-semibold', unrealizedPnlColorClass(livePnl))}>
+                      <div className={cn('font-semibold', unrealizedPnlColorClass(livePnl))}>
                         {fmtUsd(livePnl)}
-                        <span className="text-[10px] font-normal text-muted-foreground ml-1">live</span>
+                        <span className={cn('ml-1 text-[length:var(--text-dense-meta)] font-normal', denseTable.mutedMeta)}>
+                          live
+                        </span>
                       </div>
                     )}
-                    <div className={cn('font-mono font-semibold', unrealizedPnlColorClass(pos.unrealized_pnl), livePnl != null && 'text-[11px] font-normal')}>
+                    <div
+                      className={cn(
+                        'font-semibold',
+                        unrealizedPnlColorClass(pos.unrealized_pnl),
+                        livePnl != null && 'text-[length:var(--text-dense-meta)] font-normal',
+                      )}
+                    >
                       {fmtUsd(pos.unrealized_pnl)}
-                      {livePnl != null && <span className="text-[10px] ml-1">snap</span>}
+                      {livePnl != null && (
+                        <span className={cn('ml-1 text-[length:var(--text-dense-meta)]', denseTable.mutedMeta)}>
+                          snap
+                        </span>
+                      )}
                     </div>
-                  </TableCell>
-                  <TableCell className={cn('text-xs', instancePanel.subMutedCell)}>{pos.pool_label}</TableCell>
-                  <TableCell className="text-xs">
+                  </DenseTableCell>
+                  <DenseTableCell className={instancePanel.subMutedCell}>{pos.pool_label}</DenseTableCell>
+                  <DenseTableCell>
                     {pos.filtered_exec_lists ? (
-                      <Badge variant="secondary" className="text-[10px]" title="Fills that do not match the instance row for this contract (Uncategorized)">
+                      <DenseTag
+                        variant="neutral"
+                        size="cell"
+                        title="Fills that do not match the instance row for this contract (Uncategorized)"
+                      >
                         Uncategorized
-                      </Badge>
+                      </DenseTag>
                     ) : pos.attribution_type === 'mixed' ? (
-                      <Badge
-                        variant="secondary"
-                        className="text-[10px] border-yellow-500 text-yellow-600"
+                      <DenseTag
+                        variant="warning"
+                        size="cell"
                         title={`Estimated attribution (net): ${((pos.attribution_ratio ?? 0) * 100).toFixed(0)}%`}
                       >
                         Mixed
-                      </Badge>
+                      </DenseTag>
                     ) : pos.attribution_type === 'single' ? (
-                      <Badge variant="default" className="text-[10px]" title="Single instance attribution">
+                      <DenseTag variant="success" size="cell" title="Single instance attribution">
                         Single
-                      </Badge>
+                      </DenseTag>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className={denseTable.mutedMeta}>—</span>
                     )}
-                  </TableCell>
-                  <TableCell className={cn('font-mono text-xs', instancePanel.subMutedCell)}>{pos.account_id || '—'}</TableCell>
-                  <TableCell className={cn('text-xs', instancePanel.subMutedCell)}>
+                  </DenseTableCell>
+                  <DenseTableCell className={cn('font-mono', instancePanel.subMutedCell)}>
+                    {pos.account_id || '—'}
+                  </DenseTableCell>
+                  <DenseTableCell className={instancePanel.subMutedCell}>
                     {execCount === 0 ? (
                       '—'
                     ) : (
@@ -245,19 +322,23 @@ export function InstanceOptionSubTable({
                         className="inline-flex items-center gap-0.5"
                       >
                         {pos.filtered_exec_lists ? (
-                          <abbr title="Uncategorized fills" className="no-underline">Unct.</abbr>
+                          <abbr title="Uncategorized fills" className="no-underline">
+                            Unct.
+                          </abbr>
                         ) : null}
                         {pos.filtered_exec_lists ? ' · ' : null}
                         {execCount} exec{execCount > 1 ? 's' : ''} ↓
                       </span>
                     )}
-                  </TableCell>
-                  <TableCell />
-                </TableRow>,
+                  </DenseTableCell>
+                  <DenseTableCell />
+                </DenseTableRow>
+              )
 
-                ...(isExpanded && hasExecs ? [
-                  <TableRow key={`${key}-execs`} className={instancePanel.subExecRow}>
-                    <TableCell colSpan={16} className="p-2">
+              const execRow =
+                isExpanded && hasExecs ? (
+                  <DenseTableRow key={`${key}-execs`} className={instancePanel.subExecRow}>
+                    <DenseTableCell colSpan={16} className="p-2">
                       <ExecutionRow
                         finalExecs={scopedFinalExecs}
                         twsExecs={scopedTwsExecs}
@@ -267,13 +348,14 @@ export function InstanceOptionSubTable({
                         onRefresh={onRefreshExecs ?? (() => {})}
                         showPoolOff={pos.pool_label === 'Off'}
                       />
-                    </TableCell>
-                  </TableRow>,
-                ] : []),
-              ]
+                    </DenseTableCell>
+                  </DenseTableRow>
+                ) : null
+
+              return execRow ? [posRow, execRow] : [posRow]
             })}
-          </TableBody>
-        </Table>
+          </DenseTableBody>
+        </NestedDenseTable>
       </div>
     </section>
   )

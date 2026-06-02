@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
-import styles from './ledgerStyles'
+import { ledgerShell } from './ledgerShellUi'
 
 export interface LedgerSymbolComboboxProps {
   value: string
@@ -63,7 +63,7 @@ export function LedgerSymbolCombobox({
   const showList = open && !disabled && filtered.length > 0
 
   return (
-    <div ref={rootRef} className={cn(styles.symbolCombobox, className)}>
+    <div ref={rootRef} className={cn(ledgerShell.symbolCombobox, className)}>
       <input
         type="text"
         role="combobox"
@@ -76,7 +76,7 @@ export function LedgerSymbolCombobox({
         spellCheck={false}
         placeholder="Search symbol…"
         title="Type a prefix (e.g. NV) or pick a symbol from the list"
-        className={styles.symbolInput}
+        className={ledgerShell.symbolInput}
         value={value}
         onChange={e => {
           if (disabled) return
@@ -88,15 +88,15 @@ export function LedgerSymbolCombobox({
         }}
       />
       {showList ? (
-        <ul id={listboxId} role="listbox" className={styles.symbolList}>
+        <ul id={listboxId} role="listbox" className={ledgerShell.symbolList}>
           {filtered.map(sym => (
             <li
               key={sym}
               role="option"
               aria-selected={value.trim().toUpperCase() === sym.toUpperCase()}
               className={cn(
-                styles.symbolOption,
-                value.trim().toUpperCase() === sym.toUpperCase() && styles.symbolOptionActive,
+                ledgerShell.symbolOption,
+                value.trim().toUpperCase() === sym.toUpperCase() && ledgerShell.symbolOptionActive,
               )}
               onMouseDown={e => {
                 e.preventDefault()

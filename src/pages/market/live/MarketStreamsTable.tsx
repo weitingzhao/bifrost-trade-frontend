@@ -1,7 +1,17 @@
 import { Fragment } from 'react'
 import type { DailyBenchmark, QuoteItem } from '@/types/market'
 import { cn } from '@/lib/utils'
-import { pnlColorClass } from '@/utils/dailyChange'
+import {
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  GrandTotalRow,
+  GroupHeaderRow,
+  InlinePnl,
+  denseTableNumCell,
+} from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import type { MarketStreamsRow, OptPositionRow } from '@/utils/marketStreamsRows'
 import type { LiveSortGroup, MarketStreamsSortMode } from '@/utils/marketStreamsSort'
@@ -12,6 +22,8 @@ import {
 import type { OptionLiveBasis } from '@/utils/optionLiveBasis'
 import { MarketStreamStkRow } from './MarketStreamStkRow'
 import { MarketStreamOptRow } from './MarketStreamOptRow'
+import { LiveStackedPnlCell } from './LiveStackedPnlCell'
+import { liveTable } from './liveTableClasses'
 import styles from './live.module.css'
 import { liveEmptyHintClass } from './liveUi'
 
@@ -134,193 +146,181 @@ export function MarketStreamsTable({
 
   const { totalDailyDollar, totalDailyPct } = marketStreamsDailyTotals
 
-  const renderBody = () => {
-    if (filteredRows.length === 0 && optPositionRows.length === 0) {
-      return (
-        <tr>
-          <td colSpan={msColSpan} className={liveEmptyHintClass}>
-            No market stream symbols
-          </td>
-        </tr>
-      )
-    }
-
-    if (unifiedGroupedRows) {
-      return unifiedGroupedRows.map(g => (
-        <Fragment key={g.label || 'flat'}>
-          {g.showGroupHeader && g.label && (
-            <tr className={styles.groupHeader}>
-              <td colSpan={msColSpan}>{g.label}</td>
-            </tr>
-          )}
-          {g.stkRows.map(row => (
-            <MarketStreamStkRow
-              key={row.symbol}
-              row={row}
-              categoryForDrag={row.category}
-              dragEnabled={false}
-              hasStreamAccounts={hasStreamAccounts}
-              benchmarks={benchmarks}
-            />
-          ))}
-          {g.optRows.map(row => (
-            <MarketStreamOptRow
-              key={optBasisKey(row)}
-              row={row}
-              quote={quotesByContractKey[row.contract_key]}
-              basis={optionLiveBasisByRow.get(optBasisKey(row))}
-              streamHostId={streamHostId}
-              streamSecondaryId={streamSecondaryId}
-              hasStreamAccounts={hasStreamAccounts}
-              dragEnabled={false}
-            />
-          ))}
-        </Fragment>
-      ))
-    }
-
-    return (
-      <>
-        {categoryOrderFiltered.map(cat => (
-          <Fragment key={cat}>
-            <tr className={styles.groupHeader}>
-              <td colSpan={msColSpan}>{cat}</td>
-            </tr>
-            {(sortedRowsByCategory[cat] ?? []).map(row => (
-              <MarketStreamStkRow
-                key={row.symbol}
-                row={row}
-                categoryForDrag={cat}
-                dragEnabled={dragEnabled}
-                hasStreamAccounts={hasStreamAccounts}
-                benchmarks={benchmarks}
-                onSymbolReorder={onSymbolReorder}
-              />
-            ))}
-          </Fragment>
-        ))}
-        {optPositionRows.length > 0 && (
-          <>
-            <tr className={styles.groupHeader}>
-              <td colSpan={msColSpan}>Options</td>
-            </tr>
-            {sortedOptRows.map(row => (
-              <MarketStreamOptRow
-                key={optBasisKey(row)}
-                row={row}
-                quote={quotesByContractKey[row.contract_key]}
-                basis={optionLiveBasisByRow.get(optBasisKey(row))}
-                streamHostId={streamHostId}
-                streamSecondaryId={streamSecondaryId}
-                hasStreamAccounts={hasStreamAccounts}
-                dragEnabled={dragEnabled}
-                onOptRowReorder={onOptRowReorder}
-              />
-            ))}
-          </>
-        )}
-      </>
-    )
-  }
+  const showTotalRow =
+    (filteredRows.length > 0 || optPositionRows.length > 0) && filteredRows.length > 0
 
   return (
-    <div className={styles.tableWrap}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th scope="col">
+    <div className={liveTable.shell}>
+      <table className={liveTable.table}>
+        <DenseTableHeader className={liveTable.stickyThead}>
+          <DenseTableHeadRow>
+            <DenseTableHead scope="col" className="normal-case">
               <SortHeaderButton mode={msSortMode} onCycleSort={onCycleSort} />
-            </th>
+            </DenseTableHead>
             {hasStreamAccounts && (
               <>
-                <th colSpan={3} scope="colgroup" className={styles.colGroup}>
+                <DenseTableHead colSpan={3} scope="colgroup" className={liveTable.colGroupHead}>
                   Host
-                </th>
-                <th colSpan={3} scope="colgroup" className={styles.colGroup}>
+                </DenseTableHead>
+                <DenseTableHead colSpan={3} scope="colgroup" className={liveTable.colGroupHead}>
                   Secondary
-                </th>
+                </DenseTableHead>
               </>
             )}
-            <th>Qty</th>
-            <th>Cost</th>
-            <th title="Last price; Bid and Ask shown as spread vs Last">Last (Bid / Ask)</th>
-            <th className={styles.pnlStackedTh}>
+            <DenseTableHead>Qty</DenseTableHead>
+            <DenseTableHead>Cost</DenseTableHead>
+            <DenseTableHead title="Last price; Bid and Ask shown as spread vs Last">
+              Last (Bid / Ask)
+            </DenseTableHead>
+            <DenseTableHead align="right" className={liveTable.stackedPnlHead}>
               Daily
-              <span className={styles.pnlStackedSub}>% / $</span>
-            </th>
-            <th className={styles.pnlStackedTh}>
+              <span className={liveTable.stackedPnlHeadSub}>% / $</span>
+            </DenseTableHead>
+            <DenseTableHead align="right" className={liveTable.stackedPnlHead}>
               SINCE
-              <span className={styles.pnlStackedSub}>% / $</span>
-            </th>
-          </tr>
+              <span className={liveTable.stackedPnlHeadSub}>% / $</span>
+            </DenseTableHead>
+          </DenseTableHeadRow>
           {hasStreamAccounts && (
-            <tr>
-              <th aria-hidden />
-              <th>Qty</th>
-              <th>Cost</th>
-              <th>SINCE $</th>
-              <th>Qty</th>
-              <th>Cost</th>
-              <th>SINCE $</th>
-              <th colSpan={5} aria-hidden />
-            </tr>
+            <DenseTableHeadRow>
+              <DenseTableHead aria-hidden />
+              <DenseTableHead align="right">Qty</DenseTableHead>
+              <DenseTableHead align="right">Cost</DenseTableHead>
+              <DenseTableHead align="right">SINCE $</DenseTableHead>
+              <DenseTableHead align="right">Qty</DenseTableHead>
+              <DenseTableHead align="right">Cost</DenseTableHead>
+              <DenseTableHead align="right">SINCE $</DenseTableHead>
+              <DenseTableHead colSpan={5} aria-hidden />
+            </DenseTableHeadRow>
           )}
-        </thead>
-        <tbody>{renderBody()}</tbody>
-        {(filteredRows.length > 0 || optPositionRows.length > 0) && filteredRows.length > 0 && (
-          <tfoot>
-            <tr className={styles.sumRow}>
-              <td><strong>Total</strong></td>
-              {hasStreamAccounts && (
+        </DenseTableHeader>
+        <DenseTableBody>
+          {filteredRows.length === 0 && optPositionRows.length === 0 ? (
+            <tr>
+              <DenseTableCell colSpan={msColSpan} className={liveEmptyHintClass}>
+                No market stream symbols
+              </DenseTableCell>
+            </tr>
+          ) : unifiedGroupedRows ? (
+            unifiedGroupedRows.map(g => (
+              <Fragment key={g.label || 'flat'}>
+                {g.showGroupHeader && g.label ? (
+                  <GroupHeaderRow colSpan={msColSpan} label={g.label} variant="category" />
+                ) : null}
+                {g.stkRows.map(row => (
+                  <MarketStreamStkRow
+                    key={row.symbol}
+                    row={row}
+                    categoryForDrag={row.category}
+                    dragEnabled={false}
+                    hasStreamAccounts={hasStreamAccounts}
+                    benchmarks={benchmarks}
+                  />
+                ))}
+                {g.optRows.map(row => (
+                  <MarketStreamOptRow
+                    key={optBasisKey(row)}
+                    row={row}
+                    quote={quotesByContractKey[row.contract_key]}
+                    basis={optionLiveBasisByRow.get(optBasisKey(row))}
+                    streamHostId={streamHostId}
+                    streamSecondaryId={streamSecondaryId}
+                    hasStreamAccounts={hasStreamAccounts}
+                    dragEnabled={false}
+                  />
+                ))}
+              </Fragment>
+            ))
+          ) : (
+            <>
+              {categoryOrderFiltered.map(cat => (
+                <Fragment key={cat}>
+                  <GroupHeaderRow colSpan={msColSpan} label={cat} variant="category" />
+                  {(sortedRowsByCategory[cat] ?? []).map(row => (
+                    <MarketStreamStkRow
+                      key={row.symbol}
+                      row={row}
+                      categoryForDrag={cat}
+                      dragEnabled={dragEnabled}
+                      hasStreamAccounts={hasStreamAccounts}
+                      benchmarks={benchmarks}
+                      onSymbolReorder={onSymbolReorder}
+                    />
+                  ))}
+                </Fragment>
+              ))}
+              {optPositionRows.length > 0 && (
                 <>
-                  <td className={styles.numCell}>—</td>
-                  <td className={styles.numCell}>{hostCostSum !== 0 ? fmtUsd(hostCostSum, true) : '—'}</td>
-                  <td className={cn(styles.numCell, pnlColorClass(hostPnlSum))}>
-                    {hostPnlSum !== 0 ? fmtUsd(hostPnlSum, true) : '—'}
-                  </td>
-                  <td className={styles.numCell}>—</td>
-                  <td className={styles.numCell}>
-                    {secondaryCostSum !== 0 ? fmtUsd(secondaryCostSum, true) : '—'}
-                  </td>
-                  <td className={cn(styles.numCell, pnlColorClass(secondaryPnlSum))}>
-                    {secondaryPnlSum !== 0 ? fmtUsd(secondaryPnlSum, true) : '—'}
-                  </td>
+                  <GroupHeaderRow colSpan={msColSpan} label="Options" variant="category" />
+                  {sortedOptRows.map(row => (
+                    <MarketStreamOptRow
+                      key={optBasisKey(row)}
+                      row={row}
+                      quote={quotesByContractKey[row.contract_key]}
+                      basis={optionLiveBasisByRow.get(optBasisKey(row))}
+                      streamHostId={streamHostId}
+                      streamSecondaryId={streamSecondaryId}
+                      hasStreamAccounts={hasStreamAccounts}
+                      dragEnabled={dragEnabled}
+                      onOptRowReorder={onOptRowReorder}
+                    />
+                  ))}
                 </>
               )}
-              <td className={styles.numCell}>—</td>
-              <td className={styles.numCell}>{totalCost !== 0 ? fmtUsd(totalCost, true) : '—'}</td>
-              <td className={styles.numCell}>—</td>
-              <td className={styles.numCell}>
-                <span className={styles.pnlStackedLine}>
-                  {totalDailyPct != null && Number.isFinite(totalDailyPct) ? (
-                    <span className={pnlColorClass(totalDailyPct)}>{Math.abs(totalDailyPct).toFixed(2)}%</span>
-                  ) : (
-                    '—'
-                  )}
-                </span>
-                <span className={styles.pnlStackedLine}>
-                  <span className={pnlColorClass(totalDailyDollar)}>
-                    {totalDailyPct != null || totalDailyDollar !== 0 ? fmtUsd(totalDailyDollar, true) : '—'}
-                  </span>
-                </span>
-              </td>
-              <td className={styles.numCell}>
-                <span className={styles.pnlStackedLine}>
-                  {totalPct != null && Number.isFinite(totalPct) ? (
-                    <span className={pnlColorClass(totalPct)}>{Math.abs(totalPct).toFixed(2)}%</span>
-                  ) : (
-                    '—'
-                  )}
-                </span>
-                <span className={styles.pnlStackedLine}>
-                  <span className={pnlColorClass(totalCostPnl)}>
-                    {totalCostPnl !== 0 ? fmtUsd(totalCostPnl, true) : '—'}
-                  </span>
-                </span>
-              </td>
-            </tr>
-          </tfoot>
-        )}
+            </>
+          )}
+          {showTotalRow && (
+            <GrandTotalRow labelColSpan={1} label={<strong>Total</strong>}>
+              {hasStreamAccounts && (
+                <>
+                  <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    {hostCostSum !== 0 ? fmtUsd(hostCostSum, true) : '—'}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    {hostPnlSum !== 0 ? (
+                      <InlinePnl value={hostPnlSum}>{fmtUsd(hostPnlSum, true)}</InlinePnl>
+                    ) : (
+                      '—'
+                    )}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    {secondaryCostSum !== 0 ? fmtUsd(secondaryCostSum, true) : '—'}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    {secondaryPnlSum !== 0 ? (
+                      <InlinePnl value={secondaryPnlSum}>{fmtUsd(secondaryPnlSum, true)}</InlinePnl>
+                    ) : (
+                      '—'
+                    )}
+                  </DenseTableCell>
+                </>
+              )}
+              <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
+              <DenseTableCell className={denseTableNumCell}>
+                {totalCost !== 0 ? fmtUsd(totalCost, true) : '—'}
+              </DenseTableCell>
+              <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
+              <DenseTableCell className={denseTableNumCell}>
+                <LiveStackedPnlCell
+                  pct={totalDailyPct}
+                  dollar={totalDailyDollar}
+                  formatPct={v => `${v.toFixed(2)}%`}
+                  formatDollar={v => fmtUsd(v, true)}
+                />
+              </DenseTableCell>
+              <DenseTableCell className={denseTableNumCell}>
+                <LiveStackedPnlCell
+                  pct={totalPct}
+                  dollar={totalCostPnl}
+                  formatPct={v => `${v.toFixed(2)}%`}
+                  formatDollar={v => fmtUsd(v, true)}
+                />
+              </DenseTableCell>
+            </GrandTotalRow>
+          )}
+        </DenseTableBody>
       </table>
     </div>
   )

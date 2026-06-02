@@ -1,5 +1,5 @@
 import { StockInspectorPanel } from './StockInspectorPanel'
-import { StrategyInstanceInspectorPanel } from './StrategyInstanceInspectorPanel'
+import { InstanceDetailSidebar } from '@/components/strategy/InstanceDetailSidebar'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import type { LivePositionRow, OpenOptionPosition } from '@/types/positions'
 import type { StockInspectorFundamentalSeed } from '@/types/research'
@@ -22,16 +22,20 @@ interface Props {
   onClose: () => void
 }
 
-/** Stock and strategy instance inspectors. Option contracts use {@link OptionContractDrawer}. */
+/** Stock inspector shell; strategy instances use shared {@link InstanceDetailSidebar}. */
 export function InspectorDrawer({ state, onClose }: Props) {
   if (!state.type || state.type === 'option') return null
 
-  const isStrategy = state.type === 'strategy'
+  if (state.type === 'strategy' && state.id != null) {
+    return (
+      <InstanceDetailSidebar open instanceId={state.id} onClose={onClose} />
+    )
+  }
 
   return (
     <RightInspectorShell
       open
-      ariaLabel={isStrategy ? 'Strategy instance detail' : 'Stock detail'}
+      ariaLabel="Stock detail"
     >
       {state.type === 'stock' && state.symbol ? (
         <StockInspectorPanel
@@ -41,8 +45,6 @@ export function InspectorDrawer({ state, onClose }: Props) {
           fundamentalSeed={state.fundamentalSeed}
           onClose={onClose}
         />
-      ) : state.id != null ? (
-        <StrategyInstanceInspectorPanel instanceId={state.id} onClose={onClose} />
       ) : null}
     </RightInspectorShell>
   )

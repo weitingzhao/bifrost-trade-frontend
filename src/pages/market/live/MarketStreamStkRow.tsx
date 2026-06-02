@@ -1,12 +1,14 @@
 import type { DailyBenchmark } from '@/types/market'
 import { cn } from '@/lib/utils'
-import { pnlColorClass } from '@/utils/dailyChange'
+import { DenseTableCell, InlinePnl, denseTableNumCell } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import { getDailyRefTooltip } from '@/utils/marketStreamsDailyTotals'
 import { getQuoteFreshness, quoteFreshnessTitle } from '@/utils/quoteFreshness'
 import type { MarketStreamsRow } from '@/utils/marketStreamsRows'
 import { quoteDisplayLast } from '@/utils/watchlistHelpers'
 import { DailyCalcBreakdown } from './DailyCalcBreakdown'
+import { LiveStackedPnlCell } from './LiveStackedPnlCell'
+import { liveSymbolFreshnessClass, liveTable } from './liveTableClasses'
 import styles from './live.module.css'
 
 interface Props {
@@ -49,13 +51,6 @@ export function MarketStreamStkRow({
   const symBench = benchmarks[(symbol || '').trim().toUpperCase()]
   const dailyLast = quoteDisplayLast(q ?? undefined)
 
-  const symbolClass = cn(
-    styles.symbolCell,
-    symbolFreshness === 'fresh' && styles.symbolFresh,
-    symbolFreshness === 'stale' && styles.symbolStale,
-    symbolFreshness === 'very-stale' && styles.symbolVeryStale,
-  )
-
   return (
     <tr
       onDragOver={dragEnabled ? e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } : undefined}
@@ -80,8 +75,8 @@ export function MarketStreamStkRow({
           : undefined
       }
     >
-      <td
-        className={symbolClass}
+      <DenseTableCell
+        className={liveSymbolFreshnessClass(symbolFreshness)}
         title={[quoteFreshnessTitle(symbolFreshness), getDailyRefTooltip(symBench, dailyLast)]
           .filter(Boolean)
           .join('\n') || undefined}
@@ -104,39 +99,53 @@ export function MarketStreamStkRow({
           </span>
         )}
         <strong>{symbol}</strong>
-      </td>
+      </DenseTableCell>
 
       {!watchingStocksSlim && hasStreamAccounts && (
         <>
-          <td className={styles.numCell}>{hostQty != null && Number.isFinite(hostQty) ? hostQty : '—'}</td>
-          <td className={styles.numCell}>
+          <DenseTableCell className={denseTableNumCell}>
+            {hostQty != null && Number.isFinite(hostQty) ? hostQty : '—'}
+          </DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>
             {hostAvgCost != null && Number.isFinite(hostAvgCost) ? fmtUsd(hostAvgCost) : '—'}
-          </td>
-          <td className={cn(styles.numCell, pnlColorClass(hostPnlCost))}>
-            {hostPnlCost != null && Number.isFinite(hostPnlCost) ? fmtUsd(hostPnlCost, true) : '—'}
-          </td>
-          <td className={styles.numCell}>
+          </DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>
+            {hostPnlCost != null && Number.isFinite(hostPnlCost) ? (
+              <InlinePnl value={hostPnlCost}>{fmtUsd(hostPnlCost, true)}</InlinePnl>
+            ) : (
+              '—'
+            )}
+          </DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>
             {secondaryQty != null && Number.isFinite(secondaryQty) ? secondaryQty : '—'}
-          </td>
-          <td className={styles.numCell}>
-            {secondaryAvgCost != null && Number.isFinite(secondaryAvgCost) ? fmtUsd(secondaryAvgCost) : '—'}
-          </td>
-          <td className={cn(styles.numCell, pnlColorClass(secondaryPnlCost))}>
-            {secondaryPnlCost != null && Number.isFinite(secondaryPnlCost)
-              ? fmtUsd(secondaryPnlCost, true)
+          </DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>
+            {secondaryAvgCost != null && Number.isFinite(secondaryAvgCost)
+              ? fmtUsd(secondaryAvgCost)
               : '—'}
-          </td>
+          </DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>
+            {secondaryPnlCost != null && Number.isFinite(secondaryPnlCost) ? (
+              <InlinePnl value={secondaryPnlCost}>{fmtUsd(secondaryPnlCost, true)}</InlinePnl>
+            ) : (
+              '—'
+            )}
+          </DenseTableCell>
         </>
       )}
 
       {!watchingStocksSlim && (
         <>
-          <td className={styles.numCell}>{qty != null && Number.isFinite(qty) ? qty : '—'}</td>
-          <td className={styles.numCell}>{avgCost != null && Number.isFinite(avgCost) ? fmtUsd(avgCost) : '—'}</td>
+          <DenseTableCell className={denseTableNumCell}>
+            {qty != null && Number.isFinite(qty) ? qty : '—'}
+          </DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>
+            {avgCost != null && Number.isFinite(avgCost) ? fmtUsd(avgCost) : '—'}
+          </DenseTableCell>
         </>
       )}
 
-      <td className={cn(styles.numCell, styles.lastBidAsk)}>
+      <DenseTableCell className={cn(denseTableNumCell, liveTable.lastBidAsk)}>
         {q ? (() => {
           const displayLast = quoteDisplayLast(q)
           const bid = q.bid != null && Number.isFinite(q.bid) ? q.bid : null
@@ -150,51 +159,41 @@ export function MarketStreamStkRow({
               : bench && Number.isFinite(bench.close)
                 ? bench.close
                 : null
-          const lastVsPrev =
-            pnlColorClass(
-              displayLast != null && prevClose != null && prevClose > 0
-                ? displayLast - prevClose
-                : null,
-            )
+          const lastDelta =
+            displayLast != null && prevClose != null && prevClose > 0
+              ? displayLast - prevClose
+              : null
           return (
             <>
               {displayLast != null ? (
-                <span className={lastVsPrev}>{fmtUsd(displayLast)}</span>
+                <InlinePnl value={lastDelta}>{fmtUsd(displayLast)}</InlinePnl>
               ) : (
                 '—'
               )}
               {bidDiff != null && (
-                <span className={cn(styles.spread, pnlColorClass(bidDiff))} title="Bid vs Last">
+                <span className={liveTable.bidAskSpread} title="Bid vs Last">
                   {' '}
-                  {Math.abs(bidDiff).toFixed(2)}
+                  <InlinePnl value={bidDiff}>{Math.abs(bidDiff).toFixed(2)}</InlinePnl>
                 </span>
               )}
               {askDiff != null && (
-                <span className={cn(styles.spread, pnlColorClass(askDiff))} title="Ask vs Last">
+                <span className={liveTable.bidAskSpread} title="Ask vs Last">
                   {' '}
-                  {Math.abs(askDiff).toFixed(2)}
+                  <InlinePnl value={askDiff}>{Math.abs(askDiff).toFixed(2)}</InlinePnl>
                 </span>
               )}
             </>
           )
         })() : '—'}
-      </td>
+      </DenseTableCell>
 
-      <td className={cn(styles.numCell, styles.dailyCalcCell)}>
-        <span className={styles.pnlStackedLine}>
-          {changePct != null && Number.isFinite(changePct) ? (
-            <span className={pnlColorClass(changePct)}>{Math.abs(changePct).toFixed(2)}%</span>
-          ) : (
-            '—'
-          )}
-        </span>
-        <span className={styles.pnlStackedLine}>
-          {pnlVsBench != null && Number.isFinite(pnlVsBench) ? (
-            <span className={pnlColorClass(pnlVsBench)}>{fmtUsd(Math.abs(pnlVsBench))}</span>
-          ) : (
-            '—'
-          )}
-        </span>
+      <DenseTableCell className={cn(denseTableNumCell, styles.dailyCalcCell)}>
+        <LiveStackedPnlCell
+          pct={changePct}
+          dollar={pnlVsBench}
+          formatPct={v => `${v.toFixed(2)}%`}
+          formatDollar={v => fmtUsd(Math.abs(v ?? 0))}
+        />
         <DailyCalcBreakdown
           symbol={(symbol || '').trim() || '—'}
           bench={symBench}
@@ -202,25 +201,20 @@ export function MarketStreamStkRow({
           last={dailyLast}
           qty={qty}
         />
-      </td>
+      </DenseTableCell>
 
-      <td className={styles.numCell}>
-        <span className={styles.pnlStackedLine}>
-          {(() => {
+      <DenseTableCell className={denseTableNumCell}>
+        <LiveStackedPnlCell
+          pct={(() => {
             const dl = quoteDisplayLast(q ?? undefined)
-            if (avgCost == null || !Number.isFinite(avgCost) || avgCost <= 0 || dl == null) return '—'
-            const sincePct = ((dl - avgCost) / avgCost) * 100
-            return <span className={pnlColorClass(sincePct)}>{Math.abs(sincePct).toFixed(2)}%</span>
+            if (avgCost == null || !Number.isFinite(avgCost) || avgCost <= 0 || dl == null) return null
+            return ((dl - avgCost) / avgCost) * 100
           })()}
-        </span>
-        <span className={styles.pnlStackedLine}>
-          {pnlCost != null && Number.isFinite(pnlCost) ? (
-            <span className={pnlColorClass(pnlCost)}>{fmtUsd(pnlCost, true)}</span>
-          ) : (
-            '—'
-          )}
-        </span>
-      </td>
+          dollar={pnlCost}
+          formatPct={v => `${v.toFixed(2)}%`}
+          formatDollar={v => fmtUsd(v, true)}
+        />
+      </DenseTableCell>
     </tr>
   )
 }

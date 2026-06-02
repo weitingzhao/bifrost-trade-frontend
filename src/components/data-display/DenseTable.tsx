@@ -1,6 +1,7 @@
 import type { ComponentProps, KeyboardEvent, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { denseTable, denseTableCellPadding } from './denseTableClasses'
+import { DenseTag } from './DenseTag'
 
 const thBase = cn(
   denseTableCellPadding,
@@ -30,12 +31,24 @@ export function DenseDataTable({
   )
 }
 
-export function DenseTableHeader({ children }: { children: ReactNode }) {
-  return <thead>{children}</thead>
+export function DenseTableHeader({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return <thead className={className}>{children}</thead>
 }
 
-export function DenseTableBody({ children }: { children: ReactNode }) {
-  return <tbody>{children}</tbody>
+export function DenseTableBody({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return <tbody className={className}>{children}</tbody>
 }
 
 export function DenseTableHeadRow({ children }: { children: ReactNode }) {
@@ -66,6 +79,7 @@ export function DenseTableHead({
   tabIndex,
   rowSpan,
   colSpan,
+  scope,
   'aria-sort': ariaSort,
   'aria-label': ariaLabel,
   onClick,
@@ -79,6 +93,7 @@ export function DenseTableHead({
   tabIndex?: number
   rowSpan?: number
   colSpan?: number
+  scope?: string
   'aria-sort'?: 'ascending' | 'descending' | 'none' | undefined
   'aria-label'?: string
   onClick?: (e: React.MouseEvent) => void
@@ -97,6 +112,7 @@ export function DenseTableHead({
       tabIndex={tabIndex}
       rowSpan={rowSpan}
       colSpan={colSpan}
+      scope={scope}
       aria-sort={ariaSort}
       aria-label={ariaLabel}
       onClick={onClick}
@@ -140,7 +156,9 @@ export function GroupHeaderRow({
 }) {
   const isCategory = variant === 'category'
   const content = isCategory ? (
-    <span className="uppercase tracking-wide">{label}</span>
+    <DenseTag variant="category" size="pill">
+      {label}
+    </DenseTag>
   ) : (
     label
   )

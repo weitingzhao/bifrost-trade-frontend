@@ -15,6 +15,16 @@ export {
   denseTableNumCell,
 } from './DenseTable'
 export { InlinePnl, PnlCell } from './PnlDisplay'
+export { DenseTag, DenseTagButton, type DenseTagSize, type DenseTagVariant } from './DenseTag'
+export {
+  denseTagClass,
+  denseCategoryTagCellClass,
+  denseCategoryTagPillClass,
+  denseSymbolTagCellClass,
+  denseSymbolTagPillClass,
+  denseTagVariantFromTone,
+  denseTagVariantFromExecSource,
+} from './denseTagClasses'
 export { ExecSourceBadge } from './ExecSourceBadge'
 export { DenseLinkButton, SymbolLinkButton } from './DenseLinkButton'
 export { IconActionButton } from './IconActionButton'

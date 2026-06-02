@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import {
   DEFAULT_SEGMENT_SIZE,
@@ -8,7 +9,8 @@ import {
 
 export interface SegmentOption {
   value: string
-  label: string
+  label: ReactNode
+  disabled?: boolean
 }
 
 export function SegmentControl({
@@ -18,6 +20,7 @@ export function SegmentControl({
   className,
   size = DEFAULT_SEGMENT_SIZE,
   ariaLabel,
+  role = 'group',
 }: {
   options: SegmentOption[]
   value: string
@@ -25,17 +28,19 @@ export function SegmentControl({
   className?: string
   size?: SegmentControlSize
   ariaLabel?: string
+  role?: string
 }) {
   return (
     <div
       className={cn(segmentGroupClass(size), className)}
-      role="group"
+      role={role}
       aria-label={ariaLabel}
     >
       {options.map(opt => (
         <button
           key={opt.value}
           type="button"
+          disabled={opt.disabled}
           onClick={() => onChange(opt.value)}
           className={segmentButtonClass(value === opt.value, size)}
           aria-pressed={value === opt.value}

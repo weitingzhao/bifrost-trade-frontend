@@ -26,7 +26,11 @@ export interface DonutChartProps {
 const CENTER_INNER_MAX_WIDTH = 70
 
 function centerMainFontSize(variant: DonutCenterVariant, text: string): number {
-  if (variant === 'netliq') return 20
+  if (variant === 'netliq') {
+    if (text.length > 11) return 10
+    if (text.length > 9) return 11
+    return 12
+  }
   if (variant === 'triplet') return text.length > 12 ? 11 : 12
   if (text.length > 9) return 15
   return 18
@@ -101,6 +105,12 @@ export function DonutChart({
   const subLong = (centerSub?.length ?? 0) > 22
   const mainFontSize = centerMain ? centerMainFontSize(centerVariant, centerMain) : 18
   const subFontSize = centerSub ? centerSubFontSize(centerSub) : 11
+  const mainYOffset = centerSub ? (centerVariant === 'netliq' ? -6 : -5) : 1
+  const subYOffset = centerVariant === 'netliq' ? 9 : 12
+  const compressMain =
+    centerMain != null &&
+    centerMain.length > 13 &&
+    centerVariant !== 'netliq'
 
   return (
     <svg
@@ -123,12 +133,12 @@ export function DonutChart({
       {centerMain && (
         <text
           x={CX}
-          y={centerSub ? CY - 5 : CY + 1}
+          y={CY + mainYOffset}
           className={mainClass}
           fontSize={mainFontSize}
           textAnchor="middle"
           dominantBaseline="middle"
-          {...(centerMain.length > 10
+          {...(compressMain
             ? { textLength: CENTER_INNER_MAX_WIDTH, lengthAdjust: 'spacingAndGlyphs' as const }
             : {})}
         >
@@ -138,7 +148,7 @@ export function DonutChart({
       {centerSub && (
         <text
           x={CX}
-          y={CY + 12}
+          y={CY + subYOffset}
           className={cn(styles.centerSub, subLong && styles.centerSubLong)}
           fontSize={subFontSize}
           textAnchor="middle"

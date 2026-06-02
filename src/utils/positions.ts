@@ -102,7 +102,7 @@ export function fmtExecDaysAgo(days: number | null | undefined): string {
 }
 
 /** @deprecated Import from `@/utils/dailyChange` in new code. Re-export for existing call sites. */
-export { pnlColorClass } from '@/utils/dailyChange'
+export { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
 
 export function daysUntilExpiry(expiry: string | undefined): number | null {
   if (!expiry) return null

@@ -118,6 +118,19 @@ export function InstanceTab({
   return (
     <div className={instancePanel.tableWrap}>
         <Table className={instancePanel.sheetTable}>
+          <colgroup>
+            <col style={{ width: '2rem' }} />
+            <col style={{ width: '17rem' }} />
+            <col style={{ width: '9.5rem' }} />
+            <col style={{ width: '7.5rem' }} />
+            <col style={{ width: '6.75rem' }} />
+            <col style={{ width: '8rem' }} />
+            <col style={{ width: '6.5rem' }} />
+            <col style={{ width: '7.5rem' }} />
+            <col style={{ width: '7.5rem' }} />
+            <col style={{ width: '8.25rem' }} />
+            <col style={{ width: '5.75rem' }} />
+          </colgroup>
           <TableHeader>
             <TableRow>
               <TableHead className="w-7" />
@@ -164,9 +177,9 @@ export function InstanceTab({
                   <TableCell className="px-2">
                     <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
                   </TableCell>
-                  <TableCell className="text-xs align-top">
+                  <TableCell className={cn('text-xs', instancePanel.oppCell)}>
                     {id != null ? (
-                      <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex min-w-0 flex-col gap-0.5">
                         {oppName ? <span className={instancePanel.oppPrimary}>{oppName}</span> : null}
                         {onOpenStrategy ? (
                           <button
@@ -188,9 +201,11 @@ export function InstanceTab({
                       <span className={instancePanel.oppPrimary}>{oppName || instLabel}</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs">
+                  <TableCell className={cn('text-xs', instancePanel.contractTypeCell)}>
                     {group.structure_type ? (
-                      <Badge variant="secondary" className="text-[10px]">{structLabel}</Badge>
+                      <Badge variant="secondary" className="max-w-full whitespace-normal text-[10px] leading-snug">
+                        {structLabel}
+                      </Badge>
                     ) : '—'}
                   </TableCell>
                   <TableCell className="text-xs">

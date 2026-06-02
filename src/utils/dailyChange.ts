@@ -51,6 +51,12 @@ export function pnlColorClass(value: number | null | undefined): string {
   return value > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
 }
 
+/** Unrealized PnL — site-wide yellow (warning), not green/red. */
+export function unrealizedPnlColorClass(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return 'text-muted-foreground'
+  return 'text-warning font-semibold'
+}
+
 export function fmtPct(value: number | null | undefined): string {
   if (value == null) return '—'
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`

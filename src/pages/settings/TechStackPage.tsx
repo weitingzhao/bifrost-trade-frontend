@@ -80,7 +80,7 @@ const DENSE_LAYERS: { n: string; where: string; role: string }[] = [
 
 const PRIMITIVE_MAP: { use: string; never: string }[] = [
   { use: 'DenseDataTable + head/row/cell', never: 'New *.module.css tables, replay-* classes' },
-  { use: 'pnlColorClass / PnlCell / InlinePnl', never: 'pnl-positive, inline hex green/red' },
+  { use: 'pnlColorClass / PnlCell / InlinePnl', never: 'Legacy pnl color classes, inline hex green/red' },
   { use: 'SegmentControl / IncludeExcludeToggle', never: 'Custom pill CSS per page' },
   { use: 'IconActionButton', never: 'Hand-rolled 20×20 icon buttons' },
   { use: 'CollapsibleGroup', never: 'Legacy strategyGroup module classes' },

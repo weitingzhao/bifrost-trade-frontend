@@ -198,7 +198,7 @@ export default function AccountsPage() {
         <>
           <OverviewDashboard accounts={accounts} />
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-start">
             <PortfolioCategoryRing accounts={accounts} />
             <NetLiqChart accounts={accounts} />
           </div>

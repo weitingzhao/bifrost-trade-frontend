@@ -24,13 +24,15 @@ alwaysApply: true
 | Numeric columns | `denseTableNumCell` or `PnlCell` | Ad-hoc `text-right` without `font-mono tabular-nums` |
 | PnL color | `pnlColorClass` / `InlinePnl` / `PnlCell` | `pnl-positive`, module `.pnlPositive`, inline green/red hex |
 | Row icon actions | `IconActionButton` | Hand-rolled 20×20 buttons, `.iconBtn`, `window.confirm` |
-| Expand row | `ExpandToggleCell` | Unicode ▶/▼ in module CSS |
+| Expand row | `ExpandToggleCell` + `DenseTableDetailRow` | Unicode ▶/▼ in module CSS |
+| Expand must not shift columns | `DenseDataTable` + `<colgroup>` + `denseTable.detailCellClip` | Detail rows without colgrid / wide content setting width |
 | Segment / Include-Exclude | `SegmentControl` / `IncludeExcludeToggle` | New pill CSS in page modules |
 | Symbol / stock link cell | `SymbolLinkButton` / `DenseLinkButton` | Custom link pill CSS per page |
 | Nested strategy/instance panel | `CollapsibleGroup` (+ `CollapsibleBucketHeader`) | `strategyGroup` / `instanceHeader*` module classes |
 | Nested sub-table | `NestedDenseTable` | Inline `<table className={styles…}>` |
 | Detail fill rows | `DenseTableSubheadRow` / `DenseTableDetailRow` | `.ledgerDetailRow` module CSS |
-| Empty / section title | `denseTable.emptyHint` / `denseTable.sectionTitle` | Page-local empty hint CSS |
+| Empty / section title | `denseTable.emptyHint` / `denseTable.sectionTitle` + `denseTable.sectionBlock` | Page-local empty hint CSS |
+| Execution source label | `ExecSourceBadge` | Hand-rolled Badge / ledger `sourceBadge` CSS per page |
 | Destructive confirm | App `ConfirmDialog` pattern | `window.confirm` / `window.alert` |
 
 ## Agent workflow (every UI change)

@@ -49,7 +49,7 @@ export function PositionsOpenControls({
 
   return (
     <div
-      className="mb-2 flex min-w-0 flex-nowrap items-center gap-x-2 gap-y-1.5 overflow-x-auto border-b border-border/60 py-1.5 [scrollbar-width:thin]"
+      className="mb-2 flex min-w-0 flex-nowrap items-center gap-x-2 gap-y-1.5 dense-scroll-x border-b border-border/60 py-1.5"
       role="toolbar"
       aria-label="Open position filters and tabs"
     >

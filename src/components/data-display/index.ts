@@ -7,12 +7,15 @@ export {
   DenseTableHead,
   DenseTableCell,
   GroupHeaderRow,
+  GroupSubtotalRow,
+  GrandTotalRow,
   NestedDenseTable,
   DenseTableSubheadRow,
   DenseTableDetailRow,
   denseTableNumCell,
 } from './DenseTable'
 export { InlinePnl, PnlCell } from './PnlDisplay'
+export { ExecSourceBadge } from './ExecSourceBadge'
 export { DenseLinkButton, SymbolLinkButton } from './DenseLinkButton'
 export { IconActionButton } from './IconActionButton'
 export { ExpandToggleCell } from './ExpandToggleCell'

@@ -24,6 +24,7 @@ import {
   bubbleGroupClass,
   POSITIONS_BUBBLE_SIZE,
 } from '@/components/positions/charts/bubbleSwitchStyles'
+import { ExecSourceBadge } from '@/components/data-display'
 import {
   defaultOpenedAtFromExecution,
   executionQtyLabel,
@@ -48,29 +49,6 @@ interface Props {
   opportunities: StrategyOpportunity[]
   onClose: () => void
   onSuccess: () => void
-}
-
-function ExecSourceBadge({ source }: { source?: string | null }) {
-  const s = (source ?? '').trim()
-  if (!s) return <span className="text-muted-foreground">—</span>
-  const norm = s.toLowerCase()
-  let cls = 'bg-muted text-muted-foreground'
-  let label = s
-  if (norm === 'flex' || norm === 'flex_trades') {
-    cls = 'bg-emerald-500/15 text-emerald-500'
-    label = 'flex'
-  } else if (norm === 'tws_event' || norm === 'tws_client') {
-    cls = 'bg-sky-500/15 text-sky-400'
-    label = 'tws-client'
-  } else if (norm === 'journal_closed') {
-    cls = 'bg-amber-500/15 text-amber-500'
-    label = 'journal'
-  }
-  return (
-    <span className={cn('inline-flex rounded px-1.5 py-0 text-[10px] font-medium uppercase', cls)} title={s}>
-      {label}
-    </span>
-  )
 }
 
 function initLinkForm(context: LinkExecutionContext | null) {
@@ -180,7 +158,7 @@ function LinkExecutionModalBody({
   const eTs = ex?.time != null ? Number(ex.time) : null
 
   return (
-      <DialogContent className="max-w-lg gap-0 p-0 overflow-hidden">
+      <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-2 space-y-1">
           <DialogTitle>Assign strategy</DialogTitle>
           {execId != null && (

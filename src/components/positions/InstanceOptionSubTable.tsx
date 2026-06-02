@@ -5,7 +5,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { fmtUsd, fmtExpiry, rightLabel, fmtDate, fmtDaysAgo, daysUntilExpiry, pnlColorClass } from '@/utils/positions'
+import { fmtUsd, fmtExpiry, rightLabel, fmtDate, fmtDaysAgo, daysUntilExpiry, unrealizedPnlColorClass } from '@/utils/positions'
 import { optionLastStrikePctClassFromQty } from '@/utils/openOptionsTab'
 import { ExecutionRow } from './ExecutionRow'
 import type { OpenOptionPosition, Execution, InstanceAllGroup } from '@/types/positions'
@@ -203,12 +203,12 @@ export function InstanceOptionSubTable({
                   </TableCell>
                   <TableCell className="text-right text-xs">
                     {livePnl != null && (
-                      <div className={cn('font-mono font-semibold', pnlColorClass(livePnl))}>
+                      <div className={cn('font-mono font-semibold', unrealizedPnlColorClass(livePnl))}>
                         {fmtUsd(livePnl)}
                         <span className="text-[10px] font-normal text-muted-foreground ml-1">live</span>
                       </div>
                     )}
-                    <div className={cn('font-mono font-semibold', pnlColorClass(pos.unrealized_pnl), livePnl != null && 'text-[11px] text-muted-foreground font-normal')}>
+                    <div className={cn('font-mono font-semibold', unrealizedPnlColorClass(pos.unrealized_pnl), livePnl != null && 'text-[11px] font-normal')}>
                       {fmtUsd(pos.unrealized_pnl)}
                       {livePnl != null && <span className="text-[10px] ml-1">snap</span>}
                     </div>

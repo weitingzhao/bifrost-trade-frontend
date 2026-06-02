@@ -112,6 +112,14 @@ if [[ -f "$ledger_css" ]]; then
   fi
 fi
 
+# Accounts: Dense migration — no shadcn Table except Phase 1 allowlist
+accounts_table=$(grep -rl "@/components/ui/table" src/components/accounts --include='*.tsx' 2>/dev/null \
+  | grep -v OptionPositionsTable.tsx || true)
+if [[ -n "$accounts_table" ]]; then
+  echo "$accounts_table" >&2
+  report "shadcn Table under src/components/accounts (OptionPositionsTable allowlisted until Phase 1)"
+fi
+
 if [[ "$fail" -ne 0 ]]; then
   exit 1
 fi

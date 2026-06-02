@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
-import { pnlColorClass } from '@/utils/dailyChange'
+import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { Link } from 'react-router-dom'
 import { Compass, ScanSearch } from 'lucide-react'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
@@ -157,7 +157,7 @@ export function OptionsTab({
 
   if (sorted.length === 0) {
     return (
-      <div className="space-y-1">
+      <div className={denseTable.sectionBlock}>
         <h4 className={denseTable.sectionTitle}>Option positions</h4>
         <p className={denseTable.emptyHint}>No open option positions under the current filters.</p>
       </div>
@@ -165,7 +165,7 @@ export function OptionsTab({
   }
 
   return (
-    <div className="space-y-2">
+    <div className={denseTable.sectionBlock}>
       <h4 className={denseTable.sectionTitle}>Option positions</h4>
       <DenseDataTable>
         <colgroup>
@@ -178,7 +178,7 @@ export function OptionsTab({
           <col style={{ width: '5.25rem' }} />
           <col style={{ width: '7rem' }} />
           <col style={{ width: '4.75rem' }} />
-          <col style={{ width: '4.5rem' }} />
+          <col style={{ width: '6.75rem' }} />
           <col style={{ width: '8.5rem' }} />
           <col style={{ width: '5.5rem' }} />
           <col style={{ width: '5.5rem' }} />
@@ -258,12 +258,12 @@ export function OptionsTab({
                     <ExpandToggleCell expanded={isExpanded} onToggle={() => toggleExpand(posKey)} />
                   ) : null}
                 </DenseTableCell>
-                <DenseTableCell>
+                <DenseTableCell className={denseTable.detailCellClip}>
                   {iconFill !== 'empty' && <InstanceIcon fill={iconFill} />}
                   {onInspect ? (
                     <button
                       type="button"
-                      className="text-left font-semibold text-sky-600 dark:text-sky-400 hover:underline font-mono"
+                      className="block w-full truncate text-left font-semibold text-sky-600 dark:text-sky-400 hover:underline font-mono"
                       onClick={e => {
                         e.stopPropagation()
                         onInspect(pos)
@@ -274,7 +274,7 @@ export function OptionsTab({
                       {pos.strike != null ? ` ${pos.strike}` : ''}
                     </button>
                   ) : (
-                    <strong className="font-mono">{contractButtonLabel(pos)}</strong>
+                    <strong className="block truncate font-mono">{contractButtonLabel(pos)}</strong>
                   )}
                 </DenseTableCell>
                 <DenseTableCell>
@@ -327,9 +327,11 @@ export function OptionsTab({
                 <DenseTableCell>
                   {ts != null ? (
                     <>
-                      <div>{fmtDate(ts)}</div>
+                      <div className="whitespace-nowrap">{fmtDate(ts)}</div>
                       {fmtDaysAgo(ts) && (
-                        <div className={denseTable.mutedMeta}>{fmtDaysAgo(ts)}</div>
+                        <div className={cn('text-[length:var(--text-dense-meta)] font-semibold text-warning whitespace-nowrap')}>
+                          {fmtDaysAgo(ts)}
+                        </div>
                       )}
                     </>
                   ) : (
@@ -339,12 +341,12 @@ export function OptionsTab({
                 <DenseTableCell className="font-mono tabular-nums">
                   {livePnl != null && (
                     <div>
-                      <span className={cn('font-semibold', pnlColorClass(livePnl))}>{fmtUsd(livePnl)}</span>
+                      <span className={unrealizedPnlColorClass(livePnl)}>{fmtUsd(livePnl)}</span>
                       <span className={cn('ml-1', denseTable.mutedMeta)}>live</span>
                     </div>
                   )}
                   <div className={livePnl != null ? 'text-[length:var(--text-dense-meta)]' : undefined}>
-                    <span className={cn('font-semibold', pnlColorClass(pos.unrealized_pnl))}>
+                    <span className={unrealizedPnlColorClass(pos.unrealized_pnl)}>
                       {fmtUsd(pos.unrealized_pnl)}
                     </span>
                     {livePnl != null && (
@@ -436,7 +438,7 @@ export function OptionsTab({
               Total
             </td>
             <td className="px-[var(--table-cell-px)] py-[var(--table-cell-py)] text-xs font-mono tabular-nums">
-              <span className={pnlColorClass(totalUnPnl)}>{fmtUsd(totalUnPnl)}</span>
+              <span className={unrealizedPnlColorClass(totalUnPnl)}>{fmtUsd(totalUnPnl)}</span>
             </td>
           </tr>
         </tfoot>

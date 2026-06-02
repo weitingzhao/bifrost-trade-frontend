@@ -186,13 +186,13 @@ export function LedgerOpenOptionSection({
 
   const sectionTitleClass = cn(
     denseTable.sectionTitle,
-    'mb-2 mt-0 inline-flex items-center gap-1.5 text-[0.8125rem]',
+    'inline-flex items-center gap-1.5',
   )
 
   return (
     <>
       {openActiveGroups.length > 0 && (
-        <div>
+        <div className={denseTable.sectionBlock}>
           <h5 className={sectionTitleClass}>
             Open Option
             <InfoTooltip text="Option positions with non-zero net quantity and future expiry. They are excluded from the Summary (fully closed trades only) and the Closed Option table above." />
@@ -206,7 +206,7 @@ export function LedgerOpenOptionSection({
       )}
 
       {openExpiredGroups.length > 0 && (
-        <div className="mt-4">
+        <div className={cn(denseTable.sectionBlock, 'mt-4')}>
           <h5 className={sectionTitleClass}>
             Expired but not closed
             <InfoTooltip text="These option contracts have expired but net quantity is not zero. Some executions may be missing in the trade ledger; add the missing trades to close the position." />

@@ -1,35 +1,16 @@
 import { Pencil, Link2, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  DenseTableRow,
+  DenseTableDetailRow,
   DenseTableCell,
   IconActionButton,
+  ExecSourceBadge,
   denseTable,
 } from '@/components/data-display'
 import { fmtUsd, fmtDate, fmtDaysAgo } from '@/utils/positions'
+import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import type { OpenOptionPosition, Execution } from '@/types/positions'
-
-function ExecSourceBadge({ source }: { source: string | null | undefined }) {
-  const s = (source ?? '').trim()
-  if (!s) return <span className={denseTable.mutedMeta}>—</span>
-  const norm = s.toLowerCase()
-  let label = s
-  let className = 'border-border text-muted-foreground'
-  if (norm === 'flex' || norm === 'flex_trades') {
-    label = 'flex'
-    className = 'border-sky-500/40 text-sky-600 dark:text-sky-400'
-  } else if (norm === 'tws_event' || norm === 'tws_client') {
-    label = 'tws-client'
-    className = 'border-violet-500/40 text-violet-600 dark:text-violet-400'
-  }
-  return (
-    <Badge variant="outline" className={cn('text-[length:var(--text-dense-meta)] px-1.5 py-0 font-normal', className)} title={s}>
-      {label}
-    </Badge>
-  )
-}
 
 interface Props {
   pos: OpenOptionPosition
@@ -69,12 +50,16 @@ export function OpenOptionExecTableRow({
   const execInstanceId = exec.strategy_instance_id
   const isOffTrack = pos.kind === 'offtrack'
 
+  const execLabel = `↳ ${bookLabel} exec #${exec.account_executions_id ?? '?'}`
+  const execTitle =
+    execInstanceId != null ? `${execLabel} · strategy #${execInstanceId}` : execLabel
+
   return (
-    <DenseTableRow className="bg-secondary/15">
+    <DenseTableDetailRow>
       <DenseTableCell className="w-9">{null}</DenseTableCell>
-      <DenseTableCell colSpan={2} className="pl-6">
-        <div className="text-[length:var(--text-dense)]">
-          ↳ {bookLabel} exec #{exec.account_executions_id ?? '?'}
+      <DenseTableCell colSpan={2} className={cn('pl-6', denseTable.detailCellClip)}>
+        <div className={denseTable.detailRowLabel} title={execTitle}>
+          {execLabel}
           {execInstanceId != null ? (
             <>
               {' '}
@@ -102,22 +87,28 @@ export function OpenOptionExecTableRow({
       </DenseTableCell>
       <DenseTableCell className="font-mono tabular-nums">{fmtUsd(ePrice)}</DenseTableCell>
       <DenseTableCell>{null}</DenseTableCell>
+      <DenseTableCell>{null}</DenseTableCell>
       <DenseTableCell>
         {eTs != null && Number.isFinite(eTs) ? (
           <>
-            {fmtDate(eTs)}
+            <div className="whitespace-nowrap">{fmtDate(eTs)}</div>
             {fmtDaysAgo(eTs) ? (
-              <span className={cn('ml-1', denseTable.mutedMeta)}>{fmtDaysAgo(eTs)}</span>
+              <div className={cn('text-[length:var(--text-dense-meta)] font-semibold text-warning whitespace-nowrap')}>
+                {fmtDaysAgo(eTs)}
+              </div>
             ) : null}
           </>
         ) : (
           '—'
         )}
       </DenseTableCell>
-      <DenseTableCell className="font-mono tabular-nums">{eComm ? fmtUsd(eComm) : '—'}</DenseTableCell>
-      <DenseTableCell className={denseTable.mutedMeta}>{null}</DenseTableCell>
-      <DenseTableCell className={cn('max-w-[8.5rem] truncate', denseTable.mutedMeta)}>
-        {exec.strategy_opportunity_name?.trim() || '—'}
+      <DenseTableCell className={cn('font-mono tabular-nums', denseTable.detailCellClip, unrealizedPnlColorClass(eComm || null))}>
+        {eComm ? fmtUsd(eComm) : '—'}
+      </DenseTableCell>
+      <DenseTableCell className={cn(denseTable.detailCellClip, denseTable.mutedMeta)}>
+        <span className="block truncate" title={exec.strategy_opportunity_name?.trim() || undefined}>
+          {exec.strategy_opportunity_name?.trim() || '—'}
+        </span>
       </DenseTableCell>
       <DenseTableCell>
         <span className="inline-flex items-center gap-0.5">
@@ -170,6 +161,6 @@ export function OpenOptionExecTableRow({
           </IconActionButton>
         </span>
       </DenseTableCell>
-    </DenseTableRow>
+    </DenseTableDetailRow>
   )
 }

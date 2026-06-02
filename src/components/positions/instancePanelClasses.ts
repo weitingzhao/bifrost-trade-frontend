@@ -1,17 +1,21 @@
 /** Tailwind class bundles for Instance tab detail panels (replaces InstanceStrategyPanel.module.css). */
+import { cn } from '@/lib/utils'
+
 export const instancePanel = {
   filters:
-    'mb-3 flex min-w-0 flex-nowrap items-center gap-x-3 gap-y-2 overflow-x-auto [scrollbar-width:thin]',
+    'mb-3 flex min-w-0 flex-nowrap items-center gap-x-3 gap-y-2 dense-scroll-x',
   filterBubbleRow: 'inline-flex shrink-0 flex-nowrap items-center gap-x-2 gap-y-1',
   filterBubbleLabel:
     'shrink-0 whitespace-nowrap text-[0.72rem] font-semibold uppercase tracking-wide text-muted-foreground',
-  tableWrap: 'w-full min-w-0 overflow-x-auto',
-  sheetTable: 'w-full table-fixed',
+  tableWrap: cn('w-full min-w-0', 'dense-scroll-x'),
+  sheetTable: 'w-full min-w-[68rem] table-fixed',
   sheetRow:
-    'cursor-pointer hover:bg-muted/35 [&_td]:whitespace-nowrap [&_td]:text-[0.8rem] [&_td:nth-child(4)]:whitespace-normal [&_td:nth-child(4)]:align-top',
+    'cursor-pointer hover:bg-muted/35 [&_td]:whitespace-nowrap [&_td]:text-[0.8rem] [&_td:nth-child(2)]:whitespace-normal [&_td:nth-child(2)]:align-top [&_td:nth-child(3)]:whitespace-normal [&_td:nth-child(4)]:whitespace-normal [&_td:nth-child(4)]:align-top',
   sheetRowExpanded: 'bg-muted/25',
+  oppCell: 'max-w-0 overflow-hidden align-top',
   execQtyCell: 'max-w-36 overflow-hidden text-ellipsis tabular-nums',
-  oppPrimary: 'font-semibold leading-snug text-foreground',
+  contractTypeCell: 'align-top whitespace-normal',
+  oppPrimary: 'block font-semibold leading-snug text-foreground line-clamp-2 break-words',
   oppSecondary:
     'm-0 cursor-pointer border-none bg-transparent p-0 text-left font-mono text-[0.72rem] font-semibold leading-tight text-link no-underline transition-colors hover:text-link-hover hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link',
   detailRow: 'border-b border-border/45 bg-transparent hover:bg-transparent',

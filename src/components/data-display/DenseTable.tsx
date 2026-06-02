@@ -1,27 +1,29 @@
 import type { ComponentProps, KeyboardEvent, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
-import { denseTableCellPadding } from './denseTableClasses'
+import { denseTable, denseTableCellPadding } from './denseTableClasses'
 
 const thBase = cn(
   denseTableCellPadding,
-  'text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground',
-  'border-b border-border bg-secondary/40 whitespace-nowrap',
+  'max-w-0 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground',
+  'border-b border-border bg-secondary/40 whitespace-nowrap overflow-hidden',
 )
 const tdBase = cn(
   denseTableCellPadding,
-  'text-[length:var(--text-dense)] border-b border-border/60 align-middle',
+  'max-w-0 text-[length:var(--text-dense)] border-b border-border/60 align-middle overflow-hidden',
 )
 
 export function DenseDataTable({
   children,
   wrapClassName,
+  tableClassName,
 }: {
   children: ReactNode
   wrapClassName?: string
+  tableClassName?: string
 }) {
   return (
-    <div className={cn('overflow-x-auto rounded-lg border border-border', wrapClassName)}>
-      <table className="w-full min-w-[320px] border-collapse text-[length:var(--text-dense)]">
+    <div className={cn('dense-scroll-x rounded-lg border border-border', wrapClassName)}>
+      <table className={cn(denseTable.table, tableClassName)}>
         {children}
       </table>
     </div>
@@ -126,19 +128,99 @@ export function DenseTableCell({
 export function GroupHeaderRow({
   colSpan,
   label,
+  onClick,
+  variant = 'default',
+  title,
 }: {
   colSpan: number
   label: ReactNode
+  onClick?: () => void
+  variant?: 'default' | 'category'
+  title?: string
 }) {
+  const isCategory = variant === 'category'
+  const content = isCategory ? (
+    <span className="uppercase tracking-wide">{label}</span>
+  ) : (
+    label
+  )
+
   return (
-    <tr className="bg-secondary/50">
+    <tr className={cn('bg-secondary/50', onClick && 'hover:bg-secondary/70')}>
       <td
         colSpan={colSpan}
-        className="px-[var(--table-cell-px)] py-1 text-xs font-semibold text-muted-foreground"
+        className={cn(
+          'px-[var(--table-cell-px)] py-1 text-xs font-semibold text-muted-foreground',
+          onClick && 'cursor-pointer',
+        )}
       >
-        {label}
+        {onClick ? (
+          <button
+            type="button"
+            className="w-full text-left hover:text-foreground transition-colors"
+            onClick={onClick}
+            title={title}
+          >
+            {content}
+          </button>
+        ) : (
+          content
+        )}
       </td>
     </tr>
+  )
+}
+
+export function GroupSubtotalRow({
+  labelColSpan,
+  label,
+  children,
+  className,
+}: {
+  labelColSpan: number
+  label: ReactNode
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <DenseTableRow
+      className={cn(
+        'border-t border-dashed border-border/60 bg-secondary/20 hover:bg-secondary/20',
+        className,
+      )}
+    >
+      <DenseTableCell
+        colSpan={labelColSpan}
+        className={cn('italic text-muted-foreground text-[length:var(--text-dense-meta)]')}
+      >
+        {label}
+      </DenseTableCell>
+      {children}
+    </DenseTableRow>
+  )
+}
+
+export function GrandTotalRow({
+  labelColSpan,
+  label,
+  children,
+  className,
+}: {
+  labelColSpan: number
+  label: ReactNode
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <DenseTableRow
+      className={cn(
+        'border-t-2 border-border bg-secondary/30 hover:bg-secondary/30 font-semibold',
+        className,
+      )}
+    >
+      <DenseTableCell colSpan={labelColSpan}>{label}</DenseTableCell>
+      {children}
+    </DenseTableRow>
   )
 }
 

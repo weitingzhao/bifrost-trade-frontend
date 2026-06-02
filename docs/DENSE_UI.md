@@ -57,6 +57,26 @@ import {
 
 **Reference implementation:** [StocksTab.tsx](../src/components/positions/StocksTab.tsx) (also used by Fixed Income and Cash-like tabs).
 
+### Fixed columns (expand / collapse)
+
+`DenseDataTable` uses **`table-layout: fixed`** (`denseTable.table`) so column widths stay stable when detail rows are shown or hidden.
+
+Tables with expandable child rows **must** define a `<colgroup>` with explicit column widths (see [OptionsTab.tsx](../src/components/positions/OptionsTab.tsx)). Detail rows must occupy the **same column grid** as parent rows (use `colSpan` where the label spans multiple columns — never skip a column slot).
+
+Long labels in detail rows: clip with `denseTable.detailCellClip` + `denseTable.detailRowLabel` (truncate + `title` tooltip). Do not rely on wide cell content to set column width.
+
+```tsx
+<DenseTableDetailRow>
+  <DenseTableCell />
+  <DenseTableCell colSpan={2} className={cn('pl-6', denseTable.detailCellClip)}>
+    <div className={denseTable.detailRowLabel} title="Full label for tooltip">
+      ↳ [Final] exec #123 · strategy #61
+    </div>
+  </DenseTableCell>
+  {/* one cell per remaining column, including empty placeholders */}
+</DenseTableDetailRow>
+```
+
 ## Trade Ledger
 
 Content tables (Instance, Options, Stocks / Fixed Income / Cash-like) use the same dense primitives as Positions:
@@ -84,6 +104,27 @@ Always use `pnlColorClass` from `@/utils/dailyChange` or `InlinePnl` / `PnlCell`
 ## Segment controls
 
 Use `SegmentControl` / `IncludeExcludeToggle` from `data-display` instead of custom CSS pill groups.
+
+## Table section layout
+
+Wrap a subsection title and its `DenseDataTable` in `denseTable.sectionBlock` (12px gap). Use `denseTable.sectionTitle` for the heading — do not stack the title flush against the table border.
+
+```tsx
+<div className={denseTable.sectionBlock}>
+  <h4 className={denseTable.sectionTitle}>Option positions</h4>
+  <DenseDataTable>...</DenseDataTable>
+</div>
+```
+
+## Execution source badges
+
+Use `ExecSourceBadge` from `data-display` for flex / tws-client / journal / manual source labels in dense tables (Positions option exec rows, Trade Ledger, Performance on-the-fly). Do not hand-roll badge colors per page.
+
+```tsx
+import { ExecSourceBadge } from '@/components/data-display'
+
+<ExecSourceBadge source={exec.source} />
+```
 
 ## Icon row actions
 
@@ -114,6 +155,38 @@ import {
 ```
 
 Use `variant="inset"` for nested instance rows inside an opportunity group.
+
+## Category grouping + subtotals (Accounts)
+
+For tables grouped by category with per-group subtotals and a grand total row:
+
+```tsx
+import {
+  GroupHeaderRow,
+  GroupSubtotalRow,
+  GrandTotalRow,
+  InlinePnl,
+  denseTableNumCell,
+} from '@/components/data-display'
+
+<GroupHeaderRow
+  colSpan={13}
+  label="SEPA"
+  variant="category"
+  onClick={openCategoriesModal}
+  title="Manage categories and assign to positions"
+/>
+<GroupSubtotalRow labelColSpan={3} label="SEPA subtotal">
+  {/* DenseTableCell children for numeric columns */}
+</GroupSubtotalRow>
+<GrandTotalRow labelColSpan={3} label="Stock Total">
+  {/* same numeric cells */}
+</GrandTotalRow>
+```
+
+**Reference:** [StockPositionsTable.tsx](../src/components/accounts/StockPositionsTable.tsx) · metrics in [accountsStockPositions.ts](../src/utils/accountsStockPositions.ts)
+
+Use separate columns for Daily % / Daily $ ( `InlinePnl` per cell ), not stacked `PnlCell`, when matching Legacy Accounts layout.
 
 ## Allowed CSS exceptions
 

@@ -57,6 +57,7 @@ Copy and track:
 | Pattern | File |
 |---------|------|
 | Stock positions table | `src/components/positions/StocksTab.tsx` |
+| Accounts stock positions (category + subtotals) | `src/components/accounts/StockPositionsTable.tsx` |
 | Option exec row actions | `src/components/positions/OpenOptionExecTableRow.tsx` |
 | Ledger option groups | `src/pages/portfolio/ledger/OptGroupsTable.tsx` |
 | Collapsible strategy card | `src/pages/portfolio/ledger/LedgerStrategyGroup.tsx` |

@@ -44,6 +44,92 @@ export type ChartDonutSegment = DonutSegment & {
   optionDetailFoot?: OptionDetailFootnote
 }
 
+export interface PortfolioCategoryPieFlags {
+  includeFi: boolean
+  includeOpt: boolean
+}
+
+export interface PortfolioCategoryPieData {
+  coreStockMV: number
+  fixedIncomeMV: number
+  cashMergedMV: number
+  optionsMV: number
+  denom: number
+  pStock: number
+  pFixedIncome: number
+  pCashMerged: number
+  pOpt: number
+  netLiq: number | null
+  simpleCenterPct: boolean
+  includeFiInChart: boolean
+  includeOptInChart: boolean
+  ringHasData: boolean
+}
+
+/** Accounts → Portfolio by category (Stock / FI / Cash+cash-like / Options). */
+export function buildPortfolioCategoryPieData(
+  accounts: IbAccountSnapshot[],
+  flags: PortfolioCategoryPieFlags,
+): PortfolioCategoryPieData {
+  let coreStockMV = 0
+  let fixedIncomeMV = 0
+  let cashLikeMV = 0
+  let optionsMV = 0
+  let totalCash = 0
+  let totalNetLiq = 0
+
+  for (const account of accounts) {
+    const cash = parseSummaryNumber(account, 'TotalCashValue')
+    if (cash != null) totalCash += cash
+    const nlq = parseSummaryNumber(account, 'NetLiquidation')
+    if (nlq != null) totalNetLiq += nlq
+
+    for (const pos of account.positions ?? []) {
+      const st = (pos.secType ?? '').toUpperCase()
+      const mv = ibPositionMarketValue(pos)
+      if (st === 'OPT') {
+        optionsMV += mv
+        continue
+      }
+      const cat = String(pos.category ?? '').trim()
+      if (isLedgerFixedIncomeCategory(cat)) fixedIncomeMV += mv
+      else if (isLedgerCashLikeCategory(cat)) cashLikeMV += mv
+      else coreStockMV += mv
+    }
+  }
+
+  const wCash = Math.max(0, totalCash)
+  const cashMergedMV = wCash + Math.max(0, cashLikeMV)
+  const wCore = Math.max(0, coreStockMV)
+  const wFi = Math.max(0, fixedIncomeMV)
+  const wOpt = Math.max(0, optionsMV)
+
+  const wFiIn = flags.includeFi ? wFi : 0
+  const wOptIn = flags.includeOpt ? wOpt : 0
+  const denom = wCore + wFiIn + cashMergedMV + wOptIn
+
+  const netLiq = totalNetLiq > 0 ? totalNetLiq : null
+  const simpleCenterPct = !flags.includeFi && !flags.includeOpt && denom > 0
+  const ringHasData = wCore + wFi + cashMergedMV + wOpt > 0
+
+  return {
+    coreStockMV: wCore,
+    fixedIncomeMV: wFi,
+    cashMergedMV,
+    optionsMV: wOpt,
+    denom,
+    pStock: denom > 0 ? wCore / denom : 0,
+    pFixedIncome: denom > 0 && flags.includeFi ? wFi / denom : 0,
+    pCashMerged: denom > 0 && cashMergedMV > 0 ? cashMergedMV / denom : 0,
+    pOpt: denom > 0 && flags.includeOpt ? wOpt / denom : 0,
+    netLiq,
+    simpleCenterPct,
+    includeFiInChart: flags.includeFi,
+    includeOptInChart: flags.includeOpt,
+    ringHasData,
+  }
+}
+
 export interface AssetMixIncludeFlags {
   includeFi: boolean
   includeCashLike: boolean

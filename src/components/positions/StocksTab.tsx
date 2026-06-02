@@ -97,7 +97,7 @@ export function StocksTab({
 
   if (filtered.length === 0) {
     return (
-      <div className="min-w-0">
+      <div className={denseTable.sectionBlock}>
         <h5 className={denseTable.sectionTitle}>{title}</h5>
         <p className={denseTable.emptyHint}>{emptyHint}</p>
       </div>
@@ -105,7 +105,7 @@ export function StocksTab({
   }
 
   return (
-    <div className="min-w-0">
+    <div className={denseTable.sectionBlock}>
       <h5 className={denseTable.sectionTitle}>{title}</h5>
       <DenseDataTable>
         <DenseTableHeader>

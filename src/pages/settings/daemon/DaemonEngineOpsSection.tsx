@@ -1,7 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { Cpu } from 'lucide-react'
-import { StatusLamp } from '@/components/StatusLamp'
+import { useMemo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -14,46 +11,24 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import type { StatusResponse } from '@/types/monitor'
 import type { MarketIngestAction } from '@/api/ops'
-import { getOpsToken } from '@/api/ops'
-import {
-  useMarketIngestServices,
-  useOpsHealth,
-  useOpsCapabilities,
-  useControlMarketIngest,
-} from '@/hooks/useSocketServices'
-import { useIngestControlPoll } from '@/hooks/useIngestControlPoll'
-import {
-  aggregateDaemonProcessesHealthFromStatus,
-  aggregateIngestRedisHealthLamp,
-  marketIngestServicesForDaemonAggregate,
-  type MarketIngestServiceRow,
-} from '@/utils/socketIngestLamp'
 import {
   formatAccountSyncOpsError,
-  normalizedPageDevProd,
-  socketServicesHostColumnDisplay,
 } from '@/utils/ingestOpsShared'
-import { QUERY_KEYS } from '@/constants/queryKeys'
 import { OpsAuthBar } from '@/pages/settings/socket/OpsAuthBar'
-import { OpsHostEnvPill } from '@/pages/settings/socket/OpsHostEnvPill'
 import { LocalControlAgentPanel } from '@/pages/settings/socket/LocalControlAgentPanel'
 import { IngestServicesTable } from '@/pages/settings/socket/IngestServicesTable'
+import type { MarketIngestServiceRow } from '@/utils/socketIngestLamp'
+import {
+  CLOSED_DAEMON_CONFIRM,
+  type useDaemonEngineOps,
+} from './useDaemonEngineOps'
+import {
+  daemonDialogErrorClass,
+  daemonPageIntroClass,
+  daemonProcessSectionClass,
+} from './daemonUi'
 
-type ConfirmState = {
-  open: boolean
-  title: string
-  message: string
-  svc: MarketIngestServiceRow | null
-  action: MarketIngestAction | null
-}
-
-const CLOSED_CONFIRM: ConfirmState = {
-  open: false,
-  title: '',
-  message: '',
-  svc: null,
-  action: null,
-}
+type DaemonOps = ReturnType<typeof useDaemonEngineOps>
 
 function confirmMessage(svc: MarketIngestServiceRow, action: MarketIngestAction): string {
   if (svc.id === 'account_sync_daemon') {
@@ -80,91 +55,50 @@ function confirmMessage(svc: MarketIngestServiceRow, action: MarketIngestAction)
   return `Restart ${svc.label}? Brief outage; equivalent to stop then start.`
 }
 
-export function DaemonEngineOpsSection({ status }: { status: StatusResponse | null }) {
-  const [token, setToken] = useState(() => getOpsToken())
-  const [elapsed, setElapsed] = useState(0)
-  const [wallNowSec, setWallNowSec] = useState(() => Math.floor(Date.now() / 1000))
-  const [confirm, setConfirm] = useState<ConfirmState>(CLOSED_CONFIRM)
-  const [actionError, setActionError] = useState<string | null>(null)
+export function DaemonEngineOpsSection({
+  status,
+  ops,
+}: {
+  status: StatusResponse | null
+  ops: DaemonOps
+}) {
+  const {
+    token,
+    elapsed,
+    wallNowSec,
+    confirm,
+    setConfirm,
+    actionError,
+    setActionError,
+    daemonServices,
+    engineConfigMissing,
+    opsErr,
+    ingestLoading,
+    ingestError,
+    opsHealth,
+    caps,
+    controlMutation,
+    startingIds,
+    stoppingIds,
+    onControlQueued,
+    canOperate,
+    disableScript,
+    pageEnv,
+    refreshAll,
+    handleTokenChange,
+  } = ops
 
-  const qc = useQueryClient()
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setElapsed(e => e + 1)
-      setWallNowSec(Math.floor(Date.now() / 1000))
-    }, 1_000)
-    return () => clearInterval(id)
-  }, [])
-
-  useEffect(() => {
-    queueMicrotask(() => setElapsed(0))
-  }, [status])
-
-  const { data: ingestData, isLoading: ingestLoading, isError: ingestError } =
-    useMarketIngestServices(token)
-  const { data: opsHealth } = useOpsHealth(token)
-  const { data: caps } = useOpsCapabilities(token)
-  const controlMutation = useControlMarketIngest(token)
-
-  const allServices = ingestData?.services ?? []
-  const daemonServices = marketIngestServicesForDaemonAggregate(allServices)
-  const engineConfigMissing = !ingestLoading && !ingestError && !daemonServices.some(s => s.id === 'trading_engine')
-
-  const opsErr = useMemo(() => {
-    if (ingestError) return 'Failed to load Ops services'
-    if (ingestData && typeof ingestData.error === 'string' && ingestData.error.trim()) {
-      return ingestData.error
-    }
-    return null
-  }, [ingestError, ingestData])
-
-  const { startingIds, stoppingIds, onControlQueued, refresh } =
-    useIngestControlPoll(daemonServices)
-
-  const canOperate = caps?.capabilities?.can_operate === true
-  const disableScript =
-    opsHealth?.local_control === 'subprocess' && opsHealth.market_ingest_script_control !== true
-  const pageEnv = normalizedPageDevProd(opsHealth?.config_profile ?? null)
-
-  const hostColumn = useMemo(
-    () => socketServicesHostColumnDisplay({
-      configProfile: opsHealth?.config_profile ?? null,
-      localControl: opsHealth?.local_control ?? null,
-      marketIngestScriptControl: opsHealth?.market_ingest_script_control === true,
-    }),
-    [opsHealth],
-  )
-
-  const rollup = useMemo(() => {
-    if (daemonServices.length > 0) {
-      return aggregateIngestRedisHealthLamp(daemonServices, status)
-    }
-    return aggregateDaemonProcessesHealthFromStatus(status)
-  }, [daemonServices, status])
-
-  const rollupLamp = rollup.lamp === 'none' ? 'gray' : rollup.lamp
-
-  const refreshAll = useCallback(() => {
-    refresh()
-    void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.capabilities })
-    void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.opsHealth })
-  }, [refresh, qc])
-
-  function handleTokenChange(t: string) {
-    setToken(t)
-    void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.ingestServices })
-    void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.opsHealth })
-    void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.capabilities })
-  }
-
-  function openConfirm(svc: MarketIngestServiceRow, action: MarketIngestAction) {
-    const actionLabels: Record<MarketIngestAction, string> = {
+  const actionLabels = useMemo(
+    (): Record<MarketIngestAction, string> => ({
       start: 'Start',
       stop: 'Stop',
       restart: 'Restart',
       reset: 'Reset',
-    }
+    }),
+    [],
+  )
+
+  function openConfirm(svc: MarketIngestServiceRow, action: MarketIngestAction) {
     setActionError(null)
     setConfirm({
       open: true,
@@ -183,7 +117,7 @@ export function DaemonEngineOpsSection({ status }: { status: StatusResponse | nu
         serviceId: confirm.svc.id,
         action: confirm.action,
       })
-      setConfirm(CLOSED_CONFIRM)
+      setConfirm(CLOSED_DAEMON_CONFIRM)
       if (result.queued) {
         onControlQueued(confirm.svc.id, confirm.action)
       } else {
@@ -199,22 +133,12 @@ export function DaemonEngineOpsSection({ status }: { status: StatusResponse | nu
   }
 
   return (
-    <section className="space-y-0" aria-labelledby="daemon-ops-heading">
+    <div className={daemonProcessSectionClass} aria-label="Daemon process control">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 space-y-2">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <Cpu className="h-5 w-5 text-primary shrink-0" aria-hidden />
-            <StatusLamp lamp={rollupLamp} className="h-3 w-3" title={rollup.title} />
-            <h1 id="daemon-ops-heading" className="text-2xl font-semibold tracking-tight">Daemon</h1>
-          </div>
-          <p className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
-            <span title={hostColumn.title}>This Ops instance (config / executor)</span>
-            <OpsHostEnvPill pill={hostColumn.pill} title={hostColumn.title} />
-          </p>
-          <p className="text-xs text-muted-foreground max-w-2xl">
-            Ops API: POST /ops/market-ingest/control for systemd start/stop. Authenticate here or on Settings → Socket; the token is shared.
-          </p>
-        </div>
+        <p className={daemonPageIntroClass}>
+          Ops API: POST /ops/market-ingest/control for systemd start/stop. Authenticate here or on
+          Settings → Socket; the token is shared.
+        </p>
         <OpsAuthBar
           token={token}
           caps={caps}
@@ -224,12 +148,12 @@ export function DaemonEngineOpsSection({ status }: { status: StatusResponse | nu
       </div>
 
       {opsErr && (
-        <Alert variant="destructive" className="mt-4 py-2">
+        <Alert variant="destructive" className="py-2">
           <AlertDescription className="text-sm">{opsErr}</AlertDescription>
         </Alert>
       )}
       {engineConfigMissing && !opsErr && (
-        <p className="text-sm text-muted-foreground mt-4">
+        <p className="text-sm text-muted-foreground">
           No <code className="text-xs">trading_engine</code> row in Ops config.
           {daemonServices.some(s => s.id === 'account_sync_daemon')
             ? ' account_sync_daemon is available below.'
@@ -239,7 +163,7 @@ export function DaemonEngineOpsSection({ status }: { status: StatusResponse | nu
 
       <LocalControlAgentPanel opsHealth={opsHealth} />
 
-      <section className="border-t border-border pt-6 mt-6" aria-label="Daemon process control">
+      <section aria-label="Daemon ingest processes">
         <IngestServicesTable
           services={daemonServices}
           status={status}
@@ -258,19 +182,17 @@ export function DaemonEngineOpsSection({ status }: { status: StatusResponse | nu
         />
       </section>
 
-      <Dialog open={confirm.open} onOpenChange={open => !open && setConfirm(CLOSED_CONFIRM)}>
+      <Dialog open={confirm.open} onOpenChange={open => !open && setConfirm(CLOSED_DAEMON_CONFIRM)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{confirm.title}</DialogTitle>
             <DialogDescription>{confirm.message}</DialogDescription>
           </DialogHeader>
           {actionError && (
-            <p className="text-sm text-red-500 rounded border border-red-500/30 bg-red-500/10 px-3 py-2">
-              {actionError}
-            </p>
+            <p className={daemonDialogErrorClass}>{actionError}</p>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirm(CLOSED_CONFIRM)} disabled={controlMutation.isPending}>
+            <Button variant="outline" onClick={() => setConfirm(CLOSED_DAEMON_CONFIRM)} disabled={controlMutation.isPending}>
               Cancel
             </Button>
             <Button onClick={() => void executeConfirmed()} disabled={controlMutation.isPending}>
@@ -279,6 +201,6 @@ export function DaemonEngineOpsSection({ status }: { status: StatusResponse | nu
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </section>
+    </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import discoveryStyles from './discoveryCharts.module.css'
+import { discoveryRootClass } from './discovery/discoveryUi'
 import { postWatchlistItem } from '@/api/market'
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
 import { PageShell } from '@/components/layout'
@@ -198,7 +198,7 @@ export default function DiscoveryPage() {
     selectedSymbol.trim() !== '' && selectedExpiration.trim() !== '' && !snapshots.snapshotLoading
 
   return (
-    <PageShell padding="default" className={discoveryStyles.discoveryRoot}>
+    <PageShell padding="default" className={discoveryRootClass}>
       <DiscoveryPageHeader massiveStatus={massiveStatus ?? null} />
 
       <OdSessionBar

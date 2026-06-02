@@ -1,6 +1,8 @@
+import { postControlShutdown } from '@/api/apiControl'
 import type {
   ScreenerFilters,
   ScreenerResponse,
+  FetchGreeksParams,
   GreeksResponse,
   SepaPhase1Request,
   SepaFundamentalsRequest,
@@ -35,25 +37,65 @@ export async function fetchScreenerResults(filters: ScreenerFilters): Promise<Sc
   }
 }
 
-export async function fetchGreeks(
-  symbol: string,
-  tradeDate: string,
-  expiration?: string,
-): Promise<GreeksResponse> {
-  const qs = new URLSearchParams({ symbol, trade_date: tradeDate })
-  if (expiration) qs.set('expiration', expiration)
-  const res = await fetch(`${BASE}/research/greeks?${qs}`)
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new Error(`GET /research/greeks: ${res.status} — ${detail}`)
+export async function fetchGreeks(params: FetchGreeksParams): Promise<GreeksResponse> {
+  const s = (params.symbol || '').trim().toUpperCase()
+  const defaultRate = params.risk_free_rate ?? 0.045
+  if (!s) {
+    return {
+      ok: false,
+      symbol: '',
+      trade_date: params.trade_date,
+      stock_price: null,
+      risk_free_rate: defaultRate,
+      count: 0,
+      rows: [],
+      error: 'symbol is required',
+    }
   }
-  return res.json() as Promise<GreeksResponse>
+  try {
+    const qs = new URLSearchParams({ symbol: s, trade_date: params.trade_date })
+    if (params.risk_free_rate != null) qs.set('risk_free_rate', String(params.risk_free_rate))
+    if (params.expiry) qs.set('expiry', params.expiry)
+    if (params.right) qs.set('right', params.right)
+    if (params.limit != null) qs.set('limit', String(params.limit))
+    const res = await fetch(`${BASE}/research/greeks?${qs}`)
+    const j = await res.json().catch(() => ({})) as Record<string, unknown>
+    return {
+      ok: Boolean(j.ok),
+      symbol: typeof j.symbol === 'string' ? j.symbol : s,
+      trade_date: typeof j.trade_date === 'string' ? j.trade_date : params.trade_date,
+      stock_price: typeof j.stock_price === 'number' ? j.stock_price : null,
+      risk_free_rate: typeof j.risk_free_rate === 'number' ? j.risk_free_rate : defaultRate,
+      count: typeof j.count === 'number' ? j.count : 0,
+      rows: Array.isArray(j.rows) ? (j.rows as GreeksResponse['rows']) : [],
+      error: j.error != null ? String(j.error) : undefined,
+    }
+  } catch (e) {
+    return {
+      ok: false,
+      symbol: s,
+      trade_date: params.trade_date,
+      stock_price: null,
+      risk_free_rate: defaultRate,
+      count: 0,
+      rows: [],
+      error: e instanceof Error ? e.message : 'fetch failed',
+    }
+  }
 }
 
 export async function fetchGreeksAvailableDates(symbol: string): Promise<string[]> {
-  const res = await fetch(`${BASE}/research/greeks/available-dates?symbol=${encodeURIComponent(symbol)}`)
-  if (!res.ok) throw new Error(`GET /research/greeks/available-dates: ${res.status}`)
-  return res.json() as Promise<string[]>
+  const s = (symbol || '').trim().toUpperCase()
+  if (!s) return []
+  try {
+    const res = await fetch(`${BASE}/research/greeks/available-dates?symbol=${encodeURIComponent(s)}`)
+    const j = await res.json().catch(() => ({})) as Record<string, unknown>
+    if (Array.isArray(j)) return j as string[]
+    if (Array.isArray(j.dates)) return j.dates as string[]
+    return []
+  } catch {
+    return []
+  }
 }
 
 export async function fetchSepaPhase1(req: SepaPhase1Request): Promise<SepaResponse> {
@@ -166,4 +208,28 @@ export async function fetchMassiveCeleryBeatSchedule(): Promise<MassiveCeleryBea
     }
   }
   return j as unknown as MassiveCeleryBeatScheduleResponse
+}
+
+const STRATEGY_BASE = import.meta.env.VITE_API_STRATEGY as string
+const MARKET_BASE = import.meta.env.VITE_API_MARKET as string
+
+export async function postResearchShutdown(
+  serviceOrigin?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const base = (serviceOrigin ?? BASE).replace(/\/$/, '')
+  return postControlShutdown(`${base}/shutdown`)
+}
+
+export async function postStrategyShutdown(
+  serviceOrigin?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const base = (serviceOrigin ?? STRATEGY_BASE).replace(/\/$/, '')
+  return postControlShutdown(`${base}/strategy/shutdown`)
+}
+
+export async function postMarketShutdown(
+  serviceOrigin?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const base = (serviceOrigin ?? MARKET_BASE).replace(/\/$/, '')
+  return postControlShutdown(`${base}/market/shutdown`)
 }

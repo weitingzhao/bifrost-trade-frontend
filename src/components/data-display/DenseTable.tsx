@@ -128,14 +128,15 @@ export function DenseTableCell({
   className,
   title,
   colSpan,
+  ...rest
 }: {
   children?: ReactNode
   className?: string
   title?: string
   colSpan?: number
-}) {
+} & Omit<ComponentProps<'td'>, 'children' | 'className' | 'title' | 'colSpan'>) {
   return (
-    <td className={cn(tdBase, className)} title={title} colSpan={colSpan}>
+    <td className={cn(tdBase, className)} title={title} colSpan={colSpan} {...rest}>
       {children}
     </td>
   )
@@ -256,8 +257,6 @@ export function NestedDenseTable({
   )
 }
 
-const numCell = 'text-right font-mono tabular-nums'
-
 export function DenseTableSubheadRow({
   children,
   className,
@@ -290,5 +289,3 @@ export function DenseTableDetailRow({
     </DenseTableRow>
   )
 }
-
-export { numCell as denseTableNumCell }

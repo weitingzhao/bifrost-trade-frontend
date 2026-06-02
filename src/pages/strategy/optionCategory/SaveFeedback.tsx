@@ -1,4 +1,6 @@
-import { cn } from '@/lib/utils'
+import {
+  optionCategorySaveFeedbackClass,
+} from '@/pages/strategy/optionCategory/optionCategoryUi'
 
 export function SaveFeedback({
   section,
@@ -9,7 +11,7 @@ export function SaveFeedback({
 }) {
   if (feedback?.section !== section) return null
   return (
-    <span className={cn('text-xs font-medium', feedback.ok ? 'text-green-600' : 'text-red-500')}>
+    <span className={optionCategorySaveFeedbackClass(feedback.ok)}>
       {feedback.ok ? 'Saved' : 'Error'}
     </span>
   )

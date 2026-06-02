@@ -1,5 +1,5 @@
 import type { CeleryStatusFilter } from './celeryTypes'
-import { CELERY_SPLIT_GRID } from './celeryLayoutClasses'
+import { CELERY_SPLIT_GRID } from './celeryUi'
 import { QueueSummaryCard } from './QueueSummaryCard'
 import { WorkerInstanceSituationCard } from './WorkerInstanceSituationCard'
 

@@ -12,6 +12,11 @@ import type { ChainColumnId } from './useDiscoveryChainTable'
 import type { SnapshotFeedback } from '@/hooks/useDiscoverySnapshots'
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
 import type { Dispatch, ReactNode, Ref, SetStateAction } from 'react'
+import {
+  discoveryFullChainClass,
+  discoveryViewScopeClass,
+  discoveryViewScopeHintClass,
+} from './discoveryUi'
 
 type Props = {
   selectedSymbol: string
@@ -107,7 +112,7 @@ export function DiscoveryChainLayers(props: Props) {
           </div>
         )}
         {sym !== '' && exp !== '' && (
-          <div className="option-discovery-full-chain" data-analytics-scope="full-chain" aria-label="Full chain">
+          <div className={discoveryFullChainClass} data-analytics-scope="full-chain" aria-label="Full chain">
             <OptionDiscoveryMaxPainPanel
               symbol={props.selectedSymbol}
               expiration={props.selectedExpiration}
@@ -162,8 +167,8 @@ export function DiscoveryChainLayers(props: Props) {
           </div>
         </details>
 
-        <div className="option-discovery-view-scope" data-analytics-scope="strike-window" aria-label="Strike window scope">
-          <DiscoveryHint className="option-discovery-view-scope-hint" id="option-discovery-view-scope-hint">
+        <div className={discoveryViewScopeClass} data-analytics-scope="strike-window" aria-label="Strike window scope">
+          <DiscoveryHint className={discoveryViewScopeHintClass} id="option-discovery-view-scope-hint">
             Scoped to the selected strike window.
           </DiscoveryHint>
           {sym !== '' && exp !== '' && props.snapshotRows.length > 0 && !props.snapshotLoading && (

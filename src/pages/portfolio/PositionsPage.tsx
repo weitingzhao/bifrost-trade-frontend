@@ -123,7 +123,10 @@ export default function PositionsPage() {
 
   const quotesBySymbol = buildQuoteMap(quotesData)
   const quotesByCk = buildCkMap(quotesData)
-  const benchBySymbol = benchData?.benchmarks ?? {}
+  const benchBySymbol = useMemo(
+    () => benchData?.benchmarks ?? {},
+    [benchData?.benchmarks],
+  )
 
   const openOptionPosition =
     inspector.type === 'option' ? inspector.optionPosition : undefined

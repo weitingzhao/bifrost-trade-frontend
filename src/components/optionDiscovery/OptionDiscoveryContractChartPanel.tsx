@@ -8,7 +8,7 @@ import { fetchOptionBars } from '@/api/market'
 import { BarsCandlestickChart } from '@/components/charts/BarsCandlestickChart'
 import { finiteVwap } from '@/utils/chart/finiteVwap'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { SegmentControl } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import { OdChartExpandOnHover } from './OdChartExpandOnHover'
 import { buildPolygonOptionsTicker } from '@/utils/polygonOptionsTicker'
@@ -164,22 +164,14 @@ export function OptionDiscoveryContractChartPanel({
       <div className="mb-2 flex w-full flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Period</span>
-          <ToggleGroup
-            type="single"
-            size="sm"
-            variant="outline"
+          <SegmentControl
             value={period}
-            onValueChange={v => {
+            onChange={v => {
               if (v) setPeriod(v)
             }}
-            aria-label="Bar period"
-          >
-            {OPTION_BAR_PERIODS.map(p => (
-              <ToggleGroupItem key={p.value} value={p.value} aria-label={p.label}>
-                {p.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+            ariaLabel="Bar period"
+            options={OPTION_BAR_PERIODS.map(p => ({ value: p.value, label: p.label }))}
+          />
         </div>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <DiscoveryIconButton

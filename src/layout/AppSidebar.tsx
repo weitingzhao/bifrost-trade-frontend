@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, Layers2, ListTree, ScrollText } from 'lucide-react'
+import { ChevronDown, Layers2, ListTree, Network, ScrollText } from 'lucide-react'
 import { useLogPanel } from '@/hooks/useLogPanel'
+import { useReactorMap } from '@/hooks/useReactorMap'
 import { cn } from '@/lib/utils'
 import {
   Sidebar,
@@ -257,11 +258,12 @@ function CollapsedGroupButton({ group }: { group: NavGroup }) {
   )
 }
 
-// ─── Expanded footer: Logs + Settings on one row ───
+// ─── Expanded footer: Reactor + Logs + Settings ───
 
 function LogAndSettingsFooter() {
   const location = useLocation()
-  const { open, toggle, errorCount } = useLogPanel()
+  const { open: logsOpen, toggle: toggleLogs, errorCount } = useLogPanel()
+  const { open: reactorOpen, toggle: toggleReactor, alertCount } = useReactorMap()
   const settingsActive = location.pathname.startsWith('/settings')
 
   const iconBtn = 'flex h-7 w-7 items-center justify-center rounded-md transition-colors'
@@ -284,10 +286,30 @@ function LogAndSettingsFooter() {
 
       <div className="flex-1" />
 
-      {/* Logs — icon only, right */}
+      {/* Reactor Map */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <button onClick={toggle} className={cn(iconBtn, open ? btnActive : btnIdle)}>
+          <button onClick={toggleReactor} className={cn(iconBtn, reactorOpen ? btnActive : btnIdle)}>
+            <div className="relative">
+              <Network className="h-3.5 w-3.5 opacity-70" />
+              {alertCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-red-500 text-[7px] font-bold text-white leading-none">
+                  {alertCount > 9 ? '9+' : alertCount}
+                </span>
+              )}
+            </div>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs font-medium">
+          {reactorOpen ? 'Close Reactor Map' : 'Reactor Map'}
+          {alertCount > 0 ? ` · ${alertCount} offline` : ''}
+        </TooltipContent>
+      </Tooltip>
+
+      {/* Logs — icon only */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button onClick={toggleLogs} className={cn(iconBtn, logsOpen ? btnActive : btnIdle)}>
             <div className="relative">
               <ScrollText className="h-3.5 w-3.5 opacity-70" />
               {errorCount > 0 && (
@@ -299,10 +321,41 @@ function LogAndSettingsFooter() {
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs font-medium">
-          {open ? 'Close logs' : 'Logs'}{errorCount > 0 ? ` · ${errorCount} error${errorCount > 1 ? 's' : ''}` : ''}
+          {logsOpen ? 'Close logs' : 'Logs'}{errorCount > 0 ? ` · ${errorCount} error${errorCount > 1 ? 's' : ''}` : ''}
         </TooltipContent>
       </Tooltip>
     </div>
+  )
+}
+
+// ─── Reactor toggle button (collapsed) ───
+
+function CollapsedReactorButton() {
+  const { open, toggle, alertCount } = useReactorMap()
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={toggle}
+          className={cn(
+            'relative flex h-8 w-8 items-center justify-center rounded-md transition-colors mx-auto',
+            open
+              ? 'bg-sidebar-accent text-sidebar-primary'
+              : 'text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+          )}
+        >
+          <Network className="h-4 w-4 shrink-0" />
+          {alertCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
+              {alertCount > 9 ? '9+' : alertCount}
+            </span>
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right" className="text-xs font-medium">
+        Reactor Map {alertCount > 0 ? `· ${alertCount} offline` : ''}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -564,7 +617,8 @@ export function AppSidebar() {
       {/* ── Footer: Logs + Settings ── */}
       <SidebarFooter className="border-t border-sidebar-border">
         {isCollapsed ? (
-          <div className="flex items-center justify-center gap-1 py-1">
+          <div className="flex flex-col items-center gap-1 py-1">
+            <CollapsedReactorButton />
             <CollapsedLogButton />
             <CollapsedSettingsButton />
           </div>

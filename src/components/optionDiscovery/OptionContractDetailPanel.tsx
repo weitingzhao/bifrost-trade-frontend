@@ -7,17 +7,28 @@ import type { GreeksCoverageResponse, LiquiditySummaryResponse, RelativeValueRes
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { fmtUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { SegmentControl, DenseTag } from '@/components/data-display'
+import { DiscoveryContractGreeksTable } from './DiscoveryContractGreeksTable'
+import { DiscoveryScenarioTable } from './DiscoveryScenarioTable'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { OptionDiscoveryContractChartPanel } from './OptionDiscoveryContractChartPanel'
+  optionDiscoveryCardGridClass,
+  optionDiscoveryCardSectionClass,
+  optionDiscoveryCardSectionTitleClass,
+  optionDiscoveryDetailChartHintClass,
+  optionDiscoveryDetailRootClass,
+  optionDiscoveryExecGuidanceClass,
+  optionDiscoveryExecGuidanceTitleClass,
+  optionDiscoveryKvDimClass,
+  optionDiscoveryKvGridClass,
+  optionDiscoveryKvKeyClass,
+  optionDiscoveryKvValueClass,
+  optionDiscoveryScenarioWrapClass,
+  optionDiscoveryTradabilityFactorClass,
+  optionDiscoveryTradabilityFactorsClass,
+  optionDiscoveryTradabilityLabelClass,
+  optionDiscoveryTradabilityScoreClass,
+  optionDiscoveryTradabilityValueClass,
+} from './optionDiscoveryUi'
 import { IvSmileChart, IvSmileLegend } from './OptionDiscoveryAnalytics'
 import { OdChartExpandOnHover } from './OdChartExpandOnHover'
 import { expirationDaysFromToday, parseExpirationDateParts } from '@/utils/optionDiscovery/expirationMeta'
@@ -35,7 +46,7 @@ import {
   type OptionInspectorSectionId,
 } from './optionInspectorSections'
 import { OptionDataQualityBadge } from './OptionDataQualityBadge'
-import odStyles from './optionContractDetail.module.css'
+import { OptionDiscoveryContractChartPanel } from './OptionDiscoveryContractChartPanel'
 import {
   computeRelativeValue,
   computeScenarios,
@@ -104,7 +115,7 @@ export function OptionContractDetailPanel({
   }, [])
 
   return (
-    <div className={cn(odStyles.optionContractDetail, inspectorShell.panel)} aria-label="Contract detail">
+    <div className={cn(optionDiscoveryDetailRootClass, inspectorShell.panel)} aria-label="Contract detail">
       {eventContextWarnings.length > 0 && (
         <div className={inspectorShell.alertBanner} role="alert">
           {eventContextWarnings.map((w, i) => (
@@ -239,25 +250,19 @@ export function OptionContractDetailPanel({
                     <span className="font-medium tabular-nums">{expirationDaysFromToday(expiration)}</span>
                   </div>
                 </div>
-                <div className="od-card-section">
+                <div className={optionDiscoveryCardSectionClass}>
                   <div className="mb-1.5 flex flex-wrap items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Greeks
-                    <ToggleGroup
-                      type="single"
-                      size="sm"
-                      variant="outline"
+                    <SegmentControl
                       value={greeksSource}
-                      onValueChange={v => {
+                      onChange={v => {
                         if (v === 'snapshot' || v === 'bs') onGreeksSourceChange(v)
                       }}
-                    >
-                      <ToggleGroupItem value="snapshot" title="Show IV & Greeks from Massive snapshot data">
-                        Snapshot
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="bs" title="Show IV & Greeks computed locally via Black-Scholes">
-                        BS
-                      </ToggleGroupItem>
-                    </ToggleGroup>
+                      options={[
+                        { value: 'snapshot', label: 'Snapshot' },
+                        { value: 'bs', label: 'BS' },
+                      ]}
+                    />
                   </div>
                   {(() => {
                     if (greeksSource === 'snapshot') {
@@ -303,7 +308,7 @@ export function OptionContractDetailPanel({
                     if (bsD == null || bsD.iv == null) {
                       return (
                         <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
-                          <span className="od-kv-k od-kv-dim" style={{ gridColumn: '1/-1', fontSize: '0.75rem' }}>
+                          <span className={cn(optionDiscoveryKvKeyClass, optionDiscoveryKvDimClass, 'col-span-2 text-[0.75rem]')}>
                             {bsDteDays === 0 ? 'Expired; cannot compute' : underlyingPrice == null ? 'Underlying price unknown' : 'IV solve failed'}
                           </span>
                           <span className="text-xs text-muted-foreground">OI</span>
@@ -382,17 +387,6 @@ export function OptionContractDetailPanel({
               if (local == null || snap == null || snap === 0) return null
               return ((local - snap) / Math.abs(snap)) * 100
             }
-            function diffClass(pct: number | null): string {
-              if (pct == null) return ''
-              const abs = Math.abs(pct)
-              if (abs < 3) return 'text-green-600 dark:text-green-500'
-              if (abs < 10) return 'text-amber-600 dark:text-amber-400'
-              return 'text-destructive'
-            }
-            function fmtDiff(pct: number | null): string {
-              if (pct == null) return '—'
-              return (pct > 0 ? '+' : '') + pct.toFixed(1) + '%'
-            }
 
             const ivDiff = diffPct(bsDetail.iv, selectedRow.iv ?? null)
             const deltaDiff = diffPct(bsDetail.delta, selectedRow.delta ?? null)
@@ -439,44 +433,20 @@ export function OptionContractDetailPanel({
                 {bsDetail.iv == null ? (
                   <DiscoveryHint className="text-destructive">BS IV solve failed (bad price or deep ITM/OTM)</DiscoveryHint>
                 ) : (
-                  <div className="overflow-x-auto rounded-md border border-border">
-                    <Table className="text-xs">
-                      <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                          <TableHead>Metric</TableHead>
-                          <TableHead>Snapshot (Massive)</TableHead>
-                          <TableHead>BS</TableHead>
-                          <TableHead>Diff %</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {bsRows.map(row => (
-                          <TableRow key={row.label}>
-                            <TableCell className="font-medium">{row.label}</TableCell>
-                            <TableCell className="tabular-nums">{row.snap}</TableCell>
-                            <TableCell className="tabular-nums">{row.bs}</TableCell>
-                            <TableCell className={cn('tabular-nums font-medium', diffClass(row.diff))}>
-                              {fmtDiff(row.diff)}
-                              {'vegaHint' in row && row.vegaHint ? (
-                                <span className="text-muted-foreground"> Units?</span>
-                              ) : null}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                      <TableFooter>
-                        <TableRow className="hover:bg-transparent">
-                          <TableCell colSpan={4} className="text-xs text-muted-foreground">
-                            <span className="text-green-600 dark:text-green-500">■</span> &lt;3%&nbsp;&nbsp;
-                            <span className="text-amber-600 dark:text-amber-400">■</span> 3–10%&nbsp;&nbsp;
-                            <span className="text-destructive">■</span> &gt;10%
-                            &nbsp;·&nbsp;NR {bsDetail.iterCount} iter {bsDetail.converged ? '✓' : '(not converged)'}
-                            &nbsp;·&nbsp;BS model=
-                            {bsDetail.bsModelPrice != null ? `$${bsDetail.bsModelPrice.toFixed(4)}` : '—'}
-                          </TableCell>
-                        </TableRow>
-                      </TableFooter>
-                    </Table>
+                  <div className="overflow-x-auto">
+                    <DiscoveryContractGreeksTable
+                      rows={bsRows}
+                      footer={
+                        <>
+                          <span className="text-green-600 dark:text-green-500">■</span> &lt;3%&nbsp;&nbsp;
+                          <span className="text-amber-600 dark:text-amber-400">■</span> 3–10%&nbsp;&nbsp;
+                          <span className="text-destructive">■</span> &gt;10%
+                          &nbsp;·&nbsp;NR {bsDetail.iterCount} iter {bsDetail.converged ? '✓' : '(not converged)'}
+                          &nbsp;·&nbsp;BS model=
+                          {bsDetail.bsModelPrice != null ? `$${bsDetail.bsModelPrice.toFixed(4)}` : '—'}
+                        </>
+                      }
+                    />
                   </div>
                 )}
               </RightInspectorCollapsibleSection>
@@ -489,7 +459,7 @@ export function OptionContractDetailPanel({
             expanded={expandedSections.chart}
             onToggle={() => toggleSection('chart')}
           >
-            <DiscoveryHint className=" od-detail-chart-hint" style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+            <DiscoveryHint className={optionDiscoveryDetailChartHintClass}>
               OHLC below uses contract history. If the chart is empty, click Backfill from Massive (Celery worker on the massive queue required).
             </DiscoveryHint>
             <OptionDiscoveryContractChartPanel
@@ -533,20 +503,18 @@ export function OptionContractDetailPanel({
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <div className={inspectorShell.card}>
                   <div className={inspectorShell.cardLabel}>Tradability Score</div>
-                    <div className="od-tradability-score">
-                      <span
-                        className={`od-tradability-value od-tradability-${tradability.score >= 60 ? 'good' : tradability.score >= 30 ? 'fair' : 'poor'}`}
-                      >
+                    <div className={optionDiscoveryTradabilityScoreClass}>
+                      <span className={optionDiscoveryTradabilityValueClass(tradability.score)}>
                         {tradability.score}
                       </span>
-                      <span className="od-tradability-label">/ 100</span>
+                      <span className={optionDiscoveryTradabilityLabelClass}>/ 100</span>
                     </div>
-                    <div className="od-tradability-factors">
+                    <div className={optionDiscoveryTradabilityFactorsClass}>
                       {tradability.factors.map(f => (
-                        <div key={f.label} className="od-tradability-factor">
+                        <div key={f.label} className={optionDiscoveryTradabilityFactorClass}>
                           <span className="text-xs text-muted-foreground">{f.label}</span>
                           <span className="font-medium tabular-nums">
-                            +{f.contribution} <span className="od-kv-dim">({f.detail})</span>
+                            +{f.contribution} <span className={optionDiscoveryKvDimClass}>({f.detail})</span>
                           </span>
                         </div>
                       ))}
@@ -572,7 +540,7 @@ export function OptionContractDetailPanel({
                           : spreadPercentile != null
                             ? `${spreadPercentile.toFixed(0)}th`
                             : '—'}
-                        <span className="od-kv-dim"> (vs {serverLiquidity?.contracts_compared ?? spreadRows.length} same-side contracts)</span>
+                        <span className={optionDiscoveryKvDimClass}> (vs {serverLiquidity?.contracts_compared ?? spreadRows.length} same-side contracts)</span>
                       </span>
                       <span className="text-xs text-muted-foreground">OI</span>
                       <span className="font-medium tabular-nums">
@@ -591,7 +559,7 @@ export function OptionContractDetailPanel({
                       {serverLiquidity?.snapshot_ts && (
                         <>
                           <span className="text-xs text-muted-foreground">Snapshot</span>
-                          <span className="font-medium tabular-nums od-kv-dim">{new Date(serverLiquidity.snapshot_ts).toLocaleString()}</span>
+                          <span className={cn('font-medium tabular-nums', optionDiscoveryKvDimClass)}>{new Date(serverLiquidity.snapshot_ts).toLocaleString()}</span>
                         </>
                       )}
                     </div>
@@ -628,28 +596,28 @@ export function OptionContractDetailPanel({
                   </div>
                 </div>
 
-                <div className="od-exec-guidance">
-                  <span className="od-exec-guidance-title">Execution Notes</span>
+                <div className={optionDiscoveryExecGuidanceClass}>
+                  <span className={optionDiscoveryExecGuidanceTitleClass}>Execution Notes</span>
                   {selectedDerived?.spreadPct != null && selectedDerived.spreadPct > 10 && (
-                    <span className="od-exec-chip od-exec-chip--warn">Wide spread — use limit near mid</span>
+                    <DenseTag variant="warning" size="pill">Wide spread — use limit near mid</DenseTag>
                   )}
                   {selectedDerived?.spreadPct != null && selectedDerived.spreadPct <= 3 && (
-                    <span className="od-exec-chip od-exec-chip--ok">Tight spread</span>
+                    <DenseTag variant="success" size="pill">Tight spread</DenseTag>
                   )}
                   {(selectedRow.open_interest == null || selectedRow.open_interest < 10) && (
-                    <span className="od-exec-chip od-exec-chip--warn">Low OI — thin liquidity</span>
+                    <DenseTag variant="warning" size="pill">Low OI — thin liquidity</DenseTag>
                   )}
                   {lastTradeAge != null && lastTradeAge > 3600 && (
-                    <span className="od-exec-chip od-exec-chip--warn">Stale tape — last trade &gt;1h</span>
+                    <DenseTag variant="warning" size="pill">Stale tape — last trade &gt;1h</DenseTag>
                   )}
                   {selectedRow.bid == null && selectedRow.ask == null && effectiveQuotePremium(selectedRow) != null && (
-                    <span className="od-exec-chip od-exec-chip--warn">No live NBBO — mark uses mid/day-bar fallback (not a live quote)</span>
+                    <DenseTag variant="warning" size="pill">No live NBBO — mark uses mid/day-bar fallback (not a live quote)</DenseTag>
                   )}
                   {selectedRow.bid == null && selectedRow.ask == null && effectiveQuotePremium(selectedRow) == null && (
-                    <span className="od-exec-chip od-exec-chip--danger">No bid/ask or day bar — illiquid or no data</span>
+                    <DenseTag variant="danger" size="pill">No bid/ask or day bar — illiquid or no data</DenseTag>
                   )}
                   {tradability.score >= 60 && selectedDerived?.spreadPct != null && selectedDerived.spreadPct <= 5 && (
-                    <span className="od-exec-chip od-exec-chip--ok">Good tradability</span>
+                    <DenseTag variant="success" size="pill">Good tradability</DenseTag>
                   )}
                 </div>
               </RightInspectorCollapsibleSection>
@@ -669,62 +637,43 @@ export function OptionContractDetailPanel({
                 {!hasGreeks && (
                   <DiscoveryHint className="">Greeks not available for this contract. Risk scenarios require at least delta.</DiscoveryHint>
                 )}
-                <div className="od-card-grid">
-                  <div className="od-card-section">
-                    <div className="od-card-section-title">Greeks (per contract)</div>
-                    <div className="od-kv-grid">
-                      <span className="od-kv-k">Delta (Δ)</span>
-                      <span className="od-kv-v">{fmtOptNum(selectedRow.delta, 4)}</span>
-                      <span className="od-kv-k">Gamma (Γ)</span>
-                      <span className="od-kv-v">{fmtOptNum(selectedRow.gamma, 4)}</span>
-                      <span className="od-kv-k">Theta (Θ)</span>
-                      <span className="od-kv-v">{fmtOptNum(selectedRow.theta, 4)}</span>
-                      <span className="od-kv-k">Vega (ν)</span>
-                      <span className="od-kv-v">{fmtOptNum(selectedRow.vega, 4)}</span>
-                      <span className="od-kv-k">IV</span>
-                      <span className="od-kv-v">{fmtIV(selectedRow.iv)}</span>
+                <div className={optionDiscoveryCardGridClass}>
+                  <div className={optionDiscoveryCardSectionClass}>
+                    <div className={optionDiscoveryCardSectionTitleClass}>Greeks (per contract)</div>
+                    <div className={optionDiscoveryKvGridClass}>
+                      <span className={optionDiscoveryKvKeyClass}>Delta (Δ)</span>
+                      <span className={optionDiscoveryKvValueClass}>{fmtOptNum(selectedRow.delta, 4)}</span>
+                      <span className={optionDiscoveryKvKeyClass}>Gamma (Γ)</span>
+                      <span className={optionDiscoveryKvValueClass}>{fmtOptNum(selectedRow.gamma, 4)}</span>
+                      <span className={optionDiscoveryKvKeyClass}>Theta (Θ)</span>
+                      <span className={optionDiscoveryKvValueClass}>{fmtOptNum(selectedRow.theta, 4)}</span>
+                      <span className={optionDiscoveryKvKeyClass}>Vega (ν)</span>
+                      <span className={optionDiscoveryKvValueClass}>{fmtOptNum(selectedRow.vega, 4)}</span>
+                      <span className={optionDiscoveryKvKeyClass}>IV</span>
+                      <span className={optionDiscoveryKvValueClass}>{fmtIV(selectedRow.iv)}</span>
                     </div>
                   </div>
                   {scenarios.length > 0 && (
-                    <div className="od-card-section">
-                      <div className="od-card-section-title">Scenario Analysis (1 contract = 100 shares)</div>
-                      <div className="od-scenario-table-wrap">
-                        <table className="od-scenario-table">
-                        <thead>
-                          <tr>
-                            <th>Scenario</th>
-                            <th>Est. PnL</th>
-                            <th>Detail</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {scenarios.map(s => (
-                            <tr key={s.label}>
-                              <td>{s.label}</td>
-                              <td className={s.pnl != null && s.pnl >= 0 ? 'od-pnl-pos' : 'od-pnl-neg'}>
-                                {s.pnl != null ? `${s.pnl >= 0 ? '+' : ''}${fmtUsd(s.pnl)}` : '—'}
-                              </td>
-                              <td className="od-kv-dim">{s.detail}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className={optionDiscoveryCardSectionClass}>
+                      <div className={optionDiscoveryCardSectionTitleClass}>Scenario Analysis (1 contract = 100 shares)</div>
+                      <div className={optionDiscoveryScenarioWrapClass}>
+                        <DiscoveryScenarioTable scenarios={scenarios} />
                       </div>
                     </div>
                   )}
-                  <div className="od-card-section">
-                    <div className="od-card-section-title">Exposure Summary</div>
-                    <div className="od-kv-grid">
-                      <span className="od-kv-k">Delta $ (per 1 lot)</span>
-                      <span className="od-kv-v">
+                  <div className={optionDiscoveryCardSectionClass}>
+                    <div className={optionDiscoveryCardSectionTitleClass}>Exposure Summary</div>
+                    <div className={optionDiscoveryKvGridClass}>
+                      <span className={optionDiscoveryKvKeyClass}>Delta $ (per 1 lot)</span>
+                      <span className={optionDiscoveryKvValueClass}>
                         {selectedRow.delta != null && underlyingPrice != null
                           ? fmtUsd(selectedRow.delta * underlyingPrice * 100)
                           : '—'}
                       </span>
-                      <span className="od-kv-k">Theta $ / day</span>
-                      <span className="od-kv-v">{selectedRow.theta != null ? fmtUsd(selectedRow.theta * 100) : '—'}</span>
-                      <span className="od-kv-k">Vega $ / 1pt IV</span>
-                      <span className="od-kv-v">{selectedRow.vega != null ? fmtUsd(selectedRow.vega * 100 * 0.01) : '—'}</span>
+                      <span className={optionDiscoveryKvKeyClass}>Theta $ / day</span>
+                      <span className={optionDiscoveryKvValueClass}>{selectedRow.theta != null ? fmtUsd(selectedRow.theta * 100) : '—'}</span>
+                      <span className={optionDiscoveryKvKeyClass}>Vega $ / 1pt IV</span>
+                      <span className={optionDiscoveryKvValueClass}>{selectedRow.vega != null ? fmtUsd(selectedRow.vega * 100 * 0.01) : '—'}</span>
                     </div>
                   </div>
                 </div>
@@ -750,7 +699,7 @@ export function OptionContractDetailPanel({
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <div className={inspectorShell.card}>
                   <div className={inspectorShell.cardLabel}>
-                      IV Relative Value {hasServer && <span className="od-kv-dim">(server)</span>}
+                      IV Relative Value {hasServer && <span className={optionDiscoveryKvDimClass}>(server)</span>}
                     </div>
                     <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
                       <span className="text-xs text-muted-foreground">Label</span>

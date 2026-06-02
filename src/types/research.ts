@@ -54,22 +54,38 @@ export interface ScreenerResponse {
 }
 
 export interface GreeksRow {
-  symbol: string
-  expiration: string
+  expiry: string
   strike: number
-  right: 'C' | 'P'
-  stock_price: number
+  right: string
   market_price: number
-  iv: number
-  delta: number
-  gamma: number
-  theta: number
-  vega: number
+  stock_price: number
   t_years: number
+  t_days: number
+  iv: number | null
+  delta: number | null
+  gamma: number | null
+  theta: number | null
+  vega: number | null
 }
 
 export interface GreeksResponse {
+  ok: boolean
+  symbol: string
+  trade_date: string
+  stock_price: number | null
+  risk_free_rate: number
+  count: number
   rows: GreeksRow[]
+  error?: string
+}
+
+export interface FetchGreeksParams {
+  symbol: string
+  trade_date: string
+  risk_free_rate?: number
+  expiry?: string
+  right?: string
+  limit?: number
 }
 
 export interface SepaConditionResult {

@@ -25,9 +25,10 @@ export default tseslint.config(
   },
   {
     files: [
-      '**/socketIngestUi.tsx',
+      '**/socketIngestControls.tsx',
+      '**/IngestConnectionCell.tsx',
       '**/daemonShared.tsx',
-      '**/apiHealthSections.tsx',
+      '**/TabLamp.tsx',
     ],
     rules: {
       'react-refresh/only-export-components': 'off',

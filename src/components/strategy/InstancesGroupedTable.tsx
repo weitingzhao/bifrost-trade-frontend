@@ -1,9 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { ChevronRight, ChevronDown, Trash2, Eye, Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
-import { dangerGhostBtnClass } from '@/lib/uiClasses'
 import { structureChipStyle } from '@/utils/structureColor'
 import {
   computeInstancePositionStatus,
@@ -21,7 +19,44 @@ import {
 } from '@/utils/instanceListMetrics'
 import type { StrategyInstance } from '@/types/positions'
 import { pnlColorClass } from '@/utils/dailyChange'
-import styles from '@/components/strategy/instances/instancesTable.module.css'
+import {
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  DenseTableSubheadRow,
+  DenseTag,
+  IconActionButton,
+  denseTableNumCell,
+} from '@/components/data-display'
+import {
+  instancesActionsCellClass,
+  instancesActionsInnerClass,
+  instancesColIdClass,
+  instancesColOppClass,
+  instancesColPeriodClass,
+  instancesColStatusClass,
+  instancesEmptyHintClass,
+  instancesGroupMutedClass,
+  instancesGroupToggleClass,
+  instancesHeadGroupClass,
+  instancesHeadSubClass,
+  instancesOppCellClass,
+  instancesOppNameClass,
+  instancesPeriodDaysClass,
+  instancesPeriodYearClass,
+  instancesRowCompareClass,
+  instancesRowSelectedClass,
+  instancesSortBtnClass,
+  instancesSortBtnNumClass,
+  instancesSortCaretClass,
+  instancesSortHeadActiveClass,
+  instancesTableClass,
+  INSTANCES_TABLE_COL_WIDTHS,
+} from './instances/instancesUi'
 
 interface SymbolGroup {
   key: string
@@ -112,13 +147,15 @@ function getSortValue(
   }
 }
 
-function SortableTh({
+function SortableHead({
   column,
   sort,
   onSort,
   children,
   className,
   rowSpan,
+  colSpan,
+  scope,
   numeric,
 }: {
   column: SortColumn
@@ -127,36 +164,34 @@ function SortableTh({
   children: React.ReactNode
   className?: string
   rowSpan?: number
+  colSpan?: number
+  scope?: string
   numeric?: boolean
 }) {
   const active = sort?.column === column
   return (
-    <th
+    <DenseTableHead
       rowSpan={rowSpan}
-      className={cn(className, numeric && styles.colNum, active && styles.thSortActive)}
+      colSpan={colSpan}
+      scope={scope}
+      align={numeric ? 'right' : 'left'}
+      className={cn(className, active && instancesSortHeadActiveClass)}
       aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      onClick={() => onSort(column)}
     >
-      <button
-        type="button"
-        className={cn(styles.thSortBtn, numeric && styles.thSortBtnNum)}
-        onClick={() => onSort(column)}
-        aria-pressed={active}
-      >
+      <span className={cn(instancesSortBtnClass, numeric && instancesSortBtnNumClass)}>
         <span>{children}</span>
-        {active ? <span className={styles.sortCaret}>{sort!.dir === 'asc' ? '↑' : '↓'}</span> : null}
-      </button>
-    </th>
+        {active ? (
+          <span className={instancesSortCaretClass}>{sort!.dir === 'asc' ? '↑' : '↓'}</span>
+        ) : null}
+      </span>
+    </DenseTableHead>
   )
 }
 
 function StatusChip({ status }: { status: 'open' | 'closed' | 'no_fills' }) {
   const label = status === 'open' ? 'Open' : status === 'closed' ? 'Closed' : 'No fills'
-  const cls =
-    status === 'open'
-      ? styles.statusOpen
-      : status === 'closed'
-        ? styles.statusClosed
-        : styles.statusUnknown
+  const variant = status === 'open' ? 'success' : 'neutral'
   const title =
     status === 'closed'
       ? 'All contracts flat (buy and sell quantities net to zero per contract).'
@@ -164,9 +199,9 @@ function StatusChip({ status }: { status: 'open' | 'closed' | 'no_fills' }) {
         ? 'At least one contract has non-zero net quantity.'
         : 'No fills attributed to this instance in the final book.'
   return (
-    <span className={cn(styles.statusChip, cls)} title={title}>
+    <DenseTag variant={variant} size="cell" title={title}>
       {label}
-    </span>
+    </DenseTag>
   )
 }
 
@@ -180,12 +215,12 @@ function MetricsCells({
   const m = metricsMap.get(instanceId)
   if (m == null || m.status === 'loading') {
     return Array.from({ length: 9 }, (_, i) => (
-      <td key={i} className={cn(styles.colNum, 'text-muted-foreground')}>…</td>
+      <DenseTableCell key={i} className={cn(denseTableNumCell, 'text-muted-foreground')}>…</DenseTableCell>
     ))
   }
   if (m.status === 'error') {
     return Array.from({ length: 9 }, (_, i) => (
-      <td key={i} className={cn(styles.colNum, 'text-muted-foreground')}>—</td>
+      <DenseTableCell key={i} className={cn(denseTableNumCell, 'text-muted-foreground')}>—</DenseTableCell>
     ))
   }
 
@@ -207,40 +242,43 @@ function MetricsCells({
 
   return (
     <>
-      <td>
+      <DenseTableCell>
         <StatusChip status={positionStatus} />
-      </td>
-      <td className={cn(styles.colPeriod, styles.colNum)} title={periodCell.title}>
-        <span className={styles.periodYear}>{periodCell.yearLabel}</span>{' '}
+      </DenseTableCell>
+      <DenseTableCell
+        className={cn(instancesColPeriodClass, denseTableNumCell)}
+        title={periodCell.title}
+      >
+        <span className={instancesPeriodYearClass}>{periodCell.yearLabel}</span>{' '}
         <span>{periodCell.rangeLabel}</span>{' '}
         {periodCell.dayLabel != null ? (
-          <strong className={styles.periodDays}>{periodCell.dayLabel}</strong>
+          <strong className={instancesPeriodDaysClass}>{periodCell.dayLabel}</strong>
         ) : null}
-      </td>
-      <td
-        className={cn(styles.colNum, signedClass(execDerivedNetPnl))}
+      </DenseTableCell>
+      <DenseTableCell
+        className={cn(denseTableNumCell, signedClass(execDerivedNetPnl))}
         title={linkSlipTitle}
       >
         {execDerivedNetPnl != null ? fmtUsd(execDerivedNetPnl) : '—'}
-      </td>
-      <td className={cn(styles.colNum, signedClass(npd))}>
+      </DenseTableCell>
+      <DenseTableCell className={cn(denseTableNumCell, signedClass(npd))}>
         {npd != null ? fmtUsd(npd) : '—'}
-      </td>
-      <td className={cn(styles.colNum, 'text-muted-foreground')}>
+      </DenseTableCell>
+      <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
         {underlying > 0 ? fmtUsdRound(underlying) : '—'}
-      </td>
-      <td className={cn(styles.colNum, 'text-muted-foreground')}>
+      </DenseTableCell>
+      <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
         {costPerDay != null ? fmtUsdRound(costPerDay) : '—'}
-      </td>
-      <td className={cn(styles.colNum, signedClass(annual?.annualReturnPct))}>
+      </DenseTableCell>
+      <DenseTableCell className={cn(denseTableNumCell, signedClass(annual?.annualReturnPct))}>
         {annual != null ? fmtPct(annual.annualReturnPct) : '—'}
-      </td>
-      <td className={cn(styles.colNum, signedClass(returnPct))}>
+      </DenseTableCell>
+      <DenseTableCell className={cn(denseTableNumCell, signedClass(returnPct))}>
         {returnPct != null ? fmtPct(returnPct) : '—'}
-      </td>
-      <td className={cn(styles.colNum, 'text-muted-foreground')}>
+      </DenseTableCell>
+      <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
         {summary?.total_commission != null ? fmtUsd(-Number(summary.total_commission)) : '—'}
-      </td>
+      </DenseTableCell>
     </>
   )
 }
@@ -283,178 +321,219 @@ export function InstancesGroupedTable({
   }, [groups, sort, metricsMap])
 
   if (groups.length === 0) {
-    return <p className="py-4 text-sm text-muted-foreground">No instances found.</p>
+    return <p className={instancesEmptyHintClass}>No instances found.</p>
   }
 
   return (
-    <div className={styles.tableWrap}>
-      <table className={styles.instancesTable}>
-        <thead>
-          <tr>
-            <th rowSpan={2}>ID</th>
-            <th rowSpan={2} className={styles.colOpp}>Opportunity</th>
-            <th rowSpan={2}>Status</th>
-            <SortableTh column="start" sort={sort} onSort={toggleSort} rowSpan={2} className={styles.colPeriod}>
-              <span title="Window: min report date → end (open: latest open-leg expiry; closed: max report date). Hold = calendar days for metrics.">
-                Period
-              </span>
-            </SortableTh>
-            <th colSpan={2} className={styles.headGroup} scope="colgroup">Net PnL</th>
-            <th colSpan={2} className={styles.headGroup} scope="colgroup">Underlying Cost</th>
-            <th colSpan={2} className={styles.headGroup} scope="colgroup">Return %</th>
-            <SortableTh column="comm" sort={sort} onSort={toggleSort} rowSpan={2} numeric>
-              <abbr title="Commission">Comm.</abbr>
-            </SortableTh>
-            <SortableTh column="exec" sort={sort} onSort={toggleSort} rowSpan={2} numeric>
-              Exec
-            </SortableTh>
-            <th rowSpan={2} className={styles.actionsCell}>Actions</th>
-          </tr>
-          <tr>
-            <SortableTh column="net" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
-              PnL
-            </SortableTh>
-            <SortableTh column="npd" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
-              / day
-            </SortableTh>
-            <SortableTh column="und" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
-              Cost
-            </SortableTh>
-            <SortableTh column="cday" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
-              / day
-            </SortableTh>
-            <SortableTh column="ann" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
-              <abbr title="Annualized return from Net/day ÷ Cost/day × 365.25/hold days.">Annual %</abbr>
-            </SortableTh>
-            <SortableTh column="ret" sort={sort} onSort={toggleSort} className={styles.headSub} numeric>
-              <abbr title="Net PnL ÷ capital at risk × 100.">%</abbr>
-            </SortableTh>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedGroups.flatMap((group) => {
-            const collapsed = Boolean(collapsedGroups[group.key])
-            const rollup = computeSymbolGroupRollup(group.rows, metricsMap)
+    <DenseDataTable wrapClassName="mt-1" tableClassName={instancesTableClass}>
+      <colgroup>
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.id }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.opp }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.status }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.period }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.net }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.npd }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.und }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.cday }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.ann }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.ret }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.comm }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.exec }} />
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.actions }} />
+      </colgroup>
+      <DenseTableHeader>
+        <DenseTableHeadRow>
+          <DenseTableHead rowSpan={2} className={cn(instancesColIdClass, 'normal-case tracking-normal')}>
+            ID
+          </DenseTableHead>
+          <DenseTableHead rowSpan={2} className={cn(instancesColOppClass, 'normal-case tracking-normal')}>
+            Opportunity
+          </DenseTableHead>
+          <DenseTableHead rowSpan={2} className={cn(instancesColStatusClass, 'normal-case tracking-normal')}>
+            Status
+          </DenseTableHead>
+          <SortableHead
+            column="start"
+            sort={sort}
+            onSort={toggleSort}
+            rowSpan={2}
+            className={cn(instancesColPeriodClass, 'normal-case tracking-normal')}
+          >
+            <span title="Window: min report date → end (open: latest open-leg expiry; closed: max report date). Hold = calendar days for metrics.">
+              Period
+            </span>
+          </SortableHead>
+          <DenseTableHead colSpan={2} className={instancesHeadGroupClass} scope="colgroup">
+            Net PnL
+          </DenseTableHead>
+          <DenseTableHead colSpan={2} className={instancesHeadGroupClass} scope="colgroup">
+            Underlying Cost
+          </DenseTableHead>
+          <DenseTableHead colSpan={2} className={instancesHeadGroupClass} scope="colgroup">
+            Return %
+          </DenseTableHead>
+          <SortableHead column="comm" sort={sort} onSort={toggleSort} rowSpan={2} numeric>
+            <abbr title="Commission">Comm.</abbr>
+          </SortableHead>
+          <SortableHead column="exec" sort={sort} onSort={toggleSort} rowSpan={2} numeric>
+            Exec
+          </SortableHead>
+          <DenseTableHead rowSpan={2} className={cn(instancesActionsCellClass, 'normal-case tracking-normal')}>
+            Actions
+          </DenseTableHead>
+        </DenseTableHeadRow>
+        <DenseTableHeadRow>
+          <SortableHead column="net" sort={sort} onSort={toggleSort} className={instancesHeadSubClass} numeric>
+            PnL
+          </SortableHead>
+          <SortableHead column="npd" sort={sort} onSort={toggleSort} className={instancesHeadSubClass} numeric>
+            / day
+          </SortableHead>
+          <SortableHead column="und" sort={sort} onSort={toggleSort} className={instancesHeadSubClass} numeric>
+            Cost
+          </SortableHead>
+          <SortableHead column="cday" sort={sort} onSort={toggleSort} className={instancesHeadSubClass} numeric>
+            / day
+          </SortableHead>
+          <SortableHead column="ann" sort={sort} onSort={toggleSort} className={instancesHeadSubClass} numeric>
+            <abbr title="Annualized return from Net/day ÷ Cost/day × 365.25/hold days.">Annual %</abbr>
+          </SortableHead>
+          <SortableHead column="ret" sort={sort} onSort={toggleSort} className={instancesHeadSubClass} numeric>
+            <abbr title="Net PnL ÷ capital at risk × 100.">%</abbr>
+          </SortableHead>
+        </DenseTableHeadRow>
+      </DenseTableHeader>
+      <DenseTableBody>
+        {sortedGroups.flatMap((group) => {
+          const collapsed = Boolean(collapsedGroups[group.key])
+          const rollup = computeSymbolGroupRollup(group.rows, metricsMap)
 
-            const headerRow = (
-              <tr key={`group-${group.key}`} className={styles.groupRow}>
-                <td colSpan={2}>
-                  <button
-                    type="button"
-                    className={styles.groupToggle}
-                    onClick={() => onToggleGroup(group.key)}
-                    aria-expanded={!collapsed}
-                  >
-                    {collapsed ? (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <span>
-                      Symbol group: {group.label}
-                      <span className={styles.groupMuted}>
-                        {' '}
-                        ({group.rows.length} instance{group.rows.length !== 1 ? 's' : ''})
-                      </span>
+          const headerRow = (
+            <DenseTableSubheadRow key={`group-${group.key}`}>
+              <DenseTableCell colSpan={2}>
+                <button
+                  type="button"
+                  className={instancesGroupToggleClass}
+                  onClick={() => onToggleGroup(group.key)}
+                  aria-expanded={!collapsed}
+                >
+                  {collapsed ? (
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <span>
+                    Symbol group: {group.label}
+                    <span className={instancesGroupMutedClass}>
+                      {' '}
+                      ({group.rows.length} instance{group.rows.length !== 1 ? 's' : ''})
                     </span>
-                  </button>
-                </td>
-                <td className={'text-muted-foreground'}>—</td>
-                <td className={'text-muted-foreground'}>—</td>
-                <td
-                  className={cn(styles.colNum, signedClass(rollup.totalNet))}
-                  title="Sum of execution-derived Net PnL for instances with loaded metrics."
-                >
-                  {rollup.totalNet != null ? fmtUsd(rollup.totalNet) : '—'}
-                </td>
-                <td className={'text-muted-foreground'}>—</td>
-                <td
-                  className={cn(styles.colNum, rollup.sumUnderlying != null ? '' : 'text-muted-foreground')}
-                  title="Sum of per-instance underlying cost (sell-side OPT)."
-                >
-                  {rollup.sumUnderlying != null ? fmtUsdRound(rollup.sumUnderlying) : '—'}
-                </td>
-                <td className={'text-muted-foreground'}>—</td>
-                <td
-                  className={cn(styles.colNum, signedClass(rollup.groupAnnualPct))}
-                  title="Group annual return: total Net × 365.25 / Σ(denominator × hold days) × 100."
-                >
-                  {rollup.groupAnnualPct != null ? fmtPct(rollup.groupAnnualPct) : '—'}
-                </td>
-                <td className={'text-muted-foreground'}>—</td>
-                <td className={'text-muted-foreground'}>—</td>
-                <td className={'text-muted-foreground'}>—</td>
-                <td />
-              </tr>
-            )
-
-            if (collapsed) return [headerRow]
-
-            const dataRows = group.rows.map((inst) => (
-              <tr
-                key={inst.strategy_instance_id}
-                className={cn(
-                  activeDetailId === inst.strategy_instance_id && styles.rowSelected,
-                  compareId === inst.strategy_instance_id && 'bg-blue-500/5',
-                )}
+                  </span>
+                </button>
+              </DenseTableCell>
+              <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
+              <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
+              <DenseTableCell
+                className={cn(denseTableNumCell, signedClass(rollup.totalNet))}
+                title="Sum of execution-derived Net PnL for instances with loaded metrics."
               >
-                <td className={cn(styles.colNum, 'text-muted-foreground')}>{inst.strategy_instance_id}</td>
-                <td className={styles.colOpp}>
-                  <div>{inst.strategy_opportunity_name ?? '—'}</div>
+                {rollup.totalNet != null ? fmtUsd(rollup.totalNet) : '—'}
+              </DenseTableCell>
+              <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
+              <DenseTableCell
+                className={cn(
+                  denseTableNumCell,
+                  rollup.sumUnderlying != null ? '' : 'text-muted-foreground',
+                )}
+                title="Sum of per-instance underlying cost (sell-side OPT)."
+              >
+                {rollup.sumUnderlying != null ? fmtUsdRound(rollup.sumUnderlying) : '—'}
+              </DenseTableCell>
+              <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
+              <DenseTableCell
+                className={cn(denseTableNumCell, signedClass(rollup.groupAnnualPct))}
+                title="Group annual return: total Net × 365.25 / Σ(denominator × hold days) × 100."
+              >
+                {rollup.groupAnnualPct != null ? fmtPct(rollup.groupAnnualPct) : '—'}
+              </DenseTableCell>
+              <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
+              <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
+              <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
+              <DenseTableCell />
+            </DenseTableSubheadRow>
+          )
+
+          if (collapsed) return [headerRow]
+
+          const dataRows = group.rows.map((inst) => (
+            <DenseTableRow
+              key={inst.strategy_instance_id}
+              className={cn(
+                activeDetailId === inst.strategy_instance_id && instancesRowSelectedClass,
+                compareId === inst.strategy_instance_id && instancesRowCompareClass,
+              )}
+            >
+              <DenseTableCell className={cn(instancesColIdClass, denseTableNumCell, 'text-muted-foreground')}>
+                {inst.strategy_instance_id}
+              </DenseTableCell>
+              <DenseTableCell className={instancesColOppClass}>
+                <div className={instancesOppCellClass}>
+                  <div
+                    className={instancesOppNameClass}
+                    title={inst.strategy_opportunity_name ?? undefined}
+                  >
+                    {inst.strategy_opportunity_name ?? '—'}
+                  </div>
                   {inst.strategy_structure_name ? (
-                    <span
-                      className={styles.structureChip}
+                    <DenseTag
+                      size="cell"
+                      className="max-w-full truncate"
                       style={structureChipStyle(inst.strategy_structure_name, false)}
                       title={`Structure: ${inst.strategy_structure_name}`}
                     >
                       {inst.strategy_structure_name}
-                    </span>
+                    </DenseTag>
                   ) : null}
-                </td>
-                <MetricsCells instanceId={inst.strategy_instance_id} metricsMap={metricsMap} />
-                <td className={cn(styles.colNum, 'text-muted-foreground')}>
-                  {inst.executions_count != null ? inst.executions_count : '—'}
-                </td>
-                <td className={styles.actionsCell}>
-                  <div className={styles.actionsInner}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      title="View instance detail"
-                      onClick={() => onViewDetail?.(inst)}
+                </div>
+              </DenseTableCell>
+              <MetricsCells instanceId={inst.strategy_instance_id} metricsMap={metricsMap} />
+              <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
+                {inst.executions_count != null ? inst.executions_count : '—'}
+              </DenseTableCell>
+              <DenseTableCell className={instancesActionsCellClass}>
+                <div className={instancesActionsInnerClass}>
+                  <IconActionButton
+                    title="View instance detail"
+                    ariaLabel="View instance detail"
+                    onClick={() => onViewDetail?.(inst)}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </IconActionButton>
+                  {activeDetailId != null && activeDetailId !== inst.strategy_instance_id && (
+                    <IconActionButton
+                      title="Compare side-by-side"
+                      ariaLabel="Compare side-by-side"
+                      onClick={() => onCompare?.(inst)}
                     >
-                      <Eye className="h-3.5 w-3.5" />
-                    </Button>
-                    {activeDetailId != null && activeDetailId !== inst.strategy_instance_id && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        title="Compare side-by-side"
-                        onClick={() => onCompare?.(inst)}
-                      >
-                        <Columns2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn('h-7 w-7', dangerGhostBtnClass)}
-                      title="Delete instance"
-                      onClick={() => onDelete(inst)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))
+                      <Columns2 className="h-3.5 w-3.5" />
+                    </IconActionButton>
+                  )}
+                  <IconActionButton
+                    title="Delete instance"
+                    ariaLabel="Delete instance"
+                    tone="danger"
+                    onClick={() => onDelete(inst)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </IconActionButton>
+                </div>
+              </DenseTableCell>
+            </DenseTableRow>
+          ))
 
-            return [headerRow, ...dataRows]
-          })}
-        </tbody>
-      </table>
-    </div>
+          return [headerRow, ...dataRows]
+        })}
+      </DenseTableBody>
+    </DenseDataTable>
   )
 }

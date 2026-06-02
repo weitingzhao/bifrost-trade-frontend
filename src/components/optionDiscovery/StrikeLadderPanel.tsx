@@ -8,14 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { fmtUsd } from '@/lib/format'
 import {
@@ -28,76 +20,11 @@ import { DiscoveryHint } from './DiscoveryHint'
 import { DiscoveryIconButton } from './DiscoveryIconButton'
 import { DiscoveryScrollArea } from './DiscoveryScrollArea'
 import { DiscoverySideToggle, type StrikeSideMode } from './DiscoverySideToggle'
+import { DiscoveryStrikeLadderTable } from './DiscoveryStrikeLadderTable'
 
 export interface StrikeOiPair {
   c: number | null
   p: number | null
-}
-
-function fmtOiCompact(n: number | null): string {
-  if (n == null || !Number.isFinite(n)) return '—'
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 100_000) return `${Math.round(n / 1000)}k`
-  if (n >= 10_000) return `${(n / 1000).toFixed(1)}k`
-  if (n >= 1000) return `${(n / 1000).toFixed(2)}k`
-  return String(Math.round(n))
-}
-
-function StrikeOiBar({ widthPct, variant }: { widthPct: number; variant: 'call' | 'put' }) {
-  return (
-    <div className="flex h-1.5 min-w-0 flex-1 overflow-hidden rounded-sm bg-muted/50">
-      <div
-        className={cn(
-          'h-full rounded-sm transition-[width]',
-          variant === 'call' ? 'bg-green-500/70' : 'bg-destructive/70',
-        )}
-        style={{ width: `${widthPct}%` }}
-      />
-    </div>
-  )
-}
-
-function StrikeLadderOiStrikeCell({
-  strike,
-  oiMax,
-  oiByStrike,
-  showOi,
-}: {
-  strike: number
-  oiMax: number
-  oiByStrike: Map<number, StrikeOiPair>
-  showOi: boolean
-}) {
-  if (!showOi) {
-    return (
-      <TableCell className="py-1 font-mono text-xs tabular-nums">{strike.toFixed(1)}</TableCell>
-    )
-  }
-  const o = oiByStrike.get(strike)
-  const c = o?.c ?? null
-  const p = o?.p ?? null
-  const denom = oiMax > 0 ? oiMax : 1
-  const cw = c != null ? Math.min(100, (c / denom) * 100) : 0
-  const pw = p != null ? Math.min(100, (p / denom) * 100) : 0
-  return (
-    <TableCell className="py-1 align-top">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="text-center font-mono text-xs font-semibold tabular-nums">{strike.toFixed(1)}</div>
-        <div className="flex items-center gap-0.5" aria-hidden>
-          <StrikeOiBar widthPct={cw} variant="call" />
-          <div className="w-px shrink-0 self-stretch bg-border" />
-          <StrikeOiBar widthPct={pw} variant="put" />
-        </div>
-        <div
-          className="flex justify-between text-[0.62rem] text-muted-foreground tabular-nums"
-          aria-label={`Call OI ${fmtOiCompact(c)}, Put OI ${fmtOiCompact(p)}`}
-        >
-          <span className="text-green-600 dark:text-green-500">C {fmtOiCompact(c)}</span>
-          <span className="text-destructive">P {fmtOiCompact(p)}</span>
-        </div>
-      </div>
-    </TableCell>
-  )
 }
 
 function StrikeLadderTable({
@@ -121,46 +48,16 @@ function StrikeLadderTable({
 }) {
   return (
     <DiscoveryScrollArea className="rounded-md border border-border/60">
-      <Table className="text-xs" role="grid" aria-label={ariaLabel}>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="h-7 w-12 px-2 text-[0.65rem] font-semibold uppercase tracking-wide">
-              Select
-            </TableHead>
-            <TableHead className="h-7 px-2 text-[0.65rem] font-semibold uppercase tracking-wide">
-              {showOi ? 'Strike / OI' : 'Strike'}
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {strikes.map(s => (
-            <TableRow
-              key={s}
-              className={cn('cursor-default', rowClassName?.(s))}
-            >
-              <TableCell className="w-12 px-2 py-1">
-                <Checkbox
-                  checked={multiSelectStrikes.includes(s)}
-                  onCheckedChange={checked => {
-                    if (checked === true) {
-                      setMultiSelectStrikes(prev => [...prev, s].sort((a, b) => a - b))
-                    } else {
-                      setMultiSelectStrikes(prev => prev.filter(x => x !== s))
-                    }
-                  }}
-                  aria-label={`Select strike ${s}`}
-                />
-              </TableCell>
-              <StrikeLadderOiStrikeCell
-                strike={s}
-                oiMax={oiMax}
-                oiByStrike={oiByStrike}
-                showOi={showOi}
-              />
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <DiscoveryStrikeLadderTable
+        ariaLabel={ariaLabel}
+        strikes={strikes}
+        rowClassName={rowClassName}
+        multiSelectStrikes={multiSelectStrikes}
+        setMultiSelectStrikes={setMultiSelectStrikes}
+        showOi={showOi}
+        oiMax={oiMax}
+        oiByStrike={oiByStrike}
+      />
     </DiscoveryScrollArea>
   )
 }

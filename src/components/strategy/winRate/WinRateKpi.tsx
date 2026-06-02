@@ -1,7 +1,15 @@
 import { cn } from '@/lib/utils'
-import styles from './winRate.module.css'
-import { kpiToneClass } from './toneClasses'
 import type { ProfitLossTone, WinPctTone } from '@/utils/winRate'
+import {
+  winRateKpiHighlightClass,
+  winRateKpiLabelClass,
+  winRateKpiLabelCompactClass,
+  winRateKpiShellClass,
+  winRateKpiValueClass,
+  winRateKpiValueCompactClass,
+  winRateKpiWinPctValueClass,
+} from './winRateUi'
+import { profitLossToneClass, winPctToneClass } from './toneClasses'
 
 export interface WinRateKpiProps {
   label: string
@@ -9,7 +17,16 @@ export interface WinRateKpiProps {
   tone?: WinPctTone | ProfitLossTone
   highlight?: boolean
   winPctSize?: boolean
+  compact?: boolean
   title?: string
+}
+
+function resolveToneClass(
+  tone: WinPctTone | ProfitLossTone,
+  winPctSize: boolean,
+): string {
+  if (winPctSize) return winPctToneClass(tone as WinPctTone)
+  return profitLossToneClass(tone as ProfitLossTone)
 }
 
 export function WinRateKpi({
@@ -18,19 +35,22 @@ export function WinRateKpi({
   tone = 'muted',
   highlight = false,
   winPctSize = false,
+  compact = false,
   title,
 }: WinRateKpiProps) {
   return (
     <div
-      className={cn(styles.kpi, highlight && styles.kpiHighlight)}
+      className={cn(winRateKpiShellClass, highlight && winRateKpiHighlightClass)}
       title={title}
     >
-      <span className={styles.kpiLabel}>{label}</span>
+      <span className={compact ? winRateKpiLabelCompactClass : winRateKpiLabelClass}>
+        {label}
+      </span>
       <span
         className={cn(
-          styles.kpiValue,
-          winPctSize && styles.kpiValueWinPct,
-          kpiToneClass(tone),
+          compact ? winRateKpiValueCompactClass : winRateKpiValueClass,
+          winPctSize && !compact && winRateKpiWinPctValueClass,
+          resolveToneClass(tone, winPctSize),
         )}
       >
         {value}

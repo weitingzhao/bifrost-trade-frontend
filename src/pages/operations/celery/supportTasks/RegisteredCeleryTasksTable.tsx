@@ -1,14 +1,16 @@
 import { useMemo } from 'react'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+} from '@/components/data-display'
 import { formatQueueLabel, brokerQueueKeyTitle } from '@/utils/celeryQueueLabels'
 import type { CelerySupportedTaskRow } from '@/types/ops'
+import { CELERY_REGISTERED_TASKS_COL_WIDTHS, celerySectionTitleClass } from '../celeryUi'
 
 export function RegisteredCeleryTasksTable({ tasks }: { tasks: CelerySupportedTaskRow[] }) {
   const sorted = useMemo(
@@ -20,36 +22,38 @@ export function RegisteredCeleryTasksTable({ tasks }: { tasks: CelerySupportedTa
 
   return (
     <div className="space-y-2">
-      <h4 className="text-sm font-medium">Registered Celery tasks</h4>
-      <div className="overflow-x-auto rounded-md border">
-        <Table className="text-xs">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Task name</TableHead>
-              <TableHead>Task route default queue</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sorted.map(row => {
-              const dq = row.task_route_default_queue ?? row.default_queue ?? '—'
-              return (
-                <TableRow key={row.name}>
-                  <TableCell>
-                    <code className="font-mono text-[11px] break-all">{row.name}</code>
-                  </TableCell>
-                  <TableCell>
-                    {dq === '—' ? (
-                      '—'
-                    ) : (
-                      <span title={brokerQueueKeyTitle(dq)}>{formatQueueLabel(dq)}</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <h4 className={celerySectionTitleClass}>Registered Celery tasks</h4>
+      <DenseDataTable>
+        <colgroup>
+          <col style={{ width: CELERY_REGISTERED_TASKS_COL_WIDTHS.task }} />
+          <col style={{ width: CELERY_REGISTERED_TASKS_COL_WIDTHS.queue }} />
+        </colgroup>
+        <DenseTableHeader>
+          <DenseTableHeadRow>
+            <DenseTableHead>Task name</DenseTableHead>
+            <DenseTableHead>Task route default queue</DenseTableHead>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
+          {sorted.map(row => {
+            const dq = row.task_route_default_queue ?? row.default_queue ?? '—'
+            return (
+              <DenseTableRow key={row.name}>
+                <DenseTableCell>
+                  <code className="font-mono text-[11px] break-all">{row.name}</code>
+                </DenseTableCell>
+                <DenseTableCell>
+                  {dq === '—' ? (
+                    '—'
+                  ) : (
+                    <span title={brokerQueueKeyTitle(dq)}>{formatQueueLabel(dq)}</span>
+                  )}
+                </DenseTableCell>
+              </DenseTableRow>
+            )
+          })}
+        </DenseTableBody>
+      </DenseDataTable>
     </div>
   )
 }

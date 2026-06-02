@@ -1,4 +1,5 @@
-import type { StatusResponse, Operation, FlexAccountItem } from '@/types/monitor'
+import { postControlShutdown } from '@/api/apiControl'
+import type { StatusResponse, Operation, FlexAccountItem, RiskSummaryResponse } from '@/types/monitor'
 import type { ActiveStrategyPayload } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
 import { StatusResponseSchema, OperationsResponseSchema } from '@/lib/schemas/monitor'
@@ -15,6 +16,19 @@ export async function fetchMonitorStatus(): Promise<StatusResponse> {
   const res = await fetch(`${BASE}/status`)
   if (!res.ok) throw new Error(`Monitor /status: ${res.status}`)
   return validateStatus(await res.json())
+}
+
+/** GET /health on Monitor API (routing fields for API Health overview). */
+export async function fetchMonitorHealth(): Promise<Record<string, unknown>> {
+  const res = await fetch(`${BASE}/health`, { signal: AbortSignal.timeout(8_000) })
+  if (!res.ok) throw new Error(`Monitor /health: ${res.status}`)
+  const j = await res.json()
+  return j != null && typeof j === 'object' && !Array.isArray(j) ? (j as Record<string, unknown>) : {}
+}
+
+/** Terminate the Monitor (bifrost-server) process. Requires operator role. */
+export async function postMonitorShutdown(): Promise<{ ok: boolean; error?: string }> {
+  return postControlShutdown(`${BASE.replace(/\/$/, '')}/api/server/shutdown`)
 }
 
 export async function postRefreshAccounts(signal?: AbortSignal): Promise<{ ok: boolean; message?: string; error?: string }> {
@@ -57,6 +71,12 @@ export async function fetchOperations(limit = 50): Promise<{ operations: Operati
   const res = await fetch(`${BASE}/operations?limit=${limit}`)
   if (!res.ok) throw new Error(`Monitor /operations: ${res.status}`)
   return validateOperations(await res.json())
+}
+
+export async function fetchRiskSummary(): Promise<RiskSummaryResponse> {
+  const res = await fetch(`${BASE}/risk_summary`)
+  if (!res.ok) throw new Error(`Monitor /risk_summary: ${res.status}`)
+  return res.json()
 }
 
 // ─── Configuration API ────────────────────────────────────────────────────────

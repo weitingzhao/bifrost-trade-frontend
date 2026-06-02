@@ -1,3 +1,4 @@
+import { postControlShutdown } from '@/api/apiControl'
 import type {
   PositionCategoriesResponse,
   TagPositionRequest,
@@ -110,4 +111,11 @@ export async function tagPosition(
   })
   if (!res.ok) throw new Error(`Tag position: ${res.status}`)
   return res.json()
+}
+
+export async function postPortfolioShutdown(
+  serviceOrigin?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const base = (serviceOrigin ?? BASE).replace(/\/$/, '')
+  return postControlShutdown(`${base}/portfolio/shutdown`)
 }

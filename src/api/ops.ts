@@ -1,3 +1,4 @@
+import { postControlShutdown } from '@/api/apiControl'
 import type {
   WorkersResponse,
   QueuesResponse,
@@ -524,4 +525,9 @@ export async function fetchOpsHealth(token: string): Promise<OpsHealthResponse> 
 export async function fetchOpsCapabilities(token: string): Promise<OpsCapabilities> {
   const r = await fetch(opsUrl('/ops/auth/capabilities'), { headers: authHeaders(token) })
   return parseJson(r)
+}
+
+/** Terminate the Ops FastAPI process. Requires operator role. */
+export async function postOpsShutdown(): Promise<{ ok: boolean; error?: string }> {
+  return postControlShutdown(opsUrl('/ops/shutdown'))
 }

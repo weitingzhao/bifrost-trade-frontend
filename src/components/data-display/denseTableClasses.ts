@@ -17,3 +17,6 @@ export const denseTable = {
 
 export const denseTableCellPadding =
   'py-[var(--table-cell-py)] px-[var(--table-cell-px)]'
+
+/** Right-aligned numeric columns (DenseTableHead / DenseTableCell). */
+export const denseTableNumCell = 'text-right font-mono tabular-nums'

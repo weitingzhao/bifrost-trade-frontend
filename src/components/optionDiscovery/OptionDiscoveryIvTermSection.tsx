@@ -2,18 +2,15 @@ import { useCallback, useMemo, useState } from 'react'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { SegmentControl } from '@/components/data-display'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { DiscoveryIconButton } from '@/components/optionDiscovery/DiscoveryIconButton'
 import { DiscoverySection } from '@/components/optionDiscovery/DiscoverySection'
+import {
+  CONE_MIN_DAILY_SAMPLES,
+  DiscoveryIvTermSheetTable,
+} from '@/components/optionDiscovery/DiscoveryIvTermSheetTable'
+import { optionDiscoveryChartWrapClass } from '@/components/optionDiscovery/optionDiscoveryUi'
 import {
   IvParametricConeChart,
   IvTermStructureChart,
@@ -29,9 +26,6 @@ import {
   expirationDaysFromToday,
   expirationKindLabel,
 } from '@/utils/optionDiscovery/expirationMeta'
-
-/** Matches backend `min_samples_for_bands` for cone p10–p90 bands. */
-const CONE_MIN_DAILY_SAMPLES = 5
 
 type IvDataQuality = 'good' | 'limited' | 'unknown'
 
@@ -109,49 +103,6 @@ function IvDataQualityIcon({ tier }: { tier: IvDataQuality }) {
     </span>
   )
 }
-
-const TOOLTIP_SAMPLES_VS_REQ = (actual: number, req: number) =>
-  `Expected: at least ${req} calendar days in the lookback window where a daily ATM IV can be computed from historical snapshots (near-ATM strikes, valid IV, underlying spot from stock_day Massive bars aligned to option day_last_updated). Actual: ${actual}. To satisfy: keep ingesting chain snapshots and stock_day so rows accumulate; a wider strike grid helps when spot moves. The orange cone line uses option_snapshots_latest and does not require this count.`
-
-const TOOLTIP_BAND_CELLS_NA = (actual: number, req: number) =>
-  `P10–P90 / Min / Max are hidden until daily samples reach ${req} (currently ${actual}). See Samples (act. / req.) column.`
-
-function IvSheetHoverCell({
-  warn,
-  detail,
-  children,
-}: {
-  warn?: boolean
-  detail: string
-  children: React.ReactNode
-}) {
-  return (
-    <span
-      className={cn(
-        'group relative inline-flex max-w-full cursor-help align-middle',
-        warn && 'font-semibold text-amber-600 dark:text-amber-400',
-      )}
-    >
-      <span
-        className={cn(
-          'border-b border-dotted',
-          warn ? 'border-amber-600 dark:border-amber-400' : 'border-muted-foreground',
-        )}
-      >
-        {children}
-      </span>
-      <span
-        className="pointer-events-none absolute left-1/2 top-full z-[120] mt-1.5 hidden min-w-56 max-w-[22rem] -translate-x-1/2 rounded-md border border-border bg-popover px-3 py-2 text-xs font-normal leading-snug text-muted-foreground shadow-md group-hover:block"
-        role="tooltip"
-      >
-        {detail}
-      </span>
-    </span>
-  )
-}
-
-const CHART_WRAP_CLASS =
-  'min-w-0 rounded-lg border border-border bg-secondary/30 p-2 [&_.od-chart-svg]:block [&_.od-chart-svg]:h-auto [&_.od-chart-svg]:w-full [&_.od-chart-svg]:max-w-full [&_.od-chart-svg]:aspect-[640/260]'
 
 export function OptionDiscoveryIvTermSection({
   symbol,
@@ -302,31 +253,21 @@ export function OptionDiscoveryIvTermSection({
                   </span>
                 </div>
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <ToggleGroup
-                    type="single"
-                    size="sm"
-                    variant="outline"
+                  <SegmentControl
                     value={expirationFilterKind}
-                    onValueChange={v => {
+                    onChange={v => {
                       if (v === 'all' || v === 'standard' || v === 'weeklies' || v === 'quarterlies') {
                         onExpirationFilterKindChange(v)
                       }
                     }}
-                    aria-label="Expiration type filter"
-                  >
-                    <ToggleGroupItem value="all" aria-label="All expirations">
-                      All
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="standard" aria-label="Standard expirations">
-                      Std
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="weeklies" aria-label="Weekly expirations">
-                      Wk
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="quarterlies" aria-label="Quarterly expirations">
-                      Qtr
-                    </ToggleGroupItem>
-                  </ToggleGroup>
+                    ariaLabel="Expiration type filter"
+                    options={[
+                      { value: 'all', label: 'All' },
+                      { value: 'standard', label: 'Std' },
+                      { value: 'weeklies', label: 'Wk' },
+                      { value: 'quarterlies', label: 'Qtr' },
+                    ]}
+                  />
                   <div className="ml-auto flex min-w-0 flex-wrap justify-end gap-1.5">
                     <Button
                       type="button"
@@ -483,7 +424,7 @@ export function OptionDiscoveryIvTermSection({
                   tripleCharts ? 'lg:grid-cols-3' : 'lg:grid-cols-2',
                 )}
               >
-                <div className={CHART_WRAP_CLASS}>
+                <div className={optionDiscoveryChartWrapClass}>
                   <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     IV Term Structure
                     <InfoTooltip text="ATM implied volatility for the expirations you check below (PostgreSQL option_snapshots; source matches your quote pipeline). Order follows the expiration list above." />
@@ -492,7 +433,7 @@ export function OptionDiscoveryIvTermSection({
                     <IvTermStructureChart points={termPoints} />
                   </OdChartExpandOnHover>
                 </div>
-                <div className={CHART_WRAP_CLASS}>
+                <div className={optionDiscoveryChartWrapClass}>
                   <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     IV Volatility Cone
                     <InfoTooltip text="Per calendar expiration: p10–p90 band of daily ATM IV from PostgreSQL option_snapshots (up to 90 calendar days). DTE on the x-axis is today’s days to expiration; past samples had different DTE for the same expiry. Orange line: current ATM IV (same definition as IV term structure)." />
@@ -513,7 +454,7 @@ export function OptionDiscoveryIvTermSection({
                 </div>
 
                 {tripleCharts && (
-                  <div className={CHART_WRAP_CLASS}>
+                  <div className={optionDiscoveryChartWrapClass}>
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Parametric IV (historical)
                       <InfoTooltip text="Per expiration: sample mean and sample standard deviation of daily ATM IV over the same lookback as the percentile cone; min/max and mean ±1 SD / ±2 SD (lower bands clamped at 0). Not the same as p10–p90. Call and Put: latest snapshot IV at the chosen ATM strike (same as term structure)." />
@@ -543,146 +484,12 @@ export function OptionDiscoveryIvTermSection({
                     for bands; hover cells when highlighted.
                   </DiscoveryHint>
                   <div className="overflow-x-auto">
-                    <Table className="text-xs">
-                      <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                          <TableHead className="text-left">Exp</TableHead>
-                          <TableHead className="text-right">DTE</TableHead>
-                          <TableHead className="text-right">ATM</TableHead>
-                          <TableHead className="text-right">C</TableHead>
-                          <TableHead className="text-right">P</TableHead>
-                          <TableHead className="text-right">Str</TableHead>
-                          <TableHead className="text-right">
-                            ACT/REQ
-                            <InfoTooltip
-                              text={`Minimum ${CONE_MIN_DAILY_SAMPLES} daily ATM IV points in the lookback are required for cone p10–p90 bands. Hover this column or P10–Max when highlighted.`}
-                            />
-                          </TableHead>
-                          <TableHead className="text-right">
-                            Bnd
-                            <InfoTooltip text="OK = enough daily samples for percentile bands. Inc = incomplete; hover ACT/REQ or status." />
-                          </TableHead>
-                          <TableHead className="text-right">P10</TableHead>
-                          <TableHead className="text-right">P50</TableHead>
-                          <TableHead className="text-right">P90</TableHead>
-                          <TableHead className="text-right">Mn</TableHead>
-                          <TableHead className="text-right">Mx</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {mergedIvRows.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={13} className="text-center italic text-muted-foreground">
-                              {coneError && !termRows.length ? 'Failed to load data.' : 'No rows.'}
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          mergedIvRows.map(({ expiration, dte, term, cone }) => {
-                            const actual = cone?.sample_days ?? 0
-                            const req = CONE_MIN_DAILY_SAMPLES
-                            const bandsOk = cone != null && actual >= req
-                            const rowWarn = cone != null && !bandsOk
-                            const pctCell = (v: number | null | undefined) => {
-                              if (cone == null) return '—'
-                              if (v != null && Number.isFinite(v)) return fmtIvPct(v)
-                              if (bandsOk) return '—'
-                              return (
-                                <IvSheetHoverCell warn detail={TOOLTIP_BAND_CELLS_NA(actual, req)}>
-                                  —
-                                </IvSheetHoverCell>
-                              )
-                            }
-                            return (
-                              <TableRow
-                                key={expiration}
-                                className={rowWarn ? 'bg-amber-500/10' : undefined}
-                              >
-                                <TableCell className="text-left tabular-nums">{expiration}</TableCell>
-                                <TableCell className="text-right tabular-nums">{dte}</TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {fmtIvPct(term?.atm_iv ?? cone?.atm_iv)}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums">{fmtIvPct(term?.iv_call)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{fmtIvPct(term?.iv_put)}</TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {term?.strike != null && Number.isFinite(term.strike)
-                                    ? term.strike.toFixed(2)
-                                    : '—'}
-                                </TableCell>
-                                <TableCell
-                                  className={cn('text-right tabular-nums', rowWarn && 'text-amber-600 dark:text-amber-400')}
-                                >
-                                  {cone == null ? (
-                                    '—'
-                                  ) : (
-                                    <IvSheetHoverCell warn={!bandsOk} detail={TOOLTIP_SAMPLES_VS_REQ(actual, req)}>
-                                      <span title={`${actual} / ${req} daily samples`}>
-                                        <span className="font-semibold">{actual}</span>
-                                        <span className="text-muted-foreground">/</span>
-                                        {req}
-                                      </span>
-                                    </IvSheetHoverCell>
-                                  )}
-                                </TableCell>
-                                <TableCell
-                                  className={cn('text-right tabular-nums', rowWarn && 'text-amber-600 dark:text-amber-400')}
-                                >
-                                  {cone == null ? (
-                                    '—'
-                                  ) : bandsOk ? (
-                                    'OK'
-                                  ) : (
-                                    <IvSheetHoverCell warn detail={TOOLTIP_SAMPLES_VS_REQ(actual, req)}>
-                                      <span title="Incomplete">Inc</span>
-                                    </IvSheetHoverCell>
-                                  )}
-                                </TableCell>
-                                <TableCell
-                                  className={cn(
-                                    'text-right tabular-nums',
-                                    !bandsOk && cone != null && 'text-muted-foreground',
-                                  )}
-                                >
-                                  {pctCell(cone?.iv_p10)}
-                                </TableCell>
-                                <TableCell
-                                  className={cn(
-                                    'text-right tabular-nums',
-                                    !bandsOk && cone != null && 'text-muted-foreground',
-                                  )}
-                                >
-                                  {pctCell(cone?.iv_p50)}
-                                </TableCell>
-                                <TableCell
-                                  className={cn(
-                                    'text-right tabular-nums',
-                                    !bandsOk && cone != null && 'text-muted-foreground',
-                                  )}
-                                >
-                                  {pctCell(cone?.iv_p90)}
-                                </TableCell>
-                                <TableCell
-                                  className={cn(
-                                    'text-right tabular-nums',
-                                    !bandsOk && cone != null && 'text-muted-foreground',
-                                  )}
-                                >
-                                  {pctCell(cone?.iv_min)}
-                                </TableCell>
-                                <TableCell
-                                  className={cn(
-                                    'text-right tabular-nums',
-                                    !bandsOk && cone != null && 'text-muted-foreground',
-                                  )}
-                                >
-                                  {pctCell(cone?.iv_max)}
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
+                    <DiscoveryIvTermSheetTable
+                      mergedIvRows={mergedIvRows}
+                      coneError={coneError}
+                      termRows={termRows}
+                      fmtIvPct={fmtIvPct}
+                    />
                   </div>
                 </div>
               </details>

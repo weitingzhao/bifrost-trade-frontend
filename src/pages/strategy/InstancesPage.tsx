@@ -7,27 +7,17 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  InstancesGroupedTable,
-} from '@/components/strategy/InstancesGroupedTable'
+import { InstancesGroupedTable } from '@/components/strategy/InstancesGroupedTable'
 import { createCollapsedGroupsState } from '@/utils/instanceGroupCollapse'
 import { InstanceCreateModal } from '@/components/strategy/InstanceCreateModal'
 import { InstanceDeleteModal } from '@/components/strategy/InstanceDeleteModal'
 import { InstanceDetailSidebar } from '@/components/strategy/InstanceDetailSidebar'
-import { StrategyOpportunityCombobox } from '@/components/strategy/StrategyOpportunityCombobox'
 import {
   InstanceListFilters,
   type InstanceListFilterValues,
   type SinceFilter,
 } from '@/components/strategy/InstanceListFilters'
-import { InstanceListToolbar, type DetailViewMode } from '@/components/strategy/InstanceListToolbar'
+import type { DetailViewMode } from '@/components/strategy/InstanceListToolbar'
 import { useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
 import { useInstanceMetrics } from '@/hooks/useInstanceMetrics'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -35,8 +25,6 @@ import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { INSTANCE_COMPARE_MAX_WIDTH_PX } from '@/constants/instanceDetailSidebar'
 import { computeInstancePositionStatus } from '@/utils/instanceListMetrics'
 import type { StrategyInstance } from '@/types/positions'
-import filterStyles from '@/components/strategy/instances/instancesFilters.module.css'
-import layoutStyles from '@/components/strategy/instances/instancesLayout.module.css'
 
 const INSTANCES_INFO =
   'Running strategy instances per account; create from an opportunity, inspect PnL and executions, or open the instance sheet.'
@@ -322,7 +310,7 @@ export default function InstancesPage() {
 
   if (isLoading) {
     return (
-      <PageShell className="space-y-3">
+      <PageShell padding="default" className="space-y-3">
         <Skeleton className="h-6 w-40" />
         <Skeleton className="h-64 rounded-lg" />
       </PageShell>
@@ -330,137 +318,85 @@ export default function InstancesPage() {
   }
 
   return (
-    <PageShell>
-      <div className={layoutStyles.pageCard}>
-        <PageHeader
-          title={
-            <span className="inline-flex items-center gap-1">
-              Strategy / Instances
-              <InfoTooltip text={INSTANCES_INFO} />
-            </span>
-          }
-          titleSize="large"
-          actions={
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 gap-1.5"
-                onClick={() => {
-                  setMetricsRefreshKey((k) => k + 1)
-                  void refetch()
-                }}
-                disabled={isFetching}
-              >
-                <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
-                {isFetching ? 'Loading…' : 'Refresh'}
-              </Button>
-              <Button size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Create instance
-              </Button>
-            </>
-          }
-        />
-
-        <div className={filterStyles.filterRow}>
-          <label className={filterStyles.filterField}>
-            <span className={filterStyles.filterLabel}>Account</span>
-            <select
-              className={filterStyles.filterSelect}
-              value={accountFilter}
-              onChange={(e) => setAccountFilter(e.target.value)}
-              aria-label="Filter by account"
-            >
-              <option value="">All accounts</option>
-              {accounts.map((id) => (
-                <option key={id} value={id}>{id}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className={filterStyles.filterField}>
-            <span className={filterStyles.filterLabel}>Strategy</span>
-            <StrategyOpportunityCombobox
-              opportunities={opportunities}
-              value={opportunityIdFilter}
-              disabled={oppsFetching}
-              onChange={(id) => {
-                setOpportunityIdFilter(id)
-                setInstanceIdFilter('')
+    <PageShell padding="default" className="space-y-3">
+      <PageHeader
+        title={
+          <span className="inline-flex items-center gap-1">
+            Strategy / Instances
+            <InfoTooltip text={INSTANCES_INFO} />
+          </span>
+        }
+        titleSize="large"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 gap-1.5"
+              onClick={() => {
+                setMetricsRefreshKey((k) => k + 1)
+                void refetch()
               }}
-            />
-          </label>
+              disabled={isFetching}
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
+              {isFetching ? 'Loading…' : 'Refresh'}
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Create instance
+            </Button>
+          </>
+        }
+      />
 
-          {opportunityIdFilter !== '' && (
-            <label className={filterStyles.filterField}>
-              <span className={filterStyles.filterLabel}>Instance</span>
-              <Select
-                value={instanceIdFilter === '' ? '__all__' : String(instanceIdFilter)}
-                onValueChange={(v) => setInstanceIdFilter(v === '__all__' ? '' : Number(v))}
-              >
-                <SelectTrigger className="h-8 w-44 text-xs">
-                  <SelectValue placeholder="All" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All</SelectItem>
-                  {instancesForOpportunity.map((si) => (
-                    <SelectItem key={si.strategy_instance_id} value={String(si.strategy_instance_id)}>
-                      {si.label?.trim() || `#${si.strategy_instance_id}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </label>
-          )}
-        </div>
+      {isError && (
+        <QueryErrorAlert error={error} onRetry={() => void refetch()} />
+      )}
 
-        {isError && (
-          <QueryErrorAlert error={error} onRetry={() => void refetch()} />
-        )}
+      {allInstances.length > 0 && (
+        <InstanceListFilters
+          options={filterOptions}
+          values={filterValues}
+          sinceRangeText={sinceRangeText}
+          filteredCount={filtered.length}
+          totalCount={allInstances.length}
+          onChange={(patch) => setFilterValues((v) => ({ ...v, ...patch }))}
+          onClear={clearAllFilters}
+          accounts={accounts}
+          accountFilter={accountFilter}
+          onAccountFilterChange={setAccountFilter}
+          opportunities={opportunities}
+          opportunityIdFilter={opportunityIdFilter}
+          onOpportunityIdFilterChange={setOpportunityIdFilter}
+          oppsFetching={oppsFetching}
+          instancesForOpportunity={instancesForOpportunity}
+          instanceIdFilter={instanceIdFilter}
+          onInstanceIdFilterChange={setInstanceIdFilter}
+          detailViewMode={detailViewMode}
+          onDetailViewModeChange={setDetailViewMode}
+          onExpandAll={handleExpandAll}
+          onCollapseAll={handleCollapseAll}
+          showGroupToolbar={groupedItems.length > 0}
+        />
+      )}
 
-        <div className={layoutStyles.workspace}>
-          <div className={layoutStyles.listPane}>
-            {allInstances.length > 0 && (
-              <InstanceListFilters
-                options={filterOptions}
-                values={filterValues}
-                sinceRangeText={sinceRangeText}
-                filteredCount={filtered.length}
-                totalCount={allInstances.length}
-                onChange={(patch) => setFilterValues((v) => ({ ...v, ...patch }))}
-                onClear={clearAllFilters}
-              />
-            )}
-
-            {groupedItems.length > 0 && (
-              <InstanceListToolbar
-                detailViewMode={detailViewMode}
-                onDetailViewModeChange={setDetailViewMode}
-                onExpandAll={handleExpandAll}
-                onCollapseAll={handleCollapseAll}
-              />
-            )}
-
-            <InstancesGroupedTable
-              groups={groupedItems}
-              metricsMap={metricsMap}
-              detailViewMode={detailViewMode}
-              collapsedGroups={collapsedGroups}
-              onToggleGroup={handleToggleGroup}
-              onDelete={setDeleteTarget}
-              onViewDetail={openInstanceDetail}
-              onCompare={(inst) =>
-                setCompareTarget(
-                  compareTarget?.strategy_instance_id === inst.strategy_instance_id ? null : inst,
-                )
-              }
-              activeDetailId={urlInstanceId}
-              compareId={compareTarget?.strategy_instance_id ?? null}
-            />
-          </div>
-        </div>
-      </div>
+      <InstancesGroupedTable
+          groups={groupedItems}
+          metricsMap={metricsMap}
+          detailViewMode={detailViewMode}
+          collapsedGroups={collapsedGroups}
+          onToggleGroup={handleToggleGroup}
+          onDelete={setDeleteTarget}
+          onViewDetail={openInstanceDetail}
+          onCompare={(inst) =>
+            setCompareTarget(
+              compareTarget?.strategy_instance_id === inst.strategy_instance_id ? null : inst,
+            )
+          }
+          activeDetailId={urlInstanceId}
+          compareId={compareTarget?.strategy_instance_id ?? null}
+      />
 
       {urlInstanceId != null && (
         <InstanceDetailSidebar

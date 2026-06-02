@@ -27,6 +27,7 @@ export function CeleryPageHeader() {
 
   return (
     <PageHeader
+      titleSize="large"
       title={
         <span className="inline-flex items-center gap-2">
           <Tooltip>

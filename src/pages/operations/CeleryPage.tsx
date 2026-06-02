@@ -23,17 +23,17 @@ import {
   type CeleryStatusFilter,
 } from './celery/celeryTypes'
 import {
+  CELERY_FLASH_ENTER,
   CELERY_MAIN_TAB_TRIGGER,
   CELERY_MAIN_TABS_LIST,
   CELERY_SPLIT_GRID,
-} from './celery/celeryLayoutClasses'
+} from './celery/celeryUi'
 import {
   applyCeleryUrlPatch,
   legacyHashToCelerySearchParams,
   parseCelerySearchParams,
 } from './celery/celeryUrlSync'
 import { resolveConsoleTargetForQueue } from './celery/celeryNavigation'
-import { CELERY_FLASH_ENTER } from './celery/celeryLayoutClasses'
 import { useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
 import { cn } from '@/lib/utils'
 
@@ -210,7 +210,7 @@ function CeleryPageContent() {
 
   return (
     <TooltipProvider>
-      <PageShell className="space-y-6">
+      <PageShell padding="default" className="space-y-6">
         <CeleryPageHeader />
 
         {flash && (

@@ -12,7 +12,6 @@ export {
   NestedDenseTable,
   DenseTableSubheadRow,
   DenseTableDetailRow,
-  denseTableNumCell,
 } from './DenseTable'
 export { InlinePnl, PnlCell } from './PnlDisplay'
 export { DenseTag, DenseTagButton, type DenseTagSize, type DenseTagVariant } from './DenseTag'
@@ -45,7 +44,7 @@ export {
   BubbleSwitch,
   type SegmentOption,
 } from './SegmentControl'
-export { denseTable, denseTableCellPadding } from './denseTableClasses'
+export { denseTable, denseTableCellPadding, denseTableNumCell } from './denseTableClasses'
 export {
   segmentGroupClass,
   segmentButtonClass,

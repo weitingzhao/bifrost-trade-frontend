@@ -1,14 +1,29 @@
 import type { WinRateStructureRow } from '@/types/strategy'
 import { winPctLabel, winPctTone } from '@/utils/winRate'
-import styles from './winRate.module.css'
+import {
+  winRateKpiGridClass,
+  winRateSectionClass,
+  winRateSectionLabelClass,
+  winRateTotalsSectionClass,
+  winRateTotalsSectionLabelClass,
+} from './winRateUi'
+import { cn } from '@/lib/utils'
 import { WinRateKpi } from './WinRateKpi'
 
-export function WinRateTradesBand({ row }: { row: WinRateStructureRow }) {
+export function WinRateTradesBand({
+  row,
+  inTotals = false,
+}: {
+  row: WinRateStructureRow
+  inTotals?: boolean
+}) {
   const tone = winPctTone(row.total_instances, row.profit_trades)
   return (
-    <div className={styles.section}>
-      <div className={styles.sectionLabel}>Trades</div>
-      <div className={styles.kpiGrid}>
+    <div className={cn(inTotals ? winRateTotalsSectionClass : winRateSectionClass)}>
+      <div className={inTotals ? winRateTotalsSectionLabelClass : winRateSectionLabelClass}>
+        Trades
+      </div>
+      <div className={winRateKpiGridClass}>
         <WinRateKpi
           label="Profit"
           value={String(row.profit_trades)}

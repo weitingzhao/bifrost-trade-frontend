@@ -1,6 +1,18 @@
 import { cn } from '@/lib/utils'
 import type { PrimaryWorkflowTab } from '@/utils/watchlistHelpers'
-import styles from './watchlist.module.css'
+import {
+  watchlistStepperBadgeClass,
+  watchlistStepperConnectorClass,
+  watchlistStepperConnectorDoneClass,
+  watchlistStepperDescClass,
+  watchlistStepperIndexActiveClass,
+  watchlistStepperIndexClass,
+  watchlistStepperShellClass,
+  watchlistStepperStepActiveClass,
+  watchlistStepperStepClass,
+  watchlistStepperStepDoneClass,
+  watchlistStepperTitleClass,
+} from './watchlistUi'
 
 interface Props {
   active: PrimaryWorkflowTab
@@ -30,7 +42,7 @@ export function WorkflowStepper({
   ]
 
   return (
-    <div className={styles.stepper} role="tablist" aria-label="Position workflow steps">
+    <div className={watchlistStepperShellClass} role="tablist" aria-label="Position workflow steps">
       {steps.map((step, i) => {
         const isActive = active === step.id
         const stepOrder = ['watching', 'sizing', 'positions'] as const
@@ -39,10 +51,13 @@ export function WorkflowStepper({
         const isDone = stepIdx < activeIdx
 
         return (
-          <div key={step.id} className="flex flex-1 items-stretch min-w-0">
+          <div key={step.id} className="flex min-w-0 flex-1 items-stretch">
             {i > 0 && (
               <span
-                className={cn(styles.stepConnector, isDone || isActive ? styles.stepConnectorDone : '')}
+                className={cn(
+                  watchlistStepperConnectorClass,
+                  (isDone || isActive) && watchlistStepperConnectorDoneClass,
+                )}
                 aria-hidden
               />
             )}
@@ -51,18 +66,26 @@ export function WorkflowStepper({
               role="tab"
               aria-selected={isActive}
               className={cn(
-                styles.step,
-                isActive && styles.stepActive,
-                isDone && styles.stepDone,
+                watchlistStepperStepClass,
+                isActive && watchlistStepperStepActiveClass,
+                isDone && watchlistStepperStepDoneClass,
               )}
               onClick={() => onChange(step.id)}
             >
-              <span className={styles.stepIndex} aria-hidden>{step.index}</span>
-              <span className="min-w-0">
-                <span className={styles.stepTitle}>{step.title}</span>
-                <span className={styles.stepDesc}>{step.desc}</span>
+              <span
+                className={cn(
+                  watchlistStepperIndexClass,
+                  isActive && watchlistStepperIndexActiveClass,
+                )}
+                aria-hidden
+              >
+                {step.index}
               </span>
-              <span className={styles.stepBadge}>{step.count}</span>
+              <span className="min-w-0">
+                <span className={watchlistStepperTitleClass}>{step.title}</span>
+                <span className={watchlistStepperDescClass}>{step.desc}</span>
+              </span>
+              <span className={watchlistStepperBadgeClass}>{step.count}</span>
             </button>
           </div>
         )

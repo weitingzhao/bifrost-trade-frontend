@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 
-/** Dense UI tag variants — bordered tinted pills (Trade Ledger category is the reference shape). */
+/** Dense UI tag variants — outline pills (border + text only, no fill). */
 export type DenseTagVariant =
   | 'category'
   | 'symbol'
@@ -18,63 +18,58 @@ export type DenseTagVariant =
 export type DenseTagSize = 'cell' | 'pill'
 
 const shellBySize: Record<DenseTagSize, string> = {
-  cell: 'inline-block rounded px-1.5 py-0.5',
-  pill: 'inline-block rounded-md px-2 py-0.5',
-}
-
-const weightBySize: Record<DenseTagSize, string> = {
-  cell: 'font-medium',
-  pill: 'font-semibold',
+  cell: 'inline-block rounded-full border text-[0.6875rem] font-medium px-[0.45rem] py-[0.1rem]',
+  pill: 'inline-block rounded-full border text-xs font-semibold px-2 py-0.5',
 }
 
 const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
   category: {
-    cell: 'border border-purple-500/25 bg-purple-500/10 text-foreground',
-    pill: 'border border-purple-500/30 bg-purple-500/15 text-foreground',
+    cell: 'border-purple-500/35 text-foreground',
+    pill: 'border-purple-500/40 text-foreground',
   },
   symbol: {
-    cell: 'border border-primary/30 bg-primary/15 text-foreground font-semibold',
-    pill: 'border border-primary/35 bg-primary/15 text-foreground font-bold tracking-wide',
+    cell: 'border-primary/40 text-foreground font-semibold',
+    pill: 'border-primary/45 text-foreground font-bold tracking-wide',
   },
   success: {
-    cell: 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
-    pill: 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+    cell: 'border-emerald-500/45 text-emerald-600 dark:text-emerald-400',
+    pill: 'border-emerald-500/45 text-emerald-600 dark:text-emerald-400',
   },
   warning: {
-    cell: 'border border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-400',
-    pill: 'border border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-400',
+    cell: 'border-amber-500/45 text-amber-700 dark:text-amber-400',
+    pill: 'border-amber-500/45 text-amber-700 dark:text-amber-400',
   },
   danger: {
-    cell: 'border border-red-500/40 bg-red-500/15 text-red-600 dark:text-red-400',
-    pill: 'border border-red-500/40 bg-red-500/15 text-red-600 dark:text-red-400',
+    cell: 'border-red-500/45 text-red-600 dark:text-red-400',
+    pill: 'border-red-500/45 text-red-600 dark:text-red-400',
   },
   neutral: {
-    cell: 'border border-border bg-muted/50 text-muted-foreground',
-    pill: 'border border-border bg-muted/50 text-muted-foreground',
+    cell: 'border-border text-muted-foreground',
+    pill: 'border-border text-muted-foreground',
   },
   info: {
-    cell: 'border border-sky-500/40 bg-sky-500/15 text-sky-700 dark:text-sky-400',
-    pill: 'border border-sky-500/40 bg-sky-500/15 text-sky-700 dark:text-sky-400',
+    cell: 'border-sky-500/45 text-sky-700 dark:text-sky-400',
+    pill: 'border-sky-500/45 text-sky-700 dark:text-sky-400',
   },
   'source-flex': {
-    cell: 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-semibold',
-    pill: 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-semibold',
+    cell: 'border-emerald-500/45 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-semibold',
+    pill: 'border-emerald-500/45 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-semibold',
   },
   'source-tws': {
-    cell: 'border border-sky-500/40 bg-sky-500/15 text-sky-700 dark:text-sky-400 font-mono text-xs font-semibold',
-    pill: 'border border-sky-500/40 bg-sky-500/15 text-sky-700 dark:text-sky-400 font-mono text-xs font-semibold',
+    cell: 'border-sky-500/45 text-sky-700 dark:text-sky-400 font-mono text-xs font-semibold',
+    pill: 'border-sky-500/45 text-sky-700 dark:text-sky-400 font-mono text-xs font-semibold',
   },
   'source-journal': {
-    cell: 'border border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
-    pill: 'border border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
+    cell: 'border-amber-500/45 text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
+    pill: 'border-amber-500/45 text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
   },
   'source-manual': {
-    cell: 'border border-violet-500/40 bg-violet-500/15 text-violet-700 dark:text-violet-400 font-mono text-xs font-semibold',
-    pill: 'border border-violet-500/40 bg-violet-500/15 text-violet-700 dark:text-violet-400 font-mono text-xs font-semibold',
+    cell: 'border-violet-500/45 text-violet-700 dark:text-violet-400 font-mono text-xs font-semibold',
+    pill: 'border-violet-500/45 text-violet-700 dark:text-violet-400 font-mono text-xs font-semibold',
   },
   'source-muted': {
-    cell: 'border border-border bg-muted/50 text-muted-foreground font-mono text-xs font-semibold',
-    pill: 'border border-border bg-muted/50 text-muted-foreground font-mono text-xs font-semibold',
+    cell: 'border-border text-muted-foreground font-mono text-xs font-semibold',
+    pill: 'border-border text-muted-foreground font-mono text-xs font-semibold',
   },
 }
 
@@ -83,7 +78,7 @@ export function denseTagClass(
   size: DenseTagSize = 'cell',
   className?: string,
 ): string {
-  return cn(shellBySize[size], weightBySize[size], variantByType[variant][size], className)
+  return cn(shellBySize[size], variantByType[variant][size], className)
 }
 
 export function denseTagVariantFromTone(tone: 'brightOk' | 'warn' | 'bad'): DenseTagVariant {

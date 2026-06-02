@@ -9,7 +9,7 @@
 | `DiscoveryPage` uses `PageHeader` via `DiscoveryPageHeader` + Research breadcrumb → `/research/screener` | Done |
 | No `legacy-monitoring-shell`; root class `option-discovery-root` | Done |
 | No global `legacyMonitoringShell.css` in `index.css` | Done |
-| `optionDiscovery.css` removed; page import `discoveryCharts.css` only (~27 kB raw, **gzip ~4.7 kB**) | Done (Phase 2b) |
+| `optionDiscovery.css` removed; page uses [discoveryCharts.module.css](../src/pages/research/discoveryCharts.module.css) only (~169 lines, chart geometry exception) | Done (Phase 2b) |
 | Phase 2b: `StrikeLadderPanel`, `OptionChainQuotesSection`, shadcn Checkbox/ToggleGroup, Tailwind strike/chain/drawers | Done |
 | `SectionPageTitle` removed; `useDiscoveryNav` in `hooks/useDiscoveryNav.ts` | Done |
 | Legacy primitives replaced: `DiscoveryHint`, `DiscoveryIconButton`, `DiscoverySection` | Done |
@@ -44,9 +44,10 @@ test ! -f src/styles/legacyMonitoringShell.css
 test ! -f src/styles/discoveryScoped.css
 test ! -f src/styles/discoveryStrikeLadder.css
 test ! -f src/styles/discoveryShell.css
-test -f src/styles/discoveryCharts.css
+test -f src/pages/research/discoveryCharts.module.css
 rg 'legacyMonitoringShell|optionDiscovery\.css|discoveryScoped|discoveryStrikeLadder|discoveryShell' src
 # Expected: no matches (except comments in docs)
+npm run check:legacy-css
 ```
 
 ## Dev environment notes (2026-05-31 fix)
@@ -56,7 +57,13 @@ rg 'legacyMonitoringShell|optionDiscovery\.css|discoveryScoped|discoveryStrikeLa
 ## Phase 2b done (2026-05-31)
 
 - Deleted `discoveryScoped.css`, `discoveryStrikeLadder.css`, `discoveryShell.css`.
-- Strike ladder / chain quotes / contract drawer shells → Tailwind + shadcn; SVG + IV-term data tables remain in `discoveryCharts.css`.
+- Strike ladder / chain quotes / contract drawer shells → Dense UI (Phase 4.6); SVG + chart expand overlay remain in `discoveryCharts.module.css`.
+
+## Phase 4.6 Dense UI (done)
+
+- Deleted `optionContractDetail.module.css`; six `DenseDataTable` components under `src/components/optionDiscovery/Discovery*Table.tsx`
+- `ToggleGroup` → `SegmentControl` (side, Greeks, IV filter, chart period); compare remove → `IconActionButton`
+- `npm run check:legacy-css` guards optionDiscovery shadcn Table / raw table / legacy od-* strings
 
 ## Sign-off
 

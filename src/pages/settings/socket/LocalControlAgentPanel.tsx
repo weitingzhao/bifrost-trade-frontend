@@ -8,12 +8,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Info } from 'lucide-react'
+import { socketSectionTitleClass } from './socketIngestUi'
 
 export function LocalControlAgentPanel({ opsHealth }: { opsHealth: OpsHealthResponse | undefined }) {
-  if ((opsHealth?.executor_mode ?? '').toLowerCase() !== 'agent') {
-    return null
-  }
-
   const lamp = localControlAgentLamp(opsHealth?.agent_reachable)
   const socketPath = (opsHealth?.agent_socket ?? '').trim()
 
@@ -31,10 +28,10 @@ export function LocalControlAgentPanel({ opsHealth }: { opsHealth: OpsHealthResp
   }
 
   return (
-    <section className="border-t border-border pt-6 mt-6" aria-labelledby="local-control-agent-heading">
+    <section aria-labelledby="local-control-agent-heading">
       <h2
         id="local-control-agent-heading"
-        className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/80 mb-2"
+        className={`${socketSectionTitleClass} flex items-center gap-2 mb-2`}
       >
         <StatusLamp lamp={lamp} className="h-2.5 w-2.5" />
         Local Control Agent

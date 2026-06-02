@@ -9,19 +9,28 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+} from '@/components/data-display'
 import { useStrategyHistory } from '@/hooks/useStructureManagement'
 import type { StrategyHistoryRow, StrategyStructure } from '@/types/strategy'
 import {
   formatHistoryTs,
   summarizeStateSummary,
 } from '@/utils/strategyFormUtils'
+import {
+  structuresEmptyHintClass,
+  structuresHistoryFilterRowClass,
+  structuresHistoryIdCellClass,
+  structuresHistorySummaryCellClass,
+  structuresHistoryTimeCellClass,
+  structuresToolbarLabelClass,
+} from '@/components/strategy/structures/structuresUi'
 
 interface StrategyHistorySectionProps {
   structures: StrategyStructure[]
@@ -43,9 +52,9 @@ export function StrategyHistorySection({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <label htmlFor="strategy-history-filter" className="text-muted-foreground">
-          Filter by structure:
+      <div className={structuresHistoryFilterRowClass}>
+        <label htmlFor="strategy-history-filter" className={structuresToolbarLabelClass}>
+          Filter by structure
         </label>
         <Select
           value={structureFilter === '' ? 'all' : String(structureFilter)}
@@ -73,40 +82,36 @@ export function StrategyHistorySection({
 
       {isLoading ? (
         <Skeleton className="h-32 rounded-lg" />
+      ) : rows.length === 0 ? (
+        <p className={structuresEmptyHintClass}>No strategy history.</p>
       ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-44">Time</TableHead>
-                <TableHead className="w-32">Structure ID</TableHead>
-                <TableHead>State summary</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-sm text-muted-foreground py-6 text-center">
-                    No strategy history.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                rows.map((row: StrategyHistoryRow) => (
-                  <TableRow key={row.strategy_history_id}>
-                    <TableCell className="font-mono text-xs">{formatHistoryTs(row.ts)}</TableCell>
-                    <TableCell className="font-mono text-xs">{row.strategy_structure_id}</TableCell>
-                    <TableCell
-                      className="text-xs text-muted-foreground max-w-md truncate"
-                      title={summarizeStateSummary(row.state_summary)}
-                    >
-                      {summarizeStateSummary(row.state_summary)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <DenseDataTable>
+          <DenseTableHeader>
+            <DenseTableHeadRow>
+              <DenseTableHead className="w-44">Time</DenseTableHead>
+              <DenseTableHead className="w-32">Structure ID</DenseTableHead>
+              <DenseTableHead>State summary</DenseTableHead>
+            </DenseTableHeadRow>
+          </DenseTableHeader>
+          <DenseTableBody>
+            {rows.map((row: StrategyHistoryRow) => (
+              <DenseTableRow key={row.strategy_history_id}>
+                <DenseTableCell className={structuresHistoryTimeCellClass}>
+                  {formatHistoryTs(row.ts)}
+                </DenseTableCell>
+                <DenseTableCell className={structuresHistoryIdCellClass}>
+                  {row.strategy_structure_id}
+                </DenseTableCell>
+                <DenseTableCell
+                  className={structuresHistorySummaryCellClass}
+                  title={summarizeStateSummary(row.state_summary)}
+                >
+                  {summarizeStateSummary(row.state_summary)}
+                </DenseTableCell>
+              </DenseTableRow>
+            ))}
+          </DenseTableBody>
+        </DenseDataTable>
       )}
     </div>
   )

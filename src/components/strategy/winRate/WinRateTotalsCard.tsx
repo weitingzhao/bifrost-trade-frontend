@@ -1,5 +1,11 @@
 import type { WinRateStructureRow } from '@/types/strategy'
-import styles from './winRate.module.css'
+import { Card } from '@/components/ui/card'
+import {
+  winRateCardTitleClass,
+  winRateTotalsBandClass,
+  winRateTotalsPanelClass,
+  winRateTotalsRowClass,
+} from './winRateUi'
 import { WinRateTradesBand } from './WinRateTradesBand'
 import { WinRatePnlBand } from './WinRatePnlBand'
 import { WinRateUnderlyingBand } from './WinRateUnderlyingBand'
@@ -7,24 +13,24 @@ import { WinRateAveragesBand } from './WinRateAveragesBand'
 
 export function WinRateTotalsCard({ totals }: { totals: WinRateStructureRow }) {
   return (
-    <article className={styles.totalsCard}>
-      <h3 className={styles.cardTitle}>All structures</h3>
-      <div className={styles.totalsPanel}>
-        <div className={styles.totalsRow}>
-          <div className={styles.totalsBand}>
-            <WinRateTradesBand row={totals} />
+    <Card variant="elevated" size="sm" className="gap-0 p-2.5">
+      <h3 className={winRateCardTitleClass}>All structures</h3>
+      <div className={winRateTotalsPanelClass}>
+        <div className={winRateTotalsRowClass}>
+          <div className={winRateTotalsBandClass}>
+            <WinRateTradesBand row={totals} inTotals />
           </div>
-          <div className={styles.totalsBand}>
-            <WinRatePnlBand row={totals} />
+          <div className={winRateTotalsBandClass}>
+            <WinRatePnlBand row={totals} inTotals />
           </div>
-          <div className={styles.totalsBand}>
-            <WinRateUnderlyingBand row={totals} />
+          <div className={winRateTotalsBandClass}>
+            <WinRateUnderlyingBand row={totals} inTotals />
           </div>
-          <div className={styles.totalsBand}>
+          <div className={winRateTotalsBandClass}>
             <WinRateAveragesBand row={totals} layout="totals" />
           </div>
         </div>
       </div>
-    </article>
+    </Card>
   )
 }

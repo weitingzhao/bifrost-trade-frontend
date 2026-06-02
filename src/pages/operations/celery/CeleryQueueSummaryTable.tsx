@@ -5,13 +5,17 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  GrandTotalRow,
+  denseTableNumCell,
+  denseTable,
+} from '@/components/data-display'
 import {
   Tooltip,
   TooltipContent,
@@ -26,7 +30,7 @@ import type {
 import { formatQueueLabel, brokerQueueKeyTitle } from '@/utils/celeryQueueLabels'
 import { queueCoverageLamp, dedupedQueueSummaryTotals, type CeleryRuntimeLamp } from '@/utils/celeryRuntime'
 import { CeleryQueueIconButton } from './CeleryQueueIconButton'
-import { CELERY_QUEUE_ROW_FILTERED } from './celeryLayoutClasses'
+import { CELERY_QUEUE_ROW_FILTERED, CELERY_QUEUE_SUMMARY_COL_WIDTHS, celeryQueueSummaryMetaClass, celeryQueueSummaryTableClass } from './celeryUi'
 
 type ActionMode = 'pending' | 'running' | 'done' | 'failed'
 
@@ -279,7 +283,7 @@ export function CeleryQueueSummaryTable({
   return (
     <TooltipProvider>
       <div className="space-y-1">
-        <div className="flex items-center gap-2 px-1">
+        <div className={celeryQueueSummaryMetaClass}>
           <span className="text-xs text-muted-foreground">
             R/C = Redis LLEN / Celery inspect · P/R/D/F = PostgreSQL · St. = consumer coverage
           </span>
@@ -287,31 +291,41 @@ export function CeleryQueueSummaryTable({
             <span className="text-xs text-yellow-600">PostgreSQL unavailable</span>
           )}
         </div>
-        <Table className="table-fixed text-xs">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-8">St.</TableHead>
-              <TableHead>Queue</TableHead>
-              <TableHead className="text-right w-20">R/C</TableHead>
-              <TableHead className="text-right w-14">P</TableHead>
-              <TableHead className="text-right w-14">R</TableHead>
-              <TableHead className="text-right w-14">D</TableHead>
-              <TableHead className="text-right w-14">F</TableHead>
-              <TableHead className="w-36">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <DenseDataTable tableClassName={celeryQueueSummaryTableClass}>
+          <colgroup>
+            <col style={{ width: CELERY_QUEUE_SUMMARY_COL_WIDTHS.status }} />
+            <col style={{ width: CELERY_QUEUE_SUMMARY_COL_WIDTHS.queue }} />
+            <col style={{ width: CELERY_QUEUE_SUMMARY_COL_WIDTHS.broker }} />
+            <col style={{ width: CELERY_QUEUE_SUMMARY_COL_WIDTHS.count }} />
+            <col style={{ width: CELERY_QUEUE_SUMMARY_COL_WIDTHS.count }} />
+            <col style={{ width: CELERY_QUEUE_SUMMARY_COL_WIDTHS.count }} />
+            <col style={{ width: CELERY_QUEUE_SUMMARY_COL_WIDTHS.count }} />
+            <col style={{ width: CELERY_QUEUE_SUMMARY_COL_WIDTHS.actions }} />
+          </colgroup>
+          <DenseTableHeader>
+            <DenseTableHeadRow>
+              <DenseTableHead className="w-8">St.</DenseTableHead>
+              <DenseTableHead>Queue</DenseTableHead>
+              <DenseTableHead align="right" className="w-20">R/C</DenseTableHead>
+              <DenseTableHead align="right" className="w-14">P</DenseTableHead>
+              <DenseTableHead align="right" className="w-14">R</DenseTableHead>
+              <DenseTableHead align="right" className="w-14">D</DenseTableHead>
+              <DenseTableHead align="right" className="w-14">F</DenseTableHead>
+              <DenseTableHead className="w-36">Actions</DenseTableHead>
+            </DenseTableHeadRow>
+          </DenseTableHeader>
+          <DenseTableBody>
             {merged.map(({ qs, agg }) => {
               const cov = queueCoverageLamp(qs.name, brokerConnected, workers)
               const busy = loading || busyQueue === qs.name
               const rowHighlighted = highlightQueueName != null && highlightQueueName === qs.name
               const actionMode: ActionMode = actionModeByQueue[qs.name] ?? 'pending'
               return (
-                <TableRow
+                <DenseTableRow
                   key={qs.name}
                   className={cn(rowHighlighted && CELERY_QUEUE_ROW_FILTERED)}
                 >
-                  <TableCell>
+                  <DenseTableCell>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         {onNavigateQueueConsole ? (
@@ -334,8 +348,8 @@ export function CeleryQueueSummaryTable({
                         {onNavigateQueueConsole ? ' — click to open Console' : ''}
                       </TooltipContent>
                     </Tooltip>
-                  </TableCell>
-                  <TableCell>
+                  </DenseTableCell>
+                  <DenseTableCell>
                     <div className="flex items-start gap-1">
                       <div className="min-w-0 flex-1">
                         <button
@@ -379,31 +393,31 @@ export function CeleryQueueSummaryTable({
                         </Tooltip>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right font-mono text-xs">
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
                     {loading ? '…' : `${fmtN(qs.pending_broker)}/${fmtN(qs.running_celery)}`}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
                     {loading ? '…' : agg
                       ? pgBadge(agg.counts.pending, 'pending', qs.name, 'secondary')
-                      : <span className="text-muted-foreground text-xs">—</span>}
-                  </TableCell>
-                  <TableCell className="text-right">
+                      : <span className={denseTable.mutedMeta}>—</span>}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
                     {loading ? '…' : agg
                       ? pgBadge(agg.counts.running, 'running', qs.name, 'default')
-                      : <span className="text-muted-foreground text-xs">—</span>}
-                  </TableCell>
-                  <TableCell className="text-right">
+                      : <span className={denseTable.mutedMeta}>—</span>}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
                     {loading ? '…' : agg
                       ? pgBadge(agg.counts.done, 'done', qs.name, 'secondary')
-                      : <span className="text-muted-foreground text-xs">—</span>}
-                  </TableCell>
-                  <TableCell className="text-right">
+                      : <span className={denseTable.mutedMeta}>—</span>}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
                     {loading ? '…' : agg
                       ? pgBadge(agg.counts.failed, 'failed', qs.name, 'destructive')
-                      : <span className="text-muted-foreground text-xs">—</span>}
-                  </TableCell>
-                  <TableCell>
+                      : <span className={denseTable.mutedMeta}>—</span>}
+                  </DenseTableCell>
+                  <DenseTableCell>
                     {agg ? (
                       <QueueActionCell
                         mode={actionMode}
@@ -416,52 +430,50 @@ export function CeleryQueueSummaryTable({
                         onResetFailed={() => void onResetFailed(agg)}
                       />
                     ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
+                      <span className={denseTable.mutedMeta}>—</span>
                     )}
-                  </TableCell>
-                </TableRow>
+                  </DenseTableCell>
+                </DenseTableRow>
               )
             })}
 
-            {/* Totals row */}
             {merged.length > 0 && (
-              <TableRow className="border-t-2 font-medium bg-muted/30">
-                <TableCell>
+              <GrandTotalRow labelColSpan={2} label={
+                <>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span>
+                      <span className="inline-flex items-center gap-2">
                         <StatusLamp lamp={runtimeLamp} />
+                        {onClearWorkerQueueFilter ? (
+                          <button
+                            type="button"
+                            className="hover:underline"
+                            title="Show all worker instances (clear queue filter)"
+                            onClick={onClearWorkerQueueFilter}
+                          >
+                            Total
+                          </button>
+                        ) : (
+                          'Total'
+                        )}
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>{runtimeLampText}</TooltipContent>
                   </Tooltip>
-                </TableCell>
-                <TableCell className="font-semibold">
-                  {onClearWorkerQueueFilter ? (
-                    <button
-                      type="button"
-                      className="hover:underline"
-                      title="Show all worker instances (clear queue filter)"
-                      onClick={onClearWorkerQueueFilter}
-                    >
-                      Total
-                    </button>
-                  ) : (
-                    'Total'
-                  )}
-                </TableCell>
-                <TableCell className="text-right font-mono text-xs">
+                </>
+              }>
+                <DenseTableCell className={denseTableNumCell}>
                   {`${fmtN(totals?.pending_broker)}/${fmtN(totals?.running_celery)}`}
-                </TableCell>
-                <TableCell className="text-right font-mono text-xs">{pgTotals.pending}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{pgTotals.running}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{pgTotals.done}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{pgTotals.failed}</TableCell>
-                <TableCell />
-              </TableRow>
+                </DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>{pgTotals.pending}</DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>{pgTotals.running}</DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>{pgTotals.done}</DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>{pgTotals.failed}</DenseTableCell>
+                <DenseTableCell />
+              </GrandTotalRow>
             )}
-          </TableBody>
-        </Table>
+          </DenseTableBody>
+        </DenseDataTable>
       </div>
     </TooltipProvider>
   )

@@ -2,10 +2,9 @@ import { useState, useMemo } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -14,16 +13,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { AvailabilityFilterPills, type AvailabilityFilter } from '@/components/strategy/AvailabilityFilterPills'
+import { SegmentControl } from '@/components/data-display'
+import type { AvailabilityFilter } from '@/components/strategy/AvailabilityFilterPills'
+import { OpportunitiesTable } from '@/components/strategy/OpportunitiesTable'
+import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
+import {
+  opportunitiesEmptyHintClass,
+  opportunitiesSectionTitleClass,
+  opportunitiesToolbarActionsClass,
+  opportunitiesToolbarClass,
+  opportunitiesToolbarLabelClass,
+} from '@/components/strategy/opportunities/opportunitiesUi'
 import { useOpportunities } from '@/hooks/useStrategies'
 import { putOpportunity, fetchOpportunityDetail } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
-import { getScopeDisplay, opportunityDetailToPayload } from '@/utils/strategyFormUtils'
+import { opportunityDetailToPayload } from '@/utils/strategyFormUtils'
 import type { StrategyOpportunity, EntryCondition } from '@/types/positions'
 
 interface PrefillData {
@@ -35,7 +41,14 @@ interface PrefillData {
   conditions: EntryCondition[]
 }
 
-const TABLE_HEAD_CLASS = 'text-[11px] font-semibold uppercase tracking-wider text-muted-foreground'
+const OPPORTUNITY_INFO =
+  'Define opportunity strategies linked to a structure; scope and entry conditions.'
+
+const AVAILABILITY_OPTIONS: { value: AvailabilityFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Available' },
+  { value: 'inactive', label: 'Unavailable' },
+]
 
 export default function OpportunitiesPage() {
   const queryClient = useQueryClient()
@@ -114,119 +127,65 @@ export default function OpportunitiesPage() {
 
   if (isLoading) {
     return (
-      <PageShell className="space-y-4">
-        <Skeleton className="h-5 w-48" />
-        <Skeleton className="h-4 w-96 max-w-full" />
-        <Skeleton className="h-10 w-full max-w-xl" />
+      <PageShell padding="default" className="space-y-3">
+        <Skeleton className="h-10 w-56" />
         <Skeleton className="h-64 rounded-lg" />
       </PageShell>
     )
   }
 
   return (
-    <PageShell className="space-y-5">
+    <PageShell padding="default" className="space-y-3">
       <PageHeader
-        title="Strategy / Opportunity"
-        description="Define opportunity strategies linked to a structure; scope and entry conditions."
+        title={
+          <span className="inline-flex items-center gap-1">
+            Strategy / Opportunity
+            <InfoTooltip text={OPPORTUNITY_INFO} />
+          </span>
+        }
+        titleSize="large"
       />
 
-      <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-base font-medium tracking-tight">Opportunity strategies</h2>
-          <div className="flex flex-wrap items-center gap-3">
-            <AvailabilityFilterPills value={filter} onChange={setFilter} />
+      <Card variant="elevated" size="sm" className="gap-3 p-2.5">
+        <div className={opportunitiesToolbarClass}>
+          <h2 className={opportunitiesSectionTitleClass}>Opportunity strategies</h2>
+          <div className={opportunitiesToolbarActionsClass}>
+            <span className={opportunitiesToolbarLabelClass}>Availability</span>
+            <SegmentControl
+              size="sm"
+              ariaLabel="Filter by availability"
+              value={filter}
+              onChange={(v) => setFilter(v as AvailabilityFilter)}
+              options={AVAILABILITY_OPTIONS}
+            />
             <Button size="sm" onClick={handleNew}>
-              <Plus className="h-3.5 w-3.5 mr-1" />
+              <Plus className="mr-1 h-3.5 w-3.5" />
               Create opportunity
             </Button>
           </div>
         </div>
 
-        {isError && (
-          <QueryErrorAlert error={error} onRetry={() => void refetch()} />
-        )}
+        {isError && <QueryErrorAlert error={error} onRetry={() => void refetch()} />}
 
         {!isError && allItems.length === 0 && (
-          <p className="text-sm text-muted-foreground">No opportunity strategies in database.</p>
+          <p className={opportunitiesEmptyHintClass}>No opportunity strategies in database.</p>
         )}
 
         {!isError && allItems.length > 0 && items.length === 0 && (
-          <p className="text-sm text-muted-foreground">No opportunities match the current filter.</p>
+          <p className={opportunitiesEmptyHintClass}>No opportunities match the current filter.</p>
         )}
 
         {!isError && items.length > 0 && (
-          <div className="rounded-lg border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className={TABLE_HEAD_CLASS}>Name</TableHead>
-                  <TableHead className={TABLE_HEAD_CLASS}>Structure</TableHead>
-                  <TableHead className={TABLE_HEAD_CLASS}>Scope</TableHead>
-                  <TableHead className={TABLE_HEAD_CLASS}>Gate safety</TableHead>
-                  <TableHead className={cn(TABLE_HEAD_CLASS, 'w-[5.5rem] text-center')}>Available</TableHead>
-                  <TableHead className={cn(TABLE_HEAD_CLASS, 'w-36')} />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((opp) => {
-                  const scopeDisplay = getScopeDisplay(opp.scope_type, opp.symbols)
-                  const copying = copyLoadingId === opp.strategy_opportunity_id
-                  return (
-                    <TableRow key={opp.strategy_opportunity_id}>
-                      <TableCell className="font-medium">{opp.name}</TableCell>
-                      <TableCell className="text-sm">
-                        {opp.structure_name ?? opp.strategy_structure_id ?? '—'}
-                      </TableCell>
-                      <TableCell className="max-w-[14rem]">
-                        <span
-                          className="block truncate text-sm"
-                          title={scopeDisplay.title || undefined}
-                        >
-                          {scopeDisplay.text}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {opp.gate_safety_name ?? '—'}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Switch
-                          checked={opp.is_active}
-                          disabled={togglingIds.size > 0}
-                          onCheckedChange={() => void handleToggle(opp)}
-                          aria-label={`Mark "${opp.name}" as ${opp.is_active ? 'unavailable' : 'available'}`}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2.5 text-xs"
-                            onClick={() => handleEdit(opp)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2.5 text-xs"
-                            disabled={copying}
-                            onClick={() => void handleCopy(opp)}
-                          >
-                            Copy
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
+          <OpportunitiesTable
+            rows={items}
+            togglingIds={togglingIds}
+            copyLoadingId={copyLoadingId}
+            onToggle={(opp) => void handleToggle(opp)}
+            onEdit={handleEdit}
+            onCopy={(opp) => void handleCopy(opp)}
+          />
         )}
-      </section>
+      </Card>
 
       <OpportunityFormModal
         key={editTarget?.strategy_opportunity_id ?? (prefillData ? 'copy' : 'new')}

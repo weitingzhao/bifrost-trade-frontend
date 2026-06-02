@@ -3,8 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AlertTriangle, Play, Settings2 } from 'lucide-react'
 import { postSuspend, postResume, postFlatten } from '@/api/monitor'
 import type { StatusResponse } from '@/types/monitor'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
@@ -27,9 +26,28 @@ import {
   IbServiceRow,
   LampDot,
   Row,
+  ConnectionTag,
+  daemonIbServiceListClass,
   useCtrlAction,
 } from './daemonShared'
 import { ConfirmDialog } from '@/pages/operations/celery/ConfirmDialog'
+import {
+  daemonBlockReasonClass,
+  daemonCardStatusSubtitleClass,
+  daemonCardTitleRowClass,
+  daemonConnectionsBlockClass,
+  daemonControlBarClass,
+  daemonGroupTitleClass,
+  daemonHedgeStatusRowClass,
+  daemonIbGroupSummaryClass,
+  daemonIbGroupSummaryTextClass,
+  daemonMetricGridClass,
+  daemonMetricLabelClass,
+  daemonMetricValueClass,
+  daemonResumeButtonClass,
+  daemonSocketLinkClass,
+  daemonThreeColGridClass,
+} from './daemonUi'
 
 function buildStatusSummaryItems(
   autoStatus: Record<string, unknown> | null | undefined,
@@ -134,187 +152,173 @@ export function StrategyTradingDaemonCard({
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+    <div className="space-y-4">
+      <div>
+        <div className={daemonCardTitleRowClass}>
           <LampDot lamp={daemonOverallLamp} title={ibGroupTitle} />
-          Strategy Trading Daemon
-          <span className="text-sm font-normal text-muted-foreground">{statusLabel}</span>
+          <span className="font-semibold">Strategy Trading Daemon</span>
+          <span className={daemonCardStatusSubtitleClass}>{statusLabel}</span>
           {hb?.mock_hedging && (
-            <Badge variant="destructive" className="text-[10px] px-1.5">MOCK</Badge>
+            <DenseTag variant="warning" size="cell">MOCK</DenseTag>
           )}
-        </CardTitle>
+        </div>
         {blockReasonsText !== 'None' && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Block reasons: <span className="text-red-500">{blockReasonsText}</span>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Block reasons: <span className={daemonBlockReasonClass}>{blockReasonsText}</span>
           </p>
         )}
-      </CardHeader>
-      <CardContent className="pt-0 space-y-4">
-        {(ctrl.msg.text || hedgeCtrl.msg.text) && (
-          <Alert variant={(ctrl.msg.isErr || hedgeCtrl.msg.isErr) ? 'destructive' : 'default'} className="py-2">
-            <AlertDescription className="text-sm">
-              {ctrl.msg.text || hedgeCtrl.msg.text}
-            </AlertDescription>
-          </Alert>
-        )}
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="space-y-3">
-            <HeartbeatGroup
-              hb={hb}
-              label="Heartbeat"
-              countdown={nextHb}
-              intervalSec={intervalSec}
-              staleHint={
-                hb && !hb.daemon_alive && hb.last_ts != null
-                  ? 'Timed out; may have been kill -9 or crash'
-                  : hb?.graceful_shutdown_at != null
-                    ? `Gracefully stopped at ${fmtTs(hb.graceful_shutdown_at)}`
-                    : undefined
-              }
+      {(ctrl.msg.text || hedgeCtrl.msg.text) && (
+        <Alert variant={(ctrl.msg.isErr || hedgeCtrl.msg.isErr) ? 'destructive' : 'default'} className="py-2">
+          <AlertDescription className="text-sm">
+            {ctrl.msg.text || hedgeCtrl.msg.text}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className={daemonThreeColGridClass}>
+        <div className="space-y-3">
+          <HeartbeatGroup
+            hb={hb}
+            label="Heartbeat"
+            countdown={nextHb}
+            intervalSec={intervalSec}
+            staleHint={
+              hb && !hb.daemon_alive && hb.last_ts != null
+                ? 'Timed out; may have been kill -9 or crash'
+                : hb?.graceful_shutdown_at != null
+                  ? `Gracefully stopped at ${fmtTs(hb.graceful_shutdown_at)}`
+                  : undefined
+            }
+          />
+          {hb && (
+            <>
+              <Separator />
+              <div className={daemonConnectionsBlockClass}>
+                <p className={daemonGroupTitleClass}>Connections</p>
+                <Row label="IB Connected">
+                  <ConnectionTag connected={hb.ib_connected === true} />
+                </Row>
+                <Row label="IB Client ID">
+                  <span>{hb.ib_client_id ?? '—'}</span>
+                </Row>
+                <Row label="Redis Quotes">
+                  <ConnectionTag connected={hb.redis_quotes_connected === true} />
+                </Row>
+                {hb.next_retry_ts != null && hb.next_retry_ts > nowSec && (
+                  <Row label="IB retry in">
+                    <span>{Math.ceil(hb.next_retry_ts - nowSec)}s</span>
+                  </Row>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <p className={daemonGroupTitleClass}>IB broker</p>
+          <div className={daemonIbGroupSummaryClass}>
+            <LampDot lamp={ibGroupLamp} title={ibGroupTitle} />
+            <span className={daemonIbGroupSummaryTextClass}>{ibGroupTitle}</span>
+          </div>
+          <div className={daemonIbServiceListClass}>
+            <IbServiceRow label="IB Operator" svcId="ib_operator" status={data} />
+            <IbServiceRow label="IB Ingestor" svcId="ib_ingestor" status={data} />
+            <IbServiceRow label="IB Account Agent" svcId="ib_account_agent" status={data} />
+          </div>
+          <Link to="/settings/socket" className={daemonSocketLinkClass}>
+            Open Socket services…
+          </Link>
+        </div>
+
+        <div className="space-y-3">
+          <p className={daemonGroupTitleClass}>Trading Strategy</p>
+          <div className={daemonHedgeStatusRowClass}>
+            <LampDot
+              lamp={!hb || !hb.daemon_alive ? 'red' : suspended ? 'yellow' : 'green'}
+              title={hedgeStatusCompact}
             />
-            {hb && (
-              <>
-                <Separator />
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Connections</p>
-                  <Row label="IB Connected">
-                    <Badge variant={hb.ib_connected ? 'default' : 'destructive'} className="text-[10px] px-1.5">
-                      {hb.ib_connected ? 'Yes' : 'No'}
-                    </Badge>
-                  </Row>
-                  <Row label="IB Client ID">
-                    <span className="font-mono text-xs">{hb.ib_client_id ?? '—'}</span>
-                  </Row>
-                  <Row label="Redis Quotes">
-                    <Badge variant={hb.redis_quotes_connected ? 'default' : 'destructive'} className="text-[10px] px-1.5">
-                      {hb.redis_quotes_connected ? 'Yes' : 'No'}
-                    </Badge>
-                  </Row>
-                  {hb.next_retry_ts != null && hb.next_retry_ts > nowSec && (
-                    <Row label="IB retry in">
-                      <span className="font-mono text-xs tabular-nums">
-                        {Math.ceil(hb.next_retry_ts - nowSec)}s
-                      </span>
-                    </Row>
-                  )}
-                </div>
-              </>
-            )}
+            <span className="text-muted-foreground">
+              {hedgeStatusCompact}
+              {blockReasonsCompact ? ` · ${blockReasonsCompact}` : ''}
+            </span>
           </div>
 
-          <div className="space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">IB broker</p>
-            <div className="flex items-center gap-1.5 mb-2">
-              <LampDot lamp={ibGroupLamp} title={ibGroupTitle} />
-              <span className="text-xs text-muted-foreground line-clamp-2">{ibGroupTitle}</span>
-            </div>
-            <div className="space-y-0 divide-y divide-border rounded border">
-              <div className="px-3"><IbServiceRow label="IB Operator" svcId="ib_operator" status={data} /></div>
-              <div className="px-3"><IbServiceRow label="IB Ingestor" svcId="ib_ingestor" status={data} /></div>
-              <div className="px-3"><IbServiceRow label="IB Account Agent" svcId="ib_account_agent" status={data} /></div>
-            </div>
-            <Link
-              to="/settings/socket"
-              className="text-xs text-link hover:text-link-hover underline underline-offset-2"
+          <div className={daemonMetricGridClass}>
+            {compactMetrics.map(({ label, value }) => (
+              <div key={label} className="flex justify-between gap-2">
+                <span className={daemonMetricLabelClass}>{STRATEGY_METRIC_LABEL_COMPACT[label] ?? label}</span>
+                <span className={daemonMetricValueClass}>{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {(data.strategy?.active?.structure?.name || data.strategy?.active?.gate_safety?.name) && (
+            <>
+              <Separator />
+              <div className="space-y-1">
+                {data.strategy.active.structure?.name && (
+                  <Row label="Structure">
+                    <span className="max-w-[140px] truncate">{data.strategy.active.structure.name}</span>
+                  </Row>
+                )}
+                {data.strategy.active.gate_safety?.name && (
+                  <Row label="Gate set">
+                    <span className="max-w-[140px] truncate">{data.strategy.active.gate_safety.name}</span>
+                  </Row>
+                )}
+              </div>
+            </>
+          )}
+
+          <div className={daemonControlBarClass}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              disabled={suspended}
+              onClick={() => ctrl.run(postSuspend, {
+                loading: 'Setting suspend…',
+                success: 'Suspend set — daemon will pause hedging on next heartbeat.',
+              })}
             >
-              Open Socket services…
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Trading Strategy</p>
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <LampDot
-                lamp={!hb || !hb.daemon_alive ? 'red' : suspended ? 'yellow' : 'green'}
-                title={hedgeStatusCompact}
-              />
-              <span className="text-muted-foreground">
-                {hedgeStatusCompact}
-                {blockReasonsCompact ? ` · ${blockReasonsCompact}` : ''}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-              {compactMetrics.map(({ label, value }) => (
-                <div key={label} className="flex justify-between gap-2">
-                  <span className="text-muted-foreground">{STRATEGY_METRIC_LABEL_COMPACT[label] ?? label}</span>
-                  <span className="font-mono text-right truncate">{value}</span>
-                </div>
-              ))}
-            </div>
-
-            {(data.strategy?.active?.structure?.name || data.strategy?.active?.gate_safety?.name) && (
-              <>
-                <Separator />
-                <div className="space-y-1">
-                  {data.strategy.active.structure?.name && (
-                    <Row label="Structure">
-                      <span className="text-xs font-mono truncate max-w-[140px]">
-                        {data.strategy.active.structure.name}
-                      </span>
-                    </Row>
-                  )}
-                  {data.strategy.active.gate_safety?.name && (
-                    <Row label="Gate set">
-                      <span className="text-xs font-mono truncate max-w-[140px]">
-                        {data.strategy.active.gate_safety.name}
-                      </span>
-                    </Row>
-                  )}
-                </div>
-              </>
-            )}
-
-            <div className="flex flex-wrap gap-2 pt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 text-xs"
-                disabled={suspended}
-                onClick={() => ctrl.run(postSuspend, {
-                  loading: 'Setting suspend…',
-                  success: 'Suspend set — daemon will pause hedging on next heartbeat.',
-                })}
-              >
-                Suspend
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 text-xs border-green-500/50 text-green-600 dark:text-green-400"
-                disabled={!suspended}
-                onClick={() => ctrl.run(postResume, {
-                  loading: 'Setting resume…',
-                  success: 'Resume set — daemon will resume hedging on next heartbeat.',
-                })}
-              >
-                <Play className="h-3 w-3 mr-1" />
-                Resume
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 text-xs"
-                onClick={() => navigate('/strategy/instances')}
-              >
-                <Settings2 className="h-3 w-3 mr-1" />
-                Manage
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                className="h-8 text-xs gap-1"
-                onClick={() => setFlattenOpen(true)}
-              >
-                <AlertTriangle className="h-3 w-3" />
-                Emergency
-              </Button>
-            </div>
+              Suspend
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className={daemonResumeButtonClass}
+              disabled={!suspended}
+              onClick={() => ctrl.run(postResume, {
+                loading: 'Setting resume…',
+                success: 'Resume set — daemon will resume hedging on next heartbeat.',
+              })}
+            >
+              <Play className="mr-1 h-3 w-3" />
+              Resume
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              onClick={() => navigate('/strategy/instances')}
+            >
+              <Settings2 className="mr-1 h-3 w-3" />
+              Manage
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="h-8 gap-1 text-xs"
+              onClick={() => setFlattenOpen(true)}
+            >
+              <AlertTriangle className="h-3 w-3" />
+              Emergency
+            </Button>
           </div>
         </div>
-      </CardContent>
+      </div>
 
       <ConfirmDialog
         open={flattenOpen}
@@ -325,6 +329,6 @@ export function StrategyTradingDaemonCard({
         onConfirm={() => void handleFlatten()}
         onCancel={() => setFlattenOpen(false)}
       />
-    </Card>
+    </div>
   )
 }

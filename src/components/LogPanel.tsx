@@ -3,9 +3,19 @@ import { X, Trash2, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { dangerIconBtnClass } from '@/lib/uiClasses'
 import { useLogPanel } from '@/hooks/useLogPanel'
-import { LOG_SOURCES, LOG_SOURCE_GROUPS } from '@/api/logs'
-import { useLogStream, type LogLevel, type LogEntry } from '@/hooks/useLogStream'
-import { LEVEL_LABELS, LEVEL_STYLE, STREAM_STATUS_LABEL } from '@/components/log/logConsoleShared'
+import { LOG_SOURCES, LOG_SOURCE_GROUPS, LOG_SOURCE_TAGS } from '@/api/logs'
+import { useLogStream, type LogEntry } from '@/hooks/useLogStream'
+import {
+  DEFAULT_LEVEL_FILTER,
+  filterLogEntries,
+  LEVEL_FILTER_OPTIONS,
+  LEVEL_LABELS,
+  LEVEL_STYLE,
+  levelFilterExportLabel,
+  levelFilterLabel,
+  STREAM_STATUS_LABEL,
+  type LevelFilterPreset,
+} from '@/components/log/logConsoleShared'
 
 const STATUS_DOT: Record<string, string> = {
   idle: 'bg-zinc-400',
@@ -14,18 +24,21 @@ const STATUS_DOT: Record<string, string> = {
   error: 'bg-red-500',
 }
 
-type LevelFilter = LogLevel | 'ALL'
+type LevelFilter = LevelFilterPreset
 
 function LogRow({ entry }: { entry: LogEntry }) {
   const s = LEVEL_STYLE[entry.level]
+  const tagCls = LOG_SOURCE_TAGS[entry.service] ?? 'bg-muted text-muted-foreground'
   return (
-    <div className={cn('flex items-baseline gap-2 px-3 py-[2px] text-xs hover:bg-muted/40 min-w-0', s.row)}>
-      <span className="shrink-0 font-mono text-muted-foreground/60 w-[62px]">{entry.ts}</span>
-      <span className={cn('shrink-0 rounded px-1 font-mono font-semibold text-[10px] leading-4 w-[34px] text-center', s.badge)}>
+    <div className={cn('flex items-baseline gap-2 px-3 py-[2px] text-xs hover:bg-muted/40 min-w-0 font-mono', s.row)}>
+      <span className="shrink-0 text-muted-foreground/60 w-[62px]">{entry.ts}</span>
+      <span className={cn('shrink-0 rounded px-1 font-semibold text-[10px] leading-4 w-[34px] text-center', s.badge)}>
         {LEVEL_LABELS[entry.level]}
       </span>
-      <span className="shrink-0 w-[120px] text-muted-foreground/70 truncate">{entry.service}</span>
-      <span className="font-mono text-foreground/85 break-all leading-4">{entry.message}</span>
+      <span className={cn('shrink-0 rounded px-1 text-[10px] truncate w-[100px]', tagCls)}>
+        {entry.service}
+      </span>
+      <span className="text-foreground/85 break-all leading-4">{entry.message}</span>
     </div>
   )
 }
@@ -38,7 +51,7 @@ export function LogPanel() {
   const [enabledSources, setEnabledSources] = useState<Record<string, boolean>>(
     () => Object.fromEntries(LOG_SOURCES.map(s => [s.key, true])),
   )
-  const [levelFilter, setLevelFilter] = useState<LevelFilter>('ALL')
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>(DEFAULT_LEVEL_FILTER)
   const [search, setSearch] = useState('')
 
   const activeSources = useMemo(
@@ -68,8 +81,7 @@ export function LogPanel() {
   }, [entries.length])
 
   const filtered = useMemo(() => {
-    let result = entries
-    if (levelFilter !== 'ALL') result = result.filter(e => e.level === levelFilter)
+    let result = filterLogEntries(entries, levelFilter)
     if (search) {
       const q = search.toLowerCase()
       result = result.filter(e =>
@@ -81,7 +93,7 @@ export function LogPanel() {
 
   function handleExport() {
     const now = new Date()
-    const levelLabel = levelFilter === 'ALL' ? 'ALL' : LEVEL_LABELS[levelFilter as LogLevel]
+    const levelLabel = levelFilterExportLabel(levelFilter)
     const header = [
       '# Bifrost Trade — Log Export',
       `# Exported:      ${now.toISOString()}`,
@@ -126,8 +138,6 @@ export function LogPanel() {
 
   if (!open) return null
 
-  const LEVELS: LevelFilter[] = ['ALL', 'ERROR', 'WARN', 'INFO', 'DEBUG']
-
   return (
     <div
       className="shrink-0 border-t border-border bg-background flex flex-col overflow-hidden"
@@ -140,7 +150,7 @@ export function LogPanel() {
       />
       <div className="flex items-center gap-2 px-3 py-1 border-b border-border/50 shrink-0">
         <div className="flex items-center gap-0.5">
-          {LEVELS.map(lv => (
+          {LEVEL_FILTER_OPTIONS.map(lv => (
             <button
               key={lv}
               onClick={() => setLevelFilter(lv)}
@@ -149,11 +159,13 @@ export function LogPanel() {
                 levelFilter === lv
                   ? lv === 'ALL'
                     ? 'bg-foreground/10 text-foreground'
-                    : LEVEL_STYLE[lv as LogLevel].badge
+                    : lv === 'ALERTS'
+                      ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400'
+                      : LEVEL_STYLE[lv].badge
                   : 'text-muted-foreground/50 hover:text-muted-foreground',
               )}
             >
-              {lv === 'ALL' ? 'All' : LEVEL_LABELS[lv as LogLevel]}
+              {levelFilterLabel(lv)}
             </button>
           ))}
         </div>
@@ -223,20 +235,25 @@ export function LogPanel() {
               >
                 {group.label}
               </button>
-              {groupSources.map(src => (
-                <button
-                  key={src.key}
-                  onClick={() => setEnabledSources(prev => ({ ...prev, [src.key]: !prev[src.key] }))}
-                  className={cn(
-                    'px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors',
-                    enabledSources[src.key]
-                      ? 'bg-primary/10 text-primary border border-primary/20'
-                      : 'bg-muted text-muted-foreground/50 border border-transparent',
-                  )}
-                >
-                  {src.label}
-                </button>
-              ))}
+              {groupSources.map(src => {
+                const tagCls = LOG_SOURCE_TAGS[src.key]
+                const on = enabledSources[src.key]
+                return (
+                  <button
+                    key={src.key}
+                    type="button"
+                    onClick={() => setEnabledSources(prev => ({ ...prev, [src.key]: !prev[src.key] }))}
+                    className={cn(
+                      'rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border transition-colors',
+                      on
+                        ? (tagCls ?? 'bg-primary/10 text-primary border-primary/20')
+                        : 'bg-muted/30 text-muted-foreground/50 border-transparent line-through',
+                    )}
+                  >
+                    {src.label}
+                  </button>
+                )
+              })}
             </div>
           )
         })}

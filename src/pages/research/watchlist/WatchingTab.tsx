@@ -1,11 +1,18 @@
+import { cn } from '@/lib/utils'
 import type { QuoteItem, WatchlistItem } from '@/types/market'
 import type { PositionCategory } from '@/types/portfolio'
 import type { IbPositionRow } from '@/types/monitor'
+import { denseTable } from '@/components/data-display'
 import { StockWatchlistTable, OptionWatchlistTable } from './StockWatchlistTable'
 import type { WatchlistWorkflow } from '@/hooks/useWatchlistWorkflow'
 import { WL_CAT_WATCHING } from '@/utils/watchlistHelpers'
 import { Button } from '@/components/ui/button'
 import { positionToContractKey } from '@/utils/watchlistHelpers'
+import {
+  watchlistSectionHintClass,
+  watchlistStepLeadClass,
+  watchlistWarnLineClass,
+} from './watchlistUi'
 
 interface Props {
   workflow: WatchlistWorkflow
@@ -52,13 +59,13 @@ export function WatchingTab({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        <strong className="text-foreground">Step 1.</strong> Tickers you add in the header are stored with
-        category <strong>{WL_CAT_WATCHING}</strong> (same names as Portfolio → Accounts).
+      <p className={watchlistSectionHintClass}>
+        <strong className={watchlistStepLeadClass}>Step 1.</strong> Tickers you add in the header are stored with
+        category <strong className={watchlistStepLeadClass}>{WL_CAT_WATCHING}</strong> (same names as Portfolio → Accounts).
       </p>
 
       {watchingCategoryId == null && (
-        <p className="text-sm text-amber-600 dark:text-amber-400">
+        <p className={watchlistWarnLineClass}>
           The <strong>Watching</strong> category is missing or still being created. Add{' '}
           <strong>Watching</strong> and <strong>Sizing</strong> under Portfolio → Accounts if this persists.
         </p>
@@ -90,7 +97,7 @@ export function WatchingTab({
       {itemCount === 0 &&
         watchingStockRows.length === 0 &&
         watchingOptionRows.length === 0 && (
-        <p className="text-sm text-muted-foreground py-6 text-center">
+        <p className={cn(denseTable.emptyHint, 'py-6 text-center')}>
           No symbols yet. Type a ticker in the header to start in Watching.
         </p>
       )}
@@ -116,7 +123,7 @@ export function WatchingTab({
           />
           {otherCategoryStockRows.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <p className={denseTable.sectionTitle}>
                 Other portfolio categories ({otherCategoryStockRows.length})
               </p>
               <StockWatchlistTable

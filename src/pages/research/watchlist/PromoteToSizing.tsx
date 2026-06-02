@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { fuzzyMatchWatchlistItem } from '@/utils/watchlistFuzzy'
 import { watchlistItemLabel } from '@/utils/watchlistHelpers'
 import type { WatchlistItem } from '@/types/market'
+import { watchlistWarnLineClass } from './watchlistUi'
 
 interface Props {
   stocks: WatchlistItem[]
@@ -94,7 +95,7 @@ export function PromoteToSizing({ stocks, sizingCategoryId, addPending, onPromot
         </Button>
       </div>
       {sizingCategoryId == null && (
-        <p className="text-xs text-amber-600 dark:text-amber-400">
+        <p className={watchlistWarnLineClass}>
           The <strong>Sizing</strong> category is missing; you cannot promote rows yet.
         </p>
       )}

@@ -1,8 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
+import { DenseTag } from '@/components/data-display'
 import type { DaemonHeartbeat } from '@/types/monitor'
 import { ibServiceLamp, type DaemonLamp } from '@/utils/daemonLamps'
+import {
+  daemonGroupTitleClass,
+  daemonIbServiceListClass,
+  daemonIbServiceRowClass,
+  daemonIbServiceRowInnerClass,
+  daemonKvLabelClass,
+  daemonKvRowClass,
+  daemonKvValueClass,
+  daemonLampTextClass,
+} from './daemonUi'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -16,15 +27,11 @@ export function fmtUsd(n: number | null | undefined): string {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
-export function pnlClass(n: number): string {
-  return n >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'
-}
-
 export function Row({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('flex items-center justify-between gap-2 text-sm', className)}>
-      <span className="text-muted-foreground shrink-0">{label}</span>
-      <span className="text-right">{children}</span>
+    <div className={cn(daemonKvRowClass, className)}>
+      <span className={daemonKvLabelClass}>{label}</span>
+      <span className={daemonKvValueClass}>{children}</span>
     </div>
   )
 }
@@ -41,11 +48,11 @@ export function IbServiceRow({ label, svcId, status }: {
 }) {
   const { lamp, title } = ibServiceLamp(svcId, status ?? null)
   return (
-    <div className="flex items-center justify-between text-xs py-1">
-      <span className="text-muted-foreground">{label}</span>
-      <div className="flex items-center gap-1.5">
+    <div className={daemonIbServiceRowClass}>
+      <span className={daemonKvLabelClass}>{label}</span>
+      <div className={daemonIbServiceRowInnerClass}>
         <LampDot lamp={lamp} title={title} />
-        <span className={lamp === "green" ? "text-green-600 dark:text-green-400" : lamp === "red" ? "text-red-500" : "text-yellow-500"}>{lamp}</span>
+        <span className={daemonLampTextClass(lamp)}>{lamp}</span>
       </div>
     </div>
   )
@@ -62,30 +69,40 @@ export function HeartbeatGroup({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+      <p className={daemonGroupTitleClass}>{label}</p>
       {hb == null ? (
         <p className="text-xs text-muted-foreground">No heartbeat data</p>
       ) : (
         <div className="space-y-1">
           <Row label="Last heartbeat">
-            <span className="font-mono text-xs">{fmtTs(hb.last_ts)}</span>
+            <span>{fmtTs(hb.last_ts)}</span>
           </Row>
           {staleHint && (
             <p className="text-xs text-muted-foreground">{staleHint}</p>
           )}
           {hb.daemon_alive && countdown != null && (
             <Row label="Next heartbeat">
-              <span className="font-mono text-xs tabular-nums">{countdown}s</span>
+              <span>{countdown}s</span>
             </Row>
           )}
           <Row label="Interval">
-            <span className="font-mono text-xs">{intervalSec}s</span>
+            <span>{intervalSec}s</span>
           </Row>
         </div>
       )}
     </div>
   )
 }
+
+export function ConnectionTag({ connected }: { connected: boolean }) {
+  return (
+    <DenseTag variant={connected ? 'success' : 'danger'} size="cell">
+      {connected ? 'Yes' : 'No'}
+    </DenseTag>
+  )
+}
+
+export { daemonIbServiceListClass }
 
 // ── Control action hook ───────────────────────────────────────────────────────
 

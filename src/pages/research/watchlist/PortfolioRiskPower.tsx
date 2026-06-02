@@ -1,29 +1,32 @@
-import { ChevronDown, ChevronUp } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Info } from 'lucide-react'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  CollapsibleChevron,
+  CollapsibleGroup,
+  CollapsibleGroupBody,
+  CollapsibleGroupHeader,
+  CollapsibleGroupTitle,
+} from '@/components/data-display'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Info } from 'lucide-react'
 import { fmtUsd } from '@/utils/positions'
 import {
   buildPortfolioAccountTable,
   buildPortfolioCashRollup,
   portfolioCashPieFromRow,
-  type PortfolioAccountTable,
 } from '@/utils/accountsSnapshot'
 import type { StatusResponse } from '@/types/monitor'
-import styles from './watchlist.module.css'
+import { WatchlistMetricTable } from './WatchlistMetricTable'
+import {
+  watchlistCollapsedSummaryClass,
+  watchlistPieHoleClass,
+  watchlistPiePanelClass,
+  watchlistPieRingClass,
+  watchlistRangeTrackClass,
+  watchlistRiskBodyClass,
+} from './watchlistUi'
 
 const HELP_PORTFOLIO =
   'Per-account columns use the IB snapshot on this page. Cash (IB) is TotalCashValue; Cash-like is STK lines tagged cash-like. Host / Secondary follow Settings → IB event_host / trading and event_secondary.'
@@ -54,18 +57,18 @@ function CashPiePanel({
 }) {
   if (!pie) {
     return (
-      <div className="rounded-lg border p-3">
-        <h6 className="text-xs font-semibold mb-2">{title}</h6>
+      <div className={watchlistPiePanelClass}>
+        <h6 className="mb-2 text-xs font-semibold">{title}</h6>
         <p className="text-xs text-muted-foreground">{emptyMessage ?? '—'}</p>
       </div>
     )
   }
   return (
-    <div className="rounded-lg border p-3 space-y-2">
+    <div className={watchlistPiePanelClass}>
       <h6 className="text-xs font-semibold">{title}</h6>
-      <div className="flex gap-3 items-center">
+      <div className="flex items-center gap-3">
         <div
-          className={styles.pieRing}
+          className={watchlistPieRingClass}
           style={{
             background: `conic-gradient(
               var(--primary) 0turn ${pie.cashTurnEnd}turn,
@@ -76,12 +79,12 @@ function CashPiePanel({
           role="img"
           aria-label={`${title} allocation`}
         >
-          <div className={styles.pieHole}>
+          <div className={watchlistPieHoleClass}>
             <span className="font-mono font-semibold">{pie.cashPctOfNet.toFixed(0)}%</span>
             <span className="text-muted-foreground">cash</span>
           </div>
         </div>
-        <div className="text-xs space-y-1 min-w-0">
+        <div className="min-w-0 space-y-1 text-xs">
           <div>Cash: {fmtUsd(pie.cash)} ({pie.cashPctOfNet.toFixed(1)}%)</div>
           <div>STK ex-FI: {fmtUsd(pie.stkExFi)} ({pie.stkPctOfNet.toFixed(1)}%)</div>
           <div>Other: {fmtUsd(pie.other)} ({pie.otherPctOfNet.toFixed(1)}%)</div>
@@ -89,52 +92,6 @@ function CashPiePanel({
         </div>
       </div>
     </div>
-  )
-}
-
-function MetricTable({ table, maxDdPct }: { table: PortfolioAccountTable; maxDdPct: number }) {
-  const rows = [
-    { label: 'Host', id: table.hostId, data: table.hostRow },
-    { label: 'Secondary', id: table.secondaryId, data: table.secondaryRow },
-    { label: 'Total', id: 'All accounts', data: table.totalRow, total: true },
-  ] as const
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Account</TableHead>
-          <TableHead className="text-right">Cash (IB)</TableHead>
-          <TableHead className="text-right">Cash-like</TableHead>
-          <TableHead className="text-right">Cash total</TableHead>
-          <TableHead className="text-right">Positions MV</TableHead>
-          <TableHead className="text-right">Net liq.</TableHead>
-          <TableHead className="text-right">Max DD @ {maxDdPct}%</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map(row => (
-          <TableRow key={row.label} className={'total' in row && row.total ? 'font-medium' : ''}>
-            <TableCell>
-              <div className="font-semibold text-sm">{row.label}</div>
-              {row.id && <div className="text-[10px] font-mono text-muted-foreground">{row.id}</div>}
-            </TableCell>
-            {row.data ? (
-              <>
-                <TableCell className="text-right font-mono text-xs">{fmtUsd(row.data.ibCash)}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{fmtUsd(row.data.cashLike)}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{fmtUsd(row.data.cashTotal)}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{fmtUsd(row.data.positionsMv)}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{fmtUsd(row.data.netLiq)}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{fmtUsd(row.data.maxDdUsd)}</TableCell>
-              </>
-            ) : (
-              <TableCell colSpan={6} className="text-muted-foreground text-xs">—</TableCell>
-            )}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
   )
 }
 
@@ -156,47 +113,46 @@ export function PortfolioRiskPower({
   const rollup = buildPortfolioCashRollup(status)
   const hostPie = portfolioCashPieFromRow(table.hostRow ?? undefined)
   const secondaryPie = portfolioCashPieFromRow(table.secondaryRow ?? undefined)
+  const expanded = !collapsed
 
   return (
-    <Card>
-      <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0">
-        <div className="flex items-center gap-2">
-          <CardTitle className="text-sm font-semibold">Portfolio risk power</CardTitle>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button type="button" className="text-muted-foreground" aria-label="Help">
-                <Info className="h-3.5 w-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs text-xs">{HELP_PORTFOLIO}</TooltipContent>
-          </Tooltip>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={() => onCollapsedChange(!collapsed)}
-          aria-expanded={!collapsed}
-        >
-          {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-        </Button>
-      </CardHeader>
+    <CollapsibleGroup variant="card" className="mb-0">
+      <CollapsibleGroupHeader
+        expanded={expanded}
+        onToggle={() => onCollapsedChange(!collapsed)}
+        className="py-3"
+      >
+        <CollapsibleGroupTitle className="text-sm">Portfolio risk power</CollapsibleGroupTitle>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="text-muted-foreground"
+              aria-label="Help"
+              onClick={e => e.stopPropagation()}
+            >
+              <Info className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs text-xs">{HELP_PORTFOLIO}</TooltipContent>
+        </Tooltip>
+        <CollapsibleChevron expanded={expanded} className="ml-auto" />
+      </CollapsibleGroupHeader>
 
       {collapsed ? (
-        <CardContent className="pt-0 pb-3 px-4 text-xs text-muted-foreground flex flex-wrap gap-4">
+        <div className={watchlistCollapsedSummaryClass}>
           <span>Host cash: {hostPie ? fmtUsd(hostPie.cash) : '—'}</span>
           <span>Max DD %: {staticMaxDdPctCap}%</span>
           <span>Static risk budget: {capital > 0 ? fmtUsd(staticRiskBudgetUsd) : '—'}</span>
-        </CardContent>
+        </div>
       ) : (
-        <CardContent className="pt-0 px-4 pb-4 space-y-4">
+        <CollapsibleGroupBody className={watchlistRiskBodyClass}>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-xs font-medium">Max drawdown %</label>
               <input
                 type="range"
-                className={styles.rangeTrack}
+                className={watchlistRangeTrackClass}
                 min={5}
                 max={50}
                 step={1}
@@ -220,7 +176,7 @@ export function PortfolioRiskPower({
               <label className="text-xs font-medium">Static risk % (per trade)</label>
               <input
                 type="range"
-                className={styles.rangeTrack}
+                className={watchlistRangeTrackClass}
                 min={0.1}
                 max={5}
                 step={0.1}
@@ -235,7 +191,7 @@ export function PortfolioRiskPower({
           </div>
 
           <div className="overflow-x-auto rounded-md border">
-            <MetricTable table={table} maxDdPct={staticMaxDdPctCap} />
+            <WatchlistMetricTable table={table} maxDdPct={staticMaxDdPctCap} />
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
@@ -258,8 +214,8 @@ export function PortfolioRiskPower({
               }
             />
           </div>
-        </CardContent>
+        </CollapsibleGroupBody>
       )}
-    </Card>
+    </CollapsibleGroup>
   )
 }

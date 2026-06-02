@@ -1,6 +1,7 @@
 import type { WinRateStructureRow } from '@/types/strategy'
 import { cn } from '@/lib/utils'
-import styles from './winRate.module.css'
+import { Card } from '@/components/ui/card'
+import { winRateCardClickableClass, winRateCardTitleClass } from './winRateUi'
 import { WinRateTradesBand } from './WinRateTradesBand'
 import { WinRatePnlBand } from './WinRatePnlBand'
 import { WinRateUnderlyingBand } from './WinRateUnderlyingBand'
@@ -17,7 +18,7 @@ export function WinRateStructureCard({ row, onOpenInstances }: WinRateStructureC
 
   const body = (
     <>
-      <h3 className={styles.cardTitle}>{row.structure_name}</h3>
+      <h3 className={winRateCardTitleClass}>{row.structure_name}</h3>
       <WinRateTradesBand row={row} />
       <WinRatePnlBand row={row} />
       <WinRateUnderlyingBand row={row} />
@@ -26,18 +27,24 @@ export function WinRateStructureCard({ row, onOpenInstances }: WinRateStructureC
   )
 
   if (!canDrill) {
-    return <article className={styles.card}>{body}</article>
+    return (
+      <Card variant="elevated" size="sm" className="gap-0 p-2.5">
+        {body}
+      </Card>
+    )
   }
 
   return (
-    <button
-      type="button"
-      className={cn(styles.card, styles.cardClickable)}
-      onClick={() => onOpenInstances(name)}
-      title={`Open Instances filtered by structure: ${row.structure_name}`}
-      aria-label={`Open Instances for structure ${row.structure_name}`}
-    >
-      {body}
-    </button>
+    <Card variant="elevated" size="sm" className="gap-0 p-0">
+      <button
+        type="button"
+        className={cn(winRateCardClickableClass, 'rounded-lg border-0 bg-transparent p-2.5')}
+        onClick={() => onOpenInstances(name)}
+        title={`Open Instances filtered by structure: ${row.structure_name}`}
+        aria-label={`Open Instances for structure ${row.structure_name}`}
+      >
+        {body}
+      </button>
+    </Card>
   )
 }

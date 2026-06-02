@@ -282,3 +282,14 @@ export interface OpenOrderRow {
   contract_key?: string | null
   updated_ts?: number | null
 }
+
+/** Risk/post-mortem summary (GET /risk_summary). */
+export interface RiskSummaryResponse {
+  daily_hedge_count?: number | null
+  daily_pnl?: number | null
+  spot?: number | null
+  symbol?: string | null
+  operations_count_24h?: number
+  block_reasons?: string[]
+  ts?: number | null
+}

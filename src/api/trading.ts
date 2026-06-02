@@ -1,3 +1,4 @@
+import { postControlShutdown } from '@/api/apiControl'
 import type {
   ExecutionsFreshnessResponse,
   TwsFetchResponse,
@@ -199,4 +200,11 @@ export async function postOptionStockLinksQuery(
   })
   if (!res.ok) throw new Error(`POST /option-stock-links/query: ${res.status}`)
   return res.json() as Promise<OptionStockLinksResponse>
+}
+
+export async function postTradingShutdown(
+  serviceOrigin?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const base = (serviceOrigin ?? BASE).replace(/\/$/, '')
+  return postControlShutdown(`${base}/trading/shutdown`)
 }

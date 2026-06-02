@@ -3,8 +3,17 @@ import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { LogSourceDef } from '@/api/logs'
-import { useLogStream, type LogEntry, type LogLevel } from '@/hooks/useLogStream'
-import { LEVEL_LABELS, LEVEL_STYLE, STREAM_STATUS_LABEL } from './logConsoleShared'
+import { useLogStream, type LogEntry } from '@/hooks/useLogStream'
+import {
+  DEFAULT_LEVEL_FILTER,
+  filterLogEntries,
+  LEVEL_FILTER_OPTIONS,
+  LEVEL_LABELS,
+  LEVEL_STYLE,
+  levelFilterLabel,
+  STREAM_STATUS_LABEL,
+  type LevelFilterPreset,
+} from './logConsoleShared'
 
 function LogRow({
   entry,
@@ -60,7 +69,7 @@ export function LogConsole({
     Object.fromEntries(sources.map(s => [s.key, true])),
   )
   const [clearing, setClearing] = useState(false)
-  const [levelFilter, setLevelFilter] = useState<LogLevel | 'ALL'>('ALL')
+  const [levelFilter, setLevelFilter] = useState<LevelFilterPreset>(DEFAULT_LEVEL_FILTER)
   const [search, setSearch] = useState('')
 
   const activeSources = useMemo(
@@ -80,8 +89,7 @@ export function LogConsole({
   }, [entries.length])
 
   const filtered = useMemo(() => {
-    let result = entries
-    if (levelFilter !== 'ALL') result = result.filter(e => e.level === levelFilter)
+    let result = filterLogEntries(entries, levelFilter)
     if (search) {
       const q = search.toLowerCase()
       result = result.filter(e =>
@@ -101,15 +109,13 @@ export function LogConsole({
     }
   }
 
-  const LEVELS: (LogLevel | 'ALL')[] = ['ALL', 'ERROR', 'WARN', 'INFO', 'DEBUG']
-
   return (
     <div className={cn('rounded-lg border bg-card overflow-hidden', className)}>
       <div className="flex flex-col gap-0 border-b bg-muted/20">
         {showAdvancedFilters && (
           <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 border-b border-border/50">
             <div className="flex items-center gap-0.5">
-              {LEVELS.map(lv => (
+              {LEVEL_FILTER_OPTIONS.map(lv => (
                 <button
                   key={lv}
                   type="button"
@@ -119,11 +125,13 @@ export function LogConsole({
                     levelFilter === lv
                       ? lv === 'ALL'
                         ? 'bg-foreground/10 text-foreground'
-                        : LEVEL_STYLE[lv as LogLevel].badge
+                        : lv === 'ALERTS'
+                          ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400'
+                          : LEVEL_STYLE[lv].badge
                       : 'text-muted-foreground/50 hover:text-muted-foreground',
                   )}
                 >
-                  {lv === 'ALL' ? 'All' : LEVEL_LABELS[lv as LogLevel]}
+                  {levelFilterLabel(lv)}
                 </button>
               ))}
             </div>

@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, Moon, PanelLeft, Sun, SunMoon } from 'lucide-react'
+import { Bell, ChevronDown, Moon, Network, PanelLeft, ScrollText, Sun, SunMoon } from 'lucide-react'
+import { useLogPanel } from '@/hooks/useLogPanel'
+import { useReactorMap } from '@/hooks/useReactorMap'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -130,6 +132,8 @@ interface Props {
 export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: Props) {
   const [openGroup, setOpenGroup] = useState<string | null>(null)
   const { mode, cycleMode } = useThemeMode()
+  const { open: reactorOpen, toggle: toggleReactor, alertCount } = useReactorMap()
+  const { open: logsOpen, toggle: toggleLogs, errorCount } = useLogPanel()
   const handleClose = () => setOpenGroup(null)
 
   return (
@@ -177,6 +181,46 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
 
       {/* Controls */}
       <div className="flex items-center gap-0.5 shrink-0 ml-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn('relative h-8 w-8', reactorOpen && 'bg-muted')}
+              onClick={toggleReactor}
+              aria-label="Reactor Map"
+            >
+              <Network className="h-4 w-4" />
+              {alertCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white leading-none">
+                  {alertCount > 9 ? '9+' : alertCount}
+                </span>
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Reactor Map</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn('relative h-8 w-8', logsOpen && 'bg-muted')}
+              onClick={toggleLogs}
+              aria-label="Logs"
+            >
+              <ScrollText className="h-4 w-4" />
+              {errorCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white leading-none">
+                  {errorCount > 9 ? '9+' : errorCount}
+                </span>
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Logs</TooltipContent>
+        </Tooltip>
+
         {/* Nav mode toggle: switch to Sidebar */}
         {onToggleNavMode && (
           <Tooltip>

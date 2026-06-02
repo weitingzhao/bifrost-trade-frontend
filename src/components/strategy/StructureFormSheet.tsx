@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { cn } from '@/lib/utils'
-import { dangerTextBtnClass } from '@/lib/uiClasses'
+import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,14 +24,23 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  IconActionButton,
+  NestedDenseTable,
+} from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import {
+  structuresFormHintClass,
+  structuresFormPanelClass,
+  structuresFormSubheadingClass,
+  structuresTemplateOptionClass,
+  structuresWizardStepClass,
+} from '@/components/strategy/structures/structuresFormUi'
 import { fetchStructure, fetchTemplateDetail } from '@/api/strategy'
 import {
   useCreateStructure,
@@ -545,13 +553,9 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
                         if (step === 1 && wizardStep > 1) setWizardStep(1)
                         if (step === 2 && wizardStep > 2) setWizardStep(2)
                       }}
-                      className={cn(
-                        'rounded-full px-3 py-1 border transition-colors',
-                        wizardStep === step
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : wizardStep > step
-                            ? 'border-border text-foreground'
-                            : 'border-border text-muted-foreground',
+                      className={structuresWizardStepClass(
+                        wizardStep === step,
+                        wizardStep > step,
                       )}
                     >
                       {step === 1 ? 'Template' : step === 2 ? 'Parameters' : 'Details'}
@@ -561,7 +565,7 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
 
                 {wizardStep === 1 && (
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium">Choose template</h4>
+                    <h4 className={structuresFormSubheadingClass}>Choose template</h4>
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">
                         <Input
@@ -616,7 +620,7 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
                           ))}
                         </div>
                       )}
-                      <p className="text-xs text-muted-foreground">
+                      <p className={structuresFormHintClass}>
                         Showing {wizardTemplatesToShow.length} of {templates.length} templates
                       </p>
                     </div>
@@ -629,11 +633,8 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
                             key={tpl.strategy_template_id}
                             type="button"
                             onClick={() => handleTemplateSelect(tpl.strategy_template_id)}
-                            className={cn(
-                              'rounded-lg border p-3 text-left transition-colors',
-                              selectedTemplateId === tpl.strategy_template_id
-                                ? 'border-primary bg-accent-soft'
-                                : 'border-border hover:border-primary/40',
+                            className={structuresTemplateOptionClass(
+                              selectedTemplateId === tpl.strategy_template_id,
                             )}
                           >
                             <div className="font-medium text-sm">{tpl.display_name}</div>
@@ -665,7 +666,7 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
 
                 {wizardStep === 2 && wizardTemplateDetail && (
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium">Parameters</h4>
+                    <h4 className={structuresFormSubheadingClass}>Parameters</h4>
                     {wizardTemplateDetail.example && (
                       <p className="text-xs text-muted-foreground">
                         <strong>Example:</strong> {wizardTemplateDetail.example}
@@ -675,7 +676,7 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
                       .length === 0 ? (
                       <p className="text-sm text-muted-foreground">No editable parameters. Click Next.</p>
                     ) : (
-                      <div className="space-y-3 rounded-lg border p-3">
+                      <div className={structuresFormPanelClass}>
                         {(wizardTemplateDetail.meta_params ?? [])
                           .filter((p) => p.param_kind !== 'fixed')
                           .map((p) => (
@@ -905,8 +906,8 @@ function StructureDetailsFields({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border p-3 space-y-3">
-        <h4 className="text-sm font-medium">Metadata</h4>
+      <div className={structuresFormPanelClass}>
+        <h4 className={structuresFormSubheadingClass}>Metadata</h4>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1 sm:col-span-2">
             <Label className="text-xs inline-flex items-center">
@@ -946,8 +947,8 @@ function StructureDetailsFields({
       </div>
 
       {showStep3Meta && wizardTemplateDetail && (
-        <div className="rounded-lg border p-3 space-y-3">
-          <h4 className="text-sm font-medium">Parameters</h4>
+        <div className={structuresFormPanelClass}>
+          <h4 className={structuresFormSubheadingClass}>Parameters</h4>
           {metaNF.map((p) => (
             <div key={p.meta_key} className="space-y-1">
               <Label className="text-xs">{p.display_label ?? p.meta_key}</Label>
@@ -968,39 +969,41 @@ function StructureDetailsFields({
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border p-3 space-y-2">
-          <h4 className="text-sm font-medium">Legs</h4>
-          <p className="text-xs text-muted-foreground">From template. Not editable here.</p>
+        <div className={structuresFormPanelClass}>
+          <h4 className={structuresFormSubheadingClass}>Legs</h4>
+          <p className={structuresFormHintClass}>From template. Not editable here.</p>
           {defaultLegsLoading ? (
             <Skeleton className="h-16 w-full" />
           ) : (
-            <div className="rounded-md border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Direction</TableHead>
-                    <TableHead>Right</TableHead>
-                    <TableHead>Qty</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {formLegs.map((leg, i) => (
-                    <TableRow key={`${leg.role}-${leg.direction}-${i}`}>
-                      <TableCell className="text-xs">{leg.role ?? '—'}</TableCell>
-                      <TableCell className="text-xs">{leg.direction ?? '—'}</TableCell>
-                      <TableCell className="text-xs font-mono">{leg.option_right ?? '—'}</TableCell>
-                      <TableCell className="text-xs font-mono">{leg.quantity ?? 1}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <NestedDenseTable>
+              <DenseTableHeader>
+                <DenseTableHeadRow>
+                  <DenseTableHead>Role</DenseTableHead>
+                  <DenseTableHead>Direction</DenseTableHead>
+                  <DenseTableHead>Right</DenseTableHead>
+                  <DenseTableHead>Qty</DenseTableHead>
+                </DenseTableHeadRow>
+              </DenseTableHeader>
+              <DenseTableBody>
+                {formLegs.map((leg, i) => (
+                  <DenseTableRow key={`${leg.role}-${leg.direction}-${i}`}>
+                    <DenseTableCell>{leg.role ?? '—'}</DenseTableCell>
+                    <DenseTableCell>{leg.direction ?? '—'}</DenseTableCell>
+                    <DenseTableCell className="font-mono tabular-nums">
+                      {leg.option_right ?? '—'}
+                    </DenseTableCell>
+                    <DenseTableCell className="font-mono tabular-nums">
+                      {leg.quantity ?? 1}
+                    </DenseTableCell>
+                  </DenseTableRow>
+                ))}
+              </DenseTableBody>
+            </NestedDenseTable>
           )}
         </div>
 
-        <div className="rounded-lg border p-3 space-y-2">
-          <h4 className="text-sm font-medium">Constraints</h4>
+        <div className={structuresFormPanelClass}>
+          <h4 className={structuresFormSubheadingClass}>Constraints</h4>
           <div className="space-y-2">
             {formConstraints.map((c, i) => (
               <div key={i} className="flex flex-wrap gap-2 items-center">
@@ -1028,9 +1031,14 @@ function StructureDetailsFields({
                   placeholder="Int"
                   className="h-8 w-20 font-mono"
                 />
-                <Button type="button" variant="ghost" size="sm" className={dangerTextBtnClass} onClick={() => onRemoveConstraint(i)}>
-                  Remove
-                </Button>
+                <IconActionButton
+                  tone="danger"
+                  title="Remove constraint"
+                  ariaLabel="Remove constraint"
+                  onClick={() => onRemoveConstraint(i)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </IconActionButton>
               </div>
             ))}
             <Button type="button" variant="outline" size="sm" onClick={onAddConstraint}>
@@ -1040,8 +1048,8 @@ function StructureDetailsFields({
         </div>
       </div>
 
-      <div className="rounded-lg border p-3 space-y-2">
-        <h4 className="text-sm font-medium">Notes</h4>
+      <div className={structuresFormPanelClass}>
+        <h4 className={structuresFormSubheadingClass}>Notes</h4>
         <textarea
           value={formNotes}
           onChange={(e) => onNotesChange(e.target.value)}

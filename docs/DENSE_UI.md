@@ -109,6 +109,238 @@ No `ledgerStyles.module.css` — toolbar/summary use Tailwind token files above.
 
 No `transferPay.module.css` — use `InlinePnl` / `denseTableNumCell` for amounts.
 
+## Stock Screener
+
+| Pattern | Reference |
+|---------|-----------|
+| Page layout grid + elevated filter cards | [stockScreenerUi.ts](../src/pages/research/stockScreener/stockScreenerUi.ts), [StockScreenerPage.tsx](../src/pages/research/StockScreenerPage.tsx) |
+| Segment hue map (tech/fund/tier/ext) | [segmentStyles.ts](../src/pages/research/stockScreener/segmentStyles.ts) |
+| Filter card shell + checkbox chips | [ScreenerCard.tsx](../src/pages/research/stockScreener/ScreenerCard.tsx), [ScreenerConditionChip.tsx](../src/pages/research/stockScreener/ScreenerConditionChip.tsx) |
+| Condition / tier / dist filter blocks | [ConditionChipGroup.tsx](../src/pages/research/stockScreener/ConditionChipGroup.tsx), [TierFilterCard.tsx](../src/pages/research/stockScreener/TierFilterCard.tsx), [DistFunnelCard.tsx](../src/pages/research/stockScreener/DistFunnelCard.tsx) |
+| Readiness results table | [ReadinessResultsTable.tsx](../src/pages/research/stockScreener/ReadinessResultsTable.tsx) — `DenseDataTable` + sortable head + `DenseLinkButton` |
+
+No `stock-screener.module.css` — filter chips stay page-local (checkbox + hue accent), not `SegmentControl`.
+
+## Option Screener
+
+| Pattern | Reference |
+|---------|-----------|
+| Page shell + filter panel | [optionScreenerUi.ts](../src/pages/research/optionScreener/optionScreenerUi.ts), [OptionScreenerPage.tsx](../src/pages/research/optionScreener/OptionScreenerPage.tsx) |
+| Structure type + numeric filters | [OptionScreenerFilterPanel.tsx](../src/pages/research/optionScreener/OptionScreenerFilterPanel.tsx) — `SegmentControl` |
+| Symbol group + nested contracts | [OptionScreenerSymbolGroup.tsx](../src/pages/research/optionScreener/OptionScreenerSymbolGroup.tsx) — `CollapsibleGroup` |
+| Contract results table | [OptionScreenerContractsTable.tsx](../src/pages/research/optionScreener/OptionScreenerContractsTable.tsx) — `DenseDataTable` + `DenseTag` + `IconActionButton` |
+| Rating / risk badges | [optionScreenerTags.ts](../src/pages/research/optionScreener/optionScreenerTags.ts) |
+
+No raw `<table>` — re-export entry: [ScreenerPage.tsx](../src/pages/research/ScreenerPage.tsx).
+
+## Stock Watchlist
+
+| Pattern | Reference |
+|---------|-----------|
+| Workflow stepper + page tokens | [watchlistUi.ts](../src/pages/research/watchlist/watchlistUi.ts), [WorkflowStepper.tsx](../src/pages/research/watchlist/WorkflowStepper.tsx) |
+| Stock / option watchlist tables | [WatchlistStockTable.tsx](../src/pages/research/watchlist/WatchlistStockTable.tsx), [WatchlistOptionTable.tsx](../src/pages/research/watchlist/WatchlistOptionTable.tsx) — `DenseDataTable` + `DenseLinkButton` + `DenseTagButton` + `IconActionButton` |
+| Portfolio risk panel | [PortfolioRiskPower.tsx](../src/pages/research/watchlist/PortfolioRiskPower.tsx) — `CollapsibleGroup` + cash pie tokens + [WatchlistMetricTable.tsx](../src/pages/research/watchlist/WatchlistMetricTable.tsx) |
+| Sizing cap table | [WatchlistSizingCapTable.tsx](../src/pages/research/watchlist/WatchlistSizingCapTable.tsx) |
+| Positions sub-tab | [PositionsTab.tsx](../src/pages/research/watchlist/PositionsTab.tsx) — `SegmentControl` |
+
+No `watchlist.module.css` — quote cells use `watchlistQuoteLastClass` / `watchlistQuoteBaClass`; pie rings keep inline `conic-gradient`.
+
+## Option Discovery
+
+| Pattern | Reference |
+|---------|-----------|
+| Page root + scope tokens | [discoveryUi.ts](../src/pages/research/discovery/discoveryUi.ts) — re-exports `discoveryRootClass` from [discoveryCharts.module.css](../src/pages/research/discoveryCharts.module.css) |
+| Component tokens (KV, tradability, exec chips) | [optionDiscoveryUi.ts](../src/components/optionDiscovery/optionDiscoveryUi.ts) |
+| Chain quotes (sticky hybrid) | [DiscoveryChainQuotesTable.tsx](../src/components/optionDiscovery/DiscoveryChainQuotesTable.tsx) |
+| Strike ladder | [DiscoveryStrikeLadderTable.tsx](../src/components/optionDiscovery/DiscoveryStrikeLadderTable.tsx) |
+| IV term sheet | [DiscoveryIvTermSheetTable.tsx](../src/components/optionDiscovery/DiscoveryIvTermSheetTable.tsx) |
+| Compare drawer | [DiscoveryCompareTable.tsx](../src/components/optionDiscovery/DiscoveryCompareTable.tsx) |
+| Contract Greeks / scenario | [DiscoveryContractGreeksTable.tsx](../src/components/optionDiscovery/DiscoveryContractGreeksTable.tsx), [DiscoveryScenarioTable.tsx](../src/components/optionDiscovery/DiscoveryScenarioTable.tsx) |
+| Side / Greeks / period segments | `SegmentControl` in [DiscoverySideToggle.tsx](../src/components/optionDiscovery/DiscoverySideToggle.tsx), quotes, IV term, contract detail, chart panel |
+
+**Chart geometry exception:** keep [discoveryCharts.module.css](../src/pages/research/discoveryCharts.module.css) for `od-chart-expand-*`, SVG sizing, and `--od-max-pain-*` tokens only. No `optionContractDetail.module.css`.
+
+## IV & Greeks (Research)
+
+| Pattern | Reference |
+|---------|-----------|
+| Page tokens | [greeksUi.ts](../src/pages/research/greeks/greeksUi.ts) — controls, info bar, empty/loading hints, IV/Delta cell classes, tooltip tokens |
+| History table | [GreeksHistoryTable.tsx](../src/pages/research/greeks/GreeksHistoryTable.tsx) — `DenseDataTable` + `DenseTableSubheadRow` expiry groups + `DenseTag` C/P + DTE pill |
+| BS tooltip | [GreeksCalcTooltip.tsx](../src/pages/research/greeks/GreeksCalcTooltip.tsx) — portal tooltip; section/KV/compare grid via `greeksUi` tokens |
+| Format helpers | [greeksFormat.ts](../src/pages/research/greeks/greeksFormat.ts) — fmt/groupBy/dte only (no color classes) |
+| C/P filter | `SegmentControl` on [GreeksPage.tsx](../src/pages/research/GreeksPage.tsx) |
+
+**IV semantic colors** (`greeksIvCellClass`): IV &lt; 30% green, ≥ 80% amber — not PnL; do not use `pnlColorClass`.
+
+**Delta ATM highlight** (`greeksDeltaCellClass`): |Δ| in [0.4, 0.6] → `text-primary font-medium`.
+
+No `*.module.css` under `src/pages/research/greeks/`.
+
+## Strategy Instances (List)
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + filter tokens | [instancesUi.ts](../src/components/strategy/instances/instancesUi.ts) |
+| List page shell | [InstancesPage.tsx](../src/pages/strategy/InstancesPage.tsx) — `PageShell padding="default"`, elevated `Card` for Account/Strategy controls |
+| Filter panel | [InstanceListFilters.tsx](../src/components/strategy/InstanceListFilters.tsx) — `SegmentControl` (Status/Since/Type) + toggle bubbles (Structure/Symbol/Expiry) |
+| Toolbar | [InstanceListToolbar.tsx](../src/components/strategy/InstanceListToolbar.tsx) — `SegmentControl` (Accordion/Multi) + outline buttons for expand/collapse |
+| Grouped metrics table | [InstancesGroupedTable.tsx](../src/components/strategy/InstancesGroupedTable.tsx) — two-tier `DenseDataTable` header, `DenseTableSubheadRow` symbol groups, `DenseTag` status/structure, `IconActionButton` row actions, `pnlColorClass` metrics |
+
+No `instancesTable.module.css` or `instancesFilters.module.css`. Compare split layout remains in [instancesLayout.module.css](../src/components/strategy/instances/instancesLayout.module.css) until Phase 4.9 (detail sidebar).
+
+## Strategy Win Rate
+
+KPI card grid exception — no `DenseDataTable` on this page.
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + card tokens | [winRateUi.ts](../src/components/strategy/winRate/winRateUi.ts) |
+| List page shell | [WinRatePage.tsx](../src/pages/strategy/WinRatePage.tsx) — `PageShell padding="default"`, `SegmentControl` Since filter in elevated `Card` |
+| Structure cards | [WinRateStructureCard.tsx](../src/components/strategy/winRate/WinRateStructureCard.tsx) — `Card variant="elevated"`, clickable drill to Instances |
+| All-structures totals | [WinRateTotalsCard.tsx](../src/components/strategy/winRate/WinRateTotalsCard.tsx) — horizontal four-band panel with responsive stack at `max-md` |
+| PnL coloring | [toneClasses.ts](../src/components/strategy/winRate/toneClasses.ts) — `profitLossToneClass` for dollar/% metrics |
+| Win % coloring | `winRateWinPctClass(total, wins)` in `winRateUi.ts` — strictly &gt;50% green, &lt;50% red; not `pnlColorClass` |
+
+No `winRate.module.css` under `src/components/strategy/winRate/`.
+
+## Strategy Structures
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + table tokens | [structuresUi.ts](../src/components/strategy/structures/structuresUi.ts) |
+| Form sheet tokens | [structuresFormUi.ts](../src/components/strategy/structures/structuresFormUi.ts) |
+| List page shell | [StructuresPage.tsx](../src/pages/strategy/StructuresPage.tsx) — `PageShell padding="default"`, three elevated `Card` sections |
+| Structure list table | [StructuresTable.tsx](../src/components/strategy/StructuresTable.tsx) — `DenseDataTable`, `IconActionButton` Edit/Copy, centered `Switch` columns |
+| History table | [StrategyHistorySection.tsx](../src/components/strategy/StrategyHistorySection.tsx) — `DenseDataTable` |
+| Availability filter | `SegmentControl` on StructuresPage (All / Available / Unavailable) |
+| Type filter | shadcn `Tabs` for dynamic `dim_structure` values (**tabs exception** — too many options for SegmentControl) |
+| Form legs table | [StructureFormSheet.tsx](../src/components/strategy/StructureFormSheet.tsx) — `NestedDenseTable`; constraint remove → `IconActionButton tone="danger"` |
+
+No `@/components/ui/table` under Structures list/history/form legs paths guarded in CI.
+
+## Strategy Opportunities
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + table tokens | [opportunitiesUi.ts](../src/components/strategy/opportunities/opportunitiesUi.ts) |
+| Form modal tokens | [opportunitiesFormUi.ts](../src/components/strategy/opportunities/opportunitiesFormUi.ts) |
+| List page shell | [OpportunitiesPage.tsx](../src/pages/strategy/OpportunitiesPage.tsx) — `PageShell padding="default"`, single elevated `Card` |
+| Opportunity list table | [OpportunitiesTable.tsx](../src/components/strategy/OpportunitiesTable.tsx) — `DenseDataTable`, `IconActionButton` Edit/Copy, centered `Switch` |
+| Availability filter | `SegmentControl` on OpportunitiesPage (All / Available / Unavailable) |
+| Create/edit modal | [OpportunityFormModal.tsx](../src/components/strategy/OpportunityFormModal.tsx) — Scope `SegmentControl`, Available `Switch`, remove actions → `IconActionButton tone="danger"` |
+
+Also used from Option Screener (prefill path unchanged). No `@/components/ui/table` under Opportunities guarded paths.
+
+## Strategy Gates
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + table tokens | [gatesUi.ts](../src/components/strategy/gates/gatesUi.ts) |
+| Form sheet tokens | [gatesFormUi.ts](../src/components/strategy/gates/gatesFormUi.ts) |
+| List page shell | [GatesPage.tsx](../src/pages/strategy/GatesPage.tsx) — `PageShell padding="default"`, two elevated `Card` sections (active summary + list) |
+| Gate safety list table | [GatesTable.tsx](../src/components/strategy/gates/GatesTable.tsx) — `DenseDataTable`, `DenseTag` Active/Available, `IconActionButton` Edit/Copy/Set Active |
+| Create/edit/copy sheet | [GateSafetyFormSheet.tsx](../src/components/strategy/gates/GateSafetyFormSheet.tsx) — form panel tokens; earnings remove → `IconActionButton tone="danger"` |
+
+No availability `SegmentControl` (Legacy list has no filter). Set Active status flash on GatesPage. No `@/components/ui/table` under Gates guarded paths.
+
+## Strategy Allocations
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + table tokens | [allocationsUi.ts](../src/components/strategy/allocations/allocationsUi.ts) |
+| Form modal tokens | [allocationsFormUi.ts](../src/components/strategy/allocations/allocationsFormUi.ts) |
+| List page shell | [AllocationsPage.tsx](../src/pages/strategy/AllocationsPage.tsx) — `PageShell padding="default"`, Current active Card + elevated list `Card` |
+| Allocation list table | [AllocationsTable.tsx](../src/components/strategy/AllocationsTable.tsx) — `DenseDataTable`, `DenseTag` opportunity chips, dual `Switch` (Available + In use), `IconActionButton` Edit |
+| Current active summary | `useMonitorStatus` → `status.strategy.active.*` grid (Structure / Gate safety / Allocation) |
+| Availability filter | `SegmentControl` on AllocationsPage (All / Available / Unavailable) |
+| Create/edit modal | [AllocationFormModal.tsx](../src/components/strategy/AllocationFormModal.tsx) — opportunities checklist + limits grid tokens |
+
+In use Switch calls `setActiveAllocation` with companion structure/gate ids from monitor status. No `@/components/ui/table` under Allocations guarded paths.
+
+## Strategy Option Category
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + layout tokens | [optionCategoryUi.ts](../src/pages/strategy/optionCategory/optionCategoryUi.ts) |
+| Form / inline table tokens | [optionCategoryFormUi.ts](../src/pages/strategy/optionCategory/optionCategoryFormUi.ts) |
+| Admin master-detail shell | [OptionCategoryPage.tsx](../src/pages/strategy/OptionCategoryPage.tsx) — `PageShell padding="none"`, sidebar + detail scroll |
+| Sidebar + dim filters + drag reorder | [OptionCategorySidebar.tsx](../src/pages/strategy/optionCategory/OptionCategorySidebar.tsx) |
+| Default legs + meta params | [OptionCategoryLegsSection.tsx](../src/pages/strategy/optionCategory/OptionCategoryLegsSection.tsx), [OptionCategoryMetaTable.tsx](../src/pages/strategy/optionCategory/OptionCategoryMetaTable.tsx) — `NestedDenseTable`, `IconActionButton tone="danger"` |
+| Template / dim delete | `ConfirmDialog` on OptionCategoryPage |
+
+No `@/components/ui/table` or `dangerTextBtnClass` under option category guarded paths.
+
+## Settings API Health
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + table tokens | [apiHealthUi.ts](../src/pages/settings/apiHealth/apiHealthUi.ts) |
+| Detail KV tokens | [apiHealthDetailUi.ts](../src/pages/settings/apiHealth/apiHealthDetailUi.ts) |
+| Topology schematic tokens | [serviceTopologyUi.ts](../src/components/topology/serviceTopologyUi.ts) |
+| List page shell | [ApiHealthPage.tsx](../src/pages/settings/ApiHealthPage.tsx) — `PageShell padding="default"`, `InfoTooltip`, Services Overview + elevated tab `Card` |
+| Docs links table | [ApiDocsTable.tsx](../src/pages/settings/apiHealth/ApiDocsTable.tsx) — `DenseDataTable` + `API_DOCS_COL_WIDTHS` |
+| Service probe cards | [ApiServiceHealthCard.tsx](../src/pages/settings/apiHealth/ApiServiceHealthCard.tsx) — `Card variant="elevated"` |
+| Detail sub-nav | `SegmentControl size="sm"` in `panels/*DetailsPanel.tsx` |
+| Reactor Map (global) | [ReactorMapPanel.tsx](../src/components/topology/ReactorMapPanel.tsx) + [ServiceTopologyOverview.tsx](../src/components/topology/ServiceTopologyOverview.tsx) — sidebar footer / TopNav toggle; grouped bays (Edge · Control/Account/Research/Data APIs · Celery · Daemons); schematic CSS **allowed exception** |
+
+No raw `<table` under `src/pages/settings/apiHealth/`. Legacy five Settings API pages merged into this single tabbed route.
+
+### API Health follow-up (Phase 4.17)
+
+| Pattern | Reference |
+|---------|-----------|
+| Env overview tokens | [apiHealthEnvUi.ts](../src/pages/settings/apiHealth/apiHealthEnvUi.ts) |
+| Configured routes strip | [ApiConfiguredRoutesStrip.tsx](../src/pages/settings/apiHealth/ApiConfiguredRoutesStrip.tsx) |
+| Dev/Prod health columns | [ApiEnvHealthGrid.tsx](../src/pages/settings/apiHealth/ApiEnvHealthGrid.tsx), [ApiEnvHealthColumn.tsx](../src/pages/settings/apiHealth/ApiEnvHealthColumn.tsx) |
+| Utilized services util | [utilizedServices.ts](../src/utils/utilizedServices.ts) |
+| Shutdown + confirm | [apiHealthShutdown.ts](../src/pages/settings/apiHealth/apiHealthShutdown.ts), `ConfirmDialog` on [ApiHealthPage.tsx](../src/pages/settings/ApiHealthPage.tsx) |
+| Architecture logs | Global **LogPanel** (sidebar footer) — Monitor / Ops / Docs sources; no in-page console on API Health |
+
+## Settings Socket Services
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + table tokens | [socketIngestUi.ts](../src/pages/settings/socket/socketIngestUi.ts) |
+| Page shell | [SocketPage.tsx](../src/pages/settings/SocketPage.tsx) — `PageShell padding="default"`, `PageHeader titleSize="large"` + `InfoTooltip`, elevated `Card` sections |
+| Ingest services table | [IngestServicesTable.tsx](../src/pages/settings/socket/IngestServicesTable.tsx) — `DenseDataTable` + `DenseTableSubheadRow` (MASSIVE / IB groups) + dynamic `colgroup` |
+| Connection column | [IngestConnectionCell.tsx](../src/pages/settings/socket/IngestConnectionCell.tsx) — Massive age / IB client id / probe badges |
+| Row actions | [socketIngestControls.tsx](../src/pages/settings/socket/socketIngestControls.tsx) — `IconActionButton` (Start/Stop/Restart/Reset) |
+| Ops auth / host pills | [OpsAuthBar.tsx](../src/pages/settings/socket/OpsAuthBar.tsx), [OpsHostEnvPill.tsx](../src/pages/settings/socket/OpsHostEnvPill.tsx) — shared tokens (Celery/Daemon import same paths) |
+| Daemon reuse | `IngestServicesTable variant="daemon"` in [DaemonEngineOpsSection.tsx](../src/pages/settings/daemon/DaemonEngineOpsSection.tsx) |
+| Socket / edge logs | Global **LogPanel** → **Socket Services** group (`IB INGESTOR`, `IB ACCT AGENT`, `IB OPERATOR`, `MASSIVE WS`); no in-page console on Socket |
+
+No `@/components/ui/table` under `src/pages/settings/socket/`.
+
+## Operations Daemon
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + KV/table tokens | [daemonUi.ts](../src/pages/settings/daemon/daemonUi.ts) |
+| Heartbeat interval form tokens | [daemonFormUi.ts](../src/pages/settings/daemon/daemonFormUi.ts) |
+| Ops shared hook | [useDaemonEngineOps.ts](../src/pages/settings/daemon/useDaemonEngineOps.ts) — rollup lamp on `PageHeader` |
+| List page shell | [DaemonStatusPage.tsx](../src/pages/settings/DaemonStatusPage.tsx) — `PageShell padding="default"`, `InfoTooltip`, 4× elevated `Card` |
+| Recent ops table | [RecentOperationsTable.tsx](../src/pages/settings/daemon/RecentOperationsTable.tsx) — `DenseDataTable` + `DAEMON_OPS_COL_WIDTHS`; Side → `DenseTag` |
+| Strategy / Account Sync cards | [StrategyTradingDaemonCard.tsx](../src/pages/settings/daemon/StrategyTradingDaemonCard.tsx), [AccountSyncDaemonCard.tsx](../src/pages/settings/daemon/AccountSyncDaemonCard.tsx) — `daemonThreeColGridClass`, `DenseTag` Yes/No, `daemonLampTextClass` |
+| Process ingest table | [IngestServicesTable.tsx](../src/pages/settings/socket/IngestServicesTable.tsx) `variant="daemon"` in [DaemonEngineOpsSection.tsx](../src/pages/settings/daemon/DaemonEngineOpsSection.tsx) — Dense table owned by **Phase 4.18** Socket |
+
+**Logs:** Not in-page; use global footer **LogPanel → Daemon** (Strategy Trading + Account Sync). Celery card intentionally removed vs Legacy.
+
+No `@/components/ui/table` under `DaemonStatusPage.tsx` or `settings/daemon/**`.
+
+## Operations Celery
+
+| Pattern | Reference |
+|---------|-----------|
+| Page + table tokens | [celeryUi.ts](../src/pages/operations/celery/celeryUi.ts) |
+| Page shell | [CeleryPage.tsx](../src/pages/operations/CeleryPage.tsx) — `PageShell padding="default"`, `PageHeader titleSize="large"` |
+| Section cards | [CelerySectionCard.tsx](../src/pages/operations/celery/CelerySectionCard.tsx) — `Card variant="elevated"` |
+| Queue summary + 8 data tables | `CeleryQueueSummaryTable`, `jobQueues/*`, `CeleryWorkerInstancesSection`, `CeleryWorkerInstanceSituation`, `CeleryBeatScheduleCard`, `CeleryScheduledJobsSection`, `RegisteredCeleryTasksTable`, `RunMassiveJobMatrixTable` |
+| Job status filter | `SegmentControl size="sm"` in [CeleryJobQueuesSection.tsx](../src/pages/operations/celery/CeleryJobQueuesSection.tsx) |
+| Celery ops icon toolbar | [CeleryQueueIconButton.tsx](../src/pages/operations/celery/CeleryQueueIconButton.tsx) — **allowed exception** (semantic queue/worker actions; not `IconActionButton`) |
+| Terminal streams | [CeleryTerminalPanel.tsx](../src/pages/operations/celery/console/CeleryTerminalPanel.tsx) — scoped CSS exception |
+
+No `@/components/ui/table` under `src/pages/operations/celery/`.
+
 ## PnL coloring
 
 Always use `pnlColorClass` from `@/utils/dailyChange` or `InlinePnl` / `PnlCell` from `data-display`. Do not use legacy strings (`pnl-positive`, `pos-opt-pnl-*`).

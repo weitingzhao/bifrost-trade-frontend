@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
+import { SegmentControl } from '@/components/data-display'
 import type { QuoteItem, WatchlistItem } from '@/types/market'
 import type { PositionCategory } from '@/types/portfolio'
 import { StockWatchlistTable, OptionWatchlistTable } from './StockWatchlistTable'
 import type { WatchlistWorkflow } from '@/hooks/useWatchlistWorkflow'
+import { watchlistSectionHintClass, watchlistStepLeadClass } from './watchlistUi'
 
 interface Props {
   workflow: WatchlistWorkflow
@@ -38,38 +39,41 @@ export function PositionsTab({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        <strong className="text-foreground">Step 3.</strong> Rows on this list that match your current IB
+      <p className={watchlistSectionHintClass}>
+        <strong className={watchlistStepLeadClass}>Step 3.</strong> Rows on this list that match your current IB
         portfolio snapshot.
       </p>
 
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground">Instrument type:</span>
-        <button
-          type="button"
-          className={cn(
-            'text-xs px-3 py-1 rounded-md border',
-            subTab === 'stocks' ? 'bg-primary text-primary-foreground border-primary' : 'border-border',
-          )}
-          onClick={() => setSubTab('stocks')}
-        >
-          Stocks <span className="font-mono ml-1">{positionStockRows.length}</span>
-        </button>
-        <button
-          type="button"
-          className={cn(
-            'text-xs px-3 py-1 rounded-md border',
-            subTab === 'options' ? 'bg-primary text-primary-foreground border-primary' : 'border-border',
-          )}
-          onClick={() => setSubTab('options')}
-        >
-          Options <span className="font-mono ml-1">{positionOptRows.length}</span>
-        </button>
+        <SegmentControl
+          ariaLabel="Instrument type"
+          value={subTab}
+          onChange={v => setSubTab(v as 'stocks' | 'options')}
+          options={[
+            {
+              value: 'stocks',
+              label: (
+                <>
+                  Stocks <span className="ml-1 font-mono">{positionStockRows.length}</span>
+                </>
+              ),
+            },
+            {
+              value: 'options',
+              label: (
+                <>
+                  Options <span className="ml-1 font-mono">{positionOptRows.length}</span>
+                </>
+              ),
+            },
+          ]}
+        />
       </div>
 
       {subTab === 'stocks' && (
         positionStockRows.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4">No held stocks from this list.</p>
+          <p className={watchlistSectionHintClass}>No held stocks from this list.</p>
         ) : (
           <StockWatchlistTable
             items={positionStockRows}
@@ -89,7 +93,7 @@ export function PositionsTab({
 
       {subTab === 'options' && (
         positionOptRows.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4">No held options from this list.</p>
+          <p className={watchlistSectionHintClass}>No held options from this list.</p>
         ) : (
           <OptionWatchlistTable
             items={positionOptRows}

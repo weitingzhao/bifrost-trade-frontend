@@ -3,23 +3,31 @@ import { PageHeader, PageShell } from '@/components/layout'
 import { useNavigate } from 'react-router-dom'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import { SegmentControl } from '@/components/data-display'
 import { useWinRate } from '@/hooks/useStrategies'
 import { WinRateStructureCard, WinRateTotalsCard } from '@/components/strategy/winRate'
 import { resolveWinRateTotals } from '@/utils/winRate'
 import { cn } from '@/lib/utils'
-import styles from '@/components/strategy/winRate/winRate.module.css'
+import {
+  winRateEmptyHintClass,
+  winRateHintClass,
+  winRatePageSectionClass,
+  winRateSinceLabelClass,
+  winRateStructureGridClass,
+} from '@/components/strategy/winRate/winRateUi'
 
 export type SinceFilter = '' | '1m' | 'q' | 'half' | '1y' | 'ytd'
 
 const SINCE_OPTIONS: { key: SinceFilter; label: string }[] = [
   { key: '', label: 'All' },
-  { key: '1m', label: '1 month' },
-  { key: 'q', label: 'Quarter' },
-  { key: 'half', label: 'Half year' },
-  { key: '1y', label: '1 year' },
+  { key: '1m', label: '1m' },
+  { key: 'q', label: 'Q' },
+  { key: 'half', label: '6m' },
+  { key: '1y', label: '1y' },
   { key: 'ytd', label: 'YTD' },
 ]
 
@@ -60,93 +68,84 @@ export default function WinRatePage() {
   }
 
   return (
-    <PageShell className="space-y-4">
-      <div className="rounded-lg border border-border p-4 space-y-4">
-        <PageHeader
-          title={
-            <span className="inline-flex items-center gap-1">
-              Strategy / Win Rate
-              <InfoTooltip text={WIN_RATE_INFO} />
-            </span>
-          }
-          titleSize="large"
-          actions={
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0 gap-1.5"
-              onClick={() => void refetch()}
-              disabled={isFetching}
-            >
-              <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
-              {isFetching ? 'Loading…' : 'Refresh'}
-            </Button>
-          }
-        />
+    <PageShell padding="default" className="space-y-3">
+      <PageHeader
+        title={
+          <span className="inline-flex items-center gap-1">
+            Strategy / Win Rate
+            <InfoTooltip text={WIN_RATE_INFO} />
+          </span>
+        }
+        titleSize="large"
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
+            {isFetching ? 'Loading…' : 'Refresh'}
+          </Button>
+        }
+      />
 
-        <p className={styles.hint}>
-          Aggregated results per Strategy Structure. Each instance with executions is one row;
-          Profit vs Loss trade counts follow the same net PnL sign rules as Total profit / Total loss
-          for all structures. Click a structure card to open Instances with that structure filter.
-        </p>
+      <p className={winRateHintClass}>
+        Aggregated results per Strategy Structure. Click a structure card to open Instances with
+        that structure filter.
+      </p>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-muted-foreground mr-1">Since:</span>
-          {SINCE_OPTIONS.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setSinceFilter(key)}
-              className={cn(
-                'text-xs px-2.5 py-1 rounded-full border transition-colors whitespace-nowrap',
-                sinceFilter === key
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40',
-              )}
-            >
-              {label}
-            </button>
+      <Card variant="elevated" className="p-2.5">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className={winRateSinceLabelClass}>Since</span>
+          <SegmentControl
+            size="sm"
+            ariaLabel="Filter win rate by closed since"
+            value={sinceFilter}
+            onChange={(v) => setSinceFilter(v as SinceFilter)}
+            options={SINCE_OPTIONS.map(({ key, label }) => ({ value: key, label }))}
+          />
+        </div>
+      </Card>
+
+      {isLoading && (
+        <div className={winRateStructureGridClass}>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-64 w-full rounded-lg" />
           ))}
         </div>
+      )}
 
-        {isLoading && (
-          <div className={styles.structureGrid}>
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-64 w-full rounded-lg" />
+      {isError && (
+        <Alert variant="destructive" role="alert">
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Failed to load win-rate data'}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isLoading && !isError && structures.length === 0 && (
+        <p className={winRateEmptyHintClass}>
+          No closed strategy instances found. Run some strategies and close them to see win-rate
+          statistics.
+        </p>
+      )}
+
+      {!isLoading && !isError && structures.length > 0 && (
+        <div className={winRatePageSectionClass}>
+          {totalsAll != null && <WinRateTotalsCard totals={totalsAll} />}
+          <div className={winRateStructureGridClass}>
+            {structures.map((row) => (
+              <WinRateStructureCard
+                key={row.structure_name}
+                row={row}
+                onOpenInstances={handleCardClick}
+              />
             ))}
           </div>
-        )}
-
-        {isError && (
-          <Alert variant="destructive" role="alert">
-            <AlertDescription>
-              {error instanceof Error ? error.message : 'Failed to load win-rate data'}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {!isLoading && !isError && structures.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            No closed strategy instances found. Run some strategies and close them to see win-rate
-            statistics.
-          </p>
-        )}
-
-        {!isLoading && !isError && structures.length > 0 && (
-          <div className={styles.pageSection}>
-            {totalsAll != null && <WinRateTotalsCard totals={totalsAll} />}
-            <div className={styles.structureGrid}>
-              {structures.map((row) => (
-                <WinRateStructureCard
-                  key={row.structure_name}
-                  row={row}
-                  onOpenInstances={handleCardClick}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </PageShell>
   )
 }

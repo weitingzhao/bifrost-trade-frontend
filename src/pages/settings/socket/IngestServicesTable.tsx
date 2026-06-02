@@ -1,19 +1,22 @@
 import { Fragment } from 'react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Info } from 'lucide-react'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Info } from 'lucide-react'
+import {
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  DenseTableSubheadRow,
+} from '@/components/data-display'
+import { denseTable } from '@/components/data-display/denseTableClasses'
 import type { StatusResponse } from '@/types/monitor'
 import type { MarketIngestAction } from '@/api/ops'
 import {
@@ -34,10 +37,17 @@ import {
 } from '@/utils/ingestOpsShared'
 import { OpsHostEnvPill } from './OpsHostEnvPill'
 import {
-  ConnectionCell,
-  ControlButtons,
-  IngestLampDot,
+  SOCKET_INGEST_COL_WIDTHS_NO_CONNECTION,
+  SOCKET_INGEST_COL_WIDTHS_WITH_CONNECTION,
+  socketActionsCellClass,
+  socketIngestTableClass,
+  socketLogicalCellClass,
+  socketServiceLabelClass,
+  socketServiceUnitClass,
+  socketSubheadLabelClass,
 } from './socketIngestUi'
+import { ConnectionCell } from './IngestConnectionCell'
+import { ControlButtons, IngestLampDot } from './socketIngestControls'
 
 function ServiceRow({
   svc,
@@ -87,11 +97,11 @@ function ServiceRow({
   const logicalText = buildIngestLogicalSummary(svc, status)
 
   return (
-    <TableRow>
-      <TableCell className="w-10 px-3">
+    <DenseTableRow>
+      <DenseTableCell>
         <IngestLampDot lamp={lamp} title={statusTitle} />
-      </TableCell>
-      <TableCell className="w-20 px-3">
+      </DenseTableCell>
+      <DenseTableCell>
         <div
           className="flex items-center gap-1"
           title={blockedBySibling
@@ -103,20 +113,20 @@ function ServiceRow({
             <span className="text-yellow-400 text-xs" title="Locked by sibling service lease">⚠</span>
           )}
         </div>
-      </TableCell>
-      <TableCell className="px-3 min-w-[180px]">
-        <div className="font-semibold text-sm">{svc.label}</div>
-        <code className="text-xs text-muted-foreground font-mono">{svc.systemd_unit}</code>
-      </TableCell>
+      </DenseTableCell>
+      <DenseTableCell>
+        <div className={socketServiceLabelClass}>{svc.label}</div>
+        <code className={socketServiceUnitClass}>{svc.systemd_unit}</code>
+      </DenseTableCell>
       {showConnectionColumn && (
-        <TableCell className="px-3 min-w-[200px]">
+        <DenseTableCell>
           <ConnectionCell svc={svc} status={status} elapsed={elapsed} category={category} wallNowSec={wallNowSec} />
-        </TableCell>
+        </DenseTableCell>
       )}
-      <TableCell className="px-3 text-xs text-muted-foreground max-w-[280px]">
+      <DenseTableCell className={socketLogicalCellClass}>
         {logicalText}
-      </TableCell>
-      <TableCell className="px-3 min-w-[120px]">
+      </DenseTableCell>
+      <DenseTableCell className={socketActionsCellClass}>
         <ControlButtons
           svc={svc}
           actionBlock={block}
@@ -125,8 +135,8 @@ function ServiceRow({
           isStopping={isStopping}
           onAction={onAction}
         />
-      </TableCell>
-    </TableRow>
+      </DenseTableCell>
+    </DenseTableRow>
   )
 }
 
@@ -163,10 +173,13 @@ export function IngestServicesTable({
 }) {
   const rows = variant === 'daemon' ? buildDaemonIngestRows(services) : buildUnifiedIngestRows(services)
   const showConnectionColumn = rows.some(({ svc, category }) => ingestRowUsesConnectionColumn(svc, category))
+  const colWidths = showConnectionColumn
+    ? SOCKET_INGEST_COL_WIDTHS_WITH_CONNECTION
+    : SOCKET_INGEST_COL_WIDTHS_NO_CONNECTION
   const colCount = showConnectionColumn ? 6 : 5
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground py-4">Loading services from Ops API…</p>
+    return <p className={denseTable.emptyHint}>Loading services from Ops API…</p>
   }
   if (isError) {
     return (
@@ -177,7 +190,7 @@ export function IngestServicesTable({
   }
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-4">
+      <p className={denseTable.emptyHint}>
         {emptyHint ?? (variant === 'daemon'
           ? 'No trading_engine or account_sync_daemon rows in Ops config.'
           : 'No socket services returned by Ops API.')}
@@ -197,65 +210,73 @@ export function IngestServicesTable({
 
   return (
     <TooltipProvider>
-      <div className="overflow-x-auto rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableHead className="w-10 text-xs uppercase tracking-wide">Status</TableHead>
-              <TableHead className="w-20 text-xs uppercase tracking-wide">
-                <span className="inline-flex items-center gap-1">
-                  Host
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-3 w-3 text-muted-foreground/60" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-sm text-xs">
-                      Only one of Dev or Prod may run each service against the same Redis. Starting elsewhere is rejected if HOST differs.
-                    </TooltipContent>
-                  </Tooltip>
-                </span>
-              </TableHead>
-              <TableHead className="text-xs uppercase tracking-wide">Service</TableHead>
-              {showConnectionColumn && (
-                <TableHead className="text-xs uppercase tracking-wide">Connection</TableHead>
-              )}
-              <TableHead className="text-xs uppercase tracking-wide">Redis / logical</TableHead>
-              <TableHead className="text-xs uppercase tracking-wide">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {groups.map(({ cat, rows: catRows }) => (
-              <Fragment key={cat}>
-                <TableRow className="bg-muted/20 hover:bg-muted/20">
-                  <TableCell colSpan={colCount} className="py-2 px-3">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                      {INGEST_CATEGORY_LABELS[cat]}
-                    </span>
-                  </TableCell>
-                </TableRow>
-                {catRows.map(({ svc, category }) => (
-                  <ServiceRow
-                    key={svc.id}
-                    svc={svc}
-                    category={category}
-                    status={status}
-                    elapsed={elapsed}
-                    pageEnv={pageEnv}
-                    disableScript={disableScript}
-                    canOperate={canOperate}
-                    allServices={services}
-                    showConnectionColumn={showConnectionColumn}
-                    isStarting={startingIds.has(svc.id)}
-                    isStopping={stoppingIds.has(svc.id)}
-                    onAction={onAction}
-                    wallNowSec={wallNowSec}
-                  />
-                ))}
-              </Fragment>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DenseDataTable tableClassName={socketIngestTableClass} wrapClassName="rounded-lg border">
+        <colgroup>
+          <col style={{ width: colWidths.status }} />
+          <col style={{ width: colWidths.host }} />
+          <col style={{ width: colWidths.service }} />
+          {showConnectionColumn && (
+            <col style={{ width: SOCKET_INGEST_COL_WIDTHS_WITH_CONNECTION.connection }} />
+          )}
+          <col style={{ width: colWidths.logical }} />
+          <col style={{ width: colWidths.actions }} />
+        </colgroup>
+        <DenseTableHeader>
+          <DenseTableHeadRow>
+            <DenseTableHead className="normal-case tracking-normal">Status</DenseTableHead>
+            <DenseTableHead className="normal-case tracking-normal">
+              <span className="inline-flex items-center gap-1">
+                Host
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3 w-3 text-muted-foreground/60" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm text-xs">
+                    Only one of Dev or Prod may run each service against the same Redis. Starting elsewhere is rejected if HOST differs.
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+            </DenseTableHead>
+            <DenseTableHead className="normal-case tracking-normal">Service</DenseTableHead>
+            {showConnectionColumn && (
+              <DenseTableHead className="normal-case tracking-normal">Connection</DenseTableHead>
+            )}
+            <DenseTableHead className="normal-case tracking-normal">Redis / logical</DenseTableHead>
+            <DenseTableHead className="normal-case tracking-normal">Actions</DenseTableHead>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
+          {groups.map(({ cat, rows: catRows }) => (
+            <Fragment key={cat}>
+              <DenseTableSubheadRow>
+                <DenseTableCell colSpan={colCount}>
+                  <span className={socketSubheadLabelClass}>
+                    {INGEST_CATEGORY_LABELS[cat]}
+                  </span>
+                </DenseTableCell>
+              </DenseTableSubheadRow>
+              {catRows.map(({ svc, category }) => (
+                <ServiceRow
+                  key={svc.id}
+                  svc={svc}
+                  category={category}
+                  status={status}
+                  elapsed={elapsed}
+                  pageEnv={pageEnv}
+                  disableScript={disableScript}
+                  canOperate={canOperate}
+                  allServices={services}
+                  showConnectionColumn={showConnectionColumn}
+                  isStarting={startingIds.has(svc.id)}
+                  isStopping={stoppingIds.has(svc.id)}
+                  onAction={onAction}
+                  wallNowSec={wallNowSec}
+                />
+              ))}
+            </Fragment>
+          ))}
+        </DenseTableBody>
+      </DenseDataTable>
     </TooltipProvider>
   )
 }

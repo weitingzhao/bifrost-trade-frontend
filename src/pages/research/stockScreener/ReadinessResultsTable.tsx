@@ -1,13 +1,16 @@
 import { cn } from '@/lib/utils'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DenseDataTable,
+  DenseLinkButton,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  denseTable,
+  denseTableNumCell,
+} from '@/components/data-display'
 import { SEPA_COND_CATALOG, TECH_COND_CATALOG } from '@/constants/stockScreenerCatalog'
 import type { ReadinessSnapshotRow, SortColumn, SortDirection } from '@/types/stockScreener'
 import { fundCellClass, techCellClass } from '@/utils/stockScreener'
@@ -41,8 +44,10 @@ function StmtChip({ label, ok, title }: { label: string; ok?: boolean; title?: s
     <span
       title={title}
       className={cn(
-        'inline-block text-[9px] font-mono px-1 py-0 rounded border',
-        ok ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' : 'border-border text-muted-foreground',
+        'inline-block rounded border px-1 py-0 font-mono text-[9px]',
+        ok
+          ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
+          : 'border-border text-muted-foreground',
       )}
     >
       {label}
@@ -61,12 +66,18 @@ function CondDots({
   insufficient: boolean
   groupPrefix: 'tech' | 'fund'
 }) {
-  const groupBorder: Record<string, string> = groupPrefix === 'tech'
-    ? { vol: 'border-violet-500/40', price52: 'border-blue-500/40', sma: 'border-cyan-500/40', price: 'border-indigo-500/40' }
-    : { eps: 'border-emerald-500/40', rev: 'border-teal-500/40' }
+  const groupBorder: Record<string, string> =
+    groupPrefix === 'tech'
+      ? {
+          vol: 'border-violet-500/40',
+          price52: 'border-blue-500/40',
+          sma: 'border-cyan-500/40',
+          price: 'border-indigo-500/40',
+        }
+      : { eps: 'border-emerald-500/40', rev: 'border-teal-500/40' }
 
   return (
-    <div className="flex flex-wrap gap-0.5 mt-0.5">
+    <div className="mt-0.5 flex flex-wrap gap-0.5">
       {catalog.map(({ id, short, group }) => {
         const pass = passed.has(id)
         return (
@@ -74,7 +85,7 @@ function CondDots({
             key={id}
             title={`${short}: ${insufficient ? 'insufficient' : pass ? 'pass' : 'fail'}`}
             className={cn(
-              'inline-flex items-center justify-center w-4 h-4 text-[8px] rounded border',
+              'inline-flex h-4 w-4 items-center justify-center rounded border text-[8px]',
               groupBorder[group] ?? 'border-border',
               pass ? 'text-emerald-400' : 'text-muted-foreground/50',
               insufficient && 'opacity-40',
@@ -88,7 +99,7 @@ function CondDots({
   )
 }
 
-function SortHeader({
+function SortableDenseHead({
   label,
   col,
   sortCol,
@@ -104,13 +115,14 @@ function SortHeader({
   const active = sortCol === col
   const arrow = active ? (sortDir === 'desc' ? '↓' : '↑') : '⇅'
   return (
-    <TableHead
-      className="cursor-pointer select-none hover:text-foreground text-xs"
+    <DenseTableHead
+      className={cn(denseTable.sortableHead, active && 'text-foreground')}
       onClick={() => onSort(col)}
       title={`Sort by ${label} pass count`}
+      aria-sort={active ? (sortDir === 'desc' ? 'descending' : 'ascending') : undefined}
     >
       {label} {arrow}
-    </TableHead>
+    </DenseTableHead>
   )
 }
 
@@ -135,155 +147,175 @@ export function ReadinessResultsTable({
         : 'No readiness rows found.'
 
   return (
-    <Card className="py-3 gap-2">
-      <CardHeader className="px-3 py-0">
-        <CardTitle className="text-xs font-semibold">
-          Results
-          {rows.length > 0 && (
-            <span className="ml-2 font-normal text-muted-foreground">
-              {rows.length} shown · readiness snapshot
-            </span>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-0 pb-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[110px] text-xs">Symbol</TableHead>
-                <SortHeader label="Technical" col="tech" sortCol={sortCol} sortDir={sortDir} onSort={onSort} />
-                <SortHeader label="Fundamental" col="fund" sortCol={sortCol} sortDir={sortDir} onSort={onSort} />
-                <TableHead className="w-[70px] text-xs text-center">Univ</TableHead>
-                <TableHead className="w-[100px] text-xs">Price</TableHead>
-                <TableHead className="w-[150px] text-xs">Statements</TableHead>
-                <TableHead className="w-[90px] text-xs">Short</TableHead>
-                <TableHead className="w-[90px] text-xs">As-of</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-xs text-muted-foreground text-center py-8">
-                    {emptyMessage}
-                  </TableCell>
-                </TableRow>
-              )}
-              {sortedRows.map((r) => {
-                if (!r.found) {
-                  return (
-                    <TableRow key={r.symbol} className="text-xs">
-                      <TableCell>
-                        <button
-                          type="button"
-                          className="font-mono font-semibold text-primary hover:underline"
-                          onClick={() => onOpenInspector(r.symbol, r)}
-                        >
-                          {r.symbol}
-                        </button>
-                      </TableCell>
-                      <TableCell colSpan={7} className="text-muted-foreground text-[11px]">
-                        No row in stock_readiness_daily — run the universe snapshot from Stock Data Readiness.
-                      </TableCell>
-                    </TableRow>
-                  )
-                }
-
-                const passed = new Set(r.passed_conditions ?? [])
-                const passedTech = new Set(r.passed_tech_conditions ?? [])
-                const insuf = r.fundamental_insufficient ?? false
-                const passCount = r.fundamental_pass_count ?? 0
-                const techInsuf = r.technical_insufficient ?? false
-                const techPassCount = r.technical_pass_count ?? 0
-                const techEvalPresent = r.technical_pass !== undefined
-                const isActive = activeSymbol === r.symbol
-
+    <div className={denseTable.sectionBlock}>
+      <h2 className={denseTable.sectionTitle}>
+        Results
+        {rows.length > 0 && (
+          <span className="ml-2 font-normal text-muted-foreground">
+            {rows.length} shown · readiness snapshot
+          </span>
+        )}
+      </h2>
+      <DenseDataTable>
+        <DenseTableHeader>
+          <DenseTableHeadRow>
+            <DenseTableHead className="w-[110px]">Symbol</DenseTableHead>
+            <SortableDenseHead
+              label="Technical"
+              col="tech"
+              sortCol={sortCol}
+              sortDir={sortDir}
+              onSort={onSort}
+            />
+            <SortableDenseHead
+              label="Fundamental"
+              col="fund"
+              sortCol={sortCol}
+              sortDir={sortDir}
+              onSort={onSort}
+            />
+            <DenseTableHead align="center" className="w-[70px]">
+              Univ
+            </DenseTableHead>
+            <DenseTableHead className="w-[100px]">Price</DenseTableHead>
+            <DenseTableHead className="w-[150px]">Statements</DenseTableHead>
+            <DenseTableHead className="w-[90px]">Short</DenseTableHead>
+            <DenseTableHead className="w-[90px]">As-of</DenseTableHead>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
+          {sortedRows.length === 0 ? (
+            <DenseTableRow>
+              <DenseTableCell colSpan={8} className="py-10 text-center">
+                <span className={denseTable.emptyHint}>{emptyMessage}</span>
+              </DenseTableCell>
+            </DenseTableRow>
+          ) : (
+            sortedRows.map(r => {
+              if (!r.found) {
                 return (
-                  <TableRow
-                    key={r.symbol}
-                    className={cn('text-xs', isActive && 'bg-accent/30')}
-                  >
-                    <TableCell>
-                      <button
-                        type="button"
-                        className={cn(
-                          'font-mono font-semibold hover:underline inline-flex items-center gap-0.5',
-                          isActive ? 'text-primary' : 'text-foreground',
-                        )}
+                  <DenseTableRow key={r.symbol}>
+                    <DenseTableCell>
+                      <DenseLinkButton
+                        label={r.symbol}
                         onClick={() => onOpenInspector(r.symbol, r)}
-                        title={isActive ? 'Close inspector' : `Open ${r.symbol} inspector`}
-                      >
-                        {r.symbol}
-                        <span className="text-[10px] opacity-50" aria-hidden>↗</span>
-                      </button>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <span
-                          className={cn('font-mono text-[11px]', techCellClass(techPassCount, techInsuf, techEvalPresent))}
-                          title={!techEvalPresent ? 'Not evaluated' : techInsuf ? 'Insufficient data' : `${techPassCount}/11 passed`}
-                        >
-                          {!techEvalPresent ? '—' : techInsuf ? 'INS' : `${techPassCount}/11`}
-                        </span>
-                        {techEvalPresent && (
-                          <CondDots
-                            catalog={TECH_COND_CATALOG}
-                            passed={passedTech}
-                            insufficient={techInsuf}
-                            groupPrefix="tech"
-                          />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <span
-                          className={cn('font-mono text-[11px]', fundCellClass(passCount, insuf))}
-                          title={insuf ? 'Insufficient data' : `${passCount}/8 passed`}
-                        >
-                          {insuf ? 'INS' : `${passCount}/8`}
-                        </span>
-                        <CondDots
-                          catalog={SEPA_COND_CATALOG}
-                          passed={passed}
-                          insufficient={insuf}
-                          groupPrefix="fund"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <BoolMark value={r.included_in_universe} />
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-1 font-mono text-[11px]">
-                        <BoolMark value={r.price_ready} />
-                        <span className="text-muted-foreground">{(r.bar_count_lookback ?? 0).toLocaleString()}b</span>
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-0.5">
-                        <StmtChip label="IS" ok={r.income_stmt_ready} title={`Income: ${r.income_stmt_q_count ?? 0}Q · ${r.income_stmt_a_count ?? 0}A`} />
-                        <StmtChip label="BS" ok={r.balance_sheet_present} title="Balance Sheet" />
-                        <StmtChip label="CF" ok={r.cash_flow_present} title="Cash Flow" />
-                        <StmtChip label="RT" ok={r.ratios_present} title="Ratios" />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-0.5">
-                        <StmtChip label="SI" ok={r.short_interest_present} title="Short Interest" />
-                        <StmtChip label="SV" ok={r.short_volume_present} title="Short Volume" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-[11px] text-muted-foreground">
-                      {r.as_of_date ?? '—'}
-                    </TableCell>
-                  </TableRow>
+                        ariaLabel={`Open ${r.symbol} inspector`}
+                        className="font-mono"
+                      />
+                    </DenseTableCell>
+                    <DenseTableCell colSpan={7} className={denseTable.mutedMeta}>
+                      No row in stock_readiness_daily — run the universe snapshot from Stock Data
+                      Readiness.
+                    </DenseTableCell>
+                  </DenseTableRow>
                 )
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              }
+
+              const passed = new Set(r.passed_conditions ?? [])
+              const passedTech = new Set(r.passed_tech_conditions ?? [])
+              const insuf = r.fundamental_insufficient ?? false
+              const passCount = r.fundamental_pass_count ?? 0
+              const techInsuf = r.technical_insufficient ?? false
+              const techPassCount = r.technical_pass_count ?? 0
+              const techEvalPresent = r.technical_pass !== undefined
+              const isActive = activeSymbol === r.symbol
+
+              return (
+                <DenseTableRow key={r.symbol} className={cn(isActive && 'bg-accent/30')}>
+                  <DenseTableCell>
+                    <DenseLinkButton
+                      label={`${r.symbol} ↗`}
+                      onClick={() => onOpenInspector(r.symbol, r)}
+                      ariaLabel={
+                        isActive ? 'Close inspector' : `Open ${r.symbol} inspector`
+                      }
+                      className={cn(
+                        'inline-flex items-center gap-0.5 font-mono',
+                        isActive ? 'text-primary' : 'text-foreground',
+                      )}
+                    />
+                  </DenseTableCell>
+                  <DenseTableCell>
+                    <div>
+                      <span
+                        className={cn(
+                          'font-mono text-[11px]',
+                          techCellClass(techPassCount, techInsuf, techEvalPresent),
+                        )}
+                        title={
+                          !techEvalPresent
+                            ? 'Not evaluated'
+                            : techInsuf
+                              ? 'Insufficient data'
+                              : `${techPassCount}/11 passed`
+                        }
+                      >
+                        {!techEvalPresent ? '—' : techInsuf ? 'INS' : `${techPassCount}/11`}
+                      </span>
+                      {techEvalPresent && (
+                        <CondDots
+                          catalog={TECH_COND_CATALOG}
+                          passed={passedTech}
+                          insufficient={techInsuf}
+                          groupPrefix="tech"
+                        />
+                      )}
+                    </div>
+                  </DenseTableCell>
+                  <DenseTableCell>
+                    <div>
+                      <span
+                        className={cn('font-mono text-[11px]', fundCellClass(passCount, insuf))}
+                        title={insuf ? 'Insufficient data' : `${passCount}/8 passed`}
+                      >
+                        {insuf ? 'INS' : `${passCount}/8`}
+                      </span>
+                      <CondDots
+                        catalog={SEPA_COND_CATALOG}
+                        passed={passed}
+                        insufficient={insuf}
+                        groupPrefix="fund"
+                      />
+                    </div>
+                  </DenseTableCell>
+                  <DenseTableCell className="text-center">
+                    <BoolMark value={r.included_in_universe} />
+                  </DenseTableCell>
+                  <DenseTableCell>
+                    <span className="inline-flex items-center gap-1 font-mono text-[11px]">
+                      <BoolMark value={r.price_ready} />
+                      <span className={denseTable.mutedMeta}>
+                        {(r.bar_count_lookback ?? 0).toLocaleString()}b
+                      </span>
+                    </span>
+                  </DenseTableCell>
+                  <DenseTableCell>
+                    <div className="flex flex-wrap gap-0.5">
+                      <StmtChip
+                        label="IS"
+                        ok={r.income_stmt_ready}
+                        title={`Income: ${r.income_stmt_q_count ?? 0}Q · ${r.income_stmt_a_count ?? 0}A`}
+                      />
+                      <StmtChip label="BS" ok={r.balance_sheet_present} title="Balance Sheet" />
+                      <StmtChip label="CF" ok={r.cash_flow_present} title="Cash Flow" />
+                      <StmtChip label="RT" ok={r.ratios_present} title="Ratios" />
+                    </div>
+                  </DenseTableCell>
+                  <DenseTableCell>
+                    <div className="flex flex-wrap gap-0.5">
+                      <StmtChip label="SI" ok={r.short_interest_present} title="Short Interest" />
+                      <StmtChip label="SV" ok={r.short_volume_present} title="Short Volume" />
+                    </div>
+                  </DenseTableCell>
+                  <DenseTableCell className={cn(denseTableNumCell, denseTable.mutedMeta)}>
+                    {r.as_of_date ?? '—'}
+                  </DenseTableCell>
+                </DenseTableRow>
+              )
+            })
+          )}
+        </DenseTableBody>
+      </DenseDataTable>
+    </div>
   )
 }

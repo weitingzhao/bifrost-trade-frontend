@@ -9,7 +9,9 @@ import { TopNav } from './TopNav'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
 import { MessageDrawer } from '@/components/MessageCenter/MessageDrawer'
 import { LogPanel } from '@/components/LogPanel'
+import { ReactorMapPanel } from '@/components/topology/ReactorMapPanel'
 import { LogPanelProvider } from '@/context/LogPanelContext'
+import { ReactorMapProvider } from '@/context/ReactorMapContext'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useNavMode } from '@/hooks/useNavMode'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
@@ -59,43 +61,49 @@ export function AppLayout() {
 
   if (effectiveMode === 'topnav') {
     return (
-      <LogPanelProvider>
-        <div className="flex flex-col h-svh bg-card">
-          <TopNav
-            activeMsgCount={activeMsgCount}
-            onOpenMessages={() => setDrawerOpen(true)}
-            onToggleNavMode={isTooNarrow ? undefined : toggle}
-          />
-          <GlobalMarketStatusBar enabled={showMarketStrip} />
-          <main className="flex-1 overflow-auto min-w-0">
-            <BoundedOutlet />
-          </main>
-          <LogPanel />
-          {msgCenter}
-        </div>
-      </LogPanelProvider>
+      <ReactorMapProvider>
+        <LogPanelProvider>
+          <div className="flex flex-col h-svh bg-card">
+            <TopNav
+              activeMsgCount={activeMsgCount}
+              onOpenMessages={() => setDrawerOpen(true)}
+              onToggleNavMode={isTooNarrow ? undefined : toggle}
+            />
+            <GlobalMarketStatusBar enabled={showMarketStrip} />
+            <main className="flex-1 overflow-auto min-w-0">
+              <BoundedOutlet />
+            </main>
+            <ReactorMapPanel />
+            <LogPanel />
+            {msgCenter}
+          </div>
+        </LogPanelProvider>
+      </ReactorMapProvider>
     )
   }
 
   return (
-    <LogPanelProvider>
-      <SidebarProvider defaultOpen={readSidebarCookie()}>
-        <AppSidebar />
-        {/* h-svh + overflow-hidden keeps LogPanel inside the viewport */}
-        <SidebarInset className="h-svh overflow-hidden bg-card">
-          <AppHeader
-            activeMsgCount={activeMsgCount}
-            onOpenMessages={() => setDrawerOpen(true)}
-            onToggleNavMode={toggle}
-          />
-          <GlobalMarketStatusBar enabled={showMarketStrip} />
-          <main className="flex-1 overflow-auto min-w-0 bg-card">
-            <BoundedOutlet />
-          </main>
-          <LogPanel />
-        </SidebarInset>
-        {msgCenter}
-      </SidebarProvider>
-    </LogPanelProvider>
+    <ReactorMapProvider>
+      <LogPanelProvider>
+        <SidebarProvider defaultOpen={readSidebarCookie()}>
+          <AppSidebar />
+          {/* h-svh + overflow-hidden keeps dock panels inside the viewport */}
+          <SidebarInset className="h-svh overflow-hidden bg-card">
+            <AppHeader
+              activeMsgCount={activeMsgCount}
+              onOpenMessages={() => setDrawerOpen(true)}
+              onToggleNavMode={toggle}
+            />
+            <GlobalMarketStatusBar enabled={showMarketStrip} />
+            <main className="flex-1 overflow-auto min-w-0 bg-card">
+              <BoundedOutlet />
+            </main>
+            <ReactorMapPanel />
+            <LogPanel />
+          </SidebarInset>
+          {msgCenter}
+        </SidebarProvider>
+      </LogPanelProvider>
+    </ReactorMapProvider>
   )
 }

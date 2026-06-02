@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
-import { cn } from '@/lib/utils'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { InspectorDrawer } from '@/components/positions/InspectorDrawer'
 import {
@@ -28,7 +27,11 @@ import { SectionHeader } from './stockScreener/SectionHeader'
 import { SEGMENT } from './stockScreener/segmentStyles'
 import { SymbolsStrip } from './stockScreener/SymbolsStrip'
 import { TierFilterCard } from './stockScreener/TierFilterCard'
-import styles from './stockScreener/stock-screener.module.css'
+import {
+  screenerFundRowClass,
+  screenerStackColClass,
+  screenerTechRowClass,
+} from './stockScreener/stockScreenerUi'
 import type { ReadinessSnapshotRow } from '@/types/stockScreener'
 import { formatCriteriaAsOf, prepareDistBuckets } from '@/utils/stockScreener'
 
@@ -162,7 +165,7 @@ export default function StockScreenerPage() {
   }
 
   return (
-    <PageShell className="flex flex-col gap-4 max-w-[1600px]">
+    <PageShell className="flex w-full min-w-0 flex-col gap-4">
       <PageHeader
         title="Stock Screener"
         description="Discover symbols by SEPA conditions and inspect their daily readiness snapshot."
@@ -175,7 +178,7 @@ export default function StockScreenerPage() {
       {/* Technical */}
       <section className="space-y-2">
         <SectionHeader label="Technical" variant="tech" />
-        <div className={styles.ssTechRow}>
+        <div className={screenerTechRowClass}>
           <DistFunnelCard
             variant="tech"
             suffix="11"
@@ -222,7 +225,7 @@ export default function StockScreenerPage() {
             onClear={() => filters.clearTierFilter('momentum')}
           />
 
-          <div className={styles.ssStackCol}>
+          <div className={screenerStackColClass}>
             <TierFilterCard
               tier="structure"
               indicators={STRUCTURE_INDICATORS}
@@ -248,7 +251,7 @@ export default function StockScreenerPage() {
       {/* Fundamental */}
       <section className="space-y-2">
         <SectionHeader label="Fundamental" variant="fund" />
-        <div className={styles.ssFundRow}>
+        <div className={screenerFundRowClass}>
           <DistFunnelCard
             variant="fund"
             suffix="8"
@@ -286,15 +289,15 @@ export default function StockScreenerPage() {
             }}
           />
 
-          <div className={styles.ssStackCol}>
+          <div className={screenerStackColClass}>
             {renderExtCard('quality')}
             {renderExtCard('efficiency')}
           </div>
-          <div className={styles.ssStackCol}>
+          <div className={screenerStackColClass}>
             {renderExtCard('balance')}
             {renderExtCard('sentiment')}
           </div>
-          <div className={cn(styles.ssStackCol)}>
+          <div className={screenerStackColClass}>
             {renderExtCard('cashflow')}
             {renderExtCard('valuation')}
             {renderExtCard('profitability')}

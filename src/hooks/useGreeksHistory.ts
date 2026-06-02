@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { fetchGreeks, fetchGreeksAvailableDates } from '@/api/research'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import type { FetchGreeksParams } from '@/types/research'
 
 export function useGreeksAvailableDates(symbol: string) {
   const sym = symbol.trim().toUpperCase()
@@ -13,18 +14,9 @@ export function useGreeksAvailableDates(symbol: string) {
   })
 }
 
-export function useGreeksHistory(
-  symbol: string,
-  tradeDate: string | null,
-  expiration?: string,
-) {
-  const sym = symbol.trim().toUpperCase()
-  const expKey = expiration ?? 'all'
-  return useQuery({
-    queryKey: [...QUERY_KEYS.research.greeks, sym, tradeDate, expKey],
-    queryFn: () => fetchGreeks(sym, tradeDate!, expiration),
-    enabled: sym.length > 0 && Boolean(tradeDate),
-    staleTime: 300_000,
-    retry: 0,
+export function useGreeksLoad() {
+  return useMutation({
+    mutationKey: [...QUERY_KEYS.research.greeks, 'load'],
+    mutationFn: (params: FetchGreeksParams) => fetchGreeks(params),
   })
 }

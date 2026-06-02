@@ -20,6 +20,7 @@ export const QUERY_KEYS = {
     openOrders:     ['monitor', 'open-orders']       as const,
     heartbeat:      ['monitor', 'heartbeat']         as const,
     operations:     ['monitor', 'operations']        as const,
+    riskSummary:    ['monitor', 'risk-summary']      as const,
   },
   portfolio: {
     accounts:              ['portfolio', 'accounts']              as const,

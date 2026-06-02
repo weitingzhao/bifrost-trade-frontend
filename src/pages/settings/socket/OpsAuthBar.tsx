@@ -4,13 +4,11 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { setOpsToken } from '@/api/ops'
 import type { OpsCapabilities } from '@/api/ops'
-import { cn } from '@/lib/utils'
-
-const ROLE_CLASS: Record<string, string> = {
-  viewer: 'bg-muted text-muted-foreground border-border',
-  operator: 'bg-primary/15 text-primary border-primary/30',
-  admin: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-}
+import {
+  opsAuthAuthenticatedBadgeClass,
+  opsAuthRoleBadgeClass,
+  opsAuthTokenRequiredBadgeClass,
+} from './socketIngestUi'
 
 export function OpsAuthBar({
   token,
@@ -52,7 +50,7 @@ export function OpsAuthBar({
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <Badge
             variant="outline"
-            className={cn('font-bold uppercase tracking-wide', ROLE_CLASS[role] ?? ROLE_CLASS.viewer)}
+            className={opsAuthRoleBadgeClass(role)}
           >
             {role}
           </Badge>
@@ -60,11 +58,11 @@ export function OpsAuthBar({
             <span className="text-muted-foreground">{caps.identity.name}</span>
           )}
           {isAuthenticated ? (
-            <Badge variant="outline" className="border-green-600/40 text-green-500 bg-green-500/10">
+            <Badge variant="outline" className={opsAuthAuthenticatedBadgeClass()}>
               Authenticated
             </Badge>
           ) : authRequired ? (
-            <Badge variant="outline" className="border-warning/40 text-warning bg-warning-soft">
+            <Badge variant="outline" className={opsAuthTokenRequiredBadgeClass()}>
               Token required for control
             </Badge>
           ) : null}

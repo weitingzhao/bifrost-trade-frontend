@@ -1,13 +1,13 @@
 import { renderQuoteLastBidAsk } from '@/utils/watchlistHelpers'
 import type { QuoteItem } from '@/types/market'
-import styles from './watchlist.module.css'
+import { watchlistQuoteBaClass, watchlistQuoteLastClass } from './watchlistUi'
 
 export function QuoteCell({ quote }: { quote: QuoteItem | undefined }) {
   const { last, bidAsk } = renderQuoteLastBidAsk(quote)
   return (
     <span>
-      <span className={styles.quoteLast}>{last}</span>
-      {bidAsk != null && <span className={styles.quoteBa}>{bidAsk}</span>}
+      <span className={watchlistQuoteLastClass}>{last}</span>
+      {bidAsk != null && <span className={watchlistQuoteBaClass}>{bidAsk}</span>}
     </span>
   )
 }

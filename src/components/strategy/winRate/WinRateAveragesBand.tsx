@@ -2,9 +2,20 @@ import type { WinRateStructureRow } from '@/types/strategy'
 import { fmtUsd } from '@/utils/positions'
 import { fmtWinRatePct } from '@/utils/winRate'
 import { cn } from '@/lib/utils'
-import styles from './winRate.module.css'
+import {
+  winRateAveragesTotalsClass,
+  winRateMetricClass,
+  winRateMetricLabelClass,
+  winRateMetricValueClass,
+  winRateMetricsWrapClass,
+  winRateMetricsWrapItemClass,
+  winRateSectionClass,
+  winRateSectionLabelClass,
+  winRateTotalsSectionClass,
+  winRateTotalsSectionLabelClass,
+} from './winRateUi'
 import { WinRateKpi } from './WinRateKpi'
-import { kpiToneClass } from './toneClasses'
+import { profitLossToneClass } from './toneClasses'
 import type { ProfitLossTone } from '@/utils/winRate'
 
 function AverageMetric({
@@ -17,9 +28,9 @@ function AverageMetric({
   tone: ProfitLossTone
 }) {
   return (
-    <div className={styles.metric}>
-      <span className={styles.metricLabel}>{label}</span>
-      <span className={cn(styles.metricValue, kpiToneClass(tone))}>{value}</span>
+    <div className={cn(winRateMetricClass, winRateMetricsWrapItemClass)}>
+      <span className={winRateMetricLabelClass}>{label}</span>
+      <span className={cn(winRateMetricValueClass, profitLossToneClass(tone))}>{value}</span>
     </div>
   )
 }
@@ -33,21 +44,38 @@ export function WinRateAveragesBand({
 }) {
   if (layout === 'totals') {
     return (
-      <div className={styles.section}>
-        <div className={styles.sectionLabel}>Averages</div>
-        <div className={styles.averagesTotals}>
-          <WinRateKpi label="Profit avg %" value={fmtWinRatePct(row.profit_avg_pct)} tone="positive" />
-          <WinRateKpi label="Loss avg %" value={fmtWinRatePct(row.loss_avg_pct)} tone="negative" />
-          <WinRateKpi label="Max loss %" value={fmtWinRatePct(row.single_max_loss_pct)} tone="negative" />
+      <div className={winRateTotalsSectionClass}>
+        <div className={winRateTotalsSectionLabelClass}>Averages</div>
+        <div className={winRateAveragesTotalsClass}>
+          <WinRateKpi
+            label="Profit avg %"
+            value={fmtWinRatePct(row.profit_avg_pct)}
+            tone="positive"
+            compact
+          />
+          <WinRateKpi
+            label="Loss avg %"
+            value={fmtWinRatePct(row.loss_avg_pct)}
+            tone="negative"
+            compact
+          />
+          <WinRateKpi
+            label="Max loss %"
+            value={fmtWinRatePct(row.single_max_loss_pct)}
+            tone="negative"
+            compact
+          />
           <WinRateKpi
             label="Profit avg $"
             value={row.profit_avg_usd != null ? fmtUsd(row.profit_avg_usd) : '—'}
             tone="positive"
+            compact
           />
           <WinRateKpi
             label="Loss avg $"
             value={row.loss_avg_usd != null ? fmtUsd(row.loss_avg_usd) : '—'}
             tone="negative"
+            compact
           />
         </div>
       </div>
@@ -55,12 +83,16 @@ export function WinRateAveragesBand({
   }
 
   return (
-    <div className={styles.section}>
-      <div className={styles.sectionLabel}>Averages</div>
-      <div className={styles.metricsWrap}>
+    <div className={winRateSectionClass}>
+      <div className={winRateSectionLabelClass}>Averages</div>
+      <div className={winRateMetricsWrapClass}>
         <AverageMetric label="Profit avg %" value={fmtWinRatePct(row.profit_avg_pct)} tone="positive" />
         <AverageMetric label="Loss avg %" value={fmtWinRatePct(row.loss_avg_pct)} tone="negative" />
-        <AverageMetric label="Max loss %" value={fmtWinRatePct(row.single_max_loss_pct)} tone="negative" />
+        <AverageMetric
+          label="Max loss %"
+          value={fmtWinRatePct(row.single_max_loss_pct)}
+          tone="negative"
+        />
         <AverageMetric
           label="Profit avg $"
           value={row.profit_avg_usd != null ? fmtUsd(row.profit_avg_usd) : '—'}

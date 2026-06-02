@@ -1,0 +1,77 @@
+import { cn } from '@/lib/utils'
+import { denseTable } from '@/components/data-display/denseTableClasses'
+
+export const watchlistStepperShellClass = cn(
+  'mb-4 flex items-stretch gap-0 overflow-hidden rounded-lg border border-border bg-card',
+)
+
+export const watchlistStepperStepClass = cn(
+  'flex flex-1 items-center gap-[0.65rem] border-none bg-transparent p-[0.65rem_1rem] text-left',
+  'cursor-pointer text-muted-foreground transition-[background,color] duration-150 hover:bg-muted',
+)
+
+export const watchlistStepperStepActiveClass =
+  'bg-primary/10 text-foreground'
+
+export const watchlistStepperStepDoneClass = 'text-foreground'
+
+export const watchlistStepperIndexClass = cn(
+  'inline-flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center rounded-full',
+  'border border-border text-[0.65rem] font-bold',
+)
+
+export const watchlistStepperIndexActiveClass =
+  'border-primary bg-primary/20 text-primary'
+
+export const watchlistStepperTitleClass = 'block text-[0.8rem] font-semibold'
+
+export const watchlistStepperDescClass = 'block text-[0.65rem] text-muted-foreground'
+
+export const watchlistStepperBadgeClass = cn(
+  'ml-auto rounded-full bg-muted px-[0.45rem] py-[0.1rem]',
+  'font-mono text-[0.65rem] font-semibold',
+)
+
+export const watchlistStepperConnectorClass =
+  'h-0.5 w-6 shrink-0 self-center bg-border'
+
+export const watchlistStepperConnectorDoneClass = 'bg-primary/50'
+
+export const watchlistQuoteLastClass = 'font-mono font-semibold tabular-nums'
+
+export const watchlistQuoteBaClass = cn(
+  'ml-[0.35rem] font-mono text-[0.7rem] tabular-nums',
+  denseTable.mutedMeta,
+)
+
+export const watchlistPieRingClass =
+  'relative h-[5.5rem] w-[5.5rem] shrink-0 rounded-full'
+
+export const watchlistPieHoleClass = cn(
+  'absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-card',
+  'text-center text-[0.55rem] leading-[1.2]',
+)
+
+export const watchlistRangeTrackClass = 'w-full accent-primary'
+
+export const watchlistSectionHintClass = 'text-sm text-muted-foreground'
+
+export const watchlistStepLeadClass = 'text-foreground'
+
+export const watchlistKpiCellClass = 'rounded-md border bg-muted/20 p-2 text-xs'
+
+export const watchlistOrderZoneClass = cn(
+  'space-y-3 rounded-md border border-destructive/20 bg-destructive/5 p-3',
+)
+
+export const watchlistWarnLineClass = 'text-xs text-amber-700 dark:text-amber-400'
+
+export const watchlistWarnBoxClass = watchlistWarnLineClass
+
+export const watchlistPiePanelClass = 'space-y-2 rounded-lg border p-3'
+
+export const watchlistCollapsedSummaryClass = cn(
+  'flex flex-wrap gap-4 px-3 pb-3 pt-0 text-xs text-muted-foreground',
+)
+
+export const watchlistRiskBodyClass = 'space-y-4 px-3 pb-4 pt-0'

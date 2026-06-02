@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { SegmentControl } from '@/components/data-display'
 
 export type StrikeSideMode = 'all' | 'call' | 'put'
 
@@ -14,26 +14,19 @@ export function DiscoverySideToggle({
   'aria-labelledby'?: string
 }) {
   return (
-    <ToggleGroup
-      id={id}
-      type="single"
-      size="sm"
-      variant="outline"
-      value={value}
-      onValueChange={v => {
-        if (v === 'all' || v === 'call' || v === 'put') onChange(v)
-      }}
-      aria-labelledby={ariaLabelledBy}
-    >
-      <ToggleGroupItem value="all" aria-label="All sides">
-        All
-      </ToggleGroupItem>
-      <ToggleGroupItem value="call" aria-label="Calls only">
-        Call
-      </ToggleGroupItem>
-      <ToggleGroupItem value="put" aria-label="Puts only">
-        Put
-      </ToggleGroupItem>
-    </ToggleGroup>
+    <div id={id} aria-labelledby={ariaLabelledBy}>
+      <SegmentControl
+        ariaLabel={ariaLabelledBy ? undefined : 'Strike side filter'}
+        value={value}
+        onChange={v => {
+          if (v === 'all' || v === 'call' || v === 'put') onChange(v)
+        }}
+        options={[
+          { value: 'all', label: 'All' },
+          { value: 'call', label: 'Call' },
+          { value: 'put', label: 'Put' },
+        ]}
+      />
+    </div>
   )
 }

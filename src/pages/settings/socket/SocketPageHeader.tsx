@@ -1,5 +1,6 @@
-import { Radio } from 'lucide-react'
+import { PageHeader } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import type { OpsHealthResponse, OpsCapabilities } from '@/api/ops'
 import type { StatusResponse } from '@/types/monitor'
 import type { MarketIngestServiceRow } from '@/utils/socketIngestLamp'
@@ -10,6 +11,10 @@ import {
 import { socketServicesHostColumnDisplay } from '@/utils/ingestOpsShared'
 import { OpsHostEnvPill } from './OpsHostEnvPill'
 import { OpsAuthBar } from './OpsAuthBar'
+import { socketPageDescriptionClass } from './socketIngestUi'
+
+const SOCKET_PAGE_INFO =
+  'Ops-controlled ingest processes: Massive Options WS and IB edge services. Redis health from Monitor /status; start/stop via Ops API.'
 
 export function SocketPageHeader({
   services,
@@ -39,26 +44,29 @@ export function SocketPageHeader({
   const lampColor = aggregate.lamp === 'none' ? 'gray' : aggregate.lamp
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 space-y-2">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <Radio className="h-5 w-5 text-orange-400 shrink-0" aria-hidden />
+    <PageHeader
+      title={
+        <div className="space-y-1">
+          <span className="inline-flex items-center gap-2 flex-wrap">
             <StatusLamp lamp={lampColor} className="h-3 w-3" />
-            <h1 className="text-2xl font-semibold tracking-tight">Socket Services</h1>
-          </div>
-          <p className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+            Socket Services
+            <InfoTooltip text={SOCKET_PAGE_INFO} />
+          </span>
+          <div className={socketPageDescriptionClass}>
             <span title={hostColumn.title}>This Ops instance (config / executor)</span>
             <OpsHostEnvPill pill={hostColumn.pill} title={hostColumn.title} />
-          </p>
+          </div>
         </div>
+      }
+      titleSize="large"
+      actions={
         <OpsAuthBar
           token={token}
           caps={caps}
           onTokenChange={onTokenChange}
           onRefresh={onRefresh}
         />
-      </div>
-    </div>
+      }
+    />
   )
 }

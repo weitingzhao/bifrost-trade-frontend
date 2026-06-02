@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { TableCell } from '@/components/ui/table'
+import { DenseTableCell, denseTableNumCell } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import { bsComputeDetail } from '@/utils/optionDiscovery/bsCalc'
 import {
@@ -158,10 +158,11 @@ export function useDiscoveryChainTable({
           }
         }
         return (
-          <TableCell
+          <DenseTableCell
             key={key}
             className={cn(
-              'cursor-pointer py-1 text-right font-mono text-xs tabular-nums',
+              'cursor-pointer py-1 text-right font-mono text-xs',
+              denseTableNumCell,
               sideSelected && 'bg-accent/20',
             )}
             onClick={e => {
@@ -174,7 +175,7 @@ export function useDiscoveryChainTable({
             }}
           >
             {cell}
-          </TableCell>
+          </DenseTableCell>
         )
       }),
     [

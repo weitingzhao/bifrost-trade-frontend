@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react'
+import { cn } from '@/lib/utils'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { DiscoveryIconButton } from '@/components/optionDiscovery/DiscoveryIconButton'
 import { DiscoverySection } from '@/components/optionDiscovery/DiscoverySection'
@@ -21,6 +22,18 @@ import {
 } from './odChartConstants'
 import { OdChartExpandOnHover } from './OdChartExpandOnHover'
 import { chartAxisTitleFill, chartSurfaceFill } from '@/lib/chartTokens'
+import {
+  optionDiscoveryMaxPainChartCellClass,
+  optionDiscoveryMaxPainCorpWarnClass,
+  optionDiscoveryMaxPainDisclaimerBodyClass,
+  optionDiscoveryMaxPainDisclaimerDetailsClass,
+  optionDiscoveryMaxPainDisclaimerSummaryClass,
+  optionDiscoveryMaxPainHeaderActionsClass,
+  optionDiscoveryMaxPainHeaderRowClass,
+  optionDiscoveryMaxPainSectionClass,
+  optionDiscoveryMaxPainTitleClass,
+  optionDiscoveryMaxPainTitleExpClass,
+} from './optionDiscoveryUi'
 
 const AXIS_FILL = 'var(--od-max-pain-axis-fill, var(--muted-foreground))'
 
@@ -546,11 +559,11 @@ export function OptionDiscoveryMaxPainPanel({
 
   if (!massiveConfigured) {
     return (
-      <DiscoverySection className="od-max-pain-section" aria-label="Max Pain">
-        <h3 className="od-max-pain-title">
+      <DiscoverySection className={optionDiscoveryMaxPainSectionClass} aria-label="Max Pain">
+        <h3 className={optionDiscoveryMaxPainTitleClass}>
           Max Pain Analysis
           {expiration.trim() ? (
-            <span className="od-max-pain-title-exp" aria-label={`Expiration ${expiration}`}>
+            <span className={optionDiscoveryMaxPainTitleExpClass} aria-label={`Expiration ${expiration}`}>
               · {expiration}
             </span>
           ) : null}
@@ -566,20 +579,19 @@ export function OptionDiscoveryMaxPainPanel({
   }
 
   return (
-    <DiscoverySection className="od-max-pain-section" aria-labelledby="od-max-pain-head">
-      <div className="mp-header-row">
-        <h3 id="od-max-pain-head" className="od-max-pain-title">
+    <DiscoverySection className={optionDiscoveryMaxPainSectionClass} aria-labelledby="od-max-pain-head">
+      <div className={optionDiscoveryMaxPainHeaderRowClass}>
+        <h3 id="od-max-pain-head" className={optionDiscoveryMaxPainTitleClass}>
           Max Pain Analysis
           {expiration.trim() ? (
-            <span className="od-max-pain-title-exp" aria-label={`Expiration ${expiration}`}>
+            <span className={optionDiscoveryMaxPainTitleExpClass} aria-label={`Expiration ${expiration}`}>
               · {expiration}
             </span>
           ) : null}
           <InfoTooltip text="Based on end-of-day open interest from Massive (15 min delayed source). Computed live from PostgreSQL; not read from stored report rows." />
         </h3>
-        <div className="od-max-pain-header-actions">
+        <div className={optionDiscoveryMaxPainHeaderActionsClass}>
           <DiscoveryIconButton
-            className="od-max-pain-refresh-icon-btn"
             onClick={() => setCollapsed(v => !v)}
             title={collapsed ? 'Expand Max Pain Analysis' : 'Collapse Max Pain Analysis'}
             aria-label={collapsed ? 'Expand Max Pain Analysis' : 'Collapse Max Pain Analysis'}
@@ -590,7 +602,6 @@ export function OptionDiscoveryMaxPainPanel({
             </svg>
           </DiscoveryIconButton>
           <DiscoveryIconButton
-            className="od-max-pain-refresh-icon-btn"
             onClick={() => void backfillOiForSymbol()}
             disabled={loading || oiBackfillLoading}
             title={
@@ -612,7 +623,6 @@ export function OptionDiscoveryMaxPainPanel({
             </svg>
           </DiscoveryIconButton>
           <DiscoveryIconButton
-            className="od-max-pain-refresh-icon-btn"
             onClick={() => void load()}
             disabled={loading || oiBackfillLoading}
             title={loading ? 'Loading max pain' : 'Refresh max pain'}
@@ -676,7 +686,7 @@ export function OptionDiscoveryMaxPainPanel({
                   </div>
                 </div>
                 {live.recent_corporate_action && (
-                  <DiscoveryHint className="mt-0 od-max-pain-corp-warn od-max-pain-corp-warn--below-metrics" role="status">
+                  <DiscoveryHint className={optionDiscoveryMaxPainCorpWarnClass} role="status">
                     Recent corporate action — verify strikes and multipliers.
                   </DiscoveryHint>
                 )}
@@ -684,7 +694,7 @@ export function OptionDiscoveryMaxPainPanel({
 
               <div className="w-full min-w-0 overflow-x-auto">
                 <div className="grid w-max min-w-full max-w-none grid-cols-3 gap-2 sm:min-w-[48rem]">
-                  <div className="od-max-pain-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
+                  <div className={cn(optionDiscoveryMaxPainChartCellClass, 'flex min-w-0 flex-col')}>
                     <OdChartExpandOnHover title="Seller Liability by Strike">
                       <>
                         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Seller Liability by Strike</h4>
@@ -695,7 +705,7 @@ export function OptionDiscoveryMaxPainPanel({
                     </OdChartExpandOnHover>
                   </div>
 
-                  <div className="od-max-pain-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
+                  <div className={cn(optionDiscoveryMaxPainChartCellClass, 'flex min-w-0 flex-col')}>
                     <OdChartExpandOnHover title="Open Interest by Strike">
                       <>
                         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Open Interest by Strike</h4>
@@ -704,11 +714,13 @@ export function OptionDiscoveryMaxPainPanel({
                     </OdChartExpandOnHover>
                   </div>
 
-                  <div className="od-max-pain-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2" aria-label="Max Pain and underlying trend">
+                  <div
+                    className={cn(optionDiscoveryMaxPainChartCellClass, 'flex min-w-0 flex-col')}
+                    aria-label="Max Pain and underlying trend"
+                  >
                     <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
                       <h4 className="m-0 text-xs font-semibold text-muted-foreground">Max Pain · Underlying</h4>
                       <DiscoveryIconButton
-                        className="od-max-pain-refresh-icon-btn"
                         onClick={() => setTrendCollapsed(v => !v)}
                         title={trendCollapsed ? 'Expand chart' : 'Collapse chart'}
                         aria-label={trendCollapsed ? 'Expand Max Pain vs underlying chart' : 'Collapse Max Pain vs underlying chart'}
@@ -733,9 +745,9 @@ export function OptionDiscoveryMaxPainPanel({
             </div>
           )}
 
-          <details className="od-max-pain-disclaimer-details">
-            <summary className="od-max-pain-disclaimer-summary">Disclaimer</summary>
-            <p className="od-max-pain-disclaimer-body">{DISCLAIMER}</p>
+          <details className={optionDiscoveryMaxPainDisclaimerDetailsClass}>
+            <summary className={optionDiscoveryMaxPainDisclaimerSummaryClass}>Disclaimer</summary>
+            <p className={optionDiscoveryMaxPainDisclaimerBodyClass}>{DISCLAIMER}</p>
           </details>
         </>
       )}

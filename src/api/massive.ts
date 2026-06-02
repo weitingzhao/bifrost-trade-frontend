@@ -1,6 +1,13 @@
+import { postControlShutdown } from '@/api/apiControl'
 import type { MassiveJobApiRow } from '@/types/ops'
 
 const BASE = import.meta.env.VITE_API_MASSIVE as string
+
+export async function postMassiveShutdown(): Promise<{ ok: boolean; error?: string }> {
+  return postControlShutdown(`${BASE.replace(/\/$/, '')}/research/massive/shutdown`, {
+    auth: false,
+  })
+}
 
 export type TickerReferenceJobKind =
   | 'feed_stocks_tickers_reference_universe'

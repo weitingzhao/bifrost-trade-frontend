@@ -1,26 +1,12 @@
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
-import { fmtUsd } from '@/lib/format'
-import { dangerTextBtnClass } from '@/lib/uiClasses'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { DiscoveryScrollArea } from '@/components/optionDiscovery/DiscoveryScrollArea'
+import { DiscoveryCompareTable } from '@/components/optionDiscovery/DiscoveryCompareTable'
 import { Button } from '@/components/ui/button'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 
 import { COMPARE_MAX_SLOTS } from '@/utils/optionDiscovery/compareRows'
 
 const MAX_SLOTS = COMPARE_MAX_SLOTS
-
-function fmtOptNum(v: number | null | undefined, digits = 4): string {
-  if (v == null || !Number.isFinite(v)) return '—'
-  return v.toFixed(digits)
-}
 
 export function OptionDiscoveryCompareDrawer({
   open,
@@ -71,43 +57,7 @@ export function OptionDiscoveryCompareDrawer({
         ) : (
           <>
             <DiscoveryScrollArea className="flex-1 px-4" maxHeightClass="max-h-[60vh]">
-              <Table className="text-xs">
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead>Side</TableHead>
-                    <TableHead>Strike</TableHead>
-                    <TableHead>Bid</TableHead>
-                    <TableHead>Ask</TableHead>
-                    <TableHead>Mid</TableHead>
-                    <TableHead>IV</TableHead>
-                    <TableHead className="w-20" aria-label="Remove" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((r, i) => (
-                    <TableRow key={`${r.strike}-${r.right}-${i}`}>
-                      <TableCell>{r.right === 'P' || r.right === 'PUT' ? 'Put' : 'Call'}</TableCell>
-                      <TableCell className="tabular-nums">{r.strike.toFixed(2)}</TableCell>
-                      <TableCell className="tabular-nums">{r.bid != null ? fmtUsd(r.bid) : '—'}</TableCell>
-                      <TableCell className="tabular-nums">{r.ask != null ? fmtUsd(r.ask) : '—'}</TableCell>
-                      <TableCell className="tabular-nums">{r.mid != null ? fmtUsd(r.mid) : '—'}</TableCell>
-                      <TableCell className="tabular-nums">{fmtOptNum(r.iv, 4)}</TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className={dangerTextBtnClass}
-                          onClick={() => onRemove(i)}
-                          aria-label={`Remove row ${i + 1}`}
-                        >
-                          Remove
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DiscoveryCompareTable rows={rows} onRemove={onRemove} />
             </DiscoveryScrollArea>
             <div className="border-t border-border px-4 py-3">
               <Button type="button" variant="secondary" size="sm" onClick={onClear}>

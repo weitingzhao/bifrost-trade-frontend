@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -30,10 +31,17 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 import { SocketPageHeader } from '@/pages/settings/socket/SocketPageHeader'
 import { LocalControlAgentPanel } from '@/pages/settings/socket/LocalControlAgentPanel'
 import { IngestServicesTable } from '@/pages/settings/socket/IngestServicesTable'
-import { SocketLogConsole } from '@/pages/settings/socket/SocketLogConsole'
 import {
   CLOSED_SOCKET_CONFIRM,
   type SocketConfirmState,
+} from '@/pages/settings/socket/socketIngestControls'
+import {
+  socketConflictAlertClass,
+  socketConflictClearButtonClass,
+  socketElevatedCardClass,
+  socketMonitorHintClass,
+  socketSectionBlockClass,
+  socketSectionTitleClass,
 } from '@/pages/settings/socket/socketIngestUi'
 
 export default function SocketPage() {
@@ -79,6 +87,7 @@ export default function SocketPage() {
   const pageEnv = normalizedPageDevProd(opsHealth?.config_profile ?? null)
   const conflict = hasStackConflict(socketServices)
   const status = statusData ?? null
+  const showLocalAgent = (opsHealth?.executor_mode ?? '').toLowerCase() === 'agent'
 
   function handleTokenChange(t: string) {
     setToken(t)
@@ -131,7 +140,7 @@ export default function SocketPage() {
   }
 
   return (
-    <PageShell className="space-y-0">
+    <PageShell padding="default" className="space-y-3">
       <SocketPageHeader
         services={socketServices}
         status={status}
@@ -142,10 +151,8 @@ export default function SocketPage() {
         onRefresh={refreshAll}
       />
 
-      <LocalControlAgentPanel opsHealth={opsHealth} />
-
       {conflict && (
-        <div className="flex items-start gap-3 rounded-lg border border-orange-500/40 bg-orange-500/10 p-3 mt-6">
+        <div className={socketConflictAlertClass} role="alert">
           <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 shrink-0" />
           <div className="flex-1 space-y-1">
             <p className="text-sm font-medium text-orange-500">Dev/Prod stack conflict detected</p>
@@ -156,7 +163,7 @@ export default function SocketPage() {
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0 text-xs border-orange-500/40 text-orange-500 hover:bg-orange-500/10"
+            className={socketConflictClearButtonClass}
             disabled={!canOperate || clearLeasesMutation.isPending}
             onClick={() => clearLeasesMutation.mutate()}
           >
@@ -165,29 +172,36 @@ export default function SocketPage() {
         </div>
       )}
 
-      <section className="border-t border-border pt-6 mt-6" aria-label="Socket service units">
-        <IngestServicesTable
-          services={socketServices}
-          status={status}
-          elapsed={elapsed}
-          pageEnv={pageEnv}
-          disableScript={disableScript}
-          canOperate={canOperate}
-          startingIds={startingIds}
-          stoppingIds={stoppingIds}
-          wallNowSec={wallNowSec}
-          onAction={openConfirm}
-          isLoading={ingestLoading}
-          isError={ingestError}
-        />
-        {!statusLoading && !status?.socket && !ingestLoading && (
-          <p className="text-xs text-muted-foreground mt-3">
-            Monitor /status not loaded — Redis health lamps will show gray.
-          </p>
-        )}
-      </section>
+      {showLocalAgent && (
+        <Card variant="elevated" size="sm" className={socketElevatedCardClass}>
+          <LocalControlAgentPanel opsHealth={opsHealth} />
+        </Card>
+      )}
 
-      <SocketLogConsole />
+      <Card variant="elevated" size="sm" className={socketElevatedCardClass} aria-label="Socket service units">
+        <div className={socketSectionBlockClass}>
+          <h2 className={socketSectionTitleClass}>Ingest services</h2>
+          <IngestServicesTable
+            services={socketServices}
+            status={status}
+            elapsed={elapsed}
+            pageEnv={pageEnv}
+            disableScript={disableScript}
+            canOperate={canOperate}
+            startingIds={startingIds}
+            stoppingIds={stoppingIds}
+            wallNowSec={wallNowSec}
+            onAction={openConfirm}
+            isLoading={ingestLoading}
+            isError={ingestError}
+          />
+          {!statusLoading && !status?.socket && !ingestLoading && (
+            <p className={socketMonitorHintClass}>
+              Monitor /status not loaded — Redis health lamps will show gray.
+            </p>
+          )}
+        </div>
+      </Card>
 
       <Dialog open={confirm.open} onOpenChange={open => !open && setConfirm(CLOSED_SOCKET_CONFIRM)}>
         <DialogContent>

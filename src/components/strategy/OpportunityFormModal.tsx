@@ -1,17 +1,26 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { X, Plus } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { dangerTextBtnClass } from '@/lib/uiClasses'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import { IconActionButton, SegmentControl } from '@/components/data-display'
+import {
+  opportunitiesConditionRowClass,
+  opportunitiesFormFieldClass,
+  opportunitiesFormHintClass,
+  opportunitiesStatusRowClass,
+  opportunitiesSymbolChipClass,
+  opportunitiesWatchlistBoxClass,
+  opportunitiesWatchlistSymbolClass,
+} from '@/components/strategy/opportunities/opportunitiesFormUi'
 import { useStructures, useGateSafety } from '@/hooks/useStrategies'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { createOpportunity, putOpportunity, fetchOpportunityDetail } from '@/api/strategy'
@@ -27,9 +36,9 @@ export interface PrefillData {
 }
 
 const SCOPE_OPTIONS = [
-  { value: '', label: '— None' },
-  { value: 'watchlist_stk', label: 'Watchlist (stocks)' },
-  { value: 'explicit_symbols', label: 'Explicit symbols' },
+  { value: '', label: 'None' },
+  { value: 'watchlist_stk', label: 'Watchlist' },
+  { value: 'explicit_symbols', label: 'Explicit' },
 ]
 
 const CONDITION_TYPES = [
@@ -205,10 +214,10 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
         </DialogHeader>
 
         {loading ? (
-          <p className="text-sm text-muted-foreground py-4">Loading…</p>
+          <p className={opportunitiesFormHintClass}>Loading…</p>
         ) : (
           <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
+            <div className={opportunitiesFormFieldClass}>
               <Label>Name <span className="text-destructive">*</span></Label>
               <Input
                 value={name}
@@ -217,7 +226,7 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className={opportunitiesFormFieldClass}>
               <Label>Structure <span className="text-destructive">*</span></Label>
               <Select value={structureId} onValueChange={handleStructureChange}>
                 <SelectTrigger>
@@ -236,7 +245,7 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className={opportunitiesFormFieldClass}>
               <Label>Gate Safety</Label>
               <Select value={gateSafetyId} onValueChange={setGateSafetyId}>
                 <SelectTrigger>
@@ -254,37 +263,27 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className={opportunitiesFormFieldClass}>
               <Label>Scope</Label>
-              <div className="flex gap-1 flex-wrap">
-                {SCOPE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => handleScopeChange(opt.value)}
-                    className={cn(
-                      'text-xs px-2.5 py-1 rounded-full border transition-colors',
-                      scopeType === opt.value
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40',
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+              <SegmentControl
+                size="sm"
+                ariaLabel="Opportunity scope"
+                value={scopeType}
+                onChange={handleScopeChange}
+                options={SCOPE_OPTIONS}
+              />
             </div>
 
             {scopeType === 'watchlist_stk' && (
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">
+                <p className={opportunitiesFormHintClass}>
                   Watchlist optionable stocks ({watchlistStks.length})
                 </p>
-                <div className="max-h-24 overflow-y-auto rounded border border-border p-1.5 flex flex-wrap gap-1">
+                <div className={opportunitiesWatchlistBoxClass}>
                   {watchlistStks.length === 0
-                    ? <span className="text-xs text-muted-foreground">None in watchlist</span>
+                    ? <span className={opportunitiesFormHintClass}>None in watchlist</span>
                     : watchlistStks.map((s) => (
-                        <span key={s} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted">
+                        <span key={s} className={opportunitiesWatchlistSymbolClass}>
                           {s}
                         </span>
                       ))
@@ -294,21 +293,27 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
             )}
 
             {scopeType === 'explicit_symbols' && (
-              <div className="space-y-1.5">
+              <div className={opportunitiesFormFieldClass}>
                 <Label>Symbols</Label>
-                <div className="flex flex-wrap gap-1 mb-1.5">
+                <div className="mb-1.5 flex flex-wrap gap-1">
                   {symbols.map((s) => (
-                    <span key={s} className="flex items-center gap-1 text-xs font-mono bg-muted px-2 py-0.5 rounded">
+                    <span key={s} className={opportunitiesSymbolChipClass}>
                       {s}
-                      <button type="button" onClick={() => handleRemoveSymbol(s)} className={dangerTextBtnClass}>
+                      <IconActionButton
+                        tone="danger"
+                        size="dense"
+                        title={`Remove ${s}`}
+                        ariaLabel={`Remove symbol ${s}`}
+                        onClick={() => handleRemoveSymbol(s)}
+                      >
                         <X className="h-2.5 w-2.5" />
-                      </button>
+                      </IconActionButton>
                     </span>
                   ))}
                 </div>
                 <div className="flex gap-1.5">
                   <Input
-                    className="uppercase h-8 text-sm font-mono w-28"
+                    className="h-8 w-28 font-mono text-sm uppercase"
                     placeholder="AAPL"
                     value={symbolInput}
                     onChange={(e) => setSymbolInput(e.target.value.toUpperCase())}
@@ -325,16 +330,18 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
               <div className="flex items-center justify-between">
                 <Label>Entry Conditions</Label>
                 <Button type="button" variant="ghost" size="sm" onClick={handleAddCondition} className="h-7 text-xs">
-                  <Plus className="h-3 w-3 mr-1" /> Add
+                  <Plus className="mr-1 h-3 w-3" /> Add
                 </Button>
               </div>
               {conditions.length === 0 && (
-                <p className="text-xs text-muted-foreground">No conditions — add filters like IV min or DTE max.</p>
+                <p className={opportunitiesFormHintClass}>
+                  No conditions — add filters like IV min or DTE max.
+                </p>
               )}
               {conditions.map((cond, idx) => (
-                <div key={idx} className="flex items-center gap-2">
+                <div key={idx} className={opportunitiesConditionRowClass}>
                   <Select value={cond.condition_type} onValueChange={(v) => handleConditionType(idx, v)}>
-                    <SelectTrigger className="h-8 text-xs flex-1">
+                    <SelectTrigger className="h-8 flex-1 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -344,33 +351,34 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
                     </SelectContent>
                   </Select>
                   <Input
-                    className="h-8 text-xs w-24 font-mono"
+                    className="h-8 w-24 font-mono text-xs"
                     type="number"
                     placeholder="value"
                     value={cond.value_numeric ?? ''}
                     onChange={(e) => handleConditionValue(idx, e.target.value)}
                   />
-                  <button type="button" onClick={() => handleRemoveCondition(idx)} className={dangerTextBtnClass}>
+                  <IconActionButton
+                    tone="danger"
+                    title="Remove condition"
+                    ariaLabel="Remove condition"
+                    onClick={() => handleRemoveCondition(idx)}
+                  >
                     <X className="h-3.5 w-3.5" />
-                  </button>
+                  </IconActionButton>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsActive((v) => !v)}
-                className={cn(
-                  'text-xs px-2.5 py-1 rounded-full border transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40',
-                )}
-              >
-                {isActive ? 'Active' : 'Inactive'}
-              </button>
-              <span className="text-xs text-muted-foreground">Status</span>
+            <div className={opportunitiesStatusRowClass}>
+              <Switch
+                id="opportunity-form-active"
+                checked={isActive}
+                onCheckedChange={setIsActive}
+                aria-label="Available"
+              />
+              <Label htmlFor="opportunity-form-active" className="text-xs font-normal">
+                Available
+              </Label>
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}

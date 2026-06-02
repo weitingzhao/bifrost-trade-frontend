@@ -7,7 +7,14 @@ import {
   type TierKey,
 } from '@/constants/stockScreenerCatalog'
 import { SEGMENT } from './segmentStyles'
-import styles from './stock-screener.module.css'
+import { ScreenerCard } from './ScreenerCard'
+import { ScreenerConditionChip } from './ScreenerConditionChip'
+import {
+  screenerCardStackedChipRowClass,
+  screenerChipRowClass,
+  screenerGroupHeaderClass,
+  screenerScoreSliderClass,
+} from './stockScreenerUi'
 
 interface Props {
   tier: TierKey
@@ -41,74 +48,84 @@ export function TierFilterCard({
   const tierChip = SEGMENT.tierChip[tier]
 
   const renderChips = (items: readonly { id: string; label: string }[]) => (
-    <div className={styles.ssChipRow}>
-      {items.map(({ id, label }) => {
-        const active = activeIds.has(id)
-        return (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onToggle(id)}
-            className={cn(styles.ssChip, tierChip, active && styles.ssChipActive)}
-          >
-            <span className={styles.ssChipCheck} aria-hidden>{active ? '✓' : ''}</span>
-            <span>{label}</span>
-          </button>
-        )
-      })}
+    <div className={cn(screenerChipRowClass, screenerCardStackedChipRowClass)}>
+      {items.map(({ id, label }) => (
+        <ScreenerConditionChip
+          key={id}
+          active={activeIds.has(id)}
+          label={label}
+          hueClass={tierChip}
+          onToggle={() => onToggle(id)}
+        />
+      ))}
     </div>
   )
 
   return (
-    <div className={cn(styles.ssCard, styles.ssCardStacked, SEGMENT.tierCard[tier])}>
-      <div className="flex flex-row items-center justify-between gap-2 mb-2">
-        <h3 className={cn(styles.ssCardTitle, SEGMENT.tierTitle[tier], 'flex items-center gap-1.5')}>
+    <ScreenerCard
+      stacked
+      accentClassName={SEGMENT.tierCard[tier]}
+      title={
+        <>
           {TIER_TITLE[tier]}
           {activeCount > 0 && (
-            <span className={cn('text-[10px] px-1.5 py-0 rounded-full font-mono', SEGMENT.tierCountBadge[tier])}>
+            <span
+              className={cn(
+                'rounded-full px-1.5 py-0 font-mono text-[10px]',
+                SEGMENT.tierCountBadge[tier],
+              )}
+            >
               {activeCount}
             </span>
           )}
-        </h3>
-        {activeCount > 0 && (
-          <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={onClear}>
+        </>
+      }
+      titleClassName={SEGMENT.tierTitle[tier]}
+      actions={
+        activeCount > 0 ? (
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={onClear}>
             Clear
           </Button>
-        )}
-      </div>
+        ) : undefined
+      }
+    >
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground shrink-0">Score</span>
+          <span className="shrink-0 text-[10px] text-muted-foreground">Score</span>
           <input
             type="range"
             min={0}
             max={maxScore}
             value={minScore}
-            onChange={(e) => onMinScoreChange(Number(e.target.value))}
-            className={styles.ssScoreSlider}
+            onChange={e => onMinScoreChange(Number(e.target.value))}
+            className={screenerScoreSliderClass}
           />
-          <span className={cn(
-            'text-[10px] font-mono tabular-nums shrink-0',
-            minScore > 0 && SEGMENT.tierScoreVal[tier],
-          )}>
+          <span
+            className={cn(
+              'shrink-0 font-mono text-[10px] tabular-nums',
+              minScore > 0 && SEGMENT.tierScoreVal[tier],
+            )}
+          >
             {minScore}/{maxScore}
           </span>
         </div>
         {groupedMomentum ? (
           <div className="space-y-2">
-            {(Object.keys(MOMENTUM_GROUP_LABELS) as Array<keyof typeof MOMENTUM_GROUP_LABELS>).map((g) => (
-              <div key={g}>
-                <p className={cn(styles.ssGroupHeader, SEGMENT.momGroupHeader[g])}>
-                  {MOMENTUM_GROUP_LABELS[g]}
-                </p>
-                {renderChips(MOMENTUM_INDICATORS.filter((ind) => ind.group === g))}
-              </div>
-            ))}
+            {(Object.keys(MOMENTUM_GROUP_LABELS) as Array<keyof typeof MOMENTUM_GROUP_LABELS>).map(
+              g => (
+                <div key={g}>
+                  <p className={cn(screenerGroupHeaderClass, SEGMENT.momGroupHeader[g])}>
+                    {MOMENTUM_GROUP_LABELS[g]}
+                  </p>
+                  {renderChips(MOMENTUM_INDICATORS.filter(ind => ind.group === g))}
+                </div>
+              ),
+            )}
           </div>
         ) : (
           renderChips(indicators)
         )}
       </div>
-    </div>
+    </ScreenerCard>
   )
 }

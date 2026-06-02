@@ -3,13 +3,16 @@ import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  denseTable,
+  denseTableNumCell,
+} from '@/components/data-display'
 import {
   Tooltip,
   TooltipContent,
@@ -25,6 +28,12 @@ import { opsHostEnvFromConfigProfile, socketServicesHostColumnDisplay } from '@/
 import { useScaleWorker, useWorkerInstances, useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
 import { useOpsHealth } from '@/hooks/useSocketServices'
 import { useCeleryOps } from './useCeleryOps'
+import {
+  CELERY_WORKER_INSTANCES_COL_WIDTHS,
+  celeryActionMsgClass,
+  celeryWorkerInstancesFilterBarClass,
+  celeryWorkerInstancesTableClass,
+} from './celeryUi'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -338,7 +347,7 @@ export function CeleryWorkerInstancesSection({
   return (
     <div className="space-y-4">
       {queueFilter && (
-        <div className="flex items-center gap-2 text-sm bg-muted/50 rounded px-3 py-1.5">
+        <div className={celeryWorkerInstancesFilterBarClass}>
           <span>Showing instances for queue</span>
           <Badge variant="secondary" className="font-mono text-xs">{formatQueueLabel(queueFilter)}</Badge>
           <code className="text-[10px] text-muted-foreground">{queueFilter}</code>
@@ -351,10 +360,7 @@ export function CeleryWorkerInstancesSection({
       )}
 
       {scaleMsg && (
-        <p
-          className={`text-xs px-2 py-1 rounded ${scaleMsg.isErr ? 'text-destructive bg-destructive/10' : 'text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950'}`}
-          role={scaleMsg.isErr ? 'alert' : 'status'}
-        >
+        <p className={celeryActionMsgClass(scaleMsg.isErr)} role={scaleMsg.isErr ? 'alert' : 'status'}>
           {scaleMsg.text}
         </p>
       )}
@@ -364,26 +370,34 @@ export function CeleryWorkerInstancesSection({
       ) : instances.length === 0 ? (
         <p className="text-sm text-muted-foreground">No worker instances on this host.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">Host</TableHead>
-                <TableHead>Profile</TableHead>
-                <TableHead>Queue</TableHead>
-                <TableHead className="w-16 text-right">Cycle</TableHead>
-                <TableHead className="w-20">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredInstances.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-4 text-sm">
+        <DenseDataTable tableClassName={celeryWorkerInstancesTableClass}>
+          <colgroup>
+            <col style={{ width: CELERY_WORKER_INSTANCES_COL_WIDTHS.host }} />
+            <col style={{ width: CELERY_WORKER_INSTANCES_COL_WIDTHS.profile }} />
+            <col style={{ width: CELERY_WORKER_INSTANCES_COL_WIDTHS.queue }} />
+            <col style={{ width: CELERY_WORKER_INSTANCES_COL_WIDTHS.cycle }} />
+            <col style={{ width: CELERY_WORKER_INSTANCES_COL_WIDTHS.action }} />
+          </colgroup>
+          <DenseTableHeader>
+            <DenseTableHeadRow>
+              <DenseTableHead className="w-16">Host</DenseTableHead>
+              <DenseTableHead>Profile</DenseTableHead>
+              <DenseTableHead>Queue</DenseTableHead>
+              <DenseTableHead align="right" className="w-16">Cycle</DenseTableHead>
+              <DenseTableHead className="w-20">Action</DenseTableHead>
+            </DenseTableHeadRow>
+          </DenseTableHeader>
+          <DenseTableBody>
+            {filteredInstances.length === 0 ? (
+              <DenseTableRow>
+                <DenseTableCell colSpan={5} className="text-center py-4">
+                  <span className={denseTable.emptyHint}>
                     No instances for queue &quot;{queueFilter}&quot;. Clear the filter or start an instance consuming this queue.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredInstances.map(inst => {
+                  </span>
+                </DenseTableCell>
+              </DenseTableRow>
+            ) : (
+              filteredInstances.map(inst => {
                   const profile = profileForUnit(inst.unit, profiles)
                   const iid = instanceIdFromUnit(inst.unit)
                   const idParts = iid ? parseCeleryWorkerInstanceId(iid) : null
@@ -394,8 +408,8 @@ export function CeleryWorkerInstancesSection({
                   const workerTypeKey = idParts?.profileKey ?? profile?.key ?? null
 
                   return (
-                    <TableRow key={inst.unit}>
-                      <TableCell>
+                    <DenseTableRow key={inst.unit}>
+                      <DenseTableCell>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span>
@@ -406,8 +420,8 @@ export function CeleryWorkerInstancesSection({
                             Host chip = Ops API environment (GET /ops/health), not broker queue scope.
                           </TooltipContent>
                         </Tooltip>
-                      </TableCell>
-                      <TableCell>
+                      </DenseTableCell>
+                      <DenseTableCell>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div>
@@ -417,15 +431,15 @@ export function CeleryWorkerInstancesSection({
                           </TooltipTrigger>
                           <TooltipContent className="font-mono text-xs">{inst.unit}</TooltipContent>
                         </Tooltip>
-                      </TableCell>
-                      <TableCell className="text-xs">
+                      </DenseTableCell>
+                      <DenseTableCell>
                         <span title={rawQueues.join(', ')}>{queueDisplay}</span>
                         {rawQueues.length > 1 && (
-                          <span className="text-muted-foreground ml-1 text-[10px]">+{rawQueues.length - 1}</span>
+                          <span className={denseTable.mutedMeta}> +{rawQueues.length - 1}</span>
                         )}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-xs">{cycle}</TableCell>
-                      <TableCell>
+                      </DenseTableCell>
+                      <DenseTableCell className={denseTableNumCell}>{cycle}</DenseTableCell>
+                      <DenseTableCell>
                         <div className="flex gap-1">
                           <CeleryQueueIconButton
                             variant="instance-recreate"
@@ -442,14 +456,13 @@ export function CeleryWorkerInstancesSection({
                             onClick={() => iid && handleRemove(iid)}
                           />
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </DenseTableCell>
+                    </DenseTableRow>
                   )
                 })
               )}
-            </TableBody>
-          </Table>
-        </div>
+          </DenseTableBody>
+        </DenseDataTable>
       )}
 
       <div className="space-y-3 pt-1 border-t">

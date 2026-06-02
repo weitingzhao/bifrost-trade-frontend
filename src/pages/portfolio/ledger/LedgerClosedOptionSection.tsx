@@ -18,7 +18,7 @@ import { ExecSourceBadge } from './ExecSourceBadge'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { sideLabel } from './ledgerOptSideLabel'
 import { LedgerStgInsCell } from './LedgerStgInsCell'
-import { LedgerPaginationBar } from './ledgerPaginationClasses'
+import { LedgerPaginationBar } from './LedgerPaginationBar'
 import type { OptGroupCallbacks, OptSortCol } from './ledgerTypes'
 import {
   denseTable,

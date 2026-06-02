@@ -3,15 +3,18 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  denseTable,
+} from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { CelerySectionCard } from './CelerySectionCard'
+import { CELERY_SCHEDULED_JOBS_COL_WIDTHS, celerySectionTitleClass } from './celeryUi'
 import {
   useCeleryCapabilitiesTab,
   useInvalidateCeleryCapabilities,
@@ -64,30 +67,32 @@ export function CeleryScheduledJobsSection({ mainTab }: { mainTab: CeleryMainTab
         <p className="text-sm text-muted-foreground">No beat tasks returned from capabilities.</p>
       ) : (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium flex items-center gap-1.5">
+          <h4 className={celerySectionTitleClass}>
             Celery Beat (scheduled)
             <InfoTooltip text="Tasks invoked on a schedule by Celery Beat. Most enqueue run_massive_job." />
           </h4>
-          <div className="overflow-x-auto rounded-md border">
-            <Table className="text-xs">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Task name</TableHead>
-                  <TableHead>Note</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {beatTasks.map(b => (
-                  <TableRow key={b.name}>
-                    <TableCell>
-                      <code className="font-mono text-[11px] break-all">{b.name}</code>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{b.note}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DenseDataTable>
+            <colgroup>
+              <col style={{ width: CELERY_SCHEDULED_JOBS_COL_WIDTHS.task }} />
+              <col style={{ width: CELERY_SCHEDULED_JOBS_COL_WIDTHS.note }} />
+            </colgroup>
+            <DenseTableHeader>
+              <DenseTableHeadRow>
+                <DenseTableHead>Task name</DenseTableHead>
+                <DenseTableHead>Note</DenseTableHead>
+              </DenseTableHeadRow>
+            </DenseTableHeader>
+            <DenseTableBody>
+              {beatTasks.map(b => (
+                <DenseTableRow key={b.name}>
+                  <DenseTableCell>
+                    <code className="font-mono text-[11px] break-all">{b.name}</code>
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTable.mutedMeta}>{b.note}</DenseTableCell>
+                </DenseTableRow>
+              ))}
+            </DenseTableBody>
+          </DenseDataTable>
         </div>
       )}
     </CelerySectionCard>

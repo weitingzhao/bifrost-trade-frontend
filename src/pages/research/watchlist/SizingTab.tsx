@@ -3,14 +3,6 @@ import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { fmtUsd } from '@/utils/positions'
 import type { AtrResult, PositionSizeResult } from '@/utils/riskSizing'
 import type { QuoteItem, WatchlistItem } from '@/types/market'
@@ -20,8 +12,16 @@ import type { PerformanceSummary } from '@/types/trading'
 import { PortfolioRiskPower } from './PortfolioRiskPower'
 import { PromoteToSizing } from './PromoteToSizing'
 import { StockWatchlistTable } from './StockWatchlistTable'
+import { WatchlistSizingCapTable } from './WatchlistSizingCapTable'
 import type { StatusResponse } from '@/types/monitor'
 import { buildPortfolioCashRollup, aggregateCapital } from '@/utils/accountsSnapshot'
+import {
+  watchlistKpiCellClass,
+  watchlistOrderZoneClass,
+  watchlistRangeTrackClass,
+  watchlistSectionHintClass,
+  watchlistStepLeadClass,
+} from './watchlistUi'
 
 export interface SizingTabProps {
   status: StatusResponse | null | undefined
@@ -235,8 +235,8 @@ export function SizingTab(props: SizingTabProps) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        <strong className="text-foreground">Step 2.</strong> Stocks tagged <strong>Sizing</strong>. Pick a symbol
+      <p className={watchlistSectionHintClass}>
+        <strong className={watchlistStepLeadClass}>Step 2.</strong> Stocks tagged <strong className={watchlistStepLeadClass}>Sizing</strong>. Pick a symbol
         below or promote from the combobox.
       </p>
 
@@ -306,7 +306,7 @@ export function SizingTab(props: SizingTabProps) {
                   step={0.05}
                   value={kellyFraction}
                   onChange={e => onKellyFractionChange(Number.parseFloat(e.target.value))}
-                  className="w-full"
+                  className={watchlistRangeTrackClass}
                 />
                 <span className="text-xs font-mono">{kellyFraction.toFixed(2)}</span>
               </div>
@@ -347,14 +347,14 @@ export function SizingTab(props: SizingTabProps) {
                     ['Shares', sizePosResult?.is_valid ? String(sizePosResult.shares) : '—'],
                     ['Risk %', sizePosResult?.is_valid ? `${sizePosResult.risk_pct.toFixed(2)}%` : '—'],
                   ].map(([label, val]) => (
-                    <div key={label} className="rounded-md border p-2 bg-muted/20">
+                    <div key={label} className={watchlistKpiCellClass}>
                       <div className="text-muted-foreground">{label}</div>
                       <div className="font-mono font-semibold">{val}</div>
                     </div>
                   ))}
                 </div>
 
-                <div className="rounded-md border p-3 space-y-3 bg-destructive/5 border-destructive/20">
+                <div className={watchlistOrderZoneClass}>
                   <h5 className="text-sm font-semibold">Order section</h5>
                   <p className="text-xs text-muted-foreground">
                     Current bid: <span className="font-mono">{selectedBid != null ? fmtUsd(selectedBid) : '—'}</span>
@@ -377,11 +377,11 @@ export function SizingTab(props: SizingTabProps) {
 
                 {manualOrderAnalytics.isComplete && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                    <div className="rounded border p-2">
+                    <div className={watchlistKpiCellClass}>
                       <div className="text-muted-foreground">Order risk ($)</div>
                       <div className="font-mono">{manualOrderAnalytics.orderRiskUsd != null ? fmtUsd(manualOrderAnalytics.orderRiskUsd) : '—'}</div>
                     </div>
-                    <div className="rounded border p-2">
+                    <div className={watchlistKpiCellClass}>
                       <div className="text-muted-foreground">Positional DD</div>
                       <div className="font-mono">
                         {manualOrderAnalytics.positionalDrawdownRatio != null
@@ -389,7 +389,7 @@ export function SizingTab(props: SizingTabProps) {
                           : '—'}
                       </div>
                     </div>
-                    <div className="rounded border p-2">
+                    <div className={watchlistKpiCellClass}>
                       <div className="text-muted-foreground">ATR risk</div>
                       <div className="font-mono">
                         {manualOrderAnalytics.atrRisk != null ? `${manualOrderAnalytics.atrRisk.toFixed(2)} ATR` : '—'}
@@ -398,33 +398,10 @@ export function SizingTab(props: SizingTabProps) {
                   </div>
                 )}
 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Source</TableHead>
-                      <TableHead className="text-right">Max $ risk</TableHead>
-                      <TableHead className="text-right">Max shares</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sizingOrderAnalytics.capRows.map(row => (
-                      <TableRow key={row.key}>
-                        <TableCell className="text-xs">{row.label}</TableCell>
-                        <TableCell className="text-right font-mono text-xs">{row.maxRiskUsd != null ? fmtUsd(row.maxRiskUsd) : '—'}</TableCell>
-                        <TableCell className="text-right font-mono text-xs">{row.maxShares != null ? row.maxShares.toLocaleString() : '—'}</TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow className="font-semibold">
-                      <TableCell>Available (min)</TableCell>
-                      <TableCell />
-                      <TableCell className="text-right font-mono">
-                        {sizingOrderAnalytics.availableMinShares != null
-                          ? sizingOrderAnalytics.availableMinShares.toLocaleString()
-                          : '—'}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <WatchlistSizingCapTable
+                  capRows={sizingOrderAnalytics.capRows}
+                  availableMinShares={sizingOrderAnalytics.availableMinShares}
+                />
               </>
             )}
           </CardContent>

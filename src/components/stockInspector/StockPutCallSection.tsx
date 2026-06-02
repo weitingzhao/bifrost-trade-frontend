@@ -63,7 +63,7 @@ export function StockPutCallSection({
     }
   }
 
-  const trend = data?.trend ?? []
+  const trend = useMemo(() => data?.trend ?? [], [data?.trend])
   const chain = data?.chain_by_expiry ?? []
   const asOfDate = data?.as_of_date
 

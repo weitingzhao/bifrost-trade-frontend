@@ -3,13 +3,16 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  denseTable,
+} from '@/components/data-display'
+import { CELERY_BEAT_SCHEDULE_COL_WIDTHS } from './celeryUi'
 import { useMassiveCeleryBeat } from '@/hooks/useOpsData'
 
 function fmtCrontab(c: Record<string, string | number>): string {
@@ -25,7 +28,7 @@ export function CeleryBeatScheduleCard() {
   const entries = data?.entries ?? []
 
   return (
-    <Card>
+    <Card variant="elevated">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between gap-2">
           <span className="inline-flex items-center gap-1.5">
@@ -53,24 +56,29 @@ export function CeleryBeatScheduleCard() {
             No Beat schedule returned from Research API.
           </p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Label</TableHead>
-                <TableHead>Schedule (UTC)</TableHead>
-                <TableHead>Task</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <DenseDataTable wrapClassName="rounded-none border-0">
+            <colgroup>
+              <col style={{ width: CELERY_BEAT_SCHEDULE_COL_WIDTHS.label }} />
+              <col style={{ width: CELERY_BEAT_SCHEDULE_COL_WIDTHS.schedule }} />
+              <col style={{ width: CELERY_BEAT_SCHEDULE_COL_WIDTHS.task }} />
+            </colgroup>
+            <DenseTableHeader>
+              <DenseTableHeadRow>
+                <DenseTableHead>Label</DenseTableHead>
+                <DenseTableHead>Schedule (UTC)</DenseTableHead>
+                <DenseTableHead>Task</DenseTableHead>
+              </DenseTableHeadRow>
+            </DenseTableHeader>
+            <DenseTableBody>
               {entries.map(e => (
-                <TableRow key={e.name}>
-                  <TableCell className="text-sm">{e.label}</TableCell>
-                  <TableCell className="font-mono text-xs">{fmtCrontab(e.crontab)}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{e.task}</TableCell>
-                </TableRow>
+                <DenseTableRow key={e.name}>
+                  <DenseTableCell>{e.label}</DenseTableCell>
+                  <DenseTableCell className="font-mono">{fmtCrontab(e.crontab)}</DenseTableCell>
+                  <DenseTableCell className={denseTable.mutedMeta}>{e.task}</DenseTableCell>
+                </DenseTableRow>
               ))}
-            </TableBody>
-          </Table>
+            </DenseTableBody>
+          </DenseDataTable>
         )}
       </CardContent>
     </Card>

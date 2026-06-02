@@ -1,7 +1,13 @@
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { SEGMENT } from './segmentStyles'
-import styles from './stock-screener.module.css'
+import { ScreenerCard } from './ScreenerCard'
+import { ScreenerConditionChip } from './ScreenerConditionChip'
+import {
+  screenerCardStackedChipRowClass,
+  screenerChipRowClass,
+  screenerGroupHeaderClass,
+} from './stockScreenerUi'
 
 interface ChipItem {
   id: string
@@ -42,47 +48,44 @@ export function ConditionChipGroup({
   const cardAccent = cardAccentKey ? SEGMENT.extCard[cardAccentKey] : undefined
   const titleAccent = cardAccentKey ? SEGMENT.extTitle[cardAccentKey] : undefined
 
+  const clearAction =
+    totalActive > 0 && onClearAll && !cardAccentKey ? (
+      <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={onClearAll}>
+        Clear
+      </Button>
+    ) : cardAccentKey && totalActive > 0 && onClearGroup && groups.length === 1 ? (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 px-2 text-[10px]"
+        onClick={() => onClearGroup(groups[0].key)}
+      >
+        Clear
+      </Button>
+    ) : undefined
+
   return (
-    <div
-      className={cn(
-        styles.ssCard,
-        stacked && styles.ssCardStacked,
-        cardAccent,
-      )}
+    <ScreenerCard
+      title={title}
+      titleClassName={titleAccent}
+      accentClassName={cardAccent}
+      stacked={stacked}
+      badgeCount={totalActive > 0 ? totalActive : undefined}
+      actions={clearAction}
     >
-      <div className="flex flex-row items-center justify-between gap-2 mb-2">
-        <h3 className={cn(styles.ssCardTitle, titleAccent, 'flex items-center gap-1.5')}>
-          {title}
-          {totalActive > 0 && (
-            <span className={styles.ssFilterBadge}>{totalActive}</span>
-          )}
-        </h3>
-        {totalActive > 0 && onClearAll && !cardAccentKey && (
-          <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={onClearAll}>
-            Clear
-          </Button>
-        )}
-        {cardAccentKey && totalActive > 0 && onClearGroup && groups.length === 1 && (
-          <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => onClearGroup(groups[0].key)}>
-            Clear
-          </Button>
-        )}
-      </div>
       <div className="space-y-2">
-        {groups.map((g) => {
-          const groupActive = g.items.filter((c) => activeIds.has(c.id)).length
+        {groups.map(g => {
+          const groupActive = g.items.filter(c => activeIds.has(c.id)).length
           const hideInnerHeader = cardAccentKey != null
           return (
             <div key={g.key}>
               {!hideInnerHeader && (
-                <div className="flex items-center gap-1 mb-1">
-                  <span className={cn(styles.ssGroupHeader, g.headerClass)}>
-                    {g.label}
-                  </span>
+                <div className="mb-1 flex items-center gap-1">
+                  <span className={cn(screenerGroupHeaderClass, g.headerClass)}>{g.label}</span>
                   {groupActive > 0 && onClearGroup && (
                     <button
                       type="button"
-                      className="text-[9px] text-muted-foreground hover:text-foreground underline"
+                      className="text-[9px] text-muted-foreground underline hover:text-foreground"
                       onClick={() => onClearGroup(g.key)}
                     >
                       clear
@@ -90,31 +93,26 @@ export function ConditionChipGroup({
                   )}
                 </div>
               )}
-              <div className={styles.ssChipRow}>
-                {g.items.map(({ id, label, chipClass }) => {
-                  const active = activeIds.has(id)
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => onToggle(id)}
-                      title={active ? `Remove ${label}` : `Add ${label}`}
-                      className={cn(
-                        styles.ssChip,
-                        chipClass,
-                        active && styles.ssChipActive,
-                      )}
-                    >
-                      <span className={styles.ssChipCheck} aria-hidden>{active ? '✓' : ''}</span>
-                      <span>{label}</span>
-                    </button>
-                  )
-                })}
+              <div
+                className={cn(
+                  screenerChipRowClass,
+                  stacked && screenerCardStackedChipRowClass,
+                )}
+              >
+                {g.items.map(({ id, label, chipClass }) => (
+                  <ScreenerConditionChip
+                    key={id}
+                    active={activeIds.has(id)}
+                    label={label}
+                    hueClass={chipClass}
+                    onToggle={() => onToggle(id)}
+                  />
+                ))}
               </div>
             </div>
           )
         })}
       </div>
-    </div>
+    </ScreenerCard>
   )
 }

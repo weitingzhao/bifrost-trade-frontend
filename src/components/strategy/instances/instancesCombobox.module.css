@@ -4,9 +4,9 @@
 }
 
 .comboboxInput {
-  height: 2rem;
+  height: 1.75rem;
   width: 100%;
-  min-width: 12rem;
+  min-width: 10rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--card);

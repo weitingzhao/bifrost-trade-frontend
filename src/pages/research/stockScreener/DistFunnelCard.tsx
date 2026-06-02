@@ -4,7 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { FundPassCountBucket, TechPassCountBucket } from '@/types/stockScreener'
 import { fundBarColorClass, techBarColorClass } from '@/utils/stockScreener'
-import styles from './stock-screener.module.css'
+import { ScreenerCard } from './ScreenerCard'
+import {
+  screenerDistFundAccentClass,
+  screenerDistTechAccentClass,
+} from './stockScreenerUi'
 
 interface Props {
   title?: string
@@ -52,24 +56,35 @@ function FunnelRow({
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
       onClick={isClickable ? onClick : undefined}
-      onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick() } : undefined}
+      onKeyDown={
+        isClickable
+          ? e => {
+              if (e.key === 'Enter' || e.key === ' ') onClick()
+            }
+          : undefined
+      }
       title={isClickable ? `Load ${symbolCount} symbols → Results` : undefined}
       className={cn(
         'grid grid-cols-[52px_1fr_auto] items-center gap-2 py-0.5 text-[11px]',
-        isClickable && 'cursor-pointer hover:bg-muted/30 rounded px-1 -mx-1',
-        isActive && 'bg-accent/40 rounded px-1 -mx-1',
+        isClickable && '-mx-1 cursor-pointer rounded px-1 hover:bg-muted/30',
+        isActive && '-mx-1 rounded bg-accent/40 px-1',
       )}
     >
-      <span className={cn(
-        'font-mono font-medium tabular-nums',
-        isFull && (suffix === '11' ? 'text-violet-400' : 'text-emerald-400'),
-      )}>
+      <span
+        className={cn(
+          'font-mono font-medium tabular-nums',
+          isFull && (suffix === '11' ? 'text-violet-400' : 'text-emerald-400'),
+        )}
+      >
         {isFull ? `${suffix}/${suffix} ★` : `${conditionsPassed}/${suffix}`}
       </span>
-      <div className="h-2 rounded-full bg-muted overflow-hidden">
-        <div className={cn('h-full rounded-full transition-all', colorClass)} style={{ width: `${widthPct}%` }} />
+      <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn('h-full rounded-full transition-all', colorClass)}
+          style={{ width: `${widthPct}%` }}
+        />
       </div>
-      <span className="font-mono tabular-nums text-muted-foreground whitespace-nowrap">
+      <span className="whitespace-nowrap font-mono tabular-nums text-muted-foreground">
         {symbolCount.toLocaleString()}
         <span className="text-[10px] opacity-70">({sharePct}%)</span>
       </span>
@@ -96,12 +111,12 @@ export function DistFunnelCard({
   const colorFn = variant === 'tech' ? techBarColorClass : fundBarColorClass
 
   return (
-    <div className={cn(
-      styles.ssCard,
-      variant === 'tech' ? styles.ssCardDistTech : styles.ssCardDistFund,
-    )}>
-      <div className="flex flex-row items-center justify-between gap-2 mb-2">
-        <h3 className={styles.ssCardTitle}>{title}</h3>
+    <ScreenerCard
+      title={title}
+      accentClassName={
+        variant === 'tech' ? screenerDistTechAccentClass : screenerDistFundAccentClass
+      }
+      actions={
         <div className="flex items-center gap-1">
           {asOf && (
             <span className="font-mono text-[10px] text-muted-foreground">As of {asOf}</span>
@@ -119,7 +134,8 @@ export function DistFunnelCard({
             </Button>
           )}
         </div>
-      </div>
+      }
+    >
       <div className="space-y-1">
         {activeHint}
         {criteriaLoading && !buckets ? (
@@ -142,11 +158,13 @@ export function DistFunnelCard({
           ))
         ) : (
           <p className="text-xs text-muted-foreground">
-            {variant === 'tech' ? 'No data — run technical backfill first.' : 'No distribution data.'}
+            {variant === 'tech'
+              ? 'No data — run technical backfill first.'
+              : 'No distribution data.'}
           </p>
         )}
         {loading && <p className="text-[10px] text-muted-foreground">Loading symbols…</p>}
       </div>
-    </div>
+    </ScreenerCard>
   )
 }

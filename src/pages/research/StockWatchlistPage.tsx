@@ -334,7 +334,7 @@ export default function StockWatchlistPage() {
 
   if (isLoading) {
     return (
-      <PageShell className="space-y-4 max-w-[1600px]">
+      <PageShell className="w-full min-w-0 space-y-4">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -343,7 +343,7 @@ export default function StockWatchlistPage() {
   }
 
   return (
-    <PageShell className="flex flex-col gap-4 max-w-[1600px]">
+    <PageShell className="flex w-full min-w-0 flex-col gap-4">
       <WatchlistPageHeader
         itemCount={items.length}
         primaryTab={primaryTab}

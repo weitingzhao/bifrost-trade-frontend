@@ -2,18 +2,21 @@ import { useMemo, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DenseDataTable,
+  DenseTableBody,
+  DenseTableCell,
+  DenseTableHead,
+  DenseTableHeader,
+  DenseTableHeadRow,
+  DenseTableRow,
+  denseTable,
+} from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { BubbleSwitch } from '@/components/positions/charts/BubbleSwitch'
 import { formatQueueLabel, brokerQueueKeyTitle } from '@/utils/celeryQueueLabels'
 import type { RunMassiveJobMatrixRow } from '@/types/ops'
 import { MatrixModeCell, MatrixEffectsStacked } from './MatrixCells'
+import { celeryMatrixFilterBarClass, celeryMatrixTableClass } from '../celeryUi'
 import {
   compareQueueKindMatrixRows,
   matrixJobStyleLabel,
@@ -102,7 +105,7 @@ export function RunMassiveJobMatrixTable({
   return (
     <div className="space-y-4">
       {brokerQueueFilter && (
-        <div className="flex flex-wrap items-center gap-2 text-sm bg-muted/50 rounded-md px-3 py-2">
+        <div className={celeryMatrixFilterBarClass}>
           <span>
             Filtered by <strong>{formatQueueLabel(brokerQueueFilter)}</strong>
             <code className="ml-1 text-[10px] text-muted-foreground">({brokerQueueFilter})</code>
@@ -229,81 +232,79 @@ export function RunMassiveJobMatrixTable({
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
-        <Table className="text-xs">
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <button type="button" className="hover:underline" onClick={() => toggleSort('kind')}>
-                  Kind{sortArrow('kind', sort)}
+      <DenseDataTable tableClassName={celeryMatrixTableClass}>
+        <DenseTableHeader>
+          <DenseTableHeadRow>
+            <DenseTableHead>
+              <button type="button" className="hover:underline" onClick={() => toggleSort('kind')}>
+                Kind{sortArrow('kind', sort)}
+              </button>
+            </DenseTableHead>
+            <DenseTableHead>
+              <button type="button" className="hover:underline" onClick={() => toggleSort('task_name')}>
+                Task name{sortArrow('task_name', sort)}
+              </button>
+            </DenseTableHead>
+            <DenseTableHead>
+              <button type="button" className="hover:underline" onClick={() => toggleSort('job_style')}>
+                Job style{sortArrow('job_style', sort)}
+              </button>
+            </DenseTableHead>
+            <DenseTableHead>
+              <span className="inline-flex items-center gap-1">
+                Mode &amp; source
+                <InfoTooltip text="Mode value and payload field that supplies it." />
+              </span>
+            </DenseTableHead>
+            <DenseTableHead>Effects</DenseTableHead>
+            {showBrokerColumn && (
+              <DenseTableHead>
+                <button type="button" className="hover:underline" onClick={() => toggleSort('broker_queue')}>
+                  Broker queue (S · H){sortArrow('broker_queue', sort)}
                 </button>
-              </TableHead>
-              <TableHead>
-                <button type="button" className="hover:underline" onClick={() => toggleSort('task_name')}>
-                  Task name{sortArrow('task_name', sort)}
-                </button>
-              </TableHead>
-              <TableHead>
-                <button type="button" className="hover:underline" onClick={() => toggleSort('job_style')}>
-                  Job style{sortArrow('job_style', sort)}
-                </button>
-              </TableHead>
-              <TableHead>
-                <span className="inline-flex items-center gap-1">
-                  Mode &amp; source
-                  <InfoTooltip text="Mode value and payload field that supplies it." />
-                </span>
-              </TableHead>
-              <TableHead>Effects</TableHead>
-              {showBrokerColumn && (
-                <TableHead>
-                  <button type="button" className="hover:underline" onClick={() => toggleSort('broker_queue')}>
-                    Broker queue (S · H){sortArrow('broker_queue', sort)}
-                  </button>
-                </TableHead>
-              )}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sorted.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={showBrokerColumn ? 6 : 5} className="text-center text-muted-foreground py-6">
-                  No rows match filters.
-                </TableCell>
-              </TableRow>
-            ) : (
-              sorted.map((row, i) => (
-                <TableRow key={`${row.kind}-${row.mode ?? 'null'}-${i}`}>
-                  <TableCell>
-                    <code className="font-mono text-[11px]">{row.kind}</code>
-                  </TableCell>
-                  <TableCell>
-                    <code className="font-mono text-[11px] break-all">{resolvedMatrixTaskName(row)}</code>
-                  </TableCell>
-                  <TableCell>{matrixJobStyleLabel(row)}</TableCell>
-                  <TableCell>
-                    <MatrixModeCell row={row} visibility={modeVisibility} />
-                  </TableCell>
-                  <TableCell className="max-w-xs">
-                    <MatrixEffectsStacked row={row} visibility={effectsVisibility} />
-                  </TableCell>
-                  {showBrokerColumn && (
-                    <TableCell className="text-[11px]">
-                      <span title={brokerQueueKeyTitle(row.broker_queue_standard)}>
-                        S {formatQueueLabel(row.broker_queue_standard)}
-                      </span>
-                      <span className="text-muted-foreground mx-1">·</span>
-                      <span title={brokerQueueKeyTitle(row.broker_queue_high)}>
-                        H {formatQueueLabel(row.broker_queue_high)}
-                      </span>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))
+              </DenseTableHead>
             )}
-          </TableBody>
-        </Table>
-      </div>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
+          {sorted.length === 0 ? (
+            <DenseTableRow>
+              <DenseTableCell colSpan={showBrokerColumn ? 6 : 5} className="text-center py-6">
+                <span className={denseTable.emptyHint}>No rows match filters.</span>
+              </DenseTableCell>
+            </DenseTableRow>
+          ) : (
+            sorted.map((row, i) => (
+              <DenseTableRow key={`${row.kind}-${row.mode ?? 'null'}-${i}`}>
+                <DenseTableCell>
+                  <code className="font-mono text-[11px]">{row.kind}</code>
+                </DenseTableCell>
+                <DenseTableCell>
+                  <code className="font-mono text-[11px] break-all">{resolvedMatrixTaskName(row)}</code>
+                </DenseTableCell>
+                <DenseTableCell>{matrixJobStyleLabel(row)}</DenseTableCell>
+                <DenseTableCell>
+                  <MatrixModeCell row={row} visibility={modeVisibility} />
+                </DenseTableCell>
+                <DenseTableCell className="max-w-xs">
+                  <MatrixEffectsStacked row={row} visibility={effectsVisibility} />
+                </DenseTableCell>
+                {showBrokerColumn && (
+                  <DenseTableCell>
+                    <span title={brokerQueueKeyTitle(row.broker_queue_standard)}>
+                      S {formatQueueLabel(row.broker_queue_standard)}
+                    </span>
+                    <span className={denseTable.mutedMeta}> · </span>
+                    <span title={brokerQueueKeyTitle(row.broker_queue_high)}>
+                      H {formatQueueLabel(row.broker_queue_high)}
+                    </span>
+                  </DenseTableCell>
+                )}
+              </DenseTableRow>
+            ))
+          )}
+        </DenseTableBody>
+      </DenseDataTable>
     </div>
   )
 }

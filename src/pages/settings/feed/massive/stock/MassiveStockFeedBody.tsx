@@ -1,7 +1,8 @@
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { SegmentControl } from '@/components/data-display'
-import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { Badge } from '@/components/ui/badge'
+import {
+  MassiveSectionSegmentControl,
+  segmentOptionWithStatus,
+} from '@/pages/settings/feed/massive/components/MassiveSectionSegmentControl'
 import { MassiveCapabilityChipNav } from '@/pages/settings/feed/massive/components/MassiveCapabilityChipNav'
 import { MassiveDelayDbLinkCard } from '@/pages/settings/feed/massive/components/MassiveDelayDbLinkCard'
 import { MassiveDeliveryChannelTabs } from '@/pages/settings/feed/massive/components/MassiveDeliveryChannelTabs'
@@ -13,6 +14,7 @@ import {
   STOCK_REST_SECTION_ORDER,
   type StockRestSectionId,
 } from '@/pages/settings/feed/massive/stock/stockRestSections'
+import { groupedStockChecklistRows } from '@/pages/settings/feed/massive/checklist/stockStatus'
 import { stockRowById, stockRowEffective } from '@/pages/settings/feed/massive/stock/stockRowStatus'
 import { useMassiveStockPageNav } from '@/pages/settings/feed/massive/stock/useMassiveStockPageNav'
 import { StockAggregatesSection } from '@/pages/settings/feed/massive/stock/sections/StockAggregatesSection'
@@ -110,23 +112,17 @@ export function MassiveStockFeedBody({
   const wsRows = STOCK_CHECKLIST_ROWS.filter(r => r.group === 'ws')
   const flatRows = STOCK_CHECKLIST_ROWS.filter(r => r.group === 'flat')
 
-  const restOptions = STOCK_REST_SECTION_ORDER.map(id => ({
-    value: id,
-    label: STOCK_REST_SECTION_LABELS[id],
-  }))
+  const rowEff = (id: string) => {
+    const row = stockRowById(id)
+    return row ? stockRowEffective(row, massiveStatus) : ('not-implemented' as const)
+  }
+
+  const restOptions = STOCK_REST_SECTION_ORDER.map(id =>
+    segmentOptionWithStatus(id, STOCK_REST_SECTION_LABELS[id], rowEff(id)),
+  )
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-lg font-semibold tracking-tight">Feed / Massive Stock</h2>
-        <InfoTooltip text="Massive (Polygon) Stocks API coverage sheet and capability status. Shared REST (Technical Indicators, Market Operations) lives under Feed → Massive Common; corporate actions sync UI remains under Feed → Massive Option. Stock-specific endpoints are planned." />
-        {configured ? (
-          <Badge variant="secondary" title={massiveStatus?.delay_notice}>
-            Delayed feed
-          </Badge>
-        ) : null}
-      </div>
-
       {!configured ? (
         <Alert variant="destructive">
           <AlertDescription>
@@ -139,6 +135,7 @@ export function MassiveStockFeedBody({
       <MassiveStocksCoverageBanner />
 
       <MassiveCapabilityChipNav
+        groupedRows={groupedStockChecklistRows()}
         rowEffective={row => stockRowEffective(row, massiveStatus)}
         onChipClick={nav.navigateToCap}
       />
@@ -149,7 +146,7 @@ export function MassiveStockFeedBody({
 
       {nav.channelTab === 'rest' ? (
         <div className="space-y-4">
-          <SegmentControl
+          <MassiveSectionSegmentControl
             ariaLabel="REST sections"
             options={restOptions}
             value={nav.restSection}
@@ -170,9 +167,11 @@ export function MassiveStockFeedBody({
 
       {nav.channelTab === 'ws' ? (
         <div className="space-y-4">
-          <SegmentControl
+          <MassiveSectionSegmentControl
             ariaLabel="WebSocket sections"
-            options={wsRows.map(r => ({ value: r.id, label: r.service }))}
+            options={wsRows.map(r =>
+              segmentOptionWithStatus(r.id, r.service, stockRowEffective(r, massiveStatus)),
+            )}
             value={nav.wsSection}
             onChange={v => {
               nav.setWsSection(v)
@@ -190,9 +189,11 @@ export function MassiveStockFeedBody({
 
       {nav.channelTab === 'flat' ? (
         <div className="space-y-4">
-          <SegmentControl
+          <MassiveSectionSegmentControl
             ariaLabel="Flat file sections"
-            options={flatRows.map(r => ({ value: r.id, label: r.service }))}
+            options={flatRows.map(r =>
+              segmentOptionWithStatus(r.id, r.service, stockRowEffective(r, massiveStatus)),
+            )}
             value={nav.flatSection}
             onChange={v => {
               nav.setFlatSection(v)

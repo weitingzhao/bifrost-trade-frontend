@@ -15,7 +15,9 @@ import {
   fetchTickerTypesFromDb,
 } from '@/api/massive/tickerReference'
 import type { TickerReferenceSearchRow } from '@/types/tickerReference'
+import { Button } from '@/components/ui/button'
 import { RefJobDetailPanel } from '@/components/massive/RefJobDetailPanel'
+import { cn } from '@/lib/utils'
 import { useMassiveRefJobSession } from '@/components/massive/massiveRefJobContext'
 import {
   DEFAULT_TICKER_REF_SEARCH_LIMIT,
@@ -638,13 +640,16 @@ export function MassiveTickerReferenceDbSection({
             {showJobsToolbar ? (
               <div className="flex flex-wrap items-center gap-2">
                 {activeJobCount > 0 ? (
-                  <span className="ref-jobs-active-pill" aria-live="polite">
+                  <span
+                    className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                    aria-live="polite"
+                  >
                     {activeJobCount} active
                   </span>
                 ) : null}
-                <button type="button" className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm" onClick={() => refJobSession.openJobsSheet()}>
+                <Button type="button" variant="outline" size="sm" onClick={() => refJobSession.openJobsSheet()}>
                   Jobs
-                </button>
+                </Button>
               </div>
             ) : null}
           </div>
@@ -654,29 +659,34 @@ export function MassiveTickerReferenceDbSection({
           </p>
 
           {catalogRow ? (
-            <div className="ref-jobs-md ref-jobs-md--tabs">
-              <ul className="ref-jobs-md-nav" role="tablist" aria-label="Ticker reference job kinds">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+              <div
+                className="flex flex-wrap gap-1 lg:w-36 lg:flex-col lg:shrink-0"
+                role="tablist"
+                aria-label="Ticker reference job kinds"
+              >
                 {REF_TICKER_JOB_ROWS.map((row, rowIndex) => {
                   const selected = selectedRefJobKind === row.kind
                   return (
-                    <li key={row.kind} className="ref-jobs-md-nav-item">
-                      <button
-                        type="button"
-                        role="tab"
-                        id={`ref-job-tab-${row.kind}`}
-                        aria-selected={selected}
-                        aria-controls="ref-job-detail-panel"
-                        tabIndex={selected ? 0 : -1}
-                        className="ref-jobs-md-tab"
-                        onClick={() => setSelectedRefJobKind(row.kind)}
-                        onKeyDown={e => onRefJobTabKeyDown(e, rowIndex)}
-                      >
-                        {refJobKindShortLabel(row.kind)}
-                      </button>
-                    </li>
+                    <Button
+                      key={row.kind}
+                      type="button"
+                      role="tab"
+                      id={`ref-job-tab-${row.kind}`}
+                      aria-selected={selected}
+                      aria-controls="ref-job-detail-panel"
+                      tabIndex={selected ? 0 : -1}
+                      variant={selected ? 'secondary' : 'ghost'}
+                      size="sm"
+                      className={cn('justify-start', selected && 'font-semibold')}
+                      onClick={() => setSelectedRefJobKind(row.kind)}
+                      onKeyDown={e => onRefJobTabKeyDown(e, rowIndex)}
+                    >
+                      {refJobKindShortLabel(row.kind)}
+                    </Button>
                   )
                 })}
-              </ul>
+              </div>
               <RefJobDetailPanel
                 catalogRow={catalogRow}
                 disabledForJobs={disabledForJobs}

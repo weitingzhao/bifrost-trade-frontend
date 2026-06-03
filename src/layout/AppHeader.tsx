@@ -57,6 +57,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/settings/feed/massive-comm':     'Settings · Massive — Comm',
   '/settings/daemon-app':            'Settings · Daemon App',
   '/settings/tech-stack':            'Settings · Tech Stack',
+  '/settings/ui-design-system':      'Settings · UI Design System',
   '/settings/ib':                    'Settings · IB Configure',
 }
 

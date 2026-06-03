@@ -201,6 +201,10 @@ export const router = createBrowserRouter([
             lazy: lazyPage(() => import('@/pages/settings/TechStackPage')),
           },
           {
+            path: 'ui-design-system',
+            lazy: lazyPage(() => import('@/pages/settings/UiDesignSystemPage')),
+          },
+          {
             path: 'ib',
             lazy: lazyPage(() => import('@/pages/settings/IbConnectionPage')),
           },

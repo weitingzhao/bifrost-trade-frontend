@@ -1,46 +1,41 @@
+import { Link } from 'react-router-dom'
 import { PageHeader, PageShell } from '@/components/layout'
-import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import { Button } from '@/components/ui/button'
+import { DataOverviewDetailBody } from '@/pages/settings/coverage/overview/DataOverviewDetailBody'
+
+const PAGE_INFO =
+  'Per-symbol watchlist matrix, table focus chips, Compare / Check tools, and option coverage jobs. Aggregates and global coverage are on Data Overview → Summary.'
 
 export default function CoverageOverviewDetailPage() {
-  const { data: status, isLoading } = useMonitorStatus()
-  const items = status?.live_ui?.subscribed_tickers ?? []
-
   return (
     <PageShell className="space-y-4">
       <PageHeader
-        title="Data Coverage — Detail"
-        description="Per-symbol subscription list from daemon live UI state."
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Data Coverage — Overview
+            <span className="font-normal text-muted-foreground">/ Detail</span>
+            <InfoTooltip text={PAGE_INFO} />
+          </span>
+        }
+        description="Watchlist matrix and Massive coverage jobs."
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/settings/coverage/overview">Overview summary</Link>
+          </Button>
+        }
       />
-      {isLoading ? (
-        <Skeleton className="h-48 rounded-lg" />
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Symbol</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.length === 0 ? (
-                <TableRow>
-                  <TableCell className="text-muted-foreground text-sm">No subscribed tickers in status.</TableCell>
-                </TableRow>
-              ) : (
-                items.map(sym => (
-                  <TableRow key={sym}>
-                    <TableCell className="font-mono text-sm">{sym}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/settings/coverage/option">Option coverage</Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/settings/feed/massive-stock">Massive Stock feed</Link>
+        </Button>
+      </div>
+
+      <DataOverviewDetailBody />
     </PageShell>
   )
 }

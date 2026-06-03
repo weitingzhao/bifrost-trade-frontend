@@ -10,7 +10,7 @@ export function DenseLinkButton({
   label: string
   onClick: () => void
   ariaLabel: string
-  variant?: 'default' | 'stock' | 'coverage' | 'option'
+  variant?: 'default' | 'stock' | 'coverage' | 'option' | 'strategy' | 'instance'
   className?: string
 }) {
   return (
@@ -20,9 +20,11 @@ export function DenseLinkButton({
       aria-label={ariaLabel}
       className={cn(
         'font-semibold text-left hover:underline',
-        variant === 'coverage' && 'text-sky-600 dark:text-sky-400',
-        variant === 'option' && 'text-sky-600 dark:text-sky-400 font-mono',
-        (variant === 'default' || variant === 'stock') && 'text-primary',
+        variant === 'coverage' && 'text-entity-option',
+        variant === 'option' && 'text-entity-option font-mono',
+        variant === 'strategy' && 'text-entity-strategy',
+        variant === 'instance' && 'text-entity-instance font-mono',
+        (variant === 'default' || variant === 'stock') && 'text-entity-symbol',
         className,
       )}
     >

@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils'
 export type DenseTagVariant =
   | 'category'
   | 'symbol'
+  | 'strategy'
+  | 'instance'
   | 'success'
   | 'warning'
   | 'danger'
@@ -24,12 +26,20 @@ const shellBySize: Record<DenseTagSize, string> = {
 
 const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
   category: {
-    cell: 'border-purple-500/35 text-foreground',
-    pill: 'border-purple-500/40 text-foreground',
+    cell: 'border-entity-category/35 text-foreground',
+    pill: 'border-entity-category/40 text-foreground',
   },
   symbol: {
-    cell: 'border-primary/40 text-foreground font-semibold',
-    pill: 'border-primary/45 text-foreground font-bold tracking-wide',
+    cell: 'border-entity-symbol/40 text-foreground font-semibold',
+    pill: 'border-entity-symbol/45 text-foreground font-bold tracking-wide',
+  },
+  strategy: {
+    cell: 'border-entity-strategy/45 text-entity-strategy font-semibold',
+    pill: 'border-entity-strategy/45 text-entity-strategy font-semibold',
+  },
+  instance: {
+    cell: 'border-entity-instance/45 text-entity-instance font-mono font-semibold',
+    pill: 'border-entity-instance/45 text-entity-instance font-mono font-semibold',
   },
   success: {
     cell: 'border-emerald-500/45 text-emerald-600 dark:text-emerald-400',

@@ -58,6 +58,16 @@
     --color-text-dim: var(--color-text-dim);
     --color-accent-soft: var(--color-accent-soft);
 
+    /* Business semantic colors — PnL + entity identity (see /settings/ui-design-system) */
+    --color-profit: var(--color-profit);
+    --color-loss: var(--color-loss);
+    --color-unrealized: var(--color-unrealized);
+    --color-entity-symbol: var(--color-entity-symbol);
+    --color-entity-option: var(--color-entity-option);
+    --color-entity-strategy: var(--color-entity-strategy);
+    --color-entity-instance: var(--color-entity-instance);
+    --color-entity-category: var(--color-entity-category);
+
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -121,6 +131,18 @@
     --color-border-strong: #d1d5db;
     --color-text-dim: #9ca3af;
     --color-accent-soft: rgba(14, 165, 233, 0.12);
+
+    /* Business semantics — PnL (light) */
+    --color-profit: #059669;       /* realized gain — emerald-600 */
+    --color-loss: #dc2626;         /* realized loss — red-600 */
+    --color-unrealized: var(--color-warning); /* unrealized PnL — site-wide yellow */
+
+    /* Business semantics — entity identity (light) */
+    --color-entity-symbol: var(--primary);
+    --color-entity-option: #0284c7;   /* sky-600 */
+    --color-entity-strategy: #4f46e5; /* indigo-600 */
+    --color-entity-instance: #0d9488; /* teal-600 */
+    --color-entity-category: #a855f7; /* purple-500 */
 
     /* Dense data tables (Positions, Ledger, Performance) */
     --text-dense: 0.8125rem;
@@ -216,6 +238,18 @@
     --color-border-strong: #3d4754;
     --color-text-dim: #5c6572;
     --color-accent-soft: rgba(163, 230, 53, 0.12);
+
+    /* Business semantics — PnL (dark) */
+    --color-profit: #34d399;       /* emerald-400 */
+    --color-loss: #f87171;         /* red-400 */
+    --color-unrealized: var(--color-warning);
+
+    /* Business semantics — entity identity (dark) */
+    --color-entity-symbol: var(--primary);
+    --color-entity-option: #38bdf8;   /* sky-400 */
+    --color-entity-strategy: #818cf8; /* indigo-400 */
+    --color-entity-instance: #2dd4bf; /* teal-400 */
+    --color-entity-category: #c084fc; /* purple-400 */
 
     --risk-payoff-plot-bg: #0d1118;
     --risk-payoff-plot-border: rgba(74, 222, 128, 0.22);

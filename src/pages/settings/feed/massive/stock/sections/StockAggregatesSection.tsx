@@ -20,6 +20,20 @@ import {
 
 type AggSub = 'custom' | 'grouped' | 'open_close' | 'prev'
 
+const AGG_OPTS = [
+  { value: 'custom' as const, label: 'Custom Bars' },
+  { value: 'grouped' as const, label: 'Daily Market Summary' },
+  { value: 'open_close' as const, label: 'Daily Ticker Summary' },
+  { value: 'prev' as const, label: 'Previous Day Bar' },
+]
+
+function parseAdjusted(raw: string): boolean | undefined {
+  const t = raw.trim().toLowerCase()
+  if (t === 'false') return false
+  if (t === 'true') return true
+  return undefined
+}
+
 export function StockAggregatesSection({
   row,
   effectiveStatus,
@@ -42,6 +56,7 @@ export function StockAggregatesSection({
   const [startMs, setStartMs] = useState(String(STOCK_CUSTOM_BARS_DEFAULT_START_MS))
   const [endMs, setEndMs] = useState(String(STOCK_CUSTOM_BARS_DEFAULT_END_MS))
   const [date, setDate] = useState('2024-06-03')
+  const [adjusted, setAdjusted] = useState('true')
 
   return (
     <MassiveServicePanel
@@ -53,12 +68,7 @@ export function StockAggregatesSection({
     >
       <SegmentControl
         ariaLabel="Aggregates sub-tabs"
-        options={[
-          { value: 'custom', label: 'Custom Bars' },
-          { value: 'grouped', label: 'Daily Market Summary' },
-          { value: 'open_close', label: 'Daily Ticker Summary' },
-          { value: 'prev', label: 'Previous Day Bar' },
-        ]}
+        options={AGG_OPTS}
         value={sub}
         onChange={v => setSub(v as AggSub)}
         className="mb-3"
@@ -66,6 +76,7 @@ export function StockAggregatesSection({
       {sub === 'custom' ? (
         <MassiveJsonProbeCard
           title="Custom Bars (OHLC)"
+          description="Default window: one regular session (09:30–16:00 ET) on 2024-06-03, minute bars."
           fields={
             <>
               <ProbeField label="ticker">
@@ -101,12 +112,21 @@ export function StockAggregatesSection({
         <MassiveJsonProbeCard
           title="Daily Market Summary"
           fields={
-            <ProbeField label="date (YYYY-MM-DD)">
-              <ProbeInput value={date} onChange={setDate} />
-            </ProbeField>
+            <>
+              <ProbeField label="date (YYYY-MM-DD)">
+                <ProbeInput value={date} onChange={setDate} />
+              </ProbeField>
+              <ProbeField label="adjusted">
+                <ProbeInput value={adjusted} onChange={setAdjusted} placeholder="true / false" />
+              </ProbeField>
+            </>
           }
           disabled={!configured}
-          onExecute={() => fetchMassiveStockGroupedDaily(date.trim() || '2024-06-03')}
+          onExecute={() =>
+            fetchMassiveStockGroupedDaily(date.trim() || '2024-06-03', {
+              adjusted: parseAdjusted(adjusted),
+            })
+          }
         />
       ) : null}
       {sub === 'open_close' ? (
@@ -120,22 +140,38 @@ export function StockAggregatesSection({
               <ProbeField label="date">
                 <ProbeInput value={date} onChange={setDate} />
               </ProbeField>
+              <ProbeField label="adjusted">
+                <ProbeInput value={adjusted} onChange={setAdjusted} placeholder="true / false" />
+              </ProbeField>
             </>
           }
           disabled={!configured}
-          onExecute={() => fetchMassiveStockOpenClose(ticker.trim() || 'AAPL', date.trim() || '2024-06-03')}
+          onExecute={() =>
+            fetchMassiveStockOpenClose(ticker.trim() || 'AAPL', date.trim() || '2024-06-03', {
+              adjusted: parseAdjusted(adjusted),
+            })
+          }
         />
       ) : null}
       {sub === 'prev' ? (
         <MassiveJsonProbeCard
           title="Previous Day Bar"
           fields={
-            <ProbeField label="ticker">
-              <ProbeInput value={ticker} onChange={setTicker} />
-            </ProbeField>
+            <>
+              <ProbeField label="ticker">
+                <ProbeInput value={ticker} onChange={setTicker} />
+              </ProbeField>
+              <ProbeField label="adjusted">
+                <ProbeInput value={adjusted} onChange={setAdjusted} placeholder="true / false" />
+              </ProbeField>
+            </>
           }
           disabled={!configured}
-          onExecute={() => fetchMassiveStockPrev(ticker.trim() || 'AAPL')}
+          onExecute={() =>
+            fetchMassiveStockPrev(ticker.trim() || 'AAPL', {
+              adjusted: parseAdjusted(adjusted),
+            })
+          }
         />
       ) : null}
     </MassiveServicePanel>

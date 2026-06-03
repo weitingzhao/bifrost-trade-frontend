@@ -29,7 +29,7 @@ export function StockPlaceholderSection({
         linkToOption ? (
           <span>
             Sync UI:{' '}
-            <Link to="/settings/feed/massive-option" className="text-primary hover:underline">
+            <Link to="/settings/feed/massive-option#feed-massive-svc-corporate-actions" className="text-primary hover:underline">
               Feed → Massive Option → Corporate actions
             </Link>
           </span>

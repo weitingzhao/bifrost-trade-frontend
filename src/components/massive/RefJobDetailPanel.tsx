@@ -1,4 +1,8 @@
+import { SegmentControl } from '@/components/data-display'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import { Label } from '@/components/ui/label'
 import { celeryQueueHash } from '@/utils/celeryQueueDeepLink'
 import { feedMassiveStockTickersSubHash } from '@/pages/settings/feed/massive/nav/stockTabUtils'
 import {
@@ -93,10 +97,44 @@ function CatalogEnqueueIcon({ busy }: { busy: boolean }) {
 function renderTableNameList(tables: readonly string[]) {
   return tables.map((t, i) => (
     <span key={t}>
-      {i > 0 ? <span className="ref-jobs-catalog-table-sep"> · </span> : null}
-      <code className="ref-jobs-catalog-code ref-jobs-catalog-table-name">{t}</code>
+      {i > 0 ? <span className="text-muted-foreground"> · </span> : null}
+      <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{t}</code>
     </span>
   ))
+}
+
+function CoverageCountsStrip({
+  loading,
+  counts,
+  loadingLabel,
+  unavailableLabel,
+}: {
+  loading: boolean
+  counts: TickerOverviewCoverageCounts | null
+  loadingLabel: string
+  unavailableLabel: string
+}) {
+  if (loading) {
+    return <span className="text-xs text-muted-foreground">{loadingLabel}</span>
+  }
+  if (!counts) {
+    return <span className="text-xs text-muted-foreground">{unavailableLabel}</span>
+  }
+  return (
+    <span className="text-xs text-muted-foreground" aria-live="polite">
+      <span className="text-amber-700 dark:text-amber-400">
+        <strong>{counts.missing.toLocaleString()}</strong> missing
+      </span>
+      <span aria-hidden> · </span>
+      <span className="text-emerald-700 dark:text-emerald-400">
+        <strong>{counts.filled.toLocaleString()}</strong> filled
+      </span>
+      <span aria-hidden> · </span>
+      <span>
+        {counts.total_tickers.toLocaleString()} in <code className="font-mono text-[0.7rem]">tickers</code>
+      </span>
+    </span>
+  )
 }
 
 export interface TickerOverviewCoverageCounts {
@@ -229,150 +267,123 @@ export function RefJobDetailPanel({
   const enqueueBusy = jobBusyKind === kind
   const disabledEnqueue = disabledForJobs || enqueueBusy
 
+  const scopeSegmentDisabled = disabledEnqueue
+
   return (
-    <div className="ref-jobs-md-panel" id="ref-job-detail-panel" role="tabpanel">
-      <div className="ref-jobs-md-meta">
-        <div className="ref-jobs-md-meta-row">
-          <span className="ref-jobs-md-meta-label">Job</span>
-          <span>
-            <strong>{jobLabel}</strong>
-            <InfoTooltip text={catalogRow.hint} />
-          </span>
-        </div>
-        <div className="ref-jobs-md-meta-row">
-          <span className="ref-jobs-md-meta-label">REST</span>
+    <div
+      className="min-w-0 flex-1 space-y-4 rounded-md border border-border/60 bg-background p-4"
+      id="ref-job-detail-panel"
+      role="tabpanel"
+    >
+      <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[4.5rem_1fr]">
+        <dt className="font-medium text-muted-foreground">Job</dt>
+        <dd>
+          <strong>{jobLabel}</strong>
+          <InfoTooltip text={catalogRow.hint} />
+        </dd>
+        <dt className="font-medium text-muted-foreground">REST</dt>
+        <dd>
           <a
             href={feedMassiveStockTickersSubHash(catalogRow.tickersSubTab)}
-            className="ref-jobs-catalog-api-link"
+            className="text-primary hover:underline"
             title="Open Massive Stock → Tickers (matching REST tab)"
           >
             {catalogRow.restEndpointShort}
           </a>
-        </div>
-        <div className="ref-jobs-md-meta-row">
-          <span className="ref-jobs-md-meta-label">Queue</span>
-          <a href={celeryQueueHash(catalogRow.queueNote)} className="ref-jobs-catalog-queue-link" title="Open Celery queue">
-            <code className="ref-jobs-catalog-code">{catalogRow.queueNote}</code>
+        </dd>
+        <dt className="font-medium text-muted-foreground">Queue</dt>
+        <dd>
+          <a
+            href={celeryQueueHash(catalogRow.queueNote)}
+            className="text-primary hover:underline"
+            title="Open Celery queue"
+          >
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{catalogRow.queueNote}</code>
           </a>
-        </div>
-        <div className="ref-jobs-md-meta-row">
-          <span className="ref-jobs-md-meta-label">{REF_CATALOG_PG_LABELS.business}</span>
-          <span>{renderTableNameList(catalogRow.businessTables)}</span>
-        </div>
-        <div className="ref-jobs-md-meta-row">
-          <span className="ref-jobs-md-meta-label">{REF_CATALOG_PG_LABELS.job}</span>
-          <span>
-            {catalogRow.jobTables.length > 0 ? renderTableNameList(catalogRow.jobTables) : <span className="ref-jobs-catalog-pg-empty">—</span>}
-          </span>
-        </div>
-      </div>
+        </dd>
+        <dt className="font-medium text-muted-foreground">{REF_CATALOG_PG_LABELS.business}</dt>
+        <dd>{renderTableNameList(catalogRow.businessTables)}</dd>
+        <dt className="font-medium text-muted-foreground">{REF_CATALOG_PG_LABELS.job}</dt>
+        <dd>
+          {catalogRow.jobTables.length > 0 ? renderTableNameList(catalogRow.jobTables) : <span className="text-muted-foreground">—</span>}
+        </dd>
+      </dl>
 
-      <h4 className="ref-jobs-md-section-title">Enqueue</h4>
-      <div className="ref-jobs-md-enqueue-row">
-        <div className="ref-jobs-md-enqueue-fields">
+      <h4 className="text-sm font-semibold">Enqueue</h4>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1 space-y-3">
           {isFeedStocksTickersReferenceUniverseRefKind(kind) ? (
             <div>
-              <p className="ref-jobs-md-enqueue-hint">Full pagination sync (1000 rows/page) until cursor ends. No extra fields.</p>
-              <div className="ref-overview-coverage-strip mt-2" aria-live="polite">
+              <p className="text-xs text-muted-foreground">
+                Full pagination sync (1000 rows/page) until cursor ends. No extra fields.
+              </p>
+              <p className="mt-2 text-xs" aria-live="polite">
                 {universeRowCountLoading ? (
-                  <span className="ref-overview-coverage-muted">Loading row count…</span>
+                  <span className="text-muted-foreground">Loading row count…</span>
                 ) : universeRowCount != null ? (
-                  <span className="ref-refdb-stat-highlight" title="Rows in public.tickers">
+                  <span title="Rows in public.tickers">
                     <strong>{universeRowCount.toLocaleString()}</strong>
-                    <span className="ref-overview-coverage-total"> tickers in </span>
-                    <code>tickers</code>
+                    <span className="text-muted-foreground"> tickers in </span>
+                    <code className="font-mono text-[0.7rem]">tickers</code>
                   </span>
                 ) : (
-                  <span className="ref-overview-coverage-muted">Row count unavailable</span>
+                  <span className="text-muted-foreground">Row count unavailable</span>
                 )}
-              </div>
+              </p>
             </div>
           ) : null}
           {isFeedStocksTickersTypesRefKind(kind) ? (
             <div>
-              <p className="ref-jobs-md-enqueue-hint">Replaces all rows in ticker_types from the API. No extra fields.</p>
-              <div className="ref-overview-coverage-strip mt-2" aria-live="polite">
+              <p className="text-xs text-muted-foreground">
+                Replaces all rows in ticker_types from the API. No extra fields.
+              </p>
+              <p className="mt-2 text-xs" aria-live="polite">
                 {tickerTypesRowCountLoading ? (
-                  <span className="ref-overview-coverage-muted">Loading row count…</span>
+                  <span className="text-muted-foreground">Loading row count…</span>
                 ) : tickerTypesRowCount != null ? (
-                  <span className="ref-refdb-stat-highlight" title="Rows in public.ticker_types">
+                  <span title="Rows in public.ticker_types">
                     <strong>{tickerTypesRowCount.toLocaleString()}</strong>
-                    <span className="ref-overview-coverage-total"> instrument types in </span>
-                    <code>ticker_types</code>
+                    <span className="text-muted-foreground"> instrument types in </span>
+                    <code className="font-mono text-[0.7rem]">ticker_types</code>
                   </span>
                 ) : (
-                  <span className="ref-overview-coverage-muted">Row count unavailable</span>
+                  <span className="text-muted-foreground">Row count unavailable</span>
                 )}
-              </div>
+              </p>
             </div>
           ) : null}
 
           {isFeedStocksTickersOverviewRefKind(kind) ? (
             <div className="space-y-2">
-              <div className="flex flex-col gap-1 text-sm block">
-                <div className="text-sm font-medium" id="ref-overview-scope-label-panel">
-                  Overview job scope
-                </div>
-                <div
-                  className="ref-overview-scope-bubbles"
-                  role="radiogroup"
-                  aria-labelledby="ref-overview-scope-label-panel"
-                  aria-describedby="ref-overview-scope-hint-panel"
-                >
-                  {OVERVIEW_SCOPE_BUBBLES.map(opt => {
-                    const active = overviewEnqueueMode === opt.value
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        disabled={disabledEnqueue}
-                        title={opt.title}
-                        className={`ref-overview-scope-bubble${active ? ' ref-overview-scope-bubble--active' : ''}`}
-                        onClick={() => {
-                          setOverviewEnqueueMode(opt.value)
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-              <p id="ref-overview-scope-hint-panel" className="mt-1 mb-0 text-xs text-muted-foreground">
-                Compares <code>public.tickers</code> to <code>public.ticker_overview</code>.
+              <Label className="text-sm font-medium">Overview job scope</Label>
+              <SegmentControl
+                ariaLabel="Overview job scope"
+                size="sm"
+                options={OVERVIEW_SCOPE_BUBBLES.map(opt => ({
+                  value: opt.value,
+                  label: opt.label,
+                  disabled: scopeSegmentDisabled,
+                }))}
+                value={overviewEnqueueMode}
+                onChange={v => setOverviewEnqueueMode(v as OverviewEnqueueMode)}
+                className="flex-wrap"
+              />
+              <p className="text-xs text-muted-foreground">
+                Compares <code className="font-mono text-[0.7rem]">public.tickers</code> to{' '}
+                <code className="font-mono text-[0.7rem]">public.ticker_overview</code>.
               </p>
-              <div className="ref-overview-coverage-strip" aria-live="polite">
-                {overviewCoverageLoading ? (
-                  <span className="ref-overview-coverage-muted">Loading coverage counts…</span>
-                ) : overviewCoverage ? (
-                  <>
-                    <span className="ref-overview-coverage-missing" title="Tickers with no row in ticker_overview">
-                      <strong>{overviewCoverage.missing.toLocaleString()}</strong> missing
-                    </span>
-                    <span className="ref-overview-coverage-sep" aria-hidden>
-                      ·
-                    </span>
-                    <span className="ref-overview-coverage-filled" title="Tickers with a ticker_overview row">
-                      <strong>{overviewCoverage.filled.toLocaleString()}</strong> filled
-                    </span>
-                    <span className="ref-overview-coverage-sep" aria-hidden>
-                      ·
-                    </span>
-                    <span className="ref-overview-coverage-total">
-                      {overviewCoverage.total_tickers.toLocaleString()} in <code>tickers</code>
-                    </span>
-                  </>
-                ) : (
-                  <span className="ref-overview-coverage-muted">Coverage counts unavailable</span>
-                )}
-              </div>
+              <CoverageCountsStrip
+                loading={overviewCoverageLoading}
+                counts={overviewCoverage}
+                loadingLabel="Loading coverage counts…"
+                unavailableLabel="Coverage counts unavailable"
+              />
               {overviewEnqueueMode === 'stale' ? (
-                <label className="mt-2 flex flex-col gap-1 text-sm">
-                  <span className="text-sm font-medium">Stale after (hours)</span>
-                  <input
-                    className="form-input"
+                <div className="space-y-1">
+                  <Label htmlFor="ref-overview-stale-hours">Stale after (hours)</Label>
+                  <Input
+                    id="ref-overview-stale-hours"
+                    className="max-w-32"
                     type="number"
                     min={1}
                     step={1}
@@ -383,80 +394,45 @@ export function RefJobDetailPanel({
                       setOverviewStaleHours(Number.isFinite(n) && n >= 1 ? n : 720)
                     }}
                     aria-label="Hours before ticker_overview is considered stale"
-                    style={{ maxWidth: '8rem' }}
                   />
-                </label>
+                </div>
               ) : null}
             </div>
           ) : null}
 
           {isFeedStocksTickersRelatedRefKind(kind) ? (
-            <div className="space-y-2 mt-2">
-              <div className="flex flex-col gap-1 text-sm block">
-                <div className="text-sm font-medium" id="ref-related-scope-label-panel">
-                  Related job scope
-                </div>
-                <div
-                  className="ref-overview-scope-bubbles"
-                  role="radiogroup"
-                  aria-labelledby="ref-related-scope-label-panel"
-                  aria-describedby="ref-related-scope-hint-panel"
-                >
-                  {RELATED_SCOPE_BUBBLES.map(opt => {
-                    const active = relatedEnqueueMode === opt.value
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        disabled={disabledEnqueue}
-                        title={opt.title}
-                        className={`ref-overview-scope-bubble${active ? ' ref-overview-scope-bubble--active' : ''}`}
-                        onClick={() => {
-                          setRelatedEnqueueMode(opt.value)
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-              <p id="ref-related-scope-hint-panel" className="mb-1 mt-1 text-xs text-muted-foreground">
-                Compares <code>public.tickers</code> to <code>public.ticker_related_tickers</code> (
-                <code>from_tickers_id</code>). Stale uses <code>MAX(fetched_at)</code> per ticker.
+            <div className="mt-2 space-y-2">
+              <Label className="text-sm font-medium">Related job scope</Label>
+              <SegmentControl
+                ariaLabel="Related job scope"
+                size="sm"
+                options={RELATED_SCOPE_BUBBLES.map(opt => ({
+                  value: opt.value,
+                  label: opt.label,
+                  disabled: scopeSegmentDisabled,
+                }))}
+                value={relatedEnqueueMode}
+                onChange={v => setRelatedEnqueueMode(v as RelatedEnqueueMode)}
+                className="flex-wrap"
+              />
+              <p className="text-xs text-muted-foreground">
+                Compares <code className="font-mono text-[0.7rem]">public.tickers</code> to{' '}
+                <code className="font-mono text-[0.7rem]">public.ticker_related_tickers</code> (
+                <code className="font-mono text-[0.7rem]">from_tickers_id</code>). Stale uses{' '}
+                <code className="font-mono text-[0.7rem]">MAX(fetched_at)</code> per ticker.
               </p>
-              <div className="ref-overview-coverage-strip" aria-live="polite">
-                {relatedCoverageLoading ? (
-                  <span className="ref-overview-coverage-muted">Loading coverage counts…</span>
-                ) : relatedCoverage ? (
-                  <>
-                    <span className="ref-overview-coverage-missing" title="No related rows stored for this ticker">
-                      <strong>{relatedCoverage.missing.toLocaleString()}</strong> missing
-                    </span>
-                    <span className="ref-overview-coverage-sep" aria-hidden>
-                      ·
-                    </span>
-                    <span className="ref-overview-coverage-filled" title="At least one related peer row stored">
-                      <strong>{relatedCoverage.filled.toLocaleString()}</strong> filled
-                    </span>
-                    <span className="ref-overview-coverage-sep" aria-hidden>
-                      ·
-                    </span>
-                    <span className="ref-overview-coverage-total">
-                      {relatedCoverage.total_tickers.toLocaleString()} in <code>tickers</code>
-                    </span>
-                  </>
-                ) : (
-                  <span className="ref-overview-coverage-muted">Coverage counts unavailable</span>
-                )}
-              </div>
+              <CoverageCountsStrip
+                loading={relatedCoverageLoading}
+                counts={relatedCoverage}
+                loadingLabel="Loading coverage counts…"
+                unavailableLabel="Coverage counts unavailable"
+              />
               {relatedEnqueueMode === 'stale' ? (
-                <label className="mt-2 flex flex-col gap-1 text-sm">
-                  <span className="text-sm font-medium">Stale after (hours)</span>
-                  <input
-                    className="form-input"
+                <div className="space-y-1">
+                  <Label htmlFor="ref-related-stale-hours">Stale after (hours)</Label>
+                  <Input
+                    id="ref-related-stale-hours"
+                    className="max-w-32"
                     type="number"
                     min={1}
                     step={1}
@@ -467,28 +443,18 @@ export function RefJobDetailPanel({
                       setRelatedStaleHours(Number.isFinite(n) && n >= 1 ? n : 720)
                     }}
                     aria-label="Hours before related data is considered stale"
-                    style={{ maxWidth: '8rem' }}
                   />
-                </label>
+                </div>
               ) : null}
             </div>
           ) : null}
 
           {(isFeedStocksTickersOverviewRefKind(kind) && overviewEnqueueMode === 'symbols') ||
           (isFeedStocksTickersRelatedRefKind(kind) && relatedEnqueueMode === 'symbols') ? (
-            <label
-              className="flex flex-col gap-1 text-sm"
-              style={{
-                display: 'block',
-                marginTop:
-                  isFeedStocksTickersOverviewRefKind(kind) || isFeedStocksTickersRelatedRefKind(kind)
-                    ? 'var(--space-2)'
-                    : 0,
-              }}
-            >
-              <span className="text-sm font-medium">Symbols (comma or space separated)</span>
-              <input
-                className="form-input"
+            <div className="mt-2 space-y-1">
+              <Label htmlFor="ref-job-symbols-panel">Symbols (comma or space separated)</Label>
+              <Input
+                id="ref-job-symbols-panel"
                 value={refJobSymbols}
                 onChange={e => setRefJobSymbols(e.target.value)}
                 disabled={disabledEnqueue}
@@ -498,37 +464,34 @@ export function RefJobDetailPanel({
                 aria-describedby={refJobSymbolsErr ? 'ref-job-symbols-err-panel' : undefined}
               />
               {refJobSymbolsErr ? (
-                <p id="ref-job-symbols-err-panel" className="mt-1 text-sm text-destructive" role="alert">
+                <p id="ref-job-symbols-err-panel" className="text-sm text-destructive" role="alert">
                   {refJobSymbolsErr}
                 </p>
               ) : null}
-            </label>
+            </div>
           ) : null}
         </div>
-        <div className="ref-jobs-md-enqueue-actions">
-          <button
-            type="button"
-            className="btn btn-primary btn-sm ref-jobs-md-enqueue-btn"
-            disabled={disabledEnqueue}
-            aria-busy={enqueueBusy}
-            onClick={onEnqueue}
-          >
-            <CatalogEnqueueIcon busy={enqueueBusy} />
-            <span>{enqueueBusy ? 'Enqueueing…' : `Enqueue ${jobLabel}`}</span>
-          </button>
-        </div>
+        <Button
+          type="button"
+          size="sm"
+          disabled={disabledEnqueue}
+          aria-busy={enqueueBusy}
+          onClick={onEnqueue}
+          className="shrink-0 gap-1.5"
+        >
+          <CatalogEnqueueIcon busy={enqueueBusy} />
+          {enqueueBusy ? 'Enqueueing…' : `Enqueue ${jobLabel}`}
+        </Button>
       </div>
 
-      <h4 className="ref-jobs-md-section-title" >
-        Verify (PostgreSQL)
-      </h4>
+      <h4 className="text-sm font-semibold">Verify (PostgreSQL)</h4>
 
       {isFeedStocksTickersReferenceUniverseRefKind(kind) ? (
         <>
           <label className="flex flex-col gap-1 text-sm block">
             <span className="text-sm font-medium">Search query</span>
             <input
-              className="form-input"
+              className="max-w-full sm:max-w-xs"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               disabled={busyVerify}
@@ -539,7 +502,7 @@ export function RefJobDetailPanel({
           <label className="mt-2 flex flex-col gap-1 text-sm">
             <span className="text-sm font-medium">Result limit</span>
             <input
-              className="form-input"
+              className="max-w-full sm:max-w-xs"
               type="number"
               min={1}
               max={100}
@@ -554,19 +517,19 @@ export function RefJobDetailPanel({
               style={{ maxWidth: '8rem' }}
             />
           </label>
-          <div className="ref-jobs-md-actions">
-            <button type="button" className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm" disabled={busyVerify} onClick={onVerifySearch}>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={busyVerify} onClick={onVerifySearch}>
               {busyVerify ? 'Loading…' : 'Search (DB)'}
-            </button>
+            </Button>
           </div>
         </>
       ) : null}
 
       {isFeedStocksTickersTypesRefKind(kind) ? (
-        <div className="ref-jobs-md-actions">
-          <button type="button" className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm" disabled={busyVerify} onClick={onVerifyInstrumentTypes}>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" disabled={busyVerify} onClick={onVerifyInstrumentTypes}>
             {busyVerify ? 'Loading…' : 'Instrument types (DB)'}
-          </button>
+          </Button>
         </div>
       ) : null}
 
@@ -575,7 +538,7 @@ export function RefJobDetailPanel({
           <label className="flex flex-col gap-1 text-sm block">
             <span className="text-sm font-medium">Symbol (merged ticker + overview row)</span>
             <input
-              className="form-input"
+              className="max-w-full sm:max-w-xs"
               value={overviewSymbol}
               onChange={e => setOverviewSymbol(e.target.value)}
               disabled={busyVerify}
@@ -583,22 +546,23 @@ export function RefJobDetailPanel({
               autoComplete="off"
             />
           </label>
-          <div className="ref-jobs-md-actions">
-            <button
+          <div className="flex flex-wrap gap-2">
+            <Button
               type="button"
-              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              variant="outline"
+              size="sm"
               disabled={busyVerify}
               aria-busy={busyVerify && overviewVerifyKind === 'merged'}
               onClick={onVerifyOverviewMerged}
             >
               {busyVerify && overviewVerifyKind === 'merged' ? 'Loading…' : 'Load merged row (DB)'}
-            </button>
+            </Button>
           </div>
 
           <label className="mt-3 flex flex-col gap-1 text-sm">
             <span className="text-sm font-medium">Missing overview — page size</span>
             <input
-              className="form-input"
+              className="max-w-full sm:max-w-xs"
               type="number"
               min={1}
               max={MAX_TICKER_REF_MISSING_LIMIT}
@@ -617,10 +581,11 @@ export function RefJobDetailPanel({
             Lists symbols present in <code>tickers</code> with no <code>ticker_overview</code> row (ordered A–Z). Default
             page size {DEFAULT_TICKER_REF_MISSING_LIMIT}.
           </p>
-          <div className="ref-jobs-md-actions mt-2">
-            <button
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Button
               type="button"
-              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              variant="outline"
+              size="sm"
               disabled={busyVerify}
               aria-busy={busyVerify && overviewVerifyKind === 'missing' && !overviewMissingVerifyAppend}
               onClick={onVerifyOverviewMissingFirst}
@@ -628,11 +593,12 @@ export function RefJobDetailPanel({
               {busyVerify && overviewVerifyKind === 'missing' && !overviewMissingVerifyAppend
                 ? 'Loading…'
                 : 'Load missing tickers (DB)'}
-            </button>
+            </Button>
             {missingOverviewHasMore && missingOverviewLoadedCount > 0 ? (
-              <button
+              <Button
                 type="button"
-                className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+                variant="outline"
+                size="sm"
                 disabled={busyVerify}
                 aria-busy={busyVerify && overviewVerifyKind === 'missing' && overviewMissingVerifyAppend}
                 onClick={onVerifyOverviewMissingMore}
@@ -640,7 +606,7 @@ export function RefJobDetailPanel({
                 {busyVerify && overviewVerifyKind === 'missing' && overviewMissingVerifyAppend
                   ? 'Loading…'
                   : 'Load more'}
-              </button>
+              </Button>
             ) : null}
           </div>
         </>
@@ -651,7 +617,7 @@ export function RefJobDetailPanel({
           <label className="flex flex-col gap-1 text-sm block">
             <span className="text-sm font-medium">Symbol (single-ticker related rows)</span>
             <input
-              className="form-input"
+              className="max-w-full sm:max-w-xs"
               value={relatedSymbol}
               onChange={e => setRelatedSymbol(e.target.value)}
               disabled={busyVerify}
@@ -659,22 +625,23 @@ export function RefJobDetailPanel({
               autoComplete="off"
             />
           </label>
-          <div className="ref-jobs-md-actions">
-            <button
+          <div className="flex flex-wrap gap-2">
+            <Button
               type="button"
-              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              variant="outline"
+              size="sm"
               disabled={busyVerify}
               aria-busy={busyVerify && relatedVerifyKind === 'symbol'}
               onClick={onVerifyRelatedDb}
             >
               {busyVerify && relatedVerifyKind === 'symbol' ? 'Loading…' : 'Load related (DB)'}
-            </button>
+            </Button>
           </div>
 
           <label className="mt-3 flex flex-col gap-1 text-sm">
             <span className="text-sm font-medium">Page size</span>
             <input
-              className="form-input"
+              className="max-w-full sm:max-w-xs"
               type="number"
               min={1}
               max={MAX_TICKER_REF_MISSING_LIMIT}
@@ -689,10 +656,11 @@ export function RefJobDetailPanel({
               style={{ maxWidth: '8rem' }}
             />
           </label>
-          <div className="ref-jobs-md-actions mt-2">
-            <button
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Button
               type="button"
-              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              variant="outline"
+              size="sm"
               disabled={busyVerify}
               aria-busy={busyVerify && relatedVerifyKind === 'missing' && !relatedMissingVerifyAppend}
               onClick={onVerifyRelatedMissingFirst}
@@ -700,11 +668,12 @@ export function RefJobDetailPanel({
               {busyVerify && relatedVerifyKind === 'missing' && !relatedMissingVerifyAppend
                 ? 'Loading…'
                 : 'Load missing tickers (DB)'}
-            </button>
+            </Button>
             {missingRelatedHasMore && missingRelatedLoadedCount > 0 ? (
-              <button
+              <Button
                 type="button"
-                className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+                variant="outline"
+                size="sm"
                 disabled={busyVerify}
                 aria-busy={busyVerify && relatedVerifyKind === 'missing' && relatedMissingVerifyAppend}
                 onClick={onVerifyRelatedMissingMore}
@@ -712,13 +681,14 @@ export function RefJobDetailPanel({
                 {busyVerify && relatedVerifyKind === 'missing' && relatedMissingVerifyAppend
                   ? 'Loading…'
                   : 'Load more (missing)'}
-              </button>
+              </Button>
             ) : null}
           </div>
-          <div className="ref-jobs-md-actions mt-2">
-            <button
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Button
               type="button"
-              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              variant="outline"
+              size="sm"
               disabled={busyVerify}
               aria-busy={busyVerify && relatedVerifyKind === 'filled' && !relatedFilledVerifyAppend}
               onClick={onVerifyRelatedFilledFirst}
@@ -726,11 +696,12 @@ export function RefJobDetailPanel({
               {busyVerify && relatedVerifyKind === 'filled' && !relatedFilledVerifyAppend
                 ? 'Loading…'
                 : 'Load filled tickers (DB)'}
-            </button>
+            </Button>
             {filledRelatedHasMore && filledRelatedLoadedCount > 0 ? (
-              <button
+              <Button
                 type="button"
-                className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+                variant="outline"
+                size="sm"
                 disabled={busyVerify}
                 aria-busy={busyVerify && relatedVerifyKind === 'filled' && relatedFilledVerifyAppend}
                 onClick={onVerifyRelatedFilledMore}
@@ -738,7 +709,7 @@ export function RefJobDetailPanel({
                 {busyVerify && relatedVerifyKind === 'filled' && relatedFilledVerifyAppend
                   ? 'Loading…'
                   : 'Load more (filled)'}
-              </button>
+              </Button>
             ) : null}
           </div>
         </>

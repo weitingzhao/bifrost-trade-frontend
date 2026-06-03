@@ -7,6 +7,7 @@ import type {
   BarsResponse,
   BarStatsResponse,
 } from '@/types/market'
+import type { BarsCoverageResponse } from '@/types/barsCoverage'
 import { withValidation } from '@/lib/apiValidation'
 import { QuotesResponseSchema, WatchlistResponseSchema } from '@/lib/schemas/market'
 import { openSseWithBackoff } from '@/lib/sse'
@@ -39,6 +40,24 @@ export async function fetchWatchlist(): Promise<WatchlistResponse> {
   const res = await fetch(`${BASE}/watchlist`)
   if (!res.ok) throw new Error(`Market /watchlist: ${res.status}`)
   return validateWatchlist(await res.json())
+}
+
+export async function fetchBarsCoverage(symbols?: string[]): Promise<BarsCoverageResponse> {
+  const params = new URLSearchParams()
+  if (symbols && symbols.length > 0) params.set('symbols', symbols.join(','))
+  const res = await fetch(`${BASE}/bars/coverage?${params}`)
+  if (!res.ok) throw new Error(`Market /bars/coverage: ${res.status}`)
+  return res.json() as Promise<BarsCoverageResponse>
+}
+
+export async function fetchMarketTradingDay(
+  dateStr?: string,
+): Promise<{ date: string; is_trading_day: boolean }> {
+  const params = new URLSearchParams()
+  if (dateStr?.trim()) params.set('date', dateStr.trim().slice(0, 10))
+  const res = await fetch(`${BASE}/market/trading-day?${params}`)
+  if (!res.ok) throw new Error(`Market /market/trading-day: ${res.status}`)
+  return res.json() as Promise<{ date: string; is_trading_day: boolean }>
 }
 
 export async function fetchBarStats(symbol: string): Promise<BarStatsResponse> {

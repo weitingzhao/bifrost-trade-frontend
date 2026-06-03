@@ -46,15 +46,16 @@ export function computeSinceChange(
   return { sinceDollar, sincePct }
 }
 
+/** Realized PnL — site-wide tokens: profit green / loss red (see /settings/ui-design-system). */
 export function pnlColorClass(value: number | null | undefined): string {
   if (value == null || value === 0) return 'text-muted-foreground'
-  return value > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+  return value > 0 ? 'text-profit' : 'text-loss'
 }
 
-/** Unrealized PnL — site-wide yellow (warning), not green/red. */
+/** Unrealized PnL — site-wide yellow (--color-unrealized), not green/red. */
 export function unrealizedPnlColorClass(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return 'text-muted-foreground'
-  return 'text-warning font-semibold'
+  return 'text-unrealized font-semibold'
 }
 
 export function fmtPct(value: number | null | undefined): string {

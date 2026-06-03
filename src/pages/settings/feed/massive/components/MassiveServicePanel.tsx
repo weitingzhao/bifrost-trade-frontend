@@ -7,11 +7,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { CapabilityStatusDot } from '@/pages/settings/feed/massive/components/CapabilityStatusDot'
-import type { ChecklistRow, EffectiveServiceStatus } from '@/pages/settings/feed/massive/checklist/types'
 import {
   checklistEffectiveStatusLabel,
   shortServiceLabel,
-} from '@/pages/settings/feed/massive/checklist/stockStatus'
+} from '@/pages/settings/feed/massive/checklist/displayHelpers'
+import type { ChecklistRow, EffectiveServiceStatus } from '@/pages/settings/feed/massive/checklist/types'
 import { feedMassiveStockSvcAnchorId } from '@/pages/settings/feed/massive/nav/anchors'
 import { cn } from '@/lib/utils'
 import { ChevronDown } from 'lucide-react'
@@ -53,6 +53,7 @@ export function MassiveServicePanel({
   highlighted,
   evidence,
   children,
+  anchorId,
 }: {
   row: ChecklistRow
   effectiveStatus: EffectiveServiceStatus
@@ -61,8 +62,10 @@ export function MassiveServicePanel({
   highlighted?: boolean
   evidence?: ReactNode
   children?: ReactNode
+  /** Scroll/hash anchor; defaults to stock svc id for backward compatibility. */
+  anchorId?: string
 }) {
-  const anchorId = feedMassiveStockSvcAnchorId(row.id)
+  const resolvedAnchorId = anchorId ?? feedMassiveStockSvcAnchorId(row.id)
   const verificationRef = useRef<HTMLDetailsElement>(null)
   const statusLabel = checklistEffectiveStatusLabel(effectiveStatus)
   const implemented = effectiveStatus === 'implemented' || effectiveStatus === 'partial'
@@ -77,7 +80,7 @@ export function MassiveServicePanel({
 
   return (
     <Card
-      id={anchorId}
+      id={resolvedAnchorId}
       variant="elevated"
       className={cn(
         'scroll-mt-24 transition-shadow',

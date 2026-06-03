@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { STOCK_CHECKLIST_ROWS } from '@/pages/settings/feed/massive/checklist/stockChecklistRows'
-import type { CapabilityGroup } from '@/pages/settings/feed/massive/checklist/types'
 import { feedMassiveStockSvcAnchorId } from '@/pages/settings/feed/massive/nav/anchors'
 import {
   feedMassiveStockTabHash,
@@ -11,10 +10,8 @@ import {
   parseFeedMassiveStockTickersSubTabFromHash,
   type MassiveStockTickersSubTab,
 } from '@/pages/settings/feed/massive/nav/stockTabUtils'
-import {
-  stockCapabilityGroupForRowId,
-  type StockChannelTab,
-} from '@/pages/settings/feed/massive/components/MassiveDeliveryChannelTabs'
+import type { StockChannelTab } from '@/pages/settings/feed/massive/components/MassiveDeliveryChannelTabs'
+import { stockCapabilityGroupForRowId } from '@/pages/settings/feed/massive/stock/stockNavUtils'
 import {
   STOCK_REST_SECTION_ORDER,
   type StockRestSectionId,
@@ -123,6 +120,3 @@ export function useMassiveStockPageNav() {
   }
 }
 
-export function capNavGroupForRow(id: string): CapabilityGroup | null {
-  return stockCapabilityGroupForRowId(id)
-}

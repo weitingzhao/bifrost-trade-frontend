@@ -27,6 +27,8 @@ export function StockNewsSection({
   const [gte, setGte] = useState('')
   const [lte, setLte] = useState('')
   const [limit, setLimit] = useState('20')
+  const [sort, setSort] = useState('published_utc')
+  const [order, setOrder] = useState('desc')
 
   return (
     <MassiveServicePanel
@@ -52,6 +54,12 @@ export function StockNewsSection({
             <ProbeField label="limit">
               <ProbeInput value={limit} onChange={setLimit} type="number" />
             </ProbeField>
+            <ProbeField label="sort">
+              <ProbeInput value={sort} onChange={setSort} />
+            </ProbeField>
+            <ProbeField label="order">
+              <ProbeInput value={order} onChange={setOrder} placeholder="asc / desc" />
+            </ProbeField>
           </>
         }
         disabled={!configured}
@@ -61,6 +69,8 @@ export function StockNewsSection({
             published_utc_gte: gte.trim() || undefined,
             published_utc_lte: lte.trim() || undefined,
             limit: Math.min(1000, Math.max(1, parseInt(limit, 10) || 20)),
+            sort: sort.trim() || undefined,
+            order: order.trim() || undefined,
           })
         }
       />

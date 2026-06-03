@@ -557,6 +557,23 @@ if daemon_legacy_strings=$(grep -rE 'daemon-group-|table-operations|ib-connectio
   fi
 fi
 
+# Business semantic tokens (see /settings/ui-design-system):
+# PnL must use pnlColorClass / text-profit / text-loss / text-unrealized — NOT raw palette classes.
+# Ratchet: existing raw emerald/red usages outside data-display are grandfathered;
+# the count must only go DOWN. Lower the baseline as pages migrate.
+RAW_PNL_PALETTE_BASELINE=64
+raw_pnl_count=$(grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
+  --include='*.tsx' --include='*.ts' 2>/dev/null \
+  | grep -v 'src/components/data-display' | wc -l | tr -d ' ')
+if [[ "$raw_pnl_count" -gt "$RAW_PNL_PALETTE_BASELINE" ]]; then
+  grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
+    --include='*.tsx' --include='*.ts' 2>/dev/null \
+    | grep -v 'src/components/data-display' >&2
+  report "raw emerald/red palette classes increased ($raw_pnl_count > baseline $RAW_PNL_PALETTE_BASELINE) — use pnlColorClass / text-profit / text-loss / text-unrealized"
+elif [[ "$raw_pnl_count" -lt "$RAW_PNL_PALETTE_BASELINE" ]]; then
+  echo "check-legacy-css: raw PnL palette count $raw_pnl_count < baseline $RAW_PNL_PALETTE_BASELINE — lower RAW_PNL_PALETTE_BASELINE in scripts/check-legacy-css.sh" >&2
+fi
+
 if [[ "$fail" -ne 0 ]]; then
   exit 1
 fi

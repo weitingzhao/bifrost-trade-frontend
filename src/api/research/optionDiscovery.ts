@@ -2,7 +2,6 @@ import type {
   OptionExpirationsResult,
   OptionSnapshotRow,
   OptionSnapshotsPgResult,
-  MassiveStatusResponse,
   MassiveDailyChecklistDims,
   MaxPainComputeResponse,
   MaxPainHistoryPoint,
@@ -19,12 +18,14 @@ import { withValidation } from '@/lib/apiValidation'
 import {
   OptionExpirationsResponseSchema,
   OptionSnapshotsPgResponseSchema,
-  MassiveStatusResponseSchema,
   MassiveDailyChecklistResponseSchema,
   GreeksCoverageResponseSchema,
 } from '@/lib/schemas/optionDiscovery'
 
+import { fetchMassiveStatus } from '@/api/massive'
 import { massiveUrl, opsUrl, researchUrl } from '@/lib/devApiUrl'
+
+export { fetchMassiveStatus }
 
 /** Massive sync may return job_ids[] without job_id (fan-out). */
 export function resolveMassiveSyncJobId(sync: {
@@ -131,20 +132,6 @@ export async function fetchOptionSnapshotsPg(
     rows,
     error: typeof j.error === 'string' ? j.error : undefined,
     warning: typeof j.warning === 'string' ? j.warning : undefined,
-  }
-}
-
-export async function fetchMassiveStatus(): Promise<MassiveStatusResponse> {
-  const r = await fetch(massiveUrl('/research/massive/status'))
-  const j = await r.json().catch(() => ({}))
-  withValidation(MassiveStatusResponseSchema, 'fetchMassiveStatus')(j)
-  const years = Number(j.daily_full_backfill_years)
-  return {
-    configured: Boolean(j.configured),
-    tier: typeof j.tier === 'string' ? j.tier : 'starter',
-    delay_notice: typeof j.delay_notice === 'string' ? j.delay_notice : '',
-    trades_enabled: Boolean(j.trades_enabled),
-    daily_full_backfill_years: Number.isFinite(years) && years > 0 ? years : 5,
   }
 }
 

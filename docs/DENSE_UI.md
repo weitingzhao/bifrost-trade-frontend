@@ -57,6 +57,14 @@ import {
 
 **Reference implementation:** [StocksTab.tsx](../src/components/positions/StocksTab.tsx) (also used by Fixed Income and Cash-like tabs).
 
+### PostgreSQL sync jobs sheet
+
+Session-tracked Massive/Celery jobs on Research pages use a wide right `Sheet` with a seven-column `DenseDataTable` (time, kind, status, dedup, job id, summary, JSON details). Reference: [TickerReferenceJobsSheet.tsx](../src/components/massive/TickerReferenceJobsSheet.tsx); labels/summaries from [stockReferenceJobHelpers.ts](../src/utils/massive/stockReferenceJobHelpers.ts).
+
+### Stock Data Readiness runbook steps
+
+Unified snapshot (Step 2) and related actions use lime primary buttons (`bg-sidebar-primary`), mono success logs, and the instrument-type breakdown table in [SnapshotByTypeBreakdown.tsx](../src/pages/research/stockDataReadiness/SnapshotByTypeBreakdown.tsx) with tokens in [stockDataReadinessStepUi.ts](../src/pages/research/stockDataReadiness/stockDataReadinessStepUi.ts) (Legacy `sdp-btn-primary` / `sdp-snap-by-type-*` parity). Runbook step tabs use `runbookTabIndexClass` for Legacy `sdp-runbook-tab--{status}` index coloring; after any ingest, `refreshReadinessBoard()` awaits summary refetch so all stages update together.
+
 ### Fixed columns (expand / collapse)
 
 `DenseDataTable` uses **`table-layout: fixed`** (`denseTable.table`) so column widths stay stable when detail rows are shown or hidden.

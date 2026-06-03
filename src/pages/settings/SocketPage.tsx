@@ -26,6 +26,7 @@ import { marketIngestServicesForSocketAggregate, type MarketIngestServiceRow } f
 import {
   normalizedPageDevProd,
   hasStackConflict,
+  INGEST_CONTROL_PENDING_DIALOG_MESSAGE,
 } from '@/utils/ingestOpsShared'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { SocketPageHeader } from '@/pages/settings/socket/SocketPageHeader'
@@ -50,7 +51,6 @@ export default function SocketPage() {
   const [wallNowSec, setWallNowSec] = useState(() => Math.floor(Date.now() / 1000))
   const [confirm, setConfirm] = useState<SocketConfirmState>(CLOSED_SOCKET_CONFIRM)
   const [actionError, setActionError] = useState<string | null>(null)
-
   const qc = useQueryClient()
 
   useEffect(() => {
@@ -72,8 +72,8 @@ export default function SocketPage() {
   const { data: opsHealth } = useOpsHealth(token)
   const { data: caps } = useOpsCapabilities(token)
 
-  const controlMutation = useControlMarketIngest(token)
-  const clearLeasesMutation = useClearConflictLeases(token)
+  const controlMutation = useControlMarketIngest()
+  const clearLeasesMutation = useClearConflictLeases()
 
   const services: MarketIngestServiceRow[] = ingestData?.services ?? []
   const socketServices = marketIngestServicesForSocketAggregate(services)
@@ -209,6 +209,9 @@ export default function SocketPage() {
             <DialogTitle>{confirm.title}</DialogTitle>
             <DialogDescription>{confirm.description}</DialogDescription>
           </DialogHeader>
+          {controlMutation.isPending && !actionError && (
+            <p className="text-sm text-muted-foreground">{INGEST_CONTROL_PENDING_DIALOG_MESSAGE}</p>
+          )}
           {actionError && (
             <p className="text-sm text-red-500 rounded border border-red-500/30 bg-red-500/10 px-3 py-2">
               {actionError}

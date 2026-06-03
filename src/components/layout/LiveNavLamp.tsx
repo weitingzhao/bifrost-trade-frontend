@@ -13,7 +13,7 @@ export function LiveNavLamp() {
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="inline-flex shrink-0" tabIndex={0}>
-          <StatusLamp lamp={color} />
+          <StatusLamp lamp={color} variant="dot" className="h-2 w-2" />
         </span>
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-xs text-xs">

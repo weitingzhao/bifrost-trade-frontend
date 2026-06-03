@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchMassiveDailyChecklist, fetchMassiveStatus } from '@/api/research/optionDiscovery'
+import { fetchMassiveStatus } from '@/api/massive'
+import { fetchMassiveDailyChecklist } from '@/api/research/optionDiscovery'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { nyCalendarDateIso } from '@/utils/optionDiscovery/strikePresets'
 

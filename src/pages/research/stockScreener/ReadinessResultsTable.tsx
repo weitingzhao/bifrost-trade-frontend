@@ -99,30 +99,86 @@ function CondDots({
   )
 }
 
+/** Overrides DenseTable `max-w-0` — fixed layout needs explicit min widths per column. */
+const readinessCol = {
+  symbol: 'w-[5.5rem] min-w-[5.5rem] max-w-none whitespace-nowrap overflow-visible',
+  tech: 'min-w-[11.5rem] max-w-none',
+  fund: 'min-w-[10.5rem] max-w-none',
+  univ: 'w-[3.25rem] min-w-[3.25rem] max-w-none',
+  price: 'w-[6.25rem] min-w-[6.25rem] max-w-none whitespace-nowrap',
+  stmt: 'w-[9.5rem] min-w-[9.5rem] max-w-none',
+  short: 'w-[5.5rem] min-w-[5.5rem] max-w-none',
+  asof: 'w-[6rem] min-w-[6rem] max-w-none whitespace-nowrap',
+} as const
+
+function ReadinessTableColgroup() {
+  return (
+    <colgroup>
+      <col style={{ width: '5.5rem' }} />
+      <col style={{ width: '26%' }} />
+      <col style={{ width: '24%' }} />
+      <col style={{ width: '3.25rem' }} />
+      <col style={{ width: '6.25rem' }} />
+      <col style={{ width: '9.5rem' }} />
+      <col style={{ width: '5.5rem' }} />
+      <col style={{ width: '6rem' }} />
+    </colgroup>
+  )
+}
+
 function SortableDenseHead({
   label,
   col,
   sortCol,
   sortDir,
   onSort,
+  className,
 }: {
   label: string
   col: 'tech' | 'fund'
   sortCol: SortColumn
   sortDir: SortDirection
   onSort: (col: 'tech' | 'fund') => void
+  className?: string
 }) {
   const active = sortCol === col
   const arrow = active ? (sortDir === 'desc' ? '↓' : '↑') : '⇅'
   return (
     <DenseTableHead
-      className={cn(denseTable.sortableHead, active && 'text-foreground')}
+      className={cn(denseTable.sortableHead, active && 'text-foreground', className)}
       onClick={() => onSort(col)}
       title={`Sort by ${label} pass count`}
       aria-sort={active ? (sortDir === 'desc' ? 'descending' : 'ascending') : undefined}
     >
       {label} {arrow}
     </DenseTableHead>
+  )
+}
+
+function SymbolCell({
+  symbol,
+  isActive,
+  onOpen,
+}: {
+  symbol: string
+  isActive: boolean
+  onOpen: () => void
+}) {
+  return (
+    <span className="inline-flex items-center gap-0.5 min-w-0">
+      <DenseLinkButton
+        label={symbol}
+        onClick={onOpen}
+        ariaLabel={isActive ? 'Close inspector' : `Open ${symbol} inspector`}
+        className={cn(
+          'font-mono text-[11px] shrink-0',
+          isActive ? 'text-primary' : 'text-foreground',
+        )}
+      />
+      <span className="text-[10px] text-muted-foreground shrink-0" aria-hidden>
+        ↗
+      </span>
+    </span>
   )
 }
 
@@ -156,16 +212,18 @@ export function ReadinessResultsTable({
           </span>
         )}
       </h2>
-      <DenseDataTable>
+      <DenseDataTable tableClassName="min-w-[58rem]">
+        <ReadinessTableColgroup />
         <DenseTableHeader>
           <DenseTableHeadRow>
-            <DenseTableHead className="w-[110px]">Symbol</DenseTableHead>
+            <DenseTableHead className={readinessCol.symbol}>Symbol</DenseTableHead>
             <SortableDenseHead
               label="Technical"
               col="tech"
               sortCol={sortCol}
               sortDir={sortDir}
               onSort={onSort}
+              className={readinessCol.tech}
             />
             <SortableDenseHead
               label="Fundamental"
@@ -173,14 +231,15 @@ export function ReadinessResultsTable({
               sortCol={sortCol}
               sortDir={sortDir}
               onSort={onSort}
+              className={readinessCol.fund}
             />
-            <DenseTableHead align="center" className="w-[70px]">
+            <DenseTableHead align="center" className={readinessCol.univ}>
               Univ
             </DenseTableHead>
-            <DenseTableHead className="w-[100px]">Price</DenseTableHead>
-            <DenseTableHead className="w-[150px]">Statements</DenseTableHead>
-            <DenseTableHead className="w-[90px]">Short</DenseTableHead>
-            <DenseTableHead className="w-[90px]">As-of</DenseTableHead>
+            <DenseTableHead className={readinessCol.price}>Price</DenseTableHead>
+            <DenseTableHead className={readinessCol.stmt}>Statements</DenseTableHead>
+            <DenseTableHead className={readinessCol.short}>Short</DenseTableHead>
+            <DenseTableHead className={readinessCol.asof}>As-of</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
@@ -195,12 +254,12 @@ export function ReadinessResultsTable({
               if (!r.found) {
                 return (
                   <DenseTableRow key={r.symbol}>
-                    <DenseTableCell>
+                    <DenseTableCell className={readinessCol.symbol}>
                       <DenseLinkButton
                         label={r.symbol}
                         onClick={() => onOpenInspector(r.symbol, r)}
                         ariaLabel={`Open ${r.symbol} inspector`}
-                        className="font-mono"
+                        className="font-mono text-[11px]"
                       />
                     </DenseTableCell>
                     <DenseTableCell colSpan={7} className={denseTable.mutedMeta}>
@@ -222,20 +281,14 @@ export function ReadinessResultsTable({
 
               return (
                 <DenseTableRow key={r.symbol} className={cn(isActive && 'bg-accent/30')}>
-                  <DenseTableCell>
-                    <DenseLinkButton
-                      label={`${r.symbol} ↗`}
-                      onClick={() => onOpenInspector(r.symbol, r)}
-                      ariaLabel={
-                        isActive ? 'Close inspector' : `Open ${r.symbol} inspector`
-                      }
-                      className={cn(
-                        'inline-flex items-center gap-0.5 font-mono',
-                        isActive ? 'text-primary' : 'text-foreground',
-                      )}
+                  <DenseTableCell className={readinessCol.symbol}>
+                    <SymbolCell
+                      symbol={r.symbol}
+                      isActive={isActive}
+                      onOpen={() => onOpenInspector(r.symbol, r)}
                     />
                   </DenseTableCell>
-                  <DenseTableCell>
+                  <DenseTableCell className={readinessCol.tech}>
                     <div>
                       <span
                         className={cn(
@@ -262,7 +315,7 @@ export function ReadinessResultsTable({
                       )}
                     </div>
                   </DenseTableCell>
-                  <DenseTableCell>
+                  <DenseTableCell className={readinessCol.fund}>
                     <div>
                       <span
                         className={cn('font-mono text-[11px]', fundCellClass(passCount, insuf))}
@@ -278,18 +331,18 @@ export function ReadinessResultsTable({
                       />
                     </div>
                   </DenseTableCell>
-                  <DenseTableCell className="text-center">
+                  <DenseTableCell className={cn(readinessCol.univ, 'text-center')}>
                     <BoolMark value={r.included_in_universe} />
                   </DenseTableCell>
-                  <DenseTableCell>
-                    <span className="inline-flex items-center gap-1 font-mono text-[11px]">
+                  <DenseTableCell className={readinessCol.price}>
+                    <span className="inline-flex items-center gap-1 font-mono text-[11px] whitespace-nowrap">
                       <BoolMark value={r.price_ready} />
                       <span className={denseTable.mutedMeta}>
                         {(r.bar_count_lookback ?? 0).toLocaleString()}b
                       </span>
                     </span>
                   </DenseTableCell>
-                  <DenseTableCell>
+                  <DenseTableCell className={readinessCol.stmt}>
                     <div className="flex flex-wrap gap-0.5">
                       <StmtChip
                         label="IS"
@@ -301,13 +354,15 @@ export function ReadinessResultsTable({
                       <StmtChip label="RT" ok={r.ratios_present} title="Ratios" />
                     </div>
                   </DenseTableCell>
-                  <DenseTableCell>
+                  <DenseTableCell className={readinessCol.short}>
                     <div className="flex flex-wrap gap-0.5">
                       <StmtChip label="SI" ok={r.short_interest_present} title="Short Interest" />
                       <StmtChip label="SV" ok={r.short_volume_present} title="Short Volume" />
                     </div>
                   </DenseTableCell>
-                  <DenseTableCell className={cn(denseTableNumCell, denseTable.mutedMeta)}>
+                  <DenseTableCell
+                    className={cn(readinessCol.asof, denseTableNumCell, denseTable.mutedMeta)}
+                  >
                     {r.as_of_date ?? '—'}
                   </DenseTableCell>
                 </DenseTableRow>

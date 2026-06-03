@@ -459,7 +459,15 @@ export function buildDaemonIngestRows(
   }))
 }
 
-function minimalMarketIngestRowForId(id: string): MarketIngestServiceRow {
+/** Ingest rows used for Socket sidebar nav lamp (Monitor /status only). */
+export const SOCKET_NAV_INGEST_IDS = [
+  'massive_ws',
+  'ib_ingestor',
+  'ib_operator',
+  'ib_account_agent',
+] as const
+
+export function minimalMarketIngestRowForId(id: string): MarketIngestServiceRow {
   return {
     id,
     label: '',
@@ -475,6 +483,16 @@ export function aggregateDaemonProcessesHealthFromStatus(
 ): { lamp: AggregateIngestLamp; title: string } {
   return aggregateIngestRedisHealthLamp(
     DAEMON_PAGE_SERVICE_IDS.map(id => minimalMarketIngestRowForId(id)),
+    status,
+  )
+}
+
+/** Sidebar Socket link: worst Redis health across edge ingest services. */
+export function aggregateSocketNavHealthFromStatus(
+  status: StatusResponse | null | undefined,
+): { lamp: AggregateIngestLamp; title: string } {
+  return aggregateIngestRedisHealthLamp(
+    SOCKET_NAV_INGEST_IDS.map(id => minimalMarketIngestRowForId(id)),
     status,
   )
 }

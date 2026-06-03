@@ -257,6 +257,7 @@ export interface StatusResponse {
   config?: {
     ib_client?: IbClient
     ib_flex?: StatusIbFlex
+    redis?: { subscribe_channel?: string | null }
   }
   account_sync_daemon: {
     heartbeat: AccountSyncHeartbeat

@@ -36,11 +36,11 @@ import {
 import { BifrostLogoFull, BifrostLogoMark } from '@/components/BifrostLogo'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 import { LiveNavLamp } from '@/components/layout/LiveNavLamp'
-import { CeleryNavLamp } from '@/components/layout/CeleryNavLamp'
+import { NavSubItemIcon } from '@/components/layout/SystemNavIcon'
+import { SystemNavLampProvider } from '@/components/layout/SystemNavLampContext'
 import { getAllItems, NAV_GROUPS, SETTINGS_ITEM, type NavGroup, type NavItem } from './navConfig'
 
 const LIVE_NAV_PATH = '/market/live'
-const CELERY_NAV_PATH = '/operations/celery'
 
 // ─── Persistence ───
 
@@ -92,10 +92,9 @@ function SubItem({ item, depth = 0 }: { item: NavItem; depth?: number }) {
             )}
           >
             <NavLink to={item.to}>
-              <item.icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              <NavSubItemIcon item={item} />
               <span className="flex-1">{item.label}</span>
               {item.to === LIVE_NAV_PATH && <LiveNavLamp />}
-              {item.to === CELERY_NAV_PATH && <CeleryNavLamp />}
             </NavLink>
           </SidebarMenuSubButton>
           <button
@@ -130,10 +129,9 @@ function SubItem({ item, depth = 0 }: { item: NavItem; depth?: number }) {
         )}
       >
         <NavLink to={item.to} className="flex items-center gap-2 w-full">
-          <item.icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
+          <NavSubItemIcon item={item} />
           <span className="flex-1">{item.label}</span>
           {item.to === LIVE_NAV_PATH && <LiveNavLamp />}
-          {item.to === CELERY_NAV_PATH && <CeleryNavLamp />}
         </NavLink>
       </SidebarMenuSubButton>
     </SidebarMenuSubItem>
@@ -165,10 +163,9 @@ function FlyoutItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: () =
               : 'text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground',
           )}
         >
-          <item.icon className="h-3.5 w-3.5 shrink-0 opacity-75" />
+          <NavSubItemIcon item={item} />
           <span className="flex-1">{item.label}</span>
           {item.to === LIVE_NAV_PATH && <LiveNavLamp />}
-          {item.to === CELERY_NAV_PATH && <CeleryNavLamp />}
         </NavLink>
         {hasChildren && (
           <button
@@ -462,6 +459,7 @@ export function AppSidebar() {
   )
 
   return (
+    <SystemNavLampProvider>
     <Sidebar collapsible="icon">
       {/* ── Header ── */}
       <SidebarHeader
@@ -627,5 +625,6 @@ export function AppSidebar() {
         )}
       </SidebarFooter>
     </Sidebar>
+    </SystemNavLampProvider>
   )
 }

@@ -27,6 +27,8 @@ export function OpsAuthBar({
   const role = (caps?.identity?.role ?? 'viewer').toLowerCase()
   const isAuthenticated = caps?.identity?.authenticated === true
   const authRequired = caps?.auth_required !== false
+  const isInvalidToken =
+    Boolean(token) && !isAuthenticated && caps?.identity?.name === 'invalid-token'
 
   function handleConnect() {
     const t = tokenInput.trim()
@@ -35,6 +37,7 @@ export function OpsAuthBar({
     onTokenChange(t)
     setAuthOpen(false)
     setTokenInput('')
+    queueMicrotask(() => onRefresh())
   }
 
   function handleSignOut() {
@@ -61,6 +64,10 @@ export function OpsAuthBar({
             <Badge variant="outline" className={opsAuthAuthenticatedBadgeClass()}>
               Authenticated
             </Badge>
+          ) : isInvalidToken ? (
+            <Badge variant="outline" className={opsAuthTokenRequiredBadgeClass()}>
+              Invalid token
+            </Badge>
           ) : authRequired ? (
             <Badge variant="outline" className={opsAuthTokenRequiredBadgeClass()}>
               Token required for control
@@ -71,18 +78,30 @@ export function OpsAuthBar({
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onRefresh}>
             Refresh
           </Button>
-          {isAuthenticated || token ? (
+          {isAuthenticated ? (
             <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleSignOut}>
               Sign out
             </Button>
           ) : (
-            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setAuthOpen(v => !v)}>
-              Authenticate
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setAuthOpen(v => !v)}
+              >
+                {token ? 'Change token' : 'Authenticate'}
+              </Button>
+              {token ? (
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleSignOut}>
+                  Sign out
+                </Button>
+              ) : null}
+            </>
           )}
         </div>
       </div>
-      {authOpen && !isAuthenticated && !token && (
+      {authOpen && !isAuthenticated && (
         <div className="flex items-center gap-2">
           <Input
             type="password"

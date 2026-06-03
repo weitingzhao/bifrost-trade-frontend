@@ -35,12 +35,13 @@ import { deriveRunbookState } from '@/utils/stockDataReadiness/runbook'
 import { fmt } from '@/utils/stockDataReadiness/format'
 import { CheckResultsPanel } from './CheckResultsPanel'
 import { FinGapsSheet, PriceGapsSheet } from './GapSheets'
-import { ReadinessMetricsStrip } from './ReadinessMetricsStrip'
 import { ReadinessStatusSection } from './ReadinessStatusSection'
 import { RunBookSection } from './RunBookSection'
 import { StepDetailPanel } from './StepDetailPanel'
-import { CriteriaOverviewPanel } from './CriteriaOverviewPanel'
 import { DataCatalogPanel } from './DataCatalogPanel'
+import { ReadinessMetricsTabContent } from './ReadinessMetricsTabContent'
+import { ReadinessReferenceTab } from './ReadinessReferenceTab'
+import { SepaScreeningChecklist } from './SepaScreeningChecklist'
 
 function PageInner() {
   const queryClient = useQueryClient()
@@ -53,6 +54,7 @@ function PageInner() {
     () => new Set(RUNBOOK_STAGE_LAYOUT.map(s => s.id)),
   )
   const [activeInfoTab, setActiveInfoTab] = useState<'metrics' | 'checklist' | 'database' | 'reference'>('metrics')
+  const [dataSupportChecked, setDataSupportChecked] = useState(false)
 
   const [holidaysSyncBusy, setHolidaysSyncBusy] = useState(false)
   const [holidaysSyncMsg, setHolidaysSyncMsg] = useState<string | null>(null)
@@ -90,6 +92,7 @@ function PageInner() {
   const {
     data: summary,
     isLoading: summaryLoading,
+    isFetching: summaryFetching,
     error: summaryQueryError,
     refetch: refetchSummary,
   } = useQuery({
@@ -102,6 +105,19 @@ function PageInner() {
     },
     staleTime: 60_000,
   })
+
+  /** True while summary is loading or refetching — runbook uses loading step states (Legacy `loadSummary`). */
+  const summaryRefreshing = summaryLoading || summaryFetching
+
+  const refreshReadinessBoard = useCallback(async () => {
+    const res = await refetchSummary()
+    if (res.data?.snapshot_populated) {
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.research.stockDataReadiness.criteriaStats,
+      })
+    }
+    return res
+  }, [refetchSummary, queryClient])
 
   const snapshotPopulated = summary?.snapshot_populated ?? false
 
@@ -121,16 +137,19 @@ function PageInner() {
   }, [snapshotPopulated, refetchCriteria])
 
   const derived = useMemo(
-    () => deriveRunbookState(summary, summaryLoading, activeRunStep),
-    [summary, summaryLoading, activeRunStep],
+    () => deriveRunbookState(summary, summaryRefreshing, activeRunStep),
+    [summary, summaryRefreshing, activeRunStep],
   )
 
   const handleCheckCoverage = useCallback(async () => {
     const res = await refetchSummary()
     if (res.data?.ok) {
       setCheckedSteps(new Set<number>(ALL_SEPA_RUNBOOK_STEP_IDS))
+      setDataSupportChecked(true)
     }
   }, [refetchSummary])
+
+  const snapshotEmpty = summary?.snapshot_populated === false
 
   const runHolidaysSync = useCallback(async () => {
     setHolidaysSyncBusy(true)
@@ -147,7 +166,7 @@ function PageInner() {
         `Holidays synced — fetched ${fmt(res.fetched)}, inserted ${fmt(res.inserted)}, updated ${fmt(res.updated)}`,
       )
       setHolidaysSyncOk(true)
-      void refetchSummary()
+      await refreshReadinessBoard()
       return res
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Holidays sync failed'
@@ -157,7 +176,7 @@ function PageInner() {
     } finally {
       setHolidaysSyncBusy(false)
     }
-  }, [refetchSummary])
+  }, [refreshReadinessBoard])
 
   const runUniverseEnqueue = useCallback(async () => {
     setUniverseErr(null)
@@ -196,14 +215,14 @@ function PageInner() {
           .join(' — '),
       )
       setUnifiedSnapOk(true)
-      void refetchSummary()
+      await refreshReadinessBoard()
     } catch (e) {
       setUnifiedSnapMsg(e instanceof Error ? e.message : 'Unified snapshot refresh failed')
       setUnifiedSnapOk(false)
     } finally {
       setUnifiedSnapBusy(false)
     }
-  }, [refetchSummary])
+  }, [refreshReadinessBoard])
 
   const runGroupedHistory = useCallback(async () => {
     setGroupedHistoryBusy(true)
@@ -226,13 +245,14 @@ function PageInner() {
       setGroupedHistoryOk(true)
       if (res.job_ids?.[0]) refJobs.trackStockOhlcSyncJob({ job_id: res.job_ids[0] })
       else refJobs.openJobsSheet()
+      await refreshReadinessBoard()
     } catch (e) {
       setGroupedHistoryMsg(e instanceof Error ? e.message : 'Backfill failed')
       setGroupedHistoryOk(false)
     } finally {
       setGroupedHistoryBusy(false)
     }
-  }, [refJobs])
+  }, [refJobs, refreshReadinessBoard])
 
   const runFinBackfillAll = useCallback(
     async (kind: FinDrawerKind) => {
@@ -264,7 +284,7 @@ function PageInner() {
                       : 'feed_stocks_short_volume'
           res.job_ids.forEach(jid => refJobs.trackMassiveDbJob({ job_id: jid, kind: jobKind }))
         }
-        void refetchSummary()
+        await refreshReadinessBoard()
       } catch (e) {
         setFinAllMsg(e instanceof Error ? e.message : 'Backfill failed')
         setFinAllOk(false)
@@ -272,7 +292,7 @@ function PageInner() {
         setFinAllBusy(false)
       }
     },
-    [refJobs, refetchSummary],
+    [refJobs, refreshReadinessBoard],
   )
 
   const handleToggleVoid = useCallback(
@@ -307,12 +327,12 @@ function PageInner() {
       setVoidAckBusy(dataType)
       try {
         await postSepaGapAck(dataType, !isVoid, gapCount ?? 0)
-        void refetchSummary()
+        await refreshReadinessBoard()
       } finally {
         setVoidAckBusy(null)
       }
     },
-    [summary, voidAckBusy, refetchSummary],
+    [summary, voidAckBusy, refreshReadinessBoard],
   )
 
   const runEvaluatePublish = useCallback(async () => {
@@ -352,8 +372,7 @@ function PageInner() {
       }
       setSnapshotMsg(`rows_affected=${fmt(snapRes.rows_affected)} elapsed=${fmt(snapRes.elapsed_ms)}ms`)
       setSnapshotOk(true)
-      await refetchSummary()
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.stockDataReadiness.criteriaStats })
+      await refreshReadinessBoard()
     } catch (e) {
       setSnapshotMsg(e instanceof Error ? e.message : 'Evaluate & publish failed')
       setSnapshotOk(false)
@@ -361,7 +380,7 @@ function PageInner() {
       setEvalPublishBusy(false)
       setEvalPublishPhase('idle')
     }
-  }, [refetchSummary, queryClient])
+  }, [refreshReadinessBoard])
 
   const runFixGaps = useCallback(async () => {
     setFixGapsBusy(true)
@@ -382,7 +401,7 @@ function PageInner() {
             : snap.error ?? 'Snapshot refresh failed',
         )
         setFixGapsOk(snap.ok)
-        void refetchSummary()
+        await refreshReadinessBoard()
         return
       }
       setFixGapsMsg(
@@ -396,7 +415,7 @@ function PageInner() {
     } finally {
       setFixGapsBusy(false)
     }
-  }, [refJobs, refetchSummary])
+  }, [refJobs, refreshReadinessBoard])
 
   const universeBusy = refJobs.jobBusyKind === 'feed_stocks_tickers_reference_universe'
 
@@ -436,7 +455,7 @@ function PageInner() {
         stages={derived.runbookStages}
         activeRunStep={activeRunStep}
         onSelectStep={setActiveRunStep}
-        summaryLoading={summaryLoading}
+        summaryLoading={summaryRefreshing}
         onCheckCoverage={() => void handleCheckCoverage()}
       />
 
@@ -534,25 +553,29 @@ function PageInner() {
           <TabsTrigger value="metrics">Readiness Metrics</TabsTrigger>
           <TabsTrigger value="checklist">Screening Checklist</TabsTrigger>
           <TabsTrigger value="database">Database (Raw / Computed)</TabsTrigger>
-          <TabsTrigger value="reference" disabled>
-            Reference
-          </TabsTrigger>
+          <TabsTrigger value="reference">Reference</TabsTrigger>
         </TabsList>
-        <TabsContent value="metrics" className="mt-4 space-y-4">
-          <ReadinessMetricsStrip summary={summary ?? null} vendorFillGap={derived.vendorFillGap} />
-          {criteriaStats && <CriteriaOverviewPanel stats={criteriaStats} />}
+        <TabsContent value="metrics" className="mt-4">
+          <ReadinessMetricsTabContent
+            summary={summary ?? null}
+            vendorFillGap={derived.vendorFillGap}
+            snapshotEmpty={snapshotEmpty}
+            dataSupportChecked={dataSupportChecked}
+            onCheckCoverage={() => setDataSupportChecked(true)}
+          />
         </TabsContent>
         <TabsContent value="checklist" className="mt-4">
-          {criteriaStats ? (
-            <CriteriaOverviewPanel stats={criteriaStats} detailed />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Run Step 10 and Refresh Criteria to populate screening checklist stats.
-            </p>
-          )}
+          <SepaScreeningChecklist summary={summary ?? null} criteriaStats={criteriaStats ?? null} />
         </TabsContent>
         <TabsContent value="database" className="mt-4">
           <DataCatalogPanel catalog={summary?.data_catalog ?? null} loading={summaryLoading} />
+        </TabsContent>
+        <TabsContent value="reference" className="mt-4">
+          <ReadinessReferenceTab
+            summary={summary ?? null}
+            summaryLoading={summaryLoading}
+            onRefreshSummary={() => void refetchSummary()}
+          />
         </TabsContent>
       </Tabs>
 

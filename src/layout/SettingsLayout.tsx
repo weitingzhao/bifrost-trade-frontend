@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   BarChart2, ChevronDown, ChevronRight,
-  Cpu, Database, HardDrive, Globe,
+  Cpu, Database, HardDrive,
   Layers, Layers2, Plug, Radio, Wifi,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { MassiveSidebarNav } from '@/layout/settings/MassiveSidebarNav'
 
 // ─── Nav tree ────────────────────────────────────────────────────────────────
 
@@ -64,12 +65,6 @@ const NAV: NavGroup[] = [
         items: [
           leaf('Subscribe',           '/settings/subscribe', Radio),
           leaf('Interactive Brokers', '/settings/feed/ib',   Plug),
-          branch('Massive', Globe, [
-            leaf('Overview', '/settings/feed/massive',         Globe),
-            leaf('Stock',    '/settings/feed/massive-stock',   HardDrive),
-            leaf('Option',   '/settings/feed/massive-option',  Layers),
-            leaf('Common',   '/settings/feed/massive-comm',    BarChart2),
-          ]),
         ],
       },
     ],
@@ -167,7 +162,7 @@ export function SettingsLayout() {
 
   return (
     <div className="flex h-full">
-      <aside className="w-56 shrink-0 border-r border-border bg-muted/20 overflow-y-auto">
+      <aside className="w-60 shrink-0 border-r border-border bg-muted/20 overflow-y-auto">
         <div className="px-3 py-4 space-y-5">
           {NAV.map((group, gi) => (
             <div key={group.group}>
@@ -188,6 +183,7 @@ export function SettingsLayout() {
                         ? <LeafItem key={item.to} item={item} />
                         : <BranchItem key={item.label} item={item} />
                     )}
+                    {section.section === 'Feed' ? <MassiveSidebarNav /> : null}
                   </div>
                 </div>
               ))}

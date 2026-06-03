@@ -190,6 +190,9 @@ export function ingestActionButtonsForState(processActive: string): { showStart:
 }
 
 /** Richer Ops error text when Account Sync Daemon start/stop fails. */
+export const INGEST_CONTROL_PENDING_DIALOG_MESSAGE =
+  'Command sent — Ops API is processing. You can close this dialog; watch the status lamp and process badge below.'
+
 export function formatAccountSyncOpsError(raw: string): string {
   const m = raw.trim()
   if (m.includes('exited immediately')) {

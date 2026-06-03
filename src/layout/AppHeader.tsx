@@ -51,10 +51,10 @@ const PAGE_TITLES: Record<string, string> = {
   '/settings/coverage/stock-ib':     'Settings · Coverage — Stock (IB)',
   '/settings/coverage/stock-massive':'Settings · Coverage — Stock (Massive)',
   '/settings/feed/ib':               'Settings · Feed — IB',
-  '/settings/feed/massive':          'Settings · Feed — Massive',
+  '/settings/feed/massive':          'Settings · Feed — Massive Overview',
   '/settings/feed/massive-stock':    'Settings · Massive — Stock',
   '/settings/feed/massive-option':   'Settings · Massive — Option',
-  '/settings/feed/massive-comm':     'Settings · Massive — Common',
+  '/settings/feed/massive-comm':     'Settings · Massive — Comm',
   '/settings/daemon-app':            'Settings · Daemon App',
   '/settings/tech-stack':            'Settings · Tech Stack',
   '/settings/ib':                    'Settings · IB Configure',
@@ -106,7 +106,7 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
               title="Celery workers and queue pending — Operations → Celery"
             >
               <Terminal className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-              <StatusLamp lamp={celeryMetrics.lamp} className="h-2 w-2" />
+              <StatusLamp lamp={celeryMetrics.lamp} variant="dot" className="h-2 w-2" />
               <span className="text-muted-foreground">{pendingLabel}</span>
             </Button>
           </TooltipTrigger>

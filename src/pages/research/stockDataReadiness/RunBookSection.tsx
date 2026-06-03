@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import type { RunbookStageView, SepaRunStep } from '@/types/stockDataReadiness'
 import { CheckStatusDot } from './CheckStatusDot'
 import { stageHeadBorderClass } from './stageHeadBorder'
+import { runbookTabIndexClass } from './stockDataReadinessStepUi'
 
 interface Props {
   stages: RunbookStageView[]
@@ -86,10 +87,7 @@ export function RunBookSection({
                   onClick={() => onSelectStep(s.id)}
                 >
                   <span
-                    className={cn(
-                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
-                      activeRunStep === s.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
-                    )}
+                    className={runbookTabIndexClass(s.status, activeRunStep === s.id, s.done)}
                   >
                     {s.id}
                   </span>

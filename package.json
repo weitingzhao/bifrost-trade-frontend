@@ -12,7 +12,8 @@
     "format": "prettier --write src",
     "test": "vitest",
     "test:run": "vitest run",
-    "check:legacy-css": "bash scripts/check-legacy-css.sh"
+    "check:legacy-css": "bash scripts/check-legacy-css.sh",
+    "sync:massive-stocks-coverage": "cp ../bifrost-trader-engine/docs/plans/massive_stocks_api_coverage.html public/plans/massive_stocks_api_coverage.html"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",

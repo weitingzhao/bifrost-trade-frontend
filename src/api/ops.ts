@@ -17,9 +17,8 @@ import type {
   JobQueueStatusCounts,
 } from '@/types/ops'
 import { withValidation } from '@/lib/apiValidation'
+import { opsUrl } from '@/lib/devApiUrl'
 import { WorkersResponseSchema, QueuesResponseSchema } from '@/lib/schemas/ops'
-
-const BASE = import.meta.env.VITE_API_OPS as string
 
 const validateWorkers = withValidation<WorkersResponse>(WorkersResponseSchema, 'ops/workers')
 const validateQueues = withValidation<QueuesResponse>(QueuesResponseSchema, 'ops/queues')
@@ -40,17 +39,19 @@ export function setOpsToken(token: string): void {
   }
 }
 
-function authHeaders(token: string): Record<string, string> {
-  if (!token) return {}
-  return { Authorization: `Bearer ${token}` }
+/** Resolve token at request time (sessionStorage), matching legacy Ops client behavior. */
+function resolveOpsAuthToken(explicit?: string): string {
+  return (explicit ?? getOpsToken()).trim()
 }
 
-function jsonAuthHeaders(token: string): Record<string, string> {
-  return { 'Content-Type': 'application/json', ...authHeaders(token) }
+function authHeaders(explicitToken?: string): Record<string, string> {
+  const t = resolveOpsAuthToken(explicitToken)
+  if (!t) return {}
+  return { Authorization: `Bearer ${t}` }
 }
 
-function opsUrl(path: string): string {
-  return `${BASE}${path}`
+function jsonAuthHeaders(explicitToken?: string): Record<string, string> {
+  return { 'Content-Type': 'application/json', ...authHeaders(explicitToken) }
 }
 
 async function parseJson<T>(r: Response): Promise<T> {
@@ -131,9 +132,8 @@ export async function controlBroker(action: BrokerAction): Promise<{
 // ── Celery capabilities ──────────────────────────────────────────────────────
 
 export async function fetchCeleryCapabilities(): Promise<CeleryCapabilitiesResponse> {
-  const token = getOpsToken()
   const r = await fetch(opsUrl('/ops/celery/capabilities'), {
-    headers: authHeaders(token),
+    headers: authHeaders(),
   })
   const j = await parseJson<Record<string, unknown>>(r)
   const matrixRaw = j.run_massive_job_matrix
@@ -451,13 +451,13 @@ export interface OpsCapabilities {
   auth_required?: boolean
 }
 
-export async function fetchMarketIngestServices(token: string): Promise<{
+export async function fetchMarketIngestServices(): Promise<{
   ok: boolean
   services: MarketIngestServiceRow[]
   error?: string
 }> {
   const r = await fetch(opsUrl('/ops/market-ingest/services'), {
-    headers: authHeaders(token),
+    headers: authHeaders(),
   })
   return parseJson(r)
 }
@@ -465,7 +465,6 @@ export async function fetchMarketIngestServices(token: string): Promise<{
 export async function controlMarketIngest(
   serviceId: string,
   action: MarketIngestAction,
-  token: string,
 ): Promise<{
   ok: boolean
   queued?: boolean
@@ -479,7 +478,7 @@ export async function controlMarketIngest(
   try {
     const r = await fetch(opsUrl('/ops/market-ingest/control'), {
       method: 'POST',
-      headers: jsonAuthHeaders(token),
+      headers: jsonAuthHeaders(),
       body: JSON.stringify({ service_id: serviceId, action }),
       signal: controller.signal,
     })
@@ -504,7 +503,7 @@ export async function controlMarketIngest(
   }
 }
 
-export async function clearMarketIngestConflictLeases(token: string): Promise<{
+export async function clearMarketIngestConflictLeases(): Promise<{
   ok: boolean
   cleared?: string[]
   errors?: string[]
@@ -512,18 +511,18 @@ export async function clearMarketIngestConflictLeases(token: string): Promise<{
 }> {
   const r = await fetch(opsUrl('/ops/market-ingest/clear-conflict-leases'), {
     method: 'POST',
-    headers: jsonAuthHeaders(token),
+    headers: jsonAuthHeaders(),
   })
   return parseJson(r)
 }
 
-export async function fetchOpsHealth(token: string): Promise<OpsHealthResponse> {
-  const r = await fetch(opsUrl('/ops/health'), { headers: authHeaders(token) })
+export async function fetchOpsHealth(): Promise<OpsHealthResponse> {
+  const r = await fetch(opsUrl('/ops/health'), { headers: authHeaders() })
   return parseJson(r)
 }
 
-export async function fetchOpsCapabilities(token: string): Promise<OpsCapabilities> {
-  const r = await fetch(opsUrl('/ops/auth/capabilities'), { headers: authHeaders(token) })
+export async function fetchOpsCapabilities(explicitToken?: string): Promise<OpsCapabilities> {
+  const r = await fetch(opsUrl('/ops/auth/capabilities'), { headers: authHeaders(explicitToken) })
   return parseJson(r)
 }
 

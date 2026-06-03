@@ -86,7 +86,11 @@ function ReactorNode({
         )}
 
         <div className="flex items-center gap-0.5">
-          <StatusLamp lamp={node.lamp} className={cn('shrink-0', compact ? 'h-1.5 w-1.5' : 'h-2 w-2')} />
+          <StatusLamp
+            lamp={node.lamp}
+            variant="dot"
+            className={cn('shrink-0', compact ? 'h-1.5 w-1.5' : 'h-2 w-2')}
+          />
           <span className={cn('font-semibold leading-none truncate', compact ? 'text-[9px]' : 'text-[11px]')}>
             {node.name}
           </span>
@@ -292,13 +296,13 @@ export function ServiceTopologyOverview({
 
       <div className={embedded ? topologyLegendEmbeddedClass : topologyLegendClass}>
         <span className="inline-flex items-center gap-1">
-          <StatusLamp lamp="green" className="h-1.5 w-1.5" /> Online
+          <StatusLamp lamp="green" variant="dot" className="h-1.5 w-1.5" /> Online
         </span>
         <span className="inline-flex items-center gap-1">
-          <StatusLamp lamp="yellow" className="h-1.5 w-1.5" /> Probing
+          <StatusLamp lamp="yellow" variant="dot" className="h-1.5 w-1.5" /> Probing
         </span>
         <span className="inline-flex items-center gap-1">
-          <StatusLamp lamp="red" className="h-1.5 w-1.5" /> Offline
+          <StatusLamp lamp="red" variant="dot" className="h-1.5 w-1.5" /> Offline
         </span>
         <span className="ml-auto hidden lg:inline">
           Dashed bays — Edge · APIs · Celery · Daemons · Grid btn = auto layout

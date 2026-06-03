@@ -1,19 +1,18 @@
-import { PageHeader, PageShell } from '@/components/layout'
-import { Card, CardContent } from '@/components/ui/card'
+import { PageShell } from '@/components/layout'
+import { MassiveRefJobProvider } from '@/components/massive/MassiveRefJobProvider'
+import { MassiveStockStatusStrip } from '@/pages/settings/feed/massive/components/MassiveStockStatusStrip'
+import { useMassiveStatus } from '@/pages/settings/feed/massive/hooks/useMassiveStatus'
+import { MassiveStockFeedBody } from '@/pages/settings/feed/massive/stock/MassiveStockFeedBody'
 
 export default function FeedMassiveStockPage() {
+  const { data: massiveStatus } = useMassiveStatus()
+
   return (
-    <PageShell>
-      <PageHeader
-        title="Massive — Stock"
-        description="Polygon stock REST, WebSocket, and OHLCV backfill (see Celery stocks_massive queues)."
-      />
-      <Card>
-        <CardContent className="py-6 text-sm text-muted-foreground">
-          Detailed stock feed panels are being migrated from Legacy. Use Operations → Celery for
-          stocks_massive job queues and Settings → API for Massive service health.
-        </CardContent>
-      </Card>
+    <PageShell className="space-y-4">
+      <MassiveRefJobProvider>
+        <MassiveStockStatusStrip massiveStatus={massiveStatus} />
+        <MassiveStockFeedBody massiveStatus={massiveStatus} />
+      </MassiveRefJobProvider>
     </PageShell>
   )
 }

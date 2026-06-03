@@ -63,7 +63,7 @@ export function useDaemonEngineOps(status: StatusResponse | null) {
     useMarketIngestServices(token)
   const { data: opsHealth } = useOpsHealth(token)
   const { data: caps } = useOpsCapabilities(token)
-  const controlMutation = useControlMarketIngest(token)
+  const controlMutation = useControlMarketIngest()
 
   const allServices = ingestData?.services ?? []
   const daemonServices = marketIngestServicesForDaemonAggregate(allServices)

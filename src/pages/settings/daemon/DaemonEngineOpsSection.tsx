@@ -13,6 +13,7 @@ import type { StatusResponse } from '@/types/monitor'
 import type { MarketIngestAction } from '@/api/ops'
 import {
   formatAccountSyncOpsError,
+  INGEST_CONTROL_PENDING_DIALOG_MESSAGE,
 } from '@/utils/ingestOpsShared'
 import { OpsAuthBar } from '@/pages/settings/socket/OpsAuthBar'
 import { LocalControlAgentPanel } from '@/pages/settings/socket/LocalControlAgentPanel'
@@ -188,6 +189,9 @@ export function DaemonEngineOpsSection({
             <DialogTitle>{confirm.title}</DialogTitle>
             <DialogDescription>{confirm.message}</DialogDescription>
           </DialogHeader>
+          {controlMutation.isPending && !actionError && (
+            <p className="text-sm text-muted-foreground">{INGEST_CONTROL_PENDING_DIALOG_MESSAGE}</p>
+          )}
           {actionError && (
             <p className={daemonDialogErrorClass}>{actionError}</p>
           )}

@@ -72,15 +72,16 @@ function FunnelRow({
     >
       <span
         className={cn(
-          'font-mono font-medium tabular-nums',
+          'text-right font-mono font-semibold tabular-nums text-muted-foreground',
           isFull && (suffix === '11' ? 'text-violet-400' : 'text-emerald-400'),
         )}
       >
         {isFull ? `${suffix}/${suffix} ★` : `${conditionsPassed}/${suffix}`}
       </span>
-      <div className="h-2 overflow-hidden rounded-full bg-muted">
+      {/* Legacy ssp-funnel-bar-wrap: center-aligned fill → funnel taper when sorted DESC */}
+      <div className="flex h-4 w-full items-center justify-center">
         <div
-          className={cn('h-full rounded-full transition-all', colorClass)}
+          className={cn('h-full min-w-[2px] rounded-sm transition-[width] duration-200 ease-out', colorClass)}
           style={{ width: `${widthPct}%` }}
         />
       </div>

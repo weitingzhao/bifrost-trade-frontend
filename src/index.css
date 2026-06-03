@@ -317,4 +317,32 @@
     color: #ef4444;
     font-weight: 600;
   }
+
+  @keyframes lamp-pulse-green {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.65;
+    }
+  }
+
+  @keyframes lamp-pulse-red {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  .animate-lamp-pulse-green {
+    animation: lamp-pulse-green 2.5s ease-in-out infinite;
+  }
+
+  .animate-lamp-pulse-red {
+    animation: lamp-pulse-red 1.5s ease-in-out infinite;
+  }
 }

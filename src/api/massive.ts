@@ -1,7 +1,25 @@
 import { postControlShutdown } from '@/api/apiControl'
+import { withValidation } from '@/lib/apiValidation'
+import { massiveUrl } from '@/lib/devApiUrl'
+import { MassiveStatusResponseSchema } from '@/lib/schemas/optionDiscovery'
 import type { MassiveJobApiRow } from '@/types/ops'
+import type { MassiveStatusResponse } from '@/types/optionDiscovery'
 
 const BASE = import.meta.env.VITE_API_MASSIVE as string
+
+export async function fetchMassiveStatus(): Promise<MassiveStatusResponse> {
+  const r = await fetch(massiveUrl('/research/massive/status'))
+  const j = await r.json().catch(() => ({}))
+  withValidation(MassiveStatusResponseSchema, 'fetchMassiveStatus')(j)
+  const years = Number(j.daily_full_backfill_years)
+  return {
+    configured: Boolean(j.configured),
+    tier: typeof j.tier === 'string' ? j.tier : 'starter',
+    delay_notice: typeof j.delay_notice === 'string' ? j.delay_notice : '',
+    trades_enabled: Boolean(j.trades_enabled),
+    daily_full_backfill_years: Number.isFinite(years) && years > 0 ? years : 5,
+  }
+}
 
 export async function postMassiveShutdown(): Promise<{ ok: boolean; error?: string }> {
   return postControlShutdown(`${BASE.replace(/\/$/, '')}/research/massive/shutdown`, {
@@ -11,8 +29,18 @@ export async function postMassiveShutdown(): Promise<{ ok: boolean; error?: stri
 
 export type TickerReferenceJobKind =
   | 'feed_stocks_tickers_reference_universe'
+  | 'ticker_reference_universe'
+  | 'feed_stocks_tickers_overview'
+  | 'ticker_reference_overview'
+  | 'feed_stocks_tickers_related'
+  | 'ticker_reference_related'
   | 'feed_stocks_tickers_types'
   | 'ticker_reference_ticker_types'
+  | 'ticker_reference_instrument_types'
+  | 'stock_reference_universe'
+  | 'stock_reference_overview'
+  | 'stock_reference_related'
+  | 'stock_reference_instrument_types'
 
 export async function postTickerReferenceJob(body: {
   kind: TickerReferenceJobKind

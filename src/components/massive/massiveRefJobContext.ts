@@ -1,26 +1,12 @@
 import { createContext, useContext } from 'react'
 import type { TickerReferenceJobKind } from '@/api/massive'
-import type { MassiveJobApiRow } from '@/types/ops'
+import type {
+  MassiveStockRefJobDomain,
+  RefJobTrackItem,
+  TrackedMassiveDbJobKind,
+} from '@/utils/massive/stockReferenceJobHelpers'
 
-export type TrackedMassiveDbJobKind =
-  | TickerReferenceJobKind
-  | 'feed_stocks_aggregate'
-  | 'feed_stocks_income_statements'
-  | 'feed_stocks_balance_sheets'
-  | 'feed_stocks_cash_flows'
-  | 'feed_stocks_ratios'
-  | 'feed_stocks_short_interest'
-  | 'feed_stocks_short_volume'
-
-export type RefJobTrackItem = {
-  jobId: string
-  kind: TrackedMassiveDbJobKind
-  deduplicated?: boolean
-  status: string
-  job?: MassiveJobApiRow
-  streamError?: string
-  enqueuedAt: number
-}
+export type { RefJobTrackItem, TrackedMassiveDbJobKind, MassiveStockRefJobDomain }
 
 export type MassiveRefJobSessionApi = {
   refJobItems: RefJobTrackItem[]
@@ -38,9 +24,12 @@ export type MassiveRefJobSessionApi = {
     job_id?: string
     deduplicated?: boolean
     kind: TrackedMassiveDbJobKind
+    domain?: MassiveStockRefJobDomain
   }) => void
   trackStockOhlcSyncJob: (res: { job_id?: string; deduplicated?: boolean }) => void
+  withStockOhlcHttp: <T>(fn: () => Promise<T>) => Promise<T>
   handleClearCompletedJobs: () => void
+  handleClearAllJobs: () => void
 }
 
 export const MassiveRefJobSessionContext = createContext<MassiveRefJobSessionApi | null>(null)

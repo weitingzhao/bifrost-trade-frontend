@@ -67,6 +67,17 @@ export async function postFlatten(): Promise<{ ok?: boolean; error?: string }> {
   return res.json()
 }
 
+/** Release: daemon unsubscribes all real-time ticker subscriptions. */
+export async function postReleaseTickerSubscriptions(): Promise<{
+  ok: boolean
+  error?: string
+  message?: string
+}> {
+  const res = await fetch(`${BASE}/control/release_ticker_subscriptions`, { method: 'POST' })
+  const j = await res.json().catch(() => ({}))
+  return { ...j, ok: res.ok, error: j.error ?? (res.ok ? undefined : res.statusText) }
+}
+
 export async function fetchOperations(limit = 50): Promise<{ operations: Operation[] }> {
   const res = await fetch(`${BASE}/operations?limit=${limit}`)
   if (!res.ok) throw new Error(`Monitor /operations: ${res.status}`)

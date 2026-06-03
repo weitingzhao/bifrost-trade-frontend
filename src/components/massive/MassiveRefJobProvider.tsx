@@ -4,30 +4,35 @@ import {
   useMemo,
   useRef,
   useState,
+  type MutableRefObject,
   type ReactNode,
 } from 'react'
 import { postTickerReferenceJob, subscribeMassiveJobEvents, type TickerReferenceJobKind } from '@/api/massive'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-
+import { TickerReferenceJobsSheet } from '@/components/massive/TickerReferenceJobsSheet'
 import {
   MassiveRefJobSessionContext,
   type MassiveRefJobSessionApi,
+} from '@/components/massive/massiveRefJobContext'
+import {
+  MAX_REF_JOBS_TRACKED,
+  countActiveRefJobs,
+  isRefJobTerminal,
   type RefJobTrackItem,
   type TrackedMassiveDbJobKind,
-} from '@/components/massive/massiveRefJobContext'
+} from '@/utils/massive/stockReferenceJobHelpers'
 
-const MAX_TRACKED = 20
-
-function isTerminal(status: string): boolean {
-  const s = status.toLowerCase()
-  return s === 'done' || s === 'failed'
+function trimRefJobItems(
+  items: RefJobTrackItem[],
+  closers: MutableRefObject<Map<string, () => void>>,
+): RefJobTrackItem[] {
+  if (items.length <= MAX_REF_JOBS_TRACKED) return items
+  const sorted = [...items].sort((a, b) => a.enqueuedAt - b.enqueuedAt)
+  while (sorted.length > MAX_REF_JOBS_TRACKED) {
+    const ev = sorted.shift()!
+    closers.current.get(ev.jobId)?.()
+    closers.current.delete(ev.jobId)
+  }
+  return sorted
 }
 
 export function MassiveRefJobProvider({ children }: { children: ReactNode }) {
@@ -36,10 +41,13 @@ export function MassiveRefJobProvider({ children }: { children: ReactNode }) {
   const [jobBusyKind, setJobBusyKind] = useState<TrackedMassiveDbJobKind | null>(null)
   const sseClosersRef = useRef<Map<string, () => void>>(new Map())
 
-  useEffect(() => () => {
-    sseClosersRef.current.forEach(close => close())
-    sseClosersRef.current.clear()
-  }, [])
+  useEffect(
+    () => () => {
+      sseClosersRef.current.forEach(close => close())
+      sseClosersRef.current.clear()
+    },
+    [],
+  )
 
   const startJobStream = useCallback((jid: string) => {
     if (sseClosersRef.current.has(jid)) return
@@ -51,11 +59,24 @@ export function MassiveRefJobProvider({ children }: { children: ReactNode }) {
             if (row.jobId !== jid) return row
             if (!data.ok) {
               sseClosersRef.current.delete(jid)
-              return { ...row, streamError: data.error ?? 'Job stream error', status: 'failed' }
+              return {
+                ...row,
+                streamError: data.error ?? 'Job stream error',
+                status: 'failed',
+              }
             }
-            const st = (data.job?.status ?? '').trim() || 'running'
-            if (isTerminal(st)) sseClosersRef.current.delete(jid)
-            return { ...row, status: st, job: data.job, streamError: row.streamError }
+            const j = data.job
+            const st = (j?.status ?? '').trim() || 'running'
+            const stLower = st.toLowerCase()
+            if (stLower === 'done' || stLower === 'failed') {
+              sseClosersRef.current.delete(jid)
+            }
+            return {
+              ...row,
+              status: st,
+              job: j,
+              streamError: row.streamError,
+            }
           }),
         )
       },
@@ -64,27 +85,47 @@ export function MassiveRefJobProvider({ children }: { children: ReactNode }) {
     sseClosersRef.current.set(jid, sub.close)
   }, [])
 
-  const trackMassiveDbJob = useCallback(
-    (params: { job_id?: string; deduplicated?: boolean; kind: TrackedMassiveDbJobKind }) => {
-      if (!params.job_id) {
-        setJobsSheetOpen(true)
-        return
-      }
+  const pushJob = useCallback(
+    (params: {
+      jobId: string
+      kind: TrackedMassiveDbJobKind
+      deduplicated: boolean
+      domain: RefJobTrackItem['domain']
+    }) => {
+      const { jobId, kind, deduplicated, domain } = params
+      const now = Date.now()
       setRefJobItems(prev => {
-        const next: RefJobTrackItem[] = [
-          {
-            jobId: params.job_id!,
-            kind: params.kind,
-            deduplicated: params.deduplicated,
-            status: 'pending',
-            enqueuedAt: Date.now(),
-          },
-          ...prev.filter(r => r.jobId !== params.job_id),
-        ].slice(0, MAX_TRACKED)
-        return next
+        const idx = prev.findIndex(x => x.jobId === jobId)
+        let next: RefJobTrackItem[]
+        if (idx >= 0) {
+          next = [...prev]
+          next[idx] = {
+            ...next[idx],
+            kind,
+            domain,
+            deduplicated,
+            status: deduplicated ? 'deduplicated (waiting)' : 'enqueued',
+            streamError: undefined,
+            job: undefined,
+            enqueuedAt: next[idx].enqueuedAt,
+          }
+        } else {
+          next = [
+            ...prev,
+            {
+              jobId,
+              kind,
+              domain,
+              deduplicated,
+              status: deduplicated ? 'deduplicated (waiting)' : 'enqueued',
+              enqueuedAt: now,
+            },
+          ]
+        }
+        return trimRefJobItems(next, sseClosersRef)
       })
-      startJobStream(params.job_id)
       setJobsSheetOpen(true)
+      startJobStream(jobId)
     },
     [startJobStream],
   )
@@ -97,105 +138,142 @@ export function MassiveRefJobProvider({ children }: { children: ReactNode }) {
     ) => {
       setJobBusyKind(kind)
       try {
-        const res = await postTickerReferenceJob({ kind, payload, priority })
-        if (res.ok && res.job_id) {
-          trackMassiveDbJob({ job_id: res.job_id, deduplicated: res.deduplicated, kind })
+        const res = await postTickerReferenceJob({
+          kind,
+          payload,
+          ...(priority ? { priority } : {}),
+        })
+        if (!res.ok) {
+          return { ok: false as const, error: res.error ?? 'Enqueue failed' }
         }
-        return res
+        const jid = res.job_id
+        if (jid) {
+          pushJob({
+            jobId: jid,
+            kind,
+            deduplicated: Boolean(res.deduplicated),
+            domain: 'tickers',
+          })
+        }
+        return {
+          ok: true as const,
+          job_id: jid,
+          deduplicated: res.deduplicated,
+        }
       } finally {
         setJobBusyKind(null)
       }
     },
-    [trackMassiveDbJob],
+    [pushJob],
   )
 
   const trackStockOhlcSyncJob = useCallback(
     (res: { job_id?: string; deduplicated?: boolean }) => {
-      trackMassiveDbJob({
-        job_id: res.job_id,
-        deduplicated: res.deduplicated,
+      const jid = res.job_id
+      if (!jid) return
+      pushJob({
+        jobId: jid,
         kind: 'feed_stocks_aggregate',
+        deduplicated: Boolean(res.deduplicated),
+        domain: 'ohlc',
       })
     },
-    [trackMassiveDbJob],
+    [pushJob],
   )
+
+  const trackMassiveDbJob = useCallback(
+    (params: {
+      job_id?: string
+      deduplicated?: boolean
+      kind: TrackedMassiveDbJobKind
+      domain?: RefJobTrackItem['domain']
+    }) => {
+      const jid = params.job_id
+      if (!jid) return
+      pushJob({
+        jobId: jid,
+        kind: params.kind,
+        deduplicated: Boolean(params.deduplicated),
+        domain:
+          params.domain ??
+          (params.kind === 'feed_stocks_aggregate' || params.kind === 'stock_ohlc_sync'
+            ? 'ohlc'
+            : 'financials'),
+      })
+    },
+    [pushJob],
+  )
+
+  const withStockOhlcHttp = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
+    setJobBusyKind('feed_stocks_aggregate')
+    try {
+      return await fn()
+    } finally {
+      setJobBusyKind(null)
+    }
+  }, [])
 
   const handleClearCompletedJobs = useCallback(() => {
     setRefJobItems(prev => {
-      const removed = prev.filter(r => isTerminal(r.status))
+      const removed = prev.filter(isRefJobTerminal)
       removed.forEach(r => {
         sseClosersRef.current.get(r.jobId)?.()
         sseClosersRef.current.delete(r.jobId)
       })
-      return prev.filter(r => !isTerminal(r.status))
+      return prev.filter(i => !isRefJobTerminal(i))
     })
   }, [])
 
-  const activeJobCount = useMemo(
-    () => refJobItems.filter(r => !isTerminal(r.status)).length,
-    [refJobItems],
-  )
+  const handleClearAllJobs = useCallback(() => {
+    sseClosersRef.current.forEach(close => close())
+    sseClosersRef.current.clear()
+    setRefJobItems([])
+  }, [])
+
+  const activeJobCount = useMemo(() => countActiveRefJobs(refJobItems), [refJobItems])
+
+  const openJobsSheet = useCallback(() => setJobsSheetOpen(true), [])
 
   const api = useMemo<MassiveRefJobSessionApi>(
     () => ({
       refJobItems,
       jobsSheetOpen,
-      openJobsSheet: () => setJobsSheetOpen(true),
       setJobsSheetOpen,
+      openJobsSheet,
       activeJobCount,
       jobBusyKind,
       enqueueTickerReferenceJob,
       trackMassiveDbJob,
       trackStockOhlcSyncJob,
+      withStockOhlcHttp,
       handleClearCompletedJobs,
+      handleClearAllJobs,
     }),
     [
       refJobItems,
       jobsSheetOpen,
+      openJobsSheet,
       activeJobCount,
       jobBusyKind,
       enqueueTickerReferenceJob,
       trackMassiveDbJob,
       trackStockOhlcSyncJob,
+      withStockOhlcHttp,
       handleClearCompletedJobs,
+      handleClearAllJobs,
     ],
   )
 
   return (
     <MassiveRefJobSessionContext.Provider value={api}>
       {children}
-      <Sheet open={jobsSheetOpen} onOpenChange={setJobsSheetOpen}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Massive jobs</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4 space-y-3">
-            {refJobItems.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tracked jobs in this session.</p>
-            ) : (
-              refJobItems.map(row => (
-                <div key={row.jobId} className="rounded-lg border border-border p-3 space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <code className="text-xs font-mono truncate">{row.jobId}</code>
-                    <Badge variant="outline" className="text-[10px] shrink-0">
-                      {row.status}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{row.kind}</p>
-                  {row.streamError && (
-                    <p className="text-xs text-destructive">{row.streamError}</p>
-                  )}
-                </div>
-              ))
-            )}
-            {refJobItems.some(r => isTerminal(r.status)) && (
-              <Button variant="outline" size="sm" onClick={handleClearCompletedJobs}>
-                Clear completed
-              </Button>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      <TickerReferenceJobsSheet
+        open={jobsSheetOpen}
+        onClose={() => setJobsSheetOpen(false)}
+        items={refJobItems}
+        onClearCompleted={handleClearCompletedJobs}
+        onClearAll={handleClearAllJobs}
+      />
     </MassiveRefJobSessionContext.Provider>
   )
 }

@@ -1,15 +1,19 @@
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+import { SnapshotByTypeBreakdown } from './SnapshotByTypeBreakdown'
+import {
+  ReadinessCode,
+  ReadinessGhostLink,
+  ReadinessGapsButton,
+  ReadinessMaintenanceBox,
+  ReadinessOperationLog,
+  ReadinessPrimaryButton,
+  ReadinessSecondaryButton,
+  ReadinessStepDesc,
+  ReadinessStepLabel,
+} from './ReadinessStepPrimitives'
 import { FIN_STMT_GAP_INSTRUMENT_CODES } from '@/constants/stockDataReadiness'
 import { gapAckTypeForFinKind } from '@/api/research/stockDataReadiness'
 import type { FinDrawerKind, SepaReadinessSummaryResponse, SepaRunStep } from '@/types/stockDataReadiness'
@@ -33,28 +37,6 @@ function Feedback({ ok, children }: { ok: boolean | null; children: React.ReactN
       )}
     >
       {children}
-    </div>
-  )
-}
-
-function MaintenanceBox({ title, rows }: { title: string; rows: { badge: string; badgeVariant: 'auto' | 'manual'; text: React.ReactNode }[] }) {
-  return (
-    <div className="rounded-lg border border-border/80 bg-muted/20 p-3 space-y-2 text-xs">
-      <div className="font-semibold text-foreground">{title}</div>
-      {rows.map((row, i) => (
-        <div key={i} className="flex gap-2">
-          <Badge
-            variant="outline"
-            className={cn(
-              'text-[9px] h-4 px-1 shrink-0',
-              row.badgeVariant === 'auto' ? 'border-sky-500/50 text-sky-400' : 'border-amber-500/50 text-amber-400',
-            )}
-          >
-            {row.badge}
-          </Badge>
-          <span className="text-muted-foreground leading-relaxed">{row.text}</span>
-        </div>
-      ))}
     </div>
   )
 }
@@ -234,82 +216,89 @@ export function StepDetailPanel(props: Props) {
 
       {activeStep === 2 && (
         <div className="space-y-3">
-          <div className="text-sm font-medium">
-            Refresh <Code>public.cache_stock_snapshot</Code> (Massive <Code>GET /v3/snapshot</Code>, stocks)
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Batches <Code>v_us_equity_universe</Code> via <Code>ticker.any_of</Code> (≤250 per request).
-          </p>
-          <Button disabled={unifiedSnapBusy || anyJobBusy} onClick={onUnifiedSnapshot}>
+          <ReadinessStepLabel>
+            Refresh <ReadinessCode>public.cache_stock_snapshot</ReadinessCode> (Massive{' '}
+            <ReadinessCode>GET /v3/snapshot</ReadinessCode>, stocks)
+          </ReadinessStepLabel>
+          <ReadinessStepDesc>
+            Batches all <ReadinessCode>v_us_equity_universe</ReadinessCode> symbols via{' '}
+            <ReadinessCode>ticker.any_of</ReadinessCode> (≤250 per request). Flattens Massive{' '}
+            <ReadinessCode>session</ReadinessCode>, <ReadinessCode>last_minute</ReadinessCode>, and optional{' '}
+            <ReadinessCode>last_trade</ReadinessCode> / <ReadinessCode>last_quote</ReadinessCode> into scalar
+            columns (no jsonb) for SQL joins.
+          </ReadinessStepDesc>
+          <ReadinessPrimaryButton
+            disabled={unifiedSnapBusy || anyJobBusy}
+            onClick={onUnifiedSnapshot}
+          >
             {unifiedSnapBusy ? 'Refreshing…' : 'Refresh unified snapshots'}
-          </Button>
-          <Feedback ok={unifiedSnapOk}>{unifiedSnapMsg}</Feedback>
-          {(summary?.stock_unified_snapshot_by_type?.length ?? 0) > 0 && (
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Snapshot rows</TableHead>
-                    <TableHead className="text-right">Universe tickers</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {summary!.stock_unified_snapshot_by_type!.map(r => (
-                    <TableRow key={r.code}>
-                      <TableCell className="font-mono text-xs">{r.code}</TableCell>
-                      <TableCell className="text-xs">{r.description ?? '—'}</TableCell>
-                      <TableCell className="text-right font-mono text-xs">{fmt(r.snapshot_row_count)}</TableCell>
-                      <TableCell className="text-right font-mono text-xs text-muted-foreground">
-                        {fmt(r.universe_ticker_count)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          </ReadinessPrimaryButton>
+          <ReadinessOperationLog ok={unifiedSnapOk}>{unifiedSnapMsg}</ReadinessOperationLog>
+          <SnapshotByTypeBreakdown rows={summary?.stock_unified_snapshot_by_type ?? null} />
         </div>
       )}
 
       {activeStep === 3 && (
         <div className="space-y-3">
-          <div className="text-sm font-medium">Backfill <Code>public.stock_day</Code> bars</div>
-          <MaintenanceBox
+          <ReadinessStepLabel>
+            Backfill <ReadinessCode>public.stock_day</ReadinessCode> bars
+          </ReadinessStepLabel>
+          <ReadinessMaintenanceBox
             title="Daily maintenance strategy"
             rows={[
               {
                 badge: 'AUTO',
-                badgeVariant: 'auto',
+                variant: 'auto',
                 text: (
                   <>
-                    Beat task <Code>massive-sepa-universe-grouped-daily</Code> runs nightly at 22:00 UTC — one Grouped
-                    Daily Bars call covers all US stocks.
+                    Beat task <ReadinessCode>massive-sepa-universe-grouped-daily</ReadinessCode> runs nightly at 22:00
+                    UTC — one <strong>Grouped Daily Bars</strong> API call covers all 5,000+ US stocks for today&apos;s
+                    date (vs. 5,000+ calls for per-symbol approach).
                   </>
                 ),
               },
               {
                 badge: 'MANUAL',
-                badgeVariant: 'manual',
+                variant: 'manual',
                 text: (
                   <>
-                    <em>Backfill 420d History</em> queues one job per missing trading date (~420 API calls total).
+                    <em>Backfill 420d History</em> below queues one job per missing trading date. Each job = 1 API call
+                    → OHLCV for all US stocks on that date. Efficient initial setup: ~420 API calls total.
                   </>
                 ),
               },
             ]}
           />
-          <div className="flex flex-wrap gap-2">
-            <Button disabled={groupedHistoryBusy} onClick={onGroupedHistory}>
+          <ReadinessStepDesc>
+            Celery <ReadinessCode>feed_stocks_aggregate</ReadinessCode> writes{' '}
+            <ReadinessCode>source=massive</ReadinessCode> rows. The readiness summary gap count uses{' '}
+            <ReadinessCode>cache_stock_snapshot.last_minute_updated</ReadinessCode> (America/New_York date) vs{' '}
+            <ReadinessCode>max(stock_day.bar_time)</ReadinessCode>; any snapshot-based check requires non-null{' '}
+            <ReadinessCode>session_close</ReadinessCode> — if it is empty, that symbol is skipped for Step 3 gaps (no{' '}
+            <ReadinessCode>stock_day</ReadinessCode> comparison and no readiness fallback), regardless of whether daily
+            bars exist. After a calendar gap, the latest daily <ReadinessCode>stock_day.close</ReadinessCode> must differ
+            from <ReadinessCode>session_close</ReadinessCode> (beyond a tiny absolute tolerance) to count as a vendor gap
+            — matching closes mean the vendor snapshot already aligns with the last ingested bar.{' '}
+            <ReadinessCode>tickers.instrument_type = WARRANT</ReadinessCode> symbols are excluded. Symbols with no{' '}
+            <ReadinessCode>cache_stock_snapshot</ReadinessCode> row are never gaps. If a snapshot row has{' '}
+            <ReadinessCode>session_close</ReadinessCode> but <ReadinessCode>last_minute_updated</ReadinessCode> is
+            missing, the UI falls back to <ReadinessCode>NOT price_ready</ReadinessCode> on the readiness view.
+          </ReadinessStepDesc>
+          <div className="flex flex-wrap items-center gap-2">
+            <ReadinessPrimaryButton disabled={groupedHistoryBusy} onClick={onGroupedHistory}>
               {groupedHistoryBusy ? 'Queuing jobs…' : 'Backfill 420d History (Grouped Daily)'}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => refJobs.openJobsSheet()}>
+            </ReadinessPrimaryButton>
+            <ReadinessSecondaryButton onClick={() => refJobs.openJobsSheet()}>
               Jobs
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </ReadinessSecondaryButton>
+            <ReadinessGapsButton
+              tone={
+                derived.barStepStatus === 'ok'
+                  ? 'ok'
+                  : derived.priceGap != null && derived.priceGap > 0
+                    ? 'warn'
+                    : 'default'
+              }
               disabled={derived.barStepStatus === 'ok' || !checkedSteps.has(3)}
               onClick={onOpenPriceGaps}
             >
@@ -318,12 +307,10 @@ export function StepDetailPanel(props: Props) {
                 : derived.priceGap != null && derived.priceGap > 0
                   ? `Gaps (${fmt(derived.priceGap)}) →`
                   : 'View gaps →'}
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/settings/feed/massive-stock">Open Feed Massive Stock →</Link>
-            </Button>
+            </ReadinessGapsButton>
+            <ReadinessGhostLink to="/settings/feed/massive-stock">Open Feed Massive Stock →</ReadinessGhostLink>
           </div>
-          <Feedback ok={groupedHistoryOk}>{groupedHistoryMsg}</Feedback>
+          <ReadinessOperationLog ok={groupedHistoryOk}>{groupedHistoryMsg}</ReadinessOperationLog>
         </div>
       )}
 
@@ -341,11 +328,11 @@ export function StepDetailPanel(props: Props) {
             Phase 1 evaluates SEPA conditions → <Code>stock_readiness_daily</Code>. Phase 2 materializes the full
             snapshot while preserving fundamental results.
           </p>
-          <MaintenanceBox
+          <ReadinessMaintenanceBox
             title="Conditions evaluated (Phase 1)"
             rows={[
-              { badge: 'Q2Q', badgeVariant: 'auto', text: 'EPS/Revenue growth ≥25%, acceleration 2Q' },
-              { badge: '3Y/FY', badgeVariant: 'manual', text: 'EPS/Revenue CAGR 3Y ≥15%, last FY acceleration' },
+              { badge: 'Q2Q', variant: 'auto', text: 'EPS/Revenue growth ≥25%, acceleration 2Q' },
+              { badge: '3Y/FY', variant: 'manual', text: 'EPS/Revenue CAGR 3Y ≥15%, last FY acceleration' },
             ]}
           />
           <Button

@@ -12,7 +12,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 export function useMarketIngestServices(token: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.ops.ingestServices, token],
-    queryFn: () => fetchMarketIngestServices(token),
+    queryFn: () => fetchMarketIngestServices(),
     refetchInterval: 8_000,
     retry: 1,
   })
@@ -21,7 +21,7 @@ export function useMarketIngestServices(token: string) {
 export function useOpsHealth(token: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.ops.opsHealth, token],
-    queryFn: () => fetchOpsHealth(token),
+    queryFn: () => fetchOpsHealth(),
     refetchInterval: 8_000,
     retry: 1,
   })
@@ -30,17 +30,17 @@ export function useOpsHealth(token: string) {
 export function useOpsCapabilities(token: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.ops.capabilities, token],
-    queryFn: () => fetchOpsCapabilities(token),
+    queryFn: () => fetchOpsCapabilities(),
     staleTime: 30_000,
     retry: 1,
   })
 }
 
-export function useControlMarketIngest(token: string) {
+export function useControlMarketIngest() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ serviceId, action }: { serviceId: string; action: MarketIngestAction }) =>
-      controlMarketIngest(serviceId, action, token),
+      controlMarketIngest(serviceId, action),
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.ingestServices })
       void qc.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status })
@@ -48,10 +48,10 @@ export function useControlMarketIngest(token: string) {
   })
 }
 
-export function useClearConflictLeases(token: string) {
+export function useClearConflictLeases() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () => clearMarketIngestConflictLeases(token),
+    mutationFn: () => clearMarketIngestConflictLeases(),
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.ingestServices })
       void qc.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status })

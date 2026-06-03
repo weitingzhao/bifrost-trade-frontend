@@ -1,19 +1,24 @@
 import { PageHeader, PageShell } from '@/components/layout'
-import { Card, CardContent } from '@/components/ui/card'
+import { MassiveFeedAnchorOutline } from '@/pages/settings/feed/massive/components/MassiveFeedAnchorOutline'
+import { MassiveStatusStrip } from '@/pages/settings/feed/massive/components/MassiveStatusStrip'
+import { useMassiveFeedHashScroll } from '@/pages/settings/feed/massive/hooks/useMassiveFeedHashScroll'
+import { useMassiveStatus } from '@/pages/settings/feed/massive/hooks/useMassiveStatus'
+import { MASSIVE_FEED_BRANCHES } from '@/pages/settings/feed/massive/nav/massiveSidebarConfig'
+
+const COMM_GROUPS = MASSIVE_FEED_BRANCHES.find(b => b.id === 'comm')!.groups
 
 export default function FeedMassiveCommPage() {
+  useMassiveFeedHashScroll()
+  const { data: massiveStatus } = useMassiveStatus()
+
   return (
-    <PageShell>
+    <PageShell className="space-y-4">
       <PageHeader
-        title="Massive — Common"
-        description="Shared REST utilities (indicators, market status)."
+        title="Massive — Comm"
+        description="Shared Massive REST: technical indicators and market operations."
       />
-      <Card>
-        <CardContent className="py-6 text-sm text-muted-foreground">
-          Common Massive endpoints are shared across Research and data workers. Full inspector UI
-          migration is pending; use API health and Celery audit for job activity.
-        </CardContent>
-      </Card>
+      <MassiveStatusStrip massiveStatus={massiveStatus} />
+      <MassiveFeedAnchorOutline groups={COMM_GROUPS} />
     </PageShell>
   )
 }

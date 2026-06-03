@@ -1,0 +1,748 @@
+import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import { celeryQueueHash } from '@/utils/celeryQueueDeepLink'
+import { feedMassiveStockTickersSubHash } from '@/pages/settings/feed/massive/nav/stockTabUtils'
+import {
+  DEFAULT_TICKER_REF_MISSING_LIMIT,
+  DEFAULT_TICKER_REF_SEARCH_LIMIT,
+  MAX_TICKER_REF_MISSING_LIMIT,
+  REF_CATALOG_PG_LABELS,
+  type OverviewEnqueueMode,
+  type RelatedEnqueueMode,
+  refJobKindShortLabel,
+  isFeedStocksTickersRelatedRefKind,
+  isFeedStocksTickersOverviewRefKind,
+  isFeedStocksTickersReferenceUniverseRefKind,
+  isFeedStocksTickersTypesRefKind,
+  type RefTickerCatalogRow,
+  type TrackedMassiveDbJobKind,
+} from '@/utils/massive/stockReferenceJobHelpers'
+
+const RELATED_SCOPE_BUBBLES: ReadonlyArray<{
+  value: RelatedEnqueueMode
+  label: string
+  title: string
+}> = [
+  {
+    value: 'missing',
+    label: 'Missing only',
+    title: 'Tickers with no ticker_related_tickers rows for from_tickers_id.',
+  },
+  {
+    value: 'stale',
+    label: 'Missing or stale',
+    title: 'No related rows, or latest fetched_at older than stale hours.',
+  },
+  {
+    value: 'symbols',
+    label: 'Listed symbols',
+    title: 'Only symbols in the enqueue field below.',
+  },
+  {
+    value: 'all',
+    label: 'All tickers',
+    title: 'Re-fetch related peers for every row in tickers.',
+  },
+]
+
+const OVERVIEW_SCOPE_BUBBLES: ReadonlyArray<{
+  value: OverviewEnqueueMode
+  label: string
+  title: string
+}> = [
+  {
+    value: 'missing',
+    label: 'Missing only',
+    title: 'Tickers with no ticker_overview row (gap vs public.tickers).',
+  },
+  {
+    value: 'stale',
+    label: 'Missing or stale',
+    title: 'No overview, null overview_updated_at, or older than stale hours.',
+  },
+  {
+    value: 'symbols',
+    label: 'Listed symbols',
+    title: 'Only symbols in the enqueue field below.',
+  },
+  {
+    value: 'all',
+    label: 'All tickers',
+    title: 'Refresh overview for every row in tickers (full pass).',
+  },
+]
+
+function CatalogEnqueueIcon({ busy }: { busy: boolean }) {
+  if (busy) {
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <path
+          d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
+          strokeLinecap="round"
+        />
+      </svg>
+    )
+  }
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <path d="M5 7h10M5 12h10M5 17h7" />
+      <path d="M18 9v6M15 12h6" />
+    </svg>
+  )
+}
+
+function renderTableNameList(tables: readonly string[]) {
+  return tables.map((t, i) => (
+    <span key={t}>
+      {i > 0 ? <span className="ref-jobs-catalog-table-sep"> · </span> : null}
+      <code className="ref-jobs-catalog-code ref-jobs-catalog-table-name">{t}</code>
+    </span>
+  ))
+}
+
+export interface TickerOverviewCoverageCounts {
+  total_tickers: number
+  missing: number
+  filled: number
+}
+
+export interface RefJobDetailPanelProps {
+  catalogRow: RefTickerCatalogRow
+  disabledForJobs: boolean
+  busyVerify: boolean
+  jobBusyKind: TrackedMassiveDbJobKind | null
+  overviewEnqueueMode: OverviewEnqueueMode
+  setOverviewEnqueueMode: (m: OverviewEnqueueMode) => void
+  overviewStaleHours: number
+  setOverviewStaleHours: (n: number) => void
+  relatedEnqueueMode: RelatedEnqueueMode
+  setRelatedEnqueueMode: (m: RelatedEnqueueMode) => void
+  relatedStaleHours: number
+  setRelatedStaleHours: (n: number) => void
+  refJobSymbols: string
+  setRefJobSymbols: (s: string) => void
+  refJobSymbolsErr: string | null
+  onEnqueue: () => void
+  searchQuery: string
+  setSearchQuery: (s: string) => void
+  searchLimit: number
+  setSearchLimit: (n: number) => void
+  overviewSymbol: string
+  setOverviewSymbol: (s: string) => void
+  relatedSymbol: string
+  setRelatedSymbol: (s: string) => void
+  onVerifySearch: () => void
+  onVerifyOverviewMerged: () => void
+  onVerifyOverviewMissingFirst: () => void
+  onVerifyOverviewMissingMore: () => void
+  overviewMissingLimit: number
+  setOverviewMissingLimit: (n: number) => void
+  missingOverviewHasMore: boolean
+  missingOverviewLoadedCount: number
+  onVerifyRelatedDb: () => void
+  onVerifyInstrumentTypes: () => void
+  overviewCoverage: TickerOverviewCoverageCounts | null
+  overviewCoverageLoading: boolean
+  overviewVerifyKind: 'merged' | 'missing' | null
+  overviewMissingVerifyAppend: boolean
+  relatedCoverage: TickerOverviewCoverageCounts | null
+  relatedCoverageLoading: boolean
+  relatedListPageLimit: number
+  setRelatedListPageLimit: (n: number) => void
+  onVerifyRelatedMissingFirst: () => void
+  onVerifyRelatedMissingMore: () => void
+  onVerifyRelatedFilledFirst: () => void
+  onVerifyRelatedFilledMore: () => void
+  missingRelatedHasMore: boolean
+  missingRelatedLoadedCount: number
+  filledRelatedHasMore: boolean
+  filledRelatedLoadedCount: number
+  relatedVerifyKind: 'symbol' | 'missing' | 'filled' | null
+  relatedMissingVerifyAppend: boolean
+  relatedFilledVerifyAppend: boolean
+  universeRowCount: number | null
+  universeRowCountLoading: boolean
+  tickerTypesRowCount: number | null
+  tickerTypesRowCountLoading: boolean
+}
+
+export function RefJobDetailPanel({
+  catalogRow,
+  disabledForJobs,
+  busyVerify,
+  jobBusyKind,
+  overviewEnqueueMode,
+  setOverviewEnqueueMode,
+  overviewStaleHours,
+  setOverviewStaleHours,
+  relatedEnqueueMode,
+  setRelatedEnqueueMode,
+  relatedStaleHours,
+  setRelatedStaleHours,
+  refJobSymbols,
+  setRefJobSymbols,
+  refJobSymbolsErr,
+  onEnqueue,
+  searchQuery,
+  setSearchQuery,
+  searchLimit,
+  setSearchLimit,
+  overviewSymbol,
+  setOverviewSymbol,
+  relatedSymbol,
+  setRelatedSymbol,
+  onVerifySearch,
+  onVerifyOverviewMerged,
+  onVerifyOverviewMissingFirst,
+  onVerifyOverviewMissingMore,
+  overviewMissingLimit,
+  setOverviewMissingLimit,
+  missingOverviewHasMore,
+  missingOverviewLoadedCount,
+  onVerifyRelatedDb,
+  onVerifyInstrumentTypes,
+  overviewCoverage,
+  overviewCoverageLoading,
+  overviewVerifyKind,
+  overviewMissingVerifyAppend,
+  relatedCoverage,
+  relatedCoverageLoading,
+  relatedListPageLimit,
+  setRelatedListPageLimit,
+  onVerifyRelatedMissingFirst,
+  onVerifyRelatedMissingMore,
+  onVerifyRelatedFilledFirst,
+  onVerifyRelatedFilledMore,
+  missingRelatedHasMore,
+  missingRelatedLoadedCount,
+  filledRelatedHasMore,
+  filledRelatedLoadedCount,
+  relatedVerifyKind,
+  relatedMissingVerifyAppend,
+  relatedFilledVerifyAppend,
+  universeRowCount,
+  universeRowCountLoading,
+  tickerTypesRowCount,
+  tickerTypesRowCountLoading,
+}: RefJobDetailPanelProps) {
+  const kind = catalogRow.kind
+  const jobLabel = refJobKindShortLabel(kind)
+  const enqueueBusy = jobBusyKind === kind
+  const disabledEnqueue = disabledForJobs || enqueueBusy
+
+  return (
+    <div className="ref-jobs-md-panel" id="ref-job-detail-panel" role="tabpanel">
+      <div className="ref-jobs-md-meta">
+        <div className="ref-jobs-md-meta-row">
+          <span className="ref-jobs-md-meta-label">Job</span>
+          <span>
+            <strong>{jobLabel}</strong>
+            <InfoTooltip text={catalogRow.hint} />
+          </span>
+        </div>
+        <div className="ref-jobs-md-meta-row">
+          <span className="ref-jobs-md-meta-label">REST</span>
+          <a
+            href={feedMassiveStockTickersSubHash(catalogRow.tickersSubTab)}
+            className="ref-jobs-catalog-api-link"
+            title="Open Massive Stock → Tickers (matching REST tab)"
+          >
+            {catalogRow.restEndpointShort}
+          </a>
+        </div>
+        <div className="ref-jobs-md-meta-row">
+          <span className="ref-jobs-md-meta-label">Queue</span>
+          <a href={celeryQueueHash(catalogRow.queueNote)} className="ref-jobs-catalog-queue-link" title="Open Celery queue">
+            <code className="ref-jobs-catalog-code">{catalogRow.queueNote}</code>
+          </a>
+        </div>
+        <div className="ref-jobs-md-meta-row">
+          <span className="ref-jobs-md-meta-label">{REF_CATALOG_PG_LABELS.business}</span>
+          <span>{renderTableNameList(catalogRow.businessTables)}</span>
+        </div>
+        <div className="ref-jobs-md-meta-row">
+          <span className="ref-jobs-md-meta-label">{REF_CATALOG_PG_LABELS.job}</span>
+          <span>
+            {catalogRow.jobTables.length > 0 ? renderTableNameList(catalogRow.jobTables) : <span className="ref-jobs-catalog-pg-empty">—</span>}
+          </span>
+        </div>
+      </div>
+
+      <h4 className="ref-jobs-md-section-title">Enqueue</h4>
+      <div className="ref-jobs-md-enqueue-row">
+        <div className="ref-jobs-md-enqueue-fields">
+          {isFeedStocksTickersReferenceUniverseRefKind(kind) ? (
+            <div>
+              <p className="ref-jobs-md-enqueue-hint">Full pagination sync (1000 rows/page) until cursor ends. No extra fields.</p>
+              <div className="ref-overview-coverage-strip mt-2" aria-live="polite">
+                {universeRowCountLoading ? (
+                  <span className="ref-overview-coverage-muted">Loading row count…</span>
+                ) : universeRowCount != null ? (
+                  <span className="ref-refdb-stat-highlight" title="Rows in public.tickers">
+                    <strong>{universeRowCount.toLocaleString()}</strong>
+                    <span className="ref-overview-coverage-total"> tickers in </span>
+                    <code>tickers</code>
+                  </span>
+                ) : (
+                  <span className="ref-overview-coverage-muted">Row count unavailable</span>
+                )}
+              </div>
+            </div>
+          ) : null}
+          {isFeedStocksTickersTypesRefKind(kind) ? (
+            <div>
+              <p className="ref-jobs-md-enqueue-hint">Replaces all rows in ticker_types from the API. No extra fields.</p>
+              <div className="ref-overview-coverage-strip mt-2" aria-live="polite">
+                {tickerTypesRowCountLoading ? (
+                  <span className="ref-overview-coverage-muted">Loading row count…</span>
+                ) : tickerTypesRowCount != null ? (
+                  <span className="ref-refdb-stat-highlight" title="Rows in public.ticker_types">
+                    <strong>{tickerTypesRowCount.toLocaleString()}</strong>
+                    <span className="ref-overview-coverage-total"> instrument types in </span>
+                    <code>ticker_types</code>
+                  </span>
+                ) : (
+                  <span className="ref-overview-coverage-muted">Row count unavailable</span>
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          {isFeedStocksTickersOverviewRefKind(kind) ? (
+            <div className="space-y-2">
+              <div className="flex flex-col gap-1 text-sm block">
+                <div className="text-sm font-medium" id="ref-overview-scope-label-panel">
+                  Overview job scope
+                </div>
+                <div
+                  className="ref-overview-scope-bubbles"
+                  role="radiogroup"
+                  aria-labelledby="ref-overview-scope-label-panel"
+                  aria-describedby="ref-overview-scope-hint-panel"
+                >
+                  {OVERVIEW_SCOPE_BUBBLES.map(opt => {
+                    const active = overviewEnqueueMode === opt.value
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        disabled={disabledEnqueue}
+                        title={opt.title}
+                        className={`ref-overview-scope-bubble${active ? ' ref-overview-scope-bubble--active' : ''}`}
+                        onClick={() => {
+                          setOverviewEnqueueMode(opt.value)
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <p id="ref-overview-scope-hint-panel" className="mt-1 mb-0 text-xs text-muted-foreground">
+                Compares <code>public.tickers</code> to <code>public.ticker_overview</code>.
+              </p>
+              <div className="ref-overview-coverage-strip" aria-live="polite">
+                {overviewCoverageLoading ? (
+                  <span className="ref-overview-coverage-muted">Loading coverage counts…</span>
+                ) : overviewCoverage ? (
+                  <>
+                    <span className="ref-overview-coverage-missing" title="Tickers with no row in ticker_overview">
+                      <strong>{overviewCoverage.missing.toLocaleString()}</strong> missing
+                    </span>
+                    <span className="ref-overview-coverage-sep" aria-hidden>
+                      ·
+                    </span>
+                    <span className="ref-overview-coverage-filled" title="Tickers with a ticker_overview row">
+                      <strong>{overviewCoverage.filled.toLocaleString()}</strong> filled
+                    </span>
+                    <span className="ref-overview-coverage-sep" aria-hidden>
+                      ·
+                    </span>
+                    <span className="ref-overview-coverage-total">
+                      {overviewCoverage.total_tickers.toLocaleString()} in <code>tickers</code>
+                    </span>
+                  </>
+                ) : (
+                  <span className="ref-overview-coverage-muted">Coverage counts unavailable</span>
+                )}
+              </div>
+              {overviewEnqueueMode === 'stale' ? (
+                <label className="mt-2 flex flex-col gap-1 text-sm">
+                  <span className="text-sm font-medium">Stale after (hours)</span>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={overviewStaleHours}
+                    disabled={disabledEnqueue}
+                    onChange={e => {
+                      const n = parseInt(e.target.value, 10)
+                      setOverviewStaleHours(Number.isFinite(n) && n >= 1 ? n : 720)
+                    }}
+                    aria-label="Hours before ticker_overview is considered stale"
+                    style={{ maxWidth: '8rem' }}
+                  />
+                </label>
+              ) : null}
+            </div>
+          ) : null}
+
+          {isFeedStocksTickersRelatedRefKind(kind) ? (
+            <div className="space-y-2 mt-2">
+              <div className="flex flex-col gap-1 text-sm block">
+                <div className="text-sm font-medium" id="ref-related-scope-label-panel">
+                  Related job scope
+                </div>
+                <div
+                  className="ref-overview-scope-bubbles"
+                  role="radiogroup"
+                  aria-labelledby="ref-related-scope-label-panel"
+                  aria-describedby="ref-related-scope-hint-panel"
+                >
+                  {RELATED_SCOPE_BUBBLES.map(opt => {
+                    const active = relatedEnqueueMode === opt.value
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        disabled={disabledEnqueue}
+                        title={opt.title}
+                        className={`ref-overview-scope-bubble${active ? ' ref-overview-scope-bubble--active' : ''}`}
+                        onClick={() => {
+                          setRelatedEnqueueMode(opt.value)
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <p id="ref-related-scope-hint-panel" className="mb-1 mt-1 text-xs text-muted-foreground">
+                Compares <code>public.tickers</code> to <code>public.ticker_related_tickers</code> (
+                <code>from_tickers_id</code>). Stale uses <code>MAX(fetched_at)</code> per ticker.
+              </p>
+              <div className="ref-overview-coverage-strip" aria-live="polite">
+                {relatedCoverageLoading ? (
+                  <span className="ref-overview-coverage-muted">Loading coverage counts…</span>
+                ) : relatedCoverage ? (
+                  <>
+                    <span className="ref-overview-coverage-missing" title="No related rows stored for this ticker">
+                      <strong>{relatedCoverage.missing.toLocaleString()}</strong> missing
+                    </span>
+                    <span className="ref-overview-coverage-sep" aria-hidden>
+                      ·
+                    </span>
+                    <span className="ref-overview-coverage-filled" title="At least one related peer row stored">
+                      <strong>{relatedCoverage.filled.toLocaleString()}</strong> filled
+                    </span>
+                    <span className="ref-overview-coverage-sep" aria-hidden>
+                      ·
+                    </span>
+                    <span className="ref-overview-coverage-total">
+                      {relatedCoverage.total_tickers.toLocaleString()} in <code>tickers</code>
+                    </span>
+                  </>
+                ) : (
+                  <span className="ref-overview-coverage-muted">Coverage counts unavailable</span>
+                )}
+              </div>
+              {relatedEnqueueMode === 'stale' ? (
+                <label className="mt-2 flex flex-col gap-1 text-sm">
+                  <span className="text-sm font-medium">Stale after (hours)</span>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={relatedStaleHours}
+                    disabled={disabledEnqueue}
+                    onChange={e => {
+                      const n = parseInt(e.target.value, 10)
+                      setRelatedStaleHours(Number.isFinite(n) && n >= 1 ? n : 720)
+                    }}
+                    aria-label="Hours before related data is considered stale"
+                    style={{ maxWidth: '8rem' }}
+                  />
+                </label>
+              ) : null}
+            </div>
+          ) : null}
+
+          {(isFeedStocksTickersOverviewRefKind(kind) && overviewEnqueueMode === 'symbols') ||
+          (isFeedStocksTickersRelatedRefKind(kind) && relatedEnqueueMode === 'symbols') ? (
+            <label
+              className="flex flex-col gap-1 text-sm"
+              style={{
+                display: 'block',
+                marginTop:
+                  isFeedStocksTickersOverviewRefKind(kind) || isFeedStocksTickersRelatedRefKind(kind)
+                    ? 'var(--space-2)'
+                    : 0,
+              }}
+            >
+              <span className="text-sm font-medium">Symbols (comma or space separated)</span>
+              <input
+                className="form-input"
+                value={refJobSymbols}
+                onChange={e => setRefJobSymbols(e.target.value)}
+                disabled={disabledEnqueue}
+                placeholder="AAPL, MSFT, GOOGL"
+                autoComplete="off"
+                aria-invalid={refJobSymbolsErr != null}
+                aria-describedby={refJobSymbolsErr ? 'ref-job-symbols-err-panel' : undefined}
+              />
+              {refJobSymbolsErr ? (
+                <p id="ref-job-symbols-err-panel" className="mt-1 text-sm text-destructive" role="alert">
+                  {refJobSymbolsErr}
+                </p>
+              ) : null}
+            </label>
+          ) : null}
+        </div>
+        <div className="ref-jobs-md-enqueue-actions">
+          <button
+            type="button"
+            className="btn btn-primary btn-sm ref-jobs-md-enqueue-btn"
+            disabled={disabledEnqueue}
+            aria-busy={enqueueBusy}
+            onClick={onEnqueue}
+          >
+            <CatalogEnqueueIcon busy={enqueueBusy} />
+            <span>{enqueueBusy ? 'Enqueueing…' : `Enqueue ${jobLabel}`}</span>
+          </button>
+        </div>
+      </div>
+
+      <h4 className="ref-jobs-md-section-title" >
+        Verify (PostgreSQL)
+      </h4>
+
+      {isFeedStocksTickersReferenceUniverseRefKind(kind) ? (
+        <>
+          <label className="flex flex-col gap-1 text-sm block">
+            <span className="text-sm font-medium">Search query</span>
+            <input
+              className="form-input"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              disabled={busyVerify}
+              placeholder="AAPL or Apple"
+              autoComplete="off"
+            />
+          </label>
+          <label className="mt-2 flex flex-col gap-1 text-sm">
+            <span className="text-sm font-medium">Result limit</span>
+            <input
+              className="form-input"
+              type="number"
+              min={1}
+              max={100}
+              step={1}
+              value={searchLimit}
+              onChange={e => {
+                const v = parseInt(e.target.value, 10)
+                setSearchLimit(Number.isFinite(v) ? v : DEFAULT_TICKER_REF_SEARCH_LIMIT)
+              }}
+              disabled={busyVerify}
+              aria-label="Search result row limit"
+              style={{ maxWidth: '8rem' }}
+            />
+          </label>
+          <div className="ref-jobs-md-actions">
+            <button type="button" className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm" disabled={busyVerify} onClick={onVerifySearch}>
+              {busyVerify ? 'Loading…' : 'Search (DB)'}
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {isFeedStocksTickersTypesRefKind(kind) ? (
+        <div className="ref-jobs-md-actions">
+          <button type="button" className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm" disabled={busyVerify} onClick={onVerifyInstrumentTypes}>
+            {busyVerify ? 'Loading…' : 'Instrument types (DB)'}
+          </button>
+        </div>
+      ) : null}
+
+      {isFeedStocksTickersOverviewRefKind(kind) ? (
+        <>
+          <label className="flex flex-col gap-1 text-sm block">
+            <span className="text-sm font-medium">Symbol (merged ticker + overview row)</span>
+            <input
+              className="form-input"
+              value={overviewSymbol}
+              onChange={e => setOverviewSymbol(e.target.value)}
+              disabled={busyVerify}
+              placeholder="AAPL"
+              autoComplete="off"
+            />
+          </label>
+          <div className="ref-jobs-md-actions">
+            <button
+              type="button"
+              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              disabled={busyVerify}
+              aria-busy={busyVerify && overviewVerifyKind === 'merged'}
+              onClick={onVerifyOverviewMerged}
+            >
+              {busyVerify && overviewVerifyKind === 'merged' ? 'Loading…' : 'Load merged row (DB)'}
+            </button>
+          </div>
+
+          <label className="mt-3 flex flex-col gap-1 text-sm">
+            <span className="text-sm font-medium">Missing overview — page size</span>
+            <input
+              className="form-input"
+              type="number"
+              min={1}
+              max={MAX_TICKER_REF_MISSING_LIMIT}
+              step={1}
+              value={overviewMissingLimit}
+              onChange={e => {
+                const v = parseInt(e.target.value, 10)
+                if (Number.isFinite(v)) setOverviewMissingLimit(v)
+              }}
+              disabled={busyVerify}
+              aria-label="Number of tickers to load per request for missing overview list"
+              style={{ maxWidth: '8rem' }}
+            />
+          </label>
+          <p className="mt-1 mb-0 text-xs text-muted-foreground">
+            Lists symbols present in <code>tickers</code> with no <code>ticker_overview</code> row (ordered A–Z). Default
+            page size {DEFAULT_TICKER_REF_MISSING_LIMIT}.
+          </p>
+          <div className="ref-jobs-md-actions mt-2">
+            <button
+              type="button"
+              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              disabled={busyVerify}
+              aria-busy={busyVerify && overviewVerifyKind === 'missing' && !overviewMissingVerifyAppend}
+              onClick={onVerifyOverviewMissingFirst}
+            >
+              {busyVerify && overviewVerifyKind === 'missing' && !overviewMissingVerifyAppend
+                ? 'Loading…'
+                : 'Load missing tickers (DB)'}
+            </button>
+            {missingOverviewHasMore && missingOverviewLoadedCount > 0 ? (
+              <button
+                type="button"
+                className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+                disabled={busyVerify}
+                aria-busy={busyVerify && overviewVerifyKind === 'missing' && overviewMissingVerifyAppend}
+                onClick={onVerifyOverviewMissingMore}
+              >
+                {busyVerify && overviewVerifyKind === 'missing' && overviewMissingVerifyAppend
+                  ? 'Loading…'
+                  : 'Load more'}
+              </button>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+
+      {isFeedStocksTickersRelatedRefKind(kind) ? (
+        <>
+          <label className="flex flex-col gap-1 text-sm block">
+            <span className="text-sm font-medium">Symbol (single-ticker related rows)</span>
+            <input
+              className="form-input"
+              value={relatedSymbol}
+              onChange={e => setRelatedSymbol(e.target.value)}
+              disabled={busyVerify}
+              placeholder="AAPL"
+              autoComplete="off"
+            />
+          </label>
+          <div className="ref-jobs-md-actions">
+            <button
+              type="button"
+              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              disabled={busyVerify}
+              aria-busy={busyVerify && relatedVerifyKind === 'symbol'}
+              onClick={onVerifyRelatedDb}
+            >
+              {busyVerify && relatedVerifyKind === 'symbol' ? 'Loading…' : 'Load related (DB)'}
+            </button>
+          </div>
+
+          <label className="mt-3 flex flex-col gap-1 text-sm">
+            <span className="text-sm font-medium">Page size</span>
+            <input
+              className="form-input"
+              type="number"
+              min={1}
+              max={MAX_TICKER_REF_MISSING_LIMIT}
+              step={1}
+              value={relatedListPageLimit}
+              onChange={e => {
+                const v = parseInt(e.target.value, 10)
+                if (Number.isFinite(v)) setRelatedListPageLimit(v)
+              }}
+              disabled={busyVerify}
+              aria-label="Page size for missing and filled related ticker lists"
+              style={{ maxWidth: '8rem' }}
+            />
+          </label>
+          <div className="ref-jobs-md-actions mt-2">
+            <button
+              type="button"
+              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              disabled={busyVerify}
+              aria-busy={busyVerify && relatedVerifyKind === 'missing' && !relatedMissingVerifyAppend}
+              onClick={onVerifyRelatedMissingFirst}
+            >
+              {busyVerify && relatedVerifyKind === 'missing' && !relatedMissingVerifyAppend
+                ? 'Loading…'
+                : 'Load missing tickers (DB)'}
+            </button>
+            {missingRelatedHasMore && missingRelatedLoadedCount > 0 ? (
+              <button
+                type="button"
+                className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+                disabled={busyVerify}
+                aria-busy={busyVerify && relatedVerifyKind === 'missing' && relatedMissingVerifyAppend}
+                onClick={onVerifyRelatedMissingMore}
+              >
+                {busyVerify && relatedVerifyKind === 'missing' && relatedMissingVerifyAppend
+                  ? 'Loading…'
+                  : 'Load more (missing)'}
+              </button>
+            ) : null}
+          </div>
+          <div className="ref-jobs-md-actions mt-2">
+            <button
+              type="button"
+              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+              disabled={busyVerify}
+              aria-busy={busyVerify && relatedVerifyKind === 'filled' && !relatedFilledVerifyAppend}
+              onClick={onVerifyRelatedFilledFirst}
+            >
+              {busyVerify && relatedVerifyKind === 'filled' && !relatedFilledVerifyAppend
+                ? 'Loading…'
+                : 'Load filled tickers (DB)'}
+            </button>
+            {filledRelatedHasMore && filledRelatedLoadedCount > 0 ? (
+              <button
+                type="button"
+                className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm"
+                disabled={busyVerify}
+                aria-busy={busyVerify && relatedVerifyKind === 'filled' && relatedFilledVerifyAppend}
+                onClick={onVerifyRelatedFilledMore}
+              >
+                {busyVerify && relatedVerifyKind === 'filled' && relatedFilledVerifyAppend
+                  ? 'Loading…'
+                  : 'Load more (filled)'}
+              </button>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+    </div>
+  )
+}

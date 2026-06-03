@@ -21,6 +21,8 @@ export const QUERY_KEYS = {
     heartbeat:      ['monitor', 'heartbeat']         as const,
     operations:     ['monitor', 'operations']        as const,
     riskSummary:    ['monitor', 'risk-summary']      as const,
+    subscribeExecutions: (statusTick: number | undefined) =>
+      ['monitor', 'subscribe', 'executions', statusTick] as const,
   },
   portfolio: {
     accounts:              ['portfolio', 'accounts']              as const,

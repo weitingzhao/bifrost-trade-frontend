@@ -16,6 +16,7 @@ import { fetchQuotes, fetchBenchmarks } from '@/api/market'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { aggregateMarketStreamsDailyTotals } from '@/utils/marketStreamsDailyTotals'
 import { buildUnifiedGroupedRows } from '@/utils/marketStreamsSort'
+import { mergeQuotesIntoSymbolMap } from '@/utils/marketStreamsRows'
 import { computeOptMidAndLivePnl } from '@/utils/optionLiveBasis'
 import { quotesByContractKeyFromMap, type OptPositionRow } from '@/utils/marketStreamsRows'
 import {
@@ -168,14 +169,7 @@ export default function LivePage() {
         fetchQuotes(allSymbols, allContractKeys).then(resp => {
           queryClient.setQueryData<Record<string, import('@/types/market').QuoteItem>>(
             QUERY_KEYS.market.quotesLive,
-            prev => {
-              const map = { ...(prev ?? {}) }
-              for (const q of resp.quotes) {
-                const key = q.contract_key ?? q.symbol
-                if (key) map[key] = q
-              }
-              return map
-            },
+            prev => mergeQuotesIntoSymbolMap(prev ?? {}, resp.quotes),
           )
         }),
         fetchBenchmarks(benchmarkSymbols).then(resp => {

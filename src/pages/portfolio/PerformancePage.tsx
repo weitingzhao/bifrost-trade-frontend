@@ -27,6 +27,7 @@ import {
   type CalendarAssetTab,
 } from '@/pages/portfolio/performance/performanceCalendarModel'
 import styles from '@/components/performance/performanceCalendar.module.css'
+import pageStyles from '@/pages/portfolio/performance/PerformancePage.module.css'
 
 export default function PerformancePage() {
   const [timeRange, setTimeRange] = useState<PerformanceTimeRange>('quarter')
@@ -173,7 +174,10 @@ export default function PerformancePage() {
           />
         )}
 
-        <div className={styles.sectionPaneFirst}>
+        <section
+          className={pageStyles.timeRangeBlock}
+          aria-label="Time range and daily statistics"
+        >
           <PerformanceFilterBar
             timeRange={timeRange}
             onTimeRange={setTimeRange}
@@ -188,9 +192,7 @@ export default function PerformancePage() {
             byDayRangeData={bulk?.byDayRangeData}
             isLoading={filtersLoading}
           />
-        </div>
 
-        <div className={styles.sectionPane}>
           <EquityGrowthCard
             chartData={equityGrowthChart}
             fiBarData={fiBarData}
@@ -199,14 +201,13 @@ export default function PerformancePage() {
             layersVisible={growthLayersVisible}
             onLayerToggle={handleLayerToggle}
           />
-        </div>
 
-        <div className={styles.sectionPane}>
           <MonthlyPnLTable
             byDayRangeData={bulk?.byDayRangeData ?? null}
             isLoading={bulkQuery.isLoading}
+            className={pageStyles.byDayTableWrap}
           />
-        </div>
+        </section>
 
         <PerformanceCalendarSection
           calendarMonth={calendarMonth}

@@ -2,14 +2,20 @@ import type { PerformanceDayPnLBulkResult, PerformanceResponse } from '@/types/t
 
 export type CalendarAssetTab = 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 
-export const CALENDAR_ASSET_TABS: { id: CalendarAssetTab; label: string }[] = [
+export const CALENDAR_ASSET_TABS: {
+  id: CalendarAssetTab
+  label: string
+  /** Compact label for calendar asset tab row */
+  tabLabel?: string
+}[] = [
   { id: 'options', label: 'Options' },
   { id: 'stocks', label: 'Stocks' },
-  { id: 'fixed_income', label: 'Fixed income' },
+  { id: 'fixed_income', label: 'Fixed Income Stream', tabLabel: 'FI Stream' },
   { id: 'cash_like', label: 'Cash-like' },
 ]
 
-export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+/** US-style week: Sun on the left, Sat on the right (Legacy calendar). */
+export const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
 const SEC_TYPE_TAB: Record<string, CalendarAssetTab> = {
   OPT: 'options',
@@ -116,8 +122,8 @@ export function buildCalendarGrid(yearMonth: string, dayMap: Map<string, DayData
   const firstDay = new Date(y, m - 1, 1)
   const daysInMonth = new Date(y, m, 0).getDate()
 
-  let startDow = firstDay.getDay() - 1
-  if (startDow < 0) startDow = 6
+  /** 0 = Sun … 6 = Sat (matches WEEKDAY_LABELS). */
+  const startDow = firstDay.getDay()
 
   const weeks: CalendarWeek[] = []
   let currentWeek: (CalendarDayCell | null)[] = new Array(startDow).fill(null)

@@ -7,6 +7,10 @@ import { fmtUsd } from '@/utils/positions'
 import { dangerGhostBtnClass } from '@/lib/uiClasses'
 import { updateExecution } from '@/api/trading'
 import type { Execution } from '@/types/positions'
+import {
+  findMatchingTwsForFinal,
+  hasStrategyAttribution,
+} from '@/utils/execAttributionSync'
 
 interface Props {
   finalExecs: Execution[]
@@ -24,25 +28,12 @@ function fmtTime(ts: number | null | undefined): string {
   return new Date(ts * 1000).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'medium' })
 }
 
-function findMatchingTws(final: Execution, twsList: Execution[]): Execution | null {
-  const acc = final.account_id
-  const eid = final.exec_id?.trim()
-  if (eid) {
-    const hit = twsList.find((t) => t.exec_id?.trim() === eid && t.account_id === acc)
-    if (hit) return hit
-  }
-  const ft = final.time
-  const ck = final.contract_key
-  if (ft == null || !ck) return null
-  return twsList.find((t) =>
-    t.account_id === acc && t.contract_key === ck && t.time != null && Math.abs(t.time - ft) < 1.5
-  ) ?? null
-}
-
-function needsSync(a: Execution, b: Execution): boolean {
-  if (b.strategy_instance_id == null && b.strategy_opportunity_id == null) return false
-  return a.strategy_instance_id !== b.strategy_instance_id ||
-    a.strategy_opportunity_id !== b.strategy_opportunity_id
+function needsSync(target: Execution, source: Execution): boolean {
+  if (!hasStrategyAttribution(source)) return false
+  return (
+    target.strategy_instance_id !== source.strategy_instance_id ||
+    target.strategy_opportunity_id !== source.strategy_opportunity_id
+  )
 }
 
 export function ExecutionRow({
@@ -145,7 +136,7 @@ export function ExecutionRow({
   return (
     <div className="space-y-0 rounded border bg-muted/20 p-2">
       {finalExecs.map((f) => {
-        const paired = findMatchingTws(f, twsExecs)
+        const paired = findMatchingTwsForFinal(f, twsExecs)
         if (paired?.account_executions_id != null) renderedTwsIds.add(paired.account_executions_id)
         return (
           <div key={`final-group-${f.account_executions_id}`}>
@@ -157,7 +148,7 @@ export function ExecutionRow({
       {twsExecs
         .filter((t) => t.account_executions_id != null && !renderedTwsIds.has(t.account_executions_id!))
         .map((t) => {
-          const paired = finalExecs.find((f) => findMatchingTws(f, [t]) != null) ?? null
+          const paired = finalExecs.find((f) => findMatchingTwsForFinal(f, [t]) != null) ?? null
           return renderExecLine(t, 'TWS', paired)
         })}
     </div>

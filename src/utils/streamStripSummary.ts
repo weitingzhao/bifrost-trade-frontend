@@ -10,6 +10,7 @@ import {
 import { computeMarketStreamDailyChange } from '@/utils/marketStreamsDailyTotals'
 import { computeAccountSyncLamp } from '@/utils/daemonLamps'
 import { quoteDisplayLast } from '@/utils/watchlistHelpers'
+import { streamSymbolFromQuoteMapKey } from '@/utils/marketStreamsRows'
 
 export type StreamStripTone = 'positive' | 'negative' | 'neutral'
 
@@ -47,11 +48,11 @@ export function buildStripSymbolList(
   status: StatusResponse | null | undefined,
   quotesMap: Record<string, QuoteItem>,
 ): string[] {
+  const fromQuotes = Object.keys(quotesMap)
+    .map(streamSymbolFromQuoteMapKey)
+    .filter((s): s is string => Boolean(s))
   return [
-    ...new Set([
-      ...(status?.live_ui?.subscribed_tickers ?? []),
-      ...Object.keys(quotesMap),
-    ]),
+    ...new Set([...(status?.live_ui?.subscribed_tickers ?? []), ...fromQuotes]),
   ].sort()
 }
 

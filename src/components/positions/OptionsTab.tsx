@@ -1,11 +1,17 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, useCallback, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { updateExecution } from '@/api/trading'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { Link } from 'react-router-dom'
 import { Compass, ScanSearch } from 'lucide-react'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
 import { getPositionExecLists } from '@/utils/buildInstanceAllGroups'
 import { buildLiveOptExecutionMap } from '@/utils/positionsExecutions'
+import {
+  findMatchingFinalForTws,
+  findMatchingTwsForFinal,
+  shouldShowOptionExecSync,
+} from '@/utils/execAttributionSync'
 import {
   type OpenOptSortCol,
   contractButtonLabel,
@@ -57,6 +63,8 @@ interface Props {
   onCloseExec?: (exec: Execution) => void
   onInspect?: (pos: OpenOptionPosition) => void
   onOpenStrategy?: (instanceId: number) => void
+  onRefreshExecs?: () => void
+  canonicalOptContractKeys?: Set<string>
 }
 
 function InstanceIcon({ fill }: { fill: 'none' | 'all' | 'mixed' }) {
@@ -96,8 +104,11 @@ export function OptionsTab({
   onCloseExec,
   onInspect,
   onOpenStrategy,
+  onRefreshExecs,
+  canonicalOptContractKeys = new Set(),
 }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<string[]>([])
+  const [syncingExecId, setSyncingExecId] = useState<number | null>(null)
   const [openOptSort, setOpenOptSort] = useState<{ column: OpenOptSortCol; dir: 'asc' | 'desc' }>({
     column: 'expiry',
     dir: 'desc',
@@ -128,6 +139,69 @@ export function OptionsTab({
       if (detailViewMode === 'accordion') return isOpen ? [] : [posKey]
       return isOpen ? prev.filter(k => k !== posKey) : [...prev, posKey]
     })
+  }
+
+  const handleSyncAttribution = useCallback(
+    async (target: Execution, source: Execution) => {
+      const id = target.account_executions_id
+      if (id == null) return
+      setSyncingExecId(id)
+      try {
+        const res = await updateExecution(id, {
+          strategy_opportunity_id: source.strategy_opportunity_id ?? null,
+          strategy_instance_id: source.strategy_instance_id ?? null,
+        })
+        if (!res.ok) throw new Error(res.error || 'Sync failed')
+        onRefreshExecs?.()
+      } finally {
+        setSyncingExecId(null)
+      }
+    },
+    [onRefreshExecs],
+  )
+
+  function renderExecRow(
+    pos: OpenOptionPosition,
+    posKey: string,
+    ex: Execution,
+    ei: number,
+    book: 'final' | 'tws',
+    execLists: ReturnType<typeof getPositionExecLists>,
+  ) {
+    const crossBookMatch =
+      book === 'final'
+        ? findMatchingTwsForFinal(ex, execLists.tws)
+        : findMatchingFinalForTws(ex, execLists.final)
+    const showSync = shouldShowOptionExecSync({
+      book,
+      exec: ex,
+      crossBookMatch,
+      canonicalOptContractKeys,
+    })
+    const execId = ex.account_executions_id
+
+    return (
+      <OpenOptionExecTableRow
+        key={`${posKey}-${book === 'final' ? 'f' : 't'}-${execId ?? ei}`}
+        pos={pos}
+        posKey={posKey}
+        exec={ex}
+        execIndex={ei}
+        book={book}
+        onEdit={onEditExec ?? (() => {})}
+        onLink={ex => onLinkExec?.(ex, execLists.merged)}
+        onDelete={onDeleteExec ?? (() => {})}
+        onClose={pos.pool_label === 'Off' ? onCloseExec : undefined}
+        onOpenStrategy={onOpenStrategy}
+        showSync={showSync}
+        syncBusy={execId != null && syncingExecId === execId}
+        onSync={
+          showSync && crossBookMatch
+            ? () => void handleSyncAttribution(ex, crossBookMatch)
+            : undefined
+        }
+      />
+    )
   }
 
   const sortTh = (label: ReactNode, col: OpenOptSortCol, title?: string) => {
@@ -396,36 +470,12 @@ export function OptionsTab({
             const execRows =
               isExpanded && hasExecutions
                 ? [
-                    ...execLists.final.map((ex, ei) => (
-                      <OpenOptionExecTableRow
-                        key={`${posKey}-f-${ex.account_executions_id ?? ei}`}
-                        pos={pos}
-                        posKey={posKey}
-                        exec={ex}
-                        execIndex={ei}
-                        book="final"
-                        onEdit={onEditExec ?? (() => {})}
-                        onLink={ex => onLinkExec?.(ex, execLists.merged)}
-                        onDelete={onDeleteExec ?? (() => {})}
-                        onClose={pos.pool_label === 'Off' ? onCloseExec : undefined}
-                        onOpenStrategy={onOpenStrategy}
-                      />
-                    )),
-                    ...execLists.tws.map((ex, ei) => (
-                      <OpenOptionExecTableRow
-                        key={`${posKey}-t-${ex.account_executions_id ?? ei}`}
-                        pos={pos}
-                        posKey={posKey}
-                        exec={ex}
-                        execIndex={ei}
-                        book="tws"
-                        onEdit={onEditExec ?? (() => {})}
-                        onLink={ex => onLinkExec?.(ex, execLists.merged)}
-                        onDelete={onDeleteExec ?? (() => {})}
-                        onClose={pos.pool_label === 'Off' ? onCloseExec : undefined}
-                        onOpenStrategy={onOpenStrategy}
-                      />
-                    )),
+                    ...execLists.final.map((ex, ei) =>
+                      renderExecRow(pos, posKey, ex, ei, 'final', execLists),
+                    ),
+                    ...execLists.tws.map((ex, ei) =>
+                      renderExecRow(pos, posKey, ex, ei, 'tws', execLists),
+                    ),
                   ]
                 : []
 

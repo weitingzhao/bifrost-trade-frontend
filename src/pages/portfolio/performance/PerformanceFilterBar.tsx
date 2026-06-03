@@ -30,9 +30,8 @@ interface PerformanceFilterBarProps {
   isLoading?: boolean
 }
 
-function toneClass(value: number, unrealized = false): string {
+function toneClass(value: number): string {
   if (Math.abs(value) < 0.005) return styles.sumNumber
-  if (unrealized) return styles.toneUnrealized
   return value >= 0 ? styles.tonePositive : styles.toneNegative
 }
 
@@ -77,7 +76,7 @@ export function PerformanceFilterBar({
           </div>
         </fieldset>
 
-        <fieldset className={styles.filterFieldset} aria-label="Strategy filter">
+        <fieldset className={cn(styles.filterFieldset, styles.filterFieldsetCapsule)} aria-label="Strategy filter">
           <span className={styles.filterLegend}>Strategy</span>
           <Select
             value={selectedOppId != null ? String(selectedOppId) : 'all'}
@@ -97,7 +96,7 @@ export function PerformanceFilterBar({
           </Select>
         </fieldset>
 
-        <fieldset className={styles.filterFieldset} aria-label="Instance filter">
+        <fieldset className={cn(styles.filterFieldset, styles.filterFieldsetCapsule)} aria-label="Instance filter">
           <span className={styles.filterLegend}>Instance</span>
           <Select
             value={selectedInstId != null ? String(selectedInstId) : 'all'}
@@ -129,7 +128,7 @@ export function PerformanceFilterBar({
               Option{' '}
               <span className={toneClass(totals.optRealized)}>{fmtPnl(totals.optRealized)}</span>
               {' / '}
-              <span className={toneClass(totals.optUnrealized, true)}>{fmtPnl(totals.optUnrealized)}</span>
+              <span className={styles.sumNumber}>{fmtPnl(totals.optUnrealized)}</span>
             </span>
             <span className={styles.assetTotalKv}>
               Stocks{' '}
@@ -138,7 +137,7 @@ export function PerformanceFilterBar({
               <span className={toneClass(totals.stocksRealized)}>{fmtPnl(totals.stocksRealized)}</span>
             </span>
             <span className={styles.assetTotalKv}>
-              FI{' '}
+              FI Stream{' '}
               <span className={styles.sumNumber}>{fmtUsd(totals.fiNotional)}</span>
               {' / '}
               <span className={toneClass(totals.fiRealized)}>{fmtPnl(totals.fiRealized)}</span>

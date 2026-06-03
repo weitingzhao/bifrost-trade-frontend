@@ -1,4 +1,4 @@
-import { Pencil, Link2, Trash2 } from 'lucide-react'
+import { Pencil, Link2, Trash2, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +23,9 @@ interface Props {
   onDelete: (exec: Execution) => void
   onClose?: (exec: Execution) => void
   onOpenStrategy?: (instanceId: number) => void
+  showSync?: boolean
+  syncBusy?: boolean
+  onSync?: () => void
 }
 
 export function OpenOptionExecTableRow({
@@ -34,6 +37,9 @@ export function OpenOptionExecTableRow({
   onDelete,
   onClose,
   onOpenStrategy,
+  showSync = false,
+  syncBusy = false,
+  onSync,
 }: Props) {
   const es = (exec.side ?? '').toUpperCase()
   const eSideLabel =
@@ -54,27 +60,46 @@ export function OpenOptionExecTableRow({
   const execTitle =
     execInstanceId != null ? `${execLabel} · strategy #${execInstanceId}` : execLabel
 
+  const syncFromLabel = book === 'final' ? 'TWS client book' : 'final book'
+
   return (
     <DenseTableDetailRow>
       <DenseTableCell className="w-9">{null}</DenseTableCell>
       <DenseTableCell colSpan={2} className={cn('pl-6', denseTable.detailCellClip)}>
-        <div className={denseTable.detailRowLabel} title={execTitle}>
-          {execLabel}
-          {execInstanceId != null ? (
-            <>
-              {' '}
-              <span className={denseTable.mutedMeta}>·</span>{' '}
-              <button
-                type="button"
-                className="text-primary hover:underline font-medium"
+        <div className="flex flex-col gap-0.5">
+          <div className={denseTable.detailRowLabel} title={execTitle}>
+            {execLabel}
+            {execInstanceId != null ? (
+              <>
+                {' '}
+                <span className={denseTable.mutedMeta}>·</span>{' '}
+                <button
+                  type="button"
+                  className="text-primary hover:underline font-medium"
+                  onClick={e => {
+                    e.stopPropagation()
+                    onOpenStrategy?.(execInstanceId)
+                  }}
+                >
+                  strategy #{execInstanceId}
+                </button>
+              </>
+            ) : null}
+          </div>
+          {showSync && onSync ? (
+            <div className="pl-4">
+              <IconActionButton
+                title={`Apply opportunity and strategy from the ${syncFromLabel} row`}
+                ariaLabel={`Sync strategy attribution from ${syncFromLabel}`}
+                disabled={syncBusy}
                 onClick={e => {
                   e.stopPropagation()
-                  onOpenStrategy?.(execInstanceId)
+                  onSync()
                 }}
               >
-                strategy #{execInstanceId}
-              </button>
-            </>
+                <RefreshCw className={cn('h-3.5 w-3.5', syncBusy && 'animate-spin')} />
+              </IconActionButton>
+            </div>
           ) : null}
         </div>
       </DenseTableCell>

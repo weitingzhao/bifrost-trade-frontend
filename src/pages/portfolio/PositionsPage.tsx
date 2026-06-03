@@ -5,7 +5,7 @@ import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { usePositionAttribution } from '@/hooks/usePositionAttribution'
-import { useExecutionsFinal, useExecutionsTws } from '@/hooks/useExecutions'
+import { useExecutionsFinal, useExecutionsTws, useExecutionsCanonical } from '@/hooks/useExecutions'
 import { useOpportunities, useStructures } from '@/hooks/useStrategies'
 import { deleteExecution } from '@/api/trading'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -47,6 +47,7 @@ import {
 import { buildStockCoverageItems } from '@/utils/stockCoverage'
 import { buildOffTrackPositions } from '@/utils/offTrackPositions'
 import { buildInstanceAllGroups } from '@/utils/buildInstanceAllGroups'
+import { buildCanonicalOptContractKeySet } from '@/utils/execAttributionSync'
 import { buildInstanceGroups } from '@/utils/buildInstanceGroups'
 import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
@@ -72,6 +73,7 @@ export default function PositionsPage() {
   const { data: attrData } = usePositionAttribution()
   const { data: execFinalData } = useExecutionsFinal()
   const { data: execTwsData } = useExecutionsTws()
+  const { data: execCanonicalData } = useExecutionsCanonical()
   const { data: oppsData } = useOpportunities()
   const { data: structsData } = useStructures()
 
@@ -153,6 +155,10 @@ export default function PositionsPage() {
 
   const executionsFinal = useMemo(() => execFinalData?.items ?? [], [execFinalData])
   const executionsTws = useMemo(() => execTwsData?.items ?? [], [execTwsData?.items])
+  const canonicalOptContractKeys = useMemo(
+    () => buildCanonicalOptContractKeySet(execCanonicalData?.items ?? []),
+    [execCanonicalData],
+  )
   const opportunities = useMemo(() => oppsData?.items ?? [], [oppsData?.items])
   const structures = useMemo(() => structsData?.items ?? [], [structsData?.items])
   const attributions = useMemo(() => attrData?.items ?? [], [attrData])
@@ -523,6 +529,8 @@ export default function PositionsPage() {
                   onLinkExec={openLinkExec}
                   onDeleteExec={setDeleteTarget}
                   onCloseExec={setCloseExec}
+                  onRefreshExecs={refreshExecData}
+                  canonicalOptContractKeys={canonicalOptContractKeys}
                   onInspect={(pos) =>
                     setInspector({
                       type: 'option',

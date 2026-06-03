@@ -109,7 +109,7 @@ export function stkFillNotional(e: Execution): number {
 
 /**
  * Signed trade notional for STK: SELL = +|q|*p, BUY = -|q|*p.
- * Used for Stocks and Fixed Income daily aggregates.
+ * Used for Stocks daily aggregates (net trade direction).
  */
 export function stkSignedTradeNotionalUsd(e: Execution): number {
   if ((e.sec_type ?? '').toUpperCase() !== 'STK') return 0
@@ -122,6 +122,23 @@ export function stkSignedTradeNotionalUsd(e: Execution): number {
   if (side === 'SELL' || side === 'SLD' || side === 'S') return nv
   if (side === 'BUY' || side === 'BOT' || side === 'B') return -nv
   return nv
+}
+
+/**
+ * Fixed Income Stream: money flow into/out of the FI bucket.
+ * BUY = +|q|*p (capital deployed), SELL = -|q|*p (capital withdrawn).
+ */
+export function stkFixedIncomeStreamUsd(e: Execution): number {
+  if ((e.sec_type ?? '').toUpperCase() !== 'STK') return 0
+  const p = Number(e.price) || 0
+  if (!Number.isFinite(p)) return 0
+  const absQ = Math.abs(Number(e.quantity ?? e.qty) || 0)
+  if (absQ <= 0) return 0
+  const nv = absQ * p
+  const side = (e.side ?? '').toString().trim().toUpperCase()
+  if (side === 'BUY' || side === 'BOT' || side === 'B') return nv
+  if (side === 'SELL' || side === 'SLD' || side === 'S') return -nv
+  return -nv
 }
 
 /**
@@ -248,7 +265,7 @@ export async function loadPerformanceDayPnLBulk(params: {
       if (executionDateStr(e) !== dateStr) continue
       const buck = getStkLedgerBucketForExecution(e, positionCategoryByAccountContract)
       if (buck === 'stocks') ns += stkSignedTradeNotionalUsd(e)
-      else if (buck === 'fixed_income') nf += stkSignedTradeNotionalUsd(e)
+      else if (buck === 'fixed_income') nf += stkFixedIncomeStreamUsd(e)
       else if (buck === 'cash_like') nc += stkFillNotional(e)
     }
     notionalStocks[dateStr] = ns

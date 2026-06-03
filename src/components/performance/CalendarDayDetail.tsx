@@ -36,8 +36,8 @@ import {
   executionLegPnlToneClass,
 } from '@/utils/ledger/ledgerOptHelpers'
 import { getStkLedgerBucketForExecution } from '@/utils/ledger/stkBuckets'
-import { stkSignedTradeNotionalUsd, stkFillNotional } from '@/utils/ledger/performanceBulk'
-import { pnlColorClass } from '@/utils/dailyChange'
+import { stkSignedTradeNotionalUsd, stkFillNotional, stkFixedIncomeStreamUsd } from '@/utils/ledger/performanceBulk'
+import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
 
 // ─── Format helpers ───
 
@@ -106,7 +106,7 @@ export function CalendarDayDetail({
 
 const STK_TAB_LABELS: Record<string, string> = {
   stocks: 'Stocks',
-  fixed_income: 'Fixed income',
+  fixed_income: 'Fixed Income Stream',
   cash_like: 'Cash-like',
 }
 
@@ -124,14 +124,157 @@ interface LinkDialogState {
   slippageTotal: number | null
 }
 
+type OptionsDayComputed = ReturnType<typeof buildOptionsDayComputed>
+
+function buildOptionsDayComputed(
+  rawExecsWindow: Execution[],
+  selectedDay: string,
+  linkByOptionId: Record<number, OptionStockLinkSummary>,
+) {
+  const allExecs = rawExecsWindow
+  const dayExecs = allExecs.filter((e) => executionDateStr(e) === selectedDay)
+  const optExecs = dayExecs.filter((e) => (e.sec_type ?? '').toUpperCase() === 'OPT')
+
+  const backendPairs = computeBackendOptPairsFromExecutions(allExecs)
+  const execById = new Map<number, Execution>()
+  for (const e of allExecs) {
+    if (e.account_executions_id != null) execById.set(e.account_executions_id, e)
+  }
+  const relevantPairs = filterRelevantOptPairsForDay(backendPairs, execById, selectedDay)
+
+  const contractKey = (e: Execution) =>
+    `${e.account_id ?? ''}\t${e.symbol ?? ''}\t${e.expiry ?? ''}\t${normalizeStrike(e.strike)}`
+  const pairKey = (p: { account_id: string; symbol: string; expiry: string; strike: string | number }) =>
+    `${p.account_id}\t${p.symbol}\t${p.expiry}\t${normalizeStrike(p.strike)}`
+
+  const pairsEnriched = relevantPairs.map((p) => ({
+    ...p,
+    account_id:
+      p.account_id ||
+      (p.leg_c_execution_id != null ? execById.get(p.leg_c_execution_id)?.account_id : undefined) ||
+      (p.leg_p_execution_id != null ? execById.get(p.leg_p_execution_id)?.account_id : undefined) ||
+      '',
+  }))
+
+  const pairByKey = new Map<string, BackendOptPair[]>()
+  for (const p of pairsEnriched) {
+    const k = pairKey(p)
+    if (!pairByKey.has(k)) pairByKey.set(k, [])
+    pairByKey.get(k)!.push(p)
+  }
+
+  const byContract = new Map<string, Execution[]>()
+  for (const e of optExecs) {
+    const k = contractKey(e)
+    if (!byContract.has(k)) byContract.set(k, [])
+    byContract.get(k)!.push(e)
+  }
+
+  const allContractKeys = new Set<string>(byContract.keys())
+  for (const p of pairsEnriched) {
+    allContractKeys.add(pairKey(p))
+  }
+
+  const contractKeys = Array.from(allContractKeys).sort((a, b) => {
+    const execsA = byContract.get(a) ?? []
+    const execsB = byContract.get(b) ?? []
+    const tA = execsA.length > 0 ? Math.min(...execsA.map((e) => e.time ?? 0)) : 0
+    const tB = execsB.length > 0 ? Math.min(...execsB.map((e) => e.time ?? 0)) : 0
+    return tA - tB
+  })
+
+  const keysBySymbolRealized = new Map<string, string[]>()
+  const keysBySymbolUnrealized = new Map<string, string[]>()
+  const symbolSumRealized = new Map<string, number>()
+  const symbolSumUnrealized = new Map<string, number>()
+  const symbolCommRealized = new Map<string, number>()
+  const symbolCommUnrealized = new Map<string, number>()
+  let totalRealizedSum = 0
+  let totalUnrealizedSum = 0
+  let totalCommRealized = 0
+  let totalCommUnrealized = 0
+
+  for (const key of contractKeys) {
+    const pairs = pairByKey.get(key) ?? []
+    const execs = byContract.get(key) ?? []
+    const first = execs[0]
+    const firstPair = pairs[0]
+    const symbol = first?.symbol ?? firstPair?.symbol ?? '—'
+    const sortedExecs = [...execs].sort(sortExecByExecutionDateThenTime)
+
+    const matchedQtyById = new Map<number, number>()
+    for (const p of pairs) {
+      const pq = Math.abs(p.quantity) || 0
+      if (p.leg_c_execution_id != null) matchedQtyById.set(p.leg_c_execution_id, (matchedQtyById.get(p.leg_c_execution_id) ?? 0) + pq)
+      if (p.leg_p_execution_id != null) matchedQtyById.set(p.leg_p_execution_id, (matchedQtyById.get(p.leg_p_execution_id) ?? 0) + pq)
+    }
+
+    const pairNetSum = pairs.reduce((s, p) => s + (p.net_pnl ?? matchPnl(p)), 0)
+    const realizedPnl = realizedPnlFifoMatchPlusStock(pairNetSum, sortedExecs, matchedQtyById, linkByOptionId)
+    const realizedComm = pairs.reduce((s, p) => s + (Number(p.commission) || 0), 0)
+
+    let unrealizedPnl = 0
+    let unrealizedComm = 0
+    let hasUnmatched = false
+    for (const e of sortedExecs) {
+      const eq = Math.abs(Number(e.quantity ?? e.qty) || 0)
+      if (eq <= 0) continue
+      const mq = e.account_executions_id != null ? (matchedQtyById.get(e.account_executions_id) ?? 0) : 0
+      const uq = eq - mq
+      if (uq > 1e-9) {
+        const ratio = uq / eq
+        unrealizedPnl += ratio * ledgerOptionExecutionCashFlowSigned(e)
+        unrealizedComm += ratio * (Number(e.commission) || 0)
+        hasUnmatched = true
+      }
+    }
+
+    if (pairs.length > 0) {
+      if (!keysBySymbolRealized.has(symbol)) keysBySymbolRealized.set(symbol, [])
+      keysBySymbolRealized.get(symbol)!.push(key)
+      symbolSumRealized.set(symbol, (symbolSumRealized.get(symbol) ?? 0) + realizedPnl)
+      symbolCommRealized.set(symbol, (symbolCommRealized.get(symbol) ?? 0) + realizedComm)
+      totalRealizedSum += realizedPnl
+      totalCommRealized += realizedComm
+    }
+    if (hasUnmatched) {
+      if (!keysBySymbolUnrealized.has(symbol)) keysBySymbolUnrealized.set(symbol, [])
+      keysBySymbolUnrealized.get(symbol)!.push(key)
+      symbolSumUnrealized.set(symbol, (symbolSumUnrealized.get(symbol) ?? 0) + unrealizedPnl)
+      symbolCommUnrealized.set(symbol, (symbolCommUnrealized.get(symbol) ?? 0) + unrealizedComm)
+      totalUnrealizedSum += unrealizedPnl
+      totalCommUnrealized += unrealizedComm
+    }
+  }
+
+  return {
+    contractKeys,
+    byContract,
+    pairByKey,
+    execById,
+    keysBySymbolRealized,
+    keysBySymbolUnrealized,
+    symbolSumRealized,
+    symbolSumUnrealized,
+    symbolCommRealized,
+    symbolCommUnrealized,
+    totalRealizedSum,
+    totalUnrealizedSum,
+    totalCommRealized,
+    totalCommUnrealized,
+    symbolsRealized: Array.from(keysBySymbolRealized.keys()).sort(),
+    symbolsUnrealized: Array.from(keysBySymbolUnrealized.keys()).sort(),
+  }
+}
+
 function OptionsDayDetail({
   selectedDay,
   rawExecsWindow,
   linkByOptionId,
   onClose,
 }: OptionsDayDetailProps) {
-  const [pnlType, setPnlType] = useState<'realized' | 'unrealized'>('realized')
-  const [symbolTab, setSymbolTab] = useState<string | null>(null)
+  const [realizedSymbolTab, setRealizedSymbolTab] = useState<string | null>(null)
+  const [unrealizedSymbolTab, setUnrealizedSymbolTab] = useState<string | null>(null)
   const [linkDialog, setLinkDialog] = useState<LinkDialogState>({
     open: false, title: '', links: [], slippageTotal: null,
   })
@@ -143,151 +286,10 @@ function OptionsDayDetail({
     [],
   )
 
-  const computed = useMemo(() => {
-    const allExecs = rawExecsWindow
-    const dayExecs = allExecs.filter((e) => executionDateStr(e) === selectedDay)
-    const optExecs = dayExecs.filter((e) => (e.sec_type ?? '').toUpperCase() === 'OPT')
-
-    const backendPairs = computeBackendOptPairsFromExecutions(allExecs)
-    const execById = new Map<number, Execution>()
-    for (const e of allExecs) {
-      if (e.account_executions_id != null) execById.set(e.account_executions_id, e)
-    }
-    const relevantPairs = filterRelevantOptPairsForDay(backendPairs, execById, selectedDay)
-
-    const contractKey = (e: Execution) =>
-      `${e.account_id ?? ''}\t${e.symbol ?? ''}\t${e.expiry ?? ''}\t${normalizeStrike(e.strike)}`
-    const pairKey = (p: { account_id: string; symbol: string; expiry: string; strike: string | number }) =>
-      `${p.account_id}\t${p.symbol}\t${p.expiry}\t${normalizeStrike(p.strike)}`
-
-    const pairsEnriched = relevantPairs.map((p) => ({
-      ...p,
-      account_id:
-        p.account_id ||
-        (p.leg_c_execution_id != null ? execById.get(p.leg_c_execution_id)?.account_id : undefined) ||
-        (p.leg_p_execution_id != null ? execById.get(p.leg_p_execution_id)?.account_id : undefined) ||
-        '',
-    }))
-
-    const pairByKey = new Map<string, BackendOptPair[]>()
-    for (const p of pairsEnriched) {
-      const k = pairKey(p)
-      if (!pairByKey.has(k)) pairByKey.set(k, [])
-      pairByKey.get(k)!.push(p)
-    }
-
-    const byContract = new Map<string, Execution[]>()
-    for (const e of optExecs) {
-      const k = contractKey(e)
-      if (!byContract.has(k)) byContract.set(k, [])
-      byContract.get(k)!.push(e)
-    }
-
-    const allContractKeys = new Set<string>(byContract.keys())
-    for (const p of pairsEnriched) {
-      allContractKeys.add(pairKey(p))
-    }
-
-    const contractKeys = Array.from(allContractKeys).sort((a, b) => {
-      const execsA = byContract.get(a) ?? []
-      const execsB = byContract.get(b) ?? []
-      const tA = execsA.length > 0 ? Math.min(...execsA.map((e) => e.time ?? 0)) : 0
-      const tB = execsB.length > 0 ? Math.min(...execsB.map((e) => e.time ?? 0)) : 0
-      return tA - tB
-    })
-
-    // Classify each contract into realized / unrealized buckets, compute PnL
-    const keysBySymbolRealized = new Map<string, string[]>()
-    const keysBySymbolUnrealized = new Map<string, string[]>()
-    const symbolSumRealized = new Map<string, number>()
-    const symbolSumUnrealized = new Map<string, number>()
-    const symbolCommRealized = new Map<string, number>()
-    const symbolCommUnrealized = new Map<string, number>()
-    let totalRealizedSum = 0
-    let totalUnrealizedSum = 0
-    let totalCommRealized = 0
-    let totalCommUnrealized = 0
-
-    for (const key of contractKeys) {
-      const pairs = pairByKey.get(key) ?? []
-      const execs = byContract.get(key) ?? []
-      const first = execs[0]
-      const firstPair = pairs[0]
-      const symbol = first?.symbol ?? firstPair?.symbol ?? '—'
-      const sortedExecs = [...execs].sort(sortExecByExecutionDateThenTime)
-
-      const matchedQtyById = new Map<number, number>()
-      for (const p of pairs) {
-        const pq = Math.abs(p.quantity) || 0
-        if (p.leg_c_execution_id != null) matchedQtyById.set(p.leg_c_execution_id, (matchedQtyById.get(p.leg_c_execution_id) ?? 0) + pq)
-        if (p.leg_p_execution_id != null) matchedQtyById.set(p.leg_p_execution_id, (matchedQtyById.get(p.leg_p_execution_id) ?? 0) + pq)
-      }
-
-      const pairNetSum = pairs.reduce((s, p) => s + (p.net_pnl ?? matchPnl(p)), 0)
-      const realizedPnl = realizedPnlFifoMatchPlusStock(pairNetSum, sortedExecs, matchedQtyById, linkByOptionId)
-      const realizedComm = pairs.reduce((s, p) => s + (Number(p.commission) || 0), 0)
-
-      let unrealizedPnl = 0
-      let unrealizedComm = 0
-      let hasUnmatched = false
-      for (const e of sortedExecs) {
-        const eq = Math.abs(Number(e.quantity ?? e.qty) || 0)
-        if (eq <= 0) continue
-        const mq = e.account_executions_id != null ? (matchedQtyById.get(e.account_executions_id) ?? 0) : 0
-        const uq = eq - mq
-        if (uq > 1e-9) {
-          const ratio = uq / eq
-          unrealizedPnl += ratio * ledgerOptionExecutionCashFlowSigned(e)
-          unrealizedComm += ratio * (Number(e.commission) || 0)
-          hasUnmatched = true
-        }
-      }
-
-      if (pairs.length > 0) {
-        if (!keysBySymbolRealized.has(symbol)) keysBySymbolRealized.set(symbol, [])
-        keysBySymbolRealized.get(symbol)!.push(key)
-        symbolSumRealized.set(symbol, (symbolSumRealized.get(symbol) ?? 0) + realizedPnl)
-        symbolCommRealized.set(symbol, (symbolCommRealized.get(symbol) ?? 0) + realizedComm)
-        totalRealizedSum += realizedPnl
-        totalCommRealized += realizedComm
-      }
-      if (hasUnmatched) {
-        if (!keysBySymbolUnrealized.has(symbol)) keysBySymbolUnrealized.set(symbol, [])
-        keysBySymbolUnrealized.get(symbol)!.push(key)
-        symbolSumUnrealized.set(symbol, (symbolSumUnrealized.get(symbol) ?? 0) + unrealizedPnl)
-        symbolCommUnrealized.set(symbol, (symbolCommUnrealized.get(symbol) ?? 0) + unrealizedComm)
-        totalUnrealizedSum += unrealizedPnl
-        totalCommUnrealized += unrealizedComm
-      }
-    }
-
-    return {
-      contractKeys,
-      byContract,
-      pairByKey,
-      execById,
-      keysBySymbolRealized,
-      keysBySymbolUnrealized,
-      symbolSumRealized,
-      symbolSumUnrealized,
-      symbolCommRealized,
-      symbolCommUnrealized,
-      totalRealizedSum,
-      totalUnrealizedSum,
-      totalCommRealized,
-      totalCommUnrealized,
-      symbolsRealized: Array.from(keysBySymbolRealized.keys()).sort(),
-      symbolsUnrealized: Array.from(keysBySymbolUnrealized.keys()).sort(),
-    }
-  }, [rawExecsWindow, selectedDay, linkByOptionId])
-
-  const isRealized = pnlType === 'realized'
-  const keysBySymbolForType = isRealized ? computed.keysBySymbolRealized : computed.keysBySymbolUnrealized
-  const symbolsForType = isRealized ? computed.symbolsRealized : computed.symbolsUnrealized
-  const symbolSumForType = isRealized ? computed.symbolSumRealized : computed.symbolSumUnrealized
-  const symbolCommForType = isRealized ? computed.symbolCommRealized : computed.symbolCommUnrealized
-  const effectiveSymbol =
-    (symbolTab && symbolsForType.includes(symbolTab) ? symbolTab : symbolsForType[0]) ?? null
+  const computed = useMemo(
+    () => buildOptionsDayComputed(rawExecsWindow, selectedDay, linkByOptionId),
+    [rawExecsWindow, selectedDay, linkByOptionId],
+  )
 
   if (computed.contractKeys.length === 0) {
     return (
@@ -299,97 +301,43 @@ function OptionsDayDetail({
     )
   }
 
+  const realizedCount = computed.symbolsRealized.reduce(
+    (n, s) => n + (computed.keysBySymbolRealized.get(s) ?? []).length,
+    0,
+  )
+  const unrealizedCount = computed.symbolsUnrealized.reduce(
+    (n, s) => n + (computed.keysBySymbolUnrealized.get(s) ?? []).length,
+    0,
+  )
+
   return (
     <DayDetailShell title={selectedDay} onClose={onClose}>
-      {/* Subtitle */}
-      <p className="text-sm font-medium text-foreground/80 mb-1">
-        {isRealized ? 'Matched legs and pairs by contract (FIFO)' : 'Executions by contract (unmatched quantity)'}
+      <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+        Realized: FIFO matched legs and pairs (Match PnL plus prorated linked-stock slippage).
+        Unrealized: open quantity on unmatched fills. Commission shown in yellow beside each total.
       </p>
-      {isRealized && (
-        <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-          Realized lists execution legs that participate in a FIFO match (scaled to matched qty when partial), then match rows.
-          Match row PnL is option (FIFO) only. Execution rows show per-leg premium plus prorated linked stock.
-          Symbol totals = sum of Match option PnL (FIFO) plus prorated linked-stock slippage. Open quantity appears under Unrealized.
-        </p>
-      )}
 
-      {/* Realized / Unrealized tabs */}
-      <div className="flex gap-1 mb-3" role="tablist" aria-label="PnL type">
-        <PnlTypeTab
-          label="Realized"
-          count={computed.symbolsRealized.reduce((n, s) => n + (computed.keysBySymbolRealized.get(s) ?? []).length, 0)}
-          total={computed.totalRealizedSum}
-          commission={computed.totalCommRealized}
-          isActive={isRealized}
-          isRealized
-          onClick={() => setPnlType('realized')}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
+        <OptionsPnlColumn
+          variant="realized"
+          computed={computed}
+          contractCount={realizedCount}
+          symbolTab={realizedSymbolTab}
+          onSymbolTab={setRealizedSymbolTab}
+          linkByOptionId={linkByOptionId}
+          onViewLinks={handleViewLinks}
         />
-        <PnlTypeTab
-          label="Unrealized"
-          count={computed.symbolsUnrealized.reduce((n, s) => n + (computed.keysBySymbolUnrealized.get(s) ?? []).length, 0)}
-          total={computed.totalUnrealizedSum}
-          commission={computed.totalCommUnrealized}
-          isActive={!isRealized}
-          isRealized={false}
-          onClick={() => setPnlType('unrealized')}
+        <OptionsPnlColumn
+          variant="unrealized"
+          computed={computed}
+          contractCount={unrealizedCount}
+          symbolTab={unrealizedSymbolTab}
+          onSymbolTab={setUnrealizedSymbolTab}
+          linkByOptionId={linkByOptionId}
+          onViewLinks={handleViewLinks}
         />
       </div>
 
-      {/* Symbol sub-tabs */}
-      {symbolsForType.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-4" role="tablist" aria-label="Symbol">
-          {symbolsForType.map((sym) => {
-            const sum = symbolSumForType.get(sym) ?? 0
-            const comm = symbolCommForType.get(sym) ?? 0
-            return (
-              <button
-                key={sym}
-                role="tab"
-                aria-selected={sym === effectiveSymbol}
-                onClick={() => setSymbolTab(sym)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                  sym === effectiveSymbol
-                    ? 'border-primary bg-primary/10 text-foreground'
-                    : 'border-border text-muted-foreground hover:bg-muted',
-                )}
-              >
-                {sym}
-                <span className={cn('tabular-nums', isRealized ? pnlColorClass(sum) : 'text-blue-500 dark:text-blue-400')}>
-                  {fmtUsd(sum)}
-                </span>
-                <span className="text-yellow-600 dark:text-yellow-400 tabular-nums">{fmtUsd(comm)}</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {symbolsForType.length === 0 && (
-        <p className="text-sm text-muted-foreground py-4">
-          {isRealized
-            ? 'No realized (matched BUY↔SELL) pairs for this day.'
-            : 'No unrealized (unmatched) executions for this day.'}
-        </p>
-      )}
-
-      {/* Contract groups */}
-      {effectiveSymbol &&
-        (keysBySymbolForType.get(effectiveSymbol) ?? []).map((key) => (
-          <ContractGroup
-            key={key}
-            contractKey={key}
-            execs={computed.byContract.get(key) ?? []}
-            pairs={computed.pairByKey.get(key) ?? []}
-            execById={computed.execById}
-            linkByOptionId={linkByOptionId}
-            isRealized={isRealized}
-            onViewLinks={handleViewLinks}
-          />
-        ))}
-
-      {/* Option-Stock Link Dialog */}
       <OptionStockLinkDialog
         open={linkDialog.open}
         title={linkDialog.title}
@@ -398,6 +346,114 @@ function OptionsDayDetail({
         onClose={() => setLinkDialog((s) => ({ ...s, open: false }))}
       />
     </DayDetailShell>
+  )
+}
+
+interface OptionsPnlColumnProps {
+  variant: 'realized' | 'unrealized'
+  computed: OptionsDayComputed
+  contractCount: number
+  symbolTab: string | null
+  onSymbolTab: (symbol: string) => void
+  linkByOptionId: Record<number, OptionStockLinkSummary>
+  onViewLinks: (links: OptionStockLinkSummary['links'], title: string, slippageTotal: number | null) => void
+}
+
+function OptionsPnlColumn({
+  variant,
+  computed,
+  contractCount,
+  symbolTab,
+  onSymbolTab,
+  linkByOptionId,
+  onViewLinks,
+}: OptionsPnlColumnProps) {
+  const isRealized = variant === 'realized'
+  const keysBySymbol = isRealized ? computed.keysBySymbolRealized : computed.keysBySymbolUnrealized
+  const symbols = isRealized ? computed.symbolsRealized : computed.symbolsUnrealized
+  const symbolSum = isRealized ? computed.symbolSumRealized : computed.symbolSumUnrealized
+  const symbolComm = isRealized ? computed.symbolCommRealized : computed.symbolCommUnrealized
+  const total = isRealized ? computed.totalRealizedSum : computed.totalUnrealizedSum
+  const commission = isRealized ? computed.totalCommRealized : computed.totalCommUnrealized
+  const effectiveSymbol =
+    (symbolTab && symbols.includes(symbolTab) ? symbolTab : symbols[0]) ?? null
+
+  return (
+    <section
+      className="flex min-h-0 flex-col rounded-lg border border-border/60 bg-muted/10 p-2.5"
+      aria-label={isRealized ? 'Realized PnL' : 'Unrealized PnL'}
+    >
+      <PnlColumnHeader
+        label={isRealized ? 'Realized' : 'Unrealized'}
+        subtitle={
+          isRealized
+            ? 'Matched legs and pairs by contract (FIFO)'
+            : 'Executions by contract (unmatched quantity)'
+        }
+        count={contractCount}
+        total={total}
+        commission={commission}
+        isRealized={isRealized}
+      />
+
+      {symbols.length > 0 ? (
+        <>
+          <div
+            className="mb-2 flex flex-wrap gap-1"
+            role="tablist"
+            aria-label={`${isRealized ? 'Realized' : 'Unrealized'} symbol`}
+          >
+            {symbols.map((sym) => {
+              const sum = symbolSum.get(sym) ?? 0
+              const comm = symbolComm.get(sym) ?? 0
+              return (
+                <button
+                  key={sym}
+                  type="button"
+                  role="tab"
+                  aria-selected={sym === effectiveSymbol}
+                  onClick={() => onSymbolTab(sym)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium transition-colors',
+                    sym === effectiveSymbol
+                      ? 'border-primary bg-primary/10 text-foreground'
+                      : 'border-border text-muted-foreground hover:bg-muted',
+                  )}
+                >
+                  {sym}
+                  <span className={cn('tabular-nums', isRealized ? pnlColorClass(sum) : unrealizedPnlColorClass(sum))}>
+                    {fmtUsd(sum)}
+                  </span>
+                  <span className="tabular-nums text-warning">{fmtUsd(comm)}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="max-h-[min(28rem,50vh)] min-h-0 overflow-auto pr-0.5">
+            {effectiveSymbol &&
+              (keysBySymbol.get(effectiveSymbol) ?? []).map((key) => (
+                <ContractGroup
+                  key={key}
+                  contractKey={key}
+                  execs={computed.byContract.get(key) ?? []}
+                  pairs={computed.pairByKey.get(key) ?? []}
+                  execById={computed.execById}
+                  linkByOptionId={linkByOptionId}
+                  isRealized={isRealized}
+                  onViewLinks={onViewLinks}
+                />
+              ))}
+          </div>
+        </>
+      ) : (
+        <p className="py-3 text-xs text-muted-foreground">
+          {isRealized
+            ? 'No realized (matched BUY↔SELL) pairs for this day.'
+            : 'No unrealized (unmatched) executions for this day.'}
+        </p>
+      )}
+    </section>
   )
 }
 
@@ -508,7 +564,7 @@ function ContractGroup({
         <span className="text-xs font-semibold text-foreground">
           {symbol} {expiry} {strike} {rightFull !== '—' ? rightFull : ''}
         </span>
-        <span className={cn('text-xs font-semibold tabular-nums', isRealized ? pnlColorClass(tabPnl) : 'text-blue-500 dark:text-blue-400')}>
+        <span className={cn('text-xs font-semibold tabular-nums', isRealized ? pnlColorClass(tabPnl) : unrealizedPnlColorClass(tabPnl))}>
           {fmtUsd(tabPnl)}
         </span>
         <span className="text-xs tabular-nums text-yellow-600 dark:text-yellow-400">{fmtUsd(tabComm)}</span>
@@ -713,7 +769,9 @@ function StkDayDetail({
         Calendar daily realized is the sum of broker realized_pnl on fills for this trade date in this bucket.
         {assetTab === 'cash_like'
           ? ' Cash-like Notional uses |qty|×price.'
-          : ' Stocks / Fixed income Notional is signed trade size (qty×price, net buy vs sell).'}
+          : assetTab === 'fixed_income'
+            ? ' Fixed Income Stream is money flow: BUY positive, SELL negative (|qty|×price).'
+            : ' Stocks Notional is signed trade size (SELL +, BUY −).'}
       </p>
 
       <div className="rounded-md border overflow-hidden">
@@ -725,14 +783,19 @@ function StkDayDetail({
               <TableHead className="text-[10px] uppercase tracking-wider">Side</TableHead>
               <TableHead className="text-[10px] uppercase tracking-wider text-right">Qty</TableHead>
               <TableHead className="text-[10px] uppercase tracking-wider text-right">Price</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">Notional</TableHead>
+              <TableHead className="text-[10px] uppercase tracking-wider text-right">
+                {assetTab === 'fixed_income' ? 'Stream' : 'Notional'}
+              </TableHead>
               <TableHead className="text-[10px] uppercase tracking-wider text-right">Realized PnL</TableHead>
               <TableHead className="text-[10px] uppercase tracking-wider text-right">Commission</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {bucketExecs.map((ex) => {
-              const signedNv = stkSignedTradeNotionalUsd(ex)
+              const signedNv =
+                assetTab === 'fixed_income'
+                  ? stkFixedIncomeStreamUsd(ex)
+                  : stkSignedTradeNotionalUsd(ex)
               const notionalDisplay = assetTab === 'cash_like' ? stkFillNotional(ex) : signedNv
               const notionalColor =
                 assetTab === 'cash_like'
@@ -872,47 +935,38 @@ function OptionStockLinkDialog({
   )
 }
 
-// ─── PnL Type Tab Button ───
+// ─── PnL Column Header ───
 
-function PnlTypeTab({
+function PnlColumnHeader({
   label,
+  subtitle,
   count,
   total,
   commission,
-  isActive,
   isRealized,
-  onClick,
 }: {
   label: string
+  subtitle: string
   count: number
   total: number
   commission: number
-  isActive: boolean
   isRealized: boolean
-  onClick: () => void
 }) {
   return (
-    <button
-      role="tab"
-      aria-selected={isActive}
-      onClick={onClick}
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
-        isActive
-          ? 'border-primary bg-primary/10 text-foreground shadow-sm'
-          : 'border-border text-muted-foreground hover:bg-muted',
-      )}
-    >
-      {label}
-      {count > 0 && (
-        <>
-          <span className="text-muted-foreground">({count})</span>
-          <span className={cn('tabular-nums', isRealized ? pnlColorClass(total) : 'text-blue-500 dark:text-blue-400')}>
-            {fmtUsd(total)}
-          </span>
-          <span className="text-yellow-600 dark:text-yellow-400 tabular-nums">{fmtUsd(commission)}</span>
-        </>
-      )}
-    </button>
+    <header className="mb-2 border-b border-border/50 pb-2">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <h3 className="text-xs font-semibold text-foreground">{label}</h3>
+        {count > 0 && (
+          <>
+            <span className="text-[11px] text-muted-foreground">({count})</span>
+            <span className={cn('text-xs tabular-nums font-medium', isRealized ? pnlColorClass(total) : unrealizedPnlColorClass(total))}>
+              {fmtUsd(total)}
+            </span>
+            <span className="text-xs tabular-nums text-warning">{fmtUsd(commission)}</span>
+          </>
+        )}
+      </div>
+      <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">{subtitle}</p>
+    </header>
   )
 }

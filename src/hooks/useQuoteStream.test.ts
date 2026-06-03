@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mergeQuoteIntoMap } from './useQuoteStream'
+import { mergeQuotesIntoSymbolMap } from '@/utils/marketStreamsRows'
 import type { QuoteItem } from '@/types/market'
 
 function makeQuote(overrides: Partial<QuoteItem> = {}): QuoteItem {
@@ -12,60 +13,70 @@ function makeQuote(overrides: Partial<QuoteItem> = {}): QuoteItem {
 }
 
 describe('mergeQuoteIntoMap', () => {
-  it('uses contract_key as map key when present', () => {
-    const q = makeQuote({ contract_key: 'AAPL_C_150_20250117', symbol: 'AAPL' })
+  it('indexes STK ingestor ticks by uppercase symbol, not contract_key', () => {
+    const q = makeQuote({
+      symbol: 'NVDA',
+      contract_key: 'NVDA|STK|||',
+      sec_type: 'STK',
+    })
     const result = mergeQuoteIntoMap({}, q)
-    expect(result['AAPL_C_150_20250117']).toBe(q)
-    expect(result['AAPL']).toBeUndefined()
+    expect(result.NVDA).toBe(q)
+    expect(result['NVDA|STK|||']).toBeUndefined()
   })
 
   it('falls back to symbol when contract_key is undefined', () => {
     const q = makeQuote({ symbol: 'TSLA' })
     const result = mergeQuoteIntoMap({}, q)
-    expect(result['TSLA']).toBe(q)
+    expect(result.TSLA).toBe(q)
   })
 
-  it('falls back to symbol when contract_key is null', () => {
-    const q = makeQuote({ contract_key: undefined, symbol: 'MSFT' })
-    const result = mergeQuoteIntoMap({}, q)
-    expect(result['MSFT']).toBe(q)
-  })
-
-  it('returns prev unchanged when both contract_key and symbol are absent', () => {
+  it('skips quotes with no symbol', () => {
     const prev = { AAPL: makeQuote({ symbol: 'AAPL' }) }
-    const q = makeQuote()  // no symbol, no contract_key
+    const q = makeQuote()
     const result = mergeQuoteIntoMap(prev, q)
-    expect(result).toBe(prev)
+    expect(result).toEqual(prev)
+    expect(Object.keys(result)).toEqual(['AAPL'])
   })
 
   it('merges into existing map without mutating prev', () => {
     const prev = { AAPL: makeQuote({ symbol: 'AAPL', last: 180 }) }
     const q = makeQuote({ symbol: 'TSLA', last: 250 })
     const result = mergeQuoteIntoMap(prev, q)
-    expect(result['AAPL'].last).toBe(180)
-    expect(result['TSLA'].last).toBe(250)
-    // prev is not mutated
+    expect(result.AAPL.last).toBe(180)
+    expect(result.TSLA.last).toBe(250)
     expect('TSLA' in prev).toBe(false)
   })
 
-  it('overwrites an existing key with updated quote', () => {
+  it('overwrites an existing symbol key with updated quote', () => {
     const old = makeQuote({ symbol: 'AAPL', last: 180 })
     const updated = makeQuote({ symbol: 'AAPL', last: 185 })
     const result = mergeQuoteIntoMap({ AAPL: old }, updated)
-    expect(result['AAPL'].last).toBe(185)
+    expect(result.AAPL.last).toBe(185)
   })
 
-  it('returns a new object reference (immutability)', () => {
-    const prev = { AAPL: makeQuote({ symbol: 'AAPL' }) }
-    const q = makeQuote({ symbol: 'AAPL', last: 999 })
-    const result = mergeQuoteIntoMap(prev, q)
-    expect(result).not.toBe(prev)
+  it('stores OPT quotes by contract_key without overwriting STK symbol', () => {
+    const stk = makeQuote({ symbol: 'AAPL', contract_key: 'AAPL|STK|||', sec_type: 'STK', last: 180 })
+    const opt = makeQuote({
+      symbol: 'AAPL',
+      contract_key: 'AAPL|OPT|20250117|150|C',
+      sec_type: 'OPT',
+      last: 5,
+    })
+    let map = mergeQuoteIntoMap({}, stk)
+    map = mergeQuoteIntoMap(map, opt)
+    expect(map.AAPL.last).toBe(180)
+    expect(map['AAPL|OPT|20250117|150|C'].last).toBe(5)
   })
+})
 
-  it('prefers contract_key over symbol when both are present', () => {
-    const q = makeQuote({ contract_key: 'AAPL_C_200', symbol: 'AAPL' })
-    const result = mergeQuoteIntoMap({}, q)
-    expect('AAPL_C_200' in result).toBe(true)
-    expect('AAPL' in result).toBe(false)
+describe('mergeQuotesIntoSymbolMap', () => {
+  it('batch-merges multiple STK ticks by symbol', () => {
+    const quotes = [
+      makeQuote({ symbol: 'nvda', contract_key: 'NVDA|STK|||', sec_type: 'STK' }),
+      makeQuote({ symbol: 'tsla', contract_key: 'TSLA|STK|||', sec_type: 'STK' }),
+    ]
+    const result = mergeQuotesIntoSymbolMap({}, quotes)
+    expect(result.NVDA).toBe(quotes[0])
+    expect(result.TSLA).toBe(quotes[1])
   })
 })

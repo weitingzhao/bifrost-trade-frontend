@@ -3,16 +3,16 @@ import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { fetchQuotes, subscribeQuotes } from '@/api/market'
 import type { QuoteItem } from '@/types/market'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { mergeQuotesIntoSymbolMap } from '@/utils/marketStreamsRows'
 
 const FALLBACK_POLL_MS = 8_000
 
+/** Single-quote merge for SSE; uses same symbol-key rules as Legacy mergeQuotesIntoSymbolMap. */
 export function mergeQuoteIntoMap(
   prev: Record<string, QuoteItem>,
   q: QuoteItem,
 ): Record<string, QuoteItem> {
-  const key = q.contract_key ?? q.symbol
-  if (!key) return prev
-  return { ...prev, [key]: q }
+  return mergeQuotesIntoSymbolMap(prev, [q])
 }
 
 /**
@@ -40,19 +40,14 @@ export function useQuoteStream(
     queryKey: [...QUERY_KEYS.market.quotesSnapshot, symbolsKey, contractKeysKey],
     queryFn: async () => {
       const resp = await fetchQuotes(symbols, contractKeys)
-      const map: Record<string, QuoteItem> = {}
-      for (const q of resp.quotes) {
-        const key = q.contract_key ?? q.symbol
-        if (key) map[key] = q
-      }
-      queryClient.setQueryData<Record<string, QuoteItem>>(QUERY_KEYS.market.quotesLive, (prev) => ({
-        ...(prev ?? {}),
-        ...map,
-      }))
+      queryClient.setQueryData<Record<string, QuoteItem>>(QUERY_KEYS.market.quotesLive, (prev) =>
+        mergeQuotesIntoSymbolMap(prev ?? {}, resp.quotes),
+      )
       return resp
     },
     refetchInterval: enableFallbackPoll ? FALLBACK_POLL_MS : false,
-    enabled: symbols.length > 0 || contractKeys.length > 0,
+    // Empty symbol list → Market API builds focus list from positions + watchlist (Legacy behavior).
+    enabled: enableFallbackPoll || enableSse,
     staleTime: FALLBACK_POLL_MS,
   })
 

@@ -29,112 +29,146 @@
   margin: 0 0 0.5rem;
 }
 
-/* ─── Filter bar ─── */
+/* ─── Filter bar (Legacy compact inline) ─── */
 
 .filterBar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.75rem 1rem;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
 }
 
 .filterGroup {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.75rem 1rem;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  width: 100%;
 }
 
 .filterFieldset {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   border: none;
   padding: 0;
   margin: 0;
   min-width: 0;
+  min-height: 2.4rem;
+}
+
+.filterFieldsetCapsule {
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background: color-mix(in srgb, var(--muted) 25%, transparent);
 }
 
 .filterLegend {
-  font-size: 0.625rem;
-  font-weight: 600;
+  font-size: 0.6875rem;
+  font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted-foreground);
   line-height: 1.2;
+  flex-shrink: 0;
 }
 
 .timeRangePills {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.125rem;
-  padding: 0.125rem;
-  border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
-  background: color-mix(in srgb, var(--muted) 25%, transparent);
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .timeRangePill {
-  border: none;
-  border-radius: calc(var(--radius-md) - 2px);
-  padding: 0.25rem 0.625rem;
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--muted-foreground);
-  background: transparent;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: color-mix(in srgb, var(--muted) 20%, transparent);
+  color: var(--foreground);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  user-select: none;
 }
 
 .timeRangePill:hover {
-  color: var(--foreground);
+  background: color-mix(in srgb, var(--secondary) 90%, transparent);
+  border-color: color-mix(in srgb, var(--border) 90%, transparent);
 }
 
 .timeRangePillActive {
   background: var(--primary);
+  border-color: var(--primary);
   color: var(--primary-foreground);
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 80%, transparent),
+    0 6px 20px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 .filterSelect {
-  height: 1.75rem;
+  height: 1.9rem;
   min-width: 7.5rem;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
+  border-radius: 0.5rem;
 }
 
 .rangeLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.2rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: color-mix(in srgb, var(--background) 85%, transparent);
   font-size: 0.75rem;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-variant-numeric: tabular-nums;
   color: var(--foreground);
+  white-space: nowrap;
 }
 
 .rangeLabelTitle {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted-foreground);
   font-family: inherit;
 }
 
 .assetTotalsInline {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1rem;
-  font-size: 0.6875rem;
+  gap: 0.375rem 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.625rem;
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: color-mix(in srgb, var(--muted) 20%, transparent);
+  font-size: 0.75rem;
   font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 500;
 }
 
 .assetTotalKv {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   white-space: nowrap;
 }
 
 .sumNumber {
-  color: var(--foreground);
+  color: var(--color-lamp-yellow);
 }
 
 .tonePositive {
@@ -146,7 +180,8 @@
 }
 
 .toneUnrealized {
-  color: oklch(0.75 0.12 220);
+  color: var(--color-lamp-yellow);
+  font-weight: 600;
 }
 
 .notionalPos {
@@ -174,16 +209,19 @@
 .systemTabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  gap: 0.1875rem;
+  margin-bottom: 0.375rem;
 }
 
 .systemTab {
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
-  border-radius: var(--radius-md);
-  padding: 0.25rem 0.625rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
   color: var(--muted-foreground);
   background: transparent;
   cursor: pointer;
@@ -206,7 +244,7 @@
 .calendarWithSummary {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 @media (min-width: 1280px) {
@@ -219,27 +257,96 @@
 .calendarLeft {
   flex: 3;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   border-radius: var(--radius-lg);
   border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
   background: color-mix(in srgb, var(--muted) 12%, var(--card));
-  padding: 0.75rem;
+  padding: 0.5rem;
 }
 
 .calendarRight {
   flex: 2;
   min-width: 17.5rem;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendarToolbar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.calendarToolbar .systemTabs {
+  margin-bottom: 0;
+}
+
+.calendarToolbar .calendarMonthNav {
+  margin-bottom: 0;
+  flex: 1 1 10rem;
+  justify-content: center;
+  min-width: 0;
+}
+
+.calendarToolbar .legendPills {
+  margin-bottom: 0;
+}
+
+.calendarOptUnrealized {
+  flex-shrink: 0;
+  margin: 0 0 0.25rem;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  color: var(--muted-foreground);
+}
+
+.calendarBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.calendarWeeks {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+}
+
+.calendarGridWeek {
+  flex: 1 1 0;
+  min-height: 4.25rem;
+  margin-bottom: 0;
+}
+
+.calendarGridHeader {
+  flex-shrink: 0;
+  margin-bottom: 0.125rem;
 }
 
 .calendarMonthNav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+}
+
+.calendarMonthNavCompact {
+  gap: 0.25rem;
 }
 
 .calendarMonthLabel {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -247,8 +354,8 @@
 .legendPills {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
-  margin-bottom: 0.5rem;
+  gap: 0.25rem;
+  margin-bottom: 0.375rem;
 }
 
 .legendPill {
@@ -265,9 +372,9 @@
 }
 
 .legendUnrealized {
-  border-color: color-mix(in srgb, oklch(0.75 0.12 220) 35%, transparent);
-  background: color-mix(in srgb, oklch(0.75 0.12 220) 12%, transparent);
-  color: oklch(0.75 0.12 220);
+  border-color: color-mix(in srgb, var(--color-lamp-yellow) 35%, transparent);
+  background: color-mix(in srgb, var(--color-lamp-yellow) 12%, transparent);
+  color: var(--color-lamp-yellow);
 }
 
 .legendNotional {
@@ -276,34 +383,197 @@
   color: oklch(0.7 0.15 290);
 }
 
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.1875rem;
+  margin-bottom: 0;
+}
+
+.calendarSummaryPanel {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background: color-mix(in srgb, var(--muted) 10%, var(--card));
+  padding: 0.625rem;
+}
+
+.summaryMetricRow {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+.summaryAssetGrid {
+  margin-top: 0.125rem;
+  gap: 0.375rem;
+}
+
+.summaryColumn {
+  padding: 0.375rem;
+}
+
+.summaryColumnTitle {
+  margin-bottom: 0.25rem;
+}
+
+.calendarWeekday {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--foreground) 55%, var(--muted-foreground));
+  padding: 0.1875rem 0 0.25rem;
+}
+
+.calendarCellEmpty {
+  height: 100%;
+  min-height: 4.25rem;
+  border-radius: 0.5rem;
+}
+
 .calendarCell {
   position: relative;
-  height: 5.25rem;
-  border-radius: var(--radius-md);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: stretch;
+  height: 100%;
+  min-height: 4.25rem;
+  border-radius: 0.5rem;
   border: 1px solid transparent;
-  padding: 0.375rem;
+  padding: 0;
   text-align: left;
-  background: color-mix(in srgb, var(--muted) 20%, transparent);
-  transition: border-color 0.15s, background 0.15s;
+  background: color-mix(in srgb, var(--muted) 18%, transparent);
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+}
+
+.calendarCellHeader {
+  flex-shrink: 0;
+  padding: 0.3125rem 0.375rem 0;
+  justify-self: start;
+  align-self: start;
+}
+
+.calendarCellDay {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--foreground) 50%, var(--muted-foreground));
+}
+
+.calendarCellHasData .calendarCellDay {
+  color: var(--foreground);
+}
+
+.calendarCellBody {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.0625rem 0.375rem 0.625rem;
+}
+
+.calendarCellMetricsBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: max-content;
+  max-width: 100%;
+  gap: 0.1875rem;
+}
+
+.calendarCellMetric {
+  display: grid;
+  grid-template-columns: 0.8125rem minmax(0, max-content);
+  align-items: baseline;
+  column-gap: 0.3125rem;
+  min-width: 0;
+}
+
+.calendarCellMetricLabel {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: left;
+  color: var(--muted-foreground);
+}
+
+.calendarCellMetricValue {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendarCellMetricEmphasis .calendarCellMetricValue {
+  font-size: 0.8125rem;
+}
+
+.calendarCellTonePositive {
+  color: var(--color-success);
+}
+
+.calendarCellToneNegative {
+  color: var(--color-danger);
+}
+
+.calendarCellToneUnrealized {
+  color: var(--color-lamp-yellow);
+}
+
+.calendarCellToneNotionalCash {
+  color: oklch(0.7 0.15 290);
+}
+
+.calendarCellToneNotionalPos {
+  color: var(--color-success);
+}
+
+.calendarCellToneNotionalNeg {
+  color: var(--color-danger);
+}
+
+.calendarCellToneMuted {
+  color: var(--muted-foreground);
 }
 
 .calendarCellHasData {
-  border-color: color-mix(in srgb, var(--border) 80%, transparent);
-  background: var(--card);
+  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  background: color-mix(in srgb, var(--card) 92%, var(--muted));
 }
 
 .calendarCellHasData:hover {
-  border-color: color-mix(in srgb, var(--foreground) 25%, var(--border));
+  border-color: color-mix(in srgb, var(--foreground) 18%, var(--border));
+  background: var(--card);
 }
 
 .calendarCellSelected {
   border-color: var(--primary);
-  box-shadow: 0 0 0 1px var(--primary);
-  background: color-mix(in srgb, var(--primary) 8%, var(--card));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent),
+    0 0 0 1px var(--primary);
+  background: color-mix(in srgb, var(--primary) 7%, var(--card));
 }
 
 .calendarCellLoss {
-  background: var(--color-danger-soft);
+  background: color-mix(in srgb, var(--color-danger-soft) 55%, var(--card));
+  border-color: color-mix(in srgb, var(--color-danger) 14%, var(--border));
 }
 
 /* ─── Data table ─── */

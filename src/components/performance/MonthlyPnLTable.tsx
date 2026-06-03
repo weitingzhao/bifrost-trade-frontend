@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { pnlColorClass } from '@/utils/dailyChange'
+import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ByDayRangeData } from '@/types/trading'
 import styles from '@/components/performance/performanceCalendar.module.css'
@@ -7,6 +7,7 @@ import styles from '@/components/performance/performanceCalendar.module.css'
 interface MonthlyPnLTableProps {
   byDayRangeData: ByDayRangeData | null
   isLoading?: boolean
+  className?: string
 }
 
 function fmtVal(v: number): string {
@@ -21,7 +22,7 @@ function fmtVal(v: number): string {
 
 function unrealizedColorClass(value: number): string {
   if (Math.abs(value) < 0.005) return 'text-muted-foreground'
-  return 'text-cyan-600 dark:text-cyan-400'
+  return unrealizedPnlColorClass(value)
 }
 
 function signedNotionalClass(val: number): string {
@@ -55,7 +56,7 @@ interface MonthGroup {
   sums: Omit<DayRow, 'date'>
 }
 
-export default function MonthlyPnLTable({ byDayRangeData, isLoading }: MonthlyPnLTableProps) {
+export default function MonthlyPnLTable({ byDayRangeData, isLoading, className }: MonthlyPnLTableProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
 
   const monthGroups = useMemo<MonthGroup[]>(() => {
@@ -153,7 +154,7 @@ export default function MonthlyPnLTable({ byDayRangeData, isLoading }: MonthlyPn
   }
 
   return (
-    <div className={styles.tableWrap}>
+    <div className={className ?? styles.tableWrap}>
       <table className={styles.dataTable}>
         <thead>
           <tr>
@@ -162,7 +163,7 @@ export default function MonthlyPnLTable({ byDayRangeData, isLoading }: MonthlyPn
             <th>Opt U</th>
             <th>Stocks N</th>
             <th>Stocks R</th>
-            <th>FI N</th>
+            <th>FI Stream</th>
             <th>FI R</th>
             <th>Cash N</th>
             <th>Cash R</th>

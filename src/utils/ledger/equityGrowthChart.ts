@@ -12,7 +12,7 @@ export interface GrowthLayerDef {
 export const GROWTH_LAYERS: GrowthLayerDef[] = [
   { key: 'options', label: 'Options', color: 'rgb(163,230,53)', colorFill: 'rgba(163,230,53,0.28)' },
   { key: 'stocks', label: 'Stocks', color: 'rgb(56,189,248)', colorFill: 'rgba(56,189,248,0.22)' },
-  { key: 'fixed_income', label: 'Fix-In', color: 'rgb(251,191,36)', colorFill: 'rgba(251,191,36,0.18)' },
+  { key: 'fixed_income', label: 'FI Stream', color: 'rgb(251,191,36)', colorFill: 'rgba(251,191,36,0.18)' },
   { key: 'cash_like', label: 'Cash-like', color: 'rgb(167,139,250)', colorFill: 'rgba(167,139,250,0.18)' },
 ]
 

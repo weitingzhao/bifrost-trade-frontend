@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
-import { pnlColorClass } from '@/utils/dailyChange'
+import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import type {
   PerformanceSummary,
   PerformanceDayPnLCell,
@@ -8,6 +8,7 @@ import type {
   PerformanceResponse,
 } from '@/types/trading'
 import type { StkLedgerBucket } from '@/utils/ledger/stkBuckets'
+import styles from '@/components/performance/performanceCalendar.module.css'
 
 // ─── Formatting ───
 
@@ -54,7 +55,10 @@ interface MetricDef {
   label: string
   value: string
   colorValue?: number | null
+  /** When set, value uses site-wide unrealized yellow instead of PnL green/red. */
+  valueTone?: 'pnl' | 'unrealized'
   emphasize?: boolean
+  valueClassName?: string
 }
 
 // ─── Helpers ───
@@ -82,9 +86,23 @@ function sumNotionalMonth(
 
 // ─── Sub-components ───
 
-function MetricCell({ label, value, colorValue, emphasize }: MetricDef) {
+function MetricCell({
+  label,
+  value,
+  colorValue,
+  valueTone = 'pnl',
+  emphasize,
+  valueClassName,
+}: MetricDef) {
+  const toneClass =
+    valueClassName ??
+    (colorValue != null
+      ? valueTone === 'unrealized'
+        ? unrealizedPnlColorClass(colorValue)
+        : pnlColorClass(colorValue)
+      : 'text-foreground')
   return (
-    <div className="min-w-0 rounded-md bg-background/70 px-1.5 py-1">
+    <div className="shrink-0 rounded-md bg-background/70 px-1.5 py-1">
       <span className="block text-[10px] uppercase tracking-wide text-muted-foreground leading-tight">
         {label}
       </span>
@@ -92,7 +110,7 @@ function MetricCell({ label, value, colorValue, emphasize }: MetricDef) {
         className={cn(
           'block tabular-nums font-semibold leading-tight truncate',
           emphasize ? 'text-[13px]' : 'text-xs',
-          colorValue != null ? pnlColorClass(colorValue) : 'text-foreground',
+          toneClass,
         )}
       >
         {value}
@@ -108,6 +126,7 @@ function SummaryMetricRow({
   accentTitle,
   empty,
   horizontalMetrics,
+  metricsNowrap,
 }: {
   title: string
   metrics: MetricDef[]
@@ -115,13 +134,14 @@ function SummaryMetricRow({
   empty?: boolean
   /** Summary row: all metrics in one horizontal flow (Legacy default row layout) */
   horizontalMetrics?: boolean
+  metricsNowrap?: boolean
 }) {
   return (
-    <div className="flex min-w-0 items-start gap-3 border-b border-border/40 py-2 last:border-b-0">
+    <div className={cn('flex min-w-0 items-start gap-3 border-b border-border/40 last:border-b-0', styles.summaryMetricRow)}>
       <span
         className={cn(
-          'w-16 shrink-0 pt-0.5 text-xs font-bold',
-          accentTitle ? 'text-primary' : 'text-foreground',
+          'shrink-0 pt-0.5 text-xs font-bold leading-tight',
+          accentTitle ? 'w-16 text-primary' : 'w-[5.25rem] text-foreground',
         )}
       >
         {title}
@@ -133,7 +153,10 @@ function SummaryMetricRow({
           className={cn(
             'min-w-0 flex-1',
             horizontalMetrics
-              ? 'flex flex-wrap gap-x-3 gap-y-1'
+              ? cn(
+                  'flex gap-x-2 gap-y-1',
+                  metricsNowrap ? 'flex-nowrap overflow-x-auto' : 'flex-wrap',
+                )
               : 'grid grid-cols-[repeat(auto-fill,minmax(4.25rem,1fr))] gap-x-2 gap-y-1',
           )}
         >
@@ -159,10 +182,11 @@ function SummaryColumn({
   empty?: boolean
 }) {
   return (
-    <div className="min-w-0 rounded-lg border border-border/60 bg-muted/20 p-2">
+    <div className={cn('min-w-0 rounded-lg border border-border/60 bg-muted/20', styles.summaryColumn)}>
       <p
         className={cn(
-          'mb-1.5 text-xs font-bold tracking-wide',
+          'text-xs font-bold tracking-wide',
+          styles.summaryColumnTitle,
           accentTitle ? 'text-primary' : 'text-foreground',
         )}
       >
@@ -266,7 +290,7 @@ export function CalendarSummaryPanel({
 
   if (isLoading) {
     return (
-      <div className="flex h-full min-h-[12rem] items-center justify-center rounded-xl border border-border/60 bg-muted/10 p-4">
+      <div className={cn('flex min-h-[8rem] items-center justify-center', styles.calendarSummaryPanel)}>
         <p className="animate-pulse text-xs text-muted-foreground">Loading summary…</p>
       </div>
     )
@@ -280,7 +304,7 @@ export function CalendarSummaryPanel({
     { label: 'Total PnL', value: fmtUsd(totalPnl), colorValue: totalPnl, emphasize: true },
     { label: 'Realized', value: fmtUsd(summary.realized ?? summary.net_pnl) },
     { label: 'Net', value: fmtUsd(summary.net_pnl), colorValue: summary.net_pnl, emphasize: true },
-    { label: 'Unrealized', value: fmtUsd(summary.total_unrealized_pnl) },
+    { label: 'Unrealized', value: fmtUsd(summary.total_unrealized_pnl), colorValue: summary.total_unrealized_pnl, valueTone: 'unrealized' },
     { label: 'Comm', value: fmtUsd(summary.total_commission) },
     { label: 'Trades', value: String(summary.trade_count ?? 0) },
     { label: 'Win Rate', value: fmtPct1(summary.win_rate) },
@@ -302,7 +326,7 @@ export function CalendarSummaryPanel({
     { label: 'Comm', value: fmtUsd(rOpt?.commission ?? 0) },
     { label: 'Net', value: fmtUsd(optNetPnl), colorValue: optNetPnl },
     { label: 'Trades', value: String(rOpt?.trade_count ?? 0) },
-    { label: 'Unrealized', value: fmtUsd(optUnrealizedPnl), colorValue: optUnrealizedPnl },
+    { label: 'Unrealized', value: fmtUsd(optUnrealizedPnl), colorValue: optUnrealizedPnl, valueTone: 'unrealized' },
   ]
 
   const stocksMetrics = buildStkBucketMetrics({
@@ -329,6 +353,7 @@ export function CalendarSummaryPanel({
     fallbackTrades: 0,
     showFallback: false,
     notionalSignedTone: true,
+    notionalLabel: 'Stream',
   })
 
   const cashMetrics = buildStkBucketMetrics({
@@ -345,7 +370,7 @@ export function CalendarSummaryPanel({
   })
 
   return (
-    <div className="flex h-full min-w-0 flex-col rounded-xl border border-border/60 bg-muted/10 p-3">
+    <div className={cn('min-w-0 flex-col', styles.calendarSummaryPanel)}>
       {/* Legacy: Summary row — type + metrics in one horizontal flow */}
       <SummaryMetricRow
         title="Summary"
@@ -354,8 +379,8 @@ export function CalendarSummaryPanel({
         horizontalMetrics
       />
 
-      {/* Legacy: Option | Stocks | FI in one row (3 columns), Cash-like below */}
-      <div className="mt-1 grid grid-cols-3 gap-2">
+      {/* Legacy: Option | Stocks | FI | Cash-like */}
+      <div className={cn('mt-1 grid grid-cols-2 xl:grid-cols-4', styles.summaryAssetGrid)}>
         <SummaryColumn title="Option" metrics={optionMetrics} empty={!hasOpt} />
         <SummaryColumn
           title="Stocks"
@@ -363,7 +388,7 @@ export function CalendarSummaryPanel({
           empty={!stocksMetrics.hasRow}
         />
         <SummaryColumn
-          title="Fixed Income"
+          title="Fixed Income Stream"
           metrics={fiMetrics.metrics}
           empty={!fiMetrics.hasRow}
         />
@@ -375,43 +400,38 @@ export function CalendarSummaryPanel({
       </div>
 
       {monthStats && monthStats.totalDays > 0 && (
-        <div className="mt-3 border-t border-border/50 pt-3">
-          <p className="mb-2 text-xs font-semibold text-foreground">{calendarMonth} Stats</p>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div>
-              <p className="text-sm font-semibold tabular-nums">{monthStats.totalDays}</p>
-              <p className="text-[10px] text-muted-foreground">Trading</p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                {monthStats.winDays}
-              </p>
-              <p className="text-[10px] text-muted-foreground">Win</p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold tabular-nums text-red-600 dark:text-red-400">
-                {monthStats.lossDays}
-              </p>
-              <p className="text-[10px] text-muted-foreground">Loss</p>
-            </div>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            <MetricCell
-              label="Win Rate"
-              value={`${((monthStats.winDays / monthStats.totalDays) * 100).toFixed(1)}%`}
-            />
-            <MetricCell
-              label="Avg Daily"
-              value={fmtUsd(monthStats.monthPnl / monthStats.totalDays)}
-              colorValue={monthStats.monthPnl / monthStats.totalDays}
-            />
-            <MetricCell
-              label="Month PnL"
-              value={fmtUsd(monthStats.monthPnl)}
-              colorValue={monthStats.monthPnl}
-            />
-          </div>
-        </div>
+        <SummaryMetricRow
+          title={`${calendarMonth} Stats`}
+          metrics={[
+            { label: 'Trading', value: String(monthStats.totalDays) },
+            {
+              label: 'Win',
+              value: String(monthStats.winDays),
+              valueClassName: 'text-emerald-600 dark:text-emerald-400',
+            },
+            {
+              label: 'Loss',
+              value: String(monthStats.lossDays),
+              valueClassName: 'text-red-600 dark:text-red-400',
+            },
+            {
+              label: 'Win Rate',
+              value: `${((monthStats.winDays / monthStats.totalDays) * 100).toFixed(1)}%`,
+            },
+            {
+              label: 'Avg Daily',
+              value: fmtUsd(monthStats.monthPnl / monthStats.totalDays),
+              colorValue: monthStats.monthPnl / monthStats.totalDays,
+            },
+            {
+              label: 'Month PnL',
+              value: fmtUsd(monthStats.monthPnl),
+              colorValue: monthStats.monthPnl,
+            },
+          ]}
+          horizontalMetrics
+          metricsNowrap
+        />
       )}
     </div>
   )
@@ -428,6 +448,7 @@ function buildStkBucketMetrics({
   fallbackTrades,
   showFallback,
   notionalSignedTone,
+  notionalLabel = 'Notional',
 }: {
   hasCalendar: boolean
   hasCalendarNotional: boolean
@@ -439,6 +460,7 @@ function buildStkBucketMetrics({
   fallbackTrades: number
   showFallback: boolean
   notionalSignedTone: boolean
+  notionalLabel?: string
 }): { hasRow: boolean; metrics: MetricDef[] } {
   const useBulk = hasCalendar && hasCalendarNotional
   const rVal = useBulk ? monthRealized : fallbackRealized
@@ -459,7 +481,7 @@ function buildStkBucketMetrics({
     metrics: [
       { label: 'Realized', value: fmtUsd(rVal), colorValue: rVal },
       {
-        label: 'Notional',
+        label: notionalLabel,
         value: useBulk ? fmtUsd(nVal) : '—',
         colorValue: useBulk ? nVal : undefined,
       },
@@ -467,7 +489,7 @@ function buildStkBucketMetrics({
       { label: 'Net', value: fmtUsd(netVal), colorValue: netVal },
       { label: 'Trades', value: useBulk ? '—' : String(fallbackTrades) },
     ].map((m) =>
-      m.label === 'Notional' && useBulk
+      m.label === notionalLabel && useBulk
         ? {
             ...m,
             colorValue: notionalSignedTone ? nVal : undefined,

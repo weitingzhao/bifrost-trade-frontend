@@ -97,18 +97,33 @@ export function extractStreamPositionSymbols(
   return { host, secondary }
 }
 
+/** Normalize quotesMap keys to STK stream symbols (ignore OPT contract_key keys). */
+export function streamSymbolFromQuoteMapKey(key: string): string | null {
+  const k = key.trim()
+  if (!k) return null
+  if (k.includes('|STK|')) {
+    const sym = (k.split('|')[0] ?? '').trim().toUpperCase()
+    return sym || null
+  }
+  if (k.includes('|')) return null
+  return k.toUpperCase()
+}
+
 export function buildWatchlistSymbols(args: {
   subscribedTickers: string[]
   streamHostSymbols: string[]
   streamSecondarySymbols: string[]
   quoteSymbolKeys: string[]
 }): string[] {
+  const fromQuotes = args.quoteSymbolKeys
+    .map(streamSymbolFromQuoteMapKey)
+    .filter((s): s is string => Boolean(s))
   return [
     ...new Set([
       ...args.subscribedTickers,
       ...args.streamHostSymbols,
       ...args.streamSecondarySymbols,
-      ...args.quoteSymbolKeys,
+      ...fromQuotes,
     ]),
   ].sort()
 }
@@ -459,16 +474,32 @@ export function optBasisKey(row: OptPositionRow): string {
   return `${row.account_id.toLowerCase()}\t${row.contract_key}`
 }
 
+/** True when quote is equity stream data (OPT rows must not overwrite underlying STK keys). */
+export function isStkStreamQuote(q: QuoteItem): boolean {
+  const st = (q.sec_type ?? '').toString().toUpperCase()
+  if (st === 'STK') return true
+  const ck = (q.contract_key ?? '').trim()
+  return ck.includes('|STK|')
+}
+
+/** Merge GET /quotes or SSE items into a symbol-keyed map (uppercase STK keys); OPT by contract_key. */
 export function mergeQuotesIntoSymbolMap(
   prev: Record<string, QuoteItem>,
   quotes: QuoteItem[],
 ): Record<string, QuoteItem> {
   const next = { ...prev }
   for (const q of quotes) {
-    const sym = (q.symbol ?? '').trim().toUpperCase()
-    if (sym) next[sym] = q
-    const ck = q.contract_key
-    if (ck) next[ck] = q
+    const sym = (q.symbol ?? '').trim()
+    if (!sym) continue
+    const mapKey = sym.toUpperCase()
+    const st = (q.sec_type ?? '').toString().toUpperCase()
+    const ck = (q.contract_key ?? '').toString().trim()
+    const allowBareSymbolKey = !ck && st !== 'OPT'
+    if (isStkStreamQuote(q) || allowBareSymbolKey) {
+      next[mapKey] = q
+    } else if (ck) {
+      next[ck] = q
+    }
   }
   return next
 }

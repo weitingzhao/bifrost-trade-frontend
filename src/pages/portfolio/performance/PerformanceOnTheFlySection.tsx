@@ -34,7 +34,7 @@ function kvToneClass(n: number): string {
   return n >= 0 ? styles.tonePositive : styles.toneNegative
 }
 
-function stkUnrealizedToneClass(n: number): string {
+function optUnrealizedToneClass(n: number): string {
   if (Math.abs(n) < 0.005) return ''
   return styles.otfStkUnrealized
 }
@@ -133,7 +133,7 @@ export function PerformanceOnTheFlySection({
                   </span>
                   <span className={styles.onTheFlySummaryKv}>
                     Unrealized (open){' '}
-                    <strong className={kvToneClass(oAg.unrealized)}>{fmtPnl(oAg.unrealized)}</strong>
+                    <strong className={optUnrealizedToneClass(oAg.unrealized)}>{fmtPnl(oAg.unrealized)}</strong>
                     <InfoTooltip text="Option legs use the same per-execution cash flow as Trade Ledger → Options → Details (PnL column). Pairing uses backend opt pairs when available, else FIFO by contract. Trade date falls back to exec date when Flex trade_date is missing." />
                   </span>
                   <span className={styles.onTheFlySummaryKv}>
@@ -151,7 +151,7 @@ export function PerformanceOnTheFlySection({
                   </span>
                   <span className={styles.onTheFlySummaryKv}>
                     Unrealized (open){' '}
-                    <strong className={stkUnrealizedToneClass(sAg.unrealized)}>{fmtPnl(sAg.unrealized)}</strong>
+                    <strong className={optUnrealizedToneClass(sAg.unrealized)}>{fmtPnl(sAg.unrealized)}</strong>
                     <InfoTooltip text={OTF_STK_UNREALIZED_HELP} />
                   </span>
                   <span className={styles.onTheFlySummaryKv}>

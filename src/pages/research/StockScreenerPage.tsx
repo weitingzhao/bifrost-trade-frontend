@@ -193,7 +193,7 @@ export default function StockScreenerPage() {
             onRefresh={() => void refetch()}
             onBucketClick={handleTechBucketClick}
             activeHint={techBucket.activeBucket != null ? (
-              <div className="text-[10px] text-violet-400 mb-1">
+              <div className="text-[10px] text-screener-tech mb-1">
                 {techBucket.loading && <span>Loading…</span>}
                 {techBucket.error && <span className="text-destructive">{techBucket.error}</span>}
                 {!techBucket.loading && !techBucket.error && techBucket.loadedCount != null && (

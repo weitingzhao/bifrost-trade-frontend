@@ -561,7 +561,7 @@ fi
 # PnL must use pnlColorClass / text-profit / text-loss / text-unrealized — NOT raw palette classes.
 # Ratchet: existing raw emerald/red usages outside data-display are grandfathered;
 # the count must only go DOWN. Lower the baseline as pages migrate.
-RAW_PNL_PALETTE_BASELINE=64
+RAW_PNL_PALETTE_BASELINE=61
 raw_pnl_count=$(grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
   --include='*.tsx' --include='*.ts' 2>/dev/null \
   | grep -v 'src/components/data-display' | wc -l | tr -d ' ')

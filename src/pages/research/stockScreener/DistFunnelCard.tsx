@@ -73,7 +73,7 @@ function FunnelRow({
       <span
         className={cn(
           'text-right font-mono font-semibold tabular-nums text-muted-foreground',
-          isFull && (suffix === '11' ? 'text-violet-400' : 'text-emerald-400'),
+          isFull && (suffix === '11' ? 'text-screener-tech' : 'text-screener-fund'),
         )}
       >
         {isFull ? `${suffix}/${suffix} ★` : `${conditionsPassed}/${suffix}`}

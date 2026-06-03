@@ -341,7 +341,7 @@ export function OptionDiscoveryIvTermSection({
                         <span className="flex shrink-0 items-center gap-0.5">
                           {kind === 'weeklies' && (
                             <span
-                              className="rounded px-1 text-[0.6rem] font-bold bg-sky-500/20 text-sky-400"
+                              className="rounded px-1 text-[0.6rem] font-bold bg-expiry-weekly/20 text-expiry-weekly"
                               title={expirationKindLabel(kind)}
                             >
                               W
@@ -349,7 +349,7 @@ export function OptionDiscoveryIvTermSection({
                           )}
                           {kind === 'quarterlies' && (
                             <span
-                              className="rounded px-1 text-[0.6rem] font-bold bg-violet-500/20 text-violet-400"
+                              className="rounded px-1 text-[0.6rem] font-bold bg-expiry-quarterly/20 text-expiry-quarterly"
                               title={expirationKindLabel(kind)}
                             >
                               Q

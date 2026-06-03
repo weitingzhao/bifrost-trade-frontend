@@ -12,8 +12,8 @@ export function SectionHeader({ label, variant }: Props) {
         className={cn(
           'text-[0.72rem] font-extrabold uppercase tracking-widest pb-2 -mb-px border-b-2',
           variant === 'tech'
-            ? 'text-violet-400 border-violet-400'
-            : 'text-emerald-400 border-emerald-400',
+            ? 'text-screener-tech border-screener-tech'
+            : 'text-screener-fund border-screener-fund',
         )}
       >
         {label}

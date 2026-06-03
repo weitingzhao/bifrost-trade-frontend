@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useSystemNavLamp } from '@/components/layout/SystemNavLampContext'
+import { useSystemNavLamp } from '@/components/layout/useSystemNavLamp'
 import { isSystemNavPath } from '@/hooks/useSystemNavLamps'
 import { navLampIconClass } from '@/utils/navLampIcon'
 import type { NavItem } from '@/layout/navConfig'

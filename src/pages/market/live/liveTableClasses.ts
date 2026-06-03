@@ -16,7 +16,7 @@ export const liveTable = {
   stackedPnlLines: 'text-right leading-snug',
   stackedPnlLine: 'block text-right leading-tight',
   stackedPnlLineGap: 'mt-0.5',
-  symbolCell: 'font-bold',
+  symbolCell: 'font-bold text-entity-symbol',
   symbolFresh: 'text-foreground',
   symbolStale: 'text-muted-foreground opacity-85',
   symbolVeryStale: 'text-muted-foreground/60 opacity-60',

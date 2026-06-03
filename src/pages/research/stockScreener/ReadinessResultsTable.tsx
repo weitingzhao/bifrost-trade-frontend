@@ -9,6 +9,8 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   denseTable,
+  denseTableEntityCell,
+  denseTableEntityLink,
   denseTableNumCell,
 } from '@/components/data-display'
 import { SEPA_COND_CATALOG, TECH_COND_CATALOG } from '@/constants/stockScreenerCatalog'
@@ -101,7 +103,7 @@ function CondDots({
 
 /** Overrides DenseTable `max-w-0` — fixed layout needs explicit min widths per column. */
 const readinessCol = {
-  symbol: 'w-[5.5rem] min-w-[5.5rem] max-w-none whitespace-nowrap overflow-visible',
+  symbol: 'w-[5.5rem] min-w-[5.5rem] max-w-none overflow-visible',
   tech: 'min-w-[11.5rem] max-w-none',
   fund: 'min-w-[10.5rem] max-w-none',
   univ: 'w-[3.25rem] min-w-[3.25rem] max-w-none',
@@ -167,12 +169,14 @@ function SymbolCell({
   return (
     <span className="inline-flex items-center gap-0.5 min-w-0">
       <DenseLinkButton
+        variant="stock"
         label={symbol}
         onClick={onOpen}
         ariaLabel={isActive ? 'Close inspector' : `Open ${symbol} inspector`}
         className={cn(
-          'font-mono text-[11px] shrink-0',
-          isActive ? 'text-primary' : 'text-foreground',
+          denseTableEntityLink,
+          'shrink-0 font-mono text-[length:var(--text-dense-meta)]',
+          isActive && 'underline decoration-2 underline-offset-2',
         )}
       />
       <span className="text-[10px] text-muted-foreground shrink-0" aria-hidden>
@@ -254,12 +258,13 @@ export function ReadinessResultsTable({
               if (!r.found) {
                 return (
                   <DenseTableRow key={r.symbol}>
-                    <DenseTableCell className={readinessCol.symbol}>
+                    <DenseTableCell className={cn(readinessCol.symbol, denseTableEntityCell)}>
                       <DenseLinkButton
+                        variant="stock"
                         label={r.symbol}
                         onClick={() => onOpenInspector(r.symbol, r)}
                         ariaLabel={`Open ${r.symbol} inspector`}
-                        className="font-mono text-[11px]"
+                        className={cn(denseTableEntityLink, 'font-mono text-[length:var(--text-dense-meta)]')}
                       />
                     </DenseTableCell>
                     <DenseTableCell colSpan={7} className={denseTable.mutedMeta}>
@@ -281,7 +286,7 @@ export function ReadinessResultsTable({
 
               return (
                 <DenseTableRow key={r.symbol} className={cn(isActive && 'bg-accent/30')}>
-                  <DenseTableCell className={readinessCol.symbol}>
+                  <DenseTableCell className={cn(readinessCol.symbol, denseTableEntityCell)}>
                     <SymbolCell
                       symbol={r.symbol}
                       isActive={isActive}

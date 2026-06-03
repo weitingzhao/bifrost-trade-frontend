@@ -49,11 +49,11 @@ export function SymbolsStrip({
             <span className="text-muted-foreground">
               Found <strong className="text-foreground font-mono">{summary.found}</strong>/{summary.total}
             </span>
-            <span className="text-emerald-400 font-mono">
+            <span className="text-screener-fund font-mono">
               F8/8 <strong>{summary.fundPass}</strong>
             </span>
             {summary.techPass > 0 && (
-              <span className="text-violet-400 font-mono">
+              <span className="text-screener-tech font-mono">
                 T11/11 <strong>{summary.techPass}</strong>
               </span>
             )}

@@ -6,10 +6,13 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
+  DenseLinkButton,
   DenseTag,
-  DenseTagButton,
   InlinePnl,
   NestedDenseTable,
+  denseTable,
+  denseTableEntityCell,
+  denseTableEntityLink,
   denseTableNumCell,
 } from '@/components/data-display'
 import { fmtUsd, fmtSignedPct } from '@/utils/positions'
@@ -139,16 +142,15 @@ export function InstanceCoverageSubTable({
 
               return (
                 <DenseTableRow key={`${sc.symbol}-${sc.account_id}-${i}`}>
-                  <DenseTableCell>
+                  <DenseTableCell className={denseTableEntityCell}>
                     {onOpenStock ? (
-                      <DenseTagButton
-                        variant="symbol"
-                        size="cell"
-                        className="font-mono"
+                      <DenseLinkButton
+                        variant="stock"
+                        label={sc.symbol}
+                        ariaLabel={`Open details for ${sc.symbol}`}
                         onClick={() => onOpenStock(sc.symbol, sc.account_id)}
-                      >
-                        {sc.symbol}
-                      </DenseTagButton>
+                        className={cn(denseTableEntityLink, 'font-mono')}
+                      />
                     ) : (
                       <DenseTag variant="symbol" size="cell" className="font-mono">
                         {sc.symbol}

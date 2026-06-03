@@ -8,6 +8,7 @@ import {
 import type { InstanceDetailData } from '@/hooks/useInstanceDetailData'
 import type { StrategyInstance } from '@/types/positions'
 import { inspectorShell } from '@/components/layout/rightInspectorUi'
+import { DenseTag } from '@/components/data-display'
 import {
   instanceDetailBlockClass,
   instanceSectionTitleClass,
@@ -63,9 +64,9 @@ export function InstanceOverviewSection({ instance, data, hideSectionTitle = fal
             <span className={styles.typeChip}>{getStructureTypeLabel(structure.structure_type)}</span>
           ) : null}
           {instance.label?.trim() ? (
-            <span className={styles.labelChip} title={instance.label}>
+            <DenseTag variant="instance" size="pill" title={instance.label}>
               {instance.label}
-            </span>
+            </DenseTag>
           ) : null}
         </div>
       )}

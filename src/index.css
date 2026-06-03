@@ -68,6 +68,23 @@
     --color-entity-instance: var(--color-entity-instance);
     --color-entity-category: var(--color-entity-category);
 
+    /* Directional / market-structure semantics */
+    --color-option-call: var(--color-option-call);
+    --color-option-put: var(--color-option-put);
+    --color-side-buy: var(--color-side-buy);
+    --color-side-sell: var(--color-side-sell);
+    --color-quote-bid: var(--color-quote-bid);
+    --color-quote-ask: var(--color-quote-ask);
+    --color-expiry-weekly: var(--color-expiry-weekly);
+    --color-expiry-quarterly: var(--color-expiry-quarterly);
+
+    /* SEPA screener analysis dimension colors */
+    --color-screener-tech: var(--color-screener-tech);
+    --color-screener-fund: var(--color-screener-fund);
+    --color-screener-momentum: var(--color-screener-momentum);
+    --color-screener-structure-tier: var(--color-screener-structure-tier);
+    --color-screener-sentiment: var(--color-screener-sentiment);
+
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -143,6 +160,23 @@
     --color-entity-strategy: #4f46e5; /* indigo-600 */
     --color-entity-instance: #0d9488; /* teal-600 */
     --color-entity-category: #a855f7; /* purple-500 */
+
+    /* Directional / market-structure semantics (light) */
+    --color-option-call: #0284c7;      /* sky-600 — Call */
+    --color-option-put: #e11d48;       /* rose-600 — Put */
+    --color-side-buy: #0284c7;         /* sky-600 — BUY */
+    --color-side-sell: #d97706;        /* amber-600 — SELL */
+    --color-quote-bid: #0284c7;        /* sky-600 — bid price */
+    --color-quote-ask: #e11d48;        /* rose-600 — ask price */
+    --color-expiry-weekly: #0284c7;    /* sky-600 — W weekly badge */
+    --color-expiry-quarterly: #7c3aed; /* violet-600 — Q quarterly badge */
+
+    /* SEPA screener dimensions (light) */
+    --color-screener-tech: #7c3aed;           /* violet-600 — Technical */
+    --color-screener-fund: #16a34a;           /* emerald-600 — Fundamental */
+    --color-screener-momentum: #0284c7;       /* sky-600 — Momentum tier */
+    --color-screener-structure-tier: #d97706; /* amber-600 — Structure tier */
+    --color-screener-sentiment: #e11d48;      /* rose-600 — Sentiment tier */
 
     /* Dense data tables (Positions, Ledger, Performance) */
     --text-dense: 0.8125rem;
@@ -250,6 +284,23 @@
     --color-entity-strategy: #818cf8; /* indigo-400 */
     --color-entity-instance: #2dd4bf; /* teal-400 */
     --color-entity-category: #c084fc; /* purple-400 */
+
+    /* Directional / market-structure semantics (dark) */
+    --color-option-call: #38bdf8;      /* sky-400 */
+    --color-option-put: #fb7185;       /* rose-400 */
+    --color-side-buy: #38bdf8;         /* sky-400 */
+    --color-side-sell: #fbbf24;        /* amber-400 */
+    --color-quote-bid: #38bdf8;        /* sky-400 */
+    --color-quote-ask: #fb7185;        /* rose-400 */
+    --color-expiry-weekly: #38bdf8;    /* sky-400 */
+    --color-expiry-quarterly: #a78bfa; /* violet-400 */
+
+    /* SEPA screener dimensions (dark) */
+    --color-screener-tech: #a78bfa;           /* violet-400 */
+    --color-screener-fund: #4ade80;           /* emerald-400 */
+    --color-screener-momentum: #38bdf8;       /* sky-400 */
+    --color-screener-structure-tier: #fbbf24; /* amber-400 */
+    --color-screener-sentiment: #fb7185;      /* rose-400 */
 
     --risk-payoff-plot-bg: #0d1118;
     --risk-payoff-plot-border: rgba(74, 222, 128, 0.22);

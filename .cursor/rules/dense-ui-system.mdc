@@ -22,10 +22,12 @@ alwaysApply: true
 |-------------|-----|-------|
 | Data table | `DenseDataTable` + head/row/cell | `ledgerTable` / `optTable` / `replay-*` / new `*.module.css` tables |
 | Numeric columns | `denseTableNumCell` or `PnlCell` | Ad-hoc `text-right` without `font-mono tabular-nums` |
-| PnL color | `pnlColorClass` / `InlinePnl` / `PnlCell` | `pnl-positive`, module `.pnlPositive`, inline green/red hex |
+| PnL color (realized) | `pnlColorClass` / `InlinePnl` / `PnlCell` → `text-profit` / `text-loss` tokens | `pnl-positive`, module `.pnlPositive`, inline green/red hex, raw `text-emerald-*` / `text-red-*` |
+| PnL color (unrealized) | `unrealizedPnlColorClass` → `text-unrealized` (site-wide yellow) | Green/red for unrealized values |
 | Row icon actions | `IconActionButton` | Hand-rolled 20×20 buttons, `.iconBtn`, `window.confirm` |
 | Expand row | `ExpandToggleCell` + `DenseTableDetailRow` | Unicode ▶/▼ in module CSS |
 | Expand must not shift columns | `DenseDataTable` + `<colgroup>` + `denseTable.detailCellClip` | Detail rows without colgrid / wide content setting width |
+| Identity column (Symbol / Contract / Strategy / Instance) | `denseTableEntityCell` + `denseTableEntityLink` or wrapping `DenseTag`s | `truncate` / `line-clamp` / `detailCellClip` on identity cells — wrap instead |
 | Segment / Include-Exclude | `SegmentControl` / `IncludeExcludeToggle` | New pill CSS in page modules |
 | Symbol / stock link cell | `SymbolLinkButton` / `DenseLinkButton` | Custom link pill CSS per page |
 | Nested strategy/instance panel | `CollapsibleGroup` (+ `CollapsibleBucketHeader`) | `strategyGroup` / `instanceHeader*` module classes |
@@ -35,6 +37,9 @@ alwaysApply: true
 | Execution source label | `ExecSourceBadge` | Hand-rolled Badge / ledger `sourceBadge` CSS per page |
 | Position category label | `DenseTag variant="category"` (+ `GroupHeaderRow variant="category"`) | `stkPillCategoryClass`, purple inline Tailwind, plain text in Category column |
 | Symbol highlight (non-link) | `DenseTag variant="symbol"` | `stkPillSymbolClass`, custom blue pill CSS |
+| Strategy / Instance identity | `DenseTag variant="strategy" / "instance"`, `DenseLinkButton variant="strategy" / "instance"` | Ad-hoc colors per page for strategy/instance names |
+| Option contract link | `DenseLinkButton variant="option"` (`--color-entity-option`) | Raw `text-sky-*` per page |
+| New business color | Add `--color-*` token in `src/index.css` (light + dark + `@theme`) first | Inline hex / raw palette classes in pages |
 | Destructive confirm | App `ConfirmDialog` pattern | `window.confirm` / `window.alert` |
 
 ## Agent workflow (every UI change)
@@ -44,6 +49,7 @@ alwaysApply: true
 3. Do **not** add page-local `*Classes.ts` for patterns already in `data-display`; extend the primitive instead.
 4. Avoid overriding primitives with large `className` stacks; use `variant` or extend the shared component.
 5. After UI edits run: `npm run lint && npm run build && npm run check:legacy-css`.
+6. Validate visual semantics against the living contract page: **Settings → Configuration → UI Design System** (`/settings/ui-design-system`, `src/pages/settings/UiDesignSystemPage.tsx`) — PnL green/red/yellow, entity identity colors (symbol/option/strategy/instance/category), status tags, density samples.
 
 ## Allowed CSS exceptions (narrow)
 

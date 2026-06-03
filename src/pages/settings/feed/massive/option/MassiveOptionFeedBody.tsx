@@ -7,10 +7,8 @@ import {
 } from '@/pages/settings/feed/massive/components/MassiveCapabilityChipNav'
 import { MassiveDeliveryChannelTabs } from '@/pages/settings/feed/massive/components/MassiveDeliveryChannelTabs'
 import { MassiveOptionsCoverageBanner } from '@/pages/settings/feed/massive/components/MassiveOptionsCoverageBanner'
-import {
-  MassiveSectionSegmentControl,
-  segmentOptionWithStatus,
-} from '@/pages/settings/feed/massive/components/MassiveSectionSegmentControl'
+import { MassiveSectionSegmentControl } from '@/pages/settings/feed/massive/components/MassiveSectionSegmentControl'
+import { segmentOptionWithStatus } from '@/pages/settings/feed/massive/components/segmentOptionWithStatus'
 import { groupedOptionFeedChecklistRows } from '@/pages/settings/feed/massive/checklist/optionStatus'
 import { useMassiveOptionJobs } from '@/pages/settings/feed/massive/hooks/useMassiveOptionJobs'
 import { OPTION_PROJECT_IDS } from '@/pages/settings/feed/massive/option/optionNavUtils'

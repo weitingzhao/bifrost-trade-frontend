@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo } from 'react'
 import { ChevronRight, ChevronDown, Trash2, Eye, Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
-import { structureChipStyle } from '@/utils/structureColor'
 import {
   computeInstancePositionStatus,
   computeSymbolGroupRollup,
@@ -486,9 +485,9 @@ export function InstancesGroupedTable({
                   </div>
                   {inst.strategy_structure_name ? (
                     <DenseTag
+                      variant="strategy"
                       size="cell"
                       className="max-w-full truncate"
-                      style={structureChipStyle(inst.strategy_structure_name, false)}
                       title={`Structure: ${inst.strategy_structure_name}`}
                     >
                       {inst.strategy_structure_name}

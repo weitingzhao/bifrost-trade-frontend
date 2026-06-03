@@ -8,6 +8,7 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
+  DenseTag,
   IconActionButton,
 } from '@/components/data-display'
 import type { StrategyOpportunity } from '@/types/positions'
@@ -66,7 +67,9 @@ export function OpportunitiesTable({
           const copying = copyLoadingId === opp.strategy_opportunity_id
           return (
             <DenseTableRow key={opp.strategy_opportunity_id}>
-              <DenseTableCell className={opportunitiesNameCellClass}>{opp.name}</DenseTableCell>
+              <DenseTableCell className={opportunitiesNameCellClass}>
+                <DenseTag variant="strategy">{opp.name}</DenseTag>
+              </DenseTableCell>
               <DenseTableCell className={opportunitiesMetaCellClass}>
                 {opp.structure_name ?? opp.strategy_structure_id ?? '—'}
               </DenseTableCell>

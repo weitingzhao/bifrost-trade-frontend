@@ -37,7 +37,7 @@ export function FilterActionBar({
         )}
         {condCount > 0 && techCount > 0 && <span className="text-muted-foreground">∩</span>}
         {techCount > 0 && (
-          <span className="px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-400 font-mono">
+          <span className="px-1.5 py-0.5 rounded bg-screener-tech/15 text-screener-tech font-mono">
             {techCount} Technical
           </span>
         )}
@@ -46,9 +46,9 @@ export function FilterActionBar({
           const n = f.indicators.size + (f.minScore > 0 ? 1 : 0)
           if (n === 0) return null
           const colors: Record<TierKey, string> = {
-            momentum: 'bg-sky-500/15 text-sky-400',
-            structure: 'bg-amber-500/15 text-amber-400',
-            sentiment: 'bg-rose-500/15 text-rose-400',
+            momentum: 'bg-screener-momentum/15 text-screener-momentum',
+            structure: 'bg-screener-structure-tier/15 text-screener-structure-tier',
+            sentiment: 'bg-screener-sentiment/15 text-screener-sentiment',
           }
           return (
             <span key={tk} className={`px-1.5 py-0.5 rounded font-mono ${colors[tk]}`}>

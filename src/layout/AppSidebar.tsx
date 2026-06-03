@@ -37,7 +37,7 @@ import { BifrostLogoFull, BifrostLogoMark } from '@/components/BifrostLogo'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 import { LiveNavLamp } from '@/components/layout/LiveNavLamp'
 import { NavSubItemIcon } from '@/components/layout/SystemNavIcon'
-import { SystemNavLampProvider } from '@/components/layout/SystemNavLampContext'
+import { SystemNavLampProvider } from '@/components/layout/SystemNavLampProvider'
 import { getAllItems, NAV_GROUPS, SETTINGS_ITEM, type NavGroup, type NavItem } from './navConfig'
 
 const LIVE_NAV_PATH = '/market/live'

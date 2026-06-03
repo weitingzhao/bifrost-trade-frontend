@@ -4,14 +4,31 @@ Reusable styling for data-heavy monitoring pages (Positions, Trade Ledger, Perfo
 
 **Parent doc:** [TECH_STACK.md](./TECH_STACK.md) (locked stack + governance). In-app: Settings → Configuration → Tech Stack.
 
+**Living visual contract:** Settings → Configuration → **UI Design System** (`/settings/ui-design-system`) — live samples of every rule below; validate new pages against it.
+
 ## Layer stack
 
 | Layer | Location | Role |
 |-------|----------|------|
-| Tokens | `src/index.css` (`--text-dense`, `--table-cell-*`) | Typography and cell spacing |
+| Tokens | `src/index.css` (`--text-dense`, `--table-cell-*`, `--color-profit/loss/unrealized`, `--color-entity-*`) | Typography, cell spacing, business semantics |
 | Layout | `src/components/layout/` | `PageShell`, `PageHeader`, `PageSection` |
 | Data display | `src/components/data-display/` | Tables, PnL, segments, icon actions |
 | Domain | `src/components/positions/`, etc. | Business columns and interactions |
+
+## Business semantic colors (site-wide, fixed)
+
+| Concept | Token (light/dark in `src/index.css`) | Utility | Accessor |
+|---------|---------------------------------------|---------|----------|
+| Realized profit | `--color-profit` | `text-profit` | `pnlColorClass(v)` / `PnlCell` / `InlinePnl` |
+| Realized loss | `--color-loss` | `text-loss` | `pnlColorClass(v)` |
+| Unrealized PnL (always yellow) | `--color-unrealized` | `text-unrealized` | `unrealizedPnlColorClass(v)` |
+| Symbol | `--color-entity-symbol` | `text-entity-symbol` | `DenseTag variant="symbol"` / `DenseLinkButton variant="stock"` |
+| Option contract | `--color-entity-option` | `text-entity-option` | `DenseLinkButton variant="option"` |
+| Strategy | `--color-entity-strategy` | `text-entity-strategy` | `DenseTag` / `DenseLinkButton variant="strategy"` |
+| Instance | `--color-entity-instance` | `text-entity-instance` | `DenseTag` / `DenseLinkButton variant="instance"` |
+| Category | `--color-entity-category` | — | `DenseTag variant="category"` |
+
+Pages must use the accessor column — never raw palette classes (`text-emerald-*`, `text-red-*`, `text-sky-*`) or inline hex. Guarded by a ratchet rule in `scripts/check-legacy-css.sh` (`RAW_PNL_PALETTE_BASELINE`).
 
 ### Page canvas (three surfaces)
 
@@ -71,7 +88,19 @@ Unified snapshot (Step 2) and related actions use lime primary buttons (`bg-side
 
 Tables with expandable child rows **must** define a `<colgroup>` with explicit column widths (see [OptionsTab.tsx](../src/components/positions/OptionsTab.tsx)). Detail rows must occupy the **same column grid** as parent rows (use `colSpan` where the label spans multiple columns — never skip a column slot).
 
-Long labels in detail rows: clip with `denseTable.detailCellClip` + `denseTable.detailRowLabel` (truncate + `title` tooltip). Do not rely on wide cell content to set column width.
+Long labels in **non-identity** detail rows: clip with `denseTable.detailCellClip` + `denseTable.detailRowLabel` (truncate + `title` tooltip). Do not rely on wide cell content to set column width.
+
+### Identity columns — full text, no ellipsis
+
+**Symbol**, **Contract** (option contract string), **Strategy** name, and **Instance** label must never show `…` in grids. Prefer wrapping inside the cell over truncation.
+
+| Layer | Class / primitive |
+|-------|-------------------|
+| Cell | `denseTableEntityCell` / `denseTable.entityCell` on `DenseTableCell` |
+| Link | `denseTableEntityLink` on `DenseLinkButton` (`variant="stock"` / `"option"` / `"strategy"` / `"instance"`) |
+| Tags | Parent cell uses `entityCell`; inner `flex flex-wrap gap-1` for multiple `DenseTag`s |
+
+Never use `truncate`, `line-clamp-*`, or `detailCellClip` on identity columns. Reference: [UiDesignSystemPage.tsx](../src/pages/settings/UiDesignSystemPage.tsx) §4, [OptionsTab.tsx](../src/components/positions/OptionsTab.tsx) Contract column.
 
 ```tsx
 <DenseTableDetailRow>

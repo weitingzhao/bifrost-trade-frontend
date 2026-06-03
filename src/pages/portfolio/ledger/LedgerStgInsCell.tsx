@@ -27,7 +27,9 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
       <div className="flex max-w-[280px] flex-col items-start gap-0.5 whitespace-normal">
         {strategyName ? (
           <div className="w-full">
-            <span className="font-medium text-foreground truncate">{strategyName}</span>
+            <span className="font-medium text-foreground whitespace-normal break-words">
+              {strategyName}
+            </span>
           </div>
         ) : null}
         <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-label="Instance allocations">
@@ -39,7 +41,7 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
             return (
               <li key={sid} className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
                 {label ? (
-                  <span className="max-w-32 truncate text-[0.6875rem] text-muted-foreground" title={label}>
+                  <span className="text-[0.6875rem] text-muted-foreground whitespace-normal break-words">
                     {label}
                   </span>
                 ) : null}
@@ -64,15 +66,17 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
   if (instanceId != null) {
     const instLabel = executionInstanceLabel(ex, instanceId)?.trim()
     return (
-      <span className="inline-flex max-w-60 items-center gap-1.5 whitespace-nowrap">
+      <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5">
         {strategyName ? (
           <>
-            <span className="truncate font-medium text-foreground">{strategyName}</span>
+            <span className="font-medium text-foreground whitespace-normal break-words">
+              {strategyName}
+            </span>
             <span className="text-muted-foreground/70">/</span>
           </>
         ) : null}
         {instLabel ? (
-          <span className="max-w-24 truncate text-[0.6875rem] text-muted-foreground" title={instLabel}>
+          <span className="text-[0.6875rem] text-muted-foreground whitespace-normal break-words">
             {instLabel}
           </span>
         ) : null}
@@ -93,8 +97,8 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
 
   if (strategyName) {
     return (
-      <span className="inline-flex max-w-60 items-center gap-1.5 whitespace-nowrap">
-        <span className="truncate font-medium text-foreground">{strategyName}</span>
+      <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5">
+        <span className="font-medium text-foreground whitespace-normal break-words">{strategyName}</span>
         <span className="text-muted-foreground/70">/</span>
         <span className="text-muted-foreground">—</span>
       </span>

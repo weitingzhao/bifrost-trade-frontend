@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DenseDataTable,
@@ -16,29 +17,94 @@ import {
   IconActionButton,
   InlinePnl,
   PnlCell,
+  denseTable,
+  denseTableEntityCell,
+  denseTableEntityLink,
   denseTableNumCell,
 } from '@/components/data-display'
 import { fmtDollar, fmtPct, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { cn } from '@/lib/utils'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Check, ClipboardCopy, Pencil, Trash2 } from 'lucide-react'
+import {
+  QA_PROMPT_DENSITY,
+  QA_PROMPT_ENTITY,
+  QA_PROMPT_FULL,
+  QA_PROMPT_PNL,
+  QA_PROMPT_STATUS,
+  QA_PROMPT_SURFACE,
+} from './uiDesignSystem/qaPrompts'
 
 // ─── Building blocks ─────────────────────────────────────────────────────────
+
+function CopyQaPromptButton({ prompt, label = 'Copy QA Prompt' }: { prompt: string; label?: string }) {
+  const [copied, setCopied] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(prompt)
+    } catch {
+      // Clipboard API unavailable (non-secure context) — fall back to a hidden textarea
+      const ta = document.createElement('textarea')
+      ta.value = prompt
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    setCopied(true)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => setCopied(false), 1800)
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={handleCopy}
+      className="h-7 shrink-0 gap-1.5 px-2.5 text-xs font-medium"
+      title="Copy section spec + QA audit prompt for LLM Agent (variant checks, not grep-only)"
+    >
+      {copied ? (
+        <>
+          <Check className="h-3.5 w-3.5 text-success" />
+          Copied
+        </>
+      ) : (
+        <>
+          <ClipboardCopy className="h-3.5 w-3.5" />
+          {label}
+        </>
+      )}
+    </Button>
+  )
+}
 
 function SectionCard({
   id,
   title,
   description,
+  qaPrompt,
+  qaLabel,
   children,
 }: {
   id: string
   title: string
   description?: string
+  qaPrompt?: string
+  qaLabel?: string
   children: ReactNode
 }) {
   return (
     <Card id={id} variant="elevated" className="scroll-mt-6">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">{title}</CardTitle>
+        <div className="flex items-start justify-between gap-3">
+          <CardTitle className="text-base">{title}</CardTitle>
+          {qaPrompt ? <CopyQaPromptButton prompt={qaPrompt} label={qaLabel} /> : null}
+        </div>
         {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>
       <CardContent className="space-y-4 text-sm leading-relaxed text-muted-foreground">
@@ -130,6 +196,16 @@ const DEMO_ROWS: DemoRow[] = [
     dailyPct: 0,
     unrealized: 12480,
   },
+  {
+    symbol: 'BRK.B',
+    contract: 'BRK.B 251219C500000',
+    strategy: 'Long Gamma Scalping NVDA Straddle',
+    instance: 'GS-NVDA-STRADDLE-2025-Q4-HOST',
+    source: 'manual',
+    dailyDollar: 42,
+    dailyPct: 0.12,
+    unrealized: -18,
+  },
 ]
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -154,6 +230,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="pnl-semantics"
         title="1 · PnL Semantics — profit green / loss red / unrealized yellow"
+        qaPrompt={QA_PROMPT_PNL}
         description="Realized PnL is green (profit) or red (loss). Unrealized PnL is always yellow — never green/red. Zero or missing values are muted. Pages never pick these colors directly; they call the accessor functions."
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -205,6 +282,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="entity-identity"
         title="2 · Entity Identity — Symbol / Option / Strategy / Instance / Category"
+        qaPrompt={QA_PROMPT_ENTITY}
         description="Each business entity has one fixed color and one rendering primitive, identical on every page. A symbol looks the same in Positions, Ledger, Live, and Research."
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -263,6 +341,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="status-tags"
         title="3 · Status & Source Tags"
+        qaPrompt={QA_PROMPT_STATUS}
         description="Generic state (success / warning / danger / info / neutral) and execution source badges share one outline-pill language."
       >
         <SampleBox>
@@ -292,7 +371,8 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="density"
         title="4 · Density & Typography"
-        description="Dense tables: 13px body (--text-dense), 11px meta (--text-dense-meta), 6×8px cell padding, numeric columns in mono + tabular-nums, fixed table layout."
+        qaPrompt={QA_PROMPT_DENSITY}
+        description="Dense tables: 13px body, 11px meta, fixed layout. Identity columns (Symbol, Contract, Strategy, Instance) must show full text — wrap inside the cell, never ellipsis (...)."
       >
         <SampleBox className="gap-6">
           <span className="text-[length:var(--text-dense)] text-foreground">
@@ -320,15 +400,16 @@ export default function UiDesignSystemPage() {
           <DenseTableBody>
             {DEMO_ROWS.map((row) => (
               <DenseTableRow key={row.symbol}>
-                <DenseTableCell>
+                <DenseTableCell className={denseTableEntityCell}>
                   <DenseLinkButton
                     variant="stock"
                     label={row.symbol}
                     ariaLabel={`Open ${row.symbol}`}
                     onClick={noop}
+                    className={denseTableEntityLink}
                   />
                 </DenseTableCell>
-                <DenseTableCell>
+                <DenseTableCell className={denseTableEntityCell}>
                   {row.contract === '—' ? (
                     <span className="text-muted-foreground">—</span>
                   ) : (
@@ -337,10 +418,11 @@ export default function UiDesignSystemPage() {
                       label={row.contract}
                       ariaLabel={`Open ${row.contract}`}
                       onClick={noop}
+                      className={denseTableEntityLink}
                     />
                   )}
                 </DenseTableCell>
-                <DenseTableCell>
+                <DenseTableCell className={denseTableEntityCell}>
                   <span className="inline-flex flex-wrap items-center gap-1">
                     <DenseTag variant="strategy">{row.strategy}</DenseTag>
                     <DenseTag variant="instance">{row.instance}</DenseTag>
@@ -382,10 +464,19 @@ export default function UiDesignSystemPage() {
           </DenseTableBody>
         </DenseDataTable>
 
-        <p className="text-xs">
-          ✅ <CodeRef>DenseDataTable</CodeRef> family + <CodeRef>denseTableNumCell</CodeRef> +{' '}
-          <CodeRef>IconActionButton</CodeRef> — ❌ shadcn <CodeRef>Table</CodeRef> or raw{' '}
-          <CodeRef>{'<table>'}</CodeRef> for data tables
+        <p className="text-xs space-y-1">
+          <span className="block">
+            ✅ <CodeRef>DenseDataTable</CodeRef> + <CodeRef>denseTableNumCell</CodeRef> +{' '}
+            <CodeRef>denseTableEntityCell</CodeRef> / <CodeRef>denseTableEntityLink</CodeRef> on
+            Symbol / Contract / Strategy / Instance columns
+          </span>
+          <span className="block">
+            ❌ <CodeRef>truncate</CodeRef> / <CodeRef>line-clamp</CodeRef> /{' '}
+            <CodeRef>detailCellClip</CodeRef> on identity cells — prefer wrap (see long demo row)
+          </span>
+          <span className="block">
+            ❌ shadcn <CodeRef>Table</CodeRef> or raw <CodeRef>{'<table>'}</CodeRef> for data tables
+          </span>
         </p>
       </SectionCard>
 
@@ -393,6 +484,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="surfaces"
         title="5 · Surface Layers"
+        qaPrompt={QA_PROMPT_SURFACE}
         description="Three-level canvas: page root bg-card → elevated panels bg-secondary → inset wells bg-background."
       >
         <div className="rounded-lg border border-border bg-card p-3">
@@ -410,6 +502,8 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="compliance"
         title="6 · Compliance Checklist — validate any page against this contract"
+        qaPrompt={QA_PROMPT_FULL}
+        qaLabel="Copy Full QA Prompt"
         description="Walk a page against these checks. Mechanical guards run in npm run check:legacy-css; the rest is reviewed against the samples above."
       >
         <ul className="list-disc space-y-1.5 pl-5 text-foreground/85">
@@ -427,6 +521,11 @@ export default function UiDesignSystemPage() {
           </li>
           <li>
             Numeric columns: <CodeRef>denseTableNumCell</CodeRef> (right-aligned mono tabular-nums)
+          </li>
+          <li>
+            Identity columns (Symbol, Contract, Strategy, Instance):{' '}
+            <CodeRef>denseTableEntityCell</CodeRef> + <CodeRef>denseTableEntityLink</CodeRef> — full
+            text visible (wrap), never <CodeRef>truncate</CodeRef> or ellipsis
           </li>
           <li>
             Row actions: <CodeRef>IconActionButton</CodeRef>; destructive confirm via{' '}

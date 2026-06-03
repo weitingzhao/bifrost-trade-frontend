@@ -97,8 +97,8 @@ export function OptGroupRow({
             <span
               className={cn(
                 group.option_right?.toUpperCase() === 'P'
-                  ? 'text-rose-600 dark:text-rose-400'
-                  : 'text-sky-600 dark:text-sky-400',
+                  ? 'text-option-put'
+                  : 'text-option-call',
                 'font-bold text-[length:var(--text-dense-meta)]',
               )}
             >
@@ -223,7 +223,7 @@ export function OptGroupRow({
                 <span
                   className={cn(
                     'font-medium',
-                    isBuy ? 'text-sky-600 dark:text-sky-400' : 'text-amber-600 dark:text-amber-400',
+                    isBuy ? 'text-side-buy' : 'text-side-sell',
                   )}
                 >
                   {isBuy ? 'BUY' : 'SELL'}

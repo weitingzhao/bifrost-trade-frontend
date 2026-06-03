@@ -44,7 +44,13 @@ export {
   BubbleSwitch,
   type SegmentOption,
 } from './SegmentControl'
-export { denseTable, denseTableCellPadding, denseTableNumCell } from './denseTableClasses'
+export {
+  denseTable,
+  denseTableCellPadding,
+  denseTableNumCell,
+  denseTableEntityCell,
+  denseTableEntityLink,
+} from './denseTableClasses'
 export {
   segmentGroupClass,
   segmentButtonClass,

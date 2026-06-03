@@ -11,6 +11,14 @@ export const denseTable = {
   /** Long text in expand/detail rows — clip within col width instead of pushing columns. */
   detailCellClip: 'min-w-0 overflow-hidden',
   detailRowLabel: 'block truncate',
+  /**
+   * Identity columns (Symbol, Contract, Strategy, Instance) — never ellipsis; wrap instead.
+   * Apply on DenseTableCell; pair links/tags with denseTableEntityLink or flex-wrap.
+   */
+  entityCell:
+    'min-w-0 max-w-none overflow-visible whitespace-normal break-words [overflow-wrap:anywhere] align-top',
+  /** DenseLinkButton / strong labels inside entity cells — no truncate. */
+  entityLink: 'block w-full max-w-full whitespace-normal break-words text-left',
   /** Horizontal scroll container — muted slate thumb, transparent track (see index.css). */
   scrollX: 'dense-scroll-x',
 } as const
@@ -20,3 +28,9 @@ export const denseTableCellPadding =
 
 /** Right-aligned numeric columns (DenseTableHead / DenseTableCell). */
 export const denseTableNumCell = 'text-right font-mono tabular-nums'
+
+/** @see denseTable.entityCell */
+export const denseTableEntityCell = denseTable.entityCell
+
+/** @see denseTable.entityLink */
+export const denseTableEntityLink = denseTable.entityLink

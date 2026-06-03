@@ -1,8 +1,6 @@
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import {
-  MassiveSectionSegmentControl,
-  segmentOptionWithStatus,
-} from '@/pages/settings/feed/massive/components/MassiveSectionSegmentControl'
+import { MassiveSectionSegmentControl } from '@/pages/settings/feed/massive/components/MassiveSectionSegmentControl'
+import { segmentOptionWithStatus } from '@/pages/settings/feed/massive/components/segmentOptionWithStatus'
 import { MassiveCapabilityChipNav } from '@/pages/settings/feed/massive/components/MassiveCapabilityChipNav'
 import { MassiveDelayDbLinkCard } from '@/pages/settings/feed/massive/components/MassiveDelayDbLinkCard'
 import { MassiveDeliveryChannelTabs } from '@/pages/settings/feed/massive/components/MassiveDeliveryChannelTabs'

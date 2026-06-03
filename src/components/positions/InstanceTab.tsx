@@ -13,6 +13,7 @@ import {
   InlinePnl,
   DenseTag,
   DenseTagButton,
+  denseTable,
   denseTableNumCell,
 } from '@/components/data-display'
 import { RiskProfileDetail } from './RiskProfileDetail'
@@ -215,7 +216,7 @@ export function InstanceTab({
                 <DenseTableCell className="px-2">
                   <ExpandToggleCell expanded={isExpanded} onToggle={() => toggleExpand(instKey)} />
                 </DenseTableCell>
-                <DenseTableCell className={cn('text-xs', instancePanel.oppCell)}>
+                <DenseTableCell className={cn('text-xs', instancePanel.oppCell, denseTable.entityCell)}>
                   {id != null ? (
                     <div className="flex min-w-0 flex-col gap-0.5">
                       {oppName ? (
@@ -250,7 +251,7 @@ export function InstanceTab({
                     '—'
                   )}
                 </DenseTableCell>
-                <DenseTableCell className="text-xs">
+                <DenseTableCell className={cn('text-xs', denseTable.entityCell)}>
                   {scopeType === 'watchlist_stk' ? (
                     <DenseTag variant="info" size="cell">
                       Watchlist

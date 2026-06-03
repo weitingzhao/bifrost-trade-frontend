@@ -172,7 +172,7 @@ export function LedgerFilterBar({
               </span>
               <span> · </span>
               <span className="font-medium">Since </span>
-              <span className="font-bold text-sky-400 font-mono tabular-nums">{sincePresetLabel}</span>
+              <span className="font-bold text-link font-mono tabular-nums">{sincePresetLabel}</span>
             </span>
           )}
         </div>
@@ -263,7 +263,7 @@ export function LedgerFilterBar({
           )}
 
           {(filterStructure || filterWishlistSymbol) && (
-            <button type="button" className="text-xs text-sky-400 underline underline-offset-2 bg-transparent border-0 p-0 cursor-pointer" onClick={clearStructureFilters}>
+            <button type="button" className="text-xs text-link underline underline-offset-2 bg-transparent border-0 p-0 cursor-pointer" onClick={clearStructureFilters}>
               Clear
             </button>
           )}

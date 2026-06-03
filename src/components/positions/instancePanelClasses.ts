@@ -14,7 +14,8 @@ export const instancePanel = {
   oppCell: 'max-w-0 overflow-hidden align-top',
   execQtyCell: 'max-w-36 overflow-hidden text-ellipsis tabular-nums',
   contractTypeCell: 'align-top whitespace-normal',
-  oppPrimary: 'block font-semibold leading-snug text-foreground line-clamp-2 break-words',
+  oppPrimary:
+    'block font-semibold leading-snug text-foreground whitespace-normal break-words [overflow-wrap:anywhere]',
   oppSecondary:
     'm-0 cursor-pointer border-none bg-transparent p-0 text-left font-mono text-[0.72rem] font-semibold leading-tight text-link no-underline transition-colors hover:text-link-hover hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link',
   detailRow: 'border-b border-border/45 bg-transparent hover:bg-transparent',

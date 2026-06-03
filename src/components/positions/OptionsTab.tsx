@@ -30,7 +30,6 @@ import {
   fmtDate,
   fmtDaysAgo,
   daysUntilExpiry,
-  rightLabel,
 } from '@/utils/positions'
 import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
@@ -44,8 +43,11 @@ import {
   DenseTableHead,
   DenseTableRow,
   DenseTableCell,
+  DenseLinkButton,
   ExpandToggleCell,
   denseTable,
+  denseTableEntityCell,
+  denseTableEntityLink,
 } from '@/components/data-display'
 
 interface Props {
@@ -332,23 +334,22 @@ export function OptionsTab({
                     <ExpandToggleCell expanded={isExpanded} onToggle={() => toggleExpand(posKey)} />
                   ) : null}
                 </DenseTableCell>
-                <DenseTableCell className={denseTable.detailCellClip}>
+                <DenseTableCell className={denseTableEntityCell}>
                   {iconFill !== 'empty' && <InstanceIcon fill={iconFill} />}
                   {onInspect ? (
-                    <button
-                      type="button"
-                      className="block w-full truncate text-left font-semibold text-sky-600 dark:text-sky-400 hover:underline font-mono"
-                      onClick={e => {
-                        e.stopPropagation()
-                        onInspect(pos)
-                      }}
-                      aria-label={`Option details for ${contractButtonLabel(pos)}`}
-                    >
-                      <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
-                      {pos.strike != null ? ` ${pos.strike}` : ''}
-                    </button>
+                    <span onClick={e => e.stopPropagation()}>
+                      <DenseLinkButton
+                        variant="option"
+                        label={contractButtonLabel(pos)}
+                        ariaLabel={`Option details for ${contractButtonLabel(pos)}`}
+                        onClick={() => onInspect(pos)}
+                        className={denseTableEntityLink}
+                      />
+                    </span>
                   ) : (
-                    <strong className="block truncate font-mono">{contractButtonLabel(pos)}</strong>
+                    <strong className={cn(denseTableEntityLink, 'font-mono')}>
+                      {contractButtonLabel(pos)}
+                    </strong>
                   )}
                 </DenseTableCell>
                 <DenseTableCell>
@@ -386,13 +387,13 @@ export function OptionsTab({
                     <span className={denseTable.mutedMeta}>—</span>
                   ) : (
                     <>
-                      <div className="text-[length:var(--text-dense-meta)] font-mono tabular-nums text-sky-600 dark:text-sky-400">
+                      <div className="text-[length:var(--text-dense-meta)] font-mono tabular-nums text-quote-bid">
                         {liveQ.bid != null ? liveQ.bid.toFixed(2) : '—'}
                       </div>
                       <div className="font-mono tabular-nums font-semibold">
                         {liveMid != null ? liveMid.toFixed(2) : '—'}
                       </div>
-                      <div className="text-[length:var(--text-dense-meta)] font-mono tabular-nums text-rose-600 dark:text-rose-400">
+                      <div className="text-[length:var(--text-dense-meta)] font-mono tabular-nums text-quote-ask">
                         {liveQ.ask != null ? liveQ.ask.toFixed(2) : '—'}
                       </div>
                     </>

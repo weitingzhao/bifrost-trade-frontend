@@ -9,21 +9,22 @@ import {
   DenseTableRow,
   ExpandToggleCell,
   NestedDenseTable,
+  DenseLinkButton,
   DenseTag,
-  DenseTagButton,
   denseTable,
+  denseTableEntityCell,
+  denseTableEntityLink,
   denseTableNumCell,
 } from '@/components/data-display'
 import {
   fmtUsd,
   fmtExpiry,
-  rightLabel,
   fmtDate,
   fmtDaysAgo,
   daysUntilExpiry,
   unrealizedPnlColorClass,
 } from '@/utils/positions'
-import { optionLastStrikePctClassFromQty } from '@/utils/openOptionsTab'
+import { contractButtonLabel, optionLastStrikePctClassFromQty } from '@/utils/openOptionsTab'
 import { ExecutionRow } from './ExecutionRow'
 import type { OpenOptionPosition, Execution, InstanceAllGroup } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
@@ -186,25 +187,21 @@ export function InstanceOptionSubTable({
                       <ExpandToggleCell expanded={isExpanded} onToggle={() => toggleExpand(key)} />
                     ) : null}
                   </DenseTableCell>
-                  <DenseTableCell>
+                  <DenseTableCell className={denseTableEntityCell}>
                     {onOpenOption ? (
-                      <DenseTagButton
-                        variant="symbol"
-                        size="cell"
-                        className="font-mono text-left whitespace-normal leading-snug"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onOpenOption(pos)
-                        }}
-                      >
-                        <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
-                        {pos.strike != null ? ` ${pos.strike}` : ''}
-                      </DenseTagButton>
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <DenseLinkButton
+                          variant="option"
+                          label={contractButtonLabel(pos)}
+                          ariaLabel={`Option details for ${contractButtonLabel(pos)}`}
+                          onClick={() => onOpenOption(pos)}
+                          className={denseTableEntityLink}
+                        />
+                      </span>
                     ) : (
-                      <DenseTag variant="symbol" size="cell" className="font-mono whitespace-normal">
-                        <strong>{pos.symbol}</strong> {rightLabel(pos.right)}
-                        {pos.strike != null ? ` ${pos.strike}` : ''}
-                      </DenseTag>
+                      <strong className={cn(denseTableEntityLink, 'font-mono')}>
+                        {contractButtonLabel(pos)}
+                      </strong>
                     )}
                   </DenseTableCell>
                   <DenseTableCell>

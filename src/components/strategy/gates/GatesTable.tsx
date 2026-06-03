@@ -82,7 +82,9 @@ export function GatesTable({
               <DenseTableCell className={gatesIdCellClass}>
                 #{item.gate_safety_strategy_id}
               </DenseTableCell>
-              <DenseTableCell className={gatesNameCellClass}>{item.name}</DenseTableCell>
+              <DenseTableCell className={gatesNameCellClass}>
+                <DenseTag variant="strategy">{item.name}</DenseTag>
+              </DenseTableCell>
               <DenseTableCell className="text-right">
                 <span className={gatesVersionClass} aria-label={`Version ${item.version}`}>
                   v{item.version}

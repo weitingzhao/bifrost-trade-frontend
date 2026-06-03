@@ -8,7 +8,6 @@ import {
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { SegmentControl } from '@/components/data-display'
 import { denseTable } from '@/components/data-display/denseTableClasses'
-import { structureChipStyle } from '@/utils/structureColor'
 import type { StrategyInstance, StrategyOpportunity } from '@/types/positions'
 import { StrategyOpportunityCombobox } from './StrategyOpportunityCombobox'
 import type { DetailViewMode } from './InstanceListToolbar'
@@ -289,7 +288,6 @@ export function InstanceListFilters({
                   key={s}
                   active={values.structure === s}
                   onClick={() => onChange({ structure: values.structure === s ? '' : s })}
-                  style={structureChipStyle(s, values.structure === s)}
                   title={s}
                 >
                   <span className="inline-block max-w-[9rem] truncate align-bottom">{s}</span>

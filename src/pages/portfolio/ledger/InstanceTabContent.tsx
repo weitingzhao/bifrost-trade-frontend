@@ -43,7 +43,7 @@ export function InstanceTabContent({
   toggleGroup: (k: string) => void
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
-  onLinkStrategy?: (e: Execution) => void
+  onLinkStrategy?: (e: Execution, sameContractTrades?: Execution[]) => void
   onViewLinks?: (ctx: { title: string; oid: number }) => void
   syncingId?: number | null
   onSyncOpposite?: (e: Execution, src: { opportunity_id: number; instance_id: number }) => void

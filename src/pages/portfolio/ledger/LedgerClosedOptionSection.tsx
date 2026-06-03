@@ -440,7 +440,11 @@ export function LedgerClosedOptionSection({
                       {ex.account_executions_id != null ? (
                         <LedgerOptActionButtons
                           onEdit={onEdit ? () => onEdit(ex) : undefined}
-                          onLink={onLinkStrategy ? () => onLinkStrategy(ex) : undefined}
+                          onLink={
+                            onLinkStrategy
+                              ? () => onLinkStrategy(ex, g.trades ?? [])
+                              : undefined
+                          }
                           onDelete={onDelete ? () => onDelete(ex) : undefined}
                           onSync={
                             showSync && oppositePeer && onSyncOpposite

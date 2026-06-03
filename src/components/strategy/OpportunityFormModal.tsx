@@ -1,30 +1,73 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { X, Plus } from 'lucide-react'
+/* eslint-disable react-hooks/set-state-in-effect -- hydrates edit form from API when panel opens (Legacy parity) */
+import { useState, useEffect, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import { IconActionButton, SegmentControl } from '@/components/data-display'
-import {
+  opportunitiesAddBtnClass,
+  opportunitiesAvailableFieldClass,
+  opportunitiesAvailableLabelClass,
+  opportunitiesColBodyClass,
+  opportunitiesColHeaderClass,
+  opportunitiesColTitleClass,
+  opportunitiesConditionInputClass,
+  opportunitiesConditionInputNumClass,
+  opportunitiesConditionRemoveClass,
   opportunitiesConditionRowClass,
+  opportunitiesConditionSelectClass,
+  opportunitiesConditionsListClass,
+  opportunitiesFieldLabelClass,
+  opportunitiesFormBodyClass,
+  opportunitiesFormColClass,
+  opportunitiesFormColumnsClass,
+  opportunitiesFormErrorClass,
   opportunitiesFormFieldClass,
+  opportunitiesFormFooterClass,
+  opportunitiesFormHeaderClass,
   opportunitiesFormHintClass,
-  opportunitiesStatusRowClass,
-  opportunitiesSymbolChipClass,
-  opportunitiesWatchlistBoxClass,
-  opportunitiesWatchlistSymbolClass,
+  opportunitiesFormPanelClass,
+  opportunitiesFormTitleClass,
+  opportunitiesFormCloseClass,
+  opportunitiesGatePillClass,
+  opportunitiesGatePillSelectedClass,
+  opportunitiesGatePillsClass,
+  opportunitiesGatePillVersionClass,
+  opportunitiesIdentityRowClass,
+  opportunitiesNameFieldClass,
+  opportunitiesNameInputClass,
+  opportunitiesStructureCardClass,
+  opportunitiesStructureCardMetaClass,
+  opportunitiesStructureCardMetaSelectedClass,
+  opportunitiesStructureCardSelectedClass,
+  opportunitiesStructureCardTitleClass,
+  opportunitiesStructureGridClass,
+  opportunitiesSymbolTagClass,
+  opportunitiesSymbolTagInputClass,
+  opportunitiesSymbolTagRemoveClass,
+  opportunitiesSymbolTagsClass,
+  opportunitiesWatchlistActionsClass,
+  opportunitiesWatchlistCheckClass,
+  opportunitiesWatchlistCheckboxClass,
+  opportunitiesWatchlistGridClass,
 } from '@/components/strategy/opportunities/opportunitiesFormUi'
-import { useStructures, useGateSafety } from '@/hooks/useStrategies'
+import { SegmentControl } from '@/components/data-display'
+import { useGateSafety } from '@/hooks/useStrategies'
 import { useWatchlist } from '@/hooks/useWatchlist'
-import { createOpportunity, putOpportunity, fetchOpportunityDetail } from '@/api/strategy'
+import { createOpportunity, putOpportunity, fetchOpportunityDetail, fetchStructures } from '@/api/strategy'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { StrategyOpportunity, EntryCondition } from '@/types/positions'
+import type { StrategyStructure } from '@/types/strategy'
+import {
+  OPPORTUNITY_CONDITION_TYPES,
+  OPPORTUNITY_SCOPE_TYPES,
+  buildSuggestedOpportunityName,
+  getOpportunityConditionTypeLabel,
+  getScopeTypeLabel,
+  getStructureDisplayLabel,
+} from '@/utils/strategyFormUtils'
+import { cn } from '@/lib/utils'
 
 export interface PrefillData {
   name: string
@@ -35,141 +78,146 @@ export interface PrefillData {
   conditions: EntryCondition[]
 }
 
-const SCOPE_OPTIONS = [
-  { value: '', label: 'None' },
-  { value: 'watchlist_stk', label: 'Watchlist' },
-  { value: 'explicit_symbols', label: 'Explicit' },
-]
+const GATE_NONE = '__none__'
 
-const CONDITION_TYPES = [
-  { value: 'iv_min', label: 'IV Min' },
-  { value: 'iv_max', label: 'IV Max' },
-  { value: 'dte_min', label: 'DTE Min' },
-  { value: 'dte_max', label: 'DTE Max' },
-  { value: 'earnings_blackout_days', label: 'Earnings Blackout (days)' },
-  { value: 'min_volume', label: 'Min Volume' },
-]
+function FieldLabel({ children, htmlFor }: { children: string; htmlFor?: string }) {
+  return (
+    <span className={opportunitiesFieldLabelClass} {...(htmlFor ? { id: `${htmlFor}-label` } : {})}>
+      {children}
+    </span>
+  )
+}
 
 interface Props {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onClose: () => void
   initial?: StrategyOpportunity
   prefill?: PrefillData
 }
 
-function buildSuggestedName(
-  structureName: string | null,
-  scopeType: string,
-  symbols: string[],
-): string {
-  const parts: string[] = []
-  if (symbols.length > 0 && scopeType === 'explicit_symbols') parts.push(symbols.join('/'))
-  if (structureName) parts.push(structureName)
-  if (scopeType === 'watchlist_stk') parts.push('(watchlist)')
-  return parts.join(' ')
-}
-
-export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: Props) {
+export function OpportunityFormModal({ open, onClose, initial, prefill }: Props) {
   const queryClient = useQueryClient()
   const isEdit = initial != null
-  const { data: structuresData } = useStructures()
+  const isCopy = prefill != null && !isEdit
+  const isCreate = !isEdit
   const { data: gateData } = useGateSafety()
   const { data: watchlistData } = useWatchlist()
+  const { data: structuresData } = useQuery({
+    queryKey: [...QUERY_KEYS.strategy.structures, 'all'],
+    queryFn: () => fetchStructures(false),
+    enabled: open,
+    staleTime: 60_000,
+  })
+
+  const structures = useMemo(() => structuresData?.items ?? [], [structuresData?.items])
+  const activeGates = gateData?.items.filter((g) => g.is_active) ?? []
 
   const [name, setName] = useState(prefill?.name ?? '')
-  const [nameEdited, setNameEdited] = useState(prefill != null)
+  const [nameEdited, setNameEdited] = useState(prefill != null || isEdit)
   const [structureId, setStructureId] = useState<string>(prefill?.structureId ?? '')
-  const [gateSafetyId, setGateSafetyId] = useState<string>(prefill?.gateSafetyId ?? '')
+  const [gateSafetyId, setGateSafetyId] = useState<string>(prefill?.gateSafetyId || GATE_NONE)
   const [scopeType, setScopeType] = useState<string>(prefill?.scopeType ?? '')
   const [symbols, setSymbols] = useState<string[]>(prefill?.symbols ?? [])
-  const [symbolInput, setSymbolInput] = useState('')
   const [conditions, setConditions] = useState<EntryCondition[]>(prefill?.conditions ?? [])
   const [isActive, setIsActive] = useState(true)
   const [saving, setSaving] = useState(false)
-  // Initialized true when editing so first render shows spinner; key prop remounts on mode change.
-  const [loading, setLoading] = useState(() => isEdit)
   const [error, setError] = useState<string | null>(null)
+  const [editHydratedId, setEditHydratedId] = useState<number | null>(null)
 
-  const activeStructures = structuresData?.items.filter((s) => s.is_active) ?? []
-  const activeGates = gateData?.items.filter((g) => g.is_active) ?? []
+  const editDetailQuery = useQuery({
+    queryKey: ['strategy', 'opportunity-detail', initial?.strategy_opportunity_id],
+    queryFn: () => fetchOpportunityDetail(initial!.strategy_opportunity_id),
+    enabled: open && isEdit && initial != null,
+    staleTime: 0,
+  })
 
-  const selectedStructureName =
-    activeStructures.find((s) => String(s.strategy_structure_id) === structureId)?.name ?? null
+  const loading = isEdit && (editDetailQuery.isLoading || editHydratedId !== initial?.strategy_opportunity_id)
 
-  const watchlistStks = useMemo(() =>
-    (watchlistData?.items ?? [])
-      .filter((w) => w.sec_type === 'STK' && w.optionable)
-      .map((w) => w.symbol)
-      .sort(),
-    [watchlistData],
+  const selectedStructure = structures.find(
+    (s) => String(s.strategy_structure_id) === structureId,
   )
 
-  const updateSuggestedName = useCallback(
-    (sName: string | null, scope: string, syms: string[]) => {
-      if (!nameEdited) setName(buildSuggestedName(sName, scope, syms))
-    },
-    [nameEdited],
-  )
-
-  // key prop in parent resets component state when switching modes.
-  // This effect only needs to load detail for edit mode.
-  useEffect(() => {
-    if (!open || !isEdit || !initial) return
-    fetchOpportunityDetail(initial.strategy_opportunity_id)
-      .then((detail) => {
-        setName(detail.name)
-        setNameEdited(true)
-        setStructureId(detail.strategy_structure_id != null ? String(detail.strategy_structure_id) : '')
-        setGateSafetyId(detail.default_gate_safety_strategy_id != null ? String(detail.default_gate_safety_strategy_id) : '')
-        setScopeType(detail.scope_type ?? '')
-        setSymbols(detail.symbols ?? [])
-        setConditions(detail.entry_conditions ?? [])
-        setIsActive(detail.is_active)
-      })
-      .catch(() => setError('Failed to load opportunity details.'))
-      .finally(() => setLoading(false))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
-  function handleAddSymbol() {
-    const sym = symbolInput.trim().toUpperCase()
-    if (sym && !symbols.includes(sym)) {
-      const next = [...symbols, sym]
-      setSymbols(next)
-      updateSuggestedName(selectedStructureName, scopeType, next)
+  const watchlistStkSymbols = useMemo(() => {
+    const seen = new Set<string>()
+    const out: string[] = []
+    for (const w of watchlistData?.items ?? []) {
+      if ((w.sec_type || 'STK').toUpperCase() === 'OPT') continue
+      if (w.optionable !== true) continue
+      const sym = (w.symbol || w.contract_key || '').trim().toUpperCase()
+      if (sym && !seen.has(sym)) {
+        seen.add(sym)
+        out.push(sym)
+      }
     }
-    setSymbolInput('')
+    return out.sort((a, b) => a.localeCompare(b))
+  }, [watchlistData])
+
+  const suggestedName = useMemo(
+    () =>
+      buildSuggestedOpportunityName({
+        structureName: selectedStructure?.name ?? '',
+        scopeType: scopeType || null,
+        symbols,
+        entryConditions: conditions,
+      }),
+    [selectedStructure?.name, scopeType, symbols, conditions],
+  )
+
+  const resolvedStructureId =
+    structureId ||
+    (isCreate && !prefill && structures[0] ? String(structures[0].strategy_structure_id) : '')
+
+  const resolvedName = nameEdited || isEdit || isCopy ? name : suggestedName
+
+  useEffect(() => {
+    const detail = editDetailQuery.data
+    const id = initial?.strategy_opportunity_id
+    if (!open || !isEdit || !detail || id == null || editHydratedId === id) return
+    setName(detail.name)
+    setNameEdited(true)
+    setStructureId(detail.strategy_structure_id != null ? String(detail.strategy_structure_id) : '')
+    setGateSafetyId(
+      detail.default_gate_safety_strategy_id != null
+        ? String(detail.default_gate_safety_strategy_id)
+        : GATE_NONE,
+    )
+    setScopeType(detail.scope_type ?? '')
+    setSymbols(detail.symbols ?? [])
+    setConditions(detail.entry_conditions ?? [])
+    setIsActive(detail.is_active === true)
+    setEditHydratedId(id)
+  }, [open, isEdit, initial?.strategy_opportunity_id, editDetailQuery.data, editHydratedId])
+
+  useEffect(() => {
+    if (editDetailQuery.isError) setError('Failed to load opportunity details.')
+  }, [editDetailQuery.isError])
+
+  function handleAddEmptySymbol() {
+    setSymbols((prev) => [...prev, ''])
   }
 
-  function handleRemoveSymbol(s: string) {
-    const next = symbols.filter((x) => x !== s)
-    setSymbols(next)
-    updateSuggestedName(selectedStructureName, scopeType, next)
+  function handleUpdateSymbol(index: number, value: string) {
+    setSymbols((prev) => prev.map((s, i) => (i === index ? value.toUpperCase() : s)))
   }
 
-  function handleStructureChange(val: string) {
-    setStructureId(val)
-    const sName = activeStructures.find((s) => String(s.strategy_structure_id) === val)?.name ?? null
-    updateSuggestedName(sName, scopeType, symbols)
+  function handleRemoveSymbol(index: number) {
+    setSymbols((prev) => prev.filter((_, i) => i !== index))
   }
 
   function handleScopeChange(val: string) {
     setScopeType(val)
-    if (val !== 'explicit_symbols') setSymbols([])
-    updateSuggestedName(selectedStructureName, val, val === 'explicit_symbols' ? symbols : [])
+    if (val !== 'explicit_symbols' && val !== 'watchlist_stk') setSymbols([])
   }
 
   function handleAddCondition() {
-    setConditions((prev) => [...prev, { condition_type: 'iv_min', value_text: null, value_numeric: null }])
+    setConditions((prev) => [
+      ...prev,
+      { condition_type: 'iv_min', value_text: null, value_numeric: null },
+    ])
   }
 
-  function handleConditionType(idx: number, val: string) {
-    setConditions((prev) => prev.map((c, i) => i === idx ? { ...c, condition_type: val } : c))
-  }
-
-  function handleConditionValue(idx: number, val: string) {
-    const n = val === '' ? null : parseFloat(val)
-    setConditions((prev) => prev.map((c, i) => i === idx ? { ...c, value_numeric: isNaN(n as number) ? null : n } : c))
+  function handleConditionPatch(index: number, patch: Partial<EntryCondition>) {
+    setConditions((prev) => prev.map((c, i) => (i === index ? { ...c, ...patch } : c)))
   }
 
   function handleRemoveCondition(idx: number) {
@@ -177,28 +225,51 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
   }
 
   async function handleSubmit() {
-    if (!name.trim()) { setError('Name is required.'); return }
-    if (!structureId) { setError('Structure is required.'); return }
+    if (!resolvedName.trim()) {
+      setError('Name is required.')
+      return
+    }
+    if (!resolvedStructureId) {
+      setError('Structure is required.')
+      return
+    }
     setSaving(true)
     setError(null)
+    const scope = (scopeType || '').trim() || null
+    const symbolPayload =
+      scope === 'explicit_symbols'
+        ? symbols.map((s) => s.trim()).filter(Boolean)
+        : scope === 'watchlist_stk'
+          ? symbols.map((s) => s.trim().toUpperCase()).filter(Boolean)
+          : []
+    const entryConditions = conditions
+      .filter((c) => (c.condition_type ?? '').trim())
+      .map((c) => ({
+        condition_type: c.condition_type.trim(),
+        value_text: c.value_text?.trim() || null,
+        value_numeric: c.value_numeric ?? null,
+      }))
     const body = {
-      name: name.trim(),
-      strategy_structure_id: Number(structureId),
-      default_gate_safety_strategy_id: gateSafetyId ? Number(gateSafetyId) : null,
-      scope_type: scopeType || null,
-      symbols: scopeType === 'explicit_symbols' ? symbols : [],
-      entry_conditions: conditions.filter((c) => c.value_numeric != null || c.value_text),
+      name: (nameEdited ? name : resolvedName).trim(),
+      strategy_structure_id: Number(resolvedStructureId),
+      default_gate_safety_strategy_id:
+        gateSafetyId && gateSafetyId !== GATE_NONE ? Number(gateSafetyId) : null,
+      scope_type: scope,
+      symbols: symbolPayload,
+      entry_conditions: entryConditions,
       is_active: isActive,
     }
     try {
       if (isEdit && initial) {
         await putOpportunity(initial.strategy_opportunity_id, body)
-        await queryClient.invalidateQueries({ queryKey: ['strategy', 'opportunity-detail', initial.strategy_opportunity_id] })
+        await queryClient.invalidateQueries({
+          queryKey: ['strategy', 'opportunity-detail', initial.strategy_opportunity_id],
+        })
       } else {
         await createOpportunity(body)
       }
-      await queryClient.invalidateQueries({ queryKey: ['strategy', 'opportunities'] })
-      onOpenChange(false)
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategy.opportunities })
+      onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed.')
     } finally {
@@ -206,194 +277,358 @@ export function OpportunityFormModal({ open, onOpenChange, initial, prefill }: P
     }
   }
 
+  if (!open) return null
+
+  const formTitle = isEdit
+    ? `Edit opportunity #${initial?.strategy_opportunity_id}`
+    : isCopy
+      ? 'New opportunity (copy)'
+      : 'New opportunity'
+
+  const scopeOptions = OPPORTUNITY_SCOPE_TYPES.map((t) => ({
+    value: t,
+    label: getScopeTypeLabel(t || null),
+  }))
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit Opportunity' : 'New Opportunity'}</DialogTitle>
-        </DialogHeader>
+    <section className={opportunitiesFormPanelClass} aria-label={formTitle}>
+      <div className={opportunitiesFormHeaderClass}>
+        <h3 className={opportunitiesFormTitleClass}>{formTitle}</h3>
+        <button
+          type="button"
+          className={opportunitiesFormCloseClass}
+          onClick={onClose}
+          aria-label="Close form"
+        >
+          ×
+        </button>
+      </div>
 
-        {loading ? (
-          <p className={opportunitiesFormHintClass}>Loading…</p>
-        ) : (
-          <div className="space-y-4 py-2">
-            <div className={opportunitiesFormFieldClass}>
-              <Label>Name <span className="text-destructive">*</span></Label>
+      {loading ? (
+        <p className={cn(opportunitiesFormHintClass, 'px-5 py-4')}>Loading…</p>
+      ) : (
+        <div className={opportunitiesFormBodyClass}>
+          {error && (
+            <div className={opportunitiesFormErrorClass} role="alert">
+              <span
+                className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-destructive text-[0.7rem] font-bold text-destructive-foreground"
+                aria-hidden
+              >
+                !
+              </span>
+              {error}
+            </div>
+          )}
+
+          <div className={opportunitiesIdentityRowClass}>
+            <div className={cn(opportunitiesFormFieldClass, opportunitiesNameFieldClass)}>
+              <FieldLabel htmlFor="opportunity-form-name">Name</FieldLabel>
               <Input
-                value={name}
-                onChange={(e) => { setName(e.target.value); setNameEdited(true) }}
-                placeholder="e.g. AAPL Bull Call Spread"
+                id="opportunity-form-name"
+                className={opportunitiesNameInputClass}
+                value={resolvedName}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  setNameEdited(true)
+                }}
+                placeholder="e.g. AAPL Premium Harvest"
               />
-            </div>
-
-            <div className={opportunitiesFormFieldClass}>
-              <Label>Structure <span className="text-destructive">*</span></Label>
-              <Select value={structureId} onValueChange={handleStructureChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select structure…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {activeStructures.map((s) => (
-                    <SelectItem key={s.strategy_structure_id} value={String(s.strategy_structure_id)}>
-                      {s.name}
-                      {s.template_display_name && (
-                        <span className="ml-1.5 text-muted-foreground text-xs">· {s.template_display_name}</span>
-                      )}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className={opportunitiesFormFieldClass}>
-              <Label>Gate Safety</Label>
-              <Select value={gateSafetyId} onValueChange={setGateSafetyId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="None" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  {activeGates.map((g) => (
-                    <SelectItem key={g.gate_safety_strategy_id} value={String(g.gate_safety_strategy_id)}>
-                      {g.name}
-                      <span className="ml-1.5 text-muted-foreground text-xs">v{g.version}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className={opportunitiesFormFieldClass}>
-              <Label>Scope</Label>
-              <SegmentControl
-                size="sm"
-                ariaLabel="Opportunity scope"
-                value={scopeType}
-                onChange={handleScopeChange}
-                options={SCOPE_OPTIONS}
-              />
-            </div>
-
-            {scopeType === 'watchlist_stk' && (
-              <div className="space-y-1">
+              {isCreate && !isCopy && (
                 <p className={opportunitiesFormHintClass}>
-                  Watchlist optionable stocks ({watchlistStks.length})
-                </p>
-                <div className={opportunitiesWatchlistBoxClass}>
-                  {watchlistStks.length === 0
-                    ? <span className={opportunitiesFormHintClass}>None in watchlist</span>
-                    : watchlistStks.map((s) => (
-                        <span key={s} className={opportunitiesWatchlistSymbolClass}>
-                          {s}
-                        </span>
-                      ))
-                  }
-                </div>
-              </div>
-            )}
-
-            {scopeType === 'explicit_symbols' && (
-              <div className={opportunitiesFormFieldClass}>
-                <Label>Symbols</Label>
-                <div className="mb-1.5 flex flex-wrap gap-1">
-                  {symbols.map((s) => (
-                    <span key={s} className={opportunitiesSymbolChipClass}>
-                      {s}
-                      <IconActionButton
-                        tone="danger"
-                        size="dense"
-                        title={`Remove ${s}`}
-                        ariaLabel={`Remove symbol ${s}`}
-                        onClick={() => handleRemoveSymbol(s)}
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </IconActionButton>
-                    </span>
-                  ))}
-                </div>
-                <div className="flex gap-1.5">
-                  <Input
-                    className="h-8 w-28 font-mono text-sm uppercase"
-                    placeholder="AAPL"
-                    value={symbolInput}
-                    onChange={(e) => setSymbolInput(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSymbol() } }}
-                  />
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddSymbol}>
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Entry Conditions</Label>
-                <Button type="button" variant="ghost" size="sm" onClick={handleAddCondition} className="h-7 text-xs">
-                  <Plus className="mr-1 h-3 w-3" /> Add
-                </Button>
-              </div>
-              {conditions.length === 0 && (
-                <p className={opportunitiesFormHintClass}>
-                  No conditions — add filters like IV min or DTE max.
+                  Name fills from symbol scope, structure, and entry conditions; you can edit it anytime.
                 </p>
               )}
-              {conditions.map((cond, idx) => (
-                <div key={idx} className={opportunitiesConditionRowClass}>
-                  <Select value={cond.condition_type} onValueChange={(v) => handleConditionType(idx, v)}>
-                    <SelectTrigger className="h-8 flex-1 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CONDITION_TYPES.map((ct) => (
-                        <SelectItem key={ct.value} value={ct.value}>{ct.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    className="h-8 w-24 font-mono text-xs"
-                    type="number"
-                    placeholder="value"
-                    value={cond.value_numeric ?? ''}
-                    onChange={(e) => handleConditionValue(idx, e.target.value)}
-                  />
-                  <IconActionButton
-                    tone="danger"
-                    title="Remove condition"
-                    ariaLabel="Remove condition"
-                    onClick={() => handleRemoveCondition(idx)}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </IconActionButton>
-                </div>
-              ))}
             </div>
-
-            <div className={opportunitiesStatusRowClass}>
-              <Switch
-                id="opportunity-form-active"
-                checked={isActive}
-                onCheckedChange={setIsActive}
-                aria-label="Available"
-              />
-              <Label htmlFor="opportunity-form-active" className="text-xs font-normal">
-                Available
-              </Label>
+            <div className={opportunitiesAvailableFieldClass}>
+              <label className={opportunitiesAvailableLabelClass} htmlFor="opportunity-form-active">
+                <Switch
+                  id="opportunity-form-active"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                  aria-label="Available"
+                />
+                <span>Available</span>
+              </label>
             </div>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
-        )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={saving || loading}>
-            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <div className={opportunitiesFormFieldClass}>
+            <FieldLabel>Structure</FieldLabel>
+            <div className={opportunitiesStructureGridClass} role="radiogroup" aria-label="Structure (required)">
+              {structures.length === 0 ? (
+                <p className={opportunitiesFormHintClass}>No structures. Create one in Structure first.</p>
+              ) : (
+                structures.map((s: StrategyStructure) => {
+                  const id = String(s.strategy_structure_id)
+                  const selected = resolvedStructureId === id
+                  const metaLabel = getStructureDisplayLabel(s)
+                  const hasMeta =
+                    (s.version != null && String(s.version) !== '') || metaLabel !== '—'
+                  return (
+                    <label
+                      key={id}
+                      className={cn(
+                        opportunitiesStructureCardClass,
+                        selected && opportunitiesStructureCardSelectedClass,
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="opp_structure"
+                        className="sr-only"
+                        checked={selected}
+                        onChange={() => {
+                          setStructureId(id)
+                          setNameEdited(false)
+                        }}
+                      />
+                      <span className={opportunitiesStructureCardTitleClass}>{s.name}</span>
+                      {hasMeta ? (
+                        <span
+                          className={cn(
+                            opportunitiesStructureCardMetaClass,
+                            selected && opportunitiesStructureCardMetaSelectedClass,
+                          )}
+                        >
+                          {s.version != null && String(s.version) !== '' ? `v${s.version}` : ''}
+                          {s.version != null && String(s.version) !== '' && metaLabel !== '—' ? ' · ' : ''}
+                          {metaLabel !== '—' ? metaLabel : ''}
+                        </span>
+                      ) : null}
+                    </label>
+                  )
+                })
+              )}
+            </div>
+          </div>
+
+          <div className={opportunitiesFormFieldClass}>
+            <FieldLabel>Default gate safety</FieldLabel>
+            <div className={opportunitiesGatePillsClass} role="radiogroup" aria-label="Default gate safety">
+              <label
+                className={cn(
+                  opportunitiesGatePillClass,
+                  gateSafetyId === GATE_NONE && opportunitiesGatePillSelectedClass,
+                )}
+              >
+                <input
+                  type="radio"
+                  name="opp_gate"
+                  className="sr-only"
+                  checked={gateSafetyId === GATE_NONE}
+                  onChange={() => setGateSafetyId(GATE_NONE)}
+                />
+                None
+              </label>
+              {activeGates.map((g) => {
+                const id = String(g.gate_safety_strategy_id)
+                const selected = gateSafetyId === id
+                return (
+                  <label
+                    key={id}
+                    className={cn(
+                      opportunitiesGatePillClass,
+                      selected && opportunitiesGatePillSelectedClass,
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="opp_gate"
+                      className="sr-only"
+                      checked={selected}
+                      onChange={() => setGateSafetyId(id)}
+                    />
+                    <span>{g.name}</span>
+                    {g.version != null && (
+                      <span className={opportunitiesGatePillVersionClass}>v{g.version}</span>
+                    )}
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className={opportunitiesFormColumnsClass}>
+            <div className={opportunitiesFormColClass}>
+              <div className={opportunitiesColHeaderClass}>
+                <h4 className={opportunitiesColTitleClass}>Symbol scope</h4>
+              </div>
+              <div className={opportunitiesColBodyClass}>
+                <SegmentControl
+                  size="sm"
+                  ariaLabel="Symbol scope type"
+                  value={scopeType}
+                  onChange={handleScopeChange}
+                  options={scopeOptions}
+                />
+
+                {scopeType === 'explicit_symbols' && (
+                  <div className="space-y-2">
+                    <div className={opportunitiesSymbolTagsClass}>
+                      {symbols.map((sym, i) => (
+                        <span key={i} className={opportunitiesSymbolTagClass}>
+                          <Input
+                            className={opportunitiesSymbolTagInputClass}
+                            value={sym}
+                            onChange={(e) => handleUpdateSymbol(i, e.target.value)}
+                            placeholder="SYM"
+                          />
+                          <button
+                            type="button"
+                            className={opportunitiesSymbolTagRemoveClass}
+                            onClick={() => handleRemoveSymbol(i)}
+                            aria-label={`Remove ${sym || 'symbol'}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <button type="button" className={opportunitiesAddBtnClass} onClick={handleAddEmptySymbol}>
+                      <Plus className="h-3 w-3" />
+                      Add symbol
+                    </button>
+                  </div>
+                )}
+
+                {scopeType === 'watchlist_stk' && (
+                  <div className="space-y-2">
+                    {watchlistStkSymbols.length === 0 ? (
+                      <p className={opportunitiesFormHintClass}>
+                        No watchlist stocks with Option? on. Turn Option? on in Watchlist, or use Explicit symbols.
+                      </p>
+                    ) : (
+                      <>
+                        <div className={opportunitiesWatchlistActionsClass}>
+                          <button
+                            type="button"
+                            className={opportunitiesAddBtnClass}
+                            onClick={() => setSymbols([...watchlistStkSymbols])}
+                          >
+                            Select all
+                          </button>
+                          <button
+                            type="button"
+                            className={opportunitiesAddBtnClass}
+                            onClick={() => setSymbols([])}
+                          >
+                            Clear
+                          </button>
+                          <span className={cn(opportunitiesFormHintClass, 'ml-auto')}>
+                            {symbols.length === 0
+                              ? 'All symbols (empty = all)'
+                              : `${symbols.length} selected`}
+                          </span>
+                        </div>
+                        <ul
+                          className={opportunitiesWatchlistGridClass}
+                          role="group"
+                          aria-label="Select symbols from Watchlist STK"
+                        >
+                          {watchlistStkSymbols.map((sym) => {
+                            const checked = symbols.includes(sym)
+                            return (
+                              <li key={sym}>
+                                <label className={opportunitiesWatchlistCheckClass}>
+                                  <input
+                                    type="checkbox"
+                                    className={opportunitiesWatchlistCheckboxClass}
+                                    checked={checked}
+                                    onChange={() => {
+                                      setSymbols((prev) =>
+                                        checked
+                                          ? prev.filter((s) => s !== sym)
+                                          : [...prev, sym].sort((a, b) => a.localeCompare(b)),
+                                      )
+                                    }}
+                                  />
+                                  {sym}
+                                </label>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={opportunitiesFormColClass}>
+              <div className={opportunitiesColHeaderClass}>
+                <h4 className={opportunitiesColTitleClass}>Entry conditions</h4>
+              </div>
+              <div className={opportunitiesColBodyClass}>
+                {conditions.length === 0 && (
+                  <p className={opportunitiesFormHintClass}>No entry conditions yet.</p>
+                )}
+                <div className={opportunitiesConditionsListClass}>
+                  {conditions.map((cond, idx) => (
+                    <div key={idx} className={opportunitiesConditionRowClass}>
+                      <select
+                        className={opportunitiesConditionSelectClass}
+                        value={cond.condition_type}
+                        onChange={(e) =>
+                          handleConditionPatch(idx, { condition_type: e.target.value })
+                        }
+                      >
+                        {OPPORTUNITY_CONDITION_TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {getOpportunityConditionTypeLabel(t)}
+                          </option>
+                        ))}
+                      </select>
+                      <Input
+                        className={opportunitiesConditionInputClass}
+                        placeholder="text"
+                        value={cond.value_text ?? ''}
+                        onChange={(e) =>
+                          handleConditionPatch(idx, { value_text: e.target.value || null })
+                        }
+                      />
+                      <Input
+                        className={cn(opportunitiesConditionInputClass, opportunitiesConditionInputNumClass)}
+                        type="number"
+                        step="any"
+                        placeholder="numeric"
+                        value={cond.value_numeric ?? ''}
+                        onChange={(e) =>
+                          handleConditionPatch(idx, {
+                            value_numeric:
+                              e.target.value === '' ? null : parseFloat(e.target.value),
+                          })
+                        }
+                      />
+                      <button
+                        type="button"
+                        className={opportunitiesConditionRemoveClass}
+                        onClick={() => handleRemoveCondition(idx)}
+                        aria-label="Remove condition"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" className={opportunitiesAddBtnClass} onClick={handleAddCondition}>
+                  <Plus className="h-3 w-3" />
+                  Add condition
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={opportunitiesFormFooterClass}>
+        <Button variant="outline" onClick={onClose} disabled={saving}>
+          Cancel
+        </Button>
+        <Button onClick={() => void handleSubmit()} disabled={saving || loading}>
+          {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
+        </Button>
+      </div>
+    </section>
   )
 }

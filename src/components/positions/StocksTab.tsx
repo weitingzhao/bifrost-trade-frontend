@@ -16,8 +16,10 @@ import {
   GroupHeaderRow,
   PnlCell,
   SymbolLinkButton,
+  denseTable,
+  denseTableEntityCell,
+  denseTableEntityLink,
 } from '@/components/data-display'
-import { denseTable } from '@/components/data-display'
 
 interface Props {
   positions: LivePositionRow[]
@@ -42,16 +44,17 @@ function StockRow({
   return (
     <DenseTableRow>
       <DenseTableCell>{accId}</DenseTableCell>
-      <DenseTableCell>
+      <DenseTableCell className={denseTableEntityCell}>
         {onInspect ? (
           <SymbolLinkButton
             label={position.symbol ?? '—'}
             onClick={() => onInspect(sym, accId, position)}
             ariaLabel={`Open details for ${position.symbol ?? 'symbol'}`}
             variant="stock"
+            className={denseTableEntityLink}
           />
         ) : (
-          <strong>{position.symbol ?? '—'}</strong>
+          <strong className={denseTableEntityLink}>{position.symbol ?? '—'}</strong>
         )}
       </DenseTableCell>
       <DenseTableCell>{m.sideLabel}</DenseTableCell>

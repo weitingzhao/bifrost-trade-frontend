@@ -14,6 +14,7 @@ import { DonutChart } from './DonutChart'
 import { BubbleSwitch } from './BubbleSwitch'
 import { POSITIONS_BUBBLE_SIZE } from './bubbleSwitchStyles'
 import { ChartLegend } from './ChartLegend'
+import { OptionDetailLegendCarousel } from './OptionDetailLegendCarousel'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { PositionsChartCell, DonutChartRow } from './PositionsChartCell'
 import styles from '../PositionsChartsSection.module.css'
@@ -95,7 +96,8 @@ export function OptionChartsCard({
             activeLabel={activeOptionDetail}
             onSegmentClick={onOptionDetailClick}
           />
-          <ChartLegend
+          <OptionDetailLegendCarousel
+            key={`${chartAccountId}:${detailSegments.map((s) => s.label).join('|')}`}
             segments={detailSegments}
             total={detailTotal}
             mode={legendMode}
@@ -103,7 +105,6 @@ export function OptionChartsCard({
             onSegmentClick={(label) =>
               onOptionDetailClick(activeOptionDetail === label ? null : label)
             }
-            showFootnotes
           />
         </DonutChartRow>
 

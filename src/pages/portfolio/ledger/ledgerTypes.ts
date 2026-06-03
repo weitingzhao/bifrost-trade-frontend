@@ -13,7 +13,7 @@ export type OptInstanceFilter = 'all' | 'has_instance' | 'no_instance' | 'mixed'
 export type OptGroupCallbacks = {
   onEdit?: (e: Execution) => void
   onDelete?: (e: Execution) => void
-  onLinkStrategy?: (e: Execution) => void
+  onLinkStrategy?: (e: Execution, sameContractTrades?: Execution[]) => void
   onViewLinks?: (ctx: { title: string; oid: number }) => void
   onExpiredClose?: (e: Execution) => void
   syncingId?: number | null

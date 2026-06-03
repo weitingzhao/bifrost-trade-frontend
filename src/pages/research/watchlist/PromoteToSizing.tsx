@@ -46,7 +46,13 @@ export function PromoteToSizing({ stocks, sizingCategoryId, addPending, onPromot
             onClick={() => setOpen(o => !o)}
             aria-expanded={open}
           >
-            <span className={selected ? 'font-mono truncate' : 'text-muted-foreground'}>
+            <span
+              className={
+                selected
+                  ? 'min-w-0 flex-1 text-left font-mono whitespace-normal break-words [overflow-wrap:anywhere]'
+                  : 'text-muted-foreground'
+              }
+            >
               {selected ? watchlistItemLabel(selected) : 'Pick symbol…'}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />

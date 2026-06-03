@@ -2,10 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchOpportunities, fetchStructures, fetchStrategyInstances, fetchStrategyInstance, fetchGateSafety, fetchAllocations, fetchWinRate } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
-export function useOpportunities() {
+export function useOpportunities(activeOnly = false) {
   return useQuery({
-    queryKey: QUERY_KEYS.strategy.opportunities,
-    queryFn: fetchOpportunities,
+    queryKey: [...QUERY_KEYS.strategy.opportunities, activeOnly] as const,
+    queryFn: () => fetchOpportunities(activeOnly),
     staleTime: 60_000,
   })
 }

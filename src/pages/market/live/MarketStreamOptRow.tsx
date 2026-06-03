@@ -1,6 +1,12 @@
 import type { QuoteItem } from '@/types/market'
 import { cn } from '@/lib/utils'
-import { DenseTableCell, InlinePnl, denseTableNumCell } from '@/components/data-display'
+import {
+  DenseTableCell,
+  InlinePnl,
+  denseTableEntityCell,
+  denseTableEntityLink,
+  denseTableNumCell,
+} from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import {
   computeOptMidAndLivePnl,
@@ -78,7 +84,7 @@ export function MarketStreamOptRow({
           : undefined
       }
     >
-      <DenseTableCell className={liveTable.symbolCell}>
+      <DenseTableCell className={denseTableEntityCell}>
         {dragEnabled && (
           <span
             className={styles.dragHandle}
@@ -96,7 +102,12 @@ export function MarketStreamOptRow({
             ⋮⋮
           </span>
         )}
-        <strong>{contractLabel}</strong>
+        <span
+          className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}
+          title={contractLabel}
+        >
+          {contractLabel}
+        </span>
       </DenseTableCell>
 
       {hasStreamAccounts && (

@@ -13,6 +13,7 @@ import {
 } from '@/utils/positionsCharts'
 import { DonutChart } from './DonutChart'
 import { ChartLegend } from './ChartLegend'
+import { CategoryDetailStocksCarousel } from './CategoryDetailStocksCarousel'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { PositionsChartCell, DonutChartRow } from './PositionsChartCell'
 import { bubbleButtonClass, bubbleGroupClass } from './bubbleSwitchStyles'
@@ -116,16 +117,27 @@ export function UnderlyingCategoryCard({
             {detailGroups.map((group) => (
               <div key={group.category}>
                 <p className="text-xs text-muted-foreground font-medium mb-0.5">{group.category}</p>
-                <ChartLegend
-                  segments={group.segments}
-                  total={symbolTotal}
-                  mode="pct"
-                  activeLabel={activeSymbol || null}
-                  onSegmentClick={onSymbolClick}
-                  dimmedUnlessActive
-                  size="comfortable"
-                  layout={group.category === 'Stocks' ? 'grid2' : 'row'}
-                />
+                {group.category === 'Stocks' ? (
+                  <CategoryDetailStocksCarousel
+                    key={group.segments.map((s) => s.label).join('|')}
+                    segments={group.segments}
+                    total={symbolTotal}
+                    activeLabel={activeSymbol || null}
+                    onSegmentClick={onSymbolClick}
+                    dimmedUnlessActive
+                  />
+                ) : (
+                  <ChartLegend
+                    segments={group.segments}
+                    total={symbolTotal}
+                    mode="pct"
+                    activeLabel={activeSymbol || null}
+                    onSegmentClick={onSymbolClick}
+                    dimmedUnlessActive
+                    size="comfortable"
+                    layout="row"
+                  />
+                )}
               </div>
             ))}
           </div>

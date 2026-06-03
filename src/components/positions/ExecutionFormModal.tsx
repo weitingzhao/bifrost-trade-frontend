@@ -163,7 +163,7 @@ function ExecutionFormModalBody({
 
   const { data: oppsData } = useQuery({
     queryKey: ['strategy', 'opportunities', 'exec-form'],
-    queryFn: fetchOpportunities,
+    queryFn: () => fetchOpportunities(true),
     staleTime: 60_000,
   })
   const opportunities = oppsData?.items ?? []

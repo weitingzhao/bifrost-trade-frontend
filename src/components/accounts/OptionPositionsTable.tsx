@@ -9,10 +9,14 @@ import {
   DenseTableRow,
   GrandTotalRow,
   InlinePnl,
+  DenseTag,
   denseTable,
+  denseTableEntityCell,
+  denseTableEntityLink,
   denseTableNumCell,
 } from '@/components/data-display'
 import {
+  accountOptionContractLabel,
   calcOptionPremiumTotal,
   collectUnderlyingSpots,
   computeOptionPositionRowMetrics,
@@ -39,13 +43,21 @@ function PositionRow({
 }) {
   const m = computeOptionPositionRowMetrics(pos, quote)
 
+  const contractLabel = accountOptionContractLabel(pos)
+
   return (
     <DenseTableRow>
-      <DenseTableCell className="font-mono font-medium truncate" title={pos.symbol ?? undefined}>
-        {pos.symbol ?? '—'}
+      <DenseTableCell className={denseTableEntityCell}>
+        {contractLabel ? (
+          <span className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}>
+            {contractLabel}
+          </span>
+        ) : (
+          '—'
+        )}
       </DenseTableCell>
-      <DenseTableCell>{rightLabel(pos.right)}</DenseTableCell>
-      <DenseTableCell className="font-mono">
+      <DenseTableCell className={denseTable.mutedMeta}>{rightLabel(pos.right)}</DenseTableCell>
+      <DenseTableCell className="font-mono tabular-nums">
         {fmtExpiry(pos.expiry ?? pos.lastTradeDateOrContractMonth)}
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>{fmtUsd(pos.strike)}</DenseTableCell>
@@ -55,15 +67,17 @@ function PositionRow({
       <DenseTableCell className={denseTableNumCell}>
         <InlinePnl value={m.premium}>{fmtUsd(m.premium)}</InlinePnl>
       </DenseTableCell>
-      <DenseTableCell className={denseTable.mutedMeta}>
+      <DenseTableCell className={cn(denseTableEntityCell, 'align-top')}>
         {m.intrinsic != null && (
-          <span className="block">{fmtUsd(m.intrinsic)} intr.</span>
-        )}
-        {pos.strategy_opportunity_name && (
-          <span className="block truncate max-w-[120px]" title={pos.strategy_opportunity_name}>
-            {pos.strategy_opportunity_name}
+          <span className={cn(denseTable.mutedMeta, 'block font-mono tabular-nums')}>
+            {fmtUsd(m.intrinsic)} intr.
           </span>
         )}
+        {pos.strategy_opportunity_name?.trim() ? (
+          <DenseTag variant="strategy" size="cell" className="mt-0.5 whitespace-normal">
+            {pos.strategy_opportunity_name.trim()}
+          </DenseTag>
+        ) : null}
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>
         <InlinePnl value={m.lastDelta}>{fmtUsd(m.currPrice)}</InlinePnl>
@@ -106,7 +120,7 @@ export function OptionPositionsTable({ positions, quotesByCk, quotesBySymbol }: 
       <DenseDataTable tableClassName="min-w-[1100px] table-fixed">
         <DenseTableHeader>
           <DenseTableHeadRow>
-            <DenseTableHead className="min-w-[70px]">Symbol</DenseTableHead>
+            <DenseTableHead className="min-w-[5.5rem]">Contract</DenseTableHead>
             <DenseTableHead>Right</DenseTableHead>
             <DenseTableHead>Expiry</DenseTableHead>
             <DenseTableHead align="right">Strike</DenseTableHead>

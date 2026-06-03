@@ -1,5 +1,6 @@
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
+import { rightLabel } from '@/utils/positions'
 
 export interface OptionPositionRowMetrics {
   qty: number
@@ -79,6 +80,14 @@ export function calcOptionPremiumTotal(positions: IbPositionRow[]): number {
     const premium = avgCost != null ? -(qty * avgCost) : null
     return sum + (premium ?? 0)
   }, 0)
+}
+
+/** Option contract label for entity column (matches Positions OptionsTab). */
+export function accountOptionContractLabel(pos: IbPositionRow): string {
+  const sym = (pos.symbol ?? '').trim().toUpperCase()
+  const strikeStr =
+    pos.strike != null && Number.isFinite(Number(pos.strike)) ? ` ${pos.strike}` : ''
+  return `${sym} ${rightLabel(pos.right)}${strikeStr}`.trim()
 }
 
 export function collectUnderlyingSpots(

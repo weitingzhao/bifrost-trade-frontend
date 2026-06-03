@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -8,6 +9,8 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
+  DenseTag,
+  denseTableEntityCell,
   denseTableNumCell,
 } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
@@ -25,7 +28,6 @@ import {
   getEventAccountIds,
   getSubscribeChannel,
   openOrderRowLamp,
-  truncateContractKey,
 } from './subscribeUtils'
 import {
   subscribeHintClass,
@@ -34,7 +36,6 @@ import {
   subscribeSectionTitleClass,
   subscribeSummaryKClass,
   subscribeSummaryLineClass,
-  subscribeRedisKeyCellClass,
   subscribeTickerChipsClass,
 } from './subscribeUi'
 
@@ -277,16 +278,23 @@ export function SnapshotTab({
                 return (
                   <DenseTableRow key={`${accountId}-${ck || p.symbol || 'row'}-${idx}`}>
                     {showAccountColumn && <DenseTableCell>{accountId || '—'}</DenseTableCell>}
-                    <DenseTableCell>{p.symbol || '—'}</DenseTableCell>
+                    <DenseTableCell className={denseTableEntityCell}>
+                      {p.symbol?.trim() ? (
+                        <DenseTag variant="symbol" size="cell" className="font-mono">
+                          {p.symbol}
+                        </DenseTag>
+                      ) : (
+                        '—'
+                      )}
+                    </DenseTableCell>
                     <DenseTableCell>{p.secType || '—'}</DenseTableCell>
                     <DenseTableCell align="right" className={denseTableNumCell}>
                       {fmtNum(p.position)}
                     </DenseTableCell>
                     <DenseTableCell
-                      className={subscribeRedisKeyCellClass}
-                      title={ck || undefined}
+                      className={cn(denseTableEntityCell, 'font-mono text-xs break-all')}
                     >
-                      {ck ? truncateContractKey(ck) : '—'}
+                      {ck || '—'}
                     </DenseTableCell>
                     <DenseTableCell>{formatPositionUpdated(p.updated_at)}</DenseTableCell>
                   </DenseTableRow>

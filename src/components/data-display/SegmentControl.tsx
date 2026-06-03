@@ -80,8 +80,20 @@ export function IncludeExcludeToggle({
 
   if (layout === 'stacked') {
     return (
-      <div className="flex flex-col items-stretch gap-1 w-full min-w-0">
-        <span className="text-[length:var(--text-dense-meta)] font-semibold text-muted-foreground leading-snug">
+      <div
+        className={cn(
+          'flex flex-col items-stretch w-full min-w-0',
+          size === 'xs' ? 'gap-0.5' : 'gap-1',
+        )}
+      >
+        <span
+          className={cn(
+            'font-semibold text-muted-foreground leading-snug',
+            size === 'xs'
+              ? 'text-[0.68rem]'
+              : 'text-[length:var(--text-dense-meta)]',
+          )}
+        >
           {label}
         </span>
         {control}

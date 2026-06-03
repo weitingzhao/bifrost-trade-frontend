@@ -23,9 +23,12 @@ import {
   ExpandToggleCell,
   DenseTableSubheadRow,
   DenseTableDetailRow,
+  denseTableEntityCell,
+  denseTableEntityLink,
   denseTableNumCell,
   IconActionButton,
 } from '@/components/data-display'
+import { optExecutionGroupContractLabel } from '@/utils/ledger/ledgerOptHelpers'
 
 export { ExecSourceBadge }
 
@@ -92,26 +95,26 @@ export function OptGroupRow({
         <DenseTableCell className="w-8 p-0">
           <ExpandToggleCell expanded={expanded} onToggle={onToggle} label="Expand contract fills" />
         </DenseTableCell>
-        <DenseTableCell className="font-mono font-medium">
-          <span className="inline-flex items-center gap-1.5">
+        <DenseTableCell className={denseTableEntityCell}>
+          <span className="inline-flex flex-wrap items-center gap-1.5">
             <span
-              className={cn(
-                group.option_right?.toUpperCase() === 'P'
-                  ? 'text-option-put'
-                  : 'text-option-call',
-                'font-bold text-[length:var(--text-dense-meta)]',
-              )}
+              className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              role="presentation"
             >
-              {group.option_right?.toUpperCase() === 'C' ? 'C' : 'P'}
+              {optExecutionGroupContractLabel(group)}
             </span>
-            <span>{group.symbol}</span>
-            <span className="text-muted-foreground">{group.expiry?.replace(/-/g, '/')}</span>
-            <span>{group.strike}</span>
-            {expired && (
-              <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">
+            {group.expiry ? (
+              <span className="text-[length:var(--text-dense-meta)] text-muted-foreground whitespace-nowrap">
+                {group.expiry.replace(/-/g, '/')}
+              </span>
+            ) : null}
+            {expired ? (
+              <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4 shrink-0">
                 EXP
               </Badge>
-            )}
+            ) : null}
           </span>
         </DenseTableCell>
         <DenseTableCell className={cn(denseTableNumCell, 'text-center')}>
@@ -256,7 +259,7 @@ export function OptGroupRow({
                     }
                     syncDisabled={isSyncing}
                     syncSpinning={isSyncing}
-                    onLink={onLinkStrategy ? () => onLinkStrategy(t) : undefined}
+                    onLink={onLinkStrategy ? () => onLinkStrategy(t, group.trades) : undefined}
                     onEdit={onEdit ? () => onEdit(t) : undefined}
                     onDelete={onDelete ? () => onDelete(t) : undefined}
                   />

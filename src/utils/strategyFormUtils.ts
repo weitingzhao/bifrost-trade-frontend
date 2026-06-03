@@ -156,6 +156,69 @@ export function isSchemaMismatchError(msg: string): boolean {
 
 // ── Opportunity helpers (shared with OpportunitiesPage) ───────────────────────
 
+export const OPPORTUNITY_SCOPE_TYPES = ['', 'watchlist_stk', 'explicit_symbols'] as const
+
+export const OPPORTUNITY_CONDITION_TYPES = [
+  'iv_min',
+  'iv_max',
+  'dte_min',
+  'dte_max',
+  'earnings_blackout_days',
+  'min_volume',
+] as const
+
+export const OPPORTUNITY_CONDITION_TYPE_LABELS: Record<string, string> = {
+  iv_min: 'IV min',
+  iv_max: 'IV max',
+  dte_min: 'DTE min',
+  dte_max: 'DTE max',
+  earnings_blackout_days: 'Earnings blackout (days)',
+  min_volume: 'Min volume',
+}
+
+export function getOpportunityConditionTypeLabel(key: string | null | undefined): string {
+  if (key == null || key === '') return '—'
+  return OPPORTUNITY_CONDITION_TYPE_LABELS[key] ?? key
+}
+
+export function buildSuggestedOpportunityName(params: {
+  structureName: string
+  scopeType: string | null | undefined
+  symbols: string[]
+  entryConditions: { condition_type: string; value_text?: string | null; value_numeric?: number | null }[]
+}): string {
+  const { structureName, scopeType, symbols, entryConditions } = params
+  const symList = symbols.map((s) => String(s).trim().toUpperCase()).filter(Boolean)
+
+  let symbolPart = ''
+  if (scopeType === 'explicit_symbols') {
+    symbolPart = symList.join(', ')
+  } else if (scopeType === 'watchlist_stk') {
+    symbolPart = symList.length > 0 ? symList.join(', ') : 'Watchlist STK'
+  }
+
+  const structPart = (structureName || '').trim()
+
+  const entryParts = entryConditions
+    .filter((c) => (c.condition_type ?? '').trim())
+    .map((c) => {
+      const label = getOpportunityConditionTypeLabel(c.condition_type)
+      const vt = (c.value_text ?? '').trim()
+      const vn = c.value_numeric
+      const numStr =
+        vn != null && typeof vn === 'number' && Number.isFinite(vn) ? String(vn) : ''
+      const tail = [vt, numStr].filter(Boolean).join(' ')
+      return (tail ? `${label} ${tail}` : label).replace(/\s+/g, ' ').trim()
+    })
+
+  return [symbolPart, structPart, entryParts.join(' · ')].filter(Boolean).join(' ')
+}
+
+/** API may return boolean-ish is_active; normalize for filters and switches. */
+export function opportunityIsActive(value: unknown): boolean {
+  return value === true || value === 1 || value === '1' || value === 'true'
+}
+
 const SCOPE_TYPE_LABELS: Record<string, string> = {
   '': '— None',
   watchlist_stk: 'Watchlist (stocks)',

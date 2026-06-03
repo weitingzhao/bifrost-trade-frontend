@@ -19,8 +19,10 @@ import {
   GroupHeaderRow,
   PnlCell,
   SymbolLinkButton,
+  denseTable,
+  denseTableEntityCell,
+  denseTableEntityLink,
 } from '@/components/data-display'
-import { denseTable } from '@/components/data-display'
 import { coveragePanel, coverageAccountClass } from './coveragePanelClasses'
 
 export interface CoveragePoolSortState {
@@ -104,16 +106,17 @@ export function CoveragePoolTable({
     const acc = ci.account_id || '—'
     return (
       <DenseTableRow key={rowKey}>
-        <DenseTableCell>
+        <DenseTableCell className={denseTableEntityCell}>
           {onInspectSymbol ? (
             <SymbolLinkButton
               label={ci.symbol ?? '—'}
               onClick={() => onInspectSymbol(ci)}
               ariaLabel={`Stock details for ${ci.symbol} in account ${acc}`}
-              variant="coverage"
+              variant="stock"
+              className={denseTableEntityLink}
             />
           ) : (
-            <strong>{ci.symbol}</strong>
+            <strong className={denseTableEntityLink}>{ci.symbol}</strong>
           )}
         </DenseTableCell>
         {!poolGroupByAccount && (

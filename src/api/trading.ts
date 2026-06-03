@@ -102,8 +102,21 @@ export async function updateExecution(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`PUT /executions/${id}: ${res.status}`)
-  return res.json()
+  const j = (await res.json().catch(() => ({}))) as {
+    ok?: boolean
+    error?: string
+    detail?: string | { msg?: string }[]
+  }
+  const detail = j.detail
+  const detailMsg =
+    typeof detail === 'string'
+      ? detail
+      : Array.isArray(detail) && detail[0] && typeof detail[0] === 'object' && 'msg' in detail[0]
+        ? String(detail[0].msg)
+        : undefined
+  const ok = Boolean(j.ok) && res.ok
+  const error = j.error ?? detailMsg ?? (!res.ok ? `${res.status} ${res.statusText}`.trim() : undefined)
+  return { ok, error }
 }
 
 export async function deleteExecution(id: number): Promise<{ ok: boolean; error?: string }> {

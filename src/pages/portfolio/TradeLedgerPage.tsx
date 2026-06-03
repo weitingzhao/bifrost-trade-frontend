@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -12,7 +12,9 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RefreshCw, Plus } from 'lucide-react'
+import type { LinkExecutionContext } from '@/components/positions/LinkExecutionModal'
 import type { Execution } from '@/types/positions'
+import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
 import type { LedgerSincePreset, LedgerSummaryPeriod } from '@/utils/ledger/summaryPeriod'
 import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
 import { LedgerTabToolbar } from '@/pages/portfolio/ledger/LedgerTabToolbar'
@@ -89,7 +91,21 @@ export default function TradeLedgerPage() {
   const [stkPage, setStkPage] = useState(0)
   const [editExec, setEditExec] = useState<Execution | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
-  const [linkStrategyTarget, setLinkStrategyTarget] = useState<Execution | null>(null)
+  const [linkContext, setLinkContext] = useState<LinkExecutionContext | null>(null)
+
+  const handleLinkStrategy = useCallback((ex: Execution, sameContractTrades?: Execution[]) => {
+    const execId = ex.account_executions_id
+    if (execId == null) return
+    const peerPicks =
+      sameContractTrades && sameContractTrades.length > 0
+        ? collectPeerInstancePicks(sameContractTrades, execId)
+        : []
+    setLinkContext({
+      account_executions_id: execId,
+      execution: ex,
+      ...(peerPicks.length > 0 ? { peer_instance_picks: peerPicks } : {}),
+    })
+  }, [])
   const [expiredCloseTarget, setExpiredCloseTarget] = useState<Execution | null>(null)
   const [viewLinksTarget, setViewLinksTarget] = useState<{ title: string; oid: number } | null>(null)
   const [syncingId, setSyncingId] = useState<number | null>(null)
@@ -371,7 +387,7 @@ export default function TradeLedgerPage() {
             toggleGroup={toggleGroup}
             onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
             onDelete={setDeleteTarget}
-            onLinkStrategy={setLinkStrategyTarget}
+            onLinkStrategy={handleLinkStrategy}
             onViewLinks={setViewLinksTarget}
             onExpiredClose={setExpiredCloseTarget}
             syncingId={syncingId}
@@ -430,7 +446,7 @@ export default function TradeLedgerPage() {
             toggleGroup={toggleGroup}
             onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
             onDelete={setDeleteTarget}
-            onLinkStrategy={setLinkStrategyTarget}
+            onLinkStrategy={handleLinkStrategy}
             onViewLinks={setViewLinksTarget}
             syncingId={syncingId}
             onSyncOpposite={handleSyncOppositeLeg}
@@ -447,8 +463,8 @@ export default function TradeLedgerPage() {
         onDelete={handleDelete}
         editExec={editExec}
         setEditExec={e => { if (e === null) handleCloseEditModal(); else setEditExec(e) }}
-        linkStrategyTarget={linkStrategyTarget}
-        setLinkStrategyTarget={setLinkStrategyTarget}
+        linkContext={linkContext}
+        setLinkContext={setLinkContext}
         expiredCloseTarget={expiredCloseTarget}
         setExpiredCloseTarget={setExpiredCloseTarget}
         viewLinksTarget={viewLinksTarget}

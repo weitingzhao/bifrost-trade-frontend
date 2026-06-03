@@ -25,6 +25,13 @@ import type { QuoteItem, WatchlistItem } from '@/types/market'
 import type { PositionCategory } from '@/types/portfolio'
 import { watchlistItemLabel } from '@/utils/watchlistHelpers'
 import { QuoteCell } from './QuoteCell'
+import {
+  WATCHLIST_STOCK_COL_WIDTHS,
+  watchlistCategorySelectClass,
+  watchlistOptCellClass,
+  watchlistQuoteCellClass,
+  watchlistStockTableClass,
+} from './watchlistUi'
 
 export interface WatchlistStockTableProps {
   items: WatchlistItem[]
@@ -64,14 +71,25 @@ export function WatchlistStockTable({
   if (items.length === 0) return null
 
   return (
-    <DenseDataTable>
+    <DenseDataTable tableClassName={watchlistStockTableClass}>
+      <colgroup>
+        <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.symbol }} />
+        <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.quote }} />
+        {!hideOpt && <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.opt }} />}
+        {!hideCategory && <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.category }} />}
+        <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.actions }} />
+      </colgroup>
       <DenseTableHeader>
         <DenseTableHeadRow>
           <DenseTableHead>Symbol</DenseTableHead>
-          <DenseTableHead className={denseTableNumCell}>Last / B·A</DenseTableHead>
-          {!hideOpt && <DenseTableHead className="w-16">Opt</DenseTableHead>}
+          <DenseTableHead className={cn(denseTableNumCell, watchlistQuoteCellClass)}>
+            Last / B·A
+          </DenseTableHead>
+          {!hideOpt && (
+            <DenseTableHead className={watchlistOptCellClass}>Opt</DenseTableHead>
+          )}
           {!hideCategory && <DenseTableHead>Category</DenseTableHead>}
-          <DenseTableHead className="w-20" />
+          <DenseTableHead className="w-0" />
         </DenseTableHeadRow>
       </DenseTableHeader>
       <DenseTableBody>
@@ -112,11 +130,11 @@ export function WatchlistStockTable({
                   )}
                 </div>
               </DenseTableCell>
-              <DenseTableCell className={denseTableNumCell}>
+              <DenseTableCell className={cn(denseTableNumCell, watchlistQuoteCellClass)}>
                 <QuoteCell quote={q} />
               </DenseTableCell>
               {!hideOpt && (
-                <DenseTableCell>
+                <DenseTableCell className={watchlistOptCellClass}>
                   <DenseTagButton
                     variant={optOn ? 'success' : 'neutral'}
                     size="cell"
@@ -135,7 +153,7 @@ export function WatchlistStockTable({
                       onCategoryChange(item, v === 'none' ? null : Number(v))
                     }
                   >
-                    <SelectTrigger className="h-7 w-[130px] text-xs">
+                    <SelectTrigger className={watchlistCategorySelectClass}>
                       <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent>

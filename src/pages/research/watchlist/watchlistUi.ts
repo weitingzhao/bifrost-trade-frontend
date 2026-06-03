@@ -37,12 +37,47 @@ export const watchlistStepperConnectorClass =
 
 export const watchlistStepperConnectorDoneClass = 'bg-primary/50'
 
-export const watchlistQuoteLastClass = 'font-mono font-semibold tabular-nums'
+export const watchlistStockTableClass = cn('min-w-[44rem]')
+
+/** table-fixed column widths — avoid cramped quote / category cells */
+export const WATCHLIST_STOCK_COL_WIDTHS = {
+  symbol: '10rem',
+  quote: '14rem',
+  opt: '4.75rem',
+  category: '12.5rem',
+  actions: '4.75rem',
+} as const
+
+export const watchlistOptionTableClass = cn('min-w-[52rem]')
+
+export const WATCHLIST_OPTION_COL_WIDTHS = {
+  symbol: '11rem',
+  quote: '12rem',
+  expiry: '6.5rem',
+  right: '3.25rem',
+  strike: '6rem',
+  category: '12.5rem',
+  actions: '3.25rem',
+} as const
+
+export const watchlistQuoteCellClass = cn('text-right whitespace-nowrap')
+
+export const watchlistQuoteStackClass = cn(
+  'inline-flex flex-col items-end gap-0.5 leading-tight',
+)
+
+export const watchlistQuoteLastClass = 'font-mono text-sm font-semibold tabular-nums'
 
 export const watchlistQuoteBaClass = cn(
-  'ml-[0.35rem] font-mono text-[0.7rem] tabular-nums',
+  'font-mono text-[0.7rem] tabular-nums',
   denseTable.mutedMeta,
 )
+
+export const watchlistCategorySelectClass = cn(
+  'h-7 w-full min-w-[11rem] max-w-[14rem] text-xs',
+)
+
+export const watchlistOptCellClass = cn('text-center')
 
 export const watchlistPieRingClass =
   'relative h-[5.5rem] w-[5.5rem] shrink-0 rounded-full'

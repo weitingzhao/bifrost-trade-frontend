@@ -17,7 +17,6 @@ import {
   IconActionButton,
   InlinePnl,
   PnlCell,
-  denseTable,
   denseTableEntityCell,
   denseTableEntityLink,
   denseTableNumCell,
@@ -212,7 +211,7 @@ const DEMO_ROWS: DemoRow[] = [
 
 export default function UiDesignSystemPage() {
   return (
-    <PageShell className="mx-auto max-w-4xl space-y-6 pb-10">
+    <PageShell className="w-full min-w-0 space-y-6 pb-10">
       <PageHeader
         breadcrumb={
           <p className="text-xs font-medium text-primary/90">Settings / Configuration</p>

@@ -33,8 +33,10 @@ const BASE = import.meta.env.VITE_API_STRATEGY as string
 const validateInstances = withValidation<StrategyInstancesResponse>(StrategyInstancesResponseSchema, 'strategy/instances')
 const validateInstance = withValidation<StrategyInstance>(StrategyInstanceDetailSchema, 'strategy/instances/:id')
 
-export async function fetchOpportunities(): Promise<OpportunitiesResponse> {
-  const res = await fetch(`${BASE}/strategies/opportunities`)
+/** List page needs inactive rows too — Legacy calls with active_only=false. */
+export async function fetchOpportunities(activeOnly = false): Promise<OpportunitiesResponse> {
+  const qs = new URLSearchParams({ active_only: String(activeOnly) })
+  const res = await fetch(`${BASE}/strategies/opportunities?${qs}`)
   if (!res.ok) throw new Error(`Strategy /opportunities: ${res.status}`)
   return res.json() as Promise<OpportunitiesResponse>
 }
@@ -100,7 +102,9 @@ export async function fetchStrategyInstances(params?: {
   accountId?: string
 }): Promise<StrategyInstancesResponse> {
   const sp = new URLSearchParams()
-  if (params?.opportunityId != null) sp.set('opportunity_id', String(params.opportunityId))
+  if (params?.opportunityId != null) {
+    sp.set('strategy_opportunity_id', String(params.opportunityId))
+  }
   if (params?.accountId) sp.set('account_id', params.accountId)
   const qs = sp.toString()
   const res = await fetch(`${BASE}/strategies/instances${qs ? `?${qs}` : ''}`)
@@ -114,16 +118,35 @@ export async function fetchStrategyInstance(id: number): Promise<StrategyInstanc
   return validateInstance(await res.json())
 }
 
+/** Legacy Strategy API returns `{ strategy_instance_id }` on success (no `ok` field). */
 export async function createStrategyInstance(
   body: CreateStrategyInstanceBody,
-): Promise<{ ok: boolean; strategy_instance_id?: number; error?: string }> {
+): Promise<{ strategy_instance_id: number }> {
   const res = await fetch(`${BASE}/strategies/instances`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`POST /strategies/instances: ${res.status}`)
-  return res.json()
+  const j = (await res.json().catch(() => ({}))) as {
+    strategy_instance_id?: number
+    detail?: string | { msg?: string }[]
+    error?: string
+  }
+  if (!res.ok) {
+    const detail = j.detail
+    const detailMsg =
+      typeof detail === 'string'
+        ? detail
+        : Array.isArray(detail) && detail[0] && typeof detail[0] === 'object' && 'msg' in detail[0]
+          ? String(detail[0].msg)
+          : undefined
+    throw new Error(detailMsg ?? j.error ?? `POST /strategies/instances: ${res.status}`)
+  }
+  const id = j.strategy_instance_id
+  if (id == null || !Number.isFinite(Number(id))) {
+    throw new Error(j.error ?? 'Failed to create strategy instance')
+  }
+  return { strategy_instance_id: Number(id) }
 }
 
 export async function patchStrategyInstance(

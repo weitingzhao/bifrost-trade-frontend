@@ -81,3 +81,12 @@ export function executionQtyLabel(ex: Execution): string {
   const q = ex.quantity ?? ex.qty
   return q != null ? String(q) : '—'
 }
+
+/** Client-side guard when API filter is applied — instances must belong to selected opportunity. */
+export function filterInstancesForOpportunity(
+  instances: StrategyInstance[],
+  opportunityId: number | null,
+): StrategyInstance[] {
+  if (opportunityId == null || !Number.isFinite(opportunityId)) return []
+  return instances.filter((i) => i.strategy_opportunity_id === opportunityId)
+}

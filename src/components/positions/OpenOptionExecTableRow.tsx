@@ -6,7 +6,9 @@ import {
   DenseTableCell,
   IconActionButton,
   ExecSourceBadge,
+  DenseTag,
   denseTable,
+  denseTableEntityCell,
 } from '@/components/data-display'
 import { fmtUsd, fmtDate, fmtDaysAgo } from '@/utils/positions'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
@@ -130,10 +132,14 @@ export function OpenOptionExecTableRow({
       <DenseTableCell className={cn('font-mono tabular-nums', denseTable.detailCellClip, unrealizedPnlColorClass(eComm || null))}>
         {eComm ? fmtUsd(eComm) : '—'}
       </DenseTableCell>
-      <DenseTableCell className={cn(denseTable.detailCellClip, denseTable.mutedMeta)}>
-        <span className="block truncate" title={exec.strategy_opportunity_name?.trim() || undefined}>
-          {exec.strategy_opportunity_name?.trim() || '—'}
-        </span>
+      <DenseTableCell className={cn(denseTableEntityCell, denseTable.mutedMeta)}>
+        {exec.strategy_opportunity_name?.trim() ? (
+          <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+            {exec.strategy_opportunity_name.trim()}
+          </DenseTag>
+        ) : (
+          '—'
+        )}
       </DenseTableCell>
       <DenseTableCell>
         <span className="inline-flex items-center gap-0.5">

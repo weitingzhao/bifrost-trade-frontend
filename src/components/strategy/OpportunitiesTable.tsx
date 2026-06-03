@@ -1,5 +1,5 @@
-import { Copy, Pencil } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -9,7 +9,6 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
-  IconActionButton,
 } from '@/components/data-display'
 import type { StrategyOpportunity } from '@/types/positions'
 import { getScopeDisplay } from '@/utils/strategyFormUtils'
@@ -85,28 +84,32 @@ export function OpportunitiesTable({
               <DenseTableCell className={opportunitiesSwitchCellClass}>
                 <Switch
                   checked={opp.is_active}
-                  disabled={togglingIds.size > 0}
+                  disabled={togglingIds.has(opp.strategy_opportunity_id)}
                   onCheckedChange={() => onToggle(opp)}
                   aria-label={`Mark "${opp.name}" as ${opp.is_active ? 'unavailable' : 'available'}`}
                 />
               </DenseTableCell>
               <DenseTableCell className={opportunitiesActionsCellClass}>
                 <div className={opportunitiesActionsInnerClass}>
-                  <IconActionButton
-                    title="Edit opportunity"
-                    ariaLabel={`Edit ${opp.name}`}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
                     onClick={() => onEdit(opp)}
                   >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </IconActionButton>
-                  <IconActionButton
-                    title="Copy opportunity"
-                    ariaLabel={`Copy ${opp.name}`}
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
                     disabled={copying}
                     onClick={() => onCopy(opp)}
                   >
-                    <Copy className="h-3.5 w-3.5" />
-                  </IconActionButton>
+                    {copying ? 'Copying…' : 'Copy'}
+                  </Button>
                 </div>
               </DenseTableCell>
             </DenseTableRow>

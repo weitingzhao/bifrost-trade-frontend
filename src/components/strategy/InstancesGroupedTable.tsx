@@ -487,7 +487,7 @@ export function InstancesGroupedTable({
                     <DenseTag
                       variant="strategy"
                       size="cell"
-                      className="max-w-full truncate"
+                      className="max-w-full whitespace-normal"
                       title={`Structure: ${inst.strategy_structure_name}`}
                     >
                       {inst.strategy_structure_name}

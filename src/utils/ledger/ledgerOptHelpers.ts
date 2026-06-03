@@ -1,5 +1,16 @@
 import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
+import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
+
+/** Ledger option group row — same shape as Positions `contractButtonLabel`. */
+export function optExecutionGroupContractLabel(
+  g: Pick<OptExecutionGroup, 'symbol' | 'option_right' | 'strike'>,
+): string {
+  const r = (g.option_right ?? '').toUpperCase()
+  const side = r === 'C' || r === 'CALL' ? 'C' : r === 'P' || r === 'PUT' ? 'P' : r
+  const strikeStr = Number.isFinite(g.strike) ? ` ${g.strike}` : ''
+  return `${(g.symbol ?? '').trim()} ${side}${strikeStr}`.trim()
+}
 
 /**
  * Sum the slippage_total from the option-stock link for one option execution.

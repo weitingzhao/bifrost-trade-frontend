@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 
-export type SegmentControlSize = 'sm' | 'md'
+export type SegmentControlSize = 'xs' | 'sm' | 'md'
 
 /** Default segment control size for toolbars and filters. */
 export const DEFAULT_SEGMENT_SIZE: SegmentControlSize = 'sm'
@@ -14,11 +14,13 @@ export const SEGMENT_CTRL_IDLE =
   'bg-transparent text-muted-foreground font-medium hover:bg-muted/40 hover:text-foreground'
 
 const groupBySize: Record<SegmentControlSize, string> = {
+  xs: 'gap-px p-[2px]',
   sm: 'gap-0.5 p-[3px]',
   md: 'gap-1 p-1',
 }
 
 const btnBySize: Record<SegmentControlSize, string> = {
+  xs: 'px-2 py-0.5 text-[0.72rem] leading-none',
   sm: 'px-3 py-1 text-[0.78rem]',
   md: 'px-3.5 py-1.5 text-sm',
 }

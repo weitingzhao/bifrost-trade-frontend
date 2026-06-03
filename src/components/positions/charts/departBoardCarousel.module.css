@@ -1,0 +1,110 @@
+/* Departure-board carousels (Option Detail + Category Stocks) */
+.departBoardViewport {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.departBoardSlots {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.departBoardRow {
+  --slot: 0;
+  --depart-row-h: 2rem;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--depart-row-h) * var(--slot));
+  box-sizing: border-box;
+  height: var(--depart-row-h);
+  overflow: hidden;
+  border-radius: 4px;
+  transition:
+    transform 0.42s cubic-bezier(0.33, 1, 0.68, 1),
+    opacity 0.35s ease,
+    background-color 0.15s ease;
+}
+
+.departBoardRow[data-phase='animating'][data-slot='0'] {
+  transform: translateY(calc(-1 * var(--depart-row-h)));
+  opacity: 0;
+}
+
+.departBoardRow[data-phase='animating']:not([data-slot='0']) {
+  transform: translateY(calc(-1 * var(--depart-row-h)));
+}
+
+.departBoardRowEntering {
+  opacity: 0;
+  transform: translateY(var(--depart-row-h));
+}
+
+.departBoardRowEntering[data-phase='entering'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.departBoardHourglassSpacer {
+  display: inline-block;
+  width: 1.1rem;
+  min-width: 1.1rem;
+  flex-shrink: 0;
+}
+
+.departBoardHourglass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  min-width: 1.1rem;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.65;
+}
+
+.optionDetailCarousel {
+  --depart-row-h: 2.85rem;
+}
+
+.optionDetailCarouselViewport {
+  height: calc(var(--depart-row-h) * 4);
+}
+
+.optionDetailCarouselRow {
+  padding: 0.12rem 0.2rem;
+}
+
+.optionDetailCarouselHint {
+  margin: 0.35rem 0 0;
+  font-size: 0.65rem;
+  line-height: 1.3;
+  color: hsl(var(--muted-foreground));
+}
+
+.categoryDetailStocksCarousel {
+  --depart-row-h: 1.75rem;
+}
+
+.categoryDetailStocksViewport {
+  height: calc(var(--depart-row-h) * 3);
+}
+
+.categoryDetailStocksRow {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.06rem 0.15rem;
+}
+
+.categoryDetailStocksCells {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.35rem 0.5rem;
+  min-width: 0;
+}
+
+.categoryDetailStocksCellSpacer {
+  min-width: 0;
+}

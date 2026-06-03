@@ -30,8 +30,8 @@ const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
     pill: 'border-entity-category/40 text-foreground',
   },
   symbol: {
-    cell: 'border-entity-symbol/40 text-foreground font-semibold',
-    pill: 'border-entity-symbol/45 text-foreground font-bold tracking-wide',
+    cell: 'border-entity-symbol/40 text-entity-symbol font-semibold',
+    pill: 'border-entity-symbol/45 text-entity-symbol font-bold tracking-wide',
   },
   strategy: {
     cell: 'border-entity-strategy/45 text-entity-strategy font-semibold',

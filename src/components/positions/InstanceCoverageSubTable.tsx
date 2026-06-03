@@ -10,7 +10,6 @@ import {
   DenseTag,
   InlinePnl,
   NestedDenseTable,
-  denseTable,
   denseTableEntityCell,
   denseTableEntityLink,
   denseTableNumCell,

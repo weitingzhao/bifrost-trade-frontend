@@ -66,12 +66,23 @@ export function CollapsibleGroupHeader({
 export function CollapsibleGroupTitle({
   children,
   className,
+  wrap = false,
 }: {
   children: ReactNode
   className?: string
+  /** Strategy / opportunity titles — show full text (wrap), no ellipsis. */
+  wrap?: boolean
 }) {
   return (
-    <span className={cn('min-w-0 truncate font-semibold', className)}>
+    <span
+      className={cn(
+        'min-w-0 font-semibold',
+        wrap
+          ? 'whitespace-normal break-words [overflow-wrap:anywhere]'
+          : 'truncate',
+        className,
+      )}
+    >
       {children}
     </span>
   )

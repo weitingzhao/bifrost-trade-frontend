@@ -128,18 +128,21 @@ export function AccountAssetMixCard({
           <div className={styles.mixFilters}>
             <IncludeExcludeToggle
               layout="stacked"
+              size="xs"
               label="Fixed income in chart"
               include={flags.includeFi}
               onChange={(v) => setFlags((f) => ({ ...f, includeFi: v }))}
             />
             <IncludeExcludeToggle
               layout="stacked"
+              size="xs"
               label="Cash-like in chart"
               include={flags.includeCashLike}
               onChange={(v) => setFlags((f) => ({ ...f, includeCashLike: v }))}
             />
             <IncludeExcludeToggle
               layout="stacked"
+              size="xs"
               label="Buying power in chart"
               include={flags.includeBp}
               onChange={(v) => setFlags((f) => ({ ...f, includeBp: v }))}

@@ -29,7 +29,7 @@ import {
 import { useOpportunities } from '@/hooks/useStrategies'
 import { putOpportunity, fetchOpportunityDetail } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { opportunityDetailToPayload } from '@/utils/strategyFormUtils'
+import { opportunityDetailToPayload, opportunityIsActive } from '@/utils/strategyFormUtils'
 import type { StrategyOpportunity, EntryCondition } from '@/types/positions'
 
 interface PrefillData {
@@ -61,7 +61,14 @@ export default function OpportunitiesPage() {
   const [copyLoadingId, setCopyLoadingId] = useState<number | null>(null)
   const [availabilityError, setAvailabilityError] = useState<string | null>(null)
 
-  const allItems = useMemo(() => data?.items ?? [], [data])
+  const allItems = useMemo(
+    () =>
+      (data?.items ?? []).map((o) => ({
+        ...o,
+        is_active: opportunityIsActive(o.is_active),
+      })),
+    [data],
+  )
 
   const items = useMemo(() => {
     if (filter === 'active') return allItems.filter((o) => o.is_active)
@@ -71,15 +78,28 @@ export default function OpportunitiesPage() {
 
   async function handleToggle(opp: StrategyOpportunity) {
     const id = opp.strategy_opportunity_id
+    const nextActive = !opp.is_active
     setTogglingIds((prev) => new Set(prev).add(id))
     setAvailabilityError(null)
+    queryClient.setQueryData<{ items: StrategyOpportunity[] }>(
+      [...QUERY_KEYS.strategy.opportunities, false],
+      (old) => {
+        if (!old?.items) return old
+        return {
+          items: old.items.map((row) =>
+            row.strategy_opportunity_id === id ? { ...row, is_active: nextActive } : row,
+          ),
+        }
+      },
+    )
     try {
       const detail = await fetchOpportunityDetail(id)
       const payload = opportunityDetailToPayload(detail)
-      await putOpportunity(id, { ...payload, is_active: !opp.is_active })
+      await putOpportunity(id, { ...payload, is_active: nextActive })
       await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategy.opportunities })
     } catch (e) {
       setAvailabilityError(e instanceof Error ? e.message : String(e))
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategy.opportunities })
     } finally {
       setTogglingIds((prev) => {
         const next = new Set(prev)
@@ -185,21 +205,19 @@ export default function OpportunitiesPage() {
             onCopy={(opp) => void handleCopy(opp)}
           />
         )}
-      </Card>
 
-      <OpportunityFormModal
-        key={editTarget?.strategy_opportunity_id ?? (prefillData ? 'copy' : 'new')}
-        open={modalOpen}
-        onOpenChange={(v) => {
-          setModalOpen(v)
-          if (!v) {
+        <OpportunityFormModal
+          key={editTarget?.strategy_opportunity_id ?? (prefillData ? 'copy' : 'new')}
+          open={modalOpen}
+          onClose={() => {
+            setModalOpen(false)
             setEditTarget(undefined)
             setPrefillData(undefined)
-          }
-        }}
-        initial={editTarget}
-        prefill={prefillData}
-      />
+          }}
+          initial={editTarget}
+          prefill={prefillData}
+        />
+      </Card>
 
       <Dialog open={availabilityError != null} onOpenChange={(open) => { if (!open) setAvailabilityError(null) }}>
         <DialogContent showCloseButton={false}>

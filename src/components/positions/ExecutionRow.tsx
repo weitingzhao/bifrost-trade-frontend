@@ -72,7 +72,7 @@ export function ExecutionRow({
     return (
       <div
         key={`${source}-${id}`}
-        className="flex items-center gap-2 py-1 px-1 text-xs border-b border-dashed last:border-b-0"
+        className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1 px-1 text-xs border-b border-dashed last:border-b-0"
       >
         <DenseTag variant="neutral" size="cell" className="text-[10px] leading-none">
           {source}
@@ -81,16 +81,16 @@ export function ExecutionRow({
         <span className="font-mono w-8">{exec.side === 'Buy' ? 'B' : 'S'}</span>
         <span className="font-mono w-8 text-right">{Math.abs(exec.qty)}</span>
         <span className="font-mono w-14 text-right">{fmtUsd(exec.price)}</span>
-        {exec.strategy_instance_label && (
-          <span className="text-muted-foreground truncate max-w-[100px]">
-            {exec.strategy_instance_label}
-          </span>
-        )}
-        {!exec.strategy_instance_label && exec.strategy_opportunity_name && (
-          <span className="text-muted-foreground truncate max-w-[100px]">
-            {exec.strategy_opportunity_name}
-          </span>
-        )}
+        {exec.strategy_instance_label?.trim() ? (
+          <DenseTag variant="instance" size="cell" className="whitespace-normal">
+            {exec.strategy_instance_label.trim()}
+          </DenseTag>
+        ) : null}
+        {!exec.strategy_instance_label?.trim() && exec.strategy_opportunity_name?.trim() ? (
+          <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+            {exec.strategy_opportunity_name.trim()}
+          </DenseTag>
+        ) : null}
 
         <span className="ml-auto flex items-center gap-1">
           {canSync && id != null && (

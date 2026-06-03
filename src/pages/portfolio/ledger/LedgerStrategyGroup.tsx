@@ -50,7 +50,7 @@ export function LedgerStrategyGroup({
     <CollapsibleGroup variant="card">
       <CollapsibleGroupHeader expanded={expanded} onToggle={onToggle}>
         <CollapsibleChevron expanded={expanded} />
-        <CollapsibleGroupTitle>{og.title}</CollapsibleGroupTitle>
+        <CollapsibleGroupTitle wrap>{og.title}</CollapsibleGroupTitle>
         <CollapsibleGroupStats>
           <span>Instances: {og.instanceSubgroups.length}</span>
           <span>Closed: {closedCount}</span>
@@ -81,13 +81,19 @@ export function LedgerStrategyGroup({
                     className="flex-1 bg-transparent hover:bg-muted/30"
                   >
                     <CollapsibleChevron expanded={instExpanded} />
-                    <span className="min-w-0 truncate">
+                    <span className="inline-flex min-w-0 flex-1 flex-wrap items-center gap-1">
                       {sg.instanceId === 'none' ? (
                         'No instance'
                       ) : (
                         <>
-                          {sg.label ? <span title={sg.label ?? undefined}>{sg.label} </span> : null}
-                          <span className="font-mono">#{String(sg.instanceId)}</span>
+                          {sg.label ? (
+                            <DenseTag variant="instance" size="cell" className="whitespace-normal">
+                              {sg.label}
+                            </DenseTag>
+                          ) : null}
+                          <DenseTag variant="instance" size="cell" className="font-mono">
+                            #{String(sg.instanceId)}
+                          </DenseTag>
                         </>
                       )}
                     </span>

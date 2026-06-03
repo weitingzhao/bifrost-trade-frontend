@@ -29,6 +29,12 @@ import {
   watchlistItemLabel,
 } from '@/utils/watchlistHelpers'
 import { QuoteCell } from './QuoteCell'
+import {
+  WATCHLIST_OPTION_COL_WIDTHS,
+  watchlistCategorySelectClass,
+  watchlistOptionTableClass,
+  watchlistQuoteCellClass,
+} from './watchlistUi'
 
 export interface WatchlistOptionTableProps {
   items: WatchlistItem[]
@@ -56,16 +62,27 @@ export function WatchlistOptionTable({
   if (items.length === 0) return null
 
   return (
-    <DenseDataTable>
+    <DenseDataTable tableClassName={watchlistOptionTableClass}>
+      <colgroup>
+        <col style={{ width: WATCHLIST_OPTION_COL_WIDTHS.symbol }} />
+        <col style={{ width: WATCHLIST_OPTION_COL_WIDTHS.quote }} />
+        <col style={{ width: WATCHLIST_OPTION_COL_WIDTHS.expiry }} />
+        <col style={{ width: WATCHLIST_OPTION_COL_WIDTHS.right }} />
+        <col style={{ width: WATCHLIST_OPTION_COL_WIDTHS.strike }} />
+        <col style={{ width: WATCHLIST_OPTION_COL_WIDTHS.category }} />
+        <col style={{ width: WATCHLIST_OPTION_COL_WIDTHS.actions }} />
+      </colgroup>
       <DenseTableHeader>
         <DenseTableHeadRow>
           <DenseTableHead>Symbol</DenseTableHead>
-          <DenseTableHead className={denseTableNumCell}>Last / B·A</DenseTableHead>
+          <DenseTableHead className={cn(denseTableNumCell, watchlistQuoteCellClass)}>
+            Last / B·A
+          </DenseTableHead>
           <DenseTableHead>Expiry</DenseTableHead>
-          <DenseTableHead className="w-10">R</DenseTableHead>
+          <DenseTableHead className="text-center">R</DenseTableHead>
           <DenseTableHead className={denseTableNumCell}>Strike</DenseTableHead>
           <DenseTableHead>Category</DenseTableHead>
-          <DenseTableHead className="w-10" />
+          <DenseTableHead className="w-0" />
         </DenseTableHeadRow>
       </DenseTableHeader>
       <DenseTableBody>
@@ -95,7 +112,7 @@ export function WatchlistOptionTable({
                   )}
                 </div>
               </DenseTableCell>
-              <DenseTableCell className={denseTableNumCell}>
+              <DenseTableCell className={cn(denseTableNumCell, watchlistQuoteCellClass)}>
                 <QuoteCell quote={q} />
               </DenseTableCell>
               <DenseTableCell className="font-mono text-xs">{formatExpiry(item.expiry)}</DenseTableCell>
@@ -112,7 +129,7 @@ export function WatchlistOptionTable({
                   value={item.category_id != null ? String(item.category_id) : 'none'}
                   onValueChange={v => onCategoryChange(item, v === 'none' ? null : Number(v))}
                 >
-                  <SelectTrigger className="h-7 w-[130px] text-xs">
+                  <SelectTrigger className={watchlistCategorySelectClass}>
                     <SelectValue placeholder="—" />
                   </SelectTrigger>
                   <SelectContent>

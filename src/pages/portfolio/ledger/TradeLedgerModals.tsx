@@ -27,8 +27,8 @@ type Props = {
   onDelete: () => Promise<void>
   editExec: Execution | null
   setEditExec: (e: Execution | null) => void
-  linkStrategyTarget: Execution | null
-  setLinkStrategyTarget: (e: Execution | null) => void
+  linkContext: LinkExecutionContext | null
+  setLinkContext: (ctx: LinkExecutionContext | null) => void
   expiredCloseTarget: Execution | null
   setExpiredCloseTarget: (e: Execution | null) => void
   viewLinksTarget: { title: string; oid: number } | null
@@ -45,8 +45,8 @@ export function TradeLedgerModals({
   onDelete,
   editExec,
   setEditExec,
-  linkStrategyTarget,
-  setLinkStrategyTarget,
+  linkContext,
+  setLinkContext,
   expiredCloseTarget,
   setExpiredCloseTarget,
   viewLinksTarget,
@@ -84,17 +84,14 @@ export function TradeLedgerModals({
           }}
         />
       )}
-      {linkStrategyTarget?.account_executions_id != null && (
+      {linkContext != null && (
         <LinkExecutionModal
           open
-          context={{
-            account_executions_id: linkStrategyTarget.account_executions_id,
-            execution: linkStrategyTarget,
-          } satisfies LinkExecutionContext}
+          context={linkContext}
           opportunities={opportunities}
-          onClose={() => setLinkStrategyTarget(null)}
+          onClose={() => setLinkContext(null)}
           onSuccess={() => {
-            setLinkStrategyTarget(null)
+            setLinkContext(null)
             invalidateExecutions()
           }}
         />

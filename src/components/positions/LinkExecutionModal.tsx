@@ -1,8 +1,10 @@
-import { useState } from 'react'
+/* eslint-disable react-hooks/set-state-in-effect -- clear stale instance when opportunity filter changes */
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -16,23 +18,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { updateExecution } from '@/api/trading'
 import { fetchStrategyInstances, createStrategyInstance } from '@/api/strategy'
-import {
-  bubbleButtonClass,
-  bubbleGroupClass,
-  POSITIONS_BUBBLE_SIZE,
-} from '@/components/positions/charts/bubbleSwitchStyles'
-import { ExecSourceBadge } from '@/components/data-display'
+import { updateExecution } from '@/api/trading'
+import { ExecSourceBadge, SegmentControl } from '@/components/data-display'
 import {
   defaultOpenedAtFromExecution,
   executionQtyLabel,
+  filterInstancesForOpportunity,
   filterOpportunitiesBySymbol,
   formatInstanceOpenedDate,
   getUnderlyingSymbolFromExecution,
 } from '@/components/positions/linkExecutionModalHelpers'
+import {
+  linkExecDialogFooterClass,
+  linkExecHintClass,
+  linkExecInstancePanelClass,
+  linkExecPillClass,
+  linkExecPillSelectedClass,
+  linkExecPillsClass,
+  linkExecSectionClass,
+  linkExecSectionLabelClass,
+  linkExecSummaryClass,
+  linkExecSymbolBadgeClass,
+} from '@/components/positions/linkExecutionModalUi'
 import type { PeerInstancePick } from '@/utils/ledger/ledgerOptHelpers'
+import { opportunityIsActive } from '@/utils/strategyFormUtils'
 import { fmtDate, fmtUsd } from '@/utils/positions'
 import { cn } from '@/lib/utils'
 import type { Execution, StrategyOpportunity } from '@/types/positions'
@@ -73,6 +83,11 @@ function initLinkForm(context: LinkExecutionContext | null) {
   }
 }
 
+const INSTANCE_MODE_OPTIONS = [
+  { value: 'existing', label: 'Use existing' },
+  { value: 'new', label: '+ Create new' },
+] as const
+
 function LinkExecutionModalBody({
   context,
   opportunities,
@@ -93,19 +108,33 @@ function LinkExecutionModalBody({
   const execId = context?.account_executions_id
   const peerPicks = context?.peer_instance_picks
 
+  const activeOpportunities = useMemo(
+    () => opportunities.filter((o) => opportunityIsActive(o.is_active)),
+    [opportunities],
+  )
+
   const oppIdNum = oppId.trim() ? Number(oppId) : null
-  const { data: instancesData } = useQuery({
+  const { data: instancesData, isLoading: instancesLoading } = useQuery({
     queryKey: ['strategy', 'instances', 'link-modal', oppIdNum],
     queryFn: () => fetchStrategyInstances({ opportunityId: oppIdNum! }),
     enabled: oppIdNum != null && Number.isFinite(oppIdNum),
     staleTime: 30_000,
   })
-  const instances = instancesData?.items ?? []
+  const instances = useMemo(
+    () => filterInstancesForOpportunity(instancesData?.items ?? [], oppIdNum),
+    [instancesData?.items, oppIdNum],
+  )
 
   const execSymbol = getUnderlyingSymbolFromExecution(ex)
-  const filteredOpps = filterOpportunitiesBySymbol(opportunities, execSymbol)
-  const symbolFiltered = !!execSymbol && filteredOpps.length < opportunities.length
+  const filteredOpps = filterOpportunitiesBySymbol(activeOpportunities, execSymbol)
+  const symbolFiltered = !!execSymbol && filteredOpps.length < activeOpportunities.length
   const executionAccountId = (ex?.account_id ?? '').trim()
+
+  useEffect(() => {
+    if (!instanceId || instances.length === 0) return
+    const ok = instances.some((i) => String(i.strategy_instance_id) === instanceId)
+    if (!ok) setInstanceId('')
+  }, [instances, instanceId, oppIdNum])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -128,14 +157,13 @@ function LinkExecutionModalBody({
         if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
           throw new Error('Opened at (date) is required.')
         }
-        const res = await createStrategyInstance({
+        const created = await createStrategyInstance({
           strategy_opportunity_id: opp,
           account_id: executionAccountId,
           opened_at: `${dateStr}T12:00:00.000Z`,
           label: newLabel.trim() || undefined,
         })
-        if (!res.ok) throw new Error(res.error ?? 'Failed to create instance')
-        finalInstanceId = res.strategy_instance_id ?? null
+        finalInstanceId = created.strategy_instance_id
       } else {
         const instRaw = instanceId.trim()
         finalInstanceId = instRaw && Number.isFinite(Number(instRaw)) ? Number(instRaw) : null
@@ -156,137 +184,171 @@ function LinkExecutionModalBody({
   }
 
   const eTs = ex?.time != null ? Number(ex.time) : null
+  const useInstanceBubbles = instances.length > 0 && instances.length <= 12
 
   return (
-      <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden">
-        <DialogHeader className="px-5 pt-5 pb-2 space-y-1">
-          <DialogTitle>Assign strategy</DialogTitle>
-          {execId != null && (
-            <p className="text-xs text-muted-foreground font-normal">
-              Set strategy opportunity and instance for execution #{execId}. No new execution row is created.
-            </p>
-          )}
-        </DialogHeader>
-
-        {ex && (
-          <p className="px-5 text-xs text-muted-foreground pb-2">
-            {eTs != null && Number.isFinite(eTs) ? `${fmtDate(eTs)} · ` : ''}
-            {ex.side ?? '—'} {executionQtyLabel(ex)} @ {ex.price != null ? fmtUsd(Number(ex.price)) : '—'} ·{' '}
-            <ExecSourceBadge source={ex.source} />
+    <DialogContent className="max-w-xl gap-0 overflow-hidden p-0 sm:max-w-xl">
+      <DialogHeader className="space-y-1 border-b border-border bg-secondary/40 px-5 py-4">
+        <DialogTitle>Assign strategy</DialogTitle>
+        {execId != null && (
+          <p className="text-xs font-normal text-muted-foreground">
+            Set strategy opportunity and instance for execution #{execId}. No new execution row is created.
           </p>
         )}
+      </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
-          {peerPicks && peerPicks.length > 0 ? (
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Reuse from this contract</Label>
-              <div className={cn(bubbleGroupClass(POSITIONS_BUBBLE_SIZE), 'flex-wrap')} role="radiogroup">
-                {peerPicks.map((p) => {
-                  const key = `${p.strategy_opportunity_id}::${p.strategy_instance_id}`
-                  const isActive = peerShortcut === key
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      role="radio"
-                      aria-checked={isActive}
-                      className={bubbleButtonClass(isActive, POSITIONS_BUBBLE_SIZE)}
-                      title={p.label}
-                      onClick={() => {
-                        setPeerShortcut(key)
-                        setOppId(String(p.strategy_opportunity_id))
-                        setInstanceId(String(p.strategy_instance_id))
-                        setInstanceMode('existing')
-                      }}
-                    >
-                      {p.label}
-                    </button>
-                  )
-                })}
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Optional: apply strategy already used on another fill for this contract. You can still set them manually below.
-              </p>
+      {ex && (
+        <p className={cn(linkExecSummaryClass, 'border-b border-border px-5 py-2')}>
+          {eTs != null && Number.isFinite(eTs) ? <span>{fmtDate(eTs)} · </span> : null}
+          <span>
+            {ex.side ?? '—'} {executionQtyLabel(ex)} @{' '}
+            {ex.price != null ? fmtUsd(Number(ex.price)) : '—'}
+          </span>
+          <span> · </span>
+          <ExecSourceBadge source={ex.source} />
+        </p>
+      )}
+
+      <form id="link-exec-assign-form" onSubmit={handleSubmit} className="space-y-4 px-5 pb-1 pt-4">
+        {peerPicks && peerPicks.length > 0 ? (
+          <div className={linkExecSectionClass}>
+            <span className={linkExecSectionLabelClass}>Reuse from this contract</span>
+            <div className={linkExecPillsClass} role="radiogroup" aria-label="Reuse from this contract">
+              {peerPicks.map((p) => {
+                const key = `${p.strategy_opportunity_id}::${p.strategy_instance_id}`
+                const isActive = peerShortcut === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="radio"
+                    aria-checked={isActive}
+                    className={cn(linkExecPillClass, isActive && linkExecPillSelectedClass)}
+                    title={p.label}
+                    onClick={() => {
+                      setPeerShortcut(key)
+                      setOppId(String(p.strategy_opportunity_id))
+                      setInstanceId(String(p.strategy_instance_id))
+                      setInstanceMode('existing')
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                )
+              })}
             </div>
-          ) : null}
+            <p className={linkExecHintClass}>
+              Optional: apply strategy already used on another fill for this contract.
+            </p>
+          </div>
+        ) : null}
 
-          <div className="space-y-2">
-            <Label className="text-xs flex items-center gap-2">
-              Strategy opportunity
-              {symbolFiltered && execSymbol ? (
-                <Badge variant="secondary" className="text-[10px] font-mono px-1.5 py-0">
-                  {execSymbol}
-                </Badge>
-              ) : null}
-            </Label>
-            {filteredOpps.length > 0 ? (
-              <div className={cn(bubbleGroupClass(POSITIONS_BUBBLE_SIZE), 'flex-wrap')} role="radiogroup">
-                {filteredOpps.map((o) => {
-                  const idStr = String(o.strategy_opportunity_id)
-                  const isActive = oppId === idStr
-                  const label = o.name?.trim() || `#${o.strategy_opportunity_id}`
-                  return (
+        <div className={linkExecSectionClass}>
+          <span className={linkExecSectionLabelClass}>
+            Strategy opportunity
+            {symbolFiltered && execSymbol ? (
+              <span className={linkExecSymbolBadgeClass} title={`Filtered by symbol ${execSymbol}`}>
+                {execSymbol}
+              </span>
+            ) : null}
+          </span>
+          {filteredOpps.length > 0 ? (
+            <div className={linkExecPillsClass} role="radiogroup" aria-label="Strategy opportunity">
+              {filteredOpps.map((o) => {
+                const idStr = String(o.strategy_opportunity_id)
+                const isActive = oppId === idStr
+                const label = o.name?.trim() || `#${o.strategy_opportunity_id}`
+                return (
+                  <button
+                    key={o.strategy_opportunity_id}
+                    type="button"
+                    role="radio"
+                    aria-checked={isActive}
+                    className={cn(linkExecPillClass, isActive && linkExecPillSelectedClass)}
+                    title={label}
+                    onClick={() => {
+                      setOppId(idStr)
+                      setInstanceId('')
+                      setPeerShortcut('')
+                    }}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <p className={linkExecHintClass}>
+              {symbolFiltered
+                ? `No active opportunities match symbol ${execSymbol}. Check scope in Strategy / Opportunity.`
+                : 'No active strategy opportunities loaded.'}
+            </p>
+          )}
+        </div>
+
+        {oppId ? (
+          <div className={linkExecInstancePanelClass}>
+            <SegmentControl
+              size="sm"
+              ariaLabel="Instance mode"
+              value={instanceMode}
+              onChange={(v) => {
+                const mode = v as 'existing' | 'new'
+                setInstanceMode(mode)
+                if (mode === 'new') setPeerShortcut('')
+              }}
+              options={INSTANCE_MODE_OPTIONS.map((o) => ({
+                ...o,
+                disabled: o.value === 'new' && !executionAccountId,
+              }))}
+            />
+
+            {instanceMode === 'existing' ? (
+              <div className="space-y-2">
+                <span className={linkExecSectionLabelClass}>Strategy instance</span>
+                {instancesLoading ? (
+                  <p className={linkExecHintClass}>Loading instances…</p>
+                ) : instances.length === 0 ? (
+                  <p className={linkExecHintClass}>
+                    No instances for this opportunity. Switch to &quot;Create new&quot; to add one.
+                  </p>
+                ) : useInstanceBubbles ? (
+                  <div className={linkExecPillsClass} role="radiogroup" aria-label="Strategy instance">
                     <button
-                      key={o.strategy_opportunity_id}
                       type="button"
                       role="radio"
-                      aria-checked={isActive}
-                      className={bubbleButtonClass(isActive, POSITIONS_BUBBLE_SIZE)}
-                      title={label}
+                      aria-checked={!instanceId}
+                      className={cn(linkExecPillClass, !instanceId && linkExecPillSelectedClass)}
                       onClick={() => {
-                        setOppId(idStr)
                         setInstanceId('')
                         setPeerShortcut('')
                       }}
                     >
-                      {label}
+                      — None —
                     </button>
-                  )
-                })}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {symbolFiltered
-                  ? `No opportunities match symbol ${execSymbol}. Check scope settings in Strategy / Opportunity.`
-                  : 'No strategy opportunities loaded.'}
-              </p>
-            )}
-          </div>
-
-          {oppId ? (
-            <div className="space-y-3 rounded-md border border-border/60 bg-muted/20 p-3">
-              <div className={bubbleGroupClass(POSITIONS_BUBBLE_SIZE)} role="group" aria-label="Instance mode">
-                <button
-                  type="button"
-                  className={cn(
-                    bubbleButtonClass(instanceMode === 'existing', POSITIONS_BUBBLE_SIZE),
-                  )}
-                  onClick={() => setInstanceMode('existing')}
-                >
-                  Use existing
-                </button>
-                <button
-                  type="button"
-                  disabled={!executionAccountId}
-                  title={!executionAccountId ? 'This execution has no account ID.' : undefined}
-                  className={cn(
-                    bubbleButtonClass(instanceMode === 'new', POSITIONS_BUBBLE_SIZE),
-                    !executionAccountId && 'opacity-50 cursor-not-allowed',
-                  )}
-                  onClick={() => {
-                    setInstanceMode('new')
-                    setPeerShortcut('')
-                  }}
-                >
-                  + Create new
-                </button>
-              </div>
-
-              {instanceMode === 'existing' ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="link-strategy-inst" className="text-xs">
-                    Strategy instance
-                  </Label>
+                    {instances.map((inst) => {
+                      const idStr = String(inst.strategy_instance_id)
+                      const isActive = instanceId === idStr
+                      const label = formatInstanceOpenedDate(inst)
+                      return (
+                        <button
+                          key={inst.strategy_instance_id}
+                          type="button"
+                          role="radio"
+                          aria-checked={isActive}
+                          className={cn(linkExecPillClass, isActive && linkExecPillSelectedClass)}
+                          title={label}
+                          onClick={() => {
+                            setInstanceId(idStr)
+                            setPeerShortcut('')
+                          }}
+                        >
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
                   <Select
                     value={instanceId || '__none__'}
                     onValueChange={(v) => {
@@ -294,7 +356,7 @@ function LinkExecutionModalBody({
                       setPeerShortcut('')
                     }}
                   >
-                    <SelectTrigger id="link-strategy-inst" className="h-8 text-sm">
+                    <SelectTrigger id="link-strategy-inst" className="h-9 w-full text-sm">
                       <SelectValue placeholder="— None —" />
                     </SelectTrigger>
                     <SelectContent>
@@ -309,84 +371,79 @@ function LinkExecutionModalBody({
                       ))}
                     </SelectContent>
                   </Select>
-                  {instances.length === 0 && (
-                    <p className="text-[11px] text-muted-foreground">
-                      No instances yet for this opportunity. Switch to &quot;Create new&quot; to add one.
-                    </p>
-                  )}
+                )}
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="link-new-inst-date" className="text-xs">
+                    Opened at
+                  </Label>
+                  <Input
+                    id="link-new-inst-date"
+                    type="date"
+                    value={newOpenedAt}
+                    onChange={(e) => setNewOpenedAt(e.target.value)}
+                    className="h-9 text-sm"
+                    required
+                  />
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="link-new-inst-date" className="text-xs">
-                      Opened at
-                    </Label>
-                    <Input
-                      id="link-new-inst-date"
-                      type="date"
-                      value={newOpenedAt}
-                      onChange={(e) => setNewOpenedAt(e.target.value)}
-                      className="h-8 text-sm"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Account</span>
-                    <p className="text-sm font-mono">{executionAccountId || '—'}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Uses this execution&apos;s account; not editable.
-                    </p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="link-new-inst-label" className="text-xs">
-                      Label <span className="text-muted-foreground">(optional)</span>
-                    </Label>
-                    <Input
-                      id="link-new-inst-label"
-                      type="text"
-                      value={newLabel}
-                      onChange={(e) => setNewLabel(e.target.value)}
-                      placeholder="e.g. Mar trade"
-                      maxLength={80}
-                      className="h-8 text-sm"
-                    />
-                  </div>
+                <div className="space-y-1">
+                  <span className={linkExecSectionLabelClass}>Account</span>
+                  <p className="font-mono text-sm">{executionAccountId || '—'}</p>
+                  <p className={linkExecHintClass}>From this execution; not editable.</p>
                 </div>
-              )}
-            </div>
-          ) : null}
-
-          {error ? (
-            <p className="text-xs text-destructive bg-destructive/10 rounded px-3 py-2">{error}</p>
-          ) : null}
-
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={submitting || !oppId || (instanceMode === 'new' && !executionAccountId)}
-            >
-              {submitting
-                ? instanceMode === 'new'
-                  ? 'Creating…'
-                  : 'Saving…'
-                : instanceMode === 'new'
-                  ? 'Create & assign'
-                  : 'Save'}
-            </Button>
+                <div className="space-y-1.5">
+                  <Label htmlFor="link-new-inst-label" className="text-xs">
+                    Label <span className="text-muted-foreground">(optional)</span>
+                  </Label>
+                  <Input
+                    id="link-new-inst-label"
+                    type="text"
+                    value={newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                    placeholder="e.g. Mar trade"
+                    maxLength={80}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        </form>
-      </DialogContent>
+        ) : null}
+
+        {error ? (
+          <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {error}
+          </p>
+        ) : null}
+      </form>
+
+      <DialogFooter className={linkExecDialogFooterClass}>
+        <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          size="sm"
+          form="link-exec-assign-form"
+          disabled={submitting || !oppId || (instanceMode === 'new' && !executionAccountId)}
+        >
+          {submitting
+            ? instanceMode === 'new'
+              ? 'Creating…'
+              : 'Saving…'
+            : instanceMode === 'new'
+              ? 'Create & assign'
+              : 'Save'}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   )
 }
 
 export function LinkExecutionModal({ open, context, opportunities, onClose, onSuccess }: Props) {
-  const formKey = open
-    ? String(context?.account_executions_id ?? 'closed')
-    : 'closed'
+  const formKey = open ? String(context?.account_executions_id ?? 'closed') : 'closed'
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>

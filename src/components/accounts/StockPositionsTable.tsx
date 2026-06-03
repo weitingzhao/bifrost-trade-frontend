@@ -11,7 +11,9 @@ import {
   GroupHeaderRow,
   GroupSubtotalRow,
   InlinePnl,
+  DenseTag,
   denseTable,
+  denseTableEntityCell,
   denseTableNumCell,
 } from '@/components/data-display'
 import {
@@ -89,8 +91,14 @@ function PositionRow({
 
   return (
     <DenseTableRow>
-      <DenseTableCell className="font-mono font-medium truncate" title={pos.symbol ?? undefined}>
-        {pos.symbol ?? '—'}
+      <DenseTableCell className={denseTableEntityCell}>
+        {pos.symbol?.trim() ? (
+          <DenseTag variant="symbol" size="cell" className="whitespace-normal">
+            {pos.symbol.trim().toUpperCase()}
+          </DenseTag>
+        ) : (
+          '—'
+        )}
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>{pos.position ?? '—'}</DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>{fmtUsd(pos.avgCost)}</DenseTableCell>
@@ -114,11 +122,23 @@ function PositionRow({
       <DenseTableCell className={cn(denseTableNumCell, denseTable.mutedMeta)}>
         {formatLastUpdate(r.updTs)}
       </DenseTableCell>
-      <DenseTableCell className={cn('truncate', denseTable.mutedMeta)} title={pos.strategy_opportunity_name ?? undefined}>
-        {pos.strategy_opportunity_name?.trim() ?? '—'}
+      <DenseTableCell className={denseTableEntityCell}>
+        {pos.strategy_opportunity_name?.trim() ? (
+          <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+            {pos.strategy_opportunity_name.trim()}
+          </DenseTag>
+        ) : (
+          '—'
+        )}
       </DenseTableCell>
-      <DenseTableCell className={cn('truncate', denseTable.mutedMeta)} title={pos.strategy_instance_label ?? undefined}>
-        {pos.strategy_instance_label?.trim() ?? '—'}
+      <DenseTableCell className={denseTableEntityCell}>
+        {pos.strategy_instance_label?.trim() ? (
+          <DenseTag variant="instance" size="cell" className="whitespace-normal font-mono">
+            {pos.strategy_instance_label.trim()}
+          </DenseTag>
+        ) : (
+          '—'
+        )}
       </DenseTableCell>
     </DenseTableRow>
   )

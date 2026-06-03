@@ -95,7 +95,7 @@ export const instancesColOppClass = cn(
 export const instancesOppCellClass = 'flex min-w-0 flex-col gap-0.5'
 
 export const instancesOppNameClass = cn(
-  'min-w-0 text-[length:var(--text-dense)] leading-snug line-clamp-1',
+  'min-w-0 text-[length:var(--text-dense)] leading-snug whitespace-normal break-words [overflow-wrap:anywhere]',
 )
 
 export const instancesColStatusClass = 'max-w-none whitespace-nowrap'

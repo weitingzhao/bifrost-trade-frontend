@@ -116,9 +116,7 @@ export default function OptionScreenerPage() {
       <OpportunityFormModal
         key={saveSymbol ?? 'screener-save'}
         open={saveSymbol != null}
-        onOpenChange={v => {
-          if (!v) setSaveSymbol(null)
-        }}
+        onClose={() => setSaveSymbol(null)}
         prefill={prefillData}
       />
     </PageShell>

@@ -9,6 +9,7 @@ import {
   CollapsibleGroupHeader,
   CollapsibleGroupStats,
   DenseTag,
+  denseTable,
 } from '@/components/data-display'
 import { fmtCcy } from './ledgerFormat'
 
@@ -40,14 +41,25 @@ export function LedgerInstanceCard({
       <div className="flex items-stretch">
         <CollapsibleGroupHeader expanded={expanded} onToggle={onToggle} className="flex-1">
           <CollapsibleChevron expanded={expanded} />
-          <span className="min-w-0 truncate">
-            {label ? <span title={label}>{label} </span> : null}
-            <span className="font-mono">#{instanceId}</span>
-            {oppName && (
-              <span className="ml-1 text-[length:var(--text-dense-meta)] text-muted-foreground">
-                ({oppName})
-              </span>
+          <span
+            className={cn(
+              'inline-flex min-w-0 flex-1 flex-wrap items-center gap-1',
+              denseTable.entityCell,
             )}
+          >
+            {label ? (
+              <DenseTag variant="instance" size="cell" className="whitespace-normal">
+                {label}
+              </DenseTag>
+            ) : null}
+            <DenseTag variant="instance" size="cell" className="font-mono">
+              #{instanceId}
+            </DenseTag>
+            {oppName ? (
+              <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+                {oppName}
+              </DenseTag>
+            ) : null}
           </span>
           <CollapsibleGroupStats>
             <span>Closed: {closedCount}</span>

@@ -10,6 +10,8 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
+  denseTableEntityCell,
+  denseTableEntityLink,
   denseTableNumCell,
 } from '@/components/data-display'
 import type { MarketStreamsRow } from '@/utils/marketStreamsRows'
@@ -137,8 +139,10 @@ export function WatchingOptionsPane({ items, quotesByContractKey, streamsLamp }:
                 const categoryName = (item.category ?? '').trim() || 'Uncategorized'
                 return (
                   <DenseTableRow key={item.contract_key}>
-                    <DenseTableCell className={liveTable.symbolCell} title={item.contract_key}>
-                      {watchlistItemLabel(item)}
+                    <DenseTableCell className={denseTableEntityCell} title={item.contract_key}>
+                      <span className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}>
+                        {watchlistItemLabel(item)}
+                      </span>
                     </DenseTableCell>
                     <DenseTableCell className={cn(denseTableNumCell, liveTable.lastBidAsk)}>
                       <OptionQuoteLastBidAsk quote={q} />

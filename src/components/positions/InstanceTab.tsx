@@ -11,9 +11,10 @@ import {
   ExpandToggleCell,
   GrandTotalRow,
   InlinePnl,
+  DenseLinkButton,
   DenseTag,
-  DenseTagButton,
   denseTable,
+  denseTableEntityLink,
   denseTableNumCell,
 } from '@/components/data-display'
 import { RiskProfileDetail } from './RiskProfileDetail'
@@ -220,26 +221,44 @@ export function InstanceTab({
                   {id != null ? (
                     <div className="flex min-w-0 flex-col gap-0.5">
                       {oppName ? (
-                        <span className={instancePanel.oppPrimary}>{oppName}</span>
+                        <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+                          {oppName}
+                        </DenseTag>
                       ) : null}
                       {onOpenStrategy ? (
-                        <button
-                          type="button"
-                          className={instancePanel.oppSecondary}
-                          title={`View strategy instance: ${instLabel}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onOpenStrategy(id)
-                          }}
+                        <span
+                          className="inline"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          role="presentation"
                         >
-                          {instLabel}
-                        </button>
+                          <DenseLinkButton
+                            variant="instance"
+                            label={instLabel}
+                            ariaLabel={`View strategy instance: ${instLabel}`}
+                            onClick={() => onOpenStrategy(id)}
+                            className={denseTableEntityLink}
+                          />
+                        </span>
                       ) : (
-                        <span className={instancePanel.oppSecondary}>{instLabel}</span>
+                        <DenseTag variant="instance" size="cell" className="font-mono whitespace-normal">
+                          {instLabel}
+                        </DenseTag>
                       )}
                     </div>
                   ) : (
-                    <span className={instancePanel.oppPrimary}>{oppName || instLabel}</span>
+                    <span className="inline-flex flex-wrap gap-1">
+                      {oppName ? (
+                        <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+                          {oppName}
+                        </DenseTag>
+                      ) : null}
+                      {instLabel ? (
+                        <DenseTag variant="instance" size="cell" className="font-mono whitespace-normal">
+                          {instLabel}
+                        </DenseTag>
+                      ) : null}
+                    </span>
                   )}
                 </DenseTableCell>
                 <DenseTableCell className={cn('text-xs', instancePanel.contractTypeCell)}>
@@ -260,19 +279,21 @@ export function InstanceTab({
                     <span className="inline-flex flex-wrap gap-1">
                       {scopeSymbols.map(sym =>
                         onOpenStock ? (
-                          <DenseTagButton
+                          <span
                             key={sym}
-                            variant="symbol"
-                            size="cell"
-                            className="font-mono"
-                            title={`Open ${sym}`}
-                            onClick={e => {
-                              e.stopPropagation()
-                              onOpenStock(sym, defaultStockAcct)
-                            }}
+                            className="inline"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            role="presentation"
                           >
-                            {sym}
-                          </DenseTagButton>
+                            <DenseLinkButton
+                              variant="stock"
+                              label={sym}
+                              ariaLabel={`Open ${sym}`}
+                              onClick={() => onOpenStock(sym, defaultStockAcct)}
+                              className={cn(denseTableEntityLink, 'font-mono')}
+                            />
+                          </span>
                         ) : (
                           <DenseTag key={sym} variant="symbol" size="cell" className="font-mono">
                             {sym}

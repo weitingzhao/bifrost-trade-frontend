@@ -32,8 +32,6 @@ export const instancePanel = {
   subTableWrap: 'm-0 w-full min-w-0 overflow-x-visible rounded-none border-none bg-transparent',
   subExecRow:
     'border-b border-border/35 bg-secondary text-[0.88em] hover:bg-[color-mix(in_srgb,hsl(var(--secondary))_92%,hsl(var(--foreground))_8%)]',
-  subContractBtn:
-    'cursor-pointer border-none bg-transparent p-0 text-left font-mono text-[0.82rem] font-semibold text-sky-400 hover:text-sky-300 hover:underline [&_strong]:font-bold',
   subMutedCell: 'font-normal text-[#7a8492]',
   subTimeAgo: 'font-medium text-warning',
   subExpiryDte: 'text-[0.72rem] font-semibold text-warning',

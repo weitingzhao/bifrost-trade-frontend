@@ -146,12 +146,13 @@ export const denseSymbolTagCellClass = denseTagClass('symbol', 'cell')
 export const denseSymbolTagPillClass = denseTagClass('symbol', 'pill')
 
 /** Option Category text in table identity columns — token color only, no pill border. */
-export type DenseOptionCategoryVariant = 'strategy' | 'instance' | 'opportunity'
+export type DenseOptionCategoryVariant = 'strategy' | 'instance' | 'opportunity' | 'structure'
 
 const optionCategoryLabelByVariant: Record<DenseOptionCategoryVariant, string> = {
   strategy: 'font-semibold text-entity-strategy',
   instance: 'font-mono font-semibold text-entity-instance',
   opportunity: 'font-semibold text-option-category-opportunity',
+  structure: 'font-semibold text-option-category-structure',
 }
 
 export function denseOptionCategoryLabelClass(

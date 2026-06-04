@@ -10,7 +10,7 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
-  DenseTag,
+  DenseOptionCategoryLabel,
   IconActionButton,
 } from '@/components/data-display'
 import type { StrategyAllocation } from '@/types/positions'
@@ -109,9 +109,13 @@ export function AllocationsTable({
                 ) : (
                   <div className={allocationsOppTagsCellClass}>
                     {row.strategy_opportunity_ids.map((id) => (
-                      <DenseTag key={id} variant="neutral" size="cell">
+                      <DenseOptionCategoryLabel
+                        key={id}
+                        variant="opportunity"
+                        className="whitespace-normal"
+                      >
                         {oppNameMap[id] ?? `#${id}`}
-                      </DenseTag>
+                      </DenseOptionCategoryLabel>
                     ))}
                   </div>
                 )}

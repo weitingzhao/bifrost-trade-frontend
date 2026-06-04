@@ -27,6 +27,7 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTableSubheadRow,
+  DenseOptionCategoryLabel,
   DenseTag,
   IconActionButton,
   denseTableNumCell,
@@ -484,14 +485,13 @@ export function InstancesGroupedTable({
                     {inst.strategy_opportunity_name ?? '—'}
                   </div>
                   {inst.strategy_structure_name ? (
-                    <DenseTag
-                      variant="strategy"
-                      size="cell"
+                    <DenseOptionCategoryLabel
+                      variant="structure"
                       className="max-w-full whitespace-normal"
                       title={`Structure: ${inst.strategy_structure_name}`}
                     >
                       {inst.strategy_structure_name}
-                    </DenseTag>
+                    </DenseOptionCategoryLabel>
                   ) : null}
                 </div>
               </DenseTableCell>

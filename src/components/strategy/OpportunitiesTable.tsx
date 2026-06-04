@@ -8,7 +8,7 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
-  DenseTag,
+  DenseOptionCategoryLabel,
 } from '@/components/data-display'
 import type { StrategyOpportunity } from '@/types/positions'
 import { getScopeDisplay } from '@/utils/strategyFormUtils'
@@ -67,10 +67,18 @@ export function OpportunitiesTable({
           return (
             <DenseTableRow key={opp.strategy_opportunity_id}>
               <DenseTableCell className={opportunitiesNameCellClass}>
-                <DenseTag variant="strategy">{opp.name}</DenseTag>
+                <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
+                  {opp.name}
+                </DenseOptionCategoryLabel>
               </DenseTableCell>
               <DenseTableCell className={opportunitiesMetaCellClass}>
-                {opp.structure_name ?? opp.strategy_structure_id ?? '—'}
+                {opp.structure_name?.trim() || opp.strategy_structure_id != null ? (
+                  <DenseOptionCategoryLabel variant="structure" className="whitespace-normal">
+                    {opp.structure_name?.trim() || String(opp.strategy_structure_id)}
+                  </DenseOptionCategoryLabel>
+                ) : (
+                  '—'
+                )}
               </DenseTableCell>
               <DenseTableCell
                 className={opportunitiesScopeCellClass}

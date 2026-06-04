@@ -8,6 +8,7 @@ import {
   CollapsibleGroupBody,
   CollapsibleGroupHeader,
   CollapsibleGroupStats,
+  DenseOptionCategoryLabel,
   DenseTag,
   denseTable,
 } from '@/components/data-display'
@@ -48,17 +49,17 @@ export function LedgerInstanceCard({
             )}
           >
             {label ? (
-              <DenseTag variant="instance" size="cell" className="whitespace-normal">
+              <DenseOptionCategoryLabel variant="instance" className="whitespace-normal">
                 {label}
-              </DenseTag>
+              </DenseOptionCategoryLabel>
             ) : null}
-            <DenseTag variant="instance" size="cell" className="font-mono">
+            <DenseOptionCategoryLabel variant="instance" className="font-mono">
               #{instanceId}
-            </DenseTag>
+            </DenseOptionCategoryLabel>
             {oppName ? (
-              <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+              <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
                 {oppName}
-              </DenseTag>
+              </DenseOptionCategoryLabel>
             ) : null}
           </span>
           <CollapsibleGroupStats>

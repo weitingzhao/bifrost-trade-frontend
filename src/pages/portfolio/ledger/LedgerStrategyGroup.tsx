@@ -8,6 +8,7 @@ import {
   CollapsibleGroupHeader,
   CollapsibleGroupStats,
   CollapsibleGroupTitle,
+  DenseOptionCategoryLabel,
   DenseTag,
 } from '@/components/data-display'
 import { fmtCcy } from './ledgerFormat'
@@ -87,13 +88,13 @@ export function LedgerStrategyGroup({
                       ) : (
                         <>
                           {sg.label ? (
-                            <DenseTag variant="instance" size="cell" className="whitespace-normal">
+                            <DenseOptionCategoryLabel variant="instance" className="whitespace-normal">
                               {sg.label}
-                            </DenseTag>
+                            </DenseOptionCategoryLabel>
                           ) : null}
-                          <DenseTag variant="instance" size="cell" className="font-mono">
+                          <DenseOptionCategoryLabel variant="instance" className="font-mono">
                             #{String(sg.instanceId)}
-                          </DenseTag>
+                          </DenseOptionCategoryLabel>
                         </>
                       )}
                     </span>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Pencil, Link2, Trash2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DenseTag } from '@/components/data-display'
+import { DenseOptionCategoryLabel, DenseTag } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import { dangerGhostBtnClass } from '@/lib/uiClasses'
 import { updateExecution } from '@/api/trading'
@@ -82,14 +82,14 @@ export function ExecutionRow({
         <span className="font-mono w-8 text-right">{Math.abs(exec.qty)}</span>
         <span className="font-mono w-14 text-right">{fmtUsd(exec.price)}</span>
         {exec.strategy_instance_label?.trim() ? (
-          <DenseTag variant="instance" size="cell" className="whitespace-normal">
+          <DenseOptionCategoryLabel variant="instance" className="whitespace-normal">
             {exec.strategy_instance_label.trim()}
-          </DenseTag>
+          </DenseOptionCategoryLabel>
         ) : null}
         {!exec.strategy_instance_label?.trim() && exec.strategy_opportunity_name?.trim() ? (
-          <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+          <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
             {exec.strategy_opportunity_name.trim()}
-          </DenseTag>
+          </DenseOptionCategoryLabel>
         ) : null}
 
         <span className="ml-auto flex items-center gap-1">

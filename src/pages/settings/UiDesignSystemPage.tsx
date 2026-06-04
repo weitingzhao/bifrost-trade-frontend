@@ -448,25 +448,10 @@ export default function UiDesignSystemPage() {
                 </td>
               </tr>
               <tr className="border-b border-border/60">
-                <td className="px-2.5 py-2 font-medium text-foreground">Filter / chip / group header</td>
-                <td className="px-2.5 py-2">
-                  <CodeRef>DenseTag variant=&quot;strategy&quot;</CodeRef>
-                </td>
-                <td className="px-2.5 py-2">
-                  <CodeRef>DenseTag variant=&quot;instance&quot;</CodeRef>
-                </td>
-                <td className="px-2.5 py-2 text-muted-foreground">
-                  Planned <CodeRef>DenseTag</CodeRef> variant
-                </td>
-                <td className="px-2.5 py-2 text-muted-foreground">
-                  Planned <CodeRef>DenseTag</CodeRef> variant
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2.5 py-2 font-medium text-foreground">Must not use for</td>
+                <td className="px-2.5 py-2 font-medium text-foreground">Must not use</td>
                 <td className="px-2.5 py-2 text-destructive/90" colSpan={4}>
-                  Option contract strings (use Option Entity §2) · Stock symbols · Position Category
-                  labels (§4)
+                  <CodeRef>DenseTag</CodeRef> pills for Option Category anywhere · option contract strings
+                  (use Option Entity §2) · Stock symbols · Position Category labels (§4)
                 </td>
               </tr>
             </tbody>
@@ -488,25 +473,24 @@ export default function UiDesignSystemPage() {
             onClick={noop}
           />
           <DenseOptionCategoryLabel variant="opportunity">DAVE Covered Call 10% OTM</DenseOptionCategoryLabel>
+          <DenseOptionCategoryLabel variant="structure">Cash Secured Put</DenseOptionCategoryLabel>
         </SampleBox>
 
         <SampleBox>
-          <span className="text-xs font-semibold uppercase tracking-wide">Filter / chip — outline pills only</span>
-          <DenseTag variant="strategy">Covered Call</DenseTag>
-          <DenseTag variant="instance">CC-NVDA-0620</DenseTag>
-          <span className="text-[11px] text-muted-foreground">
-            Structure — planned variant · never use pills in table identity columns
-          </span>
+          <span className="text-xs font-semibold uppercase tracking-wide">Status / source — outline pills OK</span>
+          <DenseTag variant="success">Open</DenseTag>
+          <DenseTag variant="neutral">No fills</DenseTag>
+          <DenseTag variant="source-tws">TWS</DenseTag>
         </SampleBox>
 
         <div className="space-y-1 text-xs">
           <p>
-            ✅ Table Opp / Strategy / Instance columns:{' '}
-            <CodeRef>DenseLinkButton</CodeRef> or <CodeRef>DenseOptionCategoryLabel</CodeRef> inside{' '}
-            <CodeRef>denseTableEntityCell</CodeRef> — semantic color, no border
+            ✅ Table Opp / Strategy / Instance / Structure:{' '}
+            <CodeRef>DenseLinkButton</CodeRef> or <CodeRef>DenseOptionCategoryLabel</CodeRef> — semantic
+            color only, never <CodeRef>DenseTag</CodeRef> pills
           </p>
           <p>
-            ✅ Filter chips / collapsible headers: <CodeRef>DenseTag</CodeRef> outline pills
+            ✅ Status, exec source, Position Category: <CodeRef>DenseTag</CodeRef> outline pills
           </p>
           <p>
             ✅ Ledger / Instances / Opportunities / Structures pages — audit Option Category separately

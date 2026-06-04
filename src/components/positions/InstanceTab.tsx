@@ -264,9 +264,12 @@ export function InstanceTab({
                 </DenseTableCell>
                 <DenseTableCell className={cn('text-xs', instancePanel.contractTypeCell)}>
                   {group.structure_type ? (
-                    <DenseTag variant="neutral" size="cell" className="max-w-full whitespace-normal leading-snug">
+                    <DenseOptionCategoryLabel
+                      variant="structure"
+                      className="max-w-full whitespace-normal leading-snug"
+                    >
                       {structLabel}
-                    </DenseTag>
+                    </DenseOptionCategoryLabel>
                   ) : (
                     '—'
                   )}

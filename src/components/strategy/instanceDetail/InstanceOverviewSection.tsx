@@ -8,7 +8,10 @@ import {
 import type { InstanceDetailData } from '@/hooks/useInstanceDetailData'
 import type { StrategyInstance } from '@/types/positions'
 import { inspectorShell } from '@/components/layout/rightInspectorUi'
-import { DenseTag } from '@/components/data-display'
+import {
+  DenseOptionCategoryLabel,
+  denseOptionCategoryLabelClass,
+} from '@/components/data-display'
 import {
   instanceDetailBlockClass,
   instanceSectionTitleClass,
@@ -61,12 +64,17 @@ export function InstanceOverviewSection({ instance, data, hideSectionTitle = fal
         <div className={styles.chipRow}>
           <span className={statusChipClass(positionStatus)}>{statusLabel(positionStatus)}</span>
           {structure ? (
-            <span className={styles.typeChip}>{getStructureTypeLabel(structure.structure_type)}</span>
+            <DenseOptionCategoryLabel
+              variant="structure"
+              className="text-[0.625rem] uppercase tracking-wide"
+            >
+              {getStructureTypeLabel(structure.structure_type)}
+            </DenseOptionCategoryLabel>
           ) : null}
           {instance.label?.trim() ? (
-            <DenseTag variant="instance" size="pill" title={instance.label}>
+            <DenseOptionCategoryLabel variant="instance" title={instance.label}>
               {instance.label}
-            </DenseTag>
+            </DenseOptionCategoryLabel>
           ) : null}
         </div>
       )}
@@ -75,7 +83,9 @@ export function InstanceOverviewSection({ instance, data, hideSectionTitle = fal
         <div className={inspectorShell.card}>
           <div className={inspectorShell.cardLabel}>Structure</div>
           <div className={styles.kvGrid}>
-            <div className={styles.structureName}>{structureName}</div>
+            <div className={cn(denseOptionCategoryLabelClass('structure'), styles.structureName)}>
+            {structureName}
+          </div>
             {structureId != null ? (
               <>
                 <span className={styles.kvK}>ID</span>
@@ -85,7 +95,9 @@ export function InstanceOverviewSection({ instance, data, hideSectionTitle = fal
             {structure ? (
               <>
                 <span className={styles.kvK}>Type</span>
-                <span className={styles.kvV}>{getStructureTypeLabel(structure.structure_type)}</span>
+                <span className={cn(denseOptionCategoryLabelClass('structure'), styles.kvV)}>
+                  {getStructureTypeLabel(structure.structure_type)}
+                </span>
               </>
             ) : null}
           </div>

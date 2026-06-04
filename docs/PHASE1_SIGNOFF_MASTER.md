@@ -4,6 +4,8 @@
 
 **Mechanical gate (Agent, 2026-06-03)**: `npm run lint` · `npm run build` · `npm run check:legacy-css` — all pass.
 
+**Batch progress**: Batch 1 **Owner signed** (2026-06-03, four pages only). Cross-cutting **pending**. Batch 2 **in progress** — Agent pre-flight 2026-06-03 OK; Owner Pass pending.
+
 **How to sign off**: Open Legacy + New side-by-side → walk each batch → check **Pass** → fill **Owner date** → note regressions in **Remarks**. Agent fixes → re-verify row before closing batch.
 
 ---
@@ -16,7 +18,9 @@
 | Strip hidden on `/settings/*` and `/operations/*` | [ ] | | |
 | Sidebar **Live** nav IB/daemon health lamp matches Legacy | [ ] | | |
 | Canvas `bg-card`; elevated panels distinguishable from canvas | [ ] | | |
-| No data-loading regression vs Legacy on same API | [ ] | | |
+| No data-loading regression vs Legacy on same API | [ ] | | Batch 1 signed pages only; verify during Batch 2 |
+
+> **Note (2026-06-03)**: Batch 1 Owner sign-off covered the four core monitoring routes only. Cross-cutting rows remain open — re-check on `/portfolio/ledger` and `/portfolio/performance` during Batch 2.
 
 ---
 
@@ -24,19 +28,21 @@
 
 | Route | Business checks | Pass | Owner date | Remarks |
 |-------|-----------------|------|------------|---------|
-| `/market/live` | 9 sorts, Category groups, Host/Secondary, OPT MTM, DnD, summary bar | [ ] | | |
-| `/portfolio/positions` | Instance/Stocks/Options tabs, charts, Strategy attribution rows | [ ] | | |
-| `/portfolio/accounts` | KPI, stock/option tables, category click → modal | [ ] | | |
-| `/strategy/instances` | Filters, grouped table, detail sidebar (Overview/PnL/Executions/Kline) | [ ] | | |
+| `/market/live` | 9 sorts, Category groups, Host/Secondary, OPT MTM, DnD, summary bar | [x] | 2026-06-03 | Owner verified |
+| `/portfolio/positions` | Instance/Stocks/Options tabs, charts, Strategy attribution rows | [x] | 2026-06-03 | Owner verified |
+| `/portfolio/accounts` | KPI, stock/option tables, category click → modal | [x] | 2026-06-03 | Owner verified |
+| `/strategy/instances` | Filters, grouped table, detail sidebar (Overview/PnL/Executions/Kline) | [x] | 2026-06-03 | Owner verified |
 
 ---
 
-## Batch 2 — Portfolio activity
+## Batch 2 — Portfolio activity *(Owner verification in progress)*
+
+**Agent pre-flight (2026-06-03)**: `lint` / `build` / `check:legacy-css` pass. Ledger Option Category cells use `DenseOptionCategoryLabel` (no pill) in `LedgerStgInsCell`, `LedgerInstanceCard`, `LedgerStrategyGroup`.
 
 | Route | Business checks | Pass | Owner date | Remarks |
 |-------|-----------------|------|------------|---------|
-| `/portfolio/ledger` | Open/closed groups, execution link, modals | [ ] | | |
-| `/portfolio/performance` | FilterBar, calendar, On-the-fly section | [ ] | | |
+| `/portfolio/ledger` | Open/closed groups, execution link, modals | [ ] | | **Start here** — Stg/Ins semantic color, no pill |
+| `/portfolio/performance` | FilterBar, calendar, On-the-fly section | [ ] | | Notional column color; STK unrealized warning |
 | `/portfolio/model-analysis` | Main table expand, stress CollapsibleGroup | [ ] | | |
 | `/portfolio/transfer` | Fetch transactions, summary table | [ ] | | |
 

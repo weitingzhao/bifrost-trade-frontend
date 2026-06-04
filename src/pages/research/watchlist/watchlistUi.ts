@@ -39,6 +39,17 @@ export const watchlistStepperConnectorDoneClass = 'bg-primary/50'
 
 export const watchlistStockTableClass = cn('min-w-[44rem]')
 
+/** Narrow Sizing-tab symbol sheet — no horizontal scroll in workflow column. */
+export const watchlistSizingSheetTableClass = cn('min-w-0 w-full table-fixed')
+
+export const watchlistSizingSheetTableWrapClass = cn(
+  'min-w-0 overflow-x-hidden overscroll-x-none',
+)
+
+export const watchlistSizingSheetQuoteCellClass = cn(
+  'text-right whitespace-normal [overflow-wrap:anywhere]',
+)
+
 /** table-fixed column widths — avoid cramped quote / category cells */
 export const WATCHLIST_STOCK_COL_WIDTHS = {
   symbol: '10rem',
@@ -64,6 +75,11 @@ export const watchlistQuoteCellClass = cn('text-right whitespace-nowrap')
 
 export const watchlistQuoteStackClass = cn(
   'inline-flex flex-col items-end gap-0.5 leading-tight',
+)
+
+export const watchlistSizingSheetQuoteStackClass = cn(
+  watchlistQuoteStackClass,
+  'max-w-full flex-wrap',
 )
 
 export const watchlistQuoteLastClass = 'font-mono text-sm font-semibold tabular-nums'

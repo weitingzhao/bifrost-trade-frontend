@@ -13,6 +13,11 @@ import {
   watchlistStepperStepDoneClass,
   watchlistStepperTitleClass,
 } from './watchlistUi'
+import {
+  watchlistStepperSizingHubActiveClass,
+  watchlistStepperSizingHubClass,
+  watchlistStepperSizingHubTitleClass,
+} from './sizingUi'
 
 interface Props {
   active: PrimaryWorkflowTab
@@ -50,6 +55,8 @@ export function WorkflowStepper({
         const stepIdx = stepOrder.indexOf(step.id)
         const isDone = stepIdx < activeIdx
 
+        const isSizingHub = step.id === 'sizing'
+
         return (
           <div key={step.id} className="flex min-w-0 flex-1 items-stretch">
             {i > 0 && (
@@ -67,7 +74,9 @@ export function WorkflowStepper({
               aria-selected={isActive}
               className={cn(
                 watchlistStepperStepClass,
+                isSizingHub && watchlistStepperSizingHubClass,
                 isActive && watchlistStepperStepActiveClass,
+                isActive && isSizingHub && watchlistStepperSizingHubActiveClass,
                 isDone && watchlistStepperStepDoneClass,
               )}
               onClick={() => onChange(step.id)}
@@ -82,7 +91,14 @@ export function WorkflowStepper({
                 {step.index}
               </span>
               <span className="min-w-0">
-                <span className={watchlistStepperTitleClass}>{step.title}</span>
+                <span
+                  className={cn(
+                    watchlistStepperTitleClass,
+                    isSizingHub && watchlistStepperSizingHubTitleClass,
+                  )}
+                >
+                  {step.title}
+                </span>
                 <span className={watchlistStepperDescClass}>{step.desc}</span>
               </span>
               <span className={watchlistStepperBadgeClass}>{step.count}</span>

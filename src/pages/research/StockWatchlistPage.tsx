@@ -2,23 +2,6 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { PageShell } from '@/components/layout'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useWatchlistMutations } from '@/hooks/useStockWatchlist'
@@ -40,7 +23,6 @@ import {
 import {
   defaultShareAmt,
   formatOrderInputNumber,
-  normalizeExpiryInput,
   normalizeToContractKey,
   positionToContractKey,
   quoteDisplayLast,
@@ -52,6 +34,7 @@ import { WatchlistPageHeader } from './watchlist/WatchlistPageHeader'
 import { WatchingTab } from './watchlist/WatchingTab'
 import { SizingTab } from './watchlist/SizingTab'
 import { PositionsTab } from './watchlist/PositionsTab'
+import { AddOptionModal } from './watchlist/AddOptionModal'
 
 export default function StockWatchlistPage() {
   const { data: status } = useMonitorStatus()
@@ -96,9 +79,6 @@ export default function StockWatchlistPage() {
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
 
   const [addOptionSymbol, setAddOptionSymbol] = useState<string | null>(null)
-  const [addOptExpiry, setAddOptExpiry] = useState('')
-  const [addOptRight, setAddOptRight] = useState<'CALL' | 'PUT'>('CALL')
-  const [addOptStrike, setAddOptStrike] = useState('')
 
   const [kellyFraction, setKellyFraction] = useState(0.5)
   const [sizeAtrMultiplier, setSizeAtrMultiplier] = useState(2)
@@ -311,26 +291,25 @@ export default function StockWatchlistPage() {
     [sizingId, workflow.stocksForPromoteToSizing, upsertFromItem],
   )
 
-  const submitAddOption = useCallback(async () => {
-    if (!addOptionSymbol) return
-    const expiry = normalizeExpiryInput(addOptExpiry)
-    const strikeNum = parseFloat(addOptStrike.trim())
-    if (!expiry || Number.isNaN(strikeNum) || strikeNum < 0) return
-    const rightLetter = addOptRight === 'CALL' ? 'C' : 'P'
-    const contract_key = `${addOptionSymbol}|OPT|${expiry}|${strikeNum}|${rightLetter}`
-    await addItem.mutateAsync({
-      contract_key,
-      symbol: addOptionSymbol,
-      sec_type: 'OPT',
-      expiry,
-      strike: strikeNum,
-      option_right: rightLetter,
-      source: 'manual',
-    })
-    setAddOptionSymbol(null)
-    setAddOptExpiry('')
-    setAddOptStrike('')
-  }, [addOptionSymbol, addOptExpiry, addOptStrike, addOptRight, addItem])
+  const handleAddOption = useCallback(
+    async (fields: { expiry: string; strike: number; right: 'CALL' | 'PUT' }) => {
+      if (!addOptionSymbol) return
+      const sym = addOptionSymbol.trim().toUpperCase()
+      const rightLetter = fields.right === 'CALL' ? 'C' : 'P'
+      const contract_key = `${sym}|OPT|${fields.expiry}|${fields.strike}|${rightLetter}`
+      await addItem.mutateAsync({
+        contract_key,
+        symbol: sym,
+        sec_type: 'OPT',
+        expiry: fields.expiry,
+        strike: fields.strike,
+        option_right: rightLetter,
+        source: 'manual',
+      })
+      setAddOptionSymbol(null)
+    },
+    [addOptionSymbol, addItem],
+  )
 
   if (isLoading) {
     return (
@@ -394,6 +373,7 @@ export default function StockWatchlistPage() {
           quoteBySymbol={quoteBySymbol}
           quoteByContractKey={quoteByContractKey}
           perfSummary={perfSummary ?? undefined}
+          kellyMetrics={kellyMetrics}
           sizingCategoryId={sizingId}
           addPending={addItem.isPending}
           staticMaxDdPctCap={staticMaxDdPctCap}
@@ -452,37 +432,12 @@ export default function StockWatchlistPage() {
 
       <InspectorDrawer state={inspector} onClose={() => setInspector({ type: null })} />
 
-      <Dialog open={addOptionSymbol != null} onOpenChange={open => { if (!open) setAddOptionSymbol(null) }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add option — {addOptionSymbol}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-3 py-2">
-            <div>
-              <Label htmlFor="opt-exp">Expiry (YYYYMMDD)</Label>
-              <Input id="opt-exp" value={addOptExpiry} onChange={e => setAddOptExpiry(e.target.value)} className="font-mono" />
-            </div>
-            <div>
-              <Label>Right</Label>
-              <Select value={addOptRight} onValueChange={v => setAddOptRight(v as 'CALL' | 'PUT')}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CALL">Call</SelectItem>
-                  <SelectItem value="PUT">Put</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="opt-strike">Strike</Label>
-              <Input id="opt-strike" value={addOptStrike} onChange={e => setAddOptStrike(e.target.value)} className="font-mono" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setAddOptionSymbol(null)}>Cancel</Button>
-            <Button type="button" onClick={() => void submitAddOption()}>Add</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddOptionModal
+        symbol={addOptionSymbol}
+        pending={addItem.isPending}
+        onClose={() => setAddOptionSymbol(null)}
+        onSubmit={handleAddOption}
+      />
     </PageShell>
   )
 }

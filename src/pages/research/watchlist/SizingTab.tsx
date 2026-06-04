@@ -1,9 +1,5 @@
 import { useMemo } from 'react'
-import { X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
-import { fmtUsd } from '@/utils/positions'
+import type { KellyMetrics } from '@/utils/riskSizing'
 import type { AtrResult, PositionSizeResult } from '@/utils/riskSizing'
 import type { QuoteItem, WatchlistItem } from '@/types/market'
 import type { PositionCategory } from '@/types/portfolio'
@@ -12,16 +8,22 @@ import type { PerformanceSummary } from '@/types/trading'
 import { PortfolioRiskPower } from './PortfolioRiskPower'
 import { PromoteToSizing } from './PromoteToSizing'
 import { StockWatchlistTable } from './StockWatchlistTable'
-import { WatchlistSizingCapTable } from './WatchlistSizingCapTable'
+import { SizingOrderPanel } from './SizingOrderPanel'
+import { SizingOrderRiskVerify } from './SizingOrderRiskVerify'
+import { SizingOrderSection } from './SizingOrderSection'
 import type { StatusResponse } from '@/types/monitor'
 import { buildPortfolioCashRollup, aggregateCapital } from '@/utils/accountsSnapshot'
 import {
-  watchlistKpiCellClass,
-  watchlistOrderZoneClass,
-  watchlistRangeTrackClass,
   watchlistSectionHintClass,
   watchlistStepLeadClass,
 } from './watchlistUi'
+import {
+  sizingDashSubtitleClass,
+  sizingDashWorkflowColClass,
+  sizingSheetBlockPromoteClass,
+  sizingSheetOrderRowClass,
+  sizingSymbolSheetWrapClass,
+} from './sizingUi'
 
 export interface SizingTabProps {
   status: StatusResponse | null | undefined
@@ -30,6 +32,7 @@ export interface SizingTabProps {
   quoteBySymbol: Record<string, QuoteItem>
   quoteByContractKey: Record<string, QuoteItem>
   perfSummary: PerformanceSummary | null | undefined
+  kellyMetrics: KellyMetrics
   sizingCategoryId: number | null
   addPending: boolean
   staticMaxDdPctCap: number
@@ -69,6 +72,7 @@ export function SizingTab(props: SizingTabProps) {
     quoteBySymbol,
     quoteByContractKey,
     perfSummary,
+    kellyMetrics,
     sizingCategoryId,
     addPending,
     staticMaxDdPctCap,
@@ -165,14 +169,43 @@ export function SizingTab(props: SizingTabProps) {
         ? Math.abs(perfSummary.avg_loss)
         : null
 
-    const shareCandidates = [
-      sizePosResult?.is_valid ? sizePosResult.shares : null,
-      maxSharesFromRisk(portfolioScenarioRiskUsd),
-      maxSharesFromRisk(histMaxLossUsd),
-      maxSharesFromRisk(histAvgLossUsd),
+    const kellyShares = sizePosResult?.is_valid ? sizePosResult.shares : null
+    const kellyRiskUsd = sizePosResult?.is_valid ? sizePosResult.dollar_risk : null
+    const capRows = [
+      {
+        key: 'kelly',
+        label: 'Order sizing (Kelly)',
+        maxRiskUsd: kellyRiskUsd,
+        maxShares: kellyShares,
+      },
+      {
+        key: 'portfolioDd',
+        label: `Portfolio max DD budget (${pctCap}% NAV, linked)`,
+        maxRiskUsd: portfolioScenarioRiskUsd,
+        maxShares: maxSharesFromRisk(portfolioScenarioRiskUsd),
+      },
+      {
+        key: 'histMax',
+        label: 'History max loss (abs)',
+        maxRiskUsd: histMaxLossUsd,
+        maxShares: maxSharesFromRisk(histMaxLossUsd),
+      },
+      {
+        key: 'histAvg',
+        label: 'History avg loss (abs)',
+        maxRiskUsd: histAvgLossUsd,
+        maxShares: maxSharesFromRisk(histAvgLossUsd),
+      },
+    ]
+
+    const cashCapShares =
       price != null && price > 0 && portfolioCashRollup.totalCashMerged > 0
         ? Math.floor(portfolioCashRollup.totalCashMerged / price)
-        : null,
+        : null
+
+    const shareCandidates = [
+      ...capRows.map(r => r.maxShares).filter((x): x is number => x != null && Number.isFinite(x) && x >= 0),
+      cashCapShares,
     ].filter((x): x is number => x != null && Number.isFinite(x))
 
     return {
@@ -181,15 +214,20 @@ export function SizingTab(props: SizingTabProps) {
       investmentUsd: notional,
       investmentWeightPct,
       cashLeftAfter,
-      capRows: [
-        { key: 'kelly', label: 'Order sizing (Kelly)', maxRiskUsd: sizePosResult?.is_valid ? sizePosResult.dollar_risk : null, maxShares: sizePosResult?.is_valid ? sizePosResult.shares : null },
-        { key: 'dd', label: `Portfolio max DD budget (${pctCap}% NAV)`, maxRiskUsd: portfolioScenarioRiskUsd, maxShares: maxSharesFromRisk(portfolioScenarioRiskUsd) },
-        { key: 'max', label: 'History max loss (abs)', maxRiskUsd: histMaxLossUsd, maxShares: maxSharesFromRisk(histMaxLossUsd) },
-        { key: 'avg', label: 'History avg loss (abs)', maxRiskUsd: histAvgLossUsd, maxShares: maxSharesFromRisk(histAvgLossUsd) },
-      ],
+      capRows,
+      cashCapShares,
       availableMinShares: shareCandidates.length > 0 ? Math.min(...shareCandidates) : null,
     }
-  }, [sizeAtrResult, sizePosResult, sizeAtrMultiplier, sizeCurrentPrice, capital, portfolioCashRollup, staticMaxDdPctCap, perfSummary])
+  }, [
+    sizeAtrResult,
+    sizePosResult,
+    sizeAtrMultiplier,
+    sizeCurrentPrice,
+    capital,
+    portfolioCashRollup,
+    staticMaxDdPctCap,
+    perfSummary,
+  ])
 
   const manualOrderAnalytics = useMemo(() => {
     const entryNum = Number(orderEntryPrice)
@@ -233,11 +271,15 @@ export function SizingTab(props: SizingTabProps) {
     }
   }, [orderEntryPrice, orderExitPrice, orderShareAmt, capital, portfolioCashRollup.totalCashMerged, sizeAtrResult, selectedBid])
 
+  const showOrderSidePanels =
+    selectedSizingSymbol != null && !sizeComputeLoading && sizeAtrResult != null
+
   return (
     <div className="space-y-4">
       <p className={watchlistSectionHintClass}>
-        <strong className={watchlistStepLeadClass}>Step 2.</strong> Stocks tagged <strong className={watchlistStepLeadClass}>Sizing</strong>. Pick a symbol
-        below or promote from the combobox.
+        <strong className={watchlistStepLeadClass}>Step 2.</strong> The table lists stocks tagged{' '}
+        <strong className={watchlistStepLeadClass}>Sizing</strong>. Pick any stock symbol from your watchlist
+        below, then <strong className={watchlistStepLeadClass}>Move to Sizing</strong>.
       </p>
 
       <PortfolioRiskPower
@@ -255,158 +297,91 @@ export function SizingTab(props: SizingTabProps) {
         onStaticRiskPctChange={v => onStaticRiskPctChange(Math.max(0.1, Math.min(5, v)))}
       />
 
-      <PromoteToSizing
-        stocks={stocksForPromoteToSizing}
-        sizingCategoryId={sizingCategoryId}
-        addPending={addPending}
-        onPromote={onPromote}
-      />
+      <div className={sizingSheetOrderRowClass}>
+        <div className="min-w-0">
+          <section className={sizingDashWorkflowColClass}>
+            <h5 id="watchlist-sizing-symbol-sheet-head" className={sizingDashSubtitleClass}>
+              Sizing symbol sheet
+            </h5>
+            <div className={sizingSymbolSheetWrapClass}>
+              {sizingStockRows.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">
+                  No Sizing symbols yet. Promote from Watching below.
+                </p>
+              ) : (
+                <StockWatchlistTable
+                  items={sizingStockRows}
+                  categories={categories}
+                  quoteBySymbol={quoteBySymbol}
+                  quoteByContractKey={quoteByContractKey}
+                  hasPosition={hasPosition}
+                  selectedSizingSymbol={selectedSizingSymbol}
+                  showSizeBtn
+                  hideCategory
+                  hideOpt
+                  sizingSheet
+                  onSymbolClick={(item, openSizing) => onSymbolClick(item, openSizing)}
+                  onToggleOptionable={() => {}}
+                  onCategoryChange={() => {}}
+                  onRemove={onRemove}
+                  symbolFromItem={symbolFromItem}
+                />
+              )}
+            </div>
 
-      <div className="space-y-2">
-        <h5 className="text-sm font-semibold">Sizing symbol sheet</h5>
-        {sizingStockRows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No Sizing symbols yet. Promote from Watching above.</p>
-        ) : (
-          <StockWatchlistTable
-            items={sizingStockRows}
-            categories={categories}
-            quoteBySymbol={quoteBySymbol}
-            quoteByContractKey={quoteByContractKey}
-            hasPosition={hasPosition}
-            selectedSizingSymbol={selectedSizingSymbol}
-            showSizeBtn
-            hideCategory
-            hideOpt
-            onSymbolClick={(item, openSizing) => onSymbolClick(item, openSizing)}
-            onToggleOptionable={() => {}}
-            onCategoryChange={() => {}}
-            onRemove={onRemove}
-            symbolFromItem={symbolFromItem}
-          />
-        )}
+            {showOrderSidePanels && selectedSizingSymbol ? (
+              <>
+                <SizingOrderSection
+                  symbol={selectedSizingSymbol}
+                  bid={selectedBid}
+                  entry={orderEntryPrice}
+                  exit={orderExitPrice}
+                  shares={orderShareAmt}
+                  onEntryChange={onOrderEntryChange}
+                  onExitChange={onOrderExitChange}
+                  onSharesChange={onOrderShareChange}
+                />
+                <SizingOrderRiskVerify analytics={manualOrderAnalytics} />
+              </>
+            ) : null}
+          </section>
+        </div>
+
+        <div className="min-w-0">
+          {selectedSizingSymbol ? (
+            <SizingOrderPanel
+              symbol={selectedSizingSymbol}
+              kellyFraction={kellyFraction}
+              sizeAtrMultiplier={sizeAtrMultiplier}
+              sizeComputeLoading={sizeComputeLoading}
+              sizeComputeError={sizeComputeError}
+              sizeAtrResult={sizeAtrResult}
+              sizePosResult={sizePosResult}
+              sizeCurrentPrice={sizeCurrentPrice}
+              kellyMetrics={kellyMetrics}
+              sizingOrderAnalytics={sizingOrderAnalytics}
+              totalBuyingPower={portfolioCashRollup.totalBuyingPower}
+              onKellyFractionChange={onKellyFractionChange}
+              onAtrMultiplierChange={onAtrMultiplierChange}
+              onRecompute={() => onRecompute(selectedSizingSymbol)}
+              onClose={onCloseSizingPanel}
+            />
+          ) : null}
+        </div>
       </div>
 
-      {selectedSizingSymbol && (
-        <Card className="border-primary/30">
-          <CardContent className="pt-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-sm">Order sizing — {selectedSizingSymbol}</h4>
-              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onCloseSizingPanel}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="space-y-1 min-w-[140px]">
-                <label className="text-xs text-muted-foreground">Kelly fraction</label>
-                <input
-                  type="range"
-                  min={0.05}
-                  max={1}
-                  step={0.05}
-                  value={kellyFraction}
-                  onChange={e => onKellyFractionChange(Number.parseFloat(e.target.value))}
-                  className={watchlistRangeTrackClass}
-                />
-                <span className="text-xs font-mono">{kellyFraction.toFixed(2)}</span>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground" htmlFor="atr-mult">ATR multiplier</label>
-                <Input
-                  id="atr-mult"
-                  type="number"
-                  min={0.5}
-                  max={5}
-                  step={0.5}
-                  value={sizeAtrMultiplier}
-                  onChange={e => onAtrMultiplierChange(Number.parseFloat(e.target.value) || 2)}
-                  className="h-8 w-20 font-mono"
-                />
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={sizeComputeLoading}
-                onClick={() => onRecompute(selectedSizingSymbol)}
-              >
-                {sizeComputeLoading ? 'Computing…' : 'Recompute'}
-              </Button>
-            </div>
-
-            {sizeComputeError && (
-              <p className="text-sm text-destructive" role="alert">{sizeComputeError}</p>
-            )}
-
-            {sizeAtrResult && !sizeComputeLoading && (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  {[
-                    ['ATR(14)', fmtUsd(sizeAtrResult.atr14)],
-                    ['Price', sizeCurrentPrice != null ? fmtUsd(sizeCurrentPrice) : '—'],
-                    ['Shares', sizePosResult?.is_valid ? String(sizePosResult.shares) : '—'],
-                    ['Risk %', sizePosResult?.is_valid ? `${sizePosResult.risk_pct.toFixed(2)}%` : '—'],
-                  ].map(([label, val]) => (
-                    <div key={label} className={watchlistKpiCellClass}>
-                      <div className="text-muted-foreground">{label}</div>
-                      <div className="font-mono font-semibold">{val}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className={watchlistOrderZoneClass}>
-                  <h5 className="text-sm font-semibold">Order section</h5>
-                  <p className="text-xs text-muted-foreground">
-                    Current bid: <span className="font-mono">{selectedBid != null ? fmtUsd(selectedBid) : '—'}</span>
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-[10px] uppercase text-muted-foreground">Entry</label>
-                      <Input value={orderEntryPrice} onChange={e => onOrderEntryChange(e.target.value)} className="h-8 font-mono" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] uppercase text-muted-foreground">Exit</label>
-                      <Input value={orderExitPrice} onChange={e => onOrderExitChange(e.target.value)} className="h-8 font-mono" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] uppercase text-muted-foreground">Amt (step 100)</label>
-                      <Input value={orderShareAmt} onChange={e => onOrderShareChange(e.target.value)} className="h-8 font-mono" type="number" step={100} />
-                    </div>
-                  </div>
-                </div>
-
-                {manualOrderAnalytics.isComplete && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                    <div className={watchlistKpiCellClass}>
-                      <div className="text-muted-foreground">Order risk ($)</div>
-                      <div className="font-mono">{manualOrderAnalytics.orderRiskUsd != null ? fmtUsd(manualOrderAnalytics.orderRiskUsd) : '—'}</div>
-                    </div>
-                    <div className={watchlistKpiCellClass}>
-                      <div className="text-muted-foreground">Positional DD</div>
-                      <div className="font-mono">
-                        {manualOrderAnalytics.positionalDrawdownRatio != null
-                          ? `${(manualOrderAnalytics.positionalDrawdownRatio * 100).toFixed(2)}%`
-                          : '—'}
-                      </div>
-                    </div>
-                    <div className={watchlistKpiCellClass}>
-                      <div className="text-muted-foreground">ATR risk</div>
-                      <div className="font-mono">
-                        {manualOrderAnalytics.atrRisk != null ? `${manualOrderAnalytics.atrRisk.toFixed(2)} ATR` : '—'}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <WatchlistSizingCapTable
-                  capRows={sizingOrderAnalytics.capRows}
-                  availableMinShares={sizingOrderAnalytics.availableMinShares}
-                />
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <div className={sizingSheetBlockPromoteClass} aria-labelledby="watchlist-sizing-workflow-head">
+        <h4 id="watchlist-sizing-workflow-head" className="text-base font-semibold tracking-tight">
+          Sizing sheet
+        </h4>
+        <PromoteToSizing
+          stocks={stocksForPromoteToSizing}
+          sizingCategoryId={sizingCategoryId}
+          addPending={addPending}
+          onPromote={onPromote}
+          inline
+        />
+      </div>
     </div>
   )
 }

@@ -37,4 +37,4 @@ npm run build
 
 ## Sign-off
 
-- [ ] Owner verified all rows above on Positions, Watchlist, and Screener (date: ________)
+- [x] Owner verified all rows above on Positions, Watchlist, and Screener (2026-06-03)

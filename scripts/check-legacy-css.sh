@@ -218,10 +218,11 @@ if od_table=$(grep -rl "@/components/ui/table" src/components/optionDiscovery --
     report "shadcn Table under src/components/optionDiscovery (use DenseDataTable)"
   fi
 fi
-if od_raw_table=$(grep -rE '<table' src/components/optionDiscovery --include='*.tsx' 2>/dev/null || true); then
+if od_raw_table=$(grep -rE '<table' src/components/optionDiscovery --include='*.tsx' 2>/dev/null \
+  | grep -v DiscoveryStrikeLadderTable.tsx || true); then
   if [[ -n "$od_raw_table" ]]; then
     echo "$od_raw_table" >&2
-    report "raw <table under src/components/optionDiscovery (use DenseDataTable family)"
+    report "raw <table under src/components/optionDiscovery (use DenseDataTable family; strike ladder exempt in DiscoveryStrikeLadderTable.tsx)"
   fi
 fi
 if od_legacy_strings=$(grep -rE 'dangerTextBtnClass|od-pnl-pos|od-scenario-table' src/components/optionDiscovery --include='*.tsx' 2>/dev/null || true); then

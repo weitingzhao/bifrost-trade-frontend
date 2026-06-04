@@ -1,11 +1,8 @@
-import { SegmentControl } from '@/components/data-display'
-
 export type StrikeSideMode = 'all' | 'call' | 'put'
 
 export function DiscoverySideToggle({
   value,
   onChange,
-  id,
   'aria-labelledby': ariaLabelledBy,
 }: {
   value: StrikeSideMode
@@ -14,19 +11,22 @@ export function DiscoverySideToggle({
   'aria-labelledby'?: string
 }) {
   return (
-    <div id={id} aria-labelledby={ariaLabelledBy}>
-      <SegmentControl
-        ariaLabel={ariaLabelledBy ? undefined : 'Strike side filter'}
-        value={value}
-        onChange={v => {
-          if (v === 'all' || v === 'call' || v === 'put') onChange(v)
-        }}
-        options={[
-          { value: 'all', label: 'All' },
-          { value: 'call', label: 'Call' },
-          { value: 'put', label: 'Put' },
-        ]}
-      />
+    <div
+      className="od-strike-side-switch"
+      role="group"
+      aria-labelledby={ariaLabelledBy}
+    >
+      {(['all', 'call', 'put'] as const).map(mode => (
+        <button
+          key={mode}
+          type="button"
+          className={`od-strike-side-switch-btn${value === mode ? ' active' : ''}`}
+          onClick={() => onChange(mode)}
+          aria-pressed={value === mode}
+        >
+          {mode === 'all' ? 'All' : mode === 'call' ? 'Call' : 'Put'}
+        </button>
+      ))}
     </div>
   )
 }

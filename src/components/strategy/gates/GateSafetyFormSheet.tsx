@@ -1,48 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
-import { IconActionButton } from '@/components/data-display'
-import {
-  gatesEarningsRowClass,
-  gatesFormFieldClass,
-  gatesFormFooterClass,
-  gatesFormGrid3Class,
-  gatesFormGrid4Class,
-  gatesFormGroupTitleClass,
-  gatesFormHintClass,
-  gatesFormPanelClass,
-  gatesFormScrollClass,
-  gatesFormSubheadingClass,
-} from '@/components/strategy/gates/gatesFormUi'
+import styles from '@/components/strategy/gates/gatesForm.module.css'
 import {
   useCreateGateSafety,
   useGateSafetyFull,
   useStrategyDims,
   useUpdateGateSafety,
 } from '@/hooks/useGateSafety'
-import { DEFAULT_GATES, DIM_TYPES, DIM_LABELS } from '@/utils/gateDefaults'
+import { DEFAULT_GATES, DIM_TYPES, DIM_LABELS, type DimFieldName } from '@/utils/gateDefaults'
 import type { GateSafetyPayload } from '@/types/positions'
 
 export type GateSheetMode =
@@ -50,6 +18,8 @@ export type GateSheetMode =
   | { kind: 'create' }
   | { kind: 'edit'; id: number }
   | { kind: 'copy'; id: number }
+
+const DIM_TIME_LABEL = 'Time horizon'
 
 function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj)) as T
@@ -89,7 +59,7 @@ function buildEmptyPayload(): GateSafetyPayload {
   }
 }
 
-function NumberField({
+function GateNumberRow({
   label,
   value,
   onChange,
@@ -103,32 +73,35 @@ function NumberField({
   className?: string
 }) {
   return (
-    <div className={cn(gatesFormFieldClass, className)}>
-      <Label className="text-xs">{label}</Label>
-      <Input
+    <div className={cn(styles.formRow, className)}>
+      <label>{label}</label>
+      <input
         type="number"
         step={step ?? 1}
         value={value ?? ''}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-8 text-sm"
       />
     </div>
   )
 }
 
-function SwitchField({
+function GateSwitchRow({
   label,
   checked,
   onChange,
+  className,
 }: {
   label: string
   checked: boolean | undefined
   onChange: (v: boolean) => void
+  className?: string
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <Label className="text-xs">{label}</Label>
-      <Switch checked={checked ?? false} onCheckedChange={onChange} />
+    <div className={cn(styles.formRow, styles.formRowFull, className)}>
+      <label className={styles.toggleRow}>
+        <Switch checked={checked ?? false} onCheckedChange={onChange} aria-label={label} />
+        <span>{label}</span>
+      </label>
     </div>
   )
 }
@@ -143,7 +116,6 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
   const createMut = useCreateGateSafety()
   const updateMut = useUpdateGateSafety()
 
-  const sheetOpen = mode.kind !== 'closed'
   const editId = mode.kind === 'edit' ? mode.id : null
 
   const [form, setForm] = useState<GateSafetyPayload>(buildEmptyPayload)
@@ -241,318 +213,270 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
   const detailLoading =
     (mode.kind === 'edit' || mode.kind === 'copy') && detailQuery.isLoading
 
+  if (mode.kind === 'closed') return null
+
+  const panelTitle =
+    mode.kind === 'create' || mode.kind === 'copy'
+      ? 'New gate set'
+      : `Edit gate set ${editId}`
+
   return (
-    <Sheet
-      open={sheetOpen}
-      onOpenChange={(open) => {
-        if (!open) onClose()
-      }}
-    >
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-[860px]"
-      >
-        <SheetHeader className="shrink-0 border-b px-6 pb-4 pt-5">
-          <SheetTitle>
-            {mode.kind === 'edit' ? 'Edit Gate Safety Set' : 'Create Gate Safety Set'}
-          </SheetTitle>
-          <SheetDescription>
-            {mode.kind === 'edit'
-              ? `Editing gate set #${editId}`
-              : mode.kind === 'copy'
-                ? 'Creating a copy of an existing gate set'
-                : 'Configure a new risk gate parameter set'}
-          </SheetDescription>
-        </SheetHeader>
+    <section className={styles.formSection}>
+      <div className={styles.stickyHeader}>
+        <h3 className={styles.headerTitle}>{panelTitle}</h3>
+        {detailLoading && !form.name && (
+          <p className={styles.headerHint}>Loading…</p>
+        )}
+        {submitError && (
+          <Alert variant="destructive" className={styles.errorAlert}>
+            <AlertDescription>{(submitError as Error).message}</AlertDescription>
+          </Alert>
+        )}
+      </div>
 
-        {detailLoading ? (
-          <div className="flex-1 space-y-3 p-6">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-32 w-full" />
+      {!detailLoading && (
+        <div className={styles.formGrid}>
+          <div className={cn(styles.formGroup, styles.metadataRoot)}>
+            <h4 className={styles.metadataTitle}>Metadata</h4>
+            <div className={styles.formRow}>
+              <label>Name</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                placeholder="Gate set name"
+              />
+            </div>
+            <div className={styles.formRow}>
+              <label>Version</label>
+              <input
+                type="number"
+                min={1}
+                value={form.version ?? 1}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, version: parseInt(e.target.value, 10) || 1 }))
+                }
+              />
+            </div>
+            <p className={styles.metadataHint}>
+              Optional filters by strategy dimensions. Leave blank to apply broadly.
+            </p>
+            {DIM_TYPES.map((dim) => (
+              <div key={dim} className={styles.formRow}>
+                <label>{dim === 'dim_time' ? DIM_TIME_LABEL : DIM_LABELS[dim as DimFieldName]}</label>
+                <select
+                  value={form[dim] ?? ''}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      [dim]: e.target.value.trim() || null,
+                    }))
+                  }
+                  aria-label={dim === 'dim_time' ? DIM_TIME_LABEL : DIM_LABELS[dim as DimFieldName]}
+                >
+                  <option value="">— Any</option>
+                  {(dimsData?.by_type[dim] ?? []).map((d) => (
+                    <option key={d.strategy_dim_id} value={d.code}>
+                      {d.display_label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            <div className={cn(styles.formRow, styles.formRowFull)}>
+              <label className={styles.toggleRow}>
+                <Switch
+                  checked={form.is_active ?? false}
+                  onCheckedChange={(checked) => setForm((p) => ({ ...p, is_active: checked }))}
+                  aria-label="Active"
+                />
+                <span>Active</span>
+              </label>
+            </div>
           </div>
-        ) : (
-          <div className={gatesFormScrollClass}>
-            {submitError && (
-              <Alert variant="destructive">
-                <AlertDescription>{(submitError as Error).message}</AlertDescription>
-              </Alert>
-            )}
 
-            <div className={gatesFormPanelClass}>
-              <h3 className={gatesFormGroupTitleClass}>Metadata</h3>
-              <div className={gatesFormGrid4Class}>
-                <div className={cn(gatesFormFieldClass, 'col-span-3')}>
-                  <Label className="text-xs">Name *</Label>
-                  <Input
-                    value={form.name}
-                    onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                    placeholder="e.g. NVDA Gamma Default"
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <NumberField
-                  label="Version"
-                  value={form.version}
-                  onChange={(v) => setForm((p) => ({ ...p, version: v }))}
-                />
-              </div>
-              <Separator />
-              <div className={gatesFormGrid3Class}>
-                {DIM_TYPES.map((dim) => (
-                  <div key={dim} className={gatesFormFieldClass}>
-                    <Label className="text-xs">{DIM_LABELS[dim]}</Label>
-                    <Select
-                      value={form[dim] ?? '__none__'}
-                      onValueChange={(v) =>
-                        setForm((p) => ({ ...p, [dim]: v === '__none__' ? null : v }))
-                      }
-                    >
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="—" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">—</SelectItem>
-                        {(dimsData?.by_type[dim] ?? []).map((d) => (
-                          <SelectItem key={d.code} value={d.code}>
-                            {d.display_label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-              </div>
-              <SwitchField
-                label="Available (is_active)"
-                checked={form.is_active}
-                onChange={(v) => setForm((p) => ({ ...p, is_active: v }))}
-              />
-            </div>
+          <div className={styles.formGroup}>
+            <h4 className={styles.groupTitle}>Strategy (structure &amp; earnings)</h4>
+            <GateNumberRow
+              label="min_dte"
+              value={gateNum('strategy.structure.min_dte')}
+              onChange={(v) => setGateValue('strategy.structure.min_dte', v)}
+            />
+            <GateNumberRow
+              label="max_dte"
+              value={gateNum('strategy.structure.max_dte')}
+              onChange={(v) => setGateValue('strategy.structure.max_dte', v)}
+            />
+            <GateNumberRow
+              label="atm_band_pct"
+              value={gateNum('strategy.structure.atm_band_pct')}
+              onChange={(v) => setGateValue('strategy.structure.atm_band_pct', v)}
+              step={0.01}
+            />
+            <GateNumberRow
+              label="blackout_days_before"
+              value={gateNum('strategy.earnings.blackout_days_before')}
+              onChange={(v) => setGateValue('strategy.earnings.blackout_days_before', v)}
+            />
+            <GateNumberRow
+              label="blackout_days_after"
+              value={gateNum('strategy.earnings.blackout_days_after')}
+              onChange={(v) => setGateValue('strategy.earnings.blackout_days_after', v)}
+            />
+            <GateSwitchRow
+              label="trading_hours_only"
+              checked={gateBool('strategy.trading_hours_only')}
+              onChange={(v) => setGateValue('strategy.trading_hours_only', v)}
+            />
+          </div>
 
-            <div className={gatesFormPanelClass}>
-              <h3 className={gatesFormGroupTitleClass}>Strategy — Structure &amp; Earnings</h3>
-              <div className={gatesFormGrid3Class}>
-                <NumberField
-                  label="min_dte"
-                  value={gateNum('strategy.structure.min_dte')}
-                  onChange={(v) => setGateValue('strategy.structure.min_dte', v)}
-                />
-                <NumberField
-                  label="max_dte"
-                  value={gateNum('strategy.structure.max_dte')}
-                  onChange={(v) => setGateValue('strategy.structure.max_dte', v)}
-                />
-                <NumberField
-                  label="atm_band_pct"
-                  value={gateNum('strategy.structure.atm_band_pct')}
-                  onChange={(v) => setGateValue('strategy.structure.atm_band_pct', v)}
-                  step={0.01}
-                />
-              </div>
-              <Separator />
-              <div className={gatesFormGrid3Class}>
-                <NumberField
-                  label="blackout_days_before"
-                  value={gateNum('strategy.earnings.blackout_days_before')}
-                  onChange={(v) => setGateValue('strategy.earnings.blackout_days_before', v)}
-                />
-                <NumberField
-                  label="blackout_days_after"
-                  value={gateNum('strategy.earnings.blackout_days_after')}
-                  onChange={(v) => setGateValue('strategy.earnings.blackout_days_after', v)}
-                />
-                <div />
-              </div>
-              <SwitchField
-                label="trading_hours_only"
-                checked={gateBool('strategy.trading_hours_only')}
-                onChange={(v) => setGateValue('strategy.trading_hours_only', v)}
-              />
-            </div>
+          <div className={styles.formGroup}>
+            <h4 className={styles.groupTitle}>State (delta, market, liquidity, system)</h4>
+            <GateNumberRow
+              label="epsilon_band"
+              value={gateNum('state.delta.epsilon_band')}
+              onChange={(v) => setGateValue('state.delta.epsilon_band', v)}
+            />
+            <GateNumberRow
+              label="threshold_hedge_shares"
+              value={gateNum('state.delta.threshold_hedge_shares')}
+              onChange={(v) => setGateValue('state.delta.threshold_hedge_shares', v)}
+            />
+            <GateNumberRow
+              label="max_delta_limit"
+              value={gateNum('state.delta.max_delta_limit')}
+              onChange={(v) => setGateValue('state.delta.max_delta_limit', v)}
+            />
+            <GateNumberRow
+              label="vol_window_min"
+              value={gateNum('state.market.vol_window_min')}
+              onChange={(v) => setGateValue('state.market.vol_window_min', v)}
+            />
+            <GateNumberRow
+              label="stale_ts_threshold_ms"
+              value={gateNum('state.market.stale_ts_threshold_ms')}
+              onChange={(v) => setGateValue('state.market.stale_ts_threshold_ms', v)}
+            />
+            <GateNumberRow
+              label="wide_spread_pct"
+              value={gateNum('state.liquidity.wide_spread_pct')}
+              onChange={(v) => setGateValue('state.liquidity.wide_spread_pct', v)}
+              step={0.01}
+            />
+            <GateNumberRow
+              label="extreme_spread_pct"
+              value={gateNum('state.liquidity.extreme_spread_pct')}
+              onChange={(v) => setGateValue('state.liquidity.extreme_spread_pct', v)}
+              step={0.01}
+            />
+            <GateNumberRow
+              label="data_lag_threshold_ms"
+              value={gateNum('state.system.data_lag_threshold_ms')}
+              onChange={(v) => setGateValue('state.system.data_lag_threshold_ms', v)}
+            />
+          </div>
 
-            <div className={gatesFormPanelClass}>
-              <h3 className={gatesFormGroupTitleClass}>
-                State — Delta / Market / Liquidity / System
-              </h3>
-              <p className={gatesFormSubheadingClass}>Delta</p>
-              <div className={gatesFormGrid3Class}>
-                <NumberField
-                  label="epsilon_band"
-                  value={gateNum('state.delta.epsilon_band')}
-                  onChange={(v) => setGateValue('state.delta.epsilon_band', v)}
-                />
-                <NumberField
-                  label="threshold_hedge_shares"
-                  value={gateNum('state.delta.threshold_hedge_shares')}
-                  onChange={(v) => setGateValue('state.delta.threshold_hedge_shares', v)}
-                />
-                <NumberField
-                  label="max_delta_limit"
-                  value={gateNum('state.delta.max_delta_limit')}
-                  onChange={(v) => setGateValue('state.delta.max_delta_limit', v)}
-                />
-              </div>
-              <Separator />
-              <p className={gatesFormSubheadingClass}>Market</p>
-              <div className={gatesFormGrid3Class}>
-                <NumberField
-                  label="vol_window_min"
-                  value={gateNum('state.market.vol_window_min')}
-                  onChange={(v) => setGateValue('state.market.vol_window_min', v)}
-                />
-                <NumberField
-                  label="stale_ts_threshold_ms"
-                  value={gateNum('state.market.stale_ts_threshold_ms')}
-                  onChange={(v) => setGateValue('state.market.stale_ts_threshold_ms', v)}
-                />
-                <div />
-              </div>
-              <Separator />
-              <p className={gatesFormSubheadingClass}>Liquidity</p>
-              <div className={gatesFormGrid3Class}>
-                <NumberField
-                  label="wide_spread_pct"
-                  value={gateNum('state.liquidity.wide_spread_pct')}
-                  onChange={(v) => setGateValue('state.liquidity.wide_spread_pct', v)}
-                  step={0.01}
-                />
-                <NumberField
-                  label="extreme_spread_pct"
-                  value={gateNum('state.liquidity.extreme_spread_pct')}
-                  onChange={(v) => setGateValue('state.liquidity.extreme_spread_pct', v)}
-                  step={0.01}
-                />
-                <div />
-              </div>
-              <Separator />
-              <p className={gatesFormSubheadingClass}>System</p>
-              <div className={gatesFormGrid3Class}>
-                <NumberField
-                  label="data_lag_threshold_ms"
-                  value={gateNum('state.system.data_lag_threshold_ms')}
-                  onChange={(v) => setGateValue('state.system.data_lag_threshold_ms', v)}
-                />
-                <div />
-                <div />
-              </div>
-            </div>
+          <div className={styles.formGroup}>
+            <h4 className={styles.groupTitle}>Intent (hedge)</h4>
+            <GateNumberRow
+              label="min_hedge_shares"
+              value={gateNum('intent.hedge.min_hedge_shares')}
+              onChange={(v) => setGateValue('intent.hedge.min_hedge_shares', v)}
+            />
+            <GateNumberRow
+              label="cooldown_seconds"
+              value={gateNum('intent.hedge.cooldown_seconds')}
+              onChange={(v) => setGateValue('intent.hedge.cooldown_seconds', v)}
+            />
+            <GateNumberRow
+              label="max_hedge_shares_per_order"
+              value={gateNum('intent.hedge.max_hedge_shares_per_order')}
+              onChange={(v) => setGateValue('intent.hedge.max_hedge_shares_per_order', v)}
+            />
+            <GateNumberRow
+              label="min_price_move_pct"
+              value={gateNum('intent.hedge.min_price_move_pct')}
+              onChange={(v) => setGateValue('intent.hedge.min_price_move_pct', v)}
+              step={0.01}
+            />
+          </div>
 
-            <div className={gatesFormPanelClass}>
-              <h3 className={gatesFormGroupTitleClass}>Intent — Hedge</h3>
-              <div className={gatesFormGrid4Class}>
-                <NumberField
-                  label="min_hedge_shares"
-                  value={gateNum('intent.hedge.min_hedge_shares')}
-                  onChange={(v) => setGateValue('intent.hedge.min_hedge_shares', v)}
-                />
-                <NumberField
-                  label="cooldown_seconds"
-                  value={gateNum('intent.hedge.cooldown_seconds')}
-                  onChange={(v) => setGateValue('intent.hedge.cooldown_seconds', v)}
-                />
-                <NumberField
-                  label="max_hedge_shares_per_order"
-                  value={gateNum('intent.hedge.max_hedge_shares_per_order')}
-                  onChange={(v) => setGateValue('intent.hedge.max_hedge_shares_per_order', v)}
-                />
-                <NumberField
-                  label="min_price_move_pct"
-                  value={gateNum('intent.hedge.min_price_move_pct')}
-                  onChange={(v) => setGateValue('intent.hedge.min_price_move_pct', v)}
-                  step={0.01}
-                />
-              </div>
-            </div>
+          <div className={styles.formGroup}>
+            <h4 className={styles.groupTitle}>Guard (risk)</h4>
+            <GateNumberRow
+              label="max_daily_hedge_count"
+              value={gateNum('guard.risk.max_daily_hedge_count')}
+              onChange={(v) => setGateValue('guard.risk.max_daily_hedge_count', v)}
+            />
+            <GateNumberRow
+              label="max_position_shares"
+              value={gateNum('guard.risk.max_position_shares')}
+              onChange={(v) => setGateValue('guard.risk.max_position_shares', v)}
+            />
+            <GateNumberRow
+              label="max_daily_loss_usd"
+              value={gateNum('guard.risk.max_daily_loss_usd')}
+              onChange={(v) => setGateValue('guard.risk.max_daily_loss_usd', v)}
+            />
+            <GateNumberRow
+              label="max_net_delta_shares"
+              value={gateNum('guard.risk.max_net_delta_shares')}
+              onChange={(v) => setGateValue('guard.risk.max_net_delta_shares', v)}
+            />
+            <GateNumberRow
+              label="max_spread_pct"
+              value={gateNum('guard.risk.max_spread_pct')}
+              onChange={(v) => setGateValue('guard.risk.max_spread_pct', v)}
+              step={0.01}
+            />
+            <GateSwitchRow
+              label="paper_trade"
+              checked={gateBool('guard.risk.paper_trade')}
+              onChange={(v) => setGateValue('guard.risk.paper_trade', v)}
+            />
+          </div>
 
-            <div className={gatesFormPanelClass}>
-              <h3 className={gatesFormGroupTitleClass}>Guard — Risk</h3>
-              <div className={gatesFormGrid3Class}>
-                <NumberField
-                  label="max_daily_hedge_count"
-                  value={gateNum('guard.risk.max_daily_hedge_count')}
-                  onChange={(v) => setGateValue('guard.risk.max_daily_hedge_count', v)}
+          <div className={styles.formGroup}>
+            <h4 className={styles.groupTitle}>Earnings dates (blacklist YYYY-MM-DD)</h4>
+            {earningsDates.map((d, idx) => (
+              <div key={idx} className={cn(styles.formRow, styles.formRowInline)}>
+                <input
+                  type="date"
+                  value={d}
+                  onChange={(e) => updateEarningsDate(idx, e.target.value)}
                 />
-                <NumberField
-                  label="max_position_shares"
-                  value={gateNum('guard.risk.max_position_shares')}
-                  onChange={(v) => setGateValue('guard.risk.max_position_shares', v)}
-                />
-                <NumberField
-                  label="max_daily_loss_usd"
-                  value={gateNum('guard.risk.max_daily_loss_usd')}
-                  onChange={(v) => setGateValue('guard.risk.max_daily_loss_usd', v)}
-                />
-                <NumberField
-                  label="max_net_delta_shares"
-                  value={gateNum('guard.risk.max_net_delta_shares')}
-                  onChange={(v) => setGateValue('guard.risk.max_net_delta_shares', v)}
-                />
-                <NumberField
-                  label="max_spread_pct"
-                  value={gateNum('guard.risk.max_spread_pct')}
-                  onChange={(v) => setGateValue('guard.risk.max_spread_pct', v)}
-                  step={0.01}
-                />
-                <div />
-              </div>
-              <SwitchField
-                label="paper_trade"
-                checked={gateBool('guard.risk.paper_trade')}
-                onChange={(v) => setGateValue('guard.risk.paper_trade', v)}
-              />
-            </div>
-
-            <div className={gatesFormPanelClass}>
-              <div className="flex items-center justify-between gap-2">
-                <h3 className={gatesFormGroupTitleClass}>Earnings Dates</h3>
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={addEarningsDate}>
-                  <Plus className="mr-1 h-3 w-3" />
-                  Add date
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={styles.removeBtn}
+                  onClick={() => removeEarningsDate(idx)}
+                >
+                  Remove
                 </Button>
               </div>
-              {earningsDates.length === 0 && (
-                <p className={gatesFormHintClass}>No earnings dates configured.</p>
-              )}
-              <div className={gatesFormGrid3Class}>
-                {earningsDates.map((d, idx) => (
-                  <div key={idx} className={gatesEarningsRowClass}>
-                    <Input
-                      value={d}
-                      onChange={(e) => updateEarningsDate(idx, e.target.value)}
-                      placeholder="YYYY-MM-DD"
-                      className="h-8 flex-1 font-mono text-sm"
-                    />
-                    <IconActionButton
-                      title="Remove earnings date"
-                      ariaLabel={`Remove earnings date row ${idx + 1}`}
-                      tone="danger"
-                      onClick={() => removeEarningsDate(idx)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </IconActionButton>
-                  </div>
-                ))}
-              </div>
+            ))}
+            <div className={cn(styles.formRow, styles.formRowFull)}>
+              <Button type="button" variant="outline" size="sm" onClick={addEarningsDate}>
+                Add date
+              </Button>
             </div>
           </div>
-        )}
 
-        <SheetFooter className="shrink-0 border-t px-6 py-3">
-          <div className={gatesFormFooterClass}>
-            <Button variant="outline" size="sm" onClick={onClose} disabled={submitting}>
-              Cancel
-            </Button>
+          <div className={styles.formActions}>
             <Button
-              size="sm"
+              type="button"
               onClick={() => void handleSubmit()}
               disabled={submitting || !form.name.trim()}
             >
-              {submitting ? 'Saving…' : mode.kind === 'edit' ? 'Save changes' : 'Create'}
+              {submitting ? 'Saving…' : mode.kind === 'edit' ? 'Update' : 'Create'}
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
+              Cancel
             </Button>
           </div>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </div>
+      )}
+    </section>
   )
 }

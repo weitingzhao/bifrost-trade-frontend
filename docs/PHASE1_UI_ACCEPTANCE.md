@@ -47,5 +47,12 @@ rg '<h1' src/pages --glob '*.tsx'
 ## Sign-off
 
 - [x] Phase 2 code complete: Discovery `PageHeader`、去全局 Legacy shell、删除 `optionDiscovery.css`（2026-05-31）
-- [ ] Owner verified all rows above including Discovery functional regression (date: ________)
-- [ ] Phase 2 Owner sign-off: `docs/PHASE2_DISCOVERY_ACCEPTANCE.md`
+- [x] Batch 1 Owner verified — core monitoring four routes（2026-06-03；见 `PHASE1_SIGNOFF_MASTER.md` Batch 1）
+- [x] Batch 2 Owner verified — portfolio activity four routes（2026-06-03；ledger / performance / model-analysis / transfer）
+- [x] Batch 3 Owner verified — research eight routes + Stock Inspector（2026-06-03；见 `PHASE1_SIGNOFF_MASTER.md` Batch 3）
+- [x] Batch 4 Owner verified — strategy six routes（2026-06-03；option-category / structures / opportunities / allocations / gates / win-rate）
+- [x] Batch 5 Owner verified — api / daemon / celery / socket（+ logs N/A）（2026-06-03）
+- [x] Batch 6 Owner verified — subscribe / coverage/* / feed/*（+ `/settings/ib` Batch 6 parity N/A — Massive 历史数据；IB 连接/交易等仍保留）（2026-06-03）
+- [x] Cross-cutting rows（global strip、sidebar lamp、canvas）（2026-06-03）
+- [x] Owner verified all rows above including Discovery functional regression (date: 2026-06-03)
+- [x] Phase 2 Owner sign-off: `docs/PHASE2_DISCOVERY_ACCEPTANCE.md`（2026-06-03）

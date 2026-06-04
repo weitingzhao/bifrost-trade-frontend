@@ -166,3 +166,547 @@
   aspect-ratio: 640 / 240;
   min-height: 0;
 }
+
+/* ---------- Option Discovery: Strike window + strike ladder (Legacy parity) ---------- */
+
+.discoveryRoot :global(.option-discovery-strike-window) {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.discoveryRoot :global(.option-discovery-strike-window-summary) {
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  user-select: none;
+  list-style: revert;
+}
+
+.discoveryRoot :global(.option-discovery-strike-window-count) {
+  font-weight: 400;
+  margin-left: auto;
+}
+
+.discoveryRoot :global(.option-discovery-strike-window-hint) {
+  margin: 0 0.75rem 0.5rem;
+}
+
+.discoveryRoot :global(.option-discovery-strike-window > .option-discovery-strikes-content) {
+  padding: 0 0.75rem 0.75rem;
+}
+
+.discoveryRoot :global(.option-discovery-strike-window .option-discovery-strikes-with-header) {
+  display: flex;
+  flex-direction: column;
+}
+
+.discoveryRoot :global(.option-discovery-strikes-with-header .strike-ladder-layout) {
+  margin-top: 0;
+}
+
+.discoveryRoot :global(.option-discovery-strike-window .strike-ladder-layout) {
+  display: flex;
+}
+
+.discoveryRoot :global(.option-discovery-strike-window .strike-ladder-wrap),
+.discoveryRoot :global(.option-discovery-strike-window .strike-ladder-col .strike-ladder-wrap) {
+  max-height: 18rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.discoveryRoot :global(.strike-ladder-layout) {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  margin-top: 0.25rem;
+}
+
+.discoveryRoot :global(.strike-ladder-controls) {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--secondary);
+}
+
+.discoveryRoot :global(.strike-ladder-controls-row) {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.discoveryRoot :global(.strike-ladder-controls-row label) {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.discoveryRoot :global(.strike-ladder-controls-row select) {
+  min-width: 4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.35rem;
+}
+
+.discoveryRoot :global(.strike-ladder-controls-row input[type='number']) {
+  width: 3.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.35rem;
+}
+
+.discoveryRoot :global(.strike-ladder-wrap),
+.discoveryRoot :global(.option-discovery-list-wrap) {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--border) 85%, var(--foreground)) transparent;
+}
+
+.discoveryRoot :global(.strike-ladder-wrap::-webkit-scrollbar),
+.discoveryRoot :global(.option-discovery-list-wrap::-webkit-scrollbar) {
+  width: 8px;
+  height: 8px;
+}
+
+.discoveryRoot :global(.strike-ladder-wrap::-webkit-scrollbar-track),
+.discoveryRoot :global(.option-discovery-list-wrap::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+.discoveryRoot :global(.strike-ladder-wrap::-webkit-scrollbar-thumb),
+.discoveryRoot :global(.option-discovery-list-wrap::-webkit-scrollbar-thumb) {
+  background: color-mix(in srgb, var(--border) 85%, var(--foreground));
+  border-radius: 4px;
+}
+
+.discoveryRoot :global(.strike-ladder-wrap) {
+  flex: 1;
+  min-width: 0;
+  height: 14rem;
+  min-height: 14rem;
+  max-height: 14rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--secondary);
+}
+
+.discoveryRoot :global(.strike-ladder-two-cols) {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.discoveryRoot :global(.strike-ladder-two-cols--single-side .strike-ladder-col) {
+  flex: 1;
+  max-width: none;
+}
+
+.discoveryRoot :global(.strike-ladder-side-mode-row) {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.discoveryRoot :global(.strike-ladder-side-mode-label) {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.discoveryRoot :global(.strike-ladder-col) {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.discoveryRoot :global(.strike-ladder-col-header) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted-foreground);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+}
+
+.discoveryRoot :global(.strike-ladder-col-header-check) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  margin: 0;
+}
+
+.discoveryRoot :global(.strike-ladder-col-header-check input[type='checkbox']) {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, var(--muted-foreground));
+  border-radius: 4px;
+  background: var(--secondary);
+  position: relative;
+  cursor: pointer;
+}
+
+.discoveryRoot :global(.strike-ladder-col-header-check input[type='checkbox']::after) {
+  content: '';
+  position: absolute;
+  left: 0.28rem;
+  top: 0.08rem;
+  width: 0.24rem;
+  height: 0.5rem;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transform-origin: center;
+  transition: transform 0.15s ease;
+}
+
+.discoveryRoot :global(.strike-ladder-col-header-check input[type='checkbox']:checked) {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.discoveryRoot :global(.strike-ladder-col-header-check input[type='checkbox']:checked::after) {
+  transform: rotate(45deg) scale(1);
+}
+
+.discoveryRoot :global(.strike-ladder-col-header-put) {
+  color: var(--color-danger);
+}
+
+.discoveryRoot :global(.strike-ladder-col-header-call) {
+  color: var(--color-success);
+}
+
+.discoveryRoot :global(.strike-ladder-col .strike-ladder-wrap) {
+  border-radius: 0 0 8px 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.discoveryRoot :global(.strike-ladder-col-range) {
+  flex: 0 1 auto;
+  min-width: 10rem;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+
+.discoveryRoot :global(.strike-ladder-col-range .strike-ladder-controls) {
+  border-radius: 0 0 8px 8px;
+  border-top: none;
+  flex: 1 1 auto;
+  flex-shrink: 1;
+  min-height: 14rem;
+  justify-content: flex-start;
+}
+
+.discoveryRoot :global(.strike-ladder-table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.discoveryRoot :global(.strike-ladder-table thead th) {
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.discoveryRoot :global(.strike-ladder-table thead th:first-child) {
+  width: 2.25rem;
+  text-align: center;
+}
+
+.discoveryRoot :global(.strike-ladder-cell-strike--oi) {
+  min-width: 7.25rem;
+  max-width: 9.5rem;
+  padding: 0.25rem 0.5rem !important;
+  vertical-align: top;
+}
+
+.discoveryRoot :global(.strike-ladder-oi-cell) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: stretch;
+}
+
+.discoveryRoot :global(.strike-ladder-oi-strike) {
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-align: center;
+  line-height: 1.1;
+  color: var(--foreground);
+}
+
+.discoveryRoot :global(.strike-ladder-oi-bar) {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+
+.discoveryRoot :global(.strike-ladder-oi-bar-half) {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.discoveryRoot :global(.strike-ladder-oi-bar-half--call) {
+  justify-content: flex-end;
+}
+
+.discoveryRoot :global(.strike-ladder-oi-bar-half--put) {
+  justify-content: flex-start;
+}
+
+.discoveryRoot :global(.strike-ladder-oi-bar-fill) {
+  height: 100%;
+  min-width: 0;
+  border-radius: 1px;
+  transition: width 0.15s ease;
+}
+
+.discoveryRoot :global(.strike-ladder-oi-bar-fill--call) {
+  background: linear-gradient(90deg, rgba(52, 199, 89, 0.15), var(--color-success));
+}
+
+.discoveryRoot :global(.strike-ladder-oi-bar-fill--put) {
+  background: linear-gradient(90deg, var(--color-danger), rgba(220, 53, 69, 0.2));
+}
+
+.discoveryRoot :global(.strike-ladder-oi-bar-center) {
+  width: 2px;
+  flex-shrink: 0;
+  background: var(--muted-foreground);
+  opacity: 0.65;
+  align-self: stretch;
+}
+
+.discoveryRoot :global(.strike-ladder-oi-nums) {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 0.25rem;
+  font-size: 0.58rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.discoveryRoot :global(.strike-ladder-oi-nums-c) {
+  color: var(--color-success);
+}
+
+.discoveryRoot :global(.strike-ladder-oi-nums-p) {
+  color: var(--color-danger);
+}
+
+.discoveryRoot :global(.strike-ladder-table tbody td) {
+  padding: 0.2rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.discoveryRoot :global(.strike-ladder-table tbody tr) {
+  transition: background 0.15s ease;
+}
+
+.discoveryRoot :global(.strike-ladder-table tbody tr:hover) {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.discoveryRoot :global(.strike-ladder-table tbody tr.strike-ladder-row-atm) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.discoveryRoot :global(.strike-ladder-table tbody tr.strike-ladder-row-atm td) {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.discoveryRoot :global(.strike-ladder-table .strike-ladder-cell-check) {
+  width: 2.5rem;
+  text-align: center;
+  padding-left: 0.25rem;
+}
+
+.discoveryRoot :global(.strike-ladder-table .strike-ladder-cell-check input[type='checkbox']) {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, var(--muted-foreground));
+  border-radius: 4px;
+  background: var(--background);
+  position: relative;
+  cursor: pointer;
+}
+
+.discoveryRoot :global(.strike-ladder-table .strike-ladder-cell-check input[type='checkbox']::after) {
+  content: '';
+  position: absolute;
+  left: 0.28rem;
+  top: 0.08rem;
+  width: 0.24rem;
+  height: 0.5rem;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transform-origin: center;
+  transition: transform 0.15s ease;
+}
+
+.discoveryRoot :global(.strike-ladder-table .strike-ladder-cell-check input[type='checkbox']:checked) {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.discoveryRoot :global(.strike-ladder-table .strike-ladder-cell-check input[type='checkbox']:checked::after) {
+  transform: rotate(45deg) scale(1);
+}
+
+.discoveryRoot :global(.strike-ladder-table .strike-ladder-cell-strike) {
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.discoveryRoot :global(.strike-ladder-controls-price) {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  padding: 0.2rem 0;
+}
+
+.discoveryRoot :global(.strike-ladder-toolbar) {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.discoveryRoot :global(.strike-ladder-controls-summary) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  padding-top: 0.15rem;
+}
+
+.discoveryRoot :global(.section-header-icon-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--secondary);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.discoveryRoot :global(.section-header-icon-btn:hover) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.discoveryRoot :global(.od-strike-range-icon-btn.section-header-icon-btn:hover),
+.discoveryRoot :global(.od-strike-range-icon-btn.section-header-icon-btn:active) {
+  transform: none;
+}
+
+.discoveryRoot :global(.od-strike-side-switch) {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  gap: 2px;
+}
+
+.discoveryRoot :global(.od-strike-side-switch-btn) {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.28rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.2;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.discoveryRoot :global(.od-strike-side-switch-btn:hover:not(:disabled):not(.active)) {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.discoveryRoot :global(.od-strike-side-switch-btn.active) {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px color-mix(in srgb, #000 25%, transparent);
+}
+
+.discoveryRoot :global(.option-discovery-view-scope-hint) {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin: 0;
+}

@@ -67,5 +67,5 @@ npm run check:legacy-css
 
 ## Sign-off
 
-- [ ] Owner verified functional table above (date: ________)
+- [x] Owner verified functional table above (2026-06-03)
 - [x] Phase 2b CSS shrink (code complete; build chunk gzip &lt; 5 kB)

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ArrowRight, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { fuzzyMatchWatchlistItem } from '@/utils/watchlistFuzzy'
 import { watchlistItemLabel } from '@/utils/watchlistHelpers'
 import type { WatchlistItem } from '@/types/market'
+import { cn } from '@/lib/utils'
 import { watchlistWarnLineClass } from './watchlistUi'
 
 interface Props {
@@ -12,9 +13,17 @@ interface Props {
   sizingCategoryId: number | null
   addPending: boolean
   onPromote: (contractKey: string) => Promise<void>
+  /** Bottom Sizing sheet row — parent supplies section title. */
+  inline?: boolean
 }
 
-export function PromoteToSizing({ stocks, sizingCategoryId, addPending, onPromote }: Props) {
+export function PromoteToSizing({
+  stocks,
+  sizingCategoryId,
+  addPending,
+  onPromote,
+  inline = false,
+}: Props) {
   const [contractKey, setContractKey] = useState('')
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
@@ -37,25 +46,26 @@ export function PromoteToSizing({ stocks, sizingCategoryId, addPending, onPromot
 
   return (
     <div className="space-y-2">
-      <h4 className="text-sm font-semibold">Sizing sheet</h4>
-      <div className="flex items-center gap-2" ref={rootRef}>
-        <div className="relative flex-1 max-w-xs">
+      {!inline ? <h4 className="text-sm font-semibold">Sizing sheet</h4> : null}
+      <div className={inline ? 'flex flex-nowrap items-stretch gap-2' : 'flex items-center gap-2'} ref={rootRef}>
+        <div className={inline ? 'relative min-w-0 max-w-[12rem] flex-1' : 'relative flex-1 max-w-xs'}>
           <button
             type="button"
-            className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm"
+            className="flex h-9 w-full items-center justify-between rounded-lg border border-input bg-secondary px-3 text-sm shadow-sm transition-colors hover:border-primary/45 hover:bg-secondary/80"
             onClick={() => setOpen(o => !o)}
             aria-expanded={open}
+            aria-label="Pick new symbol — choose a watchlist row to move to Sizing"
           >
             <span
               className={
                 selected
-                  ? 'min-w-0 flex-1 text-left font-mono whitespace-normal break-words [overflow-wrap:anywhere]'
-                  : 'text-muted-foreground'
+                  ? 'min-w-0 flex-1 truncate text-left font-mono text-xs'
+                  : 'truncate text-left text-muted-foreground'
               }
             >
-              {selected ? watchlistItemLabel(selected) : 'Pick symbol…'}
+              {selected ? watchlistItemLabel(selected) : 'pick new symbol'}
             </span>
-            <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+            <ChevronDown className={cn('h-4 w-4 shrink-0 opacity-50 transition-transform', open && 'rotate-180')} />
           </button>
           {open && (
             <ul className="absolute z-20 mt-1 w-full max-h-48 overflow-auto rounded-md border bg-popover shadow-md py-1 text-sm">
@@ -90,15 +100,29 @@ export function PromoteToSizing({ stocks, sizingCategoryId, addPending, onPromot
             </ul>
           )}
         </div>
-        <Button
-          type="button"
-          size="sm"
-          disabled={!contractKey.trim() || sizingCategoryId == null || addPending}
-          onClick={() => void onPromote(contractKey)}
-          title="Move to Sizing"
-        >
-          Move to Sizing →
-        </Button>
+        {inline ? (
+          <Button
+            type="button"
+            size="icon"
+            className="shrink-0"
+            disabled={!contractKey.trim() || sizingCategoryId == null || addPending}
+            onClick={() => void onPromote(contractKey)}
+            title="Move to Sizing"
+            aria-label="Move to Sizing"
+          >
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            disabled={!contractKey.trim() || sizingCategoryId == null || addPending}
+            onClick={() => void onPromote(contractKey)}
+            title="Move to Sizing"
+          >
+            Move to Sizing →
+          </Button>
+        )}
       </div>
       {sizingCategoryId == null && (
         <p className={watchlistWarnLineClass}>

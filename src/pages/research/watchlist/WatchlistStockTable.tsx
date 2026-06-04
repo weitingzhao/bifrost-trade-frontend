@@ -31,7 +31,11 @@ import {
   watchlistOptCellClass,
   watchlistQuoteCellClass,
   watchlistStockTableClass,
+  watchlistSizingSheetQuoteCellClass,
+  watchlistSizingSheetTableClass,
+  watchlistSizingSheetTableWrapClass,
 } from './watchlistUi'
+import { sizingRowSelectedClass } from './sizingUi'
 
 export interface WatchlistStockTableProps {
   items: WatchlistItem[]
@@ -49,6 +53,8 @@ export interface WatchlistStockTableProps {
   onRemove: (item: WatchlistItem) => void
   onAddOption?: (item: WatchlistItem) => void
   symbolFromItem: (item: WatchlistItem) => string
+  /** Compact symbol sheet in Sizing tab (narrow column, selected-row accent). */
+  sizingSheet?: boolean
 }
 
 export function WatchlistStockTable({
@@ -67,17 +73,25 @@ export function WatchlistStockTable({
   onRemove,
   onAddOption,
   symbolFromItem,
+  sizingSheet,
 }: WatchlistStockTableProps) {
   if (items.length === 0) return null
 
+  const colWidths = sizingSheet
+    ? { symbol: '36%', quote: undefined as string | undefined, actions: '4.5rem' }
+    : WATCHLIST_STOCK_COL_WIDTHS
+
   return (
-    <DenseDataTable tableClassName={watchlistStockTableClass}>
+    <DenseDataTable
+      wrapClassName={sizingSheet ? watchlistSizingSheetTableWrapClass : undefined}
+      tableClassName={sizingSheet ? watchlistSizingSheetTableClass : watchlistStockTableClass}
+    >
       <colgroup>
-        <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.symbol }} />
-        <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.quote }} />
+        <col style={{ width: colWidths.symbol }} />
+        <col style={colWidths.quote ? { width: colWidths.quote } : undefined} />
         {!hideOpt && <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.opt }} />}
         {!hideCategory && <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.category }} />}
-        <col style={{ width: WATCHLIST_STOCK_COL_WIDTHS.actions }} />
+        <col style={{ width: colWidths.actions ?? WATCHLIST_STOCK_COL_WIDTHS.actions }} />
       </colgroup>
       <DenseTableHeader>
         <DenseTableHeadRow>
@@ -106,7 +120,8 @@ export function WatchlistStockTable({
             <DenseTableRow
               key={item.contract_key}
               className={cn(
-                isSelected && 'bg-primary/10',
+                isSelected && sizingRowSelectedClass,
+                isSelected && !sizingSheet && 'bg-primary/10',
                 !optOn && !hideOpt && 'opacity-70',
               )}
             >
@@ -121,7 +136,7 @@ export function WatchlistStockTable({
                         : `Open inspector for ${watchlistItemLabel(item)}`
                     }
                     variant="stock"
-                    className="text-sm"
+                    className={cn('text-sm', sizingSheet && 'break-all')}
                   />
                   {held && (
                     <DenseTag variant="neutral" size="cell">
@@ -130,8 +145,13 @@ export function WatchlistStockTable({
                   )}
                 </div>
               </DenseTableCell>
-              <DenseTableCell className={cn(denseTableNumCell, watchlistQuoteCellClass)}>
-                <QuoteCell quote={q} />
+              <DenseTableCell
+                className={cn(
+                  denseTableNumCell,
+                  sizingSheet ? watchlistSizingSheetQuoteCellClass : watchlistQuoteCellClass,
+                )}
+              >
+                <QuoteCell quote={q} compact={sizingSheet} />
               </DenseTableCell>
               {!hideOpt && (
                 <DenseTableCell className={watchlistOptCellClass}>

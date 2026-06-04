@@ -1,16 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react'
-import { cn } from '@/lib/utils'
-import { Checkbox } from '@/components/ui/checkbox'
-import {
-  DenseDataTable,
-  DenseTableBody,
-  DenseTableCell,
-  DenseTableHead,
-  DenseTableHeader,
-  DenseTableHeadRow,
-  DenseTableRow,
-  denseTableNumCell,
-} from '@/components/data-display'
+import type { Dispatch, Ref, SetStateAction } from 'react'
 import type { StrikeOiPair } from './StrikeLadderPanel'
 
 function fmtOiCompact(n: number | null): string {
@@ -22,21 +10,7 @@ function fmtOiCompact(n: number | null): string {
   return String(Math.round(n))
 }
 
-function StrikeOiBar({ widthPct, variant }: { widthPct: number; variant: 'call' | 'put' }) {
-  return (
-    <div className="flex h-1.5 min-w-0 flex-1 overflow-hidden rounded-sm bg-muted/50">
-      <div
-        className={cn(
-          'h-full rounded-sm transition-[width]',
-          variant === 'call' ? 'bg-green-500/70' : 'bg-destructive/70',
-        )}
-        style={{ width: `${widthPct}%` }}
-      />
-    </div>
-  )
-}
-
-function StrikeLadderOiStrikeCell({
+export function StrikeLadderOiStrikeCell({
   strike,
   oiMax,
   oiByStrike,
@@ -48,11 +22,7 @@ function StrikeLadderOiStrikeCell({
   showOi: boolean
 }) {
   if (!showOi) {
-    return (
-      <DenseTableCell className={cn(denseTableNumCell, 'py-1 font-mono text-xs')}>
-        {strike.toFixed(1)}
-      </DenseTableCell>
-    )
+    return <td className="strike-ladder-cell-strike">{strike.toFixed(1)}</td>
   }
   const o = oiByStrike.get(strike)
   const c = o?.c ?? null
@@ -61,23 +31,33 @@ function StrikeLadderOiStrikeCell({
   const cw = c != null ? Math.min(100, (c / denom) * 100) : 0
   const pw = p != null ? Math.min(100, (p / denom) * 100) : 0
   return (
-    <DenseTableCell className="py-1 align-top">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="text-center font-mono text-xs font-semibold tabular-nums">{strike.toFixed(1)}</div>
-        <div className="flex items-center gap-0.5" aria-hidden>
-          <StrikeOiBar widthPct={cw} variant="call" />
-          <div className="w-px shrink-0 self-stretch bg-border" />
-          <StrikeOiBar widthPct={pw} variant="put" />
+    <td className="strike-ladder-cell-strike strike-ladder-cell-strike--oi">
+      <div className="strike-ladder-oi-cell">
+        <div className="strike-ladder-oi-strike">{strike.toFixed(1)}</div>
+        <div className="strike-ladder-oi-bar" aria-hidden="true">
+          <div className="strike-ladder-oi-bar-half strike-ladder-oi-bar-half--call">
+            <div
+              className="strike-ladder-oi-bar-fill strike-ladder-oi-bar-fill--call"
+              style={{ width: `${cw}%` }}
+            />
+          </div>
+          <div className="strike-ladder-oi-bar-center" />
+          <div className="strike-ladder-oi-bar-half strike-ladder-oi-bar-half--put">
+            <div
+              className="strike-ladder-oi-bar-fill strike-ladder-oi-bar-fill--put"
+              style={{ width: `${pw}%` }}
+            />
+          </div>
         </div>
         <div
-          className="flex justify-between text-[0.62rem] tabular-nums text-muted-foreground"
+          className="strike-ladder-oi-nums"
           aria-label={`Call OI ${fmtOiCompact(c)}, Put OI ${fmtOiCompact(p)}`}
         >
-          <span className="text-green-600 dark:text-green-500">C {fmtOiCompact(c)}</span>
-          <span className="text-destructive">P {fmtOiCompact(p)}</span>
+          <span className="strike-ladder-oi-nums-c">C {fmtOiCompact(c)}</span>
+          <span className="strike-ladder-oi-nums-p">P {fmtOiCompact(p)}</span>
         </div>
       </div>
-    </DenseTableCell>
+    </td>
   )
 }
 
@@ -90,6 +70,7 @@ type Props = {
   showOi: boolean
   oiMax: number
   oiByStrike: Map<number, StrikeOiPair>
+  wrapRef?: Ref<HTMLDivElement>
 }
 
 export function DiscoveryStrikeLadderTable({
@@ -101,42 +82,44 @@ export function DiscoveryStrikeLadderTable({
   showOi,
   oiMax,
   oiByStrike,
+  wrapRef,
 }: Props) {
   return (
-    <div role="grid" aria-label={ariaLabel}>
-    <DenseDataTable wrapClassName="rounded-md border-border/60" tableClassName="text-xs">
-      <DenseTableHeader>
-        <DenseTableHeadRow>
-          <DenseTableHead className="h-7 w-12 px-2">Select</DenseTableHead>
-          <DenseTableHead className="h-7 px-2">{showOi ? 'Strike / OI' : 'Strike'}</DenseTableHead>
-        </DenseTableHeadRow>
-      </DenseTableHeader>
-      <DenseTableBody>
-        {strikes.map(s => (
-          <DenseTableRow key={s} className={cn('cursor-default', rowClassName?.(s))}>
-            <DenseTableCell className="w-12 px-2 py-1">
-              <Checkbox
-                checked={multiSelectStrikes.includes(s)}
-                onCheckedChange={checked => {
-                  if (checked === true) {
-                    setMultiSelectStrikes(prev => [...prev, s].sort((a, b) => a - b))
-                  } else {
-                    setMultiSelectStrikes(prev => prev.filter(x => x !== s))
-                  }
-                }}
-                aria-label={`Select strike ${s}`}
+    <div className="strike-ladder-wrap" ref={wrapRef}>
+      <table className="strike-ladder-table" role="grid" aria-label={ariaLabel}>
+        <thead>
+          <tr>
+            <th scope="col">Select</th>
+            <th scope="col">{showOi ? 'Strike / OI' : 'Strike'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {strikes.map(s => (
+            <tr key={s} className={rowClassName?.(s)}>
+              <td className="strike-ladder-cell-check">
+                <input
+                  type="checkbox"
+                  checked={multiSelectStrikes.includes(s)}
+                  onChange={() => {
+                    if (multiSelectStrikes.includes(s)) {
+                      setMultiSelectStrikes(prev => prev.filter(x => x !== s))
+                    } else {
+                      setMultiSelectStrikes(prev => [...prev, s].sort((a, b) => a - b))
+                    }
+                  }}
+                  aria-label={`Select strike ${s}`}
+                />
+              </td>
+              <StrikeLadderOiStrikeCell
+                strike={s}
+                oiMax={oiMax}
+                oiByStrike={oiByStrike}
+                showOi={showOi}
               />
-            </DenseTableCell>
-            <StrikeLadderOiStrikeCell
-              strike={s}
-              oiMax={oiMax}
-              oiByStrike={oiByStrike}
-              showOi={showOi}
-            />
-          </DenseTableRow>
-        ))}
-      </DenseTableBody>
-    </DenseDataTable>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

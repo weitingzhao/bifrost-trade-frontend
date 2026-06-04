@@ -130,19 +130,17 @@ export function DiscoveryChainLayers(props: Props) {
         enabled={sym !== '' && exp !== ''}
         lockedHint="Select symbol and chain expiry in section 2."
       >
-        <details className="group rounded-lg border border-border bg-card/50 open:pb-2" open aria-label="Strike window">
-          <summary className="cursor-pointer list-none px-3 py-2 font-medium [&::-webkit-details-marker]:hidden">
-            <span className="inline-flex flex-wrap items-baseline gap-2">
-              Strike window
-              <DiscoveryHint as="span" className="mt-0 text-xs font-normal">
-                {props.effectiveStrikes.length} selected · {props.computedStrikes.length} in range
-              </DiscoveryHint>
-            </span>
-          </summary>
-          <div className="px-3 pb-2">
-            <DiscoveryHint className="mb-2">
-              Select strikes for the option chain table and window-scoped charts below.
+        <details className="option-discovery-strike-window" open aria-label="Strike window">
+          <summary className="option-discovery-strike-window-summary">
+            Strike window
+            <DiscoveryHint as="span" className="option-discovery-strike-window-count mt-0">
+              {props.effectiveStrikes.length} selected · {props.computedStrikes.length} in range
             </DiscoveryHint>
+          </summary>
+          <DiscoveryHint className="option-discovery-strike-window-hint">
+            Select strikes for the option chain table and window-scoped charts below.
+          </DiscoveryHint>
+          <div className="option-discovery-strikes-content">
             <StrikeLadderPanel
               strikesLoading={props.strikesLoading}
               computedStrikes={props.computedStrikes}

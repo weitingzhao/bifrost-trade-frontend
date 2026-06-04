@@ -1,14 +1,4 @@
 import type { Dispatch, Ref, SetStateAction } from 'react'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { cn } from '@/lib/utils'
 import { fmtUsd } from '@/lib/format'
 import {
   STRIKE_COUNT_OPTIONS,
@@ -17,49 +7,12 @@ import {
   type StdDevOption,
 } from '@/utils/optionDiscovery/strikePresets'
 import { DiscoveryHint } from './DiscoveryHint'
-import { DiscoveryIconButton } from './DiscoveryIconButton'
-import { DiscoveryScrollArea } from './DiscoveryScrollArea'
 import { DiscoverySideToggle, type StrikeSideMode } from './DiscoverySideToggle'
 import { DiscoveryStrikeLadderTable } from './DiscoveryStrikeLadderTable'
 
 export interface StrikeOiPair {
   c: number | null
   p: number | null
-}
-
-function StrikeLadderTable({
-  ariaLabel,
-  strikes,
-  rowClassName,
-  multiSelectStrikes,
-  setMultiSelectStrikes,
-  showOi,
-  oiMax,
-  oiByStrike,
-}: {
-  ariaLabel: string
-  strikes: number[]
-  rowClassName?: (strike: number) => string
-  multiSelectStrikes: number[]
-  setMultiSelectStrikes: Dispatch<SetStateAction<number[]>>
-  showOi: boolean
-  oiMax: number
-  oiByStrike: Map<number, StrikeOiPair>
-}) {
-  return (
-    <DiscoveryScrollArea className="rounded-md border border-border/60">
-      <DiscoveryStrikeLadderTable
-        ariaLabel={ariaLabel}
-        strikes={strikes}
-        rowClassName={rowClassName}
-        multiSelectStrikes={multiSelectStrikes}
-        setMultiSelectStrikes={setMultiSelectStrikes}
-        showOi={showOi}
-        oiMax={oiMax}
-        oiByStrike={oiByStrike}
-      />
-    </DiscoveryScrollArea>
-  )
 }
 
 export function StrikeLadderPanel({
@@ -108,13 +61,15 @@ export function StrikeLadderPanel({
 
   if (strikesLoading) {
     return (
-      <DiscoveryHint className="mt-1">Loading strikes for selected expiration…</DiscoveryHint>
+      <DiscoveryHint className="strike-ladder-hint-below" style={{ marginTop: '0.35rem', marginBottom: 0 }}>
+        Loading strikes for selected expiration…
+      </DiscoveryHint>
     )
   }
 
   if (computedStrikes.length === 0) {
     return (
-      <DiscoveryHint className="mt-1">
+      <DiscoveryHint className="strike-ladder-hint-below" style={{ marginTop: '0.35rem', marginBottom: 0 }}>
         {strikesAvailable
           ? 'Select symbol with daily data or adjust count/std dev.'
           : 'Select symbol and expiration to see strikes.'}
@@ -129,72 +84,54 @@ export function StrikeLadderPanel({
   const aboveReversed = [...above].sort((a, b) => b - a)
   const hasZones = below.length > 0 || at.length > 0 || above.length > 0
 
-  const toggleAll = (strikes: number[], checked: boolean) => {
-    if (checked) {
-      setMultiSelectStrikes(prev => [...new Set([...prev, ...strikes])].sort((a, b) => a - b))
-    } else {
-      const set = new Set(strikes)
-      setMultiSelectStrikes(prev => prev.filter(x => !set.has(x)))
-    }
-  }
-
   return (
-    <div className="flex min-w-0 flex-col gap-3">
-      <div className="flex min-w-0 flex-wrap gap-3">
-        <div className="w-full min-w-[10rem] shrink-0 rounded-lg border border-border bg-secondary/40 p-2 sm:max-w-[11rem]">
-          <div className="mb-2 text-[0.7rem] font-bold uppercase tracking-wider text-muted-foreground">
-            Strikes Range
-          </div>
-          <div className="flex flex-col gap-2 text-sm">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="option-discovery-strike-count" className="text-xs text-muted-foreground">
-                Count
-              </label>
-              <Select
+    <div className="option-discovery-list-with-header option-discovery-strikes-with-header">
+      <div className="strike-ladder-layout">
+        <div className="strike-ladder-col strike-ladder-col-range">
+          <div className="strike-ladder-col-header">Strikes Range</div>
+          <div className="strike-ladder-controls">
+            <div className="strike-ladder-controls-row">
+              <label htmlFor="option-discovery-strike-count">Count</label>
+              <select
+                id="option-discovery-strike-count"
                 value={String(strikeCountOption)}
-                onValueChange={v =>
-                  setStrikeCountOption(v === 'all' ? 'all' : (Number(v) as StrikeCountOption))
+                onChange={e =>
+                  setStrikeCountOption(
+                    e.target.value === 'all' ? 'all' : (Number(e.target.value) as StrikeCountOption),
+                  )
                 }
+                aria-label="Strike count"
               >
-                <SelectTrigger id="option-discovery-strike-count" size="sm" className="w-full" aria-label="Strike count">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STRIKE_COUNT_OPTIONS.map(c => (
-                    <SelectItem key={String(c)} value={String(c)}>
-                      {String(c)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {STRIKE_COUNT_OPTIONS.map(c => (
+                  <option key={String(c)} value={String(c)}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="flex flex-col gap-1">
-              <label htmlFor="option-discovery-std-dev" className="text-xs text-muted-foreground">
-                Std dev
-              </label>
-              <Select
+            <div className="strike-ladder-controls-row">
+              <label htmlFor="option-discovery-std-dev">Std dev</label>
+              <select
+                id="option-discovery-std-dev"
                 value={String(stdDevOption)}
-                onValueChange={v =>
-                  setStdDevOption(v === 'custom' ? 'custom' : (Number(v) as StdDevOption))
+                onChange={e =>
+                  setStdDevOption(
+                    e.target.value === 'custom' ? 'custom' : (Number(e.target.value) as StdDevOption),
+                  )
                 }
+                aria-label="Standard deviations"
               >
-                <SelectTrigger id="option-discovery-std-dev" size="sm" className="w-full" aria-label="Standard deviations">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STD_DEV_OPTIONS.map(d => (
-                    <SelectItem key={String(d)} value={String(d)}>
-                      {String(d)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {STD_DEV_OPTIONS.map(d => (
+                  <option key={String(d)} value={String(d)}>
+                    {d}
+                  </option>
+                ))}
+              </select>
               {stdDevOption === 'custom' && (
-                <Input
+                <input
                   type="number"
                   min={0.1}
                   step={0.1}
-                  className="h-7 text-xs"
                   value={customStdDev}
                   onChange={e => setCustomStdDev(e.target.value)}
                   aria-label="Custom std dev"
@@ -202,42 +139,64 @@ export function StrikeLadderPanel({
               )}
             </div>
             {spot != null && (below.length > 0 || above.length > 0 || at.length > 0) && (
-              <p className="text-xs text-muted-foreground">Current price: {fmtUsd(spot)}</p>
+              <div className="strike-ladder-controls-price">Current price: {fmtUsd(spot)}</div>
             )}
-            <div className="flex gap-1">
-              <DiscoveryIconButton
+            <div className="strike-ladder-toolbar">
+              <button
+                type="button"
+                className="section-header-icon-btn od-strike-range-icon-btn"
                 onClick={() => setMultiSelectStrikes([...computedStrikes])}
                 aria-label="Select all"
                 title="Select all strikes in range"
               >
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
                   <path d="M9 12l2 2 4-4" />
                   <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9" />
                 </svg>
-              </DiscoveryIconButton>
-              <DiscoveryIconButton
+              </button>
+              <button
+                type="button"
+                className="section-header-icon-btn od-strike-range-icon-btn"
                 onClick={() => setMultiSelectStrikes([])}
                 aria-label="Clear"
                 title="Clear selected strikes"
               >
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
                   <path d="M3 6h18" />
                   <path d="M8 6V4h8v2" />
                   <path d="M19 6l-1 14H6L5 6" />
                 </svg>
-              </DiscoveryIconButton>
+              </button>
             </div>
-            <div className="space-y-0.5 text-xs text-muted-foreground tabular-nums">
+            <div className="strike-ladder-controls-summary">
               <div>
-                {effectiveStrikes.length} selected{multiSelectStrikes.length > 0 ? ' (custom)' : ' (preset)'}
+                {effectiveStrikes.length} selected
+                {multiSelectStrikes.length > 0 ? ' (custom)' : ' (preset)'}
               </div>
               <div>{computedStrikes.length} in range</div>
             </div>
-            <div className="flex flex-col gap-1.5 pt-1">
-              <span
-                className="text-xs text-muted-foreground"
-                id="option-discovery-strike-sides-label"
-              >
+            <div className="strike-ladder-controls-row strike-ladder-side-mode-row">
+              <span className="strike-ladder-side-mode-label" id="option-discovery-strike-sides-label">
                 Sides
               </span>
               <DiscoverySideToggle
@@ -251,62 +210,72 @@ export function StrikeLadderPanel({
 
         {hasZones ? (
           <div
-            className={cn(
-              'grid min-w-0 flex-1 gap-3',
-              strikeSideMode !== 'all' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2',
-            )}
+            className={`strike-ladder-two-cols${strikeSideMode !== 'all' ? ' strike-ladder-two-cols--single-side' : ''}`}
           >
             {showCallSide && (
-              <div className="min-w-0">
-                <div className="mb-1.5 flex items-center gap-2 border-b border-green-500/30 pb-1">
-                  <Checkbox
-                    id="od-ladder-check-all-call"
-                    checked={
-                      aboveReversed.length + at.length > 0 &&
-                      [...aboveReversed, ...at].every(s => multiSelectStrikes.includes(s))
-                    }
-                    onCheckedChange={c => toggleAll([...aboveReversed, ...at], c === true)}
-                    aria-label="Check all OTM Call"
-                  />
-                  <label htmlFor="od-ladder-check-all-call" className="text-sm font-semibold text-green-600 dark:text-green-500">
-                    OTM Call
+              <div className="strike-ladder-col">
+                <div className="strike-ladder-col-header strike-ladder-col-header-call">
+                  <label className="strike-ladder-col-header-check">
+                    <input
+                      type="checkbox"
+                      checked={
+                        aboveReversed.length + at.length > 0 &&
+                        [...aboveReversed, ...at].every(s => multiSelectStrikes.includes(s))
+                      }
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setMultiSelectStrikes(prev =>
+                            [...new Set([...prev, ...aboveReversed, ...at])].sort((a, b) => a - b),
+                          )
+                        } else {
+                          setMultiSelectStrikes(prev =>
+                            prev.filter(x => !aboveReversed.includes(x) && !at.includes(x)),
+                          )
+                        }
+                      }}
+                      aria-label="Check all OTM Call"
+                    />
+                    <span>OTM Call</span>
                   </label>
                 </div>
-                <div ref={otmCallWrapRef}>
-                  <StrikeLadderTable
-                    ariaLabel="OTM Call strikes"
-                    strikes={[...aboveReversed, ...at]}
-                    rowClassName={s =>
-                      at.includes(s)
-                        ? 'bg-accent/15 ring-1 ring-inset ring-primary/40'
-                        : 'hover:bg-green-500/5'
-                    }
-                    multiSelectStrikes={multiSelectStrikes}
-                    setMultiSelectStrikes={setMultiSelectStrikes}
-                    showOi={strikeLadderShowOi}
-                    oiMax={ladderOiMax}
-                    oiByStrike={strikeOiByStrike}
-                  />
-                </div>
+                <DiscoveryStrikeLadderTable
+                  ariaLabel="OTM Call strikes"
+                  strikes={[...aboveReversed, ...at]}
+                  rowClassName={s => (at.includes(s) ? 'strike-ladder-row-atm' : 'strike-ladder-row-otm-call')}
+                  multiSelectStrikes={multiSelectStrikes}
+                  setMultiSelectStrikes={setMultiSelectStrikes}
+                  showOi={strikeLadderShowOi}
+                  oiMax={ladderOiMax}
+                  oiByStrike={strikeOiByStrike}
+                  wrapRef={otmCallWrapRef}
+                />
               </div>
             )}
             {showPutSide && (
-              <div className="min-w-0">
-                <div className="mb-1.5 flex items-center gap-2 border-b border-destructive/30 pb-1">
-                  <Checkbox
-                    id="od-ladder-check-all-put"
-                    checked={below.length > 0 && below.every(s => multiSelectStrikes.includes(s))}
-                    onCheckedChange={c => toggleAll(below, c === true)}
-                    aria-label="Check all OTM Put"
-                  />
-                  <label htmlFor="od-ladder-check-all-put" className="text-sm font-semibold text-destructive">
-                    OTM Put
+              <div className="strike-ladder-col">
+                <div className="strike-ladder-col-header strike-ladder-col-header-put">
+                  <label className="strike-ladder-col-header-check">
+                    <input
+                      type="checkbox"
+                      checked={below.length > 0 && below.every(s => multiSelectStrikes.includes(s))}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setMultiSelectStrikes(prev =>
+                            [...new Set([...prev, ...below])].sort((a, b) => a - b),
+                          )
+                        } else {
+                          setMultiSelectStrikes(prev => prev.filter(x => !below.includes(x)))
+                        }
+                      }}
+                      aria-label="Check all OTM Put"
+                    />
+                    <span>OTM Put</span>
                   </label>
                 </div>
-                <StrikeLadderTable
+                <DiscoveryStrikeLadderTable
                   ariaLabel="OTM Put strikes"
                   strikes={below}
-                  rowClassName={() => 'hover:bg-destructive/5'}
+                  rowClassName={() => 'strike-ladder-row-otm-put'}
                   multiSelectStrikes={multiSelectStrikes}
                   setMultiSelectStrikes={setMultiSelectStrikes}
                   showOi={strikeLadderShowOi}
@@ -317,17 +286,15 @@ export function StrikeLadderPanel({
             )}
           </div>
         ) : (
-          <div className="min-w-0 flex-1">
-            <StrikeLadderTable
-              ariaLabel="Strikes"
-              strikes={[...computedStrikes].sort((a, b) => a - b)}
-              multiSelectStrikes={multiSelectStrikes}
-              setMultiSelectStrikes={setMultiSelectStrikes}
-              showOi={strikeLadderShowOi}
-              oiMax={ladderOiMax}
-              oiByStrike={strikeOiByStrike}
-            />
-          </div>
+          <DiscoveryStrikeLadderTable
+            ariaLabel="Strikes"
+            strikes={[...computedStrikes].sort((a, b) => a - b)}
+            multiSelectStrikes={multiSelectStrikes}
+            setMultiSelectStrikes={setMultiSelectStrikes}
+            showOi={strikeLadderShowOi}
+            oiMax={ladderOiMax}
+            oiByStrike={strikeOiByStrike}
+          />
         )}
       </div>
     </div>

@@ -273,6 +273,12 @@ export default function StructuresPage() {
         )}
       </Card>
 
+      <StructureFormSheet
+        mode={formMode}
+        onClose={() => setFormMode({ kind: 'closed' })}
+        onSaved={() => void refetch()}
+      />
+
       <Card variant="elevated" size="sm" className="gap-3 p-2.5">
         <h2 className={structuresSectionTitleClass}>Strategy history</h2>
         <CardContent className="p-0">
@@ -283,12 +289,6 @@ export default function StructuresPage() {
           />
         </CardContent>
       </Card>
-
-      <StructureFormSheet
-        mode={formMode}
-        onClose={() => setFormMode({ kind: 'closed' })}
-        onSaved={() => void refetch()}
-      />
 
       <Dialog open={availabilityError != null} onOpenChange={(v) => { if (!v) setAvailabilityError(null) }}>
         <DialogContent showCloseButton={false}>

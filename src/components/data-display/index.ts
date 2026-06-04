@@ -17,15 +17,20 @@ export { InlinePnl, PnlCell } from './PnlDisplay'
 export { DenseTag, DenseTagButton, type DenseTagSize, type DenseTagVariant } from './DenseTag'
 export {
   denseTagClass,
+  denseEntityFilterChipClass,
+  type DenseEntityFilterVariant,
   denseCategoryTagCellClass,
   denseCategoryTagPillClass,
   denseSymbolTagCellClass,
   denseSymbolTagPillClass,
   denseTagVariantFromTone,
   denseTagVariantFromExecSource,
+  denseOptionCategoryLabelClass,
+  type DenseOptionCategoryVariant,
 } from './denseTagClasses'
 export { ExecSourceBadge } from './ExecSourceBadge'
 export { DenseLinkButton, SymbolLinkButton } from './DenseLinkButton'
+export { DenseOptionCategoryLabel } from './DenseOptionCategoryLabel'
 export { IconActionButton } from './IconActionButton'
 export { ExpandToggleCell } from './ExpandToggleCell'
 export {

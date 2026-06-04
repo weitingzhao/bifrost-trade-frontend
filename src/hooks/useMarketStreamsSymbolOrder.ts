@@ -15,14 +15,17 @@ import {
 
 export function useMarketStreamsSymbolOrder() {
   const queryClient = useQueryClient()
-  const [localOrder, setLocalOrder] = useState<Record<string, string[]>>(loadSymbolOrderFromStorage)
+  const [symbolOrderByCategory, setSymbolOrderByCategory] = useState<Record<string, string[]>>(
+    loadSymbolOrderFromStorage,
+  )
 
-  const { data: serverOrder } = useQuery({
+  useQuery({
     queryKey: QUERY_KEYS.portfolio.marketStreamsSymbolOrder,
     queryFn: async () => {
       const res = await fetchMarketStreamsSymbolOrder()
       if (res.ok && res.order && Object.keys(res.order).length > 0) {
         saveSymbolOrderToStorage(res.order)
+        setSymbolOrderByCategory(res.order)
         return res.order
       }
       return null
@@ -30,24 +33,32 @@ export function useMarketStreamsSymbolOrder() {
     staleTime: 60_000,
   })
 
-  const symbolOrderByCategory =
-    serverOrder && Object.keys(serverOrder).length > 0 ? serverOrder : localOrder
-
   const applySymbolReorder = useCallback(
-    (category: string, fromSymbol: string, toSymbol: string) => {
-      setLocalOrder(prev => {
-        const base =
-          serverOrder && Object.keys(serverOrder).length > 0 ? serverOrder : prev
-        const next = applySymbolReorderInCategory(base, category, fromSymbol, toSymbol)
+    (
+      category: string,
+      fromSymbol: string,
+      toSymbol: string,
+      fallbackSymbols: string[],
+    ) => {
+      setSymbolOrderByCategory(prev => {
+        const next = applySymbolReorderInCategory(
+          prev,
+          category,
+          fromSymbol,
+          toSymbol,
+          fallbackSymbols,
+        )
+        if (next === prev) return prev
         saveSymbolOrderToStorage(next)
         const symbols = next[category] ?? []
         putMarketStreamsSymbolOrder(category, symbols).catch(() => {
           /* localStorage already updated */
         })
+        queryClient.setQueryData(QUERY_KEYS.portfolio.marketStreamsSymbolOrder, next)
         return next
       })
     },
-    [serverOrder],
+    [queryClient],
   )
 
   const invalidate = useCallback(() => {

@@ -6,7 +6,7 @@ import {
   DenseTableCell,
   IconActionButton,
   ExecSourceBadge,
-  DenseTag,
+  DenseOptionCategoryLabel,
   denseTable,
   denseTableEntityCell,
 } from '@/components/data-display'
@@ -134,9 +134,9 @@ export function OpenOptionExecTableRow({
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableEntityCell, denseTable.mutedMeta)}>
         {exec.strategy_opportunity_name?.trim() ? (
-          <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+          <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
             {exec.strategy_opportunity_name.trim()}
-          </DenseTag>
+          </DenseOptionCategoryLabel>
         ) : (
           '—'
         )}

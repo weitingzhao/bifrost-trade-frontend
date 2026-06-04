@@ -197,6 +197,20 @@ export default function LivePage() {
   const openOrdersUpdatedAt =
     openOrdersFetched && openOrdersUpdatedMs ? openOrdersUpdatedMs / 1000 : null
 
+  const handleSymbolReorder = useCallback(
+    (category: string, fromSymbol: string, toSymbol: string) => {
+      const rows =
+        streams.sortedRowsByCategory[category] ?? streams.rowsByCategory[category] ?? []
+      applySymbolReorder(
+        category,
+        fromSymbol,
+        toSymbol,
+        rows.map(r => r.symbol),
+      )
+    },
+    [applySymbolReorder, streams.sortedRowsByCategory, streams.rowsByCategory],
+  )
+
   return (
     <PageShell padding="compact">
       <div className={livePageStackClass}>
@@ -252,7 +266,7 @@ export default function LivePage() {
           optionLiveBasisByRow={optionLiveBasisByRow}
           streamHostId={streams.streamHostId}
           streamSecondaryId={streams.streamSecondaryId}
-          onSymbolReorder={applySymbolReorder}
+          onSymbolReorder={handleSymbolReorder}
           onOptRowReorder={streams.applyOptRowReorder}
           streamsLamp={streamsLamp}
           summarySinceDollar={streams.streamsSummary.totalCostPnl}

@@ -11,9 +11,10 @@ import {
   GroupHeaderRow,
   GroupSubtotalRow,
   InlinePnl,
-  DenseTag,
+  DenseOptionCategoryLabel,
   denseTable,
   denseTableEntityCell,
+  denseTableEntityLink,
   denseTableNumCell,
 } from '@/components/data-display'
 import {
@@ -93,9 +94,14 @@ function PositionRow({
     <DenseTableRow>
       <DenseTableCell className={denseTableEntityCell}>
         {pos.symbol?.trim() ? (
-          <DenseTag variant="symbol" size="cell" className="whitespace-normal">
+          <span
+            className={cn(
+              denseTableEntityLink,
+              'font-semibold tracking-wide text-entity-symbol',
+            )}
+          >
             {pos.symbol.trim().toUpperCase()}
-          </DenseTag>
+          </span>
         ) : (
           '—'
         )}
@@ -124,18 +130,18 @@ function PositionRow({
       </DenseTableCell>
       <DenseTableCell className={denseTableEntityCell}>
         {pos.strategy_opportunity_name?.trim() ? (
-          <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+          <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
             {pos.strategy_opportunity_name.trim()}
-          </DenseTag>
+          </DenseOptionCategoryLabel>
         ) : (
           '—'
         )}
       </DenseTableCell>
       <DenseTableCell className={denseTableEntityCell}>
         {pos.strategy_instance_label?.trim() ? (
-          <DenseTag variant="instance" size="cell" className="whitespace-normal font-mono">
+          <DenseOptionCategoryLabel variant="instance" className="whitespace-normal font-mono">
             {pos.strategy_instance_label.trim()}
-          </DenseTag>
+          </DenseOptionCategoryLabel>
         ) : (
           '—'
         )}
@@ -168,7 +174,9 @@ export function StockPositionsTable({
       <DenseDataTable tableClassName="min-w-[960px]">
         <DenseTableHeader>
           <DenseTableHeadRow>
-            <DenseTableHead className="w-[5rem]">Symbol</DenseTableHead>
+            <DenseTableHead className="min-w-[5.5rem] max-w-none overflow-visible">
+              Symbol
+            </DenseTableHead>
             <DenseTableHead align="right">Qty</DenseTableHead>
             <DenseTableHead align="right">Cost</DenseTableHead>
             <DenseTableHead align="right">Total Cost</DenseTableHead>

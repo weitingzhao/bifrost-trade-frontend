@@ -12,6 +12,7 @@ import {
   GrandTotalRow,
   InlinePnl,
   DenseLinkButton,
+  DenseOptionCategoryLabel,
   DenseTag,
   denseTable,
   denseTableEntityLink,
@@ -221,9 +222,9 @@ export function InstanceTab({
                   {id != null ? (
                     <div className="flex min-w-0 flex-col gap-0.5">
                       {oppName ? (
-                        <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+                        <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
                           {oppName}
-                        </DenseTag>
+                        </DenseOptionCategoryLabel>
                       ) : null}
                       {onOpenStrategy ? (
                         <span
@@ -241,22 +242,22 @@ export function InstanceTab({
                           />
                         </span>
                       ) : (
-                        <DenseTag variant="instance" size="cell" className="font-mono whitespace-normal">
+                        <DenseOptionCategoryLabel variant="instance" className="whitespace-normal font-mono">
                           {instLabel}
-                        </DenseTag>
+                        </DenseOptionCategoryLabel>
                       )}
                     </div>
                   ) : (
                     <span className="inline-flex flex-wrap gap-1">
                       {oppName ? (
-                        <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+                        <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
                           {oppName}
-                        </DenseTag>
+                        </DenseOptionCategoryLabel>
                       ) : null}
                       {instLabel ? (
-                        <DenseTag variant="instance" size="cell" className="font-mono whitespace-normal">
+                        <DenseOptionCategoryLabel variant="instance" className="whitespace-normal font-mono">
                           {instLabel}
-                        </DenseTag>
+                        </DenseOptionCategoryLabel>
                       ) : null}
                     </span>
                   )}

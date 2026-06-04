@@ -1,13 +1,22 @@
 import { Link } from 'react-router-dom'
 import type { Execution } from '@/types/positions'
 import { executionInstanceLabel } from '@/utils/ledger/ledgerOptHelpers'
-import { DenseTag } from '@/components/data-display'
+import {
+  DenseOptionCategoryLabel,
+  denseOptionCategoryLabelClass,
+} from '@/components/data-display'
+import { cn } from '@/lib/utils'
 
 function formatAllocQty(q: number): string {
   const n = Number(q)
   if (!Number.isFinite(n)) return '—'
   return n % 1 === 0 ? String(n) : String(Number(n.toFixed(6)))
 }
+
+const instanceLinkClass = cn(
+  denseOptionCategoryLabelClass('instance'),
+  'hover:underline whitespace-normal',
+)
 
 export function LedgerStgInsCell({ ex }: { ex: Execution }) {
   const strategyName = ex.strategy_opportunity_name?.trim()
@@ -23,9 +32,9 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
     return (
       <div className="flex max-w-[280px] flex-col items-start gap-0.5 whitespace-normal">
         {strategyName ? (
-          <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+          <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
             {strategyName}
-          </DenseTag>
+          </DenseOptionCategoryLabel>
         ) : null}
         <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-label="Instance allocations">
           {allocs!.map(a => {
@@ -36,18 +45,16 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
             return (
               <li key={sid} className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
                 {label ? (
-                  <DenseTag variant="instance" size="cell" className="whitespace-normal">
+                  <DenseOptionCategoryLabel variant="instance" className="whitespace-normal">
                     {label}
-                  </DenseTag>
+                  </DenseOptionCategoryLabel>
                 ) : null}
                 <Link
                   to={`/strategy/instances/${sid}`}
-                  className="inline-flex shrink-0"
+                  className={instanceLinkClass}
                   title={label ? `Open instance #${sid} (${label})` : `Open instance #${sid}`}
                 >
-                  <DenseTag variant="instance" size="cell" className="font-mono">
-                    #{sid}
-                  </DenseTag>
+                  #{sid}
                 </Link>
                 <span className="text-[0.6875rem] tabular-nums text-muted-foreground">
                   {formatAllocQty(qty)}
@@ -66,29 +73,27 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
       <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5">
         {strategyName ? (
           <>
-            <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+            <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
               {strategyName}
-            </DenseTag>
+            </DenseOptionCategoryLabel>
             <span className="text-muted-foreground/70">/</span>
           </>
         ) : null}
         {instLabel ? (
-          <DenseTag variant="instance" size="cell" className="whitespace-normal">
+          <DenseOptionCategoryLabel variant="instance" className="whitespace-normal">
             {instLabel}
-          </DenseTag>
+          </DenseOptionCategoryLabel>
         ) : null}
         <Link
           to={`/strategy/instances/${instanceId}`}
-          className="inline-flex shrink-0"
+          className={instanceLinkClass}
           title={
             instLabel
               ? `Open instance #${instanceId} (${instLabel})`
               : `Open instance #${instanceId}`
           }
         >
-          <DenseTag variant="instance" size="cell" className="font-mono">
-            #{instanceId}
-          </DenseTag>
+          #{instanceId}
         </Link>
       </span>
     )
@@ -96,9 +101,9 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
 
   if (strategyName) {
     return (
-      <DenseTag variant="strategy" size="cell" className="whitespace-normal">
+      <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
         {strategyName}
-      </DenseTag>
+      </DenseOptionCategoryLabel>
     )
   }
 

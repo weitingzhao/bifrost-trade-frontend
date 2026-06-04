@@ -17,16 +17,41 @@ Reusable styling for data-heavy monitoring pages (Positions, Trade Ledger, Perfo
 
 ## Business semantic colors (site-wide, fixed)
 
-| Concept | Token (light/dark in `src/index.css`) | Utility | Accessor |
-|---------|---------------------------------------|---------|----------|
+Three independent taxonomies — do not mix tokens across them. Living contract: Settings → **UI Design System** §2 Entity · §3 Option Category · §4 Position Category.
+
+### Entity (asset class)
+
+| Concept | Token | Utility | Accessor |
+|---------|-------|---------|----------|
+| Stock | `--color-entity-symbol` | `text-entity-symbol` | `DenseLinkButton variant="stock"` / read-only `strong` + `text-entity-symbol` in identity columns |
+| Option contract | `--color-entity-option` | `text-entity-option` | `DenseLinkButton variant="option"` |
+| Fixed Income | `--color-entity-fixed-income` *(planned)* | `text-entity-fixed-income` *(planned)* | Tab / legend / group title — entity color, not Position Category purple |
+| Cash-like | `--color-entity-cash-like` *(planned)* | `text-entity-cash-like` *(planned)* | Tab / legend / group title — entity color, not Position Category purple |
+
+### Option Category (strategy domain)
+
+| Concept | Token | Utility | Accessor |
+|---------|-------|---------|----------|
+| Strategy | `--color-entity-strategy` | `text-entity-strategy` | `DenseTag` / `DenseLinkButton variant="strategy"` |
+| Instance | `--color-entity-instance` | `text-entity-instance` | `DenseTag` / `DenseLinkButton variant="instance"` |
+| Opportunity | `--color-option-category-opportunity` *(planned)* | *(planned)* | Planned `DenseTag` / `DenseLinkButton` variant |
+| Structure | `--color-option-category-structure` *(planned)* | *(planned)* | Planned `DenseTag` / `DenseLinkButton` variant |
+
+Option contract strings remain **Option Entity** — never render as Option Category tags.
+
+### Position Category (portfolio taxonomy)
+
+| Concept | Token | Accessor |
+|---------|-------|----------|
+| watchlist / portfolio (fixed labels) + user names (Fix Income, Tech, Watching…) | `--color-entity-category` | Cell/filter: `DenseTag` / `DenseTagButton` + `denseEntityFilterChipClass` · **Group header row**: `GroupHeaderRow variant="category"` (purple text, `bg-secondary` band, `border-y` — separates group from symbol rows; no pill) |
+
+### PnL
+
+| Concept | Token | Utility | Accessor |
+|---------|-------|---------|----------|
 | Realized profit | `--color-profit` | `text-profit` | `pnlColorClass(v)` / `PnlCell` / `InlinePnl` |
 | Realized loss | `--color-loss` | `text-loss` | `pnlColorClass(v)` |
 | Unrealized PnL (always yellow) | `--color-unrealized` | `text-unrealized` | `unrealizedPnlColorClass(v)` |
-| Symbol | `--color-entity-symbol` | `text-entity-symbol` | `DenseTag variant="symbol"` / `DenseLinkButton variant="stock"` |
-| Option contract | `--color-entity-option` | `text-entity-option` | `DenseLinkButton variant="option"` |
-| Strategy | `--color-entity-strategy` | `text-entity-strategy` | `DenseTag` / `DenseLinkButton variant="strategy"` |
-| Instance | `--color-entity-instance` | `text-entity-instance` | `DenseTag` / `DenseLinkButton variant="instance"` |
-| Category | `--color-entity-category` | — | `DenseTag variant="category"` |
 
 Pages must use the accessor column — never raw palette classes (`text-emerald-*`, `text-red-*`, `text-sky-*`) or inline hex. Guarded by a ratchet rule in `scripts/check-legacy-css.sh` (`RAW_PNL_PALETTE_BASELINE`).
 
@@ -92,7 +117,7 @@ Long labels in **non-identity** detail rows: clip with `denseTable.detailCellCli
 
 ### Identity columns — full text, no ellipsis
 
-**Symbol**, **Contract** (option contract string), **Strategy** name, and **Instance** label must never show `…` in grids. Prefer wrapping inside the cell over truncation.
+**Stock**, **Contract** (option contract string), **Strategy** name, and **Instance** label must never show `…` in grids. Prefer wrapping inside the cell over truncation. Stock/Option are Entity (§2); Strategy/Instance are Option Category (§3).
 
 | Layer | Class / primitive |
 |-------|-------------------|
@@ -391,29 +416,77 @@ Always use `pnlColorClass` from `@/utils/dailyChange` or `InlinePnl` / `PnlCell`
 
 Use `SegmentControl` / `IncludeExcludeToggle` from `data-display` instead of custom CSS pill groups.
 
-## Category / symbol tags
+## Entity · Option Category · Position Category
 
-Purple **position category** pills (Trade Ledger Stocks tab style) and blue **symbol highlight** pills are centralized in `DenseTag`:
+Three separate design tracks — never mix tokens across them.
+
+Living contract: Settings → UI Design System — **§2 Entity** · **§3 Option Category** · **§4 Position Category**.
+
+**Scoped Fix Prompts:** each section has **Copy Prompt** with site / domain / page scope — use to drive Agent code fixes (see `src/pages/settings/uiDesignSystem/`).
+
+### Entity placement matrix (§2)
+
+| Context | Stock | Option | Fixed Income | Cash-like |
+|---------|-------|--------|--------------|-----------|
+| Table identity column | `DenseLinkButton variant="stock"` or `strong` + `text-entity-symbol` | `DenseLinkButton variant="option"` | Planned entity link (token pending) | Planned entity link (token pending) |
+| Tab / chart legend / group title | `text-entity-symbol` | `text-entity-option` | amber entity color (planned) | violet entity color (planned) |
+
+Never use `DenseTag variant="symbol"` in a grid **Stock** column. `DenseTag variant="symbol"` is for highlight contexts only (e.g. Ledger pill mode), not primary identity columns.
+
+### Option Category matrix (§3)
+
+| Context | Strategy | Instance | Opportunity | Structure |
+|---------|----------|----------|-------------|-----------|
+| Dedicated identity column | `DenseLinkButton variant="strategy"` | `DenseLinkButton variant="instance"` | Planned (token pending) | Planned (token pending) |
+| Composite / tag cell | `DenseTag variant="strategy"` | `DenseTag variant="instance"` | Planned variant | Planned variant |
+
+Never use Option Category tags for option contract strings — those are Option **Entity**.
+
+## Position category (§4 — purple Tag — one language everywhere)
+
+**watchlist** and **portfolio** are two fixed Position Category labels. User-defined names (Fix Income, Tech, Watching…) share the same purple outline pill. Category is a portfolio taxonomy label, not a tradable entity. Use the same outline pill in:
 
 ```tsx
-import { DenseTag, GroupHeaderRow } from '@/components/data-display'
+import {
+  DenseTag,
+  DenseTagButton,
+  GroupHeaderRow,
+  denseEntityFilterChipClass,
+} from '@/components/data-display'
 
-// Table cell
+// Table Category column
 <DenseTableCell>
   <DenseTag variant="category" size="cell">{categoryName}</DenseTag>
 </DenseTableCell>
 
-// Group header row (Accounts, Live Market Streams, …)
+// Table group header — elevated band + top/bottom border; purple label text only (no pill)
 <GroupHeaderRow colSpan={n} label={category} variant="category" />
 
-// Larger pill in ledger group bars
-<DenseTag variant="category" size="pill">{category}</DenseTag>
+// Page filter — neutral gray when off; entity color when aria-pressed
+<DenseTagButton
+  variant="category"
+  size="pill"
+  className={denseEntityFilterChipClass('category', isActive)}
+  aria-pressed={isActive}
+  onClick={...}
+>
+  {categoryName}
+</DenseTagButton>
+```
+
+**Not category:** Host/Secondary account filters, time presets, status toggles → neutral pills or `SegmentControl`, never `entity-category` purple.
+
+**Reference:** [FilterPillBar.tsx](../src/pages/market/live/FilterPillBar.tsx) · [LedgerStkTable.tsx](../src/pages/portfolio/ledger/LedgerStkTable.tsx) · [UiDesignSystemPage.tsx](../src/pages/settings/UiDesignSystemPage.tsx) §4
+
+## Stock highlight tag (secondary contexts only)
+
+For non-identity highlight (e.g. Ledger grouped bars when pill mode is on):
+
+```tsx
 <DenseTag variant="symbol" size="pill">{symbol}</DenseTag>
 ```
 
-Tokens: [denseTagClasses.ts](../src/components/data-display/denseTagClasses.ts) · component: [DenseTag.tsx](../src/components/data-display/DenseTag.tsx)
-
-**Reference:** [LedgerStkTable.tsx](../src/pages/portfolio/ledger/LedgerStkTable.tsx) · [StockPositionsTable.tsx](../src/components/accounts/StockPositionsTable.tsx) (via `GroupHeaderRow`)
+Do not use this in Positions/Live **Stock** identity columns — use `DenseLinkButton variant="stock"` or `text-entity-symbol` text per §2 matrix.
 
 ## Table section layout
 

@@ -2,6 +2,8 @@
 
 **Stage**: New Frontend + Legacy API (phase 1). Compare **bifrost-trade-frontend** (port 5173) with **bifrost-trader-engine/frontend** on the **same** Legacy API endpoints (`VITE_API_*`).
 
+**Master checklist (6 batches)**: [PHASE1_SIGNOFF_MASTER.md](./PHASE1_SIGNOFF_MASTER.md)
+
 ## Pages to verify side-by-side
 
 | Route | Focus |

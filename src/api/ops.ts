@@ -295,6 +295,29 @@ function massiveJobsUrl(path: string): string {
   return opsUrl(`/ops/research/massive/jobs${p}`)
 }
 
+export async function fetchMassiveJobsSummary(celeryQueue: string): Promise<{
+  ok: boolean
+  counts: JobQueueStatusCounts
+  error?: string
+}> {
+  const q = new URLSearchParams()
+  if (celeryQueue.trim()) q.set('celery_queue', celeryQueue.trim())
+  const r = await fetch(massiveJobsUrl(`/summary?${q}`), { headers: authHeaders() })
+  const j = await parseJson<Record<string, unknown>>(r)
+  const c = j.counts as Record<string, unknown> | undefined
+  const counts: JobQueueStatusCounts = {
+    pending: typeof c?.pending === 'number' ? c.pending : 0,
+    running: typeof c?.running === 'number' ? c.running : 0,
+    done: typeof c?.done === 'number' ? c.done : 0,
+    failed: typeof c?.failed === 'number' ? c.failed : 0,
+  }
+  return {
+    ok: r.ok && j.ok !== false,
+    counts,
+    error: typeof j.error === 'string' ? j.error : undefined,
+  }
+}
+
 export async function fetchMassiveJobsList(options?: {
   limit?: number
   offset?: number

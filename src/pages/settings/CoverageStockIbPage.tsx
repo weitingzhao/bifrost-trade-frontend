@@ -1,17 +1,21 @@
 import { PageHeader, PageShell } from '@/components/layout'
-import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { StockIbCoverageBody } from '@/pages/settings/coverage/stock/StockIbCoverageBody'
 
 export default function CoverageStockIbPage() {
   return (
-    <PageShell>
+    <PageShell className="space-y-4">
       <PageHeader
         title="Data Coverage — Stock (IB Live)"
-        description="IB real-time Redis stock coverage."
+        description="IB-backed coverage of Watchlist stocks and reference indices by bar period. Includes EOD pull and index refresh."
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/settings/coverage/stock-massive">Massive Delay (DB)</Link>
+          </Button>
+        }
       />
-      <Button variant="outline" size="sm" asChild>
-        <Link to="/settings/socket">IB ingest on Socket page</Link>
-      </Button>
+      <StockIbCoverageBody />
     </PageShell>
   )
 }

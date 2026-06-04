@@ -135,6 +135,26 @@ export interface WatchlistDbCoverageSymbolRow {
   ticker_types?: WatchlistDbCoverageTickerTypes
 }
 
+export interface DbCoverageSummaryRow {
+  id: string
+  table_name: string
+  dataset_label: string
+  domain: string
+  drill_down_hash: string
+  distinct_symbols: number | null
+  newest_activity: string | null
+  newest_trade_date?: string | null
+  error?: string | null
+}
+
+export interface DbCoverageSummaryResponse {
+  ok: boolean
+  error?: string
+  generated_at?: string
+  tables?: DbCoverageSummaryRow[]
+  source_scope?: string
+}
+
 export interface WatchlistDbCoverageResponse {
   ok: boolean
   error?: string

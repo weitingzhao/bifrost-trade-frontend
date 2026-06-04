@@ -437,8 +437,9 @@ export function applySymbolReorderInCategory(
   category: string,
   fromSymbol: string,
   toSymbol: string,
+  fallbackSymbols: string[] = [],
 ): Record<string, string[]> {
-  const current = order[category] ?? []
+  const current = order[category] ?? fallbackSymbols
   const fromIdx = current.indexOf(fromSymbol)
   const toIdx = current.indexOf(toSymbol)
   if (fromIdx === -1 || toIdx === -1) return order

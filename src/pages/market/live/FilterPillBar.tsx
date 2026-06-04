@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { DenseTagButton, denseEntityFilterChipClass } from '@/components/data-display'
 import {
   liveFeedbackHintClass,
   liveFilterGroupClass,
@@ -54,32 +55,38 @@ export function FilterPillBar({
       <div className={liveFilterGroupClass}>
         <span className={liveFilterHintClass}>Category:</span>
         <div className={liveFilterPillsClass} role="group" aria-label="Filter by position category">
-          {streamCategoryOrder.map(cat => (
-            <button
-              key={cat}
-              type="button"
-              className={cn(liveFilterPillClass, positionCategoryFilters.has(cat) && liveFilterPillActiveClass)}
-              onClick={() => onToggleCategory(cat)}
-              aria-pressed={positionCategoryFilters.has(cat)}
-              draggable
-              onDragStart={e => {
-                e.dataTransfer.setData('application/x-market-streams-category', cat)
-                e.dataTransfer.effectAllowed = 'move'
-              }}
-              onDragOver={e => {
-                e.preventDefault()
-                e.dataTransfer.dropEffect = 'move'
-              }}
-              onDrop={e => {
-                e.preventDefault()
-                const dragged = e.dataTransfer.getData('application/x-market-streams-category')
-                onCategoryDrop(dragged, cat)
-              }}
-            >
-              <span className={liveFilterPillGripClass} aria-hidden>⋮⋮</span>
-              {cat}
-            </button>
-          ))}
+          {streamCategoryOrder.map(cat => {
+            const active = positionCategoryFilters.has(cat)
+            return (
+              <DenseTagButton
+                key={cat}
+                variant="category"
+                size="pill"
+                className={denseEntityFilterChipClass('category', active)}
+                onClick={() => onToggleCategory(cat)}
+                aria-pressed={active}
+                draggable
+                onDragStart={e => {
+                  e.dataTransfer.setData('application/x-market-streams-category', cat)
+                  e.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragOver={e => {
+                  e.preventDefault()
+                  e.dataTransfer.dropEffect = 'move'
+                }}
+                onDrop={e => {
+                  e.preventDefault()
+                  const dragged = e.dataTransfer.getData('application/x-market-streams-category')
+                  onCategoryDrop(dragged, cat)
+                }}
+              >
+                <span className={liveFilterPillGripClass} aria-hidden>
+                  ⋮⋮
+                </span>
+                {cat}
+              </DenseTagButton>
+            )
+          })}
         </div>
         {categoryOrderSaving && <span className={liveFeedbackHintClass}>Saving order…</span>}
       </div>

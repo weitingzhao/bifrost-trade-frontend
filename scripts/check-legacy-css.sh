@@ -81,16 +81,16 @@ for f in "${chart_css_files[@]}"; do
     chart_css_lines=$((chart_css_lines + $(wc -l < "$f")))
   fi
 done
-if [[ "$chart_css_lines" -gt 400 ]]; then
-  report "positions chart module CSS line budget exceeded ($chart_css_lines > 400)"
+if [[ "$chart_css_lines" -gt 360 ]]; then
+  report "positions chart module CSS line budget exceeded ($chart_css_lines > 360)"
 fi
 
 # Risk profile scoped CSS (payoff + scenario matrix exception)
 risk_css=src/components/positions/riskProfile.module.css
 if [[ -f "$risk_css" ]]; then
   risk_lines=$(wc -l < "$risk_css")
-  if [[ "$risk_lines" -gt 450 ]]; then
-    report "riskProfile.module.css line budget exceeded ($risk_lines > 450)"
+  if [[ "$risk_lines" -gt 425 ]]; then
+    report "riskProfile.module.css line budget exceeded ($risk_lines > 425)"
   fi
 fi
 
@@ -294,6 +294,26 @@ if inst_legacy_strings=$(grep -rE 'strategy-instances-|instance-list-symbol-tool
   fi
 fi
 
+# Instance detail sidebar (Phase 4.9)
+if [[ -f src/components/strategy/instanceDetail/InstanceDetail.module.css ]]; then
+  report "InstanceDetail.module.css must be deleted (use instanceDetailUi.ts tokens)"
+fi
+if inst_detail_css=$(grep -rl 'InstanceDetail\.module\.css' src/components/strategy --include='*.tsx' 2>/dev/null || true); then
+  if [[ -n "$inst_detail_css" ]]; then
+    echo "$inst_detail_css" >&2
+    report "InstanceDetail.module.css import under src/components/strategy"
+  fi
+fi
+
+# Phase 5 — emptied module CSS files must stay deleted
+for f in \
+  src/pages/strategy/InstancesPage.module.css \
+  src/pages/strategy/WinRatePage.module.css; do
+  if [[ -f "$f" ]]; then
+    report "$f must not exist (Phase 5: emptied file deleted)"
+  fi
+done
+
 # Win Rate: Dense migration (Phase 4.10)
 if [[ -f src/components/strategy/winRate/winRate.module.css ]]; then
   report "winRate.module.css must not exist (use winRateUi.ts tokens)"
@@ -458,8 +478,8 @@ fi
 live_css=src/pages/market/live/live.module.css
 if [[ -f "$live_css" ]]; then
   live_lines=$(wc -l < "$live_css")
-  if [[ "$live_lines" -gt 120 ]]; then
-    report "live.module.css line budget exceeded ($live_lines > 120)"
+  if [[ "$live_lines" -gt 90 ]]; then
+    report "live.module.css line budget exceeded ($live_lines > 90)"
   fi
 fi
 

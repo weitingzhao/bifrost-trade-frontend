@@ -27,18 +27,21 @@ alwaysApply: true
 | Row icon actions | `IconActionButton` | Hand-rolled 20×20 buttons, `.iconBtn`, `window.confirm` |
 | Expand row | `ExpandToggleCell` + `DenseTableDetailRow` | Unicode ▶/▼ in module CSS |
 | Expand must not shift columns | `DenseDataTable` + `<colgroup>` + `denseTable.detailCellClip` | Detail rows without colgrid / wide content setting width |
-| Identity column (Symbol / Contract / Strategy / Instance) | `denseTableEntityCell` + `denseTableEntityLink` or wrapping `DenseTag`s | `truncate` / `line-clamp` / `detailCellClip` on identity cells — wrap instead |
+| Identity column (Stock / Option entity) | `denseTableEntityCell` + `denseTableEntityLink` or `strong` + `text-entity-symbol` | `truncate` / Tag pill in Stock identity column |
 | Segment / Include-Exclude | `SegmentControl` / `IncludeExcludeToggle` | New pill CSS in page modules |
-| Symbol / stock link cell | `SymbolLinkButton` / `DenseLinkButton` | Custom link pill CSS per page |
+| Stock link cell | `SymbolLinkButton` / `DenseLinkButton variant="stock"` | Custom link pill CSS per page |
 | Nested strategy/instance panel | `CollapsibleGroup` (+ `CollapsibleBucketHeader`) | `strategyGroup` / `instanceHeader*` module classes |
 | Nested sub-table | `NestedDenseTable` | Inline `<table className={styles…}>` |
 | Detail fill rows | `DenseTableSubheadRow` / `DenseTableDetailRow` | `.ledgerDetailRow` module CSS |
 | Empty / section title | `denseTable.emptyHint` / `denseTable.sectionTitle` + `denseTable.sectionBlock` | Page-local empty hint CSS |
 | Execution source label | `ExecSourceBadge` | Hand-rolled Badge / ledger `sourceBadge` CSS per page |
-| Position category label | `DenseTag variant="category"` (+ `GroupHeaderRow variant="category"`) | `stkPillCategoryClass`, purple inline Tailwind, plain text in Category column |
-| Symbol highlight (non-link) | `DenseTag variant="symbol"` | `stkPillSymbolClass`, custom blue pill CSS |
-| Strategy / Instance identity | `DenseTag variant="strategy" / "instance"`, `DenseLinkButton variant="strategy" / "instance"` | Ad-hoc colors per page for strategy/instance names |
-| Option contract link | `DenseLinkButton variant="option"` (`--color-entity-option`) | Raw `text-sky-*` per page |
+| Stock identity column | `DenseLinkButton variant="stock"` or `strong` + `text-entity-symbol` | Tag pill in grid Stock column, custom link CSS |
+| Stock highlight (secondary contexts only) | `DenseTag variant="symbol"` | Tag in Stock identity columns |
+| Option contract link (Entity) | `DenseLinkButton variant="option"` (`--color-entity-option`) | Raw `text-sky-*` per page; Option Category tags for contracts |
+| Fixed Income / Cash-like entity (tabs, legends) | Planned `--color-entity-fixed-income` / `--color-entity-cash-like` tokens | Position Category purple; inline amber/violet hex |
+| Option Category — Strategy / Instance | `DenseTag variant="strategy" / "instance"`, `DenseLinkButton variant="strategy" / "instance"` | Ad-hoc colors; using for option contract strings |
+| Option Category — Opportunity / Structure | Planned variants (token pending) | Ad-hoc colors per page |
+| Position Category (watchlist / portfolio / user names) | Cell: `DenseTag variant="category"` · filter: `DenseTagButton` + `denseEntityFilterChipClass` (gray default, colored when selected) · **Group header**: `GroupHeaderRow variant="category"` | Gray generic pills without selected-state entity color; DenseTag pill on group header row |
 | New business color | Add `--color-*` token in `src/index.css` (light + dark + `@theme`) first | Inline hex / raw palette classes in pages |
 | Destructive confirm | App `ConfirmDialog` pattern | `window.confirm` / `window.alert` |
 
@@ -49,7 +52,7 @@ alwaysApply: true
 3. Do **not** add page-local `*Classes.ts` for patterns already in `data-display`; extend the primitive instead.
 4. Avoid overriding primitives with large `className` stacks; use `variant` or extend the shared component.
 5. After UI edits run: `npm run lint && npm run build && npm run check:legacy-css`.
-6. Validate visual semantics against the living contract page: **Settings → Configuration → UI Design System** (`/settings/ui-design-system`, `src/pages/settings/UiDesignSystemPage.tsx`) — PnL green/red/yellow, entity identity colors (symbol/option/strategy/instance/category), status tags, density samples.
+6. Validate visual semantics against the living contract page: **Settings → Configuration → UI Design System** (`/settings/ui-design-system`, `src/pages/settings/UiDesignSystemPage.tsx`) — PnL green/red/yellow; Entity (Stock/Option/FI/Cash-like); Option Category (Instance/Strategy/Opportunity/Structure); Position Category (watchlist/portfolio); status tags; density samples. Use **Copy Prompt** per section for scoped Agent fixes.
 
 ## Allowed CSS exceptions (narrow)
 

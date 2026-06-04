@@ -1,7 +1,6 @@
 import type { ComponentProps, KeyboardEvent, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { denseTable, denseTableCellPadding } from './denseTableClasses'
-import { DenseTag } from './DenseTag'
 
 const thBase = cn(
   denseTableCellPadding,
@@ -156,27 +155,30 @@ export function GroupHeaderRow({
   title?: string
 }) {
   const isCategory = variant === 'category'
-  const content = isCategory ? (
-    <DenseTag variant="category" size="pill">
-      {label}
-    </DenseTag>
-  ) : (
-    label
+
+  const categoryLabel = (
+    <span className="text-xs font-semibold text-entity-category">{label}</span>
   )
 
+  const content = isCategory ? categoryLabel : label
+
   return (
-    <tr className={cn('bg-secondary/50', onClick && 'hover:bg-secondary/70')}>
+    <tr className={cn(!isCategory && 'bg-secondary/50', onClick && !isCategory && 'hover:bg-secondary/70')}>
       <td
         colSpan={colSpan}
         className={cn(
-          'px-[var(--table-cell-px)] py-1 text-xs font-semibold text-muted-foreground',
+          'px-[var(--table-cell-px)]',
+          isCategory
+            ? 'border-y border-border bg-secondary/60 py-1.5'
+            : 'py-1.5 text-xs font-semibold text-muted-foreground',
           onClick && 'cursor-pointer',
+          onClick && isCategory && 'hover:bg-secondary/80',
         )}
       >
         {onClick ? (
           <button
             type="button"
-            className="w-full text-left hover:text-foreground transition-colors"
+            className="w-full text-left transition-colors hover:text-foreground"
             onClick={onClick}
             title={title}
           >

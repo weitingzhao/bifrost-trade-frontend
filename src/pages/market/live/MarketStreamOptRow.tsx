@@ -4,7 +4,6 @@ import {
   DenseTableCell,
   InlinePnl,
   denseTableEntityCell,
-  denseTableEntityLink,
   denseTableNumCell,
 } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
@@ -84,29 +83,26 @@ export function MarketStreamOptRow({
           : undefined
       }
     >
-      <DenseTableCell className={denseTableEntityCell}>
-        {dragEnabled && (
-          <span
-            className={styles.dragHandle}
-            draggable
-            onDragStart={e => {
-              e.dataTransfer.setData(
-                'application/x-market-streams-opt-row',
-                JSON.stringify({ basisKey }),
-              )
-              e.dataTransfer.effectAllowed = 'move'
-            }}
-            title="Drag to reorder option row"
-            aria-hidden
-          >
-            ⋮⋮
-          </span>
-        )}
-        <span
-          className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}
-          title={contractLabel}
-        >
-          {contractLabel}
+      <DenseTableCell className={denseTableEntityCell} title={contractLabel}>
+        <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+          {dragEnabled && (
+            <span
+              className={styles.dragHandle}
+              draggable
+              onDragStart={e => {
+                e.dataTransfer.setData(
+                  'application/x-market-streams-opt-row',
+                  JSON.stringify({ basisKey }),
+                )
+                e.dataTransfer.effectAllowed = 'move'
+              }}
+              title="Drag to reorder option row"
+              aria-hidden
+            >
+              ⋮⋮
+            </span>
+          )}
+          <span className="font-mono font-semibold text-entity-option">{contractLabel}</span>
         </span>
       </DenseTableCell>
 

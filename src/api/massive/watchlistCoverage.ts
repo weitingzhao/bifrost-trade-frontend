@@ -1,4 +1,5 @@
 import { massiveUrl } from '@/lib/devApiUrl'
+import type { DbCoverageSummaryResponse } from '@/types/watchlistDbCoverage'
 import type {
   BarQualityDetailResponse,
   OptionBarsContractsGapResult,
@@ -11,6 +12,23 @@ import type {
 
 async function parseJson<T>(r: Response): Promise<T> {
   return r.json().catch(() => ({})) as Promise<T>
+}
+
+export type {
+  DbCoverageSummaryRow,
+  DbCoverageSummaryResponse,
+} from '@/types/watchlistDbCoverage'
+
+export async function fetchDbCoverageSummary(): Promise<DbCoverageSummaryResponse> {
+  const r = await fetch(massiveUrl('/research/massive/db-coverage-summary'))
+  const j = await parseJson<DbCoverageSummaryResponse & { error?: string }>(r)
+  if (!r.ok) {
+    return { ok: false, error: typeof j.error === 'string' ? j.error : `HTTP ${r.status}` }
+  }
+  if (j.ok === false) {
+    return { ok: false, error: typeof j.error === 'string' ? j.error : 'Request failed' }
+  }
+  return j
 }
 
 export async function fetchWatchlistDbCoverage(): Promise<WatchlistDbCoverageResponse> {

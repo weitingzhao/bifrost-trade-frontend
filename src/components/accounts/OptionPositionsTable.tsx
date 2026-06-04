@@ -9,7 +9,7 @@ import {
   DenseTableRow,
   GrandTotalRow,
   InlinePnl,
-  DenseTag,
+  DenseOptionCategoryLabel,
   denseTable,
   denseTableEntityCell,
   denseTableEntityLink,
@@ -74,9 +74,9 @@ function PositionRow({
           </span>
         )}
         {pos.strategy_opportunity_name?.trim() ? (
-          <DenseTag variant="strategy" size="cell" className="mt-0.5 whitespace-normal">
+          <DenseOptionCategoryLabel variant="opportunity" className="mt-0.5 whitespace-normal">
             {pos.strategy_opportunity_name.trim()}
-          </DenseTag>
+          </DenseOptionCategoryLabel>
         ) : null}
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>

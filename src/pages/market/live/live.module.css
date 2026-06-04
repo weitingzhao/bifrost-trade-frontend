@@ -33,11 +33,13 @@
 
 .dragHandle {
   display: inline-block;
-  margin-right: 0.25rem;
-  opacity: 0.35;
+  flex-shrink: 0;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.55;
   cursor: grab;
   font-size: 0.7rem;
-  vertical-align: middle;
+  line-height: 1;
+  user-select: none;
 }
 
 .sortHeader {

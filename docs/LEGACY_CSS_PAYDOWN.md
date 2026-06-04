@@ -287,7 +287,25 @@ npm run lint && npm run build && npm run check:legacy-css
 - Group rollup row, column sort, row select/compare, View/Compare/Delete actions
 - Create instance + Refresh metrics unchanged on Legacy API
 
-**Follow-up:** Phase 4.9 — Instance Detail sidebar (`instanceDetail/*` module CSS)
+**Follow-up:** Phase 4.9 — Instance Detail sidebar — **DONE (2026-06-03)**: deleted `InstanceDetail.module.css`; executions match tables use `instanceDetailUi.ts` tokens (`text-profit` / `text-loss`); CI guard in `check-legacy-css.sh`.
+
+---
+
+## Phase 4.9 — Instance Detail sidebar (done 2026-06-03)
+
+**Scope**
+
+- [`InstanceExecutionsSection.tsx`](../src/components/strategy/instanceDetail/InstanceExecutionsSection.tsx) — no module CSS; buy/sell match + fills grid via `instanceDetailUi.ts`
+- Delete [`InstanceDetail.module.css`](../src/components/strategy/instanceDetail/InstanceDetail.module.css)
+
+**CI**
+
+- No `InstanceDetail.module.css` under `instanceDetail/`
+- No raw emerald/red palette increase (use `text-profit` / `text-loss`)
+
+**Acceptance**
+
+- Instances → View detail / compare: Overview, PnL, Executions, Kline unchanged on Legacy API
 
 ---
 
@@ -541,7 +559,22 @@ grep -rl "@/components/ui/table" src --include='*.tsx' | wc -l
 
 ---
 
-## Phase 5 — Module CSS shrink
+## Phase 5 — Module CSS shrink (DONE 2026-06-03)
 
-- Delete obsolete page table modules after Dense migration
-- Tighten `check-legacy-css` budgets monotonically
+**Deleted (emptied by prior Dense phases, now removed):**
+- `src/pages/strategy/InstancesPage.module.css` (was 0 lines)
+- `src/pages/strategy/WinRatePage.module.css` (was 0 lines)
+
+**Budgets tightened (monotonically):**
+
+| Guard | Old | New | Actual |
+|-------|-----|-----|--------|
+| `live.module.css` | 120 | 90 | 86 |
+| `PositionsChartsSection + DonutChart` | 400 | 360 | 352 |
+| `riskProfile.module.css` | 450 | 425 | 414 |
+
+**New guards added:** Phase 5 block asserts `InstancesPage.module.css` and `WinRatePage.module.css` must not re-appear.
+
+**`*.module.css` count:** 25 (baseline 2026-06-01) → 16 (Phase 4.x deletions) → **16** (Phase 5: 2 more deleted, now 16).
+
+**Acceptance:** `npm run lint && npm run build && npm run check:legacy-css` pass ✅

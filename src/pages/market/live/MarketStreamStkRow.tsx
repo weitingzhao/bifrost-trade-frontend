@@ -1,6 +1,11 @@
 import type { DailyBenchmark } from '@/types/market'
 import { cn } from '@/lib/utils'
-import { DenseTableCell, InlinePnl, denseTableNumCell } from '@/components/data-display'
+import {
+  DenseTableCell,
+  InlinePnl,
+  denseTableEntityCell,
+  denseTableNumCell,
+} from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import { getDailyRefTooltip } from '@/utils/marketStreamsDailyTotals'
 import { getQuoteFreshness, quoteFreshnessTitle } from '@/utils/quoteFreshness'
@@ -8,7 +13,7 @@ import type { MarketStreamsRow } from '@/utils/marketStreamsRows'
 import { quoteDisplayLast } from '@/utils/watchlistHelpers'
 import { DailyCalcBreakdown } from './DailyCalcBreakdown'
 import { LiveStackedPnlCell } from './LiveStackedPnlCell'
-import { liveSymbolFreshnessClass, liveTable } from './liveTableClasses'
+import { liveSymbolFreshnessTagClass, liveTable } from './liveTableClasses'
 import styles from './live.module.css'
 
 interface Props {
@@ -76,29 +81,38 @@ export function MarketStreamStkRow({
       }
     >
       <DenseTableCell
-        className={liveSymbolFreshnessClass(symbolFreshness)}
+        className={denseTableEntityCell}
         title={[quoteFreshnessTitle(symbolFreshness), getDailyRefTooltip(symBench, dailyLast)]
           .filter(Boolean)
           .join('\n') || undefined}
       >
-        {dragEnabled && (
-          <span
-            className={styles.dragHandle}
-            draggable
-            onDragStart={e => {
-              e.dataTransfer.setData(
-                'application/x-market-streams-symbol',
-                JSON.stringify({ category: categoryForDrag, symbol: row.symbol }),
-              )
-              e.dataTransfer.effectAllowed = 'move'
-            }}
-            title="Drag to reorder symbol"
-            aria-hidden
+        <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+          {dragEnabled && (
+            <span
+              className={styles.dragHandle}
+              draggable
+              onDragStart={e => {
+                e.dataTransfer.setData(
+                  'application/x-market-streams-symbol',
+                  JSON.stringify({ category: categoryForDrag, symbol: row.symbol }),
+                )
+                e.dataTransfer.effectAllowed = 'move'
+              }}
+              title="Drag to reorder symbol"
+              aria-hidden
+            >
+              ⋮⋮
+            </span>
+          )}
+          <strong
+            className={cn(
+              'font-semibold text-entity-symbol',
+              liveSymbolFreshnessTagClass(symbolFreshness),
+            )}
           >
-            ⋮⋮
-          </span>
-        )}
-        <strong>{symbol}</strong>
+            {symbol}
+          </strong>
+        </span>
       </DenseTableCell>
 
       {!watchingStocksSlim && hasStreamAccounts && (

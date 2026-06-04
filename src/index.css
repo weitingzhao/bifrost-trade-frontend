@@ -66,6 +66,8 @@
     --color-entity-option: var(--color-entity-option);
     --color-entity-strategy: var(--color-entity-strategy);
     --color-entity-instance: var(--color-entity-instance);
+    --color-option-category-opportunity: var(--color-option-category-opportunity);
+    --color-option-category-structure: var(--color-option-category-structure);
     --color-entity-category: var(--color-entity-category);
 
     /* Directional / market-structure semantics */
@@ -149,16 +151,18 @@
     --color-text-dim: #9ca3af;
     --color-accent-soft: rgba(14, 165, 233, 0.12);
 
-    /* Business semantics — PnL (light) */
-    --color-profit: #059669;       /* realized gain — emerald-600 */
-    --color-loss: #dc2626;         /* realized loss — red-600 */
+    /* Business semantics — PnL (light) — classic green/red (aligned with --color-success / --color-danger) */
+    --color-profit: var(--color-success); /* green-600 #16a34a */
+    --color-loss: var(--color-danger); /* red-600 #dc2626 */
     --color-unrealized: var(--color-warning); /* unrealized PnL — site-wide yellow */
 
     /* Business semantics — entity identity (light) */
     --color-entity-symbol: var(--primary);
     --color-entity-option: #0284c7;   /* sky-600 */
-    --color-entity-strategy: #4f46e5; /* indigo-600 */
-    --color-entity-instance: #0d9488; /* teal-600 */
+    --color-entity-strategy: #7c3aed; /* violet-600 — Option Category: strategy */
+    --color-entity-instance: #0d9488; /* teal-600 — Option Category: instance */
+    --color-option-category-opportunity: #c026d3; /* fuchsia-600 — warm, distinct from teal/cyan */
+    --color-option-category-structure: #16a34a; /* green-600 — structure type, distinct from instance teal */
     --color-entity-category: #a855f7; /* purple-500 */
 
     /* Directional / market-structure semantics (light) */
@@ -273,16 +277,18 @@
     --color-text-dim: #5c6572;
     --color-accent-soft: rgba(163, 230, 53, 0.12);
 
-    /* Business semantics — PnL (dark) */
-    --color-profit: #34d399;       /* emerald-400 */
-    --color-loss: #f87171;         /* red-400 */
+    /* Business semantics — PnL (dark) — classic green/red, not teal/coral */
+    --color-profit: var(--color-success); /* green-500 #22c55e */
+    --color-loss: var(--color-danger); /* red-500 #ef4444 */
     --color-unrealized: var(--color-warning);
 
     /* Business semantics — entity identity (dark) */
     --color-entity-symbol: var(--primary);
     --color-entity-option: #38bdf8;   /* sky-400 */
-    --color-entity-strategy: #818cf8; /* indigo-400 */
+    --color-entity-strategy: #a78bfa; /* violet-400 */
     --color-entity-instance: #2dd4bf; /* teal-400 */
+    --color-option-category-opportunity: #e879f9; /* fuchsia-400 */
+    --color-option-category-structure: #4ade80; /* green-400 */
     --color-entity-category: #c084fc; /* purple-400 */
 
     /* Directional / market-structure semantics (dark) */

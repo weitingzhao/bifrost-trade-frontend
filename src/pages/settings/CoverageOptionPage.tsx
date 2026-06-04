@@ -1,23 +1,21 @@
 import { PageHeader, PageShell } from '@/components/layout'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { OptionCoverageBody } from '@/pages/settings/coverage/option/OptionCoverageBody'
 
 export default function CoverageOptionPage() {
   return (
-    <PageShell>
+    <PageShell className="space-y-4">
       <PageHeader
         title="Data Coverage — Option"
-        description="Option coverage by expiry and strike (Massive DB + IB live)."
-      />
-      <Card>
-        <CardContent className="py-6 space-y-3 text-sm text-muted-foreground">
-          <p>Use Research → Option Discovery for chain coverage and snapshot loads.</p>
+        description="Daily option pipeline status, Greeks/IV coverage, and Massive snapshot tools."
+        actions={
           <Button variant="outline" size="sm" asChild>
-            <Link to="/research/discovery">Open Option Discovery</Link>
+            <Link to="/settings/coverage/overview">Overview</Link>
           </Button>
-        </CardContent>
-      </Card>
+        }
+      />
+      <OptionCoverageBody />
     </PageShell>
   )
 }

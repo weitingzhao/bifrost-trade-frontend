@@ -26,8 +26,8 @@ const shellBySize: Record<DenseTagSize, string> = {
 
 const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
   category: {
-    cell: 'border-entity-category/35 text-foreground',
-    pill: 'border-entity-category/40 text-foreground',
+    cell: 'border-entity-category/45 text-entity-category font-medium',
+    pill: 'border-entity-category/50 text-entity-category font-semibold',
   },
   symbol: {
     cell: 'border-entity-symbol/40 text-entity-symbol font-semibold',
@@ -91,6 +91,33 @@ export function denseTagClass(
   return cn(shellBySize[size], variantByType[variant][size], className)
 }
 
+/** Toggleable filter chip for entity values — same token as table GroupHeaderRow / cell tags. */
+export type DenseEntityFilterVariant = 'category' | 'symbol' | 'strategy' | 'instance'
+
+const entityFilterInactiveClass =
+  'rounded-md border-border bg-secondary/60 font-medium text-muted-foreground opacity-100 hover:bg-secondary hover:text-foreground hover:opacity-100'
+
+const entityFilterActiveClass: Record<DenseEntityFilterVariant, string> = {
+  category:
+    'rounded-md border-entity-category/50 text-entity-category opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-category)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-category)_14%,transparent)]',
+  symbol:
+    'rounded-md border-entity-symbol/50 text-entity-symbol opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-symbol)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-symbol)_14%,transparent)]',
+  strategy:
+    'rounded-md border-entity-strategy/50 text-entity-strategy opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-strategy)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-strategy)_14%,transparent)]',
+  instance:
+    'rounded-md border-entity-instance/50 text-entity-instance opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-instance)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-instance)_14%,transparent)]',
+}
+
+export function denseEntityFilterChipClass(
+  variant: DenseEntityFilterVariant,
+  active: boolean,
+): string {
+  return cn(
+    'inline-flex items-center gap-1 transition-colors',
+    active ? entityFilterActiveClass[variant] : entityFilterInactiveClass,
+  )
+}
+
 export function denseTagVariantFromTone(tone: 'brightOk' | 'warn' | 'bad'): DenseTagVariant {
   if (tone === 'brightOk') return 'success'
   if (tone === 'warn') return 'warning'
@@ -117,3 +144,19 @@ export const denseSymbolTagCellClass = denseTagClass('symbol', 'cell')
 
 /** @deprecated Use DenseTag variant="symbol" size="pill" */
 export const denseSymbolTagPillClass = denseTagClass('symbol', 'pill')
+
+/** Option Category text in table identity columns — token color only, no pill border. */
+export type DenseOptionCategoryVariant = 'strategy' | 'instance' | 'opportunity'
+
+const optionCategoryLabelByVariant: Record<DenseOptionCategoryVariant, string> = {
+  strategy: 'font-semibold text-entity-strategy',
+  instance: 'font-mono font-semibold text-entity-instance',
+  opportunity: 'font-semibold text-option-category-opportunity',
+}
+
+export function denseOptionCategoryLabelClass(
+  variant: DenseOptionCategoryVariant,
+  className?: string,
+): string {
+  return cn(optionCategoryLabelByVariant[variant], className)
+}

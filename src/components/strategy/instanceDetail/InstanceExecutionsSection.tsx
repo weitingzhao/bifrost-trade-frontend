@@ -7,13 +7,32 @@ import type { Execution } from '@/types/positions'
 import { buildOptExecutionGroups, type OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
 import { pnlColorClass } from '@/utils/dailyChange'
-import styles from './InstanceDetail.module.css'
 import {
   instanceDetailBlockClass,
+  instanceExecContractCenterClass,
+  instanceExecContractLinkClass,
+  instanceExecFillsBuyHeaderClass,
+  instanceExecFillsColSellClass,
+  instanceExecFillsHeaderClass,
+  instanceExecFillsRowClass,
+  instanceExecFillsSellHeaderClass,
+  instanceExecFillsWrapClass,
   instanceExecHintClass,
+  instanceExecMatchTableClass,
+  instanceExecMatchTdClass,
+  instanceExecMatchTdNumsClass,
+  instanceExecMatchTdSellClass,
+  instanceExecMatchThBuyClass,
+  instanceExecMatchThClass,
+  instanceExecMatchThSellClass,
+  instanceExecMatchWrapClass,
+  instanceExecNetBadgeClass,
+  instanceExecNetFlatClass,
+  instanceExecNetOpenClass,
   instanceExecTabActiveClass,
   instanceExecTabClass,
   instanceExecTabsClass,
+  instanceExecTotalsRowClass,
   instanceMutedClass,
   instanceSectionTitleClass,
 } from './instanceDetailUi'
@@ -49,7 +68,6 @@ function fmtFillDate(e: Execution, tab: ExecTab): string {
   return '—'
 }
 
-
 function GroupBlock({
   group,
   tab,
@@ -78,39 +96,39 @@ function GroupBlock({
   const openNet = Math.abs(group.net_qty) >= 1e-9
 
   return (
-    <div key={group.contract_key} className={styles.matchWrap}>
-      <table className={styles.matchTable}>
+    <div key={group.contract_key} className={instanceExecMatchWrapClass}>
+      <table className={instanceExecMatchTableClass}>
         <thead>
           <tr>
-            <th className={styles.thBuy}>Buy</th>
-            <th>Contract / net</th>
-            <th className={styles.thSell}>Sell</th>
-            <th className={styles.tdSell}>Group PnL</th>
+            <th className={cn(instanceExecMatchThClass, instanceExecMatchThBuyClass)}>Buy</th>
+            <th className={instanceExecMatchThClass}>Contract / net</th>
+            <th className={cn(instanceExecMatchThClass, instanceExecMatchThSellClass)}>Sell</th>
+            <th className={cn(instanceExecMatchThClass, instanceExecMatchThSellClass)}>Group PnL</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className={styles.tdNums}>
-              <div className={styles.thBuy}>Qty {group.buy_volume || '—'}</div>
+            <td className={cn(instanceExecMatchTdClass, instanceExecMatchTdNumsClass)}>
+              <div className={instanceExecMatchThBuyClass}>Qty {group.buy_volume || '—'}</div>
               <div>Avg {group.buy_avg_price != null ? group.buy_avg_price.toFixed(2) : '—'}</div>
               <div>{fmtUsd(buyRaw)}</div>
             </td>
-            <td className={styles.contractCenter}>
-              <div className={styles.contractLink}>{contractLabel(group)}</div>
-              <div className={styles.netBadge}>
+            <td className={cn(instanceExecMatchTdClass, instanceExecContractCenterClass)}>
+              <div className={instanceExecContractLinkClass}>{contractLabel(group)}</div>
+              <div className={instanceExecNetBadgeClass}>
                 <span>Net {group.net_qty}</span>
-                <span className={openNet ? styles.netStatusOpen : styles.netStatusFlat}>
+                <span className={openNet ? instanceExecNetOpenClass : instanceExecNetFlatClass}>
                   {openNet ? 'Open' : 'Flat'}
                 </span>
               </div>
             </td>
-            <td className={cn(styles.tdNums, styles.tdSell)}>
-              <div className={styles.thSell}>Qty {group.sell_volume || '—'}</div>
+            <td className={cn(instanceExecMatchTdClass, instanceExecMatchTdNumsClass, instanceExecMatchTdSellClass)}>
+              <div className={instanceExecMatchThSellClass}>Qty {group.sell_volume || '—'}</div>
               <div>Avg {group.sell_avg_price != null ? group.sell_avg_price.toFixed(2) : '—'}</div>
               <div>{fmtUsd(sellRaw)}</div>
               <div className={instanceMutedClass}>Comm {fmtUsd(-comm)}</div>
             </td>
-            <td className={cn(styles.tdNums, styles.tdSell)}>
+            <td className={cn(instanceExecMatchTdClass, instanceExecMatchTdNumsClass, instanceExecMatchTdSellClass)}>
               <div>Gross {fmtUsd(gross)}</div>
               <div className={instanceMutedClass}>Comm {fmtUsd(-comm)}</div>
               <div className={cn('font-semibold', pnlColorClass(net))}>Net {fmtUsd(net)}</div>
@@ -120,32 +138,32 @@ function GroupBlock({
       </table>
 
       {(buyFills.length > 0 || sellFills.length > 0) && (
-        <div className={styles.fillsWrap}>
+        <div className={instanceExecFillsWrapClass}>
           <div>
-            <div className={cn(styles.fillsHeader, styles.fillsBuy)}>
+            <div className={cn(instanceExecFillsHeaderClass, instanceExecFillsBuyHeaderClass)}>
               Buy fills ({buyFills.length})
             </div>
             {buyFills.map((f) => (
-              <div key={f.account_executions_id ?? `${f.trade_date}-${f.price}`} className={styles.fillsRow}>
+              <div key={f.account_executions_id ?? `${f.trade_date}-${f.price}`} className={instanceExecFillsRowClass}>
                 <span>{fmtFillDate(f, tab)}</span>
-                <span style={{ textAlign: 'right' }}>{Math.abs(Number(f.quantity ?? f.qty) || 0)}</span>
-                <span style={{ textAlign: 'right' }}>{Number(f.price).toFixed(2)}</span>
-                <span style={{ textAlign: 'right' }} className={instanceMutedClass}>
+                <span className="text-right">{Math.abs(Number(f.quantity ?? f.qty) || 0)}</span>
+                <span className="text-right">{Number(f.price).toFixed(2)}</span>
+                <span className={cn('text-right', instanceMutedClass)}>
                   {fmtUsd(-(Number(f.commission) || 0))}
                 </span>
               </div>
             ))}
           </div>
-          <div className={styles.fillsColSell}>
-            <div className={cn(styles.fillsHeader, styles.fillsSell)}>
+          <div className={instanceExecFillsColSellClass}>
+            <div className={cn(instanceExecFillsHeaderClass, instanceExecFillsSellHeaderClass)}>
               Sell fills ({sellFills.length})
             </div>
             {sellFills.map((f) => (
-              <div key={f.account_executions_id ?? `${f.trade_date}-${f.price}-s`} className={styles.fillsRow}>
+              <div key={f.account_executions_id ?? `${f.trade_date}-${f.price}-s`} className={instanceExecFillsRowClass}>
                 <span>{fmtFillDate(f, tab)}</span>
-                <span style={{ textAlign: 'right' }}>{Math.abs(Number(f.quantity ?? f.qty) || 0)}</span>
-                <span style={{ textAlign: 'right' }}>{Number(f.price).toFixed(2)}</span>
-                <span style={{ textAlign: 'right' }} className={instanceMutedClass}>
+                <span className="text-right">{Math.abs(Number(f.quantity ?? f.qty) || 0)}</span>
+                <span className="text-right">{Number(f.price).toFixed(2)}</span>
+                <span className={cn('text-right', instanceMutedClass)}>
                   {fmtUsd(-(Number(f.commission) || 0))}
                 </span>
               </div>
@@ -239,16 +257,18 @@ export function InstanceExecutionsSection({ data, hideSectionTitle = false }: Pr
           ))}
 
           {totals != null && (
-            <div className={styles.totalsRow}>
+            <div className={instanceExecTotalsRowClass}>
               <span>
-                Total gross <strong className={styles.tdNums}>{fmtUsd(totals.gross)}</strong>
+                Total gross <strong className={instanceExecMatchTdNumsClass}>{fmtUsd(totals.gross)}</strong>
               </span>
               <span>
-                Comm <strong className={styles.tdNums}>{fmtUsd(-totals.comm)}</strong>
+                Comm <strong className={instanceExecMatchTdNumsClass}>{fmtUsd(-totals.comm)}</strong>
               </span>
               <span>
                 Net{' '}
-                <strong className={cn(styles.tdNums, pnlColorClass(totals.net))}>{fmtUsd(totals.net)}</strong>
+                <strong className={cn(instanceExecMatchTdNumsClass, pnlColorClass(totals.net))}>
+                  {fmtUsd(totals.net)}
+                </strong>
               </span>
             </div>
           )}

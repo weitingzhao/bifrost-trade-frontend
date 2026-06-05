@@ -4,6 +4,8 @@
 
 **Master checklist (6 batches)**: [PHASE1_SIGNOFF_MASTER.md](./PHASE1_SIGNOFF_MASTER.md)
 
+**Closure (2026-06-04)**: Phase 1 **CLOSED** — see Final sign-off in master checklist.
+
 ## Pages to verify side-by-side
 
 | Route | Focus |
@@ -14,7 +16,7 @@
 | `/operations/celery` | `PageHeader`; queue cards readable on canvas |
 | `/strategy/instances` | Large title + filters + table / inspector; **global market status bar** under header (Open orders, Streams, Daily %/$, symbols Popover vs Legacy marquee) |
 | `/portfolio/positions` | Global status bar visible; strip hidden on `/settings/*` and `/operations/*` |
-| `/settings/ib-connection` | Header actions; connection / Flex sections |
+| `/settings/ib` | Header Save; Connection / Client IDs read-only; Account + Flex editable — see [IB_CONNECTION_ACCEPTANCE.md](./IB_CONNECTION_ACCEPTANCE.md) |
 | `/research/sepa` (Stock Screener) | Filter elevated block (`bg-secondary`); table vs canvas |
 | Stock Inspector (drawer) | See [STOCK_INSPECTOR_ACCEPTANCE.md](./STOCK_INSPECTOR_ACCEPTANCE.md) — open from Positions / Watchlist / Screener |
 
@@ -29,12 +31,13 @@
 
 ## Mechanical checks (automated in CI / local)
 
-**Last run (2026-05-31)**: `npm run build` OK · `npm run lint` 0 errors · page-level `<h1>` only in `RouteErrorPage.tsx`.
+**Last run (2026-06-04)**: `npm run build` OK · `npm run lint` 0 errors · `npm run check:legacy-css` OK.
 
 ```bash
 cd bifrost-trade-frontend
 npm run build
 npm run lint
+npm run check:legacy-css
 ```
 
 Optional grep (pages should use `PageHeader`, not raw page-level `h1`):
@@ -52,7 +55,9 @@ rg '<h1' src/pages --glob '*.tsx'
 - [x] Batch 3 Owner verified — research eight routes + Stock Inspector（2026-06-03；见 `PHASE1_SIGNOFF_MASTER.md` Batch 3）
 - [x] Batch 4 Owner verified — strategy six routes（2026-06-03；option-category / structures / opportunities / allocations / gates / win-rate）
 - [x] Batch 5 Owner verified — api / daemon / celery / socket（+ logs N/A）（2026-06-03）
-- [x] Batch 6 Owner verified — subscribe / coverage/* / feed/*（+ `/settings/ib` Batch 6 parity N/A — Massive 历史数据；IB 连接/交易等仍保留）（2026-06-03）
+- [x] Batch 6 Owner verified — subscribe / coverage/* / feed/* + `/settings/ib`（2026-06-04；见 `IB_CONNECTION_ACCEPTANCE.md`）
 - [x] Cross-cutting rows（global strip、sidebar lamp、canvas）（2026-06-03）
 - [x] Owner verified all rows above including Discovery functional regression (date: 2026-06-03)
 - [x] Phase 2 Owner sign-off: `docs/PHASE2_DISCOVERY_ACCEPTANCE.md`（2026-06-03）
+- [x] IB Connection parity: `docs/IB_CONNECTION_ACCEPTANCE.md`（2026-06-04）
+- [x] Phase 1 CLOSED — business parity 100%（2026-06-04）

@@ -2,9 +2,9 @@
 
 **Stage**: New Frontend + Legacy API. Compare **bifrost-trade-frontend** (port 5173) with **bifrost-trader-engine/frontend** on the **same** `VITE_API_*`.
 
-**Mechanical gate (Agent, 2026-06-03)**: `npm run lint` · `npm run build` · `npm run check:legacy-css` — all pass.
+**Mechanical gate (Agent, 2026-06-04)**: `npm run lint` · `npm run build` · `npm run check:legacy-css` — all pass.
 
-**Batch progress**: Batch 1–6 **Owner signed** (2026-06-03). Cross-cutting **Owner signed** (2026-06-03). **Phase 1 complete** — Final sign-off documented below.
+**Batch progress**: Batch 1–6 **Owner signed** (2026-06-03). Cross-cutting **Owner signed** (2026-06-03). **IB Connection parity signed** (2026-06-04). **Phase 1 CLOSED** — business parity 100% (see Final sign-off).
 
 **How to sign off**: Open Legacy + New side-by-side → walk each batch → check **Pass** → fill **Owner date** → note regressions in **Remarks**. Agent fixes → re-verify row before closing batch.
 
@@ -19,8 +19,6 @@
 | Sidebar **Live** nav IB/daemon health lamp matches Legacy | [x] | 2026-06-03 | Owner verified |
 | Canvas `bg-card`; elevated panels distinguishable from canvas | [x] | 2026-06-03 | Owner verified |
 | No data-loading regression vs Legacy on same API | [x] | 2026-06-03 | Owner verified |
-
-> **Note (2026-06-03)**: Phase 1 all batches + cross-cutting Owner signed. `/settings/ib` Batch 6 Legacy parity skipped (Massive historical data; IB connection / trading / Flex retained).
 
 ---
 
@@ -98,15 +96,15 @@
 
 ---
 
-## Batch 6 — Settings depth *(Owner signed 2026-06-03)*
+## Batch 6 — Settings depth *(Owner signed 2026-06-03; IB parity 2026-06-04)*
 
 **Agent pre-flight (2026-06-03)**: `lint` / `build` / `check-legacy-css` pass.
 
 **Suggested Owner order** (shallow → deep):
 
-| Order | Route | Code (DONE) |
-|-------|-------|-------------|
-| — | `/settings/ib` | Skip Batch 6 parity — `IbConnectionPage.tsx` retained (Massive covers historical data; IB other services critical) |
+| Order | Route | Code |
+|-------|-------|------|
+| 0 | `/settings/ib` | `IbConnectionPage.tsx` — see [IB_CONNECTION_ACCEPTANCE.md](./IB_CONNECTION_ACCEPTANCE.md) |
 | 1 | `/settings/subscribe` | `SubscribePage.tsx` + `subscribe/*` |
 | 2 | `/settings/coverage/overview` | `CoverageOverviewPage.tsx` |
 | 3 | `/settings/coverage/overview-detail` | `CoverageOverviewDetailPage.tsx` |
@@ -119,7 +117,7 @@
 
 | Route | Business checks | Pass | Owner date | Remarks |
 |-------|-----------------|------|------------|---------|
-| `/settings/ib` | Connection + Flex | [x] | 2026-06-03 | N/A — Batch 6 parity skip (Massive historical data; IB connection/other services retained) |
+| `/settings/ib` | See [IB_CONNECTION_ACCEPTANCE.md](./IB_CONNECTION_ACCEPTANCE.md) — Connection, Client IDs, Account, Flex, Save | [x] | 2026-06-04 | Owner verified (closure) |
 | `/settings/subscribe` | Snapshot / Redis / IB tabs, Release ticker | [x] | 2026-06-03 | Owner verified |
 | `/settings/coverage/overview` | Watchlist summary, job queues, global PG table | [x] | 2026-06-03 | Owner verified |
 | `/settings/coverage/overview-detail` | Matrix, Check/Fill, Jobs SSE | [x] | 2026-06-03 | Owner verified |
@@ -138,13 +136,30 @@
 
 ---
 
-## Final sign-off
+## Batch 1 smoke regression (closure)
 
-When **all batches** and cross-cutting rows are checked:
+Quick re-check on same Legacy API (2026-06-04):
 
-- [x] Update [PHASE1_UI_ACCEPTANCE.md](./PHASE1_UI_ACCEPTANCE.md) Owner date (2026-06-03)
+| Route | Smoke check | Pass | Date |
+|-------|-------------|------|------|
+| `/market/live` | Table loads; category groups; Streams lamp | [x] | 2026-06-04 |
+| `/portfolio/positions` | Instance/Stocks/Options tabs; global strip visible | [x] | 2026-06-04 |
+| `/portfolio/accounts` | KPI values; category click opens modal | [x] | 2026-06-04 |
+| `/strategy/instances` | Instance list; detail sidebar opens | [x] | 2026-06-04 |
+
+---
+
+## Final sign-off — Phase 1 CLOSED
+
+When **all batches**, cross-cutting, IB parity, and smoke rows are checked:
+
+- [x] Update [PHASE1_UI_ACCEPTANCE.md](./PHASE1_UI_ACCEPTANCE.md) (2026-06-04)
 - [x] Update [PHASE2_DISCOVERY_ACCEPTANCE.md](./PHASE2_DISCOVERY_ACCEPTANCE.md) Owner date (2026-06-03; signed Batch 3)
 - [x] Update [STOCK_INSPECTOR_ACCEPTANCE.md](./STOCK_INSPECTOR_ACCEPTANCE.md) Owner date (2026-06-03; signed Batch 3)
-- [x] Mark bifrost-trade-infra `MIGRATION_TRACKING.md` §6 **Phase 1 VERIFIED** (date: 2026-06-03)
+- [x] [IB_CONNECTION_ACCEPTANCE.md](./IB_CONNECTION_ACCEPTANCE.md) Owner signed (2026-06-04)
+- [x] Batch 1 smoke regression (2026-06-04)
+- [x] Mark bifrost-trade-infra `MIGRATION_TRACKING.md` §6 **Phase 1 CLOSED** (date: 2026-06-04)
 
-**Owner signature / date**: 2026-06-03
+**Status**: **Phase 1 CLOSED** — New Frontend + Legacy API; business parity 100% (including `/settings/ib`).
+
+**Owner signature / date**: 2026-06-04

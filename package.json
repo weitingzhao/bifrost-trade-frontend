@@ -13,6 +13,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "check:legacy-css": "bash scripts/check-legacy-css.sh",
+    "sync:docker-lock": "docker run --rm --platform linux/amd64 -v \"$(pwd)\":/app -w /app node:20-slim npm install",
     "sync:massive-stocks-coverage": "cp ../bifrost-trader-engine/docs/plans/massive_stocks_api_coverage.html public/plans/massive_stocks_api_coverage.html",
     "sync:massive-api-coverage": "cp ../bifrost-trader-engine/frontend/public/plans/massive_api_coverage.html public/plans/massive_api_coverage.html"
   },

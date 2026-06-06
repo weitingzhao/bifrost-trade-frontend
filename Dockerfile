@@ -3,6 +3,8 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
+# package-lock.json must include Linux optional deps (esbuild, @emnapi/*) for Docker.
+# Refresh after dependency changes: npm run sync:docker-lock
 COPY package.json package-lock.json* ./
 RUN npm ci
 

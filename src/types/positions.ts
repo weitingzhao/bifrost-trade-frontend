@@ -122,6 +122,7 @@ export interface PositionAttributionResponse {
 export interface InstanceAllocation {
   strategy_instance_id: number
   allocated_quantity: number
+  strategy_opportunity_id?: number | null
   strategy_instance_label?: string | null
   strategy_opportunity_name?: string | null
 }

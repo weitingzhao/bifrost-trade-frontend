@@ -2,6 +2,7 @@ import { StockInspectorPanel } from './StockInspectorPanel'
 import { InstanceDetailSidebar } from '@/components/strategy/InstanceDetailSidebar'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import type { LivePositionRow, OpenOptionPosition } from '@/types/positions'
+import type { RiskProfile } from '@/utils/riskProfile'
 import type { StockInspectorFundamentalSeed } from '@/types/research'
 
 export type InspectorType = 'strategy' | 'stock' | 'option' | null
@@ -15,6 +16,8 @@ export interface InspectorState {
   livePosition?: LivePositionRow
   optionPosition?: OpenOptionPosition
   fundamentalSeed?: StockInspectorFundamentalSeed
+  /** Optional override; instance inspector normally derives risk from executions + instance structure. */
+  riskProfile?: RiskProfile | null
 }
 
 interface Props {
@@ -28,7 +31,12 @@ export function InspectorDrawer({ state, onClose }: Props) {
 
   if (state.type === 'strategy' && state.id != null) {
     return (
-      <InstanceDetailSidebar open instanceId={state.id} onClose={onClose} />
+      <InstanceDetailSidebar
+        open
+        instanceId={state.id}
+        riskProfile={state.riskProfile}
+        onClose={onClose}
+      />
     )
   }
 

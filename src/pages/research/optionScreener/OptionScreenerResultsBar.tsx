@@ -12,10 +12,10 @@ export function OptionScreenerResultsBar({ data, onExport }: Props) {
   return (
     <div className={optionScreenerResultsMetaClass}>
       <span>
-        {data.total_contracts} contracts across {data.symbols_scanned.length} symbols
-        {data.symbols_failed.length > 0 && (
+        {data.total_contracts ?? 0} contracts across {data.symbols_scanned?.length ?? 0} symbols
+        {(data.symbols_failed?.length ?? 0) > 0 && (
           <span className="ml-2 text-destructive">
-            Failed: {data.symbols_failed.join(', ')}
+            Failed: {data.symbols_failed?.join(', ')}
           </span>
         )}
       </span>

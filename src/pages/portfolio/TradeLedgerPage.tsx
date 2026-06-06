@@ -107,7 +107,10 @@ export default function TradeLedgerPage() {
     })
   }, [])
   const [expiredCloseTarget, setExpiredCloseTarget] = useState<Execution | null>(null)
-  const [viewLinksTarget, setViewLinksTarget] = useState<{ title: string; oid: number } | null>(null)
+  const [viewLinksTarget, setViewLinksTarget] = useState<
+    import('./ledger/LedgerOptContractCell').ViewLinksPayload | null
+  >(null)
+  const [linkStockTarget, setLinkStockTarget] = useState<Execution | null>(null)
   const [syncingId, setSyncingId] = useState<number | null>(null)
   const [createSource, setCreateSource] = useState<'manual' | 'journal_closed'>('manual')
 
@@ -146,7 +149,7 @@ export default function TradeLedgerPage() {
     stkPositionGroups,
     stkUnrealizedByKey,
     stkTotals,
-    summaryClosedGroups,
+    closedOptGroups,
     optionsSummaryByMonth,
     stocksSummaryByMonth,
     closedOptGroupsPnlSum,
@@ -351,7 +354,7 @@ export default function TradeLedgerPage() {
             onSummaryPeriodChange={setSummaryPeriod}
             optionsSummaryByMonth={optionsSummaryByMonth}
             stocksSummaryByMonth={stocksSummaryByMonth}
-            summaryClosedGroups={summaryClosedGroups}
+            summaryClosedGroups={closedOptGroups}
             closedOptGroupsPnlSum={closedOptGroupsPnlSum}
             stkFilteredExecutions={stkExecsForDisplay}
             stkUnrealizedByKey={stkUnrealizedByKey}
@@ -388,6 +391,7 @@ export default function TradeLedgerPage() {
             onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
             onDelete={setDeleteTarget}
             onLinkStrategy={handleLinkStrategy}
+            onLinkStock={setLinkStockTarget}
             onViewLinks={setViewLinksTarget}
             onExpiredClose={setExpiredCloseTarget}
             syncingId={syncingId}
@@ -447,6 +451,7 @@ export default function TradeLedgerPage() {
             onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
             onDelete={setDeleteTarget}
             onLinkStrategy={handleLinkStrategy}
+            onLinkStock={setLinkStockTarget}
             onViewLinks={setViewLinksTarget}
             syncingId={syncingId}
             onSyncOpposite={handleSyncOppositeLeg}
@@ -469,6 +474,8 @@ export default function TradeLedgerPage() {
         setExpiredCloseTarget={setExpiredCloseTarget}
         viewLinksTarget={viewLinksTarget}
         setViewLinksTarget={setViewLinksTarget}
+        linkStockTarget={linkStockTarget}
+        setLinkStockTarget={setLinkStockTarget}
         createSource={createSource}
       />
     </PageShell>

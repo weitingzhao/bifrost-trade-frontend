@@ -28,13 +28,16 @@ import {
   optionCategorySectionTitleClass,
 } from '@/pages/strategy/optionCategory/optionCategoryUi'
 import {
-  optionCategoryCompactSelectClass,
   optionCategoryInlineInputDefaultClass,
   optionCategoryInlineInputLabelClass,
+  optionCategoryInlineSelectDefaultClass,
   optionCategoryInlineSelectKeyClass,
   optionCategoryInlineSelectKindClass,
   optionCategoryMetaFooterClass,
+  optionCategoryMetaTableClass,
+  optionCategoryTableCellSelectClass,
 } from '@/pages/strategy/optionCategory/optionCategoryFormUi'
+import { OptionCategoryMetaColgroup } from '@/pages/strategy/optionCategory/optionCategoryTableColgroups'
 
 export interface OptionCategoryMetaTableProps {
   detail: StrategyTemplateDetail
@@ -86,7 +89,8 @@ export function OptionCategoryMetaTable({
             No meta parameters defined.
           </p>
         ) : (
-          <NestedDenseTable>
+          <NestedDenseTable tableClassName={optionCategoryMetaTableClass}>
+            <OptionCategoryMetaColgroup />
             <DenseTableHeader>
               <DenseTableHeadRow>
                 <DenseTableHead>Key</DenseTableHead>
@@ -99,7 +103,7 @@ export function OptionCategoryMetaTable({
             <DenseTableBody>
               {params.map((p: MetaParamItem, i: number) => (
                 <DenseTableRow key={i}>
-                  <DenseTableCell>
+                  <DenseTableCell className={optionCategoryTableCellSelectClass}>
                     <select
                       className={optionCategoryInlineSelectKeyClass}
                       value={p.meta_key}
@@ -131,10 +135,10 @@ export function OptionCategoryMetaTable({
                       }}
                     />
                   </DenseTableCell>
-                  <DenseTableCell>
+                  <DenseTableCell className={optionCategoryTableCellSelectClass}>
                     {(valueOptsByKey[p.meta_key]?.length ?? 0) > 0 ? (
                       <select
-                        className={optionCategoryCompactSelectClass + ' w-28'}
+                        className={optionCategoryInlineSelectDefaultClass}
                         value={p.default_value_text ?? ''}
                         onFocus={() => void loadValueOpts(p.meta_key, detail.template_code)}
                         onChange={(e) => {
@@ -163,7 +167,7 @@ export function OptionCategoryMetaTable({
                       />
                     )}
                   </DenseTableCell>
-                  <DenseTableCell>
+                  <DenseTableCell className={optionCategoryTableCellSelectClass}>
                     <select
                       className={optionCategoryInlineSelectKindClass}
                       value={p.param_kind ?? 'fixed'}

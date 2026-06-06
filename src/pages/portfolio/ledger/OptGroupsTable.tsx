@@ -29,8 +29,6 @@ export function OptGroupsTable({
         <DenseTableHeadRow>
           <DenseTableHead className="w-8" aria-hidden />
           <DenseTableHead>Contract</DenseTableHead>
-          <DenseTableHead className={`${denseTableNumCell} w-10 text-center`}>Inst</DenseTableHead>
-          <DenseTableHead className={`${denseTableNumCell} w-12 text-center`}>Links</DenseTableHead>
           {!showNetQty && <DenseTableHead className={denseTableNumCell}>Buy Avg</DenseTableHead>}
           {!showNetQty && <DenseTableHead className={denseTableNumCell}>Sell Avg</DenseTableHead>}
           {showNetQty && <DenseTableHead className={denseTableNumCell}>Net Qty</DenseTableHead>}

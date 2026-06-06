@@ -400,7 +400,28 @@
   color: var(--muted-foreground);
 }
 
+.stmtChartTable {
+  display: grid;
+  grid-template-columns: 55% 45%;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.stmtChartCol {
+  min-width: 0;
+}
+
+.stmtTableCol {
+  min-width: 0;
+  overflow-x: auto;
+}
+
 .stmtsTableWrap {
+  overflow-x: auto;
+  margin-top: 0;
+}
+
+.stmtsTableWrapOnly {
   overflow-x: auto;
   margin-top: 0.35rem;
 }

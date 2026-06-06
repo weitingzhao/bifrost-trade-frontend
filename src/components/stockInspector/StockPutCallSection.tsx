@@ -42,12 +42,15 @@ export function StockPutCallSection({
   const [refreshing, setRefreshing] = useState(false)
   const qc = useQueryClient()
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: QUERY_KEYS.research.optionPcr(sym),
     queryFn: () => fetchSymbolOptionPcr(sym, PCR_FETCH_DAYS),
     enabled: !!sym && expanded,
     staleTime: 120_000,
+    retry: 0,
   })
+
+  const loadError = data && !data.ok ? data.error : undefined
 
   async function handleRefresh() {
     if (!sym || refreshing) return
@@ -109,7 +112,7 @@ export function StockPutCallSection({
       {expanded && (
         <>
           {isLoading && !data && <p className={styles.hint}>Loading put/call data…</p>}
-          {error && <p className={cn(styles.hint, styles.hintErr)}>{(error as Error).message}</p>}
+          {loadError && <p className={cn(styles.hint, styles.hintErr)}>{loadError}</p>}
 
           {data?.ok && (
             <>
@@ -260,9 +263,6 @@ export function StockPutCallSection({
             </>
           )}
 
-          {data && !data.ok && data.error && (
-            <p className={cn(styles.hint, styles.hintErr)}>{data.error}</p>
-          )}
         </>
       )}
     </section>

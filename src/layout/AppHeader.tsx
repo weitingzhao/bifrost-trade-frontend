@@ -90,9 +90,11 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
     >
       <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />
       <Separator orientation="vertical" className="h-4" />
-      <span className="font-medium text-sm">{title}</span>
+      <span className="min-w-0 flex-1 truncate font-medium text-sm md:flex-none md:max-w-none">
+        {title}
+      </span>
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex shrink-0 items-center gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

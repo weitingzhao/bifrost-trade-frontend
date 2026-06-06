@@ -300,21 +300,30 @@ export async function fetchMassiveJobsSummary(celeryQueue: string): Promise<{
   counts: JobQueueStatusCounts
   error?: string
 }> {
-  const q = new URLSearchParams()
-  if (celeryQueue.trim()) q.set('celery_queue', celeryQueue.trim())
-  const r = await fetch(massiveJobsUrl(`/summary?${q}`), { headers: authHeaders() })
-  const j = await parseJson<Record<string, unknown>>(r)
-  const c = j.counts as Record<string, unknown> | undefined
-  const counts: JobQueueStatusCounts = {
-    pending: typeof c?.pending === 'number' ? c.pending : 0,
-    running: typeof c?.running === 'number' ? c.running : 0,
-    done: typeof c?.done === 'number' ? c.done : 0,
-    failed: typeof c?.failed === 'number' ? c.failed : 0,
-  }
-  return {
-    ok: r.ok && j.ok !== false,
-    counts,
-    error: typeof j.error === 'string' ? j.error : undefined,
+  const empty: JobQueueStatusCounts = { pending: 0, running: 0, done: 0, failed: 0 }
+  try {
+    const q = new URLSearchParams()
+    if (celeryQueue.trim()) q.set('celery_queue', celeryQueue.trim())
+    const r = await fetch(massiveJobsUrl(`/summary?${q}`), { headers: authHeaders() })
+    const j = await parseJson<Record<string, unknown>>(r)
+    const c = j.counts as Record<string, unknown> | undefined
+    const counts: JobQueueStatusCounts = {
+      pending: typeof c?.pending === 'number' ? c.pending : 0,
+      running: typeof c?.running === 'number' ? c.running : 0,
+      done: typeof c?.done === 'number' ? c.done : 0,
+      failed: typeof c?.failed === 'number' ? c.failed : 0,
+    }
+    return {
+      ok: r.ok && j.ok !== false,
+      counts,
+      error: typeof j.error === 'string' ? j.error : undefined,
+    }
+  } catch (e) {
+    return {
+      ok: false,
+      counts: empty,
+      error: e instanceof Error ? e.message : 'Network error',
+    }
   }
 }
 
@@ -324,35 +333,43 @@ export async function fetchMassiveJobsList(options?: {
   status?: string
   celery_queue?: string
 }): Promise<{ ok: boolean; jobs: MassiveJobApiRow[]; error?: string }> {
-  const q = new URLSearchParams()
-  if (options?.limit != null) q.set('limit', String(options.limit))
-  if (options?.offset != null) q.set('offset', String(options.offset))
-  if (options?.status?.trim()) q.set('status', options.status.trim())
-  if (options?.celery_queue?.trim()) q.set('celery_queue', options.celery_queue.trim())
-  const r = await fetch(massiveJobsUrl(`?${q}`))
-  const j = await parseJson<Record<string, unknown>>(r)
-  if (!j.ok) {
+  try {
+    const q = new URLSearchParams()
+    if (options?.limit != null) q.set('limit', String(options.limit))
+    if (options?.offset != null) q.set('offset', String(options.offset))
+    if (options?.status?.trim()) q.set('status', options.status.trim())
+    if (options?.celery_queue?.trim()) q.set('celery_queue', options.celery_queue.trim())
+    const r = await fetch(massiveJobsUrl(`?${q}`))
+    const j = await parseJson<Record<string, unknown>>(r)
+    if (!j.ok) {
+      return {
+        ok: false,
+        jobs: [],
+        error: typeof j.error === 'string' ? j.error : 'Request failed',
+      }
+    }
+    const raw = Array.isArray(j.jobs) ? j.jobs : []
+    const jobs: MassiveJobApiRow[] = raw.map((row: unknown) => {
+      const o = row as Record<string, unknown>
+      return {
+        job_id: String(o.job_id ?? ''),
+        type: typeof o.type === 'string' ? o.type : undefined,
+        kind: typeof o.kind === 'string' ? o.kind : undefined,
+        goal: typeof o.goal === 'string' ? o.goal : undefined,
+        status: typeof o.status === 'string' ? o.status : undefined,
+        result: o.result,
+        created_ts: typeof o.created_ts === 'number' ? o.created_ts : undefined,
+        updated_ts: typeof o.updated_ts === 'number' ? o.updated_ts : undefined,
+      }
+    })
+    return { ok: true, jobs }
+  } catch (e) {
     return {
       ok: false,
       jobs: [],
-      error: typeof j.error === 'string' ? j.error : 'Request failed',
+      error: e instanceof Error ? e.message : 'Network error',
     }
   }
-  const raw = Array.isArray(j.jobs) ? j.jobs : []
-  const jobs: MassiveJobApiRow[] = raw.map((row: unknown) => {
-    const o = row as Record<string, unknown>
-    return {
-      job_id: String(o.job_id ?? ''),
-      type: typeof o.type === 'string' ? o.type : undefined,
-      kind: typeof o.kind === 'string' ? o.kind : undefined,
-      goal: typeof o.goal === 'string' ? o.goal : undefined,
-      status: typeof o.status === 'string' ? o.status : undefined,
-      result: o.result,
-      created_ts: typeof o.created_ts === 'number' ? o.created_ts : undefined,
-      updated_ts: typeof o.updated_ts === 'number' ? o.updated_ts : undefined,
-    }
-  })
-  return { ok: true, jobs }
 }
 
 export async function deleteAllMassiveJobs(

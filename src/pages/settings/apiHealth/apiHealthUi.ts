@@ -50,12 +50,16 @@ export const apiHealthDocLinkClass = cn(
 export const apiHealthServiceCardContentClass = cn('space-y-3 px-4 pb-4 pt-4')
 
 export const apiHealthServiceCardHeaderClass = cn(
-  'flex min-w-0 items-center justify-between gap-2',
+  'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2',
 )
 
-export const apiHealthServiceCardTitleRowClass = cn('flex min-w-0 items-center gap-2')
+export const apiHealthServiceCardTitleRowClass = cn(
+  'flex min-w-0 items-center gap-1.5 overflow-hidden',
+)
 
-export const apiHealthServiceCardNameClass = cn('text-sm font-semibold')
+export const apiHealthServiceCardActionsClass = cn('flex shrink-0 items-center gap-1')
+
+export const apiHealthServiceCardNameClass = cn('min-w-0 truncate text-sm font-semibold')
 
 export function apiHealthServiceStatusClass(lamp: Lamp): string {
   return cn(

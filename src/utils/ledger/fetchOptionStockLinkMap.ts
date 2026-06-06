@@ -33,12 +33,7 @@ export async function fetchOptionStockLinkMapForExecutions(
 
   try {
     const res = await postOptionStockLinksQuery(batches)
-    // Legacy API returns { by_option_id: Record<string, { links, slippage_total }> }
-    // New API returns { links: OptionStockLink[] }
-    // Handle both formats for Phase 1 compatibility
-    const raw = (res as unknown as Record<string, unknown>).by_option_id as
-      | Record<string, { links?: unknown[]; slippage_total?: number | null }>
-      | undefined
+    const raw = res.by_option_id
 
     if (raw) {
       const result: Record<number, OptionStockLinkSummary> = {}
@@ -56,12 +51,13 @@ export async function fetchOptionStockLinkMapForExecutions(
     // Fallback: new API format — group links by option_execution_id
     const result: Record<number, OptionStockLinkSummary> = {}
     for (const link of res.links ?? []) {
-      const oid = link.option_execution_id
+      const oid = link.option_execution_id ?? link.option_account_executions_id
+      if (oid == null || !Number.isFinite(Number(oid))) continue
       if (!result[oid]) {
         result[oid] = { links: [], slippage_total: null }
       }
       result[oid].links.push(link)
-      const slip = link.slippage ?? 0
+      const slip = link.slippage_vs_close ?? link.slippage ?? 0
       result[oid].slippage_total = (result[oid].slippage_total ?? 0) + slip
     }
     return result

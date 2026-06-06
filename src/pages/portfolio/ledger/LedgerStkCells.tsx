@@ -80,16 +80,18 @@ export function LedgerStkSortableTh({
   dir,
   onClick,
   tooltip,
+  className,
 }: {
   label: string
   active: boolean
   dir: 'asc' | 'desc'
   onClick: () => void
   tooltip?: string
+  className?: string
 }) {
   return (
     <DenseTableHead
-      className={denseTable.sortableHead}
+      className={cn(denseTable.sortableHead, className)}
       onClick={onClick}
       onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -113,11 +115,22 @@ export function LedgerStkSortableTh({
   )
 }
 
-export function LedgerStkTimeCells({ ex }: { ex: Execution }) {
+export function LedgerStkTimeCells({
+  ex,
+  timeClassName,
+  tradeDateClassName,
+}: {
+  ex: Execution
+  timeClassName?: string
+  tradeDateClassName?: string
+}) {
+  const timeLabel = ex.time != null ? fmtTs(ex.time) : '—'
   return (
     <>
-      <DenseTableCell>{ex.time != null ? fmtTs(ex.time) : '—'}</DenseTableCell>
-      <DenseTableCell>{fmtTradeDate(ex.trade_date)}</DenseTableCell>
+      <DenseTableCell className={timeClassName} title={ex.time != null ? timeLabel : undefined}>
+        {timeLabel}
+      </DenseTableCell>
+      <DenseTableCell className={tradeDateClassName}>{fmtTradeDate(ex.trade_date)}</DenseTableCell>
     </>
   )
 }

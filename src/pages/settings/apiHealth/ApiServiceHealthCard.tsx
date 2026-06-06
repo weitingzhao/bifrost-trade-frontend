@@ -10,6 +10,7 @@ import { EnvBadge } from './EnvBadge'
 import type { ApiShutdownConfig } from './apiHealthShutdown'
 import {
   apiHealthServiceCardContentClass,
+  apiHealthServiceCardActionsClass,
   apiHealthServiceCardHeaderClass,
   apiHealthServiceCardNameClass,
   apiHealthServiceCardTitleRowClass,
@@ -58,10 +59,10 @@ export function ApiServiceHealthCard({
             <StatusLamp lamp={lamp} />
             <span className={apiHealthServiceCardNameClass}>{svc.name}</span>
             {(body?.config_profile === 'dev' || body?.config_profile === 'prod') && (
-              <EnvBadge profile={body.config_profile} ok={ok} />
+              <EnvBadge profile={body.config_profile} ok={ok} compact />
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className={apiHealthServiceCardActionsClass}>
             {canShutdown ? (
               <IconActionButton
                 tone="danger"

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
+import { MOBILE_BREAKPOINT } from '@/hooks/use-mobile'
 import { STORAGE_KEYS } from '@/constants/storage'
 
 export type NavMode = 'sidebar' | 'topnav'
 
 const KEY = STORAGE_KEYS.navMode
 
-/** Below this width the sidebar is forced off regardless of preference. */
-const FORCE_TOPNAV_WIDTH = 640
+/** Below this width the sidebar is forced off regardless of preference (same as sidebar mobile). */
+const FORCE_TOPNAV_WIDTH = MOBILE_BREAKPOINT
 
 function readStored(): NavMode {
   return localStorage.getItem(KEY) === 'topnav' ? 'topnav' : 'sidebar'

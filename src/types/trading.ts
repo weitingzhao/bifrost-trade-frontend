@@ -165,14 +165,38 @@ export interface OptionStockLinkBatch {
 }
 
 export interface OptionStockLink {
-  option_execution_id: number
-  stock_execution_id: number
-  allocated_shares: number
+  link_id?: number
+  option_execution_id?: number
+  option_account_executions_id?: number
+  stock_execution_id?: number
+  stock_account_executions_id?: number
+  role?: string | null
+  note?: string | null
+  allocated_shares?: number
   slippage?: number
+  slippage_vs_close?: number | null
+  stock_symbol?: string | null
+  stock_side?: string | null
+  stock_quantity?: number | null
+  stock_price?: number | null
+  stock_close_price?: number | null
+  stock_trade_date?: string | null
+  stock_exec_id?: string | null
+  trade_date?: string | null
+  side?: string | null
+  quantity?: number | null
+  price?: number | null
+  close_price?: number | null
+}
+
+export interface OptionStockLinkSummary {
+  links: OptionStockLink[]
+  slippage_total: number | null
 }
 
 export interface OptionStockLinksResponse {
-  links: OptionStockLink[]
+  links?: OptionStockLink[]
+  by_option_id?: Record<string, OptionStockLinkSummary>
 }
 
 // --- Bulk Performance engine types ---
@@ -191,11 +215,6 @@ export interface BackendOptPair {
   p_price: number
   commission: number
   net_pnl: number
-}
-
-export interface OptionStockLinkSummary {
-  links: OptionStockLink[]
-  slippage_total: number | null
 }
 
 export interface PerformanceDayPnLCell {

@@ -12,7 +12,7 @@ import {
 import {
   buildOptionsSummaryByMonth,
   buildStocksSummaryByMonth,
-  closedGroupsForLedgerSummary,
+  closedGroupSummaryPnl,
 } from '@/utils/ledger/ledgerSummaryGroups'
 import type { LedgerSincePreset, LedgerSummaryPeriod } from '@/utils/ledger/summaryPeriod'
 import {
@@ -27,7 +27,6 @@ import {
 } from '@/utils/ledger/stkBuckets'
 import type { StkLedgerBucket } from '@/utils/ledger/stkBuckets'
 import {
-  adjustedRealizedPnlForOptGroup,
   executionStrategyInstanceIds,
   sliceExecutionForInstanceOptView,
   expandExecutionRowsForStrategyOptView,
@@ -310,13 +309,9 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
       const byInst = groupExecutionsByStrategyInstanceId(trades)
       const instanceSubgroups = Array.from(byInst.entries())
         .map(([instId, instTrades]) => {
-          const sliced = instId === 'none'
-            ? instTrades
-            : instTrades.flatMap(t => {
-                const r = sliceExecutionForInstanceOptView(t, instId as number)
-                return r ? [r] : []
-              })
-          const groups = buildOptExecutionGroups(sliced)
+          // Legacy parity: allocation split happens in expandExecutionRowsForStrategyOptView;
+          // do not slice again per instance or legs can mis-classify as open.
+          const groups = buildOptExecutionGroups(instTrades)
           const label = instId !== 'none'
             ? (instTrades.find(t => executionInstanceLabel(t, instId as number))
                 ? executionInstanceLabel(instTrades[0], instId as number)
@@ -422,8 +417,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     } else {
       for (const id of ids) {
         const arr = byId.get(id) ?? []
-        const sliced = sliceExecutionForInstanceOptView(e, id)
-        if (sliced) arr.push(sliced)
+        arr.push(e)
         byId.set(id, arr)
       }
     }
@@ -431,9 +425,11 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   return {
     withInst: Array.from(byId.entries())
       .map(([id, trades]) => {
-        const label = trades.find(t => executionInstanceLabel(t, id))
-          ? executionInstanceLabel(trades[0], id)
-          : null
+        const tradesForGroups = trades.flatMap(t => {
+          const row = sliceExecutionForInstanceOptView(t, id)
+          return row ? [row] : []
+        })
+        const label = trades.map(t => executionInstanceLabel(t, id)).find(l => l && l.trim()) ?? null
         const oppId = trades.find(t => t.strategy_opportunity_id)?.strategy_opportunity_id ?? null
         const opp = oppId != null ? opportunitiesMap.get(oppId) : null
         return {
@@ -442,7 +438,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
           oppName: trades.find(t => t.strategy_opportunity_name)?.strategy_opportunity_name ?? null,
           structure: opp?.structure_name ?? '—',
           symbols: opp?.symbols ?? [],
-          groups: buildOptExecutionGroups(trades),
+          groups: buildOptExecutionGroups(tradesForGroups),
           trades,
         }
       })
@@ -523,31 +519,11 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
   const hasFixedIncomeExecs = stkByBucket.fixed_income.length > 0
   const hasCashLikeExecs = stkByBucket.cash_like.length > 0
 
-  // ── Period summaries ─────────────────────────────────────────────────────
-  const summaryClosedGroups = useMemo(
-    () =>
-      closedGroupsForLedgerSummary({
-      activeTab,
-      closedOptGroups,
-      filteredClosedOptGroups,
-      filteredStrategyOpportunityGroups,
-      filteredInstanceGroups,
-      noInstanceOptGroups,
-    }),
-  [
-    activeTab,
-    closedOptGroups,
-    filteredClosedOptGroups,
-    filteredStrategyOpportunityGroups,
-    filteredInstanceGroups,
-    noInstanceOptGroups,
-  ],
-)
-
+  // ── Period summaries (Legacy: all closedOptGroups; not tab-scoped) ───────
   const optionsSummaryByMonth = useMemo(
-    () => buildOptionsSummaryByMonth(summaryClosedGroups, linkByOptionId),
-  [summaryClosedGroups, linkByOptionId],
-)
+    () => buildOptionsSummaryByMonth(closedOptGroups),
+    [closedOptGroups],
+  )
 
   const stocksSummaryByMonth = useMemo(() => {
   const tab = activeTab as StkLedgerBucket
@@ -556,9 +532,9 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
   }, [activeTab, stkByBucket])
 
   const closedOptGroupsPnlSum = useMemo(
-    () => summaryClosedGroups.reduce((s, g) => s + adjustedRealizedPnlForOptGroup(g, linkByOptionId), 0),
-  [summaryClosedGroups, linkByOptionId],
-)
+    () => closedOptGroups.reduce((s, g) => s + closedGroupSummaryPnl(g), 0),
+    [closedOptGroups],
+  )
 
   const stkUnrealizedByKey = useMemo(() => {
   const m = new Map<string, number | null>()
@@ -647,7 +623,6 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
     hasStkExecs,
     hasFixedIncomeExecs,
     hasCashLikeExecs,
-    summaryClosedGroups,
     optionsSummaryByMonth,
     stocksSummaryByMonth,
     closedOptGroupsPnlSum,

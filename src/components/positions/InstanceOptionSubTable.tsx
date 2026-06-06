@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
+import { updateExecution } from '@/api/trading'
 import {
   DenseTableBody,
   DenseTableCell,
@@ -25,7 +26,14 @@ import {
   unrealizedPnlColorClass,
 } from '@/utils/positions'
 import { contractButtonLabel, optionLastStrikePctClassFromQty } from '@/utils/openOptionsTab'
-import { ExecutionRow } from './ExecutionRow'
+import {
+  findMatchingFinalForTws,
+  findMatchingTwsForFinal,
+  shouldShowOptionExecSync,
+} from '@/utils/execAttributionSync'
+import { OpenOptionExecDetailRow, OpenOptionExecDetailTable } from './OpenOptionExecCompactLine'
+
+const OPTION_COL_SPAN = 16
 import type { OpenOptionPosition, Execution, InstanceAllGroup } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import type { DetailViewMode } from './PositionsOpenControls'
@@ -47,6 +55,8 @@ interface Props {
   onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
   onDeleteExec?: (exec: Execution) => void
   onRefreshExecs?: () => void
+  onOpenStrategy?: (instanceId: number) => void
+  canonicalOptContractKeys?: Set<string>
 }
 
 function optQuoteMid(quote: QuoteItem | undefined): number | null {
@@ -69,8 +79,72 @@ export function InstanceOptionSubTable({
   onLinkExec,
   onDeleteExec,
   onRefreshExecs,
+  onOpenStrategy,
+  canonicalOptContractKeys = new Set(),
 }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
+  const [syncingExecId, setSyncingExecId] = useState<number | null>(null)
+
+  const handleSyncAttribution = useCallback(
+    async (target: Execution, source: Execution) => {
+      const id = target.account_executions_id
+      if (id == null) return
+      setSyncingExecId(id)
+      try {
+        const res = await updateExecution(id, {
+          strategy_opportunity_id: source.strategy_opportunity_id ?? null,
+          strategy_instance_id: source.strategy_instance_id ?? null,
+        })
+        if (!res.ok) throw new Error(res.error || 'Sync failed')
+        onRefreshExecs?.()
+      } finally {
+        setSyncingExecId(null)
+      }
+    },
+    [onRefreshExecs],
+  )
+
+  function renderExecLine(
+    pos: OpenOptionPosition,
+    posKey: string,
+    ex: Execution,
+    ei: number,
+    book: 'final' | 'tws',
+    scopedFinal: Execution[],
+    scopedTws: Execution[],
+  ) {
+    const crossBookMatch =
+      book === 'final'
+        ? findMatchingTwsForFinal(ex, scopedTws)
+        : findMatchingFinalForTws(ex, scopedFinal)
+    const showSync = shouldShowOptionExecSync({
+      book,
+      exec: ex,
+      crossBookMatch,
+      canonicalOptContractKeys,
+    })
+    const execId = ex.account_executions_id
+
+    return (
+      <OpenOptionExecDetailRow
+        key={`${posKey}-${book === 'final' ? 'f' : 't'}-${execId ?? ei}`}
+        pos={pos}
+        exec={ex}
+        book={book}
+        onEdit={onEditExec ?? (() => {})}
+        onLink={ex => onLinkExec?.(ex, [...scopedFinal, ...scopedTws])}
+        onDelete={onDeleteExec ?? (() => {})}
+        onOpenStrategy={onOpenStrategy}
+        showSync={showSync}
+        syncBusy={execId != null && syncingExecId === execId}
+        onSync={
+          showSync && crossBookMatch
+            ? () => void handleSyncAttribution(ex, crossBookMatch)
+            : undefined
+        }
+      />
+    )
+  }
 
   if (options.length === 0) return null
 
@@ -91,10 +165,28 @@ export function InstanceOptionSubTable({
     <section className={instancePanel.subSection}>
       <h4 className={instancePanel.subHeading}>Options ({options.length})</h4>
       <div className={instancePanel.subTableWrap}>
-        <NestedDenseTable>
+        <NestedDenseTable tableClassName="min-w-[72rem] table-fixed">
+          <colgroup>
+            <col style={{ width: '2rem' }} />
+            <col style={{ width: '9rem' }} />
+            <col style={{ width: '6.5rem' }} />
+            <col style={{ width: '5rem' }} />
+            <col style={{ width: '5.5rem' }} />
+            <col style={{ width: '4.5rem' }} />
+            <col style={{ width: '4.5rem' }} />
+            <col style={{ width: '5.5rem' }} />
+            <col style={{ width: '5rem' }} />
+            <col style={{ width: '6.5rem' }} />
+            <col style={{ width: '7rem' }} />
+            <col style={{ width: '3.5rem' }} />
+            <col style={{ width: '5rem' }} />
+            <col style={{ width: '7rem' }} />
+            <col style={{ width: '5.5rem' }} />
+            <col style={{ width: '2rem' }} />
+          </colgroup>
           <DenseTableHeader>
             <DenseTableHeadRow>
-              <DenseTableHead className="w-6" aria-label="Expand" />
+              <DenseTableHead className={denseTable.expandCol} aria-label="Expand" />
               <DenseTableHead>Contract</DenseTableHead>
               <DenseTableHead>Expiry</DenseTableHead>
               <DenseTableHead align="right">Strike</DenseTableHead>
@@ -182,7 +274,7 @@ export function InstanceOptionSubTable({
                   }
                   aria-expanded={hasExecs ? isExpanded : undefined}
                 >
-                  <DenseTableCell className="w-6 px-1">
+                  <DenseTableCell className={denseTable.expandColCell}>
                     {hasExecs ? (
                       <ExpandToggleCell expanded={isExpanded} onToggle={() => toggleExpand(key)} />
                     ) : null}
@@ -332,24 +424,28 @@ export function InstanceOptionSubTable({
                 </DenseTableRow>
               )
 
-              const execRow =
+              const execDetailRow =
                 isExpanded && hasExecs ? (
                   <DenseTableRow key={`${key}-execs`} className={instancePanel.subExecRow}>
-                    <DenseTableCell colSpan={16} className="p-2">
-                      <ExecutionRow
-                        finalExecs={scopedFinalExecs}
-                        twsExecs={scopedTwsExecs}
-                        onEdit={onEditExec ?? (() => {})}
-                        onLink={onLinkExec ?? (() => {})}
-                        onDelete={onDeleteExec ?? (() => {})}
-                        onRefresh={onRefreshExecs ?? (() => {})}
-                        showPoolOff={pos.pool_label === 'Off'}
-                      />
+                    <DenseTableCell
+                      colSpan={OPTION_COL_SPAN}
+                      className="max-w-none overflow-visible p-0 align-top"
+                    >
+                      <div className="border-t border-border/50 bg-muted/15 px-1 py-0.5">
+                        <OpenOptionExecDetailTable>
+                          {scopedFinalExecs.map((ex, ei) =>
+                            renderExecLine(pos, key, ex, ei, 'final', scopedFinalExecs, scopedTwsExecs),
+                          )}
+                          {scopedTwsExecs.map((ex, ei) =>
+                            renderExecLine(pos, key, ex, ei, 'tws', scopedFinalExecs, scopedTwsExecs),
+                          )}
+                        </OpenOptionExecDetailTable>
+                      </div>
                     </DenseTableCell>
                   </DenseTableRow>
                 ) : null
 
-              return execRow ? [posRow, execRow] : [posRow]
+              return execDetailRow ? [posRow, execDetailRow] : [posRow]
             })}
           </DenseTableBody>
         </NestedDenseTable>

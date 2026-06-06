@@ -7,6 +7,8 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
+# Same-origin API bases for infra nginx (/api/{domain}/). See .env.production.example.
+RUN test -f .env.production || cp .env.production.example .env.production
 RUN npm run build
 
 # Production stage — serve via nginx

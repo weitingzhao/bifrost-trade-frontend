@@ -35,11 +35,11 @@ export const ALL_SERVICES = [...ARCH_SERVICES, ...ACCOUNT_SERVICES, ...RESEARCH_
 export const DOC_PATHS: Record<string, { swagger: string; redoc: string; openapi: string | null }> = {
   monitor:   { swagger: '/docs',                  redoc: '/redoc',                  openapi: '/openapi.json'           },
   ops:       { swagger: '/ops/docs',              redoc: '/ops/redoc',              openapi: '/ops/openapi.json'       },
-  docs:      { swagger: '/research/docs/docs',    redoc: '/research/docs/redoc',    openapi: null                      },
+  docs:      { swagger: '/research/docs/docs',    redoc: '/research/docs/redoc',    openapi: '/research/docs/openapi.json' },
   trading:   { swagger: '/trading/docs',          redoc: '/trading/redoc',          openapi: '/trading/openapi.json'   },
   portfolio: { swagger: '/portfolio/docs',        redoc: '/portfolio/redoc',        openapi: '/portfolio/openapi.json' },
   research:  { swagger: '/docs',                  redoc: '/redoc',                  openapi: '/openapi.json'           },
   strategy:  { swagger: '/strategy/docs',         redoc: '/strategy/redoc',         openapi: '/strategy/openapi.json'  },
   market:    { swagger: '/market/docs',           redoc: '/market/redoc',           openapi: '/market/openapi.json'    },
-  massive:   { swagger: '/research/massive/docs', redoc: '/research/massive/redoc', openapi: null                      },
+  massive:   { swagger: '/research/massive/docs', redoc: '/research/massive/redoc', openapi: '/research/massive/openapi.json' },
 }

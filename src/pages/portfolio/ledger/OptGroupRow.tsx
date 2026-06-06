@@ -8,9 +8,9 @@ import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
 import {
   executionStrategyInstanceIds,
-  getInstanceConsistencyState,
   adjustedRealizedPnlForOptGroup,
 } from '@/utils/ledger/ledgerOptHelpers'
+import { LedgerOptContractCell } from './LedgerOptContractCell'
 import { executionDateStr } from '@/utils/ledger/performanceUtils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtCcy, fmtPrice } from './ledgerFormat'
@@ -24,30 +24,10 @@ import {
   DenseTableSubheadRow,
   DenseTableDetailRow,
   denseTableEntityCell,
-  denseTableEntityLink,
   denseTableNumCell,
   IconActionButton,
 } from '@/components/data-display'
-import { optExecutionGroupContractLabel } from '@/utils/ledger/ledgerOptHelpers'
-
 export { ExecSourceBadge }
-
-const INST_STATE_CLASS: Record<string, string> = {
-  same: 'bg-emerald-500',
-  multiple: 'bg-amber-400',
-  mixed: 'bg-slate-400',
-}
-
-export function InstBadge({ trades }: { trades: Execution[] }) {
-  const state = getInstanceConsistencyState(trades)
-  if (state === 'none') return null
-  return (
-    <span
-      className={cn('inline-block h-2 w-2 rounded-full shrink-0', INST_STATE_CLASS[state] ?? 'bg-slate-400')}
-      title={`Instance: ${state}`}
-    />
-  )
-}
 
 function findOppositeLegAttribution(
   ex: Execution,
@@ -70,7 +50,7 @@ function findOppositeLegAttribution(
 
 export function OptGroupRow({
   group, expanded, expired, showNetQty, linkByOptionId, onToggle, onEdit, onDelete,
-  onLinkStrategy, onViewLinks, onExpiredClose, syncingId, onSyncOpposite,
+  onLinkStrategy, onLinkStock, onViewLinks, onExpiredClose, syncingId, onSyncOpposite,
 }: {
   group: OptExecutionGroup
   expanded: boolean
@@ -83,12 +63,6 @@ export function OptGroupRow({
   const stockAdj = adjPnl - group.realized_pnl
   const hasAdj = Math.abs(stockAdj) > 0.005
 
-  const totalLinkCount = group.trades.reduce((sum, t) => {
-    const oid = t.account_executions_id
-    if (oid == null || !linkByOptionId) return sum
-    return sum + (linkByOptionId[oid]?.links?.length ?? 0)
-  }, 0)
-
   return (
     <Fragment>
       <DenseTableRow className="cursor-pointer" onClick={onToggle}>
@@ -97,14 +71,11 @@ export function OptGroupRow({
         </DenseTableCell>
         <DenseTableCell className={denseTableEntityCell}>
           <span className="inline-flex flex-wrap items-center gap-1.5">
-            <span
-              className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-              role="presentation"
-            >
-              {optExecutionGroupContractLabel(group)}
-            </span>
+            <LedgerOptContractCell
+              group={group}
+              linkByOptionId={linkByOptionId}
+              onViewLinks={onViewLinks}
+            />
             {group.expiry ? (
               <span className="text-[length:var(--text-dense-meta)] text-muted-foreground whitespace-nowrap">
                 {group.expiry.replace(/-/g, '/')}
@@ -116,35 +87,6 @@ export function OptGroupRow({
               </Badge>
             ) : null}
           </span>
-        </DenseTableCell>
-        <DenseTableCell className={cn(denseTableNumCell, 'text-center')}>
-          <InstBadge trades={group.trades} />
-        </DenseTableCell>
-        <DenseTableCell className={cn(denseTableNumCell, 'text-center')}>
-          {totalLinkCount > 0 && onViewLinks ? (
-            <button
-              type="button"
-              className="text-[length:var(--text-dense-meta)] text-blue-500 hover:underline font-mono"
-              onClick={ev => {
-                ev.stopPropagation()
-                const firstOid = group.trades.find(
-                  t =>
-                    t.account_executions_id != null &&
-                    (linkByOptionId?.[t.account_executions_id!]?.links?.length ?? 0) > 0,
-                )?.account_executions_id
-                if (firstOid != null) {
-                  onViewLinks({
-                    title: `${group.symbol} ${group.expiry} ${group.strike} ${group.option_right} — stock links`,
-                    oid: firstOid,
-                  })
-                }
-              }}
-            >
-              {totalLinkCount}
-            </button>
-          ) : (
-            <span className="text-muted-foreground/40">—</span>
-          )}
         </DenseTableCell>
         {!showNetQty && (
           <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
@@ -179,7 +121,7 @@ export function OptGroupRow({
       {expanded && (
         <DenseTableSubheadRow>
           <DenseTableCell />
-          <DenseTableCell colSpan={3}>Date / Time</DenseTableCell>
+          <DenseTableCell>Date / Time</DenseTableCell>
           <DenseTableCell className={denseTableNumCell}>Side</DenseTableCell>
           <DenseTableCell className={denseTableNumCell}>Qty</DenseTableCell>
           <DenseTableCell className={denseTableNumCell}>Price</DenseTableCell>
@@ -205,7 +147,7 @@ export function OptGroupRow({
           return (
             <DenseTableDetailRow key={oid ?? `${t.time}-${t.price}`}>
               <DenseTableCell />
-              <DenseTableCell className="font-mono text-muted-foreground pl-6" colSpan={3}>
+              <DenseTableCell className="font-mono text-muted-foreground pl-6">
                 <span>{executionDateStr(t)}</span>
                 {linkCount > 0 && (
                   <button
@@ -260,6 +202,7 @@ export function OptGroupRow({
                     syncDisabled={isSyncing}
                     syncSpinning={isSyncing}
                     onLink={onLinkStrategy ? () => onLinkStrategy(t, group.trades) : undefined}
+                    onLinkStock={onLinkStock ? () => onLinkStock(t) : undefined}
                     onEdit={onEdit ? () => onEdit(t) : undefined}
                     onDelete={onDelete ? () => onDelete(t) : undefined}
                   />

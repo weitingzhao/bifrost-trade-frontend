@@ -1,9 +1,29 @@
 import { Link2, Pencil, RefreshCw, Trash2 } from 'lucide-react'
 import { IconActionButton } from '@/components/data-display'
 
+function LinkStockFillsIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={14}
+      height={14}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 18h6v-6H3v6zm9-12h6V3h-6v3zM3 8h6V3H3v5zm9 10h6v-6h-6v6z" />
+      <path d="M14 9h2M9 14v2" />
+    </svg>
+  )
+}
+
 export function LedgerOptActionButtons({
   onEdit,
   onLink,
+  onLinkStock,
   onDelete,
   onSync,
   syncDisabled,
@@ -11,6 +31,7 @@ export function LedgerOptActionButtons({
 }: {
   onEdit?: () => void
   onLink?: () => void
+  onLinkStock?: () => void
   onDelete?: () => void
   onSync?: () => void
   syncDisabled?: boolean
@@ -36,6 +57,16 @@ export function LedgerOptActionButtons({
           size="dense"
         >
           <Link2 className="h-3.5 w-3.5" />
+        </IconActionButton>
+      )}
+      {onLinkStock && (
+        <IconActionButton
+          onClick={() => onLinkStock()}
+          title="Link underlying stock fills (exercise or assignment)"
+          ariaLabel="Link stock fills"
+          size="dense"
+        >
+          <LinkStockFillsIcon />
         </IconActionButton>
       )}
       {onSync && (

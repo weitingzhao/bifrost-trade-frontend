@@ -45,12 +45,13 @@ export interface ScreenerSymbolGroup {
 
 export interface ScreenerResponse {
   ok: boolean
-  structure_type: string
+  error?: string
+  structure_type?: string
   groups: ScreenerSymbolGroup[]
-  total_contracts: number
-  symbols_scanned: string[]
-  symbols_failed: string[]
-  warnings: Record<string, string>
+  total_contracts?: number
+  symbols_scanned?: string[]
+  symbols_failed?: string[]
+  warnings?: Record<string, string>
 }
 
 export interface GreeksRow {

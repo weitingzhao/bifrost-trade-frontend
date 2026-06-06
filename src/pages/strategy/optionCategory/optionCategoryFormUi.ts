@@ -28,15 +28,30 @@ export const optionCategoryDimSectionLabelClass = cn(
 
 export const optionCategoryFieldLabelClass = cn('mb-1 block text-xs')
 
-export const optionCategoryInlineSelectRoleClass = cn(optionCategoryCompactSelectClass, 'w-28')
+/** Table inline selects — full column width, no ellipsis on longest labels. */
+export const optionCategoryTableSelectClass = cn(
+  optionCategoryCompactSelectClass,
+  'w-full min-w-0 max-w-none',
+)
 
-export const optionCategoryInlineSelectDirClass = cn(optionCategoryCompactSelectClass, 'w-24')
+export const optionCategoryInlineSelectRoleClass = optionCategoryTableSelectClass
 
-export const optionCategoryInlineSelectRightClass = cn(optionCategoryCompactSelectClass, 'w-20')
+export const optionCategoryInlineSelectDirClass = optionCategoryTableSelectClass
 
-export const optionCategoryInlineSelectKeyClass = cn(optionCategoryCompactSelectClass, 'w-32')
+export const optionCategoryInlineSelectRightClass = optionCategoryTableSelectClass
 
-export const optionCategoryInlineSelectKindClass = cn(optionCategoryCompactSelectClass, 'w-24')
+export const optionCategoryInlineSelectKeyClass = optionCategoryTableSelectClass
+
+export const optionCategoryInlineSelectKindClass = optionCategoryTableSelectClass
+
+export const optionCategoryInlineSelectDefaultClass = optionCategoryTableSelectClass
+
+/** Legs / meta nested tables — room for "Underlying (stock)", "Fixed (no input)", etc. */
+export const optionCategoryLegsTableClass = 'min-w-[36rem]'
+
+export const optionCategoryMetaTableClass = 'min-w-[40rem]'
+
+export const optionCategoryTableCellSelectClass = '!max-w-none overflow-visible'
 
 export const optionCategoryInlineInputLabelClass = cn(optionCategoryCompactInputClass, 'w-28')
 

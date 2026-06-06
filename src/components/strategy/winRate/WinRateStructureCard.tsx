@@ -1,7 +1,11 @@
 import type { WinRateStructureRow } from '@/types/strategy'
 import { cn } from '@/lib/utils'
-import { Card } from '@/components/ui/card'
-import { winRateCardClickableClass, winRateCardTitleClass } from './winRateUi'
+import { Card, cardVariants } from '@/components/ui/card'
+import {
+  winRateCardClickableClass,
+  winRateCardTitleClass,
+  winRateStructureCardShellClass,
+} from './winRateUi'
 import { WinRateTradesBand } from './WinRateTradesBand'
 import { WinRatePnlBand } from './WinRatePnlBand'
 import { WinRateUnderlyingBand } from './WinRateUnderlyingBand'
@@ -35,16 +39,18 @@ export function WinRateStructureCard({ row, onOpenInstances }: WinRateStructureC
   }
 
   return (
-    <Card variant="elevated" size="sm" className="gap-0 p-0">
-      <button
-        type="button"
-        className={cn(winRateCardClickableClass, 'rounded-lg border-0 bg-transparent p-2.5')}
-        onClick={() => onOpenInstances(name)}
-        title={`Open Instances filtered by structure: ${row.structure_name}`}
-        aria-label={`Open Instances for structure ${row.structure_name}`}
-      >
-        {body}
-      </button>
-    </Card>
+    <button
+      type="button"
+      className={cn(
+        cardVariants({ variant: 'elevated', size: 'sm' }),
+        winRateCardClickableClass,
+        winRateStructureCardShellClass,
+      )}
+      onClick={() => onOpenInstances(name)}
+      title={`Open Instances filtered by structure: ${row.structure_name}`}
+      aria-label={`Open Instances for structure ${row.structure_name}`}
+    >
+      {body}
+    </button>
   )
 }

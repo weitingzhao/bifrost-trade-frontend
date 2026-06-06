@@ -90,10 +90,11 @@ export function buildOptExecutionGroups(sourceExecutions: Execution[]): OptExecu
     let sell_value_raw = 0
 
     for (const t of trades) {
-      const q = Math.abs(t.quantity ?? t.qty)
+      const rawQty = Number(t.quantity ?? t.qty)
+      const q = Number.isFinite(rawQty) ? Math.abs(rawQty) : 0
       if (q < NET_QTY_EPS) continue
-      const p = t.price
-      const c = Math.abs(t.commission ?? 0)
+      const p = Number(t.price) || 0
+      const c = Number(t.commission) || 0
 
       if (isBuySide(t.side)) {
         buy_qty += q

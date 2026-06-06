@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { fmtExpiry, fmtTradeDate, fmtTs, fmtUsd, fmtUsdRound, getContractLabelParts } from '@/lib/format'
+import { fmtExpiry, fmtTradeDate, fmtTs, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { pnlColorClass } from '@/utils/dailyChange'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
@@ -10,10 +9,25 @@ import {
   adjustedRealizedPnlForOptGroup,
   executionStrategyInstanceIds,
   findOppositeLegAttributionSource,
-  getInstanceConsistencyState,
   getOptGroupKey,
   ledgerOptDetailRowPnl,
 } from '@/utils/ledger/ledgerOptHelpers'
+import { LedgerOptContractCell } from './LedgerOptContractCell'
+import {
+  ClosedOptColgroup,
+  closedOptContractCell,
+  closedOptContractHead,
+  closedOptDetailActionsCell,
+  closedOptDetailActionsHead,
+  closedOptDetailContractCell,
+  closedOptDetailTableClass,
+  ClosedOptDetailColgroup,
+  closedOptExpandCell,
+  closedOptHeadPrimary,
+  closedOptHeadSub,
+  closedOptNumCell,
+  closedOptTableClass,
+} from './ledgerClosedOptionUi'
 import { ExecSourceBadge } from './ExecSourceBadge'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { sideLabel } from './ledgerOptSideLabel'
@@ -30,71 +44,9 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   ExpandToggleCell,
-  denseTableNumCell,
 } from '@/components/data-display'
 
 const CLOSED_PAGE_SIZE = 50
-
-const INSTANCE_ICON_CLASS: Record<string, string> = {
-  same: 'text-emerald-500',
-  multiple: 'text-amber-400',
-  mixed: 'text-slate-400',
-}
-
-function InstanceIcon({
-  state,
-  instanceId,
-}: {
-  state: ReturnType<typeof getInstanceConsistencyState>
-  instanceId: number | null
-}) {
-  if (state === 'none') return null
-  const icon = (
-    <svg
-      viewBox="0 0 24 24"
-      width={14}
-      height={14}
-      className="shrink-0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="5" y="5" width="14" height="14" rx="1" />
-    </svg>
-  )
-  const cls = INSTANCE_ICON_CLASS[state] ?? 'text-slate-400'
-  const linkClass = cn('mr-1.5 inline-flex items-center', cls)
-
-  if (state === 'same' && instanceId != null) {
-    return (
-      <Link
-        to={`/strategy/instances/${instanceId}`}
-        className={linkClass}
-        title="All fills share one strategy instance (click to open)"
-        aria-label="View strategy instance"
-        onClick={e => e.stopPropagation()}
-      >
-        {icon}
-      </Link>
-    )
-  }
-
-  const title =
-    state === 'same'
-      ? 'All fills share one strategy instance'
-      : state === 'multiple'
-        ? 'All fills have an instance; more than one distinct instance ID in this group'
-        : 'At least one fill has no strategy instance in this group'
-
-  return (
-    <span className={linkClass} title={title} role="img" onClick={e => e.stopPropagation()}>
-      {icon}
-    </span>
-  )
-}
 
 type Props = {
   sortedClosedGroups: OptExecutionGroup[]
@@ -121,7 +73,9 @@ export function LedgerClosedOptionSection({
   onEdit,
   onDelete,
   onLinkStrategy,
+  onLinkStock,
   onSyncOpposite,
+  onViewLinks,
   syncingId,
 }: Props) {
   const [closedPage, setClosedPage] = useState(1)
@@ -141,7 +95,7 @@ export function LedgerClosedOptionSection({
     optSort.col === col ? (optSort.dir === 'asc' ? ' ▲' : ' ▼') : ''
 
   const sortHeadProps = (col: OptSortCol, title: string) => ({
-    className: denseTable.sortableHead,
+    className: cn(denseTable.sortableHead, closedOptHeadPrimary),
     role: 'button' as const,
     tabIndex: 0,
     title,
@@ -159,42 +113,43 @@ export function LedgerClosedOptionSection({
 
   return (
     <section aria-label="Closed option positions and details">
-      <DenseDataTable wrapClassName="mb-0 rounded-b-none">
+      <DenseDataTable wrapClassName="mb-0 rounded-b-none" tableClassName={closedOptTableClass}>
+        <ClosedOptColgroup />
         <DenseTableHeader>
           <DenseTableHeadRow>
-            <DenseTableHead rowSpan={2} className="w-8" aria-hidden />
-            <DenseTableHead rowSpan={2}>Contract</DenseTableHead>
+            <DenseTableHead rowSpan={2} className={cn(closedOptExpandCell, closedOptHeadPrimary)} aria-hidden />
+            <DenseTableHead rowSpan={2} className={closedOptContractHead}>
+              Contract
+            </DenseTableHead>
             <DenseTableHead rowSpan={2} {...sortHeadProps('expiry', 'Sort by Expiry')}>
               Expiry{sortMark('expiry')}
             </DenseTableHead>
-            <DenseTableHead rowSpan={2}>STRIKE</DenseTableHead>
-            <DenseTableHead colSpan={3}>BUY</DenseTableHead>
-            <DenseTableHead colSpan={3}>SELL</DenseTableHead>
-            <DenseTableHead rowSpan={2}>Realized PnL</DenseTableHead>
-            <DenseTableHead rowSpan={2}>Account</DenseTableHead>
+            <DenseTableHead rowSpan={2} className={closedOptHeadPrimary}>
+              STRIKE
+            </DenseTableHead>
+            <DenseTableHead colSpan={3} className={closedOptHeadPrimary}>
+              BUY
+            </DenseTableHead>
+            <DenseTableHead colSpan={3} className={closedOptHeadPrimary}>
+              SELL
+            </DenseTableHead>
+            <DenseTableHead rowSpan={2} className={closedOptHeadPrimary}>
+              Realized PnL
+            </DenseTableHead>
+            <DenseTableHead rowSpan={2} className={closedOptHeadPrimary}>
+              Account
+            </DenseTableHead>
             <DenseTableHead rowSpan={2} {...sortHeadProps('trade_date', 'Sort by Trade date')}>
               Trade date{sortMark('trade_date')}
             </DenseTableHead>
           </DenseTableHeadRow>
           <DenseTableHeadRow>
-            <DenseTableHead className="font-medium normal-case tracking-normal text-muted-foreground">
-              Size
-            </DenseTableHead>
-            <DenseTableHead className="font-medium normal-case tracking-normal text-muted-foreground">
-              @
-            </DenseTableHead>
-            <DenseTableHead className="font-medium normal-case tracking-normal text-muted-foreground">
-              Cost
-            </DenseTableHead>
-            <DenseTableHead className="font-medium normal-case tracking-normal text-muted-foreground">
-              Size
-            </DenseTableHead>
-            <DenseTableHead className="font-medium normal-case tracking-normal text-muted-foreground">
-              @
-            </DenseTableHead>
-            <DenseTableHead className="font-medium normal-case tracking-normal text-muted-foreground">
-              Premium
-            </DenseTableHead>
+            <DenseTableHead className={closedOptHeadSub}>Size</DenseTableHead>
+            <DenseTableHead className={closedOptHeadSub}>@</DenseTableHead>
+            <DenseTableHead className={closedOptHeadSub}>Cost</DenseTableHead>
+            <DenseTableHead className={closedOptHeadSub}>Size</DenseTableHead>
+            <DenseTableHead className={closedOptHeadSub}>@</DenseTableHead>
+            <DenseTableHead className={closedOptHeadSub}>Premium</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
@@ -212,15 +167,6 @@ export function LedgerClosedOptionSection({
             const groupKey = getOptGroupKey(g)
             const isExpanded = expandedDetailKeys.includes(groupKey)
             const trades = g.trades ?? []
-            const resolvedState = getInstanceConsistencyState(trades)
-            const singleInstanceId =
-              resolvedState === 'same'
-                ? (trades.find(
-                    t => t.strategy_instance_id != null && Number.isFinite(t.strategy_instance_id),
-                  )?.strategy_instance_id ?? null)
-                : null
-            const p = getContractLabelParts(g.contract_key ?? '')
-            const strikeStr = g.strike != null ? ` ${g.strike}` : ''
 
             return (
               <DenseTableRow
@@ -237,42 +183,39 @@ export function LedgerClosedOptionSection({
                 }}
                 aria-expanded={isExpanded}
               >
-                <DenseTableCell className="w-8 p-0">
+                <DenseTableCell className={closedOptExpandCell}>
                   <ExpandToggleCell
                     expanded={isExpanded}
                     onToggle={() => toggleDetailExpand(groupKey)}
                     label="Expand closed group details"
                   />
                 </DenseTableCell>
-                <DenseTableCell className="font-mono text-[length:var(--text-dense-meta)] whitespace-nowrap">
-                  <InstanceIcon state={resolvedState} instanceId={singleInstanceId} />
-                  {p.symbol ? (
-                    <>
-                      <strong>{p.symbol}</strong> {p.rightLabel}
-                      {strikeStr}
-                    </>
-                  ) : (
-                    g.contract_key
-                  )}
+                <DenseTableCell className={closedOptContractCell}>
+                  <LedgerOptContractCell
+                    group={g}
+                    linkByOptionId={linkByOptionId}
+                    onViewLinks={onViewLinks}
+                    prominent
+                  />
                 </DenseTableCell>
-                <DenseTableCell>{fmtExpiry(g.expiry)}</DenseTableCell>
-                <DenseTableCell>
+                <DenseTableCell className={closedOptNumCell}>{fmtExpiry(g.expiry)}</DenseTableCell>
+                <DenseTableCell className={closedOptNumCell}>
                   <strong>{fmtUsd(g.strike)}</strong>
                 </DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{g.buy_volume}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{fmtUsd(g.buy_avg_price)}</DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'font-bold text-destructive')}>
+                <DenseTableCell className={closedOptNumCell}>{g.buy_volume}</DenseTableCell>
+                <DenseTableCell className={closedOptNumCell}>{fmtUsd(g.buy_avg_price)}</DenseTableCell>
+                <DenseTableCell className={cn(closedOptNumCell, 'font-bold text-destructive')}>
                   {fmtUsd(g.buy_cost)}
                 </DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{g.sell_volume}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{fmtUsd(g.sell_avg_price)}</DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'font-bold text-success')}>
+                <DenseTableCell className={closedOptNumCell}>{g.sell_volume}</DenseTableCell>
+                <DenseTableCell className={closedOptNumCell}>{fmtUsd(g.sell_avg_price)}</DenseTableCell>
+                <DenseTableCell className={cn(closedOptNumCell, 'font-bold text-success')}>
                   {fmtUsd(g.sell_premium)}
                 </DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, pnlColorClass(displayGroupPnl))}>
+                <DenseTableCell className={cn(closedOptNumCell, pnlColorClass(displayGroupPnl))}>
                   {fmtUsdRound(displayGroupPnl)}
                 </DenseTableCell>
-                <DenseTableCell>{accountLabel}</DenseTableCell>
+                <DenseTableCell className={closedOptNumCell}>{accountLabel}</DenseTableCell>
                 <DenseTableCell>
                   {(() => {
                     const dates = trades
@@ -289,8 +232,10 @@ export function LedgerClosedOptionSection({
         </DenseTableBody>
         <tfoot>
           <DenseTableRow className="font-semibold hover:bg-transparent border-t-2 border-border">
-            <DenseTableCell colSpan={10}>Total</DenseTableCell>
-            <DenseTableCell className={cn(denseTableNumCell, pnlColorClass(closedPnlSum))}>
+            <DenseTableCell colSpan={10} className="text-left text-muted-foreground">
+              Total
+            </DenseTableCell>
+            <DenseTableCell className={cn(closedOptNumCell, pnlColorClass(closedPnlSum))}>
               <strong>{fmtUsdRound(closedPnlSum)}</strong>
             </DenseTableCell>
             <DenseTableCell colSpan={2} />
@@ -308,22 +253,23 @@ export function LedgerClosedOptionSection({
         Details (per trade)
         <InfoTooltip text="Click a closed trade row above to load its execution details." />
       </h5>
-      <DenseDataTable>
+      <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName={closedOptDetailTableClass}>
+        <ClosedOptDetailColgroup />
         <DenseTableHeader>
           <DenseTableHeadRow>
-            <DenseTableHead>Contract</DenseTableHead>
-            <DenseTableHead>Expiry</DenseTableHead>
-            <DenseTableHead>STRIKE</DenseTableHead>
-            <DenseTableHead>Stg/Ins</DenseTableHead>
-            <DenseTableHead>Trade date</DenseTableHead>
-            <DenseTableHead>Side</DenseTableHead>
-            <DenseTableHead className={denseTableNumCell}>Qty</DenseTableHead>
-            <DenseTableHead className={denseTableNumCell}>Price</DenseTableHead>
-            <DenseTableHead className={denseTableNumCell}>Comm.</DenseTableHead>
-            <DenseTableHead className={denseTableNumCell}>PnL</DenseTableHead>
-            <DenseTableHead>Account</DenseTableHead>
-            <DenseTableHead>Source</DenseTableHead>
-            <DenseTableHead className={`${denseTableNumCell} w-24`}>Actions</DenseTableHead>
+            <DenseTableHead className={closedOptContractHead}>Contract</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Expiry</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>STRIKE</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Stg/Ins</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Trade date</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Side</DenseTableHead>
+            <DenseTableHead className={closedOptNumCell}>Qty</DenseTableHead>
+            <DenseTableHead className={closedOptNumCell}>Price</DenseTableHead>
+            <DenseTableHead className={closedOptNumCell}>Comm.</DenseTableHead>
+            <DenseTableHead className={closedOptNumCell}>PnL</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Account</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Source</DenseTableHead>
+            <DenseTableHead className={closedOptDetailActionsHead}>Actions</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
@@ -348,54 +294,17 @@ export function LedgerClosedOptionSection({
                     !Number.isFinite(Number(ex.strategy_instance_id))) &&
                   oppositePeer != null
                 const { displayPnl, hasCombinedStock } = ledgerOptDetailRowPnl(ex, linkByOptionId)
-                const p_ = getContractLabelParts(g.contract_key ?? '')
-                const strikeStr_ = g.strike != null ? ` ${g.strike}` : ''
-                const instanceId = ex.strategy_instance_id
 
                 return (
                   <DenseTableRow key={`${getOptGroupKey(g)}-${ti}-${ex.time ?? ti}`}>
-                    <DenseTableCell className="font-mono text-[length:var(--text-dense-meta)] whitespace-nowrap">
-                      {instanceId != null && (
-                        <Link
-                          to={`/strategy/instances/${instanceId}`}
-                          className="mr-1.5 inline-flex items-center text-emerald-500"
-                          title={`View instance #${instanceId}`}
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            width={14}
-                            height={14}
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden
-                          >
-                            <rect x="5" y="5" width="14" height="14" rx="1" />
-                          </svg>
-                        </Link>
-                      )}
-                      {p_.symbol ? (
-                        <>
-                          <strong>{p_.symbol}</strong> {p_.rightLabel}
-                          {strikeStr_}
-                          {ex.account_executions_id != null && (
-                            <span className="ml-1.5 text-[0.72em] font-medium text-muted-foreground/75">
-                              #{ex.account_executions_id}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          {g.contract_key}
-                          {ex.account_executions_id != null && (
-                            <span className="ml-1.5 text-[0.72em] font-medium text-muted-foreground/75">
-                              #{ex.account_executions_id}
-                            </span>
-                          )}
-                        </>
-                      )}
+                    <DenseTableCell className={closedOptDetailContractCell}>
+                      <LedgerOptContractCell
+                        group={g}
+                        linkByOptionId={linkByOptionId}
+                        onViewLinks={onViewLinks}
+                        showExecId={ex.account_executions_id}
+                        prominent
+                      />
                     </DenseTableCell>
                     <DenseTableCell>{fmtExpiry(ex.expiry ?? g.expiry)}</DenseTableCell>
                     <DenseTableCell>
@@ -415,15 +324,15 @@ export function LedgerClosedOptionSection({
                       {fmtTradeDate(ex.trade_date)}
                     </DenseTableCell>
                     <DenseTableCell>{sideLabel(ex)}</DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>
+                    <DenseTableCell className={closedOptNumCell}>
                       {ex.quantity != null ? Number(ex.quantity) : '—'}
                     </DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>
+                    <DenseTableCell className={closedOptNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
+                    <DenseTableCell className={closedOptNumCell}>
                       {fmtUsd(ex.commission ?? 0)}
                     </DenseTableCell>
                     <DenseTableCell
-                      className={cn(denseTableNumCell, pnlColorClass(displayPnl))}
+                      className={cn(closedOptNumCell, pnlColorClass(displayPnl))}
                       title={
                         hasCombinedStock
                           ? 'Option premium cash flow for this fill plus linked stock slippage (vs Flex close)'
@@ -436,7 +345,7 @@ export function LedgerClosedOptionSection({
                     <DenseTableCell>
                       <ExecSourceBadge source={ex.source} />
                     </DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>
+                    <DenseTableCell className={closedOptDetailActionsCell}>
                       {ex.account_executions_id != null ? (
                         <LedgerOptActionButtons
                           onEdit={onEdit ? () => onEdit(ex) : undefined}
@@ -445,6 +354,7 @@ export function LedgerClosedOptionSection({
                               ? () => onLinkStrategy(ex, g.trades ?? [])
                               : undefined
                           }
+                          onLinkStock={onLinkStock ? () => onLinkStock(ex) : undefined}
                           onDelete={onDelete ? () => onDelete(ex) : undefined}
                           onSync={
                             showSync && oppositePeer && onSyncOpposite
@@ -470,10 +380,10 @@ export function LedgerClosedOptionSection({
         </DenseTableBody>
         <tfoot>
           <DenseTableRow className="hover:bg-transparent">
-            <DenseTableCell colSpan={9} className="text-right text-muted-foreground">
+            <DenseTableCell colSpan={9} className="text-left text-muted-foreground">
               Total PNL
             </DenseTableCell>
-            <DenseTableCell className={cn(denseTableNumCell, pnlColorClass(detailsTotalPnl))}>
+            <DenseTableCell className={cn(closedOptNumCell, pnlColorClass(detailsTotalPnl))}>
               <strong>{fmtUsd(detailsTotalPnl)}</strong>
             </DenseTableCell>
             <DenseTableCell colSpan={3} />

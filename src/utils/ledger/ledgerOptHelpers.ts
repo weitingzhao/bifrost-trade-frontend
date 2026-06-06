@@ -1,21 +1,57 @@
 import type { Execution } from '@/types/positions'
-import type { OptionStockLinkSummary } from '@/types/trading'
+import type { OptionStockLink, OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
+import { getContractLabelParts } from '@/lib/format'
+
+export type LedgerOptContractLabelParts = {
+  namePart: string
+  rightLabel: string
+  strikeStr: string
+  full: string
+}
+
+/** Closed/Open Options tab Contract column (Legacy LedgerClosedOptionContractsSection parity). */
+export function getLedgerOptContractLabelParts(
+  g: Pick<OptExecutionGroup, 'contract_key' | 'symbol' | 'strike' | 'option_right' | 'trades'>,
+): LedgerOptContractLabelParts {
+  const p = getContractLabelParts(g.contract_key ?? '')
+  const strikeStr =
+    g.strike != null && Number.isFinite(Number(g.strike)) ? ` ${g.strike}` : ''
+  const tradeSym = (g.trades?.[0]?.symbol ?? g.symbol ?? '').trim().replace(/\s+/g, ' ')
+  const underlying = p.symbol || tradeSym.split(' ')[0] || ''
+  const namePart = /\d{6}[CP]/i.test(tradeSym) ? tradeSym : underlying || g.contract_key || 'Contract'
+  const rightLabel =
+    p.rightLabel ||
+    (() => {
+      const r = (g.option_right ?? '').toUpperCase()
+      if (r === 'C' || r === 'CALL') return 'CALL'
+      if (r === 'P' || r === 'PUT') return 'PUT'
+      return ''
+    })()
+  const full = rightLabel
+    ? `${namePart} ${rightLabel}${strikeStr}`.trim()
+    : namePart
+  return { namePart, rightLabel, strikeStr, full }
+}
+
+export function formatLedgerOptContractLabel(
+  g: Pick<OptExecutionGroup, 'contract_key' | 'symbol' | 'strike' | 'option_right' | 'trades'>,
+): string {
+  return getLedgerOptContractLabelParts(g).full
+}
 
 /** Ledger option group row — same shape as Positions `contractButtonLabel`. */
 export function optExecutionGroupContractLabel(
-  g: Pick<OptExecutionGroup, 'symbol' | 'option_right' | 'strike'>,
+  g: Pick<OptExecutionGroup, 'symbol' | 'option_right' | 'strike' | 'contract_key' | 'trades'>,
 ): string {
-  const r = (g.option_right ?? '').toUpperCase()
-  const side = r === 'C' || r === 'CALL' ? 'C' : r === 'P' || r === 'PUT' ? 'P' : r
-  const strikeStr = Number.isFinite(g.strike) ? ` ${g.strike}` : ''
-  return `${(g.symbol ?? '').trim()} ${side}${strikeStr}`.trim()
+  return formatLedgerOptContractLabel(g)
 }
 
 /**
  * Sum the slippage_total from the option-stock link for one option execution.
  * Returns 0 if no link or no slippage data.
  */
+/** Sum stock slippage vs close for one OPT execution id (Legacy ledgerOptHelpers parity). */
 export function stockSlippageTotalForOptionExecution(
   optionExecId: number | null | undefined,
   linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
@@ -23,7 +59,14 @@ export function stockSlippageTotalForOptionExecution(
   if (optionExecId == null || !linkByOptionId) return 0
   const summary = linkByOptionId[optionExecId]
   if (!summary) return 0
-  return summary.slippage_total ?? 0
+  const t = summary.slippage_total
+  if (t != null && Number.isFinite(t)) return t
+  let total = 0
+  for (const d of summary.links ?? []) {
+    const s = d.slippage_vs_close
+    if (s != null && Number.isFinite(s)) total += s
+  }
+  return total
 }
 
 /**
@@ -131,7 +174,7 @@ export function getOptionStockLinkDetailForExecution(
   const links = s?.links ?? []
   if (links.length === 0) return { linkIds: [], links: [], slippageTotal: null }
   const linkIds = links
-    .map((r) => (r as unknown as Record<string, unknown>).link_id as number | undefined)
+    .map(r => r.link_id)
     .filter((id): id is number => id != null && Number.isFinite(Number(id)))
     .sort((a, b) => a - b)
   return {
@@ -168,75 +211,145 @@ export function instanceOptionStockSlippageAdjustment(
   return sum
 }
 
-export function executionStrategyInstanceIds(e: import('@/types/positions').Execution): number[] {
-  const allocs = e.instance_allocations ?? []
-  if (allocs.length > 0) return allocs.map((a) => a.strategy_instance_id)
-  if (e.strategy_instance_id != null) return [e.strategy_instance_id]
+/** Instance id(s) on this execution: allocation rows or single strategy_instance_id. */
+export function executionStrategyInstanceIds(e: Execution): number[] {
+  const allocs = e.instance_allocations
+  if (allocs && allocs.length > 0) {
+    const out: number[] = []
+    for (const a of allocs) {
+      const id = a.strategy_instance_id
+      if (id != null && Number.isFinite(Number(id))) {
+        out.push(Number(id))
+      }
+    }
+    if (out.length > 0) return out
+  }
+  if (e.strategy_instance_id != null && Number.isFinite(Number(e.strategy_instance_id))) {
+    return [Number(e.strategy_instance_id)]
+  }
   return []
 }
 
+/**
+ * Synthetic row for one strategy_instance: allocated signed qty and pro-rata PnL/commission
+ * (Legacy ledgerOptHelpers / reader weight_realized_for_strategy_instance parity).
+ */
 export function sliceExecutionForInstanceOptView(
-  e: import('@/types/positions').Execution,
+  ex: Execution,
   instanceId: number,
-): import('@/types/positions').Execution | null {
-  const allocs = e.instance_allocations ?? []
-  if (allocs.length === 0) return e.strategy_instance_id === instanceId ? e : null
-  const alloc = allocs.find((a) => a.strategy_instance_id === instanceId)
-  if (!alloc) return null
-  const totalQty = Math.abs(Number(e.quantity ?? e.qty) || 0)
-  if (totalQty <= 1e-9) return null
-  const ratio = alloc.allocated_quantity / totalQty
-  return {
-    ...e,
-    qty: e.qty * ratio,
-    quantity: (e.quantity ?? e.qty) * ratio,
-    strategy_instance_id: instanceId,
-    strategy_instance_label: alloc.strategy_instance_label ?? e.strategy_instance_label,
-    strategy_opportunity_name: alloc.strategy_opportunity_name ?? e.strategy_opportunity_name,
+): Execution | null {
+  const allocs = ex.instance_allocations
+  if (allocs && allocs.length > 0) {
+    let denom = 0
+    for (const a of allocs) {
+      denom += Math.abs(Number(a.allocated_quantity) || 0)
+    }
+    if (denom <= 0) return null
+    const mine = allocs.find(a => Number(a.strategy_instance_id) === instanceId)
+    if (!mine) return null
+    const allocQty = Number(mine.allocated_quantity)
+    if (!Number.isFinite(allocQty)) return null
+    const w = Math.abs(allocQty) / denom
+
+    const rp = ex.realized_pnl
+    const comm = ex.commission
+    const allocOppRaw = mine.strategy_opportunity_id
+    const resolvedOppId =
+      allocOppRaw != null && Number.isFinite(Number(allocOppRaw))
+        ? Number(allocOppRaw)
+        : ex.strategy_opportunity_id != null && Number.isFinite(Number(ex.strategy_opportunity_id))
+          ? Number(ex.strategy_opportunity_id)
+          : null
+    const parentOppNum =
+      ex.strategy_opportunity_id != null && Number.isFinite(Number(ex.strategy_opportunity_id))
+        ? Number(ex.strategy_opportunity_id)
+        : null
+    const resolvedOppName =
+      resolvedOppId != null &&
+      parentOppNum != null &&
+      resolvedOppId === parentOppNum
+        ? ex.strategy_opportunity_name?.trim() ?? null
+        : null
+
+    const taxes = ex.taxes
+    const netCash = ex.net_cash
+
+    return {
+      ...ex,
+      qty: allocQty,
+      quantity: allocQty,
+      realized_pnl:
+        rp != null && Number.isFinite(Number(rp)) ? Number(rp) * w : rp,
+      commission:
+        comm != null && Number.isFinite(Number(comm)) ? Number(comm) * w : comm,
+      taxes:
+        taxes != null && Number.isFinite(Number(taxes)) ? Number(taxes) * w : taxes,
+      net_cash:
+        netCash != null && Number.isFinite(Number(netCash)) ? Number(netCash) * w : netCash,
+      strategy_opportunity_id: resolvedOppId,
+      strategy_opportunity_name: resolvedOppName,
+      strategy_instance_id: instanceId,
+      strategy_instance_label:
+        (mine.strategy_instance_label?.trim() || ex.strategy_instance_label?.trim()) ?? null,
+      instance_allocations: undefined,
+    }
   }
+
+  if (ex.strategy_instance_id === instanceId) return ex
+  return null
 }
 
-export function expandExecutionRowsForStrategyOptView(
-  e: import('@/types/positions').Execution,
-): import('@/types/positions').Execution[] {
-  const allocs = e.instance_allocations ?? []
-  if (allocs.length === 0) return [e]
-  const totalQty = Math.abs(Number(e.quantity ?? e.qty) || 0)
-  if (totalQty <= 1e-9) return [e]
-  return allocs.map((alloc) => ({
-    ...e,
-    qty: e.qty * (alloc.allocated_quantity / totalQty),
-    quantity: (e.quantity ?? e.qty) * (alloc.allocated_quantity / totalQty),
-    strategy_instance_id: alloc.strategy_instance_id,
-    strategy_instance_label: alloc.strategy_instance_label ?? e.strategy_instance_label,
-    strategy_opportunity_name: alloc.strategy_opportunity_name ?? e.strategy_opportunity_name,
-  }))
+/** Expand one execution into per-allocation instance rows (qty/PnL + opportunity id from allocation). */
+export function expandExecutionRowsForStrategyOptView(ex: Execution): Execution[] {
+  const ids = executionStrategyInstanceIds(ex)
+  if (ids.length === 0) {
+    return [ex]
+  }
+  const seen = new Set<number>()
+  const out: Execution[] = []
+  for (const id of ids) {
+    if (seen.has(id)) continue
+    seen.add(id)
+    const row = sliceExecutionForInstanceOptView(ex, id)
+    if (row) out.push(row)
+  }
+  return out
 }
 
 export function groupExecutionsByStrategyInstanceId(
-  execs: import('@/types/positions').Execution[],
-): Map<number | 'none', import('@/types/positions').Execution[]> {
-  const map = new Map<number | 'none', import('@/types/positions').Execution[]>()
-  for (const e of execs) {
-    const key: number | 'none' = e.strategy_instance_id ?? 'none'
-    const arr = map.get(key) ?? []
-    arr.push(e)
-    map.set(key, arr)
+  trades: Execution[],
+): Map<number | 'none', Execution[]> {
+  const m = new Map<number | 'none', Execution[]>()
+  for (const t of trades) {
+    const sid = t.strategy_instance_id
+    const key: number | 'none' =
+      sid != null && Number.isFinite(Number(sid)) ? Number(sid) : 'none'
+    const arr = m.get(key)
+    if (arr) arr.push(t)
+    else m.set(key, [t])
   }
-  return map
+  return m
 }
 
+/**
+ * Closed-option group PnL: premium-based realized_pnl plus stock-leg slippage
+ * (one sum per distinct account_executions_id). Legacy LedgerView parity.
+ */
 export function adjustedRealizedPnlForOptGroup(
   g: import('@/utils/ledger/optExecutionGroups').OptExecutionGroup,
-  linkByOptionId: Record<number, OptionStockLinkSummary>,
+  linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
 ): number {
-  let stockAdj = 0
-  for (const e of g.trades) {
-    const oid = e.account_executions_id
-    if (oid == null) continue
-    stockAdj += linkByOptionId[oid]?.slippage_total ?? 0
+  const base = Number(g.realized_pnl) || 0
+  if (!linkByOptionId) return base
+  let adj = 0
+  const seen = new Set<number>()
+  for (const ex of g.trades ?? []) {
+    const oid = ex.account_executions_id
+    if (oid == null || seen.has(oid)) continue
+    seen.add(oid)
+    adj += stockSlippageTotalForOptionExecution(oid, linkByOptionId)
   }
-  return g.realized_pnl + stockAdj
+  return base + adj
 }
 
 /** Stable group key for an option contract group (used as expand/collapse dict key). */
@@ -262,6 +375,66 @@ export function executionInstanceLabel(ex: Execution, instanceId: number): strin
   const col = ex.strategy_instance_label?.trim()
   if (ex.strategy_instance_id === instanceId && col) return col
   return null
+}
+
+export function collectLinkIdsForOptGroup(
+  g: OptExecutionGroup,
+  linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
+): number[] {
+  const ids = new Set<number>()
+  if (!linkByOptionId) return []
+  const seen = new Set<number>()
+  for (const ex of g.trades ?? []) {
+    const oid = ex.account_executions_id
+    if (oid == null || seen.has(oid)) continue
+    seen.add(oid)
+    for (const row of linkByOptionId[oid]?.links ?? []) {
+      if (row.link_id != null && Number.isFinite(Number(row.link_id))) {
+        ids.add(Number(row.link_id))
+      }
+    }
+  }
+  return Array.from(ids).sort((a, b) => a - b)
+}
+
+export function flattenLinksForOptGroup(
+  g: OptExecutionGroup,
+  linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
+): OptionStockLink[] {
+  const byId = new Map<number, OptionStockLink>()
+  if (!linkByOptionId) return []
+  const seen = new Set<number>()
+  for (const ex of g.trades ?? []) {
+    const oid = ex.account_executions_id
+    if (oid == null || seen.has(oid)) continue
+    seen.add(oid)
+    for (const row of linkByOptionId[oid]?.links ?? []) {
+      const lid = row.link_id
+      if (lid != null && !byId.has(lid)) byId.set(lid, row)
+    }
+  }
+  return Array.from(byId.values()).sort((a, b) => (a.link_id ?? 0) - (b.link_id ?? 0))
+}
+
+export function sumLinkSlippageForOptGroup(
+  g: OptExecutionGroup,
+  linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
+): number | null {
+  if (!linkByOptionId) return null
+  let s = 0
+  let any = false
+  const seenOid = new Set<number>()
+  for (const ex of g.trades ?? []) {
+    const oid = ex.account_executions_id
+    if (oid == null || seenOid.has(oid)) continue
+    seenOid.add(oid)
+    const t = linkByOptionId[oid]?.slippage_total
+    if (t != null && Number.isFinite(t)) {
+      s += t
+      any = true
+    }
+  }
+  return any ? s : null
 }
 
 /** Attribution consistency across all trades in a closed option group. */

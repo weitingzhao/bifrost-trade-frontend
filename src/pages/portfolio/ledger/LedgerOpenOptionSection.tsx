@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { fmtExpiry, fmtTradeDate, fmtTs, fmtUsd, getContractLabelParts } from '@/lib/format'
+import { fmtExpiry, fmtTradeDate, fmtTs, fmtUsd } from '@/lib/format'
+import { LedgerOptContractCell } from './LedgerOptContractCell'
 import { pnlColorClass } from '@/utils/dailyChange'
 import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
@@ -15,6 +16,17 @@ import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { sideLabel } from './ledgerOptSideLabel'
 import { LedgerStgInsCell } from './LedgerStgInsCell'
 import type { OptGroupCallbacks } from './ledgerTypes'
+import {
+  OpenOptColgroup,
+  openOptContractCell,
+  openOptContractHead,
+  openOptExpandCell,
+  openOptHeadPrimary,
+  openOptMetaCell,
+  openOptNumCell,
+  openOptTableClass,
+  openOptTradesCell,
+} from './ledgerOpenOptionUi'
 import {
   denseTable,
   DenseDataTable,
@@ -50,34 +62,37 @@ function OpenGroupTable({
   toggleDetailExpand,
   showExpiredClose,
   onExpiredClose,
+  linkByOptionId,
+  onViewLinks,
 }: {
   groups: OptExecutionGroup[]
   expandedDetailKeys: string[]
   toggleDetailExpand: (key: string) => void
   showExpiredClose?: boolean
   onExpiredClose?: (ex: Execution) => void
+  linkByOptionId: Record<number, OptionStockLinkSummary>
+  onViewLinks?: OptGroupCallbacks['onViewLinks']
 }) {
   return (
-    <DenseDataTable>
+    <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName={openOptTableClass}>
+      <OpenOptColgroup showActions={showExpiredClose} />
       <DenseTableHeader>
         <DenseTableHeadRow>
-          <DenseTableHead className="w-8" aria-hidden />
-          <DenseTableHead>Contract</DenseTableHead>
-          <DenseTableHead>Account</DenseTableHead>
-          <DenseTableHead>Expiry</DenseTableHead>
-          <DenseTableHead>STRIKE</DenseTableHead>
-          <DenseTableHead className={denseTableNumCell}>Net qty</DenseTableHead>
-          <DenseTableHead>Trades (side / qty / price / id)</DenseTableHead>
-          <DenseTableHead>Source</DenseTableHead>
+          <DenseTableHead className={openOptExpandCell} aria-hidden />
+          <DenseTableHead className={openOptContractHead}>Contract</DenseTableHead>
+          <DenseTableHead className={openOptHeadPrimary}>Account</DenseTableHead>
+          <DenseTableHead className={openOptHeadPrimary}>Expiry</DenseTableHead>
+          <DenseTableHead className={openOptHeadPrimary}>STRIKE</DenseTableHead>
+          <DenseTableHead className={openOptNumCell}>Net qty</DenseTableHead>
+          <DenseTableHead className={openOptHeadPrimary}>Trades (side / qty / price / id)</DenseTableHead>
+          <DenseTableHead className={openOptHeadPrimary}>Source</DenseTableHead>
           {showExpiredClose && (
-            <DenseTableHead className={`${denseTableNumCell} w-16`}>Actions</DenseTableHead>
+            <DenseTableHead className={cn(openOptNumCell, 'w-16')}>Actions</DenseTableHead>
           )}
         </DenseTableHeadRow>
       </DenseTableHeader>
       <DenseTableBody>
         {groups.map(g => {
-          const p = getContractLabelParts(g.contract_key ?? '')
-          const strikeStr = g.strike != null ? ` ${g.strike}` : ''
           const groupKey = getOptGroupKey(g)
           const isExpanded = expandedDetailKeys.includes(groupKey)
           const uniqueAccounts = Array.from(
@@ -101,39 +116,37 @@ function OpenGroupTable({
               }}
               aria-expanded={isExpanded}
             >
-              <DenseTableCell className="w-8 p-0">
+              <DenseTableCell className={openOptExpandCell}>
                 <ExpandToggleCell
                   expanded={isExpanded}
                   onToggle={() => toggleDetailExpand(groupKey)}
                   label="Expand open group details"
                 />
               </DenseTableCell>
-              <DenseTableCell className="font-mono text-[length:var(--text-dense-meta)] whitespace-nowrap">
-                {p.symbol ? (
-                  <>
-                    <strong>{p.symbol}</strong> {p.rightLabel}
-                    {strikeStr}
-                  </>
-                ) : (
-                  g.contract_key
-                )}
+              <DenseTableCell className={openOptContractCell}>
+                <LedgerOptContractCell
+                  group={g}
+                  linkByOptionId={linkByOptionId}
+                  onViewLinks={onViewLinks}
+                  prominent
+                />
               </DenseTableCell>
-              <DenseTableCell>
+              <DenseTableCell className={openOptMetaCell}>
                 {uniqueAccounts.length > 0 ? uniqueAccounts.join(', ') : '—'}
               </DenseTableCell>
-              <DenseTableCell>{fmtExpiry(g.expiry)}</DenseTableCell>
-              <DenseTableCell>
+              <DenseTableCell className={openOptMetaCell}>{fmtExpiry(g.expiry)}</DenseTableCell>
+              <DenseTableCell className={openOptMetaCell}>
                 <strong>{fmtUsd(g.strike)}</strong>
               </DenseTableCell>
-              <DenseTableCell className={denseTableNumCell}>{g.net_qty}</DenseTableCell>
-              <DenseTableCell>{tradesSummary(g) || '—'}</DenseTableCell>
-              <DenseTableCell>
+              <DenseTableCell className={openOptNumCell}>{g.net_qty}</DenseTableCell>
+              <DenseTableCell className={openOptTradesCell}>{tradesSummary(g) || '—'}</DenseTableCell>
+              <DenseTableCell className={openOptMetaCell}>
                 {uniqueSources.length > 0
                   ? uniqueSources.map(s => <ExecSourceBadge key={s} source={s} />)
                   : '—'}
               </DenseTableCell>
               {showExpiredClose && (
-                <DenseTableCell className={denseTableNumCell}>
+                <DenseTableCell className={openOptNumCell}>
                   <div onClick={e => e.stopPropagation()}>
                     {onExpiredClose && g.trades?.[0] != null && (
                       <IconActionButton
@@ -176,8 +189,10 @@ export function LedgerOpenOptionSection({
   onEdit,
   onDelete,
   onLinkStrategy,
+  onLinkStock,
   onExpiredClose,
   onSyncOpposite,
+  onViewLinks,
   syncingId,
 }: Props) {
   if (openActiveGroups.length === 0 && openExpiredGroups.length === 0) {
@@ -201,6 +216,8 @@ export function LedgerOpenOptionSection({
             groups={openActiveGroups}
             expandedDetailKeys={expandedDetailKeys}
             toggleDetailExpand={toggleDetailExpand}
+            linkByOptionId={linkByOptionId}
+            onViewLinks={onViewLinks}
           />
         </div>
       )}
@@ -217,6 +234,8 @@ export function LedgerOpenOptionSection({
             toggleDetailExpand={toggleDetailExpand}
             showExpiredClose
             onExpiredClose={onExpiredClose}
+            linkByOptionId={linkByOptionId}
+            onViewLinks={onViewLinks}
           />
         </div>
       )}
@@ -265,25 +284,16 @@ export function LedgerOpenOptionSection({
                     !Number.isFinite(Number(ex.strategy_instance_id))) &&
                   oppositePeer != null
                 const { displayPnl } = ledgerOptDetailRowPnl(ex, linkByOptionId)
-                const p_ = getContractLabelParts(g.contract_key ?? '')
-                const strikeStr_ = g.strike != null ? ` ${g.strike}` : ''
 
                 return (
                   <DenseTableRow key={`${getOptGroupKey(g)}-${ti}-${ex.time ?? ti}`}>
-                    <DenseTableCell className="font-mono text-[length:var(--text-dense-meta)] whitespace-nowrap">
-                      {p_.symbol ? (
-                        <>
-                          <strong>{p_.symbol}</strong> {p_.rightLabel}
-                          {strikeStr_}
-                          {ex.account_executions_id != null && (
-                            <span className="ml-1.5 text-[0.72em] font-medium text-muted-foreground/75">
-                              #{ex.account_executions_id}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        g.contract_key
-                      )}
+                    <DenseTableCell>
+                      <LedgerOptContractCell
+                        group={g}
+                        linkByOptionId={linkByOptionId}
+                        onViewLinks={onViewLinks}
+                        showExecId={ex.account_executions_id}
+                      />
                     </DenseTableCell>
                     <DenseTableCell>{fmtExpiry(ex.expiry ?? g.expiry)}</DenseTableCell>
                     <DenseTableCell>
@@ -317,6 +327,7 @@ export function LedgerOpenOptionSection({
                           onLink={
                             onLinkStrategy ? () => onLinkStrategy(ex, groupTrades) : undefined
                           }
+                          onLinkStock={onLinkStock ? () => onLinkStock(ex) : undefined}
                           onDelete={onDelete ? () => onDelete(ex) : undefined}
                           onSync={
                             showSync && oppositePeer && onSyncOpposite

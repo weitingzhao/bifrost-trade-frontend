@@ -57,6 +57,7 @@ export function useInstanceDetailData(
   instance: StrategyInstance | null,
   portfolioAccounts: IbAccountSnapshot[] | undefined,
   enabled = true,
+  riskProfileOverride?: RiskProfile | null,
 ): InstanceDetailData | null {
   const instanceId = instance?.strategy_instance_id ?? 0
   const structureId = instance?.strategy_structure_id
@@ -136,7 +137,7 @@ export function useInstanceDetailData(
     [instance, executionsFinal, positionStatus],
   )
 
-  const riskProfile = useMemo(
+  const riskProfileFromExecutions = useMemo(
     () =>
       computeInstanceRiskProfile(
         executionsFinal,
@@ -145,6 +146,8 @@ export function useInstanceDetailData(
       ),
     [executionsFinal, structure, portfolioAccounts],
   )
+
+  const riskProfile = riskProfileOverride ?? riskProfileFromExecutions
 
   const summary = perfData?.summary ?? null
 

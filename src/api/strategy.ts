@@ -364,10 +364,11 @@ async function fetchConfigOptions(path: string): Promise<{ options: StructureTyp
   return res.json()
 }
 
-export function fetchParamKindOptions() { return fetchConfigOptions('param-kinds') }
-export function fetchLegRoleOptions() { return fetchConfigOptions('leg-roles') }
-export function fetchLegDirectionOptions() { return fetchConfigOptions('leg-directions') }
-export function fetchLegOptionRightOptions() { return fetchConfigOptions('leg-option-rights') }
+/** Paths match Legacy + strategy API (`/templates/options/*` singular). */
+export function fetchParamKindOptions() { return fetchConfigOptions('param-kind') }
+export function fetchLegRoleOptions() { return fetchConfigOptions('leg-role') }
+export function fetchLegDirectionOptions() { return fetchConfigOptions('leg-direction') }
+export function fetchLegOptionRightOptions() { return fetchConfigOptions('leg-option-right') }
 export function fetchMetaKeyOptions() { return fetchConfigOptions('meta-keys') }
 
 export async function fetchMetaValueOptions(

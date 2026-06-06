@@ -215,6 +215,105 @@ export async function postOptionStockLinksQuery(
   return res.json() as Promise<OptionStockLinksResponse>
 }
 
+export async function fetchOptionStockLinks(
+  accountId: string,
+  optionAccountExecutionsId: number,
+): Promise<{ links: import('@/types/trading').OptionStockLink[]; slippage_total: number | null; error?: string }> {
+  const q = new URLSearchParams()
+  q.set('account_id', accountId.trim())
+  q.set('option_account_executions_id', String(optionAccountExecutionsId))
+  const res = await fetch(`${BASE}/executions/option-stock-links?${q}`)
+  const j = (await res.json().catch(() => ({}))) as {
+    links?: import('@/types/trading').OptionStockLink[]
+    slippage_total?: number | null
+    error?: string
+  }
+  if (!res.ok) {
+    return { links: [], slippage_total: null, error: j.error ?? res.statusText }
+  }
+  return {
+    links: j.links ?? [],
+    slippage_total: j.slippage_total ?? null,
+    error: j.error,
+  }
+}
+
+export async function fetchStockLinkCandidates(params: {
+  account_id: string
+  option_account_executions_id: number
+  trade_date_from?: string
+  trade_date_to?: string
+  limit?: number
+}): Promise<{
+  executions: import('@/types/positions').Execution[]
+  underlying_symbol?: string
+  trade_date_from?: string
+  trade_date_to?: string
+  error?: string
+}> {
+  const q = new URLSearchParams()
+  q.set('account_id', params.account_id.trim())
+  q.set('option_account_executions_id', String(params.option_account_executions_id))
+  if (params.trade_date_from?.trim()) q.set('trade_date_from', params.trade_date_from.trim())
+  if (params.trade_date_to?.trim()) q.set('trade_date_to', params.trade_date_to.trim())
+  if (params.limit != null) q.set('limit', String(params.limit))
+  const res = await fetch(`${BASE}/executions/stock-link-candidates?${q}`)
+  const j = (await res.json().catch(() => ({}))) as {
+    executions?: import('@/types/positions').Execution[]
+    underlying_symbol?: string
+    trade_date_from?: string
+    trade_date_to?: string
+    error?: string
+  }
+  if (!res.ok) {
+    return { executions: [], error: j.error ?? res.statusText }
+  }
+  return {
+    executions: j.executions ?? [],
+    underlying_symbol: j.underlying_symbol,
+    trade_date_from: j.trade_date_from,
+    trade_date_to: j.trade_date_to,
+    error: j.error,
+  }
+}
+
+export async function createOptionStockLink(body: {
+  account_id: string
+  option_account_executions_id: number
+  stock_account_executions_id: number
+  role?: string | null
+  note?: string | null
+}): Promise<{ ok: boolean; link_id?: number | null; error?: string; warning?: string | null }> {
+  const res = await fetch(`${BASE}/executions/option-stock-links`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const j = (await res.json().catch(() => ({}))) as {
+    ok?: boolean
+    link_id?: number | null
+    error?: string
+    warning?: string | null
+  }
+  return {
+    ok: Boolean(j.ok) && res.ok,
+    link_id: j.link_id,
+    error: j.error,
+    warning: j.warning ?? null,
+  }
+}
+
+export async function deleteOptionStockLink(
+  linkId: number,
+  accountId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const q = new URLSearchParams()
+  q.set('account_id', accountId.trim())
+  const res = await fetch(`${BASE}/executions/option-stock-links/${linkId}?${q}`, { method: 'DELETE' })
+  const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+  return { ok: Boolean(j.ok) && res.ok, error: j.error }
+}
+
 export async function postTradingShutdown(
   serviceOrigin?: string,
 ): Promise<{ ok: boolean; error?: string }> {

@@ -18,6 +18,7 @@ export default function OptionScreenerPage() {
   const [symbolsText, setSymbolsText] = useState(() => filters.symbols.join('\n'))
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [saveSymbol, setSaveSymbol] = useState<string | null>(null)
+  const [runError, setRunError] = useState<string | null>(null)
 
   const mutation = useOptionScreener()
 
@@ -30,9 +31,18 @@ export default function OptionScreenerPage() {
       .split(/[\n,\s]+/)
       .map(s => s.trim().toUpperCase())
       .filter(Boolean)
+    if (symbols.length === 0) {
+      setRunError('Enter at least one symbol.')
+      return
+    }
+    setRunError(null)
     const f = { ...filters, symbols }
     setFilters(f)
-    mutation.mutate(f)
+    mutation.mutate(f, {
+      onSuccess: data => {
+        if (!data.ok && data.error) setRunError(data.error)
+      },
+    })
     setExpandedGroups(new Set(symbols))
   }
 
@@ -76,21 +86,25 @@ export default function OptionScreenerPage() {
         symbolsText={symbolsText}
         isPending={mutation.isPending}
         onFiltersChange={updater => setFilters(updater)}
-        onSymbolsTextChange={setSymbolsText}
+        onSymbolsTextChange={text => {
+          setSymbolsText(text)
+          if (runError) setRunError(null)
+        }}
         onRun={handleRun}
       />
 
-      {mutation.isError && (
+      {(runError || mutation.isError) && (
         <Alert variant="destructive">
           <AlertDescription>
-            {mutation.error instanceof Error && mutation.error.name === 'AbortError'
-              ? 'Request timed out after 60 seconds.'
-              : (mutation.error as Error).message}
+            {runError ??
+              (mutation.error instanceof Error && mutation.error.name === 'AbortError'
+                ? 'Request timed out after 60 seconds.'
+                : (mutation.error as Error).message)}
           </AlertDescription>
         </Alert>
       )}
 
-      {mutation.data && (
+      {mutation.data?.ok && (
         <OptionScreenerResultsBar
           data={mutation.data}
           onExport={() => exportScreenerCsv(groups, filters.structure_type)}

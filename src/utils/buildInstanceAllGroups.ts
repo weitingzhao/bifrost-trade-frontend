@@ -8,8 +8,7 @@ import type {
   StrategyOpportunity,
   StrategyStructure,
 } from '@/types/positions'
-import type { RiskProfile } from '@/types/positions'
-import { computeRiskProfile, type RiskPosition } from '@/utils/riskProfile'
+import { computeInstanceRiskProfileFromOpenOptions } from '@/utils/instanceRiskProfileFromOpenOptions'
 import { computeInstanceStockCoverage } from '@/utils/stockCoverage'
 import {
   buildLiveOptExecutionMap,
@@ -19,28 +18,6 @@ import {
   optExecutionMatchKey,
   positionExecsForAttribution,
 } from '@/utils/positionsExecutions'
-
-function parseOptionContractKey(contractKey: string): { right: string | null; strike: number | null } {
-  const parts = (contractKey ?? '').split('|')
-  if (parts.length >= 5 && (parts[1] ?? '').toUpperCase() === 'OPT') {
-    const r = (parts[4] ?? '').trim().toUpperCase().slice(0, 1)
-    const strike = parseFloat(String(parts[3] ?? ''))
-    return { right: r === 'C' || r === 'P' ? r : null, strike: Number.isFinite(strike) ? strike : null }
-  }
-  return { right: null, strike: null }
-}
-
-function pickWorseRiskProfile(a: RiskProfile, b: RiskProfile): RiskProfile {
-  if (a.risk_type === 'unlimited' || b.risk_type !== 'unlimited') {
-    if (b.risk_type === 'unlimited' && a.risk_type !== 'unlimited') return b
-  }
-  if (a.max_loss == null && b.max_loss != null) return a
-  if (a.max_loss != null && b.max_loss == null) return b
-  if (a.max_loss != null && b.max_loss != null && a.max_loss !== b.max_loss) {
-    return a.max_loss < b.max_loss ? a : b
-  }
-  return a
-}
 
 export interface BuildInstanceAllGroupsInput {
   instanceGroups: InstancePositionGroup[]
@@ -194,50 +171,7 @@ export function buildInstanceAllGroups(input: BuildInstanceAllGroupsInput): Inst
     const optionsForRisk = b.options.filter((p) => !p.filtered_exec_lists)
     const coverage = computeInstanceStockCoverage(optionsForRisk, str)
 
-    let riskProfile: RiskProfile | null = null
-    if (optionsForRisk.length > 0) {
-      const byAcct = new Map<string, OpenOptionPosition[]>()
-      for (const p of optionsForRisk) {
-        const aid = (p.account_id ?? '').trim()
-        if (!byAcct.has(aid)) byAcct.set(aid, [])
-        byAcct.get(aid)!.push(p)
-      }
-      for (const optsInAcct of byAcct.values()) {
-        const riskPositions: RiskPosition[] = []
-        for (const p of optsInAcct) {
-          const parsed = parseOptionContractKey(p.contract_key)
-          const r = parsed.right === 'C' || parsed.right === 'P' ? parsed.right : null
-          if (r && p.avg_cost != null) {
-            riskPositions.push({
-              strike: p.strike,
-              right: r,
-              qty: p.qty,
-              avg_cost: p.avg_cost!,
-            })
-          }
-        }
-        if (riskPositions.length === 0) continue
-        let covShares = 0
-        let covAvgCost = 0
-        const covRows = computeInstanceStockCoverage(optsInAcct, str)
-        if (covRows.length > 0) {
-          const optSym = (optsInAcct[0]?.symbol ?? '').toUpperCase()
-          const row = covRows.find((c) => c.symbol.toUpperCase() === optSym) ?? covRows[0]
-          const sym = row.symbol
-          const acct = row.account_id
-          const heldPos = liveStocks.find(
-            (s) =>
-              (s.symbol ?? '').toUpperCase() === sym.toUpperCase() &&
-              (s.account_id ?? '').trim() === acct,
-          )
-          const held = heldPos ? Math.abs(Number(heldPos.position) || 0) : 0
-          covShares = Math.min(held, row.required_shares)
-          covAvgCost = heldPos?.avgCost != null ? Number(heldPos.avgCost) : 0
-        }
-        const rp = computeRiskProfile(riskPositions, covShares, covAvgCost)
-        riskProfile = riskProfile == null ? rp : pickWorseRiskProfile(riskProfile, rp)
-      }
-    }
+    const riskProfile = computeInstanceRiskProfileFromOpenOptions(optionsForRisk, str, liveStocks)
 
     result.push({
       strategy_instance_id: b.id,

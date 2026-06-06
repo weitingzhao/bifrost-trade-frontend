@@ -6,6 +6,7 @@ import { RiskProfileDetail } from '@/components/positions/RiskProfileDetail'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useInstanceDetailData } from '@/hooks/useInstanceDetailData'
 import type { StrategyInstance } from '@/types/positions'
+import type { RiskProfile } from '@/utils/riskProfile'
 import { InspectorSectionNav } from '@/components/layout/InspectorSectionNav'
 import { RightInspectorCollapsibleSection } from '@/components/layout/RightInspectorCollapsibleSection'
 import { inspectorShell } from '@/components/layout/rightInspectorUi'
@@ -24,12 +25,13 @@ import {
 } from './instanceDetail/instanceInspectorSections'
 interface Props {
   instance: StrategyInstance
+  riskProfile?: RiskProfile | null
 }
 
-export function InstanceDetailPanel({ instance }: Props) {
+export function InstanceDetailPanel({ instance, riskProfile: riskProfileOverride }: Props) {
   const { data: status } = useMonitorStatus()
   const portfolioAccounts = status?.portfolio?.accounts ?? undefined
-  const detail = useInstanceDetailData(instance, portfolioAccounts, true)
+  const detail = useInstanceDetailData(instance, portfolioAccounts, true, riskProfileOverride)
   const [expandedSections, setExpandedSections] = useState(defaultInstanceExpandedSections)
 
   const toggleSection = useCallback((id: InstanceInspectorSectionId) => {

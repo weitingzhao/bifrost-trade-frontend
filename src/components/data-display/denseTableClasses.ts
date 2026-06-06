@@ -21,6 +21,12 @@ export const denseTable = {
   entityLink: 'block w-full max-w-full whitespace-normal break-words text-left',
   /** Horizontal scroll container — muted slate thumb, transparent track (see index.css). */
   scrollX: 'dense-scroll-x',
+  /**
+   * Expand/collapse chevron column — overrides default td max-w-0 overflow-hidden
+   * so IconActionButton / ExpandToggleCell stays visible in table-fixed layouts.
+   */
+  expandCol: 'w-8 max-w-none shrink-0 overflow-visible px-0.5',
+  expandColCell: 'w-8 max-w-none shrink-0 overflow-visible p-0 align-middle',
 } as const
 
 export const denseTableCellPadding =

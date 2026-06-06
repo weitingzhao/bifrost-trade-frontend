@@ -6,8 +6,7 @@ import type {
   SepaReadinessSummaryResponse,
 } from '@/types/stockDataReadiness'
 import type { SepaCriteriaStats } from '@/types/stockScreener'
-
-const BASE = import.meta.env.VITE_API_RESEARCH as string
+import { researchUrl } from '@/lib/devApiUrl'
 
 async function fetchJson<T>(
   url: string,
@@ -45,7 +44,7 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number): Promi
 export async function fetchSepaReadinessSummary(): Promise<SepaReadinessSummaryResponse> {
   try {
     return await fetchJson<SepaReadinessSummaryResponse>(
-      `${BASE}/research/data/readiness/summary`,
+      researchUrl('/research/data/readiness/summary'),
       { method: 'GET' },
       45_000,
     )
@@ -67,7 +66,7 @@ export async function postSepaSyncHolidays(): Promise<{
   massive_error?: string
 }> {
   try {
-    return await postJson(`${BASE}/research/data/readiness/sync-holidays`, {}, 30_000)
+    return await postJson(researchUrl('/research/data/readiness/sync-holidays'), {}, 30_000)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
   }
@@ -84,7 +83,7 @@ export async function postSepaStockUnifiedSnapshot(): Promise<{
   message?: string
 }> {
   try {
-    return await postJson(`${BASE}/research/data/readiness/stock-unified-snapshot`, {}, 600_000)
+    return await postJson(researchUrl('/research/data/readiness/stock-unified-snapshot'), {}, 600_000)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
   }
@@ -99,7 +98,11 @@ export async function postSepaGroupedHistoryBackfill(daysBack = 420): Promise<{
   message?: string
 }> {
   try {
-    return await postJson(`${BASE}/research/data/readiness/backfill-grouped-history`, { days_back: daysBack }, 120_000)
+    return await postJson(
+      researchUrl('/research/data/readiness/backfill-grouped-history'),
+      { days_back: daysBack },
+      120_000,
+    )
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
   }
@@ -115,7 +118,7 @@ export async function postSepaPriceGapBackfill(symbols?: string[]): Promise<{
 }> {
   try {
     return await postJson(
-      `${BASE}/research/data/readiness/backfill-price-gaps`,
+      researchUrl('/research/data/readiness/backfill-price-gaps'),
       symbols?.length ? { symbols } : {},
       60_000,
     )
@@ -131,7 +134,7 @@ export async function fetchSepaPriceGaps(): Promise<{
   items?: SepaPriceGapItem[]
 }> {
   try {
-    return await fetchJson(`${BASE}/research/data/readiness/price-gaps`, { method: 'GET' }, 60_000)
+    return await fetchJson(researchUrl('/research/data/readiness/price-gaps'), { method: 'GET' }, 60_000)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
   }
@@ -144,7 +147,7 @@ export async function postSepaReadinessSnapshot(): Promise<{
   elapsed_ms?: number
 }> {
   try {
-    return await postJson(`${BASE}/research/data/readiness/snapshot`, {}, 180_000)
+    return await postJson(researchUrl('/research/data/readiness/snapshot'), {}, 180_000)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
   }
@@ -156,7 +159,7 @@ export async function postSepaFundamentalsBackfill(opts?: {
   only_missing?: boolean
 }): Promise<{ ok: boolean; error?: string; gap_count?: number; message?: string }> {
   try {
-    return await postJson(`${BASE}/research/data/readiness/backfill-fundamentals`, opts ?? {}, 60_000)
+    return await postJson(researchUrl('/research/data/readiness/backfill-fundamentals'), opts ?? {}, 60_000)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
   }
@@ -166,7 +169,7 @@ export async function postSepaTechnicalBackfill(opts?: {
   only_missing?: boolean
 }): Promise<{ ok: boolean; error?: string; gap_count?: number; message?: string }> {
   try {
-    return await postJson(`${BASE}/research/data/readiness/backfill-technical`, opts ?? {}, 60_000)
+    return await postJson(researchUrl('/research/data/readiness/backfill-technical'), opts ?? {}, 60_000)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
   }
@@ -184,7 +187,7 @@ type FinBackfillResponse = {
 
 async function getFinGaps(path: string): Promise<FinGapsResponse> {
   try {
-    return await fetchJson(`${BASE}${path}`, { method: 'GET' }, 60_000)
+    return await fetchJson(researchUrl(path), { method: 'GET' }, 60_000)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
   }
@@ -192,7 +195,7 @@ async function getFinGaps(path: string): Promise<FinGapsResponse> {
 
 async function postFinBackfill(path: string, symbols?: string[]): Promise<FinBackfillResponse> {
   try {
-    return await postJson(path, symbols?.length ? { symbols } : {}, 120_000)
+    return await postJson(researchUrl(path), symbols?.length ? { symbols } : {}, 120_000)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
   }
@@ -233,7 +236,7 @@ export async function postSepaGapAck(
   gapCount: number,
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    return await postJson(`${BASE}/research/data/readiness/gap-ack`, {
+    return await postJson(researchUrl('/research/data/readiness/gap-ack'), {
       data_type: dataType,
       is_void: isVoid,
       gap_count: gapCount,
@@ -250,7 +253,7 @@ export async function fetchSepaDataInventory(): Promise<{
   tables: Record<string, Record<string, number>>
 }> {
   try {
-    return await fetchJson(`${BASE}/research/data/readiness/data-inventory`, { method: 'GET' }, 60_000)
+    return await fetchJson(researchUrl('/research/data/readiness/data-inventory'), { method: 'GET' }, 60_000)
   } catch (e) {
     return {
       ok: false,

@@ -27,7 +27,10 @@ import {
   optionCategoryInlineSelectDirClass,
   optionCategoryInlineSelectRightClass,
   optionCategoryInlineSelectRoleClass,
+  optionCategoryLegsTableClass,
+  optionCategoryTableCellSelectClass,
 } from '@/pages/strategy/optionCategory/optionCategoryFormUi'
+import { OptionCategoryLegsColgroup } from '@/pages/strategy/optionCategory/optionCategoryTableColgroups'
 
 export interface OptionCategoryLegsSectionProps {
   detail: StrategyTemplateDetail
@@ -88,7 +91,8 @@ export function OptionCategoryLegsSection({
         </p>
       ) : (
         <div className={optionCategorySectionBodyCompactClass}>
-          <NestedDenseTable>
+          <NestedDenseTable tableClassName={optionCategoryLegsTableClass}>
+            <OptionCategoryLegsColgroup />
             <DenseTableHeader>
               <DenseTableHeadRow>
                 <DenseTableHead>Role</DenseTableHead>
@@ -101,7 +105,7 @@ export function OptionCategoryLegsSection({
             <DenseTableBody>
               {legs.map((leg: StructureLeg, i: number) => (
                 <DenseTableRow key={i}>
-                  <DenseTableCell>
+                  <DenseTableCell className={optionCategoryTableCellSelectClass}>
                     <select
                       className={optionCategoryInlineSelectRoleClass}
                       value={leg.role ?? ''}
@@ -119,7 +123,7 @@ export function OptionCategoryLegsSection({
                       ))}
                     </select>
                   </DenseTableCell>
-                  <DenseTableCell>
+                  <DenseTableCell className={optionCategoryTableCellSelectClass}>
                     <select
                       className={optionCategoryInlineSelectDirClass}
                       value={leg.direction ?? ''}
@@ -136,7 +140,7 @@ export function OptionCategoryLegsSection({
                       ))}
                     </select>
                   </DenseTableCell>
-                  <DenseTableCell>
+                  <DenseTableCell className={optionCategoryTableCellSelectClass}>
                     <select
                       className={optionCategoryInlineSelectRightClass}
                       value={leg.option_right ?? ''}

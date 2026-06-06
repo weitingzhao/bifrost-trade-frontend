@@ -10,6 +10,8 @@ import { getAllItems, NAV_GROUPS, SETTINGS_ITEM } from './navConfig'
 import type { NavGroup, NavItem } from './navConfig'
 import { BifrostLogoMark } from '@/components/BifrostLogo'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
+import { useTopNavIconOnly } from '@/hooks/useTopNavIconOnly'
+import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
 // Renders a single dropdown item; if it has children shows them indented below.
 function DropdownItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: () => void; depth?: number }) {
@@ -63,9 +65,10 @@ interface GroupMenuProps {
   isOpen: boolean
   onToggle: () => void
   onClose: () => void
+  iconOnly?: boolean
 }
 
-function GroupMenu({ group, isOpen, onToggle, onClose }: GroupMenuProps) {
+function GroupMenu({ group, isOpen, onToggle, onClose, iconOnly = false }: GroupMenuProps) {
   const location = useLocation()
   const ref = useRef<HTMLDivElement>(null)
   const allItems = getAllItems(group)
@@ -80,22 +83,44 @@ function GroupMenu({ group, isOpen, onToggle, onClose }: GroupMenuProps) {
     return () => document.removeEventListener('mousedown', handleMouseDown)
   }, [isOpen, onClose])
 
+  const trigger = (
+    <button
+      onClick={onToggle}
+      aria-label={group.label}
+      aria-expanded={isOpen}
+      className={cn(
+        'flex items-center rounded text-xs font-medium transition-colors',
+        iconOnly
+          ? 'h-8 w-8 justify-center'
+          : 'h-8 gap-1 px-2.5',
+        isActive
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+      )}
+    >
+      {iconOnly ? (
+        <group.icon className="h-4 w-4 shrink-0" />
+      ) : (
+        <>
+          {group.label}
+          <ChevronDown
+            className={cn('h-3 w-3 shrink-0 transition-transform duration-150', isOpen && 'rotate-180')}
+          />
+        </>
+      )}
+    </button>
+  )
+
   return (
     <div ref={ref} className="relative shrink-0">
-      <button
-        onClick={onToggle}
-        className={cn(
-          'flex items-center gap-1 h-8 px-2.5 rounded text-xs font-medium transition-colors',
-          isActive
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-        )}
-      >
-        {group.label}
-        <ChevronDown
-          className={cn('h-3 w-3 shrink-0 transition-transform duration-150', isOpen && 'rotate-180')}
-        />
-      </button>
+      {iconOnly ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+          <TooltipContent side="bottom">{group.label}</TooltipContent>
+        </Tooltip>
+      ) : (
+        trigger
+      )}
 
       {isOpen && (
         <div className="absolute top-full left-0 z-50 mt-1 min-w-44 rounded-md border border-border bg-popover shadow-lg py-1">
@@ -131,28 +156,55 @@ interface Props {
 
 export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: Props) {
   const [openGroup, setOpenGroup] = useState<string | null>(null)
+  const iconOnly = useTopNavIconOnly()
   const { mode, cycleMode } = useThemeMode()
   const { open: reactorOpen, toggle: toggleReactor, alertCount } = useReactorMap()
   const { open: logsOpen, toggle: toggleLogs, errorCount } = useLogPanel()
   const handleClose = () => setOpenGroup(null)
 
+  const settingsLink = (
+    <NavLink
+      to={SETTINGS_ITEM.to}
+      aria-label={SETTINGS_ITEM.label}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center rounded text-xs font-medium shrink-0 transition-colors',
+          iconOnly ? 'h-8 w-8 justify-center' : 'h-8 gap-1 px-2.5',
+          isActive
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+        )
+      }
+    >
+      <SETTINGS_ITEM.icon className={iconOnly ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+      {!iconOnly && SETTINGS_ITEM.label}
+    </NavLink>
+  )
+
   return (
-    <header className="flex h-12 shrink-0 items-center gap-1 border-b border-border bg-sidebar px-2">
+    <header
+      className={cn(
+        SHELL_TOP_BAR_HEIGHT_CLASS,
+        'flex items-center gap-1 border-b border-border bg-sidebar px-2',
+      )}
+    >
       {/* Brand mark */}
-      <div className="flex items-center gap-2 px-1 mr-1 shrink-0">
+      <div className="flex items-center gap-2 px-1 shrink-0">
         <BifrostLogoMark size={26} />
-        <div className="flex flex-col leading-tight">
-          <span className="text-[12px] font-bold tracking-tight text-sidebar-primary leading-none">
-            Bifrost
-          </span>
-          <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40 leading-none mt-0.5">
-            Trade
-          </span>
-        </div>
+        {!iconOnly && (
+          <div className="flex flex-col leading-tight">
+            <span className="text-[12px] font-bold tracking-tight text-sidebar-primary leading-none">
+              Bifrost
+            </span>
+            <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40 leading-none mt-0.5">
+              Trade
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Nav groups — no overflow container so absolute dropdowns are not clipped */}
-      <nav className="flex flex-1 items-center gap-0.5 min-w-0 flex-wrap">
+      <nav className="flex flex-1 items-center gap-0.5 min-w-0 flex-nowrap">
         {NAV_GROUPS.map((group) => (
           <GroupMenu
             key={group.label}
@@ -160,23 +212,18 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
             isOpen={openGroup === group.label}
             onToggle={() => setOpenGroup((prev) => (prev === group.label ? null : group.label))}
             onClose={handleClose}
+            iconOnly={iconOnly}
           />
         ))}
 
-        <NavLink
-          to={SETTINGS_ITEM.to}
-          className={({ isActive }) =>
-            cn(
-              'flex items-center gap-1 h-8 px-2.5 rounded text-xs font-medium shrink-0 transition-colors',
-              isActive
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-            )
-          }
-        >
-          <SETTINGS_ITEM.icon className="h-3.5 w-3.5" />
-          {SETTINGS_ITEM.label}
-        </NavLink>
+        {iconOnly ? (
+          <Tooltip>
+            <TooltipTrigger asChild>{settingsLink}</TooltipTrigger>
+            <TooltipContent side="bottom">{SETTINGS_ITEM.label}</TooltipContent>
+          </Tooltip>
+        ) : (
+          settingsLink
+        )}
       </nav>
 
       {/* Controls */}

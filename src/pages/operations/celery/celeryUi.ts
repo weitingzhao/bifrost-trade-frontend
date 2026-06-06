@@ -45,6 +45,26 @@ export const CELERY_QUEUE_SUMMARY_COL_WIDTHS = {
   actions: '9rem',
 } as const
 
+/** Queue Summary PostgreSQL job counts (P/R/D/F) — aligned with legacy dashboard-celery-top-queue-summary-pg--*. */
+export function celeryQueueSummaryPgClass(
+  mode: 'pending' | 'running' | 'done' | 'failed',
+  active: boolean,
+): string {
+  if (!active) return 'text-muted-foreground'
+  switch (mode) {
+    case 'pending':
+      return 'text-foreground font-medium'
+    case 'running':
+      return 'text-yellow-400 font-semibold'
+    case 'done':
+      return 'text-green-400 font-semibold'
+    case 'failed':
+      return 'text-red-400 font-semibold'
+    default:
+      return 'text-muted-foreground'
+  }
+}
+
 export const celeryJobQueuesToolbarClass = cn('flex flex-wrap gap-3 items-center')
 
 export const celeryJobQueuesToolbarLabelClass = cn('text-xs text-muted-foreground')

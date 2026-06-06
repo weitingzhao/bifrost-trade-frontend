@@ -1,5 +1,5 @@
 import {
-  Hourglass,
+  Clock,
   Loader2,
   Trash2,
   XCircle,
@@ -51,7 +51,7 @@ const VARIANT_CLASS: Record<CeleryQueueIconVariant, string> = {
 
 const VARIANT_ICON: Record<CeleryQueueIconVariant, LucideIcon> = {
   refresh: RotateCcw,
-  'delete-pending': Hourglass,
+  'delete-pending': Clock,
   'delete-running': Loader2,
   'delete-done': Trash2,
   'delete-failed': XCircle,

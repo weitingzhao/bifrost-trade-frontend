@@ -30,6 +30,11 @@ interface Props {
   onSync?: () => void
 }
 
+function execQty(exec: Execution): number {
+  return Math.abs(Number(exec.quantity ?? exec.qty) || 0)
+}
+
+/** Column-aligned execution row for the Options tab (13 columns). */
 export function OpenOptionExecTableRow({
   pos,
   exec,
@@ -50,7 +55,7 @@ export function OpenOptionExecTableRow({
       : es === 'SELL' || es === 'SLD' || es === 'S'
         ? 'Sell'
         : (exec.side ?? '—')
-  const eQty = Math.abs(Number(exec.quantity) || 0)
+  const eQty = execQty(exec)
   const ePrice = Number(exec.price) || 0
   const eComm = Number(exec.commission) || 0
   const eTs = exec.time != null ? Number(exec.time) : null
@@ -66,7 +71,7 @@ export function OpenOptionExecTableRow({
 
   return (
     <DenseTableDetailRow>
-      <DenseTableCell className="w-9">{null}</DenseTableCell>
+      <DenseTableCell className={denseTable.expandColCell}>{null}</DenseTableCell>
       <DenseTableCell colSpan={2} className={cn('pl-6', denseTable.detailCellClip)}>
         <div className="flex flex-col gap-0.5">
           <div className={denseTable.detailRowLabel} title={execTitle}>
@@ -120,7 +125,11 @@ export function OpenOptionExecTableRow({
           <>
             <div className="whitespace-nowrap">{fmtDate(eTs)}</div>
             {fmtDaysAgo(eTs) ? (
-              <div className={cn('text-[length:var(--text-dense-meta)] font-semibold text-warning whitespace-nowrap')}>
+              <div
+                className={cn(
+                  'text-[length:var(--text-dense-meta)] font-semibold text-warning whitespace-nowrap',
+                )}
+              >
                 {fmtDaysAgo(eTs)}
               </div>
             ) : null}
@@ -129,7 +138,13 @@ export function OpenOptionExecTableRow({
           '—'
         )}
       </DenseTableCell>
-      <DenseTableCell className={cn('font-mono tabular-nums', denseTable.detailCellClip, unrealizedPnlColorClass(eComm || null))}>
+      <DenseTableCell
+        className={cn(
+          'font-mono tabular-nums',
+          denseTable.detailCellClip,
+          unrealizedPnlColorClass(eComm || null),
+        )}
+      >
         {eComm ? fmtUsd(eComm) : '—'}
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableEntityCell, denseTable.mutedMeta)}>
@@ -142,7 +157,7 @@ export function OpenOptionExecTableRow({
         )}
       </DenseTableCell>
       <DenseTableCell>
-        <span className="inline-flex items-center gap-0.5">
+        <span className="inline-flex shrink-0 items-center gap-0.5">
           <IconActionButton
             title="Edit"
             ariaLabel="Edit execution"

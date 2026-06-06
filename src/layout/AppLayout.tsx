@@ -92,7 +92,7 @@ export function AppLayout() {
             <AppHeader
               activeMsgCount={activeMsgCount}
               onOpenMessages={() => setDrawerOpen(true)}
-              onToggleNavMode={toggle}
+              onToggleNavMode={isTooNarrow ? undefined : toggle}
             />
             <GlobalMarketStatusBar enabled={showMarketStrip} />
             <main className="flex-1 overflow-auto min-w-0 bg-card">

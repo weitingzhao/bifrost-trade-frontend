@@ -104,7 +104,7 @@ export function OptionScreenerFilterPanel({
           <span className="text-xs text-muted-foreground">Include earnings span</span>
         </label>
 
-        <Button size="sm" onClick={onRun} disabled={isPending} className="ml-auto">
+        <Button type="button" size="sm" onClick={onRun} disabled={isPending} className="ml-auto">
           <Play className="mr-1.5 h-3.5 w-3.5" />
           {isPending ? 'Scanning…' : 'Run Screener'}
         </Button>

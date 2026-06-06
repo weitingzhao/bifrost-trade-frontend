@@ -68,6 +68,31 @@ function fmtFillDate(e: Execution, tab: ExecTab): string {
   return '—'
 }
 
+function fillExecId(e: Execution): number | null {
+  const id = e.account_executions_id
+  if (id == null || !Number.isFinite(Number(id))) return null
+  return Number(id)
+}
+
+function FillRow({ fill, tab }: { fill: Execution; tab: ExecTab }) {
+  const execId = fillExecId(fill)
+  return (
+    <>
+      <span className="flex min-w-0 flex-col gap-0.5 leading-tight">
+        <span>{fmtFillDate(fill, tab)}</span>
+        {execId != null ? (
+          <span className={cn(instanceMutedClass, 'text-[0.68rem] font-normal not-italic')}>#{execId}</span>
+        ) : null}
+      </span>
+      <span className="text-right">{Math.abs(Number(fill.quantity ?? fill.qty) || 0)}</span>
+      <span className="text-right">{Number(fill.price).toFixed(2)}</span>
+      <span className={cn('text-right', instanceMutedClass)}>
+        {fmtUsd(-(Number(fill.commission) || 0))}
+      </span>
+    </>
+  )
+}
+
 function GroupBlock({
   group,
   tab,
@@ -145,12 +170,7 @@ function GroupBlock({
             </div>
             {buyFills.map((f) => (
               <div key={f.account_executions_id ?? `${f.trade_date}-${f.price}`} className={instanceExecFillsRowClass}>
-                <span>{fmtFillDate(f, tab)}</span>
-                <span className="text-right">{Math.abs(Number(f.quantity ?? f.qty) || 0)}</span>
-                <span className="text-right">{Number(f.price).toFixed(2)}</span>
-                <span className={cn('text-right', instanceMutedClass)}>
-                  {fmtUsd(-(Number(f.commission) || 0))}
-                </span>
+                <FillRow fill={f} tab={tab} />
               </div>
             ))}
           </div>
@@ -160,12 +180,7 @@ function GroupBlock({
             </div>
             {sellFills.map((f) => (
               <div key={f.account_executions_id ?? `${f.trade_date}-${f.price}-s`} className={instanceExecFillsRowClass}>
-                <span>{fmtFillDate(f, tab)}</span>
-                <span className="text-right">{Math.abs(Number(f.quantity ?? f.qty) || 0)}</span>
-                <span className="text-right">{Number(f.price).toFixed(2)}</span>
-                <span className={cn('text-right', instanceMutedClass)}>
-                  {fmtUsd(-(Number(f.commission) || 0))}
-                </span>
+                <FillRow fill={f} tab={tab} />
               </div>
             ))}
           </div>

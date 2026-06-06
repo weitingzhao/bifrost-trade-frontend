@@ -1,4 +1,5 @@
 import { postControlShutdown } from '@/api/apiControl'
+import { massiveUrl, researchUrl } from '@/lib/devApiUrl'
 import type {
   ScreenerFilters,
   ScreenerResponse,
@@ -18,20 +19,26 @@ import type {
 import type { MassiveCeleryBeatScheduleResponse } from '@/types/ops'
 
 const BASE = import.meta.env.VITE_API_RESEARCH as string
-const MASSIVE_BASE = import.meta.env.VITE_API_MASSIVE as string
 
 export async function fetchScreenerResults(filters: ScreenerFilters): Promise<ScreenerResponse> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 60_000)
+  const url = researchUrl('/research/screener')
+  const body = Object.fromEntries(
+    Object.entries(filters).filter(([, v]) => v !== null && v !== undefined),
+  )
   try {
-    const res = await fetch(`${BASE}/research/screener`, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(filters),
+      body: JSON.stringify(body),
       signal: controller.signal,
     })
-    if (!res.ok) throw new Error(`POST /research/screener: ${res.status}`)
-    return res.json() as Promise<ScreenerResponse>
+    const j = await res.json().catch(() => ({})) as ScreenerResponse
+    if (!res.ok) {
+      throw new Error(j.error ?? `POST /research/screener: ${res.status}`)
+    }
+    return { ...j, groups: j.groups ?? [] }
   } finally {
     clearTimeout(timeout)
   }
@@ -188,26 +195,48 @@ export async function fetchSymbolOptionPcr(
   const sym = symbol.trim().toUpperCase()
   const empty: SymbolOptionPcrData = { ok: false, trend: [], chain_by_expiry: [] }
   if (!sym) return { ...empty, error: 'symbol is required' }
-  const res = await fetch(
-    `${BASE}/research/data/readiness/symbol-option-pcr?symbol=${encodeURIComponent(sym)}&lookback_days=${lookbackDays}`,
+  const url = researchUrl(
+    `/research/data/readiness/symbol-option-pcr?symbol=${encodeURIComponent(sym)}&lookback_days=${lookbackDays}`,
   )
-  const j = await res.json().catch(() => ({}))
-  if (!res.ok) return { ...empty, error: typeof j.error === 'string' ? j.error : `HTTP ${res.status}` }
-  return j as SymbolOptionPcrData
+  try {
+    const res = await fetch(url)
+    const j = await res.json().catch(() => ({})) as Record<string, unknown>
+    if (!res.ok) {
+      const detail = typeof j.detail === 'string' ? j.detail : undefined
+      const err = typeof j.error === 'string' ? j.error : undefined
+      return { ...empty, error: detail ?? err ?? `HTTP ${res.status}` }
+    }
+    return j as unknown as SymbolOptionPcrData
+  } catch (e) {
+    return { ...empty, error: e instanceof Error ? e.message : 'Network error' }
+  }
 }
 
 // ── Celery Beat schedule (Massive API) ────────────────────────────────────────
 
 export async function fetchMassiveCeleryBeatSchedule(): Promise<MassiveCeleryBeatScheduleResponse> {
-  const r = await fetch(`${MASSIVE_BASE}/research/massive/celery-beat-schedule`)
-  const j = await r.json().catch(() => ({})) as Record<string, unknown>
-  if (!r.ok) {
+  try {
+    const r = await fetch(massiveUrl('/research/massive/celery-beat-schedule'))
+    const j = await r.json().catch(() => ({})) as Record<string, unknown>
+    if (!r.ok) {
+      return {
+        ok: false,
+        error: typeof j.error === 'string' ? j.error : `HTTP ${r.status}`,
+      }
+    }
+    if (j.ok === false) {
+      return {
+        ok: false,
+        error: typeof j.error === 'string' ? j.error : 'Request failed',
+      }
+    }
+    return j as unknown as MassiveCeleryBeatScheduleResponse
+  } catch (e) {
     return {
       ok: false,
-      error: typeof j.error === 'string' ? j.error : `HTTP ${r.status}`,
+      error: e instanceof Error ? e.message : 'Network error',
     }
   }
-  return j as unknown as MassiveCeleryBeatScheduleResponse
 }
 
 const STRATEGY_BASE = import.meta.env.VITE_API_STRATEGY as string

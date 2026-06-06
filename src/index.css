@@ -137,6 +137,8 @@
     --color-danger-soft: rgba(220, 38, 38, 0.1);
     --color-warning: #ca8a04;
     --color-warning-soft: rgba(202, 138, 4, 0.12);
+    /* Ledger Options: multiple distinct instance IDs on one contract group */
+    --color-instance-multi: #7c3aed;
 
     --color-link: #0284c7;
     --color-link-hover: #0369a1;
@@ -263,6 +265,7 @@
     --color-danger-soft: rgba(239, 68, 68, 0.15);
     --color-warning: #eab308;
     --color-warning-soft: rgba(234, 179, 8, 0.15);
+    --color-instance-multi: #a78bfa;
 
     --color-link: #7dd3fc;
     --color-link-hover: #bae6fd;

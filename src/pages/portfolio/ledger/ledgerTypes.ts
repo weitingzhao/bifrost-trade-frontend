@@ -14,7 +14,8 @@ export type OptGroupCallbacks = {
   onEdit?: (e: Execution) => void
   onDelete?: (e: Execution) => void
   onLinkStrategy?: (e: Execution, sameContractTrades?: Execution[]) => void
-  onViewLinks?: (ctx: { title: string; oid: number }) => void
+  onLinkStock?: (e: Execution) => void
+  onViewLinks?: (ctx: import('./LedgerOptContractCell').ViewLinksPayload) => void
   onExpiredClose?: (e: Execution) => void
   syncingId?: number | null
   onSyncOpposite?: (e: Execution, src: { opportunity_id: number; instance_id: number }) => void

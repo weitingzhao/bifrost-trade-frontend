@@ -199,3 +199,220 @@ export const watchlistStepperSizingHubActiveClass = cn(
 export const watchlistStepperSizingHubTitleClass = cn(
   'text-[0.82rem] font-extrabold uppercase tracking-wider',
 )
+
+export const HELP_PORTFOLIO_TABLE =
+  'Per-account columns use the IB snapshot on this page. Cash (IB) is TotalCashValue; Cash-like is STK lines tagged cash-like (money market, etc.); Cash total is their sum. Positions MV is Σ|qty|×mark across all legs. Host / Secondary rows follow Settings → IB event_host / trading and event_secondary. Total sums every account in the snapshot.'
+
+export const HELP_MAX_DD_SCENARIO =
+  'Max drawdown $ = Net liq. × this % for Host / Secondary; Total row uses aggregate net liq. Static risk budget (left tile under slider) = same % × aggregate net liq. Max drawdown (history) (right tile) is from performance history vs NAV.'
+
+export const HELP_CASH_PIE =
+  'Each ring splits net liq. into cash total (IB + cash-like STK), STK ex-FI (stock legs not tagged fixed income or cash-like — common underlyings), and other (fixed income, options, etc.). Legend rows pair those slices with Net liq., Ex-FI net liq., and Cash / ex-FI (same row, right column).'
+
+export const sizingDashTitleRowClass = cn(
+  'mb-2 flex flex-wrap items-center gap-x-2 gap-y-1',
+)
+
+export const sizingDashTitleClass = cn(
+  'm-0 text-[0.95rem] font-semibold tracking-tight text-foreground',
+)
+
+export const sizingDashTitleInlineClass = cn(sizingDashTitleClass, 'shrink-0')
+
+export const sizingPortfolioRiskToggleClass = cn(
+  'ml-auto inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
+  'border border-border/80 bg-secondary/60 text-muted-foreground',
+  'transition-colors hover:bg-secondary hover:text-foreground',
+)
+
+export const sizingPortfolioSummaryClass = cn(
+  'mb-2 flex flex-nowrap items-center gap-3 overflow-x-auto rounded-lg border border-border/85 px-2.5 py-2',
+  'bg-[color-mix(in_srgb,var(--background)_72%,var(--secondary))]',
+)
+
+export const sizingPortfolioSummaryItemClass = cn(
+  'flex min-w-0 shrink-0 flex-nowrap items-baseline gap-2 whitespace-nowrap',
+)
+
+export const sizingPortfolioSummaryItemMaxDdClass = cn(sizingPortfolioSummaryItemClass, 'ml-auto')
+
+export const sizingPortfolioSummaryNameClass = cn(
+  'text-[0.67rem] font-semibold uppercase tracking-wider text-muted-foreground',
+)
+
+export const sizingPortfolioSummaryMetricClass = cn(
+  'text-[0.78rem] tabular-nums text-foreground',
+)
+
+export const sizingPortfolioSummaryMetricValueClass = sizingDashValueHighlightClass
+
+export const sizingPortfolioSummaryMetricEmphClass = cn(
+  'text-[0.88rem] font-bold tabular-nums',
+  'text-[color-mix(in_srgb,var(--primary)_84%,var(--foreground))]',
+)
+
+export const sizingPortfolioMaxDdRowClass = cn(
+  'mb-2 grid items-start gap-3',
+  'grid-cols-1 lg:grid-cols-[minmax(11rem,2fr)_minmax(11rem,2fr)_minmax(0,8fr)]',
+)
+
+export const sizingRangeFieldClass = cn(
+  'min-w-0 max-w-full flex-none rounded-[10px] border border-border/85 p-2 px-3',
+  'bg-[color-mix(in_srgb,var(--secondary)_92%,transparent)]',
+)
+
+export const sizingRangeFieldPortfolioClass = cn(sizingRangeFieldClass, 'max-w-[34rem]')
+
+export const sizingRangeFieldHeadClass = cn(
+  'mb-1.5 flex items-baseline justify-between gap-2',
+)
+
+export const sizingRangeFieldLabelRowClass = cn(
+  'flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5',
+)
+
+export const sizingRangeFieldLabelClass = cn(
+  'shrink-0 text-xs font-semibold tracking-wide text-muted-foreground',
+)
+
+export const sizingRangeFieldReadoutClass = cn(
+  'shrink-0 font-mono text-base font-bold tabular-nums leading-none text-primary',
+)
+
+export const sizingRangeFieldReadoutUnitClass = cn(
+  'ml-px text-[0.72rem] font-semibold opacity-85',
+)
+
+export const sizingRangeFieldScaleClass = cn(
+  'mt-1 flex justify-between text-[0.65rem] font-medium text-muted-foreground opacity-90',
+)
+
+export const sizingRangeFieldMetricsRowClass = cn('mt-2 flex flex-wrap gap-2')
+
+export const sizingRangeFieldMetricsRowSingleClass = cn(
+  sizingRangeFieldMetricsRowClass,
+  'grid grid-cols-1',
+)
+
+export const sizingRangeFieldMetricTileClass = cn(
+  'flex min-w-0 flex-1 flex-col gap-0.5 rounded-lg border px-2 py-1.5',
+  'border-[color-mix(in_srgb,var(--primary)_42%,var(--border))]',
+  'bg-[color-mix(in_srgb,var(--primary)_8%,var(--secondary))]',
+  'shadow-[0_0_0_1px_color-mix(in_srgb,var(--primary)_12%,transparent)]',
+  'basis-[min(11.5rem,100%)]',
+)
+
+export const sizingRangeFieldMetricTileHighlightClass = cn(
+  sizingRangeFieldMetricTileClass,
+  'border-border bg-secondary shadow-none',
+)
+
+export const sizingRangeFieldMetricTileLabelClass = cn(
+  'text-[0.64rem] font-semibold uppercase tracking-wider',
+  'text-[color-mix(in_srgb,var(--primary)_35%,var(--muted-foreground))]',
+)
+
+export const sizingRangeFieldMetricTileValueClass = sizingDashValueHighlightClass
+
+export const sizingRangeFieldMetricTileSubClass = cn(
+  'text-[0.66rem] font-medium leading-snug text-muted-foreground',
+)
+
+export const sizingPortfolioTableWrapClass = cn('mt-0 min-w-0')
+
+export const sizingPortfolioNumEmphClass = cn(
+  'font-semibold tabular-nums tracking-tight',
+  'text-[color-mix(in_srgb,var(--primary)_82%,var(--foreground))]',
+)
+
+export const sizingCashPieSplitWrapClass = cn(
+  'my-3 rounded-[10px] border border-border/85 p-3',
+  'bg-[color-mix(in_srgb,var(--secondary)_90%,transparent)]',
+)
+
+export const sizingCashPieSplitHeadClass = cn(
+  'mb-2 flex flex-wrap items-center gap-x-2 gap-y-1',
+)
+
+export const sizingCashPieSplitGridClass = cn(
+  'grid grid-cols-[repeat(auto-fit,minmax(15.5rem,1fr))] gap-3',
+)
+
+export const sizingCashPiePanelClass = cn(
+  'rounded-[10px] border border-border/75 p-2 px-3',
+  'bg-[color-mix(in_srgb,var(--background)_55%,transparent)]',
+)
+
+export const sizingCashPiePanelTitleClass = cn(
+  'mb-2 text-[0.82rem] font-bold uppercase tracking-wider text-muted-foreground',
+)
+
+export const sizingCashPiePanelEmptyClass = cn(
+  'm-0 text-xs italic leading-snug text-muted-foreground',
+)
+
+export const sizingCashPieLayoutClass = cn(
+  'flex flex-wrap items-center gap-4',
+)
+
+export const sizingCashPieClass = cn('relative h-[7.75rem] w-[7.75rem] shrink-0')
+
+export const sizingCashPieRingClass = cn(
+  'absolute inset-0 rounded-full',
+  'shadow-[0_4px_18px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.05)]',
+)
+
+export const sizingCashPieHoleClass = cn(
+  'absolute inset-[17%] flex flex-col items-center justify-center rounded-full',
+  'border border-border/85 bg-secondary',
+  'shadow-[inset_0_2px_8px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.04)]',
+)
+
+export const sizingCashPiePctClass = cn(
+  'text-base font-bold tabular-nums tracking-tight text-primary',
+)
+
+export const sizingCashPiePctStkClass = cn(
+  'mt-0.5 text-sm font-bold tabular-nums tracking-tight text-violet-400',
+)
+
+export const sizingCashPieHoleLabelClass = cn(
+  'mt-0.5 text-[0.62rem] font-bold uppercase tracking-widest text-muted-foreground',
+)
+
+export const sizingCashPieLegendClass = cn(
+  'min-w-[min(14rem,100%)] flex-1 basis-48',
+)
+
+export const sizingCashPieLegendPairedClass = cn(sizingCashPieLegendClass, 'flex flex-col gap-1.5')
+
+export const sizingCashPieLegendPairClass = cn(
+  'grid items-start gap-x-3 gap-y-0.5',
+  'grid-cols-[minmax(0,1fr)_minmax(7.5rem,max-content)]',
+)
+
+export const sizingCashPieLegendPairLeftClass = cn('flex items-start gap-2')
+
+export const sizingCashPieLegendPairRightClass = cn('text-right')
+
+export const sizingCashPieLegendTextClass = cn('text-xs leading-snug text-foreground')
+
+export const sizingCashPieLegendTextTrClass = cn(sizingCashPieLegendTextClass, 'text-right')
+
+export const sizingCashPieLegendValClass = cn('font-mono tabular-nums')
+
+export const sizingCashPieLegendPctClass = cn('text-muted-foreground')
+
+export const sizingCashPieDotClass = cn('mt-1 h-2 w-2 shrink-0 rounded-full')
+
+export const sizingCashPieDotCashClass = cn(
+  sizingCashPieDotClass,
+  'bg-[color-mix(in_srgb,var(--primary)_88%,#050a10)]',
+)
+
+export const sizingCashPieDotStkClass = cn(sizingCashPieDotClass, 'bg-violet-400')
+
+export const sizingCashPieDotRestClass = cn(
+  sizingCashPieDotClass,
+  'bg-[color-mix(in_srgb,var(--border)_72%,var(--secondary))]',
+)

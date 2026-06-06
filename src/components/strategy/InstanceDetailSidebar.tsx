@@ -9,6 +9,7 @@ import { useStrategyInstance } from '@/hooks/useStrategies'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { INSTANCE_COMPARE_MAX_WIDTH_PX } from '@/constants/instanceDetailSidebar'
 import type { StrategyInstance } from '@/types/positions'
+import type { RiskProfile } from '@/utils/riskProfile'
 import layoutStyles from '@/components/strategy/instances/instancesLayout.module.css'
 
 export interface InstanceDetailSidebarProps {
@@ -25,6 +26,8 @@ export interface InstanceDetailSidebarProps {
   notFound?: boolean
   /** Compare mode panel width override */
   panelWidthPx?: number
+  /** When set (e.g. from Positions inspector), overrides execution-based risk profile. */
+  riskProfile?: RiskProfile | null
 }
 
 export function InstanceDetailSidebar({
@@ -36,6 +39,7 @@ export function InstanceDetailSidebar({
   listLoading = false,
   notFound = false,
   panelWidthPx: panelWidthPxProp,
+  riskProfile,
 }: InstanceDetailSidebarProps) {
   const windowWidth = useWindowWidth()
 
@@ -121,7 +125,7 @@ export function InstanceDetailSidebar({
       ) : isCompareMode && compareInstance != null ? (
         <div className={layoutStyles.compareSplit}>
           <div className={layoutStyles.comparePane}>
-            <InstanceDetailPanel instance={instance} />
+            <InstanceDetailPanel instance={instance} riskProfile={riskProfile} />
           </div>
           <div className={layoutStyles.compareDivider} aria-hidden />
           <div className={layoutStyles.comparePane}>
@@ -129,7 +133,7 @@ export function InstanceDetailSidebar({
           </div>
         </div>
       ) : (
-        <InstanceDetailPanel instance={instance} />
+        <InstanceDetailPanel instance={instance} riskProfile={riskProfile} />
       )}
     </RightInspectorShell>
   )

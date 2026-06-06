@@ -50,8 +50,18 @@ function StmtBlock({
         </span>
         {legend ? <div className={styles.pcrLegend}>{legend}</div> : null}
       </div>
-      {chart ? <div className={styles.pcrChartFrame}>{chart}</div> : null}
-      <div className={styles.stmtsTableWrap}>{table}</div>
+      {chart ? (
+        <div className={styles.stmtChartTable}>
+          <div className={styles.stmtChartCol}>
+            <div className={styles.pcrChartFrame}>{chart}</div>
+          </div>
+          <div className={styles.stmtTableCol}>
+            <div className={styles.stmtsTableWrap}>{table}</div>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.stmtsTableWrapOnly}>{table}</div>
+      )}
     </div>
   )
 }
@@ -78,7 +88,8 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
               <SvgBarChart
                 className={styles.pcrChart}
                 labels={lbls}
-                h={120}
+                h={110}
+                vw={500}
                 series={[
                   { key: 'Cash', color: 'rgba(74,222,128,0.82)', values: bs.map((r) => r.cash_and_equivalents) },
                   { key: 'Equity', color: 'rgba(56,189,248,0.82)', values: bs.map((r) => r.total_equity) },
@@ -144,7 +155,8 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
               <SvgBarChart
                 className={styles.pcrChart}
                 labels={lbls}
-                h={120}
+                h={110}
+                vw={500}
                 series={[
                   {
                     key: 'Net Income',
@@ -265,13 +277,19 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
         return (
           <StmtBlock
             title="Short Interest"
-            legend={<LegendItem color="rgba(248,113,113,0.8)" label="Shares Short" />}
+            legend={
+              <>
+                <LegendItem color="rgba(248,113,113,0.8)" label="Shares Short" />
+                <LegendItem color="rgba(251,191,36,0.8)" label="Days-to-Cover" />
+              </>
+            }
             chart={
               <>
                 <SvgBarChart
                   className={styles.pcrChart}
                   labels={lbls}
-                  h={120}
+                  h={110}
+                  vw={500}
                   series={[
                     {
                       key: 'Short Interest',
@@ -286,7 +304,8 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                   values={si.map((r) => r.days_to_cover)}
                   color="rgba(251,191,36,0.9)"
                   areaColor="rgba(251,191,36,0.1)"
-                  h={72}
+                  h={60}
+                  vw={500}
                 />
               </>
             }
@@ -316,37 +335,55 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
         )
       })()}
 
-      {stmts.short_volume.length > 0 && (
-        <StmtBlock
-          title="Short Volume"
-          table={
-            <table className={styles.stmtDataTable}>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Short Vol</th>
-                  <th>Ratio</th>
-                  <th>Total Vol</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stmts.short_volume.map((r) => (
-                  <tr key={r.trade_date}>
-                    <td>{r.trade_date}</td>
-                    <td>{fmtM(r.short_volume)}</td>
-                    <td>
-                      {r.short_volume_ratio != null
-                        ? `${(r.short_volume_ratio * 100).toFixed(1)}%`
-                        : '—'}
-                    </td>
-                    <td>{fmtM(r.total_volume)}</td>
+      {stmts.short_volume.length > 0 && (() => {
+        const sv = [...stmts.short_volume].reverse()
+        const lbls = sv.map((r) => r.trade_date.slice(5).replace('-', '/'))
+        return (
+          <StmtBlock
+            title="Short Volume"
+            legend={<LegendItem color="rgba(239,68,68,0.8)" label="Short Vol Ratio (%)" />}
+            chart={
+              <SvgAreaChart
+                className={styles.pcrChart}
+                labels={lbls}
+                values={sv.map((r) =>
+                  r.short_volume_ratio != null ? r.short_volume_ratio * 100 : null,
+                )}
+                color="rgba(239,68,68,0.9)"
+                areaColor="rgba(239,68,68,0.12)"
+                h={110}
+                vw={500}
+              />
+            }
+            table={
+              <table className={styles.stmtDataTable}>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Short Vol</th>
+                    <th>Ratio</th>
+                    <th>Total Vol</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          }
-        />
-      )}
+                </thead>
+                <tbody>
+                  {stmts.short_volume.map((r) => (
+                    <tr key={r.trade_date}>
+                      <td>{r.trade_date.slice(5)}</td>
+                      <td>{fmtM(r.short_volume)}</td>
+                      <td>
+                        {r.short_volume_ratio != null
+                          ? `${(r.short_volume_ratio * 100).toFixed(1)}%`
+                          : '—'}
+                      </td>
+                      <td>{fmtM(r.total_volume)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            }
+          />
+        )
+      })()}
     </>
   )
 }

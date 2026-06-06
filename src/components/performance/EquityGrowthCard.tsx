@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, Fragment } from 'react'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
+import { SegmentControl } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import type { EquityGrowthChartData, GrowthLayer, GrowthPoint } from '@/utils/ledger/equityGrowthChart'
 import { GROWTH_LAYERS } from '@/utils/ledger/equityGrowthChart'
@@ -125,23 +126,16 @@ export function EquityGrowthCard({
         </div>
 
         <div className={styles.growthControls}>
-          <div className={styles.unitToggle} role="group" aria-label="Growth chart and Fixed Income Stream bar units">
-            <button
-              type="button"
-              className={growthUnit === 'pct' ? 'active' : undefined}
-              onClick={() => onGrowthUnitChange('pct')}
-              disabled={!chartData.hasCapitalBase}
-            >
-              %
-            </button>
-            <button
-              type="button"
-              className={growthUnit === 'usd' ? 'active' : undefined}
-              onClick={() => onGrowthUnitChange('usd')}
-            >
-              $
-            </button>
-          </div>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Growth chart and Fixed Income Stream bar units"
+            options={[
+              { value: 'pct', label: '%', disabled: !chartData.hasCapitalBase },
+              { value: 'usd', label: '$' },
+            ]}
+            value={growthUnit}
+            onChange={(v) => onGrowthUnitChange(v as 'pct' | 'usd')}
+          />
 
           <div className={styles.kpis}>
             <span>

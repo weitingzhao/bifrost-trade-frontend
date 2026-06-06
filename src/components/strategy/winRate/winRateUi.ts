@@ -13,12 +13,20 @@ export const winRateCardClass = cn(
   'max-w-full min-w-0 w-full overflow-hidden text-left font-inherit text-inherit',
 )
 
+/** Legacy `strategy-win-rate-card--clickable` — border + accent lift on hover. */
 export const winRateCardClickableClass = cn(
   winRateCardClass,
-  'cursor-pointer transition-[border-color,box-shadow] duration-150',
-  'hover:border-border/80 hover:shadow-sm',
-  'focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2',
+  'cursor-pointer appearance-none border text-left',
+  'transition-[border-color,box-shadow,background-color] duration-150',
+  'hover:border-primary/40 hover:bg-card',
+  'hover:shadow-[0_4px_14px_-4px_rgba(0,0,0,0.35),0_0_0_1px_color-mix(in_srgb,var(--primary)_16%,transparent)]',
+  'active:scale-[0.995] active:shadow-sm',
+  'focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
   'disabled:cursor-default',
+)
+
+export const winRateStructureCardShellClass = cn(
+  'gap-0 p-2.5',
 )
 
 export const winRateCardTitleClass = cn(

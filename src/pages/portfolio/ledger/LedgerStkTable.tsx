@@ -20,6 +20,16 @@ import {
 import { PAGE_SIZE } from './ledgerConstants'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { ledgerPagination } from './ledgerPaginationClasses'
+import {
+  StkColgroup,
+  stkActionsCell,
+  stkActionsHead,
+  stkHeadPrimary,
+  stkMetaCell,
+  stkTableClass,
+  stkTimeCell,
+  stkTradeDateCell,
+} from './ledgerStockUi'
 import type { MainTab, StkPositionGroup, StkSortCol } from './ledgerTypes'
 import {
   denseTable,
@@ -64,7 +74,7 @@ function StkRowActions({
     return <DenseTableCell>—</DenseTableCell>
   }
   return (
-    <DenseTableCell className={denseTableNumCell}>
+    <DenseTableCell className={stkActionsCell}>
       <LedgerOptActionButtons onEdit={() => onEdit(ex)} onDelete={() => onDelete(ex)} />
     </DenseTableCell>
   )
@@ -88,9 +98,13 @@ function StkFillRow({
   const category = getExecCategory(ex, catMap)
   return (
     <DenseTableRow>
-      <LedgerStkTimeCells ex={ex} />
+      <LedgerStkTimeCells
+        ex={ex}
+        timeClassName={stkTimeCell}
+        tradeDateClassName={stkTradeDateCell}
+      />
       {showSymbolCol && (
-        <DenseTableCell>
+        <DenseTableCell className={stkMetaCell}>
           {showPills ? (
             <DenseTag variant="symbol" size="cell">
               {ex.symbol ?? '—'}
@@ -100,8 +114,8 @@ function StkFillRow({
           )}
         </DenseTableCell>
       )}
-      <DenseTableCell>{ex.account_id ?? '—'}</DenseTableCell>
-      <DenseTableCell>
+      <DenseTableCell className={stkMetaCell}>{ex.account_id ?? '—'}</DenseTableCell>
+      <DenseTableCell className={stkMetaCell}>
         {showPills ? (
           <DenseTag variant="category" size="cell">
             {category}
@@ -110,7 +124,7 @@ function StkFillRow({
           category
         )}
       </DenseTableCell>
-      <DenseTableCell>{stkSideLabel(ex)}</DenseTableCell>
+      <DenseTableCell className={stkMetaCell}>{stkSideLabel(ex)}</DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
         {ex.quantity != null ? Number(ex.quantity ?? ex.qty) : '—'}
       </DenseTableCell>
@@ -118,7 +132,7 @@ function StkFillRow({
       <LedgerStkNotionalCell ex={ex} />
       <LedgerStkRowRealizedCell realized={Number(ex.realized_pnl) || 0} />
       <DenseTableCell className={denseTableNumCell}>{fmtUsd(ex.commission ?? 0)}</DenseTableCell>
-      <DenseTableCell>
+      <DenseTableCell className={stkMetaCell}>
         <ExecSourceBadge source={ex.source} />
       </DenseTableCell>
       <StkRowActions ex={ex} onEdit={onEdit} onDelete={onDelete} />
@@ -138,17 +152,18 @@ function StkTableHead({
   return (
     <DenseTableHeader>
       <DenseTableHeadRow>
-        <DenseTableHead>Time</DenseTableHead>
+        <DenseTableHead className={stkHeadPrimary}>Time</DenseTableHead>
         <LedgerStkSortableTh
           label="Trade date"
           active={stkSort.col === 'trade_date'}
           dir={stkSort.dir}
           onClick={() => toggleStkSort('trade_date')}
+          className={stkHeadPrimary}
         />
-        {showSymbolCol ? <DenseTableHead>Symbol</DenseTableHead> : null}
-        <DenseTableHead>Account</DenseTableHead>
-        <DenseTableHead>Category</DenseTableHead>
-        <DenseTableHead>Side</DenseTableHead>
+        {showSymbolCol ? <DenseTableHead className={stkHeadPrimary}>Symbol</DenseTableHead> : null}
+        <DenseTableHead className={stkHeadPrimary}>Account</DenseTableHead>
+        <DenseTableHead className={stkHeadPrimary}>Category</DenseTableHead>
+        <DenseTableHead className={stkHeadPrimary}>Side</DenseTableHead>
         <DenseTableHead className={denseTableNumCell}>Qty</DenseTableHead>
         <DenseTableHead className={denseTableNumCell}>Price</DenseTableHead>
         <DenseTableHead className={denseTableNumCell}>Notional</DenseTableHead>
@@ -158,10 +173,11 @@ function StkTableHead({
           dir={stkSort.dir}
           onClick={() => toggleStkSort('realized_pnl')}
           tooltip="Realized on this fill (IB commission report). Zero shows as dash. Unrealized is position-level: see Group U/R PnL when grouped, or Total U in the summary."
+          className={stkHeadPrimary}
         />
         <DenseTableHead className={denseTableNumCell}>Comm.</DenseTableHead>
-        <DenseTableHead>Source</DenseTableHead>
-        <DenseTableHead className={`${denseTableNumCell} w-20`}>Actions</DenseTableHead>
+        <DenseTableHead className={stkHeadPrimary}>Source</DenseTableHead>
+        <DenseTableHead className={stkActionsHead}>Actions</DenseTableHead>
       </DenseTableHeadRow>
     </DenseTableHeader>
   )
@@ -268,7 +284,8 @@ export function LedgerStkTable({
 
     return (
       <>
-        <DenseDataTable>
+        <DenseDataTable tableClassName={stkTableClass}>
+          <StkColgroup showSymbolCol={false} />
           <StkTableHead showSymbolCol={false} stkSort={stkSort} toggleStkSort={toggleStkSort} />
           <DenseTableBody>
             {pageGroups.map(pg => {
@@ -312,7 +329,8 @@ export function LedgerStkTable({
 
   return (
     <>
-      <DenseDataTable>
+      <DenseDataTable tableClassName={stkTableClass}>
+        <StkColgroup showSymbolCol={showSymbolCol} />
         <StkTableHead showSymbolCol={showSymbolCol} stkSort={stkSort} toggleStkSort={toggleStkSort} />
         <DenseTableBody>
           {pageExecs.map(ex => (

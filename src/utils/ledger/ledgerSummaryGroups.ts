@@ -1,71 +1,34 @@
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
-import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
-import type { OptionStockLinkSummary } from '@/types/trading'
 import type { Execution } from '@/types/positions'
-import type { MainTab } from '@/pages/portfolio/ledger/ledgerTypes'
-import type { StratOppGroup, InstGroup } from '@/pages/portfolio/ledger/ledgerTypes'
-import { execMonthKey } from '@/pages/portfolio/ledger/ledgerFormat'
 
 export type OptionSummaryMonthEntry = { count: number; realizedPnl: number }
 export type StockSummaryMonthEntry = { count: number; notional: number; realizedPnl: number }
 
+/** Legacy LedgerView: execution time → UTC YYYY-MM (trade_date ignored). */
+export function legacyUtcMonthKeyFromTimeSec(timeSec: number | null | undefined): string | null {
+  const ts = Number(timeSec) || 0
+  if (ts <= 0) return null
+  return new Date(ts * 1000).toISOString().slice(0, 7)
+}
+
+/** Legacy: bucket closed group by max trade execution time (UTC month). */
 function monthKeyForClosedOptGroup(g: OptExecutionGroup): string | null {
-  const months = (g.trades ?? [])
-    .map(t => execMonthKey(t))
-    .filter(m => m !== '0000-00')
-  if (months.length === 0) return null
-  months.sort()
-  return months[months.length - 1] ?? null
+  const times = (g.trades ?? []).map(t => t.time ?? 0).filter(Boolean)
+  const ts = times.length > 0 ? Math.max(...times) : 0
+  return legacyUtcMonthKeyFromTimeSec(ts)
 }
 
-function realizedGroupsFromStrategy(opps: StratOppGroup[]): OptExecutionGroup[] {
-  const out: OptExecutionGroup[] = []
-  for (const og of opps) {
-    for (const sg of og.instanceSubgroups) {
-      for (const g of sg.groups) {
-        if (g.status === 'realized') out.push(g)
-      }
-    }
-  }
-  return out
+/**
+ * Legacy LedgerView: all closed groups; month from max(time) UTC;
+ * cell PnL = group.realized_pnl (premium-based, no option–stock slippage layer).
+ */
+export function closedGroupSummaryPnl(g: OptExecutionGroup): number {
+  return Number(g.realized_pnl) || 0
 }
 
-function realizedGroupsFromInstance(groups: InstGroup[]): OptExecutionGroup[] {
-  const out: OptExecutionGroup[] = []
-  for (const ig of groups) {
-    for (const g of ig.groups) {
-      if (g.status === 'realized') out.push(g)
-    }
-  }
-  return out
-}
-
-export function closedGroupsForLedgerSummary(params: {
-  activeTab: MainTab
-  closedOptGroups: OptExecutionGroup[]
-  filteredClosedOptGroups: OptExecutionGroup[]
-  filteredStrategyOpportunityGroups: StratOppGroup[]
-  filteredInstanceGroups: InstGroup[]
-  noInstanceOptGroups: OptExecutionGroup[]
-}): OptExecutionGroup[] {
-  switch (params.activeTab) {
-    case 'options':
-      return params.filteredClosedOptGroups
-    case 'strategy':
-      return realizedGroupsFromStrategy(params.filteredStrategyOpportunityGroups)
-    case 'instance':
-      return [
-        ...realizedGroupsFromInstance(params.filteredInstanceGroups),
-        ...params.noInstanceOptGroups.filter(g => g.status === 'realized'),
-      ]
-    default:
-      return params.closedOptGroups
-  }
-}
-
+/** Legacy: Summary always uses all closed option groups (not tab-scoped). */
 export function buildOptionsSummaryByMonth(
   groups: OptExecutionGroup[],
-  linkByOptionId: Record<number, OptionStockLinkSummary>,
 ): [string, OptionSummaryMonthEntry][] {
   const byMonth = new Map<string, OptionSummaryMonthEntry>()
   for (const g of groups) {
@@ -73,17 +36,18 @@ export function buildOptionsSummaryByMonth(
     if (!monthStr) continue
     const cur = byMonth.get(monthStr) ?? { count: 0, realizedPnl: 0 }
     cur.count += 1
-    cur.realizedPnl += adjustedRealizedPnlForOptGroup(g, linkByOptionId)
+    cur.realizedPnl += closedGroupSummaryPnl(g)
     byMonth.set(monthStr, cur)
   }
   return Array.from(byMonth.entries()).sort(([a], [b]) => b.localeCompare(a))
 }
 
+/** Legacy LedgerView STK summary: execution time → UTC month. */
 export function buildStocksSummaryByMonth(execs: Execution[]): [string, StockSummaryMonthEntry][] {
   const byMonth = new Map<string, StockSummaryMonthEntry>()
   for (const e of execs) {
-    const monthStr = execMonthKey(e)
-    if (monthStr === '0000-00') continue
+    const monthStr = legacyUtcMonthKeyFromTimeSec(e.time)
+    if (!monthStr) continue
     const cur = byMonth.get(monthStr) ?? { count: 0, notional: 0, realizedPnl: 0 }
     cur.count += 1
     const q = Math.abs(Number(e.quantity ?? e.qty) || 0)

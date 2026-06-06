@@ -1,9 +1,15 @@
 import { parseOptionContractKey } from '@/lib/format'
-import type { Execution } from '@/types/positions'
-import type { StrategyStructure } from '@/types/strategy'
+import type {
+  Execution,
+  InstanceAllGroup,
+  PositionInstanceAttribution,
+} from '@/types/positions'
+import type { StrategyOpportunity, StrategyStructure } from '@/types/strategy'
 import type { IbAccountSnapshot } from '@/types/monitor'
+import { sliceExecutionForInstanceOptView } from '@/utils/ledger/ledgerOptHelpers'
 import { computeRiskProfile, type RiskPosition, type RiskProfile } from '@/utils/riskProfile'
 
+/** Same merge rule as Legacy `StrategyInstanceDetailPage` risk profile. */
 function pickWorseRiskProfile(a: RiskProfile, b: RiskProfile): RiskProfile {
   if (a.naked_short_call_contracts !== b.naked_short_call_contracts) {
     return a.naked_short_call_contracts > b.naked_short_call_contracts ? a : b
@@ -16,6 +22,11 @@ function pickWorseRiskProfile(a: RiskProfile, b: RiskProfile): RiskProfile {
   return a
 }
 
+/**
+ * Instance inspector risk — mirrors Legacy `StrategyInstanceDetailPage`:
+ * execution net legs + stock only when instance structure has an `underlying` leg
+ * (full account stock position, not Positions-table min(held, required)).
+ */
 export function computeInstanceRiskProfile(
   executions: Execution[],
   structure: StrategyStructure | null,
@@ -71,7 +82,7 @@ export function computeInstanceRiskProfile(
     let covShares = 0
     let covAvgCost: number | null = null
     if (hasUnderlying && portfolioAccounts) {
-      const sym = (exs[0]?.symbol ?? '').toUpperCase().split(/\s+/)[0]
+      const sym = (exs[0]?.symbol ?? '').toUpperCase()
       const acct = (exs[0]?.account_id ?? '').trim()
       if (sym && acct) {
         const accRow = portfolioAccounts.find((a) => (a.account_id ?? '').trim() === acct)
@@ -92,4 +103,63 @@ export function computeInstanceRiskProfile(
   }
 
   return merged
+}
+
+export function sliceExecutionsForInstance(
+  executions: Execution[],
+  instanceId: number,
+): Execution[] {
+  return executions
+    .map((ex) => sliceExecutionForInstanceOptView(ex, instanceId))
+    .filter((row): row is Execution => row != null)
+}
+
+/** Prefer instance.strategy_structure_id (Strategy sidebar), same as useInstanceDetailData. */
+export function resolveStructureForInstance(
+  instanceId: number | null,
+  opportunityId: number | null,
+  instanceStructureById: ReadonlyMap<number, number | null | undefined>,
+  attributions: PositionInstanceAttribution[],
+  opportunities: StrategyOpportunity[],
+  structureMap: ReadonlyMap<number, StrategyStructure>,
+): StrategyStructure | null {
+  let strId: number | null = null
+  if (instanceId != null) {
+    const fromInstance = instanceStructureById.get(instanceId)
+    if (fromInstance != null) strId = fromInstance
+  }
+  if (strId == null && instanceId != null) {
+    const attr = attributions.find((a) => a.strategy_instance_id === instanceId)
+    strId = attr?.strategy_structure_id ?? null
+  }
+  if (strId == null && opportunityId != null) {
+    strId =
+      opportunities.find((o) => o.strategy_opportunity_id === opportunityId)?.strategy_structure_id ??
+      null
+  }
+  return strId != null ? (structureMap.get(strId) ?? null) : null
+}
+
+/** Positions instance expand + Strategy sidebar — execution book + instance structure. */
+export function computeInstanceDetailRiskProfileForGroup(
+  group: Pick<InstanceAllGroup, 'strategy_instance_id' | 'strategy_opportunity_id'>,
+  executionsFinal: Execution[],
+  instanceStructureById: ReadonlyMap<number, number | null | undefined>,
+  attributions: PositionInstanceAttribution[],
+  opportunities: StrategyOpportunity[],
+  structureMap: ReadonlyMap<number, StrategyStructure>,
+  portfolioAccounts: IbAccountSnapshot[] | undefined,
+): RiskProfile | null {
+  const instanceId = group.strategy_instance_id
+  if (instanceId == null) return null
+  const execs = sliceExecutionsForInstance(executionsFinal, instanceId)
+  const structure = resolveStructureForInstance(
+    instanceId,
+    group.strategy_opportunity_id,
+    instanceStructureById,
+    attributions,
+    opportunities,
+    structureMap,
+  )
+  return computeInstanceRiskProfile(execs, structure, portfolioAccounts)
 }

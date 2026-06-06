@@ -248,13 +248,17 @@ export function GrandTotalRow({
 export function NestedDenseTable({
   children,
   className,
+  tableClassName,
 }: {
   children: ReactNode
   className?: string
+  tableClassName?: string
 }) {
   return (
     <div className={cn('rounded-md border border-border bg-secondary/20 p-2', className)}>
-      <DenseDataTable wrapClassName="border-0 rounded-none">{children}</DenseDataTable>
+      <DenseDataTable wrapClassName="border-0 rounded-none" tableClassName={tableClassName}>
+        {children}
+      </DenseDataTable>
     </div>
   )
 }

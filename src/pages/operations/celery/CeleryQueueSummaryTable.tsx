@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { Filter } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DenseDataTable,
@@ -30,7 +29,13 @@ import type {
 import { formatQueueLabel, brokerQueueKeyTitle } from '@/utils/celeryQueueLabels'
 import { queueCoverageLamp, dedupedQueueSummaryTotals, type CeleryRuntimeLamp } from '@/utils/celeryRuntime'
 import { CeleryQueueIconButton } from './CeleryQueueIconButton'
-import { CELERY_QUEUE_ROW_FILTERED, CELERY_QUEUE_SUMMARY_COL_WIDTHS, celeryQueueSummaryMetaClass, celeryQueueSummaryTableClass } from './celeryUi'
+import {
+  CELERY_QUEUE_ROW_FILTERED,
+  CELERY_QUEUE_SUMMARY_COL_WIDTHS,
+  celeryQueueSummaryMetaClass,
+  celeryQueueSummaryPgClass,
+  celeryQueueSummaryTableClass,
+} from './celeryUi'
 
 type ActionMode = 'pending' | 'running' | 'done' | 'failed'
 
@@ -248,12 +253,7 @@ export function CeleryQueueSummaryTable({
     return z
   }, [aggregatedRows])
 
-  function pgBadge(
-    n: number,
-    mode: ActionMode,
-    queue: string,
-    colorVariant: 'secondary' | 'default' | 'destructive',
-  ) {
+  function pgCountCell(n: number, mode: ActionMode, queue: string) {
     const active = n > 0
     const altHint = onNavigateQueueConsole
       ? ' (Alt+click: Console for this queue)'
@@ -261,7 +261,10 @@ export function CeleryQueueSummaryTable({
     return (
       <button
         type="button"
-        className="font-mono text-xs hover:underline"
+        className={cn(
+          'w-full font-mono text-xs tabular-nums hover:underline',
+          celeryQueueSummaryPgClass(mode, active),
+        )}
         title={`Open Queues & Instances: ${mode} filter${altHint}`}
         onClick={e => {
           setActionModeByQueue(prev => ({ ...prev, [queue]: mode }))
@@ -273,10 +276,21 @@ export function CeleryQueueSummaryTable({
           onNavigateToQueue?.(queue, mode)
         }}
       >
-        {active
-          ? <Badge variant={colorVariant}>{n}</Badge>
-          : <span className="text-muted-foreground">0</span>}
+        {n}
       </button>
+    )
+  }
+
+  function pgTotalCell(n: number, mode: ActionMode) {
+    return (
+      <span
+        className={cn(
+          'font-mono text-xs tabular-nums',
+          celeryQueueSummaryPgClass(mode, n > 0),
+        )}
+      >
+        {n}
+      </span>
     )
   }
 
@@ -399,22 +413,22 @@ export function CeleryQueueSummaryTable({
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
                     {loading ? '…' : agg
-                      ? pgBadge(agg.counts.pending, 'pending', qs.name, 'secondary')
+                      ? pgCountCell(agg.counts.pending, 'pending', qs.name)
                       : <span className={denseTable.mutedMeta}>—</span>}
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
                     {loading ? '…' : agg
-                      ? pgBadge(agg.counts.running, 'running', qs.name, 'default')
+                      ? pgCountCell(agg.counts.running, 'running', qs.name)
                       : <span className={denseTable.mutedMeta}>—</span>}
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
                     {loading ? '…' : agg
-                      ? pgBadge(agg.counts.done, 'done', qs.name, 'secondary')
+                      ? pgCountCell(agg.counts.done, 'done', qs.name)
                       : <span className={denseTable.mutedMeta}>—</span>}
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
                     {loading ? '…' : agg
-                      ? pgBadge(agg.counts.failed, 'failed', qs.name, 'destructive')
+                      ? pgCountCell(agg.counts.failed, 'failed', qs.name)
                       : <span className={denseTable.mutedMeta}>—</span>}
                   </DenseTableCell>
                   <DenseTableCell>
@@ -465,10 +479,18 @@ export function CeleryQueueSummaryTable({
                 <DenseTableCell className={denseTableNumCell}>
                   {`${fmtN(totals?.pending_broker)}/${fmtN(totals?.running_celery)}`}
                 </DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{pgTotals.pending}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{pgTotals.running}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{pgTotals.done}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{pgTotals.failed}</DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>
+                  {pgTotalCell(pgTotals.pending, 'pending')}
+                </DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>
+                  {pgTotalCell(pgTotals.running, 'running')}
+                </DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>
+                  {pgTotalCell(pgTotals.done, 'done')}
+                </DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>
+                  {pgTotalCell(pgTotals.failed, 'failed')}
+                </DenseTableCell>
                 <DenseTableCell />
               </GrandTotalRow>
             )}

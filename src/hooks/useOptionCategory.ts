@@ -41,22 +41,22 @@ export function useOptionCategoryTemplateDetail(templateId: number | null) {
 
 export function useOptionCategoryFormOptions() {
   const paramKinds = useQuery({
-    queryKey: ['strategy', 'options', 'param-kinds'],
+    queryKey: ['strategy', 'options', 'param-kind'],
     queryFn: fetchParamKindOptions,
     staleTime: Infinity,
   })
   const legRoles = useQuery({
-    queryKey: ['strategy', 'options', 'leg-roles'],
+    queryKey: ['strategy', 'options', 'leg-role'],
     queryFn: fetchLegRoleOptions,
     staleTime: Infinity,
   })
   const legDirs = useQuery({
-    queryKey: ['strategy', 'options', 'leg-dirs'],
+    queryKey: ['strategy', 'options', 'leg-direction'],
     queryFn: fetchLegDirectionOptions,
     staleTime: Infinity,
   })
   const legOrs = useQuery({
-    queryKey: ['strategy', 'options', 'leg-or'],
+    queryKey: ['strategy', 'options', 'leg-option-right'],
     queryFn: fetchLegOptionRightOptions,
     staleTime: Infinity,
   })

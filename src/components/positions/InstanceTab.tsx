@@ -27,9 +27,13 @@ import type {
   InstanceAllGroup,
   Execution,
   LivePositionRow,
+  PositionInstanceAttribution,
   StrategyOpportunity,
   OpenOptionPosition,
 } from '@/types/positions'
+import type { StrategyStructure } from '@/types/strategy'
+import type { IbAccountSnapshot } from '@/types/monitor'
+import { useInstanceTabRiskProfiles } from '@/hooks/useInstanceTabRiskProfiles'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 import { buildLiveOptExecutionMap } from '@/utils/positionsExecutions'
 import { formatRiskDisplayLabels } from '@/utils/riskProfile'
@@ -55,6 +59,10 @@ interface Props {
   executionsFinal: Execution[]
   executionsTws: Execution[]
   opportunities: StrategyOpportunity[]
+  structures: StrategyStructure[]
+  attributions: PositionInstanceAttribution[]
+  instanceStructureById: ReadonlyMap<number, number | null | undefined>
+  portfolioAccounts: IbAccountSnapshot[] | undefined
   detailViewMode?: DetailViewMode
   onEditExec?: (exec: Execution) => void
   onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
@@ -63,6 +71,7 @@ interface Props {
   onOpenStrategy?: (instanceId: number) => void
   onOpenStock?: (symbol: string, accountId: string) => void
   onOpenOption?: (position: OpenOptionPosition) => void
+  canonicalOptContractKeys?: Set<string>
 }
 
 function coverageBadge(
@@ -99,6 +108,10 @@ export function InstanceTab({
   executionsFinal,
   executionsTws,
   opportunities,
+  structures,
+  attributions,
+  instanceStructureById,
+  portfolioAccounts,
   detailViewMode = 'accordion',
   onEditExec,
   onLinkExec,
@@ -107,11 +120,21 @@ export function InstanceTab({
   onOpenStrategy,
   onOpenStock,
   onOpenOption,
+  canonicalOptContractKeys,
 }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
 
   const finalMap = useMemo(() => buildLiveOptExecutionMap(executionsFinal), [executionsFinal])
   const twsMap = useMemo(() => buildLiveOptExecutionMap(executionsTws), [executionsTws])
+  const riskProfiles = useInstanceTabRiskProfiles(
+    groups,
+    executionsFinal,
+    instanceStructureById,
+    attributions,
+    opportunities,
+    structures,
+    portfolioAccounts,
+  )
 
   if (groups.length === 0) {
     return (
@@ -194,7 +217,7 @@ export function InstanceTab({
             const defaultStockAcct = instanceDefaultAccountForStockInspect(group)
             const optExecQty = formatInstanceOptExecQtyCell(group, finalMap, twsMap)
             const optN = group.options.length
-            const rp = group.risk_profile
+            const rp = id != null ? (riskProfiles.get(id) ?? null) : null
             const rl = rp ? formatRiskDisplayLabels(rp) : null
 
             const mainRow = (
@@ -405,6 +428,8 @@ export function InstanceTab({
                       onLinkExec={onLinkExec}
                       onDeleteExec={onDeleteExec}
                       onRefreshExecs={onRefreshExecs}
+                      onOpenStrategy={onOpenStrategy}
+                      canonicalOptContractKeys={canonicalOptContractKeys}
                     />
                     <InstanceCoverageSubTable
                       coverage={group.stock_coverage}

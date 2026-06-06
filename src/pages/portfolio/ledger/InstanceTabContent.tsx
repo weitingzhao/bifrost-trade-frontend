@@ -28,7 +28,7 @@ export function InstanceTabContent({
   instanceSubTab, filteredGroups, noInstGroups, noInstExecs, linkByOptionId,
   groupBy, displayBuckets, outerExpanded, toggleOuter,
   expandedGroups, toggleGroup, onEdit, onDelete,
-  onLinkStrategy, onViewLinks, syncingId, onSyncOpposite,
+  onLinkStrategy, onLinkStock, onViewLinks, syncingId, onSyncOpposite,
 }: {
   instanceSubTab: InstanceSubTab
   filteredGroups: InstGroup[]
@@ -44,7 +44,8 @@ export function InstanceTabContent({
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
   onLinkStrategy?: (e: Execution, sameContractTrades?: Execution[]) => void
-  onViewLinks?: (ctx: { title: string; oid: number }) => void
+  onLinkStock?: (e: Execution) => void
+  onViewLinks?: (ctx: import('./LedgerOptContractCell').ViewLinksPayload) => void
   syncingId?: number | null
   onSyncOpposite?: (e: Execution, src: { opportunity_id: number; instance_id: number }) => void
 }) {
@@ -78,6 +79,7 @@ export function InstanceTabContent({
               onEdit={onEdit}
               onDelete={onDelete}
               onLinkStrategy={onLinkStrategy}
+              onLinkStock={onLinkStock}
               onViewLinks={onViewLinks}
               syncingId={syncingId}
               onSyncOpposite={onSyncOpposite}
@@ -97,6 +99,7 @@ export function InstanceTabContent({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onLinkStrategy={onLinkStrategy}
+                  onLinkStock={onLinkStock}
                   onViewLinks={onViewLinks}
                   syncingId={syncingId}
                   onSyncOpposite={onSyncOpposite}
@@ -204,6 +207,7 @@ export function InstanceTabContent({
                           onEdit={onEdit}
                           onDelete={onDelete}
                           onLinkStrategy={onLinkStrategy}
+                          onLinkStock={onLinkStock}
                           onViewLinks={onViewLinks}
                           syncingId={syncingId}
                           onSyncOpposite={onSyncOpposite}
@@ -220,6 +224,7 @@ export function InstanceTabContent({
                           onEdit={onEdit}
                           onDelete={onDelete}
                           onLinkStrategy={onLinkStrategy}
+                          onLinkStock={onLinkStock}
                           onViewLinks={onViewLinks}
                           syncingId={syncingId}
                           onSyncOpposite={onSyncOpposite}

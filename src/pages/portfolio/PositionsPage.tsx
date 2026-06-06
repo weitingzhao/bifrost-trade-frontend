@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -6,7 +6,7 @@ import { useQuotes } from '@/hooks/useQuotes'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { usePositionAttribution } from '@/hooks/usePositionAttribution'
 import { useExecutionsFinal, useExecutionsTws, useExecutionsCanonical } from '@/hooks/useExecutions'
-import { useOpportunities, useStructures } from '@/hooks/useStrategies'
+import { useOpportunities, useStructures, useStrategyInstances } from '@/hooks/useStrategies'
 import { deleteExecution } from '@/api/trading'
 import { PageHeader, PageShell } from '@/components/layout'
 import { Badge } from '@/components/ui/badge'
@@ -76,6 +76,7 @@ export default function PositionsPage() {
   const { data: execCanonicalData } = useExecutionsCanonical()
   const { data: oppsData } = useOpportunities()
   const { data: structsData } = useStructures()
+  const { data: instancesData } = useStrategyInstances()
 
   const [openTab, setOpenTab] = useState<OpenTab>('instance')
   const [filterSymbol, setFilterSymbol] = useState('')
@@ -162,6 +163,13 @@ export default function PositionsPage() {
   const opportunities = useMemo(() => oppsData?.items ?? [], [oppsData?.items])
   const structures = useMemo(() => structsData?.items ?? [], [structsData?.items])
   const attributions = useMemo(() => attrData?.items ?? [], [attrData])
+  const instanceStructureById = useMemo(() => {
+    const map = new Map<number, number | null | undefined>()
+    for (const inst of instancesData?.items ?? []) {
+      map.set(inst.strategy_instance_id, inst.strategy_structure_id)
+    }
+    return map
+  }, [instancesData?.items])
 
   const liveOptions = useMemo(
     () => buildOpenOptionPositions(allOptions, attributions),
@@ -254,6 +262,10 @@ export default function PositionsPage() {
     () => buildStockCoverageItems(instanceAllGroups, allStocks),
     [instanceAllGroups, allStocks],
   )
+
+  const openStrategyInspector = useCallback((id: number) => {
+    setInspector({ type: 'strategy', id })
+  }, [])
 
   const watchlistCoverageItems = useMemo(
     () => stockCoverageItems.filter((i) => i.optionable_supported !== false),
@@ -473,12 +485,17 @@ export default function PositionsPage() {
                   executionsFinal={executionsFinal}
                   executionsTws={executionsTws}
                   opportunities={opportunities}
+                  structures={structures}
+                  attributions={attributions}
+                  instanceStructureById={instanceStructureById}
+                  portfolioAccounts={accounts}
                   detailViewMode={detailViewMode}
                   onEditExec={requestEditExec}
                   onLinkExec={openLinkExec}
                   onDeleteExec={setDeleteTarget}
                   onRefreshExecs={refreshExecData}
-                  onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
+                  onOpenStrategy={openStrategyInspector}
+                  canonicalOptContractKeys={canonicalOptContractKeys}
                   onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
                   onOpenOption={(pos) =>
                     setInspector({
@@ -538,7 +555,7 @@ export default function PositionsPage() {
                       optionPosition: pos,
                     })
                   }
-                  onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
+                  onOpenStrategy={openStrategyInspector}
                 />
               </TabsContent>
 

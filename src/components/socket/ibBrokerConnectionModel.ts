@@ -176,6 +176,26 @@ export function ibBrokerSlotLamp(slot: IbSlotView): IngestLamp {
   return 'gray'
 }
 
+/** True when automatic reconnect is attempted on the current service heartbeat tick for this slot. */
+export function ibSlotReconnectingNow(
+  reconnectHint: string | null | undefined,
+  slot: IbSlotView,
+): boolean {
+  if (!reconnectHint?.trim()) return false
+  const hint = reconnectHint.toLowerCase()
+  const label = (slot.label ?? '').toLowerCase().trim()
+  if (label === 'host') return hint.includes('host')
+  if (label === 'sec' || label === 'secondary') {
+    return hint.includes('secondary') || /\bsec\b/.test(hint)
+  }
+  if (label) return hint.includes(label)
+  return false
+}
+
+export function ibSlotNeedsRetry(slot: IbSlotView): boolean {
+  return ibBrokerSlotLamp(slot) !== 'green'
+}
+
 function ibProbeStaleSummaryParts(
   host: SocketIbSlot | null | undefined,
   secondary?: SocketIbSlot | null,

@@ -1,6 +1,10 @@
 import { cn } from '@/lib/utils'
 import type { StatusResponse } from '@/types/monitor'
-import { IbBrokerConnectionCell, ServiceHeartbeatBadge } from '@/components/socket/IbBrokerConnection'
+import {
+  ConnectionRetryControl,
+  IbBrokerConnectionCell,
+  ServiceHeartbeatBadge,
+} from '@/components/socket/IbBrokerConnection'
 import { ingestProcessRunningForIbClientId } from '@/components/socket/ibBrokerConnectionModel'
 import {
   ingestRedisTruthyConnected,
@@ -54,7 +58,7 @@ function ConnectionColumn({
       <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70 leading-none">
         {label}
       </span>
-      <div className="flex items-center gap-1 min-h-[1.125rem]">{children}</div>
+      <div className="flex flex-wrap items-center gap-1 min-h-[1.125rem] min-w-0">{children}</div>
     </div>
   )
 }
@@ -64,13 +68,18 @@ export function ConnectionCell({
   status,
   elapsed,
   category,
-  wallNowSec: _wallNowSec,
+  onReconnect,
+  reconnectDisabled,
+  reconnectBusy,
 }: {
   svc: MarketIngestServiceRow
   status: StatusResponse | null | undefined
   elapsed: number
   category?: 'Massive' | 'IB' | 'Engine' | 'Other'
   wallNowSec: number
+  onReconnect?: () => void
+  reconnectDisabled?: boolean
+  reconnectBusy?: boolean
 }) {
   if (svc.id === 'massive_ws') {
     const massive = status?.socket?.massive
@@ -86,10 +95,10 @@ export function ConnectionCell({
     const hbNext = hb.nextInS ?? hb.intervalSec
 
     return (
-      <div className="flex items-start gap-3 text-xs">
+      <div className="flex flex-wrap items-start gap-x-2 gap-y-1 min-w-0 max-w-full text-xs">
         <ConnectionColumn
           label="WS"
-          className="w-11 shrink-0"
+          className="min-w-[3.5rem]"
           hint={
             wsConnected === true
               ? 'Polygon WebSocket connected'
@@ -98,17 +107,28 @@ export function ConnectionCell({
                 : 'WebSocket state unknown'
           }
         >
-          <span
-            className={cn(
-              'inline-block h-2 w-2 rounded-full',
-              wsConnected === true
-                ? LAMP_BG.green
-                : wsConnected === false
-                  ? LAMP_BG.red
-                  : 'bg-muted-foreground/40',
+          <>
+            <span
+              className={cn(
+                'inline-block h-2 w-2 rounded-full',
+                wsConnected === true
+                  ? LAMP_BG.green
+                  : wsConnected === false
+                    ? LAMP_BG.red
+                    : 'bg-muted-foreground/40',
+              )}
+              aria-hidden
+            />
+            {wsConnected === false && (
+              <ConnectionRetryControl
+                countdownS={hb.nextInS}
+                retrying={false}
+                onReconnect={onReconnect}
+                reconnectDisabled={reconnectDisabled}
+                reconnectBusy={reconnectBusy}
+              />
             )}
-            aria-hidden
-          />
+          </>
         </ConnectionColumn>
         <ConnectionColumn
           label="Msg"
@@ -149,5 +169,14 @@ export function ConnectionCell({
     return <span className="text-xs text-muted-foreground">—</span>
   }
 
-  return <IbBrokerConnectionCell svc={svc} status={status} elapsed={elapsed} />
+  return (
+    <IbBrokerConnectionCell
+      svc={svc}
+      status={status}
+      elapsed={elapsed}
+      onReconnect={onReconnect}
+      reconnectDisabled={reconnectDisabled}
+      reconnectBusy={reconnectBusy}
+    />
+  )
 }

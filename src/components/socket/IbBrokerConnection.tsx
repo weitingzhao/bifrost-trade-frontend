@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { RotateCcw } from 'lucide-react'
+import { IconActionButton } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import type { StatusResponse } from '@/types/monitor'
 import type { MarketIngestServiceRow } from '@/utils/socketIngestLamp'
@@ -6,6 +8,8 @@ import {
   ibBrokerServiceHeartbeatNextS,
   ibBrokerServiceHeartbeatReconnectHint,
   ibBrokerSlotLamp,
+  ibSlotNeedsRetry,
+  ibSlotReconnectingNow,
   normalizeIbBrokerStatus,
   resolveIbBrokerSlots,
   type IbBrokerServiceId,
@@ -17,6 +21,7 @@ import {
   ibBrokerProbeBadgeClass,
   ibBrokerSlotDotClass,
   LAMP_BG,
+  socketConnectionRetryBadgeClass,
 } from '@/pages/settings/socket/socketIngestUi'
 
 function ConnectionColumn({
@@ -35,7 +40,7 @@ function ConnectionColumn({
       <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70 leading-none">
         {label}
       </span>
-      <div className="flex items-center gap-1 min-h-[1.125rem]">{children}</div>
+      <div className="flex flex-wrap items-center gap-1 min-h-[1.125rem] min-w-0">{children}</div>
     </div>
   )
 }
@@ -75,7 +80,75 @@ export function ServiceHeartbeatBadge({
   )
 }
 
-function IbSlotColumn({ slot, elapsed }: { slot: IbSlotView; elapsed: number }) {
+export function ConnectionRetryControl({
+  countdownS,
+  retrying,
+  onReconnect,
+  reconnectDisabled,
+  reconnectBusy,
+  hint,
+}: {
+  countdownS: number | null
+  retrying: boolean
+  onReconnect?: () => void
+  reconnectDisabled?: boolean
+  reconnectBusy?: boolean
+  hint?: string
+}) {
+  const label = retrying
+    ? '…'
+    : countdownS != null
+      ? `~${Math.ceil(countdownS)}s`
+      : '↻'
+  const title =
+    hint
+    ?? (retrying
+      ? 'Reconnecting on service heartbeat'
+      : countdownS != null
+        ? `Retry in ~${Math.ceil(countdownS)}s (service heartbeat)`
+        : 'Reconnect now')
+
+  return (
+    <div className="flex items-center gap-0.5">
+      <span className={socketConnectionRetryBadgeClass(retrying)} title={title}>
+        {label}
+      </span>
+      {onReconnect && (
+        <IconActionButton
+          size="dense"
+          className="h-5 w-5 shrink-0"
+          title="Reconnect now"
+          ariaLabel="Reconnect now"
+          disabled={reconnectDisabled || reconnectBusy}
+          onClick={(e) => {
+            e.stopPropagation()
+            onReconnect()
+          }}
+        >
+          <RotateCcw className="h-3 w-3" />
+        </IconActionButton>
+      )}
+    </div>
+  )
+}
+
+function IbSlotColumn({
+  slot,
+  elapsed,
+  heartbeatNextS,
+  reconnectHint,
+  onReconnect,
+  reconnectDisabled,
+  reconnectBusy,
+}: {
+  slot: IbSlotView
+  elapsed: number
+  heartbeatNextS: number | null
+  reconnectHint: string | null
+  onReconnect?: () => void
+  reconnectDisabled?: boolean
+  reconnectBusy?: boolean
+}) {
   const nextInS = slot.nextProbeInS != null ? Math.max(0, slot.nextProbeInS - elapsed) : null
   const probeBad = slot.probeUnhealthy === true
   const lamp = ibBrokerSlotLamp(slot)
@@ -97,8 +170,11 @@ function IbSlotColumn({ slot, elapsed }: { slot: IbSlotView; elapsed: number }) 
           ? `${colTitle} — IB API disconnected`
           : colTitle
 
+  const needsRetry = ibSlotNeedsRetry(slot)
+  const retrying = ibSlotReconnectingNow(reconnectHint, slot)
+
   return (
-    <ConnectionColumn label={slot.label ?? 'ID'} hint={connHint} className="shrink-0">
+    <ConnectionColumn label={slot.label ?? 'ID'} hint={connHint} className="min-w-[4.5rem]">
       <span className={cn('inline-block rounded-full shrink-0', connDot)} title={connHint} />
       <span className={cn(ibBrokerClientIdClass, 'py-0 px-1 text-[10px]')}>
         {slot.clientId != null ? slot.clientId : '—'}
@@ -107,6 +183,20 @@ function IbSlotColumn({ slot, elapsed }: { slot: IbSlotView; elapsed: number }) 
         <IbProbeBadge nextInS={nextInS} stale={slot.probeStale === true || probeBad} />
       )}
       {probeBad && nextInS == null && <IbProbeBadge nextInS={0} stale />}
+      {needsRetry && (
+        <ConnectionRetryControl
+          countdownS={retrying ? null : heartbeatNextS}
+          retrying={retrying}
+          onReconnect={onReconnect}
+          reconnectDisabled={reconnectDisabled}
+          reconnectBusy={reconnectBusy}
+          hint={
+            retrying
+              ? `Reconnecting ${slot.label ?? 'slot'} on current heartbeat tick`
+              : undefined
+          }
+        />
+      )}
     </ConnectionColumn>
   )
 }
@@ -123,10 +213,16 @@ export function IbBrokerConnectionCell({
   svc,
   status,
   elapsed,
+  onReconnect,
+  reconnectDisabled,
+  reconnectBusy,
 }: {
   svc: MarketIngestServiceRow
   status: StatusResponse | null | undefined
   elapsed: number
+  onReconnect?: () => void
+  reconnectDisabled?: boolean
+  reconnectBusy?: boolean
 }) {
   const brokerId = toBrokerServiceId(svc.id)
   if (!brokerId) return <span className="text-xs text-muted-foreground">—</span>
@@ -149,12 +245,12 @@ export function IbBrokerConnectionCell({
   }
 
   return (
-    <div className="flex flex-col gap-0.5">
-      <div className="flex items-start gap-3 text-xs">
+    <div className="min-w-0 max-w-full text-xs">
+      <div className="flex flex-wrap items-start gap-x-2 gap-y-1">
         {liveHeartbeatS != null && (
           <ConnectionColumn
             label="HB"
-            className="w-11 shrink-0"
+            className="w-10 min-w-[2.5rem]"
             hint={
               reconnectHint
                 ? `Service heartbeat — reconnecting: ${reconnectHint}`
@@ -165,17 +261,18 @@ export function IbBrokerConnectionCell({
           </ConnectionColumn>
         )}
         {slots.map((slot, i) => (
-          <IbSlotColumn key={i} slot={slot} elapsed={elapsed} />
+          <IbSlotColumn
+            key={i}
+            slot={slot}
+            elapsed={elapsed}
+            heartbeatNextS={liveHeartbeatS}
+            reconnectHint={reconnectHint}
+            onReconnect={onReconnect}
+            reconnectDisabled={reconnectDisabled}
+            reconnectBusy={reconnectBusy}
+          />
         ))}
       </div>
-      {reconnectHint && (
-        <span
-          className="text-[10px] text-yellow-400 truncate max-w-[220px]"
-          title="Reconnect in progress on current heartbeat tick"
-        >
-          ↻ {reconnectHint}
-        </span>
-      )}
     </div>
   )
 }

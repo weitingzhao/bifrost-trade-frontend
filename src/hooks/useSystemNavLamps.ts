@@ -77,10 +77,14 @@ export function useSystemNavLamps(enabled = true) {
 
   const status = enabled ? monitorQuery.data : undefined
 
+  const socketRollup = useMemo(
+    () => aggregateSocketNavHealthFromStatus(status),
+    [status],
+  )
+
   const lamps = useMemo((): Record<string, SystemNavLampState> => {
     const api = computeApiNavLamp(probeResults)
     const daemonRollup = aggregateDaemonProcessesHealthFromStatus(status)
-    const socketRollup = aggregateSocketNavHealthFromStatus(status)
 
     return {
       [SYSTEM_NAV_API_PATH]: api,
@@ -97,7 +101,7 @@ export function useSystemNavLamps(enabled = true) {
         title: socketRollup.title,
       },
     }
-  }, [probeResults, status, celery.lamp, celery.title])
+  }, [probeResults, status, socketRollup, celery.lamp, celery.title])
 
   return { lamps, getLamp: (path: string) => lamps[path] }
 }

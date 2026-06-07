@@ -541,12 +541,47 @@ export function aggregateDaemonProcessesHealthFromStatus(
   )
 }
 
+const SOCKET_NAV_SERVICE_LABELS: Record<(typeof SOCKET_NAV_INGEST_IDS)[number], string> = {
+  massive_ws: 'Massive WS',
+  ib_ingestor: 'IB Ingestor',
+  ib_operator: 'IB Operator',
+  ib_account_agent: 'IB Account Agent',
+}
+
+function socketNavDegradedDetailTitle(
+  services: MarketIngestServiceRow[],
+  status: StatusResponse | null | undefined,
+): string {
+  const rows = services.map(s => ({
+    id: s.id,
+    ...ingestRedisHealthLamp(s.id, status),
+  }))
+  const degraded = rows.filter(r => r.lamp !== 'green')
+  const greenN = rows.length - degraded.length
+  if (degraded.length === 0) {
+    return 'All ingest services report healthy Redis state (Monitor GET /status).'
+  }
+  const detail = degraded
+    .map(r => {
+      const name =
+        SOCKET_NAV_SERVICE_LABELS[r.id as (typeof SOCKET_NAV_INGEST_IDS)[number]] ?? r.id
+      return `${name}: ${r.title}`
+    })
+    .join(' · ')
+  return `${detail} (${greenN}/${rows.length} ingest healthy — Socket edge health, not Celery workers)`
+}
+
 /** Sidebar Socket link: worst Redis health across edge ingest services. */
 export function aggregateSocketNavHealthFromStatus(
   status: StatusResponse | null | undefined,
 ): { lamp: AggregateIngestLamp; title: string } {
-  return aggregateIngestRedisHealthLamp(
-    SOCKET_NAV_INGEST_IDS.map(id => minimalMarketIngestRowForId(id)),
-    status,
-  )
+  const services = SOCKET_NAV_INGEST_IDS.map(id => minimalMarketIngestRowForId(id))
+  const base = aggregateIngestRedisHealthLamp(services, status)
+  if (base.lamp === 'green') {
+    return base
+  }
+  return {
+    lamp: base.lamp,
+    title: socketNavDegradedDetailTitle(services, status),
+  }
 }

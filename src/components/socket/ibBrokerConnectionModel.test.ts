@@ -3,6 +3,7 @@ import {
   ibBrokerLogicalSummary,
   ibBrokerRedisHealthLamp,
   ibBrokerSlotLamp,
+  ibSlotReconnectingNow,
   resolveIbBrokerSlots,
   type IbBrokerServiceId,
 } from './ibBrokerConnectionModel'
@@ -84,5 +85,29 @@ describe('ibBrokerRedisHealthLamp', () => {
     const status = brokerStatus('ib_account_agent', true, false)
     const { lamp } = ibBrokerRedisHealthLamp('ib_account_agent', status)
     expect(lamp).toBe('yellow')
+  })
+})
+
+describe('ibSlotReconnectingNow', () => {
+  it('matches Secondary hint only on Sec slot', () => {
+    const view = brokerStatus('ib_account_agent', true, false).socket!.ib_account_agent!
+    const slots = resolveIbBrokerSlots(view, 'ib_account_agent', {
+      account_agent: 60,
+      account_agent_secondary: 60,
+    })
+    const hint = 'Secondary (client 60)'
+    expect(ibSlotReconnectingNow(hint, slots[0]!)).toBe(false)
+    expect(ibSlotReconnectingNow(hint, slots[1]!)).toBe(true)
+  })
+
+  it('matches Host hint only on Host slot', () => {
+    const view = brokerStatus('ib_operator', false, true).socket!.ib_operator!
+    const slots = resolveIbBrokerSlots(view, 'ib_operator', {
+      operator_host: 20,
+      operator_secondary: 20,
+    })
+    const hint = 'Host (client 20)'
+    expect(ibSlotReconnectingNow(hint, slots[0]!)).toBe(true)
+    expect(ibSlotReconnectingNow(hint, slots[1]!)).toBe(false)
   })
 })

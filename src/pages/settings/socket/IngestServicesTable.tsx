@@ -30,6 +30,7 @@ import {
 } from '@/utils/socketIngestLamp'
 import {
   ingestActionBlock,
+  INGEST_FORCE_RESTART_ACTION,
   resolveEffectiveRedisControlEnv,
   runtimeControlHostDisplay,
   type IngestActionBlock,
@@ -39,8 +40,10 @@ import {
   SOCKET_INGEST_COL_WIDTHS_NO_CONNECTION,
   SOCKET_INGEST_COL_WIDTHS_WITH_CONNECTION,
   socketActionsCellClass,
+  socketConnectionCellClass,
   socketIngestTableClass,
   socketLogicalCellClass,
+  socketServiceCellClass,
   socketServiceLabelClass,
   socketServiceUnitClass,
   socketSubheadLabelClass,
@@ -127,13 +130,24 @@ function ServiceRow({
           )}
         </div>
       </DenseTableCell>
-      <DenseTableCell>
+      <DenseTableCell className={socketServiceCellClass}>
         <div className={socketServiceLabelClass}>{svc.label}</div>
         <code className={socketServiceUnitClass}>{svc.systemd_unit}</code>
       </DenseTableCell>
       {showConnectionColumn && (
-        <DenseTableCell>
-          <ConnectionCell svc={svc} status={status} elapsed={elapsed} category={category} wallNowSec={wallNowSec} />
+        <DenseTableCell className={socketConnectionCellClass}>
+          <div className="min-w-0 max-w-full">
+          <ConnectionCell
+            svc={svc}
+            status={status}
+            elapsed={elapsed}
+            category={category}
+            wallNowSec={wallNowSec}
+            onReconnect={block === 'none' ? () => onAction(svc, INGEST_FORCE_RESTART_ACTION) : undefined}
+            reconnectDisabled={block !== 'none' || isStarting || isStopping}
+            reconnectBusy={isStarting || isStopping}
+          />
+          </div>
         </DenseTableCell>
       )}
       <DenseTableCell className={socketLogicalCellClass}>

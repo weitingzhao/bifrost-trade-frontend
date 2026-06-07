@@ -21,14 +21,14 @@ export const socketConflictClearButtonClass = cn(
   'shrink-0 text-xs border-orange-500/40 text-orange-500 hover:bg-orange-500/10',
 )
 
-export const socketIngestTableClass = 'min-w-[56rem]'
+export const socketIngestTableClass = 'min-w-[72rem]'
 
 /** table-fixed column widths when Connection column is shown */
 export const SOCKET_INGEST_COL_WIDTHS_WITH_CONNECTION = {
-  status: '6%',
-  host: '10%',
-  service: '22%',
-  connection: '28%',
+  status: '5%',
+  host: '8%',
+  service: '17%',
+  connection: '36%',
   logical: '24%',
   actions: '10%',
 } as const
@@ -42,9 +42,17 @@ export const SOCKET_INGEST_COL_WIDTHS_NO_CONNECTION = {
   actions: '12%',
 } as const
 
-export const socketServiceLabelClass = cn('font-semibold text-sm')
+export const socketServiceLabelClass = cn('font-semibold text-sm truncate')
 
-export const socketServiceUnitClass = cn('text-xs text-muted-foreground font-mono')
+export const socketServiceUnitClass = cn('text-xs text-muted-foreground font-mono block truncate')
+
+/** Service column — clip long unit names so Connection column is not visually crowded. */
+export const socketServiceCellClass = cn('min-w-0 overflow-hidden align-top')
+
+/** Connection column — top-aligned, allow wrapped badges within col width. */
+export const socketConnectionCellClass = cn(
+  'min-w-0 max-w-none align-top overflow-hidden pl-1',
+)
 
 export const socketLogicalCellClass = cn('text-xs text-muted-foreground max-w-[280px]')
 
@@ -175,6 +183,16 @@ export function socketIbProbeBadgeClass(stale: boolean, isSoon: boolean): string
       : isSoon
         ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'
         : 'bg-green-500/15 text-green-400 border-green-500/30',
+  )
+}
+
+/** Connection column — automatic reconnect countdown / in-progress label. */
+export function socketConnectionRetryBadgeClass(retrying: boolean): string {
+  return cn(
+    'inline-flex items-center px-1.5 py-0 rounded text-[10px] font-semibold tabular-nums border whitespace-nowrap',
+    retrying
+      ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'
+      : 'bg-orange-500/15 text-orange-300 border-orange-500/30',
   )
 }
 

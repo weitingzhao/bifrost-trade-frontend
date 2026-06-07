@@ -121,7 +121,22 @@ export function opsAuthTokenRequiredBadgeClass(): string {
   return 'border-warning/40 text-warning bg-warning-soft'
 }
 
-export function socketMassiveAgeBadgeClass(ageS: number): string {
+export function socketMassiveAgeBadgeClass(
+  ageS: number,
+  opts?: { wsConnected?: boolean; heartbeatOk?: boolean },
+): string {
+  if (opts?.wsConnected && opts?.heartbeatOk) {
+    const quietOk = ageS < 120
+    const quietWarn = ageS >= 120 && ageS < 600
+    return cn(
+      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold tabular-nums border',
+      quietOk
+        ? 'border-warning/40 bg-warning-soft text-warning'
+        : quietWarn
+          ? 'border-warning/50 bg-warning-soft text-warning'
+          : 'border-loss/40 bg-loss-soft text-loss',
+    )
+  }
   const isOk = ageS < 5
   const isWarn = ageS >= 5 && ageS < 30
   return cn(

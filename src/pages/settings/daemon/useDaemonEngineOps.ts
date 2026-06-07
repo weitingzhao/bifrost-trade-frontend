@@ -78,7 +78,7 @@ export function useDaemonEngineOps(status: StatusResponse | null) {
   }, [ingestError, ingestData])
 
   const { startingIds, stoppingIds, onControlQueued, refresh } =
-    useIngestControlPoll(daemonServices)
+    useIngestControlPoll(daemonServices, status)
 
   const canOperate = caps?.capabilities?.can_operate === true
   const disableScript =

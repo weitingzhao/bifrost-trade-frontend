@@ -79,16 +79,16 @@ export default function SocketPage() {
 
   const services: MarketIngestServiceRow[] = ingestData?.services ?? []
   const socketServices = marketIngestServicesForSocketAggregate(services)
+  const status = statusData ?? null
 
   const { startingIds, stoppingIds, onControlQueued, refresh } =
-    useIngestControlPoll(socketServices)
+    useIngestControlPoll(socketServices, status)
 
   const canOperate = caps?.capabilities?.can_operate === true
   const disableScript =
     opsHealth?.local_control === 'subprocess' && opsHealth.market_ingest_script_control !== true
   const pageEnv = normalizedPageDevProd(opsHealth?.config_profile ?? null)
   const conflict = hasStackConflict(socketServices)
-  const status = statusData ?? null
   const showLocalAgent = (opsHealth?.executor_mode ?? '').toLowerCase() === 'agent'
 
   function handleTokenChange(t: string) {

@@ -89,7 +89,13 @@ export interface SocketIbSlot {
 /** GET /status `socket.massive` — Massive WS ingest Redis meta. */
 export interface StatusSocketMassive {
   ws_connected?: boolean
+  /** Age of last Polygon quote (quiet market can be large while service is healthy). */
   last_msg_age_s?: number | null
+  /** Age of last Redis health hash write (service liveness). */
+  health_updated_age_s?: number | null
+  service_heartbeat_interval_sec?: number | null
+  last_service_heartbeat_at?: number | null
+  next_service_heartbeat_in_s?: number | null
   ws_reconnects?: number | null
 }
 

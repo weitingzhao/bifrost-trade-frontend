@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -182,6 +182,26 @@ export function CeleryWorkerInstancesSection({
   )
 
   const instances = useMemo(() => instancesData?.instances ?? [], [instancesData])
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7361/ingest/d6b3b3d0-8bc9-485b-9444-735aa2275265', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6a885c' },
+      body: JSON.stringify({
+        sessionId: '6a885c',
+        location: 'CeleryWorkerInstancesSection.tsx:instances',
+        message: 'worker instances query result',
+        data: {
+          count: instances.length,
+          units: instances.map(i => i.unit),
+          executorMode: opsHealth?.executor_mode ?? null,
+        },
+        hypothesisId: 'C',
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {})
+  }, [instances, opsHealth?.executor_mode])
+  // #endregion
   const profiles = useMemo(() => dedupeProfiles(profilesData?.profiles ?? []), [profilesData])
   const workers = workersData?.workers ?? []
   const scaleBusy = scaleWorker.isPending

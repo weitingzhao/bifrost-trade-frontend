@@ -4,7 +4,7 @@ import {
   normalizeIbBrokerStatus,
   type IbBrokerServiceId,
 } from '@/components/socket/ibBrokerConnectionModel'
-import type { StatusResponse } from '@/types/monitor'
+import type { StatusResponse, StatusSocketMassive } from '@/types/monitor'
 
 export type IngestLamp = 'green' | 'yellow' | 'red' | 'gray'
 export type AggregateIngestLamp = IngestLamp | 'none'
@@ -68,11 +68,96 @@ function ingestProcessRunning(processActive: string | undefined): boolean {
   return a === 'active' || a === 'activating'
 }
 
+const MASSIVE_SERVICE_HEARTBEAT_SLACK_SEC = 15
+
+/** Service liveness from Redis health hash (not Polygon quote age). */
+export function massiveServiceHeartbeatState(
+  massive: StatusSocketMassive | null | undefined,
+  elapsed: number,
+): {
+  intervalSec: number
+  nextInS: number | null
+  overdue: boolean
+  critical: boolean
+  ok: boolean
+} {
+  const m = massive
+  const intervalSec = Number(m?.service_heartbeat_interval_sec) > 0
+    ? Number(m?.service_heartbeat_interval_sec)
+    : 30
+  const healthAge =
+    m?.health_updated_age_s != null && Number.isFinite(Number(m.health_updated_age_s))
+      ? Math.max(0, Number(m.health_updated_age_s) + elapsed)
+      : null
+  const nextRaw =
+    m?.next_service_heartbeat_in_s != null && Number.isFinite(Number(m.next_service_heartbeat_in_s))
+      ? Number(m.next_service_heartbeat_in_s)
+      : null
+  const nextInS = nextRaw != null ? Math.max(0, nextRaw - elapsed) : null
+  const overdue =
+    healthAge != null
+      ? healthAge > intervalSec + MASSIVE_SERVICE_HEARTBEAT_SLACK_SEC
+      : nextInS != null
+        ? nextInS <= 0 && (healthAge ?? intervalSec + 1) > intervalSec
+        : false
+  const critical = healthAge != null ? healthAge > intervalSec + 90 : false
+  const ok = !overdue && !critical
+  return { intervalSec, nextInS, overdue, critical, ok }
+}
+
+export function massiveHealthUpdatedAgeS(
+  massive: StatusSocketMassive | null | undefined,
+  elapsed: number,
+): number | null {
+  const m = massive
+  if (m?.health_updated_age_s == null || !Number.isFinite(Number(m.health_updated_age_s))) {
+    return null
+  }
+  return Math.max(0, Number(m.health_updated_age_s) + elapsed)
+}
+
+export type IngestOpsPending = 'starting' | 'stopping' | null
+
+/** Daemon rows use Monitor heartbeat for Ops transition completion (not only docker process_active). */
+export function daemonServiceHealthAlive(
+  serviceId: string,
+  status: StatusResponse | null | undefined,
+): boolean | null {
+  if (serviceId === 'trading_engine') {
+    return status?.daemon?.heartbeat?.daemon_alive === true
+  }
+  if (serviceId === 'account_sync_daemon') {
+    return status?.account_sync_daemon?.heartbeat?.daemon_alive === true
+  }
+  return null
+}
+
 export function buildIngestLogicalSummary(
   svc: MarketIngestServiceRow,
   status: StatusResponse | null | undefined,
   processActive?: string,
+  pending: IngestOpsPending = null,
 ): string {
+  if (pending === 'starting') {
+    if (svc.id === 'account_sync_daemon') {
+      return 'Starting… connecting PostgreSQL and IB account stream consumer'
+    }
+    if (svc.id === 'trading_engine') {
+      return 'Starting… waiting for daemon heartbeat and IB edge health'
+    }
+    const proc = (processActive || 'unknown').toLowerCase()
+    return `Starting… (process ${proc})`
+  }
+  if (pending === 'stopping') {
+    if (svc.id === 'account_sync_daemon') {
+      return 'Stopping… clearing Redis health and pausing sync loop'
+    }
+    if (svc.id === 'trading_engine') {
+      return 'Stopping… waiting for graceful shutdown and heartbeat to clear'
+    }
+    const proc = (processActive || 'unknown').toLowerCase()
+    return `Stopping… (process ${proc})`
+  }
   const massive = status?.socket?.massive
   if (svc.id === 'massive_ws' && massive) {
     const wsUp = ingestRedisTruthyConnected(massive.ws_connected)
@@ -81,7 +166,15 @@ export function buildIngestLogicalSummary(
     const proc = ingestProcessRunning(processActive)
       ? (wsUp ? 'process active' : 'process active, WS down')
       : 'process stopped'
-    return `WS ${ws}; ${proc}; last msg ${fmtAgeShort(massive.last_msg_age_s ?? null)}; reconnects ${rc}`
+    const hb = massive.next_service_heartbeat_in_s != null
+      ? `; svc HB ~${fmtAgeShort(massive.next_service_heartbeat_in_s)}`
+      : massive.health_updated_age_s != null
+        ? `; health ${fmtAgeShort(massive.health_updated_age_s)} ago`
+        : ''
+    const quoteAge = massive.last_msg_age_s != null
+      ? `last quote ${fmtAgeShort(massive.last_msg_age_s)}`
+      : 'last quote —'
+    return `WS ${ws}; ${proc}; ${quoteAge}${hb}; reconnects ${rc}`
   }
   const ibSvcId: IbBrokerServiceId | null =
     svc.id === 'ib_market' || svc.id === 'ib_ingestor'
@@ -98,17 +191,33 @@ export function buildIngestLogicalSummary(
   if (svc.id === 'trading_engine') {
     const hb = status?.daemon?.heartbeat
     if (hb?.daemon_alive && hb.last_ts != null) {
-      return `Daemon alive; last heartbeat ${fmtAgeShort(Date.now() / 1000 - hb.last_ts)} ago`
+      const age = fmtAgeShort(Date.now() / 1000 - hb.last_ts)
+      const hints: string[] = [`Daemon alive; last heartbeat ${age} ago`]
+      if (hb.ib_connected === false) hints.push('IB edge not connected')
+      if (status?.daemon?.trading?.trading_suspended) hints.push('trading suspended')
+      return hints.join('; ')
     }
     if (hb?.graceful_shutdown_at != null) {
       return 'Graceful stop recorded (GET /status daemon.heartbeat)'
+    }
+    if (hb?.last_ts != null) {
+      const age = fmtAgeShort(Date.now() / 1000 - hb.last_ts)
+      return `Heartbeat stale (${age} ago); start process or check logs`
     }
     return 'Monitor /status heartbeat (not Redis ingest meta)'
   }
   if (svc.id === 'account_sync_daemon') {
     const hb = status?.account_sync_daemon?.heartbeat
     if (hb?.daemon_alive && hb.last_ts != null) {
-      return `Alive; last sync heartbeat ${fmtAgeShort(Date.now() / 1000 - hb.last_ts)} ago`
+      const age = fmtAgeShort(Date.now() / 1000 - hb.last_ts)
+      const ver = hb.last_sync_version ?? 0
+      const lag = hb.stream_lag ?? 0
+      const lagHint = lag > 5 ? `; stream lag ${lag}` : ''
+      return `Alive; last sync heartbeat ${age} ago; sync v${ver}${lagHint}`
+    }
+    if (hb?.last_ts != null) {
+      const age = fmtAgeShort(Date.now() / 1000 - hb.last_ts)
+      return `Heartbeat stale (${age} ago); Ops start or check account-sync logs`
     }
     return 'GET /status account_sync_daemon (PostgreSQL heartbeat)'
   }
@@ -209,31 +318,36 @@ export function ingestRedisHealthLamp(
     if (m.ws_connected === null || m.ws_connected === undefined) {
       return { lamp: 'gray', title: 'Massive WS not reported (no Redis URL or empty meta in /status).' }
     }
-    const msgAge =
-      typeof m.last_msg_age_s === 'number' && Number.isFinite(m.last_msg_age_s)
-        ? m.last_msg_age_s
-        : null
-    if (msgAge !== null && msgAge > 180) {
+    const healthAge =
+      typeof m.health_updated_age_s === 'number' && Number.isFinite(m.health_updated_age_s)
+        ? m.health_updated_age_s
+        : typeof m.last_msg_age_s === 'number' && Number.isFinite(m.last_msg_age_s)
+          ? m.last_msg_age_s
+          : null
+    const hbIv = Number(m.service_heartbeat_interval_sec) > 0
+      ? Number(m.service_heartbeat_interval_sec)
+      : 30
+    if (healthAge !== null && healthAge > hbIv + 90) {
       return {
         lamp: 'red',
-        title: `Massive WS health hash not updated for ${Math.floor(msgAge)}s — service likely crashed (bifrost:health:ws_massive_option).`,
+        title: `Massive WS service heartbeat stale (${Math.floor(healthAge)}s) — check massive-ws process (bifrost:health:ws_massive_option).`,
       }
     }
-    if (msgAge !== null && msgAge > 90) {
+    if (healthAge !== null && healthAge > hbIv + MASSIVE_SERVICE_HEARTBEAT_SLACK_SEC) {
       return {
         lamp: 'yellow',
-        title: `Massive WS health hash stale (${Math.floor(msgAge)}s) — service heartbeat not updating.`,
+        title: `Massive WS service heartbeat overdue (${Math.floor(healthAge)}s) — Redis health write delayed.`,
       }
     }
     if (ingestRedisTruthyConnected(m.ws_connected)) {
-      return { lamp: 'green', title: 'Massive WS ingest healthy (Redis bifrost:health:ws_massive_option, connected).' }
+      return { lamp: 'green', title: 'Massive WS ingest healthy (connected; service heartbeat OK).' }
     }
     const processRunning = ingestProcessRunning(processActive)
     if (processRunning) {
-      if (msgAge !== null && msgAge > 180) {
+      if (healthAge !== null && healthAge > hbIv + 90) {
         return {
           lamp: 'red',
-          title: `Massive WS process running but health hash stale (${Math.floor(msgAge)}s) — check logs / Polygon auth.`,
+          title: `Massive WS process running but service heartbeat stale (${Math.floor(healthAge)}s) — check logs / Polygon auth.`,
         }
       }
       return {
@@ -293,6 +407,44 @@ export function ingestRedisHealthLamp(
   }
 
   return { lamp: 'gray', title: 'Unknown ingest service id for Redis health.' }
+}
+
+/** Status lamp + summary for Ops table; aligns Status with Actions during start/stop transitions. */
+export function resolveIngestOpsRowDisplay(opts: {
+  svc: MarketIngestServiceRow
+  status: StatusResponse | null | undefined
+  processActive: string
+  isStarting: boolean
+  isStopping: boolean
+  hostUnclaimed: boolean
+}): { lamp: IngestLamp; title: string; logicalText: string } {
+  const { svc, status, processActive, isStarting, isStopping, hostUnclaimed } = opts
+  const pending: IngestOpsPending = isStopping ? 'stopping' : isStarting ? 'starting' : null
+  const logicalText = buildIngestLogicalSummary(svc, status, processActive, pending)
+
+  if (isStopping) {
+    return {
+      lamp: 'yellow',
+      title: `Stopping ${svc.label}…`,
+      logicalText,
+    }
+  }
+  if (isStarting) {
+    return {
+      lamp: 'yellow',
+      title: `Starting ${svc.label}…`,
+      logicalText,
+    }
+  }
+
+  const redisHealth = ingestRedisHealthLamp(svc.id, status, processActive)
+  const lamp = hostUnclaimed && redisHealth.lamp === 'green' ? 'red' : redisHealth.lamp
+  const title =
+    hostUnclaimed && redisHealth.lamp === 'green'
+      ? `${redisHealth.title} — Host lease unclaimed (no Dev/Prod Ops start). Redis health may be stale from a previous run.`
+      : redisHealth.title
+
+  return { lamp, title, logicalText }
 }
 
 /** Roll-up across all ingest rows using Redis health from Monitor /status. */

@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import type { MarketIngestServiceRow } from '@/utils/socketIngestLamp'
+import type { StatusResponse } from '@/types/monitor'
+import { daemonServiceHealthAlive, type MarketIngestServiceRow } from '@/utils/socketIngestLamp'
 
 const POLL_MS = 4_000
 const START_TIMEOUT_MS = 70_000
 const STOP_TIMEOUT_MS = 75_000
 
-export function useIngestControlPoll(services: MarketIngestServiceRow[]) {
+export function useIngestControlPoll(
+  services: MarketIngestServiceRow[],
+  status?: StatusResponse | null,
+) {
   const qc = useQueryClient()
   const [startingIds, setStartingIds] = useState<ReadonlySet<string>>(new Set())
   const [stoppingIds, setStoppingIds] = useState<ReadonlySet<string>>(new Set())
@@ -75,21 +79,25 @@ export function useIngestControlPoll(services: MarketIngestServiceRow[]) {
     if (startingIds.size === 0) return
     for (const svcId of startingIds) {
       const svc = services.find(s => s.id === svcId)
-      if (svc?.process_active === 'active') {
+      if (svc?.process_active !== 'active') continue
+      const healthAlive = daemonServiceHealthAlive(svcId, status)
+      if (healthAlive === null || healthAlive === true) {
         queueMicrotask(() => clearStartPoll(svcId))
       }
     }
-  }, [services, startingIds, clearStartPoll])
+  }, [services, status, startingIds, clearStartPoll])
 
   useEffect(() => {
     if (stoppingIds.size === 0) return
     for (const svcId of stoppingIds) {
       const svc = services.find(s => s.id === svcId)
-      if (svc && svc.process_active !== 'active') {
+      if (!svc || svc.process_active === 'active') continue
+      const healthAlive = daemonServiceHealthAlive(svcId, status)
+      if (healthAlive === null || healthAlive === false) {
         queueMicrotask(() => clearStopPoll(svcId))
       }
     }
-  }, [services, stoppingIds, clearStopPoll])
+  }, [services, status, stoppingIds, clearStopPoll])
 
   useEffect(() => {
     const startTimers = startTimersRef.current

@@ -20,11 +20,10 @@ import { denseTable } from '@/components/data-display/denseTableClasses'
 import type { StatusResponse } from '@/types/monitor'
 import type { MarketIngestAction } from '@/api/ops'
 import {
-  buildIngestLogicalSummary,
   buildUnifiedIngestRows,
   buildDaemonIngestRows,
-  ingestRedisHealthLamp,
   ingestRowUsesConnectionColumn,
+  resolveIngestOpsRowDisplay,
   INGEST_CATEGORY_LABELS,
   type IngestCategory,
   type MarketIngestServiceRow,
@@ -78,7 +77,6 @@ function ServiceRow({
   onAction: (svc: MarketIngestServiceRow, action: MarketIngestAction) => void
   wallNowSec: number
 }) {
-  const redisHealth = ingestRedisHealthLamp(svc.id, status, svc.process_active)
   const effectiveEnv = resolveEffectiveRedisControlEnv(svc, allServices)
   const processRunning = ['active', 'activating'].includes((svc.process_active || '').toLowerCase())
   const ownLease = (svc.redis_control_env ?? '').trim()
@@ -89,11 +87,14 @@ function ServiceRow({
   const hostFromSibling = !ownLease && effectiveEnv && effectiveEnv !== '__stack_conflict__'
   const hostFromPageEnv = !ownLease && !hostFromSibling && processRunning && !!pageEnv
   const hostUnclaimed = !hostEnvForDisplay
-  const lamp = hostUnclaimed && redisHealth.lamp === 'green' ? 'red' : redisHealth.lamp
-  const statusTitle =
-    hostUnclaimed && redisHealth.lamp === 'green'
-      ? `${redisHealth.title} — Host lease unclaimed (no Dev/Prod Ops start). Redis health may be stale from a previous run.`
-      : redisHealth.title
+  const { lamp, title: statusTitle, logicalText } = resolveIngestOpsRowDisplay({
+    svc,
+    status,
+    processActive: svc.process_active,
+    isStarting,
+    isStopping,
+    hostUnclaimed,
+  })
 
   const { title: runtimeHostTitle, pill: runtimeHostPill } = runtimeControlHostDisplay(
     hostEnvForDisplay,
@@ -107,7 +108,6 @@ function ServiceRow({
       : runtimeHostTitle
   const block: IngestActionBlock = ingestActionBlock(canOperate, disableScript, pageEnv, effectiveEnv)
   const blockedBySibling = block === 'remote_env' && !svc.redis_control_env
-  const logicalText = buildIngestLogicalSummary(svc, status, svc.process_active)
 
   return (
     <DenseTableRow>

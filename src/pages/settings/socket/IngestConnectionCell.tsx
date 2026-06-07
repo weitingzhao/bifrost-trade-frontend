@@ -4,6 +4,7 @@ import { IbBrokerConnectionCell, ServiceHeartbeatBadge } from '@/components/sock
 import { ingestProcessRunningForIbClientId } from '@/components/socket/ibBrokerConnectionModel'
 import {
   ingestRedisTruthyConnected,
+  massiveServiceHeartbeatState,
   type MarketIngestServiceRow,
 } from '@/utils/socketIngestLamp'
 import {
@@ -17,13 +18,21 @@ function formatMassiveAgeLabel(ageS: number): string {
   return `${Math.floor(ageS / 3600)}h`
 }
 
-export function MassiveAgeBadge({ ageS }: { ageS: number }) {
+export function MassiveAgeBadge({
+  ageS,
+  wsConnected,
+  heartbeatOk,
+}: {
+  ageS: number
+  wsConnected: boolean
+  heartbeatOk: boolean
+}) {
   const label = formatMassiveAgeLabel(ageS)
+  const title = wsConnected && heartbeatOk
+    ? `Last Polygon quote ${label} ago (quiet market OK while service heartbeat is fresh).`
+    : `Last Polygon quote ${label} ago. Green <5s, yellow <30s, red ≥30s when heartbeat is not OK.`
   return (
-    <span
-      className={socketMassiveAgeBadgeClass(ageS)}
-      title={`Last Massive WS message ${label} ago. Green <5s, yellow <30s, red ≥30s.`}
-    >
+    <span className={socketMassiveAgeBadgeClass(ageS, { wsConnected, heartbeatOk })} title={title}>
       {label}
     </span>
   )
@@ -55,7 +64,7 @@ export function ConnectionCell({
   status,
   elapsed,
   category,
-  wallNowSec,
+  wallNowSec: _wallNowSec,
 }: {
   svc: MarketIngestServiceRow
   status: StatusResponse | null | undefined
@@ -72,17 +81,10 @@ export function ConnectionCell({
       massive?.last_msg_age_s != null
         ? Math.max(0, Math.floor(massive.last_msg_age_s + elapsed))
         : null
-    const updAt = svc.redis_control_updated_at
-    let hbNext: number | null = null
-    let hbOverdue = false
-    let hbCritical = false
-    if (updAt != null && Number.isFinite(updAt) && updAt > 0) {
-      const HEARTBEAT_PERIOD = 30
-      const leaseAgeS = Math.max(0, wallNowSec - updAt)
-      hbNext = Math.max(0, HEARTBEAT_PERIOD - leaseAgeS)
-      hbOverdue = leaseAgeS > HEARTBEAT_PERIOD + 10
-      hbCritical = leaseAgeS > 120
-    }
+    const hb = massiveServiceHeartbeatState(massive, elapsed)
+    const heartbeatOk = hb.ok
+    const hbNext = hb.nextInS ?? hb.intervalSec
+
     return (
       <div className="flex items-start gap-3 text-xs">
         <ConnectionColumn
@@ -108,18 +110,32 @@ export function ConnectionCell({
             aria-hidden
           />
         </ConnectionColumn>
-        <ConnectionColumn label="Msg" className="w-12">
-          {liveAgeS != null ? <MassiveAgeBadge ageS={liveAgeS} /> : <span className="text-muted-foreground">—</span>}
-        </ConnectionColumn>
-        {hbNext != null && (
-          <ConnectionColumn label="HB" className="w-12">
-            <ServiceHeartbeatBadge
-              nextInS={hbCritical ? Math.max(0, wallNowSec - (updAt ?? wallNowSec)) : hbNext}
-              overdue={hbOverdue}
-              critical={hbCritical}
+        <ConnectionColumn
+          label="Msg"
+          className="w-12"
+          hint="Last Polygon quote age (not service liveness)"
+        >
+          {liveAgeS != null ? (
+            <MassiveAgeBadge
+              ageS={liveAgeS}
+              wsConnected={wsConnected === true}
+              heartbeatOk={heartbeatOk}
             />
-          </ConnectionColumn>
-        )}
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </ConnectionColumn>
+        <ConnectionColumn
+          label="HB"
+          className="w-12"
+          hint="Service heartbeat (Redis health hash refresh, ~30s)"
+        >
+          <ServiceHeartbeatBadge
+            nextInS={hbNext}
+            overdue={hb.overdue}
+            critical={hb.critical}
+          />
+        </ConnectionColumn>
         {massive?.ws_reconnects != null && massive.ws_reconnects > 0 && (
           <span className="text-[10px] text-muted-foreground self-end pb-0.5" title="WebSocket reconnect count">
             ↻{massive.ws_reconnects}

@@ -3,6 +3,7 @@ import { X, Info, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatLastUpdate } from '@/utils/positions'
 import type { SystemMessage, SystemMessageLevel } from '@/types/messages'
+import { IbConnectionMessageTitle } from '@/components/MessageCenter/IbConnectionSlotBadge'
 
 interface Props {
   messages: SystemMessage[]
@@ -64,7 +65,9 @@ export function MessageToastStack({ messages, dismissedIds, onDismiss }: Props) 
         >
           <div className="mt-0.5">{getLevelIcon(msg.level)}</div>
           <div className="flex-1 min-w-0 space-y-0.5">
-            <p className="text-sm font-medium leading-tight">{msg.title}</p>
+            <p className="text-sm font-medium leading-tight">
+              <IbConnectionMessageTitle msg={msg} />
+            </p>
             <p className="text-xs text-muted-foreground line-clamp-2">{msg.message}</p>
             <p className="text-[10px] text-muted-foreground/60">
               {formatLastUpdate(msg.occurred_at)} ago

@@ -163,6 +163,15 @@ export function socketIbProbeBadgeClass(stale: boolean, isSoon: boolean): string
   )
 }
 
+/** IB Broker Connection — unified dot size (matches Status lamp h-2 w-2). */
+export function ibBrokerSlotDotClass(live: boolean): string {
+  return cn('h-2 w-2', live ? LAMP_BG.green : LAMP_BG.red)
+}
+
+export const ibBrokerClientIdClass = socketIbClientIdClass
+export const ibBrokerProbeBadgeClass = socketIbProbeBadgeClass
+export const ibBrokerHeartbeatBadgeClass = socketServiceHeartbeatBadgeClass
+
 export function socketStartingIndicatorDotClass(): string {
   return 'h-2 w-2 rounded-full bg-yellow-400 animate-pulse'
 }

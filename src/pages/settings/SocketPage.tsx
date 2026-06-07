@@ -27,6 +27,8 @@ import {
   normalizedPageDevProd,
   hasStackConflict,
   INGEST_CONTROL_PENDING_DIALOG_MESSAGE,
+  ingestControlActionLabel,
+  ingestControlConfirmDescription,
 } from '@/utils/ingestOpsShared'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { SocketPageHeader } from '@/pages/settings/socket/SocketPageHeader'
@@ -61,7 +63,7 @@ export default function SocketPage() {
     return () => clearInterval(id)
   }, [])
 
-  const { data: statusData, isLoading: statusLoading } = useMonitorStatus()
+  const { data: statusData, isLoading: statusLoading, isError: statusError } = useMonitorStatus()
 
   useEffect(() => {
     queueMicrotask(() => setElapsed(0))
@@ -102,19 +104,11 @@ export default function SocketPage() {
   }, [qc, refresh])
 
   function openConfirm(svc: MarketIngestServiceRow, action: MarketIngestAction) {
-    const actionLabels: Record<MarketIngestAction, string> = {
-      start: 'Start',
-      stop: 'Stop',
-      restart: 'Restart',
-      reset: 'Reset (release IB connections + restart)',
-    }
     setActionError(null)
     setConfirm({
       open: true,
-      title: `${actionLabels[action]} ${svc.label}`,
-      description: action === 'reset'
-        ? `This will release all IB client connections for ${svc.label} then restart the service. Continue?`
-        : `${actionLabels[action]} the "${svc.label}" service via Ops API. This may take up to 120s.`,
+      title: `${ingestControlActionLabel(action)} ${svc.label}`,
+      description: ingestControlConfirmDescription(svc, action),
       svc,
       action,
     })
@@ -195,9 +189,12 @@ export default function SocketPage() {
             isLoading={ingestLoading}
             isError={ingestError}
           />
-          {!statusLoading && !status?.socket && !ingestLoading && (
+          {(statusError || (!statusLoading && !status?.socket)) && !ingestLoading && (
             <p className={socketMonitorHintClass}>
-              Monitor /status not loaded — Redis health lamps will show gray.
+              Monitor GET /status unavailable — Connection column and IB logical summary need{' '}
+              <code className="text-[11px]">/api/monitor/status</code>. If you rebuilt{' '}
+              <code className="text-[11px]">api-monitor</code>, restart{' '}
+              <code className="text-[11px]">nginx</code> (or reload nginx.conf with Docker DNS resolve).
             </p>
           )}
         </div>

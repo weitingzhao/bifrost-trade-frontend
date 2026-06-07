@@ -78,8 +78,17 @@ function ServiceRow({
   onAction: (svc: MarketIngestServiceRow, action: MarketIngestAction) => void
   wallNowSec: number
 }) {
-  const redisHealth = ingestRedisHealthLamp(svc.id, status)
-  const hostUnclaimed = !(svc.redis_control_env ?? '').trim()
+  const redisHealth = ingestRedisHealthLamp(svc.id, status, svc.process_active)
+  const effectiveEnv = resolveEffectiveRedisControlEnv(svc, allServices)
+  const processRunning = ['active', 'activating'].includes((svc.process_active || '').toLowerCase())
+  const ownLease = (svc.redis_control_env ?? '').trim()
+  const hostEnvForDisplay =
+    ownLease
+    || (effectiveEnv && effectiveEnv !== '__stack_conflict__' ? effectiveEnv : null)
+    || (processRunning && pageEnv ? pageEnv : null)
+  const hostFromSibling = !ownLease && effectiveEnv && effectiveEnv !== '__stack_conflict__'
+  const hostFromPageEnv = !ownLease && !hostFromSibling && processRunning && !!pageEnv
+  const hostUnclaimed = !hostEnvForDisplay
   const lamp = hostUnclaimed && redisHealth.lamp === 'green' ? 'red' : redisHealth.lamp
   const statusTitle =
     hostUnclaimed && redisHealth.lamp === 'green'
@@ -87,14 +96,18 @@ function ServiceRow({
       : redisHealth.title
 
   const { title: runtimeHostTitle, pill: runtimeHostPill } = runtimeControlHostDisplay(
-    svc.redis_control_env,
+    hostEnvForDisplay,
     svc.redis_meta_key,
     svc.redis_control_host,
   )
-  const effectiveEnv = resolveEffectiveRedisControlEnv(svc, allServices)
+  const runtimeHostTitleResolved = hostFromSibling
+    ? `${runtimeHostTitle} — Host inferred from IB group sibling lease (this row's Redis hash has no bifrost_ops_control_env).`
+    : hostFromPageEnv
+      ? `${runtimeHostTitle} — Host inferred from this Ops instance profile while process is still running.`
+      : runtimeHostTitle
   const block: IngestActionBlock = ingestActionBlock(canOperate, disableScript, pageEnv, effectiveEnv)
   const blockedBySibling = block === 'remote_env' && !svc.redis_control_env
-  const logicalText = buildIngestLogicalSummary(svc, status)
+  const logicalText = buildIngestLogicalSummary(svc, status, svc.process_active)
 
   return (
     <DenseTableRow>
@@ -105,8 +118,8 @@ function ServiceRow({
         <div
           className="flex items-center gap-1"
           title={blockedBySibling
-            ? `${runtimeHostTitle} — Sibling services in this group hold a lease for the other Ops stack.`
-            : runtimeHostTitle}
+            ? `${runtimeHostTitleResolved} — Sibling services in this group hold a lease for the other Ops stack.`
+            : runtimeHostTitleResolved}
         >
           <OpsHostEnvPill pill={runtimeHostPill} />
           {blockedBySibling && (

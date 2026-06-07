@@ -93,12 +93,17 @@ export interface StatusSocketMassive {
   ws_reconnects?: number | null
 }
 
-export interface StatusSocketIbIngestor {
+/** Unified IB Broker socket block (ingestor / account agent / operator). */
+export interface StatusSocketIbBroker {
   connected?: boolean
+  service_alive?: boolean
+  /** Legacy alias for service_alive (operator / account agent). */
+  operator_alive?: boolean
   last_msg_age_s?: number | null
   reconnects?: number | null
   msg_count?: number | null
   client_id?: number | null
+  /** Ingestor top-level probe mirror (back-compat); prefer ``host`` slot. */
   last_ib_probe_at?: number | null
   ib_probe_interval_sec?: number | null
   ib_probe_ok?: boolean
@@ -106,38 +111,15 @@ export interface StatusSocketIbIngestor {
   ib_probe_stale?: boolean
   next_service_heartbeat_in_s?: number | null
   service_heartbeat_reconnect_in_progress?: string | null
-}
-
-export interface StatusSocketIbOperator {
-  service_alive?: boolean
-  /** Legacy alias for service_alive. */
-  operator_alive?: boolean
-  connected?: boolean
-  msg_count?: number | null
-  last_msg_age_s?: number | null
-  reconnects?: number | null
-  next_service_heartbeat_in_s?: number | null
-  service_heartbeat_reconnect_in_progress?: string | null
-  host?: SocketIbSlot
-  secondary?: SocketIbSlot
-  account?: SocketIbSlot
-  market?: SocketIbSlot
-}
-
-export interface StatusSocketIbAccountAgent {
-  connected?: boolean
-  service_alive?: boolean
-  /** Legacy alias for service_alive. */
-  operator_alive?: boolean
-  last_msg_age_s?: number | null
-  reconnects?: number | null
-  msg_count?: number | null
-  client_id?: number | null
-  next_service_heartbeat_in_s?: number | null
-  service_heartbeat_reconnect_in_progress?: string | null
   host?: SocketIbSlot | null
   secondary?: SocketIbSlot | null
 }
+
+export type StatusSocketIbIngestor = StatusSocketIbBroker
+
+export type StatusSocketIbOperator = StatusSocketIbBroker
+
+export type StatusSocketIbAccountAgent = StatusSocketIbBroker
 
 export interface StatusSocket {
   massive?: StatusSocketMassive | null

@@ -1,3 +1,4 @@
+import type { MarketIngestAction } from '@/api/ops'
 import type { MarketIngestServiceRow } from './socketIngestLamp'
 
 export type OpsHostEnvPillVariant = 'dev' | 'prod' | 'other'
@@ -189,6 +190,78 @@ export function ingestActionButtonsForState(processActive: string): { showStart:
   return { showStart: true, showStop: false }
 }
 
+/** Ops API action for UI force-restart (bypasses stale Redis health 409; IB Operator disconnect_all). */
+export const INGEST_FORCE_RESTART_ACTION: MarketIngestAction = 'reset'
+
+export function ingestForceRestartActionLabel(): string {
+  return 'Force restart'
+}
+
+export function ingestControlActionLabel(action: MarketIngestAction): string {
+  switch (action) {
+    case 'start':
+      return 'Start'
+    case 'stop':
+      return 'Stop'
+    case 'reset':
+    case 'restart':
+      return ingestForceRestartActionLabel()
+    default:
+      return action
+  }
+}
+
+function ingestForceRestartConfirmDescription(svc: MarketIngestServiceRow): string {
+  const base =
+    'Restarts the service via Ops API and bypasses stale Redis health checks that block a normal restart.'
+  if (svc.id === 'ib_operator') {
+    return `${base} IB Operator disconnects all TWS client connections before restarting.`
+  }
+  if (IB_SERVICE_IDS.has(svc.id)) {
+    return `${base} Use when IB socket processes are stuck or another stack left orphaned health keys in Redis.`
+  }
+  if (svc.id === 'account_sync_daemon') {
+    return `${base} Brief gap in account/position PostgreSQL sync while the process restarts.`
+  }
+  if (svc.id === 'trading_engine') {
+    return `${base} Brief trading-engine outage; hedging still follows DB suspend/resume.`
+  }
+  return `${base} Brief outage while the process restarts.`
+}
+
+/** Confirm dialog body for Settings → Socket / Daemon ingest control. */
+export function ingestControlConfirmDescription(
+  svc: MarketIngestServiceRow,
+  action: MarketIngestAction,
+): string {
+  if (action === 'reset' || action === 'restart') {
+    return ingestForceRestartConfirmDescription(svc)
+  }
+  if (svc.id === 'account_sync_daemon') {
+    if (action === 'start') {
+      return 'Launches account sync (IB account stream → PostgreSQL). Not deployed until account-sync is in compose.'
+    }
+    if (action === 'stop') {
+      return 'Stops account sync (SIGTERM). Sync pauses until started again.'
+    }
+  }
+  if (svc.id === 'trading_engine') {
+    if (action === 'start') {
+      return 'Starts the strategy trading daemon (Docker compose service or local Ops subprocess). Hedging still follows DB suspend/resume.'
+    }
+    if (action === 'stop') {
+      return 'Stops the trading daemon (graceful SIGTERM). Not the same as Suspend in Trading Strategy below.'
+    }
+  }
+  if (action === 'start') {
+    return `Start "${svc.label}" via Ops API. May take up to 120s.`
+  }
+  if (action === 'stop') {
+    return `Stop "${svc.label}" via Ops API.`
+  }
+  return `${ingestControlActionLabel(action)} "${svc.label}" via Ops API.`
+}
+
 /** Richer Ops error text when Account Sync Daemon start/stop fails. */
 export const INGEST_CONTROL_PENDING_DIALOG_MESSAGE =
   'Command sent — Ops API is processing. You can close this dialog; watch the status lamp and process badge below.'
@@ -199,7 +272,7 @@ export function formatAccountSyncOpsError(raw: string): string {
     return `${m} Open logs/account-sync-daemon.log under the project. Typical causes: PostgreSQL or Redis URL wrong, IB Account Agent stream unavailable, or import/config errors.`
   }
   if (m.includes('ingest_already_running')) {
-    return `${m} Use Stop first, or Restart instead of Start.`
+    return `${m} Use Stop first, or Force restart instead of Start.`
   }
   if (m.includes('not found at') && m.includes('run_account_sync_daemon')) {
     return `${m} Ensure you run Ops from the repo root and scripts/systemd/run_account_sync_daemon.py exists.`

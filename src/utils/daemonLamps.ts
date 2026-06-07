@@ -1,4 +1,8 @@
 import type { DaemonHeartbeat, StatusResponse } from '@/types/monitor'
+import {
+  ibBrokerRedisHealthLamp,
+  type IbBrokerServiceId,
+} from '@/components/socket/ibBrokerConnectionModel'
 
 export type ServiceLamp = 'green' | 'yellow' | 'red'
 export type DaemonLamp = ServiceLamp | 'none'
@@ -9,36 +13,17 @@ function worst(lamps: ServiceLamp[]): ServiceLamp {
   return 'green'
 }
 
+function mapIngestLampToServiceLamp(lamp: string): ServiceLamp {
+  if (lamp === 'green' || lamp === 'yellow' || lamp === 'red') return lamp
+  return 'yellow'
+}
+
 export function ibServiceLamp(
-  svc: 'ib_operator' | 'ib_ingestor' | 'ib_account_agent',
+  svc: IbBrokerServiceId,
   status: StatusResponse | null | undefined,
 ): { lamp: ServiceLamp; title: string } {
-  if (!status) return { lamp: 'yellow', title: 'Monitor status not loaded.' }
-
-  if (svc === 'ib_operator') {
-    const op = status.socket?.ib_operator
-    if (op == null) return { lamp: 'yellow', title: 'IB Operator data not present in /status socket.' }
-    if (op.service_alive === false) return { lamp: 'red', title: 'IB Operator process not alive (service_alive=false).' }
-    if (op.connected === true) return { lamp: 'green', title: 'IB Operator connected.' }
-    if (op.connected === false) return { lamp: 'red', title: 'IB Operator not connected.' }
-    return { lamp: 'yellow', title: 'IB Operator connection status unknown.' }
-  }
-
-  if (svc === 'ib_ingestor') {
-    const ing = status.socket?.ib_ingestor
-    if (ing == null) return { lamp: 'yellow', title: 'IB Ingestor data not present in /status socket.' }
-    if (ing.connected === true) return { lamp: 'green', title: 'IB Ingestor connected.' }
-    if (ing.connected === false) return { lamp: 'red', title: 'IB Ingestor not connected.' }
-    return { lamp: 'yellow', title: 'IB Ingestor connection status unknown.' }
-  }
-
-  // ib_account_agent
-  const aa = status.socket?.ib_account_agent
-  if (aa == null) return { lamp: 'yellow', title: 'IB Account Agent data not present in /status socket.' }
-  if (aa.service_alive === false) return { lamp: 'red', title: 'IB Account Agent process not alive (service_alive=false).' }
-  if (aa.connected === true) return { lamp: 'green', title: 'IB Account Agent connected.' }
-  if (aa.connected === false) return { lamp: 'red', title: 'IB Account Agent not connected.' }
-  return { lamp: 'yellow', title: 'IB Account Agent connection status unknown.' }
+  const { lamp, title } = ibBrokerRedisHealthLamp(svc, status)
+  return { lamp: mapIngestLampToServiceLamp(lamp), title }
 }
 
 export function computeIbBrokerGroupLamp(
@@ -78,7 +63,9 @@ export function computeAccountSyncIbGroupLamp(
   const sync = computeAccountSyncLamp(status)
   const syncLamp: ServiceLamp = sync.lamp === 'none' ? 'red' : sync.lamp
   const roll = worst([aa.lamp, syncLamp])
-  if (roll === 'green') return { lamp: 'green', title: 'IB Account Agent and PostgreSQL sync both healthy.' }
+  if (roll === 'green') {
+    return { lamp: 'green', title: 'IB Account Agent and Account Sync Daemon healthy.' }
+  }
   const bad = [
     aa.lamp !== 'green' ? aa.title : null,
     syncLamp !== 'green' ? sync.title : null,

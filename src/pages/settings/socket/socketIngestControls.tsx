@@ -1,4 +1,5 @@
-import { Play, Square, RotateCcw, Zap } from 'lucide-react'
+import { Play, Square, RotateCcw } from 'lucide-react'
+import { INGEST_FORCE_RESTART_ACTION, ingestForceRestartActionLabel } from '@/utils/ingestOpsShared'
 import type { MarketIngestAction } from '@/api/ops'
 import {
   type MarketIngestServiceRow,
@@ -82,8 +83,8 @@ export function ControlButtons({
   const showStop = isStarting ? true : isStopping ? false : redisLamp === 'green' ? true : rawButtons.showStop
   const blocked = actionBlock !== 'none'
   const blockMsg = ingestActionBlockMessage(actionBlock)
-  const isIb = svc.id !== 'massive_ws'
   const blockedBySibling = actionBlock === 'remote_env' && !svc.redis_control_env
+  const forceRestartLabel = ingestForceRestartActionLabel()
 
   if (blocked) {
     return (
@@ -124,22 +125,12 @@ export function ControlButtons({
           </IconActionButton>
         )}
         <IconActionButton
-          title={`Restart ${svc.label}`}
-          ariaLabel={`Restart ${svc.label}`}
-          onClick={() => onAction(svc, 'restart')}
+          title={`${forceRestartLabel} ${svc.label}`}
+          ariaLabel={`${forceRestartLabel} ${svc.label}`}
+          onClick={() => onAction(svc, INGEST_FORCE_RESTART_ACTION)}
         >
           <RotateCcw className="h-3.5 w-3.5" />
         </IconActionButton>
-        {isIb && (
-          <IconActionButton
-            title={`Reset ${svc.label}`}
-            ariaLabel={`Reset ${svc.label}`}
-            tone="warn"
-            onClick={() => onAction(svc, 'reset')}
-          >
-            <Zap className="h-3.5 w-3.5" />
-          </IconActionButton>
-        )}
       </div>
     </div>
   )

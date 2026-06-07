@@ -4,6 +4,10 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { formatLastUpdate } from '@/utils/positions'
 import type { SystemMessage, SystemMessageLevel } from '@/types/messages'
+import {
+  IbConnectionMessageTitle,
+  ibSlotDisplayLabel,
+} from '@/components/MessageCenter/IbConnectionSlotBadge'
 
 interface Props {
   open: boolean
@@ -31,6 +35,11 @@ const LEVEL_BG: Record<SystemMessageLevel, string> = {
 }
 
 function fmtMeta(msg: SystemMessage): string {
+  if (msg.topic === 'ib.connection' && msg.slot) {
+    return [msg.service, ibSlotDisplayLabel(msg.slot), msg.account]
+      .filter(Boolean)
+      .join(' · ')
+  }
   return [msg.service, msg.slot, msg.account]
     .filter(Boolean)
     .join(' · ')
@@ -107,7 +116,9 @@ export function MessageDrawer({ open, messages, dismissedIds, onDismiss, onDismi
                 >
                   <div className="mt-0.5">{getLevelIcon(msg.level)}</div>
                   <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-sm font-medium leading-tight">{msg.title}</p>
+                    <p className="text-sm font-medium leading-tight">
+                      <IbConnectionMessageTitle msg={msg} />
+                    </p>
                     <p className="text-xs text-muted-foreground">{msg.message}</p>
                     {msg.reason && (
                       <p className="text-xs text-muted-foreground/70 italic">{msg.reason}</p>

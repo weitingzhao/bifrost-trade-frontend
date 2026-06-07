@@ -1,3 +1,9 @@
+import {
+  ibBrokerLogicalSummary,
+  ibBrokerRedisHealthLamp,
+  normalizeIbBrokerStatus,
+  type IbBrokerServiceId,
+} from '@/components/socket/ibBrokerConnectionModel'
 import type { StatusResponse } from '@/types/monitor'
 
 export type IngestLamp = 'green' | 'yellow' | 'red' | 'gray'
@@ -57,48 +63,37 @@ function fmtAgeShort(s: number | null | undefined): string {
   return `${Math.floor(s / 3600)}h`
 }
 
+function ingestProcessRunning(processActive: string | undefined): boolean {
+  const a = (processActive || '').toLowerCase().trim()
+  return a === 'active' || a === 'activating'
+}
+
 export function buildIngestLogicalSummary(
   svc: MarketIngestServiceRow,
   status: StatusResponse | null | undefined,
+  processActive?: string,
 ): string {
   const massive = status?.socket?.massive
-  const ibIngestor = status?.socket?.ib_ingestor
-  const ibAccountAgent = status?.socket?.ib_account_agent
-
   if (svc.id === 'massive_ws' && massive) {
-    const ws = ingestRedisTruthyConnected(massive.ws_connected) ? 'connected' : 'disconnected'
+    const wsUp = ingestRedisTruthyConnected(massive.ws_connected)
+    const ws = wsUp ? 'connected' : 'disconnected'
     const rc = massive.ws_reconnects != null ? String(massive.ws_reconnects) : '—'
-    return `WS ${ws}; last msg ${fmtAgeShort(massive.last_msg_age_s ?? null)}; reconnects ${rc}`
+    const proc = ingestProcessRunning(processActive)
+      ? (wsUp ? 'process active' : 'process active, WS down')
+      : 'process stopped'
+    return `WS ${ws}; ${proc}; last msg ${fmtAgeShort(massive.last_msg_age_s ?? null)}; reconnects ${rc}`
   }
-  if ((svc.id === 'ib_ingestor' || svc.id === 'ib_market') && ibIngestor) {
-    const c = ingestRedisTruthyConnected(ibIngestor.connected) ? 'connected' : 'disconnected'
-    const rc = ibIngestor.reconnects != null ? String(ibIngestor.reconnects) : '—'
-    const mc = ibIngestor.msg_count != null ? String(ibIngestor.msg_count) : '—'
-    return `IB ${c}; last msg ${fmtAgeShort(ibIngestor.last_msg_age_s ?? null)}; reconnects ${rc}; msgs ${mc}`
-  }
-  if (svc.id === 'ib_account_agent' && ibAccountAgent) {
-    const hostUp =
-      ingestRedisTruthyConnected(ibAccountAgent.connected)
-      || ingestRedisTruthyConnected(ibAccountAgent.host?.connected)
-    const h = hostUp ? 'Host up' : 'Host down'
-    const sec = ibAccountAgent.secondary
-    const secBit =
-      sec != null
-        ? `; Sec ${ingestRedisTruthyConnected(sec.connected) ? 'up' : 'down'}`
-        : ''
-    const rc = ibAccountAgent.reconnects != null ? String(ibAccountAgent.reconnects) : '—'
-    const mc = ibAccountAgent.msg_count != null ? String(ibAccountAgent.msg_count) : '—'
-    return `${h}${secBit}; last msg ${fmtAgeShort(ibAccountAgent.last_msg_age_s ?? null)}; reconnects ${rc}; msgs ${mc}`
-  }
-  if (svc.id === 'ib_operator' && status?.socket?.ib_operator) {
-    const op = status.socket.ib_operator
-    const hostUp =
-      ingestRedisTruthyConnected(op.connected)
-      || ingestRedisTruthyConnected(op.host?.connected)
-    const c = hostUp ? 'connected' : 'disconnected'
-    const rc = op.reconnects != null ? String(op.reconnects) : '—'
-    const mc = op.msg_count != null ? String(op.msg_count) : '—'
-    return `IB Operator ${c}; last activity ${fmtAgeShort(op.last_msg_age_s ?? null)}; reconnects ${rc}; cmds ${mc}`
+  const ibSvcId: IbBrokerServiceId | null =
+    svc.id === 'ib_market' || svc.id === 'ib_ingestor'
+      ? 'ib_ingestor'
+      : svc.id === 'ib_account_agent'
+        ? 'ib_account_agent'
+        : svc.id === 'ib_operator'
+          ? 'ib_operator'
+          : null
+  if (ibSvcId) {
+    const view = normalizeIbBrokerStatus(ibSvcId, status)
+    if (view) return ibBrokerLogicalSummary(ibSvcId, view)
   }
   if (svc.id === 'trading_engine') {
     const hb = status?.daemon?.heartbeat
@@ -161,15 +156,6 @@ export function ingestRedisTruthyConnected(v: unknown): boolean {
   return false
 }
 
-function ingestRedisExplicitlyOff(v: unknown): boolean {
-  if (v === false || v === 0) return true
-  if (typeof v === 'string') {
-    const s = v.trim().toLowerCase()
-    return s === '0' || s === 'false' || s === 'no'
-  }
-  return false
-}
-
 /** True when IB probe fields indicate staleness or failure. */
 export function ibSlotProbeUnhealthy(
   slot:
@@ -200,8 +186,6 @@ export function ingestProcessLamp(active: string): IngestLamp {
   return 'gray'
 }
 
-const IB_HEALTH_FRESH_MAX_S = 180
-
 /**
  * Redis health lamp for a single ingest service, derived from Monitor GET /status socket.*.
  * Independent of Ops systemd state — Redis is shared across Dev/Prod stacks.
@@ -209,6 +193,7 @@ const IB_HEALTH_FRESH_MAX_S = 180
 export function ingestRedisHealthLamp(
   serviceId: string,
   status: StatusResponse | null | undefined,
+  processActive?: string,
 ): { lamp: IngestLamp; title: string } {
   const id = serviceId === 'ib_market' ? 'ib_ingestor' : serviceId
 
@@ -243,108 +228,25 @@ export function ingestRedisHealthLamp(
     if (ingestRedisTruthyConnected(m.ws_connected)) {
       return { lamp: 'green', title: 'Massive WS ingest healthy (Redis bifrost:health:ws_massive_option, connected).' }
     }
+    const processRunning = ingestProcessRunning(processActive)
+    if (processRunning) {
+      if (msgAge !== null && msgAge > 180) {
+        return {
+          lamp: 'red',
+          title: `Massive WS process running but health hash stale (${Math.floor(msgAge)}s) — check logs / Polygon auth.`,
+        }
+      }
+      return {
+        lamp: 'yellow',
+        title:
+          'Massive WS ingest process running; Polygon WebSocket not connected (reconnecting, auth probe, or market closed).',
+      }
+    }
     return { lamp: 'red', title: 'Massive WS not connected (Redis bifrost:health:ws_massive_option).' }
   }
 
-  if (id === 'ib_ingestor') {
-    const ib = status.socket?.ib_ingestor
-    if (ib == null) {
-      return { lamp: 'gray', title: 'IB ingestor block missing from /status socket (Redis health unavailable).' }
-    }
-    if (ibSlotProbeUnhealthy(ib)) {
-      return { lamp: 'red', title: 'IB ingestor IB liveness probe stale or failed (Redis bifrost:health:ws_ib_ingestor ib_probe_*).' }
-    }
-    if (ingestRedisTruthyConnected(ib.connected)) {
-      return { lamp: 'green', title: 'IB ingestor healthy (Redis bifrost:health:ws_ib_ingestor, connected).' }
-    }
-    return { lamp: 'red', title: 'IB ingestor not connected (Redis bifrost:health:ws_ib_ingestor).' }
-  }
-
-  if (id === 'ib_account_agent') {
-    const aa = status.socket?.ib_account_agent
-    if (aa == null) {
-      return { lamp: 'gray', title: 'IB Account Agent block missing from /status socket.' }
-    }
-    const hostSlotUp =
-      ingestRedisTruthyConnected(aa.connected) || ingestRedisTruthyConnected(aa.host?.connected)
-    const procDead =
-      ingestRedisExplicitlyOff(aa.service_alive) || ingestRedisExplicitlyOff(aa.operator_alive)
-    const hasAliveField =
-      (aa.service_alive !== undefined && aa.service_alive !== null) ||
-      (aa.operator_alive !== undefined && aa.operator_alive !== null)
-    const serviceAlive = hasAliveField
-      ? ingestRedisTruthyConnected(aa.service_alive) || ingestRedisTruthyConnected(aa.operator_alive)
-      : true
-    const secConfigured = aa.secondary !== undefined && aa.secondary !== null
-    const secUp = ingestRedisTruthyConnected(aa.secondary?.connected)
-    const lastAge = aa.last_msg_age_s
-    const healthFresh =
-      lastAge != null &&
-      typeof lastAge === 'number' &&
-      Number.isFinite(lastAge) &&
-      lastAge <= IB_HEALTH_FRESH_MAX_S
-    const hostUp = hostSlotUp && !procDead
-    if (ibSlotProbeUnhealthy(aa.host)) {
-      return { lamp: 'red', title: 'IB Account Agent Host IB probe stale or failed (Redis bifrost:health:ws_ib_account_agent host_ib_probe_*).' }
-    }
-    if (hostUp) {
-      if (secConfigured && ibSlotProbeUnhealthy(aa.secondary)) {
-        return { lamp: 'yellow', title: 'IB Account Agent Secondary IB probe stale or failed.' }
-      }
-      if (secConfigured && !secUp) {
-        return { lamp: 'yellow', title: 'IB Account Agent Host connected; Secondary not connected.' }
-      }
-      return { lamp: 'green', title: 'IB Account Agent healthy (Host + Secondary if configured).' }
-    }
-    if (procDead) {
-      return { lamp: 'red', title: 'IB Account Agent process reports stopped (Redis host_alive / service_alive).' }
-    }
-    if (serviceAlive && !hostSlotUp && healthFresh) {
-      return { lamp: 'yellow', title: 'IB Account Agent running; IB Host not connected yet. Green when Host connects.' }
-    }
-    if (serviceAlive && !hostSlotUp && !healthFresh) {
-      return { lamp: 'red', title: 'IB Account Agent Host not connected; Redis health stale or missing timestamp.' }
-    }
-    return { lamp: 'red', title: 'IB Account Agent Host not connected (Redis bifrost:health:ws_ib_account_agent).' }
-  }
-
-  if (id === 'ib_operator') {
-    const mon = status.socket?.ib_operator
-    if (mon == null) {
-      return { lamp: 'gray', title: 'IB Operator health not in /status (socket.ib_operator missing).' }
-    }
-    const hostSlotUp =
-      ingestRedisTruthyConnected(mon.connected) || ingestRedisTruthyConnected(mon.host?.connected)
-    const procDead =
-      ingestRedisExplicitlyOff(mon.service_alive) || ingestRedisExplicitlyOff(mon.operator_alive)
-    const serviceAlive =
-      ingestRedisTruthyConnected(mon.service_alive) || ingestRedisTruthyConnected(mon.operator_alive)
-    const lastAge = mon.last_msg_age_s
-    const healthFresh =
-      lastAge != null &&
-      typeof lastAge === 'number' &&
-      Number.isFinite(lastAge) &&
-      lastAge <= IB_HEALTH_FRESH_MAX_S
-    const hostUp = hostSlotUp && !procDead
-    if (ibSlotProbeUnhealthy(mon.host)) {
-      return { lamp: 'red', title: 'IB Operator Host IB probe stale or failed (Redis bifrost:health:ws_ib_operator host_ib_probe_*).' }
-    }
-    if (hostUp) {
-      if (mon.secondary != null && ibSlotProbeUnhealthy(mon.secondary)) {
-        return { lamp: 'yellow', title: 'IB Operator Secondary IB probe stale or failed.' }
-      }
-      return { lamp: 'green', title: 'IB Operator healthy (Redis bifrost:health:ws_ib_operator).' }
-    }
-    if (procDead) {
-      return { lamp: 'red', title: 'IB Operator process reports stopped (Redis host_alive / service_alive).' }
-    }
-    if (serviceAlive && !hostSlotUp && healthFresh) {
-      return { lamp: 'yellow', title: 'IB Operator running; IB Host not connected yet. Green when Host connects.' }
-    }
-    if (serviceAlive && !hostSlotUp && !healthFresh) {
-      return { lamp: 'red', title: 'IB Operator Host not connected; Redis health stale or missing timestamp.' }
-    }
-    return { lamp: 'red', title: 'IB Operator Host not connected (Redis bifrost:health:ws_ib_operator).' }
+  if (id === 'ib_ingestor' || id === 'ib_account_agent' || id === 'ib_operator') {
+    return ibBrokerRedisHealthLamp(id, status, processActive)
   }
 
   if (id === 'trading_engine') {

@@ -18,6 +18,7 @@
     "sync:massive-api-coverage": "cp ../bifrost-trader-engine/frontend/public/plans/massive_api_coverage.html public/plans/massive_api_coverage.html"
   },
   "dependencies": {
+    "@bifrost/ui": "file:../bifrost-ui",
     "@fontsource-variable/geist": "^5.2.9",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/react-query": "^5.100.14",

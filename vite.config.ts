@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 import { parseDevApiPorts } from './src/lib/devApiUrl'
 
+const uiRoot = resolve(__dirname, '../bifrost-ui')
+
 function target(port: number): string {
   return `http://127.0.0.1:${port}`
 }
@@ -49,9 +51,14 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
-      alias: {
-        '@': resolve(__dirname, 'src'),
-      },
+      alias: [
+        { find: '@', replacement: resolve(__dirname, 'src') },
+        {
+          find: '@bifrost/ui/styles',
+          replacement: resolve(uiRoot, 'src/styles/bifrost-ui.css'),
+        },
+        { find: '@bifrost/ui', replacement: resolve(uiRoot, 'src/index.ts') },
+      ],
     },
     build: {
       rollupOptions: {
@@ -74,6 +81,9 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
+      fs: {
+        allow: [resolve(__dirname, '..'), uiRoot],
+      },
       proxy: buildDevProxies(ports),
     },
   }

@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_API_PORTFOLIO: string
   readonly VITE_API_RESEARCH: string
   readonly VITE_API_DOCS: string
+  readonly VITE_OPS_CONSOLE_URL?: string
 }
 
 interface ImportMeta {

@@ -483,6 +483,11 @@ export function isStkStreamQuote(q: QuoteItem): boolean {
   return ck.includes('|STK|')
 }
 
+function quoteEpochTs(q: QuoteItem | undefined): number {
+  const ts = q?.ts
+  return ts != null && Number.isFinite(ts) ? ts : 0
+}
+
 /** Merge GET /quotes or SSE items into a symbol-keyed map (uppercase STK keys); OPT by contract_key. */
 export function mergeQuotesIntoSymbolMap(
   prev: Record<string, QuoteItem>,
@@ -496,11 +501,16 @@ export function mergeQuotesIntoSymbolMap(
     const st = (q.sec_type ?? '').toString().toUpperCase()
     const ck = (q.contract_key ?? '').toString().trim()
     const allowBareSymbolKey = !ck && st !== 'OPT'
+    let targetKey: string | null = null
     if (isStkStreamQuote(q) || allowBareSymbolKey) {
-      next[mapKey] = q
+      targetKey = mapKey
     } else if (ck) {
-      next[ck] = q
+      targetKey = ck
     }
+    if (!targetKey) continue
+    const existing = next[targetKey]
+    if (existing && quoteEpochTs(existing) > quoteEpochTs(q)) continue
+    next[targetKey] = q
   }
   return next
 }

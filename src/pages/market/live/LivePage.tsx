@@ -81,11 +81,13 @@ export default function LivePage() {
   const allContractKeys = useMemo(() => {
     const keys = new Set<string>()
     for (const w of watchlistItems) {
-      if (w.contract_key) keys.add(w.contract_key)
+      const ck = (w.contract_key ?? '').trim()
+      if (ck && (w.sec_type ?? '').toUpperCase() === 'OPT') keys.add(ck)
     }
     for (const acc of accounts) {
       for (const p of acc?.positions ?? []) {
-        if (p.contract_key) keys.add(p.contract_key)
+        const ck = (p.contract_key ?? '').trim()
+        if (ck && (p.secType ?? '').toUpperCase() === 'OPT') keys.add(ck)
       }
     }
     return Array.from(keys)

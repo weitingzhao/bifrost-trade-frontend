@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, Layers2, ListTree, Network, ScrollText } from 'lucide-react'
+import { ChevronDown, ExternalLink, Layers2, ListTree, Network, ScrollText } from 'lucide-react'
 import { useLogPanel } from '@/hooks/useLogPanel'
 import { useReactorMap } from '@/hooks/useReactorMap'
 import { cn } from '@/lib/utils'
@@ -252,6 +252,53 @@ function CollapsedGroupButton({ group }: { group: NavGroup }) {
         ))}
       </PopoverContent>
     </Popover>
+  )
+}
+
+const OPS_CONSOLE_URL =
+  import.meta.env.VITE_OPS_CONSOLE_URL ?? 'http://127.0.0.1:5180'
+
+// ─── Bifrost Ops peer link (flywheel B / release governance) ───
+
+function OpsPeerLink({ collapsed }: { collapsed?: boolean }) {
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <a
+            href={OPS_CONSOLE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-md transition-colors mx-auto',
+              'text-sidebar-foreground/50 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            )}
+          >
+            <ExternalLink className="h-4 w-4 shrink-0" />
+          </a>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="text-xs font-medium">
+          Open Bifrost Ops
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return (
+    <a
+      href={OPS_CONSOLE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mx-2 mb-1 block rounded-md border border-sidebar-border bg-sidebar-accent/40 px-2.5 py-2 text-xs transition-colors hover:border-sidebar-primary/40 hover:bg-sidebar-accent"
+    >
+      <span className="flex items-center gap-1.5 font-semibold text-sidebar-primary">
+        Open Bifrost Ops
+        <ExternalLink className="h-3 w-3 shrink-0 opacity-70" />
+      </span>
+      <span className="mt-0.5 block text-[10px] leading-snug text-sidebar-foreground/55">
+        Environment matrix & release program
+      </span>
+    </a>
   )
 }
 
@@ -616,12 +663,16 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border">
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-1 py-1">
+            <OpsPeerLink collapsed />
             <CollapsedReactorButton />
             <CollapsedLogButton />
             <CollapsedSettingsButton />
           </div>
         ) : (
-          <LogAndSettingsFooter />
+          <>
+            <OpsPeerLink />
+            <LogAndSettingsFooter />
+          </>
         )}
       </SidebarFooter>
     </Sidebar>

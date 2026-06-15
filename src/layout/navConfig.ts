@@ -26,39 +26,26 @@ import {
   Trophy,
   Wand2,
 } from 'lucide-react'
+import { getAllNavItems, type ShellNavGroup, type ShellNavItem } from '@bifrost/ui'
 
-export interface NavItem {
-  label: string
-  to: string
-  icon: LucideIcon
-  /** Optional nested children — renders as collapsible sub-list under this item */
-  children?: NavItem[]
+export { getAllNavItems }
+
+/** Trade route nav item — `id` and `to` both set to the path. */
+function route(
+  label: string,
+  to: string,
+  icon: LucideIcon,
+  children?: ShellNavItem[],
+): ShellNavItem {
+  return { id: to, label, to, icon, children }
 }
 
-export interface NavSubGroup {
-  label: string
-  items: NavItem[]
-}
-
-export interface NavGroup {
-  label: string
-  icon: LucideIcon
-  defaultOpen?: boolean
-  dividerBefore?: boolean
-  /** Flat items (no sub-group labels) */
-  items?: NavItem[]
-  /** Grouped items with section labels (Legacy-style Groups) */
-  subGroups?: NavSubGroup[]
-}
-
-export const NAV_GROUPS: NavGroup[] = [
+export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Market',
     icon: Activity,
     defaultOpen: true,
-    items: [
-      { label: 'Live', to: '/market/live', icon: Activity },
-    ],
+    items: [route('Live', '/market/live', Activity)],
   },
   {
     label: 'Portfolio',
@@ -67,17 +54,17 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Overview',
         items: [
-          { label: 'Accounts', to: '/portfolio/accounts', icon: LayoutDashboard },
-          { label: 'Positions', to: '/portfolio/positions', icon: TrendingUp },
-          { label: 'Performance', to: '/portfolio/performance', icon: LineChart },
-          { label: 'Model Analysis', to: '/portfolio/model-analysis', icon: BarChart2 },
+          route('Accounts', '/portfolio/accounts', LayoutDashboard),
+          route('Positions', '/portfolio/positions', TrendingUp),
+          route('Performance', '/portfolio/performance', LineChart),
+          route('Model Analysis', '/portfolio/model-analysis', BarChart2),
         ],
       },
       {
         label: 'Activity & Cash',
         items: [
-          { label: 'Trade Ledger', to: '/portfolio/ledger', icon: ClipboardList },
-          { label: 'Transfer & Pay', to: '/portfolio/transfer', icon: ArrowLeftRight },
+          route('Trade Ledger', '/portfolio/ledger', ClipboardList),
+          route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
         ],
       },
     ],
@@ -89,24 +76,22 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Screener',
         items: [
-          { label: 'Stock Screener', to: '/research/sepa', icon: BookOpen },
-          { label: 'Stock Data Readiness', to: '/research/stock-data', icon: Database },
-          { label: 'Option Screener', to: '/research/screener', icon: ListFilter },
-          { label: 'Stock Watchlist', to: '/research/watchlist', icon: Star },
+          route('Stock Screener', '/research/sepa', BookOpen),
+          route('Stock Data Readiness', '/research/stock-data', Database),
+          route('Option Screener', '/research/screener', ListFilter),
+          route('Stock Watchlist', '/research/watchlist', Star),
         ],
       },
       {
         label: 'Discovery',
-        items: [
-          { label: 'Option Discovery', to: '/research/discovery', icon: Eye },
-        ],
+        items: [route('Option Discovery', '/research/discovery', Eye)],
       },
       {
         label: 'Risk & Tools',
         items: [
-          { label: 'Risk Model', to: '/research/risk', icon: AlertCircle },
-          { label: 'Backtest', to: '/research/backtest', icon: History },
-          { label: 'IV & Greeks', to: '/research/greeks', icon: Wand2 },
+          route('Risk Model', '/research/risk', AlertCircle),
+          route('Backtest', '/research/backtest', History),
+          route('IV & Greeks', '/research/greeks', Wand2),
         ],
       },
     ],
@@ -118,18 +103,18 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Operations',
         items: [
-          { label: 'Instances', to: '/strategy/instances', icon: GitBranch },
-          { label: 'Win Rate', to: '/strategy/win-rate', icon: Trophy },
+          route('Instances', '/strategy/instances', GitBranch),
+          route('Win Rate', '/strategy/win-rate', Trophy),
         ],
       },
       {
         label: 'Configuration',
         items: [
-          { label: 'Structure', to: '/strategy/structures', icon: Cpu },
-          { label: 'Opportunity', to: '/strategy/opportunities', icon: Star },
-          { label: 'Allocations', to: '/strategy/allocations', icon: PieChart },
-          { label: 'Gates', to: '/strategy/gates', icon: Shield },
-          { label: 'Option Category', to: '/strategy/option-category', icon: Layers },
+          route('Structure', '/strategy/structures', Cpu),
+          route('Opportunity', '/strategy/opportunities', Star),
+          route('Allocations', '/strategy/allocations', PieChart),
+          route('Gates', '/strategy/gates', Shield),
+          route('Option Category', '/strategy/option-category', Layers),
         ],
       },
     ],
@@ -139,18 +124,24 @@ export const NAV_GROUPS: NavGroup[] = [
     icon: Terminal,
     dividerBefore: true,
     items: [
-      { label: 'API',    to: '/settings/api',      icon: Server   },
-      { label: 'Daemon', to: '/operations/daemon',  icon: Cpu      },
-      { label: 'Celery', to: '/operations/celery',  icon: Terminal },
-      { label: 'Socket', to: '/settings/socket',    icon: Network  },
+      route('API', '/settings/api', Server),
+      route('Daemon', '/operations/daemon', Cpu),
+      route('Celery', '/operations/celery', Terminal),
+      route('Socket', '/settings/socket', Network),
     ],
   },
 ]
 
-export const SETTINGS_ITEM: NavItem = { label: 'Settings', to: '/settings/coverage/overview', icon: Settings }
+export const SETTINGS_ITEM: ShellNavItem = route(
+  'Settings',
+  '/settings/coverage/overview',
+  Settings,
+)
 
-/** Flatten all items from a group (across subGroups or items) — used for active-state detection */
-export function getAllItems(group: NavGroup): NavItem[] {
-  if (group.items) return group.items
-  return group.subGroups?.flatMap((sg) => sg.items) ?? []
-}
+export { Settings as SETTINGS_ICON }
+
+/** @deprecated Use getAllNavItems from @bifrost/ui */
+export const getAllItems = getAllNavItems
+
+export type NavItem = ShellNavItem
+export type NavGroup = ShellNavGroup

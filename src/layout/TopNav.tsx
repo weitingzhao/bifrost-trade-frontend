@@ -6,28 +6,34 @@ import { useReactorMap } from '@/hooks/useReactorMap'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { getAllItems, NAV_GROUPS, SETTINGS_ITEM } from './navConfig'
-import type { NavGroup, NavItem } from './navConfig'
+import { getAllNavItems, NAV_GROUPS, SETTINGS_ICON, SETTINGS_ITEM } from './navConfig'
+import type { ShellNavGroup, ShellNavItem } from '@bifrost/ui'
+
+function itemPath(item: ShellNavItem): string {
+  return item.to ?? item.id
+}
 import { BifrostLogoMark } from '@/components/BifrostLogo'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 import { useTopNavIconOnly } from '@/hooks/useTopNavIconOnly'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
 // Renders a single dropdown item; if it has children shows them indented below.
-function DropdownItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: () => void; depth?: number }) {
+function DropdownItem({ item, onClose, depth = 0 }: { item: ShellNavItem; onClose: () => void; depth?: number }) {
   const location = useLocation()
+  const path = itemPath(item)
+  const ItemIcon = item.icon
   const hasChildren = item.children && item.children.length > 0
   const childActive = hasChildren
-    ? item.children!.some((c) => location.pathname.startsWith(c.to))
+    ? item.children!.some((c) => location.pathname.startsWith(itemPath(c)))
     : false
-  const [open, setOpen] = useState(location.pathname.startsWith(item.to) || childActive)
+  const [open, setOpen] = useState(location.pathname.startsWith(path) || childActive)
   const pl = depth === 0 ? 'px-3' : 'pl-6 pr-3'
 
   return (
     <div>
       <div className="flex items-center">
         <NavLink
-          to={item.to}
+          to={path}
           onClick={onClose}
           className={({ isActive: a }) =>
             cn(
@@ -36,7 +42,7 @@ function DropdownItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: ()
             )
           }
         >
-          <item.icon className="h-3.5 w-3.5 shrink-0" />
+          {ItemIcon != null && <ItemIcon className="h-3.5 w-3.5 shrink-0" />}
           {item.label}
         </NavLink>
         {hasChildren && (
@@ -52,7 +58,7 @@ function DropdownItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: ()
       {hasChildren && open && (
         <div>
           {item.children!.map((child) => (
-            <DropdownItem key={child.to} item={child} onClose={onClose} depth={depth + 1} />
+            <DropdownItem key={itemPath(child)} item={child} onClose={onClose} depth={depth + 1} />
           ))}
         </div>
       )}
@@ -61,7 +67,7 @@ function DropdownItem({ item, onClose, depth = 0 }: { item: NavItem; onClose: ()
 }
 
 interface GroupMenuProps {
-  group: NavGroup
+  group: ShellNavGroup
   isOpen: boolean
   onToggle: () => void
   onClose: () => void
@@ -71,8 +77,9 @@ interface GroupMenuProps {
 function GroupMenu({ group, isOpen, onToggle, onClose, iconOnly = false }: GroupMenuProps) {
   const location = useLocation()
   const ref = useRef<HTMLDivElement>(null)
-  const allItems = getAllItems(group)
-  const isActive = allItems.some((i) => location.pathname.startsWith(i.to))
+  const allItems = getAllNavItems(group)
+  const isActive = allItems.some((i) => location.pathname.startsWith(itemPath(i)))
+  const GroupIcon = group.icon
 
   useEffect(() => {
     if (!isOpen) return
@@ -99,7 +106,7 @@ function GroupMenu({ group, isOpen, onToggle, onClose, iconOnly = false }: Group
       )}
     >
       {iconOnly ? (
-        <group.icon className="h-4 w-4 shrink-0" />
+        GroupIcon != null ? <GroupIcon className="h-4 w-4 shrink-0" /> : null
       ) : (
         <>
           {group.label}
@@ -126,7 +133,7 @@ function GroupMenu({ group, isOpen, onToggle, onClose, iconOnly = false }: Group
         <div className="absolute top-full left-0 z-50 mt-1 min-w-44 rounded-md border border-border bg-popover shadow-lg py-1">
           {/* Flat items (with optional nested children) */}
           {group.items?.map((item) => (
-            <DropdownItem key={item.to} item={item} onClose={onClose} />
+            <DropdownItem key={itemPath(item)} item={item} onClose={onClose} />
           ))}
 
           {/* Sub-grouped items with section labels */}
@@ -137,7 +144,7 @@ function GroupMenu({ group, isOpen, onToggle, onClose, iconOnly = false }: Group
                 {sg.label}
               </p>
               {sg.items.map((item) => (
-                <DropdownItem key={item.to} item={item} onClose={onClose} />
+                <DropdownItem key={itemPath(item)} item={item} onClose={onClose} />
               ))}
             </div>
           ))}
@@ -164,7 +171,7 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
 
   const settingsLink = (
     <NavLink
-      to={SETTINGS_ITEM.to}
+      to={itemPath(SETTINGS_ITEM)}
       aria-label={SETTINGS_ITEM.label}
       className={({ isActive }) =>
         cn(
@@ -176,7 +183,7 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
         )
       }
     >
-      <SETTINGS_ITEM.icon className={iconOnly ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+      <SETTINGS_ICON className={iconOnly ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
       {!iconOnly && SETTINGS_ITEM.label}
     </NavLink>
   )

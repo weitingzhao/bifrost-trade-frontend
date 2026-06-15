@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useSystemNavLamp } from '@/components/layout/useSystemNavLamp'
 import { isSystemNavPath } from '@/hooks/useSystemNavLamps'
 import { navLampIconClass } from '@/utils/navLampIcon'
-import type { NavItem } from '@/layout/navConfig'
+import type { ShellNavItem } from '@bifrost/ui'
 
 type SystemNavIconProps = {
   path: string
@@ -32,6 +32,9 @@ export function SystemNavIcon({ path, icon: Icon }: SystemNavIconProps) {
   )
 }
 
-export function NavSubItemIcon({ item }: { item: NavItem }) {
-  return <SystemNavIcon path={item.to} icon={item.icon} />
+export function NavSubItemIcon({ item }: { item: ShellNavItem }) {
+  const path = item.to ?? item.id
+  const Icon = item.icon as LucideIcon | undefined
+  if (Icon == null) return null
+  return <SystemNavIcon path={path} icon={Icon} />
 }

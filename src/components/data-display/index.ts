@@ -42,19 +42,19 @@ export {
   CollapsibleChevron,
   CollapsibleBucketHeader,
   type CollapsibleGroupVariant,
-} from './CollapsibleGroup'
+} from '@bifrost/ui'
 export {
   SegmentControl,
   IncludeExcludeToggle,
   type SegmentOption,
-} from './SegmentControl'
+} from '@bifrost/ui'
 export {
   denseTable,
   denseTableCellPadding,
   denseTableNumCell,
   denseTableEntityCell,
   denseTableEntityLink,
-} from './denseTableClasses'
+} from '@bifrost/ui'
 export { EmptyState } from './EmptyState'
 export {
   segmentGroupClass,
@@ -63,4 +63,4 @@ export {
   SEGMENT_CTRL_IDLE,
   DEFAULT_SEGMENT_SIZE,
   type SegmentControlSize,
-} from './segmentClasses'
+} from '@bifrost/ui'

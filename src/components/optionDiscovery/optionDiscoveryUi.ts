@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 
 export const optionDiscoveryChartWrapClass = cn(
   'min-w-0 rounded-lg border border-border bg-secondary/30 p-2',

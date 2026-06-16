@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 
 export const winRatePageSectionClass = cn('flex flex-col gap-2')
 

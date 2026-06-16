@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 
 export const gatesActiveGridClass = cn(
   'grid gap-2 text-sm sm:grid-cols-2',

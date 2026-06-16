@@ -16,7 +16,7 @@ import {
   DenseTableRow,
   DenseTableSubheadRow,
 } from '@/components/data-display'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 import type { StatusResponse } from '@/types/monitor'
 import type { MarketIngestAction } from '@/api/ops'
 import {

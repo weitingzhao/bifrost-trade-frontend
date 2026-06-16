@@ -1,5 +1,5 @@
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 import { LogConsole, type LogConsoleProps } from './LogConsole'
 
 export interface EmbeddedLogConsoleSectionProps extends Omit<LogConsoleProps, 'showAdvancedFilters'> {

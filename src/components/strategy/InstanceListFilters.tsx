@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/select'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { SegmentControl } from '@/components/data-display'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 import type { StrategyInstance, StrategyOpportunity } from '@/types/positions'
 import { StrategyOpportunityCombobox } from './StrategyOpportunityCombobox'
 import type { DetailViewMode } from './InstanceListToolbar'

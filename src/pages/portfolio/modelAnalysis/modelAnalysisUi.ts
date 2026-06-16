@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 
 /** Model Analysis table shell + sticky header bridge to Dense UI tokens. */
 export const modelAnalysisTable = {

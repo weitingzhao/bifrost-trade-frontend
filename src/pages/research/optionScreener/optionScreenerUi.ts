@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 
 export const optionScreenerFilterPanelClass = cn(
   'space-y-3 rounded-lg border border-border bg-secondary p-3',

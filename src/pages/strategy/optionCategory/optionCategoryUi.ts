@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 
 export const OPTION_CATEGORY_INFO =
   'Structure templates: six dimensions, default legs, meta parameters, and characteristics. Used when creating option structures.'

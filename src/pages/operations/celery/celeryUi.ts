@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 import type { SegmentOption } from '@/components/data-display'
 
 /** Shared 7:5 split used for Queue Summary / Situation and Queues tab worker sidebar. */

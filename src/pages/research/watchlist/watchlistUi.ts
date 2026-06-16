@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 
 export const watchlistStepperShellClass = cn(
   'mb-4 flex items-stretch gap-0 overflow-hidden rounded-lg border border-border bg-card',

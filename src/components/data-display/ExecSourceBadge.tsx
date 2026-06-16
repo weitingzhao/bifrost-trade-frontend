@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { DenseTag } from './DenseTag'
-import { denseTable } from './denseTableClasses'
+import { denseTable } from '@bifrost/ui'
 import {
   denseTagVariantFromExecSource,
   type DenseTagVariant,

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 import type { DaemonLamp } from '@/utils/daemonLamps'
 
 export const daemonSectionTitleClass = denseTable.sectionTitle

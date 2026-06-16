@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable } from '@/components/data-display/denseTableClasses'
+import { denseTable } from '@/components/data-display'
 import { ledgerFilterLabelClass } from '@/lib/ledgerUi'
 
 /** Transfer & Pay page inner surface (elevated card on PageShell canvas). */

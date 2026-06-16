@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { denseTable, denseTableEntityCell } from '@/components/data-display/denseTableClasses'
+import { denseTable, denseTableEntityCell } from '@/components/data-display'
 
 /** Live page table shell + sticky header bridge to Dense UI tokens. */
 export const liveTable = {

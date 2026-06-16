@@ -57,8 +57,8 @@ function IvDataQualityIcon({ tier }: { tier: IvDataQuality }) {
   }
   const className = cn(
     'inline-flex shrink-0',
-    tier === 'good' && 'text-green-500',
-    tier === 'limited' && 'text-amber-500',
+    tier === 'good' && 'text-success',
+    tier === 'limited' && 'text-warning',
     tier === 'unknown' && 'text-muted-foreground',
   )
   if (tier === 'good') {
@@ -243,7 +243,7 @@ export function OptionDiscoveryIvTermSection({
                     className={cn(
                       'rounded-full border px-2 py-0.5 text-[0.7rem] font-semibold tabular-nums',
                       selectedCount < 2
-                        ? 'border-amber-500/45 text-amber-600 dark:text-amber-400'
+                        ? 'border-warning/45 text-warning'
                         : 'border-border/70 bg-card text-foreground',
                     )}
                     aria-live="polite"

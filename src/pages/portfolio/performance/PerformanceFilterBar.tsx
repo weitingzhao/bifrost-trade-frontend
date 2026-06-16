@@ -10,10 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SegmentControl, type SegmentOption } from '@/components/data-display'
 import { fmtPnl, fmtUsd, formatRangeDate } from './performanceFormatters'
 import { computeByDayRangeTotals } from './performanceRangeTotals'
 import { TIME_RANGE_OPTIONS } from './performanceConstants'
 import styles from '@/components/performance/performanceCalendar.module.css'
+
+const TIME_RANGE_SEGMENT_OPTIONS: SegmentOption[] = TIME_RANGE_OPTIONS.map(o => ({
+  value: o.id,
+  label: o.label,
+}))
 
 interface PerformanceFilterBarProps {
   timeRange: PerformanceTimeRange
@@ -59,21 +65,13 @@ export function PerformanceFilterBar({
       <div className={styles.filterGroup}>
         <fieldset className={styles.filterFieldset} aria-label="Time range">
           <span className={styles.filterLegend}>Time range</span>
-          <div className={styles.timeRangePills} role="group">
-            {TIME_RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                className={cn(
-                  styles.timeRangePill,
-                  timeRange === opt.id && styles.timeRangePillActive,
-                )}
-                onClick={() => onTimeRange(opt.id)}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <SegmentControl
+            size="sm"
+            options={TIME_RANGE_SEGMENT_OPTIONS}
+            value={timeRange}
+            onChange={v => onTimeRange(v as PerformanceTimeRange)}
+            ariaLabel="Time range"
+          />
         </fieldset>
 
         <fieldset className={cn(styles.filterFieldset, styles.filterFieldsetCapsule)} aria-label="Strategy filter">

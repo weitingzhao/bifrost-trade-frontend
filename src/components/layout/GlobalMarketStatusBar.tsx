@@ -23,8 +23,8 @@ import { fmtPctSigned, fmtUsdCompact } from '@/lib/format'
 import type { StreamStripTone } from '@/utils/streamStripSummary'
 
 function toneTextClass(tone: StreamStripTone): string {
-  if (tone === 'positive') return 'text-emerald-600 dark:text-emerald-400'
-  if (tone === 'negative') return 'text-red-600 dark:text-red-400'
+  if (tone === 'positive') return 'text-profit'
+  if (tone === 'negative') return 'text-loss'
   return 'text-muted-foreground'
 }
 
@@ -93,7 +93,7 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
         <span
           className={cn(
             'font-semibold shrink-0',
-            model.streamsOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400',
+            model.streamsOnline ? 'text-success' : 'text-danger',
           )}
         >
           {streamsLabel}

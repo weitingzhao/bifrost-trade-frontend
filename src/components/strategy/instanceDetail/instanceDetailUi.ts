@@ -13,11 +13,11 @@ export const instanceMutedClass = 'text-muted-foreground'
 export const instanceErrorClass = 'text-destructive text-xs'
 
 export const instanceStatusOpenClass =
-  'inline-flex rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-600 dark:text-emerald-400'
+  'inline-flex rounded-full border border-success/40 bg-success-soft px-2 py-0.5 text-[10px] font-semibold uppercase text-success'
 export const instanceStatusClosedClass =
   'inline-flex rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground'
 export const instanceStatusUnknownClass =
-  'inline-flex rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-400'
+  'inline-flex rounded-full border border-warning/40 bg-warning-soft px-2 py-0.5 text-[10px] font-semibold uppercase text-warning'
 
 export const instancePnlColumnClass = 'min-w-0'
 export const instancePnlSectionHeadClass = 'flex items-center gap-2 mb-2'

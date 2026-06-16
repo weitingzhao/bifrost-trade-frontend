@@ -25,9 +25,9 @@ export const greeksLoadingHintClass = cn(denseTable.emptyHint, 'py-6')
 
 export function greeksIvCellClass(iv: number | null): string {
   if (iv == null) return ''
-  if (iv < 0.3) return 'text-green-600 dark:text-green-400'
+  if (iv < 0.3) return 'text-success'
   if (iv < 0.8) return ''
-  return 'text-amber-600 dark:text-amber-400'
+  return 'text-warning'
 }
 
 export function greeksDeltaCellClass(delta: number | null): string {

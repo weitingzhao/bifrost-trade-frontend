@@ -279,10 +279,10 @@ export function InstanceKlineSection({
           <p className="mt-2 text-[11px] text-muted-foreground">
             {windowedBars.length} bars
             {buyCount > 0 ? (
-              <span className="ml-2.5 text-green-600 dark:text-green-400">▲ {buyCount} buy</span>
+              <span className="ml-2.5 text-side-buy">▲ {buyCount} buy</span>
             ) : null}
             {sellCount > 0 ? (
-              <span className="ml-2 text-red-500 dark:text-red-400">▼ {sellCount} sell</span>
+              <span className="ml-2 text-side-sell">▼ {sellCount} sell</span>
             ) : null}
             {bars.length > windowedBars.length ? (
               <span className="ml-2 opacity-60">(windowed from {bars.length} total)</span>

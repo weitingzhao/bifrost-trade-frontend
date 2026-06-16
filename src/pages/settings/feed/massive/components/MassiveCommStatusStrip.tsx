@@ -18,7 +18,7 @@ export function MassiveCommStatusStrip({
             <div
               className={cn(
                 'text-sm font-medium',
-                configured ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive',
+                configured ? 'text-success' : 'text-destructive',
               )}
             >
               {configured ? 'Configured' : 'Not configured'}

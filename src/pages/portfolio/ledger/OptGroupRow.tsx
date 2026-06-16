@@ -107,7 +107,7 @@ export function OptGroupRow({
         <DenseTableCell className={cn(denseTableNumCell, 'font-medium', pnlColorClass(adjPnl))}>
           {fmtCcy(adjPnl)}
           {hasAdj && (
-            <span className="ml-1 text-[length:var(--text-dense-meta)] text-blue-500 dark:text-blue-400">
+            <span className="ml-1 text-[length:var(--text-dense-meta)] text-link">
               {stockAdj >= 0 ? '+' : ''}
               {fmtCcy(stockAdj)}
             </span>
@@ -152,7 +152,7 @@ export function OptGroupRow({
                 {linkCount > 0 && (
                   <button
                     type="button"
-                    className="ml-2 text-[length:var(--text-dense-meta)] text-blue-500 hover:underline"
+                    className="ml-2 text-[length:var(--text-dense-meta)] text-link hover:underline"
                     onClick={ev => {
                       ev.stopPropagation()
                       if (oid != null && onViewLinks) onViewLinks({ title: `Fill #${oid} — stock links`, oid })

@@ -12,6 +12,7 @@ import { PageHeader, PageShell } from '@/components/layout'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { EmptyState } from '@/components/data-display'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { InstanceFilters } from '@/components/positions/InstanceFilters'
 import type { InstanceFilterValues } from '@/components/positions/InstanceFilters'
@@ -422,12 +423,10 @@ export default function PositionsPage() {
       />
 
       {!showOpenPositionsPanel ? (
-        <div className="rounded-lg border border-dashed p-4 text-center space-y-1">
-          <p className="text-sm font-medium">No open positions</p>
-          <p className="text-xs text-muted-foreground">
-            Position data comes from account snapshots. Ensure IB is connected and Account Sync is running.
-          </p>
-        </div>
+        <EmptyState
+          title="No open positions"
+          description="Position data comes from account snapshots. Ensure IB is connected and Account Sync is running."
+        />
       ) : (
         <Tabs value={openTab} onValueChange={(v) => setOpenTab(v as OpenTab)}>
           <PositionsOpenControls
@@ -451,20 +450,17 @@ export default function PositionsPage() {
 
           <div className="min-w-0 w-full">
             {!hasAccountSelection ? (
-              <div className="mt-3 rounded-lg border border-dashed p-4 text-center space-y-1">
-                <p className="text-sm font-medium">Select an account</p>
-                <p className="text-xs text-muted-foreground">
-                  Turn on HOST and/or Secondary above to show open positions for those accounts.
-                </p>
-              </div>
+              <EmptyState
+                className="mt-3"
+                title="Select an account"
+                description="Turn on HOST and/or Secondary above to show open positions for those accounts."
+              />
             ) : totalPositions === 0 ? (
-              <div className="mt-3 rounded-lg border border-dashed p-4 text-center space-y-1">
-                <p className="text-sm font-medium">No positions match filters</p>
-                <p className="text-xs text-muted-foreground">
-                  No open positions under the current symbol, expiry, or account filters. Off-track options
-                  appear when both HOST and Secondary are enabled.
-                </p>
-              </div>
+              <EmptyState
+                className="mt-3"
+                title="No positions match filters"
+                description="No open positions under the current symbol, expiry, or account filters. Off-track options appear when both HOST and Secondary are enabled."
+              />
             ) : (
               <>
               <TabsContent value="instance" className="mt-3 outline-none">

@@ -635,6 +635,78 @@ Page tokens: [modelAnalysisUi.ts](../src/pages/portfolio/modelAnalysis/modelAnal
 
 **Reference:** [ModelAnalysisSections.tsx](../src/pages/portfolio/modelAnalysis/ModelAnalysisSections.tsx) · [UnderlyingDetailPanel.tsx](../src/pages/portfolio/modelAnalysis/UnderlyingDetailPanel.tsx)
 
+## Filter interaction layer
+
+Same filter scenario → same primitive + container. Authoritative rules in `.cursor/rules/dense-ui-system.mdc` § Filter interaction layer.
+
+### Filter primitives
+
+| Scenario | Primitive |
+|----------|-----------|
+| Single-select ≤6 static options (status, period, view mode, Host/Secondary account) | `SegmentControl` from `data-display` |
+| Multi-select entity tags (position category, symbol chips) | `DenseTagButton` + `denseEntityFilterChipClass` |
+| Dropdown with dynamic/many options (strategy, instance, expiry, structure type) | shadcn `Select` |
+| Text search / pattern input | shadcn `Input` with `placeholder` |
+| Boolean include/exclude (chart layer toggles) | `IncludeExcludeToggle` from `data-display` |
+
+**Never use**: CSS module pills (`timeRangePill`, `systemTab`), native `<select>`, custom `rounded-full` pill buttons, `BubbleSwitch` alias (deprecated), `TabsList` as a data filter.
+
+### Filter bar containers
+
+| Complexity | Container |
+|------------|-----------|
+| Simple (≤3 controls) | Inline in `PageHeader actions` or single `flex` row above table |
+| Medium (3–6 controls) | `Card variant="elevated"` · `px-3 py-2` · `flex flex-wrap items-center gap-2` |
+| Complex (6+ controls, labeled sections) | `Card variant="elevated"` · `flex flex-col gap-2` with inner rows |
+
+### Reference implementations
+
+| Pattern | Page |
+|---------|------|
+| Simple SegmentControl filter | [OpportunitiesPage.tsx](../src/pages/strategy/OpportunitiesPage.tsx) (Availability) |
+| Medium multi-control in Card | [InstanceListFilters.tsx](../src/components/strategy/InstanceListFilters.tsx) |
+| DenseTagButton category filter | [FilterPillBar.tsx](../src/pages/market/live/FilterPillBar.tsx) (Category section) |
+| Select + SegmentControl combo | [GreeksPage.tsx](../src/pages/research/GreeksPage.tsx) |
+
+## Status indicators
+
+Three tiers — choose by context, never mix within the same semantic level.
+
+| Context | Primitive | Reference |
+|---------|-----------|-----------|
+| Process health (real-time heartbeat) | `StatusLamp` — green/yellow/red/gray + glow | [DaemonStatusPage](../src/pages/settings/DaemonStatusPage.tsx), [SocketPage](../src/pages/settings/SocketPage.tsx) |
+| Row-level status in table | `DenseTag variant="success/warning/…"` | [InstancesGroupedTable](../src/components/strategy/InstancesGroupedTable.tsx) |
+| Inline status text | Semantic `text-success` / `text-danger` / `text-warning` | [apiHealthUi.ts](../src/pages/settings/apiHealth/apiHealthUi.ts) |
+
+## Loading states
+
+Three tiers by scope.
+
+| Tier | Context | Pattern |
+|------|---------|---------|
+| Full page | Route transition, initial data | `PageRouteFallback` — centered spinner |
+| Card / section | `isLoading` within a `Card` | shadcn `Skeleton` blocks matching content layout |
+| Table | Table data loading | `denseTable.emptyHint` "Loading…" or 3–5 `Skeleton` table rows |
+
+## Empty states
+
+| Context | Pattern |
+|---------|---------|
+| Table with no rows | `denseTable.emptyHint` centered text |
+| Section / card with no data | Planned `EmptyState` component — icon + title + optional subtitle + action button |
+| Filter yields no results | `denseTable.emptyHint` with distinct message ("No results match filters") |
+
+## Operation feedback
+
+| Context | Pattern |
+|---------|---------|
+| Form save success | Inline `text-success` near submit, auto-fade 2–3s |
+| Batch / async action | Toast notification (success or error) |
+| Validation error | Inline `text-destructive` below field |
+| Server error on mutation | Toast with error message |
+
+**Never**: `window.alert`, silent failure on mutations, persistent success banner.
+
 ## Allowed CSS exceptions
 
 - **Chart geometry** only: small scoped modules (e.g. Positions donut grid, Discovery chart overlay)

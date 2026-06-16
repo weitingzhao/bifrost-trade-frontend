@@ -25,9 +25,6 @@ export const liveFiltersInlineClass = 'flex flex-wrap items-center gap-3 min-w-0
 export const liveFilterGroupClass = 'flex flex-wrap items-center gap-2 min-w-0'
 export const liveFilterHintClass = 'text-xs font-medium text-muted-foreground shrink-0'
 export const liveFilterPillsClass = 'flex flex-wrap items-center gap-1'
-export const liveFilterPillClass =
-  'inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground'
-export const liveFilterPillActiveClass = 'border-primary/40 bg-primary/10 text-foreground'
 export const liveFilterPillGripClass = 'cursor-grab text-[10px] leading-none opacity-50'
 
 export const liveFeedbackHintClass = 'text-xs text-muted-foreground animate-pulse'

@@ -36,7 +36,7 @@ export function EnvBadge({
         title={compact ? 'Production' : undefined}
         className={cn(
           badgeClass,
-          'border-green-600/40 bg-green-600/10 text-green-600 hover:bg-green-600/15 dark:text-green-400',
+          'border-success/40 bg-success-soft text-success hover:bg-success/15',
         )}
       >
         {compact ? 'Prod' : 'Production'}

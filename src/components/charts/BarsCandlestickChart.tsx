@@ -29,11 +29,11 @@ export interface BarsCandlestickChartProps {
   showSr?: boolean
 }
 
-const VWAP_STROKE = '#0ea5e9'
-const BB_UPPER = '#a78bfa'
+const VWAP_STROKE = 'var(--color-link)'
+const BB_UPPER = 'var(--color-chart-bb)'
 const BB_MID = '#94a3b8'
-const BB_LOWER = '#a78bfa'
-const MACD_LINE = '#38bdf8'
+const BB_LOWER = 'var(--color-chart-bb)'
+const MACD_LINE = 'var(--color-chart-macd)'
 const MACD_SIG = '#f97316'
 const RSI_STROKE = '#e879f9'
 const SR_PIVOT = '#facc15'

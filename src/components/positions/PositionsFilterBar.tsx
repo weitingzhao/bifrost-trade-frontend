@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
+import { segmentGroupClass, segmentButtonClass } from '@/components/data-display'
 
 export interface AccountFilter {
   host: boolean
@@ -47,29 +47,25 @@ export function PositionsFilterBar({
       />
 
       {showAccountBubbles && (
-        <div className="flex rounded-md border overflow-hidden text-xs ml-2">
+        <div className={segmentGroupClass('sm')} role="group" aria-label="Account filter">
           {hostAccountId && (
             <button
               type="button"
               onClick={() => onAccountFilterChange({ ...accountFilter, host: !accountFilter.host })}
-              className={cn(
-                'px-3 py-1 transition-colors font-medium',
-                accountFilter.host ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-              )}
+              className={segmentButtonClass(accountFilter.host, 'sm')}
               title={`Host account: ${hostAccountId}`}
+              aria-pressed={accountFilter.host}
             >
-              HOST
+              Host
             </button>
           )}
           {secondaryAccountId && secondaryAccountId !== hostAccountId && (
             <button
               type="button"
               onClick={() => onAccountFilterChange({ ...accountFilter, secondary: !accountFilter.secondary })}
-              className={cn(
-                'px-3 py-1 transition-colors font-medium',
-                accountFilter.secondary ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-              )}
+              className={segmentButtonClass(accountFilter.secondary, 'sm')}
               title={`Secondary account: ${secondaryAccountId}`}
+              aria-pressed={accountFilter.secondary}
             >
               Secondary
             </button>

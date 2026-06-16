@@ -22,8 +22,8 @@ export type GreeksCompareRow = {
 function diffClass(pct: number | null): string {
   if (pct == null) return ''
   const abs = Math.abs(pct)
-  if (abs < 3) return 'text-green-600 dark:text-green-500'
-  if (abs < 10) return 'text-amber-600 dark:text-amber-400'
+  if (abs < 3) return 'text-success'
+  if (abs < 10) return 'text-warning'
   return 'text-destructive'
 }
 

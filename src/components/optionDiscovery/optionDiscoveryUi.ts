@@ -67,8 +67,8 @@ export const optionDiscoveryTradabilityValueBaseClass =
   'text-[1.8rem] font-extrabold tabular-nums leading-none'
 
 export function optionDiscoveryTradabilityValueClass(score: number): string {
-  if (score >= 60) return cn(optionDiscoveryTradabilityValueBaseClass, 'text-emerald-600 dark:text-emerald-400')
-  if (score >= 30) return cn(optionDiscoveryTradabilityValueBaseClass, 'text-amber-600 dark:text-amber-400')
+  if (score >= 60) return cn(optionDiscoveryTradabilityValueBaseClass, 'text-success')
+  if (score >= 30) return cn(optionDiscoveryTradabilityValueBaseClass, 'text-warning')
   return cn(optionDiscoveryTradabilityValueBaseClass, 'text-destructive')
 }
 

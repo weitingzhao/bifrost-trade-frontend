@@ -461,8 +461,8 @@ export function executionLegPnlToneClass(e: Execution, ep: number): string {
   if (Math.abs(ep) < 0.005) return ''
   const s = (e.side ?? '').toUpperCase()
   const isBuy = s === 'BUY' || s === 'BOT' || s === 'B'
-  if (isBuy) return ep >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-  return 'text-blue-500 dark:text-blue-400'
+  if (isBuy) return ep >= 0 ? 'text-profit' : 'text-loss'
+  return 'text-side-sell'
 }
 
 export function isExecutionBuySide(ex: Execution): boolean {

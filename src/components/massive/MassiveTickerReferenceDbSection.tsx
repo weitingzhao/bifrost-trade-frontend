@@ -764,7 +764,7 @@ export function MassiveTickerReferenceDbSection({
       ) : null}
 
       {jobMsg ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-2" role="status">
+        <p className="text-sm text-success mt-2" role="status">
           {jobMsg}
         </p>
       ) : null}

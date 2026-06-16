@@ -519,7 +519,7 @@ export function SkewSummary({ rows, underlying }: {
         className={cn(
           'font-semibold tabular-nums',
           skewSign === 'put-heavy' && 'text-destructive',
-          skewSign === 'call-heavy' && 'text-green-600 dark:text-green-500',
+          skewSign === 'call-heavy' && 'text-option-call',
         )}
       >
         {result.spread >= 0 ? '+' : ''}{(result.spread * 100).toFixed(2)} pts

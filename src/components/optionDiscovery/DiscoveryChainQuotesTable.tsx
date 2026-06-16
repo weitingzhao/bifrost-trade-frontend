@@ -91,7 +91,7 @@ export function DiscoveryChainQuotesTable({
               {showCallSide && (
                 <DenseTableHead
                   colSpan={chainColumnList.length}
-                  className="sticky top-0 z-10 bg-green-500/10 text-center font-semibold normal-case tracking-normal text-green-700 dark:text-green-500"
+                  className="sticky top-0 z-10 bg-[color-mix(in_oklch,var(--color-option-call)_10%,transparent)] text-center font-semibold normal-case tracking-normal text-option-call"
                   scope="colgroup"
                 >
                   Calls
@@ -107,7 +107,7 @@ export function DiscoveryChainQuotesTable({
               {showPutSide && strikeSideMode === 'all' && (
                 <DenseTableHead
                   colSpan={chainColumnList.length}
-                  className="sticky top-0 z-10 bg-red-500/10 text-center font-semibold normal-case tracking-normal text-destructive"
+                  className="sticky top-0 z-10 bg-[color-mix(in_oklch,var(--color-option-put)_10%,transparent)] text-center font-semibold normal-case tracking-normal text-option-put"
                   scope="colgroup"
                 >
                   Puts

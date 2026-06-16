@@ -30,7 +30,7 @@ export const celeryActionMsgClass = (isErr: boolean) =>
     'text-xs px-2 py-1 rounded',
     isErr
       ? 'text-destructive bg-destructive/10'
-      : 'text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950',
+      : 'text-success bg-success-soft',
   )
 
 export const celeryQueueSummaryMetaClass = cn('flex items-center gap-2 px-1')
@@ -55,11 +55,11 @@ export function celeryQueueSummaryPgClass(
     case 'pending':
       return 'text-foreground font-medium'
     case 'running':
-      return 'text-yellow-400 font-semibold'
+      return 'text-warning font-semibold'
     case 'done':
-      return 'text-green-400 font-semibold'
+      return 'text-success font-semibold'
     case 'failed':
-      return 'text-red-400 font-semibold'
+      return 'text-danger font-semibold'
     default:
       return 'text-muted-foreground'
   }
@@ -103,15 +103,15 @@ export const celeryWorkerSituationAtCapRowClass = cn(
 )
 
 export const celeryWorkerSituationAtCapNumClass = cn(
-  'text-amber-600 dark:text-amber-400 font-semibold',
+  'text-warning font-semibold',
 )
 
 export const celeryWorkerSituationDevNumClass = cn(
-  'text-blue-600 dark:text-blue-400 font-semibold',
+  'text-link font-semibold',
 )
 
 export const celeryWorkerSituationProdNumClass = cn(
-  'text-green-600 dark:text-green-400 font-semibold',
+  'text-success font-semibold',
 )
 
 export const CELERY_WORKER_SITUATION_COL_WIDTHS = {

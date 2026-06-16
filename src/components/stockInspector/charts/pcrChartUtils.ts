@@ -12,10 +12,10 @@ export const PCR_WINDOW_OPTIONS = [
 export type PcrWindowDays = (typeof PCR_WINDOW_OPTIONS)[number]['days']
 
 export const PCR_COLORS = {
-  oiLine: '#4ade80',
-  volLine: '#fbbf24',
-  putOi: '#f87171',
-  callOi: '#4ade80',
+  oiLine: 'var(--color-chart-oi-call)',
+  volLine: 'var(--color-chart-cash)',
+  putOi: 'var(--color-chart-oi-put)',
+  callOi: 'var(--color-chart-oi-call)',
 } as const
 
 /** Wide viewBox + preserveAspectRatio="none" on SVG → plot fills sidebar width. */

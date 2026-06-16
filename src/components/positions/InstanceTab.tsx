@@ -379,7 +379,7 @@ export function InstanceTab({
                     <span
                       className={
                         rl.lossLabel === 'Unlimited'
-                          ? 'text-red-600 dark:text-red-400'
+                          ? 'text-loss'
                           : undefined
                       }
                     >

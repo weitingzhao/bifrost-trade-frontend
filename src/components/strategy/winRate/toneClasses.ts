@@ -1,7 +1,7 @@
 import type { ProfitLossTone, WinPctTone } from '@/utils/winRate'
 
-const PROFIT_CLASS = 'text-emerald-600 dark:text-emerald-400'
-const LOSS_CLASS = 'text-red-600 dark:text-red-400'
+const PROFIT_CLASS = 'text-profit'
+const LOSS_CLASS = 'text-loss'
 const NEUTRAL_CLASS = 'text-muted-foreground'
 
 export function profitLossToneClass(tone: ProfitLossTone): string {

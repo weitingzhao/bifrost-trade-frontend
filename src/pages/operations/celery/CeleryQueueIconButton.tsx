@@ -28,23 +28,23 @@ const VARIANT_CLASS: Record<CeleryQueueIconVariant, string> = {
   refresh:
     'border border-border bg-background text-muted-foreground shadow-sm hover:text-primary hover:border-primary/40 hover:bg-primary/5',
   'delete-pending':
-    'border border-yellow-500/35 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/20',
+    'border border-warning/35 bg-warning-soft text-warning hover:bg-warning/20',
   'delete-running':
-    'border border-lime-500/25 bg-lime-500/10 text-lime-600 dark:text-lime-400 hover:bg-lime-500/20',
+    'border border-success/25 bg-success-soft text-success hover:bg-success/20',
   'delete-done':
-    'border border-green-500/35 bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20',
+    'border border-success/35 bg-success-soft text-success hover:bg-success/20',
   'delete-failed':
-    'border border-red-500/35 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20',
+    'border border-danger/35 bg-danger-soft text-danger hover:bg-danger/20',
   trim:
     'border border-primary/45 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary/55',
   'scale-add-all':
-    'border border-green-500/38 bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20',
+    'border border-success/38 bg-success-soft text-success hover:bg-success/20',
   'scale-reset':
-    'border border-yellow-500/40 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/20',
+    'border border-warning/40 bg-warning-soft text-warning hover:bg-warning/20',
   'scale-remove-all':
-    'border border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20',
+    'border border-danger/40 bg-danger-soft text-danger hover:bg-danger/20',
   'instance-recreate':
-    'border border-yellow-500/40 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/20',
+    'border border-warning/40 bg-warning-soft text-warning hover:bg-warning/20',
   'instance-remove':
     'border border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20',
 }

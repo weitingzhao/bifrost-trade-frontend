@@ -1,9 +1,9 @@
 import type { LogEntry, LogLevel } from '@/hooks/useLogStream'
 
 export const LEVEL_STYLE: Record<LogLevel, { badge: string; row: string }> = {
-  ERROR: { badge: 'bg-red-500/15 text-red-500', row: 'bg-red-500/[0.04]' },
-  WARN:  { badge: 'bg-yellow-500/15 text-yellow-500 dark:text-yellow-400', row: 'bg-yellow-500/[0.03]' },
-  INFO:  { badge: 'bg-blue-500/10 text-blue-500', row: '' },
+  ERROR: { badge: 'bg-danger-soft text-danger', row: 'bg-danger/[0.04]' },
+  WARN:  { badge: 'bg-warning-soft text-warning', row: 'bg-warning/[0.03]' },
+  INFO:  { badge: 'bg-accent-soft text-link', row: '' },
   DEBUG: { badge: 'bg-zinc-500/10 text-zinc-500', row: '' },
   OTHER: { badge: 'bg-zinc-500/10 text-zinc-400', row: '' },
 }

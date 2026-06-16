@@ -801,9 +801,9 @@ function StkDayDetail({
                 assetTab === 'cash_like'
                   ? ''
                   : signedNv > 0
-                    ? 'text-emerald-600 dark:text-emerald-400'
+                    ? 'text-profit'
                     : signedNv < 0
-                      ? 'text-red-600 dark:text-red-400'
+                      ? 'text-loss'
                       : ''
               return (
                 <TableRow key={ex.account_executions_id ?? `${ex.time}-${ex.symbol}`}>

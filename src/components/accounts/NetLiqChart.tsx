@@ -4,7 +4,7 @@ import { fmtUsd } from '@/utils/positions'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import styles from '@/components/positions/PositionsChartsSection.module.css'
 
-const LINE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6']
+const LINE_COLORS = ['var(--color-success)', 'var(--color-link)', 'var(--color-warning)', 'var(--color-chart-option)']
 
 interface Props {
   accounts: IbAccountSnapshot[]

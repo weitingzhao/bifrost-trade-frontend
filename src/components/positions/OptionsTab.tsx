@@ -72,9 +72,9 @@ interface Props {
 function InstanceIcon({ fill }: { fill: 'none' | 'all' | 'mixed' }) {
   const colorClass =
     fill === 'all'
-      ? 'text-emerald-500'
+      ? 'text-success'
       : fill === 'mixed'
-        ? 'text-amber-500'
+        ? 'text-warning'
         : 'text-muted-foreground/70'
   const title =
     fill === 'all'

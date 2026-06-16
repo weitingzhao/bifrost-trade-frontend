@@ -23,10 +23,10 @@ export function subscribeAgeBadgeClass(ageSec: number | null): string {
   if (ageSec == null || !Number.isFinite(ageSec)) {
     return 'border-muted-foreground/30 text-muted-foreground'
   }
-  if (ageSec < 10) return 'border-emerald-500/50 text-emerald-600 dark:text-emerald-400'
-  if (ageSec < 60) return 'border-amber-500/50 text-amber-600 dark:text-amber-400'
-  if (ageSec < 300) return 'border-orange-500/50 text-orange-600 dark:text-orange-400'
-  return 'border-red-500/50 text-red-600 dark:text-red-400'
+  if (ageSec < 10) return 'border-success/50 text-success'
+  if (ageSec < 60) return 'border-warning/50 text-warning'
+  if (ageSec < 300) return 'border-warning/50 text-warning'
+  return 'border-danger/50 text-danger'
 }
 
 export const subscribeAgeBadgeBaseClass = cn(

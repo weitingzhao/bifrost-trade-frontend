@@ -65,7 +65,7 @@ export function LedgerStkUrPnlGroupInline({
         <span className="text-muted-foreground/60" aria-hidden>
           ·
         </span>
-        <span className={uFinite ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}>
+        <span className={uFinite ? 'text-unrealized' : 'text-muted-foreground'}>
           <span className="mr-0.5 font-semibold opacity-90">U</span>
           {uFinite ? fmtUsdRound(unrealized as number) : '—'}
         </span>

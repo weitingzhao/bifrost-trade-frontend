@@ -407,12 +407,12 @@ export function CalendarSummaryPanel({
             {
               label: 'Win',
               value: String(monthStats.winDays),
-              valueClassName: 'text-emerald-600 dark:text-emerald-400',
+              valueClassName: 'text-profit',
             },
             {
               label: 'Loss',
               value: String(monthStats.lossDays),
-              valueClassName: 'text-red-600 dark:text-red-400',
+              valueClassName: 'text-loss',
             },
             {
               label: 'Win Rate',

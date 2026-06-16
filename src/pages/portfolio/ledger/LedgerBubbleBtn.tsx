@@ -1,4 +1,4 @@
-import { ledgerBubbleBtn } from '@/lib/ledgerUi'
+import { segmentButtonClass } from '@/components/data-display'
 
 type Props = {
   active: boolean
@@ -7,13 +7,14 @@ type Props = {
   disabled?: boolean
 }
 
+/** @deprecated Prefer SegmentControl or direct segmentButtonClass usage. */
 export function LedgerBubbleBtn({ active, onClick, children, disabled }: Props) {
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={ledgerBubbleBtn(active)}
+      className={segmentButtonClass(active, 'sm')}
     >
       {children}
     </button>

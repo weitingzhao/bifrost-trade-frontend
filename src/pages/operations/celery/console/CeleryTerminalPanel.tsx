@@ -63,7 +63,7 @@ export function CeleryTerminalPanel({
         <span
           className={cn(
             'font-semibold',
-            status === 'connected' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground',
+            status === 'connected' ? 'text-success' : 'text-muted-foreground',
           )}
         >
           {statusLabel(status)}

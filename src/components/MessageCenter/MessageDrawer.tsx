@@ -20,7 +20,7 @@ interface Props {
 
 function getLevelIcon(level: SystemMessageLevel) {
   switch (level) {
-    case 'success': return <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+    case 'success': return <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
     case 'warning': return <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
     case 'error':   return <XCircle className="h-4 w-4 shrink-0 text-red-500" />
     default:        return <Info className="h-4 w-4 shrink-0 text-muted-foreground" />

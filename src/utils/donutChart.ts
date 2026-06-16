@@ -50,11 +50,11 @@ export function buildAssetMixSegments(
   }
 
   const segments: DonutSegment[] = []
-  if (coreMV > 0) segments.push({ label: 'Stock', value: coreMV, color: '#38bdf8' })
-  if (fiMV > 0) segments.push({ label: 'Fixed Income', value: fiMV, color: '#fbbf24' })
+  if (coreMV > 0) segments.push({ label: 'Stock', value: coreMV, color: 'var(--color-chart-stock)' })
+  if (fiMV > 0) segments.push({ label: 'Fixed Income', value: fiMV, color: 'var(--color-chart-fi)' })
   const cashTotal = Math.max(0, totalCash) + cashLikeMV
-  if (cashTotal > 0) segments.push({ label: 'Cash + Cash-like', value: cashTotal, color: '#2dd4bf' })
-  if (optMV > 0) segments.push({ label: 'Options', value: optMV, color: '#c084fc' })
+  if (cashTotal > 0) segments.push({ label: 'Cash + Cash-like', value: cashTotal, color: 'var(--color-chart-cash)' })
+  if (optMV > 0) segments.push({ label: 'Options', value: optMV, color: 'var(--color-chart-option)' })
 
   return segments
 }

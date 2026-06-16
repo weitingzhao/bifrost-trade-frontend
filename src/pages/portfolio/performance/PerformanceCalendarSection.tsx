@@ -7,6 +7,7 @@ import type { PerformanceSummary } from '@/types/trading'
 import { Button } from '@/components/ui/button'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Skeleton } from '@/components/ui/skeleton'
+import { SegmentControl, type SegmentOption } from '@/components/data-display'
 import { CalendarSummaryPanel } from '@/components/performance/CalendarSummaryPanel'
 import { CalendarDayDetail } from '@/components/performance/CalendarDayDetail'
 import {
@@ -18,6 +19,11 @@ import {
 import { CALENDAR_HELP } from './performanceConstants'
 import { fmtMoney, fmtMoneyFull, fmtUsd } from './performanceFormatters'
 import styles from '@/components/performance/performanceCalendar.module.css'
+
+const CALENDAR_ASSET_SEGMENT_OPTIONS: SegmentOption[] = CALENDAR_ASSET_TABS.map(t => ({
+  value: t.id,
+  label: t.tabLabel ?? t.label,
+}))
 
 const LOSS_DAY_THRESHOLD = -500
 
@@ -104,27 +110,16 @@ export function PerformanceCalendarSection({
       <div className={styles.calendarWithSummary}>
         <div className={styles.calendarLeft}>
           <div className={styles.calendarToolbar}>
-            <div className={styles.systemTabs} role="tablist" aria-label="Calendar asset class">
-              {CALENDAR_ASSET_TABS.map(({ id, label, tabLabel }) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={calendarAssetTab === id}
-                  title={tabLabel ? label : undefined}
-                  className={cn(
-                    styles.systemTab,
-                    calendarAssetTab === id && styles.systemTabActive,
-                  )}
-                  onClick={() => {
-                    onCalendarAssetTab(id)
-                    onSelectedDay(null)
-                  }}
-                >
-                  {tabLabel ?? label}
-                </button>
-              ))}
-            </div>
+            <SegmentControl
+              size="sm"
+              options={CALENDAR_ASSET_SEGMENT_OPTIONS}
+              value={calendarAssetTab}
+              onChange={v => {
+                onCalendarAssetTab(v as CalendarAssetTab)
+                onSelectedDay(null)
+              }}
+              ariaLabel="Calendar asset class"
+            />
 
             <div className={cn(styles.calendarMonthNav, styles.calendarMonthNavCompact)}>
               <Button

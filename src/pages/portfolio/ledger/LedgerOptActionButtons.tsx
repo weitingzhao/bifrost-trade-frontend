@@ -76,7 +76,7 @@ export function LedgerOptActionButtons({
           ariaLabel="Sync attribution from opposite leg"
           size="dense"
           disabled={syncDisabled}
-          className="text-blue-500 hover:text-blue-600"
+          className="text-link hover:text-link-hover"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${syncSpinning ? 'animate-spin' : ''}`} />
         </IconActionButton>

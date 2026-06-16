@@ -151,7 +151,7 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
               <span
                 className={cn(
                   'text-sm max-w-xs text-right',
-                  saveMsg.isErr ? 'text-destructive' : 'text-green-600 dark:text-green-400',
+                  saveMsg.isErr ? 'text-destructive' : 'text-success',
                 )}
               >
                 {saveMsg.text}

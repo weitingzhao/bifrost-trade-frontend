@@ -45,7 +45,7 @@ function EnvChip({ profile }: { profile: 'dev' | 'prod' }) {
     )
   }
   return (
-    <span className="rounded border border-green-600/30 bg-green-600/10 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-green-600 dark:text-green-400">
+    <span className="rounded border border-success/30 bg-success-soft px-1 py-px text-[8px] font-bold uppercase tracking-wide text-success">
       PROD
     </span>
   )

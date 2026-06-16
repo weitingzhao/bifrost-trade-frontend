@@ -56,6 +56,7 @@ export {
   denseTableEntityCell,
   denseTableEntityLink,
 } from './denseTableClasses'
+export { EmptyState } from './EmptyState'
 export {
   segmentGroupClass,
   segmentButtonClass,

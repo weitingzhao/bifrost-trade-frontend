@@ -153,7 +153,7 @@ export const winRateSinceLabelClass = cn(
 export function winRateWinPctClass(total: number, wins: number): string {
   if (total <= 0) return 'text-muted-foreground'
   const pct = (wins / total) * 100
-  if (pct > 50) return 'text-emerald-600 dark:text-emerald-400'
-  if (pct < 50) return 'text-red-600 dark:text-red-400'
+  if (pct > 50) return 'text-profit'
+  if (pct < 50) return 'text-loss'
   return 'text-muted-foreground'
 }

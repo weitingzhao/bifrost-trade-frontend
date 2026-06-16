@@ -9,5 +9,5 @@ export const daemonFormHintClass = cn('text-xs text-muted-foreground')
 export const daemonFormFieldRowClass = cn('flex items-center gap-2')
 
 export function daemonFormSaveStatusClass(isErr: boolean): string {
-  return cn('text-sm', isErr ? 'text-destructive' : 'text-green-600 dark:text-green-400')
+  return cn('text-sm', isErr ? 'text-destructive' : 'text-success')
 }

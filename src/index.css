@@ -81,6 +81,16 @@
     --color-expiry-weekly: var(--color-expiry-weekly);
     --color-expiry-quarterly: var(--color-expiry-quarterly);
 
+    /* Chart palette tokens */
+    --color-chart-stock: var(--color-chart-stock);
+    --color-chart-option: var(--color-chart-option);
+    --color-chart-fi: var(--color-chart-fi);
+    --color-chart-cash: var(--color-chart-cash);
+    --color-chart-macd: var(--color-chart-macd);
+    --color-chart-bb: var(--color-chart-bb);
+    --color-chart-oi-call: var(--color-chart-oi-call);
+    --color-chart-oi-put: var(--color-chart-oi-put);
+
     /* SEPA screener analysis dimension colors */
     --color-screener-tech: var(--color-screener-tech);
     --color-screener-fund: var(--color-screener-fund);
@@ -187,6 +197,16 @@
     --color-screener-momentum: #0284c7;       /* sky-600 — Momentum tier */
     --color-screener-structure-tier: #d97706; /* amber-600 — Structure tier */
     --color-screener-sentiment: #e11d48;      /* rose-600 — Sentiment tier */
+
+    /* Chart palette — asset-class and indicator colors */
+    --color-chart-stock: #0284c7;        /* sky-600 — stock positions */
+    --color-chart-option: #7c3aed;       /* violet-600 — option positions */
+    --color-chart-fi: #16a34a;           /* green-600 — fixed income */
+    --color-chart-cash: #ca8a04;         /* yellow-600 — cash-like */
+    --color-chart-macd: #0284c7;         /* sky-600 — MACD line */
+    --color-chart-bb: #7c3aed;           /* violet-600 — Bollinger Bands */
+    --color-chart-oi-call: #16a34a;      /* green-600 — call open interest */
+    --color-chart-oi-put: #dc2626;       /* red-600 — put open interest */
 
     /* Dense data tables (Positions, Ledger, Performance) */
     --text-dense: 0.8125rem;
@@ -318,6 +338,16 @@
     --color-screener-structure-tier: #fbbf24; /* amber-400 */
     --color-screener-sentiment: #fb7185;      /* rose-400 */
 
+    /* Chart palette (dark) */
+    --color-chart-stock: #38bdf8;        /* sky-400 */
+    --color-chart-option: #c084fc;       /* purple-400 */
+    --color-chart-fi: #4ade80;           /* green-400 */
+    --color-chart-cash: #fbbf24;         /* amber-400 */
+    --color-chart-macd: #38bdf8;         /* sky-400 */
+    --color-chart-bb: #a78bfa;           /* violet-400 */
+    --color-chart-oi-call: #4ade80;      /* green-400 */
+    --color-chart-oi-put: #f87171;       /* red-400 */
+
     --risk-payoff-plot-bg: #0d1118;
     --risk-payoff-plot-border: rgba(74, 222, 128, 0.22);
     --risk-payoff-profit-fill: rgba(74, 222, 128, 0.38);
@@ -429,12 +459,12 @@
   }
 
   .pnl-positive {
-    color: #22c55e;
+    color: var(--color-profit);
     font-weight: 600;
   }
 
   .pnl-negative {
-    color: #ef4444;
+    color: var(--color-loss);
     font-weight: 600;
   }
 

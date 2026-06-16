@@ -135,7 +135,7 @@ export function OptionContractDetailPanel({
               className={cn(
                 'rounded-full border px-1.5 py-0.5 text-xs font-semibold uppercase',
                 selectedDerived.moneynessLabel === 'ATM' && 'border-primary/50 bg-primary/10',
-                selectedDerived.moneynessLabel === 'ITM' && 'border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400',
+                selectedDerived.moneynessLabel === 'ITM' && 'border-success/40 bg-success-soft text-success',
                 selectedDerived.moneynessLabel === 'OTM' && 'border-muted-foreground/40 bg-muted text-muted-foreground',
               )}
             >
@@ -438,8 +438,8 @@ export function OptionContractDetailPanel({
                       rows={bsRows}
                       footer={
                         <>
-                          <span className="text-green-600 dark:text-green-500">■</span> &lt;3%&nbsp;&nbsp;
-                          <span className="text-amber-600 dark:text-amber-400">■</span> 3–10%&nbsp;&nbsp;
+                          <span className="text-success">■</span> &lt;3%&nbsp;&nbsp;
+                          <span className="text-warning">■</span> 3–10%&nbsp;&nbsp;
                           <span className="text-destructive">■</span> &gt;10%
                           &nbsp;·&nbsp;NR {bsDetail.iterCount} iter {bsDetail.converged ? '✓' : '(not converged)'}
                           &nbsp;·&nbsp;BS model=
@@ -707,7 +707,7 @@ export function OptionContractDetailPanel({
                         className={cn(
                           'font-medium tabular-nums',
                           rvLabel === 'Rich' && 'text-destructive',
-                          rvLabel === 'Cheap' && 'text-green-600 dark:text-green-500',
+                          rvLabel === 'Cheap' && 'text-success',
                           rvLabel === 'Neutral' && 'text-primary',
                           rvLabel === '—' && 'text-muted-foreground',
                         )}

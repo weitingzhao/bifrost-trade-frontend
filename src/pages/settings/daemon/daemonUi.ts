@@ -31,7 +31,7 @@ export const daemonIbServiceRowInnerClass = cn('flex items-center gap-1.5')
 export function daemonLampTextClass(lamp: DaemonLamp): string {
   return cn(
     'font-mono text-xs tabular-nums',
-    lamp === 'green' && 'text-green-600 dark:text-green-400',
+    lamp === 'green' && 'text-success',
     (lamp === 'red' || lamp === 'none') && 'text-red-500',
     lamp === 'yellow' && 'text-yellow-500',
   )
@@ -42,7 +42,7 @@ export const daemonBlockReasonClass = cn('text-destructive')
 export const daemonControlBarClass = cn('flex flex-wrap items-center gap-2 pt-2')
 
 export const daemonResumeButtonClass = cn(
-  'h-8 border-green-500/50 text-xs text-green-600 dark:text-green-400',
+  'h-8 border-success/50 text-xs text-success',
 )
 
 export const daemonEmptyHintClass = denseTable.emptyHint

@@ -1,6 +1,13 @@
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { GripVertical, LayoutGrid, Search, X } from 'lucide-react'
 import type { StrategyTemplateRow } from '@/types/positions'
 import { DIM_TYPES, DIM_LABELS, DIM_ICONS, type DimType } from '@/pages/strategy/optionCategory/constants'
@@ -17,7 +24,6 @@ import {
   optionCategorySidebarRowClass,
   optionCategorySidebarSearchClass,
 } from '@/pages/strategy/optionCategory/optionCategoryUi'
-import { optionCategoryDimFilterSelectClass } from '@/pages/strategy/optionCategory/optionCategoryFormUi'
 
 export interface OptionCategorySidebarProps {
   searchText: string
@@ -109,23 +115,27 @@ export function OptionCategorySidebar({
                 <span className="w-5 text-center text-sm" title={DIM_LABELS[dt]}>
                   {DIM_ICONS[dt]}
                 </span>
-                <select
-                  className={optionCategoryDimFilterSelectClass}
-                  value={dimFilters[dt] ?? ''}
-                  onChange={(e) => {
+                <Select
+                  value={dimFilters[dt] ?? '__all__'}
+                  onValueChange={(v) => {
                     const next = { ...dimFilters }
-                    if (e.target.value) next[dt] = e.target.value
+                    if (v !== '__all__') next[dt] = v
                     else delete next[dt]
                     onDimFiltersChange(next)
                   }}
                 >
-                  <option value="">All {DIM_LABELS[dt]}</option>
-                  {(dimsByType[dt] ?? []).map((d: StrategyDimRow) => (
-                    <option key={d.code} value={d.code}>
-                      {d.display_label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-6 flex-1 text-[10px] px-1">
+                    <SelectValue placeholder={`All ${DIM_LABELS[dt]}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All {DIM_LABELS[dt]}</SelectItem>
+                    {(dimsByType[dt] ?? []).map((d: StrategyDimRow) => (
+                      <SelectItem key={d.code} value={d.code}>
+                        {d.display_label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             ))}
             {activeDimFilterCount > 0 ? (

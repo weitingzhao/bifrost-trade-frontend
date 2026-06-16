@@ -10,20 +10,20 @@ export const UNDERLYING_CATEGORY_ORDER: UnderlyingCategoryFilter[] = ['Stocks', 
 
 /** Asset-mix donut + legend — matches Legacy --coverage-pie-* tokens. */
 export const ASSET_MIX_CHART_COLORS = {
-  stock: '#38bdf8',
-  fi: '#4ade80',
+  stock: 'var(--color-chart-stock)',
+  fi: 'var(--color-chart-fi)',
   cashLike: '#2dd4bf',
-  cash: '#fbbf24',
+  cash: 'var(--color-chart-cash)',
   bp: '#e879f9',
-  options: '#c084fc',
+  options: 'var(--color-chart-option)',
 } as const
 
 /** Legacy coverage-asset-pie-ring-track stroke. */
 export const COVERAGE_PIE_EMPTY = 'rgba(255, 255, 255, 0.14)'
 
 export const UNDERLYING_CATEGORY_COLORS: Record<UnderlyingCategoryFilter, string> = {
-  Stocks: '#38bdf8',
-  'Fixed Income': '#fbbf24',
+  Stocks: 'var(--color-chart-stock)',
+  'Fixed Income': 'var(--color-chart-cash)',
   'Cash-like': '#2dd4bf',
 }
 
@@ -31,7 +31,7 @@ export type OptionStockMixCategory = 'Backing Pool' | 'Other Stock' | 'Cash-like
 
 export const OPTION_STOCK_MIX_COLORS: Record<OptionStockMixCategory, string> = {
   'Backing Pool': '#76b900',
-  'Other Stock': '#38bdf8',
+  'Other Stock': 'var(--color-chart-stock)',
   'Cash-like': '#2dd4bf',
 }
 

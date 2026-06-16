@@ -64,9 +64,9 @@ export const apiHealthServiceCardNameClass = cn('min-w-0 truncate text-sm font-s
 export function apiHealthServiceStatusClass(lamp: Lamp): string {
   return cn(
     'shrink-0 font-mono text-xs tabular-nums',
-    lamp === 'green' && 'text-green-600 dark:text-green-400',
-    lamp === 'red' && 'text-red-500',
-    lamp === 'yellow' && 'text-yellow-500',
+    lamp === 'green' && 'text-success',
+    lamp === 'red' && 'text-danger',
+    lamp === 'yellow' && 'text-warning',
   )
 }
 

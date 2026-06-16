@@ -1,4 +1,4 @@
-import { segmentButtonClass, segmentGroupClass } from '@/components/data-display/segmentClasses'
+import { SegmentControl, type SegmentOption } from '@/components/data-display'
 
 interface Props {
   accountId: string | null
@@ -17,36 +17,18 @@ export function ModelAnalysisAccountPills({
   secondarySelectable,
   onSelect,
 }: Props) {
+  const options: SegmentOption[] = [
+    { value: hostId, label: 'Host', disabled: !hostSelectable },
+    { value: secondaryId, label: 'Secondary', disabled: !secondarySelectable },
+  ]
+
   return (
-    <div className={segmentGroupClass('sm')} role="group" aria-label="IB account for model analysis">
-      <button
-        type="button"
-        className={segmentButtonClass(accountId === hostId, 'sm')}
-        disabled={!hostSelectable}
-        onClick={() => hostSelectable && onSelect(hostId)}
-        title={
-          hostId
-            ? `Host: ${hostId}${hostSelectable ? '' : ' (not in current account list)'}`
-            : 'Host account ID not configured (Settings → IB / Event account)'
-        }
-        aria-pressed={accountId === hostId}
-      >
-        Host
-      </button>
-      <button
-        type="button"
-        className={segmentButtonClass(accountId === secondaryId, 'sm')}
-        disabled={!secondarySelectable}
-        onClick={() => secondarySelectable && onSelect(secondaryId)}
-        title={
-          secondaryId
-            ? `Secondary: ${secondaryId}${secondarySelectable ? '' : ' (not in current account list)'}`
-            : 'Secondary account ID not configured (Settings → IB / Event account)'
-        }
-        aria-pressed={accountId === secondaryId}
-      >
-        Secondary
-      </button>
-    </div>
+    <SegmentControl
+      size="sm"
+      options={options}
+      value={accountId ?? ''}
+      onChange={onSelect}
+      ariaLabel="IB account for model analysis"
+    />
   )
 }

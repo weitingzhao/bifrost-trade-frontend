@@ -1,5 +1,13 @@
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { segmentButtonClass, segmentGroupClass } from '@/components/data-display'
+import {
   LEDGER_SINCE_PRESET_TABS,
   type LedgerSincePreset,
 } from '@/utils/ledger/summaryPeriod'
@@ -8,15 +16,17 @@ import { fmtMdHint } from './ledgerFormat'
 import { LedgerSymbolCombobox } from './LedgerSymbolCombobox'
 import type { LedgerAccountTab } from './ledgerAccountTabs'
 import {
-  ledgerBubbleBtn,
   ledgerFilterPanelClass,
   ledgerFilterRowClass,
   ledgerFilterLabelClass,
 } from '@/lib/ledgerUi'
+
 const SINCE_TOOLTIP =
   'Include executions whose trade date falls in a rolling window ending today: 1 month, 1 quarter, half-year, or 1 year back from today\'s date, or year-to-date from Jan 1. Mutually exclusive with expiry year/month.'
 
 const SINCE_PRESET_TABS = LEDGER_SINCE_PRESET_TABS.filter(t => t.id !== 'all')
+
+const COMPACT_SELECT_TRIGGER = 'h-[1.875rem] min-w-[5.5rem] text-[0.8125rem] px-2'
 
 type Props = {
   sincePreset: LedgerSincePreset
@@ -45,33 +55,6 @@ type Props = {
   groupByPosition: boolean
   onToggleGroupByPosition: () => void
   showStkControls: boolean
-}
-
-function BubbleButton({
-  active,
-  onClick,
-  children,
-  title,
-  disabled,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-  title?: string
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      disabled={disabled}
-      onClick={onClick}
-      className={ledgerBubbleBtn(active)}
-      aria-pressed={active}
-    >
-      {children}
-    </button>
-  )
 }
 
 export function LedgerFilterBar({
@@ -121,42 +104,50 @@ export function LedgerFilterBar({
           <div className="inline-flex flex-wrap items-center gap-x-2 gap-y-1" role="group" aria-label="Since (rolling trade date window)">
             <span className={ledgerFilterLabelClass}>Since</span>
             <InfoTooltip text={SINCE_TOOLTIP} />
-            <div className="inline-flex flex-wrap gap-0.5 items-center">
-              <BubbleButton
-                active={sincePreset === 'all' && !expiryFilterYear}
+            <div className={segmentGroupClass('sm')}>
+              <button
+                type="button"
                 onClick={() => { onSincePreset('all'); clearExpiryFilters() }}
+                className={segmentButtonClass(sincePreset === 'all' && !expiryFilterYear, 'sm')}
+                aria-pressed={sincePreset === 'all' && !expiryFilterYear}
               >
                 All
-              </BubbleButton>
+              </button>
               {SINCE_PRESET_TABS.map(t => (
-                <BubbleButton
+                <button
                   key={t.id}
-                  active={sincePreset === t.id && !expiryFilterYear}
+                  type="button"
                   onClick={() => { onSincePreset(t.id); clearExpiryFilters() }}
+                  className={segmentButtonClass(sincePreset === t.id && !expiryFilterYear, 'sm')}
+                  aria-pressed={sincePreset === t.id && !expiryFilterYear}
                 >
                   {t.label}
-                </BubbleButton>
+                </button>
               ))}
             </div>
           </div>
 
           {accountTabs.length > 0 && (
-            <div className="inline-flex flex-wrap gap-0.5 items-center" role="group" aria-label="Account filter">
-              <BubbleButton
-                active={accountFilter === 'all'}
+            <div className={segmentGroupClass('sm')} role="group" aria-label="Account filter">
+              <button
+                type="button"
                 onClick={() => onAccountFilter('all')}
+                className={segmentButtonClass(accountFilter === 'all', 'sm')}
+                aria-pressed={accountFilter === 'all'}
               >
                 All
-              </BubbleButton>
+              </button>
               {accountTabs.map(({ id, label }) => (
-                <BubbleButton
+                <button
                   key={id}
-                  active={accountFilter === id}
+                  type="button"
                   onClick={() => onAccountFilter(id)}
+                  className={segmentButtonClass(accountFilter === id, 'sm')}
+                  aria-pressed={accountFilter === id}
                   title={id}
                 >
                   {label}
-                </BubbleButton>
+                </button>
               ))}
             </div>
           )}
@@ -189,77 +180,91 @@ export function LedgerFilterBar({
           </label>
 
           {structureOptions.length > 0 && (
-            <label className="inline-flex items-center gap-1.5 min-w-0">
+            <div className="inline-flex items-center gap-1.5 min-w-0">
               <span className={ledgerFilterLabelClass}>Structure</span>
-              <select
-                className="h-[1.875rem] min-w-[6.5rem] rounded-sm border border-border bg-background text-[0.8125rem] px-2"
-                value={filterStructure}
-                onChange={e => {
-                  onFilterStructure(e.target.value)
+              <Select
+                value={filterStructure || '__all__'}
+                onValueChange={v => {
+                  onFilterStructure(v === '__all__' ? '' : v)
                   onFilterWishlistSymbol('')
                 }}
-                aria-label="Structure filter"
               >
-                <option value="">All structures</option>
-                {structureOptions.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </label>
+                <SelectTrigger className={COMPACT_SELECT_TRIGGER} aria-label="Structure filter">
+                  <SelectValue placeholder="All structures" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All structures</SelectItem>
+                  {structureOptions.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           <div className="inline-flex items-center gap-1.5 min-w-0" role="group" aria-label="Expiry filter">
             <span className={ledgerFilterLabelClass}>Expiry</span>
             <div className="inline-flex items-center gap-1.5">
-              <select
-                className="h-[1.875rem] min-w-[5.5rem] rounded-sm border border-border bg-background text-[0.8125rem] px-2 disabled:opacity-45"
-                value={expiryFilterYear}
+              <Select
+                value={expiryFilterYear || '__all__'}
                 disabled={sinceDisabled}
-                onChange={e => {
-                  onExpiryFilterYear(e.target.value)
+                onValueChange={v => {
+                  const year = v === '__all__' ? '' : v
+                  onExpiryFilterYear(year)
                   onExpiryFilterMonth('')
-                  if (e.target.value) onSincePreset('all')
+                  if (year) onSincePreset('all')
                 }}
-                aria-label="Expiry year"
               >
-                <option value="">All years</option>
-                {expiryYearOptions.map(y => (
-                  <option key={y} value={String(y)}>{y}</option>
-                ))}
-              </select>
-              <select
-                className="h-[1.875rem] min-w-[4.5rem] rounded-sm border border-border bg-background text-[0.8125rem] px-2 disabled:opacity-45"
-                value={expiryFilterMonth}
+                <SelectTrigger className={COMPACT_SELECT_TRIGGER} aria-label="Expiry year">
+                  <SelectValue placeholder="All years" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All years</SelectItem>
+                  {expiryYearOptions.map(y => (
+                    <SelectItem key={y} value={String(y)}>{String(y)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={expiryFilterMonth || '__all__'}
                 disabled={sinceDisabled || !expiryFilterYear}
-                onChange={e => {
-                  onExpiryFilterMonth(e.target.value)
-                  if (e.target.value) onSincePreset('all')
+                onValueChange={v => {
+                  const month = v === '__all__' ? '' : v
+                  onExpiryFilterMonth(month)
+                  if (month) onSincePreset('all')
                 }}
-                aria-label="Expiry month"
               >
-                <option value="">All months</option>
-                {expiryMonthOptions.map(m => (
-                  <option key={m} value={String(m).padStart(2, '0')}>{MONTH_NAMES[m - 1]}</option>
-                ))}
-              </select>
+                <SelectTrigger className={COMPACT_SELECT_TRIGGER} aria-label="Expiry month">
+                  <SelectValue placeholder="All months" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All months</SelectItem>
+                  {expiryMonthOptions.map(m => (
+                    <SelectItem key={m} value={String(m).padStart(2, '0')}>{MONTH_NAMES[m - 1]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {wishlistSymbolOptions.length > 0 && (
-            <label className="inline-flex items-center gap-1.5 min-w-0">
+            <div className="inline-flex items-center gap-1.5 min-w-0">
               <span className={ledgerFilterLabelClass}>Wishlist</span>
-              <select
-                className="h-[1.875rem] min-w-[6.5rem] rounded-sm border border-border bg-background text-[0.8125rem] px-2"
-                value={filterWishlistSymbol}
-                onChange={e => onFilterWishlistSymbol(e.target.value)}
-                aria-label="Wishlist symbol filter"
+              <Select
+                value={filterWishlistSymbol || '__all__'}
+                onValueChange={v => onFilterWishlistSymbol(v === '__all__' ? '' : v)}
               >
-                <option value="">All symbols</option>
-                {wishlistSymbolOptions.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </label>
+                <SelectTrigger className={COMPACT_SELECT_TRIGGER} aria-label="Wishlist symbol filter">
+                  <SelectValue placeholder="All symbols" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All symbols</SelectItem>
+                  {wishlistSymbolOptions.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
           {(filterStructure || filterWishlistSymbol) && (
@@ -269,9 +274,14 @@ export function LedgerFilterBar({
           )}
 
           {showStkControls && (
-            <BubbleButton active={groupByPosition} onClick={onToggleGroupByPosition}>
+            <button
+              type="button"
+              className={segmentButtonClass(groupByPosition, 'sm')}
+              onClick={onToggleGroupByPosition}
+              aria-pressed={groupByPosition}
+            >
               By Position
-            </BubbleButton>
+            </button>
           )}
         </div>
       </div>

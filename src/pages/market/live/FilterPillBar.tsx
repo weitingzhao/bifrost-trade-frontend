@@ -1,11 +1,8 @@
-import { cn } from '@/lib/utils'
-import { DenseTagButton, denseEntityFilterChipClass } from '@/components/data-display'
+import { DenseTagButton, denseEntityFilterChipClass, segmentGroupClass, segmentButtonClass } from '@/components/data-display'
 import {
   liveFeedbackHintClass,
   liveFilterGroupClass,
   liveFilterHintClass,
-  liveFilterPillActiveClass,
-  liveFilterPillClass,
   liveFilterPillGripClass,
   liveFilterPillsClass,
   liveFiltersInlineClass,
@@ -37,12 +34,12 @@ export function FilterPillBar({
       {hasStreamAccounts && (
         <div className={liveFilterGroupClass}>
           <span className={liveFilterHintClass}>Account:</span>
-          <div className={liveFilterPillsClass} role="group" aria-label="Filter by stream account">
+          <div className={segmentGroupClass('sm')} role="group" aria-label="Filter by stream account">
             {(['host', 'secondary'] as const).map(key => (
               <button
                 key={key}
                 type="button"
-                className={cn(liveFilterPillClass, streamAccountFilters.has(key) && liveFilterPillActiveClass)}
+                className={segmentButtonClass(streamAccountFilters.has(key), 'sm')}
                 onClick={() => onToggleAccount(key)}
                 aria-pressed={streamAccountFilters.has(key)}
               >

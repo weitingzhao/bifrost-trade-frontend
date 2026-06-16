@@ -122,11 +122,11 @@ function CoverageCountsStrip({
   }
   return (
     <span className="text-xs text-muted-foreground" aria-live="polite">
-      <span className="text-amber-700 dark:text-amber-400">
+      <span className="text-warning">
         <strong>{counts.missing.toLocaleString()}</strong> missing
       </span>
       <span aria-hidden> · </span>
-      <span className="text-emerald-700 dark:text-emerald-400">
+      <span className="text-success">
         <strong>{counts.filled.toLocaleString()}</strong> filled
       </span>
       <span aria-hidden> · </span>

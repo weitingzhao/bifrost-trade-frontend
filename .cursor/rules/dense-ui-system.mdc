@@ -45,6 +45,74 @@ alwaysApply: true
 | New business color | Add `--color-*` token in `src/index.css` (light + dark + `@theme`) first | Inline hex / raw palette classes in pages |
 | Destructive confirm | App `ConfirmDialog` pattern | `window.confirm` / `window.alert` |
 
+## Filter interaction layer (same filter scenario → same primitive + container)
+
+### Filter primitives (choose one per scenario)
+
+| Scenario | Use | Never |
+|----------|-----|-------|
+| Single-select ≤6 options (status, period, view mode, account) | `SegmentControl` | CSS module pills, custom `rounded-full` buttons, `BubbleSwitch` alias, `TabsList` as filter |
+| Multi-select entity tags (category, symbol chips) | `DenseTagButton` + `denseEntityFilterChipClass` | Hand-rolled pill buttons with custom active class |
+| Dropdown (dynamic options, >6 items, strategy/instance/expiry) | shadcn `Select` | Native `<select>` element |
+| Text search / pattern match | shadcn `Input` with `placeholder` + optional Search icon | Bare `<input>` without wrapper |
+| Boolean include/exclude | `IncludeExcludeToggle` or `SegmentControl` 2-option | shadcn `Switch` for list filters (Switch is for form settings only) |
+
+### Filter bar containers (choose one per page)
+
+| Page complexity | Container | Layout |
+|----------------|-----------|--------|
+| Simple (1 row, ≤3 controls) | Inline in `PageHeader actions` slot or `flex items-center gap-2` above table | Single `flex` row |
+| Medium (1–2 rows, 3–6 controls) | `Card variant="elevated"` with `px-3 py-2` | `flex flex-wrap items-center gap-2` |
+| Complex (multi-section, 6+ controls) | `Card variant="elevated"` with labeled sections | `flex flex-col gap-2`, inner rows `flex flex-wrap items-center gap-2` |
+
+### Filter label pattern
+
+Always pair controls with a short label to give context:
+
+```
+<span className="text-xs font-medium text-muted-foreground shrink-0">Account:</span>
+<SegmentControl ... />
+```
+
+### Filter state management
+
+- Simple page filters: `useState` in page component
+- Filters worth bookmarking (Ledger, Instances, Celery): sync to `useSearchParams`
+- No global filter store (Zustand/Context) unless explicitly needed for cross-page persistence
+
+## Status indicators (lamp vs. tag vs. text)
+
+| Context | Use | Never |
+|---------|-----|-------|
+| Process health (Daemon, Socket, IB) — real-time heartbeat | `StatusLamp` (4 colors + glow) | `DenseTag` for live process health |
+| Row-level status in table (open/closed, active/inactive) | `DenseTag variant="success/warning/…"` | `StatusLamp` inside table cells |
+| Inline status text (API health, queue state, connection) | Semantic text class: `text-success` / `text-danger` / `text-warning` | Raw Tailwind color, `StatusLamp` for static text |
+
+## Loading states (three tiers)
+
+| Tier | Context | Pattern |
+|------|---------|---------|
+| Full page | Initial page load, route transition | `PageRouteFallback` (centered spinner) |
+| Card / section | TanStack Query `isLoading` within a Card | shadcn `Skeleton` blocks matching content shape |
+| Table | Table data loading | `denseTable.emptyHint` with "Loading…" or 3–5 `Skeleton` rows |
+
+## Empty states
+
+| Context | Pattern | Never |
+|---------|---------|-------|
+| Table with no data | `denseTable.emptyHint` centered text | Custom `p` with ad-hoc classes |
+| Section / card with no data | Planned `EmptyState` component — icon + title + optional subtitle + action | Bare `text-muted-foreground` paragraph |
+| Filter yields no results | `denseTable.emptyHint` with "No results match filters" | Same text as "no data at all" |
+
+## Operation feedback
+
+| Context | Pattern | Never |
+|---------|---------|-------|
+| Form save success | Inline `text-success` near submit button, auto-fade 2–3s | `window.alert`, persistent banner |
+| Batch / async action | Toast notification (success/error) | Inline text for background operations |
+| Validation error | Inline `text-destructive` below field or form | Toast for validation errors |
+| Server error on mutation | Toast with error message | Silent failure |
+
 ## Agent workflow (every UI change)
 
 1. Read `docs/DENSE_UI.md` and grep `data-display` for an existing primitive before writing styles.

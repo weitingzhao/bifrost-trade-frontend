@@ -26,13 +26,13 @@ export function RiskProfileSummary({ profile }: Props) {
       </div>
       <div>
         <span className="text-muted-foreground">Max gain</span>
-        <p className={cn('font-mono font-semibold mt-0.5', profile.max_gain != null && profile.max_gain > 0 ? 'text-green-600 dark:text-green-400' : '')}>
+        <p className={cn('font-mono font-semibold mt-0.5', profile.max_gain != null && profile.max_gain > 0 ? 'text-profit' : '')}>
           {profile.max_gain != null ? fmtUsd(profile.max_gain) : '∞'}
         </p>
       </div>
       <div>
         <span className="text-muted-foreground">Max loss</span>
-        <p className={cn('font-mono font-semibold mt-0.5', profile.max_loss != null && profile.max_loss < 0 ? 'text-red-600 dark:text-red-400' : '')}>
+        <p className={cn('font-mono font-semibold mt-0.5', profile.max_loss != null && profile.max_loss < 0 ? 'text-loss' : '')}>
           {profile.max_loss != null ? fmtUsd(profile.max_loss) : '∞'}
         </p>
       </div>

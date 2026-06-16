@@ -25,7 +25,7 @@ export interface StockOhlcCoverageTableProps {
 
 const STATUS_CLASS: Record<string, string> = {
   ok: 'text-muted-foreground',
-  gap: 'text-amber-600 dark:text-amber-500',
+  gap: 'text-warning',
   missing: 'text-destructive',
 }
 

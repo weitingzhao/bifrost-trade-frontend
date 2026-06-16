@@ -126,7 +126,7 @@ export function LogConsole({
                       ? lv === 'ALL'
                         ? 'bg-foreground/10 text-foreground'
                         : lv === 'ALERTS'
-                          ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400'
+                          ? 'bg-warning-soft text-warning'
                           : LEVEL_STYLE[lv].badge
                       : 'text-muted-foreground/50 hover:text-muted-foreground',
                   )}

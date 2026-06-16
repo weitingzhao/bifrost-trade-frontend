@@ -56,9 +56,9 @@ export const optionCategorySectionBodyCompactClass = cn('px-4 py-3')
 
 export const optionCategoryEmptyHintClass = denseTable.emptyHint
 
-export const optionCategorySaveOkClass = cn('text-xs font-medium text-green-600')
+export const optionCategorySaveOkClass = cn('text-xs font-medium text-success')
 
-export const optionCategorySaveErrClass = cn('text-xs font-medium text-red-500')
+export const optionCategorySaveErrClass = cn('text-xs font-medium text-danger')
 
 export function optionCategorySaveFeedbackClass(ok: boolean): string {
   return ok ? optionCategorySaveOkClass : optionCategorySaveErrClass

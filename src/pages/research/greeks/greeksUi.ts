@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display/denseTableClasses'
 
 export const greeksControlsInnerClass = cn(
-  'flex flex-wrap items-end gap-4',
+  'flex flex-wrap items-end gap-3',
 )
 
 export const greeksFieldLabelClass = cn(

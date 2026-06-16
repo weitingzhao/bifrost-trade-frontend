@@ -21,7 +21,7 @@ export const opportunitiesFormCloseClass = cn(
 )
 
 export const opportunitiesFormBodyClass = cn(
-  'flex flex-col gap-4 px-5 py-4',
+  'flex flex-col gap-3 px-4 py-3',
 )
 
 export const opportunitiesFormFooterClass = cn(
@@ -42,7 +42,7 @@ export const opportunitiesFormErrorClass = cn(
 )
 
 export const opportunitiesIdentityRowClass = cn(
-  'flex flex-wrap items-end gap-4',
+  'flex flex-wrap items-end gap-3',
 )
 
 export const opportunitiesNameFieldClass = cn('min-w-[16rem] flex-1')
@@ -96,7 +96,7 @@ export const opportunitiesGatePillVersionClass = cn('text-[10px] opacity-70')
 
 /** Scope + conditions — Legacy two-column bordered cols */
 export const opportunitiesFormColumnsClass = cn(
-  'grid grid-cols-1 gap-4 lg:grid-cols-2',
+  'grid grid-cols-1 gap-3 lg:grid-cols-2',
 )
 
 export const opportunitiesFormColClass = cn(

@@ -5,7 +5,8 @@ import { denseTable, denseTableCellPadding } from './denseTableClasses'
 const thBase = cn(
   denseTableCellPadding,
   'max-w-0 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground',
-  'border-b border-border bg-secondary/40 whitespace-nowrap overflow-hidden',
+  'border-b border-border bg-surface-elevated whitespace-nowrap overflow-hidden',
+  'sticky top-0 z-[1]',
 )
 const tdBase = cn(
   denseTableCellPadding,
@@ -63,7 +64,7 @@ export function DenseTableRow({
   className?: string
 } & ComponentProps<'tr'>) {
   return (
-    <tr className={cn('hover:bg-secondary/30 transition-colors', className)} {...rest}>
+    <tr className={cn('hover:bg-primary/[0.04] transition-colors', className)} {...rest}>
       {children}
     </tr>
   )

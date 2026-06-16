@@ -8,7 +8,7 @@ export const daemonElevatedCardClass = cn('gap-3 p-4')
 
 export const daemonPageIntroClass = cn('text-xs text-muted-foreground max-w-2xl')
 
-export const daemonThreeColGridClass = cn('grid grid-cols-1 gap-6 lg:grid-cols-3')
+export const daemonThreeColGridClass = cn('grid grid-cols-1 gap-3 lg:grid-cols-3')
 
 export const daemonGroupTitleClass = cn(
   'text-xs font-medium uppercase tracking-wide text-muted-foreground',

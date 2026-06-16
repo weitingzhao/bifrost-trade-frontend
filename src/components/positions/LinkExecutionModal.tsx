@@ -209,7 +209,7 @@ function LinkExecutionModalBody({
         </p>
       )}
 
-      <form id="link-exec-assign-form" onSubmit={handleSubmit} className="space-y-4 px-5 pb-1 pt-4">
+      <form id="link-exec-assign-form" onSubmit={handleSubmit} className="space-y-3 px-4 pb-1 pt-3">
         {peerPicks && peerPicks.length > 0 ? (
           <div className={linkExecSectionClass}>
             <span className={linkExecSectionLabelClass}>Reuse from this contract</span>

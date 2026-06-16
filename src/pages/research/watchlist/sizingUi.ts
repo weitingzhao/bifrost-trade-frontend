@@ -53,7 +53,7 @@ export const sizingPanelHeadClass = cn('mb-3 flex flex-wrap items-center gap-2')
 export const sizingPanelTitleClass = cn('text-base font-semibold tracking-tight')
 
 export const sizingPanelControlsClass = cn(
-  'mb-3 flex flex-wrap items-end gap-4',
+  'mb-3 flex flex-wrap items-end gap-3',
 )
 
 export const sizingOrderSectionDangerClass = cn(
@@ -352,7 +352,7 @@ export const sizingCashPiePanelEmptyClass = cn(
 )
 
 export const sizingCashPieLayoutClass = cn(
-  'flex flex-wrap items-center gap-4',
+  'flex flex-wrap items-center gap-3',
 )
 
 export const sizingCashPieClass = cn('relative h-[7.75rem] w-[7.75rem] shrink-0')

@@ -58,7 +58,7 @@ export function WatchingTab({
   } = workflow
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <p className={watchlistSectionHintClass}>
         <strong className={watchlistStepLeadClass}>Step 1.</strong> Tickers you add in the header are stored with
         category <strong className={watchlistStepLeadClass}>{WL_CAT_WATCHING}</strong> (same names as Portfolio → Accounts).

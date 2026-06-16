@@ -2,7 +2,7 @@
 import { inspectorShell } from '@/components/layout/rightInspectorUi'
 
 export const instanceDetailPageClass = inspectorShell.stack
-export const instanceMainGridClass = 'flex flex-col gap-4 min-w-0'
+export const instanceMainGridClass = 'flex flex-col gap-3 min-w-0'
 export const instanceDetailBlockClass = inspectorShell.section
 export const instanceSectionTitleClass = inspectorShell.sectionTitle
 export const instanceRiskSectionBodyClass = 'min-w-0'

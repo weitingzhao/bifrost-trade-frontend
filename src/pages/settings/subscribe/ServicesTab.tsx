@@ -82,7 +82,7 @@ export function ServicesTab({
   const aaRowLamp = ingestLampToRowLamp(aaLamp.lamp)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <section className="space-y-3">
         <h3 className={subscribeSectionTitleClass}>Summary</h3>
         <div className="grid gap-3 md:grid-cols-2" role="group" aria-label="IB stream summary">

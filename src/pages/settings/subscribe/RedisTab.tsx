@@ -69,7 +69,7 @@ export function RedisTab({
       : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <section className="space-y-2">
         <h3 className={subscribeSectionTitleClass}>Redis paths</h3>
         <p className={subscribeHintClass}>

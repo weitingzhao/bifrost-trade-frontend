@@ -165,7 +165,7 @@ export default function StockScreenerPage() {
   }
 
   return (
-    <PageShell className="flex w-full min-w-0 flex-col gap-4">
+    <PageShell className="flex w-full min-w-0 flex-col gap-3">
       <PageHeader
         title="Stock Screener"
         description="Discover symbols by SEPA conditions and inspect their daily readiness snapshot."

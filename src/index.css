@@ -153,6 +153,9 @@
     --color-border-strong: #d1d5db;
     --color-text-dim: #9ca3af;
     --color-accent-soft: rgba(14, 165, 233, 0.12);
+    --color-accent-glow: rgba(14, 165, 233, 0.25);
+    --color-dashboard-tile: rgba(0, 0, 0, 0.04);
+    --color-dashboard-shadow: rgba(0, 0, 0, 0.08);
 
     /* Business semantics — PnL (light) — classic green/red (aligned with --color-success / --color-danger) */
     --color-profit: var(--color-success); /* green-600 #16a34a */
@@ -280,6 +283,9 @@
     --color-border-strong: #3d4754;
     --color-text-dim: #5c6572;
     --color-accent-soft: rgba(163, 230, 53, 0.12);
+    --color-accent-glow: rgba(163, 230, 53, 0.35);
+    --color-dashboard-tile: rgba(255, 255, 255, 0.05);
+    --color-dashboard-shadow: rgba(0, 0, 0, 0.25);
 
     /* Business semantics — PnL (dark) — classic green/red, not teal/coral */
     --color-profit: var(--color-success); /* green-500 #22c55e */
@@ -339,6 +345,19 @@
     }
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(14, 165, 233, 0.04), transparent 50%);
+    }
+  .dark body::before {
+    background: radial-gradient(ellipse 120% 80% at 50% -20%, rgba(26, 31, 38, 0.6), transparent 50%);
     }
   html {
     @apply font-sans;
@@ -381,6 +400,12 @@
 }
 
 @layer utilities {
+  [data-slot="card"][data-variant="surface"]:focus-within {
+    --tw-ring-color: var(--color-border-strong);
+    box-shadow: 0 4px 12px var(--color-dashboard-shadow);
+    transition: box-shadow var(--transition-fast);
+  }
+
   .dense-scroll-x {
     overflow-x: auto;
     overscroll-behavior-x: contain;

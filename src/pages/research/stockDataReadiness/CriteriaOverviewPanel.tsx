@@ -13,7 +13,7 @@ export function CriteriaOverviewPanel({
   const techConds = stats.technical.conditions
 
   return (
-    <div className="rounded-xl border border-border bg-secondary/50 p-4 space-y-4">
+    <div className="rounded-xl border border-border bg-secondary/50 p-3 space-y-3">
       <div className="space-y-2">
         <div className="flex flex-wrap items-baseline gap-2 text-sm">
           <strong>Fundamental</strong>

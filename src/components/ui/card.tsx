@@ -4,16 +4,16 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const cardVariants = cva(
-  "group/card flex flex-col gap-4 overflow-hidden rounded-xl py-4 text-sm text-card-foreground has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+  "group/card flex flex-col gap-3 overflow-hidden rounded-xl py-3 text-sm text-card-foreground has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-2 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
   {
     variants: {
       variant: {
-        /** Default panel on page canvas — ring for contrast on bg-card. */
+        /** Default panel on page canvas — subtle lift like Legacy .process-section. */
         surface:
-          "bg-card ring-1 ring-foreground/10",
+          "bg-card ring-1 ring-foreground/[0.12] shadow-[0_1px_3px_rgba(0,0,0,0.12)]",
         /** Raised panel on bg-card canvas (KPI tiles, nested blocks). */
         elevated:
-          "border border-border bg-secondary text-secondary-foreground shadow-sm",
+          "border border-border bg-secondary text-secondary-foreground shadow-[0_2px_6px_rgba(0,0,0,0.15)]",
       },
       size: {
         default: "",
@@ -62,7 +62,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-title"
       className={cn(
-        "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        "font-heading text-base leading-snug font-semibold group-data-[size=sm]/card:text-sm",
         className
       )}
       {...props}

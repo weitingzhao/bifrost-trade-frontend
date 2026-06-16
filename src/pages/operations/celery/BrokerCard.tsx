@@ -97,7 +97,7 @@ export function BrokerCard() {
           )
         }
       >
-        <div className="flex flex-wrap gap-4 text-sm">
+        <div className="flex flex-wrap gap-3 text-sm">
           <div className="space-y-0.5">
             <p className="text-xs text-muted-foreground">Status</p>
             <Badge variant={broker.connected ? 'default' : 'destructive'}>

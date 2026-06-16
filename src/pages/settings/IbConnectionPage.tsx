@@ -141,7 +141,7 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
   }
 
   return (
-    <PageShell className="space-y-6">
+    <PageShell className="space-y-4">
       <PageHeader
         title="IB Connection"
         description="Configure Interactive Brokers connection and Flex Query"

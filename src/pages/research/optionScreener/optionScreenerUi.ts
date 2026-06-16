@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display/denseTableClasses'
 
 export const optionScreenerFilterPanelClass = cn(
-  'space-y-4 rounded-lg border border-border bg-secondary p-4',
+  'space-y-3 rounded-lg border border-border bg-secondary p-3',
 )
 
 export const optionScreenerResultsMetaClass = cn(

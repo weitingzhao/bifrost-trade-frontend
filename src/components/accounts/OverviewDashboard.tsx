@@ -20,12 +20,12 @@ function Tile({
 }) {
   return (
     <Card variant="elevated" size="sm">
-      <CardContent className="py-3">
-        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">{label}</p>
+      <CardContent className="py-2">
+        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">{label}</p>
         <p
           className={cn(
             'font-semibold font-mono tabular-nums',
-            largeValue ? 'text-xl font-bold' : 'text-lg',
+            largeValue ? 'text-lg font-bold' : 'text-base',
             valueClass,
           )}
         >

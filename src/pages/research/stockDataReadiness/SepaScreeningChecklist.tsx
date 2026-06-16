@@ -186,9 +186,9 @@ export function SepaScreeningChecklist({
         })}
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-3 space-y-3">
         {activeTab === 'technical' && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <CriteriaGroupHeader
               badge="Technical"
               badgeClass="bg-emerald-500/15 text-emerald-400"

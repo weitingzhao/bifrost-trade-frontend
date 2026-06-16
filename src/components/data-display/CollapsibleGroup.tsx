@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 export type CollapsibleGroupVariant = 'card' | 'inset'
 
 const shellByVariant: Record<CollapsibleGroupVariant, string> = {
-  card: 'mb-3 overflow-hidden rounded-md border border-border bg-card',
+  card: 'mb-2 overflow-hidden rounded-md border border-border bg-card',
   inset: 'border-t border-border',
 }
 

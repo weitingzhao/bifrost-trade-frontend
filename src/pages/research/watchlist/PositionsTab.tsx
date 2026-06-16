@@ -38,7 +38,7 @@ export function PositionsTab({
   } = workflow
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <p className={watchlistSectionHintClass}>
         <strong className={watchlistStepLeadClass}>Step 3.</strong> Rows on this list that match your current IB
         portfolio snapshot.

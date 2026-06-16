@@ -22,7 +22,7 @@ export function CelerySectionCard({
 }: CelerySectionCardProps) {
   return (
     <Card variant="elevated" className={cn('h-full', className)}>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-1.5 flex-wrap">
           <span className="flex items-center gap-1.5 min-w-0">
             {title}

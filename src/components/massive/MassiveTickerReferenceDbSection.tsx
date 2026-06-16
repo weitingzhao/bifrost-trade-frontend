@@ -625,7 +625,7 @@ export function MassiveTickerReferenceDbSection({
   const catalogRow = getRefCatalogRow(selectedRefJobKind)
 
   return (
-    <div className="space-y-4" role={rootRole} id={panelId} aria-labelledby={ariaLabelledBy}>
+    <div className="space-y-3" role={rootRole} id={panelId} aria-labelledby={ariaLabelledBy}>
       {showInitControls ? (
         <div
           className="space-y-3 rounded-md border border-border p-3"
@@ -659,7 +659,7 @@ export function MassiveTickerReferenceDbSection({
           </p>
 
           {catalogRow ? (
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
               <div
                 className="flex flex-wrap gap-1 lg:w-36 lg:flex-col lg:shrink-0"
                 role="tablist"

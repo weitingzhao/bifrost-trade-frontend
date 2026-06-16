@@ -3,7 +3,7 @@ import { BrokerCard } from './BrokerCard'
 
 export function CelerySidePanel() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <CeleryBeatScheduleCard />
       <BrokerCard />
     </div>

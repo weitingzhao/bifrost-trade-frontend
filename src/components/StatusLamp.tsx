@@ -2,9 +2,9 @@ import { Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const DOT_BG: Record<string, string> = {
-  green: 'bg-lamp-green',
-  yellow: 'bg-lamp-yellow',
-  red: 'bg-lamp-red',
+  green: 'bg-lamp-green shadow-[0_0_5px_var(--color-lamp-green)]',
+  yellow: 'bg-lamp-yellow shadow-[0_0_5px_var(--color-lamp-yellow)]',
+  red: 'bg-lamp-red shadow-[0_0_5px_var(--color-lamp-red)]',
   gray: 'bg-lamp-gray',
 }
 

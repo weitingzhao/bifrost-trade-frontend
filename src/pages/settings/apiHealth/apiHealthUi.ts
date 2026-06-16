@@ -17,7 +17,7 @@ export const LAMP_GLOW: Record<Lamp, string> = {
 
 export const apiHealthSectionTitleClass = denseTable.sectionTitle
 
-export const apiHealthCategoryContentClass = cn('space-y-6')
+export const apiHealthCategoryContentClass = cn('space-y-3')
 
 export const apiHealthElevatedSectionClass = cn('gap-3 p-4')
 

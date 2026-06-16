@@ -5,7 +5,7 @@ export const addOptionDialogFooterClass = cn(
 )
 
 export const addOptionFormPanelClass = cn(
-  'space-y-4 rounded-lg border border-border bg-secondary/30 p-4',
+  'space-y-3 rounded-lg border border-border bg-secondary/30 p-3',
 )
 
 export const addOptionFieldLabelClass = cn(

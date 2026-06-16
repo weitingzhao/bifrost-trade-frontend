@@ -48,7 +48,7 @@ export function AccountSummaryCard({ account, freshnessItems }: Props) {
       className="rounded-xl border border-border bg-secondary px-4 py-3"
       aria-label="Account summary"
     >
-      <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
         <SummaryField label="Account" value={aid} className="min-w-[7rem]" />
         <SummaryField label="Net liquidation" value={fmtSummaryUsd(s.NetLiquidation)} />
         <SummaryField label="Total cash" value={fmtSummaryUsd(s.TotalCashValue)} />

@@ -122,7 +122,7 @@ export const watchlistWarnBoxClass = watchlistWarnLineClass
 export const watchlistPiePanelClass = 'space-y-2 rounded-lg border p-3'
 
 export const watchlistCollapsedSummaryClass = cn(
-  'flex flex-wrap gap-4 px-3 pb-3 pt-0 text-xs text-muted-foreground',
+  'flex flex-wrap gap-3 px-3 pb-3 pt-0 text-xs text-muted-foreground',
 )
 
-export const watchlistRiskBodyClass = 'space-y-4 px-3 pb-4 pt-0'
+export const watchlistRiskBodyClass = 'space-y-3 px-3 pb-3 pt-0'

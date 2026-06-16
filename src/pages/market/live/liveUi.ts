@@ -1,6 +1,6 @@
 /** Live page layout + filter class tokens (Tailwind). */
 
-export const livePageStackClass = 'flex flex-col gap-4 min-w-0'
+export const livePageStackClass = 'flex flex-col gap-3 min-w-0'
 
 export const liveStreamsBlockClass = 'flex flex-col gap-3 min-w-0'
 
@@ -41,7 +41,7 @@ export const liveEmptyHintClass = 'text-sm text-muted-foreground py-2'
 export const liveSplitOuterCardClass = liveCardClass
 export const liveSplitBodyClass = 'px-3 pb-3 pt-3'
 export const liveSplitGridClass =
-  'grid gap-4 items-start min-w-0 lg:grid-cols-2'
+  'grid gap-3 items-start min-w-0 lg:grid-cols-2'
 export const liveSplitWatchingColClass = 'min-w-0'
 export const liveSplitRightColClass = 'min-w-0 flex flex-col gap-3'
 

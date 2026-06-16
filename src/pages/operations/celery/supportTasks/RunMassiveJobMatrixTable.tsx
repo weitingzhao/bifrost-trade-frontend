@@ -103,7 +103,7 @@ export function RunMassiveJobMatrixTable({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {brokerQueueFilter && (
         <div className={celeryMatrixFilterBarClass}>
           <span>
@@ -162,7 +162,7 @@ export function RunMassiveJobMatrixTable({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-4 items-center text-xs">
+      <div className="flex flex-wrap gap-3 items-center text-xs">
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">Job style</span>
           <BubbleSwitch

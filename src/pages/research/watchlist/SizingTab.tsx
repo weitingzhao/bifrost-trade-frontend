@@ -275,7 +275,7 @@ export function SizingTab(props: SizingTabProps) {
     selectedSizingSymbol != null && !sizeComputeLoading && sizeAtrResult != null
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <p className={watchlistSectionHintClass}>
         <strong className={watchlistStepLeadClass}>Step 2.</strong> The table lists stocks tagged{' '}
         <strong className={watchlistStepLeadClass}>Sizing</strong>. Pick any stock symbol from your watchlist

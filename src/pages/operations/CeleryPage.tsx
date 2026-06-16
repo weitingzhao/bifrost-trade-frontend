@@ -210,7 +210,7 @@ function CeleryPageContent() {
 
   return (
     <TooltipProvider>
-      <PageShell padding="default" className="space-y-6">
+        <PageShell padding="default" className="space-y-3">
         <CeleryPageHeader />
 
         {flash && (
@@ -244,7 +244,7 @@ function CeleryPageContent() {
             ))}
           </TabsList>
 
-          <TabsContent value="queues_instances" className="space-y-6 mt-4">
+          <TabsContent value="queues_instances" className="space-y-3 mt-3">
             <div ref={jobQueuesSectionRef}>
               <CelerySectionCard title="Job Queues" tooltip={JOB_QUEUES_TOOLTIP}>
                 <CeleryJobQueuesSection
@@ -269,7 +269,7 @@ function CeleryPageContent() {
             </div>
           </TabsContent>
 
-          <TabsContent value="console_runtime" className="mt-4">
+          <TabsContent value="console_runtime" className="mt-3">
             <CeleryConsoleRuntimeTab
               consoleTarget={consoleTarget}
               onSelectConsole={selectConsole}
@@ -278,7 +278,7 @@ function CeleryPageContent() {
             />
           </TabsContent>
 
-          <TabsContent value="support_tasks" className="mt-4">
+          <TabsContent value="support_tasks" className="mt-3">
             <CelerySupportTasksSection
               mainTab={mainTab}
               brokerQueueFilter={brokerQueueFilter}
@@ -286,7 +286,7 @@ function CeleryPageContent() {
             />
           </TabsContent>
 
-          <TabsContent value="scheduled_jobs" className="mt-4">
+          <TabsContent value="scheduled_jobs" className="mt-3">
             <CeleryScheduledJobsSection mainTab={mainTab} />
           </TabsContent>
         </Tabs>

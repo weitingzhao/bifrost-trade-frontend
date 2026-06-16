@@ -86,7 +86,7 @@ export default function AccountsPage() {
 
   if (isLoading) {
     return (
-      <PageShell className="space-y-4">
+      <PageShell className="space-y-3">
         <div className="flex justify-between items-center">
           <Skeleton className="h-6 w-32" />
           <Skeleton className="h-8 w-48" />
@@ -110,7 +110,7 @@ export default function AccountsPage() {
   }
 
   return (
-    <PageShell className="space-y-5">
+    <PageShell className="space-y-3">
       <PageHeader
         breadcrumb={
           <p className="text-xs text-primary/90 font-medium">Portfolio / Accounts</p>
@@ -198,7 +198,7 @@ export default function AccountsPage() {
         <>
           <OverviewDashboard accounts={accounts} />
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-start">
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 xl:items-start">
             <PortfolioCategoryRing accounts={accounts} />
             <NetLiqChart accounts={accounts} />
           </div>

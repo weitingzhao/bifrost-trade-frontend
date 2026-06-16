@@ -38,9 +38,9 @@ export const optionCategoryDetailEmptyClass = cn(
   'flex h-full flex-col items-center justify-center gap-3 p-8 text-muted-foreground',
 )
 
-export const optionCategoryDetailLoadingClass = cn('space-y-4 p-6')
+export const optionCategoryDetailLoadingClass = cn('space-y-3 p-4')
 
-export const optionCategoryDetailContentClass = cn('space-y-6 p-6')
+export const optionCategoryDetailContentClass = cn('space-y-3 p-3')
 
 export const optionCategorySectionHeaderClass = cn(
   'flex items-center justify-between border-b px-4 py-3',
@@ -66,7 +66,7 @@ export function optionCategorySaveFeedbackClass(ok: boolean): string {
 
 export const optionCategoryReorderHintClass = cn('ml-2')
 
-export const optionCategoryDimsDialogGridClass = cn('grid grid-cols-3 gap-4 sm:grid-cols-6')
+export const optionCategoryDimsDialogGridClass = cn('grid grid-cols-3 gap-3 sm:grid-cols-6')
 
 export const optionCategoryDimsDialogAddRowClass = cn(
   'mt-2 flex items-center gap-2 border-t pt-4',

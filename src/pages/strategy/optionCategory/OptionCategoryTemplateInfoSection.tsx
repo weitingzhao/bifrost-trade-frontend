@@ -61,7 +61,7 @@ export function OptionCategoryTemplateInfoSection({
           </Button>
         </div>
       </div>
-      <div className={cn(optionCategorySectionBodyClass, 'space-y-4')}>
+      <div className={cn(optionCategorySectionBodyClass, 'space-y-3')}>
         <div className={optionCategoryFormGridClass}>
           <div className="col-span-2">
             <Label className={optionCategoryFieldLabelClass}>Template code</Label>

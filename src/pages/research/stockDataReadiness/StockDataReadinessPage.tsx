@@ -420,7 +420,7 @@ function PageInner() {
   const universeBusy = refJobs.jobBusyKind === 'feed_stocks_tickers_reference_universe'
 
   return (
-    <PageShell className="w-full min-w-0 space-y-5">
+    <PageShell className="w-full min-w-0 space-y-3">
       <PageHeader
         breadcrumb={
           <p className="text-xs text-sky-400/90 font-medium">Research / Stock Data Readiness</p>
@@ -459,7 +459,7 @@ function PageInner() {
         onCheckCoverage={() => void handleCheckCoverage()}
       />
 
-      <div className="grid w-full min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]">
         <div className="space-y-3 min-w-0">
           <StepDetailPanel
             activeStep={activeRunStep}

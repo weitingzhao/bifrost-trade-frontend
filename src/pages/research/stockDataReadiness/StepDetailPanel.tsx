@@ -163,7 +163,7 @@ export function StepDetailPanel(props: Props) {
   return (
     <div className="rounded-xl border border-border bg-secondary/50 p-4 min-h-[200px]">
       {activeStep === 1 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="text-sm font-medium">
             Sync All Tickers + Market Holidays into <Code>public.tickers</Code> &amp;{' '}
             <Code>public.reference_us_holidays</Code>

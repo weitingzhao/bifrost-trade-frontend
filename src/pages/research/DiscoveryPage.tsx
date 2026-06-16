@@ -212,7 +212,7 @@ export default function DiscoveryPage() {
 
       <div className="mt-3">
         <div className="w-full min-w-0">
-          <div className="flex flex-col gap-4 min-w-0">
+          <div className="flex flex-col gap-3 min-w-0">
             <div className="sticky top-2 z-[3] -mx-1 rounded-lg border border-border bg-card shadow-sm overflow-visible">
               <DiscoveryUnderlyingBar
                 underlyingInput={underlyingInput}

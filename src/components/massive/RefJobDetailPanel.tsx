@@ -271,7 +271,7 @@ export function RefJobDetailPanel({
 
   return (
     <div
-      className="min-w-0 flex-1 space-y-4 rounded-md border border-border/60 bg-background p-4"
+      className="min-w-0 flex-1 space-y-3 rounded-md border border-border/60 bg-background p-3"
       id="ref-job-detail-panel"
       role="tabpanel"
     >

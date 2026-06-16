@@ -97,7 +97,7 @@ export default function GreeksPage() {
   const loading = loadMutation.isPending
 
   return (
-    <PageShell padding="default" className="space-y-4">
+    <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="IV & Greeks"
         description="Historical option greeks from the research API: pick symbol and trade date, then fetch chain rows."

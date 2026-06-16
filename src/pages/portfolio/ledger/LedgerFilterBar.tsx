@@ -116,7 +116,7 @@ export function LedgerFilterBar({
 
   return (
     <div className={ledgerFilterPanelClass} aria-label="Trade ledger quick filters">
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-1.5">
         <div className={ledgerFilterRowClass}>
           <div className="inline-flex flex-wrap items-center gap-x-2 gap-y-1" role="group" aria-label="Since (rolling trade date window)">
             <span className={ledgerFilterLabelClass}>Since</span>

@@ -75,7 +75,7 @@ export default function OptionScreenerPage() {
       : undefined
 
   return (
-    <PageShell className="space-y-4">
+    <PageShell className="space-y-3">
       <PageHeader
         title="Option Screener"
         description="Screen options contracts by structure type and filters"

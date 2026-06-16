@@ -17,7 +17,7 @@ export function ReadinessMetricsTabContent({
   onCheckCoverage: () => void
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
         Readiness metrics
       </h3>

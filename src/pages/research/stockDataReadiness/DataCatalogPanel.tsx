@@ -194,7 +194,7 @@ export function DataCatalogPanel({
   const meta = CATALOG_TABS.find(t => t.key === activeTab)!
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2" role="tablist" aria-label="Data catalog">
         {CATALOG_TABS.map(tab => {
           const count =

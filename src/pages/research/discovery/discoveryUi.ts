@@ -5,9 +5,9 @@ export const discoveryRootClass = chartStyles.discoveryRoot
 
 export const discoverySectionHintClass = 'text-sm text-muted-foreground'
 
-export const discoveryChainScopeClass = 'space-y-4'
+export const discoveryChainScopeClass = 'space-y-3'
 
-export const discoveryFullChainClass = 'space-y-4'
+export const discoveryFullChainClass = 'space-y-3'
 
 export const discoveryViewScopeClass = 'space-y-3'
 

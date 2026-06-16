@@ -36,7 +36,7 @@ export function ReadinessStatusSection({
   const snap = summary?.snapshot_today
 
   return (
-    <div className="rounded-xl border border-border bg-secondary p-5 space-y-4">
+    <div className="rounded-xl border border-border bg-secondary p-4 space-y-3">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
           Readiness Status

@@ -362,7 +362,7 @@ export function MassiveStockOhlcDbEnqueueBlock({
   const queueCode = priorityHigh ? 'stocks_massive_high' : 'stocks_massive'
 
   return (
-    <div className="space-y-4" role="region" aria-label="Stock OHLC PostgreSQL sync">
+    <div className="space-y-3" role="region" aria-label="Stock OHLC PostgreSQL sync">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <p className="max-w-3xl text-sm text-muted-foreground">
           Celery job <code className="text-xs">feed_stocks_aggregate</code> upserts into{' '}
@@ -395,7 +395,7 @@ export function MassiveStockOhlcDbEnqueueBlock({
         onChange={v => setDelayDbOhlcTab(v as (typeof OHLC_MODES)[number]['id'])}
       />
 
-      <div className="rounded-md border bg-card p-4 space-y-4">
+      <div className="rounded-md border bg-card p-3 space-y-3">
         <dl className="grid gap-2 text-sm sm:grid-cols-3">
           <div>
             <dt className="text-xs text-muted-foreground">Job</dt>
@@ -418,7 +418,7 @@ export function MassiveStockOhlcDbEnqueueBlock({
         <h4 className="text-sm font-semibold">Enqueue</h4>
 
         {delayDbOhlcTab === 'custom_bars' ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
               <strong>Massive (delayed) → PostgreSQL</strong> — not IB Live in Redis.{' '}
               <strong>Daily:</strong> through NY <strong>today</strong>; ~<strong>{backfillYears}y</strong> when
@@ -589,7 +589,7 @@ export function MassiveStockOhlcDbEnqueueBlock({
             </details>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex-1 space-y-3 text-sm">
               {delayDbOhlcTab === 'daily_market_summary' ? (
                 <>

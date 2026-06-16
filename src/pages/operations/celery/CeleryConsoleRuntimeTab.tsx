@@ -16,7 +16,7 @@ export function CeleryConsoleRuntimeTab({
   consoleSectionRef,
 }: CeleryConsoleRuntimeTabProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <CeleryRuntimeSnapshotSection
         consoleTarget={consoleTarget}
         onSelectConsole={target => {

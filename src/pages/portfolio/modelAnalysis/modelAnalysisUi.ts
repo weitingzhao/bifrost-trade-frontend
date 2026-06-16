@@ -70,6 +70,6 @@ export const modelAnalysisMethodologyListClass =
 export const modelAnalysisStressNoteClass =
   'mb-2 text-xs text-muted-foreground leading-relaxed'
 
-export const modelAnalysisDetailStackClass = 'flex flex-col gap-4 min-w-0'
+export const modelAnalysisDetailStackClass = 'flex flex-col gap-3 min-w-0'
 
 export const MAIN_TABLE_COL_SPAN = 11

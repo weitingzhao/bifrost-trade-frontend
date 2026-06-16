@@ -34,7 +34,7 @@ export function ReadinessReferenceTab({
   const queuesErr = queuesError instanceof Error ? queuesError.message : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="rounded-xl border border-border bg-secondary/30 overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-border">
           <h3 className="text-sm font-semibold">Notes breakdown</h3>

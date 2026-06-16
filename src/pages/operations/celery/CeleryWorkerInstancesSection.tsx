@@ -345,7 +345,7 @@ export function CeleryWorkerInstancesSection({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {queueFilter && (
         <div className={celeryWorkerInstancesFilterBarClass}>
           <span>Showing instances for queue</span>

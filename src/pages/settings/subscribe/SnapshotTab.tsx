@@ -204,7 +204,7 @@ export function SnapshotTab({
   const { rows: positionRows, showAccountColumn, filterHint } = buildPositionRows(status)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <section className="space-y-2">
         <h3 className={subscribeSectionTitleClass}>Host real-time tickers (daemon)</h3>
         <p className={subscribeHintClass}>

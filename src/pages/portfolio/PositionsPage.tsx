@@ -366,9 +366,9 @@ export default function PositionsPage() {
 
   if (isLoading) {
     return (
-      <PageShell className="space-y-4">
+      <PageShell className="space-y-3">
         <Skeleton className="h-6 w-40" />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-48 rounded-lg" />
           ))}
@@ -389,7 +389,7 @@ export default function PositionsPage() {
   }
 
   return (
-    <PageShell className="space-y-6">
+    <PageShell className="space-y-3">
       <PageHeader
         title="Positions"
         description="Open positions (Pool On and Off) and manual execution records."
@@ -422,7 +422,7 @@ export default function PositionsPage() {
       />
 
       {!showOpenPositionsPanel ? (
-        <div className="rounded-lg border border-dashed p-8 text-center space-y-1">
+        <div className="rounded-lg border border-dashed p-4 text-center space-y-1">
           <p className="text-sm font-medium">No open positions</p>
           <p className="text-xs text-muted-foreground">
             Position data comes from account snapshots. Ensure IB is connected and Account Sync is running.
@@ -451,14 +451,14 @@ export default function PositionsPage() {
 
           <div className="min-w-0 w-full">
             {!hasAccountSelection ? (
-              <div className="mt-3 rounded-lg border border-dashed p-6 text-center space-y-1">
+              <div className="mt-3 rounded-lg border border-dashed p-4 text-center space-y-1">
                 <p className="text-sm font-medium">Select an account</p>
                 <p className="text-xs text-muted-foreground">
                   Turn on HOST and/or Secondary above to show open positions for those accounts.
                 </p>
               </div>
             ) : totalPositions === 0 ? (
-              <div className="mt-3 rounded-lg border border-dashed p-6 text-center space-y-1">
+              <div className="mt-3 rounded-lg border border-dashed p-4 text-center space-y-1">
                 <p className="text-sm font-medium">No positions match filters</p>
                 <p className="text-xs text-muted-foreground">
                   No open positions under the current symbol, expiry, or account filters. Off-track options

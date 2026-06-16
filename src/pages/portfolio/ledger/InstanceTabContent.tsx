@@ -61,7 +61,7 @@ export function InstanceTabContent({
 
   if (instanceSubTab === 'no_instance') {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {noInstGroups.length === 0 ? (
           <p className={denseTable.emptyHint}>No unassigned option groups.</p>
         ) : (

@@ -22,7 +22,7 @@ export function RunBookSection({
   onCheckCoverage,
 }: Props) {
   return (
-    <div className="rounded-xl border border-border bg-secondary p-5 shadow-sm space-y-4">
+    <div className="rounded-xl border border-border bg-secondary p-4 shadow-sm space-y-3">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Run book</h2>
         <Button

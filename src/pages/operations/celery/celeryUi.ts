@@ -4,7 +4,7 @@ import type { SegmentOption } from '@/components/data-display'
 
 /** Shared 7:5 split used for Queue Summary / Situation and Queues tab worker sidebar. */
 export const CELERY_SPLIT_GRID =
-  'grid grid-cols-1 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] gap-4 items-start'
+  'grid grid-cols-1 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] gap-3 items-start'
 
 /** Legacy-style underline main tabs (shadcn TabsTrigger). */
 export const CELERY_MAIN_TAB_TRIGGER =

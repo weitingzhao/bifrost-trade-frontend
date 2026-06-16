@@ -107,7 +107,7 @@ const REPO_PATHS: { label: string; path: string }[] = [
 
 export default function TechStackPage() {
   return (
-    <PageShell className="mx-auto max-w-4xl space-y-6 pb-10">
+    <PageShell className="mx-auto max-w-4xl space-y-4 pb-10">
       <PageHeader
         breadcrumb={
           <p className="text-xs font-medium text-primary/90">Settings / Configuration</p>

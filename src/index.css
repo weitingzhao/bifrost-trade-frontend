@@ -98,6 +98,14 @@
     --color-screener-structure-tier: var(--color-screener-structure-tier);
     --color-screener-sentiment: var(--color-screener-sentiment);
 
+    /* Dense typography scale — all data-heavy pages use these 5 stops.
+       Avoid hardcoded text-[Npx]; pick the nearest token instead. */
+    --font-size-dense-body: var(--text-dense);
+    --font-size-dense-label: 0.75rem;
+    --font-size-dense-meta: var(--text-dense-meta);
+    --font-size-dense-caption: 0.625rem;
+    --font-size-dense-micro: 0.5625rem;
+
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);

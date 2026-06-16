@@ -97,7 +97,7 @@ export function ApiConfiguredRoutesStrip({
                       {profile ? (
                         <EnvBadge profile={profile} ok />
                       ) : (
-                        <span className="text-muted-foreground text-[10px]">{row.env}</span>
+                        <span className="text-muted-foreground text-dense-caption">{row.env}</span>
                       )}
                     </div>
                   )

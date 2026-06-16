@@ -58,7 +58,7 @@ export function MassiveJobsTable({
           const detail = fmtMassiveResultDetail(row)
           return (
             <DenseTableRow key={row.job_id}>
-              <DenseTableCell className="font-mono text-[10px]">{row.job_id}</DenseTableCell>
+              <DenseTableCell className="font-mono text-dense-caption">{row.job_id}</DenseTableCell>
               <DenseTableCell>{row.kind ?? '—'}</DenseTableCell>
               <DenseTableCell className="max-w-48 truncate" title={row.goal ?? undefined}>
                 {row.goal ?? '—'}

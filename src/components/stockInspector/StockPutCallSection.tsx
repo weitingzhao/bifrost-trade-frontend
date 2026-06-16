@@ -88,10 +88,10 @@ export function StockPutCallSection({
         {expanded && (
         <div className="flex items-center gap-2 shrink-0">
           {asOfDate && (
-            <span className="text-[10px] text-muted-foreground font-mono">as of {asOfDate}</span>
+            <span className="text-dense-caption text-muted-foreground font-mono">as of {asOfDate}</span>
           )}
           {data?.stale_days != null && data.stale_days > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500">
+            <span className="text-dense-caption px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500">
               {data.stale_days}d ago
             </span>
           )}

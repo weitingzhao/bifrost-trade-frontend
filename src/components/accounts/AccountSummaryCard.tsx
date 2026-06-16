@@ -20,7 +20,7 @@ interface FieldProps {
 function SummaryField({ label, value, className }: FieldProps) {
   return (
     <div className={cn('min-w-0 flex-1', className)}>
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-dense-caption uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold font-mono tabular-nums mt-0.5 truncate">{value}</p>
     </div>
   )

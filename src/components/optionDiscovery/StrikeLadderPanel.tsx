@@ -1,5 +1,6 @@
 import type { Dispatch, Ref, SetStateAction } from 'react'
 import { fmtUsd } from '@/lib/format'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   STRIKE_COUNT_OPTIONS,
   STD_DEV_OPTIONS,
@@ -92,41 +93,47 @@ export function StrikeLadderPanel({
           <div className="strike-ladder-controls">
             <div className="strike-ladder-controls-row">
               <label htmlFor="option-discovery-strike-count">Count</label>
-              <select
-                id="option-discovery-strike-count"
+              <Select
                 value={String(strikeCountOption)}
-                onChange={e =>
+                onValueChange={v =>
                   setStrikeCountOption(
-                    e.target.value === 'all' ? 'all' : (Number(e.target.value) as StrikeCountOption),
+                    v === 'all' ? 'all' : (Number(v) as StrikeCountOption),
                   )
                 }
-                aria-label="Strike count"
               >
-                {STRIKE_COUNT_OPTIONS.map(c => (
-                  <option key={String(c)} value={String(c)}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="option-discovery-strike-count" aria-label="Strike count">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STRIKE_COUNT_OPTIONS.map(c => (
+                    <SelectItem key={String(c)} value={String(c)}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="strike-ladder-controls-row">
               <label htmlFor="option-discovery-std-dev">Std dev</label>
-              <select
-                id="option-discovery-std-dev"
+              <Select
                 value={String(stdDevOption)}
-                onChange={e =>
+                onValueChange={v =>
                   setStdDevOption(
-                    e.target.value === 'custom' ? 'custom' : (Number(e.target.value) as StdDevOption),
+                    v === 'custom' ? 'custom' : (Number(v) as StdDevOption),
                   )
                 }
-                aria-label="Standard deviations"
               >
-                {STD_DEV_OPTIONS.map(d => (
-                  <option key={String(d)} value={String(d)}>
-                    {d}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="option-discovery-std-dev" aria-label="Standard deviations">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STD_DEV_OPTIONS.map(d => (
+                    <SelectItem key={String(d)} value={String(d)}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {stdDevOption === 'custom' && (
                 <input
                   type="number"

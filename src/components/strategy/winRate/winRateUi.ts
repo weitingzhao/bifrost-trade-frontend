@@ -13,7 +13,7 @@ export const winRateCardClass = cn(
   'max-w-full min-w-0 w-full overflow-hidden text-left font-inherit text-inherit',
 )
 
-/** Legacy `strategy-win-rate-card--clickable` — border + accent lift on hover. */
+/** Clickable card variant — border + accent lift on hover. */
 export const winRateCardClickableClass = cn(
   winRateCardClass,
   'cursor-pointer appearance-none border text-left',
@@ -38,7 +38,7 @@ export const winRateSectionClass = cn(
 )
 
 export const winRateSectionLabelClass = cn(
-  'mb-1 text-[0.62rem] font-semibold uppercase tracking-wide text-muted-foreground',
+  'mb-1 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const winRateKpiGridClass = cn('grid grid-cols-2 gap-1.5 min-w-0')
@@ -52,7 +52,7 @@ export const winRateKpiHighlightClass = cn(
 )
 
 export const winRateKpiLabelClass = cn(
-  'text-[0.65rem] leading-tight text-muted-foreground',
+  'text-dense-caption leading-tight text-muted-foreground',
 )
 
 export const winRateKpiValueClass = cn(
@@ -64,11 +64,11 @@ export const winRateKpiWinPctValueClass = cn(
 )
 
 export const winRateKpiLabelCompactClass = cn(
-  'text-[0.58rem] leading-snug text-muted-foreground',
+  'text-dense-micro leading-snug text-muted-foreground',
 )
 
 export const winRateKpiValueCompactClass = cn(
-  'text-[0.8rem] font-bold tabular-nums leading-tight text-foreground',
+  'text-dense-body font-bold tabular-nums leading-tight text-foreground',
 )
 
 export const winRateMetrics3Class = cn(
@@ -78,14 +78,14 @@ export const winRateMetrics3Class = cn(
 export const winRateMetricClass = cn('flex min-w-0 flex-col gap-0.5')
 
 export const winRateMetricLabelClass = cn(
-  'text-[0.65rem] leading-tight text-muted-foreground',
+  'text-dense-caption leading-tight text-muted-foreground',
 )
 
 export const winRateMetricValueClass = cn(
-  'text-[0.82rem] font-bold tabular-nums leading-snug',
+  'text-dense-body font-bold tabular-nums leading-snug',
 )
 
-export const winRateMetricValuePnlClass = cn('text-[0.82rem]')
+export const winRateMetricValuePnlClass = cn('text-dense-body')
 
 export const winRateUnderlyingRowsClass = cn('grid grid-cols-1 gap-1.5')
 
@@ -94,7 +94,7 @@ export const winRateUnderlyingRowClass = cn(
 )
 
 export const winRateUnderlyingRowLabelClass = cn(
-  'shrink-0 text-[0.75rem] leading-snug text-muted-foreground',
+  'shrink-0 text-dense-label leading-snug text-muted-foreground',
 )
 
 export const winRateUnderlyingRowValueClass = cn(
@@ -127,12 +127,12 @@ export const winRateTotalsBandClass = cn(
 export const winRateTotalsSectionClass = cn('flex flex-col')
 
 export const winRateTotalsSectionLabelClass = cn(
-  'mb-1 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground',
+  'mb-1 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const winRateTotalsBandMetricPnlClass = cn('text-[0.88rem]')
 
-export const winRateTotalsBandUnderlyingLabelClass = cn('text-[0.65rem]')
+export const winRateTotalsBandUnderlyingLabelClass = cn('text-dense-caption')
 
 export const winRateTotalsBandUnderlyingValueClass = cn('text-[0.88rem]')
 
@@ -146,7 +146,7 @@ export const winRateHintClass = denseTable.mutedMeta
 export const winRateEmptyHintClass = denseTable.emptyHint
 
 export const winRateSinceLabelClass = cn(
-  'mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
+  'mr-1 shrink-0 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 /** Win % color: strictly >50% green, strictly <50% red; 50% or no trades neutral. */

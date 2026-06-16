@@ -74,7 +74,7 @@ export function ExecutionRow({
         key={`${source}-${id}`}
         className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1 px-1 text-xs border-b border-dashed last:border-b-0"
       >
-        <DenseTag variant="neutral" size="cell" className="text-[10px] leading-none">
+        <DenseTag variant="neutral" size="cell" className="text-dense-caption leading-none">
           {source}
         </DenseTag>
         <span className="font-mono text-muted-foreground w-36 truncate">{fmtTime(exec.time)}</span>

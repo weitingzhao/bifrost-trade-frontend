@@ -86,7 +86,7 @@ export function CeleryScheduledJobsSection({ mainTab }: { mainTab: CeleryMainTab
               {beatTasks.map(b => (
                 <DenseTableRow key={b.name}>
                   <DenseTableCell>
-                    <code className="font-mono text-[11px] break-all">{b.name}</code>
+                    <code className="font-mono text-dense-meta break-all">{b.name}</code>
                   </DenseTableCell>
                   <DenseTableCell className={denseTable.mutedMeta}>{b.note}</DenseTableCell>
                 </DenseTableRow>

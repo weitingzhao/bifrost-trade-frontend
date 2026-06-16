@@ -20,8 +20,8 @@ const groupBySize: Record<SegmentControlSize, string> = {
 }
 
 const btnBySize: Record<SegmentControlSize, string> = {
-  xs: 'px-2 py-0.5 text-[0.72rem] leading-none',
-  sm: 'px-3 py-1 text-[0.78rem]',
+  xs: 'px-2 py-0.5 text-dense-label leading-none',
+  sm: 'px-3 py-1 text-dense-label',
   md: 'px-3.5 py-1.5 text-sm',
 }
 
@@ -40,9 +40,3 @@ export function segmentButtonClass(active: boolean, size: SegmentControlSize = '
     active ? SEGMENT_CTRL_ACTIVE : SEGMENT_CTRL_IDLE,
   )
 }
-
-/** @deprecated Use segmentGroupClass */
-export const bubbleGroupClass = segmentGroupClass
-
-/** @deprecated Use segmentButtonClass */
-export const bubbleButtonClass = segmentButtonClass

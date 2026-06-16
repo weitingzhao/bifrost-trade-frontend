@@ -230,7 +230,7 @@ export function InstanceListFilters({
                 {filteredCount}/{totalCount}
               </span>
               {hasActive && (
-                <Button type="button" variant="link" size="sm" className="h-auto p-0 text-[10px]" onClick={onClear}>
+                <Button type="button" variant="link" size="sm" className="h-auto p-0 text-dense-caption" onClick={onClear}>
                   Clear
                 </Button>
               )}
@@ -357,10 +357,10 @@ export function InstanceListFilters({
               </div>
               <div className={instancesToolbarClass}>
                 <span className={instancesToolbarLabelClass}>Groups</span>
-                <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={onExpandAll}>
+                <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onExpandAll}>
                   Expand
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={onCollapseAll}>
+                <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onCollapseAll}>
                   Collapse
                 </Button>
               </div>

@@ -12,7 +12,7 @@ function RiskMetricTile({ label, value, valueClass }: { label: string; value: st
   return (
     <Card variant="elevated" size="sm">
       <CardContent className="py-3">
-        <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="mb-1 text-dense-caption uppercase tracking-wide text-muted-foreground">{label}</p>
         <p className={cn('font-mono text-lg font-semibold tabular-nums', valueClass)}>{value}</p>
       </CardContent>
     </Card>

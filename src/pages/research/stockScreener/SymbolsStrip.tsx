@@ -29,8 +29,8 @@ export function SymbolsStrip({
     <div className="rounded-lg border border-border bg-card/50 p-3 space-y-2">
       <div className="flex items-center gap-2 text-xs">
         <span className="font-semibold">Symbols</span>
-        {asOf && <span className="font-mono text-[10px] text-muted-foreground">as-of {asOf}</span>}
-        {loading && <span className="text-[10px] text-muted-foreground">loading…</span>}
+        {asOf && <span className="font-mono text-dense-caption text-muted-foreground">as-of {asOf}</span>}
+        {loading && <span className="text-dense-caption text-muted-foreground">loading…</span>}
       </div>
       <textarea
         rows={2}
@@ -39,7 +39,7 @@ export function SymbolsStrip({
         placeholder="AAPL,MSFT,NVDA  — or select conditions above"
         className="w-full font-mono text-xs min-h-[52px] resize-y rounded-md border border-input bg-background px-3 py-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-dense-meta">
         <span className="text-muted-foreground">
           Parsed <strong className="text-foreground font-mono">{parsedCount}</strong>
         </span>

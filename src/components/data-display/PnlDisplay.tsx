@@ -28,7 +28,7 @@ export function PnlCell({
   return (
     <div className="text-right leading-snug font-mono tabular-nums">
       <div className={pnlColorClass(dollar)}>{formatDollar(dollar)}</div>
-      <div className={cn('text-[length:var(--text-dense-meta)]', pnlColorClass(pct))}>
+      <div className={cn('text-dense-meta', pnlColorClass(pct))}>
         {formatPct(pct)}
       </div>
     </div>

@@ -12,7 +12,7 @@ export const opportunitiesToolbarActionsClass = cn(
 )
 
 export const opportunitiesToolbarLabelClass = cn(
-  'mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
+  'mr-1 shrink-0 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const opportunitiesEmptyHintClass = denseTable.emptyHint
@@ -32,11 +32,11 @@ export const OPPORTUNITIES_TABLE_COL_WIDTHS = {
 export const opportunitiesNameCellClass = cn('font-medium')
 
 export const opportunitiesMetaCellClass = cn(
-  'text-[length:var(--text-dense-meta)] text-muted-foreground',
+  'text-dense-meta text-muted-foreground',
 )
 
 export const opportunitiesScopeCellClass = cn(
-  'max-w-0 truncate text-[length:var(--text-dense-meta)]',
+  'max-w-0 truncate text-dense-meta',
 )
 
 export const opportunitiesSwitchCellClass = cn('text-center')

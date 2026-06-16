@@ -8,7 +8,7 @@ export const coveragePanel = {
   poolPanel:
     'min-w-0 overflow-x-auto rounded-md border border-border bg-[color-mix(in_srgb,var(--card)_88%,var(--muted))] px-2 py-1.5 pb-2',
   sectionHint: 'mb-1.5 text-xs text-muted-foreground',
-  sectionHintSm: 'text-[0.68rem]',
+  sectionHintSm: 'text-dense-meta',
   poolEmptyExplanation: 'text-xs text-muted-foreground',
   placeholderText: 'text-xs text-muted-foreground',
   totalsLine: 'mb-2 text-xs text-muted-foreground',

@@ -16,7 +16,7 @@ import { ChartLegend } from './ChartLegend'
 import { CategoryDetailStocksCarousel } from './CategoryDetailStocksCarousel'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { PositionsChartCell, DonutChartRow } from './PositionsChartCell'
-import { bubbleButtonClass, bubbleGroupClass } from './bubbleSwitchStyles'
+import { segmentButtonClass as bubbleButtonClass, segmentGroupClass as bubbleGroupClass } from '@/components/data-display'
 import styles from '../PositionsChartsSection.module.css'
 
 interface Props {

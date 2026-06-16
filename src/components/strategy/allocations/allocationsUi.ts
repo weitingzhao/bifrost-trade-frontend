@@ -28,7 +28,7 @@ export const allocationsToolbarActionsClass = cn(
 )
 
 export const allocationsToolbarLabelClass = cn(
-  'mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
+  'mr-1 shrink-0 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const allocationsEmptyHintClass = denseTable.emptyHint
@@ -50,13 +50,13 @@ export const ALLOCATIONS_TABLE_COL_WIDTHS = {
 export const allocationsNameCellClass = cn('font-medium')
 
 export const allocationsMetaCellClass = cn(
-  'max-w-0 truncate text-[length:var(--text-dense-meta)] text-muted-foreground',
+  'max-w-0 truncate text-dense-meta text-muted-foreground',
 )
 
 export const allocationsOppTagsCellClass = cn('flex flex-wrap gap-1')
 
 export const allocationsNumCellClass = cn(
-  'text-right font-mono tabular-nums text-[length:var(--text-dense-meta)]',
+  'text-right font-mono tabular-nums text-dense-meta',
 )
 
 export const allocationsSwitchCellClass = cn('text-center')

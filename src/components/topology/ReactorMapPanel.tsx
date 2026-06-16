@@ -111,13 +111,13 @@ export function ReactorMapPanel() {
         aria-label="Resize Reactor Map height"
       />
       <div className="flex items-center gap-2 px-3 py-1 border-b border-border/50 shrink-0">
-        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-cyan-500/80">
+        <span className="font-mono text-dense-caption font-bold uppercase tracking-[0.15em] text-cyan-500/80">
           System topology
         </span>
-        <span className="hidden font-mono text-[9px] text-muted-foreground sm:inline">{layout.label}</span>
+        <span className="hidden font-mono text-dense-micro text-muted-foreground sm:inline">{layout.label}</span>
         <div className="flex-1" />
         {isLoading && (
-          <span className="text-[10px] text-muted-foreground">Scanning…</span>
+          <span className="text-dense-caption text-muted-foreground">Scanning…</span>
         )}
         <button
           type="button"

@@ -69,7 +69,7 @@ function DataSourceCard({
     >
       <div className="p-3 space-y-2 bg-secondary">
         <div className="flex items-start justify-between gap-2">
-          <div className="font-mono text-[11px] min-w-0">
+          <div className="font-mono text-dense-meta min-w-0">
             {schema && <span className="text-muted-foreground">{schema}.</span>}
             <span className="text-sky-300/90 break-all">{name}</span>
           </div>
@@ -78,14 +78,14 @@ function DataSourceCard({
               <Badge
                 variant="outline"
                 className={cn(
-                  'text-[9px]',
+                  'text-dense-micro',
                   hasViewQuery ? 'text-lamp-green border-lamp-green/40' : 'text-muted-foreground',
                 )}
               >
                 {hasViewQuery ? 'SQL' : 'NO SQL'}
               </Badge>
             )}
-            <Badge variant={tag.variant} className="text-[9px]">
+            <Badge variant={tag.variant} className="text-dense-micro">
               {tag.label}
             </Badge>
           </div>
@@ -94,7 +94,7 @@ function DataSourceCard({
         {isComputed && (
           <div className="rounded-md border border-border bg-background/50 p-2 space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+              <span className="text-dense-caption font-semibold text-muted-foreground uppercase tracking-wide">
                 {hasViewQuery ? 'View SQL (live from PostgreSQL)' : 'No view SQL available'}
               </span>
               {hasViewQuery && (
@@ -102,7 +102,7 @@ function DataSourceCard({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-6 px-2 text-[10px]"
+                  className="h-6 px-2 text-dense-caption"
                   onClick={() => void handleCopyViewSql()}
                 >
                   {sqlCopied ? 'Copied' : 'Copy'}
@@ -110,11 +110,11 @@ function DataSourceCard({
               )}
             </div>
             {hasViewQuery ? (
-              <pre className="max-h-40 overflow-auto text-[10px] font-mono text-muted-foreground whitespace-pre-wrap">
+              <pre className="max-h-40 overflow-auto text-dense-caption font-mono text-muted-foreground whitespace-pre-wrap">
                 {entry.view_query}
               </pre>
             ) : (
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-dense-caption text-muted-foreground">
                 This object is not a PostgreSQL view (or view definition is unavailable with current DB
                 permissions).
               </p>
@@ -125,7 +125,7 @@ function DataSourceCard({
         <p className="text-muted-foreground leading-snug">{entry.role}</p>
 
         {entry.typical_ingest && (
-          <div className="flex flex-wrap gap-x-2 text-[10px]">
+          <div className="flex flex-wrap gap-x-2 text-dense-caption">
             <span className="text-muted-foreground uppercase tracking-wide">Typical ingest</span>
             <span>{entry.typical_ingest}</span>
           </div>
@@ -133,10 +133,10 @@ function DataSourceCard({
 
         {entry.depends_on && entry.depends_on.length > 0 && (
           <div className="space-y-1">
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Depends on</span>
+            <span className="text-dense-caption text-muted-foreground uppercase tracking-wide">Depends on</span>
             <div className="flex flex-wrap gap-1">
               {entry.depends_on.map(d => (
-                <span key={d} className="rounded bg-muted px-1.5 py-px font-mono text-[10px]">
+                <span key={d} className="rounded bg-muted px-1.5 py-px font-mono text-dense-caption">
                   {d}
                 </span>
               ))}
@@ -146,12 +146,12 @@ function DataSourceCard({
 
         {entry.data_points.length > 0 && (
           <div className="space-y-1 pt-1 border-t border-border/60">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+            <span className="text-dense-caption font-semibold text-muted-foreground uppercase tracking-wide">
               Supported data points
             </span>
             <div className="flex flex-wrap gap-1">
               {entry.data_points.map(dp => (
-                <span key={dp} className="rounded bg-muted/80 px-1.5 py-px text-[10px]">
+                <span key={dp} className="rounded bg-muted/80 px-1.5 py-px text-dense-caption">
                   {dp}
                 </span>
               ))}
@@ -216,7 +216,7 @@ export function DataCatalogPanel({
             >
               <span
                 className={cn(
-                  'text-[10px] font-bold uppercase tracking-wider',
+                  'text-dense-caption font-bold uppercase tracking-wider',
                   tab.key === 'raw' ? 'text-sky-400' : 'text-violet-400',
                 )}
               >
@@ -224,7 +224,7 @@ export function DataCatalogPanel({
               </span>
               <span className="text-xs font-medium">{tab.title}</span>
               {count > 0 && (
-                <span className="text-[10px] font-mono text-muted-foreground">{count} entries</span>
+                <span className="text-dense-caption font-mono text-muted-foreground">{count} entries</span>
               )}
             </button>
           )

@@ -55,7 +55,7 @@ export function BarsJobsTable({
       <DenseTableBody>
         {jobs.map(row => (
           <DenseTableRow key={row.job_id}>
-            <DenseTableCell className="font-mono text-[10px]">{row.job_id}</DenseTableCell>
+            <DenseTableCell className="font-mono text-dense-caption">{row.job_id}</DenseTableCell>
             <DenseTableCell className="font-medium">{row.symbol}</DenseTableCell>
             <DenseTableCell>{row.period}</DenseTableCell>
             <DenseTableCell>{statusBadge(row.status)}</DenseTableCell>

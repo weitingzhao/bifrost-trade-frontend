@@ -223,7 +223,7 @@ function LiabilityLegend({ underlyingClose, maxPainStrike }: {
   maxPainStrike: number
 }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] text-muted-foreground" role="presentation">
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-dense-caption text-muted-foreground" role="presentation">
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
         <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
         Call liability

@@ -28,7 +28,7 @@ export const gatesToolbarActionsClass = cn(
 )
 
 export const gatesCountMetaClass = cn(
-  'text-[length:var(--text-dense-meta)] text-muted-foreground tabular-nums',
+  'text-dense-meta text-muted-foreground tabular-nums',
 )
 
 export const gatesEmptyHintClass = denseTable.emptyHint
@@ -56,7 +56,7 @@ export const gatesVersionClass = cn(
 )
 
 export const gatesDimensionsCellClass = cn(
-  'max-w-0 truncate text-[length:var(--text-dense-meta)] text-muted-foreground',
+  'max-w-0 truncate text-dense-meta text-muted-foreground',
 )
 
 export const gatesActiveCellClass = cn('text-center')

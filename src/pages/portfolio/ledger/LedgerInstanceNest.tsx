@@ -51,7 +51,7 @@ function ContractTable({
 
   return (
     <div className="min-w-0">
-      <h6 className={cn(denseTable.sectionTitle, 'text-[length:var(--text-dense-meta)] uppercase tracking-wide')}>
+      <h6 className={cn(denseTable.sectionTitle, 'text-dense-meta uppercase tracking-wide')}>
         {title}
       </h6>
       <NestedDenseTable>

@@ -26,7 +26,7 @@ const SINCE_TOOLTIP =
 
 const SINCE_PRESET_TABS = LEDGER_SINCE_PRESET_TABS.filter(t => t.id !== 'all')
 
-const COMPACT_SELECT_TRIGGER = 'h-[1.875rem] min-w-[5.5rem] text-[0.8125rem] px-2'
+const COMPACT_SELECT_TRIGGER = 'h-[1.875rem] min-w-[5.5rem] text-dense-body px-2'
 
 type Props = {
   sincePreset: LedgerSincePreset
@@ -154,7 +154,7 @@ export function LedgerFilterBar({
 
           {sincePreset !== 'all' && !expiryFilterYear && (
             <span
-              className="inline-flex flex-wrap items-baseline text-[0.6875rem] text-muted-foreground"
+              className="inline-flex flex-wrap items-baseline text-dense-meta text-muted-foreground"
               role="status"
               title={`Trade date window: ${dateRange.start} → ${dateRange.end}`}
             >
@@ -287,7 +287,7 @@ export function LedgerFilterBar({
       </div>
 
       {activeFilterSummary.length > 0 && (
-        <p className="m-0 text-[0.6875rem] text-muted-foreground leading-snug" role="status" aria-label="Active filters">
+        <p className="m-0 text-dense-meta text-muted-foreground leading-snug" role="status" aria-label="Active filters">
           {activeFilterSummary.join(' · ')}
         </p>
       )}

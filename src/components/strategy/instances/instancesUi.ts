@@ -6,7 +6,7 @@ export const instancesControlsInnerClass = cn(
 )
 
 export const instancesFieldLabelClass = cn(
-  'text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
+  'text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const instancesInlineFieldClass = cn('flex min-w-0 items-center gap-1.5')
@@ -20,11 +20,11 @@ export const instancesFilterPrimaryRowClass = cn(
 export const instancesFilterRowClass = cn('flex flex-wrap items-center gap-x-1.5 gap-y-1')
 
 export const instancesFilterLabelClass = cn(
-  'mr-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
+  'mr-0.5 shrink-0 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const instancesFilterBubbleClass = cn(
-  'rounded-full px-2 py-0.5 text-[0.72rem] font-semibold leading-tight transition-colors',
+  'rounded-full px-2 py-0.5 text-dense-label font-semibold leading-tight transition-colors',
   'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
 )
 
@@ -33,7 +33,7 @@ export const instancesFilterBubbleActiveClass = cn(
 )
 
 export const instancesFilterMetaClass = cn(
-  'shrink-0 text-[10px] text-muted-foreground tabular-nums',
+  'shrink-0 text-dense-caption text-muted-foreground tabular-nums',
 )
 
 export const instancesFilterFooterClass = cn(
@@ -43,17 +43,17 @@ export const instancesFilterFooterClass = cn(
 export const instancesToolbarClass = cn('flex flex-wrap items-center gap-x-3 gap-y-1')
 
 export const instancesToolbarLabelClass = cn(
-  'mr-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
+  'mr-0.5 shrink-0 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const instancesEmptyHintClass = denseTable.emptyHint
 
 export const instancesHeadGroupClass = cn(
-  'text-center font-semibold normal-case tracking-normal text-[length:var(--text-dense-meta)]',
+  'text-center font-semibold normal-case tracking-normal text-dense-meta',
 )
 
 export const instancesHeadSubClass = cn(
-  'font-medium normal-case tracking-normal text-[length:var(--text-dense-meta)] text-muted-foreground',
+  'font-medium normal-case tracking-normal text-dense-meta text-muted-foreground',
 )
 
 export const instancesSortBtnClass = cn(
@@ -95,7 +95,7 @@ export const instancesColOppClass = cn(
 export const instancesOppCellClass = 'flex min-w-0 flex-col gap-0.5'
 
 export const instancesOppNameClass = cn(
-  'min-w-0 text-[length:var(--text-dense)] font-semibold leading-snug text-option-category-opportunity whitespace-normal break-words [overflow-wrap:anywhere]',
+  'min-w-0 text-dense-body font-semibold leading-snug text-option-category-opportunity whitespace-normal break-words [overflow-wrap:anywhere]',
 )
 
 export const instancesColStatusClass = 'max-w-none whitespace-nowrap'

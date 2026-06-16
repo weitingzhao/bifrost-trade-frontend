@@ -9,7 +9,7 @@ export const addOptionFormPanelClass = cn(
 )
 
 export const addOptionFieldLabelClass = cn(
-  'text-[10px] font-semibold uppercase tracking-wider text-muted-foreground',
+  'text-dense-caption font-semibold uppercase tracking-wider text-muted-foreground',
 )
 
 export const addOptionSymbolBadgeClass = cn(
@@ -17,7 +17,7 @@ export const addOptionSymbolBadgeClass = cn(
 )
 
 export const addOptionPreviewClass = cn(
-  'rounded-md border border-border/60 bg-background/60 px-3 py-2 font-mono text-[11px] text-muted-foreground',
+  'rounded-md border border-border/60 bg-background/60 px-3 py-2 font-mono text-dense-meta text-muted-foreground',
 )
 
-export const addOptionHintClass = cn('text-[11px] text-muted-foreground')
+export const addOptionHintClass = cn('text-dense-meta text-muted-foreground')

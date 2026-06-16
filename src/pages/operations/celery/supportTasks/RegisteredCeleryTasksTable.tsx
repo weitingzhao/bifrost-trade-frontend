@@ -40,7 +40,7 @@ export function RegisteredCeleryTasksTable({ tasks }: { tasks: CelerySupportedTa
             return (
               <DenseTableRow key={row.name}>
                 <DenseTableCell>
-                  <code className="font-mono text-[11px] break-all">{row.name}</code>
+                  <code className="font-mono text-dense-meta break-all">{row.name}</code>
                 </DenseTableCell>
                 <DenseTableCell>
                   {dq === '—' ? (

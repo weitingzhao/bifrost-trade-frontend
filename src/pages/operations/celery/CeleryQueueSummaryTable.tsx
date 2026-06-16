@@ -375,14 +375,14 @@ export function CeleryQueueSummaryTable({
                           {queueDisplayName(qs)}
                           {qs.db_totals_shared && (
                             <span
-                              className="text-muted-foreground ml-0.5 text-[10px]"
+                              className="text-muted-foreground ml-0.5 text-dense-caption"
                               title="DB totals shared with Massive aggregates"
                             >
                               *
                             </span>
                           )}
                         </button>
-                        <p className="text-[10px] font-mono text-muted-foreground">{qs.name}</p>
+                        <p className="text-dense-caption font-mono text-muted-foreground">{qs.name}</p>
                       </div>
                       {onToggleSupportTasksFilter && (
                         <Tooltip>

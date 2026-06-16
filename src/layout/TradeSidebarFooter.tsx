@@ -88,7 +88,7 @@ function CollapsedReactorButton() {
         >
           <Network className="h-4 w-4 shrink-0" />
           {alertCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
+            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-dense-micro font-bold text-white leading-none">
               {alertCount > 9 ? '9+' : alertCount}
             </span>
           )}
@@ -112,7 +112,7 @@ function CollapsedLogButton() {
         >
           <ScrollText className="h-4 w-4 shrink-0" />
           {errorCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white leading-none">
+            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-dense-micro font-bold text-white leading-none">
               {errorCount > 9 ? '9+' : errorCount}
             </span>
           )}

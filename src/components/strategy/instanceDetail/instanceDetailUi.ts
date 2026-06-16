@@ -13,16 +13,16 @@ export const instanceMutedClass = 'text-muted-foreground'
 export const instanceErrorClass = 'text-destructive text-xs'
 
 export const instanceStatusOpenClass =
-  'inline-flex rounded-full border border-success/40 bg-success-soft px-2 py-0.5 text-[10px] font-semibold uppercase text-success'
+  'inline-flex rounded-full border border-success/40 bg-success-soft px-2 py-0.5 text-dense-caption font-semibold uppercase text-success'
 export const instanceStatusClosedClass =
-  'inline-flex rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground'
+  'inline-flex rounded-full border border-border px-2 py-0.5 text-dense-caption font-semibold uppercase text-muted-foreground'
 export const instanceStatusUnknownClass =
-  'inline-flex rounded-full border border-warning/40 bg-warning-soft px-2 py-0.5 text-[10px] font-semibold uppercase text-warning'
+  'inline-flex rounded-full border border-warning/40 bg-warning-soft px-2 py-0.5 text-dense-caption font-semibold uppercase text-warning'
 
 export const instancePnlColumnClass = 'min-w-0'
 export const instancePnlSectionHeadClass = 'flex items-center gap-2 mb-2'
 export const instancePnlInfoBtnClass =
-  'inline-flex h-5 w-5 items-center justify-center rounded border border-border text-muted-foreground text-[10px] hover:bg-secondary'
+  'inline-flex h-5 w-5 items-center justify-center rounded border border-border text-muted-foreground text-dense-caption hover:bg-secondary'
 export const instancePnlPanelClass = inspectorShell.card
 export const instancePnlPanelMutedClass = 'rounded-lg border border-dashed border-border p-3 text-center'
 export const instancePnlBandsClass = 'grid gap-2 sm:grid-cols-2'
@@ -42,7 +42,7 @@ export const instanceExecTabsClass = 'inline-flex rounded-full border border-bor
 export const instanceExecTabClass =
   'rounded-full px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors'
 export const instanceExecTabActiveClass = 'bg-card text-foreground shadow-sm'
-export const instanceExecHintClass = 'text-[11px] text-muted-foreground'
+export const instanceExecHintClass = 'text-dense-meta text-muted-foreground'
 
 export const instanceKlinePanelClass =
   'rounded-lg border border-dashed border-border bg-secondary/20 p-6 text-center'
@@ -51,9 +51,9 @@ export const instanceKlineHintClass = 'text-xs text-muted-foreground'
 /** Executions match tables (Phase 4.9 — no module CSS) */
 export const instanceExecMatchWrapClass =
   'mb-3 overflow-x-auto rounded-lg border border-border bg-card/90'
-export const instanceExecMatchTableClass = 'w-full border-collapse text-[0.8125rem]'
+export const instanceExecMatchTableClass = 'w-full border-collapse text-dense-body'
 export const instanceExecMatchThClass =
-  'border-b border-border bg-muted/25 px-2 py-1.5 text-left align-top text-[0.72rem] font-semibold tracking-wide'
+  'border-b border-border bg-muted/25 px-2 py-1.5 text-left align-top text-dense-label font-semibold tracking-wide'
 export const instanceExecMatchThBuyClass = 'text-profit'
 export const instanceExecMatchThSellClass = 'text-right text-loss'
 export const instanceExecMatchTdClass =
@@ -62,16 +62,16 @@ export const instanceExecMatchTdNumsClass = 'font-mono tabular-nums'
 export const instanceExecMatchTdSellClass = 'text-right'
 export const instanceExecContractCenterClass = 'text-center'
 export const instanceExecContractLinkClass =
-  'font-mono text-[0.8125rem] font-semibold text-[var(--color-entity-option)]'
+  'font-mono text-dense-body font-semibold text-[var(--color-entity-option)]'
 export const instanceExecNetBadgeClass =
   'mt-0.5 inline-flex flex-wrap items-center justify-center gap-1.5 text-xs'
 export const instanceExecNetOpenClass =
-  'rounded px-1.5 py-0.5 text-[0.68rem] font-semibold bg-amber-500/20 text-foreground'
+  'rounded px-1.5 py-0.5 text-dense-meta font-semibold bg-amber-500/20 text-foreground'
 export const instanceExecNetFlatClass =
-  'rounded px-1.5 py-0.5 text-[0.68rem] font-semibold bg-[var(--color-success-soft)] text-profit'
+  'rounded px-1.5 py-0.5 text-dense-meta font-semibold bg-[var(--color-success-soft)] text-profit'
 export const instanceExecFillsWrapClass = 'grid grid-cols-2 border-t border-border'
 export const instanceExecFillsHeaderClass =
-  'px-2.5 py-1 text-[0.72rem] font-semibold uppercase tracking-wide'
+  'px-2.5 py-1 text-dense-label font-semibold uppercase tracking-wide'
 export const instanceExecFillsBuyHeaderClass =
   'border-b border-[var(--color-success)]/35 bg-[var(--color-success-soft)] text-profit'
 export const instanceExecFillsSellHeaderClass =
@@ -80,4 +80,4 @@ export const instanceExecFillsRowClass =
   'grid grid-cols-4 gap-1 border-t border-border/50 px-2.5 py-1 font-mono text-xs tabular-nums'
 export const instanceExecFillsColSellClass = 'border-l border-border'
 export const instanceExecTotalsRowClass =
-  'flex flex-wrap justify-end gap-x-5 gap-y-2 rounded-lg border border-border bg-muted/20 px-2.5 py-2 text-[0.8125rem]'
+  'flex flex-wrap justify-end gap-x-5 gap-y-2 rounded-lg border border-border bg-muted/20 px-2.5 py-2 text-dense-body'

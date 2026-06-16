@@ -50,14 +50,14 @@ export function ConditionChipGroup({
 
   const clearAction =
     totalActive > 0 && onClearAll && !cardAccentKey ? (
-      <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={onClearAll}>
+      <Button variant="ghost" size="sm" className="h-6 px-2 text-dense-caption" onClick={onClearAll}>
         Clear
       </Button>
     ) : cardAccentKey && totalActive > 0 && onClearGroup && groups.length === 1 ? (
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 px-2 text-[10px]"
+        className="h-6 px-2 text-dense-caption"
         onClick={() => onClearGroup(groups[0].key)}
       >
         Clear
@@ -85,7 +85,7 @@ export function ConditionChipGroup({
                   {groupActive > 0 && onClearGroup && (
                     <button
                       type="button"
-                      className="text-[9px] text-muted-foreground underline hover:text-foreground"
+                      className="text-dense-micro text-muted-foreground underline hover:text-foreground"
                       onClick={() => onClearGroup(g.key)}
                     >
                       clear

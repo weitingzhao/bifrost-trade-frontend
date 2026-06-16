@@ -115,7 +115,7 @@ export default function TechStackPage() {
         title="Tech Stack"
         description="Authoritative technology choices, Dense UI standards, and UI governance for Bifrost Trade Frontend."
         actions={
-          <Badge variant="secondary" className="font-mono text-[10px] uppercase tracking-wide">
+          <Badge variant="secondary" className="font-mono text-dense-caption uppercase tracking-wide">
             Core reference
           </Badge>
         }

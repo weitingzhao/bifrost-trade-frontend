@@ -12,7 +12,7 @@ export function OptionDataQualityBadge({ items }: Props) {
   if (items.length === 0) return null
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-border bg-background px-2 py-1 text-[0.7rem]">
+    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-border bg-background px-2 py-1 text-dense-meta">
       <span className="font-bold uppercase tracking-wide text-muted-foreground">Data Quality</span>
       {items.map((item) => (
         <span

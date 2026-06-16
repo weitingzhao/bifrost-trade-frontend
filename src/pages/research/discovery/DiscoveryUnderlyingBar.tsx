@@ -25,7 +25,7 @@ export function DiscoveryUnderlyingBar(props: Props) {
         <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col items-stretch">
           <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2.5 gap-y-2">
             <label
-              className="shrink-0 text-[0.7rem] font-bold uppercase tracking-wider text-muted-foreground"
+              className="shrink-0 text-dense-meta font-bold uppercase tracking-wider text-muted-foreground"
               htmlFor="od-underlying-manual-input"
             >
               Symbol
@@ -53,7 +53,7 @@ export function DiscoveryUnderlyingBar(props: Props) {
           {props.stkSymbols.length > 0 ? (
             <div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-2">
               <span
-                className="shrink-0 text-[0.7rem] font-bold uppercase tracking-wider text-muted-foreground"
+                className="shrink-0 text-dense-meta font-bold uppercase tracking-wider text-muted-foreground"
                 id="od-underlying-bubbles-label"
               >
                 Wishlist
@@ -85,12 +85,12 @@ export function DiscoveryUnderlyingBar(props: Props) {
                       title={`${symU} · ${priceLabel} (daily)`}
                     >
                       <span className="inline-flex max-w-full min-w-0 flex-nowrap items-baseline whitespace-nowrap">
-                        <span className="text-[0.78rem] font-bold tabular-nums tracking-wide">{symU}</span>
-                        <span className="text-muted-foreground text-[0.7rem] font-medium" aria-hidden>
+                        <span className="text-dense-label font-bold tabular-nums tracking-wide">{symU}</span>
+                        <span className="text-muted-foreground text-dense-meta font-medium" aria-hidden>
                           {' '}
                           ·{' '}
                         </span>
-                        <span className="text-[0.65rem] font-semibold tabular-nums text-muted-foreground">
+                        <span className="text-dense-caption font-semibold tabular-nums text-muted-foreground">
                           {priceLabel}
                         </span>
                       </span>

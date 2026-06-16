@@ -578,11 +578,30 @@ if daemon_legacy_strings=$(grep -rE 'daemon-group-|table-operations|ib-connectio
   fi
 fi
 
+# Deprecated BubbleSwitch / bubbleSwitchStyles imports (use SegmentControl from @/components/data-display)
+if bubble_imports=$(grep -rE "from.*BubbleSwitch|from.*bubbleSwitchStyles|from.*LedgerBubbleBtn" src --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+  if [[ -n "$bubble_imports" ]]; then
+    echo "$bubble_imports" >&2
+    report "deprecated BubbleSwitch / LedgerBubbleBtn imports (use SegmentControl from @/components/data-display)"
+  fi
+fi
+
+# Dense typography ratchet: hardcoded text-[Npx] / text-[0.NNrem] should only go DOWN.
+# Allowed exceptions: text-[7px], text-[8px], and sizing/winRate responsive gradations.
+HARDCODED_TYPO_BASELINE=26
+hardcoded_typo_count=$(grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$hardcoded_typo_count" -gt "$HARDCODED_TYPO_BASELINE" ]]; then
+  grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null >&2
+  report "hardcoded typography increased ($hardcoded_typo_count > baseline $HARDCODED_TYPO_BASELINE) — use text-dense-body/label/meta/caption/micro tokens"
+elif [[ "$hardcoded_typo_count" -lt "$HARDCODED_TYPO_BASELINE" ]]; then
+  echo "check-legacy-css: hardcoded typography count $hardcoded_typo_count < baseline $HARDCODED_TYPO_BASELINE — lower HARDCODED_TYPO_BASELINE in scripts/check-legacy-css.sh" >&2
+fi
+
 # Business semantic tokens (see /settings/ui-design-system):
 # PnL must use pnlColorClass / text-profit / text-loss / text-unrealized — NOT raw palette classes.
 # Ratchet: existing raw emerald/red usages outside data-display are grandfathered;
 # the count must only go DOWN. Lower the baseline as pages migrate.
-RAW_PNL_PALETTE_BASELINE=61
+RAW_PNL_PALETTE_BASELINE=29
 raw_pnl_count=$(grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
   --include='*.tsx' --include='*.ts' 2>/dev/null \
   | grep -v 'src/components/data-display' | wc -l | tr -d ' ')

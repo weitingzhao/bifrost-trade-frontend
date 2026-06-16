@@ -57,25 +57,25 @@ export function InstrumentTypeDataSupportSection({
                   <th className={readinessStepUi.snapTh}>Description</th>
                   <th className={readinessStepUi.snapTh}>
                     Income
-                    <span className="block text-[9px] font-normal normal-case tracking-normal text-muted-foreground">
+                    <span className="block text-dense-micro font-normal normal-case tracking-normal text-muted-foreground">
                       distinct symbols
                     </span>
                   </th>
                   <th className={readinessStepUi.snapTh}>
                     Balance
-                    <span className="block text-[9px] font-normal normal-case tracking-normal text-muted-foreground">
+                    <span className="block text-dense-micro font-normal normal-case tracking-normal text-muted-foreground">
                       distinct symbols
                     </span>
                   </th>
                   <th className={readinessStepUi.snapTh}>
                     Cash flow
-                    <span className="block text-[9px] font-normal normal-case tracking-normal text-muted-foreground">
+                    <span className="block text-dense-micro font-normal normal-case tracking-normal text-muted-foreground">
                       distinct symbols
                     </span>
                   </th>
                   <th className={readinessStepUi.snapTh}>
                     Ratios
-                    <span className="block text-[9px] font-normal normal-case tracking-normal text-muted-foreground">
+                    <span className="block text-dense-micro font-normal normal-case tracking-normal text-muted-foreground">
                       distinct symbols
                     </span>
                   </th>
@@ -127,7 +127,7 @@ export function InstrumentTypeDataSupportSection({
                                 style={{ width: `${Math.max(0, Math.min(100, coveragePct))}%` }}
                               />
                             </div>
-                            <span className="font-mono text-[10px] tabular-nums shrink-0">
+                            <span className="font-mono text-dense-caption tabular-nums shrink-0">
                               {coveragePct.toFixed(1)}%
                             </span>
                           </div>
@@ -157,7 +157,7 @@ function SupportFundCell({
     <div className="flex flex-col gap-0.5">
       <span className={badge.className}>{badge.text}</span>
       {typeof count === 'number' && (
-        <span className="font-mono text-[10px] tabular-nums text-muted-foreground">{fmt(count)}</span>
+        <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">{fmt(count)}</span>
       )}
     </div>
   )

@@ -65,7 +65,7 @@ function FunnelRow({
       }
       title={isClickable ? `Load ${symbolCount} symbols → Results` : undefined}
       className={cn(
-        'grid grid-cols-[52px_1fr_auto] items-center gap-2 py-0.5 text-[11px]',
+        'grid grid-cols-[52px_1fr_auto] items-center gap-2 py-0.5 text-dense-meta',
         isClickable && '-mx-1 cursor-pointer rounded px-1 hover:bg-muted/30',
         isActive && '-mx-1 rounded bg-accent/40 px-1',
       )}
@@ -87,7 +87,7 @@ function FunnelRow({
       </div>
       <span className="whitespace-nowrap font-mono tabular-nums text-muted-foreground">
         {symbolCount.toLocaleString()}
-        <span className="text-[10px] opacity-70">({sharePct}%)</span>
+        <span className="text-dense-caption opacity-70">({sharePct}%)</span>
       </span>
     </div>
   )
@@ -120,7 +120,7 @@ export function DistFunnelCard({
       actions={
         <div className="flex items-center gap-1">
           {asOf && (
-            <span className="font-mono text-[10px] text-muted-foreground">As of {asOf}</span>
+            <span className="font-mono text-dense-caption text-muted-foreground">As of {asOf}</span>
           )}
           {onRefresh && (
             <Button
@@ -164,7 +164,7 @@ export function DistFunnelCard({
               : 'No distribution data.'}
           </p>
         )}
-        {loading && <p className="text-[10px] text-muted-foreground">Loading symbols…</p>}
+        {loading && <p className="text-dense-caption text-muted-foreground">Loading symbols…</p>}
       </div>
     </ScreenerCard>
   )

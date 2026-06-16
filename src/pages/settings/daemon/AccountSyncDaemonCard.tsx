@@ -68,7 +68,7 @@ export function AccountSyncDaemonCard({
         {!asd && (
           <p className="mt-1 text-xs text-muted-foreground">
             Start Account Sync Daemon from Ops (authenticated) or run{' '}
-            <code className="text-[11px]">python scripts/systemd/run_account_sync_daemon.py --config …</code>
+            <code className="text-dense-meta">python scripts/systemd/run_account_sync_daemon.py --config …</code>
           </p>
         )}
       </div>
@@ -156,9 +156,9 @@ export function AccountSyncDaemonCard({
       <Separator />
       <p className={daemonManualHintClass}>
         <strong className="text-foreground/80">Start (manual):</strong>{' '}
-        <code className="text-[11px]">python scripts/systemd/run_account_sync_daemon.py --config config/config.dev.yaml</code>
+        <code className="text-dense-meta">python scripts/systemd/run_account_sync_daemon.py --config config/config.dev.yaml</code>
         {' '}(dev){' '}|{' '}
-        <code className="text-[11px]">python scripts/systemd/run_account_sync_daemon.py --config config/config.prod.yaml</code>
+        <code className="text-dense-meta">python scripts/systemd/run_account_sync_daemon.py --config config/config.prod.yaml</code>
         {' '}(prod). Or use Ops on this page if your host runs systemd.
       </p>
     </div>

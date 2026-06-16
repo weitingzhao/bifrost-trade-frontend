@@ -337,7 +337,7 @@ export function InstanceTab({
                     <>
                       <div>{fmtDate(group.strategy_instance_opened_at_epoch)}</div>
                       {fmtDaysAgo(group.strategy_instance_opened_at_epoch) && (
-                        <div className="text-[10px] text-muted-foreground">
+                        <div className="text-dense-caption text-muted-foreground">
                           {fmtDaysAgo(group.strategy_instance_opened_at_epoch)}
                         </div>
                       )}

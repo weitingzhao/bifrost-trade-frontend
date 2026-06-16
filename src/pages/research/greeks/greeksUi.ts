@@ -6,7 +6,7 @@ export const greeksControlsInnerClass = cn(
 )
 
 export const greeksFieldLabelClass = cn(
-  'text-[length:var(--text-dense-meta)] font-semibold uppercase tracking-wide text-muted-foreground',
+  'text-dense-meta font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const greeksInfoBarClass = cn(
@@ -16,7 +16,7 @@ export const greeksInfoBarClass = cn(
 export const greeksInfoLabelClass = 'text-muted-foreground mr-1.5'
 
 export const greeksInfoApproxClass = cn(
-  'ml-auto text-[length:var(--text-dense-meta)] italic text-muted-foreground',
+  'ml-auto text-dense-meta italic text-muted-foreground',
 )
 
 export const greeksEmptyHintClass = denseTable.emptyHint
@@ -39,7 +39,7 @@ export function greeksDeltaCellClass(delta: number | null): string {
 
 export const greeksCalcTooltipClass = cn(
   'fixed z-50 max-w-md rounded-lg border border-border bg-popover p-3 shadow-lg',
-  'text-[length:var(--text-dense-meta)] font-mono pointer-events-none',
+  'text-dense-meta font-mono pointer-events-none',
 )
 
 export const greeksTooltipBodyClass = 'space-y-3'

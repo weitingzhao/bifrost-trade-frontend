@@ -132,7 +132,7 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
             <Button variant="ghost" size="icon" className="relative h-8 w-8" onClick={onOpenMessages} aria-label="Open messages">
               <Bell className="h-4 w-4" />
               {activeMsgCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white leading-none">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-dense-micro font-bold text-white leading-none">
                   {activeMsgCount > 9 ? '9+' : activeMsgCount}
                 </span>
               )}

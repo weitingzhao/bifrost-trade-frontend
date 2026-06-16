@@ -312,7 +312,7 @@ function OptionsDayDetail({
 
   return (
     <DayDetailShell title={selectedDay} onClose={onClose}>
-      <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
+      <p className="mb-3 text-dense-meta leading-relaxed text-muted-foreground">
         Realized: FIFO matched legs and pairs (Match PnL plus prorated linked-stock slippage).
         Unrealized: open quantity on unmatched fills. Commission shown in yellow beside each total.
       </p>
@@ -414,7 +414,7 @@ function OptionsPnlColumn({
                   aria-selected={sym === effectiveSymbol}
                   onClick={() => onSymbolTab(sym)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium transition-colors',
+                    'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-dense-meta font-medium transition-colors',
                     sym === effectiveSymbol
                       ? 'border-primary bg-primary/10 text-foreground'
                       : 'border-border text-muted-foreground hover:bg-muted',
@@ -575,15 +575,15 @@ function ContractGroup({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-[10px] uppercase tracking-wider w-[80px]">Record type</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider">Id</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider">Account</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider">Trade Date</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider">Side</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">Qty</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">Price</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">Commission</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">PnL</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider w-[80px]">Record type</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider">Id</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider">Account</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider">Trade Date</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider">Side</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Qty</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Price</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Commission</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider text-right">PnL</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -662,7 +662,7 @@ function ExecutionRow({
                       slippageTotal,
                     )
                   }}
-                  className="inline-block rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1 py-px text-[9px] font-mono cursor-pointer hover:bg-amber-500/30 transition-colors"
+                  className="inline-block rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1 py-px text-dense-micro font-mono cursor-pointer hover:bg-amber-500/30 transition-colors"
                 >
                   #{lid}
                 </button>
@@ -765,7 +765,7 @@ function StkDayDetail({
   return (
     <DayDetailShell title={selectedDay} onClose={onClose}>
       <p className="text-sm font-medium text-foreground/80 mb-1">STK executions ({label})</p>
-      <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
+      <p className="text-dense-meta text-muted-foreground mb-3 leading-relaxed">
         Calendar daily realized is the sum of broker realized_pnl on fills for this trade date in this bucket.
         {assetTab === 'cash_like'
           ? ' Cash-like Notional uses |qty|×price.'
@@ -778,16 +778,16 @@ function StkDayDetail({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-[10px] uppercase tracking-wider">Account</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider">Symbol</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider">Side</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">Qty</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">Price</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">
+              <TableHead className="text-dense-caption uppercase tracking-wider">Account</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider">Symbol</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider">Side</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Qty</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Price</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider text-right">
                 {assetTab === 'fixed_income' ? 'Stream' : 'Notional'}
               </TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">Realized PnL</TableHead>
-              <TableHead className="text-[10px] uppercase tracking-wider text-right">Commission</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Realized PnL</TableHead>
+              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Commission</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -897,15 +897,15 @@ function OptionStockLinkDialog({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="text-[10px] uppercase tracking-wider">Link id</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider">Stock id</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider">Symbol</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider">Trade date</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider text-right">Qty</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider text-right">Price</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider text-right">Close</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider text-right">Slippage</TableHead>
-                  <TableHead className="text-[10px] uppercase tracking-wider">Role</TableHead>
+                  <TableHead className="text-dense-caption uppercase tracking-wider">Link id</TableHead>
+                  <TableHead className="text-dense-caption uppercase tracking-wider">Stock id</TableHead>
+                  <TableHead className="text-dense-caption uppercase tracking-wider">Symbol</TableHead>
+                  <TableHead className="text-dense-caption uppercase tracking-wider">Trade date</TableHead>
+                  <TableHead className="text-dense-caption uppercase tracking-wider text-right">Qty</TableHead>
+                  <TableHead className="text-dense-caption uppercase tracking-wider text-right">Price</TableHead>
+                  <TableHead className="text-dense-caption uppercase tracking-wider text-right">Close</TableHead>
+                  <TableHead className="text-dense-caption uppercase tracking-wider text-right">Slippage</TableHead>
+                  <TableHead className="text-dense-caption uppercase tracking-wider">Role</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -958,7 +958,7 @@ function PnlColumnHeader({
         <h3 className="text-xs font-semibold text-foreground">{label}</h3>
         {count > 0 && (
           <>
-            <span className="text-[11px] text-muted-foreground">({count})</span>
+            <span className="text-dense-meta text-muted-foreground">({count})</span>
             <span className={cn('text-xs tabular-nums font-medium', isRealized ? pnlColorClass(total) : unrealizedPnlColorClass(total))}>
               {fmtUsd(total)}
             </span>
@@ -966,7 +966,7 @@ function PnlColumnHeader({
           </>
         )}
       </div>
-      <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">{subtitle}</p>
+      <p className="mt-0.5 text-dense-caption leading-snug text-muted-foreground">{subtitle}</p>
     </header>
   )
 }

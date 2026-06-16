@@ -35,7 +35,7 @@ function BoolMark({ value }: { value: boolean | undefined | null }) {
     return <span className="text-muted-foreground">—</span>
   }
   return (
-    <span className={cn('font-mono text-[10px]', value ? 'text-emerald-400' : 'text-red-400')}>
+    <span className={cn('font-mono text-dense-caption', value ? 'text-emerald-400' : 'text-red-400')}>
       {value ? '✓' : '✗'}
     </span>
   )
@@ -46,7 +46,7 @@ function StmtChip({ label, ok, title }: { label: string; ok?: boolean; title?: s
     <span
       title={title}
       className={cn(
-        'inline-block rounded border px-1 py-0 font-mono text-[9px]',
+        'inline-block rounded border px-1 py-0 font-mono text-dense-micro',
         ok
           ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
           : 'border-border text-muted-foreground',
@@ -175,11 +175,11 @@ function SymbolCell({
         ariaLabel={isActive ? 'Close inspector' : `Open ${symbol} inspector`}
         className={cn(
           denseTableEntityLink,
-          'shrink-0 font-mono text-[length:var(--text-dense-meta)]',
+          'shrink-0 font-mono text-dense-meta',
           isActive && 'underline decoration-2 underline-offset-2',
         )}
       />
-      <span className="text-[10px] text-muted-foreground shrink-0" aria-hidden>
+      <span className="text-dense-caption text-muted-foreground shrink-0" aria-hidden>
         ↗
       </span>
     </span>
@@ -264,7 +264,7 @@ export function ReadinessResultsTable({
                         label={r.symbol}
                         onClick={() => onOpenInspector(r.symbol, r)}
                         ariaLabel={`Open ${r.symbol} inspector`}
-                        className={cn(denseTableEntityLink, 'font-mono text-[length:var(--text-dense-meta)]')}
+                        className={cn(denseTableEntityLink, 'font-mono text-dense-meta')}
                       />
                     </DenseTableCell>
                     <DenseTableCell colSpan={7} className={denseTable.mutedMeta}>
@@ -297,7 +297,7 @@ export function ReadinessResultsTable({
                     <div>
                       <span
                         className={cn(
-                          'font-mono text-[11px]',
+                          'font-mono text-dense-meta',
                           techCellClass(techPassCount, techInsuf, techEvalPresent),
                         )}
                         title={
@@ -323,7 +323,7 @@ export function ReadinessResultsTable({
                   <DenseTableCell className={readinessCol.fund}>
                     <div>
                       <span
-                        className={cn('font-mono text-[11px]', fundCellClass(passCount, insuf))}
+                        className={cn('font-mono text-dense-meta', fundCellClass(passCount, insuf))}
                         title={insuf ? 'Insufficient data' : `${passCount}/8 passed`}
                       >
                         {insuf ? 'INS' : `${passCount}/8`}
@@ -340,7 +340,7 @@ export function ReadinessResultsTable({
                     <BoolMark value={r.included_in_universe} />
                   </DenseTableCell>
                   <DenseTableCell className={readinessCol.price}>
-                    <span className="inline-flex items-center gap-1 font-mono text-[11px] whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1 font-mono text-dense-meta whitespace-nowrap">
                       <BoolMark value={r.price_ready} />
                       <span className={denseTable.mutedMeta}>
                         {(r.bar_count_lookback ?? 0).toLocaleString()}b

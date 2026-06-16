@@ -125,7 +125,7 @@ export function PerformanceCalendarSection({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-[1.625rem] px-2 text-[11px]"
+                className="h-[1.625rem] px-2 text-dense-meta"
                 onClick={() => onShiftMonth(-1)}
                 aria-label="Previous month"
               >
@@ -136,7 +136,7 @@ export function PerformanceCalendarSection({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-[1.625rem] px-2 text-[11px]"
+                className="h-[1.625rem] px-2 text-dense-meta"
                 onClick={() => onShiftMonth(1)}
                 aria-label="Next month"
               >

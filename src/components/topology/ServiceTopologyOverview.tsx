@@ -91,7 +91,7 @@ function ReactorNode({
             variant="dot"
             className={cn('shrink-0', compact ? 'h-1.5 w-1.5' : 'h-2 w-2')}
           />
-          <span className={cn('font-semibold leading-none truncate', compact ? 'text-[9px]' : 'text-[11px]')}>
+          <span className={cn('font-semibold leading-none truncate', compact ? 'text-dense-micro' : 'text-dense-meta')}>
             {node.name}
           </span>
           {node.profile && <EnvChip profile={node.profile} />}
@@ -100,7 +100,7 @@ function ReactorNode({
         <div
           className={cn(
             'mt-0.5 flex items-center justify-between gap-0.5 font-mono tabular-nums text-muted-foreground',
-            compact ? 'text-[7px]' : 'text-[9px]',
+            compact ? 'text-[7px]' : 'text-dense-micro',
           )}
         >
           {isApi ? (

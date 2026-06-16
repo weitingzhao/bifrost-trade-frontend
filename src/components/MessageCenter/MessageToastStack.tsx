@@ -72,7 +72,7 @@ export function MessageToastStack({ messages, dismissedIds, onDismiss }: Props) 
               <IbConnectionMessageTitle msg={msg} />
             </p>
             <p className="text-[10.5px] text-[#7a8492] line-clamp-2">{msg.message}</p>
-            <p className="text-[10px] text-[#5c6572]">
+            <p className="text-dense-caption text-[#5c6572]">
               {formatLastUpdate(msg.occurred_at)} ago
             </p>
           </div>

@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 export const linkExecSectionClass = cn('space-y-2')
 
 export const linkExecSectionLabelClass = cn(
-  'text-[10px] font-semibold uppercase tracking-wider text-muted-foreground',
+  'text-dense-caption font-semibold uppercase tracking-wider text-muted-foreground',
 )
 
 export const linkExecPillsClass = cn('flex flex-wrap gap-2')
@@ -18,7 +18,7 @@ export const linkExecPillSelectedClass = cn(
 )
 
 export const linkExecSymbolBadgeClass = cn(
-  'ml-1.5 inline-flex rounded border border-border bg-secondary px-1.5 py-0 font-mono text-[10px] font-semibold text-foreground',
+  'ml-1.5 inline-flex rounded border border-border bg-secondary px-1.5 py-0 font-mono text-dense-caption font-semibold text-foreground',
 )
 
 export const linkExecInstancePanelClass = cn(
@@ -29,7 +29,7 @@ export const linkExecSummaryClass = cn(
   'flex flex-wrap items-center gap-1 text-xs text-muted-foreground',
 )
 
-export const linkExecHintClass = cn('text-[11px] text-muted-foreground')
+export const linkExecHintClass = cn('text-dense-meta text-muted-foreground')
 
 /** Footer: cancel negative margins from DialogFooter when content uses p-0. */
 export const linkExecDialogFooterClass = cn(

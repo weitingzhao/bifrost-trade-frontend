@@ -13,24 +13,24 @@ export function supportBadge(level: DataSupportLevel): { text: string; className
   if (level === 'supported') {
     return {
       text: 'Supported',
-      className: 'rounded px-1.5 py-0.5 text-[10px] font-semibold bg-success-soft/40 text-lamp-green border border-lamp-green/30',
+      className: 'rounded px-1.5 py-0.5 text-dense-caption font-semibold bg-success-soft/40 text-lamp-green border border-lamp-green/30',
     }
   }
   if (level === 'partial') {
     return {
       text: 'Partial',
-      className: 'rounded px-1.5 py-0.5 text-[10px] font-semibold bg-warning-soft/30 text-lamp-yellow border border-lamp-yellow/30',
+      className: 'rounded px-1.5 py-0.5 text-dense-caption font-semibold bg-warning-soft/30 text-lamp-yellow border border-lamp-yellow/30',
     }
   }
   if (level === 'not_supported') {
     return {
       text: 'Not supported',
-      className: 'rounded px-1.5 py-0.5 text-[10px] font-semibold bg-muted/50 text-muted-foreground border border-border',
+      className: 'rounded px-1.5 py-0.5 text-dense-caption font-semibold bg-muted/50 text-muted-foreground border border-border',
     }
   }
   return {
     text: 'Unknown',
-    className: 'rounded px-1.5 py-0.5 text-[10px] font-semibold bg-muted/50 text-muted-foreground',
+    className: 'rounded px-1.5 py-0.5 text-dense-caption font-semibold bg-muted/50 text-muted-foreground',
   }
 }
 

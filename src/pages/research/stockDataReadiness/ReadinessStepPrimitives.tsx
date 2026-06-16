@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { readinessStepUi } from './stockDataReadinessStepUi'
 
 export function ReadinessCode({ children }: { children: ReactNode }) {
-  return <code className="text-[11px] font-mono text-sky-300/90">{children}</code>
+  return <code className="text-dense-meta font-mono text-sky-300/90">{children}</code>
 }
 
 export function ReadinessOperationLog({
@@ -70,7 +70,7 @@ export function ReadinessMaintenanceBox({
           >
             {row.badge}
           </span>
-          <span className="min-w-0 [&_code]:rounded-sm [&_code]:bg-white/5 [&_code]:px-1 [&_code]:font-mono [&_code]:text-[11px] [&_code]:text-foreground/90">
+          <span className="min-w-0 [&_code]:rounded-sm [&_code]:bg-white/5 [&_code]:px-1 [&_code]:font-mono [&_code]:text-dense-meta [&_code]:text-foreground/90">
             {row.text}
           </span>
         </div>

@@ -90,8 +90,8 @@ export function IncludeExcludeToggle({
           className={cn(
             'font-semibold text-muted-foreground leading-snug',
             size === 'xs'
-              ? 'text-[0.68rem]'
-              : 'text-[length:var(--text-dense-meta)]',
+              ? 'text-dense-meta'
+              : 'text-dense-meta',
           )}
         >
           {label}
@@ -108,6 +108,3 @@ export function IncludeExcludeToggle({
     </div>
   )
 }
-
-/** @deprecated Use SegmentControl */
-export const BubbleSwitch = SegmentControl

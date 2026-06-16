@@ -38,14 +38,14 @@ export function CheckResultsPanel({
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Check Results</h3>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2" onClick={onExpandAll}>
+          <Button variant="ghost" size="sm" className="h-7 text-dense-caption px-2" onClick={onExpandAll}>
             Expand all
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2" onClick={onCollapseAll}>
+          <Button variant="ghost" size="sm" className="h-7 text-dense-caption px-2" onClick={onCollapseAll}>
             Collapse all
           </Button>
           {checkedSteps.size > 0 && (
-            <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2" onClick={onResetChecks}>
+            <Button variant="ghost" size="sm" className="h-7 text-dense-caption px-2" onClick={onResetChecks}>
               Reset
             </Button>
           )}
@@ -95,11 +95,11 @@ export function CheckResultsPanel({
                           {isChecked && !summaryLoading && <CheckStatusDot status={s.status} />}
                         </div>
                         {!isChecked ? (
-                          <p className="text-[10px] text-muted-foreground pl-7">
+                          <p className="text-dense-caption text-muted-foreground pl-7">
                             Use Check in the run book header above
                           </p>
                         ) : summaryLoading ? (
-                          <p className="text-[10px] text-muted-foreground pl-7">Checking…</p>
+                          <p className="text-dense-caption text-muted-foreground pl-7">Checking…</p>
                         ) : (
                           <div className="pl-7 space-y-1.5">
                             {s.id === 1 && (

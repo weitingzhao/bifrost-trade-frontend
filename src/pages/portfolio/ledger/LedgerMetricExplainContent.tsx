@@ -24,7 +24,7 @@ function ExplainSteps({ children }: { children: ReactNode }) {
 
 function FormulaBlock({ children }: { children: ReactNode }) {
   return (
-    <pre className="mt-1.5 overflow-x-auto rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 font-mono text-[10px] leading-relaxed whitespace-pre-wrap text-foreground">
+    <pre className="mt-1.5 overflow-x-auto rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 font-mono text-dense-caption leading-relaxed whitespace-pre-wrap text-foreground">
       {children}
     </pre>
   )
@@ -52,7 +52,7 @@ function LiveExample({ payload }: { payload: LedgerMetricExplainPayload }) {
       {payload.formulaLines.map((line, i) => (
         <pre
           key={i}
-          className="mt-1 overflow-x-auto rounded bg-muted/50 px-2 py-1 font-mono text-[10px] whitespace-pre-wrap"
+          className="mt-1 overflow-x-auto rounded bg-muted/50 px-2 py-1 font-mono text-dense-caption whitespace-pre-wrap"
         >
           {line}
         </pre>
@@ -62,7 +62,7 @@ function LiveExample({ payload }: { payload: LedgerMetricExplainPayload }) {
       ) : null}
       {payload.detailRows.length > 0 ? (
         <div className="mt-2 overflow-x-auto">
-          <table className="w-full border-collapse text-[10px]">
+          <table className="w-full border-collapse text-dense-caption">
             <thead>
               <tr className="border-b border-border">
                 {payload.detailColumnHeaders.map(h => (
@@ -111,10 +111,10 @@ export function LedgerMetricExplainContent({
           <ExplainList>
             <li>
               <strong className="text-foreground">API:</strong>{' '}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">GET /executions</code> with{' '}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">source_scope=performance_book</code>{' '}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-dense-caption">GET /executions</code> with{' '}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-dense-caption">source_scope=performance_book</code>{' '}
               — server reads finalized executions (e.g.{' '}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">account_executions_final</code>).
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-dense-caption">account_executions_final</code>).
             </li>
             <li>
               <strong className="text-foreground">UI rows:</strong> each execution has{' '}

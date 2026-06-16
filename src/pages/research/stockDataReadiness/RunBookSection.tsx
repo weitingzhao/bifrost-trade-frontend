@@ -60,14 +60,14 @@ export function RunBookSection({
               )}
             >
               <div className="flex items-center justify-between gap-2 mb-0.5">
-                <span className="text-[0.62rem] font-extrabold uppercase tracking-wider text-muted-foreground">
+                <span className="text-dense-caption font-extrabold uppercase tracking-wider text-muted-foreground">
                   Stage {stageIdx + 1}
                 </span>
                 <CheckStatusDot status={stage.stageStatus} />
               </div>
               <div className="text-sm font-semibold leading-tight">{stage.title}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">{stage.blurb}</div>
-              <div className="text-[10px] text-muted-foreground mt-1">
+              <div className="text-dense-meta text-muted-foreground mt-0.5">{stage.blurb}</div>
+              <div className="text-dense-caption text-muted-foreground mt-1">
                 {stage.doneCount}/{stage.steps.length} complete
               </div>
             </div>
@@ -93,7 +93,7 @@ export function RunBookSection({
                   </span>
                   <span className="min-w-0">
                     <span className="block font-medium leading-tight">{s.title}</span>
-                    <span className="block text-[10px] text-muted-foreground truncate">
+                    <span className="block text-dense-caption text-muted-foreground truncate">
                       {s.short} · {s.metric}
                     </span>
                   </span>

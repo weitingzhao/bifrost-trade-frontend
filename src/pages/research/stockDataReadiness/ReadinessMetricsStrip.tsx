@@ -52,7 +52,7 @@ export function ReadinessMetricsStrip({ summary, vendorFillGap }: Props) {
           key={m.label}
           className="rounded-lg border border-border bg-secondary px-3 py-3 space-y-1"
         >
-          <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="text-dense-caption font-bold uppercase tracking-wider text-muted-foreground">
             {m.label}
           </div>
           <div
@@ -64,7 +64,7 @@ export function ReadinessMetricsStrip({ summary, vendorFillGap }: Props) {
           >
             {m.value}
           </div>
-          <div className="text-[10px] text-muted-foreground leading-snug">{m.sub}</div>
+          <div className="text-dense-caption text-muted-foreground leading-snug">{m.sub}</div>
         </div>
       ))}
     </div>

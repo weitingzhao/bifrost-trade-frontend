@@ -17,19 +17,19 @@ export const watchlistStepperStepDoneClass = 'text-foreground'
 
 export const watchlistStepperIndexClass = cn(
   'inline-flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center rounded-full',
-  'border border-border text-[0.65rem] font-bold',
+  'border border-border text-dense-caption font-bold',
 )
 
 export const watchlistStepperIndexActiveClass =
   'border-primary bg-primary/20 text-primary'
 
-export const watchlistStepperTitleClass = 'block text-[0.8rem] font-semibold'
+export const watchlistStepperTitleClass = 'block text-dense-body font-semibold'
 
-export const watchlistStepperDescClass = 'block text-[0.65rem] text-muted-foreground'
+export const watchlistStepperDescClass = 'block text-dense-caption text-muted-foreground'
 
 export const watchlistStepperBadgeClass = cn(
   'ml-auto rounded-full bg-muted px-[0.45rem] py-[0.1rem]',
-  'font-mono text-[0.65rem] font-semibold',
+  'font-mono text-dense-caption font-semibold',
 )
 
 export const watchlistStepperConnectorClass =
@@ -85,7 +85,7 @@ export const watchlistSizingSheetQuoteStackClass = cn(
 export const watchlistQuoteLastClass = 'font-mono text-sm font-semibold tabular-nums'
 
 export const watchlistQuoteBaClass = cn(
-  'font-mono text-[0.7rem] tabular-nums',
+  'font-mono text-dense-meta tabular-nums',
   denseTable.mutedMeta,
 )
 
@@ -100,7 +100,7 @@ export const watchlistPieRingClass =
 
 export const watchlistPieHoleClass = cn(
   'absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-card',
-  'text-center text-[0.55rem] leading-[1.2]',
+  'text-center text-dense-micro leading-[1.2]',
 )
 
 export const watchlistRangeTrackClass = 'w-full accent-primary'

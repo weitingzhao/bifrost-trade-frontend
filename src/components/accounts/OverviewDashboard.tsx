@@ -21,7 +21,7 @@ function Tile({
   return (
     <Card variant="elevated" size="sm">
       <CardContent className="py-2">
-        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">{label}</p>
+        <p className="text-dense-caption uppercase tracking-wide text-muted-foreground mb-0.5">{label}</p>
         <p
           className={cn(
             'font-semibold font-mono tabular-nums',

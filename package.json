@@ -15,7 +15,8 @@
     "check:legacy-css": "bash scripts/check-legacy-css.sh",
     "sync:docker-lock": "docker run --rm --platform linux/amd64 -v \"$(pwd)\":/app -w /app node:20-slim npm install",
     "sync:massive-stocks-coverage": "cp ../bifrost-trader-engine/docs/plans/massive_stocks_api_coverage.html public/plans/massive_stocks_api_coverage.html",
-    "sync:massive-api-coverage": "cp ../bifrost-trader-engine/frontend/public/plans/massive_api_coverage.html public/plans/massive_api_coverage.html"
+    "sync:massive-api-coverage": "cp ../bifrost-trader-engine/frontend/public/plans/massive_api_coverage.html public/plans/massive_api_coverage.html",
+    "prepare": "husky"
   },
   "dependencies": {
     "@bifrost/ui": "file:../bifrost-ui",
@@ -50,6 +51,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "prettier": "^3.8.3",
     "typescript": "~5.6.2",

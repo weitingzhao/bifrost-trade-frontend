@@ -18,7 +18,7 @@ export const modelAnalysisTable = {
 export const modelAnalysisPageStackClass = 'flex flex-col gap-3 min-w-0'
 
 export const modelAnalysisHypotheticalBadgeClass =
-  'inline-flex items-center gap-1 rounded-md border border-warning/40 bg-warning-soft px-2 py-0.5 text-[0.6875rem] font-semibold tracking-wide text-warning whitespace-nowrap'
+  'inline-flex items-center gap-1 rounded-md border border-warning/40 bg-warning-soft px-2 py-0.5 text-dense-meta font-semibold tracking-wide text-warning whitespace-nowrap'
 
 export const modelAnalysisDisclaimerClass =
   'rounded-md border border-warning/35 bg-warning-soft/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground'
@@ -32,7 +32,7 @@ export const modelAnalysisSummaryStripClass =
 export const modelAnalysisSummaryItemClass = 'min-w-[6.5rem]'
 
 export const modelAnalysisSummaryLabelClass =
-  'block text-[0.625rem] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5'
+  'block text-dense-caption font-semibold uppercase tracking-wider text-muted-foreground mb-0.5'
 
 export const modelAnalysisSummaryValueClass =
   'text-[0.9375rem] font-semibold font-mono tabular-nums text-foreground'
@@ -40,26 +40,26 @@ export const modelAnalysisSummaryValueClass =
 export const modelAnalysisEmptyHintClass =
   'py-8 text-center text-sm text-muted-foreground'
 
-export const modelAnalysisProseClass = 'text-[length:var(--text-dense)] text-muted-foreground leading-relaxed'
+export const modelAnalysisProseClass = 'text-dense-body text-muted-foreground leading-relaxed'
 
 export const modelAnalysisSubheadingClass = 'text-sm font-semibold text-foreground mb-1'
 
-export const modelAnalysisMetaRowClass = 'flex flex-wrap gap-x-6 gap-y-2 text-[length:var(--text-dense)]'
+export const modelAnalysisMetaRowClass = 'flex flex-wrap gap-x-6 gap-y-2 text-dense-body'
 
 export const modelAnalysisMetaMutedClass = 'text-muted-foreground'
 
 export const modelAnalysisCarBlockClass =
   'mt-2 rounded-md border border-border bg-background p-3'
 
-export const modelAnalysisCarTitleClass = 'text-[length:var(--text-dense)] font-semibold mb-1'
+export const modelAnalysisCarTitleClass = 'text-dense-body font-semibold mb-1'
 
 export const modelAnalysisCodeRefClass =
-  'mt-1.5 text-[0.6875rem] font-mono text-muted-foreground'
+  'mt-1.5 text-dense-meta font-mono text-muted-foreground'
 
 export const modelAnalysisMethodCodeClass =
-  'rounded-sm bg-muted px-1 py-0.5 text-[0.6875rem] font-mono'
+  'rounded-sm bg-muted px-1 py-0.5 text-dense-meta font-mono'
 
-export const modelAnalysisScenarioLineClass = 'text-[length:var(--text-dense)] text-foreground'
+export const modelAnalysisScenarioLineClass = 'text-dense-body text-foreground'
 
 export const modelAnalysisMethodologyBlockClass =
   'my-2 rounded-md border border-dashed border-border bg-muted/40 p-3'

@@ -171,7 +171,7 @@ export function IvSmileChart({
 
 export function IvSmileLegend({ side = 'both', underlying }: { side?: 'call' | 'put' | 'both'; underlying: number | null }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] text-muted-foreground" role="presentation">
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-dense-caption text-muted-foreground" role="presentation">
       {(side === 'call' || side === 'both') && (
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
           <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
@@ -305,7 +305,7 @@ export function OiProfileChart({ rows, underlying }: {
 
 export function OiProfileLegend({ underlying }: { underlying: number | null }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] text-muted-foreground" role="presentation">
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-dense-caption text-muted-foreground" role="presentation">
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
         <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
         Call OI
@@ -452,7 +452,7 @@ export function GammaExposureChart({ rows, underlying }: {
 
 export function GammaExposureLegend({ underlying }: { underlying: number | null }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] text-muted-foreground" role="presentation">
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-dense-caption text-muted-foreground" role="presentation">
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
         <span className="inline-block h-2 w-3.5 shrink-0 rounded-sm" style={{ background: 'var(--color-lamp-green, #66bb6a)' }} />
         Call G×OI×100
@@ -1029,7 +1029,7 @@ export function IvParametricConeChart({ points }: { points: IvVolatilityConePoin
         )}
       </svg>
       <div
-        className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.65rem] leading-snug text-muted-foreground"
+        className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-dense-caption leading-snug text-muted-foreground"
         aria-label="Chart legend"
       >
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap">

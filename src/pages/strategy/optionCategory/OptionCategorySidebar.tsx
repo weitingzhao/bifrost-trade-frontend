@@ -100,7 +100,7 @@ export function OptionCategorySidebar({
           <Button
             variant={activeDimFilterCount > 0 ? 'default' : 'ghost'}
             size="sm"
-            className="h-6 px-2 text-[10px]"
+            className="h-6 px-2 text-dense-caption"
             onClick={onFiltersOpenToggle}
           >
             <LayoutGrid className="mr-1 h-3 w-3" />
@@ -124,7 +124,7 @@ export function OptionCategorySidebar({
                     onDimFiltersChange(next)
                   }}
                 >
-                  <SelectTrigger className="h-6 flex-1 text-[10px] px-1">
+                  <SelectTrigger className="h-6 flex-1 text-dense-caption px-1">
                     <SelectValue placeholder={`All ${DIM_LABELS[dt]}`} />
                   </SelectTrigger>
                   <SelectContent>
@@ -205,7 +205,7 @@ export function OptionCategorySidebar({
               onClick={() => onSelectId(t.strategy_template_id)}
             >
               <div className="truncate">{t.display_name}</div>
-              <div className="truncate font-mono text-[10px] text-muted-foreground">
+              <div className="truncate font-mono text-dense-caption text-muted-foreground">
                 {t.template_code}
               </div>
             </button>

@@ -99,7 +99,7 @@ export function CeleryTerminalPanel({
       <div style={{ height }} className="overflow-y-auto bg-zinc-950 text-zinc-100 p-3">
         <pre
           ref={consoleRef}
-          className="text-[11px] font-mono whitespace-pre-wrap break-all leading-relaxed m-0"
+          className="text-dense-meta font-mono whitespace-pre-wrap break-all leading-relaxed m-0"
         >
           {body}
           {status === 'error' && lines.length > 0 && errorDetail && (

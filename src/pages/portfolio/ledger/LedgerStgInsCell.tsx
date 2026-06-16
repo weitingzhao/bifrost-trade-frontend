@@ -56,7 +56,7 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
                 >
                   #{sid}
                 </Link>
-                <span className="text-[0.6875rem] tabular-nums text-muted-foreground">
+                <span className="text-dense-meta tabular-nums text-muted-foreground">
                   {formatAllocQty(qty)}
                 </span>
               </li>

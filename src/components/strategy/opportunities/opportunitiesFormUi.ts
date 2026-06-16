@@ -29,7 +29,7 @@ export const opportunitiesFormFooterClass = cn(
 )
 
 export const opportunitiesFieldLabelClass = cn(
-  'text-[10px] font-semibold uppercase tracking-wider text-muted-foreground',
+  'text-dense-caption font-semibold uppercase tracking-wider text-muted-foreground',
 )
 
 export const opportunitiesFormFieldClass = cn('flex flex-col gap-2')
@@ -92,7 +92,7 @@ export const opportunitiesGatePillSelectedClass = cn(
   'border-primary bg-primary/10 font-semibold text-primary hover:border-primary hover:bg-primary/10 hover:text-primary',
 )
 
-export const opportunitiesGatePillVersionClass = cn('text-[10px] opacity-70')
+export const opportunitiesGatePillVersionClass = cn('text-dense-caption opacity-70')
 
 /** Scope + conditions — Legacy two-column bordered cols */
 export const opportunitiesFormColumnsClass = cn(
@@ -108,7 +108,7 @@ export const opportunitiesColHeaderClass = cn(
 )
 
 export const opportunitiesColTitleClass = cn(
-  'm-0 text-[10px] font-bold uppercase tracking-wider text-muted-foreground',
+  'm-0 text-dense-caption font-bold uppercase tracking-wider text-muted-foreground',
 )
 
 export const opportunitiesColBodyClass = cn('flex flex-col gap-3 p-3')

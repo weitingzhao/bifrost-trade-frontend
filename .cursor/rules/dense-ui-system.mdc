@@ -11,7 +11,7 @@ alwaysApply: true
 
 ## Layer stack (do not skip layers)
 
-1. **Tokens** — `src/index.css` (`--text-dense`, `--text-dense-meta`, `--table-cell-py/px`)
+1. **Tokens** — `src/index.css` (typography: `text-dense-body/label/meta/caption/micro`; spacing: `--table-cell-py/px`)
 2. **Primitives** — `@/components/data-display` (tables, PnL, segments, icon actions, collapsible groups)
 3. **Generic UI** — shadcn/ui (`Button`, `Dialog`, `Select`, …)
 4. **Domain** — page-specific columns, hooks, API wiring only (minimal styling)
@@ -21,6 +21,7 @@ alwaysApply: true
 | Interaction | Use | Never |
 |-------------|-----|-------|
 | Data table | `DenseDataTable` + head/row/cell | `ledgerTable` / `optTable` / `replay-*` / new `*.module.css` tables |
+| Dense font size | 5-stop scale: `text-dense-body` (13px) / `text-dense-label` (12px) / `text-dense-meta` (11px) / `text-dense-caption` (10px) / `text-dense-micro` (9px) | `text-[Npx]`, `text-[0.NNrem]` — pick nearest token |
 | Numeric columns | `denseTableNumCell` or `PnlCell` | Ad-hoc `text-right` without `font-mono tabular-nums` |
 | PnL color (realized) | `pnlColorClass` / `InlinePnl` / `PnlCell` → `text-profit` / `text-loss` tokens | `pnl-positive`, module `.pnlPositive`, inline green/red hex, raw `text-emerald-*` / `text-red-*` |
 | PnL color (unrealized) | `unrealizedPnlColorClass` → `text-unrealized` (site-wide yellow) | Green/red for unrealized values |
@@ -101,7 +102,7 @@ Always pair controls with a short label to give context:
 | Context | Pattern | Never |
 |---------|---------|-------|
 | Table with no data | `denseTable.emptyHint` centered text | Custom `p` with ad-hoc classes |
-| Section / card with no data | Planned `EmptyState` component — icon + title + optional subtitle + action | Bare `text-muted-foreground` paragraph |
+| Section / card with no data | `EmptyState` from `data-display` — icon + title + optional subtitle + action | Bare `text-muted-foreground` paragraph |
 | Filter yields no results | `denseTable.emptyHint` with "No results match filters" | Same text as "no data at all" |
 
 ## Operation feedback

@@ -174,7 +174,7 @@ export function PromptCopyDialog({ specId, label = 'Copy Prompt' }: Props) {
             <Label className="text-xs text-muted-foreground">
               Preview ({promptText.length.toLocaleString()} chars)
             </Label>
-            <pre className="max-h-32 overflow-auto rounded-md border border-border bg-background p-2 text-[10px] leading-snug text-muted-foreground whitespace-pre-wrap">
+            <pre className="max-h-32 overflow-auto rounded-md border border-border bg-background p-2 text-dense-caption leading-snug text-muted-foreground whitespace-pre-wrap">
               {previewLines}
               {'\n…'}
             </pre>

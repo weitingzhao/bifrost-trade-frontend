@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import {
   opportunitiesAddBtnClass,
@@ -311,7 +312,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
           {error && (
             <div className={opportunitiesFormErrorClass} role="alert">
               <span
-                className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-destructive text-[0.7rem] font-bold text-destructive-foreground"
+                className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-destructive text-dense-meta font-bold text-destructive-foreground"
                 aria-hidden
               >
                 !
@@ -566,19 +567,23 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
                 <div className={opportunitiesConditionsListClass}>
                   {conditions.map((cond, idx) => (
                     <div key={idx} className={opportunitiesConditionRowClass}>
-                      <select
-                        className={opportunitiesConditionSelectClass}
+                      <Select
                         value={cond.condition_type}
-                        onChange={(e) =>
-                          handleConditionPatch(idx, { condition_type: e.target.value })
+                        onValueChange={(v) =>
+                          handleConditionPatch(idx, { condition_type: v })
                         }
                       >
-                        {OPPORTUNITY_CONDITION_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {getOpportunityConditionTypeLabel(t)}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className={opportunitiesConditionSelectClass}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {OPPORTUNITY_CONDITION_TYPES.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {getOpportunityConditionTypeLabel(t)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input
                         className={opportunitiesConditionInputClass}
                         placeholder="text"

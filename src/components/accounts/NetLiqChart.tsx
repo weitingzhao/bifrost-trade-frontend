@@ -43,7 +43,7 @@ export function NetLiqChart({ accounts }: Props) {
         <p className="text-sm text-muted-foreground">No account data.</p>
       ) : (
         <div className="space-y-3">
-          <p className="text-[11px] leading-snug text-muted-foreground">
+          <p className="text-dense-meta leading-snug text-muted-foreground">
             Current snapshot by account. Historical series will appear when time-series data is stored.
           </p>
 

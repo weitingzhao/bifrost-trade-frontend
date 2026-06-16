@@ -18,7 +18,7 @@ export function RiskProfileSummary({ profile }: Props) {
         <div className="mt-0.5">
           <Badge
             variant={profile.risk_type === 'defined' ? 'default' : 'destructive'}
-            className="text-[10px]"
+            className="text-dense-caption"
           >
             {profile.risk_type === 'defined' ? 'Defined' : profile.risk_type === 'unlimited' ? 'Unlimited' : 'Unknown'}
           </Badge>
@@ -45,7 +45,7 @@ export function RiskProfileSummary({ profile }: Props) {
         </p>
       </div>
       {profile.naked_short_call_contracts > 0 && (
-        <p className="col-span-full text-[10px] text-muted-foreground">
+        <p className="col-span-full text-dense-caption text-muted-foreground">
           {rl.lossLabel === 'Unlimited' ? 'Includes naked short call tail beyond hedge.' : ''}
         </p>
       )}

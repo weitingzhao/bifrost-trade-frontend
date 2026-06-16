@@ -113,7 +113,7 @@ export default function FeedMassiveOverviewPage() {
 
       <p className="text-xs text-muted-foreground">
         Bookmark this overview:{' '}
-        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">{MASSIVE_OVERVIEW_BASE}</code>
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-dense-meta">{MASSIVE_OVERVIEW_BASE}</code>
       </p>
     </PageShell>
   )

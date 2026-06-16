@@ -140,7 +140,7 @@ function GroupMenu({ group, isOpen, onToggle, onClose, iconOnly = false }: Group
           {group.subGroups?.map((sg, idx) => (
             <div key={sg.label}>
               {idx > 0 && <div className="my-1 border-t border-border/50" />}
-              <p className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
+              <p className="px-3 pt-1.5 pb-0.5 text-dense-caption font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
                 {sg.label}
               </p>
               {sg.items.map((item) => (
@@ -200,7 +200,7 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
         <BifrostLogoMark size={26} />
         {!iconOnly && (
           <div className="flex flex-col leading-tight">
-            <span className="text-[12px] font-bold tracking-tight text-sidebar-primary leading-none">
+            <span className="text-dense-label font-bold tracking-tight text-sidebar-primary leading-none">
               Bifrost
             </span>
             <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40 leading-none mt-0.5">
@@ -246,7 +246,7 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
             >
               <Network className="h-4 w-4" />
               {alertCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white leading-none">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-dense-micro font-bold text-white leading-none">
                   {alertCount > 9 ? '9+' : alertCount}
                 </span>
               )}
@@ -266,7 +266,7 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
             >
               <ScrollText className="h-4 w-4" />
               {errorCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white leading-none">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-dense-micro font-bold text-white leading-none">
                   {errorCount > 9 ? '9+' : errorCount}
                 </span>
               )}
@@ -298,7 +298,7 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
             >
               <Bell className="h-4 w-4" />
               {activeMsgCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white leading-none">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-dense-micro font-bold text-white leading-none">
                   {activeMsgCount > 9 ? '9+' : activeMsgCount}
                 </span>
               )}

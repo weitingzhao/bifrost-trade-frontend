@@ -148,7 +148,7 @@ function AddOptionModalBody({
           {preview ? (
             <div className={addOptionPreviewClass} aria-live="polite">
               <span className="text-foreground">{preview.label}</span>
-              <span className="mt-1 block truncate text-[10px] opacity-80">{preview.contractKey}</span>
+              <span className="mt-1 block truncate text-dense-caption opacity-80">{preview.contractKey}</span>
             </div>
           ) : (
             <p className={addOptionHintClass}>Expiry accepts YYYYMMDD or yyyy-mm-dd.</p>

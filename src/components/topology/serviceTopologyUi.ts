@@ -27,13 +27,13 @@ export const topologyHeaderEmbeddedClass = cn(
 )
 
 export const topologyHeaderTitleClass = cn(
-  'font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-500/80',
+  'font-mono text-dense-caption font-bold uppercase tracking-[0.2em] text-cyan-500/80',
 )
 
-export const topologyHeaderMetaClass = cn('font-mono text-[10px] text-muted-foreground')
+export const topologyHeaderMetaClass = cn('font-mono text-dense-caption text-muted-foreground')
 
 export const topologyHeaderRightClass = cn(
-  'flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground',
+  'flex items-center gap-2 font-mono text-dense-caption uppercase tracking-wider text-muted-foreground',
 )
 
 export const topologyCanvasEmbeddedClass = cn('relative w-full shrink-0 overflow-hidden')

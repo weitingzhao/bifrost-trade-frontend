@@ -359,7 +359,7 @@ export function OptionsTab({
                     if (days == null) return null
                     const label = days >= 0 ? (days === 0 ? 'today' : `${days}d`) : `${-days}d ago`
                     return (
-                      <div className={cn('text-[length:var(--text-dense-meta)] font-semibold text-warning')}>
+                      <div className={cn('text-dense-meta font-semibold text-warning')}>
                         {label}
                       </div>
                     )
@@ -371,7 +371,7 @@ export function OptionsTab({
                 <DenseTableCell>
                   <div className="font-mono tabular-nums">{last != null ? fmtUsd(last) : '—'}</div>
                   {pct != null && (
-                    <div className={cn('text-[length:var(--text-dense-meta)] font-mono tabular-nums', pctClass)} title={`(Last − Strike) / Last = ${pct.toFixed(2)}%`}>
+                    <div className={cn('text-dense-meta font-mono tabular-nums', pctClass)} title={`(Last − Strike) / Last = ${pct.toFixed(2)}%`}>
                       {pct >= 0 ? '+' : ''}
                       {pct.toFixed(2)}%
                     </div>
@@ -387,13 +387,13 @@ export function OptionsTab({
                     <span className={denseTable.mutedMeta}>—</span>
                   ) : (
                     <>
-                      <div className="text-[length:var(--text-dense-meta)] font-mono tabular-nums text-quote-bid">
+                      <div className="text-dense-meta font-mono tabular-nums text-quote-bid">
                         {liveQ.bid != null ? liveQ.bid.toFixed(2) : '—'}
                       </div>
                       <div className="font-mono tabular-nums font-semibold">
                         {liveMid != null ? liveMid.toFixed(2) : '—'}
                       </div>
-                      <div className="text-[length:var(--text-dense-meta)] font-mono tabular-nums text-quote-ask">
+                      <div className="text-dense-meta font-mono tabular-nums text-quote-ask">
                         {liveQ.ask != null ? liveQ.ask.toFixed(2) : '—'}
                       </div>
                     </>
@@ -404,7 +404,7 @@ export function OptionsTab({
                     <>
                       <div className="whitespace-nowrap">{fmtDate(ts)}</div>
                       {fmtDaysAgo(ts) && (
-                        <div className={cn('text-[length:var(--text-dense-meta)] font-semibold text-warning whitespace-nowrap')}>
+                        <div className={cn('text-dense-meta font-semibold text-warning whitespace-nowrap')}>
                           {fmtDaysAgo(ts)}
                         </div>
                       )}
@@ -420,7 +420,7 @@ export function OptionsTab({
                       <span className={cn('ml-1', denseTable.mutedMeta)}>live</span>
                     </div>
                   )}
-                  <div className={livePnl != null ? 'text-[length:var(--text-dense-meta)]' : undefined}>
+                  <div className={livePnl != null ? 'text-dense-meta' : undefined}>
                     <span className={unrealizedPnlColorClass(pos.unrealized_pnl)}>
                       {fmtUsd(pos.unrealized_pnl)}
                     </span>

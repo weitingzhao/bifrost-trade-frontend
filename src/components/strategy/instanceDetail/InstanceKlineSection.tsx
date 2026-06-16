@@ -276,7 +276,7 @@ export function InstanceKlineSection({
       {!loading && !error && windowedBars.length > 0 ? (
         <>
           <BarsCandlestickChart bars={windowedBars} period="1 D" showVwap={false} />
-          <p className="mt-2 text-[11px] text-muted-foreground">
+          <p className="mt-2 text-dense-meta text-muted-foreground">
             {windowedBars.length} bars
             {buyCount > 0 ? (
               <span className="ml-2.5 text-side-buy">▲ {buyCount} buy</span>

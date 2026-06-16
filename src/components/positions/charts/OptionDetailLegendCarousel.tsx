@@ -200,7 +200,7 @@ function OptionDetailLegendRow({
         )}
       </div>
       {seg.optionDetailFoot ? (
-        <div className="mt-0.5 pl-[1.85rem] text-[10px] leading-tight text-muted-foreground">
+        <div className="mt-0.5 pl-[1.85rem] text-dense-caption leading-tight text-muted-foreground">
           {seg.optionDetailFoot.kind === 'stock' ? (
             <>
               Stock cost{' '}

@@ -209,8 +209,8 @@ export function LedgerOptContractCell({
       className={cn(
         'inline-flex min-w-0 flex-wrap items-center gap-1 font-mono',
         prominent
-          ? 'text-[0.8125rem] leading-snug tracking-tight'
-          : 'text-[length:var(--text-dense-meta)]',
+          ? 'text-dense-body leading-snug tracking-tight'
+          : 'text-dense-meta',
         className,
       )}
     >

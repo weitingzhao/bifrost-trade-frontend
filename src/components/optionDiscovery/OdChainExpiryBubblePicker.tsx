@@ -59,18 +59,18 @@ export function OdChainExpiryBubblePicker({
           >
             <span className="inline-flex flex-nowrap items-baseline whitespace-nowrap">
               <span className="text-xs font-semibold tabular-nums">{exp}</span>
-              <span className="text-muted-foreground text-[0.65rem]" aria-hidden>
+              <span className="text-muted-foreground text-dense-caption" aria-hidden>
                 {' '}
                 ·{' '}
               </span>
-              <span className="text-[0.65rem] text-muted-foreground tabular-nums">
+              <span className="text-dense-caption text-muted-foreground tabular-nums">
                 {expirationDaysFromToday(exp)}
               </span>
             </span>
             <span className="flex gap-0.5" aria-hidden>
               {kind === 'weeklies' && (
                 <span
-                  className="rounded px-1 text-[0.6rem] font-bold bg-expiry-weekly/20 text-expiry-weekly"
+                  className="rounded px-1 text-dense-caption font-bold bg-expiry-weekly/20 text-expiry-weekly"
                   title={expirationKindLabel(kind)}
                 >
                   W
@@ -78,7 +78,7 @@ export function OdChainExpiryBubblePicker({
               )}
               {kind === 'quarterlies' && (
                 <span
-                  className="rounded px-1 text-[0.6rem] font-bold bg-expiry-quarterly/20 text-expiry-quarterly"
+                  className="rounded px-1 text-dense-caption font-bold bg-expiry-quarterly/20 text-expiry-quarterly"
                   title={expirationKindLabel(kind)}
                 >
                   Q

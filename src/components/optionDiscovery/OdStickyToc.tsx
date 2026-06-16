@@ -58,7 +58,7 @@ export function OdStickyToc({
             <path d="M9 17h6" />
           </svg>
           <span
-            className="pointer-events-none absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 rounded-full bg-primary text-[0.62rem] leading-4 text-center text-primary-foreground border border-card font-mono tabular-nums"
+            className="pointer-events-none absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 rounded-full bg-primary text-dense-caption leading-4 text-center text-primary-foreground border border-card font-mono tabular-nums"
             aria-hidden
           >
             {compareCount}

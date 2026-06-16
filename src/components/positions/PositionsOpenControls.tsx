@@ -99,7 +99,7 @@ export function PositionsOpenControls({
       )}
 
       <div className="flex shrink-0 items-center gap-1" role="radiogroup" aria-label="Detail view mode">
-        <span className="whitespace-nowrap text-[0.76rem] font-semibold text-muted-foreground">
+        <span className="whitespace-nowrap text-dense-label font-semibold text-muted-foreground">
           Detail
         </span>
         <SegmentControl
@@ -129,7 +129,7 @@ export function PositionsOpenControls({
                 value="instance"
                 disabled={!hasInstances && !hasOptions}
                 className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >
@@ -139,7 +139,7 @@ export function PositionsOpenControls({
                 value="options"
                 disabled={!hasOptions}
                 className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >
@@ -149,7 +149,7 @@ export function PositionsOpenControls({
                 value="stocks"
                 disabled={!hasCoreStocks}
                 className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >
@@ -159,7 +159,7 @@ export function PositionsOpenControls({
                 value="fixed_income"
                 disabled={!hasFixedIncome}
                 className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >
@@ -169,7 +169,7 @@ export function PositionsOpenControls({
                 value="cash_like"
                 disabled={!hasCashLike}
                 className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-[0.76rem]',
+                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
                   'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
                 )}
               >

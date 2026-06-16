@@ -20,7 +20,7 @@ export function MatrixModeCell({
       )}
       {showModeSource && (
         <div className="text-muted-foreground">
-          <code className="font-mono text-[10px]">{row.mode_source}</code>
+          <code className="font-mono text-dense-caption">{row.mode_source}</code>
         </div>
       )}
     </div>
@@ -29,7 +29,7 @@ export function MatrixModeCell({
 
 function EffectsBullets({ items }: { items: string[] }) {
   return (
-    <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-muted-foreground">
+    <ul className="list-disc pl-4 space-y-0.5 text-dense-meta text-muted-foreground">
       {items.map((t, i) => (
         <li key={i}>{t}</li>
       ))}

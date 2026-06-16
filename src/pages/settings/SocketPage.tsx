@@ -192,9 +192,9 @@ export default function SocketPage() {
           {(statusError || (!statusLoading && !status?.socket)) && !ingestLoading && (
             <p className={socketMonitorHintClass}>
               Monitor GET /status unavailable — Connection column and IB logical summary need{' '}
-              <code className="text-[11px]">/api/monitor/status</code>. If you rebuilt{' '}
-              <code className="text-[11px]">api-monitor</code>, restart{' '}
-              <code className="text-[11px]">nginx</code> (or reload nginx.conf with Docker DNS resolve).
+              <code className="text-dense-meta">/api/monitor/status</code>. If you rebuilt{' '}
+              <code className="text-dense-meta">api-monitor</code>, restart{' '}
+              <code className="text-dense-meta">nginx</code> (or reload nginx.conf with Docker DNS resolve).
             </p>
           )}
         </div>

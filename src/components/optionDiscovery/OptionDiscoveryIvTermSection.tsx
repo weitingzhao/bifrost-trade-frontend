@@ -233,7 +233,7 @@ export function OptionDiscoveryIvTermSection({
             >
               <div className="flex flex-col gap-2 border-b border-border/80 px-3 py-2.5">
                 <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 text-[0.7rem] font-bold uppercase tracking-wide text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5 text-dense-meta font-bold uppercase tracking-wide text-muted-foreground">
                     Expirations in chart
                     <InfoTooltip
                       text={`You may check any expirations in the list (up to ${maxExpirations}), not only the first ${defaultExpirationCount}. "Select first ${defaultExpirationCount}" is a shortcut. IV term reads existing rows in PostgreSQL — if you pick expirations that were never snapshotted, use Backfill (Massive) or Load quotes in section 4 for those dates.`}
@@ -241,7 +241,7 @@ export function OptionDiscoveryIvTermSection({
                   </span>
                   <span
                     className={cn(
-                      'rounded-full border px-2 py-0.5 text-[0.7rem] font-semibold tabular-nums',
+                      'rounded-full border px-2 py-0.5 text-dense-meta font-semibold tabular-nums',
                       selectedCount < 2
                         ? 'border-warning/45 text-warning'
                         : 'border-border/70 bg-card text-foreground',
@@ -341,7 +341,7 @@ export function OptionDiscoveryIvTermSection({
                         <span className="flex shrink-0 items-center gap-0.5">
                           {kind === 'weeklies' && (
                             <span
-                              className="rounded px-1 text-[0.6rem] font-bold bg-expiry-weekly/20 text-expiry-weekly"
+                              className="rounded px-1 text-dense-caption font-bold bg-expiry-weekly/20 text-expiry-weekly"
                               title={expirationKindLabel(kind)}
                             >
                               W
@@ -349,7 +349,7 @@ export function OptionDiscoveryIvTermSection({
                           )}
                           {kind === 'quarterlies' && (
                             <span
-                              className="rounded px-1 text-[0.6rem] font-bold bg-expiry-quarterly/20 text-expiry-quarterly"
+                              className="rounded px-1 text-dense-caption font-bold bg-expiry-quarterly/20 text-expiry-quarterly"
                               title={expirationKindLabel(kind)}
                             >
                               Q

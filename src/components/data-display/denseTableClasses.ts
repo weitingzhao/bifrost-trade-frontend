@@ -1,13 +1,13 @@
 /** Shared class names for compact data tables (Positions, Ledger, Performance). */
 export const denseTable = {
   /** Applied by DenseDataTable — fixed layout keeps columns stable when rows expand. */
-  table: 'w-full min-w-[320px] table-fixed border-collapse text-[length:var(--text-dense)]',
+  table: 'w-full min-w-[320px] table-fixed border-collapse text-dense-body',
   /** Title + table stack — use on the wrapper around sectionTitle + DenseDataTable. */
   sectionBlock: 'flex min-w-0 flex-col gap-3',
   sectionTitle: 'text-sm font-semibold tracking-tight text-foreground',
   emptyHint: 'text-xs text-muted-foreground',
   sortableHead: 'cursor-pointer select-none hover:text-foreground',
-  mutedMeta: 'text-muted-foreground text-[length:var(--text-dense-meta)]',
+  mutedMeta: 'text-muted-foreground text-dense-meta',
   /** Long text in expand/detail rows — clip within col width instead of pushing columns. */
   detailCellClip: 'min-w-0 overflow-hidden',
   detailRowLabel: 'block truncate',

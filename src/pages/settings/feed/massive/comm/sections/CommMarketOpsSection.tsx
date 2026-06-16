@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MassiveServicePanel } from '@/pages/settings/feed/massive/components/MassiveServicePanel'
 import {
   fetchMassiveMarketConditions,
@@ -197,31 +198,31 @@ export function CommMarketOpsSection({
           <div className="mt-3 flex flex-wrap items-end gap-3 max-w-md">
             <div className="space-y-1">
               <Label>Asset class</Label>
-              <select
-                className="h-9 w-full min-w-[8rem] rounded-md border border-input bg-background px-2 text-sm"
-                value={exchAsset}
-                onChange={e => setExchAsset(e.target.value)}
-                disabled={exchBusy}
-              >
-                <option value="">All</option>
-                <option value="stocks">Stocks</option>
-                <option value="options">Options</option>
-                <option value="crypto">Crypto</option>
-                <option value="fx">FX</option>
-              </select>
+              <Select value={exchAsset || '__all__'} onValueChange={v => setExchAsset(v === '__all__' ? '' : v)} disabled={exchBusy}>
+                <SelectTrigger className="h-9 min-w-[8rem]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All</SelectItem>
+                  <SelectItem value="stocks">Stocks</SelectItem>
+                  <SelectItem value="options">Options</SelectItem>
+                  <SelectItem value="crypto">Crypto</SelectItem>
+                  <SelectItem value="fx">FX</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label>Locale</Label>
-              <select
-                className="h-9 w-full min-w-[8rem] rounded-md border border-input bg-background px-2 text-sm"
-                value={exchLocale}
-                onChange={e => setExchLocale(e.target.value)}
-                disabled={exchBusy}
-              >
-                <option value="">All</option>
-                <option value="us">US</option>
-                <option value="global">Global</option>
-              </select>
+              <Select value={exchLocale || '__all__'} onValueChange={v => setExchLocale(v === '__all__' ? '' : v)} disabled={exchBusy}>
+                <SelectTrigger className="h-9 min-w-[8rem]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All</SelectItem>
+                  <SelectItem value="us">US</SelectItem>
+                  <SelectItem value="global">Global</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button type="button" variant="secondary" size="sm" disabled={exchBusy || !configured} onClick={() => void runExchanges()}>
               {exchBusy ? 'Loading…' : 'Fetch Exchanges'}
@@ -391,32 +392,32 @@ export function CommMarketOpsSection({
           <div className="mt-3 flex flex-wrap items-end gap-3 max-w-md">
             <div className="space-y-1">
               <Label>Asset class</Label>
-              <select
-                className="h-9 w-full min-w-[8rem] rounded-md border border-input bg-background px-2 text-sm"
-                value={condAsset}
-                onChange={e => setCondAsset(e.target.value)}
-                disabled={condBusy}
-              >
-                <option value="">All</option>
-                <option value="stocks">Stocks</option>
-                <option value="options">Options</option>
-                <option value="crypto">Crypto</option>
-                <option value="fx">FX</option>
-              </select>
+              <Select value={condAsset || '__all__'} onValueChange={v => setCondAsset(v === '__all__' ? '' : v)} disabled={condBusy}>
+                <SelectTrigger className="h-9 min-w-[8rem]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All</SelectItem>
+                  <SelectItem value="stocks">Stocks</SelectItem>
+                  <SelectItem value="options">Options</SelectItem>
+                  <SelectItem value="crypto">Crypto</SelectItem>
+                  <SelectItem value="fx">FX</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label>Data type</Label>
-              <select
-                className="h-9 w-full min-w-[8rem] rounded-md border border-input bg-background px-2 text-sm"
-                value={condDataType}
-                onChange={e => setCondDataType(e.target.value)}
-                disabled={condBusy}
-              >
-                <option value="">All</option>
-                <option value="trade">Trade</option>
-                <option value="bbo">BBO</option>
-                <option value="nbbo">NBBO</option>
-              </select>
+              <Select value={condDataType || '__all__'} onValueChange={v => setCondDataType(v === '__all__' ? '' : v)} disabled={condBusy}>
+                <SelectTrigger className="h-9 min-w-[8rem]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All</SelectItem>
+                  <SelectItem value="trade">Trade</SelectItem>
+                  <SelectItem value="bbo">BBO</SelectItem>
+                  <SelectItem value="nbbo">NBBO</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button type="button" variant="secondary" size="sm" disabled={condBusy || !configured} onClick={() => void runConditions()}>
               {condBusy ? 'Loading…' : 'Fetch Condition Codes'}

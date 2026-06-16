@@ -50,7 +50,7 @@ export function CollapsibleGroupHeader({
     <button
       type="button"
       className={cn(
-        'flex w-full min-w-0 items-center gap-2 px-3 py-2 text-left text-[length:var(--text-dense)] text-foreground',
+        'flex w-full min-w-0 items-center gap-2 px-3 py-2 text-left text-dense-body text-foreground',
         'bg-secondary/40 hover:bg-muted/40 transition-colors',
         className,
       )}
@@ -98,7 +98,7 @@ export function CollapsibleGroupStats({
   return (
     <span
       className={cn(
-        'ml-auto flex shrink-0 flex-wrap gap-x-3 gap-y-0.5 text-[length:var(--text-dense-meta)] text-muted-foreground',
+        'ml-auto flex shrink-0 flex-wrap gap-x-3 gap-y-0.5 text-dense-meta text-muted-foreground',
         className,
       )}
     >
@@ -135,7 +135,7 @@ export function CollapsibleBucketHeader({
     <button
       type="button"
       className={cn(
-        'mb-1 mt-3 flex items-baseline gap-1.5 text-[length:var(--text-dense)] font-semibold text-foreground',
+        'mb-1 mt-3 flex items-baseline gap-1.5 text-dense-body font-semibold text-foreground',
         className,
       )}
       onClick={onToggle}

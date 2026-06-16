@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   DenseTableBody,
   DenseTableCell,
@@ -104,25 +105,29 @@ export function OptionCategoryMetaTable({
               {params.map((p: MetaParamItem, i: number) => (
                 <DenseTableRow key={i}>
                   <DenseTableCell className={optionCategoryTableCellSelectClass}>
-                    <select
-                      className={optionCategoryInlineSelectKeyClass}
+                    <Select
                       value={p.meta_key}
-                      onChange={(e) => {
+                      onValueChange={(v) => {
                         const mp = [...params]
-                        mp[i] = { ...mp[i], meta_key: e.target.value }
+                        mp[i] = { ...mp[i], meta_key: v }
                         updateParams(mp)
-                        void loadValueOpts(e.target.value, detail.template_code)
+                        void loadValueOpts(v, detail.template_code)
                       }}
                     >
-                      {metaKeyOpts.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                      {!metaKeyOpts.some((o) => o.value === p.meta_key) ? (
-                        <option value={p.meta_key}>{p.meta_key}</option>
-                      ) : null}
-                    </select>
+                      <SelectTrigger className={optionCategoryInlineSelectKeyClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {metaKeyOpts.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                        {!metaKeyOpts.some((o) => o.value === p.meta_key) ? (
+                          <SelectItem value={p.meta_key}>{p.meta_key}</SelectItem>
+                        ) : null}
+                      </SelectContent>
+                    </Select>
                   </DenseTableCell>
                   <DenseTableCell>
                     <Input
@@ -137,23 +142,26 @@ export function OptionCategoryMetaTable({
                   </DenseTableCell>
                   <DenseTableCell className={optionCategoryTableCellSelectClass}>
                     {(valueOptsByKey[p.meta_key]?.length ?? 0) > 0 ? (
-                      <select
-                        className={optionCategoryInlineSelectDefaultClass}
-                        value={p.default_value_text ?? ''}
-                        onFocus={() => void loadValueOpts(p.meta_key, detail.template_code)}
-                        onChange={(e) => {
+                      <Select
+                        value={p.default_value_text || '__empty__'}
+                        onValueChange={(v) => {
                           const mp = [...params]
-                          mp[i] = { ...mp[i], default_value_text: e.target.value }
+                          mp[i] = { ...mp[i], default_value_text: v === '__empty__' ? '' : v }
                           updateParams(mp)
                         }}
                       >
-                        <option value="">—</option>
-                        {(valueOptsByKey[p.meta_key] ?? []).map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className={optionCategoryInlineSelectDefaultClass} onFocus={() => void loadValueOpts(p.meta_key, detail.template_code)}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__empty__">—</SelectItem>
+                          {(valueOptsByKey[p.meta_key] ?? []).map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
                       <Input
                         className={optionCategoryInlineInputDefaultClass}
@@ -168,21 +176,25 @@ export function OptionCategoryMetaTable({
                     )}
                   </DenseTableCell>
                   <DenseTableCell className={optionCategoryTableCellSelectClass}>
-                    <select
-                      className={optionCategoryInlineSelectKindClass}
+                    <Select
                       value={p.param_kind ?? 'fixed'}
-                      onChange={(e) => {
+                      onValueChange={(v) => {
                         const mp = [...params]
-                        mp[i] = { ...mp[i], param_kind: e.target.value }
+                        mp[i] = { ...mp[i], param_kind: v }
                         updateParams(mp)
                       }}
                     >
-                      {paramKindOpts.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className={optionCategoryInlineSelectKindClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paramKindOpts.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </DenseTableCell>
                   <DenseTableCell>
                     <IconActionButton

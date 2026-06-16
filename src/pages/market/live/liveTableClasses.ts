@@ -13,12 +13,12 @@ export const liveTable = {
     'border-b-2 border-border',
   ),
   stackedPnlHead: 'whitespace-normal leading-snug normal-case',
-  stackedPnlHeadSub: 'block font-medium text-[length:var(--text-dense-meta)] opacity-85',
+  stackedPnlHeadSub: 'block font-medium text-dense-meta opacity-85',
   stackedPnlLines: 'text-right leading-snug',
   stackedPnlLine: 'block text-right leading-tight',
   stackedPnlLineGap: 'mt-0.5',
   lastBidAsk: 'font-mono whitespace-nowrap',
-  quoteSpread: 'text-[length:var(--text-dense-meta)] ml-1 opacity-90',
+  quoteSpread: 'text-dense-meta ml-1 opacity-90',
   bidAskSpread: 'text-[0.8em] ml-1 opacity-75',
 } as const
 

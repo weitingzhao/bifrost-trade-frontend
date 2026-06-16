@@ -6,10 +6,10 @@ export const instancePanel = {
     'mb-3 flex min-w-0 flex-nowrap items-center gap-x-3 gap-y-2 dense-scroll-x',
   filterBubbleRow: 'inline-flex shrink-0 flex-nowrap items-center gap-x-2 gap-y-1',
   filterBubbleLabel:
-    'shrink-0 whitespace-nowrap text-[0.72rem] font-semibold uppercase tracking-wide text-muted-foreground',
+    'shrink-0 whitespace-nowrap text-dense-label font-semibold uppercase tracking-wide text-muted-foreground',
   tableWrap: cn('w-full min-w-0', 'dense-scroll-x'),
   sheetRow:
-    'cursor-pointer hover:bg-muted/35 [&_td]:whitespace-nowrap [&_td]:text-[0.8rem] [&_td:nth-child(2)]:whitespace-normal [&_td:nth-child(2)]:align-top [&_td:nth-child(3)]:whitespace-normal [&_td:nth-child(4)]:whitespace-normal [&_td:nth-child(4)]:align-top',
+    'cursor-pointer hover:bg-muted/35 [&_td]:whitespace-nowrap [&_td]:text-dense-body [&_td:nth-child(2)]:whitespace-normal [&_td:nth-child(2)]:align-top [&_td:nth-child(3)]:whitespace-normal [&_td:nth-child(4)]:whitespace-normal [&_td:nth-child(4)]:align-top',
   sheetRowExpanded: 'bg-muted/25',
   oppCell: 'max-w-0 overflow-hidden align-top',
   execQtyCell: 'max-w-36 overflow-hidden text-ellipsis tabular-nums',
@@ -17,7 +17,7 @@ export const instancePanel = {
   oppPrimary:
     'block font-semibold leading-snug text-foreground whitespace-normal break-words [overflow-wrap:anywhere]',
   oppSecondary:
-    'm-0 cursor-pointer border-none bg-transparent p-0 text-left font-mono text-[0.72rem] font-semibold leading-tight text-link no-underline transition-colors hover:text-link-hover hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link',
+    'm-0 cursor-pointer border-none bg-transparent p-0 text-left font-mono text-dense-label font-semibold leading-tight text-link no-underline transition-colors hover:text-link-hover hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link',
   detailRow: 'border-b border-border/45 bg-transparent hover:bg-transparent',
   detailCell:
     'max-w-0 overflow-x-auto overflow-y-visible border-t-0 bg-card p-2 pb-3 align-top whitespace-normal [-webkit-overflow-scrolling:touch]',
@@ -34,5 +34,5 @@ export const instancePanel = {
     'border-b border-border/35 bg-secondary text-[0.88em] hover:bg-[color-mix(in_srgb,hsl(var(--secondary))_92%,hsl(var(--foreground))_8%)]',
   subMutedCell: 'font-normal text-[#7a8492]',
   subTimeAgo: 'font-medium text-warning',
-  subExpiryDte: 'text-[0.72rem] font-semibold text-warning',
+  subExpiryDte: 'text-dense-label font-semibold text-warning',
 } as const

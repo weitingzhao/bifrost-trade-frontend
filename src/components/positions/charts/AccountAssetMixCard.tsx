@@ -12,8 +12,7 @@ import type { IbAccountSnapshot } from '@/types/monitor'
 import type { LivePositionRow } from '@/types/positions'
 import { DonutChart } from './DonutChart'
 import { donutCenterFromDenom } from './donutCenter'
-import { BubbleSwitch, IncludeExcludeToggle } from './BubbleSwitch'
-import { POSITIONS_BUBBLE_SIZE } from './bubbleSwitchStyles'
+import { SegmentControl as BubbleSwitch, IncludeExcludeToggle, DEFAULT_SEGMENT_SIZE as POSITIONS_BUBBLE_SIZE } from '@/components/data-display'
 import styles from '../PositionsChartsSection.module.css'
 
 interface Props {

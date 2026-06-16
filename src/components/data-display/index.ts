@@ -46,7 +46,6 @@ export {
 export {
   SegmentControl,
   IncludeExcludeToggle,
-  BubbleSwitch,
   type SegmentOption,
 } from './SegmentControl'
 export {
@@ -60,8 +59,6 @@ export { EmptyState } from './EmptyState'
 export {
   segmentGroupClass,
   segmentButtonClass,
-  bubbleGroupClass,
-  bubbleButtonClass,
   SEGMENT_CTRL_ACTIVE,
   SEGMENT_CTRL_IDLE,
   DEFAULT_SEGMENT_SIZE,

@@ -10,7 +10,7 @@ export function SectionHeader({ label, variant }: Props) {
     <div className="flex items-center gap-3 pb-0.5 border-b border-border">
       <span
         className={cn(
-          'text-[0.72rem] font-extrabold uppercase tracking-widest pb-2 -mb-px border-b-2',
+          'text-dense-label font-extrabold uppercase tracking-widest pb-2 -mb-px border-b-2',
           variant === 'tech'
             ? 'text-screener-tech border-screener-tech'
             : 'text-screener-fund border-screener-fund',

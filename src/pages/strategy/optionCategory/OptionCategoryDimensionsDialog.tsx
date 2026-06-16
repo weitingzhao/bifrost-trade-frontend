@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -62,7 +63,7 @@ export function OptionCategoryDimensionsDialog({
                 <span>{DIM_ICONS[dt]}</span> {DIM_LABELS[dt]}
               </div>
               {(dimsByType[dt] ?? []).length === 0 ? (
-                <p className={optionCategoryEmptyHintClass + ' text-[10px] italic'}>No values</p>
+                <p className={optionCategoryEmptyHintClass + ' text-dense-caption italic'}>No values</p>
               ) : (
                 <ul className="space-y-1">
                   {(dimsByType[dt] ?? []).map((row: StrategyDimRow) => (
@@ -86,17 +87,18 @@ export function OptionCategoryDimensionsDialog({
         </div>
 
         <div className={optionCategoryDimsDialogAddRowClass}>
-          <select
-            className={optionCategoryCompactSelectClass + ' h-8'}
-            value={newDimType}
-            onChange={(e) => onNewDimTypeChange(e.target.value as DimType)}
-          >
-            {DIM_TYPES.map((dt) => (
-              <option key={dt} value={dt}>
-                {DIM_LABELS[dt]}
-              </option>
-            ))}
-          </select>
+          <Select value={newDimType} onValueChange={(v) => onNewDimTypeChange(v as DimType)}>
+            <SelectTrigger className={optionCategoryCompactSelectClass + ' h-8'}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DIM_TYPES.map((dt) => (
+                <SelectItem key={dt} value={dt}>
+                  {DIM_LABELS[dt]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
             className="h-8 w-28 text-xs"
             placeholder="code"

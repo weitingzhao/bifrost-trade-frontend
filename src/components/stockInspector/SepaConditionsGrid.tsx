@@ -185,7 +185,7 @@ function TechColumn({
             <details className={styles.tierDetails}>
               <summary className={styles.tierSummary}>
                 <span>Momentum</span>
-                <span className="font-mono text-[10px]">{tiers.momentum.score} / {tiers.momentum.max}</span>
+                <span className="font-mono text-dense-caption">{tiers.momentum.score} / {tiers.momentum.max}</span>
               </summary>
               <TierIndicatorList indicators={tiers.momentum.indicators} />
             </details>
@@ -195,7 +195,7 @@ function TechColumn({
             <details className={styles.tierDetails}>
               <summary className={styles.tierSummary}>
                 <span>Structure & Patterns</span>
-                <span className="font-mono text-[10px]">
+                <span className="font-mono text-dense-caption">
                   {tiers.structure.diagnostics.filter((d) => d.active).length} active
                 </span>
               </summary>
@@ -226,7 +226,7 @@ function TechColumn({
               <summary className={styles.tierSummary}>
                 <span>Sentiment (Short)</span>
                 {tiers.sentiment.short.staleness_days != null && (
-                  <span className="font-mono text-[10px]">{tiers.sentiment.short.staleness_days}d stale</span>
+                  <span className="font-mono text-dense-caption">{tiers.sentiment.short.staleness_days}d stale</span>
                 )}
               </summary>
               <TierIndicatorList indicators={tiers.sentiment.indicators} />

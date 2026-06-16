@@ -141,7 +141,7 @@ export function DraggableExplainPanel({
         </button>
       </div>
       <div className="overflow-y-auto px-3 py-2 text-xs leading-relaxed">{children}</div>
-      <p className="border-t border-border px-3 py-1.5 text-[10px] text-muted-foreground">
+      <p className="border-t border-border px-3 py-1.5 text-dense-caption text-muted-foreground">
         Drag the header to move. Click × or press Escape to close.
       </p>
     </div>

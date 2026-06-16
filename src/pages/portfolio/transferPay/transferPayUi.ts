@@ -21,13 +21,13 @@ export const transferPayUi = {
   typesLegend: ledgerFilterLabelClass,
   toolbarRight: cn(
     'ml-auto flex flex-wrap items-center gap-3',
-    'text-[0.8125rem] text-muted-foreground',
+    'text-dense-body text-muted-foreground',
   ),
   summaryHead: 'mt-3 mb-1.5 flex flex-wrap items-center justify-between gap-2',
   summaryTitle: 'inline-flex items-center gap-1 m-0 text-sm font-semibold',
   summaryView: 'inline-flex items-center gap-1.5',
   viewLabel: 'text-xs text-muted-foreground',
-  changeHint: 'block text-[length:var(--text-dense-meta)] leading-snug text-muted-foreground',
+  changeHint: 'block text-dense-meta leading-snug text-muted-foreground',
   paginationBar: 'inline-flex items-center gap-1.5',
   pageBtn: cn(
     'h-7 rounded-md border border-border bg-secondary px-2.5',

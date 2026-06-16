@@ -112,9 +112,9 @@ export function WatchlistMetricTable({ table, maxDdPct }: Props) {
             <DenseTableCell>
               <div className="text-sm font-semibold">{row.label}</div>
               {row.id ? (
-                <div className="font-mono text-[10px] text-muted-foreground">{row.id}</div>
+                <div className="font-mono text-dense-caption text-muted-foreground">{row.id}</div>
               ) : row.sub ? (
-                <div className="text-[10px] text-muted-foreground">{row.sub}</div>
+                <div className="text-dense-caption text-muted-foreground">{row.sub}</div>
               ) : null}
             </DenseTableCell>
             {row.data ? <MetricCells row={row.data} /> : <EmptyMetricCells />}

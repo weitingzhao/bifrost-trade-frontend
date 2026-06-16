@@ -161,7 +161,7 @@ export function MassiveSidebarNav() {
                           <button
                             type="button"
                             className={cn(
-                              'flex w-full items-center gap-1 rounded-md px-2 py-1 text-left text-[11px] font-semibold uppercase tracking-wide transition-colors',
+                              'flex w-full items-center gap-1 rounded-md px-2 py-1 text-left text-dense-meta font-semibold uppercase tracking-wide transition-colors',
                               groupActive
                                 ? 'text-foreground'
                                 : 'text-muted-foreground hover:text-foreground',

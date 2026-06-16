@@ -310,7 +310,7 @@ export function InstanceOptionSubTable({
                     {lastStrikePct != null && (
                       <div
                         className={cn(
-                          'text-[length:var(--text-dense-meta)] font-semibold',
+                          'text-dense-meta font-semibold',
                           pctClass,
                         )}
                       >
@@ -353,7 +353,7 @@ export function InstanceOptionSubTable({
                     {livePnl != null && (
                       <div className={cn('font-semibold', unrealizedPnlColorClass(livePnl))}>
                         {fmtUsd(livePnl)}
-                        <span className={cn('ml-1 text-[length:var(--text-dense-meta)] font-normal', denseTable.mutedMeta)}>
+                        <span className={cn('ml-1 text-dense-meta font-normal', denseTable.mutedMeta)}>
                           live
                         </span>
                       </div>
@@ -362,12 +362,12 @@ export function InstanceOptionSubTable({
                       className={cn(
                         'font-semibold',
                         unrealizedPnlColorClass(pos.unrealized_pnl),
-                        livePnl != null && 'text-[length:var(--text-dense-meta)] font-normal',
+                        livePnl != null && 'text-dense-meta font-normal',
                       )}
                     >
                       {fmtUsd(pos.unrealized_pnl)}
                       {livePnl != null && (
-                        <span className={cn('ml-1 text-[length:var(--text-dense-meta)]', denseTable.mutedMeta)}>
+                        <span className={cn('ml-1 text-dense-meta', denseTable.mutedMeta)}>
                           snap
                         </span>
                       )}

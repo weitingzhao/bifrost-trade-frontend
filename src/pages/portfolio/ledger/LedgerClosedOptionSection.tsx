@@ -249,7 +249,7 @@ export function LedgerClosedOptionSection({
         onPage={p => setClosedPage(Math.max(1, Math.min(p, totalClosedPages)))}
       />
 
-      <h5 className="mb-2 mt-4 inline-flex items-center gap-1.5 text-[0.8125rem] font-semibold text-foreground">
+      <h5 className="mb-2 mt-4 inline-flex items-center gap-1.5 text-dense-body font-semibold text-foreground">
         Details (per trade)
         <InfoTooltip text="Click a closed trade row above to load its execution details." />
       </h5>

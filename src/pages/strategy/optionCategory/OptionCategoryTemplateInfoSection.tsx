@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import type { StrategyDimRow, StrategyTemplateDetail } from '@/types/positions'
 import { DIM_TYPES, DIM_LABELS, DIM_ICONS } from '@/pages/strategy/optionCategory/constants'
@@ -47,7 +48,7 @@ export function OptionCategoryTemplateInfoSection({
       <div className={optionCategorySectionHeaderClass}>
         <div className="flex items-center gap-2">
           <h2 className={optionCategorySectionTitleClass}>{detail.display_name}</h2>
-          <Badge variant="outline" className="font-mono text-[10px]">
+          <Badge variant="outline" className="font-mono text-dense-caption">
             {detail.template_code}
           </Badge>
         </div>
@@ -111,23 +112,27 @@ export function OptionCategoryTemplateInfoSection({
                 <div className={optionCategoryDimLabelClass}>
                   <span>{DIM_ICONS[dt]}</span> {DIM_LABELS[dt]}
                 </div>
-                <select
-                  className={cn(optionCategoryCompactSelectClass, 'w-full')}
-                  value={(detail[`dim_${dt}` as keyof StrategyTemplateDetail] as string | null) ?? ''}
-                  onChange={(e) =>
+                <Select
+                  value={(detail[`dim_${dt}` as keyof StrategyTemplateDetail] as string | null) || '__empty__'}
+                  onValueChange={(v) =>
                     onDetailChange({
                       ...detail,
-                      [`dim_${dt}`]: e.target.value || null,
+                      [`dim_${dt}`]: v === '__empty__' ? null : v,
                     } as StrategyTemplateDetail)
                   }
                 >
-                  <option value="">—</option>
-                  {(dimsByType[dt] ?? []).map((d: StrategyDimRow) => (
-                    <option key={d.code} value={d.code}>
-                      {d.display_label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className={cn(optionCategoryCompactSelectClass, 'w-full')}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__empty__">—</SelectItem>
+                    {(dimsByType[dt] ?? []).map((d: StrategyDimRow) => (
+                      <SelectItem key={d.code} value={d.code}>
+                        {d.display_label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             ))}
           </div>

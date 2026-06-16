@@ -28,7 +28,7 @@ export const structuresToolbarActionsClass = cn(
 )
 
 export const structuresToolbarLabelClass = cn(
-  'mr-1 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
+  'mr-1 shrink-0 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const structuresEmptyHintClass = denseTable.emptyHint
@@ -54,11 +54,11 @@ export const structuresVersionClass = cn(
 )
 
 export const structuresSummaryCellClass = cn(
-  'max-w-0 truncate text-[length:var(--text-dense-meta)] text-muted-foreground',
+  'max-w-0 truncate text-dense-meta text-muted-foreground',
 )
 
 export const structuresTemplateCellClass = cn(
-  'text-[length:var(--text-dense-meta)] text-muted-foreground',
+  'text-dense-meta text-muted-foreground',
 )
 
 export const structuresSwitchCellClass = cn('text-center')
@@ -82,5 +82,5 @@ export const structuresHistoryIdCellClass = cn(
 )
 
 export const structuresHistorySummaryCellClass = cn(
-  'max-w-md truncate text-[length:var(--text-dense-meta)] text-muted-foreground',
+  'max-w-md truncate text-dense-meta text-muted-foreground',
 )

@@ -7,7 +7,7 @@ export const ledgerSummary = {
     'shadow-[inset_0_1px_0_color-mix(in_srgb,var(--foreground)_4%,transparent)]',
   ),
   head: 'mb-3 flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2',
-  title: 'shrink-0 text-[0.8125rem] font-semibold text-muted-foreground',
+  title: 'shrink-0 text-dense-body font-semibold text-muted-foreground',
   body: 'flex w-full min-w-0 flex-wrap items-stretch gap-3',
   calendarGrid: cn(
     'm-0 grid min-w-0 flex-[1_1_14rem] list-none gap-2 p-0',
@@ -19,15 +19,15 @@ export const ledgerSummary = {
     'shadow-sm',
   ),
   periodCellLabel: cn(
-    'font-mono text-[length:var(--text-dense-meta)] font-semibold tabular-nums',
+    'font-mono text-dense-meta font-semibold tabular-nums',
     'tracking-wide text-muted-foreground leading-tight',
   ),
   periodCellMetrics: cn(
     'inline-flex flex-wrap items-baseline gap-[0.35em]',
-    'text-[length:var(--text-dense)] leading-snug text-muted-foreground',
+    'text-dense-body leading-snug text-muted-foreground',
   ),
   stocksNotionalLine: cn(
-    'mt-0.5 block text-left font-mono text-[0.6875rem] tabular-nums',
+    'mt-0.5 block text-left font-mono text-dense-meta tabular-nums',
     'leading-tight text-muted-foreground',
   ),
   metricSep: 'select-none text-border',
@@ -43,11 +43,11 @@ export const ledgerSummary = {
     'bg-gradient-to-br from-muted/40 to-muted/15',
   ),
   summaryTotalLabel: cn(
-    'text-[length:var(--text-dense-meta)] font-bold uppercase tracking-wider text-muted-foreground',
+    'text-dense-meta font-bold uppercase tracking-wider text-muted-foreground',
   ),
   summaryTotalMetrics: cn(
     'inline-flex flex-wrap items-baseline gap-[0.35em]',
-    'text-[0.8125rem] leading-snug text-foreground',
+    'text-dense-body leading-snug text-foreground',
   ),
   emptyHint: denseTable.emptyHint,
 } as const

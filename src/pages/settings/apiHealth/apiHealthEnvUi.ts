@@ -61,7 +61,7 @@ export function apiHealthDiagramNodeClass(lamp: EnvLamp): string {
 export const apiHealthDiagramLabelClass = cn('text-xs font-medium shrink-0 w-24')
 
 export const apiHealthDiagramDetailClass = cn(
-  'text-[10px] text-muted-foreground font-mono break-all min-w-0 flex-1',
+  'text-dense-caption text-muted-foreground font-mono break-all min-w-0 flex-1',
 )
 
 export const apiHealthEmptyHintClass = cn('text-xs text-muted-foreground')

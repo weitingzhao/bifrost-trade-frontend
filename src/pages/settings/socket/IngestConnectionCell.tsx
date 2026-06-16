@@ -55,7 +55,7 @@ function ConnectionColumn({
 }) {
   return (
     <div className={cn('flex flex-col gap-0.5 min-w-0', className)} title={hint}>
-      <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70 leading-none">
+      <span className="text-dense-caption font-medium uppercase tracking-wide text-muted-foreground/70 leading-none">
         {label}
       </span>
       <div className="flex flex-wrap items-center gap-1 min-h-[1.125rem] min-w-0">{children}</div>
@@ -157,7 +157,7 @@ export function ConnectionCell({
           />
         </ConnectionColumn>
         {massive?.ws_reconnects != null && massive.ws_reconnects > 0 && (
-          <span className="text-[10px] text-muted-foreground self-end pb-0.5" title="WebSocket reconnect count">
+          <span className="text-dense-caption text-muted-foreground self-end pb-0.5" title="WebSocket reconnect count">
             ↻{massive.ws_reconnects}
           </span>
         )}

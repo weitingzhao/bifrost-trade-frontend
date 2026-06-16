@@ -103,13 +103,13 @@ function MetricCell({
       : 'text-foreground')
   return (
     <div className="shrink-0 rounded-md bg-background/70 px-1.5 py-1">
-      <span className="block text-[10px] uppercase tracking-wide text-muted-foreground leading-tight">
+      <span className="block text-dense-caption uppercase tracking-wide text-muted-foreground leading-tight">
         {label}
       </span>
       <span
         className={cn(
           'block tabular-nums font-semibold leading-tight truncate',
-          emphasize ? 'text-[13px]' : 'text-xs',
+          emphasize ? 'text-dense-body' : 'text-xs',
           toneClass,
         )}
       >

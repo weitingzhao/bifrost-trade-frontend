@@ -31,11 +31,11 @@ export const sizingDashSubtitleClass = cn(
   'mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground',
 )
 
-export const sizingDashSubtitleSmClass = cn(sizingDashSubtitleClass, 'text-[10px]')
+export const sizingDashSubtitleSmClass = cn(sizingDashSubtitleClass, 'text-dense-caption')
 
-export const sizingDashHintClass = cn('text-[11px] leading-snug text-muted-foreground')
+export const sizingDashHintClass = cn('text-dense-meta leading-snug text-muted-foreground')
 
-export const sizingDashFootnoteClass = cn('mt-2 text-[11px] text-muted-foreground')
+export const sizingDashFootnoteClass = cn('mt-2 text-dense-meta text-muted-foreground')
 
 export const sizingSymbolSheetWrapClass = cn('min-w-0 max-w-full overflow-x-hidden')
 
@@ -74,7 +74,7 @@ export const sizingOrderBidRowClass = cn(
 )
 
 export const sizingOrderBidLabelClass = cn(
-  'text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
+  'text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const sizingOrderBidValueClass = cn('font-mono text-sm font-semibold tabular-nums')
@@ -86,7 +86,7 @@ export const sizingOrderCompactGridClass = cn('grid grid-cols-3 gap-2')
 export const sizingOrderFieldClass = cn('flex min-w-0 flex-col gap-1')
 
 export const sizingOrderFieldLabelClass = cn(
-  'text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
+  'text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const sizingOrderFieldHintClass = cn('ml-1 font-normal normal-case text-muted-foreground')
@@ -114,11 +114,11 @@ export const sizingDashCardHighlightClass = cn(
 )
 
 export const sizingDashLabelClass = cn(
-  'mb-0.5 block text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground',
+  'mb-0.5 block text-dense-meta font-semibold uppercase tracking-wide text-muted-foreground',
 )
 
 export const sizingDashLabelHighlightClass = cn(
-  'mb-[0.22rem] block text-[0.58rem] font-semibold uppercase tracking-[0.06em]',
+  'mb-[0.22rem] block text-dense-micro font-semibold uppercase tracking-[0.06em]',
   'text-[color-mix(in_srgb,var(--primary)_35%,var(--muted-foreground))] opacity-90',
 )
 
@@ -151,7 +151,7 @@ export const sizingOrderTwoColCardsClass = cn(
 )
 
 export const sizingOrderAtrSheetTitleClass = cn(
-  'mb-[0.35rem] text-[0.7rem] font-semibold uppercase tracking-[0.04em] text-muted-foreground',
+  'mb-[0.35rem] text-dense-meta font-semibold uppercase tracking-[0.04em] text-muted-foreground',
 )
 
 export const sizingOrderMetricSuffixClass = cn(
@@ -169,12 +169,12 @@ export const sizingKellyRangeLabelClass = cn('text-xs font-medium')
 export const sizingKellyRangeReadoutClass = cn('font-mono text-sm font-semibold tabular-nums')
 
 export const sizingKellyRangeScaleClass = cn(
-  'mt-0.5 flex justify-between text-[10px] text-muted-foreground',
+  'mt-0.5 flex justify-between text-dense-caption text-muted-foreground',
 )
 
 export const sizingKellyExactRowClass = cn('mt-1 flex items-center justify-end gap-2')
 
-export const sizingKellyExactLabelClass = cn('text-[10px] font-semibold text-muted-foreground')
+export const sizingKellyExactLabelClass = cn('text-dense-caption font-semibold text-muted-foreground')
 
 export const sizingKellyExactInputClass = cn(
   'h-7 w-[4.25rem] rounded-md border border-input bg-background px-2 font-mono text-xs tabular-nums',
@@ -197,7 +197,7 @@ export const watchlistStepperSizingHubActiveClass = cn(
 )
 
 export const watchlistStepperSizingHubTitleClass = cn(
-  'text-[0.82rem] font-extrabold uppercase tracking-wider',
+  'text-dense-body font-extrabold uppercase tracking-wider',
 )
 
 export const HELP_PORTFOLIO_TABLE =
@@ -237,11 +237,11 @@ export const sizingPortfolioSummaryItemClass = cn(
 export const sizingPortfolioSummaryItemMaxDdClass = cn(sizingPortfolioSummaryItemClass, 'ml-auto')
 
 export const sizingPortfolioSummaryNameClass = cn(
-  'text-[0.67rem] font-semibold uppercase tracking-wider text-muted-foreground',
+  'text-dense-meta font-semibold uppercase tracking-wider text-muted-foreground',
 )
 
 export const sizingPortfolioSummaryMetricClass = cn(
-  'text-[0.78rem] tabular-nums text-foreground',
+  'text-dense-label tabular-nums text-foreground',
 )
 
 export const sizingPortfolioSummaryMetricValueClass = sizingDashValueHighlightClass
@@ -280,11 +280,11 @@ export const sizingRangeFieldReadoutClass = cn(
 )
 
 export const sizingRangeFieldReadoutUnitClass = cn(
-  'ml-px text-[0.72rem] font-semibold opacity-85',
+  'ml-px text-dense-label font-semibold opacity-85',
 )
 
 export const sizingRangeFieldScaleClass = cn(
-  'mt-1 flex justify-between text-[0.65rem] font-medium text-muted-foreground opacity-90',
+  'mt-1 flex justify-between text-dense-caption font-medium text-muted-foreground opacity-90',
 )
 
 export const sizingRangeFieldMetricsRowClass = cn('mt-2 flex flex-wrap gap-2')
@@ -308,14 +308,14 @@ export const sizingRangeFieldMetricTileHighlightClass = cn(
 )
 
 export const sizingRangeFieldMetricTileLabelClass = cn(
-  'text-[0.64rem] font-semibold uppercase tracking-wider',
+  'text-dense-caption font-semibold uppercase tracking-wider',
   'text-[color-mix(in_srgb,var(--primary)_35%,var(--muted-foreground))]',
 )
 
 export const sizingRangeFieldMetricTileValueClass = sizingDashValueHighlightClass
 
 export const sizingRangeFieldMetricTileSubClass = cn(
-  'text-[0.66rem] font-medium leading-snug text-muted-foreground',
+  'text-dense-caption font-medium leading-snug text-muted-foreground',
 )
 
 export const sizingPortfolioTableWrapClass = cn('mt-0 min-w-0')
@@ -344,7 +344,7 @@ export const sizingCashPiePanelClass = cn(
 )
 
 export const sizingCashPiePanelTitleClass = cn(
-  'mb-2 text-[0.82rem] font-bold uppercase tracking-wider text-muted-foreground',
+  'mb-2 text-dense-body font-bold uppercase tracking-wider text-muted-foreground',
 )
 
 export const sizingCashPiePanelEmptyClass = cn(
@@ -377,7 +377,7 @@ export const sizingCashPiePctStkClass = cn(
 )
 
 export const sizingCashPieHoleLabelClass = cn(
-  'mt-0.5 text-[0.62rem] font-bold uppercase tracking-widest text-muted-foreground',
+  'mt-0.5 text-dense-caption font-bold uppercase tracking-widest text-muted-foreground',
 )
 
 export const sizingCashPieLegendClass = cn(

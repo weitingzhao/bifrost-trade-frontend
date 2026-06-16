@@ -12,20 +12,20 @@ export const liveCardTitleClass = 'text-base font-semibold tracking-tight'
 export const liveHeaderActionsClass = 'flex flex-wrap items-center gap-2 shrink-0'
 
 export const liveSummaryBarClass =
-  'flex flex-wrap items-center gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-[0.78rem]'
+  'flex flex-wrap items-center gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-dense-label'
 export const liveSummaryLabelClass =
-  'text-[0.68rem] font-bold uppercase tracking-wider text-muted-foreground mr-1'
+  'text-dense-meta font-bold uppercase tracking-wider text-muted-foreground mr-1'
 export const liveSummarySegClass = 'inline-flex items-baseline gap-1.5'
 export const liveSummaryKeyClass =
-  'text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground'
-export const liveSummaryValClass = 'font-mono font-bold tabular-nums text-[0.85rem]'
+  'text-dense-meta font-semibold uppercase tracking-wide text-muted-foreground'
+export const liveSummaryValClass = 'font-mono font-bold tabular-nums text-dense-body'
 export const liveSummaryDividerClass = 'text-border-strong select-none'
 
 export const liveFiltersInlineClass = 'flex flex-wrap items-center gap-3 min-w-0'
 export const liveFilterGroupClass = 'flex flex-wrap items-center gap-2 min-w-0'
 export const liveFilterHintClass = 'text-xs font-medium text-muted-foreground shrink-0'
 export const liveFilterPillsClass = 'flex flex-wrap items-center gap-1'
-export const liveFilterPillGripClass = 'cursor-grab text-[10px] leading-none opacity-50'
+export const liveFilterPillGripClass = 'cursor-grab text-dense-caption leading-none opacity-50'
 
 export const liveFeedbackHintClass = 'text-xs text-muted-foreground animate-pulse'
 
@@ -48,8 +48,8 @@ export const livePaneTitleRowClass = 'flex items-center gap-2 min-w-0'
 export const livePaneTitleClass = 'text-sm font-semibold tracking-tight'
 export const livePaneHeaderActionsClass = 'flex items-center gap-2 shrink-0'
 export const liveFreshnessBadgeClass =
-  'inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground'
-export const liveSourceHintClass = 'text-[11px] text-muted-foreground mb-2'
+  'inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-dense-caption text-muted-foreground'
+export const liveSourceHintClass = 'text-dense-meta text-muted-foreground mb-2'
 
 export const liveOpenOrdersWrapClass = 'space-y-3'
 export const liveOpenOrdersSectionClass = 'min-w-0'

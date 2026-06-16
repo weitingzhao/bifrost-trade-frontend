@@ -14,7 +14,9 @@ import {
   DenseOptionCategoryLabel,
   DenseTag,
   DenseTagButton,
+  EmptyState,
   ExecSourceBadge,
+  SegmentControl,
   denseEntityFilterChipClass,
   IconActionButton,
   InlinePnl,
@@ -22,10 +24,13 @@ import {
   denseTableEntityCell,
   denseTableEntityLink,
   denseTableNumCell,
+  type SegmentOption,
 } from '@/components/data-display'
+import { StatusLamp } from '@/components/StatusLamp'
+import { Skeleton } from '@/components/ui/skeleton'
 import { fmtDollar, fmtPct, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { cn } from '@/lib/utils'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2, Inbox } from 'lucide-react'
 import { PromptCopyDialog } from './uiDesignSystem/PromptCopyDialog'
 import type { PromptSpecId } from './uiDesignSystem/promptSpecs'
 
@@ -39,6 +44,9 @@ const DESIGN_SYSTEM_SECTIONS = [
   { id: 'status-tags', label: 'Status' },
   { id: 'density', label: 'Density' },
   { id: 'surfaces', label: 'Surfaces' },
+  { id: 'filters', label: 'Filters' },
+  { id: 'loading-empty', label: 'Loading / Empty' },
+  { id: 'status-lamp', label: 'StatusLamp' },
   { id: 'compliance', label: 'Compliance' },
 ] as const
 
@@ -116,7 +124,7 @@ function TokenSwatch({ label, varName }: { label: string; varName: string }) {
       />
       <div className="min-w-0">
         <p className="truncate text-xs font-semibold text-foreground">{label}</p>
-        <p className="truncate font-mono text-[10px] text-muted-foreground">{varName}</p>
+        <p className="truncate font-mono text-dense-caption text-muted-foreground">{varName}</p>
       </div>
     </div>
   )
@@ -139,7 +147,7 @@ function PlannedTokenSwatch({
       />
       <div className="min-w-0">
         <p className="truncate text-xs font-semibold text-foreground">{label}</p>
-        <p className="truncate font-mono text-[10px] text-muted-foreground">{note}</p>
+        <p className="truncate font-mono text-dense-caption text-muted-foreground">{note}</p>
       </div>
     </div>
   )
@@ -161,6 +169,11 @@ function SampleBox({ children, className }: { children: ReactNode; className?: s
 // ─── Demo data ───────────────────────────────────────────────────────────────
 
 const noop = () => {}
+
+const FILTER_SEGMENT_DEMO: SegmentOption[] = [
+  { value: 'host', label: 'Host' },
+  { value: 'secondary', label: 'Secondary' },
+]
 
 interface DemoRow {
   symbol: string
@@ -228,7 +241,7 @@ export default function UiDesignSystemPage() {
         title="UI Design System"
         description="Site-wide business semantics — PnL colors, entity asset classes, option category, position category, status tags, density. Same token everywhere; primitive varies by placement. Use this page to validate compliance."
         actions={
-          <Badge variant="secondary" className="font-mono text-[10px] uppercase tracking-wide">
+          <Badge variant="secondary" className="font-mono text-dense-caption uppercase tracking-wide">
             Visual contract
           </Badge>
         }
@@ -590,7 +603,7 @@ export default function UiDesignSystemPage() {
           >
             Secondary
           </button>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-dense-meta text-muted-foreground">
             Account / time range / status — neutral pills or SegmentControl, not Position Category
           </span>
         </SampleBox>
@@ -649,11 +662,37 @@ export default function UiDesignSystemPage() {
         specId="density"
         description="Dense tables: 13px body, 11px meta, fixed layout. Entity identity columns (Stock, Option) and Option Category columns must show full text — wrap inside the cell, never ellipsis (...)."
       >
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+          Dense typography scale — 5 stops, all in @theme
+        </p>
+        <div className="space-y-1.5 rounded-md border border-border bg-background p-3">
+          <div className="flex items-baseline gap-3">
+            <span className="w-28 shrink-0 font-mono text-dense-caption text-muted-foreground">text-dense-body</span>
+            <span className="text-dense-body text-foreground">13px — table body, primary data (0.8125rem)</span>
+          </div>
+          <div className="flex items-baseline gap-3">
+            <span className="w-28 shrink-0 font-mono text-dense-caption text-muted-foreground">text-dense-label</span>
+            <span className="text-dense-label text-foreground">12px — form labels, secondary info (0.75rem)</span>
+          </div>
+          <div className="flex items-baseline gap-3">
+            <span className="w-28 shrink-0 font-mono text-dense-caption text-muted-foreground">text-dense-meta</span>
+            <span className="text-dense-meta text-foreground">11px — metadata, captions (0.6875rem)</span>
+          </div>
+          <div className="flex items-baseline gap-3">
+            <span className="w-28 shrink-0 font-mono text-dense-caption text-muted-foreground">text-dense-caption</span>
+            <span className="text-dense-caption text-foreground">10px — badges, tags, compact info (0.625rem)</span>
+          </div>
+          <div className="flex items-baseline gap-3">
+            <span className="w-28 shrink-0 font-mono text-dense-caption text-muted-foreground">text-dense-micro</span>
+            <span className="text-dense-micro text-foreground">9px — chart axis, extreme compact (0.5625rem)</span>
+          </div>
+        </div>
+
         <SampleBox className="gap-6">
-          <span className="text-[length:var(--text-dense)] text-foreground">
+          <span className="text-dense-body text-foreground">
             --text-dense · 13px body
           </span>
-          <span className="text-[length:var(--text-dense-meta)]">--text-dense-meta · 11px meta</span>
+          <span className="text-dense-meta">--text-dense-meta · 11px meta</span>
           <span className="font-mono tabular-nums text-foreground">1,234.56 mono tabular</span>
         </SampleBox>
 
@@ -781,10 +820,134 @@ export default function UiDesignSystemPage() {
         </div>
       </SectionCard>
 
-      {/* 8 — Compliance checklist */}
+      {/* 8 — Filter patterns */}
+      <SectionCard
+        id="filters"
+        title="8 · Filter Patterns"
+        description="Filters follow a layered hierarchy: SegmentControl for few fixed options (≤5), shadcn Select for longer lists or form contexts, DenseTagButton for entity-colored chip filters. Never use native <select> or ad-hoc pill CSS."
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+          Segment control — account toggle, time range, view mode
+        </p>
+        <SampleBox>
+          <SegmentControl
+            size="sm"
+            options={FILTER_SEGMENT_DEMO}
+            value="host"
+            onChange={noop}
+            ariaLabel="Account filter demo"
+          />
+        </SampleBox>
+
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+          Filter bar container — bg-secondary/80 rounded-lg, same elevation as Card elevated
+        </p>
+        <div className="flex items-center gap-3 rounded-lg bg-secondary/80 px-3 py-2">
+          <span className="text-dense-meta text-muted-foreground">Filters:</span>
+          <SegmentControl
+            size="sm"
+            options={FILTER_SEGMENT_DEMO}
+            value="host"
+            onChange={noop}
+            ariaLabel="Filter bar demo"
+          />
+        </div>
+
+        <div className="space-y-1 text-xs">
+          <p>
+            ✅ <CodeRef>SegmentControl</CodeRef> for ≤5 fixed options ·{' '}
+            <CodeRef>{'<Select>'}</CodeRef> (shadcn) for dropdowns ·{' '}
+            <CodeRef>DenseTagButton</CodeRef> for entity-colored chip filters
+          </p>
+          <p>
+            ❌ Native <CodeRef>{'<select>'}</CodeRef> · hand-rolled pill CSS ·{' '}
+            <CodeRef>bg-primary</CodeRef> toggle buttons · inconsistent filter bar backgrounds
+          </p>
+        </div>
+      </SectionCard>
+
+      {/* 9 — Loading & Empty states */}
+      <SectionCard
+        id="loading-empty"
+        title="9 · Loading & Empty States"
+        description="Three loading tiers: page-level route fallback, card-level skeleton, inline spinner. Empty states use the EmptyState component for non-table contexts."
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+          Card-level skeleton
+        </p>
+        <SampleBox className="flex-col">
+          <div className="w-full space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+        </SampleBox>
+
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+          EmptyState — card/section level
+        </p>
+        <SampleBox className="flex-col">
+          <EmptyState
+            icon={<Inbox />}
+            title="No positions found"
+            description="Open a position to see it here."
+          />
+        </SampleBox>
+
+        <div className="space-y-1 text-xs">
+          <p>
+            ✅ Full page: <CodeRef>PageRouteFallback</CodeRef> · Card/section:{' '}
+            <CodeRef>Skeleton</CodeRef> · Empty: <CodeRef>EmptyState</CodeRef> ·
+            Table empty: <CodeRef>denseTable.emptyHint</CodeRef>
+          </p>
+          <p>
+            ❌ Bare <CodeRef>Loading...</CodeRef> text · ad-hoc empty <CodeRef>{'<div>'}</CodeRef>{' '}
+            per page · spinner without skeleton context
+          </p>
+        </div>
+      </SectionCard>
+
+      {/* 10 — StatusLamp indicators */}
+      <SectionCard
+        id="status-lamp"
+        title="10 · StatusLamp — Process Health Indicators"
+        description="StatusLamp is reserved for process health (daemon, IB connection, Celery workers). It is NOT a general status indicator — use DenseTag for state labels."
+      >
+        <SampleBox>
+          <div className="flex items-center gap-2">
+            <StatusLamp lamp="green" variant="pulse" />
+            <span className="text-xs">Running — healthy (pulse)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusLamp lamp="yellow" variant="pulse" />
+            <span className="text-xs">Warning — degraded</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusLamp lamp="red" variant="pulse" />
+            <span className="text-xs">Error — stopped</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusLamp lamp="gray" variant="dot" />
+            <span className="text-xs">Unknown — no data (dot)</span>
+          </div>
+        </SampleBox>
+
+        <div className="space-y-1 text-xs">
+          <p>
+            ✅ <CodeRef>StatusLamp</CodeRef> for: daemon process, IB Gateway, Celery worker health,
+            Redis/PG connectivity
+          </p>
+          <p>
+            ❌ StatusLamp for: order status (use <CodeRef>DenseTag</CodeRef>), data freshness (use text),
+            feature flags (use <CodeRef>Switch</CodeRef>)
+          </p>
+        </div>
+      </SectionCard>
+
+      {/* 11 — Compliance checklist */}
       <SectionCard
         id="compliance"
-        title="8 · Compliance Checklist — validate any page against this contract"
+        title="11 · Compliance Checklist — validate any page against this contract"
         specId="full"
         promptLabel="Copy Full Prompt"
         description="Walk a page against these checks. Mechanical guards run in npm run check:legacy-css; the rest is reviewed against the samples above."
@@ -829,6 +992,23 @@ export default function UiDesignSystemPage() {
           <li>
             Page shell: <CodeRef>PageShell</CodeRef> + <CodeRef>PageHeader</CodeRef>; surfaces follow
             the 3-layer canvas (§7)
+          </li>
+          <li>
+            Typography uses the 5-stop dense scale (<CodeRef>text-dense-body</CodeRef> /{' '}
+            <CodeRef>text-dense-label</CodeRef> / <CodeRef>text-dense-meta</CodeRef> /{' '}
+            <CodeRef>text-dense-caption</CodeRef> / <CodeRef>text-dense-micro</CodeRef>) — no{' '}
+            <CodeRef>{'text-[Npx]'}</CodeRef> (§6)
+          </li>
+          <li>
+            Filters: <CodeRef>SegmentControl</CodeRef> for ≤5 options; shadcn{' '}
+            <CodeRef>Select</CodeRef> for dropdowns — no native <CodeRef>{'<select>'}</CodeRef> (§8)
+          </li>
+          <li>
+            Empty states: <CodeRef>EmptyState</CodeRef> for card/section empty;{' '}
+            <CodeRef>denseTable.emptyHint</CodeRef> for table empty (§9)
+          </li>
+          <li>
+            StatusLamp only for process health — not for order/data status (§10)
           </li>
           <li>
             New colors go through <CodeRef>src/index.css</CodeRef> tokens first — never inline hex in

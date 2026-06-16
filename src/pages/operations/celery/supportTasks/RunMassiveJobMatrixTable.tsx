@@ -12,7 +12,7 @@ import {
   denseTable,
 } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { BubbleSwitch } from '@/components/positions/charts/BubbleSwitch'
+import { SegmentControl as BubbleSwitch } from '@/components/data-display'
 import { formatQueueLabel, brokerQueueKeyTitle } from '@/utils/celeryQueueLabels'
 import type { RunMassiveJobMatrixRow } from '@/types/ops'
 import { MatrixModeCell, MatrixEffectsStacked } from './MatrixCells'
@@ -108,7 +108,7 @@ export function RunMassiveJobMatrixTable({
         <div className={celeryMatrixFilterBarClass}>
           <span>
             Filtered by <strong>{formatQueueLabel(brokerQueueFilter)}</strong>
-            <code className="ml-1 text-[10px] text-muted-foreground">({brokerQueueFilter})</code>
+            <code className="ml-1 text-dense-caption text-muted-foreground">({brokerQueueFilter})</code>
           </span>
           {onClearBrokerFilter && (
             <Button size="sm" variant="outline" className="h-7 text-xs ml-auto" onClick={onClearBrokerFilter}>
@@ -214,7 +214,7 @@ export function RunMassiveJobMatrixTable({
                 key={key}
                 size="sm"
                 variant={effectsVisibility[key] ? 'default' : 'outline'}
-                className="h-7 text-[10px] px-2"
+                className="h-7 text-dense-caption px-2"
                 onClick={() => setEffectsVisibility(v => ({ ...v, [key]: !v[key] }))}
               >
                 {key === 'showFeedApi' ? 'Feed' : key === 'showDb' ? 'DB' : 'Redis'}
@@ -277,10 +277,10 @@ export function RunMassiveJobMatrixTable({
             sorted.map((row, i) => (
               <DenseTableRow key={`${row.kind}-${row.mode ?? 'null'}-${i}`}>
                 <DenseTableCell>
-                  <code className="font-mono text-[11px]">{row.kind}</code>
+                  <code className="font-mono text-dense-meta">{row.kind}</code>
                 </DenseTableCell>
                 <DenseTableCell>
-                  <code className="font-mono text-[11px] break-all">{resolvedMatrixTaskName(row)}</code>
+                  <code className="font-mono text-dense-meta break-all">{resolvedMatrixTaskName(row)}</code>
                 </DenseTableCell>
                 <DenseTableCell>{matrixJobStyleLabel(row)}</DenseTableCell>
                 <DenseTableCell>

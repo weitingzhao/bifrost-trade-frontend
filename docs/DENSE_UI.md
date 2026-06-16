@@ -10,7 +10,7 @@ Reusable styling for data-heavy monitoring pages (Positions, Trade Ledger, Perfo
 
 | Layer | Location | Role |
 |-------|----------|------|
-| Tokens | `src/index.css` (`--text-dense`, `--table-cell-*`, `--color-profit/loss/unrealized`, `--color-entity-*`) | Typography, cell spacing, business semantics |
+| Tokens | `src/index.css` (typography: `text-dense-body/label/meta/caption/micro`; spacing: `--table-cell-*`; colors: `--color-profit/loss/unrealized`, `--color-entity-*`) | Typography, cell spacing, business semantics |
 | Layout | `src/components/layout/` | `PageShell`, `PageHeader`, `PageSection` |
 | Data display | `src/components/data-display/` | Tables, PnL, segments, icon actions |
 | Domain | `src/components/positions/`, etc. | Business columns and interactions |
@@ -410,7 +410,21 @@ Always use `pnlColorClass` from `@/utils/dailyChange` or `InlinePnl` / `PnlCell`
 ## Numbers
 
 - Monetary and quantity columns: `font-mono tabular-nums`
-- Meta captions: `denseTable.mutedMeta` or `text-[length:var(--text-dense-meta)]`
+- Meta captions: `denseTable.mutedMeta` or `text-dense-meta`
+
+### Dense typography scale
+
+5-stop scale defined in `@theme` (`src/index.css`). Pick the nearest token; avoid `text-[Npx]` or `text-[0.NNrem]`.
+
+| Token class | Value | px | Use |
+|-------------|-------|-----|-----|
+| `text-dense-body` | 0.8125rem | 13px | Table body, primary data |
+| `text-dense-label` | 0.75rem | 12px | Form labels, secondary info |
+| `text-dense-meta` | 0.6875rem | 11px | Metadata, captions |
+| `text-dense-caption` | 0.625rem | 10px | Badges, tags, compact info |
+| `text-dense-micro` | 0.5625rem | 9px | Chart axis, extreme compact |
+
+Allowed exceptions: `text-[7px]`/`text-[8px]` in topology diagrams; responsive sizing gradations in `sizingUi.ts` / `winRateUi.ts`.
 
 ## Segment controls
 
@@ -693,7 +707,7 @@ Three tiers by scope.
 | Context | Pattern |
 |---------|---------|
 | Table with no rows | `denseTable.emptyHint` centered text |
-| Section / card with no data | Planned `EmptyState` component — icon + title + optional subtitle + action button |
+| Section / card with no data | `EmptyState` from `data-display` — icon + title + optional subtitle + action button |
 | Filter yields no results | `denseTable.emptyHint` with distinct message ("No results match filters") |
 
 ## Operation feedback

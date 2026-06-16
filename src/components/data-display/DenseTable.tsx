@@ -10,7 +10,7 @@ const thBase = cn(
 )
 const tdBase = cn(
   denseTableCellPadding,
-  'max-w-0 text-[length:var(--text-dense)] border-b border-border/60 align-middle overflow-hidden',
+  'max-w-0 text-dense-body border-b border-border/60 align-middle overflow-hidden',
 )
 
 export function DenseDataTable({
@@ -213,7 +213,7 @@ export function GroupSubtotalRow({
     >
       <DenseTableCell
         colSpan={labelColSpan}
-        className={cn('italic text-muted-foreground text-[length:var(--text-dense-meta)]')}
+        className={cn('italic text-muted-foreground text-dense-meta')}
       >
         {label}
       </DenseTableCell>
@@ -272,7 +272,7 @@ export function DenseTableSubheadRow({
   className?: string
 }) {
   return (
-    <DenseTableRow className={cn('bg-secondary/30 hover:bg-secondary/30 text-[length:var(--text-dense-meta)]', className)}>
+    <DenseTableRow className={cn('bg-secondary/30 hover:bg-secondary/30 text-dense-meta', className)}>
       {children}
     </DenseTableRow>
   )
@@ -288,7 +288,7 @@ export function DenseTableDetailRow({
   return (
     <DenseTableRow
       className={cn(
-        'bg-secondary/15 text-[length:var(--text-dense-meta)] hover:bg-secondary/25 border-border/40',
+        'bg-secondary/15 text-dense-meta hover:bg-secondary/25 border-border/40',
         className,
       )}
     >

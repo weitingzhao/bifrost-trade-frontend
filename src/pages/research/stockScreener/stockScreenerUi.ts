@@ -28,16 +28,16 @@ export const screenerCardStackedClass = 'px-3 py-2 sm:px-3 sm:py-2'
 export const screenerCardStackedChipRowClass = 'max-h-[120px] overflow-y-auto'
 
 export const screenerCardTitleClass =
-  'm-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--color-text-dim,#5c6572)]'
+  'm-0 text-dense-label font-bold uppercase tracking-[0.08em] text-[var(--color-text-dim,#5c6572)]'
 
 export const screenerGroupHeaderClass =
-  'mb-1 border-b border-border pb-1 text-[0.64rem] font-extrabold uppercase tracking-[0.07em]'
+  'mb-1 border-b border-border pb-1 text-dense-caption font-extrabold uppercase tracking-[0.07em]'
 
 export const screenerChipRowClass = 'flex flex-wrap gap-1'
 
 export const screenerChipClass = cn(
   'inline-flex cursor-pointer items-center gap-0.5 rounded border border-border',
-  'bg-[rgba(26,31,38,0.6)] px-1.5 py-0.5 text-[0.625rem] text-muted-foreground',
+  'bg-[rgba(26,31,38,0.6)] px-1.5 py-0.5 text-dense-caption text-muted-foreground',
   'transition-[background,border-color,color] duration-150',
   'hover:bg-[rgba(26,31,38,0.9)] hover:text-foreground',
 )
@@ -48,7 +48,7 @@ export const screenerChipActiveClass = cn(
 
 export const screenerChipCheckClass = cn(
   'inline-flex h-[0.85rem] w-[0.85rem] items-center justify-center rounded-[3px]',
-  'border border-[var(--color-border-strong,#3d4754)] text-[0.6rem] font-bold text-transparent',
+  'border border-[var(--color-border-strong,#3d4754)] text-dense-caption font-bold text-transparent',
 )
 
 export const screenerChipActiveCheckClass =
@@ -56,7 +56,7 @@ export const screenerChipActiveCheckClass =
 
 export const screenerFilterBadgeClass = cn(
   'inline-flex h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full',
-  'bg-lime-400 px-[3px] text-[0.58rem] font-bold text-[#0a0c0f]',
+  'bg-lime-400 px-[3px] text-dense-micro font-bold text-[#0a0c0f]',
 )
 
 export const screenerScoreSliderClass = 'h-1 flex-1 cursor-pointer accent-lime-400'

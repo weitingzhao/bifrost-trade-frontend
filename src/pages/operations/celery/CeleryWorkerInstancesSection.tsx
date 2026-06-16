@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/tooltip'
 import { ConfirmDialog } from './ConfirmDialog'
 import { CeleryQueueIconButton } from './CeleryQueueIconButton'
-import { BubbleSwitch } from '@/components/positions/charts/BubbleSwitch'
+import { SegmentControl as BubbleSwitch } from '@/components/data-display'
 import { OpsHostEnvPill } from '@/pages/settings/socket/OpsHostEnvPill'
 import type { WorkerProfileInfo, SystemdInstance } from '@/types/ops'
 import { formatQueueLabel } from '@/utils/celeryQueueLabels'
@@ -350,7 +350,7 @@ export function CeleryWorkerInstancesSection({
         <div className={celeryWorkerInstancesFilterBarClass}>
           <span>Showing instances for queue</span>
           <Badge variant="secondary" className="font-mono text-xs">{formatQueueLabel(queueFilter)}</Badge>
-          <code className="text-[10px] text-muted-foreground">{queueFilter}</code>
+          <code className="text-dense-caption text-muted-foreground">{queueFilter}</code>
           {onClearQueueFilter && (
             <Button size="sm" variant="ghost" className="h-6 text-xs ml-auto" onClick={onClearQueueFilter}>
               Show all
@@ -426,7 +426,7 @@ export function CeleryWorkerInstancesSection({
                           <TooltipTrigger asChild>
                             <div>
                               <p className="text-xs font-medium">{profile?.label ?? profileKey ?? '—'}</p>
-                              <p className="text-[10px] font-mono text-muted-foreground">{profileKey ?? inst.unit}</p>
+                              <p className="text-dense-caption font-mono text-muted-foreground">{profileKey ?? inst.unit}</p>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent className="font-mono text-xs">{inst.unit}</TooltipContent>

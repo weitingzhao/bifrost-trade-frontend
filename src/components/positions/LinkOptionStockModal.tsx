@@ -245,7 +245,7 @@ export function LinkOptionStockModal({
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="h-6 px-2 text-[0.6875rem]"
+                          className="h-6 px-2 text-dense-meta"
                           onClick={() => row.link_id != null && setUnlinkLinkId(row.link_id)}
                         >
                           Remove

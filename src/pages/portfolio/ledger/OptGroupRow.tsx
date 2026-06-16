@@ -77,12 +77,12 @@ export function OptGroupRow({
               onViewLinks={onViewLinks}
             />
             {group.expiry ? (
-              <span className="text-[length:var(--text-dense-meta)] text-muted-foreground whitespace-nowrap">
+              <span className="text-dense-meta text-muted-foreground whitespace-nowrap">
                 {group.expiry.replace(/-/g, '/')}
               </span>
             ) : null}
             {expired ? (
-              <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4 shrink-0">
+              <Badge variant="destructive" className="text-dense-micro px-1 py-0 h-4 shrink-0">
                 EXP
               </Badge>
             ) : null}
@@ -107,7 +107,7 @@ export function OptGroupRow({
         <DenseTableCell className={cn(denseTableNumCell, 'font-medium', pnlColorClass(adjPnl))}>
           {fmtCcy(adjPnl)}
           {hasAdj && (
-            <span className="ml-1 text-[length:var(--text-dense-meta)] text-link">
+            <span className="ml-1 text-dense-meta text-link">
               {stockAdj >= 0 ? '+' : ''}
               {fmtCcy(stockAdj)}
             </span>
@@ -152,7 +152,7 @@ export function OptGroupRow({
                 {linkCount > 0 && (
                   <button
                     type="button"
-                    className="ml-2 text-[length:var(--text-dense-meta)] text-link hover:underline"
+                    className="ml-2 text-dense-meta text-link hover:underline"
                     onClick={ev => {
                       ev.stopPropagation()
                       if (oid != null && onViewLinks) onViewLinks({ title: `Fill #${oid} — stock links`, oid })

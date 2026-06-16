@@ -129,7 +129,7 @@ export function CeleryJobQueuesSection({
 
         {tabs.map(t => (
           <TabsContent key={t.id} value={t.id} className="mt-3">
-            <p className="text-[10px] font-mono text-muted-foreground mb-2">
+            <p className="text-dense-caption font-mono text-muted-foreground mb-2">
               Queue: {t.celeryQueue}
             </p>
             {t.pipeline === 'massive_async' ? (

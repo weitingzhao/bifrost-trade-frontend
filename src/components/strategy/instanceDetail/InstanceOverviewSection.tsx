@@ -66,7 +66,7 @@ export function InstanceOverviewSection({ instance, data, hideSectionTitle = fal
           {structure ? (
             <DenseOptionCategoryLabel
               variant="structure"
-              className="text-[0.625rem] uppercase tracking-wide"
+              className="text-dense-caption uppercase tracking-wide"
             >
               {getStructureTypeLabel(structure.structure_type)}
             </DenseOptionCategoryLabel>

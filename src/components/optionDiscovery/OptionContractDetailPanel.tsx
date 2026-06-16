@@ -194,7 +194,7 @@ export function OptionContractDetailPanel({
                 <div className={inspectorShell.card}>
                   <div className={cn(inspectorShell.cardLabel, 'normal-case')}>
                     Price
-                    <span className="rounded bg-muted px-1 py-0.5 text-[0.65rem] font-medium normal-case">Day</span>
+                    <span className="rounded bg-muted px-1 py-0.5 text-dense-caption font-medium normal-case">Day</span>
                     <InfoTooltip text="Day bar OHLC from Massive (chain snapshot, 15 min delayed). Underlying spot for decomposition uses stock_day daily close when available." />
                   </div>
                   <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
@@ -308,7 +308,7 @@ export function OptionContractDetailPanel({
                     if (bsD == null || bsD.iv == null) {
                       return (
                         <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
-                          <span className={cn(optionDiscoveryKvKeyClass, optionDiscoveryKvDimClass, 'col-span-2 text-[0.75rem]')}>
+                          <span className={cn(optionDiscoveryKvKeyClass, optionDiscoveryKvDimClass, 'col-span-2 text-dense-label')}>
                             {bsDteDays === 0 ? 'Expired; cannot compute' : underlyingPrice == null ? 'Underlying price unknown' : 'IV solve failed'}
                           </span>
                           <span className="text-xs text-muted-foreground">OI</span>

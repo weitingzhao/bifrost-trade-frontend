@@ -39,10 +39,10 @@ export function InstanceListToolbar({
         ]}
       />
       <span className={instancesToolbarLabelClass}>Groups</span>
-      <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={onExpandAll}>
+      <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onExpandAll}>
         Expand
       </Button>
-      <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={onCollapseAll}>
+      <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onCollapseAll}>
         Collapse
       </Button>
     </div>

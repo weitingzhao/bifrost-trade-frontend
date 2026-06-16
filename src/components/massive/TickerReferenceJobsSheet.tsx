@@ -162,13 +162,13 @@ export function TickerReferenceJobsSheet({
                       <DenseTableCell>
                         <Badge
                           variant={statusBadgeVariant(tone)}
-                          className="text-[10px] font-normal capitalize"
+                          className="text-dense-caption font-normal capitalize"
                           title="Job status"
                         >
                           {statusLabel}
                         </Badge>
                         {item.streamError ? (
-                          <p className="mt-1 text-[10px] text-destructive" role="alert">
+                          <p className="mt-1 text-dense-caption text-destructive" role="alert">
                             {item.streamError}
                           </p>
                         ) : null}
@@ -179,7 +179,7 @@ export function TickerReferenceJobsSheet({
                       <DenseTableCell>
                         <div className="flex flex-col gap-1">
                           <code
-                            className="truncate font-mono text-[10px]"
+                            className="truncate font-mono text-dense-caption"
                             title={item.jobId}
                           >
                             {formatRefJobIdShort(item.jobId)}
@@ -188,7 +188,7 @@ export function TickerReferenceJobsSheet({
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-6 px-2 text-[10px]"
+                            className="h-6 px-2 text-dense-caption"
                             onClick={() => {
                               void navigator.clipboard?.writeText(item.jobId).catch(() => {})
                             }}
@@ -210,7 +210,7 @@ export function TickerReferenceJobsSheet({
                           <details className="text-xs">
                             <summary className="cursor-pointer select-none">JSON</summary>
                             <pre
-                              className="mt-1 max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 font-mono text-[10px]"
+                              className="mt-1 max-h-40 overflow-auto rounded border border-border bg-muted/40 p-2 font-mono text-dense-caption"
                               tabIndex={0}
                             >
                               {typeof item.job.result === 'string'

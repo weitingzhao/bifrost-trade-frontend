@@ -29,10 +29,10 @@ function LogRow({
   return (
     <div className={cn('flex items-baseline gap-2 px-3 py-[2px] text-xs hover:bg-muted/40 min-w-0 font-mono', s.row)}>
       <span className="shrink-0 text-muted-foreground/60 w-[62px]">{entry.ts}</span>
-      <span className={cn('shrink-0 rounded px-1 font-semibold text-[10px] leading-4 w-[34px] text-center', s.badge)}>
+      <span className={cn('shrink-0 rounded px-1 font-semibold text-dense-caption leading-4 w-[34px] text-center', s.badge)}>
         {LEVEL_LABELS[entry.level]}
       </span>
-      <span className={cn('shrink-0 rounded px-1 text-[10px] truncate', serviceWidth, tagCls)}>
+      <span className={cn('shrink-0 rounded px-1 text-dense-caption truncate', serviceWidth, tagCls)}>
         {entry.service}
       </span>
       <span className="text-foreground/85 break-all leading-4">{entry.message}</span>
@@ -121,7 +121,7 @@ export function LogConsole({
                   type="button"
                   onClick={() => setLevelFilter(lv)}
                   className={cn(
-                    'px-1.5 py-0.5 rounded text-[10px] font-semibold transition-colors',
+                    'px-1.5 py-0.5 rounded text-dense-caption font-semibold transition-colors',
                     levelFilter === lv
                       ? lv === 'ALL'
                         ? 'bg-foreground/10 text-foreground'
@@ -139,9 +139,9 @@ export function LogConsole({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Filter…"
-              className="h-5 rounded border border-border bg-muted/30 px-2 text-[11px] outline-none focus:ring-1 focus:ring-ring w-32 placeholder:text-muted-foreground/40"
+              className="h-5 rounded border border-border bg-muted/30 px-2 text-dense-meta outline-none focus:ring-1 focus:ring-ring w-32 placeholder:text-muted-foreground/40"
             />
-            <span className="text-[10px] text-muted-foreground/50 ml-auto">
+            <span className="text-dense-caption text-muted-foreground/50 ml-auto">
               {filtered.length} / {entries.length}
             </span>
           </div>
@@ -153,7 +153,7 @@ export function LogConsole({
               type="button"
               onClick={() => setEnabledSources(prev => ({ ...prev, [src.key]: !prev[src.key] }))}
               className={cn(
-                'rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border transition-colors',
+                'rounded px-2 py-0.5 text-dense-caption font-semibold uppercase tracking-wide border transition-colors',
                 enabledSources[src.key]
                   ? (sourceTags?.[src.key] ?? 'bg-primary/10 text-primary border-primary/30')
                   : 'bg-muted/30 text-muted-foreground/50 border-transparent line-through',
@@ -163,7 +163,7 @@ export function LogConsole({
             </button>
           ))}
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-[10px] text-muted-foreground uppercase">
+            <span className="text-dense-caption text-muted-foreground uppercase">
               {STREAM_STATUS_LABEL[status] ?? status}
             </span>
             <Button

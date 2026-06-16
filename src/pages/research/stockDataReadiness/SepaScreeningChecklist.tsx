@@ -53,7 +53,7 @@ function StaticCriteriaTable({
     <div className="overflow-x-auto rounded-lg border border-border">
       <table className="w-full text-xs border-collapse">
         <thead>
-          <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border text-left text-dense-caption uppercase tracking-wide text-muted-foreground">
             <th className="w-8 p-2" />
             <th className="p-2">Criteria</th>
             <th className="p-2">Condition</th>
@@ -72,7 +72,7 @@ function StaticCriteriaTable({
               </td>
               <td className="p-2 font-medium">{c.criteria}</td>
               <td className="p-2">
-                <code className="text-[10px] text-sky-300/90">{c.condition}</code>
+                <code className="text-dense-caption text-sky-300/90">{c.condition}</code>
               </td>
               <td className="p-2 text-muted-foreground">{c.explain}</td>
               <td className="p-2">
@@ -80,13 +80,13 @@ function StaticCriteriaTable({
                   {c.dataFields.map(f => (
                     <span
                       key={f}
-                      className="rounded bg-muted px-1 py-px font-mono text-[10px]"
+                      className="rounded bg-muted px-1 py-px font-mono text-dense-caption"
                     >
                       {f}
                     </span>
                   ))}
                   {c.minBars != null && (
-                    <span className="rounded bg-muted px-1 py-px font-mono text-[10px] text-amber-400/90">
+                    <span className="rounded bg-muted px-1 py-px font-mono text-dense-caption text-amber-400/90">
                       ≥{c.minBars}d
                     </span>
                   )}
@@ -95,7 +95,7 @@ function StaticCriteriaTable({
               <td className="p-2">
                 <span className="font-medium">{criterionStatusLabel(c.status)}</span>
                 {c.note && (
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{c.note}</div>
+                  <div className="text-dense-caption text-muted-foreground mt-0.5">{c.note}</div>
                 )}
               </td>
             </tr>
@@ -199,7 +199,7 @@ export function SepaScreeningChecklist({
                   : `${techOk} / ${techTotal}`
               }
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-dense-meta text-muted-foreground">
               Data source: <code className="text-sky-300/90">stock_readiness_daily.technical_eval</code>{' '}
               (Phase-1 stock_day + CRS percentile rank)
             </p>
@@ -267,7 +267,7 @@ export function SepaScreeningChecklist({
               label="EPS / Revenue Growth & Acceleration"
               count={`${fundOk} / ${fundTotal}`}
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-dense-meta text-muted-foreground">
               Data source: <code className="text-sky-300/90">stock_readiness_daily.fundamental_eval</code>{' '}
               (evaluated from <code className="text-sky-300/90">stock_income_statements</code> by Phase 1)
             </p>

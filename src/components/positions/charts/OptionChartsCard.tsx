@@ -11,8 +11,7 @@ import {
   type OptionStockMixCategory,
 } from '@/utils/positionsCharts'
 import { DonutChart } from './DonutChart'
-import { BubbleSwitch } from './BubbleSwitch'
-import { POSITIONS_BUBBLE_SIZE } from './bubbleSwitchStyles'
+import { SegmentControl as BubbleSwitch, DEFAULT_SEGMENT_SIZE as POSITIONS_BUBBLE_SIZE } from '@/components/data-display'
 import { ChartLegend } from './ChartLegend'
 import { OptionDetailLegendCarousel } from './OptionDetailLegendCarousel'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'

@@ -7,7 +7,7 @@ export const ledgerPageCardClass = cn(
 
 const tabGroupCaptionBase = cn(
   'mb-1.5 block w-full rounded-md border px-2 py-1 text-center',
-  'text-[0.68rem] font-bold uppercase tracking-[0.07em] leading-snug',
+  'text-dense-meta font-bold uppercase tracking-[0.07em] leading-snug',
   'border-sky-500/25 bg-gradient-to-b from-sky-500/15 to-sky-500/5',
   'text-foreground shadow-[0_1px_0_rgba(0,0,0,0.12)]',
 )
@@ -29,7 +29,7 @@ export const ledgerShell = {
   instTabRow: 'grid grid-cols-4 gap-0',
   splitTabBtn: cn(
     'min-w-0 cursor-pointer border-0 border-b-2 border-transparent bg-transparent',
-    'px-2 py-2 text-center text-[0.8125rem] font-medium text-muted-foreground',
+    'px-2 py-2 text-center text-dense-body font-medium text-muted-foreground',
     'transition-colors hover:bg-muted/25 hover:text-foreground',
     'disabled:cursor-not-allowed disabled:opacity-35',
   ),
@@ -41,7 +41,7 @@ export const ledgerShell = {
     'flex min-w-36 shrink-0 flex-col items-start justify-center gap-1.5',
     'border-l border-border/80 px-3 py-2',
   ),
-  detailViewLabel: 'whitespace-nowrap text-[0.6875rem] text-muted-foreground',
+  detailViewLabel: 'whitespace-nowrap text-dense-meta text-muted-foreground',
   toolbarFilters: 'block w-full min-w-0 border-t border-border/80 px-[0.65rem] py-2',
   toolbarFiltersInner: 'flex w-full min-w-0 flex-col gap-2',
   filterSegmentInlineRow: 'flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1.5',
@@ -52,7 +52,7 @@ export const ledgerShell = {
   symbolCombobox: 'relative min-w-28',
   symbolInput: cn(
     'h-[1.875rem] w-full min-w-28 rounded-sm border border-border bg-background',
-    'px-2 text-[0.8125rem] text-foreground',
+    'px-2 text-dense-body text-foreground',
   ),
   symbolList: cn(
     'absolute left-0 right-0 top-[calc(100%+2px)] z-40 m-0 max-h-48',

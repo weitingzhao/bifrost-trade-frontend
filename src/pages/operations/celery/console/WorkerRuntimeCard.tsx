@@ -81,11 +81,11 @@ export function WorkerRuntimeCard({
       </div>
 
       <div className="min-w-0">
-        <div className="font-mono text-[11px] truncate" title={worker.worker_id}>
+        <div className="font-mono text-dense-meta truncate" title={worker.worker_id}>
           {worker.worker_id}
         </div>
         {host && (
-          <div className="text-muted-foreground text-[10px]" title="Machine hostname from Celery nodename">
+          <div className="text-muted-foreground text-dense-caption" title="Machine hostname from Celery nodename">
             @{host}
           </div>
         )}

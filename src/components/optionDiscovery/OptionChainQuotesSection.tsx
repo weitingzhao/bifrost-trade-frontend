@@ -182,7 +182,7 @@ export function OptionChainQuotesSection({
           <div className="mb-2 flex flex-wrap items-center gap-2" role="group" aria-label="Column visibility">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Columns</span>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="text-[0.65rem] font-medium text-muted-foreground">Day</span>
+              <span className="text-dense-caption font-medium text-muted-foreground">Day</span>
               {(['day_open', 'day_high', 'day_low', 'day_close', 'day_vol'] as const).map(id => (
                 <label key={id} className="inline-flex items-center gap-1.5 text-xs">
                   <Checkbox

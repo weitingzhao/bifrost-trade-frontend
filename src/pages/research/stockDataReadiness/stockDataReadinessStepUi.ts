@@ -4,9 +4,9 @@ import type { CheckStatus } from '@/types/stockDataReadiness'
 /** Stock Data Readiness runbook step panel — aligned with Legacy `sdp-*` (data-readiness.css). */
 export const readinessStepUi = {
   stepLabel:
-    'text-sm font-semibold tracking-tight text-foreground [&_code]:text-[11px] [&_code]:font-mono [&_code]:text-sky-300/90',
+    'text-sm font-semibold tracking-tight text-foreground [&_code]:text-dense-meta [&_code]:font-mono [&_code]:text-sky-300/90',
   stepDesc:
-    'text-xs leading-relaxed text-muted-foreground [&_code]:text-[11px] [&_code]:font-mono [&_code]:text-sky-300/90',
+    'text-xs leading-relaxed text-muted-foreground [&_code]:text-dense-meta [&_code]:font-mono [&_code]:text-sky-300/90',
   primaryBtn: cn(
     'h-8 rounded-[5px] border-0 px-4 text-xs font-bold shadow-none',
     'bg-sidebar-primary text-sidebar-primary-foreground',
@@ -25,26 +25,26 @@ export const readinessStepUi = {
   snapTableWrap: 'overflow-x-auto',
   snapTable: 'w-full border-collapse font-mono text-xs',
   snapTh:
-    'border-b border-border px-2.5 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap',
+    'border-b border-border px-2.5 py-1 text-left text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap',
   snapTd: 'border-b border-border px-2.5 py-1 align-top',
   snapTdLast: 'border-b-0',
   snapNum: 'text-right tabular-nums whitespace-nowrap',
   snapCode: 'whitespace-nowrap',
   snapCodePill:
-    'inline-block rounded-[3px] bg-sky-500/10 px-1.5 py-px font-mono text-[11px] text-sky-400',
+    'inline-block rounded-[3px] bg-sky-500/10 px-1.5 py-px font-mono text-dense-meta text-sky-400',
   snapDim: 'text-muted-foreground',
   snapLow: 'text-amber-400',
   maintenanceBox:
     'my-2 mb-3 flex flex-col gap-2 rounded-md border border-border border-l-[3px] border-l-sidebar-primary bg-black/10 px-4 py-3',
   maintenanceTitle:
-    'mb-0.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--color-text-dim)]',
+    'mb-0.5 text-dense-caption font-bold uppercase tracking-[0.1em] text-[var(--color-text-dim)]',
   maintenanceRow: 'flex items-start gap-2 text-xs leading-relaxed text-muted-foreground',
   maintenanceBadgeAuto: cn(
-    'mt-0.5 shrink-0 rounded-[3px] border px-1.5 py-0.5 font-mono text-[9px] font-extrabold uppercase tracking-wider',
+    'mt-0.5 shrink-0 rounded-[3px] border px-1.5 py-0.5 font-mono text-dense-micro font-extrabold uppercase tracking-wider',
     'border-sidebar-primary/30 bg-[var(--color-accent-soft)] text-sidebar-primary',
   ),
   maintenanceBadgeManual: cn(
-    'mt-0.5 shrink-0 rounded-[3px] border px-1.5 py-0.5 font-mono text-[9px] font-extrabold uppercase tracking-wider',
+    'mt-0.5 shrink-0 rounded-[3px] border px-1.5 py-0.5 font-mono text-dense-micro font-extrabold uppercase tracking-wider',
     'border-sky-500/25 bg-sky-500/10 text-sky-400',
   ),
   secondaryBtn: cn(
@@ -70,7 +70,7 @@ export function runbookTabIndexClass(
   done: boolean,
 ): string {
   return cn(
-    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border font-mono text-[10px] font-bold',
+    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border font-mono text-dense-caption font-bold',
     isActive && 'border-sky-400/85 bg-sky-500/15 text-sky-400',
     !isActive && done && 'border-lamp-green/65 bg-success-soft/40 text-lamp-green',
     !isActive &&

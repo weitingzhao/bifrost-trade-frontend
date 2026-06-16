@@ -69,7 +69,7 @@ export const socketIbClientIdClass = cn(
 )
 
 export const socketSubheadLabelClass = cn(
-  'text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60',
+  'text-dense-caption font-bold uppercase tracking-widest text-muted-foreground/60',
 )
 
 export const socketMonitorHintClass = cn('text-xs text-muted-foreground mt-3')
@@ -93,7 +93,7 @@ export function opsHostEnvPillVariantClass(variant: OpsHostEnvPillType['pillVari
     other: 'border-border bg-muted/40 text-muted-foreground',
   }
   return cn(
-    'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+    'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-dense-caption font-bold uppercase tracking-wide',
     map[variant],
   )
 }
@@ -189,7 +189,7 @@ export function socketIbProbeBadgeClass(stale: boolean, isSoon: boolean): string
 /** Connection column — automatic reconnect countdown / in-progress label. */
 export function socketConnectionRetryBadgeClass(retrying: boolean): string {
   return cn(
-    'inline-flex items-center px-1.5 py-0 rounded text-[10px] font-semibold tabular-nums border whitespace-nowrap',
+    'inline-flex items-center px-1.5 py-0 rounded text-dense-caption font-semibold tabular-nums border whitespace-nowrap',
     retrying
       ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'
       : 'bg-orange-500/15 text-orange-300 border-orange-500/30',

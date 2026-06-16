@@ -83,7 +83,7 @@ export function MessageDrawer({ open, messages, dismissedIds, onDismiss, onDismi
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">Messages</span>
             {active.length > 0 && (
-              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-dense-caption font-bold text-white leading-none">
                 {active.length > 99 ? '99+' : active.length}
               </span>
             )}
@@ -123,7 +123,7 @@ export function MessageDrawer({ open, messages, dismissedIds, onDismiss, onDismi
                     {msg.reason && (
                       <p className="text-xs text-muted-foreground/70 italic">{msg.reason}</p>
                     )}
-                    <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground/60">
+                    <div className="flex flex-wrap items-center gap-x-2 text-dense-caption text-muted-foreground/60">
                       {fmtMeta(msg) && <span>{fmtMeta(msg)}</span>}
                       <span>{formatLastUpdate(msg.occurred_at)} ago</span>
                     </div>

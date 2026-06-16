@@ -121,7 +121,7 @@ export function UnderlyingDetailPanel({ entry: u }: Props) {
                   <DenseTableCell>
                     <code className={modelAnalysisMethodCodeClass}>{leg.type}</code>
                   </DenseTableCell>
-                  <DenseTableCell className="font-sans text-[length:var(--text-dense-meta)]">
+                  <DenseTableCell className="font-sans text-dense-meta">
                     {carLegTypeDescription(leg.type)}
                   </DenseTableCell>
                 </DenseTableRow>

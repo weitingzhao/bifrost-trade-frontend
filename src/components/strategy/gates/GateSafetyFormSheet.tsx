@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import styles from '@/components/strategy/gates/gatesForm.module.css'
@@ -264,23 +265,27 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
             {DIM_TYPES.map((dim) => (
               <div key={dim} className={styles.formRow}>
                 <label>{dim === 'dim_time' ? DIM_TIME_LABEL : DIM_LABELS[dim as DimFieldName]}</label>
-                <select
-                  value={form[dim] ?? ''}
-                  onChange={(e) =>
+                <Select
+                  value={form[dim] || '__any__'}
+                  onValueChange={(v) =>
                     setForm((p) => ({
                       ...p,
-                      [dim]: e.target.value.trim() || null,
+                      [dim]: v === '__any__' ? null : v,
                     }))
                   }
-                  aria-label={dim === 'dim_time' ? DIM_TIME_LABEL : DIM_LABELS[dim as DimFieldName]}
                 >
-                  <option value="">— Any</option>
-                  {(dimsData?.by_type[dim] ?? []).map((d) => (
-                    <option key={d.strategy_dim_id} value={d.code}>
-                      {d.display_label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger aria-label={dim === 'dim_time' ? DIM_TIME_LABEL : DIM_LABELS[dim as DimFieldName]}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__any__">— Any</SelectItem>
+                    {(dimsData?.by_type[dim] ?? []).map((d) => (
+                      <SelectItem key={d.strategy_dim_id} value={d.code}>
+                        {d.display_label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             ))}
             <div className={cn(styles.formRow, styles.formRowFull)}>

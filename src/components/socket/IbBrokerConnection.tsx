@@ -37,7 +37,7 @@ function ConnectionColumn({
 }) {
   return (
     <div className={cn('flex flex-col gap-0.5 min-w-0', className)} title={hint}>
-      <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70 leading-none">
+      <span className="text-dense-caption font-medium uppercase tracking-wide text-muted-foreground/70 leading-none">
         {label}
       </span>
       <div className="flex flex-wrap items-center gap-1 min-h-[1.125rem] min-w-0">{children}</div>
@@ -176,7 +176,7 @@ function IbSlotColumn({
   return (
     <ConnectionColumn label={slot.label ?? 'ID'} hint={connHint} className="min-w-[4.5rem]">
       <span className={cn('inline-block rounded-full shrink-0', connDot)} title={connHint} />
-      <span className={cn(ibBrokerClientIdClass, 'py-0 px-1 text-[10px]')}>
+      <span className={cn(ibBrokerClientIdClass, 'py-0 px-1 text-dense-caption')}>
         {slot.clientId != null ? slot.clientId : '—'}
       </span>
       {nextInS != null && (

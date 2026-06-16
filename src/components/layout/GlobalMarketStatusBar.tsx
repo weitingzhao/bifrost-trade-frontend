@@ -127,7 +127,7 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
           <PopoverContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0">
             <div className="border-b border-border px-3 py-2">
               <p className="text-xs font-semibold">Market stream symbols</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <p className="text-dense-meta text-muted-foreground mt-0.5">
                 Daily change vs benchmark · position-weighted where held
               </p>
             </div>

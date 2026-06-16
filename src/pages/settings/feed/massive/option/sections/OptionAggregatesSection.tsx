@@ -3,6 +3,7 @@ import { SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MassiveServicePanel } from '@/pages/settings/feed/massive/components/MassiveServicePanel'
 import { feedMassiveOptionSvcAnchorId } from '@/pages/settings/feed/massive/nav/anchors'
 import { useMassiveSyncJob } from '@/pages/settings/feed/massive/hooks/useMassiveSyncJob'
@@ -112,15 +113,15 @@ export function OptionAggregatesSection({
           </div>
           <div className="space-y-1">
             <Label>Right</Label>
-            <select
-              className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
-              value={right}
-              onChange={e => setRight(e.target.value as 'C' | 'P')}
-              disabled={!configured || sync.busy}
-            >
-              <option value="C">Call</option>
-              <option value="P">Put</option>
-            </select>
+            <Select value={right} onValueChange={v => setRight(v as 'C' | 'P')} disabled={!configured || sync.busy}>
+              <SelectTrigger className="h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="C">Call</SelectItem>
+                <SelectItem value="P">Put</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1">
             <Label>Start (ms)</Label>

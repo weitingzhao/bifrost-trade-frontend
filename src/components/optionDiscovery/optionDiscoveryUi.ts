@@ -48,7 +48,7 @@ export const optionDiscoveryCardGridClass =
   'grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-3'
 
 export const optionDiscoveryCardSectionTitleClass = cn(
-  'mb-2 text-[0.7rem] font-bold uppercase tracking-wide text-muted-foreground',
+  'mb-2 text-dense-meta font-bold uppercase tracking-wide text-muted-foreground',
 )
 
 export const optionDiscoveryKvGridClass = cn(
@@ -59,7 +59,7 @@ export const optionDiscoveryKvKeyClass = 'font-medium whitespace-nowrap text-mut
 
 export const optionDiscoveryKvValueClass = 'text-right font-semibold text-foreground'
 
-export const optionDiscoveryKvDimClass = 'text-[0.7rem] font-normal text-muted-foreground'
+export const optionDiscoveryKvDimClass = 'text-dense-meta font-normal text-muted-foreground'
 
 export const optionDiscoveryTradabilityScoreClass = 'mb-2 flex items-baseline gap-1.5'
 
@@ -72,7 +72,7 @@ export function optionDiscoveryTradabilityValueClass(score: number): string {
   return cn(optionDiscoveryTradabilityValueBaseClass, 'text-destructive')
 }
 
-export const optionDiscoveryTradabilityLabelClass = 'text-[0.8rem] text-muted-foreground'
+export const optionDiscoveryTradabilityLabelClass = 'text-dense-body text-muted-foreground'
 
 export const optionDiscoveryTradabilityFactorsClass = 'flex flex-col gap-0.5'
 
@@ -80,7 +80,7 @@ export const optionDiscoveryTradabilityFactorClass =
   'flex items-baseline justify-between gap-2 text-xs'
 
 export const optionDiscoveryExecGuidanceClass = cn(
-  'mt-3 flex flex-wrap items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[0.7rem]',
+  'mt-3 flex flex-wrap items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-dense-meta',
 )
 
 export const optionDiscoveryExecGuidanceTitleClass = cn(

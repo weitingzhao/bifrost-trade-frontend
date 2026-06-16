@@ -81,7 +81,7 @@ function FillRow({ fill, tab }: { fill: Execution; tab: ExecTab }) {
       <span className="flex min-w-0 flex-col gap-0.5 leading-tight">
         <span>{fmtFillDate(fill, tab)}</span>
         {execId != null ? (
-          <span className={cn(instanceMutedClass, 'text-[0.68rem] font-normal not-italic')}>#{execId}</span>
+          <span className={cn(instanceMutedClass, 'text-dense-meta font-normal not-italic')}>#{execId}</span>
         ) : null}
       </span>
       <span className="text-right">{Math.abs(Number(fill.quantity ?? fill.qty) || 0)}</span>

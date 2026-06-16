@@ -131,7 +131,7 @@ function CoverageCountsStrip({
       </span>
       <span aria-hidden> · </span>
       <span>
-        {counts.total_tickers.toLocaleString()} in <code className="font-mono text-[0.7rem]">tickers</code>
+        {counts.total_tickers.toLocaleString()} in <code className="font-mono text-dense-meta">tickers</code>
       </span>
     </span>
   )
@@ -324,7 +324,7 @@ export function RefJobDetailPanel({
                   <span title="Rows in public.tickers">
                     <strong>{universeRowCount.toLocaleString()}</strong>
                     <span className="text-muted-foreground"> tickers in </span>
-                    <code className="font-mono text-[0.7rem]">tickers</code>
+                    <code className="font-mono text-dense-meta">tickers</code>
                   </span>
                 ) : (
                   <span className="text-muted-foreground">Row count unavailable</span>
@@ -344,7 +344,7 @@ export function RefJobDetailPanel({
                   <span title="Rows in public.ticker_types">
                     <strong>{tickerTypesRowCount.toLocaleString()}</strong>
                     <span className="text-muted-foreground"> instrument types in </span>
-                    <code className="font-mono text-[0.7rem]">ticker_types</code>
+                    <code className="font-mono text-dense-meta">ticker_types</code>
                   </span>
                 ) : (
                   <span className="text-muted-foreground">Row count unavailable</span>
@@ -369,8 +369,8 @@ export function RefJobDetailPanel({
                 className="flex-wrap"
               />
               <p className="text-xs text-muted-foreground">
-                Compares <code className="font-mono text-[0.7rem]">public.tickers</code> to{' '}
-                <code className="font-mono text-[0.7rem]">public.ticker_overview</code>.
+                Compares <code className="font-mono text-dense-meta">public.tickers</code> to{' '}
+                <code className="font-mono text-dense-meta">public.ticker_overview</code>.
               </p>
               <CoverageCountsStrip
                 loading={overviewCoverageLoading}
@@ -416,10 +416,10 @@ export function RefJobDetailPanel({
                 className="flex-wrap"
               />
               <p className="text-xs text-muted-foreground">
-                Compares <code className="font-mono text-[0.7rem]">public.tickers</code> to{' '}
-                <code className="font-mono text-[0.7rem]">public.ticker_related_tickers</code> (
-                <code className="font-mono text-[0.7rem]">from_tickers_id</code>). Stale uses{' '}
-                <code className="font-mono text-[0.7rem]">MAX(fetched_at)</code> per ticker.
+                Compares <code className="font-mono text-dense-meta">public.tickers</code> to{' '}
+                <code className="font-mono text-dense-meta">public.ticker_related_tickers</code> (
+                <code className="font-mono text-dense-meta">from_tickers_id</code>). Stale uses{' '}
+                <code className="font-mono text-dense-meta">MAX(fetched_at)</code> per ticker.
               </p>
               <CoverageCountsStrip
                 loading={relatedCoverageLoading}

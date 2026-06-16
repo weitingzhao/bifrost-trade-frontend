@@ -169,7 +169,7 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <CardTitle className="text-sm font-medium">Connection</CardTitle>
-            <Badge variant="outline" className="text-[10px] font-normal">Read-only · YAML</Badge>
+            <Badge variant="outline" className="text-dense-caption font-normal">Read-only · YAML</Badge>
           </div>
           <p className="text-xs text-muted-foreground">
             Host &amp; port are sourced from config.yaml — restart processes after file changes.
@@ -209,7 +209,7 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <CardTitle className="text-sm font-medium">Client IDs</CardTitle>
-            <Badge variant="outline" className="text-[10px] font-normal">Read-only · YAML</Badge>
+            <Badge variant="outline" className="text-dense-caption font-normal">Read-only · YAML</Badge>
           </div>
         </CardHeader>
         <CardContent>
@@ -256,7 +256,7 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
                 <TableRow>
                   <TableCell className="pl-6">
                     Ingestor
-                    <span className="ml-1 text-[10px] text-muted-foreground/50" title="Host only, no secondary ingestor">ⓘ</span>
+                    <span className="ml-1 text-dense-caption text-muted-foreground/50" title="Host only, no secondary ingestor">ⓘ</span>
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums">{port.ingestor ?? '—'}</TableCell>
                   <TableCell className="text-right text-muted-foreground">—</TableCell>
@@ -264,7 +264,7 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
                 <TableRow>
                   <TableCell className="pl-6">
                     Account Agent
-                    <span className="ml-1 text-[10px] text-muted-foreground/50" title="ib.host.client_id.account_agent; secondary: ib.secondary.client_id.account_agent">ⓘ</span>
+                    <span className="ml-1 text-dense-caption text-muted-foreground/50" title="ib.host.client_id.account_agent; secondary: ib.secondary.client_id.account_agent">ⓘ</span>
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums">{port.account_agent ?? '—'}</TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
@@ -321,7 +321,7 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
               <Label className="text-xs text-muted-foreground">
                 Trading Account — Host
                 <span
-                  className="ml-1 text-[10px] text-muted-foreground/50"
+                  className="ml-1 text-dense-caption text-muted-foreground/50"
                   title="Single IB account used by daemon for trading and position writes. Empty = first account from Host User's TWS."
                 >
                   ⓘ

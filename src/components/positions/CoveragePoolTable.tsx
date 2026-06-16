@@ -188,7 +188,7 @@ export function CoveragePoolTable({
           {showHeldAmtColumn &&
             (backingLayout ? (
               sortTh(
-                <span className="inline-block text-center text-[0.78rem] leading-tight">
+                <span className="inline-block text-center text-dense-label leading-tight">
                   Backed
                   <br />
                   Amt
@@ -198,7 +198,7 @@ export function CoveragePoolTable({
               )
             ) : slim && poolSortOn ? (
               sortTh(
-                <span className="inline-block text-center text-[0.78rem] leading-tight">
+                <span className="inline-block text-center text-dense-label leading-tight">
                   Held
                   <br />
                   Amt
@@ -208,7 +208,7 @@ export function CoveragePoolTable({
               )
             ) : (
               <DenseTableHead title="Contracts ≈ max(0, long shares) ÷ 100.">
-                <span className="inline-block text-center text-[0.78rem] leading-tight">
+                <span className="inline-block text-center text-dense-label leading-tight">
                   Held
                   <br />
                   Amt

@@ -334,7 +334,7 @@ function ExecutionFormModalBody({
       {isJournal && (
         <p className="px-5 text-xs text-muted-foreground pb-2">
           Manual journal entry: stored as{' '}
-          <code className="font-mono text-[11px]">journal_closed</code> in the journal execution store.
+          <code className="font-mono text-dense-meta">journal_closed</code> in the journal execution store.
           Use only when IB / Flex cannot supply the fill.
         </p>
       )}
@@ -443,7 +443,7 @@ function ExecutionFormModalBody({
           </ExecFormRow>
           {useInstanceSplits && (
             <>
-              <p className="text-[11px] text-muted-foreground pl-[96px]">
+              <p className="text-dense-meta text-muted-foreground pl-[96px]">
                 Signed quantities must sum to the execution quantity. Saving with splits enabled and no rows clears
                 allocation rows. Single Strategy / Instance fields are ignored when splits are saved.
               </p>

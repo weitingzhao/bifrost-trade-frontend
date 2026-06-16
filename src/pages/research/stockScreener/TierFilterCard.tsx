@@ -71,7 +71,7 @@ export function TierFilterCard({
           {activeCount > 0 && (
             <span
               className={cn(
-                'rounded-full px-1.5 py-0 font-mono text-[10px]',
+                'rounded-full px-1.5 py-0 font-mono text-dense-caption',
                 SEGMENT.tierCountBadge[tier],
               )}
             >
@@ -83,7 +83,7 @@ export function TierFilterCard({
       titleClassName={SEGMENT.tierTitle[tier]}
       actions={
         activeCount > 0 ? (
-          <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={onClear}>
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-dense-caption" onClick={onClear}>
             Clear
           </Button>
         ) : undefined
@@ -91,7 +91,7 @@ export function TierFilterCard({
     >
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="shrink-0 text-[10px] text-muted-foreground">Score</span>
+          <span className="shrink-0 text-dense-caption text-muted-foreground">Score</span>
           <input
             type="range"
             min={0}
@@ -102,7 +102,7 @@ export function TierFilterCard({
           />
           <span
             className={cn(
-              'shrink-0 font-mono text-[10px] tabular-nums',
+              'shrink-0 font-mono text-dense-caption tabular-nums',
               minScore > 0 && SEGMENT.tierScoreVal[tier],
             )}
           >

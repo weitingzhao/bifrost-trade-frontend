@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   DenseTableBody,
   DenseTableCell,
@@ -106,56 +107,68 @@ export function OptionCategoryLegsSection({
               {legs.map((leg: StructureLeg, i: number) => (
                 <DenseTableRow key={i}>
                   <DenseTableCell className={optionCategoryTableCellSelectClass}>
-                    <select
-                      className={optionCategoryInlineSelectRoleClass}
-                      value={leg.role ?? ''}
-                      onChange={(e) => {
+                    <Select
+                      value={leg.role || '__empty__'}
+                      onValueChange={(v) => {
                         const next = [...legs]
-                        next[i] = { ...next[i], role: e.target.value || null }
+                        next[i] = { ...next[i], role: v === '__empty__' ? null : v }
                         updateLegs(next)
                       }}
                     >
-                      <option value="">—</option>
-                      {legRoleOpts.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className={optionCategoryInlineSelectRoleClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__empty__">—</SelectItem>
+                        {legRoleOpts.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </DenseTableCell>
                   <DenseTableCell className={optionCategoryTableCellSelectClass}>
-                    <select
-                      className={optionCategoryInlineSelectDirClass}
-                      value={leg.direction ?? ''}
-                      onChange={(e) => {
+                    <Select
+                      value={leg.direction || legDirOpts[0]?.value || ''}
+                      onValueChange={(v) => {
                         const next = [...legs]
-                        next[i] = { ...next[i], direction: e.target.value || null }
+                        next[i] = { ...next[i], direction: v || null }
                         updateLegs(next)
                       }}
                     >
-                      {legDirOpts.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className={optionCategoryInlineSelectDirClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {legDirOpts.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </DenseTableCell>
                   <DenseTableCell className={optionCategoryTableCellSelectClass}>
-                    <select
-                      className={optionCategoryInlineSelectRightClass}
-                      value={leg.option_right ?? ''}
-                      onChange={(e) => {
+                    <Select
+                      value={leg.option_right || '__empty__'}
+                      onValueChange={(v) => {
                         const next = [...legs]
-                        next[i] = { ...next[i], option_right: e.target.value || null }
+                        next[i] = { ...next[i], option_right: v === '__empty__' ? null : v }
                         updateLegs(next)
                       }}
                     >
-                      {legOrOpts.map((o) => (
-                        <option key={o.value || '_empty'} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className={optionCategoryInlineSelectRightClass}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {legOrOpts.map((o) => (
+                          <SelectItem key={o.value || '__empty__'} value={o.value || '__empty__'}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </DenseTableCell>
                   <DenseTableCell className="text-right">
                     <Input

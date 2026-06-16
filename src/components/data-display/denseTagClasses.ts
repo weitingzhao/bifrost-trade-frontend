@@ -20,7 +20,7 @@ export type DenseTagVariant =
 export type DenseTagSize = 'cell' | 'pill'
 
 const shellBySize: Record<DenseTagSize, string> = {
-  cell: 'inline-block rounded-full border text-[0.6875rem] font-medium px-[0.45rem] py-[0.1rem]',
+  cell: 'inline-block rounded-full border text-dense-meta font-medium px-[0.45rem] py-[0.1rem]',
   pill: 'inline-block rounded-full border text-xs font-semibold px-2 py-0.5',
 }
 

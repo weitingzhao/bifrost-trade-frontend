@@ -1,4 +1,4 @@
-import { bubbleButtonClass, bubbleGroupClass } from './charts/bubbleSwitchStyles'
+import { segmentButtonClass as bubbleButtonClass, segmentGroupClass as bubbleGroupClass } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { instancePanel } from './instancePanelClasses'
 import {

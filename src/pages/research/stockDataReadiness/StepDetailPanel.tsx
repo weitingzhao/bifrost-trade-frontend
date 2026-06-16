@@ -22,7 +22,7 @@ import { fmt } from '@/utils/stockDataReadiness/format'
 import type { MassiveRefJobSessionApi } from '@/components/massive/massiveRefJobContext'
 
 function Code({ children }: { children: React.ReactNode }) {
-  return <code className="text-[11px] font-mono text-sky-300/90">{children}</code>
+  return <code className="text-dense-meta font-mono text-sky-300/90">{children}</code>
 }
 
 function Feedback({ ok, children }: { ok: boolean | null; children: React.ReactNode }) {
@@ -171,7 +171,7 @@ export function StepDetailPanel(props: Props) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="rounded-lg border border-border p-3 space-y-2">
               <div className="flex items-center gap-2">
-                <Badge className="text-[9px] bg-violet-500/20 text-violet-300 border-violet-500/30">TICKERS</Badge>
+                <Badge className="text-dense-micro bg-violet-500/20 text-violet-300 border-violet-500/30">TICKERS</Badge>
                 <Code>public.tickers</Code>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -181,7 +181,7 @@ export function StepDetailPanel(props: Props) {
             </div>
             <div className="rounded-lg border border-border p-3 space-y-2">
               <div className="flex items-center gap-2">
-                <Badge className="text-[9px] bg-amber-500/20 text-amber-300 border-amber-500/30">HOLIDAYS</Badge>
+                <Badge className="text-dense-micro bg-amber-500/20 text-amber-300 border-amber-500/30">HOLIDAYS</Badge>
                 <Code>public.reference_us_holidays</Code>
               </div>
               <p className="text-xs text-muted-foreground">

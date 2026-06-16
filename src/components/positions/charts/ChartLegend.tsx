@@ -96,7 +96,7 @@ export function ChartLegend({
               )}
             </div>
             {showFootnotes && seg.optionDetailFoot && (
-              <div className="text-[10px] pl-3.5 mt-0.5 text-muted-foreground leading-tight">
+              <div className="text-dense-caption pl-3.5 mt-0.5 text-muted-foreground leading-tight">
                 {seg.optionDetailFoot.kind === 'stock' ? (
                   <>
                     Stock cost{' '}

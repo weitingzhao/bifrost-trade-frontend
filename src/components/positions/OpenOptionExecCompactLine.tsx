@@ -18,7 +18,7 @@ function execQty(exec: Execution): number {
 /** Self-aligned mini-table for execution fills (independent of parent Options columns). */
 export function OpenOptionExecDetailTable({ children }: { children: ReactNode }) {
   return (
-    <table className="w-full min-w-[36rem] table-fixed border-collapse text-[length:var(--text-dense)] [&_tr:last-child_td]:border-b-0">
+    <table className="w-full min-w-[36rem] table-fixed border-collapse text-dense-body [&_tr:last-child_td]:border-b-0">
       <colgroup>
         <col style={{ width: '24%' }} />
         <col style={{ width: '4.25rem' }} />
@@ -149,7 +149,7 @@ export function OpenOptionExecDetailRow({
                 <Square className="h-3 w-3" aria-hidden />
               </button>
             ) : null}
-            <span className="truncate text-[length:var(--text-dense-meta)]" title={oppName}>
+            <span className="truncate text-dense-meta" title={oppName}>
               {oppName}
             </span>
           </span>

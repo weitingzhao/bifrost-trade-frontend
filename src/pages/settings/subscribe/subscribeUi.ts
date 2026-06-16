@@ -6,7 +6,7 @@ export const subscribeSectionTitleClass = denseTable.sectionTitle
 export const subscribeHintClass = cn('text-xs text-muted-foreground max-w-3xl')
 
 export const subscribeInlineCodeClass = cn(
-  'rounded bg-muted px-1 py-0.5 font-mono text-[0.7rem] text-foreground/90',
+  'rounded bg-muted px-1 py-0.5 font-mono text-dense-meta text-foreground/90',
 )
 
 export const subscribeSummaryKClass = cn('text-muted-foreground')

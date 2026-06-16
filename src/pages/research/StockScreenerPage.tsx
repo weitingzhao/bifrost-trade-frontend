@@ -193,7 +193,7 @@ export default function StockScreenerPage() {
             onRefresh={() => void refetch()}
             onBucketClick={handleTechBucketClick}
             activeHint={techBucket.activeBucket != null ? (
-              <div className="text-[10px] text-screener-tech mb-1">
+              <div className="text-dense-caption text-screener-tech mb-1">
                 {techBucket.loading && <span>Loading…</span>}
                 {techBucket.error && <span className="text-destructive">{techBucket.error}</span>}
                 {!techBucket.loading && !techBucket.error && techBucket.loadedCount != null && (
@@ -265,7 +265,7 @@ export default function StockScreenerPage() {
             onRefresh={() => void refetch()}
             onBucketClick={handleFundBucketClick}
             activeHint={fundBucket.activeBucket != null ? (
-              <div className="text-[10px] text-emerald-400 mb-1">
+              <div className="text-dense-caption text-emerald-400 mb-1">
                 {fundBucket.loading && <span>Loading…</span>}
                 {fundBucket.error && <span className="text-destructive">{fundBucket.error}</span>}
                 {!fundBucket.loading && !fundBucket.error && fundBucket.loadedCount != null && (

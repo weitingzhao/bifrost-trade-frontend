@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -967,19 +968,22 @@ function StructureTemplateFilters({
           {TEMPLATE_DIM_TYPES.map((dt) => (
             <label key={dt} className={styles.templateFilterDim}>
               <span className={styles.templateFilterDimLabel}>{TEMPLATE_DIM_LABELS[dt]}</span>
-              <select
-                className={cn(styles.detailsInput, styles.templateFilterSelect)}
-                value={tplDimFilters[dt] ?? ''}
-                onChange={(e) => onDimFilterChange(dt, e.target.value)}
-                aria-label={`Filter by ${TEMPLATE_DIM_LABELS[dt]}`}
+              <Select
+                value={tplDimFilters[dt] || '__any__'}
+                onValueChange={(v) => onDimFilterChange(dt, v === '__any__' ? '' : v)}
               >
-                <option value="">Any</option>
-                {tplDimOptions[dt].map((code) => (
-                  <option key={code} value={code}>
-                    {code}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className={cn(styles.detailsInput, styles.templateFilterSelect)} aria-label={`Filter by ${TEMPLATE_DIM_LABELS[dt]}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__any__">Any</SelectItem>
+                  {tplDimOptions[dt].map((code) => (
+                    <SelectItem key={code} value={code}>
+                      {code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
           ))}
         </div>
@@ -1416,22 +1420,25 @@ function StructureCopyForm({
             onClearFilters={onClearFilters}
             onDimFilterChange={onDimFilterChange}
           />
-          <select
-            value={formPayload.strategy_template_id ?? ''}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10)
-              if (v) onTemplateSelect(v)
+          <Select
+            value={formPayload.strategy_template_id != null ? String(formPayload.strategy_template_id) : '__none__'}
+            onValueChange={(v) => {
+              const n = parseInt(v, 10)
+              if (n) onTemplateSelect(n)
             }}
-            aria-label="Template"
-            className={cn(styles.detailsInput, styles.copyTemplateSelect)}
           >
-            <option value="">— Select —</option>
-            {copyTemplateSelectOptions.map((tpl) => (
-              <option key={tpl.strategy_template_id} value={tpl.strategy_template_id}>
-                {tpl.display_name} ({tpl.template_code})
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className={cn(styles.detailsInput, styles.copyTemplateSelect)} aria-label="Template">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">— Select —</SelectItem>
+              {copyTemplateSelectOptions.map((tpl) => (
+                <SelectItem key={tpl.strategy_template_id} value={String(tpl.strategy_template_id)}>
+                  {tpl.display_name} ({tpl.template_code})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {copyTemplateSelectOptions.length === 0 && (
             <p className={styles.formHint}>No templates match filters. Clear filters to see all.</p>
           )}

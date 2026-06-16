@@ -127,7 +127,7 @@ export function OpenOptionExecTableRow({
             {fmtDaysAgo(eTs) ? (
               <div
                 className={cn(
-                  'text-[length:var(--text-dense-meta)] font-semibold text-warning whitespace-nowrap',
+                  'text-dense-meta font-semibold text-warning whitespace-nowrap',
                 )}
               >
                 {fmtDaysAgo(eTs)}

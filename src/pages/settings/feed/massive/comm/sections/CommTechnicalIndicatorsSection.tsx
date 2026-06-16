@@ -3,6 +3,7 @@ import { SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MassiveServicePanel } from '@/pages/settings/feed/massive/components/MassiveServicePanel'
 import { fetchTechnicalIndicator, type TechnicalIndicatorResponse } from '@/api/massive/commFeed'
 import { feedMassiveCommonSvcAnchorId } from '@/pages/settings/feed/massive/nav/anchors'
@@ -184,32 +185,32 @@ export function CommTechnicalIndicatorsSection({
         )}
         <div className="space-y-1">
           <Label>Timespan</Label>
-          <select
-            className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-            value={timespan}
-            onChange={e => setTimespan(e.target.value)}
-            disabled={busy}
-          >
-            <option value="minute">Minute</option>
-            <option value="hour">Hour</option>
-            <option value="day">Day</option>
-            <option value="week">Week</option>
-            <option value="month">Month</option>
-          </select>
+          <Select value={timespan} onValueChange={setTimespan} disabled={busy}>
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="minute">Minute</SelectItem>
+              <SelectItem value="hour">Hour</SelectItem>
+              <SelectItem value="day">Day</SelectItem>
+              <SelectItem value="week">Week</SelectItem>
+              <SelectItem value="month">Month</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1">
           <Label>Series type</Label>
-          <select
-            className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-            value={seriesType}
-            onChange={e => setSeriesType(e.target.value)}
-            disabled={busy}
-          >
-            <option value="close">Close</option>
-            <option value="open">Open</option>
-            <option value="high">High</option>
-            <option value="low">Low</option>
-          </select>
+          <Select value={seriesType} onValueChange={setSeriesType} disabled={busy}>
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="close">Close</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1">
           <Label>Limit</Label>

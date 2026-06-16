@@ -3,6 +3,7 @@ import { SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MassiveServicePanel } from '@/pages/settings/feed/massive/components/MassiveServicePanel'
 import { fetchOptionSnapshotsPg } from '@/api/massive/optionFeed'
 import { feedMassiveOptionSvcAnchorId } from '@/pages/settings/feed/massive/nav/anchors'
@@ -141,16 +142,16 @@ export function OptionSnapshotsSection({
           </div>
           <div className="space-y-1">
             <Label>Contract type</Label>
-            <select
-              className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
-              value={chainType}
-              onChange={e => setChainType(e.target.value as '' | 'call' | 'put')}
-              disabled={!configured || sync.busy}
-            >
-              <option value="">All</option>
-              <option value="call">Call</option>
-              <option value="put">Put</option>
-            </select>
+            <Select value={chainType || '__all__'} onValueChange={v => setChainType(v === '__all__' ? '' : v as 'call' | 'put')} disabled={!configured || sync.busy}>
+              <SelectTrigger className="h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All</SelectItem>
+                <SelectItem value="call">Call</SelectItem>
+                <SelectItem value="put">Put</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       ) : null}

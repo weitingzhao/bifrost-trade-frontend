@@ -90,6 +90,7 @@ export function opsHostEnvPillVariantClass(variant: OpsHostEnvPillType['pillVari
   const map: Record<OpsHostEnvPillType['pillVariant'], string> = {
     dev: 'border-sky-500/40 bg-sky-500/10 text-sky-400',
     prod: 'border-green-600/40 bg-green-600/10 text-green-400',
+    stg: 'border-violet-500/40 bg-violet-500/10 text-violet-400',
     other: 'border-border bg-muted/40 text-muted-foreground',
   }
   return cn(
@@ -102,6 +103,7 @@ export function opsHostEnvPillDotClass(variant: OpsHostEnvPillType['pillVariant'
   const map: Record<OpsHostEnvPillType['pillVariant'], string> = {
     dev: 'bg-sky-400',
     prod: 'bg-green-500',
+    stg: 'bg-violet-400',
     other: 'bg-muted-foreground/50',
   }
   return cn('h-1.5 w-1.5 rounded-full shrink-0', map[variant])

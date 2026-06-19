@@ -1,7 +1,7 @@
 import type { MarketIngestAction } from '@/api/ops'
 import type { MarketIngestServiceRow } from './socketIngestLamp'
 
-export type OpsHostEnvPillVariant = 'dev' | 'prod' | 'other'
+export type OpsHostEnvPillVariant = 'dev' | 'prod' | 'stg' | 'other'
 
 export interface OpsHostEnvPill {
   shortLabel: string
@@ -17,6 +17,9 @@ export function opsHostEnvFromConfigProfile(configProfile: string | null | undef
   if (p === 'prod' || p === 'production') {
     return { shortLabel: 'Prod', pillVariant: 'prod', ariaLabel: 'Production' }
   }
+  if (p === 'stg' || p === 'staging') {
+    return { shortLabel: 'Stg', pillVariant: 'stg', ariaLabel: 'Staging (K3s)' }
+  }
   return { shortLabel: '—', pillVariant: 'other', ariaLabel: 'Unknown environment' }
 }
 
@@ -31,6 +34,8 @@ export function socketServicesHostColumnDisplay(opts: {
     bits.push('Ops config profile: dev (config.dev.yaml overlay).')
   } else if (pill.pillVariant === 'prod') {
     bits.push('Ops config profile: prod (config.prod.yaml overlay).')
+  } else if (pill.pillVariant === 'stg') {
+    bits.push('Ops config profile: stg (config.stg.yaml / K3s). Ingest may run in cluster Deployments.')
   } else {
     bits.push('Ops config profile not inferred (custom path or base config.yaml only).')
   }
@@ -52,12 +57,16 @@ export function runtimeControlHostDisplay(
   const r = (redisControlEnv ?? '').toLowerCase().trim()
   const host = (redisControlHost ?? '').trim()
   const hostSentence = host ? ` Last Ops start host: ${host}.` : ''
-  if (r === 'dev' || r === 'prod') {
+  if (r === 'dev' || r === 'prod' || r === 'stg') {
     const pill = opsHostEnvFromConfigProfile(r)
     const keyHint = redisMetaKey ? `${redisMetaKey}` : 'ingest meta hash'
+    const k8sNote =
+      host === 'k8s'
+        ? ' Writer runs in K8s Deployment (inferred from live Redis health, not Ops subprocess on this host).'
+        : ''
     return {
       pill,
-      title: `Ops control fields in Redis health (${keyHint}): last start from ${pill.ariaLabel}.${hostSentence} Fields bifrost_ops_control_env, bifrost_ops_control_host.`,
+      title: `Stack profile ${pill.ariaLabel} on Redis health (${keyHint}).${k8sNote}${hostSentence}`,
     }
   }
   return {
@@ -68,10 +77,18 @@ export function runtimeControlHostDisplay(
   }
 }
 
+export type PageStackEnv = 'dev' | 'prod' | 'stg'
+
 export function normalizedPageDevProd(configProfile: string | null | undefined): 'dev' | 'prod' | null {
+  const p = normalizedPageStackEnv(configProfile)
+  return p === 'dev' || p === 'prod' ? p : null
+}
+
+export function normalizedPageStackEnv(configProfile: string | null | undefined): PageStackEnv | null {
   const p = (configProfile ?? '').toLowerCase().trim()
   if (p === 'dev' || p === 'development') return 'dev'
   if (p === 'prod' || p === 'production') return 'prod'
+  if (p === 'stg' || p === 'staging') return 'stg'
   return null
 }
 
@@ -88,7 +105,7 @@ export function resolveEffectiveRedisControlEnv(
   allRows: { id: string; redis_control_env?: string | null }[],
 ): string | null | undefined {
   const own = (svc.redis_control_env ?? '').toLowerCase().trim()
-  if (own === 'dev' || own === 'prod') return svc.redis_control_env
+  if (own === 'dev' || own === 'prod' || own === 'stg') return svc.redis_control_env
 
   let conflictRows: typeof allRows
   if (svc.id === 'massive_ws') {
@@ -112,14 +129,16 @@ export function resolveEffectiveRedisControlEnv(
   return svc.redis_control_env ?? null
 }
 
-export type IngestActionBlock = 'none' | 'admin' | 'script' | 'remote_env' | 'stack_conflict'
+export type IngestActionBlock = 'none' | 'admin' | 'script' | 'remote_env' | 'stack_conflict' | 'k8s_managed'
 
 export function ingestActionBlock(
   canOperate: boolean,
   disableIngestScript: boolean,
-  pageEnv: 'dev' | 'prod' | null,
+  pageEnv: PageStackEnv | null,
   effectiveRedisControlEnv: string | null | undefined,
+  runtimeExternallyManaged?: boolean,
 ): IngestActionBlock {
+  if (runtimeExternallyManaged) return 'k8s_managed'
   if (!canOperate) return 'admin'
   if (disableIngestScript) return 'script'
   const lease = (effectiveRedisControlEnv ?? '').toLowerCase().trim()
@@ -138,6 +157,8 @@ export function ingestActionBlockMessage(block: IngestActionBlock): string {
       return 'Control is held by the other stack (Redis). Stop the service from that Ops host first.'
     case 'stack_conflict':
       return 'Conflicting dev/prod Redis control leases. Stop processes on one stack first, or click Clear Leases.'
+    case 'k8s_managed':
+      return 'Managed by K8s Deployment on this stack. Use kubectl / Ops Console deploy — not Ops Start/Stop on this host.'
     default:
       return ''
   }

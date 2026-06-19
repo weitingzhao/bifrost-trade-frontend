@@ -239,6 +239,7 @@ export interface MarketIngestServiceRow {
   redis_control_env?: string | null
   redis_control_host?: string | null
   redis_control_updated_at?: number | null
+  runtime_externally_managed?: boolean
 }
 
 /**
@@ -417,8 +418,9 @@ export function resolveIngestOpsRowDisplay(opts: {
   isStarting: boolean
   isStopping: boolean
   hostUnclaimed: boolean
+  runtimeExternallyManaged?: boolean
 }): { lamp: IngestLamp; title: string; logicalText: string } {
-  const { svc, status, processActive, isStarting, isStopping, hostUnclaimed } = opts
+  const { svc, status, processActive, isStarting, isStopping, hostUnclaimed, runtimeExternallyManaged } = opts
   const pending: IngestOpsPending = isStopping ? 'stopping' : isStarting ? 'starting' : null
   const logicalText = buildIngestLogicalSummary(svc, status, processActive, pending)
 
@@ -438,11 +440,14 @@ export function resolveIngestOpsRowDisplay(opts: {
   }
 
   const redisHealth = ingestRedisHealthLamp(svc.id, status, processActive)
-  const lamp = hostUnclaimed && redisHealth.lamp === 'green' ? 'red' : redisHealth.lamp
+  const staleLeaseGuard = hostUnclaimed && !runtimeExternallyManaged
+  const lamp = staleLeaseGuard && redisHealth.lamp === 'green' ? 'red' : redisHealth.lamp
   const title =
-    hostUnclaimed && redisHealth.lamp === 'green'
+    staleLeaseGuard && redisHealth.lamp === 'green'
       ? `${redisHealth.title} — Host lease unclaimed (no Dev/Prod Ops start). Redis health may be stale from a previous run.`
-      : redisHealth.title
+      : runtimeExternallyManaged && redisHealth.lamp === 'green'
+        ? `${redisHealth.title} — Managed by K8s Deployment (runtime_externally_managed).`
+        : redisHealth.title
 
   return { lamp, title, logicalText }
 }

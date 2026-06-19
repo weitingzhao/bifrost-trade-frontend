@@ -165,7 +165,7 @@ export function ConnectionCell({
     )
   }
 
-  if (category === 'IB' && !ingestProcessRunningForIbClientId(svc.process_active)) {
+  if (category === 'IB' && !ingestProcessRunningForIbClientId(svc.process_active) && !svc.runtime_externally_managed) {
     return <span className="text-xs text-muted-foreground">—</span>
   }
 

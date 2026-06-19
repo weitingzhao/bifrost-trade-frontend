@@ -34,6 +34,7 @@ import {
   resolveEffectiveRedisControlEnv,
   runtimeControlHostDisplay,
   type IngestActionBlock,
+  type PageStackEnv,
 } from '@/utils/ingestOpsShared'
 import { OpsHostEnvPill } from './OpsHostEnvPill'
 import {
@@ -70,7 +71,7 @@ function ServiceRow({
   category: IngestCategory
   status: StatusResponse | null
   elapsed: number
-  pageEnv: 'dev' | 'prod' | null
+  pageEnv: PageStackEnv | null
   disableScript: boolean
   canOperate: boolean
   allServices: MarketIngestServiceRow[]
@@ -90,6 +91,7 @@ function ServiceRow({
   const hostFromSibling = !ownLease && effectiveEnv && effectiveEnv !== '__stack_conflict__'
   const hostFromPageEnv = !ownLease && !hostFromSibling && processRunning && !!pageEnv
   const hostUnclaimed = !hostEnvForDisplay
+  const externallyManaged = svc.runtime_externally_managed === true
   const { lamp, title: statusTitle, logicalText } = resolveIngestOpsRowDisplay({
     svc,
     status,
@@ -97,6 +99,7 @@ function ServiceRow({
     isStarting,
     isStopping,
     hostUnclaimed,
+    runtimeExternallyManaged: externallyManaged,
   })
 
   const { title: runtimeHostTitle, pill: runtimeHostPill } = runtimeControlHostDisplay(
@@ -109,7 +112,13 @@ function ServiceRow({
     : hostFromPageEnv
       ? `${runtimeHostTitle} — Host inferred from this Ops instance profile while process is still running.`
       : runtimeHostTitle
-  const block: IngestActionBlock = ingestActionBlock(canOperate, disableScript, pageEnv, effectiveEnv)
+  const block: IngestActionBlock = ingestActionBlock(
+    canOperate,
+    disableScript,
+    pageEnv,
+    effectiveEnv,
+    externallyManaged,
+  )
   const blockedBySibling = block === 'remote_env' && !svc.redis_control_env
 
   return (
@@ -186,7 +195,7 @@ export function IngestServicesTable({
   services: MarketIngestServiceRow[]
   status: StatusResponse | null
   elapsed: number
-  pageEnv: 'dev' | 'prod' | null
+  pageEnv: PageStackEnv | null
   disableScript: boolean
   canOperate: boolean
   startingIds: ReadonlySet<string>

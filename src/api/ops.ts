@@ -468,6 +468,7 @@ export interface MarketIngestServiceRow {
   redis_control_env?: string | null
   redis_control_host?: string | null
   redis_control_updated_at?: number | null
+  runtime_externally_managed?: boolean
 }
 
 export interface OpsHealthResponse {

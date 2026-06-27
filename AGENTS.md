@@ -4,7 +4,7 @@ Instructions for **Claude Code, Cursor Agent, Codex, GPT**, and other coding age
 
 ## Language
 
-- **Chat with the user**: Chinese
+- **Chat with the user**: Always reply in **Chinese**, regardless of the user's input language (do not switch to English just because a message arrives in English)
 - **UI strings and code identifiers**: English only
 
 ## Product context

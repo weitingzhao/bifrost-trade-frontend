@@ -9,6 +9,7 @@ import { ingestProcessRunningForIbClientId } from '@/components/socket/ibBrokerC
 import {
   ingestRedisTruthyConnected,
   massiveServiceHeartbeatState,
+  massiveWsRestOnly,
   type MarketIngestServiceRow,
 } from '@/utils/socketIngestLamp'
 import {
@@ -83,6 +84,7 @@ export function ConnectionCell({
 }) {
   if (svc.id === 'massive_ws') {
     const massive = status?.socket?.massive
+    const restOnly = massiveWsRestOnly(massive)
     const wsConnected = massive?.ws_connected != null
       ? ingestRedisTruthyConnected(massive.ws_connected)
       : null
@@ -100,26 +102,30 @@ export function ConnectionCell({
           label="WS"
           className="min-w-[3.5rem]"
           hint={
-            wsConnected === true
-              ? 'Polygon WebSocket connected'
-              : wsConnected === false
-                ? 'Polygon WebSocket disconnected'
-                : 'WebSocket state unknown'
+            restOnly
+              ? 'REST-only standby (Options Starter — Celery aggregates, no live WS)'
+              : wsConnected === true
+                ? 'Polygon WebSocket connected'
+                : wsConnected === false
+                  ? 'Polygon WebSocket disconnected'
+                  : 'WebSocket state unknown'
           }
         >
           <>
             <span
               className={cn(
                 'inline-block h-2 w-2 rounded-full',
-                wsConnected === true
+                restOnly
                   ? LAMP_BG.green
-                  : wsConnected === false
-                    ? LAMP_BG.red
-                    : 'bg-muted-foreground/40',
+                  : wsConnected === true
+                    ? LAMP_BG.green
+                    : wsConnected === false
+                      ? LAMP_BG.red
+                      : 'bg-muted-foreground/40',
               )}
               aria-hidden
             />
-            {wsConnected === false && (
+            {wsConnected === false && !restOnly && (
               <ConnectionRetryControl
                 countdownS={hb.nextInS}
                 retrying={false}

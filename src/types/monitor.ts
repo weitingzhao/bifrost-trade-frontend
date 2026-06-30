@@ -89,6 +89,8 @@ export interface SocketIbSlot {
 /** GET /status `socket.massive` — Massive WS ingest Redis meta. */
 export interface StatusSocketMassive {
   ws_connected?: boolean
+  /** ``rest_only`` when Options Starter skips Polygon WS (Celery REST aggregates). */
+  ws_mode?: string | null
   /** Age of last Polygon quote (quiet market can be large while service is healthy). */
   last_msg_age_s?: number | null
   /** Age of last Redis health hash write (service liveness). */

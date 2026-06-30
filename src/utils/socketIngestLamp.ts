@@ -29,6 +29,11 @@ export function categoryForServiceId(id: string): IngestCategory {
   return 'Other'
 }
 
+/** Options Starter REST-only standby — process healthy without Polygon WS connected. */
+export function massiveWsRestOnly(m: StatusSocketMassive | null | undefined): boolean {
+  return (m?.ws_mode ?? '').trim().toLowerCase() === 'rest_only'
+}
+
 export function buildUnifiedIngestRows(
   services: MarketIngestServiceRow[],
 ): { svc: MarketIngestServiceRow; category: IngestCategory }[] {
@@ -160,6 +165,14 @@ export function buildIngestLogicalSummary(
   }
   const massive = status?.socket?.massive
   if (svc.id === 'massive_ws' && massive) {
+    if (massiveWsRestOnly(massive)) {
+      const hb = massive.next_service_heartbeat_in_s != null
+        ? `; svc HB ~${fmtAgeShort(massive.next_service_heartbeat_in_s)}`
+        : massive.health_updated_age_s != null
+          ? `; health ${fmtAgeShort(massive.health_updated_age_s)} ago`
+          : ''
+      return `REST-only standby (Options Starter); process active${hb}`
+    }
     const wsUp = ingestRedisTruthyConnected(massive.ws_connected)
     const ws = wsUp ? 'connected' : 'disconnected'
     const rc = massive.ws_reconnects != null ? String(massive.ws_reconnects) : '—'
@@ -338,6 +351,13 @@ export function ingestRedisHealthLamp(
       return {
         lamp: 'yellow',
         title: `Massive WS service heartbeat overdue (${Math.floor(healthAge)}s) — Redis health write delayed.`,
+      }
+    }
+    if (massiveWsRestOnly(m)) {
+      return {
+        lamp: 'green',
+        title:
+          'Massive ingest healthy (REST-only standby; Options Starter uses Celery aggregates, not live WS).',
       }
     }
     if (ingestRedisTruthyConnected(m.ws_connected)) {

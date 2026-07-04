@@ -6,6 +6,7 @@ import type {
 } from '@/types/monitor'
 import type { IngestLamp } from '@/utils/socketIngestLamp'
 import { ingestRedisTruthyConnected, ibSlotProbeUnhealthy } from '@/utils/socketIngestLamp'
+import { isPlatformIbGatewayActive } from '@/utils/platformIbGateway'
 
 export type IbBrokerServiceId = 'ib_ingestor' | 'ib_account_agent' | 'ib_operator'
 
@@ -248,10 +249,19 @@ export function ibBrokerRedisHealthLamp(
         : 'bifrost:health:ws_ib_operator'
   const label =
     svcId === 'ib_ingestor'
-      ? 'IB ingestor'
+      ? isPlatformIbGatewayActive(status)
+        ? 'Platform IB Gateway · Market ingest'
+        : 'IB ingestor'
       : svcId === 'ib_account_agent'
-        ? 'IB Account Agent'
-        : 'IB Operator'
+        ? isPlatformIbGatewayActive(status)
+          ? 'Platform IB Gateway · Account agent'
+          : 'IB Account Agent'
+        : isPlatformIbGatewayActive(status)
+          ? 'Platform IB Gateway · Operator RPC'
+          : 'IB Operator'
+  const redisScope = isPlatformIbGatewayActive(status)
+    ? 'Platform IB Gateway @ redis-ib (data/ib-gateway)'
+    : `Redis ${redisKey}`
 
   if (!status || !view) {
     return { lamp: 'gray', title: `${label} block missing from /status socket.` }
@@ -289,10 +299,10 @@ export function ibBrokerRedisHealthLamp(
     if (secConfigured && !secUp) {
       return { lamp: 'yellow', title: `${label} Host connected; Secondary not connected.` }
     }
-    return { lamp: 'green', title: `${label} healthy (Redis ${redisKey}).` }
+    return { lamp: 'green', title: `${label} healthy (${redisScope}).` }
   }
   if (procDead) {
-    return { lamp: 'red', title: `${label} process reports stopped (Redis host_alive / service_alive).` }
+    return { lamp: 'red', title: `${label} process reports stopped (${redisScope}).` }
   }
   if (serviceAlive && !hostSlotUp && healthFresh) {
     return {
@@ -307,9 +317,9 @@ export function ibBrokerRedisHealthLamp(
     }
   }
   if (svcId === 'ib_ingestor' && ingestProcessRunning(processActive) && !hostSlotUp) {
-    return { lamp: 'red', title: `${label} not connected (Redis ${redisKey}).` }
+    return { lamp: 'red', title: `${label} not connected (${redisScope}).` }
   }
-  return { lamp: 'red', title: `${label} Host not connected (Redis ${redisKey}).` }
+  return { lamp: 'red', title: `${label} Host not connected (${redisScope}).` }
 }
 
 export function ibBrokerServiceHeartbeatNextS(

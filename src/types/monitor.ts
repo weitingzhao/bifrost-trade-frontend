@@ -121,6 +121,26 @@ export interface StatusSocketIbBroker {
   service_heartbeat_reconnect_in_progress?: string | null
   host?: SocketIbSlot | null
   secondary?: SocketIbSlot | null
+  /** TIBM2+ — platform_gateway when health from data/ib-gateway plugin. */
+  transport?: 'platform_gateway' | 'legacy_socket' | string
+  health_source?: 'platform_ib_gateway' | 'legacy_socket' | string
+}
+
+/** Platform IB Gateway aggregate from Monitor GET /status socket.platform_ib_gateway. */
+export interface StatusPlatformIbGateway {
+  transport?: 'platform_gateway' | string
+  deployment?: string
+  bus?: string
+  mode?: 'live' | 'mock' | string | null
+  connected?: boolean
+  lamp?: 'green' | 'yellow' | 'red' | string
+  title?: string
+  client_id?: number | null
+  components?: {
+    ingestor?: StatusSocketIbBroker
+    account_agent?: StatusSocketIbBroker
+    operator?: StatusSocketIbBroker
+  }
 }
 
 export type StatusSocketIbIngestor = StatusSocketIbBroker
@@ -134,6 +154,7 @@ export interface StatusSocket {
   ib_ingestor?: StatusSocketIbIngestor | null
   ib_operator?: StatusSocketIbOperator | null
   ib_account_agent?: StatusSocketIbAccountAgent | null
+  platform_ib_gateway?: StatusPlatformIbGateway | null
 }
 
 export interface Operation {

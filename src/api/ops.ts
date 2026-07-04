@@ -469,6 +469,8 @@ export interface MarketIngestServiceRow {
   redis_control_host?: string | null
   redis_control_updated_at?: number | null
   runtime_externally_managed?: boolean
+  platform_gateway_managed?: boolean
+  transport?: 'platform_gateway' | 'legacy_socket' | string
 }
 
 export interface OpsHealthResponse {

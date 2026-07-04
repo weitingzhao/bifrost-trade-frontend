@@ -14,7 +14,7 @@ import { OpsAuthBar } from './OpsAuthBar'
 import { socketPageDescriptionClass } from './socketIngestUi'
 
 const SOCKET_PAGE_INFO =
-  'Ops-controlled ingest processes: Massive Options WS and IB edge services. Redis health from Monitor /status; start/stop via Ops API. Logs: footer LogPanel → Socket Services sources (MASSIVE WS, IB INGESTOR, IB OPERATOR, IB ACCT AGENT).'
+  'Ops-controlled ingest: Massive Options WS (Trade stack) and Platform IB Gateway components @ redis-ib (data/ib-gateway — not legacy trade-socket STS). Redis health from Monitor /status; IB rows on K8s are externally managed.'
 
 export function SocketPageHeader({
   services,

@@ -5,6 +5,7 @@ import {
   type IbBrokerServiceId,
 } from '@/components/socket/ibBrokerConnectionModel'
 import type { StatusResponse, StatusSocketMassive } from '@/types/monitor'
+import { isPlatformIbGatewayActive, platformIbGatewayAggregateLamp } from '@/utils/platformIbGateway'
 
 export type IngestLamp = 'green' | 'yellow' | 'red' | 'gray'
 export type AggregateIngestLamp = IngestLamp | 'none'
@@ -14,7 +15,7 @@ export type IngestCategory = 'Massive' | 'IB' | 'Engine' | 'Other'
 
 export const INGEST_CATEGORY_LABELS: Record<IngestCategory, string> = {
   Massive: 'Massive Options WS',
-  IB: 'IB Broker Services',
+  IB: 'Platform IB Gateway (redis-ib)',
   Engine: 'Strategy Trading',
   Other: 'Other',
 }
@@ -253,6 +254,8 @@ export interface MarketIngestServiceRow {
   redis_control_host?: string | null
   redis_control_updated_at?: number | null
   runtime_externally_managed?: boolean
+  platform_gateway_managed?: boolean
+  transport?: 'platform_gateway' | 'legacy_socket' | string
 }
 
 /**
@@ -466,7 +469,9 @@ export function resolveIngestOpsRowDisplay(opts: {
     staleLeaseGuard && redisHealth.lamp === 'green'
       ? `${redisHealth.title} — Host lease unclaimed (no Dev/Prod Ops start). Redis health may be stale from a previous run.`
       : runtimeExternallyManaged && redisHealth.lamp === 'green'
-        ? `${redisHealth.title} — Managed by K8s Deployment (runtime_externally_managed).`
+        ? svc.platform_gateway_managed
+          ? `${redisHealth.title} — Platform IB Gateway @ redis-ib (externally managed).`
+          : `${redisHealth.title} — Managed by K8s Deployment (runtime_externally_managed).`
         : redisHealth.title
 
   return { lamp, title, logicalText }
@@ -568,9 +573,9 @@ export function aggregateDaemonProcessesHealthFromStatus(
 
 const SOCKET_NAV_SERVICE_LABELS: Record<(typeof SOCKET_NAV_INGEST_IDS)[number], string> = {
   massive_ws: 'Massive WS',
-  ib_ingestor: 'IB Ingestor',
-  ib_operator: 'IB Operator',
-  ib_account_agent: 'IB Account Agent',
+  ib_ingestor: 'Gateway · Market',
+  ib_operator: 'Gateway · Operator',
+  ib_account_agent: 'Gateway · Account',
 }
 
 function socketNavDegradedDetailTitle(
@@ -600,6 +605,20 @@ function socketNavDegradedDetailTitle(
 export function aggregateSocketNavHealthFromStatus(
   status: StatusResponse | null | undefined,
 ): { lamp: AggregateIngestLamp; title: string } {
+  const pg = platformIbGatewayAggregateLamp(status)
+  if (pg && isPlatformIbGatewayActive(status)) {
+    const services = SOCKET_NAV_INGEST_IDS.map(id => minimalMarketIngestRowForId(id))
+    const base = aggregateIngestRedisHealthLamp(services, status)
+    if (base.lamp === 'green' && pg.lamp === 'green') {
+      return {
+        lamp: 'green',
+        title: 'Platform IB Gateway + Massive WS healthy (Monitor GET /status @ redis-ib).',
+      }
+    }
+    if (pg.lamp !== 'green') {
+      return { lamp: pg.lamp, title: pg.title }
+    }
+  }
   const services = SOCKET_NAV_INGEST_IDS.map(id => minimalMarketIngestRowForId(id))
   const base = aggregateIngestRedisHealthLamp(services, status)
   if (base.lamp === 'green') {

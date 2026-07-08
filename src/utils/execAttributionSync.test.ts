@@ -32,7 +32,7 @@ describe('execAttributionSync', () => {
       strategy_opportunity_id: 10,
     })
     const tws = ex({ account_executions_id: 2, strategy_instance_id: null })
-    const keys = new Set(['U1|OPT|20260821|115|C'])
+    const keys = new Set(['U1|RKLB|OPT|20260821|115|C'])
     expect(twsNeedsStrategySyncFromFinal(tws, final)).toBe(true)
     expect(
       shouldShowOptionExecSync({ book: 'tws', exec: tws, crossBookMatch: final, canonicalOptContractKeys: keys }),
@@ -45,7 +45,7 @@ describe('execAttributionSync', () => {
       strategy_instance_id: 66,
     })
     const final = ex({ account_executions_id: 1, strategy_instance_id: null })
-    const keys = new Set(['U1|OPT|20260821|115|C'])
+    const keys = new Set(['U1|RKLB|OPT|20260821|115|C'])
     expect(finalNeedsStrategySyncFromTws(final, tws)).toBe(true)
     expect(
       shouldShowOptionExecSync({ book: 'final', exec: final, crossBookMatch: tws, canonicalOptContractKeys: keys }),

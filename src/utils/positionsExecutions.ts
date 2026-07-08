@@ -1,15 +1,23 @@
 import type { Execution } from '@/types/positions'
 
-/** Align position vs execution contract_key: OCC local differs in segment 1; OPT|expiry|strike|right match. */
+/** Normalize option root symbol from contract_key segment 0 (short symbol or OCC local). */
+function normalizeOptContractSymbol(symSeg: string): string {
+  const trimmed = (symSeg ?? '').trim()
+  if (!trimmed) return ''
+  return trimmed.split(/\s+/)[0]?.toUpperCase().slice(0, 6) ?? ''
+}
+
+/** Align position vs execution contract_key; includes symbol so different underlyings do not collide. */
 export function optExecutionMatchKey(accountId: string, contractKey: string): string {
   const acc = (accountId ?? '').trim()
   const parts = (contractKey ?? '').split('|')
   if (parts.length >= 5 && (parts[1] ?? '').toUpperCase().trim() === 'OPT') {
+    const sym = normalizeOptContractSymbol(parts[0] ?? '')
     const exp = (parts[2] ?? '').trim()
     const sn = parseFloat(String(parts[3] ?? '').trim())
     const strikeKey = Number.isFinite(sn) ? String(sn) : (parts[3] ?? '').trim()
     const right = (parts[4] ?? '').trim().toUpperCase().slice(0, 1)
-    return `${acc}|OPT|${exp}|${strikeKey}|${right}`
+    return `${acc}|${sym}|OPT|${exp}|${strikeKey}|${right}`
   }
   return `${acc}|${(contractKey ?? '').trim()}`
 }

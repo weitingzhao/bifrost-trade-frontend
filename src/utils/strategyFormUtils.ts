@@ -28,6 +28,8 @@ export const STRUCTURE_TYPE_LABELS: Record<string, string> = {
   cash_secured_put: 'Cash Secured Put',
   covered_call: 'Covered Call',
   covered_call_otm: 'Covered Call OTM',
+  bull_call_spread: 'Bull Call Spread',
+  bear_call_spread: 'Bear Call Spread',
   iron_condor: 'Iron Condor',
   leaps: 'LEAPS',
   calendar_spread: 'Calendar Spread',

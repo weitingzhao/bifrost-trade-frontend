@@ -9,6 +9,7 @@ import { CeleryTerminalPanel } from './console/CeleryTerminalPanel'
 import { useCeleryBrokerConsole } from '@/hooks/useCeleryBrokerConsole'
 import { useCeleryWorkerConsole } from '@/hooks/useCeleryWorkerConsole'
 import { useOpsWorkers } from '@/hooks/useOpsData'
+import { useOpsHealth } from '@/hooks/useSocketServices'
 import { useCeleryOps } from './useCeleryOps'
 import type { ConsoleTarget } from './CeleryRuntimeSnapshotSection'
 
@@ -21,7 +22,7 @@ export interface CeleryConsoleSectionProps {
   sectionRef?: React.RefObject<HTMLDivElement | null>
 }
 
-function WorkerConsoleView({ workerId }: { workerId: string }) {
+function WorkerConsoleView({ workerId, isK8s }: { workerId: string; isK8s: boolean }) {
   const ctrl = useCeleryWorkerConsole(workerId, true)
   return (
     <CeleryTerminalPanel
@@ -31,7 +32,11 @@ function WorkerConsoleView({ workerId }: { workerId: string }) {
       consoleRef={ctrl.consoleRef}
       loadingText="Connecting…"
       errorText="Unable to load (Redis/Celery broker may be down)."
-      emptyText="No log lines yet. Start Worker: python scripts/systemd/run_celery.py"
+      emptyText={
+        isK8s
+          ? 'No log lines yet. Check the Kubernetes worker Deployment and pod logs.'
+          : 'No log lines yet. Start Worker: python scripts/systemd/run_celery.py'
+      }
       onClear={() => void ctrl.clear()}
       onSelectAll={ctrl.selectAll}
       clearTitle="Clear displayed log and this worker's Redis stream; new lines continue when Worker runs"
@@ -67,6 +72,8 @@ export function CeleryConsoleSection({
   const { data } = useOpsWorkers()
   const workers = useMemo(() => data?.workers ?? [], [data?.workers])
   const { token } = useCeleryOps()
+  const { data: opsHealth } = useOpsHealth(token)
+  const isK8s = (opsHealth?.executor_mode ?? '').toLowerCase() === 'kubernetes'
   const hasToken = Boolean(token.trim())
 
   useEffect(() => {
@@ -139,7 +146,7 @@ export function CeleryConsoleSection({
         ) : consoleTarget === 'broker' ? (
           <BrokerConsoleView key="broker" />
         ) : (
-          <WorkerConsoleView key={consoleTarget} workerId={consoleTarget} />
+          <WorkerConsoleView key={consoleTarget} workerId={consoleTarget} isK8s={isK8s} />
         )}
       </CelerySectionCard>
     </div>

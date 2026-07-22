@@ -28,6 +28,7 @@ export function CeleryScheduledJobsSection({ mainTab }: { mainTab: CeleryMainTab
   const { data, isLoading, isError, error, isFetching } = useCeleryCapabilitiesTab(mainTab)
   const invalidate = useInvalidateCeleryCapabilities()
   const beatTasks = data?.beat_tasks ?? []
+  const consumingQueues = data?.consuming_queues ?? []
 
   return (
     <CelerySectionCard
@@ -63,10 +64,28 @@ export function CeleryScheduledJobsSection({ mainTab }: { mainTab: CeleryMainTab
         <Alert variant="destructive">
           <AlertDescription>{data.error}</AlertDescription>
         </Alert>
-      ) : beatTasks.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No beat tasks returned from capabilities.</p>
       ) : (
         <div className="space-y-2">
+          {data?.beat_running === false && (
+            <Alert variant="destructive">
+              <AlertDescription>Celery Beat is not running — schedules will not enqueue.</AlertDescription>
+            </Alert>
+          )}
+          {data?.beat_running === true && (
+            <p className="text-dense-meta text-success" role="status">
+              Beat running
+            </p>
+          )}
+          {consumingQueues.length > 0 && (
+            <p className={denseTable.mutedMeta}>
+              Consuming queues:{' '}
+              <code className="font-mono">{consumingQueues.join(', ')}</code>
+            </p>
+          )}
+          {beatTasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No beat tasks returned from capabilities.</p>
+          ) : (
+            <>
           <h4 className={celerySectionTitleClass}>
             Celery Beat (scheduled)
             <InfoTooltip text="Tasks invoked on a schedule by Celery Beat. Most enqueue run_massive_job." />
@@ -93,6 +112,8 @@ export function CeleryScheduledJobsSection({ mainTab }: { mainTab: CeleryMainTab
               ))}
             </DenseTableBody>
           </DenseDataTable>
+            </>
+          )}
         </div>
       )}
     </CelerySectionCard>

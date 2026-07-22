@@ -17,6 +17,7 @@ export interface WorkerRuntimeCardProps {
   selected: boolean
   onSelect: () => void
   onRemove: () => void
+  showRemove?: boolean
   removeDisabled?: boolean
 }
 
@@ -25,6 +26,7 @@ export function WorkerRuntimeCard({
   selected,
   onSelect,
   onRemove,
+  showRemove = true,
   removeDisabled,
 }: WorkerRuntimeCardProps) {
   const lamp = workerLamp(worker.status)
@@ -62,21 +64,23 @@ export function WorkerRuntimeCard({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-muted-foreground font-medium">{workerStatusLabel(worker.status)}</span>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-            disabled={removeDisabled}
-            title="Remove: stops the systemd/subprocess unit on the Ops control host for this instance id."
-            aria-label={`Remove ${worker.worker_id}`}
-            onClick={e => {
-              e.stopPropagation()
-              onRemove()
-            }}
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
+          {showRemove && (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+              disabled={removeDisabled}
+              title="Remove this worker instance."
+              aria-label={`Remove ${worker.worker_id}`}
+              onClick={e => {
+                e.stopPropagation()
+                onRemove()
+              }}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
 

@@ -95,6 +95,9 @@ export interface SystemdInstance {
   active: string
   sub: string
   description: string
+  deployment?: string
+  replicas?: number
+  ready_replicas?: number
 }
 
 export interface WorkerInstancesResponse {
@@ -135,6 +138,8 @@ export interface CeleryCapabilitiesResponse {
   canonical_broker_queues: string[]
   run_massive_job_matrix?: RunMassiveJobMatrixRow[]
   beat_tasks?: CeleryBeatTaskRow[]
+  beat_running?: boolean
+  consuming_queues?: string[]
   broker_queue_labels?: Record<string, string>
   error?: string
 }

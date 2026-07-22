@@ -35,13 +35,11 @@ import {
 } from './celery/celeryUrlSync'
 import { resolveConsoleTargetForQueue } from './celery/celeryNavigation'
 import { useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
+import { useOpsHealth } from '@/hooks/useSocketServices'
 import { cn } from '@/lib/utils'
 
 const JOB_QUEUES_TOOLTIP =
   'PostgreSQL job rows per worker profile queue. Filter by status, trim old done rows, retry or delete in bulk. Click a queue name in Queue Summary above to jump here with filters.'
-
-const WORKER_INSTANCES_TOOLTIP =
-  'Running systemd/Celery worker units on this Ops host. Instance IDs are profile_key-sequence (Cycle). Queue summary: click a queue cell to filter this list. Profile bubbles: Add Instance / ALL with Add all, Reset all, Remove all. Per row: Recreate / Remove.'
 
 function CeleryPageContent() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -49,7 +47,9 @@ function CeleryPageContent() {
   const mainTab = urlState.tab
   const brokerQueueFilter = urlState.brokerQueue
 
-  const { flash } = useCeleryOps()
+  const { flash, token } = useCeleryOps()
+  const { data: opsHealth } = useOpsHealth(token)
+  const isK8s = (opsHealth?.executor_mode ?? '').toLowerCase() === 'kubernetes'
   const { data: workersData } = useOpsWorkers()
   const workers = useMemo(() => workersData?.workers ?? [], [workersData?.workers])
   const { data: profilesData } = useWorkerProfiles()
@@ -259,7 +259,14 @@ function CeleryPageContent() {
             </div>
 
             <div className={CELERY_SPLIT_GRID}>
-              <CelerySectionCard title="Worker Instances" tooltip={WORKER_INSTANCES_TOOLTIP}>
+              <CelerySectionCard
+                title="Worker Instances"
+                tooltip={
+                  isK8s
+                    ? 'Kubernetes worker workloads reported by Ops. Deployment replicas control scale; systemd instance actions are unavailable.'
+                    : 'Running Celery worker instances. Instance IDs are profile_key-sequence (Cycle). Queue summary: click a queue cell to filter this list. Profile controls add, reset, or remove instances.'
+                }
+              >
                 <CeleryWorkerInstancesSection
                   queueFilter={queueFilter}
                   onClearQueueFilter={clearWorkerQueueFilter}

@@ -9,13 +9,14 @@ import { CelerySectionCard } from './CelerySectionCard'
 import { ConfirmDialog } from './ConfirmDialog'
 import { WorkerRuntimeCard } from './console/WorkerRuntimeCard'
 import { useScaleWorker, useWorkerInstances, useOpsWorkers } from '@/hooks/useOpsData'
+import { useOpsHealth } from '@/hooks/useSocketServices'
 import { useCeleryOps } from './useCeleryOps'
 import { computeCeleryRuntimeLamp, runtimeLampText } from '@/utils/celeryRuntime'
 import { workerIdToInstanceId } from '@/utils/celeryWorkerDisplay'
 import { cn } from '@/lib/utils'
 
 const RUNTIME_INFO =
-  'Broker from Redis; workers from Redis presence + Celery inspect. Worker Dev/Prod badge = that process BIFROST_CONFIG. Remove stops the unit on the Ops control host.'
+  'Broker from Redis; workers from Redis presence + Celery inspect. Worker Dev/Prod badge = that process BIFROST_CONFIG.'
 
 export type ConsoleTarget = 'none' | 'broker' | string
 
@@ -30,7 +31,9 @@ export function CeleryRuntimeSnapshotSection({
   onSelectConsole,
   onScrollToConsole,
 }: CeleryRuntimeSnapshotSectionProps) {
-  const { canOperate, showFlash } = useCeleryOps()
+  const { canOperate, showFlash, token } = useCeleryOps()
+  const { data: opsHealth } = useOpsHealth(token)
+  const isK8s = (opsHealth?.executor_mode ?? '').toLowerCase() === 'kubernetes'
   const { data, isLoading, isFetching, refetch } = useOpsWorkers()
   const { data: instancesData } = useWorkerInstances()
   const scaleMut = useScaleWorker()
@@ -60,7 +63,7 @@ export function CeleryRuntimeSnapshotSection({
     setConfirm({
       open: true,
       title: 'Remove worker instance?',
-      message: `Stop systemd unit for instance ${instanceId} (${workerId}) on the Ops control host.`,
+      message: `Stop worker instance ${instanceId} (${workerId}).`,
       instanceId,
     })
   }
@@ -149,15 +152,15 @@ export function CeleryRuntimeSnapshotSection({
         <div className="text-sm text-muted-foreground space-y-2">
           {instances.length > 0 ? (
             <p>
-              Worker Instances lists matching OS processes (e.g. <code className="text-xs">run_celery.py</code>).
-              Runtime Snapshot only shows workers returned by <strong>Celery inspect</strong> on the configured
-              broker. If you just added an instance, wait a few seconds for the next poll; if this stays empty,
-              check the worker terminal for errors and that it uses the same Redis as Ops.
+              {isK8s
+                ? <>Worker Instances lists Kubernetes workloads. Runtime Snapshot only shows workers returned by <strong>Celery inspect</strong> on the configured broker. If this stays empty, check the worker pod logs and broker configuration.</>
+                : <>Worker Instances lists matching OS processes (e.g. <code className="text-xs">run_celery.py</code>). Runtime Snapshot only shows workers returned by <strong>Celery inspect</strong> on the configured broker. If you just added an instance, wait a few seconds for the next poll; if this stays empty, check the worker terminal for errors and that it uses the same Redis as Ops.</>}
             </p>
           ) : (
             <p>
-              No workers detected. Start a Celery worker:{' '}
-              <code className="text-xs">python scripts/systemd/run_celery.py</code>
+              {isK8s
+                ? 'No workers detected. Check the Celery worker Deployment replicas and pod readiness.'
+                : <>No workers detected. Start a Celery worker: <code className="text-xs">python scripts/systemd/run_celery.py</code></>}
             </p>
           )}
         </div>
@@ -177,6 +180,7 @@ export function CeleryRuntimeSnapshotSection({
                 }
                 requestRemove(instanceId, w.worker_id)
               }}
+              showRemove={!isK8s}
               removeDisabled={scaleMut.isPending || !canOperate}
             />
           ))}

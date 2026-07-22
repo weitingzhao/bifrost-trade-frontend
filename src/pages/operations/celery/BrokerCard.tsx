@@ -12,12 +12,15 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { CelerySectionCard } from './CelerySectionCard'
 import { useCeleryOps } from './useCeleryOps'
 import { useBrokerStatusExtended, useControlBroker } from '@/hooks/useOpsData'
+import { useOpsHealth } from '@/hooks/useSocketServices'
 
 const BROKER_TOOLTIP =
-  'Redis broker systemd control on this Ops host. Start / Restart / Stop require an Ops API token with admin permission and local systemd management.'
+  'Redis broker status. In Kubernetes mode, broker lifecycle is managed by Kubernetes rather than this page.'
 
 export function BrokerCard() {
-  const { canAdmin, showFlash } = useCeleryOps()
+  const { canAdmin, showFlash, token } = useCeleryOps()
+  const { data: opsHealth } = useOpsHealth(token)
+  const isK8s = (opsHealth?.executor_mode ?? '').toLowerCase() === 'kubernetes'
   const { data: extData, isLoading: extLoading } = useBrokerStatusExtended()
   const controlBroker = useControlBroker()
   const [confirm, setConfirm] = useState<{
@@ -71,7 +74,9 @@ export function BrokerCard() {
         }
         tooltip={BROKER_TOOLTIP}
         headerExtra={
-          locallyManaged ? (
+          isK8s ? (
+            <span className="text-xs text-muted-foreground">Managed by Kubernetes</span>
+          ) : locallyManaged ? (
             <span className="flex gap-1">
               {brokerBtn('Start', () =>
                 controlBroker.mutateAsync('start').then(r => {
@@ -93,7 +98,7 @@ export function BrokerCard() {
               )}
             </span>
           ) : (
-            <span className="text-xs text-muted-foreground">Read-only: Redis not under local systemd.</span>
+            <span className="text-xs text-muted-foreground">Read-only: broker is not locally managed.</span>
           )
         }
       >

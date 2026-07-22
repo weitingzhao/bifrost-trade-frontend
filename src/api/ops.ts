@@ -153,6 +153,10 @@ export async function fetchCeleryCapabilities(): Promise<CeleryCapabilitiesRespo
     beat_tasks: Array.isArray(beatRaw)
       ? (beatRaw as CeleryCapabilitiesResponse['beat_tasks'])
       : [],
+    beat_running: typeof j.beat_running === 'boolean' ? j.beat_running : undefined,
+    consuming_queues: Array.isArray(j.consuming_queues)
+      ? j.consuming_queues.filter((queue): queue is string => typeof queue === 'string')
+      : undefined,
     broker_queue_labels:
       j.broker_queue_labels && typeof j.broker_queue_labels === 'object'
         ? (j.broker_queue_labels as Record<string, string>)

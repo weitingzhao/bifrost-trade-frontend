@@ -99,12 +99,14 @@ export interface CeleryWorkerInstanceSituationProps {
   profiles: WorkerProfileInfo[]
   instances: SystemdInstance[]
   workers: WorkerSummary[]
+  isK8s?: boolean
 }
 
 export function CeleryWorkerInstanceSituation({
   profiles,
   instances,
   workers,
+  isK8s = false,
 }: CeleryWorkerInstanceSituationProps) {
   const deduped = useMemo(() => dedupeProfiles(profiles), [profiles])
 
@@ -127,7 +129,7 @@ export function CeleryWorkerInstanceSituation({
             <DenseTableHead
               align="right"
               className="w-20"
-              title="Target bifrost-celery-worker units on this Ops host (config max_worker_instances)"
+              title="Configured maximum worker instances for this profile"
             >
               Max
             </DenseTableHead>
@@ -154,8 +156,8 @@ export function CeleryWorkerInstanceSituation({
             const stack = countWorkerStackByProfile(workers, p.key)
             const atCap = cur >= maxN
             const tooltipText = atCap
-              ? `Systemd units: ${cur} (at or above max ${maxN}). Dev ${stack.dev}, Prod ${stack.prod}${stack.unknown > 0 ? `, Unknown ${stack.unknown}` : ''}.`
-              : `Systemd units: ${cur} / max ${maxN}. Dev ${stack.dev}, Prod ${stack.prod}${stack.unknown > 0 ? `, Unknown ${stack.unknown}` : ''}.`
+              ? `${isK8s ? 'Kubernetes worker pods' : 'Worker instances'}: ${cur} (at or above configured max ${maxN}). Dev ${stack.dev}, Prod ${stack.prod}${stack.unknown > 0 ? `, Unknown ${stack.unknown}` : ''}.`
+              : `${isK8s ? 'Kubernetes worker pods' : 'Worker instances'}: ${cur} / configured max ${maxN}. Dev ${stack.dev}, Prod ${stack.prod}${stack.unknown > 0 ? `, Unknown ${stack.unknown}` : ''}.`
 
             return (
               <DenseTableRow
@@ -196,7 +198,9 @@ export function CeleryWorkerInstanceSituation({
         </DenseTableBody>
       </DenseDataTable>
       <p className={denseTable.mutedMeta}>
-        Systemd instances on this host: {instances.length} total · Limits from config (reload Ops after editing YAML)
+        {isK8s
+          ? `Kubernetes worker pods observed: ${instances.length} total · Deployment replicas control scale`
+          : `Worker instances observed: ${instances.length} total · Limits from config (reload Ops after editing YAML)`}
       </p>
     </div>
   )

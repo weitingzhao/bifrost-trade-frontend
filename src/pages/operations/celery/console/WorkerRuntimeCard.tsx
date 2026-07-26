@@ -16,7 +16,7 @@ export interface WorkerRuntimeCardProps {
   worker: WorkerSummary
   selected: boolean
   onSelect: () => void
-  onRemove: () => void
+  onRemove?: () => void
   showRemove?: boolean
   removeDisabled?: boolean
 }
@@ -26,7 +26,7 @@ export function WorkerRuntimeCard({
   selected,
   onSelect,
   onRemove,
-  showRemove = true,
+  showRemove = false,
   removeDisabled,
 }: WorkerRuntimeCardProps) {
   const lamp = workerLamp(worker.status)
@@ -64,7 +64,7 @@ export function WorkerRuntimeCard({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-muted-foreground font-medium">{workerStatusLabel(worker.status)}</span>
-          {showRemove && (
+          {showRemove && onRemove && (
             <Button
               type="button"
               size="icon"

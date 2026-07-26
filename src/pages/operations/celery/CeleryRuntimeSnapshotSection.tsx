@@ -1,18 +1,13 @@
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { StatusLamp } from '@/components/StatusLamp'
 import { CelerySectionCard } from './CelerySectionCard'
-import { ConfirmDialog } from './ConfirmDialog'
 import { WorkerRuntimeCard } from './console/WorkerRuntimeCard'
-import { useScaleWorker, useWorkerInstances, useOpsWorkers } from '@/hooks/useOpsData'
-import { useOpsHealth } from '@/hooks/useSocketServices'
-import { useCeleryOps } from './useCeleryOps'
+import { useWorkerInstances, useOpsWorkers } from '@/hooks/useOpsData'
 import { computeCeleryRuntimeLamp, runtimeLampText } from '@/utils/celeryRuntime'
-import { workerIdToInstanceId } from '@/utils/celeryWorkerDisplay'
 import { cn } from '@/lib/utils'
 
 const RUNTIME_INFO =
@@ -31,20 +26,8 @@ export function CeleryRuntimeSnapshotSection({
   onSelectConsole,
   onScrollToConsole,
 }: CeleryRuntimeSnapshotSectionProps) {
-  const { canOperate, showFlash, token } = useCeleryOps()
-  const { data: opsHealth } = useOpsHealth(token)
-  const isK8s = (opsHealth?.executor_mode ?? '').toLowerCase() === 'kubernetes'
   const { data, isLoading, isFetching, refetch } = useOpsWorkers()
   const { data: instancesData } = useWorkerInstances()
-  const scaleMut = useScaleWorker()
-
-  const [confirm, setConfirm] = useState<{
-    open: boolean
-    title: string
-    message: string
-    instanceId: string
-  } | null>(null)
-  const [scaleMsg, setScaleMsg] = useState<{ text: string; isErr: boolean } | null>(null)
 
   const workers = data?.workers ?? []
   const broker = data?.broker
@@ -58,15 +41,6 @@ export function CeleryRuntimeSnapshotSection({
     },
     [onSelectConsole, onScrollToConsole],
   )
-
-  function requestRemove(instanceId: string, workerId: string) {
-    setConfirm({
-      open: true,
-      title: 'Remove worker instance?',
-      message: `Stop worker instance ${instanceId} (${workerId}).`,
-      instanceId,
-    })
-  }
 
   return (
     <CelerySectionCard
@@ -89,12 +63,6 @@ export function CeleryRuntimeSnapshotSection({
         </Button>
       }
     >
-      {scaleMsg && (
-        <Alert variant={scaleMsg.isErr ? 'destructive' : 'default'} className="mb-4">
-          <AlertDescription>{scaleMsg.text}</AlertDescription>
-        </Alert>
-      )}
-
       <div className="flex items-center gap-2 mb-4 text-sm" role="status">
         <StatusLamp lamp={runtimeLamp} className="h-3 w-3" />
         <strong>Celery (aggregate)</strong>
@@ -152,16 +120,12 @@ export function CeleryRuntimeSnapshotSection({
         <div className="text-sm text-muted-foreground space-y-2">
           {instances.length > 0 ? (
             <p>
-              {isK8s
-                ? <>Worker Instances lists Kubernetes workloads. Runtime Snapshot only shows workers returned by <strong>Celery inspect</strong> on the configured broker. If this stays empty, check the worker pod logs and broker configuration.</>
-                : <>Worker Instances lists matching OS processes (e.g. <code className="text-xs">run_celery.py</code>). Runtime Snapshot only shows workers returned by <strong>Celery inspect</strong> on the configured broker. If you just added an instance, wait a few seconds for the next poll; if this stays empty, check the worker terminal for errors and that it uses the same Redis as Ops.</>}
+              Worker Instances lists Kubernetes workloads. Runtime Snapshot only shows workers
+              returned by <strong>Celery inspect</strong> on the configured broker. If this stays
+              empty, check the worker pod logs and broker configuration.
             </p>
           ) : (
-            <p>
-              {isK8s
-                ? 'No workers detected. Check the Celery worker Deployment replicas and pod readiness.'
-                : <>No workers detected. Start a Celery worker: <code className="text-xs">python scripts/systemd/run_celery.py</code></>}
-            </p>
+            <p>No workers detected. Check the Celery worker Deployment replicas and pod readiness.</p>
           )}
         </div>
       ) : (
@@ -172,51 +136,10 @@ export function CeleryRuntimeSnapshotSection({
               worker={w}
               selected={consoleTarget === w.worker_id}
               onSelect={() => pickConsole(w.worker_id)}
-              onRemove={() => {
-                const instanceId = workerIdToInstanceId(w.worker_id)
-                if (!instanceId) {
-                  setScaleMsg({ text: `Cannot infer instance ID from ${w.worker_id}`, isErr: true })
-                  return
-                }
-                requestRemove(instanceId, w.worker_id)
-              }}
-              showRemove={!isK8s}
-              removeDisabled={scaleMut.isPending || !canOperate}
             />
           ))}
         </div>
       )}
-
-      <ConfirmDialog
-        open={confirm?.open ?? false}
-        title={confirm?.title ?? ''}
-        message={confirm?.message ?? ''}
-        confirming={scaleMut.isPending}
-        onCancel={() => setConfirm(null)}
-        onConfirm={() => {
-          if (!confirm) return
-          scaleMut.mutate(
-            { action: 'remove', instance_id: confirm.instanceId },
-            {
-              onSuccess: res => {
-                setScaleMsg({
-                  text: res.ok ? `Removed ${confirm.instanceId}` : (res.error ?? 'Remove failed'),
-                  isErr: !res.ok,
-                })
-                showFlash(
-                  res.ok ? `Removed ${confirm.instanceId}` : (res.error ?? 'Remove failed'),
-                  !res.ok,
-                )
-                setConfirm(null)
-              },
-              onError: e => {
-                setScaleMsg({ text: e instanceof Error ? e.message : 'Remove failed', isErr: true })
-                setConfirm(null)
-              },
-            },
-          )
-        }}
-      />
     </CelerySectionCard>
   )
 }

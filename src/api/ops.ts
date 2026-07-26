@@ -496,11 +496,6 @@ export interface OpsHealthResponse {
   config_profile?: string
   port?: number
   executor_mode?: string
-  local_control?: string
-  market_ingest_script_control?: boolean
-  agent_socket?: string
-  agent_reachable?: boolean
-  agent_error?: string
   k8s_reachable?: boolean
   k8s_namespace?: string
   daemon_scale_guard?: string

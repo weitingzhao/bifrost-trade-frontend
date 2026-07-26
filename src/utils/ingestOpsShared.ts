@@ -25,8 +25,6 @@ export function opsHostEnvFromConfigProfile(configProfile: string | null | undef
 
 export function socketServicesHostColumnDisplay(opts: {
   configProfile: string | null
-  localControl: string | null
-  marketIngestScriptControl: boolean
 }): { title: string; pill: OpsHostEnvPill } {
   const pill = opsHostEnvFromConfigProfile(opts.configProfile)
   const bits: string[] = []
@@ -39,13 +37,7 @@ export function socketServicesHostColumnDisplay(opts: {
   } else {
     bits.push('Ops config profile not inferred (custom path or base config.yaml only).')
   }
-  if (opts.marketIngestScriptControl) {
-    bits.push('Ingest control: local scripts on this Ops host (typical Mac dev).')
-  } else if (opts.localControl === 'subprocess') {
-    bits.push('Subprocess executor without market ingest script control.')
-  } else {
-    bits.push('Ingest control: systemd on this Ops host (typical Linux prod).')
-  }
+  bits.push('Ingest control: managed by Kubernetes Deployments.')
   return { title: bits.join(' '), pill }
 }
 
@@ -62,7 +54,7 @@ export function runtimeControlHostDisplay(
     const keyHint = redisMetaKey ? `${redisMetaKey}` : 'ingest meta hash'
     const k8sNote =
       host === 'k8s'
-        ? ' Writer runs in K8s Deployment (inferred from live Redis health, not Ops subprocess on this host).'
+        ? ' Writer runs in K8s Deployment (inferred from live Redis health).'
         : ''
     return {
       pill,
@@ -132,7 +124,6 @@ export function resolveEffectiveRedisControlEnv(
 export type IngestActionBlock =
   | 'none'
   | 'admin'
-  | 'script'
   | 'remote_env'
   | 'stack_conflict'
   | 'k8s_managed'
@@ -140,7 +131,6 @@ export type IngestActionBlock =
 
 export function ingestActionBlock(
   canOperate: boolean,
-  disableIngestScript: boolean,
   pageEnv: PageStackEnv | null,
   effectiveRedisControlEnv: string | null | undefined,
   runtimeExternallyManaged?: boolean,
@@ -155,7 +145,6 @@ export function ingestActionBlock(
   // D10 freeze: Start (and Restart when scaled to 0) blocked in UI; Stop stays available.
   if ((k8sScaleGuard ?? '').toLowerCase().trim() === 'freeze') return 'd10_freeze'
   if (runtimeExternallyManaged && !opsK8sControllable) return 'k8s_managed'
-  if (disableIngestScript) return 'script'
   const lease = (effectiveRedisControlEnv ?? '').toLowerCase().trim()
   if (lease === '__stack_conflict__') return 'stack_conflict'
   if (pageEnv && (lease === 'dev' || lease === 'prod') && lease !== pageEnv) return 'remote_env'
@@ -166,8 +155,6 @@ export function ingestActionBlockMessage(block: IngestActionBlock): string {
   switch (block) {
     case 'admin':
       return 'Operator role required (Ops token).'
-    case 'script':
-      return 'Control disabled: subprocess Ops without ingest script support.'
     case 'remote_env':
       return 'Control is held by the other stack (Redis). Stop the service from that Ops host first.'
     case 'stack_conflict':
@@ -277,18 +264,18 @@ export function ingestControlConfirmDescription(
   }
   if (svc.id === 'account_sync_daemon') {
     if (action === 'start') {
-      return 'Launches account sync (IB account stream → PostgreSQL). Not deployed until account-sync is in compose.'
+      return 'Launches account sync (IB account stream → PostgreSQL) by scaling the account-sync Deployment to 1 replica.'
     }
     if (action === 'stop') {
-      return 'Stops account sync (SIGTERM). Sync pauses until started again.'
+      return 'Stops account sync by scaling the account-sync Deployment to 0 replicas. Sync pauses until started again.'
     }
   }
   if (svc.id === 'trading_engine') {
     if (action === 'start') {
-      return 'Starts the strategy trading daemon (Docker compose service or local Ops subprocess). Hedging still follows DB suspend/resume.'
+      return 'Starts the strategy trading daemon (Kubernetes Deployment). Hedging still follows DB suspend/resume.'
     }
     if (action === 'stop') {
-      return 'Stops the trading daemon (graceful SIGTERM). Not the same as Suspend in Trading Strategy below.'
+      return 'Stops the trading daemon by scaling the daemon Deployment to 0 replicas. Not the same as Suspend in Trading Strategy below.'
     }
   }
   if (action === 'start') {
@@ -307,16 +294,10 @@ export const INGEST_CONTROL_PENDING_DIALOG_MESSAGE =
 export function formatAccountSyncOpsError(raw: string): string {
   const m = raw.trim()
   if (m.includes('exited immediately')) {
-    return `${m} Open logs/account-sync-daemon.log under the project. Typical causes: PostgreSQL or Redis URL wrong, IB Account Agent stream unavailable, or import/config errors.`
+    return `${m} Check the account-sync pod logs (kubectl logs). Typical causes: PostgreSQL or Redis URL wrong, IB Account Agent stream unavailable, or import/config errors.`
   }
   if (m.includes('ingest_already_running')) {
     return `${m} Use Stop first, or Force restart instead of Start.`
-  }
-  if (m.includes('not found at') && m.includes('run_account_sync_daemon')) {
-    return `${m} Ensure you run Ops from the repo root and scripts/systemd/run_account_sync_daemon.py exists.`
-  }
-  if (m.includes('sudo') && m.includes('NOPASSWD')) {
-    return `${m} Linux Ops needs passwordless sudo for systemctl. On macOS, enable script-based control or start the daemon manually.`
   }
   return m
 }

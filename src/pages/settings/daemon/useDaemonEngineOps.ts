@@ -81,15 +81,11 @@ export function useDaemonEngineOps(status: StatusResponse | null) {
     useIngestControlPoll(daemonServices, status)
 
   const canOperate = caps?.capabilities?.can_operate === true
-  const disableScript =
-    opsHealth?.local_control === 'subprocess' && opsHealth.market_ingest_script_control !== true
   const pageEnv = normalizedPageDevProd(opsHealth?.config_profile ?? null)
 
   const hostColumn = useMemo(
     () => socketServicesHostColumnDisplay({
       configProfile: opsHealth?.config_profile ?? null,
-      localControl: opsHealth?.local_control ?? null,
-      marketIngestScriptControl: opsHealth?.market_ingest_script_control === true,
     }),
     [opsHealth],
   )
@@ -137,7 +133,6 @@ export function useDaemonEngineOps(status: StatusResponse | null) {
     stoppingIds,
     onControlQueued,
     canOperate,
-    disableScript,
     pageEnv,
     hostColumn,
     rollupLamp,

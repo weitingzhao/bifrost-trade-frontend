@@ -17,7 +17,6 @@ import {
   ingestControlConfirmDescription,
 } from '@/utils/ingestOpsShared'
 import { OpsAuthBar } from '@/pages/settings/socket/OpsAuthBar'
-import { LocalControlAgentPanel } from '@/pages/settings/socket/LocalControlAgentPanel'
 import { IngestServicesTable } from '@/pages/settings/socket/IngestServicesTable'
 import type { MarketIngestServiceRow } from '@/utils/socketIngestLamp'
 import {
@@ -60,7 +59,6 @@ export function DaemonEngineOpsSection({
     stoppingIds,
     onControlQueued,
     canOperate,
-    disableScript,
     pageEnv,
     refreshAll,
     handleTokenChange,
@@ -129,11 +127,7 @@ export function DaemonEngineOpsSection({
         </p>
       )}
 
-      {(opsHealth?.executor_mode ?? '').toLowerCase() === 'kubernetes' ? (
-        <K8sDaemonStatusPanel opsHealth={opsHealth} />
-      ) : (
-        <LocalControlAgentPanel opsHealth={opsHealth} />
-      )}
+      <K8sDaemonStatusPanel opsHealth={opsHealth} />
 
       <section aria-label="Daemon ingest processes">
         <IngestServicesTable
@@ -141,7 +135,6 @@ export function DaemonEngineOpsSection({
           status={status}
           elapsed={elapsed}
           pageEnv={pageEnv}
-          disableScript={disableScript}
           canOperate={canOperate}
           startingIds={startingIds}
           stoppingIds={stoppingIds}

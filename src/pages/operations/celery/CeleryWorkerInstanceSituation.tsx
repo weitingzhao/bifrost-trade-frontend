@@ -99,14 +99,12 @@ export interface CeleryWorkerInstanceSituationProps {
   profiles: WorkerProfileInfo[]
   instances: SystemdInstance[]
   workers: WorkerSummary[]
-  isK8s?: boolean
 }
 
 export function CeleryWorkerInstanceSituation({
   profiles,
   instances,
   workers,
-  isK8s = false,
 }: CeleryWorkerInstanceSituationProps) {
   const deduped = useMemo(() => dedupeProfiles(profiles), [profiles])
 
@@ -156,8 +154,8 @@ export function CeleryWorkerInstanceSituation({
             const stack = countWorkerStackByProfile(workers, p.key)
             const atCap = cur >= maxN
             const tooltipText = atCap
-              ? `${isK8s ? 'Kubernetes worker pods' : 'Worker instances'}: ${cur} (at or above configured max ${maxN}). Dev ${stack.dev}, Prod ${stack.prod}${stack.unknown > 0 ? `, Unknown ${stack.unknown}` : ''}.`
-              : `${isK8s ? 'Kubernetes worker pods' : 'Worker instances'}: ${cur} / configured max ${maxN}. Dev ${stack.dev}, Prod ${stack.prod}${stack.unknown > 0 ? `, Unknown ${stack.unknown}` : ''}.`
+              ? `Kubernetes worker pods: ${cur} (at or above configured max ${maxN}). Dev ${stack.dev}, Prod ${stack.prod}${stack.unknown > 0 ? `, Unknown ${stack.unknown}` : ''}.`
+              : `Kubernetes worker pods: ${cur} / configured max ${maxN}. Dev ${stack.dev}, Prod ${stack.prod}${stack.unknown > 0 ? `, Unknown ${stack.unknown}` : ''}.`
 
             return (
               <DenseTableRow
@@ -198,9 +196,7 @@ export function CeleryWorkerInstanceSituation({
         </DenseTableBody>
       </DenseDataTable>
       <p className={denseTable.mutedMeta}>
-        {isK8s
-          ? `Kubernetes worker pods observed: ${instances.length} total · Deployment replicas control scale`
-          : `Worker instances observed: ${instances.length} total · Limits from config (reload Ops after editing YAML)`}
+        Kubernetes worker pods observed: {instances.length} total · Deployment replicas control scale
       </p>
     </div>
   )

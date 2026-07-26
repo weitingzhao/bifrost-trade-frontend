@@ -35,7 +35,6 @@ import {
 } from './celery/celeryUrlSync'
 import { resolveConsoleTargetForQueue } from './celery/celeryNavigation'
 import { useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
-import { useOpsHealth } from '@/hooks/useSocketServices'
 import { cn } from '@/lib/utils'
 
 const JOB_QUEUES_TOOLTIP =
@@ -47,9 +46,7 @@ function CeleryPageContent() {
   const mainTab = urlState.tab
   const brokerQueueFilter = urlState.brokerQueue
 
-  const { flash, token } = useCeleryOps()
-  const { data: opsHealth } = useOpsHealth(token)
-  const isK8s = (opsHealth?.executor_mode ?? '').toLowerCase() === 'kubernetes'
+  const { flash } = useCeleryOps()
   const { data: workersData } = useOpsWorkers()
   const workers = useMemo(() => workersData?.workers ?? [], [workersData?.workers])
   const { data: profilesData } = useWorkerProfiles()
@@ -261,11 +258,7 @@ function CeleryPageContent() {
             <div className={CELERY_SPLIT_GRID}>
               <CelerySectionCard
                 title="Worker Instances"
-                tooltip={
-                  isK8s
-                    ? 'Kubernetes worker workloads reported by Ops. Deployment replicas control scale; systemd instance actions are unavailable.'
-                    : 'Running Celery worker instances. Instance IDs are profile_key-sequence (Cycle). Queue summary: click a queue cell to filter this list. Profile controls add, reset, or remove instances.'
-                }
+                tooltip="Kubernetes worker workloads reported by Ops. Deployment replicas control scale; systemd instance actions are unavailable."
               >
                 <CeleryWorkerInstancesSection
                   queueFilter={queueFilter}

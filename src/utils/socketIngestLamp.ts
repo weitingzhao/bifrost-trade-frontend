@@ -9,7 +9,6 @@ import { isPlatformIbGatewayActive, platformIbGatewayAggregateLamp } from '@/uti
 
 export type IngestLamp = 'green' | 'yellow' | 'red' | 'gray'
 export type AggregateIngestLamp = IngestLamp | 'none'
-export type LocalControlAgentLamp = 'green' | 'yellow' | 'red'
 
 export type IngestCategory = 'Massive' | 'IB' | 'Engine' | 'Other'
 
@@ -54,12 +53,6 @@ export function buildUnifiedIngestRows(
   for (const s of byCat.Engine) out.push({ svc: s, category: 'Engine' })
   for (const s of byCat.Other) out.push({ svc: s, category: 'Other' })
   return out
-}
-
-export function localControlAgentLamp(reachable: boolean | null | undefined): LocalControlAgentLamp {
-  if (reachable === true) return 'green'
-  if (reachable === false) return 'red'
-  return 'yellow'
 }
 
 function fmtAgeShort(s: number | null | undefined): string {

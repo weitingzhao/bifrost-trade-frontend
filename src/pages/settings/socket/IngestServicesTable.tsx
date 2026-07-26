@@ -58,7 +58,6 @@ function ServiceRow({
   status,
   elapsed,
   pageEnv,
-  disableScript,
   canOperate,
   allServices,
   showConnectionColumn,
@@ -73,7 +72,6 @@ function ServiceRow({
   status: StatusResponse | null
   elapsed: number
   pageEnv: PageStackEnv | null
-  disableScript: boolean
   canOperate: boolean
   allServices: MarketIngestServiceRow[]
   showConnectionColumn: boolean
@@ -116,7 +114,6 @@ function ServiceRow({
       : runtimeHostTitle
   const block: IngestActionBlock = ingestActionBlock(
     canOperate,
-    disableScript,
     pageEnv,
     effectiveEnv,
     externallyManaged,
@@ -197,7 +194,6 @@ export function IngestServicesTable({
   status,
   elapsed,
   pageEnv,
-  disableScript,
   canOperate,
   startingIds,
   stoppingIds,
@@ -212,7 +208,6 @@ export function IngestServicesTable({
   status: StatusResponse | null
   elapsed: number
   pageEnv: PageStackEnv | null
-  disableScript: boolean
   canOperate: boolean
   startingIds: ReadonlySet<string>
   stoppingIds: ReadonlySet<string>
@@ -315,7 +310,6 @@ export function IngestServicesTable({
                   status={status}
                   elapsed={elapsed}
                   pageEnv={pageEnv}
-                  disableScript={disableScript}
                   canOperate={canOperate}
                   allServices={services}
                   showConnectionColumn={showConnectionColumn}

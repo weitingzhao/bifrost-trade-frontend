@@ -32,7 +32,6 @@ import {
 } from '@/utils/ingestOpsShared'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { SocketPageHeader } from '@/pages/settings/socket/SocketPageHeader'
-import { LocalControlAgentPanel } from '@/pages/settings/socket/LocalControlAgentPanel'
 import { IngestServicesTable } from '@/pages/settings/socket/IngestServicesTable'
 import {
   CLOSED_SOCKET_CONFIRM,
@@ -85,11 +84,8 @@ export default function SocketPage() {
     useIngestControlPoll(socketServices, status)
 
   const canOperate = caps?.capabilities?.can_operate === true
-  const disableScript =
-    opsHealth?.local_control === 'subprocess' && opsHealth.market_ingest_script_control !== true
   const pageEnv = normalizedPageStackEnv(opsHealth?.config_profile ?? null)
   const conflict = hasStackConflict(socketServices)
-  const showLocalAgent = (opsHealth?.executor_mode ?? '').toLowerCase() === 'agent'
 
   function handleTokenChange(t: string) {
     setToken(t)
@@ -166,12 +162,6 @@ export default function SocketPage() {
         </div>
       )}
 
-      {showLocalAgent && (
-        <Card variant="elevated" size="sm" className={socketElevatedCardClass}>
-          <LocalControlAgentPanel opsHealth={opsHealth} />
-        </Card>
-      )}
-
       <Card variant="elevated" size="sm" className={socketElevatedCardClass} aria-label="Socket service units">
         <div className={socketSectionBlockClass}>
           <h2 className={socketSectionTitleClass}>Ingest services</h2>
@@ -180,7 +170,6 @@ export default function SocketPage() {
             status={status}
             elapsed={elapsed}
             pageEnv={pageEnv}
-            disableScript={disableScript}
             canOperate={canOperate}
             startingIds={startingIds}
             stoppingIds={stoppingIds}

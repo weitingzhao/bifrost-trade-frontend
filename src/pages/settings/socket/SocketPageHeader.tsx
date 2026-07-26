@@ -37,8 +37,6 @@ export function SocketPageHeader({
   const aggregate = aggregateIngestRedisHealthLamp(rows.map(r => r.svc), status)
   const hostColumn = socketServicesHostColumnDisplay({
     configProfile: opsHealth?.config_profile ?? null,
-    localControl: opsHealth?.local_control ?? null,
-    marketIngestScriptControl: opsHealth?.market_ingest_script_control === true,
   })
 
   const lampColor = aggregate.lamp === 'none' ? 'gray' : aggregate.lamp

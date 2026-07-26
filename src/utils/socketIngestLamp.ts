@@ -256,6 +256,10 @@ export interface MarketIngestServiceRow {
   runtime_externally_managed?: boolean
   platform_gateway_managed?: boolean
   transport?: 'platform_gateway' | 'legacy_socket' | string
+  k8s_deployment?: string
+  k8s_replicas?: number
+  k8s_ready?: number
+  k8s_scale_guard?: string | null
 }
 
 /**

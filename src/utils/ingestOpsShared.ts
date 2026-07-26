@@ -129,7 +129,14 @@ export function resolveEffectiveRedisControlEnv(
   return svc.redis_control_env ?? null
 }
 
-export type IngestActionBlock = 'none' | 'admin' | 'script' | 'remote_env' | 'stack_conflict' | 'k8s_managed'
+export type IngestActionBlock =
+  | 'none'
+  | 'admin'
+  | 'script'
+  | 'remote_env'
+  | 'stack_conflict'
+  | 'k8s_managed'
+  | 'd10_freeze'
 
 export function ingestActionBlock(
   canOperate: boolean,
@@ -137,9 +144,12 @@ export function ingestActionBlock(
   pageEnv: PageStackEnv | null,
   effectiveRedisControlEnv: string | null | undefined,
   runtimeExternallyManaged?: boolean,
+  k8sScaleGuard?: string | null,
 ): IngestActionBlock {
-  if (runtimeExternallyManaged) return 'k8s_managed'
   if (!canOperate) return 'admin'
+  // D10 freeze: Start/Restart blocked in UI; Stop stays available for operators.
+  if ((k8sScaleGuard ?? '').toLowerCase().trim() === 'freeze') return 'd10_freeze'
+  if (runtimeExternallyManaged) return 'k8s_managed'
   if (disableIngestScript) return 'script'
   const lease = (effectiveRedisControlEnv ?? '').toLowerCase().trim()
   if (lease === '__stack_conflict__') return 'stack_conflict'
@@ -159,6 +169,8 @@ export function ingestActionBlockMessage(block: IngestActionBlock): string {
       return 'Conflicting dev/prod Redis control leases. Stop processes on one stack first, or click Clear Leases.'
     case 'k8s_managed':
       return 'Managed by K8s Deployment on this stack. Use kubectl / Ops Console deploy — not Ops Start/Stop on this host.'
+    case 'd10_freeze':
+      return 'Trading execution is BLOCKED (D10). Daemon scale-up requires Owner unlock.'
     default:
       return ''
   }

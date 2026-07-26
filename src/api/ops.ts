@@ -475,6 +475,18 @@ export interface MarketIngestServiceRow {
   runtime_externally_managed?: boolean
   platform_gateway_managed?: boolean
   transport?: 'platform_gateway' | 'legacy_socket' | string
+  k8s_deployment?: string
+  k8s_replicas?: number
+  k8s_ready?: number
+  k8s_scale_guard?: string | null
+}
+
+export interface OpsK8sWorkloadStatus {
+  replicas: number
+  ready: number
+  kind: string
+  mode?: string
+  scale_guard?: string
 }
 
 export interface OpsHealthResponse {
@@ -489,6 +501,10 @@ export interface OpsHealthResponse {
   agent_socket?: string
   agent_reachable?: boolean
   agent_error?: string
+  k8s_reachable?: boolean
+  k8s_namespace?: string
+  daemon_scale_guard?: string
+  k8s_workloads?: Record<string, OpsK8sWorkloadStatus>
 }
 
 export interface OpsCapabilities {

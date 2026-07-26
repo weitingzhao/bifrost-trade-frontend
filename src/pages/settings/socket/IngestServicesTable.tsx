@@ -66,6 +66,7 @@ function ServiceRow({
   isStopping,
   onAction,
   wallNowSec,
+  variant,
 }: {
   svc: MarketIngestServiceRow
   category: IngestCategory
@@ -80,6 +81,7 @@ function ServiceRow({
   isStopping: boolean
   onAction: (svc: MarketIngestServiceRow, action: MarketIngestAction) => void
   wallNowSec: number
+  variant: 'socket' | 'daemon'
 }) {
   const effectiveEnv = resolveEffectiveRedisControlEnv(svc, allServices)
   const processRunning = ['active', 'activating'].includes((svc.process_active || '').toLowerCase())
@@ -118,13 +120,26 @@ function ServiceRow({
     pageEnv,
     effectiveEnv,
     externallyManaged,
+    svc.k8s_scale_guard,
   )
   const blockedBySibling = block === 'remote_env' && !svc.redis_control_env
+  const showK8sReady =
+    variant === 'daemon' && svc.k8s_replicas !== undefined
+  const k8sReadyText = showK8sReady
+    ? `${svc.k8s_ready ?? 0}/${svc.k8s_replicas} ready`
+    : null
 
   return (
     <DenseTableRow>
       <DenseTableCell>
-        <IngestLampDot lamp={lamp} title={statusTitle} />
+        <div className="flex flex-col gap-0.5">
+          <IngestLampDot lamp={lamp} title={statusTitle} />
+          {k8sReadyText ? (
+            <span className="text-dense-micro font-mono tabular-nums text-muted-foreground whitespace-nowrap">
+              {k8sReadyText}
+            </span>
+          ) : null}
+        </div>
       </DenseTableCell>
       <DenseTableCell>
         <div
@@ -307,6 +322,7 @@ export function IngestServicesTable({
                   isStopping={stoppingIds.has(svc.id)}
                   onAction={onAction}
                   wallNowSec={wallNowSec}
+                  variant={variant}
                 />
               ))}
             </Fragment>

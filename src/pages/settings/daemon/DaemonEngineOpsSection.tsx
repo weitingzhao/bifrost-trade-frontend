@@ -24,6 +24,7 @@ import {
   CLOSED_DAEMON_CONFIRM,
   type useDaemonEngineOps,
 } from './useDaemonEngineOps'
+import { K8sDaemonStatusPanel } from './K8sDaemonStatusPanel'
 import {
   daemonDialogErrorClass,
   daemonPageIntroClass,
@@ -128,7 +129,11 @@ export function DaemonEngineOpsSection({
         </p>
       )}
 
-      <LocalControlAgentPanel opsHealth={opsHealth} />
+      {(opsHealth?.executor_mode ?? '').toLowerCase() === 'kubernetes' ? (
+        <K8sDaemonStatusPanel opsHealth={opsHealth} />
+      ) : (
+        <LocalControlAgentPanel opsHealth={opsHealth} />
+      )}
 
       <section aria-label="Daemon ingest processes">
         <IngestServicesTable

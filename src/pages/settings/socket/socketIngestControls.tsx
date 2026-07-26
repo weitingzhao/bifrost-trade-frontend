@@ -81,10 +81,12 @@ export function ControlButtons({
   const rawButtons = ingestActionButtonsForState(svc.process_active)
   const showStart = isStarting ? false : isStopping ? false : redisLamp === 'green' ? false : rawButtons.showStart
   const showStop = isStarting ? true : isStopping ? false : redisLamp === 'green' ? true : rawButtons.showStop
-  const blocked = actionBlock !== 'none'
+  const blocked = actionBlock !== 'none' && actionBlock !== 'd10_freeze'
   const blockMsg = ingestActionBlockMessage(actionBlock)
   const blockedBySibling = actionBlock === 'remote_env' && !svc.redis_control_env
   const forceRestartLabel = ingestForceRestartActionLabel()
+  const d10Freeze = actionBlock === 'd10_freeze'
+  const d10Title = ingestActionBlockMessage('d10_freeze')
 
   if (blocked) {
     return (
@@ -106,9 +108,14 @@ export function ControlButtons({
       <div className={socketActionsInnerClass}>
         {showStart && (
           <IconActionButton
-            title={`Start ${svc.label}`}
-            ariaLabel={`Start ${svc.label}`}
-            className={socketControlStartButtonClass()}
+            title={d10Freeze ? d10Title : `Start ${svc.label}`}
+            ariaLabel={d10Freeze ? d10Title : `Start ${svc.label}`}
+            className={
+              d10Freeze
+                ? 'text-destructive/60 cursor-not-allowed'
+                : socketControlStartButtonClass()
+            }
+            disabled={d10Freeze}
             onClick={() => onAction(svc, 'start')}
           >
             <Play className="h-3.5 w-3.5" />
@@ -125,8 +132,10 @@ export function ControlButtons({
           </IconActionButton>
         )}
         <IconActionButton
-          title={`${forceRestartLabel} ${svc.label}`}
-          ariaLabel={`${forceRestartLabel} ${svc.label}`}
+          title={d10Freeze ? d10Title : `${forceRestartLabel} ${svc.label}`}
+          ariaLabel={d10Freeze ? d10Title : `${forceRestartLabel} ${svc.label}`}
+          className={d10Freeze ? 'text-destructive/60 cursor-not-allowed' : undefined}
+          disabled={d10Freeze}
           onClick={() => onAction(svc, INGEST_FORCE_RESTART_ACTION)}
         >
           <RotateCcw className="h-3.5 w-3.5" />

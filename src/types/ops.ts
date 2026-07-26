@@ -180,19 +180,6 @@ export interface MassiveCeleryBeatScheduleResponse {
   error?: string
 }
 
-export type BrokerAction = 'start' | 'stop' | 'restart'
-
-export type ScaleAction = 'add' | 'remove'
-
-export interface ScaleResult {
-  ok: boolean
-  action?: string
-  unit?: string
-  instance_id?: string
-  worker_type?: string
-  error?: string
-}
-
 export interface AuditEntry {
   timestamp: number
   operator: string

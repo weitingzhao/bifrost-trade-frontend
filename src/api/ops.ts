@@ -8,9 +8,6 @@ import type {
   WorkerInstancesResponse,
   ExtendedBrokerStatus,
   CeleryCapabilitiesResponse,
-  BrokerAction,
-  ScaleAction,
-  ScaleResult,
   AuditEntry,
   MassiveJobApiRow,
   BarsJob,
@@ -87,24 +84,6 @@ export async function fetchWorkerInstances(): Promise<WorkerInstancesResponse> {
   return parseJson(r)
 }
 
-export async function scaleWorker(params: {
-  action: ScaleAction
-  instance_id?: string
-  worker_type?: string
-  force?: boolean
-}): Promise<ScaleResult> {
-  const body: Record<string, unknown> = { action: params.action }
-  if (params.instance_id) body.instance_id = params.instance_id
-  if (params.worker_type) body.worker_type = params.worker_type
-  if (params.force === true) body.force = true
-  const r = await fetch(opsUrl('/ops/workers/scale'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  return parseJson(r)
-}
-
 // ── Broker ────────────────────────────────────────────────────────────────────
 
 export async function fetchBrokerStatusExtended(): Promise<{
@@ -113,19 +92,6 @@ export async function fetchBrokerStatusExtended(): Promise<{
   error?: string
 }> {
   const r = await fetch(opsUrl('/ops/broker/status'))
-  return parseJson(r)
-}
-
-export async function controlBroker(action: BrokerAction): Promise<{
-  ok: boolean
-  action?: string
-  error?: string
-}> {
-  const r = await fetch(opsUrl('/ops/broker/control'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action }),
-  })
   return parseJson(r)
 }
 

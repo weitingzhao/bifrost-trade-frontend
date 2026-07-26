@@ -145,11 +145,16 @@ export function ingestActionBlock(
   effectiveRedisControlEnv: string | null | undefined,
   runtimeExternallyManaged?: boolean,
   k8sScaleGuard?: string | null,
+  /**
+   * Daemon Process Control rows are driven by api-ops KubernetesExecutor —
+   * do not treat stale Redis "externally managed" as a hard Start/Stop block.
+   */
+  opsK8sControllable?: boolean,
 ): IngestActionBlock {
   if (!canOperate) return 'admin'
-  // D10 freeze: Start/Restart blocked in UI; Stop stays available for operators.
+  // D10 freeze: Start (and Restart when scaled to 0) blocked in UI; Stop stays available.
   if ((k8sScaleGuard ?? '').toLowerCase().trim() === 'freeze') return 'd10_freeze'
-  if (runtimeExternallyManaged) return 'k8s_managed'
+  if (runtimeExternallyManaged && !opsK8sControllable) return 'k8s_managed'
   if (disableIngestScript) return 'script'
   const lease = (effectiveRedisControlEnv ?? '').toLowerCase().trim()
   if (lease === '__stack_conflict__') return 'stack_conflict'

@@ -121,6 +121,7 @@ function ServiceRow({
     effectiveEnv,
     externallyManaged,
     svc.k8s_scale_guard,
+    variant === 'daemon',
   )
   const blockedBySibling = block === 'remote_env' && !svc.redis_control_env
   const showK8sReady =

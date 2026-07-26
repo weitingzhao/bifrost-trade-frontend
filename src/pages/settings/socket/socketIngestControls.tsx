@@ -87,6 +87,11 @@ export function ControlButtons({
   const forceRestartLabel = ingestForceRestartActionLabel()
   const d10Freeze = actionBlock === 'd10_freeze'
   const d10Title = ingestActionBlockMessage('d10_freeze')
+  // Align with Wave A: freeze blocks scale-up only. Restart of an already-running
+  // daemon (replicas > 0) is a rollout, not a scale-up.
+  const d10BlockStart = d10Freeze
+  const d10BlockRestart =
+    d10Freeze && !(typeof svc.k8s_replicas === 'number' && svc.k8s_replicas > 0)
 
   if (blocked) {
     return (
@@ -108,14 +113,14 @@ export function ControlButtons({
       <div className={socketActionsInnerClass}>
         {showStart && (
           <IconActionButton
-            title={d10Freeze ? d10Title : `Start ${svc.label}`}
-            ariaLabel={d10Freeze ? d10Title : `Start ${svc.label}`}
+            title={d10BlockStart ? d10Title : `Start ${svc.label}`}
+            ariaLabel={d10BlockStart ? d10Title : `Start ${svc.label}`}
             className={
-              d10Freeze
+              d10BlockStart
                 ? 'text-destructive/60 cursor-not-allowed'
                 : socketControlStartButtonClass()
             }
-            disabled={d10Freeze}
+            disabled={d10BlockStart}
             onClick={() => onAction(svc, 'start')}
           >
             <Play className="h-3.5 w-3.5" />
@@ -132,10 +137,10 @@ export function ControlButtons({
           </IconActionButton>
         )}
         <IconActionButton
-          title={d10Freeze ? d10Title : `${forceRestartLabel} ${svc.label}`}
-          ariaLabel={d10Freeze ? d10Title : `${forceRestartLabel} ${svc.label}`}
-          className={d10Freeze ? 'text-destructive/60 cursor-not-allowed' : undefined}
-          disabled={d10Freeze}
+          title={d10BlockRestart ? d10Title : `${forceRestartLabel} ${svc.label}`}
+          ariaLabel={d10BlockRestart ? d10Title : `${forceRestartLabel} ${svc.label}`}
+          className={d10BlockRestart ? 'text-destructive/60 cursor-not-allowed' : undefined}
+          disabled={d10BlockRestart}
           onClick={() => onAction(svc, INGEST_FORCE_RESTART_ACTION)}
         >
           <RotateCcw className="h-3.5 w-3.5" />

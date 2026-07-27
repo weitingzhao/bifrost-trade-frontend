@@ -6,7 +6,7 @@ export const closedOptTableClass = 'min-w-[880px]'
 
 /** Primary header row (Contract, Expiry, BUY, …) — slightly larger than default DenseTableHead. */
 export const closedOptHeadPrimary =
-  '!text-dense-body font-semibold uppercase tracking-wide text-muted-foreground'
+  '!text-dense-body font-semibold uppercase tracking-wide leading-snug text-muted-foreground'
 
 /** BUY/SELL sub-header row (Size, @, Cost, …). */
 export const closedOptHeadSub =

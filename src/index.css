@@ -98,13 +98,18 @@
     --color-screener-structure-tier: var(--color-screener-structure-tier);
     --color-screener-sentiment: var(--color-screener-sentiment);
 
-    /* Dense typography scale — all data-heavy pages use these 5 stops.
+    /* Dense typography scale — Tailwind v4 uses --text-* (not --font-size-*).
        Avoid hardcoded text-[Npx]; pick the nearest token instead. */
-    --font-size-dense-body: var(--text-dense);
-    --font-size-dense-label: 0.75rem;
-    --font-size-dense-meta: var(--text-dense-meta);
-    --font-size-dense-caption: 0.625rem;
-    --font-size-dense-micro: 0.5625rem;
+    --text-dense-body: var(--text-dense);
+    --text-dense-body--line-height: 1.25;
+    --text-dense-label: 0.75rem;
+    --text-dense-label--line-height: 1.25;
+    --text-dense-meta: var(--text-dense-meta);
+    --text-dense-meta--line-height: 1.25;
+    --text-dense-caption: 0.625rem;
+    --text-dense-caption--line-height: 1.2;
+    --text-dense-micro: 0.5625rem;
+    --text-dense-micro--line-height: 1.2;
 
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
@@ -218,7 +223,11 @@
 
     /* Dense data tables (Positions, Ledger, Performance) */
     --text-dense: 0.8125rem;
+    --text-dense-body: 0.8125rem;
     --text-dense-meta: 0.6875rem;
+    --text-dense-label: 0.75rem;
+    --text-dense-caption: 0.625rem;
+    --text-dense-micro: 0.5625rem;
     --table-cell-py: 0.375rem;
     --table-cell-px: 0.5rem;
 

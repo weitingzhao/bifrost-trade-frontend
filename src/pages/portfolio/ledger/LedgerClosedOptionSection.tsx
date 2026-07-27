@@ -253,7 +253,7 @@ export function LedgerClosedOptionSection({
         Details (per trade)
         <InfoTooltip text="Click a closed trade row above to load its execution details." />
       </h5>
-      <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName={closedOptDetailTableClass}>
+      <DenseDataTable scrollX={false} tableClassName={closedOptDetailTableClass}>
         <ClosedOptDetailColgroup />
         <DenseTableHeader>
           <DenseTableHeadRow>

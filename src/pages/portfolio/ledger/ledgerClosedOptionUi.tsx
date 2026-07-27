@@ -45,26 +45,26 @@ export function ClosedOptColgroup() {
   )
 }
 
-/** Details (per trade) — Legacy `table-operations` width; Actions column must stay visible. */
-export const closedOptDetailTableClass = 'min-w-[1080px]'
+/** Details (per trade) — fit all columns in the card (no horizontal scrollbar). */
+export const closedOptDetailTableClass = 'w-full min-w-0'
 
 export const closedOptDetailContractCell = cn(
-  closedOptContractCell,
-  '!max-w-none min-w-[11rem] overflow-visible',
+  denseTable.entityCell,
+  'min-w-0 !pl-1 pr-1.5 align-middle overflow-hidden',
 )
 
 export const closedOptDetailActionsCell =
-  '!max-w-none w-[8.5rem] shrink-0 overflow-visible whitespace-nowrap px-1.5'
+  'min-w-0 overflow-hidden whitespace-nowrap px-1 text-left'
 
-export const closedOptDetailActionsHead = cn(closedOptHeadPrimary, closedOptDetailActionsCell, 'text-left')
+export const closedOptDetailActionsHead = cn(closedOptHeadPrimary, closedOptDetailActionsCell)
 
 export function ClosedOptDetailColgroup() {
   return (
     <colgroup>
-      <col style={{ width: '17%' }} />
+      <col style={{ width: '15%' }} />
       <col style={{ width: '7%' }} />
       <col style={{ width: '6%' }} />
-      <col style={{ width: '13%' }} />
+      <col style={{ width: '11%' }} />
       <col style={{ width: '8%' }} />
       <col style={{ width: '5%' }} />
       <col style={{ width: '4%' }} />
@@ -72,8 +72,8 @@ export function ClosedOptDetailColgroup() {
       <col style={{ width: '5%' }} />
       <col style={{ width: '7%' }} />
       <col style={{ width: '8%' }} />
-      <col style={{ width: '5%' }} />
-      <col style={{ width: '8.5rem' }} />
+      <col style={{ width: '6%' }} />
+      <col style={{ width: '12%' }} />
     </colgroup>
   )
 }

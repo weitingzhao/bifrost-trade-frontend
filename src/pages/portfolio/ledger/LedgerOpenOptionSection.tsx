@@ -28,6 +28,16 @@ import {
   openOptTradesCell,
 } from './ledgerOpenOptionUi'
 import {
+  ClosedOptDetailColgroup,
+  closedOptContractHead,
+  closedOptDetailActionsCell,
+  closedOptDetailActionsHead,
+  closedOptDetailContractCell,
+  closedOptDetailTableClass,
+  closedOptHeadPrimary,
+  closedOptNumCell,
+} from './ledgerClosedOptionUi'
+import {
   denseTable,
   DenseDataTable,
   DenseTableBody,
@@ -38,7 +48,6 @@ import {
   DenseTableRow,
   ExpandToggleCell,
   IconActionButton,
-  denseTableNumCell,
 } from '@/components/data-display'
 
 function tradesSummary(g: OptExecutionGroup): string {
@@ -244,22 +253,23 @@ export function LedgerOpenOptionSection({
         Details (per trade)
         <InfoTooltip text="Click an open option row above to load its execution details." />
       </h5>
-      <DenseDataTable>
+      <DenseDataTable scrollX={false} tableClassName={closedOptDetailTableClass}>
+        <ClosedOptDetailColgroup />
         <DenseTableHeader>
           <DenseTableHeadRow>
-            <DenseTableHead>Contract</DenseTableHead>
-            <DenseTableHead>Expiry</DenseTableHead>
-            <DenseTableHead>STRIKE</DenseTableHead>
-            <DenseTableHead>Stg/Ins</DenseTableHead>
-            <DenseTableHead>Trade date</DenseTableHead>
-            <DenseTableHead>Side</DenseTableHead>
-            <DenseTableHead className={denseTableNumCell}>Qty</DenseTableHead>
-            <DenseTableHead className={denseTableNumCell}>Price</DenseTableHead>
-            <DenseTableHead className={denseTableNumCell}>Comm.</DenseTableHead>
-            <DenseTableHead className={denseTableNumCell}>PnL</DenseTableHead>
-            <DenseTableHead>Account</DenseTableHead>
-            <DenseTableHead>Source</DenseTableHead>
-            <DenseTableHead className={`${denseTableNumCell} w-24`}>Actions</DenseTableHead>
+            <DenseTableHead className={closedOptContractHead}>Contract</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Expiry</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>STRIKE</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Stg/Ins</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Trade date</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Side</DenseTableHead>
+            <DenseTableHead className={closedOptNumCell}>Qty</DenseTableHead>
+            <DenseTableHead className={closedOptNumCell}>Price</DenseTableHead>
+            <DenseTableHead className={closedOptNumCell}>Comm.</DenseTableHead>
+            <DenseTableHead className={closedOptNumCell}>PnL</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Account</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Source</DenseTableHead>
+            <DenseTableHead className={closedOptDetailActionsHead}>Actions</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
@@ -287,7 +297,7 @@ export function LedgerOpenOptionSection({
 
                 return (
                   <DenseTableRow key={`${getOptGroupKey(g)}-${ti}-${ex.time ?? ti}`}>
-                    <DenseTableCell>
+                    <DenseTableCell className={closedOptDetailContractCell}>
                       <LedgerOptContractCell
                         group={g}
                         linkByOptionId={linkByOptionId}
@@ -306,21 +316,21 @@ export function LedgerOpenOptionSection({
                       {fmtTradeDate(ex.trade_date)}
                     </DenseTableCell>
                     <DenseTableCell>{sideLabel(ex)}</DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>
+                    <DenseTableCell className={closedOptNumCell}>
                       {ex.quantity != null ? Number(ex.quantity) : '—'}
                     </DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>
+                    <DenseTableCell className={closedOptNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
+                    <DenseTableCell className={closedOptNumCell}>
                       {fmtUsd(ex.commission ?? 0)}
                     </DenseTableCell>
-                    <DenseTableCell className={cn(denseTableNumCell, pnlColorClass(displayPnl))}>
+                    <DenseTableCell className={cn(closedOptNumCell, pnlColorClass(displayPnl))}>
                       {fmtUsd(displayPnl)}
                     </DenseTableCell>
                     <DenseTableCell>{ex.account_id ?? '—'}</DenseTableCell>
                     <DenseTableCell>
                       <ExecSourceBadge source={ex.source} />
                     </DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>
+                    <DenseTableCell className={closedOptDetailActionsCell}>
                       {ex.account_executions_id != null ? (
                         <LedgerOptActionButtons
                           onEdit={onEdit ? () => onEdit(ex) : undefined}

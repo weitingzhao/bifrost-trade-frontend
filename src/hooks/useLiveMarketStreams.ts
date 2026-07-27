@@ -104,9 +104,11 @@ export function useLiveMarketStreams(args: {
         subscribedTickers: status?.live_ui?.subscribed_tickers ?? [],
         streamHostSymbols: streamPositionSymbols.host,
         streamSecondarySymbols: streamPositionSymbols.secondary,
-        quoteSymbolKeys: Object.keys(quotesMap),
+        watchlistSymbols: watchlistStkItems
+          .map(w => (w.symbol ?? '').trim())
+          .filter(Boolean),
       }),
-    [status?.live_ui?.subscribed_tickers, streamPositionSymbols, quotesMap],
+    [status?.live_ui?.subscribed_tickers, streamPositionSymbols, watchlistStkItems],
   )
 
   const watchlistRows = useMemo(
@@ -121,6 +123,7 @@ export function useLiveMarketStreams(args: {
           streamSecondaryId,
           hasStreamAccounts,
           wishlistSet,
+          subscribedSymbols: subscribedSet,
         }),
       ),
     [
@@ -132,10 +135,11 @@ export function useLiveMarketStreams(args: {
       streamSecondaryId,
       hasStreamAccounts,
       wishlistSet,
+      subscribedSet,
     ],
   )
 
-  const { marketStreamsRows, watchingTickerRows } = useMemo(
+  const { marketStreamsRows, watchingTickerRows, subscribedTickerRows } = useMemo(
     () => splitWatchingAndMarketStreams(watchlistRows, watchlistStkBySymbol),
     [watchlistRows, watchlistStkBySymbol],
   )
@@ -143,6 +147,11 @@ export function useLiveMarketStreams(args: {
   const watchingTickerRowsSorted = useMemo(
     () => [...watchingTickerRows].sort((a, b) => cmpSymbolLocale(a.symbol, b.symbol, 1)),
     [watchingTickerRows],
+  )
+
+  const subscribedTickerRowsSorted = useMemo(
+    () => [...subscribedTickerRows].sort((a, b) => cmpSymbolLocale(a.symbol, b.symbol, 1)),
+    [subscribedTickerRows],
   )
 
   const optPositionRows = useMemo(() => extractOptPositionRows(accounts), [accounts])
@@ -270,6 +279,7 @@ export function useLiveMarketStreams(args: {
     sortedRowsByCategory,
     rowsByCategory,
     watchingTickerRowsSorted,
+    subscribedTickerRowsSorted,
     watchlistOptionItems: watchlistItems.filter(w => (w.sec_type ?? '').toUpperCase() === 'OPT'),
     optPositionRows,
     sortedOptRows,

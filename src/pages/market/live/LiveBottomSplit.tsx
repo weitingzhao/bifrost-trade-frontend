@@ -14,6 +14,7 @@ import {
 
 interface Props {
   watchingRows: MarketStreamsRow[]
+  subscribedRows: MarketStreamsRow[]
   watchingOptions: WatchlistItem[]
   optOrders: OpenOrder[]
   stkOrders: OpenOrder[]
@@ -29,6 +30,7 @@ interface Props {
 
 export function LiveBottomSplit({
   watchingRows,
+  subscribedRows,
   watchingOptions,
   optOrders,
   stkOrders,
@@ -46,12 +48,13 @@ export function LiveBottomSplit({
       <div
         className={liveSplitBodyClass}
         role="group"
-        aria-label="Watching stocks, Watching options, and open orders"
+        aria-label="Watching and subscribed stocks, Watching options, and open orders"
       >
         <div className={liveSplitGridClass}>
           <div className={liveSplitWatchingColClass}>
             <WatchingStocksPane
-              rows={watchingRows}
+              watchingRows={watchingRows}
+              subscribedRows={subscribedRows}
               benchmarks={benchmarks}
               quotesMap={quotesMap}
               streamsLamp={streamsLamp}

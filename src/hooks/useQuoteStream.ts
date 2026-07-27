@@ -3,7 +3,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { fetchQuotes, subscribeQuotes } from '@/api/market'
 import type { QuoteItem } from '@/types/market'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { mergeQuotesIntoSymbolMap } from '@/utils/marketStreamsRows'
+import { mergeQuotesIntoSymbolMap, trimStaleStkQuotes } from '@/utils/marketStreamsRows'
 
 const FALLBACK_POLL_MS = 8_000
 
@@ -62,6 +62,22 @@ export function useQuoteStream(
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   })
+
+  // Trim STK keys that are no longer in the requested symbol universe (P3.1).
+  // Skip while symbols is empty (initial load / Market API focus-list mode).
+  useEffect(() => {
+    if (symbols.length === 0) return
+    const keep = new Set(
+      symbols
+        .map(s => (typeof s === 'string' ? s.trim().toUpperCase() : ''))
+        .filter(Boolean),
+    )
+    queryClient.setQueryData<Record<string, QuoteItem>>(QUERY_KEYS.market.quotesLive, prev => {
+      if (!prev || Object.keys(prev).length === 0) return prev
+      const trimmed = trimStaleStkQuotes(prev, keep)
+      return Object.keys(trimmed).length === Object.keys(prev).length ? prev : trimmed
+    })
+  }, [symbolsKey, queryClient, symbols])
 
   // SSE subscription — pushes individual quote updates into the shared cache.
   useEffect(() => {

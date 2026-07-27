@@ -29,6 +29,26 @@ export async function fetchQuotes(
   return validateQuotes(await res.json())
 }
 
+export interface QuotesCleanupResponse {
+  removed: string[]
+  kept: string[]
+}
+
+/** Unsubscribe stale on-demand STK symbols not in keepSymbols (Wave 2 cleanup). */
+export async function postQuotesCleanup(keepSymbols: string[]): Promise<QuotesCleanupResponse> {
+  const res = await fetch(`${BASE}/quotes/cleanup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keep_symbols: keepSymbols }),
+  })
+  if (!res.ok) throw new Error(`Market /quotes/cleanup: ${res.status}`)
+  const data = (await res.json()) as Partial<QuotesCleanupResponse>
+  return {
+    removed: Array.isArray(data.removed) ? data.removed : [],
+    kept: Array.isArray(data.kept) ? data.kept : [],
+  }
+}
+
 export async function fetchBenchmarks(symbols: string[]): Promise<BenchmarkResponse> {
   const params = new URLSearchParams({ symbols: symbols.join(',') })
   const res = await fetch(`${BASE}/bars/benchmark?${params}`)

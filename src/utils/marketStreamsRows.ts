@@ -6,6 +6,14 @@ import { computeMarketStreamDailyChange } from '@/utils/marketStreamsDailyTotals
 
 export type StreamCategory = 'host' | 'secondary' | 'both' | null
 
+/** Where a Live STK symbol comes from — drives top/bottom sheet placement and Source badges. */
+export type SymbolSource =
+  | 'position'
+  | 'watchlist'
+  | 'gateway-default'
+  | 'on-demand'
+  | 'residual'
+
 export type MarketStreamsRow = {
   symbol: string
   quote?: QuoteItem | null
@@ -24,6 +32,47 @@ export type MarketStreamsRow = {
   secondaryAvgCost: number | null
   secondaryPnlCost: number | null
   positionDailyPrevClose: number | null
+  symbolSource: SymbolSource
+}
+
+/** True when the row has a non-zero STK position (Market Streams top sheet). */
+export function hasPosition(row: MarketStreamsRow): boolean {
+  return row.qty != null && row.qty !== 0
+}
+
+/** Observe-only: watchlist / gateway / on-demand — bottom Watching & Subscribed sheet. */
+export function isObserveOnly(row: MarketStreamsRow): boolean {
+  return !hasPosition(row)
+}
+
+export function resolveSymbolSource(args: {
+  qty: number | null
+  isInWatchlist: boolean
+  symbol: string
+  gatewayDefaultSymbols?: Set<string>
+  subscribedSymbols?: Set<string>
+}): SymbolSource {
+  const sym = (args.symbol || '').trim().toUpperCase()
+  if (args.qty != null && args.qty !== 0) return 'position'
+  if (args.isInWatchlist) return 'watchlist'
+  if (sym && args.gatewayDefaultSymbols?.has(sym)) return 'gateway-default'
+  if (sym && args.subscribedSymbols?.has(sym)) return 'on-demand'
+  return 'residual'
+}
+
+export function symbolSourceLabel(source: SymbolSource): string {
+  switch (source) {
+    case 'position':
+      return 'Position'
+    case 'watchlist':
+      return 'Watchlist'
+    case 'gateway-default':
+      return 'Gateway'
+    case 'on-demand':
+      return 'On-demand'
+    case 'residual':
+      return 'Residual'
+  }
 }
 
 export type OptPositionRow = {
@@ -109,23 +158,50 @@ export function streamSymbolFromQuoteMapKey(key: string): string | null {
   return k.toUpperCase()
 }
 
+/**
+ * Deterministic STK symbol universe for Live Market Streams rows.
+ * Driven by known sources only (subscribed / positions / watchlist) — not by quotesMap cache keys.
+ */
 export function buildWatchlistSymbols(args: {
   subscribedTickers: string[]
   streamHostSymbols: string[]
   streamSecondarySymbols: string[]
-  quoteSymbolKeys: string[]
+  /** Watchlist STK symbols (observe sheet). Replaces legacy quotesMap fromQuotes backfill. */
+  watchlistSymbols?: string[]
 }): string[] {
-  const fromQuotes = args.quoteSymbolKeys
-    .map(streamSymbolFromQuoteMapKey)
-    .filter((s): s is string => Boolean(s))
   return [
     ...new Set([
       ...args.subscribedTickers,
       ...args.streamHostSymbols,
       ...args.streamSecondarySymbols,
-      ...fromQuotes,
+      ...(args.watchlistSymbols ?? []),
     ]),
   ].sort()
+}
+
+/** Drop STK keys not in keepSymbols; preserve OPT / contract_key entries. */
+export function trimStaleStkQuotes(
+  quotesMap: Record<string, QuoteItem>,
+  keepSymbols: Set<string> | Iterable<string>,
+): Record<string, QuoteItem> {
+  const keep =
+    keepSymbols instanceof Set
+      ? keepSymbols
+      : new Set(
+          [...keepSymbols]
+            .map(s => (typeof s === 'string' ? s.trim().toUpperCase() : ''))
+            .filter(Boolean),
+        )
+  const next: Record<string, QuoteItem> = {}
+  for (const [key, q] of Object.entries(quotesMap)) {
+    const stkSym = streamSymbolFromQuoteMapKey(key)
+    if (stkSym != null) {
+      if (keep.has(stkSym)) next[key] = q
+      continue
+    }
+    next[key] = q
+  }
+  return next
 }
 
 export function buildMarketStreamsRowForSymbol(args: {
@@ -137,6 +213,8 @@ export function buildMarketStreamsRowForSymbol(args: {
   streamSecondaryId: string | null
   hasStreamAccounts: boolean
   wishlistSet: Set<string>
+  gatewayDefaultSymbols?: Set<string>
+  subscribedSymbols?: Set<string>
 }): MarketStreamsRow {
   const {
     symbol,
@@ -147,6 +225,8 @@ export function buildMarketStreamsRowForSymbol(args: {
     streamSecondaryId,
     hasStreamAccounts,
     wishlistSet,
+    gatewayDefaultSymbols,
+    subscribedSymbols,
   } = args
 
   const wantHost = norm(streamHostId)
@@ -248,16 +328,26 @@ export function buildMarketStreamsRowForSymbol(args: {
       ? (lastVal - secondaryAvgCost) * secondaryQty
       : null
 
+  const qtyOut = qty || null
+  const isInWatchlist = wishlistSet.has((symbol || '').trim().toUpperCase())
+  const symbolSource = resolveSymbolSource({
+    qty: qtyOut,
+    isInWatchlist,
+    symbol,
+    gatewayDefaultSymbols,
+    subscribedSymbols,
+  })
+
   return {
     symbol,
     quote,
-    qty: qty || null,
+    qty: qtyOut,
     avgCost,
     changePct,
     pnlVsBench,
     pnlCost,
     streamCategory,
-    isInWatchlist: wishlistSet.has((symbol || '').trim().toUpperCase()),
+    isInWatchlist,
     category: positionCategory,
     hostQty: hostQty || null,
     hostAvgCost,
@@ -266,25 +356,56 @@ export function buildMarketStreamsRowForSymbol(args: {
     secondaryAvgCost,
     secondaryPnlCost,
     positionDailyPrevClose,
+    symbolSource,
   }
 }
 
+/**
+ * Dual-axis split: positions → Market Streams (top); observe-only → bottom.
+ * Bottom: Watching (watchlist) vs Subscribed (gateway-default / on-demand / residual).
+ * Preserves Watching category label when watchlist category is Watching.
+ */
 export function splitWatchingAndMarketStreams(
   rows: MarketStreamsRow[],
   watchlistStkBySymbol: Map<string, WatchlistItem>,
-): { marketStreamsRows: MarketStreamsRow[]; watchingTickerRows: MarketStreamsRow[] } {
-  const watching: MarketStreamsRow[] = []
-  const rest: MarketStreamsRow[] = []
+): {
+  marketStreamsRows: MarketStreamsRow[]
+  watchingTickerRows: MarketStreamsRow[]
+  subscribedTickerRows: MarketStreamsRow[]
+  observeRows: MarketStreamsRow[]
+} {
+  const marketStreamsRows: MarketStreamsRow[] = []
+  const watchingTickerRows: MarketStreamsRow[] = []
+  const subscribedTickerRows: MarketStreamsRow[] = []
+
   for (const r of rows) {
+    if (hasPosition(r)) {
+      marketStreamsRows.push(r)
+      continue
+    }
+
     const sym = (r.symbol || '').trim().toUpperCase()
     const wl = watchlistStkBySymbol.get(sym)
-    if (wl && isWatchlistStockCategoryWatching(wl.category)) {
-      watching.push({ ...r, category: WL_CAT_WATCHING })
+    const isWatchingCat = wl != null && isWatchlistStockCategoryWatching(wl.category)
+    const toWatching =
+      r.symbolSource === 'watchlist' || isWatchingCat
+
+    if (toWatching) {
+      watchingTickerRows.push({
+        ...r,
+        category: isWatchingCat ? WL_CAT_WATCHING : r.category,
+      })
     } else {
-      rest.push(r)
+      subscribedTickerRows.push(r)
     }
   }
-  return { marketStreamsRows: rest, watchingTickerRows: watching }
+
+  return {
+    marketStreamsRows,
+    watchingTickerRows,
+    subscribedTickerRows,
+    observeRows: [...watchingTickerRows, ...subscribedTickerRows],
+  }
 }
 
 export function filterByStreamAccount(

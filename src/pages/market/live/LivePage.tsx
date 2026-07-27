@@ -12,11 +12,11 @@ import { usePositionCategories } from '@/hooks/usePositionCategories'
 import { useLiveMarketStreams, useMarketStreamsSort } from '@/hooks/useLiveMarketStreams'
 import { useMarketStreamsSymbolOrder } from '@/hooks/useMarketStreamsSymbolOrder'
 import { useOptionLiveBasis } from '@/hooks/useOptionLiveBasis'
-import { fetchQuotes, fetchBenchmarks } from '@/api/market'
+import { fetchQuotes, fetchBenchmarks, postQuotesCleanup } from '@/api/market'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { aggregateMarketStreamsDailyTotals } from '@/utils/marketStreamsDailyTotals'
 import { buildUnifiedGroupedRows } from '@/utils/marketStreamsSort'
-import { mergeQuotesIntoSymbolMap } from '@/utils/marketStreamsRows'
+import { mergeQuotesIntoSymbolMap, trimStaleStkQuotes } from '@/utils/marketStreamsRows'
 import { computeOptMidAndLivePnl } from '@/utils/optionLiveBasis'
 import { quotesByContractKeyFromMap, type OptPositionRow } from '@/utils/marketStreamsRows'
 import {
@@ -164,9 +164,32 @@ export default function LivePage() {
     quotesByContractKey,
   ])
 
+  const knownSourceSymbols = useMemo(() => {
+    const set = new Set<string>()
+    for (const s of stkSymbolsFromAccounts) {
+      const u = s.trim().toUpperCase()
+      if (u) set.add(u)
+    }
+    for (const s of watchlistStkSymbols) {
+      const u = s.trim().toUpperCase()
+      if (u) set.add(u)
+    }
+    return Array.from(set)
+  }, [stkSymbolsFromAccounts, watchlistStkSymbols])
+
   const handleRefresh = useCallback(async () => {
     setStreamSyncFeedback('Refreshing…')
     try {
+      const keepSet = new Set(knownSourceSymbols)
+      queryClient.setQueryData<Record<string, import('@/types/market').QuoteItem>>(
+        QUERY_KEYS.market.quotesLive,
+        prev => trimStaleStkQuotes(prev ?? {}, keepSet),
+      )
+      try {
+        await postQuotesCleanup(knownSourceSymbols)
+      } catch {
+        // Backend cleanup may not be deployed yet; local purge + refetch still apply.
+      }
       await Promise.all([
         fetchQuotes(allSymbols, allContractKeys).then(resp => {
           queryClient.setQueryData<Record<string, import('@/types/market').QuoteItem>>(
@@ -184,7 +207,7 @@ export default function LivePage() {
       setStreamSyncFeedback('Failed')
     }
     window.setTimeout(() => setStreamSyncFeedback(null), 4000)
-  }, [allSymbols, allContractKeys, benchmarkSymbols, queryClient])
+  }, [allSymbols, allContractKeys, benchmarkSymbols, knownSourceSymbols, queryClient])
 
   const mergedOpenOrders = useMemo(() => {
     if (openOrdersFetched) return openOrdersData ?? []
@@ -280,6 +303,7 @@ export default function LivePage() {
 
         <LiveBottomSplit
           watchingRows={streams.watchingTickerRowsSorted}
+          subscribedRows={streams.subscribedTickerRowsSorted}
           watchingOptions={streams.watchlistOptionItems}
           optOrders={optOrders}
           stkOrders={stkOrders}

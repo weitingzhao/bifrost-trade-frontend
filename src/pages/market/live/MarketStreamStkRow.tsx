@@ -2,6 +2,7 @@ import type { DailyBenchmark } from '@/types/market'
 import { cn } from '@/lib/utils'
 import {
   DenseTableCell,
+  DenseTag,
   InlinePnl,
   denseTableEntityCell,
   denseTableNumCell,
@@ -9,7 +10,7 @@ import {
 import { fmtUsd } from '@/utils/positions'
 import { getDailyRefTooltip } from '@/utils/marketStreamsDailyTotals'
 import { getQuoteFreshness, quoteFreshnessTitle } from '@/utils/quoteFreshness'
-import type { MarketStreamsRow } from '@/utils/marketStreamsRows'
+import { symbolSourceLabel, type MarketStreamsRow } from '@/utils/marketStreamsRows'
 import { quoteDisplayLast } from '@/utils/watchlistHelpers'
 import { DailyCalcBreakdown } from './DailyCalcBreakdown'
 import { LiveStackedPnlCell } from './LiveStackedPnlCell'
@@ -21,6 +22,8 @@ interface Props {
   categoryForDrag: string
   dragEnabled: boolean
   watchingStocksSlim?: boolean
+  /** When slim: show Source badge instead of Since (Subscribed section). */
+  showSourceBadge?: boolean
   hasStreamAccounts: boolean
   benchmarks: Record<string, DailyBenchmark>
   onSymbolReorder?: (category: string, fromSymbol: string, toSymbol: string) => void
@@ -31,6 +34,7 @@ export function MarketStreamStkRow({
   categoryForDrag,
   dragEnabled,
   watchingStocksSlim = false,
+  showSourceBadge = false,
   hasStreamAccounts,
   benchmarks,
   onSymbolReorder,
@@ -217,18 +221,26 @@ export function MarketStreamStkRow({
         />
       </DenseTableCell>
 
-      <DenseTableCell className={denseTableNumCell}>
-        <LiveStackedPnlCell
-          pct={(() => {
-            const dl = quoteDisplayLast(q ?? undefined)
-            if (avgCost == null || !Number.isFinite(avgCost) || avgCost <= 0 || dl == null) return null
-            return ((dl - avgCost) / avgCost) * 100
-          })()}
-          dollar={pnlCost}
-          formatPct={v => `${v.toFixed(2)}%`}
-          formatDollar={v => fmtUsd(v, true)}
-        />
-      </DenseTableCell>
+      {watchingStocksSlim && showSourceBadge ? (
+        <DenseTableCell>
+          <DenseTag variant="category" size="cell">
+            {symbolSourceLabel(row.symbolSource)}
+          </DenseTag>
+        </DenseTableCell>
+      ) : (
+        <DenseTableCell className={denseTableNumCell}>
+          <LiveStackedPnlCell
+            pct={(() => {
+              const dl = quoteDisplayLast(q ?? undefined)
+              if (avgCost == null || !Number.isFinite(avgCost) || avgCost <= 0 || dl == null) return null
+              return ((dl - avgCost) / avgCost) * 100
+            })()}
+            dollar={pnlCost}
+            formatPct={v => `${v.toFixed(2)}%`}
+            formatDollar={v => fmtUsd(v, true)}
+          />
+        </DenseTableCell>
+      )}
     </tr>
   )
 }

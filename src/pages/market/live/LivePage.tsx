@@ -12,7 +12,7 @@ import { usePositionCategories } from '@/hooks/usePositionCategories'
 import { useLiveMarketStreams, useMarketStreamsSort } from '@/hooks/useLiveMarketStreams'
 import { useMarketStreamsSymbolOrder } from '@/hooks/useMarketStreamsSymbolOrder'
 import { useOptionLiveBasis } from '@/hooks/useOptionLiveBasis'
-import { fetchQuotes, fetchBenchmarks, postQuotesCleanup } from '@/api/market'
+import { fetchQuotes, fetchBenchmarks, postQuotesCleanup, postQuotesRefreshOptions } from '@/api/market'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { aggregateMarketStreamsDailyTotals } from '@/utils/marketStreamsDailyTotals'
 import { buildUnifiedGroupedRows } from '@/utils/marketStreamsSort'
@@ -189,6 +189,11 @@ export default function LivePage() {
         await postQuotesCleanup(knownSourceSymbols)
       } catch {
         // Backend cleanup may not be deployed yet; local purge + refetch still apply.
+      }
+      try {
+        await postQuotesRefreshOptions(allContractKeys)
+      } catch {
+        // Soft-fail: older Market API without /quotes/refresh-options; GET /quotes still registers.
       }
       await Promise.all([
         fetchQuotes(allSymbols, allContractKeys).then(resp => {

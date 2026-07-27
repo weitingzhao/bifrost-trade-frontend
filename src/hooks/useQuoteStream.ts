@@ -5,7 +5,16 @@ import type { QuoteItem } from '@/types/market'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { mergeQuotesIntoSymbolMap, trimStaleStkQuotes } from '@/utils/marketStreamsRows'
 
-const FALLBACK_POLL_MS = 8_000
+/** Default poll interval for GET /quotes snapshot (STK + OPT). Override OPT via VITE_OPT_QUOTE_POLL_MS. */
+const DEFAULT_FALLBACK_POLL_MS = 8_000
+
+function resolveFallbackPollMs(hasOptKeys: boolean): number {
+  if (!hasOptKeys) return DEFAULT_FALLBACK_POLL_MS
+  const raw = import.meta.env.VITE_OPT_QUOTE_POLL_MS
+  if (raw == null || String(raw).trim() === '') return DEFAULT_FALLBACK_POLL_MS
+  const n = Number(raw)
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_FALLBACK_POLL_MS
+}
 
 /** Single-quote merge for SSE; uses same symbol-key rules as Legacy mergeQuotesIntoSymbolMap. */
 export function mergeQuoteIntoMap(
@@ -34,6 +43,7 @@ export function useQuoteStream(
 
   const symbolsKey = symbols.join(',')
   const contractKeysKey = contractKeys.join(',')
+  const pollMs = resolveFallbackPollMs(contractKeys.length > 0)
 
   // Snapshot fetch — writes merged result into the shared QUOTES_KEY cache.
   const snapshotQuery = useQuery({
@@ -45,10 +55,10 @@ export function useQuoteStream(
       )
       return resp
     },
-    refetchInterval: enableFallbackPoll ? FALLBACK_POLL_MS : false,
+    refetchInterval: enableFallbackPoll ? pollMs : false,
     // Empty symbol list → Market API builds focus list from positions + watchlist (Legacy behavior).
     enabled: enableFallbackPoll || enableSse,
-    staleTime: FALLBACK_POLL_MS,
+    staleTime: pollMs,
   })
 
   // Subscribe to the shared quotes map.

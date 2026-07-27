@@ -605,8 +605,17 @@ export function isStkStreamQuote(q: QuoteItem): boolean {
 }
 
 function quoteEpochTs(q: QuoteItem | undefined): number {
-  const ts = q?.ts
+  const ts = q?.ts ?? q?.updated_ts
   return ts != null && Number.isFinite(ts) ? ts : 0
+}
+
+/** Normalize Redis OPT cache shape: prefer ``ts``, fall back to ``updated_ts``. */
+function normalizeQuoteItem(q: QuoteItem): QuoteItem {
+  if (q.ts != null && Number.isFinite(q.ts)) return q
+  if (q.updated_ts != null && Number.isFinite(q.updated_ts)) {
+    return { ...q, ts: q.updated_ts }
+  }
+  return q
 }
 
 /** Merge GET /quotes or SSE items into a symbol-keyed map (uppercase STK keys); OPT by contract_key. */
@@ -615,7 +624,8 @@ export function mergeQuotesIntoSymbolMap(
   quotes: QuoteItem[],
 ): Record<string, QuoteItem> {
   const next = { ...prev }
-  for (const q of quotes) {
+  for (const raw of quotes) {
+    const q = normalizeQuoteItem(raw)
     const sym = (q.symbol ?? '').trim()
     if (!sym) continue
     const mapKey = sym.toUpperCase()

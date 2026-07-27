@@ -49,6 +49,29 @@ export async function postQuotesCleanup(keepSymbols: string[]): Promise<QuotesCl
   }
 }
 
+export interface QuotesRefreshOptionsResponse {
+  registered: number
+  contract_keys: string[]
+}
+
+/** Register OPT contract_keys for Gateway on-demand cache (soft-fail on 404). */
+export async function postQuotesRefreshOptions(
+  contractKeys: string[],
+): Promise<QuotesRefreshOptionsResponse | null> {
+  const res = await fetch(`${BASE}/quotes/refresh-options`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contract_keys: contractKeys }),
+  })
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(`Market /quotes/refresh-options: ${res.status}`)
+  const data = (await res.json()) as Partial<QuotesRefreshOptionsResponse>
+  return {
+    registered: typeof data.registered === 'number' ? data.registered : 0,
+    contract_keys: Array.isArray(data.contract_keys) ? data.contract_keys : [],
+  }
+}
+
 export async function fetchBenchmarks(symbols: string[]): Promise<BenchmarkResponse> {
   const params = new URLSearchParams({ symbols: symbols.join(',') })
   const res = await fetch(`${BASE}/bars/benchmark?${params}`)

@@ -79,4 +79,18 @@ describe('mergeQuotesIntoSymbolMap', () => {
     expect(result.NVDA).toBe(quotes[0])
     expect(result.TSLA).toBe(quotes[1])
   })
+
+  it('maps OPT updated_ts to ts for freshness merge', () => {
+    const opt = makeQuote({
+      symbol: 'GOOG',
+      contract_key: 'GOOG|OPT|20260717|300.0|C',
+      sec_type: 'OPT',
+      last: 1.2,
+      updated_ts: 1_700_000_000,
+    })
+    const result = mergeQuotesIntoSymbolMap({}, [opt])
+    const stored = result['GOOG|OPT|20260717|300.0|C']
+    expect(stored.ts).toBe(1_700_000_000)
+    expect(stored.updated_ts).toBe(1_700_000_000)
+  })
 })

@@ -9,6 +9,7 @@ export const QuoteItemSchema = z.object({
   mid: z.number().nullable().optional(),
   timestamp: z.number().nullable().optional(),
   ts: z.number().optional(),
+  updated_ts: z.number().nullable().optional(),
   change: z.number().nullable().optional(),
   sec_type: z.string().nullable().optional(),
   expiry: z.string().nullable().optional(),

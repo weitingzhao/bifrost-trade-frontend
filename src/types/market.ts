@@ -7,6 +7,8 @@ export interface QuoteItem {
   mid?: number | null
   timestamp?: number | null
   ts?: number
+  /** Gateway OPT cache write time (seconds); mapped to ``ts`` on merge when ``ts`` absent. */
+  updated_ts?: number | null
   change?: number | null
   sec_type?: string | null
   expiry?: string | null

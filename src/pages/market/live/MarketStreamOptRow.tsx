@@ -16,6 +16,7 @@ import {
 } from '@/utils/optionLiveBasis'
 import { optBasisKey, type OptPositionRow } from '@/utils/marketStreamsRows'
 import { liveTable } from './liveTableClasses'
+import { OptQuoteAgeLabel } from './OptQuoteAgeLabel'
 import styles from './live.module.css'
 
 interface Props {
@@ -141,6 +142,7 @@ export function MarketStreamOptRow({
                 {quote.bid.toFixed(2)}/{quote.ask.toFixed(2)}
               </span>
             )}
+            <OptQuoteAgeLabel ts={quote.ts ?? quote.updated_ts} />
           </>
         ) : (
           '—'

@@ -31,6 +31,11 @@ import {
   fmtDaysAgo,
   daysUntilExpiry,
 } from '@/utils/positions'
+import {
+  computeOptionLiveAvgPerShareFromExecutions,
+  computeOptionMtmPnlUsd,
+  resolveOptAvgCostPerShareForMtm,
+} from '@/utils/optionLiveBasis'
 import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import type { DetailViewMode } from './PositionsOpenControls'
@@ -118,6 +123,10 @@ export function OptionsTab({
 
   const finalMap = useMemo(() => buildLiveOptExecutionMap(executionsFinal), [executionsFinal])
   const twsMap = useMemo(() => buildLiveOptExecutionMap(executionsTws), [executionsTws])
+  const allOptExecs = useMemo(
+    () => [...executionsFinal, ...executionsTws],
+    [executionsFinal, executionsTws],
+  )
 
   let filtered = positions
   const symUpper = filterSymbol.trim().toUpperCase()
@@ -281,9 +290,16 @@ export function OptionsTab({
             const posKey = getOptionsTabPositionKey(pos)
             const absQty = Math.abs(pos.qty)
             const sideLabel = pos.qty > 0 ? 'Long' : pos.qty < 0 ? 'Short' : '—'
-            const value = (pos.avg_cost ?? 0) * absQty * 100
-            const ts = getPositionTime(pos)
             const execLists = getPositionExecLists(pos, finalMap, twsMap)
+            const basis = computeOptionLiveAvgPerShareFromExecutions(
+              allOptExecs,
+              pos.account_id,
+              pos.contract_key,
+              pos.qty,
+            )
+            const avgPerShare = resolveOptAvgCostPerShareForMtm(pos, basis)
+            const value = avgPerShare != null ? avgPerShare * absQty * 100 : 0
+            const ts = getPositionTime(pos)
             const execCount = execLists.final.length + execLists.tws.length
             const hasExecutions = execCount > 0
             const isExpanded = expandedKeys.includes(posKey)
@@ -298,7 +314,9 @@ export function OptionsTab({
             const liveQ = quotesByCk[pos.contract_key]
             const liveMid = optQuoteMid(liveQ)
             const livePnl =
-              liveMid != null && pos.avg_cost != null ? (liveMid - pos.avg_cost) * absQty * 100 : null
+              liveMid != null && avgPerShare != null
+                ? computeOptionMtmPnlUsd(liveMid, avgPerShare, pos.qty)
+                : null
 
             const iconFill = instanceIconFillFromMergedExecutions(execLists.merged)
 
@@ -380,7 +398,7 @@ export function OptionsTab({
                 <DenseTableCell>
                   {sideLabel} {absQty}
                 </DenseTableCell>
-                <DenseTableCell className="font-mono tabular-nums">{fmtUsd(pos.avg_cost)}</DenseTableCell>
+                <DenseTableCell className="font-mono tabular-nums">{fmtUsd(avgPerShare)}</DenseTableCell>
                 <DenseTableCell className="font-mono tabular-nums">{fmtUsd(value)}</DenseTableCell>
                 <DenseTableCell>
                   {!liveQ ? (

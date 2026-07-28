@@ -2,6 +2,7 @@ import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { rightLabel } from '@/utils/positions'
+import { normalizeIbOptionAvgCostPerShare } from '@/utils/optionLiveBasis'
 
 export type OpenOptSortCol =
   | 'contract'
@@ -137,10 +138,16 @@ export function sortOpenOptionPositions(
       return 0
     }
     if (column === 'qty') return mult * (Math.abs(a.qty) - Math.abs(b.qty))
-    if (column === 'avg_cost') return mult * ((a.avg_cost ?? -Infinity) - (b.avg_cost ?? -Infinity))
+    if (column === 'avg_cost') {
+      const aAvg = normalizeIbOptionAvgCostPerShare(a.avg_cost) ?? -Infinity
+      const bAvg = normalizeIbOptionAvgCostPerShare(b.avg_cost) ?? -Infinity
+      return mult * (aAvg - bAvg)
+    }
     if (column === 'value') {
-      const aVal = (a.avg_cost ?? 0) * Math.abs(a.qty) * 100
-      const bVal = (b.avg_cost ?? 0) * Math.abs(b.qty) * 100
+      const aAvg = normalizeIbOptionAvgCostPerShare(a.avg_cost) ?? 0
+      const bAvg = normalizeIbOptionAvgCostPerShare(b.avg_cost) ?? 0
+      const aVal = aAvg * Math.abs(a.qty) * 100
+      const bVal = bAvg * Math.abs(b.qty) * 100
       return mult * (aVal - bVal)
     }
     if (column === 'time') return mult * ((getPositionTime(a) ?? 0) - (getPositionTime(b) ?? 0))

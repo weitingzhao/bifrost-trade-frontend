@@ -25,6 +25,11 @@ import {
   daysUntilExpiry,
   unrealizedPnlColorClass,
 } from '@/utils/positions'
+import {
+  computeOptionLiveAvgPerShareFromExecutions,
+  computeOptionMtmPnlUsd,
+  resolveOptAvgCostPerShareForMtm,
+} from '@/utils/optionLiveBasis'
 import { contractButtonLabel, optionLastStrikePctClassFromQty } from '@/utils/openOptionsTab'
 import {
   findMatchingFinalForTws,
@@ -212,7 +217,6 @@ export function InstanceOptionSubTable({
               const isExpanded = expandedKeys.has(key)
               const absQty = Math.abs(pos.qty)
               const sideLabel = pos.qty > 0 ? 'Long' : pos.qty < 0 ? 'Short' : '—'
-              const value = (pos.avg_cost ?? 0) * absQty * 100
 
               const underlying = pos.symbol
               const stkQuote = quotesBySymbol[underlying?.toUpperCase() ?? '']
@@ -237,6 +241,21 @@ export function InstanceOptionSubTable({
                 finalMap,
                 twsMap,
               )
+              const basis = computeOptionLiveAvgPerShareFromExecutions(
+                [...scopedFinalExecs, ...scopedTwsExecs],
+                pos.account_id,
+                pos.contract_key,
+                pos.qty,
+              )
+              const avgPerShare = resolveOptAvgCostPerShareForMtm(pos, basis)
+              const value = avgPerShare != null ? avgPerShare * absQty * 100 : 0
+
+              const optQuote = quotesByCk[pos.contract_key]
+              const liveMid = optQuoteMid(optQuote)
+              const livePnl =
+                liveMid != null && avgPerShare != null
+                  ? computeOptionMtmPnlUsd(liveMid, avgPerShare, pos.qty)
+                  : null
               const execCount = scopedFinalExecs.length + scopedTwsExecs.length
               const hasExecs = execCount > 0
 
@@ -247,13 +266,6 @@ export function InstanceOptionSubTable({
                 },
                 null,
               )
-
-              const optQuote = quotesByCk[pos.contract_key]
-              const liveMid = optQuoteMid(optQuote)
-              const livePnl =
-                liveMid != null && pos.avg_cost != null
-                  ? (liveMid - pos.avg_cost) * absQty * 100
-                  : null
 
               const posRow = (
                 <DenseTableRow
@@ -322,7 +334,7 @@ export function InstanceOptionSubTable({
                   <DenseTableCell>
                     {sideLabel} {absQty}
                   </DenseTableCell>
-                  <DenseTableCell className={denseTableNumCell}>{fmtUsd(pos.avg_cost)}</DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>{fmtUsd(avgPerShare)}</DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>{fmtUsd(value)}</DenseTableCell>
                   <DenseTableCell className={denseTable.mutedMeta}>
                     {optQuote ? (

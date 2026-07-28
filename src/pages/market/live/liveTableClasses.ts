@@ -17,7 +17,9 @@ export const liveTable = {
   stackedPnlLines: 'text-right leading-snug',
   stackedPnlLine: 'block text-right leading-tight',
   stackedPnlLineGap: 'mt-0.5',
-  lastBidAsk: 'font-mono whitespace-nowrap',
+  inlinePnlDollar: 'text-dense-meta opacity-80',
+  accountSplitSep: 'text-muted-foreground opacity-60 mx-0.5',
+  lastBidAsk: 'font-mono whitespace-nowrap text-right',
   quoteSpread: 'text-dense-meta ml-1 opacity-90',
   bidAskSpread: 'text-[0.8em] ml-1 opacity-75',
 } as const

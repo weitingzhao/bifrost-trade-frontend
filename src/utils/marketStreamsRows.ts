@@ -21,6 +21,8 @@ export type MarketStreamsRow = {
   avgCost: number | null
   changePct: number | null
   pnlVsBench: number | null
+  hostPnlVsBench: number | null
+  secondaryPnlVsBench: number | null
   pnlCost: number | null
   streamCategory: StreamCategory
   isInWatchlist: boolean
@@ -310,13 +312,25 @@ export function buildMarketStreamsRowForSymbol(args: {
   const symKey = (symbol || '').trim().toUpperCase()
   const quote = quotesMap[symKey] ?? quotesMap[symbol]
   const bench = benchmarks[symKey]
+  const lastVal = quoteDisplayLast(quote)
   const { changePct, pnlVsBench } = computeMarketStreamDailyChange(
     bench,
-    quoteDisplayLast(quote),
+    lastVal,
     qty ?? 0,
     positionDailyPrevClose,
   )
-  const lastVal = quoteDisplayLast(quote)
+  const { pnlVsBench: hostPnlVsBench } = computeMarketStreamDailyChange(
+    bench,
+    lastVal,
+    hostQty,
+    positionDailyPrevClose,
+  )
+  const { pnlVsBench: secondaryPnlVsBench } = computeMarketStreamDailyChange(
+    bench,
+    lastVal,
+    secondaryQty,
+    positionDailyPrevClose,
+  )
   const pnlCost =
     lastVal != null && avgCost != null && qty != null && Number.isFinite(qty) && qty !== 0
       ? (lastVal - avgCost) * qty
@@ -345,6 +359,8 @@ export function buildMarketStreamsRowForSymbol(args: {
     avgCost,
     changePct,
     pnlVsBench,
+    hostPnlVsBench: hostQty !== 0 ? hostPnlVsBench : null,
+    secondaryPnlVsBench: secondaryQty !== 0 ? secondaryPnlVsBench : null,
     pnlCost,
     streamCategory,
     isInWatchlist,

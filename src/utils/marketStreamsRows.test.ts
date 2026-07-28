@@ -20,6 +20,8 @@ function row(partial: Partial<MarketStreamsRow> & { symbol: string }): MarketStr
     avgCost: null,
     changePct: null,
     pnlVsBench: null,
+    hostPnlVsBench: null,
+    secondaryPnlVsBench: null,
     pnlCost: null,
     streamCategory: null,
     isInWatchlist: false,

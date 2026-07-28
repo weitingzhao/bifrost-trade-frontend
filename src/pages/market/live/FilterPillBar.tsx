@@ -1,4 +1,10 @@
-import { DenseTagButton, denseEntityFilterChipClass, segmentGroupClass, segmentButtonClass } from '@/components/data-display'
+import { DenseTagButton, denseEntityFilterChipClass, SegmentControl } from '@/components/data-display'
+import {
+  STREAM_ACCOUNT_VIEW_OPTIONS,
+  OPT_PREMIUM_UNIT_OPTIONS,
+  type StreamAccountViewMode,
+  type OptPremiumUnit,
+} from '@/utils/streamAccountView'
 import {
   liveFeedbackHintClass,
   liveFilterGroupClass,
@@ -10,8 +16,10 @@ import {
 
 interface Props {
   hasStreamAccounts: boolean
-  streamAccountFilters: Set<'host' | 'secondary'>
-  onToggleAccount: (key: 'host' | 'secondary') => void
+  accountViewMode: StreamAccountViewMode
+  onAccountViewModeChange: (mode: StreamAccountViewMode) => void
+  optPremiumUnit: OptPremiumUnit
+  onOptPremiumUnitChange: (unit: OptPremiumUnit) => void
   streamCategoryOrder: string[]
   positionCategoryFilters: Set<string>
   onToggleCategory: (cat: string) => void
@@ -21,8 +29,10 @@ interface Props {
 
 export function FilterPillBar({
   hasStreamAccounts,
-  streamAccountFilters,
-  onToggleAccount,
+  accountViewMode,
+  onAccountViewModeChange,
+  optPremiumUnit,
+  onOptPremiumUnitChange,
   streamCategoryOrder,
   positionCategoryFilters,
   onToggleCategory,
@@ -34,21 +44,31 @@ export function FilterPillBar({
       {hasStreamAccounts && (
         <div className={liveFilterGroupClass}>
           <span className={liveFilterHintClass}>Account:</span>
-          <div className={segmentGroupClass('sm')} role="group" aria-label="Filter by stream account">
-            {(['host', 'secondary'] as const).map(key => (
-              <button
-                key={key}
-                type="button"
-                className={segmentButtonClass(streamAccountFilters.has(key), 'sm')}
-                onClick={() => onToggleAccount(key)}
-                aria-pressed={streamAccountFilters.has(key)}
-              >
-                {key === 'host' ? 'Host' : 'Secondary'}
-              </button>
-            ))}
-          </div>
+          <SegmentControl
+            size="sm"
+            ariaLabel="Account column display mode"
+            value={accountViewMode}
+            onChange={v => onAccountViewModeChange(v as StreamAccountViewMode)}
+            options={STREAM_ACCOUNT_VIEW_OPTIONS.map(o => ({
+              value: o.value,
+              label: <span title={o.title}>{o.label}</span>,
+            }))}
+          />
         </div>
       )}
+      <div className={liveFilterGroupClass}>
+        <span className={liveFilterHintClass}>Opt unit:</span>
+        <SegmentControl
+          size="sm"
+          ariaLabel="Option premium display unit"
+          value={optPremiumUnit}
+          onChange={v => onOptPremiumUnitChange(v as OptPremiumUnit)}
+          options={OPT_PREMIUM_UNIT_OPTIONS.map(o => ({
+            value: o.value,
+            label: <span title={o.title}>{o.label}</span>,
+          }))}
+        />
+      </div>
       <div className={liveFilterGroupClass}>
         <span className={liveFilterHintClass}>Category:</span>
         <div className={liveFilterPillsClass} role="group" aria-label="Filter by position category">

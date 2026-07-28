@@ -20,19 +20,31 @@ import {
   marketStreamsSortHeaderMeta,
 } from '@/utils/marketStreamsSort'
 import type { OptionLiveBasis } from '@/utils/optionLiveBasis'
+import {
+  resolveStkAccountMetrics,
+  sumStkCostBasis,
+  sumStkDailyDollar,
+  type StreamAccountViewMode,
+  type OptPremiumUnit,
+} from '@/utils/streamAccountView'
+import { AccountMetricCells } from './AccountMetricCells'
+import { AccountDailyCells } from './AccountDailyCells'
+import { AccountSinceCells } from './AccountSinceCells'
 import { MarketStreamStkRow } from './MarketStreamStkRow'
 import { MarketStreamOptRow } from './MarketStreamOptRow'
-import { LiveStackedPnlCell } from './LiveStackedPnlCell'
 import { liveTable } from './liveTableClasses'
 import styles from './live.module.css'
 import { liveEmptyHintClass } from './liveUi'
 
-function marketStreamsColSpan(hasStreamAccounts: boolean): number {
-  return hasStreamAccounts ? 12 : 6
+/** Symbol + Qty + Cost + Last + Daily $ + Daily % + Since $ + Since % */
+function marketStreamsColSpan(_hasStreamAccounts: boolean): number {
+  return 8
 }
 
 interface Props {
   hasStreamAccounts: boolean
+  accountViewMode: StreamAccountViewMode
+  optPremiumUnit: OptPremiumUnit
   msSortMode: MarketStreamsSortMode
   onCycleSort: () => void
   dragEnabled: boolean
@@ -89,6 +101,8 @@ function SortHeaderButton({
 
 export function MarketStreamsTable({
   hasStreamAccounts,
+  accountViewMode,
+  optPremiumUnit,
   msSortMode,
   onCycleSort,
   dragEnabled,
@@ -108,46 +122,77 @@ export function MarketStreamsTable({
   onOptRowReorder,
 }: Props) {
   const msColSpan = marketStreamsColSpan(hasStreamAccounts)
+  const viewMode = hasStreamAccounts ? accountViewMode : 'combine'
+  const { costSum, pnlSum } = sumStkCostBasis(filteredRows, viewMode)
+  const totalPct = costSum > 0 && Number.isFinite(pnlSum) ? (pnlSum / costSum) * 100 : null
+  const { totalDailyPct } = marketStreamsDailyTotals
+  const totalDailyDollar = sumStkDailyDollar(filteredRows, viewMode)
 
-  const totalCost = filteredRows.reduce((a, r) => {
-    const q = r.qty != null && Number.isFinite(r.qty) ? r.qty : 0
-    const c = r.avgCost != null && Number.isFinite(r.avgCost) ? r.avgCost : 0
-    return a + q * c
-  }, 0)
-
-  const totalCostPnl = filteredRows.reduce(
-    (a, r) => a + (r.pnlCost != null && Number.isFinite(r.pnlCost) ? r.pnlCost : 0),
-    0,
-  )
-
-  const totalPct = totalCost > 0 && Number.isFinite(totalCostPnl) ? (totalCostPnl / totalCost) * 100 : null
-
-  const hostCostSum = filteredRows.reduce((a, r) => {
-    const q = r.hostQty != null && Number.isFinite(r.hostQty) ? r.hostQty : 0
-    const c = r.hostAvgCost != null && Number.isFinite(r.hostAvgCost) ? r.hostAvgCost : 0
-    return a + q * c
-  }, 0)
-
-  const hostPnlSum = filteredRows.reduce(
-    (a, r) => a + (r.hostPnlCost != null && Number.isFinite(r.hostPnlCost) ? r.hostPnlCost : 0),
-    0,
-  )
-
-  const secondaryCostSum = filteredRows.reduce((a, r) => {
-    const q = r.secondaryQty != null && Number.isFinite(r.secondaryQty) ? r.secondaryQty : 0
-    const c = r.secondaryAvgCost != null && Number.isFinite(r.secondaryAvgCost) ? r.secondaryAvgCost : 0
-    return a + q * c
-  }, 0)
-
-  const secondaryPnlSum = filteredRows.reduce(
-    (a, r) => a + (r.secondaryPnlCost != null && Number.isFinite(r.secondaryPnlCost) ? r.secondaryPnlCost : 0),
-    0,
-  )
-
-  const { totalDailyDollar, totalDailyPct } = marketStreamsDailyTotals
+  const totalDailyMetrics = (() => {
+    if (hasStreamAccounts && accountViewMode === 'all') {
+      let hostD = 0
+      let secD = 0
+      for (const r of filteredRows) {
+        if (r.hostPnlVsBench != null && Number.isFinite(r.hostPnlVsBench)) hostD += r.hostPnlVsBench
+        if (r.secondaryPnlVsBench != null && Number.isFinite(r.secondaryPnlVsBench)) {
+          secD += r.secondaryPnlVsBench
+        }
+      }
+      return {
+        kind: 'split' as const,
+        hostPct: totalDailyPct,
+        hostDollar: hostD !== 0 ? hostD : null,
+        secondaryPct: totalDailyPct,
+        secondaryDollar: secD !== 0 ? secD : null,
+      }
+    }
+    return {
+      kind: 'single' as const,
+      pct: totalDailyPct,
+      dollar: totalDailyDollar !== 0 ? totalDailyDollar : null,
+    }
+  })()
 
   const showTotalRow =
     (filteredRows.length > 0 || optPositionRows.length > 0) && filteredRows.length > 0
+
+  const totalAccountMetrics = (() => {
+    if (!hasStreamAccounts) return null
+    if (accountViewMode === 'all') {
+      let hostCost = 0
+      let hostPnl = 0
+      let secCost = 0
+      let secPnl = 0
+      for (const r of filteredRows) {
+        const m = resolveStkAccountMetrics(r, 'all')
+        if (m.kind !== 'split') continue
+        const hq = m.hostQty != null && Number.isFinite(m.hostQty) ? m.hostQty : 0
+        const hc = m.hostAvgCost != null && Number.isFinite(m.hostAvgCost) ? m.hostAvgCost : 0
+        const sq = m.secondaryQty != null && Number.isFinite(m.secondaryQty) ? m.secondaryQty : 0
+        const sc =
+          m.secondaryAvgCost != null && Number.isFinite(m.secondaryAvgCost) ? m.secondaryAvgCost : 0
+        hostCost += hq * hc
+        secCost += sq * sc
+        if (m.hostPnl != null && Number.isFinite(m.hostPnl)) hostPnl += m.hostPnl
+        if (m.secondaryPnl != null && Number.isFinite(m.secondaryPnl)) secPnl += m.secondaryPnl
+      }
+      return {
+        kind: 'split' as const,
+        hostQty: null,
+        hostAvgCost: hostCost !== 0 ? hostCost : null,
+        hostPnl: hostPnl !== 0 ? hostPnl : null,
+        secondaryQty: null,
+        secondaryAvgCost: secCost !== 0 ? secCost : null,
+        secondaryPnl: secPnl !== 0 ? secPnl : null,
+      }
+    }
+    return {
+      kind: 'single' as const,
+      qty: null,
+      avgCost: costSum !== 0 ? costSum : null,
+      pnl: pnlSum !== 0 ? pnlSum : null,
+    }
+  })()
 
   return (
     <div className={liveTable.shell}>
@@ -157,42 +202,24 @@ export function MarketStreamsTable({
             <DenseTableHead scope="col" className="normal-case">
               <SortHeaderButton mode={msSortMode} onCycleSort={onCycleSort} />
             </DenseTableHead>
-            {hasStreamAccounts && (
-              <>
-                <DenseTableHead colSpan={3} scope="colgroup" className={liveTable.colGroupHead}>
-                  Host
-                </DenseTableHead>
-                <DenseTableHead colSpan={3} scope="colgroup" className={liveTable.colGroupHead}>
-                  Secondary
-                </DenseTableHead>
-              </>
-            )}
-            <DenseTableHead>Qty</DenseTableHead>
-            <DenseTableHead>Cost</DenseTableHead>
-            <DenseTableHead title="Last price; Bid and Ask shown as spread vs Last">
+            <DenseTableHead align="right">Qty</DenseTableHead>
+            <DenseTableHead align="right">Cost</DenseTableHead>
+            <DenseTableHead align="right" title="Last price; Bid and Ask shown as spread vs Last">
               Last (Bid / Ask)
             </DenseTableHead>
-            <DenseTableHead align="right" className={liveTable.stackedPnlHead}>
-              Daily
-              <span className={liveTable.stackedPnlHeadSub}>% / $</span>
+            <DenseTableHead align="right" title="Daily PnL $ vs prior close (account view)">
+              Daily $
             </DenseTableHead>
-            <DenseTableHead align="right" className={liveTable.stackedPnlHead}>
-              SINCE
-              <span className={liveTable.stackedPnlHeadSub}>% / $</span>
+            <DenseTableHead align="right" title="Daily price return % vs prior close">
+              Daily %
+            </DenseTableHead>
+            <DenseTableHead align="right" title="Unrealized PnL vs cost (account view)">
+              Since $
+            </DenseTableHead>
+            <DenseTableHead align="right" title="Unrealized return vs cost (account view)">
+              Since %
             </DenseTableHead>
           </DenseTableHeadRow>
-          {hasStreamAccounts && (
-            <DenseTableHeadRow>
-              <DenseTableHead aria-hidden />
-              <DenseTableHead align="right">Qty</DenseTableHead>
-              <DenseTableHead align="right">Cost</DenseTableHead>
-              <DenseTableHead align="right">SINCE $</DenseTableHead>
-              <DenseTableHead align="right">Qty</DenseTableHead>
-              <DenseTableHead align="right">Cost</DenseTableHead>
-              <DenseTableHead align="right">SINCE $</DenseTableHead>
-              <DenseTableHead colSpan={5} aria-hidden />
-            </DenseTableHeadRow>
-          )}
         </DenseTableHeader>
         <DenseTableBody>
           {filteredRows.length === 0 && optPositionRows.length === 0 ? (
@@ -214,6 +241,7 @@ export function MarketStreamsTable({
                     categoryForDrag={row.category}
                     dragEnabled={false}
                     hasStreamAccounts={hasStreamAccounts}
+                    accountViewMode={accountViewMode}
                     benchmarks={benchmarks}
                   />
                 ))}
@@ -226,6 +254,8 @@ export function MarketStreamsTable({
                     streamHostId={streamHostId}
                     streamSecondaryId={streamSecondaryId}
                     hasStreamAccounts={hasStreamAccounts}
+                    accountViewMode={accountViewMode}
+                    optPremiumUnit={optPremiumUnit}
                     dragEnabled={false}
                   />
                 ))}
@@ -243,6 +273,7 @@ export function MarketStreamsTable({
                       categoryForDrag={cat}
                       dragEnabled={dragEnabled}
                       hasStreamAccounts={hasStreamAccounts}
+                      accountViewMode={accountViewMode}
                       benchmarks={benchmarks}
                       onSymbolReorder={onSymbolReorder}
                     />
@@ -261,6 +292,8 @@ export function MarketStreamsTable({
                       streamHostId={streamHostId}
                       streamSecondaryId={streamSecondaryId}
                       hasStreamAccounts={hasStreamAccounts}
+                      accountViewMode={accountViewMode}
+                      optPremiumUnit={optPremiumUnit}
                       dragEnabled={dragEnabled}
                       onOptRowReorder={onOptRowReorder}
                     />
@@ -271,53 +304,38 @@ export function MarketStreamsTable({
           )}
           {showTotalRow && (
             <GrandTotalRow labelColSpan={1} label={<strong>Total</strong>}>
-              {hasStreamAccounts && (
+              {hasStreamAccounts && totalAccountMetrics ? (
+                <AccountMetricCells metrics={totalAccountMetrics} />
+              ) : (
                 <>
                   <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
-                    {hostCostSum !== 0 ? fmtUsd(hostCostSum, true) : '—'}
+                    {costSum !== 0 ? fmtUsd(costSum, true) : '—'}
                   </DenseTableCell>
+                </>
+              )}
+              <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
+              <AccountDailyCells metrics={totalDailyMetrics} />
+              {hasStreamAccounts && totalAccountMetrics ? (
+                <AccountSinceCells metrics={totalAccountMetrics} useBasisPct />
+              ) : (
+                <>
                   <DenseTableCell className={denseTableNumCell}>
-                    {hostPnlSum !== 0 ? (
-                      <InlinePnl value={hostPnlSum}>{fmtUsd(hostPnlSum, true)}</InlinePnl>
+                    {pnlSum !== 0 ? (
+                      <InlinePnl value={pnlSum}>{fmtUsd(pnlSum, true)}</InlinePnl>
                     ) : (
                       '—'
                     )}
                   </DenseTableCell>
-                  <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
-                    {secondaryCostSum !== 0 ? fmtUsd(secondaryCostSum, true) : '—'}
-                  </DenseTableCell>
-                  <DenseTableCell className={denseTableNumCell}>
-                    {secondaryPnlSum !== 0 ? (
-                      <InlinePnl value={secondaryPnlSum}>{fmtUsd(secondaryPnlSum, true)}</InlinePnl>
+                    {totalPct != null ? (
+                      <InlinePnl value={totalPct}>{`${Math.abs(totalPct).toFixed(2)}%`}</InlinePnl>
                     ) : (
                       '—'
                     )}
                   </DenseTableCell>
                 </>
               )}
-              <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
-              <DenseTableCell className={denseTableNumCell}>
-                {totalCost !== 0 ? fmtUsd(totalCost, true) : '—'}
-              </DenseTableCell>
-              <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
-              <DenseTableCell className={denseTableNumCell}>
-                <LiveStackedPnlCell
-                  pct={totalDailyPct}
-                  dollar={totalDailyDollar}
-                  formatPct={v => `${v.toFixed(2)}%`}
-                  formatDollar={v => fmtUsd(v, true)}
-                />
-              </DenseTableCell>
-              <DenseTableCell className={denseTableNumCell}>
-                <LiveStackedPnlCell
-                  pct={totalPct}
-                  dollar={totalCostPnl}
-                  formatPct={v => `${v.toFixed(2)}%`}
-                  formatDollar={v => fmtUsd(v, true)}
-                />
-              </DenseTableCell>
             </GrandTotalRow>
           )}
         </DenseTableBody>

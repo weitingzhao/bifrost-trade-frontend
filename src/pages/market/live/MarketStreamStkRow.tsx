@@ -11,7 +11,16 @@ import { fmtUsd } from '@/utils/positions'
 import { getDailyRefTooltip } from '@/utils/marketStreamsDailyTotals'
 import { getQuoteFreshness, quoteFreshnessTitle } from '@/utils/quoteFreshness'
 import { symbolSourceLabel, type MarketStreamsRow } from '@/utils/marketStreamsRows'
+import {
+  resolveStkAccountMetrics,
+  resolveStkDailyMetrics,
+  sincePctFromAvg,
+  type StreamAccountViewMode,
+} from '@/utils/streamAccountView'
 import { quoteDisplayLast } from '@/utils/watchlistHelpers'
+import { AccountMetricCells } from './AccountMetricCells'
+import { AccountDailyCells } from './AccountDailyCells'
+import { AccountSinceCells } from './AccountSinceCells'
 import { DailyCalcBreakdown } from './DailyCalcBreakdown'
 import { LiveStackedPnlCell } from './LiveStackedPnlCell'
 import { liveSymbolFreshnessTagClass, liveTable } from './liveTableClasses'
@@ -25,6 +34,7 @@ interface Props {
   /** When slim: show Source badge instead of Since (Subscribed section). */
   showSourceBadge?: boolean
   hasStreamAccounts: boolean
+  accountViewMode?: StreamAccountViewMode
   benchmarks: Record<string, DailyBenchmark>
   onSymbolReorder?: (category: string, fromSymbol: string, toSymbol: string) => void
 }
@@ -36,6 +46,7 @@ export function MarketStreamStkRow({
   watchingStocksSlim = false,
   showSourceBadge = false,
   hasStreamAccounts,
+  accountViewMode = 'combine',
   benchmarks,
   onSymbolReorder,
 }: Props) {
@@ -47,18 +58,18 @@ export function MarketStreamStkRow({
     changePct,
     pnlVsBench,
     pnlCost,
-    hostQty,
-    hostAvgCost,
-    hostPnlCost,
-    secondaryQty,
-    secondaryAvgCost,
-    secondaryPnlCost,
     positionDailyPrevClose,
   } = row
 
   const symbolFreshness = getQuoteFreshness(q?.ts)
   const symBench = benchmarks[(symbol || '').trim().toUpperCase()]
   const dailyLast = quoteDisplayLast(q ?? undefined)
+  const accountMetrics = resolveStkAccountMetrics(row, accountViewMode)
+  const dailyMetrics = resolveStkDailyMetrics(row, accountViewMode)
+  const sinceQty = accountMetrics.kind === 'single' ? accountMetrics.qty : qty
+  const sinceAvgCost = accountMetrics.kind === 'single' ? accountMetrics.avgCost : avgCost
+  const sincePnl = accountMetrics.kind === 'single' ? accountMetrics.pnl : pnlCost
+  const sincePct = sincePctFromAvg(sinceAvgCost, dailyLast)
 
   return (
     <tr
@@ -120,39 +131,10 @@ export function MarketStreamStkRow({
       </DenseTableCell>
 
       {!watchingStocksSlim && hasStreamAccounts && (
-        <>
-          <DenseTableCell className={denseTableNumCell}>
-            {hostQty != null && Number.isFinite(hostQty) ? hostQty : '—'}
-          </DenseTableCell>
-          <DenseTableCell className={denseTableNumCell}>
-            {hostAvgCost != null && Number.isFinite(hostAvgCost) ? fmtUsd(hostAvgCost) : '—'}
-          </DenseTableCell>
-          <DenseTableCell className={denseTableNumCell}>
-            {hostPnlCost != null && Number.isFinite(hostPnlCost) ? (
-              <InlinePnl value={hostPnlCost}>{fmtUsd(hostPnlCost, true)}</InlinePnl>
-            ) : (
-              '—'
-            )}
-          </DenseTableCell>
-          <DenseTableCell className={denseTableNumCell}>
-            {secondaryQty != null && Number.isFinite(secondaryQty) ? secondaryQty : '—'}
-          </DenseTableCell>
-          <DenseTableCell className={denseTableNumCell}>
-            {secondaryAvgCost != null && Number.isFinite(secondaryAvgCost)
-              ? fmtUsd(secondaryAvgCost)
-              : '—'}
-          </DenseTableCell>
-          <DenseTableCell className={denseTableNumCell}>
-            {secondaryPnlCost != null && Number.isFinite(secondaryPnlCost) ? (
-              <InlinePnl value={secondaryPnlCost}>{fmtUsd(secondaryPnlCost, true)}</InlinePnl>
-            ) : (
-              '—'
-            )}
-          </DenseTableCell>
-        </>
+        <AccountMetricCells metrics={accountMetrics} />
       )}
 
-      {!watchingStocksSlim && (
+      {!watchingStocksSlim && !hasStreamAccounts && (
         <>
           <DenseTableCell className={denseTableNumCell}>
             {qty != null && Number.isFinite(qty) ? qty : '—'}
@@ -205,42 +187,81 @@ export function MarketStreamStkRow({
         })() : '—'}
       </DenseTableCell>
 
-      <DenseTableCell className={cn(denseTableNumCell, styles.dailyCalcCell)}>
-        <LiveStackedPnlCell
-          pct={changePct}
-          dollar={pnlVsBench}
-          formatPct={v => `${v.toFixed(2)}%`}
-          formatDollar={v => fmtUsd(Math.abs(v ?? 0))}
-        />
-        <DailyCalcBreakdown
-          symbol={(symbol || '').trim() || '—'}
-          bench={symBench}
-          positionDailyPrevClose={positionDailyPrevClose}
-          last={dailyLast}
-          qty={qty}
-        />
-      </DenseTableCell>
-
-      {watchingStocksSlim && showSourceBadge ? (
-        <DenseTableCell>
-          <DenseTag variant="category" size="cell">
-            {symbolSourceLabel(row.symbolSource)}
-          </DenseTag>
-        </DenseTableCell>
+      {!watchingStocksSlim ? (
+        <AccountDailyCells
+          metrics={
+            hasStreamAccounts
+              ? dailyMetrics
+              : { kind: 'single', pct: changePct, dollar: pnlVsBench }
+          }
+          className={cn(denseTableNumCell, styles.dailyCalcCell)}
+        >
+          <DailyCalcBreakdown
+            symbol={(symbol || '').trim() || '—'}
+            bench={symBench}
+            positionDailyPrevClose={positionDailyPrevClose}
+            last={dailyLast}
+            qty={sinceQty}
+          />
+        </AccountDailyCells>
       ) : (
-        <DenseTableCell className={denseTableNumCell}>
+        <DenseTableCell className={cn(denseTableNumCell, styles.dailyCalcCell)}>
           <LiveStackedPnlCell
-            pct={(() => {
-              const dl = quoteDisplayLast(q ?? undefined)
-              if (avgCost == null || !Number.isFinite(avgCost) || avgCost <= 0 || dl == null) return null
-              return ((dl - avgCost) / avgCost) * 100
-            })()}
-            dollar={pnlCost}
+            pct={changePct}
+            dollar={pnlVsBench}
             formatPct={v => `${v.toFixed(2)}%`}
-            formatDollar={v => fmtUsd(v, true)}
+            formatDollar={v => fmtUsd(Math.abs(v ?? 0))}
+          />
+          <DailyCalcBreakdown
+            symbol={(symbol || '').trim() || '—'}
+            bench={symBench}
+            positionDailyPrevClose={positionDailyPrevClose}
+            last={dailyLast}
+            qty={sinceQty}
           />
         </DenseTableCell>
       )}
+
+      {!watchingStocksSlim && hasStreamAccounts && (
+        <AccountSinceCells metrics={accountMetrics} lastPrice={dailyLast} />
+      )}
+
+      {!watchingStocksSlim && !hasStreamAccounts && (
+        <>
+          <DenseTableCell className={denseTableNumCell}>
+            {sincePnl != null && Number.isFinite(sincePnl) ? (
+              <InlinePnl value={sincePnl}>{fmtUsd(sincePnl, true)}</InlinePnl>
+            ) : (
+              '—'
+            )}
+          </DenseTableCell>
+          <DenseTableCell className={denseTableNumCell}>
+            {sincePct != null ? (
+              <InlinePnl value={sincePct}>{`${Math.abs(sincePct).toFixed(2)}%`}</InlinePnl>
+            ) : (
+              '—'
+            )}
+          </DenseTableCell>
+        </>
+      )}
+
+      {watchingStocksSlim &&
+        (showSourceBadge ? (
+          <DenseTableCell>
+            <DenseTag variant="category" size="cell">
+              {symbolSourceLabel(row.symbolSource)}
+            </DenseTag>
+          </DenseTableCell>
+        ) : (
+          <DenseTableCell className={denseTableNumCell}>
+            <LiveStackedPnlCell
+              pct={sincePct}
+              dollar={pnlCost}
+              formatPct={v => `${v.toFixed(2)}%`}
+              formatDollar={v => fmtUsd(v, true)}
+            />
+          </DenseTableCell>
+        ))}
     </tr>
   )
 }

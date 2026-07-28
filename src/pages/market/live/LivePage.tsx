@@ -274,8 +274,10 @@ export default function LivePage() {
           streamSyncFeedback={streamSyncFeedback}
           onRefresh={() => void handleRefresh()}
           hasStreamAccounts={streams.hasStreamAccounts}
-          streamAccountFilters={streams.streamAccountFilters}
-          onToggleAccount={streams.toggleStreamAccountFilter}
+          accountViewMode={streams.accountViewMode}
+          onAccountViewModeChange={streams.setAccountViewMode}
+          optPremiumUnit={streams.optPremiumUnit}
+          onOptPremiumUnitChange={streams.setOptPremiumUnit}
           streamCategoryOrder={streams.streamCategoryOrder}
           positionCategoryFilters={streams.positionCategoryFilters}
           onToggleCategory={streams.togglePositionCategoryFilter}

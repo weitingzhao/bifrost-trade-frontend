@@ -15,7 +15,6 @@ import {
   extractStreamPositionSymbols,
   extractWatchlistStkItems,
   filterByCategory,
-  filterByStreamAccount,
   groupRowsByCategory,
   loadOptRowOrderFromStorage,
   optBasisKey,
@@ -30,6 +29,14 @@ import {
   type MarketStreamsSortMode,
 } from '@/utils/marketStreamsSort'
 import { useCategoryOrderPersistence } from '@/hooks/useMarketStreamsSymbolOrder'
+import {
+  DEFAULT_STREAM_ACCOUNT_VIEW,
+  DEFAULT_OPT_PREMIUM_UNIT,
+  filterOptByAccountView,
+  filterStkByAccountView,
+  type StreamAccountViewMode,
+  type OptPremiumUnit,
+} from '@/utils/streamAccountView'
 
 export function useMarketStreamsSort(initial: MarketStreamsSortMode = 1) {
   const [msSortMode, setMsSortMode] = useState<MarketStreamsSortMode>(initial)
@@ -64,7 +71,9 @@ export function useLiveMarketStreams(args: {
   const streamSecondaryId = (ibAcct?.event_secondary ?? '').trim() || null
   const hasStreamAccounts = streamHostId != null || streamSecondaryId != null
 
-  const [streamAccountFilters, setStreamAccountFilters] = useState<Set<'host' | 'secondary'>>(() => new Set())
+  const [accountViewMode, setAccountViewMode] =
+    useState<StreamAccountViewMode>(DEFAULT_STREAM_ACCOUNT_VIEW)
+  const [optPremiumUnit, setOptPremiumUnit] = useState<OptPremiumUnit>(DEFAULT_OPT_PREMIUM_UNIT)
   const [positionCategoryFilters, setPositionCategoryFilters] = useState<Set<string>>(() => new Set())
   const [optRowOrder, setOptRowOrder] = useState<string[]>(loadOptRowOrderFromStorage)
 
@@ -156,15 +165,6 @@ export function useLiveMarketStreams(args: {
 
   const optPositionRows = useMemo(() => extractOptPositionRows(accounts), [accounts])
 
-  const toggleStreamAccountFilter = useCallback((key: 'host' | 'secondary') => {
-    setStreamAccountFilters(prev => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }, [])
-
   const togglePositionCategoryFilter = useCallback((cat: string) => {
     setPositionCategoryFilters(prev => {
       const next = new Set(prev)
@@ -175,8 +175,8 @@ export function useLiveMarketStreams(args: {
   }, [])
 
   const filteredByAccount = useMemo(
-    () => filterByStreamAccount(marketStreamsRows, streamAccountFilters, hasStreamAccounts),
-    [marketStreamsRows, streamAccountFilters, hasStreamAccounts],
+    () => filterStkByAccountView(marketStreamsRows, accountViewMode, hasStreamAccounts),
+    [marketStreamsRows, accountViewMode, hasStreamAccounts],
   )
 
   const filteredRows = useMemo(
@@ -231,10 +231,22 @@ export function useLiveMarketStreams(args: {
     return out
   }, [rowsByCategory, symbolOrderByCategory])
 
+  const filteredOptPositionRows = useMemo(
+    () =>
+      filterOptByAccountView(
+        optPositionRows,
+        accountViewMode,
+        hasStreamAccounts,
+        streamHostId,
+        streamSecondaryId,
+      ),
+    [optPositionRows, accountViewMode, hasStreamAccounts, streamHostId, streamSecondaryId],
+  )
+
   const sortedOptRows = useMemo(() => {
-    if (msSortMode !== 1) return optPositionRows
-    return sortOptRowsByBasisOrder(optPositionRows, optRowOrder)
-  }, [optPositionRows, optRowOrder, msSortMode])
+    if (msSortMode !== 1) return filteredOptPositionRows
+    return sortOptRowsByBasisOrder(filteredOptPositionRows, optRowOrder)
+  }, [filteredOptPositionRows, optRowOrder, msSortMode])
 
   const applyOptRowReorderFn = useCallback(
     (fromBasisKey: string, toBasisKey: string) => {
@@ -267,8 +279,10 @@ export function useLiveMarketStreams(args: {
     streamHostId,
     streamSecondaryId,
     hasStreamAccounts,
-    streamAccountFilters,
-    toggleStreamAccountFilter,
+    accountViewMode,
+    setAccountViewMode,
+    optPremiumUnit,
+    setOptPremiumUnit,
     positionCategoryFilters,
     togglePositionCategoryFilter,
     marketStreamsRows,
@@ -281,7 +295,7 @@ export function useLiveMarketStreams(args: {
     watchingTickerRowsSorted,
     subscribedTickerRowsSorted,
     watchlistOptionItems: watchlistItems.filter(w => (w.sec_type ?? '').toUpperCase() === 'OPT'),
-    optPositionRows,
+    optPositionRows: filteredOptPositionRows,
     sortedOptRows,
     applyOptRowReorder: applyOptRowReorderFn,
     categoryOrderSaving,

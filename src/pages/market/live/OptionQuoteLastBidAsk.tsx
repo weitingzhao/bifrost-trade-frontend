@@ -3,7 +3,6 @@ import { InlinePnl } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import { quoteDisplayLast } from '@/utils/watchlistHelpers'
 import { liveTable } from './liveTableClasses'
-import { OptQuoteAgeLabel } from './OptQuoteAgeLabel'
 
 interface Props {
   quote: QuoteItem | undefined
@@ -34,7 +33,6 @@ export function OptionQuoteLastBidAsk({ quote }: Props) {
           <InlinePnl value={askDiff}>{Math.abs(askDiff).toFixed(2)}</InlinePnl>
         </span>
       )}
-      <OptQuoteAgeLabel ts={quote.ts ?? quote.updated_ts} />
     </>
   )
 }

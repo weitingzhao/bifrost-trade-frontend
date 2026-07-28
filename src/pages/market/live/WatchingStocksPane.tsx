@@ -23,6 +23,7 @@ import {
 } from '@/utils/watchlistHelpers'
 import { MarketStreamStkRow } from './MarketStreamStkRow'
 import { OptionQuoteLastBidAsk } from './OptionQuoteLastBidAsk'
+import { OptQuoteAgeLabel } from './OptQuoteAgeLabel'
 import { liveTable } from './liveTableClasses'
 import {
   liveEmptyHintClass,
@@ -63,7 +64,7 @@ function ObserveStkTable({
         <DenseTableHeader className={liveTable.stickyThead}>
           <DenseTableHeadRow>
             <DenseTableHead scope="col">Symbol</DenseTableHead>
-            <DenseTableHead title="Last price; Bid and Ask shown as spread vs Last">
+            <DenseTableHead align="right" title="Last price; Bid and Ask shown as spread vs Last">
               Last (Bid / Ask)
             </DenseTableHead>
             <DenseTableHead align="right" className={liveTable.stackedPnlHead}>
@@ -187,7 +188,7 @@ export function WatchingOptionsPane({ items, quotesByContractKey, streamsLamp }:
             <DenseTableHeader className={liveTable.stickyThead}>
               <DenseTableHeadRow>
                 <DenseTableHead scope="col">Symbol</DenseTableHead>
-                <DenseTableHead title="Last price; Bid and Ask shown as spread vs Last">
+                <DenseTableHead align="right" title="Last price; Bid and Ask shown as spread vs Last">
                   Last (Bid / Ask)
                 </DenseTableHead>
                 <DenseTableHead>Expiry</DenseTableHead>
@@ -203,8 +204,11 @@ export function WatchingOptionsPane({ items, quotesByContractKey, streamsLamp }:
                 return (
                   <DenseTableRow key={item.contract_key}>
                     <DenseTableCell className={denseTableEntityCell} title={item.contract_key}>
-                      <span className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}>
-                        {watchlistItemLabel(item)}
+                      <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+                        <span className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}>
+                          {watchlistItemLabel(item)}
+                        </span>
+                        <OptQuoteAgeLabel ts={q?.ts ?? q?.updated_ts} />
                       </span>
                     </DenseTableCell>
                     <DenseTableCell className={cn(denseTableNumCell, liveTable.lastBidAsk)}>

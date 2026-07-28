@@ -214,6 +214,16 @@ export function computeOptionLiveAvgPerShareFromExecutions(
   return { avgPerShare: avg, basisSource }
 }
 
+/**
+ * IB portfolio OPT `avgCost` is the average **cost of one contract**
+ * (premium $/share × multiplier 100), not $/share.
+ *
+ * Empirically (Host live book): HIMS 111 → $1.11/sh, RKLB 319 → $3.19/sh,
+ * MRVL 1459 → $14.60/sh. Same rule as `normalizeAvgCostPerShare` in
+ * buildInstanceGroups (`>= 10 → /100`). Tiny values (< 10) are left as
+ * already-$/share. FIFO-derived averages are already $/share — do not pass
+ * them through this.
+ */
 export function normalizeIbOptionAvgCostPerShare(raw: number | null | undefined): number | null {
   if (raw == null || !Number.isFinite(Number(raw))) return null
   const n = Number(raw)
@@ -254,11 +264,11 @@ export function resolveOptAvgCostPerShareForMtm(
   row: { avg_cost: number | null },
   basis: OptionLiveBasis | undefined,
 ): number | null {
-  const raw =
-    basis?.avgPerShare != null && Number.isFinite(basis.avgPerShare)
-      ? basis.avgPerShare
-      : row.avg_cost
-  return normalizeIbOptionAvgCostPerShare(raw)
+  // Ledger FIFO avg is already $/share — never apply IB ×100 unwind.
+  if (basis?.avgPerShare != null && Number.isFinite(basis.avgPerShare)) {
+    return basis.avgPerShare
+  }
+  return normalizeIbOptionAvgCostPerShare(row.avg_cost)
 }
 
 export function computeOptMidAndLivePnl(

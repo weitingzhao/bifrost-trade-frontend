@@ -7,6 +7,7 @@ import type { DailyBenchmark, QuoteItem } from '@/types/market'
 import type { MarketStreamsRow, OptPositionRow } from '@/utils/marketStreamsRows'
 import type { LiveSortGroup, MarketStreamsSortMode } from '@/utils/marketStreamsSort'
 import type { OptionLiveBasis } from '@/utils/optionLiveBasis'
+import type { StreamAccountViewMode, OptPremiumUnit } from '@/utils/streamAccountView'
 import { LiveStreamsSummaryBar } from './LiveStreamsSummaryBar'
 import { FilterPillBar } from './FilterPillBar'
 import { MarketStreamsTable } from './MarketStreamsTable'
@@ -27,8 +28,10 @@ interface Props {
   streamSyncFeedback: string | null
   onRefresh: () => void
   hasStreamAccounts: boolean
-  streamAccountFilters: Set<'host' | 'secondary'>
-  onToggleAccount: (key: 'host' | 'secondary') => void
+  accountViewMode: StreamAccountViewMode
+  onAccountViewModeChange: (mode: StreamAccountViewMode) => void
+  optPremiumUnit: OptPremiumUnit
+  onOptPremiumUnitChange: (unit: OptPremiumUnit) => void
   streamCategoryOrder: string[]
   positionCategoryFilters: Set<string>
   onToggleCategory: (cat: string) => void
@@ -65,8 +68,10 @@ export function MarketStreamsSection({
   streamSyncFeedback,
   onRefresh,
   hasStreamAccounts,
-  streamAccountFilters,
-  onToggleAccount,
+  accountViewMode,
+  onAccountViewModeChange,
+  optPremiumUnit,
+  onOptPremiumUnitChange,
   streamCategoryOrder,
   positionCategoryFilters,
   onToggleCategory,
@@ -99,7 +104,7 @@ export function MarketStreamsSection({
   const navigate = useNavigate()
 
   const infoText = marketStreamsOk
-    ? `Live quotes: IB ingestor writes Redis; Market API SSE + polling. STK symbols: Watchlist ∪ Host & Secondary positions; Watchlist category "Watching" STK are shown in Watching Stocks. ${watchlistSymbolCount} stream symbol(s). Refresh reloads quotes and daily benchmarks.`
+    ? `Live quotes: IB ingestor writes Redis; Market API SSE + polling. STK symbols: Watchlist ∪ Host & Secondary positions; Watchlist category "Watching" STK are shown in Watching Stocks. ${watchlistSymbolCount} stream symbol(s). Account filter controls merged Qty/Cost/Since $ columns. Opt unit scales option Cost/Last (Contract = ×100, Share = $/sh). Since $ for options is always (mid−avg)×contracts×100. Refresh reloads quotes and daily benchmarks.`
     : 'Requires Market API Redis (quotes) and IB ingestor connected (see System status). Watching-category STK are in Watching Stocks on the Live split card.'
 
   return (
@@ -122,8 +127,10 @@ export function MarketStreamsSection({
         </div>
         <FilterPillBar
           hasStreamAccounts={hasStreamAccounts}
-          streamAccountFilters={streamAccountFilters}
-          onToggleAccount={onToggleAccount}
+          accountViewMode={accountViewMode}
+          onAccountViewModeChange={onAccountViewModeChange}
+          optPremiumUnit={optPremiumUnit}
+          onOptPremiumUnitChange={onOptPremiumUnitChange}
           streamCategoryOrder={streamCategoryOrder}
           positionCategoryFilters={positionCategoryFilters}
           onToggleCategory={onToggleCategory}
@@ -159,6 +166,8 @@ export function MarketStreamsSection({
 
       <MarketStreamsTable
         hasStreamAccounts={hasStreamAccounts}
+        accountViewMode={accountViewMode}
+        optPremiumUnit={optPremiumUnit}
         msSortMode={msSortMode}
         onCycleSort={onCycleSort}
         dragEnabled={dragEnabled}

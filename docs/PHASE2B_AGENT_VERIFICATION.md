@@ -6,7 +6,7 @@ Mechanical and API smoke only. **Owner UI sign-off** remains in [PHASE2B_SIGNOFF
 
 | Check | Result |
 |-------|--------|
-| `make dev-health` | 9/9 OK (LAN PG `192.168.10.80`, Redis `192.168.10.70`) |
+| `make dev-health` | 9/9 OK (CNPG `bifrost-postgres-rw.data.svc` / `bifrost_dev`) |
 | `make verify-domain-apis` | 9/9 OK |
 | `celery-worker` | Up |
 | `npm run lint` | pass |

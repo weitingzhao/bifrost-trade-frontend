@@ -47,12 +47,25 @@ export function IbServiceRow({ label, svcId, status }: {
   status: import('@/types/monitor').StatusResponse | undefined
 }) {
   const { lamp, title } = ibServiceLamp(svcId, status ?? null)
+  const healthLabel = lamp === 'green'
+    ? 'IB connected'
+    : title.includes('Secondary')
+      ? 'Secondary unavailable'
+      : title.includes('not connected yet')
+        ? 'IB connecting'
+        : title.includes('not connected')
+          ? 'IB not connected'
+          : lamp === 'yellow'
+            ? 'IB degraded'
+            : lamp === 'red'
+              ? 'IB unavailable'
+              : 'IB status unknown'
   return (
     <div className={daemonIbServiceRowClass}>
       <span className={daemonKvLabelClass}>{label}</span>
       <div className={daemonIbServiceRowInnerClass}>
         <LampDot lamp={lamp} title={title} />
-        <span className={daemonLampTextClass(lamp)}>{lamp}</span>
+        <span className={daemonLampTextClass(lamp)} title={title}>{healthLabel}</span>
       </div>
     </div>
   )

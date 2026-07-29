@@ -64,8 +64,7 @@ function buildSocketNode(
 function buildDaemonTradingNode(status: StatusResponse | null | undefined): Pick<TopologyNodeHealth, 'lamp' | 'subtitle'> {
   const hb = status?.daemon?.heartbeat
   const ibGroup = computeIbBrokerGroupLamp(status, hb)
-  const suspended = Boolean(status?.daemon?.trading?.trading_suspended)
-  const lamp = computeStrategyTradingDaemonLamp(hb, ibGroup.lamp, suspended)
+  const lamp = computeStrategyTradingDaemonLamp(hb, ibGroup.lamp)
   const state = status?.daemon?.trading?.auto_status?.daemon_state?.trim()
   const subtitle = state && state.length > 0 ? state : hb?.daemon_alive ? 'Running' : 'Not running'
   return { lamp: daemonToTopologyLamp(lamp), subtitle }

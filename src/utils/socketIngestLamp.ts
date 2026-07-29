@@ -201,7 +201,6 @@ export function buildIngestLogicalSummary(
       const age = fmtAgeShort(Date.now() / 1000 - hb.last_ts)
       const hints: string[] = [`Daemon alive; last heartbeat ${age} ago`]
       if (hb.ib_connected === false) hints.push('IB edge not connected')
-      if (status?.daemon?.trading?.trading_suspended) hints.push('trading suspended')
       return hints.join('; ')
     }
     if (hb?.graceful_shutdown_at != null) {

@@ -76,12 +76,10 @@ export function computeAccountSyncIbGroupLamp(
 export function computeStrategyTradingDaemonLamp(
   hb: DaemonHeartbeat | null | undefined,
   ibGroupLamp: DaemonLamp,
-  suspended: boolean,
 ): DaemonLamp {
   if (!hb) return 'none'
   if (!hb.daemon_alive) return 'red'
   const heartbeatL: ServiceLamp = 'green'
   const ibL: ServiceLamp = ibGroupLamp === 'none' ? 'red' : ibGroupLamp
-  const tradeL: ServiceLamp = suspended ? 'yellow' : 'green'
-  return worst([heartbeatL, ibL, tradeL])
+  return worst([heartbeatL, ibL])
 }

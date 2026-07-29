@@ -15,6 +15,7 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTableSubheadRow,
+  DenseTag,
 } from '@/components/data-display'
 import { denseTable } from '@/components/data-display'
 import type { StatusResponse } from '@/types/monitor'
@@ -124,7 +125,14 @@ function ServiceRow({
   const showK8sReady =
     variant === 'daemon' && svc.k8s_replicas !== undefined
   const k8sReadyText = showK8sReady
-    ? `${svc.k8s_ready ?? 0}/${svc.k8s_replicas} ready`
+    ? `K8s ${svc.k8s_ready ?? 0}/${svc.k8s_replicas} ready`
+    : null
+  const tradingControl = variant === 'daemon' && svc.id === 'trading_engine'
+    ? status?.daemon?.heartbeat?.daemon_alive
+      ? status.daemon.trading.trading_suspended
+        ? { label: 'Suspended', variant: 'warning' as const }
+        : { label: 'Hedge enabled', variant: 'success' as const }
+      : { label: 'Unavailable', variant: 'neutral' as const }
     : null
 
   return (
@@ -173,7 +181,14 @@ function ServiceRow({
         </DenseTableCell>
       )}
       <DenseTableCell className={socketLogicalCellClass}>
-        {logicalText}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span>{logicalText}</span>
+          {tradingControl && (
+            <DenseTag variant={tradingControl.variant} size="cell">
+              {tradingControl.label}
+            </DenseTag>
+          )}
+        </div>
       </DenseTableCell>
       <DenseTableCell className={socketActionsCellClass}>
         <ControlButtons
@@ -270,7 +285,7 @@ export function IngestServicesTable({
         </colgroup>
         <DenseTableHeader>
           <DenseTableHeadRow>
-            <DenseTableHead className="normal-case tracking-normal">Status</DenseTableHead>
+            <DenseTableHead className="normal-case tracking-normal">Health</DenseTableHead>
             <DenseTableHead className="normal-case tracking-normal">
               <span className="inline-flex items-center gap-1">
                 Host

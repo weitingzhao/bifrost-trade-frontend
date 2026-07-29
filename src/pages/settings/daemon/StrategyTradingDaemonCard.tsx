@@ -108,7 +108,14 @@ export function StrategyTradingDaemonCard({
   }, [hb?.daemon_alive, hb?.last_ts, intervalSec, nowSec])
 
   const { lamp: ibGroupLamp, title: ibGroupTitle } = computeIbBrokerGroupLamp(data, hb)
-  const daemonOverallLamp = computeStrategyTradingDaemonLamp(hb, ibGroupLamp, suspended)
+  const daemonOverallLamp = computeStrategyTradingDaemonLamp(hb, ibGroupLamp)
+  const daemonHealthTitle = !hb
+    ? 'No Strategy Trading Daemon heartbeat is available.'
+    : !hb.daemon_alive
+      ? 'Strategy Trading Daemon heartbeat is stale or stopped.'
+      : daemonOverallLamp === 'green'
+        ? 'Strategy Trading Daemon heartbeat and IB broker health are OK.'
+        : ibGroupTitle
 
   const selfCheck =
     DAEMON_SELF_CHECK_LABELS[data.daemon?.self_check ?? ''] ?? data.daemon?.self_check ?? '—'
@@ -117,7 +124,7 @@ export function StrategyTradingDaemonCard({
 
   let statusLabel = 'Not running'
   if (hb?.daemon_alive) {
-    statusLabel = suspended ? 'Running (hedge suspended)' : 'Running (OK)'
+    statusLabel = 'Running'
   } else if (hb?.graceful_shutdown_at != null) {
     statusLabel = 'Not running (graceful stop)'
   } else if (hb) {
@@ -155,9 +162,14 @@ export function StrategyTradingDaemonCard({
     <div className="space-y-4">
       <div>
         <div className={daemonCardTitleRowClass}>
-          <LampDot lamp={daemonOverallLamp} title={ibGroupTitle} />
+          <LampDot lamp={daemonOverallLamp} title={daemonHealthTitle} />
           <span className="font-semibold">Strategy Trading Daemon</span>
           <span className={daemonCardStatusSubtitleClass}>{statusLabel}</span>
+          {hb?.daemon_alive && (
+            <DenseTag variant={suspended ? 'warning' : 'success'} size="cell">
+              {suspended ? 'Suspended' : 'Hedge enabled'}
+            </DenseTag>
+          )}
           {hb?.mock_hedging && (
             <DenseTag variant="warning" size="cell">MOCK</DenseTag>
           )}
@@ -233,16 +245,18 @@ export function StrategyTradingDaemonCard({
         </div>
 
         <div className="space-y-3">
-          <p className={daemonGroupTitleClass}>Trading Strategy</p>
+          <p className={daemonGroupTitleClass}>Trading control</p>
           <div className={daemonHedgeStatusRowClass}>
-            <LampDot
-              lamp={!hb || !hb.daemon_alive ? 'red' : suspended ? 'yellow' : 'green'}
-              title={hedgeStatusCompact}
-            />
+            <LampDot lamp={daemonOverallLamp} title={daemonHealthTitle} />
             <span className="text-muted-foreground">
-              {hedgeStatusCompact}
+              Hedge loop: {hedgeStatusCompact}
               {blockReasonsCompact ? ` · ${blockReasonsCompact}` : ''}
             </span>
+            {hb?.daemon_alive && (
+              <DenseTag variant={suspended ? 'warning' : 'success'} size="cell">
+                {suspended ? 'Suspended' : 'Hedge enabled'}
+              </DenseTag>
+            )}
           </div>
 
           <div className={daemonMetricGridClass}>

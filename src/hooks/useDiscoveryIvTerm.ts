@@ -109,6 +109,15 @@ export function useDiscoveryIvTerm({
         const sync = await postMassiveSync('feed_option_snapshots', payload)
         const jobId = resolveMassiveSyncJobId(sync)
         if (!sync.ok || !jobId) {
+          // P8: plugin owns ingest — skip Celery sync and load IV term from PG.
+          const refused = /market-data plugin|massive queues disabled/i.test(
+            `${sync.error ?? ''} ${sync.message ?? ''}`,
+          )
+          if (refused) {
+            setIvTermSyncStatus('Loading IV term structure from PostgreSQL…')
+            await loadIvTermStructure()
+            return
+          }
           setTermError(sync.error ?? sync.message ?? `Massive sync failed for ${exp}`)
           return
         }

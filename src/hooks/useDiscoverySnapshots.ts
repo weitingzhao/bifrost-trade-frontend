@@ -136,13 +136,35 @@ export function useDiscoverySnapshots({
         massiveChainPayload.strike_price_gte = Math.min(...strikesToSend)
         massiveChainPayload.strike_price_lte = Math.max(...strikesToSend)
       }
+      const strikesCsv =
+        strikesToSend && strikesToSend.length > 0 ? strikesToSend.map(x => String(x)).join(',') : undefined
+
       const sync = await postMassiveSync('feed_option_snapshots', massiveChainPayload)
       const jobId = resolveMassiveSyncJobId(sync)
       if (!sync.ok || !jobId) {
+        // P8: Celery Massive ingest is disabled — read market.* rows written by plugin.
+        const snPg = await fetchOptionSnapshotsPg(sym, exp, strikesCsv, 'massive')
+        const pgRows = snPg.rows ?? []
+        if (pgRows.length > 0) {
+          setSnapshotRows(pgRows)
+          setLastQuotesLoadTs(new Date())
+          const up =
+            snPg.underlying_price != null && Number.isFinite(Number(snPg.underlying_price))
+              ? Number(snPg.underlying_price)
+              : null
+          setUnderlyingPrice(up)
+          setSelectedContractKey(defaultSnapshotContractKey(pgRows, up, stockDayLastPrice))
+          setSnapshotFeedback({
+            level: 'info',
+            title: 'Loaded from PostgreSQL',
+            body: sync.error ?? sync.message ?? 'Massive Celery sync skipped; using market-data plugin rows.',
+          })
+          return
+        }
         setSnapshotFeedback({
           level: 'error',
           title: 'Sync failed',
-          body: sync.error ?? sync.message ?? 'Massive sync failed',
+          body: sync.error ?? sync.message ?? snPg.error ?? 'Massive sync failed',
         })
         setSnapshotRows([])
         setUnderlyingPrice(null)
@@ -155,8 +177,6 @@ export function useDiscoverySnapshots({
         setUnderlyingPrice(null)
         return
       }
-      const strikesCsv =
-        strikesToSend && strikesToSend.length > 0 ? strikesToSend.map(x => String(x)).join(',') : undefined
       const sn = await fetchOptionSnapshotsPg(sym, exp, strikesCsv, 'massive')
       const rows = sn.rows ?? []
       setSnapshotRows(rows)

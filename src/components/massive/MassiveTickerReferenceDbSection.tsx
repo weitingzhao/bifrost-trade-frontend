@@ -836,7 +836,7 @@ export function MassiveTickerReferenceDbSection({
             )
           </summary>
           <p className="mb-2 text-xs text-muted-foreground">
-            No rows in <code>ticker_related_tickers</code> with <code>from_tickers_id</code> for these symbols (ordered
+            No rows in <code>ticker_related_tickers</code> with <code>from_symbol</code> for these symbols (ordered
             A–Z). Empty API syncs also leave no rows.
             {missingRelatedHasMore ? ' Use Load more (missing) for the next page.' : ''}
           </p>

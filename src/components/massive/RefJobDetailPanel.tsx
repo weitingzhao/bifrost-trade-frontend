@@ -29,7 +29,7 @@ const RELATED_SCOPE_BUBBLES: ReadonlyArray<{
   {
     value: 'missing',
     label: 'Missing only',
-    title: 'Tickers with no ticker_related_tickers rows for from_tickers_id.',
+    title: 'Tickers with no ticker_related_tickers rows (by symbol).',
   },
   {
     value: 'stale',
@@ -416,9 +416,9 @@ export function RefJobDetailPanel({
                 className="flex-wrap"
               />
               <p className="text-xs text-muted-foreground">
-                Compares <code className="font-mono text-dense-meta">public.tickers</code> to{' '}
+                Compares <code className="font-mono text-dense-meta">market.ticker</code> to{' '}
                 <code className="font-mono text-dense-meta">public.ticker_related_tickers</code> (
-                <code className="font-mono text-dense-meta">from_tickers_id</code>). Stale uses{' '}
+                <code className="font-mono text-dense-meta">from_symbol</code>). Stale uses{' '}
                 <code className="font-mono text-dense-meta">MAX(fetched_at)</code> per ticker.
               </p>
               <CoverageCountsStrip

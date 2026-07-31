@@ -29,7 +29,12 @@ export const WatchlistItemSchema = z.object({
   category: z.string().nullable(),
   category_id: z.number().nullable(),
   source: z.string(),
-  created_at: z.number(),
+  // Market API historically returned epoch as a numeric string.
+  created_at: z.union([z.number(), z.string()]).transform((v) => {
+    if (typeof v === 'number') return v
+    const n = Number(v)
+    return Number.isFinite(n) ? n : 0
+  }),
 }).passthrough()
 
 export const WatchlistResponseSchema = z.object({

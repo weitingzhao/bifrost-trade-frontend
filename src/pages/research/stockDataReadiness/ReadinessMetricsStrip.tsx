@@ -1,5 +1,10 @@
+import { ExternalLink } from 'lucide-react'
 import type { SepaReadinessSummaryResponse } from '@/types/stockDataReadiness'
 import { fmt, fmtRelativeTime } from '@/utils/stockDataReadiness/format'
+
+const OPS_CONSOLE_URL =
+  import.meta.env.VITE_OPS_CONSOLE_URL ?? 'http://127.0.0.1:5180'
+const PLUGIN_GALLERY_HREF = `${OPS_CONSOLE_URL.replace(/\/$/, '')}/#plugin-gallery`
 
 interface Props {
   summary: SepaReadinessSummaryResponse | null
@@ -46,27 +51,41 @@ export function ReadinessMetricsStrip({ summary, vendorFillGap }: Props) {
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-      {metrics.map(m => (
-        <div
-          key={m.label}
-          className="rounded-lg border border-border bg-secondary px-3 py-3 space-y-1"
+    <div className="space-y-2">
+      <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-dense-caption text-muted-foreground">
+        <span>Pipeline health (workers / freshness) lives in Ops Console Plugin Gallery.</span>
+        <a
+          href={PLUGIN_GALLERY_HREF}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
         >
-          <div className="text-dense-caption font-bold uppercase tracking-wider text-muted-foreground">
-            {m.label}
-          </div>
+          Open Plugin Gallery
+          <ExternalLink className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+        </a>
+      </p>
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        {metrics.map(m => (
           <div
-            className={
-              m.accent
-                ? 'text-2xl font-semibold font-mono tabular-nums text-primary'
-                : 'text-2xl font-semibold font-mono tabular-nums'
-            }
+            key={m.label}
+            className="rounded-lg border border-border bg-secondary px-3 py-3 space-y-1"
           >
-            {m.value}
+            <div className="text-dense-caption font-bold uppercase tracking-wider text-muted-foreground">
+              {m.label}
+            </div>
+            <div
+              className={
+                m.accent
+                  ? 'text-2xl font-semibold font-mono tabular-nums text-primary'
+                  : 'text-2xl font-semibold font-mono tabular-nums'
+              }
+            >
+              {m.value}
+            </div>
+            <div className="text-dense-caption text-muted-foreground leading-snug">{m.sub}</div>
           </div>
-          <div className="text-dense-caption text-muted-foreground leading-snug">{m.sub}</div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

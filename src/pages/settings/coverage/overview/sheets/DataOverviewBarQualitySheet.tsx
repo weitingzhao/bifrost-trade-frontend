@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect -- fetch on dialog open */
 import { useEffect, useState } from 'react'
-import { fetchBarQualityDetail } from '@/api/massive/watchlistCoverage'
+import { fetchBarQualityDetail } from '@/api/coverageWatchlistStubs'
 import {
   Dialog,
   DialogContent,

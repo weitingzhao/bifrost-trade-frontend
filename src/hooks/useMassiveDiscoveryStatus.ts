@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchMassiveStatus } from '@/api/massive'
-import { fetchMassiveDailyChecklist } from '@/api/research/optionDiscovery'
+import { fetchMassiveStatus, fetchMassiveDailyChecklist } from '@/api/research/optionDiscovery'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { nyCalendarDateIso } from '@/utils/optionDiscovery/strikePresets'
 
+/** Plugin health stand-in for Discovery status strip. */
 export function useMassiveDiscoveryStatus() {
   return useQuery({
     queryKey: QUERY_KEYS.research.discovery.massiveStatus,

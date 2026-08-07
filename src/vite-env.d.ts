@@ -4,6 +4,7 @@ interface ImportMetaEnv {
   readonly VITE_API_MONITOR: string
   readonly VITE_API_MARKET: string
   readonly VITE_API_MASSIVE: string
+  readonly VITE_API_MARKET_DATA_PLUGIN: string
   readonly VITE_API_OPS: string
   readonly VITE_API_TRADING: string
   readonly VITE_API_STRATEGY: string

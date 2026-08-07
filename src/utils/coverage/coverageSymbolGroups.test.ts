@@ -3,7 +3,7 @@ import {
   emptyBarCoverageItem,
   normCoverageSymbol,
   splitCoverageByReferenceIndices,
-} from '@/utils/massive/coverageSymbolGroups'
+} from '@/utils/coverage/coverageSymbolGroups'
 
 describe('normCoverageSymbol', () => {
   it('uppercases and normalizes fullwidth caret', () => {

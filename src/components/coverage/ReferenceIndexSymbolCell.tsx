@@ -9,7 +9,7 @@ export function ReferenceIndexSymbolCell({
   const label = (reference?.label || '').trim()
   const titleParts: string[] = []
   if (label && label !== symbol) titleParts.push(label)
-  if (px) titleParts.push(`Massive/Polygon ticker: ${px}`)
+  if (px) titleParts.push(`Polygon ticker: ${px}`)
   const title = titleParts.length > 0 ? titleParts.join(' · ') : undefined
   return (
     <span className="inline-flex flex-wrap items-baseline gap-0.5">
@@ -17,7 +17,7 @@ export function ReferenceIndexSymbolCell({
         {symbol}
       </strong>
       {px ? (
-        <span className="text-xs text-muted-foreground" title="Aggregate ticker used for Massive/Polygon sync">
+        <span className="text-xs text-muted-foreground" title="Aggregate ticker used for Polygon sync">
           {' · '}
           {px}
         </span>

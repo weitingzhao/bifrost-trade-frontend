@@ -2,11 +2,10 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   BarChart2, ChevronDown, ChevronRight,
-  Cpu, Database, HardDrive,
+  Cpu, HardDrive,
   Layers, Layers2, Palette, Plug, Radio, Wifi,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { MassiveSidebarNav } from '@/layout/settings/MassiveSidebarNav'
 
 // ─── Nav tree ────────────────────────────────────────────────────────────────
 
@@ -55,8 +54,7 @@ const NAV: NavGroup[] = [
           ]),
           leaf('Option', '/settings/coverage/option', Layers),
           branch('Stock', HardDrive, [
-            leaf('IB Live (Redis)',    '/settings/coverage/stock-ib',      Wifi),
-            leaf('Massive Delay (DB)', '/settings/coverage/stock-massive', Database),
+            leaf('IB Live (Redis)', '/settings/coverage/stock-ib', Wifi),
           ]),
         ],
       },
@@ -82,7 +80,7 @@ const NAV: NavGroup[] = [
             leaf('User (YAML)',       '/settings/ib#ib-users',       Plug),
             leaf('Client ID (YAML)',  '/settings/ib#ib-client-ids',  Cpu),
             leaf('Account',          '/settings/ib#ib-account',      Layers),
-            leaf('Flex Query',       '/settings/ib#ib-flex-query',   Database),
+            leaf('Flex Query',       '/settings/ib#ib-flex-query',   HardDrive),
             leaf('Flex Preference',  '/settings/ib#flex-preference', BarChart2),
           ]),
         ],
@@ -184,7 +182,6 @@ export function SettingsLayout() {
                         ? <LeafItem key={item.to} item={item} />
                         : <BranchItem key={item.label} item={item} />
                     )}
-                    {section.section === 'Feed' ? <MassiveSidebarNav /> : null}
                   </div>
                 </div>
               ))}

@@ -37,7 +37,8 @@ import styles from './live.module.css'
 import { liveEmptyHintClass } from './liveUi'
 
 /** Symbol + Qty + Cost + Last + Daily $ + Daily % + Since $ + Since % */
-function marketStreamsColSpan(_hasStreamAccounts: boolean): number {
+function marketStreamsColSpan(hasStreamAccounts: boolean): number {
+  void hasStreamAccounts
   return 8
 }
 

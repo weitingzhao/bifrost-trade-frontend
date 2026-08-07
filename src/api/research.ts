@@ -1,5 +1,5 @@
 import { postControlShutdown } from '@/api/apiControl'
-import { massiveUrl, researchUrl } from '@/lib/devApiUrl'
+import { researchUrl } from '@/lib/devApiUrl'
 import type {
   ScreenerFilters,
   ScreenerResponse,
@@ -212,30 +212,12 @@ export async function fetchSymbolOptionPcr(
   }
 }
 
-// ── Celery Beat schedule (Massive API) ────────────────────────────────────────
+// ── Celery Beat schedule (Massive API removed — noop) ─────────────────────────
 
 export async function fetchMassiveCeleryBeatSchedule(): Promise<MassiveCeleryBeatScheduleResponse> {
-  try {
-    const r = await fetch(massiveUrl('/research/massive/celery-beat-schedule'))
-    const j = await r.json().catch(() => ({})) as Record<string, unknown>
-    if (!r.ok) {
-      return {
-        ok: false,
-        error: typeof j.error === 'string' ? j.error : `HTTP ${r.status}`,
-      }
-    }
-    if (j.ok === false) {
-      return {
-        ok: false,
-        error: typeof j.error === 'string' ? j.error : 'Request failed',
-      }
-    }
-    return j as unknown as MassiveCeleryBeatScheduleResponse
-  } catch (e) {
-    return {
-      ok: false,
-      error: e instanceof Error ? e.message : 'Network error',
-    }
+  return {
+    ok: false,
+    error: 'Massive Trade API removed — Celery Beat schedule lives on Market Data Plugin CronJobs',
   }
 }
 

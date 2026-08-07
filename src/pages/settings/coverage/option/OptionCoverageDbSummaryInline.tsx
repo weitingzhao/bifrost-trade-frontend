@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect -- inline DB summary refresh on refreshKey */
 import { useEffect, useState } from 'react'
-import { fetchDbCoverageSummary } from '@/api/massive/watchlistCoverage'
+import { fetchDbCoverageSummary } from '@/api/coverageWatchlistStubs'
 
 export function OptionCoverageDbSummaryInline({ refreshKey }: { refreshKey: number }) {
   const [line, setLine] = useState<string | null>(null)

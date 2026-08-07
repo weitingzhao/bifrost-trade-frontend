@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { subscribeMassiveJobEvents } from '@/api/massive'
+import { subscribeMassiveJobEvents } from '@/api/coverageJobEventsStub'
 import type { MassiveJobApiRow } from '@/types/ops'
 
 export interface OptionJobTrackItem {

@@ -1,6 +1,5 @@
 import { postDocsShutdown } from '@/api/docs'
 import { postMarketShutdown, postResearchShutdown, postStrategyShutdown } from '@/api/research'
-import { postMassiveShutdown } from '@/api/massive'
 import { postMonitorShutdown } from '@/api/monitor'
 import { postOpsShutdown } from '@/api/ops'
 import { postPortfolioShutdown } from '@/api/portfolio'
@@ -61,12 +60,6 @@ export const API_SHUTDOWN_BY_KEY: Record<string, ApiShutdownConfig> = {
     scriptHint: 'python scripts/run_server_market.py',
     requiresOpsToken: true,
     post: () => postMarketShutdown(),
-  },
-  massive: {
-    label: 'Massive API',
-    scriptHint: 'python scripts/run_server_massive.py',
-    requiresOpsToken: false,
-    post: postMassiveShutdown,
   },
 }
 

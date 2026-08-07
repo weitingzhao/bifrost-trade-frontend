@@ -15,7 +15,7 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { ReferenceIndexSymbolCell } from '@/components/massive/ReferenceIndexSymbolCell'
+import { ReferenceIndexSymbolCell } from '@/components/coverage/ReferenceIndexSymbolCell'
 import type { BarCoverageItem, BarsCoverageResponse } from '@/types/barsCoverage'
 import type { StatusResponse } from '@/types/monitor'
 import {
@@ -23,8 +23,8 @@ import {
   coverageCompact,
   coverageRange,
   coverageStatusDisplay,
-} from '@/utils/massive/barCoverageDisplay'
-import { normCoverageSymbol } from '@/utils/massive/coverageSymbolGroups'
+} from '@/utils/coverage/barCoverageDisplay'
+import { normCoverageSymbol } from '@/utils/coverage/coverageSymbolGroups'
 
 export interface IbStockCoveragePanelProps {
   coverage: BarCoverageItem[] | null

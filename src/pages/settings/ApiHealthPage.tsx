@@ -13,7 +13,6 @@ import { ApiEnvHealthGrid } from './apiHealth/ApiEnvHealthGrid'
 import {
   ACCOUNT_SERVICES,
   ARCH_SERVICES,
-  MASSIVE_SERVICES,
   RESEARCH_SERVICES,
 } from './apiHealth/apiHealthConfig'
 import type { ServiceDef } from './apiHealth/apiHealthConfig'
@@ -22,7 +21,6 @@ import { apiHealthOverviewCardClass } from './apiHealth/apiHealthUi'
 import { TabLamp } from './apiHealth/TabLamp'
 import { AccountDetailsPanel } from './apiHealth/panels/AccountDetailsPanel'
 import { ArchDetailsPanel } from './apiHealth/panels/ArchDetailsPanel'
-import { MassiveDetailsPanel } from './apiHealth/panels/MassiveDetailsPanel'
 import { ResearchDetailsPanel } from './apiHealth/panels/ResearchDetailsPanel'
 
 const API_HEALTH_INFO =
@@ -52,7 +50,6 @@ export default function ApiHealthPage() {
 
   function refreshAll() {
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.settings.apiHealth })
-    void qc.invalidateQueries({ queryKey: QUERY_KEYS.settings.apiHealthMassive })
     void qc.invalidateQueries({ queryKey: ['settings', 'api-health', 'env-overview'] })
   }
 
@@ -122,10 +119,6 @@ export default function ApiHealthPage() {
               <TabLamp services={RESEARCH_SERVICES} />
               Research
             </TabsTrigger>
-            <TabsTrigger value="massive" className="gap-2">
-              <TabLamp services={MASSIVE_SERVICES} />
-              Massive
-            </TabsTrigger>
           </TabsList>
 
           <TabsPanelContent>
@@ -153,15 +146,6 @@ export default function ApiHealthPage() {
                 <ApiCategoryTabContent
                   services={RESEARCH_SERVICES}
                   detailsPanel={<ResearchDetailsPanel />}
-                  shutdownMsgs={shutdownMsgs}
-                  forceDownKeys={forceDownKeys}
-                  onRequestShutdown={onRequestShutdown}
-                />
-              </TabsContent>
-              <TabsContent value="massive">
-                <ApiCategoryTabContent
-                  services={MASSIVE_SERVICES}
-                  detailsPanel={<MassiveDetailsPanel />}
                   shutdownMsgs={shutdownMsgs}
                   forceDownKeys={forceDownKeys}
                   onRequestShutdown={onRequestShutdown}

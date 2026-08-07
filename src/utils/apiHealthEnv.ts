@@ -382,10 +382,12 @@ export async function resolveApiHealthColumnPlans(): Promise<{
 
   try {
     const h = await fetchMonitorHealth()
-    const mhRes = await fetch(
-      `${import.meta.env.VITE_API_MASSIVE as string}/research/massive/health`,
-      { signal: AbortSignal.timeout(API_HEALTH_FETCH_TIMEOUT_MS) },
-    ).catch(() => null)
+    const pluginBase =
+      (import.meta.env.VITE_API_MARKET_DATA_PLUGIN as string | undefined)?.trim() ||
+      'http://localhost:8780/api/v1/plugins/market-data/api'
+    const mhRes = await fetch(`${pluginBase.replace(/\/$/, '')}/health`, {
+      signal: AbortSignal.timeout(API_HEALTH_FETCH_TIMEOUT_MS),
+    }).catch(() => null)
     const mh =
       mhRes?.ok === true
         ? ((await mhRes.json().catch(() => null)) as Record<string, unknown> | null)

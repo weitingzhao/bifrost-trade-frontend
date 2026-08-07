@@ -13,19 +13,45 @@ import type {
   LiquiditySummaryResponse,
   RelativeValueResponse,
   MassiveJobDetail,
+  MassiveJobPollResult,
+  MassiveStatusResponse,
 } from '@/types/optionDiscovery'
 import { withValidation } from '@/lib/apiValidation'
 import {
   OptionExpirationsResponseSchema,
   OptionSnapshotsPgResponseSchema,
-  MassiveDailyChecklistResponseSchema,
-  GreeksCoverageResponseSchema,
 } from '@/lib/schemas/optionDiscovery'
 
-import { fetchMassiveStatus } from '@/api/massive'
-import { massiveUrl, opsUrl, researchUrl } from '@/lib/devApiUrl'
+import { marketDataPluginUrl, researchUrl } from '@/lib/devApiUrl'
 
-export { fetchMassiveStatus }
+const MASSIVE_DISABLED =
+  'Massive Trade API removed — use Market Data Plugin (Ops Console / Plugin API)'
+
+/** Plugin health as Discovery "status" stand-in (configured when reachable). */
+export async function fetchMassiveStatus(): Promise<MassiveStatusResponse> {
+  try {
+    const r = await fetch(marketDataPluginUrl('/health'))
+    const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
+    const ok = r.ok && (j.status === 'ok' || j.status === 'degraded')
+    return {
+      configured: ok,
+      tier: typeof j.service === 'string' ? String(j.service) : 'market-data-plugin',
+      delay_notice: ok
+        ? 'Market Data Plugin (Polygon ingest via platform proxy)'
+        : MASSIVE_DISABLED,
+      trades_enabled: ok,
+      daily_full_backfill_years: 0,
+    }
+  } catch {
+    return {
+      configured: false,
+      tier: 'unavailable',
+      delay_notice: MASSIVE_DISABLED,
+      trades_enabled: false,
+      daily_full_backfill_years: 0,
+    }
+  }
+}
 
 /** Massive sync may return job_ids[] without job_id (fan-out). */
 export function resolveMassiveSyncJobId(sync: {
@@ -77,6 +103,15 @@ function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
     day_last_updated_day:
       typeof row.day_last_updated_day === 'string' ? row.day_last_updated_day : null,
   }
+}
+
+function dteFromExpiry(expiry: string, asOf?: string | null): number {
+  const exp = expiry.trim().slice(0, 10)
+  const base = (asOf || new Date().toISOString()).slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(exp) || !/^\d{4}-\d{2}-\d{2}$/.test(base)) return 0
+  const ms = Date.parse(`${exp}T12:00:00Z`) - Date.parse(`${base}T12:00:00Z`)
+  if (!Number.isFinite(ms)) return 0
+  return Math.max(0, Math.round(ms / 86_400_000))
 }
 
 export async function fetchOptionExpirations(
@@ -146,18 +181,11 @@ export async function fetchMassiveDailyChecklist(params: {
 }> {
   const syms = [...new Set((params.symbols || []).map(s => String(s).trim().toUpperCase()).filter(Boolean))].slice(0, 80)
   if (syms.length === 0) return { ok: false, error: 'symbols is required' }
-  const q = new URLSearchParams({ symbols: syms.join(',') })
-  if (params.tradeDate?.trim()) q.set('trade_date', params.tradeDate.trim())
-  const r = await fetch(massiveUrl(`/research/massive/daily-checklist?${q.toString()}`))
-  const j = await r.json().catch(() => ({}))
-  if (!r.ok || !j.ok) {
-    return { ok: false, error: typeof j.error === 'string' ? j.error : `HTTP ${r.status}` }
-  }
-  withValidation(MassiveDailyChecklistResponseSchema, 'fetchMassiveDailyChecklist')(j)
   return {
-    ok: true,
-    trade_date: typeof j.trade_date === 'string' ? j.trade_date : undefined,
-    symbols: j.symbols && typeof j.symbols === 'object' ? (j.symbols as Record<string, MassiveDailyChecklistDims>) : {},
+    ok: false,
+    trade_date: params.tradeDate?.trim() || undefined,
+    symbols: {},
+    error: MASSIVE_DISABLED,
   }
 }
 
@@ -173,42 +201,10 @@ export async function postMassiveSync(
   message?: string
   deduplicated?: boolean
 }> {
-  const r = await fetch(massiveUrl('/research/massive/sync'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      kind,
-      payload,
-      ...(options?.priority === 'high' ? { priority: 'high' } : {}),
-    }),
-    signal: options?.signal,
-  })
-  const j = await r.json().catch(() => ({}))
-  if (!r.ok) {
-    return {
-      ok: false,
-      error: typeof j.error === 'string' ? j.error : `HTTP ${r.status}`,
-      message: typeof j.message === 'string' ? j.message : undefined,
-    }
-  }
-  if (r.status === 403) {
-    return { ok: false, message: typeof j.message === 'string' ? j.message : 'Forbidden' }
-  }
-  const rawIds = j.job_ids
-  const job_ids =
-    Array.isArray(rawIds) && rawIds.length > 0
-      ? rawIds.map((x: unknown) => String(x)).filter(Boolean)
-      : undefined
-  const job_id =
-    typeof j.job_id === 'string' ? j.job_id : job_ids?.[0]
-  return {
-    ok: Boolean(j.ok),
-    job_id,
-    job_ids,
-    error: typeof j.error === 'string' ? j.error : undefined,
-    message: typeof j.message === 'string' ? j.message : undefined,
-    deduplicated: typeof j.deduplicated === 'boolean' ? j.deduplicated : undefined,
-  }
+  void kind
+  void payload
+  void options
+  return { ok: false, error: MASSIVE_DISABLED, message: MASSIVE_DISABLED }
 }
 
 export async function fetchMassiveJob(jobId: string): Promise<{
@@ -216,24 +212,17 @@ export async function fetchMassiveJob(jobId: string): Promise<{
   error?: string
   job?: MassiveJobDetail
 }> {
-  const r = await fetch(opsUrl(`/research/massive/jobs/${encodeURIComponent(jobId)}`))
-  const j = await r.json().catch(() => ({}))
-  if (!j.ok) {
-    return { ok: false, error: typeof j.error === 'string' ? j.error : 'Unknown error' }
-  }
-  const job = j.job as Record<string, unknown> | undefined
-  if (!job) return { ok: true }
-  return {
-    ok: true,
-    job: {
-      job_id: String(job.job_id ?? ''),
-      kind: typeof job.kind === 'string' ? job.kind : undefined,
-      status: typeof job.status === 'string' ? job.status : undefined,
-      result: job.result,
-      created_ts: typeof job.created_ts === 'number' ? job.created_ts : undefined,
-      updated_ts: typeof job.updated_ts === 'number' ? job.updated_ts : undefined,
-    },
-  }
+  void jobId
+  return { ok: false, error: MASSIVE_DISABLED }
+}
+
+export async function pollMassiveJobUntilDone(
+  jobId: string,
+  options?: { maxAttempts?: number; intervalMs?: number },
+): Promise<MassiveJobPollResult> {
+  void jobId
+  void options
+  return { ok: false, error: MASSIVE_DISABLED }
 }
 
 export async function fetchMaxPainCompute(params: {
@@ -246,19 +235,34 @@ export async function fetchMaxPainCompute(params: {
   if (!sym || !exp) return { ok: false, error: 'symbol and expiry are required' }
   const q = new URLSearchParams({ symbol: sym, expiry: exp })
   if (params.tradeDate?.trim()) q.set('trade_date', params.tradeDate.trim())
-  const r = await fetch(`${researchUrl('/research/max-pain/compute')}?${q.toString()}`)
-  const j = await r.json().catch(() => ({}))
-  if (!j.ok) {
-    return { ok: false, error: typeof j.error === 'string' ? j.error : 'Request failed' }
+  const r = await fetch(`${marketDataPluginUrl('/market/analytics/max-pain/compute')}?${q.toString()}`)
+  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
+  if (!r.ok || j.ok === false) {
+    const detail =
+      typeof j.detail === 'string'
+        ? j.detail
+        : typeof j.error === 'string'
+          ? j.error
+          : `HTTP ${r.status}`
+    return { ok: false, error: detail }
   }
-  const pts = Array.isArray(j.pain_by_strike) ? j.pain_by_strike : []
+  const pts = Array.isArray(j.points)
+    ? j.points
+    : Array.isArray(j.pain_by_strike)
+      ? j.pain_by_strike
+      : []
   return {
     ok: true,
     symbol: typeof j.symbol === 'string' ? j.symbol : sym,
     expiry: typeof j.expiry === 'string' ? j.expiry : undefined,
     trade_date: typeof j.trade_date === 'string' ? j.trade_date : undefined,
     max_pain_strike: typeof j.max_pain_strike === 'number' ? j.max_pain_strike : undefined,
-    min_pain_value: typeof j.min_pain_value === 'number' ? j.min_pain_value : undefined,
+    min_pain_value:
+      typeof j.total_pain_at_strike === 'number'
+        ? j.total_pain_at_strike
+        : typeof j.min_pain_value === 'number'
+          ? j.min_pain_value
+          : undefined,
     total_oi: typeof j.total_oi === 'number' ? j.total_oi : undefined,
     underlying_close:
       j.underlying_close != null && Number.isFinite(Number(j.underlying_close))
@@ -277,7 +281,7 @@ export async function fetchMaxPainCompute(params: {
       put_oi: Number(p.put_oi ?? 0),
     })),
     recent_corporate_action: Boolean(j.recent_corporate_action),
-    oi_basis: typeof j.oi_basis === 'string' ? j.oi_basis : undefined,
+    oi_basis: typeof j.oi_basis === 'string' ? j.oi_basis : typeof j.source === 'string' ? j.source : undefined,
   }
 }
 
@@ -291,10 +295,18 @@ export async function fetchMaxPainComputeHistory(params: {
   if (!sym || !exp) return { ok: false, error: 'symbol and expiry are required', series: [] }
   const q = new URLSearchParams({ symbol: sym, expiry: exp })
   if (params.lookbackDays != null && params.lookbackDays > 0) q.set('lookback_days', String(params.lookbackDays))
-  const r = await fetch(`${researchUrl('/research/max-pain/compute/history')}?${q.toString()}`)
-  const j = await r.json().catch(() => ({}))
-  if (!j.ok) {
-    return { ok: false, error: typeof j.error === 'string' ? j.error : 'Request failed', series: [] }
+  const r = await fetch(
+    `${marketDataPluginUrl('/market/analytics/max-pain/compute/history')}?${q.toString()}`,
+  )
+  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
+  if (!r.ok || j.ok === false) {
+    const detail =
+      typeof j.detail === 'string'
+        ? j.detail
+        : typeof j.error === 'string'
+          ? j.error
+          : `HTTP ${r.status}`
+    return { ok: false, error: detail, series: [] }
   }
   const raw = Array.isArray(j.series) ? j.series : []
   return {
@@ -354,48 +366,62 @@ export async function fetchIvVolatilityCone(
   source = 'massive',
   lookbackDays = 90,
 ): Promise<IvVolatilityConeResponse> {
-  const params = new URLSearchParams({
-    symbol,
-    expirations: expirations.join(','),
-    source,
-    lookback_days: String(lookbackDays),
-  })
-  const r = await fetch(`${researchUrl('/research/iv-volatility-cone')}?${params}`)
-  const j = await r.json().catch(() => ({}))
+  void expirations
+  void source
+  void lookbackDays
+  const sym = (symbol || '').trim().toUpperCase()
+  if (!sym) return { ok: false, symbol: '', points: [], error: 'symbol is required' }
+  const r = await fetch(
+    `${marketDataPluginUrl('/market/analytics/atm-iv/term')}?symbol=${encodeURIComponent(sym)}`,
+  )
+  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
+  if (!r.ok) {
+    const detail =
+      typeof j.detail === 'string'
+        ? j.detail
+        : typeof j.error === 'string'
+          ? j.error
+          : `HTTP ${r.status}`
+    return { ok: false, symbol: sym, points: [], error: detail }
+  }
+  const tradeDate = typeof j.trade_date === 'string' ? j.trade_date : null
+  const term = Array.isArray(j.term) ? j.term : []
   const numOrNull = (v: unknown): number | null => {
     if (v == null || v === '') return null
     const n = Number(v)
     return Number.isFinite(n) ? n : null
   }
-  const pts: IvVolatilityConePoint[] = Array.isArray(j.points)
-    ? j.points.map((p: Record<string, unknown>) => ({
-        expiration: String(p.expiration ?? ''),
-        dte_days: Number(p.dte_days ?? 0),
-        atm_iv: numOrNull(p.atm_iv),
-        iv_call: numOrNull(p.iv_call),
-        iv_put: numOrNull(p.iv_put),
-        strike: numOrNull(p.strike),
-        iv_p10: numOrNull(p.iv_p10),
-        iv_p50: numOrNull(p.iv_p50),
-        iv_p90: numOrNull(p.iv_p90),
-        iv_min: numOrNull(p.iv_min),
-        iv_max: numOrNull(p.iv_max),
-        sample_days: Number(p.sample_days ?? 0),
-        iv_hist_mean: numOrNull(p.iv_hist_mean),
-        iv_hist_stdev: numOrNull(p.iv_hist_stdev),
-        iv_hist_min: numOrNull(p.iv_hist_min),
-        iv_hist_max: numOrNull(p.iv_hist_max),
-        iv_hist_plus_1sd: numOrNull(p.iv_hist_plus_1sd),
-        iv_hist_minus_1sd: numOrNull(p.iv_hist_minus_1sd),
-        iv_hist_plus_2sd: numOrNull(p.iv_hist_plus_2sd),
-        iv_hist_minus_2sd: numOrNull(p.iv_hist_minus_2sd),
-      }))
-    : []
+  const pts: IvVolatilityConePoint[] = term.map((p: Record<string, unknown>) => {
+    const expiration = String(p.expiry ?? p.expiration ?? '')
+    const atm = numOrNull(p.atm_iv)
+    return {
+      expiration,
+      dte_days: dteFromExpiry(expiration, tradeDate),
+      atm_iv: atm,
+      iv_call: null,
+      iv_put: null,
+      strike: numOrNull(p.atm_strike ?? p.strike),
+      iv_p10: null,
+      iv_p50: atm,
+      iv_p90: null,
+      iv_min: null,
+      iv_max: null,
+      sample_days: 0,
+      iv_hist_mean: null,
+      iv_hist_stdev: null,
+      iv_hist_min: null,
+      iv_hist_max: null,
+      iv_hist_plus_1sd: null,
+      iv_hist_minus_1sd: null,
+      iv_hist_plus_2sd: null,
+      iv_hist_minus_2sd: null,
+    }
+  })
   return {
-    ok: Boolean(j.ok) && r.ok,
-    symbol: j.symbol ?? symbol,
+    ok: pts.length > 0,
+    symbol: typeof j.symbol === 'string' ? j.symbol : sym,
     points: pts,
-    error: typeof j.error === 'string' ? j.error : !r.ok ? `HTTP ${r.status}` : undefined,
+    error: pts.length === 0 ? 'No atm-iv term rows' : undefined,
   }
 }
 
@@ -404,22 +430,66 @@ export async function fetchGreeksCoverage(
   expiration?: string,
   source: 'massive' | 'ib' = 'massive',
 ): Promise<GreeksCoverageResponse> {
+  void source
   const s = (symbol || '').trim()
   if (!s) return { ok: false, error: 'symbol is required' }
-  const q = new URLSearchParams({ symbol: s, source })
-  if (expiration?.trim()) q.set('expiration', expiration.trim())
-  const r = await fetch(massiveUrl(`/research/massive/greeks-coverage?${q.toString()}`))
-  const j = await r.json().catch(() => ({}))
-  withValidation(GreeksCoverageResponseSchema, 'fetchGreeksCoverage')(j)
+  const q = new URLSearchParams({ symbol: s })
+  const r = await fetch(`${marketDataPluginUrl('/market/coverage/greeks')}?${q.toString()}`)
+  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
+  if (!r.ok || j.ok === false) {
+    return {
+      ok: false,
+      error:
+        typeof j.detail === 'string'
+          ? j.detail
+          : typeof j.error === 'string'
+            ? j.error
+            : `HTTP ${r.status}`,
+    }
+  }
+  const rows = Array.isArray(j.rows) ? j.rows : []
+  const row =
+    (rows.find(
+      (x: Record<string, unknown>) => String(x.symbol ?? '').toUpperCase() === s.toUpperCase(),
+    ) as Record<string, unknown> | undefined) ??
+    (rows[0] as Record<string, unknown> | undefined)
+  if (!row) {
+    return {
+      ok: true,
+      symbol: s,
+      expiration: expiration?.trim() || undefined,
+      source: 'plugin',
+      total: 0,
+      coverage: {},
+      freshness: { oldest_ts: null, newest_ts: null, stale_rows: 0 },
+    }
+  }
+  const total = Number(row.total_contracts ?? 0)
+  const withIv = Number(row.with_iv ?? 0)
+  const withDelta = Number(row.with_delta ?? 0)
+  const withFull = Number(row.with_full_greeks ?? 0)
+  const newest =
+    row.newest_ts != null
+      ? typeof row.newest_ts === 'string'
+        ? row.newest_ts
+        : String(row.newest_ts)
+      : null
   return {
-    ok: Boolean(j.ok),
-    symbol: typeof j.symbol === 'string' ? j.symbol : undefined,
-    expiration: typeof j.expiration === 'string' ? j.expiration : undefined,
-    source: typeof j.source === 'string' ? j.source : undefined,
-    total: typeof j.total === 'number' ? j.total : undefined,
-    coverage: typeof j.coverage === 'object' && j.coverage != null ? j.coverage : undefined,
-    freshness: typeof j.freshness === 'object' && j.freshness != null ? j.freshness : undefined,
-    error: typeof j.error === 'string' ? j.error : undefined,
+    ok: true,
+    symbol: typeof row.symbol === 'string' ? row.symbol : s,
+    expiration: expiration?.trim() || undefined,
+    source: 'plugin',
+    total,
+    coverage: {
+      iv: withIv,
+      delta: withDelta,
+      full_greeks: withFull,
+    },
+    freshness: {
+      oldest_ts: null,
+      newest_ts: newest,
+      stale_rows: 0,
+    },
   }
 }
 
@@ -492,11 +562,30 @@ export async function fetchMassiveLastTrade(ticker: string): Promise<{
 }> {
   const ot = (ticker || '').trim()
   if (!ot) return { ok: false, error: 'options_ticker is required' }
-  const r = await fetch(massiveUrl(`/research/massive/trades-quotes/last-trade/${encodeURIComponent(ot)}`))
-  const j = await r.json().catch(() => ({}))
+  const r = await fetch(
+    marketDataPluginUrl(`/market/trades-quotes/last-trade/${encodeURIComponent(ot)}`),
+  )
+  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
+  if (!r.ok) {
+    return {
+      ok: false,
+      error:
+        typeof j.detail === 'string'
+          ? j.detail
+          : typeof j.error === 'string'
+            ? j.error
+            : `HTTP ${r.status}`,
+    }
+  }
+  const results =
+    j.results != null && typeof j.results === 'object' && !Array.isArray(j.results)
+      ? (j.results as Record<string, unknown>)
+      : j.status != null
+        ? j
+        : undefined
   return {
-    ok: Boolean(j.ok),
-    results: j.results as Record<string, unknown> | undefined,
+    ok: true,
+    results,
     error: typeof j.error === 'string' ? j.error : undefined,
   }
 }
@@ -509,16 +598,28 @@ export async function fetchMassiveHistQuotes(
   if (!ot) return { ok: false, error: 'options_ticker is required' }
   const q = new URLSearchParams()
   if (options?.limit != null) q.set('limit', String(options.limit))
+  const qs = q.toString()
   const r = await fetch(
-    massiveUrl(`/research/massive/trades-quotes/quotes/${encodeURIComponent(ot)}?${q.toString()}`),
+    marketDataPluginUrl(
+      `/market/trades-quotes/quotes/${encodeURIComponent(ot)}${qs ? `?${qs}` : ''}`,
+    ),
   )
-  const j = await r.json().catch(() => ({}))
+  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
+  if (!r.ok) {
+    return {
+      ok: false,
+      error:
+        typeof j.detail === 'string'
+          ? j.detail
+          : typeof j.error === 'string'
+            ? j.error
+            : `HTTP ${r.status}`,
+    }
+  }
   return {
-    ok: Boolean(j.ok),
-    results: Array.isArray(j.results) ? j.results : undefined,
+    ok: true,
+    results: Array.isArray(j.results) ? (j.results as Record<string, unknown>[]) : undefined,
     count: typeof j.count === 'number' ? j.count : undefined,
     error: typeof j.error === 'string' ? j.error : undefined,
   }
 }
-
-export { pollMassiveJobUntilDone } from '@/utils/massiveJobPoll'

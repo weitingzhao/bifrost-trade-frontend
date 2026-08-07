@@ -45,6 +45,18 @@ export function massiveUrl(path: string): string {
   return joinBase(import.meta.env.VITE_API_MASSIVE as string, normalizedPath)
 }
 
+/**
+ * Market Data Plugin via platform-api proxy.
+ * Always uses VITE_API_MARKET_DATA_PLUGIN (full URL) — Plugin is on :8780, not Trade Vite proxy.
+ */
+export function marketDataPluginUrl(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const base =
+    (import.meta.env.VITE_API_MARKET_DATA_PLUGIN as string | undefined)?.trim() ||
+    'http://localhost:8780/api/v1/plugins/market-data/api'
+  return joinBase(base, normalizedPath)
+}
+
 export function opsUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   const withOps = normalizedPath.startsWith('/ops') ? normalizedPath : `/ops${normalizedPath}`

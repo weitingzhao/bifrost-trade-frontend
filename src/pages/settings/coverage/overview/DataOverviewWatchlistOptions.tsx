@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { postOptionBarsContractsGapBatch } from '@/api/massive/watchlistCoverage'
+import { postOptionBarsContractsGapBatch } from '@/api/coverageWatchlistStubs'
 import type {
   OptionBarsContractsGapResult,
   OptionContractsReferenceGapResult,

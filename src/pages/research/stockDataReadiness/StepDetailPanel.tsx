@@ -19,7 +19,7 @@ import { gapAckTypeForFinKind } from '@/api/research/stockDataReadiness'
 import type { FinDrawerKind, SepaReadinessSummaryResponse, SepaRunStep } from '@/types/stockDataReadiness'
 import type { RunbookDerivedState } from '@/utils/stockDataReadiness/runbook'
 import { fmt } from '@/utils/stockDataReadiness/format'
-import type { MassiveRefJobSessionApi } from '@/components/massive/massiveRefJobContext'
+import type { MassiveRefJobSessionApi } from './refJobSessionStub'
 
 function Code({ children }: { children: React.ReactNode }) {
   return <code className="text-dense-meta font-mono text-sky-300/90">{children}</code>
@@ -308,7 +308,7 @@ export function StepDetailPanel(props: Props) {
                   ? `Gaps (${fmt(derived.priceGap)}) →`
                   : 'View gaps →'}
             </ReadinessGapsButton>
-            <ReadinessGhostLink to="/settings/feed/massive-stock">Open Feed Massive Stock →</ReadinessGhostLink>
+            <ReadinessGhostLink to="/settings/coverage/stock-ib">Open Stock IB Coverage →</ReadinessGhostLink>
           </div>
           <ReadinessOperationLog ok={groupedHistoryOk}>{groupedHistoryMsg}</ReadinessOperationLog>
         </div>

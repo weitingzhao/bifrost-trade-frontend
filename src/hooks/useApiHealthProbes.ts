@@ -14,11 +14,6 @@ export interface ProbeResult {
   body: Record<string, unknown> | null
 }
 
-export interface MassiveStatus {
-  configured?: boolean
-  [key: string]: unknown
-}
-
 function safeBody(raw: unknown): Record<string, unknown> | null {
   if (raw != null && typeof raw === 'object' && !Array.isArray(raw)) {
     return raw as Record<string, unknown>
@@ -51,20 +46,5 @@ export function useApiHealthProbe(svc: ApiServiceDef) {
 export function useApiHealthProbes(services: ApiServiceDef[]) {
   return useQueries({
     queries: services.map(svc => makeProbeQuery(svc)),
-  })
-}
-
-export function useMassiveApiStatus(massiveBase: string) {
-  return useQuery({
-    queryKey: QUERY_KEYS.settings.apiHealthMassive,
-    queryFn: async (): Promise<MassiveStatus> => {
-      const res = await fetch(`${massiveBase}/research/massive/status`, {
-        signal: AbortSignal.timeout(10_000),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      return res.json() as Promise<MassiveStatus>
-    },
-    refetchInterval: 30_000,
-    retry: 1,
   })
 }

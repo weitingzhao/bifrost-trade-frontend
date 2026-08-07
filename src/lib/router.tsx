@@ -166,30 +166,10 @@ export const router = createBrowserRouter([
             path: 'coverage/stock-ib',
             lazy: lazyPage(() => import('@/pages/settings/CoverageStockIbPage')),
           },
-          {
-            path: 'coverage/stock-massive',
-            lazy: lazyPage(() => import('@/pages/settings/CoverageStockMassivePage')),
-          },
 
           {
             path: 'feed/ib',
             lazy: lazyPage(() => import('@/pages/settings/FeedIbPage')),
-          },
-          {
-            path: 'feed/massive',
-            lazy: lazyPage(() => import('@/pages/settings/FeedMassiveOverviewPage')),
-          },
-          {
-            path: 'feed/massive-stock',
-            lazy: lazyPage(() => import('@/pages/settings/FeedMassiveStockPage')),
-          },
-          {
-            path: 'feed/massive-option',
-            lazy: lazyPage(() => import('@/pages/settings/FeedMassiveOptionPage')),
-          },
-          {
-            path: 'feed/massive-comm',
-            lazy: lazyPage(() => import('@/pages/settings/FeedMassiveCommPage')),
           },
 
           {

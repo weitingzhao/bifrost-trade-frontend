@@ -6,10 +6,7 @@ import {
   useState,
 } from 'react'
 import { postMassiveSync } from '@/api/research/optionDiscovery'
-import {
-  postOptionDayFillEligibility,
-  postOptionMinFillEligibility,
-} from '@/api/massive/watchlistCoverage'
+import { postOptionDayFillEligibility, postOptionMinFillEligibility } from '@/api/coverageWatchlistStubs'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import {

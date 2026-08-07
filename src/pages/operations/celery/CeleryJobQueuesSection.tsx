@@ -12,7 +12,6 @@ import {
 } from './celeryUi'
 import type { CeleryStatusFilter } from './celeryTypes'
 import { BarsJobsPanel } from './jobQueues/BarsJobsPanel'
-import { MassiveJobsPanel } from './jobQueues/MassiveJobsPanel'
 import {
   FALLBACK_TABS,
   tabsFromProfiles,
@@ -133,13 +132,10 @@ export function CeleryJobQueuesSection({
               Queue: {t.celeryQueue}
             </p>
             {t.pipeline === 'massive_async' ? (
-              <MassiveJobsPanel
-                tab={t}
-                statusFilter={activeTabId === t.id ? statusFilter : 'all'}
-                limit={limit}
-                onConfirm={handleConfirm}
-                onMsg={handleMsg}
-              />
+              <p className="text-dense-meta text-muted-foreground py-6 text-center">
+                Massive Celery job queue UI removed. Market Data Plugin owns Polygon ingest
+                (Ops Console → Subcontractors).
+              </p>
             ) : (
               <BarsJobsPanel
                 statusFilter={activeTabId === t.id ? statusFilter : 'all'}

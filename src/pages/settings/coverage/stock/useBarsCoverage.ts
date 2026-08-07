@@ -13,7 +13,7 @@ import {
 } from '@/api/market'
 import { fetchBarsJobs } from '@/api/ops'
 import { ALL_BAR_PERIOD_VALUES } from '@/constants/barPeriods'
-import { splitCoverageByReferenceIndices } from '@/utils/massive/coverageSymbolGroups'
+import { splitCoverageByReferenceIndices } from '@/utils/coverage/coverageSymbolGroups'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 
 export function useBarsCoverage() {

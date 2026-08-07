@@ -37,18 +37,23 @@ export async function fetchHealthAtOrigin(
 }
 
 export async function fetchMassiveApiHealthAtOrigin(
-  origin: ApiOriginBase,
+  _origin: ApiOriginBase,
   options?: { timeoutMs?: number },
 ): Promise<{ status: string; service: string; ts: number; config_profile?: string | null }> {
-  const j = await fetchJsonAt(
-    origin,
-    '/research/massive/health',
-    options?.timeoutMs ?? API_HEALTH_FETCH_TIMEOUT_MS,
-  )
+  const base =
+    (import.meta.env.VITE_API_MARKET_DATA_PLUGIN as string | undefined)?.trim() ||
+    'http://localhost:8780/api/v1/plugins/market-data/api'
+  const url = `${base.replace(/\/$/, '')}/health`
+  const r = await fetch(url, {
+    credentials: 'omit',
+    signal: AbortSignal.timeout(options?.timeoutMs ?? API_HEALTH_FETCH_TIMEOUT_MS),
+  })
+  if (!r.ok) throw new Error(`HTTP ${r.status}`)
+  const j = (await r.json()) as Record<string, unknown>
   return {
     status: String(j.status ?? 'unknown'),
-    service: String(j.service ?? 'bifrost-massive'),
-    ts: typeof j.ts === 'number' ? j.ts : 0,
+    service: String(j.service ?? 'market-data-api'),
+    ts: typeof j.ts === 'number' ? j.ts : Date.now(),
     config_profile: typeof j.config_profile === 'string' ? j.config_profile : null,
   }
 }

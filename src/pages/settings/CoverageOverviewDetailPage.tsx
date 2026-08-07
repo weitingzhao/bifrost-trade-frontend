@@ -18,7 +18,7 @@ export default function CoverageOverviewDetailPage() {
             <InfoTooltip text={PAGE_INFO} />
           </span>
         }
-        description="Watchlist matrix and Massive coverage jobs."
+        description="Watchlist matrix and option coverage tools."
         actions={
           <Button variant="outline" size="sm" asChild>
             <Link to="/settings/coverage/overview">Overview summary</Link>
@@ -31,7 +31,7 @@ export default function CoverageOverviewDetailPage() {
           <Link to="/settings/coverage/option">Option coverage</Link>
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <Link to="/settings/feed/massive-stock">Massive Stock feed</Link>
+          <Link to="/settings/coverage/stock-ib">Stock IB coverage</Link>
         </Button>
       </div>
 

@@ -26,11 +26,7 @@ export const RESEARCH_SERVICES: ServiceDef[] = [
   { key: 'market',   name: 'Market',   base: import.meta.env.VITE_API_MARKET   as string, port: '8772', description: 'Real-time quotes SSE',      healthPath: '/health' },
 ]
 
-export const MASSIVE_SERVICES: ServiceDef[] = [
-  { key: 'massive', name: 'Massive', base: import.meta.env.VITE_API_MASSIVE as string, port: '8766', description: 'Polygon data query', healthPath: '/research/massive/health' },
-]
-
-export const ALL_SERVICES = [...ARCH_SERVICES, ...ACCOUNT_SERVICES, ...RESEARCH_SERVICES, ...MASSIVE_SERVICES]
+export const ALL_SERVICES = [...ARCH_SERVICES, ...ACCOUNT_SERVICES, ...RESEARCH_SERVICES]
 
 export const DOC_PATHS: Record<string, { swagger: string; redoc: string; openapi: string | null }> = {
   monitor:   { swagger: '/docs',                  redoc: '/redoc',                  openapi: '/openapi.json'           },
@@ -41,5 +37,4 @@ export const DOC_PATHS: Record<string, { swagger: string; redoc: string; openapi
   research:  { swagger: '/docs',                  redoc: '/redoc',                  openapi: '/openapi.json'           },
   strategy:  { swagger: '/strategy/docs',         redoc: '/strategy/redoc',         openapi: '/strategy/openapi.json'  },
   market:    { swagger: '/market/docs',           redoc: '/market/redoc',           openapi: '/market/openapi.json'    },
-  massive:   { swagger: '/research/massive/docs', redoc: '/research/massive/redoc', openapi: '/research/massive/openapi.json' },
 }

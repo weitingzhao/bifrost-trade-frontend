@@ -1,12 +1,5 @@
 import type { WorkerProfileInfo } from '@/types/ops'
-import {
-  BROKER_QUEUE_OPTIONS_MASSIVE,
-  BROKER_QUEUE_OPTIONS_MASSIVE_HIGH,
-  BROKER_QUEUE_STOCKS_IB,
-  BROKER_QUEUE_STOCKS_MASSIVE,
-  BROKER_QUEUE_STOCKS_MASSIVE_HIGH,
-  formatQueueLabel,
-} from '@/utils/celeryQueueLabels'
+import { BROKER_QUEUE_STOCKS_IB, formatQueueLabel } from '@/utils/celeryQueueLabels'
 import type { CeleryStatusFilter } from '../celeryTypes'
 
 export interface JobQueueTab {
@@ -17,11 +10,12 @@ export interface JobQueueTab {
 }
 
 export const FALLBACK_TABS: JobQueueTab[] = [
-  { id: 'stocks_ib', label: formatQueueLabel(BROKER_QUEUE_STOCKS_IB), celeryQueue: BROKER_QUEUE_STOCKS_IB, pipeline: 'stocks_ib' },
-  { id: 'options_massive', label: formatQueueLabel(BROKER_QUEUE_OPTIONS_MASSIVE), celeryQueue: BROKER_QUEUE_OPTIONS_MASSIVE, pipeline: 'massive_async' },
-  { id: 'options_massive_high', label: formatQueueLabel(BROKER_QUEUE_OPTIONS_MASSIVE_HIGH), celeryQueue: BROKER_QUEUE_OPTIONS_MASSIVE_HIGH, pipeline: 'massive_async' },
-  { id: 'stocks_massive', label: formatQueueLabel(BROKER_QUEUE_STOCKS_MASSIVE), celeryQueue: BROKER_QUEUE_STOCKS_MASSIVE, pipeline: 'massive_async' },
-  { id: 'stocks_massive_high', label: formatQueueLabel(BROKER_QUEUE_STOCKS_MASSIVE_HIGH), celeryQueue: BROKER_QUEUE_STOCKS_MASSIVE_HIGH, pipeline: 'massive_async' },
+  {
+    id: 'stocks_ib',
+    label: formatQueueLabel(BROKER_QUEUE_STOCKS_IB),
+    celeryQueue: BROKER_QUEUE_STOCKS_IB,
+    pipeline: 'stocks_ib',
+  },
 ]
 
 export function tabsFromProfiles(profiles: WorkerProfileInfo[]): JobQueueTab[] {

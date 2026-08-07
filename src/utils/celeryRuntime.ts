@@ -1,19 +1,7 @@
 import type { QueueSummaryRow, WorkerSummary } from '@/types/ops'
-import {
-  BROKER_QUEUE_STOCKS_IB,
-  BROKER_QUEUE_OPTIONS_MASSIVE,
-  BROKER_QUEUE_OPTIONS_MASSIVE_HIGH,
-  BROKER_QUEUE_STOCKS_MASSIVE,
-  BROKER_QUEUE_STOCKS_MASSIVE_HIGH,
-} from './celeryQueueLabels'
+import { BROKER_QUEUE_STOCKS_IB } from './celeryQueueLabels'
 
-export const SUPPORTED_CELERY_QUEUE_NAMES = [
-  BROKER_QUEUE_STOCKS_IB,
-  BROKER_QUEUE_STOCKS_MASSIVE_HIGH,
-  BROKER_QUEUE_STOCKS_MASSIVE,
-  BROKER_QUEUE_OPTIONS_MASSIVE_HIGH,
-  BROKER_QUEUE_OPTIONS_MASSIVE,
-] as const
+export const SUPPORTED_CELERY_QUEUE_NAMES = [BROKER_QUEUE_STOCKS_IB] as const
 
 export type CeleryRuntimeLamp = 'green' | 'yellow' | 'red' | 'none'
 
@@ -54,67 +42,42 @@ export function runtimeLampText(lamp: CeleryRuntimeLamp): string {
   return ''
 }
 
-const MASSIVE_LIKE_QUEUE_NAMES = [
-  BROKER_QUEUE_OPTIONS_MASSIVE,
-  BROKER_QUEUE_OPTIONS_MASSIVE_HIGH,
-  BROKER_QUEUE_STOCKS_MASSIVE,
-  BROKER_QUEUE_STOCKS_MASSIVE_HIGH,
-] as const
-
-type MassiveLikeQueue = (typeof MASSIVE_LIKE_QUEUE_NAMES)[number]
-
-/** Deduped totals for the Queue summary footer row (bars + one massive row for done/failed). */
+/** Deduped totals for the Queue summary footer row. */
 export function dedupedQueueSummaryTotals(rows: QueueSummaryRow[]): {
   pending_broker: number | null
   running_celery: number | null
   done_db: number | null
   failed_db: number | null
 } {
-  const massivePrimary =
-    rows.find(r => r.name === BROKER_QUEUE_OPTIONS_MASSIVE) ??
-    rows.find(r => MASSIVE_LIKE_QUEUE_NAMES.includes(r.name as MassiveLikeQueue))
-
   let pb = 0
   let pbHas = false
+  let rc = 0
+  let rcHas = false
+  let done_db: number | null = null
+  let failed_db: number | null = null
+
   for (const row of rows) {
     const p = row.pending_broker
     if (p != null && Number.isFinite(p)) {
       pb += p
       pbHas = true
     }
-  }
-
-  const bars = rows.find(r => r.name === BROKER_QUEUE_STOCKS_IB)
-  let rc = 0
-  let rcHas = false
-
-  const barRun = bars?.running_celery
-  if (barRun != null && Number.isFinite(barRun)) { rc += barRun; rcHas = true }
-
-  const massiveRun =
-    rows.find(r => r.name === BROKER_QUEUE_OPTIONS_MASSIVE)?.running_celery ??
-    MASSIVE_LIKE_QUEUE_NAMES.map(n => rows.find(r => r.name === n)?.running_celery).find(
-      x => x != null && Number.isFinite(x as number),
-    )
-  if (massiveRun != null && Number.isFinite(massiveRun)) { rc += massiveRun; rcHas = true }
-
-  for (const row of rows) {
-    if (
-      row.name === BROKER_QUEUE_STOCKS_IB ||
-      MASSIVE_LIKE_QUEUE_NAMES.includes(row.name as MassiveLikeQueue)
-    ) continue
     const x = row.running_celery
-    if (x != null && Number.isFinite(x)) { rc += x; rcHas = true }
+    if (x != null && Number.isFinite(x)) {
+      rc += x
+      rcHas = true
+    }
+    if (row.name === BROKER_QUEUE_STOCKS_IB) {
+      if (row.done_db != null && Number.isFinite(row.done_db)) done_db = row.done_db
+      if (row.failed_db != null && Number.isFinite(row.failed_db)) failed_db = row.failed_db
+    }
   }
-
-  const done_db = massivePrimary?.done_db ?? null
-  const failed_db = massivePrimary?.failed_db ?? null
 
   return {
     pending_broker: pbHas ? pb : null,
     running_celery: rcHas ? rc : null,
-    done_db: done_db != null && Number.isFinite(done_db) ? done_db : null,
-    failed_db: failed_db != null && Number.isFinite(failed_db) ? failed_db : null,
+    done_db,
+    failed_db,
   }
 }
 

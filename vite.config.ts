@@ -39,7 +39,6 @@ function withTargetPath(target: ApiTarget, path: string): string {
 function buildDevProxies(env: Record<string, string>): Record<string, object> {
   const targets = {
     monitor: apiTarget(env.VITE_API_MONITOR, 8765),
-    massive: apiTarget(env.VITE_API_MASSIVE, 8766),
     docs: apiTarget(env.VITE_API_DOCS, 8767),
     ops: apiTarget(env.VITE_API_OPS, 8768),
     trading: apiTarget(env.VITE_API_TRADING, 8769),
@@ -62,11 +61,6 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
 
   return {
     ...apiProxies,
-    '/research/massive': {
-      target: targets.massive.target,
-      changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.massive, path),
-    },
     '/research/docs': {
       target: targets.docs.target,
       changeOrigin: true,

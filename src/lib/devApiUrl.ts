@@ -17,7 +17,6 @@ function portFromBase(base: string | undefined, fallback: number): number {
 export function parseDevApiPorts(env: Record<string, string>): Record<string, number> {
   return {
     monitor: portFromBase(env.VITE_API_MONITOR, 8765),
-    massive: portFromBase(env.VITE_API_MASSIVE, 8766),
     docs: portFromBase(env.VITE_API_DOCS, 8767),
     ops: portFromBase(env.VITE_API_OPS, 8768),
     trading: portFromBase(env.VITE_API_TRADING, 8769),
@@ -37,12 +36,6 @@ export function researchUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   if (import.meta.env.DEV) return normalizedPath
   return joinBase(import.meta.env.VITE_API_RESEARCH as string, normalizedPath)
-}
-
-export function massiveUrl(path: string): string {
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  if (import.meta.env.DEV) return normalizedPath
-  return joinBase(import.meta.env.VITE_API_MASSIVE as string, normalizedPath)
 }
 
 /**

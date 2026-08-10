@@ -6,7 +6,7 @@ import type {
 } from '@/types/monitor'
 import type { IngestLamp } from '@/utils/socketIngestLamp'
 import { ingestRedisTruthyConnected, ibSlotProbeUnhealthy } from '@/utils/socketIngestLamp'
-import { isPlatformIbGatewayActive } from '@/utils/platformIbGateway'
+import { ibBrokerPlatformGatewayLabel, isPlatformIbGatewayActive } from '@/utils/platformIbGateway'
 
 export type IbBrokerServiceId = 'ib_ingestor' | 'ib_account_agent' | 'ib_operator'
 
@@ -247,18 +247,13 @@ export function ibBrokerRedisHealthLamp(
       : svcId === 'ib_account_agent'
         ? 'bifrost:health:ws_ib_account_agent'
         : 'bifrost:health:ws_ib_operator'
-  const label =
-    svcId === 'ib_ingestor'
-      ? isPlatformIbGatewayActive(status)
-        ? 'Platform IB Gateway · Market ingest'
-        : 'IB ingestor'
+  const label = isPlatformIbGatewayActive(status)
+    ? ibBrokerPlatformGatewayLabel(svcId)
+    : svcId === 'ib_ingestor'
+      ? 'IB ingestor'
       : svcId === 'ib_account_agent'
-        ? isPlatformIbGatewayActive(status)
-          ? 'Platform IB Gateway · Account agent'
-          : 'IB Account Agent'
-        : isPlatformIbGatewayActive(status)
-          ? 'Platform IB Gateway · Operator RPC'
-          : 'IB Operator'
+        ? 'IB Account Agent'
+        : 'IB Operator'
   const redisScope = isPlatformIbGatewayActive(status)
     ? 'Platform IB Gateway @ redis-ib (data/ib-gateway)'
     : `Redis ${redisKey}`

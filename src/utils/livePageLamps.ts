@@ -1,6 +1,19 @@
 import type { StatusResponse } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
+import { ibBrokerPlatformGatewayLabel, isPlatformIbGatewayActive } from '@/utils/platformIbGateway'
 import { ingestRedisHealthLamp, ingestRedisTruthyConnected } from '@/utils/socketIngestLamp'
+
+function liveIbServiceLabel(
+  serviceId: 'ib_operator' | 'ib_ingestor' | 'ib_account_agent',
+  status: StatusResponse,
+): string {
+  if (isPlatformIbGatewayActive(status)) {
+    return ibBrokerPlatformGatewayLabel(serviceId)
+  }
+  if (serviceId === 'ib_operator') return 'IB Operator'
+  if (serviceId === 'ib_ingestor') return 'IB Ingestor'
+  return 'IB Account Agent'
+}
 
 const RECENT_QUOTE_MAX_AGE_S = 60
 export const ACCOUNT_SYNC_HEARTBEAT_MAX_AGE_S = 35
@@ -58,7 +71,7 @@ export function computeOpenOrdersLamp(status: StatusResponse | undefined): LampC
 }
 
 /**
- * Sidebar Live nav lamp — Legacy semantics: IB ingest services + strategy daemon liveness.
+ * Sidebar Live nav lamp — Platform IB Gateway (redis-ib) + strategy daemon liveness.
  */
 export function computeLiveNavLamp(
   status: StatusResponse | null | undefined,
@@ -72,19 +85,26 @@ export function computeLiveNavLamp(
   const ing = ingestRedisHealthLamp('ib_ingestor', status)
   const aa = ingestRedisHealthLamp('ib_account_agent', status)
   const lamps = [op.lamp, ing.lamp, aa.lamp] as const
+  const gatewayActive = isPlatformIbGatewayActive(status)
 
   const ibAllGreen = lamps.every(l => l === 'green')
   const ibAnyRed = lamps.some(l => l === 'red')
 
   const redParts: string[] = []
-  if (op.lamp === 'red') redParts.push(`IB Operator: ${op.title}`)
-  if (ing.lamp === 'red') redParts.push(`IB Ingestor: ${ing.title}`)
-  if (aa.lamp === 'red') redParts.push(`Account Agent: ${aa.title}`)
+  if (op.lamp === 'red') redParts.push(`${liveIbServiceLabel('ib_operator', status)}: ${op.title}`)
+  if (ing.lamp === 'red') redParts.push(`${liveIbServiceLabel('ib_ingestor', status)}: ${ing.title}`)
+  if (aa.lamp === 'red') redParts.push(`${liveIbServiceLabel('ib_account_agent', status)}: ${aa.title}`)
 
   const degradedParts: string[] = []
-  if (op.lamp !== 'green' && op.lamp !== 'red') degradedParts.push(`IB Operator: ${op.title}`)
-  if (ing.lamp !== 'green' && ing.lamp !== 'red') degradedParts.push(`IB Ingestor: ${ing.title}`)
-  if (aa.lamp !== 'green' && aa.lamp !== 'red') degradedParts.push(`Account Agent: ${aa.title}`)
+  if (op.lamp !== 'green' && op.lamp !== 'red') {
+    degradedParts.push(`${liveIbServiceLabel('ib_operator', status)}: ${op.title}`)
+  }
+  if (ing.lamp !== 'green' && ing.lamp !== 'red') {
+    degradedParts.push(`${liveIbServiceLabel('ib_ingestor', status)}: ${ing.title}`)
+  }
+  if (aa.lamp !== 'green' && aa.lamp !== 'red') {
+    degradedParts.push(`${liveIbServiceLabel('ib_account_agent', status)}: ${aa.title}`)
+  }
 
   if (ibAnyRed) {
     const ibMsg = redParts.join(' · ')
@@ -101,20 +121,32 @@ export function computeLiveNavLamp(
     if (ibAllGreen) {
       return {
         color: 'yellow',
-        title: 'IB services healthy · Daemon not running — Open Orders unavailable.',
+        title: gatewayActive
+          ? 'Platform IB Gateway healthy · Daemon not running — Open Orders unavailable.'
+          : 'IB services healthy · Daemon not running — Open Orders unavailable.',
       }
     }
     const msg = degradedParts.join(' · ')
     return {
       color: 'yellow',
-      title: `Daemon not running (Open Orders unavailable) · IB degraded: ${msg}`,
+      title: gatewayActive
+        ? `Daemon not running (Open Orders unavailable) · Platform IB Gateway degraded: ${msg}`
+        : `Daemon not running (Open Orders unavailable) · IB degraded: ${msg}`,
     }
   }
 
   if (ibAllGreen) {
-    return { color: 'green', title: 'IB Broker Services healthy · Daemon running.' }
+    return {
+      color: 'green',
+      title: gatewayActive
+        ? 'Platform IB Gateway healthy · Daemon running.'
+        : 'IB Broker Services healthy · Daemon running.',
+    }
   }
 
   const msg = degradedParts.join(' · ')
-  return { color: 'yellow', title: msg || 'IB services degraded.' }
+  return {
+    color: 'yellow',
+    title: msg || (gatewayActive ? 'Platform IB Gateway degraded.' : 'IB services degraded.'),
+  }
 }

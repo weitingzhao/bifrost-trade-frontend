@@ -1,7 +1,7 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { Plus, RefreshCw } from 'lucide-react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -14,16 +14,18 @@ import { InstanceDeleteModal } from '@/components/strategy/InstanceDeleteModal'
 import { InstanceDetailSidebar } from '@/components/strategy/InstanceDetailSidebar'
 import {
   InstanceListFilters,
-  type InstanceListFilterValues,
   type SinceFilter,
 } from '@/components/strategy/InstanceListFilters'
-import type { DetailViewMode } from '@/components/strategy/InstanceListToolbar'
 import { useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
 import { useInstanceMetrics } from '@/hooks/useInstanceMetrics'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { INSTANCE_COMPARE_MAX_WIDTH_PX } from '@/constants/instanceDetailSidebar'
 import { computeInstancePositionStatus } from '@/utils/instanceListMetrics'
+import {
+  applyInstancesUrlPatch,
+  parseInstancesSearchParams,
+} from '@/utils/instancesUrlSync'
 import type { StrategyInstance } from '@/types/positions'
 
 const INSTANCES_INFO =
@@ -73,9 +75,36 @@ function parseUrlInstanceId(param: string | undefined): number | null {
 
 export default function InstancesPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { instanceId: instanceIdParam } = useParams()
   const urlInstanceId = useMemo(() => parseUrlInstanceId(instanceIdParam), [instanceIdParam])
   const windowWidth = useWindowWidth()
+  const location = useLocation()
+
+  const urlState = useMemo(() => parseInstancesSearchParams(searchParams), [searchParams])
+  const accountFilter = urlState.account
+  const opportunityIdFilter = urlState.opportunityId
+  const instanceIdFilter = urlState.instanceId
+  const filterValues = urlState.filters
+  const detailViewMode = urlState.detailViewMode
+
+  const patchUrl = useCallback(
+    (patch: Parameters<typeof applyInstancesUrlPatch>[1], replace = false) => {
+      setSearchParams((prev) => applyInstancesUrlPatch(prev, patch), { replace })
+    },
+    [setSearchParams],
+  )
+
+  // One-shot: Structures page may navigate with location.state.structureFilter
+  const appliedLocationStructure = useRef(false)
+  useEffect(() => {
+    if (appliedLocationStructure.current) return
+    const structureFilter =
+      (location.state as { structureFilter?: string } | null)?.structureFilter?.trim() ?? ''
+    if (!structureFilter) return
+    appliedLocationStructure.current = true
+    patchUrl({ structure: structureFilter }, true)
+  }, [location.state, patchUrl])
 
   const { data: status } = useMonitorStatus()
   const { data: oppsData, isFetching: oppsFetching } = useOpportunities()
@@ -86,10 +115,6 @@ export default function InstancesPage() {
   )
   const opportunities = useMemo(() => oppsData?.items ?? [], [oppsData])
 
-  const [accountFilter, setAccountFilter] = useState<string>('')
-  const [opportunityIdFilter, setOpportunityIdFilter] = useState<number | ''>('')
-  const [instanceIdFilter, setInstanceIdFilter] = useState<number | ''>('')
-
   const { data, isLoading, isError, error, refetch, isFetching } = useStrategyInstances({
     accountId: accountFilter || undefined,
     opportunityId: opportunityIdFilter === '' ? undefined : opportunityIdFilter,
@@ -98,20 +123,6 @@ export default function InstancesPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<StrategyInstance | null>(null)
   const [compareTarget, setCompareTarget] = useState<StrategyInstance | null>(null)
-
-  const location = useLocation()
-  const locationStructureFilter =
-    (location.state as { structureFilter?: string } | null)?.structureFilter ?? ''
-
-  const [filterValues, setFilterValues] = useState<InstanceListFilterValues>({
-    status: '',
-    structure: locationStructureFilter,
-    symbol: '',
-    right: '',
-    expiry: '',
-    since: 'q',
-  })
-  const [detailViewMode, setDetailViewMode] = useState<DetailViewMode>('accordion')
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
   const [metricsRefreshKey, setMetricsRefreshKey] = useState(0)
 
@@ -134,14 +145,25 @@ export default function InstancesPage() {
     ? Math.min(INSTANCE_COMPARE_MAX_WIDTH_PX, windowWidth - 40)
     : undefined
 
-  const openInstanceDetail = useCallback((inst: StrategyInstance) => {
-    navigate(`/strategy/instances/${inst.strategy_instance_id}`)
-  }, [navigate])
+  const openInstanceDetail = useCallback(
+    (inst: StrategyInstance) => {
+      const q = searchParams.toString()
+      navigate({
+        pathname: `/strategy/instances/${inst.strategy_instance_id}`,
+        search: q ? `?${q}` : '',
+      })
+    },
+    [navigate, searchParams],
+  )
 
   const closeInstanceDetail = useCallback(() => {
     setCompareTarget(null)
-    navigate('/strategy/instances', { replace: true })
-  }, [navigate])
+    const q = searchParams.toString()
+    navigate(
+      { pathname: '/strategy/instances', search: q ? `?${q}` : '' },
+      { replace: true },
+    )
+  }, [navigate, searchParams])
 
   const instancesForOpportunity = useMemo(() => {
     if (opportunityIdFilter === '') return []
@@ -276,16 +298,18 @@ export default function InstancesPage() {
   }, [filterValues.since])
 
   const clearAllFilters = useCallback(() => {
-    setFilterValues({
-      status: '',
-      structure: '',
-      symbol: '',
-      right: '',
-      expiry: '',
-      since: '',
+    patchUrl({
+      instanceId: '',
+      filters: {
+        status: '',
+        structure: '',
+        symbol: '',
+        right: '',
+        expiry: '',
+        since: '',
+      },
     })
-    setInstanceIdFilter('')
-  }, [])
+  }, [patchUrl])
 
   const handleToggleGroup = useCallback(
     (key: string) => {
@@ -361,20 +385,20 @@ export default function InstancesPage() {
           sinceRangeText={sinceRangeText}
           filteredCount={filtered.length}
           totalCount={allInstances.length}
-          onChange={(patch) => setFilterValues((v) => ({ ...v, ...patch }))}
+          onChange={(patch) => patchUrl(patch)}
           onClear={clearAllFilters}
           accounts={accounts}
           accountFilter={accountFilter}
-          onAccountFilterChange={setAccountFilter}
+          onAccountFilterChange={(accountId) => patchUrl({ account: accountId })}
           opportunities={opportunities}
           opportunityIdFilter={opportunityIdFilter}
-          onOpportunityIdFilterChange={setOpportunityIdFilter}
+          onOpportunityIdFilterChange={(id) => patchUrl({ opportunityId: id, instanceId: '' })}
           oppsFetching={oppsFetching}
           instancesForOpportunity={instancesForOpportunity}
           instanceIdFilter={instanceIdFilter}
-          onInstanceIdFilterChange={setInstanceIdFilter}
+          onInstanceIdFilterChange={(id) => patchUrl({ instanceId: id })}
           detailViewMode={detailViewMode}
-          onDetailViewModeChange={setDetailViewMode}
+          onDetailViewModeChange={(mode) => patchUrl({ detailViewMode: mode })}
           onExpandAll={handleExpandAll}
           onCollapseAll={handleCollapseAll}
           showGroupToolbar={groupedItems.length > 0}

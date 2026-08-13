@@ -69,6 +69,7 @@ export const instancesSortCaretClass = 'text-[0.75em] opacity-90'
 
 /** table-fixed column widths — sum ≈ 100% */
 export const INSTANCES_TABLE_COL_WIDTHS = {
+  actions: '7%',
   id: '3%',
   opp: '24%',
   status: '5%',
@@ -81,7 +82,6 @@ export const INSTANCES_TABLE_COL_WIDTHS = {
   ret: '5%',
   comm: '5%',
   exec: '3%',
-  actions: '7%',
 } as const
 
 export const instancesTableClass = 'min-w-[68rem]'
@@ -106,7 +106,9 @@ export const instancesPeriodYearClass = 'font-medium'
 
 export const instancesPeriodDaysClass = 'font-bold'
 
-export const instancesActionsCellClass = 'whitespace-nowrap'
+export const instancesActionsCellClass = cn(
+  'sticky left-0 z-[1] whitespace-nowrap bg-card',
+)
 
 export const instancesActionsInnerClass = 'inline-flex items-center gap-0.5'
 
@@ -116,6 +118,10 @@ export const instancesGroupToggleClass = cn(
 
 export const instancesGroupMutedClass = 'font-normal text-muted-foreground'
 
-export const instancesRowSelectedClass = '[&>td]:bg-primary/8'
+/** Active detail row — left accent + tint so it stands out from peers. */
+export const instancesRowSelectedClass = cn(
+  '[&>td]:bg-primary/12',
+  '[&>td:first-child]:shadow-[inset_3px_0_0_0] [&>td:first-child]:shadow-primary',
+)
 
 export const instancesRowCompareClass = 'bg-blue-500/5'

@@ -22,11 +22,18 @@ function readSidebarCookie(): boolean {
   return match ? match[1] === 'true' : true
 }
 
+/** Stable ErrorBoundary key — keep Instances mounted when opening/closing detail. */
+function outletBoundaryKey(pathname: string): string {
+  const instances = pathname.match(/^(\/strategy\/instances)(?:\/\d+)?\/?$/)
+  if (instances) return instances[1]
+  return pathname
+}
+
 function BoundedOutlet() {
   const { pathname } = useLocation()
   return (
-    // key=pathname resets the boundary when navigating to a different page
-    <ErrorBoundary key={pathname}>
+    // key resets the boundary when navigating to a different page
+    <ErrorBoundary key={outletBoundaryKey(pathname)}>
       <Suspense fallback={<PageRouteFallback />}>
         <Outlet />
       </Suspense>

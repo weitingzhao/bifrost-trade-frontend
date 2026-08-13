@@ -327,6 +327,7 @@ export function InstancesGroupedTable({
   return (
     <DenseDataTable wrapClassName="mt-1" tableClassName={instancesTableClass}>
       <colgroup>
+        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.actions }} />
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.id }} />
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.opp }} />
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.status }} />
@@ -339,10 +340,12 @@ export function InstancesGroupedTable({
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.ret }} />
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.comm }} />
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.exec }} />
-        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.actions }} />
       </colgroup>
       <DenseTableHeader>
         <DenseTableHeadRow>
+          <DenseTableHead rowSpan={2} className={cn(instancesActionsCellClass, 'normal-case tracking-normal')}>
+            Actions
+          </DenseTableHead>
           <DenseTableHead rowSpan={2} className={cn(instancesColIdClass, 'normal-case tracking-normal')}>
             ID
           </DenseTableHead>
@@ -378,9 +381,6 @@ export function InstancesGroupedTable({
           <SortableHead column="exec" sort={sort} onSort={toggleSort} rowSpan={2} numeric>
             Exec
           </SortableHead>
-          <DenseTableHead rowSpan={2} className={cn(instancesActionsCellClass, 'normal-case tracking-normal')}>
-            Actions
-          </DenseTableHead>
         </DenseTableHeadRow>
         <DenseTableHeadRow>
           <SortableHead column="net" sort={sort} onSort={toggleSort} className={instancesHeadSubClass} numeric>
@@ -410,6 +410,7 @@ export function InstancesGroupedTable({
 
           const headerRow = (
             <DenseTableSubheadRow key={`group-${group.key}`}>
+              <DenseTableCell className={instancesActionsCellClass} />
               <DenseTableCell colSpan={2}>
                 <button
                   type="button"
@@ -459,47 +460,27 @@ export function InstancesGroupedTable({
               <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
               <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
               <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
-              <DenseTableCell />
             </DenseTableSubheadRow>
           )
 
           if (collapsed) return [headerRow]
 
-          const dataRows = group.rows.map((inst) => (
+          const dataRows = group.rows.map((inst) => {
+            const selected = activeDetailId === inst.strategy_instance_id
+            return (
             <DenseTableRow
               key={inst.strategy_instance_id}
               className={cn(
-                activeDetailId === inst.strategy_instance_id && instancesRowSelectedClass,
+                selected && instancesRowSelectedClass,
                 compareId === inst.strategy_instance_id && instancesRowCompareClass,
               )}
             >
-              <DenseTableCell className={cn(instancesColIdClass, denseTableNumCell, 'text-muted-foreground')}>
-                {inst.strategy_instance_id}
-              </DenseTableCell>
-              <DenseTableCell className={instancesColOppClass}>
-                <div className={instancesOppCellClass}>
-                  <div
-                    className={instancesOppNameClass}
-                    title={inst.strategy_opportunity_name ?? undefined}
-                  >
-                    {inst.strategy_opportunity_name ?? '—'}
-                  </div>
-                  {inst.strategy_structure_name ? (
-                    <DenseOptionCategoryLabel
-                      variant="structure"
-                      className="max-w-full whitespace-normal"
-                      title={`Structure: ${inst.strategy_structure_name}`}
-                    >
-                      {inst.strategy_structure_name}
-                    </DenseOptionCategoryLabel>
-                  ) : null}
-                </div>
-              </DenseTableCell>
-              <MetricsCells instanceId={inst.strategy_instance_id} metricsMap={metricsMap} />
-              <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
-                {inst.executions_count != null ? inst.executions_count : '—'}
-              </DenseTableCell>
-              <DenseTableCell className={instancesActionsCellClass}>
+              <DenseTableCell
+                className={cn(
+                  instancesActionsCellClass,
+                  selected && 'bg-primary/12',
+                )}
+              >
                 <div className={instancesActionsInnerClass}>
                   <IconActionButton
                     title="View instance detail"
@@ -527,8 +508,35 @@ export function InstancesGroupedTable({
                   </IconActionButton>
                 </div>
               </DenseTableCell>
+              <DenseTableCell className={cn(instancesColIdClass, denseTableNumCell, 'text-muted-foreground')}>
+                {inst.strategy_instance_id}
+              </DenseTableCell>
+              <DenseTableCell className={instancesColOppClass}>
+                <div className={instancesOppCellClass}>
+                  <div
+                    className={instancesOppNameClass}
+                    title={inst.strategy_opportunity_name ?? undefined}
+                  >
+                    {inst.strategy_opportunity_name ?? '—'}
+                  </div>
+                  {inst.strategy_structure_name ? (
+                    <DenseOptionCategoryLabel
+                      variant="structure"
+                      className="max-w-full whitespace-normal"
+                      title={`Structure: ${inst.strategy_structure_name}`}
+                    >
+                      {inst.strategy_structure_name}
+                    </DenseOptionCategoryLabel>
+                  ) : null}
+                </div>
+              </DenseTableCell>
+              <MetricsCells instanceId={inst.strategy_instance_id} metricsMap={metricsMap} />
+              <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
+                {inst.executions_count != null ? inst.executions_count : '—'}
+              </DenseTableCell>
             </DenseTableRow>
-          ))
+            )
+          })
 
           return [headerRow, ...dataRows]
         })}

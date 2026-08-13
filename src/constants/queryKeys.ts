@@ -65,6 +65,7 @@ export const QUERY_KEYS = {
       massiveStatus:  ['research', 'discovery', 'massive-status']  as const,
       dailyChecklist: ['research', 'discovery', 'daily-checklist'] as const,
     },
+    ivRadar:        ['research', 'iv-radar']                     as const,
   },
   strategy: {
     instances:      ['strategy', 'instances']        as const,

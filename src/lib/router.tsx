@@ -68,11 +68,15 @@ export const router = createBrowserRouter([
       },
       {
         path: 'research/stock-data',
-        lazy: lazyPage(() => import('@/pages/research/StockDataPage')),
+        element: <Navigate to="/settings/data-readiness" replace />,
       },
       {
         path: 'research/discovery',
         lazy: lazyPage(() => import('@/pages/research/DiscoveryPage')),
+      },
+      {
+        path: 'research/iv-radar',
+        lazy: lazyPage(() => import('@/pages/research/IvRadarPage')),
       },
       {
         path: 'research/greeks',
@@ -165,6 +169,10 @@ export const router = createBrowserRouter([
           {
             path: 'coverage/stock-ib',
             lazy: lazyPage(() => import('@/pages/settings/CoverageStockIbPage')),
+          },
+          {
+            path: 'data-readiness',
+            lazy: lazyPage(() => import('@/pages/research/StockDataPage')),
           },
 
           {

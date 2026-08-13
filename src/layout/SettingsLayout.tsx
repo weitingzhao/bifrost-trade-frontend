@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   BarChart2, ChevronDown, ChevronRight,
-  Cpu, HardDrive,
+  Cpu, Database, HardDrive,
   Layers, Layers2, Palette, Plug, Radio, Wifi,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -56,6 +56,7 @@ const NAV: NavGroup[] = [
           branch('Stock', HardDrive, [
             leaf('IB Live (Redis)', '/settings/coverage/stock-ib', Wifi),
           ]),
+          leaf('Data Readiness', '/settings/data-readiness', Database),
         ],
       },
       {

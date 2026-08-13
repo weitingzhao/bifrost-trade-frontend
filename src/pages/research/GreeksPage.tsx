@@ -99,7 +99,7 @@ export default function GreeksPage() {
   return (
     <PageShell padding="default" className="space-y-3">
       <PageHeader
-        title="IV & Greeks"
+        title="Contract Greeks"
         description="Historical option greeks from the research API: pick symbol and trade date, then fetch chain rows."
       />
 
@@ -226,7 +226,7 @@ export default function GreeksPage() {
 
       {loading && (
         <p className={greeksLoadingHintClass}>
-          Computing IV & Greeks…
+          Computing Contract Greeks…
         </p>
       )}
 

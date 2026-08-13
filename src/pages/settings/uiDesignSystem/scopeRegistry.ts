@@ -90,9 +90,10 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/research/watchlist', label: 'Stock Watchlist', domain: 'research', pathGlobs: ['pages/research/StockWatchlistPage.tsx', 'pages/research/watchlist/**'] },
   { route: '/research/sepa', label: 'Stock Screener', domain: 'research', pathGlobs: ['pages/research/StockScreenerPage.tsx', 'pages/research/stockScreener/**'] },
   { route: '/research/screener', label: 'Option Screener', domain: 'research', pathGlobs: ['pages/research/ScreenerPage.tsx', 'pages/research/optionScreener/**'] },
-  { route: '/research/stock-data', label: 'Stock Data Readiness', domain: 'research', pathGlobs: ['pages/research/StockDataPage.tsx'] },
+  { route: '/settings/data-readiness', label: 'Data Readiness', domain: 'settings', pathGlobs: ['pages/research/StockDataPage.tsx', 'pages/research/stockDataReadiness/**'] },
   { route: '/research/discovery', label: 'Option Discovery', domain: 'research', pathGlobs: ['pages/research/DiscoveryPage.tsx'] },
-  { route: '/research/greeks', label: 'IV & Greeks', domain: 'research', pathGlobs: ['pages/research/GreeksPage.tsx'] },
+  { route: '/research/iv-radar', label: 'IV Radar', domain: 'research', pathGlobs: ['pages/research/IvRadarPage.tsx', 'utils/ivRadar/**', 'hooks/useIvRadarData.ts', 'hooks/useHoldingSymbols.ts', 'api/research/ivRadar.ts'] },
+  { route: '/research/greeks', label: 'Contract Greeks', domain: 'research', pathGlobs: ['pages/research/GreeksPage.tsx'] },
   { route: '/research/risk', label: 'Risk Model', domain: 'research', pathGlobs: ['pages/research/RiskModelPage.tsx'] },
   { route: '/research/backtest', label: 'Backtest', domain: 'research', pathGlobs: ['pages/research/BacktestPage.tsx'] },
 

@@ -423,7 +423,7 @@ function PageInner() {
     <PageShell className="w-full min-w-0 space-y-3">
       <PageHeader
         breadcrumb={
-          <p className="text-xs text-sky-400/90 font-medium">Research / Stock Data Readiness</p>
+          <p className="text-xs text-sky-400/90 font-medium">Settings / Data Coverage / Data Readiness</p>
         }
         title="Stock Data Readiness"
         actions={

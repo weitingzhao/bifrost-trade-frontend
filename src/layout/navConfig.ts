@@ -7,7 +7,6 @@ import {
   BookOpen,
   ClipboardList,
   Cpu,
-  Database,
   Eye,
   GitBranch,
   History,
@@ -17,6 +16,7 @@ import {
   ListFilter,
   Network,
   PieChart,
+  Radar,
   Server,
   Settings,
   Shield,
@@ -74,25 +74,31 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     icon: BookOpen,
     subGroups: [
       {
-        label: 'Screener',
+        label: 'Ideas',
         items: [
           route('Stock Screener', '/research/sepa', BookOpen),
-          route('Stock Data Readiness', '/research/stock-data', Database),
           route('Option Screener', '/research/screener', ListFilter),
           route('Stock Watchlist', '/research/watchlist', Star),
         ],
       },
       {
-        label: 'Discovery',
+        label: 'Volatility',
+        items: [
+          route('IV Radar', '/research/iv-radar', Radar),
+          route('Contract Greeks', '/research/greeks', Wand2),
+        ],
+      },
+      {
+        label: 'Structure',
         items: [route('Option Discovery', '/research/discovery', Eye)],
       },
       {
-        label: 'Risk & Tools',
-        items: [
-          route('Risk Model', '/research/risk', AlertCircle),
-          route('Backtest', '/research/backtest', History),
-          route('IV & Greeks', '/research/greeks', Wand2),
-        ],
+        label: 'Risk',
+        items: [route('Risk Model', '/research/risk', AlertCircle)],
+      },
+      {
+        label: 'Lab',
+        items: [route('Backtest', '/research/backtest', History)],
       },
     ],
   },

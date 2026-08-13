@@ -11,6 +11,22 @@ Instructions for **Claude Code, Cursor Agent, Codex, GPT**, and other coding age
 
 Internal trading monitoring SPA (React 18 + Vite + TanStack Query + shadcn/ui). Phase 1: New Frontend + Legacy API. See `CLAUDE.md` for architecture, hooks, and migration constraints.
 
+## DEV Inner Loop (D-IL1 — mandatory habit)
+
+**Default UI acceptance is local Vite, not Prod.**
+
+| Item | Value |
+|------|-------|
+| Accept surface | `http://127.0.0.1:5173` (`npm run dev` / `npm run dev:k3s`) |
+| API target | `.env.development.local` → `http://192.168.10.73:30882` (`bifrost-dev`) |
+| Preset | `.env.development.k3s` — copy via `npm run dev:k3s` |
+| Contract | `../bifrost-trade-infra/docs/TRADE_DEV_INNER_LOOP.md` · Program `trade-dev-inner-loop` |
+
+- **Do** smoke Instances / Live / Ledger on local Vite against `:30882` before calling a change done.
+- **Do not** treat Satellite/Prod browser refresh as daily visual acceptance (D-IL4 — L2 publish gate only).
+- **Do not** pin local FE long-term to Prod writable APIs.
+- Live quotes use shared `redis-ib` (not redis-live-prod dump). Ledger freshness = Owner-gated CNPG clone → `bifrost_dev`.
+
 ## UI consistency (MANDATORY)
 
 **Same interaction → same shared primitive. One token/component change → all adopters update together.**
@@ -53,7 +69,8 @@ Chart geometry and risk payoff layout only (`PositionsChartsSection.module.css`,
 ## Commands
 
 ```bash
-npm run dev          # port 5173
+npm run dev:k3s      # apply .env.development.k3s → .env.development.local, then Vite :5173
+npm run dev          # port 5173 (uses existing .env.development.local)
 npm run lint
 npm run build
 npm run check:legacy-css

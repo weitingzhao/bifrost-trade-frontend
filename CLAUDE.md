@@ -12,6 +12,24 @@
 
 ---
 
+## DEV Inner Loop（D-IL1 — Agent 强制习惯）
+
+**默认 UI 验收 = 本机 Vite `:5173`，不是 Prod 浏览器刷新。**
+
+| 项 | 值 |
+|----|-----|
+| Accept | `npm run dev:k3s` → `http://127.0.0.1:5173` |
+| API | `.env.development.local` → `192.168.10.73:30882`（`bifrost-dev`） |
+| Preset | `.env.development.k3s` |
+| 合同 | `bifrost-trade-infra/docs/TRADE_DEV_INNER_LOOP.md` · Program `trade-dev-inner-loop` |
+
+- Smoke：Instances / Live / Ledger 在本地 Vite 对 DEV API 点检通过后才算 FE 完成
+- Prod / Satellite 刷新 = **L2 发布闸门**（D-IL4），不是日常视觉回归
+- 禁止长期把本地 FE 钉到 Prod 可写 API；禁止 D10 解锁路径
+- Live = 共享 `redis-ib`；台账新鲜度 = Owner 门控 `trigger_data_clone` → `bifrost_dev`
+
+---
+
 ## ⚠️ 关于 bifrost-trader-engine 参考源的使用规则
 
 `bifrost-trader-engine/frontend/` 是**只读参考**，用于理解业务逻辑，**不得复制其代码**：

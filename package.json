@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:k3s": "cp .env.development.k3s .env.development.local && vite",
+    "env:k3s": "cp .env.development.k3s .env.development.local",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",

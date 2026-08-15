@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { BarsCandlestickChart } from '@/components/charts/BarsCandlestickChart'
 import { fetchBarStats, fetchBars } from '@/api/market'
-import { postMassiveSync, pollMassiveJobUntilDone, resolveMassiveSyncJobId } from '@/api/research/optionDiscovery'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { Bar } from '@/types/market'
 import { SectionCollapseToggle } from './SectionCollapseToggle'
@@ -29,7 +28,6 @@ export function StockBarDataSection({
   const sym = symbol.trim().toUpperCase()
   const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('1 D')
   const barLimit = chartPeriod === '1 D' ? 120 : 390
-  const [fetchStep, setFetchStep] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [showVolume, setShowVolume] = useState(true)
   const [showVwap, setShowVwap] = useState(false)
@@ -74,36 +72,10 @@ export function StockBarDataSection({
   )
 
   async function handleFetch() {
-    if (!sym || fetchStep) return
-    setFetchError(null)
-    setFetchStep('Enqueue daily OHLC…')
-    try {
-      const res = await postMassiveSync('feed_stocks_aggregate', {
-        mode: 'custom_bars',
-        sync_all_periods: true,
-        custom_bars_period_group: 'daily',
-        custom_bars_sync_mode: 'daily_smart',
-        start_ms: 0,
-        end_ms: 0,
-        symbols: [sym],
-      })
-      const jobId = resolveMassiveSyncJobId(res)
-      if (!jobId) {
-        setFetchError(res.error ?? 'Enqueue failed')
-        return
-      }
-      setFetchStep('Waiting for job…')
-      const polled = await pollMassiveJobUntilDone(jobId, { maxAttempts: 90, intervalMs: 1000 })
-      if (!polled.ok) {
-        setFetchError(polled.error ?? 'Job failed')
-        return
-      }
-      await reloadChart()
-    } catch (e) {
-      setFetchError(e instanceof Error ? e.message : 'Fetch failed')
-    } finally {
-      setFetchStep(null)
-    }
+    if (!sym) return
+    setFetchError(
+      'Massive Celery feed_stocks_aggregate is retired (replicas 0). Daily bars come from Plugin ingest stock_daily_grouped into Golden Source.',
+    )
   }
 
   if (!sym) return null
@@ -138,10 +110,10 @@ export function StockBarDataSection({
             size="sm"
             variant="default"
             className="h-7 text-xs ml-auto"
-            disabled={!!fetchStep}
+            disabled={false}
             onClick={() => void handleFetch()}
           >
-            {fetchStep ?? 'Fetch'}
+            Fetch
           </Button>
         )}
       </div>
@@ -191,7 +163,7 @@ export function StockBarDataSection({
           size="sm"
           variant="ghost"
           className="h-7 w-7 p-0"
-          disabled={chartLoading || !!fetchStep}
+          disabled={chartLoading}
           onClick={() => void reloadChart()}
           title="Reload chart"
         >

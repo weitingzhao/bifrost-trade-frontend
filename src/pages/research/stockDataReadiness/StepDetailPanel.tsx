@@ -175,8 +175,8 @@ export function StepDetailPanel(props: Props) {
                 <Code>public.tickers</Code>
               </div>
               <p className="text-xs text-muted-foreground">
-                Reference universe from Massive REST <Code>/v3/reference/tickers</Code>. Celery queue{' '}
-                <Code>stocks_massive</Code>.
+                Reference universe from Plugin ingest <Code>ticker_sync</Code> (Polygon REST{' '}
+                <Code>/v3/reference/tickers</Code> → Golden Source). Massive Celery queues stay at 0 replicas.
               </p>
             </div>
             <div className="rounded-lg border border-border p-3 space-y-2">
@@ -206,7 +206,7 @@ export function StepDetailPanel(props: Props) {
               Jobs
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/operations/celery">Celery settings</Link>
+              <Link to="/operations/celery">Ops Celery (Massive scaled to 0)</Link>
             </Button>
           </div>
           <Feedback ok={holidaysSyncOk}>{holidaysSyncMsg}</Feedback>
@@ -270,7 +270,7 @@ export function StepDetailPanel(props: Props) {
             ]}
           />
           <ReadinessStepDesc>
-            Celery <ReadinessCode>feed_stocks_aggregate</ReadinessCode> writes{' '}
+            Plugin ingest <ReadinessCode>stock_daily_grouped</ReadinessCode> writes{' '}
             <ReadinessCode>source=massive</ReadinessCode> rows. The readiness summary gap count uses{' '}
             <ReadinessCode>cache_stock_snapshot.last_minute_updated</ReadinessCode> (America/New_York date) vs{' '}
             <ReadinessCode>max(stock_day.bar_time)</ReadinessCode>; any snapshot-based check requires non-null{' '}

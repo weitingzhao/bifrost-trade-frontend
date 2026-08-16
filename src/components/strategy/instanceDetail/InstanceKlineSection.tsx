@@ -4,11 +4,10 @@ import { cn } from '@/lib/utils'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { BarsCandlestickChart } from '@/components/charts/BarsCandlestickChart'
 import { fetchBars, fetchOptionBars } from '@/api/market'
-import { fetchOptionSnapshotsPg, postMassiveSync } from '@/api/research/optionDiscovery'
+import { fetchOptionSnapshotsPg } from '@/api/research/optionDiscovery'
 import type { Bar } from '@/types/market'
 import type { Execution } from '@/types/positions'
 import { fmtExpiry, parseOptionContractKey } from '@/lib/format'
-import { buildPolygonOptionsTicker } from '@/utils/polygonOptionsTicker'
 import {
   klineOptionTabKey,
   normalizeOptionExpiryDigits,
@@ -188,22 +187,6 @@ export function InstanceKlineSection({
           const key = klineOptionTabKey(tab.expiry, tab.strike, tab.option_right)
           if (!snapshotAttemptedRef.current.has(key)) {
             snapshotAttemptedRef.current.add(key)
-            const optionContract = buildPolygonOptionsTicker(
-              tab.symbol,
-              tab.expiry,
-              tab.strike,
-              tab.option_right,
-            )
-            await postMassiveSync(
-              'feed_option_snapshots',
-              {
-                mode: 'contract',
-                underlying: tab.symbol,
-                option_contract: optionContract,
-                persist: true,
-              },
-              { priority: 'high' },
-            )
             await fetchOptionSnapshotsPg(tab.symbol, tab.expiry, String(tab.strike), 'massive')
             res = await pullOptionBars()
           }

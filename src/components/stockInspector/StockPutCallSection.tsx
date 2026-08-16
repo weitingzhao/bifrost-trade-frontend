@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { fetchSymbolOptionPcr } from '@/api/research'
-import { postMassiveSync } from '@/api/research/optionDiscovery'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { SectionCollapseToggle } from './SectionCollapseToggle'
 import { INSPECTOR_SECTION_NAV_BY_ID } from './stockInspectorSections'
@@ -56,9 +55,6 @@ export function StockPutCallSection({
     if (!sym || refreshing) return
     setRefreshing(true)
     try {
-      const res = await postMassiveSync('feed_option_snapshots', { mode: 'chain', underlying: sym })
-      if (!res.ok) return
-      await new Promise((r) => setTimeout(r, 2500))
       await qc.invalidateQueries({ queryKey: QUERY_KEYS.research.optionPcr(sym) })
       await refetch()
     } finally {

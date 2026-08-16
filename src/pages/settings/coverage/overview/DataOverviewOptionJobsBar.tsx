@@ -5,7 +5,6 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { postMassiveSync } from '@/api/research/optionDiscovery'
 import { postOptionDayFillEligibility, postOptionMinFillEligibility } from '@/api/coverageWatchlistStubs'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
@@ -85,7 +84,7 @@ export const DataOverviewOptionJobsBar = forwardRef<
   const [confirmFill, setConfirmFill] = useState<'row' | 'column' | null>(null)
   const [checkMsg, setCheckMsg] = useState<string | null>(null)
 
-  const { items, trackJob, activeCount } = useOptionJobTracker(() => {
+  const { items, activeCount } = useOptionJobTracker(() => {
     void onWatchlistRefreshRequested?.()
   })
 
@@ -138,14 +137,14 @@ export const DataOverviewOptionJobsBar = forwardRef<
   }, [poolUpper, focusDataset, refGapBySymbol, snapshotGapBySymbol, barsGapBySymbol])
 
   const enqueueOne = useCallback(
-    async (sym: string, kind: string, payload: Record<string, unknown>) => {
-      const res = await postMassiveSync(kind, payload)
-      if (!res.ok || !res.job_id) {
-        throw new Error(res.error ?? res.message ?? 'Enqueue failed')
-      }
-      trackJob(res.job_id, kind, sym, res.deduplicated)
+    async (sym: string, _kind: string, _payload: Record<string, unknown>) => {
+      void _kind
+      void _payload
+      throw new Error(
+        `Celery Massive enqueue retired for ${sym}. Ingest is owned by the Market Data plugin.`,
+      )
     },
-    [trackJob],
+    [],
   )
 
   const enqueueChainSnapshot = useCallback(

@@ -3,7 +3,6 @@ import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { DiscoveryIconButton } from '@/components/optionDiscovery/DiscoveryIconButton'
 /* eslint-disable react-hooks/set-state-in-effect -- contract chart sync/load */
 import type { Bar } from '@/types/market'
-import { pollMassiveJobUntilDone, postMassiveSync, resolveMassiveSyncJobId } from '@/api/research/optionDiscovery'
 import { fetchOptionBars } from '@/api/market'
 import { BarsCandlestickChart } from '@/components/charts/BarsCandlestickChart'
 import { finiteVwap } from '@/utils/chart/finiteVwap'
@@ -11,16 +10,10 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { SegmentControl } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import { OdChartExpandOnHover } from './OdChartExpandOnHover'
-import { buildPolygonOptionsTicker } from '@/utils/polygonOptionsTicker'
 import { OPTION_BAR_PERIODS } from '@/utils/optionBarPeriods'
 
-/** Option Discovery chart always reads Massive-backed rows in PostgreSQL (option_min / option_day). */
+/** Option Discovery chart reads Plugin-ingested rows in PostgreSQL (option_min / option_day). */
 const BAR_SOURCE = 'massive' as const
-
-/** Massive aggregates backfill: intraday job window (option_min). */
-const AGG_LOOKBACK_MS_INTRADAY = 7 * 24 * 60 * 60 * 1000
-/** Massive aggregates backfill: daily bars → option_day (plan default: ~2 years). */
-const AGG_LOOKBACK_MS_DAILY = 730 * 24 * 60 * 60 * 1000
 
 function sortBarsAsc(bars: Bar[]): Bar[] {
   return [...bars].sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
@@ -72,8 +65,8 @@ export function OptionDiscoveryContractChartPanel({
         setError(
           msg ||
             (period === '1 D'
-              ? 'No bars in the database for this contract. Click Backfill from Massive to enqueue daily aggregates (option_day), or run the same job from Feed → Massive Option.'
-              : 'No bars in the database for this contract. Click Backfill from Massive to enqueue aggregates (option_min), or run the same job from Feed → Massive Option.'),
+              ? 'No bars in the database for this contract. Option bars are ingested by the Market Data plugin (not Celery Massive).'
+              : 'No bars in the database for this contract. Option bars are ingested by the Market Data plugin (not Celery Massive).'),
         )
       }
     } catch (e) {
@@ -89,67 +82,18 @@ export function OptionDiscoveryContractChartPanel({
   }, [load])
 
   const runMassiveAggregatesBackfill = useCallback(async () => {
-    const sym = symbol.trim().toUpperCase()
-    const exp = expiration.trim()
-    if (!sym || !exp || !Number.isFinite(strike)) return
     setSyncBusy(true)
     setSyncHint(null)
     setError(null)
     try {
-      const optionsTicker = buildPolygonOptionsTicker(sym, exp, strike, optionRight)
-      const endMs = Date.now()
-      const isDaily = period === '1 D'
-      const lookbackMs = isDaily ? AGG_LOOKBACK_MS_DAILY : AGG_LOOKBACK_MS_INTRADAY
-      const startMs = endMs - lookbackMs
-      let timespan = 'minute'
-      let multiplier = 1
-      if (isDaily) {
-        timespan = 'day'
-        multiplier = 1
-      } else if (period === '1 hour') {
-        timespan = 'hour'
-        multiplier = 1
-      } else if (period === '5 mins') {
-        timespan = 'minute'
-        multiplier = 5
-      } else {
-        timespan = 'minute'
-        multiplier = 1
-      }
-      const res = await postMassiveSync('feed_options_aggregate', {
-        options_ticker: optionsTicker,
-        symbol: sym,
-        expiry: exp,
-        strike,
-        option_right: optionRight,
-        timespan,
-        multiplier,
-        start_ms: startMs,
-        end_ms: endMs,
-      })
-      const jobId = resolveMassiveSyncJobId(res)
-      if (!res.ok || !jobId) {
-        setError(res.error ?? res.message ?? 'Failed to enqueue Massive aggregates job')
-        return
-      }
-      const polled = await pollMassiveJobUntilDone(jobId, { maxAttempts: 120, intervalMs: 1000 })
-      if (!polled.ok) {
-        setError(polled.error ?? 'Massive job failed')
-        return
-      }
-      if (period === '5 mins') {
-        setSyncHint('Backfill wrote 5-minute bars (option_min, period=5 mins). Reloading bars from PostgreSQL.')
-        await load()
-      } else {
-        setSyncHint(isDaily ? 'Daily backfill finished (option_day, ~2y window). Reloading bars from PostgreSQL.' : 'Backfill finished. Reloading bars from PostgreSQL.')
-        await load()
-      }
+      setSyncHint('Reloading bars from Plugin/PostgreSQL. Ingest is owned by the Market Data plugin.')
+      await load()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Backfill failed')
+      setError(e instanceof Error ? e.message : 'Reload failed')
     } finally {
       setSyncBusy(false)
     }
-  }, [symbol, expiration, strike, optionRight, period, load])
+  }, [load])
 
   const chartBars = useMemo(() => sortBarsAsc(bars), [bars])
 
@@ -189,14 +133,8 @@ export function OptionDiscoveryContractChartPanel({
           </DiscoveryIconButton>
           <DiscoveryIconButton
             disabled={loading || syncBusy}
-            title={
-              syncBusy
-                ? 'Backfilling bars from Massive'
-                : period === '1 D'
-                ? 'Enqueue Celery job: Massive /v2/aggs (1 day) → option_day (~2 years lookback)'
-                : 'Enqueue Celery job: Massive /v2/aggs → option_min (last 7 days)'
-            }
-            aria-label={syncBusy ? 'Backfilling bars from Massive' : 'Backfill bars from Massive'}
+            title={syncBusy ? 'Reloading bars from Plugin/PostgreSQL' : 'Reload bars from Plugin/PostgreSQL'}
+            aria-label={syncBusy ? 'Reloading bars from Plugin/PostgreSQL' : 'Reload bars from Plugin/PostgreSQL'}
             onClick={() => void runMassiveAggregatesBackfill()}
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -206,7 +144,7 @@ export function OptionDiscoveryContractChartPanel({
               <path d="M16 14l3 3-3 3" />
             </svg>
           </DiscoveryIconButton>
-          <InfoTooltip text="Reads OHLC from PostgreSQL (option_day for Daily, option_min for intraday). Backfill enqueues Massive /v2/aggs on the Celery queue: daily bars upsert option_day (~2y window); intraday upserts option_min (7 days). You can also use Feed → Massive Option → Aggregate Bars (OHLC)." />
+          <InfoTooltip text="Reads OHLC from PostgreSQL (option_day for Daily, option_min for intraday). Ingest is owned by the Market Data plugin; Celery Massive is disabled." />
           <label
             className={cn(
               'inline-flex cursor-pointer select-none items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
@@ -241,7 +179,7 @@ export function OptionDiscoveryContractChartPanel({
           <div className="data-bars-chart-container" style={{ marginTop: '0.75rem' }}>
             <div className="data-bars-chart-header">
               <span className="data-bars-chart-title">
-                {symbol.trim().toUpperCase()} {optionRight === 'C' ? 'Call' : 'Put'} {strike.toFixed(2)} · {period} · Massive (DB) · {chartBars.length} bars
+                {symbol.trim().toUpperCase()} {optionRight === 'C' ? 'Call' : 'Put'} {strike.toFixed(2)} · {period} · Plugin (DB) · {chartBars.length} bars
               </span>
             </div>
             {!chartHasVwap && (

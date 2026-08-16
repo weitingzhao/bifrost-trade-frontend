@@ -15,14 +15,8 @@ import {
 } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { fetchWatchlist } from '@/api/market'
-import {
-  fetchMassiveDailyChecklist,
-  fetchMassiveJob,
-  pollMassiveJobUntilDone,
-  postMassiveSync,
-} from '@/api/research/optionDiscovery'
+import { fetchMassiveDailyChecklist } from '@/api/research/optionDiscovery'
 import type { MassiveDailyChecklistDims, MassiveDailyDimBlock } from '@/types/optionDiscovery'
-import type { MassiveJobApiRow } from '@/types/ops'
 import { cn } from '@/lib/utils'
 
 const DAILY_DIMS = [
@@ -88,21 +82,6 @@ function statusLabel(s: string | undefined): string {
   if (x === 'degraded') return 'Degraded'
   if (x === 'missing') return 'Missing'
   return s || '—'
-}
-
-function summarizeJobResult(job: MassiveJobApiRow | undefined): string {
-  const r = job?.result as Record<string, unknown> | undefined
-  if (!r || typeof r !== 'object') return '—'
-  if (typeof r.error === 'string') return r.error
-  if (r.rows_written != null) return `rows ${String(r.rows_written)}`
-  if (r.rows_upserted != null) return `upserted ${String(r.rows_upserted)}`
-  if (r.bars_upserted != null) return `bars ${String(r.bars_upserted)}`
-  if (r.message != null) return String(r.message)
-  try {
-    return JSON.stringify(r)
-  } catch {
-    return '—'
-  }
 }
 
 function canBackfillDim(dimKey: DimKey, block: MassiveDailyDimBlock | undefined): boolean {
@@ -198,45 +177,15 @@ export function DailyDataChecklistSection({
       const k = `${sym}|${dimKey}`
       setBusyKey(k)
       try {
-        let post: { ok: boolean; job_id?: string; error?: string } = { ok: false }
-        if (dimKey === 'daily-snapshot') {
-          post = await postMassiveSync('feed_option_snapshots', { mode: 'chain', underlying: sym })
-        } else if (dimKey === 'daily-oi') {
-          post = await postMassiveSync('oi', { mode: 'watchlist_eod', symbols: [sym], trade_date: tradeDate })
-        } else if (dimKey === 'daily-max-pain') {
-          post = await postMassiveSync('report_option_max_pain', { symbols: [sym], trade_date: tradeDate })
-        } else if (dimKey === 'daily-corporate') {
-          post = await postMassiveSync('feed_stocks_corporate_action', { symbol: sym })
-        }
-        if (!post.ok) {
-          appendLog(`[${sym} ${dimKey}] ${post.error ?? 'enqueue failed'}`)
-          return
-        }
-        const jid = post.job_id
-        if (!jid) {
-          appendLog(`[${sym} ${dimKey}] No job id returned`)
-          return
-        }
-        const polled = await pollMassiveJobUntilDone(jid, { maxAttempts: 120, intervalMs: 1000 })
-        const full = await fetchMassiveJob(jid)
-        const job = full.job
-          ? ({
-              job_id: full.job.job_id,
-              kind: full.job.kind,
-              status: full.job.status,
-              result: full.job.result,
-            } as MassiveJobApiRow)
-          : undefined
-        if (!polled.ok) {
-          appendLog(`[${sym} ${dimKey}] job ${jid} ${polled.status ?? ''} ${polled.error ?? ''} ${summarizeJobResult(job)}`)
-          return
-        }
-        appendLog(`[${sym} ${dimKey}] ${summarizeJobResult(job)}`)
+        appendLog(
+          `[${sym} ${dimKey}] Celery Massive enqueue retired — ingest is owned by the Market Data plugin.`,
+        )
+        await loadChecklist()
       } finally {
         setBusyKey(null)
       }
     },
-    [appendLog, tradeDate],
+    [appendLog, loadChecklist],
   )
 
   const onBackfillAll = useCallback(async () => {

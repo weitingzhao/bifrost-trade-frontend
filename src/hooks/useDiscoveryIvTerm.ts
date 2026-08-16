@@ -1,12 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect -- IV term keys and auto-load when expirations change */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  fetchIvTermStructure,
-  fetchIvVolatilityCone,
-  pollMassiveJobUntilDone,
-  postMassiveSync,
-  resolveMassiveSyncJobId,
-} from '@/api/research/optionDiscovery'
+import { fetchIvTermStructure, fetchIvVolatilityCone } from '@/api/research/optionDiscovery'
 import type { IvTermPoint, IvVolConePoint } from '@/components/optionDiscovery/OptionDiscoveryAnalytics'
 import {
   IV_TERM_DEFAULT_EXPIRATIONS,
@@ -27,7 +21,6 @@ export function useDiscoveryIvTerm({
   selectedSymbol,
   expirations,
   visibleExpirations,
-  effectiveStrikes,
   massiveConfigured,
   expirationsLoading,
   expirationsError,
@@ -91,51 +84,16 @@ export function useDiscoveryIvTerm({
     if (!sym || ordered.length < 2) return
     setIvTermSyncLoading(true)
     setTermError(null)
-    setIvTermSyncStatus(null)
+    setIvTermSyncStatus('Loading IV term structure from Plugin/PostgreSQL…')
     try {
-      for (let i = 0; i < ordered.length; i++) {
-        const exp = ordered[i]
-        setIvTermSyncStatus(`Massive chain snapshot ${i + 1}/${ordered.length} (${exp})…`)
-        const payload: Record<string, unknown> = {
-          underlying: sym,
-          mode: 'chain',
-          expiration_date: exp,
-          limit: 250,
-        }
-        if (effectiveStrikes.length > 0) {
-          payload.strike_price_gte = Math.min(...effectiveStrikes)
-          payload.strike_price_lte = Math.max(...effectiveStrikes)
-        }
-        const sync = await postMassiveSync('feed_option_snapshots', payload)
-        const jobId = resolveMassiveSyncJobId(sync)
-        if (!sync.ok || !jobId) {
-          // P8: plugin owns ingest — skip Celery sync and load IV term from PG.
-          const refused = /market-data plugin|massive queues disabled/i.test(
-            `${sync.error ?? ''} ${sync.message ?? ''}`,
-          )
-          if (refused) {
-            setIvTermSyncStatus('Loading IV term structure from PostgreSQL…')
-            await loadIvTermStructure()
-            return
-          }
-          setTermError(sync.error ?? sync.message ?? `Massive sync failed for ${exp}`)
-          return
-        }
-        const polled = await pollMassiveJobUntilDone(jobId, { maxAttempts: 120, intervalMs: 1000 })
-        if (!polled.ok) {
-          setTermError(polled.error ?? `Massive job failed for ${exp}`)
-          return
-        }
-      }
-      setIvTermSyncStatus('Loading IV term structure…')
       await loadIvTermStructure()
     } catch (e) {
-      setTermError(e instanceof Error ? e.message : 'Backfill failed')
+      setTermError(e instanceof Error ? e.message : 'Failed to load IV term structure')
     } finally {
       setIvTermSyncLoading(false)
       setIvTermSyncStatus(null)
     }
-  }, [selectedSymbol, expirations, ivTermExpKeys, effectiveStrikes, loadIvTermStructure])
+  }, [selectedSymbol, expirations, ivTermExpKeys, loadIvTermStructure])
 
   const toggleIvTermExpiration = useCallback(
     (exp: string, checked: boolean) => {

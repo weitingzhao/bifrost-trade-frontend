@@ -7,9 +7,6 @@ import { DiscoverySection } from '@/components/optionDiscovery/DiscoverySection'
 import {
   fetchMaxPainCompute,
   fetchMaxPainComputeHistory,
-  pollMassiveJobUntilDone,
-  postMassiveSync,
-  resolveMassiveSyncJobId,
 } from '@/api/research/optionDiscovery'
 import type { MaxPainComputeResponse, MaxPainHistoryPoint, MaxPainStrikePoint } from '@/types/optionDiscovery'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
@@ -517,39 +514,22 @@ export function OptionDiscoveryMaxPainPanel({
 
   const backfillOiForSymbol = useCallback(async () => {
     const sym = symbol.trim().toUpperCase()
-    if (!massiveConfigured || !sym) return
+    if (!sym) return
     setOiBackfillLoading(true)
-    setOiBackfillMsg('Backfilling daily OI…')
+    setOiBackfillMsg('Reloading Max Pain from Plugin/PostgreSQL…')
     setErr(null)
     try {
-      const sync = await postMassiveSync('oi', {
-        mode: 'watchlist_eod',
-        symbols: [sym],
-      })
-      const jobId = resolveMassiveSyncJobId(sync)
-      if (!sync.ok || !jobId) {
-        setErr(sync.error ?? sync.message ?? 'Failed to enqueue OI backfill')
-        setOiBackfillMsg(null)
-        return
-      }
-      const polled = await pollMassiveJobUntilDone(jobId, { maxAttempts: 180, intervalMs: 1000 })
-      if (!polled.ok) {
-        setErr(polled.error ?? 'OI backfill job failed')
-        setOiBackfillMsg(null)
-        return
-      }
-      setOiBackfillMsg('OI backfill done. Refreshing Max Pain…')
       await load()
       setOiBackfillMsg(
-        'OI backfill finished. Historical Trend needs at least 2 distinct trade dates with OI for this expiry.',
+        'Ingest is owned by the Market Data plugin. Showing current Plugin/PostgreSQL Max Pain rows.',
       )
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Failed to backfill OI')
+      setErr(e instanceof Error ? e.message : 'Failed to reload Max Pain')
       setOiBackfillMsg(null)
     } finally {
       setOiBackfillLoading(false)
     }
-  }, [symbol, massiveConfigured, load])
+  }, [symbol, load])
 
   useEffect(() => {
     void load()

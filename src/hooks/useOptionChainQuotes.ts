@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  fetchGreeksCoverage,
-  fetchOptionSnapshotsPg,
-  pollMassiveJobUntilDone,
-  postMassiveSync,
-  resolveMassiveSyncJobId,
-} from '@/api/research/optionDiscovery'
+import { fetchGreeksCoverage, fetchOptionSnapshotsPg } from '@/api/research/optionDiscovery'
 import type { GreeksCoverageResponse, OptionSnapshotRow } from '@/types/optionDiscovery'
 
 const QUOTES_DEBOUNCE_MS = 400
@@ -106,46 +100,6 @@ export function useOptionChainQuotes() {
       setSnapshotFeedback(null)
 
       try {
-        const sync = await postMassiveSync('feed_option_snapshots', {
-          underlying: sym,
-          mode: 'chain',
-          expiration_date: exp,
-          limit: 250,
-          ...(params.strikes.length > 0
-            ? {
-                strike_price_gte: Math.min(...params.strikes),
-                strike_price_lte: Math.max(...params.strikes),
-              }
-            : {}),
-        })
-
-        if (gen !== loadGenRef.current) return
-
-        const jobId = resolveMassiveSyncJobId(sync)
-        if (!sync.ok || !jobId) {
-          setSnapshotFeedback({
-            level: 'error',
-            title: 'Sync failed',
-            body: sync.error ?? sync.message ?? 'Massive sync failed',
-          })
-          setSnapshotRows([])
-          setUnderlyingPrice(null)
-          return
-        }
-
-        const poll = await pollMassiveJobUntilDone(jobId, { maxAttempts: 120, intervalMs: 1000 })
-        if (gen !== loadGenRef.current) return
-        if (!poll.ok) {
-          setSnapshotFeedback({
-            level: 'error',
-            title: 'Job failed',
-            body: poll.error ?? 'Massive job failed',
-          })
-          setSnapshotRows([])
-          setUnderlyingPrice(null)
-          return
-        }
-
         const pg = await readPgSnapshots(sym, exp, params.strikes)
         if (gen !== loadGenRef.current) return
 

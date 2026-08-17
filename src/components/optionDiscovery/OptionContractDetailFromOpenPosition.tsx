@@ -209,7 +209,7 @@ export function OptionContractDetailFromOpenPosition({
       warnings.push(`${greeksCoverage.freshness.stale_rows} stale snapshot row(s) older than 24h.`)
     }
     if (snapshotRows.length === 0) {
-      warnings.push('No Massive snapshot rows in PostgreSQL for this expiry/strike band — Greeks/IV charts may be sparse. Use Research → Option Discovery to sync chain, or wait for backfill.')
+      warnings.push('No Polygon snapshot rows in PostgreSQL for this expiry/strike band — Greeks/IV charts may be sparse. Use Research → Option Discovery to sync chain, or wait for Market Data Plugin backfill.')
     }
     setEventContextWarnings(warnings)
   }, [expirationDisplay, greeksCoverage, snapshotRows.length])
@@ -256,7 +256,7 @@ export function OptionContractDetailFromOpenPosition({
         />
         <div className={inspectorShell.section}>
           <DiscoveryHint className="" style={{ margin: 0 }}>
-            Loading contract detail (Massive snapshots)…
+            Loading contract detail (Polygon snapshots)…
           </DiscoveryHint>
         </div>
       </div>

@@ -8,7 +8,7 @@ export default function CoverageOptionPage() {
     <PageShell className="space-y-4">
       <PageHeader
         title="Data Coverage — Option"
-        description="Daily option pipeline status, Greeks/IV coverage, and Massive snapshot tools."
+        description="Daily option pipeline status, Greeks/IV coverage, and Market Data Plugin snapshot tools."
         actions={
           <Button variant="outline" size="sm" asChild>
             <Link to="/settings/coverage/overview">Overview</Link>

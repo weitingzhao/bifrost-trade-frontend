@@ -321,7 +321,7 @@ export const DataOverviewOptionJobsBar = forwardRef<
       <ConfirmDialog
         open={confirmFill === 'row'}
         title="Fill row gap"
-        message="Enqueue Celery jobs for pool symbols with non-zero gap after Check. This may trigger many Massive sync tasks."
+        message="Celery Massive enqueue is retired (P7). Gap repair for pool symbols is owned by the Market Data Plugin — this action no longer queues Massive sync tasks."
         confirmLabel="Confirm"
         confirming={fillBusy === 'row'}
         onConfirm={() => void runFillRow()}

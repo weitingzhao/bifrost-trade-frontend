@@ -169,7 +169,7 @@ export function OptionContractDetailPanel({
                 <path d="M9 17h6" />
               </svg>
             </DiscoveryIconButton>
-            <span className={inspectorShell.headerMeta}>Massive · 15 min delayed</span>
+            <span className={inspectorShell.headerMeta}>Polygon · 15 min delayed</span>
           </>
         }
         onClose={onClose}
@@ -195,7 +195,7 @@ export function OptionContractDetailPanel({
                   <div className={cn(inspectorShell.cardLabel, 'normal-case')}>
                     Price
                     <span className="rounded bg-muted px-1 py-0.5 text-dense-caption font-medium normal-case">Day</span>
-                    <InfoTooltip text="Day bar OHLC from Massive (chain snapshot, 15 min delayed). Underlying spot for decomposition uses stock_day daily close when available." />
+                    <InfoTooltip text="Day bar OHLC from Polygon (chain snapshot, 15 min delayed). Underlying spot for decomposition uses stock_day daily close when available." />
                   </div>
                   <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
                     {selectedRow.snapshot_ts && (
@@ -460,7 +460,7 @@ export function OptionContractDetailPanel({
             onToggle={() => toggleSection('chart')}
           >
             <DiscoveryHint className={optionDiscoveryDetailChartHintClass}>
-              OHLC below uses contract history. If the chart is empty, click Backfill from Massive (Celery worker on the massive queue required).
+              OHLC below uses contract history. If the chart is empty, reload bars from Market Data Plugin / PostgreSQL (Celery Massive queue is retired).
             </DiscoveryHint>
             <OptionDiscoveryContractChartPanel
               symbol={symbol}

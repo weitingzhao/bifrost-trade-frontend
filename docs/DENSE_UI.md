@@ -101,7 +101,7 @@ import {
 
 ### PostgreSQL sync jobs sheet
 
-Session-tracked Massive/Celery jobs on Research pages use a wide right `Sheet` with a seven-column `DenseDataTable` (time, kind, status, dedup, job id, summary, JSON details). Reference: [TickerReferenceJobsSheet.tsx](../src/components/massive/TickerReferenceJobsSheet.tsx); labels/summaries from [stockReferenceJobHelpers.ts](../src/utils/massive/stockReferenceJobHelpers.ts).
+Trade Celery Massive job-matrix / ticker-reference job sheets were retired with **api-massive (P7)**. Polygon ingest is owned by the **Market Data Plugin**; Celery pages use shared `data-display` tables (`DenseDataTable` + `jobQueues/*`) for remaining IB/worker queues only.
 
 ### Stock Data Readiness runbook steps
 
@@ -365,7 +365,7 @@ No raw `<table` under `src/pages/settings/apiHealth/`. Legacy five Settings API 
 | Page + table tokens | [socketIngestUi.ts](../src/pages/settings/socket/socketIngestUi.ts) |
 | Page shell | [SocketPage.tsx](../src/pages/settings/SocketPage.tsx) — `PageShell padding="default"`, `PageHeader titleSize="large"` + `InfoTooltip`, elevated `Card` sections |
 | Ingest services table | [IngestServicesTable.tsx](../src/pages/settings/socket/IngestServicesTable.tsx) — `DenseDataTable` + `DenseTableSubheadRow` (MASSIVE / IB groups) + dynamic `colgroup` |
-| Connection column | [IngestConnectionCell.tsx](../src/pages/settings/socket/IngestConnectionCell.tsx) — Massive age / IB client id / probe badges |
+| Connection column | [IngestConnectionCell.tsx](../src/pages/settings/socket/IngestConnectionCell.tsx) — Polygon WS age / IB client id / probe badges |
 | Row actions | [socketIngestControls.tsx](../src/pages/settings/socket/socketIngestControls.tsx) — `IconActionButton` (Start/Stop/Restart/Reset) |
 | Ops auth / host pills | [OpsAuthBar.tsx](../src/pages/settings/socket/OpsAuthBar.tsx), [OpsHostEnvPill.tsx](../src/pages/settings/socket/OpsHostEnvPill.tsx) — shared tokens (Celery/Daemon import same paths) |
 | Daemon reuse | `IngestServicesTable variant="daemon"` in [DaemonEngineOpsSection.tsx](../src/pages/settings/daemon/DaemonEngineOpsSection.tsx) |
@@ -396,7 +396,7 @@ No `@/components/ui/table` under `DaemonStatusPage.tsx` or `settings/daemon/**`.
 | Page + table tokens | [celeryUi.ts](../src/pages/operations/celery/celeryUi.ts) |
 | Page shell | [CeleryPage.tsx](../src/pages/operations/CeleryPage.tsx) — `PageShell padding="default"`, `PageHeader titleSize="large"` |
 | Section cards | [CelerySectionCard.tsx](../src/pages/operations/celery/CelerySectionCard.tsx) — `Card variant="elevated"` |
-| Queue summary + 8 data tables | `CeleryQueueSummaryTable`, `jobQueues/*`, `CeleryWorkerInstancesSection`, `CeleryWorkerInstanceSituation`, `CeleryBeatScheduleCard`, `CeleryScheduledJobsSection`, `RegisteredCeleryTasksTable`, `RunMassiveJobMatrixTable` |
+| Queue summary + data tables | `CeleryQueueSummaryTable`, `jobQueues/*` (Bars/IB), `CeleryWorkerInstancesSection`, `CeleryWorkerInstanceSituation`, `CeleryBeatScheduleCard`, `CeleryScheduledJobsSection`, `RegisteredCeleryTasksTable` — Run Massive matrix retired (P7 → Market Data Plugin) |
 | Job status filter | `SegmentControl size="sm"` in [CeleryJobQueuesSection.tsx](../src/pages/operations/celery/CeleryJobQueuesSection.tsx) |
 | Celery ops icon toolbar | [CeleryQueueIconButton.tsx](../src/pages/operations/celery/CeleryQueueIconButton.tsx) — **allowed exception** (semantic queue/worker actions; not `IconActionButton`) |
 | Terminal streams | [CeleryTerminalPanel.tsx](../src/pages/operations/celery/console/CeleryTerminalPanel.tsx) — scoped CSS exception |

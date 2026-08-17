@@ -43,7 +43,7 @@ export function DiscoveryContractGreeksTable({ rows, footer }: Props) {
       <DenseTableHeader>
         <DenseTableHeadRow>
           <DenseTableHead className="normal-case tracking-normal">Metric</DenseTableHead>
-          <DenseTableHead className={cn(denseTableNumCell, 'normal-case tracking-normal')}>Snapshot (Massive)</DenseTableHead>
+          <DenseTableHead className={cn(denseTableNumCell, 'normal-case tracking-normal')}>Snapshot (Polygon)</DenseTableHead>
           <DenseTableHead className={cn(denseTableNumCell, 'normal-case tracking-normal')}>BS</DenseTableHead>
           <DenseTableHead className={cn(denseTableNumCell, 'normal-case tracking-normal')}>Diff %</DenseTableHead>
         </DenseTableHeadRow>

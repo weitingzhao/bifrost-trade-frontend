@@ -14,7 +14,7 @@ import { apiHealthSectionTitleClass } from './apiHealthUi'
 
 function formatServiceLabel(service: string): string {
   const t = service.toLowerCase()
-  if (t === 'massive') return 'Massive'
+  if (t === 'massive') return 'Massive (legacy config key)'
   if (t === 'docs') return 'Docs'
   if (t === 'ops') return 'Ops'
   if (t === 'research') return 'Research'

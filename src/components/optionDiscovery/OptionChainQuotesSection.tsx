@@ -90,7 +90,7 @@ export function OptionChainQuotesSection({
       <div className="mt-1 mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
         <h3 id="option-discovery-table-head" className="m-0 inline-flex items-center gap-1.5 text-base font-medium">
           Option quotes
-          <InfoTooltip text="Massive: enqueue sync job (REST), then read snapshots from PostgreSQL; 15 min delayed." />
+          <InfoTooltip text="Polygon: Market Data Plugin sync, then read snapshots from PostgreSQL; 15 min delayed." />
         </h3>
         <span className="inline-flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           {lastQuotesLoadTs != null && (
@@ -113,7 +113,7 @@ export function OptionChainQuotesSection({
               { value: 'snapshot', label: 'Snapshot' },
               { value: 'bs', label: 'BS' },
             ]}
-            ariaLabel="Switch IV and Greeks columns between Massive snapshot data and local Black-Scholes calculation"
+            ariaLabel="Switch IV and Greeks columns between Polygon snapshot data and local Black-Scholes calculation"
           />
         </span>
         <DiscoveryIconButton
@@ -162,7 +162,7 @@ export function OptionChainQuotesSection({
               </Button>
               {openMassiveFeed && (
                 <Button type="button" variant="ghost" size="sm" onClick={openMassiveFeed}>
-                  Open Massive Option
+                  Open Market Data Option
                 </Button>
               )}
             </div>
@@ -231,7 +231,7 @@ export function OptionChainQuotesSection({
         <DiscoveryHint role="status">
           {!snapshotLoadAttempted
             ? 'Select symbol and expiration to load quotes automatically.'
-            : 'No quotes returned. Check Massive job queue, Celery worker, and PostgreSQL option_snapshots.'}
+            : 'No quotes returned. Check Market Data Plugin ingest, PostgreSQL option_snapshots, and Plugin workers.'}
         </DiscoveryHint>
       )}
     </DiscoverySection>

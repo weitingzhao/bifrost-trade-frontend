@@ -8,7 +8,7 @@ export default function CoverageOverviewPage() {
     <PageShell className="space-y-4">
       <PageHeader
         title="Data Coverage — Overview"
-        description="Aggregated coverage metrics: watchlist summary, Massive job queues, and global PostgreSQL tables."
+        description="Aggregated coverage metrics: watchlist summary, Market Data Plugin ingest status, and global PostgreSQL tables."
         actions={
           <Button variant="outline" size="sm" asChild>
             <Link to="/settings/coverage/overview-detail">Per-symbol detail</Link>

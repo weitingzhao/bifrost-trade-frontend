@@ -45,7 +45,7 @@ function mpPainXTitleY(viewH: number) {
 }
 
 const DISCLAIMER =
-  'Disclaimer: Max Pain is a theoretical reference metric based on end-of-day open interest data. It does not predict future price movement and should not be used as the sole basis for trading decisions. Open interest data is sourced from Massive (Polygon) with approximately 15-minute delay. Corporate actions (splits, special dividends) may affect strike prices and contract multipliers.'
+  'Disclaimer: Max Pain is a theoretical reference metric based on end-of-day open interest data. It does not predict future price movement and should not be used as the sole basis for trading decisions. Open interest data is sourced from Polygon with approximately 15-minute delay. Corporate actions (splits, special dividends) may affect strike prices and contract multipliers.'
 
 function scaleLin(v: number, vmin: number, vmax: number, outMin: number, outMax: number): number {
   if (!Number.isFinite(v)) return (outMin + outMax) / 2
@@ -547,9 +547,9 @@ export function OptionDiscoveryMaxPainPanel({
               · {expiration}
             </span>
           ) : null}
-          <InfoTooltip text="Requires Massive API key and EOD open interest in PostgreSQL." />
+          <InfoTooltip text="Requires Market Data Plugin (Polygon) API key and EOD open interest in PostgreSQL." />
         </h3>
-        <DiscoveryHint className="">Configure Massive under Settings → Feed → Massive Option to enable Max Pain.</DiscoveryHint>
+        <DiscoveryHint className="">Configure Market Data Plugin under Settings → Feed to enable Max Pain.</DiscoveryHint>
       </DiscoverySection>
     )
   }
@@ -568,7 +568,7 @@ export function OptionDiscoveryMaxPainPanel({
               · {expiration}
             </span>
           ) : null}
-          <InfoTooltip text="Based on end-of-day open interest from Massive (15 min delayed source). Computed live from PostgreSQL; not read from stored report rows." />
+          <InfoTooltip text="Based on end-of-day open interest from Polygon (15 min delayed source). Computed live from PostgreSQL; not read from stored report rows." />
         </h3>
         <div className={optionDiscoveryMaxPainHeaderActionsClass}>
           <DiscoveryIconButton

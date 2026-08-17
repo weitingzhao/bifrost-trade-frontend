@@ -6,7 +6,7 @@ import type { MassiveStatusResponse } from '@/types/optionDiscovery'
 import { DiscoveryHint } from './DiscoveryHint'
 
 const INFO_TEXT =
-  'Option Discovery: choose underlying (from Watchlist STK with Option? on) and expiration. Expirations and quotes use Massive delayed snapshot sync + PostgreSQL.'
+  'Option Discovery: choose underlying (from Watchlist STK with Option? on) and expiration. Expirations and quotes use Polygon delayed snapshot sync (Market Data Plugin) + PostgreSQL.'
 
 export function DiscoveryPageHeader({
   massiveStatus,
@@ -42,11 +42,11 @@ export function DiscoveryPageHeader({
               className="mt-0 font-semibold"
               title={massiveStatus.delay_notice}
             >
-              Massive · 15 min delayed
+              Polygon · 15 min delayed
             </DiscoveryHint>
           )}
           {massiveStatus?.configured && massiveStatus && !massiveStatus.trades_enabled && (
-            <InfoTooltip text="Tape (last trades) is not available on this tier. Enable trades in Massive config for Developer." />
+            <InfoTooltip text="Tape (last trades) is not available on this tier. Enable trades in Market Data Plugin / Polygon config for Developer." />
           )}
           {extraActions}
         </>

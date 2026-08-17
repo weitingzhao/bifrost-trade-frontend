@@ -236,7 +236,7 @@ export function OptionDiscoveryIvTermSection({
                   <span className="inline-flex items-center gap-1.5 text-dense-meta font-bold uppercase tracking-wide text-muted-foreground">
                     Expirations in chart
                     <InfoTooltip
-                      text={`You may check any expirations in the list (up to ${maxExpirations}), not only the first ${defaultExpirationCount}. "Select first ${defaultExpirationCount}" is a shortcut. IV term reads existing rows in PostgreSQL — if you pick expirations that were never snapshotted, use Backfill (Massive) or Load quotes in section 4 for those dates.`}
+                      text={`You may check any expirations in the list (up to ${maxExpirations}), not only the first ${defaultExpirationCount}. "Select first ${defaultExpirationCount}" is a shortcut. IV term reads existing rows in PostgreSQL — if you pick expirations that were never snapshotted, use Backfill (Market Data Plugin) or Load quotes in section 4 for those dates.`}
                     />
                   </span>
                   <span
@@ -365,7 +365,7 @@ export function OptionDiscoveryIvTermSection({
             </div>
             {massiveBackfillAvailable && (
               <DiscoveryHint className="mt-2 text-xs">
-                Backfill runs the same Massive chain snapshot jobs as “Load quotes” (section 4), once per checked
+                Backfill runs the same Polygon chain snapshot jobs as “Load quotes” (section 4), once per checked
                 expiration. Strike window from section 3 is applied when set; otherwise a broad chain (limit 250) is
                 requested.
               </DiscoveryHint>
@@ -477,7 +477,7 @@ export function OptionDiscoveryIvTermSection({
                   <DiscoveryHint className="mb-2 text-xs leading-snug">
                     <strong>Term (latest):</strong> PostgreSQL{' '}
                     <code className="rounded bg-muted px-1 py-0.5 text-[0.85em]">option_snapshots_latest</code> (same
-                    pipeline as quotes: Massive or IB). <strong>Cone (historical bands):</strong>{' '}
+                    pipeline as quotes: Polygon or IB). <strong>Cone (historical bands):</strong>{' '}
                     <code className="rounded bg-muted px-1 py-0.5 text-[0.85em]">option_snapshots</code>, one row per NY
                     calendar day per contract (last snapshot that day), up to 90 calendar days; percentiles from daily ATM
                     IV. <strong>ACT/REQ</strong> = actual daily ATM IV sample count vs minimum ({CONE_MIN_DAILY_SAMPLES})

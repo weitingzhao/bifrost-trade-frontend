@@ -88,7 +88,7 @@ export function CeleryScheduledJobsSection({ mainTab }: { mainTab: CeleryMainTab
             <>
           <h4 className={celerySectionTitleClass}>
             Celery Beat (scheduled)
-            <InfoTooltip text="Tasks invoked on a schedule by Celery Beat. Most enqueue run_massive_job." />
+            <InfoTooltip text="Tasks invoked on a schedule by Celery Beat." />
           </h4>
           <DenseDataTable>
             <colgroup>

@@ -1095,7 +1095,7 @@ export function OptionDiscoveryAnalyticsPanel({
     <DiscoverySection className="w-full" aria-label="Option analytics">
       <h3 className="mb-2 flex items-center gap-2 text-base font-medium">
         Option Analytics
-        <InfoTooltip text="Derived from current-expiry snapshot data (Massive, ~15 min delayed). IV Smile and OI by strike for loaded contracts. Scoped to the selected strike window." />
+        <InfoTooltip text="Derived from current-expiry snapshot data (Polygon, ~15 min delayed). IV Smile and OI by strike for loaded contracts. Scoped to the selected strike window." />
       </h3>
 
       <div className="mb-3 w-full min-w-0 overflow-x-auto overflow-y-hidden">

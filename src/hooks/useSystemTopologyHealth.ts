@@ -29,7 +29,16 @@ import {
   celeryQueueHealth,
 } from '@/components/topology/topologyCeleryHealth'
 
-type SocketIngestKey = 'ib_ingestor' | 'ib_account_agent' | 'ib_operator' | 'massive_ws'
+type SocketIngestKey = 'ib_ingestor' | 'ib_account_agent' | 'ib_operator' | 'polygon_ws'
+
+function topologySocketToIngestKey(key: string): SocketIngestKey | null {
+  // Topology node key is polygon_ws (Wave A); dual-accept legacy massive_ws if present.
+  if (key === 'polygon_ws' || key === 'massive_ws') return 'polygon_ws'
+  if (key === 'ib_ingestor' || key === 'ib_account_agent' || key === 'ib_operator') {
+    return key
+  }
+  return null
+}
 
 function ingestToTopologyLamp(lamp: IngestLamp): TopologyLamp {
   if (lamp === 'green') return 'green'
@@ -175,8 +184,9 @@ export function useSystemTopologyHealth(enabled: boolean) {
       }
 
       if (def.kind === 'socket') {
-        const socketKey = def.key as SocketIngestKey
-        const health = buildSocketNode(socketKey, status)
+        const ingestKey = topologySocketToIngestKey(def.key)
+        if (!ingestKey) return base
+        const health = buildSocketNode(ingestKey, status)
         return { ...base, ...health }
       }
 

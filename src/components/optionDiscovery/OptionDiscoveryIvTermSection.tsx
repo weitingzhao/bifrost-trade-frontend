@@ -116,8 +116,8 @@ export function OptionDiscoveryIvTermSection({
   onUncheckAllExpirations,
   maxExpirations,
   defaultExpirationCount,
-  massiveBackfillAvailable,
-  onBackfillMassiveSnapshots,
+  pluginBackfillAvailable,
+  onBackfillPolygonSnapshots,
   snapshotSyncLoading,
   snapshotSyncStatus,
   onLoad,
@@ -140,8 +140,8 @@ export function OptionDiscoveryIvTermSection({
   onUncheckAllExpirations: () => void
   maxExpirations: number
   defaultExpirationCount: number
-  massiveBackfillAvailable: boolean
-  onBackfillMassiveSnapshots: () => Promise<void>
+  pluginBackfillAvailable: boolean
+  onBackfillPolygonSnapshots: () => Promise<void>
   snapshotSyncLoading: boolean
   snapshotSyncStatus: string | null
   onLoad: () => Promise<void>
@@ -166,11 +166,11 @@ export function OptionDiscoveryIvTermSection({
   const runBackfill = useCallback(async () => {
     setBusy(true)
     try {
-      await onBackfillMassiveSnapshots()
+      await onBackfillPolygonSnapshots()
     } finally {
       setBusy(false)
     }
-  }, [onBackfillMassiveSnapshots])
+  }, [onBackfillPolygonSnapshots])
 
   const sym = symbol.trim()
   const canLoad = sym !== '' && filteredExpirations.length >= 2 && !expirationsLoading
@@ -363,7 +363,7 @@ export function OptionDiscoveryIvTermSection({
                 })}
               </ul>
             </div>
-            {massiveBackfillAvailable && (
+            {pluginBackfillAvailable && (
               <DiscoveryHint className="mt-2 text-xs">
                 Backfill runs the same Polygon chain snapshot jobs as “Load quotes” (section 4), once per checked
                 expiration. Strike window from section 3 is applied when set; otherwise a broad chain (limit 250) is
@@ -385,7 +385,7 @@ export function OptionDiscoveryIvTermSection({
           )}
           {!snapshotSyncLoading && !(termLoading || busy) && (
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              {massiveBackfillAvailable && (
+              {pluginBackfillAvailable && (
                 <DiscoveryIconButton
                   disabled={!canRunLoad}
                   onClick={() => void runBackfill()}

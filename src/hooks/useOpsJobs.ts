@@ -8,7 +8,7 @@ import {
   postRetryFailedBarsJobs,
   trimBarsJobs,
 } from '@/api/ops'
-import { fetchMassiveCeleryBeatSchedule } from '@/api/research'
+import { fetchMarketDataPluginCeleryBeatSchedule } from '@/api/research'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
 export interface BarsJobsFilter {
@@ -33,10 +33,10 @@ export function useOpsAudit(limit = 100) {
   })
 }
 
-export function useMassiveCeleryBeat() {
+export function useMarketDataPluginCeleryBeat() {
   return useQuery({
     queryKey: QUERY_KEYS.research.celeryBeat,
-    queryFn: fetchMassiveCeleryBeatSchedule,
+    queryFn: fetchMarketDataPluginCeleryBeatSchedule,
     staleTime: 120_000,
   })
 }

@@ -5,7 +5,7 @@ export function useDiscoveryNav() {
   const navigate = useNavigate()
   return {
     goToScreener: () => navigate('/research/screener'),
-    /** Historical Massive feed link — now points to stock IB coverage. */
-    openMassiveFeed: () => navigate('/settings/coverage/stock-ib'),
+    /** Polygon feed coverage settings (stock IB coverage page). */
+    openPolygonFeed: () => navigate('/settings/coverage/stock-ib'),
   }
 }

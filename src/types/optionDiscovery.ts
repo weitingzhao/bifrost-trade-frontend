@@ -47,7 +47,7 @@ export interface OptionExpirationsResult {
   provider?: string
 }
 
-export interface MassiveStatusResponse {
+export interface MarketDataPluginStatus {
   configured: boolean
   tier: string
   delay_notice: string
@@ -55,7 +55,7 @@ export interface MassiveStatusResponse {
   daily_full_backfill_years: number
 }
 
-export interface MassiveDailyDimBlock {
+export interface MarketDataPluginDailyDimBlock {
   status?: string
   rows?: number
   last_ts?: string
@@ -66,12 +66,12 @@ export interface MassiveDailyDimBlock {
   last_msg_age_s?: number | null
 }
 
-export type MassiveDailyChecklistDims = {
-  'daily-snapshot'?: MassiveDailyDimBlock
-  'daily-oi'?: MassiveDailyDimBlock
-  'daily-max-pain'?: MassiveDailyDimBlock
-  'daily-corporate'?: MassiveDailyDimBlock
-  'daily-ws-alive'?: MassiveDailyDimBlock
+export type MarketDataPluginDailyChecklistDims = {
+  'daily-snapshot'?: MarketDataPluginDailyDimBlock
+  'daily-oi'?: MarketDataPluginDailyDimBlock
+  'daily-max-pain'?: MarketDataPluginDailyDimBlock
+  'daily-corporate'?: MarketDataPluginDailyDimBlock
+  'daily-ws-alive'?: MarketDataPluginDailyDimBlock
 }
 
 export interface MaxPainStrikePoint {
@@ -196,13 +196,13 @@ export interface RelativeValueResponse {
   error?: string
 }
 
-export interface MassiveJobPollResult {
+export interface MarketDataPluginJobPollResult {
   ok: boolean
   status?: string
   error?: string
 }
 
-export interface MassiveJobDetail {
+export interface MarketDataPluginJobDetail {
   job_id: string
   kind?: string
   status?: string

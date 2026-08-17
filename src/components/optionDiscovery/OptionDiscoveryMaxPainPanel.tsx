@@ -464,11 +464,11 @@ function TrendSvg({ series }: { series: MaxPainHistoryPoint[] }) {
 export function OptionDiscoveryMaxPainPanel({
   symbol,
   expiration,
-  massiveConfigured,
+  pluginConfigured,
 }: {
   symbol: string
   expiration: string
-  massiveConfigured: boolean
+  pluginConfigured: boolean
 }) {
   const [live, setLive] = useState<MaxPainComputeResponse | null>(null)
   const [hist, setHist] = useState<MaxPainHistoryPoint[]>([])
@@ -480,7 +480,7 @@ export function OptionDiscoveryMaxPainPanel({
   const [err, setErr] = useState<string | null>(null)
 
 
-  const canLoad = massiveConfigured && symbol.trim() !== '' && expiration.trim() !== ''
+  const canLoad = pluginConfigured && symbol.trim() !== '' && expiration.trim() !== ''
 
   const load = useCallback(async () => {
     if (!canLoad) {
@@ -537,7 +537,7 @@ export function OptionDiscoveryMaxPainPanel({
 
   const points = useMemo(() => live?.pain_by_strike ?? [], [live])
 
-  if (!massiveConfigured) {
+  if (!pluginConfigured) {
     return (
       <DiscoverySection className={optionDiscoveryMaxPainSectionClass} aria-label="Max Pain">
         <h3 className={optionDiscoveryMaxPainTitleClass}>

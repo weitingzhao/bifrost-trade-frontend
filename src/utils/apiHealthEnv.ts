@@ -2,7 +2,7 @@ import {
   API_HEALTH_FETCH_TIMEOUT_MS,
   fetchDocsApiHealthAtOrigin,
   fetchHealthAtOrigin,
-  fetchMassiveApiHealthAtOrigin,
+  fetchMarketDataApiHealthAtOrigin,
   fetchOpsHealthAtOrigin,
   fetchResearchApiHealthAtOrigin,
   type ApiOriginBase,
@@ -55,7 +55,7 @@ interface ServiceProbe {
 
 interface ProbeResult {
   server: ServiceProbe
-  massive: ServiceProbe
+  marketData: ServiceProbe
   docs: ServiceProbe
   ops: ServiceProbe
   trading: ServiceProbe
@@ -174,7 +174,7 @@ async function probeServices(kind: ProbeKind): Promise<ProbeResult> {
     if (mp === null) {
       const [sr, mr, dr, or_] = await Promise.allSettled([
         fetchHealthAtOrigin(o, tmo),
-        fetchMassiveApiHealthAtOrigin(o, tmo),
+        fetchMarketDataApiHealthAtOrigin(o, tmo),
         fetchDocsApiHealthAtOrigin(o, tmo),
         fetchOpsHealthAtOrigin(o, tmo),
       ])
@@ -189,7 +189,7 @@ async function probeServices(kind: ProbeKind): Promise<ProbeResult> {
           ts: sr.status === 'fulfilled' ? sr.value.ts : undefined,
           base: baseLabel,
         },
-        massive: {
+        marketData: {
           ok: mr.status === 'fulfilled',
           ts: mr.status === 'fulfilled' ? mr.value.ts : undefined,
           base: baseLabel,
@@ -218,7 +218,7 @@ async function probeServices(kind: ProbeKind): Promise<ProbeResult> {
     const oMk = microserviceHealthBase(kind, mp.marketPort)
     const [sr, mr, dr, or, tr, st, pf, mk, rr] = await Promise.allSettled([
       fetchHealthAtOrigin(o, tmo),
-      fetchMassiveApiHealthAtOrigin(o, tmo),
+      fetchMarketDataApiHealthAtOrigin(o, tmo),
       fetchDocsApiHealthAtOrigin(o, tmo),
       fetchOpsHealthAtOrigin(o, tmo),
       fetchHealthAtOrigin(oTr, tmo),
@@ -233,7 +233,7 @@ async function probeServices(kind: ProbeKind): Promise<ProbeResult> {
         ts: sr.status === 'fulfilled' ? sr.value.ts : undefined,
         base: baseLabel,
       },
-      massive: {
+      marketData: {
         ok: mr.status === 'fulfilled',
         ts: mr.status === 'fulfilled' ? mr.value.ts : undefined,
         base: baseLabel,
@@ -299,7 +299,7 @@ async function probeServices(kind: ProbeKind): Promise<ProbeResult> {
   const oR = `${scheme}://${host}:${researchPort}`
   const [sr, mr, dr, or, tr, st, pf, mk, rr] = await Promise.allSettled([
     fetchHealthAtOrigin(oS, tmo),
-    fetchMassiveApiHealthAtOrigin(oM, tmo),
+    fetchMarketDataApiHealthAtOrigin(oM, tmo),
     fetchDocsApiHealthAtOrigin(oD, tmo),
     fetchOpsHealthAtOrigin(oO, tmo),
     fetchHealthAtOrigin(oTr, tmo),
@@ -314,7 +314,7 @@ async function probeServices(kind: ProbeKind): Promise<ProbeResult> {
       ts: sr.status === 'fulfilled' ? sr.value.ts : undefined,
       base: oS,
     },
-    massive: {
+    marketData: {
       ok: mr.status === 'fulfilled',
       ts: mr.status === 'fulfilled' ? mr.value.ts : undefined,
       base: oM,
@@ -521,7 +521,7 @@ export function buildEnvColumn(
     },
     {
       title: 'Feed',
-      rows: [row('Market Data Plugin', probe.massive, 'GET /api/plugin/market-data/health failed')],
+      rows: [row('Market Data Plugin', probe.marketData, 'GET /api/plugin/market-data/health failed')],
     },
   ]
   return { title, display, groups }

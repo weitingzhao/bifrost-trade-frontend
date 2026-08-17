@@ -12,7 +12,7 @@ type Params = {
   expirations: string[]
   visibleExpirations: string[]
   effectiveStrikes: number[]
-  massiveConfigured: boolean
+  pluginConfigured: boolean
   expirationsLoading: boolean
   expirationsError: string | null
 }
@@ -21,7 +21,7 @@ export function useDiscoveryIvTerm({
   selectedSymbol,
   expirations,
   visibleExpirations,
-  massiveConfigured,
+  pluginConfigured,
   expirationsLoading,
   expirationsError,
 }: Params) {
@@ -155,7 +155,7 @@ export function useDiscoveryIvTerm({
   }, [visibleExpirations])
 
   useEffect(() => {
-    if (!massiveConfigured) return
+    if (!pluginConfigured) return
     const sym = selectedSymbol.trim()
     if (!sym || expirationsLoading || expirationsError) return
     if (ivTermExpKeys.length < 2) return
@@ -168,7 +168,7 @@ export function useDiscoveryIvTerm({
     }, 400)
     return () => window.clearTimeout(tid)
   }, [
-    massiveConfigured,
+    pluginConfigured,
     selectedSymbol,
     ivTermExpKeys,
     expirationsLoading,

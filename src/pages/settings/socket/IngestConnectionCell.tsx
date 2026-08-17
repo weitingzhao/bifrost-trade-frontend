@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import type { StatusResponse } from '@/types/monitor'
+import { statusSocketPolygonWs } from '@/types/monitor'
 import {
   ConnectionRetryControl,
   IbBrokerConnectionCell,
@@ -10,6 +11,7 @@ import {
   ingestRedisTruthyConnected,
   massiveServiceHeartbeatState,
   massiveWsRestOnly,
+  isPolygonWsServiceId,
   type MarketIngestServiceRow,
 } from '@/utils/socketIngestLamp'
 import {
@@ -76,14 +78,14 @@ export function ConnectionCell({
   svc: MarketIngestServiceRow
   status: StatusResponse | null | undefined
   elapsed: number
-  category?: 'Massive' | 'IB' | 'Engine' | 'Other'
+  category?: 'Polygon' | 'IB' | 'Engine' | 'Other'
   wallNowSec: number
   onReconnect?: () => void
   reconnectDisabled?: boolean
   reconnectBusy?: boolean
 }) {
-  if (svc.id === 'massive_ws') {
-    const massive = status?.socket?.massive
+  if (isPolygonWsServiceId(svc.id)) {
+    const massive = statusSocketPolygonWs(status)
     const restOnly = massiveWsRestOnly(massive)
     const wsConnected = massive?.ws_connected != null
       ? ingestRedisTruthyConnected(massive.ws_connected)

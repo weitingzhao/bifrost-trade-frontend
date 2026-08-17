@@ -62,7 +62,7 @@ export const QUERY_KEYS = {
       ivTerm:         ['research', 'discovery', 'iv-term']        as const,
       maxPain:        ['research', 'discovery', 'max-pain']       as const,
       greeksCoverage: ['research', 'discovery', 'greeks-coverage'] as const,
-      massiveStatus:  ['research', 'discovery', 'massive-status']  as const,
+      pluginStatus:  ['research', 'discovery', 'plugin-status']  as const,
       dailyChecklist: ['research', 'discovery', 'daily-checklist'] as const,
     },
     ivRadar:        ['research', 'iv-radar']                     as const,
@@ -81,7 +81,7 @@ export const QUERY_KEYS = {
   },
   settings: {
     apiHealth:        ['settings', 'api-health']        as const,
-    apiHealthMassive: ['settings', 'api-health', 'massive-status'] as const,
+    apiHealthMarketData: ['settings', 'api-health', 'market-data-status'] as const,
   },
   ops: {
     workers:            ['ops', 'workers']                   as const,

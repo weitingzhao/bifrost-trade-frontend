@@ -35,7 +35,7 @@ export function OptionChainQuotesSection({
   snapshotPgWatching,
   snapshotPgWatchSecondsLeft,
   onPullNow,
-  openMassiveFeed,
+  openPolygonFeed,
   chainColumnVisibility,
   onToggleChainColumn,
   chainColumnList,
@@ -62,7 +62,7 @@ export function OptionChainQuotesSection({
   snapshotPgWatching: boolean
   snapshotPgWatchSecondsLeft: number | null
   onPullNow: () => void
-  openMassiveFeed?: () => void
+  openPolygonFeed?: () => void
   chainColumnVisibility: Record<string, boolean | undefined>
   onToggleChainColumn: (id: ChainColumnId) => void
   chainColumnList: ChainColumnId[]
@@ -160,8 +160,8 @@ export function OptionChainQuotesSection({
               <Button type="button" variant="secondary" size="sm" onClick={onPullNow} disabled={!canLoadQuotes}>
                 Pull now
               </Button>
-              {openMassiveFeed && (
-                <Button type="button" variant="ghost" size="sm" onClick={openMassiveFeed}>
+              {openPolygonFeed && (
+                <Button type="button" variant="ghost" size="sm" onClick={openPolygonFeed}>
                   Open Market Data Option
                 </Button>
               )}

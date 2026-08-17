@@ -2,17 +2,17 @@ import type { ReactNode } from 'react'
 import { PageHeader } from '@/components/layout'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { useDiscoveryNav } from '@/hooks/useDiscoveryNav'
-import type { MassiveStatusResponse } from '@/types/optionDiscovery'
+import type { MarketDataPluginStatus } from '@/types/optionDiscovery'
 import { DiscoveryHint } from './DiscoveryHint'
 
 const INFO_TEXT =
   'Option Discovery: choose underlying (from Watchlist STK with Option? on) and expiration. Expirations and quotes use Polygon delayed snapshot sync (Market Data Plugin) + PostgreSQL.'
 
 export function DiscoveryPageHeader({
-  massiveStatus,
+  pluginStatus,
   extraActions,
 }: {
-  massiveStatus: MassiveStatusResponse | null
+  pluginStatus: MarketDataPluginStatus | null
   extraActions?: ReactNode
 }) {
   const { goToScreener } = useDiscoveryNav()
@@ -36,16 +36,16 @@ export function DiscoveryPageHeader({
       actions={
         <>
           <InfoTooltip text={INFO_TEXT} />
-          {massiveStatus?.configured && (
+          {pluginStatus?.configured && (
             <DiscoveryHint
               as="span"
               className="mt-0 font-semibold"
-              title={massiveStatus.delay_notice}
+              title={pluginStatus.delay_notice}
             >
               Polygon · 15 min delayed
             </DiscoveryHint>
           )}
-          {massiveStatus?.configured && massiveStatus && !massiveStatus.trades_enabled && (
+          {pluginStatus?.configured && pluginStatus && !pluginStatus.trades_enabled && (
             <InfoTooltip text="Tape (last trades) is not available on this tier. Enable trades in Market Data Plugin / Polygon config for Developer." />
           )}
           {extraActions}

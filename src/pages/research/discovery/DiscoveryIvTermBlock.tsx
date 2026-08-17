@@ -17,8 +17,8 @@ type Props = {
   onResetExpirationsToDefault: () => void
   onSelectAllExpirations: () => void
   onUncheckAllExpirations: () => void
-  massiveBackfillAvailable: boolean
-  onBackfillMassiveSnapshots: () => void | Promise<void>
+  pluginBackfillAvailable: boolean
+  onBackfillPolygonSnapshots: () => void | Promise<void>
   snapshotSyncLoading: boolean
   snapshotSyncStatus: string | null
   onLoad: () => void | Promise<void>
@@ -54,9 +54,9 @@ export function DiscoveryIvTermBlock(props: Props) {
         onUncheckAllExpirations={props.onUncheckAllExpirations}
         maxExpirations={IV_TERM_MAX_EXPIRATIONS}
         defaultExpirationCount={IV_TERM_DEFAULT_EXPIRATIONS}
-        massiveBackfillAvailable={props.massiveBackfillAvailable}
-        onBackfillMassiveSnapshots={async () => {
-          await props.onBackfillMassiveSnapshots()
+        pluginBackfillAvailable={props.pluginBackfillAvailable}
+        onBackfillPolygonSnapshots={async () => {
+          await props.onBackfillPolygonSnapshots()
         }}
         snapshotSyncLoading={props.snapshotSyncLoading}
         snapshotSyncStatus={props.snapshotSyncStatus}

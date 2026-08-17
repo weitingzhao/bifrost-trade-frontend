@@ -211,9 +211,9 @@ export async function fetchSymbolOptionPcr(
   }
 }
 
-// ── Celery Beat schedule (Massive API removed — noop) ─────────────────────────
+// ── Celery Beat schedule (Market Data Plugin — noop; CronJobs own schedule) ───
 
-export async function fetchMassiveCeleryBeatSchedule(): Promise<MassiveCeleryBeatScheduleResponse> {
+export async function fetchMarketDataPluginCeleryBeatSchedule(): Promise<MassiveCeleryBeatScheduleResponse> {
   return {
     ok: false,
     error: 'Massive Trade API removed — Celery Beat schedule lives on Market Data Plugin CronJobs',

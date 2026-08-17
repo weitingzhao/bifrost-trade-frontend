@@ -86,8 +86,11 @@ export interface SocketIbSlot {
   ib_probe_stale?: boolean
 }
 
-/** GET /status `socket.massive` — Massive WS ingest Redis meta. */
-export interface StatusSocketMassive {
+/**
+ * GET /status `socket.polygon_ws` (preferred) — Polygon WS ingest Redis meta.
+ * Legacy wire field `socket.massive` carries the same shape during Wave C dual-write.
+ */
+export interface StatusSocketPolygonWs {
   ws_connected?: boolean
   /** ``rest_only`` when Options Starter skips Polygon WS (Celery REST aggregates). */
   ws_mode?: string | null
@@ -99,7 +102,12 @@ export interface StatusSocketMassive {
   last_service_heartbeat_at?: number | null
   next_service_heartbeat_in_s?: number | null
   ws_reconnects?: number | null
+  /** Present on some monitor payloads (STG policy-off). */
+  configured?: boolean
 }
+
+/** @deprecated Prefer StatusSocketPolygonWs — same shape; legacy name for Wave C compat. */
+export type StatusSocketMassive = StatusSocketPolygonWs
 
 /** Unified IB Broker socket block (ingestor / account agent / operator). */
 export interface StatusSocketIbBroker {
@@ -150,11 +158,21 @@ export type StatusSocketIbOperator = StatusSocketIbBroker
 export type StatusSocketIbAccountAgent = StatusSocketIbBroker
 
 export interface StatusSocket {
-  massive?: StatusSocketMassive | null
+  /** Preferred Wave C key (same payload as massive while dual-writing). */
+  polygon_ws?: StatusSocketPolygonWs | null
+  /** Legacy dual-write; prefer polygon_ws. Owner gate before dropping. */
+  massive?: StatusSocketPolygonWs | null
   ib_ingestor?: StatusSocketIbIngestor | null
   ib_operator?: StatusSocketIbOperator | null
   ib_account_agent?: StatusSocketIbAccountAgent | null
   platform_ib_gateway?: StatusPlatformIbGateway | null
+}
+
+/** Prefer `socket.polygon_ws`, fall back to legacy `socket.massive`. */
+export function statusSocketPolygonWs(
+  status: { socket?: StatusSocket | null } | null | undefined,
+): StatusSocketPolygonWs | null | undefined {
+  return status?.socket?.polygon_ws ?? status?.socket?.massive
 }
 
 export interface Operation {

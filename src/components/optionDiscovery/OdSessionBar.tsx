@@ -1,4 +1,4 @@
-import type { MassiveDailyChecklistDims, MassiveStatusResponse } from '@/types/optionDiscovery'
+import type { MarketDataPluginDailyChecklistDims, MarketDataPluginStatus } from '@/types/optionDiscovery'
 import { DiscoveryHint } from './DiscoveryHint'
 import { DiscoveryIconButton } from './DiscoveryIconButton'
 import { DiscoverySection } from './DiscoverySection'
@@ -20,21 +20,21 @@ function formatSnapshotTime(block: { last_ts?: string; status?: string } | undef
 }
 
 export interface OdSessionBarProps {
-  massiveStatus: MassiveStatusResponse | null
+  pluginStatus: MarketDataPluginStatus | null
   selectedSymbol: string
-  dailyDims: MassiveDailyChecklistDims | null
+  dailyDims: MarketDataPluginDailyChecklistDims | null
   dailyDimsDate: string | null
   dailyDimsLoading: boolean
-  onOpenMassiveFeed?: () => void
+  onOpenPolygonFeed?: () => void
 }
 
 export function OdSessionBar({
-  massiveStatus,
+  pluginStatus,
   selectedSymbol,
   dailyDims,
   dailyDimsDate,
   dailyDimsLoading,
-  onOpenMassiveFeed,
+  onOpenPolygonFeed,
 }: OdSessionBarProps) {
   return (
     <DiscoverySection first className="flex flex-col overflow-visible" aria-label="Session">
@@ -42,7 +42,7 @@ export function OdSessionBar({
         <h3 id="option-discovery-conditions-head" className="text-base font-medium">
           Chain
         </h3>
-        {massiveStatus?.configured && selectedSymbol.trim() ? (
+        {pluginStatus?.configured && selectedSymbol.trim() ? (
           <div
             className="flex flex-wrap items-center gap-2 min-w-0"
             role="status"
@@ -59,10 +59,10 @@ export function OdSessionBar({
                 <DiscoveryHint as="span" className="mt-0 font-mono">
                   {`${selectedSymbol.trim().toUpperCase()} · Snapshot: ${formatSnapshotTime(dailyDims['daily-snapshot'])} · OI: ${formatDimShort('daily-oi', dailyDims['daily-oi'])} · Max pain: ${formatDimShort('daily-max-pain', dailyDims['daily-max-pain'])} · Corporate: ${formatDimShort('daily-corporate', dailyDims['daily-corporate'])} · WS: ${formatDimShort('daily-ws-alive', dailyDims['daily-ws-alive'])}`}
                 </DiscoveryHint>
-                {onOpenMassiveFeed && (
+                {onOpenPolygonFeed && (
                   <DiscoveryIconButton
                     className="od-daily-data-open-btn"
-                    onClick={onOpenMassiveFeed}
+                    onClick={onOpenPolygonFeed}
                     title="Open daily data status in Settings"
                     aria-label="Open daily data status"
                   >

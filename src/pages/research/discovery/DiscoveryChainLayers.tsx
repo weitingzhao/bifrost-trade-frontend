@@ -5,7 +5,7 @@ import { OptionDiscoveryMaxPainPanel } from '@/components/optionDiscovery/Option
 import { OptionDiscoveryAnalyticsPanel } from '@/components/optionDiscovery/OptionDiscoveryAnalytics'
 import { StrikeLadderPanel } from '@/components/optionDiscovery/StrikeLadderPanel'
 import { OptionChainQuotesSection } from '@/components/optionDiscovery/OptionChainQuotesSection'
-import type { MassiveStatusResponse } from '@/types/optionDiscovery'
+import type { MarketDataPluginStatus } from '@/types/optionDiscovery'
 import type { StdDevOption, StrikeCountOption } from '@/utils/optionDiscovery/strikePresets'
 import type { StrikeOiPair } from '@/components/optionDiscovery/StrikeLadderPanel'
 import type { ChainColumnId } from './useDiscoveryChainTable'
@@ -23,7 +23,7 @@ type Props = {
   selectedExpiration: string
   setSelectedExpiration: (exp: string) => void
   visibleExpirations: string[]
-  massiveStatus: MassiveStatusResponse | null
+  pluginStatus: MarketDataPluginStatus | null
   strikesLoading: boolean
   strikes: number[]
   stockDayLastPrice: number | null
@@ -57,7 +57,7 @@ type Props = {
   snapshotPgWatchSecondsLeft: number | null
   chainColumnVisibility: Record<ChainColumnId, boolean>
   onToggleChainColumn: (id: ChainColumnId) => void
-  openMassiveFeed: () => void
+  openPolygonFeed: () => void
   chainColumnList: ChainColumnId[]
   showCallSide: boolean
   showPutSide: boolean
@@ -116,7 +116,7 @@ export function DiscoveryChainLayers(props: Props) {
             <OptionDiscoveryMaxPainPanel
               symbol={props.selectedSymbol}
               expiration={props.selectedExpiration}
-              massiveConfigured={Boolean(props.massiveStatus?.configured)}
+              pluginConfigured={Boolean(props.pluginStatus?.configured)}
             />
           </div>
         )}
@@ -202,7 +202,7 @@ export function DiscoveryChainLayers(props: Props) {
           snapshotPgWatching={props.snapshotPgWatching}
           snapshotPgWatchSecondsLeft={props.snapshotPgWatchSecondsLeft}
           onPullNow={() => void props.loadQuotes()}
-          openMassiveFeed={props.openMassiveFeed}
+          openPolygonFeed={props.openPolygonFeed}
           chainColumnVisibility={props.chainColumnVisibility}
           onToggleChainColumn={props.onToggleChainColumn}
           chainColumnList={props.chainColumnList}

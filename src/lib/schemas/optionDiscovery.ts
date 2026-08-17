@@ -36,7 +36,7 @@ export const OptionExpirationsResponseSchema = z.object({
   provider: z.string().optional(),
 }).passthrough()
 
-export const MassiveStatusResponseSchema = z.object({
+export const MarketDataPluginStatusSchema = z.object({
   configured: z.boolean(),
   tier: z.string(),
   delay_notice: z.string(),
@@ -44,7 +44,7 @@ export const MassiveStatusResponseSchema = z.object({
   daily_full_backfill_years: z.number(),
 }).passthrough()
 
-const MassiveDailyDimBlockSchema = z.object({
+const MarketDataPluginDailyDimBlockSchema = z.object({
   status: z.string().optional(),
   rows: z.number().optional(),
   last_ts: z.string().optional(),
@@ -55,10 +55,10 @@ const MassiveDailyDimBlockSchema = z.object({
   last_msg_age_s: z.number().nullable().optional(),
 }).passthrough()
 
-export const MassiveDailyChecklistResponseSchema = z.object({
+export const MarketDataPluginDailyChecklistResponseSchema = z.object({
   ok: z.boolean(),
   trade_date: z.string().optional(),
-  symbols: z.record(z.string(), z.record(z.string(), MassiveDailyDimBlockSchema)).optional(),
+  symbols: z.record(z.string(), z.record(z.string(), MarketDataPluginDailyDimBlockSchema)).optional(),
   error: z.string().optional(),
 }).passthrough()
 

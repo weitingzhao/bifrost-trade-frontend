@@ -14,7 +14,7 @@ import { useOptionContractLiquidity } from '@/components/optionDiscovery/useOpti
 import { useDiscoverySession } from '@/hooks/useDiscoverySession'
 import { useDiscoveryCompare } from '@/hooks/useDiscoveryCompare'
 import { useWatchlistStkSymbols } from '@/hooks/useWatchlistStkSymbols'
-import { useMassiveDiscoveryStatus, useMassiveDailyChecklist } from '@/hooks/useMassiveDiscoveryStatus'
+import { useMarketDataPluginStatus, useMarketDataPluginDailyChecklist } from '@/hooks/useMarketDataPluginStatus'
 import { useDiscoverySymbolBenchmark } from '@/hooks/useDiscoverySymbolBenchmark'
 import { useDiscoveryGreeksCoverage } from '@/hooks/useDiscoveryGreeksCoverage'
 import { useDiscoveryExpirations } from '@/hooks/useDiscoveryExpirations'
@@ -29,9 +29,9 @@ import { useDiscoveryStrikeWindow } from './discovery/useDiscoveryStrikeWindow'
 import { useDiscoveryChainTable } from './discovery/useDiscoveryChainTable'
 
 export default function DiscoveryPage() {
-  const { openMassiveFeed } = useDiscoveryNav()
+  const { openPolygonFeed } = useDiscoveryNav()
   const { symbols: stkSymbols } = useWatchlistStkSymbols()
-  const { data: massiveStatus } = useMassiveDiscoveryStatus()
+  const { data: pluginStatus } = useMarketDataPluginStatus()
   const session = useDiscoverySession()
   const {
     selectedSymbol,
@@ -55,7 +55,7 @@ export default function DiscoveryPage() {
     setGreeksSource,
   } = session
 
-  const dailyChecklistQuery = useMassiveDailyChecklist(selectedSymbol, massiveStatus?.configured)
+  const dailyChecklistQuery = useMarketDataPluginDailyChecklist(selectedSymbol, pluginStatus?.configured)
   const dailyDims =
     dailyChecklistQuery.data?.ok && selectedSymbol.trim()
       ? (dailyChecklistQuery.data.symbols?.[selectedSymbol.trim().toUpperCase()] ?? null)
@@ -126,7 +126,7 @@ export default function DiscoveryPage() {
     expirations,
     visibleExpirations,
     effectiveStrikes: strikeCore.effectiveStrikes,
-    massiveConfigured: Boolean(massiveStatus?.configured),
+    pluginConfigured: Boolean(pluginStatus?.configured),
     expirationsLoading,
     expirationsError,
   })
@@ -199,15 +199,15 @@ export default function DiscoveryPage() {
 
   return (
     <PageShell padding="default" className={discoveryRootClass}>
-      <DiscoveryPageHeader massiveStatus={massiveStatus ?? null} />
+      <DiscoveryPageHeader pluginStatus={pluginStatus ?? null} />
 
       <OdSessionBar
-        massiveStatus={massiveStatus ?? null}
+        pluginStatus={pluginStatus ?? null}
         selectedSymbol={selectedSymbol}
         dailyDims={dailyDims}
         dailyDimsDate={dailyDimsDate}
         dailyDimsLoading={dailyDimsLoading}
-        onOpenMassiveFeed={openMassiveFeed}
+        onOpenPolygonFeed={openPolygonFeed}
       />
 
       <div className="mt-3">
@@ -242,8 +242,8 @@ export default function DiscoveryPage() {
               onResetExpirationsToDefault={ivTerm.resetIvTermExpirationsToDefault}
               onSelectAllExpirations={ivTerm.selectAllIvTermExpirations}
               onUncheckAllExpirations={ivTerm.uncheckAllIvTermExpirations}
-              massiveBackfillAvailable={Boolean(massiveStatus?.configured)}
-              onBackfillMassiveSnapshots={() => void ivTerm.syncIvTermMassiveSnapshots()}
+              pluginBackfillAvailable={Boolean(pluginStatus?.configured)}
+              onBackfillPolygonSnapshots={() => void ivTerm.syncIvTermMassiveSnapshots()}
               snapshotSyncLoading={ivTerm.ivTermSyncLoading}
               snapshotSyncStatus={ivTerm.ivTermSyncStatus}
               onLoad={() => void ivTerm.loadIvTermStructure()}
@@ -261,7 +261,7 @@ export default function DiscoveryPage() {
               selectedExpiration={selectedExpiration}
               setSelectedExpiration={setSelectedExpiration}
               visibleExpirations={visibleExpirations}
-              massiveStatus={massiveStatus ?? null}
+              pluginStatus={pluginStatus ?? null}
               strikesLoading={strikesLoading}
               strikes={strikes}
               stockDayLastPrice={stockDayLastPrice}
@@ -304,7 +304,7 @@ export default function DiscoveryPage() {
               onSelectContractKey={snapshots.setSelectedContractKey}
               snapshotLoadAttempted={snapshots.snapshotLoadAttempted}
               renderChainSideCells={chainTable.renderChainSideCells}
-              openMassiveFeed={openMassiveFeed}
+              openPolygonFeed={openPolygonFeed}
             />
 
             <OptionContractDrawer open={Boolean(chainTable.selectedRow && chainTable.selectedDerived)}>

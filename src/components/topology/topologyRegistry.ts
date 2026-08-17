@@ -93,7 +93,7 @@ export const TOPOLOGY_NODE_REGISTRY: TopologyNodeDef[] = [
   { key: 'ib_ingestor', name: 'IB Ingestor', kind: 'socket', zoneId: 'edge' },
   { key: 'ib_account_agent', name: 'IB Acct', kind: 'socket', zoneId: 'edge' },
   { key: 'ib_operator', name: 'IB Operator', kind: 'socket', zoneId: 'edge' },
-  { key: 'massive_ws', name: 'Massive WS', kind: 'socket', zoneId: 'edge' },
+  { key: 'polygon_ws', name: 'Polygon WS (Plugin)', kind: 'socket', zoneId: 'edge' },
   { key: 'daemon_trading', name: 'Strategy Daemon', kind: 'daemon', zoneId: 'daemon' },
   { key: 'account_sync', name: 'Account Sync', kind: 'daemon', zoneId: 'daemon' },
 ]
@@ -103,7 +103,7 @@ export const TOPOLOGY_NODE_LAYOUT: Record<string, { x: number; y: number }> = {
   ib_ingestor: { x: 50, y: 56 },
   ib_account_agent: { x: 50, y: 136 },
   ib_operator: { x: 50, y: 216 },
-  massive_ws: { x: 50, y: 296 },
+  polygon_ws: { x: 50, y: 296 },
   monitor: { x: 132, y: 48 },
   ops: { x: 192, y: 48 },
   docs: { x: 252, y: 48 },
@@ -139,7 +139,7 @@ export const TOPOLOGY_EDGES: TopologyEdgeDef[] = [
   { from: 'ib_ingestor', to: 'market', label: 'ticks' },
   { from: 'ib_operator', to: 'trading', label: 'orders' },
   { from: 'ib_account_agent', to: 'portfolio', label: 'positions' },
-  { from: 'massive_ws', to: 'market', label: 'health only (via Plugin redis-massive)' },
+  { from: 'polygon_ws', to: 'market', label: 'health only (via Plugin redis-massive)' },
   { from: 'daemon_trading', to: 'trading', label: 'engine' },
   { from: 'account_sync', to: 'portfolio', label: 'sync' },
 ]

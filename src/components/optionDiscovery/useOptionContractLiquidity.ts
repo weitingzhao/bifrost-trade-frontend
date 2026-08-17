@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 /* eslint-disable react-hooks/set-state-in-effect -- fetches on drawer open */
 import type { OptionSnapshotRow, LiquiditySummaryResponse, RelativeValueResponse } from '@/types/optionDiscovery'
 import {
-  fetchMassiveLastTrade,
-  fetchMassiveHistQuotes,
+  fetchPolygonLastTrade,
+  fetchPolygonHistQuotes,
   fetchLiquiditySummary,
   fetchRelativeValue,
 } from '@/api/research/optionDiscovery'
@@ -35,8 +35,8 @@ export function useOptionContractLiquidity(
     let cancelled = false
     setLiquidityLoading(true)
     Promise.allSettled([
-      fetchMassiveLastTrade(optTicker),
-      fetchMassiveHistQuotes(optTicker, { limit: 50 }),
+      fetchPolygonLastTrade(optTicker),
+      fetchPolygonHistQuotes(optTicker, { limit: 50 }),
       fetchLiquiditySummary(sym, exp, selectedRow.strike, selectedRow.right, 'massive'),
     ]).then(([tradeRes, quotesRes, liqRes]) => {
       if (cancelled) return

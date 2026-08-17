@@ -11,7 +11,7 @@ import type {
   GreeksCoverageResponse,
   LiquiditySummaryResponse,
   RelativeValueResponse,
-  MassiveStatusResponse,
+  MarketDataPluginStatus,
 } from '@/types/optionDiscovery'
 import { withValidation } from '@/lib/apiValidation'
 import {
@@ -25,7 +25,7 @@ const MARKET_DATA_PLUGIN_UNAVAILABLE =
   'Market Data Plugin unavailable — check platform-api / Plugin health'
 
 /** Plugin health as Discovery "status" stand-in (configured when reachable). */
-export async function fetchMarketDataPluginStatus(): Promise<MassiveStatusResponse> {
+export async function fetchMarketDataPluginStatus(): Promise<MarketDataPluginStatus> {
   try {
     const r = await fetch(marketDataPluginUrl('/health'))
     const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
@@ -49,9 +49,6 @@ export async function fetchMarketDataPluginStatus(): Promise<MassiveStatusRespon
     }
   }
 }
-
-/** @deprecated Use fetchMarketDataPluginStatus */
-export const fetchMassiveStatus = fetchMarketDataPluginStatus
 
 function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
   return {
@@ -491,7 +488,7 @@ export async function fetchRelativeValue(
   }
 }
 
-export async function fetchMassiveLastTrade(ticker: string): Promise<{
+export async function fetchPolygonLastTrade(ticker: string): Promise<{
   ok: boolean
   results?: Record<string, unknown>
   error?: string
@@ -526,7 +523,7 @@ export async function fetchMassiveLastTrade(ticker: string): Promise<{
   }
 }
 
-export async function fetchMassiveHistQuotes(
+export async function fetchPolygonHistQuotes(
   ticker: string,
   options?: { limit?: number },
 ): Promise<{ ok: boolean; results?: Record<string, unknown>[]; count?: number; error?: string }> {

@@ -13,7 +13,7 @@ import {
   denseTable,
 } from '@/components/data-display'
 import { CELERY_BEAT_SCHEDULE_COL_WIDTHS } from './celeryUi'
-import { useMassiveCeleryBeat } from '@/hooks/useOpsData'
+import { useMarketDataPluginCeleryBeat } from '@/hooks/useOpsData'
 
 function fmtCrontab(c: Record<string, string | number>): string {
   const h = c.hour
@@ -22,7 +22,7 @@ function fmtCrontab(c: Record<string, string | number>): string {
 }
 
 export function CeleryBeatScheduleCard() {
-  const { data, isLoading, isError, error } = useMassiveCeleryBeat()
+  const { data, isLoading, isError, error } = useMarketDataPluginCeleryBeat()
 
   const tz = data?.timezone?.trim() || 'UTC'
   const entries = data?.entries ?? []

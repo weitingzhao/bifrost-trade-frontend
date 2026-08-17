@@ -38,7 +38,7 @@ export async function fetchHealthAtOrigin(
   }
 }
 
-export async function fetchMassiveApiHealthAtOrigin(
+export async function fetchMarketDataApiHealthAtOrigin(
   _origin: ApiOriginBase,
   options?: { timeoutMs?: number },
 ): Promise<{ status: string; service: string; ts: number; config_profile?: string | null }> {

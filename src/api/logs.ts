@@ -57,7 +57,6 @@ export const LOG_APIS = {
   ib_ingestor:      makeLogApi('/api/ib-ingestor/logs'),
   ib_account_agent: makeLogApi('/api/ib-account-agent/logs'),
   ib_operator:      makeLogApi('/api/ib-operator/logs'),
-  massive_ws:       makeLogApi('/api/massive-ws/logs'),
 } as const
 
 /** Redis console streams for long-running daemon processes (not in global LOG_APIS). */
@@ -102,19 +101,17 @@ export const LOG_SOURCES: LogSourceDef[] = [
   { key: 'ib_ingestor',      label: 'IB INGESTOR',   api: LOG_APIS.ib_ingestor,      group: 'edge' },
   { key: 'ib_account_agent', label: 'IB ACCT AGENT', api: LOG_APIS.ib_account_agent, group: 'edge' },
   { key: 'ib_operator',      label: 'IB OPERATOR',   api: LOG_APIS.ib_operator,      group: 'edge' },
-  { key: 'massive_ws',       label: 'Polygon WS (Plugin)',    api: LOG_APIS.massive_ws,       group: 'edge' },
   // Daemon — Redis console streams (Strategy Trading + Account Sync)
   { key: 'daemon_trading', label: 'Strategy Trading', api: DAEMON_LOG_APIS.daemon_trading, group: 'daemon' },
   { key: 'account_sync',   label: 'Account Sync',     api: DAEMON_LOG_APIS.account_sync,   group: 'daemon' },
 ]
 
-/** Socket Services page — fixed 4-source log console. */
+/** Socket Services page — fixed 3-source log console. */
 export const SOCKET_LOG_SOURCES: LogSourceDef[] = LOG_SOURCES.filter(s =>
-  (['massive_ws', 'ib_operator', 'ib_ingestor', 'ib_account_agent'] as LogSourceKey[]).includes(s.key as LogSourceKey),
+  (['ib_operator', 'ib_ingestor', 'ib_account_agent'] as LogSourceKey[]).includes(s.key as LogSourceKey),
 )
 
 export const SOCKET_LOG_SOURCE_TAGS: Record<string, string> = {
-  massive_ws: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
   ib_operator: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
   ib_ingestor: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
   ib_account_agent: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
@@ -150,10 +147,6 @@ async function clearLogStream(path: string): Promise<{ ok: boolean; error?: stri
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Clear failed' }
   }
-}
-
-export async function clearMassiveWsLogs(): Promise<{ ok: boolean; error?: string }> {
-  return clearLogStream('/api/massive-ws/logs')
 }
 
 export async function clearIbOperatorLogs(): Promise<{ ok: boolean; error?: string }> {
@@ -221,7 +214,6 @@ export async function clearArchitectureApiLogs(): Promise<{ ok: boolean; errors:
 
 export async function clearAllSocketServiceLogs(): Promise<{ ok: boolean; errors: string[] }> {
   const results = await Promise.allSettled([
-    clearMassiveWsLogs(),
     clearIbOperatorLogs(),
     clearIbIngestorLogs(),
     clearIbAccountAgentLogs(),

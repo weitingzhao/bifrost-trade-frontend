@@ -6,7 +6,7 @@ export interface JobQueueTab {
   id: string
   label: string
   celeryQueue: string
-  pipeline: 'stocks_ib' | 'massive_async'
+  pipeline: 'stocks_ib'
 }
 
 export const FALLBACK_TABS: JobQueueTab[] = [
@@ -32,7 +32,7 @@ export function tabsFromProfiles(profiles: WorkerProfileInfo[]): JobQueueTab[] {
         id,
         label: qs.length > 1 ? `${p.label} (${q})` : p.label,
         celeryQueue: q,
-        pipeline: q === 'stocks_ib' ? 'stocks_ib' : 'massive_async',
+        pipeline: 'stocks_ib',
       })
     }
   }

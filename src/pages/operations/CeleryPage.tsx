@@ -174,10 +174,6 @@ function CeleryPageContent() {
     [setSearchParams],
   )
 
-  const clearBrokerQueueFilter = useCallback(() => {
-    setSearchParams(prev => applyCeleryUrlPatch(prev, { brokerQueue: null }), { replace: true })
-  }, [setSearchParams])
-
   const clearWorkerQueueFilter = useCallback(() => {
     setQueueFilter(null)
     setSearchParams(
@@ -281,8 +277,6 @@ function CeleryPageContent() {
           <TabsContent value="support_tasks" className="mt-3">
             <CelerySupportTasksSection
               mainTab={mainTab}
-              brokerQueueFilter={brokerQueueFilter}
-              onClearBrokerFilter={clearBrokerQueueFilter}
             />
           </TabsContent>
 

@@ -65,7 +65,7 @@ export interface AggregatedJobQueueSummaryRow {
   profile_key: string
   label: string
   celery_queue: string
-  pipeline: 'stocks_ib' | 'massive_async'
+  pipeline: 'stocks_ib'
   counts: JobQueueStatusCounts
 }
 
@@ -113,19 +113,6 @@ export interface CelerySupportedTaskRow {
   task_route_default_queue?: string
 }
 
-export interface RunMassiveJobMatrixRow {
-  kind: string
-  mode: string | null
-  mode_source: string
-  broker_queue_standard: string
-  broker_queue_high: string
-  task_name?: string
-  job_style?: 'scheduled' | 'on_demand'
-  feed_apis: string[]
-  db_tables: string[]
-  redis_nodes: string[]
-}
-
 export interface CeleryBeatTaskRow {
   name: string
   note: string
@@ -136,23 +123,11 @@ export interface CeleryCapabilitiesResponse {
   registered_tasks: CelerySupportedTaskRow[]
   count: number
   canonical_broker_queues: string[]
-  run_massive_job_matrix?: RunMassiveJobMatrixRow[]
   beat_tasks?: CeleryBeatTaskRow[]
   beat_running?: boolean
   consuming_queues?: string[]
   broker_queue_labels?: Record<string, string>
   error?: string
-}
-
-export interface MassiveJobApiRow {
-  job_id: string
-  type?: string
-  kind?: string
-  goal?: string
-  status?: string
-  result?: unknown
-  created_ts?: number
-  updated_ts?: number
 }
 
 export interface BarsJob {

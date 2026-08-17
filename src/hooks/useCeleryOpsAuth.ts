@@ -19,7 +19,6 @@ export function useCeleryOpsAuth() {
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.celeryCapabilities })
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.aggregatedJobs })
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.brokerStatus })
-    void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.massiveJobs })
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.ops.barsJobs })
   }, [qc])
 

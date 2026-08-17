@@ -94,7 +94,6 @@ export const QUERY_KEYS = {
     audit:              ['ops', 'audit']                     as const,
     celery:             ['ops', 'celery']                    as const,
     daemon:             ['ops', 'daemon']                    as const,
-    massiveJobs:        ['ops', 'massive-jobs']              as const,
     barsJobs:           ['ops', 'bars-jobs']                 as const,
     // Socket / market ingest services
     ingestServices:     ['ops', 'ingest-services']           as const,

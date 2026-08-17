@@ -9,27 +9,21 @@ import {
   useInvalidateCeleryCapabilities,
 } from '@/hooks/useCeleryCapabilitiesTab'
 import type { CeleryMainTab } from '../celeryTypes'
-import { RunMassiveJobMatrixTable } from './RunMassiveJobMatrixTable'
 import { RegisteredCeleryTasksTable } from './RegisteredCeleryTasksTable'
 
 const SUPPORT_TASKS_INFO =
-  'GET /ops/celery/capabilities: Queue kind/mode matrix for run_massive_job and the full worker task registry below. Celery Beat task names are on the Scheduled Jobs tab.'
+  'GET /ops/celery/capabilities: Full worker task registry. Celery Beat task names are on the Scheduled Jobs tab.'
 
 export interface CelerySupportTasksSectionProps {
   mainTab: CeleryMainTab
-  brokerQueueFilter?: string | null
-  onClearBrokerFilter?: () => void
 }
 
 export function CelerySupportTasksSection({
   mainTab,
-  brokerQueueFilter = null,
-  onClearBrokerFilter,
 }: CelerySupportTasksSectionProps) {
   const { data, isLoading, isError, error, isFetching } = useCeleryCapabilitiesTab(mainTab)
   const invalidate = useInvalidateCeleryCapabilities()
 
-  const matrix = data?.run_massive_job_matrix ?? []
   const tasks = data?.registered_tasks ?? []
 
   return (
@@ -67,20 +61,7 @@ export function CelerySupportTasksSection({
           <AlertDescription>{data.error}</AlertDescription>
         </Alert>
       ) : (
-        <div className="space-y-8">
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium flex items-center gap-1.5">
-              Queue kind / mode
-              <InfoTooltip text="Documented Massive job kind and payload mode combinations (run_massive_job)." />
-            </h4>
-            <RunMassiveJobMatrixTable
-              rows={matrix}
-              brokerQueueFilter={brokerQueueFilter}
-              onClearBrokerFilter={onClearBrokerFilter}
-            />
-          </div>
-          <RegisteredCeleryTasksTable tasks={tasks} />
-        </div>
+        <RegisteredCeleryTasksTable tasks={tasks} />
       )}
     </CelerySectionCard>
   )

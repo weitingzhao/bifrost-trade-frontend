@@ -9,7 +9,6 @@ import type {
   ExtendedBrokerStatus,
   CeleryCapabilitiesResponse,
   AuditEntry,
-  MassiveJobApiRow,
   BarsJob,
   JobQueueStatusCounts,
 } from '@/types/ops'
@@ -102,7 +101,6 @@ export async function fetchCeleryCapabilities(): Promise<CeleryCapabilitiesRespo
     headers: authHeaders(),
   })
   const j = await parseJson<Record<string, unknown>>(r)
-  const matrixRaw = j.run_massive_job_matrix
   const beatRaw = j.beat_tasks
   return {
     ok: r.ok && j.ok !== false,
@@ -112,9 +110,6 @@ export async function fetchCeleryCapabilities(): Promise<CeleryCapabilitiesRespo
     count: typeof j.count === 'number' ? j.count : 0,
     canonical_broker_queues: Array.isArray(j.canonical_broker_queues)
       ? (j.canonical_broker_queues as string[])
-      : [],
-    run_massive_job_matrix: Array.isArray(matrixRaw)
-      ? (matrixRaw as CeleryCapabilitiesResponse['run_massive_job_matrix'])
       : [],
     beat_tasks: Array.isArray(beatRaw)
       ? (beatRaw as CeleryCapabilitiesResponse['beat_tasks'])
@@ -150,7 +145,7 @@ export async function fetchAggregatedJobQueuesSummary(): Promise<AggregatedJobQu
       profile_key: String(o.profile_key ?? ''),
       label: String(o.label ?? o.celery_queue ?? ''),
       celery_queue: String(o.celery_queue ?? ''),
-      pipeline: o.pipeline === 'stocks_ib' ? 'stocks_ib' : 'massive_async',
+      pipeline: 'stocks_ib' as const,
       counts,
     }
   })
@@ -250,141 +245,6 @@ export async function trimBarsJobs(
 ): Promise<{ ok: boolean; deleted: number; error?: string }> {
   const params = new URLSearchParams({ keep: String(keep) })
   const r = await fetch(barsJobsUrl(`/trim?${params}`), { method: 'POST' })
-  const j = await parseJson<Record<string, unknown>>(r)
-  return {
-    ok: r.ok && j.ok !== false,
-    deleted: typeof j.deleted === 'number' ? j.deleted : 0,
-    error: typeof j.error === 'string' ? j.error : undefined,
-  }
-}
-
-// ── Massive jobs (/ops/research/massive/jobs) — Ops still serves these for Celery job UI ─
-
-function massiveJobsUrl(path: string): string {
-  const p = path.startsWith('?') ? path : path.startsWith('/') ? path : `/${path}`
-  return opsUrl(`/ops/research/massive/jobs${p}`)
-}
-
-export async function fetchMassiveJobsList(options?: {
-  limit?: number
-  offset?: number
-  status?: string
-  celery_queue?: string
-}): Promise<{ ok: boolean; jobs: MassiveJobApiRow[]; error?: string }> {
-  try {
-    const q = new URLSearchParams()
-    if (options?.limit != null) q.set('limit', String(options.limit))
-    if (options?.offset != null) q.set('offset', String(options.offset))
-    if (options?.status?.trim()) q.set('status', options.status.trim())
-    if (options?.celery_queue?.trim()) q.set('celery_queue', options.celery_queue.trim())
-    const r = await fetch(massiveJobsUrl(`?${q}`))
-    const j = await parseJson<Record<string, unknown>>(r)
-    if (!j.ok) {
-      return {
-        ok: false,
-        jobs: [],
-        error: typeof j.error === 'string' ? j.error : 'Request failed',
-      }
-    }
-    const raw = Array.isArray(j.jobs) ? j.jobs : []
-    const jobs: MassiveJobApiRow[] = raw.map((row: unknown) => {
-      const o = row as Record<string, unknown>
-      return {
-        job_id: String(o.job_id ?? ''),
-        type: typeof o.type === 'string' ? o.type : undefined,
-        kind: typeof o.kind === 'string' ? o.kind : undefined,
-        goal: typeof o.goal === 'string' ? o.goal : undefined,
-        status: typeof o.status === 'string' ? o.status : undefined,
-        result: o.result,
-        created_ts: typeof o.created_ts === 'number' ? o.created_ts : undefined,
-        updated_ts: typeof o.updated_ts === 'number' ? o.updated_ts : undefined,
-      }
-    })
-    return { ok: true, jobs }
-  } catch (e) {
-    return {
-      ok: false,
-      jobs: [],
-      error: e instanceof Error ? e.message : 'Network error',
-    }
-  }
-}
-
-export async function deleteAllMassiveJobs(
-  status?: string | null,
-  celeryQueue?: string | null,
-): Promise<{ ok: boolean; deleted: number; error?: string }> {
-  const params = new URLSearchParams()
-  if (status && status !== 'all') params.set('status', status)
-  if (celeryQueue?.trim()) params.set('celery_queue', celeryQueue.trim())
-  const qs = params.toString()
-  const r = await fetch(massiveJobsUrl(`/purge${qs ? `?${qs}` : ''}`), { method: 'POST' })
-  const j = await parseJson<Record<string, unknown>>(r)
-  return {
-    ok: r.ok && j.ok !== false,
-    deleted: typeof j.deleted === 'number' ? j.deleted : 0,
-    error: typeof j.error === 'string' ? j.error : undefined,
-  }
-}
-
-export async function postRetryMassiveJob(
-  jobId: string,
-): Promise<{ ok: boolean; error?: string; job?: MassiveJobApiRow }> {
-  const r = await fetch(massiveJobsUrl(`/${encodeURIComponent(jobId)}/retry`), { method: 'POST' })
-  const j = await parseJson<Record<string, unknown>>(r)
-  const raw = j.job as Record<string, unknown> | undefined
-  const job: MassiveJobApiRow | undefined =
-    raw && typeof raw === 'object'
-      ? {
-          job_id: String(raw.job_id ?? ''),
-          type: typeof raw.type === 'string' ? raw.type : undefined,
-          kind: typeof raw.kind === 'string' ? raw.kind : undefined,
-          goal: typeof raw.goal === 'string' ? raw.goal : undefined,
-          status: typeof raw.status === 'string' ? raw.status : undefined,
-          result: raw.result,
-          created_ts: typeof raw.created_ts === 'number' ? raw.created_ts : undefined,
-          updated_ts: typeof raw.updated_ts === 'number' ? raw.updated_ts : undefined,
-        }
-      : undefined
-  return {
-    ok: r.ok && j.ok === true,
-    error: typeof j.error === 'string' ? j.error : undefined,
-    job,
-  }
-}
-
-export async function postRetryFailedMassiveJobs(
-  celeryQueue: string,
-  limit = 500,
-): Promise<{
-  ok: boolean
-  error?: string
-  reset?: number
-  enqueued?: number
-  enqueue_errors?: { job_id: string; error: string }[]
-}> {
-  const params = new URLSearchParams({ limit: String(Math.max(1, Math.min(2000, limit))) })
-  if (celeryQueue.trim()) params.set('celery_queue', celeryQueue.trim())
-  const r = await fetch(massiveJobsUrl(`/retry-failed?${params}`), { method: 'POST' })
-  const j = await parseJson<Record<string, unknown>>(r)
-  return {
-    ok: r.ok && j.ok === true,
-    error: typeof j.error === 'string' ? j.error : undefined,
-    reset: typeof j.reset === 'number' ? j.reset : undefined,
-    enqueued: typeof j.enqueued === 'number' ? j.enqueued : undefined,
-    enqueue_errors: Array.isArray(j.enqueue_errors)
-      ? (j.enqueue_errors as { job_id: string; error: string }[])
-      : undefined,
-  }
-}
-
-export async function trimMassiveJobs(
-  keep: number,
-  celeryQueue?: string | null,
-): Promise<{ ok: boolean; deleted: number; error?: string }> {
-  const params = new URLSearchParams({ keep: String(keep) })
-  if (celeryQueue?.trim()) params.set('celery_queue', celeryQueue.trim())
-  const r = await fetch(massiveJobsUrl(`/trim?${params}`), { method: 'POST' })
   const j = await parseJson<Record<string, unknown>>(r)
   return {
     ok: r.ok && j.ok !== false,

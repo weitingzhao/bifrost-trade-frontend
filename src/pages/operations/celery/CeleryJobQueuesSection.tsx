@@ -131,19 +131,12 @@ export function CeleryJobQueuesSection({
             <p className="text-dense-caption font-mono text-muted-foreground mb-2">
               Queue: {t.celeryQueue}
             </p>
-            {t.pipeline === 'massive_async' ? (
-              <p className="text-dense-meta text-muted-foreground py-6 text-center">
-                Massive Celery job queue UI removed. Market Data Plugin owns Polygon ingest
-                (Ops Console → Subcontractors).
-              </p>
-            ) : (
-              <BarsJobsPanel
-                statusFilter={activeTabId === t.id ? statusFilter : 'all'}
-                limit={limit}
-                onConfirm={handleConfirm}
-                onMsg={handleMsg}
-              />
-            )}
+            <BarsJobsPanel
+              statusFilter={activeTabId === t.id ? statusFilter : 'all'}
+              limit={limit}
+              onConfirm={handleConfirm}
+              onMsg={handleMsg}
+            />
           </TabsContent>
         ))}
       </Tabs>

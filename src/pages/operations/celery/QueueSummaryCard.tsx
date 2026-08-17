@@ -16,9 +16,7 @@ import {
   useOpsWorkers,
   useOpsQueuesSummary,
   useAggregatedJobQueuesSummary,
-  useDeleteAllMassiveJobs,
   useDeleteAllBarsJobs,
-  useRetryFailedMassiveJobs,
   useRetryFailedBarsJobs,
 } from '@/hooks/useOpsData'
 import { computeCeleryRuntimeLamp, runtimeLampText } from '@/utils/celeryRuntime'
@@ -54,9 +52,7 @@ export function QueueSummaryCard({
     error: queuesErr,
   } = useOpsQueuesSummary()
   const { data: aggData, isLoading: aggLoading } = useAggregatedJobQueuesSummary()
-  const deleteMassive = useDeleteAllMassiveJobs()
   const deleteBars = useDeleteAllBarsJobs()
-  const retryMassive = useRetryFailedMassiveJobs()
   const retryBars = useRetryFailedBarsJobs()
   const [busyQueue, setBusyQueue] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<{
@@ -99,13 +95,8 @@ export function QueueSummaryCard({
       'Permanently delete all pending rows in this queue. Cannot be undone.',
       () =>
         withBusyQueue(row.celery_queue, async () => {
-          if (row.pipeline === 'massive_async') {
-            const r = await deleteMassive.mutateAsync({ status: 'pending', celeryQueue: row.celery_queue })
-            if (!r.ok) throw new Error(r.error ?? 'Delete failed')
-          } else {
-            const r = await deleteBars.mutateAsync({ status: 'pending' })
-            if (!r.ok) throw new Error(r.error ?? 'Delete failed')
-          }
+          const r = await deleteBars.mutateAsync({ status: 'pending' })
+          if (!r.ok) throw new Error(r.error ?? 'Delete failed')
           showFlash(`Deleted pending jobs for ${row.celery_queue}`)
         }),
     )
@@ -118,11 +109,7 @@ export function QueueSummaryCard({
       'Removes PostgreSQL rows only. Worker may still execute. Cannot be undone.',
       () =>
         withBusyQueue(row.celery_queue, async () => {
-          if (row.pipeline === 'massive_async') {
-            await deleteMassive.mutateAsync({ status: 'running', celeryQueue: row.celery_queue })
-          } else {
-            await deleteBars.mutateAsync({ status: 'running' })
-          }
+          await deleteBars.mutateAsync({ status: 'running' })
         }),
     )
     return Promise.resolve()
@@ -134,11 +121,7 @@ export function QueueSummaryCard({
       'Permanently delete all done rows. Cannot be undone.',
       () =>
         withBusyQueue(row.celery_queue, async () => {
-          if (row.pipeline === 'massive_async') {
-            await deleteMassive.mutateAsync({ status: 'done', celeryQueue: row.celery_queue })
-          } else {
-            await deleteBars.mutateAsync({ status: 'done' })
-          }
+          await deleteBars.mutateAsync({ status: 'done' })
         }),
     )
     return Promise.resolve()
@@ -150,11 +133,7 @@ export function QueueSummaryCard({
       'Permanently delete all failed rows. Cannot be undone.',
       () =>
         withBusyQueue(row.celery_queue, async () => {
-          if (row.pipeline === 'massive_async') {
-            await deleteMassive.mutateAsync({ status: 'failed', celeryQueue: row.celery_queue })
-          } else {
-            await deleteBars.mutateAsync({ status: 'failed' })
-          }
+          await deleteBars.mutateAsync({ status: 'failed' })
         }),
     )
     return Promise.resolve()
@@ -166,11 +145,7 @@ export function QueueSummaryCard({
       'Reset up to 500 oldest failed jobs to pending and re-queue Celery.',
       () =>
         withBusyQueue(row.celery_queue, async () => {
-          if (row.pipeline === 'massive_async') {
-            await retryMassive.mutateAsync({ celeryQueue: row.celery_queue, limit: 500 })
-          } else {
-            await retryBars.mutateAsync(500)
-          }
+          await retryBars.mutateAsync(500)
         }),
     )
     return Promise.resolve()

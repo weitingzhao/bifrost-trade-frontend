@@ -61,19 +61,13 @@ ensure_env() {
         exit 1
       fi
       cp "$K3S_TEMPLATE" "$LOCAL_ENV"
-      # Vision V1 template leaves Monitor on localhost for optional --reload;
-      # for UI-only Live experience, point Monitor at the same K3s gateway.
-      if grep -q '^VITE_API_MONITOR=http://localhost:8765' "$LOCAL_ENV" 2>/dev/null; then
-        sed -i.bak 's|^VITE_API_MONITOR=http://localhost:8765|VITE_API_MONITOR=http://192.168.10.73:30882/api/monitor|' "$LOCAL_ENV"
-        rm -f "${LOCAL_ENV}.bak"
-      fi
       echo "✓ Created $LOCAL_ENV from $K3S_TEMPLATE (Mac thin + K3s bifrost-dev :30882)"
       ;;
     local)
       src="$LOCAL_TEMPLATE"
       [[ -f "$BASE_ENV" ]] && src="$BASE_ENV"
       cp "$src" "$LOCAL_ENV"
-      echo "✓ Created $LOCAL_ENV from $src (all APIs on localhost)"
+      echo "✓ Created $LOCAL_ENV from $src (Trade APIs via nginx :80)"
       ;;
   esac
 }
@@ -104,10 +98,10 @@ fi
 
 # ─── Banner ──────────────────────────────────────────────────────────────────
 MARKET_HINT=""
-if grep -q 'VITE_API_MARKET=.*30882' "$LOCAL_ENV" 2>/dev/null; then
-  MARKET_HINT="Market API → K3s :30882/api/market"
-elif grep -q 'VITE_API_MARKET=.*localhost:8772' "$LOCAL_ENV" 2>/dev/null; then
-  MARKET_HINT="Market API → localhost:8772 (start api locally for Live quotes)"
+if grep -q 'VITE_API_BASE=.*30882' "$LOCAL_ENV" 2>/dev/null; then
+  MARKET_HINT="Trade API base → K3s :30882"
+elif grep -q 'VITE_API_BASE=.*localhost:80' "$LOCAL_ENV" 2>/dev/null; then
+  MARKET_HINT="Trade API base → localhost:80 (nginx)"
 fi
 
 echo ""

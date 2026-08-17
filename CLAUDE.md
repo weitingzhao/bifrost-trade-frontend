@@ -244,17 +244,11 @@ App.tsx **只允许**包含：
 端口通过 `.env` 文件管理，不使用 Python 脚本：
 
 ```
-# .env.development
-VITE_API_MONITOR=http://localhost:8765
-VITE_API_OPS=http://localhost:8768
-VITE_API_DOCS=http://localhost:8767
-VITE_API_TRADING=http://localhost:8769
-VITE_API_PORTFOLIO=http://localhost:8771
-VITE_API_RESEARCH=http://localhost:8773
-VITE_API_MARKET=http://localhost:8772
-VITE_API_STRATEGY=http://localhost:8770
+# .env.development — Phase B single gateway base
+VITE_API_BASE=http://localhost:80
 VITE_API_MARKET_DATA_PLUGIN=http://localhost:8780/api/v1/plugins/market-data/api
-# P7: VITE_API_MASSIVE retired — use Market Data Plugin above
+# K3s thick backend: VITE_API_BASE=http://192.168.10.73:30882
+# P7: api-massive retired — use Market Data Plugin above
 ```
 
 ---

@@ -1,57 +1,65 @@
 function joinBase(base: string, path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  if (!base || base === '/') return normalizedPath
   return `${base.replace(/\/$/, '')}${normalizedPath}`
 }
 
 /**
- * Domain URL helpers — return Vite-proxy-relative paths in DEV,
- * full VITE_API_* URLs in production.
+ * Single Trade API base (Phase B Wave B1).
  *
- * In DEV the browser fetches `/api/{domain}/…` which is proxied by
- * vite.config.ts to the K3s ingress (or local compose). This avoids
- * cross-origin issues when the K3s LAN IP is unreachable from the
- * Electron/browser webview.
+ * DEV: browser always fetches `/api/{domain}/…` (Vite proxy → K3s / nginx).
+ * PROD: `VITE_API_BASE` + `/api/{domain}` + path.
+ *   - empty / unset → same-origin `/api/{domain}/…` (nginx / Traefik)
+ *   - absolute URL → e.g. `http://host:30882/api/{domain}/…`
  *
- * Backend route prefixes (e.g. `/research/…`, `/ops/…`) are part of the
- * service path and must be included in `path` by callers.
+ * Backend route prefixes (e.g. `/research/…`, `/ops/…`) remain part of `path`.
  */
 
-function domainUrl(domain: string, envVar: string, path: string): string {
+function tradeApiBase(): string {
+  return (import.meta.env.VITE_API_BASE as string | undefined)?.trim() ?? ''
+}
+
+/** Origin for a Trade API domain (no trailing path beyond `/api/{domain}`). */
+export function domainOrigin(domain: string): string {
+  if (import.meta.env.DEV) return `/api/${domain}`
+  return joinBase(tradeApiBase(), `/api/${domain}`)
+}
+
+function domainUrl(domain: string, path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  if (import.meta.env.DEV) return `/api/${domain}${normalizedPath}`
-  return joinBase(envVar, normalizedPath)
+  return `${domainOrigin(domain)}${normalizedPath}`
 }
 
 export function monitorUrl(path: string): string {
-  return domainUrl('monitor', import.meta.env.VITE_API_MONITOR as string, path)
+  return domainUrl('monitor', path)
 }
 
 export function marketUrl(path: string): string {
-  return domainUrl('market', import.meta.env.VITE_API_MARKET as string, path)
+  return domainUrl('market', path)
 }
 
 export function tradingUrl(path: string): string {
-  return domainUrl('trading', import.meta.env.VITE_API_TRADING as string, path)
+  return domainUrl('trading', path)
 }
 
 export function strategyUrl(path: string): string {
-  return domainUrl('strategy', import.meta.env.VITE_API_STRATEGY as string, path)
+  return domainUrl('strategy', path)
 }
 
 export function portfolioUrl(path: string): string {
-  return domainUrl('portfolio', import.meta.env.VITE_API_PORTFOLIO as string, path)
+  return domainUrl('portfolio', path)
 }
 
 export function docsUrl(path: string): string {
-  return domainUrl('docs', import.meta.env.VITE_API_DOCS as string, path)
+  return domainUrl('docs', path)
 }
 
 export function researchUrl(path: string): string {
-  return domainUrl('research', import.meta.env.VITE_API_RESEARCH as string, path)
+  return domainUrl('research', path)
 }
 
 export function opsUrl(path: string): string {
-  return domainUrl('ops', import.meta.env.VITE_API_OPS as string, path)
+  return domainUrl('ops', path)
 }
 
 /**

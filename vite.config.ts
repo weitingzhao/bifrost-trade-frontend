@@ -5,61 +5,25 @@ import { resolve } from 'path'
 
 const uiRoot = resolve(__dirname, '../bifrost-ui')
 
-type ApiTarget = {
-  target: string
-  pathPrefix: string
-}
-
-function apiTarget(base: string | undefined, fallbackPort: number): ApiTarget {
-  const fallback = `http://127.0.0.1:${fallbackPort}`
-  const configuredBase = base?.trim()
-  if (configuredBase?.startsWith('/')) {
-    return {
-      target: fallback,
-      pathPrefix: configuredBase.replace(/\/$/, ''),
-    }
-  }
-  const parsed = new URL(configuredBase || fallback)
-  return {
-    target: parsed.origin,
-    pathPrefix: parsed.pathname.replace(/\/$/, ''),
-  }
-}
-
-function withTargetPath(target: ApiTarget, path: string): string {
-  return `${target.pathPrefix}${path}`
-}
-
 /**
- * Route same-origin development requests to the full VITE_API_* URL.
+ * Phase B Wave B1: single VITE_API_BASE for all Trade domains.
  *
- * Local Compose values only contain a host and port. K3s values additionally
- * contain an ingress prefix (for example `/api/ops`), which must be retained.
+ * Browser always requests `/api/{domain}/…`. Vite proxies `/api` to the
+ * Trade gateway origin (K3s NodePort or Compose nginx). Plugin stays on
+ * a separate host (platform-api).
  */
 function buildDevProxies(env: Record<string, string>): Record<string, object> {
-  const targets = {
-    monitor: apiTarget(env.VITE_API_MONITOR, 8765),
-    docs: apiTarget(env.VITE_API_DOCS, 8767),
-    ops: apiTarget(env.VITE_API_OPS, 8768),
-    trading: apiTarget(env.VITE_API_TRADING, 8769),
-    strategy: apiTarget(env.VITE_API_STRATEGY, 8770),
-    portfolio: apiTarget(env.VITE_API_PORTFOLIO, 8771),
-    market: apiTarget(env.VITE_API_MARKET, 8772),
-    research: apiTarget(env.VITE_API_RESEARCH, 8773),
+  const rawBase = env.VITE_API_BASE?.trim() || 'http://127.0.0.1:80'
+  let tradeTarget = 'http://127.0.0.1:80'
+  try {
+    if (rawBase.startsWith('/')) {
+      tradeTarget = 'http://127.0.0.1:80'
+    } else {
+      tradeTarget = new URL(rawBase).origin
+    }
+  } catch {
+    tradeTarget = 'http://127.0.0.1:80'
   }
-  const apiProxies = Object.fromEntries(
-    Object.entries(targets).map(([domain, target]) => [
-      `/api/${domain}`,
-      {
-        target: target.target,
-        changeOrigin: true,
-        // Ops Celery console SSE needs unbounded proxy timeout
-        ...(domain === 'ops' ? { timeout: 0, proxyTimeout: 0 } : {}),
-        rewrite: (path: string) =>
-          withTargetPath(target, path.replace(`/api/${domain}`, '')),
-      },
-    ]),
-  )
 
   const pluginBase =
     env.VITE_API_MARKET_DATA_PLUGIN?.trim() ||
@@ -77,13 +41,20 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
   })()
 
   return {
-    ...apiProxies,
-    // Market Data Plugin → platform-api (avoids DEV CORS to :8780)
+    // More specific rule first — Market Data Plugin → platform-api
     '/api/plugin/market-data': {
       target: pluginParsed.target,
       changeOrigin: true,
       rewrite: (path: string) =>
         `${pluginParsed.pathPrefix}${path.replace('/api/plugin/market-data', '')}`,
+    },
+    // All Trade domains → single gateway (path preserved: /api/monitor/…)
+    // timeout 0 covers Ops Celery console SSE
+    '/api': {
+      target: tradeTarget,
+      changeOrigin: true,
+      timeout: 0,
+      proxyTimeout: 0,
     },
   }
 }

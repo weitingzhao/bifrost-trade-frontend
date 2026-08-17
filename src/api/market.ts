@@ -11,8 +11,7 @@ import type { BarsCoverageResponse } from '@/types/barsCoverage'
 import { withValidation } from '@/lib/apiValidation'
 import { QuotesResponseSchema, WatchlistResponseSchema } from '@/lib/schemas/market'
 import { openSseWithBackoff } from '@/lib/sse'
-
-const BASE = import.meta.env.VITE_API_MARKET as string
+import { marketUrl, monitorUrl } from '@/lib/devApiUrl'
 
 const validateQuotes = withValidation<QuotesResponse>(QuotesResponseSchema, 'market/quotes')
 const validateWatchlist = withValidation<WatchlistResponse>(WatchlistResponseSchema, 'market/watchlist')
@@ -24,7 +23,7 @@ export async function fetchQuotes(
   const params = new URLSearchParams()
   if (symbols.length > 0) params.set('symbols', symbols.join(','))
   if (contractKeys.length > 0) params.set('contract_keys', contractKeys.join(','))
-  const res = await fetch(`${BASE}/quotes?${params}`)
+  const res = await fetch(marketUrl(`/quotes?${params}`))
   if (!res.ok) throw new Error(`Market /quotes: ${res.status}`)
   return validateQuotes(await res.json())
 }
@@ -36,7 +35,7 @@ export interface QuotesCleanupResponse {
 
 /** Unsubscribe stale on-demand STK symbols not in keepSymbols (Wave 2 cleanup). */
 export async function postQuotesCleanup(keepSymbols: string[]): Promise<QuotesCleanupResponse> {
-  const res = await fetch(`${BASE}/quotes/cleanup`, {
+  const res = await fetch(marketUrl('/quotes/cleanup'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ keep_symbols: keepSymbols }),
@@ -58,7 +57,7 @@ export interface QuotesRefreshOptionsResponse {
 export async function postQuotesRefreshOptions(
   contractKeys: string[],
 ): Promise<QuotesRefreshOptionsResponse | null> {
-  const res = await fetch(`${BASE}/quotes/refresh-options`, {
+  const res = await fetch(marketUrl('/quotes/refresh-options'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contract_keys: contractKeys }),
@@ -74,13 +73,13 @@ export async function postQuotesRefreshOptions(
 
 export async function fetchBenchmarks(symbols: string[]): Promise<BenchmarkResponse> {
   const params = new URLSearchParams({ symbols: symbols.join(',') })
-  const res = await fetch(`${BASE}/bars/benchmark?${params}`)
+  const res = await fetch(marketUrl(`/bars/benchmark?${params}`))
   if (!res.ok) throw new Error(`Market /bars/benchmark: ${res.status}`)
   return res.json() as Promise<BenchmarkResponse>
 }
 
 export async function fetchWatchlist(): Promise<WatchlistResponse> {
-  const res = await fetch(`${BASE}/watchlist`)
+  const res = await fetch(marketUrl('/watchlist'))
   if (!res.ok) throw new Error(`Market /watchlist: ${res.status}`)
   return validateWatchlist(await res.json())
 }
@@ -150,7 +149,7 @@ export async function postWatchlistEodRefresh(
   if (options?.override_days != null) params.set('override_days', String(options.override_days))
   if (options?.is_test === true) params.set('is_test', '1')
   if (options?.api_interval_sec != null) params.set('api_interval_sec', String(options.api_interval_sec))
-  const res = await fetch(`${BASE}/bars/watchlist/eod-refresh?${params}`, { method: 'POST' })
+  const res = await fetch(marketUrl(`/bars/watchlist/eod-refresh?${params}`), { method: 'POST' })
   const j = await res.json().catch(() => ({}))
   return {
     ok: j.ok === true,
@@ -168,7 +167,7 @@ export async function fetchWatchlistEodRefreshPreview(
   const params = new URLSearchParams()
   if (options?.override_days != null) params.set('override_days', String(options.override_days))
   if (options?.api_interval_sec != null) params.set('api_interval_sec', String(options.api_interval_sec))
-  const res = await fetch(`${BASE}/bars/watchlist/eod-refresh/preview?${params}`, { method: 'POST' })
+  const res = await fetch(marketUrl(`/bars/watchlist/eod-refresh/preview?${params}`), { method: 'POST' })
   const j = await res.json().catch(() => ({}))
   return {
     ok: j.ok === true,
@@ -198,7 +197,7 @@ export async function postIndicesRefresh(options?: { symbol?: string; days?: num
   const params = new URLSearchParams()
   if (options?.symbol?.trim()) params.set('symbol', options.symbol.trim())
   if (options?.days != null && options.days > 0) params.set('days', String(options.days))
-  const res = await fetch(`${BASE}/indices/refresh?${params}`, { method: 'POST' })
+  const res = await fetch(marketUrl(`/indices/refresh?${params}`), { method: 'POST' })
   const j = await res.json().catch(() => ({}))
   return {
     ok: j.ok === true,
@@ -223,7 +222,7 @@ export async function deleteBarsForSymbol(
     init.headers = { 'Content-Type': 'application/json' }
     init.body = JSON.stringify({ periods })
   }
-  const res = await fetch(`${BASE}/bars/symbol?${params}`, init)
+  const res = await fetch(marketUrl(`/bars/symbol?${params}`), init)
   const j = await res.json().catch(() => ({}))
   return {
     ok: j.ok === true,
@@ -255,7 +254,7 @@ export async function postBarsBackfill(
   if (options?.queue !== false) params.set('queue', '1')
   if (options?.is_test === true) params.set('is_test', '1')
   if (options?.api_interval_sec != null) params.set('api_interval_sec', String(options.api_interval_sec))
-  const res = await fetch(`${BASE}/bars/backfill?${params}`, { method: 'POST' })
+  const res = await fetch(marketUrl(`/bars/backfill?${params}`), { method: 'POST' })
   const j = await res.json().catch(() => ({}))
   return {
     ok: j.ok === true,
@@ -269,7 +268,7 @@ export async function postBarsBackfill(
 export async function fetchBarsCoverage(symbols?: string[]): Promise<BarsCoverageResponse> {
   const params = new URLSearchParams()
   if (symbols && symbols.length > 0) params.set('symbols', symbols.join(','))
-  const res = await fetch(`${BASE}/bars/coverage?${params}`)
+  const res = await fetch(marketUrl(`/bars/coverage?${params}`))
   if (!res.ok) throw new Error(`Market /bars/coverage: ${res.status}`)
   return res.json() as Promise<BarsCoverageResponse>
 }
@@ -279,14 +278,14 @@ export async function fetchMarketTradingDay(
 ): Promise<{ date: string; is_trading_day: boolean }> {
   const params = new URLSearchParams()
   if (dateStr?.trim()) params.set('date', dateStr.trim().slice(0, 10))
-  const res = await fetch(`${BASE}/market/trading-day?${params}`)
+  const res = await fetch(marketUrl(`/market/trading-day?${params}`))
   if (!res.ok) throw new Error(`Market /market/trading-day: ${res.status}`)
   return res.json() as Promise<{ date: string; is_trading_day: boolean }>
 }
 
 export async function fetchBarStats(symbol: string): Promise<BarStatsResponse> {
   const params = new URLSearchParams({ symbol: symbol.trim().toUpperCase() })
-  const res = await fetch(`${BASE}/bars/stats?${params}`)
+  const res = await fetch(marketUrl(`/bars/stats?${params}`))
   if (!res.ok) throw new Error(`Market /bars/stats: ${res.status}`)
   return res.json() as Promise<BarStatsResponse>
 }
@@ -301,7 +300,7 @@ export async function fetchBars(
     period,
     limit: String(limit),
   })
-  const res = await fetch(`${BASE}/bars?${params}`)
+  const res = await fetch(marketUrl(`/bars?${params}`))
   if (!res.ok) throw new Error(`Market /bars: ${res.status}`)
   return res.json() as Promise<BarsResponse>
 }
@@ -325,7 +324,7 @@ export async function fetchOptionBars(params: {
     limit: String(params.limit ?? 100),
     source: params.source ?? 'massive',
   })
-  const res = await fetch(`${BASE}/bars?${q}`)
+  const res = await fetch(marketUrl(`/bars?${q}`))
   if (!res.ok) throw new Error(`Market /bars (option): ${res.status}`)
   return res.json() as Promise<BarsResponse>
 }
@@ -342,7 +341,7 @@ export async function postWatchlistItem(item: {
   source?: string
   category_id?: number | null
 }): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/watchlist`, {
+  const res = await fetch(marketUrl('/watchlist'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(item),
@@ -352,7 +351,7 @@ export async function postWatchlistItem(item: {
 }
 
 export async function deleteWatchlistItem(contractKey: string): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/watchlist?contract_key=${encodeURIComponent(contractKey)}`, {
+  const res = await fetch(marketUrl(`/watchlist?contract_key=${encodeURIComponent(contractKey)}`), {
     method: 'DELETE',
   })
   if (!res.ok) throw new Error(`Market DELETE /watchlist: ${res.status}`)
@@ -383,16 +382,15 @@ function parseQuoteFromSSE(raw: string): QuoteItem | null {
 }
 
 export function subscribeQuotes(onQuote: (q: QuoteItem) => void): () => void {
-  return openSseWithBackoff(`${BASE}/quotes/stream`, (raw) => {
+  return openSseWithBackoff(marketUrl('/quotes/stream'), (raw) => {
     const q = parseQuoteFromSSE(raw)
     if (q) onQuote(q)
   })
 }
 
-const MONITOR_BASE = import.meta.env.VITE_API_MONITOR as string
 
 export async function fetchOpenOrders(): Promise<OpenOrder[]> {
-  const res = await fetch(`${MONITOR_BASE}/open-orders`)
+  const res = await fetch(monitorUrl('/open-orders'))
   if (!res.ok) throw new Error(`Monitor /open-orders: ${res.status}`)
   const data = await res.json()
   const result = data.open_orders ?? data.orders ?? data.items ?? data

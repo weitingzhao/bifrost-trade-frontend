@@ -1,23 +1,23 @@
 // ── Generic log API factory ───────────────────────────────────────────────────
-// All log endpoints are proxied through the Monitor API (VITE_API_MONITOR).
+// All log endpoints are proxied through the Monitor API.
 // Paths: GET /api/{service}/logs?tail=N  →  { lines: string[] }
 //        GET /api/{service}/logs/stream  →  SSE  data: { line: string }
+// DEV: monitorUrl() → /api/monitor/api/{service}/logs (Vite proxy → K3s)
 
 import { openSseWithBackoff } from '@/lib/sse'
-
-const env = import.meta.env
+import { monitorUrl } from '@/lib/devApiUrl'
 
 export interface LogApi {
   fetch(tail?: number): Promise<{ lines: string[] }>
   subscribe(onLine: (line: string) => void, onError?: () => void): () => void
 }
 
-function makeLogApi(getBase: () => string, path: string): LogApi {
+function makeLogApi(path: string): LogApi {
   return {
     async fetch(tail = 150) {
       const params = new URLSearchParams({ tail: String(tail) })
       try {
-        const r = await fetch(`${getBase()}${path}?${params}`, {
+        const r = await fetch(`${monitorUrl(path)}?${params}`, {
           signal: AbortSignal.timeout(8_000),
         })
         const j = await r.json().catch(() => ({ lines: [] }))
@@ -29,7 +29,7 @@ function makeLogApi(getBase: () => string, path: string): LogApi {
 
     subscribe(onLine, onError) {
       return openSseWithBackoff(
-        `${getBase()}${path}/stream`,
+        monitorUrl(`${path}/stream`),
         (raw) => {
           try {
             const data = JSON.parse(raw) as { line?: string }
@@ -44,28 +44,26 @@ function makeLogApi(getBase: () => string, path: string): LogApi {
 
 // ── Per-service log clients (all routed through Monitor) ─────────────────────
 
-const monitor = () => env.VITE_API_MONITOR as string
-
 export const LOG_APIS = {
-  monitor:          makeLogApi(monitor, '/api/monitor/logs'),
-  trading:          makeLogApi(monitor, '/api/trading/logs'),
-  portfolio:        makeLogApi(monitor, '/api/portfolio/logs'),
-  research:         makeLogApi(monitor, '/api/research/logs'),
-  strategy:         makeLogApi(monitor, '/api/strategy/logs'),
-  market:           makeLogApi(monitor, '/api/market/logs'),
-  ops:              makeLogApi(monitor, '/api/ops/logs'),
-  docs:             makeLogApi(monitor, '/api/docs/logs'),
+  monitor:          makeLogApi('/api/monitor/logs'),
+  trading:          makeLogApi('/api/trading/logs'),
+  portfolio:        makeLogApi('/api/portfolio/logs'),
+  research:         makeLogApi('/api/research/logs'),
+  strategy:         makeLogApi('/api/strategy/logs'),
+  market:           makeLogApi('/api/market/logs'),
+  ops:              makeLogApi('/api/ops/logs'),
+  docs:             makeLogApi('/api/docs/logs'),
   // Socket / market ingest edge services (proxied through Monitor API)
-  ib_ingestor:      makeLogApi(monitor, '/api/ib-ingestor/logs'),
-  ib_account_agent: makeLogApi(monitor, '/api/ib-account-agent/logs'),
-  ib_operator:      makeLogApi(monitor, '/api/ib-operator/logs'),
-  massive_ws:       makeLogApi(monitor, '/api/massive-ws/logs'),
+  ib_ingestor:      makeLogApi('/api/ib-ingestor/logs'),
+  ib_account_agent: makeLogApi('/api/ib-account-agent/logs'),
+  ib_operator:      makeLogApi('/api/ib-operator/logs'),
+  massive_ws:       makeLogApi('/api/massive-ws/logs'),
 } as const
 
 /** Redis console streams for long-running daemon processes (not in global LOG_APIS). */
 export const DAEMON_LOG_APIS = {
-  daemon_trading: makeLogApi(monitor, '/api/daemon/logs'),
-  account_sync:   makeLogApi(monitor, '/api/account-sync-daemon/logs'),
+  daemon_trading: makeLogApi('/api/daemon/logs'),
+  account_sync:   makeLogApi('/api/account-sync-daemon/logs'),
 } as const
 
 export type LogSourceKey = keyof typeof LOG_APIS
@@ -146,7 +144,7 @@ export const DAEMON_LOG_SOURCES: LogSourceDef[] = LOG_SOURCES.filter(s => s.grou
 
 async function clearLogStream(path: string): Promise<{ ok: boolean; error?: string }> {
   try {
-    const r = await fetch(`${monitor()}${path}`, { method: 'DELETE' })
+    const r = await fetch(monitorUrl(path), { method: 'DELETE' })
     const j = await r.json().catch(() => ({})) as { ok?: boolean; error?: string }
     return { ok: r.ok && j.ok !== false, error: j.error }
   } catch (e) {

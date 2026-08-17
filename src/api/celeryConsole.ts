@@ -1,6 +1,7 @@
+import { opsUrl } from '@/lib/devApiUrl'
 import { getOpsToken } from '@/api/ops'
 
-const BASE = import.meta.env.VITE_API_OPS as string
+
 
 function opsAuthHeaders(): Record<string, string> {
   const token = getOpsToken()
@@ -17,11 +18,11 @@ function consoleStreamQuery(lines: number): URLSearchParams {
 }
 
 export function brokerConsoleUrl(lines = 200): string {
-  return `${BASE}/ops/console/broker?${consoleStreamQuery(lines)}`
+  return opsUrl(`/ops/console/broker?${consoleStreamQuery(lines)}`)
 }
 
 export function workerConsoleUrl(workerId: string, lines = 200): string {
-  return `${BASE}/ops/console/worker/${encodeURIComponent(workerId)}?${consoleStreamQuery(lines)}`
+  return opsUrl(`/ops/console/worker/${encodeURIComponent(workerId)}?${consoleStreamQuery(lines)}`)
 }
 
 export async function fetchCeleryLogs(
@@ -29,14 +30,14 @@ export async function fetchCeleryLogs(
   tail = 50,
 ): Promise<{ lines: string[]; error?: string }> {
   const params = new URLSearchParams({ tail: String(tail), worker: workerId })
-  const res = await fetch(`${BASE}/ops/celery/logs?${params}`, { headers: opsAuthHeaders() })
+  const res = await fetch(opsUrl(`/ops/celery/logs?${params}`), { headers: opsAuthHeaders() })
   const j = await res.json().catch(() => ({ lines: [] }))
   return { lines: Array.isArray(j.lines) ? j.lines : [], error: j.error }
 }
 
 export async function clearCeleryLogs(workerId: string): Promise<{ ok: boolean; error?: string }> {
   const q = new URLSearchParams({ worker: workerId })
-  const res = await fetch(`${BASE}/ops/celery/logs?${q}`, {
+  const res = await fetch(opsUrl(`/ops/celery/logs?${q}`), {
     method: 'DELETE',
     headers: opsAuthHeaders(),
   })

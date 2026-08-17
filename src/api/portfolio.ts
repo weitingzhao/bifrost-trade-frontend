@@ -7,8 +7,8 @@ import type { ModelAnalysisResponse } from '@/types/modelAnalysis'
 import { withValidation } from '@/lib/apiValidation'
 import { PositionCategoriesResponseSchema } from '@/lib/schemas/portfolio'
 import { ModelAnalysisResponseSchema } from '@/lib/schemas/modelAnalysis'
+import { portfolioUrl } from '@/lib/devApiUrl'
 
-const BASE = import.meta.env.VITE_API_PORTFOLIO as string
 
 const validateCategories = withValidation<PositionCategoriesResponse>(
   PositionCategoriesResponseSchema, 'portfolio/position-categories'
@@ -20,13 +20,13 @@ const validateModelAnalysis = withValidation<ModelAnalysisResponse>(
 
 export async function fetchModelAnalysis(accountId: string): Promise<ModelAnalysisResponse> {
   const params = new URLSearchParams({ account_id: accountId })
-  const res = await fetch(`${BASE}/portfolio/model-analysis?${params}`)
+  const res = await fetch(portfolioUrl(`/portfolio/model-analysis?${params}`))
   if (!res.ok) throw new Error(`Portfolio /portfolio/model-analysis: ${res.status}`)
   return validateModelAnalysis(await res.json())
 }
 
 export async function fetchPositionCategories(): Promise<PositionCategoriesResponse> {
-  const res = await fetch(`${BASE}/position-categories`)
+  const res = await fetch(portfolioUrl('/position-categories'))
   if (!res.ok) throw new Error(`Portfolio /position-categories: ${res.status}`)
   return validateCategories(await res.json())
 }
@@ -35,7 +35,7 @@ export async function createPositionCategory(
   name: string,
   sort_order?: number,
 ): Promise<{ ok: boolean; id: number | null; error?: string }> {
-  const res = await fetch(`${BASE}/position-categories`, {
+  const res = await fetch(portfolioUrl('/position-categories'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, ...(sort_order != null ? { sort_order } : {}) }),
@@ -48,7 +48,7 @@ export async function updatePositionCategory(
   id: number,
   name: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/position-categories/${id}`, {
+  const res = await fetch(portfolioUrl(`/position-categories/${id}`), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -61,7 +61,7 @@ export async function patchPositionCategory(
   id: number,
   patch: { name?: string; description?: string; sort_order?: number },
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/position-categories/${id}`, {
+  const res = await fetch(portfolioUrl(`/position-categories/${id}`), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
@@ -74,7 +74,7 @@ export async function fetchMarketStreamsSymbolOrder(): Promise<{
   ok: boolean
   order?: Record<string, string[]>
 }> {
-  const res = await fetch(`${BASE}/position-categories/symbol-order`)
+  const res = await fetch(portfolioUrl('/position-categories/symbol-order'))
   if (!res.ok) return { ok: false }
   const j = await res.json()
   return { ok: j.ok === true, order: j.order ?? {} }
@@ -84,7 +84,7 @@ export async function putMarketStreamsSymbolOrder(
   category_name: string,
   symbols: string[],
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/position-categories/symbol-order`, {
+  const res = await fetch(portfolioUrl('/position-categories/symbol-order'), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ category_name, symbols }),
@@ -96,7 +96,7 @@ export async function putMarketStreamsSymbolOrder(
 export async function deletePositionCategory(
   id: number
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/position-categories/${id}`, { method: 'DELETE' })
+  const res = await fetch(portfolioUrl(`/position-categories/${id}`), { method: 'DELETE' })
   if (!res.ok) throw new Error(`Delete category: ${res.status}`)
   return res.json()
 }
@@ -104,7 +104,7 @@ export async function deletePositionCategory(
 export async function tagPosition(
   req: TagPositionRequest
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/position-categories/tag`, {
+  const res = await fetch(portfolioUrl('/position-categories/tag'), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
@@ -116,6 +116,6 @@ export async function tagPosition(
 export async function postPortfolioShutdown(
   serviceOrigin?: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const base = (serviceOrigin ?? BASE).replace(/\/$/, '')
-  return postControlShutdown(`${base}/portfolio/shutdown`)
+  if (serviceOrigin) return postControlShutdown(`${serviceOrigin.replace(/\/$/, '')}/portfolio/shutdown`)
+  return postControlShutdown(portfolioUrl('/portfolio/shutdown'))
 }

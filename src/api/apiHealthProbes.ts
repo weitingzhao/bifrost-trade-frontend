@@ -1,3 +1,5 @@
+import { marketDataPluginUrl } from '@/lib/devApiUrl'
+
 export const API_HEALTH_FETCH_TIMEOUT_MS = 8_000
 
 export type ApiOriginBase = string
@@ -40,11 +42,7 @@ export async function fetchMassiveApiHealthAtOrigin(
   _origin: ApiOriginBase,
   options?: { timeoutMs?: number },
 ): Promise<{ status: string; service: string; ts: number; config_profile?: string | null }> {
-  const base =
-    (import.meta.env.VITE_API_MARKET_DATA_PLUGIN as string | undefined)?.trim() ||
-    'http://localhost:8780/api/v1/plugins/market-data/api'
-  const url = `${base.replace(/\/$/, '')}/health`
-  const r = await fetch(url, {
+  const r = await fetch(marketDataPluginUrl('/health'), {
     credentials: 'omit',
     signal: AbortSignal.timeout(options?.timeoutMs ?? API_HEALTH_FETCH_TIMEOUT_MS),
   })

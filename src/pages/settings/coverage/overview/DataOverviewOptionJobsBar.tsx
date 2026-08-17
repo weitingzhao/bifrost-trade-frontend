@@ -5,7 +5,7 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { postOptionDayFillEligibility, postOptionMinFillEligibility } from '@/api/coverageWatchlistStubs'
+import { MARKET_DATA_PLUGIN_MIGRATED } from '@/api/marketDataRetired'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import {
@@ -202,29 +202,9 @@ export const DataOverviewOptionJobsBar = forwardRef<
     setFillBusy('column')
     setCheckMsg(null)
     try {
-      if (focusDataset === 'option_min') {
-        const elig = await postOptionMinFillEligibility(poolUpper, optionMinPeriod)
-        if (!elig.ok) throw new Error(elig.error ?? 'Eligibility check failed')
-        for (const sym of poolUpper) {
-          if (!elig.results?.[sym]?.needs_column_fill) continue
-          await enqueueOne(sym, 'feed_options_aggregate', {
-            underlying: sym,
-            table: 'option_min',
-            period: optionMinPeriod,
-            mode: 'column_fill',
-          })
-        }
-      } else if (focusDataset === 'option_day') {
-        const elig = await postOptionDayFillEligibility(poolUpper)
-        if (!elig.ok) throw new Error(elig.error ?? 'Eligibility check failed')
-        for (const sym of poolUpper) {
-          if (!elig.results?.[sym]?.needs_column_fill) continue
-          await enqueueOne(sym, 'feed_options_aggregate', {
-            underlying: sym,
-            table: 'option_day',
-            mode: 'column_fill',
-          })
-        }
+      if (focusDataset === 'option_min' || focusDataset === 'option_day') {
+        setCheckMsg(MARKET_DATA_PLUGIN_MIGRATED)
+        return
       } else if (focusDataset === 'option_snapshots') {
         for (const sym of poolUpper) {
           await enqueueOne(sym, 'feed_option_snapshots', {
@@ -246,7 +226,7 @@ export const DataOverviewOptionJobsBar = forwardRef<
       setFillBusy(null)
       setConfirmFill(null)
     }
-  }, [poolUpper, focusDataset, optionMinPeriod, enqueueOne])
+  }, [poolUpper, focusDataset, enqueueOne])
 
   const checkLoading =
     refGapLoading || snapshotGapLoading || barsGapLoading

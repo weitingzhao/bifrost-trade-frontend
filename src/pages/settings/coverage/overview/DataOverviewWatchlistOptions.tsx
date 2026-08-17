@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { postOptionBarsContractsGapBatch } from '@/api/coverageWatchlistStubs'
+import { MARKET_DATA_PLUGIN_MIGRATED } from '@/api/marketDataRetired'
 import type {
   OptionBarsContractsGapResult,
   OptionContractsReferenceGapResult,
@@ -51,34 +51,16 @@ export function DataOverviewWatchlistOptions({
   onJobsSheetOpenChange,
   focusDataset,
 }: DataOverviewWatchlistOptionsProps) {
-  const [barsGapBySymbol, setBarsGapBySymbol] = useState<
-    Record<string, OptionBarsContractsGapResult>
-  >({})
-  const [barsGapLoading, setBarsGapLoading] = useState(false)
+  const [barsGapBySymbol] = useState<Record<string, OptionBarsContractsGapResult>>({})
+  const [barsGapLoading] = useState(false)
   const [barsGapError, setBarsGapError] = useState<string | null>(null)
   const prevFocusRef = useRef(focusDataset)
   const [gapExplainOpen, setGapExplainOpen] = useState(false)
 
-  const handleCompareBarsGap = useCallback(
-    async (symbols: string[]) => {
-      const table = focusDataset === 'option_min' ? 'option_min' : 'option_day'
-      const period = focusDataset === 'option_min' ? '1 min' : undefined
-      setBarsGapLoading(true)
-      setBarsGapError(null)
-      try {
-        for (const sym of symbols) {
-          const res = await postOptionBarsContractsGapBatch([sym], table, period)
-          const r = res.results?.[sym] ?? { ok: false, error: res.error ?? 'No result' }
-          setBarsGapBySymbol(prev => ({ ...prev, [sym]: r }))
-        }
-      } catch (e) {
-        setBarsGapError(e instanceof Error ? e.message : 'Check failed')
-      } finally {
-        setBarsGapLoading(false)
-      }
-    },
-    [focusDataset],
-  )
+  const handleCompareBarsGap = useCallback(async (_symbols: string[]) => {
+    void _symbols
+    setBarsGapError(MARKET_DATA_PLUGIN_MIGRATED)
+  }, [])
 
   useEffect(() => {
     const prev = prevFocusRef.current
@@ -88,7 +70,6 @@ export function DataOverviewWatchlistOptions({
       (poolable.has(prev) && poolable.has(focusDataset) && prev !== focusDataset)
     ) {
       onClearComparePool?.()
-      if (prev === 'option_day' || prev === 'option_min') setBarsGapBySymbol({})
     }
     prevFocusRef.current = focusDataset
   }, [focusDataset, onClearComparePool])
@@ -97,7 +78,7 @@ export function DataOverviewWatchlistOptions({
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         One sheet per symbol: grouped columns for each dataset. The Symbol column stays fixed when
-        the table is wider than the viewport.
+        the table is wider than the viewport. Option bar gap-fill checks: {MARKET_DATA_PLUGIN_MIGRATED}
       </p>
 
       {(focusDataset === 'option_contracts' ||

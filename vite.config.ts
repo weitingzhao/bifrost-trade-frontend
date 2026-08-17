@@ -53,65 +53,37 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
       {
         target: target.target,
         changeOrigin: true,
+        // Ops Celery console SSE needs unbounded proxy timeout
+        ...(domain === 'ops' ? { timeout: 0, proxyTimeout: 0 } : {}),
         rewrite: (path: string) =>
           withTargetPath(target, path.replace(`/api/${domain}`, '')),
       },
     ]),
   )
 
+  const pluginBase =
+    env.VITE_API_MARKET_DATA_PLUGIN?.trim() ||
+    'http://localhost:8780/api/v1/plugins/market-data/api'
+  const pluginParsed = (() => {
+    try {
+      const u = new URL(pluginBase)
+      return { target: u.origin, pathPrefix: u.pathname.replace(/\/$/, '') }
+    } catch {
+      return {
+        target: 'http://localhost:8780',
+        pathPrefix: '/api/v1/plugins/market-data/api',
+      }
+    }
+  })()
+
   return {
     ...apiProxies,
-    '/research/docs': {
-      target: targets.docs.target,
+    // Market Data Plugin → platform-api (avoids DEV CORS to :8780)
+    '/api/plugin/market-data': {
+      target: pluginParsed.target,
       changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.docs, path),
-    },
-    '/research/option': {
-      target: targets.research.target,
-      changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.research, path),
-    },
-    '/research/screening': {
-      target: targets.research.target,
-      changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.research, path),
-    },
-    '/research/data': {
-      target: targets.research.target,
-      changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.research, path),
-    },
-    '/research/screener': {
-      target: targets.research.target,
-      changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.research, path),
-    },
-    '/research/greeks': {
-      target: targets.research.target,
-      changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.research, path),
-    },
-    '/research/iv-term-structure': {
-      target: targets.research.target,
-      changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.research, path),
-    },
-    '/research/iv-volatility-cone': {
-      target: targets.research.target,
-      changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.research, path),
-    },
-    '/research/max-pain': {
-      target: targets.research.target,
-      changeOrigin: true,
-      rewrite: (path: string) => withTargetPath(targets.research, path),
-    },
-    '/ops': {
-      target: targets.ops.target,
-      changeOrigin: true,
-      timeout: 0,
-      proxyTimeout: 0,
-      rewrite: (path: string) => withTargetPath(targets.ops, path),
+      rewrite: (path: string) =>
+        `${pluginParsed.pathPrefix}${path.replace('/api/plugin/market-data', '')}`,
     },
   }
 }

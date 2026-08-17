@@ -21,31 +21,31 @@ import type {
 } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
 import { ExecutionsResponseSchema } from '@/lib/schemas/positions'
+import { tradingUrl } from '@/lib/devApiUrl'
 
-const BASE = import.meta.env.VITE_API_TRADING as string
 
 const validateExecutions = withValidation<ExecutionsResponse>(ExecutionsResponseSchema, 'trading/executions')
 
 export async function fetchExecutionsFreshness(): Promise<ExecutionsFreshnessResponse> {
-  const res = await fetch(`${BASE}/executions/freshness`)
+  const res = await fetch(tradingUrl('/executions/freshness'))
   if (!res.ok) throw new Error(`Trading /executions/freshness: ${res.status}`)
   return res.json() as Promise<ExecutionsFreshnessResponse>
 }
 
 export async function postTwsFetch(days: 1 | 3 | 7): Promise<TwsFetchResponse> {
-  const res = await fetch(`${BASE}/executions/fetch?days=${days}`, { method: 'POST' })
+  const res = await fetch(tradingUrl(`/executions/fetch?days=${days}`), { method: 'POST' })
   if (!res.ok) throw new Error(`Trading /executions/fetch: ${res.status}`)
   return res.json() as Promise<TwsFetchResponse>
 }
 
 export async function postFlexFetch(): Promise<FlexFetchResponse> {
-  const res = await fetch(`${BASE}/executions/fetch-flex`, { method: 'POST' })
+  const res = await fetch(tradingUrl('/executions/fetch-flex'), { method: 'POST' })
   if (!res.ok) throw new Error(`Trading /executions/fetch-flex: ${res.status}`)
   return res.json() as Promise<FlexFetchResponse>
 }
 
 export async function postFlexUpload(xml: string): Promise<FlexUploadResponse> {
-  const res = await fetch(`${BASE}/executions/fetch-flex-upload`, {
+  const res = await fetch(tradingUrl('/executions/fetch-flex-upload'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ xml }),
@@ -58,7 +58,7 @@ export async function fetchExecutions(source: 'final' | 'tws' | 'canonical' = 'f
   // Backend uses source_scope; map our internal alias to the correct backend value
   const scopeMap: Record<string, string> = { final: 'performance_book', tws: 'tws_raw', canonical: '' }
   const scope = scopeMap[source] ?? ''
-  const url = scope ? `${BASE}/executions?limit=0&source_scope=${scope}` : `${BASE}/executions?limit=0`
+  const url = scope ? tradingUrl(`/executions?limit=0&source_scope=${scope}`) : tradingUrl('/executions?limit=0')
   const res = await fetch(url)
   if (!res.ok) throw new Error(`Trading /executions (${source}): ${res.status}`)
   const raw = await res.json() as { executions?: import('@/types/positions').Execution[] }
@@ -74,7 +74,7 @@ export async function fetchPositionAttribution(
   if (accountId?.trim()) params.set('account_id', accountId.trim())
   if (secType?.trim()) params.set('sec_type', secType.trim())
   const qs = params.toString()
-  const res = await fetch(`${BASE}/executions/position-attribution${qs ? `?${qs}` : ''}`)
+  const res = await fetch(tradingUrl(`/executions/position-attribution${qs ? `?${qs}` : ''}`))
   if (!res.ok) throw new Error(`Trading /executions/position-attribution: ${res.status}`)
   const raw = (await res.json()) as {
     items?: PositionAttributionResponse['items']
@@ -84,7 +84,7 @@ export async function fetchPositionAttribution(
 }
 
 export async function createExecution(body: CreateExecutionBody): Promise<{ ok: boolean; id?: number; error?: string }> {
-  const res = await fetch(`${BASE}/executions`, {
+  const res = await fetch(tradingUrl('/executions'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -97,7 +97,7 @@ export async function updateExecution(
   id: number,
   body: UpdateExecutionBody,
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/executions/${id}`, {
+  const res = await fetch(tradingUrl(`/executions/${id}`), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -120,20 +120,20 @@ export async function updateExecution(
 }
 
 export async function deleteExecution(id: number): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`${BASE}/executions/${id}`, { method: 'DELETE' })
+  const res = await fetch(tradingUrl(`/executions/${id}`), { method: 'DELETE' })
   if (!res.ok) throw new Error(`DELETE /executions/${id}: ${res.status}`)
   return res.json()
 }
 
 export async function fetchInstancePerformance(instanceId: number): Promise<PerformanceResponse> {
-  const res = await fetch(`${BASE}/performance?strategy_instance_id=${instanceId}&summary_only=true`)
+  const res = await fetch(tradingUrl(`/performance?strategy_instance_id=${instanceId}&summary_only=true`))
   if (!res.ok) throw new Error(`Trading /performance [${instanceId}]: ${res.status}`)
   return res.json() as Promise<PerformanceResponse>
 }
 
 export async function fetchInstanceExecutions(instanceId: number): Promise<RawExecutionsResponse> {
   const res = await fetch(
-    `${BASE}/executions?strategy_instance_id=${instanceId}&source_scope=performance_book&limit=500`,
+    tradingUrl(`/executions?strategy_instance_id=${instanceId}&source_scope=performance_book&limit=500`),
   )
   if (!res.ok) throw new Error(`Trading /executions [${instanceId}]: ${res.status}`)
   return res.json() as Promise<RawExecutionsResponse>
@@ -151,7 +151,7 @@ export async function fetchPerformance(params: PerformanceParams = {}): Promise<
     qs.set('strategy_instance_id', String(params.strategy_instance_id))
   if (params.source_scope) qs.set('source_scope', params.source_scope)
   if (params.summary_only) qs.set('summary_only', 'true')
-  const res = await fetch(`${BASE}/performance?${qs}`)
+  const res = await fetch(tradingUrl(`/performance?${qs}`))
   if (!res.ok) throw new Error(`Trading /performance: ${res.status}`)
   return res.json() as Promise<PerformanceResponse>
 }
@@ -168,7 +168,7 @@ export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): 
     qs.set('strategy_instance_id', String(params.strategy_instance_id))
   if (params.source_scope) qs.set('source_scope', params.source_scope)
   if (params.account_id) qs.set('account_id', params.account_id)
-  const res = await fetch(`${BASE}/executions?${qs}`)
+  const res = await fetch(tradingUrl(`/executions?${qs}`))
   if (!res.ok) throw new Error(`Trading /executions range: ${res.status}`)
   const json = await res.json() as { executions?: import('@/types/positions').Execution[] }
   return { items: json.executions ?? [] }
@@ -185,7 +185,7 @@ export async function getTransactions(params?: {
   if (params?.until_ts != null) qs.set('until_ts', String(params.until_ts))
   if (params?.account_id) qs.set('account_id', params.account_id)
   if (params?.limit != null) qs.set('limit', String(params.limit))
-  const res = await fetch(`${BASE}/transactions?${qs}`)
+  const res = await fetch(tradingUrl(`/transactions?${qs}`))
   if (!res.ok) throw new Error(`Trading /transactions: ${res.status}`)
   return res.json() as Promise<AccountTransactionsResponse>
 }
@@ -194,7 +194,7 @@ export async function postTransactionsFetch(body?: {
   from_date?: string
   to_date?: string
 }): Promise<TransactionsFetchResponse> {
-  const res = await fetch(`${BASE}/transactions/fetch`, {
+  const res = await fetch(tradingUrl('/transactions/fetch'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
@@ -206,7 +206,7 @@ export async function postTransactionsFetch(body?: {
 export async function postOptionStockLinksQuery(
   batches: OptionStockLinkBatch[],
 ): Promise<OptionStockLinksResponse> {
-  const res = await fetch(`${BASE}/executions/option-stock-links/query`, {
+  const res = await fetch(tradingUrl('/executions/option-stock-links/query'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ batches }),
@@ -222,7 +222,7 @@ export async function fetchOptionStockLinks(
   const q = new URLSearchParams()
   q.set('account_id', accountId.trim())
   q.set('option_account_executions_id', String(optionAccountExecutionsId))
-  const res = await fetch(`${BASE}/executions/option-stock-links?${q}`)
+  const res = await fetch(tradingUrl(`/executions/option-stock-links?${q}`))
   const j = (await res.json().catch(() => ({}))) as {
     links?: import('@/types/trading').OptionStockLink[]
     slippage_total?: number | null
@@ -257,7 +257,7 @@ export async function fetchStockLinkCandidates(params: {
   if (params.trade_date_from?.trim()) q.set('trade_date_from', params.trade_date_from.trim())
   if (params.trade_date_to?.trim()) q.set('trade_date_to', params.trade_date_to.trim())
   if (params.limit != null) q.set('limit', String(params.limit))
-  const res = await fetch(`${BASE}/executions/stock-link-candidates?${q}`)
+  const res = await fetch(tradingUrl(`/executions/stock-link-candidates?${q}`))
   const j = (await res.json().catch(() => ({}))) as {
     executions?: import('@/types/positions').Execution[]
     underlying_symbol?: string
@@ -284,7 +284,7 @@ export async function createOptionStockLink(body: {
   role?: string | null
   note?: string | null
 }): Promise<{ ok: boolean; link_id?: number | null; error?: string; warning?: string | null }> {
-  const res = await fetch(`${BASE}/executions/option-stock-links`, {
+  const res = await fetch(tradingUrl('/executions/option-stock-links'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -309,7 +309,7 @@ export async function deleteOptionStockLink(
 ): Promise<{ ok: boolean; error?: string }> {
   const q = new URLSearchParams()
   q.set('account_id', accountId.trim())
-  const res = await fetch(`${BASE}/executions/option-stock-links/${linkId}?${q}`, { method: 'DELETE' })
+  const res = await fetch(tradingUrl(`/executions/option-stock-links/${linkId}?${q}`), { method: 'DELETE' })
   const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string }
   return { ok: Boolean(j.ok) && res.ok, error: j.error }
 }
@@ -317,6 +317,6 @@ export async function deleteOptionStockLink(
 export async function postTradingShutdown(
   serviceOrigin?: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const base = (serviceOrigin ?? BASE).replace(/\/$/, '')
-  return postControlShutdown(`${base}/trading/shutdown`)
+  if (serviceOrigin) return postControlShutdown(`${serviceOrigin.replace(/\/$/, '')}/trading/shutdown`)
+  return postControlShutdown(tradingUrl('/trading/shutdown'))
 }

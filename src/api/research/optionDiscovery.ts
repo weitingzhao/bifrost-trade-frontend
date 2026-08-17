@@ -2,7 +2,6 @@ import type {
   OptionExpirationsResult,
   OptionSnapshotRow,
   OptionSnapshotsPgResult,
-  MassiveDailyChecklistDims,
   MaxPainComputeResponse,
   MaxPainHistoryPoint,
   IvTermStructureResponse,
@@ -12,8 +11,6 @@ import type {
   GreeksCoverageResponse,
   LiquiditySummaryResponse,
   RelativeValueResponse,
-  MassiveJobDetail,
-  MassiveJobPollResult,
   MassiveStatusResponse,
 } from '@/types/optionDiscovery'
 import { withValidation } from '@/lib/apiValidation'
@@ -24,11 +21,11 @@ import {
 
 import { marketDataPluginUrl, researchUrl } from '@/lib/devApiUrl'
 
-const MASSIVE_DISABLED =
-  'Massive Trade API removed — use Market Data Plugin (Ops Console / Plugin API)'
+const MARKET_DATA_PLUGIN_UNAVAILABLE =
+  'Market Data Plugin unavailable — check platform-api / Plugin health'
 
 /** Plugin health as Discovery "status" stand-in (configured when reachable). */
-export async function fetchMassiveStatus(): Promise<MassiveStatusResponse> {
+export async function fetchMarketDataPluginStatus(): Promise<MassiveStatusResponse> {
   try {
     const r = await fetch(marketDataPluginUrl('/health'))
     const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
@@ -38,7 +35,7 @@ export async function fetchMassiveStatus(): Promise<MassiveStatusResponse> {
       tier: typeof j.service === 'string' ? String(j.service) : 'market-data-plugin',
       delay_notice: ok
         ? 'Market Data Plugin (Polygon ingest via platform proxy)'
-        : MASSIVE_DISABLED,
+        : MARKET_DATA_PLUGIN_UNAVAILABLE,
       trades_enabled: ok,
       daily_full_backfill_years: 0,
     }
@@ -46,21 +43,15 @@ export async function fetchMassiveStatus(): Promise<MassiveStatusResponse> {
     return {
       configured: false,
       tier: 'unavailable',
-      delay_notice: MASSIVE_DISABLED,
+      delay_notice: MARKET_DATA_PLUGIN_UNAVAILABLE,
       trades_enabled: false,
       daily_full_backfill_years: 0,
     }
   }
 }
 
-/** Massive sync may return job_ids[] without job_id (fan-out). */
-export function resolveMassiveSyncJobId(sync: {
-  job_id?: string
-  job_ids?: string[]
-}): string | undefined {
-  if (sync.job_id) return sync.job_id
-  return sync.job_ids?.[0]
-}
+/** @deprecated Use fetchMarketDataPluginStatus */
+export const fetchMassiveStatus = fetchMarketDataPluginStatus
 
 function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
   return {
@@ -168,61 +159,6 @@ export async function fetchOptionSnapshotsPg(
     error: typeof j.error === 'string' ? j.error : undefined,
     warning: typeof j.warning === 'string' ? j.warning : undefined,
   }
-}
-
-export async function fetchMassiveDailyChecklist(params: {
-  symbols: string[]
-  tradeDate?: string
-}): Promise<{
-  ok: boolean
-  trade_date?: string
-  symbols?: Record<string, MassiveDailyChecklistDims>
-  error?: string
-}> {
-  const syms = [...new Set((params.symbols || []).map(s => String(s).trim().toUpperCase()).filter(Boolean))].slice(0, 80)
-  if (syms.length === 0) return { ok: false, error: 'symbols is required' }
-  return {
-    ok: false,
-    trade_date: params.tradeDate?.trim() || undefined,
-    symbols: {},
-    error: MASSIVE_DISABLED,
-  }
-}
-
-export async function postMassiveSync(
-  kind: string,
-  payload: Record<string, unknown>,
-  options?: { priority?: 'high'; signal?: AbortSignal },
-): Promise<{
-  ok: boolean
-  job_id?: string
-  job_ids?: string[]
-  error?: string
-  message?: string
-  deduplicated?: boolean
-}> {
-  void kind
-  void payload
-  void options
-  return { ok: false, error: MASSIVE_DISABLED, message: MASSIVE_DISABLED }
-}
-
-export async function fetchMassiveJob(jobId: string): Promise<{
-  ok: boolean
-  error?: string
-  job?: MassiveJobDetail
-}> {
-  void jobId
-  return { ok: false, error: MASSIVE_DISABLED }
-}
-
-export async function pollMassiveJobUntilDone(
-  jobId: string,
-  options?: { maxAttempts?: number; intervalMs?: number },
-): Promise<MassiveJobPollResult> {
-  void jobId
-  void options
-  return { ok: false, error: MASSIVE_DISABLED }
 }
 
 export async function fetchMaxPainCompute(params: {

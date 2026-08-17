@@ -3,6 +3,7 @@ import {
   SepaCriteriaStatsSchema,
   SymbolsReadinessSnapshotSchema,
 } from '@/lib/schemas/stockScreener'
+import { researchUrl } from '@/lib/devApiUrl'
 import type {
   FundamentalFilterResponse,
   FundDistSymbolsResponse,
@@ -14,7 +15,6 @@ import type {
   TierFilterResponse,
 } from '@/types/stockScreener'
 
-const BASE = import.meta.env.VITE_API_RESEARCH as string
 
 const EMPTY_CRITERIA: SepaCriteriaStats = {
   ok: false,
@@ -69,7 +69,7 @@ const validateSnapshot = withValidation<SymbolsReadinessSnapshotResponse>(
 )
 
 export async function fetchSepaCriteriaStats(): Promise<SepaCriteriaStats> {
-  const data = await fetchJson(`${BASE}/research/data/readiness/criteria-stats`, 60_000, EMPTY_CRITERIA)
+  const data = await fetchJson(researchUrl('/research/data/readiness/criteria-stats'), 60_000, EMPTY_CRITERIA)
   if (!data.ok) throw new Error(data.error ?? 'Failed to load criteria stats')
   return validateCriteriaStats(data)
 }
@@ -84,7 +84,7 @@ export async function fetchFundamentalDistributionSymbols(
     symbols: [],
   }
   return fetchJson(
-    `${BASE}/research/data/readiness/fundamental-distribution/symbols?conditions_passed=${conditionsPassed}`,
+    researchUrl(`/research/data/readiness/fundamental-distribution/symbols?conditions_passed=${conditionsPassed}`),
     20_000,
     fallback,
   )
@@ -100,7 +100,7 @@ export async function fetchTechnicalDistributionSymbols(
     symbols: [],
   }
   return fetchJson(
-    `${BASE}/research/data/readiness/technical-distribution/symbols?conditions_passed=${conditionsPassed}`,
+    researchUrl(`/research/data/readiness/technical-distribution/symbols?conditions_passed=${conditionsPassed}`),
     20_000,
     fallback,
   )
@@ -117,7 +117,7 @@ export async function fetchFundamentalFilter(opts: {
   const limit = Math.max(1, Math.min(opts.limit ?? 500, 5000))
   const qs = new URLSearchParams({ include: include.join(','), limit: String(limit) })
   return fetchJson(
-    `${BASE}/research/data/readiness/fundamental-filter?${qs}`,
+    researchUrl(`/research/data/readiness/fundamental-filter?${qs}`),
     20_000,
     { ok: false },
   )
@@ -134,7 +134,7 @@ export async function fetchTechnicalFilter(opts: {
   const limit = Math.max(1, Math.min(opts.limit ?? 500, 5000))
   const qs = new URLSearchParams({ include: include.join(','), limit: String(limit) })
   return fetchJson(
-    `${BASE}/research/data/readiness/technical-filter?${qs}`,
+    researchUrl(`/research/data/readiness/technical-filter?${qs}`),
     20_000,
     { ok: false },
   )
@@ -150,7 +150,7 @@ export async function fetchMomentumFilter(params: {
   if (params.min_score != null) qs.set('min_score', String(params.min_score))
   if (params.limit != null) qs.set('limit', String(params.limit))
   return fetchJson(
-    `${BASE}/research/data/readiness/momentum-filter?${qs.toString()}`,
+    researchUrl(`/research/data/readiness/momentum-filter?${qs.toString()}`),
     15_000,
     { ok: false },
   )
@@ -167,7 +167,7 @@ export async function fetchTierFilter(params: {
   if (params.min_score != null && params.min_score > 0) qs.set('min_score', String(params.min_score))
   if (params.limit != null) qs.set('limit', String(params.limit))
   return fetchJson(
-    `${BASE}/research/data/readiness/tier-filter?${qs.toString()}`,
+    researchUrl(`/research/data/readiness/tier-filter?${qs.toString()}`),
     15_000,
     { ok: false },
   )
@@ -183,7 +183,7 @@ export async function fetchSymbolsReadinessSnapshot(
   const sliced = clean.slice(0, 500)
   const qs = new URLSearchParams({ symbols: sliced.join(',') })
   const data = await fetchJson<SymbolsReadinessSnapshotResponse>(
-    `${BASE}/research/data/readiness/symbols-snapshot?${qs}`,
+    researchUrl(`/research/data/readiness/symbols-snapshot?${qs}`),
     20_000,
     { ok: false },
   )

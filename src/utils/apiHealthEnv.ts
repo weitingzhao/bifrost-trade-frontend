@@ -384,7 +384,7 @@ export async function resolveApiHealthColumnPlans(): Promise<{
     const h = await fetchMonitorHealth()
     const pluginBase =
       (import.meta.env.VITE_API_MARKET_DATA_PLUGIN as string | undefined)?.trim() ||
-      'http://localhost:8780/api/v1/plugins/market-data/api'
+      '/api/plugin/market-data'
     const mhRes = await fetch(`${pluginBase.replace(/\/$/, '')}/health`, {
       signal: AbortSignal.timeout(API_HEALTH_FETCH_TIMEOUT_MS),
     }).catch(() => null)

@@ -63,15 +63,17 @@ export function opsUrl(path: string): string {
 }
 
 /**
- * Market Data Plugin via platform-api proxy.
- * DEV: same-origin `/api/plugin/market-data/…` → Vite proxy → platform-api :8780
- * PROD: full VITE_API_MARKET_DATA_PLUGIN URL
+ * Market Data Plugin (same-origin preferred).
+ *
+ * DEV: `/api/plugin/market-data/…` → Vite proxy → platform-api / plugin API
+ * PROD/STG (empty VITE_API_MARKET_DATA_PLUGIN): same path → Trade Traefik
+ *   strip → market-data-api:8790 (plugin-market-data)
+ * Escape hatch: absolute VITE_API_MARKET_DATA_PLUGIN still supported.
  */
 export function marketDataPluginUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   if (import.meta.env.DEV) return `/api/plugin/market-data${normalizedPath}`
-  const base =
-    (import.meta.env.VITE_API_MARKET_DATA_PLUGIN as string | undefined)?.trim() ||
-    'http://localhost:8780/api/v1/plugins/market-data/api'
+  const base = (import.meta.env.VITE_API_MARKET_DATA_PLUGIN as string | undefined)?.trim() ?? ''
+  if (!base || base === '/') return `/api/plugin/market-data${normalizedPath}`
   return joinBase(base, normalizedPath)
 }

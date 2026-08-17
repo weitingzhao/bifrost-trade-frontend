@@ -139,7 +139,7 @@ export const TOPOLOGY_EDGES: TopologyEdgeDef[] = [
   { from: 'ib_ingestor', to: 'market', label: 'ticks' },
   { from: 'ib_operator', to: 'trading', label: 'orders' },
   { from: 'ib_account_agent', to: 'portfolio', label: 'positions' },
-  { from: 'massive_ws', to: 'market', label: 'opt quotes' },
+  { from: 'massive_ws', to: 'market', label: 'health only (via Plugin redis-massive)' },
   { from: 'daemon_trading', to: 'trading', label: 'engine' },
   { from: 'account_sync', to: 'portfolio', label: 'sync' },
 ]

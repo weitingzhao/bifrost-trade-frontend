@@ -13,7 +13,7 @@ export type AggregateIngestLamp = IngestLamp | 'none'
 export type IngestCategory = 'Massive' | 'IB' | 'Engine' | 'Other'
 
 export const INGEST_CATEGORY_LABELS: Record<IngestCategory, string> = {
-  Massive: 'Massive Options WS',
+  Massive: 'Polygon Options WS (Plugin · redis-massive)',
   IB: 'Platform IB Gateway (redis-ib)',
   Engine: 'Strategy Trading',
   Other: 'Other',
@@ -343,7 +343,7 @@ export function ingestRedisHealthLamp(
     if (healthAge !== null && healthAge > hbIv + 90) {
       return {
         lamp: 'red',
-        title: `Massive WS service heartbeat stale (${Math.floor(healthAge)}s) — check massive-ws process (bifrost:health:ws_massive_option).`,
+        title: `Massive WS service heartbeat stale (${Math.floor(healthAge)}s) — check polygon-ws-ingestor (Plugin) (bifrost:health:ws_massive_option).`,
       }
     }
     if (healthAge !== null && healthAge > hbIv + MASSIVE_SERVICE_HEARTBEAT_SLACK_SEC) {
@@ -568,7 +568,7 @@ export function aggregateDaemonProcessesHealthFromStatus(
 }
 
 const SOCKET_NAV_SERVICE_LABELS: Record<(typeof SOCKET_NAV_INGEST_IDS)[number], string> = {
-  massive_ws: 'Massive WS',
+  massive_ws: 'Polygon WS (Plugin)',
   ib_ingestor: 'Gateway · Market',
   ib_operator: 'Gateway · Operator',
   ib_account_agent: 'Gateway · Account',

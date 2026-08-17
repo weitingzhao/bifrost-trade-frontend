@@ -98,11 +98,11 @@ export const LOG_SOURCES: LogSourceDef[] = [
   { key: 'market',           label: 'Market',        api: LOG_APIS.market,           group: 'api'  },
   { key: 'ops',              label: 'Ops',           api: LOG_APIS.ops,              group: 'api'  },
   { key: 'docs',             label: 'Docs',          api: LOG_APIS.docs,             group: 'api'  },
-  // Socket Services — IB edge + Massive WS ingest (Settings → Socket page)
+  // Socket Services — IB edge + Polygon Options WS (Settings → Socket page)
   { key: 'ib_ingestor',      label: 'IB INGESTOR',   api: LOG_APIS.ib_ingestor,      group: 'edge' },
   { key: 'ib_account_agent', label: 'IB ACCT AGENT', api: LOG_APIS.ib_account_agent, group: 'edge' },
   { key: 'ib_operator',      label: 'IB OPERATOR',   api: LOG_APIS.ib_operator,      group: 'edge' },
-  { key: 'massive_ws',       label: 'MASSIVE WS',    api: LOG_APIS.massive_ws,       group: 'edge' },
+  { key: 'massive_ws',       label: 'Polygon WS (Plugin)',    api: LOG_APIS.massive_ws,       group: 'edge' },
   // Daemon — Redis console streams (Strategy Trading + Account Sync)
   { key: 'daemon_trading', label: 'Strategy Trading', api: DAEMON_LOG_APIS.daemon_trading, group: 'daemon' },
   { key: 'account_sync',   label: 'Account Sync',     api: DAEMON_LOG_APIS.account_sync,   group: 'daemon' },

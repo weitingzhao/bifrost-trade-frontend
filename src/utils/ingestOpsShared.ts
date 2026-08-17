@@ -89,7 +89,7 @@ const IB_SERVICE_IDS = new Set(['ib_ingestor', 'ib_market', 'ib_account_agent', 
 
 /**
  * Per-row effective Redis control env using conflict groups:
- * - polygon_ws (legacy massive_ws): standalone — IB leases do not block it.
+ * - polygon_ws: standalone — IB leases do not block it.
  * - IB services: grouped — any IB peer lease on the other stack blocks the whole group.
  */
 export function resolveEffectiveRedisControlEnv(
@@ -100,7 +100,7 @@ export function resolveEffectiveRedisControlEnv(
   if (own === 'dev' || own === 'prod' || own === 'stg') return svc.redis_control_env
 
   let conflictRows: typeof allRows
-  if (svc.id === 'polygon_ws' || svc.id === 'massive_ws') {
+  if (svc.id === 'polygon_ws') {
     conflictRows = []
   } else if (IB_SERVICE_IDS.has(svc.id)) {
     conflictRows = allRows.filter(r => IB_SERVICE_IDS.has(r.id))

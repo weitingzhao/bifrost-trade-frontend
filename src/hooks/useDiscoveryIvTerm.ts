@@ -56,7 +56,7 @@ export function useDiscoveryIvTerm({
         const pts = res.points ?? []
         if (pts.length < 2) {
           setTermError(
-            'Not enough ATM IV in PostgreSQL for the checked expirations (need ≥2 with IV). Use Backfill snapshots (Massive) or Load quotes per expiration.',
+            'Not enough ATM IV in PostgreSQL for the checked expirations (need ≥2 with IV). Use Backfill snapshots (Plugin) or Load quotes per expiration.',
           )
         } else {
           setTermError(null)
@@ -78,7 +78,7 @@ export function useDiscoveryIvTerm({
     }
   }, [selectedSymbol, expirations, ivTermExpKeys])
 
-  const syncIvTermMassiveSnapshots = useCallback(async () => {
+  const syncIvTermPolygonSnapshots = useCallback(async () => {
     const sym = selectedSymbol.trim()
     const ordered = expirations.filter(e => ivTermExpKeys.includes(e)).slice(0, IV_TERM_MAX_EXPIRATIONS)
     if (!sym || ordered.length < 2) return
@@ -187,7 +187,7 @@ export function useDiscoveryIvTerm({
     ivTermSyncLoading,
     ivTermSyncStatus,
     loadIvTermStructure,
-    syncIvTermMassiveSnapshots,
+    syncIvTermPolygonSnapshots,
     toggleIvTermExpiration,
     resetIvTermExpirationsToDefault,
     selectAllIvTermExpirations,

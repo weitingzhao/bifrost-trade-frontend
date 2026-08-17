@@ -141,19 +141,24 @@ export interface BarsJob {
   updated_ts?: number
 }
 
-export interface MassiveCeleryBeatEntry {
+export interface MarketDataPluginCeleryBeatEntry {
   name: string
   task: string
   label: string
   crontab: Record<string, string | number>
 }
 
-export interface MassiveCeleryBeatScheduleResponse {
+export interface MarketDataPluginCeleryBeatScheduleResponse {
   ok: boolean
   timezone?: string
-  entries?: MassiveCeleryBeatEntry[]
+  entries?: MarketDataPluginCeleryBeatEntry[]
   error?: string
 }
+
+/** @deprecated Use MarketDataPluginCeleryBeatEntry — Trade Massive Celery retired (P7). */
+export type MassiveCeleryBeatEntry = MarketDataPluginCeleryBeatEntry
+/** @deprecated Use MarketDataPluginCeleryBeatScheduleResponse. */
+export type MassiveCeleryBeatScheduleResponse = MarketDataPluginCeleryBeatScheduleResponse
 
 export interface AuditEntry {
   timestamp: number

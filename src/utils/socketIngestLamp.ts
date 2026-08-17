@@ -13,12 +13,11 @@ export type AggregateIngestLamp = IngestLamp | 'none'
 
 export type IngestCategory = 'Polygon' | 'IB' | 'Engine' | 'Other'
 
-/** Official Ops ingest id; legacy ``massive_ws`` dual-accepted for ≥1 release. */
+/** Official Ops ingest id. */
 export const POLYGON_WS_SERVICE_ID = 'polygon_ws'
-export const LEGACY_MASSIVE_WS_SERVICE_ID = 'massive_ws'
 
 export function isPolygonWsServiceId(id: string): boolean {
-  return id === POLYGON_WS_SERVICE_ID || id === LEGACY_MASSIVE_WS_SERVICE_ID
+  return id === POLYGON_WS_SERVICE_ID
 }
 
 export const INGEST_CATEGORY_LABELS: Record<IngestCategory, string> = {

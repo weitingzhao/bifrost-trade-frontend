@@ -243,7 +243,7 @@ export default function DiscoveryPage() {
               onSelectAllExpirations={ivTerm.selectAllIvTermExpirations}
               onUncheckAllExpirations={ivTerm.uncheckAllIvTermExpirations}
               pluginBackfillAvailable={Boolean(pluginStatus?.configured)}
-              onBackfillPolygonSnapshots={() => void ivTerm.syncIvTermMassiveSnapshots()}
+              onBackfillPolygonSnapshots={() => void ivTerm.syncIvTermPolygonSnapshots()}
               snapshotSyncLoading={ivTerm.ivTermSyncLoading}
               snapshotSyncStatus={ivTerm.ivTermSyncStatus}
               onLoad={() => void ivTerm.loadIvTermStructure()}

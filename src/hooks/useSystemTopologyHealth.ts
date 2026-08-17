@@ -32,8 +32,7 @@ import {
 type SocketIngestKey = 'ib_ingestor' | 'ib_account_agent' | 'ib_operator' | 'polygon_ws'
 
 function topologySocketToIngestKey(key: string): SocketIngestKey | null {
-  // Topology node key is polygon_ws (Wave A); dual-accept legacy massive_ws if present.
-  if (key === 'polygon_ws' || key === 'massive_ws') return 'polygon_ws'
+  if (key === 'polygon_ws') return 'polygon_ws'
   if (key === 'ib_ingestor' || key === 'ib_account_agent' || key === 'ib_operator') {
     return key
   }

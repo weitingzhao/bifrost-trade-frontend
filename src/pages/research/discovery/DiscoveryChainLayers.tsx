@@ -185,7 +185,7 @@ export function DiscoveryChainLayers(props: Props) {
         id="od-layer-4"
         step={4}
         title="Option quotes & contract"
-        subtitle="Refresh Massive snapshots, browse the chain, then open a contract for liquidity, risk, and K-line."
+        subtitle="Refresh Plugin/PostgreSQL snapshots, browse the chain, then open a contract for liquidity, risk, and K-line."
         enabled={sym !== '' && exp !== ''}
         lockedHint="Select symbol and chain expiry in section 2."
       >

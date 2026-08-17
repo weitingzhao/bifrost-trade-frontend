@@ -87,8 +87,7 @@ export interface SocketIbSlot {
 }
 
 /**
- * GET /status `socket.polygon_ws` (preferred) — Polygon WS ingest Redis meta.
- * Legacy wire field `socket.massive` carries the same shape during Wave C dual-write.
+ * GET /status `socket.polygon_ws` — Polygon WS ingest Redis meta.
  */
 export interface StatusSocketPolygonWs {
   ws_connected?: boolean
@@ -106,7 +105,7 @@ export interface StatusSocketPolygonWs {
   configured?: boolean
 }
 
-/** @deprecated Prefer StatusSocketPolygonWs — same shape; legacy name for Wave C compat. */
+/** @deprecated Prefer StatusSocketPolygonWs — same shape. */
 export type StatusSocketMassive = StatusSocketPolygonWs
 
 /** Unified IB Broker socket block (ingestor / account agent / operator). */
@@ -158,21 +157,18 @@ export type StatusSocketIbOperator = StatusSocketIbBroker
 export type StatusSocketIbAccountAgent = StatusSocketIbBroker
 
 export interface StatusSocket {
-  /** Preferred Wave C key (same payload as massive while dual-writing). */
   polygon_ws?: StatusSocketPolygonWs | null
-  /** Legacy dual-write; prefer polygon_ws. Owner gate before dropping. */
-  massive?: StatusSocketPolygonWs | null
   ib_ingestor?: StatusSocketIbIngestor | null
   ib_operator?: StatusSocketIbOperator | null
   ib_account_agent?: StatusSocketIbAccountAgent | null
   platform_ib_gateway?: StatusPlatformIbGateway | null
 }
 
-/** Prefer `socket.polygon_ws`, fall back to legacy `socket.massive`. */
+/** Read `socket.polygon_ws` only (no legacy massive fallback). */
 export function statusSocketPolygonWs(
   status: { socket?: StatusSocket | null } | null | undefined,
 ): StatusSocketPolygonWs | null | undefined {
-  return status?.socket?.polygon_ws ?? status?.socket?.massive
+  return status?.socket?.polygon_ws
 }
 
 export interface Operation {

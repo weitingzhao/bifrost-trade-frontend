@@ -16,7 +16,7 @@ import type {
   SymbolStatementsData,
   SymbolOptionPcrData,
 } from '@/types/research'
-import type { MassiveCeleryBeatScheduleResponse } from '@/types/ops'
+import type { MarketDataPluginCeleryBeatScheduleResponse } from '@/types/ops'
 
 
 export async function fetchScreenerResults(filters: ScreenerFilters): Promise<ScreenerResponse> {
@@ -213,10 +213,10 @@ export async function fetchSymbolOptionPcr(
 
 // ── Celery Beat schedule (Market Data Plugin — noop; CronJobs own schedule) ───
 
-export async function fetchMarketDataPluginCeleryBeatSchedule(): Promise<MassiveCeleryBeatScheduleResponse> {
+export async function fetchMarketDataPluginCeleryBeatSchedule(): Promise<MarketDataPluginCeleryBeatScheduleResponse> {
   return {
     ok: false,
-    error: 'Massive Trade API removed — Celery Beat schedule lives on Market Data Plugin CronJobs',
+    error: 'Trade Massive API removed — Celery Beat schedule lives on Market Data Plugin CronJobs',
   }
 }
 

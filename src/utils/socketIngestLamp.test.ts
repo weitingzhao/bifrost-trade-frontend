@@ -15,10 +15,10 @@ describe('massiveWsRestOnly', () => {
   })
 })
 
-describe('isPolygonWsServiceId dual-accept', () => {
-  it('accepts official and legacy ids', () => {
+describe('isPolygonWsServiceId', () => {
+  it('accepts only official polygon_ws id', () => {
     expect(isPolygonWsServiceId('polygon_ws')).toBe(true)
-    expect(isPolygonWsServiceId('massive_ws')).toBe(true)
+    expect(isPolygonWsServiceId('massive_ws')).toBe(false)
     expect(isPolygonWsServiceId('ib_ingestor')).toBe(false)
   })
 })
@@ -26,7 +26,7 @@ describe('isPolygonWsServiceId dual-accept', () => {
 describe('ingestRedisHealthLamp polygon_ws', () => {
   const baseStatus = {
     socket: {
-      massive: {
+      polygon_ws: {
         ws_connected: false,
         ws_mode: 'rest_only',
         health_updated_age_s: 5,
@@ -35,38 +35,25 @@ describe('ingestRedisHealthLamp polygon_ws', () => {
     },
   } as StatusResponse
 
-  it('shows green for REST-only standby with fresh heartbeat (official id)', () => {
+  it('shows green for REST-only standby with fresh heartbeat', () => {
     const { lamp, title } = ingestRedisHealthLamp('polygon_ws', baseStatus)
     expect(lamp).toBe('green')
     expect(title).toMatch(/REST-only standby/i)
   })
 
-  it('dual-accepts legacy massive_ws id', () => {
-    const { lamp, title } = ingestRedisHealthLamp('massive_ws', baseStatus)
-    expect(lamp).toBe('green')
-    expect(title).toMatch(/REST-only standby/i)
-  })
-
-  it('prefers socket.polygon_ws over legacy socket.massive', () => {
+  it('reads socket.polygon_ws only (no massive fallback)', () => {
     const status = {
       socket: {
-        polygon_ws: {
+        // Legacy wire field present — must be ignored by statusSocketPolygonWs.
+        massive: {
           ws_connected: true,
           ws_mode: 'live',
           health_updated_age_s: 2,
           service_heartbeat_interval_sec: 30,
         },
-        massive: {
-          ws_connected: false,
-          ws_mode: 'rest_only',
-          health_updated_age_s: 5,
-          service_heartbeat_interval_sec: 30,
-        },
       },
-    } as StatusResponse
-    const { lamp, title } = ingestRedisHealthLamp('polygon_ws', status)
-    expect(lamp).toBe('green')
-    expect(title).toMatch(/connected/i)
-    expect(title).not.toMatch(/REST-only/i)
+    } as unknown as StatusResponse
+    const { lamp } = ingestRedisHealthLamp('polygon_ws', status)
+    expect(lamp).not.toBe('green')
   })
 })

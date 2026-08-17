@@ -8,9 +8,12 @@ const uiRoot = resolve(__dirname, '../bifrost-ui')
 /**
  * Phase B Wave B1: single VITE_API_BASE for all Trade domains.
  *
- * Browser always requests `/api/{domain}/…`. Vite proxies `/api` to the
- * Trade gateway origin (K3s NodePort or Compose nginx). Plugin stays on
- * a separate host (platform-api).
+ * Browser always requests `/api/{domain}/…` and `/api/plugin/market-data/…`.
+ * Default: both proxy to the Trade gateway origin (K3s NodePort / Compose nginx)
+ * so DEV matches PROD same-origin topology.
+ *
+ * Escape hatch: set absolute VITE_API_MARKET_DATA_PLUGIN (e.g. platform-api
+ * `http://localhost:8780/api/v1/plugins/market-data/api`) to bypass Trade gateway.
  */
 function buildDevProxies(env: Record<string, string>): Record<string, object> {
   const rawBase = env.VITE_API_BASE?.trim() || 'http://127.0.0.1:80'
@@ -25,31 +28,35 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
     tradeTarget = 'http://127.0.0.1:80'
   }
 
-  const pluginBase =
-    env.VITE_API_MARKET_DATA_PLUGIN?.trim() ||
-    'http://localhost:8780/api/v1/plugins/market-data/api'
-  const pluginParsed = (() => {
+  const pluginOverride = env.VITE_API_MARKET_DATA_PLUGIN?.trim() || ''
+  const pluginProxy = (() => {
+    if (!pluginOverride || pluginOverride === '/') {
+      return {
+        target: tradeTarget,
+        changeOrigin: true,
+      }
+    }
     try {
-      const u = new URL(pluginBase)
-      return { target: u.origin, pathPrefix: u.pathname.replace(/\/$/, '') }
+      const u = new URL(pluginOverride)
+      const pathPrefix = u.pathname.replace(/\/$/, '')
+      return {
+        target: u.origin,
+        changeOrigin: true,
+        rewrite: (path: string) =>
+          `${pathPrefix}${path.replace('/api/plugin/market-data', '')}`,
+      }
     } catch {
       return {
         target: 'http://localhost:8780',
-        pathPrefix: '/api/v1/plugins/market-data/api',
+        changeOrigin: true,
+        rewrite: (path: string) =>
+          `/api/v1/plugins/market-data/api${path.replace('/api/plugin/market-data', '')}`,
       }
     }
   })()
 
   return {
-    // More specific rule first — Market Data Plugin → platform-api
-    '/api/plugin/market-data': {
-      target: pluginParsed.target,
-      changeOrigin: true,
-      rewrite: (path: string) =>
-        `${pluginParsed.pathPrefix}${path.replace('/api/plugin/market-data', '')}`,
-    },
-    // All Trade domains → single gateway (path preserved: /api/monitor/…)
-    // timeout 0 covers Ops Celery console SSE
+    '/api/plugin/market-data': pluginProxy,
     '/api': {
       target: tradeTarget,
       changeOrigin: true,

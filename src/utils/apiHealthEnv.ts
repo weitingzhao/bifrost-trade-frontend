@@ -8,6 +8,7 @@ import {
   type ApiOriginBase,
 } from '@/api/apiHealthProbes'
 import { fetchMonitorHealth } from '@/api/monitor'
+import { marketDataPluginUrl } from '@/lib/devApiUrl'
 import {
   normalizeUtilizedServices,
   utilizedAllEnv,
@@ -382,10 +383,7 @@ export async function resolveApiHealthColumnPlans(): Promise<{
 
   try {
     const h = await fetchMonitorHealth()
-    const pluginBase =
-      (import.meta.env.VITE_API_MARKET_DATA_PLUGIN as string | undefined)?.trim() ||
-      '/api/plugin/market-data'
-    const mhRes = await fetch(`${pluginBase.replace(/\/$/, '')}/health`, {
+    const mhRes = await fetch(marketDataPluginUrl('/health'), {
       signal: AbortSignal.timeout(API_HEALTH_FETCH_TIMEOUT_MS),
     }).catch(() => null)
     const mh =
@@ -523,7 +521,7 @@ export function buildEnvColumn(
     },
     {
       title: 'Feed',
-      rows: [row('Massive API', probe.massive, 'GET /research/massive/health failed')],
+      rows: [row('Market Data Plugin', probe.massive, 'GET /api/plugin/market-data/health failed')],
     },
   ]
   return { title, display, groups }

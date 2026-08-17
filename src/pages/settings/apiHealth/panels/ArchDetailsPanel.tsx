@@ -48,7 +48,6 @@ export function ArchDetailsPanel() {
             <ApiDetailKvCard>
               {(
                 [
-                  ['Massive API', monitorBody.massive_port],
                   ['Ops API', monitorBody.ops_port],
                   ['Docs API', monitorBody.docs_port],
                   ['Trading API', monitorBody.trading_port],
@@ -56,6 +55,7 @@ export function ArchDetailsPanel() {
                   ['Portfolio API', monitorBody.portfolio_port],
                   ['Market API', monitorBody.market_port],
                   ['Research API', monitorBody.research_port],
+                  ['Market Data (legacy YAML port)', monitorBody.massive_port],
                 ] as [string, number | undefined][]
               ).map(([label, port]) => (
                 <DetailKV key={label} label={label}>
@@ -98,7 +98,7 @@ export function ArchDetailsPanel() {
               <DetailKV label="Main API" mono>
                 {String(docsBody.main_url)}
               </DetailKV>
-              <DetailKV label="Massive API" mono>
+              <DetailKV label="Market Data (legacy OpenAPI URL)" mono>
                 {String(docsBody.massive_url ?? '–')}
               </DetailKV>
               <DetailKV label="Research API" mono>

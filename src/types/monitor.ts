@@ -232,15 +232,6 @@ export interface FlexAccountItem {
   purpose?: string | null
 }
 
-/** GET /status `config.ib_flex` — Flex tokens + query rows + range day preferences. */
-export interface StatusIbFlex {
-  host_token?: string | null
-  secondary_token?: string | null
-  rows?: FlexAccountItem[]
-  default_range_days?: number | null
-  init_range_days?: number | null
-}
-
 // ─── Status response ──────────────────────────────────────────────────────────
 
 export interface StatusResponse {
@@ -281,7 +272,6 @@ export interface StatusResponse {
   }
   config?: {
     ib_client?: IbClient
-    ib_flex?: StatusIbFlex
     redis?: { subscribe_channel?: string | null }
   }
   account_sync_daemon: {

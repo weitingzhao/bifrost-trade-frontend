@@ -77,3 +77,19 @@ export function marketDataPluginUrl(path: string): string {
   if (!base || base === '/') return `/api/plugin/market-data${normalizedPath}`
   return joinBase(base, normalizedPath)
 }
+
+/**
+ * IB Flex Query Plugin (same-origin preferred).
+ *
+ * DEV: `/api/plugin/flex-query/…` → Vite proxy → Trade gateway / Plugin API
+ * PROD/STG (empty VITE_API_FLEX_QUERY_PLUGIN): same path → Trade Traefik
+ *   strip → flex-query-api:8791 (plugin-flex-query)
+ * Escape hatch: absolute VITE_API_FLEX_QUERY_PLUGIN still supported.
+ */
+export function flexQueryPluginUrl(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  if (import.meta.env.DEV) return `/api/plugin/flex-query${normalizedPath}`
+  const base = (import.meta.env.VITE_API_FLEX_QUERY_PLUGIN as string | undefined)?.trim() ?? ''
+  if (!base || base === '/') return `/api/plugin/flex-query${normalizedPath}`
+  return joinBase(base, normalizedPath)
+}

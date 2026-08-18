@@ -1,7 +1,8 @@
 import { useLayoutEffect, useState } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { useLocation } from 'react-router-dom'
-import { postIbConfig, postFlexConfig } from '@/api/monitor'
+import { postIbConfig } from '@/api/monitor'
+import { pluginFlexWriteConfig } from '@/api/flexQueryPlugin'
 import type { FlexAccountItem, StatusIbFlex, StatusResponse } from '@/types/monitor'
 import { useMonitorStatus, useInvalidateStatus } from '@/hooks/useMonitorStatus'
 import { Badge } from '@/components/ui/badge'
@@ -116,7 +117,7 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
           stream_host_account_id: streamHostAccountId.trim() || null,
           stream_secondary_account_id: streamSecondaryAccountId.trim() || null,
         }),
-        postFlexConfig(
+        pluginFlexWriteConfig(
           flexHostToken.trim() || undefined,
           flexSecondaryToken.trim() || undefined,
           flexToSave,

@@ -8,12 +8,14 @@ const uiRoot = resolve(__dirname, '../bifrost-ui')
 /**
  * Phase B Wave B1: single VITE_API_BASE for all Trade domains.
  *
- * Browser always requests `/api/{domain}/…` and `/api/plugin/market-data/…`.
- * Default: both proxy to the Trade gateway origin (K3s NodePort / Compose nginx)
+ * Browser always requests `/api/{domain}/…`, `/api/plugin/market-data/…`,
+ * and `/api/plugin/flex-query/…`.
+ * Default: all proxy to the Trade gateway origin (K3s NodePort / Compose nginx)
  * so DEV matches PROD same-origin topology.
  *
- * Escape hatch: set absolute VITE_API_MARKET_DATA_PLUGIN (e.g. platform-api
- * `http://localhost:8780/api/v1/plugins/market-data/api`) to bypass Trade gateway.
+ * Escape hatch: set absolute VITE_API_MARKET_DATA_PLUGIN or
+ * VITE_API_FLEX_QUERY_PLUGIN (e.g. platform-api
+ * `http://localhost:8780/api/v1/plugins/flex-query/api`) to bypass Trade gateway.
  */
 function buildDevProxies(env: Record<string, string>): Record<string, object> {
   const rawBase = env.VITE_API_BASE?.trim() || 'http://127.0.0.1:80'
@@ -29,6 +31,7 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
   }
 
   const pluginOverride = env.VITE_API_MARKET_DATA_PLUGIN?.trim() || ''
+  const flexOverride = env.VITE_API_FLEX_QUERY_PLUGIN?.trim() || ''
   const pluginProxy = (() => {
     if (!pluginOverride || pluginOverride === '/') {
       return {
@@ -54,9 +57,37 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
       }
     }
   })()
+  const flexPluginProxy = (() => {
+    if (!flexOverride || flexOverride === '/') {
+      return {
+        target: tradeTarget,
+        changeOrigin: true,
+        timeout: 0,
+        proxyTimeout: 0,
+      }
+    }
+    try {
+      const u = new URL(flexOverride)
+      const pathPrefix = u.pathname.replace(/\/$/, '')
+      return {
+        target: u.origin,
+        changeOrigin: true,
+        rewrite: (path: string) =>
+          `${pathPrefix}${path.replace('/api/plugin/flex-query', '')}`,
+      }
+    } catch {
+      return {
+        target: 'http://localhost:8780',
+        changeOrigin: true,
+        rewrite: (path: string) =>
+          `/api/v1/plugins/flex-query/api${path.replace('/api/plugin/flex-query', '')}`,
+      }
+    }
+  })()
 
   return {
     '/api/plugin/market-data': pluginProxy,
+    '/api/plugin/flex-query': flexPluginProxy,
     '/api': {
       target: tradeTarget,
       changeOrigin: true,

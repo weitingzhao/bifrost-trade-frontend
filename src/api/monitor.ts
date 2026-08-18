@@ -1,5 +1,5 @@
 import { postControlShutdown } from '@/api/apiControl'
-import type { StatusResponse, Operation, FlexAccountItem, RiskSummaryResponse } from '@/types/monitor'
+import type { StatusResponse, Operation, RiskSummaryResponse } from '@/types/monitor'
 import type { ActiveStrategyPayload } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
 import { StatusResponseSchema, OperationsResponseSchema } from '@/lib/schemas/monitor'
@@ -123,34 +123,6 @@ export async function postIbConfig(accounts: {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(accounts),
-  })
-  const j = await res.json().catch(() => ({}))
-  return { ...j, ok: res.ok, error: j.error ?? (res.ok ? undefined : res.statusText) }
-}
-
-export async function postFlexConfig(
-  hostToken: string | null | undefined,
-  secondaryToken: string | null | undefined,
-  accounts: FlexAccountItem[],
-  flexDefaultRangeDays?: number | null,
-  flexInitRangeDays?: number | null,
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(monitorUrl('/config/flex'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      host_token: hostToken ?? undefined,
-      secondary_token: secondaryToken ?? undefined,
-      accounts,
-      flex_default_range_days:
-        flexDefaultRangeDays != null && Number.isFinite(flexDefaultRangeDays)
-          ? Math.max(1, Math.round(flexDefaultRangeDays))
-          : undefined,
-      flex_init_range_days:
-        flexInitRangeDays != null && Number.isFinite(flexInitRangeDays)
-          ? Math.max(1, Math.round(flexInitRangeDays))
-          : undefined,
-    }),
   })
   const j = await res.json().catch(() => ({}))
   return { ...j, ok: res.ok, error: j.error ?? (res.ok ? undefined : res.statusText) }

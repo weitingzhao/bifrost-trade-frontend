@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import { postTwsFetch, postFlexFetch, postFlexUpload } from '@/api/trading'
+import { postTwsFetch } from '@/api/trading'
+import { pluginFlexTrigger, pluginFlexUploadXml } from '@/api/flexQueryPlugin'
 import { formatLastUpdate } from '@/utils/positions'
 import { cn } from '@/lib/utils'
 import type { FlexFetchPerQuery } from '@/types/trading'
@@ -94,7 +95,7 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
     setFlexLoading(true)
     setFlexResult(null)
     try {
-      const r = await postFlexFetch()
+      const r = await pluginFlexTrigger('trades')
       if (r.ok) {
         setFlexResult({
           summary: buildFlexSuccessMessage(r),
@@ -125,7 +126,7 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
     setFlexResult(null)
     try {
       const xml = await file.text()
-      const r = await postFlexUpload(xml)
+      const r = await pluginFlexUploadXml(xml)
       setFlexResult({
         summary: r.ok
           ? `Imported ${r.count} trade(s) from XML.${r.message ? ` ${r.message}` : ''}`

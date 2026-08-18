@@ -26,7 +26,7 @@ Run Legacy and New on **different ports** if both dev servers are needed (e.g. e
 | Account editable | `#ib-account` | `#ib-account` | Event Host / Event Secondary / Trading Host inputs editable; Secondary trading column shows em dash |
 | Flex Query editable | `#ib-flex-query` | `#ib-flex-query` | Host + Secondary tokens; Cash Transactions + Trades query IDs; Secondary token disabled when no secondary host |
 | Flex Preference | `#flex-preference` | `#flex-preference` | `default_range_days` and `init_range_days` (1–9999) |
-| Save settings | Page Save button | Page **Save settings** | Both call `POST /config/ib` + `POST /config/flex` with same payload shape; success message; status refresh shows persisted values |
+| Save settings | Page Save button | Page **Save settings** | `POST /config/ib` (Trade Monitor) + `POST /api/plugin/flex-query/flex/config/write` (Flex Query Plugin); success message; status refresh shows persisted values |
 | Settings sidebar deep links | Sidebar sub-items | [`SettingsLayout`](../src/layout/SettingsLayout.tsx) IB Configure children | Each nav item scrolls to the matching Card (`#ib-users`, `#ib-client-ids`, `#ib-account`, `#ib-flex-query`, `#flex-preference`) |
 
 **Known non-gap**: Host and Client ID blocks are read-only in Legacy (`readOnly` / `disabled` inputs). New uses read-only tables — same business rule (edit via `config.yaml` + process restart).
@@ -47,7 +47,7 @@ Run Legacy and New on **different ports** if both dev servers are needed (e.g. e
 |------|--------|
 | Read-only fields sourced from `status.config.ib_client` / `port` | Pass |
 | Editable account fields map to `postIbConfig` (`ib_host_account_id`, `stream_*`) | Pass |
-| Flex save maps to `postFlexConfig` (tokens, accounts rows, range days) | Pass |
+| Flex save maps to `pluginFlexWriteConfig` (tokens, accounts rows, range days) | Pass |
 | `FLEX_QUERY_TYPES` (cash_transactions, trades) aligned with Legacy | Pass |
 | Hash scroll via `useLayoutEffect` + `document.getElementById` | Pass |
 

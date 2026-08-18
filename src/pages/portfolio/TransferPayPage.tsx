@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { getTransactions, postTransactionsFetch } from '@/api/trading'
+import { getTransactions } from '@/api/trading'
+import { pluginFlexTrigger } from '@/api/flexQueryPlugin'
 import { cn } from '@/lib/utils'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import {
@@ -63,7 +64,7 @@ export default function TransferPayPage() {
     mutationFn: () => {
       const r = getRangeForPreset(rangePreset)
       const payload = rangePreset === 'last_365' ? undefined : { from_date: r.fromDate, to_date: r.toDate }
-      return postTransactionsFetch(payload)
+      return pluginFlexTrigger('transactions', payload)
     },
     onSuccess: res => {
       if (res.ok) {

@@ -2,8 +2,6 @@ import { postControlShutdown } from '@/api/apiControl'
 import type {
   ExecutionsFreshnessResponse,
   TwsFetchResponse,
-  FlexFetchResponse,
-  FlexUploadResponse,
   PerformanceResponse,
   PerformanceParams,
   ExecutionsRangeParams,
@@ -11,7 +9,6 @@ import type {
   OptionStockLinkBatch,
   OptionStockLinksResponse,
   AccountTransactionsResponse,
-  TransactionsFetchResponse,
 } from '@/types/trading'
 import type {
   ExecutionsResponse,
@@ -36,22 +33,6 @@ export async function postTwsFetch(days: 1 | 3 | 7): Promise<TwsFetchResponse> {
   const res = await fetch(tradingUrl(`/executions/fetch?days=${days}`), { method: 'POST' })
   if (!res.ok) throw new Error(`Trading /executions/fetch: ${res.status}`)
   return res.json() as Promise<TwsFetchResponse>
-}
-
-export async function postFlexFetch(): Promise<FlexFetchResponse> {
-  const res = await fetch(tradingUrl('/executions/fetch-flex'), { method: 'POST' })
-  if (!res.ok) throw new Error(`Trading /executions/fetch-flex: ${res.status}`)
-  return res.json() as Promise<FlexFetchResponse>
-}
-
-export async function postFlexUpload(xml: string): Promise<FlexUploadResponse> {
-  const res = await fetch(tradingUrl('/executions/fetch-flex-upload'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ xml }),
-  })
-  if (!res.ok) throw new Error(`Trading /executions/fetch-flex-upload: ${res.status}`)
-  return res.json() as Promise<FlexUploadResponse>
 }
 
 export async function fetchExecutions(source: 'final' | 'tws' | 'canonical' = 'final'): Promise<ExecutionsResponse> {
@@ -188,19 +169,6 @@ export async function getTransactions(params?: {
   const res = await fetch(tradingUrl(`/transactions?${qs}`))
   if (!res.ok) throw new Error(`Trading /transactions: ${res.status}`)
   return res.json() as Promise<AccountTransactionsResponse>
-}
-
-export async function postTransactionsFetch(body?: {
-  from_date?: string
-  to_date?: string
-}): Promise<TransactionsFetchResponse> {
-  const res = await fetch(tradingUrl('/transactions/fetch'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  if (!res.ok) throw new Error(`POST /transactions/fetch: ${res.status}`)
-  return res.json() as Promise<TransactionsFetchResponse>
 }
 
 export async function postOptionStockLinksQuery(

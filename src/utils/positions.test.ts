@@ -11,6 +11,7 @@ import {
   uniqueContractKeys,
   resolveBasePrice,
   fmtExecDaysAgo,
+  quoteTimestamp,
 } from './positions'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { QuotesResponse, DailyBenchmark } from '@/types/market'
@@ -111,8 +112,33 @@ describe('buildQuoteMap', () => {
     expect(map['NVDA']?.last).toBe(900)
   })
 
+  it('keeps STK last when OPT quotes share the same symbol', () => {
+    const data: QuotesResponse = {
+      quotes: [
+        { symbol: 'RKLB', contract_key: 'RKLB|STK|||', sec_type: 'STK', last: 79.71, bid: 79.7, ask: 79.72, ts: 1_787_081_298 },
+        { symbol: 'DAVE', contract_key: 'DAVE|STK|||', sec_type: 'STK', last: 335.62, bid: 334.65, ask: 336.48, ts: 1_787_081_298 },
+        { symbol: 'DAVE', contract_key: 'DAVE|OPT|20270115|280.0|C', sec_type: 'OPT', last: null, bid: null, ask: null },
+        { symbol: 'RKLB', contract_key: 'RKLB|OPT|20261218|125.0|C', sec_type: 'OPT', last: 4.7, bid: 4.6, ask: 4.8 },
+      ],
+    }
+    const map = buildQuoteMap(data)
+    expect(map['RKLB']?.last).toBe(79.71)
+    expect(map['RKLB']?.contract_key).toBe('RKLB|STK|||')
+    expect(map['DAVE']?.last).toBe(335.62)
+    expect(map['DAVE']?.contract_key).toBe('DAVE|STK|||')
+  })
+
   it('returns empty object for undefined', () => {
     expect(buildQuoteMap(undefined)).toEqual({})
+  })
+})
+
+describe('quoteTimestamp', () => {
+  it('prefers timestamp, then ts, then updated_ts', () => {
+    expect(quoteTimestamp({ last: 1, bid: null, ask: null, timestamp: 10, ts: 20, updated_ts: 30 })).toBe(10)
+    expect(quoteTimestamp({ last: 1, bid: null, ask: null, ts: 20, updated_ts: 30 })).toBe(20)
+    expect(quoteTimestamp({ last: 1, bid: null, ask: null, updated_ts: 30 })).toBe(30)
+    expect(quoteTimestamp({ last: 1, bid: null, ask: null })).toBeNull()
   })
 })
 

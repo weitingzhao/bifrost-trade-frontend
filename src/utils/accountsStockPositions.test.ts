@@ -52,6 +52,17 @@ describe('computeStockPositionRowMetrics', () => {
     expect(m.updTs).toBe(1_700_000_000)
   })
 
+  it('uses quote.ts for Upd when timestamp is absent', () => {
+    const pos = stk({ price: 341.43, price_updated_at: 1_786_924_800 })
+    const m = computeStockPositionRowMetrics(
+      pos,
+      quote({ last: 335.62, ts: 1_787_081_298 }),
+      undefined,
+    )
+    expect(m.currPrice).toBe(335.62)
+    expect(m.updTs).toBe(1_787_081_298)
+  })
+
   it('uses unrealized_pnl when present', () => {
     const pos = stk({ unrealized_pnl: 42 })
     const m = computeStockPositionRowMetrics(pos, quote({ last: 110 }), undefined)

@@ -1,4 +1,4 @@
-import { resolveBasePrice } from '@/utils/positions'
+import { quoteTimestamp, resolveBasePrice } from '@/utils/positions'
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 
@@ -46,7 +46,7 @@ export function computeStockPositionRowMetrics(
   const changeUsd =
     pos.unrealized_pnl ??
     (currPrice != null && avgCost != null ? (currPrice - avgCost) * qty : null)
-  const updTs = quote?.timestamp ?? pos.price_updated_at ?? null
+  const updTs = quoteTimestamp(quote) ?? pos.price_updated_at ?? null
   return {
     currPrice,
     basePrice,

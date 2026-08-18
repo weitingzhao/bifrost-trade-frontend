@@ -1,6 +1,6 @@
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
-import { rightLabel } from '@/utils/positions'
+import { quoteTimestamp, rightLabel } from '@/utils/positions'
 
 export interface OptionPositionRowMetrics {
   qty: number
@@ -53,7 +53,7 @@ export function computeOptionPositionRowMetrics(
   const changeUsd =
     pos.unrealized_pnl ??
     (currPrice != null && avgCost != null ? (currPrice - avgCost) * qty : null)
-  const updTs = quote?.timestamp ?? pos.price_updated_at ?? null
+  const updTs = quoteTimestamp(quote) ?? pos.price_updated_at ?? null
   const lastDelta =
     currPrice != null && avgCost != null ? currPrice - avgCost : null
 

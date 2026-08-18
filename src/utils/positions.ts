@@ -46,11 +46,30 @@ export function rightLabel(r: string | undefined): 'Call' | 'Put' | '—' {
   return '—'
 }
 
+/** IB Gateway ticks use ``ts``; some rows still send ``timestamp``. */
+export function quoteTimestamp(q: QuoteItem | undefined): number | null {
+  if (!q) return null
+  for (const v of [q.timestamp, q.ts, q.updated_ts]) {
+    if (v != null && Number.isFinite(v)) return v
+  }
+  return null
+}
+
+function isOptQuote(q: QuoteItem): boolean {
+  const sec = (q.sec_type ?? '').trim().toUpperCase()
+  if (sec === 'OPT') return true
+  if (sec === 'STK') return false
+  const ck = (q.contract_key ?? '').toUpperCase()
+  return ck.includes('|OPT|')
+}
+
+/** Symbol → STK quote only. OPT rows share ``symbol`` and must not overwrite Last. */
 export function buildQuoteMap(data: QuotesResponse | undefined): Record<string, QuoteItem> {
   if (!data?.quotes) return {}
   const map: Record<string, QuoteItem> = {}
   for (const q of data.quotes) {
-    if (q.symbol) map[q.symbol.toUpperCase()] = q
+    if (!q.symbol || isOptQuote(q)) continue
+    map[q.symbol.toUpperCase()] = q
   }
   return map
 }

@@ -2,9 +2,10 @@ import { useLayoutEffect, useState } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { useLocation } from 'react-router-dom'
 import { postIbConfig } from '@/api/monitor'
-import { pluginFlexWriteConfig } from '@/api/flexQueryPlugin'
-import type { FlexAccountItem, StatusIbFlex, StatusResponse } from '@/types/monitor'
+import { pluginFlexWriteConfig, type FlexConfigSummary } from '@/api/flexQueryPlugin'
+import type { FlexAccountItem, StatusResponse } from '@/types/monitor'
 import { useMonitorStatus, useInvalidateStatus } from '@/hooks/useMonitorStatus'
+import { useFlexConfigSummary, useInvalidateFlexConfigSummary } from '@/hooks/useFlexConfigSummary'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -41,10 +43,10 @@ function makeDefaultFlexRows(): FlexAccountItem[] {
   }))
 }
 
-function initFlexRows(ibFlex: StatusIbFlex | null | undefined): FlexAccountItem[] {
-  if (!Array.isArray(ibFlex?.rows) || ibFlex!.rows!.length === 0) return makeDefaultFlexRows()
+function initFlexRows(queryRows: FlexAccountItem[] | null | undefined): FlexAccountItem[] {
+  if (!Array.isArray(queryRows) || queryRows.length === 0) return makeDefaultFlexRows()
   return FLEX_QUERY_TYPES.map(({ purpose, label }) => {
-    const row = ibFlex!.rows!.find((r: FlexAccountItem) => (r.purpose ?? 'cash_transactions') === purpose)
+    const row = queryRows.find((r) => (r.purpose ?? 'cash_transactions') === purpose)
     return {
       purpose,
       query_label: label,
@@ -54,13 +56,27 @@ function initFlexRows(ibFlex: StatusIbFlex | null | undefined): FlexAccountItem[
   })
 }
 
+function tokenKeepHint(set: boolean, last4: string | null): string {
+  if (set && last4) return `Leave blank to keep current · last ${last4}`
+  if (set) return 'Leave blank to keep current token'
+  return 'IB Flex token'
+}
+
 // ─── Inner form — receives loaded status as props ─────────────────────────────
 
-function IbConnectionForm({ status, initialHash }: { status: StatusResponse; initialHash: string }) {
+function IbConnectionForm({
+  status,
+  flexSummary,
+  initialHash,
+}: {
+  status: StatusResponse
+  flexSummary: FlexConfigSummary
+  initialHash: string
+}) {
   const invalidateStatus = useInvalidateStatus()
+  const invalidateFlexSummary = useInvalidateFlexConfigSummary()
 
   const ibClient = status.config?.ib_client
-  const ibFlex = status.config?.ib_flex
 
   const ibHost = ibClient?.client?.host_ip ?? ''
   const ibPortType = (ibClient?.client?.host_port_type ?? 'tws_paper') as PortType
@@ -78,16 +94,16 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
   const [hostAccountId, setHostAccountId] = useState(
     () => ibClient?.account?.trading ?? '',
   )
-  const [flexHostToken, setFlexHostToken] = useState(() => ibFlex?.host_token ?? '')
-  const [flexSecondaryToken, setFlexSecondaryToken] = useState(
-    () => ibFlex?.secondary_token ?? '',
+  const [flexHostToken, setFlexHostToken] = useState('')
+  const [flexSecondaryToken, setFlexSecondaryToken] = useState('')
+  const [flexRows, setFlexRows] = useState<FlexAccountItem[]>(() =>
+    initFlexRows(flexSummary.query_rows),
   )
-  const [flexRows, setFlexRows] = useState<FlexAccountItem[]>(() => initFlexRows(ibFlex))
   const [defaultFlexRangeDays, setDefaultFlexRangeDays] = useState(
-    () => ibFlex?.default_range_days ?? 30,
+    () => flexSummary.range_days?.default ?? 30,
   )
   const [initFlexRangeDays, setInitFlexRangeDays] = useState(
-    () => ibFlex?.init_range_days ?? 360,
+    () => flexSummary.range_days?.init ?? 360,
   )
 
   // Scroll to hash-targeted section
@@ -130,7 +146,10 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
           text: 'Settings saved. Account/stream IDs and Flex config updated.',
           isErr: false,
         })
+        setFlexHostToken('')
+        setFlexSecondaryToken('')
         invalidateStatus()
+        void invalidateFlexSummary()
       } else {
         setSaveMsg({ text: r1.error ?? r2.error ?? 'Save failed', isErr: true })
       }
@@ -347,6 +366,9 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
       <Card id="ib-flex-query">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium">Flex Query</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Tokens and query IDs from the Flex Query Plugin. Leave token fields blank to keep the stored value.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -355,7 +377,11 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
               <Input
                 value={flexHostToken}
                 onChange={(e) => setFlexHostToken(e.target.value)}
-                placeholder="IB Flex token (Host account)"
+                placeholder={tokenKeepHint(
+                  flexSummary.tokens.host_token_set,
+                  flexSummary.tokens.host_token_last4,
+                )}
+                autoComplete="off"
                 aria-label="Flex token — Host"
               />
             </div>
@@ -364,8 +390,16 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
               <Input
                 value={flexSecondaryToken}
                 onChange={(e) => setFlexSecondaryToken(e.target.value)}
-                placeholder="IB Flex token (empty if not used)"
+                placeholder={
+                  hasSecondary
+                    ? tokenKeepHint(
+                        flexSummary.tokens.secondary_token_set,
+                        flexSummary.tokens.secondary_token_last4,
+                      )
+                    : 'IB Flex token (empty if not used)'
+                }
                 disabled={!hasSecondary}
+                autoComplete="off"
                 aria-label="Flex token — Secondary"
               />
             </div>
@@ -480,11 +514,33 @@ function IbConnectionForm({ status, initialHash }: { status: StatusResponse; ini
 // ─── Page shell ───────────────────────────────────────────────────────────────
 
 export default function IbConnectionPage() {
-  const { data: status } = useMonitorStatus()
+  const { data: status, isError: statusIsError, error: statusError, refetch: refetchStatus } =
+    useMonitorStatus()
+  const {
+    data: flexSummary,
+    isError: flexIsError,
+    error: flexError,
+    refetch: refetchFlex,
+  } = useFlexConfigSummary()
   const { hash } = useLocation()
   const initialHash = hash.replace('#', '')
 
-  if (!status) {
+  if (statusIsError || flexIsError) {
+    return (
+      <PageShell className="space-y-4">
+        <PageHeader title="IB Connection" description="Configure Interactive Brokers connection and Flex Query" />
+        <QueryErrorAlert
+          error={statusError ?? flexError}
+          onRetry={() => {
+            void refetchStatus()
+            void refetchFlex()
+          }}
+        />
+      </PageShell>
+    )
+  }
+
+  if (!status || !flexSummary) {
     return (
       <PageShell className="space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -496,5 +552,5 @@ export default function IbConnectionPage() {
     )
   }
 
-  return <IbConnectionForm status={status} initialHash={initialHash} />
+  return <IbConnectionForm status={status} flexSummary={flexSummary} initialHash={initialHash} />
 }

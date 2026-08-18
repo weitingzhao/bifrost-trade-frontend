@@ -13,7 +13,7 @@
 
 Run Legacy and New on **different ports** if both dev servers are needed (e.g. engine `5173`, new `5174` with `vite --port 5174`). Both must point at the same `VITE_API_MONITOR` / status API.
 
-**Pre-flight**: `GET /status` returns `config.ib_client` and `config.ib_flex` (or equivalent nested paths).
+**Pre-flight**: `GET /status` returns `config.ib_client`. Flex tokens / query IDs / range days come from Plugin `GET /api/plugin/flex-query/flex/config/summary` (tokens are last4 only).
 
 ---
 
@@ -26,7 +26,7 @@ Run Legacy and New on **different ports** if both dev servers are needed (e.g. e
 | Account editable | `#ib-account` | `#ib-account` | Event Host / Event Secondary / Trading Host inputs editable; Secondary trading column shows em dash |
 | Flex Query editable | `#ib-flex-query` | `#ib-flex-query` | Host + Secondary tokens; Cash Transactions + Trades query IDs; Secondary token disabled when no secondary host |
 | Flex Preference | `#flex-preference` | `#flex-preference` | `default_range_days` and `init_range_days` (1–9999) |
-| Save settings | Page Save button | Page **Save settings** | `POST /config/ib` (Trade Monitor) + `POST /api/plugin/flex-query/flex/config/write` (Flex Query Plugin); success message; status refresh shows persisted values |
+| Save settings | Page Save button | Page **Save settings** | `POST /config/ib` (Trade Monitor) + `POST /api/plugin/flex-query/flex/config/write` (Flex Query Plugin); success message; Plugin summary refresh shows persisted query IDs / last4 |
 | Settings sidebar deep links | Sidebar sub-items | [`SettingsLayout`](../src/layout/SettingsLayout.tsx) IB Configure children | Each nav item scrolls to the matching Card (`#ib-users`, `#ib-client-ids`, `#ib-account`, `#ib-flex-query`, `#flex-preference`) |
 
 **Known non-gap**: Host and Client ID blocks are read-only in Legacy (`readOnly` / `disabled` inputs). New uses read-only tables — same business rule (edit via `config.yaml` + process restart).

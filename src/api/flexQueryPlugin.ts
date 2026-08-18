@@ -2,6 +2,17 @@ import { flexQueryPluginUrl } from '@/lib/devApiUrl'
 import type { FlexAccountItem } from '@/types/monitor'
 import type { FlexFetchResponse, FlexUploadResponse, TransactionsFetchResponse } from '@/types/trading'
 
+export type FlexConfigSummary = {
+  tokens: {
+    host_token_set: boolean
+    host_token_last4: string | null
+    secondary_token_set: boolean
+    secondary_token_last4: string | null
+  }
+  range_days: { default: number; init: number }
+  query_rows: FlexAccountItem[]
+}
+
 function pluginErrorMessage(json: unknown, fallback: string): string {
   if (json != null && typeof json === 'object') {
     const rec = json as { error?: unknown; detail?: unknown }
@@ -9,6 +20,15 @@ function pluginErrorMessage(json: unknown, fallback: string): string {
     if (typeof rec.detail === 'string' && rec.detail.trim()) return rec.detail
   }
   return fallback
+}
+
+export async function pluginFlexConfigSummary(): Promise<FlexConfigSummary> {
+  const res = await fetch(flexQueryPluginUrl('/flex/config/summary'))
+  const json: unknown = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(pluginErrorMessage(json, `Flex Plugin /flex/config/summary: ${res.status}`))
+  }
+  return json as FlexConfigSummary
 }
 
 async function pluginPost<T>(path: string, body: unknown): Promise<T> {

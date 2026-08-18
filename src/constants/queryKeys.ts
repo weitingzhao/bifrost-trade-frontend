@@ -100,4 +100,7 @@ export const QUERY_KEYS = {
     opsHealth:          ['ops', 'ops-health']                as const,
     capabilities:       ['ops', 'capabilities']              as const,
   },
+  plugin: {
+    flexConfigSummary: ['plugin', 'flex-query', 'config-summary'] as const,
+  },
 } as const

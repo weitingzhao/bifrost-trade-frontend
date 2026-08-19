@@ -1,18 +1,39 @@
 import type { DailyBenchmark } from '@/types/market'
-import type { IbPositionRow } from '@/types/monitor'
+
+function finitePositive(value: unknown): number | null {
+  if (value == null) return null
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
+/** Position row, raw daily_prev_close, or omitted (benchmark-only). */
+export type DailyPrevCloseSource =
+  | number
+  | null
+  | undefined
+  | { daily_prev_close?: number | null }
+
+function extractDailyPrevClose(source: DailyPrevCloseSource): number | null {
+  if (source == null || typeof source === 'number') return finitePositive(source)
+  return finitePositive(source.daily_prev_close)
+}
 
 /**
- * Resolve the base price for daily % / $ calculation.
- * Priority: position.daily_prev_close > benchmark prev_close > benchmark close
+ * Prior close for Daily % / Daily $.
+ * 1. position.daily_prev_close (yesterday close after core 0.8.4 fallback)
+ * 2. If bench.is_today and prev_close > 0 → prev_close
+ * 3. Else bench.close (latest daily bar = yesterday when not today)
  */
 export function resolveDailyBasePrice(
-  position: IbPositionRow | undefined,
-  benchmark: DailyBenchmark | undefined,
+  source: DailyPrevCloseSource,
+  benchmark?: DailyBenchmark,
 ): number | null {
-  if (position?.daily_prev_close != null) return position.daily_prev_close
-  if (benchmark?.prev_close != null) return benchmark.prev_close
-  if (benchmark?.close != null && !benchmark.is_today) return benchmark.close
-  return null
+  const fromPosition = extractDailyPrevClose(source)
+  if (fromPosition != null) return fromPosition
+  if (!benchmark) return null
+  const prev = finitePositive(benchmark.prev_close)
+  if (benchmark.is_today && prev != null) return prev
+  return finitePositive(benchmark.close)
 }
 
 export interface DailyChangeResult {
@@ -20,16 +41,48 @@ export interface DailyChangeResult {
   dailyPct: number | null
 }
 
+/**
+ * Daily % is price return vs prior close: (last − base) / base × 100.
+ * Daily $ is (last − base) × qty when qty is finite; otherwise per-share delta.
+ */
 export function computeDailyChange(
   last: number | null | undefined,
   basePrice: number | null,
+  qty?: number | null,
 ): DailyChangeResult {
-  if (last == null || basePrice == null || basePrice === 0) {
+  if (
+    last == null ||
+    !Number.isFinite(last) ||
+    basePrice == null ||
+    !Number.isFinite(basePrice) ||
+    basePrice === 0
+  ) {
     return { dailyDollar: null, dailyPct: null }
   }
-  const dailyDollar = last - basePrice
-  const dailyPct = (dailyDollar / basePrice) * 100
+  const delta = last - basePrice
+  const dailyPct = (delta / basePrice) * 100
+  const dailyDollar = qty != null && Number.isFinite(qty) ? delta * qty : delta
   return { dailyDollar, dailyPct }
+}
+
+/** Weighted Daily %: Σ Daily $ / Σ (base × |qty|). */
+export function aggregateDailyChange(
+  rows: { dailyDollar: number | null; basePrice: number | null; qty: number | null }[],
+): { totalDailyDollar: number; totalDailyPct: number | null } {
+  let totalDailyDollar = 0
+  let totalDailyDenom = 0
+  for (const r of rows) {
+    if (r.dailyDollar != null && Number.isFinite(r.dailyDollar)) totalDailyDollar += r.dailyDollar
+    const qty = r.qty != null && Number.isFinite(r.qty) ? r.qty : 0
+    if (r.basePrice != null && Number.isFinite(r.basePrice) && r.basePrice > 0 && qty !== 0) {
+      totalDailyDenom += r.basePrice * Math.abs(qty)
+    }
+  }
+  const totalDailyPct =
+    totalDailyDenom !== 0 && Number.isFinite(totalDailyDollar)
+      ? (totalDailyDollar / totalDailyDenom) * 100
+      : null
+  return { totalDailyDollar, totalDailyPct }
 }
 
 export function computeSinceChange(

@@ -15,6 +15,7 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import { fmtUsd, fmtSignedPct } from '@/utils/positions'
+import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 import type { InstanceStockCoverage, LivePositionRow } from '@/types/positions'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 import { instancePanel } from './instancePanelClasses'
@@ -65,16 +66,8 @@ function computeStockMetrics(
   const avg_cost = qtyAbs > 0 ? costSum / qtyAbs : null
   const live_last = quote?.last ?? matches[0]?.price ?? null
   const cost_basis = costSum > 0 ? costSum : null
-
-  let daily_pnl: number | null = null
-  let daily_pct: number | null = null
-  if (live_last != null && bench) {
-    const base = bench.is_today && bench.prev_close != null ? bench.prev_close : bench.close
-    if (base != null && base > 0) {
-      daily_pnl = (live_last - base) * held
-      daily_pct = ((live_last - base) / base) * 100
-    }
-  }
+  const base = resolveDailyBasePrice(matches[0], bench)
+  const { dailyDollar: daily_pnl, dailyPct: daily_pct } = computeDailyChange(live_last, base, held)
 
   let total_pnl: number | null = null
   let total_pct: number | null = null

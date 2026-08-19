@@ -1,4 +1,5 @@
 import type { LivePositionRow, OpenOptionPosition, InstanceAllGroup, InstanceStockCoverage, StockCoverageItem, StrategyStructure } from '@/types/positions'
+import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 
 export function computeInstanceStockCoverage(
   options: OpenOptionPosition[],
@@ -100,10 +101,7 @@ export function buildStockCoverageItems(
     const absQty = Math.abs(qty)
     const avgCost = s.avgCost != null && Number.isFinite(Number(s.avgCost)) ? Number(s.avgCost) : null
     const lastPrice = s.price != null && Number.isFinite(Number(s.price)) ? Number(s.price) : null
-    const dailyPrevClose =
-      s.daily_prev_close != null && Number.isFinite(Number(s.daily_prev_close))
-        ? Number(s.daily_prev_close)
-        : null
+    const dailyPrevClose = resolveDailyBasePrice(s)
     const unrealizedPnl =
       s.unrealized_pnl != null && Number.isFinite(Number(s.unrealized_pnl))
         ? Number(s.unrealized_pnl)
@@ -132,8 +130,9 @@ export function buildStockCoverageItems(
       prev.lastWeight += absQty
     }
     if (dailyPrevClose != null && lastPrice != null) {
-      prev.dailyPnl += (lastPrice - dailyPrevClose) * qty
-      prev.dailyBaseAbs += Math.abs(dailyPrevClose * qty)
+      const { dailyDollar } = computeDailyChange(lastPrice, dailyPrevClose, qty)
+      if (dailyDollar != null) prev.dailyPnl += dailyDollar
+      prev.dailyBaseAbs += dailyPrevClose * absQty
     }
     prev.totalPnl += unrealizedPnl
     if (s.optionable === true) prev.optionableTrue += 1

@@ -86,6 +86,8 @@ describe('calcStockGroupTotals', () => {
     expect(t.totalMarket).toBe(1100 + 1050)
     expect(t.dailyUsd).toBeCloseTo(50 + 50)
     expect(t.changeUsd).toBeCloseTo(100 + 50)
+    expect(t.dailyNotional).toBeCloseTo(105 * 10 + 200 * 5)
+    expect(stockGroupPctFromTotals(t).dailyPct).toBeCloseTo((100 / (105 * 10 + 200 * 5)) * 100)
   })
 })
 
@@ -106,6 +108,7 @@ describe('stockGroupPctFromTotals', () => {
       totalCost: 0,
       totalMarket: 0,
       dailyUsd: 0,
+      dailyNotional: 0,
       changeUsd: 0,
       hasDailyDenom: false,
     })).toEqual({ dailyPct: null, changePct: null })

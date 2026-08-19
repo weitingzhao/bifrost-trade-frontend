@@ -2,7 +2,6 @@ import { fmtTs } from '@/lib/format'
 import type {
   CreateOpportunityBody,
   MetaParamItem,
-  StructureConstraint,
   StructureLeg,
   StructureMetaEntry,
   StructurePayload,
@@ -15,7 +14,6 @@ export const DEFAULT_STRUCTURE_PAYLOAD: StructurePayload = {
   strategy_template_id: undefined,
   structure_type: '',
   legs: [],
-  constraints: [],
   version: 1,
   is_active: true,
   notes: '',
@@ -66,19 +64,6 @@ export function summarizeLegs(legs: StructureLeg[] | null | undefined): string {
     .join(', ')
 }
 
-export function summarizeConstraints(constraints: StructureConstraint[] | null | undefined): string {
-  if (!constraints?.length) return '—'
-  return constraints
-    .map((c) => {
-      const t = (c.constraint_type ?? '').trim()
-      if (!t) return ''
-      const v = c.constraint_value_text ?? c.constraint_value_int ?? ''
-      return `${t}: ${v}`
-    })
-    .filter(Boolean)
-    .join(', ')
-}
-
 export function formatHistoryTs(ts: number | string | null | undefined): string {
   if (ts == null) return '—'
   if (typeof ts === 'number' && Number.isFinite(ts)) return fmtTs(ts)
@@ -125,7 +110,6 @@ export function wizardParamValuesFromSavedMeta(
 
 export function structureToPayload(row: StrategyStructure): StructurePayload {
   const legs: StructureLeg[] = Array.isArray(row.legs) ? row.legs : []
-  const constraints: StructureConstraint[] = Array.isArray(row.constraints) ? row.constraints : []
   const meta = metadataToMetaEntries(row.metadata)
   const structureType = row.structure_type ?? 'custom'
   const structureSubtype =
@@ -138,7 +122,6 @@ export function structureToPayload(row: StrategyStructure): StructurePayload {
     structure_type: structureType,
     structure_subtype: structureSubtype ?? null,
     legs,
-    constraints,
     version:
       typeof row.version === 'number'
         ? row.version

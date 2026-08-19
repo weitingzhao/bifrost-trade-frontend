@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -9,6 +10,7 @@ import { pluginFlexTrigger, pluginFlexUploadXml } from '@/api/flexQueryPlugin'
 import { formatLastUpdate } from '@/utils/positions'
 import { cn } from '@/lib/utils'
 import type { FlexFetchPerQuery } from '@/types/trading'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 type TwsDays = 1 | 3 | 7
 
@@ -21,6 +23,7 @@ interface FlexResult {
 interface Props {
   accountsFetchedAt?: number | null
   hasAccounts: boolean
+  flexClockLine?: string
 }
 
 function buildFlexSuccessMessage(r: {
@@ -61,7 +64,8 @@ function buildFlexSuccessMessage(r: {
 const pillGroupClass =
   'inline-flex flex-nowrap items-center gap-2 rounded-lg border border-border/60 bg-secondary/40 px-2.5 py-1.5 min-h-[30px] shrink-0'
 
-export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
+export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine }: Props) {
+  const queryClient = useQueryClient()
   const [twsDays, setTwsDays] = useState<TwsDays>(1)
   const [twsLoading, setTwsLoading] = useState(false)
   const [twsResult, setTwsResult] = useState<{ msg: string; isError: boolean } | null>(null)
@@ -72,6 +76,12 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const busy = twsLoading || flexLoading
+
+  function invalidateAfterFlex() {
+    void queryClient.invalidateQueries({ queryKey: ['trading', 'executions-freshness'] })
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plugin.flexCoverageFreshness })
+  }
 
   async function handleTwsFetch() {
     setTwsLoading(true)
@@ -102,6 +112,7 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
           isError: false,
           perQuery: r.per_query?.length ? r.per_query : undefined,
         })
+        invalidateAfterFlex()
       } else {
         const parts: string[] = [r.error ?? 'Failed to fetch from IB Flex.']
         if (r.raw_count != null && r.raw_count > 0) parts.push(`Flex report had ${r.raw_count} row(s).`)
@@ -133,6 +144,7 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
           : (r.error ?? 'Error'),
         isError: !r.ok,
       })
+      if (r.ok) invalidateAfterFlex()
     } catch (e) {
       setFlexResult({ summary: (e as Error).message, isError: true })
     } finally {
@@ -217,6 +229,14 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts }: Props) {
                 <RefreshCw className={cn('h-3 w-3', flexLoading && 'animate-spin')} />
                 {flexLoading ? 'Fetching…' : 'Flex Refresh'}
               </Button>
+              {flexClockLine != null && flexClockLine !== '' && (
+                <span
+                  className="text-dense-caption text-muted-foreground whitespace-nowrap"
+                  title="Pull = last Flex ingest. Rec = newest Flex trade in DB vs now."
+                >
+                  {flexClockLine}
+                </span>
+              )}
             </div>
           </div>
         )}

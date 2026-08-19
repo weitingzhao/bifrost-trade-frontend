@@ -1,5 +1,5 @@
 import type { DailyBenchmark } from '@/types/market'
-import { resolveMarketStreamDailyBasePrice } from '@/utils/marketStreamsDailyTotals'
+import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 import styles from './live.module.css'
 
 interface Props {
@@ -11,8 +11,9 @@ interface Props {
 }
 
 export function DailyCalcBreakdown({ symbol, bench, positionDailyPrevClose, last, qty }: Props) {
-  const base = resolveMarketStreamDailyBasePrice(bench, positionDailyPrevClose ?? undefined)
+  const base = resolveDailyBasePrice(positionDailyPrevClose, bench)
   const q = qty != null && Number.isFinite(qty) ? qty : 0
+  const { dailyPct, dailyDollar } = computeDailyChange(last, base, q)
 
   return (
     <div className={styles.dailyCalcPopup} role="tooltip">
@@ -20,13 +21,13 @@ export function DailyCalcBreakdown({ symbol, bench, positionDailyPrevClose, last
       <div>Base (daily ref): {base != null ? base.toFixed(4) : '—'}</div>
       <div>Last: {last != null ? last.toFixed(4) : '—'}</div>
       <div>Qty: {q !== 0 ? q : '—'}</div>
-      {base != null && last != null && q !== 0 && (
+      {dailyPct != null && dailyDollar != null && q !== 0 && (
         <>
           <div className="mt-1 opacity-80">
-            Daily %: {(((last - base) / base) * 100).toFixed(2)}%
+            Daily %: {dailyPct.toFixed(2)}%
           </div>
           <div className="opacity-80">
-            Daily $: {((last - base) * q).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+            Daily $: {dailyDollar.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
           </div>
         </>
       )}

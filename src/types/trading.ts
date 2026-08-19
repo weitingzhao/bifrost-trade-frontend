@@ -9,6 +9,17 @@ export interface ExecutionsFreshnessResponse {
   items: ExecutionFreshnessItem[]
 }
 
+export interface FlexCoverageDimension {
+  dimension: string
+  latest_ts?: string | null
+  row_count?: number | null
+  updated_at?: string | null
+}
+
+export interface FlexCoverageFreshnessResponse {
+  dimensions: FlexCoverageDimension[]
+}
+
 export interface TwsFetchResponse {
   ok: boolean
   count: number

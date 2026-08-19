@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils'
 import type { LivePositionRow } from '@/types/positions'
 import { fmtUsd, pnlColorClass } from '@/utils/positions'
+import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 import styles from './stock-inspector.module.css'
 import { inspectorShell } from '@/components/layout/rightInspectorUi'
 
@@ -13,14 +14,8 @@ export function StockPositionSection({ position }: Props) {
   const avgCost = position.avgCost != null ? Number(position.avgCost) : null
   const lastPrice = position.price != null ? Number(position.price) : null
   const pnl = position.unrealized_pnl != null ? Number(position.unrealized_pnl) : null
-  const prevClose = position.daily_prev_close != null ? Number(position.daily_prev_close) : null
-
-  const dailyPnl = lastPrice != null && prevClose != null && Number.isFinite(qty)
-    ? (lastPrice - prevClose) * qty
-    : null
-  const dailyPct = lastPrice != null && prevClose != null && prevClose !== 0
-    ? ((lastPrice - prevClose) / prevClose) * 100
-    : null
+  const prevClose = resolveDailyBasePrice(position)
+  const { dailyDollar: dailyPnl, dailyPct } = computeDailyChange(lastPrice, prevClose, qty)
   const sincePct = pnl != null && avgCost != null && avgCost !== 0 && Number.isFinite(qty)
     ? (pnl / Math.abs(avgCost * qty)) * 100
     : null

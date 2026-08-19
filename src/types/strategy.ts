@@ -86,12 +86,6 @@ export interface StructureLeg {
   expiration: string | null
 }
 
-export interface StructureConstraint {
-  constraint_type: string
-  constraint_value_text: string | null
-  constraint_value_int: number | null
-}
-
 export interface StrategyStructure {
   strategy_structure_id: number
   name: string
@@ -113,7 +107,6 @@ export interface StrategyStructure {
   updated_at: string | null
   notes: string | null
   legs: StructureLeg[]
-  constraints: StructureConstraint[]
   /** Present when fetched by id; map assembled from strategy_structure_meta rows. */
   metadata?: Record<string, unknown> | null
 }
@@ -130,7 +123,6 @@ export interface StructurePayload {
   structure_type?: string
   structure_subtype?: string | null
   legs: StructureLeg[]
-  constraints?: StructureConstraint[]
   version?: number
   is_active?: boolean
   notes?: string

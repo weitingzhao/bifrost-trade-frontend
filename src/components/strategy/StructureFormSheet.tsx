@@ -25,7 +25,6 @@ import {
 } from '@/hooks/useStructureManagement'
 import type {
   MetaParamItem,
-  StructureConstraint,
   StructureLeg,
   StructureMetaEntry,
   StructurePayload,
@@ -92,7 +91,6 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
       : DEFAULT_STRUCTURE_PAYLOAD,
   )
   const [formLegs, setFormLegs] = useState<StructureLeg[]>([])
-  const [formConstraints, setFormConstraints] = useState<StructureConstraint[]>([])
   const [formNotes, setFormNotes] = useState('')
   const [formMeta, setFormMeta] = useState<StructureMetaEntry[]>([])
   const [formLoading, setFormLoading] = useState(false)
@@ -187,7 +185,6 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
   const resetForm = useCallback(() => {
     setFormPayload(DEFAULT_STRUCTURE_PAYLOAD)
     setFormLegs([])
-    setFormConstraints([])
     setFormNotes('')
     setFormMeta([])
     setFormError(null)
@@ -238,7 +235,6 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
         }
         setFormPayload(p)
         setFormLegs(p.legs)
-        setFormConstraints(p.constraints ?? [])
         setFormNotes(p.notes ?? '')
         setFormMeta(p.meta ?? [])
         if (isEdit) {
@@ -401,7 +397,6 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
       structure_type: tpl?.template_code ?? formPayload.structure_type,
       structure_subtype: null,
       legs: formLegs,
-      constraints: formConstraints.length ? formConstraints : undefined,
       version: versionOverride !== undefined ? versionOverride : (formPayload.version ?? 1),
       is_active: formPayload.is_active ?? true,
       notes: formNotes.trim() || undefined,
@@ -457,7 +452,6 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
       structure_type: formPayload.structure_type,
       structure_subtype: null,
       legs: formLegs,
-      constraints: formConstraints.length ? formConstraints : undefined,
       version: formPayload.version ?? 1,
       is_active: formPayload.is_active ?? true,
       notes: formNotes.trim() || undefined,
@@ -530,20 +524,7 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
     }
   }
 
-  const updateConstraint = (index: number, patch: Partial<StructureConstraint>) => {
-    setFormConstraints((prev) => prev.map((c, i) => (i === index ? { ...c, ...patch } : c)))
-  }
 
-  const addConstraint = () => {
-    setFormConstraints((prev) => [
-      ...prev,
-      { constraint_type: '', constraint_value_text: '', constraint_value_int: null },
-    ])
-  }
-
-  const removeConstraint = (index: number) => {
-    setFormConstraints((prev) => prev.filter((_, i) => i !== index))
-  }
 
   const updateMeta = (index: number, patch: Partial<StructureMetaEntry>) => {
     setFormMeta((prev) => prev.map((m, i) => (i === index ? { ...m, ...patch } : m)))
@@ -687,16 +668,12 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
                 <StructureDetailsFields
                   formPayload={formPayload}
                   formLegs={formLegs}
-                  formConstraints={formConstraints}
                   defaultLegsLoading={defaultLegsLoading}
                   isEdit={isEdit}
                   wizardTemplateDetail={wizardTemplateDetail}
                   wizardParamValues={wizardParamValues}
                   wizardVisitedMetaStep={wizardVisitedMetaStep}
                   onUpdateForm={updateForm}
-                  onUpdateConstraint={updateConstraint}
-                  onAddConstraint={addConstraint}
-                  onRemoveConstraint={removeConstraint}
                   onParamChange={(key, value) =>
                     setWizardParamValues((prev) => ({ ...prev, [key]: value }))
                   }
@@ -708,7 +685,6 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
               <StructureCopyForm
                 formPayload={formPayload}
                 formLegs={formLegs}
-                formConstraints={formConstraints}
                 formNotes={formNotes}
                 formMeta={formMeta}
                 defaultLegsLoading={defaultLegsLoading}
@@ -730,9 +706,6 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
                   setTplDimFilters((prev) => ({ ...prev, [dt]: value }))
                 }
                 onNotesChange={setFormNotes}
-                onUpdateConstraint={updateConstraint}
-                onAddConstraint={addConstraint}
-                onRemoveConstraint={removeConstraint}
                 onUpdateMeta={updateMeta}
                 onAddMeta={addMeta}
                 onRemoveMeta={removeMeta}
@@ -1077,32 +1050,24 @@ function StructureTemplateStep({
 interface StructureDetailsFieldsProps {
   formPayload: StructurePayload
   formLegs: StructureLeg[]
-  formConstraints: StructureConstraint[]
   defaultLegsLoading: boolean
   isEdit: boolean
   wizardTemplateDetail: Awaited<ReturnType<typeof fetchTemplateDetail>> | null
   wizardParamValues: Record<string, string | number>
   wizardVisitedMetaStep: boolean
   onUpdateForm: (patch: Partial<StructurePayload>) => void
-  onUpdateConstraint: (index: number, patch: Partial<StructureConstraint>) => void
-  onAddConstraint: () => void
-  onRemoveConstraint: (index: number) => void
   onParamChange: (key: string, value: string | number) => void
 }
 
 function StructureDetailsFields({
   formPayload,
   formLegs,
-  formConstraints,
   defaultLegsLoading,
   isEdit,
   wizardTemplateDetail,
   wizardParamValues,
   wizardVisitedMetaStep,
   onUpdateForm,
-  onUpdateConstraint,
-  onAddConstraint,
-  onRemoveConstraint,
   onParamChange,
 }: StructureDetailsFieldsProps) {
   const metaNF = (wizardTemplateDetail?.meta_params ?? []).filter((p) => p.param_kind !== 'fixed')
@@ -1186,12 +1151,6 @@ function StructureDetailsFields({
       )}
 
       <StructureLegsCard formLegs={formLegs} defaultLegsLoading={defaultLegsLoading} />
-      <StructureConstraintsCard
-        formConstraints={formConstraints}
-        onUpdateConstraint={onUpdateConstraint}
-        onAddConstraint={onAddConstraint}
-        onRemoveConstraint={onRemoveConstraint}
-      />
     </div>
   )
 }
@@ -1239,82 +1198,9 @@ function StructureLegsCard({
   )
 }
 
-function StructureConstraintsCard({
-  formConstraints,
-  onUpdateConstraint,
-  onAddConstraint,
-  onRemoveConstraint,
-}: {
-  formConstraints: StructureConstraint[]
-  onUpdateConstraint: (index: number, patch: Partial<StructureConstraint>) => void
-  onAddConstraint: () => void
-  onRemoveConstraint: (index: number) => void
-}) {
-  return (
-    <div className={styles.detailsCard}>
-      <h4 className={styles.detailsCardTitle}>Constraints</h4>
-      <div className={styles.detailsConstraints}>
-        {formConstraints.map((c, i) => (
-          <div key={i} className={styles.detailsConstraintRow}>
-            <input
-              type="text"
-              value={c.constraint_type ?? ''}
-              onChange={(e) => onUpdateConstraint(i, { constraint_type: e.target.value })}
-              placeholder="Type"
-              className={cn(styles.detailsInput, styles.detailsConstraintType)}
-              aria-label="Constraint type"
-            />
-            <input
-              type="text"
-              value={c.constraint_value_text ?? ''}
-              onChange={(e) => onUpdateConstraint(i, { constraint_value_text: e.target.value })}
-              placeholder="Value (text)"
-              className={cn(styles.detailsInput, styles.detailsConstraintValue)}
-              aria-label="Value text"
-            />
-            <input
-              type="number"
-              value={c.constraint_value_int ?? ''}
-              onChange={(e) =>
-                onUpdateConstraint(i, {
-                  constraint_value_int:
-                    e.target.value === '' ? null : parseInt(e.target.value, 10),
-                })
-              }
-              placeholder="Int"
-              className={cn(styles.detailsInput, styles.detailsConstraintInt)}
-              aria-label="Value int"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className={styles.detailsConstraintRemove}
-              onClick={() => onRemoveConstraint(i)}
-              aria-label="Remove constraint"
-            >
-              Remove
-            </Button>
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className={styles.detailsAddConstraint}
-          onClick={onAddConstraint}
-        >
-          Add constraint
-        </Button>
-      </div>
-    </div>
-  )
-}
-
 interface StructureCopyFormProps {
   formPayload: StructurePayload
   formLegs: StructureLeg[]
-  formConstraints: StructureConstraint[]
   formNotes: string
   formMeta: StructureMetaEntry[]
   defaultLegsLoading: boolean
@@ -1331,9 +1217,6 @@ interface StructureCopyFormProps {
   onClearFilters: () => void
   onDimFilterChange: (dt: string, value: string) => void
   onNotesChange: (notes: string) => void
-  onUpdateConstraint: (index: number, patch: Partial<StructureConstraint>) => void
-  onAddConstraint: () => void
-  onRemoveConstraint: (index: number) => void
   onUpdateMeta: (index: number, patch: Partial<StructureMetaEntry>) => void
   onAddMeta: () => void
   onRemoveMeta: (index: number) => void
@@ -1342,7 +1225,6 @@ interface StructureCopyFormProps {
 function StructureCopyForm({
   formPayload,
   formLegs,
-  formConstraints,
   formNotes,
   formMeta,
   defaultLegsLoading,
@@ -1359,9 +1241,6 @@ function StructureCopyForm({
   onClearFilters,
   onDimFilterChange,
   onNotesChange,
-  onUpdateConstraint,
-  onAddConstraint,
-  onRemoveConstraint,
   onUpdateMeta,
   onAddMeta,
   onRemoveMeta,
@@ -1446,12 +1325,6 @@ function StructureCopyForm({
       </div>
 
       <StructureLegsCard formLegs={formLegs} defaultLegsLoading={defaultLegsLoading} />
-      <StructureConstraintsCard
-        formConstraints={formConstraints}
-        onUpdateConstraint={onUpdateConstraint}
-        onAddConstraint={onAddConstraint}
-        onRemoveConstraint={onRemoveConstraint}
-      />
 
       <div className={styles.detailsCard}>
         <h4 className={styles.detailsCardTitle}>Notes</h4>

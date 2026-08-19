@@ -1,4 +1,5 @@
 import type { LivePositionRow } from '@/types/positions'
+import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 
 export interface OpenStockPositionMetrics {
   qty: number
@@ -18,10 +19,7 @@ export function computeOpenStockPositionMetrics(position: LivePositionRow): Open
     position.price != null && Number.isFinite(Number(position.price)) ? Number(position.price) : null
   const avgCost =
     position.avgCost != null && Number.isFinite(Number(position.avgCost)) ? Number(position.avgCost) : null
-  const prevClose =
-    position.daily_prev_close != null && Number.isFinite(Number(position.daily_prev_close))
-      ? Number(position.daily_prev_close)
-      : null
+  const prevClose = resolveDailyBasePrice(position)
   const sincePnl =
     position.unrealized_pnl != null && Number.isFinite(Number(position.unrealized_pnl))
       ? Number(position.unrealized_pnl)
@@ -30,12 +28,7 @@ export function computeOpenStockPositionMetrics(position: LivePositionRow): Open
     sincePnl != null && avgCost != null && avgCost !== 0 && Number.isFinite(qty)
       ? (sincePnl / Math.abs(avgCost * qty)) * 100
       : null
-  const dailyPnl =
-    lastPrice != null && prevClose != null && Number.isFinite(qty) ? (lastPrice - prevClose) * qty : null
-  const dailyPct =
-    dailyPnl != null && prevClose != null && prevClose !== 0
-      ? ((lastPrice! - prevClose) / prevClose) * 100
-      : null
+  const { dailyDollar: dailyPnl, dailyPct } = computeDailyChange(lastPrice, prevClose, qty)
   const marketValue =
     lastPrice != null && Number.isFinite(qty) ? qty * lastPrice : null
 

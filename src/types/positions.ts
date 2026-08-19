@@ -216,7 +216,6 @@ export type {
   CreateOpportunityBody,
   OpportunitiesResponse,
   StructureLeg,
-  StructureConstraint,
   StrategyStructure,
   StructuresResponse,
   StructurePayload,

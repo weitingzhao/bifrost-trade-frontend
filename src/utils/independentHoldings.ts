@@ -1,4 +1,5 @@
 import type { LivePositionRow } from '@/types/positions'
+import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 
 export interface IndependentHoldingMetrics {
   lastPrice: number | null
@@ -13,18 +14,8 @@ export function computeIndependentHoldingMetrics(position: LivePositionRow): Ind
   const qty = Number(position.position)
   const lastPrice =
     position.price != null && Number.isFinite(Number(position.price)) ? Number(position.price) : null
-  const dailyPrev =
-    position.daily_prev_close != null && Number.isFinite(Number(position.daily_prev_close))
-      ? Number(position.daily_prev_close)
-      : null
-
-  let dailyPnl: number | null = null
-  let dailyPct: number | null = null
-  if (lastPrice != null && dailyPrev != null && Number.isFinite(qty) && qty !== 0) {
-    dailyPnl = (lastPrice - dailyPrev) * qty
-    const dBase = Math.abs(dailyPrev * qty)
-    dailyPct = dBase > 0 ? (dailyPnl / dBase) * 100 : null
-  }
+  const dailyPrev = resolveDailyBasePrice(position)
+  const { dailyDollar: dailyPnl, dailyPct } = computeDailyChange(lastPrice, dailyPrev, qty)
 
   const totalPnl =
     position.unrealized_pnl != null && Number.isFinite(Number(position.unrealized_pnl))

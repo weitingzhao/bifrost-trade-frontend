@@ -10,7 +10,7 @@ describe('computeInstanceStockCoverage', () => {
       strategy_template_id: null, template_code: null, template_display_name: null,
       dim_direction: null, dim_structure: null, dim_coverage: null, dim_risk: null,
       dim_volatility: null, dim_time: null, version: 1, is_active: true,
-      created_at: null, updated_at: null, notes: null, constraints: [],
+      created_at: null, updated_at: null, notes: null,
       legs: [{ role: 'option', direction: null, option_right: null, quantity: 1, strike: null, expiration: null }],
     }
     expect(computeInstanceStockCoverage([], structure)).toHaveLength(0)
@@ -23,7 +23,7 @@ describe('computeInstanceStockCoverage', () => {
       strategy_template_id: null, template_code: null, template_display_name: null,
       dim_direction: null, dim_structure: null, dim_coverage: null, dim_risk: null,
       dim_volatility: null, dim_time: null, version: 1, is_active: true,
-      created_at: null, updated_at: null, notes: null, constraints: [],
+      created_at: null, updated_at: null, notes: null,
       legs: [
         { role: 'underlying', direction: 'long', option_right: null, quantity: 1, strike: null, expiration: null },
         { role: 'option', direction: 'short', option_right: 'C', quantity: 1, strike: null, expiration: null },

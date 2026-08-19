@@ -1,44 +1,28 @@
 import type { DailyBenchmark } from '@/types/market'
+import {
+  aggregateDailyChange,
+  computeDailyChange,
+  resolveDailyBasePrice,
+} from '@/utils/dailyChange'
 
+/** @deprecated Use resolveDailyBasePrice from @/utils/dailyChange */
 export function resolveMarketStreamDailyBasePrice(
   bench: DailyBenchmark | undefined,
   dailyPrevCloseFromPosition?: number | null,
 ): number | null {
-  if (
-    dailyPrevCloseFromPosition != null &&
-    Number.isFinite(dailyPrevCloseFromPosition) &&
-    dailyPrevCloseFromPosition > 0
-  ) {
-    return dailyPrevCloseFromPosition
-  }
-  if (bench && bench.close != null && Number.isFinite(bench.close) && bench.close > 0) {
-    const prevClose =
-      bench.prev_close != null && Number.isFinite(bench.prev_close) && bench.prev_close > 0
-        ? bench.prev_close
-        : null
-    const base = bench.is_today && prevClose != null ? prevClose : bench.close
-    return Number.isFinite(base) && base > 0 ? base : null
-  }
-  return null
+  return resolveDailyBasePrice(dailyPrevCloseFromPosition, bench)
 }
 
+/** @deprecated Use computeDailyChange from @/utils/dailyChange */
 export function computeMarketStreamDailyChange(
   bench: DailyBenchmark | undefined,
   currPrice: number | null,
   qty: number,
   dailyPrevClose?: number | null,
 ): { changePct: number | null; pnlVsBench: number | null } {
-  if (currPrice == null || !Number.isFinite(currPrice)) {
-    return { changePct: null, pnlVsBench: null }
-  }
-  const basePrice = resolveMarketStreamDailyBasePrice(bench, dailyPrevClose)
-  if (basePrice == null) {
-    return { changePct: null, pnlVsBench: null }
-  }
-  return {
-    changePct: ((currPrice - basePrice) / basePrice) * 100,
-    pnlVsBench: Number.isFinite(qty) ? (currPrice - basePrice) * qty : null,
-  }
+  const basePrice = resolveDailyBasePrice(dailyPrevClose, bench)
+  const { dailyPct, dailyDollar } = computeDailyChange(currPrice, basePrice, qty)
+  return { changePct: dailyPct, pnlVsBench: dailyDollar }
 }
 
 /** Total Daily $ and weighted Daily % for Market Streams (denominator = Σ base × |qty|). */
@@ -51,21 +35,16 @@ export function aggregateMarketStreamsDailyTotals(
   }[],
   benchmarks: Record<string, DailyBenchmark>,
 ): { totalDailyDollar: number; totalDailyPct: number | null } {
-  let totalDailyDollar = 0
-  let totalDailyDenom = 0
-  for (const r of rows) {
-    const sym = (r.symbol || '').trim().toUpperCase()
-    const bench = benchmarks[sym]
-    const qty = r.qty != null && Number.isFinite(r.qty) ? r.qty : 0
-    if (r.pnlVsBench != null && Number.isFinite(r.pnlVsBench)) totalDailyDollar += r.pnlVsBench
-    const base = resolveMarketStreamDailyBasePrice(bench, r.positionDailyPrevClose ?? undefined)
-    if (base != null && qty !== 0) totalDailyDenom += base * Math.abs(qty)
-  }
-  const totalDailyPct =
-    totalDailyDenom !== 0 && Number.isFinite(totalDailyDollar)
-      ? (totalDailyDollar / totalDailyDenom) * 100
-      : null
-  return { totalDailyDollar, totalDailyPct }
+  return aggregateDailyChange(
+    rows.map((r) => {
+      const sym = (r.symbol || '').trim().toUpperCase()
+      return {
+        dailyDollar: r.pnlVsBench,
+        basePrice: resolveDailyBasePrice(r.positionDailyPrevClose, benchmarks[sym]),
+        qty: r.qty,
+      }
+    }),
+  )
 }
 
 export function getDailyRefTooltip(
@@ -73,7 +52,7 @@ export function getDailyRefTooltip(
   last: number | null,
 ): string | undefined {
   if (last == null) return undefined
-  const base = resolveMarketStreamDailyBasePrice(bench, undefined)
+  const base = resolveDailyBasePrice(undefined, bench)
   if (base == null) return undefined
   return `Daily ref: ${base.toFixed(2)} → Last: ${last.toFixed(2)}`
 }

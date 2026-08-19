@@ -1,6 +1,11 @@
 import { flexQueryPluginUrl } from '@/lib/devApiUrl'
 import type { FlexAccountItem } from '@/types/monitor'
-import type { FlexFetchResponse, FlexUploadResponse, TransactionsFetchResponse } from '@/types/trading'
+import type {
+  FlexCoverageFreshnessResponse,
+  FlexFetchResponse,
+  FlexUploadResponse,
+  TransactionsFetchResponse,
+} from '@/types/trading'
 
 export type FlexConfigSummary = {
   tokens: {
@@ -88,4 +93,14 @@ export async function pluginFlexWriteConfig(
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
   }
+}
+
+export async function pluginFlexCoverageFreshness(): Promise<FlexCoverageFreshnessResponse> {
+  const res = await fetch(flexQueryPluginUrl('/flex/coverage/freshness'))
+  const json: unknown = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(pluginErrorMessage(json, `Flex Plugin /flex/coverage/freshness: ${res.status}`))
+  }
+  const rec = json as Partial<FlexCoverageFreshnessResponse>
+  return { dimensions: Array.isArray(rec.dimensions) ? rec.dimensions : [] }
 }

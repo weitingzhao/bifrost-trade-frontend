@@ -5,6 +5,7 @@ import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
+import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
 import { useAccountsRefresh } from '@/hooks/useAccountsRefresh'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -26,28 +27,56 @@ import { OptionPositionsTable } from '@/components/accounts/OptionPositionsTable
 import { CategoriesModal } from '@/components/accounts/CategoriesModal'
 import { ExecutionImport } from '@/components/accounts/ExecutionImport'
 import { AccountSummaryCard } from '@/components/accounts/AccountSummaryCard'
-import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys, formatLastUpdate } from '@/utils/positions'
+import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys } from '@/utils/positions'
+import {
+  clockLabel,
+  flexPullStale,
+  flexPullTsFromCoverage,
+  latestClientExecFreshness,
+  latestFlexFreshness,
+  pullAndRecLine,
+} from '@/utils/accountsFreshness'
 import { cn } from '@/lib/utils'
-import type { AccountSyncHeartbeat } from '@/types/monitor'
 
-function SyncDaemonBadge({ hb }: { hb: AccountSyncHeartbeat }) {
-  const alive = hb.daemon_alive === true
-  const freshLabel = hb.last_ts != null ? formatLastUpdate(hb.last_ts) : ''
+const freshnessBadgeClass =
+  'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-dense-meta font-medium'
 
+function DualClockBadge({
+  name,
+  pullTs,
+  recTs,
+  tone,
+  title,
+}: {
+  name: string
+  pullTs: number | null
+  recTs: number | null
+  tone: 'ok' | 'off' | 'warn' | 'muted'
+  title: string
+}) {
+  const toneClass =
+    tone === 'ok'
+      ? 'bg-success-soft text-success'
+      : tone === 'off'
+        ? 'bg-danger-soft text-danger'
+        : tone === 'warn'
+          ? 'bg-secondary text-warning'
+          : 'bg-secondary text-muted-foreground'
+  const dotClass =
+    tone === 'ok'
+      ? 'bg-success'
+      : tone === 'off'
+        ? 'bg-danger'
+        : tone === 'warn'
+          ? 'bg-warning'
+          : 'bg-muted-foreground/50'
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-dense-meta font-medium',
-        alive
-          ? 'bg-success-soft text-success'
-          : 'bg-danger-soft text-danger',
-      )}
-      title={`Account Sync Daemon: ${alive ? 'running' : 'not running'}${freshLabel ? ` — last sync ${freshLabel}` : ''}`}
-    >
-      <span
-        className={cn('h-1.5 w-1.5 rounded-full shrink-0', alive ? 'bg-success' : 'bg-danger')}
-      />
-      {alive ? `Synced ${freshLabel}` : 'Sync offline'}
+    <span className={cn(freshnessBadgeClass, toneClass)} title={title}>
+      <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', dotClass)} />
+      <span className="whitespace-nowrap">{name}</span>
+      <span className="font-normal text-dense-caption whitespace-nowrap opacity-90">
+        Pull {clockLabel(pullTs)} · Rec {clockLabel(recTs)}
+      </span>
     </span>
   )
 }
@@ -76,6 +105,14 @@ export default function AccountsPage() {
   const { data: quotesData } = useQuotes(stkSymbols, optCks)
   const { data: benchData } = useBenchmarks(stkSymbols)
   const { data: freshnessData } = useExecutionsFreshness()
+  const { data: flexCoverage } = useFlexCoverageFreshness()
+  const execItems = freshnessData?.items ?? []
+  const ibPullTs = data?.account_sync_daemon?.heartbeat.last_ts ?? null
+  const ibRecTs = latestClientExecFreshness(execItems)?.latest_exec_ts ?? null
+  const ibAlive = data?.account_sync_daemon?.heartbeat.daemon_alive === true
+  const flexPullTs = flexPullTsFromCoverage(flexCoverage?.dimensions ?? [])
+  const flexRecTs = latestFlexFreshness(execItems)?.latest_exec_ts ?? null
+  const flexClockLine = pullAndRecLine(flexPullTs, flexRecTs)
 
   const quotesBySymbol = buildQuoteMap(quotesData)
   const quotesByCk = buildCkMap(quotesData)
@@ -119,8 +156,21 @@ export default function AccountsPage() {
         actions={
           <>
             {data?.account_sync_daemon && (
-              <SyncDaemonBadge hb={data.account_sync_daemon.heartbeat} />
+              <DualClockBadge
+                name={ibAlive ? 'IB Client' : 'IB Client offline'}
+                pullTs={ibPullTs}
+                recTs={ibRecTs}
+                tone={ibAlive ? 'ok' : 'off'}
+                title="Pull = last Account Sync from TWS. Rec = newest TWS execution in DB vs now."
+              />
             )}
+            <DualClockBadge
+              name="Flex"
+              pullTs={flexPullTs}
+              recTs={flexRecTs}
+              tone={flexPullStale(flexPullTs) ? 'warn' : 'muted'}
+              title="Pull = last Flex ingest job. Rec = newest Flex trade in DB vs now (not the same as Pull)."
+            />
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -132,7 +182,7 @@ export default function AccountsPage() {
                 </button>
               </TooltipTrigger>
               <TooltipContent className="max-w-sm">
-                Multi-account summary &amp; positions from DB; auto-refresh every 1h.
+                Pull is last fetch; Rec is newest trade in DB. IB Client = TWS Account Sync + TWS executions. Flex = daily Flex Query ingest.
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -174,6 +224,7 @@ export default function AccountsPage() {
       <ExecutionImport
         accountsFetchedAt={accountsFetchedAt}
         hasAccounts={hasAccounts}
+        flexClockLine={flexClockLine}
       />
 
       {feedback != null && feedback !== '' && (

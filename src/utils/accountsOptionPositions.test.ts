@@ -43,11 +43,20 @@ describe('computeOptionPositionRowMetrics', () => {
     const m = computeOptionPositionRowMetrics(opt(), quote({ last: 6, timestamp: 1_700_000_000 }))
     expect(m.premium).toBeCloseTo(-(-2 * 5.5))
     expect(m.side).toBe('Short')
-    expect(m.dailyPct).toBeCloseTo(((6 - 5) / 5) * 100)
-    expect(m.dailyUsd).toBeCloseTo((6 - 5) * -2)
+    expect(m.dailyPct).toBeNull()
+    expect(m.dailyUsd).toBeNull()
     expect(m.changePct).toBeCloseTo(((6 - 5.5) / 5.5) * 100)
     expect(m.changeUsd).toBeCloseTo((6 - 5.5) * -2)
     expect(m.updTs).toBe(1_700_000_000)
+  })
+
+  it('uses daily_prev_close for Daily % / $', () => {
+    const m = computeOptionPositionRowMetrics(
+      opt({ daily_prev_close: 4, price: 5 }),
+      quote({ last: 6 }),
+    )
+    expect(m.dailyPct).toBeCloseTo(((6 - 4) / 4) * 100)
+    expect(m.dailyUsd).toBeCloseTo((6 - 4) * -2)
   })
 
   it('uses unrealized_pnl when present', () => {

@@ -1,5 +1,5 @@
-import type { IbAccountSnapshot, IbPositionRow } from '@/types/monitor'
-import type { QuoteItem, QuotesResponse, DailyBenchmark } from '@/types/market'
+import type { IbAccountSnapshot } from '@/types/monitor'
+import type { QuoteItem, QuotesResponse } from '@/types/market'
 
 export function fmtUsd(n: number | null | undefined, round = false): string {
   if (n == null || isNaN(n)) return '—'
@@ -103,15 +103,8 @@ export function uniqueContractKeys(accounts: IbAccountSnapshot[]): string[] {
   return [...set]
 }
 
-export function resolveBasePrice(
-  pos: IbPositionRow,
-  bench: DailyBenchmark | undefined
-): number | null {
-  if (pos.daily_prev_close != null) return pos.daily_prev_close
-  if (bench == null) return null
-  if (bench.is_today && bench.prev_close != null) return bench.prev_close
-  return bench.close
-}
+/** @deprecated Import resolveDailyBasePrice from @/utils/dailyChange. */
+export { resolveDailyBasePrice as resolveBasePrice } from '@/utils/dailyChange'
 
 export function fmtExecDaysAgo(days: number | null | undefined): string {
   if (days == null) return '—'

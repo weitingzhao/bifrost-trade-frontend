@@ -1,6 +1,7 @@
 import type { IbPositionRow } from '@/types/monitor'
-import type { QuoteItem } from '@/types/market'
+import type { QuoteItem, DailyBenchmark } from '@/types/market'
 import { quoteTimestamp, rightLabel } from '@/utils/positions'
+import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 
 export interface OptionPositionRowMetrics {
   qty: number
@@ -31,6 +32,7 @@ export function optionIntrinsic(
 export function computeOptionPositionRowMetrics(
   pos: IbPositionRow,
   quote: QuoteItem | undefined,
+  bench?: DailyBenchmark,
 ): OptionPositionRowMetrics {
   const qty = pos.position ?? 0
   const avgCost = pos.avgCost ?? null
@@ -39,13 +41,9 @@ export function computeOptionPositionRowMetrics(
   const side = qty > 0 ? 'Long' : qty < 0 ? 'Short' : '—'
   const intrinsic = optionIntrinsic(pos.right, pos.strike, currPrice)
 
-  const basePrice = pos.price ?? null
-  const dailyPct =
-    currPrice != null && basePrice != null && basePrice !== 0
-      ? ((currPrice - basePrice) / basePrice) * 100
-      : null
-  const dailyUsd =
-    currPrice != null && basePrice != null ? (currPrice - basePrice) * qty : null
+  const basePrice = resolveDailyBasePrice(pos, bench)
+  const { dailyPct, dailyDollar } = computeDailyChange(currPrice, basePrice, qty)
+  const dailyUsd = dailyDollar
   const changePct =
     currPrice != null && avgCost != null && avgCost !== 0
       ? ((currPrice - avgCost) / avgCost) * 100

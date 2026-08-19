@@ -2,7 +2,6 @@ import { cn } from '@/lib/utils'
 import {
   getStructureDisplayLabel,
   getStructureTypeLabel,
-  summarizeConstraints,
   summarizeLegs,
 } from '@/utils/strategyFormUtils'
 import type { InstanceDetailData } from '@/hooks/useInstanceDetailData'
@@ -129,12 +128,6 @@ export function InstanceOverviewSection({ instance, data, hideSectionTitle = fal
                 <span className={styles.kvBlockLabel}>Legs</span>
                 <span className={styles.kvBlockValue} title={summarizeLegs(structure.legs)}>
                   {summarizeLegs(structure.legs)}
-                </span>
-              </div>
-              <div className={styles.kvBlock}>
-                <span className={styles.kvBlockLabel}>Constraints</span>
-                <span className={styles.kvBlockValue} title={summarizeConstraints(structure.constraints)}>
-                  {summarizeConstraints(structure.constraints)}
                 </span>
               </div>
             </div>

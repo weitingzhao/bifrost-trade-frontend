@@ -25,7 +25,6 @@ function baseStructure(legs: StrategyStructure['legs']): StrategyStructure {
     created_at: null,
     updated_at: null,
     notes: null,
-    constraints: [],
     legs,
   }
 }

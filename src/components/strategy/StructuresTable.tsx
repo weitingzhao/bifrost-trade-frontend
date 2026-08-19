@@ -15,7 +15,6 @@ import {
 import type { StrategyStructure } from '@/types/strategy'
 import {
   getStructureDisplayLabel,
-  summarizeConstraints,
   summarizeDimensions,
   summarizeLegs,
 } from '@/utils/strategyFormUtils'
@@ -64,7 +63,6 @@ export function StructuresTable({
         <col style={{ width: STRUCTURES_TABLE_COL_WIDTHS.template }} />
         <col style={{ width: STRUCTURES_TABLE_COL_WIDTHS.dimensions }} />
         <col style={{ width: STRUCTURES_TABLE_COL_WIDTHS.legs }} />
-        <col style={{ width: STRUCTURES_TABLE_COL_WIDTHS.constraints }} />
         <col style={{ width: STRUCTURES_TABLE_COL_WIDTHS.available }} />
         <col style={{ width: STRUCTURES_TABLE_COL_WIDTHS.inUse }} />
         <col style={{ width: STRUCTURES_TABLE_COL_WIDTHS.actions }} />
@@ -75,7 +73,6 @@ export function StructuresTable({
           <DenseTableHead>Template</DenseTableHead>
           <DenseTableHead>Dimensions</DenseTableHead>
           <DenseTableHead>Legs</DenseTableHead>
-          <DenseTableHead>Constraints</DenseTableHead>
           <DenseTableHead className={structuresSwitchCellClass}>Available</DenseTableHead>
           <DenseTableHead className={structuresSwitchCellClass}>
             <span className="inline-flex items-center justify-center gap-1">
@@ -111,12 +108,6 @@ export function StructuresTable({
               </DenseTableCell>
               <DenseTableCell className={structuresSummaryCellClass} title={summarizeLegs(row.legs)}>
                 {summarizeLegs(row.legs)}
-              </DenseTableCell>
-              <DenseTableCell
-                className={structuresSummaryCellClass}
-                title={summarizeConstraints(row.constraints)}
-              >
-                {summarizeConstraints(row.constraints)}
               </DenseTableCell>
               <DenseTableCell className={structuresSwitchCellClass}>
                 <Switch

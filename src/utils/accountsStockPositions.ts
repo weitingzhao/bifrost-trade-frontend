@@ -1,4 +1,5 @@
-import { quoteTimestamp, resolveBasePrice } from '@/utils/positions'
+import { quoteTimestamp } from '@/utils/positions'
+import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 
@@ -18,6 +19,7 @@ export interface StockGroupTotals {
   totalCost: number
   totalMarket: number
   dailyUsd: number
+  dailyNotional: number
   changeUsd: number
   hasDailyDenom: boolean
 }
@@ -30,15 +32,11 @@ export function computeStockPositionRowMetrics(
   const qty = pos.position ?? 0
   const avgCost = pos.avgCost ?? null
   const currPrice = quote?.last ?? pos.price ?? null
-  const basePrice = resolveBasePrice(pos, bench)
+  const basePrice = resolveDailyBasePrice(pos, bench)
   const totalCost = avgCost != null ? qty * avgCost : null
   const totalMarket = currPrice != null ? qty * currPrice : null
-  const dailyPct =
-    currPrice != null && basePrice != null && basePrice !== 0
-      ? ((currPrice - basePrice) / basePrice) * 100
-      : null
-  const dailyUsd =
-    currPrice != null && basePrice != null ? (currPrice - basePrice) * qty : null
+  const { dailyPct, dailyDollar } = computeDailyChange(currPrice, basePrice, qty)
+  const dailyUsd = dailyDollar
   const changePct =
     currPrice != null && avgCost != null && avgCost !== 0
       ? ((currPrice - avgCost) / avgCost) * 100
@@ -68,6 +66,7 @@ export function calcStockGroupTotals(
   let totalCost = 0
   let totalMarket = 0
   let dailyUsd = 0
+  let dailyNotional = 0
   let changeUsd = 0
   let hasDailyDenom = false
   for (const pos of rows) {
@@ -83,9 +82,13 @@ export function calcStockGroupTotals(
       dailyUsd += r.dailyUsd
       hasDailyDenom = true
     }
+    const qty = pos.position ?? 0
+    if (r.basePrice != null && r.basePrice > 0 && qty !== 0) {
+      dailyNotional += r.basePrice * Math.abs(qty)
+    }
     if (r.changeUsd != null) changeUsd += r.changeUsd
   }
-  return { totalCost, totalMarket, dailyUsd, changeUsd, hasDailyDenom }
+  return { totalCost, totalMarket, dailyUsd, dailyNotional, changeUsd, hasDailyDenom }
 }
 
 export function groupStockPositionsByCategory(
@@ -109,11 +112,9 @@ export function stockGroupPctFromTotals(totals: StockGroupTotals): {
   dailyPct: number | null
   changePct: number | null
 } {
-  if (totals.totalCost === 0) {
-    return { dailyPct: null, changePct: null }
-  }
   return {
-    dailyPct: (totals.dailyUsd / totals.totalCost) * 100,
-    changePct: (totals.changeUsd / totals.totalCost) * 100,
+    dailyPct:
+      totals.dailyNotional !== 0 ? (totals.dailyUsd / totals.dailyNotional) * 100 : null,
+    changePct: totals.totalCost !== 0 ? (totals.changeUsd / totals.totalCost) * 100 : null,
   }
 }

@@ -102,5 +102,6 @@ export const QUERY_KEYS = {
   },
   plugin: {
     flexConfigSummary: ['plugin', 'flex-query', 'config-summary'] as const,
+    flexCoverageFreshness: ['plugin', 'flex-query', 'coverage-freshness'] as const,
   },
 } as const

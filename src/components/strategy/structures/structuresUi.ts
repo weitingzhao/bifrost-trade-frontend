@@ -37,13 +37,12 @@ export const structuresTableClass = 'min-w-[56rem]'
 
 /** table-fixed column widths — sum ≈ 100% */
 export const STRUCTURES_TABLE_COL_WIDTHS = {
-  name: '16%',
-  template: '14%',
-  dimensions: '14%',
-  legs: '18%',
-  constraints: '14%',
-  available: '8%',
-  inUse: '8%',
+  name: '18%',
+  template: '16%',
+  dimensions: '16%',
+  legs: '22%',
+  available: '10%',
+  inUse: '10%',
   actions: '8%',
 } as const
 

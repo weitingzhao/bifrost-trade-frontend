@@ -54,24 +54,6 @@ export async function fetchSepaReadinessSummary(): Promise<SepaReadinessSummaryR
   }
 }
 
-export async function postSepaSyncHolidays(): Promise<{
-  ok: boolean
-  error?: string
-  fetched?: number
-  inserted?: number
-  updated?: number
-  skipped?: number
-  total_in_table?: number
-  synced_at?: string
-  massive_error?: string
-}> {
-  try {
-    return await postJson(researchUrl('/research/data/readiness/sync-holidays'), {}, 30_000)
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Network error' }
-  }
-}
-
 export async function postSepaStockUnifiedSnapshot(): Promise<{
   ok: boolean
   error?: string

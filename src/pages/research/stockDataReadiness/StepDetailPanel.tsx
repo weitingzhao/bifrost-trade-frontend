@@ -47,9 +47,6 @@ interface Props {
   derived: RunbookDerivedState
   refJobs: MassiveRefJobSessionApi
   universeBusy: boolean
-  holidaysSyncBusy: boolean
-  holidaysSyncMsg: string | null
-  holidaysSyncOk: boolean | null
   universeErr: string | null
   unifiedSnapBusy: boolean
   unifiedSnapMsg: string | null
@@ -68,7 +65,6 @@ interface Props {
   finAllOk: boolean | null
   voidAckBusy: string | null
   onSyncUniverse: () => void
-  onHolidaysOnly: () => void
   onUnifiedSnapshot: () => void
   onGroupedHistory: () => void
   onOpenPriceGaps: () => void
@@ -86,9 +82,6 @@ export function StepDetailPanel(props: Props) {
     derived,
     refJobs,
     universeBusy,
-    holidaysSyncBusy,
-    holidaysSyncMsg,
-    holidaysSyncOk,
     universeErr,
     unifiedSnapBusy,
     unifiedSnapMsg,
@@ -107,7 +100,6 @@ export function StepDetailPanel(props: Props) {
     finAllOk,
     voidAckBusy,
     onSyncUniverse,
-    onHolidaysOnly,
     onUnifiedSnapshot,
     onGroupedHistory,
     onOpenPriceGaps,
@@ -165,14 +157,13 @@ export function StepDetailPanel(props: Props) {
       {activeStep === 1 && (
         <div className="space-y-3">
           <div className="text-sm font-medium">
-            Sync All Tickers + Market Holidays into <Code>public.tickers</Code> &amp;{' '}
-            <Code>public.reference_us_holidays</Code>
+            Sync All Tickers into <Code>market.ticker</Code> (Plugin). Holidays are Plugin-owned.
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="rounded-lg border border-border p-3 space-y-2">
               <div className="flex items-center gap-2">
                 <Badge className="text-dense-micro bg-violet-500/20 text-violet-300 border-violet-500/30">TICKERS</Badge>
-                <Code>public.tickers</Code>
+                <Code>market.ticker</Code>
               </div>
               <p className="text-xs text-muted-foreground">
                 Reference universe from Plugin ingest <Code>ticker_sync</Code> (Polygon REST{' '}
@@ -182,20 +173,17 @@ export function StepDetailPanel(props: Props) {
             <div className="rounded-lg border border-border p-3 space-y-2">
               <div className="flex items-center gap-2">
                 <Badge className="text-dense-micro bg-amber-500/20 text-amber-300 border-amber-500/30">HOLIDAYS</Badge>
-                <Code>public.reference_us_holidays</Code>
+                <Code>market.us_market_holiday</Code>
               </div>
               <p className="text-xs text-muted-foreground">
-                Seeds NYSE/NASDAQ federal closures 2020-2027, then pulls{' '}
-                <Code>/v1/marketstatus/upcoming</Code> for early-close timing.
+                US Market Holidays: maintained by Market Data Plugin (Polygon{' '}
+                <Code>/v1/marketstatus/upcoming</Code>). No manual Trade sync.
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button disabled={anyJobBusy || holidaysSyncBusy} onClick={onSyncUniverse}>
-              {universeBusy ? 'Enqueueing tickers…' : holidaysSyncBusy ? 'Syncing both…' : 'Sync tickers + holidays'}
-            </Button>
-            <Button variant="outline" disabled={holidaysSyncBusy} onClick={onHolidaysOnly}>
-              {holidaysSyncBusy ? 'Syncing…' : 'Holidays only'}
+            <Button disabled={anyJobBusy} onClick={onSyncUniverse}>
+              {universeBusy ? 'Enqueueing tickers…' : 'Sync tickers'}
             </Button>
             {activeJobs > 0 && (
               <Badge variant="secondary" className="text-xs">
@@ -209,7 +197,6 @@ export function StepDetailPanel(props: Props) {
               <Link to="/operations/celery">Ops Celery (Massive scaled to 0)</Link>
             </Button>
           </div>
-          <Feedback ok={holidaysSyncOk}>{holidaysSyncMsg}</Feedback>
           <Feedback ok={false}>{universeErr}</Feedback>
         </div>
       )}

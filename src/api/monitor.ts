@@ -150,34 +150,3 @@ export async function fetchMarketHolidays(
   if (!res.ok) throw new Error(`Market /holidays: ${res.status}`)
   return res.json()
 }
-
-export async function postMarketHoliday(payload: {
-  date: string
-  label?: string
-  exchange?: string
-}): Promise<{ date: string; exchange: string; label: string | null }> {
-  const res = await fetch(marketUrl('/market/holidays'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      date: (payload.date ?? '').trim().slice(0, 10),
-      label: payload.label?.trim() || undefined,
-      exchange: (payload.exchange ?? 'NYSE').trim() || undefined,
-    }),
-  })
-  if (!res.ok) {
-    const j = await res.json().catch(() => ({}))
-    throw new Error(j.detail ?? res.statusText)
-  }
-  return res.json()
-}
-
-export async function deleteMarketHoliday(dateStr: string, exchange?: string): Promise<void> {
-  const params = new URLSearchParams({ date: (dateStr ?? '').trim().slice(0, 10) })
-  if (exchange?.trim()) params.set('exchange', exchange.trim())
-  const res = await fetch(marketUrl(`/market/holidays?${params}`), { method: 'DELETE' })
-  if (!res.ok) {
-    const j = await res.json().catch(() => ({}))
-    throw new Error(j.detail ?? res.statusText)
-  }
-}

@@ -9,13 +9,6 @@ export interface CoverageStockHolidaysSectionProps {
   setHolidaysYear: (v: string) => void
   holidaysLoading: boolean
   loadHolidays: () => void
-  addDate: string
-  setAddDate: (v: string) => void
-  addLabel: string
-  setAddLabel: (v: string) => void
-  holidayMsg: { text: string; isErr: boolean }
-  onAddHoliday: () => void
-  onDeleteHoliday: (dateStr: string) => void
 }
 
 export function CoverageStockHolidaysSection({
@@ -25,19 +18,12 @@ export function CoverageStockHolidaysSection({
   setHolidaysYear,
   holidaysLoading,
   loadHolidays,
-  addDate,
-  setAddDate,
-  addLabel,
-  setAddLabel,
-  holidayMsg,
-  onAddHoliday,
-  onDeleteHoliday,
 }: CoverageStockHolidaysSectionProps) {
   return (
     <div className="space-y-4" id="settings-holidays">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-semibold">US market holidays (NYSE)</h3>
-        <InfoTooltip text="Holidays used to decide trading days (e.g. Settings → Status → Feed → Interactive Brokers coverage yellow (end)). Add or delete as needed." />
+        <InfoTooltip text="Calendar maintained automatically by Market Data Plugin (Polygon.io). Manual editing is no longer available. Used to decide trading days (e.g. coverage yellow end)." />
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
@@ -62,43 +48,12 @@ export function CoverageStockHolidaysSection({
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="space-y-1 text-sm">
-          <span className="text-xs text-muted-foreground">Date</span>
-          <input
-            type="date"
-            value={addDate}
-            onChange={e => setAddDate(e.target.value)}
-            className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-            aria-label="Holiday date"
-          />
-        </label>
-        <label className="min-w-[12rem] flex-1 space-y-1 text-sm">
-          <span className="text-xs text-muted-foreground">Label</span>
-          <input
-            type="text"
-            value={addLabel}
-            onChange={e => setAddLabel(e.target.value)}
-            placeholder="e.g. New Year's Day"
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-            aria-label="Holiday label"
-          />
-        </label>
-        <Button type="button" size="sm" onClick={onAddHoliday} disabled={holidaysLoading}>
-          Add
-        </Button>
-      </div>
-
-      {holidayMsg.text ? (
-        <p className={`text-sm ${holidayMsg.isErr ? 'text-destructive' : 'text-muted-foreground'}`}>
-          {holidayMsg.text}
-        </p>
-      ) : null}
-
       {holidaysLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : holidays.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No holidays in database. Add a date and label above.</p>
+        <p className="text-sm text-muted-foreground">
+          No holidays in Golden Source yet. Plugin calendar ingest will populate upcoming sessions.
+        </p>
       ) : (
         <div className="overflow-x-auto rounded-md border">
           <table className="w-full border-collapse text-sm" aria-label="US market holidays">
@@ -108,8 +63,6 @@ export function CoverageStockHolidaysSection({
                 <th className="px-3 py-2 font-medium">Exchange</th>
                 <th className="px-3 py-2 font-medium">Label</th>
                 <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 font-medium">Source</th>
-                <th className="px-3 py-2 font-medium" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -119,17 +72,6 @@ export function CoverageStockHolidaysSection({
                   <td className="px-3 py-2">{h.exchange}</td>
                   <td className="px-3 py-2">{h.label ?? h.name ?? '—'}</td>
                   <td className="px-3 py-2">{h.status ?? '—'}</td>
-                  <td className="px-3 py-2 text-xs text-muted-foreground">{h.source ?? '—'}</td>
-                  <td className="px-3 py-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onDeleteHoliday(h.holiday_date)}
-                    >
-                      Delete
-                    </Button>
-                  </td>
                 </tr>
               ))}
             </tbody>

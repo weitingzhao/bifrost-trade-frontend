@@ -130,7 +130,7 @@ export function CheckResultsPanel({
                                   status={derived.holidaysStatus}
                                   primary={
                                     derived.holidaysTotal > 0
-                                      ? `${fmt(derived.holidaysTotal)} holidays · ${fmt(derived.holidaysMassive)} from Massive · ${fmt(derived.holidaysSeed)} seeded`
+                                      ? `${fmt(derived.holidaysTotal)} holidays from Market Data Plugin`
                                       : 'No holidays loaded'
                                   }
                                   primaryLabel=" · all exchanges"
@@ -139,10 +139,10 @@ export function CheckResultsPanel({
                                       ? `${fmt(derived.holidaysEarlyClose)} early-close days`
                                       : null
                                   }
-                                  target="Seed 2020-2027 + Massive upcoming (~12 months)"
+                                  target="Plugin calendar ingest (Polygon upcoming + historical seed)"
                                   note={
-                                    derived.holidaysLastSync
-                                      ? `Massive sync ${fmtRelativeTime(derived.holidaysLastSync)}${derived.holidaysEarliest && derived.holidaysLatest ? ` · ${derived.holidaysEarliest} → ${derived.holidaysLatest}` : ''}`
+                                    derived.holidaysLastFetched
+                                      ? `Last fetched ${fmtRelativeTime(derived.holidaysLastFetched)}${derived.holidaysEarliest && derived.holidaysLatest ? ` · ${derived.holidaysEarliest} → ${derived.holidaysLatest}` : ''}`
                                       : summaryLoadedAt
                                         ? `Checked ${fmtRelativeTime(summaryLoadedAt)}`
                                         : null

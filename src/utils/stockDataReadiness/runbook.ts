@@ -86,10 +86,8 @@ export interface RunbookDerivedState {
   unifiedSnapRows: number | null | undefined
   fundCacheValid: number
   holidaysTotal: number
-  holidaysMassive: number
-  holidaysSeed: number
   holidaysEarlyClose: number
-  holidaysLastSync: string | null
+  holidaysLastFetched: string | null
   holidaysEarliest: string | null
   holidaysLatest: string | null
 }
@@ -127,10 +125,8 @@ export function deriveRunbookState(
 
   const holidaysSummary = summary?.holidays_summary
   const holidaysTotal = holidaysSummary?.total ?? 0
-  const holidaysMassive = holidaysSummary?.massive_count ?? 0
-  const holidaysSeed = holidaysSummary?.seed_count ?? 0
   const holidaysEarlyClose = holidaysSummary?.early_close_count ?? 0
-  const holidaysLastSync = holidaysSummary?.last_massive_sync ?? null
+  const holidaysLastFetched = holidaysSummary?.last_fetched_at ?? null
   const holidaysEarliest = holidaysSummary?.earliest_date ?? null
   const holidaysLatest = holidaysSummary?.latest_date ?? null
 
@@ -457,10 +453,8 @@ export function deriveRunbookState(
     unifiedSnapRows,
     fundCacheValid,
     holidaysTotal,
-    holidaysMassive,
-    holidaysSeed,
     holidaysEarlyClose,
-    holidaysLastSync,
+    holidaysLastFetched,
     holidaysEarliest,
     holidaysLatest,
   }

@@ -32,12 +32,9 @@ export interface SepaReadinessDataCatalog {
 export interface SepaReadinessHolidaysSummary {
   total: number
   early_close_count: number
-  massive_count: number
-  seed_count: number
-  manual_count: number
   earliest_date: string | null
   latest_date: string | null
-  last_massive_sync: string | null
+  last_fetched_at?: string | null
   by_exchange: Array<{ exchange: string; count: number }>
 }
 

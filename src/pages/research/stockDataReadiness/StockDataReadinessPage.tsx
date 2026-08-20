@@ -26,7 +26,6 @@ import {
   postSepaPriceGapBackfill,
   postSepaReadinessSnapshot,
   postSepaStockUnifiedSnapshot,
-  postSepaSyncHolidays,
   postSepaTechnicalBackfill,
 } from '@/api/research/stockDataReadiness'
 import type { TrackedMassiveDbJobKind } from './refJobSessionStub'
@@ -56,9 +55,6 @@ function PageInner() {
   const [activeInfoTab, setActiveInfoTab] = useState<'metrics' | 'checklist' | 'database' | 'reference'>('metrics')
   const [dataSupportChecked, setDataSupportChecked] = useState(false)
 
-  const [holidaysSyncBusy, setHolidaysSyncBusy] = useState(false)
-  const [holidaysSyncMsg, setHolidaysSyncMsg] = useState<string | null>(null)
-  const [holidaysSyncOk, setHolidaysSyncOk] = useState<boolean | null>(null)
   const [universeErr, setUniverseErr] = useState<string | null>(null)
 
   const [unifiedSnapBusy, setUnifiedSnapBusy] = useState(false)
@@ -151,49 +147,17 @@ function PageInner() {
 
   const snapshotEmpty = summary?.snapshot_populated === false
 
-  const runHolidaysSync = useCallback(async () => {
-    setHolidaysSyncBusy(true)
-    setHolidaysSyncMsg(null)
-    setHolidaysSyncOk(null)
-    try {
-      const res = await postSepaSyncHolidays()
-      if (!res.ok) {
-        setHolidaysSyncMsg(res.error ?? 'Holidays sync failed')
-        setHolidaysSyncOk(false)
-        return res
-      }
-      setHolidaysSyncMsg(
-        `Holidays synced — fetched ${fmt(res.fetched)}, inserted ${fmt(res.inserted)}, updated ${fmt(res.updated)}`,
-      )
-      setHolidaysSyncOk(true)
-      await refreshReadinessBoard()
-      return res
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Holidays sync failed'
-      setHolidaysSyncMsg(msg)
-      setHolidaysSyncOk(false)
-      return { ok: false, error: msg }
-    } finally {
-      setHolidaysSyncBusy(false)
-    }
-  }, [refreshReadinessBoard])
-
   const runUniverseEnqueue = useCallback(async () => {
     setUniverseErr(null)
-    const [tickerRes, holidaysRes] = await Promise.all([
-      refJobs.enqueueTickerReferenceJob(
-        'feed_stocks_tickers_reference_universe',
-        { full_universe: true, limit: 1000, sort: 'ticker', order: 'asc' },
-        'high',
-      ),
-      runHolidaysSync(),
-    ])
-    const parts = [
-      !tickerRes.ok ? `Tickers: ${tickerRes.error ?? 'enqueue failed'}` : null,
-      !holidaysRes.ok ? `Holidays: ${holidaysRes.error ?? 'sync failed'}` : null,
-    ].filter(Boolean)
-    if (parts.length) setUniverseErr(parts.join(' · '))
-  }, [refJobs, runHolidaysSync])
+    const tickerRes = await refJobs.enqueueTickerReferenceJob(
+      'feed_stocks_tickers_reference_universe',
+      { full_universe: true, limit: 1000, sort: 'ticker', order: 'asc' },
+      'high',
+    )
+    if (!tickerRes.ok) {
+      setUniverseErr(`Tickers: ${tickerRes.error ?? 'enqueue failed'}`)
+    }
+  }, [refJobs])
 
   const runUnifiedSnapshot = useCallback(async () => {
     setUnifiedSnapBusy(true)
@@ -467,9 +431,6 @@ function PageInner() {
             derived={derived}
             refJobs={refJobs}
             universeBusy={universeBusy}
-            holidaysSyncBusy={holidaysSyncBusy}
-            holidaysSyncMsg={holidaysSyncMsg}
-            holidaysSyncOk={holidaysSyncOk}
             universeErr={universeErr}
             unifiedSnapBusy={unifiedSnapBusy}
             unifiedSnapMsg={unifiedSnapMsg}
@@ -488,7 +449,6 @@ function PageInner() {
             finAllOk={finAllOk}
             voidAckBusy={voidAckBusy}
             onSyncUniverse={() => void runUniverseEnqueue()}
-            onHolidaysOnly={() => void runHolidaysSync()}
             onUnifiedSnapshot={() => void runUnifiedSnapshot()}
             onGroupedHistory={() => void runGroupedHistory()}
             onOpenPriceGaps={() => setPriceGapsOpen(true)}

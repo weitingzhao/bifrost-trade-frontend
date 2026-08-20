@@ -6,7 +6,6 @@
 export type TrackedMassiveDbJobKind =
   | 'feed_stocks_tickers_reference_universe'
   | 'feed_stocks_tickers_reference_overview'
-  | 'feed_stocks_tickers_reference_related'
   | 'feed_stocks_aggregate'
   | string
 

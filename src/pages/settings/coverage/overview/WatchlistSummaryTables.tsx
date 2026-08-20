@@ -89,7 +89,7 @@ export function DataOverviewWatchlistStocksSummaryTable({
       <div>
         <h5 className="mb-2 inline-flex items-center gap-1 text-sm font-medium">
           Utilities
-          <InfoTooltip text="PostgreSQL reference tables for the full Massive instruments universe. Coverage uses the watchlist as a convenience slice where rows are per-symbol; ticker_types is one global dictionary." />
+          <InfoTooltip text="PostgreSQL / Plugin reference for the full Massive instruments universe. Coverage uses the watchlist as a convenience slice where rows are per-symbol; ticker_types is one global dictionary owned by Market Data Plugin (market.ticker_type)." />
         </h5>
         <p className="mb-2 text-xs text-muted-foreground">
           Not watchlist-specific — universe-wide reference data. Slice columns show how many watchlist symbols

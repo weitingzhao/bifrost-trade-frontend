@@ -376,7 +376,7 @@ export function buildStocksUtilitiesSummaryRows(rows: WatchlistDbCoverageSymbolR
     },
     {
       table: 'ticker_types',
-      pipeline: 'Reference · instrument type dictionary (global)',
+      pipeline: 'Reference · instrument type dictionary (Plugin market.ticker_type)',
       coverage: ttOk ? `${ttRows} rows (full table)` : '—',
       freshness: ttOk ? fmtAgeSeconds(isoAgeSeconds(tt0.dictionary_last_created_at)) : '—',
       health: '—',

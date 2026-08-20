@@ -106,7 +106,9 @@ export function DataOverviewStocksUtilitiesSection({
       <h3 className="text-sm font-semibold">Utilities</h3>
       <p className="text-sm text-muted-foreground">
         Reference tables <code className="text-xs">tickers</code>, <code className="text-xs">ticker_overview</code>, and{' '}
-        <code className="text-xs">ticker_types</code> cover the full instrument universe (not watchlist-only).
+        <code className="text-xs">ticker_types</code> (Plugin-managed{' '}
+        <code className="text-xs">market.ticker_type</code> dictionary) cover the full instrument universe
+        (not watchlist-only).
       </p>
       <DenseDataTable tableClassName="text-xs">
         <thead>

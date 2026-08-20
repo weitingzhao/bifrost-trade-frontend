@@ -20,12 +20,12 @@ export function ReadinessMetricsStrip({ summary, vendorFillGap }: Props) {
     {
       label: 'Unified snapshot rows',
       value: fmt(summary?.stock_unified_snapshot_row_count ?? null),
-      sub: `cache_stock_snapshot${summary?.stock_unified_snapshot_last_fetched_at ? ` · ${fmtRelativeTime(summary.stock_unified_snapshot_last_fetched_at)}` : ''}`,
+      sub: `market.stock_snapshot (Plugin)${summary?.stock_unified_snapshot_last_fetched_at ? ` · ${fmtRelativeTime(summary.stock_unified_snapshot_last_fetched_at)}` : ''}`,
     },
     {
       label: 'Daily fill gaps (Step 3)',
       value: fmt(vendorFillGap),
-      sub: 'cache.last_minute_updated (NY) vs max(stock_day)',
+      sub: 'snapshot session_date vs max(stock_daily)',
       accent: vendorFillGap === 0,
     },
     {

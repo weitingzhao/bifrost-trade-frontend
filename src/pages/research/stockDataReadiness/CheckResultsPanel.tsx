@@ -151,17 +151,17 @@ export function CheckResultsPanel({
                               </>
                             )}
                             {s.id === 2 && (
-                              <StepCheckStrip
-                                hasChecked
-                                loading={false}
-                                status={derived.unifiedSnapStatus}
-                                primary={
-                                  derived.unifiedSnapRows != null && derived.unifiedSnapRows > 0
-                                    ? `${fmt(derived.unifiedSnapRows)} symbols cached`
-                                    : 'No unified snapshot rows yet'
-                                }
-                                primaryLabel=" · cache_stock_snapshot"
-                                secondary={
+                                <StepCheckStrip
+                                  hasChecked
+                                  loading={false}
+                                  status={derived.unifiedSnapStatus}
+                                  primary={
+                                    derived.unifiedSnapRows != null && derived.unifiedSnapRows > 0
+                                      ? `${fmt(derived.unifiedSnapRows)} symbols cached`
+                                      : 'No unified snapshot rows yet'
+                                  }
+                                  primaryLabel=" · market.stock_snapshot (Plugin)"
+                                  secondary={
                                   summary?.stock_unified_snapshot_last_fetched_at
                                     ? `Last fetch ${fmtRelativeTime(summary.stock_unified_snapshot_last_fetched_at)}`
                                     : null
@@ -179,7 +179,7 @@ export function CheckResultsPanel({
                                     ? `${fmt(derived.priceReady)} / ${fmt(derived.totalSymbols)} price_ready`
                                     : null
                                 }
-                                primaryLabel=" · cache vs stock_day + readiness fallback"
+                                primaryLabel=" · snapshot vs stock_daily + Plugin vendor-gap"
                                 gap={derived.priceGap}
                                 gapUnit="symbols need daily fill"
                                 target="Vendor NY date from Step 2 cache ≤ last massive daily bar"

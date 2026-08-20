@@ -9,8 +9,8 @@ export function SnapshotByTypeBreakdown({ rows }: { rows: SepaSnapshotByTypeRow[
   if (rows.length === 0) {
     return (
       <div className={readinessStepUi.asideEmpty}>
-        No instrument-type breakdown yet — refresh once to populate{' '}
-        <ReadinessCode>cache_stock_snapshot</ReadinessCode>.
+        No instrument-type breakdown yet — Plugin CronJob populates{' '}
+        <ReadinessCode>market.stock_snapshot</ReadinessCode> daily.
       </div>
     )
   }
@@ -22,7 +22,7 @@ export function SnapshotByTypeBreakdown({ rows }: { rows: SepaSnapshotByTypeRow[
     <div className={readinessStepUi.aside}>
       <div className={readinessStepUi.asideTitle}>
         <span>
-          Instrument types in <ReadinessCode>cache_stock_snapshot</ReadinessCode>
+          Instrument types in <ReadinessCode>market.stock_snapshot</ReadinessCode> (Plugin)
         </span>
         <span className={readinessStepUi.asideMeta}>
           {rows.length} types · {fmt(totalSnap)} snapshot rows · {fmt(totalUni)} universe tickers

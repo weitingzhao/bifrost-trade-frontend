@@ -204,15 +204,14 @@ export function StepDetailPanel(props: Props) {
       {activeStep === 2 && (
         <div className="space-y-3">
           <ReadinessStepLabel>
-            Refresh <ReadinessCode>public.cache_stock_snapshot</ReadinessCode> (Massive{' '}
+            Snapshot coverage from <ReadinessCode>market.stock_snapshot</ReadinessCode> (Plugin{' '}
             <ReadinessCode>GET /v3/snapshot</ReadinessCode>, stocks)
           </ReadinessStepLabel>
           <ReadinessStepDesc>
-            Batches all <ReadinessCode>v_us_equity_universe</ReadinessCode> symbols via{' '}
-            <ReadinessCode>ticker.any_of</ReadinessCode> (≤250 per request). Flattens Massive{' '}
-            <ReadinessCode>session</ReadinessCode>, <ReadinessCode>last_minute</ReadinessCode>, and optional{' '}
-            <ReadinessCode>last_trade</ReadinessCode> / <ReadinessCode>last_quote</ReadinessCode> into scalar
-            columns (no jsonb) for SQL joins.
+            Plugin CronJob writes <ReadinessCode>market.stock_snapshot</ReadinessCode> daily for all{' '}
+            <ReadinessCode>v_us_equity_universe</ReadinessCode> symbols. Coverage is served via{' '}
+            <ReadinessCode>/market/readiness/snapshot-coverage</ReadinessCode>. The readiness check validates
+            instrument-type breakdown against the universe.
           </ReadinessStepDesc>
           <ReadinessPrimaryButton
             disabled={unifiedSnapBusy || anyJobBusy}
@@ -258,18 +257,14 @@ export function StepDetailPanel(props: Props) {
           />
           <ReadinessStepDesc>
             Plugin ingest <ReadinessCode>stock_daily_grouped</ReadinessCode> writes{' '}
-            <ReadinessCode>source=massive</ReadinessCode> rows. The readiness summary gap count uses{' '}
-            <ReadinessCode>cache_stock_snapshot.last_minute_updated</ReadinessCode> (America/New_York date) vs{' '}
-            <ReadinessCode>max(stock_day.bar_time)</ReadinessCode>; any snapshot-based check requires non-null{' '}
-            <ReadinessCode>session_close</ReadinessCode> — if it is empty, that symbol is skipped for Step 3 gaps (no{' '}
-            <ReadinessCode>stock_day</ReadinessCode> comparison and no readiness fallback), regardless of whether daily
-            bars exist. After a calendar gap, the latest daily <ReadinessCode>stock_day.close</ReadinessCode> must differ
-            from <ReadinessCode>session_close</ReadinessCode> (beyond a tiny absolute tolerance) to count as a vendor gap
+            <ReadinessCode>source=massive</ReadinessCode> rows. The readiness gap count uses{' '}
+            <ReadinessCode>market.stock_snapshot.session_date</ReadinessCode> vs{' '}
+            <ReadinessCode>max(stock_daily.bar_time)</ReadinessCode> via Plugin{' '}
+            <ReadinessCode>/market/readiness/vendor-gap</ReadinessCode>; symbols without a snapshot row are never
+            gaps. After a calendar gap, the latest daily <ReadinessCode>stock_daily.close</ReadinessCode> must differ
+            from <ReadinessCode>close</ReadinessCode> (beyond a tiny absolute tolerance) to count as a vendor gap
             — matching closes mean the vendor snapshot already aligns with the last ingested bar.{' '}
-            <ReadinessCode>tickers.instrument_type = WARRANT</ReadinessCode> symbols are excluded. Symbols with no{' '}
-            <ReadinessCode>cache_stock_snapshot</ReadinessCode> row are never gaps. If a snapshot row has{' '}
-            <ReadinessCode>session_close</ReadinessCode> but <ReadinessCode>last_minute_updated</ReadinessCode> is
-            missing, the UI falls back to <ReadinessCode>NOT price_ready</ReadinessCode> on the readiness view.
+            <ReadinessCode>tickers.instrument_type = WARRANT</ReadinessCode> symbols are excluded.
           </ReadinessStepDesc>
           <div className="flex flex-wrap items-center gap-2">
             <ReadinessPrimaryButton disabled={groupedHistoryBusy} onClick={onGroupedHistory}>

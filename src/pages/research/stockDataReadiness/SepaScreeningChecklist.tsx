@@ -200,8 +200,8 @@ export function SepaScreeningChecklist({
               }
             />
             <p className="text-dense-meta text-muted-foreground">
-              Data source: <code className="text-sky-300/90">stock_readiness_daily.technical_eval</code>{' '}
-              (Phase-1 stock_day + CRS percentile rank)
+              Data source: <code className="text-sky-300/90">analytics.sepa_wide</code>{' '}
+              (dbt analytics pipeline — stock_day + CRS percentile rank)
             </p>
 
             {hasTechConds ? (
@@ -268,8 +268,8 @@ export function SepaScreeningChecklist({
               count={`${fundOk} / ${fundTotal}`}
             />
             <p className="text-dense-meta text-muted-foreground">
-              Data source: <code className="text-sky-300/90">stock_readiness_daily.fundamental_eval</code>{' '}
-              (evaluated from <code className="text-sky-300/90">stock_income_statements</code> by Phase 1)
+              Data source: <code className="text-sky-300/90">analytics.sepa_wide</code>{' '}
+              (dbt analytics pipeline — evaluated from <code className="text-sky-300/90">stock_income_statements</code>)
             </p>
             <StaticCriteriaTable rows={fundStatuses} />
           </div>

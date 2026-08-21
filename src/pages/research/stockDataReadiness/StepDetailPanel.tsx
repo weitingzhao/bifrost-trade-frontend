@@ -305,16 +305,18 @@ export function StepDetailPanel(props: Props) {
 
       {activeStep === 10 && (
         <div className="space-y-3">
-          <div className="text-sm font-medium">Evaluate fundamentals &amp; refresh readiness snapshot</div>
-          <p className="text-xs text-muted-foreground">
-            Phase 1 evaluates SEPA conditions → <Code>stock_readiness_daily</Code>. Phase 2 materializes the full
-            snapshot while preserving fundamental results.
-          </p>
+          <div className="text-sm font-medium">Evaluate &amp; publish readiness snapshot</div>
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+            <strong>Note:</strong> Evaluation is now handled by the{' '}
+            <Code>dbt analytics pipeline</Code> (runs daily after market close). The manual
+            &ldquo;Backfill Fundamentals&rdquo; and &ldquo;Backfill Technical&rdquo; steps are
+            deprecated — dbt materializes <Code>analytics.sepa_wide</Code> automatically.
+          </div>
           <ReadinessMaintenanceBox
-            title="Conditions evaluated (Phase 1)"
+            title="Conditions evaluated"
             rows={[
-              { badge: 'Q2Q', variant: 'auto', text: 'EPS/Revenue growth ≥25%, acceleration 2Q' },
-              { badge: '3Y/FY', variant: 'manual', text: 'EPS/Revenue CAGR 3Y ≥15%, last FY acceleration' },
+              { badge: 'AUTO', variant: 'auto', text: 'dbt analytics pipeline runs daily after market close — evaluates all SEPA fundamental and technical conditions into analytics.sepa_wide' },
+              { badge: 'LEGACY', variant: 'manual', text: 'Manual backfill-fundamentals / backfill-technical endpoints are deprecated; the button below triggers a legacy snapshot refresh only' },
             ]}
           />
           <Button
@@ -325,7 +327,7 @@ export function StepDetailPanel(props: Props) {
               ? evalPublishPhase === 'backfill'
                 ? '(1/2) Evaluating fundamentals…'
                 : '(2/2) Refreshing snapshot…'
-              : 'Evaluate & Refresh Snapshot'}
+              : 'Refresh Snapshot (Legacy)'}
           </Button>
           {fundBackfillMsg && (
             <Feedback ok={fundBackfillOk}>

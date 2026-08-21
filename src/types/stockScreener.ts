@@ -148,6 +148,12 @@ export interface TierFilterResponse {
   limit?: number
 }
 
+/**
+ * Row from the symbols-snapshot endpoint.
+ * Supports both legacy jsonb-parsed format and new analytics flat-column format.
+ * After normalization (see normalizeSnapshotRow), flat boolean condition fields
+ * are always populated regardless of which format the API returned.
+ */
 export interface ReadinessSnapshotRow {
   symbol: string
   found: boolean
@@ -175,6 +181,53 @@ export interface ReadinessSnapshotRow {
   technical_pass_count?: number
   technical_insufficient?: boolean
   passed_tech_conditions?: string[]
+
+  // --- Analytics flat columns (new format) ---
+  eval_date?: string
+  overall_rank?: number
+  decile?: number
+  composite_score?: number
+  fund_pass_count?: number
+  fund_insufficient?: boolean
+  // Fundamental conditions (flat booleans)
+  eps_q2q_ge_25pct?: boolean
+  rev_q2q_ge_25pct?: boolean
+  eps_acc_2q?: boolean
+  rev_acc_2q?: boolean
+  eps_3y_ge_15pct?: boolean
+  rev_3y_ge_15pct?: boolean
+  eps_acc_fy?: boolean
+  rev_acc_fy?: boolean
+  // Technical conditions (flat booleans)
+  tech_pass_count?: number
+  avg_volume_50_gt_threshold?: boolean
+  close_ge_low52_x_1_3?: boolean
+  close_ge_high52_x_0_75?: boolean
+  sma50_gt_sma150?: boolean
+  sma50_gt_sma200?: boolean
+  sma150_gt_sma200?: boolean
+  sma200_rising_1m?: boolean
+  price_gt_sma50?: boolean
+  price_gt_sma150?: boolean
+  price_gt_sma200?: boolean
+  crs_ge_70?: boolean
+  // Raw metrics
+  eps_q0?: number | null
+  eps_g0?: number | null
+  rev_q0?: number | null
+  rev_g0?: number | null
+  latest_close?: number | null
+  sma_50?: number | null
+  sma_150?: number | null
+  sma_200?: number | null
+  crs_percentile?: number | null
+  // Tier scores
+  momentum_score?: number | null
+  structure_score?: number | null
+  sentiment_score?: number | null
+  // Universe info
+  company_name?: string
+  primary_exchange?: string
 }
 
 export interface SymbolsReadinessSnapshotResponse {

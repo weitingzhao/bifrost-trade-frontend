@@ -14,6 +14,7 @@ import type {
   TechDistSymbolsResponse,
   TierFilterResponse,
 } from '@/types/stockScreener'
+import { normalizeSnapshotRow } from '@/utils/stockScreener'
 
 
 const EMPTY_CRITERIA: SepaCriteriaStats = {
@@ -188,5 +189,9 @@ export async function fetchSymbolsReadinessSnapshot(
     { ok: false },
   )
   if (!data.ok) return data
-  return validateSnapshot(data)
+  const validated = validateSnapshot(data)
+  if (validated.symbols) {
+    validated.symbols = validated.symbols.map(normalizeSnapshotRow)
+  }
+  return validated
 }

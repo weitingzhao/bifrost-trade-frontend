@@ -1,4 +1,64 @@
+import { SEPA_COND_CATALOG, TECH_COND_CATALOG } from '@/constants/stockScreenerCatalog'
 import type { FundPassCountBucket, ReadinessSnapshotRow, SortColumn, SortDirection, TechPassCountBucket } from '@/types/stockScreener'
+
+const FUND_CONDITION_IDS = SEPA_COND_CATALOG.map(c => c.id)
+const TECH_CONDITION_IDS = TECH_COND_CATALOG.map(c => c.id)
+
+/**
+ * Detect whether a snapshot row uses the new analytics flat-column format.
+ * Presence of any flat boolean condition field at the top level is the signal.
+ */
+function isAnalyticsFormat(row: ReadinessSnapshotRow): boolean {
+  return row.eps_q2q_ge_25pct !== undefined || row.avg_volume_50_gt_threshold !== undefined
+}
+
+/**
+ * Normalize a snapshot row so that both legacy (jsonb `passed_conditions` arrays)
+ * and new (flat boolean columns) formats produce a consistent shape:
+ * - `passed_conditions` / `passed_tech_conditions` arrays are always populated
+ * - `fundamental_pass_count` / `technical_pass_count` are always set
+ * - Flat boolean fields are always set
+ *
+ * This allows downstream components to read whichever representation they prefer.
+ */
+export function normalizeSnapshotRow(raw: ReadinessSnapshotRow): ReadinessSnapshotRow {
+  if (isAnalyticsFormat(raw)) {
+    const rec = raw as unknown as Record<string, unknown>
+    const passedFund = FUND_CONDITION_IDS.filter(id => rec[id] === true)
+    const passedTech = TECH_CONDITION_IDS.filter(id => rec[id] === true)
+    return {
+      ...raw,
+      passed_conditions: raw.passed_conditions ?? passedFund,
+      passed_tech_conditions: raw.passed_tech_conditions ?? passedTech,
+      fundamental_pass_count: raw.fundamental_pass_count ?? raw.fund_pass_count ?? passedFund.length,
+      technical_pass_count: raw.technical_pass_count ?? raw.tech_pass_count ?? passedTech.length,
+      fundamental_insufficient: raw.fundamental_insufficient ?? raw.fund_insufficient ?? false,
+      fundamental_pass: raw.fundamental_pass ?? (passedFund.length === 8),
+      technical_pass: raw.technical_pass ?? (passedTech.length === 11),
+    }
+  }
+
+  // Legacy format: derive flat booleans from the passed_conditions arrays
+  const passedSet = new Set(raw.passed_conditions ?? [])
+  const passedTechSet = new Set(raw.passed_tech_conditions ?? [])
+  const flatFund: Partial<ReadinessSnapshotRow> = {}
+  for (const id of FUND_CONDITION_IDS) {
+    ;(flatFund as Record<string, boolean>)[id] = passedSet.has(id)
+  }
+  const flatTech: Partial<ReadinessSnapshotRow> = {}
+  for (const id of TECH_CONDITION_IDS) {
+    ;(flatTech as Record<string, boolean>)[id] = passedTechSet.has(id)
+  }
+
+  return {
+    ...raw,
+    ...flatFund,
+    ...flatTech,
+    fund_pass_count: raw.fundamental_pass_count,
+    tech_pass_count: raw.technical_pass_count,
+    fund_insufficient: raw.fundamental_insufficient,
+  }
+}
 
 export function parseSymbols(text: string): string[] {
   return Array.from(

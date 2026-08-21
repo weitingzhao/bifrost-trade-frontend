@@ -27,14 +27,14 @@ export const SEPA_TECHNICAL_CRITERIA: SepaCriterionDef[] = [
 ]
 
 export const SEPA_FUNDAMENTAL_CRITERIA: SepaCriterionDef[] = [
-  { id: 'eps_q2q', criteria: 'EPS Growth Q2Q', condition: '≥ 25%', explain: 'Decent earnings growth Q2Q', dataSource: 'research_sepa_fundamentals_cache', dataFields: ['EPS (quarterly)'] },
-  { id: 'revenue_q2q', criteria: 'Revenue Growth Q2Q', condition: '≥ 25%', explain: 'Decent revenue growth Q2Q', dataSource: 'research_sepa_fundamentals_cache', dataFields: ['Revenue (quarterly)'] },
-  { id: 'eps_acc_2q', criteria: 'EPS Acceleration', condition: 'EPS acc. 2 Qs', explain: 'Decent earnings growth acceleration last 2Q', dataSource: 'research_sepa_fundamentals_cache', dataFields: ['EPS (≥3 quarters)'] },
-  { id: 'revenue_acc_2q', criteria: 'Revenue Acceleration', condition: 'Revenue acc. 2 Qs', explain: 'Decent revenue growth acceleration last 2Q', dataSource: 'research_sepa_fundamentals_cache', dataFields: ['Revenue (≥3 quarters)'] },
-  { id: 'eps_3y', criteria: 'EPS Growth 3Y', condition: '≥ 15%', explain: 'Decent earnings growth long-term', dataSource: 'research_sepa_fundamentals_cache', dataFields: ['EPS (annual, ≥3 years)'] },
-  { id: 'revenue_3y', criteria: 'Revenue Growth 3Y', condition: '≥ 15%', explain: 'Decent revenue growth long-term', dataSource: 'research_sepa_fundamentals_cache', dataFields: ['Revenue (annual, ≥3 years)'] },
-  { id: 'eps_acc_fy', criteria: 'EPS Acceleration FY', condition: 'EPS acc. last FY', explain: 'Decent earnings growth acceleration last year', dataSource: 'research_sepa_fundamentals_cache', dataFields: ['EPS (annual, ≥2 years)'] },
-  { id: 'revenue_acc_fy', criteria: 'Revenue Acceleration FY', condition: 'Revenue acc. last FY', explain: 'Decent revenue growth acceleration last year', dataSource: 'research_sepa_fundamentals_cache', dataFields: ['Revenue (annual, ≥2 years)'] },
+  { id: 'eps_q2q', criteria: 'EPS Growth Q2Q', condition: '≥ 25%', explain: 'Decent earnings growth Q2Q', dataSource: 'analytics_sepa_wide', dataFields: ['EPS (quarterly)'] },
+  { id: 'revenue_q2q', criteria: 'Revenue Growth Q2Q', condition: '≥ 25%', explain: 'Decent revenue growth Q2Q', dataSource: 'analytics_sepa_wide', dataFields: ['Revenue (quarterly)'] },
+  { id: 'eps_acc_2q', criteria: 'EPS Acceleration', condition: 'EPS acc. 2 Qs', explain: 'Decent earnings growth acceleration last 2Q', dataSource: 'analytics_sepa_wide', dataFields: ['EPS (≥3 quarters)'] },
+  { id: 'revenue_acc_2q', criteria: 'Revenue Acceleration', condition: 'Revenue acc. 2 Qs', explain: 'Decent revenue growth acceleration last 2Q', dataSource: 'analytics_sepa_wide', dataFields: ['Revenue (≥3 quarters)'] },
+  { id: 'eps_3y', criteria: 'EPS Growth 3Y', condition: '≥ 15%', explain: 'Decent earnings growth long-term', dataSource: 'analytics_sepa_wide', dataFields: ['EPS (annual, ≥3 years)'] },
+  { id: 'revenue_3y', criteria: 'Revenue Growth 3Y', condition: '≥ 15%', explain: 'Decent revenue growth long-term', dataSource: 'analytics_sepa_wide', dataFields: ['Revenue (annual, ≥3 years)'] },
+  { id: 'eps_acc_fy', criteria: 'EPS Acceleration FY', condition: 'EPS acc. last FY', explain: 'Decent earnings growth acceleration last year', dataSource: 'analytics_sepa_wide', dataFields: ['EPS (annual, ≥2 years)'] },
+  { id: 'revenue_acc_fy', criteria: 'Revenue Acceleration FY', condition: 'Revenue acc. last FY', explain: 'Decent revenue growth acceleration last year', dataSource: 'analytics_sepa_wide', dataFields: ['Revenue (annual, ≥2 years)'] },
 ]
 
 export const TECH_COND_LABELS: Record<string, string> = {
@@ -91,7 +91,7 @@ export function deriveCriterionStatus(
     }
   }
 
-  if (criterion.dataSource === 'research_sepa_fundamentals_cache') {
+  if (criterion.dataSource === 'analytics_sepa_wide' || criterion.dataSource === 'research_sepa_fundamentals_cache') {
     if (summary.fund_cache_view_exists === false) return { status: 'missing', note: 'Fund cache view not created' }
     const valid = summary.fund_cache_valid_count
     if (valid == null) return { status: 'unknown', note: 'Fund cache count unavailable' }
@@ -99,13 +99,13 @@ export function deriveCriterionStatus(
     const universe = summary.universe_count ?? 0
     if (universe > 0) {
       const pct = (valid / universe) * 100
-      if (pct >= 50) return { status: 'supported', note: `${valid.toLocaleString()} symbols cached` }
+      if (pct >= 50) return { status: 'supported', note: `${valid.toLocaleString()} symbols (dbt analytics)` }
       return {
         status: 'partial',
-        note: `${valid.toLocaleString()} / ${universe.toLocaleString()} cached (${pct.toFixed(1)}%)`,
+        note: `${valid.toLocaleString()} / ${universe.toLocaleString()} (${pct.toFixed(1)}%)`,
       }
     }
-    return { status: 'supported', note: `${valid.toLocaleString()} symbols cached` }
+    return { status: 'supported', note: `${valid.toLocaleString()} symbols (dbt analytics)` }
   }
 
   return { status: 'unknown', note: '' }

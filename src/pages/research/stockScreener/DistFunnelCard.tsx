@@ -6,6 +6,7 @@ import type { FundPassCountBucket, TechPassCountBucket } from '@/types/stockScre
 import { fundBarColorClass, techBarColorClass } from '@/utils/stockScreener'
 import { ScreenerCard } from './ScreenerCard'
 import {
+  screenerDistBodyClass,
   screenerDistFundAccentClass,
   screenerDistTechAccentClass,
 } from './stockScreenerUi'
@@ -65,21 +66,20 @@ function FunnelRow({
       }
       title={isClickable ? `Load ${symbolCount} symbols → Results` : undefined}
       className={cn(
-        'grid grid-cols-[52px_1fr_auto] items-center gap-2 py-0.5 text-dense-meta',
-        isClickable && '-mx-1 cursor-pointer rounded px-1 hover:bg-muted/30',
-        isActive && '-mx-1 rounded bg-accent/40 px-1',
+        'grid grid-cols-[44px_1fr_auto] items-center gap-1.5 py-px text-dense-caption',
+        isClickable && '-mx-0.5 cursor-pointer rounded px-0.5 hover:bg-muted/30',
+        isActive && '-mx-0.5 rounded bg-accent/40 px-0.5',
       )}
     >
       <span
         className={cn(
-          'text-right font-mono font-semibold tabular-nums text-muted-foreground',
+          'text-right font-mono font-medium tabular-nums text-muted-foreground',
           isFull && (suffix === '11' ? 'text-screener-tech' : 'text-screener-fund'),
         )}
       >
-        {isFull ? `${suffix}/${suffix} ★` : `${conditionsPassed}/${suffix}`}
+        {isFull ? `${suffix}/${suffix}★` : `${conditionsPassed}/${suffix}`}
       </span>
-      {/* Legacy ssp-funnel-bar-wrap: center-aligned fill → funnel taper when sorted DESC */}
-      <div className="flex h-4 w-full items-center justify-center">
+      <div className="flex h-2.5 w-full items-center justify-center">
         <div
           className={cn('h-full min-w-[2px] rounded-sm transition-[width] duration-200 ease-out', colorClass)}
           style={{ width: `${widthPct}%` }}
@@ -87,7 +87,7 @@ function FunnelRow({
       </div>
       <span className="whitespace-nowrap font-mono tabular-nums text-muted-foreground">
         {symbolCount.toLocaleString()}
-        <span className="text-dense-caption opacity-70">({sharePct}%)</span>
+        <span className="text-dense-micro opacity-70">({sharePct}%)</span>
       </span>
     </div>
   )
@@ -137,12 +137,12 @@ export function DistFunnelCard({
         </div>
       }
     >
-      <div className="space-y-1">
+      <div className={screenerDistBodyClass}>
         {activeHint}
         {criteriaLoading && !buckets ? (
-          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-16 w-full" />
         ) : criteriaError ? (
-          <p className="text-xs text-destructive">{criteriaError}</p>
+          <p className="text-dense-caption text-destructive">{criteriaError}</p>
         ) : buckets && buckets.length > 0 ? (
           buckets.map(({ conditions_passed, symbol_count }) => (
             <FunnelRow
@@ -158,13 +158,13 @@ export function DistFunnelCard({
             />
           ))
         ) : (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-dense-caption text-muted-foreground">
             {variant === 'tech'
               ? 'No data — run technical backfill first.'
               : 'No distribution data.'}
           </p>
         )}
-        {loading && <p className="text-dense-caption text-muted-foreground">Loading symbols…</p>}
+        {loading && <p className="text-dense-micro text-muted-foreground">Loading symbols…</p>}
       </div>
     </ScreenerCard>
   )

@@ -50,14 +50,14 @@ export function ConditionChipGroup({
 
   const clearAction =
     totalActive > 0 && onClearAll && !cardAccentKey ? (
-      <Button variant="ghost" size="sm" className="h-6 px-2 text-dense-caption" onClick={onClearAll}>
+      <Button variant="ghost" size="sm" className="h-5 px-1.5 text-dense-micro" onClick={onClearAll}>
         Clear
       </Button>
     ) : cardAccentKey && totalActive > 0 && onClearGroup && groups.length === 1 ? (
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 px-2 text-dense-caption"
+        className="h-5 px-1.5 text-dense-micro"
         onClick={() => onClearGroup(groups[0].key)}
       >
         Clear
@@ -73,14 +73,14 @@ export function ConditionChipGroup({
       badgeCount={totalActive > 0 ? totalActive : undefined}
       actions={clearAction}
     >
-      <div className="space-y-2">
+      <div className="space-y-1">
         {groups.map(g => {
           const groupActive = g.items.filter(c => activeIds.has(c.id)).length
           const hideInnerHeader = cardAccentKey != null
           return (
             <div key={g.key}>
               {!hideInnerHeader && (
-                <div className="mb-1 flex items-center gap-1">
+                <div className="mb-0.5 flex items-center gap-1">
                   <span className={cn(screenerGroupHeaderClass, g.headerClass)}>{g.label}</span>
                   {groupActive > 0 && onClearGroup && (
                     <button

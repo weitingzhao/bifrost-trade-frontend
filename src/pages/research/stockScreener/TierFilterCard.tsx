@@ -71,7 +71,7 @@ export function TierFilterCard({
           {activeCount > 0 && (
             <span
               className={cn(
-                'rounded-full px-1.5 py-0 font-mono text-dense-caption',
+                'rounded-full px-1.5 py-0 text-dense-caption tabular-nums',
                 SEGMENT.tierCountBadge[tier],
               )}
             >
@@ -83,15 +83,15 @@ export function TierFilterCard({
       titleClassName={SEGMENT.tierTitle[tier]}
       actions={
         activeCount > 0 ? (
-          <Button variant="ghost" size="sm" className="h-6 px-2 text-dense-caption" onClick={onClear}>
+          <Button variant="ghost" size="sm" className="h-5 px-1.5 text-dense-micro" onClick={onClear}>
             Clear
           </Button>
         ) : undefined
       }
     >
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="shrink-0 text-dense-caption text-muted-foreground">Score</span>
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5">
+          <span className="shrink-0 text-dense-micro text-muted-foreground">Score</span>
           <input
             type="range"
             min={0}
@@ -102,7 +102,7 @@ export function TierFilterCard({
           />
           <span
             className={cn(
-              'shrink-0 font-mono text-dense-caption tabular-nums',
+              'shrink-0 font-mono text-dense-micro tabular-nums',
               minScore > 0 && SEGMENT.tierScoreVal[tier],
             )}
           >
@@ -110,7 +110,7 @@ export function TierFilterCard({
           </span>
         </div>
         {groupedMomentum ? (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {(Object.keys(MOMENTUM_GROUP_LABELS) as Array<keyof typeof MOMENTUM_GROUP_LABELS>).map(
               g => (
                 <div key={g}>

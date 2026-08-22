@@ -59,6 +59,10 @@ export const router = createBrowserRouter([
       },
 
       {
+        path: 'research/daily-brief',
+        lazy: lazyPage(() => import('@/pages/research/DailyBriefPage')),
+      },
+      {
         path: 'research/sepa',
         lazy: lazyPage(() => import('@/pages/research/StockScreenerPage')),
       },
@@ -89,6 +93,38 @@ export const router = createBrowserRouter([
       {
         path: 'research/backtest',
         lazy: lazyPage(() => import('@/pages/research/BacktestPage')),
+      },
+      {
+        path: 'research/analysis-model',
+        lazy: lazyPage(() => import('@/pages/research/AnalysisModelPage')),
+      },
+      {
+        path: 'research/intraday-playbook',
+        lazy: lazyPage(() => import('@/pages/research/IntradayPlaybookPage')),
+      },
+      {
+        path: 'research/momentum-radar',
+        lazy: lazyPage(() => import('@/pages/research/MomentumRadarPage')),
+      },
+      {
+        path: 'research/sepa-daily-core',
+        lazy: lazyPage(() => import('@/pages/research/SepaDailyCorePage')),
+      },
+      {
+        path: 'research/gex-intraday',
+        lazy: lazyPage(() => import('@/pages/research/GexIntradayPage')),
+      },
+      {
+        path: 'research/forecast-sessions',
+        lazy: lazyPage(() => import('@/pages/research/ForecastSessionsPage')),
+      },
+      {
+        path: 'research/order-sentiment',
+        lazy: lazyPage(() => import('@/pages/research/OrderSentimentPage')),
+      },
+      {
+        path: 'research/event-radar',
+        lazy: lazyPage(() => import('@/pages/research/EventRadarPage')),
       },
 
       { path: 'strategy/instances/:instanceId?', element: <InstancesPage /> },

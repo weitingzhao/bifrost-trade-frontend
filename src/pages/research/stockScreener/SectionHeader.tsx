@@ -7,13 +7,11 @@ interface Props {
 
 export function SectionHeader({ label, variant }: Props) {
   return (
-    <div className="flex items-center gap-3 pb-0.5 border-b border-border">
+    <div className="flex items-center gap-2 border-b border-border/60 pb-0.5">
       <span
         className={cn(
-          'text-dense-label font-extrabold uppercase tracking-widest pb-2 -mb-px border-b-2',
-          variant === 'tech'
-            ? 'text-screener-tech border-screener-tech'
-            : 'text-screener-fund border-screener-fund',
+          'text-dense-caption font-medium uppercase tracking-[0.06em]',
+          variant === 'tech' ? 'text-screener-tech' : 'text-screener-fund',
         )}
       >
         {label}

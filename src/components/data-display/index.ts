@@ -56,6 +56,7 @@ export {
   denseTableEntityLink,
 } from '@bifrost/ui'
 export { EmptyState } from './EmptyState'
+export { SettlementBadges } from './SettlementBadges'
 export {
   segmentGroupClass,
   segmentButtonClass,

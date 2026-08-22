@@ -14,7 +14,7 @@ import type {
   TechDistSymbolsResponse,
   TierFilterResponse,
 } from '@/types/stockScreener'
-import { normalizeSnapshotRow } from '@/utils/stockScreener'
+import { normalizeCriteriaStats, normalizeSnapshotRow } from '@/utils/stockScreener'
 
 
 const EMPTY_CRITERIA: SepaCriteriaStats = {
@@ -72,7 +72,29 @@ const validateSnapshot = withValidation<SymbolsReadinessSnapshotResponse>(
 export async function fetchSepaCriteriaStats(): Promise<SepaCriteriaStats> {
   const data = await fetchJson(researchUrl('/research/data/readiness/criteria-stats'), 60_000, EMPTY_CRITERIA)
   if (!data.ok) throw new Error(data.error ?? 'Failed to load criteria stats')
-  return validateCriteriaStats(data)
+  const normalized = normalizeCriteriaStats(data)
+
+  // Enrich pass-count histograms when dbt mart omits them (api-research:stg shape).
+  if (!normalized.fundamental.pass_count_distribution?.length) {
+    const fundBuckets = await Promise.all(
+      Array.from({ length: 9 }, (_, i) => 8 - i).map(async (n) => {
+        const res = await fetchFundamentalDistributionSymbols(n)
+        return { conditions_passed: n, symbol_count: res.ok ? res.count : 0 }
+      }),
+    )
+    normalized.fundamental.pass_count_distribution = fundBuckets
+  }
+  if (!normalized.technical.pass_count_distribution?.length) {
+    const techBuckets = await Promise.all(
+      Array.from({ length: 12 }, (_, i) => 11 - i).map(async (n) => {
+        const res = await fetchTechnicalDistributionSymbols(n)
+        return { conditions_passed: n, symbol_count: res.ok ? res.count : 0 }
+      }),
+    )
+    normalized.technical.pass_count_distribution = techBuckets
+  }
+
+  return validateCriteriaStats(normalized)
 }
 
 export async function fetchFundamentalDistributionSymbols(

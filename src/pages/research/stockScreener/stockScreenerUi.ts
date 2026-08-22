@@ -1,66 +1,70 @@
 import { cn } from '@/lib/utils'
 
-/** Technical filter row — full viewport width; reflow at legacy breakpoints. */
+/** Technical filter row — tighter gaps; reflow at legacy breakpoints. */
 export const screenerTechRowClass = cn(
-  'grid w-full min-w-0 grid-cols-1 gap-3 items-stretch [&>*]:min-w-0',
+  'grid w-full min-w-0 grid-cols-1 gap-1.5 items-start [&>*]:min-w-0',
   'min-[721px]:grid-cols-2',
-  'min-[1501px]:grid-cols-[minmax(168px,0.95fr)_minmax(220px,1.35fr)_minmax(200px,1.15fr)_minmax(180px,1fr)]',
+  'min-[1501px]:grid-cols-[minmax(148px,0.9fr)_minmax(200px,1.3fr)_minmax(180px,1.1fr)_minmax(160px,1fr)]',
 )
 
-/** Fundamental filter row — full viewport width; reflow at legacy breakpoints. */
+/** Fundamental filter row — tighter gaps; reflow at legacy breakpoints. */
 export const screenerFundRowClass = cn(
-  'grid w-full min-w-0 grid-cols-1 gap-3 items-stretch [&>*]:min-w-0',
+  'grid w-full min-w-0 grid-cols-1 gap-1.5 items-start [&>*]:min-w-0',
   'min-[601px]:grid-cols-2',
   'min-[1001px]:grid-cols-3',
-  'min-[1501px]:grid-cols-[minmax(168px,0.95fr)_minmax(200px,1.1fr)_repeat(3,minmax(0,1fr))]',
+  'min-[1501px]:grid-cols-[minmax(148px,0.9fr)_minmax(180px,1.05fr)_repeat(3,minmax(0,1fr))]',
 )
 
-export const screenerStackColClass = 'flex min-w-0 flex-col gap-2'
+export const screenerStackColClass = 'flex min-w-0 flex-col gap-1.5'
 
-/** Elevated filter card on PageShell canvas. */
+/** Elevated filter card — compact padding (filters should not dominate the page). */
 export const screenerCardClass = cn(
-  'h-full rounded-[10px] border border-border bg-secondary p-3 shadow-sm',
-  'sm:px-4 sm:py-3',
+  'h-auto rounded-md border border-border bg-secondary px-2.5 py-1.5 shadow-none',
 )
 
-export const screenerCardStackedClass = 'px-3 py-2 sm:px-3 sm:py-2'
+export const screenerCardStackedClass = 'px-2 py-1.5'
 
-export const screenerCardStackedChipRowClass = 'max-h-[120px] overflow-y-auto'
+/** Cap tall chip stacks so filter columns stay short. */
+export const screenerCardStackedChipRowClass = 'max-h-[72px] overflow-y-auto'
 
 export const screenerCardTitleClass =
-  'm-0 text-dense-label font-bold uppercase tracking-[0.08em] text-[var(--color-text-dim,#5c6572)]'
+  'm-0 text-dense-caption font-medium uppercase tracking-[0.04em] text-muted-foreground'
 
 export const screenerGroupHeaderClass =
-  'mb-1 border-b border-border pb-1 text-dense-caption font-extrabold uppercase tracking-[0.07em]'
+  'mb-0.5 border-b border-border/70 pb-0.5 text-dense-micro font-medium uppercase tracking-[0.04em] text-muted-foreground'
 
-export const screenerChipRowClass = 'flex flex-wrap gap-1'
+export const screenerChipRowClass = 'flex flex-wrap gap-0.5'
 
+/** Condition chips — caption size, lighter than page results. */
 export const screenerChipClass = cn(
-  'inline-flex cursor-pointer items-center gap-0.5 rounded border border-border',
-  'bg-[rgba(26,31,38,0.6)] px-1.5 py-0.5 text-dense-caption text-muted-foreground',
-  'transition-[background,border-color,color] duration-150',
-  'hover:bg-[rgba(26,31,38,0.9)] hover:text-foreground',
+  'inline-flex cursor-pointer items-center gap-1 rounded border border-border/70',
+  'whitespace-nowrap bg-background/40 px-1.5 py-0.5 text-dense-caption font-sans font-normal',
+  'text-muted-foreground/90 transition-[background,border-color,color] duration-150',
+  'hover:bg-muted/40 hover:text-foreground',
 )
 
 export const screenerChipActiveClass = cn(
-  'border-lime-400 bg-lime-400/10 font-semibold text-foreground',
+  'border-lime-400/70 bg-lime-400/10 font-medium text-foreground',
 )
 
 export const screenerChipCheckClass = cn(
-  'inline-flex h-[0.85rem] w-[0.85rem] items-center justify-center rounded-[3px]',
-  'border border-[var(--color-border-strong,#3d4754)] text-dense-caption font-bold text-transparent',
+  'inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-[2px]',
+  'border border-border text-dense-micro font-medium text-transparent',
 )
 
 export const screenerChipActiveCheckClass =
   'border-lime-400 bg-lime-400 text-[#0a0c0f]'
 
 export const screenerFilterBadgeClass = cn(
-  'inline-flex h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full',
-  'bg-lime-400 px-[3px] text-dense-micro font-bold text-[#0a0c0f]',
+  'inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full',
+  'bg-lime-400 px-[2px] text-dense-micro font-semibold text-[#0a0c0f]',
 )
 
 export const screenerScoreSliderClass = 'h-1 flex-1 cursor-pointer accent-lime-400'
 
-export const screenerDistTechAccentClass = 'border-t-2 border-violet-400/35'
+export const screenerDistTechAccentClass = 'border-t border-violet-400/30'
 
-export const screenerDistFundAccentClass = 'border-t-2 border-emerald-400/35'
+export const screenerDistFundAccentClass = 'border-t border-emerald-400/30'
+
+/** Dist funnel body — scroll so 11 buckets do not stretch the filter row. */
+export const screenerDistBodyClass = 'max-h-[148px] overflow-y-auto space-y-0 pr-0.5'

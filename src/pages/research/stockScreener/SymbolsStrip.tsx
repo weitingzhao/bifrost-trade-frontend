@@ -16,6 +16,7 @@ interface Props {
   summary?: Summary | null
 }
 
+/** Results entry — slightly larger than filter chips so the page hierarchy reads Results > Filters. */
 export function SymbolsStrip({
   symbolText,
   onSymbolTextChange,
@@ -26,9 +27,9 @@ export function SymbolsStrip({
   summary,
 }: Props) {
   return (
-    <div className="rounded-lg border border-border bg-card/50 p-3 space-y-2">
-      <div className="flex items-center gap-2 text-xs">
-        <span className="font-semibold">Symbols</span>
+    <div className="rounded-md border border-border bg-secondary px-3 py-2 space-y-1.5">
+      <div className="flex items-center gap-2 text-dense-meta">
+        <span className="font-medium text-foreground">Symbols</span>
         {asOf && <span className="font-mono text-dense-caption text-muted-foreground">as-of {asOf}</span>}
         {loading && <span className="text-dense-caption text-muted-foreground">loading…</span>}
       </div>
@@ -37,7 +38,7 @@ export function SymbolsStrip({
         value={symbolText}
         onChange={(e) => onSymbolTextChange(e.target.value)}
         placeholder="AAPL,MSFT,NVDA  — or select conditions above"
-        className="w-full font-mono text-xs min-h-[52px] resize-y rounded-md border border-input bg-background px-3 py-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        className="w-full font-mono text-dense-body min-h-[44px] resize-y rounded-md border border-input bg-background px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-dense-meta">
         <span className="text-muted-foreground">

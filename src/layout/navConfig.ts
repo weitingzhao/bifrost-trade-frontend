@@ -6,6 +6,7 @@ import {
   BarChart2,
   BookOpen,
   ClipboardList,
+  Compass,
   Cpu,
   Eye,
   GitBranch,
@@ -25,6 +26,7 @@ import {
   TrendingUp,
   Trophy,
   Wand2,
+  Zap,
 } from 'lucide-react'
 import { getAllNavItems, type ShellNavGroup, type ShellNavItem } from '@bifrost/ui'
 
@@ -76,9 +78,28 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       {
         label: 'Ideas',
         items: [
+          route('Daily Brief', '/research/daily-brief', ClipboardList),
           route('Stock Screener', '/research/sepa', BookOpen),
           route('Option Screener', '/research/screener', ListFilter),
           route('Stock Watchlist', '/research/watchlist', Star),
+        ],
+      },
+      {
+        label: 'Engine',
+        items: [
+          route('Analysis Model', '/research/analysis-model', BarChart2),
+          route('Playbook', '/research/intraday-playbook', LineChart),
+          route('Momentum Radar', '/research/momentum-radar', Radar),
+          route('SEPA Daily Core', '/research/sepa-daily-core', Compass),
+        ],
+      },
+      {
+        label: 'Intelligence',
+        items: [
+          route('GEX Intraday', '/research/gex-intraday', BarChart2),
+          route('Forecast', '/research/forecast-sessions', TrendingUp),
+          route('Order Sentiment', '/research/order-sentiment', Activity),
+          route('Event Radar', '/research/event-radar', Zap),
         ],
       },
       {

@@ -38,9 +38,9 @@ export function ScreenerCard({
       )}
     >
       {(title != null || actions != null) && (
-        <div className="mb-2 flex flex-row items-center justify-between gap-2">
+        <div className="mb-1 flex flex-row items-center justify-between gap-1.5">
           {title != null && (
-            <h3 className={cn(screenerCardTitleClass, titleClassName, 'flex items-center gap-1.5')}>
+            <h3 className={cn(screenerCardTitleClass, titleClassName, 'flex items-center gap-1')}>
               {title}
               {badgeCount != null && badgeCount > 0 && (
                 <span className={screenerFilterBadgeClass}>{badgeCount}</span>

@@ -40,6 +40,10 @@ export interface SepaCriteriaStats {
     cached_count: number
     fund_pass_count: number
     no_data_count: number
+    /** Mart cumulative: symbols with ≥6 fundamental conditions. */
+    pass_6_plus?: number
+    pass_4_plus?: number
+    eval_date?: string
     conditions: SepaConditionStat[]
     pass_count_distribution?: FundPassCountBucket[]
     groups?: Record<string, { cached_count: number; pass_count: number; conditions: SepaConditionStat[] }>
@@ -58,6 +62,10 @@ export interface SepaCriteriaStats {
     tech_cached_count: number
     tech_pass_count: number
     tech_insufficient_count: number
+    /** Mart cumulative: symbols with ≥8 technical conditions. */
+    pass_8_plus?: number
+    pass_4_plus?: number
+    eval_date?: string
     conditions: TechConditionStat[]
     pass_count_distribution?: TechPassCountBucket[]
     momentum_conditions?: TechConditionStat[]

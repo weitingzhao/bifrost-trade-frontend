@@ -1,5 +1,12 @@
 import { SEPA_COND_CATALOG, TECH_COND_CATALOG } from '@/constants/stockScreenerCatalog'
-import type { FundPassCountBucket, ReadinessSnapshotRow, SortColumn, SortDirection, TechPassCountBucket } from '@/types/stockScreener'
+import type {
+  FundPassCountBucket,
+  ReadinessSnapshotRow,
+  SepaCriteriaStats,
+  SortColumn,
+  SortDirection,
+  TechPassCountBucket,
+} from '@/types/stockScreener'
 
 const FUND_CONDITION_IDS = SEPA_COND_CATALOG.map(c => c.id)
 const TECH_CONDITION_IDS = TECH_COND_CATALOG.map(c => c.id)
@@ -75,6 +82,146 @@ export function formatCriteriaAsOf(iso: string | undefined): string | null {
   if (!iso) return null
   const d = iso.slice(0, 10)
   return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null
+}
+
+/** dbt mart_sepa_criteria_stats counter key → condition id */
+const FUND_DBT_KEY_TO_ID: Record<string, string> = {
+  eps_q2q: 'eps_q2q_ge_25pct',
+  rev_q2q: 'rev_q2q_ge_25pct',
+  eps_acc: 'eps_acc_2q',
+  rev_acc: 'rev_acc_2q',
+  eps_3y: 'eps_3y_ge_15pct',
+  rev_3y: 'rev_3y_ge_15pct',
+  eps_acc_fy: 'eps_acc_fy',
+  rev_acc_fy: 'rev_acc_fy',
+}
+
+const TECH_DBT_KEY_TO_ID: Record<string, string> = {
+  volume: 'avg_volume_50_gt_threshold',
+  low52: 'close_ge_low52_x_1_3',
+  high52: 'close_ge_high52_x_0_75',
+  sma50_150: 'sma50_gt_sma150',
+  sma50_200: 'sma50_gt_sma200',
+  sma150_200: 'sma150_gt_sma200',
+  sma200_rising: 'sma200_rising_1m',
+  price_sma50: 'price_gt_sma50',
+  price_sma150: 'price_gt_sma150',
+  price_sma200: 'price_gt_sma200',
+  crs: 'crs_ge_70',
+}
+
+function isLegacyFeCriteriaShape(raw: Record<string, unknown>): boolean {
+  const fund = raw.fundamental
+  return (
+    typeof fund === 'object' &&
+    fund !== null &&
+    Array.isArray((fund as { conditions?: unknown }).conditions)
+  )
+}
+
+function conditionsFromDbtCounters(
+  stats: Record<string, unknown>,
+  keyMap: Record<string, string>,
+  catalog: readonly { id: string; label: string }[],
+): { id: string; label: string; pass: number; fail: number; no_data: number; total: number }[] {
+  const labelById = new Map(catalog.map((c) => [c.id, c.label]))
+  const total = Number(stats.evaluated ?? stats.total ?? 0) || 0
+  const out: {
+    id: string
+    label: string
+    pass: number
+    fail: number
+    no_data: number
+    total: number
+  }[] = []
+  for (const [key, id] of Object.entries(keyMap)) {
+    const pass = Number(stats[`${key}_pass`] ?? 0) || 0
+    const fail = Number(stats[`${key}_fail`] ?? 0) || 0
+    out.push({
+      id,
+      label: labelById.get(id) ?? id,
+      pass,
+      fail,
+      no_data: Math.max(0, total - pass - fail),
+      total,
+    })
+  }
+  return out
+}
+
+/**
+ * Normalize criteria-stats payload.
+ * Legacy FE shape has ``fundamental.conditions[]``; dbt mart returns flat pass/fail counters.
+ */
+export function normalizeCriteriaStats(raw: unknown): SepaCriteriaStats {
+  const data = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  if (isLegacyFeCriteriaShape(data)) {
+    return data as unknown as SepaCriteriaStats
+  }
+
+  const fundRaw = (data.fundamental && typeof data.fundamental === 'object'
+    ? data.fundamental
+    : {}) as Record<string, unknown>
+  const techRaw = (data.technical && typeof data.technical === 'object'
+    ? data.technical
+    : {}) as Record<string, unknown>
+
+  const fundEvaluated = Number(fundRaw.evaluated ?? fundRaw.total ?? 0) || 0
+  const techEvaluated = Number(techRaw.evaluated ?? techRaw.total ?? 0) || 0
+
+  return {
+    ok: data.ok !== false,
+    error: typeof data.error === 'string' ? data.error : undefined,
+    universe_count: Number(data.universe_count ?? fundRaw.total ?? techRaw.total ?? 0) || 0,
+    computed_at: typeof data.computed_at === 'string' ? data.computed_at : new Date().toISOString(),
+    fundamental: {
+      cached_count: fundEvaluated || Number(fundRaw.cached_count ?? 0) || 0,
+      fund_pass_count: Number(fundRaw.all_pass ?? fundRaw.fund_pass_count ?? 0) || 0,
+      no_data_count: Number(fundRaw.no_data ?? fundRaw.no_data_count ?? 0) || 0,
+      pass_6_plus: Number(fundRaw.pass_6_plus ?? 0) || 0,
+      pass_4_plus: Number(fundRaw.pass_4_plus ?? 0) || 0,
+      eval_date: typeof fundRaw.eval_date === 'string' ? fundRaw.eval_date : undefined,
+      conditions: Array.isArray(fundRaw.conditions)
+        ? (fundRaw.conditions as SepaCriteriaStats['fundamental']['conditions'])
+        : conditionsFromDbtCounters(fundRaw, FUND_DBT_KEY_TO_ID, SEPA_COND_CATALOG),
+      pass_count_distribution: Array.isArray(fundRaw.pass_count_distribution)
+        ? (fundRaw.pass_count_distribution as FundPassCountBucket[])
+        : undefined,
+    },
+    technical: {
+      total_in_snapshot: techEvaluated || Number(techRaw.total_in_snapshot ?? 0) || 0,
+      price_ready_count: techEvaluated || Number(techRaw.price_ready_count ?? 0) || 0,
+      fund_cached_count: fundEvaluated || Number(techRaw.fund_cached_count ?? 0) || 0,
+      both_ready: Math.min(
+        fundEvaluated || Number(fundRaw.cached_count ?? 0) || 0,
+        techEvaluated || Number(techRaw.tech_cached_count ?? 0) || 0,
+      ),
+      bars_ge_252: Number(techRaw.bars_ge_252 ?? 0) || 0,
+      bars_ge_240: Number(techRaw.bars_ge_240 ?? 0) || 0,
+      bars_ge_200: Number(techRaw.bars_ge_200 ?? 0) || 0,
+      bars_lt_200: Number(techRaw.bars_lt_200 ?? 0) || 0,
+      no_bars: Number(techRaw.no_bars ?? 0) || 0,
+      failure_reasons: Array.isArray(techRaw.failure_reasons)
+        ? (techRaw.failure_reasons as SepaCriteriaStats['technical']['failure_reasons'])
+        : [],
+      tech_cached_count: techEvaluated || Number(techRaw.tech_cached_count ?? 0) || 0,
+      tech_pass_count: Number(techRaw.all_pass ?? techRaw.tech_pass_count ?? 0) || 0,
+      tech_insufficient_count: Number(techRaw.tech_insufficient_count ?? 0) || 0,
+      pass_8_plus: Number(techRaw.pass_8_plus ?? 0) || 0,
+      pass_4_plus: Number(techRaw.pass_4_plus ?? 0) || 0,
+      eval_date: typeof techRaw.eval_date === 'string' ? techRaw.eval_date : undefined,
+      conditions: Array.isArray(techRaw.conditions)
+        ? (techRaw.conditions as SepaCriteriaStats['technical']['conditions']).map(
+            ({ id, label, pass, fail }) => ({ id, label, pass, fail }),
+          )
+        : conditionsFromDbtCounters(techRaw, TECH_DBT_KEY_TO_ID, TECH_COND_CATALOG).map(
+            ({ id, label, pass, fail }) => ({ id, label, pass, fail }),
+          ),
+      pass_count_distribution: Array.isArray(techRaw.pass_count_distribution)
+        ? (techRaw.pass_count_distribution as TechPassCountBucket[])
+        : undefined,
+    },
+  }
 }
 
 export function prepareDistBuckets(

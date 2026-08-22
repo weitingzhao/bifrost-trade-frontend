@@ -30,13 +30,13 @@ export const SEGMENT = {
     sentiment: 'border-l-[3px] border-l-pink-400/55',
   } as Record<string, string>,
   extTitle: {
-    quality: 'text-sky-300',
-    balance: 'text-lime-500',
-    cashflow: 'text-emerald-400',
-    valuation: 'text-amber-400',
-    profitability: 'text-violet-400',
-    efficiency: 'text-orange-400',
-    sentiment: 'text-pink-400',
+    quality: 'text-sky-300/90 font-medium',
+    balance: 'text-lime-500/90 font-medium',
+    cashflow: 'text-emerald-400/90 font-medium',
+    valuation: 'text-amber-400/90 font-medium',
+    profitability: 'text-violet-400/90 font-medium',
+    efficiency: 'text-orange-400/90 font-medium',
+    sentiment: 'text-pink-400/90 font-medium',
   } as Record<string, string>,
   extChip: {
     quality: 'border-l-2 border-l-sky-300/50',
@@ -53,9 +53,9 @@ export const SEGMENT = {
     sentiment: 'border-l-[3px] border-l-pink-400/55',
   } as Record<string, string>,
   tierTitle: {
-    momentum: 'text-amber-500',
-    structure: 'text-emerald-400',
-    sentiment: 'text-pink-400',
+    momentum: 'text-amber-500/90 font-medium',
+    structure: 'text-emerald-400/90 font-medium',
+    sentiment: 'text-pink-400/90 font-medium',
   } as Record<string, string>,
   tierChip: {
     momentum: 'border-l-2 border-l-amber-500/60',

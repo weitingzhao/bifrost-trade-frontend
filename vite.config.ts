@@ -32,6 +32,7 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
 
   const pluginOverride = env.VITE_API_MARKET_DATA_PLUGIN?.trim() || ''
   const flexOverride = env.VITE_API_FLEX_QUERY_PLUGIN?.trim() || ''
+  const researchOverride = env.VITE_API_RESEARCH_ENGINE?.trim() || ''
   const pluginProxy = (() => {
     if (!pluginOverride || pluginOverride === '/') {
       return {
@@ -85,9 +86,36 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
     }
   })()
 
+  const researchPluginProxy = (() => {
+    if (!researchOverride || researchOverride === '/') {
+      return {
+        target: tradeTarget,
+        changeOrigin: true,
+      }
+    }
+    try {
+      const u = new URL(researchOverride)
+      const pathPrefix = u.pathname.replace(/\/$/, '')
+      return {
+        target: u.origin,
+        changeOrigin: true,
+        rewrite: (path: string) =>
+          `${pathPrefix}${path.replace('/api/plugin/research', '')}`,
+      }
+    } catch {
+      return {
+        target: 'http://localhost:8780',
+        changeOrigin: true,
+        rewrite: (path: string) =>
+          `/api/v1/plugins/research/api${path.replace('/api/plugin/research', '')}`,
+      }
+    }
+  })()
+
   return {
     '/api/plugin/market-data': pluginProxy,
     '/api/plugin/flex-query': flexPluginProxy,
+    '/api/plugin/research': researchPluginProxy,
     '/api': {
       target: tradeTarget,
       changeOrigin: true,

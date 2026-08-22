@@ -93,3 +93,18 @@ export function flexQueryPluginUrl(path: string): string {
   if (!base || base === '/') return `/api/plugin/flex-query${normalizedPath}`
   return joinBase(base, normalizedPath)
 }
+
+/**
+ * Research Engine API (port 8795, via platform-api proxy or Trade gateway).
+ *
+ * DEV: `/api/plugin/research/…` → Vite proxy → Trade gateway / platform-api / research-api
+ * PROD/STG (empty VITE_API_RESEARCH_ENGINE): same-origin `/api/plugin/research/…` → Trade Traefik/nginx
+ * Escape hatch: absolute VITE_API_RESEARCH_ENGINE still supported.
+ */
+export function researchEngineUrl(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  if (import.meta.env.DEV) return `/api/plugin/research${normalizedPath}`
+  const base = (import.meta.env.VITE_API_RESEARCH_ENGINE as string | undefined)?.trim() ?? ''
+  if (!base || base === '/') return `/api/plugin/research${normalizedPath}`
+  return joinBase(base, normalizedPath)
+}

@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
+import { IvGauge } from '@/components/charts/IvGauge'
 import { useIvRadarData } from '@/hooks/useIvRadarData'
 import type { IvRadarBucket, IvRadarRow, IvRadarUniverseFilter } from '@/types/ivRadar'
 import {
@@ -31,6 +32,7 @@ import {
 } from '@/utils/ivRadar/universe'
 import { cn } from '@/lib/utils'
 
+type ViewMode = 'table' | 'gauge'
 type SortMode = 'symbol' | 'rank' | 'extremes'
 
 function fmtIv(n: number | null | undefined): string {
@@ -119,10 +121,54 @@ function RegimeCard({
   )
 }
 
+function GaugeGridView({ rows, navigate }: { rows: IvRadarRow[]; navigate: ReturnType<typeof useNavigate> }) {
+  const withData = rows.filter((r) => r.bucket !== 'no_data')
+  if (withData.length === 0) {
+    return (
+      <p className="py-8 text-center text-dense-meta text-muted-foreground">
+        No IV data to display in gauge view
+      </p>
+    )
+  }
+  return (
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+      {withData.map((row) => {
+        const rank = row.data?.iv_rank_1y ?? 0
+        const iv = row.data?.iv_current
+        const pct = row.data?.iv_percentile_1y
+        return (
+          <Card
+            key={row.symbol}
+            variant="elevated"
+            className="cursor-pointer transition-shadow hover:shadow-md"
+            onClick={() => navigate(`/research/discovery?symbol=${encodeURIComponent(row.symbol)}`)}
+          >
+            <CardContent className="flex flex-col items-center gap-1 px-2 py-3">
+              <IvGauge value={rank} size={90} />
+              <p className="text-dense-body font-semibold text-entity-symbol">{row.symbol}</p>
+              {iv != null && Number.isFinite(iv) ? (
+                <p className="font-mono text-dense-meta tabular-nums text-muted-foreground">
+                  ATM {(iv > 0 && iv < 3 ? iv * 100 : iv).toFixed(1)}%
+                </p>
+              ) : null}
+              {pct != null && Number.isFinite(pct) ? (
+                <p className="font-mono text-dense-micro tabular-nums text-muted-foreground">
+                  Pctl {pct.toFixed(0)}
+                </p>
+              ) : null}
+            </CardContent>
+          </Card>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function IvRadarPage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState<IvRadarUniverseFilter>('all')
   const [sortMode, setSortMode] = useState<SortMode>('rank')
+  const [viewMode, setViewMode] = useState<ViewMode>('table')
   const { rows, counts, isLoading, isError, error, refetch, isFetching } = useIvRadarData(filter)
 
   const sorted = useMemo(() => sortRows(rows, sortMode), [rows, sortMode])
@@ -138,7 +184,18 @@ export default function IvRadarPage() {
       <Card variant="elevated">
         <CardContent className="flex flex-col gap-2 px-3 py-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="shrink-0 text-xs font-medium text-muted-foreground">Universe:</span>
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">View:</span>
+            <SegmentControl
+              ariaLabel="IV Radar view mode"
+              size="sm"
+              value={viewMode}
+              onChange={v => setViewMode(v as ViewMode)}
+              options={[
+                { value: 'table', label: 'Table' },
+                { value: 'gauge', label: 'Gauge Grid' },
+              ]}
+            />
+            <span className="ml-2 shrink-0 text-xs font-medium text-muted-foreground">Universe:</span>
             <SegmentControl
               ariaLabel="IV Radar universe filter"
               size="sm"
@@ -151,18 +208,22 @@ export default function IvRadarPage() {
                 { value: 'holdings', label: 'Holdings' },
               ]}
             />
-            <span className="ml-2 shrink-0 text-xs font-medium text-muted-foreground">Sort:</span>
-            <SegmentControl
-              ariaLabel="IV Radar sort mode"
-              size="sm"
-              value={sortMode}
-              onChange={v => setSortMode(v as SortMode)}
-              options={[
-                { value: 'rank', label: 'Rank' },
-                { value: 'extremes', label: '|Rank−50|' },
-                { value: 'symbol', label: 'Symbol' },
-              ]}
-            />
+            {viewMode === 'table' && (
+              <>
+                <span className="ml-2 shrink-0 text-xs font-medium text-muted-foreground">Sort:</span>
+                <SegmentControl
+                  ariaLabel="IV Radar sort mode"
+                  size="sm"
+                  value={sortMode}
+                  onChange={v => setSortMode(v as SortMode)}
+                  options={[
+                    { value: 'rank', label: 'Rank' },
+                    { value: 'extremes', label: '|Rank−50|' },
+                    { value: 'symbol', label: 'Symbol' },
+                  ]}
+                />
+              </>
+            )}
             {isFetching && !isLoading ? (
               <span className="text-dense-meta text-muted-foreground">Refreshing…</span>
             ) : null}
@@ -236,6 +297,8 @@ export default function IvRadarPage() {
             </Button>
           }
         />
+      ) : viewMode === 'gauge' ? (
+        <GaugeGridView rows={sorted} navigate={navigate} />
       ) : (
         <DenseDataTable tableClassName="min-w-[720px]">
           <colgroup>

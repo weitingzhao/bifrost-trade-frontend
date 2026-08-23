@@ -20,13 +20,10 @@ import {
   fetchSepaReadinessSummary,
   finBackfillPoster,
   gapAckTypeForFinKind,
-  postSepaFundamentalsBackfill,
   postSepaGapAck,
   postSepaGroupedHistoryBackfill,
   postSepaPriceGapBackfill,
-  postSepaReadinessSnapshot,
   postSepaStockUnifiedSnapshot,
-  postSepaTechnicalBackfill,
 } from '@/api/research/stockDataReadiness'
 import type { TrackedMassiveDbJobKind } from './refJobSessionStub'
 import type { FinDrawerKind, RunbookStageId, SepaRunStep } from '@/types/stockDataReadiness'
@@ -64,13 +61,6 @@ function PageInner() {
   const [groupedHistoryBusy, setGroupedHistoryBusy] = useState(false)
   const [groupedHistoryMsg, setGroupedHistoryMsg] = useState<string | null>(null)
   const [groupedHistoryOk, setGroupedHistoryOk] = useState<boolean | null>(null)
-
-  const [evalPublishBusy, setEvalPublishBusy] = useState(false)
-  const [evalPublishPhase, setEvalPublishPhase] = useState<'idle' | 'backfill' | 'snapshot'>('idle')
-  const [fundBackfillMsg, setFundBackfillMsg] = useState<string | null>(null)
-  const [fundBackfillOk, setFundBackfillOk] = useState<boolean | null>(null)
-  const [snapshotMsg, setSnapshotMsg] = useState<string | null>(null)
-  const [snapshotOk, setSnapshotOk] = useState<boolean | null>(null)
 
   const [finAllBusy, setFinAllBusy] = useState(false)
   const [finAllMsg, setFinAllMsg] = useState<string | null>(null)
@@ -299,53 +289,6 @@ function PageInner() {
     [summary, voidAckBusy, refreshReadinessBoard],
   )
 
-  const runEvaluatePublish = useCallback(async () => {
-    setEvalPublishBusy(true)
-    setEvalPublishPhase('backfill')
-    setFundBackfillMsg(null)
-    setFundBackfillOk(null)
-    setSnapshotMsg(null)
-    setSnapshotOk(null)
-    try {
-      const fundRes = await postSepaFundamentalsBackfill({
-        max_workers: 4,
-        rate_limit_rps: 4,
-        only_missing: false,
-      })
-      if (!fundRes.ok) {
-        setFundBackfillMsg(fundRes.error ?? 'Fundamentals backfill failed')
-        setFundBackfillOk(false)
-        return
-      }
-      setFundBackfillMsg(fundRes.message ?? `Phase4 job for ${fmt(fundRes.gap_count)} symbols.`)
-      setFundBackfillOk(true)
-      try {
-        const techRes = await postSepaTechnicalBackfill({ only_missing: false })
-        if (techRes.ok && techRes.message) {
-          setFundBackfillMsg(prev => (prev ? `${prev} · ${techRes.message}` : techRes.message ?? null))
-        }
-      } catch {
-        // non-fatal
-      }
-      setEvalPublishPhase('snapshot')
-      const snapRes = await postSepaReadinessSnapshot()
-      if (!snapRes.ok) {
-        setSnapshotMsg(snapRes.error ?? 'Snapshot failed')
-        setSnapshotOk(false)
-        return
-      }
-      setSnapshotMsg(`rows_affected=${fmt(snapRes.rows_affected)} elapsed=${fmt(snapRes.elapsed_ms)}ms`)
-      setSnapshotOk(true)
-      await refreshReadinessBoard()
-    } catch (e) {
-      setSnapshotMsg(e instanceof Error ? e.message : 'Evaluate & publish failed')
-      setSnapshotOk(false)
-    } finally {
-      setEvalPublishBusy(false)
-      setEvalPublishPhase('idle')
-    }
-  }, [refreshReadinessBoard])
-
   const runFixGaps = useCallback(async () => {
     setFixGapsBusy(true)
     setFixGapsMsg(null)
@@ -358,13 +301,8 @@ function PageInner() {
         return
       }
       if ((backfill.gap_count ?? 0) === 0) {
-        const snap = await postSepaReadinessSnapshot()
-        setFixGapsMsg(
-          snap.ok
-            ? `No gaps found. Snapshot refreshed: ${fmt(snap.rows_affected)} rows.`
-            : snap.error ?? 'Snapshot refresh failed',
-        )
-        setFixGapsOk(snap.ok)
+        setFixGapsMsg('No price gaps found.')
+        setFixGapsOk(true)
         await refreshReadinessBoard()
         return
       }
@@ -438,12 +376,6 @@ function PageInner() {
             groupedHistoryBusy={groupedHistoryBusy}
             groupedHistoryMsg={groupedHistoryMsg}
             groupedHistoryOk={groupedHistoryOk}
-            evalPublishBusy={evalPublishBusy}
-            evalPublishPhase={evalPublishPhase}
-            fundBackfillMsg={fundBackfillMsg}
-            fundBackfillOk={fundBackfillOk}
-            snapshotMsg={snapshotMsg}
-            snapshotOk={snapshotOk}
             finAllBusy={finAllBusy}
             finAllMsg={finAllMsg}
             finAllOk={finAllOk}
@@ -455,7 +387,6 @@ function PageInner() {
             onFinBackfillAll={kind => void runFinBackfillAll(kind)}
             onOpenFinGaps={kind => setFinGapsKind(kind)}
             onToggleVoid={kind => void handleToggleVoid(kind)}
-            onEvaluatePublish={() => void runEvaluatePublish()}
             checkedSteps={checkedSteps}
           />
           <div className="flex flex-wrap items-center gap-2">

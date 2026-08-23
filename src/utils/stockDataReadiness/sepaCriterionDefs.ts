@@ -91,11 +91,10 @@ export function deriveCriterionStatus(
     }
   }
 
-  if (criterion.dataSource === 'analytics_sepa_wide' || criterion.dataSource === 'research_sepa_fundamentals_cache') {
-    if (summary.fund_cache_view_exists === false) return { status: 'missing', note: 'Fund cache view not created' }
+  if (criterion.dataSource === 'analytics_sepa_wide') {
     const valid = summary.fund_cache_valid_count
-    if (valid == null) return { status: 'unknown', note: 'Fund cache count unavailable' }
-    if (valid === 0) return { status: 'missing', note: 'No valid fund cache rows' }
+    if (valid == null) return { status: 'unknown', note: 'Fundamental eval count unavailable' }
+    if (valid === 0) return { status: 'missing', note: 'No fundamental eval rows (dbt)' }
     const universe = summary.universe_count ?? 0
     if (universe > 0) {
       const pct = (valid / universe) * 100

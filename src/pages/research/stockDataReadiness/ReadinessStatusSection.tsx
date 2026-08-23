@@ -68,7 +68,8 @@ export function ReadinessStatusSection({
 
       {!summary?.snapshot_populated && (
         <p className="text-sm text-muted-foreground">
-          No snapshot for today yet. Run <strong>Step 10 → Evaluate &amp; Refresh Snapshot</strong> to populate.
+          Analytics marts may still be filling — dbt CronJob populates{' '}
+          <code className="text-sky-300/90">dw_stock.mart_sepa_*</code> after market close.
         </p>
       )}
 
@@ -80,10 +81,10 @@ export function ReadinessStatusSection({
               {notesCount === 0
                 ? 'All universe symbols are price_ready'
                 : `${fmt(notesCount)} universe symbols not price_ready`}
-              {summary.fund_cache_view_exists && (
+              {summary.fund_cache_valid_count != null && (
                 <span className="text-muted-foreground">
                   {' '}
-                  · {fmt(summary.fund_cache_valid_count ?? null)} fund cache valid
+                  · {fmt(summary.fund_cache_valid_count)} fundamental eval rows (dbt)
                 </span>
               )}
             </span>

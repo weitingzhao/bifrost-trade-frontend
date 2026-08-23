@@ -215,9 +215,9 @@ export function SepaScreeningChecklist({
 
             {!hasTechConds && (
               <p className="text-xs text-muted-foreground">
-                No technical snapshot yet — run Evaluate &amp; Publish or POST{' '}
-                <code className="text-sky-300/90">/research/data/readiness/backfill-technical</code> to
-                populate.
+                No technical eval rows yet — dbt CronJob materializes{' '}
+                <code className="text-sky-300/90">mart_sepa_technical_eval</code> after market close
+                (requires sufficient bar depth).
               </p>
             )}
 

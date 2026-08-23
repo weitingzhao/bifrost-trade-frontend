@@ -54,12 +54,6 @@ interface Props {
   groupedHistoryBusy: boolean
   groupedHistoryMsg: string | null
   groupedHistoryOk: boolean | null
-  evalPublishBusy: boolean
-  evalPublishPhase: 'idle' | 'backfill' | 'snapshot'
-  fundBackfillMsg: string | null
-  fundBackfillOk: boolean | null
-  snapshotMsg: string | null
-  snapshotOk: boolean | null
   finAllBusy: boolean
   finAllMsg: string | null
   finAllOk: boolean | null
@@ -71,7 +65,6 @@ interface Props {
   onFinBackfillAll: (kind: FinDrawerKind) => void
   onOpenFinGaps: (kind: FinDrawerKind) => void
   onToggleVoid: (kind: FinDrawerKind) => void
-  onEvaluatePublish: () => void
   checkedSteps: Set<number>
 }
 
@@ -89,12 +82,6 @@ export function StepDetailPanel(props: Props) {
     groupedHistoryBusy,
     groupedHistoryMsg,
     groupedHistoryOk,
-    evalPublishBusy,
-    evalPublishPhase,
-    fundBackfillMsg,
-    fundBackfillOk,
-    snapshotMsg,
-    snapshotOk,
     finAllBusy,
     finAllMsg,
     finAllOk,
@@ -106,7 +93,6 @@ export function StepDetailPanel(props: Props) {
     onFinBackfillAll,
     onOpenFinGaps,
     onToggleVoid,
-    onEvaluatePublish,
     checkedSteps,
   } = props
 
@@ -305,42 +291,22 @@ export function StepDetailPanel(props: Props) {
 
       {activeStep === 10 && (
         <div className="space-y-3">
-          <div className="text-sm font-medium">Evaluate &amp; publish readiness snapshot</div>
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-            <strong>Note:</strong> Evaluation is now handled by the{' '}
-            <Code>dbt analytics pipeline</Code> (runs daily after market close). The manual
-            &ldquo;Backfill Fundamentals&rdquo; and &ldquo;Backfill Technical&rdquo; steps are
-            deprecated — dbt materializes <Code>analytics.sepa_wide</Code> automatically.
+          <div className="text-sm font-medium">SEPA evaluation (dbt analytics)</div>
+          <div className="rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-muted-foreground">
+            Fundamental and technical conditions are materialized by the{' '}
+            <Code>dbt analytics pipeline</Code> (daily CronJob after market close) into{' '}
+            <Code>dw_stock.mart_sepa_*</Code>. Manual snapshot / backfill endpoints are retired.
           </div>
           <ReadinessMaintenanceBox
             title="Conditions evaluated"
             rows={[
-              { badge: 'AUTO', variant: 'auto', text: 'dbt analytics pipeline runs daily after market close — evaluates all SEPA fundamental and technical conditions into analytics.sepa_wide' },
-              { badge: 'LEGACY', variant: 'manual', text: 'Manual backfill-fundamentals / backfill-technical endpoints are deprecated; the button below triggers a legacy snapshot refresh only' },
+              {
+                badge: 'AUTO',
+                variant: 'auto',
+                text: 'dbt CronJob refreshes mart_sepa_fundamental_eval, mart_sepa_technical_eval, and screener_wide — no manual Step 10 action required',
+              },
             ]}
           />
-          <Button
-            disabled={evalPublishBusy || derived.universeCount === 0}
-            onClick={onEvaluatePublish}
-          >
-            {evalPublishBusy
-              ? evalPublishPhase === 'backfill'
-                ? '(1/2) Evaluating fundamentals…'
-                : '(2/2) Refreshing snapshot…'
-              : 'Refresh Snapshot (Legacy)'}
-          </Button>
-          {fundBackfillMsg && (
-            <Feedback ok={fundBackfillOk}>
-              <span className="text-muted-foreground">Phase 1: </span>
-              {fundBackfillMsg}
-            </Feedback>
-          )}
-          {snapshotMsg && (
-            <Feedback ok={snapshotOk}>
-              <span className="text-muted-foreground">Phase 2: </span>
-              {snapshotMsg}
-            </Feedback>
-          )}
         </div>
       )}
     </div>

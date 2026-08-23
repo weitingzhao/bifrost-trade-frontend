@@ -28,8 +28,8 @@ export const RUNBOOK_STAGE_LAYOUT: ReadonlyArray<{
   },
   {
     id: 'publish',
-    title: 'Evaluate & publish',
-    blurb: 'Evaluate fundamentals + materialize readiness snapshot',
+    title: 'SEPA evaluation',
+    blurb: 'dbt analytics pipeline materializes mart_sepa_* marts (daily CronJob)',
     stepIds: [10],
   },
 ]

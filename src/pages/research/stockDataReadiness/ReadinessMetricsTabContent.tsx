@@ -28,7 +28,9 @@ export function ReadinessMetricsTabContent({
         >
           <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>
-            Snapshot table is empty for today — run Step 10 (Evaluate &amp; publish) to populate it.
+            Analytics marts may still be filling — dbt CronJob populates{' '}
+            <span className="font-mono">dw_stock.mart_sepa_*</span> after market close (no manual Step 10
+            action).
           </span>
         </div>
       )}

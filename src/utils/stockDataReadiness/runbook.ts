@@ -232,18 +232,15 @@ export function deriveRunbookState(
   const step1Done = universeCount > 0
   const unifiedSnapDone = (unifiedSnapRows ?? 0) > 0
   const fundCacheValid = summary?.fund_cache_valid_count ?? 0
-  const fundCacheViewExists = summary?.fund_cache_view_exists
   const fundStepStatus: CheckStatus = summaryLoading
     ? 'loading'
-    : fundCacheViewExists === false
-      ? 'error'
-      : fundCacheValid > 0 && universeCount > 0 && fundCacheValid / universeCount >= 0.5
-        ? 'ok'
-        : fundCacheValid > 0
-          ? 'warn'
-          : summary
-            ? 'error'
-            : 'unknown'
+    : fundCacheValid > 0 && universeCount > 0 && fundCacheValid / universeCount >= 0.5
+      ? 'ok'
+      : fundCacheValid > 0
+        ? 'warn'
+        : summary
+          ? 'error'
+          : 'unknown'
   const fundStepDone = fundCacheValid > 0
   const matSnapshotStepDone = summary?.snapshot_populated === true
 
@@ -373,8 +370,8 @@ export function deriveRunbookState(
     },
     {
       id: 10,
-      title: 'Evaluate & publish',
-      short: 'Fund + Snapshot',
+      title: 'SEPA evaluation',
+      short: 'dbt analytics',
       status: (fundStepStatus === 'error' || matSnapshotStepStatus === 'error'
         ? 'error'
         : fundStepStatus === 'loading' || matSnapshotStepStatus === 'loading'
@@ -386,10 +383,10 @@ export function deriveRunbookState(
               : 'unknown') as CheckStatus,
       done: fundStepDone && matSnapshotStepDone,
       metric: matSnapshotStepDone
-        ? `${fmt(snap?.rows_total)} rows · ${fmt(fundCacheValid)} cached`
+        ? `${fmt(snap?.rows_total)} screener · ${fmt(fundCacheValid)} eval`
         : fundCacheValid > 0
-          ? `${fmt(fundCacheValid)} cached`
-          : 'not run',
+          ? `${fmt(fundCacheValid)} eval rows`
+          : 'awaiting dbt',
     },
   ]
 

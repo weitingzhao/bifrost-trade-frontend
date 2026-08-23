@@ -66,7 +66,6 @@ export interface SepaReadinessSummaryResponse {
   tickers_active_count?: number
   tickers_last_synced_at?: string | null
   price_readiness_live?: { total_symbols: number; price_ready: number }
-  fund_cache_view_exists?: boolean
   fund_cache_valid_count?: number | null
   snapshot_populated?: boolean
   snapshot_today?: {

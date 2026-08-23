@@ -41,12 +41,9 @@ export function ReadinessMetricsStrip({ summary, vendorFillGap }: Props) {
       accent: Boolean(snap?.price_ready),
     },
     {
-      label: 'Fund cache valid',
-      value:
-        summary?.fund_cache_view_exists === false
-          ? 'View not created'
-          : fmt(summary?.fund_cache_valid_count ?? null),
-      sub: 'v_sepa_symbol_fund_cache_readiness (optional)',
+      label: 'Fundamental eval rows',
+      value: fmt(summary?.fund_cache_valid_count ?? null),
+      sub: 'dw_stock.mart_sepa_fundamental_eval (dbt)',
     },
   ]
 

@@ -1,7 +1,6 @@
 import type { QueueSummaryRow, WorkerSummary } from '@/types/ops'
-import { BROKER_QUEUE_STOCKS_IB } from './celeryQueueLabels'
 
-export const SUPPORTED_CELERY_QUEUE_NAMES = [BROKER_QUEUE_STOCKS_IB] as const
+export const SUPPORTED_CELERY_QUEUE_NAMES = [] as const
 
 export type CeleryRuntimeLamp = 'green' | 'yellow' | 'red' | 'none'
 
@@ -67,9 +66,11 @@ export function dedupedQueueSummaryTotals(rows: QueueSummaryRow[]): {
       rc += x
       rcHas = true
     }
-    if (row.name === BROKER_QUEUE_STOCKS_IB) {
-      if (row.done_db != null && Number.isFinite(row.done_db)) done_db = row.done_db
-      if (row.failed_db != null && Number.isFinite(row.failed_db)) failed_db = row.failed_db
+    if (row.done_db != null && Number.isFinite(row.done_db)) {
+      done_db = (done_db ?? 0) + row.done_db
+    }
+    if (row.failed_db != null && Number.isFinite(row.failed_db)) {
+      failed_db = (failed_db ?? 0) + row.failed_db
     }
   }
 

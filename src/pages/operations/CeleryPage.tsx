@@ -34,7 +34,7 @@ import {
   parseCelerySearchParams,
 } from './celery/celeryUrlSync'
 import { resolveConsoleTargetForQueue } from './celery/celeryNavigation'
-import { useWorkerProfiles, useOpsWorkers } from '@/hooks/useOpsData'
+import { useOpsWorkers } from '@/hooks/useOpsData'
 import { cn } from '@/lib/utils'
 
 const JOB_QUEUES_TOOLTIP =
@@ -49,13 +49,7 @@ function CeleryPageContent() {
   const { flash } = useCeleryOps()
   const { data: workersData } = useOpsWorkers()
   const workers = useMemo(() => workersData?.workers ?? [], [workersData?.workers])
-  const { data: profilesData } = useWorkerProfiles()
 
-  const [jobQueueTarget, setJobQueueTarget] = useState<{
-    queue: string
-    status?: CeleryStatusFilter
-    seq: number
-  } | null>(null)
   const [queueFilter, setQueueFilter] = useState<string | null>(null)
   const [consoleTarget, setConsoleTarget] = useState<ConsoleTarget>('none')
 
@@ -87,13 +81,8 @@ function CeleryPageContent() {
     const parsed = parseCelerySearchParams(searchParams)
 
     if (parsed.queue) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync URL deep link to job queue target
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync URL deep link to job queue filter
       setQueueFilter(parsed.queue)
-      setJobQueueTarget(prev => ({
-        queue: parsed.queue!,
-        status: parsed.status ?? 'all',
-        seq: (prev?.seq ?? 0) + 1,
-      }))
     }
 
     if (parsed.console) {
@@ -120,7 +109,6 @@ function CeleryPageContent() {
 
   const navigateToQueue = useCallback(
     (queue: string, status?: CeleryStatusFilter) => {
-      setJobQueueTarget(prev => ({ queue, status, seq: (prev?.seq ?? 0) + 1 }))
       setQueueFilter(queue)
       setSearchParams(
         prev =>
@@ -240,14 +228,7 @@ function CeleryPageContent() {
           <TabsContent value="queues_instances" className="space-y-3 mt-3">
             <div ref={jobQueuesSectionRef}>
               <CelerySectionCard title="Job Queues" tooltip={JOB_QUEUES_TOOLTIP}>
-                <CeleryJobQueuesSection
-                  key={
-                    jobQueueTarget ? `${jobQueueTarget.queue}-${jobQueueTarget.seq}` : 'default'
-                  }
-                  profiles={profilesData?.profiles}
-                  initialQueue={jobQueueTarget?.queue ?? urlState.queue}
-                  initialStatus={jobQueueTarget?.status ?? urlState.status ?? 'all'}
-                />
+                <CeleryJobQueuesSection />
               </CelerySectionCard>
             </div>
 

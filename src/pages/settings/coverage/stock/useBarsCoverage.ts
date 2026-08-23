@@ -11,7 +11,6 @@ import {
   postWatchlistEodRefresh,
   type WatchlistEodRefreshPreviewResponse,
 } from '@/api/market'
-import { fetchBarsJobs } from '@/api/ops'
 import { ALL_BAR_PERIOD_VALUES } from '@/constants/barPeriods'
 import { splitCoverageByReferenceIndices } from '@/utils/coverage/coverageSymbolGroups'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -76,14 +75,6 @@ export function useBarsCoverage() {
     }
   }, [])
 
-  const loadBarsJobs = useCallback(async () => {
-    try {
-      await fetchBarsJobs(5, 0, 'done')
-    } catch {
-      /* ignore */
-    }
-  }, [])
-
   useEffect(() => {
     void loadCoverage()
   }, [loadCoverage])
@@ -127,7 +118,6 @@ export function useBarsCoverage() {
       )
       setWatchlistRefreshPreview(null)
       if ((res.queued_count ?? 0) > 0) {
-        await loadBarsJobs()
         await loadCoverage()
       }
     } catch (e) {
@@ -135,7 +125,7 @@ export function useBarsCoverage() {
     } finally {
       setWatchlistRefreshRunning(false)
     }
-  }, [backfillApiIntervalSec, backfillIsTest, loadBarsJobs, loadCoverage])
+  }, [backfillApiIntervalSec, backfillIsTest, loadCoverage])
 
   const handleRefreshIndices = useCallback(async () => {
     setIndicesRefreshLoading(true)

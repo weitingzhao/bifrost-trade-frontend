@@ -9,7 +9,6 @@ import type {
   ExtendedBrokerStatus,
   CeleryCapabilitiesResponse,
   AuditEntry,
-  BarsJob,
   JobQueueStatusCounts,
 } from '@/types/ops'
 import { withValidation } from '@/lib/apiValidation'
@@ -166,91 +165,6 @@ export async function fetchOpsAudit(limit = 100): Promise<{
 }> {
   const r = await fetch(opsUrl(`/ops/audit?limit=${limit}`))
   return parseJson(r)
-}
-
-// ── Bars jobs (/ops/bars/jobs) ───────────────────────────────────────────────
-
-function barsJobsUrl(path: string): string {
-  return opsUrl(`/ops/bars/jobs${path}`)
-}
-
-export async function fetchBarsJobs(
-  limit = 25,
-  offset = 0,
-  status?: string | null,
-): Promise<{ jobs: BarsJob[]; total: number; error?: string }> {
-  const params = new URLSearchParams()
-  params.set('limit', String(limit))
-  params.set('offset', String(offset))
-  if (status && status !== 'all') params.set('status', status)
-  const r = await fetch(barsJobsUrl(`?${params}`))
-  if (!r.ok) throw new Error(`/ops/bars/jobs: ${r.status}`)
-  const j = await parseJson<Record<string, unknown>>(r)
-  return {
-    jobs: Array.isArray(j.jobs) ? (j.jobs as BarsJob[]) : [],
-    total: typeof j.total === 'number' ? j.total : 0,
-    error: typeof j.error === 'string' ? j.error : undefined,
-  }
-}
-
-export async function deleteAllBarsJobs(
-  status?: string | null,
-): Promise<{ ok: boolean; deleted: number; error?: string }> {
-  const params = new URLSearchParams()
-  if (status && status !== 'all') params.set('status', status)
-  const r = await fetch(barsJobsUrl(`?${params}`), { method: 'DELETE' })
-  const j = await parseJson<Record<string, unknown>>(r)
-  return {
-    ok: r.ok && j.ok !== false,
-    deleted: typeof j.deleted === 'number' ? j.deleted : 0,
-    error: typeof j.error === 'string' ? j.error : undefined,
-  }
-}
-
-export async function postRetryBarsJob(
-  jobId: string,
-): Promise<{ ok: boolean; error?: string; job?: BarsJob }> {
-  const r = await fetch(barsJobsUrl(`/${encodeURIComponent(jobId)}/retry`), { method: 'POST' })
-  const j = await parseJson<Record<string, unknown>>(r)
-  return {
-    ok: r.ok && j.ok === true,
-    error: typeof j.error === 'string' ? j.error : undefined,
-    job: j.job as BarsJob | undefined,
-  }
-}
-
-export async function postRetryFailedBarsJobs(limit = 100): Promise<{
-  ok: boolean
-  error?: string
-  reset?: number
-  enqueued?: number
-  enqueue_errors?: { job_id: string; error: string }[]
-}> {
-  const params = new URLSearchParams({ limit: String(Math.max(1, Math.min(500, limit))) })
-  const r = await fetch(barsJobsUrl(`/retry-failed?${params}`), { method: 'POST' })
-  const j = await parseJson<Record<string, unknown>>(r)
-  return {
-    ok: r.ok && j.ok === true,
-    error: typeof j.error === 'string' ? j.error : undefined,
-    reset: typeof j.reset === 'number' ? j.reset : undefined,
-    enqueued: typeof j.enqueued === 'number' ? j.enqueued : undefined,
-    enqueue_errors: Array.isArray(j.enqueue_errors)
-      ? (j.enqueue_errors as { job_id: string; error: string }[])
-      : undefined,
-  }
-}
-
-export async function trimBarsJobs(
-  keep: number,
-): Promise<{ ok: boolean; deleted: number; error?: string }> {
-  const params = new URLSearchParams({ keep: String(keep) })
-  const r = await fetch(barsJobsUrl(`/trim?${params}`), { method: 'POST' })
-  const j = await parseJson<Record<string, unknown>>(r)
-  return {
-    ok: r.ok && j.ok !== false,
-    deleted: typeof j.deleted === 'number' ? j.deleted : 0,
-    error: typeof j.error === 'string' ? j.error : undefined,
-  }
 }
 
 // ── Market ingest services (Socket page) ──────────────────────────────────────

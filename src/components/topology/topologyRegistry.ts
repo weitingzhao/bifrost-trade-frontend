@@ -1,6 +1,3 @@
-import { SUPPORTED_CELERY_QUEUE_NAMES } from '@/utils/celeryRuntime'
-import { formatQueueLabel } from '@/utils/celeryQueueLabels'
-
 export type TopologyNodeKind = 'api' | 'socket' | 'daemon' | 'celery'
 
 export type TopologyLamp = 'green' | 'yellow' | 'red'
@@ -70,21 +67,10 @@ export function celeryQueueFromNodeKey(key: string): string | undefined {
   return key.slice('celery_q_'.length)
 }
 
-const CELERY_QUEUE_NODES: TopologyNodeDef[] = SUPPORTED_CELERY_QUEUE_NAMES.map(queue => ({
-  key: celeryQueueNodeKey(queue),
-  name: formatQueueLabel(queue),
-  kind: 'celery' as const,
-  zoneId: 'celery' as const,
-  celeryQueue: queue,
-}))
-
 export const TOPOLOGY_NODE_REGISTRY: TopologyNodeDef[] = [
   { key: 'monitor', name: 'Monitor', kind: 'api', zoneId: 'api_control' },
   { key: 'ops', name: 'Ops', kind: 'api', zoneId: 'api_control' },
   { key: 'docs', name: 'Docs', kind: 'api', zoneId: 'api_control' },
-  { key: CELERY_BEAT_NODE_KEY, name: 'Beat Agent', kind: 'celery', zoneId: 'celery' },
-  { key: CELERY_BROKER_NODE_KEY, name: 'Broker', kind: 'celery', zoneId: 'celery' },
-  ...CELERY_QUEUE_NODES,
   { key: 'trading', name: 'Trading', kind: 'api', zoneId: 'api_account' },
   { key: 'portfolio', name: 'Portfolio', kind: 'api', zoneId: 'api_account' },
   { key: 'research', name: 'Research', kind: 'api', zoneId: 'api_research' },
@@ -112,9 +98,6 @@ export const TOPOLOGY_NODE_LAYOUT: Record<string, { x: number; y: number }> = {
   research: { x: 488, y: 48 },
   strategy: { x: 568, y: 48 },
   market: { x: 648, y: 48 },
-  celery_beat: { x: 180, y: 128 },
-  celery_broker: { x: 280, y: 128 },
-  celery_q_stocks_ib: { x: 380, y: 220 },
   daemon_trading: { x: 160, y: 400 },
   account_sync: { x: 260, y: 400 },
 }
@@ -129,9 +112,6 @@ export const TOPOLOGY_EDGES: TopologyEdgeDef[] = [
   { from: 'monitor', to: 'ib_ingestor', label: 'health' },
   { from: 'docs', to: 'monitor', label: 'openapi' },
   { from: 'docs', to: 'research', label: 'openapi' },
-  { from: 'ops', to: CELERY_BROKER_NODE_KEY, label: 'inspect' },
-  { from: CELERY_BEAT_NODE_KEY, to: CELERY_BROKER_NODE_KEY, label: 'schedule' },
-  { from: CELERY_BROKER_NODE_KEY, to: 'celery_q_stocks_ib', label: 'queue' },
   { from: 'research', to: 'strategy', label: 'pipeline' },
   { from: 'strategy', to: 'research', label: 'gate' },
   { from: 'trading', to: 'portfolio', label: 'ledger' },

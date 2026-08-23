@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -10,14 +9,11 @@ import {
 } from '@/components/ui/tooltip'
 import { CeleryQueueSummaryTable } from './CeleryQueueSummaryTable'
 import { CelerySectionCard } from './CelerySectionCard'
-import { ConfirmDialog } from './ConfirmDialog'
 import { useCeleryOps } from './useCeleryOps'
 import {
   useOpsWorkers,
   useOpsQueuesSummary,
   useAggregatedJobQueuesSummary,
-  useDeleteAllBarsJobs,
-  useRetryFailedBarsJobs,
 } from '@/hooks/useOpsData'
 import { computeCeleryRuntimeLamp, runtimeLampText } from '@/utils/celeryRuntime'
 import type { AggregatedJobQueueSummaryRow } from '@/types/ops'
@@ -43,7 +39,7 @@ export function QueueSummaryCard({
   highlightQueueName,
   activeSupportTasksFilterKey,
 }: QueueSummaryCardProps) {
-  const { canOperate, showFlash } = useCeleryOps()
+  const { canOperate } = useCeleryOps()
   const { data: workersData } = useOpsWorkers()
   const {
     data: queuesData,
@@ -52,14 +48,7 @@ export function QueueSummaryCard({
     error: queuesErr,
   } = useOpsQueuesSummary()
   const { data: aggData, isLoading: aggLoading } = useAggregatedJobQueuesSummary()
-  const deleteBars = useDeleteAllBarsJobs()
-  const retryBars = useRetryFailedBarsJobs()
-  const [busyQueue, setBusyQueue] = useState<string | null>(null)
-  const [confirm, setConfirm] = useState<{
-    title: string
-    message: string
-    action: () => Promise<void>
-  } | null>(null)
+  const busyQueue = null
 
   const workers = workersData?.workers ?? []
   const brokerConnected = workersData?.broker.connected
@@ -70,84 +59,23 @@ export function QueueSummaryCard({
   const runtimeLamp = computeCeleryRuntimeLamp(brokerConnected ?? false, workers)
   const lampText = runtimeLampText(runtimeLamp)
 
-  function openConfirm(
-    title: string,
-    message: string,
-    action: () => Promise<void>,
-  ) {
-    setConfirm({ title, message, action })
-  }
-
-  async function withBusyQueue(queue: string, fn: () => Promise<void>) {
-    setBusyQueue(queue)
-    try {
-      await fn()
-    } catch (e) {
-      showFlash(e instanceof Error ? e.message : 'Operation failed', true)
-    } finally {
-      setBusyQueue(null)
-    }
-  }
-
-  function handleDeletePending(row: AggregatedJobQueueSummaryRow): Promise<void> {
-    openConfirm(
-      `Delete pending — ${row.celery_queue}`,
-      'Permanently delete all pending rows in this queue. Cannot be undone.',
-      () =>
-        withBusyQueue(row.celery_queue, async () => {
-          const r = await deleteBars.mutateAsync({ status: 'pending' })
-          if (!r.ok) throw new Error(r.error ?? 'Delete failed')
-          showFlash(`Deleted pending jobs for ${row.celery_queue}`)
-        }),
-    )
+  function handleDeletePending(_row: AggregatedJobQueueSummaryRow): Promise<void> {
     return Promise.resolve()
   }
 
-  function handleDeleteRunning(row: AggregatedJobQueueSummaryRow): Promise<void> {
-    openConfirm(
-      `Delete running — ${row.celery_queue}`,
-      'Removes PostgreSQL rows only. Worker may still execute. Cannot be undone.',
-      () =>
-        withBusyQueue(row.celery_queue, async () => {
-          await deleteBars.mutateAsync({ status: 'running' })
-        }),
-    )
+  function handleDeleteRunning(_row: AggregatedJobQueueSummaryRow): Promise<void> {
     return Promise.resolve()
   }
 
-  function handleDeleteDone(row: AggregatedJobQueueSummaryRow): Promise<void> {
-    openConfirm(
-      `Delete done — ${row.celery_queue}`,
-      'Permanently delete all done rows. Cannot be undone.',
-      () =>
-        withBusyQueue(row.celery_queue, async () => {
-          await deleteBars.mutateAsync({ status: 'done' })
-        }),
-    )
+  function handleDeleteDone(_row: AggregatedJobQueueSummaryRow): Promise<void> {
     return Promise.resolve()
   }
 
-  function handleDeleteFailed(row: AggregatedJobQueueSummaryRow): Promise<void> {
-    openConfirm(
-      `Delete failed — ${row.celery_queue}`,
-      'Permanently delete all failed rows. Cannot be undone.',
-      () =>
-        withBusyQueue(row.celery_queue, async () => {
-          await deleteBars.mutateAsync({ status: 'failed' })
-        }),
-    )
+  function handleDeleteFailed(_row: AggregatedJobQueueSummaryRow): Promise<void> {
     return Promise.resolve()
   }
 
-  function handleResetFailed(row: AggregatedJobQueueSummaryRow): Promise<void> {
-    openConfirm(
-      `Reset failed — ${row.celery_queue}`,
-      'Reset up to 500 oldest failed jobs to pending and re-queue Celery.',
-      () =>
-        withBusyQueue(row.celery_queue, async () => {
-          await retryBars.mutateAsync(500)
-        }),
-    )
+  function handleResetFailed(_row: AggregatedJobQueueSummaryRow): Promise<void> {
     return Promise.resolve()
   }
 
@@ -209,17 +137,6 @@ export function QueueSummaryCard({
           onResetFailed={handleResetFailed}
         />
       </CelerySectionCard>
-
-      <ConfirmDialog
-        open={confirm !== null}
-        title={confirm?.title ?? ''}
-        message={confirm?.message ?? ''}
-        onConfirm={async () => {
-          await confirm?.action()
-          setConfirm(null)
-        }}
-        onCancel={() => setConfirm(null)}
-      />
     </>
   )
 }

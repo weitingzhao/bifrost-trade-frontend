@@ -268,8 +268,7 @@ export function ReadinessResultsTable({
                       />
                     </DenseTableCell>
                     <DenseTableCell colSpan={7} className={denseTable.mutedMeta}>
-                      No row in stock_readiness_daily — run the universe snapshot from Stock Data
-                      Readiness.
+                      No screener row — analytics pipeline may still be filling (252d bars).
                     </DenseTableCell>
                   </DenseTableRow>
                 )

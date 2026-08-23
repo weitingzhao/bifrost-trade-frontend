@@ -130,17 +130,6 @@ export interface CeleryCapabilitiesResponse {
   error?: string
 }
 
-export interface BarsJob {
-  job_id: string
-  type: string
-  symbol: string
-  period: string
-  status: 'pending' | 'running' | 'done' | 'failed'
-  result?: { ok?: boolean; count?: number; message?: string; error?: string }
-  created_ts?: number
-  updated_ts?: number
-}
-
 export interface MarketDataPluginCeleryBeatEntry {
   name: string
   task: string

@@ -16,8 +16,6 @@ import type {
   SymbolStatementsData,
   SymbolOptionPcrData,
 } from '@/types/research'
-import type { MarketDataPluginCeleryBeatScheduleResponse } from '@/types/ops'
-
 
 export async function fetchScreenerResults(filters: ScreenerFilters): Promise<ScreenerResponse> {
   const controller = new AbortController()
@@ -210,16 +208,6 @@ export async function fetchSymbolOptionPcr(
     return { ...empty, error: e instanceof Error ? e.message : 'Network error' }
   }
 }
-
-// ── Celery Beat schedule (Market Data Plugin — noop; CronJobs own schedule) ───
-
-export async function fetchMarketDataPluginCeleryBeatSchedule(): Promise<MarketDataPluginCeleryBeatScheduleResponse> {
-  return {
-    ok: false,
-    error: 'Trade Massive API removed — Celery Beat schedule lives on Market Data Plugin CronJobs',
-  }
-}
-
 
 export async function postResearchShutdown(
   serviceOrigin?: string,

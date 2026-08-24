@@ -41,7 +41,6 @@ export const QUERY_KEYS = {
       summary:       ['research', 'stock-data-readiness', 'summary'] as const,
       criteriaStats: ['research', 'stock-data-readiness', 'criteria-stats'] as const,
     },
-    celeryBeat:     ['research', 'celery-beat']      as const,
     stockScreener: {
       criteriaStats:    ['research', 'stock-screener', 'criteria-stats'] as const,
       fundDistSymbols:  (n: number) => ['research', 'stock-screener', 'fund-dist', n] as const,

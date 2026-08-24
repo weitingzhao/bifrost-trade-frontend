@@ -31,9 +31,6 @@ export const StatusResponseSchema = z.object({
     accounts: z.array(z.object({}).passthrough()).nullable(),
     accounts_fetched_at: z.number().nullable(),
   }).passthrough(),
-  celery: z.object({
-    broker_connected: z.boolean(),
-  }).passthrough(),
 }).passthrough()
 
 export const OperationsResponseSchema = z.object({

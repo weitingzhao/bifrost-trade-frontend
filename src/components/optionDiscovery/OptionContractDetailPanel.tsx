@@ -460,7 +460,7 @@ export function OptionContractDetailPanel({
             onToggle={() => toggleSection('chart')}
           >
             <DiscoveryHint className={optionDiscoveryDetailChartHintClass}>
-              OHLC below uses contract history. If the chart is empty, reload bars from Market Data Plugin / PostgreSQL (Celery Massive queue is retired).
+              OHLC below uses contract history. If the chart is empty, reload bars from Market Data Plugin / PostgreSQL (the legacy Trade queue is retired).
             </DiscoveryHint>
             <OptionDiscoveryContractChartPanel
               symbol={symbol}

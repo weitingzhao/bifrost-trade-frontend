@@ -158,10 +158,6 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/operations/DaemonPage')),
       },
       {
-        path: 'operations/celery',
-        lazy: lazyPage(() => import('@/pages/operations/CeleryPage')),
-      },
-      {
         path: 'operations/logs',
         lazy: lazyPage(() => import('@/pages/operations/LogsPage')),
       },

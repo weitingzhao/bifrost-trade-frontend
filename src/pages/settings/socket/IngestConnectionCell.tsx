@@ -105,7 +105,7 @@ export function ConnectionCell({
           className="min-w-[3.5rem]"
           hint={
             restOnly
-              ? 'REST-only standby (Options Starter — Celery aggregates, no live WS)'
+              ? 'REST-only standby (Options Starter — REST aggregates, no live WS)'
               : wsConnected === true
                 ? 'Polygon WebSocket connected'
                 : wsConnected === false

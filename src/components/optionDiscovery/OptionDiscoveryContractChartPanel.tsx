@@ -65,8 +65,8 @@ export function OptionDiscoveryContractChartPanel({
         setError(
           msg ||
             (period === '1 D'
-              ? 'No bars in the database for this contract. Option bars are ingested by the Market Data plugin (not Celery Massive).'
-              : 'No bars in the database for this contract. Option bars are ingested by the Market Data plugin (not Celery Massive).'),
+              ? 'No bars in the database for this contract. Option bars are ingested by the Market Data plugin.'
+              : 'No bars in the database for this contract. Option bars are ingested by the Market Data plugin.'),
         )
       }
     } catch (e) {
@@ -144,7 +144,7 @@ export function OptionDiscoveryContractChartPanel({
               <path d="M16 14l3 3-3 3" />
             </svg>
           </DiscoveryIconButton>
-          <InfoTooltip text="Reads OHLC from PostgreSQL (option_day for Daily, option_min for intraday). Ingest is owned by the Market Data plugin; Celery Massive is disabled." />
+          <InfoTooltip text="Reads OHLC from PostgreSQL (option_day for Daily, option_min for intraday). Ingest is owned by the Market Data plugin." />
           <label
             className={cn(
               'inline-flex cursor-pointer select-none items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',

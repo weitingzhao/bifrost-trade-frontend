@@ -13,7 +13,7 @@ export type Lamp = 'green' | 'yellow' | 'red'
 
 export const ARCH_SERVICES: ServiceDef[] = [
   { key: 'monitor', name: 'Monitor',   base: domainOrigin('monitor'), port: '8765', description: 'Daemon status & control', healthPath: '/health' },
-  { key: 'ops',     name: 'Ops',       base: domainOrigin('ops'),     port: '8768', description: 'Celery management',        healthPath: '/health' },
+  { key: 'ops',     name: 'Ops',       base: domainOrigin('ops'),     port: '8768', description: 'Operations control',       healthPath: '/health' },
   { key: 'docs',    name: 'Docs',      base: domainOrigin('docs'),    port: '8767', description: 'OpenAPI gateway',           healthPath: '/health' },
 ]
 

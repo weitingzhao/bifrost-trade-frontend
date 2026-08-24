@@ -68,7 +68,6 @@ export function K8sDaemonStatusPanel({ opsHealth }: { opsHealth: OpsHealthRespon
   const namespace = (opsHealth?.k8s_namespace ?? '').trim()
   const daemon = workloads.daemon
   const accountSync = workloads['account-sync']
-  const celeryBeat = workloads['celery-beat']
 
   const pairOffline =
     (daemon?.replicas ?? 0) === 0 && (accountSync?.replicas ?? 0) === 0
@@ -112,7 +111,6 @@ export function K8sDaemonStatusPanel({ opsHealth }: { opsHealth: OpsHealthRespon
             />
           </>
         )}
-        <WorkloadRow name="celery-beat" kind="Deployment" wl={celeryBeat} />
       </div>
     </section>
   )

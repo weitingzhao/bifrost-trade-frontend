@@ -90,7 +90,7 @@
 |-------|-----------------|------|------------|---------|
 | `/settings/api` | 5 tabs, Shutdown, Log Console | [x] | 2026-06-03 | Owner verified |
 | `/operations/daemon` | Control actions, Recent ops table | [x] | 2026-06-03 | Owner verified |
-| `/operations/celery` | 8 tables, Job Queues, ops auth | [x] | 2026-06-03 | Owner verified |
+| Retired worker console | 8 tables, Job Queues, ops auth | [x] | 2026-06-03 | Historical acceptance; removed in Wave 5 |
 | `/settings/socket` | Ingest groups, logical columns, control poll, Local Agent | [x] | 2026-06-03 | Owner verified |
 | `/operations/logs` | Opens LogPanel → redirects Live (by design) | [x] | 2026-06-03 | N/A |
 

@@ -20,7 +20,6 @@ import {
   topologyHeaderTitleClass,
   topologyLegendClass,
   topologyLegendEmbeddedClass,
-  topologyCeleryNodeShellClass,
   topologyNodeLampGlow,
   topologyNodeShellClass,
   topologyNodeStatusClass,
@@ -67,15 +66,13 @@ function ReactorNode({
   const statusLabel =
     node.lamp === 'green' ? 'ONLINE' : node.lamp === 'yellow' ? 'PROBE' : 'OFFLINE'
   const isApi = node.kind === 'api'
-  const isCelery = node.kind === 'celery'
-  const shellClass = isCelery ? topologyCeleryNodeShellClass : topologyNodeShellClass
 
   return (
     <div
       className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
       style={{ left: `${(pos.x / width) * 100}%`, top: `${(pos.y / height) * 100}%` }}
     >
-      <div className={cn(shellClass, topologyNodeLampGlow[node.lamp])}>
+      <div className={cn(topologyNodeShellClass, topologyNodeLampGlow[node.lamp])}>
         {!compact && (
           <>
             <span className="pointer-events-none absolute -left-px -top-px h-1.5 w-1.5 border-l border-t border-foreground/25" />
@@ -109,10 +106,7 @@ function ReactorNode({
               {node.ms != null ? <span>{node.ms}ms</span> : <span>—</span>}
             </>
           ) : (
-            <span
-              className={cn('truncate', isCelery && 'whitespace-normal line-clamp-2 leading-tight')}
-              title={node.subtitle}
-            >
+            <span className="truncate" title={node.subtitle}>
               {node.subtitle ?? '—'}
             </span>
           )}
@@ -305,7 +299,7 @@ export function ServiceTopologyOverview({
           <StatusLamp lamp="red" variant="dot" className="h-1.5 w-1.5" /> Offline
         </span>
         <span className="ml-auto hidden lg:inline">
-          Dashed bays — Edge · APIs · Celery · Daemons · Grid btn = auto layout
+          Dashed bays — Edge · APIs · Daemons · Grid btn = auto layout
         </span>
       </div>
 

@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -153,7 +152,7 @@ export function StepDetailPanel(props: Props) {
               </div>
               <p className="text-xs text-muted-foreground">
                 Reference universe from Plugin ingest <Code>ticker_sync</Code> (Polygon REST{' '}
-                <Code>/v3/reference/tickers</Code> → Golden Source). Massive Celery queues stay at 0 replicas.
+                <Code>/v3/reference/tickers</Code> → Golden Source).
               </p>
             </div>
             <div className="rounded-lg border border-border p-3 space-y-2">
@@ -178,9 +177,6 @@ export function StepDetailPanel(props: Props) {
             )}
             <Button variant="outline" size="sm" onClick={() => refJobs.openJobsSheet()}>
               Jobs
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/operations/celery">Ops Celery (Massive scaled to 0)</Link>
             </Button>
           </div>
           <Feedback ok={false}>{universeErr}</Feedback>

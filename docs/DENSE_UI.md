@@ -101,7 +101,7 @@ import {
 
 ### PostgreSQL sync jobs sheet
 
-Trade Celery Massive job-matrix / ticker-reference job sheets were retired with **api-massive (P7)**. Polygon ingest is owned by the **Market Data Plugin**; Celery pages use shared `data-display` tables (`DenseDataTable` + `jobQueues/*`) for remaining IB/worker queues only.
+Trade background job sheets were retired with **api-massive (P7)** and Wave 5. Polygon ingest is owned by the **Market Data Plugin**.
 
 ### Stock Data Readiness runbook steps
 
@@ -388,20 +388,6 @@ No `@/components/ui/table` under `src/pages/settings/socket/`.
 **Logs:** Not in-page; use global footer **LogPanel → Daemon** (Strategy Trading + Account Sync). Celery card intentionally removed vs Legacy.
 
 No `@/components/ui/table` under `DaemonStatusPage.tsx` or `settings/daemon/**`.
-
-## Operations Celery
-
-| Pattern | Reference |
-|---------|-----------|
-| Page + table tokens | [celeryUi.ts](../src/pages/operations/celery/celeryUi.ts) |
-| Page shell | [CeleryPage.tsx](../src/pages/operations/CeleryPage.tsx) — `PageShell padding="default"`, `PageHeader titleSize="large"` |
-| Section cards | [CelerySectionCard.tsx](../src/pages/operations/celery/CelerySectionCard.tsx) — `Card variant="elevated"` |
-| Queue summary + data tables | `CeleryQueueSummaryTable`, `jobQueues/*` (Bars/IB), `CeleryWorkerInstancesSection`, `CeleryWorkerInstanceSituation`, `CeleryBeatScheduleCard`, `CeleryScheduledJobsSection`, `RegisteredCeleryTasksTable` — Run Massive matrix retired (P7 → Market Data Plugin) |
-| Job status filter | `SegmentControl size="sm"` in [CeleryJobQueuesSection.tsx](../src/pages/operations/celery/CeleryJobQueuesSection.tsx) |
-| Celery ops icon toolbar | [CeleryQueueIconButton.tsx](../src/pages/operations/celery/CeleryQueueIconButton.tsx) — **allowed exception** (semantic queue/worker actions; not `IconActionButton`) |
-| Terminal streams | [CeleryTerminalPanel.tsx](../src/pages/operations/celery/console/CeleryTerminalPanel.tsx) — scoped CSS exception |
-
-No `@/components/ui/table` under `src/pages/operations/celery/`.
 
 ## PnL coloring
 

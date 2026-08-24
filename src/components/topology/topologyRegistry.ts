@@ -1,4 +1,4 @@
-export type TopologyNodeKind = 'api' | 'socket' | 'daemon' | 'celery'
+export type TopologyNodeKind = 'api' | 'socket' | 'daemon'
 
 export type TopologyLamp = 'green' | 'yellow' | 'red'
 
@@ -7,7 +7,6 @@ export interface TopologyNodeDef {
   name: string
   kind: TopologyNodeKind
   zoneId: TopologyZoneId
-  celeryQueue?: string
 }
 
 export interface TopologyNodeHealth {
@@ -19,7 +18,6 @@ export interface TopologyNodeHealth {
   ms?: number
   profile?: 'dev' | 'prod'
   subtitle?: string
-  celeryQueue?: string
   zoneId?: TopologyZoneId
 }
 
@@ -35,7 +33,6 @@ export type TopologyZoneId =
   | 'api_account'
   | 'api_research'
   | 'api_data'
-  | 'celery'
   | 'daemon'
 
 export interface TopologyZoneDef {
@@ -50,22 +47,6 @@ export interface TopologyZoneDef {
 }
 
 export const TOPOLOGY_VIEWBOX = { width: 1280, height: 480 } as const
-
-export const CELERY_BEAT_NODE_KEY = 'celery_beat'
-export const CELERY_BROKER_NODE_KEY = 'celery_broker'
-
-export function celeryQueueNodeKey(queueName: string): string {
-  return `celery_q_${queueName}`
-}
-
-export function isCeleryQueueNodeKey(key: string): boolean {
-  return key.startsWith('celery_q_')
-}
-
-export function celeryQueueFromNodeKey(key: string): string | undefined {
-  if (!isCeleryQueueNodeKey(key)) return undefined
-  return key.slice('celery_q_'.length)
-}
 
 export const TOPOLOGY_NODE_REGISTRY: TopologyNodeDef[] = [
   { key: 'monitor', name: 'Monitor', kind: 'api', zoneId: 'api_control' },

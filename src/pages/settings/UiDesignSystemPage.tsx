@@ -911,7 +911,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="status-lamp"
         title="10 · StatusLamp — Process Health Indicators"
-        description="StatusLamp is reserved for process health (daemon, IB connection, Celery workers). It is NOT a general status indicator — use DenseTag for state labels."
+        description="StatusLamp is reserved for process health (daemon, IB connection, API services). It is NOT a general status indicator — use DenseTag for state labels."
       >
         <SampleBox>
           <div className="flex items-center gap-2">
@@ -934,7 +934,7 @@ export default function UiDesignSystemPage() {
 
         <div className="space-y-1 text-xs">
           <p>
-            ✅ <CodeRef>StatusLamp</CodeRef> for: daemon process, IB Gateway, Celery worker health,
+            ✅ <CodeRef>StatusLamp</CodeRef> for: daemon process, IB Gateway, API service health,
             Redis/PG connectivity
           </p>
           <p>

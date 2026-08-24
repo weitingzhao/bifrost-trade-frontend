@@ -153,7 +153,6 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     items: [
       route('API', '/settings/api', Server),
       route('Daemon', '/operations/daemon', Cpu),
-      route('Celery', '/operations/celery', Terminal),
       route('Socket', '/settings/socket', Network),
     ],
   },

@@ -91,7 +91,7 @@ export interface SocketIbSlot {
  */
 export interface StatusSocketPolygonWs {
   ws_connected?: boolean
-  /** ``rest_only`` when Options Starter skips Polygon WS (Celery REST aggregates). */
+  /** ``rest_only`` when Options Starter skips Polygon WS and uses REST aggregates. */
   ws_mode?: string | null
   /** Age of last Polygon quote (quiet market can be large while service is healthy). */
   last_msg_age_s?: number | null
@@ -207,7 +207,6 @@ export interface IbClientPort {
   ingestor?: number
   account_agent?: number
   account_agent_secondary?: number
-  market_data_worker?: number
 }
 
 /** Trading / event stream account IDs from DB settings (editable). */
@@ -263,12 +262,6 @@ export interface StatusResponse {
     accounts: IbAccountSnapshot[] | null
     accounts_fetched_at: number | null
     open_orders: OpenOrderRow[]
-  }
-  celery: {
-    broker_connected: boolean
-    workers: string[]
-    worker_ib_connected: boolean
-    worker_ib_client_id: number | null
   }
   config?: {
     ib_client?: IbClient

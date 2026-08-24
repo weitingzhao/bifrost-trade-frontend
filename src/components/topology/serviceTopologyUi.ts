@@ -54,10 +54,6 @@ export const topologyNodeShellClass = cn(
   'relative min-w-[76px] max-w-[92px] rounded border bg-card/90 px-1.5 py-1 backdrop-blur-sm transition-shadow duration-300',
 )
 
-export const topologyCeleryNodeShellClass = cn(
-  'relative min-w-[80px] max-w-[104px] rounded border bg-card/90 px-1.5 py-1 backdrop-blur-sm transition-shadow duration-300',
-)
-
 export const topologyNodeLampGlow: Record<TopologyLamp, string> = {
   green: 'border-lamp-green/40 shadow-[0_0_10px_-3px_var(--color-lamp-green)]',
   yellow: 'border-lamp-yellow/40 shadow-[0_0_10px_-3px_var(--color-lamp-yellow)]',

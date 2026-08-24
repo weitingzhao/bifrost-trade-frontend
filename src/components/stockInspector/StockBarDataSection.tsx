@@ -74,7 +74,7 @@ export function StockBarDataSection({
   async function handleFetch() {
     if (!sym) return
     setFetchError(
-      'Celery Massive feed_stocks_aggregate is retired (replicas 0). Daily bars come from Market Data Plugin ingest stock_daily_grouped into Golden Source.',
+      'The legacy Trade aggregate feed is retired. Daily bars come from Market Data Plugin ingest stock_daily_grouped into Golden Source.',
     )
   }
 

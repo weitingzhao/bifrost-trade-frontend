@@ -83,17 +83,6 @@ export const QUERY_KEYS = {
     apiHealthMarketData: ['settings', 'api-health', 'market-data-status'] as const,
   },
   ops: {
-    workers:            ['ops', 'workers']                   as const,
-    queuesSummary:      ['ops', 'queues-summary']            as const,
-    workerProfiles:     ['ops', 'worker-profiles']           as const,
-    workerInstances:    ['ops', 'worker-instances']          as const,
-    celeryCapabilities: ['ops', 'celery-capabilities']       as const,
-    aggregatedJobs:     ['ops', 'aggregated-jobs']           as const,
-    brokerStatus:       ['ops', 'broker-status']             as const,
-    audit:              ['ops', 'audit']                     as const,
-    celery:             ['ops', 'celery']                    as const,
-    daemon:             ['ops', 'daemon']                    as const,
-    barsJobs:           ['ops', 'bars-jobs']                 as const,
     // Socket / market ingest services
     ingestServices:     ['ops', 'ingest-services']           as const,
     opsHealth:          ['ops', 'ops-health']                as const,

@@ -1,12 +1,10 @@
-import { Bell, Moon, PanelTop, Sun, SunMoon, Terminal } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Bell, Moon, PanelTop, Sun, SunMoon } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { StatusLamp } from '@/components/StatusLamp'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
-import { useCeleryHeaderMetrics } from '@/hooks/useCeleryHeaderMetrics'
 import { cn } from '@/lib/utils'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
@@ -45,7 +43,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/strategy/allocations': 'Allocations',
   '/strategy/option-category': 'Option Category',
   '/operations/daemon': 'System · Daemon',
-  '/operations/celery': 'System · Celery',
   '/operations/logs': 'System · Logs',
   '/settings/daemon':                'System · Daemon Status',
   '/settings/api':                   'Settings · API Health',
@@ -74,17 +71,8 @@ interface AppHeaderProps {
 
 export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: AppHeaderProps) {
   const location = useLocation()
-  const navigate = useNavigate()
   const { mode, cycleMode } = useThemeMode()
-  const celeryMetrics = useCeleryHeaderMetrics(true)
   const title = PAGE_TITLES[location.pathname] ?? 'Bifrost Trade'
-  const onCeleryPage = location.pathname === '/operations/celery'
-  const pendingLabel =
-    celeryMetrics.pendingTotal != null
-      ? celeryMetrics.pendingTotal > 99
-        ? '99+'
-        : String(celeryMetrics.pendingTotal)
-      : '—'
 
   return (
     <header
@@ -100,27 +88,6 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
       </span>
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                'h-8 gap-1.5 px-2 font-mono text-xs tabular-nums',
-                onCeleryPage && 'bg-muted',
-              )}
-              onClick={() => navigate('/operations/celery')}
-              aria-label="Operations Celery"
-              title="Celery workers and queue pending — Operations → Celery"
-            >
-              <Terminal className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-              <StatusLamp lamp={celeryMetrics.lamp} variant="dot" className="h-2 w-2" />
-              <span className="text-muted-foreground">{pendingLabel}</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{celeryMetrics.title}</TooltipContent>
-        </Tooltip>
-
         {onToggleNavMode && (
           <Tooltip>
             <TooltipTrigger asChild>

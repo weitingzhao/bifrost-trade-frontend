@@ -13,7 +13,7 @@
 | `/portfolio/accounts` | Canvas matches sidebar (`#13171d`); KPI / Overview blocks visibly elevated (`#1a1f26`) |
 | `/research/discovery` | Outer shell same canvas color; **function** matches Legacy (Phase 2 CSS/页头见 `PHASE2_DISCOVERY_ACCEPTANCE.md`) |
 | `/market/live` | `PageHeader` + strategy badges; table/summary bar hierarchy |
-| `/operations/celery` | `PageHeader`; queue cards readable on canvas |
+| Retired worker console | Historical `PageHeader` and queue-card acceptance; removed in Wave 5 |
 | `/strategy/instances` | Large title + filters + table / inspector; **global market status bar** under header (Open orders, Streams, Daily %/$, symbols Popover vs Legacy marquee) |
 | `/portfolio/positions` | Global status bar visible; strip hidden on `/settings/*` and `/operations/*` |
 | `/settings/ib` | Header Save; Connection / Client IDs read-only; Account + Flex editable — see [IB_CONNECTION_ACCEPTANCE.md](./IB_CONNECTION_ACCEPTANCE.md) |

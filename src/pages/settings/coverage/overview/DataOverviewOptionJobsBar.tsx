@@ -141,7 +141,7 @@ export const DataOverviewOptionJobsBar = forwardRef<
       void _kind
       void _payload
       throw new Error(
-        `Celery Massive enqueue retired for ${sym}. Ingest is owned by the Market Data plugin.`,
+        `Legacy Trade enqueue retired for ${sym}. Ingest is owned by the Market Data plugin.`,
       )
     },
     [],
@@ -321,7 +321,7 @@ export const DataOverviewOptionJobsBar = forwardRef<
       <ConfirmDialog
         open={confirmFill === 'row'}
         title="Fill row gap"
-        message="Celery Massive enqueue is retired (P7). Gap repair for pool symbols is owned by the Market Data Plugin — this action no longer queues Massive sync tasks."
+        message="Legacy Trade enqueue is retired (P7). Gap repair for pool symbols is owned by the Market Data Plugin — this action no longer queues sync tasks."
         confirmLabel="Confirm"
         confirming={fillBusy === 'row'}
         onConfirm={() => void runFillRow()}

@@ -83,7 +83,7 @@
 
 - 使用 **shadcn/ui Sidebar 组件**
 - 支持两种状态：**展开**（文字 + 图标）/ **折叠 Mini**（仅图标）
-- 折叠状态用于数据密集页面（期权链表格、Celery 任务列表等）释放横向空间
+- 折叠状态用于数据密集页面（期权链、交易台账等）释放横向空间
 - 导航分组与 API 域对齐：
 
 ```
@@ -91,7 +91,7 @@ Market       → Live、WatchList
 Portfolio    → Accounts、Positions、Performance
 Research     → Screener、Discovery、Greeks、SEPA
 Strategy     → Instances、Structures、Opportunities、Gates
-Operations   → Daemon、Celery、Logs
+Operations   → Daemon、Logs
 Settings     → Config、IB Connection
 ```
 
@@ -274,7 +274,7 @@ VITE_API_MARKET_DATA_PLUGIN=http://localhost:8780/api/v1/plugins/market-data/api
 4. **实时行情页面**：LivePage（SSE 行情流 + SSE 系统消息）
 5. **Research 域**：OptionScreenerPage、OptionGreeksPage、SEPA 相关页面
 6. **Strategy 域**：StrategyInstancesPage（含 RightInspectorDrawer）
-7. **Operations 域**：CeleryControlPage、LogConsolePage（多路 SSE 日志流）
+7. **Operations 域**：DaemonStatusPage、LogConsolePage（多路 SSE 日志流）
 8. **Settings**：最后迁移，配置项最多、子菜单最复杂
 
 每迁移一个页面必须：

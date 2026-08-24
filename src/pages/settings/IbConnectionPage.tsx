@@ -292,17 +292,6 @@ function IbConnectionForm({
                   </TableCell>
                 </TableRow>
 
-                {/* Celery */}
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableCell colSpan={3} className="py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Celery
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="pl-6">Market Data</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{port.market_data_worker ?? '—'}</TableCell>
-                  <TableCell className="text-right text-muted-foreground">—</TableCell>
-                </TableRow>
               </TableBody>
             </Table>
           </div>

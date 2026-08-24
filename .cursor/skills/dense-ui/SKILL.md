@@ -81,7 +81,6 @@ Copy and track:
 | Strategy Option Category templates | `src/pages/strategy/OptionCategoryPage.tsx`, `src/pages/strategy/optionCategory/optionCategoryUi.ts`, `OptionCategoryLegsSection.tsx`, `OptionCategoryMetaTable.tsx` |
 | Strategy Gates list + form sheet | `src/components/strategy/gates/GatesTable.tsx`, `src/components/strategy/gates/gatesUi.ts`, `GateSafetyFormSheet.tsx` |
 | Strategy Allocations list + form | `src/components/strategy/AllocationsTable.tsx`, `src/components/strategy/allocations/allocationsUi.ts`, `AllocationFormModal.tsx` |
-| Operations Celery queue/job tables | `src/pages/operations/celery/celeryUi.ts`, `CeleryQueueSummaryTable.tsx`, `jobQueues/*`, `CeleryWorkerInstancesSection.tsx` |
 | Settings API Health docs + cards | `src/pages/settings/apiHealth/ApiDocsTable.tsx`, `ApiServiceHealthCard.tsx`, `apiHealthUi.ts` |
 | Settings Socket ingest table | `src/pages/settings/socket/IngestServicesTable.tsx`, `socketIngestUi.ts`, `IngestConnectionCell.tsx`, `socketIngestControls.tsx` |
 | Operations Daemon status + ops | `src/pages/settings/DaemonStatusPage.tsx`, `src/pages/settings/daemon/daemonUi.ts`, `RecentOperationsTable.tsx`, `StrategyTradingDaemonCard.tsx` |

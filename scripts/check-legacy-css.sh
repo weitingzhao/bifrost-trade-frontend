@@ -525,20 +525,6 @@ if api_health_ui_table=$(grep -rl '@/components/ui/table' src/pages/settings/api
   fi
 fi
 
-# Operations Celery: Dense migration (Phase 4.20)
-if celery_layout_classes=$(grep -rl 'celeryLayoutClasses' src/pages/operations/celery --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
-  if [[ -n "$celery_layout_classes" ]]; then
-    echo "$celery_layout_classes" >&2
-    report "celeryLayoutClasses imports (merged into celeryUi.ts)"
-  fi
-fi
-if celery_ui_table=$(grep -rl '@/components/ui/table' src/pages/operations/celery --include='*.tsx' 2>/dev/null || true); then
-  if [[ -n "$celery_ui_table" ]]; then
-    echo "$celery_ui_table" >&2
-    report "shadcn Table under src/pages/operations/celery (use DenseDataTable)"
-  fi
-fi
-
 # Settings Socket: Dense migration (Phase 4.18)
 if socket_ui_table=$(grep -rl '@/components/ui/table' src/pages/settings/socket --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$socket_ui_table" ]]; then

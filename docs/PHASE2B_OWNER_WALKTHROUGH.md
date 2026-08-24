@@ -45,7 +45,7 @@ make switch-cutover-domain DOMAIN=all-new
 | 2B.3 | `trading` | 8721 → 8769 | `/portfolio/ledger` |
 | 2B.3 | `portfolio` | 8723 → 8771 | accounts、positions、performance |
 | 2B.3 | `strategy` | 8735 → 8770 | instances + 6 strategy 路由 |
-| 2B.4 | `ops` | 8713 → 8768 | `/operations/celery`、`/settings/socket` |
+| 2B.4 | `ops` | 8713 → 8768 | former worker console、`/settings/socket` |
 | 2B.4 | `massive` | 8741 → 8766 | `/settings/coverage/*`、`/settings/feed/*` |
 | 2B.4 | `research` | 8731 → 8773 | 8 research 路由 + Inspector |
 

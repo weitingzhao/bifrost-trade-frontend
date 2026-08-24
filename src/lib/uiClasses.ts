@@ -11,6 +11,6 @@ export const dangerGhostBtnClass =
 export const dangerTextBtnClass =
   'text-destructive hover:text-destructive transition-colors'
 
-/** Outline Button bulk delete (e.g. Celery Del Pending). */
+/** Outline Button bulk delete. */
 export const dangerOutlineBtnClass =
   'text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive'

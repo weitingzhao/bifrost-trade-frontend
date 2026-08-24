@@ -529,21 +529,9 @@ npm run lint && npm run build && npm run check:legacy-css
 
 ---
 
-## Phase 4.20 — Operations Celery (DONE)
+## Phase 4.20 — Operations job runtime (RETIRED)
 
-**Scope:** `/operations/celery` — `CeleryPage.tsx`, `operations/celery/*` (8× shadcn Table → `DenseDataTable`).
-
-**Deliverables**
-
-- [`celeryUi.ts`](../src/pages/operations/celery/celeryUi.ts) (merged `celeryLayoutClasses`); `CelerySectionCard` + Beat card `Card variant="elevated"`
-- `PageShell padding="default"` + `PageHeader titleSize="large"`
-- 8 tables: Queue Summary, Massive/Bars job queues (split [`jobQueues/*`](../src/pages/operations/celery/jobQueues/)), Worker Instances, Worker Situation, Beat Schedule, Scheduled Jobs, Registered Tasks, Run Massive matrix
-- Job Queues status/limit → `SegmentControl size="sm"`
-- **Exception:** [`CeleryQueueIconButton`](../src/pages/operations/celery/CeleryQueueIconButton.tsx) (semantic Celery ops toolbar — documented in `DENSE_UI.md`)
-- Terminal panel CSS remains scoped exception under `console/CeleryTerminalPanel.tsx`
-- `check-legacy-css`: no `@/components/ui/table` under `operations/celery/`
-
-**Acceptance:** `npm run lint && npm run build && npm run check:legacy-css` pass.
+The former Trade background-worker console and its Dense UI migration were removed in Wave 5.
 
 ---
 

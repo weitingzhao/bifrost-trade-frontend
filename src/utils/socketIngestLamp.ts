@@ -364,7 +364,7 @@ export function ingestRedisHealthLamp(
       return {
         lamp: 'green',
         title:
-          'Polygon WS ingest healthy (REST-only standby; Options Starter uses Celery aggregates, not live WS).',
+          'Polygon WS ingest healthy (REST-only standby; Options Starter uses REST aggregates, not live WS).',
       }
     }
     if (ingestRedisTruthyConnected(m.ws_connected)) {
@@ -602,7 +602,7 @@ function socketNavDegradedDetailTitle(
       return `${name}: ${r.title}`
     })
     .join(' · ')
-  return `${detail} (${greenN}/${rows.length} ingest healthy — Socket edge health, not Celery workers)`
+  return `${detail} (${greenN}/${rows.length} ingest healthy — Socket edge health)`
 }
 
 /** Sidebar Socket link: worst Redis health across edge ingest services. */

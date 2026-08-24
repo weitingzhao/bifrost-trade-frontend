@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
-import { useCeleryHeaderMetrics } from '@/hooks/useCeleryHeaderMetrics'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { makeProbeQuery } from '@/hooks/useApiHealthProbes'
 import { ALL_SERVICES } from '@/pages/settings/apiHealth/apiHealthConfig'
@@ -11,17 +10,14 @@ import {
   aggregateSocketNavHealthFromStatus,
   type AggregateIngestLamp,
 } from '@/utils/socketIngestLamp'
-import { runtimeLampText } from '@/utils/celeryRuntime'
 
 export const SYSTEM_NAV_API_PATH = '/settings/api'
 export const SYSTEM_NAV_DAEMON_PATH = '/operations/daemon'
-export const SYSTEM_NAV_CELERY_PATH = '/operations/celery'
 export const SYSTEM_NAV_SOCKET_PATH = '/settings/socket'
 
 const SYSTEM_NAV_PATHS = new Set([
   SYSTEM_NAV_API_PATH,
   SYSTEM_NAV_DAEMON_PATH,
-  SYSTEM_NAV_CELERY_PATH,
   SYSTEM_NAV_SOCKET_PATH,
 ])
 
@@ -73,7 +69,6 @@ export function useSystemNavLamps(enabled = true) {
   })
 
   const monitorQuery = useMonitorStatus()
-  const celery = useCeleryHeaderMetrics(enabled)
 
   const status = enabled ? monitorQuery.data : undefined
 
@@ -92,16 +87,12 @@ export function useSystemNavLamps(enabled = true) {
         lamp: ingestLampForIcon(daemonRollup.lamp),
         title: daemonRollup.title,
       },
-      [SYSTEM_NAV_CELERY_PATH]: {
-        lamp: celery.lamp === 'none' ? 'gray' : celery.lamp,
-        title: `${runtimeLampText(celery.lamp)} — ${celery.title}`,
-      },
       [SYSTEM_NAV_SOCKET_PATH]: {
         lamp: ingestLampForIcon(socketRollup.lamp),
         title: socketRollup.title,
       },
     }
-  }, [probeResults, status, socketRollup, celery.lamp, celery.title])
+  }, [probeResults, status, socketRollup])
 
   return { lamps, getLamp: (path: string) => lamps[path] }
 }

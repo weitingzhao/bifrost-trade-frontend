@@ -69,16 +69,6 @@ const WIDE_LAYOUT: TopologyLayoutSpec = {
       rectClass: 'fill-emerald-500/[0.03] stroke-emerald-500/15',
     },
     {
-      id: 'celery',
-      label: 'CELERY RUNTIME',
-      x: 100,
-      y: 88,
-      width: 1080,
-      height: 248,
-      labelClass: 'fill-orange-400/45',
-      rectClass: 'fill-orange-500/[0.03] stroke-orange-500/12',
-    },
-    {
       id: 'daemon',
       label: 'DAEMONS',
       x: 100,
@@ -165,16 +155,6 @@ const TALL_LAYOUT: TopologyLayoutSpec = {
       rectClass: 'fill-emerald-500/[0.03] stroke-emerald-500/15',
     },
     {
-      id: 'celery',
-      label: 'CELERY RUNTIME',
-      x: 100,
-      y: 208,
-      width: 772,
-      height: 320,
-      labelClass: 'fill-orange-400/45',
-      rectClass: 'fill-orange-500/[0.03] stroke-orange-500/12',
-    },
-    {
       id: 'daemon',
       label: 'DAEMONS',
       x: 100,
@@ -204,16 +184,14 @@ const TALL_LAYOUT: TopologyLayoutSpec = {
   edges: TOPOLOGY_EDGES,
 }
 
-/** Middle ground — wide canvas with extra Celery vertical room. */
+/** Middle ground — wide canvas with extra vertical room. */
 const BALANCED_LAYOUT: TopologyLayoutSpec = {
   ...WIDE_LAYOUT,
   mode: 'balanced',
   label: 'Balanced',
   viewBox: { width: 1280, height: 560 },
   zones: WIDE_LAYOUT.zones.map(z =>
-    z.id === 'celery'
-      ? { ...z, y: 88, height: 300 }
-      : z.id === 'daemon'
+    z.id === 'daemon'
         ? { ...z, y: 400, height: 152 }
         : z.id === 'edge'
           ? { ...z, height: 544 }

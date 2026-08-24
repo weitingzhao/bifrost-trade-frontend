@@ -30,7 +30,7 @@ import {
   daemonIbServiceListClass,
   useCtrlAction,
 } from './daemonShared'
-import { ConfirmDialog } from '@/pages/operations/celery/ConfirmDialog'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import {
   daemonBlockReasonClass,
   daemonCardStatusSubtitleClass,

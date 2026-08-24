@@ -130,7 +130,7 @@ Keep Legacy engine UI/API running → `make switch-cutover-domain DOMAIN=<域> M
 
 | Route / check | Business checks | Pass | Owner date | Remarks |
 |---------------|-----------------|------|------------|---------|
-| `/operations/celery` | 8 tables, capabilities, Job Queues | [x] | 2026-06-04 | Batch 5；Queue Summary 状态色、Worker PROD/Max 已对齐 |
+| Retired worker console | 8 tables, capabilities, Job Queues | [x] | 2026-06-04 | Historical acceptance; removed in Wave 5 |
 | `/settings/socket` | Ingest control (ops-backed) | [x] | 2026-06-04 | Batch 5 |
 
 ---

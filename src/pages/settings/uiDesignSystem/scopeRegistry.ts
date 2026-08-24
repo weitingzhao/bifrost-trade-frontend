@@ -106,7 +106,6 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/strategy/option-category', label: 'Option Category', domain: 'strategy', pathGlobs: ['pages/strategy/OptionCategoryPage.tsx'] },
 
   { route: '/operations/daemon', label: 'Daemon', domain: 'operations', pathGlobs: ['pages/operations/DaemonPage.tsx'] },
-  { route: '/operations/celery', label: 'Celery', domain: 'operations', pathGlobs: ['pages/operations/CeleryPage.tsx', 'pages/operations/celery/**'] },
   { route: '/operations/logs', label: 'Logs', domain: 'operations', pathGlobs: ['pages/operations/LogsPage.tsx'] },
 
   { route: '/settings/ui-design-system', label: 'UI Design System', domain: 'settings', pathGlobs: ['pages/settings/UiDesignSystemPage.tsx', 'pages/settings/uiDesignSystem/**'] },

@@ -133,25 +133,6 @@ export interface StructuresResponse {
   items: StrategyStructure[]
 }
 
-export interface StrategyHistoryRow {
-  strategy_history_id: number
-  strategy_structure_id: number
-  ts: number | string
-  state_summary: unknown
-  created_at: string | null
-}
-
-export interface StrategyHistoryParams {
-  from_ts?: number
-  to_ts?: number
-  strategy_structure_id?: number
-  limit?: number
-}
-
-export interface StrategyHistoryResponse {
-  items: StrategyHistoryRow[]
-}
-
 // ── Gate Safety ───────────────────────────────────────────────────────────────
 
 export interface GateSafetyItem {

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/dialog'
 import type { AvailabilityFilter } from '@/components/strategy/AvailabilityFilterPills'
 import { StructureFormSheet, type StructureFormMode } from '@/components/strategy/StructureFormSheet'
-import { StrategyHistorySection } from '@/components/strategy/StrategyHistorySection'
 import { StructuresTable } from '@/components/strategy/StructuresTable'
 import {
   structuresActiveGridClass,
@@ -61,7 +60,6 @@ export default function StructuresPage() {
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>('active')
   const [structureTypeTab, setStructureTypeTab] = useState('')
   const [formMode, setFormMode] = useState<StructureFormMode>({ kind: 'closed' })
-  const [historyStructureFilter, setHistoryStructureFilter] = useState<number | ''>('')
   const [statusMsg, setStatusMsg] = useState<{ text: string; isErr: boolean } | null>(null)
   const [availabilityUpdatingId, setAvailabilityUpdatingId] = useState<number | null>(null)
   const [availabilityError, setAvailabilityError] = useState<string | null>(null)
@@ -278,17 +276,6 @@ export default function StructuresPage() {
         onClose={() => setFormMode({ kind: 'closed' })}
         onSaved={() => void refetch()}
       />
-
-      <Card variant="elevated" size="sm" className="gap-3 p-2.5">
-        <h2 className={structuresSectionTitleClass}>Strategy history</h2>
-        <CardContent className="p-0">
-          <StrategyHistorySection
-            structures={allStructures}
-            structureFilter={historyStructureFilter}
-            onStructureFilterChange={setHistoryStructureFilter}
-          />
-        </CardContent>
-      </Card>
 
       <Dialog open={availabilityError != null} onOpenChange={(v) => { if (!v) setAvailabilityError(null) }}>
         <DialogContent showCloseButton={false}>

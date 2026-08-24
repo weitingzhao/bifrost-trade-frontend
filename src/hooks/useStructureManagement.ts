@@ -4,13 +4,12 @@ import {
   fetchStructure,
   createStructure,
   updateStructure,
-  fetchStrategyHistory,
   fetchTemplates,
   fetchTemplateDetail,
 } from '@/api/strategy'
 import { postActiveStrategy } from '@/api/monitor'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import type { StructurePayload, StrategyHistoryParams } from '@/types/strategy'
+import type { StructurePayload } from '@/types/strategy'
 import type { ActiveStrategyPayload } from '@/types/strategy'
 
 export function useStructuresAll() {
@@ -26,18 +25,6 @@ export function useStructureDetail(id: number | null) {
     queryKey: [...QUERY_KEYS.strategy.structureDetail, id],
     queryFn: () => fetchStructure(id!),
     enabled: id != null,
-  })
-}
-
-export function useStrategyHistory(params: StrategyHistoryParams) {
-  return useQuery({
-    queryKey: [
-      ...QUERY_KEYS.strategy.history,
-      params.strategy_structure_id ?? null,
-      params.limit ?? 100,
-    ],
-    queryFn: () => fetchStrategyHistory(params),
-    staleTime: 30_000,
   })
 }
 

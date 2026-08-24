@@ -2,8 +2,6 @@ import type {
   OpportunitiesResponse,
   StructuresResponse,
   StructurePayload,
-  StrategyHistoryParams,
-  StrategyHistoryResponse,
   StrategyInstancesResponse,
   StrategyInstance,
   StrategyStructure,
@@ -79,22 +77,6 @@ export async function updateStructure(
   const j = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `PUT /structures/${id}: ${res.status}`)
   return j as { ok: boolean }
-}
-
-export async function fetchStrategyHistory(
-  params: StrategyHistoryParams = {},
-): Promise<StrategyHistoryResponse> {
-  const sp = new URLSearchParams()
-  if (params.from_ts != null) sp.set('from_ts', String(params.from_ts))
-  if (params.to_ts != null) sp.set('to_ts', String(params.to_ts))
-  if (params.strategy_structure_id != null) {
-    sp.set('strategy_structure_id', String(params.strategy_structure_id))
-  }
-  if (params.limit != null) sp.set('limit', String(Math.min(500, Math.max(1, params.limit))))
-  const qs = sp.toString()
-  const res = await fetch(strategyUrl(`/strategies/history${qs ? `?${qs}` : ''}`))
-  if (!res.ok) throw new Error(`Strategy /history: ${res.status}`)
-  return res.json() as Promise<StrategyHistoryResponse>
 }
 
 export async function fetchStrategyInstances(params?: {

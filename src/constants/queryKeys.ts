@@ -73,7 +73,6 @@ export const QUERY_KEYS = {
     opportunities:  ['strategy', 'opportunities']    as const,
     structures:     ['strategy', 'structures']       as const,
     structureDetail:['strategy', 'structure-detail'] as const,
-    history:        ['strategy', 'history']          as const,
     gates:          ['strategy', 'gates']            as const,
     gateSafety:     ['strategy', 'gate-safety']      as const,
     allocations:    ['strategy', 'allocations']      as const,

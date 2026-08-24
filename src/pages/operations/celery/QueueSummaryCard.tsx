@@ -60,22 +60,27 @@ export function QueueSummaryCard({
   const lampText = runtimeLampText(runtimeLamp)
 
   function handleDeletePending(_row: AggregatedJobQueueSummaryRow): Promise<void> {
+    void _row
     return Promise.resolve()
   }
 
   function handleDeleteRunning(_row: AggregatedJobQueueSummaryRow): Promise<void> {
+    void _row
     return Promise.resolve()
   }
 
   function handleDeleteDone(_row: AggregatedJobQueueSummaryRow): Promise<void> {
+    void _row
     return Promise.resolve()
   }
 
   function handleDeleteFailed(_row: AggregatedJobQueueSummaryRow): Promise<void> {
+    void _row
     return Promise.resolve()
   }
 
   function handleResetFailed(_row: AggregatedJobQueueSummaryRow): Promise<void> {
+    void _row
     return Promise.resolve()
   }
 

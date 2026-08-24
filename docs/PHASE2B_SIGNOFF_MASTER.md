@@ -1,5 +1,7 @@
 # Phase 2B — API cutover sign-off (M6)
 
+> **Note (Wave 5–6)**: Trade Celery/Flower retired; Ops domain retains auth/audit/market-ingest on api-monitor. Session 9 celery references are historical.
+
 **Stage**: New Frontend + **New API** (Dev Docker stack, ports 8765–8773). One domain at a time during sprint work; final `.env.development` matches [`.env.development.example`](../.env.development.example).
 
 **Backend**: `cd bifrost-trade-infra && make dev && make dev-health` (9/9 API OK).

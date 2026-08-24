@@ -78,7 +78,7 @@ Always pair controls with a short label to give context:
 ### Filter state management
 
 - Simple page filters: `useState` in page component
-- Filters worth bookmarking (Ledger, Instances, Celery): sync to `useSearchParams`
+- Filters worth bookmarking (Ledger, Instances): sync to `useSearchParams`
 - No global filter store (Zustand/Context) unless explicitly needed for cross-page persistence
 
 ## Status indicators (lamp vs. tag vs. text)

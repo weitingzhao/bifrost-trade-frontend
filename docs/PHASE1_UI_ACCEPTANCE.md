@@ -1,5 +1,7 @@
 # Phase 1 UI canvas — visual acceptance checklist
 
+> **Note (Wave 5–6)**: Trade Celery/Flower ops UI retired. Historical batch notes mentioning "celery" are Legacy acceptance only.
+
 **Stage**: New Frontend + Legacy API (phase 1). Compare **bifrost-trade-frontend** (port 5173) with **bifrost-trader-engine/frontend** on the **same** Legacy API endpoints (`VITE_API_*`).
 
 **Master checklist (6 batches)**: [PHASE1_SIGNOFF_MASTER.md](./PHASE1_SIGNOFF_MASTER.md)

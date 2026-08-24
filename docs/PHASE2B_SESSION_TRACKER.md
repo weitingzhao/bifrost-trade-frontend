@@ -1,5 +1,7 @@
 # Phase 2B — Session tracker (Wave A / Wave B)
 
+> **Note (Wave 5–6)**: Trade Celery/Flower retired. Session 9 "celery" sign-off is historical acceptance only.
+
 **Owner UI sign-off**: [PHASE2B_SIGNOFF_MASTER.md](./PHASE2B_SIGNOFF_MASTER.md) — **你**勾选 Pass + Owner date。  
 **Agent API gate**: `cd bifrost-trade-infra && make verify-wave-a-sessions`（2026-06-05 全 Wave A 通过）。
 

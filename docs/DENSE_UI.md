@@ -343,7 +343,7 @@ No `@/components/ui/table` or `dangerTextBtnClass` under option category guarded
 | Docs links table | [ApiDocsTable.tsx](../src/pages/settings/apiHealth/ApiDocsTable.tsx) — `DenseDataTable` + `API_DOCS_COL_WIDTHS` |
 | Service probe cards | [ApiServiceHealthCard.tsx](../src/pages/settings/apiHealth/ApiServiceHealthCard.tsx) — `Card variant="elevated"` |
 | Detail sub-nav | `SegmentControl size="sm"` in `panels/*DetailsPanel.tsx` |
-| Reactor Map (global) | [ReactorMapPanel.tsx](../src/components/topology/ReactorMapPanel.tsx) + [ServiceTopologyOverview.tsx](../src/components/topology/ServiceTopologyOverview.tsx) — sidebar footer / TopNav toggle; grouped bays (Edge · Control/Account/Research/Data APIs · Celery · Daemons); schematic CSS **allowed exception** |
+| Reactor Map (global) | [ReactorMapPanel.tsx](../src/components/topology/ReactorMapPanel.tsx) + [ServiceTopologyOverview.tsx](../src/components/topology/ServiceTopologyOverview.tsx) — sidebar footer / TopNav toggle; grouped bays (Edge · Control/Account/Research/Data APIs · Daemons); schematic CSS **allowed exception** |
 
 No raw `<table` under `src/pages/settings/apiHealth/`. Legacy five Settings API pages merged into this single tabbed route.
 
@@ -367,7 +367,7 @@ No raw `<table` under `src/pages/settings/apiHealth/`. Legacy five Settings API 
 | Ingest services table | [IngestServicesTable.tsx](../src/pages/settings/socket/IngestServicesTable.tsx) — `DenseDataTable` + `DenseTableSubheadRow` (MASSIVE / IB groups) + dynamic `colgroup` |
 | Connection column | [IngestConnectionCell.tsx](../src/pages/settings/socket/IngestConnectionCell.tsx) — Polygon WS age / IB client id / probe badges |
 | Row actions | [socketIngestControls.tsx](../src/pages/settings/socket/socketIngestControls.tsx) — `IconActionButton` (Start/Stop/Restart/Reset) |
-| Ops auth / host pills | [OpsAuthBar.tsx](../src/pages/settings/socket/OpsAuthBar.tsx), [OpsHostEnvPill.tsx](../src/pages/settings/socket/OpsHostEnvPill.tsx) — shared tokens (Celery/Daemon import same paths) |
+| Ops auth / host pills | [OpsAuthBar.tsx](../src/pages/settings/socket/OpsAuthBar.tsx), [OpsHostEnvPill.tsx](../src/pages/settings/socket/OpsHostEnvPill.tsx) — shared tokens (Daemon reuses same paths) |
 | Daemon reuse | `IngestServicesTable variant="daemon"` in [DaemonEngineOpsSection.tsx](../src/pages/settings/daemon/DaemonEngineOpsSection.tsx) |
 | Socket / edge logs | Global **LogPanel** → **Socket Services** group (`IB INGESTOR`, `IB ACCT AGENT`, `IB OPERATOR`, `MASSIVE WS`); no in-page console on Socket |
 
@@ -385,7 +385,7 @@ No `@/components/ui/table` under `src/pages/settings/socket/`.
 | Strategy / Account Sync cards | [StrategyTradingDaemonCard.tsx](../src/pages/settings/daemon/StrategyTradingDaemonCard.tsx), [AccountSyncDaemonCard.tsx](../src/pages/settings/daemon/AccountSyncDaemonCard.tsx) — `daemonThreeColGridClass`, `DenseTag` Yes/No, `daemonLampTextClass` |
 | Process ingest table | [IngestServicesTable.tsx](../src/pages/settings/socket/IngestServicesTable.tsx) `variant="daemon"` in [DaemonEngineOpsSection.tsx](../src/pages/settings/daemon/DaemonEngineOpsSection.tsx) — Dense table owned by **Phase 4.18** Socket |
 
-**Logs:** Not in-page; use global footer **LogPanel → Daemon** (Strategy Trading + Account Sync). Celery card intentionally removed vs Legacy.
+**Logs:** Not in-page; use global footer **LogPanel → Daemon** (Strategy Trading + Account Sync). Legacy Celery ops card removed (Wave 5).
 
 No `@/components/ui/table` under `DaemonStatusPage.tsx` or `settings/daemon/**`.
 

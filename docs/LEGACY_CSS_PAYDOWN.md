@@ -497,7 +497,7 @@ npm run lint && npm run build && npm run check:legacy-css
 - [`IngestServicesTable.tsx`](../src/pages/settings/socket/IngestServicesTable.tsx) — `DenseDataTable` + `DenseTableSubheadRow` + `IconActionButton` row actions
 - `check-legacy-css`: no `@/components/ui/table` under `pages/settings/socket/**`
 
-**Out of scope:** Celery/Daemon page shells (except `IngestServicesTable` reuse); LogConsole internals; Owner Legacy 并排业务验收（MIGRATION WIP 不变）。
+**Out of scope:** Legacy Celery page (retired Wave 5); Daemon page shells except `IngestServicesTable` reuse; LogConsole internals; Owner Legacy 并排业务验收（MIGRATION WIP 不变）。
 
 **Acceptance:** `npm run lint && npm run build && npm run check:legacy-css` pass; Daemon ingest table `variant="daemon"` visual regression.
 
@@ -537,7 +537,7 @@ The former Trade background-worker console and its Dense UI migration were remov
 
 ## Phase 4 — Ops / Research / Settings grids
 
-Migrate remaining shadcn `Table` usages in Celery, Strategy admin, Screener, etc. Prioritize high-traffic monitoring pages.
+Migrate remaining shadcn `Table` usages in Strategy admin, Screener, etc. Prioritize high-traffic monitoring pages. (Celery ops page retired Wave 5.)
 
 Track remaining count:
 

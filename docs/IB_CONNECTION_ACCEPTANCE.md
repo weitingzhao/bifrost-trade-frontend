@@ -22,7 +22,7 @@ Run Legacy and New on **different ports** if both dev servers are needed (e.g. e
 | Check | Legacy anchor | New anchor | Expected |
 |-------|---------------|------------|----------|
 | Connection read-only | `#ib-users` | `#ib-users` | Host IP, Secondary host, Port type match `status.config.ib_client`; New shows **Read-only · YAML** badge |
-| Client IDs read-only | `#ib-client-ids` | `#ib-client-ids` | Daemon (Trading, Listener), Socket (Operator, Ingestor, Account Agent), Celery (Market Data) IDs match Legacy table |
+| Client IDs read-only | `#ib-client-ids` | `#ib-client-ids` | Daemon (Trading, Listener), Socket (Operator, Ingestor, Account Agent) IDs match Legacy table |
 | Account editable | `#ib-account` | `#ib-account` | Event Host / Event Secondary / Trading Host inputs editable; Secondary trading column shows em dash |
 | Flex Query editable | `#ib-flex-query` | `#ib-flex-query` | Host + Secondary tokens; Cash Transactions + Trades query IDs; Secondary token disabled when no secondary host |
 | Flex Preference | `#flex-preference` | `#flex-preference` | `default_range_days` and `init_range_days` (1–9999) |

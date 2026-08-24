@@ -1,5 +1,7 @@
 # Phase 2B — Agent verification log
 
+> **Note (Wave 5–6)**: Trade Celery/Flower retired. Celery worker preflight rows below are historical.
+
 Mechanical and API smoke only. **Owner UI sign-off** remains in [PHASE2B_SIGNOFF_MASTER.md](./PHASE2B_SIGNOFF_MASTER.md).
 
 ## 2026-06-05 — Preflight + domain smoke

@@ -1,5 +1,7 @@
 # Phase 1 — Master sign-off checklist
 
+> **Note (Wave 5–6)**: Trade Celery/Flower ops UI retired. Checklist rows mentioning "celery" are Legacy Phase 1 acceptance history, not current runtime.
+
 **Stage**: New Frontend + Legacy API. Compare **bifrost-trade-frontend** (port 5173) with **bifrost-trader-engine/frontend** on the **same** `VITE_API_*`.
 
 **Mechanical gate (Agent, 2026-06-04)**: `npm run lint` · `npm run build` · `npm run check:legacy-css` — all pass.

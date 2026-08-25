@@ -127,8 +127,14 @@ function LinkExecutionModalBody({
 
   const execSymbol = getUnderlyingSymbolFromExecution(ex)
   const filteredOpps = filterOpportunitiesBySymbol(activeOpportunities, execSymbol)
-  const symbolFiltered = !!execSymbol && filteredOpps.length < activeOpportunities.length
   const executionAccountId = (ex?.account_id ?? '').trim()
+
+  // When exactly one opportunity matches the underlying, pre-select it.
+  useEffect(() => {
+    if (oppId) return
+    if (filteredOpps.length !== 1) return
+    setOppId(String(filteredOpps[0].strategy_opportunity_id))
+  }, [filteredOpps, oppId])
 
   useEffect(() => {
     if (!instanceId || instances.length === 0) return
@@ -199,6 +205,7 @@ function LinkExecutionModalBody({
 
       {ex && (
         <p className={cn(linkExecSummaryClass, 'border-b border-border px-5 py-2')}>
+          {execSymbol ? <span className="font-medium text-entity-symbol">{execSymbol} · </span> : null}
           {eTs != null && Number.isFinite(eTs) ? <span>{fmtDate(eTs)} · </span> : null}
           <span>
             {ex.side ?? '—'} {executionQtyLabel(ex)} @{' '}
@@ -246,8 +253,8 @@ function LinkExecutionModalBody({
         <div className={linkExecSectionClass}>
           <span className={linkExecSectionLabelClass}>
             Strategy opportunity
-            {symbolFiltered && execSymbol ? (
-              <span className={linkExecSymbolBadgeClass} title={`Filtered by symbol ${execSymbol}`}>
+            {execSymbol ? (
+              <span className={linkExecSymbolBadgeClass} title={`Filtered by underlying ${execSymbol}`}>
                 {execSymbol}
               </span>
             ) : null}
@@ -279,8 +286,8 @@ function LinkExecutionModalBody({
             </div>
           ) : (
             <p className={linkExecHintClass}>
-              {symbolFiltered
-                ? `No active opportunities match symbol ${execSymbol}. Check scope in Strategy / Opportunity.`
+              {execSymbol
+                ? `No active opportunities match underlying ${execSymbol}. Create one under Strategy → Opportunity, or check scope symbols.`
                 : 'No active strategy opportunities loaded.'}
             </p>
           )}

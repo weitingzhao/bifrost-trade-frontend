@@ -89,55 +89,6 @@ export interface FetchGreeksParams {
   limit?: number
 }
 
-export interface SepaConditionResult {
-  condition_id: string
-  label: string
-  pass: boolean
-  value: number | null
-}
-
-export interface SepaSymbolResult {
-  symbol: string
-  technical_pass: boolean
-  insufficient_data: boolean
-  pass_count: number
-  fail_count: number
-  conditions: SepaConditionResult[]
-  metrics: Record<string, number | null>
-}
-
-export interface SepaPhase1Request {
-  symbols: string[]
-  as_of_date?: string
-  volume_threshold?: number
-  strict_sma200_rising?: boolean
-  source?: string
-}
-
-export interface SepaFundamentalsRequest {
-  symbols: string[]
-  as_of_date?: string
-  eps_q2q_threshold?: number
-  rev_q2q_threshold?: number
-  eps_3y_threshold?: number
-  rev_3y_threshold?: number
-}
-
-export interface SepaResponse {
-  ok: boolean
-  as_of_date: string
-  source: string
-  results: SepaSymbolResult[]
-  summary: {
-    total: number
-    passed: number
-    failed: number
-    insufficient_data: number
-  }
-  warnings: Record<string, string>
-  rule_version: string
-}
-
 export interface DataReadinessSummary {
   universe_count: number
   tickers_active_count: number

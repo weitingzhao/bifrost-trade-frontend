@@ -31,16 +31,16 @@ export function ResearchDetailsPanel() {
 
       {tab === 'research' && (
         <div className={apiHealthDetailSectionClass}>
-          <p className={apiHealthDetailTitleClass}>Option discovery and max pain</p>
+          <p className={apiHealthDetailTitleClass}>Option discovery and data readiness</p>
           <p className={apiHealthDetailHintClass}>
-            IB-backed option chains, snapshots, and max pain compute endpoints. Uses IB operator client
-            on startup when configured.
+            IB-backed option chains and snapshots; SEPA readiness reads dw_stock.mart_sepa_*. Max pain
+            compute is served by Market Data Plugin.
           </p>
           <ApiDetailKvCard>
             <DetailKV label="Typical routes">
               <code className="text-xs">/research/option-snapshot</code>
               <span className="text-xs text-muted-foreground">
-                , /research/max-pain/compute (see OpenAPI)
+                , Plugin /market/analytics/max-pain* (see OpenAPI)
               </span>
             </DetailKV>
             <DetailKV label="OpenAPI JSON" mono>

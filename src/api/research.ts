@@ -5,9 +5,6 @@ import type {
   ScreenerResponse,
   FetchGreeksParams,
   GreeksResponse,
-  SepaPhase1Request,
-  SepaFundamentalsRequest,
-  SepaResponse,
   DataReadinessSummary,
   TickerOverview,
   FundamentalConditionsData,
@@ -100,26 +97,6 @@ export async function fetchGreeksAvailableDates(symbol: string): Promise<string[
   } catch {
     return []
   }
-}
-
-export async function fetchSepaPhase1(req: SepaPhase1Request): Promise<SepaResponse> {
-  const res = await fetch(researchUrl('/research/screening/sepa/phase1'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
-  })
-  if (!res.ok) throw new Error(`POST /research/screening/sepa/phase1: ${res.status}`)
-  return res.json() as Promise<SepaResponse>
-}
-
-export async function fetchSepaFundamentals(req: SepaFundamentalsRequest): Promise<SepaResponse> {
-  const res = await fetch(researchUrl('/research/screening/sepa/fundamentals'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
-  })
-  if (!res.ok) throw new Error(`POST /research/screening/sepa/fundamentals: ${res.status}`)
-  return res.json() as Promise<SepaResponse>
 }
 
 export async function fetchDataReadinessSummary(): Promise<DataReadinessSummary> {

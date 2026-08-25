@@ -200,7 +200,7 @@ export function SepaScreeningChecklist({
               }
             />
             <p className="text-dense-meta text-muted-foreground">
-              Data source: <code className="text-sky-300/90">analytics.sepa_wide</code>{' '}
+              Data source: <code className="text-sky-300/90">dw_stock.mart_sepa_screener_wide</code>{' '}
               (dbt analytics pipeline — stock_day + CRS percentile rank)
             </p>
 
@@ -268,7 +268,7 @@ export function SepaScreeningChecklist({
               count={`${fundOk} / ${fundTotal}`}
             />
             <p className="text-dense-meta text-muted-foreground">
-              Data source: <code className="text-sky-300/90">analytics.sepa_wide</code>{' '}
+              Data source: <code className="text-sky-300/90">dw_stock.mart_sepa_screener_wide</code>{' '}
               (dbt analytics pipeline — evaluated from <code className="text-sky-300/90">stock_income_statements</code>)
             </p>
             <StaticCriteriaTable rows={fundStatuses} />

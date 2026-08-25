@@ -107,7 +107,7 @@ export interface StrategyStructure {
   updated_at: string | null
   notes: string | null
   legs: StructureLeg[]
-  /** Present when fetched by id; map assembled from strategy_structure_meta rows. */
+  /** Present when fetched by id; map from strategy_structure.characteristics_json / legs_json. */
   metadata?: Record<string, unknown> | null
 }
 

@@ -83,9 +83,13 @@ function writeStoredPosition(pos: CopilotBubblePosition) {
 
 function readStoredSessionsOpen(): boolean {
   try {
-    return localStorage.getItem(SESSIONS_STORAGE_KEY) === '1'
+    const raw = localStorage.getItem(SESSIONS_STORAGE_KEY)
+    // Default: open — sessions rail is the primary way to switch sessions.
+    // Only closed if the user explicitly hid it (writes '0').
+    if (raw === '0') return false
+    return true
   } catch {
-    return false
+    return true
   }
 }
 

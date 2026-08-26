@@ -25,10 +25,10 @@ import { cn } from '@/lib/utils'
 
 const COMPACT_W = 440
 const COMPACT_H = 640
-const EXPANDED_W = 720
-const EXPANDED_H_MAX = 800
+const EXPANDED_W = 780
+const EXPANDED_H_MAX = 820
 const DEFAULT_MARGIN = 24
-const SESSIONS_RAIL_W = 220
+const SESSIONS_RAIL_W = 240
 
 function clampPosition(pos: CopilotBubblePosition, size: { w: number; h: number }): CopilotBubblePosition {
   if (pos === null) return null
@@ -186,16 +186,21 @@ export function CopilotFloatingBubble() {
         aria-label="Research Copilot"
         style={positionStyle}
         className={cn(
-          'fixed z-[190] flex flex-col overflow-hidden rounded-xl border border-border bg-card',
-          'shadow-[0_20px_50px_-8px_rgba(0,0,0,0.35)]',
+          'fixed z-[190] flex flex-col overflow-hidden rounded-xl',
+          // Copilot-specific identity: subtle primary tint over card, distinct ring,
+          // stronger shadow — makes the panel visually pop off Trade pages.
+          'border border-primary/25 ring-1 ring-primary/10',
+          'bg-gradient-to-br from-card via-card to-primary/[0.04]',
+          'shadow-[0_24px_60px_-12px_rgba(70,90,220,0.35),0_10px_20px_-6px_rgba(0,0,0,0.35)]',
           // Mobile / narrow — full-width bottom sheet (ignores position/drag)
           'inset-x-3 max-w-none md:inset-x-auto md:max-w-[92vw]',
           'h-[85vh] md:h-auto',
           // Desktop sizing
           size === 'expanded'
-            ? 'md:h-[min(800px,88vh)] md:w-[720px]'
+            ? 'md:h-[min(820px,90vh)] md:w-[780px]'
             : 'md:h-[640px] md:w-[440px]',
-          dragging && 'shadow-[0_28px_60px_-8px_rgba(0,0,0,0.55)]',
+          dragging &&
+            'shadow-[0_32px_70px_-10px_rgba(70,90,220,0.55),0_14px_28px_-8px_rgba(0,0,0,0.5)]',
         )}
       >
         <header
@@ -204,7 +209,8 @@ export function CopilotFloatingBubble() {
           onPointerUp={onHeaderPointerUp}
           onPointerCancel={onHeaderPointerUp}
           className={cn(
-            'flex shrink-0 items-center justify-between gap-2 border-b border-border/60 bg-card px-3 py-2 select-none',
+            'flex shrink-0 items-center justify-between gap-2 border-b border-primary/20 px-3 py-2 select-none',
+            'bg-gradient-to-b from-primary/10 to-primary/[0.04] backdrop-blur-sm',
             'md:cursor-grab',
             dragging && 'md:cursor-grabbing',
           )}
@@ -305,16 +311,16 @@ export function CopilotFloatingBubble() {
         <div className="flex min-h-0 flex-1">
           {sessionsOpen ? (
             <div
-              className="hidden shrink-0 border-r border-border/60 bg-background/60 md:block"
+              className="hidden shrink-0 flex-col border-r border-primary/15 bg-background/40 backdrop-blur-sm md:flex"
               style={{ width: SESSIONS_RAIL_W }}
             >
-              <div className="flex items-center gap-1 border-b border-border/40 px-2 py-1.5">
-                <History className="h-3 w-3 text-muted-foreground" />
-                <span className="text-dense-caption font-medium uppercase tracking-wide text-muted-foreground">
-                  Sessions
+              <div className="flex items-center gap-1.5 border-b border-primary/15 bg-primary/[0.03] px-2.5 py-2">
+                <History className="h-3.5 w-3.5 text-primary" />
+                <span className="text-dense-label font-semibold text-foreground">
+                  Chat history
                 </span>
               </div>
-              <div className="h-[calc(100%-2rem)] overflow-y-auto px-1.5 py-1.5">
+              <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
                 <SessionListSidebar onLoaded={() => undefined} />
               </div>
             </div>

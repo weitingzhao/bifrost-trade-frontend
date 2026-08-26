@@ -1,3 +1,4 @@
+import { MessageCircle, Settings } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PinsTab } from '@/components/cockpit/PinsTab'
 import { ContextTab } from '@/components/cockpit/ContextTab'
@@ -12,12 +13,26 @@ import {
 import { usePendingDraftCount } from '@/hooks/useResearchDrafts'
 import { cn } from '@/lib/utils'
 
-const TAB_TRIGGER = 'h-7 px-2 text-dense-meta data-active:shadow-sm'
+const PRIMARY_TAB =
+  'h-8 gap-1.5 px-2.5 text-dense-label font-medium ' +
+  'data-active:bg-primary/15 data-active:text-primary data-active:shadow-sm'
+const WORKSPACE_TAB =
+  'h-7 px-2 text-dense-meta text-muted-foreground ' +
+  'hover:text-foreground data-active:bg-secondary data-active:text-foreground'
+const UTILITY_TAB =
+  'h-7 w-7 justify-center p-0 text-muted-foreground ' +
+  'hover:text-foreground data-active:bg-secondary data-active:text-foreground'
 
 /**
  * Unified Research panel tabs — hosted inside the floating Copilot bubble.
- * Copilot chat sits alongside the workspace tabs (Inbox / Pins / Context / Actions / Settings)
- * so users get one entry point → one surface.
+ *
+ * Layout hierarchy (Wave RS-UX5):
+ *   [ Copilot ●● ]  │  Inbox • Pins • Context • Actions  │ ⚙ Settings
+ *   ═══ primary  ═══ ─── workspace utilities ───         ─ utility ─
+ *
+ * The primary Copilot tab is visually promoted (larger pill, primary tint) so
+ * users understand the chat is the main surface.  Workspace tools sit in a
+ * secondary group behind a subtle separator.  Settings collapses to an icon.
  */
 export function CockpitTabs({ className }: { className?: string }) {
   const { tab, setTab } = useCockpitDrawer()
@@ -29,29 +44,38 @@ export function CockpitTabs({ className }: { className?: string }) {
       onValueChange={(v) => setTab(v as CockpitTabId)}
       className={cn('flex min-h-0 flex-1 flex-col gap-2', className)}
     >
-      <TabsList variant="default" className="h-auto w-full flex-wrap justify-start gap-0.5 p-1">
-        <TabsTrigger value="copilot" className={TAB_TRIGGER}>
+      <TabsList
+        variant="default"
+        className="h-auto w-full items-center gap-1 rounded-lg border border-border bg-secondary p-1"
+      >
+        <TabsTrigger value="copilot" className={PRIMARY_TAB} aria-label="Copilot chat">
+          <MessageCircle className="size-3.5" aria-hidden />
           Copilot
         </TabsTrigger>
-        <TabsTrigger value="inbox" className={TAB_TRIGGER}>
+        <div className="mx-0.5 h-4 w-px shrink-0 bg-border/60" aria-hidden />
+        <TabsTrigger value="inbox" className={WORKSPACE_TAB}>
           Inbox
           {pendingCount > 0 ? (
-            <span className="ml-1 inline-flex min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-dense-micro font-semibold text-primary">
+            <span
+              className="ml-1 inline-flex min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-dense-micro font-semibold text-primary"
+              aria-label={`${pendingCount} pending drafts`}
+            >
               {pendingCount > 99 ? '99+' : pendingCount}
             </span>
           ) : null}
         </TabsTrigger>
-        <TabsTrigger value="pins" className={TAB_TRIGGER}>
+        <TabsTrigger value="pins" className={WORKSPACE_TAB}>
           Pins
         </TabsTrigger>
-        <TabsTrigger value="context" className={TAB_TRIGGER}>
+        <TabsTrigger value="context" className={WORKSPACE_TAB}>
           Context
         </TabsTrigger>
-        <TabsTrigger value="actions" className={TAB_TRIGGER}>
+        <TabsTrigger value="actions" className={WORKSPACE_TAB}>
           Actions
         </TabsTrigger>
-        <TabsTrigger value="settings" className={TAB_TRIGGER}>
-          Settings
+        <div className="ml-auto" aria-hidden />
+        <TabsTrigger value="settings" className={UTILITY_TAB} aria-label="Copilot settings">
+          <Settings className="size-3.5" aria-hidden />
         </TabsTrigger>
       </TabsList>
 

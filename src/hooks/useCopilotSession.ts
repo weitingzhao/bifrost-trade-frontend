@@ -256,6 +256,14 @@ function applyEvent(ev: CopilotSseEvent) {
     )
     store.setState({ messages: msgs, streaming: false })
     abort = null
+    // Notify listeners (sessions rail, usage query) that a turn just persisted.
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('copilot:turn-done'))
+      }
+    } catch {
+      // no-op
+    }
   }
 }
 

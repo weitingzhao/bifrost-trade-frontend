@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  Expand,
   History,
   Maximize2,
   MessageCircle,
@@ -8,6 +9,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   RotateCcw,
+  Shrink,
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,10 +27,11 @@ import { cn } from '@/lib/utils'
 
 const COMPACT_W = 440
 const COMPACT_H = 640
-const EXPANDED_W = 780
-const EXPANDED_H_MAX = 820
+const EXPANDED_W = 900
+const EXPANDED_H_MAX = 860
 const DEFAULT_MARGIN = 24
 const SESSIONS_RAIL_W = 240
+const SESSIONS_RAIL_W_FS = 280
 
 function clampPosition(pos: CopilotBubblePosition, size: { w: number; h: number }): CopilotBubblePosition {
   if (pos === null) return null
@@ -60,6 +63,7 @@ export function CopilotFloatingBubble() {
     close,
     toggle,
     toggleSize,
+    toggleFullscreen,
     setPosition,
     resetPosition,
     toggleSessions,
@@ -70,8 +74,19 @@ export function CopilotFloatingBubble() {
   const dragOffsetRef = useRef<{ dx: number; dy: number } | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
 
-  const panelWidth = size === 'expanded' ? EXPANDED_W : COMPACT_W
-  const panelHeight = size === 'expanded' ? Math.min(EXPANDED_H_MAX, window.innerHeight * 0.88) : COMPACT_H
+  const isFullscreen = size === 'fullscreen'
+  const panelWidth =
+    size === 'fullscreen'
+      ? window.innerWidth - 32
+      : size === 'expanded'
+        ? EXPANDED_W
+        : COMPACT_W
+  const panelHeight =
+    size === 'fullscreen'
+      ? window.innerHeight - 32
+      : size === 'expanded'
+        ? Math.min(EXPANDED_H_MAX, window.innerHeight * 0.9)
+        : COMPACT_H
 
   useEffect(() => {
     if (!open) return
@@ -144,6 +159,7 @@ export function CopilotFloatingBubble() {
 
   function onHeaderPointerDown(e: React.PointerEvent<HTMLElement>) {
     if (window.innerWidth < 768) return // mobile — no drag
+    if (isFullscreen) return // fullscreen — dragging disabled, panel anchored
     if ((e.target as HTMLElement).closest('button, [role="button"], input, textarea, select, a')) {
       return
     }
@@ -173,9 +189,11 @@ export function CopilotFloatingBubble() {
     }
   }
 
-  const positionStyle: React.CSSProperties = position
-    ? { top: position.y, left: position.x, right: 'auto', bottom: 'auto' }
-    : { bottom: DEFAULT_MARGIN, right: DEFAULT_MARGIN }
+  const positionStyle: React.CSSProperties = isFullscreen
+    ? { top: 16, left: 16, right: 16, bottom: 16, width: 'auto', height: 'auto' }
+    : position
+      ? { top: position.y, left: position.x, right: 'auto', bottom: 'auto' }
+      : { bottom: DEFAULT_MARGIN, right: DEFAULT_MARGIN }
 
   return (
     <>
@@ -187,18 +205,18 @@ export function CopilotFloatingBubble() {
         style={positionStyle}
         className={cn(
           'fixed z-[190] flex flex-col overflow-hidden rounded-xl',
-          // Copilot-specific identity: subtle primary tint over card, distinct ring,
-          // stronger shadow — makes the panel visually pop off Trade pages.
-          'border border-primary/25 ring-1 ring-primary/10',
-          'bg-gradient-to-br from-card via-card to-primary/[0.04]',
+          // Copilot identity is delivered via border / ring / shadow only.  Body is
+          // fully opaque so page content behind the panel does not bleed through
+          // and confuse the reader — usability > cosmetic transparency.
+          'border border-primary/40 ring-1 ring-primary/15',
+          'bg-card',
           'shadow-[0_24px_60px_-12px_rgba(70,90,220,0.35),0_10px_20px_-6px_rgba(0,0,0,0.35)]',
           // Mobile / narrow — full-width bottom sheet (ignores position/drag)
-          'inset-x-3 max-w-none md:inset-x-auto md:max-w-[92vw]',
-          'h-[85vh] md:h-auto',
+          !isFullscreen && 'inset-x-3 max-w-none md:inset-x-auto md:max-w-[96vw]',
+          !isFullscreen && 'h-[85vh] md:h-auto',
           // Desktop sizing
-          size === 'expanded'
-            ? 'md:h-[min(820px,90vh)] md:w-[780px]'
-            : 'md:h-[640px] md:w-[440px]',
+          !isFullscreen && size === 'expanded' && 'md:h-[min(860px,92vh)] md:w-[900px]',
+          !isFullscreen && size === 'compact' && 'md:h-[640px] md:w-[440px]',
           dragging &&
             'shadow-[0_32px_70px_-10px_rgba(70,90,220,0.55),0_14px_28px_-8px_rgba(0,0,0,0.5)]',
         )}
@@ -209,17 +227,21 @@ export function CopilotFloatingBubble() {
           onPointerUp={onHeaderPointerUp}
           onPointerCancel={onHeaderPointerUp}
           className={cn(
-            'flex shrink-0 items-center justify-between gap-2 border-b border-primary/20 px-3 py-2 select-none',
-            'bg-gradient-to-b from-primary/10 to-primary/[0.04] backdrop-blur-sm',
-            'md:cursor-grab',
-            dragging && 'md:cursor-grabbing',
+            'flex shrink-0 items-center justify-between gap-2 border-b border-primary/25 px-3 py-2 select-none',
+            // Opaque header bar — Copilot brand color comes from icon + border,
+            // never from a semi-transparent tint that lets page text bleed through.
+            'bg-secondary',
+            !isFullscreen && 'md:cursor-grab',
+            !isFullscreen && dragging && 'md:cursor-grabbing',
           )}
         >
           <div className="flex min-w-0 items-center gap-1.5">
-            <MoveDiagonal2
-              className="hidden md:block h-3.5 w-3.5 text-muted-foreground/60"
-              aria-hidden
-            />
+            {!isFullscreen ? (
+              <MoveDiagonal2
+                className="hidden md:block h-3.5 w-3.5 text-muted-foreground/60"
+                aria-hidden
+              />
+            ) : null}
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15">
               <MessageCircle className="h-3.5 w-3.5 text-primary" strokeWidth={2.25} />
             </span>
@@ -255,7 +277,7 @@ export function CopilotFloatingBubble() {
                 {sessionsOpen ? 'Hide sessions' : 'Sessions history'}
               </TooltipContent>
             </Tooltip>
-            {position ? (
+            {position && !isFullscreen ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -271,24 +293,47 @@ export function CopilotFloatingBubble() {
                 <TooltipContent side="bottom">Reset to bottom-right</TooltipContent>
               </Tooltip>
             ) : null}
+            {!isFullscreen ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={toggleSize}
+                    aria-label={size === 'compact' ? 'Expand panel' : 'Collapse panel'}
+                  >
+                    {size === 'compact' ? (
+                      <Maximize2 className="h-3.5 w-3.5" />
+                    ) : (
+                      <Minimize2 className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {size === 'compact' ? 'Expand' : 'Collapse'}
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  onClick={toggleSize}
-                  aria-label={size === 'compact' ? 'Expand panel' : 'Collapse panel'}
+                  onClick={toggleFullscreen}
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                  aria-pressed={isFullscreen}
                 >
-                  {size === 'compact' ? (
-                    <Maximize2 className="h-3.5 w-3.5" />
+                  {isFullscreen ? (
+                    <Shrink className="h-3.5 w-3.5" />
                   ) : (
-                    <Minimize2 className="h-3.5 w-3.5" />
+                    <Expand className="h-3.5 w-3.5" />
                   )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                {size === 'compact' ? 'Expand' : 'Collapse'}
+                {isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -311,10 +356,10 @@ export function CopilotFloatingBubble() {
         <div className="flex min-h-0 flex-1">
           {sessionsOpen ? (
             <div
-              className="hidden shrink-0 flex-col border-r border-primary/15 bg-background/40 backdrop-blur-sm md:flex"
-              style={{ width: SESSIONS_RAIL_W }}
+              className="hidden shrink-0 flex-col border-r border-border bg-background md:flex"
+              style={{ width: isFullscreen ? SESSIONS_RAIL_W_FS : SESSIONS_RAIL_W }}
             >
-              <div className="flex items-center gap-1.5 border-b border-primary/15 bg-primary/[0.03] px-2.5 py-2">
+              <div className="flex items-center gap-1.5 border-b border-border bg-secondary px-2.5 py-2">
                 <History className="h-3.5 w-3.5 text-primary" />
                 <span className="text-dense-label font-semibold text-foreground">
                   Chat history
@@ -325,7 +370,7 @@ export function CopilotFloatingBubble() {
               </div>
             </div>
           ) : null}
-          <div className="flex min-w-0 flex-1 flex-col p-3">
+          <div className="flex min-w-0 flex-1 flex-col bg-card p-3">
             <CockpitTabs />
           </div>
         </div>

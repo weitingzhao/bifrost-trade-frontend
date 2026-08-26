@@ -6,6 +6,7 @@ export type CopilotSessionSummary = {
   model?: string
   updated_at?: string
   message_count?: number
+  pinned?: boolean
 }
 
 export type CopilotSessionDetail = {
@@ -37,4 +38,18 @@ export async function archiveCopilotSession(id: string): Promise<void> {
     method: 'DELETE',
   })
   if (!res.ok) throw new Error(`archive HTTP ${res.status}`)
+}
+
+export async function patchCopilotSession(
+  id: string,
+  changes: { title?: string; pinned?: boolean },
+): Promise<CopilotSessionSummary> {
+  const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  })
+  if (!res.ok) throw new Error(`patch HTTP ${res.status}`)
+  const body = (await res.json()) as { session: CopilotSessionSummary }
+  return body.session
 }

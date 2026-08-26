@@ -5,6 +5,7 @@ import { AgentChip } from '@/components/cockpit/AgentChip'
 import { CopilotComposer } from '@/components/cockpit/CopilotComposer'
 import { CopilotMessageList } from '@/components/cockpit/CopilotMessageList'
 import { CopilotTracePanel } from '@/components/cockpit/CopilotTracePanel'
+import { QuickPromptChips } from '@/components/cockpit/QuickPromptChips'
 import { fetchCopilotUsage } from '@/api/aiCopilot'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
 import { cn } from '@/lib/utils'
@@ -52,6 +53,7 @@ export function CopilotChatBody({ className }: Props) {
   }, [usageQ.data?.remaining_usd])
 
   const blocked = capBreached || streaming
+  const isEmpty = messages.length === 0
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col gap-2', className)}>
@@ -78,11 +80,15 @@ export function CopilotChatBody({ className }: Props) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
-        <CopilotMessageList
-          messages={messages}
-          onApproveWrite={approveWrite}
-          onRejectWrite={rejectWrite}
-        />
+        {isEmpty ? (
+          <CopilotEmptyIntro onPickPrompt={send} disabled={blocked} />
+        ) : (
+          <CopilotMessageList
+            messages={messages}
+            onApproveWrite={approveWrite}
+            onRejectWrite={rejectWrite}
+          />
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-1">
@@ -109,6 +115,35 @@ export function CopilotChatBody({ className }: Props) {
         onSend={send}
         disabled={blocked}
       />
+    </div>
+  )
+}
+
+function CopilotEmptyIntro({
+  onPickPrompt,
+  disabled,
+}: {
+  onPickPrompt: (prompt: string) => void
+  disabled?: boolean
+}) {
+  return (
+    <div className="flex h-full flex-col justify-center gap-3 px-1 py-4">
+      <div className="text-center">
+        <h3 className="text-dense-body font-semibold text-foreground">
+          How can Research Copilot help today?
+        </h3>
+        <p className="mt-1 text-dense-caption text-muted-foreground">
+          Ask about hypotheses, portfolio risk, volatility, or SEPA candidates. Pick a shortcut or type your own question.
+        </p>
+      </div>
+      <QuickPromptChips
+        onPick={onPickPrompt}
+        disabled={disabled}
+        className="justify-center"
+      />
+      <p className="text-center text-dense-micro text-muted-foreground/70">
+        Research engines — observe only (D10). Not investment advice.
+      </p>
     </div>
   )
 }

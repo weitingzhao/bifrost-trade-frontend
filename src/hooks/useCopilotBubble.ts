@@ -11,7 +11,7 @@
  */
 import { createExternalStore } from '@/lib/cockpit/externalStore'
 
-export type CopilotBubbleSize = 'compact' | 'expanded'
+export type CopilotBubbleSize = 'compact' | 'expanded' | 'fullscreen'
 export type CopilotBubblePosition = { x: number; y: number } | null
 
 const OPEN_STORAGE_KEY = 'bifrost.copilot.bubble.open'
@@ -38,11 +38,11 @@ function writeStoredOpen(open: boolean) {
 function readStoredSize(): CopilotBubbleSize {
   try {
     const raw = localStorage.getItem(SIZE_STORAGE_KEY)
-    if (raw === 'compact' || raw === 'expanded') return raw
+    if (raw === 'compact' || raw === 'expanded' || raw === 'fullscreen') return raw
   } catch {
     // ignore
   }
-  return 'compact'
+  return 'expanded'
 }
 
 function writeStoredSize(size: CopilotBubbleSize) {
@@ -113,6 +113,7 @@ type BubbleState = {
   toggle: () => void
   setSize: (size: CopilotBubbleSize) => void
   toggleSize: () => void
+  toggleFullscreen: () => void
   setPosition: (pos: CopilotBubblePosition) => void
   resetPosition: () => void
   setSessionsOpen: (open: boolean) => void
@@ -129,6 +130,7 @@ function buildActions(
   | 'toggle'
   | 'setSize'
   | 'toggleSize'
+  | 'toggleFullscreen'
   | 'setPosition'
   | 'resetPosition'
   | 'setSessionsOpen'
@@ -155,8 +157,21 @@ function buildActions(
       set({ size })
     },
     toggleSize() {
+      // Cycle compact → expanded → fullscreen → compact
       set((prev) => {
-        const next: CopilotBubbleSize = prev.size === 'compact' ? 'expanded' : 'compact'
+        const next: CopilotBubbleSize =
+          prev.size === 'compact'
+            ? 'expanded'
+            : prev.size === 'expanded'
+              ? 'fullscreen'
+              : 'compact'
+        writeStoredSize(next)
+        return { ...prev, size: next }
+      })
+    },
+    toggleFullscreen() {
+      set((prev) => {
+        const next: CopilotBubbleSize = prev.size === 'fullscreen' ? 'expanded' : 'fullscreen'
         writeStoredSize(next)
         return { ...prev, size: next }
       })
@@ -193,6 +208,7 @@ const base = createExternalStore<BubbleState>({
   toggle: () => undefined,
   setSize: () => undefined,
   toggleSize: () => undefined,
+  toggleFullscreen: () => undefined,
   setPosition: () => undefined,
   resetPosition: () => undefined,
   setSessionsOpen: () => undefined,

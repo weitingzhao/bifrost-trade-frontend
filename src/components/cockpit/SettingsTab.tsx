@@ -6,12 +6,9 @@ import {
   type CopilotModelId,
 } from '@/lib/cockpit/modelCatalog'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
-import { useCockpitDrawer, type CockpitDisplayMode } from '@/hooks/useCockpitDrawer'
-import { SegmentControl } from '@/components/data-display'
 
 export function SettingsTab() {
   const { model, lastError, clearSession, setModel } = useCopilotSession()
-  const { mode, setMode } = useCockpitDrawer()
   const modelMeta = COPILOT_MODELS.find((m) => m.id === model)
 
   const byProvider = COPILOT_MODELS.reduce(
@@ -33,22 +30,6 @@ export function SettingsTab() {
       </div>
 
       <AiUsageTile />
-
-      <div className="rounded border border-border/50 px-2 py-2 space-y-2">
-        <p className="text-dense-label font-medium">Display</p>
-        <SegmentControl
-          value={mode}
-          onChange={(v) => setMode(v as CockpitDisplayMode)}
-          options={[
-            { value: 'overlay', label: 'Overlay' },
-            { value: 'dock', label: 'Dock' },
-          ]}
-          size="sm"
-        />
-        <p className="text-dense-caption text-muted-foreground">
-          Dock shifts main content left when Cockpit is open (400px).
-        </p>
-      </div>
 
       <div className="rounded border border-border/50 px-2 py-2 space-y-2">
         <p className="text-dense-label font-medium">Model</p>

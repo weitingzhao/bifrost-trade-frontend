@@ -1,9 +1,15 @@
 /**
- * Global Cockpit keybinds — ⌘K / Ctrl+K toggles drawer; Esc closes.
+ * Global Research Copilot keybinds.
+ *
+ *   ⌘K / Ctrl+K — toggle Research Copilot panel (alias)
+ *   ⌘J / Ctrl+J — toggle Research Copilot panel
+ *   Esc        — close panel (unless focus is inside an editable field)
+ *
+ * Cockpit ("workspace tabs") is hosted inside the same floating panel — a single entry point.
  * Mount once via `useCockpitKeybinds()` from App layout.
  */
 import { useEffect } from 'react'
-import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
+import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
@@ -16,16 +22,16 @@ function isEditableTarget(target: EventTarget | null): boolean {
 export function useCockpitKeybinds() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      const metaK = (e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')
-      if (metaK) {
+      const meta = e.metaKey || e.ctrlKey
+      if (meta && (e.key === 'k' || e.key === 'K' || e.key === 'j' || e.key === 'J')) {
         e.preventDefault()
-        cockpitDrawerStore.getState().toggle()
+        copilotBubbleStore.getState().toggle()
         return
       }
-      if (e.key === 'Escape' && cockpitDrawerStore.getState().open) {
+      if (e.key === 'Escape' && copilotBubbleStore.getState().open) {
         if (isEditableTarget(e.target)) return
         e.preventDefault()
-        cockpitDrawerStore.getState().close()
+        copilotBubbleStore.getState().close()
       }
     }
     window.addEventListener('keydown', onKeyDown)

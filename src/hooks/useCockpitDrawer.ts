@@ -5,11 +5,11 @@
 import { createExternalStore } from '@/lib/cockpit/externalStore'
 
 export type CockpitTabId =
+  | 'copilot'
   | 'inbox'
   | 'pins'
   | 'context'
   | 'actions'
-  | 'copilot'
   | 'settings'
 
 export type CockpitDisplayMode = 'overlay' | 'dock'
@@ -17,11 +17,11 @@ export type CockpitDisplayMode = 'overlay' | 'dock'
 const TAB_STORAGE_KEY = 'bifrost.cockpit.tab'
 const MODE_STORAGE_KEY = 'bifrost.cockpit.displayMode'
 const VALID_TABS: CockpitTabId[] = [
+  'copilot',
   'inbox',
   'pins',
   'context',
   'actions',
-  'copilot',
   'settings',
 ]
 
@@ -34,7 +34,7 @@ function readStoredTab(): CockpitTabId {
   } catch {
     // ignore
   }
-  return 'pins'
+  return 'copilot'
 }
 
 function writeStoredTab(tab: CockpitTabId) {

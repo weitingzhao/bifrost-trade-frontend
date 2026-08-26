@@ -6,7 +6,7 @@ import { PinChip, PinSectionHeader } from '@/components/cockpit/PinChip'
 import { useCockpitPins } from '@/hooks/useCockpitPins'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { useHypothesisList } from '@/hooks/useHypotheses'
-import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
+import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
 
 export function PinsTab() {
   const navigate = useNavigate()
@@ -22,7 +22,7 @@ export function PinsTab() {
   function jumpSymbol(sym: string) {
     setSymbol(sym)
     navigate(`/research/daily-brief?symbol=${encodeURIComponent(sym)}`)
-    cockpitDrawerStore.getState().close()
+    copilotBubbleStore.getState().close()
   }
 
   function jumpHypothesis(id: string) {
@@ -31,7 +31,7 @@ export function PinsTab() {
     const sym = h?.symbols?.[0]
     if (sym) setSymbol(sym)
     navigate(`/research/backtest?tab=event-query&hypothesis_id=${encodeURIComponent(id)}`)
-    cockpitDrawerStore.getState().close()
+    copilotBubbleStore.getState().close()
   }
 
   function jumpHit(originPage: string, sym: string) {
@@ -39,7 +39,7 @@ export function PinsTab() {
     const path = originPage.startsWith('/') ? originPage : `/${originPage}`
     const sep = path.includes('?') ? '&' : '?'
     navigate(`${path}${sep}symbol=${encodeURIComponent(sym)}`)
-    cockpitDrawerStore.getState().close()
+    copilotBubbleStore.getState().close()
   }
 
   const empty =

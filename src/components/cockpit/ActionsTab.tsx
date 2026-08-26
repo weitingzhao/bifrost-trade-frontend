@@ -14,6 +14,7 @@ import { QuickActionButton } from '@/components/cockpit/QuickActionButton'
 import { useCockpitContext } from '@/hooks/useCockpitContext'
 import { useCockpitPins } from '@/hooks/useCockpitPins'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
+import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
 import { useRunEodAgent, useRunMorningAgent } from '@/hooks/useResearchDrafts'
 import { saveHypothesisIntentStore } from '@/store/saveHypothesisIntentStore'
 
@@ -27,7 +28,7 @@ export function ActionsTab() {
 
   function go(path: string) {
     navigate(path)
-    cockpitDrawerStore.getState().close()
+    copilotBubbleStore.getState().close()
   }
 
   function withSymbol(base: string) {
@@ -57,7 +58,10 @@ export function ActionsTab() {
             disabled={morning.isPending}
             onClick={() => {
               morning.mutate(undefined, {
-                onSuccess: () => cockpitDrawerStore.getState().openWithTab('inbox'),
+                onSuccess: () => {
+                  cockpitDrawerStore.getState().setTab('inbox')
+                  copilotBubbleStore.getState().open_()
+                },
               })
             }}
           />
@@ -76,7 +80,10 @@ export function ActionsTab() {
             disabled={eod.isPending}
             onClick={() => {
               eod.mutate(undefined, {
-                onSuccess: () => cockpitDrawerStore.getState().openWithTab('inbox'),
+                onSuccess: () => {
+                  cockpitDrawerStore.getState().setTab('inbox')
+                  copilotBubbleStore.getState().open_()
+                },
               })
             }}
           />

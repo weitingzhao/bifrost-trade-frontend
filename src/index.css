@@ -7,8 +7,17 @@
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'DM Sans', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    /* Latin glyphs fall to 'DM Sans'; CJK glyphs (no coverage in DM Sans) fall
+       through to the platform-native CJK face — PingFang on macOS/iOS,
+       HarmonyOS on Huawei, Microsoft YaHei UI on Windows, Noto Sans SC on
+       Linux. This keeps Chinese and English in the UI at the same optical
+       weight and rhythm without shipping a heavy CJK web font.  Same
+       strategy for mono so bilingual code / JSON blocks look consistent. */
+    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'PingFang SC',
+        'HarmonyOS Sans SC', 'Microsoft YaHei UI', 'Microsoft YaHei',
+        'Noto Sans SC', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo,
+        Consolas, 'PingFang SC', 'Microsoft YaHei UI', monospace;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

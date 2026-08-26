@@ -208,6 +208,11 @@ export function CopilotFloatingBubble() {
         style={positionStyle}
         className={cn(
           'fixed z-[190] flex flex-col overflow-hidden rounded-xl',
+          // Uniform typography inside the Copilot: sans-serif with the shared
+          // CJK fallback chain (index.css) so Chinese and Latin glyphs render
+          // at the same optical weight; tabular numerics so amounts, times,
+          // and IDs line up neatly.
+          'font-sans tabular-nums',
           // Copilot identity is delivered via border / ring / shadow only.  Body is
           // fully opaque so page content behind the panel does not bleed through
           // and confuse the reader — usability > cosmetic transparency.

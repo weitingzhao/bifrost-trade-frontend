@@ -16,8 +16,10 @@ import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useNavMode } from '@/hooks/useNavMode'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
-import { CockpitDrawer } from '@/components/cockpit'
+import { CockpitDrawer, cockpitDockPaddingClass } from '@/components/cockpit'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
+import { useCockpitDrawer } from '@/hooks/useCockpitDrawer'
+import { cn } from '@/lib/utils'
 
 function readSidebarCookie(): boolean {
   const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
@@ -50,6 +52,8 @@ export function AppLayout() {
   const { messages, dismissedIds, activeMsgCount, dismissMessage, dismissAll } = useSystemMessages()
   const [drawerOpen, setDrawerOpen] = useState(false)
   useCockpitKeybinds()
+  const cockpit = useCockpitDrawer()
+  const dockPad = cockpitDockPaddingClass(cockpit.open, cockpit.mode)
 
   const msgCenter = (
     <>
@@ -80,7 +84,7 @@ export function AppLayout() {
               onToggleNavMode={isTooNarrow ? undefined : toggle}
             />
             <GlobalMarketStatusBar enabled={showMarketStrip} />
-            <main className="flex-1 overflow-auto min-w-0">
+            <main className={cn('flex-1 overflow-auto min-w-0', dockPad)}>
               <BoundedOutlet />
             </main>
             <ReactorMapPanel />
@@ -106,7 +110,7 @@ export function AppLayout() {
               onToggleNavMode={isTooNarrow ? undefined : toggle}
             />
             <GlobalMarketStatusBar enabled={showMarketStrip} />
-            <main className="flex-1 overflow-auto min-w-0 bg-card">
+            <main className={cn('flex-1 overflow-auto min-w-0 bg-card', dockPad)}>
               <BoundedOutlet />
             </main>
             <ReactorMapPanel />

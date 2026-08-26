@@ -12,7 +12,10 @@ export type CockpitTabId =
   | 'copilot'
   | 'settings'
 
+export type CockpitDisplayMode = 'overlay' | 'dock'
+
 const TAB_STORAGE_KEY = 'bifrost.cockpit.tab'
+const MODE_STORAGE_KEY = 'bifrost.cockpit.displayMode'
 const VALID_TABS: CockpitTabId[] = [
   'inbox',
   'pins',
@@ -42,20 +45,43 @@ function writeStoredTab(tab: CockpitTabId) {
   }
 }
 
+function readStoredMode(): CockpitDisplayMode {
+  try {
+    const raw = localStorage.getItem(MODE_STORAGE_KEY)
+    if (raw === 'overlay' || raw === 'dock') return raw
+  } catch {
+    // ignore
+  }
+  return 'overlay'
+}
+
+function writeStoredMode(mode: CockpitDisplayMode) {
+  try {
+    localStorage.setItem(MODE_STORAGE_KEY, mode)
+  } catch {
+    // ignore
+  }
+}
+
 type DrawerState = {
   open: boolean
   tab: CockpitTabId
+  mode: CockpitDisplayMode
   openWithTab: (tab: CockpitTabId) => void
   close: () => void
   toggle: () => void
   setTab: (tab: CockpitTabId) => void
   setOpen: (open: boolean) => void
+  setMode: (mode: CockpitDisplayMode) => void
 }
 
 function buildActions(
   _get: () => DrawerState,
   set: (partial: Partial<DrawerState> | ((prev: DrawerState) => DrawerState)) => void,
-): Pick<DrawerState, 'openWithTab' | 'close' | 'toggle' | 'setTab' | 'setOpen'> {
+): Pick<
+  DrawerState,
+  'openWithTab' | 'close' | 'toggle' | 'setTab' | 'setOpen' | 'setMode'
+> {
   return {
     openWithTab(tab) {
       writeStoredTab(tab)
@@ -74,17 +100,23 @@ function buildActions(
     setOpen(open) {
       set({ open })
     },
+    setMode(mode) {
+      writeStoredMode(mode)
+      set({ mode })
+    },
   }
 }
 
 const base = createExternalStore<DrawerState>({
   open: false,
   tab: readStoredTab(),
+  mode: readStoredMode(),
   openWithTab: () => undefined,
   close: () => undefined,
   toggle: () => undefined,
   setTab: () => undefined,
   setOpen: () => undefined,
+  setMode: () => undefined,
 })
 
 const actions = buildActions(base.getState, base.setState)

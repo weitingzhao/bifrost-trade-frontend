@@ -1,4 +1,4 @@
-export { CockpitDrawer } from './CockpitDrawer'
+export { CockpitDrawer, cockpitDockPaddingClass } from './CockpitDrawer'
 export { CockpitTabs } from './CockpitTabs'
 export { InboxTab } from './InboxTab'
 export { DraftCard } from './DraftCard'

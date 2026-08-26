@@ -1,7 +1,6 @@
 /**
  * Research Copilot SSE client — POST /research/copilot/stream
- * FE never holds LLM API keys; talks only to Research API via researchEngineUrl.
- * Wave RS-E4: approve / execute / dismiss for write diffs.
+ * Wave RS-F: agent_handoff · guardrail events (back-compat ignored if unknown).
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import type { CopilotModelId } from '@/lib/cockpit/modelCatalog'
@@ -27,7 +26,15 @@ export type CopilotSseEvent =
       result: unknown
       session_id?: string
     }
-  | { event: 'error'; message: string; session_id?: string }
+  | { event: 'error'; message: string; code?: string; session_id?: string }
+  | {
+      event: 'agent_handoff'
+      from: string
+      to: string
+      reason?: string
+      session_id?: string
+    }
+  | { event: 'guardrail'; phase?: string; code?: string; session_id?: string }
   | {
       event: 'done'
       session_id?: string
@@ -66,6 +73,7 @@ export function streamCopilot(
     model: CopilotModelId | string
     max_tools?: number
     session_id?: string
+    resume?: boolean
   },
   handlers: StreamHandlers,
 ): AbortController {

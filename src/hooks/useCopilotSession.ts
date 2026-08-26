@@ -35,6 +35,22 @@ export type CopilotUiMessage = {
   toolCalls?: CopilotToolCall[]
   streaming?: boolean
   error?: boolean
+  /** RS-F: inline handoff chip */
+  handoff?: { from: string; to: string }
+}
+
+export type AgentTrailEntry = {
+  from: string
+  to: string
+  at: number
+  reason?: string
+}
+
+export type TraceEvent = {
+  id: string
+  kind: string
+  at: number
+  durationMs?: number
 }
 
 type CopilotState = {
@@ -44,6 +60,10 @@ type CopilotState = {
   sessionId: string
   lastError: string | null
   capBreached: boolean
+  agentTrail: AgentTrailEntry[]
+  activeAgent: string | null
+  traceEvents: TraceEvent[]
+  traceCollapsed: boolean
 }
 
 let abort: AbortController | null = null
@@ -58,6 +78,29 @@ function newSessionId() {
   return `sess-${Date.now().toString(36)}`
 }
 
+let traceSeq = 0
+let pendingToolTrace: Map<string, string> = new Map()
+
+function pushTrace(kind: string, meta?: { toolId?: string }) {
+  const id = `tr-${Date.now()}-${++traceSeq}`
+  const events = [...store.getState().traceEvents, { id, kind, at: Date.now() }]
+  store.setState({ traceEvents: events })
+  if (meta?.toolId) pendingToolTrace.set(meta.toolId, id)
+  return id
+}
+
+function finishToolTrace(toolId: string) {
+  const traceId = pendingToolTrace.get(toolId)
+  if (!traceId) return
+  pendingToolTrace.delete(toolId)
+  const now = Date.now()
+  store.setState({
+    traceEvents: store.getState().traceEvents.map((e) =>
+      e.id === traceId ? { ...e, durationMs: now - e.at } : e,
+    ),
+  })
+}
+
 const store = createExternalStore<CopilotState>({
   messages: [],
   model: readStoredModel(),
@@ -65,6 +108,10 @@ const store = createExternalStore<CopilotState>({
   sessionId: newSessionId(),
   lastError: null,
   capBreached: false,
+  agentTrail: [],
+  activeAgent: null,
+  traceEvents: [],
+  traceCollapsed: true,
 })
 
 function stripMetaArgs(args: Record<string, unknown>): Record<string, unknown> {
@@ -97,7 +144,38 @@ function patchToolCall(
 
 function applyEvent(ev: CopilotSseEvent) {
   const state = store.getState()
+  if (ev.event === 'agent_handoff') {
+    pushTrace(`handoff:${ev.to}`)
+    const entry: AgentTrailEntry = {
+      from: ev.from,
+      to: ev.to,
+      at: Date.now(),
+      reason: ev.reason,
+    }
+    const msgs = [...state.messages]
+    msgs.push({
+      id: nextId('h'),
+      role: 'assistant',
+      content: '',
+      handoff: { from: ev.from, to: ev.to },
+    })
+    store.setState({
+      messages: msgs,
+      agentTrail: [...state.agentTrail, entry],
+      activeAgent: ev.to,
+    })
+    return
+  }
+
+  if (ev.event === 'guardrail') {
+    pushTrace('guardrail')
+    return
+  }
+
   if (ev.event === 'token') {
+    if (!state.traceEvents.some((t) => t.kind === 'token' && t.at > Date.now() - 500)) {
+      pushTrace('token')
+    }
     const msgs = [...state.messages]
     const last = msgs[msgs.length - 1]
     if (last?.role === 'assistant' && last.streaming) {
@@ -116,6 +194,7 @@ function applyEvent(ev: CopilotSseEvent) {
   }
 
   if (ev.event === 'tool_call') {
+    pushTrace(`tool:${ev.name}`, { toolId: ev.id })
     const msgs = [...state.messages]
     let last = msgs[msgs.length - 1]
     if (!last || last.role !== 'assistant') {
@@ -141,6 +220,7 @@ function applyEvent(ev: CopilotSseEvent) {
   }
 
   if (ev.event === 'tool_result') {
+    finishToolTrace(ev.id)
     const msgs = [...state.messages]
     const last = msgs[msgs.length - 1]
     if (last?.role === 'assistant' && last.toolCalls) {
@@ -170,6 +250,7 @@ function applyEvent(ev: CopilotSseEvent) {
   }
 
   if (ev.event === 'done') {
+    pushTrace('done')
     const msgs = store.getState().messages.map((m) =>
       m.streaming ? { ...m, streaming: false } : m,
     )
@@ -194,10 +275,16 @@ export const copilotSessionStore = {
       streaming: false,
       sessionId: newSessionId(),
       lastError: null,
+      agentTrail: [],
+      activeAgent: null,
+      traceEvents: [],
     })
   },
   setCapBreached(v: boolean) {
     store.setState({ capBreached: v })
+  },
+  setTraceCollapsed(v: boolean) {
+    store.setState({ traceCollapsed: v })
   },
   send(userText: string) {
     const trimmed = userText.trim()
@@ -213,7 +300,9 @@ export const copilotSessionStore = {
       messages: [...prev, userMsg],
       streaming: true,
       lastError: null,
+      traceEvents: [],
     })
+    pendingToolTrace = new Map()
 
     const history: CopilotChatMessage[] = [...prev, userMsg]
       .filter((m) => m.role === 'user' || m.role === 'assistant')
@@ -337,5 +426,9 @@ export function useCopilotSession() {
     (toolCallId: string) => copilotSessionStore.rejectWrite(toolCallId),
     [],
   )
-  return { ...state, send, clearSession, setModel, approveWrite, rejectWrite }
+  const setTraceCollapsed = useCallback(
+    (v: boolean) => copilotSessionStore.setTraceCollapsed(v),
+    [],
+  )
+  return { ...state, send, clearSession, setModel, approveWrite, rejectWrite, setTraceCollapsed }
 }

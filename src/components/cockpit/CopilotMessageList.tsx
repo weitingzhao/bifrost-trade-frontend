@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { CopilotToolCallCard } from '@/components/cockpit/CopilotToolCallCard'
+import { AgentHandoffChip } from '@/components/cockpit/AgentChip'
 import { DiffApprovalCard } from '@/components/cockpit/DiffApprovalCard'
 import { EmptyState } from '@/components/data-display'
 import type { CopilotUiMessage } from '@/hooks/useCopilotSession'
@@ -52,6 +53,9 @@ export function CopilotMessageList({
             {m.role}
             {m.streaming ? <span className="text-warning normal-case">streaming…</span> : null}
           </div>
+          {m.handoff ? (
+            <AgentHandoffChip from={m.handoff.from} to={m.handoff.to} className="mb-1" />
+          ) : null}
           {m.toolCalls && m.toolCalls.length > 0 && (
             <div className="mb-1.5 flex flex-col gap-1">
               {m.toolCalls.map((tc) => {

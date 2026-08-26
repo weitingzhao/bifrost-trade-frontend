@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { CopilotToolCallCard } from '@/components/cockpit/CopilotToolCallCard'
 import { AgentHandoffChip } from '@/components/cockpit/AgentChip'
 import { DiffApprovalCard } from '@/components/cockpit/DiffApprovalCard'
+import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { EmptyState } from '@/components/data-display'
 import type { CopilotUiMessage } from '@/hooks/useCopilotSession'
 import { extractDiffPreview } from '@/lib/cockpit/extractDiffPreview'
@@ -79,7 +80,11 @@ export function CopilotMessageList({
             </div>
           )}
           {m.content ? (
-            <p className="whitespace-pre-wrap text-dense-label">{m.content}</p>
+            m.role === 'assistant' ? (
+              <MarkdownContent>{m.content}</MarkdownContent>
+            ) : (
+              <p className="whitespace-pre-wrap text-dense-label">{m.content}</p>
+            )
           ) : null}
         </div>
       ))}

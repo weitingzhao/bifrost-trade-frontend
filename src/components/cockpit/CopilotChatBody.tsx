@@ -1,27 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AgentChip } from '@/components/cockpit/AgentChip'
 import { CopilotComposer } from '@/components/cockpit/CopilotComposer'
 import { CopilotMessageList } from '@/components/cockpit/CopilotMessageList'
 import { CopilotTracePanel } from '@/components/cockpit/CopilotTracePanel'
-import { SessionListSidebar } from '@/components/cockpit/SessionListSidebar'
 import { fetchCopilotUsage } from '@/api/aiCopilot'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
 import { cn } from '@/lib/utils'
 
 interface Props {
-  /** Session list defaults to collapsed inside the floating bubble; expanded on legacy dock. */
-  defaultSessionsOpen?: boolean
   className?: string
 }
 
 /**
- * Copilot chat body — messages, composer, trace, sessions.
- * Reusable inside CopilotFloatingBubble (RS-UX1) and other future hosts.
+ * Copilot chat body — messages, composer, trace.
+ * Session history is hosted in the parent panel's left rail (RS-UX3),
+ * so this component no longer renders its own inline session list.
  */
-export function CopilotChatBody({ defaultSessionsOpen = false, className }: Props) {
+export function CopilotChatBody({ className }: Props) {
   const {
     messages,
     model,
@@ -37,8 +34,6 @@ export function CopilotChatBody({ defaultSessionsOpen = false, className }: Prop
     rejectWrite,
     setTraceCollapsed,
   } = useCopilotSession()
-
-  const [sessionsOpen, setSessionsOpen] = useState<boolean>(defaultSessionsOpen)
 
   const usageQ = useQuery({
     queryKey: ['research', 'copilot', 'usage'],
@@ -72,31 +67,15 @@ export function CopilotChatBody({ defaultSessionsOpen = false, className }: Prop
         <p className="text-dense-meta text-destructive leading-snug">{lastError}</p>
       ) : null}
 
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0 flex items-center gap-1 text-dense-caption text-muted-foreground">
-          {activeAgent ? (
-            <>
-              Active agent: <AgentChip agent={activeAgent} />
-            </>
-          ) : (
-            <span>Research Copilot</span>
-          )}
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-6 gap-1 text-dense-caption"
-          onClick={() => setSessionsOpen((s) => !s)}
-          aria-expanded={sessionsOpen}
-          aria-label={sessionsOpen ? 'Hide session history' : 'Show session history'}
-        >
-          <History className="size-3" />
-          {sessionsOpen ? 'Hide sessions' : 'Sessions'}
-        </Button>
+      <div className="min-w-0 flex items-center gap-1 text-dense-caption text-muted-foreground">
+        {activeAgent ? (
+          <>
+            Active agent: <AgentChip agent={activeAgent} />
+          </>
+        ) : (
+          <span>Research Copilot</span>
+        )}
       </div>
-
-      {sessionsOpen ? <SessionListSidebar onLoaded={() => setSessionsOpen(false)} /> : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
         <CopilotMessageList

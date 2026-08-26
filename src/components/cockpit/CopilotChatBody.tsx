@@ -5,6 +5,7 @@ import { AgentChip } from '@/components/cockpit/AgentChip'
 import { CopilotComposer } from '@/components/cockpit/CopilotComposer'
 import { CopilotMessageList } from '@/components/cockpit/CopilotMessageList'
 import { CopilotTracePanel } from '@/components/cockpit/CopilotTracePanel'
+import { PersonaMiniCard } from '@/components/cockpit/PersonaMiniCard'
 import { QuickPromptChips } from '@/components/cockpit/QuickPromptChips'
 import { fetchCopilotUsage } from '@/api/aiCopilot'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
@@ -148,6 +149,7 @@ function CopilotEmptyIntro({
             : 'Ask about hypotheses, portfolio risk, volatility, or SEPA candidates. Pick a shortcut or type your own question.'}
         </p>
       </div>
+      <PersonaMiniCard />
       <QuickPromptChips onPick={onPickPrompt} disabled={disabled} />
       <p className="text-center text-dense-micro text-muted-foreground/70">
         {lang === 'zh'

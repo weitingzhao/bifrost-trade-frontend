@@ -37,6 +37,8 @@ export type CopilotUiMessage = {
   error?: boolean
   /** RS-F: inline handoff chip */
   handoff?: { from: string; to: string }
+  /** RS-PS: specialist that produced this assistant text */
+  agent?: string
 }
 
 export type AgentTrailEntry = {

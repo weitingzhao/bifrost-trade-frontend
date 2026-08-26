@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { CopilotUiMessage } from '@/hooks/useCopilotSession'
 import {
   exportFilename,
+  memoryBriefToHtml,
   messagesToHtml,
   messagesToMarkdown,
   sessionShortId,
@@ -72,5 +73,23 @@ describe('exportSerializer', () => {
     const md = singleMessageMarkdown(sampleMessages[2]!)
     expect(md).toContain('## Assistant')
     expect(md).toContain('+$120.50')
+  })
+
+  it('wraps an AI memory brief as printable HTML', () => {
+    const html = memoryBriefToHtml('## Holdings\n- RKLB 18%\n', {
+      sessionId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+    })
+    expect(html).toContain('Memory brief')
+    expect(html).toContain('RKLB 18%')
+    expect(html).toContain('@page')
+  })
+
+  it('names memory exports distinctly from transcripts', () => {
+    const name = exportFilename(
+      'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      new Date('2026-08-26T15:04:00'),
+      'memory',
+    )
+    expect(name).toBe('bifrost-copilot-memory-aaaaaaaa-20260826-1504.md')
   })
 })

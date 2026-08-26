@@ -17,6 +17,8 @@ export type ExportSerializerOptions = {
   exportedAt?: Date
   /** Include fenced raw JSON for tool results (default false — summaries only). */
   includeRawTools?: boolean
+  /** Owner persona snapshot lines (Wave RS-PS). */
+  personaSnapshot?: string[]
 }
 
 function escapeHtml(text: string): string {
@@ -38,8 +40,13 @@ export function sessionShortId(sessionId?: string): string {
   return clean.slice(0, 8)
 }
 
-export function exportFilename(sessionId?: string, at: Date = new Date()): string {
-  return `bifrost-copilot-${sessionShortId(sessionId)}-${formatTs(at)}.md`
+export function exportFilename(
+  sessionId?: string,
+  at: Date = new Date(),
+  kind: 'transcript' | 'memory' = 'transcript',
+): string {
+  const prefix = kind === 'memory' ? 'bifrost-copilot-memory' : 'bifrost-copilot'
+  return `${prefix}-${sessionShortId(sessionId)}-${formatTs(at)}.md`
 }
 
 function headerBlock(opts: ExportSerializerOptions): string[] {
@@ -48,6 +55,13 @@ function headerBlock(opts: ExportSerializerOptions): string[] {
   if (opts.sessionTitle) lines.push(`**Session:** ${opts.sessionTitle}`)
   if (opts.sessionId) lines.push(`**Session ID:** \`${opts.sessionId}\``)
   lines.push(`**Exported:** ${at.toISOString()}`)
+  if (opts.personaSnapshot && opts.personaSnapshot.length > 0) {
+    lines.push('')
+    lines.push('## Persona snapshot')
+    for (const line of opts.personaSnapshot) {
+      lines.push(line)
+    }
+  }
   lines.push('')
   return lines
 }
@@ -266,8 +280,9 @@ th, td { border: 1px solid #ddd; padding: 0.25rem 0.4rem; text-align: left; }
 .tool-lines { margin: 0.25rem 0 0.5rem 1rem; padding: 0; }
 .tool-lines .label { font-weight: 600; }
 @media print {
-  body { margin: 0; max-width: none; }
-  .message { break-inside: avoid; }
+  @page { margin: 16mm; }
+  html, body { height: auto !important; overflow: visible !important; margin: 0; max-width: none; }
+  .message, .memory-body { break-inside: avoid; page-break-inside: avoid; }
 }
 `.trim()
 
@@ -335,16 +350,77 @@ export function downloadTextFile(filename: string, content: string, mime = 'text
   URL.revokeObjectURL(url)
 }
 
+/** Standalone HTML for an AI-distilled memory brief (not a chat transcript). */
+export function memoryBriefToHtml(
+  markdown: string,
+  opts: ExportSerializerOptions = {},
+): string {
+  const at = opts.exportedAt ?? new Date()
+  const metaParts: string[] = ['Bifrost Copilot · AI memory brief']
+  if (opts.sessionTitle) metaParts.push(`Session: ${escapeHtml(opts.sessionTitle)}`)
+  if (opts.sessionId) metaParts.push(`ID: ${escapeHtml(opts.sessionId)}`)
+  metaParts.push(`Exported: ${escapeHtml(at.toISOString())}`)
+  const personaBlock =
+    opts.personaSnapshot && opts.personaSnapshot.length > 0
+      ? `<section class="persona-snapshot"><h2>Persona snapshot</h2><pre class="md-body">${escapeHtml(
+          opts.personaSnapshot.join('\n'),
+        )}</pre></section>`
+      : ''
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bifrost Copilot Memory</title>
+  <style>${INLINE_CSS}</style>
+</head>
+<body>
+  <h1>Bifrost Copilot — Memory brief</h1>
+  <p class="meta">${metaParts.join(' · ')}</p>
+  ${personaBlock}
+  <article class="memory-body"><pre class="md-body">${escapeHtml(markdown.trim())}</pre></article>
+</body>
+</html>`
+}
+
+/**
+ * Print via a hidden iframe so the browser paginates the full document.
+ * Do not fall back to `window.print()` on the app shell — visibility:hidden
+ * + position:fixed on the floating panel only captures the first page.
+ */
 export function printHtml(html: string) {
-  const w = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700')
-  if (!w) {
-    window.print()
+  const iframe = document.createElement('iframe')
+  iframe.setAttribute('aria-hidden', 'true')
+  iframe.style.position = 'fixed'
+  iframe.style.right = '0'
+  iframe.style.bottom = '0'
+  iframe.style.width = '0'
+  iframe.style.height = '0'
+  iframe.style.border = '0'
+  document.body.appendChild(iframe)
+
+  const doc = iframe.contentDocument
+  if (!doc) {
+    iframe.remove()
     return
   }
-  w.document.write(html)
-  w.document.close()
-  w.focus()
-  w.onload = () => {
-    w.print()
+
+  const cleanup = () => {
+    window.setTimeout(() => iframe.remove(), 1500)
   }
+
+  const doPrint = () => {
+    try {
+      iframe.contentWindow?.focus()
+      iframe.contentWindow?.print()
+    } finally {
+      cleanup()
+    }
+  }
+
+  iframe.onload = () => window.setTimeout(doPrint, 50)
+  doc.open()
+  doc.write(html)
+  doc.close()
 }

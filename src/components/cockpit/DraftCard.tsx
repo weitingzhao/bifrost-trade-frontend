@@ -46,6 +46,12 @@ export function DraftCard({
       ? draft.payload.proposed_status
       : null
   const body = payloadMarkdown(draft.payload)
+  const personaDiff =
+    draft.kind === 'playbook_rule' && draft.payload.persona_diff
+      ? (draft.payload.persona_diff as Record<string, unknown>)
+      : null
+  const agentOwner =
+    typeof draft.payload.agent_owner === 'string' ? draft.payload.agent_owner : null
 
   return (
     <div
@@ -85,6 +91,15 @@ export function DraftCard({
       <pre className="whitespace-pre-wrap break-words text-dense-meta text-foreground/90 font-sans max-h-40 overflow-y-auto">
         {body}
       </pre>
+
+      {personaDiff && Object.keys(personaDiff).length > 0 ? (
+        <p className="text-dense-meta text-warning">
+          Also updates {agentOwner ?? 'agent'} persona:{' '}
+          {Object.entries(personaDiff)
+            .map(([k, v]) => `${k} → ${String(v)}`)
+            .join('; ')}
+        </p>
+      ) : null}
 
       <div className="flex items-center gap-1.5">
         <Button

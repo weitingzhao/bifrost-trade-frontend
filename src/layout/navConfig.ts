@@ -27,6 +27,7 @@ import {
   Terminal,
   TrendingUp,
   Trophy,
+  Users,
   Wand2,
   Zap,
 } from 'lucide-react'
@@ -111,6 +112,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         label: 'Validate',
         items: [
           route('Backtest', '/research/backtest', History),
+          route('Agent Personas', '/research/agent-personas', Users),
           route('My Trading System', '/research/playbook', BookOpen),
           route('Contract Greeks', '/research/greeks', Wand2),
           route('Risk Model', '/research/risk', AlertCircle),

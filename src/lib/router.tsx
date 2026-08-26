@@ -83,6 +83,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/copilot/PlaybookPage')),
       },
       {
+        path: 'research/agent-personas',
+        lazy: lazyPage(() => import('@/pages/copilot/AgentPersonaPage')),
+      },
+      {
         path: 'research/discovery',
         lazy: lazyPage(() => import('@/pages/research/DiscoveryPage')),
       },

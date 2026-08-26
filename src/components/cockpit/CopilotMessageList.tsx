@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { CopilotToolCallCard } from '@/components/cockpit/CopilotToolCallCard'
 import { AgentHandoffChip } from '@/components/cockpit/AgentChip'
+import { personaVersionLabel } from '@/components/cockpit/PersonaMiniCard'
+import { fetchAgentPersonas, type AgentPersona } from '@/api/agentPersona'
 import { DiffApprovalCard } from '@/components/cockpit/DiffApprovalCard'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { MessageActions } from '@/components/cockpit/MessageActions'
@@ -24,6 +27,14 @@ export function CopilotMessageList({
   className?: string
 }) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const personasQ = useQuery({
+    queryKey: ['agent-personas'],
+    queryFn: fetchAgentPersonas,
+    staleTime: 120_000,
+  })
+  const personaByAgent = new Map<string, AgentPersona>(
+    (personasQ.data ?? []).map((p) => [p.agent_name, p]),
+  )
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
@@ -56,6 +67,14 @@ export function CopilotMessageList({
             <div className="flex items-center gap-1 text-dense-caption text-muted-foreground uppercase tracking-wide">
               {m.role === 'assistant' ? <Bot className="size-3" /> : null}
               {m.role}
+              {m.role === 'assistant' && m.agent ? (
+                <span className="normal-case text-dense-micro">
+                  · {m.agent}
+                  {personaVersionLabel(personaByAgent.get(m.agent)?.updated_at)
+                    ? ` · persona ${personaVersionLabel(personaByAgent.get(m.agent)?.updated_at)}`
+                    : ''}
+                </span>
+              ) : null}
               {m.streaming ? <span className="text-warning normal-case">streaming…</span> : null}
             </div>
             {sessionId && m.role === 'assistant' ? (

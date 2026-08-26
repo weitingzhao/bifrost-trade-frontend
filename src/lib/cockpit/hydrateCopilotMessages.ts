@@ -130,12 +130,14 @@ export function hydrateCopilotMessages(
       !currentAssistant.content
     ) {
       currentAssistant.content = content
+      if (frame.agent) currentAssistant.agent = String(frame.agent)
     } else {
       currentAssistant = {
         id: `hist-${sessionId}-${seq++}`,
         role: 'assistant',
         content,
         toolCalls: [],
+        agent: frame.agent ? String(frame.agent) : undefined,
       }
       out.push(currentAssistant)
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 import { KeyRound, LogOut, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,31 +12,61 @@ import {
 } from '@/components/ui/dialog'
 import { researchAuthStore, useResearchAuth } from '@/lib/auth/researchUser'
 
-export function ResearchUserSwitcher({ className }: { className?: string }) {
+export type ResearchUserSwitcherHandle = {
+  openDialog: () => void
+}
+
+export const ResearchUserSwitcher = forwardRef<
+  ResearchUserSwitcherHandle,
+  {
+    className?: string
+    dialogStackLayer?: 'default' | 'elevated'
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+    showTrigger?: boolean
+  }
+>(function ResearchUserSwitcher(
+  {
+    className,
+    dialogStackLayer = 'default',
+    open: controlledOpen,
+    onOpenChange,
+    showTrigger = true,
+  },
+  ref,
+) {
   const { token, userLabel } = useResearchAuth()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = controlledOpen ?? internalOpen
+  const setOpen = onOpenChange ?? setInternalOpen
   const [draftToken, setDraftToken] = useState(token ?? '')
   const [draftUser, setDraftUser] = useState(userLabel ?? '')
 
+  function openDialog() {
+    setDraftToken(token ?? '')
+    setDraftUser(userLabel ?? '')
+    setOpen(true)
+  }
+
+  useImperativeHandle(ref, () => ({ openDialog }), [token, userLabel, setOpen])
+
   return (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className={className}
-        onClick={() => {
-          setDraftToken(token ?? '')
-          setDraftUser(userLabel ?? '')
-          setOpen(true)
-        }}
-        aria-label="Research user"
-      >
-        <User className="size-3.5" aria-hidden />
-        <span className="text-dense-caption">{userLabel ?? 'Set user'}</span>
-      </Button>
+      {showTrigger ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className={className}
+          onClick={openDialog}
+          aria-label="Research user"
+        >
+          <User className="size-3.5" aria-hidden />
+          <span className="text-dense-caption">{userLabel ?? 'Set user'}</span>
+        </Button>
+      ) : null}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent stackLayer={dialogStackLayer} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Research identity</DialogTitle>
             <DialogDescription>
@@ -97,4 +127,4 @@ export function ResearchUserSwitcher({ className }: { className?: string }) {
       </Dialog>
     </>
   )
-}
+})

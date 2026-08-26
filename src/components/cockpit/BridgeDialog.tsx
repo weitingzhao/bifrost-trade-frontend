@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, Copy, Loader2 } from 'lucide-react'
+import { Check, Copy, Download, Loader2, Printer } from 'lucide-react'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,7 +21,13 @@ import {
 } from '@/components/ui/select'
 import { SegmentControl } from '@/components/data-display'
 import { useBridgePresets, useCopilotBridge } from '@/hooks/useCopilotBridge'
-import { copyTextToClipboard } from '@/lib/cockpit/exportSerializer'
+import {
+  copyTextToClipboard,
+  downloadTextFile,
+  exportFilename,
+  memoryBriefToHtml,
+  printHtml,
+} from '@/lib/cockpit/exportSerializer'
 import type { BridgeDepth, BridgeFocus, BridgeTarget } from '@/api/researchCopilotBridge'
 
 export function BridgeDialog({
@@ -121,12 +127,12 @@ export function BridgeDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent stackLayer="elevated" className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Context Bridge</DialogTitle>
+          <DialogTitle>Export memory (AI brief)</DialogTitle>
           <DialogDescription>
-            Compress this Copilot session into markdown for ChatGPT, Claude, DeepSeek, or another
-            assistant. Tool results are summarized first; a cheap model polishes the brief.
+            Ask a cheap model to distill this session into a high-density memory brief for
+            ChatGPT, Claude, DeepSeek, or another assistant. Not a raw chat log.
           </DialogDescription>
         </DialogHeader>
 
@@ -203,18 +209,50 @@ export function BridgeDialog({
 
           {previewMd ? (
             <div className="space-y-2 rounded border border-border/60 bg-secondary/30 p-2">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-dense-label font-medium">Preview</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1"
-                  onClick={() => void onCopyPreview()}
-                >
-                  {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
-                  {copied ? 'Copied' : 'Copy markdown'}
-                </Button>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-dense-label font-medium">Memory brief</p>
+                <div className="flex flex-wrap items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1"
+                    onClick={() => void onCopyPreview()}
+                  >
+                    {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1"
+                    onClick={() => {
+                      if (!previewMd) return
+                      downloadTextFile(
+                        exportFilename(sessionId, new Date(), 'memory'),
+                        previewMd,
+                        'text/markdown;charset=utf-8',
+                      )
+                    }}
+                  >
+                    <Download className="size-3.5" />
+                    .md
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1"
+                    onClick={() => {
+                      if (!previewMd) return
+                      printHtml(memoryBriefToHtml(previewMd, { sessionId }))
+                    }}
+                  >
+                    <Printer className="size-3.5" />
+                    Print
+                  </Button>
+                </div>
               </div>
               <div className="max-h-48 overflow-y-auto rounded border border-border/40 bg-background p-2">
                 <MarkdownContent>{previewMd}</MarkdownContent>

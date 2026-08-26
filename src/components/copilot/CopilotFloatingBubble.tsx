@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
-  BookOpen,
   Expand,
-  ExternalLink,
   History,
   Maximize2,
   MessageCircle,
@@ -17,12 +14,13 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
+import { ResearchUserSwitcher, type ResearchUserSwitcherHandle } from '@/components/auth/ResearchUserSwitcher'
 import { CockpitTabs } from '@/components/cockpit/CockpitTabs'
 import { CockpitSaveHypothesisHost } from '@/components/cockpit/CockpitSaveHypothesisHost'
 import { BridgeDialog } from '@/components/cockpit/BridgeDialog'
 import { ExportSessionMenu } from '@/components/cockpit/ExportSessionMenu'
 import { SessionListSidebar } from '@/components/cockpit/SessionListSidebar'
+import { CopilotPanelMoreMenu } from '@/components/copilot/CopilotPanelMoreMenu'
 import {
   copilotBubbleStore,
   useCopilotBubble,
@@ -78,6 +76,7 @@ export function CopilotFloatingBubble() {
 
   const [dragging, setDragging] = useState(false)
   const [bridgeOpen, setBridgeOpen] = useState(false)
+  const userSwitcherRef = useRef<ResearchUserSwitcherHandle>(null)
   const dragOffsetRef = useRef<{ dx: number; dy: number } | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
 
@@ -211,7 +210,10 @@ export function CopilotFloatingBubble() {
         aria-label="Research Copilot"
         style={positionStyle}
         className={cn(
-          'fixed z-[190] flex flex-col overflow-hidden rounded-xl',
+          // Below elevated Bridge dialog overlay (z-[230]) when export is open
+          bridgeOpen ? 'z-[100]' : 'z-[190]',
+          'fixed flex flex-col overflow-hidden rounded-xl',
+          bridgeOpen && 'pointer-events-none opacity-60',
           // Uniform typography inside the Copilot: sans-serif with the shared
           // CJK fallback chain (index.css) so Chinese and Latin glyphs render
           // at the same optical weight; tabular numerics so amounts, times,
@@ -268,39 +270,6 @@ export function CopilotFloatingBubble() {
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
-            <ExportSessionMenu messages={messages} sessionId={sessionId} />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setBridgeOpen(true)}
-                  aria-label="Context Bridge"
-                  disabled={messages.length === 0}
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Context Bridge</TooltipContent>
-            </Tooltip>
-            <ResearchUserSwitcher className="h-7 px-1.5" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  asChild
-                  aria-label="Open My Trading System"
-                >
-                  <Link to="/research/playbook" onClick={close}>
-                    <BookOpen className="h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">My Trading System (Playbook)</TooltipContent>
-            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -322,22 +291,6 @@ export function CopilotFloatingBubble() {
                 {sessionsOpen ? 'Hide sessions' : 'Sessions history'}
               </TooltipContent>
             </Tooltip>
-            {position && !isFullscreen ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={resetPosition}
-                    aria-label="Reset position"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Reset to bottom-right</TooltipContent>
-              </Tooltip>
-            ) : null}
             {!isFullscreen ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -381,6 +334,29 @@ export function CopilotFloatingBubble() {
                 {isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
               </TooltipContent>
             </Tooltip>
+            {position && !isFullscreen ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={resetPosition}
+                    aria-label="Reset panel position"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Reset to bottom-right</TooltipContent>
+              </Tooltip>
+            ) : null}
+            <ExportSessionMenu messages={messages} sessionId={sessionId} />
+            <CopilotPanelMoreMenu
+              onExportMemory={() => setBridgeOpen(true)}
+              onOpenUserIdentity={() => userSwitcherRef.current?.openDialog()}
+              onClosePanel={close}
+              disabledExport={messages.length === 0}
+            />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -420,6 +396,11 @@ export function CopilotFloatingBubble() {
           </div>
         </div>
       </aside>
+      <ResearchUserSwitcher
+        ref={userSwitcherRef}
+        showTrigger={false}
+        dialogStackLayer="elevated"
+      />
       <BridgeDialog open={bridgeOpen} onOpenChange={setBridgeOpen} sessionId={sessionId} />
       <CockpitSaveHypothesisHost />
     </>

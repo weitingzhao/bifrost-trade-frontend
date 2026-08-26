@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -15,19 +15,28 @@ export function CopilotComposer({
   model,
   onModelChange,
   onSend,
+  onStop,
+  streaming = false,
   disabled,
 }: {
   model: CopilotModelId
   onModelChange: (id: CopilotModelId) => void
   onSend: (text: string) => void
+  onStop?: () => void
+  streaming?: boolean
   disabled?: boolean
 }) {
   const [text, setText] = useState('')
 
+  // Input is only disabled when: cap breached, or currently streaming.
+  // The outer `disabled` covers both — but we still want the Stop button
+  // clickable while streaming, so we manage the two states independently.
+  const inputDisabled = disabled
+  const canSend = !inputDisabled && text.trim().length > 0
+
   function submit() {
-    const t = text.trim()
-    if (!t || disabled) return
-    onSend(t)
+    if (!canSend) return
+    onSend(text.trim())
     setText('')
   }
 
@@ -50,7 +59,7 @@ export function CopilotComposer({
         <Select
           value={model}
           onValueChange={(v) => onModelChange(v as CopilotModelId)}
-          disabled={disabled}
+          disabled={inputDisabled}
         >
           <SelectTrigger className="h-7 text-dense-meta">
             <SelectValue />
@@ -69,19 +78,33 @@ export function CopilotComposer({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Ask about hypotheses, VRP, OpEx…"
-          disabled={disabled}
+          placeholder={streaming ? 'Streaming… click ⬛ to stop' : 'Ask about hypotheses, VRP, OpEx…'}
+          disabled={inputDisabled}
           className="h-8 text-dense-label"
         />
-        <Button
-          type="submit"
-          size="sm"
-          disabled={disabled || !text.trim()}
-          className="h-8 shrink-0 px-2"
-          aria-label="Send"
-        >
-          <Send className="size-3.5" />
-        </Button>
+        {streaming && onStop ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="destructive"
+            onClick={onStop}
+            className="h-8 shrink-0 px-2"
+            aria-label="Stop generation"
+            title="Stop generation"
+          >
+            <Square className="size-3.5 fill-current" />
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            size="sm"
+            disabled={!canSend}
+            className="h-8 shrink-0 px-2"
+            aria-label="Send"
+          >
+            <Send className="size-3.5" />
+          </Button>
+        )}
       </div>
     </form>
   )

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
+  BookOpen,
   Expand,
   History,
   Maximize2,
@@ -258,6 +260,22 @@ export function CopilotFloatingBubble() {
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
             <ResearchUserSwitcher className="h-7 px-1.5" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  asChild
+                  aria-label="Open My Trading System"
+                >
+                  <Link to="/research/playbook" onClick={close}>
+                    <BookOpen className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">My Trading System (Playbook)</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

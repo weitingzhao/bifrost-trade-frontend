@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   Check,
+  FolderPlus,
   Loader2,
   MessageSquare,
   MoreHorizontal,
@@ -8,6 +9,7 @@ import {
   Pin,
   PinOff,
   Plus,
+  Tag,
   Trash2,
   X,
 } from 'lucide-react'
@@ -17,6 +19,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -32,16 +35,21 @@ import {
 import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 
 /**
- * Session history rail (Wave RS-UX3 → RS-UX5).
+ * Session history rail (Wave RS-UX3 → RS-UX5, QA follow-up).
  *
  * Sits in the left column of `CopilotFloatingBubble` when the user has the
  * rail visible.  Delivers full session management:
  *   - `+ New chat` primary button
- *   - Pinned group at the top (auto-sorted by backend)
+ *   - Pinned group at the top
+ *   - Custom groups (folders) — user-defined labels via row menu → "Move to group"
  *   - Inline rename (double-click title or menu → Rename)
  *   - Pin / Unpin toggle from row menu
  *   - Archive (delete) from row menu
  *   - Active session highlighted with primary tint
+ *
+ * Groups are per-owner strings persisted on the row (`group_name`).  We do not
+ * maintain a separate "groups" table — the union of existing `group_name`
+ * values is the group taxonomy, which keeps this feature lightweight.
  */
 export function SessionListSidebar({
   onLoaded,
@@ -50,19 +58,41 @@ export function SessionListSidebar({
   onLoaded?: (sessionId: string) => void
   className?: string
 }) {
-  const { data, isLoading, refetch } = useCopilotSessions(30)
+  const { data, isLoading, refetch } = useCopilotSessions(50)
   const { sessionId: currentSessionId } = useCopilotSession()
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [groupPromptFor, setGroupPromptFor] = useState<string | null>(null)
 
   const rows = useMemo(() => data ?? [], [data])
-  const { pinned, others } = useMemo(() => {
-    const pin: CopilotSessionSummary[] = []
-    const oth: CopilotSessionSummary[] = []
+
+  // Compute existing group list from the loaded rows so users can quickly
+  // pick an existing folder rather than retyping it.
+  const existingGroups = useMemo(() => {
+    const set = new Set<string>()
     for (const r of rows) {
-      if (r.pinned) pin.push(r)
-      else oth.push(r)
+      if (r.group_name && r.group_name.trim()) set.add(r.group_name.trim())
     }
-    return { pinned: pin, others: oth }
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  }, [rows])
+
+  const { pinned, grouped, ungrouped } = useMemo(() => {
+    const pin: CopilotSessionSummary[] = []
+    const bucketed: Record<string, CopilotSessionSummary[]> = {}
+    const flat: CopilotSessionSummary[] = []
+    for (const r of rows) {
+      if (r.pinned) {
+        pin.push(r)
+        continue
+      }
+      if (r.group_name && r.group_name.trim()) {
+        const key = r.group_name.trim()
+        if (!bucketed[key]) bucketed[key] = []
+        bucketed[key].push(r)
+      } else {
+        flat.push(r)
+      }
+    }
+    return { pinned: pin, grouped: bucketed, ungrouped: flat }
   }, [rows])
 
   async function loadSession(id: string) {
@@ -98,6 +128,19 @@ export function SessionListSidebar({
   async function togglePin(row: CopilotSessionSummary) {
     try {
       await patchCopilotSession(row.id, { pinned: !row.pinned })
+      refetch()
+    } catch {
+      // ignore
+    }
+  }
+
+  async function assignGroup(row: CopilotSessionSummary, groupName: string | null) {
+    try {
+      if (groupName === null) {
+        await patchCopilotSession(row.id, { clear_group: true })
+      } else {
+        await patchCopilotSession(row.id, { group_name: groupName })
+      }
       refetch()
     } catch {
       // ignore
@@ -162,7 +205,7 @@ export function SessionListSidebar({
                 <MoreHorizontal className="size-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem]">
+            <DropdownMenuContent align="end" className="min-w-[12rem]">
               <DropdownMenuItem onSelect={() => setEditingId(row.id)}>
                 <Pencil className="mr-2 size-3.5" /> Rename
               </DropdownMenuItem>
@@ -178,6 +221,38 @@ export function SessionListSidebar({
                 )}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-dense-caption">
+                Group
+              </DropdownMenuLabel>
+              {existingGroups.length === 0 ? (
+                <DropdownMenuItem onSelect={() => setGroupPromptFor(row.id)}>
+                  <FolderPlus className="mr-2 size-3.5" /> Create group…
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  {existingGroups.map((g) => (
+                    <DropdownMenuItem
+                      key={g}
+                      onSelect={() => assignGroup(row, g)}
+                      className={cn(
+                        row.group_name === g && 'text-primary',
+                      )}
+                    >
+                      <Tag className="mr-2 size-3.5" />
+                      <span className="truncate">{g}</span>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuItem onSelect={() => setGroupPromptFor(row.id)}>
+                    <FolderPlus className="mr-2 size-3.5" /> New group…
+                  </DropdownMenuItem>
+                  {row.group_name ? (
+                    <DropdownMenuItem onSelect={() => assignGroup(row, null)}>
+                      <X className="mr-2 size-3.5" /> Remove from group
+                    </DropdownMenuItem>
+                  ) : null}
+                </>
+              )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={() => archive(row.id)}
                 className="text-destructive focus:text-destructive"
@@ -191,8 +266,10 @@ export function SessionListSidebar({
     )
   }
 
+  const groupedKeys = Object.keys(grouped).sort((a, b) => a.localeCompare(b))
+
   return (
-    <div className={cn('flex h-full flex-col gap-1.5', className)}>
+    <div className={cn('relative flex h-full flex-col gap-1.5', className)}>
       <Button
         type="button"
         variant="outline"
@@ -229,17 +306,40 @@ export function SessionListSidebar({
             <ul className="space-y-0.5">{pinned.map(renderRow)}</ul>
           </div>
         ) : null}
-        {others.length > 0 ? (
+        {groupedKeys.map((k) => (
+          <div key={k} className="mb-1">
+            <div className="mb-0.5 flex items-center gap-1 px-1.5 text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground/70">
+              <Tag className="size-2.5" />
+              <span className="truncate">{k}</span>
+            </div>
+            <ul className="space-y-0.5">{grouped[k].map(renderRow)}</ul>
+          </div>
+        ))}
+        {ungrouped.length > 0 ? (
           <div>
-            {pinned.length > 0 ? (
+            {pinned.length > 0 || groupedKeys.length > 0 ? (
               <div className="mb-0.5 px-1.5 text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground/70">
                 Recent
               </div>
             ) : null}
-            <ul className="space-y-0.5">{others.map(renderRow)}</ul>
+            <ul className="space-y-0.5">{ungrouped.map(renderRow)}</ul>
           </div>
         ) : null}
       </div>
+
+      {groupPromptFor ? (
+        <GroupNamePrompt
+          existing={existingGroups}
+          onCancel={() => setGroupPromptFor(null)}
+          onCommit={(name) => {
+            const row = rows.find((r) => r.id === groupPromptFor)
+            setGroupPromptFor(null)
+            if (row && name.trim()) {
+              void assignGroup(row, name.trim())
+            }
+          }}
+        />
+      ) : null}
     </div>
   )
 }
@@ -295,6 +395,73 @@ function SessionRenameField({
       >
         <X className="size-3" />
       </Button>
+    </div>
+  )
+}
+
+function GroupNamePrompt({
+  existing,
+  onCommit,
+  onCancel,
+}: {
+  existing: string[]
+  onCommit: (name: string) => void
+  onCancel: () => void
+}) {
+  const [text, setText] = useState('')
+  return (
+    <div
+      className="absolute inset-x-2 bottom-2 z-10 rounded-lg border border-primary/30 bg-card p-2 shadow-lg"
+      role="dialog"
+      aria-label="New group name"
+    >
+      <div className="mb-1 text-dense-caption text-muted-foreground">
+        Group name (e.g. Strategies, Research, VRP)
+      </div>
+      <Input
+        autoFocus
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Enter group name"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            onCommit(text)
+          } else if (e.key === 'Escape') {
+            e.preventDefault()
+            onCancel()
+          }
+        }}
+        className="h-7 text-dense-meta"
+      />
+      {existing.length > 0 ? (
+        <div className="mt-1 flex flex-wrap gap-1">
+          {existing.slice(0, 6).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => onCommit(g)}
+              className="rounded-full border border-border bg-secondary px-1.5 py-0.5 text-dense-caption text-foreground/80 hover:bg-primary/10 hover:text-primary"
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-1 flex justify-end gap-1">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-6 text-dense-caption">
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => onCommit(text)}
+          disabled={!text.trim()}
+          className="h-6 text-dense-caption"
+        >
+          Save
+        </Button>
+      </div>
     </div>
   )
 }

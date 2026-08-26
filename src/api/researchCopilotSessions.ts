@@ -8,6 +8,7 @@ export type CopilotSessionSummary = {
   updated_at?: string
   message_count?: number
   pinned?: boolean
+  group_name?: string | null
 }
 
 export type CopilotSessionDetail = {
@@ -64,7 +65,12 @@ export async function archiveCopilotSession(id: string): Promise<void> {
 
 export async function patchCopilotSession(
   id: string,
-  changes: { title?: string; pinned?: boolean },
+  changes: {
+    title?: string
+    pinned?: boolean
+    group_name?: string | null
+    clear_group?: boolean
+  },
 ): Promise<CopilotSessionSummary> {
   const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
     method: 'PATCH',

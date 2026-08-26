@@ -398,6 +398,30 @@ export const copilotSessionStore = {
     store.setState({ messages: [...store.getState().messages, note] })
   },
 
+  stop() {
+    if (!store.getState().streaming) return
+    abort?.abort()
+    abort = null
+    const msgs = store.getState().messages.map((m) =>
+      m.streaming
+        ? {
+            ...m,
+            streaming: false,
+            content: (m.content ?? '') + '\n\n_[Stopped by user]_',
+          }
+        : m,
+    )
+    store.setState({ messages: msgs, streaming: false })
+    // Best-effort: still notify sessions rail so partial turn shows up.
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('copilot:turn-done'))
+      }
+    } catch {
+      // no-op
+    }
+  },
+
   async rejectWrite(toolCallId: string) {
     const state = store.getState()
     let target: CopilotToolCall | undefined
@@ -432,6 +456,7 @@ export const copilotSessionStore = {
 export function useCopilotSession() {
   const state = store.useStore()
   const send = useCallback((text: string) => copilotSessionStore.send(text), [])
+  const stop = useCallback(() => copilotSessionStore.stop(), [])
   const clearSession = useCallback(() => copilotSessionStore.clearSession(), [])
   const setModel = useCallback(
     (model: CopilotModelId) => copilotSessionStore.setModel(model),
@@ -449,5 +474,14 @@ export function useCopilotSession() {
     (v: boolean) => copilotSessionStore.setTraceCollapsed(v),
     [],
   )
-  return { ...state, send, clearSession, setModel, approveWrite, rejectWrite, setTraceCollapsed }
+  return {
+    ...state,
+    send,
+    stop,
+    clearSession,
+    setModel,
+    approveWrite,
+    rejectWrite,
+    setTraceCollapsed,
+  }
 }

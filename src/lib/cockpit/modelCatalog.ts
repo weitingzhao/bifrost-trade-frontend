@@ -6,6 +6,10 @@ export type CopilotModelId =
   | 'claude-4.5-sonnet'
   | 'gpt-4o'
   | 'gpt-4o-mini'
+  | 'gpt-4.1'
+  | 'gpt-4.1-mini'
+  | 'gpt-5-mini'
+  | 'gpt-5'
   | 'ollama:llama3.2'
 
 export type CopilotModelOption = {
@@ -52,6 +56,34 @@ export const COPILOT_MODELS: CopilotModelOption[] = [
     provider: 'openai',
     costPerMtokIn: 0.15,
     costPerMtokOut: 0.6,
+  },
+  {
+    id: 'gpt-4.1',
+    label: 'GPT-4.1',
+    provider: 'openai',
+    costPerMtokIn: 2,
+    costPerMtokOut: 8,
+  },
+  {
+    id: 'gpt-4.1-mini',
+    label: 'GPT-4.1 Mini',
+    provider: 'openai',
+    costPerMtokIn: 0.4,
+    costPerMtokOut: 1.6,
+  },
+  {
+    id: 'gpt-5-mini',
+    label: 'GPT-5 Mini',
+    provider: 'openai',
+    costPerMtokIn: 0.25,
+    costPerMtokOut: 2,
+  },
+  {
+    id: 'gpt-5',
+    label: 'GPT-5',
+    provider: 'openai',
+    costPerMtokIn: 1.25,
+    costPerMtokOut: 10,
   },
   {
     id: 'ollama:llama3.2',

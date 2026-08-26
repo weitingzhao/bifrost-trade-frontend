@@ -29,7 +29,7 @@ import {
   patchCopilotSession,
   type CopilotSessionSummary,
 } from '@/api/researchCopilotSessions'
-import type { CopilotUiMessage } from '@/hooks/useCopilotSession'
+import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 
 /**
  * Session history rail (Wave RS-UX3 → RS-UX5).
@@ -70,11 +70,7 @@ export function SessionListSidebar({
     if (editingId === id) return
     try {
       const detail = await fetchCopilotSession(id)
-      const msgs: CopilotUiMessage[] = (detail.messages ?? []).map((m, i) => ({
-        id: `hist-${id}-${i}`,
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      }))
+      const msgs = hydrateCopilotMessages(detail.messages ?? [], id)
       copilotSessionStore.setState({
         messages: msgs,
         sessionId: id,

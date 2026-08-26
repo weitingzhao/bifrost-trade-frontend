@@ -3,6 +3,7 @@
  * Wave RS-F: agent_handoff · guardrail events (back-compat ignored if unknown).
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import type { CopilotModelId } from '@/lib/cockpit/modelCatalog'
 
 export type CopilotChatMessage = {
@@ -42,6 +43,7 @@ export type CopilotSseEvent =
       tokens?: number
       cost_usd?: number
     }
+  | { event: 'session_id'; session_id: string }
 
 export type CopilotUsage = {
   tokens_today: number
@@ -52,7 +54,10 @@ export type CopilotUsage = {
 }
 
 export async function fetchCopilotUsage(signal?: AbortSignal): Promise<CopilotUsage> {
-  const res = await fetch(researchEngineUrl('/research/copilot/usage'), { signal })
+  const res = await fetch(researchEngineUrl('/research/copilot/usage'), {
+    signal,
+    headers: getResearchAuthHeaders(),
+  })
   if (!res.ok) {
     throw new Error(`usage HTTP ${res.status}`)
   }
@@ -86,6 +91,7 @@ export function streamCopilot(
         headers: {
           'Content-Type': 'application/json',
           Accept: 'text/event-stream',
+          ...getResearchAuthHeaders(),
         },
         body: JSON.stringify(body),
         signal: ac.signal,
@@ -162,7 +168,7 @@ export async function approveCopilotWrite(body: {
 }): Promise<ApproveWriteResponse> {
   const res = await fetch(researchEngineUrl('/research/copilot/approve'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
     body: JSON.stringify(body),
   })
   if (!res.ok) {
@@ -190,7 +196,7 @@ export async function executeCopilotWrite(body: {
 }): Promise<ExecuteWriteResponse> {
   const res = await fetch(researchEngineUrl('/research/copilot/execute'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
     body: JSON.stringify(body),
   })
   if (!res.ok) {
@@ -208,7 +214,7 @@ export async function dismissCopilotWrite(body: {
 }): Promise<void> {
   await fetch(researchEngineUrl('/research/copilot/dismiss'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
     body: JSON.stringify(body),
   }).catch(() => {
     // dismiss is best-effort telemetry

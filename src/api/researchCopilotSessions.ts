@@ -1,4 +1,5 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 
 export type CopilotSessionSummary = {
   id: string
@@ -14,21 +15,41 @@ export type CopilotSessionDetail = {
     id: string
     title?: string | null
     model?: string
-    messages?: Array<{ role: string; content: string }>
+    messages?: PersistedCopilotFrame[]
     agent_trail?: Array<{ from: string; to: string; at?: string }>
   }
-  messages: Array<{ role: string; content: string }>
+  messages: PersistedCopilotFrame[]
+}
+
+export type PersistedCopilotFrame = {
+  kind?: string
+  role?: string
+  content?: string
+  agent_from?: string
+  agent_to?: string
+  tool_call_id?: string
+  tool_name?: string
+  args?: Record<string, unknown>
+  ok?: boolean
+  data?: unknown
+  error?: string
+  agent?: string
+  ts?: string
 }
 
 export async function fetchCopilotSessions(limit = 10): Promise<CopilotSessionSummary[]> {
-  const res = await fetch(researchEngineUrl(`/research/copilot/sessions?limit=${limit}`))
+  const res = await fetch(researchEngineUrl(`/research/copilot/sessions?limit=${limit}`), {
+    headers: getResearchAuthHeaders(),
+  })
   if (!res.ok) throw new Error(`sessions HTTP ${res.status}`)
   const body = (await res.json()) as { rows: CopilotSessionSummary[] }
   return body.rows ?? []
 }
 
 export async function fetchCopilotSession(id: string): Promise<CopilotSessionDetail> {
-  const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`))
+  const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
+    headers: getResearchAuthHeaders(),
+  })
   if (!res.ok) throw new Error(`session HTTP ${res.status}`)
   return (await res.json()) as CopilotSessionDetail
 }
@@ -36,6 +57,7 @@ export async function fetchCopilotSession(id: string): Promise<CopilotSessionDet
 export async function archiveCopilotSession(id: string): Promise<void> {
   const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
     method: 'DELETE',
+    headers: getResearchAuthHeaders(),
   })
   if (!res.ok) throw new Error(`archive HTTP ${res.status}`)
 }
@@ -46,7 +68,7 @@ export async function patchCopilotSession(
 ): Promise<CopilotSessionSummary> {
   const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
     body: JSON.stringify(changes),
   })
   if (!res.ok) throw new Error(`patch HTTP ${res.status}`)

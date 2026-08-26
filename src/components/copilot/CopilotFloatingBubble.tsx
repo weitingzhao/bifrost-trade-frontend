@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
 import { CockpitTabs } from '@/components/cockpit/CockpitTabs'
 import { CockpitSaveHypothesisHost } from '@/components/cockpit/CockpitSaveHypothesisHost'
 import { SessionListSidebar } from '@/components/cockpit/SessionListSidebar'
@@ -256,6 +257,7 @@ export function CopilotFloatingBubble() {
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
+            <ResearchUserSwitcher className="h-7 px-1.5" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

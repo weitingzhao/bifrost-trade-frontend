@@ -44,7 +44,7 @@ export function InboxTab() {
       <EmptyState
         icon={<Inbox />}
         title="Inbox empty"
-        description="Morning Prep and EOD Review drafts appear here for approval. Run agents from Actions."
+        description="Morning Prep, EOD Review, and Playbook drafts appear here for approval."
       />
     )
   }

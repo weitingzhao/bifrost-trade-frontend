@@ -111,6 +111,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         label: 'Validate',
         items: [
           route('Backtest', '/research/backtest', History),
+          route('My Trading System', '/research/playbook', BookOpen),
           route('Contract Greeks', '/research/greeks', Wand2),
           route('Risk Model', '/research/risk', AlertCircle),
         ],

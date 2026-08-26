@@ -5,8 +5,14 @@
  * Envelope: `{ ok, data, error? }`.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 
-export type DraftKind = 'morning_brief' | 'eod_verdict' | 'hypothesis_suggestion'
+export type DraftKind =
+  | 'morning_brief'
+  | 'eod_verdict'
+  | 'hypothesis_suggestion'
+  | 'playbook_rule'
+  | 'playbook_note'
 export type DraftStatus = 'pending' | 'approved' | 'dismissed' | 'expired'
 
 export interface AiDraft {
@@ -78,7 +84,11 @@ export async function listResearchDrafts(params?: {
   if (params?.kind) qs.set('kind', params.kind)
   if (params?.limit) qs.set('limit', String(params.limit))
   const suffix = qs.toString() ? `?${qs}` : ''
-  return unwrap(await fetch(researchEngineUrl(`/research/drafts${suffix}`)))
+  return unwrap(
+    await fetch(researchEngineUrl(`/research/drafts${suffix}`), {
+      headers: getResearchAuthHeaders(),
+    }),
+  )
 }
 
 export async function approveResearchDraft(
@@ -88,7 +98,7 @@ export async function approveResearchDraft(
   return unwrap(
     await fetch(researchEngineUrl(`/research/drafts/${encodeURIComponent(id)}/approve`), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
       body: JSON.stringify({ approved_by: approvedBy }),
     }),
   )
@@ -101,7 +111,7 @@ export async function dismissResearchDraft(
   return unwrap(
     await fetch(researchEngineUrl(`/research/drafts/${encodeURIComponent(id)}/dismiss`), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
       body: JSON.stringify({ approved_by: approvedBy }),
     }),
   )
@@ -111,7 +121,7 @@ export async function runMorningAgent(dryRun = false): Promise<AgentRunResult> {
   return unwrap(
     await fetch(researchEngineUrl('/research/agents/morning/run'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
       body: JSON.stringify({ dry_run: dryRun }),
     }),
   )
@@ -121,7 +131,7 @@ export async function runEodAgent(dryRun = false): Promise<AgentRunResult> {
   return unwrap(
     await fetch(researchEngineUrl('/research/agents/eod/run'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
       body: JSON.stringify({ dry_run: dryRun }),
     }),
   )

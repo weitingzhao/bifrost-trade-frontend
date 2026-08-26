@@ -79,6 +79,10 @@ export const router = createBrowserRouter([
         element: <Navigate to="/settings/data-readiness" replace />,
       },
       {
+        path: 'research/playbook',
+        lazy: lazyPage(() => import('@/pages/copilot/PlaybookPage')),
+      },
+      {
         path: 'research/discovery',
         lazy: lazyPage(() => import('@/pages/research/DiscoveryPage')),
       },

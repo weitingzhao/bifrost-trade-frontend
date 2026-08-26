@@ -75,7 +75,10 @@ function nextId(prefix: string) {
 }
 
 function newSessionId() {
-  return `sess-${Date.now().toString(36)}`
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `sess-${Date.now().toString(36)}-${msgSeq}`
 }
 
 let traceSeq = 0
@@ -172,6 +175,11 @@ function applyEvent(ev: CopilotSseEvent) {
     return
   }
 
+  if (ev.event === 'session_id' && ev.session_id) {
+    store.setState({ sessionId: ev.session_id })
+    return
+  }
+
   if (ev.event === 'token') {
     if (!state.traceEvents.some((t) => t.kind === 'token' && t.at > Date.now() - 500)) {
       pushTrace('token')
@@ -256,6 +264,9 @@ function applyEvent(ev: CopilotSseEvent) {
     )
     store.setState({ messages: msgs, streaming: false })
     abort = null
+    if (ev.session_id && typeof ev.session_id === 'string') {
+      store.setState({ sessionId: ev.session_id })
+    }
     // Notify listeners (sessions rail, usage query) that a turn just persisted.
     try {
       if (typeof window !== 'undefined') {

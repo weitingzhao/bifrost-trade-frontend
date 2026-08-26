@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Send, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { COPILOT_MODELS, type CopilotModelId } from '@/lib/cockpit/modelCatalog'
+import { useCopilotModels } from '@/hooks/useCopilotModels'
 
 export function CopilotComposer({
   model,
@@ -27,6 +33,37 @@ export function CopilotComposer({
   disabled?: boolean
 }) {
   const [text, setText] = useState('')
+  const { data: modelData } = useCopilotModels()
+
+  // Prefer the deployment's actual model list; fall back to the static
+  // catalog only if the backend hasn't answered yet (first paint).
+  const options = useMemo(() => {
+    const rows = modelData?.available ?? []
+    if (rows.length > 0) {
+      return rows.map((m) => ({
+        id: m.id as CopilotModelId,
+        label: m.label,
+        note: m.note ?? null,
+      }))
+    }
+    return COPILOT_MODELS.map((m) => ({
+      id: m.id,
+      label: m.label,
+      note: null as string | null,
+    }))
+  }, [modelData])
+
+  // If the persisted model isn't in the deployment's available list,
+  // switch to the backend's default so we don't send a request that will
+  // be rejected with "model not configured".
+  useEffect(() => {
+    if (!modelData) return
+    const ids = new Set(modelData.available.map((m) => m.id))
+    if (ids.size === 0) return
+    if (!ids.has(model) && modelData.default) {
+      onModelChange(modelData.default as CopilotModelId)
+    }
+  }, [modelData, model, onModelChange])
 
   // Input is only disabled when: cap breached, or currently streaming.
   // The outer `disabled` covers both — but we still want the Stop button
@@ -65,13 +102,39 @@ export function CopilotComposer({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {COPILOT_MODELS.map((m) => (
+            {options.map((m) => (
               <SelectItem key={m.id} value={m.id} className="text-dense-meta">
-                {m.label}
+                <span className="flex flex-col">
+                  <span>{m.label}</span>
+                  {m.note ? (
+                    <span className="text-dense-caption text-muted-foreground leading-tight">
+                      {m.note}
+                    </span>
+                  ) : null}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {(() => {
+          const active = options.find((m) => m.id === model)
+          if (!active?.note) return null
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="cursor-help text-dense-caption text-muted-foreground/80"
+                  aria-label="Model description"
+                >
+                  ⓘ
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[240px] text-dense-meta">
+                {active.note}
+              </TooltipContent>
+            </Tooltip>
+          )
+        })()}
       </div>
       <div className="flex items-center gap-1.5">
         <Input

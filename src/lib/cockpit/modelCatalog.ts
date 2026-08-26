@@ -4,7 +4,8 @@ export type CopilotModelId =
   | 'deepseek-chat'
   | 'deepseek-reasoner'
   | 'claude-4.5-sonnet'
-  | 'gpt-5'
+  | 'gpt-4o'
+  | 'gpt-4o-mini'
   | 'ollama:llama3.2'
 
 export type CopilotModelOption = {
@@ -39,11 +40,18 @@ export const COPILOT_MODELS: CopilotModelOption[] = [
     costPerMtokOut: 15,
   },
   {
-    id: 'gpt-5',
-    label: 'GPT-5',
+    id: 'gpt-4o',
+    label: 'GPT-4o',
     provider: 'openai',
     costPerMtokIn: 2.5,
     costPerMtokOut: 10,
+  },
+  {
+    id: 'gpt-4o-mini',
+    label: 'GPT-4o Mini',
+    provider: 'openai',
+    costPerMtokIn: 0.15,
+    costPerMtokOut: 0.6,
   },
   {
     id: 'ollama:llama3.2',

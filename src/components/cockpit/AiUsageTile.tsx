@@ -25,6 +25,8 @@ export function AiUsageTile() {
   }
 
   const { tokens_today, cost_estimate_usd, cap_usd, remaining_usd } = q.data
+  const bridgeCount = q.data.bridge_count_today ?? 0
+  const bridgeTokens = q.data.bridge_tokens_today ?? 0
   const breached = remaining_usd <= 0
 
   return (
@@ -44,6 +46,10 @@ export function AiUsageTile() {
         <dd className="font-mono tabular-nums text-right">${cap_usd.toFixed(2)}</dd>
         <dt className="text-muted-foreground">Remaining</dt>
         <dd className="font-mono tabular-nums text-right">${remaining_usd.toFixed(4)}</dd>
+        <dt className="text-muted-foreground">Bridge today</dt>
+        <dd className="font-mono tabular-nums text-right">
+          {bridgeCount} · {bridgeTokens.toLocaleString()} tok
+        </dd>
       </dl>
       {breached ? (
         <p className="text-dense-caption text-destructive">Resets at 00:00 UTC</p>

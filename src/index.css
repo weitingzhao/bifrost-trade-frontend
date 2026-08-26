@@ -522,3 +522,42 @@
     animation: lamp-pulse-red 1.5s ease-in-out infinite;
   }
 }
+
+/* Wave RS-EX1 — Copilot panel print (window.print) */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  [role='dialog'][aria-label='Research Copilot'],
+  [role='dialog'][aria-label='Research Copilot'] * {
+    visibility: visible;
+  }
+
+  [role='dialog'][aria-label='Research Copilot'] {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    ring: none !important;
+    background: white !important;
+    color: black !important;
+    overflow: visible !important;
+  }
+
+  [role='dialog'][aria-label='Research Copilot'] header,
+  [role='dialog'][aria-label='Research Copilot'] button,
+  [role='dialog'][aria-label='Research Copilot'] [data-slot='tabs-list'],
+  [role='dialog'][aria-label='Research Copilot'] .group\/message .opacity-0 {
+    display: none !important;
+  }
+
+  [role='dialog'][aria-label='Research Copilot'] .overflow-y-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+}

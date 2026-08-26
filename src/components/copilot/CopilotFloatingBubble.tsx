@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   BookOpen,
   Expand,
+  ExternalLink,
   History,
   Maximize2,
   MessageCircle,
@@ -19,6 +20,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
 import { CockpitTabs } from '@/components/cockpit/CockpitTabs'
 import { CockpitSaveHypothesisHost } from '@/components/cockpit/CockpitSaveHypothesisHost'
+import { BridgeDialog } from '@/components/cockpit/BridgeDialog'
+import { ExportSessionMenu } from '@/components/cockpit/ExportSessionMenu'
 import { SessionListSidebar } from '@/components/cockpit/SessionListSidebar'
 import {
   copilotBubbleStore,
@@ -71,9 +74,10 @@ export function CopilotFloatingBubble() {
     resetPosition,
     toggleSessions,
   } = useCopilotBubble()
-  const { streaming, capBreached } = useCopilotSession()
+  const { streaming, capBreached, messages, sessionId } = useCopilotSession()
 
   const [dragging, setDragging] = useState(false)
+  const [bridgeOpen, setBridgeOpen] = useState(false)
   const dragOffsetRef = useRef<{ dx: number; dy: number } | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
 
@@ -264,6 +268,22 @@ export function CopilotFloatingBubble() {
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
+            <ExportSessionMenu messages={messages} sessionId={sessionId} />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setBridgeOpen(true)}
+                  aria-label="Context Bridge"
+                  disabled={messages.length === 0}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Context Bridge</TooltipContent>
+            </Tooltip>
             <ResearchUserSwitcher className="h-7 px-1.5" />
             <Tooltip>
               <TooltipTrigger asChild>
@@ -400,6 +420,7 @@ export function CopilotFloatingBubble() {
           </div>
         </div>
       </aside>
+      <BridgeDialog open={bridgeOpen} onOpenChange={setBridgeOpen} sessionId={sessionId} />
       <CockpitSaveHypothesisHost />
     </>
   )

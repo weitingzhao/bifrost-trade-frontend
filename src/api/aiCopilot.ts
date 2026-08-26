@@ -51,6 +51,9 @@ export type CopilotUsage = {
   cap_usd: number
   remaining_usd: number
   day_utc?: string
+  bridge_count_today?: number
+  bridge_tokens_today?: number
+  bridge_cost_usd_today?: number
 }
 
 export async function fetchCopilotUsage(signal?: AbortSignal): Promise<CopilotUsage> {

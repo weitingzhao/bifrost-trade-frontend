@@ -29,6 +29,7 @@ export function CopilotChatBody({ className }: Props) {
     activeAgent,
     traceEvents,
     traceCollapsed,
+    sessionId,
     send,
     stop,
     setModel,
@@ -86,6 +87,7 @@ export function CopilotChatBody({ className }: Props) {
         ) : (
           <CopilotMessageList
             messages={messages}
+            sessionId={sessionId}
             onApproveWrite={approveWrite}
             onRejectWrite={rejectWrite}
           />

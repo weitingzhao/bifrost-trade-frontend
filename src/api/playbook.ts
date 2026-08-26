@@ -89,6 +89,19 @@ export async function fetchPlaybookCases(): Promise<PlaybookCase[]> {
   return data.rows ?? []
 }
 
+export async function createPlaybookCaseFromBridge(input: {
+  bridge_event_id: string
+  external_reply_md: string
+  outcome?: string
+  tags?: string[]
+}): Promise<PlaybookCase> {
+  return playbookFetch<PlaybookCase>('/research/playbook/cases/from_bridge', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+}
+
 export async function searchPlaybook(q: string): Promise<{
   rules: PlaybookRule[]
   notes: PlaybookNote[]

@@ -7,15 +7,24 @@ import {
   fetchPlaybookRules,
   retirePlaybookRule,
   searchPlaybook,
+  type PlaybookCase,
 } from '@/api/playbook'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { PageShell } from '@/components/layout/PageShell'
+import { ExportSessionMenu } from '@/components/cockpit/ExportSessionMenu'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { SegmentControl } from '@/components/data-display'
+import type { CopilotUiMessage } from '@/hooks/useCopilotSession'
 import { useState } from 'react'
 
 type TabId = 'rules' | 'notes' | 'cases' | 'search'
@@ -31,9 +40,27 @@ const CATEGORIES = [
   'instrument',
 ] as const
 
+/** Wrap a playbook case as a pseudo-session for export reuse (RS-EX1-P4). */
+function caseAsExportMessages(c: {
+  outcome?: string | null
+  lessons_md: string
+}): CopilotUiMessage[] {
+  const parts: string[] = []
+  if (c.outcome) parts.push(`**Outcome:** ${c.outcome}`)
+  parts.push(c.lessons_md)
+  return [
+    {
+      id: 'case-export',
+      role: 'assistant',
+      content: parts.join('\n\n'),
+    },
+  ]
+}
+
 export function PlaybookPage() {
   const [tab, setTab] = useState<TabId>('rules')
   const [searchQ, setSearchQ] = useState('')
+  const [selectedCase, setSelectedCase] = useState<PlaybookCase | null>(null)
   const qc = useQueryClient()
 
   const rulesQ = useQuery({
@@ -193,7 +220,12 @@ export function PlaybookPage() {
       {tab === 'cases' ? (
         <div className="space-y-2">
           {(casesQ.data ?? []).map((c) => (
-            <Card key={c.id} variant="elevated" className="p-3">
+            <Card
+              key={c.id}
+              variant="elevated"
+              className="cursor-pointer p-3 transition-colors hover:bg-secondary/40"
+              onClick={() => setSelectedCase(c)}
+            >
               {c.outcome ? (
                 <p className="text-dense-caption text-muted-foreground mb-1">{c.outcome}</p>
               ) : null}
@@ -228,6 +260,29 @@ export function PlaybookPage() {
           ) : null}
         </div>
       ) : null}
+
+      <Dialog open={Boolean(selectedCase)} onOpenChange={(o) => !o && setSelectedCase(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Case study</DialogTitle>
+          </DialogHeader>
+          {selectedCase ? (
+            <div className="space-y-3">
+              {selectedCase.outcome ? (
+                <p className="text-dense-caption text-muted-foreground">{selectedCase.outcome}</p>
+              ) : null}
+              <MarkdownContent>{selectedCase.lessons_md}</MarkdownContent>
+              <div className="flex justify-end">
+                <ExportSessionMenu
+                  messages={caseAsExportMessages(selectedCase)}
+                  sessionId={selectedCase.id}
+                  sessionTitle={selectedCase.outcome ?? 'Playbook case'}
+                />
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </PageShell>
   )
 }

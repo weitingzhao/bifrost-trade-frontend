@@ -3,6 +3,7 @@ import { CopilotToolCallCard } from '@/components/cockpit/CopilotToolCallCard'
 import { AgentHandoffChip } from '@/components/cockpit/AgentChip'
 import { DiffApprovalCard } from '@/components/cockpit/DiffApprovalCard'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
+import { MessageActions } from '@/components/cockpit/MessageActions'
 import { EmptyState } from '@/components/data-display'
 import type { CopilotUiMessage } from '@/hooks/useCopilotSession'
 import { extractDiffPreview } from '@/lib/cockpit/extractDiffPreview'
@@ -11,11 +12,13 @@ import { Bot, MessageSquare } from 'lucide-react'
 
 export function CopilotMessageList({
   messages,
+  sessionId,
   onApproveWrite,
   onRejectWrite,
   className,
 }: {
   messages: CopilotUiMessage[]
+  sessionId?: string
   onApproveWrite?: (toolCallId: string) => Promise<void> | void
   onRejectWrite?: (toolCallId: string) => Promise<void> | void
   className?: string
@@ -43,16 +46,21 @@ export function CopilotMessageList({
         <div
           key={m.id}
           className={cn(
-            'rounded px-2 py-1.5 text-dense-body leading-snug',
+            'group/message rounded px-2 py-1.5 text-dense-body leading-snug',
             m.role === 'user' && 'bg-secondary ml-4',
             m.role === 'assistant' && 'bg-background/60 border border-border/40 mr-2',
             m.error && 'border-destructive/50',
           )}
         >
-          <div className="mb-0.5 flex items-center gap-1 text-dense-caption text-muted-foreground uppercase tracking-wide">
-            {m.role === 'assistant' ? <Bot className="size-3" /> : null}
-            {m.role}
-            {m.streaming ? <span className="text-warning normal-case">streaming…</span> : null}
+          <div className="mb-0.5 flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1 text-dense-caption text-muted-foreground uppercase tracking-wide">
+              {m.role === 'assistant' ? <Bot className="size-3" /> : null}
+              {m.role}
+              {m.streaming ? <span className="text-warning normal-case">streaming…</span> : null}
+            </div>
+            {sessionId && m.role === 'assistant' ? (
+              <MessageActions message={m} sessionId={sessionId} />
+            ) : null}
           </div>
           {m.handoff ? (
             <AgentHandoffChip from={m.handoff.from} to={m.handoff.to} className="mb-1" />

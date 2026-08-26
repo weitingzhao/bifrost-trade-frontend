@@ -1,21 +1,78 @@
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { Send, Square } from 'lucide-react'
+import { Select as SelectPrimitive } from 'radix-ui'
+import { CheckIcon, Send, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
+import { COPILOT_MODELS, PROVIDER_LABELS, type CopilotModelId } from '@/lib/cockpit/modelCatalog'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { COPILOT_MODELS, type CopilotModelId } from '@/lib/cockpit/modelCatalog'
+  COPILOT_MODEL_PICKER_HINT,
+  getModelPracticalAdvice,
+} from '@/lib/cockpit/modelPickerAdvice'
+import {
+  TIER_LABELS,
+  TIER_ORDER,
+  compareModels,
+  getModelMeta,
+  modelPickerPrefs,
+  type ModelTier,
+} from '@/lib/cockpit/modelPreferences'
 import { useCopilotModels } from '@/hooks/useCopilotModels'
+
+type ModelOption = {
+  id: CopilotModelId | string
+  label: string
+  provider: keyof typeof PROVIDER_LABELS
+  note: string | null
+}
+
+/**
+ * Custom select row.  We put the (visible) model label inside
+ * `SelectPrimitive.ItemText` — Radix uses it to render the trigger value
+ * and to power keyboard type-ahead.  The advice line sits below as an
+ * independent span, and the check indicator lives in an absolutely
+ * positioned corner so it never re-flows the two-line layout.
+ */
+function ModelSelectItem({
+  value,
+  label,
+  advice,
+}: {
+  value: string
+  label: string
+  advice: string
+}) {
+  return (
+    <SelectPrimitive.Item
+      value={value}
+      textValue={`${label} ${advice}`}
+      className={cn(
+        'group relative flex w-full cursor-default select-none flex-col rounded-md px-2 py-1.5 pr-8',
+        'text-dense-meta outline-none',
+        'focus:bg-accent focus:text-accent-foreground',
+        'data-disabled:pointer-events-none data-disabled:opacity-50',
+      )}
+    >
+      <SelectPrimitive.ItemText asChild>
+        <span className="text-dense-label font-medium text-foreground">{label}</span>
+      </SelectPrimitive.ItemText>
+      <span className="mt-0.5 text-dense-caption leading-snug text-muted-foreground line-clamp-2">
+        {advice}
+      </span>
+      <span className="pointer-events-none absolute right-2 top-2 flex size-4 items-center justify-center">
+        <SelectPrimitive.ItemIndicator>
+          <CheckIcon className="size-3.5 text-primary" />
+        </SelectPrimitive.ItemIndicator>
+      </span>
+    </SelectPrimitive.Item>
+  )
+}
 
 export function CopilotComposer({
   model,
@@ -34,28 +91,27 @@ export function CopilotComposer({
 }) {
   const [text, setText] = useState('')
   const { data: modelData } = useCopilotModels()
+  const hidden = modelPickerPrefs.useHidden()
 
-  // Prefer the deployment's actual model list; fall back to the static
-  // catalog only if the backend hasn't answered yet (first paint).
-  const options = useMemo(() => {
+  const options: ModelOption[] = useMemo(() => {
     const rows = modelData?.available ?? []
-    if (rows.length > 0) {
-      return rows.map((m) => ({
-        id: m.id as CopilotModelId,
-        label: m.label,
-        note: m.note ?? null,
-      }))
-    }
-    return COPILOT_MODELS.map((m) => ({
-      id: m.id,
-      label: m.label,
-      note: null as string | null,
-    }))
+    const src =
+      rows.length > 0
+        ? rows.map((m) => ({
+            id: m.id,
+            label: m.label,
+            provider: m.provider as keyof typeof PROVIDER_LABELS,
+            note: m.note ?? null,
+          }))
+        : COPILOT_MODELS.map((m) => ({
+            id: m.id,
+            label: m.label,
+            provider: m.provider,
+            note: null as string | null,
+          }))
+    return [...src].sort((a, b) => compareModels(a.id, b.id))
   }, [modelData])
 
-  // If the persisted model isn't in the deployment's available list,
-  // switch to the backend's default so we don't send a request that will
-  // be rejected with "model not configured".
   useEffect(() => {
     if (!modelData) return
     const ids = new Set(modelData.available.map((m) => m.id))
@@ -65,9 +121,30 @@ export function CopilotComposer({
     }
   }, [modelData, model, onModelChange])
 
-  // Input is only disabled when: cap breached, or currently streaming.
-  // The outer `disabled` covers both — but we still want the Stop button
-  // clickable while streaming, so we manage the two states independently.
+  const active = options.find((m) => m.id === model)
+  const practicalAdvice = getModelPracticalAdvice(model, active?.note)
+
+  // Hidden ids get filtered out — but the currently active one always
+  // stays visible so the trigger label stays consistent with the user's
+  // choice even if they hide it in Settings after selecting.
+  const visibleOptions = useMemo(
+    () => options.filter((m) => m.id === model || !hidden.has(m.id)),
+    [options, hidden, model],
+  )
+
+  const byTier = useMemo(() => {
+    const acc: Record<ModelTier, ModelOption[]> = {
+      recommended: [],
+      reasoning: [],
+      advanced: [],
+      trial: [],
+    }
+    for (const m of visibleOptions) {
+      acc[getModelMeta(m.id).tier].push(m)
+    }
+    return acc
+  }, [visibleOptions])
+
   const inputDisabled = disabled
   const canSend = !inputDisabled && text.trim().length > 0
 
@@ -90,84 +167,119 @@ export function CopilotComposer({
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-1.5 border-t border-border/50 pt-2">
-      <div className="flex items-center gap-1.5">
-        <span className="text-dense-caption text-muted-foreground shrink-0">Model</span>
-        <Select
-          value={model}
-          onValueChange={(v) => onModelChange(v as CopilotModelId)}
-          disabled={inputDisabled}
-        >
-          <SelectTrigger className="h-7 text-dense-meta">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((m) => (
-              <SelectItem key={m.id} value={m.id} className="text-dense-meta">
-                <span className="flex flex-col">
-                  <span>{m.label}</span>
-                  {m.note ? (
-                    <span className="text-dense-caption text-muted-foreground leading-tight">
-                      {m.note}
-                    </span>
-                  ) : null}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {(() => {
-          const active = options.find((m) => m.id === model)
-          if (!active?.note) return null
-          return (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span
-                  className="cursor-help text-dense-caption text-muted-foreground/80"
-                  aria-label="Model description"
-                >
-                  ⓘ
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[240px] text-dense-meta">
-                {active.note}
-              </TooltipContent>
-            </Tooltip>
-          )
-        })()}
-      </div>
-      <div className="flex items-center gap-1.5">
+    <form
+      onSubmit={onSubmit}
+      className="border-t border-border/50 pt-2"
+      aria-label="Copilot message composer"
+    >
+      <div
+        className={cn(
+          'rounded-lg border border-border/60 bg-secondary/25',
+          'focus-within:border-primary/35 focus-within:ring-1 focus-within:ring-primary/15',
+        )}
+      >
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={streaming ? 'Streaming… click ⬛ to stop' : 'Ask about hypotheses, VRP, OpEx…'}
+          placeholder={
+            streaming ? '生成中… 点击右侧方块停止' : '问持仓、VRP、OpEx、策略…'
+          }
           disabled={inputDisabled}
-          className="h-8 text-dense-label"
+          className={cn(
+            'h-9 border-0 bg-transparent shadow-none',
+            'text-dense-label focus-visible:ring-0 focus-visible:ring-offset-0',
+            'rounded-b-none rounded-t-lg px-3',
+          )}
         />
-        {streaming && onStop ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            onClick={onStop}
-            className="h-8 shrink-0 px-2"
-            aria-label="Stop generation"
-            title="Stop generation"
+
+        {/* Cursor-style footer: model + advice + send on one row */}
+        <div className="flex items-center gap-2 border-t border-border/40 px-2 py-1.5">
+          <Select
+            value={model}
+            onValueChange={(v) => onModelChange(v as CopilotModelId)}
+            disabled={inputDisabled}
           >
-            <Square className="size-3.5 fill-current" />
-          </Button>
-        ) : (
-          <Button
-            type="submit"
-            size="sm"
-            disabled={!canSend}
-            className="h-8 shrink-0 px-2"
-            aria-label="Send"
+            <SelectTrigger
+              size="sm"
+              className={cn(
+                'h-7 shrink-0 gap-1 border-border/50 bg-card px-2 shadow-none',
+                'text-dense-caption font-medium',
+                'w-auto min-w-[8.5rem] max-w-[14rem]',
+                '[&_[data-slot=select-value]]:line-clamp-none',
+                '[&_[data-slot=select-value]]:whitespace-nowrap',
+              )}
+              aria-label="Model"
+            >
+              <SelectValue placeholder="Model">{active?.label ?? model}</SelectValue>
+            </SelectTrigger>
+            <SelectContent
+              align="start"
+              position="popper"
+              side="top"
+              sideOffset={6}
+              className={cn(
+                'z-[250] min-w-[min(22rem,calc(100vw-2rem))] max-w-[26rem]',
+                'border border-border bg-card text-foreground shadow-lg',
+                'max-h-[min(360px,55vh)] p-1',
+              )}
+            >
+              <div className="mx-0.5 mb-1 rounded-md border border-border/50 bg-secondary px-2 py-1.5 text-dense-caption leading-snug text-foreground/85">
+                {COPILOT_MODEL_PICKER_HINT}
+              </div>
+              {TIER_ORDER.map((tier) => {
+                const rows = byTier[tier]
+                if (rows.length === 0) return null
+                return (
+                  <SelectPrimitive.Group key={tier} className="p-0.5">
+                    <SelectPrimitive.Label className="px-2 pb-0.5 pt-1 text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+                      {TIER_LABELS[tier]}
+                    </SelectPrimitive.Label>
+                    {rows.map((m) => (
+                      <ModelSelectItem
+                        key={m.id}
+                        value={m.id}
+                        label={m.label}
+                        advice={getModelPracticalAdvice(m.id, m.note)}
+                      />
+                    ))}
+                  </SelectPrimitive.Group>
+                )
+              })}
+            </SelectContent>
+          </Select>
+
+          <p
+            className="min-w-0 flex-1 text-dense-meta leading-snug text-foreground/75 line-clamp-2"
+            title={practicalAdvice}
           >
-            <Send className="size-3.5" />
-          </Button>
-        )}
+            {practicalAdvice}
+          </p>
+
+          {streaming && onStop ? (
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="destructive"
+              onClick={onStop}
+              className="size-7 shrink-0"
+              aria-label="Stop generation"
+              title="Stop generation"
+            >
+              <Square className="size-3.5 fill-current" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              size="icon-sm"
+              disabled={!canSend}
+              className="size-7 shrink-0"
+              aria-label="Send"
+            >
+              <Send className="size-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
     </form>
   )

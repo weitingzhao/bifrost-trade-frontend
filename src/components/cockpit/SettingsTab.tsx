@@ -1,15 +1,27 @@
+import { useMemo } from 'react'
 import { AiUsageTile } from '@/components/cockpit/AiUsageTile'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 import {
   COPILOT_MODELS,
   PROVIDER_LABELS,
   type CopilotModelId,
 } from '@/lib/cockpit/modelCatalog'
+import {
+  TIER_LABELS,
+  TIER_ORDER,
+  compareModels,
+  getModelMeta,
+  modelPickerPrefs,
+  type ModelTier,
+} from '@/lib/cockpit/modelPreferences'
+import { getModelPracticalAdvice } from '@/lib/cockpit/modelPickerAdvice'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
 import { useCopilotModels } from '@/hooks/useCopilotModels'
 
 type ModelRow = {
-  id: CopilotModelId
+  id: CopilotModelId | string
   label: string
   provider: keyof typeof PROVIDER_LABELS
   cost_per_mtok_in?: number
@@ -21,61 +33,51 @@ type ModelRow = {
 export function SettingsTab() {
   const { model, lastError, clearSession, setModel } = useCopilotSession()
   const { data: modelData, isLoading, isError } = useCopilotModels()
+  const hidden = modelPickerPrefs.useHidden()
 
-  // Merge static catalog with the deployment's actual availability so users
-  // can see what exists in principle but the picker only lets them choose
-  // real, configured ones.  If the backend hasn't answered (or 404s), we
-  // fall back to "everything is available" to avoid greying out the whole
-  // list during development.
-  const rows: ModelRow[] = COPILOT_MODELS.map((m) => {
-    const remote = modelData?.available.find((r) => r.id === m.id)
-    return {
-      id: m.id,
-      label: m.label,
-      provider: m.provider,
-      cost_per_mtok_in: remote?.cost_per_mtok_in ?? m.costPerMtokIn,
-      cost_per_mtok_out: remote?.cost_per_mtok_out ?? m.costPerMtokOut,
-      note: remote?.note,
-      available: modelData ? Boolean(remote) : true,
-    }
-  })
-
-  // Also surface any backend model that isn't in the frontend catalog yet
-  // (e.g. a preview model dropped in via env-only config).
-  if (modelData) {
-    for (const r of modelData.available) {
-      if (!rows.find((row) => row.id === r.id)) {
-        rows.push({
-          id: r.id as CopilotModelId,
-          label: r.label,
-          provider: r.provider,
-          cost_per_mtok_in: r.cost_per_mtok_in,
-          cost_per_mtok_out: r.cost_per_mtok_out,
-          note: r.note,
-          available: true,
-        })
+  const rows: ModelRow[] = useMemo(() => {
+    const acc: ModelRow[] = COPILOT_MODELS.map((m) => {
+      const remote = modelData?.available.find((r) => r.id === m.id)
+      return {
+        id: m.id,
+        label: m.label,
+        provider: m.provider,
+        cost_per_mtok_in: remote?.cost_per_mtok_in ?? m.costPerMtokIn,
+        cost_per_mtok_out: remote?.cost_per_mtok_out ?? m.costPerMtokOut,
+        note: remote?.note,
+        available: modelData ? Boolean(remote) : true,
+      }
+    })
+    if (modelData) {
+      for (const r of modelData.available) {
+        if (!acc.find((row) => row.id === r.id)) {
+          acc.push({
+            id: r.id,
+            label: r.label,
+            provider: r.provider as keyof typeof PROVIDER_LABELS,
+            cost_per_mtok_in: r.cost_per_mtok_in,
+            cost_per_mtok_out: r.cost_per_mtok_out,
+            note: r.note,
+            available: true,
+          })
+        }
       }
     }
-  }
+    return acc.sort((a, b) => compareModels(a.id, b.id))
+  }, [modelData])
 
   const activeMeta = rows.find((r) => r.id === model)
 
-  const byProvider = rows.reduce(
-    (acc, m) => {
-      if (!acc[m.provider]) acc[m.provider] = []
-      acc[m.provider].push(m)
-      return acc
-    },
-    {} as Record<keyof typeof PROVIDER_LABELS, ModelRow[]>,
-  )
-
-  // Only render providers that have at least one available model (unless
-  // the backend list is empty / errored, in which case show everything so
-  // the user isn't staring at a blank pane).
-  const showAll = !modelData || (modelData.available.length === 0 && !isLoading)
-  const providersToShow = (
-    Object.keys(byProvider) as Array<keyof typeof PROVIDER_LABELS>
-  ).filter((p) => showAll || byProvider[p].some((m) => m.available))
+  const byTier = useMemo(() => {
+    const acc: Record<ModelTier, ModelRow[]> = {
+      recommended: [],
+      reasoning: [],
+      advanced: [],
+      trial: [],
+    }
+    for (const r of rows) acc[getModelMeta(r.id).tier].push(r)
+    return acc
+  }, [rows])
 
   return (
     <div className="space-y-3 py-1">
@@ -90,69 +92,126 @@ export function SettingsTab() {
 
       <div className="rounded border border-border/50 px-2 py-2 space-y-2">
         <div className="flex items-baseline justify-between gap-2">
-          <p className="text-dense-label font-medium">Model</p>
+          <div className="min-w-0">
+            <p className="text-dense-label font-medium">Model</p>
+            <p className="text-dense-caption leading-snug text-muted-foreground">
+              开关控制是否显示在聊天框的下拉里；点击行切换当前使用的模型。
+            </p>
+          </div>
           {isLoading ? (
-            <span className="text-dense-caption text-muted-foreground">加载中…</span>
+            <span className="text-dense-caption text-muted-foreground shrink-0">加载中…</span>
           ) : isError ? (
-            <span className="text-dense-caption text-destructive">
-              无法获取可用模型（后端旧版本？）
+            <span className="text-dense-caption text-destructive shrink-0">
+              无法获取可用模型
             </span>
           ) : modelData ? (
-            <span className="text-dense-caption text-muted-foreground">
+            <span className="text-dense-caption text-muted-foreground shrink-0">
               {modelData.available.length} / {modelData.total_catalog} 已配置
             </span>
           ) : null}
         </div>
-        {providersToShow.map((provider) => (
-          <div key={provider} className="space-y-1">
-            <p className="text-dense-caption text-muted-foreground">
-              {PROVIDER_LABELS[provider]}
-            </p>
-            <div className="flex flex-col gap-0.5">
-              {byProvider[provider].map((m) => {
-                const disabled = !m.available
-                const isActive = model === m.id
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    disabled={disabled}
-                    className={`flex flex-col rounded px-2 py-1 text-left text-dense-meta transition-colors ${
-                      isActive ? 'bg-secondary font-medium' : ''
-                    } ${
-                      disabled
-                        ? 'cursor-not-allowed opacity-40'
-                        : 'hover:bg-secondary/80'
-                    }`}
-                    onClick={() => setModel(m.id)}
-                    title={disabled ? 'This model is not configured on the backend' : undefined}
-                  >
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5">
-                        <span>{m.label}</span>
-                        {disabled ? (
-                          <span className="rounded border border-border/60 px-1 text-dense-caption text-muted-foreground/70">
-                            未配置
+
+        {TIER_ORDER.map((tier) => {
+          const tierRows = byTier[tier]
+          if (tierRows.length === 0) return null
+          return (
+            <div key={tier} className="space-y-1">
+              <p className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+                {TIER_LABELS[tier]}
+              </p>
+              <ul className="flex flex-col gap-0.5">
+                {tierRows.map((m) => {
+                  const disabled = !m.available
+                  const isActive = model === m.id
+                  const isHidden = hidden.has(m.id)
+                  const advice = getModelPracticalAdvice(m.id, m.note)
+                  return (
+                    <li
+                      key={m.id}
+                      className={cn(
+                        'flex items-start gap-2 rounded px-2 py-1.5',
+                        isActive && 'bg-secondary',
+                        disabled && 'opacity-50',
+                      )}
+                    >
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => setModel(m.id as CopilotModelId)}
+                        className={cn(
+                          'flex min-w-0 flex-1 flex-col text-left text-dense-meta',
+                          !disabled && 'cursor-pointer hover:text-foreground',
+                        )}
+                        title={
+                          disabled
+                            ? 'This model is not configured on the backend'
+                            : '点击设为当前模型'
+                        }
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span
+                            className={cn(
+                              'truncate',
+                              isActive ? 'font-medium text-foreground' : 'text-foreground/90',
+                            )}
+                          >
+                            {m.label}
+                          </span>
+                          <span className="text-dense-caption text-muted-foreground/70 truncate">
+                            {m.id}
+                          </span>
+                          {disabled ? (
+                            <span className="rounded border border-border/60 px-1 text-dense-caption text-muted-foreground/70">
+                              未配置
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="text-dense-caption leading-snug text-muted-foreground line-clamp-2">
+                          {advice}
+                        </span>
+                      </button>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        {m.cost_per_mtok_in != null ? (
+                          <span className="text-dense-caption text-muted-foreground tabular-nums">
+                            ${m.cost_per_mtok_in}/${m.cost_per_mtok_out ?? 0} /M
                           </span>
                         ) : null}
-                      </span>
-                      {m.cost_per_mtok_in != null ? (
-                        <span className="text-dense-caption text-muted-foreground tabular-nums shrink-0">
-                          ${m.cost_per_mtok_in}/${m.cost_per_mtok_out ?? 0} /M
-                        </span>
-                      ) : null}
-                    </span>
-                    {m.note ? (
-                      <span className="text-dense-caption text-muted-foreground leading-snug mt-0.5">
-                        {m.note}
-                      </span>
-                    ) : null}
-                  </button>
-                )
-              })}
+                        <label
+                          className={cn(
+                            'flex items-center gap-1 text-dense-caption text-muted-foreground',
+                            disabled && 'cursor-not-allowed',
+                          )}
+                          title={
+                            disabled
+                              ? '模型未配置，无法在聊天框显示'
+                              : isHidden
+                                ? '打开：让此模型出现在聊天框下拉里'
+                                : '关闭：把此模型从聊天框下拉里隐藏（不影响后端）'
+                          }
+                        >
+                          <span>{isHidden ? '隐藏' : '显示'}</span>
+                          <Switch
+                            checked={!isHidden}
+                            disabled={disabled}
+                            onCheckedChange={(v) =>
+                              modelPickerPrefs.setHidden(m.id, !v)
+                            }
+                            aria-label={
+                              isHidden
+                                ? `Show ${m.label} in composer`
+                                : `Hide ${m.label} from composer`
+                            }
+                          />
+                        </label>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
-          </div>
-        ))}
+          )
+        })}
+
         <p className="text-dense-caption text-muted-foreground">
           Active: <span className="font-mono">{activeMeta?.label ?? model}</span>
         </p>

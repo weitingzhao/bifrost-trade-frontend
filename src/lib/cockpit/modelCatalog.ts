@@ -10,6 +10,11 @@ export type CopilotModelId =
   | 'gpt-4.1-mini'
   | 'gpt-5-mini'
   | 'gpt-5'
+  | 'gpt-5.6-luna'
+  | 'gpt-5.6-terra'
+  | 'gpt-5.6-sol'
+  | 'gpt-5.4-nano'
+  | 'gpt-5.5'
   | 'ollama:llama3.2'
 
 export type CopilotModelOption = {
@@ -84,6 +89,41 @@ export const COPILOT_MODELS: CopilotModelOption[] = [
     provider: 'openai',
     costPerMtokIn: 1.25,
     costPerMtokOut: 10,
+  },
+  {
+    id: 'gpt-5.6-luna',
+    label: 'GPT-5.6 Luna',
+    provider: 'openai',
+    costPerMtokIn: 0.2,
+    costPerMtokOut: 1.2,
+  },
+  {
+    id: 'gpt-5.6-terra',
+    label: 'GPT-5.6 Terra',
+    provider: 'openai',
+    costPerMtokIn: 2,
+    costPerMtokOut: 12,
+  },
+  {
+    id: 'gpt-5.6-sol',
+    label: 'GPT-5.6 Sol',
+    provider: 'openai',
+    costPerMtokIn: 4,
+    costPerMtokOut: 20,
+  },
+  {
+    id: 'gpt-5.4-nano',
+    label: 'GPT-5.4 nano',
+    provider: 'openai',
+    costPerMtokIn: 0.2,
+    costPerMtokOut: 1.25,
+  },
+  {
+    id: 'gpt-5.5',
+    label: 'GPT-5.5',
+    provider: 'openai',
+    costPerMtokIn: 5,
+    costPerMtokOut: 30,
   },
   {
     id: 'ollama:llama3.2',

@@ -23,6 +23,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { IvGauge } from '@/components/charts/IvGauge'
+import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { useIvRadarData } from '@/hooks/useIvRadarData'
 import type { IvRadarBucket, IvRadarRow, IvRadarUniverseFilter } from '@/types/ivRadar'
 import {
@@ -174,12 +176,32 @@ export default function IvRadarPage() {
   const sorted = useMemo(() => sortRows(rows, sortMode), [rows, sortMode])
   const allMissing = counts.total > 0 && counts.noData === counts.total
 
+  const topIvSymbols = useMemo(
+    () => sorted.slice(0, 5).map((r) => r.symbol).filter(Boolean),
+    [sorted],
+  )
+
   return (
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="IV Radar"
         description="Underlying IV Rank regime for Benchmarks ∪ optionable Watchlist ∪ Holdings. Drill into Option Discovery for chain/structure. Observe-only (D10)."
+        actions={
+          <SaveAsHypothesisButton
+            originPage="iv-radar"
+            defaultTitle="IV Radar hypothesis"
+            defaultSymbols={topIvSymbols}
+            defaultTags={['iv-regime']}
+            originRef={{
+              universe: filter,
+              sort: sortMode,
+              view: viewMode,
+            }}
+          />
+        }
       />
+
+      <ResearchContextBar showDate={false} />
 
       <Card variant="elevated">
         <CardContent className="flex flex-col gap-2 px-3 py-2">

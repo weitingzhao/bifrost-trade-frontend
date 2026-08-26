@@ -20,6 +20,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import {
   fetchSepaCandidates,
   fetchSepaDaily,
@@ -87,19 +88,16 @@ function fmt(n: number | null | undefined, digits = 1): string {
 }
 
 function CandidateCard({ item }: { item: SepaScoreRow }) {
+  const stageLabel = (item.stage ?? '').replace('STAGE_', 'S') || '—'
   return (
     <Card variant="elevated" className="border border-emerald-500/40">
       <CardContent className="flex flex-col items-center gap-1 px-3 py-3">
         <p className="text-dense-body font-semibold text-entity-symbol">{item.symbol}</p>
-        <p className="font-mono text-2xl font-bold tabular-nums">
-          {item.sepa_score.toFixed(0)}
-        </p>
+        <p className="font-mono text-2xl font-bold tabular-nums">{fmt(item.sepa_score, 0)}</p>
         <div className="flex flex-wrap items-center justify-center gap-1.5">
-          <DenseTag variant={gradeTagVariant(item.grade)}>{item.grade}</DenseTag>
-          <DenseTag variant={pathTagVariant(item.path)}>{item.path}</DenseTag>
-          <DenseTag variant={stageTagVariant(item.stage)}>
-            {item.stage.replace('STAGE_', 'S')}
-          </DenseTag>
+          <DenseTag variant={gradeTagVariant(item.grade ?? '')}>{item.grade || '—'}</DenseTag>
+          <DenseTag variant={pathTagVariant(item.path ?? '')}>{item.path || '—'}</DenseTag>
+          <DenseTag variant={stageTagVariant(item.stage ?? '')}>{stageLabel}</DenseTag>
         </div>
         <p className="text-dense-caption tabular-nums text-muted-foreground">
           F {fmt(item.fundamental_score, 0)} · T {fmt(item.trend_template_score, 0)} · M{' '}
@@ -134,7 +132,10 @@ export default function SepaDailyCorePage() {
   })
 
   const rows = useMemo(() => daily.data?.rows ?? [], [daily.data?.rows])
-  const candidateRows = candidates.data?.candidates ?? []
+  const candidateRows = useMemo(
+    () => candidates.data?.candidates ?? [],
+    [candidates.data?.candidates],
+  )
 
   const stats = useMemo(() => {
     if (rows.length === 0) return null
@@ -144,6 +145,11 @@ export default function SepaDailyCorePage() {
     return { setupOrPivot, avoid, avgScore, total: rows.length }
   }, [rows])
 
+  const topSepaSymbols = useMemo(
+    () => candidateRows.slice(0, 5).map((r) => r.symbol),
+    [candidateRows],
+  )
+
   return (
     <PageShell padding="default" className="space-y-3">
       <PageHeader
@@ -152,6 +158,25 @@ export default function SepaDailyCorePage() {
           daily.data?.trade_date
             ? `Fusion score for ${daily.data.trade_date}: Fundamental · Trend Template · Momentum · Options Structure`
             : 'SEPA fusion (Fundamental · Trend Template · Momentum · Options Structure) — advisory only (D10)'
+        }
+        actions={
+          <SaveAsHypothesisButton
+            originPage="sepa-daily-core"
+            defaultTitle={
+              candidateRows.length > 0
+                ? `SEPA setups ${daily.data?.trade_date ?? ''}`.trim()
+                : 'SEPA Daily Core hypothesis'
+            }
+            defaultSymbols={topSepaSymbols}
+            defaultTags={['sepa']}
+            originRef={{
+              trade_date: daily.data?.trade_date ?? null,
+              stage,
+              path,
+              grade,
+              candidate_count: candidateRows.length,
+            }}
+          />
         }
       />
 
@@ -299,15 +324,15 @@ export default function SepaDailyCorePage() {
                   <span className="font-semibold">{fmt(r.sepa_score, 1)}</span>
                 </DenseTableCell>
                 <DenseTableCell className={denseTableCellPadding}>
-                  <DenseTag variant={gradeTagVariant(r.grade)}>{r.grade}</DenseTag>
+                  <DenseTag variant={gradeTagVariant(r.grade ?? '')}>{r.grade || '—'}</DenseTag>
                 </DenseTableCell>
                 <DenseTableCell className={denseTableCellPadding}>
-                  <DenseTag variant={stageTagVariant(r.stage)}>
-                    {r.stage.replace('STAGE_', 'S')}
+                  <DenseTag variant={stageTagVariant(r.stage ?? '')}>
+                    {(r.stage ?? '').replace('STAGE_', 'S') || '—'}
                   </DenseTag>
                 </DenseTableCell>
                 <DenseTableCell className={denseTableCellPadding}>
-                  <DenseTag variant={pathTagVariant(r.path)}>{r.path}</DenseTag>
+                  <DenseTag variant={pathTagVariant(r.path ?? '')}>{r.path || '—'}</DenseTag>
                 </DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>{fmt(r.fundamental_score, 0)}</DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>{fmt(r.trend_template_score, 0)}</DenseTableCell>

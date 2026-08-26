@@ -2,7 +2,15 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Radar } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
-import { DenseTag, SegmentControl, EmptyState } from '@/components/data-display'
+import {
+  CollapsibleGroup,
+  CollapsibleGroupBody,
+  CollapsibleGroupHeader,
+  CollapsibleGroupTitle,
+  DenseTag,
+  EmptyState,
+  SegmentControl,
+} from '@/components/data-display'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
@@ -38,10 +46,19 @@ function gradeAccentColor(grade: string): string {
 }
 
 function MomentumCard({ item }: { item: MomentumScore }) {
+  const spot =
+    typeof item.factors_json?.latest_close === 'number'
+      ? item.factors_json.latest_close
+      : null
   return (
     <Card variant="elevated" className={`border ${gradeAccentColor(item.grade)}`}>
       <CardContent className="flex flex-col items-center gap-1 px-3 py-3">
         <p className="text-dense-body font-semibold text-entity-symbol">{item.symbol}</p>
+        {spot != null ? (
+          <p className="font-mono text-dense-meta tabular-nums text-muted-foreground">
+            ${spot.toFixed(2)}
+          </p>
+        ) : null}
         <p className="font-mono text-2xl font-bold tabular-nums">{item.score.toFixed(0)}</p>
         <div className="flex items-center gap-1.5">
           <DenseTag variant={gradeTagVariant(item.grade)}>{item.grade}</DenseTag>
@@ -56,6 +73,7 @@ function MomentumCard({ item }: { item: MomentumScore }) {
 
 export default function MomentumRadarPage() {
   const [grade, setGrade] = useState<GradeFilter>('all')
+  const [legendOpen, setLegendOpen] = useState(false)
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['momentum-radar', grade],
@@ -103,6 +121,28 @@ export default function MomentumRadarPage() {
           ))}
         </div>
       )}
+
+      <CollapsibleGroup variant="card">
+        <CollapsibleGroupHeader expanded={legendOpen} onToggle={() => setLegendOpen((o) => !o)}>
+          <CollapsibleGroupTitle>How to read momentum factors</CollapsibleGroupTitle>
+        </CollapsibleGroupHeader>
+        {legendOpen ? (
+          <CollapsibleGroupBody>
+            <div className="grid gap-2 md:grid-cols-2 text-dense-meta text-muted-foreground">
+              <p><strong>z_sdt</strong> — Short-term trend deviation; high = extended up.</p>
+              <p><strong>z_v</strong> — Volume z-score; spikes flag participation.</p>
+              <p><strong>accept_vwap</strong> — Price vs session VWAP acceptance.</p>
+              <p><strong>z_ofi</strong> — Order flow imbalance proxy.</p>
+              <p><strong>h_52w</strong> — Distance from 52-week high.</p>
+              <p><strong>o_plus</strong> — Opening range extension factor.</p>
+              <p><strong>a_factor</strong> — Acceleration / momentum persistence.</p>
+              <p><strong>r_sec</strong> — Sector relative strength.</p>
+              <p><strong>crash</strong> — Tail-risk / crash sensitivity.</p>
+              <p>Grade A+/A/B = constructive; C/D = caution. Path EXT/PB = expansion vs pullback.</p>
+            </div>
+          </CollapsibleGroupBody>
+        ) : null}
+      </CollapsibleGroup>
 
       <p className="text-dense-caption text-muted-foreground">
         Momentum radar — observe only (D10). Not investment advice.

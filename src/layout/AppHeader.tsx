@@ -1,10 +1,11 @@
-import { Bell, Moon, PanelTop, Sun, SunMoon } from 'lucide-react'
+import { Bell, Moon, PanelTop, Pin, Sun, SunMoon } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
+import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
 import { cn } from '@/lib/utils'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
@@ -98,6 +99,21 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
             <TooltipContent side="bottom">Switch to top navigation</TooltipContent>
           </Tooltip>
         )}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => cockpitDrawerStore.getState().toggle()}
+              aria-label="Open Research Cockpit"
+            >
+              <Pin className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Research Cockpit (⌘K)</TooltipContent>
+        </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>

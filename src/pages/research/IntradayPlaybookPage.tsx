@@ -1,8 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { BookOpen } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
+  CollapsibleGroup,
+  CollapsibleGroupBody,
+  CollapsibleGroupHeader,
+  CollapsibleGroupTitle,
   DenseDataTable,
   DenseTableBody,
   DenseTableCell,
@@ -11,27 +14,35 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
-  EmptyState,
 } from '@/components/data-display'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { ProbabilityBar } from '@/components/charts/ProbabilityBar'
 import { ScenarioFanChart } from '@/components/charts/ScenarioFanChart'
+import { SessionTimelineChart } from '@/components/charts/SessionTimelineChart'
+import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { EmptyHint } from '@/components/research/EmptyHint'
 import {
   fetchTerrainIntraday,
   type TerrainIntraday,
 } from '@/api/researchEngine'
+import { useIntradayVerdict } from '@/hooks/useIntradayVerdict'
+import { useResearchContext } from '@/hooks/useResearchContext'
+import {
+  invalidateLine,
+  liveScenario,
+  SCENARIO_LABELS,
+  type ScenarioKind,
+} from '@/lib/intradayPlaybook'
 import { cn } from '@/lib/utils'
-
-type ScenarioKind = 'rangy' | 'bull' | 'bear' | 'squeeze'
 
 interface ScenarioCardProps {
   kind: ScenarioKind
   probability: number
   latest: TerrainIntraday
   live?: boolean
+  wide?: boolean
 }
 
 const SCENARIO_META: Record<
@@ -64,48 +75,10 @@ const SCENARIO_META: Record<
   },
 }
 
-/** Invalidate / Stop lines from levels only — no invented strategy copy. */
-function invalidateLine(kind: ScenarioKind, latest: TerrainIntraday): string {
-  const low = latest.gamma_zone_low
-  const high = latest.gamma_zone_high
-  const mid = (low + high) / 2
-  const halfWidth = Math.abs(high - low) / 2
-  const inputs = latest.inputs_json ?? {}
-  const sigmaRaw =
-    typeof inputs.sigma === 'number'
-      ? inputs.sigma
-      : typeof inputs['1sigma'] === 'number'
-        ? (inputs['1sigma'] as number)
-        : typeof inputs.one_sigma === 'number'
-          ? (inputs.one_sigma as number)
-          : null
-  const sigma = sigmaRaw != null && Number.isFinite(sigmaRaw) ? sigmaRaw : halfWidth > 0 ? halfWidth : null
-
-  switch (kind) {
-    case 'rangy':
-      return `Invalidate: break below ${low.toFixed(2)} or above ${high.toFixed(2)}`
-    case 'bull':
-      return `Invalidate: fall back through zone mid ${mid.toFixed(2)}`
-    case 'bear':
-      return `Invalidate: reclaim zone mid ${mid.toFixed(2)}`
-    case 'squeeze':
-      if (sigma == null) return 'Invalidate: leave pin ±1σ —'
-      return `Invalidate: leave pin ${mid.toFixed(2)} ±1σ (${sigma.toFixed(2)})`
-  }
-}
-
-function liveScenario(latest: TerrainIntraday): ScenarioKind {
-  const scores: { kind: ScenarioKind; p: number }[] = [
-    { kind: 'rangy', p: latest.prob_rangy },
-    { kind: 'bull', p: latest.prob_bull },
-    { kind: 'bear', p: latest.prob_bear },
-    { kind: 'squeeze', p: latest.prob_squeeze },
-  ]
-  scores.sort((a, b) => b.p - a.p)
-  return scores[0].kind
-}
-
-function scenarioLevels(kind: ScenarioKind, latest: TerrainIntraday): { a: string; aLabel: string; b: string; bLabel: string } {
+function scenarioLevels(
+  kind: ScenarioKind,
+  latest: TerrainIntraday,
+): { a: string; aLabel: string; b: string; bLabel: string } {
   const spot = latest.spot
   const low = latest.gamma_zone_low
   const high = latest.gamma_zone_high
@@ -142,11 +115,19 @@ function scenarioLevels(kind: ScenarioKind, latest: TerrainIntraday): { a: strin
   }
 }
 
-function ScenarioCard({ kind, probability, latest, live }: ScenarioCardProps) {
+function ScenarioCard({ kind, probability, latest, live, wide }: ScenarioCardProps) {
   const meta = SCENARIO_META[kind]
   const levels = scenarioLevels(kind, latest)
   return (
-    <Card variant="elevated" className={cn('border', meta.color)}>
+    <Card
+      variant="elevated"
+      className={cn(
+        'border',
+        meta.color,
+        wide && 'ring-1 ring-primary/25',
+        wide && 'col-span-2',
+      )}
+    >
       <CardContent className="space-y-2 px-3 py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
@@ -205,19 +186,24 @@ function buildPathTransitions(rows: TerrainIntraday[]): { time: string; from: st
 }
 
 export default function IntradayPlaybookPage() {
-  const [symbol, setSymbol] = useState('SPX')
-  const [date, setDate] = useState('')
+  const { symbol, apiDate } = useResearchContext()
+  const [transitionsExplicit, setTransitionsExplicit] = useState<boolean | undefined>(undefined)
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
 
   const intradayQ = useQuery({
-    queryKey: ['terrain-intraday', symbol, date],
-    queryFn: () => fetchTerrainIntraday(symbol, date || undefined),
+    queryKey: ['terrain-intraday', symbol, apiDate],
+    queryFn: () => fetchTerrainIntraday(symbol, apiDate),
     enabled: symbol.length > 0,
     refetchInterval: 60_000,
   })
 
   const rows = useMemo(() => intradayQ.data?.rows ?? [], [intradayQ.data])
-  const latest = rows.length > 0 ? rows[rows.length - 1] : null
-  const liveKind = latest ? liveScenario(latest) : null
+  const effectiveIdx =
+    selectedIdx ?? (rows.length > 0 ? rows.length - 1 : null)
+  const selected =
+    effectiveIdx != null && effectiveIdx >= 0 ? rows[effectiveIdx] ?? null : null
+  const selectedKind = selected ? liveScenario(selected) : null
+  const intradayVerdict = useIntradayVerdict(selected)
 
   const transitions = useMemo(() => buildPathTransitions(rows), [rows])
 
@@ -237,31 +223,21 @@ export default function IntradayPlaybookPage() {
     [rows],
   )
 
+  const liveIdx = effectiveIdx != null && effectiveIdx >= 0 ? effectiveIdx : undefined
+
   const isLoading = intradayQ.isLoading
   const isError = intradayQ.isError
 
+  const transitionsExpanded = transitionsExplicit ?? transitions.length > 0
+
   return (
     <PageShell padding="default" className="space-y-3">
-      <PageHeader title="Intraday Playbook" />
+      <PageHeader
+        title="Intraday Playbook"
+        description="Scenario fan, LIVE bias, and path transitions — observe only (D10)"
+      />
 
-      <Card variant="elevated">
-        <CardContent className="flex flex-wrap items-center gap-3 px-3 py-2">
-          <span className="shrink-0 text-xs font-medium text-muted-foreground">Symbol:</span>
-          <Input
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            className="h-7 w-28 font-mono text-sm"
-            placeholder="SPX"
-          />
-          <span className="shrink-0 text-xs font-medium text-muted-foreground">Date:</span>
-          <Input
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="h-7 w-36 font-mono text-sm"
-            placeholder="YYYY-MM-DD"
-          />
-        </CardContent>
-      </Card>
+      <ResearchContextBar />
 
       {isError && (
         <QueryErrorAlert
@@ -279,18 +255,54 @@ export default function IntradayPlaybookPage() {
             ))}
           </div>
         </div>
-      ) : latest ? (
+      ) : selected ? (
         <>
+          {/* Verdict */}
+          <Card variant="elevated" className="ring-1 ring-primary/15">
+            <CardContent className="space-y-2 px-4 py-3">
+              <p className="text-dense-body font-semibold leading-snug">{intradayVerdict.headline}</p>
+              <div className="flex flex-wrap items-center gap-3 gap-y-1">
+                <DenseTag variant={biasTagVariant(intradayVerdict.biasTag)}>
+                  {intradayVerdict.biasTag}
+                </DenseTag>
+                <span className="text-dense-meta text-muted-foreground">
+                  Mechanism: {intradayVerdict.mechanism}
+                </span>
+              </div>
+              <p className="text-dense-caption text-muted-foreground leading-snug">
+                {intradayVerdict.invalidate}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Session timeline */}
+          <Card variant="elevated">
+            <CardContent className="px-4 py-3">
+              <p className="mb-2 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
+                Session Timeline
+              </p>
+              <SessionTimelineChart
+                rows={rows}
+                selectedIdx={effectiveIdx ?? undefined}
+                onSelectIdx={(idx) => setSelectedIdx(idx)}
+                className="w-full"
+              />
+            </CardContent>
+          </Card>
+
           {/* Info bar */}
           <Card variant="elevated">
             <CardContent className="flex flex-wrap items-center gap-4 px-4 py-3">
-              <KeyValue label="Close" value={latest.expected_close.toFixed(2)} />
-              <KeyValue label="PIN" value={latest.pin_score.toFixed(0)} />
-              <KeyValue label="Pivot" value={((latest.gamma_zone_low + latest.gamma_zone_high) / 2).toFixed(2)} />
-              <KeyValue label="Spot" value={latest.spot.toFixed(2)} />
+              <KeyValue label="Close" value={selected.expected_close.toFixed(2)} />
+              <KeyValue label="PIN" value={selected.pin_score.toFixed(0)} />
+              <KeyValue
+                label="Pivot"
+                value={((selected.gamma_zone_low + selected.gamma_zone_high) / 2).toFixed(2)}
+              />
+              <KeyValue label="Spot" value={selected.spot.toFixed(2)} />
               <div className="ml-auto">
                 <p className="text-dense-micro text-muted-foreground">Mechanism</p>
-                <DenseTag variant={biasTagVariant(latest.regime)}>{latest.regime}</DenseTag>
+                <DenseTag variant={biasTagVariant(selected.regime)}>{selected.regime}</DenseTag>
               </div>
             </CardContent>
           </Card>
@@ -299,21 +311,37 @@ export default function IntradayPlaybookPage() {
           <Card variant="elevated">
             <CardContent className="px-4 py-3">
               <ProbabilityBar
-                rangy={latest.prob_rangy}
-                bull={latest.prob_bull}
-                bear={latest.prob_bear}
-                squeeze={latest.prob_squeeze}
+                rangy={selected.prob_rangy}
+                bull={selected.prob_bull}
+                bear={selected.prob_bear}
+                squeeze={selected.prob_squeeze}
                 height={36}
               />
             </CardContent>
           </Card>
 
-          {/* Scenario cards */}
+          {/* Scenario cards — selected snapshot */}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <ScenarioCard kind="rangy" probability={latest.prob_rangy} latest={latest} live={liveKind === 'rangy'} />
-            <ScenarioCard kind="bull" probability={latest.prob_bull} latest={latest} live={liveKind === 'bull'} />
-            <ScenarioCard kind="bear" probability={latest.prob_bear} latest={latest} live={liveKind === 'bear'} />
-            <ScenarioCard kind="squeeze" probability={latest.prob_squeeze} latest={latest} live={liveKind === 'squeeze'} />
+            {(['rangy', 'bull', 'bear', 'squeeze'] as ScenarioKind[]).map((kind) => {
+              const prob =
+                kind === 'rangy'
+                  ? selected.prob_rangy
+                  : kind === 'bull'
+                    ? selected.prob_bull
+                    : kind === 'bear'
+                      ? selected.prob_bear
+                      : selected.prob_squeeze
+              return (
+                <ScenarioCard
+                  key={kind}
+                  kind={kind}
+                  probability={prob}
+                  latest={selected}
+                  live={selectedKind === kind}
+                  wide={selectedKind === kind}
+                />
+              )
+            })}
           </div>
 
           {/* Fan chart */}
@@ -322,66 +350,91 @@ export default function IntradayPlaybookPage() {
               <CardContent className="px-4 py-3">
                 <p className="mb-2 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
                   Scenario Fan
+                  {selectedKind ? (
+                    <span className="ml-2 font-normal normal-case text-muted-foreground">
+                      · {SCENARIO_LABELS[selectedKind]}
+                    </span>
+                  ) : null}
                 </p>
                 <ScenarioFanChart
                   fanPoints={fanPoints}
                   spotPoints={spotPoints}
+                  liveIdx={liveIdx}
                   className="w-full max-w-none"
                 />
               </CardContent>
             </Card>
           )}
 
-          {/* Path transitions table */}
-          <Card variant="elevated">
-            <CardContent className="space-y-2 px-3 py-3">
-              <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
+          {/* Path transitions — collapsed when empty */}
+          <CollapsibleGroup variant="card">
+            <CollapsibleGroupHeader
+              expanded={transitionsExpanded}
+              onToggle={() =>
+                setTransitionsExplicit((prev) => !(prev ?? transitions.length > 0))
+              }
+            >
+              <CollapsibleGroupTitle>
                 Path Transitions
-              </p>
-              {transitions.length === 0 ? (
-                <p className="py-4 text-center text-dense-meta text-muted-foreground">
-                  No regime transitions recorded today
-                </p>
-              ) : (
-                <DenseDataTable tableClassName="min-w-[400px]">
-                  <colgroup>
-                    <col style={{ width: '30%' }} />
-                    <col style={{ width: '35%' }} />
-                    <col style={{ width: '15%' }} />
-                  </colgroup>
-                  <DenseTableHeader>
-                    <DenseTableHeadRow>
-                      <DenseTableHead>Time</DenseTableHead>
-                      <DenseTableHead>Transition</DenseTableHead>
-                      <DenseTableHead className="text-right">Price</DenseTableHead>
-                    </DenseTableHeadRow>
-                  </DenseTableHeader>
-                  <DenseTableBody>
-                    {transitions.map((t, i) => (
-                      <DenseTableRow key={i}>
-                        <DenseTableCell className="font-mono text-dense-meta">
-                          {t.time}
-                        </DenseTableCell>
-                        <DenseTableCell className="text-dense-label">
-                          {t.from} → {t.to}
-                        </DenseTableCell>
-                        <DenseTableCell className="text-right font-mono text-dense-label tabular-nums">
-                          {t.price}
-                        </DenseTableCell>
-                      </DenseTableRow>
-                    ))}
-                  </DenseTableBody>
-                </DenseDataTable>
-              )}
-            </CardContent>
-          </Card>
+                {transitions.length === 0 ? ' · 0 transitions today' : ` · ${transitions.length}`}
+              </CollapsibleGroupTitle>
+            </CollapsibleGroupHeader>
+            {transitionsExpanded ? (
+              <CollapsibleGroupBody>
+                <div className="px-3 pb-3">
+                  {transitions.length === 0 ? (
+                    <p className="py-4 text-center text-dense-meta text-muted-foreground">
+                      No regime transitions recorded today
+                    </p>
+                  ) : (
+                    <DenseDataTable tableClassName="min-w-[400px]">
+                      <colgroup>
+                        <col style={{ width: '30%' }} />
+                        <col style={{ width: '35%' }} />
+                        <col style={{ width: '15%' }} />
+                      </colgroup>
+                      <DenseTableHeader>
+                        <DenseTableHeadRow>
+                          <DenseTableHead>Time</DenseTableHead>
+                          <DenseTableHead>Transition</DenseTableHead>
+                          <DenseTableHead className="text-right">Price</DenseTableHead>
+                        </DenseTableHeadRow>
+                      </DenseTableHeader>
+                      <DenseTableBody>
+                        {transitions.map((t, i) => (
+                          <DenseTableRow key={i}>
+                            <DenseTableCell className="font-mono text-dense-meta">
+                              {t.time}
+                            </DenseTableCell>
+                            <DenseTableCell className="text-dense-label">
+                              {t.from} → {t.to}
+                            </DenseTableCell>
+                            <DenseTableCell className="text-right font-mono text-dense-label tabular-nums">
+                              {t.price}
+                            </DenseTableCell>
+                          </DenseTableRow>
+                        ))}
+                      </DenseTableBody>
+                    </DenseDataTable>
+                  )}
+                </div>
+              </CollapsibleGroupBody>
+            ) : null}
+          </CollapsibleGroup>
         </>
       ) : (
-        <EmptyState
-          icon={<BookOpen />}
-          title="No intraday data"
-          description={`No terrain intraday rows for ${symbol}. Check that the forecast engine has run for today.`}
-        />
+        <Card variant="elevated">
+          <CardContent className="px-4 py-6">
+            <EmptyHint
+              title="No intraday data"
+              hint={`No terrain intraday rows for ${symbol}. Check that the terrain intraday CronJob has run.`}
+              to="/research/intraday-playbook"
+              triggerId="terrain-intraday"
+              triggerLabel="Trigger terrain intraday"
+              invalidateKeys={[['terrain-intraday', symbol, apiDate ?? '']]}
+            />
+          </CardContent>
+        </Card>
       )}
 
       <p className="text-dense-caption text-muted-foreground">

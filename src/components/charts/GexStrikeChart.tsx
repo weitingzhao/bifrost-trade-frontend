@@ -8,6 +8,9 @@ export interface GexBar {
   call_gex: number
   put_gex: number
   net_gex: number
+  call_gex_vol?: number
+  put_gex_vol?: number
+  volume_net_gex?: number
 }
 
 interface GexStrikeChartProps {
@@ -46,7 +49,12 @@ export function GexStrikeChart({
   const chartH = height - pad.top - pad.bottom
 
   const sorted = [...bars].sort((a, b) => a.strike - b.strike)
-  const maxAbsGex = Math.max(...sorted.map((b) => Math.abs(b.net_gex)), 1)
+  const hasVolLayer = sorted.some((b) => b.volume_net_gex != null && Number.isFinite(b.volume_net_gex))
+  const maxAbsGex = Math.max(
+    ...sorted.map((b) => Math.abs(b.net_gex)),
+    ...sorted.map((b) => Math.abs(b.volume_net_gex ?? 0)),
+    1,
+  )
   const barH = Math.min(chartH / sorted.length, 12)
   const gapH = Math.max(1, (chartH - barH * sorted.length) / Math.max(sorted.length - 1, 1))
   const midX = pad.left + chartW / 2
@@ -77,15 +85,29 @@ export function GexStrikeChart({
       {sorted.map((bar, i) => {
         const y = yOf(i)
         const w = wOf(bar.net_gex)
+        const wVol = bar.volume_net_gex != null ? wOf(bar.volume_net_gex) : 0
         const isPos = bar.net_gex >= 0
         const x = isPos ? midX : midX - w
         const fill = isPos
           ? 'var(--color-profit, #22c55e)'
           : 'var(--color-loss, #ef4444)'
+        const volPos = (bar.volume_net_gex ?? 0) >= 0
+        const xVol = volPos ? midX : midX - wVol
 
         return (
           <g key={bar.strike}>
-            <rect x={x} y={y} width={w} height={barH} fill={fill} opacity={0.8} rx={1} />
+            <rect x={x} y={y} width={w} height={barH} fill={fill} opacity={0.85} rx={1} />
+            {hasVolLayer && bar.volume_net_gex != null && wVol > 0 ? (
+              <rect
+                x={xVol}
+                y={y + barH * 0.25}
+                width={wVol}
+                height={barH * 0.5}
+                fill={volPos ? 'var(--color-chart-2, #34d399)' : 'var(--color-chart-1, #f87171)'}
+                opacity={0.55}
+                rx={1}
+              />
+            ) : null}
             {/* Strike label (every Nth) */}
             {(i % Math.max(Math.floor(sorted.length / 15), 1) === 0) && (
               <text
@@ -100,7 +122,12 @@ export function GexStrikeChart({
             )}
           </g>
         )
-      })}
+        })}
+      {hasVolLayer ? (
+        <text x={pad.left} y={height - 4} fill="var(--muted-foreground)" fontSize={9}>
+          Solid = OI-GEX · inner = Volume-GEX
+        </text>
+      ) : null}
 
       {/* Spot line */}
       {spotY != null && (

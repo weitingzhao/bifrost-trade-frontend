@@ -113,6 +113,11 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
   })()
 
   return {
+    '/api/platform': {
+      target: 'http://localhost:8780',
+      changeOrigin: true,
+      rewrite: (path: string) => path.replace(/^\/api\/platform/, '/api/v1'),
+    },
     '/api/plugin/market-data': pluginProxy,
     '/api/plugin/flex-query': flexPluginProxy,
     '/api/plugin/research': researchPluginProxy,

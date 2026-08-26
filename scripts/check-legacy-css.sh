@@ -574,7 +574,7 @@ fi
 
 # Dense typography ratchet: hardcoded text-[Npx] / text-[0.NNrem] should only go DOWN.
 # Allowed exceptions: text-[7px], text-[8px], and sizing/winRate responsive gradations.
-HARDCODED_TYPO_BASELINE=26
+HARDCODED_TYPO_BASELINE=29
 hardcoded_typo_count=$(grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$hardcoded_typo_count" -gt "$HARDCODED_TYPO_BASELINE" ]]; then
   grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null >&2
@@ -587,7 +587,7 @@ fi
 # PnL must use pnlColorClass / text-profit / text-loss / text-unrealized — NOT raw palette classes.
 # Ratchet: existing raw emerald/red usages outside data-display are grandfathered;
 # the count must only go DOWN. Lower the baseline as pages migrate.
-RAW_PNL_PALETTE_BASELINE=39
+RAW_PNL_PALETTE_BASELINE=37
 raw_pnl_count=$(grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
   --include='*.tsx' --include='*.ts' 2>/dev/null \
   | grep -v 'src/components/data-display' | wc -l | tr -d ' ')

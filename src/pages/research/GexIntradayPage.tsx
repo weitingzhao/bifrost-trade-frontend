@@ -11,17 +11,23 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
-  denseTable,
+  EmptyState,
   denseTableNumCell,
 } from '@/components/data-display'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Input } from '@/components/ui/input'
 import { fetchGexIntraday, type GexIntraday } from '@/api/researchEngine'
+import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { useResearchContext } from '@/hooks/useResearchContext'
 import { GexStrikeChart } from '@/components/charts/GexStrikeChart'
 import { GexTimelineChart } from '@/components/charts/GexTimelineChart'
+import { BarChart2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
 import { cn } from '@/lib/utils'
+
+const GEX_SYMBOL_HINTS = ['SPY', 'QQQ', 'NVDA', 'AAPL'] as const
 
 function InfoCell({
   label,
@@ -62,8 +68,8 @@ function fmtTime(ts: string): string {
 }
 
 export default function GexIntradayPage() {
-  const [symbol, setSymbol] = useState('SPX')
-  const [date, setDate] = useState('')
+  const { symbol, dateInput, setSymbol, setDate } = useResearchContext()
+  const date = dateInput
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
 
   const { data, isLoading, error } = useQuery({
@@ -86,29 +92,10 @@ export default function GexIntradayPage() {
     <PageShell padding="compact">
       <PageHeader
         title="GEX Intraday"
-        actions={
-          <div className="flex items-center gap-2">
-            <Input
-              className="h-7 w-24 text-dense-label"
-              value={symbol}
-              onChange={(e) => {
-                setSymbol(e.target.value.toUpperCase())
-                setSelectedIdx(null)
-              }}
-              placeholder="Symbol"
-            />
-            <Input
-              type="date"
-              className="h-7 w-36 text-dense-label"
-              value={date}
-              onChange={(e) => {
-                setDate(e.target.value)
-                setSelectedIdx(null)
-              }}
-            />
-          </div>
-        }
+        description="OI-GEX (solid) vs Volume-GEX (inner bar) by strike · pick a snapshot row or scroll timeline"
       />
+
+      <ResearchContextBar />
 
       {error && <QueryErrorAlert error={error} />}
 
@@ -160,6 +147,9 @@ export default function GexIntradayPage() {
           {/* Main strike chart */}
           <Card variant="elevated" className="mt-3">
             <CardContent className="p-3">
+              <p className="mb-2 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
+                Strike GEX (OI solid · Volume inner)
+              </p>
               <GexStrikeChart
                 bars={bars}
                 spot={active.spot}
@@ -231,7 +221,35 @@ export default function GexIntradayPage() {
       )}
 
       {!isLoading && rows.length === 0 && !error && (
-        <p className={denseTable.emptyHint}>No GEX snapshots available</p>
+        <EmptyState
+          icon={<BarChart2 />}
+          title={`No GEX snapshots for ${symbol.trim().toUpperCase() || 'symbol'}`}
+          description={
+            symbol.trim().toUpperCase() === 'SPX'
+              ? 'SPX index options often lack OI in Golden Source — engine skips write. Try SPY/QQQ for the same session, or pick a date when Cron succeeded.'
+              : 'GEX intraday Cron (research-gex-intraday) writes features.option_metric_gex_intraday during US session hours. Try another symbol or an explicit trade date.'
+          }
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {GEX_SYMBOL_HINTS.map((s) => (
+                <Button
+                  key={s}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-dense-label"
+                  onClick={() => {
+                    setSymbol(s)
+                    setDate('')
+                    setSelectedIdx(null)
+                  }}
+                >
+                  Try {s}
+                </Button>
+              ))}
+            </div>
+          }
+        />
       )}
     </PageShell>
   )

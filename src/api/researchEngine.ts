@@ -5,6 +5,8 @@
  * IV surface, order flow, event radar, settlement).
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import type { LampColor } from '@/lib/researchFreshness'
+import type { IvPercentileRow } from '@/types/ivRadar'
 
 async function get<T = unknown>(path: string): Promise<T> {
   const res = await fetch(researchEngineUrl(path))
@@ -176,7 +178,15 @@ export interface GexIntraday {
   zero_gamma: number
   major_call_wall: number
   major_put_wall: number
-  levels_json: { strike: number; call_gex: number; put_gex: number; net_gex: number }[]
+  levels_json: {
+    strike: number
+    call_gex: number
+    put_gex: number
+    net_gex: number
+    call_gex_vol?: number
+    put_gex_vol?: number
+    volume_net_gex?: number
+  }[]
   computed_at: string
 }
 
@@ -392,6 +402,7 @@ export interface EventRadarRow {
   event_id: string
   batch_id: string
   collected_at: string
+  event_date?: string | null
   source: string
   subject: string
   event_summary: string
@@ -435,8 +446,43 @@ export function fetchEventBatches() {
 }
 
 export function fetchEventThemes() {
-  return get<{ rows: { theme: string; count: number; direction_avg: number; sentiment_avg: number }[]; count: number }>(
-    '/research/events/themes',
+  return get<{
+    rows: {
+      theme: string
+      count: number
+      direction_avg: number
+      sentiment_avg: number
+      bull_count?: number
+      bear_count?: number
+      neutral_count?: number
+    }[]
+    count: number
+  }>('/research/events/themes')
+}
+
+export interface MacroEventRow {
+  macro_id: string
+  event_date: string
+  indicator: string
+  actual_value?: number | null
+  expected_value?: number | null
+  prior_value?: number | null
+  unit?: string | null
+  gap_pct?: number | null
+  forward_flag?: boolean
+  source?: string
+  notes?: string
+}
+
+export function fetchMacroGap(limit = 30) {
+  return get<{ rows: MacroEventRow[]; count: number }>(
+    `/research/event-radar/macro/gap?limit=${limit}`,
+  )
+}
+
+export function fetchMacroForward(days = 7) {
+  return get<{ rows: MacroEventRow[]; count: number; days: number }>(
+    `/research/event-radar/macro/forward?days=${days}`,
   )
 }
 
@@ -460,6 +506,11 @@ export interface ForecastSettlement {
   path_total: number
   notes: string
   computed_at: string
+  stats_json?: Record<string, unknown>
+  direction_hit?: boolean
+  path_shape?: string
+  close_zone?: string
+  lean_miss?: boolean
 }
 
 export function fetchSettlements(symbol?: string, sessionId?: string) {
@@ -556,7 +607,8 @@ export async function fetchSepaDaily(opts?: {
   if (opts?.grade) params.set('grade', opts.grade)
   if (opts?.min_score !== undefined) params.set('min_score', String(opts.min_score))
   if (opts?.limit) params.set('limit', String(opts.limit))
-  const path = `/research/sepa/daily?${params}`
+  // Model/Feature Store path — grade/stage/path/sepa_score (dashboard /sepa/daily is screener-wide).
+  const path = `/research/sepa/model/daily?${params}`
   const res = await fetch(researchEngineUrl(path))
   // Older research-api builds may lack fusion routes; empty is honest, not a hard fail.
   if (res.status === 404) {
@@ -589,7 +641,8 @@ export async function fetchSepaCandidates(opts?: { trade_date?: string; top?: nu
   const params = new URLSearchParams()
   if (opts?.trade_date) params.set('trade_date', opts.trade_date)
   if (opts?.top) params.set('top', String(opts.top))
-  const path = `/research/sepa/candidates?${params}`
+  // SETUP/PIVOT short-list from features.stock_signal_sepa_daily (not screener-wide ranks).
+  const path = `/research/sepa/model/candidates?${params}`
   const res = await fetch(researchEngineUrl(path))
   if (res.status === 404) {
     return {
@@ -608,4 +661,122 @@ export async function fetchSepaCandidates(opts?: { trade_date?: string; top?: nu
     throw new Error(`Research Engine ${res.status}: ${text}`)
   }
   return res.json() as Promise<SepaCandidatesResponse>
+}
+
+// --- Daily Brief Synth (Wave R8) ---
+
+export class DailyBriefSynthUnavailableError extends Error {
+  readonly status: number
+
+  constructor(status: number, message?: string) {
+    super(message ?? `Daily Brief synth unavailable (${status})`)
+    this.name = 'DailyBriefSynthUnavailableError'
+    this.status = status
+  }
+}
+
+export function isDailyBriefSynthUnavailable(err: unknown): boolean {
+  return err instanceof DailyBriefSynthUnavailableError
+}
+
+export interface SynthVerdictSegment {
+  label: string
+  text: string
+  lamp: LampColor
+  to?: string
+  meta?: string | null
+}
+
+export interface DailyBriefSynthCard {
+  present: boolean
+  verdict: string
+  detail?: Record<string, unknown> | null
+  settlement?: ForecastSettlement | null
+  candidates?: SepaScoreRow[]
+  sample_symbols?: string[]
+  count?: number
+  rows?: EventRadarRow[]
+}
+
+export interface DailyBriefSynth {
+  symbol: string
+  trade_date: string
+  verdict: {
+    narrative: SynthVerdictSegment
+    risk: SynthVerdictSegment
+    opportunity: SynthVerdictSegment
+    action_hint: { label: string; to: string }
+  }
+  freshness: Record<string, LampColor>
+  cards: {
+    terrain: DailyBriefSynthCard
+    gex: DailyBriefSynthCard
+    forecast: DailyBriefSynthCard
+    sepa: DailyBriefSynthCard
+    momentum: DailyBriefSynthCard
+    iv: DailyBriefSynthCard
+    events: DailyBriefSynthCard
+    sentiment: DailyBriefSynthCard
+  }
+  regime_context: Record<string, unknown> | null
+}
+
+export async function fetchDailyBriefSynth(symbol: string, date?: string): Promise<DailyBriefSynth> {
+  const params = new URLSearchParams({ symbol })
+  if (date) params.set('date', date)
+  const path = `/research/daily-brief/synth?${params}`
+  const res = await fetch(researchEngineUrl(path))
+  if (res.status === 404 || res.status === 503) {
+    throw new DailyBriefSynthUnavailableError(res.status)
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText)
+    if (text.trimStart().startsWith('<!')) {
+      throw new Error(
+        `Research Engine unreachable (got HTML). Start research-api :8795 and set VITE_API_RESEARCH_ENGINE.`,
+      )
+    }
+    throw new Error(`Research Engine ${res.status}: ${text}`)
+  }
+  return res.json() as Promise<DailyBriefSynth>
+}
+
+/** Map synth API verdict to FE DailyVerdict shape (no client-side rules). */
+export function mapSynthVerdict(synth: DailyBriefSynth): {
+  narrative: SynthVerdictSegment
+  risk: SynthVerdictSegment
+  opportunity: SynthVerdictSegment
+  actionHint: { label: string; to: string }
+} {
+  return {
+    narrative: synth.verdict.narrative,
+    risk: synth.verdict.risk,
+    opportunity: synth.verdict.opportunity,
+    actionHint: synth.verdict.action_hint,
+  }
+}
+
+/** Extract typed card details from synth response for BriefCard rendering. */
+export function synthTerrainDetail(synth: DailyBriefSynth): TerrainData | null {
+  const d = synth.cards.terrain.detail
+  return d ? (d as unknown as TerrainData) : null
+}
+
+export function synthGexDetail(synth: DailyBriefSynth): GexIntraday | null {
+  const d = synth.cards.gex.detail
+  return d ? (d as unknown as GexIntraday) : null
+}
+
+export function synthForecastDetail(synth: DailyBriefSynth): ForecastSession | null {
+  const d = synth.cards.forecast.detail
+  return d ? (d as unknown as ForecastSession) : null
+}
+
+export function synthSettlement(synth: DailyBriefSynth): ForecastSettlement | null {
+  return synth.cards.forecast.settlement ?? null
+}
+
+export function synthIvDetail(synth: DailyBriefSynth): IvPercentileRow | null {
+  const d = synth.cards.iv.detail
+  return d ? (d as unknown as IvPercentileRow) : null
 }

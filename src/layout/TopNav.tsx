@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, Moon, Network, PanelLeft, ScrollText, Sun, SunMoon } from 'lucide-react'
+import { Bell, ChevronDown, Moon, Network, PanelLeft, Pin, ScrollText, Sun, SunMoon } from 'lucide-react'
 import { useLogPanel } from '@/hooks/useLogPanel'
 import { useReactorMap } from '@/hooks/useReactorMap'
 import { cn } from '@/lib/utils'
@@ -15,6 +15,7 @@ function itemPath(item: ShellNavItem): string {
 import { BifrostLogoMark } from '@/components/BifrostLogo'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 import { useTopNavIconOnly } from '@/hooks/useTopNavIconOnly'
+import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
 // Renders a single dropdown item; if it has children shows them indented below.
@@ -286,6 +287,21 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
             <TooltipContent side="bottom">Switch to sidebar navigation</TooltipContent>
           </Tooltip>
         )}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => cockpitDrawerStore.getState().toggle()}
+              aria-label="Open Research Cockpit"
+            >
+              <Pin className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Research Cockpit (⌘K)</TooltipContent>
+        </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>

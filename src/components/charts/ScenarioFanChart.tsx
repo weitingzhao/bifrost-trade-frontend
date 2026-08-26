@@ -21,6 +21,23 @@ interface ScenarioFanChartProps {
   width?: number
   height?: number
   className?: string
+  /** Index of LIVE snapshot — draws vertical marker when set */
+  liveIdx?: number
+}
+
+function sparseLabelIndices(count: number): Set<number> {
+  if (count <= 8) {
+    return new Set(Array.from({ length: count }, (_, i) => i))
+  }
+  const indices = new Set<number>()
+  indices.add(0)
+  indices.add(count - 1)
+  indices.add(Math.floor(count / 2))
+  const step = Math.max(1, Math.floor(count / 4))
+  for (let i = step; i < count - 1; i += step) {
+    indices.add(i)
+  }
+  return indices
 }
 
 export function ScenarioFanChart({
@@ -29,6 +46,7 @@ export function ScenarioFanChart({
   width = 600,
   height = 260,
   className,
+  liveIdx,
 }: ScenarioFanChartProps) {
   if (fanPoints.length === 0) {
     return (
@@ -56,6 +74,8 @@ export function ScenarioFanChart({
   const xScale = (i: number) => pad.left + (i / Math.max(n - 1, 1)) * chartW
   const yScale = (p: number) => pad.top + (1 - (p - minP) / pRange) * chartH
 
+  const labelIndices = sparseLabelIndices(n)
+
   // Fan area (low→high band)
   const areaTop = fanPoints.map((p, i) => `${xScale(i)},${yScale(p.high)}`).join(' ')
   const areaBot = fanPoints
@@ -66,7 +86,9 @@ export function ScenarioFanChart({
   const fanPolygon = `${areaTop} ${areaBot}`
 
   // Target line
-  const targetPath = fanPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(i)},${yScale(p.target)}`).join(' ')
+  const targetPath = fanPoints
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(i)},${yScale(p.target)}`)
+    .join(' ')
 
   // Spot overlay
   let spotPath = ''
@@ -79,6 +101,9 @@ export function ScenarioFanChart({
 
   // Y-axis ticks
   const yTicks = Array.from({ length: 5 }, (_, i) => minP + (pRange * i) / 4)
+
+  const liveX =
+    liveIdx != null && liveIdx >= 0 && liveIdx < n ? xScale(liveIdx) : null
 
   return (
     <svg
@@ -112,25 +137,47 @@ export function ScenarioFanChart({
         </g>
       ))}
 
-      {/* X-axis labels */}
-      {fanPoints.map((p, i) => (
-        <text
-          key={p.time}
-          x={xScale(i)}
-          y={height - 6}
-          textAnchor="middle"
-          fill="var(--muted-foreground)"
-          fontSize={9}
-        >
-          {p.time}
-        </text>
-      ))}
+      {/* LIVE vertical marker */}
+      {liveX != null && (
+        <line
+          x1={liveX}
+          y1={pad.top}
+          x2={liveX}
+          y2={height - pad.bottom}
+          stroke="var(--primary)"
+          strokeWidth={1.5}
+          strokeDasharray="4,3"
+          opacity={0.85}
+        />
+      )}
+
+      {/* X-axis labels (sparse when many points) */}
+      {fanPoints.map((p, i) =>
+        labelIndices.has(i) ? (
+          <text
+            key={`${p.time}-${i}`}
+            x={xScale(i)}
+            y={height - 6}
+            textAnchor="middle"
+            fill="var(--muted-foreground)"
+            fontSize={9}
+          >
+            {p.time}
+          </text>
+        ) : null,
+      )}
 
       {/* Fan area */}
       <polygon points={fanPolygon} fill="var(--color-chart-4, #a78bfa)" opacity={0.15} />
 
       {/* Target line */}
-      <path d={targetPath} fill="none" stroke="var(--color-chart-4, #a78bfa)" strokeWidth={2} strokeDasharray="5,3" />
+      <path
+        d={targetPath}
+        fill="none"
+        stroke="var(--color-chart-4, #a78bfa)"
+        strokeWidth={2}
+        strokeDasharray="5,3"
+      />
 
       {/* Spot overlay */}
       {spotPath && (

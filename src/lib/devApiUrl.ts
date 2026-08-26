@@ -63,6 +63,20 @@ export function opsUrl(path: string): string {
 }
 
 /**
+ * Platform API (control plane :8780) — L1 research CronJob triggers, etc.
+ *
+ * DEV: `/api/platform/v1/…` → Vite proxy → platform-api
+ * PROD: same-origin `/api/platform/v1/…` when nginx routes are configured.
+ */
+export function platformApiUrl(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  if (import.meta.env.DEV) return `/api/platform/v1${normalizedPath}`
+  const base = (import.meta.env.VITE_API_PLATFORM as string | undefined)?.trim() ?? ''
+  if (!base || base === '/') return `/api/platform/v1${normalizedPath}`
+  return joinBase(base, normalizedPath)
+}
+
+/**
  * Market Data Plugin (same-origin preferred).
  *
  * DEV: `/api/plugin/market-data/…` → Vite proxy → platform-api / plugin API

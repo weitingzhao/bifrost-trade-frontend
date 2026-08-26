@@ -16,6 +16,8 @@ import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useNavMode } from '@/hooks/useNavMode'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
+import { CockpitDrawer } from '@/components/cockpit'
+import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 
 function readSidebarCookie(): boolean {
   const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
@@ -47,6 +49,7 @@ export function AppLayout() {
   const { effectiveMode, toggle, isTooNarrow } = useNavMode()
   const { messages, dismissedIds, activeMsgCount, dismissMessage, dismissAll } = useSystemMessages()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  useCockpitKeybinds()
 
   const msgCenter = (
     <>
@@ -83,6 +86,7 @@ export function AppLayout() {
             <ReactorMapPanel />
             <LogPanel />
             {msgCenter}
+            <CockpitDrawer />
           </div>
         </LogPanelProvider>
       </ReactorMapProvider>
@@ -109,6 +113,7 @@ export function AppLayout() {
             <LogPanel />
           </SidebarInset>
           {msgCenter}
+          <CockpitDrawer />
         </SidebarProvider>
       </LogPanelProvider>
     </ReactorMapProvider>

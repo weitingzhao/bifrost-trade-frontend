@@ -2,6 +2,7 @@ import { useState } from 'react'
 // lucide-react icons used only in navConfig; PageHeader has no icon prop
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
+import { ForecastStructureCards } from '@/components/research/ForecastStructureCards'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -18,13 +19,16 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { settlementFineGrain } from '@/lib/researchSettlement'
 import {
-  fetchForecastSessions,
   fetchForecastSessionDetail,
+  fetchForecastSessions,
   fetchSettlements,
   type ForecastSession,
 } from '@/api/researchEngine'
 import { ProbabilityBar } from '@/components/charts/ProbabilityBar'
+import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { useResearchContext } from '@/hooks/useResearchContext'
 import { cn } from '@/lib/utils'
 
 function fmtNum(v: number | null | undefined, digits = 2): string {
@@ -70,6 +74,7 @@ function regimeVariant(
 }
 
 export default function ForecastSessionsPage() {
+  const { symbol, apiDate } = useResearchContext()
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const {
@@ -77,8 +82,8 @@ export default function ForecastSessionsPage() {
     isLoading: listLoading,
     error: listError,
   } = useQuery({
-    queryKey: ['forecast-sessions'],
-    queryFn: () => fetchForecastSessions(),
+    queryKey: ['forecast-sessions', symbol, apiDate],
+    queryFn: () => fetchForecastSessions(symbol, apiDate || undefined),
   })
 
   const {
@@ -114,6 +119,8 @@ export default function ForecastSessionsPage() {
   return (
     <PageShell padding="compact">
       <PageHeader title="Forecast" />
+
+      <ResearchContextBar />
 
       {listError && <QueryErrorAlert error={listError} />}
 
@@ -197,6 +204,15 @@ export default function ForecastSessionsPage() {
                       {detail.session.narrative}
                     </p>
                   )}
+                  <p className="text-dense-micro text-muted-foreground">
+                    LLM: {detail.session.llm_provider || 'heuristic'}
+                    {(() => {
+                      const tj = detail.session.terrain_json as Record<string, unknown> | null
+                      const tokens = tj?.llm_tokens as Record<string, unknown> | undefined
+                      const cost = tokens?.session_cost_usd ?? tokens?.cost_usd
+                      return cost != null ? ` · session cost $${Number(cost).toFixed(4)}` : ''
+                    })()}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -213,7 +229,9 @@ export default function ForecastSessionsPage() {
               </Card>
 
               {/* Settlement KPI */}
-              {settlement && (
+              {settlement && (() => {
+                const fine = settlementFineGrain(settlement)
+                return (
                 <Card variant="elevated" size="sm" className="p-3">
                   <CardContent className="p-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-3">
@@ -223,6 +241,10 @@ export default function ForecastSessionsPage() {
                         pathHitCount={settlement.path_hit_count}
                         pathTotal={settlement.path_total}
                         closeMissPct={settlement.close_miss_pct}
+                        directionHit={fine.directionHit}
+                        pathShape={fine.pathShape}
+                        closeZone={fine.closeZone}
+                        leanMiss={fine.leanMiss}
                       />
                     </div>
                     <div className="flex flex-wrap gap-x-5 gap-y-1 text-dense-meta text-muted-foreground">
@@ -263,7 +285,8 @@ export default function ForecastSessionsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+                )
+              })()}
 
               {/* Hourly forecast table */}
               {detail.hourly.length > 0 && (
@@ -319,18 +342,12 @@ export default function ForecastSessionsPage() {
                 </Card>
               )}
 
-              {/* Structures card */}
+              {/* Structures cards */}
               {detail.session.structures_json && (
                 <Card variant="elevated" size="sm" className="p-3">
-                  <CardContent className="p-0">
-                    <h3 className="text-dense-label font-semibold mb-1">
-                      Recommended Structures
-                    </h3>
-                    <pre className="text-dense-meta text-muted-foreground whitespace-pre-wrap break-words">
-                      {typeof detail.session.structures_json === 'string'
-                        ? detail.session.structures_json
-                        : JSON.stringify(detail.session.structures_json, null, 2)}
-                    </pre>
+                  <CardContent className="p-0 space-y-2">
+                    <h3 className="text-dense-label font-semibold">Recommended Structures</h3>
+                    <ForecastStructureCards structuresJson={detail.session.structures_json} />
                   </CardContent>
                 </Card>
               )}

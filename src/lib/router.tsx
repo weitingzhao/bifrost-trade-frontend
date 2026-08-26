@@ -25,7 +25,11 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     errorElement: <RouteErrorPage />,
     children: [
-      { index: true, element: <Navigate to="/market/live" replace /> },
+      { index: true, element: <Navigate to="/research" replace /> },
+      {
+        path: 'research',
+        lazy: lazyPage(() => import('@/pages/research/ResearchHomePage')),
+      },
 
       { path: 'market/live', element: <LivePage /> },
       { path: 'market/watchlist', element: <Navigate to="/research/watchlist" replace /> },
@@ -81,6 +85,18 @@ export const router = createBrowserRouter([
       {
         path: 'research/iv-radar',
         lazy: lazyPage(() => import('@/pages/research/IvRadarPage')),
+      },
+      {
+        path: 'research/vrp-lab',
+        lazy: lazyPage(() => import('@/pages/research/VrpLabPage')),
+      },
+      {
+        path: 'research/vol-surface-lab',
+        lazy: lazyPage(() => import('@/pages/research/VolSurfaceLabPage')),
+      },
+      {
+        path: 'research/opex-cycle-lab',
+        lazy: lazyPage(() => import('@/pages/research/OpExCycleLabPage')),
       },
       {
         path: 'research/greeks',

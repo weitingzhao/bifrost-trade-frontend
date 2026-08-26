@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo } from 'react'
 // lucide-react icons used only in navConfig; PageHeader has no icon prop
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -17,12 +17,13 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Input } from '@/components/ui/input'
 import {
   fetchOrderSentiment,
   fetchMultiLegTrades,
   type OrderSentiment,
 } from '@/api/researchEngine'
+import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { useResearchContext } from '@/hooks/useResearchContext'
 import { cn } from '@/lib/utils'
 
 function fmtNotional(v: number): string {
@@ -41,8 +42,8 @@ function fmtNum(v: number | null | undefined, digits = 2): string {
 }
 
 export default function OrderSentimentPage() {
-  const [symbol, setSymbol] = useState('SPX')
-  const [date, setDate] = useState('')
+  const { symbol, dateInput } = useResearchContext()
+  const date = dateInput
 
   const {
     data: sentimentData,
@@ -66,44 +67,44 @@ export default function OrderSentimentPage() {
 
   const sentiment: OrderSentiment | undefined = sentimentData?.rows?.[0]
   const multiLegRows = multiLegData?.rows ?? []
+  const topMultiLeg = useMemo(
+    () => [...multiLegRows].sort((a, b) => b.total_notional - a.total_notional).slice(0, 10),
+    [multiLegRows],
+  )
+
+  useEffect(() => {
+    if (window.location.hash === '#multi-leg') {
+      document.getElementById('multi-leg-section')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [multiLegRows.length])
 
   return (
     <PageShell padding="compact">
-      <PageHeader
-        title="Order Sentiment"
-        actions={
-          <div className="flex items-center gap-2">
-            {sentiment?.data_source === 'option_snapshot_aggregates' && (
-              <DenseTag
-                variant="warning"
-                title="Approximated from OI × volume snapshots. Real aggressor-signed tape uses market.option_trades when Plugin ingest has rows."
-              >
-                Source: option snapshot proxy (real tape pending)
-              </DenseTag>
-            )}
-            {sentiment?.data_source === 'option_trades_tape' && (
-              <DenseTag
-                variant="success"
-                title="Aggregated from market.option_trades (Polygon REST daily tape)."
-              >
-                Source: option trades tape
-              </DenseTag>
-            )}
-            <Input
-              className="h-7 w-24 text-dense-label"
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              placeholder="Symbol"
-            />
-            <Input
-              type="date"
-              className="h-7 w-36 text-dense-label"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </div>
-        }
-      />
+      <PageHeader title="Order Sentiment" />
+
+      <ResearchContextBar />
+
+      {(sentiment?.data_source === 'option_snapshot_aggregates' ||
+        sentiment?.data_source === 'option_trades_tape') && (
+        <div className="flex flex-wrap items-center gap-2">
+          {sentiment?.data_source === 'option_snapshot_aggregates' && (
+            <DenseTag
+              variant="warning"
+              title="Approximated from OI × volume snapshots. Real aggressor-signed tape uses market.option_trades when Plugin ingest has rows."
+            >
+              Source: option snapshot proxy (real tape pending)
+            </DenseTag>
+          )}
+          {sentiment?.data_source === 'option_trades_tape' && (
+            <DenseTag
+              variant="success"
+              title="Aggregated from market.option_trades (Polygon REST daily tape)."
+            >
+              Source: option trades tape
+            </DenseTag>
+          )}
+        </div>
+      )}
 
       {sentimentError && <QueryErrorAlert error={sentimentError} />}
 
@@ -205,7 +206,28 @@ export default function OrderSentimentPage() {
       {multiLegLoading && <Skeleton className="h-48 w-full mt-3" />}
 
       {multiLegRows.length > 0 && (
-        <Card variant="elevated" className="mt-3">
+        <div id="multi-leg-section" className="mt-3 space-y-3">
+          <h2 className="text-dense-body font-semibold">Top multi-leg clusters</h2>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            {topMultiLeg.map((row) => (
+              <Card key={row.cluster_id} variant="elevated">
+                <CardContent className="flex flex-col gap-1 px-3 py-2">
+                  <DenseTag variant="neutral">{row.strategy_guess}</DenseTag>
+                  <p className="font-mono text-lg font-semibold tabular-nums">
+                    {fmtNotional(row.total_notional)}
+                  </p>
+                  <p className="font-mono text-dense-micro text-muted-foreground truncate">
+                    {row.cluster_id}
+                  </p>
+                  <p className="text-dense-caption text-muted-foreground">
+                    Conf {(row.confidence * 100).toFixed(0)}%
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+        <Card variant="elevated">
           <CardContent className="p-0">
             <DenseDataTable>
               <DenseTableHeader>
@@ -247,6 +269,7 @@ export default function OrderSentimentPage() {
             </DenseDataTable>
           </CardContent>
         </Card>
+        </div>
       )}
 
       {!sentimentLoading &&

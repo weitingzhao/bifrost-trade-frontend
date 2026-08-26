@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SymbolPicker } from '@/components/symbol'
+import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -28,7 +30,6 @@ const DEFAULT_RFR = 0.045
 
 export default function GreeksPage() {
   const [symbol, setSymbol] = useState(DEFAULT_SYMBOL)
-  const [symbolInput, setSymbolInput] = useState(DEFAULT_SYMBOL)
   const [tradeDate, setTradeDate] = useState('')
   const [riskFreeRate, setRiskFreeRate] = useState(DEFAULT_RFR)
   const [rightFilter, setRightFilter] = useState<'ALL' | 'C' | 'P'>('ALL')
@@ -47,10 +48,9 @@ export default function GreeksPage() {
     return availableDates[0] ?? ''
   }, [tradeDate, availableDates])
 
-  function commitSymbol(next?: string) {
-    const s = (next ?? symbolInput).trim().toUpperCase()
+  function commitSymbol(next: string) {
+    const s = next.trim().toUpperCase()
     if (!s || s === symbol) return
-    setSymbolInput(s)
     setSymbol(s)
     setTradeDate('')
     setResult(null)
@@ -101,28 +101,36 @@ export default function GreeksPage() {
       <PageHeader
         title="Contract Greeks"
         description="Historical option greeks from the research API: pick symbol and trade date, then fetch chain rows."
+        actions={
+          <SaveAsHypothesisButton
+            originPage="contract-greeks"
+            defaultTitle={symbol ? `${symbol} greeks hypothesis` : 'Contract Greeks hypothesis'}
+            defaultSymbols={symbol ? [symbol] : []}
+            defaultTags={['greeks']}
+            originRef={{
+              symbol,
+              trade_date: resolvedTradeDate || null,
+              risk_free_rate: riskFreeRate,
+              right_filter: rightFilter,
+              rows: result?.count ?? null,
+            }}
+          />
+        }
       />
 
       <Card variant="elevated">
         <CardContent className="p-4">
           <div className={greeksControlsInnerClass}>
-            <form
-              className="space-y-1"
-              onSubmit={(e) => {
-                e.preventDefault()
-                commitSymbol()
-              }}
-            >
+            <div className="space-y-1">
               <Label htmlFor="greeks-symbol" className={greeksFieldLabelClass}>Symbol</Label>
-              <Input
+              <SymbolPicker
                 id="greeks-symbol"
-                className="h-8 w-[5.5rem] font-mono uppercase text-xs"
-                value={symbolInput}
-                onChange={e => setSymbolInput(e.target.value.toUpperCase())}
-                onBlur={() => commitSymbol()}
+                value={symbol}
+                onSelect={commitSymbol}
                 placeholder="NVDA"
+                className="h-8 w-[5.5rem] text-xs"
               />
-            </form>
+            </div>
 
             <div className="space-y-1 min-w-[10rem]">
               <Label htmlFor="greeks-date" className={greeksFieldLabelClass}>

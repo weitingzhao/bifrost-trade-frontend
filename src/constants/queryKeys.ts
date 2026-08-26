@@ -65,6 +65,45 @@ export const QUERY_KEYS = {
       dailyChecklist: ['research', 'discovery', 'daily-checklist'] as const,
     },
     ivRadar:        ['research', 'iv-radar']                     as const,
+    vrp: {
+      latest:     (symbol: string) => ['research', 'vrp', 'latest', symbol] as const,
+      history:    (symbol: string, days: number) =>
+        ['research', 'vrp', 'history', symbol, days] as const,
+      extremes:   (bucket: 'high' | 'low', limit: number) =>
+        ['research', 'vrp', 'extremes', bucket, limit] as const,
+    },
+    volSurface: {
+      fit:           (symbol: string, tradeDate: string) =>
+        ['research', 'vol-surface', 'fit', symbol, tradeDate] as const,
+      termStructure: (symbol: string, tradeDate: string) =>
+        ['research', 'vol-surface', 'term', symbol, tradeDate] as const,
+      residuals:     (symbol: string, tradeDate: string, expiry: string) =>
+        ['research', 'vol-surface', 'residuals', symbol, tradeDate, expiry] as const,
+      skewExtremes:  (limit: number) =>
+        ['research', 'vol-surface', 'skew-extremes', limit] as const,
+    },
+    opexCycle: {
+      current:     (symbol: string, tradeDate: string) =>
+        ['research', 'opex-cycle', 'current', symbol, tradeDate] as const,
+      history:     (symbol: string, cycles: number) =>
+        ['research', 'opex-cycle', 'history', symbol, cycles] as const,
+      pinAnalysis: (symbol: string, cycles: number) =>
+        ['research', 'opex-cycle', 'pin-analysis', symbol, cycles] as const,
+    },
+    hypothesis: {
+      list:            ['research', 'hypothesis', 'list']         as const,
+      active:          ['research', 'hypothesis', 'active']       as const,
+      summaryActive:   ['research', 'hypothesis', 'summary-active'] as const,
+      byId:            (id: string) => ['research', 'hypothesis', 'by-id', id] as const,
+    },
+    backtest: {
+      runs:            ['research', 'backtest', 'runs']           as const,
+      runsByHypothesis: (hid: string) =>
+        ['research', 'backtest', 'runs', 'hypothesis', hid] as const,
+      run:             (runId: string) =>
+        ['research', 'backtest', 'run', runId] as const,
+    },
+    home:             ['research', 'home', 'aggregate']           as const,
   },
   strategy: {
     instances:      ['strategy', 'instances']        as const,

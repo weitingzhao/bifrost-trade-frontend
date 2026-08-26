@@ -23,6 +23,8 @@ import {
   fetchEventCalendar,
   type EventRadarRow,
 } from '@/api/researchEngine'
+import { EventRadarDashboard } from '@/components/research/EventRadarDashboard'
+import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 
 type ViewMode = 'events' | 'themes' | 'calendar'
 
@@ -86,11 +88,38 @@ export default function EventRadarPage() {
     return allEvents.filter((r) => (r.importance ?? 0) === want)
   }, [allEvents, importanceFilter])
 
+  const latestBatchId =
+    (batchesQ.data?.rows ?? [])[0]?.batch_id ?? null
+  const topEventSymbols = useMemo(() => {
+    const set = new Set<string>()
+    for (const row of filteredEvents.slice(0, 8)) {
+      for (const raw of (row.affected_symbols ?? '').split(/[,\s]+/)) {
+        const s = raw.trim().toUpperCase()
+        if (s) set.add(s)
+      }
+      if (set.size >= 6) break
+    }
+    return Array.from(set)
+  }, [filteredEvents])
+
   return (
     <PageShell>
       <PageHeader
         title="Event Radar"
         description="Event table, theme aggregates, and forward calendar"
+        actions={
+          <SaveAsHypothesisButton
+            originPage="event-radar"
+            defaultTitle="Event Radar hypothesis"
+            defaultSymbols={topEventSymbols}
+            defaultTags={['events']}
+            originRef={{
+              view,
+              importance: importanceFilter,
+              batch_id: latestBatchId,
+            }}
+          />
+        }
       />
 
       <div className="flex items-center gap-4 mb-4">
@@ -121,6 +150,8 @@ export default function EventRadarPage() {
           </span>
         )}
       </div>
+
+      <EventRadarDashboard events={allEvents} />
 
       {view === 'events' && (
         <>

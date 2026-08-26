@@ -1,11 +1,11 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
+import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { useResearchContext } from '@/hooks/useResearchContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Input } from '@/components/ui/input'
 import {
   fetchAtmIv,
   fetchTerrain,
@@ -212,12 +212,37 @@ function IvSurfaceCard({
       ? Object.entries(params).filter(([, v]) => v != null && typeof v !== 'object')
       : []
 
+  const skewVal = (() => {
+    if (!params || typeof params !== 'object') return null
+    const v = (params as Record<string, unknown>).skew ?? (params as Record<string, unknown>).skewness
+    return typeof v === 'number' && Number.isFinite(v) ? v : null
+  })()
+  const kurtVal = (() => {
+    if (!params || typeof params !== 'object') return null
+    const v = (params as Record<string, unknown>).kurtosis ?? (params as Record<string, unknown>).kurt
+    return typeof v === 'number' && Number.isFinite(v) ? v : null
+  })()
+
   return (
     <Card variant="elevated">
       <CardContent className="space-y-3 px-4 py-3">
         <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
           IV Surface
         </p>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <p className="text-dense-meta text-muted-foreground">Skew</p>
+            <p className="font-mono text-sm font-semibold tabular-nums">
+              {skewVal != null ? skewVal.toFixed(4) : '—'}
+            </p>
+          </div>
+          <div>
+            <p className="text-dense-meta text-muted-foreground">Kurtosis</p>
+            <p className="font-mono text-sm font-semibold tabular-nums">
+              {kurtVal != null ? kurtVal.toFixed(4) : '—'}
+            </p>
+          </div>
+        </div>
         <div className="space-y-2">
           <div className="flex items-baseline justify-between">
             <span className="text-dense-meta text-muted-foreground">ATM IV</span>
@@ -277,7 +302,7 @@ function IvSurfaceCard({
 }
 
 export default function AnalysisModelPage() {
-  const [symbol, setSymbol] = useState('SPX')
+  const { symbol } = useResearchContext()
   const sym = symbol.trim().toUpperCase() || 'SPX'
 
   const terrainQ = useQuery({
@@ -313,17 +338,7 @@ export default function AnalysisModelPage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader title="Analysis Model" />
 
-      <Card variant="elevated">
-        <CardContent className="flex items-center gap-3 px-3 py-2">
-          <span className="shrink-0 text-xs font-medium text-muted-foreground">Symbol:</span>
-          <Input
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            className="h-7 w-28 font-mono text-sm"
-            placeholder="SPX"
-          />
-        </CardContent>
-      </Card>
+      <ResearchContextBar showDate={false} />
 
       {isError && <QueryErrorAlert error={terrainQ.error} onRetry={() => void terrainQ.refetch()} />}
 

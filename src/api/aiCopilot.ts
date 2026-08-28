@@ -11,6 +11,60 @@ export type CopilotChatMessage = {
   content: string
 }
 
+/** Frozen stream body field — keep in sync with bifrost-research ClientContext. */
+export type CopilotClientContext = {
+  origin_page?: string
+  origin_label?: string
+  symbol?: string
+  date?: string
+  panel?: string
+  snapshot?: Record<string, unknown>
+  suggested_prompt?: string
+}
+
+export function toCopilotClientContext(
+  intent: {
+    originPage: string
+    originLabel: string
+    symbol?: string
+    date?: string
+    panel?: string
+    snapshot?: Record<string, unknown>
+    suggestedPrompt?: string
+  },
+  options?: { includeSuggested?: boolean },
+): CopilotClientContext {
+  const ctx: CopilotClientContext = {
+    origin_page: intent.originPage,
+    origin_label: intent.originLabel,
+  }
+  if (intent.symbol) ctx.symbol = intent.symbol
+  if (intent.date) ctx.date = intent.date
+  if (intent.panel) ctx.panel = intent.panel
+  if (intent.snapshot && Object.keys(intent.snapshot).length > 0) {
+    ctx.snapshot = intent.snapshot
+  }
+  if (options?.includeSuggested && intent.suggestedPrompt) {
+    ctx.suggested_prompt = intent.suggestedPrompt
+  }
+  return ctx
+}
+
+export function isCopilotClientContextEmpty(
+  ctx: CopilotClientContext | undefined,
+): boolean {
+  if (!ctx) return true
+  return (
+    !ctx.origin_page &&
+    !ctx.origin_label &&
+    !ctx.symbol &&
+    !ctx.date &&
+    !ctx.panel &&
+    (!ctx.snapshot || Object.keys(ctx.snapshot).length === 0) &&
+    !ctx.suggested_prompt
+  )
+}
+
 export type CopilotSseEvent =
   | { event: 'token'; text: string; session_id?: string }
   | {
@@ -82,6 +136,7 @@ export function streamCopilot(
     max_tools?: number
     session_id?: string
     resume?: boolean
+    client_context?: CopilotClientContext
   },
   handlers: StreamHandlers,
 ): AbortController {

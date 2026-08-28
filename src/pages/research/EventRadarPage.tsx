@@ -24,6 +24,8 @@ import {
   type EventRadarRow,
 } from '@/api/researchEngine'
 import { EventRadarDashboard } from '@/components/research/EventRadarDashboard'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 
 type ViewMode = 'events' | 'themes' | 'calendar'
@@ -108,17 +110,31 @@ export default function EventRadarPage() {
         title="Event Radar"
         description="Event table, theme aggregates, and forward calendar"
         actions={
-          <SaveAsHypothesisButton
-            originPage="event-radar"
-            defaultTitle="Event Radar hypothesis"
-            defaultSymbols={topEventSymbols}
-            defaultTags={['events']}
-            originRef={{
-              view,
-              importance: importanceFilter,
-              batch_id: latestBatchId,
-            }}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="event-radar"
+              originLabel="Event Radar"
+              symbol={topEventSymbols[0]}
+              snapshot={compactSnapshot({
+                view,
+                importance: importanceFilter,
+                batch_id: latestBatchId,
+                top_symbols: topEventSymbols,
+              })}
+              suggestedPrompt="Which events on this radar look most material, and which symbols should I watch?"
+            />
+            <SaveAsHypothesisButton
+              originPage="event-radar"
+              defaultTitle="Event Radar hypothesis"
+              defaultSymbols={topEventSymbols}
+              defaultTags={['events']}
+              originRef={{
+                view,
+                importance: importanceFilter,
+                batch_id: latestBatchId,
+              }}
+            />
+          </div>
         }
       />
 

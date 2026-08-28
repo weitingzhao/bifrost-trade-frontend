@@ -11,13 +11,17 @@ import { fetchCopilotSessions } from '@/api/researchCopilotSessions'
  * guarantees a new session shows up in the "Chat history" rail without waiting
  * for the 15s staleTime.
  */
-export function useCopilotSessions(limit = 20) {
+export function useCopilotSessions(limit = 20, search?: string) {
   const qc = useQueryClient()
+  const term = (search ?? '').trim()
   const q = useQuery({
-    queryKey: ['research', 'copilot', 'sessions', limit],
-    queryFn: () => fetchCopilotSessions(limit),
+    queryKey: ['research', 'copilot', 'sessions', limit, term],
+    queryFn: () => fetchCopilotSessions(limit, term),
     staleTime: 15_000,
     refetchOnWindowFocus: true,
+    // Keep the previous list on screen while a new search term resolves,
+    // otherwise the rail flashes empty on every keystroke.
+    placeholderData: (prev) => prev,
   })
 
   useEffect(() => {

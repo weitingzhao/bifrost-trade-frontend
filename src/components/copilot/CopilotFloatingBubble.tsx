@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ResearchUserSwitcher, type ResearchUserSwitcherHandle } from '@/components/auth/ResearchUserSwitcher'
 import { CockpitTabs } from '@/components/cockpit/CockpitTabs'
+import { AskCopilotIntentHost } from '@/components/cockpit/AskCopilotIntentHost'
 import { CockpitSaveHypothesisHost } from '@/components/cockpit/CockpitSaveHypothesisHost'
 import { BridgeDialog } from '@/components/cockpit/BridgeDialog'
 import { ExportSessionMenu } from '@/components/cockpit/ExportSessionMenu'
@@ -159,6 +160,7 @@ export function CopilotFloatingBubble() {
           </Tooltip>
         </div>
         <CockpitSaveHypothesisHost />
+        <AskCopilotIntentHost />
       </>
     )
   }
@@ -403,6 +405,7 @@ export function CopilotFloatingBubble() {
       />
       <BridgeDialog open={bridgeOpen} onOpenChange={setBridgeOpen} sessionId={sessionId} />
       <CockpitSaveHypothesisHost />
+      <AskCopilotIntentHost />
     </>
   )
 }

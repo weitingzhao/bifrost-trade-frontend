@@ -1,3 +1,5 @@
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { PageHeader, PageSection, PageShell } from '@/components/layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +33,19 @@ export default function RiskModelPage() {
       <PageHeader
         title="Risk Model"
         description="Risk model summary from daemon auto status and operations (daily hedge count, daily PnL, spot, ops 24h). Data from GET /risk_summary."
+        actions={
+          <AskCopilotButton
+            originPage="risk"
+            originLabel="Risk Model"
+            snapshot={compactSnapshot({
+              daily_hedge_count: data?.daily_hedge_count,
+              daily_pnl: data?.daily_pnl,
+              spot: data?.spot,
+              ops_24h: data?.operations_count_24h,
+            })}
+            suggestedPrompt="Interpret this risk-model snapshot and flag anything I should watch before the next session."
+          />
+        }
       />
 
       <p className="mt-2 text-sm text-muted-foreground">

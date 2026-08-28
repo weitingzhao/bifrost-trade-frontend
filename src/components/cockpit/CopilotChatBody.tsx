@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Button } from '@/components/ui/button'
 import { AgentChip } from '@/components/cockpit/AgentChip'
 import { CopilotComposer } from '@/components/cockpit/CopilotComposer'
 import { CopilotMessageList } from '@/components/cockpit/CopilotMessageList'
 import { CopilotTracePanel } from '@/components/cockpit/CopilotTracePanel'
+import { InboxBanner } from '@/components/cockpit/InboxBanner'
 import { PersonaMiniCard } from '@/components/cockpit/PersonaMiniCard'
 import { QuickPromptChips } from '@/components/cockpit/QuickPromptChips'
 import { fetchCopilotUsage } from '@/api/aiCopilot'
@@ -82,6 +82,10 @@ export function CopilotChatBody({ className }: Props) {
         )}
       </div>
 
+      {/* Pending agent drafts (RS-UX6) — expands in place so the chat stays
+          visible while approving; renders nothing when the queue is empty. */}
+      <InboxBanner />
+
       <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
         {isEmpty ? (
           <CopilotEmptyIntro onPickPrompt={send} disabled={blocked} />
@@ -95,24 +99,13 @@ export function CopilotChatBody({ className }: Props) {
         )}
       </div>
 
-      <div className="flex items-center justify-end gap-1">
-        <CopilotTracePanel
-          events={traceEvents}
-          collapsed={traceCollapsed}
-          onCollapsedChange={setTraceCollapsed}
-        />
-        {traceEvents.length > 0 ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-6 text-dense-caption shrink-0"
-            onClick={() => setTraceCollapsed(!traceCollapsed)}
-          >
-            {traceCollapsed ? 'Show trace' : 'Hide trace'}
-          </Button>
-        ) : null}
-      </div>
+      {/* The trace header is itself the toggle (RS-UX6 / research-copilot-reach P3),
+          so the separate Show/Hide button that used to sit beside it is gone. */}
+      <CopilotTracePanel
+        events={traceEvents}
+        collapsed={traceCollapsed}
+        onCollapsedChange={setTraceCollapsed}
+      />
       <CopilotComposer
         model={model}
         onModelChange={setModel}

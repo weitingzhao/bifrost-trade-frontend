@@ -124,6 +124,23 @@ export function PlaybookPage() {
         actions={<ResearchUserSwitcher />}
       />
 
+      {/* Program research-copilot-reach P4 — name the knowledge-loop break.
+          The Copilot can propose rules and notes here, and its own agents read
+          them back (research.playbook.rules_active). Trade-side daemon / gate
+          configuration does NOT read this playbook. Under the D10 freeze that
+          is the correct wiring, but nothing in the UI said so, leaving the
+          impression that saving a rule arms it. */}
+      <div
+        role="note"
+        className="rounded-md border border-border/60 bg-secondary px-3 py-2 text-dense-meta leading-snug text-muted-foreground"
+      >
+        <span className="font-medium text-foreground">Advisory only.</span>{' '}
+        These rules and notes inform Copilot reasoning and your own review. They are{' '}
+        <span className="font-medium text-foreground">not</span> read by the trading daemon or
+        gate configuration, and do not arm or block any order — spine{' '}
+        <span className="font-mono">D10</span> (trade execution frozen).
+      </div>
+
       <SegmentControl
         ariaLabel="Playbook section"
         value={tab}

@@ -1,16 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Pencil } from 'lucide-react'
-import { fetchAgentPersonas, type AgentPersona } from '@/api/agentPersona'
-import { agentLabel } from '@/lib/copilot/agentPersonaCatalog'
-import { DenseTag } from '@/components/data-display'
-import { Button } from '@/components/ui/button'
+import { fetchAgentPersonas } from '@/api/agentPersona'
+import { AGENT_LABELS_EN } from '@/lib/copilot/agentPersonaCatalog'
 import { cn } from '@/lib/utils'
 
-function firstLine(md: string): string {
-  const line = md.split('\n').find((l) => l.trim() && !l.startsWith('#'))
-  return (line ?? md.split('\n')[0] ?? '').replace(/^#+\s*/, '').trim()
-}
+const PERSONA_TOTAL = Object.keys(AGENT_LABELS_EN).length
 
 export function PersonaMiniCard({ className }: { className?: string }) {
   const { data, isLoading } = useQuery({
@@ -19,46 +13,20 @@ export function PersonaMiniCard({ className }: { className?: string }) {
     staleTime: 60_000,
   })
 
-  if (isLoading) {
-    return (
-      <p className={cn('text-dense-meta text-muted-foreground', className)}>
-        Loading trading personas…
-      </p>
-    )
-  }
-
-  const agents = data ?? []
+  const customized = (data ?? []).filter((p) => !p.seeded).length
 
   return (
-    <div
-      className={cn(
-        'rounded-md border border-border/60 bg-secondary/30 px-2.5 py-2 space-y-2',
-        className,
-      )}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-dense-label font-medium">My trading personas</p>
-        <Button variant="ghost" size="sm" className="h-7 gap-1 text-dense-meta" asChild>
-          <Link to="/research/agent-personas">
-            <Pencil className="size-3.5" />
-            Edit
-          </Link>
-        </Button>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {agents.map((p: AgentPersona) => (
-          <DenseTag
-            key={p.agent_name}
-            variant="category"
-            size="cell"
-            title={firstLine(p.persona_md)}
-          >
-            {agentLabel(p.agent_name, 'zh', p.label)}: {firstLine(p.persona_md).slice(0, 36)}
-            {firstLine(p.persona_md).length > 36 ? '…' : ''}
-          </DenseTag>
-        ))}
-      </div>
-    </div>
+    <p className={cn('text-center text-dense-caption text-muted-foreground', className)}>
+      Personas:{' '}
+      {isLoading ? '…' : `${customized}/${PERSONA_TOTAL}`} customized
+      {' · '}
+      <Link
+        to="/research/agent-personas"
+        className="text-primary hover:underline"
+      >
+        Personalize
+      </Link>
+    </p>
   )
 }
 

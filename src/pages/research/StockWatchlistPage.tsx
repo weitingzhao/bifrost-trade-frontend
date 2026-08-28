@@ -30,6 +30,8 @@ import {
   type PrimaryWorkflowTab,
 } from '@/utils/watchlistHelpers'
 import { WorkflowStepper } from './watchlist/WorkflowStepper'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { WatchlistPageHeader } from './watchlist/WatchlistPageHeader'
 import { WatchingTab } from './watchlist/WatchingTab'
 import { SizingTab } from './watchlist/SizingTab'
@@ -333,6 +335,18 @@ export default function StockWatchlistPage() {
         onAddInputChange={setAddInput}
         onAdd={() => void handleAddSymbol()}
         onTogglePositionPicker={() => setShowPositionPicker(v => !v)}
+        extraActions={
+          <AskCopilotButton
+            originPage="watchlist"
+            originLabel="Stock Watchlist"
+            symbol={addInput.trim().toUpperCase() || allSymbols[0]}
+            snapshot={compactSnapshot({
+              tab: primaryTab,
+              item_count: items.length,
+            })}
+            suggestedPrompt="Review this watchlist and tell me which names deserve attention first."
+          />
+        }
       />
 
       {isError && <QueryErrorAlert error={error} />}

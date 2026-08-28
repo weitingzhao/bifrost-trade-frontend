@@ -1,5 +1,7 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { Plus, RefreshCw } from 'lucide-react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { cn } from '@/lib/utils'
@@ -370,6 +372,20 @@ export default function InstancesPage() {
               <Plus className="h-3.5 w-3.5 mr-1.5" />
               Create instance
             </Button>
+            {/* Program research-copilot-reach P1 — pairs with the Copilot's
+                trade.strategy_instances tool so the chat starts from what the
+                user is actually filtered to. */}
+            <AskCopilotButton
+              originPage="strategy-instances"
+              originLabel="Strategy Instances"
+              snapshot={compactSnapshot({
+                filtered_count: filtered.length,
+                total_count: allInstances.length,
+                account: accountFilter || undefined,
+                opportunity_id: opportunityIdFilter || undefined,
+              })}
+              suggestedPrompt="这些策略实例目前的状态和风险如何？哪些需要关注或调整？"
+            />
           </>
         }
       />

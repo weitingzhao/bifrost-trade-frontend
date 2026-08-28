@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Radar } from 'lucide-react'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
   CollapsibleGroup,
@@ -85,7 +87,20 @@ export default function MomentumRadarPage() {
 
   return (
     <PageShell padding="default" className="space-y-3">
-      <PageHeader title="Momentum Radar" />
+      <PageHeader
+        title="Momentum Radar"
+        actions={
+          <AskCopilotButton
+            originPage="momentum-radar"
+            originLabel="Momentum Radar"
+            snapshot={compactSnapshot({
+              grade,
+              row_count: items.length,
+            })}
+            suggestedPrompt="From this momentum radar universe, which names look strongest or most stretched?"
+          />
+        }
+      />
 
       <Card variant="elevated">
         <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">

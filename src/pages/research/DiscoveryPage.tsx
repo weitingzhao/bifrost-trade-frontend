@@ -4,6 +4,8 @@ import { postWatchlistItem } from '@/api/market'
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
 import { PageShell } from '@/components/layout'
 import { useDiscoveryNav } from '@/hooks/useDiscoveryNav'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { DiscoveryPageHeader } from '@/components/optionDiscovery/DiscoveryPageHeader'
 import { OdSessionBar } from '@/components/optionDiscovery/OdSessionBar'
 import { OdStickyToc } from '@/components/optionDiscovery/OdStickyToc'
@@ -199,7 +201,25 @@ export default function DiscoveryPage() {
 
   return (
     <PageShell padding="default" className={discoveryRootClass}>
-      <DiscoveryPageHeader pluginStatus={pluginStatus ?? null} />
+      <DiscoveryPageHeader
+        pluginStatus={pluginStatus ?? null}
+        extraActions={
+          <AskCopilotButton
+            originPage="discovery"
+            originLabel="Option Discovery"
+            symbol={selectedSymbol || undefined}
+            snapshot={compactSnapshot({
+              expiration: selectedExpiration,
+              strike_count: strikeCountOption,
+            })}
+            suggestedPrompt={
+              selectedSymbol
+                ? `Walk through the ${selectedSymbol} option chain and highlight unusual strikes or IV.`
+                : 'Help me pick an underlying from this Option Discovery session.'
+            }
+          />
+        }
+      />
 
       <OdSessionBar
         pluginStatus={pluginStatus ?? null}

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
+import { useResearchContext } from '@/hooks/useResearchContext'
 import { labPathForTool } from '@/lib/cockpit/modelCatalog'
 import { cn } from '@/lib/utils'
 
@@ -12,7 +13,8 @@ export function CopilotSourceLink({
   symbol?: string
   className?: string
 }) {
-  const path = labPathForTool(toolName, symbol)
+  const { symbol: contextSymbol } = useResearchContext()
+  const path = labPathForTool(toolName, symbol ?? contextSymbol)
   if (!path) {
     return (
       <span className={cn('text-dense-caption text-muted-foreground font-mono', className)}>

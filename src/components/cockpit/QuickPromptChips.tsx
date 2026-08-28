@@ -3,6 +3,7 @@ import {
   ClipboardList,
   LineChart,
   Radar,
+  ShieldQuestion,
   Sunrise,
   Sunset,
   TrendingUp,
@@ -89,6 +90,17 @@ const PROMPTS: LocalizedPrompt[] = [
     prompt: {
       zh: '总结我目前活跃的假设、当前市场背景，以及下一步的验证步骤。',
       en: 'Summarize my active hypotheses, their current market backdrop, and next validation steps.',
+    },
+  },
+  {
+    // Surfaces the trade.strategy.gate_safety tool added in program
+    // research-copilot-reach P5 — entry gating was previously unaskable.
+    id: 'gates',
+    Icon: ShieldQuestion,
+    label: { zh: '开仓门控', en: 'Entry gates' },
+    prompt: {
+      zh: '当前的 safety gate 配置是什么？结合我的持仓和策略实例说明：现在有什么在阻止开仓？（D10 冻结中，仅需观察说明）',
+      en: 'What is the current safety gate configuration? Combined with my positions and strategy instances, explain what is currently blocking entries. (D10 frozen — observation only.)',
     },
   },
 ]

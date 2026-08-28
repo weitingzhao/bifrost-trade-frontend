@@ -27,6 +27,8 @@ import {
   type ForecastSession,
 } from '@/api/researchEngine'
 import { ProbabilityBar } from '@/components/charts/ProbabilityBar'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { cn } from '@/lib/utils'
@@ -118,7 +120,24 @@ export default function ForecastSessionsPage() {
 
   return (
     <PageShell padding="compact">
-      <PageHeader title="Forecast" />
+      <PageHeader
+        title="Forecast"
+        actions={
+          <AskCopilotButton
+            originPage="forecast-sessions"
+            originLabel="Forecast"
+            symbol={symbol}
+            date={apiDate}
+            snapshot={compactSnapshot({
+              session_count: sessions.length,
+              selected_id: selectedId,
+              path_hit_rate: pathHitRate,
+              avg_miss_pct: avgMissPct,
+            })}
+            suggestedPrompt={`Review the ${symbol} forecast sessions and tell me which paths look most / least reliable.`}
+          />
+        }
+      />
 
       <ResearchContextBar />
 

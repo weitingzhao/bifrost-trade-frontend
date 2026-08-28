@@ -14,6 +14,8 @@ import {
 import { SettlementBadges } from '@/components/data-display/SettlementBadges'
 import { EmptyHint } from '@/components/research/EmptyHint'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { VerdictStrip } from '@/components/research/VerdictStrip'
 import { settlementFineGrain } from '@/lib/researchSettlement'
@@ -338,12 +340,26 @@ export default function DailyBriefPage() {
       <PageHeader
         title="Daily Brief"
         actions={
-          <SaveAsHypothesisButton
-            originPage="daily-brief"
-            defaultTitle={`${sym} daily brief`}
-            defaultSymbols={sym ? [sym] : []}
-            originRef={{ symbol: sym, date: selectedDate }}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="daily-brief"
+              originLabel="Daily Brief"
+              symbol={sym}
+              date={dateInput || undefined}
+              snapshot={compactSnapshot({
+                narrative: verdict.narrative,
+                risk: verdict.risk,
+                opportunity: verdict.opportunity,
+              })}
+              suggestedPrompt={`Based on today's daily brief for ${sym}, highlight the signals I should act on.`}
+            />
+            <SaveAsHypothesisButton
+              originPage="daily-brief"
+              defaultTitle={`${sym} daily brief`}
+              defaultSymbols={sym ? [sym] : []}
+              originRef={{ symbol: sym, date: selectedDate }}
+            />
+          </div>
         }
       />
 

@@ -160,23 +160,25 @@ export function writeStoredModel(id: CopilotModelId) {
 
 /** Map MCP tool domain → Lab route for source chips. */
 export function labPathForTool(toolName: string, symbol?: string): string | null {
+  const name = toolName.toLowerCase()
   const sym = symbol ? `?symbol=${encodeURIComponent(symbol)}` : ''
-  if (toolName.startsWith('research.hypothesis.')) return `/research${sym}`
-  if (toolName.startsWith('research.backtest.')) {
+  if (name.startsWith('research.hypothesis.')) return `/research${sym}`
+  if (name.startsWith('research.backtest.')) {
     return `/research/backtest?tab=event-query${symbol ? `&symbol=${encodeURIComponent(symbol)}` : ''}`
   }
-  if (toolName.startsWith('research.vrp.')) return `/research/vrp-lab${sym}`
-  if (toolName.startsWith('research.vol_surface.')) return `/research/vol-surface-lab${sym}`
-  if (toolName.startsWith('research.opex_cycle.')) return `/research/opex-cycle-lab${sym}`
-  if (toolName.includes('sepa')) return `/research/sepa-daily-core${sym}`
-  if (toolName.includes('event_radar')) return `/research/event-radar${sym}`
-  if (toolName.includes('momentum')) return `/research/momentum-radar${sym}`
-  if (toolName.includes('gex')) return `/research/gex-intraday${sym}`
-  if (toolName.includes('flow')) return `/research/order-sentiment${sym}`
-  if (toolName.includes('forecast') || toolName.includes('daily_brief')) {
+  if (name.startsWith('research.vrp.')) return `/research/vrp-lab${sym}`
+  if (name.startsWith('research.vol_surface.')) return `/research/vol-surface-lab${sym}`
+  if (name.startsWith('research.opex_cycle.')) return `/research/opex-cycle-lab${sym}`
+  if (name.startsWith('research.discovery.')) return `/research/discovery${sym}`
+  if (name.includes('sepa')) return `/research/sepa-daily-core${sym}`
+  if (name.includes('event_radar')) return `/research/event-radar${sym}`
+  if (name.includes('momentum')) return `/research/momentum-radar${sym}`
+  if (name.includes('gex')) return `/research/gex-intraday${sym}`
+  if (name.includes('flow')) return `/research/order-sentiment${sym}`
+  if (name.includes('forecast') || name.includes('daily_brief')) {
     return `/research/daily-brief${sym}`
   }
-  if (toolName.includes('regime')) return `/research/backtest${sym}`
+  if (name.includes('regime')) return `/research/backtest${sym}`
   return null
 }
 

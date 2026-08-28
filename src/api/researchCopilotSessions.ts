@@ -38,8 +38,19 @@ export type PersistedCopilotFrame = {
   ts?: string
 }
 
-export async function fetchCopilotSessions(limit = 10): Promise<CopilotSessionSummary[]> {
-  const res = await fetch(researchEngineUrl(`/research/copilot/sessions?limit=${limit}`), {
+/**
+ * Recent sessions. `q` full-text filters title + message content server-side
+ * (program research-copilot-reach P2) — content matters because the words a
+ * user remembers usually live in the conversation, not the generated title.
+ */
+export async function fetchCopilotSessions(
+  limit = 10,
+  q?: string,
+): Promise<CopilotSessionSummary[]> {
+  const params = new URLSearchParams({ limit: String(limit) })
+  const term = (q ?? '').trim()
+  if (term) params.set('q', term)
+  const res = await fetch(researchEngineUrl(`/research/copilot/sessions?${params}`), {
     headers: getResearchAuthHeaders(),
   })
   if (!res.ok) throw new Error(`sessions HTTP ${res.status}`)

@@ -9,6 +9,8 @@ import { useExecutionsFinal, useExecutionsTws, useExecutionsCanonical } from '@/
 import { useOpportunities, useStructures, useStrategyInstances } from '@/hooks/useStrategies'
 import { deleteExecution } from '@/api/trading'
 import { PageHeader, PageShell } from '@/components/layout'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -395,13 +397,32 @@ export default function PositionsPage() {
         title="Positions"
         description="Open positions (Pool On and Off) and manual execution records."
         actions={
-          portfolioPositionCount > 0 ? (
-            <Badge variant="secondary" className="text-xs">
-              {hasAccountSelection ? totalPositions : 0} position
-              {hasAccountSelection && totalPositions !== 1 ? 's' : ''}
-              {!hasAccountSelection ? ' (select account)' : ''}
-            </Badge>
-          ) : undefined
+          <div className="flex items-center gap-1.5">
+            {portfolioPositionCount > 0 ? (
+              <Badge variant="secondary" className="text-xs">
+                {hasAccountSelection ? totalPositions : 0} position
+                {hasAccountSelection && totalPositions !== 1 ? 's' : ''}
+                {!hasAccountSelection ? ' (select account)' : ''}
+              </Badge>
+            ) : null}
+            {/* Program research-copilot-reach P1 — the Copilot already has
+                trade.portfolio_snapshot / portfolio_risk_summary; this hands it
+                the page's live context so the user need not retype it. */}
+            <AskCopilotButton
+              originPage="positions"
+              originLabel="Positions"
+              symbol={filterSymbol || undefined}
+              snapshot={compactSnapshot({
+                open_tab: openTab,
+                total_positions: hasAccountSelection ? totalPositions : 0,
+                portfolio_position_count: portfolioPositionCount,
+                accounts: accountFilter,
+                filter_symbol: filterSymbol || undefined,
+                filter_expiry: filterExpiry || undefined,
+              })}
+              suggestedPrompt="分析我当前持仓的风险暴露：集中度、净 delta/vega、各标的 IV，以及任何需要减仓或对冲的头寸。"
+            />
+          </div>
         }
       />
 

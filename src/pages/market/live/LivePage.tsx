@@ -3,6 +3,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/badge'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { PageShell } from '@/components/layout'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
@@ -247,6 +249,25 @@ export default function LivePage() {
         {quotesError && (
           <QueryErrorAlert error="Failed to load live quotes — check Market API connection." />
         )}
+
+        {/* Program research-copilot-reach P1 — Live had no Copilot entry point
+            even though the backend exposes trade.market_watchlist / market_quotes.
+            No PageHeader on this compact page, so the button gets its own row. */}
+        <div className="flex items-center justify-end">
+          <AskCopilotButton
+            originPage="market-live"
+            originLabel="Market Live"
+            snapshot={compactSnapshot({
+              watchlist_symbols: streams.watchlistSymbols,
+              watchlist_symbol_count: streams.watchlistSymbols.length,
+              market_streams_ok: marketStreamsOk,
+              active_structure: strategyActive?.structure?.name ?? undefined,
+              active_gate: strategyActive?.gate_safety?.name ?? undefined,
+            })}
+            suggestedPrompt="这些标的今天有什么值得注意的？结合我的持仓说说异常波动和风险。"
+          />
+        </div>
+
 
         {strategyActive && (
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">

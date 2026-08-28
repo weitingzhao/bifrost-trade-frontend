@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SymbolPicker } from '@/components/symbol'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -102,19 +104,33 @@ export default function GreeksPage() {
         title="Contract Greeks"
         description="Historical option greeks from the research API: pick symbol and trade date, then fetch chain rows."
         actions={
-          <SaveAsHypothesisButton
-            originPage="contract-greeks"
-            defaultTitle={symbol ? `${symbol} greeks hypothesis` : 'Contract Greeks hypothesis'}
-            defaultSymbols={symbol ? [symbol] : []}
-            defaultTags={['greeks']}
-            originRef={{
-              symbol,
-              trade_date: resolvedTradeDate || null,
-              risk_free_rate: riskFreeRate,
-              right_filter: rightFilter,
-              rows: result?.count ?? null,
-            }}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="greeks"
+              originLabel="Contract Greeks"
+              symbol={symbol}
+              date={resolvedTradeDate || undefined}
+              snapshot={compactSnapshot({
+                risk_free_rate: riskFreeRate,
+                right_filter: rightFilter,
+                rows: result?.count,
+              })}
+              suggestedPrompt={`Interpret the ${symbol} contract greeks on this date and flag unusual risk.`}
+            />
+            <SaveAsHypothesisButton
+              originPage="contract-greeks"
+              defaultTitle={symbol ? `${symbol} greeks hypothesis` : 'Contract Greeks hypothesis'}
+              defaultSymbols={symbol ? [symbol] : []}
+              defaultTags={['greeks']}
+              originRef={{
+                symbol,
+                trade_date: resolvedTradeDate || null,
+                risk_free_rate: riskFreeRate,
+                right_filter: rightFilter,
+                rows: result?.count ?? null,
+              }}
+            />
+          </div>
         }
       />
 

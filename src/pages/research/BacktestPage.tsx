@@ -33,6 +33,8 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { fetchSettlements, type ForecastSettlement } from '@/api/researchEngine'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { EventQueryBuilder } from '@/components/research/EventQueryBuilder'
 import { BacktestRunResultCard } from '@/components/research/BacktestRunResultCard'
@@ -76,6 +78,7 @@ function rowToResponse(row: BacktestRunRow): EventQueryResponse {
 }
 
 export default function BacktestPage() {
+  const { symbol } = useResearchContext()
   const [params, setParams] = useSearchParams()
   const initialTab = (params.get('tab') as TabKey) || (params.get('run_id') ? 'event-query' : 'settlement')
   const [tab, setTab] = useState<TabKey>(
@@ -107,6 +110,18 @@ export default function BacktestPage() {
       <PageHeader
         title="Backtest"
         description="Settlement replay (RS-A/B baseline) · Event Query (RS-C event-driven engine)"
+        actions={
+          <AskCopilotButton
+            originPage="backtest"
+            originLabel="Backtest"
+            symbol={symbol}
+            snapshot={compactSnapshot({
+              tab,
+              run_id: runIdParam ?? activeResult?.run_id,
+            })}
+            suggestedPrompt="Interpret these backtest results and suggest the next validation step."
+          />
+        }
       />
 
       <SegmentControl

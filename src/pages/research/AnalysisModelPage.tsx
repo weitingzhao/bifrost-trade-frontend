@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { Card, CardContent } from '@/components/ui/card'
@@ -336,7 +338,22 @@ export default function AnalysisModelPage() {
 
   return (
     <PageShell padding="default" className="space-y-3">
-      <PageHeader title="Analysis Model" />
+      <PageHeader
+        title="Analysis Model"
+        actions={
+          <AskCopilotButton
+            originPage="analysis-model"
+            originLabel="Analysis Model"
+            symbol={sym}
+            snapshot={compactSnapshot({
+              regime: terrain?.regime,
+              spot: terrain?.spot ?? smile?.spot,
+              atm_iv: atm?.atm_iv,
+            })}
+            suggestedPrompt={`Walk through the ${sym} analysis-model terrain and smile — what regime is this?`}
+          />
+        }
+      />
 
       <ResearchContextBar showDate={false} />
 

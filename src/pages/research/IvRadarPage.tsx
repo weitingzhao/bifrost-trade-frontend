@@ -24,6 +24,8 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { IvGauge } from '@/components/charts/IvGauge'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { useIvRadarData } from '@/hooks/useIvRadarData'
 import type { IvRadarBucket, IvRadarRow, IvRadarUniverseFilter } from '@/types/ivRadar'
@@ -187,17 +189,30 @@ export default function IvRadarPage() {
         title="IV Radar"
         description="Underlying IV Rank regime for Benchmarks ∪ optionable Watchlist ∪ Holdings. Drill into Option Discovery for chain/structure. Observe-only (D10)."
         actions={
-          <SaveAsHypothesisButton
-            originPage="iv-radar"
-            defaultTitle="IV Radar hypothesis"
-            defaultSymbols={topIvSymbols}
-            defaultTags={['iv-regime']}
-            originRef={{
-              universe: filter,
-              sort: sortMode,
-              view: viewMode,
-            }}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="iv-radar"
+              originLabel="IV Radar"
+              snapshot={compactSnapshot({
+                universe: filter,
+                sort: sortMode,
+                view: viewMode,
+                top_symbols: topIvSymbols,
+              })}
+              suggestedPrompt="From this IV Rank universe, which names look interesting for short-vol observation?"
+            />
+            <SaveAsHypothesisButton
+              originPage="iv-radar"
+              defaultTitle="IV Radar hypothesis"
+              defaultSymbols={topIvSymbols}
+              defaultTags={['iv-regime']}
+              originRef={{
+                universe: filter,
+                sort: sortMode,
+                view: viewMode,
+              }}
+            />
+          </div>
         }
       />
 

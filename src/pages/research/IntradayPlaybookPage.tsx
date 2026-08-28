@@ -21,6 +21,8 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { ProbabilityBar } from '@/components/charts/ProbabilityBar'
 import { ScenarioFanChart } from '@/components/charts/ScenarioFanChart'
 import { SessionTimelineChart } from '@/components/charts/SessionTimelineChart'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { EmptyHint } from '@/components/research/EmptyHint'
 import {
@@ -235,6 +237,21 @@ export default function IntradayPlaybookPage() {
       <PageHeader
         title="Intraday Playbook"
         description="Scenario fan, LIVE bias, and path transitions — observe only (D10)"
+        actions={
+          <AskCopilotButton
+            originPage="intraday-playbook"
+            originLabel="Intraday Playbook"
+            symbol={symbol}
+            date={apiDate}
+            snapshot={compactSnapshot({
+              headline: intradayVerdict.headline,
+              bias: intradayVerdict.biasTag,
+              live_kind: selectedKind,
+              spot: selected?.spot,
+            })}
+            suggestedPrompt={`Given the live intraday playbook for ${symbol}, what bias should I observe and what would invalidate it?`}
+          />
+        }
       />
 
       <ResearchContextBar />

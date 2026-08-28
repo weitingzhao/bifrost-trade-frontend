@@ -20,6 +20,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import {
   fetchSepaCandidates,
@@ -160,23 +162,39 @@ export default function SepaDailyCorePage() {
             : 'SEPA fusion (Fundamental · Trend Template · Momentum · Options Structure) — advisory only (D10)'
         }
         actions={
-          <SaveAsHypothesisButton
-            originPage="sepa-daily-core"
-            defaultTitle={
-              candidateRows.length > 0
-                ? `SEPA setups ${daily.data?.trade_date ?? ''}`.trim()
-                : 'SEPA Daily Core hypothesis'
-            }
-            defaultSymbols={topSepaSymbols}
-            defaultTags={['sepa']}
-            originRef={{
-              trade_date: daily.data?.trade_date ?? null,
-              stage,
-              path,
-              grade,
-              candidate_count: candidateRows.length,
-            }}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="sepa-daily-core"
+              originLabel="SEPA Daily Core"
+              symbol={topSepaSymbols[0]}
+              date={daily.data?.trade_date ?? undefined}
+              snapshot={compactSnapshot({
+                stage,
+                path,
+                grade,
+                candidate_count: candidateRows.length,
+                top_symbols: topSepaSymbols,
+              })}
+              suggestedPrompt="From today's SEPA Daily Core, which SETUP / PIVOT names deserve a closer look?"
+            />
+            <SaveAsHypothesisButton
+              originPage="sepa-daily-core"
+              defaultTitle={
+                candidateRows.length > 0
+                  ? `SEPA setups ${daily.data?.trade_date ?? ''}`.trim()
+                  : 'SEPA Daily Core hypothesis'
+              }
+              defaultSymbols={topSepaSymbols}
+              defaultTags={['sepa']}
+              originRef={{
+                trade_date: daily.data?.trade_date ?? null,
+                stage,
+                path,
+                grade,
+                candidate_count: candidateRows.length,
+              }}
+            />
+          </div>
         }
       />
 

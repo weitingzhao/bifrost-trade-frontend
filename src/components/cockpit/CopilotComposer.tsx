@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Select as SelectPrimitive } from 'radix-ui'
-import { CheckIcon, Send, Square } from 'lucide-react'
+import { CheckIcon, Crosshair, Send, Square, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { AgentActionsMenu } from '@/components/cockpit/AgentActionsMenu'
+import { CopilotContextPopover } from '@/components/cockpit/CopilotContextPopover'
 import {
   Select,
   SelectContent,
@@ -24,6 +25,11 @@ import {
   type ModelTier,
 } from '@/lib/cockpit/modelPreferences'
 import { useCopilotModels } from '@/hooks/useCopilotModels'
+import {
+  askCopilotIntentStore,
+  useAskCopilotIntent,
+} from '@/store/askCopilotIntentStore'
+import { copilotViewStore, useCopilotView } from '@/store/copilotViewStore'
 
 type ModelOption = {
   id: CopilotModelId | string
@@ -74,6 +80,13 @@ function ModelSelectItem({
   )
 }
 
+function contextChipLabel(ctx: { originLabel: string; symbol?: string; date?: string }): string {
+  const parts = [ctx.originLabel]
+  if (ctx.symbol) parts.push(ctx.symbol)
+  if (ctx.date) parts.push(ctx.date)
+  return parts.filter(Boolean).join(' · ')
+}
+
 export function CopilotComposer({
   model,
   onModelChange,
@@ -89,7 +102,46 @@ export function CopilotComposer({
   streaming?: boolean
   disabled?: boolean
 }) {
-  const [text, setText] = useState('')
+  const intent = useAskCopilotIntent()
+  const seed = intent.open && intent.nonce > 0
+
+  return (
+    <ComposerForm
+      key={intent.nonce}
+      model={model}
+      onModelChange={onModelChange}
+      onSend={onSend}
+      onStop={onStop}
+      streaming={streaming}
+      disabled={disabled}
+      initialText={seed ? (intent.suggestedPrompt ?? '') : ''}
+      autoFocus={seed}
+    />
+  )
+}
+
+function ComposerForm({
+  model,
+  onModelChange,
+  onSend,
+  onStop,
+  streaming = false,
+  disabled,
+  initialText,
+  autoFocus,
+}: {
+  model: CopilotModelId
+  onModelChange: (id: CopilotModelId) => void
+  onSend: (text: string) => void
+  onStop?: () => void
+  streaming?: boolean
+  disabled?: boolean
+  initialText: string
+  autoFocus: boolean
+}) {
+  const [text, setText] = useState(initialText)
+  const { view, suppressed } = useCopilotView()
+  const showChip = Boolean(view && !suppressed)
   const { data: modelData } = useCopilotModels()
   const hidden = modelPickerPrefs.useHidden()
 
@@ -152,6 +204,7 @@ export function CopilotComposer({
     if (!canSend) return
     onSend(text.trim())
     setText('')
+    askCopilotIntentStore.consume()
   }
 
   function onSubmit(e: FormEvent) {
@@ -159,7 +212,7 @@ export function CopilotComposer({
     submit()
   }
 
-  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       submit()
@@ -178,7 +231,50 @@ export function CopilotComposer({
           'focus-within:border-primary/35 focus-within:ring-1 focus-within:ring-primary/15',
         )}
       >
-        <Input
+        {/* Context chip doubles as the session-context editor (RS-UX6): the old
+            `Context` tab was a third place showing the same symbol/date. */}
+        <div className="flex items-center gap-1 px-2 pt-1.5">
+          {showChip && view ? (
+            <span
+              data-testid="copilot-context-chip"
+              className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-border/60 bg-secondary/70 pl-1.5 pr-1 py-0.5 text-dense-caption text-foreground"
+            >
+              <CopilotContextPopover>
+                <button
+                  type="button"
+                  className="min-w-0 truncate rounded-sm hover:text-primary"
+                  title="Edit session context — attached to every message"
+                >
+                  {contextChipLabel(view)}
+                </button>
+              </CopilotContextPopover>
+              <button
+                type="button"
+                onClick={() => copilotViewStore.suppress()}
+                aria-label="Remove context"
+                className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ) : (
+            <CopilotContextPopover>
+              <button
+                type="button"
+                data-testid="copilot-context-chip"
+                className="inline-flex items-center gap-1 rounded-md border border-dashed border-border/60 px-1.5 py-0.5 text-dense-caption text-muted-foreground hover:text-foreground"
+                title="Set session context"
+              >
+                <Crosshair className="size-3" />
+                Context
+              </button>
+            </CopilotContextPopover>
+          )}
+          <div className="ml-auto" aria-hidden />
+          <AgentActionsMenu disabled={inputDisabled} />
+        </div>
+        <textarea
+          data-testid="copilot-composer-input"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
@@ -186,14 +282,21 @@ export function CopilotComposer({
             streaming ? '生成中… 点击右侧方块停止' : '问持仓、VRP、OpEx、策略…'
           }
           disabled={inputDisabled}
+          autoFocus={autoFocus}
+          rows={text.length > 90 ? 3 : 2}
           className={cn(
-            'h-9 border-0 bg-transparent shadow-none',
-            'text-dense-label focus-visible:ring-0 focus-visible:ring-offset-0',
-            'rounded-b-none rounded-t-lg px-3',
+            'w-full resize-none border-0 bg-transparent shadow-none',
+            'text-dense-label leading-snug text-foreground',
+            'rounded-b-none rounded-t-lg px-3 py-1.5',
+            'focus-visible:outline-none focus-visible:ring-0',
+            'placeholder:text-muted-foreground',
           )}
         />
 
-        {/* Cursor-style footer: model + advice + send on one row */}
+        {/* Footer: model + send. The always-on advice paragraph used to live here
+            and out-weighed the send button for what is a set-once decision
+            (program research-copilot-reach P4) — it now shows only on hover/focus
+            of the picker, and in full inside the picker panel. */}
         <div className="flex items-center gap-2 border-t border-border/40 px-2 py-1.5">
           <Select
             value={model}
@@ -210,6 +313,7 @@ export function CopilotComposer({
                 '[&_[data-slot=select-value]]:whitespace-nowrap',
               )}
               aria-label="Model"
+              title={practicalAdvice}
             >
               <SelectValue placeholder="Model">{active?.label ?? model}</SelectValue>
             </SelectTrigger>
@@ -249,12 +353,13 @@ export function CopilotComposer({
             </SelectContent>
           </Select>
 
-          <p
-            className="min-w-0 flex-1 text-dense-meta leading-snug text-foreground/75 line-clamp-2"
-            title={practicalAdvice}
-          >
-            {practicalAdvice}
-          </p>
+          {/* Advice stays reachable (title tooltip on the picker + full text in
+              the picker panel) without permanently occupying the row. */}
+          <div className="min-w-0 flex-1" aria-hidden />
+
+          {streaming ? (
+            <span className="shrink-0 text-dense-caption text-muted-foreground">生成中…</span>
+          ) : null}
 
           {streaming && onStop ? (
             <Button

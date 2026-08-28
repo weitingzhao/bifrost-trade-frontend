@@ -20,6 +20,8 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DiscoveryHitList } from '@/components/research/DiscoveryHitList'
 import { HypothesisCard } from '@/components/research/HypothesisCard'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { useActiveHypotheses } from '@/hooks/useHypotheses'
 import { useResearchHomeData } from '@/hooks/useResearchHomeData'
@@ -132,6 +134,16 @@ export default function ResearchHomePage() {
         description="Workflow-oriented landing: active hypotheses, today's discoveries, and recent backtests. Observe-only (D10)."
         actions={
           <div className="flex items-center gap-2">
+            <AskCopilotButton
+              originPage="research-home"
+              originLabel="Research Home"
+              snapshot={compactSnapshot({
+                active_hypotheses: activeCount,
+                discoveries: home.totalDiscoveries,
+                recent_backtests: recentBacktests.length,
+              })}
+              suggestedPrompt="Summarize today's research home: which hypotheses or discoveries should I open first?"
+            />
             <SaveAsHypothesisButton
               originPage="research-home"
               defaultTitle=""

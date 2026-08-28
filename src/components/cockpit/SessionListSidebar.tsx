@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Check,
   FolderPlus,
@@ -9,12 +9,14 @@ import {
   Pin,
   PinOff,
   Plus,
+  Search,
   Tag,
   Trash2,
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PinsSection } from '@/components/cockpit/PinsSection'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,7 +60,17 @@ export function SessionListSidebar({
   onLoaded?: (sessionId: string) => void
   className?: string
 }) {
-  const { data, isLoading, refetch } = useCopilotSessions(50)
+  // Full-text session search (program research-copilot-reach P2).
+  // Debounced like useSymbolSearch — one request per pause, not per keystroke.
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearch(searchInput.trim()), 250)
+    return () => window.clearTimeout(timer)
+  }, [searchInput])
+
+  const { data, isLoading, refetch } = useCopilotSessions(50, search)
+  const searching = search.length > 0
   const { sessionId: currentSessionId } = useCopilotSession()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [groupPromptFor, setGroupPromptFor] = useState<string | null>(null)
@@ -281,6 +293,30 @@ export function SessionListSidebar({
         <span className="text-dense-label font-medium">New chat</span>
       </Button>
 
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute left-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
+        <Input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search sessions…"
+          aria-label="Search sessions"
+          className="h-7 pl-7 pr-6 text-dense-meta"
+        />
+        {searchInput ? (
+          <button
+            type="button"
+            onClick={() => setSearchInput('')}
+            aria-label="Clear search"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-sm text-muted-foreground hover:text-foreground"
+          >
+            <X className="size-3" />
+          </button>
+        ) : null}
+      </div>
+
       {isLoading ? (
         <div className="flex items-center gap-1 text-dense-caption text-muted-foreground py-1">
           <Loader2 className="size-3 animate-spin" /> Loading…
@@ -290,10 +326,21 @@ export function SessionListSidebar({
       {!isLoading && rows.length === 0 ? (
         <div className="flex flex-col items-center gap-1 rounded border border-dashed border-border/50 px-2 py-3 text-center">
           <MessageSquare className="size-4 text-muted-foreground/60" />
-          <span className="text-dense-caption text-muted-foreground">No sessions yet</span>
-          <span className="text-dense-caption text-muted-foreground/70">
-            Ask a question — it will appear here after the first reply.
-          </span>
+          {searching ? (
+            <>
+              <span className="text-dense-caption text-muted-foreground">No match</span>
+              <span className="text-dense-caption text-muted-foreground/70">
+                Searches session titles and message content.
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-dense-caption text-muted-foreground">No sessions yet</span>
+              <span className="text-dense-caption text-muted-foreground/70">
+                Ask a question — it will appear here after the first reply.
+              </span>
+            </>
+          )}
         </div>
       ) : null}
 
@@ -325,6 +372,9 @@ export function SessionListSidebar({
             <ul className="space-y-0.5">{ungrouped.map(renderRow)}</ul>
           </div>
         ) : null}
+
+        {/* Pins share this rail's purpose — "take me back to something" (RS-UX6). */}
+        <PinsSection className="mt-2" />
       </div>
 
       {groupPromptFor ? (

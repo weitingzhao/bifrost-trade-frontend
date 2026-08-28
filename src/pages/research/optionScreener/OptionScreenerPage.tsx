@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { PageHeader, PageShell } from '@/components/layout'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
@@ -79,6 +81,20 @@ export default function OptionScreenerPage() {
       <PageHeader
         title="Option Screener"
         description="Screen options contracts by structure type and filters"
+        actions={
+          <AskCopilotButton
+            originPage="screener"
+            originLabel="Option Screener"
+            symbol={
+              symbolsText.split(/[\n,\s]+/).map((s) => s.trim().toUpperCase()).find(Boolean)
+            }
+            snapshot={compactSnapshot({
+              structure_type: filters.structure_type,
+              group_count: groups.length,
+            })}
+            suggestedPrompt="Interpret these option screener results and flag contracts worth a closer look."
+          />
+        }
       />
 
       <OptionScreenerFilterPanel

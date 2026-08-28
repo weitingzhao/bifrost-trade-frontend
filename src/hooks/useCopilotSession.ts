@@ -8,10 +8,14 @@ import {
   dismissCopilotWrite,
   executeCopilotWrite,
   streamCopilot,
+  isCopilotClientContextEmpty,
+  toCopilotClientContext,
   type CopilotChatMessage,
+  type CopilotClientContext,
   type CopilotSseEvent,
 } from '@/api/aiCopilot'
 import { createExternalStore } from '@/lib/cockpit/externalStore'
+import { copilotViewStore } from '@/store/copilotViewStore'
 import {
   readStoredModel,
   writeStoredModel,
@@ -66,6 +70,7 @@ type CopilotState = {
   activeAgent: string | null
   traceEvents: TraceEvent[]
   traceCollapsed: boolean
+  scrollTargetId: string | null
 }
 
 let abort: AbortController | null = null
@@ -117,6 +122,7 @@ const store = createExternalStore<CopilotState>({
   activeAgent: null,
   traceEvents: [],
   traceCollapsed: true,
+  scrollTargetId: null,
 })
 
 function stripMetaArgs(args: Record<string, unknown>): Record<string, unknown> {
@@ -307,7 +313,13 @@ export const copilotSessionStore = {
   setTraceCollapsed(v: boolean) {
     store.setState({ traceCollapsed: v })
   },
-  send(userText: string) {
+  requestScrollTo(messageId: string) {
+    store.setState({ scrollTargetId: messageId })
+  },
+  clearScrollTarget() {
+    store.setState({ scrollTargetId: null })
+  },
+  send(userText: string, options?: { clientContext?: CopilotClientContext }) {
     const trimmed = userText.trim()
     if (!trimmed || store.getState().streaming) return
 
@@ -330,12 +342,21 @@ export const copilotSessionStore = {
       .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
 
     abort?.abort()
+    const ambient = copilotViewStore.getState()
+    const clientContext =
+      options?.clientContext ??
+      (!ambient.suppressed && ambient.view
+        ? toCopilotClientContext(ambient.view)
+        : undefined)
     abort = streamCopilot(
       {
         messages: history,
         model: store.getState().model,
         max_tools: 8,
         session_id: store.getState().sessionId,
+        ...(isCopilotClientContextEmpty(clientContext)
+          ? {}
+          : { client_context: clientContext }),
       },
       {
         onEvent: applyEvent,
@@ -457,7 +478,11 @@ export const copilotSessionStore = {
 
 export function useCopilotSession() {
   const state = store.useStore()
-  const send = useCallback((text: string) => copilotSessionStore.send(text), [])
+  const send = useCallback(
+    (text: string, options?: { clientContext?: CopilotClientContext }) =>
+      copilotSessionStore.send(text, options),
+    [],
+  )
   const stop = useCallback(() => copilotSessionStore.stop(), [])
   const clearSession = useCallback(() => copilotSessionStore.clearSession(), [])
   const setModel = useCallback(
@@ -476,6 +501,10 @@ export function useCopilotSession() {
     (v: boolean) => copilotSessionStore.setTraceCollapsed(v),
     [],
   )
+  const requestScrollTo = useCallback(
+    (messageId: string) => copilotSessionStore.requestScrollTo(messageId),
+    [],
+  )
   return {
     ...state,
     send,
@@ -485,5 +514,6 @@ export function useCopilotSession() {
     approveWrite,
     rejectWrite,
     setTraceCollapsed,
+    requestScrollTo,
   }
 }

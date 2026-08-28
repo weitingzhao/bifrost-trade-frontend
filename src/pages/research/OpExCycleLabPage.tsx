@@ -18,6 +18,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { VannaCharmMap } from '@/components/charts/VannaCharmMap'
 import {
@@ -270,23 +272,39 @@ export default function OpExCycleLabPage() {
         title="OpEx Cycle Lab"
         description="Third-Friday OpEx cycle — dealer Vanna & Charm, per-strike exposure map, and historical pin-risk. Observe-only (D10)."
         actions={
-          <SaveAsHypothesisButton
-            originPage="opex-cycle-lab"
-            defaultTitle={`${symbol} OpEx cycle hypothesis`}
-            defaultSymbols={[symbol]}
-            defaultTags={['opex-cycle', 'vanna', 'charm']}
-            originRef={{
-              symbol,
-              trade_date: row?.trade_date ?? null,
-              next_opex_date: nextOpex,
-              dte_to_opex_today: dteToday,
-              is_opex_week_today: isOpexWeekToday,
-              total_vanna: row?.total_vanna ?? null,
-              total_charm: row?.total_charm ?? null,
-              vanna_zero_strike: row?.vanna_zero_strike ?? null,
-              charm_zero_strike: row?.charm_zero_strike ?? null,
-            }}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="opex-cycle-lab"
+              originLabel="OpEx Cycle Lab"
+              symbol={symbol}
+              date={row?.trade_date ?? apiDate}
+              snapshot={compactSnapshot({
+                next_opex_date: nextOpex,
+                dte_to_opex_today: dteToday,
+                is_opex_week_today: isOpexWeekToday,
+                total_vanna: row?.total_vanna,
+                total_charm: row?.total_charm,
+              })}
+              suggestedPrompt={`What do current OpEx Vanna/Charm dynamics imply for ${symbol}?`}
+            />
+            <SaveAsHypothesisButton
+              originPage="opex-cycle-lab"
+              defaultTitle={`${symbol} OpEx cycle hypothesis`}
+              defaultSymbols={[symbol]}
+              defaultTags={['opex-cycle', 'vanna', 'charm']}
+              originRef={{
+                symbol,
+                trade_date: row?.trade_date ?? null,
+                next_opex_date: nextOpex,
+                dte_to_opex_today: dteToday,
+                is_opex_week_today: isOpexWeekToday,
+                total_vanna: row?.total_vanna ?? null,
+                total_charm: row?.total_charm ?? null,
+                vanna_zero_strike: row?.vanna_zero_strike ?? null,
+                charm_zero_strike: row?.charm_zero_strike ?? null,
+              }}
+            />
+          </div>
         }
       />
 

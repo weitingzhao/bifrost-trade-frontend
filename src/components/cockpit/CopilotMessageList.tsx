@@ -1,14 +1,16 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { CopilotToolCallCard } from '@/components/cockpit/CopilotToolCallCard'
 import { AgentHandoffChip } from '@/components/cockpit/AgentChip'
 import { personaVersionLabel } from '@/components/cockpit/PersonaMiniCard'
 import { fetchAgentPersonas, type AgentPersona } from '@/api/agentPersona'
 import { DiffApprovalCard } from '@/components/cockpit/DiffApprovalCard'
-import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
+import { linkifyKnownSymbols, MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { MessageActions } from '@/components/cockpit/MessageActions'
 import { EmptyState } from '@/components/data-display'
-import type { CopilotUiMessage } from '@/hooks/useCopilotSession'
+import { useWatchlist } from '@/hooks/useWatchlist'
+import { useResearchContext } from '@/hooks/useResearchContext'
+import { copilotSessionStore, useCopilotSession, type CopilotUiMessage } from '@/hooks/useCopilotSession'
 import { extractDiffPreview } from '@/lib/cockpit/extractDiffPreview'
 import { cn } from '@/lib/utils'
 import { Bot, MessageSquare } from 'lucide-react'
@@ -27,6 +29,20 @@ export function CopilotMessageList({
   className?: string
 }) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const { symbol, setSymbol } = useResearchContext()
+  const { scrollTargetId } = useCopilotSession()
+  const watchlistQ = useWatchlist()
+  const knownSymbols = useMemo(() => {
+    const set = new Set<string>()
+    const ctx = symbol.trim().toUpperCase()
+    if (ctx) set.add(ctx)
+    for (const item of watchlistQ.data?.items ?? []) {
+      const s = (item.symbol || '').trim().toUpperCase()
+      if (s) set.add(s)
+    }
+    return set
+  }, [symbol, watchlistQ.data?.items])
+
   const personasQ = useQuery({
     queryKey: ['agent-personas'],
     queryFn: fetchAgentPersonas,
@@ -37,8 +53,16 @@ export function CopilotMessageList({
   )
 
   useEffect(() => {
+    if (scrollTargetId) return
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [messages])
+  }, [messages, scrollTargetId])
+
+  useEffect(() => {
+    if (!scrollTargetId) return
+    const el = document.querySelector(`[data-copilot-msg="${CSS.escape(scrollTargetId)}"]`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    copilotSessionStore.clearScrollTarget()
+  }, [scrollTargetId])
 
   if (messages.length === 0) {
     return (
@@ -56,6 +80,7 @@ export function CopilotMessageList({
       {messages.map((m) => (
         <div
           key={m.id}
+          data-copilot-msg={m.id}
           className={cn(
             'group/message rounded px-2 py-1.5 text-dense-body leading-snug',
             m.role === 'user' && 'bg-secondary ml-4',
@@ -108,9 +133,16 @@ export function CopilotMessageList({
           )}
           {m.content ? (
             m.role === 'assistant' ? (
-              <MarkdownContent>{m.content}</MarkdownContent>
+              <MarkdownContent
+                knownSymbols={knownSymbols}
+                onSymbolClick={setSymbol}
+              >
+                {m.content}
+              </MarkdownContent>
             ) : (
-              <p className="whitespace-pre-wrap text-dense-label">{m.content}</p>
+              <p className="whitespace-pre-wrap text-dense-label">
+                {linkifyKnownSymbols(m.content, knownSymbols, setSymbol)}
+              </p>
             )
           ) : null}
         </div>

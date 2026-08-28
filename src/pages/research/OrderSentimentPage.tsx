@@ -22,6 +22,8 @@ import {
   fetchMultiLegTrades,
   type OrderSentiment,
 } from '@/api/researchEngine'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { cn } from '@/lib/utils'
@@ -80,7 +82,24 @@ export default function OrderSentimentPage() {
 
   return (
     <PageShell padding="compact">
-      <PageHeader title="Order Sentiment" />
+      <PageHeader
+        title="Order Sentiment"
+        actions={
+          <AskCopilotButton
+            originPage="order-sentiment"
+            originLabel="Order Sentiment"
+            symbol={symbol}
+            date={date || undefined}
+            snapshot={compactSnapshot({
+              data_source: sentiment?.data_source,
+              sentiment_score: sentiment?.sentiment_score,
+              pcr_volume: sentiment?.pcr_volume,
+              multi_leg_count: multiLegRows.length,
+            })}
+            suggestedPrompt={`Interpret ${symbol} order-flow / sentiment from this tape snapshot. What stands out?`}
+          />
+        }
+      />
 
       <ResearchContextBar />
 

@@ -1,7 +1,59 @@
+import { Children, cloneElement, isValidElement, type ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
 import { cn } from '@/lib/utils'
+
+const TICKER_RE = /\b[A-Z]{1,5}\b/g
+
+export function linkifyKnownSymbols(
+  text: string,
+  knownSymbols: ReadonlySet<string>,
+  onSymbolClick: (symbol: string) => void,
+): ReactNode {
+  if (!text || knownSymbols.size === 0) return text
+  const nodes: ReactNode[] = []
+  let last = 0
+  const re = new RegExp(TICKER_RE)
+  let match: RegExpExecArray | null
+  while ((match = re.exec(text)) !== null) {
+    const token = match[0]
+    if (!knownSymbols.has(token)) continue
+    if (match.index > last) nodes.push(text.slice(last, match.index))
+    nodes.push(
+      <button
+        key={`${match.index}-${token}`}
+        type="button"
+        onClick={() => onSymbolClick(token)}
+        className="inline-flex items-center rounded-sm border border-border/50 bg-secondary/70 px-1 py-0 font-mono text-[0.85em] text-entity-symbol hover:border-primary/40 hover:bg-secondary"
+      >
+        {token}
+      </button>,
+    )
+    last = match.index + token.length
+  }
+  if (nodes.length === 0) return text
+  if (last < text.length) nodes.push(text.slice(last))
+  return nodes
+}
+
+function enhanceChildren(
+  children: ReactNode,
+  knownSymbols: ReadonlySet<string>,
+  onSymbolClick: (symbol: string) => void,
+): ReactNode {
+  return Children.map(children, (child) => {
+    if (typeof child === 'string' || typeof child === 'number') {
+      return linkifyKnownSymbols(String(child), knownSymbols, onSymbolClick)
+    }
+    if (isValidElement<{ children?: ReactNode }>(child) && child.props.children != null) {
+      return cloneElement(child, {
+        children: enhanceChildren(child.props.children, knownSymbols, onSymbolClick),
+      })
+    }
+    return child
+  })
+}
 
 /**
  * Markdown renderer for Copilot assistant messages (Wave RS-UX3).
@@ -158,13 +210,44 @@ const components: Components = {
 export function MarkdownContent({
   children,
   className,
+  knownSymbols,
+  onSymbolClick,
 }: {
   children: string
   className?: string
+  knownSymbols?: ReadonlySet<string>
+  onSymbolClick?: (symbol: string) => void
 }) {
+  const map: Components =
+    knownSymbols && onSymbolClick && knownSymbols.size > 0
+      ? {
+          ...components,
+          p: ({ children: kids, ...props }) => (
+            <p {...props} className="my-1 text-dense-label leading-snug text-foreground">
+              {enhanceChildren(kids, knownSymbols, onSymbolClick)}
+            </p>
+          ),
+          li: ({ children: kids, ...props }) => (
+            <li {...props} className="text-dense-label leading-snug">
+              {enhanceChildren(kids, knownSymbols, onSymbolClick)}
+            </li>
+          ),
+          td: ({ children: kids, ...props }) => (
+            <td {...props} className="border-b border-border/30 px-1.5 py-1 align-top">
+              {enhanceChildren(kids, knownSymbols, onSymbolClick)}
+            </td>
+          ),
+          strong: ({ children: kids, ...props }) => (
+            <strong {...props} className="font-semibold text-foreground">
+              {enhanceChildren(kids, knownSymbols, onSymbolClick)}
+            </strong>
+          ),
+        }
+      : components
+
   return (
     <div className={cn('space-y-0', className)}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={map}>
         {children}
       </ReactMarkdown>
     </div>

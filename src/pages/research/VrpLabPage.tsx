@@ -22,6 +22,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { VrpTimeSeriesChart } from '@/components/charts/VrpTimeSeriesChart'
 import {
@@ -265,20 +267,35 @@ export default function VrpLabPage() {
         title="IV-RV Spread Lab"
         description="Volatility Risk Premium (IV − RV) percentile regime. Sell-vol edge when VRP high, buy-vol edge when VRP low. Observe-only (D10)."
         actions={
-          <SaveAsHypothesisButton
-            originPage="vrp-lab"
-            defaultTitle={`${symbol} VRP hypothesis`}
-            defaultSymbols={[symbol]}
-            defaultTags={['vrp', 'iv-rv']}
-            originRef={{
-              symbol,
-              date: latest?.trade_date ?? null,
-              vrp_pct: latest?.vrp_pct_252d ?? null,
-              vrp_60d: latest?.vrp_60d ?? null,
-              atm_iv_30d: latest?.atm_iv_30d ?? null,
-              rv_60d: latest?.rv_60d ?? null,
-            }}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="vrp-lab"
+              originLabel="VRP Lab"
+              symbol={symbol}
+              date={latest?.trade_date ?? undefined}
+              snapshot={compactSnapshot({
+                vrp_pct: latest?.vrp_pct_252d,
+                vrp_60d: latest?.vrp_60d,
+                atm_iv_30d: latest?.atm_iv_30d,
+                rv_60d: latest?.rv_60d,
+              })}
+              suggestedPrompt={`Explain ${symbol} current VRP / IV rank and comparable historical regimes.`}
+            />
+            <SaveAsHypothesisButton
+              originPage="vrp-lab"
+              defaultTitle={`${symbol} VRP hypothesis`}
+              defaultSymbols={[symbol]}
+              defaultTags={['vrp', 'iv-rv']}
+              originRef={{
+                symbol,
+                date: latest?.trade_date ?? null,
+                vrp_pct: latest?.vrp_pct_252d ?? null,
+                vrp_60d: latest?.vrp_60d ?? null,
+                atm_iv_30d: latest?.atm_iv_30d ?? null,
+                rv_60d: latest?.rv_60d ?? null,
+              }}
+            />
+          </div>
         }
       />
 

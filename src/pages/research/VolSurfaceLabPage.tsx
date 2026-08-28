@@ -22,6 +22,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { TermStructureChart } from '@/components/charts/TermStructureChart'
 import { VolSurfaceHeatmap } from '@/components/charts/VolSurface3DChart'
@@ -236,20 +238,35 @@ export default function VolSurfaceLabPage() {
         title="Vol Surface Lab (SVI)"
         description="Gatheral raw SVI fit per expiry. Surface term structure, per-strike residuals, and cross-symbol skew extremes. Observe-only (D10)."
         actions={
-          <SaveAsHypothesisButton
-            originPage="vol-surface-lab"
-            defaultTitle={`${symbol} SVI hypothesis`}
-            defaultSymbols={[symbol]}
-            defaultTags={['vol-surface', 'svi']}
-            originRef={{
-              symbol,
-              trade_date: anchor?.trade_date ?? null,
-              expiry: anchor?.expiry ?? null,
-              atm_vol: anchor?.atm_vol ?? null,
-              atm_slope: anchor?.atm_slope ?? null,
-              fit_rmse: anchor?.fit_rmse ?? null,
-            }}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="vol-surface-lab"
+              originLabel="Vol Surface Lab"
+              symbol={symbol}
+              date={anchor?.trade_date ?? apiDate}
+              snapshot={compactSnapshot({
+                expiry: anchor?.expiry,
+                atm_vol: anchor?.atm_vol,
+                atm_slope: anchor?.atm_slope,
+                fit_rmse: anchor?.fit_rmse,
+              })}
+              suggestedPrompt={`Interpret unusual points on the ${symbol} volatility surface.`}
+            />
+            <SaveAsHypothesisButton
+              originPage="vol-surface-lab"
+              defaultTitle={`${symbol} SVI hypothesis`}
+              defaultSymbols={[symbol]}
+              defaultTags={['vol-surface', 'svi']}
+              originRef={{
+                symbol,
+                trade_date: anchor?.trade_date ?? null,
+                expiry: anchor?.expiry ?? null,
+                atm_vol: anchor?.atm_vol ?? null,
+                atm_slope: anchor?.atm_slope ?? null,
+                fit_rmse: anchor?.fit_rmse ?? null,
+              }}
+            />
+          </div>
         }
       />
 

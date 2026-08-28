@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BookOpen, MoreHorizontal, Sparkles, User } from 'lucide-react'
+import { BookOpen, MoreHorizontal, Settings, Sparkles, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useResearchAuth } from '@/lib/auth/researchUser'
+import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
 
 /** Secondary Copilot actions — panel layout controls stay on the header toolbar. */
 export function CopilotPanelMoreMenu({
@@ -65,6 +66,12 @@ export function CopilotPanelMoreMenu({
             <User className="mr-2 h-3.5 w-3.5" />
             Agent Personas
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {/* Settings lost its tab when the tab bar was retired (RS-UX6). */}
+        <DropdownMenuItem onSelect={() => cockpitDrawerStore.getState().setTab('settings')}>
+          <Settings className="mr-2 h-3.5 w-3.5" />
+          Copilot settings
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

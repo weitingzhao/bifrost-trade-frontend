@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Info } from 'lucide-react'
+import type { ReactNode } from 'react'
 import type { PrimaryWorkflowTab } from '@/utils/watchlistHelpers'
 
 const INFO_TEXT =
@@ -23,6 +24,7 @@ interface Props {
   onAddInputChange: (v: string) => void
   onAdd: () => void
   onTogglePositionPicker: () => void
+  extraActions?: ReactNode
 }
 
 export function WatchlistPageHeader({
@@ -35,6 +37,7 @@ export function WatchlistPageHeader({
   onAddInputChange,
   onAdd,
   onTogglePositionPicker,
+  extraActions,
 }: Props) {
   const showPosBtn =
     (primaryTab === 'watching' || primaryTab === 'positions') && positionsNotInWatchlistCount > 0
@@ -59,6 +62,7 @@ export function WatchlistPageHeader({
               {INFO_TEXT}
             </TooltipContent>
           </Tooltip>
+          {extraActions}
           {showPosBtn && (
             <Button type="button" variant="outline" size="sm" onClick={onTogglePositionPicker}>
               Pos ({positionsNotInWatchlistCount})

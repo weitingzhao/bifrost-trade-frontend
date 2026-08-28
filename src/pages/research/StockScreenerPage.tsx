@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { PageHeader, PageShell } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { InspectorDrawer } from '@/components/positions/InspectorDrawer'
@@ -222,6 +224,21 @@ export default function StockScreenerPage() {
       <PageHeader
         title="Stock Screener"
         description="Discover symbols by SEPA conditions and inspect their daily readiness snapshot."
+        actions={
+          <AskCopilotButton
+            originPage="sepa"
+            originLabel="Stock Screener"
+            symbol={
+              inspector?.symbol ||
+              symbolText.split(/[,\s]+/).map((s) => s.trim().toUpperCase()).find(Boolean)
+            }
+            snapshot={compactSnapshot({
+              result_count: sortedRows.length,
+              symbol_text: symbolText.slice(0, 120),
+            })}
+            suggestedPrompt="From this SEPA stock screener view, which names look most interesting to investigate next?"
+          />
+        }
       />
 
       {criteriaError && (

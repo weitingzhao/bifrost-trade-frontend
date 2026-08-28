@@ -18,6 +18,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { fetchGexIntraday, type GexIntraday } from '@/api/researchEngine'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { GexStrikeChart } from '@/components/charts/GexStrikeChart'
@@ -93,6 +95,22 @@ export default function GexIntradayPage() {
       <PageHeader
         title="GEX Intraday"
         description="OI-GEX (solid) vs Volume-GEX (inner bar) by strike · pick a snapshot row or scroll timeline"
+        actions={
+          <AskCopilotButton
+            originPage="gex-intraday"
+            originLabel="GEX Intraday"
+            symbol={symbol}
+            date={date || undefined}
+            snapshot={compactSnapshot({
+              spot: active?.spot,
+              zero_gamma: active?.zero_gamma,
+              major_call_wall: active?.major_call_wall,
+              major_put_wall: active?.major_put_wall,
+              asof_ts: active?.asof_ts,
+            })}
+            suggestedPrompt={`Explain the current GEX walls and zero-gamma for ${symbol} and what they imply for the session.`}
+          />
+        }
       />
 
       <ResearchContextBar />

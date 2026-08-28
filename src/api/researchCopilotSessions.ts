@@ -1,6 +1,10 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
-
+import { withValidation } from '@/lib/apiValidation'
+import {
+  CopilotSessionDetailSchema,
+  CopilotSessionListSchema,
+} from '@/lib/schemas/research'
 export type CopilotSessionSummary = {
   id: string
   title?: string | null
@@ -43,6 +47,15 @@ export type PersistedCopilotFrame = {
  * (program research-copilot-reach P2) — content matters because the words a
  * user remembers usually live in the conversation, not the generated title.
  */
+const validateSessionList = withValidation<{ rows: CopilotSessionSummary[] }>(
+  CopilotSessionListSchema,
+  'research/copilot/sessions',
+)
+const validateSessionDetail = withValidation<CopilotSessionDetail>(
+  CopilotSessionDetailSchema,
+  'research/copilot/sessions/{id}',
+)
+
 export async function fetchCopilotSessions(
   limit = 10,
   q?: string,
@@ -54,7 +67,7 @@ export async function fetchCopilotSessions(
     headers: getResearchAuthHeaders(),
   })
   if (!res.ok) throw new Error(`sessions HTTP ${res.status}`)
-  const body = (await res.json()) as { rows: CopilotSessionSummary[] }
+  const body = validateSessionList(await res.json())
   return body.rows ?? []
 }
 
@@ -63,7 +76,7 @@ export async function fetchCopilotSession(id: string): Promise<CopilotSessionDet
     headers: getResearchAuthHeaders(),
   })
   if (!res.ok) throw new Error(`session HTTP ${res.status}`)
-  return (await res.json()) as CopilotSessionDetail
+  return validateSessionDetail(await res.json())
 }
 
 export async function archiveCopilotSession(id: string): Promise<void> {

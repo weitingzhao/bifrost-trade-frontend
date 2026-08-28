@@ -4,6 +4,8 @@
  * Reaches `bifrost-research` Research API `:8795` via `researchEngineUrl()`.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { withValidation } from '@/lib/apiValidation'
+import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
 
 export interface VrpRow {
   symbol: string
@@ -63,12 +65,20 @@ function parseRow(raw: unknown): VrpRow | null {
   }
 }
 
+const validateEnvelope = withValidation<{ ok: boolean; data?: unknown; error?: string | null }>(
+  ResearchEnvelopeSchema,
+  'research/vrp',
+)
+
 async function jsonOrThrow<T>(res: Response): Promise<Envelope<T>> {
   const j = (await res.json().catch(() => ({}))) as Envelope<T> & { detail?: string }
   if (!res.ok || j.ok === false) {
     const msg = j.error ?? j.detail ?? `HTTP ${res.status}`
     throw new Error(typeof msg === 'string' ? msg : `HTTP ${res.status}`)
   }
+  // Envelope-level check only — payload shapes vary per endpoint and are
+  // deliberately validated at their own call sites where useful.
+  validateEnvelope(j)
   return j
 }
 

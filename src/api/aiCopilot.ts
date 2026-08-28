@@ -3,6 +3,8 @@
  * Wave RS-F: agent_handoff · guardrail events (back-compat ignored if unknown).
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { withValidation } from '@/lib/apiValidation'
+import { CopilotUsageSchema } from '@/lib/schemas/research'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import type { CopilotModelId } from '@/lib/cockpit/modelCatalog'
 
@@ -110,6 +112,11 @@ export type CopilotUsage = {
   bridge_cost_usd_today?: number
 }
 
+const validateUsage = withValidation<CopilotUsage>(
+  CopilotUsageSchema,
+  'research/copilot/usage',
+)
+
 export async function fetchCopilotUsage(signal?: AbortSignal): Promise<CopilotUsage> {
   const res = await fetch(researchEngineUrl('/research/copilot/usage'), {
     signal,
@@ -118,7 +125,7 @@ export async function fetchCopilotUsage(signal?: AbortSignal): Promise<CopilotUs
   if (!res.ok) {
     throw new Error(`usage HTTP ${res.status}`)
   }
-  return (await res.json()) as CopilotUsage
+  return validateUsage(await res.json())
 }
 
 export type StreamHandlers = {

@@ -6,6 +6,8 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { withValidation } from '@/lib/apiValidation'
+import { DraftListResponseSchema } from '@/lib/schemas/research'
 
 export type DraftKind =
   | 'morning_brief'
@@ -69,6 +71,12 @@ async function unwrap<T>(res: Response): Promise<T> {
   return body.data
 }
 
+/** Feeds InboxBanner — pending_count decides whether the banner renders at all. */
+const validateDraftList = withValidation<DraftListResponse>(
+  DraftListResponseSchema,
+  'research/drafts',
+)
+
 export async function listResearchDrafts(params?: {
   status?: DraftStatus | null
   kind?: DraftKind
@@ -84,10 +92,12 @@ export async function listResearchDrafts(params?: {
   if (params?.kind) qs.set('kind', params.kind)
   if (params?.limit) qs.set('limit', String(params.limit))
   const suffix = qs.toString() ? `?${qs}` : ''
-  return unwrap(
-    await fetch(researchEngineUrl(`/research/drafts${suffix}`), {
-      headers: getResearchAuthHeaders(),
-    }),
+  return validateDraftList(
+    await unwrap(
+      await fetch(researchEngineUrl(`/research/drafts${suffix}`), {
+        headers: getResearchAuthHeaders(),
+      }),
+    ),
   )
 }
 

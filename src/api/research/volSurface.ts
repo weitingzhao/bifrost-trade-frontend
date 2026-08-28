@@ -2,6 +2,8 @@
  * Vol Surface (SVI) API client — Wave RS-B-Surface2.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { withValidation } from '@/lib/apiValidation'
+import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
 
 export interface VolSurfaceFitRow {
   symbol: string
@@ -115,12 +117,20 @@ function parseResidual(raw: unknown): VolSurfaceResidualRow | null {
   }
 }
 
+const validateEnvelope = withValidation<{ ok: boolean; data?: unknown; error?: string | null }>(
+  ResearchEnvelopeSchema,
+  'research/vol-surface',
+)
+
 async function jsonOrThrow<T>(res: Response): Promise<Envelope<T>> {
   const j = (await res.json().catch(() => ({}))) as Envelope<T> & { detail?: string }
   if (!res.ok || j.ok === false) {
     const msg = j.error ?? j.detail ?? `HTTP ${res.status}`
     throw new Error(typeof msg === 'string' ? msg : `HTTP ${res.status}`)
   }
+  // Envelope-level check only — payload shapes vary per endpoint and are
+  // deliberately validated at their own call sites where useful.
+  validateEnvelope(j)
   return j
 }
 

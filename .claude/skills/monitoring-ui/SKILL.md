@@ -1,6 +1,8 @@
 ---
-description: Monitoring page UI rules and visual reference
-alwaysApply: false
+name: monitoring-ui
+description: >-
+  监控页面 UI 修改规则与视觉参考（Skote reference atlas、traffic lights、IB 账户布局）。
+  Use when changing monitoring/daemon/IB-account pages, status lamps, or layout in bifrost-trade-frontend.
 parity-id: monitoring-ui-v1
 ---
 

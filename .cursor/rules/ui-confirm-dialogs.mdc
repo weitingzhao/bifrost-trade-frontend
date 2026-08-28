@@ -1,6 +1,7 @@
 ---
 description: Prefer custom confirm dialogs over window.confirm for destructive actions
 alwaysApply: true
+parity-id: ui-confirm-dialogs-v1
 ---
 
 # UI Confirm Dialogs (Destructive Actions)

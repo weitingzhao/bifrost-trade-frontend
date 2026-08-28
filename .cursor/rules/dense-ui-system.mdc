@@ -1,6 +1,7 @@
 ---
 description: Dense UI design system — mandatory reuse of data-display primitives, tokens, and governance for all frontend UI work
 alwaysApply: true
+parity-id: dense-ui-system-v1
 ---
 
 # Dense UI System (Agent MUST follow)

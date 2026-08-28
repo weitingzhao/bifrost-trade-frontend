@@ -35,8 +35,8 @@ Before any UI work, agents MUST:
 
 1. Read **`docs/TECH_STACK.md`** (locked stack + governance — authoritative)
 2. Read **`docs/DENSE_UI.md`** (dense table / monitoring patterns)
-3. Follow **`.cursor/rules/dense-ui-system.mdc`**
-4. For tables, segments, collapsible panels, or CSS migration: read **`.cursor/skills/dense-ui/SKILL.md`**
+3. Follow the Dense UI system — Cursor: **`.cursor/rules/dense-ui-system.mdc`** · Claude: **`CLAUDE.md` § Dense UI 设计系统**
+4. For tables, segments, collapsible panels, or CSS migration: read **`{.cursor,.claude}/skills/dense-ui/SKILL.md`**
 
 ### Stack
 
@@ -50,7 +50,7 @@ Before any UI work, agents MUST:
 ### Hard rules
 
 - Use `DenseDataTable`, `PnlCell`/`pnlColorClass`, `IconActionButton`, `SegmentControl`, `CollapsibleGroup` — not new table module CSS or `replay-*` classes
-- No `window.confirm` / `window.alert` — use in-app `ConfirmDialog` (see `.cursor/rules/ui-confirm-dialogs.mdc`)
+- No `window.confirm` / `window.alert` — use in-app `ConfirmDialog` (see `.cursor/rules/ui-confirm-dialogs.mdc` · Claude: `CLAUDE.md`)
 - After UI changes: `npm run lint && npm run build && npm run check:legacy-css`
 
 ### Allowed CSS exceptions
@@ -61,9 +61,9 @@ Chart geometry and risk payoff layout only (`PositionsChartsSection.module.css`,
 
 | Topic | File |
 |-------|------|
-| Confirm dialogs | `.cursor/rules/ui-confirm-dialogs.mdc` |
-| Monitoring layout / Skote reference | `.cursor/rules/monitoring-ui.mdc` |
-| Distinctive visual design (large redesigns) | `.cursor/skills/frontend-design/SKILL.md` |
+| Confirm dialogs | `.cursor/rules/ui-confirm-dialogs.mdc` · Claude `CLAUDE.md` |
+| Monitoring layout / Skote reference | `.cursor/rules/monitoring-ui.mdc` · `.claude/skills/monitoring-ui/` |
+| Distinctive visual design (large redesigns) | `{.cursor,.claude}/skills/frontend-design/SKILL.md` |
 | Full project conventions | `CLAUDE.md` |
 
 ## Commands

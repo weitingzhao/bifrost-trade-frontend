@@ -1,6 +1,13 @@
+<!--
+parity-ids: dense-ui-system-v1, ui-confirm-dialogs-v1
+对等文件: .cursor/rules/{dense-ui-system,ui-confirm-dialogs}.mdc
+改任一侧必须同步另一侧并 bump 两侧版本号；校验: bash ../scripts/check-agent-config-parity.sh
+-->
+
 # CLAUDE.md — bifrost-trade-frontend
 
-> 本项目是 bifrost-trader-engine 重构的一部分。迁移进度见 `bifrost-trade-infra/docs/MIGRATION_TRACKING.md`。
+> Legacy `bifrost-trader-engine` 已按 spine **D8**（2026-06-29）NAS 归档并移出工作区，重构完成。
+> 工作区事实基线见 `../AGENT_FACTS.md`。
 
 与本项目用户对话一律使用中文回复（无论用户用何种语言提问）；UI 字符串与代码标识符使用 English。
 
@@ -30,20 +37,17 @@
 
 ---
 
-## ⚠️ 关于 bifrost-trader-engine 参考源的使用规则
+## ⚠️ 架构禁令（Legacy 遗留问题清单）
 
-`bifrost-trader-engine/frontend/` 是**只读参考**，用于理解业务逻辑，**不得复制其代码**：
+Legacy 前端（`bifrost-trader-engine/frontend`，已随 D8 归档，不可访问）存在以下问题，
+**本项目严禁重现** —— 这些是已确立的架构禁令，不是待办事项：
 
-- 读旧代码：了解「要展示什么数据、调哪些 API、有什么交互逻辑」
-- 写新代码：用本文档规定的正确架构重新实现同样的业务
-
-旧代码存在以下已知问题，**新项目中严禁重现**：
-- App.tsx 1963 行，27 个 useState 混杂路由/数据/UI 三类状态
-- 页面组件内直接写 useEffect + fetch，无 custom hook 封装
-- App.css 31,769 行单文件，魔法数字泛滥
-- SSE 订阅逻辑散落在 App.tsx 顶层
-- 无 ESLint/Prettier，有 console.log 残留
-- vite.config.ts 用 Python 脚本加载端口，无 fallback
+- App.tsx 1963 行，27 个 useState 混杂路由/数据/UI 三类状态 → App.tsx 仅含路由 + Provider
+- 页面组件内直接写 useEffect + fetch，无 custom hook 封装 → 强制用 TanStack Query hook
+- App.css 31,769 行单文件，魔法数字泛滥 → Tailwind + token，禁原生色板与内联 hex
+- SSE 订阅逻辑散落在 App.tsx 顶层 → 封装成独立 hook，每个 EventSource 必须有 cleanup
+- 无 ESLint/Prettier，有 console.log 残留 → ESLint `no-console` 强制拦截
+- vite.config.ts 用 Python 脚本加载端口 → `.env` + `VITE_API_*` 变量
 
 ---
 
@@ -171,8 +175,8 @@ function useQuoteStream(symbols: string[]) {
 相同交互必须复用 `@/components/data-display` 原语；改 token/组件一处，全站采纳者统一升级。Agent 必读：
 
 - `docs/DENSE_UI.md` · `AGENTS.md`
-- `.cursor/rules/dense-ui-system.mdc`（alwaysApply）
-- `.cursor/skills/dense-ui/SKILL.md`（表格/迁移任务）
+- Cursor: `.cursor/rules/dense-ui-system.mdc`（alwaysApply）· `.cursor/skills/dense-ui/SKILL.md`
+- Claude: 本文件本节 · `.claude/skills/dense-ui/`（表格/迁移任务）
 
 UI 改动后运行 `npm run check:legacy-css`。
 
@@ -253,36 +257,10 @@ VITE_API_MARKET_DATA_PLUGIN=http://localhost:8780/api/v1/plugins/market-data/api
 
 ---
 
-## ⚠️ 前端先行、API 后迁（阶段 1 约束）
+## API 目标
 
-**当前处于阶段 1：New Frontend + Legacy API。** 在新前端所有页面业务等价于 Legacy 之前，不迁移后端 API。
-
-- `src/api/*.ts` 中的 fetch 函数**全部指向 Legacy API**（通过 `VITE_API_*` 环境变量连接 bifrost-trader-engine 后端）
-- 每完成一个页面，需与 Legacy Frontend 在同一 Legacy API 上对比验证业务行为
-- **禁止**在此阶段修改 API 响应格式或迁移 `bifrost-trade-api` 的实现
-- 详见 `.cursor/rules/migration-protocol.mdc` 中「前端先行、API 后迁」章节
-
----
-
-## 页面迁移顺序
-
-从 `bifrost-trader-engine/frontend/` 参考旧逻辑，按以下顺序迁移到本 repo：
-
-1. **Layout Shell**：AppSidebar + AppHeader + AppLayout（无页面内容，先跑通路由框架）
-2. **简单只读页面**（3–5 个）：DaemonStatusPage、AccountsPage → 验证 TanStack Query 数据流
-3. **中等复杂页面**：PositionsPage、WatchlistPage、TradeHistoryPage
-4. **实时行情页面**：LivePage（SSE 行情流 + SSE 系统消息）
-5. **Research 域**：OptionScreenerPage、OptionGreeksPage、SEPA 相关页面
-6. **Strategy 域**：StrategyInstancesPage（含 RightInspectorDrawer）
-7. **Operations 域**：DaemonStatusPage、LogConsolePage（多路 SSE 日志流）
-8. **Settings**：最后迁移，配置项最多、子菜单最复杂
-
-每迁移一个页面必须：
-- 读旧代码理解 API 调用和业务逻辑
-- 用 TanStack Query hook 重新实现数据获取
-- SSE 封装成独立 hook，带正确 cleanup
-- 无 console.log、无 any 类型
-- 与 Legacy Frontend 在同一 API 上对比确认业务等价
+Phase 1（New FE + Legacy API）与 Phase 2（逐域切换）均已完成，Legacy 全线退役（spine **D8**）。
+当前 API 目标由 `.env.development.local` / `.env.development.k3s` 控制，见上文 DEV Inner Loop。
 
 ---
 

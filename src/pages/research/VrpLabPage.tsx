@@ -22,16 +22,30 @@ import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
+import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
+import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
+import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
+import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { VrpTimeSeriesChart } from '@/components/charts/VrpTimeSeriesChart'
 import {
   useVrpExtremes,
   useVrpHistory,
   useVrpLatest,
 } from '@/hooks/useVrpData'
+import {
+  PORTFOLIO_UNIVERSE_OPTIONS,
+  usePortfolioSymbols,
+  type PortfolioUniverse,
+} from '@/hooks/usePortfolioSymbols'
 import { useResearchContext } from '@/hooks/useResearchContext'
+import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
+import { copilotViewStore } from '@/store/copilotViewStore'
 import { cn } from '@/lib/utils'
 import type { VrpRow } from '@/api/research/vrp'
 
@@ -63,17 +77,17 @@ function percentileBandTone(
 }
 
 function percentileBandLabel(pct: number | null | undefined): string {
-  if (pct == null || !Number.isFinite(pct)) return 'No data'
-  if (pct >= 80) return 'High VRP'
-  if (pct <= 20) return 'Low VRP'
-  return 'Neutral'
+  if (pct == null || !Number.isFinite(pct)) return 'No VRP — wait'
+  if (pct >= 80) return 'Sell-vol edge'
+  if (pct <= 20) return 'Buy-vol edge'
+  return 'No VRP edge — flat'
 }
 
 function verdictText(row: VrpRow | null | undefined): string {
-  if (!row) return 'No VRP data available for this symbol yet.'
+  if (!row) return 'No VRP yet — wait for 252d history before sizing vol.'
   const pct = row.vrp_pct_252d
   if (pct == null || !Number.isFinite(pct)) {
-    return `${row.symbol}: VRP percentile not yet computed (needs ≥252d of history).`
+    return `${row.symbol}: VRP percentile not ready (needs ≥252d) — do not size from this page.`
   }
   const iv = row.atm_iv_30d
   const rv = row.rv_60d
@@ -82,12 +96,12 @@ function verdictText(row: VrpRow | null | undefined): string {
   const rvStr = rv != null ? fmtPct(rv) : '—'
   const spreadStr = spread != null ? fmtSpread(spread) : '—'
   if (pct >= 80) {
-    return `${row.symbol}: VRP at ${fmtPercentile(pct)}th percentile — sell-vol edge significant (IV ${ivStr} > RV ${rvStr}, spread ${spreadStr}).`
+    return `Prefer short premium in ${row.symbol}: VRP ${fmtPercentile(pct)}th pctl (IV ${ivStr} > RV ${rvStr}, spread ${spreadStr}). Confirm with IV Rank.`
   }
   if (pct <= 20) {
-    return `${row.symbol}: VRP at ${fmtPercentile(pct)}th percentile — buy-vol edge (IV ${ivStr} < RV ${rvStr}, spread ${spreadStr}).`
+    return `Prefer long premium in ${row.symbol}: VRP ${fmtPercentile(pct)}th pctl (IV ${ivStr} < RV ${rvStr}, spread ${spreadStr}). Confirm with IV Rank.`
   }
-  return `${row.symbol}: VRP at ${fmtPercentile(pct)}th percentile — neutral regime (IV ${ivStr}, RV60 ${rvStr}).`
+  return `${row.symbol} VRP mid-band (${fmtPercentile(pct)}th) — no standalone sell/buy-vol edge (IV ${ivStr}, RV60 ${rvStr}).`
 }
 
 function DistributionBar({
@@ -158,6 +172,79 @@ function DistributionBar({
   )
 }
 
+/** Wave 16 — dual histogram of ATM IV vs RV levels (10 bins on shared max). */
+function IvRvDualHistogram({ rows }: { rows: VrpRow[] }) {
+  const { ivBins, rvBins, max, n } = useMemo(() => {
+    const ivs: number[] = []
+    const rvs: number[] = []
+    rows.forEach((r) => {
+      if (r.atm_iv_30d != null && Number.isFinite(r.atm_iv_30d)) ivs.push(r.atm_iv_30d)
+      if (r.rv_60d != null && Number.isFinite(r.rv_60d)) rvs.push(r.rv_60d)
+    })
+    const all = [...ivs, ...rvs]
+    if (all.length === 0) {
+      return { ivBins: [] as number[], rvBins: [] as number[], max: 1, n: 0 }
+    }
+    const lo = Math.min(...all)
+    const hi = Math.max(...all)
+    const span = hi - lo || 1
+    const empty = () => Array.from({ length: 10 }, () => 0)
+    const ivBins = empty()
+    const rvBins = empty()
+    const place = (v: number, buckets: number[]) => {
+      const idx = Math.min(9, Math.max(0, Math.floor(((v - lo) / span) * 10)))
+      buckets[idx] += 1
+    }
+    ivs.forEach((v) => place(v, ivBins))
+    rvs.forEach((v) => place(v, rvBins))
+    const max = Math.max(1, ...ivBins, ...rvBins)
+    return { ivBins, rvBins, max, n: Math.max(ivs.length, rvs.length) }
+  }, [rows])
+
+  if (n === 0) {
+    return (
+      <p className="py-4 text-center text-dense-meta text-muted-foreground">
+        IV / RV history not populated yet.
+      </p>
+    )
+  }
+
+  const render = (bins: number[], tone: 'iv' | 'rv') => (
+    <div className="flex items-end gap-0.5 h-20 flex-1">
+      {bins.map((count, i) => (
+        <div
+          key={i}
+          className={cn(
+            'flex-1 rounded-sm',
+            tone === 'iv' ? 'bg-sky-500/70' : 'bg-amber-500/70',
+          )}
+          style={{ height: `${Math.max((count / max) * 100, 2)}%` }}
+          title={`${tone.toUpperCase()} bin ${i + 1}: ${count}`}
+        />
+      ))}
+    </div>
+  )
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-3">
+        <div className="flex-1 space-y-1">
+          <p className="text-dense-micro text-muted-foreground">ATM IV 30d</p>
+          {render(ivBins, 'iv')}
+        </div>
+        <div className="flex-1 space-y-1">
+          <p className="text-dense-micro text-muted-foreground">RV 60d</p>
+          {render(rvBins, 'rv')}
+        </div>
+      </div>
+      <p className="text-dense-meta text-muted-foreground">
+        Dual histogram over trailing history ({n} days). Shared scale — rich IV sits right of RV when
+        sell-vol edge is present.
+      </p>
+    </div>
+  )
+}
+
 function ExtremesTable({
   rows,
   bucket,
@@ -205,6 +292,7 @@ function ExtremesTable({
                   ariaLabel={`Load ${row.symbol} in VRP Lab`}
                   onClick={() => onPick(row.symbol)}
                 />
+                <PortfolioTag symbol={row.symbol} variant="row-suffix" />
                 <DenseTag variant={bucket === 'high' ? 'success' : 'danger'}>
                   {bucket === 'high' ? 'Sell-vol' : 'Buy-vol'}
                 </DenseTag>
@@ -236,6 +324,8 @@ export default function VrpLabPage() {
   const navigate = useNavigate()
   const { symbol, setSymbol } = useResearchContext()
   const [bucket, setBucket] = useState<Bucket>('high')
+  const [universe, setUniverse] = useState<PortfolioUniverse>('all')
+  const { filterSymbols } = usePortfolioSymbols()
 
   const latestQ = useVrpLatest(symbol)
   const historyQ = useVrpHistory(symbol, 252)
@@ -243,20 +333,20 @@ export default function VrpLabPage() {
 
   const latest = latestQ.data ?? null
   const history = historyQ.data ?? []
-  const extremes = extremesQ.data?.rows ?? []
+  const extremes = useMemo(() => {
+    const rows = extremesQ.data?.rows ?? []
+    if (universe === 'all') return rows
+    const allowed = new Set(filterSymbols(universe, rows.map((r) => r.symbol)))
+    return rows.filter((r) => allowed.has(r.symbol))
+  }, [extremesQ.data?.rows, universe, filterSymbols])
 
   const verdictTone = percentileBandTone(latest?.vrp_pct_252d)
   const verdictLabel = percentileBandLabel(latest?.vrp_pct_252d)
   const verdictTextValue = verdictText(latest)
-
-  const verdictToneClass =
-    verdictTone === 'success'
-      ? 'border-success/40 text-success'
-      : verdictTone === 'danger'
-        ? 'border-destructive/40 text-destructive'
-        : verdictTone === 'warning'
-          ? 'border-warning/40 text-warning'
-          : 'border-border text-muted-foreground'
+  const symbolOutOfUniverse =
+    universe !== 'all' &&
+    Boolean(symbol.trim()) &&
+    filterSymbols(universe, [symbol]).length === 0
 
   const anyLoading = latestQ.isLoading || historyQ.isLoading
   const anyError = latestQ.isError || historyQ.isError
@@ -286,14 +376,17 @@ export default function VrpLabPage() {
               defaultTitle={`${symbol} VRP hypothesis`}
               defaultSymbols={[symbol]}
               defaultTags={['vrp', 'iv-rv']}
-              originRef={{
+              originRef={withWatchlistContractKey(
+                {
+                  symbol,
+                  date: latest?.trade_date ?? null,
+                  vrp_pct: latest?.vrp_pct_252d ?? null,
+                  vrp_60d: latest?.vrp_60d ?? null,
+                  atm_iv_30d: latest?.atm_iv_30d ?? null,
+                  rv_60d: latest?.rv_60d ?? null,
+                },
                 symbol,
-                date: latest?.trade_date ?? null,
-                vrp_pct: latest?.vrp_pct_252d ?? null,
-                vrp_60d: latest?.vrp_60d ?? null,
-                atm_iv_30d: latest?.atm_iv_30d ?? null,
-                rv_60d: latest?.rv_60d ?? null,
-              }}
+              )}
             />
           </div>
         }
@@ -301,34 +394,86 @@ export default function VrpLabPage() {
 
       <ResearchContextBar showDate={false} />
 
-      <Card variant="elevated" className={cn('border', verdictToneClass)}>
-        <CardContent className="flex flex-col gap-1 px-3 py-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <DenseTag
-              variant={
-                verdictTone === 'success'
-                  ? 'success'
-                  : verdictTone === 'danger'
-                    ? 'danger'
-                    : verdictTone === 'warning'
-                      ? 'warning'
-                      : 'neutral'
-              }
-            >
-              {verdictLabel}
-            </DenseTag>
-            <span className="text-dense-label text-foreground">{verdictTextValue}</span>
-          </div>
-          {latest ? (
-            <p className="text-dense-caption text-muted-foreground">
-              Trade date{' '}
-              <span className="font-mono">{latest.trade_date ?? '—'}</span> ·
-              VRP20 {fmtSpread(latest.vrp_20d)} · VRP60 {fmtSpread(latest.vrp_60d)} ·
-              Percentile {fmtPercentile(latest.vrp_pct_252d)}
-            </p>
+      <SymbolContextGuard symbol={symbol}>
+
+      {symbol.trim() ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-dense-label font-semibold text-entity-symbol">
+            {symbol.trim().toUpperCase()}
+          </span>
+          <PortfolioTag symbol={symbol} variant="inline" />
+          {symbolOutOfUniverse ? (
+            <span className="text-dense-meta text-muted-foreground">Not in holdings/watchlist</span>
           ) : null}
+        </div>
+      ) : null}
+
+      <Card variant="elevated">
+        <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">
+          <span className="text-dense-meta font-medium text-muted-foreground shrink-0">Universe:</span>
+          <SegmentControl
+            ariaLabel="Portfolio universe filter"
+            size="sm"
+            value={universe}
+            onChange={(v) => setUniverse(v as PortfolioUniverse)}
+            options={[...PORTFOLIO_UNIVERSE_OPTIONS]}
+          />
         </CardContent>
       </Card>
+
+      <CompositeRegimeRibbon symbol={symbol} />
+
+      {(verdictTone === 'success' || verdictTone === 'danger') && latest ? (
+        <CopilotAutoInsightChip
+          message={`${symbol} VRP percentile ${fmtPercentile(latest.vrp_pct_252d)} looks ${verdictLabel.toLowerCase()}.`}
+          tone={verdictTone}
+          onAsk={() => {
+            copilotViewStore.unsuppress()
+            askCopilotIntentStore.open({
+              originPage: 'vrp-lab',
+              originLabel: 'VRP Lab',
+              symbol,
+              suggestedPrompt: `Explain ${symbol} current VRP regime and similar historical outcomes.`,
+              snapshot: compactSnapshot({
+                vrp_pct: latest.vrp_pct_252d,
+                vrp_60d: latest.vrp_60d,
+              }),
+            })
+          }}
+        />
+      ) : null}
+
+      <AnalyzeVerdictStrip
+        tone={verdictTone}
+        verdictLabel={verdictLabel}
+        narrative={verdictTextValue}
+        signals={[
+          { label: 'VRP60', value: fmtSpread(latest?.vrp_60d) },
+          { label: 'ATM IV', value: fmtPct(latest?.atm_iv_30d) },
+          { label: 'RV60', value: fmtPct(latest?.rv_60d) },
+          { label: 'Pctl', value: fmtPercentile(latest?.vrp_pct_252d) },
+        ]}
+        nextMoves={[
+          {
+            label: 'Option Discovery',
+            href: `/research/discovery?symbol=${encodeURIComponent(symbol)}`,
+          },
+          {
+            label: 'Watchlist',
+            href: `/research/watchlist`,
+          },
+          {
+            label: 'IV Radar',
+            href: `/research/iv-radar`,
+          },
+        ]}
+      />
+
+      <SimilarRegimeCard
+        lens="vrp"
+        symbol={symbol}
+        value={latest?.vrp_pct_252d}
+      />
 
       {anyError ? (
         <QueryErrorAlert
@@ -362,12 +507,38 @@ export default function VrpLabPage() {
       <Card variant="elevated">
         <CardContent className="space-y-2 px-3 py-2">
           <p className="text-dense-label font-medium text-foreground">
+            IV vs RV dual histogram (industry strip)
+          </p>
+          {anyLoading ? (
+            <Skeleton className="h-24 w-full rounded-md" />
+          ) : (
+            <IvRvDualHistogram rows={history} />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card variant="elevated">
+        <CardContent className="space-y-2 px-3 py-2">
+          <p className="text-dense-label font-medium text-foreground">
             VRP percentile distribution ({symbol})
           </p>
           {anyLoading ? (
             <Skeleton className="h-24 w-full rounded-md" />
           ) : (
             <DistributionBar rows={history} currentPct={latest?.vrp_pct_252d} />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card variant="elevated">
+        <CardContent className="space-y-2 px-3 py-2">
+          <p className="text-dense-label font-medium text-foreground">
+            IV vs RV distribution ({symbol})
+          </p>
+          {anyLoading ? (
+            <Skeleton className="h-24 w-full rounded-md" />
+          ) : (
+            <IvRvDualHistogram rows={history} />
           )}
         </CardContent>
       </Card>
@@ -416,6 +587,7 @@ export default function VrpLabPage() {
         VRP = ATM IV(30d) − RV(60d). Percentile rank over trailing 252 sessions. Historical
         edge only — not investment advice. D10: no live order execution from this page.
       </p>
+      </SymbolContextGuard>
     </PageShell>
   )
 }

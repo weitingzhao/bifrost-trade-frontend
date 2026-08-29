@@ -4,10 +4,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   approveResearchDraft,
+  createResearchDraft,
   dismissResearchDraft,
   listResearchDrafts,
   runEodAgent,
   runMorningAgent,
+  type CreateResearchDraftBody,
   type DraftKind,
   type DraftStatus,
 } from '@/api/researchDrafts'
@@ -53,6 +55,16 @@ export function useDismissDraft() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => dismissResearchDraft(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: researchDraftsQueryKey })
+    },
+  })
+}
+
+export function useCreateResearchDraft() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateResearchDraftBody) => createResearchDraft(body),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: researchDraftsQueryKey })
     },

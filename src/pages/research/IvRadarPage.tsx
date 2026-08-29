@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueries } from '@tanstack/react-query'
 import { Radar } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
@@ -23,11 +24,31 @@ import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { IvGauge } from '@/components/charts/IvGauge'
+import { IvRankStrip } from '@/components/charts/IvRankStrip'
+import { DenseSparkline } from '@/components/charts/DenseSparkline'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
+import { fetchIvRankHistory } from '@/api/research/ivRadar'
+import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
+import {
+  AnalyzeVerdictStrip,
+  type AnalyzeVerdictTone,
+} from '@/components/research/AnalyzeVerdictStrip'
+import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
+import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { useIvRadarData } from '@/hooks/useIvRadarData'
+import {
+  PORTFOLIO_UNIVERSE_OPTIONS,
+  usePortfolioSymbols,
+  type PortfolioUniverse,
+} from '@/hooks/usePortfolioSymbols'
+import { useResearchContext } from '@/hooks/useResearchContext'
+import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
+import { copilotViewStore } from '@/store/copilotViewStore'
 import type { IvRadarBucket, IvRadarRow, IvRadarUniverseFilter } from '@/types/ivRadar'
 import {
   IV_RADAR_BUCKET_HINTS,
@@ -65,6 +86,35 @@ function bucketLabel(bucket: IvRadarBucket): string {
   if (bucket === 'neutral') return 'Neutral'
   if (bucket === 'low') return 'Low'
   return 'No data'
+}
+
+function ivRankVerdictTone(rank: number | null | undefined): AnalyzeVerdictTone {
+  if (rank == null || !Number.isFinite(rank)) return 'neutral'
+  if (rank >= 60) return 'danger'
+  if (rank <= 30) return 'success'
+  return 'warning'
+}
+
+function ivRankVerdictLabel(rank: number | null | undefined): string {
+  if (rank == null || !Number.isFinite(rank)) return 'No IV Rank — wait'
+  if (rank >= 60) return 'Sell premium bias'
+  if (rank <= 30) return 'Buy premium bias'
+  return 'No edge — stay flat'
+}
+
+function ivRankVerdictSummary(row: IvRadarRow | null): string {
+  if (!row) return 'No IV Rank for this symbol — wait for radar compute before sizing vol.'
+  const rank = row.data?.iv_rank_1y
+  if (rank == null || !Number.isFinite(rank)) {
+    return `${row.symbol}: IV Rank not computed yet — do not size from this row.`
+  }
+  if (rank >= 60) {
+    return `${row.symbol} IV Rank ${fmtRankPct(rank)} (${bucketLabel(row.bucket)}) — prefer short premium / defined-risk shorts if VRP agrees. IV ${fmtIv(row.data?.iv_current)}.`
+  }
+  if (rank <= 30) {
+    return `${row.symbol} IV Rank ${fmtRankPct(rank)} (${bucketLabel(row.bucket)}) — prefer long premium / debit structures. IV ${fmtIv(row.data?.iv_current)}.`
+  }
+  return `${row.symbol} IV Rank ${fmtRankPct(rank)} mid-band — no standalone vol edge; wait for VRP or GEX confirmation.`
 }
 
 function sortRows(rows: IvRadarRow[], mode: SortMode): IvRadarRow[] {
@@ -125,8 +175,34 @@ function RegimeCard({
   )
 }
 
-function GaugeGridView({ rows, navigate }: { rows: IvRadarRow[]; navigate: ReturnType<typeof useNavigate> }) {
+function GaugeGridView({
+  rows,
+  navigate,
+}: {
+  rows: IvRadarRow[]
+  navigate: ReturnType<typeof useNavigate>
+}) {
   const withData = rows.filter((r) => r.bucket !== 'no_data')
+  const sparkSymbols = useMemo(() => withData.slice(0, 12).map((r) => r.symbol), [withData])
+  const sparkQueries = useQueries({
+    queries: sparkSymbols.map((sym) => ({
+      queryKey: ['iv-rank-history', sym, 90],
+      queryFn: () => fetchIvRankHistory(sym, 90),
+      staleTime: 5 * 60_000,
+    })),
+  })
+  const sparkBySymbol = useMemo(() => {
+    const map = new Map<string, number[]>()
+    sparkSymbols.forEach((sym, i) => {
+      const rows = sparkQueries[i]?.data ?? []
+      map.set(
+        sym,
+        rows.map((r) => r.iv_rank_1y ?? r.iv_percentile_1y ?? null).filter((v): v is number => v != null),
+      )
+    })
+    return map
+  }, [sparkSymbols, sparkQueries])
+
   if (withData.length === 0) {
     return (
       <p className="py-8 text-center text-dense-meta text-muted-foreground">
@@ -140,6 +216,7 @@ function GaugeGridView({ rows, navigate }: { rows: IvRadarRow[]; navigate: Retur
         const rank = row.data?.iv_rank_1y ?? 0
         const iv = row.data?.iv_current
         const pct = row.data?.iv_percentile_1y
+        const spark = sparkBySymbol.get(row.symbol) ?? []
         return (
           <Card
             key={row.symbol}
@@ -149,7 +226,13 @@ function GaugeGridView({ rows, navigate }: { rows: IvRadarRow[]; navigate: Retur
           >
             <CardContent className="flex flex-col items-center gap-1 px-2 py-3">
               <IvGauge value={rank} size={90} />
-              <p className="text-dense-body font-semibold text-entity-symbol">{row.symbol}</p>
+              <div className="flex items-center gap-1">
+                <p className="text-dense-body font-semibold text-entity-symbol">{row.symbol}</p>
+                <PortfolioTag symbol={row.symbol} variant="inline" />
+              </div>
+              {spark.length >= 2 ? (
+                <DenseSparkline values={spark} width={64} height={16} />
+              ) : null}
               {iv != null && Number.isFinite(iv) ? (
                 <p className="font-mono text-dense-meta tabular-nums text-muted-foreground">
                   ATM {(iv > 0 && iv < 3 ? iv * 100 : iv).toFixed(1)}%
@@ -170,13 +253,40 @@ function GaugeGridView({ rows, navigate }: { rows: IvRadarRow[]; navigate: Retur
 
 export default function IvRadarPage() {
   const navigate = useNavigate()
+  const { symbol: contextSymbol } = useResearchContext()
   const [filter, setFilter] = useState<IvRadarUniverseFilter>('all')
+  const [universe, setUniverse] = useState<PortfolioUniverse>('all')
   const [sortMode, setSortMode] = useState<SortMode>('rank')
   const [viewMode, setViewMode] = useState<ViewMode>('table')
+  const { filterSymbols } = usePortfolioSymbols()
   const { rows, counts, isLoading, isError, error, refetch, isFetching } = useIvRadarData(filter)
 
-  const sorted = useMemo(() => sortRows(rows, sortMode), [rows, sortMode])
+  const sorted = useMemo(() => {
+    const ordered = sortRows(rows, sortMode)
+    if (universe === 'all') return ordered
+    const allowed = new Set(filterSymbols(universe, ordered.map((r) => r.symbol)))
+    return ordered.filter((r) => allowed.has(r.symbol))
+  }, [rows, sortMode, universe, filterSymbols])
   const allMissing = counts.total > 0 && counts.noData === counts.total
+
+  const focusRow = useMemo(() => {
+    const sym = contextSymbol.trim().toUpperCase()
+    if (sym) {
+      const match = sorted.find((r) => r.symbol === sym)
+      if (match) return match
+    }
+    return sorted.find((r) => r.bucket !== 'no_data') ?? sorted[0] ?? null
+  }, [sorted, contextSymbol])
+
+  const focusSymbol = focusRow?.symbol ?? contextSymbol.trim().toUpperCase()
+  const focusIvRank = focusRow?.data?.iv_rank_1y
+  const verdictTone = ivRankVerdictTone(focusIvRank)
+  const verdictLabel = ivRankVerdictLabel(focusIvRank)
+  const verdictSummary = ivRankVerdictSummary(focusRow)
+  const focusOutOfUniverse =
+    universe !== 'all' &&
+    Boolean(focusSymbol) &&
+    filterSymbols(universe, [focusSymbol]).length === 0
 
   const topIvSymbols = useMemo(
     () => sorted.slice(0, 5).map((r) => r.symbol).filter(Boolean),
@@ -218,6 +328,67 @@ export default function IvRadarPage() {
 
       <ResearchContextBar showDate={false} />
 
+      <SymbolContextGuard symbol={contextSymbol}>
+
+      {focusSymbol ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-dense-label font-semibold text-entity-symbol">{focusSymbol}</span>
+          <PortfolioTag symbol={focusSymbol} variant="inline" />
+          {focusOutOfUniverse ? (
+            <span className="text-dense-meta text-muted-foreground">Not in holdings/watchlist</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <CompositeRegimeRibbon symbol={focusSymbol} />
+
+      {(verdictTone === 'success' || verdictTone === 'danger') && focusRow ? (
+        <CopilotAutoInsightChip
+          message={`${focusSymbol} IV Rank ${fmtRankPct(focusIvRank)} looks ${verdictLabel.toLowerCase()}.`}
+          tone={verdictTone}
+          onAsk={() => {
+            copilotViewStore.unsuppress()
+            askCopilotIntentStore.open({
+              originPage: 'iv-radar',
+              originLabel: 'IV Radar',
+              symbol: focusSymbol,
+              suggestedPrompt: `Explain ${focusSymbol} current IV Rank regime and comparable historical outcomes.`,
+              snapshot: {},
+            })
+          }}
+        />
+      ) : null}
+
+      <AnalyzeVerdictStrip
+        tone={verdictTone}
+        verdictLabel={verdictLabel}
+        narrative={verdictSummary}
+        signals={[
+          { label: 'Rank', value: fmtRankPct(focusIvRank) },
+          { label: 'IV', value: fmtIv(focusRow?.data?.iv_current) },
+          { label: 'Pctl', value: fmtRankPct(focusRow?.data?.iv_percentile_1y) },
+        ]}
+        nextMoves={[
+          {
+            label: 'Option Discovery',
+            href: `/research/discovery?symbol=${encodeURIComponent(focusSymbol)}`,
+          },
+          { label: 'VRP Lab', href: `/research/vrp-lab?symbol=${encodeURIComponent(focusSymbol)}` },
+        ]}
+      />
+
+      <SimilarRegimeCard lens="iv_rank" symbol={focusSymbol} value={focusIvRank} />
+
+      <Card variant="elevated">
+        <CardContent className="space-y-2 px-3 py-2">
+          <p className="text-dense-label font-medium text-foreground flex flex-wrap items-center gap-1">
+            <span>IV Rank strip · {focusSymbol || '—'}</span>
+            {focusSymbol ? <PortfolioTag symbol={focusSymbol} variant="inline" /> : null}
+          </p>
+          <IvRankStrip rank={focusIvRank} />
+        </CardContent>
+      </Card>
+
       <Card variant="elevated">
         <CardContent className="flex flex-col gap-2 px-3 py-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -232,9 +403,17 @@ export default function IvRadarPage() {
                 { value: 'gauge', label: 'Gauge Grid' },
               ]}
             />
-            <span className="ml-2 shrink-0 text-xs font-medium text-muted-foreground">Universe:</span>
+            <span className="ml-2 shrink-0 text-dense-meta font-medium text-muted-foreground">Universe:</span>
             <SegmentControl
-              ariaLabel="IV Radar universe filter"
+              ariaLabel="Portfolio universe filter"
+              size="sm"
+              value={universe}
+              onChange={(v) => setUniverse(v as PortfolioUniverse)}
+              options={[...PORTFOLIO_UNIVERSE_OPTIONS]}
+            />
+            <span className="ml-2 shrink-0 text-xs font-medium text-muted-foreground">Source:</span>
+            <SegmentControl
+              ariaLabel="IV Radar source filter"
               size="sm"
               value={filter}
               onChange={v => setFilter(v as IvRadarUniverseFilter)}
@@ -371,6 +550,7 @@ export default function IvRadarPage() {
                         navigate(`/research/discovery?symbol=${encodeURIComponent(row.symbol)}`)
                       }
                     />
+                    <PortfolioTag symbol={row.symbol} variant="row-suffix" />
                     {row.bucket !== 'no_data' ? (
                       <DenseTag variant={bucketTagVariant(row.bucket)}>
                         {bucketLabel(row.bucket)}
@@ -408,6 +588,7 @@ export default function IvRadarPage() {
         Relative regime only — not investment advice. IV levels are Polygon vendor-dependent.
         D10: no live order execution from this page.
       </p>
+      </SymbolContextGuard>
     </PageShell>
   )
 }

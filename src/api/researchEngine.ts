@@ -92,6 +92,58 @@ export async function fetchTerrain(symbol: string, date?: string) {
   return res.json() as Promise<{ terrain: TerrainData; symbol: string; trade_date: string }>
 }
 
+/** Compact regime timeline point (no invented history — only real API rows). */
+export interface TerrainRegimePoint {
+  trade_date: string
+  regime: string
+}
+
+/**
+ * Up to `limit` recent daily terrain regimes for a symbol.
+ * There is no dedicated history endpoint — probes prior calendar weekdays
+ * via `fetchTerrain(symbol, date)`. Returns only dates that actually exist.
+ */
+export async function fetchRecentTerrainRegimes(
+  symbol: string,
+  opts?: { limit?: number; lookbackCalendarDays?: number },
+): Promise<TerrainRegimePoint[]> {
+  const limit = opts?.limit ?? 5
+  const lookback = opts?.lookbackCalendarDays ?? 12
+  const latest = await fetchTerrain(symbol)
+  if (!latest?.terrain) return []
+
+  const byDate = new Map<string, string>()
+  const push = (t: TerrainData) => {
+    const d = String(t.trade_date).slice(0, 10)
+    if (!d || byDate.has(d)) return
+    byDate.set(d, t.regime)
+  }
+  push(latest.terrain)
+
+  if (byDate.size < limit) {
+    const base = new Date(`${String(latest.terrain.trade_date).slice(0, 10)}T12:00:00`)
+    const priorDates: string[] = []
+    for (let i = 1; i <= lookback && priorDates.length < limit - 1; i++) {
+      const d = new Date(base)
+      d.setDate(d.getDate() - i)
+      const dow = d.getDay()
+      if (dow === 0 || dow === 6) continue
+      priorDates.push(
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      )
+    }
+    const rows = await Promise.all(priorDates.map((d) => fetchTerrain(symbol, d)))
+    for (const row of rows) {
+      if (row?.terrain) push(row.terrain)
+    }
+  }
+
+  return [...byDate.entries()]
+    .map(([trade_date, regime]) => ({ trade_date, regime }))
+    .sort((a, b) => a.trade_date.localeCompare(b.trade_date))
+    .slice(-limit)
+}
+
 export async function fetchTerrainIntraday(symbol: string, date?: string) {
   const qs = date ? `?symbol=${symbol}&date=${date}` : `?symbol=${symbol}`
   const path = `/research/terrain/intraday${qs}`
@@ -507,6 +559,8 @@ export interface ForecastSettlement {
   notes: string
   computed_at: string
   stats_json?: Record<string, unknown>
+  hourly_json?: unknown
+  hourly_realized?: { hour_et: number; close: number }[] | null
   direction_hit?: boolean
   path_shape?: string
   close_zone?: string
@@ -520,6 +574,79 @@ export function fetchSettlements(symbol?: string, sessionId?: string) {
   return get<{ rows: ForecastSettlement[]; count: number }>(
     `/research/backtest/settlement?${params}`,
   )
+}
+
+export interface ForecastHitRateSummary {
+  symbol: string
+  lookback_days: number
+  session_count: number
+  path_hit_rate: number | null
+  avg_close_miss_pct: number | null
+  direction_hit_rate: number | null
+  rows: ForecastSettlement[]
+}
+
+export function fetchForecastHitRate(symbol: string, lookbackDays = 30) {
+  const params = new URLSearchParams({
+    symbol: symbol.trim().toUpperCase(),
+    lookback_days: String(lookbackDays),
+  })
+  return get<ForecastHitRateSummary>(`/research/forecast/hit-rate?${params}`)
+}
+
+export function fetchTerrainHistory(symbol: string, limit = 30) {
+  const params = new URLSearchParams({
+    symbol: symbol.trim().toUpperCase(),
+    limit: String(limit),
+  })
+  return get<{ symbol: string; rows: TerrainData[]; count: number }>(
+    `/research/forecast/terrain/history?${params}`,
+  )
+}
+
+export interface PlaybookTriggerRow {
+  symbol: string
+  trade_date: string
+  scenario_key: string
+  trigger_at: string
+  satisfied: boolean
+  condition_snapshot: Record<string, unknown> | null
+  computed_at: string | null
+}
+
+export function fetchPlaybookTriggers(symbol: string, date?: string) {
+  const params = new URLSearchParams({ symbol: symbol.trim().toUpperCase() })
+  if (date) params.set('date', date)
+  return get<{ symbol: string; rows: PlaybookTriggerRow[]; count: number }>(
+    `/research/playbook/triggers?${params}`,
+  )
+}
+
+export interface PlaybookHitRateSummary {
+  symbol: string
+  window_days: number
+  horizon: number
+  trigger_count: number
+  evaluated_count: number
+  hit_count: number
+  hit_rate: number | null
+  by_scenario: Record<string, { n: number; hits: number; rate: number | null }>
+  rows: Array<{
+    trigger_at: string
+    trade_date: string
+    scenario_key: string
+    fwd_return: number | null
+    hit: boolean | null
+  }>
+}
+
+export function fetchPlaybookHitRate(symbol: string, windowDays = 30, horizon = 5) {
+  const params = new URLSearchParams({
+    symbol: symbol.trim().toUpperCase(),
+    window_days: String(windowDays),
+    horizon: String(horizon),
+  })
+  return get<PlaybookHitRateSummary>(`/research/playbook/hit-rate?${params}`)
 }
 
 export function fetchBacktestResults(symbol: string, start?: string, end?: string) {

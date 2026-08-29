@@ -44,7 +44,8 @@ export function GexStrikeChart({
     )
   }
 
-  const pad = { top: 10, right: 20, bottom: 20, left: 60 }
+  // Right pad leaves room for wall / zero-gamma labels inside the viewBox.
+  const pad = { top: 10, right: 72, bottom: 20, left: 60 }
   const chartW = width - pad.left - pad.right
   const chartH = height - pad.top - pad.bottom
 
@@ -142,13 +143,13 @@ export function GexStrikeChart({
         />
       )}
 
-      {/* Key level annotations */}
+      {/* Key level annotations — clear English labels (visible when props set) */}
       {[
-        { val: zeroGamma, label: 'ZG', color: 'var(--color-chart-3, #fbbf24)' },
-        { val: callWall, label: 'CW', color: 'var(--color-profit, #22c55e)' },
-        { val: putWall, label: 'PW', color: 'var(--color-loss, #ef4444)' },
+        { val: zeroGamma, label: 'Zero γ', color: 'var(--color-chart-3, #fbbf24)' },
+        { val: callWall, label: 'Call Wall', color: 'var(--color-profit, #22c55e)' },
+        { val: putWall, label: 'Put Wall', color: 'var(--color-loss, #ef4444)' },
       ]
-        .filter((l) => l.val != null)
+        .filter((l) => l.val != null && Number.isFinite(l.val))
         .map((level) => {
           const idx = sorted.findIndex((b) => b.strike >= level.val!)
           if (idx < 0) return null
@@ -161,13 +162,14 @@ export function GexStrikeChart({
                 x2={width - pad.right}
                 y2={ly}
                 stroke={level.color}
-                strokeWidth={1}
-                strokeDasharray="2,2"
-                opacity={0.6}
+                strokeWidth={1.25}
+                strokeDasharray="3,2"
+                opacity={0.85}
               />
               <text
-                x={width - pad.right + 2}
+                x={width - 4}
                 y={ly + 3}
+                textAnchor="end"
                 fill={level.color}
                 fontSize={9}
                 fontWeight={600}

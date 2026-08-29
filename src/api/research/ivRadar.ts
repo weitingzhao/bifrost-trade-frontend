@@ -1,4 +1,4 @@
-import { marketDataPluginUrl } from '@/lib/devApiUrl'
+import { marketDataPluginUrl, researchEngineUrl } from '@/lib/devApiUrl'
 import type { IvPercentileRow } from '@/types/ivRadar'
 
 function numOrNull(v: unknown): number | null {
@@ -85,3 +85,39 @@ export async function fetchIvPercentileForSymbols(
   })
   return new Map(rows)
 }
+
+/**
+ * Last N trading days of IV Rank for sparkline (Research Engine options analytics).
+ * Ordered ascending by trade_date for charting.
+ */
+export async function fetchIvRankHistory(
+  symbol: string,
+  lookbackDays = 90,
+): Promise<IvPercentileRow[]> {
+  const sym = (symbol || '').trim().toUpperCase()
+  if (!sym) return []
+  const q = new URLSearchParams({
+    symbol: sym,
+    lookback_days: String(lookbackDays),
+  })
+  const r = await fetch(
+    `${researchEngineUrl('/analytics/options/iv-percentile')}?${q.toString()}`,
+  )
+  if (r.status === 404) return []
+  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
+  if (!r.ok) {
+    const detail =
+      typeof j.detail === 'string'
+        ? j.detail
+        : typeof j.error === 'string'
+          ? j.error
+          : `HTTP ${r.status}`
+    throw new Error(detail)
+  }
+  const rows = Array.isArray(j.rows) ? j.rows : []
+  const parsed = rows
+    .map((raw) => parseRow(raw as Record<string, unknown>))
+    .filter((row): row is IvPercentileRow => row != null)
+  return parsed.sort((a, b) => (a.trade_date ?? '').localeCompare(b.trade_date ?? ''))
+}
+

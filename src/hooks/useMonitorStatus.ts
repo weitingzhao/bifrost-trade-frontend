@@ -6,7 +6,10 @@ export function useMonitorStatus() {
   return useQuery({
     queryKey: QUERY_KEYS.monitor.status,
     queryFn: fetchMonitorStatus,
-    refetchInterval: 5_000,
+    // Poll every 15s; use useInvalidateStatus() after commands for instant feedback.
+    // Previously 5s — that combined with several other layout-level polls kept
+    // Cursor's embedded browser main thread busy every second.
+    refetchInterval: 15_000,
   })
 }
 

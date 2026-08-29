@@ -23,6 +23,7 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
+import { AddToPoolButton } from '@/components/research/AddToPoolButton'
 import {
   fetchSepaCandidates,
   fetchSepaDaily,
@@ -94,7 +95,22 @@ function CandidateCard({ item }: { item: SepaScoreRow }) {
   return (
     <Card variant="elevated" className="border border-emerald-500/40">
       <CardContent className="flex flex-col items-center gap-1 px-3 py-3">
-        <p className="text-dense-body font-semibold text-entity-symbol">{item.symbol}</p>
+        <div className="flex items-center gap-1">
+          <p className="text-dense-body font-semibold text-entity-symbol">{item.symbol}</p>
+          <AddToPoolButton
+            symbol={item.symbol}
+            source="sepa"
+            score={item.sepa_score}
+            tags={['sepa', item.path ?? '', item.grade ?? ''].filter(Boolean)}
+            lens_snapshot={{
+              sepa_score: item.sepa_score,
+              grade: item.grade,
+              path: item.path,
+              stage: item.stage,
+            }}
+            size="icon"
+          />
+        </div>
         <p className="font-mono text-2xl font-bold tabular-nums">{fmt(item.sepa_score, 0)}</p>
         <div className="flex flex-wrap items-center justify-center gap-1.5">
           <DenseTag variant={gradeTagVariant(item.grade ?? '')}>{item.grade || '—'}</DenseTag>
@@ -110,7 +126,7 @@ function CandidateCard({ item }: { item: SepaScoreRow }) {
   )
 }
 
-export default function SepaDailyCorePage() {
+function useSepaDailyState() {
   const [stage, setStage] = useState<StageFilter>('all')
   const [path, setPath] = useState<PathFilter>('all')
   const [grade, setGrade] = useState<GradeFilter>('all')
@@ -152,52 +168,61 @@ export default function SepaDailyCorePage() {
     [candidateRows],
   )
 
-  return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="SEPA Daily Core"
-        description={
-          daily.data?.trade_date
-            ? `Fusion score for ${daily.data.trade_date}: Fundamental · Trend Template · Momentum · Options Structure`
-            : 'SEPA fusion (Fundamental · Trend Template · Momentum · Options Structure) — advisory only (D10)'
-        }
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="sepa-daily-core"
-              originLabel="SEPA Daily Core"
-              symbol={topSepaSymbols[0]}
-              date={daily.data?.trade_date ?? undefined}
-              snapshot={compactSnapshot({
-                stage,
-                path,
-                grade,
-                candidate_count: candidateRows.length,
-                top_symbols: topSepaSymbols,
-              })}
-              suggestedPrompt="From today's SEPA Daily Core, which SETUP / PIVOT names deserve a closer look?"
-            />
-            <SaveAsHypothesisButton
-              originPage="sepa-daily-core"
-              defaultTitle={
-                candidateRows.length > 0
-                  ? `SEPA setups ${daily.data?.trade_date ?? ''}`.trim()
-                  : 'SEPA Daily Core hypothesis'
-              }
-              defaultSymbols={topSepaSymbols}
-              defaultTags={['sepa']}
-              originRef={{
-                trade_date: daily.data?.trade_date ?? null,
-                stage,
-                path,
-                grade,
-                candidate_count: candidateRows.length,
-              }}
-            />
-          </div>
-        }
-      />
+  return {
+    stage, setStage, path, setPath, grade, setGrade,
+    daily, candidates, rows, candidateRows, stats, topSepaSymbols,
+  }
+}
 
+type SepaState = ReturnType<typeof useSepaDailyState>
+
+export function SepaDailyCoreActions({ state }: { state?: SepaState }) {
+  const inner = useSepaDailyState()
+  const s = state ?? inner
+  return (
+    <div className="flex items-center gap-1.5">
+      <AskCopilotButton
+        originPage="sepa-daily-core"
+        originLabel="SEPA Daily Core"
+        symbol={s.topSepaSymbols[0]}
+        date={s.daily.data?.trade_date ?? undefined}
+        snapshot={compactSnapshot({
+          stage: s.stage,
+          path: s.path,
+          grade: s.grade,
+          candidate_count: s.candidateRows.length,
+          top_symbols: s.topSepaSymbols,
+        })}
+        suggestedPrompt="From today's SEPA Daily Core, which SETUP / PIVOT names deserve a closer look?"
+      />
+      <SaveAsHypothesisButton
+        originPage="sepa-daily-core"
+        defaultTitle={
+          s.candidateRows.length > 0
+            ? `SEPA setups ${s.daily.data?.trade_date ?? ''}`.trim()
+            : 'SEPA Daily Core hypothesis'
+        }
+        defaultSymbols={s.topSepaSymbols}
+        defaultTags={['sepa']}
+        originRef={{
+          trade_date: s.daily.data?.trade_date ?? null,
+          stage: s.stage,
+          path: s.path,
+          grade: s.grade,
+          candidate_count: s.candidateRows.length,
+        }}
+      />
+    </div>
+  )
+}
+
+export function SepaDailyCoreBody({ state: injected }: { state?: SepaState } = {}) {
+  const inner = useSepaDailyState()
+  const s = injected ?? inner
+  const { stage, setStage, path, setPath, grade, setGrade, daily, candidates, rows, candidateRows, stats } = s
+
+  return (
+    <div className="space-y-3">
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Card variant="elevated">
@@ -316,6 +341,7 @@ export default function SepaDailyCorePage() {
           <DenseTableHeader>
             <DenseTableHeadRow>
               <DenseTableHead className={denseTableCellPadding}>Symbol</DenseTableHead>
+              <DenseTableHead className="w-10">Pool</DenseTableHead>
               <DenseTableHead className={`${denseTableCellPadding} text-right`}>
                 Score
               </DenseTableHead>
@@ -337,6 +363,21 @@ export default function SepaDailyCorePage() {
               <DenseTableRow key={r.symbol}>
                 <DenseTableCell className={denseTableEntityCell}>
                   <strong className="text-entity-symbol">{r.symbol}</strong>
+                </DenseTableCell>
+                <DenseTableCell>
+                  <AddToPoolButton
+                    symbol={r.symbol}
+                    source="sepa"
+                    score={r.sepa_score}
+                    tags={['sepa', r.path ?? '', r.grade ?? ''].filter(Boolean)}
+                    lens_snapshot={{
+                      sepa_score: r.sepa_score,
+                      grade: r.grade,
+                      path: r.path,
+                      stage: r.stage,
+                    }}
+                    size="icon"
+                  />
                 </DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>
                   <span className="font-semibold">{fmt(r.sepa_score, 1)}</span>
@@ -370,6 +411,24 @@ export default function SepaDailyCorePage() {
         SEPA fusion = 0.30 · Fund + 0.35 · Trend Template + 0.20 · Momentum + 0.15 · Options
         Structure. Advisory only (D10) — not investment advice.
       </p>
+    </div>
+  )
+}
+
+export default function SepaDailyCorePage() {
+  const state = useSepaDailyState()
+  return (
+    <PageShell padding="default" className="space-y-3">
+      <PageHeader
+        title="SEPA Daily Core"
+        description={
+          state.daily.data?.trade_date
+            ? `Fusion score for ${state.daily.data.trade_date}: Fundamental · Trend Template · Momentum · Options Structure`
+            : 'SEPA fusion (Fundamental · Trend Template · Momentum · Options Structure) — advisory only (D10)'
+        }
+        actions={<SepaDailyCoreActions state={state} />}
+      />
+      <SepaDailyCoreBody state={state} />
     </PageShell>
   )
 }

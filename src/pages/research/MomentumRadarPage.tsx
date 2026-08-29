@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Radar } from 'lucide-react'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { AddToPoolButton } from '@/components/research/AddToPoolButton'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
   CollapsibleGroup,
@@ -55,7 +56,21 @@ function MomentumCard({ item }: { item: MomentumScore }) {
   return (
     <Card variant="elevated" className={`border ${gradeAccentColor(item.grade)}`}>
       <CardContent className="flex flex-col items-center gap-1 px-3 py-3">
-        <p className="text-dense-body font-semibold text-entity-symbol">{item.symbol}</p>
+        <div className="flex items-center gap-1">
+          <p className="text-dense-body font-semibold text-entity-symbol">{item.symbol}</p>
+          <AddToPoolButton
+            symbol={item.symbol}
+            source="momentum"
+            score={item.score}
+            tags={['momentum', item.grade]}
+            lens_snapshot={{
+              grade: item.grade,
+              path: item.path,
+              score: item.score,
+            }}
+            size="icon"
+          />
+        </div>
         {spot != null ? (
           <p className="font-mono text-dense-meta tabular-nums text-muted-foreground">
             ${spot.toFixed(2)}
@@ -73,7 +88,7 @@ function MomentumCard({ item }: { item: MomentumScore }) {
   )
 }
 
-export default function MomentumRadarPage() {
+function useMomentumRadarState() {
   const [grade, setGrade] = useState<GradeFilter>('all')
   const [legendOpen, setLegendOpen] = useState(false)
 
@@ -84,24 +99,34 @@ export default function MomentumRadarPage() {
   })
 
   const items = data?.rows ?? []
+  return { grade, setGrade, legendOpen, setLegendOpen, data, items, isLoading, isError, error, refetch }
+}
+
+type MomentumState = ReturnType<typeof useMomentumRadarState>
+
+export function MomentumRadarActions({ state }: { state?: MomentumState } = {}) {
+  const inner = useMomentumRadarState()
+  const s = state ?? inner
+  return (
+    <AskCopilotButton
+      originPage="momentum-radar"
+      originLabel="Momentum Radar"
+      snapshot={compactSnapshot({
+        grade: s.grade,
+        row_count: s.items.length,
+      })}
+      suggestedPrompt="From this momentum radar universe, which names look strongest or most stretched?"
+    />
+  )
+}
+
+export function MomentumRadarBody({ state: injected }: { state?: MomentumState } = {}) {
+  const inner = useMomentumRadarState()
+  const s = injected ?? inner
+  const { grade, setGrade, legendOpen, setLegendOpen, items, isLoading, isError, error, refetch } = s
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="Momentum Radar"
-        actions={
-          <AskCopilotButton
-            originPage="momentum-radar"
-            originLabel="Momentum Radar"
-            snapshot={compactSnapshot({
-              grade,
-              row_count: items.length,
-            })}
-            suggestedPrompt="From this momentum radar universe, which names look strongest or most stretched?"
-          />
-        }
-      />
-
+    <div className="space-y-3">
       <Card variant="elevated">
         <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">
           <span className="shrink-0 text-xs font-medium text-muted-foreground">Grade:</span>
@@ -162,6 +187,19 @@ export default function MomentumRadarPage() {
       <p className="text-dense-caption text-muted-foreground">
         Momentum radar — observe only (D10). Not investment advice.
       </p>
+    </div>
+  )
+}
+
+export default function MomentumRadarPage() {
+  const state = useMomentumRadarState()
+  return (
+    <PageShell padding="default" className="space-y-3">
+      <PageHeader
+        title="Momentum Radar"
+        actions={<MomentumRadarActions state={state} />}
+      />
+      <MomentumRadarBody state={state} />
     </PageShell>
   )
 }

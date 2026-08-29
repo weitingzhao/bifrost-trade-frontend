@@ -12,6 +12,7 @@ import { useQuoteStream } from '@/hooks/useQuoteStream'
 import type { QuoteItem, WatchlistItem } from '@/types/market'
 import type { InspectorState } from '@/components/positions/InspectorDrawer'
 import { InspectorDrawer } from '@/components/positions/InspectorDrawer'
+import { Card, CardContent } from '@/components/ui/card'
 import { fetchBars, fetchQuotes } from '@/api/market'
 import {
   computeAtr,
@@ -32,6 +33,7 @@ import {
 import { WorkflowStepper } from './watchlist/WorkflowStepper'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { WatchlistHypothesisDetail } from './watchlist/WatchlistHypothesisDetail'
 import { WatchlistPageHeader } from './watchlist/WatchlistPageHeader'
 import { WatchingTab } from './watchlist/WatchingTab'
 import { SizingTab } from './watchlist/SizingTab'
@@ -445,6 +447,13 @@ export default function StockWatchlistPage() {
       )}
 
       <InspectorDrawer state={inspector} onClose={() => setInspector({ type: null })} />
+      {inspector.type === 'stock' && inspector.symbol ? (
+        <Card variant="elevated" className="mt-2">
+          <CardContent className="px-3 py-2">
+            <WatchlistHypothesisDetail symbol={inspector.symbol} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <AddOptionModal
         symbol={addOptionSymbol}

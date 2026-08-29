@@ -21,15 +21,22 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { settlementFineGrain } from '@/lib/researchSettlement'
 import {
+  fetchForecastHitRate,
   fetchForecastSessionDetail,
   fetchForecastSessions,
   fetchSettlements,
   type ForecastSession,
 } from '@/api/researchEngine'
 import { ProbabilityBar } from '@/components/charts/ProbabilityBar'
+import { ForecastPathOverlay } from '@/components/charts/ForecastPathOverlay'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
+import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { cn } from '@/lib/utils'
 
@@ -106,40 +113,142 @@ export default function ForecastSessionsPage() {
     enabled: !!selectedId,
   })
 
+  const { data: hitRateData } = useQuery({
+    queryKey: ['forecast-hit-rate', symbol, 30],
+    queryFn: () => fetchForecastHitRate(symbol, 30),
+    enabled: symbol.length > 0,
+    staleTime: 60_000,
+  })
+
   const sessions = listData?.rows ?? []
   const settlement = settlementData?.rows?.[0]
+  const rollingHit = hitRateData?.path_hit_rate ?? null
+  const rollingMiss = hitRateData?.avg_close_miss_pct ?? null
+  const rollingCount = hitRateData?.session_count ?? 0
   const pathHitRate =
     settlementData && settlementData.rows.length > 0
       ? settlementData.rows.filter((r) => r.path_hit).length / settlementData.rows.length
-      : null
+      : rollingHit
   const avgMissPct =
     settlementData && settlementData.rows.length > 0
       ? settlementData.rows.reduce((s, r) => s + Math.abs(r.close_miss_pct), 0) /
         settlementData.rows.length
-      : null
+      : rollingMiss
 
   return (
     <PageShell padding="compact">
       <PageHeader
         title="Forecast"
         actions={
-          <AskCopilotButton
-            originPage="forecast-sessions"
-            originLabel="Forecast"
-            symbol={symbol}
-            date={apiDate}
-            snapshot={compactSnapshot({
-              session_count: sessions.length,
-              selected_id: selectedId,
-              path_hit_rate: pathHitRate,
-              avg_miss_pct: avgMissPct,
-            })}
-            suggestedPrompt={`Review the ${symbol} forecast sessions and tell me which paths look most / least reliable.`}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="forecast-sessions"
+              originLabel="Forecast"
+              symbol={symbol}
+              date={apiDate}
+              snapshot={compactSnapshot({
+                session_count: sessions.length,
+                selected_id: selectedId,
+                path_hit_rate: pathHitRate,
+                avg_miss_pct: avgMissPct,
+              })}
+              suggestedPrompt={`Review the ${symbol} forecast sessions and tell me which paths look most / least reliable.`}
+            />
+            <SaveAsHypothesisButton
+              originPage="forecast-sessions"
+              defaultTitle={`${symbol} forecast path hypothesis`}
+              defaultThesis={
+                pathHitRate != null
+                  ? `${symbol} selected session path hit ${(pathHitRate * 100).toFixed(0)}% · avg miss ${avgMissPct != null ? `${(avgMissPct * 100).toFixed(1)}%` : '—'}. Trust paths only when hit-rate ≥ 60%.`
+                  : `${symbol}: ${sessions.length} forecast session(s). Settle closed sessions before sizing from path calls.`
+              }
+              defaultSymbols={[symbol]}
+              defaultTags={['forecast', 'path', 'settlement']}
+              originRef={withWatchlistContractKey(
+                {
+                  symbol,
+                  date: apiDate || null,
+                  selected_id: selectedId,
+                  path_hit_rate: pathHitRate,
+                  avg_miss_pct: avgMissPct,
+                  session_count: sessions.length,
+                },
+                symbol,
+              )}
+            />
+          </div>
         }
       />
 
       <ResearchContextBar />
+
+      <SymbolContextGuard symbol={symbol}>
+
+      <CompositeRegimeRibbon symbol={symbol} />
+
+      <AnalyzeVerdictStrip
+        tone={
+          pathHitRate == null
+            ? 'neutral'
+            : pathHitRate >= 0.6
+              ? 'success'
+              : pathHitRate < 0.4
+                ? 'danger'
+                : 'warning'
+        }
+        verdictLabel={
+          pathHitRate == null
+            ? 'Settle before sizing'
+            : pathHitRate >= 0.6
+              ? 'Paths reliable — lean in'
+              : pathHitRate < 0.4
+                ? 'Paths unreliable — fade'
+                : 'Mixed path quality — reduce size'
+        }
+        narrative={
+          pathHitRate != null
+            ? `${symbol} 30d path hit ${rollingHit != null ? `${(rollingHit * 100).toFixed(0)}%` : '—'} across ${rollingCount} settled session(s) · avg |miss| ${rollingMiss != null ? `${(rollingMiss * 100).toFixed(1)}%` : '—'}. Prefer structures that match the winning path call.`
+            : `${sessions.length} session(s) listed. Open a settled session to decide whether forecast paths deserve capital.`
+        }
+        signals={
+          pathHitRate != null
+            ? [
+                {
+                  label: '30d Hit',
+                  value: rollingHit != null ? `${(rollingHit * 100).toFixed(0)}%` : '—',
+                },
+                {
+                  label: 'Miss',
+                  value: rollingMiss != null ? `${(rollingMiss * 100).toFixed(1)}%` : '—',
+                },
+                { label: 'N', value: String(rollingCount) },
+              ]
+            : [{ label: 'Sessions', value: String(sessions.length) }]
+        }
+      />
+
+      {hitRateData && rollingCount > 0 ? (
+        <Card variant="elevated" size="sm">
+          <CardContent className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 text-dense-caption text-muted-foreground">
+            <span className="font-medium text-foreground">30d realized path KPI</span>
+            <span>
+              Hit{' '}
+              <strong className="font-mono text-foreground">
+                {rollingHit != null ? `${(rollingHit * 100).toFixed(0)}%` : '—'}
+              </strong>
+            </span>
+            <span>
+              Avg |miss|{' '}
+              <strong className="font-mono text-foreground">
+                {rollingMiss != null ? `${(rollingMiss * 100).toFixed(1)}%` : '—'}
+              </strong>
+            </span>
+            <span>
+              Settled <strong className="font-mono text-foreground">{rollingCount}</strong>
+            </span>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {listError && <QueryErrorAlert error={listError} />}
 
@@ -302,6 +411,32 @@ export default function ForecastSessionsPage() {
                         </span>
                       )}
                     </div>
+                    <div className="space-y-1">
+                      <ForecastPathOverlay
+                        forecast={(detail.hourly ?? []).map((h) => ({
+                          hour_et: h.hour_et,
+                          level_low: h.level_low,
+                          level_high: h.level_high,
+                          level_target: h.level_target,
+                        }))}
+                        realized={
+                          (settlement.hourly_realized as
+                            | { hour_et: number; close: number }[]
+                            | null
+                            | undefined) ??
+                          (Array.isArray(settlement.stats_json?.hourly_close)
+                            ? (settlement.stats_json.hourly_close as {
+                                hour_et: number
+                                close: number
+                              }[])
+                            : null)
+                        }
+                      />
+                      <p className="text-dense-micro text-muted-foreground">
+                        Realized overlay: forecast band vs hourly close when settlement has
+                        stats_json.hourly_close; otherwise expected/actual close KPIs above.
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
                 )
@@ -374,6 +509,7 @@ export default function ForecastSessionsPage() {
           )}
         </div>
       </div>
+      </SymbolContextGuard>
     </PageShell>
   )
 }

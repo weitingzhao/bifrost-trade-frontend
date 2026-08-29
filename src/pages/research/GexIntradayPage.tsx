@@ -12,6 +12,7 @@ import {
   DenseTableRow,
   DenseTag,
   EmptyState,
+  SegmentControl,
   denseTableNumCell,
 } from '@/components/data-display'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,8 +21,20 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { fetchGexIntraday, type GexIntraday } from '@/api/researchEngine'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
+import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
+import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
+import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { useResearchContext } from '@/hooks/useResearchContext'
+import {
+  PORTFOLIO_UNIVERSE_OPTIONS,
+  usePortfolioSymbols,
+  type PortfolioUniverse,
+} from '@/hooks/usePortfolioSymbols'
 import { GexStrikeChart } from '@/components/charts/GexStrikeChart'
 import { GexTimelineChart } from '@/components/charts/GexTimelineChart'
 import { BarChart2 } from 'lucide-react'
@@ -73,6 +86,12 @@ export default function GexIntradayPage() {
   const { symbol, dateInput, setSymbol, setDate } = useResearchContext()
   const date = dateInput
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
+  const [universe, setUniverse] = useState<PortfolioUniverse>('all')
+  const { filterSymbols } = usePortfolioSymbols()
+  const symbolOutOfUniverse =
+    universe !== 'all' &&
+    Boolean(symbol.trim()) &&
+    filterSymbols(universe, [symbol]).length === 0
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['gex-intraday', symbol, date],
@@ -96,24 +115,102 @@ export default function GexIntradayPage() {
         title="GEX Intraday"
         description="OI-GEX (solid) vs Volume-GEX (inner bar) by strike · pick a snapshot row or scroll timeline"
         actions={
-          <AskCopilotButton
-            originPage="gex-intraday"
-            originLabel="GEX Intraday"
-            symbol={symbol}
-            date={date || undefined}
-            snapshot={compactSnapshot({
-              spot: active?.spot,
-              zero_gamma: active?.zero_gamma,
-              major_call_wall: active?.major_call_wall,
-              major_put_wall: active?.major_put_wall,
-              asof_ts: active?.asof_ts,
-            })}
-            suggestedPrompt={`Explain the current GEX walls and zero-gamma for ${symbol} and what they imply for the session.`}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="gex-intraday"
+              originLabel="GEX Intraday"
+              symbol={symbol}
+              date={date || undefined}
+              snapshot={compactSnapshot({
+                spot: active?.spot,
+                zero_gamma: active?.zero_gamma,
+                major_call_wall: active?.major_call_wall,
+                major_put_wall: active?.major_put_wall,
+                asof_ts: active?.asof_ts,
+              })}
+              suggestedPrompt={`Explain the current GEX walls and zero-gamma for ${symbol} and what they imply for the session.`}
+            />
+            <SaveAsHypothesisButton
+              originPage="gex-intraday"
+              defaultTitle={`${symbol} GEX walls hypothesis`}
+              defaultThesis={
+                active
+                  ? `${symbol} spot ${fmtNum(active.spot, 2)} between put wall ${fmtNum(active.major_put_wall, 0)} and call wall ${fmtNum(active.major_call_wall, 0)}; zero-γ ${fmtNum(active.zero_gamma, 0)}. Prefer mean-reversion above zero-γ / breakout below.`
+                  : undefined
+              }
+              defaultSymbols={[symbol]}
+              defaultTags={['gex', 'walls', 'intraday']}
+              originRef={withWatchlistContractKey(
+                {
+                  symbol,
+                  date: date || null,
+                  spot: active?.spot ?? null,
+                  zero_gamma: active?.zero_gamma ?? null,
+                  major_call_wall: active?.major_call_wall ?? null,
+                  major_put_wall: active?.major_put_wall ?? null,
+                  asof_ts: active?.asof_ts ?? null,
+                },
+                symbol,
+              )}
+            />
+          </div>
         }
       />
 
       <ResearchContextBar />
+
+      <SymbolContextGuard symbol={symbol}>
+
+      {symbol.trim() ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-dense-label font-semibold text-entity-symbol">
+            {symbol.trim().toUpperCase()}
+          </span>
+          <PortfolioTag symbol={symbol} variant="inline" />
+          {symbolOutOfUniverse ? (
+            <span className="text-dense-meta text-muted-foreground">Not in holdings/watchlist</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <Card variant="elevated">
+        <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">
+          <span className="text-dense-meta font-medium text-muted-foreground shrink-0">Universe:</span>
+          <SegmentControl
+            ariaLabel="Portfolio universe filter"
+            size="sm"
+            value={universe}
+            onChange={(v) => setUniverse(v as PortfolioUniverse)}
+            options={[...PORTFOLIO_UNIVERSE_OPTIONS]}
+          />
+        </CardContent>
+      </Card>
+
+      <CompositeRegimeRibbon symbol={symbol} />
+
+      <AnalyzeVerdictStrip
+        tone={
+          active?.zero_gamma != null && active.spot != null && active.spot < active.zero_gamma
+            ? 'warning'
+            : 'neutral'
+        }
+        verdictLabel={
+          active?.zero_gamma != null && active.spot != null && active.spot < active.zero_gamma
+            ? 'Below zero-γ — trend risk'
+            : 'Above zero-γ — mean-revert bias'
+        }
+        narrative={
+          active
+            ? `${symbol} spot ${fmtNum(active.spot, 2)} · put wall ${fmtNum(active.major_put_wall, 0)} · call wall ${fmtNum(active.major_call_wall, 0)} · zero-γ ${fmtNum(active.zero_gamma, 0)}. Trade the walls, not the mid.`
+            : 'Load a GEX snapshot to decide whether to fade walls or follow a zero-γ break.'
+        }
+      />
+
+      <SimilarRegimeCard
+        lens="gex_notional"
+        symbol={symbol}
+        value={active?.total_net_gex ?? null}
+      />
 
       {error && <QueryErrorAlert error={error} />}
 
@@ -130,7 +227,11 @@ export default function GexIntradayPage() {
           <Card variant="elevated" size="sm" className="p-2.5">
             <CardContent className="p-0">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-dense-label">
-                <InfoCell label="Ticker" value={active.symbol} />
+                <span>
+                  <span className="text-muted-foreground">Ticker</span>{' '}
+                  <strong className="font-mono">{active.symbol}</strong>
+                  <PortfolioTag symbol={active.symbol} variant="row-suffix" />
+                </span>
                 <InfoCell label="Spot" value={fmtNum(active.spot, 2)} />
                 <InfoCell label="As-of" value={fmtTime(active.asof_ts)} />
                 <InfoCell
@@ -269,6 +370,7 @@ export default function GexIntradayPage() {
           }
         />
       )}
+      </SymbolContextGuard>
     </PageShell>
   )
 }

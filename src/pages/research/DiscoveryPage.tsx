@@ -6,6 +6,7 @@ import { PageShell } from '@/components/layout'
 import { useDiscoveryNav } from '@/hooks/useDiscoveryNav'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { DiscoveryPageHeader } from '@/components/optionDiscovery/DiscoveryPageHeader'
 import { OdSessionBar } from '@/components/optionDiscovery/OdSessionBar'
 import { OdStickyToc } from '@/components/optionDiscovery/OdStickyToc'
@@ -252,119 +253,121 @@ export default function DiscoveryPage() {
               />
             </div>
 
-            <DiscoveryIvTermBlock
-              selectedSymbol={selectedSymbol}
-              visibleExpirations={visibleExpirations}
-              expirationFilterKind={expirationFilterKind}
-              onExpirationFilterKindChange={setExpirationFilterKind}
-              ivTermExpKeys={ivTerm.ivTermExpKeys}
-              onToggleExpiration={ivTerm.toggleIvTermExpiration}
-              onResetExpirationsToDefault={ivTerm.resetIvTermExpirationsToDefault}
-              onSelectAllExpirations={ivTerm.selectAllIvTermExpirations}
-              onUncheckAllExpirations={ivTerm.uncheckAllIvTermExpirations}
-              pluginBackfillAvailable={Boolean(pluginStatus?.configured)}
-              onBackfillPolygonSnapshots={() => void ivTerm.syncIvTermPolygonSnapshots()}
-              snapshotSyncLoading={ivTerm.ivTermSyncLoading}
-              snapshotSyncStatus={ivTerm.ivTermSyncStatus}
-              onLoad={() => void ivTerm.loadIvTermStructure()}
-              termPoints={ivTerm.termPoints}
-              termLoading={ivTerm.termLoading}
-              termError={ivTerm.termError}
-              conePoints={ivTerm.conePoints}
-              coneError={ivTerm.coneError}
-              expirationsLoading={expirationsLoading}
-              expirationsError={expirationsError}
-            />
+            <SymbolContextGuard symbol={selectedSymbol}>
+              <DiscoveryIvTermBlock
+                selectedSymbol={selectedSymbol}
+                visibleExpirations={visibleExpirations}
+                expirationFilterKind={expirationFilterKind}
+                onExpirationFilterKindChange={setExpirationFilterKind}
+                ivTermExpKeys={ivTerm.ivTermExpKeys}
+                onToggleExpiration={ivTerm.toggleIvTermExpiration}
+                onResetExpirationsToDefault={ivTerm.resetIvTermExpirationsToDefault}
+                onSelectAllExpirations={ivTerm.selectAllIvTermExpirations}
+                onUncheckAllExpirations={ivTerm.uncheckAllIvTermExpirations}
+                pluginBackfillAvailable={Boolean(pluginStatus?.configured)}
+                onBackfillPolygonSnapshots={() => void ivTerm.syncIvTermPolygonSnapshots()}
+                snapshotSyncLoading={ivTerm.ivTermSyncLoading}
+                snapshotSyncStatus={ivTerm.ivTermSyncStatus}
+                onLoad={() => void ivTerm.loadIvTermStructure()}
+                termPoints={ivTerm.termPoints}
+                termLoading={ivTerm.termLoading}
+                termError={ivTerm.termError}
+                conePoints={ivTerm.conePoints}
+                coneError={ivTerm.coneError}
+                expirationsLoading={expirationsLoading}
+                expirationsError={expirationsError}
+              />
 
-            <DiscoveryChainLayers
-              selectedSymbol={selectedSymbol}
-              selectedExpiration={selectedExpiration}
-              setSelectedExpiration={setSelectedExpiration}
-              visibleExpirations={visibleExpirations}
-              pluginStatus={pluginStatus ?? null}
-              strikesLoading={strikesLoading}
-              strikes={strikes}
-              stockDayLastPrice={stockDayLastPrice}
-              strikeCountOption={strikeCountOption}
-              setStrikeCountOption={setStrikeCountOption}
-              stdDevOption={stdDevOption}
-              setStdDevOption={setStdDevOption}
-              customStdDev={customStdDev}
-              setCustomStdDev={setCustomStdDev}
-              strikeSideMode={strikeSideMode}
-              setStrikeSideMode={setStrikeSideMode}
-              computedStrikes={strikeWindow.computedStrikes}
-              effectiveStrikes={strikeWindow.effectiveStrikes}
-              multiSelectStrikes={multiSelectStrikes}
-              setMultiSelectStrikes={setMultiSelectStrikes}
-              strikeLadderShowOi={strikeWindow.strikeLadderShowOi}
-              ladderOiMax={strikeWindow.ladderOiMax}
-              strikeOiByStrike={strikeWindow.strikeOiByStrike}
-              otmCallWrapRef={strikeWindow.otmCallWrapRef}
-              snapshotRows={snapshots.snapshotRows}
-              snapshotLoading={snapshots.snapshotLoading}
-              underlyingPrice={snapshots.underlyingPrice}
-              lastQuotesLoadTs={snapshots.lastQuotesLoadTs}
-              greeksSource={greeksSource}
-              onGreeksSourceChange={setGreeksSource}
-              loadQuotes={snapshots.loadQuotes}
-              canLoadQuotes={canLoadQuotes}
-              addWatchlistFeedback={snapshots.addWatchlistFeedback}
-              snapshotFeedback={snapshots.snapshotFeedback}
-              snapshotPgWatching={snapshots.snapshotPgWatching}
-              snapshotPgWatchSecondsLeft={snapshots.snapshotPgWatchSecondsLeft}
-              chainColumnVisibility={chainColumnVisibility}
-              onToggleChainColumn={toggleChainColumn}
-              chainColumnList={chainTable.chainColumnList}
-              showCallSide={chainTable.showCallSide}
-              showPutSide={chainTable.showPutSide}
-              chainStrikesSorted={chainTable.chainStrikesSorted}
-              rowIndexByStrikeRight={chainTable.rowIndexByStrikeRight}
-              selectedContractKey={snapshots.selectedContractKey}
-              onSelectContractKey={snapshots.setSelectedContractKey}
-              snapshotLoadAttempted={snapshots.snapshotLoadAttempted}
-              renderChainSideCells={chainTable.renderChainSideCells}
-              openPolygonFeed={openPolygonFeed}
-            />
+              <DiscoveryChainLayers
+                selectedSymbol={selectedSymbol}
+                selectedExpiration={selectedExpiration}
+                setSelectedExpiration={setSelectedExpiration}
+                visibleExpirations={visibleExpirations}
+                pluginStatus={pluginStatus ?? null}
+                strikesLoading={strikesLoading}
+                strikes={strikes}
+                stockDayLastPrice={stockDayLastPrice}
+                strikeCountOption={strikeCountOption}
+                setStrikeCountOption={setStrikeCountOption}
+                stdDevOption={stdDevOption}
+                setStdDevOption={setStdDevOption}
+                customStdDev={customStdDev}
+                setCustomStdDev={setCustomStdDev}
+                strikeSideMode={strikeSideMode}
+                setStrikeSideMode={setStrikeSideMode}
+                computedStrikes={strikeWindow.computedStrikes}
+                effectiveStrikes={strikeWindow.effectiveStrikes}
+                multiSelectStrikes={multiSelectStrikes}
+                setMultiSelectStrikes={setMultiSelectStrikes}
+                strikeLadderShowOi={strikeWindow.strikeLadderShowOi}
+                ladderOiMax={strikeWindow.ladderOiMax}
+                strikeOiByStrike={strikeWindow.strikeOiByStrike}
+                otmCallWrapRef={strikeWindow.otmCallWrapRef}
+                snapshotRows={snapshots.snapshotRows}
+                snapshotLoading={snapshots.snapshotLoading}
+                underlyingPrice={snapshots.underlyingPrice}
+                lastQuotesLoadTs={snapshots.lastQuotesLoadTs}
+                greeksSource={greeksSource}
+                onGreeksSourceChange={setGreeksSource}
+                loadQuotes={snapshots.loadQuotes}
+                canLoadQuotes={canLoadQuotes}
+                addWatchlistFeedback={snapshots.addWatchlistFeedback}
+                snapshotFeedback={snapshots.snapshotFeedback}
+                snapshotPgWatching={snapshots.snapshotPgWatching}
+                snapshotPgWatchSecondsLeft={snapshots.snapshotPgWatchSecondsLeft}
+                chainColumnVisibility={chainColumnVisibility}
+                onToggleChainColumn={toggleChainColumn}
+                chainColumnList={chainTable.chainColumnList}
+                showCallSide={chainTable.showCallSide}
+                showPutSide={chainTable.showPutSide}
+                chainStrikesSorted={chainTable.chainStrikesSorted}
+                rowIndexByStrikeRight={chainTable.rowIndexByStrikeRight}
+                selectedContractKey={snapshots.selectedContractKey}
+                onSelectContractKey={snapshots.setSelectedContractKey}
+                snapshotLoadAttempted={snapshots.snapshotLoadAttempted}
+                renderChainSideCells={chainTable.renderChainSideCells}
+                openPolygonFeed={openPolygonFeed}
+              />
 
-            <OptionContractDrawer open={Boolean(chainTable.selectedRow && chainTable.selectedDerived)}>
-              {chainTable.selectedRow && chainTable.selectedDerived ? (
-                <OptionContractDetailPanel
-                  symbol={selectedSymbol}
-                  expiration={selectedExpiration}
-                  underlyingPrice={snapshots.underlyingPrice}
-                  selectedRow={chainTable.selectedRow}
-                  selectedDerived={chainTable.selectedDerived}
-                  snapshotRows={snapshots.snapshotRows}
-                  greeksCoverage={greeksCoverage ?? null}
-                  eventContextWarnings={eventContextWarnings}
-                  greeksSource={greeksSource}
-                  onGreeksSourceChange={setGreeksSource}
-                  liquidityLastTrade={liquidityLastTrade}
-                  liquidityQuoteCount={liquidityQuoteCount}
-                  liquidityLoading={liquidityLoading}
-                  serverLiquidity={serverLiquidity}
-                  serverRelativeValue={serverRelativeValue}
-                  onClose={() => snapshots.setSelectedContractKey(null)}
-                  onAddToWatchlist={() => void handleAddToWatchlist(chainTable.selectedRow!)}
-                  onAddToCompare={() => {
-                    handleAddToCompare(chainTable.selectedRow!)
-                    setCompareOpen(true)
-                  }}
-                />
-              ) : null}
-            </OptionContractDrawer>
+              <OptionContractDrawer open={Boolean(chainTable.selectedRow && chainTable.selectedDerived)}>
+                {chainTable.selectedRow && chainTable.selectedDerived ? (
+                  <OptionContractDetailPanel
+                    symbol={selectedSymbol}
+                    expiration={selectedExpiration}
+                    underlyingPrice={snapshots.underlyingPrice}
+                    selectedRow={chainTable.selectedRow}
+                    selectedDerived={chainTable.selectedDerived}
+                    snapshotRows={snapshots.snapshotRows}
+                    greeksCoverage={greeksCoverage ?? null}
+                    eventContextWarnings={eventContextWarnings}
+                    greeksSource={greeksSource}
+                    onGreeksSourceChange={setGreeksSource}
+                    liquidityLastTrade={liquidityLastTrade}
+                    liquidityQuoteCount={liquidityQuoteCount}
+                    liquidityLoading={liquidityLoading}
+                    serverLiquidity={serverLiquidity}
+                    serverRelativeValue={serverRelativeValue}
+                    onClose={() => snapshots.setSelectedContractKey(null)}
+                    onAddToWatchlist={() => void handleAddToWatchlist(chainTable.selectedRow!)}
+                    onAddToCompare={() => {
+                      handleAddToCompare(chainTable.selectedRow!)
+                      setCompareOpen(true)
+                    }}
+                  />
+                ) : null}
+              </OptionContractDrawer>
 
-            <OptionDiscoveryCompareDrawer
-              open={compareOpen}
-              onClose={() => setCompareOpen(false)}
-              rows={compareRows}
-              symbol={selectedSymbol}
-              expiration={selectedExpiration}
-              dteLabel={expirationDaysFromToday(selectedExpiration)}
-              onRemove={i => setCompareRows(prev => prev.filter((_, j) => j !== i))}
-              onClear={() => setCompareRows([])}
-            />
+              <OptionDiscoveryCompareDrawer
+                open={compareOpen}
+                onClose={() => setCompareOpen(false)}
+                rows={compareRows}
+                symbol={selectedSymbol}
+                expiration={selectedExpiration}
+                dteLabel={expirationDaysFromToday(selectedExpiration)}
+                onRemove={i => setCompareRows(prev => prev.filter((_, j) => j !== i))}
+                onClear={() => setCompareRows([])}
+              />
+            </SymbolContextGuard>
           </div>
         </div>
       </div>

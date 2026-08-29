@@ -1,5 +1,6 @@
 import { Bell, Moon, PanelTop, Sun, SunMoon } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import { AlertBell } from '@/components/research/AlertBell'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
@@ -24,6 +25,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/research/stock-data': 'Settings · Data Readiness',
   '/research/discovery': 'Option Discovery',
   '/research/iv-radar': 'IV Radar',
+  '/research/scan': 'Scan',
+  '/research/signal-decay': 'Signal Decay',
   '/research/greeks': 'Contract Greeks',
   '/research/risk': 'Risk Model',
   '/research/backtest': 'Backtest',
@@ -35,6 +38,10 @@ const PAGE_TITLES: Record<string, string> = {
   '/research/forecast-sessions': 'Forecast',
   '/research/order-sentiment': 'Order Sentiment',
   '/research/event-radar': 'Event Radar',
+  '/research/loop/candidates': 'Candidate Pool',
+  '/research/loop/hypotheses': 'Hypothesis Board',
+  '/research/loop/decisions': 'Decision Inbox',
+  '/research/loop/harness': 'Harness Console',
   '/strategy/instances': 'Instances',
   '/strategy/structures': 'Structure',
   '/strategy/opportunities': 'Opportunity',
@@ -98,6 +105,8 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
             <TooltipContent side="bottom">Switch to top navigation</TooltipContent>
           </Tooltip>
         )}
+
+        <AlertBell />
 
         <Tooltip>
           <TooltipTrigger asChild>

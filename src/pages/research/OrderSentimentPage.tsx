@@ -24,8 +24,19 @@ import {
 } from '@/api/researchEngine'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
+import {
+  AnalyzeVerdictStrip,
+  type AnalyzeVerdictTone,
+} from '@/components/research/AnalyzeVerdictStrip'
+import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
+import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { useResearchContext } from '@/hooks/useResearchContext'
+import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
+import { copilotViewStore } from '@/store/copilotViewStore'
 import { cn } from '@/lib/utils'
 
 function fmtNotional(v: number): string {
@@ -41,6 +52,32 @@ function fmtNum(v: number | null | undefined, digits = 2): string {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })
+}
+
+function sentimentVerdictTone(score: number | undefined): AnalyzeVerdictTone {
+  if (score == null || !Number.isFinite(score)) return 'neutral'
+  if (score >= 30) return 'success'
+  if (score <= -30) return 'danger'
+  return 'warning'
+}
+
+function sentimentVerdictLabel(score: number | undefined): string {
+  if (score == null || !Number.isFinite(score)) return 'No tape — wait'
+  if (score >= 30) return 'Lean long with flow'
+  if (score <= -30) return 'Lean short with flow'
+  return 'Fade extremes — mixed tape'
+}
+
+function sentimentVerdictSummary(s: OrderSentiment | undefined): string {
+  if (!s) return 'No order-flow sentiment yet — do not size from tape until snapshot lands.'
+  const score = s.sentiment_score
+  if (score >= 30) {
+    return `Follow bullish flow in ${s.symbol} (score ${score.toFixed(1)}); confirm with GEX walls before adding. PCR vol ${fmtNum(s.pcr_volume)}.`
+  }
+  if (score <= -30) {
+    return `Follow bearish flow in ${s.symbol} (score ${score.toFixed(1)}); confirm put wall / zero-γ before adding. PCR vol ${fmtNum(s.pcr_volume)}.`
+  }
+  return `${s.symbol} tape is mixed (score ${score.toFixed(1)}) — prefer mean-reversion / wait for clearer PCR. Call ${fmtNotional(s.call_notional)} vs put ${fmtNotional(s.put_notional)}.`
 }
 
 export default function OrderSentimentPage() {
@@ -74,6 +111,10 @@ export default function OrderSentimentPage() {
     [multiLegRows],
   )
 
+  const verdictTone = sentimentVerdictTone(sentiment?.sentiment_score)
+  const verdictLabel = sentimentVerdictLabel(sentiment?.sentiment_score)
+  const verdictSummary = sentimentVerdictSummary(sentiment)
+
   useEffect(() => {
     if (window.location.hash === '#multi-leg') {
       document.getElementById('multi-leg-section')?.scrollIntoView({ behavior: 'smooth' })
@@ -85,23 +126,88 @@ export default function OrderSentimentPage() {
       <PageHeader
         title="Order Sentiment"
         actions={
-          <AskCopilotButton
-            originPage="order-sentiment"
-            originLabel="Order Sentiment"
-            symbol={symbol}
-            date={date || undefined}
-            snapshot={compactSnapshot({
-              data_source: sentiment?.data_source,
-              sentiment_score: sentiment?.sentiment_score,
-              pcr_volume: sentiment?.pcr_volume,
-              multi_leg_count: multiLegRows.length,
-            })}
-            suggestedPrompt={`Interpret ${symbol} order-flow / sentiment from this tape snapshot. What stands out?`}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="order-sentiment"
+              originLabel="Order Sentiment"
+              symbol={symbol}
+              date={date || undefined}
+              snapshot={compactSnapshot({
+                data_source: sentiment?.data_source,
+                sentiment_score: sentiment?.sentiment_score,
+                pcr_volume: sentiment?.pcr_volume,
+                multi_leg_count: multiLegRows.length,
+              })}
+              suggestedPrompt={`Interpret ${symbol} order-flow / sentiment from this tape snapshot. What stands out?`}
+            />
+            <SaveAsHypothesisButton
+              originPage="order-sentiment"
+              defaultTitle={`${symbol} order-flow hypothesis`}
+              defaultThesis={verdictSummary}
+              defaultSymbols={[symbol]}
+              defaultTags={['order-flow', 'sentiment', 'tape']}
+              originRef={withWatchlistContractKey(
+                {
+                  symbol,
+                  date: date || null,
+                  sentiment_score: sentiment?.sentiment_score ?? null,
+                  pcr_volume: sentiment?.pcr_volume ?? null,
+                  multi_leg_count: multiLegRows.length,
+                },
+                symbol,
+              )}
+            />
+          </div>
         }
       />
 
       <ResearchContextBar />
+
+      <SymbolContextGuard symbol={symbol}>
+
+      <CompositeRegimeRibbon symbol={symbol} />
+
+      {(verdictTone === 'success' || verdictTone === 'danger') && sentiment ? (
+        <CopilotAutoInsightChip
+          message={`${symbol} order flow looks ${verdictLabel.toLowerCase()} (score ${sentiment.sentiment_score.toFixed(1)}).`}
+          tone={verdictTone}
+          onAsk={() => {
+            copilotViewStore.unsuppress()
+            askCopilotIntentStore.open({
+              originPage: 'order-sentiment',
+              originLabel: 'Order Sentiment',
+              symbol,
+              suggestedPrompt: `Interpret ${symbol} order-flow sentiment and what the tape implies for positioning.`,
+              snapshot: compactSnapshot({
+                sentiment_score: sentiment.sentiment_score,
+                pcr_volume: sentiment.pcr_volume,
+              }),
+            })
+          }}
+        />
+      ) : null}
+
+      <AnalyzeVerdictStrip
+        tone={verdictTone}
+        verdictLabel={verdictLabel}
+        narrative={verdictSummary}
+        signals={
+          sentiment
+            ? [
+                { label: 'Score', value: sentiment.sentiment_score.toFixed(1) },
+                { label: 'PCR vol', value: fmtNum(sentiment.pcr_volume) },
+                { label: 'PCR OI', value: fmtNum(sentiment.pcr_oi) },
+              ]
+            : []
+        }
+        nextMoves={[
+          {
+            label: 'Option Discovery',
+            href: `/research/discovery?symbol=${encodeURIComponent(symbol)}`,
+          },
+          { label: 'IV Radar', href: `/research/iv-radar?symbol=${encodeURIComponent(symbol)}` },
+        ]}
+      />
 
       {(sentiment?.data_source === 'option_snapshot_aggregates' ||
         sentiment?.data_source === 'option_trades_tape') && (
@@ -299,6 +405,7 @@ export default function OrderSentimentPage() {
         !multiLegError && (
           <p className={denseTable.emptyHint}>No order sentiment data available</p>
         )}
+      </SymbolContextGuard>
     </PageShell>
   )
 }

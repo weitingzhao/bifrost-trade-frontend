@@ -44,6 +44,7 @@ Option contract strings remain **Option Entity** — never render as Option Cate
 | Concept | Token | Accessor |
 |---------|-------|----------|
 | watchlist / portfolio (fixed labels) + user names (Fix Income, Tech, Watching…) | `--color-entity-category` | Cell/filter: `DenseTag` / `DenseTagButton` + `denseEntityFilterChipClass` · **Group header row**: `GroupHeaderRow variant="category"` (purple text, `bg-secondary` band, `border-y` — separates group from symbol rows; no pill) |
+| Portfolio context tag (holding / watchlist on Analyze desks) | `--color-entity-category` | `PortfolioTag` (`src/components/portfolio/PortfolioTag.tsx`) |
 
 ### PnL
 

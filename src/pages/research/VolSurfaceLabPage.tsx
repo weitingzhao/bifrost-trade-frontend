@@ -22,11 +22,17 @@ import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
+import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { TermStructureChart } from '@/components/charts/TermStructureChart'
 import { VolSurfaceHeatmap } from '@/components/charts/VolSurface3DChart'
+import { VolSurface2DChart } from '@/components/charts/VolSurface2DChart'
+import { VolSurfaceResidualScatter } from '@/components/charts/VolSurfaceResidualScatter'
+import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import {
   useResiduals,
   useSkewExtremes,
@@ -60,10 +66,10 @@ function slopeSeverityTone(
 }
 
 function slopeSeverityLabel(absSlope: number | null | undefined): string {
-  if (absSlope == null || !Number.isFinite(absSlope)) return 'No fit'
-  if (absSlope >= 0.25) return 'Extreme skew'
-  if (absSlope >= 0.12) return 'Elevated skew'
-  return 'Neutral skew'
+  if (absSlope == null || !Number.isFinite(absSlope)) return 'No fit — wait'
+  if (absSlope >= 0.25) return 'Skew extreme — size carefully'
+  if (absSlope >= 0.12) return 'Skew elevated — prefer defined risk'
+  return 'Skew calm — structure freer'
 }
 
 function pickAnchor(rows: VolSurfaceFitRow[]): VolSurfaceFitRow | null {
@@ -78,16 +84,22 @@ function pickAnchor(rows: VolSurfaceFitRow[]): VolSurfaceFitRow | null {
 }
 
 function verdictText(anchor: VolSurfaceFitRow | null): string {
-  if (!anchor) return 'No SVI fit available for this symbol yet.'
+  if (!anchor) return 'No SVI fit yet — wait before pricing wings or ratio spreads.'
   const slope = anchor.atm_slope
   if (slope == null) {
-    return `${anchor.symbol}: SVI fit converged (RMSE ${fmtSlope(anchor.fit_rmse)}) but ATM slope not computed.`
+    return `${anchor.symbol}: SVI converged (RMSE ${fmtSlope(anchor.fit_rmse)}) but ATM slope missing — do not size skew trades.`
   }
   const dir = slope < 0 ? 'call skew' : 'put skew'
   const abs = Math.abs(slope)
   const sev = slopeSeverityLabel(abs)
   const dte = anchor.dte != null ? `${anchor.dte}d` : '30d'
-  return `${anchor.symbol}: ${sev.toLowerCase()} at ${dte} tenor — ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPct(anchor.atm_vol)}.`
+  if (abs >= 0.25) {
+    return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}). Prefer defined-risk; avoid naked wings.`
+  }
+  if (abs >= 0.12) {
+    return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPct(anchor.atm_vol)}. Prefer defined-risk skew expressions.`
+  }
+  return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPct(anchor.atm_vol)}. Structure freer if VRP agrees.`
 }
 
 function SkewExtremesTable({
@@ -272,25 +284,38 @@ export default function VolSurfaceLabPage() {
 
       <ResearchContextBar />
 
-      <Card variant="elevated" className={cn('border', verdictBorderClass)}>
-        <CardContent className="flex flex-col gap-1 px-3 py-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <DenseTag
-              variant={
-                verdictTone === 'danger'
-                  ? 'danger'
-                  : verdictTone === 'warning'
-                    ? 'warning'
-                    : verdictTone === 'success'
-                      ? 'success'
-                      : 'neutral'
-              }
-            >
-              {verdictLabel}
-            </DenseTag>
-            <span className="text-dense-label text-foreground">{verdictLine}</span>
-          </div>
-          {anchor ? (
+      <SymbolContextGuard symbol={symbol}>
+
+      <CompositeRegimeRibbon symbol={symbol} />
+
+      <AnalyzeVerdictStrip
+        tone={verdictTone}
+        verdictLabel={verdictLabel}
+        narrative={verdictLine}
+        signals={
+          anchor
+            ? [
+                { label: 'ATM', value: fmtPct(anchor.atm_vol) },
+                { label: 'Slope', value: fmtSlope(anchor.atm_slope) },
+                { label: 'RMSE', value: fmtSlope(anchor.fit_rmse) },
+              ]
+            : []
+        }
+        nextMoves={[
+          {
+            label: 'IV Radar',
+            href: `/research/iv-radar?symbol=${encodeURIComponent(symbol)}`,
+          },
+          {
+            label: 'VRP Lab',
+            href: `/research/vrp-lab?symbol=${encodeURIComponent(symbol)}`,
+          },
+        ]}
+      />
+
+      {anchor ? (
+        <Card variant="elevated" className={cn('border', verdictBorderClass)}>
+          <CardContent className="px-3 py-2">
             <p className="text-dense-caption text-muted-foreground">
               Anchor expiry{' '}
               <span className="font-mono">{anchor.expiry ?? '—'}</span> ·
@@ -298,9 +323,9 @@ export default function VolSurfaceLabPage() {
               rho={anchor.svi_rho?.toFixed(3) ?? '—'} · m={anchor.svi_m?.toFixed(3) ?? '—'} ·
               sigma={anchor.svi_sigma?.toFixed(3) ?? '—'}
             </p>
-          ) : null}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {anyError ? (
         <QueryErrorAlert
@@ -330,6 +355,50 @@ export default function VolSurfaceLabPage() {
           )}
         </CardContent>
       </Card>
+
+      <Card variant="elevated">
+        <CardContent className="space-y-2 px-3 py-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-dense-label font-medium text-foreground">
+              SVI smile · log-moneyness vs IV
+            </p>
+            {expiryOptions.length > 0 ? (
+              <>
+                <span className="text-xs font-medium text-muted-foreground">Expiry:</span>
+                <SegmentControl
+                  ariaLabel="Vol Surface smile expiry"
+                  size="sm"
+                  value={effectiveExpiry ?? expiryOptions[0]?.value ?? ''}
+                  onChange={(v) => setUserExpiry(v)}
+                  options={expiryOptions.slice(0, 6)}
+                />
+              </>
+            ) : null}
+          </div>
+          {residualQ.isLoading ? (
+            <Skeleton className="h-[220px] w-full rounded-md" />
+          ) : (
+            <VolSurface2DChart rows={residualQ.data ?? []} />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card variant="elevated">
+        <CardContent className="space-y-2 px-3 py-2">
+          <p className="text-dense-label font-medium text-foreground">
+            Residual scatter · fit error by moneyness
+          </p>
+          {residualQ.isLoading ? (
+            <Skeleton className="h-[180px] w-full rounded-md" />
+          ) : (
+            <VolSurfaceResidualScatter rows={residualQ.data ?? []} mode="residual_z" />
+          )}
+        </CardContent>
+      </Card>
+
+      {anchor?.atm_slope != null ? (
+        <SimilarRegimeCard lens="term_slope" symbol={symbol} value={anchor.atm_slope} />
+      ) : null}
 
       <Card variant="elevated">
         <CardContent className="space-y-2 px-3 py-2">
@@ -397,6 +466,7 @@ export default function VolSurfaceLabPage() {
         option chain IV per contract, only fits smiles with DTE 7–90 and ≥10 points.
         D10: no live order execution from this page.
       </p>
+      </SymbolContextGuard>
     </PageShell>
   )
 }

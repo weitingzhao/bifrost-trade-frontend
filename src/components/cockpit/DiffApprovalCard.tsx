@@ -17,6 +17,11 @@ function titleForKind(kind: string): string {
   if (kind === 'patch_hypothesis') return 'Patch hypothesis'
   if (kind === 'retire_hypothesis') return 'Retire hypothesis'
   if (kind === 'run_backtest') return 'Run backtest'
+  if (kind === 'candidate_batch') return 'Propose candidates'
+  if (kind === 'hypothesis_draft') return 'Promote to hypothesis'
+  if (kind === 'decision_draft') return 'Draft decision'
+  if (kind === 'attach_backtest_evidence') return 'Attach backtest evidence'
+  if (kind === 'order_intent') return 'Order intent (advisory)'
   return kind || 'Proposed write'
 }
 

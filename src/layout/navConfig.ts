@@ -20,6 +20,7 @@ import {
   Network,
   PieChart,
   Radar,
+  ScanSearch,
   Server,
   Settings,
   Shield,
@@ -29,7 +30,6 @@ import {
   Trophy,
   Users,
   Wand2,
-  Zap,
 } from 'lucide-react'
 import { getAllNavItems, type ShellNavGroup, type ShellNavItem } from '@bifrost/ui'
 
@@ -63,6 +63,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
           route('Positions', '/portfolio/positions', TrendingUp),
           route('Performance', '/portfolio/performance', LineChart),
           route('Model Analysis', '/portfolio/model-analysis', BarChart2),
+          route('Risk Model', '/portfolio/risk', AlertCircle),
         ],
       },
       {
@@ -83,19 +84,26 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         items: [route('Research Home', '/research', Home)],
       },
       {
+        label: 'Loop',
+        items: [
+          route('Candidate Pool', '/research/loop/candidates', ListFilter),
+          route('Hypothesis Board', '/research/loop/hypotheses', BookOpen),
+          route('Decision Inbox', '/research/loop/decisions', ClipboardList),
+          route('Harness Console', '/research/loop/harness', Terminal),
+        ],
+      },
+      {
         label: 'Discover',
         items: [
-          route('Daily Brief', '/research/daily-brief', ClipboardList),
-          route('Event Radar', '/research/event-radar', Zap),
-          route('SEPA Daily Core', '/research/sepa-daily-core', Compass),
-          route('Stock Screener', '/research/sepa', BookOpen),
-          route('Option Discovery', '/research/discovery', Eye),
-          route('Momentum Radar', '/research/momentum-radar', Radar),
+          route('Overview', '/research/daily-brief', ClipboardList),
+          route('Stock Explorer', '/research/explorer', Compass),
+          route('Option Scan', '/research/scan', ScanSearch),
         ],
       },
       {
         label: 'Analyze',
         items: [
+          route('Option Discovery', '/research/discovery', Eye),
           route('IV Radar', '/research/iv-radar', Radar),
           route('IV-RV Spread', '/research/vrp-lab', Activity),
           route('Vol Surface', '/research/vol-surface-lab', LineChart),
@@ -106,22 +114,23 @@ export const NAV_GROUPS: ShellNavGroup[] = [
           route('Multi-leg Flow', '/research/order-sentiment#multi-leg', Network),
           route('Forecast Sessions', '/research/forecast-sessions', TrendingUp),
           route('Intraday Playbook', '/research/intraday-playbook', LineChart),
+          route('Contract Greeks', '/research/greeks', Wand2),
         ],
       },
       {
         label: 'Validate',
         items: [
+          route('Signal Decay', '/research/signal-decay', Activity),
           route('Backtest', '/research/backtest', History),
           route('Agent Personas', '/research/agent-personas', Users),
           route('My Trading System', '/research/playbook', BookOpen),
-          route('Contract Greeks', '/research/greeks', Wand2),
-          route('Risk Model', '/research/risk', AlertCircle),
         ],
       },
       {
         label: 'Data',
         items: [
           route('Stock Data Readiness', '/settings/data-readiness', Server),
+          route('Signal Health', '/research/signal-health', Activity),
           route('Stock Watchlist', '/research/watchlist', Star),
           route('Option Screener', '/research/screener', ListFilter),
         ],

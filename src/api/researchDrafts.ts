@@ -15,6 +15,8 @@ export type DraftKind =
   | 'hypothesis_suggestion'
   | 'playbook_rule'
   | 'playbook_note'
+  | 'candidate_batch'
+  | 'policy_suggestion'
 export type DraftStatus = 'pending' | 'approved' | 'dismissed' | 'expired'
 
 export interface AiDraft {
@@ -123,6 +125,28 @@ export async function dismissResearchDraft(
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
       body: JSON.stringify({ approved_by: approvedBy }),
+    }),
+  )
+}
+
+export type ManualDraftKind = 'hypothesis_suggestion' | 'morning_brief' | 'eod_verdict'
+
+export interface CreateResearchDraftBody {
+  kind: ManualDraftKind
+  title: string
+  summary: string
+  hypothesis_id?: string
+  symbols?: string[]
+}
+
+export async function createResearchDraft(
+  body: CreateResearchDraftBody,
+): Promise<{ draft: AiDraft }> {
+  return unwrap(
+    await fetch(researchEngineUrl('/research/drafts'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
+      body: JSON.stringify(body),
     }),
   )
 }

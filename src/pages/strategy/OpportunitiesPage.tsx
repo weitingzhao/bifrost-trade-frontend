@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
-import { useQueryClient } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Copy, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { SegmentControl } from '@/components/data-display'
+import { DenseTag, EmptyState, SegmentControl } from '@/components/data-display'
 import type { AvailabilityFilter } from '@/components/strategy/AvailabilityFilterPills'
 import { OpportunitiesTable } from '@/components/strategy/OpportunitiesTable'
 import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
@@ -28,6 +28,7 @@ import {
 } from '@/components/strategy/opportunities/opportunitiesUi'
 import { useOpportunities } from '@/hooks/useStrategies'
 import { putOpportunity, fetchOpportunityDetail } from '@/api/strategy'
+import { fetchOrderIntents, type OrderIntentPayload } from '@/api/research/orderIntents'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { opportunityDetailToPayload, opportunityIsActive } from '@/utils/strategyFormUtils'
 import type { StrategyOpportunity, EntryCondition } from '@/types/positions'
@@ -60,6 +61,14 @@ export default function OpportunitiesPage() {
   const [prefillData, setPrefillData] = useState<PrefillData | undefined>(undefined)
   const [copyLoadingId, setCopyLoadingId] = useState<number | null>(null)
   const [availabilityError, setAvailabilityError] = useState<string | null>(null)
+  const [copiedIntentId, setCopiedIntentId] = useState<string | null>(null)
+
+  const orderIntentsQ = useQuery({
+    queryKey: QUERY_KEYS.research.orderIntents({ status: 'pending' }),
+    queryFn: () => fetchOrderIntents({ status: 'pending' }),
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
+  })
 
   const allItems = useMemo(
     () =>
@@ -145,6 +154,49 @@ export default function OpportunitiesPage() {
     }
   }
 
+  async function handleCopyIntentPayload(draftId: string, payload: unknown) {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+      setCopiedIntentId(draftId)
+      window.setTimeout(() => {
+        setCopiedIntentId((cur) => (cur === draftId ? null : cur))
+      }, 2000)
+    } catch {
+      /* clipboard may be unavailable */
+    }
+  }
+
+  function mapIntentToPrefill(payload: OrderIntentPayload): PrefillData {
+    const template = String(payload.strategy_template ?? '').trim()
+    const hypId = String(payload.hypothesis_id ?? '').trim()
+    const shortHyp = hypId ? hypId.slice(0, 8) : ''
+    const legs = Array.isArray(payload.legs) ? (payload.legs as Array<{ symbol?: string }>) : []
+    const symbolSet = new Set<string>()
+    for (const leg of legs) {
+      const s = leg?.symbol
+      if (typeof s === 'string' && s.trim()) symbolSet.add(s.trim().toUpperCase())
+    }
+    const symbols = Array.from(symbolSet)
+    const scopeType = symbols.length > 1 ? 'watchlist' : symbols.length === 1 ? 'symbol' : ''
+    const nameParts = ['Research proposal']
+    if (template) nameParts.push(template)
+    if (shortHyp) nameParts.push(shortHyp)
+    return {
+      name: nameParts.join(' · '),
+      structureId: '',
+      gateSafetyId: '',
+      scopeType,
+      symbols,
+      conditions: [],
+    }
+  }
+
+  function handleOpenIntentInForm(payload: OrderIntentPayload) {
+    setEditTarget(undefined)
+    setPrefillData(mapIntentToPrefill(payload))
+    setModalOpen(true)
+  }
+
   if (isLoading) {
     return (
       <PageShell padding="default" className="space-y-3">
@@ -165,6 +217,74 @@ export default function OpportunitiesPage() {
         }
         titleSize="large"
       />
+
+      <Card variant="elevated" size="sm" className="gap-2.5 p-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className={opportunitiesSectionTitleClass}>Research Proposals</h2>
+          <DenseTag variant="warning">Advisory — D10 BLOCKED</DenseTag>
+        </div>
+        {orderIntentsQ.isError ? (
+          <QueryErrorAlert error={orderIntentsQ.error} />
+        ) : orderIntentsQ.isLoading ? (
+          <Skeleton className="h-20 w-full rounded-md" />
+        ) : (orderIntentsQ.data?.items?.length ?? 0) === 0 ? (
+          <EmptyState
+            title="No pending proposals"
+            description="Harness order intents with status pending will appear here. Copy payload only — never places orders."
+          />
+        ) : (
+          <ul className="space-y-2">
+            {(orderIntentsQ.data?.items ?? []).map((draft) => {
+              const p = draft.payload ?? {}
+              const rationale = String(p.rationale ?? '').trim()
+              const snippet =
+                rationale.length > 160 ? `${rationale.slice(0, 160)}…` : rationale || '—'
+              return (
+                <li
+                  key={draft.id}
+                  className="flex flex-wrap items-start justify-between gap-2 rounded-md border border-border/60 bg-background/40 px-2.5 py-2"
+                >
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-dense-label font-medium">
+                        {String(p.strategy_template ?? '—')}
+                      </span>
+                      <span className="text-dense-caption font-mono text-muted-foreground truncate">
+                        {String(p.hypothesis_id ?? '—')}
+                      </span>
+                      <DenseTag variant="warning" size="cell">
+                        Advisory — D10 BLOCKED
+                      </DenseTag>
+                    </div>
+                    <p className="text-dense-meta text-muted-foreground">{snippet}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 px-2 text-dense-meta"
+                      onClick={() => handleOpenIntentInForm(draft.payload)}
+                    >
+                      <Plus className="mr-1 size-3" />
+                      Open in form
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-dense-meta"
+                      onClick={() => void handleCopyIntentPayload(draft.id, draft.payload)}
+                    >
+                      <Copy className="mr-1 size-3" />
+                      {copiedIntentId === draft.id ? 'Copied' : 'Copy JSON'}
+                    </Button>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Card>
 
       <Card variant="elevated" size="sm" className="gap-3 p-2.5">
         <div className={opportunitiesToolbarClass}>

@@ -14,6 +14,7 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
+  SegmentControl,
 } from '@/components/data-display'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -23,13 +24,26 @@ import { ScenarioFanChart } from '@/components/charts/ScenarioFanChart'
 import { SessionTimelineChart } from '@/components/charts/SessionTimelineChart'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
+import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { EmptyHint } from '@/components/research/EmptyHint'
+import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
+import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import {
+  fetchPlaybookHitRate,
+  fetchPlaybookTriggers,
   fetchTerrainIntraday,
   type TerrainIntraday,
 } from '@/api/researchEngine'
 import { useIntradayVerdict } from '@/hooks/useIntradayVerdict'
+import {
+  PORTFOLIO_UNIVERSE_OPTIONS,
+  usePortfolioSymbols,
+  type PortfolioUniverse,
+} from '@/hooks/usePortfolioSymbols'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import {
   invalidateLine,
@@ -191,6 +205,12 @@ export default function IntradayPlaybookPage() {
   const { symbol, apiDate } = useResearchContext()
   const [transitionsExplicit, setTransitionsExplicit] = useState<boolean | undefined>(undefined)
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
+  const [universe, setUniverse] = useState<PortfolioUniverse>('all')
+  const { filterSymbols } = usePortfolioSymbols()
+  const symbolOutOfUniverse =
+    universe !== 'all' &&
+    Boolean(symbol.trim()) &&
+    filterSymbols(universe, [symbol]).length === 0
 
   const intradayQ = useQuery({
     queryKey: ['terrain-intraday', symbol, apiDate],
@@ -199,7 +219,25 @@ export default function IntradayPlaybookPage() {
     refetchInterval: 60_000,
   })
 
+  const triggersQ = useQuery({
+    queryKey: ['playbook-triggers', symbol, apiDate],
+    queryFn: () => fetchPlaybookTriggers(symbol, apiDate || undefined),
+    enabled: symbol.length > 0,
+    staleTime: 30_000,
+  })
+
+  const hitRateQ = useQuery({
+    queryKey: ['playbook-hit-rate', symbol, 30],
+    queryFn: () => fetchPlaybookHitRate(symbol, 30, 5),
+    enabled: symbol.length > 0,
+    staleTime: 60_000,
+  })
+
   const rows = useMemo(() => intradayQ.data?.rows ?? [], [intradayQ.data])
+  const triggerRows = useMemo(() => triggersQ.data?.rows ?? [], [triggersQ.data])
+  const hitRate = hitRateQ.data?.hit_rate ?? null
+  const hitEval = hitRateQ.data?.evaluated_count ?? 0
+  const hitCount = hitRateQ.data?.hit_count ?? 0
   const effectiveIdx =
     selectedIdx ?? (rows.length > 0 ? rows.length - 1 : null)
   const selected =
@@ -238,23 +276,145 @@ export default function IntradayPlaybookPage() {
         title="Intraday Playbook"
         description="Scenario fan, LIVE bias, and path transitions — observe only (D10)"
         actions={
-          <AskCopilotButton
-            originPage="intraday-playbook"
-            originLabel="Intraday Playbook"
-            symbol={symbol}
-            date={apiDate}
-            snapshot={compactSnapshot({
-              headline: intradayVerdict.headline,
-              bias: intradayVerdict.biasTag,
-              live_kind: selectedKind,
-              spot: selected?.spot,
-            })}
-            suggestedPrompt={`Given the live intraday playbook for ${symbol}, what bias should I observe and what would invalidate it?`}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="intraday-playbook"
+              originLabel="Intraday Playbook"
+              symbol={symbol}
+              date={apiDate}
+              snapshot={compactSnapshot({
+                headline: intradayVerdict.headline,
+                bias: intradayVerdict.biasTag,
+                live_kind: selectedKind,
+                spot: selected?.spot,
+              })}
+              suggestedPrompt={`Given the live intraday playbook for ${symbol}, what bias should I observe and what would invalidate it?`}
+            />
+            <SaveAsHypothesisButton
+              originPage="intraday-playbook"
+              defaultTitle={`${symbol} intraday ${intradayVerdict.biasTag} hypothesis`}
+              defaultThesis={`${intradayVerdict.headline}. Invalidate: ${intradayVerdict.invalidate}`}
+              defaultSymbols={[symbol]}
+              defaultTags={['intraday', 'playbook', 'scenario']}
+              originRef={withWatchlistContractKey(
+                {
+                  symbol,
+                  date: apiDate || null,
+                  bias: intradayVerdict.biasTag,
+                  live_kind: selectedKind,
+                  spot: selected?.spot ?? null,
+                  invalidate: intradayVerdict.invalidate,
+                },
+                symbol,
+              )}
+            />
+          </div>
         }
       />
 
       <ResearchContextBar />
+
+      <SymbolContextGuard symbol={symbol}>
+
+      {symbol.trim() ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-dense-label font-semibold text-entity-symbol">
+            {symbol.trim().toUpperCase()}
+          </span>
+          <PortfolioTag symbol={symbol} variant="inline" />
+          {symbolOutOfUniverse ? (
+            <span className="text-dense-meta text-muted-foreground">Not in holdings/watchlist</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <Card variant="elevated">
+        <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">
+          <span className="text-dense-meta font-medium text-muted-foreground shrink-0">Universe:</span>
+          <SegmentControl
+            ariaLabel="Portfolio universe filter"
+            size="sm"
+            value={universe}
+            onChange={(v) => setUniverse(v as PortfolioUniverse)}
+            options={[...PORTFOLIO_UNIVERSE_OPTIONS]}
+          />
+        </CardContent>
+      </Card>
+
+      <CompositeRegimeRibbon symbol={symbol} />
+
+      <AnalyzeVerdictStrip
+        tone={
+          intradayVerdict.liveKind === 'bull'
+            ? 'success'
+            : intradayVerdict.liveKind === 'bear'
+              ? 'danger'
+              : intradayVerdict.liveKind === 'squeeze'
+                ? 'warning'
+                : 'neutral'
+        }
+        verdictLabel={
+          selected
+            ? `Observe ${intradayVerdict.mechanism} — D10`
+            : 'No LIVE scenario'
+        }
+        narrative={
+          selected
+            ? `${intradayVerdict.headline}. ${intradayVerdict.invalidate} Observe only — do not arm live orders (D10).`
+            : 'Load intraday terrain to pick a LIVE scenario bias before the open.'
+        }
+        signals={
+          selected
+            ? [
+                { label: 'Bias', value: intradayVerdict.biasTag },
+                {
+                  label: 'LIVE',
+                  value:
+                    intradayVerdict.liveProbability != null
+                      ? `${(intradayVerdict.liveProbability * 100).toFixed(0)}%`
+                      : '—',
+                },
+                {
+                  label: '30d hit',
+                  value:
+                    hitRate != null ? `${(hitRate * 100).toFixed(0)}% (${hitCount}/${hitEval})` : '—',
+                },
+              ]
+            : []
+        }
+      />
+
+      <Card variant="elevated">
+        <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-3 text-dense-meta">
+          <span className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
+            Trigger hit-rate (30d)
+          </span>
+          {hitRateQ.isLoading ? (
+            <Skeleton className="h-5 w-32" />
+          ) : (
+            <>
+              <span>
+                Rate{' '}
+                <strong className="font-mono text-foreground">
+                  {hitRate != null ? `${(hitRate * 100).toFixed(0)}%` : '—'}
+                </strong>
+              </span>
+              <span>
+                Hits{' '}
+                <strong className="font-mono text-foreground">
+                  {hitCount}/{hitEval}
+                </strong>
+              </span>
+              <span>
+                Triggers{' '}
+                <strong className="font-mono text-foreground">
+                  {hitRateQ.data?.trigger_count ?? 0}
+                </strong>
+              </span>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {isError && (
         <QueryErrorAlert
@@ -274,6 +434,41 @@ export default function IntradayPlaybookPage() {
         </div>
       ) : selected ? (
         <>
+          {/* Scenario trigger timeline */}
+          <Card variant="elevated">
+            <CardContent className="space-y-2 px-4 py-3">
+              <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
+                Scenario trigger timeline
+              </p>
+              {triggersQ.isLoading ? (
+                <Skeleton className="h-16 w-full rounded-md" />
+              ) : triggerRows.length === 0 ? (
+                <p className="text-dense-meta text-muted-foreground">
+                  No trigger events for this session yet. Events fire when LIVE scenario changes or probability crosses 0.40.
+                </p>
+              ) : (
+                <ul className="space-y-2 border-l border-border pl-3">
+                  {triggerRows.map((t, i) => (
+                    <li key={`${t.trigger_at}-${t.scenario_key}-${i}`} className="relative">
+                      <span className="absolute -left-[17px] top-1.5 size-2 rounded-full bg-primary" />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-dense-meta text-muted-foreground">
+                          {t.trigger_at.slice(11, 19) || t.trigger_at}
+                        </span>
+                        <DenseTag variant={t.satisfied ? 'success' : 'warning'}>
+                          {t.scenario_key}
+                        </DenseTag>
+                        <span className="text-dense-caption text-muted-foreground">
+                          {t.satisfied ? 'satisfied' : 'armed'}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Verdict */}
           <Card variant="elevated" className="ring-1 ring-primary/15">
             <CardContent className="space-y-2 px-4 py-3">
@@ -457,6 +652,7 @@ export default function IntradayPlaybookPage() {
       <p className="text-dense-caption text-muted-foreground">
         Intraday playbook — observe only (D10). Not investment advice.
       </p>
+      </SymbolContextGuard>
     </PageShell>
   )
 }

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 import { useCreateHypothesis } from '@/hooks/useHypotheses'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import { cockpitPinStore } from '@/store/cockpitPinStore'
+import { PromoteToWatchlistButton } from '@/components/research/PromoteToWatchlistButton'
 
 const TEXTAREA_CLASS =
   'w-full text-dense-body min-h-[80px] resize-y rounded-md border border-input bg-background px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
@@ -62,6 +63,7 @@ export function SaveAsHypothesisButton({
   const [tagsStr, setTagsStr] = useState(initialTags)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Hypothesis | null>(null)
 
   const openDialog = useCallback(() => {
     setTitle(defaultTitle ?? '')
@@ -97,6 +99,7 @@ export function SaveAsHypothesisButton({
       })
       cockpitPinStore.getState().pinHypothesis(created.id)
       setSavedFlash(true)
+      setLastSaved(created)
       window.setTimeout(() => setSavedFlash(false), 2400)
       setOpen(false)
       onSaved?.(created)
@@ -130,7 +133,7 @@ export function SaveAsHypothesisButton({
 
   return (
     <>
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         {trigger}
         {savedFlash && (
           <span
@@ -141,6 +144,13 @@ export function SaveAsHypothesisButton({
             Saved
           </span>
         )}
+        {lastSaved && (lastSaved.symbols?.[0] || symbolsArray[0]) ? (
+          <PromoteToWatchlistButton
+            hypothesis={lastSaved}
+            symbol={lastSaved.symbols?.[0] ?? symbolsArray[0]}
+            size="dense"
+          />
+        ) : null}
       </div>
 
       <Dialog open={open} onOpenChange={(next) => (submitting ? undefined : setOpen(next))}>

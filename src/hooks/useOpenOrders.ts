@@ -6,6 +6,8 @@ export function useOpenOrders() {
   return useQuery({
     queryKey: QUERY_KEYS.monitor.openOrders,
     queryFn: fetchOpenOrders,
-    refetchInterval: 6_000,
+    // 15s — order submissions should call queryClient.invalidate directly
+    // for instant feedback; short polls only add load without helping UX.
+    refetchInterval: 15_000,
   })
 }

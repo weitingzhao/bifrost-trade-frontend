@@ -27,8 +27,18 @@ import { EventRadarDashboard } from '@/components/research/EventRadarDashboard'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
+import { AddToPoolButton } from '@/components/research/AddToPoolButton'
 
 type ViewMode = 'events' | 'themes' | 'calendar'
+
+function firstSymbol(affected: string | null | undefined): string {
+  if (!affected) return ''
+  for (const raw of affected.split(/[,\s]+/)) {
+    const s = raw.trim().toUpperCase()
+    if (s) return s
+  }
+  return ''
+}
 
 function directionTag(d: number) {
   if (d > 0) return <DenseTag variant="success">Bullish</DenseTag>
@@ -55,7 +65,7 @@ function sentimentBar(score: number) {
   )
 }
 
-export default function EventRadarPage() {
+function useEventRadarState() {
   const [view, setView] = useState<ViewMode>('events')
   const [importanceFilter, setImportanceFilter] = useState<string>('all')
 
@@ -104,40 +114,58 @@ export default function EventRadarPage() {
     return Array.from(set)
   }, [filteredEvents])
 
-  return (
-    <PageShell>
-      <PageHeader
-        title="Event Radar"
-        description="Event table, theme aggregates, and forward calendar"
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="event-radar"
-              originLabel="Event Radar"
-              symbol={topEventSymbols[0]}
-              snapshot={compactSnapshot({
-                view,
-                importance: importanceFilter,
-                batch_id: latestBatchId,
-                top_symbols: topEventSymbols,
-              })}
-              suggestedPrompt="Which events on this radar look most material, and which symbols should I watch?"
-            />
-            <SaveAsHypothesisButton
-              originPage="event-radar"
-              defaultTitle="Event Radar hypothesis"
-              defaultSymbols={topEventSymbols}
-              defaultTags={['events']}
-              originRef={{
-                view,
-                importance: importanceFilter,
-                batch_id: latestBatchId,
-              }}
-            />
-          </div>
-        }
-      />
+  return {
+    view, setView, importanceFilter, setImportanceFilter,
+    eventsQ, themesQ, calendarQ, batchesQ,
+    allEvents, filteredEvents, latestBatchId, topEventSymbols,
+  }
+}
 
+type EventRadarState = ReturnType<typeof useEventRadarState>
+
+export function EventRadarActions({ state }: { state?: EventRadarState } = {}) {
+  const inner = useEventRadarState()
+  const s = state ?? inner
+  return (
+    <div className="flex items-center gap-1.5">
+      <AskCopilotButton
+        originPage="event-radar"
+        originLabel="Event Radar"
+        symbol={s.topEventSymbols[0]}
+        snapshot={compactSnapshot({
+          view: s.view,
+          importance: s.importanceFilter,
+          batch_id: s.latestBatchId,
+          top_symbols: s.topEventSymbols,
+        })}
+        suggestedPrompt="Which events on this radar look most material, and which symbols should I watch?"
+      />
+      <SaveAsHypothesisButton
+        originPage="event-radar"
+        defaultTitle="Event Radar hypothesis"
+        defaultSymbols={s.topEventSymbols}
+        defaultTags={['events']}
+        originRef={{
+          view: s.view,
+          importance: s.importanceFilter,
+          batch_id: s.latestBatchId,
+        }}
+      />
+    </div>
+  )
+}
+
+export function EventRadarBody({ state: injected }: { state?: EventRadarState } = {}) {
+  const inner = useEventRadarState()
+  const s = injected ?? inner
+  const {
+    view, setView, importanceFilter, setImportanceFilter,
+    eventsQ, themesQ, calendarQ, batchesQ,
+    allEvents, filteredEvents,
+  } = s
+
+  return (
+    <div>
       <div className="flex items-center gap-4 mb-4">
         <SegmentControl
           value={view}
@@ -198,6 +226,7 @@ export default function EventRadarPage() {
                   <DenseTableHead>Subject</DenseTableHead>
                   <DenseTableHead>Event</DenseTableHead>
                   <DenseTableHead>Symbols</DenseTableHead>
+                  <DenseTableHead className="w-10">Pool</DenseTableHead>
                   <DenseTableHead>Direction</DenseTableHead>
                   <DenseTableHead className={denseTableNumCell}>Certainty</DenseTableHead>
                   <DenseTableHead>Sentiment</DenseTableHead>
@@ -207,7 +236,9 @@ export default function EventRadarPage() {
                 </DenseTableHeadRow>
               </DenseTableHeader>
               <DenseTableBody>
-                {filteredEvents.map((row: EventRadarRow) => (
+                {filteredEvents.map((row: EventRadarRow) => {
+                  const poolSym = firstSymbol(row.affected_symbols)
+                  return (
                   <DenseTableRow key={row.event_id}>
                     <DenseTableCell className="max-w-[100px] truncate">
                       {row.source}
@@ -220,6 +251,22 @@ export default function EventRadarPage() {
                     </DenseTableCell>
                     <DenseTableCell className="max-w-[80px] truncate">
                       {row.affected_symbols}
+                    </DenseTableCell>
+                    <DenseTableCell>
+                      {poolSym ? (
+                        <AddToPoolButton
+                          symbol={poolSym}
+                          source="event_radar"
+                          tags={['event_radar']}
+                          source_ref={{
+                            event_id: row.event_id,
+                            subject: row.subject,
+                          }}
+                          size="icon"
+                        />
+                      ) : (
+                        <span className="text-dense-caption text-muted-foreground">—</span>
+                      )}
                     </DenseTableCell>
                     <DenseTableCell>{directionTag(row.direction)}</DenseTableCell>
                     <DenseTableCell className={denseTableNumCell}>
@@ -234,7 +281,8 @@ export default function EventRadarPage() {
                       {row.collected_at ?? '—'}
                     </DenseTableCell>
                   </DenseTableRow>
-                ))}
+                  )
+                })}
               </DenseTableBody>
             </DenseDataTable>
           )}
@@ -298,13 +346,16 @@ export default function EventRadarPage() {
                   <DenseTableHead>Subject</DenseTableHead>
                   <DenseTableHead>Event</DenseTableHead>
                   <DenseTableHead>Symbols</DenseTableHead>
+                  <DenseTableHead className="w-10">Pool</DenseTableHead>
                   <DenseTableHead>Direction</DenseTableHead>
                   <DenseTableHead>Importance</DenseTableHead>
                   <DenseTableHead>Theme</DenseTableHead>
                 </DenseTableHeadRow>
               </DenseTableHeader>
               <DenseTableBody>
-                {calendarQ.data.rows.map((row: EventRadarRow) => (
+                {calendarQ.data.rows.map((row: EventRadarRow) => {
+                  const poolSym = firstSymbol(row.affected_symbols)
+                  return (
                   <DenseTableRow key={row.event_id}>
                     <DenseTableCell className="text-dense-meta">
                       {row.collected_at ?? '—'}
@@ -316,18 +367,46 @@ export default function EventRadarPage() {
                       {row.event_summary}
                     </DenseTableCell>
                     <DenseTableCell>{row.affected_symbols}</DenseTableCell>
+                    <DenseTableCell>
+                      {poolSym ? (
+                        <AddToPoolButton
+                          symbol={poolSym}
+                          source="event_radar"
+                          tags={['event_radar', 'calendar']}
+                          source_ref={{ event_id: row.event_id }}
+                          size="icon"
+                        />
+                      ) : (
+                        <span className="text-dense-caption text-muted-foreground">—</span>
+                      )}
+                    </DenseTableCell>
                     <DenseTableCell>{directionTag(row.direction)}</DenseTableCell>
                     <DenseTableCell>{importanceTag(row.importance)}</DenseTableCell>
                     <DenseTableCell>
                       {row.theme ? <DenseTag variant="neutral">{row.theme}</DenseTag> : '—'}
                     </DenseTableCell>
                   </DenseTableRow>
-                ))}
+                  )
+                })}
               </DenseTableBody>
             </DenseDataTable>
           )}
         </>
       )}
+    </div>
+  )
+}
+
+export default function EventRadarPage() {
+  const state = useEventRadarState()
+  return (
+    <PageShell>
+      <PageHeader
+        title="Event Radar"
+        description="Event table, theme aggregates, and forward calendar"
+        actions={<EventRadarActions state={state} />}
+      />
+      <EventRadarBody state={state} />
     </PageShell>
   )
 }

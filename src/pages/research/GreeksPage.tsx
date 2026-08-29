@@ -10,6 +10,7 @@ import { SymbolPicker } from '@/components/symbol'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -210,71 +211,73 @@ export default function GreeksPage() {
         </CardContent>
       </Card>
 
-      {result && (
-        <Card variant="elevated">
-          <CardContent className={greeksInfoBarClass}>
-            <span>
-              <span className={greeksInfoLabelClass}>Symbol</span>
-              <strong className="font-mono">{result.symbol}</strong>
-            </span>
-            <span>
-              <span className={greeksInfoLabelClass}>Trade Date</span>
-              <strong className="font-mono">{result.trade_date}</strong>
-            </span>
-            {result.stock_price != null && (
+      <SymbolContextGuard symbol={symbol}>
+        {result && (
+          <Card variant="elevated">
+            <CardContent className={greeksInfoBarClass}>
               <span>
-                <span className={greeksInfoLabelClass}>Stock Price</span>
-                <strong className="font-mono">${result.stock_price.toFixed(2)}</strong>
+                <span className={greeksInfoLabelClass}>Symbol</span>
+                <strong className="font-mono">{result.symbol}</strong>
               </span>
-            )}
-            <span>
-              <span className={greeksInfoLabelClass}>r</span>
-              <strong className="font-mono">{(result.risk_free_rate * 100).toFixed(2)}%</strong>
-            </span>
-            <span>
-              <span className={greeksInfoLabelClass}>Contracts</span>
-              <strong className="font-mono">{result.count.toLocaleString()}</strong>
-            </span>
-            <span className={greeksInfoApproxClass}>
-              Black-Scholes (European approximation for American options) · Hover row for BS detail
-            </span>
-          </CardContent>
-        </Card>
-      )}
+              <span>
+                <span className={greeksInfoLabelClass}>Trade Date</span>
+                <strong className="font-mono">{result.trade_date}</strong>
+              </span>
+              {result.stock_price != null && (
+                <span>
+                  <span className={greeksInfoLabelClass}>Stock Price</span>
+                  <strong className="font-mono">${result.stock_price.toFixed(2)}</strong>
+                </span>
+              )}
+              <span>
+                <span className={greeksInfoLabelClass}>r</span>
+                <strong className="font-mono">{(result.risk_free_rate * 100).toFixed(2)}%</strong>
+              </span>
+              <span>
+                <span className={greeksInfoLabelClass}>Contracts</span>
+                <strong className="font-mono">{result.count.toLocaleString()}</strong>
+              </span>
+              <span className={greeksInfoApproxClass}>
+                Black-Scholes (European approximation for American options) · Hover row for BS detail
+              </span>
+            </CardContent>
+          </Card>
+        )}
 
-      {loadError && (
-        <Alert variant="destructive">
-          <AlertDescription>{loadError}</AlertDescription>
-        </Alert>
-      )}
+        {loadError && (
+          <Alert variant="destructive">
+            <AlertDescription>{loadError}</AlertDescription>
+          </Alert>
+        )}
 
-      {loading && (
-        <p className={greeksLoadingHintClass}>
-          Computing Contract Greeks…
-        </p>
-      )}
+        {loading && (
+          <p className={greeksLoadingHintClass}>
+            Computing Contract Greeks…
+          </p>
+        )}
 
-      {result && result.rows.length > 0 && !loading && (
-        <GreeksHistoryTable
-          rows={result.rows}
-          tradeDate={result.trade_date}
-          onRowHover={handleRowHover}
-        />
-      )}
+        {result && result.rows.length > 0 && !loading && (
+          <GreeksHistoryTable
+            rows={result.rows}
+            tradeDate={result.trade_date}
+            onRowHover={handleRowHover}
+          />
+        )}
 
-      {result && result.rows.length === 0 && !loading && (
-        <p className={greeksEmptyHintClass}>
-          No option data found for {result.symbol} on {result.trade_date}.
-        </p>
-      )}
+        {result && result.rows.length === 0 && !loading && (
+          <p className={greeksEmptyHintClass}>
+            No option data found for {result.symbol} on {result.trade_date}.
+          </p>
+        )}
 
-      {hoveredRow && (
-        <GreeksCalcTooltip
-          row={hoveredRow}
-          pos={tooltipPos}
-          riskFreeRate={riskFreeRate}
-        />
-      )}
+        {hoveredRow && (
+          <GreeksCalcTooltip
+            row={hoveredRow}
+            pos={tooltipPos}
+            riskFreeRate={riskFreeRate}
+          />
+        )}
+      </SymbolContextGuard>
     </PageShell>
   )
 }

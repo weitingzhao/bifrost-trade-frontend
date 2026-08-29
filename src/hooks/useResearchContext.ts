@@ -28,18 +28,22 @@ export function useResearchContext() {
   const stored = readStoredContext()
 
   const urlSymbol = searchParams.get('symbol')?.trim().toUpperCase()
-  const symbol = urlSymbol || stored.symbol || 'SPX'
+  const symbol = urlSymbol || stored.symbol || ''
   const dateInput = searchParams.get('date') ?? stored.date ?? ''
   const selectedDate = dateInput || todayIso()
 
   const setSymbol = useCallback(
     (value: string) => {
-      const sym = value.trim().toUpperCase() || 'SPX'
+      const sym = value.trim().toUpperCase()
       writeStoredContext(sym, dateInput)
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev)
-          next.set('symbol', sym)
+          if (sym) {
+            next.set('symbol', sym)
+          } else {
+            next.delete('symbol')
+          }
           return next
         },
         { replace: true },

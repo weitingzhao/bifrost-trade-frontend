@@ -65,6 +65,10 @@ export const QUERY_KEYS = {
       dailyChecklist: ['research', 'discovery', 'daily-checklist'] as const,
     },
     ivRadar:        ['research', 'iv-radar']                     as const,
+    scan:           ['research', 'scan']                         as const,
+    alerts:         ['research', 'alerts']                       as const,
+    signalDecay:    ['research', 'signal-decay']                 as const,
+    signalDecayIntersect: ['research', 'signal-decay', 'intersect'] as const,
     vrp: {
       latest:     (symbol: string) => ['research', 'vrp', 'latest', symbol] as const,
       history:    (symbol: string, days: number) =>
@@ -96,6 +100,15 @@ export const QUERY_KEYS = {
       summaryActive:   ['research', 'hypothesis', 'summary-active'] as const,
       byId:            (id: string) => ['research', 'hypothesis', 'by-id', id] as const,
     },
+    drafts: ['research', 'drafts'] as const,
+    candidates: (params?: { status?: string; source?: string; days?: number }) =>
+      ['research', 'candidates', params ?? {}] as const,
+    objectives: (params?: { status?: string }) =>
+      ['research', 'objectives', params ?? {}] as const,
+    objectiveRuns: (params?: { status?: string; objective_id?: string }) =>
+      ['research', 'objective-runs', params ?? {}] as const,
+    orderIntents: (params?: { status?: string }) =>
+      ['research', 'order-intents', params ?? {}] as const,
     backtest: {
       runs:            ['research', 'backtest', 'runs']           as const,
       runsByHypothesis: (hid: string) =>

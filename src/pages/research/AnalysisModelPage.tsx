@@ -1,21 +1,44 @@
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
-import { DenseTag } from '@/components/data-display'
+import { DenseTag, SegmentControl } from '@/components/data-display'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
+import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
+import {
+  AnalyzeVerdictStrip,
+  type AnalyzeVerdictTone,
+} from '@/components/research/AnalyzeVerdictStrip'
+import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
+import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
+import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
+import {
+  PORTFOLIO_UNIVERSE_OPTIONS,
+  usePortfolioSymbols,
+  type PortfolioUniverse,
+} from '@/hooks/usePortfolioSymbols'
 import { useResearchContext } from '@/hooks/useResearchContext'
+import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
+import { copilotViewStore } from '@/store/copilotViewStore'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import {
   fetchAtmIv,
+  fetchRecentTerrainRegimes,
   fetchTerrain,
+  fetchTerrainHistory,
   fetchVolatilitySmile,
   type AtmIvRow,
   type TerrainData,
+  type TerrainRegimePoint,
   type VolatilitySmileRow,
 } from '@/api/researchEngine'
+import { DenseSparkline } from '@/components/charts/DenseSparkline'
 import { cn } from '@/lib/utils'
 
 function regimeVariant(r: string): 'danger' | 'warning' | 'success' | 'neutral' {
@@ -26,7 +49,35 @@ function regimeVariant(r: string): 'danger' | 'warning' | 'success' | 'neutral' 
   return 'neutral'
 }
 
-function ProgressBar({ label, value }: { label: string; value: number }) {
+function regimeVerdictTone(r: string | undefined): AnalyzeVerdictTone {
+  if (!r) return 'neutral'
+  return regimeVariant(r)
+}
+
+function terrainVerdictSummary(terrain: TerrainData | undefined, sym: string): string {
+  if (!terrain) return `No terrain for ${sym} — wait for forecast terrain compute before sizing.`
+  const lo = terrain.regime.toLowerCase()
+  if (lo.includes('high') || lo.includes('crisis') || lo.includes('crash')) {
+    return `Do not add risk in ${sym}: regime ${terrain.regime}, tail ${terrain.tail_risk.toFixed(0)}, pin ${terrain.pin_score.toFixed(0)}. Prefer hedges / wait for calm.`
+  }
+  if (lo.includes('low') || lo.includes('calm')) {
+    return `${sym} calm regime — fade extremes; pin ${terrain.pin_score.toFixed(0)} / tail ${terrain.tail_risk.toFixed(0)}. Short premium only if VRP supports.`
+  }
+  if (lo.includes('transition') || lo.includes('squeeze')) {
+    return `${sym} ${terrain.regime}: wait for confirmation; squeeze/transition risk elevated (tail ${terrain.tail_risk.toFixed(0)}).`
+  }
+  return `${sym} regime ${terrain.regime} · pin ${terrain.pin_score.toFixed(0)} · tail ${terrain.tail_risk.toFixed(0)}. Size only with GEX walls aligned.`
+}
+
+function ProgressBar({
+  label,
+  value,
+  spark,
+}: {
+  label: string
+  value: number
+  spark?: number[]
+}) {
   const clamped = Math.max(0, Math.min(100, value))
   const color =
     clamped >= 75
@@ -39,9 +90,14 @@ function ProgressBar({ label, value }: { label: string; value: number }) {
 
   return (
     <div className="space-y-1">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-baseline justify-between gap-2">
         <span className="text-dense-label text-muted-foreground">{label}</span>
-        <span className="font-mono text-dense-label tabular-nums">{clamped.toFixed(0)}</span>
+        <div className="flex items-center gap-2">
+          {spark && spark.length >= 2 ? (
+            <DenseSparkline values={spark} width={56} height={14} />
+          ) : null}
+          <span className="font-mono text-dense-label tabular-nums">{clamped.toFixed(0)}</span>
+        </div>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
         <div className={cn('h-full rounded-full transition-all', color)} style={{ width: `${clamped}%` }} />
@@ -50,21 +106,122 @@ function ProgressBar({ label, value }: { label: string; value: number }) {
   )
 }
 
-function TerrainCard({ terrain }: { terrain: TerrainData }) {
+function fmtChipDate(iso: string): string {
+  const d = iso.slice(0, 10)
+  // MM-DD for density; full date available via title
+  return d.length >= 10 ? d.slice(5) : d
+}
+
+/** Compact ≤5-day regime chip strip — only real terrain rows, never invented. */
+function RegimeChipStrip({ points }: { points: TerrainRegimePoint[] }) {
+  if (points.length === 0) return null
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-dense-caption font-medium text-muted-foreground shrink-0">
+        Regime · {points.length}d
+      </span>
+      {points.map((p, i) => {
+        const isLatest = i === points.length - 1
+        return (
+          <span
+            key={p.trade_date}
+            className="inline-flex items-center gap-1"
+            title={`${p.trade_date} · ${p.regime}`}
+          >
+            <span className="text-dense-micro tabular-nums text-muted-foreground">
+              {fmtChipDate(p.trade_date)}
+            </span>
+            <DenseTag variant={regimeVariant(p.regime)} className={isLatest ? undefined : 'opacity-80'}>
+              {p.regime}
+            </DenseTag>
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
+function TerrainCard({
+  terrain,
+  pinSpark,
+  tailSpark,
+  trendSpark,
+  squeezeSpark,
+}: {
+  terrain: TerrainData
+  pinSpark?: number[]
+  tailSpark?: number[]
+  trendSpark?: number[]
+  squeezeSpark?: number[]
+}) {
   return (
     <Card variant="elevated">
       <CardContent className="space-y-3 px-4 py-3">
         <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
           Market Terrain
         </p>
-        <ProgressBar label="PIN Score" value={terrain.pin_score} />
-        <ProgressBar label="Trend Release" value={terrain.trend_release} />
-        <ProgressBar label="Vol Squeeze" value={terrain.vol_squeeze} />
-        <ProgressBar label="Tail Risk" value={terrain.tail_risk} />
+        <ProgressBar label="PIN Score" value={terrain.pin_score} spark={pinSpark} />
+        <ProgressBar label="Trend Release" value={terrain.trend_release} spark={trendSpark} />
+        <ProgressBar label="Vol Squeeze" value={terrain.vol_squeeze} spark={squeezeSpark} />
+        <ProgressBar label="Tail Risk" value={terrain.tail_risk} spark={tailSpark} />
         <div className="flex items-center justify-between pt-1">
           <span className="text-dense-meta text-muted-foreground">Regime</span>
           <DenseTag variant={regimeVariant(terrain.regime)}>{terrain.regime}</DenseTag>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function RegimeForwardCard({ history }: { history: TerrainData[] }) {
+  const stats = useMemo(() => {
+    const asc = [...history].sort((a, b) =>
+      String(a.trade_date).localeCompare(String(b.trade_date)),
+    )
+    const counts = new Map<string, number>()
+    for (let i = 1; i < asc.length; i++) {
+      const from = asc[i - 1].regime
+      const to = asc[i].regime
+      if (!from || !to || from === to) continue
+      const key = `${from} → ${to}`
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .map(([transition, n]) => ({ transition, n }))
+      .sort((a, b) => b.n - a.n)
+      .slice(0, 6)
+  }, [history])
+
+  if (stats.length === 0) {
+    return (
+      <Card variant="elevated">
+        <CardContent className="px-4 py-3 text-dense-meta text-muted-foreground">
+          Not enough terrain history for regime-transition stats yet.
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card variant="elevated">
+      <CardContent className="space-y-2 px-4 py-3">
+        <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
+          Regime transitions · last {history.length}d
+        </p>
+        <p className="text-dense-caption text-muted-foreground">
+          After each shift, confirm with GEX / VRP before sizing. Counts only (no fabricated forwards).
+        </p>
+        <ul className="space-y-1">
+          {stats.map((s) => (
+            <li
+              key={s.transition}
+              className="flex items-center justify-between text-dense-label"
+            >
+              <span>{s.transition}</span>
+              <span className="font-mono tabular-nums">{s.n}×</span>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   )
@@ -306,10 +463,31 @@ function IvSurfaceCard({
 export default function AnalysisModelPage() {
   const { symbol } = useResearchContext()
   const sym = symbol.trim().toUpperCase() || 'SPX'
+  const [universe, setUniverse] = useState<PortfolioUniverse>('all')
+  const { filterSymbols } = usePortfolioSymbols()
+  const symbolOutOfUniverse =
+    universe !== 'all' && filterSymbols(universe, [sym]).length === 0
 
   const terrainQ = useQuery({
     queryKey: ['terrain', sym],
     queryFn: () => fetchTerrain(sym),
+    enabled: sym.length > 0,
+    refetchInterval: 60_000,
+  })
+
+  const terrainHistoryQ = useQuery({
+    queryKey: ['terrain-regime-history', sym],
+    queryFn: () => fetchRecentTerrainRegimes(sym, { limit: 5 }),
+    enabled: sym.length > 0,
+    refetchInterval: 60_000,
+  })
+
+  const terrainScoreHistoryQ = useQuery({
+    queryKey: ['terrain-score-history', sym],
+    queryFn: async () => {
+      const res = await fetchTerrainHistory(sym, 30)
+      return res.rows ?? []
+    },
     enabled: sym.length > 0,
     refetchInterval: 60_000,
   })
@@ -329,6 +507,23 @@ export default function AnalysisModelPage() {
   })
 
   const terrain = terrainQ.data?.terrain ?? undefined
+  // Prefer probed history; fall back to the single current terrain point (no fake days).
+  const regimePoints: TerrainRegimePoint[] =
+    terrainHistoryQ.data && terrainHistoryQ.data.length > 0
+      ? terrainHistoryQ.data
+      : terrain
+        ? [{ trade_date: String(terrain.trade_date).slice(0, 10), regime: terrain.regime }]
+        : []
+  const scoreHistory = useMemo(() => {
+    const rows = terrainScoreHistoryQ.data ?? []
+    return [...rows].sort((a, b) =>
+      String(a.trade_date).localeCompare(String(b.trade_date)),
+    )
+  }, [terrainScoreHistoryQ.data])
+  const pinSpark = useMemo(() => scoreHistory.map((r) => r.pin_score), [scoreHistory])
+  const tailSpark = useMemo(() => scoreHistory.map((r) => r.tail_risk), [scoreHistory])
+  const trendSpark = useMemo(() => scoreHistory.map((r) => r.trend_release), [scoreHistory])
+  const squeezeSpark = useMemo(() => scoreHistory.map((r) => r.vol_squeeze), [scoreHistory])
   const smileRows = smileQ.data?.rows ?? []
   const smile = smileRows[0] ?? null
   const atm = nearestAtmIv(atmQ.data?.rows ?? [], terrain?.spot ?? smile?.spot ?? 0)
@@ -336,26 +531,124 @@ export default function AnalysisModelPage() {
   const isLoading = terrainQ.isLoading
   const isError = terrainQ.isError
 
+  const verdictTone = regimeVerdictTone(terrain?.regime)
+  const verdictLabel = terrain?.regime ?? 'Observe'
+  const verdictSummary = terrainVerdictSummary(terrain, sym)
+
   return (
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Analysis Model"
         actions={
-          <AskCopilotButton
-            originPage="analysis-model"
-            originLabel="Analysis Model"
-            symbol={sym}
-            snapshot={compactSnapshot({
-              regime: terrain?.regime,
-              spot: terrain?.spot ?? smile?.spot,
-              atm_iv: atm?.atm_iv,
-            })}
-            suggestedPrompt={`Walk through the ${sym} analysis-model terrain and smile — what regime is this?`}
-          />
+          <div className="flex items-center gap-1.5">
+            <AskCopilotButton
+              originPage="analysis-model"
+              originLabel="Analysis Model"
+              symbol={sym}
+              snapshot={compactSnapshot({
+                regime: terrain?.regime,
+                spot: terrain?.spot ?? smile?.spot,
+                atm_iv: atm?.atm_iv,
+              })}
+              suggestedPrompt={`Walk through the ${sym} analysis-model terrain and smile — what regime is this?`}
+            />
+            <SaveAsHypothesisButton
+              originPage="analysis-model"
+              defaultTitle={`${sym} terrain ${terrain?.regime ?? 'regime'} hypothesis`}
+              defaultThesis={verdictSummary}
+              defaultSymbols={[sym]}
+              defaultTags={['terrain', 'regime', 'analysis-model']}
+              originRef={withWatchlistContractKey(
+                {
+                  symbol: sym,
+                  regime: terrain?.regime ?? null,
+                  spot: terrain?.spot ?? null,
+                  pin_score: terrain?.pin_score ?? null,
+                  tail_risk: terrain?.tail_risk ?? null,
+                  atm_iv: atm?.atm_iv ?? null,
+                },
+                sym,
+              )}
+            />
+          </div>
         }
       />
 
       <ResearchContextBar showDate={false} />
+
+      <SymbolContextGuard symbol={symbol}>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-dense-label font-semibold text-entity-symbol">{sym}</span>
+        <PortfolioTag symbol={sym} variant="inline" />
+        {symbolOutOfUniverse ? (
+          <span className="text-dense-meta text-muted-foreground">Not in holdings/watchlist</span>
+        ) : null}
+      </div>
+
+      <Card variant="elevated">
+        <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">
+          <span className="text-dense-meta font-medium text-muted-foreground shrink-0">Universe:</span>
+          <SegmentControl
+            ariaLabel="Portfolio universe filter"
+            size="sm"
+            value={universe}
+            onChange={(v) => setUniverse(v as PortfolioUniverse)}
+            options={[...PORTFOLIO_UNIVERSE_OPTIONS]}
+          />
+        </CardContent>
+      </Card>
+
+      <CompositeRegimeRibbon symbol={sym} />
+
+      {(verdictTone === 'success' || verdictTone === 'danger') && terrain ? (
+        <CopilotAutoInsightChip
+          message={`${sym} terrain reads ${terrain.regime.toLowerCase()} — tail risk ${terrain.tail_risk.toFixed(0)}.`}
+          tone={verdictTone}
+          onAsk={() => {
+            copilotViewStore.unsuppress()
+            askCopilotIntentStore.open({
+              originPage: 'analysis-model',
+              originLabel: 'Analysis Model',
+              symbol: sym,
+              suggestedPrompt: `Walk through the ${sym} analysis-model terrain — what regime is this and what would invalidate it?`,
+              snapshot: compactSnapshot({
+                regime: terrain.regime,
+                spot: terrain.spot,
+                tail_risk: terrain.tail_risk,
+              }),
+            })
+          }}
+        />
+      ) : null}
+
+      <AnalyzeVerdictStrip
+        tone={verdictTone}
+        verdictLabel={verdictLabel}
+        narrative={verdictSummary}
+        signals={
+          terrain
+            ? [
+                { label: 'PIN', value: terrain.pin_score.toFixed(0) },
+                { label: 'Tail', value: terrain.tail_risk.toFixed(0) },
+                { label: 'Spot', value: terrain.spot.toFixed(2) },
+              ]
+            : []
+        }
+        nextMoves={[
+          {
+            label: 'Intraday Playbook',
+            href: `/research/intraday-playbook?symbol=${encodeURIComponent(sym)}`,
+          },
+          { label: 'GEX Intraday', href: `/research/gex-intraday?symbol=${encodeURIComponent(sym)}` },
+        ]}
+      />
+
+      <SimilarRegimeCard
+        lens="regime"
+        symbol={sym}
+        value={terrain?.regime ?? null}
+      />
 
       {isError && <QueryErrorAlert error={terrainQ.error} onRetry={() => void terrainQ.refetch()} />}
 
@@ -366,10 +659,20 @@ export default function AnalysisModelPage() {
           ))}
         </div>
       ) : terrain ? (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <TerrainCard terrain={terrain} />
-          <CloseExpectationCard terrain={terrain} />
-          <IvSurfaceCard terrain={terrain} smile={smile} atm={atm} />
+        <div className="space-y-2">
+          <RegimeChipStrip points={regimePoints} />
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <TerrainCard
+              terrain={terrain}
+              pinSpark={pinSpark}
+              tailSpark={tailSpark}
+              trendSpark={trendSpark}
+              squeezeSpark={squeezeSpark}
+            />
+            <CloseExpectationCard terrain={terrain} />
+            <IvSurfaceCard terrain={terrain} smile={smile} atm={atm} />
+          </div>
+          <RegimeForwardCard history={scoreHistory} />
         </div>
       ) : (
         <Card variant="elevated">
@@ -382,6 +685,7 @@ export default function AnalysisModelPage() {
       <p className="text-dense-caption text-muted-foreground">
         Terrain model output — observe only (D10). Not investment advice.
       </p>
+      </SymbolContextGuard>
     </PageShell>
   )
 }

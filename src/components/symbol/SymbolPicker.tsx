@@ -80,6 +80,14 @@ function symbolHit(symbol: string): TickerHit {
   }
 }
 
+function stepSymbol(list: string[], current: string, delta: number): string {
+  if (list.length === 0) return current
+  const idx = list.indexOf(current)
+  if (idx < 0) return delta > 0 ? list[0]! : list[list.length - 1]!
+  const next = (idx + delta + list.length) % list.length
+  return list[next]!
+}
+
 export function SymbolPicker({
   value,
   onSelect,
@@ -93,6 +101,8 @@ export function SymbolPicker({
 }: SymbolPickerProps) {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState(value)
+  /** cmdk highlight value — driven by ↑/↓ while focus stays on the text input. */
+  const [highlight, setHighlight] = useState('')
   const pins = useCockpitPins()
   const pinned = pins.isSymbolPinned(value)
 
@@ -117,6 +127,41 @@ export function SymbolPicker({
     holdingsSet,
     watchlistSet,
   ])
+
+  const hasPortfolioGroups =
+    showPortfolioContext &&
+    (portfolio.positionSymbols.length > 0 || portfolio.watchlistOnlySymbols.length > 0)
+
+  /** Flat order matches visual list order for keyboard navigation. */
+  const navigableSymbols = useMemo(() => {
+    if (!open) return [] as string[]
+    if (!showPreferred) {
+      return hits.map((h) => h.symbol.trim().toUpperCase()).filter(Boolean)
+    }
+    if (hasPortfolioGroups) {
+      return [
+        ...portfolio.positionSymbols,
+        ...portfolio.watchlistOnlySymbols,
+        ...benchmarkSymbols,
+      ].map((s) => s.trim().toUpperCase())
+    }
+    return benchmarkSymbols.map((s) => s.trim().toUpperCase())
+  }, [
+    open,
+    showPreferred,
+    hits,
+    hasPortfolioGroups,
+    portfolio.positionSymbols,
+    portfolio.watchlistOnlySymbols,
+    benchmarkSymbols,
+  ])
+
+  const resolvedHighlight =
+    open && navigableSymbols.length > 0
+      ? navigableSymbols.includes(highlight)
+        ? highlight
+        : navigableSymbols[0]!
+      : ''
 
   function commitSymbol(raw: string) {
     const sym = raw.trim().toUpperCase()
@@ -156,108 +201,138 @@ export function SymbolPicker({
     )
   }
 
-  const hasPortfolioGroups =
-    showPortfolioContext &&
-    (portfolio.positionSymbols.length > 0 || portfolio.watchlistOnlySymbols.length > 0)
-
   return (
     <div className={cn('flex items-center gap-1', showPin && 'min-w-0')}>
-    <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverAnchor asChild>
-        <Input
-          id={id}
-          value={inputValue}
-          disabled={disabled}
-          placeholder={placeholder}
-          className={cn('h-7 font-mono text-dense-body uppercase', className)}
-          onChange={(e) => {
-            setDraft(e.target.value.toUpperCase())
-            if (!open) setOpen(true)
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverAnchor asChild>
+          <Input
+            id={id}
+            value={inputValue}
+            disabled={disabled}
+            placeholder={placeholder}
+            className={cn('h-7 font-mono text-dense-body uppercase', className)}
+            aria-autocomplete="list"
+            aria-expanded={open}
+            aria-controls={open ? `${id ?? 'symbol-picker'}-listbox` : undefined}
+            onChange={(e) => {
+              setDraft(e.target.value.toUpperCase())
+              if (!open) setOpen(true)
+            }}
+            onFocus={openPickerFromValue}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setOpen(false)
+                setDraft(value)
+                return
+              }
+              if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                setOpen(true)
+                e.preventDefault()
+                return
+              }
+              if (!open) {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  commitSymbol(draft)
+                }
+                return
+              }
+              if (e.key === 'ArrowDown') {
+                e.preventDefault()
+                setHighlight(stepSymbol(navigableSymbols, resolvedHighlight, 1))
+                return
+              }
+              if (e.key === 'ArrowUp') {
+                e.preventDefault()
+                setHighlight(stepSymbol(navigableSymbols, resolvedHighlight, -1))
+                return
+              }
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                commitSymbol(resolvedHighlight || draft)
+              }
+            }}
+          />
+        </PopoverAnchor>
+        <PopoverContent
+          className="w-80 p-0"
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <Command
+            shouldFilter={false}
+            value={resolvedHighlight}
+            onValueChange={setHighlight}
+          >
+            <CommandList id={`${id ?? 'symbol-picker'}-listbox`}>
+              {portfolio.isLoading && showPreferred && showPortfolioContext ? (
+                <div className="py-2 text-center text-dense-caption text-muted-foreground">
+                  Loading watchlist & positions…
+                </div>
+              ) : null}
+              {isFetching && !showPreferred ? (
+                <div className="py-2 text-center text-dense-caption text-muted-foreground">
+                  Searching…
+                </div>
+              ) : null}
+              <CommandEmpty>No matches.</CommandEmpty>
+              {showPreferred && hasPortfolioGroups ? (
+                <>
+                  {portfolio.positionSymbols.length > 0 ? (
+                    <CommandGroup heading="Positions">
+                      {portfolio.positionSymbols.map((sym) => renderSymbolItem(sym))}
+                    </CommandGroup>
+                  ) : null}
+                  {portfolio.watchlistOnlySymbols.length > 0 ? (
+                    <CommandGroup heading="Watchlist">
+                      {portfolio.watchlistOnlySymbols.map((sym) => renderSymbolItem(sym))}
+                    </CommandGroup>
+                  ) : null}
+                  {benchmarkSymbols.length > 0 ? (
+                    <CommandGroup heading="Benchmarks">
+                      {benchmarkSymbols.map((sym) => renderSymbolItem(sym, true))}
+                    </CommandGroup>
+                  ) : null}
+                </>
+              ) : null}
+              {showPreferred && !hasPortfolioGroups ? (
+                <CommandGroup heading="Suggested">
+                  {benchmarkSymbols.map((sym) => renderSymbolItem(sym, true))}
+                </CommandGroup>
+              ) : null}
+              {!showPreferred ? (
+                <CommandGroup heading="Matches">
+                  {hits.map((hit) => {
+                    const sym = hit.symbol.trim().toUpperCase()
+                    return (
+                      <CommandItem key={sym} value={sym} onSelect={() => commitSymbol(sym)}>
+                        <TickerRow
+                          hit={hit}
+                          inWatchlist={watchlistSet.has(sym)}
+                          inPosition={holdingsSet.has(sym)}
+                        />
+                      </CommandItem>
+                    )
+                  })}
+                </CommandGroup>
+              ) : null}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {showPin && value ? (
+        <IconActionButton
+          title={pinned ? 'Unpin from Cockpit' : 'Pin to Cockpit'}
+          ariaLabel={pinned ? 'Unpin symbol' : 'Pin symbol'}
+          onClick={() => {
+            if (pinned) pins.unpinSymbol(value)
+            else pins.pinSymbol(value)
           }}
-          onFocus={openPickerFromValue}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              commitSymbol(draft)
-            }
-            if (e.key === 'Escape') {
-              setOpen(false)
-              setDraft(value)
-            }
-          }}
-        />
-      </PopoverAnchor>
-      <PopoverContent className="w-80 p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-        <Command shouldFilter={false}>
-          <CommandList>
-            {portfolio.isLoading && showPreferred && showPortfolioContext ? (
-              <div className="py-2 text-center text-dense-caption text-muted-foreground">
-                Loading watchlist & positions…
-              </div>
-            ) : null}
-            {isFetching && !showPreferred ? (
-              <div className="py-2 text-center text-dense-caption text-muted-foreground">
-                Searching…
-              </div>
-            ) : null}
-            <CommandEmpty>No matches.</CommandEmpty>
-            {showPreferred && hasPortfolioGroups ? (
-              <>
-                {portfolio.positionSymbols.length > 0 ? (
-                  <CommandGroup heading="Positions">
-                    {portfolio.positionSymbols.map((sym) => renderSymbolItem(sym))}
-                  </CommandGroup>
-                ) : null}
-                {portfolio.watchlistOnlySymbols.length > 0 ? (
-                  <CommandGroup heading="Watchlist">
-                    {portfolio.watchlistOnlySymbols.map((sym) => renderSymbolItem(sym))}
-                  </CommandGroup>
-                ) : null}
-                {benchmarkSymbols.length > 0 ? (
-                  <CommandGroup heading="Benchmarks">
-                    {benchmarkSymbols.map((sym) => renderSymbolItem(sym, true))}
-                  </CommandGroup>
-                ) : null}
-              </>
-            ) : null}
-            {showPreferred && !hasPortfolioGroups ? (
-              <CommandGroup heading="Suggested">
-                {benchmarkSymbols.map((sym) => renderSymbolItem(sym, true))}
-              </CommandGroup>
-            ) : null}
-            {!showPreferred ? (
-              <CommandGroup heading="Matches">
-                {hits.map((hit) => {
-                  const sym = hit.symbol.trim().toUpperCase()
-                  return (
-                    <CommandItem key={sym} value={sym} onSelect={() => commitSymbol(sym)}>
-                      <TickerRow
-                        hit={hit}
-                        inWatchlist={watchlistSet.has(sym)}
-                        inPosition={holdingsSet.has(sym)}
-                      />
-                    </CommandItem>
-                  )
-                })}
-              </CommandGroup>
-            ) : null}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-    {showPin && value ? (
-      <IconActionButton
-        title={pinned ? 'Unpin from Cockpit' : 'Pin to Cockpit'}
-        ariaLabel={pinned ? 'Unpin symbol' : 'Pin symbol'}
-        onClick={() => {
-          if (pinned) pins.unpinSymbol(value)
-          else pins.pinSymbol(value)
-        }}
-        tone={pinned ? 'warn' : 'default'}
-      >
-        <Pin className={pinned ? 'h-3.5 w-3.5 fill-current' : 'h-3.5 w-3.5'} />
-      </IconActionButton>
-    ) : null}
+          tone={pinned ? 'warn' : 'default'}
+        >
+          <Pin className={pinned ? 'h-3.5 w-3.5 fill-current' : 'h-3.5 w-3.5'} />
+        </IconActionButton>
+      ) : null}
     </div>
   )
 }

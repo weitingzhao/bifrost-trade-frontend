@@ -91,12 +91,38 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/DiscoveryPage')),
       },
       {
+        path: 'research/scan',
+        lazy: lazyPage(() => import('@/pages/research/ScanPage')),
+      },
+      /* Wave Discover-IA — /research/option-scan alias to Scan */
+      {
+        path: 'research/option-scan',
+        element: <Navigate to="/research/scan" replace />,
+      },
+      /* Wave Discover-IA — new grouped Stock Explorer (SEPA + Momentum + Events + Rules link) */
+      {
+        path: 'research/explorer',
+        lazy: lazyPage(() => import('@/pages/research/StockExplorerPage')),
+      },
+      {
+        path: 'research/signal-decay',
+        lazy: lazyPage(() => import('@/pages/research/SignalDecayPage')),
+      },
+      {
+        path: 'research/signal-decay/:symbol',
+        lazy: lazyPage(() => import('@/pages/research/SignalDecayPage')),
+      },
+      {
         path: 'research/iv-radar',
         lazy: lazyPage(() => import('@/pages/research/IvRadarPage')),
       },
       {
         path: 'research/vrp-lab',
         lazy: lazyPage(() => import('@/pages/research/VrpLabPage')),
+      },
+      {
+        path: 'research/signal-health',
+        lazy: lazyPage(() => import('@/pages/research/SignalHealthPage')),
       },
       {
         path: 'research/vol-surface-lab',
@@ -109,10 +135,6 @@ export const router = createBrowserRouter([
       {
         path: 'research/greeks',
         lazy: lazyPage(() => import('@/pages/research/GreeksPage')),
-      },
-      {
-        path: 'research/risk',
-        lazy: lazyPage(() => import('@/pages/research/RiskModelPage')),
       },
       {
         path: 'research/backtest',
@@ -149,6 +171,34 @@ export const router = createBrowserRouter([
       {
         path: 'research/event-radar',
         lazy: lazyPage(() => import('@/pages/research/EventRadarPage')),
+      },
+
+      /* Wave Z+R — Research Loop */
+      {
+        path: 'research/loop/candidates',
+        lazy: lazyPage(() => import('@/pages/research/loop/CandidatePoolPage')),
+      },
+      {
+        path: 'research/loop/hypotheses',
+        lazy: lazyPage(() => import('@/pages/research/loop/HypothesisBoardPage')),
+      },
+      {
+        path: 'research/loop/decisions',
+        lazy: lazyPage(() => import('@/pages/research/loop/DecisionInboxPage')),
+      },
+      {
+        path: 'research/loop/harness',
+        lazy: lazyPage(() => import('@/pages/research/loop/HarnessConsolePage')),
+      },
+
+      /* Wave Z — Risk Model moved under Portfolio (alias keeps /research/risk) */
+      {
+        path: 'portfolio/risk',
+        lazy: lazyPage(() => import('@/pages/research/RiskModelPage')),
+      },
+      {
+        path: 'research/risk',
+        element: <Navigate to="/portfolio/risk" replace />,
       },
 
       { path: 'strategy/instances/:instanceId?', element: <InstancesPage /> },

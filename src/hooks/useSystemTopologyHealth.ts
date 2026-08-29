@@ -92,7 +92,9 @@ export function useSystemTopologyHealth(enabled: boolean) {
     queryKey: QUERY_KEYS.monitor.status,
     queryFn: fetchMonitorStatus,
     enabled,
-    refetchInterval: enabled ? 5_000 : (false as const),
+    // 30s — this hook already de-dupes with useMonitorStatus via queryKey.
+    // Previously 5s created two poll paths at the fast tier.
+    refetchInterval: enabled ? 30_000 : (false as const),
   })
 
   const status = monitorQuery.data

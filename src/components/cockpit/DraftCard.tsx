@@ -1,13 +1,20 @@
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DenseTag } from '@/components/data-display'
+import {
+  CandidateBatchBody,
+  PolicySuggestionBody,
+} from '@/components/research/harness'
 import type { AiDraft } from '@/api/researchDrafts'
+import { isHitRateWarnActive } from '@/lib/harness/harnessDraftHelpers'
 import { cn } from '@/lib/utils'
 
 function kindLabel(kind: string): string {
   if (kind === 'morning_brief') return 'Morning'
   if (kind === 'eod_verdict') return 'EOD'
   if (kind === 'hypothesis_suggestion') return 'Suggestion'
+  if (kind === 'candidate_batch') return 'Candidate Batch'
+  if (kind === 'policy_suggestion') return 'Policy Suggestion'
   return kind
 }
 
@@ -39,13 +46,13 @@ export function DraftCard({
 }) {
   const busy = Boolean(approving || dismissing)
   const title =
+    (typeof draft.payload.title === 'string' && draft.payload.title) ||
     (typeof draft.payload.hypothesis_title === 'string' && draft.payload.hypothesis_title) ||
     (draft.scope === 'global' ? "Today's Discoveries" : draft.scope)
   const proposed =
     typeof draft.payload.proposed_status === 'string'
       ? draft.payload.proposed_status
       : null
-  const body = payloadMarkdown(draft.payload)
   const personaDiff =
     draft.kind === 'playbook_rule' && draft.payload.persona_diff
       ? (draft.payload.persona_diff as Record<string, unknown>)
@@ -53,10 +60,15 @@ export function DraftCard({
   const agentOwner =
     typeof draft.payload.agent_owner === 'string' ? draft.payload.agent_owner : null
 
+  const warnActive = draft.kind === 'candidate_batch' && isHitRateWarnActive(draft.payload)
+
   return (
     <div
       className={cn(
-        'rounded-md border border-border/60 bg-secondary/40 px-2.5 py-2 space-y-2',
+        'rounded-md border px-2.5 py-2 space-y-2',
+        warnActive
+          ? 'border-warning/50 bg-warning/5'
+          : 'border-border/60 bg-secondary/40',
         className,
       )}
     >
@@ -88,9 +100,15 @@ export function DraftCard({
         </div>
       </div>
 
-      <pre className="whitespace-pre-wrap break-words text-dense-meta text-foreground/90 font-sans max-h-40 overflow-y-auto">
-        {body}
-      </pre>
+      {draft.kind === 'candidate_batch' ? (
+        <CandidateBatchBody payload={draft.payload} />
+      ) : draft.kind === 'policy_suggestion' ? (
+        <PolicySuggestionBody payload={draft.payload} />
+      ) : (
+        <pre className="whitespace-pre-wrap break-words text-dense-meta text-foreground/90 font-sans max-h-40 overflow-y-auto">
+          {payloadMarkdown(draft.payload)}
+        </pre>
+      )}
 
       {personaDiff && Object.keys(personaDiff).length > 0 ? (
         <p className="text-dense-meta text-warning">

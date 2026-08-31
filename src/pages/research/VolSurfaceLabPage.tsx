@@ -42,6 +42,7 @@ import {
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { cn } from '@/lib/utils'
 import type { VolSurfaceFitRow } from '@/api/research/volSurface'
+import { fmtPctFromFraction } from '@/lib/format'
 
 type HeatmapMode = 'iv' | 'residual_z'
 
@@ -49,11 +50,6 @@ function fmtSlope(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v)) return '—'
   const sign = v > 0 ? '+' : ''
   return `${sign}${v.toFixed(3)}`
-}
-
-function fmtPct(v: number | null | undefined): string {
-  if (v == null || !Number.isFinite(v)) return '—'
-  return `${(v * 100).toFixed(1)}%`
 }
 
 function slopeSeverityTone(
@@ -97,9 +93,9 @@ function verdictText(anchor: VolSurfaceFitRow | null): string {
     return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}). Prefer defined-risk; avoid naked wings.`
   }
   if (abs >= 0.12) {
-    return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPct(anchor.atm_vol)}. Prefer defined-risk skew expressions.`
+    return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPctFromFraction(anchor.atm_vol)}. Prefer defined-risk skew expressions.`
   }
-  return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPct(anchor.atm_vol)}. Structure freer if VRP agrees.`
+  return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPctFromFraction(anchor.atm_vol)}. Structure freer if VRP agrees.`
 }
 
 function SkewExtremesTable({
@@ -179,7 +175,7 @@ function SkewExtremesTable({
                   {fmtSlope(row.atm_slope)}
                 </DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>
-                  {fmtPct(row.atm_vol)}
+                  {fmtPctFromFraction(row.atm_vol)}
                 </DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>
                   {row.fit_rmse != null ? row.fit_rmse.toFixed(4) : '—'}
@@ -295,7 +291,7 @@ export default function VolSurfaceLabPage() {
         signals={
           anchor
             ? [
-                { label: 'ATM', value: fmtPct(anchor.atm_vol) },
+                { label: 'ATM', value: fmtPctFromFraction(anchor.atm_vol) },
                 { label: 'Slope', value: fmtSlope(anchor.atm_slope) },
                 { label: 'RMSE', value: fmtSlope(anchor.fit_rmse) },
               ]

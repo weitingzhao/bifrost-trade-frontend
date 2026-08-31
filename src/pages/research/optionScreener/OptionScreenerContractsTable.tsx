@@ -14,7 +14,8 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import type { ScreenerContractRow } from '@/types/research'
-import { fmtGreek, fmtPct, fmtPrice } from './optionScreenerFormat'
+import { fmtGreek, fmtPrice } from './optionScreenerFormat'
+import { fmtPctFromFraction } from '@/lib/format'
 import { ratingTagVariant, riskTagVariant } from './optionScreenerTags'
 import { optionScreenerScoreFillClass, optionScreenerScoreTrackClass } from './optionScreenerUi'
 
@@ -100,9 +101,9 @@ export function OptionScreenerContractsTable({ contracts, symbol, onSave }: Prop
             <DenseTableCell>
               <ScoreBarCell score={c.score} />
             </DenseTableCell>
-            <DenseTableCell className={denseTableNumCell}>{fmtPct(c.iv)}</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>{fmtPctFromFraction(c.iv)}</DenseTableCell>
             <DenseTableCell className={denseTableNumCell}>{fmtPrice(c.premium)}</DenseTableCell>
-            <DenseTableCell className={denseTableNumCell}>{fmtPct(c.prob_itm)}</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>{fmtPctFromFraction(c.prob_itm)}</DenseTableCell>
             <DenseTableCell className={cn(denseTableNumCell, denseTable.mutedMeta)}>
               {fmtGreek(c.delta)}
             </DenseTableCell>
@@ -116,7 +117,7 @@ export function OptionScreenerContractsTable({ contracts, symbol, onSave }: Prop
               {fmtGreek(c.vega)}
             </DenseTableCell>
             <DenseTableCell className={cn(denseTableNumCell, denseTable.mutedMeta)}>
-              {fmtPct(c.spread_pct)}
+              {fmtPctFromFraction(c.spread_pct)}
             </DenseTableCell>
             <DenseTableCell className={cn(denseTableNumCell, denseTable.mutedMeta)}>
               {c.oi != null ? c.oi.toLocaleString() : '—'}

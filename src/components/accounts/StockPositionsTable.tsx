@@ -1,3 +1,4 @@
+import { fmtPctSigned } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import {
   DenseDataTable,
@@ -23,7 +24,7 @@ import {
   groupStockPositionsByCategory,
   stockGroupPctFromTotals,
 } from '@/utils/accountsStockPositions'
-import { fmtUsd, fmtPct, formatLastUpdate } from '@/utils/positions'
+import { fmtUsd, formatLastUpdate } from '@/utils/positions'
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 
@@ -56,13 +57,13 @@ function SubtotalCells({
       </DenseTableCell>
       <DenseTableCell />
       <DenseTableCell className={denseTableNumCell}>
-        <InlinePnl value={dailyPct}>{fmtPct(dailyPct)}</InlinePnl>
+        <InlinePnl value={dailyPct}>{fmtPctSigned(dailyPct)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
         <InlinePnl value={totals.dailyUsd}>{fmtUsd(totals.dailyUsd)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
-        <InlinePnl value={changePct}>{fmtPct(changePct)}</InlinePnl>
+        <InlinePnl value={changePct}>{fmtPctSigned(changePct)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
         <InlinePnl value={totals.changeUsd}>{fmtUsd(totals.changeUsd)}</InlinePnl>
@@ -114,13 +115,13 @@ function PositionRow({
         <InlinePnl value={lastDelta}>{fmtUsd(r.currPrice)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
-        <InlinePnl value={r.dailyPct}>{fmtPct(r.dailyPct)}</InlinePnl>
+        <InlinePnl value={r.dailyPct}>{fmtPctSigned(r.dailyPct)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
         <InlinePnl value={r.dailyUsd}>{fmtUsd(r.dailyUsd)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
-        <InlinePnl value={r.changePct}>{fmtPct(r.changePct)}</InlinePnl>
+        <InlinePnl value={r.changePct}>{fmtPctSigned(r.changePct)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>
         <InlinePnl value={r.changeUsd}>{fmtUsd(r.changeUsd)}</InlinePnl>

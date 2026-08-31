@@ -1,7 +1,3 @@
-export function fmtPct(v: number | null | undefined): string {
-  return v != null ? `${(v * 100).toFixed(1)}%` : '—'
-}
-
 export function fmtPrice(v: number | null | undefined): string {
   return v != null ? `$${v.toFixed(2)}` : '—'
 }

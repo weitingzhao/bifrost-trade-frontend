@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   fmtUsd,
-  fmtPct,
   formatLastUpdate,
   fmtExpiry,
   rightLabel,
@@ -31,22 +30,6 @@ describe('fmtUsd', () => {
 
   it('rounds when round=true', () => {
     expect(fmtUsd(1234.56, true)).toBe('$1,235')
-  })
-})
-
-describe('fmtPct', () => {
-  it('formats positive with + sign', () => {
-    expect(fmtPct(5.123)).toBe('+5.12%')
-  })
-
-  it('formats negative without extra sign', () => {
-    expect(fmtPct(-3.456)).toBe('-3.46%')
-  })
-
-  it('returns dash for null/undefined/NaN', () => {
-    expect(fmtPct(null)).toBe('—')
-    expect(fmtPct(undefined)).toBe('—')
-    expect(fmtPct(NaN)).toBe('—')
   })
 })
 

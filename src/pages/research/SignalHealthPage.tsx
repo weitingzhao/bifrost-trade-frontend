@@ -21,17 +21,13 @@ import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fetchSignalHealth } from '@/api/research/similarRegime'
+import { fmtPctFromFraction } from '@/lib/format'
 
 function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'neutral' | 'info' {
   if (status === 'fresh' || status === 'ok') return 'success'
   if (status === 'stale' || status === 'degraded' || status === 'unknown') return 'warning'
   if (status === 'missing' || status === 'empty') return 'danger'
   return 'neutral'
-}
-
-function fmtPct(n: number | null | undefined): string {
-  if (n == null || !Number.isFinite(n)) return '—'
-  return `${(n * 100).toFixed(1)}%`
 }
 
 function fmtAge(h: number | null | undefined): string {
@@ -159,7 +155,7 @@ export default function SignalHealthPage() {
                 <p>
                   Insufficient chain:{' '}
                   <span className="font-mono text-foreground">
-                    {fmtPct(data?.canonical_pnl.insufficient_pct)}
+                    {fmtPctFromFraction(data?.canonical_pnl.insufficient_pct)}
                   </span>
                 </p>
                 <p className="text-muted-foreground">
@@ -179,7 +175,7 @@ export default function SignalHealthPage() {
                 <p>
                   Solver OK:{' '}
                   <span className="font-mono text-foreground">
-                    {fmtPct(data.iv_reconstruction.solver_ok_pct)}
+                    {fmtPctFromFraction(data.iv_reconstruction.solver_ok_pct)}
                   </span>
                 </p>
                 <p className="text-muted-foreground">

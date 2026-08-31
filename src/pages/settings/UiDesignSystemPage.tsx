@@ -1,3 +1,4 @@
+import { fmtPctSigned } from '@/lib/format'
 import { type ReactNode } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +29,7 @@ import {
 } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
-import { fmtDollar, fmtPct, unrealizedPnlColorClass } from '@/utils/dailyChange'
+import { fmtDollar, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { cn } from '@/lib/utils'
 import { Pencil, Trash2, Inbox } from 'lucide-react'
 import { PromptCopyDialog } from './uiDesignSystem/PromptCopyDialog'
@@ -284,8 +285,8 @@ export default function UiDesignSystemPage() {
 
         <SampleBox className="gap-6">
           <span className="text-xs font-semibold uppercase tracking-wide">PnlCell ($ / %)</span>
-          <PnlCell dollar={1245.5} pct={2.31} formatDollar={fmtDollar} formatPct={fmtPct} />
-          <PnlCell dollar={-872.25} pct={-1.64} formatDollar={fmtDollar} formatPct={fmtPct} />
+          <PnlCell dollar={1245.5} pct={2.31} formatDollar={fmtDollar} formatPct={fmtPctSigned} />
+          <PnlCell dollar={-872.25} pct={-1.64} formatDollar={fmtDollar} formatPct={fmtPctSigned} />
         </SampleBox>
 
         <div className="space-y-1 text-xs">
@@ -758,7 +759,7 @@ export default function UiDesignSystemPage() {
                     dollar={row.dailyDollar}
                     pct={row.dailyPct}
                     formatDollar={fmtDollar}
-                    formatPct={fmtPct}
+                    formatPct={fmtPctSigned}
                   />
                 </DenseTableCell>
                 <DenseTableCell

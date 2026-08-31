@@ -26,6 +26,7 @@ import {
   EmptyState,
 } from '@/components/data-display'
 import { pnlColorClass } from '@/utils/dailyChange'
+import { fmtPctFromFraction } from '@/lib/format'
 import type {
   BacktestRunRow,
   EventQueryResponse,
@@ -38,11 +39,6 @@ function fmtNum(v: number | null | undefined, digits = 2): string {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })
-}
-
-function fmtPct(v: number | null | undefined, digits = 1): string {
-  if (v == null || Number.isNaN(v) || !Number.isFinite(v)) return '—'
-  return `${(v * 100).toFixed(digits)}%`
 }
 
 function fmtDollar(v: number | null | undefined, digits = 2): string {
@@ -134,7 +130,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
         <SummaryTile label="Events" value={fmtNum(summary.n_events, 0)} />
         <SummaryTile
           label="Win rate"
-          value={fmtPct(summary.win_rate)}
+          value={fmtPctFromFraction(summary.win_rate)}
           tone={
             summary.win_rate > 0.55
               ? 'profit'
@@ -273,7 +269,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
               />
               <SummaryTile
                 label="Positive windows"
-                value={fmtPct(walkForward.aggregate.positive_windows_pct)}
+                value={fmtPctFromFraction(walkForward.aggregate.positive_windows_pct)}
               />
             </div>
           )}
@@ -336,7 +332,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
             />
             <SummaryTile
               label="Annualized"
-              value={fmtPct(benchmark.spy_buy_hold.annualized_return)}
+              value={fmtPctFromFraction(benchmark.spy_buy_hold.annualized_return)}
             />
             <SummaryTile
               label="Sharpe"

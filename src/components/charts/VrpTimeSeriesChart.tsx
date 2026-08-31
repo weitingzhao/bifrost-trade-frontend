@@ -11,6 +11,7 @@
  * (no `text-[Npx]`, no raw emerald/red). Follows the pattern established by
  * SessionTimelineChart but scoped for a daily VRP view.
  */
+import { fmtPctFromFraction } from '@/lib/format'
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { VrpRow } from '@/api/research/vrp'
@@ -102,9 +103,6 @@ export function VrpTimeSeriesChart({
 
   const labelIndices = sparseLabelIndices(chart.n)
   const tooltipRow = hoverIdx != null ? rows[hoverIdx] : null
-  const fmtPct = (v: number | null | undefined) =>
-    v == null ? '—' : `${(v * 100).toFixed(1)}%`
-
   return (
     <div className={cn('relative', className)}>
       <svg
@@ -194,17 +192,17 @@ export function VrpTimeSeriesChart({
           <span className="font-mono">{tooltipRow.trade_date ?? '—'}</span>
           <span className="mx-2 text-muted-foreground">·</span>
           <span className="font-mono tabular-nums">
-            IV {fmtPct(tooltipRow.atm_iv_30d)}
+            IV {fmtPctFromFraction(tooltipRow.atm_iv_30d)}
           </span>
           <span className="mx-2 text-muted-foreground">·</span>
           <span className="font-mono tabular-nums">
-            RV60 {fmtPct(tooltipRow.rv_60d)}
+            RV60 {fmtPctFromFraction(tooltipRow.rv_60d)}
           </span>
           {tooltipRow.vrp_60d != null ? (
             <>
               <span className="mx-2 text-muted-foreground">·</span>
               <span className="font-mono tabular-nums">
-                VRP {fmtPct(tooltipRow.vrp_60d)}
+                VRP {fmtPctFromFraction(tooltipRow.vrp_60d)}
               </span>
             </>
           ) : null}

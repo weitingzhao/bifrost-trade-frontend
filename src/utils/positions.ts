@@ -11,12 +11,6 @@ export function fmtUsd(n: number | null | undefined, round = false): string {
   })
 }
 
-export function fmtPct(n: number | null | undefined): string {
-  if (n == null || isNaN(n)) return '—'
-  const sign = n >= 0 ? '+' : ''
-  return `${sign}${n.toFixed(2)}%`
-}
-
 export function formatLastUpdate(ts: number | null | undefined): string {
   if (ts == null) return '—'
   const secs = Math.floor(Date.now() / 1000 - ts)

@@ -44,6 +44,7 @@ import {
 } from '@/hooks/useScanUniverse'
 import { cn } from '@/lib/utils'
 import type { SimilarRegimeLens } from '@/api/research/similarRegime'
+import { fmtPctFromFraction } from '@/lib/format'
 
 const SORT_OPTIONS: { value: ScanSortBy; label: string }[] = [
   { value: 'composite_score', label: 'Composite' },
@@ -96,11 +97,6 @@ const REGIME_PICKER_OPTIONS: { value: RegimePicker; label: string }[] = [
 function fmtNum(n: number | null | undefined, d = 1): string {
   if (n == null || !Number.isFinite(n)) return '—'
   return n.toFixed(d)
-}
-
-function fmtPctFrac(n: number | null | undefined, d = 1): string {
-  if (n == null || !Number.isFinite(n)) return '—'
-  return `${(n * 100).toFixed(d)}%`
 }
 
 function flagVariant(flag: string | undefined): 'danger' | 'success' | 'warning' | 'neutral' {
@@ -459,7 +455,7 @@ export default function ScanPage() {
                         {fmtNum(row.atm_slope_30d, 3)}
                       </DenseTableCell>
                       <DenseTableCell className={denseTableNumCell}>
-                        {fmtPctFrac(row.pin_pct_distance)}
+                        {fmtPctFromFraction(row.pin_pct_distance)}
                       </DenseTableCell>
                       <DenseTableCell>
                         {row.terrain_regime ? (

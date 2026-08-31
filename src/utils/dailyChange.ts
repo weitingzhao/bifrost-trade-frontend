@@ -111,11 +111,6 @@ export function unrealizedPnlColorClass(value: number | null | undefined): strin
   return 'text-unrealized font-semibold'
 }
 
-export function fmtPct(value: number | null | undefined): string {
-  if (value == null) return '—'
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
-}
-
 export function fmtDollar(value: number | null | undefined): string {
   if (value == null) return '—'
   const abs = Math.abs(value)

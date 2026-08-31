@@ -1,3 +1,4 @@
+import { fmtPct1, fmtPct2 } from '@/lib/format'
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
@@ -20,16 +21,6 @@ function fmtUsd(v: number | null | undefined): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
-}
-
-function fmtPct1(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return `${v.toFixed(1)}%`
-}
-
-function fmtPct2(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return `${v.toFixed(2)}%`
 }
 
 function fmtPF(v: number | null | undefined): string {

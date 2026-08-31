@@ -1,3 +1,4 @@
+import { fmtPctSigned } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import {
   DenseDataTable,
@@ -21,7 +22,7 @@ import {
   collectUnderlyingSpots,
   computeOptionPositionRowMetrics,
 } from '@/utils/accountsOptionPositions'
-import { fmtUsd, fmtPct, formatLastUpdate, fmtExpiry, rightLabel } from '@/utils/positions'
+import { fmtUsd, formatLastUpdate, fmtExpiry, rightLabel } from '@/utils/positions'
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
 
@@ -83,13 +84,13 @@ function PositionRow({
         <InlinePnl value={m.lastDelta}>{fmtUsd(m.currPrice)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
-        <InlinePnl value={m.dailyPct}>{fmtPct(m.dailyPct)}</InlinePnl>
+        <InlinePnl value={m.dailyPct}>{fmtPctSigned(m.dailyPct)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
         <InlinePnl value={m.dailyUsd}>{fmtUsd(m.dailyUsd)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
-        <InlinePnl value={m.changePct}>{fmtPct(m.changePct)}</InlinePnl>
+        <InlinePnl value={m.changePct}>{fmtPctSigned(m.changePct)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>
         <InlinePnl value={m.changeUsd}>{fmtUsd(m.changeUsd)}</InlinePnl>

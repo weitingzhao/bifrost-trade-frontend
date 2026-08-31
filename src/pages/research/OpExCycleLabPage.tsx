@@ -1,3 +1,4 @@
+import { fmtPctFromFraction } from '@/lib/format'
 import { useMemo, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -56,11 +57,6 @@ function fmtSigned(v: number | null | undefined, digits = 2): string {
   if (v == null || !Number.isFinite(v)) return '—'
   const s = v > 0 ? '+' : ''
   return `${s}${fmtNum(v, digits)}`
-}
-
-function fmtPct(v: number | null | undefined, digits = 2): string {
-  if (v == null || !Number.isFinite(v)) return '—'
-  return `${(v * 100).toFixed(digits)}%`
 }
 
 function fmtInt(v: number | null | undefined): string {
@@ -236,7 +232,7 @@ function PinRiskTable({ rows }: { rows: OpexPinRow[] }) {
                 {fmtSigned(r.distance)}
               </DenseTableCell>
               <DenseTableCell className={denseTableNumCell}>
-                {fmtPct(r.pct_distance)}
+                {fmtPctFromFraction(r.pct_distance, 2)}
               </DenseTableCell>
               <DenseTableCell className={denseTableNumCell}>
                 {r.total_oi != null ? Math.round(r.total_oi).toLocaleString() : '—'}
@@ -414,7 +410,7 @@ export default function OpExCycleLabPage() {
                 ? ` · Charm₀ ${fmtNum(row.charm_zero_strike)}`
                 : ''}
               {pinRate != null
-                ? ` · pin rate (24 cycles) ${fmtPct(pinRate, 1)}`
+                ? ` · pin rate (24 cycles) ${fmtPctFromFraction(pinRate, 1)}`
                 : ''}
             </span>
           </div>
@@ -531,7 +527,7 @@ export default function OpExCycleLabPage() {
             </p>
             {pinRate != null ? (
               <DenseTag variant={pinRate >= 0.4 ? 'warning' : 'neutral'}>
-                Pin rate {fmtPct(pinRate, 1)}
+                Pin rate {fmtPctFromFraction(pinRate, 1)}
               </DenseTag>
             ) : null}
           </div>

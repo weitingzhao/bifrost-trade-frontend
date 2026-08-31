@@ -9,6 +9,7 @@
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import type { VolSurfaceResidualRow } from '@/api/research/volSurface'
+import { fmtPctFromFraction } from '@/lib/format'
 
 type HeatmapMode = 'iv' | 'residual_z'
 
@@ -18,11 +19,6 @@ interface VolSurfaceHeatmapProps {
   className?: string
   cellWidth?: number
   cellHeight?: number
-}
-
-function fmtPct(v: number | null | undefined): string {
-  if (v == null || !Number.isFinite(v)) return '—'
-  return `${(v * 100).toFixed(1)}%`
 }
 
 function fmtZ(v: number | null | undefined): string {
@@ -140,11 +136,11 @@ export function VolSurfaceHeatmap({
                     ? residualCellStyle(cell.residual_z)
                     : ivCellStyle(cell.iv_market)
                 const value =
-                  mode === 'residual_z' ? fmtZ(cell.residual_z) : fmtPct(cell.iv_market)
+                  mode === 'residual_z' ? fmtZ(cell.residual_z) : fmtPctFromFraction(cell.iv_market)
                 const title =
                   mode === 'residual_z'
-                    ? `${exp} K=${strike} · residual_z=${fmtZ(cell.residual_z)} · residual=${fmtPct(cell.residual)}`
-                    : `${exp} K=${strike} · IV mkt=${fmtPct(cell.iv_market)} · IV fit=${fmtPct(cell.iv_fitted)}`
+                    ? `${exp} K=${strike} · residual_z=${fmtZ(cell.residual_z)} · residual=${fmtPctFromFraction(cell.residual)}`
+                    : `${exp} K=${strike} · IV mkt=${fmtPctFromFraction(cell.iv_market)} · IV fit=${fmtPctFromFraction(cell.iv_fitted)}`
                 return (
                   <td
                     key={`${exp}-${strike}`}

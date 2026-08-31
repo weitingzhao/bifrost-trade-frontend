@@ -8,7 +8,8 @@ import { SectionCollapseToggle } from './SectionCollapseToggle'
 import { INSPECTOR_SECTION_NAV_BY_ID } from './stockInspectorSections'
 import styles from './stock-inspector.module.css'
 import { inspectorShell } from '@/components/layout/rightInspectorUi'
-import { colRange, fmtM, fmtPct2, fmtRatio } from './stockInspectorUtils'
+import { colRange, fmtM, fmtRatio } from './stockInspectorUtils'
+import { fmtPctFromFraction } from '@/lib/format'
 
 interface Props {
   symbol: string
@@ -259,8 +260,8 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                     <td>{fmtRatio(r.price_to_sales)}</td>
                     <td>{fmtRatio(r.price_to_book)}</td>
                     <td>{fmtRatio(r.debt_to_equity)}</td>
-                    <td>{fmtPct2(r.return_on_equity)}</td>
-                    <td>{fmtPct2(r.return_on_assets)}</td>
+                    <td>{fmtPctFromFraction(r.return_on_equity)}</td>
+                    <td>{fmtPctFromFraction(r.return_on_assets)}</td>
                     <td>{r.earnings_per_share != null ? `$${r.earnings_per_share.toFixed(2)}` : '—'}</td>
                     <td>{fmtM(r.market_cap)}</td>
                   </tr>

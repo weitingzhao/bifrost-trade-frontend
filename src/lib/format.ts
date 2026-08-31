@@ -31,7 +31,23 @@ export function fmtUsdRound(v: number | null | undefined): string {
 
 // ─── Percentages ───
 
-/** "24.1%"  (1dp, no sign) */
+/**
+ * Percentage helpers come in two families, and mixing them is a 100x error.
+ *
+ *   fmtPct1 / fmtPct2 / fmtPctSigned  input is ALREADY a percentage (12.5 -> "12.5%")
+ *   fmtPctFromFraction                input is a FRACTION       (0.125 -> "12.5%")
+ *
+ * Prefer these over a local `fmtPct`: that name was defined in 13 files with
+ * both meanings, so its behaviour depended on which file you were reading.
+ */
+
+/** 0.125 -> "12.5%"  — for API values expressed as fractions (IV, VRP, rates). */
+export function fmtPctFromFraction(v: number | null | undefined, digits = 1): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  return `${(v * 100).toFixed(digits)}%`
+}
+
+/** "24.1%"  (1dp, no sign) — input is already a percentage. */
 export function fmtPct1(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v)) return '—'
   return `${v.toFixed(1)}%`

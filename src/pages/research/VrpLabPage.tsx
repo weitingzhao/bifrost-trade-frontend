@@ -48,13 +48,9 @@ import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { copilotViewStore } from '@/store/copilotViewStore'
 import { cn } from '@/lib/utils'
 import type { VrpRow } from '@/api/research/vrp'
+import { fmtPctFromFraction } from '@/lib/format'
 
 type Bucket = 'high' | 'low'
-
-function fmtPct(n: number | null | undefined, digits = 1): string {
-  if (n == null || !Number.isFinite(n)) return '—'
-  return `${(n * 100).toFixed(digits)}%`
-}
 
 function fmtSpread(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '—'
@@ -92,8 +88,8 @@ function verdictText(row: VrpRow | null | undefined): string {
   const iv = row.atm_iv_30d
   const rv = row.rv_60d
   const spread = row.vrp_60d
-  const ivStr = iv != null ? fmtPct(iv) : '—'
-  const rvStr = rv != null ? fmtPct(rv) : '—'
+  const ivStr = iv != null ? fmtPctFromFraction(iv) : '—'
+  const rvStr = rv != null ? fmtPctFromFraction(rv) : '—'
   const spreadStr = spread != null ? fmtSpread(spread) : '—'
   if (pct >= 80) {
     return `Prefer short premium in ${row.symbol}: VRP ${fmtPercentile(pct)}th pctl (IV ${ivStr} > RV ${rvStr}, spread ${spreadStr}). Confirm with IV Rank.`
@@ -302,10 +298,10 @@ function ExtremesTable({
               {fmtPercentile(row.vrp_pct_252d)}
             </DenseTableCell>
             <DenseTableCell className={denseTableNumCell}>
-              {fmtPct(row.atm_iv_30d)}
+              {fmtPctFromFraction(row.atm_iv_30d)}
             </DenseTableCell>
             <DenseTableCell className={denseTableNumCell}>
-              {fmtPct(row.rv_60d)}
+              {fmtPctFromFraction(row.rv_60d)}
             </DenseTableCell>
             <DenseTableCell className={denseTableNumCell}>
               {fmtSpread(row.vrp_60d)}
@@ -449,8 +445,8 @@ export default function VrpLabPage() {
         narrative={verdictTextValue}
         signals={[
           { label: 'VRP60', value: fmtSpread(latest?.vrp_60d) },
-          { label: 'ATM IV', value: fmtPct(latest?.atm_iv_30d) },
-          { label: 'RV60', value: fmtPct(latest?.rv_60d) },
+          { label: 'ATM IV', value: fmtPctFromFraction(latest?.atm_iv_30d) },
+          { label: 'RV60', value: fmtPctFromFraction(latest?.rv_60d) },
           { label: 'Pctl', value: fmtPercentile(latest?.vrp_pct_252d) },
         ]}
         nextMoves={[

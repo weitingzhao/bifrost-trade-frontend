@@ -23,11 +23,6 @@ export function fmtRawPct(v: number | null | undefined): string {
   return `${v.toFixed(1)}%`
 }
 
-export function fmtPct2(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return `${v.toFixed(2)}%`
-}
-
 export function fmtNum(v: number | null | undefined): string {
   if (v == null) return '—'
   return String(v)

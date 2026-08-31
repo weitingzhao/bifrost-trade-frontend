@@ -1,3 +1,4 @@
+import { fmtPctFromFraction } from '@/lib/format'
 import { DenseTag } from '@/components/data-display'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -61,11 +62,6 @@ function statusVariant(status: ForecastStructureRec['status']) {
   return 'danger'
 }
 
-function fmtPct(n: number, digits = 0): string {
-  if (!Number.isFinite(n)) return '—'
-  return `${(n * 100).toFixed(digits)}%`
-}
-
 export function ForecastStructureCards({ structuresJson }: { structuresJson: unknown }) {
   const parsed = parseStructures(structuresJson)
   if (parsed.length === 0) return null
@@ -96,7 +92,7 @@ export function ForecastStructureCards({ structuresJson }: { structuresJson: unk
             </div>
             <p className="text-dense-meta text-muted-foreground">{rec.legs_summary}</p>
             <div className="flex flex-wrap gap-3 font-mono text-dense-meta tabular-nums">
-              <span>PoP {fmtPct(rec.pop)}</span>
+              <span>PoP {fmtPctFromFraction(rec.pop, 0)}</span>
               <span>EV {rec.ev.toFixed(2)}</span>
               <span>CVaR {rec.cvar.toFixed(2)}</span>
             </div>

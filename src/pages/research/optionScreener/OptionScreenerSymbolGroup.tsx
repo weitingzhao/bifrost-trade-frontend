@@ -9,7 +9,8 @@ import {
 } from '@/components/data-display'
 import type { ScreenerSymbolGroup } from '@/types/research'
 import { OptionScreenerContractsTable } from './OptionScreenerContractsTable'
-import { bestScoreRating, fmtPct } from './optionScreenerFormat'
+import { bestScoreRating } from './optionScreenerFormat'
+import { fmtPctFromFraction } from '@/lib/format'
 import { ratingTagVariant } from './optionScreenerTags'
 
 type Props = {
@@ -37,7 +38,7 @@ export function OptionScreenerSymbolGroup({ group, expanded, onToggle, onSave }:
               {group.best_score}
             </DenseTag>
           </span>
-          <span>IV: {fmtPct(group.avg_iv)}</span>
+          <span>IV: {fmtPctFromFraction(group.avg_iv)}</span>
           <span>{group.contracts.length} contracts</span>
         </CollapsibleGroupStats>
       </CollapsibleGroupHeader>

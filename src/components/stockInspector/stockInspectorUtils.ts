@@ -59,11 +59,6 @@ export function fmtM(v: number | null | undefined): string {
   return `${sign}$${abs.toFixed(0)}`
 }
 
-export function fmtPct2(v: number | null | undefined): string {
-  if (v == null || !Number.isFinite(v)) return '—'
-  return `${(v * 100).toFixed(1)}%`
-}
-
 export function colRange(vals: (number | null | undefined)[]): [number, number] {
   const ns = vals.filter((v): v is number => v != null && Number.isFinite(v))
   if (ns.length === 0) return [0, 0]

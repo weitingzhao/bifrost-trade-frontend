@@ -3,11 +3,6 @@ export function fmt(n: number | null | undefined): string {
   return n.toLocaleString()
 }
 
-export function fmtPct(num: number, denom: number): string {
-  if (!denom) return '—'
-  return `${((num / denom) * 100).toFixed(1)}%`
-}
-
 export function fmtRelativeTime(iso: string | null | undefined): string {
   if (!iso) return '—'
   try {

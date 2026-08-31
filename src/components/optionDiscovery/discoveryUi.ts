@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import chartStyles from '../discoveryCharts.module.css'
+import chartStyles from './discoveryCharts.module.css'
 
 export const discoveryRootClass = chartStyles.discoveryRoot
 

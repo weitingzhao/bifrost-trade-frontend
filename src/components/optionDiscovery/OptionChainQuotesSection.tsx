@@ -11,7 +11,7 @@ import { DiscoveryIconButton } from './DiscoveryIconButton'
 import { DiscoverySection } from './DiscoverySection'
 import { DiscoveryScrollArea } from './DiscoveryScrollArea'
 import { DiscoveryChainQuotesTable } from './DiscoveryChainQuotesTable'
-import { discoveryFeedbackBoxClass } from '@/pages/research/discovery/discoveryUi'
+import { discoveryFeedbackBoxClass } from './discoveryUi'
 import type { StrikeSideMode } from './DiscoverySideToggle'
 
 type ChainColumnId = keyof typeof CHAIN_COLUMN_LABEL

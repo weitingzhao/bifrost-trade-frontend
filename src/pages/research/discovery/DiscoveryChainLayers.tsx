@@ -16,7 +16,7 @@ import {
   discoveryFullChainClass,
   discoveryViewScopeClass,
   discoveryViewScopeHintClass,
-} from './discoveryUi'
+} from '@/components/optionDiscovery/discoveryUi'
 
 type Props = {
   selectedSymbol: string

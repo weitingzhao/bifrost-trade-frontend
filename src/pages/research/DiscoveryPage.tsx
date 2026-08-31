@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { discoveryRootClass } from './discovery/discoveryUi'
+import { discoveryRootClass } from '@/components/optionDiscovery/discoveryUi'
 import { postWatchlistItem } from '@/api/market'
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
 import { PageShell } from '@/components/layout'

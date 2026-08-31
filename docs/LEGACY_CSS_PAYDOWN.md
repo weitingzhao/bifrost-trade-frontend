@@ -152,15 +152,15 @@ npm run lint && npm run build && npm run check:legacy-css
 
 **Scope**
 
-- Delete [`stock-screener.module.css`](../src/pages/research/stockScreener/stock-screener.module.css) (225 lines → 0)
-- [`stockScreenerUi.ts`](../src/pages/research/stockScreener/stockScreenerUi.ts) — layout grid, card shell, chip tokens
-- [`segmentStyles.ts`](../src/pages/research/stockScreener/segmentStyles.ts) — Tailwind hue map (no module import)
-- [`ScreenerCard.tsx`](../src/pages/research/stockScreener/ScreenerCard.tsx), [`ScreenerConditionChip.tsx`](../src/pages/research/stockScreener/ScreenerConditionChip.tsx) — filter UI
-- [`ReadinessResultsTable.tsx`](../src/pages/research/stockScreener/ReadinessResultsTable.tsx) — `DenseDataTable` + sortable head + `DenseLinkButton`
+- Delete [`stock-screener.module.css`](../src/pages/research/data/stockScreener/stock-screener.module.css) (225 lines → 0)
+- [`stockScreenerUi.ts`](../src/pages/research/data/stockScreener/stockScreenerUi.ts) — layout grid, card shell, chip tokens
+- [`segmentStyles.ts`](../src/pages/research/data/stockScreener/segmentStyles.ts) — Tailwind hue map (no module import)
+- [`ScreenerCard.tsx`](../src/pages/research/data/stockScreener/ScreenerCard.tsx), [`ScreenerConditionChip.tsx`](../src/pages/research/data/stockScreener/ScreenerConditionChip.tsx) — filter UI
+- [`ReadinessResultsTable.tsx`](../src/pages/research/data/stockScreener/ReadinessResultsTable.tsx) — `DenseDataTable` + sortable head + `DenseLinkButton`
 
 **CI**
 
-- No `stock-screener.module.css` under `src/pages/research/stockScreener/**`
+- No `stock-screener.module.css` under `src/pages/research/data/stockScreener/**`
 - No shadcn `@/components/ui/table` in `ReadinessResultsTable.tsx`
 
 **Acceptance**
@@ -173,15 +173,15 @@ npm run lint && npm run build && npm run check:legacy-css
 
 **Scope**
 
-- Split monolith [`ScreenerPage.tsx`](../src/pages/research/ScreenerPage.tsx) → [`optionScreener/`](../src/pages/research/optionScreener/) (14 files)
-- [`optionScreenerUi.ts`](../src/pages/research/optionScreener/optionScreenerUi.ts) — filter panel, warn box, score bar tokens
-- [`OptionScreenerFilterPanel.tsx`](../src/pages/research/optionScreener/OptionScreenerFilterPanel.tsx) — `SegmentControl` structure type
-- [`OptionScreenerSymbolGroup.tsx`](../src/pages/research/optionScreener/OptionScreenerSymbolGroup.tsx) — `CollapsibleGroup`
-- [`OptionScreenerContractsTable.tsx`](../src/pages/research/optionScreener/OptionScreenerContractsTable.tsx) — `DenseDataTable` + `DenseTag` + `IconActionButton`
+- Split monolith [`ScreenerPage.tsx`](../src/pages/research/data/ScreenerPage.tsx) → [`optionScreener/`](../src/pages/research/data/optionScreener/) (14 files)
+- [`optionScreenerUi.ts`](../src/pages/research/data/optionScreener/optionScreenerUi.ts) — filter panel, warn box, score bar tokens
+- [`OptionScreenerFilterPanel.tsx`](../src/pages/research/data/optionScreener/OptionScreenerFilterPanel.tsx) — `SegmentControl` structure type
+- [`OptionScreenerSymbolGroup.tsx`](../src/pages/research/data/optionScreener/OptionScreenerSymbolGroup.tsx) — `CollapsibleGroup`
+- [`OptionScreenerContractsTable.tsx`](../src/pages/research/data/optionScreener/OptionScreenerContractsTable.tsx) — `DenseDataTable` + `DenseTag` + `IconActionButton`
 
 **CI**
 
-- No raw `<table` under `src/pages/research/optionScreener/**`
+- No raw `<table` under `src/pages/research/data/optionScreener/**`
 - No hand-rolled bookmark opacity buttons in option screener paths
 
 **Acceptance**
@@ -194,17 +194,17 @@ npm run lint && npm run build && npm run check:legacy-css
 
 **Scope**
 
-- Delete [`watchlist.module.css`](../src/pages/research/watchlist/watchlist.module.css) (142 lines → 0)
-- [`watchlistUi.ts`](../src/pages/research/watchlist/watchlistUi.ts) — stepper, quote, pie, range, KPI/order zone tokens
-- [`WorkflowStepper.tsx`](../src/pages/research/watchlist/WorkflowStepper.tsx) — three-step workflow nav
-- [`WatchlistStockTable.tsx`](../src/pages/research/watchlist/WatchlistStockTable.tsx), [`WatchlistOptionTable.tsx`](../src/pages/research/watchlist/WatchlistOptionTable.tsx) — `DenseDataTable` + `DenseLinkButton` + `DenseTag` + `IconActionButton`
-- [`PortfolioRiskPower.tsx`](../src/pages/research/watchlist/PortfolioRiskPower.tsx) — `CollapsibleGroup` + [WatchlistMetricTable.tsx](../src/pages/research/watchlist/WatchlistMetricTable.tsx)
-- [`WatchlistSizingCapTable.tsx`](../src/pages/research/watchlist/WatchlistSizingCapTable.tsx) — sizing cap rows
-- [`PositionsTab.tsx`](../src/pages/research/watchlist/PositionsTab.tsx) — `SegmentControl` stocks/options
+- Delete [`watchlist.module.css`](../src/pages/research/data/watchlist/watchlist.module.css) (142 lines → 0)
+- [`watchlistUi.ts`](../src/pages/research/data/watchlist/watchlistUi.ts) — stepper, quote, pie, range, KPI/order zone tokens
+- [`WorkflowStepper.tsx`](../src/pages/research/data/watchlist/WorkflowStepper.tsx) — three-step workflow nav
+- [`WatchlistStockTable.tsx`](../src/pages/research/data/watchlist/WatchlistStockTable.tsx), [`WatchlistOptionTable.tsx`](../src/pages/research/data/watchlist/WatchlistOptionTable.tsx) — `DenseDataTable` + `DenseLinkButton` + `DenseTag` + `IconActionButton`
+- [`PortfolioRiskPower.tsx`](../src/pages/research/data/watchlist/PortfolioRiskPower.tsx) — `CollapsibleGroup` + [WatchlistMetricTable.tsx](../src/pages/research/data/watchlist/WatchlistMetricTable.tsx)
+- [`WatchlistSizingCapTable.tsx`](../src/pages/research/data/watchlist/WatchlistSizingCapTable.tsx) — sizing cap rows
+- [`PositionsTab.tsx`](../src/pages/research/data/watchlist/PositionsTab.tsx) — `SegmentControl` stocks/options
 
 **CI**
 
-- No `watchlist.module.css` under `src/pages/research/watchlist/**`
+- No `watchlist.module.css` under `src/pages/research/data/watchlist/**`
 - No `@/components/ui/table` under watchlist paths
 - No `dangerGhostBtnClass` under watchlist paths
 
@@ -219,10 +219,10 @@ npm run lint && npm run build && npm run check:legacy-css
 **Scope**
 
 - Delete [`optionContractDetail.module.css`](../src/components/optionDiscovery/optionContractDetail.module.css) (198 lines → 0)
-- [`discoveryUi.ts`](../src/pages/research/discovery/discoveryUi.ts) + [`optionDiscoveryUi.ts`](../src/components/optionDiscovery/optionDiscoveryUi.ts) — page/component tokens
+- [`discoveryUi.ts`](../src/components/optionDiscovery/discoveryUi.ts) + [`optionDiscoveryUi.ts`](../src/components/optionDiscovery/optionDiscoveryUi.ts) — page/component tokens
 - Six Dense tables: [`DiscoveryChainQuotesTable`](../src/components/optionDiscovery/DiscoveryChainQuotesTable.tsx) (sticky hybrid), [`DiscoveryStrikeLadderTable`](../src/components/optionDiscovery/DiscoveryStrikeLadderTable.tsx), [`DiscoveryIvTermSheetTable`](../src/components/optionDiscovery/DiscoveryIvTermSheetTable.tsx), [`DiscoveryCompareTable`](../src/components/optionDiscovery/DiscoveryCompareTable.tsx), [`DiscoveryContractGreeksTable`](../src/components/optionDiscovery/DiscoveryContractGreeksTable.tsx), [`DiscoveryScenarioTable`](../src/components/optionDiscovery/DiscoveryScenarioTable.tsx)
 - Five `ToggleGroup` → `SegmentControl`; compare remove → `IconActionButton tone="danger"`
-- **Keep** [`discoveryCharts.module.css`](../src/pages/research/discoveryCharts.module.css) — chart expand overlay + SVG geometry only
+- **Keep** [`discoveryCharts.module.css`](../src/components/optionDiscovery/discoveryCharts.module.css) — chart expand overlay + SVG geometry only
 
 **CI**
 
@@ -241,17 +241,17 @@ npm run lint && npm run build && npm run check:legacy-css
 
 **Scope**
 
-- [`greeksUi.ts`](../src/pages/research/greeks/greeksUi.ts) — IV/Delta semantic cell classes, loading/empty hints, tooltip section/KV/compare tokens
-- [`GreeksHistoryTable.tsx`](../src/pages/research/greeks/GreeksHistoryTable.tsx) — `DenseDataTable` + expiry subhead + `DenseTag` C/P + DTE pill (`variant="info"`)
-- [`GreeksCalcTooltip.tsx`](../src/pages/research/greeks/GreeksCalcTooltip.tsx) — tokenized BS detail portal
-- [`GreeksPage.tsx`](../src/pages/research/GreeksPage.tsx) — `PageShell padding="default"`, controls/info bar in `Card variant="elevated"`
-- [`greeksFormat.ts`](../src/pages/research/greeks/greeksFormat.ts) — fmt/groupBy/dte only (colors moved to `greeksUi`)
+- [`greeksUi.ts`](../src/pages/research/analyze/greeks/greeksUi.ts) — IV/Delta semantic cell classes, loading/empty hints, tooltip section/KV/compare tokens
+- [`GreeksHistoryTable.tsx`](../src/pages/research/analyze/greeks/GreeksHistoryTable.tsx) — `DenseDataTable` + expiry subhead + `DenseTag` C/P + DTE pill (`variant="info"`)
+- [`GreeksCalcTooltip.tsx`](../src/pages/research/analyze/greeks/GreeksCalcTooltip.tsx) — tokenized BS detail portal
+- [`GreeksPage.tsx`](../src/pages/research/analyze/GreeksPage.tsx) — `PageShell padding="default"`, controls/info bar in `Card variant="elevated"`
+- [`greeksFormat.ts`](../src/pages/research/analyze/greeks/greeksFormat.ts) — fmt/groupBy/dte only (colors moved to `greeksUi`)
 
 **CI**
 
-- No `*.module.css` under `src/pages/research/greeks/**`
-- No `@/components/ui/table` under `src/pages/research/greeks/**`
-- No raw `<table` under `src/pages/research/greeks/**`
+- No `*.module.css` under `src/pages/research/analyze/greeks/**`
+- No `@/components/ui/table` under `src/pages/research/analyze/greeks/**`
+- No raw `<table` under `src/pages/research/analyze/greeks/**`
 - No legacy strings: `greeks-table__`, `greeks-calc-tooltip__`, `option-greeks-page__`
 
 **Acceptance**

@@ -65,15 +65,15 @@ Copy and track:
 | Live open orders | `src/pages/market/live/OpenOrdersPane.tsx` |
 | Model Analysis (expand + nested stress) | `src/pages/portfolio/modelAnalysis/ModelAnalysisSections.tsx`, `UnderlyingDetailPanel.tsx` |
 | Transfer Pay transactions / summary | `src/pages/portfolio/transferPay/TransferPayTransactionsTable.tsx`, `TransferPaySummaryTable.tsx` |
-| Stock Screener readiness results | `src/pages/research/stockScreener/ReadinessResultsTable.tsx` |
-| Option Screener symbol groups + contracts | `src/pages/research/optionScreener/OptionScreenerSymbolGroup.tsx`, `OptionScreenerContractsTable.tsx` |
-| Stock Watchlist stock/option tables | `src/pages/research/watchlist/WatchlistStockTable.tsx`, `WatchlistOptionTable.tsx` |
-| Stock Watchlist portfolio risk | `src/pages/research/watchlist/PortfolioRiskPower.tsx`, `WatchlistMetricTable.tsx` |
+| Stock Screener readiness results | `src/pages/research/data/stockScreener/ReadinessResultsTable.tsx` |
+| Option Screener symbol groups + contracts | `src/pages/research/data/optionScreener/OptionScreenerSymbolGroup.tsx`, `OptionScreenerContractsTable.tsx` |
+| Stock Watchlist stock/option tables | `src/pages/research/data/watchlist/WatchlistStockTable.tsx`, `WatchlistOptionTable.tsx` |
+| Stock Watchlist portfolio risk | `src/pages/research/data/watchlist/PortfolioRiskPower.tsx`, `WatchlistMetricTable.tsx` |
 | Option Discovery chain (sticky hybrid) | `src/components/optionDiscovery/DiscoveryChainQuotesTable.tsx` |
 | Option Discovery strike / IV / compare / contract tables | `DiscoveryStrikeLadderTable.tsx`, `DiscoveryIvTermSheetTable.tsx`, `DiscoveryCompareTable.tsx`, `DiscoveryContractGreeksTable.tsx`, `DiscoveryScenarioTable.tsx` |
-| Option Discovery tokens | `src/pages/research/discovery/discoveryUi.ts`, `src/components/optionDiscovery/optionDiscoveryUi.ts` |
-| IV & Greeks history table | `src/pages/research/greeks/GreeksHistoryTable.tsx` |
-| IV & Greeks BS tooltip + page tokens | `src/pages/research/greeks/GreeksCalcTooltip.tsx`, `src/pages/research/greeks/greeksUi.ts` |
+| Option Discovery tokens | `src/components/optionDiscovery/discoveryUi.ts`, `src/components/optionDiscovery/optionDiscoveryUi.ts` |
+| IV & Greeks history table | `src/pages/research/analyze/greeks/GreeksHistoryTable.tsx` |
+| IV & Greeks BS tooltip + page tokens | `src/pages/research/analyze/greeks/GreeksCalcTooltip.tsx`, `src/pages/research/analyze/greeks/greeksUi.ts` |
 | Strategy Instances grouped list | `src/components/strategy/InstancesGroupedTable.tsx`, `src/components/strategy/instances/instancesUi.ts` |
 | Strategy Win Rate KPI cards | `src/components/strategy/winRate/winRateUi.ts`, `src/pages/strategy/WinRatePage.tsx` |
 | Strategy Structures list + history | `src/components/strategy/StructuresTable.tsx`, `src/components/strategy/structures/structuresUi.ts` |

@@ -6,7 +6,7 @@ import RouteErrorPage from '@/pages/RouteErrorPage'
 
 /** Eager — high-traffic monitoring entry points */
 import LivePage from '@/pages/market/LivePage'
-import StockWatchlistPage from '@/pages/research/StockWatchlistPage'
+import StockWatchlistPage from '@/pages/research/data/StockWatchlistPage'
 import PositionsPage from '@/pages/portfolio/PositionsPage'
 import InstancesPage from '@/pages/strategy/InstancesPage'
 
@@ -64,11 +64,11 @@ export const router = createBrowserRouter([
 
       {
         path: 'research/daily-brief',
-        lazy: lazyPage(() => import('@/pages/research/DailyBriefPage')),
+        lazy: lazyPage(() => import('@/pages/research/discover/DailyBriefPage')),
       },
       {
         path: 'research/stock-screener',
-        lazy: lazyPage(() => import('@/pages/research/StockScreenerPage')),
+        lazy: lazyPage(() => import('@/pages/research/data/StockScreenerPage')),
       },
       /* Legacy URL — the page is a Stock Screener; SEPA is one of its condition
          families, not its identity. Kept so existing bookmarks resolve. */
@@ -78,7 +78,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'research/screener',
-        lazy: lazyPage(() => import('@/pages/research/ScreenerPage')),
+        lazy: lazyPage(() => import('@/pages/research/data/ScreenerPage')),
       },
       {
         path: 'research/stock-data',
@@ -94,11 +94,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'research/discovery',
-        lazy: lazyPage(() => import('@/pages/research/DiscoveryPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/DiscoveryPage')),
       },
       {
         path: 'research/scan',
-        lazy: lazyPage(() => import('@/pages/research/ScanPage')),
+        lazy: lazyPage(() => import('@/pages/research/discover/ScanPage')),
       },
       /* Wave Discover-IA — /research/option-scan alias to Scan */
       {
@@ -108,75 +108,75 @@ export const router = createBrowserRouter([
       /* Wave Discover-IA — new grouped Stock Explorer (SEPA + Momentum + Events + Rules link) */
       {
         path: 'research/explorer',
-        lazy: lazyPage(() => import('@/pages/research/StockExplorerPage')),
+        lazy: lazyPage(() => import('@/pages/research/discover/StockExplorerPage')),
       },
       {
         path: 'research/signal-decay',
-        lazy: lazyPage(() => import('@/pages/research/SignalDecayPage')),
+        lazy: lazyPage(() => import('@/pages/research/validate/SignalDecayPage')),
       },
       {
         path: 'research/signal-decay/:symbol',
-        lazy: lazyPage(() => import('@/pages/research/SignalDecayPage')),
+        lazy: lazyPage(() => import('@/pages/research/validate/SignalDecayPage')),
       },
       {
         path: 'research/iv-radar',
-        lazy: lazyPage(() => import('@/pages/research/IvRadarPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/IvRadarPage')),
       },
       {
         path: 'research/vrp-lab',
-        lazy: lazyPage(() => import('@/pages/research/VrpLabPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/VrpLabPage')),
       },
       {
         path: 'research/signal-health',
-        lazy: lazyPage(() => import('@/pages/research/SignalHealthPage')),
+        lazy: lazyPage(() => import('@/pages/research/data/SignalHealthPage')),
       },
       {
         path: 'research/vol-surface-lab',
-        lazy: lazyPage(() => import('@/pages/research/VolSurfaceLabPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/VolSurfaceLabPage')),
       },
       {
         path: 'research/opex-cycle-lab',
-        lazy: lazyPage(() => import('@/pages/research/OpExCycleLabPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/OpExCycleLabPage')),
       },
       {
         path: 'research/greeks',
-        lazy: lazyPage(() => import('@/pages/research/GreeksPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/GreeksPage')),
       },
       {
         path: 'research/backtest',
-        lazy: lazyPage(() => import('@/pages/research/BacktestPage')),
+        lazy: lazyPage(() => import('@/pages/research/validate/BacktestPage')),
       },
       {
         path: 'research/analysis-model',
-        lazy: lazyPage(() => import('@/pages/research/AnalysisModelPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/AnalysisModelPage')),
       },
       {
         path: 'research/intraday-playbook',
-        lazy: lazyPage(() => import('@/pages/research/IntradayPlaybookPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/IntradayPlaybookPage')),
       },
       {
         path: 'research/momentum-radar',
-        lazy: lazyPage(() => import('@/pages/research/MomentumRadarPage')),
+        lazy: lazyPage(() => import('@/pages/research/discover/MomentumRadarPage')),
       },
       {
         path: 'research/sepa-daily-core',
-        lazy: lazyPage(() => import('@/pages/research/SepaDailyCorePage')),
+        lazy: lazyPage(() => import('@/pages/research/discover/SepaDailyCorePage')),
       },
       {
         path: 'research/gex-intraday',
-        lazy: lazyPage(() => import('@/pages/research/GexIntradayPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/GexIntradayPage')),
       },
       {
         path: 'research/forecast-sessions',
-        lazy: lazyPage(() => import('@/pages/research/ForecastSessionsPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/ForecastSessionsPage')),
       },
       {
         path: 'research/order-sentiment',
-        lazy: lazyPage(() => import('@/pages/research/OrderSentimentPage')),
+        lazy: lazyPage(() => import('@/pages/research/analyze/OrderSentimentPage')),
       },
       {
         path: 'research/event-radar',
-        lazy: lazyPage(() => import('@/pages/research/EventRadarPage')),
+        lazy: lazyPage(() => import('@/pages/research/discover/EventRadarPage')),
       },
 
       /* Wave Z+R — Research Loop */
@@ -200,7 +200,7 @@ export const router = createBrowserRouter([
       /* Wave Z — Risk Model moved under Portfolio (alias keeps /research/risk) */
       {
         path: 'portfolio/risk',
-        lazy: lazyPage(() => import('@/pages/research/RiskModelPage')),
+        lazy: lazyPage(() => import('@/pages/portfolio/RiskModelPage')),
       },
       {
         path: 'research/risk',
@@ -284,7 +284,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'data-readiness',
-            lazy: lazyPage(() => import('@/pages/research/StockDataPage')),
+            lazy: lazyPage(() => import('@/pages/research/data/StockDataPage')),
           },
 
           {

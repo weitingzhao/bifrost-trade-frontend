@@ -136,7 +136,7 @@ fi
 
 # Stock Screener: Dense migration — no module CSS
 if ss_legacy=$(grep -rE 'styles\.(ssTechRow|ssFundRow|ssStackCol|ssCard|ssChip|ssGroupHeader|ssFilterBadge)' \
-  src/pages/research/stockScreener --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+  src/pages/research/data/stockScreener --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$ss_legacy" ]]; then
     echo "$ss_legacy" >&2
     report "legacy stock-screener.module.css class references under Stock Screener"
@@ -148,29 +148,29 @@ if ss_styles=$(grep -rl "stock-screener.module.css" src/pages/research --include
     report "stock-screener.module.css import under src/pages/research"
   fi
 fi
-ss_css=src/pages/research/stockScreener/stock-screener.module.css
+ss_css=src/pages/research/data/stockScreener/stock-screener.module.css
 if [[ -f "$ss_css" ]]; then
   report "stock-screener.module.css must be deleted (Stock Screener Dense migration)"
 fi
-if grep -q "@/components/ui/table" src/pages/research/stockScreener/ReadinessResultsTable.tsx 2>/dev/null; then
+if grep -q "@/components/ui/table" src/pages/research/data/stockScreener/ReadinessResultsTable.tsx 2>/dev/null; then
   report "shadcn Table in ReadinessResultsTable.tsx (use DenseDataTable)"
 fi
 
 # Option Screener: Dense migration — no raw HTML tables
-if os_raw_table=$(grep -rE '<table[\s>]' src/pages/research/optionScreener --include='*.tsx' 2>/dev/null || true); then
+if os_raw_table=$(grep -rE '<table[\s>]' src/pages/research/data/optionScreener --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$os_raw_table" ]]; then
     echo "$os_raw_table" >&2
-    report "raw HTML table under src/pages/research/optionScreener (use DenseDataTable)"
+    report "raw HTML table under src/pages/research/data/optionScreener (use DenseDataTable)"
   fi
 fi
 if os_icon_legacy=$(grep -rE 'opacity-40 hover:opacity-100' \
-  src/pages/research/optionScreener src/pages/research/ScreenerPage.tsx --include='*.tsx' 2>/dev/null || true); then
+  src/pages/research/data/optionScreener src/pages/research/data/ScreenerPage.tsx --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$os_icon_legacy" ]]; then
     echo "$os_icon_legacy" >&2
     report "hand-rolled icon row buttons under Option Screener (use IconActionButton)"
   fi
 fi
-if os_risk_legacy=$(grep -rE 'bg-yellow-100|bg-red-100' src/pages/research/optionScreener --include='*.tsx' 2>/dev/null || true); then
+if os_risk_legacy=$(grep -rE 'bg-yellow-100|bg-red-100' src/pages/research/data/optionScreener --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$os_risk_legacy" ]]; then
     echo "$os_risk_legacy" >&2
     report "legacy risk pill colors under Option Screener (use DenseTag)"
@@ -178,23 +178,23 @@ if os_risk_legacy=$(grep -rE 'bg-yellow-100|bg-red-100' src/pages/research/optio
 fi
 
 # Stock Watchlist: Dense migration — no module CSS or shadcn Table
-wl_css=src/pages/research/watchlist/watchlist.module.css
+wl_css=src/pages/research/data/watchlist/watchlist.module.css
 if [[ -f "$wl_css" ]]; then
   report "watchlist.module.css must be deleted (Stock Watchlist Dense migration)"
 fi
-if wl_styles=$(grep -rl "watchlist.module.css" src/pages/research/watchlist --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if wl_styles=$(grep -rl "watchlist.module.css" src/pages/research/data/watchlist --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$wl_styles" ]]; then
     echo "$wl_styles" >&2
-    report "watchlist.module.css import under src/pages/research/watchlist"
+    report "watchlist.module.css import under src/pages/research/data/watchlist"
   fi
 fi
-if wl_table=$(grep -rl "@/components/ui/table" src/pages/research/watchlist --include='*.tsx' 2>/dev/null || true); then
+if wl_table=$(grep -rl "@/components/ui/table" src/pages/research/data/watchlist --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$wl_table" ]]; then
     echo "$wl_table" >&2
-    report "shadcn Table under src/pages/research/watchlist (use DenseDataTable)"
+    report "shadcn Table under src/pages/research/data/watchlist (use DenseDataTable)"
   fi
 fi
-if wl_danger=$(grep -rl "dangerGhostBtnClass" src/pages/research/watchlist --include='*.tsx' 2>/dev/null || true); then
+if wl_danger=$(grep -rl "dangerGhostBtnClass" src/pages/research/data/watchlist --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$wl_danger" ]]; then
     echo "$wl_danger" >&2
     report "dangerGhostBtnClass under watchlist (use IconActionButton tone=danger)"
@@ -233,28 +233,28 @@ if od_legacy_strings=$(grep -rE 'dangerTextBtnClass|od-pnl-pos|od-scenario-table
 fi
 
 # IV & Greeks: Dense migration — no module CSS or shadcn Table
-if greeks_module_css=$(find src/pages/research/greeks -name '*.module.css' 2>/dev/null || true); then
+if greeks_module_css=$(find src/pages/research/analyze/greeks -name '*.module.css' 2>/dev/null || true); then
   if [[ -n "$greeks_module_css" ]]; then
     echo "$greeks_module_css" >&2
-    report "*.module.css under src/pages/research/greeks (use greeksUi tokens + DenseDataTable)"
+    report "*.module.css under src/pages/research/analyze/greeks (use greeksUi tokens + DenseDataTable)"
   fi
 fi
-if greeks_table=$(grep -rl "@/components/ui/table" src/pages/research/greeks --include='*.tsx' 2>/dev/null || true); then
+if greeks_table=$(grep -rl "@/components/ui/table" src/pages/research/analyze/greeks --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$greeks_table" ]]; then
     echo "$greeks_table" >&2
-    report "shadcn Table under src/pages/research/greeks (use DenseDataTable)"
+    report "shadcn Table under src/pages/research/analyze/greeks (use DenseDataTable)"
   fi
 fi
-if greeks_raw_table=$(grep -rE '<table' src/pages/research/greeks --include='*.tsx' 2>/dev/null || true); then
+if greeks_raw_table=$(grep -rE '<table' src/pages/research/analyze/greeks --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$greeks_raw_table" ]]; then
     echo "$greeks_raw_table" >&2
-    report "raw <table under src/pages/research/greeks (use DenseDataTable family)"
+    report "raw <table under src/pages/research/analyze/greeks (use DenseDataTable family)"
   fi
 fi
-if greeks_legacy_strings=$(grep -rE 'greeks-table__|greeks-calc-tooltip__|option-greeks-page__' src/pages/research/greeks --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if greeks_legacy_strings=$(grep -rE 'greeks-table__|greeks-calc-tooltip__|option-greeks-page__' src/pages/research/analyze/greeks --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$greeks_legacy_strings" ]]; then
     echo "$greeks_legacy_strings" >&2
-    report "legacy greeks class strings under src/pages/research/greeks"
+    report "legacy greeks class strings under src/pages/research/analyze/greeks"
   fi
 fi
 
@@ -600,11 +600,29 @@ elif [[ "$raw_pnl_count" -lt "$RAW_PNL_PALETTE_BASELINE" ]]; then
   echo "check-legacy-css: raw PnL palette count $raw_pnl_count < baseline $RAW_PNL_PALETTE_BASELINE — lower RAW_PNL_PALETTE_BASELINE in scripts/check-legacy-css.sh" >&2
 fi
 
+# Self-check: every directory this script scans must exist.
+#
+# Rules are written as `grep -r <dir>`, which reports nothing for a directory
+# that has been renamed — so the rule keeps passing while guarding an empty set.
+# That is how a guard goes quiet without anyone noticing; moving the research
+# pages into nav groups broke five of these paths at once.
+#
+# Paths with a file extension are exempt: those are "this file must stay
+# deleted" assertions, where absence is the passing state.
+scanned_dirs=$(grep -oE 'src/(pages|components)/[A-Za-z0-9/_.-]+' "${BASH_SOURCE[0]}" \
+  | grep -vE '\.[A-Za-z]+$' | sed 's:/*$::' | sort -u)
+while IFS= read -r d; do
+  [[ -z "$d" ]] && continue
+  if [[ ! -e "$d" ]]; then
+    report "check-legacy-css scans '$d', which does not exist — the rule guarding it is silently inert"
+  fi
+done <<< "$scanned_dirs"
+
 # Module placement (.cursor/rules/module-placement.mdc · CLAUDE.md):
 # the shared layers must never import from pages/. src/lib/router.tsx is the one
 # exemption — a route table has to name its pages.
 #
-# This is not style. components/optionDiscovery imported pages/research/discovery
+# This is not style. components/optionDiscovery imported pages/research/analyze/discovery
 # while pages/research/optionDiscovery re-exported components/optionDiscovery — a
 # directory-level cycle neither side could untangle.
 placement_violations=$(git ls-files 'src/components/*' 'src/hooks/*' 'src/lib/*' 'src/utils/*' \

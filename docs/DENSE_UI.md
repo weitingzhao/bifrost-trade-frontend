@@ -106,7 +106,7 @@ Trade background job sheets were retired with **api-massive (P7)** and Wave 5. P
 
 ### Stock Data Readiness runbook steps
 
-Unified snapshot (Step 2) and related actions use lime primary buttons (`bg-sidebar-primary`), mono success logs, and the instrument-type breakdown table in [SnapshotByTypeBreakdown.tsx](../src/pages/research/stockDataReadiness/SnapshotByTypeBreakdown.tsx) with tokens in [stockDataReadinessStepUi.ts](../src/pages/research/stockDataReadiness/stockDataReadinessStepUi.ts) (Legacy `sdp-btn-primary` / `sdp-snap-by-type-*` parity). Runbook step tabs use `runbookTabIndexClass` for Legacy `sdp-runbook-tab--{status}` index coloring; after any ingest, `refreshReadinessBoard()` awaits summary refetch so all stages update together.
+Unified snapshot (Step 2) and related actions use lime primary buttons (`bg-sidebar-primary`), mono success logs, and the instrument-type breakdown table in [SnapshotByTypeBreakdown.tsx](../src/pages/research/data/stockDataReadiness/SnapshotByTypeBreakdown.tsx) with tokens in [stockDataReadinessStepUi.ts](../src/pages/research/data/stockDataReadiness/stockDataReadinessStepUi.ts) (Legacy `sdp-btn-primary` / `sdp-snap-by-type-*` parity). Runbook step tabs use `runbookTabIndexClass` for Legacy `sdp-runbook-tab--{status}` index coloring; after any ingest, `refreshReadinessBoard()` awaits summary refetch so all stages update together.
 
 ### Fixed columns (expand / collapse)
 
@@ -176,11 +176,11 @@ No `transferPay.module.css` — use `InlinePnl` / `denseTableNumCell` for amount
 
 | Pattern | Reference |
 |---------|-----------|
-| Page layout grid + elevated filter cards | [stockScreenerUi.ts](../src/pages/research/stockScreener/stockScreenerUi.ts), [StockScreenerPage.tsx](../src/pages/research/StockScreenerPage.tsx) |
-| Segment hue map (tech/fund/tier/ext) | [segmentStyles.ts](../src/pages/research/stockScreener/segmentStyles.ts) |
-| Filter card shell + checkbox chips | [ScreenerCard.tsx](../src/pages/research/stockScreener/ScreenerCard.tsx), [ScreenerConditionChip.tsx](../src/pages/research/stockScreener/ScreenerConditionChip.tsx) |
-| Condition / tier / dist filter blocks | [ConditionChipGroup.tsx](../src/pages/research/stockScreener/ConditionChipGroup.tsx), [TierFilterCard.tsx](../src/pages/research/stockScreener/TierFilterCard.tsx), [DistFunnelCard.tsx](../src/pages/research/stockScreener/DistFunnelCard.tsx) |
-| Readiness results table | [ReadinessResultsTable.tsx](../src/pages/research/stockScreener/ReadinessResultsTable.tsx) — `DenseDataTable` + sortable head + `DenseLinkButton` |
+| Page layout grid + elevated filter cards | [stockScreenerUi.ts](../src/pages/research/data/stockScreener/stockScreenerUi.ts), [StockScreenerPage.tsx](../src/pages/research/data/StockScreenerPage.tsx) |
+| Segment hue map (tech/fund/tier/ext) | [segmentStyles.ts](../src/pages/research/data/stockScreener/segmentStyles.ts) |
+| Filter card shell + checkbox chips | [ScreenerCard.tsx](../src/pages/research/data/stockScreener/ScreenerCard.tsx), [ScreenerConditionChip.tsx](../src/pages/research/data/stockScreener/ScreenerConditionChip.tsx) |
+| Condition / tier / dist filter blocks | [ConditionChipGroup.tsx](../src/pages/research/data/stockScreener/ConditionChipGroup.tsx), [TierFilterCard.tsx](../src/pages/research/data/stockScreener/TierFilterCard.tsx), [DistFunnelCard.tsx](../src/pages/research/data/stockScreener/DistFunnelCard.tsx) |
+| Readiness results table | [ReadinessResultsTable.tsx](../src/pages/research/data/stockScreener/ReadinessResultsTable.tsx) — `DenseDataTable` + sortable head + `DenseLinkButton` |
 
 No `stock-screener.module.css` — filter chips stay page-local (checkbox + hue accent), not `SegmentControl`.
 
@@ -188,23 +188,23 @@ No `stock-screener.module.css` — filter chips stay page-local (checkbox + hue 
 
 | Pattern | Reference |
 |---------|-----------|
-| Page shell + filter panel | [optionScreenerUi.ts](../src/pages/research/optionScreener/optionScreenerUi.ts), [OptionScreenerPage.tsx](../src/pages/research/optionScreener/OptionScreenerPage.tsx) |
-| Structure type + numeric filters | [OptionScreenerFilterPanel.tsx](../src/pages/research/optionScreener/OptionScreenerFilterPanel.tsx) — `SegmentControl` |
-| Symbol group + nested contracts | [OptionScreenerSymbolGroup.tsx](../src/pages/research/optionScreener/OptionScreenerSymbolGroup.tsx) — `CollapsibleGroup` |
-| Contract results table | [OptionScreenerContractsTable.tsx](../src/pages/research/optionScreener/OptionScreenerContractsTable.tsx) — `DenseDataTable` + `DenseTag` + `IconActionButton` |
-| Rating / risk badges | [optionScreenerTags.ts](../src/pages/research/optionScreener/optionScreenerTags.ts) |
+| Page shell + filter panel | [optionScreenerUi.ts](../src/pages/research/data/optionScreener/optionScreenerUi.ts), [OptionScreenerPage.tsx](../src/pages/research/data/optionScreener/OptionScreenerPage.tsx) |
+| Structure type + numeric filters | [OptionScreenerFilterPanel.tsx](../src/pages/research/data/optionScreener/OptionScreenerFilterPanel.tsx) — `SegmentControl` |
+| Symbol group + nested contracts | [OptionScreenerSymbolGroup.tsx](../src/pages/research/data/optionScreener/OptionScreenerSymbolGroup.tsx) — `CollapsibleGroup` |
+| Contract results table | [OptionScreenerContractsTable.tsx](../src/pages/research/data/optionScreener/OptionScreenerContractsTable.tsx) — `DenseDataTable` + `DenseTag` + `IconActionButton` |
+| Rating / risk badges | [optionScreenerTags.ts](../src/pages/research/data/optionScreener/optionScreenerTags.ts) |
 
-No raw `<table>` — re-export entry: [ScreenerPage.tsx](../src/pages/research/ScreenerPage.tsx).
+No raw `<table>` — re-export entry: [ScreenerPage.tsx](../src/pages/research/data/ScreenerPage.tsx).
 
 ## Stock Watchlist
 
 | Pattern | Reference |
 |---------|-----------|
-| Workflow stepper + page tokens | [watchlistUi.ts](../src/pages/research/watchlist/watchlistUi.ts), [WorkflowStepper.tsx](../src/pages/research/watchlist/WorkflowStepper.tsx) |
-| Stock / option watchlist tables | [WatchlistStockTable.tsx](../src/pages/research/watchlist/WatchlistStockTable.tsx), [WatchlistOptionTable.tsx](../src/pages/research/watchlist/WatchlistOptionTable.tsx) — `DenseDataTable` + `DenseLinkButton` + `DenseTagButton` + `IconActionButton` |
-| Portfolio risk panel | [PortfolioRiskPower.tsx](../src/pages/research/watchlist/PortfolioRiskPower.tsx) — `CollapsibleGroup` + cash pie tokens + [WatchlistMetricTable.tsx](../src/pages/research/watchlist/WatchlistMetricTable.tsx) |
-| Sizing cap table | [WatchlistSizingCapTable.tsx](../src/pages/research/watchlist/WatchlistSizingCapTable.tsx) |
-| Positions sub-tab | [PositionsTab.tsx](../src/pages/research/watchlist/PositionsTab.tsx) — `SegmentControl` |
+| Workflow stepper + page tokens | [watchlistUi.ts](../src/pages/research/data/watchlist/watchlistUi.ts), [WorkflowStepper.tsx](../src/pages/research/data/watchlist/WorkflowStepper.tsx) |
+| Stock / option watchlist tables | [WatchlistStockTable.tsx](../src/pages/research/data/watchlist/WatchlistStockTable.tsx), [WatchlistOptionTable.tsx](../src/pages/research/data/watchlist/WatchlistOptionTable.tsx) — `DenseDataTable` + `DenseLinkButton` + `DenseTagButton` + `IconActionButton` |
+| Portfolio risk panel | [PortfolioRiskPower.tsx](../src/pages/research/data/watchlist/PortfolioRiskPower.tsx) — `CollapsibleGroup` + cash pie tokens + [WatchlistMetricTable.tsx](../src/pages/research/data/watchlist/WatchlistMetricTable.tsx) |
+| Sizing cap table | [WatchlistSizingCapTable.tsx](../src/pages/research/data/watchlist/WatchlistSizingCapTable.tsx) |
+| Positions sub-tab | [PositionsTab.tsx](../src/pages/research/data/watchlist/PositionsTab.tsx) — `SegmentControl` |
 
 No `watchlist.module.css` — quote cells use `watchlistQuoteLastClass` / `watchlistQuoteBaClass`; pie rings keep inline `conic-gradient`.
 
@@ -212,7 +212,7 @@ No `watchlist.module.css` — quote cells use `watchlistQuoteLastClass` / `watch
 
 | Pattern | Reference |
 |---------|-----------|
-| Page root + scope tokens | [discoveryUi.ts](../src/pages/research/discovery/discoveryUi.ts) — re-exports `discoveryRootClass` from [discoveryCharts.module.css](../src/pages/research/discoveryCharts.module.css) |
+| Page root + scope tokens | [discoveryUi.ts](../src/components/optionDiscovery/discoveryUi.ts) — re-exports `discoveryRootClass` from [discoveryCharts.module.css](../src/components/optionDiscovery/discoveryCharts.module.css) |
 | Component tokens (KV, tradability, exec chips) | [optionDiscoveryUi.ts](../src/components/optionDiscovery/optionDiscoveryUi.ts) |
 | Chain quotes (sticky hybrid) | [DiscoveryChainQuotesTable.tsx](../src/components/optionDiscovery/DiscoveryChainQuotesTable.tsx) |
 | Strike ladder | [DiscoveryStrikeLadderTable.tsx](../src/components/optionDiscovery/DiscoveryStrikeLadderTable.tsx) |
@@ -221,23 +221,23 @@ No `watchlist.module.css` — quote cells use `watchlistQuoteLastClass` / `watch
 | Contract Greeks / scenario | [DiscoveryContractGreeksTable.tsx](../src/components/optionDiscovery/DiscoveryContractGreeksTable.tsx), [DiscoveryScenarioTable.tsx](../src/components/optionDiscovery/DiscoveryScenarioTable.tsx) |
 | Side / Greeks / period segments | `SegmentControl` in [DiscoverySideToggle.tsx](../src/components/optionDiscovery/DiscoverySideToggle.tsx), quotes, IV term, contract detail, chart panel |
 
-**Chart geometry exception:** keep [discoveryCharts.module.css](../src/pages/research/discoveryCharts.module.css) for `od-chart-expand-*`, SVG sizing, and `--od-max-pain-*` tokens only. No `optionContractDetail.module.css`.
+**Chart geometry exception:** keep [discoveryCharts.module.css](../src/components/optionDiscovery/discoveryCharts.module.css) for `od-chart-expand-*`, SVG sizing, and `--od-max-pain-*` tokens only. No `optionContractDetail.module.css`.
 
 ## IV & Greeks (Research)
 
 | Pattern | Reference |
 |---------|-----------|
-| Page tokens | [greeksUi.ts](../src/pages/research/greeks/greeksUi.ts) — controls, info bar, empty/loading hints, IV/Delta cell classes, tooltip tokens |
-| History table | [GreeksHistoryTable.tsx](../src/pages/research/greeks/GreeksHistoryTable.tsx) — `DenseDataTable` + `DenseTableSubheadRow` expiry groups + `DenseTag` C/P + DTE pill |
-| BS tooltip | [GreeksCalcTooltip.tsx](../src/pages/research/greeks/GreeksCalcTooltip.tsx) — portal tooltip; section/KV/compare grid via `greeksUi` tokens |
-| Format helpers | [greeksFormat.ts](../src/pages/research/greeks/greeksFormat.ts) — fmt/groupBy/dte only (no color classes) |
-| C/P filter | `SegmentControl` on [GreeksPage.tsx](../src/pages/research/GreeksPage.tsx) |
+| Page tokens | [greeksUi.ts](../src/pages/research/analyze/greeks/greeksUi.ts) — controls, info bar, empty/loading hints, IV/Delta cell classes, tooltip tokens |
+| History table | [GreeksHistoryTable.tsx](../src/pages/research/analyze/greeks/GreeksHistoryTable.tsx) — `DenseDataTable` + `DenseTableSubheadRow` expiry groups + `DenseTag` C/P + DTE pill |
+| BS tooltip | [GreeksCalcTooltip.tsx](../src/pages/research/analyze/greeks/GreeksCalcTooltip.tsx) — portal tooltip; section/KV/compare grid via `greeksUi` tokens |
+| Format helpers | [greeksFormat.ts](../src/pages/research/analyze/greeks/greeksFormat.ts) — fmt/groupBy/dte only (no color classes) |
+| C/P filter | `SegmentControl` on [GreeksPage.tsx](../src/pages/research/analyze/GreeksPage.tsx) |
 
 **IV semantic colors** (`greeksIvCellClass`): IV &lt; 30% green, ≥ 80% amber — not PnL; do not use `pnlColorClass`.
 
 **Delta ATM highlight** (`greeksDeltaCellClass`): |Δ| in [0.4, 0.6] → `text-primary font-medium`.
 
-No `*.module.css` under `src/pages/research/greeks/`.
+No `*.module.css` under `src/pages/research/analyze/greeks/`.
 
 ## Strategy Instances (List)
 
@@ -667,7 +667,7 @@ Same filter scenario → same primitive + container. Authoritative rules in `.cu
 | Simple SegmentControl filter | [OpportunitiesPage.tsx](../src/pages/strategy/OpportunitiesPage.tsx) (Availability) |
 | Medium multi-control in Card | [InstanceListFilters.tsx](../src/components/strategy/InstanceListFilters.tsx) |
 | DenseTagButton category filter | [FilterPillBar.tsx](../src/pages/market/live/FilterPillBar.tsx) (Category section) |
-| Select + SegmentControl combo | [GreeksPage.tsx](../src/pages/research/GreeksPage.tsx) |
+| Select + SegmentControl combo | [GreeksPage.tsx](../src/pages/research/analyze/GreeksPage.tsx) |
 
 ## Status indicators
 

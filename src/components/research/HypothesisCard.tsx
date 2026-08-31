@@ -13,7 +13,7 @@
  * yet mounted, because React Router simply renders the 404 boundary).
  */
 import { Link } from 'react-router-dom'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, FlaskConical } from 'lucide-react'
 import { DenseTag, type DenseTagVariant } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -57,6 +57,13 @@ export interface HypothesisCardProps {
 
 export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProps) {
   const target = to ?? `/research/hypothesis/${encodeURIComponent(hypothesis.id)}`
+  // Carries the hypothesis and its symbols so the builder opens ready to run,
+  // rather than asking you to find the thesis again in a dropdown.
+  const backtestTarget = `/research/backtest?tab=event-query&hypothesis_id=${encodeURIComponent(hypothesis.id)}${
+    hypothesis.symbols.length > 0
+      ? `&symbols=${encodeURIComponent(hypothesis.symbols.join(','))}`
+      : ''
+  }`
   const symbols = hypothesis.symbols.slice(0, 4)
   const extraSymbols = Math.max(0, hypothesis.symbols.length - symbols.length)
   const tags = hypothesis.tags.slice(0, 3)
@@ -118,12 +125,34 @@ export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProp
             ) : null}
           </div>
         )}
-        <p className="text-dense-micro text-muted-foreground">
-          Updated {formatRelative(hypothesis.updated_at)}
-          {hypothesis.linked_backtest_ids.length > 0 ? (
-            <span> · {hypothesis.linked_backtest_ids.length} backtest{hypothesis.linked_backtest_ids.length === 1 ? '' : 's'}</span>
-          ) : null}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-dense-micro text-muted-foreground">
+            Updated {formatRelative(hypothesis.updated_at)}
+            {hypothesis.linked_backtest_ids.length > 0 ? (
+              <span> · {hypothesis.linked_backtest_ids.length} backtest{hypothesis.linked_backtest_ids.length === 1 ? '' : 's'}</span>
+            ) : null}
+          </p>
+          {/*
+            The card has always shown a linked-backtest count with no way to
+            produce one. EventQueryBuilder can already attach a run to a
+            hypothesis and write the id back — it just had no entry point, so a
+            thesis could stay Active indefinitely without ever being tested.
+          */}
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-dense-meta shrink-0"
+          >
+            <Link
+              to={backtestTarget}
+              aria-label={`Backtest hypothesis ${hypothesis.title}`}
+            >
+              <FlaskConical className="mr-1 h-3 w-3" />
+              {hypothesis.linked_backtest_ids.length > 0 ? 'Backtest again' : 'Backtest'}
+            </Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

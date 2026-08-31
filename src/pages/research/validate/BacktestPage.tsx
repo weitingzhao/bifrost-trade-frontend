@@ -79,6 +79,14 @@ export default function BacktestPage() {
   )
 
   const runIdParam = params.get('run_id') || undefined
+  // Arriving from a Hypothesis card: preselect the thesis and its symbols so the
+  // builder opens ready to run. EventQueryBuilder already accepts both and
+  // writes the resulting run id back to linked_backtest_ids.
+  const hypothesisIdParam = params.get('hypothesis_id') || null
+  const symbolsParam = params.get('symbols')
+  const defaultSymbols = symbolsParam
+    ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+    : undefined
   const persistedRunQ = useBacktestRun(runIdParam, tab === 'event-query')
   const [liveResult, setLiveResult] = useState<EventQueryResponse | null>(null)
 
@@ -128,6 +136,8 @@ export default function BacktestPage() {
       ) : (
         <div className="space-y-3">
           <EventQueryBuilder
+            initialHypothesisId={hypothesisIdParam}
+            defaultSymbols={defaultSymbols}
             onRun={(res) => {
               setLiveResult(res)
               if (res.run_id) {

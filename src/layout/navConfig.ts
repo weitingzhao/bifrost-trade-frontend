@@ -132,6 +132,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
           route('Stock Data Readiness', '/settings/data-readiness', Server),
           route('Signal Health', '/research/signal-health', Activity),
           route('Stock Watchlist', '/research/watchlist', Star),
+          route('Stock Screener', '/research/stock-screener', ListFilter),
           route('Option Screener', '/research/screener', ListFilter),
         ],
       },

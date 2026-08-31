@@ -67,8 +67,14 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/DailyBriefPage')),
       },
       {
-        path: 'research/sepa',
+        path: 'research/stock-screener',
         lazy: lazyPage(() => import('@/pages/research/StockScreenerPage')),
+      },
+      /* Legacy URL — the page is a Stock Screener; SEPA is one of its condition
+         families, not its identity. Kept so existing bookmarks resolve. */
+      {
+        path: 'research/sepa',
+        element: <Navigate to="/research/stock-screener" replace />,
       },
       {
         path: 'research/screener',

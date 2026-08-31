@@ -20,7 +20,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/portfolio/ledger': 'Trade Ledger',
   '/portfolio/transfer': 'Transfer & Pay',
   '/research/daily-brief': 'Daily Brief',
-  '/research/sepa': 'Stock Screener',
+  '/research/stock-screener': 'Stock Screener',
   '/research/screener': 'Option Screener',
   '/research/stock-data': 'Settings · Data Readiness',
   '/research/discovery': 'Option Discovery',

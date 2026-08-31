@@ -138,7 +138,7 @@ function RulesLandingCard() {
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild size="sm">
-            <Link to="/research/sepa">Open Stock Screener</Link>
+            <Link to="/research/stock-screener">Open Stock Screener</Link>
           </Button>
           <Button asChild size="sm" variant="outline">
             <Link to="/research/loop/candidates">Candidate Pool</Link>

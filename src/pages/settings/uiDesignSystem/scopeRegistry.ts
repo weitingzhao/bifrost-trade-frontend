@@ -88,7 +88,7 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/portfolio/transfer', label: 'Transfer & Pay', domain: 'portfolio', pathGlobs: ['pages/portfolio/TransferPayPage.tsx'] },
 
   { route: '/research/watchlist', label: 'Stock Watchlist', domain: 'research', pathGlobs: ['pages/research/StockWatchlistPage.tsx', 'pages/research/watchlist/**'] },
-  { route: '/research/sepa', label: 'Stock Screener', domain: 'research', pathGlobs: ['pages/research/StockScreenerPage.tsx', 'pages/research/stockScreener/**'] },
+  { route: '/research/stock-screener', label: 'Stock Screener', domain: 'research', pathGlobs: ['pages/research/StockScreenerPage.tsx', 'pages/research/stockScreener/**'] },
   { route: '/research/screener', label: 'Option Screener', domain: 'research', pathGlobs: ['pages/research/ScreenerPage.tsx', 'pages/research/optionScreener/**'] },
   { route: '/settings/data-readiness', label: 'Data Readiness', domain: 'settings', pathGlobs: ['pages/research/StockDataPage.tsx', 'pages/research/stockDataReadiness/**'] },
   { route: '/research/discovery', label: 'Option Discovery', domain: 'research', pathGlobs: ['pages/research/DiscoveryPage.tsx'] },

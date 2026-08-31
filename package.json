@@ -15,6 +15,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "check:legacy-css": "bash scripts/check-legacy-css.sh",
+    "check:code-health": "bash ../scripts/code-health/scan.sh --repo bifrost-trade-frontend",
     "sync:docker-lock": "docker run --rm --platform linux/amd64 -v \"$(pwd)\":/app -w /app node:20-slim npm install",
     "prepare": "husky"
   },

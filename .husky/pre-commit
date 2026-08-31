@@ -1,1 +1,2 @@
 npm run check:legacy-css
+npm run check:code-health

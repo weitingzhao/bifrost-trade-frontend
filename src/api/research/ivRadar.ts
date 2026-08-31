@@ -1,11 +1,6 @@
 import { marketDataPluginUrl, researchEngineUrl } from '@/lib/devApiUrl'
 import type { IvPercentileRow } from '@/types/ivRadar'
-
-function numOrNull(v: unknown): number | null {
-  if (v == null || v === '') return null
-  const n = Number(v)
-  return Number.isFinite(n) ? n : null
-}
+import { numOrNull } from '@/lib/researchParseHelpers'
 
 function parseRow(raw: Record<string, unknown>): IvPercentileRow | null {
   const symbol = typeof raw.symbol === 'string' ? raw.symbol.trim().toUpperCase() : ''

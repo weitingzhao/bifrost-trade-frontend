@@ -4,6 +4,7 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
+import { numOrNull } from '@/lib/researchParseHelpers'
 
 export interface VolSurfaceFitRow {
   symbol: string
@@ -50,12 +51,6 @@ interface Envelope<T> {
   ok: boolean
   data: T
   error?: string
-}
-
-function numOrNull(v: unknown): number | null {
-  if (v == null || v === '') return null
-  const n = Number(v)
-  return Number.isFinite(n) ? n : null
 }
 
 function strOrNull(v: unknown): string | null {

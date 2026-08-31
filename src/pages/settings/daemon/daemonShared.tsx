@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { fmtUsdRound as fmtUsd } from '@/lib/format'
+import { fmtTs, fmtUsdRound as fmtUsd } from '@/lib/format'
 import { StatusLamp } from '@/components/StatusLamp'
 import { DenseTag } from '@/components/data-display'
 import type { DaemonHeartbeat } from '@/types/monitor'
@@ -16,15 +16,9 @@ import {
   daemonLampTextClass,
 } from './daemonUi'
 
-export { fmtUsd }
+export { fmtTs, fmtUsd }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-export function fmtTs(ts: number | null | undefined): string {
-  if (ts == null) return '—'
-  return new Date(ts * 1000).toLocaleString()
-}
-
 
 export function Row({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (

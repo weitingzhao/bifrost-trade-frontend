@@ -4,6 +4,7 @@ import { fmtUsd } from '@/lib/format'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { InstanceDetailData } from '@/hooks/useInstanceDetailData'
 import type { Execution } from '@/types/positions'
+import { isBuySide, isSellSide } from '@/utils/instanceDetail/executionSide'
 import { buildOptExecutionGroups, type OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -38,16 +39,6 @@ import {
 } from './instanceDetailUi'
 
 type ExecTab = 'performance_book' | 'tws_raw'
-
-function isBuySide(e: Execution): boolean {
-  const s = (e.side ?? '').toUpperCase()
-  return s === 'BUY' || s === 'BOT' || s === 'B'
-}
-
-function isSellSide(e: Execution): boolean {
-  const s = (e.side ?? '').toUpperCase()
-  return s === 'SELL' || s === 'SLD' || s === 'S'
-}
 
 function formatStrike(strike: number | null | undefined): string {
   if (strike == null || !Number.isFinite(strike)) return '—'

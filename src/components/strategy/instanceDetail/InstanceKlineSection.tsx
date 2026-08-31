@@ -7,6 +7,7 @@ import { fetchBars, fetchOptionBars } from '@/api/market'
 import { fetchOptionSnapshotsPg } from '@/api/research/optionDiscovery'
 import type { Bar } from '@/types/market'
 import type { Execution } from '@/types/positions'
+import { isBuySide } from '@/utils/instanceDetail/executionSide'
 import { fmtExpiry, parseOptionContractKey } from '@/lib/format'
 import {
   klineOptionTabKey,
@@ -119,11 +120,6 @@ function windowBarsAroundExecs(bars: Bar[], tabExecs: Execution[]): Bar[] {
   }
   const endIdx = Math.min(bars.length - 1, lastIdx + 15)
   return bars.slice(startIdx, endIdx + 1)
-}
-
-function isBuySide(e: Execution): boolean {
-  const s = (e.side ?? '').toUpperCase()
-  return s === 'BUY' || s === 'BOT' || s === 'B'
 }
 
 interface Props {

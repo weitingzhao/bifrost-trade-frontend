@@ -1,3 +1,4 @@
+import { fmtUsd } from '@/lib/format'
 import type { ByDayRangeData } from '@/types/trading'
 import type { PerformanceTimeRange } from './performanceUtils'
 import { getTimeRangeDates, listMonthKeysInRange } from './performanceUtils'
@@ -44,14 +45,6 @@ function fmtUsdCompact(v: number): string {
   return `$${v.toFixed(0)}`
 }
 
-function fmtUsd(v: number): string {
-  return v.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
 
 export function buildFiBarChart(params: {
   byDayRangeData: ByDayRangeData

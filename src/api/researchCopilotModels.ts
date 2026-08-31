@@ -1,5 +1,7 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { withValidation } from '@/lib/apiValidation'
+import { CopilotModelsResponseSchema } from '@/lib/schemas/research'
 
 /**
  * Model catalog returned by the Research API — reflects which providers
@@ -28,6 +30,11 @@ export type CopilotModelsResponse = {
   total_catalog: number
 }
 
+const validateModels = withValidation<CopilotModelsResponse>(
+  CopilotModelsResponseSchema,
+  'research/copilot/models',
+)
+
 export async function fetchCopilotModels(
   signal?: AbortSignal,
 ): Promise<CopilotModelsResponse> {
@@ -39,5 +46,5 @@ export async function fetchCopilotModels(
   if (!resp.ok) {
     throw new Error(`copilot/models failed: ${resp.status}`)
   }
-  return (await resp.json()) as CopilotModelsResponse
+  return validateModels(await resp.json())
 }

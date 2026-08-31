@@ -28,6 +28,7 @@ import {
   SegmentControl,
   SettlementBadges,
 } from '@/components/data-display'
+import { fmtNumLocale } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -45,14 +46,6 @@ import type {
   BacktestRunRow,
   EventQueryResponse,
 } from '@/api/research/backtestEvent'
-
-function fmtNum(v: number | null | undefined, digits = 2): string {
-  if (v == null || Number.isNaN(v)) return '—'
-  return v.toLocaleString(undefined, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })
-}
 
 type TabKey = 'settlement' | 'event-query'
 
@@ -269,10 +262,10 @@ function SettlementTab() {
                     {r.session_id}
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
-                    {fmtNum(r.expected_close)}
+                    {fmtNumLocale(r.expected_close)}
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
-                    {fmtNum(r.actual_close)}
+                    {fmtNumLocale(r.actual_close)}
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
                     {(r.close_miss_pct * 100).toFixed(2)}%

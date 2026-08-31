@@ -1,4 +1,4 @@
-import { fmtPct1, fmtPct2 } from '@/lib/format'
+import { fmtPct1, fmtPct2, fmtUsd } from '@/lib/format'
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
@@ -12,16 +12,6 @@ import type { StkLedgerBucket } from '@/utils/ledger/stkBuckets'
 import styles from '@/components/performance/performanceCalendar.module.css'
 
 // ─── Formatting ───
-
-function fmtUsd(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return v.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
 
 function fmtPF(v: number | null | undefined): string {
   if (v == null) return '—'

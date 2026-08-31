@@ -44,7 +44,7 @@ import {
 } from '@/hooks/useScanUniverse'
 import { cn } from '@/lib/utils'
 import type { SimilarRegimeLens } from '@/api/research/similarRegime'
-import { fmtPctFromFraction } from '@/lib/format'
+import { fmtNum, fmtPctFromFraction } from '@/lib/format'
 
 const SORT_OPTIONS: { value: ScanSortBy; label: string }[] = [
   { value: 'composite_score', label: 'Composite' },
@@ -93,11 +93,6 @@ const REGIME_PICKER_OPTIONS: { value: RegimePicker; label: string }[] = [
   { value: 'pin_distance', label: 'Pin' },
   { value: 'regime', label: 'Regime' },
 ]
-
-function fmtNum(n: number | null | undefined, d = 1): string {
-  if (n == null || !Number.isFinite(n)) return '—'
-  return n.toFixed(d)
-}
 
 function flagVariant(flag: string | undefined): 'danger' | 'success' | 'warning' | 'neutral' {
   if (flag === 'hot') return 'danger'

@@ -15,6 +15,7 @@ import {
   SegmentControl,
   denseTableNumCell,
 } from '@/components/data-display'
+import { fmtNum } from '@/lib/format'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -78,11 +79,6 @@ function parseRegime(raw: string | null): SignalDecayRegime {
 function pct(rate: number | null | undefined): string {
   if (rate == null || !Number.isFinite(rate)) return '—'
   return `${(rate * 100).toFixed(0)}%`
-}
-
-function fmtNum(v: number | null | undefined, digits = 2): string {
-  if (v == null || !Number.isFinite(v)) return '—'
-  return v.toFixed(digits)
 }
 
 function fmtHit(v: boolean | null | undefined): string {

@@ -85,6 +85,21 @@ export function fmtUsdCompact(v: number | null | undefined): string {
 
 // ─── Numbers ───
 
+/** `toFixed(digits)` or "—" — default 2dp. Prefer over local `fmtNum` copies. */
+export function fmtNum(v: number | null | undefined, digits = 2): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  return v.toFixed(digits)
+}
+
+/** Locale-grouped number with fixed fraction digits — or "—". */
+export function fmtNumLocale(v: number | null | undefined, digits = 2): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  return v.toLocaleString(undefined, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })
+}
+
 /** Integer or "—" */
 export function fmtInt(v: number | null | undefined): string {
   if (v == null) return '—'

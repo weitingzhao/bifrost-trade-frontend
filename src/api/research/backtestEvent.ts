@@ -5,6 +5,7 @@
  * Response envelope: `{ ok, data, error? }`.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
 
 export type EventKind =
   | 'earnings'
@@ -104,36 +105,8 @@ export interface EventQueryResponse {
   advisory: string
 }
 
-interface Envelope<T> {
-  ok: boolean
-  data: T
-  error?: string
-}
-
-async function unwrap<T>(res: Response): Promise<T> {
-  const ct = res.headers.get('content-type') ?? ''
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!') || ct.includes('text/html')) {
-      throw new Error(
-        'Backtest event API unreachable (got HTML instead of JSON). ' +
-          'Ensure research-api :8795 is running and VITE_API_RESEARCH_ENGINE is set.',
-      )
-    }
-    let detail = text
-    try {
-      const parsed = JSON.parse(text) as { detail?: string; error?: string }
-      detail = parsed.detail ?? parsed.error ?? text
-    } catch {
-      /* keep raw text */
-    }
-    throw new Error(`Backtest event API ${res.status}: ${detail}`)
-  }
-  const body = (await res.json()) as Envelope<T>
-  if (!body.ok) {
-    throw new Error(body.error ?? 'Backtest event API returned ok=false')
-  }
-  return body.data
+function unwrap<T>(res: Response): Promise<T> {
+  return unwrapResearchEnvelope(res, { apiLabel: 'Backtest event API' })
 }
 
 export async function postEventQuery(input: EventQueryInput): Promise<EventQueryResponse> {

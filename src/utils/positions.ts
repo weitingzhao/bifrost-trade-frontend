@@ -1,14 +1,9 @@
+import { fmtUsd as fmtUsdCanonical, fmtUsdRound } from '@/lib/format'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { QuoteItem, QuotesResponse } from '@/types/market'
 
 export function fmtUsd(n: number | null | undefined, round = false): string {
-  if (n == null || isNaN(n)) return '—'
-  return n.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: round ? 0 : 2,
-    maximumFractionDigits: round ? 0 : 2,
-  })
+  return round ? fmtUsdRound(n) : fmtUsdCanonical(n)
 }
 
 export function formatLastUpdate(ts: number | null | undefined): string {

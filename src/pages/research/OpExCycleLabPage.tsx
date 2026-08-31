@@ -1,4 +1,4 @@
-import { fmtPctFromFraction } from '@/lib/format'
+import { fmtNumLocale, fmtPctFromFraction } from '@/lib/format'
 import { useMemo, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -45,18 +45,10 @@ import type { OpexDailyRow, OpexHistoryRow, OpexPinRow } from '@/api/research/op
 
 type Tone = 'success' | 'warning' | 'danger' | 'neutral'
 
-function fmtNum(v: number | null | undefined, digits = 2): string {
-  if (v == null || !Number.isFinite(v)) return '—'
-  return v.toLocaleString(undefined, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })
-}
-
 function fmtSigned(v: number | null | undefined, digits = 2): string {
   if (v == null || !Number.isFinite(v)) return '—'
   const s = v > 0 ? '+' : ''
-  return `${s}${fmtNum(v, digits)}`
+  return `${s}${fmtNumLocale(v, digits)}`
 }
 
 function fmtInt(v: number | null | undefined): string {
@@ -165,7 +157,7 @@ function OpexHistoryTable({ rows }: { rows: OpexHistoryRow[] }) {
             <DenseTableCell className={denseTableNumCell}>
               {fmtInt(r.dte_to_opex)}
             </DenseTableCell>
-            <DenseTableCell className={denseTableNumCell}>{fmtNum(r.spot)}</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>{fmtNumLocale(r.spot)}</DenseTableCell>
             <DenseTableCell className={denseTableNumCell}>
               {fmtSigned(r.total_vanna)}
             </DenseTableCell>
@@ -223,10 +215,10 @@ function PinRiskTable({ rows }: { rows: OpexPinRow[] }) {
                 <DenseTag variant={variant}>{pinBandLabel(r.pct_distance)}</DenseTag>
               </DenseTableCell>
               <DenseTableCell className={denseTableNumCell}>
-                {fmtNum(r.max_pain_strike)}
+                {fmtNumLocale(r.max_pain_strike)}
               </DenseTableCell>
               <DenseTableCell className={denseTableNumCell}>
-                {fmtNum(r.settle_close)}
+                {fmtNumLocale(r.settle_close)}
               </DenseTableCell>
               <DenseTableCell className={denseTableNumCell}>
                 {fmtSigned(r.distance)}
@@ -368,8 +360,8 @@ export default function OpExCycleLabPage() {
           row
             ? [
                 { label: 'DTE', value: String(dteToday) },
-                { label: 'Vanna', value: fmtNum(row.total_vanna) },
-                { label: 'Charm', value: fmtNum(row.total_charm) },
+                { label: 'Vanna', value: fmtNumLocale(row.total_vanna) },
+                { label: 'Charm', value: fmtNumLocale(row.total_charm) },
               ]
             : [{ label: 'DTE', value: String(dteToday) }]
         }
@@ -404,10 +396,10 @@ export default function OpExCycleLabPage() {
             <span className="text-dense-caption text-muted-foreground">
               Next OpEx <span className="font-mono">{nextOpex ?? '—'}</span>
               {row?.vanna_zero_strike != null
-                ? ` · Vanna₀ ${fmtNum(row.vanna_zero_strike)}`
+                ? ` · Vanna₀ ${fmtNumLocale(row.vanna_zero_strike)}`
                 : ''}
               {row?.charm_zero_strike != null
-                ? ` · Charm₀ ${fmtNum(row.charm_zero_strike)}`
+                ? ` · Charm₀ ${fmtNumLocale(row.charm_zero_strike)}`
                 : ''}
               {pinRate != null
                 ? ` · pin rate (24 cycles) ${fmtPctFromFraction(pinRate, 1)}`
@@ -417,7 +409,7 @@ export default function OpExCycleLabPage() {
           {row ? (
             <p className="text-dense-caption text-muted-foreground">
               Trade date <span className="font-mono">{row.trade_date ?? '—'}</span> · spot{' '}
-              <span className="font-mono">{fmtNum(row.spot)}</span> · Σ Vanna{' '}
+              <span className="font-mono">{fmtNumLocale(row.spot)}</span> · Σ Vanna{' '}
               <span className="font-mono">{fmtExp(row.total_vanna)}</span> · Σ Charm{' '}
               <span className="font-mono">{fmtExp(row.total_charm)}</span>
             </p>
@@ -488,7 +480,7 @@ export default function OpExCycleLabPage() {
                       <span className="font-mono">{c.dte_to_opex ?? '—'}</span>
                     </p>
                     <p className="text-dense-caption">
-                      Spot <span className="font-mono">{fmtNum(c.spot)}</span>
+                      Spot <span className="font-mono">{fmtNumLocale(c.spot)}</span>
                     </p>
                     <p className="text-dense-caption">
                       ΣV <span className="font-mono">{fmtExp(c.total_vanna)}</span> · ΣC{' '}

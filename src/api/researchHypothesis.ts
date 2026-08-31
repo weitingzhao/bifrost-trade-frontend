@@ -5,6 +5,7 @@
  * that Wave 4 endpoints use. Response envelope: `{ ok, data, error? }`.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
 
 export type HypothesisStatus = 'active' | 'validated' | 'rejected' | 'archived'
 
@@ -63,29 +64,8 @@ export interface HypothesisPatchInput {
   conclusion?: string | null
 }
 
-interface Envelope<T> {
-  ok: boolean
-  data: T
-  error?: string
-}
-
-async function unwrap<T>(res: Response): Promise<T> {
-  const ct = res.headers.get('content-type') ?? ''
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!') || ct.includes('text/html')) {
-      throw new Error(
-        'Hypothesis API unreachable (got HTML instead of JSON). ' +
-          'Ensure research-api :8795 is running and VITE_API_RESEARCH_ENGINE is set.',
-      )
-    }
-    throw new Error(`Hypothesis API ${res.status}: ${text}`)
-  }
-  const body = (await res.json()) as Envelope<T>
-  if (!body.ok) {
-    throw new Error(body.error ?? 'Hypothesis API returned ok=false')
-  }
-  return body.data
+function unwrap<T>(res: Response): Promise<T> {
+  return unwrapResearchEnvelope(res, { apiLabel: 'Hypothesis API' })
 }
 
 async function get<T>(path: string): Promise<T> {

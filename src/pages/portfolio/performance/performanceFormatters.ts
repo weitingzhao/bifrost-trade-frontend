@@ -1,3 +1,5 @@
+import { fmtUsd } from '@/lib/format'
+export { fmtUsd }
 export function fmtMoney(v: number | null | undefined): string {
   if (v == null) return '—'
   return v.toLocaleString('en-US', {
@@ -41,10 +43,6 @@ export function fmtPnl(v: number | null | undefined): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
-}
-
-export function fmtUsd(v: number | null | undefined): string {
-  return fmtMoneyFull(v)
 }
 
 export function fmtChicagoTime(unixSec: number | string | null | undefined): string {

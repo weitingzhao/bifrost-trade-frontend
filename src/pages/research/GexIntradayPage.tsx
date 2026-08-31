@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { fmtNumLocale } from '@/lib/format'
 // lucide-react icons used only in navConfig; PageHeader has no icon prop
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -59,14 +60,6 @@ function InfoCell({
       <strong className={cn('font-mono', className)}>{value}</strong>
     </span>
   )
-}
-
-function fmtNum(v: number | null | undefined, digits = 1): string {
-  if (v == null) return '—'
-  return v.toLocaleString(undefined, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })
 }
 
 function fmtTime(ts: string): string {
@@ -135,7 +128,7 @@ export default function GexIntradayPage() {
               defaultTitle={`${symbol} GEX walls hypothesis`}
               defaultThesis={
                 active
-                  ? `${symbol} spot ${fmtNum(active.spot, 2)} between put wall ${fmtNum(active.major_put_wall, 0)} and call wall ${fmtNum(active.major_call_wall, 0)}; zero-γ ${fmtNum(active.zero_gamma, 0)}. Prefer mean-reversion above zero-γ / breakout below.`
+                  ? `${symbol} spot ${fmtNumLocale(active.spot, 2)} between put wall ${fmtNumLocale(active.major_put_wall, 0)} and call wall ${fmtNumLocale(active.major_call_wall, 0)}; zero-γ ${fmtNumLocale(active.zero_gamma, 0)}. Prefer mean-reversion above zero-γ / breakout below.`
                   : undefined
               }
               defaultSymbols={[symbol]}
@@ -201,7 +194,7 @@ export default function GexIntradayPage() {
         }
         narrative={
           active
-            ? `${symbol} spot ${fmtNum(active.spot, 2)} · put wall ${fmtNum(active.major_put_wall, 0)} · call wall ${fmtNum(active.major_call_wall, 0)} · zero-γ ${fmtNum(active.zero_gamma, 0)}. Trade the walls, not the mid.`
+            ? `${symbol} spot ${fmtNumLocale(active.spot, 2)} · put wall ${fmtNumLocale(active.major_put_wall, 0)} · call wall ${fmtNumLocale(active.major_call_wall, 0)} · zero-γ ${fmtNumLocale(active.zero_gamma, 0)}. Trade the walls, not the mid.`
             : 'Load a GEX snapshot to decide whether to fade walls or follow a zero-γ break.'
         }
       />
@@ -232,21 +225,21 @@ export default function GexIntradayPage() {
                   <strong className="font-mono">{active.symbol}</strong>
                   <PortfolioTag symbol={active.symbol} variant="row-suffix" />
                 </span>
-                <InfoCell label="Spot" value={fmtNum(active.spot, 2)} />
+                <InfoCell label="Spot" value={fmtNumLocale(active.spot, 2)} />
                 <InfoCell label="As-of" value={fmtTime(active.asof_ts)} />
                 <InfoCell
                   label="Call Wall"
-                  value={fmtNum(active.major_call_wall, 0)}
+                  value={fmtNumLocale(active.major_call_wall, 0)}
                   className="text-profit"
                 />
                 <InfoCell
                   label="Zero Gamma"
-                  value={fmtNum(active.zero_gamma, 0)}
+                  value={fmtNumLocale(active.zero_gamma, 0)}
                   className="text-warning"
                 />
                 <InfoCell
                   label="Put Wall"
-                  value={fmtNum(active.major_put_wall, 0)}
+                  value={fmtNumLocale(active.major_put_wall, 0)}
                   className="text-loss"
                 />
               </div>
@@ -317,19 +310,19 @@ export default function GexIntradayPage() {
                       </DenseTag>
                     </DenseTableCell>
                     <DenseTableCell className={denseTableNumCell}>
-                      {fmtNum(row.spot, 2)}
+                      {fmtNumLocale(row.spot, 2)}
                     </DenseTableCell>
                     <DenseTableCell className={denseTableNumCell}>
-                      {fmtNum(row.total_net_gex)}
+                      {fmtNumLocale(row.total_net_gex)}
                     </DenseTableCell>
                     <DenseTableCell className={denseTableNumCell}>
-                      {fmtNum(row.major_call_wall, 0)}
+                      {fmtNumLocale(row.major_call_wall, 0)}
                     </DenseTableCell>
                     <DenseTableCell className={denseTableNumCell}>
-                      {fmtNum(row.zero_gamma, 0)}
+                      {fmtNumLocale(row.zero_gamma, 0)}
                     </DenseTableCell>
                     <DenseTableCell className={denseTableNumCell}>
-                      {fmtNum(row.major_put_wall, 0)}
+                      {fmtNumLocale(row.major_put_wall, 0)}
                     </DenseTableCell>
                   </DenseTableRow>
                 ))}

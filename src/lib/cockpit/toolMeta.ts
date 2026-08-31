@@ -89,7 +89,7 @@ function unwrapEnvelope(envelope: unknown): {
   return { ok: true, data: envelope }
 }
 
-function fmtUsd(v: unknown): string | null {
+function fmtUsdAbbrev(v: unknown): string | null {
   const n = typeof v === 'string' ? Number(v) : v
   if (typeof n !== 'number' || !Number.isFinite(n)) return null
   const abs = Math.abs(n)
@@ -101,7 +101,7 @@ function fmtUsd(v: unknown): string | null {
 function fmtSigned(v: unknown): string | null {
   const n = typeof v === 'string' ? Number(v) : v
   if (typeof n !== 'number' || !Number.isFinite(n)) return null
-  const s = fmtUsd(n)
+  const s = fmtUsdAbbrev(n)
   if (!s) return null
   return n > 0 ? `+${s}` : s
 }
@@ -147,7 +147,7 @@ export const TOOL_META: Record<string, ToolMeta> = {
       const dailyPnl = daemon.daily_pnl
 
       return {
-        headline: `${accounts.length} 账户 · 净值 ${fmtUsd(totalNetLiq) ?? '—'} · ${totalPositions} 持仓`,
+        headline: `${accounts.length} 账户 · 净值 ${fmtUsdAbbrev(totalNetLiq) ?? '—'} · ${totalPositions} 持仓`,
         lines: [
           { label: 'Daemon 状态', value: `${dstate} / ${tstate}` },
           { label: '交易标的', value: `${symbol} @ ${spot}` },
@@ -179,7 +179,7 @@ export const TOOL_META: Record<string, ToolMeta> = {
                   const s = asRecord(acct.summary) ?? {}
                   return [
                     String(acct.account_id ?? '—'),
-                    fmtUsd(s.NetLiquidation) ?? '—',
+                    fmtUsdAbbrev(s.NetLiquidation) ?? '—',
                     String(acct.positions_count ?? '—'),
                     fmtSigned(s.UnrealizedPnL) ?? '—',
                   ]
@@ -230,7 +230,7 @@ export const TOOL_META: Record<string, ToolMeta> = {
                     String(x.symbol ?? x.local_symbol ?? '—'),
                     String(x.side ?? x.action ?? '—'),
                     String(x.qty ?? x.shares ?? x.quantity ?? '—'),
-                    fmtUsd(x.price) ?? String(x.price ?? '—'),
+                    fmtUsdAbbrev(x.price) ?? String(x.price ?? '—'),
                   ]
                 }),
                 truncatedFrom: rows.length > 8 ? rows.length : undefined,

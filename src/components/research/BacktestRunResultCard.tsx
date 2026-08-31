@@ -26,20 +26,12 @@ import {
   EmptyState,
 } from '@/components/data-display'
 import { pnlColorClass } from '@/utils/dailyChange'
-import { fmtPctFromFraction } from '@/lib/format'
+import { fmtNumLocale, fmtPctFromFraction } from '@/lib/format'
 import type {
   BacktestRunRow,
   EventQueryResponse,
   EventRun,
 } from '@/api/research/backtestEvent'
-
-function fmtNum(v: number | null | undefined, digits = 2): string {
-  if (v == null || Number.isNaN(v) || !Number.isFinite(v)) return '—'
-  return v.toLocaleString(undefined, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })
-}
 
 function fmtDollar(v: number | null | undefined, digits = 2): string {
   if (v == null || Number.isNaN(v) || !Number.isFinite(v)) return '—'
@@ -127,7 +119,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
       )}
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
-        <SummaryTile label="Events" value={fmtNum(summary.n_events, 0)} />
+        <SummaryTile label="Events" value={fmtNumLocale(summary.n_events, 0)} />
         <SummaryTile
           label="Win rate"
           value={fmtPctFromFraction(summary.win_rate)}
@@ -153,7 +145,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
         />
         <SummaryTile
           label="Sharpe (annual)"
-          value={fmtNum(summary.sharpe_annual)}
+          value={fmtNumLocale(summary.sharpe_annual)}
           tone={
             summary.sharpe_annual > 0.5
               ? 'profit'
@@ -250,7 +242,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
             <div className="mb-2 grid grid-cols-2 gap-2 md:grid-cols-4">
               <SummaryTile
                 label="Windows"
-                value={fmtNum(walkForward.aggregate.n_windows, 0)}
+                value={fmtNumLocale(walkForward.aggregate.n_windows, 0)}
               />
               <SummaryTile
                 label="Avg OOS return"
@@ -265,7 +257,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
               />
               <SummaryTile
                 label="Avg OOS Sharpe"
-                value={fmtNum(walkForward.aggregate.avg_oos_sharpe)}
+                value={fmtNumLocale(walkForward.aggregate.avg_oos_sharpe)}
               />
               <SummaryTile
                 label="Positive windows"
@@ -303,7 +295,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
                     {fmtDollar(w.oos_return)}
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
-                    {fmtNum(w.oos_sharpe)}
+                    {fmtNumLocale(w.oos_sharpe)}
                   </DenseTableCell>
                 </DenseTableRow>
               ))}
@@ -336,7 +328,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
             />
             <SummaryTile
               label="Sharpe"
-              value={fmtNum(benchmark.spy_buy_hold.sharpe_annual)}
+              value={fmtNumLocale(benchmark.spy_buy_hold.sharpe_annual)}
             />
             <SummaryTile
               label="Max drawdown"

@@ -54,6 +54,27 @@ export const CopilotUsageSchema = z
   })
   .passthrough()
 
+/** GET /research/copilot/models — provider catalog for the unified model picker. */
+export const CopilotModelInfoSchema = z
+  .object({
+    id: z.string(),
+    label: z.string(),
+    provider: z.enum(['deepseek', 'anthropic', 'openai', 'ollama']),
+    family: z.string(),
+    cost_per_mtok_in: z.number().optional(),
+    cost_per_mtok_out: z.number().optional(),
+    note: z.string().optional(),
+  })
+  .passthrough()
+
+export const CopilotModelsResponseSchema = z
+  .object({
+    available: z.array(CopilotModelInfoSchema),
+    default: z.string().nullable(),
+    total_catalog: z.number(),
+  })
+  .passthrough()
+
 export const CopilotSessionSummarySchema = z
   .object({
     id: z.string(),

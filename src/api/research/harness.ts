@@ -6,6 +6,7 @@
  * Advisory only — D10 BLOCKED (no trade execution).
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 
 export type ObjectiveStatus = 'active' | 'paused' | 'retired'
 export type ObjectiveRunStatus =
@@ -62,21 +63,6 @@ export interface ApproveAllResult {
   count: number
   executed?: Record<string, unknown>[]
   errors?: { draft_id: string; status: number; detail?: unknown }[]
-}
-
-interface Envelope<T> {
-  ok: boolean
-  data: T
-  error?: string
-}
-
-async function unwrap<T>(res: Response): Promise<T> {
-  const body = (await res.json().catch(() => ({}))) as Envelope<T> & { detail?: string }
-  if (!res.ok || body.ok === false) {
-    const msg = body.error ?? body.detail ?? `HTTP ${res.status}`
-    throw new Error(typeof msg === 'string' ? msg : `HTTP ${res.status}`)
-  }
-  return body.data
 }
 
 export async function fetchObjectives(params?: {

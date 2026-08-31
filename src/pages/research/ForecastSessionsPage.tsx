@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { fmtNumLocale } from '@/lib/format'
 // lucide-react icons used only in navConfig; PageHeader has no icon prop
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -39,14 +40,6 @@ import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { cn } from '@/lib/utils'
-
-function fmtNum(v: number | null | undefined, digits = 2): string {
-  if (v == null) return '—'
-  return v.toLocaleString(undefined, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })
-}
 
 function fmtTime(ts: string): string {
   try {
@@ -317,13 +310,13 @@ export default function ForecastSessionsPage() {
                     <span>
                       Spot{' '}
                       <strong className="font-mono">
-                        {fmtNum(detail.session.spot)}
+                        {fmtNumLocale(detail.session.spot)}
                       </strong>
                     </span>
                     <span>
                       Expected Close{' '}
                       <strong className="font-mono">
-                        {fmtNum(detail.session.expected_close)}
+                        {fmtNumLocale(detail.session.expected_close)}
                       </strong>
                     </span>
                   </div>
@@ -379,19 +372,19 @@ export default function ForecastSessionsPage() {
                       <span>
                         Expected{' '}
                         <strong className="font-mono text-foreground">
-                          {fmtNum(settlement.expected_close)}
+                          {fmtNumLocale(settlement.expected_close)}
                         </strong>
                       </span>
                       <span>
                         Actual{' '}
                         <strong className="font-mono text-foreground">
-                          {fmtNum(settlement.actual_close)}
+                          {fmtNumLocale(settlement.actual_close)}
                         </strong>
                       </span>
                       <span>
                         Miss{' '}
                         <strong className="font-mono text-foreground">
-                          {fmtNum(settlement.close_miss)}
+                          {fmtNumLocale(settlement.close_miss)}
                         </strong>
                       </span>
                       {pathHitRate != null && (
@@ -477,13 +470,13 @@ export default function ForecastSessionsPage() {
                               </DenseTag>
                             </DenseTableCell>
                             <DenseTableCell className={denseTableNumCell}>
-                              {fmtNum(h.level_low)}
+                              {fmtNumLocale(h.level_low)}
                             </DenseTableCell>
                             <DenseTableCell className={denseTableNumCell}>
-                              {fmtNum(h.level_high)}
+                              {fmtNumLocale(h.level_high)}
                             </DenseTableCell>
                             <DenseTableCell className={denseTableNumCell}>
-                              {fmtNum(h.level_target)}
+                              {fmtNumLocale(h.level_target)}
                             </DenseTableCell>
                             <DenseTableCell className={denseTableNumCell}>
                               {(h.confidence * 100).toFixed(0)}%
@@ -552,7 +545,7 @@ function SessionRow({
         </DenseTag>
       </div>
       <div className="text-dense-meta text-muted-foreground mt-0.5">
-        {session.symbol} — Spot {fmtNum(session.spot)}
+        {session.symbol} — Spot {fmtNumLocale(session.spot)}
       </div>
     </button>
   )

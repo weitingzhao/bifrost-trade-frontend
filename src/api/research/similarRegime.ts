@@ -2,21 +2,7 @@
  * Similar-regime + Signal Health API clients — Wave 14.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-
-interface Envelope<T> {
-  ok: boolean
-  data: T
-  error?: string
-}
-
-async function unwrap<T>(res: Response): Promise<T> {
-  const body = (await res.json().catch(() => ({}))) as Envelope<T> & { detail?: string }
-  if (!res.ok || body.ok === false) {
-    const msg = body.error ?? body.detail ?? `HTTP ${res.status}`
-    throw new Error(typeof msg === 'string' ? msg : `HTTP ${res.status}`)
-  }
-  return body.data
-}
+import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 
 export type SimilarRegimeLens =
   | 'vrp'

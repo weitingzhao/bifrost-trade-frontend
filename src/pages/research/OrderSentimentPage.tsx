@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react'
+import { fmtNumLocale } from '@/lib/format'
 // lucide-react icons used only in navConfig; PageHeader has no icon prop
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -46,14 +47,6 @@ function fmtNotional(v: number): string {
   return `$${v.toFixed(0)}`
 }
 
-function fmtNum(v: number | null | undefined, digits = 2): string {
-  if (v == null) return '—'
-  return v.toLocaleString(undefined, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  })
-}
-
 function sentimentVerdictTone(score: number | undefined): AnalyzeVerdictTone {
   if (score == null || !Number.isFinite(score)) return 'neutral'
   if (score >= 30) return 'success'
@@ -72,10 +65,10 @@ function sentimentVerdictSummary(s: OrderSentiment | undefined): string {
   if (!s) return 'No order-flow sentiment yet — do not size from tape until snapshot lands.'
   const score = s.sentiment_score
   if (score >= 30) {
-    return `Follow bullish flow in ${s.symbol} (score ${score.toFixed(1)}); confirm with GEX walls before adding. PCR vol ${fmtNum(s.pcr_volume)}.`
+    return `Follow bullish flow in ${s.symbol} (score ${score.toFixed(1)}); confirm with GEX walls before adding. PCR vol ${fmtNumLocale(s.pcr_volume)}.`
   }
   if (score <= -30) {
-    return `Follow bearish flow in ${s.symbol} (score ${score.toFixed(1)}); confirm put wall / zero-γ before adding. PCR vol ${fmtNum(s.pcr_volume)}.`
+    return `Follow bearish flow in ${s.symbol} (score ${score.toFixed(1)}); confirm put wall / zero-γ before adding. PCR vol ${fmtNumLocale(s.pcr_volume)}.`
   }
   return `${s.symbol} tape is mixed (score ${score.toFixed(1)}) — prefer mean-reversion / wait for clearer PCR. Call ${fmtNotional(s.call_notional)} vs put ${fmtNotional(s.put_notional)}.`
 }
@@ -195,8 +188,8 @@ export default function OrderSentimentPage() {
           sentiment
             ? [
                 { label: 'Score', value: sentiment.sentiment_score.toFixed(1) },
-                { label: 'PCR vol', value: fmtNum(sentiment.pcr_volume) },
-                { label: 'PCR OI', value: fmtNum(sentiment.pcr_oi) },
+                { label: 'PCR vol', value: fmtNumLocale(sentiment.pcr_volume) },
+                { label: 'PCR OI', value: fmtNumLocale(sentiment.pcr_oi) },
               ]
             : []
         }
@@ -300,8 +293,8 @@ export default function OrderSentimentPage() {
                   color="var(--color-chart-2, #34d399)"
                 />
                 <div className="mt-1 text-dense-meta text-muted-foreground">
-                  PCR Volume: {fmtNum(sentiment.pcr_volume)} — PCR OI:{' '}
-                  {fmtNum(sentiment.pcr_oi)}
+                  PCR Volume: {fmtNumLocale(sentiment.pcr_volume)} — PCR OI:{' '}
+                  {fmtNumLocale(sentiment.pcr_oi)}
                 </div>
               </CardContent>
             </Card>

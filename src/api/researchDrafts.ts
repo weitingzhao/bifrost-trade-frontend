@@ -8,6 +8,7 @@ import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
 import { DraftListResponseSchema } from '@/lib/schemas/research'
+import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
 
 export type DraftKind =
   | 'morning_brief'
@@ -49,28 +50,8 @@ export interface AgentRunResult {
   message?: string
 }
 
-interface Envelope<T> {
-  ok: boolean
-  data: T
-  error?: string
-}
-
-async function unwrap<T>(res: Response): Promise<T> {
-  const ct = res.headers.get('content-type') ?? ''
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!') || ct.includes('text/html')) {
-      throw new Error(
-        'Drafts API unreachable (got HTML). Ensure research-api :8795 is running.',
-      )
-    }
-    throw new Error(`Drafts API ${res.status}: ${text}`)
-  }
-  const body = (await res.json()) as Envelope<T>
-  if (!body.ok) {
-    throw new Error(body.error ?? 'Drafts API returned ok=false')
-  }
-  return body.data
+function unwrap<T>(res: Response): Promise<T> {
+  return unwrapResearchEnvelope(res, { apiLabel: 'Drafts API' })
 }
 
 /** Feeds InboxBanner — pending_count decides whether the banner renders at all. */

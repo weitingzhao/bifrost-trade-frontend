@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
+import { fmtUsd } from '@/lib/format'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -41,15 +42,6 @@ import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
 
 // ─── Format helpers ───
 
-function fmtUsd(v: number | null | undefined): string {
-  if (v == null) return '—'
-  return v.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
 
 function fmtPnl(v: number): string {
   if (Math.abs(v) < 0.005) return '$0.00'

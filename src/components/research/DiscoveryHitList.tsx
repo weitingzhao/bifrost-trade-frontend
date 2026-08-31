@@ -16,6 +16,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react'
+import { fmtNum } from '@/lib/format'
 import { DenseTag, EmptyState, IconActionButton } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -136,11 +137,6 @@ export interface DiscoveryHitListProps {
   sentimentAnomalies: SentimentAnomalyHit[]
   sepaTradeDate: string | null
   isLoading: boolean
-}
-
-function fmtNum(n: number | null | undefined, digits = 1): string {
-  if (n == null || !Number.isFinite(n)) return '—'
-  return n.toFixed(digits)
 }
 
 function fmtIv(n: number | null | undefined): string {

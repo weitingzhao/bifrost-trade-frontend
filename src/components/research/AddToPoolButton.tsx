@@ -1,8 +1,12 @@
 /**
  * Add symbol to Research Candidate Pool (Loop v1).
+ *
+ * The pool is the triage stage: capture something worth a second look without
+ * committing to a thesis. Save-as-Hypothesis is the next rung up — use that
+ * when you are ready to state what you think is true.
  */
-import type { MouseEvent } from 'react'
-import { Plus } from 'lucide-react'
+import { useState, type MouseEvent } from 'react'
+import { Check, Plus } from 'lucide-react'
 import { IconActionButton } from '@/components/data-display'
 import { useAddCandidates } from '@/hooks/useCandidates'
 import { cn } from '@/lib/utils'
@@ -29,11 +33,17 @@ export function AddToPoolButton({
   className,
 }: AddToPoolButtonProps) {
   const mutation = useAddCandidates()
+  // Same brief confirmation SaveAsHypothesisButton uses. Without it the click
+  // produces no visible result at all, and a capture action you cannot tell
+  // succeeded is one people stop using.
+  const [savedFlash, setSavedFlash] = useState(false)
+  const [failed, setFailed] = useState(false)
   const sym = symbol.trim().toUpperCase()
 
   async function onClick(e: MouseEvent) {
     e.stopPropagation()
     if (!sym || mutation.isPending) return
+    setFailed(false)
     try {
       await mutation.mutateAsync([
         {
@@ -45,21 +55,36 @@ export function AddToPoolButton({
           source_ref: source_ref,
         },
       ])
+      setSavedFlash(true)
+      window.setTimeout(() => setSavedFlash(false), 1600)
     } catch {
-      // No shared toast helper in this app — stay silent on error.
+      // No shared toast helper in this app — surface failure on the control.
+      setFailed(true)
+      window.setTimeout(() => setFailed(false), 2400)
     }
   }
 
   return (
     <IconActionButton
-      title="Add to Pool"
+      title={
+        savedFlash
+          ? `${sym} added to pool`
+          : failed
+            ? `Could not add ${sym} — retry`
+            : 'Add to Pool'
+      }
       ariaLabel={`Add ${sym} to candidate pool`}
       size={size}
+      tone={failed ? 'danger' : undefined}
       disabled={!sym || mutation.isPending}
       onClick={(e) => void onClick(e)}
       className={cn(className)}
     >
-      <Plus className="h-3.5 w-3.5" />
+      {savedFlash ? (
+        <Check className="h-3.5 w-3.5 text-success" aria-hidden />
+      ) : (
+        <Plus className="h-3.5 w-3.5" />
+      )}
     </IconActionButton>
   )
 }

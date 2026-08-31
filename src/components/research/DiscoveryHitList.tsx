@@ -2,9 +2,15 @@
  * "Today's Discoveries" cluster for Research Home (Wave RS-A4).
  *
  * Renders four columns (SEPA · Events · IV extremes · Sentiment anomalies) as
- * elevated cards with top-3 hits and a "Save as Hypothesis" quick action per
- * row. Empty per-column state is handled locally with EmptyState so a single
- * missing engine does not blank the whole strip.
+ * elevated cards with top-3 hits. Empty per-column state is handled locally
+ * with EmptyState so a single missing engine does not blank the whole strip.
+ *
+ * Each row offers the three capture actions in ascending order of commitment:
+ * pin to Cockpit, add to the Candidate Pool (triage), save as a Hypothesis
+ * (state a thesis). Until the pool action existed here, the landing page where
+ * discoveries actually surface offered only the last of those, so the triage
+ * stage was reachable from four deep pages and nowhere else — and the pool held
+ * nothing but automated harness entries.
  */
 import { Link } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
@@ -22,6 +28,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { AddToPoolButton } from '@/components/research/AddToPoolButton'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { cockpitPinStore } from '@/store/cockpitPinStore'
 import type {
@@ -104,10 +111,11 @@ interface HitRowProps {
   detail: React.ReactNode
   meta?: React.ReactNode
   saveButton: React.ReactNode
+  poolButton?: React.ReactNode
   pinButton?: React.ReactNode
 }
 
-function HitRow({ entity, detail, meta, saveButton, pinButton }: HitRowProps) {
+function HitRow({ entity, detail, meta, saveButton, poolButton, pinButton }: HitRowProps) {
   return (
     <div
       className={cn(
@@ -124,6 +132,7 @@ function HitRow({ entity, detail, meta, saveButton, pinButton }: HitRowProps) {
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
         {pinButton}
+        {poolButton}
         {saveButton}
       </div>
     </div>
@@ -217,6 +226,21 @@ export function DiscoveryHitList({
                 Composite {fmtNum(hit.score, 1)}
               </span>
             }
+            poolButton={
+              <AddToPoolButton
+                symbol={hit.symbol}
+                source="sepa"
+                score={hit.score}
+                tags={['sepa', hit.path.toLowerCase(), hit.grade].filter(Boolean)}
+                lens_snapshot={{
+                  sepa_score: hit.score,
+                  grade: hit.grade,
+                  path: hit.path,
+                  stage: hit.stage,
+                }}
+                source_ref={{ trade_date: hit.trade_date }}
+              />
+            }
             saveButton={
               <SaveAsHypothesisButton
                 originPage="research-home"
@@ -294,6 +318,21 @@ export function DiscoveryHitList({
               meta={
                 hit.theme ? <span>Theme {hit.theme}</span> : null
               }
+              poolButton={
+                symbolPreview ? (
+                  <AddToPoolButton
+                    symbol={symbolPreview}
+                    source="event_radar"
+                    tags={['event_radar', hit.theme].filter(Boolean) as string[]}
+                    source_ref={{
+                      event_id: hit.event_id,
+                      subject: hit.subject,
+                      importance: hit.importance,
+                      direction: hit.direction,
+                    }}
+                  />
+                ) : null
+              }
               saveButton={
                 <SaveAsHypothesisButton
                   originPage="research-home"
@@ -352,6 +391,20 @@ export function DiscoveryHitList({
               </span>
             }
             meta={hit.trade_date ? <span>{hit.trade_date}</span> : null}
+            poolButton={
+              <AddToPoolButton
+                symbol={hit.symbol}
+                source="iv_extreme"
+                score={hit.iv_rank_1y}
+                tags={['iv-regime', hit.bucket].filter(Boolean)}
+                lens_snapshot={{
+                  iv_rank_1y: hit.iv_rank_1y,
+                  iv_current: hit.iv_current,
+                  bucket: hit.bucket,
+                }}
+                source_ref={{ trade_date: hit.trade_date }}
+              />
+            }
             saveButton={
               <SaveAsHypothesisButton
                 originPage="research-home"
@@ -402,6 +455,20 @@ export function DiscoveryHitList({
             }
             meta={
               hit.data_source ? <span>Source {hit.data_source}</span> : null
+            }
+            poolButton={
+              <AddToPoolButton
+                symbol={hit.symbol}
+                source="order_sentiment"
+                score={hit.sentiment_score}
+                tags={['sentiment', hit.sentiment_score >= 0 ? 'bull-tilt' : 'bear-tilt']}
+                lens_snapshot={{
+                  sentiment_score: hit.sentiment_score,
+                  pcr_volume: hit.pcr_volume,
+                  strike_concentration: hit.strike_concentration,
+                }}
+                source_ref={{ trade_date: hit.trade_date }}
+              />
             }
             saveButton={
               <SaveAsHypothesisButton

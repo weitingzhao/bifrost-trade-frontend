@@ -14,8 +14,8 @@ import {
   ACCOUNT_SERVICES,
   ARCH_SERVICES,
   RESEARCH_SERVICES,
-} from './apiHealth/apiHealthConfig'
-import type { ServiceDef } from './apiHealth/apiHealthConfig'
+} from '@/utils/apiHealthConfig'
+import type { ServiceDef } from '@/utils/apiHealthConfig'
 import type { ApiShutdownConfig } from './apiHealth/apiHealthShutdown'
 import { apiHealthOverviewCardClass } from './apiHealth/apiHealthUi'
 import { TabLamp } from './apiHealth/TabLamp'

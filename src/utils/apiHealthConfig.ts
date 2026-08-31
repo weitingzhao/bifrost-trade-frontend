@@ -40,3 +40,10 @@ export const DOC_PATHS: Record<string, { swagger: string; redoc: string; openapi
   strategy:  { swagger: '/strategy/docs',         redoc: '/strategy/redoc',         openapi: '/strategy/openapi.json'  },
   market:    { swagger: '/market/docs',           redoc: '/market/redoc',           openapi: '/market/openapi.json'    },
 }
+
+/** Most severe lamp in a set — red beats yellow beats green. */
+export function worstLamp(lamps: Lamp[]): Lamp {
+  if (lamps.includes('red')) return 'red'
+  if (lamps.includes('yellow')) return 'yellow'
+  return 'green'
+}

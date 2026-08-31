@@ -18,7 +18,7 @@ import {
   fmtUsd,
 } from '@/pages/portfolio/performance/performanceFormatters'
 import { OTF_STK_UNREALIZED_HELP } from '@/pages/portfolio/performance/performanceConstants'
-import styles from '@/components/performance/performanceCalendar.module.css'
+import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 type SecTab = 'all' | 'OPT' | 'STK'
 

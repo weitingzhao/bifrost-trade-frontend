@@ -14,7 +14,7 @@ import {
   resolveIbBrokerSlots,
   type IbBrokerServiceId,
   type IbSlotView,
-} from './ibBrokerConnectionModel'
+} from '@/utils/ibBrokerConnectionModel'
 import {
   ibBrokerClientIdClass,
   ibBrokerHeartbeatBadgeClass,

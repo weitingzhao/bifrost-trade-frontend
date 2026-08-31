@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ByDayRangeData } from '@/types/trading'
-import styles from '@/components/performance/performanceCalendar.module.css'
+import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 interface MonthlyPnLTableProps {
   byDayRangeData: ByDayRangeData | null

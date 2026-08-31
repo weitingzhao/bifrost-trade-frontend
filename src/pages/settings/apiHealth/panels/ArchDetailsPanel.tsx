@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { SegmentControl } from '@/components/data-display'
 import { makeProbeQuery } from '@/hooks/useApiHealthProbes'
 import { ApiDetailKvCard, DetailKV } from '../ApiDetailKvList'
-import { ARCH_SERVICES } from '../apiHealthConfig'
+import { ARCH_SERVICES } from '@/utils/apiHealthConfig'
 import {
   apiHealthDetailEmptyClass,
   apiHealthDetailHintClass,

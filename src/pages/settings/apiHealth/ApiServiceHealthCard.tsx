@@ -5,7 +5,7 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { IconActionButton } from '@/components/data-display'
 import { makeProbeQuery } from '@/hooks/useApiHealthProbes'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import type { Lamp, ServiceDef } from './apiHealthConfig'
+import type { Lamp, ServiceDef } from '@/utils/apiHealthConfig'
 import { EnvBadge } from './EnvBadge'
 import type { ApiShutdownConfig } from './apiHealthShutdown'
 import {

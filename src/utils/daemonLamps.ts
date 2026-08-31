@@ -2,7 +2,7 @@ import type { DaemonHeartbeat, StatusResponse } from '@/types/monitor'
 import {
   ibBrokerRedisHealthLamp,
   type IbBrokerServiceId,
-} from '@/components/socket/ibBrokerConnectionModel'
+} from '@/utils/ibBrokerConnectionModel'
 
 export type ServiceLamp = 'green' | 'yellow' | 'red'
 export type DaemonLamp = ServiceLamp | 'none'

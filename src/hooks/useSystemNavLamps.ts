@@ -2,9 +2,9 @@ import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { makeProbeQuery } from '@/hooks/useApiHealthProbes'
-import { ALL_SERVICES } from '@/pages/settings/apiHealth/apiHealthConfig'
-import { worstLamp } from '@/pages/settings/apiHealth/apiHealthUi'
-import type { Lamp } from '@/pages/settings/apiHealth/apiHealthConfig'
+import { ALL_SERVICES } from '@/utils/apiHealthConfig'
+import { worstLamp } from '@/utils/apiHealthConfig'
+import type { Lamp } from '@/utils/apiHealthConfig'
 import {
   aggregateDaemonProcessesHealthFromStatus,
   aggregateSocketNavHealthFromStatus,

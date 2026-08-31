@@ -1,6 +1,6 @@
 <!--
-parity-ids: dense-ui-system-v1, ui-confirm-dialogs-v1
-对等文件: .cursor/rules/{dense-ui-system,ui-confirm-dialogs}.mdc
+parity-ids: dense-ui-system-v1, ui-confirm-dialogs-v1, module-placement-v1
+对等文件: .cursor/rules/{dense-ui-system,ui-confirm-dialogs,module-placement}.mdc
 改任一侧必须同步另一侧并 bump 两侧版本号；校验: bash ../scripts/check-agent-config-parity.sh
 -->
 
@@ -193,6 +193,29 @@ UI 改动后运行 `npm run check:legacy-css`。
 - 铺在 canvas 上的 KPI/图表面板使用 `Card variant="elevated"` 或 `bg-secondary`，禁止与画布同色的 `bg-card` 块
 - **禁止**在新页面使用 Legacy 全局类 `.card`、`.process-section`、`.legacy-monitoring-shell` 作为页面外壳
 - Option Discovery 样式仅限页面 import：`discoveryCharts.css`（SVG/IV-term 表）+ Tailwind（`option-discovery-root`）；**不得**在新页面 import 或复用全局 Legacy shell
+
+### 模块归属与依赖方向（`module-placement-v1`）
+
+**先判方向，再判位置。**
+
+```
+pages/  ──→  components/  hooks/  lib/  utils/  api/
+        ✗    反向 import 一律禁止（唯一豁免：src/lib/router.tsx）
+```
+
+| 被几个 feature 使用 | 放哪 |
+|---|---|
+| 1 个 | 该 feature 目录内（`pages/<域>/<feature>/`） |
+| 2 个以上 | 共享层 |
+
+判据是**使用面**，不是"它是不是个组件"。只被一个页面用的组件放进 `components/`
+并不会更可复用，只会让它离自己的常量和样式更远 —— 反向 import 就是这么来的。
+
+第二个 feature 开始用 → 提到共享层；只剩一个使用方 → 沉回该 feature。
+不要为"以后可能复用"提前放进 `components/`。
+
+机械强制：`npm run check:legacy-css`（module placement 一节）。
+Cursor 侧对等：`.cursor/rules/module-placement.mdc`。
 
 ### 文件组织规范
 

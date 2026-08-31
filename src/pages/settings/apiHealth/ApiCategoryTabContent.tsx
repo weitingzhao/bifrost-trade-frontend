@@ -8,7 +8,7 @@ import { fetchOpsCapabilities, getOpsToken } from '@/api/ops'
 import { OpsAuthBar } from '@/pages/settings/socket/OpsAuthBar'
 import { ApiDocsTable } from './ApiDocsTable'
 import { ApiServiceHealthCard } from './ApiServiceHealthCard'
-import type { ServiceDef } from './apiHealthConfig'
+import type { ServiceDef } from '@/utils/apiHealthConfig'
 import { API_SHUTDOWN_BY_KEY, type ApiShutdownConfig } from './apiHealthShutdown'
 import {
   apiHealthCategoryContentClass,

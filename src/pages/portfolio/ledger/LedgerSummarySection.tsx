@@ -18,7 +18,7 @@ import {
   buildLedgerMetricExplainPayload,
   ledgerMetricExplainTitle,
   type LedgerMetricExplainPayload,
-} from '@/utils/ledger/ledgerSummaryExplainPayload'
+} from '@/pages/portfolio/ledger/ledgerSummaryExplainPayload'
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
 import { ledgerSummary } from './ledgerSummaryUi'
 

@@ -18,7 +18,7 @@ import {
 import { cn } from '@/lib/utils'
 import { createStrategyInstance } from '@/api/strategy'
 import { useOpportunities } from '@/hooks/useStrategies'
-import { getLedgerAccountTabs } from '@/pages/portfolio/ledger/ledgerAccountTabs'
+import { getLedgerAccountTabs } from '@/lib/ledgerAccountTabs'
 import type { StatusResponse } from '@/types/monitor'
 import {
   instanceCreateAccountPillActiveClass,

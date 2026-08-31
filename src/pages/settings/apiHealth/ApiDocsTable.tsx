@@ -9,7 +9,7 @@ import {
   DenseTableRow,
   denseTable,
 } from '@/components/data-display'
-import { DOC_PATHS, type ServiceDef } from './apiHealthConfig'
+import { DOC_PATHS, type ServiceDef } from '@/utils/apiHealthConfig'
 import {
   API_DOCS_COL_WIDTHS,
   apiHealthDocLinkClass,

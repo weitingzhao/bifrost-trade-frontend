@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SegmentControl, type SegmentOption } from '@/components/data-display'
-import { CalendarSummaryPanel } from '@/components/performance/CalendarSummaryPanel'
-import { CalendarDayDetail } from '@/components/performance/CalendarDayDetail'
+import { CalendarSummaryPanel } from '@/pages/portfolio/performance/components/CalendarSummaryPanel'
+import { CalendarDayDetail } from '@/pages/portfolio/performance/components/CalendarDayDetail'
 import {
   buildCalendarGrid,
   CALENDAR_ASSET_TABS,
@@ -18,7 +18,7 @@ import {
 } from './performanceCalendarModel'
 import { CALENDAR_HELP } from './performanceConstants'
 import { fmtMoney, fmtMoneyFull, fmtUsd } from './performanceFormatters'
-import styles from '@/components/performance/performanceCalendar.module.css'
+import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 const CALENDAR_ASSET_SEGMENT_OPTIONS: SegmentOption[] = CALENDAR_ASSET_TABS.map(t => ({
   value: t.id,

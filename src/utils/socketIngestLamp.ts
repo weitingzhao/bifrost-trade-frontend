@@ -3,7 +3,7 @@ import {
   ibBrokerRedisHealthLamp,
   normalizeIbBrokerStatus,
   type IbBrokerServiceId,
-} from '@/components/socket/ibBrokerConnectionModel'
+} from '@/utils/ibBrokerConnectionModel'
 import type { StatusResponse, StatusSocketPolygonWs } from '@/types/monitor'
 import { statusSocketPolygonWs } from '@/types/monitor'
 import { isPlatformIbGatewayActive, platformIbGatewayAggregateLamp } from '@/utils/platformIbGateway'

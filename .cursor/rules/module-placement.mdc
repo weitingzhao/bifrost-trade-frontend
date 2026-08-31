@@ -1,0 +1,45 @@
+---
+description: Where a module lives, and which direction imports may point
+alwaysApply: true
+parity-id: module-placement-v1
+---
+
+# Module Placement
+
+两条规则决定一个文件放哪。**先判方向，再判位置。**
+
+## 1. 依赖方向：pages → 共享层，反向禁止
+
+```
+pages/  ──→  components/  hooks/  lib/  utils/  api/
+        ✗    反向 import 一律禁止
+```
+
+唯一豁免是 `src/lib/router.tsx` —— 路由表按定义必须引用页面。
+
+违反这条不只是"不好看"：`components/optionDiscovery` 曾经 import
+`pages/research/discovery/discoveryUi`，而同域的 `pages/research/optionDiscovery`
+又 re-export 了 `components/optionDiscovery` —— 目录级的环，两边都改不动。
+
+机械强制：`npm run check:legacy-css`（module placement 一节）。
+
+## 2. 位置：按使用面，不按类型
+
+| 被几个 feature 使用 | 放哪 |
+|---|---|
+| **1 个** | 该 feature 目录内（`pages/<域>/<feature>/`） |
+| **2 个以上** | 共享层（`components/` `hooks/` `lib/` `utils/`） |
+
+判据是**使用面**，不是"它是不是个组件"。一个只被 Performance 页用的
+`EquityGrowthCard` 放在 `components/performance/` 并不比放在
+`pages/portfolio/performance/` 更可复用 —— 只是让它离自己的常量和格式化模块更远，
+于是产生了上面那条反向 import。
+
+反过来，`ledgerAccountTabs` 被 ledger 页、`useTradeLedgerModel`
+和 strategy 的弹窗同时使用 —— 它是真共享的，就该在共享层。
+
+## 何时搬
+
+- 第二个 feature 开始用某个 feature-local 模块 → 提到共享层
+- 某个共享模块只剩一个使用方 → 沉回该 feature
+- **不要**为了"以后可能复用"提前放进 `components/`

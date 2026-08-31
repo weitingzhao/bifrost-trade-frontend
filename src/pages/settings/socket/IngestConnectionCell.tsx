@@ -5,8 +5,8 @@ import {
   ConnectionRetryControl,
   IbBrokerConnectionCell,
   ServiceHeartbeatBadge,
-} from '@/components/socket/IbBrokerConnection'
-import { ingestProcessRunningForIbClientId } from '@/components/socket/ibBrokerConnectionModel'
+} from '@/pages/settings/socket/IbBrokerConnection'
+import { ingestProcessRunningForIbClientId } from '@/utils/ibBrokerConnectionModel'
 import {
   ingestRedisTruthyConnected,
   massiveServiceHeartbeatState,

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import type { LedgerMetricExplainPayload } from '@/utils/ledger/ledgerSummaryExplainPayload'
+import type { LedgerMetricExplainPayload } from '@/pages/portfolio/ledger/ledgerSummaryExplainPayload'
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
-import { LEDGER_METRIC_EXPLAIN_MAX_ROWS } from '@/utils/ledger/ledgerSummaryExplainPayload'
+import { LEDGER_METRIC_EXPLAIN_MAX_ROWS } from '@/pages/portfolio/ledger/ledgerSummaryExplainPayload'
 function SectionTitle({ n, children }: { n: 1 | 2 | 3 | 4; children: ReactNode }) {
   return (
     <h4 className="mt-3 mb-1.5 text-sm font-semibold text-foreground first:mt-0">

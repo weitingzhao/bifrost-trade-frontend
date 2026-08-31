@@ -3,7 +3,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchMonitorStatus } from '@/api/monitor'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { makeProbeQuery } from '@/hooks/useApiHealthProbes'
-import { ALL_SERVICES } from '@/pages/settings/apiHealth/apiHealthConfig'
+import { ALL_SERVICES } from '@/utils/apiHealthConfig'
 import type { StatusResponse } from '@/types/monitor'
 import {
   computeAccountSyncLamp,

@@ -12,8 +12,8 @@ import { buildFiBarChart } from '@/utils/ledger/fiBarChart'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { PageHeader, PageShell } from '@/components/layout'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { EquityGrowthCard } from '@/components/performance/EquityGrowthCard'
-import MonthlyPnLTable from '@/components/performance/MonthlyPnLTable'
+import { EquityGrowthCard } from '@/pages/portfolio/performance/components/EquityGrowthCard'
+import MonthlyPnLTable from '@/pages/portfolio/performance/components/MonthlyPnLTable'
 import { buildPositionCategoryByAccountContract, serializePositionCategoryKey } from '@/utils/ledger/stkBuckets'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { PerformanceFilterBar } from '@/pages/portfolio/performance/PerformanceFilterBar'
@@ -26,7 +26,7 @@ import {
   buildDayMapFromBulk,
   type CalendarAssetTab,
 } from '@/pages/portfolio/performance/performanceCalendarModel'
-import styles from '@/components/performance/performanceCalendar.module.css'
+import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 import pageStyles from '@/pages/portfolio/performance/PerformancePage.module.css'
 
 export default function PerformancePage() {

@@ -37,7 +37,7 @@ import {
 } from '@/utils/ledger/ledgerOptHelpers'
 import type { InstanceConsistencyState } from '@/utils/ledger/ledgerOptHelpers'
 import { useLedgerOptionStockLinks } from '@/hooks/useLedgerOptionStockLinks'
-import { getLedgerAccountTabs, getLedgerAccountIds } from '@/pages/portfolio/ledger/ledgerAccountTabs'
+import { getLedgerAccountTabs, getLedgerAccountIds } from '@/lib/ledgerAccountTabs'
 import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
 
 export type TradeLedgerModelParams = {

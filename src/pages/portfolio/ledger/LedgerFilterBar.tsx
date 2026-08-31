@@ -14,7 +14,7 @@ import {
 import { MONTH_NAMES } from './ledgerConstants'
 import { fmtMdHint } from './ledgerFormat'
 import { LedgerSymbolCombobox } from './LedgerSymbolCombobox'
-import type { LedgerAccountTab } from './ledgerAccountTabs'
+import type { LedgerAccountTab } from '@/lib/ledgerAccountTabs'
 import {
   ledgerFilterPanelClass,
   ledgerFilterRowClass,

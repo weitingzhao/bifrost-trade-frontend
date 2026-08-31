@@ -14,7 +14,7 @@ import { SegmentControl, type SegmentOption } from '@/components/data-display'
 import { fmtPnl, fmtUsd, formatRangeDate } from './performanceFormatters'
 import { computeByDayRangeTotals } from './performanceRangeTotals'
 import { TIME_RANGE_OPTIONS } from './performanceConstants'
-import styles from '@/components/performance/performanceCalendar.module.css'
+import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 const TIME_RANGE_SEGMENT_OPTIONS: SegmentOption[] = TIME_RANGE_OPTIONS.map(o => ({
   value: o.id,

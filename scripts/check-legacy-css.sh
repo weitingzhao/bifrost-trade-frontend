@@ -600,6 +600,22 @@ elif [[ "$raw_pnl_count" -lt "$RAW_PNL_PALETTE_BASELINE" ]]; then
   echo "check-legacy-css: raw PnL palette count $raw_pnl_count < baseline $RAW_PNL_PALETTE_BASELINE — lower RAW_PNL_PALETTE_BASELINE in scripts/check-legacy-css.sh" >&2
 fi
 
+# Module placement (.cursor/rules/module-placement.mdc · CLAUDE.md):
+# the shared layers must never import from pages/. src/lib/router.tsx is the one
+# exemption — a route table has to name its pages.
+#
+# This is not style. components/optionDiscovery imported pages/research/discovery
+# while pages/research/optionDiscovery re-exported components/optionDiscovery — a
+# directory-level cycle neither side could untangle.
+placement_violations=$(git ls-files 'src/components/*' 'src/hooks/*' 'src/lib/*' 'src/utils/*' \
+  'src/api/*' 'src/types/*' 'src/constants/*' 'src/context/*' 'src/layout/*' 2>/dev/null \
+  | grep -v '^src/lib/router\.tsx$' \
+  | tr '\n' '\0' | xargs -0 grep -n "from '@/pages/" 2>/dev/null || true)
+if [[ -n "$placement_violations" ]]; then
+  echo "$placement_violations" >&2
+  report "shared layer imports from pages/ — move the module to the layer its usage warrants (see CLAUDE.md · module placement)"
+fi
+
 if [[ "$fail" -ne 0 ]]; then
   exit 1
 fi

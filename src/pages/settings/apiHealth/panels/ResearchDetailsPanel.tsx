@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { SegmentControl } from '@/components/data-display'
 import { ApiDetailKvCard, DetailKV } from '../ApiDetailKvList'
-import { RESEARCH_SERVICES } from '../apiHealthConfig'
+import { RESEARCH_SERVICES } from '@/utils/apiHealthConfig'
 import {
   apiHealthDetailPanelClass,
   apiHealthDetailSectionClass,

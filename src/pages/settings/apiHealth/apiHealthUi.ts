@@ -1,12 +1,6 @@
 import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
-import type { Lamp } from './apiHealthConfig'
-
-export function worstLamp(lamps: Lamp[]): Lamp {
-  if (lamps.includes('red')) return 'red'
-  if (lamps.includes('yellow')) return 'yellow'
-  return 'green'
-}
+import type { Lamp } from '@/utils/apiHealthConfig'
 
 /** Small glow for tab lamps and compact indicators. */
 export const LAMP_GLOW: Record<Lamp, string> = {

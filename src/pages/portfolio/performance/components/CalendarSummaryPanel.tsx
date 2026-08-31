@@ -9,7 +9,7 @@ import type {
   PerformanceResponse,
 } from '@/types/trading'
 import type { StkLedgerBucket } from '@/utils/ledger/stkBuckets'
-import styles from '@/components/performance/performanceCalendar.module.css'
+import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 // ─── Formatting ───
 

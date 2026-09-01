@@ -5,7 +5,7 @@
  * Advisory only — D10 BLOCKED (no trade execution).
  * Daily Loop LLM work lives in Research Copilot; this page is ops history.
  */
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, MessageCircle, Play, Sparkles, Terminal } from 'lucide-react'
@@ -25,6 +25,7 @@ import {
   DenseTableRow,
   DenseTag,
   EmptyState,
+  IconActionButton,
   SegmentControl,
 } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
@@ -44,6 +45,7 @@ import {
   type ResearchObjective,
 } from '@/api/research/harness'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { fmtInt } from '@/lib/format'
 import { NewObjectiveDialog } from '@/components/research/NewObjectiveDialog'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import {
@@ -56,7 +58,7 @@ import {
   openLoopRunInCopilot,
   openResearchCopilot,
 } from '@/lib/harness/loopCopilotPrefill'
-import { runDurationMs } from '@/lib/harness/harnessTrace'
+import { funnelReach, parseHarnessTrace, runDurationMs } from '@/lib/harness/harnessTrace'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 
 type RunStatusFilter = ObjectiveRunStatus | 'all'
@@ -88,8 +90,48 @@ function fmtTs(v: string | null | undefined): string {
   }
 }
 
+
+/**
+ * Watchlist-sized. Below this a run did not screen a market, it re-read a list —
+ * the failure the funnel column exists to make visible at a glance rather than
+ * after a warehouse query.
+ */
+const WATCHLIST_SCALE = 100
+
+/** Considered → proposed for one run, with the conversion it implies. */
+function RunFunnelCell({ trace }: { trace: unknown }) {
+  const reach = funnelReach(parseHarnessTrace(trace))
+  if (!reach) {
+    return (
+      <span className="text-dense-caption text-muted-foreground">no funnel</span>
+    )
+  }
+  const { considered, proposed } = reach
+  const pct = considered > 0 ? (proposed / considered) * 100 : null
+  const narrow = considered < WATCHLIST_SCALE
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      <span className="font-mono tabular-nums text-dense-meta">
+        {fmtInt(considered)} → {fmtInt(proposed)}
+      </span>
+      <DenseTag variant={narrow ? 'warning' : 'category'} size="cell">
+        {pct == null ? '—' : `${pct < 1 ? pct.toFixed(1) : Math.round(pct)}%`}
+      </DenseTag>
+      {narrow ? (
+        <span
+          className="text-dense-micro text-warning"
+          title={`Only ${considered} symbols were considered — that is a watchlist, not a screen`}
+        >
+          watchlist-sized
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 export default function HarnessConsolePage() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [lang] = useCopilotPromptLang()
   const [runStatus, setRunStatus] = useState<RunStatusFilter>('all')
   const [policyOpen, setPolicyOpen] = useState(false)
@@ -320,6 +362,7 @@ export default function HarnessConsolePage() {
               <DenseTableHeadRow>
                 <DenseTableHead>Run</DenseTableHead>
                 <DenseTableHead>Objective</DenseTableHead>
+                <DenseTableHead>Funnel</DenseTableHead>
                 <DenseTableHead>Started</DenseTableHead>
                 <DenseTableHead>Status</DenseTableHead>
                 <DenseTableHead>Actions</DenseTableHead>
@@ -358,6 +401,9 @@ export default function HarnessConsolePage() {
                       ) : null}
                     </DenseTableCell>
                     <DenseTableCell className="truncate">{objectiveTitle}</DenseTableCell>
+                    <DenseTableCell>
+                      <RunFunnelCell trace={row.trace_json} />
+                    </DenseTableCell>
                     <DenseTableCell className="truncate text-dense-meta text-muted-foreground">
                       {fmtTs(row.started_at)}
                       {duration != null ? (
@@ -373,11 +419,10 @@ export default function HarnessConsolePage() {
                     </DenseTableCell>
                     <DenseTableCell>
                       {awaiting ? (
-                        <div className="flex min-w-0 flex-col gap-1">
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="h-7 w-full max-w-full justify-start truncate px-2 text-dense-meta"
+                        <div className="flex flex-wrap items-center gap-0.5">
+                          <IconActionButton
+                            title={loopCopilotUi.discuss(lang)}
+                            ariaLabel={`${loopCopilotUi.discuss(lang)} ${row.id}`}
                             onClick={() =>
                               openLoopRunInCopilot({
                                 runId: row.id,
@@ -386,41 +431,36 @@ export default function HarnessConsolePage() {
                               })
                             }
                           >
-                            <MessageCircle className="mr-1 size-3 shrink-0" />
-                            {loopCopilotUi.discuss(lang)}
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-7 w-full max-w-full justify-start truncate px-2 text-dense-meta"
-                            asChild
+                            <MessageCircle className="size-3.5" />
+                          </IconActionButton>
+                          <IconActionButton
+                            title={loopCopilotUi.viewPipeline(lang)}
+                            ariaLabel={`${loopCopilotUi.viewPipeline(lang)} ${row.id}`}
+                            onClick={() => navigate(loopPipelinePath(row.id))}
                           >
-                            <Link to={loopPipelinePath(row.id)}>
-                              {loopCopilotUi.viewPipeline(lang)}
-                            </Link>
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-7 w-full max-w-full justify-start truncate px-2 text-dense-meta"
+                            <Terminal className="size-3.5" />
+                          </IconActionButton>
+                          <IconActionButton
+                            title={curateBusy ? 'Curating…' : 'Curator'}
+                            ariaLabel={`Curator ${row.id}`}
                             disabled={curateBusy || curateMut.isPending}
                             onClick={() => void curateMut.mutateAsync(row.id)}
                           >
-                            <Sparkles className="mr-1 size-3 shrink-0" />
-                            {curateBusy ? 'Curating…' : 'Curator'}
-                          </Button>
+                            <Sparkles className="size-3.5" />
+                          </IconActionButton>
+                          {/* Approve keeps its label: it promotes candidates and
+                              creates hypotheses, and an icon-only control that
+                              writes is one misclick from doing so. */}
                           <Button
                             type="button"
                             size="sm"
                             variant="outline"
-                            className="h-7 w-full max-w-full justify-start truncate px-2 text-dense-meta"
+                            className="h-6 px-1.5 text-dense-micro"
                             disabled={approveBusy || approveMut.isPending}
                             onClick={() => void approveMut.mutateAsync(row.id)}
                           >
-                            <Check className="mr-1 size-3 shrink-0" />
-                            {approveBusy ? 'Approving…' : 'Approve all'}
+                            <Check className="mr-0.5 size-3 shrink-0" />
+                            {approveBusy ? 'Approving…' : 'Approve'}
                           </Button>
                         </div>
                       ) : curatorTrace ? (

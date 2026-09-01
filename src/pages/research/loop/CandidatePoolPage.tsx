@@ -6,6 +6,10 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, ListFilter, X } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
+import type { CandidateOutcomeRow } from '@/api/research/candidateOutcome'
+import { CandidateOutcomeSummary } from '@/components/research/CandidateOutcomeSummary'
+import { useCandidateOutcomeByCandidate } from '@/hooks/useCandidateOutcome'
+import { fmtPctSigned } from '@/lib/format'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -46,6 +50,28 @@ function fmtScore(n: number | null | undefined): string {
   return n.toFixed(1)
 }
 
+/**
+ * Excess return over SPY for one candidate, five sessions on.
+ *
+ * A candidate whose window has not elapsed shows "pending", not a dash and not a
+ * zero — the pool is usually younger than its shortest horizon, and an em dash
+ * there reads as "no result" rather than "not yet".
+ */
+function CandidateOutcomeCell({ outcome }: { outcome?: CandidateOutcomeRow }) {
+  if (!outcome) {
+    return <span className="text-dense-micro text-muted-foreground">pending</span>
+  }
+  const excess = outcome.excess_return
+  if (excess == null) {
+    return <span className="text-dense-micro text-muted-foreground">no benchmark</span>
+  }
+  return (
+    <span className={excess > 0 ? 'text-success' : 'text-danger'}>
+      {fmtPctSigned(excess * 100)}
+    </span>
+  )
+}
+
 export default function CandidatePoolPage() {
   const [status, setStatus] = useState<StatusFilter>('open')
   const [dismissTarget, setDismissTarget] = useState<ResearchCandidate | null>(null)
@@ -84,12 +110,16 @@ export default function CandidatePoolPage() {
     }
   }
 
+  const { data: outcomeByCandidate } = useCandidateOutcomeByCandidate(5)
+
   return (
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Candidate Pool"
         description="Staging queue for symbols before promotion to a Hypothesis. Observe-only (D10)."
       />
+
+      <CandidateOutcomeSummary />
 
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-dense-meta font-medium text-muted-foreground shrink-0">Status:</span>
@@ -125,6 +155,7 @@ export default function CandidatePoolPage() {
               <DenseTableHead>Tags</DenseTableHead>
               <DenseTableHead>Book</DenseTableHead>
               <DenseTableHead>Status</DenseTableHead>
+              <DenseTableHead className="text-right">T+5 vs SPY</DenseTableHead>
               <DenseTableHead className="w-24">Actions</DenseTableHead>
             </DenseTableHeadRow>
           </DenseTableHeader>
@@ -185,6 +216,9 @@ export default function CandidatePoolPage() {
                     >
                       {row.status}
                     </DenseTag>
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    <CandidateOutcomeCell outcome={outcomeByCandidate?.get(row.id)} />
                   </DenseTableCell>
                   <DenseTableCell>
                     <div className="flex items-center gap-0.5">

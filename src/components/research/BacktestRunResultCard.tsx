@@ -79,6 +79,36 @@ interface BacktestRunResultCardProps {
 export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) {
   const summary = response.summary
   const runs: EventRun[] = response.runs ?? []
+
+  // An event the engine could not price says nothing about the strategy. These
+  // separate "no edge" from "no history", which the card used to render alike.
+  const noOption = summary.skipped_no_option ?? 0
+  const noStock = summary.skipped_no_stock ?? 0
+  const skipped = summary.skipped_events ?? noOption + noStock
+  // Below this a win rate is noise; 1 of 1 is not a 100% strategy.
+  const MIN_MEANINGFUL_EVENTS = 5
+  const enoughEvents = summary.n_events >= MIN_MEANINGFUL_EVENTS
+
+  const coverage = (() => {
+    if (skipped === 0 && enoughEvents) return null
+    const parts: string[] = []
+    if (noOption > 0) {
+      parts.push(
+        `${noOption} event${noOption === 1 ? '' : 's'} skipped — no option data covers those dates`,
+      )
+    }
+    if (noStock > 0) {
+      parts.push(
+        `${noStock} event${noStock === 1 ? '' : 's'} skipped — outside the daily price history`,
+      )
+    }
+    if (summary.n_events > 0 && !enoughEvents) {
+      parts.push(
+        `${summary.n_events} priced event${summary.n_events === 1 ? '' : 's'} is too small a sample to read a win rate from`,
+      )
+    }
+    return parts.length > 0 ? parts.join(' · ') : null
+  })()
   const walkForward = response.walk_forward as WalkForwardPayload | null
   const benchmark = response.benchmark as BenchmarkPayload | null
   const persisted = Boolean(response.run_id)
@@ -118,17 +148,25 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
         </Alert>
       )}
 
+      {coverage ? (
+        <Alert>
+          <AlertDescription className="text-dense-meta">{coverage}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
         <SummaryTile label="Events" value={fmtNumLocale(summary.n_events, 0)} />
         <SummaryTile
           label="Win rate"
           value={fmtPctFromFraction(summary.win_rate)}
           tone={
-            summary.win_rate > 0.55
-              ? 'profit'
-              : summary.win_rate < 0.45
-                ? 'loss'
-                : 'muted'
+            !enoughEvents
+              ? 'muted'
+              : summary.win_rate > 0.55
+                ? 'profit'
+                : summary.win_rate < 0.45
+                  ? 'loss'
+                  : 'muted'
           }
         />
         <SummaryTile
@@ -174,9 +212,11 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
               icon={<Beaker />}
               title="No event trades produced"
               description={
-                summary.n_events === 0
-                  ? 'No events matched the criteria over the selected lookback window. Widen the window or relax parameters.'
-                  : 'Events matched but none produced tradeable legs (missing option chain or stock data).'
+                noOption > 0
+                  ? `${noOption} event${noOption === 1 ? '' : 's'} matched but could not be priced — no option data covers those dates. A stock-only template can run on this window.`
+                  : noStock > 0
+                    ? `${noStock} event${noStock === 1 ? '' : 's'} matched but fall outside the daily price history.`
+                    : 'No events matched the criteria over the selected lookback window. Widen the window or relax parameters.'
               }
             />
           </CardContent>

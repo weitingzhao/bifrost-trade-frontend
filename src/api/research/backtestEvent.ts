@@ -64,6 +64,17 @@ export interface BacktestSummary {
   max_drawdown: number
   avg_mfe?: number
   avg_mae?: number
+  /**
+   * Provenance, carried inside summary because it is the only part of a run the
+   * backend persists — anything outside it is gone once the run is reopened by id.
+   *
+   * The skip reasons are what separate "no edge" from "no history": an event the
+   * engine could not price says nothing about the strategy.
+   */
+  skipped_events?: number
+  skipped_no_option?: number
+  skipped_no_stock?: number
+  event_source?: string | null
 }
 
 export interface BacktestRunRow {

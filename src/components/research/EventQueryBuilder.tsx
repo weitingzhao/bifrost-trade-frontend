@@ -48,7 +48,16 @@ const EVENT_KIND_OPTIONS: { value: Exclude<EventKind, 'sql'>; label: string; hin
   },
 ]
 
+// Must stay in sync with TEMPLATES in
+// bifrost-research/src/bifrost_research/engines/backtest/strategy_templates.py —
+// a template the backend knows but this list omits is unreachable from the UI.
+//
+// Stock-leg templates lead: every option template prices against
+// raw_market.option_daily, which currently holds a few weeks of history, so a
+// multi-year event study on one of those returns nothing at all.
 const TEMPLATE_OPTIONS: { value: string; label: string; note?: string }[] = [
+  { value: 'long_stock_event', label: 'Long stock across event', note: 'stock only' },
+  { value: 'short_stock_event', label: 'Short stock across event', note: 'stock only' },
   { value: 'long_atm_straddle', label: 'Long ATM straddle' },
   { value: 'short_atm_straddle', label: 'Short ATM straddle' },
   { value: 'long_atm_call', label: 'Long ATM call' },
@@ -81,7 +90,7 @@ export function EventQueryBuilder({
   const [symbolsStr, setSymbolsStr] = useState(
     (defaultSymbols ?? ['NVDA', 'AAPL', 'AMZN', 'MSFT']).join(', '),
   )
-  const [template, setTemplate] = useState<string>('long_atm_straddle')
+  const [template, setTemplate] = useState<string>('long_stock_event')
   const [lookbackYears, setLookbackYears] = useState(3)
   const [entryOffset, setEntryOffset] = useState(-1)
   const [exitOffset, setExitOffset] = useState(2)
@@ -185,6 +194,11 @@ export function EventQueryBuilder({
                 {TEMPLATE_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
+                    {opt.note ? (
+                      <span className="ml-1.5 text-dense-caption text-muted-foreground">
+                        {opt.note}
+                      </span>
+                    ) : null}
                   </SelectItem>
                 ))}
               </SelectContent>

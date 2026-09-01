@@ -45,6 +45,7 @@ import {
 } from '@/api/research/harness'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { NewObjectiveDialog } from '@/components/research/NewObjectiveDialog'
+import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import {
   HarnessObjectivesColgroup,
   HarnessRunsColgroup,
@@ -158,6 +159,8 @@ export default function HarnessConsolePage() {
         description="Ops dashboard — objectives & run history. Click a run id for white-box Pipeline."
         actions={<NewObjectiveDialog />}
       />
+
+      <UniverseReachStrip />
 
       <Card variant="elevated" size="sm" className="min-w-0 border-warning/40 bg-warning/5">
         <CardContent className="space-y-2 px-3 py-2 text-dense-meta text-warning">

@@ -37,6 +37,7 @@ export const QUERY_KEYS = {
     stockData:      ['research', 'stock-data']       as const,
     watchlist:      ['research', 'watchlist']        as const,
     performanceKelly: ['research', 'performance-kelly'] as const,
+    universeReach:  ['research', 'universe-reach']    as const,
     stockDataReadiness: {
       summary:       ['research', 'stock-data-readiness', 'summary'] as const,
       criteriaStats: ['research', 'stock-data-readiness', 'criteria-stats'] as const,

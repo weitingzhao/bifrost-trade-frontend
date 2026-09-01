@@ -170,3 +170,27 @@ export const VolSurfaceFitSchema = z
     symbol: z.string(),
   })
   .passthrough()
+
+// ── Universe reach ──────────────────────────────────────────────────────
+// `symbols` is nullable on purpose: a layer that could not be counted must not
+// arrive as 0, which would read as "this layer covers nothing".
+
+export const UniverseReachLayerSchema = z
+  .object({
+    key: z.string(),
+    label: z.string(),
+    table: z.string(),
+    symbols: z.number().nullable(),
+    status: z.string(),
+  })
+  .passthrough()
+
+export const UniverseReachSchema = z
+  .object({
+    layers: z.array(UniverseReachLayerSchema),
+    widest_symbols: z.number().nullable(),
+    loop_symbols: z.number().nullable(),
+    loop_pct_of_widest: z.number().nullable(),
+    measured: z.boolean(),
+  })
+  .passthrough()

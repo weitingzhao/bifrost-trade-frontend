@@ -1,5 +1,6 @@
 import { DenseTag } from '@/components/data-display'
 import {
+  funnelReach,
   parseHarnessTrace,
   runDurationMs,
   statusVariant,
@@ -27,6 +28,7 @@ export function HarnessRunVerdictStrip({ run }: { run: ObjectiveRunDetail }) {
     '—'
   const dataSource =
     typeof run.outputs?.data_source === 'string' ? run.outputs.data_source : '—'
+  const reach = funnelReach(trace)
 
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-secondary/50 px-3 py-2">
@@ -38,6 +40,7 @@ export function HarnessRunVerdictStrip({ run }: { run: ObjectiveRunDetail }) {
       </span>
       <DenseTag variant="neutral" size="cell">
         {universeMode}
+        {reach ? ` · ${reach.considered} considered → ${reach.proposed} proposed` : ''}
       </DenseTag>
       <DenseTag variant="category" size="cell">
         source: {dataSource}
@@ -78,7 +81,8 @@ export function HarnessFunnelPanel({ traceJson }: { traceJson: unknown }) {
   if (funnel.length === 0) {
     return (
       <p className="text-dense-meta text-muted-foreground">
-        No funnel steps — legacy scan or empty universe.
+        No funnel steps — this run predates white-box tracing, or the universe
+        resolver returned nothing.
       </p>
     )
   }

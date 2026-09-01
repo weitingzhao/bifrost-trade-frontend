@@ -55,6 +55,24 @@ export function traceFunnel(trace: HarnessTrace): HarnessFunnelStep[] {
   )
 }
 
+/**
+ * How many symbols the run looked at, and how many it proposed.
+ *
+ * The mode label alone ("scan_legacy") never said whether that meant 28 symbols
+ * or 14,836 — you had to query the warehouse to find out. Reads the first step's
+ * input and the last step's output, so it survives modes with different stages.
+ */
+export function funnelReach(
+  trace: HarnessTrace,
+): { considered: number; proposed: number } | null {
+  const funnel = traceFunnel(trace)
+  if (funnel.length === 0) return null
+  const considered = funnel[0]?.in_count
+  const proposed = funnel[funnel.length - 1]?.out_count
+  if (!Number.isFinite(considered) || !Number.isFinite(proposed)) return null
+  return { considered, proposed }
+}
+
 export function runDurationMs(
   started: string | null | undefined,
   finished: string | null | undefined,

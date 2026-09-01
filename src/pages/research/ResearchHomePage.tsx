@@ -12,6 +12,7 @@
 import { Link } from 'react-router-dom'
 import { Beaker, ClipboardList, Compass, Plus, Radar } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
+import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import { EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -159,6 +160,8 @@ export default function ResearchHomePage() {
           </div>
         }
       />
+
+      <UniverseReachStrip />
 
       <VerdictSummary
         totalActive={activeCount}

@@ -18,6 +18,11 @@ import {
   useResearchDrafts,
 } from '@/hooks/useResearchDrafts'
 import type { DraftKind } from '@/api/researchDrafts'
+import {
+  BRIEFING_KINDS,
+  LOOP_KINDS,
+  isDecisionKind,
+} from '@/lib/harness/harnessDraftHelpers'
 
 type KindFilter = 'all' | 'decisions' | 'briefings' | 'loop' | DraftKind
 
@@ -42,23 +47,6 @@ const KIND_OPTIONS: { value: KindFilter; label: string }[] = [
  * verdict, and putting an Approve button on them teaches you to clear the queue
  * without looking, which is how a real decision gets waved through.
  */
-const BRIEFING_KINDS = new Set<string>(['morning_brief', 'eod_verdict'])
-
-const LOOP_KINDS = new Set<string>(['candidate_batch', 'policy_suggestion'])
-
-/**
- * Anything that is not a briefing or a loop item needs a call.
- *
- * Defined by exclusion on purpose. The backend already emits `order_intent`,
- * which DraftKind does not model; an allowlist would have dropped it out of
- * every group filter, and with Decisions as the default view it would have been
- * invisible on load. A draft the UI does not recognise is exactly the one a
- * human should see.
- */
-function isDecisionKind(kind: string): boolean {
-  return !BRIEFING_KINDS.has(kind) && !LOOP_KINDS.has(kind)
-}
-
 export default function DecisionInboxPage() {
   // Opens on what needs a call. Briefings stay one click away with their own
   // count, so nothing is hidden — it just stops competing for the same attention.

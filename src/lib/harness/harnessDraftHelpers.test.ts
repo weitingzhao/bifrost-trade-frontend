@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BRIEFING_KINDS,
+  LOOP_KINDS,
+  isDecisionKind,
   candidateBatchDataSource,
   candidateBatchItems,
   computePolicySuggestionRows,
@@ -154,5 +157,31 @@ describe('candidate evidence', () => {
       items: [{ id: 'c1', symbol: 'AAPL', score: 1, evidence: 'oops' }],
     })
     expect(item.evidence).toBeNull()
+  })
+})
+
+describe('draft kind classification', () => {
+  it('treats loop drafts as decisions — they carry Approve / Dismiss', () => {
+    expect(isDecisionKind('candidate_batch')).toBe(true)
+    expect(isDecisionKind('policy_suggestion')).toBe(true)
+  })
+
+  it('keeps recurring briefings out of the decisions view', () => {
+    expect(isDecisionKind('morning_brief')).toBe(false)
+    expect(isDecisionKind('eod_verdict')).toBe(false)
+  })
+
+  it('shows an unrecognised kind rather than hiding it', () => {
+    // order_intent is emitted by the backend and absent from DraftKind; an
+    // allowlist would have made it invisible on the default view.
+    expect(isDecisionKind('order_intent')).toBe(true)
+    expect(isDecisionKind('something_new')).toBe(true)
+  })
+
+  it('keeps the Loop tab as a narrower view of the same drafts', () => {
+    for (const kind of LOOP_KINDS) {
+      expect(isDecisionKind(kind)).toBe(true)
+    }
+    expect(BRIEFING_KINDS.has('morning_brief')).toBe(true)
   })
 })

@@ -140,3 +140,24 @@ function _valuesEqual(a: unknown, b: unknown): boolean {
   }
   return false
 }
+
+/** Recurring agent posts — they accumulate and should not crowd out decisions. */
+export const BRIEFING_KINDS = new Set<string>(['morning_brief', 'eod_verdict'])
+
+/** Loop drafts. A narrower view, not a separate inbox. */
+export const LOOP_KINDS = new Set<string>(['candidate_batch', 'policy_suggestion'])
+
+/**
+ * Anything that is not a recurring briefing needs a call.
+ *
+ * By exclusion on purpose: the backend emits kinds the UI does not model (e.g.
+ * `order_intent`), and an allowlist would drop exactly the unrecognised draft a
+ * human most needs to see.
+ *
+ * Loop drafts were excluded too, from when the Loop rarely produced any. Once it
+ * did, the page opened on "Nothing to decide" with twenty candidate batches and
+ * policy suggestions waiting — both of which carry Approve / Dismiss.
+ */
+export function isDecisionKind(kind: string): boolean {
+  return !BRIEFING_KINDS.has(kind)
+}

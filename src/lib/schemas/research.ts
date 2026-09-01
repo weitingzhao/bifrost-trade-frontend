@@ -191,6 +191,7 @@ export const UniverseReachSchema = z
     widest_symbols: z.number().nullable(),
     loop_symbols: z.number().nullable(),
     loop_pct_of_widest: z.number().nullable(),
+    universe_modes: z.array(z.string()).optional(),
     measured: z.boolean(),
   })
   .passthrough()

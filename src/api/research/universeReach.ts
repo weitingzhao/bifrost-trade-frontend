@@ -23,6 +23,8 @@ export interface UniverseReach {
   widest_symbols: number | null
   loop_symbols: number | null
   loop_pct_of_widest: number | null
+  /** universe_mode values across active objectives — what reach is measured against. */
+  universe_modes?: string[]
   measured: boolean
   cached?: boolean
 }

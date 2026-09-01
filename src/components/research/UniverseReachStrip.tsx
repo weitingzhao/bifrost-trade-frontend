@@ -27,6 +27,8 @@ export function UniverseReachStrip() {
   }
 
   const pct = data.loop_pct_of_widest
+  // Name the mode: 0.19% and 23.4% are both true, of different modes.
+  const modes = data.universe_modes?.length ? data.universe_modes.join(' + ') : null
 
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border/60 bg-secondary/50 px-3 py-2">
@@ -45,6 +47,7 @@ export function UniverseReachStrip() {
       {pct != null ? (
         <DenseTag variant={pct < 1 ? 'warning' : 'category'} size="cell">
           Loop sees {pct}% of priced symbols
+          {modes ? ` · ${modes}` : ''}
         </DenseTag>
       ) : (
         <DenseTag variant="warning" size="cell">

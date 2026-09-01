@@ -101,8 +101,8 @@ describe('candidateBatch helpers', () => {
         ],
       }),
     ).toEqual([
-      { id: 'c1', symbol: 'AAPL', score: 82 },
-      { id: 'c2', symbol: 'MSFT', score: null },
+      { id: 'c1', symbol: 'AAPL', score: 82, evidence: null },
+      { id: 'c2', symbol: 'MSFT', score: null, evidence: null },
     ])
   })
 
@@ -125,5 +125,34 @@ describe('formatPolicyValue', () => {
 
   it('serialises objects', () => {
     expect(formatPolicyValue({ a: 1 })).toBe('{"a":1}')
+  })
+})
+
+describe('candidate evidence', () => {
+  it('carries the evidence chain through when present', () => {
+    const [item] = candidateBatchItems({
+      items: [
+        {
+          id: 'c1',
+          symbol: 'PAYS',
+          score: 82.75,
+          evidence: {
+            selection: { status: 'ok', sepa_score: 82.75, path: 'PIVOT' },
+            option_analytics: { status: 'not_measured', reason: 'no option data' },
+            invalidation: ['sepa_score falls below 70'],
+          },
+        },
+      ],
+    })
+    expect(item.evidence?.selection?.path).toBe('PIVOT')
+    expect(item.evidence?.option_analytics?.status).toBe('not_measured')
+    expect(item.evidence?.invalidation).toHaveLength(1)
+  })
+
+  it('reads a malformed evidence field as absent rather than throwing', () => {
+    const [item] = candidateBatchItems({
+      items: [{ id: 'c1', symbol: 'AAPL', score: 1, evidence: 'oops' }],
+    })
+    expect(item.evidence).toBeNull()
   })
 })

@@ -1,6 +1,7 @@
 import { AlertTriangle } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
 import {
+  type CandidateEvidence,
   candidateBatchDataSource,
   candidateBatchItems,
   hitRateFailingLenses,
@@ -66,12 +67,20 @@ export function CandidateBatchBody({
       {items.length > 0 ? (
         <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-dense-meta text-foreground/90 font-mono tabular-nums">
           {items.slice(0, 6).map((item) => (
-            <li key={item.id} className="flex items-center gap-1.5 truncate">
-              <span className="font-semibold">{item.symbol}</span>
-              {item.score !== null ? (
-                <span className="text-muted-foreground">
-                  score {item.score.toFixed(1)}
-                </span>
+            <li key={item.id} className="col-span-2 space-y-0.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="font-semibold">{item.symbol}</span>
+                {item.score !== null ? (
+                  <span className="text-muted-foreground">
+                    score {item.score.toFixed(1)}
+                  </span>
+                ) : null}
+                <CandidateEvidenceTags evidence={item.evidence} />
+              </div>
+              {item.evidence?.invalidation?.length ? (
+                <div className="text-dense-micro text-muted-foreground font-sans">
+                  wrong if: {item.evidence.invalidation[0]}
+                </div>
               ) : null}
             </li>
           ))}
@@ -87,5 +96,43 @@ export function CandidateBatchBody({
         </p>
       )}
     </div>
+  )
+}
+
+/**
+ * The evidence chain, compressed to tags.
+ *
+ * `not measured` is shown, not hidden: most candidates have no option analytics
+ * because that data covers a fraction of the stock universe, and an absent tag
+ * would read as "nothing notable here" — a claim about the stock rather than
+ * about our coverage.
+ */
+function CandidateEvidenceTags({
+  evidence,
+}: {
+  evidence: CandidateEvidence | null
+}) {
+  if (!evidence) return null
+  const sel = evidence.selection
+  const opt = evidence.option_analytics
+  const rec = evidence.track_record
+  const settled = rec?.horizons?.find((h) => h.hit_rate != null)
+  return (
+    <>
+      {sel?.path ? (
+        <DenseTag variant="category" size="cell">
+          {sel.path}
+          {sel.grade ? ` · ${sel.grade}` : ''}
+        </DenseTag>
+      ) : null}
+      <DenseTag variant={opt?.status === 'ok' ? 'info' : 'neutral'} size="cell">
+        {opt?.status === 'ok' ? 'option view' : 'no option data'}
+      </DenseTag>
+      <DenseTag variant={settled ? 'success' : 'neutral'} size="cell">
+        {settled
+          ? `T+${settled.horizon_days} ${Math.round((settled.hit_rate ?? 0) * 100)}% beat`
+          : 'no settled record yet'}
+      </DenseTag>
+    </>
   )
 }

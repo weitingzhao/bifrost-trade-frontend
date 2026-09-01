@@ -72,10 +72,22 @@ export function candidateBatchDataSource(payload: Record<string, unknown>): stri
 }
 
 /** Extract shape ``{ id, symbol, score? }[]`` for the candidate_batch preview. */
+export interface CandidateEvidence {
+  /** Why this symbol — SEPA components, grade, path. */
+  selection?: { status?: string; sepa_score?: number | null; grade?: string | null; path?: string | null }
+  /** Single-stock option view; NOT MEASURED for most symbols, with a reason. */
+  option_analytics?: { status?: string; reason?: string }
+  /** How this source's candidates have actually settled (Wave W2). */
+  track_record?: { status?: string; reason?: string; horizons?: { horizon_days: number; hit_rate: number | null }[] }
+  /** What would make the call wrong. */
+  invalidation?: string[]
+}
+
 export interface CandidateItem {
   id: string
   symbol: string
   score: number | null
+  evidence: CandidateEvidence | null
 }
 export function candidateBatchItems(payload: Record<string, unknown>): CandidateItem[] {
   const raw = payload.items
@@ -90,7 +102,10 @@ export function candidateBatchItems(payload: Record<string, unknown>): Candidate
     const rawScore = rec.score
     const score =
       typeof rawScore === 'number' && Number.isFinite(rawScore) ? rawScore : null
-    out.push({ id, symbol, score })
+    const ev = rec.evidence
+    const evidence =
+      ev && typeof ev === 'object' && !Array.isArray(ev) ? (ev as CandidateEvidence) : null
+    out.push({ id, symbol, score, evidence })
   }
   return out
 }

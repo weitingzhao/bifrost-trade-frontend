@@ -1,5 +1,6 @@
 export { CockpitTabs } from './CockpitTabs'
 export { InboxBanner } from './InboxBanner'
+export { LoopBanner } from './LoopBanner'
 export { DraftCard } from './DraftCard'
 export { PinsSection } from './PinsSection'
 export { CopilotContextPopover } from './CopilotContextPopover'

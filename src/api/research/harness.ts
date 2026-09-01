@@ -1,5 +1,5 @@
 /**
- * Agent Harness API — Research Loop Wave A.
+ * Agent Harness API — Research Loop Wave A + LO Orchestrator.
  *
  * Talks to bifrost-research :8795 via researchEngineUrl().
  * Envelope: `{ ok, data, error? }`.
@@ -65,6 +65,110 @@ export interface ApproveAllResult {
   errors?: { draft_id: string; status: number; detail?: unknown }[]
 }
 
+export interface CurateRunResult {
+  run_id: string
+  curator_trace: Record<string, unknown>
+  error?: string
+}
+
+/** Recommended policy_json for Loop Orchestrator objectives (LO-0). */
+export const RECOMMENDED_LOOP_POLICY: Record<string, unknown> = {
+  universe_mode: 'scan_legacy',
+  preset: 'adaptive_30d',
+  flag_filter: [],
+  min_composite_score: 0.55,
+  min_hit_rate: 0.45,
+  max_candidates: 8,
+  use_llm_plan: true,
+  auto_validate: true,
+}
+
+/** LS-1 stock-first composite policy (Discover Stock Explorer aligned). */
+export const RECOMMENDED_LOOP_POLICY_STOCK: Record<string, unknown> = {
+  universe_mode: 'stock_composite',
+  layers: {
+    sepa: { stage: ['SETUP', 'PIVOT'], min_score: 70, required: true },
+    momentum: { grade: 'A', required: false },
+    events: { min_importance: 2, within_days: 5, required: false },
+  },
+  option_overlay: { enabled: true, required: false, flag_filter: 'iv_rank:hot' },
+  max_candidates: 8,
+  use_llm_plan: true,
+  auto_validate: true,
+}
+
+export type UniverseMode =
+  | 'stock_composite'
+  | 'sepa'
+  | 'momentum'
+  | 'events'
+  | 'scan_legacy'
+
+export interface LoopPolicyV2 {
+  universe_mode?: UniverseMode
+  layers?: {
+    sepa?: {
+      stage?: string[]
+      path?: string | null
+      grade?: string | null
+      min_score?: number
+      required?: boolean
+    }
+    momentum?: {
+      grade?: string | null
+      min_score?: number | null
+      required?: boolean
+    }
+    events?: {
+      min_importance?: number
+      within_days?: number
+      required?: boolean
+    }
+  }
+  option_overlay?: {
+    enabled?: boolean
+    required?: boolean
+    flag_filter?: string | null
+    min_composite?: number | null
+    scan_preset?: string
+  }
+  preset?: string
+  flag_filter?: string | string[] | null
+  min_composite_score?: number | null
+  min_hit_rate?: number | null
+  max_candidates?: number
+  seed_symbols?: string[]
+  use_llm_plan?: boolean
+  auto_validate?: boolean
+}
+
+export interface HarnessFunnelStep {
+  name: string
+  in_count: number
+  out_count: number
+  filter?: string
+  dropped_sample?: string[]
+  optional?: boolean
+  skipped?: boolean
+  skip_reason?: string
+}
+
+export interface HarnessTrace {
+  events: Record<string, unknown>[]
+  error?: string
+}
+
+export interface ObjectiveRunDetail extends ObjectiveRun {
+  objective_title?: string
+  objective_policy_json?: Record<string, unknown>
+}
+
+export interface RunObjectiveResponse {
+  run: ObjectiveRun
+  outputs?: Record<string, unknown>
+  advisory?: string
+}
+
 export async function fetchObjectives(params?: {
   status?: string
   limit?: number
@@ -97,6 +201,14 @@ export async function runObjective(objectiveId: string): Promise<ObjectiveRun> {
   )
 }
 
+export async function fetchObjectiveRun(runId: string): Promise<ObjectiveRunDetail> {
+  return unwrap(
+    await fetch(
+      researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}`),
+    ),
+  )
+}
+
 export async function fetchObjectiveRuns(params?: {
   status?: string
   objective_id?: string
@@ -109,6 +221,15 @@ export async function fetchObjectiveRuns(params?: {
   const qs = q.toString()
   return unwrap(
     await fetch(`${researchEngineUrl('/research/objective-runs')}${qs ? `?${qs}` : ''}`),
+  )
+}
+
+export async function curateRun(runId: string): Promise<CurateRunResult> {
+  return unwrap(
+    await fetch(
+      researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}/curate`),
+      { method: 'POST' },
+    ),
   )
 }
 

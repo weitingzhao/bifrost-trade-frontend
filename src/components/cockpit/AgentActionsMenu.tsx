@@ -1,5 +1,16 @@
 import { useNavigate } from 'react-router-dom'
-import { Beaker, BookmarkPlus, Moon, Sunrise, Zap } from 'lucide-react'
+import {
+  Beaker,
+  BookmarkPlus,
+  ChevronRight,
+  Moon,
+  Play,
+  RefreshCw,
+  Sparkles,
+  Sunrise,
+  Terminal,
+  Zap,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -7,24 +18,27 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useCockpitContext } from '@/hooks/useCockpitContext'
 import { useCockpitPins } from '@/hooks/useCockpitPins'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
+import {
+  useActiveObjectives,
+  useAwaitingRuns,
+  useCurateRun,
+  useRunObjective,
+} from '@/hooks/useLoopHarness'
 import { useRunEodAgent, useRunMorningAgent } from '@/hooks/useResearchDrafts'
+import { openCopilotInbox } from '@/lib/harness/loopCopilotPrefill'
+import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
 import { saveHypothesisIntentStore } from '@/store/saveHypothesisIntentStore'
 
 /**
- * Agent + workspace commands (Wave RS-UX6).
- *
- * Replaces the old `Actions` tab, which mixed three unrelated things: agent
- * triggers (verbs with side effects), Lab navigation links that duplicated the
- * left sidebar one-for-one, and a freshness lamp grid that was not an action at
- * all.  Only the verbs survive, and they sit next to the composer because that
- * is where commands are issued.  The nav links are gone (the sidebar has
- * IV Radar / Vol Surface / IV-RV Spread / OpEx Cycle already); the lamps moved
- * into the context popover.
+ * Agent + workspace commands (Wave RS-UX6 + HC-2 Loop).
  *
  * D10: observe-only. Nothing here places or arms an order.
  */
@@ -35,13 +49,36 @@ export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
   const hypId = pins.focusedHypothesisId ?? pins.hypothesisIds[0] ?? null
   const morning = useRunMorningAgent()
   const eod = useRunEodAgent()
+  const objectivesQ = useActiveObjectives()
+  const awaitingQ = useAwaitingRuns()
+  const runObjective = useRunObjective()
+  const curateRun = useCurateRun()
 
-  const busy = morning.isPending || eod.isPending
+  const objectives = objectivesQ.data?.items ?? []
+  const latestAwaiting = awaitingQ.data?.items?.[0] ?? null
+
+  const busy =
+    morning.isPending ||
+    eod.isPending ||
+    runObjective.isPending ||
+    curateRun.isPending
 
   function runAndRevealInbox(run: typeof morning) {
     run.mutate(undefined, {
-      onSuccess: () => cockpitDrawerStore.getState().revealInbox(),
+      onSuccess: () => {
+        copilotBubbleStore.getState().open_()
+        cockpitDrawerStore.getState().revealInbox()
+      },
     })
+  }
+
+  function runSingleObjective(objectiveId: string) {
+    runObjective.mutate(objectiveId)
+  }
+
+  function curateLatestAwaiting() {
+    if (!latestAwaiting) return
+    curateRun.mutate(latestAwaiting.id)
   }
 
   return (
@@ -89,6 +126,81 @@ export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
           {eod.isPending ? (
             <span className="text-dense-micro text-muted-foreground">Running…</span>
           ) : null}
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-dense-caption font-normal text-muted-foreground">
+          Loop harness — observe only (D10)
+        </DropdownMenuLabel>
+        {objectives.length === 0 ? (
+          <DropdownMenuItem disabled>
+            <Play className="mr-2 size-3.5" />
+            <span className="flex-1">Run active objective</span>
+            <span className="text-dense-micro text-muted-foreground">none</span>
+          </DropdownMenuItem>
+        ) : objectives.length === 1 ? (
+          <DropdownMenuItem
+            disabled={runObjective.isPending}
+            onSelect={(e) => {
+              e.preventDefault()
+              runSingleObjective(objectives[0]!.id)
+            }}
+          >
+            <Play className="mr-2 size-3.5" />
+            <span className="min-w-0 flex-1 truncate">Run {objectives[0]!.title}</span>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Play className="mr-2 size-3.5" />
+              <span className="flex-1">Run active objective</span>
+              <ChevronRight className="ml-auto size-3.5" />
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="z-[260] max-w-[14rem]">
+              {objectives.map((o) => (
+                <DropdownMenuItem
+                  key={o.id}
+                  disabled={runObjective.isPending}
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    runSingleObjective(o.id)
+                  }}
+                >
+                  <span className="truncate">{o.title}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
+        <DropdownMenuItem
+          disabled={!latestAwaiting || curateRun.isPending}
+          onSelect={(e) => {
+            e.preventDefault()
+            curateLatestAwaiting()
+          }}
+        >
+          <Sparkles className="mr-2 size-3.5" />
+          <span className="flex-1">Curator on latest awaiting</span>
+          {!latestAwaiting ? (
+            <span className="text-dense-micro text-muted-foreground">none</span>
+          ) : curateRun.isPending ? (
+            <span className="text-dense-micro text-muted-foreground">Running…</span>
+          ) : null}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault()
+            openCopilotInbox()
+          }}
+        >
+          <RefreshCw className="mr-2 size-3.5" />
+          <span className="flex-1">Open Decision Inbox</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => navigate('/research/loop/harness')}
+        >
+          <Terminal className="mr-2 size-3.5" />
+          <span className="flex-1">Open Harness Console</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

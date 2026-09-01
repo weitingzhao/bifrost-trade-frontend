@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DenseTag } from '@/components/data-display'
@@ -7,6 +8,7 @@ import {
 } from '@/components/research/harness'
 import type { AiDraft } from '@/api/researchDrafts'
 import { isHitRateWarnActive } from '@/lib/harness/harnessDraftHelpers'
+import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { cn } from '@/lib/utils'
 
 function kindLabel(kind: string): string {
@@ -61,6 +63,8 @@ export function DraftCard({
     typeof draft.payload.agent_owner === 'string' ? draft.payload.agent_owner : null
 
   const warnActive = draft.kind === 'candidate_batch' && isHitRateWarnActive(draft.payload)
+  const runId =
+    typeof draft.payload.run_id === 'string' ? draft.payload.run_id : null
 
   return (
     <div
@@ -96,6 +100,17 @@ export function DraftCard({
           <p className="text-dense-label font-medium truncate">{title}</p>
           <p className="text-dense-micro text-muted-foreground">
             {draft.generated_by} · {new Date(draft.created_at).toLocaleString()}
+            {runId ? (
+              <>
+                {' · '}
+                <Link
+                  to={loopPipelinePath(runId)}
+                  className="text-primary hover:underline font-mono"
+                >
+                  Pipeline
+                </Link>
+              </>
+            ) : null}
           </p>
         </div>
       </div>

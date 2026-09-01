@@ -82,6 +82,9 @@ export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProp
             {hypothesis.origin_page ? (
               <DenseTag variant="neutral">{hypothesis.origin_page}</DenseTag>
             ) : null}
+            {hypothesis.linked_backtest_ids.length > 0 ? (
+              <DenseTag variant="success">Evidence</DenseTag>
+            ) : null}
           </div>
           <Button
             asChild

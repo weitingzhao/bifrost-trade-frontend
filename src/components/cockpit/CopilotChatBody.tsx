@@ -5,10 +5,12 @@ import { CopilotComposer } from '@/components/cockpit/CopilotComposer'
 import { CopilotMessageList } from '@/components/cockpit/CopilotMessageList'
 import { CopilotTracePanel } from '@/components/cockpit/CopilotTracePanel'
 import { InboxBanner } from '@/components/cockpit/InboxBanner'
+import { LoopBanner } from '@/components/cockpit/LoopBanner'
 import { PersonaMiniCard } from '@/components/cockpit/PersonaMiniCard'
 import { QuickPromptChips } from '@/components/cockpit/QuickPromptChips'
 import { fetchCopilotUsage } from '@/api/aiCopilot'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
+import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -86,6 +88,8 @@ export function CopilotChatBody({ className }: Props) {
           visible while approving; renders nothing when the queue is empty. */}
       <InboxBanner />
 
+      <LoopBanner />
+
       <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
         {isEmpty ? (
           <CopilotEmptyIntro onPickPrompt={send} disabled={blocked} />
@@ -125,11 +129,8 @@ function CopilotEmptyIntro({
   onPickPrompt: (prompt: string) => void
   disabled?: boolean
 }) {
-  // Best-effort read of the same preference used inside QuickPromptChips.
-  const lang =
-    typeof window !== 'undefined' && window.localStorage.getItem('bifrost.copilot.prompt_lang') === 'en'
-      ? 'en'
-      : 'zh'
+  // Best-effort read of Copilot prompt language (shared with QuickPromptChips / Discuss prefill).
+  const [lang] = useCopilotPromptLang()
   return (
     <div className="flex h-full flex-col justify-center gap-3 px-1 py-4">
       <div className="text-center">

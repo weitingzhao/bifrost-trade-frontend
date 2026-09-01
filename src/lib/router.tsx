@@ -196,6 +196,10 @@ export const router = createBrowserRouter([
         path: 'research/loop/harness',
         lazy: lazyPage(() => import('@/pages/research/loop/HarnessConsolePage')),
       },
+      {
+        path: 'research/loop/runs/:runId',
+        lazy: lazyPage(() => import('@/pages/research/loop/LoopRunPipelinePage')),
+      },
 
       /* Wave Z — Risk Model moved under Portfolio (alias keeps /research/risk) */
       {

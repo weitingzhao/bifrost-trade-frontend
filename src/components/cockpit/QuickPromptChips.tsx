@@ -3,18 +3,23 @@ import {
   ClipboardList,
   LineChart,
   Radar,
+  RefreshCw,
   ShieldQuestion,
   Sunrise,
   Sunset,
   TrendingUp,
 } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
-import { useSyncExternalStore } from 'react'
 import { cn } from '@/lib/utils'
+import { CopilotPromptLangToggle } from '@/components/cockpit/CopilotPromptLangToggle'
+import {
+  useCopilotPromptLang,
+  type CopilotPromptLang,
+} from '@/lib/copilot/promptLang'
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>
 
-export type QuickPromptLang = 'zh' | 'en'
+export type QuickPromptLang = CopilotPromptLang
 
 type LocalizedPrompt = {
   id: string
@@ -103,51 +108,25 @@ const PROMPTS: LocalizedPrompt[] = [
       en: 'What is the current safety gate configuration? Combined with my positions and strategy instances, explain what is currently blocking entries. (D10 frozen — observation only.)',
     },
   },
+  {
+    id: 'loop-scan-review',
+    Icon: RefreshCw,
+    label: { zh: 'Loop scan 解读', en: 'Loop scan review' },
+    prompt: {
+      zh: '解读最新 harness scan / candidate_batch 结果：说明 composite score、hit_rate 门槛，以及哪些候选值得进一步研究。（D10 观察）',
+      en: 'Review the latest harness scan / candidate_batch output: explain composite score and hit_rate gates, and which candidates merit deeper research. (D10 observe-only.)',
+    },
+  },
+  {
+    id: 'loop-curator-brief',
+    Icon: ClipboardList,
+    label: { zh: 'Loop Curator 摘要', en: 'Loop curator brief' },
+    prompt: {
+      zh: '以 loop_curator 视角总结今日 awaiting approval 的 harness 候选与 policy 建议，并指出 hit_rate 警告。（D10 观察）',
+      en: 'As loop_curator, summarize today\'s awaiting-approval harness candidates and policy suggestions, including any hit_rate warnings. (D10 observe-only.)',
+    },
+  },
 ]
-
-// Language preference — persisted per-browser.
-const LANG_STORAGE_KEY = 'bifrost.copilot.prompt_lang'
-
-function readStoredLang(): QuickPromptLang {
-  if (typeof window === 'undefined') return 'zh'
-  try {
-    const raw = window.localStorage.getItem(LANG_STORAGE_KEY)
-    if (raw === 'en' || raw === 'zh') return raw
-  } catch {
-    // ignore
-  }
-  return 'zh'
-}
-
-function writeStoredLang(lang: QuickPromptLang) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(LANG_STORAGE_KEY, lang)
-    window.dispatchEvent(new CustomEvent('copilot:prompt-lang-changed'))
-  } catch {
-    // ignore
-  }
-}
-
-function subscribeLang(cb: () => void) {
-  if (typeof window === 'undefined') return () => {}
-  const handler = () => cb()
-  window.addEventListener('copilot:prompt-lang-changed', handler)
-  window.addEventListener('storage', handler)
-  return () => {
-    window.removeEventListener('copilot:prompt-lang-changed', handler)
-    window.removeEventListener('storage', handler)
-  }
-}
-
-function useQuickPromptLang(): [QuickPromptLang, (l: QuickPromptLang) => void] {
-  const lang = useSyncExternalStore(
-    subscribeLang,
-    () => readStoredLang(),
-    () => 'zh' as QuickPromptLang,
-  )
-  return [lang, writeStoredLang]
-}
 
 interface Props {
   onPick: (prompt: string) => void
@@ -156,41 +135,11 @@ interface Props {
 }
 
 export function QuickPromptChips({ onPick, disabled, className }: Props) {
-  const [lang, setLang] = useQuickPromptLang()
+  const [lang] = useCopilotPromptLang()
 
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <div className="flex items-center justify-center gap-2 text-dense-caption text-muted-foreground">
-        <span>{lang === 'zh' ? '语言' : 'Language'}</span>
-        <div className="inline-flex rounded-full border border-border/60 bg-secondary p-0.5">
-          <button
-            type="button"
-            onClick={() => setLang('zh')}
-            className={cn(
-              'rounded-full px-2 py-0.5 text-dense-caption transition-colors',
-              lang === 'zh'
-                ? 'bg-primary/20 text-primary'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-            aria-pressed={lang === 'zh'}
-          >
-            中文
-          </button>
-          <button
-            type="button"
-            onClick={() => setLang('en')}
-            className={cn(
-              'rounded-full px-2 py-0.5 text-dense-caption transition-colors',
-              lang === 'en'
-                ? 'bg-primary/20 text-primary'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-            aria-pressed={lang === 'en'}
-          >
-            EN
-          </button>
-        </div>
-      </div>
+      <CopilotPromptLangToggle className="justify-center" />
       <div
         className="flex flex-wrap gap-1 justify-center"
         aria-label={lang === 'zh' ? '推荐提示词' : 'Suggested prompts'}

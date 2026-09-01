@@ -4,6 +4,7 @@ import { CheckIcon, Crosshair, Send, Square, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AgentActionsMenu } from '@/components/cockpit/AgentActionsMenu'
 import { CopilotContextPopover } from '@/components/cockpit/CopilotContextPopover'
+import { CopilotPromptLangToggle } from '@/components/cockpit/CopilotPromptLangToggle'
 import {
   Select,
   SelectContent,
@@ -30,6 +31,7 @@ import {
   useAskCopilotIntent,
 } from '@/store/askCopilotIntentStore'
 import { copilotViewStore, useCopilotView } from '@/store/copilotViewStore'
+import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 
 type ModelOption = {
   id: CopilotModelId | string
@@ -140,6 +142,7 @@ function ComposerForm({
   autoFocus: boolean
 }) {
   const [text, setText] = useState(initialText)
+  const [lang] = useCopilotPromptLang()
   const { view, suppressed } = useCopilotView()
   const showChip = Boolean(view && !suppressed)
   const { data: modelData } = useCopilotModels()
@@ -279,7 +282,13 @@ function ComposerForm({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder={
-            streaming ? '生成中… 点击右侧方块停止' : '问持仓、VRP、OpEx、策略…'
+            streaming
+              ? lang === 'zh'
+                ? '生成中… 点击右侧方块停止'
+                : 'Generating… click square to stop'
+              : lang === 'zh'
+                ? '问持仓、VRP、OpEx、策略…'
+                : 'Ask about positions, VRP, OpEx, strategy…'
           }
           disabled={inputDisabled}
           autoFocus={autoFocus}
@@ -298,6 +307,7 @@ function ComposerForm({
             (program research-copilot-reach P4) — it now shows only on hover/focus
             of the picker, and in full inside the picker panel. */}
         <div className="flex items-center gap-2 border-t border-border/40 px-2 py-1.5">
+          <CopilotPromptLangToggle showLabel={false} className="shrink-0" />
           <Select
             value={model}
             onValueChange={(v) => onModelChange(v as CopilotModelId)}
@@ -358,7 +368,9 @@ function ComposerForm({
           <div className="min-w-0 flex-1" aria-hidden />
 
           {streaming ? (
-            <span className="shrink-0 text-dense-caption text-muted-foreground">生成中…</span>
+            <span className="shrink-0 text-dense-caption text-muted-foreground">
+              {lang === 'zh' ? '生成中…' : 'Generating…'}
+            </span>
           ) : null}
 
           {streaming && onStop ? (

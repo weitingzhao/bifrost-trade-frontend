@@ -143,7 +143,7 @@ export default function LoopRunPipelinePage() {
                   variant="outline"
                   className="h-7"
                   disabled={curate.isPending}
-                  onClick={() => void curate.mutateAsync(run.id)}
+                  onClick={() => curate.mutate(run.id)}
                 >
                   <Sparkles className="mr-1 size-3" />
                   {curate.isPending ? 'Curating…' : 'Curator'}
@@ -154,7 +154,7 @@ export default function LoopRunPipelinePage() {
                   variant="outline"
                   className="h-7"
                   disabled={approve.isPending}
-                  onClick={() => void approve.mutateAsync(run.id)}
+                  onClick={() => approve.mutate(run.id)}
                 >
                   <Check className="mr-1 size-3" />
                   {approve.isPending ? 'Approving…' : 'Approve all'}
@@ -171,6 +171,8 @@ export default function LoopRunPipelinePage() {
               </>
             ) : null}
           </div>
+          {curate.isError ? <QueryErrorAlert error={curate.error} /> : null}
+          {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
         </>
       ) : null}
     </PageShell>

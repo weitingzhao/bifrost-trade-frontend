@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest'
+import type { AiDraft } from '@/api/researchDrafts'
 import {
   BRIEFING_KINDS,
   LOOP_KINDS,
+  groupIdenticalDrafts,
+  isActionableDraft,
   isDecisionKind,
+  policySuggestionMergeCount,
   candidateBatchDataSource,
   candidateBatchItems,
   computePolicySuggestionRows,
   formatPolicyValue,
+  POLICY_FIELD_HELP,
   hitRateFailingLenses,
   isHitRateWarnActive,
   POLICY_SUGGESTION_KEYS,
@@ -116,10 +121,26 @@ describe('candidateBatch helpers', () => {
   })
 })
 
+describe('POLICY_FIELD_HELP', () => {
+  it('explains every whitelist field', () => {
+    // A key added to the whitelist without help text ships a column the reader
+    // has to ask about — which is how "null" got into the UI in the first place.
+    for (const key of POLICY_SUGGESTION_KEYS) {
+      expect(POLICY_FIELD_HELP[key], `missing help for ${key}`).toBeTruthy()
+    }
+    expect(Object.keys(POLICY_FIELD_HELP).sort()).toEqual([...POLICY_SUGGESTION_KEYS].sort())
+  })
+
+  it('says what leaving an optional gate unset does', () => {
+    for (const key of ['flag_filter', 'min_composite_score', 'min_hit_rate'] as const) {
+      expect(POLICY_FIELD_HELP[key]).toMatch(/not set/i)
+    }
+  })
+})
+
 describe('formatPolicyValue', () => {
   it('handles primitives + undefined', () => {
     expect(formatPolicyValue(undefined)).toBe('—')
-    expect(formatPolicyValue(null)).toBe('null')
     expect(formatPolicyValue(0.7)).toBe('0.7')
     expect(formatPolicyValue('iv_rank:hot')).toBe('iv_rank:hot')
     expect(formatPolicyValue('')).toBe('(empty)')
@@ -128,6 +149,15 @@ describe('formatPolicyValue', () => {
 
   it('serialises objects', () => {
     expect(formatPolicyValue({ a: 1 })).toBe('{"a":1}')
+  })
+
+  it('separates "no constraint" from "not proposed"', () => {
+    // Both are absences, and they mean different things: null is a gate that is
+    // off, undefined is a field the model left alone. Rendering null as the
+    // literal `null` made an unset gate read like a value.
+    expect(formatPolicyValue(null)).toBe('not set')
+    expect(formatPolicyValue(undefined)).toBe('—')
+    expect(formatPolicyValue(null)).not.toBe(formatPolicyValue(undefined))
   })
 })
 
@@ -183,5 +213,164 @@ describe('draft kind classification', () => {
       expect(isDecisionKind(kind)).toBe(true)
     }
     expect(BRIEFING_KINDS.has('morning_brief')).toBe(true)
+  })
+})
+
+describe('groupIdenticalDrafts', () => {
+  function draft(
+    id: string,
+    createdAt: string,
+    payload: Record<string, unknown>,
+    kind: AiDraft['kind'] = 'candidate_batch',
+  ): AiDraft {
+    return {
+      id,
+      kind,
+      payload,
+      scope: 'research',
+      status: 'pending',
+      generated_by: 'harness',
+      linked_action_id: null,
+      created_at: createdAt,
+      expires_at: null,
+    }
+  }
+
+  function batch(id: string, createdAt: string, objective: string, symbols: string[]) {
+    return draft(id, createdAt, {
+      objective_id: objective,
+      items: symbols.map((s) => ({ id: `cand-${s.toLowerCase()}`, symbol: s, score: 1 })),
+    })
+  }
+
+  it('collapses repeated runs of one objective into a single decision', () => {
+    const groups = groupIdenticalDrafts([
+      batch('d1', '2026-09-01T17:24:00Z', 'obj-a', ['NVDA', 'PAYS']),
+      batch('d2', '2026-09-01T18:06:00Z', 'obj-a', ['PAYS', 'NVDA']),
+      batch('d3', '2026-09-01T20:52:00Z', 'obj-a', ['NVDA', 'PAYS']),
+    ])
+    expect(groups).toHaveLength(1)
+    // Symbol order inside the payload must not defeat the match.
+    expect(groups[0].superseded.map((d) => d.id)).toEqual(['d2', 'd1'])
+  })
+
+  it('carries the newest draft, not the first seen', () => {
+    const groups = groupIdenticalDrafts([
+      batch('old', '2026-09-01T05:00:00Z', 'obj-a', ['NNE']),
+      batch('new', '2026-09-01T19:52:00Z', 'obj-a', ['NNE']),
+    ])
+    expect(groups[0].draft.id).toBe('new')
+  })
+
+  it('keeps batches that differ by a single symbol apart', () => {
+    const groups = groupIdenticalDrafts([
+      batch('d1', '2026-09-01T05:00:00Z', 'obj-a', ['MRVL', 'NNE', 'SPX']),
+      batch('d2', '2026-09-01T16:02:00Z', 'obj-a', ['MRVL', 'NNE', 'PLTR']),
+    ])
+    expect(groups).toHaveLength(2)
+    expect(groups.every((g) => g.superseded.length === 0)).toBe(true)
+  })
+
+  it('never merges across objectives', () => {
+    const groups = groupIdenticalDrafts([
+      batch('d1', '2026-09-01T05:00:00Z', 'obj-a', ['NVDA']),
+      batch('d2', '2026-09-01T06:00:00Z', 'obj-b', ['NVDA']),
+    ])
+    expect(groups).toHaveLength(2)
+  })
+
+  it('leaves non-batch kinds alone even when byte-identical', () => {
+    const p = { objective_id: 'obj-a', suggestion: {}, current_policy: {} }
+    const groups = groupIdenticalDrafts([
+      draft('p1', '2026-09-01T05:00:00Z', p, 'policy_suggestion'),
+      draft('p2', '2026-09-01T06:00:00Z', p, 'policy_suggestion'),
+    ])
+    expect(groups).toHaveLength(2)
+  })
+
+  it('does not group a batch that carries no objective', () => {
+    const groups = groupIdenticalDrafts([
+      draft('d1', '2026-09-01T05:00:00Z', { items: [] }),
+      draft('d2', '2026-09-01T06:00:00Z', { items: [] }),
+    ])
+    expect(groups).toHaveLength(2)
+  })
+
+  it('keeps surviving groups in first-appearance order', () => {
+    const groups = groupIdenticalDrafts([
+      batch('a1', '2026-09-01T05:00:00Z', 'obj-a', ['NVDA']),
+      batch('b1', '2026-09-01T06:00:00Z', 'obj-b', ['TSLA']),
+      batch('a2', '2026-09-01T07:00:00Z', 'obj-a', ['NVDA']),
+    ])
+    expect(groups.map((g) => g.draft.id)).toEqual(['a2', 'b1'])
+  })
+
+  it('orders deterministically when timestamps tie or do not parse', () => {
+    const groups = groupIdenticalDrafts([
+      batch('d1', 'not-a-date', 'obj-a', ['NVDA']),
+      batch('d2', 'not-a-date', 'obj-a', ['NVDA']),
+    ])
+    expect(groups).toHaveLength(1)
+    expect(groups[0].draft.id).toBe('d2')
+    expect(groups[0].superseded.map((d) => d.id)).toEqual(['d1'])
+  })
+
+  it('returns an empty list for no rows', () => {
+    expect(groupIdenticalDrafts([])).toEqual([])
+  })
+})
+
+describe('policySuggestionMergeCount / isActionableDraft', () => {
+  function asDraft(kind: AiDraft['kind'], payload: Record<string, unknown>): AiDraft {
+    return {
+      id: 'd1',
+      kind,
+      payload,
+      scope: 'research',
+      status: 'pending',
+      generated_by: 'harness',
+      linked_action_id: null,
+      created_at: '2026-09-01T05:00:00Z',
+      expires_at: null,
+    }
+  }
+
+  it('counts only fields the merge would actually write', () => {
+    const payload = {
+      current_policy: { preset: 'neutral', min_hit_rate: 0.5 },
+      suggestion: { preset: 'neutral', min_hit_rate: 0.7 },
+    }
+    // preset is proposed but identical — it writes nothing.
+    expect(policySuggestionMergeCount(payload)).toBe(1)
+  })
+
+  it('reports zero when the model proposed nothing whitelist-eligible', () => {
+    // The eight pending suggestions on 2026-09-01 all looked like this: reasoning
+    // present, suggestion dict empty after whitelist filtering.
+    const payload = {
+      current_policy: { preset: 'neutral', max_candidates: 8 },
+      suggestion: {},
+      llm_reasoning: 'Stock-composite objective; option overlay enabled…',
+    }
+    expect(policySuggestionMergeCount(payload)).toBe(0)
+    expect(isActionableDraft(asDraft('policy_suggestion', payload))).toBe(false)
+  })
+
+  it('treats a suggestion that would write a field as a real call', () => {
+    const payload = {
+      current_policy: { min_hit_rate: 0.5 },
+      suggestion: { min_hit_rate: 0.7 },
+    }
+    expect(isActionableDraft(asDraft('policy_suggestion', payload))).toBe(true)
+  })
+
+  it('leaves every other decision kind actionable', () => {
+    expect(isActionableDraft(asDraft('candidate_batch', { items: [] }))).toBe(true)
+    expect(isActionableDraft(asDraft('hypothesis_suggestion', {}))).toBe(true)
+  })
+
+  it('never counts a recurring briefing as a call', () => {
+    expect(isActionableDraft(asDraft('morning_brief', {}))).toBe(false)
+    expect(isActionableDraft(asDraft('eod_verdict', {}))).toBe(false)
   })
 })

@@ -8,7 +8,16 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, MessageCircle, Play, Sparkles, Terminal } from 'lucide-react'
+import {
+  Archive,
+  ArchiveRestore,
+  Check,
+  MessageCircle,
+  Play,
+  Sparkles,
+  Terminal,
+  Trash2,
+} from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
   CollapsibleGroup,
@@ -30,11 +39,15 @@ import {
 } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   approveAllRun,
   curateRun,
+  deleteObjective,
+  deleteObjectiveRun,
+  setObjectiveStatus,
   fetchObjectiveRuns,
   fetchObjectives,
   RECOMMENDED_LOOP_POLICY,
@@ -134,11 +147,14 @@ export default function HarnessConsolePage() {
   const navigate = useNavigate()
   const [lang] = useCopilotPromptLang()
   const [runStatus, setRunStatus] = useState<RunStatusFilter>('all')
+  // Archive is only a retirement if there is a way back. The console lists
+  // active objectives, so without this filter an archived one is simply gone.
+  const [objStatus, setObjStatus] = useState<'active' | 'archived'>('active')
   const [policyOpen, setPolicyOpen] = useState(false)
 
   const objectivesQ = useQuery({
-    queryKey: QUERY_KEYS.research.objectives({ status: 'active' }),
-    queryFn: () => fetchObjectives({ status: 'active' }),
+    queryKey: QUERY_KEYS.research.objectives({ status: objStatus }),
+    queryFn: () => fetchObjectives({ status: objStatus }),
     staleTime: 15_000,
     refetchOnWindowFocus: false,
   })
@@ -174,6 +190,41 @@ export default function HarnessConsolePage() {
     },
   })
 
+  // Archiving is the retirement path; delete is only offered for an objective
+  // that never ran, because the API refuses once runs exist and taking them
+  // would take the funnels and the candidate lineage with them.
+  const [retiring, setRetiring] = useState<{
+    objective: ResearchObjective
+    mode: 'archive' | 'delete'
+  } | null>(null)
+
+  const archiveMut = useMutation({
+    mutationFn: (v: { id: string; status: 'active' | 'archived' }) =>
+      setObjectiveStatus(v.id, v.status),
+    onSuccess: () => {
+      setRetiring(null)
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+    },
+  })
+
+  const deleteMut = useMutation({
+    mutationFn: (objectiveId: string) => deleteObjective(objectiveId),
+    onSuccess: () => {
+      setRetiring(null)
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+    },
+  })
+
+  const [deletingRun, setDeletingRun] = useState<ObjectiveRun | null>(null)
+
+  const deleteRunMut = useMutation({
+    mutationFn: (runId: string) => deleteObjectiveRun(runId),
+    onSuccess: () => {
+      setDeletingRun(null)
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
+    },
+  })
+
   const curateMut = useMutation({
     mutationFn: (runId: string) => curateRun(runId),
     onSuccess: () => {
@@ -187,6 +238,15 @@ export default function HarnessConsolePage() {
     [objectivesQ.data?.items],
   )
   const runs = useMemo(() => runsQ.data?.items ?? [], [runsQ.data?.items])
+
+  // Whether Delete is even offered. The API is the authority — it refuses with
+  // the real count — but showing the button for an objective that plainly has
+  // history invites a click that can only fail.
+  const runCountByObjective = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const r of runs) map.set(r.objective_id, (map.get(r.objective_id) ?? 0) + 1)
+    return map
+  }, [runs])
 
   const objectiveTitleById = useMemo(() => {
     const map = new Map<string, string>()
@@ -252,7 +312,17 @@ export default function HarnessConsolePage() {
 
       {/* Objectives */}
       <section className="min-w-0 space-y-2">
-        <h2 className="text-dense-body font-semibold">Objectives</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-dense-body font-semibold">Objectives</h2>
+          <SegmentControl
+            value={objStatus}
+            onChange={(v) => setObjStatus(v as 'active' | 'archived')}
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'archived', label: 'Archived' },
+            ]}
+          />
+        </div>
         {objectivesQ.isError ? (
           <QueryErrorAlert error={objectivesQ.error} />
         ) : objectivesQ.isLoading ? (
@@ -260,8 +330,12 @@ export default function HarnessConsolePage() {
         ) : objectives.length === 0 ? (
           <EmptyState
             icon={<Terminal />}
-            title="No active objectives"
-            description="Click New Objective to create one. Harness proposes candidates; Owner approves in Decision Inbox or Copilot."
+            title={objStatus === 'archived' ? 'No archived objectives' : 'No active objectives'}
+            description={
+              objStatus === 'archived'
+                ? 'Nothing retired yet. Archived objectives are restored from here.'
+                : 'Click New Objective to create one. Harness proposes candidates; Owner approves in Decision Inbox or Copilot.'
+            }
           />
         ) : (
           <DenseDataTable scrollX={false}>
@@ -279,6 +353,8 @@ export default function HarnessConsolePage() {
               {objectives.map((row: ResearchObjective) => {
                 const busy =
                   runMut.isPending && runMut.variables === row.id
+                const hasRuns = (runCountByObjective.get(row.id) ?? 0) > 0
+                const archived = row.status !== 'active'
                 return (
                   <DenseTableRow key={row.id}>
                     <DenseTableCell>
@@ -296,20 +372,55 @@ export default function HarnessConsolePage() {
                       {row.persona}
                     </DenseTableCell>
                     <DenseTableCell>
-                      <DenseTag variant="success">{row.status}</DenseTag>
+                      <DenseTag variant={archived ? 'neutral' : 'success'}>{row.status}</DenseTag>
                     </DenseTableCell>
                     <DenseTableCell>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-7 max-w-full truncate px-2 text-dense-meta"
-                        disabled={busy || runMut.isPending}
-                        onClick={() => void runMut.mutateAsync(row.id)}
-                      >
-                        <Play className="mr-1 size-3 shrink-0" />
-                        {busy ? 'Running…' : 'Run'}
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-0.5">
+                        {archived ? null : (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-1.5 text-dense-micro"
+                            disabled={busy || runMut.isPending}
+                            onClick={() => runMut.mutate(row.id)}
+                          >
+                            <Play className="mr-0.5 size-3 shrink-0" />
+                            {busy ? 'Running…' : 'Run'}
+                          </Button>
+                        )}
+                        {archived ? (
+                          <IconActionButton
+                            title="Restore — brings it back to the active list"
+                            ariaLabel={`Restore ${row.title}`}
+                            disabled={archiveMut.isPending}
+                            onClick={() => archiveMut.mutate({ id: row.id, status: 'active' })}
+                          >
+                            <ArchiveRestore className="size-3.5" />
+                          </IconActionButton>
+                        ) : (
+                          <IconActionButton
+                            title="Archive — leaves the console, keeps its runs"
+                            ariaLabel={`Archive ${row.title}`}
+                            onClick={() => setRetiring({ objective: row, mode: 'archive' })}
+                          >
+                            <Archive className="size-3.5" />
+                          </IconActionButton>
+                        )}
+                        <IconActionButton
+                          tone="danger"
+                          title={
+                            hasRuns
+                              ? 'Cannot delete — this objective has runs. Archive it instead.'
+                              : 'Delete — it has never run'
+                          }
+                          ariaLabel={`Delete ${row.title}`}
+                          disabled={hasRuns}
+                          onClick={() => setRetiring({ objective: row, mode: 'delete' })}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </IconActionButton>
+                      </div>
                     </DenseTableCell>
                   </DenseTableRow>
                 )
@@ -322,6 +433,62 @@ export default function HarnessConsolePage() {
             {runMut.error instanceof Error ? runMut.error.message : String(runMut.error)}
           </p>
         ) : null}
+        {/* The API refuses a delete that would take run history with it, and
+            says how many runs. Surfacing that verbatim is more useful than a
+            generic failure. */}
+        {deleteMut.isError ? (
+          <p className="text-dense-meta text-destructive">
+            {deleteMut.error instanceof Error
+              ? deleteMut.error.message
+              : String(deleteMut.error)}
+          </p>
+        ) : null}
+        {archiveMut.isError ? (
+          <p className="text-dense-meta text-destructive">
+            {archiveMut.error instanceof Error
+              ? archiveMut.error.message
+              : String(archiveMut.error)}
+          </p>
+        ) : null}
+
+        <ConfirmDialog
+          open={deletingRun !== null}
+          title="Delete run"
+          message={
+            deletingRun
+              ? `Delete ${deletingRun.id}? Its funnel and trace go with it. The API refuses if candidates still point at this run.`
+              : ''
+          }
+          confirmLabel="Delete"
+          confirming={deleteRunMut.isPending}
+          onCancel={() => setDeletingRun(null)}
+          onConfirm={() => {
+            if (deletingRun) deleteRunMut.mutate(deletingRun.id)
+          }}
+        />
+
+        <ConfirmDialog
+          open={retiring !== null}
+          title={
+            retiring?.mode === 'delete' ? 'Delete objective' : 'Archive objective'
+          }
+          message={
+            retiring?.mode === 'delete'
+              ? `Delete “${retiring.objective.title}”? It has never run, so nothing is lost.`
+              : `Archive “${retiring?.objective.title ?? ''}”? It leaves the console. Its runs, funnels and the candidates that reference them stay.`
+          }
+          confirmLabel={retiring?.mode === 'delete' ? 'Delete' : 'Archive'}
+          confirming={archiveMut.isPending || deleteMut.isPending}
+          onCancel={() => setRetiring(null)}
+          onConfirm={() => {
+            if (!retiring) return
+            if (retiring.mode === 'delete') {
+              deleteMut.mutate(retiring.objective.id)
+            } else {
+              archiveMut.mutate({ id: retiring.objective.id, status: 'archived' })
+            }
+          }}
+        />
       </section>
 
       {/* Runs */}
@@ -418,8 +585,9 @@ export default function HarnessConsolePage() {
                       </DenseTag>
                     </DenseTableCell>
                     <DenseTableCell>
+                      <div className="flex flex-wrap items-center gap-0.5">
                       {awaiting ? (
-                        <div className="flex flex-wrap items-center gap-0.5">
+                        <>
                           <IconActionButton
                             title={loopCopilotUi.discuss(lang)}
                             ariaLabel={`${loopCopilotUi.discuss(lang)} ${row.id}`}
@@ -444,7 +612,7 @@ export default function HarnessConsolePage() {
                             title={curateBusy ? 'Curating…' : 'Curator'}
                             ariaLabel={`Curator ${row.id}`}
                             disabled={curateBusy || curateMut.isPending}
-                            onClick={() => void curateMut.mutateAsync(row.id)}
+                            onClick={() => curateMut.mutate(row.id)}
                           >
                             <Sparkles className="size-3.5" />
                           </IconActionButton>
@@ -457,19 +625,32 @@ export default function HarnessConsolePage() {
                             variant="outline"
                             className="h-6 px-1.5 text-dense-micro"
                             disabled={approveBusy || approveMut.isPending}
-                            onClick={() => void approveMut.mutateAsync(row.id)}
+                            onClick={() => approveMut.mutate(row.id)}
                           >
                             <Check className="mr-0.5 size-3 shrink-0" />
                             {approveBusy ? 'Approving…' : 'Approve'}
                           </Button>
-                        </div>
+                        </>
                       ) : curatorTrace ? (
-                        <span className="block truncate text-dense-caption text-muted-foreground">
+                        <span className="inline-block truncate align-middle text-dense-caption text-muted-foreground">
                           Curator: {String(curatorTrace.status ?? 'done')}
                         </span>
                       ) : (
                         <span className="text-dense-caption text-muted-foreground">—</span>
                       )}
+                      {/* Offered on every run, including failed and completed ones:
+                          those are exactly the rows that accumulate. The API
+                          refuses while candidates still point at the run. */}
+                      <IconActionButton
+                        tone="danger"
+                        title="Delete this run — refused while its candidates exist"
+                        ariaLabel={`Delete run ${row.id}`}
+                        disabled={deleteRunMut.isPending}
+                        onClick={() => setDeletingRun(row)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </IconActionButton>
+                      </div>
                     </DenseTableCell>
                   </DenseTableRow>
                 )
@@ -477,6 +658,13 @@ export default function HarnessConsolePage() {
             </DenseTableBody>
           </DenseDataTable>
         )}
+        {deleteRunMut.isError ? (
+          <p className="text-dense-meta text-destructive">
+            {deleteRunMut.error instanceof Error
+              ? deleteRunMut.error.message
+              : String(deleteRunMut.error)}
+          </p>
+        ) : null}
         {approveMut.isError ? (
           <p className="text-dense-meta text-destructive">
             {approveMut.error instanceof Error

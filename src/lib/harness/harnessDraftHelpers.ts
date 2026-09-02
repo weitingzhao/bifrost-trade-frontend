@@ -4,6 +4,7 @@
  * Kept small and side-effect free so DraftCard can stay a dumb render
  * component and the logic gets its own unit tests.
  */
+import type { AiDraft } from '@/api/researchDrafts'
 
 /** Fields the runtime may accept in policy_json (mirrors backend whitelist). */
 export const POLICY_SUGGESTION_KEYS = [
@@ -15,6 +16,26 @@ export const POLICY_SUGGESTION_KEYS = [
 ] as const
 
 export type PolicyKey = (typeof POLICY_SUGGESTION_KEYS)[number]
+
+/**
+ * What each whitelist field gates, and what leaving it unset means.
+ *
+ * Mirrors `copilot/harness/policy_schema.py` (`LoopPolicy` defaults and
+ * `validate_policy_for_mode`). A diff table that shows `min_hit_rate` as an
+ * absence without saying the gate is off is a table you have to ask about.
+ */
+export const POLICY_FIELD_HELP: Record<PolicyKey, string> = {
+  preset:
+    'Scoring weights for the scan layer. "neutral" keeps the stored composite score as-is. In stock_composite mode it applies only to the option overlay.',
+  flag_filter:
+    'Keep only symbols carrying these lens flags. Not set = no flag filter, every symbol passes this layer.',
+  min_composite_score:
+    'Floor on the composite score. Not set = no floor, the layer drops nobody.',
+  min_hit_rate:
+    'Hit-rate gate on the selected lenses. Not set = gate off; it is ignored in stock modes anyway unless flag_filter is set.',
+  max_candidates:
+    'Cap on how many candidates one run may propose. Always set — the run stops at this many.',
+}
 
 export interface PolicyDiffRow {
   key: PolicyKey
@@ -50,6 +71,26 @@ export function computePolicySuggestionRows(
     })
   }
   return rows
+}
+
+/** How many whitelist fields a `policy_suggestion` would actually write. */
+export function policySuggestionMergeCount(payload: Record<string, unknown>): number {
+  return computePolicySuggestionRows(payload).filter((r) => r.changed).length
+}
+
+/**
+ * True when approving this draft would change something.
+ *
+ * A `policy_suggestion` whose whitelist-eligible fields are all unchanged is
+ * reading material, not a call: Approve writes nothing. Counting those as
+ * decisions is how the Inbox came to claim eleven pending calls when three
+ * batches and eight no-ops were waiting — and an Approve button that does
+ * nothing teaches you to clear the queue without looking.
+ */
+export function isActionableDraft(draft: AiDraft): boolean {
+  if (!isDecisionKind(draft.kind)) return false
+  if (draft.kind === 'policy_suggestion') return policySuggestionMergeCount(draft.payload) > 0
+  return true
 }
 
 /** True when a `candidate_batch` payload carries the Y.3 warn flag. */
@@ -110,10 +151,17 @@ export function candidateBatchItems(payload: Record<string, unknown>): Candidate
   return out
 }
 
-/** Human-readable rendering for a policy_json value cell. */
+/**
+ * Human-readable rendering for a policy_json value cell.
+ *
+ * `null` and `undefined` are different absences and must not read alike:
+ * `undefined` means the model did not touch this field, `null` means the field
+ * carries no constraint — the gate is off. Printing the literal `null` made an
+ * unset gate look like a value, the same trap as rendering NOT MEASURED as 0.
+ */
 export function formatPolicyValue(value: unknown): string {
   if (value === undefined) return '—'
-  if (value === null) return 'null'
+  if (value === null) return 'not set'
   if (typeof value === 'string') return value || '(empty)'
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   try {
@@ -160,4 +208,75 @@ export const LOOP_KINDS = new Set<string>(['candidate_batch', 'policy_suggestion
  */
 export function isDecisionKind(kind: string): boolean {
   return !BRIEFING_KINDS.has(kind)
+}
+
+/** A decision, plus the identical drafts it supersedes. */
+export interface DraftGroup {
+  /** Newest draft — the one that carries the call. */
+  draft: AiDraft
+  /** Older drafts proposing exactly the same thing, newest first. */
+  superseded: AiDraft[]
+}
+
+/**
+ * Collapse repeated Loop batches into one decision.
+ *
+ * A daily objective re-run every few minutes posts a `candidate_batch` each
+ * time. On 2026-09-01 thirteen runs of `obj-daily-loop-stock` proposed exactly
+ * the same eight symbols and three runs of the IV watch proposed the same
+ * three, so the Inbox read "25 to decide" for three real calls — the count was
+ * honest, the content was not.
+ *
+ * Deliberately narrow: only `candidate_batch`, and only on an exact match of
+ * objective and symbol set. Two batches differing by one symbol are two
+ * decisions, and hiding one behind the other costs more than the duplication.
+ * Everything else passes through as its own group, in input order.
+ */
+export function groupIdenticalDrafts(rows: AiDraft[]): DraftGroup[] {
+  const slots: (DraftGroup | null)[] = []
+  const members = new Map<string, AiDraft[]>()
+  const slotOf = new Map<string, number>()
+
+  for (const draft of rows) {
+    const key = _batchKey(draft)
+    if (key === null) {
+      slots.push({ draft, superseded: [] })
+      continue
+    }
+    const seen = members.get(key)
+    if (seen) {
+      seen.push(draft)
+      slots.push(null)
+      continue
+    }
+    members.set(key, [draft])
+    slotOf.set(key, slots.length)
+    slots.push(null)
+  }
+
+  for (const [key, group] of members) {
+    const [newest, ...superseded] = group.slice().sort(_newestFirst)
+    slots[slotOf.get(key) as number] = { draft: newest, superseded }
+  }
+
+  return slots.filter((g): g is DraftGroup => g !== null)
+}
+
+/** Grouping key, or null when the draft must never be collapsed. */
+function _batchKey(draft: AiDraft): string | null {
+  if (draft.kind !== 'candidate_batch') return null
+  const objective = draft.payload?.objective_id
+  if (typeof objective !== 'string' || !objective) return null
+  const symbols = candidateBatchItems(draft.payload)
+    .map((i) => i.symbol)
+    .sort()
+  return `${objective} ${symbols.join(',')}`
+}
+
+function _newestFirst(a: AiDraft, b: AiDraft): number {
+  const ta = Date.parse(a.created_at)
+  const tb = Date.parse(b.created_at)
+  if (Number.isFinite(ta) && Number.isFinite(tb) && ta !== tb) return tb - ta
+  // Unparsable or tied timestamps must still order deterministically.
+  return a.id < b.id ? 1 : a.id > b.id ? -1 : 0
 }

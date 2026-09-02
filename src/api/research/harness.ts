@@ -224,6 +224,38 @@ export async function fetchObjectiveRuns(params?: {
   )
 }
 
+/** Delete one run. The API refuses (409) while candidates point at it. */
+export async function deleteObjectiveRun(runId: string): Promise<{ id: string }> {
+  return unwrap<{ id: string }>(
+    await fetch(researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}`), {
+      method: 'DELETE',
+    }),
+  )
+}
+
+/** Archive an objective (or bring it back). Runs and lineage are untouched. */
+export async function setObjectiveStatus(
+  objectiveId: string,
+  status: 'active' | 'archived',
+): Promise<ResearchObjective> {
+  return unwrap<ResearchObjective>(
+    await fetch(researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}`), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    }),
+  )
+}
+
+/** Delete an objective that never ran. The API refuses (409) once it has runs. */
+export async function deleteObjective(objectiveId: string): Promise<{ id: string }> {
+  return unwrap<{ id: string }>(
+    await fetch(researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}`), {
+      method: 'DELETE',
+    }),
+  )
+}
+
 export async function curateRun(runId: string): Promise<CurateRunResult> {
   return unwrap(
     await fetch(

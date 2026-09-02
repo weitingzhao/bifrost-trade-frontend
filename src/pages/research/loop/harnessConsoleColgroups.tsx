@@ -8,12 +8,12 @@ export const HARNESS_OBJECTIVES_COL_WIDTHS = {
 } as const
 
 export const HARNESS_RUNS_COL_WIDTHS = {
-  run: '15%',
-  objective: '19%',
+  run: '14%',
+  objective: '18%',
   funnel: '17%',
   started: '14%',
-  status: '13%',
-  actions: '22%',
+  status: '12%',
+  actions: '25%',
 } as const
 
 export function HarnessObjectivesColgroup() {

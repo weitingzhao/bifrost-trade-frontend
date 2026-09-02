@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react'
 import { Inbox } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { EmptyState, SegmentControl } from '@/components/data-display'
+import { Button } from '@/components/ui/button'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DraftCard } from '@/components/cockpit/DraftCard'
@@ -21,6 +22,8 @@ import type { DraftKind } from '@/api/researchDrafts'
 import {
   BRIEFING_KINDS,
   LOOP_KINDS,
+  groupIdenticalDrafts,
+  isActionableDraft,
   isDecisionKind,
 } from '@/lib/harness/harnessDraftHelpers'
 
@@ -78,12 +81,24 @@ export default function DecisionInboxPage() {
     return all
   }, [query.data?.rows, kindFilter])
 
+  // One card per decision, not per draft. Repeated runs of the same objective
+  // post an identical batch each time; they are folded into the newest and
+  // listed under it rather than dropped.
+  const groups = useMemo(() => groupIdenticalDrafts(rows), [rows])
+
   // Shown next to the filter so the split is visible without switching views:
   // you can see at a glance whether anything actually needs a call today.
+  //
+  // `decisions` counts calls, not drafts. Counting drafts is what let the header
+  // read "25 to decide" when thirteen were the same eight symbols and eight more
+  // were policy suggestions that would write nothing.
   const counts = useMemo(() => {
     const all = query.data?.rows ?? []
+    const decisionGroups = groupIdenticalDrafts(all.filter((d) => isDecisionKind(d.kind)))
     return {
-      decisions: all.filter((d) => isDecisionKind(d.kind)).length,
+      decisions: decisionGroups.filter((g) => isActionableDraft(g.draft)).length,
+      inert: decisionGroups.filter((g) => !isActionableDraft(g.draft)).length,
+      collapsed: decisionGroups.reduce((n, g) => n + g.superseded.length, 0),
       briefings: all.filter((d) => BRIEFING_KINDS.has(d.kind)).length,
     }
   }, [query.data?.rows])
@@ -104,11 +119,16 @@ export default function DecisionInboxPage() {
           options={KIND_OPTIONS}
         />
         <span className="text-dense-meta text-muted-foreground ml-auto">
-          {counts.decisions} to decide · {counts.briefings} briefing
-          {counts.briefings === 1 ? '' : 's'} ·{' '}
+          {counts.decisions} to decide
+          {counts.inert > 0 ? ` · ${counts.inert} nothing to merge` : ''} ·{' '}
+          {counts.briefings} briefing{counts.briefings === 1 ? '' : 's'} ·{' '}
           {query.data?.pending_count ?? rows.length} pending
+          {counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}
         </span>
       </div>
+
+      {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
+      {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}
 
       {query.isError ? (
         <QueryErrorAlert error={query.error} />
@@ -125,17 +145,53 @@ export default function DecisionInboxPage() {
           }
         />
       ) : (
-        <div className="space-y-2 max-w-3xl">
-          {rows.map((draft) => (
-            <DraftCard
-              key={draft.id}
-              draft={draft}
-              approving={approve.isPending && approve.variables === draft.id}
-              dismissing={dismiss.isPending && dismiss.variables === draft.id}
-              onApprove={() => approve.mutate(draft.id)}
-              onDismiss={() => dismiss.mutate(draft.id)}
-            />
-          ))}
+        // Cards were capped at 48rem, using 57% of the canvas while candidate
+        // rows wrapped inside them. Width belongs to the content that needs it:
+        // the batch rows take it, prose and the policy diff cap themselves.
+        //
+        // Gap is 4, not 2: at 2 the space between two decisions matched the
+        // space between a card's own lines, so eleven cards read as one wall.
+        <div className="max-w-7xl space-y-4">
+          {groups.map(({ draft, superseded }) => {
+            // A card that would write nothing on Approve keeps its content and
+            // its colour, at lower weight — the calls that matter sit forward,
+            // and nothing is hidden or reordered to get there.
+            const actionable = isActionableDraft(draft)
+            return (
+              <div key={draft.id} className="space-y-1">
+                <DraftCard
+                  draft={draft}
+                  muted={!actionable}
+                  approving={approve.isPending && approve.variables === draft.id}
+                  dismissing={dismiss.isPending && dismiss.variables === draft.id}
+                  onApprove={() => approve.mutate(draft.id)}
+                  onDismiss={() => dismiss.mutate(draft.id)}
+                />
+                {superseded.length > 0 ? (
+                  // Indented under its own card: unattached, this line sat
+                  // between two cards belonging visibly to neither.
+                  <div className="ml-3.5 flex flex-wrap items-center gap-2 border-l-2 border-border/50 pl-2 text-dense-meta text-muted-foreground">
+                    <span>
+                      {superseded.length} earlier run{superseded.length === 1 ? '' : 's'} proposed
+                      exactly this. Folded in, not decided for you.
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2"
+                      disabled={dismiss.isPending}
+                      onClick={() => {
+                        for (const stale of superseded) dismiss.mutate(stale.id)
+                      }}
+                    >
+                      Dismiss {superseded.length}
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
         </div>
       )}
     </PageShell>

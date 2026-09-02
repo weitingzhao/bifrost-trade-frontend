@@ -3,6 +3,8 @@ import type { ByDayRangeData } from '@/types/trading'
 import type { PerformanceTimeRange } from './performanceUtils'
 import { getTimeRangeDates, listMonthKeysInRange } from './performanceUtils'
 
+export type FiBarBucket = 'month' | 'quarter' | 'year'
+
 export interface FiBar {
   key: string
   x: number
@@ -10,12 +12,15 @@ export interface FiBar {
   w: number
   h: number
   label: string
+  /** Period stream total (month / quarter / year bucket). */
   monthlyNotional: number
   annualizedRatio: number
   valueLine: string
   valueX: number
   labelY: number
   showXLabel: boolean
+  /** Hide on-chart value captions when bars are dense; hover title still has the value. */
+  showValueCaption: boolean
   tone: 'pos' | 'neg' | 'zero'
 }
 
@@ -36,15 +41,51 @@ export interface FiBarChartData {
   useRatio: boolean
   fiAnnMode: boolean
   fiPositionValueBase: number
+  bucket: FiBarBucket
 }
 
-function fmtUsdCompact(v: number): string {
+function fiBarUsdAbbrev(v: number): string {
   const abs = Math.abs(v)
   if (abs >= 1e6) return `$${(v / 1e6).toFixed(1)}M`
   if (abs >= 1e3) return `$${(v / 1e3).toFixed(1)}k`
   return `$${v.toFixed(0)}`
 }
 
+/** Align FI bar grain to Time Range so Year / 3Y are not 12–36 squeezed months. */
+export function fiBarBucketForTimeRange(timeRange: PerformanceTimeRange): FiBarBucket {
+  switch (timeRange) {
+    case 'quarter':
+    case 'halfyear':
+      return 'month'
+    case 'year':
+      return 'quarter'
+    case '3year':
+      return 'year'
+  }
+}
+
+export function monthKeyToFiBucketKey(monthKey: string, bucket: FiBarBucket): string {
+  if (bucket === 'month') return monthKey
+  if (bucket === 'year') return monthKey.slice(0, 4)
+  const [y, m] = monthKey.split('-').map(Number)
+  const q = Math.floor((m - 1) / 3) + 1
+  return `${y}-Q${q}`
+}
+
+export function fiBucketLabel(bucketKey: string, bucket: FiBarBucket): string {
+  if (bucket === 'month') {
+    const [y, m] = bucketKey.split('-').map(Number)
+    return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+  }
+  if (bucket === 'year') return bucketKey
+  const [y, qPart] = bucketKey.split('-Q')
+  return `Q${qPart} '${String(y).slice(2)}`
+}
+
+function daysInMonthKey(monthKey: string): number {
+  const [y, m] = monthKey.split('-').map(Number)
+  return new Date(y, m, 0).getDate()
+}
 
 export function buildFiBarChart(params: {
   byDayRangeData: ByDayRangeData
@@ -62,24 +103,45 @@ export function buildFiBarChart(params: {
   const monthKeys = listMonthKeysInRange(sinceStr, untilStr)
   if (monthKeys.length === 0) return null
 
+  const bucket = fiBarBucketForTimeRange(timeRange)
+
   const daily = byDayRangeData.stkBucketNotional.fixed_income
-  const totals = new Map<string, number>(monthKeys.map((k) => [k, 0]))
+  const monthTotals = new Map<string, number>(monthKeys.map((k) => [k, 0]))
   for (const [dateStr, raw] of Object.entries(daily)) {
     const mk = dateStr.slice(0, 7)
-    if (!totals.has(mk)) continue
-    totals.set(mk, (totals.get(mk) ?? 0) + (Number(raw) || 0))
+    if (!monthTotals.has(mk)) continue
+    monthTotals.set(mk, (monthTotals.get(mk) ?? 0) + (Number(raw) || 0))
   }
 
-  const rows = monthKeys.map((monthKey) => {
-    const [y, m] = monthKey.split('-').map(Number)
-    const label = new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-    const monthlyNotional = totals.get(monthKey) ?? 0
-    const daysInMonth = new Date(y, m, 0).getDate()
-    const monthlyRatio = hasFiPositionValueBase ? monthlyNotional / fiPositionValueBase : 0
-    const annualizedRatio = hasFiPositionValueBase && daysInMonth > 0
-      ? monthlyRatio * (365 / daysInMonth) : 0
-    return { monthKey, label, monthlyNotional, annualizedRatio, daysInMonth }
+  type Agg = { key: string; notional: number; days: number; order: number }
+  const aggMap = new Map<string, Agg>()
+  monthKeys.forEach((monthKey, idx) => {
+    const bKey = monthKeyToFiBucketKey(monthKey, bucket)
+    const prev = aggMap.get(bKey)
+    const addN = monthTotals.get(monthKey) ?? 0
+    const addD = daysInMonthKey(monthKey)
+    if (!prev) {
+      aggMap.set(bKey, { key: bKey, notional: addN, days: addD, order: idx })
+    } else {
+      prev.notional += addN
+      prev.days += addD
+    }
   })
+
+  const rows = [...aggMap.values()]
+    .sort((a, b) => a.order - b.order)
+    .map((a) => {
+      const periodRatio = hasFiPositionValueBase ? a.notional / fiPositionValueBase : 0
+      const annualizedRatio =
+        hasFiPositionValueBase && a.days > 0 ? periodRatio * (365 / a.days) : 0
+      return {
+        key: a.key,
+        label: fiBucketLabel(a.key, bucket),
+        monthlyNotional: a.notional,
+        annualizedRatio,
+        days: a.days,
+      }
+    })
 
   const useRatio = hasFiPositionValueBase
   const fiAnnMode = useRatio && growthUnit === 'pct'
@@ -95,7 +157,7 @@ export function buildFiBarChart(params: {
   minY -= pad; maxY += pad
 
   const n = rows.length
-  const W = Math.max(176, Math.min(328, 40 + n * 12))
+  const W = Math.max(176, Math.min(328, 56 + n * 48))
   const H = 186
   const axisGutter = 32
   const plotX0 = axisGutter + 2
@@ -109,8 +171,9 @@ export function buildFiBarChart(params: {
   const yScale = (v: number) => plotBottom - ((v - minY) / (maxY - minY)) * chartH
   const zeroY = yScale(0)
   const slot = chartW / Math.max(1, n)
-  const barW = Math.max(2, Math.min(20, slot * 0.58))
+  const barW = Math.max(8, Math.min(36, slot * 0.55))
   const xLabelStep = Math.max(1, Math.ceil(n / 5))
+  const showValueCaptions = n <= 6 && barW >= 14
 
   const bars: FiBar[] = rows.map((r, i) => {
     const v = fiAnnMode ? r.annualizedRatio : r.monthlyNotional
@@ -131,7 +194,7 @@ export function buildFiBarChart(params: {
     else labelY = Math.min(plotBottom - 10, yRect + h + 6)
 
     return {
-      key: r.monthKey,
+      key: r.key,
       x, y: yRect, w: barW, h,
       label: r.label,
       monthlyNotional: r.monthlyNotional,
@@ -140,17 +203,19 @@ export function buildFiBarChart(params: {
       valueX: cx,
       labelY,
       showXLabel: i % xLabelStep === 0 || i === n - 1,
+      showValueCaption: showValueCaptions,
       tone: v > 0 ? 'pos' : v < 0 ? 'neg' : 'zero',
     }
   })
 
-  const yTopLabel = fiAnnMode ? `${(100 * maxY).toFixed(2)}%` : fmtUsdCompact(maxY)
-  const yBotLabel = fiAnnMode ? `${(100 * minY).toFixed(2)}%` : fmtUsdCompact(minY)
+  const yTopLabel = fiAnnMode ? `${(100 * maxY).toFixed(2)}%` : fiBarUsdAbbrev(maxY)
+  const yBotLabel = fiAnnMode ? `${(100 * minY).toFixed(2)}%` : fiBarUsdAbbrev(minY)
 
   return {
     W, H, plotX0, PR, PB, plotTop, plotBottom,
     bars, zeroY, yTopLabel, yBotLabel,
     chartW, chartH,
     useRatio, fiAnnMode, fiPositionValueBase,
+    bucket,
   }
 }

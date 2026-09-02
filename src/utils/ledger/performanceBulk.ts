@@ -17,6 +17,13 @@ import {
   listMonthKeysInRange,
   sortExecByExecutionDateThenTime,
 } from './performanceUtils'
+import { detectSameDayOptionRolls, buildEconomicOptDeltaByDay } from './sameDayOptionRolls'
+import {
+  chicagoTodayDateStr,
+  attributeOpenUnrealizedByOpenMonth,
+  computeOptOpenUnrealizedByDay,
+  listOpenOptCashLegsAsOf,
+} from './optAsOfPnL'
 
 const FETCH_LIMIT = 10000
 const STK_BUCKETS: readonly StkLedgerBucket[] = ['stocks', 'fixed_income', 'cash_like']
@@ -288,6 +295,28 @@ export async function loadPerformanceDayPnLBulk(params: {
     cash_like: monthGridForNotional(cy, cm, notionalCash),
   }
 
+  const sameDayRollsAll = detectSameDayOptionRolls(rawExecsWindow)
+  const economicOptByDay = buildEconomicOptDeltaByDay(opt, sameDayRollsAll)
+  const sameDayRolls = sameDayRollsAll.filter(
+    (r) => r.dateStr >= sinceStr && r.dateStr <= untilStr,
+  )
+
+  let realizedInRange = 0
+  for (const cell of Object.values(opt)) {
+    realizedInRange += cell.realized ?? 0
+  }
+  const asOfDateStr = chicagoTodayDateStr()
+  const optOpenLegs = listOpenOptCashLegsAsOf(rawExecsWindow, asOfDateStr)
+  const openUnrealized = optOpenLegs.reduce((s, l) => s + l.cash, 0)
+  const optAsOf = {
+    asOfDateStr,
+    realizedInRange,
+    openUnrealized,
+    total: realizedInRange + openUnrealized,
+  }
+  const optOpenByDay = computeOptOpenUnrealizedByDay(rawExecsWindow, rangeDates)
+  const optOpenByOpenMonth = attributeOpenUnrealizedByOpenMonth(rawExecsWindow, asOfDateStr)
+
   return {
     calendarDayPnLByAsset,
     calendarStkNotionalByBucket,
@@ -302,8 +331,14 @@ export async function loadPerformanceDayPnLBulk(params: {
         fixed_income: notionalFi,
         cash_like: notionalCash,
       },
+      economicOptByDay,
+      optOpenByDay,
+      optOpenByOpenMonth,
     },
     linkByOptionId,
     rawExecsWindow,
+    optAsOf,
+    optOpenLegs,
+    sameDayRolls,
   }
 }

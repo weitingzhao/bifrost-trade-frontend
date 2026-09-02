@@ -1,5 +1,5 @@
 import type { UseQueryResult } from '@tanstack/react-query'
-import type { ByDayRangeData } from '@/types/trading'
+import type { ByDayRangeData, PerformanceDayPnLBulkResult } from '@/types/trading'
 import type { OpportunitiesResponse, StrategyInstancesResponse } from '@/types/strategy'
 import type { PerformanceTimeRange } from '@/utils/ledger/performanceUtils'
 import { cn } from '@/lib/utils'
@@ -33,6 +33,8 @@ interface PerformanceFilterBarProps {
   oppQuery: UseQueryResult<OpportunitiesResponse>
   instQuery: UseQueryResult<StrategyInstancesResponse>
   byDayRangeData: ByDayRangeData | null | undefined
+  /** Options as-of-today snapshot from bulk (R in range + open U). */
+  optAsOf?: PerformanceDayPnLBulkResult['optAsOf']
   isLoading?: boolean
 }
 
@@ -53,9 +55,13 @@ export function PerformanceFilterBar({
   oppQuery,
   instQuery,
   byDayRangeData,
+  optAsOf,
   isLoading,
 }: PerformanceFilterBarProps) {
   const totals = computeByDayRangeTotals(byDayRangeData)
+  const optionTitle =
+    'Option R = realized in range (Σ monthly OPT R). Open = still-unmatched option premium as of Chicago today (not Σ monthly OPT U). Total = R + Open. Monthly OPT U column stays a path metric.'
+
 
   return (
     <div className={styles.filterBar} aria-label="Time range and daily statistics">
@@ -122,11 +128,31 @@ export function PerformanceFilterBar({
 
         {totals && (
           <span className={styles.assetTotalsInline} aria-label="Total sum of all days">
-            <span className={styles.assetTotalKv}>
+            <span className={styles.assetTotalKv} title={optionTitle}>
               Option{' '}
-              <span className={toneClass(totals.optRealized)}>{fmtPnl(totals.optRealized)}</span>
-              {' / '}
-              <span className={styles.sumNumber}>{fmtPnl(totals.optUnrealized)}</span>
+              <span className="text-muted-foreground">R </span>
+              <span className={toneClass(optAsOf?.realizedInRange ?? totals.optRealized)}>
+                {fmtPnl(optAsOf?.realizedInRange ?? totals.optRealized)}
+              </span>
+              {optAsOf != null ? (
+                <>
+                  {' · '}
+                  <span className="text-muted-foreground">Open </span>
+                  <span className={styles.sumNumber}>{fmtPnl(optAsOf.openUnrealized)}</span>
+                  {' · '}
+                  <span className="text-muted-foreground">Total </span>
+                  <span className={toneClass(optAsOf.total)}>{fmtPnl(optAsOf.total)}</span>
+                  <span className="text-muted-foreground">
+                    {' '}
+                    (as of {optAsOf.asOfDateStr.slice(5)})
+                  </span>
+                </>
+              ) : (
+                <>
+                  {' / '}
+                  <span className={styles.sumNumber}>{fmtPnl(totals.optUnrealized)}</span>
+                </>
+              )}
             </span>
             <span className={styles.assetTotalKv}>
               Stocks{' '}

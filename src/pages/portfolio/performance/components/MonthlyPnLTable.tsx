@@ -2,10 +2,17 @@ import { useState, useMemo } from 'react'
 import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ByDayRangeData } from '@/types/trading'
+import type { OpenOptCashLeg } from '@/utils/ledger/optAsOfPnL'
+import OpenOptInventoryDialog from '@/pages/portfolio/performance/components/OpenOptInventoryDialog'
 import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 interface MonthlyPnLTableProps {
   byDayRangeData: ByDayRangeData | null
+  /** Still-open premium cash as of today, keyed by open-fill month (YYYY-MM). */
+  optOpenByOpenMonth?: Record<string, number> | null
+  /** Still-open OPT fill legs as of Chicago today (for Open drill-down). */
+  optOpenLegs?: OpenOptCashLeg[] | null
+  asOfDateStr?: string | null
   isLoading?: boolean
   className?: string
 }
@@ -56,8 +63,16 @@ interface MonthGroup {
   sums: Omit<DayRow, 'date'>
 }
 
-export default function MonthlyPnLTable({ byDayRangeData, isLoading, className }: MonthlyPnLTableProps) {
+export default function MonthlyPnLTable({
+  byDayRangeData,
+  optOpenByOpenMonth,
+  optOpenLegs,
+  asOfDateStr,
+  isLoading,
+  className,
+}: MonthlyPnLTableProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
+  const [openDrill, setOpenDrill] = useState<{ monthKey: string; monthLabel: string } | null>(null)
 
   const monthGroups = useMemo<MonthGroup[]>(() => {
     if (!byDayRangeData) return []
@@ -161,6 +176,9 @@ export default function MonthlyPnLTable({ byDayRangeData, isLoading, className }
             <th>Date</th>
             <th>Opt R</th>
             <th>Opt U</th>
+            <th title="Still-open premium cash as of today that was opened in this month (not path Opt U). Click to list contracts.">
+              Open
+            </th>
             <th>Stocks N</th>
             <th>Stocks R</th>
             <th>FI Stream</th>
@@ -178,11 +196,28 @@ export default function MonthlyPnLTable({ byDayRangeData, isLoading, className }
                 group={group}
                 expanded={expanded}
                 onToggle={() => toggleMonth(group.key)}
+                openAsOfMonth={optOpenByOpenMonth?.[group.key] ?? 0}
+                onOpenDrill={
+                  optOpenLegs != null && optOpenLegs.length > 0
+                    ? () => setOpenDrill({ monthKey: group.key, monthLabel: group.label })
+                    : undefined
+                }
               />
             )
           })}
         </tbody>
       </table>
+
+      {openDrill != null && (
+        <OpenOptInventoryDialog
+          open
+          onClose={() => setOpenDrill(null)}
+          monthKey={openDrill.monthKey}
+          monthLabel={openDrill.monthLabel}
+          asOfDateStr={asOfDateStr ?? '—'}
+          legs={optOpenLegs ?? []}
+        />
+      )}
     </div>
   )
 }
@@ -191,12 +226,17 @@ function MonthSection({
   group,
   expanded,
   onToggle,
+  openAsOfMonth,
+  onOpenDrill,
 }: {
   group: MonthGroup
   expanded: boolean
   onToggle: () => void
+  openAsOfMonth: number
+  onOpenDrill?: () => void
 }) {
   const { sums } = group
+  const canDrill = onOpenDrill != null && Math.abs(openAsOfMonth) >= 0.005
   return (
     <>
       <tr className={styles.monthRow} onClick={onToggle}>
@@ -208,6 +248,30 @@ function MonthSection({
         </td>
         <td className={pnlColorClass(sums.optR)}>{fmtVal(sums.optR)}</td>
         <td className={unrealizedColorClass(sums.optU)}>{fmtVal(sums.optU)}</td>
+        <td
+          className={unrealizedColorClass(openAsOfMonth)}
+          onClick={
+            canDrill
+              ? (e) => {
+                  e.stopPropagation()
+                  onOpenDrill()
+                }
+              : undefined
+          }
+        >
+          {canDrill ? (
+            <button
+              type="button"
+              className="font-semibold hover:underline underline-offset-2"
+              title="Show still-open option contracts"
+              aria-label={`Open option inventory for ${group.label}`}
+            >
+              {fmtVal(openAsOfMonth)}
+            </button>
+          ) : (
+            fmtVal(openAsOfMonth)
+          )}
+        </td>
         <td className={signedNotionalClass(sums.stocksN)}>{fmtVal(sums.stocksN)}</td>
         <td className={pnlColorClass(sums.stocksR)}>{fmtVal(sums.stocksR)}</td>
         <td className={signedNotionalClass(sums.fiN)}>{fmtVal(sums.fiN)}</td>
@@ -221,6 +285,7 @@ function MonthSection({
             <td className="pl-7 whitespace-nowrap text-muted-foreground">{day.date}</td>
             <td className={pnlColorClass(day.optR)}>{fmtVal(day.optR)}</td>
             <td className={unrealizedColorClass(day.optU)}>{fmtVal(day.optU)}</td>
+            <td className="text-muted-foreground">—</td>
             <td className={signedNotionalClass(day.stocksN)}>{fmtVal(day.stocksN)}</td>
             <td className={pnlColorClass(day.stocksR)}>{fmtVal(day.stocksR)}</td>
             <td className={signedNotionalClass(day.fiN)}>{fmtVal(day.fiN)}</td>

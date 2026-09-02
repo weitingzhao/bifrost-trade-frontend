@@ -10,7 +10,7 @@ import {
 } from '@/utils/ledger/stkBuckets'
 import { useMonitorStatus } from './useMonitorStatus'
 
-const OPT_PAIR_LOOK_BACK_DAYS = 180
+const OPT_PAIR_LOOK_BACK_DAYS = 365
 
 export function usePerformanceBulk(params: {
   timeRange: PerformanceTimeRange

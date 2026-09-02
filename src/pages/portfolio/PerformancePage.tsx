@@ -7,13 +7,14 @@ import {
   type PerformanceTimeRange,
 } from '@/utils/ledger/performanceUtils'
 import { sumStkPositionMarketValueForBucket } from '@/utils/ledger/stkBuckets'
-import { buildEquityGrowthChart, DEFAULT_LAYERS_VISIBLE, type GrowthLayer } from '@/utils/ledger/equityGrowthChart'
+import { buildEquityGrowthChart, DEFAULT_LAYERS_VISIBLE, type GrowthLayer, type OptionsPnLMode } from '@/utils/ledger/equityGrowthChart'
 import { buildFiBarChart } from '@/utils/ledger/fiBarChart'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { PageHeader, PageShell } from '@/components/layout'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { EquityGrowthCard } from '@/pages/portfolio/performance/components/EquityGrowthCard'
 import MonthlyPnLTable from '@/pages/portfolio/performance/components/MonthlyPnLTable'
+import OptionsModeBridgePanel from '@/pages/portfolio/performance/components/OptionsModeBridgePanel'
 import { buildPositionCategoryByAccountContract, serializePositionCategoryKey } from '@/utils/ledger/stkBuckets'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { PerformanceFilterBar } from '@/pages/portfolio/performance/PerformanceFilterBar'
@@ -41,6 +42,7 @@ export default function PerformancePage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [growthUnit, setGrowthUnit] = useState<'pct' | 'usd'>('usd')
   const [growthLayersVisible, setGrowthLayersVisible] = useState(DEFAULT_LAYERS_VISIBLE)
+  const [optionsPnLMode, setOptionsPnLMode] = useState<OptionsPnLMode>('book')
 
   const handleLayerToggle = useCallback((layer: GrowthLayer) => {
     setGrowthLayersVisible((prev) => ({ ...prev, [layer]: !prev[layer] }))
@@ -99,8 +101,9 @@ export default function PerformancePage() {
       capitalBase,
       growthUnit,
       layersVisible: growthLayersVisible,
+      optionsMode: optionsPnLMode,
     })
-  }, [bulk, perf, growthUnit, growthLayersVisible])
+  }, [bulk, perf, growthUnit, growthLayersVisible, optionsPnLMode])
 
   const fiBarData = useMemo(() => {
     if (!bulk?.byDayRangeData) return null
@@ -190,6 +193,7 @@ export default function PerformancePage() {
             oppQuery={oppQuery}
             instQuery={instQuery}
             byDayRangeData={bulk?.byDayRangeData}
+            optAsOf={bulk?.optAsOf}
             isLoading={filtersLoading}
           />
 
@@ -200,10 +204,23 @@ export default function PerformancePage() {
             onGrowthUnitChange={setGrowthUnit}
             layersVisible={growthLayersVisible}
             onLayerToggle={handleLayerToggle}
+            optionsPnLMode={optionsPnLMode}
+            onOptionsPnLModeChange={setOptionsPnLMode}
+          />
+
+          <OptionsModeBridgePanel
+            byDayRangeData={bulk?.byDayRangeData ?? null}
+            openUnrealized={bulk?.optAsOf?.openUnrealized ?? 0}
+            sameDayRolls={bulk?.sameDayRolls ?? []}
+            asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
+            optionsPnLMode={optionsPnLMode}
           />
 
           <MonthlyPnLTable
             byDayRangeData={bulk?.byDayRangeData ?? null}
+            optOpenByOpenMonth={bulk?.byDayRangeData?.optOpenByOpenMonth ?? null}
+            optOpenLegs={bulk?.optOpenLegs ?? null}
+            asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
             isLoading={bulkQuery.isLoading}
             className={pageStyles.byDayTableWrap}
           />

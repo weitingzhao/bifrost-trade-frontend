@@ -37,7 +37,12 @@ export interface GrowthPoint {
   optionsUnrealMonthStart: number
   optionsUnrealMonthDelta: number
   optionsUnrealMonthAnchored: number
+  /** B0: same-day roll events on this date (Economic mode tooltip). */
+  optionsRollCount: number
+  optionsCashRoll: number
 }
+
+export type OptionsPnLMode = 'book' | 'economic' | 'total'
 
 export interface LayerArea {
   key: GrowthLayer
@@ -101,32 +106,71 @@ export function buildEquityGrowthChart(params: {
   capitalBase: number | null
   growthUnit: 'pct' | 'usd'
   layersVisible: Record<GrowthLayer, boolean>
+  /** Book = FIFO realized path; Economic = B0 same-day roll cash adjustment. */
+  optionsMode?: OptionsPnLMode
 }): EquityGrowthChartData | null {
-  const { byDayRangeData, capitalBase: rawCb, growthUnit, layersVisible: vis } = params
+  const {
+    byDayRangeData,
+    capitalBase: rawCb,
+    growthUnit,
+    layersVisible: vis,
+    optionsMode = 'book',
+  } = params
 
   const capitalBase = Number(rawCb)
   const hasCapitalBase = Number.isFinite(capitalBase) && capitalBase > 0
   const isPct = growthUnit === 'pct' && hasCapitalBase
 
-  const { opt, stocks: stocksMap, fixed_income: fiMap, cash_like: cashMap, stkBucketNotional } = byDayRangeData
+  const {
+    opt,
+    stocks: stocksMap,
+    fixed_income: fiMap,
+    cash_like: cashMap,
+    stkBucketNotional,
+    economicOptByDay,
+    optOpenByDay,
+  } = byDayRangeData
   const fiNotionalMap = stkBucketNotional.fixed_income
+  const useEconomic = optionsMode === 'economic' && economicOptByDay != null
+  const useTotal = optionsMode === 'total'
 
   const allDates = [...new Set([
     ...Object.keys(opt), ...Object.keys(stocksMap),
     ...Object.keys(fiMap), ...Object.keys(fiNotionalMap), ...Object.keys(cashMap),
+    ...(useEconomic ? Object.keys(economicOptByDay) : []),
+    ...(useTotal && optOpenByDay != null ? Object.keys(optOpenByDay) : []),
   ])].sort()
 
   if (allDates.length === 0) return null
 
   const conv = (v: number) => (isPct ? (100 * v) / capitalBase : v)
 
-  let cumOpt = 0, cumStk = 0, cumFi = 0, cumCash = 0
+  let cumOptBook = 0
+  let cumOptMode = 0
+  let cumStk = 0, cumFi = 0, cumCash = 0
   let currentOptUMonth = ''
   let optUMonthStartRealizedRaw = 0
   let optUMonthDeltaRaw = 0
 
   const points: GrowthPoint[] = allDates.map((dateStr) => {
-    cumOpt += opt[dateStr]?.realized ?? 0
+    const bookR = opt[dateStr]?.realized ?? 0
+    cumOptBook += bookR
+    const econCell = economicOptByDay?.[dateStr]
+    let dayOptForMode: number
+    if (useTotal) {
+      // Point-in-time Total path: Σ R through today + Open as of this day
+      dayOptForMode = 0 // applied via level below
+    } else if (useEconomic) {
+      dayOptForMode = econCell?.delta ?? bookR
+    } else {
+      dayOptForMode = bookR
+    }
+    if (!useTotal) cumOptMode += dayOptForMode
+    const optLevel = useTotal
+      ? cumOptBook + (optOpenByDay?.[dateStr] ?? 0)
+      : cumOptMode
+    if (useTotal) cumOptMode = optLevel
+
     cumStk += stocksMap[dateStr]?.realized ?? 0
     cumFi += fiNotionalMap[dateStr] ?? 0
     cumCash += cashMap[dateStr]?.realized ?? 0
@@ -135,16 +179,18 @@ export function buildEquityGrowthChart(params: {
     const uNowRaw = opt[dateStr]?.unrealized ?? 0
     if (mk !== currentOptUMonth) {
       currentOptUMonth = mk
-      optUMonthStartRealizedRaw = cumOpt
+      // Unrealized dashed line stays Book-anchored (B0 does not redefine U).
+      optUMonthStartRealizedRaw = cumOptBook
       optUMonthDeltaRaw = 0
     } else {
       optUMonthDeltaRaw += uNowRaw
     }
     const optUnrealMonthAnchored = optUMonthStartRealizedRaw + optUMonthDeltaRaw
 
-    const totalRaw = cumOpt + cumStk + cumFi + cumCash
+    // Net PnL KPI always Book (all four). Total visible uses mode options.
+    const totalRaw = cumOptBook + cumStk + cumFi + cumCash
     const totalRawVisible =
-      (vis.options ? cumOpt : 0) +
+      (vis.options ? optLevel : 0) +
       (vis.stocks ? cumStk : 0) +
       (vis.fixed_income ? cumFi : 0) +
       (vis.cash_like ? cumCash : 0)
@@ -155,7 +201,7 @@ export function buildEquityGrowthChart(params: {
     return {
       dateStr,
       dateLabel,
-      options: conv(cumOpt),
+      options: conv(optLevel),
       stocks: conv(cumStk),
       fixed_income: conv(cumFi),
       cash_like: conv(cumCash),
@@ -166,6 +212,8 @@ export function buildEquityGrowthChart(params: {
       optionsUnrealMonthStart: conv(optUMonthStartRealizedRaw),
       optionsUnrealMonthDelta: conv(optUMonthDeltaRaw),
       optionsUnrealMonthAnchored: conv(optUnrealMonthAnchored),
+      optionsRollCount: econCell?.rollCount ?? 0,
+      optionsCashRoll: econCell?.cashRoll ?? 0,
     }
   })
 

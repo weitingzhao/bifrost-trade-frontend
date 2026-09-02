@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { SegmentControl } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import type { EquityGrowthChartData, GrowthLayer, GrowthPoint } from '@/utils/ledger/equityGrowthChart'
+import type { EquityGrowthChartData, GrowthLayer, GrowthPoint, OptionsPnLMode } from '@/utils/ledger/equityGrowthChart'
 import { GROWTH_LAYERS } from '@/utils/ledger/equityGrowthChart'
 import type { FiBarChartData } from '@/utils/ledger/fiBarChart'
 import { EQUITY_GROWTH_INFO } from '@/pages/portfolio/performance/performanceConstants'
@@ -23,6 +23,8 @@ interface EquityGrowthCardProps {
   onGrowthUnitChange: (unit: 'pct' | 'usd') => void
   layersVisible: Record<GrowthLayer, boolean>
   onLayerToggle: (layer: GrowthLayer) => void
+  optionsPnLMode: OptionsPnLMode
+  onOptionsPnLModeChange: (mode: OptionsPnLMode) => void
 }
 
 interface TipPos {
@@ -32,10 +34,10 @@ interface TipPos {
 }
 
 const FI_BAR_INFO_RATIO =
-  'Uses the same % / $ control as Portfolio Equity Growth (top right). $: bar height and labels are that month\'s total Fixed Income Stream (BUY +, SELL −; same S as the gold line). %: bar height and labels use ann. ratio = (month Stream ÷ current Fixed income position value) × (365 ÷ days in month).'
+  'Uses the same % / $ control as Portfolio Equity Growth (top right). $: bar height and labels are that period\'s total Fixed Income Stream (BUY +, SELL −; same S as the gold line). Bars aggregate by Time Range: Quarter/Half year = month, Year = quarter, 3 Years = year. %: ann. ratio = (period Stream ÷ current Fixed income position value) × (365 ÷ days in period).'
 
 const FI_BAR_INFO_USD =
-  'Bar height and caption: monthly total Fixed Income Stream (US$)—money flow into/out of the FI bucket (BUY positive, SELL negative). Load current Fixed income STK positions to enable ann. % mode for this panel.'
+  'Bar height and caption: period total Fixed Income Stream (US$)—money flow into/out of the FI bucket (BUY positive, SELL negative). Grain follows Time Range (month / quarter / year). Load current Fixed income STK positions to enable ann. % mode for this panel.'
 
 export function EquityGrowthCard({
   chartData,
@@ -44,6 +46,8 @@ export function EquityGrowthCard({
   onGrowthUnitChange,
   layersVisible,
   onLayerToggle,
+  optionsPnLMode,
+  onOptionsPnLModeChange,
 }: EquityGrowthCardProps) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
   const [tipPos, setTipPos] = useState<TipPos | null>(null)
@@ -126,6 +130,17 @@ export function EquityGrowthCard({
         </div>
 
         <div className={styles.growthControls}>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Options PnL path Book Economic or Total"
+            options={[
+              { value: 'book', label: 'Book' },
+              { value: 'economic', label: 'Economic' },
+              { value: 'total', label: 'Total' },
+            ]}
+            value={optionsPnLMode}
+            onChange={(v) => onOptionsPnLModeChange(v as OptionsPnLMode)}
+          />
           <SegmentControl
             size="xs"
             ariaLabel="Growth chart and Fixed Income Stream bar units"
@@ -310,6 +325,7 @@ export function EquityGrowthCard({
                 pos={tipPos}
                 isPct={isPct}
                 layersVisible={layersVisible}
+                optionsPnLMode={optionsPnLMode}
               />
             )}
           </div>
@@ -322,12 +338,13 @@ export function EquityGrowthCard({
 }
 
 function Tooltip({
-  pt, pos, isPct, layersVisible,
+  pt, pos, isPct, layersVisible, optionsPnLMode,
 }: {
   pt: GrowthPoint
   pos: TipPos
   isPct: boolean
   layersVisible: Record<GrowthLayer, boolean>
+  optionsPnLMode: OptionsPnLMode
 }) {
   const dateLong = (() => {
     const [yy, mm, dd] = pt.dateStr.split('-').map(Number)
@@ -356,6 +373,23 @@ function Tooltip({
             </span>
           </div>
         ))}
+
+        {optionsPnLMode === 'economic' && pt.optionsRollCount > 0 && (
+          <div className={styles.tooltipRow}>
+            <span className={styles.tooltipLabel}>
+              Rolls: {pt.optionsRollCount}
+            </span>
+            <span className={styles.tooltipValue}>
+              net cash {fmtPnl(pt.optionsCashRoll)}
+            </span>
+          </div>
+        )}
+        {optionsPnLMode === 'total' && (
+          <div className={styles.tooltipRow}>
+            <span className={styles.tooltipLabel}>Options Total</span>
+            <span className={styles.tooltipValue}>Σ R + Open as of day</span>
+          </div>
+        )}
 
         {layersVisible.options && (
           <>
@@ -387,7 +421,7 @@ function Tooltip({
           </span>
         </div>
         <div className={cn(styles.tooltipRow, styles.tooltipRowNet)}>
-          <span className={styles.tooltipLabel}>Net (all four)</span>
+          <span className={styles.tooltipLabel}>Net (all four, Book)</span>
           <span className={styles.tooltipValue}>{fmtPnl(pt.totalRaw)}</span>
         </div>
       </div>
@@ -411,7 +445,7 @@ function FiBarPanel({ data }: { data: FiBarChartData }) {
     })
 
   return (
-    <div className={styles.fiBarPanel} aria-label="Fixed Income Stream by month">
+    <div className={styles.fiBarPanel} aria-label={`Fixed Income Stream by ${data.bucket}`}>
       <div className={styles.fiBarHead}>
         <div className={styles.fiBarTitleRow}>
           <span className={styles.fiBarKicker}>Fixed Income Stream</span>
@@ -426,8 +460,8 @@ function FiBarPanel({ data }: { data: FiBarChartData }) {
         role="img"
         aria-label={
           data.useRatio
-            ? 'Fixed Income Stream monthly flow versus capital base, annualized percentage and dollar stream'
-            : 'Fixed Income Stream monthly money flow in US dollars (BUY positive, SELL negative)'
+            ? `Fixed Income Stream ${data.bucket} flow versus capital base, annualized percentage and dollar stream`
+            : `Fixed Income Stream ${data.bucket} money flow in US dollars (BUY positive, SELL negative)`
         }
       >
         <text
@@ -465,13 +499,15 @@ function FiBarPanel({ data }: { data: FiBarChartData }) {
                 </title>
               </rect>
             )}
-            <text
-              className={captionClass(b.tone)}
-              x={b.valueX} y={b.labelY}
-              textAnchor="middle" dominantBaseline="auto"
-            >
-              {b.valueLine}
-            </text>
+            {b.showValueCaption && (
+              <text
+                className={captionClass(b.tone)}
+                x={b.valueX} y={b.labelY}
+                textAnchor="middle" dominantBaseline="auto"
+              >
+                {b.valueLine}
+              </text>
+            )}
             {b.showXLabel && (
               <text
                 className={styles.fiXlabel}

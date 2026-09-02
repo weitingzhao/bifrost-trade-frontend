@@ -244,6 +244,22 @@ export interface ByDayRangeData {
     fixed_income: Record<string, number>
     cash_like: Record<string, number>
   }
+  /** B0 Economic options day delta (parallel to opt.realized; does not replace Book). */
+  economicOptByDay?: Record<string, EconomicOptDayCell>
+  /** Open unmatched premium cash as of each calendar day (for Total curve). */
+  optOpenByDay?: Record<string, number>
+  /**
+   * Of as-of-today Open inventory, cash attributed to the month the open fill
+   * occurred (YYYY-MM). For monthly table column — not path OPT U.
+   */
+  optOpenByOpenMonth?: Record<string, number>
+}
+
+export interface EconomicOptDayCell {
+  delta: number
+  rollCount: number
+  cashRoll: number
+  bookRollRealized: number
 }
 
 export interface PerformanceDayPnLBulkResult {
@@ -252,6 +268,17 @@ export interface PerformanceDayPnLBulkResult {
   calendarStkNotionalByBucket: Record<string, Record<string, number>>
   linkByOptionId: Record<number, OptionStockLinkSummary>
   rawExecsWindow: import('@/types/positions').Execution[]
+  /** Options Book R in range + open U as of Chicago today (not Σ path OPT U). */
+  optAsOf?: {
+    asOfDateStr: string
+    realizedInRange: number
+    openUnrealized: number
+    total: number
+  }
+  /** Still-open OPT fill legs as of Chicago today (premium cash inventory). */
+  optOpenLegs?: import('@/utils/ledger/optAsOfPnL').OpenOptCashLeg[]
+  /** Same-day option rolls in the selected performance range (B0 Economic bridge). */
+  sameDayRolls?: import('@/utils/ledger/sameDayOptionRolls').SameDayRollEvent[]
 }
 
 export interface RawExecution {

@@ -92,3 +92,72 @@ export function statusVariant(
   if (status === 'failed') return 'danger'
   return 'neutral'
 }
+
+/** A run, plus the runs it repeats. */
+export interface RunGroup {
+  run: ObjectiveRun
+  /** Older runs of the same objective, same day, same funnel — newest first. */
+  repeats: ObjectiveRun[]
+}
+
+/**
+ * Collapse a day's re-runs of one objective into a single row.
+ *
+ * The Console listed 23 runs, all awaiting_approval, with `47 → 8 · 17%`
+ * repeating eight times: the same objective re-run through the day, each time
+ * screening the same universe to the same eight names. Counting records instead
+ * of decisions is the same failure the Decision Inbox had, so this is the same
+ * fix — fold, keep the newest, and say how many were folded.
+ *
+ * The key is deliberately strict: same objective, same calendar day, identical
+ * funnel shape. Two runs whose funnels differ screened different ground and are
+ * two results, not one repeated.
+ */
+export function groupIdenticalRuns(runs: ObjectiveRun[]): RunGroup[] {
+  const slots: (RunGroup | null)[] = []
+  const members = new Map<string, ObjectiveRun[]>()
+  const slotOf = new Map<string, number>()
+
+  for (const run of runs) {
+    const key = runFoldKey(run)
+    if (key === null) {
+      slots.push({ run, repeats: [] })
+      continue
+    }
+    const seen = members.get(key)
+    if (seen) {
+      seen.push(run)
+      slots.push(null)
+      continue
+    }
+    members.set(key, [run])
+    slotOf.set(key, slots.length)
+    slots.push(null)
+  }
+
+  for (const [key, group] of members) {
+    const [newest, ...repeats] = group.slice().sort(newestRunFirst)
+    slots[slotOf.get(key) as number] = { run: newest, repeats }
+  }
+  return slots.filter((g): g is RunGroup => g !== null)
+}
+
+/** Fold key, or null for a run that must stand alone. */
+function runFoldKey(run: ObjectiveRun): string | null {
+  if (!run.objective_id || !run.started_at) return null
+  const day = run.started_at.slice(0, 10)
+  if (day.length !== 10) return null
+  const steps = traceFunnel(parseHarnessTrace(run.trace_json))
+  // No funnel means we cannot tell whether two runs screened the same ground.
+  if (steps.length === 0) return null
+  const shape = steps.map((s) => `${s.name}:${s.in_count}>${s.out_count}`).join('|')
+  return `${run.objective_id} ${day} ${run.status} ${shape}`
+}
+
+function newestRunFirst(a: ObjectiveRun, b: ObjectiveRun): number {
+  const ta = Date.parse(a.started_at ?? '')
+  const tb = Date.parse(b.started_at ?? '')
+  if (Number.isFinite(ta) && Number.isFinite(tb) && ta !== tb) return tb - ta
+  // Unparsable or tied timestamps must still order deterministically.
+  return a.id < b.id ? 1 : a.id > b.id ? -1 : 0
+}

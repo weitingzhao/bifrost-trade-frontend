@@ -70,7 +70,12 @@ import {
   openLoopRunInCopilot,
   openResearchCopilot,
 } from '@/lib/harness/loopCopilotPrefill'
-import { funnelReach, parseHarnessTrace, runDurationMs } from '@/lib/harness/harnessTrace'
+import {
+  funnelReach,
+  groupIdenticalRuns,
+  parseHarnessTrace,
+  runDurationMs,
+} from '@/lib/harness/harnessTrace'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 
 type RunStatusFilter = ObjectiveRunStatus | 'all'
@@ -237,6 +242,14 @@ export default function HarnessConsolePage() {
     [objectivesQ.data?.items],
   )
   const runs = useMemo(() => runsQ.data?.items ?? [], [runsQ.data?.items])
+  // One row per result, not per record. The console listed 23 runs with the same
+  // funnel repeating eight times — a day's re-runs of one objective screening the
+  // same ground to the same names.
+  const runGroups = useMemo(() => groupIdenticalRuns(runs), [runs])
+  const foldedRuns = useMemo(
+    () => runGroups.reduce((n, g) => n + g.repeats.length, 0),
+    [runGroups],
+  )
 
   // Whether Delete is even offered. The API is the authority — it refuses with
   // the real count — but showing the button for an objective that plainly has
@@ -495,7 +508,8 @@ export default function HarnessConsolePage() {
             />
           </div>
           <span className="shrink-0 text-dense-meta text-muted-foreground">
-            {runsQ.data?.count ?? 0} shown
+            {runGroups.length} result{runGroups.length === 1 ? '' : 's'}
+            {foldedRuns > 0 ? ` · ${foldedRuns} re-runs folded in` : ''}
           </span>
         </div>
 
@@ -523,7 +537,7 @@ export default function HarnessConsolePage() {
               </DenseTableHeadRow>
             </DenseTableHeader>
             <DenseTableBody>
-              {runs.map((row: ObjectiveRun) => {
+              {runGroups.map(({ run: row, repeats }) => {
                 const awaiting = row.status === 'awaiting_approval'
                 const approveBusy =
                   approveMut.isPending && approveMut.variables === row.id
@@ -548,6 +562,14 @@ export default function HarnessConsolePage() {
                       >
                         {row.id}
                       </Link>
+                      {repeats.length > 0 ? (
+                        <span
+                          className="mt-0.5 block text-dense-micro text-muted-foreground"
+                          title={`${repeats.length} earlier run(s) today screened the same ground to the same names`}
+                        >
+                          +{repeats.length} re-run{repeats.length === 1 ? '' : 's'} today
+                        </span>
+                      ) : null}
                       {dataSource ? (
                         <DenseTag variant="category" size="cell" className="mt-0.5">
                           {dataSource}

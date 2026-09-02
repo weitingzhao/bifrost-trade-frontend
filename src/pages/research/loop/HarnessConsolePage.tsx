@@ -50,8 +50,6 @@ import {
   setObjectiveStatus,
   fetchObjectiveRuns,
   fetchObjectives,
-  RECOMMENDED_LOOP_POLICY,
-  RECOMMENDED_LOOP_POLICY_STOCK,
   runObjective,
   type ObjectiveRun,
   type ObjectiveRunStatus,
@@ -65,6 +63,7 @@ import {
   HarnessObjectivesColgroup,
   HarnessRunsColgroup,
 } from '@/pages/research/loop/harnessConsoleColgroups'
+import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
 import {
   loopCopilotUi,
   loopPipelinePath,
@@ -289,23 +288,11 @@ export default function HarnessConsolePage() {
           onToggle={() => setPolicyOpen((o) => !o)}
         >
           <CollapsibleChevron expanded={policyOpen} />
-          <CollapsibleGroupTitle>Recommended policy template</CollapsibleGroupTitle>
+          <CollapsibleGroupTitle>Policy templates</CollapsibleGroupTitle>
         </CollapsibleGroupHeader>
         {policyOpen ? (
-          <CollapsibleGroupBody className="space-y-1 px-3 pb-3">
-            <p className="text-dense-meta text-muted-foreground">
-              Legacy scan (<code className="font-mono">scan_legacy</code>) vs stock-first (
-              <code className="font-mono">stock_composite</code>). Seed:{' '}
-              <code className="font-mono">--profile stock</code>.
-            </p>
-            <p className="text-dense-label font-medium text-muted-foreground">scan_legacy</p>
-            <pre className="whitespace-pre-wrap break-words rounded bg-background px-2 py-1 font-mono text-dense-micro">
-              {JSON.stringify(RECOMMENDED_LOOP_POLICY, null, 2)}
-            </pre>
-            <p className="text-dense-label font-medium text-muted-foreground">stock_composite</p>
-            <pre className="whitespace-pre-wrap break-words rounded bg-background px-2 py-1 font-mono text-dense-micro">
-              {JSON.stringify(RECOMMENDED_LOOP_POLICY_STOCK, null, 2)}
-            </pre>
+          <CollapsibleGroupBody className="px-3 pb-3">
+            <PolicyTemplatePanel />
           </CollapsibleGroupBody>
         ) : null}
       </CollapsibleGroup>

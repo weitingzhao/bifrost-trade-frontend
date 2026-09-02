@@ -227,3 +227,36 @@ export const CandidateOutcomeRowsSchema = z
     count: z.number(),
   })
   .passthrough()
+
+// ── Loop policy templates (P0-2) ────────────────────────────────────────
+// The Loop's strategy is data now, not a constant compiled into two codebases.
+// `.passthrough()` throughout: policy_json is the runtime's LoopPolicy dump and
+// gains fields as the Loop does, so the schema guards the envelope, not the
+// strategy — tightening it here would just recreate the drift this replaced.
+
+export const PolicyTemplateSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    universe_mode: z.string(),
+    policy_json: z.record(z.string(), z.unknown()),
+    is_default: z.boolean(),
+    owner_id: z.string(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    // Non-fatal notes from validate_policy_for_mode — shown, never swallowed.
+    warnings: z.array(z.string()).optional(),
+  })
+  .passthrough()
+
+export const PolicyTemplateListSchema = z
+  .object({ items: z.array(PolicyTemplateSchema) })
+  .passthrough()
+
+export const PolicyValidationSchema = z
+  .object({
+    policy_json: z.record(z.string(), z.unknown()),
+    warnings: z.array(z.string()),
+  })
+  .passthrough()

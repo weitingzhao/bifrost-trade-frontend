@@ -71,32 +71,6 @@ export interface CurateRunResult {
   error?: string
 }
 
-/** Recommended policy_json for Loop Orchestrator objectives (LO-0). */
-export const RECOMMENDED_LOOP_POLICY: Record<string, unknown> = {
-  universe_mode: 'scan_legacy',
-  preset: 'adaptive_30d',
-  flag_filter: [],
-  min_composite_score: 0.55,
-  min_hit_rate: 0.45,
-  max_candidates: 8,
-  use_llm_plan: true,
-  auto_validate: true,
-}
-
-/** LS-1 stock-first composite policy (Discover Stock Explorer aligned). */
-export const RECOMMENDED_LOOP_POLICY_STOCK: Record<string, unknown> = {
-  universe_mode: 'stock_composite',
-  layers: {
-    sepa: { stage: ['SETUP', 'PIVOT'], min_score: 70, required: true },
-    momentum: { grade: 'A', required: false },
-    events: { min_importance: 2, within_days: 5, required: false },
-  },
-  option_overlay: { enabled: true, required: false, flag_filter: 'iv_rank:hot' },
-  max_candidates: 8,
-  use_llm_plan: true,
-  auto_validate: true,
-}
-
 export type UniverseMode =
   | 'stock_composite'
   | 'sepa'

@@ -403,6 +403,38 @@ export function matchPnl(p: {
 }
 
 /**
+ * Per-leg signed cash for a FIFO Match (same sign as ledgerOptionExecutionCashFlowSigned):
+ * BUY = outflow (−), SELL = inflow (+). Commission on the pair is split 50/50.
+ * Prefer `pair.net_pnl` for the Match total when present; cashC + cashP ≈ that net.
+ */
+export function matchPairLegCashFlows(p: {
+  quantity: number
+  c_side: string
+  p_side: string
+  c_price: number
+  p_price: number
+  commission: number
+}): { cashC: number; cashP: number; net: number } {
+  const qty = Number(p.quantity) || 0
+  const halfComm = Math.abs(Number(p.commission) || 0) / 2
+  const cashC = matchLegCashFlow(p.c_side, Number(p.c_price) || 0, qty, halfComm)
+  const cashP = matchLegCashFlow(p.p_side, Number(p.p_price) || 0, qty, halfComm)
+  return { cashC, cashP, net: cashC + cashP }
+}
+
+function matchLegCashFlow(
+  side: string,
+  price: number,
+  qty: number,
+  commissionAlloc: number,
+): number {
+  const s = (side ?? '').toString().trim().toUpperCase()
+  const buy = s === 'BUY' || s === 'BOT' || s === 'B'
+  const premium = qty * price * 100
+  return buy ? -(premium + commissionAlloc) : premium - commissionAlloc
+}
+
+/**
  * FIFO OPT pairing that emits leg_c/p_execution_id (for day filtering).
  * Uses queue-style matching: first opposite-side item encountered is matched.
  */
@@ -559,10 +591,14 @@ export function computeDayRealizedUnrealized(
     ? optPairs
     : computeBackendOptPairsFromExecutions(allExecs, sortExec)
 
+  // Flex OCC symbols look like "HIMS  261218C00040000". Pair rows store the full
+  // string; exec grouping must use the same root ticker or matched qty never joins
+  // and day U incorrectly nets all leg cash (calendar $109 vs Records $2415 bug).
+  const optRoot = (symbol: string | null | undefined) => (symbol ?? '').trim().split(/\s+/)[0] ?? ''
   const pairKey = (p: { account_id: string; symbol: string; expiry: string; strike: string | number }) =>
-    `${p.account_id}\t${p.symbol}\t${p.expiry}\t${normalizeStrike(p.strike)}`
+    `${p.account_id}\t${optRoot(p.symbol)}\t${p.expiry}\t${normalizeStrike(p.strike)}`
   const contractKey = (e: Execution) =>
-    `${e.account_id ?? ''}\t${(e.symbol ?? '').split(' ')[0]}\t${e.expiry ?? ''}\t${normalizeStrike(e.strike)}`
+    `${e.account_id ?? ''}\t${optRoot(e.symbol)}\t${e.expiry ?? ''}\t${normalizeStrike(e.strike)}`
 
   const execById = new Map<number, Execution>()
   for (const e of allExecs) {

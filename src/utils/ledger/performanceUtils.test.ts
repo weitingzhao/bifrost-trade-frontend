@@ -7,6 +7,9 @@ import {
   listDateStrings,
   listMonthKeysInRange,
   computeOptPairsFromExecutions,
+  computeBackendOptPairsFromExecutions,
+  computeOptionDayPnLForPerformanceDate,
+  matchPairLegCashFlows,
   dateStrMinusDays,
 } from './performanceUtils'
 import type { Execution } from '@/types/positions'
@@ -167,5 +170,76 @@ describe('computeOptPairsFromExecutions', () => {
     const buy2 = makeExec({ account_executions_id: 2, side: 'Buy', qty: 1, price: 4.0 })
     const pairs = computeOptPairsFromExecutions([buy1, buy2])
     expect(pairs).toHaveLength(0)
+  })
+})
+
+describe('matchPairLegCashFlows', () => {
+  it('splits open premium and close cost for short-then-cover', () => {
+    const { cashC, cashP, net } = matchPairLegCashFlows({
+      quantity: 5,
+      c_side: 'SELL',
+      p_side: 'BUY',
+      c_price: 27.24,
+      p_price: 2.88,
+      commission: 7.2173,
+    })
+    // Open (sell) before close cost ≈ +13616; close ≈ −1443; net ≈ 12173
+    expect(cashC).toBeCloseTo(13616.39135, 2)
+    expect(cashP).toBeCloseTo(-1443.60865, 2)
+    expect(net).toBeCloseTo(12172.7827, 2)
+    expect(cashC + cashP).toBeCloseTo(net, 6)
+  })
+})
+
+describe('computeOptionDayPnLForPerformanceDate OCC symbols', () => {
+  it('does not net matched close cash into day U when symbol is OCC-spaced', () => {
+    // Prior short + same-day cover (realized) alongside a new short (unrealized).
+    // Regression: pairKey used full OCC symbol while contractKey used ticker root,
+    // so matched qty never joined and U became Σ all day cash (~$109 style bug).
+    const priorSell = makeExec({
+      account_executions_id: 10,
+      symbol: 'SPCX  261016C00165000',
+      side: 'Sell',
+      qty: 2,
+      quantity: 2,
+      price: 11.75,
+      commission: 0,
+      expiry: '20261016',
+      strike: 165,
+      trade_date: '2026-08-11',
+      time: 1_700_000_000,
+    })
+    const dayCover = makeExec({
+      account_executions_id: 11,
+      symbol: 'SPCX  261016C00165000',
+      side: 'Buy',
+      qty: 2,
+      quantity: 2,
+      price: 4.35,
+      commission: 0,
+      expiry: '20261016',
+      strike: 165,
+      trade_date: '2026-08-20',
+      time: 1_700_100_000,
+    })
+    const dayOpen = makeExec({
+      account_executions_id: 12,
+      symbol: 'HIMS  261218C00040000',
+      side: 'Sell',
+      qty: 4,
+      quantity: 4,
+      price: 3.8,
+      commission: 2.833672,
+      expiry: '20261218',
+      strike: 40,
+      trade_date: '2026-08-20',
+      time: 1_700_100_100,
+    })
+    const slice = [priorSell, dayCover, dayOpen]
+    const pairs = computeBackendOptPairsFromExecutions(slice)
+    const day = computeOptionDayPnLForPerformanceDate('2026-08-20', slice, pairs)
+    // HIMS unmatched only: 4*3.8*100 - 2.833672
+    expect(day.unrealized).toBeCloseTo(1517.166328, 2)
+    expect(Math.abs(day.realized)).toBeGreaterThan(100)
   })
 })

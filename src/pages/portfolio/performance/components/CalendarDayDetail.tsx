@@ -28,6 +28,7 @@ import {
   computeBackendOptPairsFromExecutions,
   filterRelevantOptPairsForDay,
   matchPnl,
+  matchPairLegCashFlows,
   ledgerOptionExecutionCashFlowSigned,
 } from '@/utils/ledger/performanceUtils'
 import {
@@ -306,6 +307,7 @@ function OptionsDayDetail({
     <DayDetailShell title={selectedDay} onClose={onClose}>
       <p className="mb-3 text-dense-meta leading-relaxed text-muted-foreground">
         Realized: FIFO matched legs and pairs (Match PnL plus prorated linked-stock slippage).
+        Each Match row shows Open cash (open-leg premium) · Close cash (cover cost) · Net.
         Unrealized: open quantity on unmatched fills. Commission shown in yellow beside each total.
       </p>
 
@@ -681,6 +683,14 @@ function ExecutionRow({
 
 // ─── Match Row ───
 
+function matchLegSortKey(e: Execution | undefined): string {
+  if (!e) return '9999-99-99\t9'
+  const d = executionDateStr(e)
+  const t = String(e.time ?? 0).padStart(16, '0')
+  const id = String(e.account_executions_id ?? 0).padStart(12, '0')
+  return `${d}\t${t}\t${id}`
+}
+
 function MatchRow({
   pair,
   execById,
@@ -690,31 +700,90 @@ function MatchRow({
 }) {
   const legC = pair.leg_c_execution_id != null ? execById.get(pair.leg_c_execution_id) : undefined
   const legP = pair.leg_p_execution_id != null ? execById.get(pair.leg_p_execution_id) : undefined
-  const tdC = (legC?.trade_date ?? '').trim()
-  const tdP = (legP?.trade_date ?? '').trim()
-  const tradeDateStr = tdC !== '' ? tdC : tdP !== '' ? tdP : '—'
+  const dateC = legC ? executionDateStr(legC) : '—'
+  const dateP = legP ? executionDateStr(legP) : '—'
+  const tradeDateStr =
+    dateC !== '—' && dateP !== '—' && dateC !== dateP
+      ? `${dateC} / ${dateP}`
+      : dateC !== '—'
+        ? dateC
+        : dateP
+
+  const { cashC, cashP } = matchPairLegCashFlows(pair)
   const mp = pair.net_pnl ?? matchPnl(pair)
 
+  const cFirst = matchLegSortKey(legC) <= matchLegSortKey(legP)
+  const openCash = cFirst ? cashC : cashP
+  const closeCash = cFirst ? cashP : cashC
+  const openDate = cFirst ? dateC : dateP
+  const closeDate = cFirst ? dateP : dateC
+  const openSide = cFirst ? pair.c_side : pair.p_side
+  const closeSide = cFirst ? pair.p_side : pair.c_side
+  const openPx = cFirst ? pair.c_price : pair.p_price
+  const closePx = cFirst ? pair.p_price : pair.c_price
+
   return (
-    <TableRow className="bg-muted/20">
-      <TableCell className="text-xs font-medium text-muted-foreground">Match</TableCell>
-      <TableCell className="text-xs tabular-nums text-muted-foreground">
-        {pair.leg_c_execution_id != null && pair.leg_p_execution_id != null
-          ? `${pair.leg_c_execution_id} / ${pair.leg_p_execution_id}`
-          : '—'}
-      </TableCell>
-      <TableCell className="text-xs text-muted-foreground">{pair.account_id || '—'}</TableCell>
-      <TableCell className="text-xs tabular-nums text-muted-foreground">{tradeDateStr}</TableCell>
-      <TableCell className="text-xs text-muted-foreground">{`${pair.c_side} / ${pair.p_side}`}</TableCell>
-      <TableCell className="text-xs text-right tabular-nums text-muted-foreground">{String(pair.quantity)}</TableCell>
-      <TableCell className="text-xs text-right tabular-nums text-muted-foreground">
-        {`${fmtUsd(pair.c_price)} / ${fmtUsd(pair.p_price)}`}
-      </TableCell>
-      <TableCell className="text-xs text-right tabular-nums text-muted-foreground">{fmtUsd(pair.commission)}</TableCell>
-      <TableCell className={cn('text-xs text-right tabular-nums font-medium', pnlColorClass(mp))}>
-        {fmtPnl(mp)}
-      </TableCell>
-    </TableRow>
+    <>
+      <TableRow className="bg-muted/20">
+        <TableCell className="text-xs font-medium text-muted-foreground">Match</TableCell>
+        <TableCell className="text-xs tabular-nums text-muted-foreground">
+          {pair.leg_c_execution_id != null && pair.leg_p_execution_id != null
+            ? `${pair.leg_c_execution_id} / ${pair.leg_p_execution_id}`
+            : '—'}
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground">{pair.account_id || '—'}</TableCell>
+        <TableCell className="text-xs tabular-nums text-muted-foreground">{tradeDateStr}</TableCell>
+        <TableCell className="text-xs text-muted-foreground">{`${pair.c_side} / ${pair.p_side}`}</TableCell>
+        <TableCell className="text-xs text-right tabular-nums text-muted-foreground">{String(pair.quantity)}</TableCell>
+        <TableCell className="text-xs text-right tabular-nums text-muted-foreground">
+          {`${fmtUsd(pair.c_price)} / ${fmtUsd(pair.p_price)}`}
+        </TableCell>
+        <TableCell className="text-xs text-right tabular-nums text-muted-foreground">{fmtUsd(pair.commission)}</TableCell>
+        <TableCell className={cn('text-xs text-right tabular-nums font-medium', pnlColorClass(mp))}>
+          {fmtPnl(mp)}
+        </TableCell>
+      </TableRow>
+      <TableRow className="bg-muted/10 hover:bg-muted/10">
+        <TableCell colSpan={9} className="py-1.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-0.5 text-dense-meta text-muted-foreground">
+            <span>
+              Open{' '}
+              <span className="tabular-nums text-foreground/80">{openDate}</span>
+              {' · '}
+              <span className="text-foreground/80">{openSide}</span>
+              {' @ '}
+              <span className="tabular-nums text-foreground/80">{fmtUsd(openPx)}</span>
+              {': '}
+              <span className={cn('tabular-nums font-medium', pnlColorClass(openCash))}>
+                {fmtPnl(openCash)}
+              </span>
+            </span>
+            <span className="text-border" aria-hidden>
+              ·
+            </span>
+            <span>
+              Close{' '}
+              <span className="tabular-nums text-foreground/80">{closeDate}</span>
+              {' · '}
+              <span className="text-foreground/80">{closeSide}</span>
+              {' @ '}
+              <span className="tabular-nums text-foreground/80">{fmtUsd(closePx)}</span>
+              {': '}
+              <span className={cn('tabular-nums font-medium', pnlColorClass(closeCash))}>
+                {fmtPnl(closeCash)}
+              </span>
+            </span>
+            <span className="text-border" aria-hidden>
+              ·
+            </span>
+            <span>
+              Net:{' '}
+              <span className={cn('tabular-nums font-medium', pnlColorClass(mp))}>{fmtPnl(mp)}</span>
+            </span>
+          </div>
+        </TableCell>
+      </TableRow>
+    </>
   )
 }
 

@@ -24,6 +24,8 @@ import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { INSTANCE_COMPARE_MAX_WIDTH_PX } from '@/constants/instanceDetailSidebar'
 import { computeInstancePositionStatus } from '@/utils/instanceListMetrics'
+import type { InstanceListMetricsEntry } from '@/hooks/useInstanceMetrics'
+import { primaryUnderlyingFromExecutions } from '@/components/positions/linkExecutionModalHelpers'
 import {
   applyInstancesUrlPatch,
   parseInstancesSearchParams,
@@ -56,17 +58,29 @@ function sinceThresholdYmd(v: SinceFilter): string | null {
   return null
 }
 
-function getScopeSymbol(
+/**
+ * Accordion / filter symbol = instance underlying from executions.
+ * Multi-symbol Opportunity books must NOT use symbols[0] (that collapses every
+ * instance under the first ticker in the book).
+ */
+function getInstanceSymbol(
   inst: StrategyInstance,
   opportunities: { strategy_opportunity_id: number; scope_type: string | null; symbols: string[] }[],
+  metricsMap: Map<number, InstanceListMetricsEntry>,
 ): string {
+  const entry = metricsMap.get(inst.strategy_instance_id)
+  if (entry?.status === 'ready') {
+    const fromExec = primaryUnderlyingFromExecutions(entry.sliced)
+    if (fromExec) return fromExec
+  }
+  // Single-symbol opp only — safe fallback while metrics load / empty instance
   const opp = opportunities.find((o) => o.strategy_opportunity_id === inst.strategy_opportunity_id)
   if (!opp) return '—'
   const st = (opp.scope_type ?? '').trim()
   if (st !== 'explicit_symbols' && st !== 'watchlist_stk') return '—'
-  const sym = opp.symbols?.filter((s) => s?.trim())
-  if (!sym || sym.length === 0) return '—'
-  return sym[0].trim().toUpperCase()
+  const sym = opp.symbols?.filter((s) => s?.trim()) ?? []
+  if (sym.length === 1) return sym[0].trim().toUpperCase()
+  return '—'
 }
 
 function parseUrlInstanceId(param: string | undefined): number | null {
@@ -201,7 +215,7 @@ export default function InstancesPage() {
     for (const inst of allInstances) {
       const sn = (inst.strategy_structure_name ?? '').trim()
       if (sn) structures.add(sn)
-      const sym = getScopeSymbol(inst, opportunities)
+      const sym = getInstanceSymbol(inst, opportunities, metricsMap)
       if (sym !== '—') symbols.add(sym)
       const meta = instancePositionMeta.get(inst.strategy_instance_id)
       if (meta) {
@@ -215,7 +229,7 @@ export default function InstancesPage() {
       rights: Array.from(rights).sort(),
       expiryMonths: Array.from(expiryMonths).sort(),
     }
-  }, [allInstances, opportunities, instancePositionMeta])
+  }, [allInstances, opportunities, instancePositionMeta, metricsMap])
 
   const filtered = useMemo(() => {
     let list = allInstances
@@ -229,7 +243,9 @@ export default function InstancesPage() {
     }
 
     if (filterValues.symbol) {
-      list = list.filter((inst) => getScopeSymbol(inst, opportunities) === filterValues.symbol)
+      list = list.filter(
+        (inst) => getInstanceSymbol(inst, opportunities, metricsMap) === filterValues.symbol,
+      )
     }
 
     if (filterValues.right) {
@@ -280,7 +296,7 @@ export default function InstancesPage() {
     const groups: { key: string; label: string; rows: StrategyInstance[] }[] = []
     const indexByKey = new Map<string, number>()
     for (const inst of filtered) {
-      const sym = getScopeSymbol(inst, opportunities)
+      const sym = getInstanceSymbol(inst, opportunities, metricsMap)
       const idx = indexByKey.get(sym)
       if (idx == null) {
         indexByKey.set(sym, groups.length)
@@ -290,7 +306,7 @@ export default function InstancesPage() {
       }
     }
     return groups
-  }, [filtered, opportunities])
+  }, [filtered, opportunities, metricsMap])
 
   const sinceRangeText = useMemo(() => {
     if (!filterValues.since) return null

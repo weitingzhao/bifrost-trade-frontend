@@ -42,6 +42,7 @@ import {
   instanceDefaultAccountForStockInspect,
   instanceGroupKey,
 } from '@/utils/instanceSheetExec'
+import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
 import { instancePanel } from './instancePanelClasses'
 
 const EXEC_QTY_TITLE =
@@ -213,7 +214,20 @@ export function InstanceTab({
                 ? oppMap.get(group.strategy_opportunity_id)
                 : undefined
             const scopeType = group.scope_type
-            const scopeSymbols = opp?.symbols?.length ? opp.symbols : []
+            // Instance row symbol = underlyings on this instance's options, not the full Opp book list
+            const fromOptions = Array.from(
+              new Set(
+                group.options
+                  .map((p) => extractUnderlyingRootSymbol(p.symbol))
+                  .filter(Boolean),
+              ),
+            ).sort()
+            const scopeSymbols =
+              fromOptions.length > 0
+                ? fromOptions
+                : opp?.symbols?.length === 1
+                  ? opp.symbols
+                  : []
             const defaultStockAcct = instanceDefaultAccountForStockInspect(group)
             const optExecQty = formatInstanceOptExecQtyCell(group, finalMap, twsMap)
             const optN = group.options.length

@@ -3,6 +3,7 @@ import {
   extractUnderlyingRootSymbol,
   filterOpportunitiesBySymbol,
   getUnderlyingSymbolFromExecution,
+  primaryUnderlyingFromExecutions,
 } from '@/components/positions/linkExecutionModalHelpers'
 import type { Execution, StrategyOpportunity } from '@/types/positions'
 
@@ -48,6 +49,21 @@ describe('getUnderlyingSymbolFromExecution', () => {
   })
 })
 
+describe('primaryUnderlyingFromExecutions', () => {
+  it('prefers OPT root over STK noise', () => {
+    const rows = [
+      { symbol: 'HIMS  261218C00040000', sec_type: 'OPT' },
+      { symbol: 'SPY', sec_type: 'STK' },
+    ] as Execution[]
+    expect(primaryUnderlyingFromExecutions(rows)).toBe('HIMS')
+  })
+
+  it('returns empty when no executions', () => {
+    expect(primaryUnderlyingFromExecutions([])).toBe('')
+    expect(primaryUnderlyingFromExecutions(null)).toBe('')
+  })
+})
+
 describe('filterOpportunitiesBySymbol', () => {
   const opps = [
     opp({ strategy_opportunity_id: 1, name: 'NVDA Cash Secured Put', symbols: ['NVDA'] }),
@@ -75,16 +91,18 @@ describe('filterOpportunitiesBySymbol', () => {
     expect(out.map((o) => o.strategy_opportunity_id)).toEqual([1])
   })
 
-  it('falls back to name prefix when symbols empty', () => {
-    const named = [
+  it('matches multi-symbol books by explicit list', () => {
+    const books = [
       opp({
-        strategy_opportunity_id: 9,
-        name: 'MU · Covered Call 10% OTM',
-        scope_type: 'watchlist_stk',
-        symbols: [],
+        strategy_opportunity_id: 10,
+        name: 'Cash Secured Put book',
+        scope_type: 'explicit_symbols',
+        symbols: ['CBRS', 'DDOG', 'FN', 'GOOG', 'INTC', 'MRVL', 'NBIS', 'NVDA', 'TSLA'],
       }),
     ]
-    expect(filterOpportunitiesBySymbol(named, 'MU')).toHaveLength(1)
-    expect(filterOpportunitiesBySymbol(named, 'NVDA')).toHaveLength(0)
+    expect(filterOpportunitiesBySymbol(books, 'FN').map((o) => o.strategy_opportunity_id)).toEqual([
+      10,
+    ])
+    expect(filterOpportunitiesBySymbol(books, 'AAPL')).toHaveLength(0)
   })
 })

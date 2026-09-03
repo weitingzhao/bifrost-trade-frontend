@@ -70,6 +70,34 @@ export function getUnderlyingSymbolFromExecution(ex?: Execution | null): string 
   return ''
 }
 
+/**
+ * Primary underlying for an instance from its executions (not Opportunity.symbols[0]).
+ * Prefer OPT roots; fall back to STK. Majority vote when mixed.
+ */
+export function primaryUnderlyingFromExecutions(executions: Execution[] | null | undefined): string {
+  if (!executions?.length) return ''
+  const counts = new Map<string, number>()
+  const bump = (sym: string, weight: number) => {
+    if (!sym) return
+    counts.set(sym, (counts.get(sym) ?? 0) + weight)
+  }
+  for (const e of executions) {
+    const root = getUnderlyingSymbolFromExecution(e)
+    if (!root) continue
+    const st = (e.sec_type ?? '').toUpperCase()
+    bump(root, st === 'OPT' ? 3 : 1)
+  }
+  let best = ''
+  let bestN = 0
+  for (const [sym, n] of counts) {
+    if (n > bestN || (n === bestN && sym < best)) {
+      best = sym
+      bestN = n
+    }
+  }
+  return best
+}
+
 export function defaultOpenedAtFromExecution(ex?: Execution | null): string {
   const td = ex?.trade_date?.trim()
   if (td && /^\d{4}-\d{2}-\d{2}$/.test(td)) return td

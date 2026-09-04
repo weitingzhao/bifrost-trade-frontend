@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { PIPELINE_PHASES, PIPELINE_STAGES } from '@/lib/harness/harnessTrace'
+import {
+  PIPELINE_PHASES,
+  PIPELINE_STAGES,
+  parseHarnessTrace,
+  ruleImpacts,
+  ruleStanceSummary,
+} from '@/lib/harness/harnessTrace'
 import {
   compactPolicyGroup,
   phaseViews,
@@ -165,5 +171,82 @@ describe('compactPolicyGroup', () => {
   it('leaves primitives alone', () => {
     expect(compactPolicyGroup(8)).toBe('8')
     expect(compactPolicyGroup('stock_composite')).toBe('stock_composite')
+  })
+})
+
+describe('ruleImpacts — what each rule actually did', () => {
+  const POLICY = {
+    layers: {
+      sepa: { required: true, min_score: 70, stage: ['SETUP', 'PIVOT'] },
+      momentum: { required: false, grade: 'A' },
+      events: { required: false, within_days: 5 },
+    },
+    option_overlay: { enabled: true, required: false, flag_filter: 'iv_rank:hot' },
+    max_candidates: 8,
+  }
+  const FUNNEL = {
+    events: [
+      {
+        step: 'scan_universe',
+        funnel: [
+          { name: 'sepa', in_count: 3475, out_count: 44 },
+          { name: 'momentum', in_count: 44, out_count: 44 },
+          { name: 'events', in_count: 44, out_count: 44 },
+          { name: 'rank_cut', in_count: 44, out_count: 24 },
+          { name: 'option_overlay', in_count: 24, out_count: 24 },
+          { name: 'max_candidates', in_count: 24, out_count: 8 },
+        ],
+      },
+    ],
+  }
+
+  it('attributes the drop to the rule that made it', () => {
+    const r = ruleImpacts(POLICY, parseHarnessTrace(FUNNEL))
+    expect(r.find((x) => x.key === 'sepa')?.dropped).toBe(3431)
+    expect(r.find((x) => x.key === 'momentum')?.dropped).toBe(0)
+  })
+
+  it('charges the cap for both of the cuts it causes', () => {
+    // rank_cut trims to max_candidates * 3 and max_candidates finishes the job;
+    // both are the same rule and splitting them would understate it.
+    const r = ruleImpacts(POLICY, parseHarnessTrace(FUNNEL))
+    expect(r.find((x) => x.key === 'max_candidates')?.dropped).toBe(36)
+  })
+
+  it('calls required layers gates and the rest advisory', () => {
+    const r = ruleImpacts(POLICY, parseHarnessTrace(FUNNEL))
+    expect(r.find((x) => x.key === 'sepa')?.kind).toBe('gate')
+    expect(r.find((x) => x.key === 'momentum')?.kind).toBe('advisory')
+    expect(r.find((x) => x.key === 'max_candidates')?.kind).toBe('limit')
+  })
+
+  it('marks a disabled layer off rather than advisory', () => {
+    const r = ruleImpacts(
+      { ...POLICY, discovery_assist: { enabled: false } },
+      parseHarnessTrace(FUNNEL),
+    )
+    expect(r.find((x) => x.key === 'discovery_assist')?.kind).toBe('off')
+  })
+
+  it('reports not-measured, not zero, when the run has no step for a rule', () => {
+    // The distinction this console has had to relearn: a rule the run never
+    // recorded is not a rule that removed nobody.
+    const r = ruleImpacts(POLICY, parseHarnessTrace({ events: [{ step: 'scan_universe' }] }))
+    expect(r.find((x) => x.key === 'sepa')?.dropped).toBeNull()
+  })
+
+  it('skips rules the policy does not configure', () => {
+    const r = ruleImpacts({ max_candidates: 8 }, parseHarnessTrace(FUNNEL))
+    expect(r.map((x) => x.key)).toEqual(['max_candidates'])
+  })
+
+  it('says nothing at all without a policy', () => {
+    expect(ruleImpacts(null, parseHarnessTrace(FUNNEL))).toEqual([])
+  })
+
+  it('summarises the stance in one line', () => {
+    expect(ruleStanceSummary(ruleImpacts(POLICY, parseHarnessTrace(FUNNEL)))).toBe(
+      '1 gate · 3 advisory · cap 8',
+    )
   })
 })

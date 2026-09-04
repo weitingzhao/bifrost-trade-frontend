@@ -106,10 +106,10 @@ export function parseHarnessTrace(raw: unknown): HarnessTrace {
  * hold before the pipeline is deepened further.
  */
 export const PIPELINE_PHASES = [
-  { id: 'setup', label: 'Set up', blurb: 'What this run is allowed to do' },
-  { id: 'screen', label: 'Screen', blurb: 'Narrow the market by rule' },
-  { id: 'judge', label: 'Judge', blurb: 'Read the survivors and take a view' },
-  { id: 'decide', label: 'Decide', blurb: 'Hand the batch over' },
+  { id: 'setup', label: 'Set up', blurb: 'What this run is allowed to do', panel: 'rules' },
+  { id: 'screen', label: 'Screen', blurb: 'Narrow the market by rule', panel: null },
+  { id: 'judge', label: 'Judge', blurb: 'Read the survivors and take a view', panel: null },
+  { id: 'decide', label: 'Decide', blurb: 'Hand the batch over', panel: null },
 ] as const
 
 export type PipelinePhaseId = (typeof PIPELINE_PHASES)[number]['id']
@@ -353,4 +353,100 @@ function newestRunFirst(a: ObjectiveRun, b: ObjectiveRun): number {
   if (Number.isFinite(ta) && Number.isFinite(tb) && ta !== tb) return tb - ta
   // Unparsable or tied timestamps must still order deterministically.
   return a.id < b.id ? 1 : a.id > b.id ? -1 : 0
+}
+
+
+/* ------------------------------------------------- what each rule actually did */
+
+export type RuleKind = 'gate' | 'advisory' | 'limit' | 'off'
+
+export interface RuleImpact {
+  key: string
+  kind: RuleKind
+  /** Raw policy value; the view formats it. */
+  setting: unknown
+  /** Symbols this rule removed on this run. null = the run did not measure it. */
+  dropped: number | null
+}
+
+/** Funnel steps that belong to each policy rule. The cap does its work twice. */
+const RULE_FUNNEL_STEPS: Record<string, readonly string[]> = {
+  sepa: ['sepa'],
+  momentum: ['momentum'],
+  events: ['events'],
+  option_overlay: ['option_overlay'],
+  discovery_assist: ['discovery_assist'],
+  max_candidates: ['rank_cut', 'max_candidates'],
+}
+
+function ruleKind(key: string, value: unknown): RuleKind {
+  if (key === 'max_candidates') return 'limit'
+  if (value && typeof value === 'object') {
+    const v = value as Record<string, unknown>
+    if (v.enabled === false) return 'off'
+    if (v.required === true) return 'gate'
+  }
+  return 'advisory'
+}
+
+/**
+ * Each rule of the trading system, with the number of symbols it removed.
+ *
+ * The policy says what the system is *allowed* to reject; the funnel says what
+ * it *did*. Read together they answer the question a settings page cannot: which
+ * of these rules is actually selecting anything. On the daily stock objective
+ * the answer is one of them — sepa removes 3,431 and the three optional layers
+ * remove nobody at all, because `required: false` does not mean "lenient", it
+ * means "never rejects".
+ *
+ * A rule with no matching funnel step reports null, not 0. "Not measured" and
+ * "removed nobody" are different facts, and rendering them alike is the failure
+ * this console has had to correct more than once.
+ */
+export function ruleImpacts(
+  policy: Record<string, unknown> | null | undefined,
+  trace: HarnessTrace,
+): RuleImpact[] {
+  if (!policy) return []
+  const dropped = new Map<string, number>()
+  for (const step of traceFunnel(trace)) {
+    dropped.set(step.name, Math.max(0, step.in_count - step.out_count))
+  }
+
+  const layers = (policy.layers ?? {}) as Record<string, unknown>
+  const out: RuleImpact[] = []
+
+  const push = (key: string, setting: unknown) => {
+    if (setting === undefined) return
+    const steps = RULE_FUNNEL_STEPS[key] ?? []
+    const measured = steps.filter((n) => dropped.has(n))
+    out.push({
+      key,
+      kind: ruleKind(key, setting),
+      setting,
+      dropped:
+        measured.length === 0
+          ? null
+          : measured.reduce((n, name) => n + (dropped.get(name) ?? 0), 0),
+    })
+  }
+
+  for (const key of ['sepa', 'momentum', 'events']) push(key, layers[key])
+  push('option_overlay', policy.option_overlay)
+  push('discovery_assist', policy.discovery_assist)
+  push('max_candidates', policy.max_candidates)
+  return out
+}
+
+/** "1 gate · 3 advisory · cap 8" — the stance in one line. */
+export function ruleStanceSummary(rules: RuleImpact[]): string {
+  if (rules.length === 0) return '—'
+  const gates = rules.filter((r) => r.kind === 'gate').length
+  const advisory = rules.filter((r) => r.kind === 'advisory').length
+  const off = rules.filter((r) => r.kind === 'off').length
+  const cap = rules.find((r) => r.kind === 'limit')
+  const parts = [`${gates} gate${gates === 1 ? '' : 's'}`, `${advisory} advisory`]
+  if (off > 0) parts.push(`${off} off`)
+  if (cap && typeof cap.setting === 'number') parts.push(`cap ${cap.setting}`)
+  return parts.join(' · ')
 }

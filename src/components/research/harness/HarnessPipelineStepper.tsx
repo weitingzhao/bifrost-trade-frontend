@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils'
 import {
   PIPELINE_PHASES,
   PIPELINE_STAGES,
+  ruleImpacts,
+  ruleStanceSummary,
   completedProgressSteps,
   funnelReach,
   stageDurationsMs,
@@ -26,6 +28,7 @@ import {
   type HarnessFunnelStep,
   type HarnessTrace,
   type PipelinePhaseId,
+  type RuleImpact,
 } from '@/lib/harness/harnessTrace'
 
 type StageState = 'done' | 'active' | 'pending'
@@ -626,12 +629,100 @@ export function StageGovernors({
   )
 }
 
+/* ----------------------------------------------------------- rules panel */
+
+const RULE_KIND_TONE: Record<RuleImpact['kind'], string> = {
+  gate: 'text-warning',
+  advisory: 'text-muted-foreground',
+  limit: 'text-info',
+  off: 'text-muted-foreground/50',
+}
+
+/**
+ * The trading system, and which of its rules actually selected anything.
+ *
+ * A settings page shows what the system is allowed to reject. This shows what it
+ * rejected — and on the daily stock objective those are very different pictures:
+ * sepa removes 3,431 symbols while momentum, events and the option overlay
+ * remove nobody. `required: false` is not leniency, it is "never rejects", and
+ * three of four layers carry it. That is the risk stance, stated as measurement
+ * rather than as an adjective I would have had to invent.
+ */
+export function RulesImpactPanel({
+  policy,
+  trace,
+}: {
+  policy: Record<string, unknown> | null | undefined
+  trace: HarnessTrace
+}) {
+  const rules = ruleImpacts(policy, trace)
+  if (rules.length === 0) return null
+  const advisory = rules.filter((r) => r.kind === 'advisory')
+
+  return (
+    <div className="mx-1.5 mb-1 space-y-1 rounded-md border border-border/50 bg-background px-2.5 py-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-dense-label font-medium">Your rules, and what they did</span>
+        <span className="text-dense-caption text-muted-foreground">
+          {ruleStanceSummary(rules)}
+        </span>
+      </div>
+      <ul className="space-y-0.5">
+        {rules.map((r) => (
+          <li key={r.key} className="flex items-baseline gap-2 text-dense-caption">
+            <span className="w-28 shrink-0 truncate font-mono">{r.key}</span>
+            <span className={cn('w-16 shrink-0 uppercase', RULE_KIND_TONE[r.kind])}>
+              {r.kind}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-muted-foreground">
+              {compactPolicyGroup(r.setting)}
+            </span>
+            <span
+              className={cn(
+                'w-16 shrink-0 text-right tabular-nums',
+                r.dropped == null
+                  ? 'text-muted-foreground/50'
+                  : r.dropped > 0
+                    ? 'text-warning'
+                    : 'text-muted-foreground/60',
+              )}
+              title={
+                r.dropped == null
+                  ? 'This run recorded no funnel step for this rule — not measured, which is not the same as removing nobody.'
+                  : undefined
+              }
+            >
+              {r.dropped == null ? 'not measured' : r.dropped > 0 ? `−${num(r.dropped)}` : '−0'}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {advisory.length > 0 ? (
+        <p className="text-dense-caption text-muted-foreground/70">
+          {advisory.length} of {rules.filter((r) => r.kind !== 'limit').length} layers are
+          advisory — they rank, they never reject.
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 /* --------------------------------------------------------------- phase view */
 
 export interface PhaseView {
   id: PipelinePhaseId
   label: string
   blurb: string
+  /**
+   * A derived view for the phase, distinct from its stages.
+   *
+   * Stages come from the trace: each is something the run recorded doing, with
+   * a time and a state. A panel is computed from policy and outcome, so it has
+   * neither. Forcing one into the stage list would mean inventing a status and
+   * a duration for something that never ran — so phases carry both, and the two
+   * kinds stay honest about what they are.
+   */
+  panel: string | null
   stages: StageView[]
   state: StageState
   /** null while no member stage has been timed. */
@@ -655,6 +746,7 @@ export function phaseViews(stages: StageView[]): PhaseView[] {
       id: phase.id,
       label: phase.label,
       blurb: phase.blurb,
+      panel: phase.panel,
       stages: members,
       state: (members.some((s) => s.state === 'active')
         ? 'active'

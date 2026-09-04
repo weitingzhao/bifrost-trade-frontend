@@ -31,6 +31,7 @@ import {
   HarnessFunnelBars,
   HarnessPersonaFold,
   PipelineStageRow,
+  RulesImpactPanel,
   StageGovernors,
   fmtStageMs,
   phaseViews,
@@ -199,6 +200,9 @@ export function LoopRunPipelineBody({
                   </span>
                 ) : null}
               </div>
+              {phase.panel === 'rules' ? (
+                <RulesImpactPanel policy={run.objective_policy_json} trace={trace} />
+              ) : null}
               <ol className="px-0.5">
                 {phase.stages.map((s, i) => {
                   const isDecision = s.step === 'draft_candidate_batch'

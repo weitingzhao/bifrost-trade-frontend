@@ -314,7 +314,7 @@ export default function HarnessConsolePage() {
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
       <PageHeader
         title="Harness Console"
-        description="Objectives and the runs they produced. Open a run to see its pipeline."
+        description="Objectives and the runs they produced. Open a run to see how it decided."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -475,7 +475,7 @@ export default function HarnessConsolePage() {
             batchMut.isPending
               ? {
                   tone: 'warning',
-                  text: 'Starting unattended run — Pipeline opens in the right drawer…',
+                  text: 'Starting unattended run — opens in the right drawer…',
                 }
               : null,
             approveFeedback ? { tone: 'success', text: approveFeedback } : null,
@@ -545,7 +545,7 @@ export default function HarnessConsolePage() {
 
       <RightInspectorShell
         open={Boolean(pipelineRunId)}
-        ariaLabel="Loop Pipeline"
+        ariaLabel="Smart Decision Run"
         panelWidthPx={560}
       >
         {pipelineRunId ? (

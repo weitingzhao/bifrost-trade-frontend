@@ -108,7 +108,7 @@ export const loopCopilotUi = {
     lang === 'zh' ? '在 Copilot 讨论' : 'Discuss in Copilot',
   discussShort: (lang: CopilotPromptLang) => (lang === 'zh' ? '讨论' : 'Discuss'),
   viewPipeline: (lang: CopilotPromptLang) =>
-    lang === 'zh' ? '查看 Pipeline' : 'View pipeline',
+    lang === 'zh' ? '查看运行' : 'View run',
   curator: (lang: CopilotPromptLang, curating?: boolean) => {
     if (curating) return lang === 'zh' ? '整理中…' : 'Curating…'
     return 'Curator'

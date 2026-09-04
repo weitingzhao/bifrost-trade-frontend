@@ -1,5 +1,5 @@
 /**
- * Loop Pipeline — one run, told in order.
+ * Smart Decision Run — one run, told in order.
  *
  * The drawer answers one question: should this batch be approved. It used to
  * open with a status header, eleven wrapping pills, a six-line `plan_ops` dump
@@ -129,7 +129,7 @@ export function LoopRunPipelineBody({
   return (
     <div className="space-y-2 px-1 pb-3">
       <RightInspectorHeader
-        title="Loop Pipeline"
+        title="Smart Decision Run"
         meta={running ? 'Live' : (run?.status ?? '…')}
         actions={
           run ? (

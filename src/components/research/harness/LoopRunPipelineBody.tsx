@@ -31,6 +31,9 @@ import {
   HarnessFunnelBars,
   HarnessPersonaFold,
   PipelineStageRow,
+  StageGovernors,
+  fmtStageMs,
+  phaseViews,
   stageViews,
 } from '@/components/research/harness/HarnessPipelineStepper'
 import {
@@ -39,6 +42,7 @@ import {
   openLoopRunInCopilot,
 } from '@/lib/harness/loopCopilotPrefill'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
+import { cn } from '@/lib/utils'
 import {
   funnelReach,
   parseHarnessTrace,
@@ -86,6 +90,7 @@ export function LoopRunPipelineBody({
     () => stageViews(trace, run?.plan_json ?? null, run?.status ?? ''),
     [trace, run?.plan_json, run?.status],
   )
+  const phases = useMemo(() => phaseViews(stages), [stages])
   const terminal = traceTerminalState(trace)
   const reach = funnelReach(trace)
   const scan = traceScanEvent(trace)
@@ -171,52 +176,74 @@ export function LoopRunPipelineBody({
             </div>
           </div>
 
-          <ol className="px-0.5">
-            {stages.map((s, i) => {
-              const isDecision = i === stages.length - 1
-              return (
-                <PipelineStageRow
-                  key={s.step}
-                  index={s.index}
-                  state={s.state}
-                  label={s.label}
-                  blurb={s.blurb}
-                  summary={s.summary}
-                  isLast={isDecision}
-                  durationMs={s.durationMs}
-                  slowest={s.slowest}
-                  expanded={open[s.step] ?? (isDecision && awaiting)}
-                  onToggle={() => toggle(s.step)}
+          {phases.map((phase) => (
+            <section key={phase.id} className="space-y-0.5">
+              <div className="flex items-baseline gap-2 px-1.5 pt-1.5">
+                <h4
+                  className={cn(
+                    'text-dense-label font-semibold',
+                    phase.state === 'done'
+                      ? 'text-foreground'
+                      : phase.state === 'active'
+                        ? 'text-warning'
+                        : 'text-muted-foreground/60',
+                  )}
                 >
-                  {s.step === 'plan' ? <HarnessPlanStepper planJson={run.plan_json} /> : null}
-                  {s.step === 'scan_universe' ? <HarnessFunnelBars trace={trace} /> : null}
-                  {s.step === 'propose_candidates' ? (
-                    <ProposedSymbols trace={trace} />
-                  ) : null}
-                  {s.step === 'persona_evaluate' ? <HarnessPersonaFold trace={trace} /> : null}
-                  {s.step === 'compose_report' ? <ReportStanceCounts trace={trace} /> : null}
-                  {isDecision ? (
-                    <DecisionStage
-                      awaiting={awaiting}
-                      terminalLabel={terminal?.label ?? null}
-                      draftCount={draftIds.length}
-                      batchMeta={batchMeta}
-                      curating={curate.isPending}
-                      approving={approve.isPending}
-                      onCurate={() => curate.mutate(run.id)}
-                      onApprove={() => approve.mutate(run.id)}
-                      onInbox={() => openCopilotInbox()}
-                      inboxLabel={loopCopilotUi.inbox(lang)}
-                    />
-                  ) : null}
-                </PipelineStageRow>
-              )
-            })}
-          </ol>
+                  {phase.label}
+                </h4>
+                <span className="min-w-0 flex-1 truncate text-dense-caption text-muted-foreground/70">
+                  {phase.blurb}
+                </span>
+                {phase.durationMs != null ? (
+                  <span className="shrink-0 tabular-nums text-dense-caption text-muted-foreground/70">
+                    {fmtStageMs(phase.durationMs)}
+                  </span>
+                ) : null}
+              </div>
+              <ol className="px-0.5">
+                {phase.stages.map((s, i) => {
+                  const isDecision = s.step === 'draft_candidate_batch'
+                  return (
+                    <PipelineStageRow
+                      key={s.step}
+                      index={s.index}
+                      state={s.state}
+                      label={s.label}
+                      blurb={s.blurb}
+                      summary={s.summary}
+                      isLast={i === phase.stages.length - 1}
+                      durationMs={s.durationMs}
+                      slowest={s.slowest}
+                      expanded={open[s.step] ?? (isDecision && awaiting)}
+                      onToggle={() => toggle(s.step)}
+                    >
+                      <StageGovernors step={s.step} policy={run.objective_policy_json} />
+                      {s.step === 'plan' ? <HarnessPlanStepper planJson={run.plan_json} /> : null}
+                      {s.step === 'scan_universe' ? <HarnessFunnelBars trace={trace} /> : null}
+                      {s.step === 'propose_candidates' ? <ProposedSymbols trace={trace} /> : null}
+                      {s.step === 'persona_evaluate' ? <HarnessPersonaFold trace={trace} /> : null}
+                      {s.step === 'compose_report' ? <ReportStanceCounts trace={trace} /> : null}
+                      {isDecision ? (
+                        <DecisionStage
+                          awaiting={awaiting}
+                          terminalLabel={terminal?.label ?? null}
+                          draftCount={draftIds.length}
+                          batchMeta={batchMeta}
+                          curating={curate.isPending}
+                          approving={approve.isPending}
+                          onCurate={() => curate.mutate(run.id)}
+                          onApprove={() => approve.mutate(run.id)}
+                          onInbox={() => openCopilotInbox()}
+                          inboxLabel={loopCopilotUi.inbox(lang)}
+                        />
+                      ) : null}
+                    </PipelineStageRow>
+                  )
+                })}
+              </ol>
+            </section>
+          ))}
 
-          {/* Subordinate to the stages, and styled that way. As cards with
-              13px titles these two sat above the 12px stage rows they belong
-              under — the reference material outranking the run it describes. */}
           <CollapsibleGroup variant="inset">
             <CollapsibleGroupHeader
               expanded={outputsOpen}

@@ -13,8 +13,10 @@
 import type { ReactNode } from 'react'
 import { Check, ChevronDown, ChevronRight } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
+import { POLICY_FIELD_HELP, formatPolicyValue } from '@/lib/harness/harnessDraftHelpers'
 import { cn } from '@/lib/utils'
 import {
+  PIPELINE_PHASES,
   PIPELINE_STAGES,
   completedProgressSteps,
   funnelReach,
@@ -23,6 +25,7 @@ import {
   tracePersonaEval,
   type HarnessFunnelStep,
   type HarnessTrace,
+  type PipelinePhaseId,
 } from '@/lib/harness/harnessTrace'
 
 type StageState = 'done' | 'active' | 'pending'
@@ -550,4 +553,131 @@ export function stageViews(
     durationMs: durations.get(s.step) ?? null,
     slowest: slowestStep === s.step,
   }))
+}
+
+
+/* ------------------------------------------------------- governing policy */
+
+/**
+ * A nested policy group as one readable line.
+ *
+ * `layers` and `option_overlay` are objects, and `JSON.stringify` put 200
+ * characters of braces and nulls into a 560px drawer — unreadable, and mostly
+ * nulls, which carry no constraint at all. Null means "not set", so it is
+ * dropped: what is left is what the layer actually enforces.
+ *
+ * Deliberately shape-agnostic. A policy group added later renders without this
+ * function learning about it, which is the point of grouping in the first place.
+ */
+export function compactPolicyGroup(value: unknown): string {
+  if (value === null || value === undefined) return '—'
+  if (typeof value !== 'object') return formatPolicyValue(value)
+  if (Array.isArray(value)) {
+    return value.length === 0 ? 'none' : value.map((v) => formatPolicyValue(v)).join(', ')
+  }
+  const parts: string[] = []
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (v === null || v === undefined) continue
+    if (typeof v === 'object') {
+      const inner = compactPolicyGroup(v)
+      if (inner && inner !== '—' && inner !== 'none') parts.push(`${k}(${inner})`)
+      continue
+    }
+    if (v === false) continue
+    parts.push(v === true ? k : `${k} ${formatPolicyValue(v)}`)
+  }
+  return parts.length === 0 ? 'all defaults' : parts.join(' · ')
+}
+
+/**
+ * The knobs that produced this stage's behaviour, shown with its outcome.
+ *
+ * The Loop's "trading system" is its policy, and reading it as one document
+ * elsewhere leaves you matching fields to effects by memory. `max_candidates: 8`
+ * next to a funnel that ends at 8 explains itself.
+ */
+export function StageGovernors({
+  step,
+  policy,
+}: {
+  step: string
+  policy: Record<string, unknown> | null | undefined
+}) {
+  const rows = stageGovernors(step, policy)
+  if (rows.length === 0) return null
+  return (
+    <div className="mb-1.5 space-y-0.5 border-b border-border/40 pb-1.5">
+      <p className="text-dense-caption text-muted-foreground/70">Governed by</p>
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+        {rows.map((r) => (
+          <span
+            key={r.key}
+            className="text-dense-caption"
+            title={POLICY_FIELD_HELP[r.key as keyof typeof POLICY_FIELD_HELP]}
+          >
+            <span className="font-mono text-muted-foreground">{r.key}</span>{' '}
+            <span className={r.value == null ? 'text-muted-foreground/60' : 'font-medium'}>
+              {compactPolicyGroup(r.value)}
+            </span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* --------------------------------------------------------------- phase view */
+
+export interface PhaseView {
+  id: PipelinePhaseId
+  label: string
+  blurb: string
+  stages: StageView[]
+  state: StageState
+  /** null while no member stage has been timed. */
+  durationMs: number | null
+}
+
+/**
+ * Phases are derived from their stages, never declared alongside them.
+ *
+ * A hand-maintained phase status is a second source of truth that drifts the
+ * first time a stage is added — the kind of divergence this console keeps
+ * finding elsewhere. A phase is done when all of its stages are, active while
+ * any is running, and costs what its stages cost.
+ */
+export function phaseViews(stages: StageView[]): PhaseView[] {
+  const byStep = new Map(PIPELINE_STAGES.map((s) => [s.step as string, s.phase as PipelinePhaseId]))
+  return PIPELINE_PHASES.map((phase) => {
+    const members = stages.filter((s) => byStep.get(s.step) === phase.id)
+    const timed = members.filter((s) => s.durationMs != null)
+    return {
+      id: phase.id,
+      label: phase.label,
+      blurb: phase.blurb,
+      stages: members,
+      state: (members.some((s) => s.state === 'active')
+        ? 'active'
+        : members.length > 0 && members.every((s) => s.state === 'done')
+          ? 'done'
+          : 'pending') as StageState,
+      durationMs:
+        timed.length === 0 ? null : timed.reduce((n, s) => n + (s.durationMs ?? 0), 0),
+    }
+  }).filter((p) => p.stages.length > 0)
+}
+
+/**
+ * The policy fields that decided how this stage behaved, with what they were
+ * set to on the run. Empty when the stage declares no governors, or when the
+ * run carries no policy — an absent policy must read as absent, not as defaults.
+ */
+export function stageGovernors(
+  step: string,
+  policy: Record<string, unknown> | null | undefined,
+): { key: string; value: unknown }[] {
+  if (!policy) return []
+  const stage = PIPELINE_STAGES.find((s) => s.step === step)
+  if (!stage) return []
+  return (stage.governedBy as readonly string[]).map((key) => ({ key, value: policy[key] }))
 }

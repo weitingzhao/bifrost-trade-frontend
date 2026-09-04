@@ -92,21 +92,87 @@ export function parseHarnessTrace(raw: unknown): HarnessTrace {
 }
 
 /**
- * The stages a run passes through, in order.
+ * The run in four movements, and the stages inside each.
  *
- * These used to sit in one array with `curate` / `approve_all` / `held` /
- * `awaiting_approval`, which rendered as eleven wrapping pills that read as a
- * step strip but were not one: the last four are *outcomes*, mutually exclusive
- * and never all reached, so the strip could neither show order nor show state.
- * Stages advance; a run ends in exactly one terminal state.
+ * Six flat stages read as six equal things. They are not: `scan_universe`
+ * narrows 3,475 symbols by rule and `persona_evaluate` forms an opinion about
+ * the eight that survived, and those are different kinds of work with different
+ * failure modes. Grouping them is what lets either half be refined without the
+ * other becoming harder to read.
+ *
+ * Both tables are the extension seam. A new stage is one entry that names its
+ * phase; a new phase is one entry here. Nothing renders by index or by position,
+ * so neither addition touches the stepper — which is the property that has to
+ * hold before the pipeline is deepened further.
+ */
+export const PIPELINE_PHASES = [
+  { id: 'setup', label: 'Set up', blurb: 'What this run is allowed to do' },
+  { id: 'screen', label: 'Screen', blurb: 'Narrow the market by rule' },
+  { id: 'judge', label: 'Judge', blurb: 'Read the survivors and take a view' },
+  { id: 'decide', label: 'Decide', blurb: 'Hand the batch over' },
+] as const
+
+export type PipelinePhaseId = (typeof PIPELINE_PHASES)[number]['id']
+
+/**
+ * `governedBy` names the policy fields that decide how a stage behaves.
+ *
+ * The Loop's "trading system" is its LoopPolicy, and the policy is not one
+ * setting for the run — each field governs one stage. `max_candidates` is why
+ * Scan ends at 8; `require_validate_pass` is why a persona can hold the batch.
+ * Declaring the mapping here means a stage can show the knobs that produced its
+ * own outcome, next to that outcome, rather than in a policy panel the reader
+ * has to hold in their head while looking somewhere else.
  */
 export const PIPELINE_STAGES = [
-  { step: 'plan', label: 'Plan', blurb: 'Decide what this run will do' },
-  { step: 'scan_universe', label: 'Scan', blurb: 'Narrow the universe through the funnel' },
-  { step: 'propose_candidates', label: 'Propose', blurb: 'Turn survivors into candidates' },
-  { step: 'persona_evaluate', label: 'Personas', blurb: 'Each persona votes on every candidate' },
-  { step: 'compose_report', label: 'Report', blurb: 'Write the case for the batch' },
-  { step: 'draft_candidate_batch', label: 'Decision', blurb: 'Hand the batch to the Owner' },
+  {
+    step: 'plan',
+    phase: 'setup',
+    label: 'Plan',
+    blurb: 'Decide what this run will do',
+    governedBy: ['use_llm_plan', 'llm_model'],
+  },
+  {
+    step: 'scan_universe',
+    phase: 'screen',
+    label: 'Scan',
+    blurb: 'Narrow the universe through the funnel',
+    governedBy: [
+      'universe_mode',
+      'layers',
+      'option_overlay',
+      'discovery_assist',
+      'max_candidates',
+    ],
+  },
+  {
+    step: 'propose_candidates',
+    phase: 'screen',
+    label: 'Propose',
+    blurb: 'Turn survivors into candidates',
+    governedBy: ['min_composite_score', 'min_hit_rate', 'flag_filter', 'seed_symbols'],
+  },
+  {
+    step: 'persona_evaluate',
+    phase: 'judge',
+    label: 'Personas',
+    blurb: 'Each persona votes on every candidate',
+    governedBy: ['persona_evaluate', 'require_validate_pass'],
+  },
+  {
+    step: 'compose_report',
+    phase: 'judge',
+    label: 'Report',
+    blurb: 'Write the case for the batch',
+    governedBy: [],
+  },
+  {
+    step: 'draft_candidate_batch',
+    phase: 'decide',
+    label: 'Decision',
+    blurb: 'Hand the batch to the Owner',
+    governedBy: ['auto_validate'],
+  },
 ] as const
 
 export type PipelineStage = (typeof PIPELINE_STAGES)[number]

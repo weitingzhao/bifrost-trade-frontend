@@ -3,15 +3,19 @@ import {
   PIPELINE_PHASES,
   PIPELINE_STAGES,
   parseHarnessTrace,
+  funnelInstrument,
+  ruleDrift,
   ruleImpacts,
   ruleStanceSummary,
 } from '@/lib/harness/harnessTrace'
 import {
-  compactPolicyGroup,
   phaseViews,
-  stageGovernors,
   type StageView,
 } from '@/components/research/harness/HarnessPipelineStepper'
+import {
+  compactPolicyGroup,
+  stageGovernors,
+} from '@/components/research/harness/HarnessRulesPanel'
 
 /**
  * The invariants that make the pipeline safe to deepen.
@@ -248,5 +252,151 @@ describe('ruleImpacts — what each rule actually did', () => {
     expect(ruleStanceSummary(ruleImpacts(POLICY, parseHarnessTrace(FUNNEL)))).toBe(
       '1 gate · 3 advisory · cap 8',
     )
+  })
+})
+
+describe('ruleDrift — day over day, not run over run', () => {
+  const run = (started: string, sepaIn: number, sepaOut: number) => ({
+    started_at: started,
+    trace_json: {
+      events: [
+        { step: 'scan_universe', funnel: [{ name: 'sepa', in_count: sepaIn, out_count: sepaOut }] },
+      ],
+    },
+  })
+
+  it('collapses same-day runs instead of drawing them as separate points', () => {
+    // Fifteen runs on 2026-09-04 each dropped 3,431 at sepa — they read one
+    // daily snapshot. Plotting per run would draw a flat line and call it
+    // stability, when it is one measurement repeated.
+    const d = ruleDrift(
+      [
+        run('2026-09-04T04:24:00Z', 3475, 44),
+        run('2026-09-04T13:30:00Z', 3475, 44),
+        run('2026-09-04T16:13:00Z', 3475, 44),
+      ],
+      'sepa',
+    )
+    expect(d.days).toHaveLength(1)
+    expect(d.days[0]).toMatchObject({ day: '2026-09-04', dropped: 3431, runs: 3 })
+  })
+
+  it('reports the day-over-day change', () => {
+    const d = ruleDrift(
+      [run('2026-09-03T13:30:00Z', 3475, 75), run('2026-09-04T13:30:00Z', 3475, 44)],
+      'sepa',
+    )
+    expect(d.change).toBe(3431 - 3400)
+  })
+
+  it('withholds a change rather than inventing one from a single day', () => {
+    expect(ruleDrift([run('2026-09-04T13:30:00Z', 3475, 44)], 'sepa').change).toBeNull()
+    expect(ruleDrift([], 'sepa').change).toBeNull()
+  })
+
+  it('omits days where the rule was never measured', () => {
+    // Runs recorded before the funnel accounted for its own cuts have exactly
+    // this gap. Charting them as zero would invent a collapse that never
+    // happened — the instrument changed, not the market.
+    const noFunnel = { started_at: '2026-09-01T10:00:00Z', trace_json: { events: [] } }
+    const d = ruleDrift([noFunnel, run('2026-09-04T13:30:00Z', 3475, 44)], 'sepa')
+    expect(d.days.map((x) => x.day)).toEqual(['2026-09-04'])
+    expect(d.change).toBeNull()
+  })
+
+  it('orders days oldest first so the last point is today', () => {
+    const d = ruleDrift(
+      [run('2026-09-04T13:30:00Z', 3475, 44), run('2026-09-02T13:30:00Z', 3475, 60)],
+      'sepa',
+    )
+    expect(d.days.map((x) => x.day)).toEqual(['2026-09-02', '2026-09-04'])
+  })
+
+  it('skips runs with no usable timestamp', () => {
+    const d = ruleDrift(
+      [{ started_at: null, trace_json: run('x', 1, 0).trace_json }, run('2026-09-04T13:30:00Z', 3475, 44)],
+      'sepa',
+    )
+    expect(d.days).toHaveLength(1)
+  })
+
+  it('charges the cap for both of its cuts on a day', () => {
+    const capRun = {
+      started_at: '2026-09-04T13:30:00Z',
+      trace_json: {
+        events: [
+          {
+            step: 'scan_universe',
+            funnel: [
+              { name: 'rank_cut', in_count: 44, out_count: 24 },
+              { name: 'max_candidates', in_count: 24, out_count: 8 },
+            ],
+          },
+        ],
+      },
+    }
+    expect(ruleDrift([capRun], 'max_candidates').days[0].dropped).toBe(36)
+  })
+})
+
+describe('ruleDrift — never compare across instruments', () => {
+  const withFunnel = (started: string, funnel: unknown[]) => ({
+    started_at: started,
+    trace_json: { events: [{ step: 'scan_universe', funnel }] },
+  })
+  const OLD = [{ name: 'sepa', in_count: 47, out_count: 47 }]
+  const NEW = [
+    { name: 'sepa', in_count: 3475, out_count: 44 },
+    { name: 'rank_cut', in_count: 44, out_count: 24 },
+    { name: 'max_candidates', in_count: 24, out_count: 8 },
+  ]
+
+  it('excludes days measured by a different funnel shape', () => {
+    // Real regression: 2026-09-01 opened the funnel at SEPA's own output and
+    // emitted no rank_cut, so sepa read as removing nobody. Compared against a
+    // later run it produced "+3,431 vs 09-01" — a market collapse that never
+    // happened. The instrument changed, not the market.
+    const d = ruleDrift(
+      [withFunnel('2026-09-01T10:00:00Z', OLD), withFunnel('2026-09-04T13:30:00Z', NEW)],
+      'sepa',
+      funnelInstrument(NEW as never),
+    )
+    expect(d.days.map((x) => x.day)).toEqual(['2026-09-04'])
+    expect(d.change).toBeNull()
+  })
+
+  it('compares freely when the instrument matches', () => {
+    const older = [
+      { name: 'sepa', in_count: 3475, out_count: 75 },
+      { name: 'rank_cut', in_count: 44, out_count: 24 },
+      { name: 'max_candidates', in_count: 24, out_count: 8 },
+    ]
+    const d = ruleDrift(
+      [withFunnel('2026-09-03T13:30:00Z', older), withFunnel('2026-09-04T13:30:00Z', NEW)],
+      'sepa',
+      funnelInstrument(NEW as never),
+    )
+    expect(d.days).toHaveLength(2)
+    expect(d.change).toBe(3431 - 3400)
+  })
+
+  it('compares everything when no instrument is named', () => {
+    const d = ruleDrift(
+      [withFunnel('2026-09-01T10:00:00Z', OLD), withFunnel('2026-09-04T13:30:00Z', NEW)],
+      'sepa',
+    )
+    expect(d.days).toHaveLength(2)
+  })
+
+  it('reads the instrument from the step set, not their order or counts', () => {
+    const a = funnelInstrument([
+      { name: 'sepa', in_count: 1, out_count: 1 },
+      { name: 'rank_cut', in_count: 1, out_count: 1 },
+    ] as never)
+    const b = funnelInstrument([
+      { name: 'rank_cut', in_count: 9, out_count: 2 },
+      { name: 'sepa', in_count: 9, out_count: 9 },
+    ] as never)
+    expect(a).toBe(b)
   })
 })

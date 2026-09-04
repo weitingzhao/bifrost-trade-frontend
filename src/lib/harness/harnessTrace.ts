@@ -450,3 +450,87 @@ export function ruleStanceSummary(rules: RuleImpact[]): string {
   if (cap && typeof cap.setting === 'number') parts.push(`cap ${cap.setting}`)
   return parts.join(' · ')
 }
+
+
+/* ------------------------------------------------------- rule impact drift */
+
+/**
+ * Which instrument measured a funnel — the set of steps it recorded.
+ *
+ * Comparing across instruments produces fiction. Runs from 2026-09-01 opened the
+ * funnel at SEPA's own output and emitted no `rank_cut` or `max_candidates`, so
+ * sepa read as removing nobody; against a later run that opens at the universe
+ * and removes 3,431, the day-over-day change came out as "+3,431" — a market
+ * collapse that never happened. The step set is the honest discriminator: if it
+ * differs, the ruler changed and the numbers are not on one scale.
+ */
+export function funnelInstrument(funnel: HarnessFunnelStep[]): string {
+  return funnel
+    .map((f) => f.name)
+    .sort()
+    .join(',')
+}
+
+export interface RuleDay {
+  /** YYYY-MM-DD in the run's own timezone offset, as recorded. */
+  day: string
+  /** Symbols this rule removed that day. */
+  dropped: number
+  /** Runs that day which measured this rule. Same-day runs read one snapshot. */
+  runs: number
+}
+
+export interface RuleDrift {
+  key: string
+  days: RuleDay[]
+  /** Today minus the previous measured day, or null with under two days. */
+  change: number | null
+}
+
+/**
+ * A rule's impact day by day, not run by run.
+ *
+ * Same-day runs read the same daily snapshot and so remove exactly the same
+ * symbols — fifteen runs of the daily stock objective on 2026-09-04 each dropped
+ * 3,431 at sepa. Plotting per run would draw a flat line and call it stability,
+ * when it is just the same measurement repeated. Drift is a day-over-day
+ * question.
+ *
+ * Days where a rule has no funnel step are left out rather than entered as
+ * zero. Runs recorded before the funnel accounted for its own cuts have exactly
+ * that gap, and charting them as zeroes would invent a collapse that never
+ * happened — the instrument changed, not the market.
+ */
+export function ruleDrift(
+  runs: { started_at?: string | null; trace_json?: unknown }[],
+  ruleKey: string,
+  /** Only days measured by this instrument are comparable. */
+  instrument?: string,
+): RuleDrift {
+  const steps = RULE_FUNNEL_STEPS[ruleKey] ?? []
+  const byDay = new Map<string, { dropped: number; runs: number }>()
+
+  for (const run of runs) {
+    const day = (run.started_at ?? '').slice(0, 10)
+    if (day.length !== 10) continue
+    const funnel = traceFunnel(parseHarnessTrace(run.trace_json))
+    if (instrument !== undefined && funnelInstrument(funnel) !== instrument) continue
+    const measured = funnel.filter((f) => steps.includes(f.name))
+    if (measured.length === 0) continue
+    const dropped = measured.reduce((n, f) => n + Math.max(0, f.in_count - f.out_count), 0)
+    const seen = byDay.get(day)
+    // Same-day runs agree by construction; keep the latest and count them.
+    if (seen) byDay.set(day, { dropped, runs: seen.runs + 1 })
+    else byDay.set(day, { dropped, runs: 1 })
+  }
+
+  const days = [...byDay.entries()]
+    .map(([day, v]) => ({ day, dropped: v.dropped, runs: v.runs }))
+    .sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0))
+
+  return {
+    key: ruleKey,
+    days,
+    change: days.length < 2 ? null : days[days.length - 1].dropped - days[days.length - 2].dropped,
+  }
+}

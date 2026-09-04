@@ -31,12 +31,14 @@ import {
   HarnessFunnelBars,
   HarnessPersonaFold,
   PipelineStageRow,
-  RulesImpactPanel,
-  StageGovernors,
-  fmtStageMs,
   phaseViews,
   stageViews,
 } from '@/components/research/harness/HarnessPipelineStepper'
+import {
+  RulesImpactPanel,
+  StageGovernors,
+} from '@/components/research/harness/HarnessRulesPanel'
+import { fmtStageMs } from '@/components/research/harness/harnessFormat'
 import {
   loopCopilotUi,
   openCopilotInbox,
@@ -53,6 +55,8 @@ import {
   traceTerminalState,
 } from '@/lib/harness/harnessTrace'
 import { useApproveAllRun, useCurateRun, useObjectiveRun } from '@/hooks/useLoopHarness'
+import { useQuery } from '@tanstack/react-query'
+import { fetchObjectiveRuns } from '@/api/research/harness'
 
 function fmtDuration(ms: number | null): string {
   if (ms == null) return '—'
@@ -90,6 +94,15 @@ export function LoopRunPipelineBody({
     () => stageViews(trace, run?.plan_json ?? null, run?.status ?? ''),
     [trace, run?.plan_json, run?.status],
   )
+  // The objective's own history, for day-over-day rule comparison. Scoped to
+  // this objective so an unrelated system's runs cannot enter the baseline.
+  const historyQ = useQuery({
+    queryKey: ['objective-runs', 'drift', run?.objective_id],
+    queryFn: () => fetchObjectiveRuns({ objective_id: run!.objective_id, limit: 200 }),
+    enabled: Boolean(run?.objective_id),
+    staleTime: 120_000,
+  })
+
   const phases = useMemo(() => phaseViews(stages), [stages])
   const terminal = traceTerminalState(trace)
   const reach = funnelReach(trace)
@@ -201,7 +214,11 @@ export function LoopRunPipelineBody({
                 ) : null}
               </div>
               {phase.panel === 'rules' ? (
-                <RulesImpactPanel policy={run.objective_policy_json} trace={trace} />
+                <RulesImpactPanel
+                  policy={run.objective_policy_json}
+                  trace={trace}
+                  history={historyQ.data?.items}
+                />
               ) : null}
               <ol className="px-0.5">
                 {phase.stages.map((s, i) => {

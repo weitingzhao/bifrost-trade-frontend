@@ -6,13 +6,28 @@
  */
 import type { AiDraft } from '@/api/researchDrafts'
 
-/** Fields the runtime may accept in policy_json (mirrors backend whitelist). */
+/**
+ * Fields approving a policy_suggestion actually writes — the backend's
+ * POLICY_SUGGESTION_WHITELIST, in full.
+ *
+ * It held five of the ten while claiming to mirror the whitelist, and the diff
+ * table iterates it. A suggestion touching `layers` or `universe_mode`
+ * therefore rendered no row at all and counted as "0 fields to merge" — while
+ * approving it changed the trading system. That is worse than the drop it
+ * resembles: a card that overstates a change gets scrutinised, a card that
+ * understates one gets approved.
+ */
 export const POLICY_SUGGESTION_KEYS = [
   'preset',
   'flag_filter',
   'min_composite_score',
   'min_hit_rate',
   'max_candidates',
+  'universe_mode',
+  'layers',
+  'option_overlay',
+  'require_validate_pass',
+  'discovery_assist',
 ] as const
 
 export type PolicyKey = (typeof POLICY_SUGGESTION_KEYS)[number]
@@ -35,6 +50,16 @@ export const POLICY_FIELD_HELP: Record<PolicyKey, string> = {
     'Hit-rate gate on the selected lenses. Not set = gate off; it is ignored in stock modes anyway unless flag_filter is set.',
   max_candidates:
     'Cap on how many candidates one run may propose. Always set — the run stops at this many.',
+  universe_mode:
+    'Which resolver picks the universe. stock_composite runs the SEPA / momentum / events funnel; the single-layer modes run only that layer.',
+  layers:
+    'The screening layers and their thresholds. A layer with required:false never rejects — it only ranks, so it can be configured and still cut nobody.',
+  option_overlay:
+    'An option-flag pass over the survivors. required:false means it narrows when it can and is skipped when it cannot, rather than emptying the funnel.',
+  require_validate_pass:
+    'When true, a validate persona opposing a candidate blocks auto-approve for the whole batch.',
+  discovery_assist:
+    'Playbook-driven boost/veto at the funnel exit. Reorders and can veto; disabled by default.',
 }
 
 export interface PolicyDiffRow {

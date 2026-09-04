@@ -3,18 +3,18 @@ import type { AiDraft } from '@/api/researchDrafts'
 import {
   BRIEFING_KINDS,
   LOOP_KINDS,
-  groupIdenticalDrafts,
-  isActionableDraft,
-  isDecisionKind,
-  policySuggestionMergeCount,
+  POLICY_FIELD_HELP,
+  POLICY_SUGGESTION_KEYS,
   candidateBatchDataSource,
   candidateBatchItems,
   computePolicySuggestionRows,
   formatPolicyValue,
-  POLICY_FIELD_HELP,
+  groupIdenticalDrafts,
   hitRateFailingLenses,
+  isActionableDraft,
+  isDecisionKind,
   isHitRateWarnActive,
-  POLICY_SUGGESTION_KEYS,
+  policySuggestionMergeCount,
 } from './harnessDraftHelpers'
 
 describe('computePolicySuggestionRows', () => {
@@ -401,5 +401,66 @@ describe('policySuggestionMergeCount / isActionableDraft', () => {
   it('never counts a recurring briefing as a call', () => {
     expect(isActionableDraft(asDraft('morning_brief', {}))).toBe(false)
     expect(isActionableDraft(asDraft('eod_verdict', {}))).toBe(false)
+  })
+})
+
+/**
+ * The diff table iterates POLICY_SUGGESTION_KEYS. It held five of the backend's
+ * ten while claiming to mirror the whitelist, so a suggestion touching `layers`
+ * or `universe_mode` rendered no row and counted as "nothing to merge" — while
+ * approving it changed the trading system. A card that overstates a change gets
+ * scrutinised; one that understates it gets approved.
+ */
+describe('policy diff covers every field approval writes', () => {
+  it('shows a row for a nested group', () => {
+    const rows = computePolicySuggestionRows({
+      current_policy: { layers: { sepa: { min_score: 70 } } },
+      suggestion: { layers: { sepa: { min_score: 65 } } },
+    })
+    const layers = rows.find((r) => r.key === 'layers')
+    expect(layers, 'layers must appear in the diff').toBeTruthy()
+    expect(layers?.changed).toBe(true)
+  })
+
+  it('counts a nested change as a change', () => {
+    const payload = {
+      current_policy: { universe_mode: 'sepa' },
+      suggestion: { universe_mode: 'stock_composite' },
+    }
+    expect(policySuggestionMergeCount(payload)).toBe(1)
+  })
+
+  it('reads the current value from the snapshot rather than showing not-set', () => {
+    // Without current_policy every row rendered "—", so an 8 → 10 change looked
+    // like setting a field that had never been set.
+    const rows = computePolicySuggestionRows({
+      current_policy: { max_candidates: 8 },
+      suggestion: { max_candidates: 10 },
+    })
+    const row = rows.find((r) => r.key === 'max_candidates')
+    expect(row?.current).toBe(8)
+    expect(row?.proposed).toBe(10)
+  })
+
+  it('lists exactly the fields the backend whitelist writes', () => {
+    expect([...POLICY_SUGGESTION_KEYS].sort()).toEqual([
+      'discovery_assist',
+      'flag_filter',
+      'layers',
+      'max_candidates',
+      'min_composite_score',
+      'min_hit_rate',
+      'option_overlay',
+      'preset',
+      'require_validate_pass',
+      'universe_mode',
+    ])
+  })
+
+  it('explains every field it offers', () => {
+    // A knob with no help text is one the reader has to guess at.
+    for (const k of POLICY_SUGGESTION_KEYS) {
+      expect(POLICY_FIELD_HELP[k], k).toBeTruthy()
+    }
   })
 })

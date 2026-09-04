@@ -1,4 +1,4 @@
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, Sparkles, User } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
 import {
   computePolicySuggestionRows,
@@ -25,6 +25,13 @@ export function PolicySuggestionBody({
       : null
   const source =
     typeof payload.source === 'string' && payload.source ? payload.source : null
+  // Owner-authored suggestions were badged "llm". Mislabelling who changed the
+  // rules defeats the record the draft exists to leave.
+  const byOwner = payload.manual === true
+  const rationale =
+    typeof payload.rationale === 'string' && payload.rationale.trim()
+      ? payload.rationale.trim()
+      : null
   const evidence =
     payload.evidence && typeof payload.evidence === 'object' && !Array.isArray(payload.evidence)
       ? (payload.evidence as Record<string, unknown>)
@@ -33,11 +40,17 @@ export function PolicySuggestionBody({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-1.5">
-        <DenseTag variant="success" size="cell" className="inline-flex items-center gap-0.5">
-          <Sparkles className="size-3" />
-          {source === 'persona_eval_outcomes'
-            ? 'outcome flywheel'
-            : (llmModel ?? 'llm')}
+        <DenseTag
+          variant={byOwner ? 'category' : 'success'}
+          size="cell"
+          className="inline-flex items-center gap-0.5"
+        >
+          {byOwner ? <User className="size-3" /> : <Sparkles className="size-3" />}
+          {byOwner
+            ? 'you proposed this'
+            : source === 'persona_eval_outcomes'
+              ? 'outcome flywheel'
+              : (llmModel ?? 'llm')}
         </DenseTag>
         {source ? (
           <DenseTag variant="neutral" size="cell">
@@ -50,6 +63,15 @@ export function PolicySuggestionBody({
             : 'nothing to merge'}
         </DenseTag>
       </div>
+
+      {/* Why the change was proposed. Kept next to the diff because the number
+          alone cannot say whether a later shift in a rule's reach was the market
+          moving or this decision landing. */}
+      {rationale ? (
+        <p className="rounded-md border border-border/50 bg-secondary/40 px-2.5 py-1.5 text-dense-meta">
+          {rationale}
+        </p>
+      ) : null}
 
       {evidence ? (
         <p className="text-dense-micro text-muted-foreground">

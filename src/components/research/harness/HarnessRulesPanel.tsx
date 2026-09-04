@@ -6,6 +6,7 @@
 import { cn } from '@/lib/utils'
 import { POLICY_FIELD_HELP, formatPolicyValue } from '@/lib/harness/harnessDraftHelpers'
 import { num } from '@/components/research/harness/harnessFormat'
+import { PolicyKnobEditor } from '@/components/research/harness/PolicyKnobEditor'
 import {
   PIPELINE_STAGES,
   funnelInstrument,
@@ -76,9 +77,12 @@ export function compactPolicyGroup(value: unknown): string {
 export function StageGovernors({
   step,
   policy,
+  objectiveId,
 }: {
   step: string
   policy: Record<string, unknown> | null | undefined
+  /** Present when the knobs can be turned; absent renders read-only. */
+  objectiveId?: string | null
 }) {
   const rows = stageGovernors(step, policy)
   if (rows.length === 0) return null
@@ -93,9 +97,18 @@ export function StageGovernors({
             title={POLICY_FIELD_HELP[r.key as keyof typeof POLICY_FIELD_HELP]}
           >
             <span className="font-mono text-muted-foreground">{r.key}</span>{' '}
-            <span className={r.value == null ? 'text-muted-foreground/60' : 'font-medium'}>
-              {compactPolicyGroup(r.value)}
-            </span>
+            {objectiveId ? (
+              <PolicyKnobEditor
+                objectiveId={objectiveId}
+                field={r.key}
+                value={r.value}
+                rendered={compactPolicyGroup(r.value)}
+              />
+            ) : (
+              <span className={r.value == null ? 'text-muted-foreground/60' : 'font-medium'}>
+                {compactPolicyGroup(r.value)}
+              </span>
+            )}
           </span>
         ))}
       </div>

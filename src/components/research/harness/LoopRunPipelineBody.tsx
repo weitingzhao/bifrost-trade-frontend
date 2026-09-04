@@ -237,7 +237,11 @@ export function LoopRunPipelineBody({
                       expanded={open[s.step] ?? (isDecision && awaiting)}
                       onToggle={() => toggle(s.step)}
                     >
-                      <StageGovernors step={s.step} policy={run.objective_policy_json} />
+                      <StageGovernors
+                        step={s.step}
+                        policy={run.objective_policy_json}
+                        objectiveId={run.objective_id}
+                      />
                       {s.step === 'plan' ? <HarnessPlanStepper planJson={run.plan_json} /> : null}
                       {s.step === 'scan_universe' ? <HarnessFunnelBars trace={trace} /> : null}
                       {s.step === 'propose_candidates' ? <ProposedSymbols trace={trace} /> : null}

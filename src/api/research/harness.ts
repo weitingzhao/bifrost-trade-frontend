@@ -5,6 +5,7 @@
  * Envelope: `{ ok, data, error? }`.
  * Advisory only — D10 BLOCKED (no trade execution).
  */
+import { POLICY_SUGGESTION_KEYS } from '@/lib/harness/harnessDraftHelpers'
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 
@@ -280,6 +281,55 @@ export async function setObjectiveStatus(
       body: JSON.stringify({ status }),
     }),
   )
+}
+
+/**
+ * The whitelist the backend enforces, so the UI offers an edit only where one
+ * would actually apply. A control for a field that gets dropped at approval is
+ * worse than no control — it looks like a change and is not one. One list, also
+ * used by the Inbox diff table, so an editable knob and a visible diff row can
+ * never disagree. The API is still the authority and answers 400 with the same
+ * set.
+ */
+export const EDITABLE_POLICY_FIELDS = POLICY_SUGGESTION_KEYS
+
+export type EditablePolicyField = (typeof EDITABLE_POLICY_FIELDS)[number]
+
+export function isEditablePolicyField(key: string): key is EditablePolicyField {
+  return (EDITABLE_POLICY_FIELDS as readonly string[]).includes(key)
+}
+
+/**
+ * Propose a policy change as a draft, the way the model does.
+ *
+ * Not a direct write: routed through the Inbox so an Owner-made change leaves
+ * the same record as a model-made one, which is what lets rule drift be
+ * attributed to a decision rather than guessed at.
+ */
+export async function proposePolicyChange(
+  objectiveId: string,
+  suggestion: Record<string, unknown>,
+  rationale: string,
+): Promise<{ draft: AiDraftLike }> {
+  return unwrap<{ draft: AiDraftLike }>(
+    await fetch(
+      researchEngineUrl(
+        `/research/objectives/${encodeURIComponent(objectiveId)}/policy-suggestion`,
+      ),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suggestion, rationale }),
+      },
+    ),
+  )
+}
+
+/** Minimal shape the caller needs back — the Inbox owns the full type. */
+export interface AiDraftLike {
+  id: string
+  kind: string
+  payload?: Record<string, unknown>
 }
 
 /** Delete an objective that never ran. The API refuses (409) once it has runs. */

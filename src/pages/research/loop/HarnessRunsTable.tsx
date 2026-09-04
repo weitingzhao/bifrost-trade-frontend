@@ -21,7 +21,7 @@ import {
   IconActionButton,
 } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
-import { fmtInt } from '@/lib/format'
+import { fmtInt, fmtIsoTs } from '@/lib/format'
 import { funnelReach, parseHarnessTrace, runDurationMs } from '@/lib/harness/harnessTrace'
 import type { RunGroup } from '@/lib/harness/harnessTrace'
 import type { ObjectiveRun } from '@/api/research/harness'
@@ -40,15 +40,6 @@ function runStatusVariant(status: string): 'success' | 'warning' | 'danger' | 'n
   if (status === 'awaiting_approval') return 'warning'
   if (status === 'failed') return 'danger'
   return 'neutral'
-}
-
-function fmtTs(v: string | null | undefined): string {
-  if (!v) return '—'
-  try {
-    return new Date(v).toLocaleString()
-  } catch {
-    return v
-  }
 }
 
 /** Considered → proposed for one run, with the conversion it implies. */
@@ -183,7 +174,7 @@ export function HarnessRunsTable({
                 <RunFunnelCell trace={row.trace_json} />
               </DenseTableCell>
               <DenseTableCell className="truncate text-dense-meta text-muted-foreground">
-                {fmtTs(row.started_at)}
+                {fmtIsoTs(row.started_at)}
                 {duration != null ? (
                   <span className="block text-dense-caption">
                     {(duration / 1000).toFixed(1)}s

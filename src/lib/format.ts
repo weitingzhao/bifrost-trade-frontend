@@ -173,6 +173,18 @@ export function fmtTs(ts: number | null | undefined): string {
   return new Date(ts * 1000).toLocaleString()
 }
 
+/**
+ * Same, for an ISO-8601 string. `fmtTs` takes epoch seconds, so every caller
+ * holding an API timestamp string wrote its own — four functions named fmtTs
+ * across the app, taking two different input types. Naming the input keeps them
+ * apart.
+ */
+export function fmtIsoTs(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString()
+}
+
 /** Format trade_date (YYYY-MM-DD string from API) for display. */
 export function fmtTradeDate(tradeDate: string | null | undefined): string {
   if (tradeDate == null || String(tradeDate).trim() === '') return '—'

@@ -216,11 +216,20 @@ function FunnelBarRow({ step }: { step: HarnessFunnelStep }) {
 
 /* ------------------------------------------------------------ persona fold */
 
+export interface PersonaVerdict {
+  agent: string
+  source: string
+  stance: string
+  confidence: number | null
+  summary: string
+}
+
 export interface PersonaRow {
   symbol: string
   net: string
   validate: string
   blocked: boolean
+  verdicts: PersonaVerdict[]
 }
 
 export function personaRows(trace: HarnessTrace): PersonaRow[] {
@@ -231,12 +240,21 @@ export function personaRows(trace: HarnessTrace): PersonaRow[] {
     net: String(r.net_stance ?? '—'),
     validate: String(r.validate_stance ?? '—'),
     blocked: r.blocked_by_validate === true,
+    verdicts: (Array.isArray(r.verdicts) ? (r.verdicts as Record<string, unknown>[]) : []).map(
+      (v) => ({
+        agent: String(v.agent ?? '—'),
+        source: String(v.source ?? '—'),
+        stance: String(v.stance ?? '—'),
+        confidence: typeof v.confidence === 'number' ? v.confidence : null,
+        summary: String(v.summary ?? ''),
+      }),
+    ),
   }))
 }
 
 /**
- * Eight rows reading `net=caution · validate=caution` eight times says one
- * thing, not eight. Fold the agreement, keep the exceptions visible.
+ * Eight rows reading `net=caution` eight times says one thing, not eight. Fold
+ * the agreement, keep the exceptions visible.
  */
 export function personaVerdictSummary(rows: PersonaRow[]): string {
   if (rows.length === 0) return '—'
@@ -247,6 +265,79 @@ export function personaVerdictSummary(rows: PersonaRow[]): string {
     .map(([stance, n]) => (n === rows.length ? `${n}/${n} ${stance}` : `${n} ${stance}`))
   const blocked = rows.filter((r) => r.blocked).length
   return `${parts.join(' · ')} · ${blocked} blocked`
+}
+
+/**
+ * Fold key for a symbol's whole panel of verdicts.
+ *
+ * Numbers are masked out because the heuristic embeds the SEPA score in its own
+ * prose ("Mixed structure (SEPA 79) · PIVOT"), which would otherwise split eight
+ * identical judgements into eight groups over a rounding difference. What is
+ * being compared is the reasoning, not the score — the score is shown per
+ * symbol alongside its name.
+ */
+function verdictShape(row: PersonaRow): string {
+  return row.verdicts
+    .map((v) => `${v.agent}:${v.stance}:${v.summary.replace(/[\d.]+/g, '#')}`)
+    .join('|')
+}
+
+export interface PersonaGroup {
+  shape: string
+  members: PersonaRow[]
+  verdicts: PersonaVerdict[]
+}
+
+/**
+ * Eight candidates that drew the same four verdicts is one judgement repeated
+ * eight times, and printing it eight times buries the fact. Folded, the
+ * repetition becomes the headline it should be: the personas did not
+ * differentiate between these names.
+ */
+export function groupPersonaRows(rows: PersonaRow[]): PersonaGroup[] {
+  const byShape = new Map<string, PersonaRow[]>()
+  for (const r of rows) {
+    const k = verdictShape(r)
+    const seen = byShape.get(k)
+    if (seen) seen.push(r)
+    else byShape.set(k, [r])
+  }
+  return [...byShape.entries()].map(([shape, members]) => ({
+    shape,
+    members,
+    verdicts: members[0].verdicts,
+  }))
+}
+
+function stanceClass(stance: string): string {
+  if (stance === 'support') return 'text-success'
+  if (stance === 'caution') return 'text-warning'
+  if (stance === 'oppose' || stance === 'block') return 'text-destructive'
+  return 'text-muted-foreground'
+}
+
+function VerdictList({ verdicts }: { verdicts: PersonaVerdict[] }) {
+  if (verdicts.length === 0) {
+    return (
+      <p className="text-dense-caption text-muted-foreground">
+        No per-persona verdicts recorded.
+      </p>
+    )
+  }
+  return (
+    <ul className="space-y-1">
+      {verdicts.map((v) => (
+        <li key={v.agent} className="flex gap-2 text-dense-caption">
+          <span className="w-16 shrink-0 font-medium">{v.agent}</span>
+          <span className={cn('w-14 shrink-0', stanceClass(v.stance))}>{v.stance}</span>
+          <span className="w-8 shrink-0 tabular-nums text-muted-foreground/70">
+            {v.confidence == null ? '—' : v.confidence.toFixed(2)}
+          </span>
+          <span className="min-w-0 flex-1 text-muted-foreground">{v.summary}</span>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
@@ -262,24 +353,35 @@ export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
   }
   const mode = typeof ev.mode === 'string' ? ev.mode : '—'
   const fallback = ev.fallback_used === true
-  const dissent = rows.filter((r) => r.blocked || r.net !== rows[0]?.net)
+  const isLlm = mode === 'agent' && !fallback
+  const agents = [...new Set(rows.flatMap((r) => r.verdicts.map((v) => v.agent)))]
+  const groups = groupPersonaRows(rows)
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
+      {/* What actually produced these opinions. "Personas" reads as LLM agents
+          reasoning over the batch; by default they are deterministic heuristics
+          over the same evidence, and that difference decides how much the
+          verdicts are worth. */}
+      <p className="text-dense-caption">
+        {isLlm ? (
+          <>
+            <span className="text-info font-medium">LLM persona agents</span> read each
+            candidate{agents.length > 0 ? ` — ${agents.join(', ')}` : ''}.
+          </>
+        ) : (
+          <>
+            <span className="text-warning font-medium">
+              Deterministic heuristics{fallback ? ' (agents requested, fell back)' : ''}
+            </span>
+            {agents.length > 0 ? ` — ${agents.join(', ')}` : ''} scored the same evidence
+            without an LLM. Set{' '}
+            <span className="font-mono">BIFROST_PERSONA_EVAL_AGENTS=1</span> for live agents.
+          </>
+        )}
+      </p>
+
       <div className="flex flex-wrap items-center gap-1">
-        <DenseTag
-          variant={mode === 'agent' && !fallback ? 'info' : 'neutral'}
-          size="cell"
-          title={
-            mode === 'heuristic'
-              ? 'Deterministic evidence heuristics — not live multi-agent.'
-              : fallback
-                ? 'Agents requested; at least one symbol fell back to heuristic.'
-                : 'LLM Persona agents via BIFROST_PERSONA_EVAL_AGENTS=1.'
-          }
-        >
-          {mode === 'agent' && fallback ? 'agent (fell back)' : mode}
-        </DenseTag>
         <DenseTag
           variant={Number(ev.blocked_by_validate) > 0 ? 'danger' : 'success'}
           size="cell"
@@ -290,38 +392,46 @@ export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
           auto-approve {ev.auto_approve_eligible ? 'eligible' : 'held'}
         </DenseTag>
         {typeof ev.holdings_status === 'string' && ev.holdings_status !== 'applied' ? (
-          <DenseTag variant="warning" size="cell" title="Portfolio persona had no holdings to reason over.">
+          <DenseTag
+            variant="warning"
+            size="cell"
+            title="Portfolio persona had no holdings to reason over."
+          >
             holdings {String(ev.holdings_status)}
           </DenseTag>
         ) : null}
       </div>
 
-      {rows.length > 0 ? (
-        dissent.length === 0 ? (
-          <p className="text-dense-meta">
-            All {rows.length} agreed:{' '}
-            <span className="font-medium">net={rows[0].net}</span>,{' '}
-            <span className="font-medium">validate={rows[0].validate}</span> — no
-            dissent, nothing held.
+      {groups.map((g) => (
+        <div key={g.shape} className="space-y-1 rounded-md border border-border/50 px-2 py-1.5">
+          <p className="text-dense-caption">
+            {g.members.length === rows.length && rows.length > 1 ? (
+              <>
+                <span className="font-medium">All {rows.length}</span> drew the same four
+                verdicts — the personas did not separate these names.
+              </>
+            ) : (
+              <span className="font-medium">
+                {g.members.length} candidate{g.members.length === 1 ? '' : 's'}
+              </span>
+            )}
           </p>
-        ) : (
-          <ul className="space-y-0.5">
-            {rows.map((r) => (
-              <li key={r.symbol} className="flex items-baseline gap-2 text-dense-meta">
-                <span className="w-14 shrink-0 font-mono font-semibold">{r.symbol}</span>
-                <span className="text-muted-foreground">
-                  net={r.net} · validate={r.validate}
-                </span>
-                {r.blocked ? (
-                  <DenseTag variant="danger" size="cell">
-                    blocked
-                  </DenseTag>
-                ) : null}
-              </li>
+          <div className="flex flex-wrap gap-1">
+            {g.members.map((m) => (
+              <DenseTag
+                key={m.symbol}
+                variant={m.blocked ? 'danger' : 'symbol'}
+                size="cell"
+                title={`net ${m.net} · validate ${m.validate}`}
+              >
+                {m.symbol}
+                {m.blocked ? ' · blocked' : ''}
+              </DenseTag>
             ))}
-          </ul>
-        )
-      ) : null}
+          </div>
+          <VerdictList verdicts={g.verdicts} />
+        </div>
+      ))}
       {typeof ev.error === 'string' ? (
         <p className="text-dense-meta text-destructive">{ev.error}</p>
       ) : null}

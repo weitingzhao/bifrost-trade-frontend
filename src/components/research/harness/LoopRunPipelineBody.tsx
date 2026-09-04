@@ -119,7 +119,7 @@ export function LoopRunPipelineBody({
               type="button"
               size="sm"
               variant="outline"
-              className="h-6 px-1.5 text-dense-micro"
+              className="h-7 px-2 text-dense-meta"
               onClick={() => openLoopRunInCopilot({ runId: run.id, title, lang, runDetail: run })}
             >
               <MessageCircle className="mr-0.5 size-3" />
@@ -321,19 +321,28 @@ function DecisionStage({
   const skipped = Boolean(batchMeta?.approveAll?.skipped_batch || batchMeta?.approveSkipped)
   return (
     <div className="space-y-2">
+      {/* A tag is a label, not a paragraph. `trustReason` is a full sentence, so
+          wrapping it in a pill produced a three-line rounded box that read as a
+          broken control. Short label in the tag; the reason as prose under it. */}
       {batchMeta ? (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {skipped ? (
+              <DenseTag variant="warning" size="cell">
+                Auto-approve held
+              </DenseTag>
+            ) : (
+              <DenseTag variant="success" size="cell">
+                Auto-approved {batchMeta.approveAll?.count ?? 0} · held{' '}
+                {batchMeta.approveAll?.held_count ?? 0}
+              </DenseTag>
+            )}
+          </div>
           {skipped ? (
-            <DenseTag variant="warning" size="cell">
-              Auto-approve held
-              {batchMeta.trustReason ? ` — ${batchMeta.trustReason}` : ' (not Trust L0, or dissent)'}
-            </DenseTag>
-          ) : (
-            <DenseTag variant="success" size="cell">
-              Auto-approved {batchMeta.approveAll?.count ?? 0} · held{' '}
-              {batchMeta.approveAll?.held_count ?? 0}
-            </DenseTag>
-          )}
+            <p className="text-dense-caption text-muted-foreground">
+              {batchMeta.trustReason ?? 'Not at Trust L0, or a persona dissented.'}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -356,7 +365,7 @@ function DecisionStage({
           <Button
             type="button"
             size="sm"
-            className="h-7 px-2 text-dense-micro"
+            className="h-7 px-2 text-dense-meta"
             disabled={approving}
             onClick={onApprove}
           >
@@ -367,7 +376,7 @@ function DecisionStage({
             type="button"
             size="sm"
             variant="outline"
-            className="h-7 px-2 text-dense-micro"
+            className="h-7 px-2 text-dense-meta"
             disabled={curating}
             onClick={onCurate}
           >
@@ -378,7 +387,7 @@ function DecisionStage({
             type="button"
             size="sm"
             variant="ghost"
-            className="h-7 px-2 text-dense-micro"
+            className="h-7 px-2 text-dense-meta"
             onClick={onInbox}
           >
             {inboxLabel}

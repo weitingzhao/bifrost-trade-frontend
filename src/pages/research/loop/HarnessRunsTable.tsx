@@ -24,7 +24,6 @@ import { Button } from '@/components/ui/button'
 import { fmtInt, fmtIsoTs } from '@/lib/format'
 import { funnelReach, parseHarnessTrace, runDurationMs } from '@/lib/harness/harnessTrace'
 import type { RunGroup } from '@/lib/harness/harnessTrace'
-import type { ObjectiveRun } from '@/api/research/harness'
 import { loopCopilotUi, openLoopRunInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import type { CopilotPromptLang } from '@/lib/copilot/promptLang'
 
@@ -97,7 +96,8 @@ export function HarnessRunsTable({
   onOpenPipeline: (runId: string) => void
   onApprove: (runId: string) => void
   onCurate: (runId: string) => void
-  onDelete: (run: ObjectiveRun) => void
+  /** Deletes the whole folded group (head + identical re-runs). */
+  onDelete: (group: RunGroup) => void
   approvingId: string | null
   curatingId: string | null
   deleteBusy: boolean
@@ -238,10 +238,18 @@ export function HarnessRunsTable({
                       those are exactly the rows that accumulate. */}
                   <IconActionButton
                     tone="danger"
-                    title="Delete this run — also removes its candidates and pending drafts"
-                    ariaLabel={`Delete run ${row.id}`}
+                    title={
+                      repeats.length > 0
+                        ? `Delete this run and ${repeats.length} identical re-run(s) — also removes their candidates and pending drafts`
+                        : 'Delete this run — also removes its candidates and pending drafts'
+                    }
+                    ariaLabel={
+                      repeats.length > 0
+                        ? `Delete run ${row.id} and ${repeats.length} re-runs`
+                        : `Delete run ${row.id}`
+                    }
                     disabled={deleteBusy}
-                    onClick={() => onDelete(row)}
+                    onClick={() => onDelete({ run: row, repeats })}
                   >
                     <Trash2 className="size-3.5" />
                   </IconActionButton>

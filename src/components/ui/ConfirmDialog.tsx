@@ -16,6 +16,12 @@ export interface ConfirmDialogProps {
   confirmLabel?: string
   confirming?: boolean
   bodyExtra?: ReactNode
+  /**
+   * Default elevated — above RightInspector (z-200) and Copilot (z-190).
+   * Without this, confirms opened while a drawer is open sit under it and look
+   * like the destructive action "did nothing".
+   */
+  stackLayer?: 'default' | 'elevated'
   onConfirm: () => void
   onCancel: () => void
 }
@@ -27,12 +33,13 @@ export function ConfirmDialog({
   confirmLabel = 'Confirm',
   confirming = false,
   bodyExtra,
+  stackLayer = 'elevated',
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onCancel() }}>
-      <DialogContent showCloseButton={false}>
+      <DialogContent showCloseButton={false} stackLayer={stackLayer}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{message}</DialogDescription>

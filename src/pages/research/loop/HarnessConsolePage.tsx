@@ -12,7 +12,7 @@
  * Advisory only — D10 BLOCKED (no trade execution).
  */
 import { useSearchParams } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Archive,
@@ -146,6 +146,10 @@ export default function HarnessConsolePage() {
     refetchOnWindowFocus: false,
   })
 
+  // Set while a synchronous /run is in flight, so the list keeps polling until
+  // the run row this click created shows up.
+  const [awaitingRunFor, setAwaitingRunFor] = useState<string | null>(null)
+
   const runsQ = useQuery({
     queryKey: QUERY_KEYS.research.objectiveRuns({
       status: runStatus === 'all' ? undefined : runStatus,
@@ -159,15 +163,29 @@ export default function HarnessConsolePage() {
     // "no funnel" until something else happened to refetch. Poll only while a
     // run is actually in flight.
     refetchInterval: (q) =>
-      (q.state.data?.items ?? []).some((r) => r.status === 'running') ? 3_000 : false,
+      awaitingRunFor != null ||
+      (q.state.data?.items ?? []).some((r) => r.status === 'running')
+        ? 1_500
+        : false,
   })
 
+  // POST /run is synchronous: it returns only once the whole loop is done, so
+  // opening the drawer on its response meant every run appeared already
+  // finished — the stepper had nothing to show. The run row exists from the
+  // first moment though (create_run inserts status 'running') and the runtime
+  // flushes its trace eight times on the way, so the progress is there to read;
+  // we just have to go looking for the run instead of waiting to be handed it.
   const runMut = useMutation({
     mutationFn: (objectiveId: string) => runObjective(objectiveId),
-    onSuccess: (res) => {
+    onMutate: (objectiveId) => {
+      setAwaitingRunFor(objectiveId)
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
+    },
+    onSettled: (res) => {
+      setAwaitingRunFor(null)
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
       void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-      const runId = res.run?.id
+      const runId = res?.run?.id
       if (runId) openPipeline(runId)
     },
   })
@@ -228,23 +246,39 @@ export default function HarnessConsolePage() {
     },
   })
 
-  const [deletingRun, setDeletingRun] = useState<ObjectiveRun | null>(null)
+  const [deletingGroup, setDeletingGroup] = useState<RunGroup | null>(null)
 
   const deleteRunMut = useMutation({
-    mutationFn: (v: { runId: string; force?: boolean }) =>
-      deleteObjectiveRun(v.runId, { force: v.force ?? true }),
+    mutationFn: async (v: { runIds: string[]; force?: boolean }) => {
+      let candidates_removed = 0
+      let drafts_dismissed = 0
+      for (const runId of v.runIds) {
+        const res = await deleteObjectiveRun(runId, { force: v.force ?? true })
+        candidates_removed += res.candidates_removed ?? 0
+        drafts_dismissed += res.drafts_dismissed ?? 0
+      }
+      return {
+        deleted: v.runIds.length,
+        runIds: v.runIds,
+        candidates_removed,
+        drafts_dismissed,
+      }
+    },
     onSuccess: (res) => {
-      setDeletingRun(null)
+      setDeletingGroup(null)
+      // If the open pipeline drawer points at a deleted run, close it.
+      if (pipelineRunId && res.runIds.includes(pipelineRunId)) closePipeline()
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
       void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
       const removed = res.candidates_removed ?? 0
       const dismissed = res.drafts_dismissed ?? 0
-      if (removed > 0 || dismissed > 0) {
-        setApproveFeedback(
-          `Deleted run — removed ${removed} candidate(s), dismissed ${dismissed} draft(s). Hypotheses kept.`,
-        )
-      }
+      const n = res.deleted
+      setApproveFeedback(
+        n > 1
+          ? `Deleted ${n} runs — removed ${removed} candidate(s), dismissed ${dismissed} draft(s). Hypotheses kept.`
+          : `Deleted run — removed ${removed} candidate(s), dismissed ${dismissed} draft(s). Hypotheses kept.`,
+      )
     },
   })
 
@@ -261,6 +295,20 @@ export default function HarnessConsolePage() {
     if (Array.isArray(ids)) return ids.length
     return null
   }
+
+  function groupRunIds(group: RunGroup): string[] {
+    return [group.run.id, ...group.repeats.map((r) => r.id)]
+  }
+
+  // Open on the run as soon as it exists, not when it finishes. Without this the
+  // drawer waited for the POST to return and every run read as already complete.
+  useEffect(() => {
+    if (awaitingRunFor == null || pipelineRunId != null) return
+    const live = (runsQ.data?.items ?? []).find(
+      (r) => r.objective_id === awaitingRunFor && r.status === 'running',
+    )
+    if (live) openPipeline(live.id)
+  }, [awaitingRunFor, pipelineRunId, runsQ.data?.items])
 
   const objectives = useMemo(
     () => objectivesQ.data?.items ?? [],
@@ -296,7 +344,7 @@ export default function HarnessConsolePage() {
     onOpenPipeline: openPipeline,
     onApprove: (id: string) => approveMut.mutate(id),
     onCurate: (id: string) => curateMut.mutate(id),
-    onDelete: setDeletingRun,
+    onDelete: setDeletingGroup,
     approvingId: approveMut.isPending ? (approveMut.variables ?? null) : null,
     curatingId: curateMut.isPending ? (curateMut.variables ?? null) : null,
     deleteBusy: deleteRunMut.isPending,
@@ -489,25 +537,35 @@ export default function HarnessConsolePage() {
       </section>
 
       <ConfirmDialog
-        open={deletingRun !== null}
+        open={deletingGroup !== null}
         title="Delete run"
         message={
-          deletingRun
+          deletingGroup
             ? (() => {
-                const n = candidateCountHint(deletingRun)
+                const ids = groupRunIds(deletingGroup)
+                const nCand = candidateCountHint(deletingGroup.run)
                 const lineage =
-                  n != null && n > 0
-                    ? `This also deletes ${n} candidate(s) that point at it and dismisses pending drafts.`
-                    : 'This also deletes any candidates that still point at it and dismisses pending drafts.'
-                return `Delete ${deletingRun.id}? Its funnel and trace go with it. ${lineage} Promoted hypotheses are kept.`
+                  nCand != null && nCand > 0
+                    ? `This also deletes ${nCand}+ candidate(s) that point at them and dismisses pending drafts.`
+                    : 'This also deletes any candidates that still point at them and dismisses pending drafts.'
+                if (ids.length > 1) {
+                  return `Delete ${deletingGroup.run.id} and ${ids.length - 1} identical re-run(s)? Their funnels and traces go with them. ${lineage} Promoted hypotheses are kept.`
+                }
+                return `Delete ${deletingGroup.run.id}? Its funnel and trace go with it. ${lineage} Promoted hypotheses are kept.`
               })()
             : ''
         }
-        confirmLabel="Delete run"
+        confirmLabel={
+          deletingGroup && groupRunIds(deletingGroup).length > 1
+            ? `Delete ${groupRunIds(deletingGroup).length} runs`
+            : 'Delete run'
+        }
         confirming={deleteRunMut.isPending}
-        onCancel={() => setDeletingRun(null)}
+        onCancel={() => setDeletingGroup(null)}
         onConfirm={() => {
-          if (deletingRun) deleteRunMut.mutate({ runId: deletingRun.id, force: true })
+          if (deletingGroup) {
+            deleteRunMut.mutate({ runIds: groupRunIds(deletingGroup), force: true })
+          }
         }}
       />
 

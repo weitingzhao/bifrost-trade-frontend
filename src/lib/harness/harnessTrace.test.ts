@@ -4,6 +4,7 @@ import {
   funnelReach,
   groupIdenticalRuns,
   parseHarnessTrace,
+  stageDurationsMs,
   traceFunnel,
 } from './harnessTrace'
 
@@ -183,5 +184,59 @@ describe('groupIdenticalRuns', () => {
 
   it('returns an empty list for no runs', () => {
     expect(groupIdenticalRuns([])).toEqual([])
+  })
+})
+
+/**
+ * A finished run reported "5.1s" and six green ticks — the same picture whether
+ * the time went to the universe scan or the personas. Stage timing is what makes
+ * an already-complete run legible as a process.
+ */
+describe('stageDurationsMs', () => {
+  const stamped = (rows: [string, number][]) =>
+    parseHarnessTrace({ events: rows.map(([step, at_ms]) => ({ step, at_ms })) })
+
+  it('charges a stage the gap since the previous stage, not the previous event', () => {
+    // propose_candidates is preceded by one propose_candidate per symbol; timing
+    // against the last of those would credit Propose with 5ms of its 400.
+    const d = stageDurationsMs(
+      stamped([
+        ['plan', 20],
+        ['plan_ops', 22],
+        ['scan_universe', 3120],
+        ['propose_candidate', 3500],
+        ['propose_candidate', 3515],
+        ['propose_candidates', 3520],
+      ]),
+    )
+    expect(d.get('plan')).toBe(20)
+    expect(d.get('scan_universe')).toBe(3100)
+    expect(d.get('propose_candidates')).toBe(400)
+  })
+
+  it('ignores events that are not pipeline stages', () => {
+    const d = stageDurationsMs(stamped([['resolved_source', 10], ['plan', 20]]))
+    expect(d.has('resolved_source')).toBe(false)
+    expect(d.get('plan')).toBe(20)
+  })
+
+  it('is empty — not zeroes — for a run recorded before stage timing', () => {
+    // "not measured" and "instant" are different facts and must not render alike.
+    const d = stageDurationsMs(parseHarnessTrace({ events: [{ step: 'plan' }] }))
+    expect(d.size).toBe(0)
+  })
+
+  it('ends a repeated stage at its last mark', () => {
+    // plan is recorded again at 90, after scan_universe at 50, so plan closes at
+    // 90 and is charged the 40ms since the stage before it — not the 10ms of its
+    // first mark, and not 90ms measured from the start of the run.
+    const d = stageDurationsMs(stamped([['plan', 10], ['scan_universe', 50], ['plan', 90]]))
+    expect(d.get('scan_universe')).toBe(50)
+    expect(d.get('plan')).toBe(40)
+  })
+
+  it('never reports a negative stage', () => {
+    const d = stageDurationsMs(stamped([['scan_universe', 900], ['plan', 100]]))
+    expect([...d.values()].every((v) => v >= 0)).toBe(true)
   })
 })

@@ -16,7 +16,43 @@ export interface HarnessFunnelStep {
 
 export interface HarnessTraceEvent {
   step: string
+  /** Milliseconds from the start of the run to when this event was recorded. */
+  at_ms?: number
   [key: string]: unknown
+}
+
+/**
+ * How long each pipeline stage took, keyed by step.
+ *
+ * Measured stage-to-stage, not event-to-event. The trace interleaves the six
+ * stages with the work they generate — `propose_candidates` is preceded by one
+ * `propose_candidate` per symbol — so timing against the previous *event* would
+ * charge Propose only the last insert and silently drop the rest of its work.
+ * The gap since the previous stage is what that stage cost.
+ *
+ * Runs recorded before research 0.65.4 carry no marks and get an empty map, so
+ * the UI can tell "not measured" from "instant" — the distinction this codebase
+ * has had to relearn more than once.
+ */
+export function stageDurationsMs(trace: HarnessTrace): Map<string, number> {
+  const stageSteps = new Set<string>(PIPELINE_STAGES.map((s) => s.step))
+  const marks: { step: string; at: number }[] = []
+  for (const ev of trace.events) {
+    if (typeof ev.at_ms !== 'number' || !stageSteps.has(ev.step)) continue
+    // A stage recorded more than once ends at its last mark.
+    const seen = marks.find((m) => m.step === ev.step)
+    if (seen) seen.at = ev.at_ms
+    else marks.push({ step: ev.step, at: ev.at_ms })
+  }
+  if (marks.length === 0) return new Map()
+  marks.sort((a, b) => a.at - b.at)
+  const out = new Map<string, number>()
+  let prev = 0
+  for (const m of marks) {
+    out.set(m.step, Math.max(0, m.at - prev))
+    prev = m.at
+  }
+  return out
 }
 
 export interface HarnessTrace {

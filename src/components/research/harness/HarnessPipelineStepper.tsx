@@ -18,6 +18,7 @@ import {
   PIPELINE_STAGES,
   completedProgressSteps,
   funnelReach,
+  stageDurationsMs,
   traceFunnel,
   tracePersonaEval,
   type HarnessFunnelStep,
@@ -35,6 +36,12 @@ function num(n: number): string {
   return n.toLocaleString('en-US')
 }
 
+/** Two significant figures is enough to see where a five-second run went. */
+export function fmtStageMs(ms: number): string {
+  if (ms < 1000) return `${ms}ms`
+  return `${(ms / 1000).toFixed(1)}s`
+}
+
 /* ---------------------------------------------------------------- stage row */
 
 export function PipelineStageRow({
@@ -46,6 +53,8 @@ export function PipelineStageRow({
   expanded,
   onToggle,
   isLast,
+  durationMs,
+  slowest,
   children,
   accessory,
 }: {
@@ -57,6 +66,8 @@ export function PipelineStageRow({
   expanded: boolean
   onToggle?: () => void
   isLast: boolean
+  durationMs?: number | null
+  slowest?: boolean
   children?: ReactNode
   accessory?: ReactNode
 }) {
@@ -122,6 +133,19 @@ export function PipelineStageRow({
           <span className="min-w-0 flex-1 truncate text-right text-dense-meta text-muted-foreground">
             {summary}
           </span>
+          {/* Where the run spent itself. A finished run used to report one total
+              and six green ticks, which says nothing about the shape of the work. */}
+          {durationMs != null ? (
+            <span
+              className={cn(
+                'w-12 shrink-0 text-right tabular-nums text-dense-caption',
+                slowest ? 'font-medium text-warning' : 'text-muted-foreground/70',
+              )}
+              title={slowest ? 'Longest stage of this run' : undefined}
+            >
+              {fmtStageMs(durationMs)}
+            </span>
+          ) : null}
           {accessory}
         </div>
         {expanded && children ? (
@@ -448,6 +472,10 @@ export interface StageView {
   blurb: string
   state: StageState
   summary: ReactNode
+  /** null when the run predates stage timing. */
+  durationMs: number | null
+  /** The stage that took the largest share — where the run actually spent itself. */
+  slowest: boolean
 }
 
 /**
@@ -460,6 +488,11 @@ export function stageViews(
   status: string,
 ): StageView[] {
   const done = completedProgressSteps(trace)
+  const durations = stageDurationsMs(trace)
+  const slowestStep =
+    durations.size === 0
+      ? null
+      : [...durations.entries()].sort((a, b) => b[1] - a[1])[0][0]
   const current = trace.progress?.step
   const running = status === 'running'
   const reach = funnelReach(trace)
@@ -514,5 +547,7 @@ export function stageViews(
         ? 'active'
         : 'pending',
     summary: summaryFor(s.step),
+    durationMs: durations.get(s.step) ?? null,
+    slowest: slowestStep === s.step,
   }))
 }

@@ -183,6 +183,8 @@ export function LoopRunPipelineBody({
                   blurb={s.blurb}
                   summary={s.summary}
                   isLast={isDecision}
+                  durationMs={s.durationMs}
+                  slowest={s.slowest}
                   expanded={open[s.step] ?? (isDecision && awaiting)}
                   onToggle={() => toggle(s.step)}
                 >
@@ -212,13 +214,18 @@ export function LoopRunPipelineBody({
             })}
           </ol>
 
-          <CollapsibleGroup variant="card">
+          {/* Subordinate to the stages, and styled that way. As cards with
+              13px titles these two sat above the 12px stage rows they belong
+              under — the reference material outranking the run it describes. */}
+          <CollapsibleGroup variant="inset">
             <CollapsibleGroupHeader
               expanded={outputsOpen}
               onToggle={() => setOutputsOpen((o) => !o)}
             >
               <CollapsibleChevron expanded={outputsOpen} />
-              <CollapsibleGroupTitle>Outputs &amp; drafts</CollapsibleGroupTitle>
+              <CollapsibleGroupTitle className="text-dense-label font-medium">
+                Outputs &amp; drafts
+              </CollapsibleGroupTitle>
             </CollapsibleGroupHeader>
             {outputsOpen ? (
               <CollapsibleGroupBody className="px-3 pb-3">
@@ -228,13 +235,15 @@ export function LoopRunPipelineBody({
           </CollapsibleGroup>
 
           {/* Raw. `plan_ops: persona=True` lives here now, not in the main view. */}
-          <CollapsibleGroup variant="card">
+          <CollapsibleGroup variant="inset">
             <CollapsibleGroupHeader
               expanded={traceOpen}
               onToggle={() => setTraceOpen((o) => !o)}
             >
               <CollapsibleChevron expanded={traceOpen} />
-              <CollapsibleGroupTitle>Trace events</CollapsibleGroupTitle>
+              <CollapsibleGroupTitle className="text-dense-label font-medium">
+                Trace events
+              </CollapsibleGroupTitle>
             </CollapsibleGroupHeader>
             {traceOpen ? (
               <CollapsibleGroupBody className="px-3 pb-3">

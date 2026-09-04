@@ -23,6 +23,7 @@ const AGENT_ORDER = [
   'verdict',
   'write',
   'curator',
+  'loop_curator',
   'explain',
 ] as const
 
@@ -126,7 +127,10 @@ function AgentTile({
   const isValidate = agentName === 'validate'
   const isExplain = agentName === 'explain'
   const feedsVerdict =
-    agentName === 'discovery' || agentName === 'analyze' || agentName === 'validate'
+    agentName === 'discovery' ||
+    agentName === 'analyze' ||
+    agentName === 'validate' ||
+    agentName === 'portfolio'
 
   const handleKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -160,10 +164,10 @@ function AgentTile({
         <span
           className={cn(
             'shrink-0 rounded px-1.5 py-0 text-dense-micro font-medium',
-            ROLE_ACCENT[role],
+            role ? ROLE_ACCENT[role] : ROLE_ACCENT.specialist,
           )}
         >
-          {ROLE_LABELS[lang][role]}
+          {role ? ROLE_LABELS[lang][role] : agentName}
         </span>
       </div>
       <p className="line-clamp-2 text-dense-caption text-muted-foreground">{description}</p>
@@ -331,9 +335,33 @@ export function AgentOrchestrationDiagram({
             {agentLabel('verdict', lang)} ({copy.composerLegend}):
           </span>{' '}
           {lang === 'zh'
-            ? '不是直接调 MCP，而是把 Discovery / Analyze / Validate 三位专家当作子工具 (agent-as-tool) 分别调用，再合成一份裁决。这就是盘前盘后综合简报的实现方式。'
-            : 'Instead of calling MCP directly, Verdict invokes Discovery / Analyze / Validate as sub-tools (agent-as-tool) and synthesizes a single verdict. This is how morning / EOD briefs are composed.'}
+            ? '不是直接调 MCP，而是把 Discovery / Analyze / Validate / Portfolio 当作子工具 (agent-as-tool) 分别调用，再合成一份裁决。这就是盘前盘后综合简报的实现方式。'
+            : 'Instead of calling MCP directly, Verdict invokes Discovery / Analyze / Validate / Portfolio as sub-tools (agent-as-tool) and synthesizes a single verdict. This is how morning / EOD briefs are composed.'}
         </p>
+      </div>
+
+      {/* Harness batch strip — separate from Chat Triage */}
+      <div className="flex items-start gap-2 rounded-md border border-amber-500/35 bg-amber-500/5 p-2">
+        <Layers className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <div className="min-w-0 space-y-0.5">
+          <p className="text-dense-label font-semibold text-foreground">
+            {copy.harnessStripTitle}
+          </p>
+          <p className="text-dense-caption text-muted-foreground">{copy.harnessStripHint}</p>
+          <p className="text-dense-micro text-muted-foreground">{copy.policyVsPersona}</p>
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {(['analyze', 'portfolio', 'validate', 'verdict', 'loop_curator'] as const).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onSelect(n)}
+                className="rounded border border-border/50 bg-background/70 px-1.5 py-0.5 text-dense-micro hover:border-primary/40"
+              >
+                {agentLabel(n, lang)}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <p className="text-center text-dense-micro text-muted-foreground">{copy.diagramHint}</p>

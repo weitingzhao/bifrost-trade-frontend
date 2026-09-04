@@ -23,7 +23,7 @@ export function RightInspectorShell({
     <div className="pointer-events-none fixed inset-0 z-[200] flex justify-end" role="presentation">
       <aside
         className={cn(
-          'pointer-events-auto flex min-h-0 max-w-full flex-col',
+          'pointer-events-auto flex h-svh min-h-0 max-w-full flex-col',
           'border-l border-border bg-card shadow-[-4px_0_24px_rgba(0,0,0,0.15)]',
           panelWidthPx == null && 'w-[min(72rem,96vw)]',
         )}

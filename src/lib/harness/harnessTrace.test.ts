@@ -29,6 +29,7 @@ describe('funnelReach', () => {
     expect(funnelReach(parseHarnessTrace(trace(COMPOSITE)))).toEqual({
       considered: 3472,
       proposed: 8,
+      source: 'funnel_tail',
     })
   })
 
@@ -48,6 +49,30 @@ describe('funnelReach', () => {
     expect(composite!.considered / scan!.considered).toBeGreaterThan(100)
   })
 
+  /**
+   * The failure this guards against: a run whose funnel ends at a pass-through
+   * layer. `option_overlay` and `discovery_assist` take the selection layers'
+   * output and hand it straight on, so the last step's out_count stopped being
+   * the number of proposals the moment they were added — the drawer header and
+   * the Console FUNNEL column both reported 24 for a run that proposed 8.
+   */
+  it('reports what the run said it proposed, not what the funnel trails off at', () => {
+    const out = funnelReach(
+      parseHarnessTrace({
+        events: [
+          { step: 'scan_universe', funnel: COMPOSITE },
+          { step: 'propose_candidates', count: 3 },
+        ],
+      }),
+    )
+    expect(out).toEqual({ considered: 3472, proposed: 3, source: 'event' })
+  })
+
+  it('falls back to the funnel tail for runs recorded before that event, and says so', () => {
+    const out = funnelReach(parseHarnessTrace(trace(COMPOSITE)))
+    expect(out?.source).toBe('funnel_tail')
+  })
+
   it('returns null when a run predates funnel tracing', () => {
     expect(funnelReach(parseHarnessTrace({ events: [{ step: 'scan_universe' }] }))).toBeNull()
     expect(funnelReach(parseHarnessTrace(null))).toBeNull()
@@ -63,7 +88,7 @@ describe('funnelReach', () => {
   it('keeps a single-step funnel readable', () => {
     expect(
       funnelReach(parseHarnessTrace(trace([{ name: 'scan_legacy', in_count: 28, out_count: 3 }]))),
-    ).toEqual({ considered: 28, proposed: 3 })
+    ).toEqual({ considered: 28, proposed: 3, source: 'funnel_tail' })
   })
 })
 

@@ -31,7 +31,7 @@ export function buildLoopRunReviewPrompt(
   lang: CopilotPromptLang = readCopilotPromptLang(),
 ): string {
   const funnel = funnelSummaryText(params.runDetail, lang)
-  const pipelinePath = `/research/loop/runs/${params.runId}`
+  const pipelinePath = loopPipelinePath(params.runId, { live: true })
   const overlay =
     params.runDetail?.outputs?.data_source != null
       ? String(params.runDetail.outputs.data_source)
@@ -78,7 +78,7 @@ export function openLoopRunInCopilot(params: {
       run_id: params.runId,
       objective_title: params.title,
       prompt_lang: lang,
-      pipeline_path: `/research/loop/runs/${params.runId}`,
+      pipeline_path: loopPipelinePath(params.runId, { live: true }),
     },
   })
   copilotBubbleStore.getState().open_()
@@ -95,8 +95,11 @@ export function openCopilotInbox() {
   cockpitDrawerStore.getState().revealInbox()
 }
 
-export function loopPipelinePath(runId: string): string {
-  return `/research/loop/runs/${encodeURIComponent(runId)}`
+export function loopPipelinePath(runId: string, opts?: { live?: boolean }): string {
+  const q = new URLSearchParams()
+  q.set('run', runId)
+  if (opts?.live !== false) q.set('live', '1')
+  return `/research/loop/harness?${q.toString()}`
 }
 
 /** LoopBanner / Harness action labels keyed by prompt language. */

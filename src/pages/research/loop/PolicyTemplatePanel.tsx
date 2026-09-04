@@ -98,7 +98,8 @@ export function PolicyTemplatePanel() {
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-dense-meta text-muted-foreground">
-          The Loop reads these. Editing one changes what the next run selects — no release.
+          Policy = what to pick (funnel). Personas = how to judge (eval chain). Editing a
+          template changes the next run&apos;s universe — no release.
         </span>
         <Button
           type="button"
@@ -187,6 +188,67 @@ export function PolicyTemplatePanel() {
             }}
             onBlur={(e) => void check(e.target.value)}
           />
+
+          {(() => {
+            const obj = parsed(draft.body)
+            if (!obj) return null
+            const assist =
+              obj.discovery_assist &&
+              typeof obj.discovery_assist === 'object' &&
+              !Array.isArray(obj.discovery_assist)
+                ? (obj.discovery_assist as Record<string, unknown>)
+                : {}
+            const enabled = assist.enabled === true
+            const maxVeto =
+              typeof assist.max_veto_fraction === 'number'
+                ? assist.max_veto_fraction
+                : 0.35
+            const patchAssist = (next: Record<string, unknown>) => {
+              const updated = {
+                ...obj,
+                discovery_assist: { ...assist, ...next },
+              }
+              setDraft({ ...draft, body: JSON.stringify(updated, null, 2) })
+              setParseError(null)
+            }
+            return (
+              <div className="space-y-1.5 rounded-md border border-border/50 bg-background px-2 py-1.5">
+                <p className="text-dense-meta font-medium">Discovery assist (funnel exit)</p>
+                <p className="text-dense-micro text-muted-foreground">
+                  Optional nominate/veto after Policy — never replaces resolve_universe. Syncs into
+                  the JSON body above.
+                </p>
+                <label className="flex items-center gap-1.5 text-dense-meta">
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={(e) => patchAssist({ enabled: e.target.checked })}
+                  />
+                  discovery_assist.enabled
+                </label>
+                <label className="flex flex-wrap items-center gap-2 text-dense-meta">
+                  <span className="text-muted-foreground">max_veto_fraction</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={0.9}
+                    step={0.05}
+                    className="h-7 w-20 rounded border border-border bg-background px-1.5 font-mono text-dense-micro"
+                    value={maxVeto}
+                    disabled={!enabled}
+                    onChange={(e) => {
+                      const n = Number(e.target.value)
+                      if (!Number.isFinite(n)) return
+                      patchAssist({
+                        enabled,
+                        max_veto_fraction: Math.max(0, Math.min(0.9, n)),
+                      })
+                    }}
+                  />
+                </label>
+              </div>
+            )
+          })()}
 
           {parseError ? (
             <p className="text-dense-meta text-destructive">{parseError}</p>

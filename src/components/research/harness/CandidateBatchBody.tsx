@@ -8,27 +8,41 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
+  type DenseTagVariant,
 } from '@/components/data-display'
 import {
   candidateBatchDataSource,
   candidateBatchItems,
   hitRateFailingLenses,
   isHitRateWarnActive,
+  isPersonaDissentActive,
+  parseAgentVerdicts,
+  personaEvalModeLabel,
+  stanceCounts,
+  type AgentStance,
 } from '@/lib/harness/harnessDraftHelpers'
-
-/**
- * Candidates a batch is asking you to approve, aligned into columns.
- *
- * They were a stacked tag list in a `grid-cols-2` whose every item carried
- * `col-span-2` — a two-column layout that never happened, so eight candidates
- * ran down the left third of the card while the rest sat empty. Repeating
- * `PIVOT · A · no option data · no settled record yet` eight times also buries
- * the part that differs; in columns the score and the invalidation line up and
- * the sameness reads as one glance instead of eight.
- */
 
 /** Above this a decision card turns into a spreadsheet; batches are policy-capped at 50. */
 const MAX_ROWS = 20
+
+function stanceVariant(stance: AgentStance): DenseTagVariant {
+  if (stance === 'support') return 'success'
+  if (stance === 'oppose') return 'danger'
+  if (stance === 'caution') return 'warning'
+  return 'neutral'
+}
+
+function hasPortfolioHoldingsGap(items: ReturnType<typeof candidateBatchItems>): boolean {
+  for (const item of items) {
+    const verdicts = parseAgentVerdicts(item.evidence)
+    const port = verdicts.find((v) => v.agent === 'portfolio')
+    if (!port) continue
+    if (port.stance === 'abstain' && /holdings not applied/i.test(port.summary)) {
+      return true
+    }
+  }
+  return false
+}
 
 export function CandidateBatchBody({
   payload,
@@ -37,18 +51,16 @@ export function CandidateBatchBody({
 }) {
   const items = candidateBatchItems(payload)
   const warn = isHitRateWarnActive(payload)
+  const dissent = isPersonaDissentActive(payload)
   const failing = hitRateFailingLenses(payload)
   const dataSource = candidateBatchDataSource(payload)
   const desc = typeof payload.description === 'string' ? payload.description : ''
   const shown = items.slice(0, MAX_ROWS)
+  const modeInfo = personaEvalModeLabel(payload)
+  const holdingsGap = hasPortfolioHoldingsGap(items)
 
   return (
     <div className="space-y-2">
-      {/*
-        Same three zones as PolicySuggestionBody — tags, content, then what
-        Approve actually does. The "what Approve does" line used to sit third
-        from the top, which put boilerplate above the candidates it describes.
-      */}
       <div className="flex flex-wrap items-center gap-1.5">
         {dataSource ? (
           <DenseTag
@@ -58,13 +70,53 @@ export function CandidateBatchBody({
             source: {dataSource}
           </DenseTag>
         ) : null}
+        {modeInfo ? (
+          <DenseTag
+            variant={modeInfo.mode === 'agent' && !modeInfo.fallback ? 'info' : 'neutral'}
+            size="cell"
+            title={modeInfo.hint}
+          >
+            persona: {modeInfo.label}
+          </DenseTag>
+        ) : null}
         <DenseTag variant="neutral" size="cell">
           {items.length} candidate{items.length === 1 ? '' : 's'}
         </DenseTag>
+        {dissent ? (
+          <DenseTag variant="danger" size="cell">
+            persona dissent
+          </DenseTag>
+        ) : null}
       </div>
 
       {desc ? (
         <p className="max-w-prose text-foreground/80">{desc}</p>
+      ) : null}
+
+      {modeInfo?.mode === 'heuristic' || modeInfo?.fallback ? (
+        <p className="text-dense-micro text-muted-foreground">
+          Persona eval is {modeInfo.fallback ? 'agent with heuristic fallback' : 'heuristic'} —
+          not a live multi-agent debate. Enable agent mode with{' '}
+          <span className="font-mono">BIFROST_PERSONA_EVAL_AGENTS=1</span> (never a prod default).
+        </p>
+      ) : null}
+
+      {holdingsGap ? (
+        <div
+          role="status"
+          className="flex items-start gap-1.5 rounded-sm border border-border/60 bg-secondary/40 px-2 py-1.5"
+        >
+          <AlertTriangle className="size-3.5 mt-0.5 text-muted-foreground shrink-0" />
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-dense-meta font-medium text-foreground">
+              Portfolio abstained — holdings not applied
+            </p>
+            <p className="text-dense-micro text-muted-foreground">
+              Trade monitor snapshot was unavailable for the heuristic overlay. Stance is
+              abstain, not a portfolio oppose.
+            </p>
+          </div>
+        </div>
       ) : null}
 
       {warn ? (
@@ -87,30 +139,45 @@ export function CandidateBatchBody({
         </div>
       ) : null}
 
+      {dissent ? (
+        <div
+          role="alert"
+          className="flex items-start gap-1.5 rounded-sm border border-destructive/40 bg-destructive/10 px-2 py-1.5"
+        >
+          <AlertTriangle className="size-3.5 mt-0.5 text-destructive shrink-0" />
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-dense-meta font-medium text-destructive">
+              Persona dissent / validate block
+            </p>
+            <p className="text-dense-micro text-muted-foreground">
+              At least one candidate was opposed by validate or net_stance=oppose.
+              Trust L0 batch mode will not auto-approve this draft.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {items.length > 0 ? (
         <>
-          {/*
-            Six columns need room. Below the min-width the wrapper scrolls
-            rather than crushing "no settled record yet" into three lines and
-            clipping the score — which is what `scrollX={false}` did at 768px.
-          */}
-          <DenseDataTable tableClassName="min-w-[52rem]">
+          <DenseDataTable tableClassName="min-w-[60rem]">
             <colgroup>
-              <col style={{ width: '9%' }} />
               <col style={{ width: '8%' }} />
-              <col style={{ width: '13%' }} />
-              <col style={{ width: '13%' }} />
-              <col style={{ width: '17%' }} />
-              <col style={{ width: '40%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '39%' }} />
             </colgroup>
             <DenseTableHeader>
               <DenseTableHeadRow>
                 <DenseTableHead>Symbol</DenseTableHead>
                 <DenseTableHead>Score</DenseTableHead>
+                <DenseTableHead>Net</DenseTableHead>
                 <DenseTableHead>Selection</DenseTableHead>
                 <DenseTableHead>Option</DenseTableHead>
                 <DenseTableHead>Track record</DenseTableHead>
-                <DenseTableHead>Wrong if</DenseTableHead>
+                <DenseTableHead>Personas</DenseTableHead>
               </DenseTableHeadRow>
             </DenseTableHeader>
             <DenseTableBody>
@@ -120,15 +187,28 @@ export function CandidateBatchBody({
                 const settled = item.evidence?.track_record?.horizons?.find(
                   (h) => h.hit_rate != null,
                 )
+                const verdicts = parseAgentVerdicts(item.evidence)
+                const counts = stanceCounts(verdicts)
+                const net = (item.net_stance || 'abstain') as AgentStance
                 return (
                   <DenseTableRow key={item.id}>
                     <DenseTableCell>
                       <span className="font-mono font-semibold">{item.symbol}</span>
+                      {item.blocked_by_validate ? (
+                        <DenseTag variant="danger" size="cell" className="ml-1">
+                          blocked
+                        </DenseTag>
+                      ) : null}
                     </DenseTableCell>
                     <DenseTableCell>
                       <span className="font-mono tabular-nums text-muted-foreground">
                         {item.score !== null ? item.score.toFixed(1) : '—'}
                       </span>
+                    </DenseTableCell>
+                    <DenseTableCell>
+                      <DenseTag variant={stanceVariant(net)} size="cell">
+                        {net}
+                      </DenseTag>
                     </DenseTableCell>
                     <DenseTableCell>
                       {sel?.path ? (
@@ -140,12 +220,6 @@ export function CandidateBatchBody({
                         <span className="text-muted-foreground">—</span>
                       )}
                     </DenseTableCell>
-                    {/*
-                      `no option data` is shown, not left blank: option analytics
-                      cover a fraction of the stock universe, and an empty cell
-                      would read as "nothing notable" — a claim about the stock
-                      rather than about our coverage.
-                    */}
                     <DenseTableCell>
                       <DenseTag
                         variant={opt?.status === 'ok' ? 'info' : 'neutral'}
@@ -162,9 +236,32 @@ export function CandidateBatchBody({
                       </DenseTag>
                     </DenseTableCell>
                     <DenseTableCell>
-                      <span className="text-dense-micro text-muted-foreground">
-                        {item.evidence?.invalidation?.[0] ?? '—'}
-                      </span>
+                      {verdicts.length > 0 ? (
+                        <div className="space-y-0.5">
+                          <p className="text-dense-micro text-muted-foreground">
+                            +{counts.support} / !{counts.caution} / −{counts.oppose} / ~
+                            {counts.abstain}
+                          </p>
+                          <div className="flex flex-wrap gap-0.5">
+                            {verdicts.map((v) => (
+                              <DenseTag
+                                key={`${item.id}-${v.agent}`}
+                                variant={stanceVariant(v.stance)}
+                                size="cell"
+                                title={
+                                  v.source
+                                    ? `${v.summary} · source=${v.source}`
+                                    : v.summary
+                                }
+                              >
+                                {v.agent}:{v.stance}
+                              </DenseTag>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </DenseTableCell>
                   </DenseTableRow>
                 )
@@ -185,7 +282,7 @@ export function CandidateBatchBody({
 
       <p className="text-dense-micro text-muted-foreground">
         Approve promotes these candidates and creates hypotheses. Next hop:
-        Hypothesis Board / Candidate Pool.
+        Hypothesis Board / Candidate Pool. Auto-approve never places orders (D10).
       </p>
     </div>
   )

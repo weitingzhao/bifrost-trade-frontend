@@ -1,42 +1,25 @@
 /** Column widths for Harness Console dense tables (table-fixed + colgroup). */
 export const HARNESS_OBJECTIVES_COL_WIDTHS = {
-  title: '44%',
+  // The expand column is a fixed 2rem in the shared token; the rest share what
+  // is left. Persona moved into the title's sub-line, and Runs took its place —
+  // an objective's run count is what you look for before opening it.
+  expand: '2rem',
+  title: '42%',
   schedule: '12%',
-  persona: '16%',
+  runs: '14%',
   status: '10%',
-  actions: '18%',
-} as const
-
-export const HARNESS_RUNS_COL_WIDTHS = {
-  run: '14%',
-  objective: '18%',
-  funnel: '17%',
-  started: '14%',
-  status: '12%',
-  actions: '25%',
+  actions: '20%',
 } as const
 
 export function HarnessObjectivesColgroup() {
   return (
     <colgroup>
+      <col style={{ width: HARNESS_OBJECTIVES_COL_WIDTHS.expand }} />
       <col style={{ width: HARNESS_OBJECTIVES_COL_WIDTHS.title }} />
       <col style={{ width: HARNESS_OBJECTIVES_COL_WIDTHS.schedule }} />
-      <col style={{ width: HARNESS_OBJECTIVES_COL_WIDTHS.persona }} />
+      <col style={{ width: HARNESS_OBJECTIVES_COL_WIDTHS.runs }} />
       <col style={{ width: HARNESS_OBJECTIVES_COL_WIDTHS.status }} />
       <col style={{ width: HARNESS_OBJECTIVES_COL_WIDTHS.actions }} />
-    </colgroup>
-  )
-}
-
-export function HarnessRunsColgroup() {
-  return (
-    <colgroup>
-      <col style={{ width: HARNESS_RUNS_COL_WIDTHS.run }} />
-      <col style={{ width: HARNESS_RUNS_COL_WIDTHS.objective }} />
-      <col style={{ width: HARNESS_RUNS_COL_WIDTHS.funnel }} />
-      <col style={{ width: HARNESS_RUNS_COL_WIDTHS.started }} />
-      <col style={{ width: HARNESS_RUNS_COL_WIDTHS.status }} />
-      <col style={{ width: HARNESS_RUNS_COL_WIDTHS.actions }} />
     </colgroup>
   )
 }

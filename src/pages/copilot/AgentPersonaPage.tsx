@@ -42,6 +42,16 @@ import {
 } from '@/lib/copilot/agentPersonaCatalog'
 import { cn } from '@/lib/utils'
 
+/** Personas whose preference slots feed Harness Persona eval / Loop Inbox. */
+const LOOP_EVAL_PERSONAS = new Set([
+  'analyze',
+  'portfolio',
+  'validate',
+  'verdict',
+  'discovery',
+  'loop_curator',
+])
+
 const SYMBOL_CLASSES = ['growth', 'value', 'event_driven', 'income', 'fixed_income'] as const
 const STRUCTURE_BIAS = [
   'outright',
@@ -121,6 +131,13 @@ function PersonaPreferencesForm({
       <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
         {PAGE_COPY[lang].preferences}
       </p>
+      {LOOP_EVAL_PERSONAS.has(agentName) ? (
+        <p className="text-dense-micro text-muted-foreground">
+          {lang === 'zh'
+            ? '这些偏好会影响 Loop 评议链（Harness Persona eval / Decision Inbox）。'
+            : 'These slots affect Loop evaluation (Harness Persona eval / Decision Inbox).'}
+        </p>
+      ) : null}
       {slots.includes('symbol_class') && toggleList('symbol_class', SYMBOL_CLASSES)}
       {slots.includes('structure_bias') && toggleList('structure_bias', STRUCTURE_BIAS)}
       {slots.includes('favor_signals') && toggleList('favor_signals', FAVOR_SIGNALS)}

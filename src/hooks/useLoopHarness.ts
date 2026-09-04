@@ -5,7 +5,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   approveAllRun,
+  batchRunObjective,
   curateRun,
+  fetchLoopTrust,
   fetchObjectiveRun,
   fetchObjectiveRuns,
   fetchObjectives,
@@ -38,6 +40,16 @@ export function useAwaitingRuns() {
   })
 }
 
+export function useLoopTrust() {
+  return useQuery({
+    queryKey: ['research', 'loop-trust'],
+    queryFn: () => fetchLoopTrust(),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: false,
+  })
+}
+
 export function useRunObjective() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -45,6 +57,19 @@ export function useRunObjective() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
       void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+    },
+  })
+}
+
+export function useBatchRunObjective() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (objectiveId: string) => batchRunObjective(objectiveId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'loop-trust'] })
     },
   })
 }
@@ -60,12 +85,18 @@ export function useCurateRun() {
   })
 }
 
-export function useObjectiveRun(runId: string | undefined) {
+export function useObjectiveRun(runId: string | undefined, opts?: { live?: boolean }) {
   return useQuery({
     queryKey: ['research', 'objective-run', runId],
     queryFn: () => fetchObjectiveRun(runId!),
     enabled: Boolean(runId),
-    staleTime: 10_000,
+    staleTime: opts?.live ? 0 : 10_000,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status
+      if (status === 'running') return 1500
+      if (opts?.live && status == null) return 1500
+      return false
+    },
     refetchOnWindowFocus: false,
   })
 }

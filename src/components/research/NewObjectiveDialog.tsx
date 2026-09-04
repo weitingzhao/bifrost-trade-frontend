@@ -62,6 +62,7 @@ export function NewObjectiveDialog({ triggerLabel = 'New Objective' }: NewObject
   const [seedSymbols, setSeedSymbols] = useState('')
   const [preset, setPreset] = useState<Preset>('neutral')
   const [flagFilter, setFlagFilter] = useState('')
+  const [persona, setPersona] = useState('loop_curator')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const queryClient = useQueryClient()
@@ -74,6 +75,7 @@ export function NewObjectiveDialog({ triggerLabel = 'New Objective' }: NewObject
     setSeedSymbols('')
     setPreset('neutral')
     setFlagFilter('')
+    setPersona('loop_curator')
     setErrorMsg(null)
   }, [])
 
@@ -100,6 +102,7 @@ export function NewObjectiveDialog({ triggerLabel = 'New Objective' }: NewObject
       title: title.trim(),
       description: description.trim(),
       schedule,
+      persona,
       policy_json: {
         max_candidates: Math.max(1, Math.min(20, maxCandidates)),
         seed_symbols: parsedSymbols,
@@ -128,8 +131,11 @@ export function NewObjectiveDialog({ triggerLabel = 'New Objective' }: NewObject
           <DialogHeader>
             <DialogTitle>New Harness Objective</DialogTitle>
             <DialogDescription>
-              Advisory only — D10 BLOCKED. Objective drives the harness to propose candidates
-              for Owner approval. Cron schedules are configured but currently suspended in DEV.
+              Advisory only — D10 BLOCKED. Policy picks symbols; Personas evaluate them
+              (default Loop Curator). Auto-approve is research drafts only. Persona eval
+              defaults to heuristic — set{' '}
+              <span className="font-mono">BIFROST_PERSONA_EVAL_AGENTS=1</span> for LLM agents
+              (not a prod default). Cron schedules are configured but currently suspended in DEV.
             </DialogDescription>
           </DialogHeader>
 
@@ -157,6 +163,28 @@ export function NewObjectiveDialog({ triggerLabel = 'New Objective' }: NewObject
                 rows={3}
                 disabled={submitting}
               />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="objective-persona">Persona (how to judge)</Label>
+              <Select
+                value={persona}
+                onValueChange={setPersona}
+                disabled={submitting}
+              >
+                <SelectTrigger id="objective-persona">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="loop_curator">Loop Curator (default)</SelectItem>
+                  <SelectItem value="curator">Curator</SelectItem>
+                  <SelectItem value="verdict">Verdict</SelectItem>
+                  <SelectItem value="discovery">Discovery</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-dense-caption text-muted-foreground">
+                Policy = what to pick. Persona = how Harness judges / curates after the funnel.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -23,26 +23,40 @@ export function PolicySuggestionBody({
     typeof payload.llm_model === 'string' && payload.llm_model
       ? payload.llm_model
       : null
+  const source =
+    typeof payload.source === 'string' && payload.source ? payload.source : null
+  const evidence =
+    payload.evidence && typeof payload.evidence === 'object' && !Array.isArray(payload.evidence)
+      ? (payload.evidence as Record<string, unknown>)
+      : null
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-1.5">
-        {/*
-          DenseTag's shell is `inline-block`, so an inline SVG sits on the text
-          baseline and pushes the line box taller than every neighbouring tag.
-          This is the only tag in the app carrying an icon — flex the shell here
-          rather than changing the primitive for one caller.
-        */}
         <DenseTag variant="success" size="cell" className="inline-flex items-center gap-0.5">
           <Sparkles className="size-3" />
-          {llmModel ?? 'llm'}
+          {source === 'persona_eval_outcomes'
+            ? 'outcome flywheel'
+            : (llmModel ?? 'llm')}
         </DenseTag>
+        {source ? (
+          <DenseTag variant="neutral" size="cell">
+            {source}
+          </DenseTag>
+        ) : null}
         <DenseTag variant={mergeCount > 0 ? 'warning' : 'neutral'} size="cell">
           {mergeCount > 0
             ? `${mergeCount} field${mergeCount === 1 ? '' : 's'} to merge`
             : 'nothing to merge'}
         </DenseTag>
       </div>
+
+      {evidence ? (
+        <p className="text-dense-micro text-muted-foreground">
+          Evidence from recent Persona eval:{' '}
+          <code className="font-mono">{JSON.stringify(evidence)}</code>
+        </p>
+      ) : null}
 
       {/*
         Reasoning and diff are one thought — what the model concluded and what it

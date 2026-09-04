@@ -98,6 +98,99 @@ export function isHitRateWarnActive(payload: Record<string, unknown>): boolean {
   return payload.hit_rate_warn === true
 }
 
+/** True when Persona eval marked validate dissent / oppose on the batch. */
+export function isPersonaDissentActive(payload: Record<string, unknown>): boolean {
+  return payload.persona_dissent === true
+}
+
+export interface PersonaEvalModeInfo {
+  mode: 'heuristic' | 'agent' | string
+  fallback: boolean
+  label: string
+  hint: string
+}
+
+/** Inbox / Pipeline badge for persona_eval.mode (heuristic vs real agents). */
+export function personaEvalModeLabel(
+  payload: Record<string, unknown>,
+): PersonaEvalModeInfo | null {
+  const pe = _dict(payload.persona_eval)
+  const modeRaw = typeof pe.mode === 'string' ? pe.mode : ''
+  if (!modeRaw) return null
+  const fallback = pe.fallback_used === true
+  if (modeRaw === 'heuristic') {
+    return {
+      mode: 'heuristic',
+      fallback: false,
+      label: 'heuristic',
+      hint: 'Deterministic Persona eval from evidence — not a live multi-agent run.',
+    }
+  }
+  if (modeRaw === 'agent') {
+    return {
+      mode: 'agent',
+      fallback,
+      label: fallback ? 'agent (fallback)' : 'agent',
+      hint: fallback
+        ? 'LLM agents requested but at least one symbol fell back to heuristic.'
+        : 'LLM Persona agents (BIFROST_PERSONA_EVAL_AGENTS=1).',
+    }
+  }
+  return {
+    mode: modeRaw,
+    fallback,
+    label: fallback ? `${modeRaw} (fallback)` : modeRaw,
+    hint: 'Persona eval mode from harness run outputs.',
+  }
+}
+
+export type AgentStance = 'support' | 'caution' | 'oppose' | 'abstain'
+
+export interface AgentVerdict {
+  agent: string
+  stance: AgentStance
+  summary: string
+  confidence?: number
+  source?: string
+}
+
+export function parseAgentVerdicts(evidence: CandidateEvidence | null): AgentVerdict[] {
+  const raw = evidence?.agent_verdicts
+  if (!Array.isArray(raw)) return []
+  const out: AgentVerdict[] = []
+  for (const r of raw) {
+    if (!r || typeof r !== 'object') continue
+    const rec = r as unknown as Record<string, unknown>
+    const agent = typeof rec.agent === 'string' ? rec.agent : ''
+    const stanceRaw = typeof rec.stance === 'string' ? rec.stance : 'abstain'
+    const stance = (
+      ['support', 'caution', 'oppose', 'abstain'].includes(stanceRaw)
+        ? stanceRaw
+        : 'abstain'
+    ) as AgentStance
+    const summary = typeof rec.summary === 'string' ? rec.summary : ''
+    if (!agent) continue
+    const row: AgentVerdict = { agent, stance, summary }
+    if (typeof rec.confidence === 'number' && Number.isFinite(rec.confidence)) {
+      row.confidence = rec.confidence
+    }
+    if (typeof rec.source === 'string') row.source = rec.source
+    out.push(row)
+  }
+  return out
+}
+
+export function stanceCounts(verdicts: AgentVerdict[]): Record<AgentStance, number> {
+  const c: Record<AgentStance, number> = {
+    support: 0,
+    caution: 0,
+    oppose: 0,
+    abstain: 0,
+  }
+  for (const v of verdicts) c[v.stance] += 1
+  return c
+}
+
 /** Extract failing lens keys from a `candidate_batch` draft (empty when none). */
 export function hitRateFailingLenses(payload: Record<string, unknown>): string[] {
   const gate = _dict(payload.hit_rate_gate)
@@ -122,6 +215,9 @@ export interface CandidateEvidence {
   track_record?: { status?: string; reason?: string; horizons?: { horizon_days: number; hit_rate: number | null }[] }
   /** What would make the call wrong. */
   invalidation?: string[]
+  /** Wave 1 — Persona eval chain stances. */
+  agent_verdicts?: AgentVerdict[]
+  net_stance?: AgentStance | string
 }
 
 export interface CandidateItem {
@@ -129,6 +225,8 @@ export interface CandidateItem {
   symbol: string
   score: number | null
   evidence: CandidateEvidence | null
+  net_stance?: string | null
+  blocked_by_validate?: boolean
 }
 export function candidateBatchItems(payload: Record<string, unknown>): CandidateItem[] {
   const raw = payload.items
@@ -146,7 +244,20 @@ export function candidateBatchItems(payload: Record<string, unknown>): Candidate
     const ev = rec.evidence
     const evidence =
       ev && typeof ev === 'object' && !Array.isArray(ev) ? (ev as CandidateEvidence) : null
-    out.push({ id, symbol, score, evidence })
+    const net =
+      typeof rec.net_stance === 'string'
+        ? rec.net_stance
+        : evidence?.net_stance
+          ? String(evidence.net_stance)
+          : null
+    out.push({
+      id,
+      symbol,
+      score,
+      evidence,
+      net_stance: net,
+      blocked_by_validate: rec.blocked_by_validate === true,
+    })
   }
   return out
 }

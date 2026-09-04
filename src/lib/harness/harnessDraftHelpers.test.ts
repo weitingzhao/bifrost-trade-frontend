@@ -73,6 +73,21 @@ describe('isHitRateWarnActive', () => {
   })
 })
 
+describe('personaEvalModeLabel', () => {
+  it('labels heuristic vs agent fallback', async () => {
+    const { personaEvalModeLabel } = await import('./harnessDraftHelpers')
+    expect(personaEvalModeLabel({})).toBeNull()
+    expect(personaEvalModeLabel({ persona_eval: { mode: 'heuristic' } })?.label).toBe(
+      'heuristic',
+    )
+    expect(
+      personaEvalModeLabel({
+        persona_eval: { mode: 'agent', fallback_used: true },
+      })?.label,
+    ).toBe('agent (fallback)')
+  })
+})
+
 describe('hitRateFailingLenses', () => {
   it('reads gate.failing string array', () => {
     expect(
@@ -109,8 +124,22 @@ describe('candidateBatch helpers', () => {
         ],
       }),
     ).toEqual([
-      { id: 'c1', symbol: 'AAPL', score: 82, evidence: null },
-      { id: 'c2', symbol: 'MSFT', score: null, evidence: null },
+      {
+        id: 'c1',
+        symbol: 'AAPL',
+        score: 82,
+        evidence: null,
+        net_stance: null,
+        blocked_by_validate: false,
+      },
+      {
+        id: 'c2',
+        symbol: 'MSFT',
+        score: null,
+        evidence: null,
+        net_stance: null,
+        blocked_by_validate: false,
+      },
     ])
   })
 

@@ -22,6 +22,11 @@ export interface HarnessTraceEvent {
 export interface HarnessTrace {
   events: HarnessTraceEvent[]
   error?: string
+  progress?: {
+    step?: string
+    label?: string
+    detail?: string
+  }
 }
 
 export interface ObjectiveRunDetail extends ObjectiveRun {
@@ -33,10 +38,68 @@ export function parseHarnessTrace(raw: unknown): HarnessTrace {
   if (!raw || typeof raw !== 'object') return { events: [] }
   const obj = raw as Record<string, unknown>
   const events = Array.isArray(obj.events) ? (obj.events as HarnessTraceEvent[]) : []
+  const progressRaw = obj.progress
+  let progress: HarnessTrace['progress']
+  if (progressRaw && typeof progressRaw === 'object') {
+    const p = progressRaw as Record<string, unknown>
+    progress = {
+      step: typeof p.step === 'string' ? p.step : undefined,
+      label: typeof p.label === 'string' ? p.label : undefined,
+      detail: typeof p.detail === 'string' ? p.detail : undefined,
+    }
+  }
   return {
     events,
     error: typeof obj.error === 'string' ? obj.error : undefined,
+    progress,
   }
+}
+
+/**
+ * The stages a run passes through, in order.
+ *
+ * These used to sit in one array with `curate` / `approve_all` / `held` /
+ * `awaiting_approval`, which rendered as eleven wrapping pills that read as a
+ * step strip but were not one: the last four are *outcomes*, mutually exclusive
+ * and never all reached, so the strip could neither show order nor show state.
+ * Stages advance; a run ends in exactly one terminal state.
+ */
+export const PIPELINE_STAGES = [
+  { step: 'plan', label: 'Plan', blurb: 'Decide what this run will do' },
+  { step: 'scan_universe', label: 'Scan', blurb: 'Narrow the universe through the funnel' },
+  { step: 'propose_candidates', label: 'Propose', blurb: 'Turn survivors into candidates' },
+  { step: 'persona_evaluate', label: 'Personas', blurb: 'Each persona votes on every candidate' },
+  { step: 'compose_report', label: 'Report', blurb: 'Write the case for the batch' },
+  { step: 'draft_candidate_batch', label: 'Decision', blurb: 'Hand the batch to the Owner' },
+] as const
+
+export type PipelineStage = (typeof PIPELINE_STAGES)[number]
+
+/** How a run ended. Exactly one of these applies. */
+export const TERMINAL_STATES = [
+  { step: 'approve_all', label: 'Auto-approved', variant: 'success' },
+  { step: 'curate', label: 'Curated', variant: 'success' },
+  { step: 'held', label: 'Held', variant: 'danger' },
+  { step: 'awaiting_approval', label: 'Awaiting you', variant: 'warning' },
+] as const
+
+export type TerminalState = (typeof TERMINAL_STATES)[number]
+
+/** The terminal state this run reached, if it reached one. */
+export function traceTerminalState(trace: HarnessTrace): TerminalState | null {
+  const done = completedProgressSteps(trace)
+  for (const t of TERMINAL_STATES) {
+    if (done.has(t.step)) return t
+  }
+  return null
+}
+
+export function completedProgressSteps(trace: HarnessTrace): Set<string> {
+  const steps = new Set<string>()
+  for (const ev of trace.events) {
+    if (typeof ev.step === 'string') steps.add(ev.step)
+  }
+  return steps
 }
 
 export function traceScanEvent(trace: HarnessTrace): HarnessTraceEvent | undefined {
@@ -55,22 +118,50 @@ export function traceFunnel(trace: HarnessTrace): HarnessFunnelStep[] {
   )
 }
 
+export interface FunnelReach {
+  considered: number
+  proposed: number
+  /**
+   * `event` is the number the run actually proposed. `funnel_tail` is inferred
+   * from the funnel's last step, for runs recorded before the funnel accounted
+   * for its own cuts — it can overstate the output.
+   */
+  source: 'event' | 'funnel_tail'
+}
+
 /**
  * How many symbols the run looked at, and how many it proposed.
  *
  * The mode label alone ("scan_legacy") never said whether that meant 28 symbols
- * or 14,836 — you had to query the warehouse to find out. Reads the first step's
- * input and the last step's output, so it survives modes with different stages.
+ * or 14,836 — you had to query the warehouse to find out.
+ *
+ * The proposed count comes from the `propose_candidates` event, which is the run
+ * saying what it did. Reading the funnel's last step instead was an inference
+ * that held only while the funnel's final step was also the final cut: once
+ * `option_overlay` and `discovery_assist` landed after the selection layers and
+ * passed their input straight through, a run that proposed 8 reported 24 in both
+ * the drawer header and the Console's FUNNEL column. The backend now records
+ * every cut (research 0.65.3), but old runs keep their old traces, so the
+ * fallback stays — and says so, rather than passing an inference off as a fact.
  */
-export function funnelReach(
-  trace: HarnessTrace,
-): { considered: number; proposed: number } | null {
+export function funnelReach(trace: HarnessTrace): FunnelReach | null {
   const funnel = traceFunnel(trace)
   if (funnel.length === 0) return null
   const considered = funnel[0]?.in_count
+  if (!Number.isFinite(considered)) return null
+
+  const proposeCount = trace.events.find((e) => e.step === 'propose_candidates')?.count
+  if (typeof proposeCount === 'number' && Number.isFinite(proposeCount)) {
+    return { considered, proposed: proposeCount, source: 'event' }
+  }
+
   const proposed = funnel[funnel.length - 1]?.out_count
-  if (!Number.isFinite(considered) || !Number.isFinite(proposed)) return null
-  return { considered, proposed }
+  if (!Number.isFinite(proposed)) return null
+  return { considered, proposed, source: 'funnel_tail' }
+}
+
+export function tracePersonaEval(trace: HarnessTrace): HarnessTraceEvent | undefined {
+  return trace.events.find((e) => e.step === 'persona_evaluate')
 }
 
 export function runDurationMs(

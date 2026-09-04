@@ -45,9 +45,19 @@ export function UniverseReachStrip() {
         </span>
       ))}
       {pct != null ? (
-        <DenseTag variant={pct < 1 ? 'warning' : 'category'} size="cell">
-          Loop sees {pct}% of priced symbols
-          {modes ? ` · ${modes}` : ''}
+        // The modes moved into the tooltip: spelled out, this chip was long
+        // enough to wrap onto its own line, so a strip meant to be one line was
+        // two — and the second one restated the first.
+        <DenseTag
+          variant={pct < 1 ? 'warning' : 'category'}
+          size="cell"
+          title={
+            modes
+              ? `Loop universe modes: ${modes}. Percentage is of the widest priced-symbol layer.`
+              : 'Percentage is of the widest priced-symbol layer.'
+          }
+        >
+          Loop sees {pct}%
         </DenseTag>
       ) : (
         <DenseTag variant="warning" size="cell">

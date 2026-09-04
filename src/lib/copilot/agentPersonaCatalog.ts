@@ -11,6 +11,7 @@ export const AGENT_LABELS_ZH: Record<string, string> = {
   portfolio: '持仓',
   verdict: '综合裁决',
   curator: '沉淀',
+  loop_curator: 'Loop 沉淀',
 }
 
 export const AGENT_LABELS_EN: Record<string, string> = {
@@ -22,6 +23,7 @@ export const AGENT_LABELS_EN: Record<string, string> = {
   portfolio: 'Portfolio',
   verdict: 'Verdict',
   curator: 'Curator',
+  loop_curator: 'Loop Curator',
 }
 
 export const AGENT_DESCRIPTIONS: Record<PersonaUiLang, Record<string, string>> = {
@@ -34,6 +36,7 @@ export const AGENT_DESCRIPTIONS: Record<PersonaUiLang, Record<string, string>> =
     portfolio: '持仓、集中度、对冲',
     verdict: '盘前盘后综合简报',
     curator: '规则与案例沉淀',
+    loop_curator: 'Harness 批跑后沉淀规则 / 假设',
   },
   en: {
     discovery: 'SEPA, momentum, events',
@@ -44,6 +47,7 @@ export const AGENT_DESCRIPTIONS: Record<PersonaUiLang, Record<string, string>> =
     portfolio: 'Holdings & concentration',
     verdict: 'Morning / EOD synthesis',
     curator: 'Rules & case drafts',
+    loop_curator: 'Post-harness playbook / hypothesis curation',
   },
 }
 
@@ -65,7 +69,7 @@ export const AGENT_GROUPS: {
   {
     id: 'workflow',
     label: { zh: '工作流与沉淀', en: 'Workflow & curation' },
-    agents: ['verdict', 'write', 'curator', 'explain'],
+    agents: ['verdict', 'write', 'curator', 'loop_curator', 'explain'],
   },
 ]
 
@@ -86,6 +90,7 @@ export type AgentRoleKind =
   | 'writer'
   | 'curator'
   | 'explainer'
+  | 'loop'
 
 export const AGENT_ROLE_KIND: Record<string, AgentRoleKind> = {
   discovery: 'specialist',
@@ -95,6 +100,7 @@ export const AGENT_ROLE_KIND: Record<string, AgentRoleKind> = {
   verdict: 'composer',
   write: 'writer',
   curator: 'curator',
+  loop_curator: 'loop',
   explain: 'explainer',
 }
 
@@ -106,6 +112,7 @@ export const ROLE_LABELS: Record<PersonaUiLang, Record<AgentRoleKind, string>> =
     writer: '写入',
     curator: '沉淀',
     explainer: '解释',
+    loop: 'Loop',
   },
   en: {
     router: 'Router',
@@ -114,6 +121,7 @@ export const ROLE_LABELS: Record<PersonaUiLang, Record<AgentRoleKind, string>> =
     writer: 'Writer',
     curator: 'Curator',
     explainer: 'Explainer',
+    loop: 'Loop',
   },
 }
 
@@ -124,6 +132,7 @@ export const ROLE_ACCENT: Record<AgentRoleKind, string> = {
   writer: 'text-orange-800 dark:text-orange-200 bg-orange-500/15',
   curator: 'text-emerald-800 dark:text-emerald-200 bg-emerald-500/15',
   explainer: 'text-teal-800 dark:text-teal-200 bg-teal-500/15',
+  loop: 'text-amber-800 dark:text-amber-200 bg-amber-500/15',
 }
 
 /** MCP tool scopes each agent is instructed to prefer. Mirrors the .md files
@@ -147,6 +156,11 @@ export const AGENT_MCP_SCOPES: Record<string, string[]> = {
   ],
   write: ['research.hypothesis.*', 'research.backtest.*'],
   curator: ['research.playbook.propose_*', 'research.note.propose_*'],
+  loop_curator: [
+    'research.playbook.propose_*',
+    'research.hypothesis.*',
+    'research.draft.*',
+  ],
   explain: [],
   verdict: [],
 }
@@ -168,11 +182,15 @@ export const AGENT_INVOKED_BY: Record<string, InvokedBy[]> = {
     { by: 'triage', kind: 'handoff' },
     { by: 'verdict', kind: 'as_tool' },
   ],
-  portfolio: [{ by: 'triage', kind: 'handoff' }],
+  portfolio: [
+    { by: 'triage', kind: 'handoff' },
+    { by: 'verdict', kind: 'as_tool' },
+  ],
   write: [{ by: 'triage', kind: 'handoff' }],
   explain: [{ by: 'triage', kind: 'handoff' }],
   verdict: [{ by: 'triage', kind: 'handoff' }],
   curator: [{ by: 'triage', kind: 'handoff' }],
+  loop_curator: [{ by: 'triage', kind: 'handoff' }],
 }
 
 /** Agents this one calls (only the composer chain: verdict → D/A/V). */
@@ -181,6 +199,7 @@ export const AGENT_CALLS: Record<string, { to: string; kind: 'as_tool' }[]> = {
     { to: 'discovery', kind: 'as_tool' },
     { to: 'analyze', kind: 'as_tool' },
     { to: 'validate', kind: 'as_tool' },
+    { to: 'portfolio', kind: 'as_tool' },
   ],
 }
 
@@ -198,6 +217,7 @@ export const AGENT_GUARDRAILS: Record<
   explain: { input: true, output: true, neutralAppendix: false },
   verdict: { input: true, output: true, neutralAppendix: false },
   curator: { input: true, output: true, neutralAppendix: false },
+  loop_curator: { input: true, output: true, neutralAppendix: false },
 }
 
 /** One-liner explaining WHEN Triage routes here. Rendered as a subtle badge
@@ -212,6 +232,7 @@ export const AGENT_TRIAGE_HINT: Record<PersonaUiLang, Record<string, string>> = 
     explain: '概念 / Runbook',
     verdict: '盘前盘后综合',
     curator: '沉淀为 Playbook 规则',
+    loop_curator: 'Harness 批跑 / Decision Inbox',
   },
   en: {
     discovery: 'SEPA / momentum / events',
@@ -222,6 +243,7 @@ export const AGENT_TRIAGE_HINT: Record<PersonaUiLang, Record<string, string>> = 
     explain: 'Concepts / runbook',
     verdict: 'Morning / EOD synthesis',
     curator: 'Consolidate into playbook',
+    loop_curator: 'Harness batch / Decision Inbox',
   },
 }
 
@@ -324,12 +346,15 @@ export const PAGE_COPY: Record<
     composerLegend: string
     writerCuratorLegend: string
     diagramHint: string
+    harnessStripTitle: string
+    harnessStripHint: string
+    policyVsPersona: string
   }
 > = {
   zh: {
     title: 'Agent Personas',
     description:
-      '为每位 Copilot 专家定义交易人格（Owner 作用域）。支持中英文 Markdown；默认模板为中文。每次对话都会叠加到系统指令。',
+      '为每位 Copilot 专家定义交易人格（Owner 作用域）。支持中英文 Markdown；默认模板为中文。每次对话都会叠加到系统指令。两条脊柱：Policy 决定「选什么」，Personas 决定「怎么评」。',
     personaLabel: 'Persona（Markdown）',
     personaHint: '可写交易风格、边界、常用框架。中英文均可，模型会按你的 Copilot 语言偏好回复。',
     personaPlaceholder:
@@ -371,11 +396,15 @@ export const PAGE_COPY: Record<
     composerLegend: '综合',
     writerCuratorLegend: '写入 / 沉淀',
     diagramHint: '点击任一 Agent 卡片可跳转到下方编辑该 Persona',
+    harnessStripTitle: 'Harness 批跑（无人值守）',
+    harnessStripHint:
+      'Policy 漏斗选股 → Personas 评议（analyze→portfolio→validate→verdict）→ Decision Inbox。默认 persona = loop_curator。与上方 Chat Triage 分流无关。',
+    policyVsPersona: 'Policy = 选什么 · Personas = 怎么评',
   },
   en: {
     title: 'Agent Personas',
     description:
-      'Owner-scoped trading personas for each Copilot specialist. Markdown in Chinese or English; defaults are Chinese templates.',
+      'Owner-scoped trading personas for each Copilot specialist. Markdown in Chinese or English; defaults are Chinese templates. Two spines: Policy picks what; Personas judge how.',
     personaLabel: 'Persona (markdown)',
     personaHint: 'Trading style, boundaries, frameworks. Chinese or English.',
     personaPlaceholder:
@@ -417,5 +446,9 @@ export const PAGE_COPY: Record<
     composerLegend: 'Composer',
     writerCuratorLegend: 'Writer / Curator',
     diagramHint: 'Click any agent card to edit its persona below',
+    harnessStripTitle: 'Harness batch (unattended)',
+    harnessStripHint:
+      'Policy funnel → Persona eval (analyze→portfolio→validate→verdict) → Decision Inbox. Default persona = loop_curator. Separate from Chat Triage above.',
+    policyVsPersona: 'Policy = what to pick · Personas = how to judge',
   },
 }

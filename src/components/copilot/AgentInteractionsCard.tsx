@@ -61,14 +61,16 @@ export function AgentInteractionsCard({
   const scopes = AGENT_MCP_SCOPES[agentName] ?? []
   const guard = AGENT_GUARDRAILS[agentName]
   const role = AGENT_ROLE_KIND[agentName]
+  const roleAccent = role ? ROLE_ACCENT[role] : ROLE_ACCENT.specialist
+  const roleLabel = role ? ROLE_LABELS[lang][role] : agentName
 
   return (
     <div className="rounded-md border border-border/60 bg-background/60 p-3 space-y-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
         <div className="flex items-center gap-2">
           <p className="text-dense-label font-semibold">{copy.interactions}</p>
-          <DenseTag variant="neutral" size="cell" className={cn(ROLE_ACCENT[role])}>
-            {ROLE_LABELS[lang][role]}
+          <DenseTag variant="neutral" size="cell" className={cn(roleAccent)}>
+            {roleLabel}
           </DenseTag>
         </div>
         <div className="flex flex-wrap items-center gap-1">

@@ -60,9 +60,13 @@ export interface ObjectiveCreateBody {
 
 export interface ApproveAllResult {
   approved: string[]
+  held?: { draft_id?: string; reason?: string; blocked_by_validate?: unknown }[]
   count: number
+  held_count?: number
+  skipped_batch?: boolean
+  advisory?: string
   executed?: Record<string, unknown>[]
-  errors?: { draft_id: string; status: number; detail?: unknown }[]
+  errors?: { draft_id: string; status?: number; detail?: unknown }[]
 }
 
 export interface CurateRunResult {
@@ -166,7 +170,11 @@ export async function createObjective(body: ObjectiveCreateBody): Promise<Resear
   )
 }
 
-export async function runObjective(objectiveId: string): Promise<ObjectiveRun> {
+export async function runObjective(objectiveId: string): Promise<{
+  run: ObjectiveRun
+  outputs?: Record<string, unknown>
+  advisory?: string
+}> {
   return unwrap(
     await fetch(
       researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}/run`),
@@ -198,12 +206,65 @@ export async function fetchObjectiveRuns(params?: {
   )
 }
 
-/** Delete one run. The API refuses (409) while candidates point at it. */
-export async function deleteObjectiveRun(runId: string): Promise<{ id: string }> {
-  return unwrap<{ id: string }>(
-    await fetch(researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}`), {
-      method: 'DELETE',
-    }),
+/** Delete one run. Pass ``force: true`` to cascade-clear candidates + pending drafts. */
+export async function deleteObjectiveRun(
+  runId: string,
+  opts?: { force?: boolean },
+): Promise<{
+  id: string
+  deleted?: boolean
+  force?: boolean
+  candidates_removed?: number
+  drafts_dismissed?: number
+}> {
+  const q = opts?.force ? '?force=true' : ''
+  return unwrap(
+    await fetch(
+      researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}${q}`),
+      { method: 'DELETE' },
+    ),
+  )
+}
+
+export interface LoopTrustStatus {
+  skill: string
+  batch_mode_env: boolean
+  trust_l0_override?: boolean
+  l0: boolean
+  reason: string
+  advisory?: string
+}
+
+export async function fetchLoopTrust(): Promise<LoopTrustStatus> {
+  return unwrap(await fetch(researchEngineUrl('/research/loop/trust')))
+}
+
+export interface BatchRunResult {
+  run: ObjectiveRun
+  started?: boolean
+  outputs?: Record<string, unknown>
+  trust?: LoopTrustStatus
+  curator?: Record<string, unknown>
+  curator_error?: string
+  approve_all?: ApproveAllResult
+  approve_skipped?: boolean
+  advisory?: string
+}
+
+/** Unattended batch: run → curate → Trust-L0 narrow auto-approve (D10 research drafts only). */
+export async function batchRunObjective(
+  objectiveId: string,
+  body?: { curate_after?: boolean },
+): Promise<BatchRunResult> {
+  return unwrap(
+    await fetch(
+      researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}/batch-run`),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ curate_after: body?.curate_after ?? true }),
+      },
+    ),
   )
 }
 

@@ -8,7 +8,7 @@ import {
   PolicySuggestionBody,
 } from '@/components/research/harness'
 import type { AiDraft } from '@/api/researchDrafts'
-import { isHitRateWarnActive } from '@/lib/harness/harnessDraftHelpers'
+import { isHitRateWarnActive, isPersonaDissentActive } from '@/lib/harness/harnessDraftHelpers'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { cn } from '@/lib/utils'
 
@@ -129,6 +129,8 @@ export function DraftCard({
     typeof draft.payload.agent_owner === 'string' ? draft.payload.agent_owner : null
 
   const warnActive = draft.kind === 'candidate_batch' && isHitRateWarnActive(draft.payload)
+  const dissentActive =
+    draft.kind === 'candidate_batch' && isPersonaDissentActive(draft.payload)
   const accent = KIND_ACCENT[draft.kind] ?? DEFAULT_ACCENT
   const prose = payloadProse(draft.payload)
   const runId =
@@ -141,11 +143,13 @@ export function DraftCard({
         // name a size inherits the app default 16px — which is how the kind tag
         // came to render larger than the title it labels.
         'rounded-md border border-l-4 px-2.5 py-2 space-y-2 text-dense-meta',
-        warnActive
-          ? 'border-warning/50 border-l-warning bg-warning/5'
-          : muted
-            ? accent.muted
-            : accent.normal,
+        dissentActive
+          ? 'border-destructive/50 border-l-destructive bg-destructive/5'
+          : warnActive
+            ? 'border-warning/50 border-l-warning bg-warning/5'
+            : muted
+              ? accent.muted
+              : accent.normal,
         className,
       )}
     >

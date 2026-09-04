@@ -1,24 +1,31 @@
 /**
- * Harness Console — Research Loop Wave A + HC ops dashboard.
+ * Harness Console — Research Loop ops dashboard.
  * `/research/loop/harness`
  *
+ * Three zones, not six blocks. The page used to open with a title, a reach
+ * strip, a 111px advisory banner whose text never changes, a collapsed Policy
+ * templates row, an Objectives table and a Runs table — four of the six being
+ * chrome, and the last two asking the reader to join them by eye on an
+ * Objective column. Now: what the Loop can see, then the objectives, with each
+ * objective's runs inside it.
+ *
  * Advisory only — D10 BLOCKED (no trade execution).
- * Daily Loop LLM work lives in Research Copilot; this page is ops history.
  */
-import { Link, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Archive,
   ArchiveRestore,
-  Check,
   MessageCircle,
   Play,
-  Sparkles,
+  ShieldAlert,
   Terminal,
   Trash2,
+  Zap,
 } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
+import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import {
   CollapsibleGroup,
   CollapsibleGroupBody,
@@ -28,22 +35,27 @@ import {
   DenseDataTable,
   DenseTableBody,
   DenseTableCell,
+  DenseTableDetailRow,
   DenseTableHead,
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
   EmptyState,
+  ExpandToggleCell,
   IconActionButton,
   SegmentControl,
+  denseTable,
 } from '@/components/data-display'
+import { StatusLamp } from '@/components/StatusLamp'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
+import { LoopRunPipelineBody } from '@/components/research/harness/LoopRunPipelineBody'
 import {
   approveAllRun,
+  batchRunObjective,
   curateRun,
   deleteObjective,
   deleteObjectiveRun,
@@ -56,27 +68,15 @@ import {
   type ResearchObjective,
 } from '@/api/research/harness'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { fmtInt } from '@/lib/format'
 import { NewObjectiveDialog } from '@/components/research/NewObjectiveDialog'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
-import {
-  HarnessObjectivesColgroup,
-  HarnessRunsColgroup,
-} from '@/pages/research/loop/harnessConsoleColgroups'
+import { HarnessObjectivesColgroup } from '@/pages/research/loop/harnessConsoleColgroups'
+import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
 import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
-import {
-  loopCopilotUi,
-  loopPipelinePath,
-  openLoopRunInCopilot,
-  openResearchCopilot,
-} from '@/lib/harness/loopCopilotPrefill'
-import {
-  funnelReach,
-  groupIdenticalRuns,
-  parseHarnessTrace,
-  runDurationMs,
-} from '@/lib/harness/harnessTrace'
+import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
+import { useLoopTrust } from '@/hooks/useLoopHarness'
 
 type RunStatusFilter = ObjectiveRunStatus | 'all'
 
@@ -88,73 +88,56 @@ const RUN_STATUS_OPTIONS: { value: RunStatusFilter; label: string }[] = [
   { value: 'failed', label: 'Failed' },
 ]
 
-function runStatusVariant(
-  status: string,
-): 'success' | 'warning' | 'danger' | 'neutral' {
-  if (status === 'completed') return 'success'
-  if (status === 'awaiting_approval') return 'warning'
-  if (status === 'failed') return 'danger'
-  if (status === 'running') return 'neutral'
-  return 'neutral'
-}
-
-function fmtTs(v: string | null | undefined): string {
-  if (!v) return '—'
-  try {
-    return new Date(v).toLocaleString()
-  } catch {
-    return v
-  }
-}
-
-
 /**
- * Watchlist-sized. Below this a run did not screen a market, it re-read a list —
- * the failure the funnel column exists to make visible at a glance rather than
- * after a warehouse query.
+ * The banner this replaces took a sixth of the first screen, every visit, to say
+ * the same thing. A boundary that never changes is a property of the console,
+ * not news — so it reads as a badge, with the detail one hover away.
  */
-const WATCHLIST_SCALE = 100
-
-/** Considered → proposed for one run, with the conversion it implies. */
-function RunFunnelCell({ trace }: { trace: unknown }) {
-  const reach = funnelReach(parseHarnessTrace(trace))
-  if (!reach) {
-    return (
-      <span className="text-dense-caption text-muted-foreground">no funnel</span>
-    )
-  }
-  const { considered, proposed } = reach
-  const pct = considered > 0 ? (proposed / considered) * 100 : null
-  const narrow = considered < WATCHLIST_SCALE
-  return (
-    <div className="flex flex-wrap items-center gap-1">
-      <span className="font-mono tabular-nums text-dense-meta">
-        {fmtInt(considered)} → {fmtInt(proposed)}
-      </span>
-      <DenseTag variant={narrow ? 'warning' : 'category'} size="cell">
-        {pct == null ? '—' : `${pct < 1 ? pct.toFixed(1) : Math.round(pct)}%`}
-      </DenseTag>
-      {narrow ? (
-        <span
-          className="text-dense-micro text-warning"
-          title={`Only ${considered} symbols were considered — that is a watchlist, not a screen`}
-        >
-          watchlist-sized
-        </span>
-      ) : null}
-    </div>
-  )
-}
+const D10_DETAIL =
+  'D10 BLOCKED — advisory only. Auto-approve covers research drafts and nothing else ' +
+  '(never policy_suggestion, never order_intent). Run unattended still selects and ' +
+  'evaluates without Trust L0; it just will not auto-approve until L0. Persona eval ' +
+  'defaults to heuristic — LLM agents require BIFROST_PERSONA_EVAL_AGENTS=1.'
 
 export default function HarnessConsolePage() {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [lang] = useCopilotPromptLang()
   const [runStatus, setRunStatus] = useState<RunStatusFilter>('all')
   // Archive is only a retirement if there is a way back. The console lists
   // active objectives, so without this filter an archived one is simply gone.
   const [objStatus, setObjStatus] = useState<'active' | 'archived'>('active')
   const [policyOpen, setPolicyOpen] = useState(false)
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const trustQ = useLoopTrust()
+  const trust = trustQ.data
+
+  const pipelineRunId = searchParams.get('run')
+  const pipelineLive = searchParams.get('live') !== '0'
+
+  function openPipeline(runId: string) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.set('run', runId)
+        next.set('live', '1')
+        return next
+      },
+      { replace: true },
+    )
+  }
+
+  function closePipeline() {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('run')
+        next.delete('live')
+        return next
+      },
+      { replace: true },
+    )
+  }
 
   const objectivesQ = useQuery({
     queryKey: QUERY_KEYS.research.objectives({ status: objStatus }),
@@ -168,24 +151,50 @@ export default function HarnessConsolePage() {
       status: runStatus === 'all' ? undefined : runStatus,
     }),
     queryFn: () =>
-      fetchObjectiveRuns({
-        status: runStatus === 'all' ? undefined : runStatus,
-      }),
+      fetchObjectiveRuns({ status: runStatus === 'all' ? undefined : runStatus }),
     staleTime: 10_000,
     refetchOnWindowFocus: false,
+    // batch-run returns a run id before the work is done so the Pipeline can
+    // open on it. The drawer polls; the list did not, so the new row sat at
+    // "no funnel" until something else happened to refetch. Poll only while a
+    // run is actually in flight.
+    refetchInterval: (q) =>
+      (q.state.data?.items ?? []).some((r) => r.status === 'running') ? 3_000 : false,
   })
 
   const runMut = useMutation({
     mutationFn: (objectiveId: string) => runObjective(objectiveId),
-    onSuccess: () => {
+    onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
       void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      const runId = res.run?.id
+      if (runId) openPipeline(runId)
     },
   })
 
+  const batchMut = useMutation({
+    mutationFn: (objectiveId: string) => batchRunObjective(objectiveId),
+    onSuccess: (res) => {
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
+      const runId = res.run?.id
+      if (runId) openPipeline(runId)
+    },
+  })
+
+  const [approveFeedback, setApproveFeedback] = useState<string | null>(null)
+
   const approveMut = useMutation({
     mutationFn: (runId: string) => approveAllRun(runId),
-    onSuccess: () => {
+    onSuccess: (res) => {
+      const approvedN = res.count ?? res.approved?.length ?? 0
+      const heldN = res.held_count ?? res.held?.length ?? 0
+      setApproveFeedback(
+        res.skipped_batch
+          ? `Held batch (dissent) — auto-approved ${approvedN} / held ${heldN}`
+          : `Auto-approved ${approvedN} · held ${heldN} (dissent)`,
+      )
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.list })
@@ -222,10 +231,20 @@ export default function HarnessConsolePage() {
   const [deletingRun, setDeletingRun] = useState<ObjectiveRun | null>(null)
 
   const deleteRunMut = useMutation({
-    mutationFn: (runId: string) => deleteObjectiveRun(runId),
-    onSuccess: () => {
+    mutationFn: (v: { runId: string; force?: boolean }) =>
+      deleteObjectiveRun(v.runId, { force: v.force ?? true }),
+    onSuccess: (res) => {
       setDeletingRun(null)
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
+      const removed = res.candidates_removed ?? 0
+      const dismissed = res.drafts_dismissed ?? 0
+      if (removed > 0 || dismissed > 0) {
+        setApproveFeedback(
+          `Deleted run — removed ${removed} candidate(s), dismissed ${dismissed} draft(s). Hypotheses kept.`,
+        )
+      }
     },
   })
 
@@ -237,63 +256,95 @@ export default function HarnessConsolePage() {
     },
   })
 
+  function candidateCountHint(run: ObjectiveRun): number | null {
+    const ids = run.outputs?.candidate_ids
+    if (Array.isArray(ids)) return ids.length
+    return null
+  }
+
   const objectives = useMemo(
     () => objectivesQ.data?.items ?? [],
     [objectivesQ.data?.items],
   )
   const runs = useMemo(() => runsQ.data?.items ?? [], [runsQ.data?.items])
+
   // One row per result, not per record. The console listed 23 runs with the same
   // funnel repeating eight times — a day's re-runs of one objective screening the
   // same ground to the same names.
-  const runGroups = useMemo(() => groupIdenticalRuns(runs), [runs])
-  const foldedRuns = useMemo(
-    () => runGroups.reduce((n, g) => n + g.repeats.length, 0),
-    [runGroups],
-  )
-
-  // Whether Delete is even offered. The API is the authority — it refuses with
-  // the real count — but showing the button for an objective that plainly has
-  // history invites a click that can only fail.
-  const runCountByObjective = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const r of runs) map.set(r.objective_id, (map.get(r.objective_id) ?? 0) + 1)
-    return map
+  const groupsByObjective = useMemo(() => {
+    const byObj = new Map<string, ObjectiveRun[]>()
+    for (const r of runs) {
+      const list = byObj.get(r.objective_id)
+      if (list) list.push(r)
+      else byObj.set(r.objective_id, [r])
+    }
+    const out = new Map<string, RunGroup[]>()
+    for (const [id, list] of byObj) out.set(id, groupIdenticalRuns(list))
+    return out
   }, [runs])
 
-  const objectiveTitleById = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const o of objectives) map.set(o.id, o.title)
-    return map
-  }, [objectives])
+  // Runs whose objective is not in the list on screen — archived, or deleted.
+  // Without this they would simply vanish under the Active filter, which is the
+  // kind of silent disappearance this console exists to prevent.
+  const orphanGroups = useMemo(() => {
+    const shown = new Set(objectives.map((o) => o.id))
+    return groupIdenticalRuns(runs.filter((r) => !shown.has(r.objective_id)))
+  }, [runs, objectives])
+
+  const runsTableProps = {
+    lang,
+    onOpenPipeline: openPipeline,
+    onApprove: (id: string) => approveMut.mutate(id),
+    onCurate: (id: string) => curateMut.mutate(id),
+    onDelete: setDeletingRun,
+    approvingId: approveMut.isPending ? (approveMut.variables ?? null) : null,
+    curatingId: curateMut.isPending ? (curateMut.variables ?? null) : null,
+    deleteBusy: deleteRunMut.isPending,
+  }
 
   return (
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
       <PageHeader
         title="Harness Console"
-        description="Ops dashboard — objectives & run history. Click a run id for white-box Pipeline."
-        actions={<NewObjectiveDialog />}
+        description="Objectives and the runs they produced. Open a run to see its pipeline."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className="inline-flex items-center gap-1 rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-dense-caption text-warning"
+              title={D10_DETAIL}
+            >
+              <ShieldAlert className="size-3" />
+              D10 BLOCKED
+            </span>
+            <div
+              className="flex items-center gap-1.5 rounded-md border border-border/60 bg-secondary/40 px-2 py-1"
+              title={trust?.reason ?? 'Loading Trust…'}
+            >
+              <StatusLamp
+                lamp={trust?.l0 ? 'green' : 'yellow'}
+                variant="dot"
+                title={trust?.l0 ? 'Trust L0' : 'Trust not L0'}
+              />
+              <span className="text-dense-caption text-muted-foreground">
+                Trust {trust?.l0 ? 'L0' : 'not L0'}
+              </span>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-dense-micro"
+              onClick={() => openResearchCopilot()}
+            >
+              <MessageCircle className="mr-1 size-3" />
+              Copilot
+            </Button>
+            <NewObjectiveDialog />
+          </div>
+        }
       />
 
       <UniverseReachStrip />
-
-      <Card variant="elevated" size="sm" className="min-w-0 border-warning/40 bg-warning/5">
-        <CardContent className="space-y-2 px-3 py-2 text-dense-meta text-warning">
-          <p>
-            Advisory only — D10 BLOCKED. Approve all uses the same Inbox side
-            effects: policy merge, plus candidate promote and hypotheses.
-          </p>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-7 border-warning/40 text-warning hover:bg-warning/10"
-            onClick={() => openResearchCopilot()}
-          >
-            <MessageCircle className="size-3 mr-1" />
-            Open Research Copilot
-          </Button>
-        </CardContent>
-      </Card>
 
       <CollapsibleGroup variant="card" className="min-w-0">
         <CollapsibleGroupHeader
@@ -302,6 +353,9 @@ export default function HarnessConsolePage() {
         >
           <CollapsibleChevron expanded={policyOpen} />
           <CollapsibleGroupTitle>Policy templates</CollapsibleGroupTitle>
+          <span className="ml-2 text-dense-caption text-muted-foreground">
+            what to pick · Personas judge how · auto-approve is research drafts only
+          </span>
         </CollapsibleGroupHeader>
         {policyOpen ? (
           <CollapsibleGroupBody className="px-3 pb-3">
@@ -310,10 +364,9 @@ export default function HarnessConsolePage() {
         ) : null}
       </CollapsibleGroup>
 
-      {/* Objectives */}
       <section className="min-w-0 space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-dense-body font-semibold">Objectives</h2>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h2 className="shrink-0 text-dense-body font-semibold">Objectives</h2>
           <SegmentControl
             value={objStatus}
             onChange={(v) => setObjStatus(v as 'active' | 'archived')}
@@ -322,7 +375,18 @@ export default function HarnessConsolePage() {
               { value: 'archived', label: 'Archived' },
             ]}
           />
+          <span className="ml-auto shrink-0 text-dense-caption text-muted-foreground">
+            Runs
+          </span>
+          <SegmentControl
+            value={runStatus}
+            onChange={(v) => setRunStatus(v as RunStatusFilter)}
+            options={RUN_STATUS_OPTIONS}
+            size="sm"
+            ariaLabel="Filter runs by status"
+          />
         </div>
+
         {objectivesQ.isError ? (
           <QueryErrorAlert error={objectivesQ.error} />
         ) : objectivesQ.isLoading ? (
@@ -342,353 +406,336 @@ export default function HarnessConsolePage() {
             <HarnessObjectivesColgroup />
             <DenseTableHeader>
               <DenseTableHeadRow>
+                <DenseTableHead className={denseTable.expandCol} />
                 <DenseTableHead>Title</DenseTableHead>
                 <DenseTableHead>Schedule</DenseTableHead>
-                <DenseTableHead>Persona</DenseTableHead>
+                <DenseTableHead>Runs</DenseTableHead>
                 <DenseTableHead>Status</DenseTableHead>
                 <DenseTableHead>Actions</DenseTableHead>
               </DenseTableHeadRow>
             </DenseTableHeader>
             <DenseTableBody>
               {objectives.map((row: ResearchObjective) => {
-                const busy =
-                  runMut.isPending && runMut.variables === row.id
-                const hasRuns = (runCountByObjective.get(row.id) ?? 0) > 0
+                const busy = runMut.isPending && runMut.variables === row.id
+                const batchBusy = batchMut.isPending && batchMut.variables === row.id
+                const groups = groupsByObjective.get(row.id) ?? []
+                const awaitingN = groups.filter(
+                  (g) => g.run.status === 'awaiting_approval',
+                ).length
+                const hasRuns = groups.length > 0
                 const archived = row.status !== 'active'
+                const isOpen = expanded[row.id] ?? false
                 return (
-                  <DenseTableRow key={row.id}>
-                    <DenseTableCell>
-                      <div className="min-w-0">
-                        <p className="truncate text-dense-label font-medium">{row.title}</p>
-                        <p className="truncate text-dense-caption text-muted-foreground">
-                          {row.description}
-                        </p>
-                      </div>
-                    </DenseTableCell>
-                    <DenseTableCell>
-                      <DenseTag variant="neutral">{row.schedule}</DenseTag>
-                    </DenseTableCell>
-                    <DenseTableCell className="truncate font-mono text-dense-meta">
-                      {row.persona}
-                    </DenseTableCell>
-                    <DenseTableCell>
-                      <DenseTag variant={archived ? 'neutral' : 'success'}>{row.status}</DenseTag>
-                    </DenseTableCell>
-                    <DenseTableCell>
-                      <div className="flex flex-wrap items-center gap-0.5">
-                        {archived ? null : (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-6 px-1.5 text-dense-micro"
-                            disabled={busy || runMut.isPending}
-                            onClick={() => runMut.mutate(row.id)}
-                          >
-                            <Play className="mr-0.5 size-3 shrink-0" />
-                            {busy ? 'Running…' : 'Run'}
-                          </Button>
-                        )}
-                        {archived ? (
-                          <IconActionButton
-                            title="Restore — brings it back to the active list"
-                            ariaLabel={`Restore ${row.title}`}
-                            disabled={archiveMut.isPending}
-                            onClick={() => archiveMut.mutate({ id: row.id, status: 'active' })}
-                          >
-                            <ArchiveRestore className="size-3.5" />
-                          </IconActionButton>
-                        ) : (
-                          <IconActionButton
-                            title="Archive — leaves the console, keeps its runs"
-                            ariaLabel={`Archive ${row.title}`}
-                            onClick={() => setRetiring({ objective: row, mode: 'archive' })}
-                          >
-                            <Archive className="size-3.5" />
-                          </IconActionButton>
-                        )}
-                        <IconActionButton
-                          tone="danger"
-                          title={
-                            hasRuns
-                              ? 'Cannot delete — this objective has runs. Archive it instead.'
-                              : 'Delete — it has never run'
-                          }
-                          ariaLabel={`Delete ${row.title}`}
-                          disabled={hasRuns}
-                          onClick={() => setRetiring({ objective: row, mode: 'delete' })}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </IconActionButton>
-                      </div>
-                    </DenseTableCell>
-                  </DenseTableRow>
+                  <ObjectiveRows
+                    key={row.id}
+                    row={row}
+                    groups={groups}
+                    awaitingN={awaitingN}
+                    hasRuns={hasRuns}
+                    archived={archived}
+                    isOpen={isOpen}
+                    onToggle={() =>
+                      setExpanded((e) => ({ ...e, [row.id]: !(e[row.id] ?? false) }))
+                    }
+                    running={busy}
+                    batchRunning={batchBusy}
+                    anyRunPending={runMut.isPending || batchMut.isPending}
+                    trustL0={Boolean(trust?.l0)}
+                    onRun={() => runMut.mutate(row.id)}
+                    onBatchRun={() => batchMut.mutate(row.id)}
+                    onArchive={() => setRetiring({ objective: row, mode: 'archive' })}
+                    onRestore={() => archiveMut.mutate({ id: row.id, status: 'active' })}
+                    onDelete={() => setRetiring({ objective: row, mode: 'delete' })}
+                    archivePending={archiveMut.isPending}
+                    runsTableProps={runsTableProps}
+                  />
                 )
               })}
             </DenseTableBody>
           </DenseDataTable>
         )}
-        {runMut.isError ? (
-          <p className="text-dense-meta text-destructive">
-            {runMut.error instanceof Error ? runMut.error.message : String(runMut.error)}
-          </p>
-        ) : null}
-        {/* The API refuses a delete that would take run history with it, and
-            says how many runs. Surfacing that verbatim is more useful than a
-            generic failure. */}
-        {deleteMut.isError ? (
-          <p className="text-dense-meta text-destructive">
-            {deleteMut.error instanceof Error
-              ? deleteMut.error.message
-              : String(deleteMut.error)}
-          </p>
-        ) : null}
-        {archiveMut.isError ? (
-          <p className="text-dense-meta text-destructive">
-            {archiveMut.error instanceof Error
-              ? archiveMut.error.message
-              : String(archiveMut.error)}
-          </p>
-        ) : null}
 
-        <ConfirmDialog
-          open={deletingRun !== null}
-          title="Delete run"
-          message={
-            deletingRun
-              ? `Delete ${deletingRun.id}? Its funnel and trace go with it. The API refuses if candidates still point at this run.`
-              : ''
-          }
-          confirmLabel="Delete"
-          confirming={deleteRunMut.isPending}
-          onCancel={() => setDeletingRun(null)}
-          onConfirm={() => {
-            if (deletingRun) deleteRunMut.mutate(deletingRun.id)
-          }}
-        />
-
-        <ConfirmDialog
-          open={retiring !== null}
-          title={
-            retiring?.mode === 'delete' ? 'Delete objective' : 'Archive objective'
-          }
-          message={
-            retiring?.mode === 'delete'
-              ? `Delete “${retiring.objective.title}”? It has never run, so nothing is lost.`
-              : `Archive “${retiring?.objective.title ?? ''}”? It leaves the console. Its runs, funnels and the candidates that reference them stay.`
-          }
-          confirmLabel={retiring?.mode === 'delete' ? 'Delete' : 'Archive'}
-          confirming={archiveMut.isPending || deleteMut.isPending}
-          onCancel={() => setRetiring(null)}
-          onConfirm={() => {
-            if (!retiring) return
-            if (retiring.mode === 'delete') {
-              deleteMut.mutate(retiring.objective.id)
-            } else {
-              archiveMut.mutate({ id: retiring.objective.id, status: 'archived' })
-            }
-          }}
-        />
-      </section>
-
-      {/* Runs */}
-      <section className="min-w-0 space-y-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="shrink-0 text-dense-body font-semibold">Runs</h2>
-          <span className="shrink-0 text-dense-meta font-medium text-muted-foreground">
-            Status:
-          </span>
-          <div className="min-w-0 flex-1">
-            <SegmentControl
-              value={runStatus}
-              onChange={(v) => setRunStatus(v as RunStatusFilter)}
-              options={RUN_STATUS_OPTIONS}
-              size="sm"
-              ariaLabel="Filter runs by status"
-            />
+        {orphanGroups.length > 0 ? (
+          <div className="space-y-1">
+            <p className="text-dense-caption text-muted-foreground">
+              {orphanGroups.length} run{orphanGroups.length === 1 ? '' : 's'} whose
+              objective is not in this list — archived, or since deleted.
+            </p>
+            <HarnessRunsTable groups={orphanGroups} objectiveTitle="—" {...runsTableProps} />
           </div>
-          <span className="shrink-0 text-dense-meta text-muted-foreground">
-            {runGroups.length} result{runGroups.length === 1 ? '' : 's'}
-            {foldedRuns > 0 ? ` · ${foldedRuns} re-runs folded in` : ''}
-          </span>
-        </div>
+        ) : null}
 
-        {runsQ.isError ? (
-          <QueryErrorAlert error={runsQ.error} />
-        ) : runsQ.isLoading ? (
-          <Skeleton className="h-48 w-full rounded-md" />
-        ) : runs.length === 0 ? (
-          <EmptyState
-            icon={<Terminal />}
-            title="No runs"
-            description="Trigger an objective Run to produce harness history here."
-          />
-        ) : (
-          <DenseDataTable scrollX={false}>
-            <HarnessRunsColgroup />
-            <DenseTableHeader>
-              <DenseTableHeadRow>
-                <DenseTableHead>Run</DenseTableHead>
-                <DenseTableHead>Objective</DenseTableHead>
-                <DenseTableHead>Funnel</DenseTableHead>
-                <DenseTableHead>Started</DenseTableHead>
-                <DenseTableHead>Status</DenseTableHead>
-                <DenseTableHead>Actions</DenseTableHead>
-              </DenseTableHeadRow>
-            </DenseTableHeader>
-            <DenseTableBody>
-              {runGroups.map(({ run: row, repeats }) => {
-                const awaiting = row.status === 'awaiting_approval'
-                const approveBusy =
-                  approveMut.isPending && approveMut.variables === row.id
-                const curateBusy =
-                  curateMut.isPending && curateMut.variables === row.id
-                const curatorTrace = (row.outputs?.curator_trace ?? null) as
-                  | Record<string, unknown>
-                  | null
-                const objectiveTitle =
-                  objectiveTitleById.get(row.objective_id) ?? row.objective_id
-                const dataSource =
-                  typeof row.outputs?.data_source === 'string'
-                    ? row.outputs.data_source
-                    : null
-                const duration = runDurationMs(row.started_at, row.finished_at)
-                return (
-                  <DenseTableRow key={row.id}>
-                    <DenseTableCell>
-                      <Link
-                        to={loopPipelinePath(row.id)}
-                        className="block truncate font-mono text-dense-meta text-primary hover:underline"
-                      >
-                        {row.id}
-                      </Link>
-                      {repeats.length > 0 ? (
-                        <span
-                          className="mt-0.5 block text-dense-micro text-muted-foreground"
-                          title={`${repeats.length} earlier run(s) today screened the same ground to the same names`}
-                        >
-                          +{repeats.length} re-run{repeats.length === 1 ? '' : 's'} today
-                        </span>
-                      ) : null}
-                      {dataSource ? (
-                        <DenseTag variant="category" size="cell" className="mt-0.5">
-                          {dataSource}
-                        </DenseTag>
-                      ) : null}
-                    </DenseTableCell>
-                    <DenseTableCell className="truncate">{objectiveTitle}</DenseTableCell>
-                    <DenseTableCell>
-                      <RunFunnelCell trace={row.trace_json} />
-                    </DenseTableCell>
-                    <DenseTableCell className="truncate text-dense-meta text-muted-foreground">
-                      {fmtTs(row.started_at)}
-                      {duration != null ? (
-                        <span className="block text-dense-caption">
-                          {(duration / 1000).toFixed(1)}s
-                        </span>
-                      ) : null}
-                    </DenseTableCell>
-                    <DenseTableCell>
-                      <DenseTag variant={runStatusVariant(row.status)}>
-                        {row.status}
-                      </DenseTag>
-                    </DenseTableCell>
-                    <DenseTableCell>
-                      <div className="flex flex-wrap items-center gap-0.5">
-                      {awaiting ? (
-                        <>
-                          <IconActionButton
-                            title={loopCopilotUi.discuss(lang)}
-                            ariaLabel={`${loopCopilotUi.discuss(lang)} ${row.id}`}
-                            onClick={() =>
-                              openLoopRunInCopilot({
-                                runId: row.id,
-                                title: objectiveTitle,
-                                lang,
-                              })
-                            }
-                          >
-                            <MessageCircle className="size-3.5" />
-                          </IconActionButton>
-                          <IconActionButton
-                            title={loopCopilotUi.viewPipeline(lang)}
-                            ariaLabel={`${loopCopilotUi.viewPipeline(lang)} ${row.id}`}
-                            onClick={() => navigate(loopPipelinePath(row.id))}
-                          >
-                            <Terminal className="size-3.5" />
-                          </IconActionButton>
-                          <IconActionButton
-                            title={curateBusy ? 'Curating…' : 'Curator'}
-                            ariaLabel={`Curator ${row.id}`}
-                            disabled={curateBusy || curateMut.isPending}
-                            onClick={() => curateMut.mutate(row.id)}
-                          >
-                            <Sparkles className="size-3.5" />
-                          </IconActionButton>
-                          {/* Approve keeps its label: it promotes candidates and
-                              creates hypotheses, and an icon-only control that
-                              writes is one misclick from doing so. */}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-6 px-1.5 text-dense-micro"
-                            disabled={approveBusy || approveMut.isPending}
-                            onClick={() => approveMut.mutate(row.id)}
-                          >
-                            <Check className="mr-0.5 size-3 shrink-0" />
-                            {approveBusy ? 'Approving…' : 'Approve'}
-                          </Button>
-                        </>
-                      ) : curatorTrace ? (
-                        <span className="inline-block truncate align-middle text-dense-caption text-muted-foreground">
-                          Curator: {String(curatorTrace.status ?? 'done')}
-                        </span>
-                      ) : (
-                        <span className="text-dense-caption text-muted-foreground">—</span>
-                      )}
-                      {/* Offered on every run, including failed and completed ones:
-                          those are exactly the rows that accumulate. The API
-                          refuses while candidates still point at the run. */}
-                      <IconActionButton
-                        tone="danger"
-                        title="Delete this run — refused while its candidates exist"
-                        ariaLabel={`Delete run ${row.id}`}
-                        disabled={deleteRunMut.isPending}
-                        onClick={() => setDeletingRun(row)}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </IconActionButton>
-                      </div>
-                    </DenseTableCell>
-                  </DenseTableRow>
-                )
-              })}
-            </DenseTableBody>
-          </DenseDataTable>
-        )}
-        {deleteRunMut.isError ? (
-          <p className="text-dense-meta text-destructive">
-            {deleteRunMut.error instanceof Error
-              ? deleteRunMut.error.message
-              : String(deleteRunMut.error)}
-          </p>
-        ) : null}
-        {approveMut.isError ? (
-          <p className="text-dense-meta text-destructive">
-            {approveMut.error instanceof Error
-              ? approveMut.error.message
-              : String(approveMut.error)}
-          </p>
-        ) : null}
-        {curateMut.isError ? (
-          <p className="text-dense-meta text-destructive">
-            {curateMut.error instanceof Error
-              ? curateMut.error.message
-              : String(curateMut.error)}
-          </p>
-        ) : null}
+        <MutationNotices
+          notices={[
+            batchMut.isPending
+              ? {
+                  tone: 'warning',
+                  text: 'Starting unattended run — Pipeline opens in the right drawer…',
+                }
+              : null,
+            approveFeedback ? { tone: 'success', text: approveFeedback } : null,
+            errNotice(runMut.error, runMut.isError),
+            errNotice(batchMut.error, batchMut.isError),
+            // The API refuses a delete that would take run history with it, and
+            // says how many runs. Surfacing that verbatim beats a generic failure.
+            errNotice(deleteMut.error, deleteMut.isError),
+            errNotice(archiveMut.error, archiveMut.isError),
+            errNotice(deleteRunMut.error, deleteRunMut.isError),
+            errNotice(approveMut.error, approveMut.isError),
+            errNotice(curateMut.error, curateMut.isError),
+            errNotice(runsQ.error, runsQ.isError),
+          ]}
+        />
       </section>
+
+      <ConfirmDialog
+        open={deletingRun !== null}
+        title="Delete run"
+        message={
+          deletingRun
+            ? (() => {
+                const n = candidateCountHint(deletingRun)
+                const lineage =
+                  n != null && n > 0
+                    ? `This also deletes ${n} candidate(s) that point at it and dismisses pending drafts.`
+                    : 'This also deletes any candidates that still point at it and dismisses pending drafts.'
+                return `Delete ${deletingRun.id}? Its funnel and trace go with it. ${lineage} Promoted hypotheses are kept.`
+              })()
+            : ''
+        }
+        confirmLabel="Delete run"
+        confirming={deleteRunMut.isPending}
+        onCancel={() => setDeletingRun(null)}
+        onConfirm={() => {
+          if (deletingRun) deleteRunMut.mutate({ runId: deletingRun.id, force: true })
+        }}
+      />
+
+      <ConfirmDialog
+        open={retiring !== null}
+        title={retiring?.mode === 'delete' ? 'Delete objective' : 'Archive objective'}
+        message={
+          retiring?.mode === 'delete'
+            ? `Delete “${retiring.objective.title}”? It has never run, so nothing is lost.`
+            : `Archive “${retiring?.objective.title ?? ''}”? It leaves the console. Its runs, funnels and the candidates that reference them stay.`
+        }
+        confirmLabel={retiring?.mode === 'delete' ? 'Delete' : 'Archive'}
+        confirming={archiveMut.isPending || deleteMut.isPending}
+        onCancel={() => setRetiring(null)}
+        onConfirm={() => {
+          if (!retiring) return
+          if (retiring.mode === 'delete') deleteMut.mutate(retiring.objective.id)
+          else archiveMut.mutate({ id: retiring.objective.id, status: 'archived' })
+        }}
+      />
+
+      <RightInspectorShell
+        open={Boolean(pipelineRunId)}
+        ariaLabel="Loop Pipeline"
+        panelWidthPx={560}
+      >
+        {pipelineRunId ? (
+          <LoopRunPipelineBody
+            runId={pipelineRunId}
+            live={pipelineLive}
+            onClose={closePipeline}
+          />
+        ) : null}
+      </RightInspectorShell>
     </PageShell>
+  )
+}
+
+type RunsTableProps = Omit<
+  Parameters<typeof HarnessRunsTable>[0],
+  'groups' | 'objectiveTitle'
+>
+
+/** One objective, and — when opened — the runs it produced. */
+function ObjectiveRows({
+  row,
+  groups,
+  awaitingN,
+  hasRuns,
+  archived,
+  isOpen,
+  onToggle,
+  running,
+  batchRunning,
+  anyRunPending,
+  trustL0,
+  onRun,
+  onBatchRun,
+  onArchive,
+  onRestore,
+  onDelete,
+  archivePending,
+  runsTableProps,
+}: {
+  row: ResearchObjective
+  groups: RunGroup[]
+  awaitingN: number
+  hasRuns: boolean
+  archived: boolean
+  isOpen: boolean
+  onToggle: () => void
+  running: boolean
+  batchRunning: boolean
+  anyRunPending: boolean
+  trustL0: boolean
+  onRun: () => void
+  onBatchRun: () => void
+  onArchive: () => void
+  onRestore: () => void
+  onDelete: () => void
+  archivePending: boolean
+  runsTableProps: RunsTableProps
+}) {
+  return (
+    <>
+      <DenseTableRow>
+        <DenseTableCell className={denseTable.expandColCell}>
+          <ExpandToggleCell
+            expanded={isOpen}
+            onToggle={onToggle}
+            label={`${isOpen ? 'Collapse' : 'Expand'} runs for ${row.title}`}
+          />
+        </DenseTableCell>
+        <DenseTableCell>
+          <div className="min-w-0">
+            <p className="truncate text-dense-label font-medium">{row.title}</p>
+            <p className="truncate text-dense-caption text-muted-foreground">
+              {row.persona} · {row.description}
+            </p>
+          </div>
+        </DenseTableCell>
+        <DenseTableCell>
+          <DenseTag variant="neutral">{row.schedule}</DenseTag>
+        </DenseTableCell>
+        <DenseTableCell>
+          {hasRuns ? (
+            <span className="text-dense-meta tabular-nums">
+              {groups.length} result{groups.length === 1 ? '' : 's'}
+              {awaitingN > 0 ? (
+                <span className="text-warning"> · {awaitingN} awaiting</span>
+              ) : null}
+            </span>
+          ) : (
+            <span className="text-dense-caption text-muted-foreground">never run</span>
+          )}
+        </DenseTableCell>
+        <DenseTableCell>
+          <DenseTag variant={archived ? 'neutral' : 'success'}>{row.status}</DenseTag>
+        </DenseTableCell>
+        <DenseTableCell>
+          <div className="flex flex-wrap items-center gap-0.5">
+            {archived ? null : (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-1.5 text-dense-micro"
+                  disabled={running || anyRunPending}
+                  onClick={onRun}
+                >
+                  <Play className="mr-0.5 size-3 shrink-0" />
+                  {running ? 'Running…' : 'Run'}
+                </Button>
+                <IconActionButton
+                  title={
+                    trustL0
+                      ? 'Run unattended — run → curate → Trust L0 auto-approve (research drafts only)'
+                      : 'Run unattended — selects and evaluates; will not auto-approve until Trust L0'
+                  }
+                  ariaLabel={`Run unattended ${row.title}`}
+                  disabled={anyRunPending}
+                  onClick={onBatchRun}
+                >
+                  <Zap className={batchRunning ? 'size-3.5 animate-pulse' : 'size-3.5'} />
+                </IconActionButton>
+              </>
+            )}
+            {archived ? (
+              <IconActionButton
+                title="Restore — brings it back to the active list"
+                ariaLabel={`Restore ${row.title}`}
+                disabled={archivePending}
+                onClick={onRestore}
+              >
+                <ArchiveRestore className="size-3.5" />
+              </IconActionButton>
+            ) : (
+              <IconActionButton
+                title="Archive — leaves the console, keeps its runs"
+                ariaLabel={`Archive ${row.title}`}
+                onClick={onArchive}
+              >
+                <Archive className="size-3.5" />
+              </IconActionButton>
+            )}
+            <IconActionButton
+              tone="danger"
+              title={
+                hasRuns
+                  ? 'Cannot delete — this objective has runs. Archive it instead.'
+                  : 'Delete — it has never run'
+              }
+              ariaLabel={`Delete ${row.title}`}
+              disabled={hasRuns}
+              onClick={onDelete}
+            >
+              <Trash2 className="size-3.5" />
+            </IconActionButton>
+          </div>
+        </DenseTableCell>
+      </DenseTableRow>
+      {isOpen ? (
+        <DenseTableDetailRow>
+          <DenseTableCell className={denseTable.expandColCell}>{null}</DenseTableCell>
+          <DenseTableCell colSpan={5} className="py-2 pl-2 pr-1">
+            <HarnessRunsTable
+              groups={groups}
+              objectiveTitle={row.title}
+              {...runsTableProps}
+            />
+          </DenseTableCell>
+        </DenseTableDetailRow>
+      ) : null}
+    </>
+  )
+}
+
+type Notice = { tone: 'warning' | 'success' | 'danger'; text: string } | null
+
+function errNotice(error: unknown, isError: boolean): Notice {
+  if (!isError) return null
+  return { tone: 'danger', text: error instanceof Error ? error.message : String(error) }
+}
+
+/**
+ * Every mutation used to append its own conditional paragraph where it was
+ * declared, scattering nine near-identical blocks through the markup.
+ */
+function MutationNotices({ notices }: { notices: Notice[] }) {
+  const shown = notices.filter((n): n is NonNullable<Notice> => n !== null)
+  if (shown.length === 0) return null
+  return (
+    <div className="space-y-0.5">
+      {shown.map((n, i) => (
+        <p
+          key={i}
+          className={
+            n.tone === 'danger'
+              ? 'text-dense-meta text-destructive'
+              : n.tone === 'success'
+                ? 'text-dense-meta text-success'
+                : 'text-dense-meta text-warning'
+          }
+        >
+          {n.text}
+        </p>
+      ))}
+    </div>
   )
 }

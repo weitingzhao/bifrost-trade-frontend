@@ -75,7 +75,6 @@ export function LoopRunPipelineBody({
 
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [traceOpen, setTraceOpen] = useState(false)
-  const [outputsOpen, setOutputsOpen] = useState(false)
 
   const run = runQ.data
   const draftIds = Array.isArray(run?.outputs?.draft_ids)
@@ -237,6 +236,13 @@ export function LoopRunPipelineBody({
                           inboxLabel={loopCopilotUi.inbox(lang)}
                         />
                       ) : null}
+                      {/* The drafts are what this stage produced. As a sibling
+                          of the phases they read as a seventh step. */}
+                      {isDecision ? (
+                        <div className="mt-2 border-t border-border/40 pt-2">
+                          <HarnessRunOutputs run={run} draftIds={draftIds} />
+                        </div>
+                      ) : null}
                     </PipelineStageRow>
                   )
                 })}
@@ -244,40 +250,30 @@ export function LoopRunPipelineBody({
             </section>
           ))}
 
-          <CollapsibleGroup variant="inset">
-            <CollapsibleGroupHeader
-              expanded={outputsOpen}
-              onToggle={() => setOutputsOpen((o) => !o)}
-            >
-              <CollapsibleChevron expanded={outputsOpen} />
-              <CollapsibleGroupTitle className="text-dense-label font-medium">
-                Outputs &amp; drafts
-              </CollapsibleGroupTitle>
-            </CollapsibleGroupHeader>
-            {outputsOpen ? (
-              <CollapsibleGroupBody className="px-3 pb-3">
-                <HarnessRunOutputs run={run} draftIds={draftIds} />
-              </CollapsibleGroupBody>
-            ) : null}
-          </CollapsibleGroup>
-
-          {/* Raw. `plan_ops: persona=True` lives here now, not in the main view. */}
-          <CollapsibleGroup variant="inset">
-            <CollapsibleGroupHeader
-              expanded={traceOpen}
-              onToggle={() => setTraceOpen((o) => !o)}
-            >
-              <CollapsibleChevron expanded={traceOpen} />
-              <CollapsibleGroupTitle className="text-dense-label font-medium">
-                Trace events
-              </CollapsibleGroupTitle>
-            </CollapsibleGroupHeader>
-            {traceOpen ? (
-              <CollapsibleGroupBody className="px-3 pb-3">
-                <HarnessTraceEventCard traceJson={run.trace_json} />
-              </CollapsibleGroupBody>
-            ) : null}
-          </CollapsibleGroup>
+          {/* Not a step. The pipeline above is what the run did; this is the
+              record it left. Kept behind its own rule and labelled as raw so it
+              stops reading as a phase that comes after Decide. */}
+          <div className="mt-3 border-t border-border pt-2">
+            <CollapsibleGroup variant="inset" className="border-t-0">
+              <CollapsibleGroupHeader
+                expanded={traceOpen}
+                onToggle={() => setTraceOpen((o) => !o)}
+              >
+                <CollapsibleChevron expanded={traceOpen} />
+                <CollapsibleGroupTitle className="text-dense-meta font-normal text-muted-foreground">
+                  Raw trace
+                </CollapsibleGroupTitle>
+                <span className="ml-2 text-dense-caption text-muted-foreground/60">
+                  every event, unformatted
+                </span>
+              </CollapsibleGroupHeader>
+              {traceOpen ? (
+                <CollapsibleGroupBody className="px-3 pb-3">
+                  <HarnessTraceEventCard traceJson={run.trace_json} />
+                </CollapsibleGroupBody>
+              ) : null}
+            </CollapsibleGroup>
+          </div>
         </>
       ) : null}
     </div>

@@ -12,7 +12,7 @@
  * Advisory only — D10 BLOCKED (no trade execution).
  */
 import { useSearchParams } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Archive,
@@ -22,7 +22,6 @@ import {
   ShieldAlert,
   Terminal,
   Trash2,
-  Zap,
 } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
@@ -62,7 +61,6 @@ import {
   setObjectiveStatus,
   fetchObjectiveRuns,
   fetchObjectives,
-  runObjective,
   type ObjectiveRun,
   type ObjectiveRunStatus,
   type ResearchObjective,
@@ -146,10 +144,6 @@ export default function HarnessConsolePage() {
     refetchOnWindowFocus: false,
   })
 
-  // Set while a synchronous /run is in flight, so the list keeps polling until
-  // the run row this click created shows up.
-  const [awaitingRunFor, setAwaitingRunFor] = useState<string | null>(null)
-
   const runsQ = useQuery({
     queryKey: QUERY_KEYS.research.objectiveRuns({
       status: runStatus === 'all' ? undefined : runStatus,
@@ -163,31 +157,7 @@ export default function HarnessConsolePage() {
     // "no funnel" until something else happened to refetch. Poll only while a
     // run is actually in flight.
     refetchInterval: (q) =>
-      awaitingRunFor != null ||
-      (q.state.data?.items ?? []).some((r) => r.status === 'running')
-        ? 1_500
-        : false,
-  })
-
-  // POST /run is synchronous: it returns only once the whole loop is done, so
-  // opening the drawer on its response meant every run appeared already
-  // finished — the stepper had nothing to show. The run row exists from the
-  // first moment though (create_run inserts status 'running') and the runtime
-  // flushes its trace eight times on the way, so the progress is there to read;
-  // we just have to go looking for the run instead of waiting to be handed it.
-  const runMut = useMutation({
-    mutationFn: (objectiveId: string) => runObjective(objectiveId),
-    onMutate: (objectiveId) => {
-      setAwaitingRunFor(objectiveId)
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-    },
-    onSettled: (res) => {
-      setAwaitingRunFor(null)
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-      const runId = res?.run?.id
-      if (runId) openPipeline(runId)
-    },
+      (q.state.data?.items ?? []).some((r) => r.status === 'running') ? 1_500 : false,
   })
 
   const batchMut = useMutation({
@@ -300,16 +270,6 @@ export default function HarnessConsolePage() {
     return [group.run.id, ...group.repeats.map((r) => r.id)]
   }
 
-  // Open on the run as soon as it exists, not when it finishes. Without this the
-  // drawer waited for the POST to return and every run read as already complete.
-  useEffect(() => {
-    if (awaitingRunFor == null || pipelineRunId != null) return
-    const live = (runsQ.data?.items ?? []).find(
-      (r) => r.objective_id === awaitingRunFor && r.status === 'running',
-    )
-    if (live) openPipeline(live.id)
-  }, [awaitingRunFor, pipelineRunId, runsQ.data?.items])
-
   const objectives = useMemo(
     () => objectivesQ.data?.items ?? [],
     [objectivesQ.data?.items],
@@ -381,7 +341,7 @@ export default function HarnessConsolePage() {
               type="button"
               size="sm"
               variant="outline"
-              className="h-7 px-2 text-dense-micro"
+              className="h-7 px-2 text-dense-meta"
               onClick={() => openResearchCopilot()}
             >
               <MessageCircle className="mr-1 size-3" />
@@ -464,7 +424,6 @@ export default function HarnessConsolePage() {
             </DenseTableHeader>
             <DenseTableBody>
               {objectives.map((row: ResearchObjective) => {
-                const busy = runMut.isPending && runMut.variables === row.id
                 const batchBusy = batchMut.isPending && batchMut.variables === row.id
                 const groups = groupsByObjective.get(row.id) ?? []
                 const awaitingN = groups.filter(
@@ -485,12 +444,10 @@ export default function HarnessConsolePage() {
                     onToggle={() =>
                       setExpanded((e) => ({ ...e, [row.id]: !(e[row.id] ?? false) }))
                     }
-                    running={busy}
-                    batchRunning={batchBusy}
-                    anyRunPending={runMut.isPending || batchMut.isPending}
+                    running={batchBusy}
+                    anyRunPending={batchMut.isPending}
                     trustL0={Boolean(trust?.l0)}
-                    onRun={() => runMut.mutate(row.id)}
-                    onBatchRun={() => batchMut.mutate(row.id)}
+                    onRun={() => batchMut.mutate(row.id)}
                     onArchive={() => setRetiring({ objective: row, mode: 'archive' })}
                     onRestore={() => archiveMut.mutate({ id: row.id, status: 'active' })}
                     onDelete={() => setRetiring({ objective: row, mode: 'delete' })}
@@ -522,8 +479,7 @@ export default function HarnessConsolePage() {
                 }
               : null,
             approveFeedback ? { tone: 'success', text: approveFeedback } : null,
-            errNotice(runMut.error, runMut.isError),
-            errNotice(batchMut.error, batchMut.isError),
+                      errNotice(batchMut.error, batchMut.isError),
             // The API refuses a delete that would take run history with it, and
             // says how many runs. Surfacing that verbatim beats a generic failure.
             errNotice(deleteMut.error, deleteMut.isError),
@@ -619,11 +575,9 @@ function ObjectiveRows({
   isOpen,
   onToggle,
   running,
-  batchRunning,
   anyRunPending,
   trustL0,
   onRun,
-  onBatchRun,
   onArchive,
   onRestore,
   onDelete,
@@ -638,11 +592,9 @@ function ObjectiveRows({
   isOpen: boolean
   onToggle: () => void
   running: boolean
-  batchRunning: boolean
   anyRunPending: boolean
   trustL0: boolean
   onRun: () => void
-  onBatchRun: () => void
   onArchive: () => void
   onRestore: () => void
   onDelete: () => void
@@ -688,31 +640,28 @@ function ObjectiveRows({
         <DenseTableCell>
           <div className="flex flex-wrap items-center gap-0.5">
             {archived ? null : (
-              <>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-6 px-1.5 text-dense-micro"
-                  disabled={running || anyRunPending}
-                  onClick={onRun}
-                >
-                  <Play className="mr-0.5 size-3 shrink-0" />
-                  {running ? 'Running…' : 'Run'}
-                </Button>
-                <IconActionButton
-                  title={
-                    trustL0
-                      ? 'Run unattended — run → curate → Trust L0 auto-approve (research drafts only)'
-                      : 'Run unattended — selects and evaluates; will not auto-approve until Trust L0'
-                  }
-                  ariaLabel={`Run unattended ${row.title}`}
-                  disabled={anyRunPending}
-                  onClick={onBatchRun}
-                >
-                  <Zap className={batchRunning ? 'size-3.5 animate-pulse' : 'size-3.5'} />
-                </IconActionButton>
-              </>
+              /* One Run, not two. The pair was "Run" (a labelled button) beside
+                 "Run unattended" (a bare lightning icon) — wildly different
+                 visual weight for two controls whose difference nobody could
+                 read, and the second strictly contains the first: same
+                 proposal, then the Curator, then auto-approve once Trust is L0.
+                 Keeping the manual subset only offered a way to do less. */
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-dense-meta"
+                disabled={anyRunPending}
+                title={
+                  trustL0
+                    ? 'Propose → Curator → auto-approve research drafts (Trust L0). Runs an LLM curator pass.'
+                    : 'Propose → Curator. Will not auto-approve until Trust L0. Runs an LLM curator pass.'
+                }
+                onClick={onRun}
+              >
+                <Play className="mr-0.5 size-3 shrink-0" />
+                {running ? 'Running…' : 'Run loop'}
+              </Button>
             )}
             {archived ? (
               <IconActionButton

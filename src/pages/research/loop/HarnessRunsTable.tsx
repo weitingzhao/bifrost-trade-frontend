@@ -194,7 +194,7 @@ export function HarnessRunsTable({
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="h-6 px-1.5 text-dense-micro"
+                      className="h-7 px-2 text-dense-meta"
                       disabled={approvingId !== null}
                       onClick={() => onApprove(row.id)}
                     >

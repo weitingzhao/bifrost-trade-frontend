@@ -12,6 +12,7 @@
 import { Link } from 'react-router-dom'
 import { Beaker, ClipboardList, Compass, Plus, Radar } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
+import { LoopOverviewStrip } from '@/pages/research/home/LoopOverviewStrip'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import { EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
@@ -160,6 +161,10 @@ export default function ResearchHomePage() {
           </div>
         }
       />
+
+      {/* The circuit first. Every section below shows one segment of it, and a
+          segment looks healthy on its own while the loop is open. */}
+      <LoopOverviewStrip />
 
       <UniverseReachStrip />
 

@@ -43,7 +43,7 @@ import { OpenOptionExecDetailRow, OpenOptionExecDetailTable } from './OpenOption
 const OPTION_COL_SPAN = 17
 import type { OpenOptionPosition, Execution, InstanceAllGroup } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
-import type { DetailViewMode } from './PositionsOpenControls'
+import type { DetailViewMode } from './LinesToolbar'
 import { scopedExecListsForPosition } from '@/utils/instanceSheetExec'
 import { instancePanel } from './instancePanelClasses'
 import { localDayStamp } from '@/utils/positions'

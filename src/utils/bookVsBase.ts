@@ -102,6 +102,19 @@ export interface BaseLayer {
   /** Market value of the part in use, and of the part still free. Per symbol for stocks. */
   backingValue?: number
   freeValue?: number
+  /** Whole shares with no price: counted as cover, but their value is unknown. Stocks only. */
+  unpricedShares?: number
+}
+
+/** One account's holding of one symbol against that account's short calls. */
+export interface CoverRow {
+  accountId: string
+  symbol: string
+  held: number
+  backing: number
+  spare: number
+  moreCalls: number
+  price: number | null
 }
 
 const SHARES_PER_CONTRACT = 100
@@ -118,27 +131,49 @@ function marketValue(rows: readonly LivePositionRow[]): number {
 }
 
 /**
- * Cover is per symbol. A portfolio-wide "free shares" total was the first cut,
- * and it said 44 more calls could be written when 26 could: RKLB's spare shares
- * cannot back a MU call. Each symbol's long shares are set against that
- * symbol's short calls, and only the remainder counts as free.
+ * Cover is per account and per symbol. A portfolio-wide "free shares" total was
+ * the first cut, and it said 44 more calls could be written when 26 could:
+ * RKLB's spare shares cannot back a MU call. Per symbol was the second cut, and
+ * it still let RKLB held in HOST cover an RKLB call written in Secondary. Each
+ * account's long shares are set against that account's short calls on the same
+ * symbol, and only the remainder counts as free.
  */
-function coverBySymbol(
+export function coverByAccountSymbol(
   coreStocks: readonly LivePositionRow[],
-  bySymbol: ExposureSummary['bySymbol'],
-): { held: number; backing: number; free: number; backingValue: number; freeValue: number; moreCalls: number } {
-  const shares = new Map<string, { qty: number; price: number | null }>()
+  byAccountSymbol: ExposureSummary['byAccountSymbol'],
+): {
+  held: number
+  backing: number
+  free: number
+  backingValue: number
+  freeValue: number
+  moreCalls: number
+  unpricedShares: number
+  rows: CoverRow[]
+} {
+  const keyOf = (acct: string, sym: string) => `${acct}\x00${sym}`
+  const shares = new Map<string, { accountId: string; symbol: string; qty: number; price: number | null }>()
   for (const r of coreStocks) {
     const sym = (r.symbol ?? '').toUpperCase()
+    const acct = (r.account_id ?? '').trim()
     const qty = Number(r.position)
     if (!sym || !Number.isFinite(qty) || qty <= 0) continue
     const px = r.price != null && Number.isFinite(Number(r.price)) ? Number(r.price) : null
-    const cur = shares.get(sym)
-    shares.set(sym, { qty: (cur?.qty ?? 0) + qty, price: px ?? cur?.price ?? null })
+    const k = keyOf(acct, sym)
+    const cur = shares.get(k)
+    shares.set(k, {
+      accountId: acct,
+      symbol: sym,
+      qty: (cur?.qty ?? 0) + qty,
+      price: px ?? cur?.price ?? null,
+    })
   }
   const need = new Map<string, number>()
-  for (const e of bySymbol) {
-    need.set(e.underlying, (e.coveredCallContracts + e.nakedCallContracts) * SHARES_PER_CONTRACT)
+  for (const e of byAccountSymbol) {
+    need.set(
+      keyOf(e.accountId, e.underlying),
+      (e.coveredCallContracts + e.nakedCallContracts) * SHARES_PER_CONTRACT,
+    )
   }
   let held = 0
   let backing = 0
@@ -146,21 +181,28 @@ function coverBySymbol(
   let backingValue = 0
   let freeValue = 0
   let moreCalls = 0
-  for (const [sym, { qty, price }] of shares) {
+  let unpricedShares = 0
+  const rows: CoverRow[] = []
+  for (const [k, { accountId, symbol, qty, price }] of shares) {
     // Fractional shares (dividend reinvestment) cannot back a contract.
     const whole = Math.floor(qty)
-    const used = Math.min(whole, need.get(sym) ?? 0)
+    const used = Math.min(whole, need.get(k) ?? 0)
     const spare = whole - used
+    const more = Math.floor(spare / SHARES_PER_CONTRACT)
     held += whole
     backing += used
     free += spare
-    moreCalls += Math.floor(spare / SHARES_PER_CONTRACT)
+    moreCalls += more
     if (price != null) {
       backingValue += used * price
       freeValue += spare * price
+    } else {
+      unpricedShares += whole
     }
+    rows.push({ accountId, symbol, held: whole, backing: used, spare, moreCalls: more, price })
   }
-  return { held, backing, free, backingValue, freeValue, moreCalls }
+  rows.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.symbol.localeCompare(b.symbol))
+  return { held, backing, free, backingValue, freeValue, moreCalls, unpricedShares, rows }
 }
 
 function symbolsOf(rows: readonly LivePositionRow[]): string[] {
@@ -243,7 +285,7 @@ export function deriveBookVsBase(input: {
 
   const callsTotal = exposure.coveredCallContracts + exposure.nakedCallContracts
   const callShares = callsTotal * SHARES_PER_CONTRACT
-  const cover = coverBySymbol(input.coreStocks, exposure.bySymbol)
+  const cover = coverByAccountSymbol(input.coreStocks, exposure.byAccountSymbol)
   const sharesHeld = cover.held
   const sharesBacking = cover.backing
   const sharesFree = cover.free
@@ -297,6 +339,7 @@ export function deriveBookVsBase(input: {
         used: sharesHeld > 0 ? sharesBacking / sharesHeld : null,
         backingValue: cover.backingValue,
         freeValue: cover.freeValue,
+        unpricedShares: cover.unpricedShares,
       },
       {
         role: 'income',

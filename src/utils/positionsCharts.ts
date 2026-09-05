@@ -2,7 +2,7 @@ import type { IbAccountSnapshot, IbPositionRow } from '@/types/monitor'
 import type { LivePositionRow, StockCoverageItem } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import { assignColor, type DonutSegment } from '@/utils/donutChart'
-import type { BookVsBase } from '@/utils/bookVsBase'
+import type { BaseRole, BookVsBase } from '@/utils/bookVsBase'
 import { isLedgerCashLikeCategory, isLedgerFixedIncomeCategory, ibPositionMarketValue } from '@/utils/stockCategories'
 import { fmtUsd } from '@/utils/positions'
 
@@ -600,22 +600,73 @@ export function buildOptionStockMix(
   }
 }
 
+/** Where a click on a backing-pool slice should take the reader. */
+export type BackingPoolTarget = 'calls' | 'puts' | 'free' | 'income'
+
+export type BackingPoolSegmentLabel =
+  | 'Stocks · backing calls'
+  | 'Stocks · free'
+  | 'Cash and SGOV · backing puts'
+  | 'Cash and SGOV · free'
+  | 'Income ETFs · via buying power, not as cash'
+
+export interface BackingPoolSegment extends ChartDonutSegment {
+  layer: BaseRole
+  target: BackingPoolTarget
+}
+
+/**
+ * The five slices of the backing pool, in ring order: grouped by layer, then
+ * by what the options are doing with it. Two tones per layer — the full token
+ * for the part in use, the same token faded toward the card for the part still
+ * free — so the ring reads as three layers at a glance and five slices on a
+ * second look. Income ETFs get a single slice: the broker counts them in buying
+ * power, and there is no "in use" fraction to draw.
+ */
+export const BACKING_POOL_SEGMENTS: ReadonlyArray<
+  Omit<BackingPoolSegment, 'value' | 'label'> & { label: BackingPoolSegmentLabel }
+> = [
+  { label: 'Stocks · backing calls', layer: 'stocks', target: 'calls', color: 'var(--color-chart-stock)' },
+  {
+    label: 'Stocks · free',
+    layer: 'stocks',
+    target: 'free',
+    color: 'color-mix(in oklch, var(--color-chart-stock) 45%, var(--card))',
+  },
+  { label: 'Cash and SGOV · backing puts', layer: 'cash', target: 'puts', color: 'var(--color-chart-cash)' },
+  {
+    label: 'Cash and SGOV · free',
+    layer: 'cash',
+    target: 'free',
+    color: 'color-mix(in oklch, var(--color-chart-cash) 45%, var(--card))',
+  },
+  {
+    label: 'Income ETFs · via buying power, not as cash',
+    layer: 'income',
+    target: 'income',
+    color: 'var(--color-chart-fi)',
+  },
+]
+
 /**
  * The base split by what it does for the option book — the segments behind
- * BaseRoleCard. Same derivation the gauges grade on; the ring is its picture.
+ * BackingPoolCard. Same derivation the gauges grade on; the ring is its
+ * picture. A layer with no priced value contributes no slice, so the ring only
+ * ever shows what is actually known to be there.
  */
-export function baseRoleSegments(book: BookVsBase): ChartDonutSegment[] {
+export function baseRoleSegments(book: BookVsBase): BackingPoolSegment[] {
   const stocks = book.base.find((l) => l.role === 'stocks')
   const income = book.base.find((l) => l.role === 'income')
   const cash = book.base.find((l) => l.role === 'cash')
 
-  const rows: Array<[string, number]> = [
-    ['Backing calls', stocks?.backingValue ?? 0],
-    ['Backing puts', cash?.backingValue ?? 0],
-    ['Free', (stocks?.freeValue ?? 0) + (cash?.freeValue ?? 0)],
-    ['Not option collateral', income?.marketValue ?? 0],
-  ]
-  return rows
-    .filter(([, v]) => v > 0)
-    .map(([label, value], i) => ({ label, value, color: assignColor(i) }))
+  const valueOf: Record<BackingPoolSegmentLabel, number> = {
+    'Stocks · backing calls': stocks?.backingValue ?? 0,
+    'Stocks · free': stocks?.freeValue ?? 0,
+    'Cash and SGOV · backing puts': cash?.backingValue ?? 0,
+    'Cash and SGOV · free': cash?.freeValue ?? 0,
+    'Income ETFs · via buying power, not as cash': income?.marketValue ?? 0,
+  }
+  return BACKING_POOL_SEGMENTS.map((seg) => ({ ...seg, value: valueOf[seg.label] })).filter(
+    (seg) => seg.value > 0,
+  )
 }

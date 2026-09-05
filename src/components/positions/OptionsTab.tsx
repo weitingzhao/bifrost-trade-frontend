@@ -38,7 +38,7 @@ import {
 } from '@/utils/optionLiveBasis'
 import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
-import type { DetailViewMode } from './PositionsOpenControls'
+import type { DetailViewMode } from './LinesToolbar'
 import { OpenOptionExecTableRow } from './OpenOptionExecTableRow'
 import {
   DenseDataTable,

@@ -1,0 +1,127 @@
+/**
+ * How far each account is from liquidation.
+ *
+ * Sits under the cockpit. The cockpit's Pressure gauge is a two-account total,
+ * and margin does not net across IB accounts — the broker closes positions in
+ * whichever account runs out of excess liquidity, not in the portfolio. So a
+ * comfortable blended gauge can hide one account at the edge. One bullet bar
+ * per account, on the same 0–100% scale and the same band ticks as the gauge,
+ * puts the two side by side where the gauge could only show their sum.
+ *
+ * Rows come from marginAccountRows; this file only draws them.
+ */
+import { cn } from '@/lib/utils'
+import type { MarginRollup } from '@/utils/marginPressure'
+import {
+  PRESSURE_TICKS,
+  marginAccountRows,
+  type MarginAccountRow,
+  type MarginAccountTone,
+} from '@/utils/marginByAccount'
+
+const TONE_FILL: Record<MarginAccountTone, string> = {
+  profit: 'bg-profit',
+  warning: 'bg-warning',
+  loss: 'bg-loss',
+}
+
+function PressureBar({
+  label,
+  pressure,
+  tone,
+}: {
+  label: string
+  pressure: number
+  tone: MarginAccountTone
+}) {
+  const pct = Math.round(Math.min(1, Math.max(0, pressure)) * 100)
+  return (
+    <span
+      role="meter"
+      aria-label={`${label} margin pressure`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={pct}
+      className="relative block h-2 w-full overflow-hidden rounded-sm border border-border/60 bg-secondary"
+    >
+      {/* Width is data, not styling — the only inline style on the page. */}
+      <span
+        data-testid="pressure-fill"
+        className={cn('absolute inset-y-0 left-0', TONE_FILL[tone])}
+        style={{ width: `${pct}%` }}
+      />
+      {PRESSURE_TICKS.map((t) => (
+        <span
+          key={t}
+          aria-hidden="true"
+          className="absolute inset-y-0 w-px bg-foreground/40"
+          style={{ left: `${t * 100}%` }}
+        />
+      ))}
+    </span>
+  )
+}
+
+function AccountRow({ row }: { row: MarginAccountRow }) {
+  const known = row.pressure != null && row.tone != null && row.pctText != null
+  return (
+    <div
+      className={cn(
+        'grid grid-cols-[5.25rem_minmax(6rem,11rem)_minmax(0,1fr)] items-center gap-x-3',
+        !row.inScope && 'opacity-50'
+      )}
+      title={row.inScope ? row.rawTitle : `not in scope\n${row.rawTitle}`}
+      data-account={row.accountId}
+      data-in-scope={row.inScope ? 'true' : 'false'}
+    >
+      <span className="truncate text-dense-body font-medium text-foreground">{row.label}</span>
+      {row.pressure != null && row.tone != null ? (
+        <PressureBar label={row.label} pressure={row.pressure} tone={row.tone} />
+      ) : (
+        <span />
+      )}
+      <span className="min-w-0 truncate font-mono text-dense-body tabular-nums">
+        {known ? (
+          <>
+            <span className="text-foreground">{row.pctText}</span>
+            <span className="text-muted-foreground"> · {row.detailText}</span>
+          </>
+        ) : (
+          <span className="text-warning">n/a — broker reported no cushion</span>
+        )}
+      </span>
+    </div>
+  )
+}
+
+export function MarginByAccountStrip({
+  margin,
+  hostId,
+  secondaryId,
+  accountFilter,
+}: {
+  margin: MarginRollup
+  hostId: string
+  secondaryId: string
+  accountFilter: { host: boolean; secondary: boolean }
+}) {
+  const rows = marginAccountRows(margin, hostId, secondaryId, accountFilter)
+  return (
+    <section
+      id="positions-margin"
+      aria-label="Margin by account"
+      className="rounded-md border border-border bg-secondary/40 px-3 py-1"
+    >
+      {rows.length === 0 ? (
+        <p className="text-dense-body text-warning">n/a — no funded account reported margin</p>
+      ) : (
+        <div className="flex flex-col gap-y-0.5">
+          {rows.map((r) => (
+            <AccountRow key={r.accountId} row={r} />
+          ))}
+        </div>
+      )}
+      <p className="text-dense-caption text-muted-foreground">cockpit pressure: both accounts</p>
+    </section>
+  )
+}

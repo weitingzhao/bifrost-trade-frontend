@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   backingLevel,
+  coverByAccountSymbol,
   deriveBookVsBase,
   pressureLevel,
   riskCountsFromLadder,
@@ -26,7 +27,7 @@ const margin = (pressure: number | null, bp: number | null): MarginRollup => ({
 })
 
 const exposure = (o: Partial<ExposureSummary> = {}): ExposureSummary => ({
-  bySymbol: [],
+  byAccountSymbol: [],
   putAssignmentCash: 0,
   shortPutContracts: 0,
   coveredCallContracts: 0,
@@ -114,11 +115,11 @@ describe('deriveBookVsBase', () => {
         shortPutContracts: 8,
         coveredCallContracts: 30,
         nakedCallContracts: 1,
-        bySymbol: [
-          { underlying: 'RKLB', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 10, nakedCallContracts: 0, callDeliveryShares: 1000 },
-          { underlying: 'NVDA', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 5, nakedCallContracts: 0, callDeliveryShares: 500 },
-          { underlying: 'HIMS', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 9, nakedCallContracts: 0, callDeliveryShares: 900 },
-          { underlying: 'MU', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 0, nakedCallContracts: 1, callDeliveryShares: 0 },
+        byAccountSymbol: [
+          { accountId: 'U1', underlying: 'RKLB', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 10, nakedCallContracts: 0, callDeliveryShares: 1000 },
+          { accountId: 'U1', underlying: 'NVDA', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 5, nakedCallContracts: 0, callDeliveryShares: 500 },
+          { accountId: 'U1', underlying: 'HIMS', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 9, nakedCallContracts: 0, callDeliveryShares: 900 },
+          { accountId: 'U1', underlying: 'MU', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 0, nakedCallContracts: 1, callDeliveryShares: 0 },
         ],
       }),
       risk: { ...quiet, unpriced: 13 },
@@ -164,7 +165,7 @@ describe('deriveBookVsBase', () => {
       margin: margin(0.1, 100_000),
       exposure: exposure({
         coveredCallContracts: 1,
-        bySymbol: [{ underlying: 'AAA', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 1, nakedCallContracts: 0, callDeliveryShares: 100 }],
+        byAccountSymbol: [{ accountId: 'U1', underlying: 'AAA', putAssignmentCash: 0, shortPutContracts: 0, coveredCallContracts: 1, nakedCallContracts: 0, callDeliveryShares: 100 }],
       }),
       risk: quiet,
       thetaPerDay: null,
@@ -247,5 +248,40 @@ describe('deriveBookVsBase', () => {
     expect(b.base[0].note).toContain('naked')
     expect(b.potential.unusedBuyingPower).toBeNull()
     expect(b.pressure.pct).toBeNull()
+  })
+})
+
+describe('coverByAccountSymbol', () => {
+  const calls = (accountId: string, underlying: string, covered: number, naked: number) => ({
+    accountId,
+    underlying,
+    putAssignmentCash: 0,
+    shortPutContracts: 0,
+    coveredCallContracts: covered,
+    nakedCallContracts: naked,
+    callDeliveryShares: covered * 100,
+  })
+
+  it('shares in one account cannot cover a call written in another', () => {
+    // U1 holds 1,600 RKLB; the three calls are written in U2.
+    const cover = coverByAccountSymbol([stk('RKLB', 1600, 70)], [calls('U2', 'RKLB', 0, 3)])
+    expect(cover.backing).toBe(0)
+    expect(cover.free).toBe(1600)
+    expect(cover.moreCalls).toBe(16)
+    expect(cover.rows).toEqual([
+      { accountId: 'U1', symbol: 'RKLB', held: 1600, backing: 0, spare: 1600, moreCalls: 16, price: 70 },
+    ])
+  })
+
+  it('unpriced shares still count as cover but are reported, not valued', () => {
+    const cover = coverByAccountSymbol(
+      [{ ...stk('AAA', 250, 10), price: null } as LivePositionRow],
+      [calls('U1', 'AAA', 2, 0)],
+    )
+    expect(cover.backing).toBe(200)
+    expect(cover.free).toBe(50)
+    expect(cover.unpricedShares).toBe(250)
+    expect(cover.backingValue).toBe(0)
+    expect(cover.freeValue).toBe(0)
   })
 })

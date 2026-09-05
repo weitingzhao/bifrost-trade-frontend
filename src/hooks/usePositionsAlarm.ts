@@ -17,9 +17,6 @@
  *    have no state to be in, and putting them in an alarm channel is how an
  *    alarm channel stops being read.
  */
-import { useQueries } from '@tanstack/react-query'
-import { fetchModelAnalysis } from '@/api/portfolio'
-import { QUERY_KEYS } from '@/constants/queryKeys'
 import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
 import { instanceGroupKey } from '@/utils/instanceSheetExec'
 import { quoteFeedAgeSec } from '@/utils/positions'
@@ -33,7 +30,6 @@ import { marginBand, rollupMargin, type MarginRollup } from '@/utils/marginPress
 import {
   assignmentCoverRatio,
   summarizeAssignmentExposure,
-  type ExposureLeg,
   type ExposureSummary,
 } from '@/utils/assignmentExposure'
 import type { InstanceAllGroup, LivePositionRow } from '@/types/positions'
@@ -47,7 +43,8 @@ import type { IbAccountSnapshot } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
 
 /** Which section a chip opens. Null when the chip has nowhere useful to go. */
-export type AlarmTarget = 'ladder' | 'capital' | 'coverage'
+/** Where a chip or gauge label lands: a collapsible section, or an anchor on the page. */
+export type AlarmTarget = 'ladder' | 'capital' | 'coverage' | 'independent' | 'margin' | 'lines'
 
 export type AlarmTone = 'ok' | 'warn' | 'danger'
 
@@ -72,8 +69,13 @@ function pct1(v: number): string {
   return `${p > 0 ? '+' : ''}${p.toFixed(1)}%`
 }
 
+/** A leg as the page flattens it: ladder fields plus the account and contract that own it. */
+export type AlarmLeg = LadderLeg & { accountId: string; contractKey: string }
+
 export interface PositionsAlarm {
   ladderRows: ExpiryLadderRow[]
+  /** Every option leg in scope, flattened once for the ladder, the exposure, and the risk map. */
+  legs: AlarmLeg[]
   checks: AlarmCheck[]
   margin: MarginRollup
   exposure: ExposureSummary
@@ -96,7 +98,6 @@ export function usePositionsAlarm({
   incomeEtfs,
   cashLike,
   thetaPerDay,
-  modelAnalysisAccountIds,
   cushionTightPct,
 }: {
   groups: InstanceAllGroup[]
@@ -110,10 +111,9 @@ export function usePositionsAlarm({
   cashLike: LivePositionRow[]
   /** Portfolio theta a day from the vendor Greeks; null while loading. */
   thetaPerDay: number | null
-  modelAnalysisAccountIds: string[]
   cushionTightPct: number
 }): PositionsAlarm {
-  const legs: LadderLeg[] = []
+  const legs: AlarmLeg[] = []
   for (const group of groups) {
     const key = instanceGroupKey(group)
     for (const pos of group.options) {
@@ -124,42 +124,35 @@ export function usePositionsAlarm({
         qty: pos.qty,
         underlying: extractUnderlyingRootSymbol(pos.symbol),
         instanceKey: key,
+        accountId: (pos.account_id ?? '').trim(),
+        contractKey: pos.contract_key ?? '',
       })
     }
   }
   const ladderRows = buildExpiryLadder(legs, (leg) => quotesBySymbol[leg.underlying]?.last ?? null)
 
-  // Same query keys as the capital section, so this shares its cache rather
-  // than issuing a second round of requests.
-  const modelResults = useQueries({
-    queries: modelAnalysisAccountIds.map((accountId) => ({
-      queryKey: [...QUERY_KEYS.portfolio.modelAnalysis, accountId],
-      queryFn: () => fetchModelAnalysis(accountId),
-      enabled: Boolean(accountId),
-    })),
-  })
-  const nakedCalls = modelResults.reduce(
-    (n, r) =>
-      n + (r.data?.per_underlying ?? []).reduce((m, u) => m + u.naked_short_call_contracts, 0),
-    0,
-  )
-
   const margin = rollupMargin(accounts)
   const feedAgeSec = quoteFeedAgeSec(Object.values(quotesBySymbol))
 
-  const sharesBySymbol = new Map<string, number>()
+  // Keyed by account and symbol: a call is covered only by shares in its own account.
+  const sharesByAccountSymbol = new Map<string, number>()
   for (const st of liveStocks) {
     const sym = (st.symbol ?? '').toUpperCase()
     if (!sym) continue
     // Long shares only: a short stock position cannot deliver against a call.
     const qty = st.position ?? 0
     if (qty <= 0) continue
-    sharesBySymbol.set(sym, (sharesBySymbol.get(sym) ?? 0) + qty)
+    const k = `${(st.account_id ?? '').trim()}\x00${sym}`
+    sharesByAccountSymbol.set(k, (sharesByAccountSymbol.get(k) ?? 0) + qty)
   }
   const exposure = summarizeAssignmentExposure(
-    legs as ExposureLeg[],
-    (sym) => sharesBySymbol.get(sym) ?? 0,
+    legs,
+    (sym, acct) => sharesByAccountSymbol.get(`${acct}\x00${sym}`) ?? 0,
   )
+  // One source for "naked" on this page: the same share arithmetic the
+  // Backing gauge and the obligations table read. The model's own count lives
+  // in the Capital section under its own name.
+  const nakedCalls = exposure.nakedCallContracts
   const buyingPower = margin.accounts.reduce((n, a) => n + (a.buyingPower ?? 0), 0)
   const coverRatio = assignmentCoverRatio(exposure.putAssignmentCash, buyingPower || null)
 
@@ -188,6 +181,7 @@ export function usePositionsAlarm({
 
   return {
     ladderRows,
+    legs,
     checks,
     margin,
     exposure,
@@ -246,7 +240,7 @@ export function buildChecks({
         itm > 0
           ? `${itm} short leg${itm === 1 ? '' : 's'} past its strike — assignable tonight.`
           : 'No short leg is past its strike.',
-      target: 'ladder',
+      target: 'lines',
     },
     {
       id: 'cushion',
@@ -264,7 +258,7 @@ export function buildChecks({
         tightest == null
           ? 'No short leg could be priced, so there is no cushion to report — not a clean reading.'
           : `Closest any short strike is to being breached. Warning line ${pct1(cushionTightPct)}.`,
-      target: 'ladder',
+      target: 'lines',
     },
     {
       id: 'expiring',
@@ -286,9 +280,9 @@ export function buildChecks({
       tone: nakedCalls > 0 ? 'danger' : 'ok',
       detail:
         nakedCalls > 0
-          ? `${nakedCalls} short call contract${nakedCalls === 1 ? '' : 's'} with no stock or long call behind them — the loss is unbounded.`
-          : 'Every short call is covered by stock or a long call.',
-      target: 'capital',
+          ? `${nakedCalls} short call contract${nakedCalls === 1 ? '' : 's'} with no shares behind them in the same account — the loss is unbounded.`
+          : 'Every short call is covered by shares in its own account.',
+      target: 'coverage',
     },
     {
       id: 'margin',
@@ -309,7 +303,7 @@ export function buildChecks({
             (margin.tightest?.accountId
               ? ` Most loaded: ${margin.tightest.accountId} at ${((margin.tightest.pressure ?? 0) * 100).toFixed(0)}%.`
               : ''),
-      target: 'coverage',
+      target: 'margin',
     },
   ]
 

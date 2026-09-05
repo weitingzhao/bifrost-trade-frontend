@@ -11,11 +11,15 @@ const leg = (o: Partial<ExposureLeg> = {}): ExposureLeg => ({
   right: 'P',
   qty: -1,
   underlying: 'AAA',
+  accountId: 'U1',
   ...o,
 })
 
-/** Shares held per symbol, as the caller resolves them. */
-const shares = (m: Record<string, number> = {}) => (sym: string) => m[sym] ?? 0
+/** Shares held per symbol in U1 unless the key names an account ("U2:AAA"). */
+const shares =
+  (m: Record<string, number> = {}) =>
+  (sym: string, acct: string) =>
+    m[`${acct}:${sym}`] ?? (acct === 'U1' ? (m[sym] ?? 0) : 0)
 
 describe('summarizeAssignmentExposure', () => {
   it('prices a short put at the cash it would actually take', () => {
@@ -43,7 +47,7 @@ describe('summarizeAssignmentExposure', () => {
     const s = summarizeAssignmentExposure([leg({ right: 'C', qty: -2 })], shares({ AAA: 150 }))
     expect(s.coveredCallContracts).toBe(1)
     expect(s.nakedCallContracts).toBe(1)
-    expect(s.bySymbol[0]?.callDeliveryShares).toBe(100)
+    expect(s.byAccountSymbol[0]?.callDeliveryShares).toBe(100)
   })
 
   it('groups by underlying and names the largest obligation', () => {
@@ -52,9 +56,9 @@ describe('summarizeAssignmentExposure', () => {
       leg({ underlying: 'BBB', strike: 400, qty: -1 }),
       leg({ underlying: 'AAA', strike: 60, qty: -1 }),
     ], shares())
-    expect(s.bySymbol.map((x) => x.underlying)).toEqual(['BBB', 'AAA'])
+    expect(s.byAccountSymbol.map((x) => x.underlying)).toEqual(['BBB', 'AAA'])
     expect(s.largest?.underlying).toBe('BBB')
-    expect(s.bySymbol[1]?.putAssignmentCash).toBe(100 * 50 + 100 * 60)
+    expect(s.byAccountSymbol[1]?.putAssignmentCash).toBe(100 * 50 + 100 * 60)
   })
 
   it('drops legs it cannot price rather than counting them as free', () => {
@@ -63,7 +67,7 @@ describe('summarizeAssignmentExposure', () => {
       leg({ strike: Number.NaN }),
       leg({ right: 'X' }),
     ], shares())
-    expect(s.bySymbol).toHaveLength(0)
+    expect(s.byAccountSymbol).toHaveLength(0)
     expect(s.putAssignmentCash).toBe(0)
   })
 
@@ -94,5 +98,25 @@ describe('assignmentCoverRatio', () => {
   it('returns null rather than a comfortable zero when buying power is unknown', () => {
     expect(assignmentCoverRatio(500_000, null)).toBeNull()
     expect(assignmentCoverRatio(500_000, 0)).toBeNull()
+  })
+})
+
+describe('summarizeAssignmentExposure — accounts', () => {
+  it('a call is covered only by shares in its own account', () => {
+    // U1 holds 300 AAA; the calls are written in U2, which holds none.
+    const s = summarizeAssignmentExposure([leg({ right: 'C', qty: -2, accountId: 'U2' })], shares({ AAA: 300 }))
+    expect(s.coveredCallContracts).toBe(0)
+    expect(s.nakedCallContracts).toBe(2)
+    expect(s.byAccountSymbol[0]).toMatchObject({ accountId: 'U2', underlying: 'AAA', nakedCallContracts: 2 })
+  })
+  it('the same symbol in two accounts is two rows, each settled on its own shares', () => {
+    const s = summarizeAssignmentExposure(
+      [leg({ right: 'C', qty: -1, accountId: 'U1' }), leg({ right: 'C', qty: -1, accountId: 'U2' })],
+      shares({ AAA: 100, 'U2:AAA': 0 }),
+    )
+    expect(s.byAccountSymbol.map((r) => [r.accountId, r.coveredCallContracts, r.nakedCallContracts])).toEqual([
+      ['U1', 1, 0],
+      ['U2', 0, 1],
+    ])
   })
 })

@@ -1,10 +1,18 @@
+/**
+ * The scope bar: the one row that decides what the whole page is about.
+ *
+ * Accounts, symbol, expiry — and the tightness threshold, which is a setting
+ * the Owner asked to keep visible rather than a filter. Everything that only
+ * changes the grid (contract type, opportunity, attribution, detail mode) lives
+ * on the grid's own toolbar, so a filter there never quietly re-grades the
+ * cockpit above it. The removable chips on the right say what is in force.
+ */
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
-import { TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { SegmentControl, segmentGroupClass, segmentButtonClass } from '@/components/data-display'
-import type { AccountFilter } from './PositionsFilterBar'
+import { DenseTagButton, segmentGroupClass, segmentButtonClass } from '@/components/data-display'
+import type { AccountFilter } from '@/utils/positionsGrouping'
 
-export type DetailViewMode = 'accordion' | 'multi'
+export type { AccountFilter }
 
 interface Props {
   filterSymbol: string
@@ -15,18 +23,11 @@ interface Props {
   secondaryAccountId?: string
   accountFilter: AccountFilter
   onAccountFilterChange: (f: AccountFilter) => void
-  detailViewMode: DetailViewMode
-  onDetailViewModeChange: (m: DetailViewMode) => void
-  hasInstances: boolean
-  hasOptions: boolean
-  hasCoreStocks: boolean
-  hasFixedIncome: boolean
-  hasCashLike: boolean
-  /** Show Strategy/Options/… tabs when portfolio has data (not when account filter clears the list). */
-  showPositionTabs: boolean
   /** Cushion warning line, as a fraction of strike. Persisted per browser. */
   cushionTightPct: number
   onCushionTightPctChange: (pct: number) => void
+  /** Positions inside the current scope; the header badge uses the same number. */
+  scopedCount: number
 }
 
 export function PositionsOpenControls({
@@ -38,70 +39,22 @@ export function PositionsOpenControls({
   secondaryAccountId,
   accountFilter,
   onAccountFilterChange,
-  detailViewMode,
-  onDetailViewModeChange,
   cushionTightPct,
   onCushionTightPctChange,
-  hasInstances,
-  hasOptions,
-  hasCoreStocks,
-  hasFixedIncome,
-  hasCashLike,
-  showPositionTabs,
+  scopedCount,
 }: Props) {
   const showAccountBubbles = !!(hostAccountId || secondaryAccountId)
-  const showTabs = showPositionTabs
+  const symbolChip = filterSymbol.trim().toUpperCase()
+  const expiryChip = filterExpiry.trim()
 
   return (
     <div
       className="mb-2 flex min-w-0 flex-nowrap items-center gap-x-2 gap-y-1.5 dense-scroll-x border-b border-border/60 py-1.5"
       role="toolbar"
-      aria-label="Open position filters and tabs"
+      aria-label="Page scope"
     >
-      <div className="flex shrink-0 items-center gap-1.5" aria-label="Position filters">
-        <Input
-          placeholder="Symbol"
-          value={filterSymbol}
-          onChange={(e) => onFilterSymbolChange(e.target.value)}
-          className="h-8 w-32 min-w-[6.5rem] max-w-40 shrink-0 font-mono text-sm"
-        />
-        <Input
-          placeholder="YYYYMMDD"
-          value={filterExpiry}
-          onChange={(e) => onFilterExpiryChange(e.target.value.replace(/\D/g, '').slice(0, 8))}
-          className="h-8 w-[7.5rem] max-w-36 shrink-0 font-mono text-sm"
-          maxLength={8}
-          title="Option expiry filter (YYYYMMDD prefix match)"
-          aria-label="Filter by option expiry YYYYMMDD"
-        />
-        {/* The warning line for Moneyness. It sits with the filters because it
-            changes what the table says, not what it contains. */}
-        <label
-          className="flex h-8 shrink-0 items-center gap-1 rounded-md border border-border bg-card px-1.5"
-          title="Short-leg cushion below this is shown as tight. In the money is always shown as breached, whatever this is set to."
-        >
-          <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-            Tight
-          </span>
-          <input
-            type="number"
-            min={0}
-            max={50}
-            step={0.5}
-            value={Number((cushionTightPct * 100).toFixed(2))}
-            onChange={(e) => {
-              const n = Number(e.target.value)
-              if (Number.isFinite(n)) onCushionTightPctChange(n / 100)
-            }}
-            className="w-11 bg-transparent text-right font-mono text-sm tabular-nums outline-none"
-            aria-label="Cushion warning threshold, percent of strike"
-          />
-          <span className="text-sm text-muted-foreground">%</span>
-        </label>
-      </div>
-
       {showAccountBubbles && (
-        <div className={cn(segmentGroupClass(), 'shrink-0 flex-nowrap')}>
+        <div className={cn(segmentGroupClass(), 'shrink-0 flex-nowrap')} aria-label="Accounts in scope">
           {hostAccountId && (
             <button
               type="button"
@@ -127,87 +80,74 @@ export function PositionsOpenControls({
         </div>
       )}
 
-      <div className="flex shrink-0 items-center gap-1" role="radiogroup" aria-label="Detail view mode">
-        <span className="whitespace-nowrap text-dense-label font-semibold text-muted-foreground">
-          Detail
-        </span>
-        <SegmentControl
-          size="sm"
-          ariaLabel="Detail view mode"
-          options={[
-            { value: 'accordion', label: 'Accordion' },
-            { value: 'multi', label: 'Multi' },
-          ]}
-          value={detailViewMode}
-          onChange={(v) => onDetailViewModeChange(v as DetailViewMode)}
+      <div className="flex shrink-0 items-center gap-1.5" aria-label="Symbol and expiry scope">
+        <Input
+          placeholder="Symbol"
+          value={filterSymbol}
+          onChange={(e) => onFilterSymbolChange(e.target.value)}
+          className="h-8 w-32 min-w-[6.5rem] max-w-40 shrink-0 font-mono text-sm"
+        />
+        <Input
+          placeholder="YYYYMMDD"
+          value={filterExpiry}
+          onChange={(e) => onFilterExpiryChange(e.target.value.replace(/\D/g, '').slice(0, 8))}
+          className="h-8 w-[7.5rem] max-w-36 shrink-0 font-mono text-sm"
+          maxLength={8}
+          title="Option expiry filter (YYYYMMDD prefix match)"
+          aria-label="Filter by option expiry YYYYMMDD"
         />
       </div>
 
-      {showTabs && (
-        <>
-          <span
-            className="mx-0.5 min-h-[1.55rem] w-px shrink-0 self-stretch bg-border"
-            aria-hidden
-          />
-          <div className="flex min-w-0 flex-1 items-center">
-            <TabsList
-              variant="line"
-              className="h-auto min-w-0 flex-1 flex-nowrap justify-start gap-x-1 gap-y-0.5 border-b-0 bg-transparent p-0"
-            >
-              <TabsTrigger
-                value="instance"
-                disabled={!hasInstances && !hasOptions}
-                className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
-                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
-                )}
-              >
-                Strategy
-              </TabsTrigger>
-              <TabsTrigger
-                value="options"
-                disabled={!hasOptions}
-                className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
-                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
-                )}
-              >
-                Options
-              </TabsTrigger>
-              <TabsTrigger
-                value="stocks"
-                disabled={!hasCoreStocks}
-                className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
-                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
-                )}
-              >
-                Stocks
-              </TabsTrigger>
-              <TabsTrigger
-                value="fixed_income"
-                disabled={!hasFixedIncome}
-                className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
-                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
-                )}
-              >
-                Fixed income
-              </TabsTrigger>
-              <TabsTrigger
-                value="cash_like"
-                disabled={!hasCashLike}
-                className={cn(
-                  'h-[1.65rem] min-h-0 flex-none whitespace-nowrap px-2 py-[0.18rem] text-dense-label',
-                  'group-data-[variant=line]/tabs-list:h-[1.65rem] group-data-[variant=line]/tabs-list:px-2 group-data-[variant=line]/tabs-list:py-[0.18rem]',
-                )}
-              >
-                Cash-like
-              </TabsTrigger>
-            </TabsList>
-          </div>
-        </>
-      )}
+      {/* A setting, not a filter: it changes what counts as tight everywhere
+          cushion is drawn (cockpit, risk map, grid, ladder), never which rows exist. */}
+      <label
+        className="flex h-8 shrink-0 items-center gap-1 rounded-md border border-border bg-card px-1.5"
+        title="Short-leg cushion below this is shown as tight. In the money is always shown as breached, whatever this is set to."
+      >
+        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
+          Tight
+        </span>
+        <input
+          type="number"
+          min={0}
+          max={50}
+          step={0.5}
+          value={Number((cushionTightPct * 100).toFixed(2))}
+          onChange={(e) => {
+            const n = Number(e.target.value)
+            if (Number.isFinite(n)) onCushionTightPctChange(n / 100)
+          }}
+          className="w-11 bg-transparent text-right font-mono text-sm tabular-nums outline-none"
+          aria-label="Cushion warning threshold, percent of strike"
+        />
+        <span className="text-sm text-muted-foreground">%</span>
+      </label>
+
+      <span className="ml-auto flex shrink-0 items-center gap-1" aria-label="Scope in force">
+        {symbolChip ? (
+          <DenseTagButton
+            variant="category"
+            size="cell"
+            title="Symbol scope — click to clear"
+            onClick={() => onFilterSymbolChange('')}
+          >
+            {symbolChip} ×
+          </DenseTagButton>
+        ) : null}
+        {expiryChip ? (
+          <DenseTagButton
+            variant="category"
+            size="cell"
+            title="Expiry scope — click to clear"
+            onClick={() => onFilterExpiryChange('')}
+          >
+            {expiryChip} ×
+          </DenseTagButton>
+        ) : null}
+        <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
+          {scopedCount} in scope
+        </span>
+      </span>
     </div>
   )
 }

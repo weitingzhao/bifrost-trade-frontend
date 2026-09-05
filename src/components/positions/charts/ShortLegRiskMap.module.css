@@ -1,0 +1,139 @@
+/*
+ * SVG internals for ShortLegRiskMap. Tailwind cannot address fill/stroke on
+ * SVG children the way these need, so the chart's own geometry lives here.
+ * Every colour is a theme variable — no palette of its own.
+ */
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Background bands: the week's work, the roll window, and the breached zone. */
+.bandNear {
+  fill: var(--color-warning);
+  opacity: 0.1;
+}
+
+.bandMonth {
+  fill: var(--muted-foreground);
+  opacity: 0.07;
+}
+
+.bandItm {
+  fill: var(--color-loss);
+  opacity: 0.07;
+}
+
+.gutter {
+  fill: var(--muted-foreground);
+  opacity: 0.06;
+}
+
+.gutterClickable {
+  cursor: pointer;
+}
+
+.gutterClickable:hover .gutter {
+  opacity: 0.14;
+}
+
+.zeroLine {
+  stroke: var(--color-loss);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.tightLine {
+  stroke: var(--color-warning);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.axisLine {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.tickMark {
+  stroke: var(--muted-foreground);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+
+.label {
+  fill: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  user-select: none;
+}
+
+.labelWarning {
+  fill: var(--color-warning);
+}
+
+.labelActive {
+  fill: var(--color-link);
+  font-weight: 600;
+}
+
+.tick {
+  cursor: pointer;
+}
+
+.tick:hover .label {
+  fill: var(--color-link);
+}
+
+.tickActive .tickMark {
+  stroke: var(--color-link);
+  stroke-width: 1.5;
+  opacity: 1;
+}
+
+/* Points: the band decides the colour, never the caller. */
+.point {
+  stroke: var(--background);
+  stroke-width: 1;
+  cursor: pointer;
+}
+
+.point:hover,
+.point:focus-visible {
+  stroke: var(--foreground);
+  outline: none;
+}
+
+.pointComfortable {
+  fill: var(--color-profit);
+}
+
+.pointTight {
+  fill: var(--color-warning);
+}
+
+.pointBreached {
+  fill: var(--color-loss);
+}
+
+/* Unknown is hollow and grey: no fill that could read as a verdict. */
+.pointUnpriced {
+  fill: none;
+  stroke: var(--muted-foreground);
+  stroke-width: 1.25;
+  stroke-dasharray: 2 1.5;
+  cursor: pointer;
+}
+
+.pointUnpriced:hover,
+.pointUnpriced:focus-visible {
+  stroke: var(--foreground);
+  outline: none;
+}
+
+.pointClamped {
+  stroke: var(--foreground);
+  stroke-width: 1.5;
+}

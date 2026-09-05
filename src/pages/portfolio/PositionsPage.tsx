@@ -16,16 +16,17 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EmptyState } from '@/components/data-display'
-import { Tabs, TabsContent } from '@/components/ui/tabs'
-import { InstanceFilters } from '@/components/positions/InstanceFilters'
-import type { InstanceFilterValues } from '@/components/positions/InstanceFilters'
-import { StocksTab } from '@/components/positions/StocksTab'
-import { FixedIncomeTab } from '@/components/positions/FixedIncomeTab'
-import { CashLikeTab } from '@/components/positions/CashLikeTab'
+import {
+  LinesToolbar,
+  CLEAR_FILTERS,
+  type InstanceFilterValues,
+  type LinesView,
+  type DetailViewMode,
+} from '@/components/positions/LinesToolbar'
 import { OptionsTab } from '@/components/positions/OptionsTab'
 import { InstanceTab } from '@/components/positions/InstanceTab'
-import { PositionsChartsSection, type OpenTab } from '@/components/positions/PositionsChartsSection'
-import { PositionsOpenControls, type DetailViewMode } from '@/components/positions/PositionsOpenControls'
+import { PositionsDashboard, type BackingSegmentTarget } from '@/components/positions/PositionsDashboard'
+import { PositionsOpenControls, type AccountFilter } from '@/components/positions/PositionsOpenControls'
 import { EditExecutionConfirmDialog } from '@/components/positions/EditExecutionConfirmDialog'
 import { ExecutionFormModal } from '@/components/positions/ExecutionFormModal'
 import {
@@ -54,24 +55,27 @@ import {
   buildOpenOptionPositions,
   positionMatchesAccountFilter,
 } from '@/utils/positionsGrouping'
-import { buildStockCoverageItems } from '@/utils/stockCoverage'
 import { buildOffTrackPositions } from '@/utils/offTrackPositions'
 import { buildInstanceAllGroups } from '@/utils/buildInstanceAllGroups'
 import { buildCanonicalOptContractKeySet } from '@/utils/execAttributionSync'
 import { buildInstanceGroups } from '@/utils/buildInstanceGroups'
 import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
-import { CoverageSummarySection } from '@/components/positions/CoverageSummarySection'
 import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
-import { BaseLayersSection } from '@/components/positions/BaseLayersSection'
+import { MarginByAccountStrip } from '@/components/positions/MarginByAccountStrip'
+import { ObligationsRoomSection } from '@/components/positions/ObligationsRoomSection'
+import { BaseHoldingsSection } from '@/components/positions/BaseHoldingsSection'
 import { usePositionsAlarm, type AlarmTarget } from '@/hooks/usePositionsAlarm'
-import { usePositionsSections } from '@/hooks/usePositionsSections'
+import { usePositionsSections, type PositionsSectionId } from '@/hooks/usePositionsSections'
 import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
 import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
 import { ExpiryLadderSection } from '@/components/positions/ExpiryLadderSection'
 import { UnderlyingRiskSection } from '@/components/positions/UnderlyingRiskSection'
-import { IndependentHoldingsSection } from '@/components/positions/IndependentHoldingsSection'
-import type { AccountFilter } from '@/components/positions/PositionsFilterBar'
+import { coverByAccountSymbol } from '@/utils/bookVsBase'
+import { buildObligationsRows } from '@/utils/obligationsRows'
+import { sortObligations, type ObligationsSort } from '@/utils/obligationsRoom'
+import { buildRiskMapLegs, type RiskMapLeg } from '@/utils/shortLegRiskMap'
+import { ShortLegsPanel } from '@/components/positions/ShortLegsPanel'
 import type { Execution } from '@/types/positions'
 
 function optionExpiryMatchesFilter(expiryRaw: string, filterRaw: string): boolean {
@@ -81,6 +85,20 @@ function optionExpiryMatchesFilter(expiryRaw: string, filterRaw: string): boolea
   if (!ex) return false
   if (ex.length >= f.length) return ex.startsWith(f)
   return f.startsWith(ex)
+}
+
+const SECTION_IDS: ReadonlySet<string> = new Set<PositionsSectionId>([
+  'charts',
+  'ladder',
+  'capital',
+  'coverage',
+  'independent',
+])
+
+/** Anchors for the two targets that are places on the page rather than sections. */
+const ANCHOR_IDS: Record<'margin' | 'lines', string> = {
+  margin: 'positions-margin',
+  lines: 'positions-lines',
 }
 
 export default function PositionsPage() {
@@ -95,30 +113,32 @@ export default function PositionsPage() {
   const { data: structsData } = useStructures()
   const { data: instancesData } = useStrategyInstances()
 
-  const [openTab, setOpenTab] = useState<OpenTab>('instance')
+  // Scope: the one set of choices the whole page is about.
   const [filterSymbol, setFilterSymbol] = useState('')
   const [filterExpiry, setFilterExpiry] = useState('')
   const [accountFilter, setAccountFilter] = useState<AccountFilter>({ host: true, secondary: true })
   const { pct: cushionTightPct, setPct: setCushionTightPct } = useCushionThreshold()
   // Section open/closed is the reader's call and is remembered between visits.
   const { open: openSections, toggle: toggleSection, openSection } = usePositionsSections()
-  const openSectionFromAlarm = useCallback((t: AlarmTarget) => {
-    openSection(t)
-    // The section is what holds the detail; the chip only says which to read.
-    requestAnimationFrame(() => {
-      document.getElementById(`positions-section-${t}`)?.scrollIntoView({ block: 'nearest' })
-    })
-  }, [openSection])
+
+  // Grid-only state: changes what the grid shows, never what the cockpit grades.
+  const [linesView, setLinesView] = useState<LinesView>('strategy')
   const [detailViewMode, setDetailViewMode] = useState<DetailViewMode>('accordion')
-  // The chart-local account switch retired with the allocation donuts; the
-  // coverage pools follow the page's Host / Secondary toggles like everything else.
-  const chartAccountId = 'all'
-  const [instanceFilters, setInstanceFilters] = useState<InstanceFilterValues>({
-    structureType: 'all',
-    oppName: 'all',
-    scopeType: 'all',
-    attributionType: 'all',
-  })
+  const [instanceFilters, setInstanceFilters] = useState<InstanceFilterValues>(CLEAR_FILTERS)
+  const [obligationsSort, setObligationsSort] = useState<ObligationsSort>('cash')
+
+  const openTarget = useCallback(
+    (t: AlarmTarget, sort?: ObligationsSort) => {
+      if (sort) setObligationsSort(sort)
+      if (SECTION_IDS.has(t)) openSection(t as PositionsSectionId)
+      const id = t === 'margin' || t === 'lines' ? ANCHOR_IDS[t] : `positions-section-${t}`
+      // The section is what holds the detail; the chip only says which to read.
+      requestAnimationFrame(() => {
+        document.getElementById(id)?.scrollIntoView({ block: 'nearest' })
+      })
+    },
+    [openSection],
+  )
 
   const [editExec, setEditExec] = useState<Execution | null>(null)
   const [editExecConfirm, setEditExecConfirm] = useState<{ open: boolean; exec: Execution | null }>({
@@ -139,6 +159,13 @@ export default function PositionsPage() {
     accountFilter.host ? hostAccountId : '',
     accountFilter.secondary ? secondaryAccountId : '',
   ].filter(Boolean)
+  const scopedAccounts = useMemo(
+    () =>
+      accounts.filter((a) =>
+        positionMatchesAccountFilter(a.account_id ?? '', accountFilter, hostAccountId, secondaryAccountId),
+      ),
+    [accounts, accountFilter, hostAccountId, secondaryAccountId],
+  )
 
   const allPositions = useMemo(
     () =>
@@ -270,6 +297,14 @@ export default function PositionsPage() {
     ],
   )
 
+  // Two instance sets, one rule: the scope bar (accounts, symbol, expiry) is in
+  // both; the grid's own filters are only in the second. The cockpit, the
+  // dashboard, the ladder and the obligations read the first, so choosing a
+  // contract type in the toolbar never re-grades the book above it.
+  const scopedInstanceGroups = useMemo(
+    () => sortInstanceGroupOptions(instanceAllGroups),
+    [instanceAllGroups],
+  )
   const filteredInstanceGroups = useMemo(
     () =>
       sortInstanceGroupOptions(
@@ -295,46 +330,11 @@ export default function PositionsPage() {
     return { structureTypes, oppNames, scopeTypes }
   }, [instanceAllGroups])
 
-  const stockCoverageItems = useMemo(
-    () => buildStockCoverageItems(instanceAllGroups, allStocks),
-    [instanceAllGroups, allStocks],
-  )
-
   const openStrategyInspector = useCallback((id: number) => {
     setInspector({ type: 'strategy', id })
   }, [])
 
-
   const accountOptions = [...new Set(accounts.map((a) => a.account_id ?? '').filter(Boolean))]
-
-
-  const filteredCoreStocks = useMemo(() => {
-    let list = coreStocks
-    const sym = filterSymbol.trim().toUpperCase()
-    if (sym) list = list.filter((p) => (p.symbol ?? '').toUpperCase().includes(sym))
-    return list
-  }, [coreStocks, filterSymbol])
-
-  const filteredFixedIncomeStocks = useMemo(() => {
-    const sym = filterSymbol.trim().toUpperCase()
-    if (!sym) return fixedIncomeStocks
-    return fixedIncomeStocks.filter((p) => (p.symbol ?? '').toUpperCase().includes(sym))
-  }, [fixedIncomeStocks, filterSymbol])
-
-  const filteredCashLikeStocks = useMemo(() => {
-    const sym = filterSymbol.trim().toUpperCase()
-    if (!sym) return cashLikeStocks
-    return cashLikeStocks.filter((p) => (p.symbol ?? '').toUpperCase().includes(sym))
-  }, [cashLikeStocks, filterSymbol])
-
-  const stocksTabEmptyHint = 'No open stock positions under the current filters.'
-
-  const fixedIncomeTabEmptyHint = useMemo(() => {
-    if (filterSymbol.trim() && filteredFixedIncomeStocks.length === 0 && fixedIncomeStocks.length > 0) {
-      return 'No fixed income positions match the current symbol filter.'
-    }
-    return 'No open fixed income positions under the current filters.'
-  }, [filterSymbol, filteredFixedIncomeStocks.length, fixedIncomeStocks.length])
 
   const filteredOptions = useMemo(() => {
     let list = openOptions
@@ -345,19 +345,15 @@ export default function PositionsPage() {
     return list
   }, [openOptions, filterSymbol, filterExpiry])
 
-  const hasInstances = instanceAllGroups.some((g) => g.strategy_instance_id != null)
-  const hasCoreStocks = coreStocks.length > 0
-  const hasFixedIncome = fixedIncomeStocks.length > 0
-  const hasCashLike = cashLikeStocks.length > 0
-  const hasOptions = allOptions.length > 0 || offTrackPositions.length > 0
   const totalPositions = allPositions.length
   const portfolioPositionCount = useMemo(() => flattenPositions(accounts).length, [accounts])
   const hasAccountSelection =
     (!hostAccountId && !secondaryAccountId) || accountFilter.host || accountFilter.secondary
 
   // Vendor Greeks for the legs actually held (Owner decision 2026-09-05: the
-  // Golden Source is the authority, not a second in-house derivation).
-  const greekLegs: GreekLeg[] = filteredInstanceGroups.flatMap((g) =>
+  // Golden Source is the authority, not a second in-house derivation). Read from
+  // the scoped set so the cockpit's θ/day does not move with a grid filter.
+  const greekLegs: GreekLeg[] = scopedInstanceGroups.flatMap((g) =>
     g.options.map((p) => ({
       underlying: extractUnderlyingRootSymbol(p.symbol),
       expiry: p.expiry,
@@ -368,9 +364,9 @@ export default function PositionsPage() {
   )
   const greeks = useOptionGreeks(greekLegs)
 
-  // One derivation feeding the cockpit, the ladder and the base layers.
+  // One derivation feeding the cockpit, the dashboard, the ladder and the obligations.
   const alarm = usePositionsAlarm({
-    groups: filteredInstanceGroups,
+    groups: scopedInstanceGroups,
     quotesBySymbol,
     accounts,
     liveStocks: allStocks,
@@ -378,9 +374,42 @@ export default function PositionsPage() {
     incomeEtfs: fixedIncomeStocks,
     cashLike: cashLikeStocks,
     thetaPerDay: greeks.matched > 0 ? greeks.theta : null,
-    modelAnalysisAccountIds,
     cushionTightPct,
   })
+
+  const riskLegs: RiskMapLeg[] = useMemo(
+    () =>
+      buildRiskMapLegs({
+        legs: alarm.legs,
+        spotOf: (leg) => quotesBySymbol[leg.underlying]?.last ?? null,
+      }),
+    [alarm.legs, quotesBySymbol],
+  )
+
+  const obligationsRows = useMemo(() => {
+    const cover = coverByAccountSymbol(coreStocks, alarm.exposure.byAccountSymbol)
+    return sortObligations(
+      buildObligationsRows(alarm.exposure.byAccountSymbol, cover.rows, coreStocks),
+      obligationsSort,
+    )
+  }, [coreStocks, alarm.exposure.byAccountSymbol, obligationsSort])
+
+  const activeExpiry = filterExpiry.replace(/\D/g, '').length === 8 ? filterExpiry : null
+  const toggleSymbolScope = useCallback(
+    (symbol: string) => setFilterSymbol((prev) => (prev.trim().toUpperCase() === symbol ? '' : symbol)),
+    [],
+  )
+  const toggleExpiryScope = useCallback(
+    (expiry: string) => setFilterExpiry((prev) => (prev === expiry ? '' : expiry)),
+    [],
+  )
+  const openFromBackingSegment = useCallback(
+    (target: BackingSegmentTarget) => {
+      if (target === 'income') openTarget('independent')
+      else openTarget('coverage', target === 'puts' ? 'cash' : target === 'free' ? 'spare' : 'calls')
+    },
+    [openTarget],
+  )
 
   const showOpenPositionsPanel = accounts.length > 0
 
@@ -435,7 +464,7 @@ export default function PositionsPage() {
     <PageShell className="space-y-3">
       <PageHeader
         title="Positions"
-        description="Open positions (Pool On and Off) and manual execution records."
+        description="The option book against its base: what the options need, what backs them, and where it is tight."
         actions={
           <div className="flex items-center gap-1.5">
             {portfolioPositionCount > 0 ? (
@@ -453,7 +482,7 @@ export default function PositionsPage() {
               originLabel="Positions"
               symbol={filterSymbol || undefined}
               snapshot={compactSnapshot({
-                open_tab: openTab,
+                lines_view: linesView,
                 total_positions: hasAccountSelection ? totalPositions : 0,
                 portfolio_position_count: portfolioPositionCount,
                 accounts: accountFilter,
@@ -466,16 +495,13 @@ export default function PositionsPage() {
         }
       />
 
-
-
-
       {!showOpenPositionsPanel ? (
         <EmptyState
           title="No open positions"
           description="Position data comes from account snapshots. Ensure IB is connected and Account Sync is running."
         />
       ) : (
-        <Tabs value={openTab} onValueChange={(v) => setOpenTab(v as OpenTab)}>
+        <>
           <PositionsOpenControls
             filterSymbol={filterSymbol}
             onFilterSymbolChange={setFilterSymbol}
@@ -485,123 +511,178 @@ export default function PositionsPage() {
             secondaryAccountId={secondaryAccountId}
             accountFilter={accountFilter}
             onAccountFilterChange={setAccountFilter}
-            detailViewMode={detailViewMode}
-            onDetailViewModeChange={setDetailViewMode}
             cushionTightPct={cushionTightPct}
             onCushionTightPctChange={setCushionTightPct}
-            hasInstances={hasInstances}
-            hasOptions={hasOptions}
-            hasCoreStocks={hasCoreStocks}
-            hasFixedIncome={hasFixedIncome}
-            hasCashLike={hasCashLike}
-            showPositionTabs={portfolioPositionCount > 0}
+            scopedCount={hasAccountSelection ? totalPositions : 0}
           />
 
-          <div className="min-w-0 w-full">
-            {!hasAccountSelection ? (
-              <EmptyState
-                className="mt-3"
-                title="Select an account"
-                description="Turn on HOST and/or Secondary above to show open positions for those accounts."
-              />
-            ) : totalPositions === 0 ? (
-              <EmptyState
-                className="mt-3"
-                title="No positions match filters"
-                description="No open positions under the current symbol, expiry, or account filters. Off-track options appear when both HOST and Secondary are enabled."
-              />
-            ) : (
-              <>
-              <TabsContent value="instance" className="mt-3 outline-none">
-                <BookVsBaseCockpit
+          {!hasAccountSelection ? (
+            <EmptyState
+              title="Select an account"
+              description="Turn on HOST and/or Secondary above to show open positions for those accounts."
+            />
+          ) : totalPositions === 0 ? (
+            <EmptyState
+              title="No positions match filters"
+              description="No open positions under the current symbol, expiry, or account filters. Off-track options appear when both HOST and Secondary are enabled."
+            />
+          ) : (
+            <div className="min-w-0 space-y-3">
+              {/* Band 1: the state of the book on the left (gauges, margin by
+                  account, the short legs against the tightness line), the Owner's
+                  pictures of the base on the right. */}
+              <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+                <div className="min-w-0 space-y-2">
+                  <BookVsBaseCockpit
+                    book={alarm.book}
+                    checks={alarm.checks}
+                    cushionTightPct={cushionTightPct}
+                    onOpenTarget={openTarget}
+                  />
+                  <MarginByAccountStrip
+                    margin={alarm.margin}
+                    hostId={hostAccountId}
+                    secondaryId={secondaryAccountId}
+                    accountFilter={accountFilter}
+                  />
+                  <ShortLegsPanel
+                    legs={riskLegs}
+                    tightPct={cushionTightPct}
+                    activeExpiry={activeExpiry}
+                    onLegClick={(leg) => {
+                      setFilterSymbol(leg.symbol)
+                      openTarget('lines')
+                    }}
+                    onExpiryClick={toggleExpiryScope}
+                    onUnpricedClick={() => openTarget('ladder')}
+                  />
+                </div>
+                <PositionsDashboard
+                  open={openSections.charts}
+                  onToggle={() => toggleSection('charts')}
                   book={alarm.book}
-                  checks={alarm.checks}
-                  onOpenTarget={openSectionFromAlarm}
+                  stocks={allStocks}
+                  coreStocks={coreStocks}
+                  incomeEtfs={fixedIncomeStocks}
+                  cashLike={cashLikeStocks}
+                  accounts={scopedAccounts}
+                  quotesBySymbol={quotesBySymbol}
+                  quotesByCk={quotesByCk}
+                  activeSymbol={filterSymbol.trim().toUpperCase()}
+                  onSymbolClick={toggleSymbolScope}
+                  onBackingSegment={openFromBackingSegment}
                 />
-                <InstanceFilters
+              </div>
+
+              {/* Band 2: the lines, most dangerous first. */}
+              <div id="positions-lines" className="min-w-0">
+                <LinesToolbar
+                  view={linesView}
+                  onViewChange={setLinesView}
+                  detailViewMode={detailViewMode}
+                  onDetailViewModeChange={setDetailViewMode}
                   structureTypes={instanceFilterOptions.structureTypes}
                   oppNames={instanceFilterOptions.oppNames}
                   scopeTypes={instanceFilterOptions.scopeTypes}
                   values={instanceFilters}
                   onChange={setInstanceFilters}
+                  shown={filteredInstanceGroups.length}
+                  total={instanceAllGroups.length}
                 />
-                <InstanceTab
-                  groups={filteredInstanceGroups}
-                  totalInstanceCount={instanceAllGroups.length}
-                  quotesBySymbol={quotesBySymbol}
-                  quotesByCk={quotesByCk}
-                  benchBySymbol={benchBySymbol}
-                  liveStocks={allStocks}
-                  executionsFinal={executionsFinal}
-                  executionsTws={executionsTws}
-                  opportunities={opportunities}
-                  structures={structures}
-                  attributions={attributions}
-                  instanceStructureById={instanceStructureById}
-                  portfolioAccounts={accounts}
-                  greeksByTicker={greeks.byTicker}
-                  detailViewMode={detailViewMode}
-                  onEditExec={requestEditExec}
-                  onLinkExec={openLinkExec}
-                  onDeleteExec={setDeleteTarget}
-                  onRefreshExecs={refreshExecData}
-                  onOpenStrategy={openStrategyInspector}
-                  canonicalOptContractKeys={canonicalOptContractKeys}
-                  onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
-                  onOpenOption={(pos) =>
-                    setInspector({
-                      type: 'option',
-                      contractKey: pos.contract_key,
-                      optionPosition: pos,
-                    })
-                  }
-                />
-                <BaseLayersSection layers={alarm.book.base} />
-                <PositionsChartsSection
-                  open={openSections.charts}
-                  onToggle={() => toggleSection('charts')}
-                  book={alarm.book}
-                />
-                <div id="positions-section-ladder">
-                  <ExpiryLadderSection
-                    rows={alarm.ladderRows}
+                {linesView === 'strategy' ? (
+                  <InstanceTab
+                    groups={filteredInstanceGroups}
+                    totalInstanceCount={instanceAllGroups.length}
                     quotesBySymbol={quotesBySymbol}
-                    cushionTightPct={cushionTightPct}
-                    open={openSections.ladder}
-                    onToggle={() => toggleSection('ladder')}
+                    quotesByCk={quotesByCk}
+                    benchBySymbol={benchBySymbol}
+                    liveStocks={allStocks}
+                    executionsFinal={executionsFinal}
+                    executionsTws={executionsTws}
+                    opportunities={opportunities}
+                    structures={structures}
+                    attributions={attributions}
+                    instanceStructureById={instanceStructureById}
+                    portfolioAccounts={accounts}
+                    greeksByTicker={greeks.byTicker}
+                    detailViewMode={detailViewMode}
+                    onEditExec={requestEditExec}
+                    onLinkExec={openLinkExec}
+                    onDeleteExec={setDeleteTarget}
+                    onRefreshExecs={refreshExecData}
+                    onOpenStrategy={openStrategyInspector}
+                    canonicalOptContractKeys={canonicalOptContractKeys}
+                    onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
+                    onOpenOption={(pos) =>
+                      setInspector({
+                        type: 'option',
+                        contractKey: pos.contract_key,
+                        optionPosition: pos,
+                      })
+                    }
                   />
-                </div>
-                <div id="positions-section-capital">
-                  <UnderlyingRiskSection
-                    accountIds={modelAnalysisAccountIds}
-                    greeks={greeks}
-                    open={openSections.capital}
-                    onToggle={() => toggleSection('capital')}
+                ) : (
+                  <OptionsTab
+                    positions={filteredOptions}
+                    quotesBySymbol={quotesBySymbol}
+                    quotesByCk={quotesByCk}
+                    filterSymbol={filterSymbol}
+                    filterExpiry={filterExpiry}
+                    executionsFinal={executionsFinal}
+                    executionsTws={executionsTws}
+                    detailViewMode={detailViewMode}
+                    onEditExec={requestEditExec}
+                    onLinkExec={openLinkExec}
+                    onDeleteExec={setDeleteTarget}
+                    onCloseExec={setCloseExec}
+                    onRefreshExecs={refreshExecData}
+                    canonicalOptContractKeys={canonicalOptContractKeys}
+                    onInspect={(pos) =>
+                      setInspector({
+                        type: 'option',
+                        contractKey: pos.contract_key,
+                        optionPosition: pos,
+                      })
+                    }
+                    onOpenStrategy={openStrategyInspector}
                   />
-                </div>
-                <div id="positions-section-coverage">
-                <CoverageSummarySection
-                  exposure={alarm.exposure}
-                  coverRatio={alarm.coverRatio}
+                )}
+              </div>
+
+              {/* Drill-downs, collapsed and remembered. */}
+              <div id="positions-section-ladder">
+                <ExpiryLadderSection
+                  rows={alarm.ladderRows}
+                  quotesBySymbol={quotesBySymbol}
+                  cushionTightPct={cushionTightPct}
+                  open={openSections.ladder}
+                  onToggle={() => toggleSection('ladder')}
+                />
+              </div>
+              <div id="positions-section-coverage">
+                <ObligationsRoomSection
                   open={openSections.coverage}
                   onToggle={() => toggleSection('coverage')}
-                  instanceGroups={filteredInstanceGroups}
-                  stockCoverageItems={stockCoverageItems}
-                  chartAccountId={chartAccountId}
-                  hostAccountId={hostAccountId}
-                  secondaryAccountId={secondaryAccountId}
-                  accounts={accounts}
-                  onInspectSymbol={(symbol, accountId) =>
-                    setInspector({ type: 'stock', symbol, accountId })
-                  }
+                  rows={obligationsRows}
+                  exposure={alarm.exposure}
+                  coverRatio={alarm.coverRatio}
+                  moreCalls={alarm.book.potential.moreCalls}
+                  cashLikeTotal={alarm.book.backing.cashLike}
+                  buyingPower={alarm.book.supply.buyingPower}
+                  sort={obligationsSort}
+                  onSortChange={setObligationsSort}
+                  onSymbolClick={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
+                  onNakedClick={(symbol) => setFilterSymbol(symbol)}
                 />
-                </div>
-                <IndependentHoldingsSection
+              </div>
+              <div id="positions-section-independent">
+                <BaseHoldingsSection
                   open={openSections.independent}
                   onToggle={() => toggleSection('independent')}
+                  layers={alarm.book.base}
                   coreStocks={coreStocks}
-                  fixedIncomeStocks={fixedIncomeStocks}
-                  cashLikeStocks={cashLikeStocks}
+                  incomeEtfs={fixedIncomeStocks}
+                  cashLike={cashLikeStocks}
                   filterSymbol={filterSymbol}
                   onInspectStock={(pos) =>
                     setInspector({
@@ -612,71 +693,18 @@ export default function PositionsPage() {
                     })
                   }
                 />
-              </TabsContent>
-
-              <TabsContent value="options" className="mt-3 outline-none">
-                <OptionsTab
-                  positions={filteredOptions}
-                  quotesBySymbol={quotesBySymbol}
-                  quotesByCk={quotesByCk}
-                  filterSymbol={filterSymbol}
-                  filterExpiry={filterExpiry}
-                  executionsFinal={executionsFinal}
-                  executionsTws={executionsTws}
-                  detailViewMode={detailViewMode}
-                  onEditExec={requestEditExec}
-                  onLinkExec={openLinkExec}
-                  onDeleteExec={setDeleteTarget}
-                  onCloseExec={setCloseExec}
-                  onRefreshExecs={refreshExecData}
-                  canonicalOptContractKeys={canonicalOptContractKeys}
-                  onInspect={(pos) =>
-                    setInspector({
-                      type: 'option',
-                      contractKey: pos.contract_key,
-                      optionPosition: pos,
-                    })
-                  }
-                  onOpenStrategy={openStrategyInspector}
+              </div>
+              <div id="positions-section-capital">
+                <UnderlyingRiskSection
+                  accountIds={modelAnalysisAccountIds}
+                  greeks={greeks}
+                  open={openSections.capital}
+                  onToggle={() => toggleSection('capital')}
                 />
-              </TabsContent>
-
-              <TabsContent value="stocks" className="mt-3 outline-none">
-                <StocksTab
-                  positions={filteredCoreStocks}
-                  title="Stock positions"
-                  emptyHint={stocksTabEmptyHint}
-                  filterSymbol={filterSymbol}
-                  onInspect={(symbol, accountId, pos) =>
-                    setInspector({ type: 'stock', symbol, accountId, livePosition: pos })
-                  }
-                />
-              </TabsContent>
-
-              <TabsContent value="fixed_income" className="mt-3 outline-none">
-                <FixedIncomeTab
-                  positions={filteredFixedIncomeStocks}
-                  emptyHint={fixedIncomeTabEmptyHint}
-                  filterSymbol={filterSymbol}
-                  onInspect={(symbol, accountId, pos) =>
-                    setInspector({ type: 'stock', symbol, accountId, livePosition: pos })
-                  }
-                />
-              </TabsContent>
-
-              <TabsContent value="cash_like" className="mt-3 outline-none">
-                <CashLikeTab
-                  positions={filteredCashLikeStocks}
-                  filterSymbol={filterSymbol}
-                  onInspect={(symbol, accountId, pos) =>
-                    setInspector({ type: 'stock', symbol, accountId, livePosition: pos })
-                  }
-                />
-              </TabsContent>
-              </>
-            )}
-          </div>
-        </Tabs>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <EditExecutionConfirmDialog

@@ -18,6 +18,8 @@ import { DenseTagButton } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import type { BookVsBase, GaugeLevel } from '@/utils/bookVsBase'
 import type { AlarmCheck, AlarmTarget } from '@/hooks/usePositionsAlarm'
+import type { ObligationsSort } from '@/utils/obligationsRoom'
+import { cushionBand } from '@/utils/positionsOptionRisk'
 
 const LEVEL_TONE: Record<GaugeLevel, string> = {
   0: 'bg-profit',
@@ -68,7 +70,7 @@ function Gauge({
           />
         ))}
       </span>
-      <span className="min-w-0 truncate text-dense-body text-muted-foreground">{children}</span>
+      <span className="min-w-0 text-dense-body leading-snug text-muted-foreground">{children}</span>
     </div>
   )
 }
@@ -91,18 +93,26 @@ function usdK(v: number | null): string {
 export function BookVsBaseCockpit({
   book,
   checks,
+  cushionTightPct,
   onOpenTarget,
 }: {
   book: BookVsBase
-  /** The firing checks, so the data-quality ones still have somewhere to be. */
+  /** All nine checks; each is a chip with a place to land, quiet ones in grey. */
   checks: AlarmCheck[]
-  onOpenTarget: (t: AlarmTarget) => void
+  /** The tightness setting, so the Risk line can say how close the closest leg is to it. */
+  cushionTightPct: number
+  onOpenTarget: (t: AlarmTarget, sort?: ObligationsSort) => void
 }) {
   const { pressure, backing, risk, potential, demand, supply } = book
-  // Every gauge line already states its own count. Chips stay only for the
-  // data-quality checks no gauge carries — a stalled quote feed, contracts still
-  // open past expiry — so nothing is said twice in the same 100px.
-  const firing = checks.filter((c) => c.tone !== 'ok' && (c.id === 'feed' || c.id === 'past'))
+  const tightest = risk.counts.tightest
+  const tightestTone =
+    tightest == null
+      ? 'text-warning'
+      : cushionBand(tightest, cushionTightPct) === 'breached'
+        ? 'text-loss'
+        : cushionBand(tightest, cushionTightPct) === 'tight'
+          ? 'text-warning'
+          : 'text-profit'
 
   return (
     <section
@@ -113,27 +123,43 @@ export function BookVsBaseCockpit({
         <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
           Option book against the base
         </span>
-        {firing.length > 0 ? (
-          <span className="flex flex-wrap items-center gap-1">
-            {firing.map((c) => (
+        <span className="flex flex-wrap items-center justify-end gap-1">
+          {checks.map((c) =>
+            c.tone === 'ok' || !c.target ? (
+              // Quiet, or nowhere to land (the feed age is a fact, not a section).
+              <button
+                key={c.id}
+                type="button"
+                disabled={!c.target}
+                title={c.target ? `${c.detail}\nClick to open the detail.` : c.detail}
+                onClick={() => c.target && onOpenTarget(c.target)}
+                className={cn(
+                  'rounded-sm px-1 text-dense-caption text-muted-foreground',
+                  c.tone !== 'ok' && 'text-warning',
+                  c.target && 'hover:text-foreground hover:underline',
+                )}
+              >
+                {c.label} <span className="font-mono tabular-nums">{c.value}</span>
+              </button>
+            ) : (
               <DenseTagButton
                 key={c.id}
                 variant={c.tone === 'danger' ? 'danger' : 'warning'}
                 size="cell"
-                title={c.target ? `${c.detail}\nClick to open the section with the detail.` : c.detail}
-                onClick={() => c.target && onOpenTarget(c.target)}
+                title={`${c.detail}\nClick to open the section with the detail.`}
+                onClick={() => onOpenTarget(c.target as AlarmTarget)}
               >
                 {c.label} <span className="font-mono tabular-nums">{c.value}</span>
               </DenseTagButton>
-            ))}
-          </span>
-        ) : null}
+            ),
+          )}
+        </span>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <Gauge
           label="Pressure"
-          onOpen={() => onOpenTarget('coverage')}
+          onOpen={() => onOpenTarget('margin')}
           level={pressure.pct == null ? null : pressure.level}
           title="1 − the broker's own Cushion. At 100% excess liquidity is gone and it starts closing positions; level 3 begins at 75%."
         >
@@ -143,7 +169,7 @@ export function BookVsBaseCockpit({
 
         <Gauge
           label="Backing"
-          onOpen={() => onOpenTarget('coverage')}
+          onOpen={() => onOpenTarget('coverage', 'cash')}
           level={backing.level}
           title="What the options need against what actually backs them. Any naked call is level 2; puts leaning on margin rather than cash is level 1."
         >
@@ -186,11 +212,24 @@ export function BookVsBaseCockpit({
               <Num tone="text-warning">{risk.counts.unpriced} unpriced</Num>
             </>
           ) : null}
+          {' · '}
+          {tightest == null ? (
+            <Num tone={tightestTone}>tightest n/a</Num>
+          ) : (
+            <>
+              tightest{' '}
+              <Num tone={tightestTone}>
+                {tightest >= 0 ? '+' : ''}
+                {(tightest * 100).toFixed(1)}%
+              </Num>{' '}
+              vs {Math.round(cushionTightPct * 100)}%
+            </>
+          )}
         </Gauge>
 
         <Gauge
           label="Potential"
-          onOpen={() => onOpenTarget('capital')}
+          onOpen={() => onOpenTarget('coverage', 'spare')}
           level={3}
           tone="bg-link"
           title="What is still free to sell against, and what the book earns a day. An opportunity, not a warning — so it is not graded."

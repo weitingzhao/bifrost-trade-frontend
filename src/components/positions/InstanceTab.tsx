@@ -19,7 +19,7 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import { RiskProfileDetail } from './RiskProfileDetail'
-import type { DetailViewMode } from './PositionsOpenControls'
+import type { DetailViewMode } from './LinesToolbar'
 import { fmtUsd, fmtDate, fmtDaysAgo } from '@/utils/positions'
 import { InstanceOptionSubTable } from './InstanceOptionSubTable'
 import { InstanceCoverageSubTable } from './InstanceCoverageSubTable'

@@ -23,9 +23,12 @@ import { normalizeRight, type OptionLegLike } from './positionsOptionRisk'
 
 export interface ExposureLeg extends OptionLegLike {
   underlying: string
+  /** The account holding the leg. Cover is settled inside one account. */
+  accountId: string
 }
 
 export interface SymbolExposure {
+  accountId: string
   underlying: string
   /** Cash needed if every short put on this symbol is assigned. */
   putAssignmentCash: number
@@ -39,7 +42,8 @@ export interface SymbolExposure {
 }
 
 export interface ExposureSummary {
-  bySymbol: SymbolExposure[]
+  /** One row per account × underlying, most assignment cash first. */
+  byAccountSymbol: SymbolExposure[]
   /** Total cash required if every short put is assigned. */
   putAssignmentCash: number
   shortPutContracts: number
@@ -52,26 +56,31 @@ export interface ExposureSummary {
 const SHARES_PER_CONTRACT = 100
 
 /**
- * Grouped by underlying, because assignment is settled per symbol and a total
- * alone hides a book where one name carries most of the obligation.
+ * Grouped by account and underlying. Assignment is settled per symbol, and a
+ * short call is covered only by shares in the same account — RKLB held in HOST
+ * does nothing for an RKLB call written in Secondary. A total alone would hide
+ * both facts.
  *
- * Held shares are supplied per symbol and allocated once across that symbol's
- * short calls. Taking them per leg would let two contracts on the same underlying
- * each claim the same 100 shares and both report covered — the double-count the
- * per-instance badge already has, which must not be repeated at book level where
- * the whole point is a portfolio-wide total.
+ * Held shares are supplied per account × symbol and allocated once across that
+ * bucket's short calls. Taking them per leg would let two contracts on the same
+ * underlying each claim the same 100 shares and both report covered — the
+ * double-count the per-instance badge already has, which must not be repeated
+ * at book level where the whole point is a portfolio-wide total.
  */
 export function summarizeAssignmentExposure(
   legs: readonly ExposureLeg[],
-  /** Shares of the underlying held across the accounts in scope. */
-  sharesOf: (underlying: string) => number,
+  /** Long shares of the underlying held in that account. */
+  sharesOf: (underlying: string, accountId: string) => number,
 ): ExposureSummary {
   const map = new Map<string, SymbolExposure>()
+  const keyOf = (accountId: string, underlying: string) => `${accountId}\x00${underlying}`
 
-  const bucket = (underlying: string): SymbolExposure => {
-    let b = map.get(underlying)
+  const bucket = (accountId: string, underlying: string): SymbolExposure => {
+    const key = keyOf(accountId, underlying)
+    let b = map.get(key)
     if (!b) {
       b = {
+        accountId,
         underlying,
         putAssignmentCash: 0,
         shortPutContracts: 0,
@@ -79,12 +88,12 @@ export function summarizeAssignmentExposure(
         nakedCallContracts: 0,
         callDeliveryShares: 0,
       }
-      map.set(underlying, b)
+      map.set(key, b)
     }
     return b
   }
 
-  const shortCallsBySymbol = new Map<string, number>()
+  const shortCalls = new Map<string, { accountId: string; underlying: string; contracts: number }>()
 
   for (const leg of legs) {
     if (leg.qty >= 0) continue
@@ -93,28 +102,37 @@ export function summarizeAssignmentExposure(
     if (!Number.isFinite(leg.strike) || leg.strike <= 0) continue
     const contracts = Math.abs(leg.qty)
     const symbol = leg.underlying || '—'
-    const b = bucket(symbol)
+    const accountId = leg.accountId || '—'
+    const b = bucket(accountId, symbol)
 
     if (right === 'P') {
       b.shortPutContracts += contracts
       b.putAssignmentCash += contracts * SHARES_PER_CONTRACT * leg.strike
       continue
     }
-    shortCallsBySymbol.set(symbol, (shortCallsBySymbol.get(symbol) ?? 0) + contracts)
+    const k = keyOf(accountId, symbol)
+    const cur = shortCalls.get(k)
+    if (cur) cur.contracts += contracts
+    else shortCalls.set(k, { accountId, underlying: symbol, contracts })
   }
 
-  // One allocation of the symbol's shares across all its short calls.
-  for (const [symbol, contracts] of shortCallsBySymbol) {
-    const b = bucket(symbol)
-    const backable = Math.max(0, Math.floor((sharesOf(symbol) || 0) / SHARES_PER_CONTRACT))
+  // One allocation of the account's shares across all its short calls on that symbol.
+  for (const { accountId, underlying, contracts } of shortCalls.values()) {
+    const b = bucket(accountId, underlying)
+    const backable = Math.max(
+      0,
+      Math.floor((sharesOf(underlying, accountId) || 0) / SHARES_PER_CONTRACT),
+    )
     const covered = Math.min(contracts, backable)
     b.coveredCallContracts += covered
     b.nakedCallContracts += contracts - covered
     b.callDeliveryShares += covered * SHARES_PER_CONTRACT
   }
 
-  const bySymbol = [...map.values()].sort((a, b) => b.putAssignmentCash - a.putAssignmentCash)
-  const totals = bySymbol.reduce(
+  const byAccountSymbol = [...map.values()].sort(
+    (a, b) => b.putAssignmentCash - a.putAssignmentCash || a.underlying.localeCompare(b.underlying),
+  )
+  const totals = byAccountSymbol.reduce(
     (acc, s) => ({
       putAssignmentCash: acc.putAssignmentCash + s.putAssignmentCash,
       shortPutContracts: acc.shortPutContracts + s.shortPutContracts,
@@ -125,9 +143,9 @@ export function summarizeAssignmentExposure(
   )
 
   return {
-    bySymbol,
+    byAccountSymbol,
     ...totals,
-    largest: bySymbol.find((s) => s.putAssignmentCash > 0) ?? null,
+    largest: byAccountSymbol.find((s) => s.putAssignmentCash > 0) ?? null,
   }
 }
 

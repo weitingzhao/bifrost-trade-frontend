@@ -7,6 +7,7 @@ import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { usePositionAttribution } from '@/hooks/usePositionAttribution'
 import { useExecutionsFinal, useExecutionsTws, useExecutionsCanonical } from '@/hooks/useExecutions'
 import { useOpportunities, useStructures, useStrategyInstances } from '@/hooks/useStrategies'
+import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { deleteExecution } from '@/api/trading'
 import { PageHeader, PageShell } from '@/components/layout'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
@@ -39,7 +40,13 @@ import type { InspectorState } from '@/components/positions/InspectorDrawer'
 import { OptionContractDrawer } from '@/components/optionDiscovery/OptionContractDrawer'
 import { OptionContractDetailFromOpenPosition } from '@/components/optionDiscovery/OptionContractDetailFromOpenPosition'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
-import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys } from '@/utils/positions'
+import {
+  buildQuoteMap,
+  buildCkMap,
+  uniqueSymbols,
+  uniqueContractKeys,
+  uniqueOptionUnderlyings,
+} from '@/utils/positions'
 import {
   flattenPositions,
   splitBySecType,
@@ -56,6 +63,13 @@ import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
 import { buildOptionStockMix, liveStockRowCovKey, type OptionStockMixCategory } from '@/utils/positionsCharts'
 import { CoverageSummarySection } from '@/components/positions/CoverageSummarySection'
+import { PositionsAlarmStrip } from '@/components/positions/PositionsAlarmStrip'
+import { usePositionsAlarm, type AlarmTarget } from '@/hooks/usePositionsAlarm'
+import { usePositionsSections } from '@/hooks/usePositionsSections'
+import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
+import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
+import { ExpiryLadderSection } from '@/components/positions/ExpiryLadderSection'
+import { UnderlyingRiskSection } from '@/components/positions/UnderlyingRiskSection'
 import { IndependentHoldingsSection } from '@/components/positions/IndependentHoldingsSection'
 import type { AccountFilter } from '@/components/positions/PositionsFilterBar'
 import type { Execution } from '@/types/positions'
@@ -85,6 +99,16 @@ export default function PositionsPage() {
   const [filterSymbol, setFilterSymbol] = useState('')
   const [filterExpiry, setFilterExpiry] = useState('')
   const [accountFilter, setAccountFilter] = useState<AccountFilter>({ host: true, secondary: true })
+  const { pct: cushionTightPct, setPct: setCushionTightPct } = useCushionThreshold()
+  // Section open/closed is the reader's call and is remembered between visits.
+  const { open: openSections, toggle: toggleSection, openSection } = usePositionsSections()
+  const openSectionFromAlarm = useCallback((t: AlarmTarget) => {
+    openSection(t)
+    // The section is what holds the detail; the chip only says which to read.
+    requestAnimationFrame(() => {
+      document.getElementById(`positions-section-${t}`)?.scrollIntoView({ block: 'nearest' })
+    })
+  }, [openSection])
   const [detailViewMode, setDetailViewMode] = useState<DetailViewMode>('accordion')
   const [optionStockMixFilter, setOptionStockMixFilter] = useState<OptionStockMixCategory | null>(null)
   const [chartAccountId, setChartAccountId] = useState('all')
@@ -109,6 +133,11 @@ export default function PositionsPage() {
   const accounts = useMemo(() => data?.portfolio.accounts ?? [], [data])
   const hostAccountId = data?.config?.ib_client?.account?.event_host ?? ''
   const secondaryAccountId = data?.config?.ib_client?.account?.event_secondary ?? ''
+  /** Model-analysis is per account; follow the same Host / Secondary toggles the tables do. */
+  const modelAnalysisAccountIds = [
+    accountFilter.host ? hostAccountId : '',
+    accountFilter.secondary ? secondaryAccountId : '',
+  ].filter(Boolean)
 
   const allPositions = useMemo(
     () =>
@@ -122,7 +151,11 @@ export default function PositionsPage() {
     [allPositions],
   )
 
-  const stkSymbols = uniqueSymbols(accounts)
+  // Include the underlyings of held options, not just held stock: a short put
+  // on a symbol with no share position still needs a spot to be measured against.
+  const stkSymbols = [
+    ...new Set([...uniqueSymbols(accounts), ...uniqueOptionUnderlyings(accounts)]),
+  ]
   const optCks = uniqueContractKeys(accounts)
   const { data: quotesData } = useQuotes(stkSymbols, optCks)
   const { data: benchData } = useBenchmarks(stkSymbols)
@@ -342,6 +375,29 @@ export default function PositionsPage() {
   const portfolioPositionCount = useMemo(() => flattenPositions(accounts).length, [accounts])
   const hasAccountSelection =
     (!hostAccountId && !secondaryAccountId) || accountFilter.host || accountFilter.secondary
+  // One derivation feeding both the strip and the ladder table below it.
+  const alarm = usePositionsAlarm({
+    groups: filteredInstanceGroups,
+    quotesBySymbol,
+    accounts,
+    liveStocks: allStocks,
+    modelAnalysisAccountIds,
+    cushionTightPct,
+  })
+
+  // Vendor Greeks for the legs actually held (Owner decision 2026-09-05: the
+  // Golden Source is the authority, not a second in-house derivation).
+  const greekLegs: GreekLeg[] = filteredInstanceGroups.flatMap((g) =>
+    g.options.map((p) => ({
+      underlying: extractUnderlyingRootSymbol(p.symbol),
+      expiry: p.expiry,
+      strike: p.strike,
+      right: p.right,
+      qty: p.qty,
+    })),
+  )
+  const greeks = useOptionGreeks(greekLegs)
+
   const showOpenPositionsPanel = accounts.length > 0
 
   function refreshExecData() {
@@ -426,7 +482,11 @@ export default function PositionsPage() {
         }
       />
 
+
+
       <PositionsChartsSection
+        open={openSections.charts}
+        onToggle={() => toggleSection('charts')}
         accounts={accounts}
         allStocks={allStocks}
         hostAccountId={hostAccountId}
@@ -461,6 +521,8 @@ export default function PositionsPage() {
             onAccountFilterChange={setAccountFilter}
             detailViewMode={detailViewMode}
             onDetailViewModeChange={setDetailViewMode}
+            cushionTightPct={cushionTightPct}
+            onCushionTightPctChange={setCushionTightPct}
             hasInstances={hasInstances}
             hasOptions={hasOptions}
             hasCoreStocks={hasCoreStocks}
@@ -485,6 +547,7 @@ export default function PositionsPage() {
             ) : (
               <>
               <TabsContent value="instance" className="mt-3 outline-none">
+                <PositionsAlarmStrip checks={alarm.checks} onOpenTarget={openSectionFromAlarm} />
                 <InstanceFilters
                   structureTypes={instanceFilterOptions.structureTypes}
                   oppNames={instanceFilterOptions.oppNames}
@@ -492,6 +555,15 @@ export default function PositionsPage() {
                   values={instanceFilters}
                   onChange={setInstanceFilters}
                 />
+                <div id="positions-section-ladder">
+                  <ExpiryLadderSection
+                    rows={alarm.ladderRows}
+                    quotesBySymbol={quotesBySymbol}
+                    cushionTightPct={cushionTightPct}
+                    open={openSections.ladder}
+                    onToggle={() => toggleSection('ladder')}
+                  />
+                </div>
                 <InstanceTab
                   groups={filteredInstanceGroups}
                   totalInstanceCount={instanceAllGroups.length}
@@ -522,7 +594,20 @@ export default function PositionsPage() {
                     })
                   }
                 />
+                <div id="positions-section-capital">
+                  <UnderlyingRiskSection
+                    accountIds={modelAnalysisAccountIds}
+                    greeks={greeks}
+                    open={openSections.capital}
+                    onToggle={() => toggleSection('capital')}
+                  />
+                </div>
+                <div id="positions-section-coverage">
                 <CoverageSummarySection
+                  exposure={alarm.exposure}
+                  coverRatio={alarm.coverRatio}
+                  open={openSections.coverage}
+                  onToggle={() => toggleSection('coverage')}
                   instanceGroups={filteredInstanceGroups}
                   stockCoverageItems={stockCoverageItems}
                   chartAccountId={chartAccountId}
@@ -533,7 +618,10 @@ export default function PositionsPage() {
                     setInspector({ type: 'stock', symbol, accountId })
                   }
                 />
+                </div>
                 <IndependentHoldingsSection
+                  open={openSections.independent}
+                  onToggle={() => toggleSection('independent')}
                   coreStocks={coreStocks}
                   fixedIncomeStocks={fixedIncomeStocks}
                   cashLikeStocks={cashLikeStocks}

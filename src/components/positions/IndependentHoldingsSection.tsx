@@ -16,10 +16,19 @@ import {
   GroupHeaderRow,
   InlinePnl,
   SymbolLinkButton,
+  CollapsibleChevron,
+  CollapsibleGroup,
+  CollapsibleGroupBody,
+  CollapsibleGroupHeader,
+  CollapsibleGroupStats,
+  CollapsibleGroupTitle,
 } from '@/components/data-display'
 import { denseTable } from '@/components/data-display'
 
 interface Props {
+  /** Controlled and persisted by the page — see usePositionsSections. */
+  open: boolean
+  onToggle: () => void
   coreStocks: LivePositionRow[]
   fixedIncomeStocks: LivePositionRow[]
   cashLikeStocks: LivePositionRow[]
@@ -79,12 +88,15 @@ function HoldingRow({
 }
 
 export function IndependentHoldingsSection({
+  open,
+  onToggle,
   coreStocks,
   fixedIncomeStocks,
   cashLikeStocks,
   filterSymbol = '',
   onInspectStock,
 }: Props) {
+
   const sections = useMemo(() => {
     const built = buildIndependentStockSections(coreStocks, fixedIncomeStocks, cashLikeStocks)
     return built
@@ -94,9 +106,30 @@ export function IndependentHoldingsSection({
 
   if (sections.length === 0) return null
 
+  // The collapsed header has to answer the section's own question, or collapsing
+  // it just hides the answer: how much is parked here, in how many lines.
+  const rowCount = sections.reduce((n, sec) => n + sec.rows.length, 0)
+  const marketValue = sections.reduce(
+    (sum, sec) =>
+      sum + sec.rows.reduce((n, r) => n + (computeIndependentHoldingMetrics(r).marketValue ?? 0), 0),
+    0,
+  )
+
   return (
+    <CollapsibleGroup>
+      <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
+        <CollapsibleChevron expanded={open} />
+        <CollapsibleGroupTitle>Independent Holdings</CollapsibleGroupTitle>
+        <CollapsibleGroupStats>
+          <span className="text-xs text-muted-foreground">
+            {rowCount} {rowCount === 1 ? 'position' : 'positions'} · {fmtUsd(marketValue)} ·{' '}
+            {sections.map((sec) => sec.title).join(' / ')}
+          </span>
+        </CollapsibleGroupStats>
+      </CollapsibleGroupHeader>
+      {!open ? null : (
+      <CollapsibleGroupBody>
     <div className="min-w-0 space-y-2">
-      <h4 className="text-sm font-semibold text-foreground">Independent Holdings</h4>
       <p className={denseTable.emptyHint}>
         Positions without tradeable options (Index, ETF, etc.); not part of any option strategy. Grouped by
         position category (Stocks, Fixed income, Cash-like).
@@ -129,5 +162,8 @@ export function IndependentHoldingsSection({
         </DenseTableBody>
       </DenseDataTable>
     </div>
+      </CollapsibleGroupBody>
+      )}
+    </CollapsibleGroup>
   )
 }

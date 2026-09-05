@@ -6,4 +6,6 @@ export const STORAGE_KEYS = {
   sidebarOpenGroups: 'bifrost-sidebar-open-groups',
   optionScreenerFilters: 'optionScreenerFilters',
   optionDiscoveryPrefs: 'optionDiscoveryPrefs',
+  positionsCushionPct: 'bifrost-positions-cushion-pct',
+  positionsSections: 'bifrost-positions-sections',
 } as const

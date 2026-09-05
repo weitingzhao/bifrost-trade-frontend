@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   fmtUsd,
   formatLastUpdate,
@@ -6,7 +6,10 @@ import {
   rightLabel,
   buildQuoteMap,
   buildCkMap,
+  daysUntilExpiry,
+  quoteFeedAgeSec,
   uniqueSymbols,
+  uniqueOptionUnderlyings,
   uniqueContractKeys,
   resolveBasePrice,
   fmtExecDaysAgo,
@@ -221,5 +224,98 @@ describe('fmtExecDaysAgo', () => {
 
   it('returns dash for null', () => {
     expect(fmtExecDaysAgo(null)).toBe('—')
+  })
+})
+
+describe('uniqueOptionUnderlyings', () => {
+  it('collects OPT roots that hold no shares, and skips STK rows', () => {
+    const accounts = [
+      {
+        account_id: 'U1',
+        positions: [
+          { symbol: 'NVDA', secType: 'STK' },
+          { symbol: 'CBRS', secType: 'OPT' },
+          { symbol: 'cbrs', secType: 'OPT' },
+          { symbol: 'DAVE', secType: 'OPT' },
+          { secType: 'OPT' },
+        ],
+      },
+    ]
+    expect(uniqueOptionUnderlyings(accounts).sort()).toEqual(['CBRS', 'DAVE'])
+  })
+
+  it('returns nothing when the book holds no options', () => {
+    expect(uniqueOptionUnderlyings([{ account_id: 'U1', positions: [] }])).toEqual([])
+  })
+})
+
+describe('daysUntilExpiry', () => {
+  afterEach(() => vi.useRealTimers())
+
+  const at = (iso: string) => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(iso))
+  }
+
+  // The defect this replaced: 16:00-anchored + Math.ceil reported 1 all morning
+  // on expiry day, and only fell to 0 after the contract was already gone.
+  it('is 0 all day on the day of expiry, from the open', () => {
+    at('2026-11-20T09:30:00')
+    expect(daysUntilExpiry('20261120')).toBe(0)
+  })
+
+  it('is still 0 after the close on expiry day', () => {
+    at('2026-11-20T16:30:00')
+    expect(daysUntilExpiry('20261120')).toBe(0)
+  })
+
+  it('is 1 the day before, at any hour', () => {
+    at('2026-11-19T06:00:00')
+    expect(daysUntilExpiry('20261120')).toBe(1)
+    at('2026-11-19T23:59:00')
+    expect(daysUntilExpiry('20261120')).toBe(1)
+  })
+
+  it('goes negative the day after', () => {
+    at('2026-11-21T00:01:00')
+    expect(daysUntilExpiry('20261120')).toBe(-1)
+    at('2026-11-25T12:00:00')
+    expect(daysUntilExpiry('20261120')).toBe(-5)
+  })
+
+  it('counts whole days across a DST boundary', () => {
+    // US DST ends 2026-11-01; a 25-hour day must not become 0.96 of one.
+    at('2026-10-30T12:00:00')
+    expect(daysUntilExpiry('20261106')).toBe(7)
+  })
+
+  it('rejects what it cannot parse rather than guessing', () => {
+    at('2026-11-20T09:30:00')
+    expect(daysUntilExpiry('')).toBeNull()
+    expect(daysUntilExpiry(undefined)).toBeNull()
+    expect(daysUntilExpiry('2026')).toBeNull()
+  })
+})
+
+describe('quoteFeedAgeSec', () => {
+  const q = (ts: number | null) => ({ last: 1, bid: 1, ask: 1, ts: ts ?? undefined })
+
+  it('reports the freshest timestamp, not the oldest', () => {
+    const now = 1_700_000_000_000
+    expect(quoteFeedAgeSec([q(1_699_999_900), q(1_699_999_970)], now)).toBe(30)
+  })
+
+  it('accepts a millisecond stamp without inventing an age', () => {
+    const now = 1_700_000_000_000
+    expect(quoteFeedAgeSec([q(1_699_999_940_000)], now)).toBe(60)
+  })
+
+  it('returns null — unknown, not fresh — when nothing carried a timestamp', () => {
+    expect(quoteFeedAgeSec([q(null), q(null)], 1_700_000_000_000)).toBeNull()
+    expect(quoteFeedAgeSec([], 1_700_000_000_000)).toBeNull()
+  })
+
+  it('never reports a negative age from clock skew', () => {
+    expect(quoteFeedAgeSec([q(1_700_000_060)], 1_700_000_000_000)).toBe(0)
   })
 })

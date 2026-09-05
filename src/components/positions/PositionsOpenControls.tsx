@@ -24,6 +24,9 @@ interface Props {
   hasCashLike: boolean
   /** Show Strategy/Options/… tabs when portfolio has data (not when account filter clears the list). */
   showPositionTabs: boolean
+  /** Cushion warning line, as a fraction of strike. Persisted per browser. */
+  cushionTightPct: number
+  onCushionTightPctChange: (pct: number) => void
 }
 
 export function PositionsOpenControls({
@@ -37,6 +40,8 @@ export function PositionsOpenControls({
   onAccountFilterChange,
   detailViewMode,
   onDetailViewModeChange,
+  cushionTightPct,
+  onCushionTightPctChange,
   hasInstances,
   hasOptions,
   hasCoreStocks,
@@ -69,6 +74,30 @@ export function PositionsOpenControls({
           title="Option expiry filter (YYYYMMDD prefix match)"
           aria-label="Filter by option expiry YYYYMMDD"
         />
+        {/* The warning line for Moneyness. It sits with the filters because it
+            changes what the table says, not what it contains. */}
+        <label
+          className="flex h-8 shrink-0 items-center gap-1 rounded-md border border-border bg-card px-1.5"
+          title="Short-leg cushion below this is shown as tight. In the money is always shown as breached, whatever this is set to."
+        >
+          <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
+            Tight
+          </span>
+          <input
+            type="number"
+            min={0}
+            max={50}
+            step={0.5}
+            value={Number((cushionTightPct * 100).toFixed(2))}
+            onChange={(e) => {
+              const n = Number(e.target.value)
+              if (Number.isFinite(n)) onCushionTightPctChange(n / 100)
+            }}
+            className="w-11 bg-transparent text-right font-mono text-sm tabular-nums outline-none"
+            aria-label="Cushion warning threshold, percent of strike"
+          />
+          <span className="text-sm text-muted-foreground">%</span>
+        </label>
       </div>
 
       {showAccountBubbles && (

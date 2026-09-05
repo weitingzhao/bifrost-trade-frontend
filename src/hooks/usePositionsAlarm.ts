@@ -1,0 +1,340 @@
+/**
+ * The checks a premium seller reads before deciding whether to keep reading.
+ *
+ * The page's opening four questions — is a short leg in the money, what expires
+ * this week, am I naked anywhere, how much room is left — sat at y=1369, 1369,
+ * 1629 and 2700, so the first act of every morning was scrolling three times.
+ * This gathers them into facts the strip can render in one line.
+ *
+ * Two rules hold this together:
+ *
+ *  - It derives nothing of its own. Cushion, ITM and expiry come from the single
+ *    `buildExpiryLadder` call the ladder section also renders; naked calls come
+ *    from the model-analysis query the capital section already runs; margin
+ *    comes from the broker's fields. A strip that recomputed would eventually
+ *    disagree with the table under it, and the louder number would win.
+ *  - Only checks with a threshold. Inventory counts ("13 strategies", "39 short")
+ *    have no state to be in, and putting them in an alarm channel is how an
+ *    alarm channel stops being read.
+ */
+import { useQueries } from '@tanstack/react-query'
+import { fetchModelAnalysis } from '@/api/portfolio'
+import { QUERY_KEYS } from '@/constants/queryKeys'
+import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
+import { instanceGroupKey } from '@/utils/instanceSheetExec'
+import { quoteFeedAgeSec } from '@/utils/positions'
+import {
+  buildExpiryLadder,
+  cushionBand,
+  type ExpiryLadderRow,
+  type LadderLeg,
+} from '@/utils/positionsOptionRisk'
+import { marginBand, rollupMargin, type MarginRollup } from '@/utils/marginPressure'
+import {
+  assignmentCoverRatio,
+  summarizeAssignmentExposure,
+  type ExposureLeg,
+  type ExposureSummary,
+} from '@/utils/assignmentExposure'
+import type { InstanceAllGroup, LivePositionRow } from '@/types/positions'
+import type { IbAccountSnapshot } from '@/types/monitor'
+import type { QuoteItem } from '@/types/market'
+
+/** Which section a chip opens. Null when the chip has nowhere useful to go. */
+export type AlarmTarget = 'ladder' | 'capital' | 'coverage'
+
+export type AlarmTone = 'ok' | 'warn' | 'danger'
+
+export interface AlarmCheck {
+  id: string
+  label: string
+  value: string
+  tone: AlarmTone
+  /** One line saying what fired and why it matters. */
+  detail: string
+  target: AlarmTarget | null
+}
+
+/** Past this the quote path is suspect — the page polls every 8 seconds. */
+export const STALE_FEED_SEC = 60
+
+/** Shorts landing inside this window are the week's work. */
+export const NEAR_EXPIRY_DAYS = 7
+
+function pct1(v: number): string {
+  const p = v * 100
+  return `${p > 0 ? '+' : ''}${p.toFixed(1)}%`
+}
+
+export interface PositionsAlarm {
+  ladderRows: ExpiryLadderRow[]
+  checks: AlarmCheck[]
+  margin: MarginRollup
+  exposure: ExposureSummary
+  /** Assignment cash as a fraction of buying power. Null when BP is unknown. */
+  coverRatio: number | null
+  /** True when anything is in warn or danger — the strip's own reason to exist. */
+  anyFiring: boolean
+}
+
+export function usePositionsAlarm({
+  groups,
+  quotesBySymbol,
+  accounts,
+  liveStocks,
+  modelAnalysisAccountIds,
+  cushionTightPct,
+}: {
+  groups: InstanceAllGroup[]
+  quotesBySymbol: Record<string, QuoteItem>
+  accounts: IbAccountSnapshot[]
+  /** Stock rows in scope, for allocating shares against short calls. */
+  liveStocks: LivePositionRow[]
+  modelAnalysisAccountIds: string[]
+  cushionTightPct: number
+}): PositionsAlarm {
+  const legs: LadderLeg[] = []
+  for (const group of groups) {
+    const key = instanceGroupKey(group)
+    for (const pos of group.options) {
+      legs.push({
+        strike: pos.strike,
+        expiry: pos.expiry,
+        right: pos.right,
+        qty: pos.qty,
+        underlying: extractUnderlyingRootSymbol(pos.symbol),
+        instanceKey: key,
+      })
+    }
+  }
+  const ladderRows = buildExpiryLadder(legs, (leg) => quotesBySymbol[leg.underlying]?.last ?? null)
+
+  // Same query keys as the capital section, so this shares its cache rather
+  // than issuing a second round of requests.
+  const modelResults = useQueries({
+    queries: modelAnalysisAccountIds.map((accountId) => ({
+      queryKey: [...QUERY_KEYS.portfolio.modelAnalysis, accountId],
+      queryFn: () => fetchModelAnalysis(accountId),
+      enabled: Boolean(accountId),
+    })),
+  })
+  const nakedCalls = modelResults.reduce(
+    (n, r) =>
+      n + (r.data?.per_underlying ?? []).reduce((m, u) => m + u.naked_short_call_contracts, 0),
+    0,
+  )
+
+  const margin = rollupMargin(accounts)
+  const feedAgeSec = quoteFeedAgeSec(Object.values(quotesBySymbol))
+
+  const sharesBySymbol = new Map<string, number>()
+  for (const st of liveStocks) {
+    const sym = (st.symbol ?? '').toUpperCase()
+    if (!sym) continue
+    // Long shares only: a short stock position cannot deliver against a call.
+    const qty = st.position ?? 0
+    if (qty <= 0) continue
+    sharesBySymbol.set(sym, (sharesBySymbol.get(sym) ?? 0) + qty)
+  }
+  const exposure = summarizeAssignmentExposure(
+    legs as ExposureLeg[],
+    (sym) => sharesBySymbol.get(sym) ?? 0,
+  )
+  const buyingPower = margin.accounts.reduce((n, a) => n + (a.buyingPower ?? 0), 0)
+  const coverRatio = assignmentCoverRatio(exposure.putAssignmentCash, buyingPower || null)
+
+  const checks = buildChecks({
+    ladderRows,
+    nakedCalls,
+    margin,
+    feedAgeSec,
+    cushionTightPct,
+    coverRatio,
+  })
+
+  return {
+    ladderRows,
+    checks,
+    margin,
+    exposure,
+    coverRatio,
+    anyFiring: checks.some((c) => c.tone !== 'ok'),
+  }
+}
+
+/** Above this, a full assignment eats most of what the account can reach. */
+export const ASSIGN_HEAVY = 0.5
+export const ASSIGN_CRITICAL = 1
+
+/**
+ * The checks, as a pure function of what was measured.
+ *
+ * Split out so the thresholds can be tested directly: this is the code that
+ * decides whether the page says "nothing is wrong", and that sentence has to be
+ * earned rather than defaulted to.
+ */
+export function buildChecks({
+  ladderRows,
+  nakedCalls,
+  margin,
+  feedAgeSec,
+  cushionTightPct,
+  coverRatio,
+}: {
+  ladderRows: readonly ExpiryLadderRow[]
+  nakedCalls: number
+  margin: MarginRollup
+  feedAgeSec: number | null
+  cushionTightPct: number
+  /** Assignment cash / buying power. Null when buying power is unknown. */
+  coverRatio?: number | null
+}): AlarmCheck[] {
+  let itm = 0
+  let unpriced = 0
+  let nearShorts = 0
+  let zeroDteShorts = 0
+  let pastShorts = 0
+  let tightest: number | null = null
+
+  for (const r of ladderRows) {
+    itm += r.itmShortCount
+    unpriced += r.unpricedShortCount
+    if (r.tightestCushionPct != null) {
+      if (tightest == null || r.tightestCushionPct < tightest) tightest = r.tightestCushionPct
+    }
+    if (r.dte == null) continue
+    if (r.dte < 0) pastShorts += r.shortContracts
+    else if (r.dte === 0) zeroDteShorts += r.shortContracts
+    if (r.dte >= 0 && r.dte <= NEAR_EXPIRY_DAYS) nearShorts += r.shortContracts
+  }
+
+  const checks: AlarmCheck[] = [
+    {
+      id: 'itm',
+      label: 'ITM short',
+      value: String(itm),
+      tone: itm > 0 ? 'danger' : 'ok',
+      detail:
+        itm > 0
+          ? `${itm} short leg${itm === 1 ? '' : 's'} past its strike — assignable tonight.`
+          : 'No short leg is past its strike.',
+      target: 'ladder',
+    },
+    {
+      id: 'cushion',
+      label: 'Tightest',
+      value: tightest == null ? 'n/a' : pct1(tightest),
+      tone:
+        tightest == null
+          ? 'warn'
+          : cushionBand(tightest, cushionTightPct) === 'breached'
+            ? 'danger'
+            : cushionBand(tightest, cushionTightPct) === 'tight'
+              ? 'warn'
+              : 'ok',
+      detail:
+        tightest == null
+          ? 'No short leg could be priced, so there is no cushion to report — not a clean reading.'
+          : `Closest any short strike is to being breached. Warning line ${pct1(cushionTightPct)}.`,
+      target: 'ladder',
+    },
+    {
+      id: 'expiring',
+      label: zeroDteShorts > 0 ? '0DTE' : `≤${NEAR_EXPIRY_DAYS}d`,
+      value: zeroDteShorts > 0 ? String(zeroDteShorts) : String(nearShorts),
+      tone: zeroDteShorts > 0 ? 'danger' : nearShorts > 0 ? 'warn' : 'ok',
+      detail:
+        zeroDteShorts > 0
+          ? `${zeroDteShorts} short contract${zeroDteShorts === 1 ? '' : 's'} expiring today.`
+          : nearShorts > 0
+            ? `${nearShorts} short contract${nearShorts === 1 ? '' : 's'} expiring within ${NEAR_EXPIRY_DAYS} days.`
+            : `Nothing short expires within ${NEAR_EXPIRY_DAYS} days.`,
+      target: 'ladder',
+    },
+    {
+      id: 'naked',
+      label: 'Naked C',
+      value: String(nakedCalls),
+      tone: nakedCalls > 0 ? 'danger' : 'ok',
+      detail:
+        nakedCalls > 0
+          ? `${nakedCalls} short call contract${nakedCalls === 1 ? '' : 's'} with no stock or long call behind them — the loss is unbounded.`
+          : 'Every short call is covered by stock or a long call.',
+      target: 'capital',
+    },
+    {
+      id: 'margin',
+      label: 'Margin',
+      value: margin.pressure == null ? 'n/a' : `${(margin.pressure * 100).toFixed(0)}%`,
+      tone:
+        margin.pressure == null
+          ? 'warn'
+          : marginBand(margin.pressure) === 'critical'
+            ? 'danger'
+            : marginBand(margin.pressure) === 'heavy'
+              ? 'warn'
+              : 'ok',
+      detail:
+        margin.pressure == null
+          ? 'The broker did not report a cushion for any funded account.'
+          : `1 − the broker's own Cushion. At 100% excess liquidity is gone and it starts closing positions.` +
+            (margin.tightest?.accountId
+              ? ` Most loaded: ${margin.tightest.accountId} at ${((margin.tightest.pressure ?? 0) * 100).toFixed(0)}%.`
+              : ''),
+      target: 'coverage',
+    },
+  ]
+
+  if (coverRatio != null) {
+    checks.push({
+      id: 'assign',
+      label: 'If assigned',
+      value: `${(coverRatio * 100).toFixed(0)}%`,
+      tone:
+        coverRatio >= ASSIGN_CRITICAL ? 'danger' : coverRatio >= ASSIGN_HEAVY ? 'warn' : 'ok',
+      detail:
+        `Cash to take assignment on every short put, as a share of buying power. ` +
+        `At 100% a full assignment cannot be funded without selling something.`,
+      target: 'coverage',
+    })
+  }
+
+  // Data-quality checks come last: they qualify everything above them, and a
+  // reading of "nothing is wrong" taken over missing data is the failure this
+  // whole strip exists to prevent.
+  if (unpriced > 0) {
+    checks.push({
+      id: 'unpriced',
+      label: 'Unpriced',
+      value: String(unpriced),
+      tone: 'warn',
+      detail: `${unpriced} short leg${unpriced === 1 ? '' : 's'} with no underlying quote — excluded from ITM and cushion above, not known to be safe.`,
+      target: 'ladder',
+    })
+  }
+  if (pastShorts > 0) {
+    checks.push({
+      id: 'past',
+      label: 'Past expiry',
+      value: String(pastShorts),
+      tone: 'warn',
+      detail: `${pastShorts} short contract${pastShorts === 1 ? '' : 's'} still open past their expiry date.`,
+      target: 'ladder',
+    })
+  }
+  if (feedAgeSec == null || feedAgeSec > STALE_FEED_SEC) {
+    checks.push({
+      id: 'feed',
+      label: 'Quotes',
+      value: feedAgeSec == null ? 'n/a' : `${feedAgeSec}s`,
+      tone: 'warn',
+      detail:
+        feedAgeSec == null
+          ? 'No quote carried a timestamp — the age of everything priced above is unknown.'
+          : `The quote path last wrote ${feedAgeSec}s ago. This is the gateway cache, not proof any single price is current.`,
+      target: null,
+    })
+  }
+
+  return checks
+}

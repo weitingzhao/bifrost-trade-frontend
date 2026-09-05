@@ -44,11 +44,20 @@ import {
 } from '@/utils/instanceSheetExec'
 import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
 import { instancePanel } from './instancePanelClasses'
+import {
+  AT_EXPIRY_TITLE,
+  CUSHION_TITLE,
+  DTE_TITLE,
+  InstanceCushionCell,
+  InstanceDteCell,
+  InstancePayoffCell,
+} from './InstanceRiskCells'
+import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
 
-const COL_SPAN = 11
+const COL_SPAN = 10
 
 interface Props {
   groups: InstanceAllGroup[]
@@ -124,6 +133,7 @@ export function InstanceTab({
   canonicalOptContractKeys,
 }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
+  const { pct: cushionTightPct } = useCushionThreshold()
 
   const finalMap = useMemo(() => buildLiveOptExecutionMap(executionsFinal), [executionsFinal])
   const twsMap = useMemo(() => buildLiveOptExecutionMap(executionsTws), [executionsTws])
@@ -166,35 +176,42 @@ export function InstanceTab({
   const totalOptPnl = groups.reduce((s, g) => s + g.options_unrealized_pnl, 0)
   const oppMap = new Map(opportunities.map((o) => [o.strategy_opportunity_id, o]))
 
+  /** Spot for an option leg, via its underlying root — the same source the
+   *  expanded sub-table compares strikes against. */
+  const spotOfLeg = (leg: OpenOptionPosition): number | null =>
+    quotesBySymbol[extractUnderlyingRootSymbol(leg.symbol)]?.last ?? null
+
   return (
     <div className={instancePanel.tableWrap}>
-      <DenseDataTable tableClassName="min-w-[68rem] table-fixed">
+      <DenseDataTable tableClassName="min-w-[66.5rem] table-fixed">
         <colgroup>
           <col style={{ width: '2rem' }} />
-          <col style={{ width: '17rem' }} />
-          <col style={{ width: '9.5rem' }} />
+          <col style={{ width: '14rem' }} />
           <col style={{ width: '7.5rem' }} />
-          <col style={{ width: '6.75rem' }} />
-          <col style={{ width: '8rem' }} />
-          <col style={{ width: '6.5rem' }} />
-          <col style={{ width: '7.5rem' }} />
-          <col style={{ width: '7.5rem' }} />
-          <col style={{ width: '8.25rem' }} />
+          <col style={{ width: '6rem' }} />
+          <col style={{ width: '4.75rem' }} />
           <col style={{ width: '5.75rem' }} />
+          <col style={{ width: '5.5rem' }} />
+          <col style={{ width: '5rem' }} />
+          <col style={{ width: '6.5rem' }} />
+          <col style={{ width: '9.5rem' }} />
         </colgroup>
         <DenseTableHeader>
           <DenseTableHeadRow>
             <DenseTableHead className="w-7" aria-label="Expand" />
-            <DenseTableHead title="Opportunity">Opp</DenseTableHead>
+            <DenseTableHead title="Opportunity · strategy instance · when it was opened">
+              Opp
+            </DenseTableHead>
             <DenseTableHead>Contract Type</DenseTableHead>
             <DenseTableHead>Symbols</DenseTableHead>
-            <DenseTableHead>Opened</DenseTableHead>
+            <DenseTableHead title={DTE_TITLE}>DTE</DenseTableHead>
+            <DenseTableHead title={CUSHION_TITLE}>Moneyness</DenseTableHead>
             <DenseTableHead title={EXEC_QTY_TITLE}>Exec Qty</DenseTableHead>
             <DenseTableHead>Underlying</DenseTableHead>
             <DenseTableHead align="right">Opt PNL</DenseTableHead>
-            <DenseTableHead align="right">Max Gain</DenseTableHead>
-            <DenseTableHead align="right">Max Loss</DenseTableHead>
-            <DenseTableHead>Risk</DenseTableHead>
+            <DenseTableHead align="right" title={AT_EXPIRY_TITLE}>
+              Gain / Loss @exp
+            </DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
@@ -231,8 +248,25 @@ export function InstanceTab({
             const defaultStockAcct = instanceDefaultAccountForStockInspect(group)
             const optExecQty = formatInstanceOptExecQtyCell(group, finalMap, twsMap)
             const optN = group.options.length
+            // Opened is instance metadata, so it rides under the instance label
+            // rather than paying for a column of its own.
+            const openedMeta =
+              group.strategy_instance_opened_at_epoch != null ? (
+                <span className="text-dense-caption text-muted-foreground">
+                  {fmtDate(group.strategy_instance_opened_at_epoch)}
+                  {fmtDaysAgo(group.strategy_instance_opened_at_epoch)
+                    ? ` · ${fmtDaysAgo(group.strategy_instance_opened_at_epoch)}`
+                    : ''}
+                </span>
+              ) : null
             const rp = id != null ? (riskProfiles.get(id) ?? null) : null
             const rl = rp ? formatRiskDisplayLabels(rp) : null
+            // A breakeven is a price on one underlying. With two underlyings in
+            // the instance there is no single spot to measure it against.
+            const beSpot =
+              fromOptions.length === 1
+                ? (quotesBySymbol[fromOptions[0] as string]?.last ?? null)
+                : null
 
             const mainRow = (
               <DenseTableRow
@@ -283,6 +317,7 @@ export function InstanceTab({
                           {instLabel}
                         </DenseOptionCategoryLabel>
                       )}
+                      {openedMeta}
                     </div>
                   ) : (
                     <span className="inline-flex flex-wrap gap-1">
@@ -347,18 +382,14 @@ export function InstanceTab({
                   )}
                 </DenseTableCell>
                 <DenseTableCell className="text-xs">
-                  {group.strategy_instance_opened_at_epoch != null ? (
-                    <>
-                      <div>{fmtDate(group.strategy_instance_opened_at_epoch)}</div>
-                      {fmtDaysAgo(group.strategy_instance_opened_at_epoch) && (
-                        <div className="text-dense-caption text-muted-foreground">
-                          {fmtDaysAgo(group.strategy_instance_opened_at_epoch)}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    '—'
-                  )}
+                  <InstanceDteCell legs={group.options} />
+                </DenseTableCell>
+                <DenseTableCell className="text-xs">
+                  <InstanceCushionCell
+                    legs={group.options}
+                    spotOf={spotOfLeg}
+                    tightPct={cushionTightPct}
+                  />
                 </DenseTableCell>
                 <DenseTableCell
                   className={cn(
@@ -380,39 +411,16 @@ export function InstanceTab({
                   )}
                 </DenseTableCell>
                 <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
-                  {rl ? (
-                    <InlinePnl value={rp?.max_gain}>
-                      <span>{rl.gainLabel}</span>
-                    </InlinePnl>
-                  ) : (
-                    '—'
-                  )}
-                </DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
-                  {rl ? (
-                    <span
-                      className={
-                        rl.lossLabel === 'Unlimited'
-                          ? 'text-loss'
-                          : undefined
-                      }
-                    >
-                      <InlinePnl value={rp?.max_loss}>
-                        <span>{rl.lossLabel}</span>
-                      </InlinePnl>
-                    </span>
-                  ) : (
-                    '—'
-                  )}
-                </DenseTableCell>
-                <DenseTableCell className="text-xs">
-                  {rl ? (
-                    <DenseTag
-                      variant={rp!.risk_type === 'defined' ? 'success' : 'danger'}
-                      size="cell"
-                    >
-                      {rl.riskBadge}
-                    </DenseTag>
+                  {rp && rl ? (
+                    <InstancePayoffCell
+                      gainLabel={rl.gainLabel}
+                      lossLabel={rl.lossLabel}
+                      maxGain={rp.max_gain}
+                      maxLoss={rp.max_loss}
+                      unlimited={rp.risk_type === 'unlimited'}
+                      prices={rp.breakeven_prices}
+                      spot={beSpot}
+                    />
                   ) : (
                     '—'
                   )}
@@ -461,13 +469,13 @@ export function InstanceTab({
             return detailRow ? [mainRow, detailRow] : [mainRow]
           })}
           <GrandTotalRow
-            labelColSpan={7}
+            labelColSpan={8}
             label={`Total (${groups.length} ${groups.length === 1 ? 'strategy' : 'strategies'})`}
           >
             <DenseTableCell className={cn(denseTableNumCell, 'text-xs font-semibold')}>
               <InlinePnl value={totalOptPnl}>{fmtUsd(totalOptPnl)}</InlinePnl>
             </DenseTableCell>
-            <DenseTableCell colSpan={3} />
+            <DenseTableCell colSpan={1} />
           </GrandTotalRow>
         </DenseTableBody>
       </DenseDataTable>

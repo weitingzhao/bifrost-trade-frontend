@@ -9,10 +9,21 @@ import { UnderlyingCategoryCard } from './charts/UnderlyingCategoryCard'
 import { OptionChartsCard } from './charts/OptionChartsCard'
 import { SegmentControl as BubbleSwitch, DEFAULT_SEGMENT_SIZE as POSITIONS_BUBBLE_SIZE } from '@/components/data-display'
 import styles from './PositionsChartsSection.module.css'
+import {
+  CollapsibleChevron,
+  CollapsibleGroup,
+  CollapsibleGroupBody,
+  CollapsibleGroupHeader,
+  CollapsibleGroupStats,
+  CollapsibleGroupTitle,
+} from '@/components/data-display'
 
 export type OpenTab = 'instance' | 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 
 interface Props {
+  /** Controlled and persisted by the page — see usePositionsSections. */
+  open: boolean
+  onToggle: () => void
   accounts: IbAccountSnapshot[]
   allStocks: LivePositionRow[]
   hostAccountId: string
@@ -30,6 +41,8 @@ interface Props {
 }
 
 export function PositionsChartsSection({
+  open,
+  onToggle,
   accounts,
   allStocks,
   hostAccountId,
@@ -122,6 +135,18 @@ export function PositionsChartsSection({
   if (!hasAnyData) return null
 
   return (
+    <CollapsibleGroup>
+      <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
+        <CollapsibleChevron expanded={open} />
+        <CollapsibleGroupTitle>Composition</CollapsibleGroupTitle>
+        <CollapsibleGroupStats>
+          <span className="text-xs text-muted-foreground">
+            Asset mix · underlying category · option backing — how capital is allocated
+          </span>
+        </CollapsibleGroupStats>
+      </CollapsibleGroupHeader>
+      {!open ? null : (
+      <CollapsibleGroupBody>
     <section className={styles.section} aria-label="Portfolio charts">
       <div className={styles.row}>
         <div className={styles.col}>
@@ -184,5 +209,8 @@ export function PositionsChartsSection({
         </div>
       </div>
     </section>
+      </CollapsibleGroupBody>
+      )}
+    </CollapsibleGroup>
   )
 }

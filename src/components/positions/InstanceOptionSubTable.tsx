@@ -38,18 +38,26 @@ import {
 } from '@/utils/execAttributionSync'
 import { OpenOptionExecDetailRow, OpenOptionExecDetailTable } from './OpenOptionExecCompactLine'
 
-const OPTION_COL_SPAN = 16
+/** Must equal the header count — an execution detail row that spans one column
+ *  short pulls the table's last column out from under its own header. */
+const OPTION_COL_SPAN = 17
 import type { OpenOptionPosition, Execution, InstanceAllGroup } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import type { DetailViewMode } from './PositionsOpenControls'
 import { scopedExecListsForPosition } from '@/utils/instanceSheetExec'
 import { instancePanel } from './instancePanelClasses'
+import { LEG_GREEKS_TITLE, OptionLegGreeksCell, localDayStamp } from './OptionLegGreeksCell'
+import { buildOptionTicker } from '@/utils/optionTicker'
+import { extractUnderlyingRootSymbol } from './linkExecutionModalHelpers'
+import type { PositionGreeks } from '@/hooks/useOptionGreeks'
 
 interface Props {
   group: Pick<InstanceAllGroup, 'strategy_instance_id' | 'strategy_opportunity_id'>
   options: OpenOptionPosition[]
   quotesBySymbol: Record<string, QuoteItem>
   quotesByCk: Record<string, QuoteItem>
+  /** Vendor Greeks keyed by the warehouse ticker — see useOptionGreeks. */
+  greeksByTicker: ReadonlyMap<string, PositionGreeks>
   executionsFinal: Execution[]
   executionsTws: Execution[]
   finalMap: Map<string, Execution[]>
@@ -76,6 +84,7 @@ export function InstanceOptionSubTable({
   options,
   quotesBySymbol,
   quotesByCk,
+  greeksByTicker,
   finalMap,
   twsMap,
   detailViewMode = 'accordion',
@@ -87,6 +96,18 @@ export function InstanceOptionSubTable({
   onOpenStrategy,
   canonicalOptContractKeys = new Set(),
 }: Props) {
+  const todayStamp = localDayStamp()
+  /** Positions carry the parts; the warehouse keys rows by one ticker string. */
+  const legGreeks = (pos: OpenOptionPosition): PositionGreeks | undefined => {
+    const ticker = buildOptionTicker({
+      underlying: extractUnderlyingRootSymbol(pos.symbol),
+      expiry: pos.expiry,
+      strike: pos.strike,
+      right: pos.right,
+    })
+    return ticker ? greeksByTicker.get(ticker) : undefined
+  }
+
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
   const [syncingExecId, setSyncingExecId] = useState<number | null>(null)
 
@@ -200,6 +221,9 @@ export function InstanceOptionSubTable({
               <DenseTableHead align="right">@</DenseTableHead>
               <DenseTableHead align="right">Value</DenseTableHead>
               <DenseTableHead title="Option live bid / mid / ask">Opt Quote</DenseTableHead>
+              <DenseTableHead align="right" title={LEG_GREEKS_TITLE}>
+                IV · θ/day
+              </DenseTableHead>
               <DenseTableHead>Time</DenseTableHead>
               <DenseTableHead align="right">UN PNL</DenseTableHead>
               <DenseTableHead>Pool</DenseTableHead>
@@ -348,6 +372,12 @@ export function InstanceOptionSubTable({
                     ) : (
                       '—'
                     )}
+                  </DenseTableCell>
+                  <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
+                    <OptionLegGreeksCell
+                      greeks={legGreeks(pos)}
+                      today={todayStamp}
+                    />
                   </DenseTableCell>
                   <DenseTableCell>
                     {latestExecTime != null ? (

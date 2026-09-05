@@ -578,6 +578,7 @@ export default function PositionsPage() {
                   attributions={attributions}
                   instanceStructureById={instanceStructureById}
                   portfolioAccounts={accounts}
+                  greeksByTicker={greeks.byTicker}
                   detailViewMode={detailViewMode}
                   onEditExec={requestEditExec}
                   onLinkExec={openLinkExec}

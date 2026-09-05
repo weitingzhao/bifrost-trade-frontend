@@ -53,6 +53,7 @@ import {
   InstancePayoffCell,
 } from './InstanceRiskCells'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
+import type { PositionGreeks } from '@/hooks/useOptionGreeks'
 
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
@@ -73,6 +74,8 @@ interface Props {
   attributions: PositionInstanceAttribution[]
   instanceStructureById: ReadonlyMap<number, number | null | undefined>
   portfolioAccounts: IbAccountSnapshot[] | undefined
+  /** Vendor Greeks keyed by warehouse ticker, for the expanded per-leg row. */
+  greeksByTicker: ReadonlyMap<string, PositionGreeks>
   detailViewMode?: DetailViewMode
   onEditExec?: (exec: Execution) => void
   onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
@@ -122,6 +125,7 @@ export function InstanceTab({
   attributions,
   instanceStructureById,
   portfolioAccounts,
+  greeksByTicker,
   detailViewMode = 'accordion',
   onEditExec,
   onLinkExec,
@@ -440,6 +444,7 @@ export function InstanceTab({
                       options={group.options}
                       quotesBySymbol={quotesBySymbol}
                       quotesByCk={quotesByCk}
+                      greeksByTicker={greeksByTicker}
                       executionsFinal={executionsFinal}
                       executionsTws={executionsTws}
                       finalMap={finalMap}

@@ -10,7 +10,12 @@ export function isLedgerCashLikeCategory(category: string): boolean {
   const n = category.trim().toLowerCase()
   if (!n || n === '—') return false
   if (isLedgerFixedIncomeCategory(category)) return false
+  // The account snapshot labels SGOV-type holdings with the bare word "Cash"
+  // (DEV, 2026-09-05: STK categories are 'Option leg' / 'Fix Income' / 'SEPA' /
+  // 'Cash'). Matching only the longer spellings put SGOV in the Stocks bucket,
+  // where it counted as call collateral and was missing from put cover.
   return (
+    n === 'cash' ||
     n.includes('cash like') ||
     n.includes('cash-like') ||
     n.includes('cash equivalent') ||

@@ -319,7 +319,9 @@ export function deriveBookVsBase(input: {
             : putsCashCovered != null && putsCashCovered >= 1
               ? 'Covers every put obligation in cash'
               : `Covers ${Math.round((putsCashCovered ?? 0) * 100)}% of put obligations — the rest sits on margin`,
-        used: putsCashCovered,
+        // "In use" is the share of this layer the puts would take, not the
+        // share of the puts this layer covers — the Stocks row reads the same way.
+        used: cashLike > 0 ? Math.min(1, putCash / cashLike) : null,
         backingValue: Math.min(cashLike, putCash),
         freeValue: Math.max(0, cashLike - putCash),
       },

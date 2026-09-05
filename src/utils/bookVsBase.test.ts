@@ -196,6 +196,28 @@ describe('deriveBookVsBase', () => {
     expect(layers[2].note).toMatch(/Covers \d+% of put obligations/)
   })
 
+  it('a layer\'s "in use" is the share of the layer taken, on both rows', () => {
+    const layers = book().base
+    // Stocks: 2,400 of 4,000 shares back calls.
+    expect(layers[0].used).toBeCloseTo(2400 / 4000, 6)
+    // Cash: 72,676.80 against 131,500 of puts — all of it is spoken for, so 100%…
+    expect(layers[2].used).toBe(1)
+    // …and when cash exceeds the obligation, in-use is the fraction taken, not 100%.
+    const rich = deriveBookVsBase({
+      margin: margin(0.1, 500_000),
+      exposure: exposure({ putAssignmentCash: 50_000, shortPutContracts: 2 }),
+      risk: quiet,
+      thetaPerDay: null,
+      coreStocks: [],
+      incomeEtfs: [],
+      cashLike: [stk('SGOV', 2000, 100, 'Cash')],
+      accounts: [],
+    })
+    expect(rich.base[2].used).toBeCloseTo(0.25, 6)
+    expect(rich.base[2].note).toBe('Covers every put obligation in cash')
+    expect(rich.backing.putsCashCovered).toBe(1)
+  })
+
   it('a book with no puts has no cash coverage to report', () => {
     const b = deriveBookVsBase({
       margin: margin(0.1, 100_000),

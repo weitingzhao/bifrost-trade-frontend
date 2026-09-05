@@ -72,7 +72,7 @@ export const STRESS_METHODOLOGY_SECTIONS: { title: string; body: string }[] = [
   {
     title: 'Spot shock',
     body:
-      'For each scenario, the stressed spot is S′ = S × (1 + spot shock) with fixed shocks −10%, −5%, +5%, +10%, where S is the current underlying mark used for this symbol.',
+      'For each scenario, the stressed spot is S′ = S × (1 + spot shock) with fixed shocks −15%, −10%, −5%, 0%, +5%, +10%, +15% — the range portfolio margin stresses equities over — where S is the current underlying mark used for this symbol. The 0% row is the baseline: Δ P&L is each scenario measured against it, while P&L @exp is the payoff against cost basis at that price.',
   },
   {
     title: 'Stock P&L',

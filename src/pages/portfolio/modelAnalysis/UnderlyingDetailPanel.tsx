@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils'
 import type { UnderlyingEntry } from '@/types/modelAnalysis'
 import { fmtUsd } from '@/lib/format'
 import {
@@ -197,7 +198,12 @@ export function UnderlyingDetailPanel({ entry: u }: Props) {
                 <DenseTableHead>IV Δ</DenseTableHead>
                 <DenseTableHead align="right">Opt P&amp;L</DenseTableHead>
                 <DenseTableHead align="right">Stock P&amp;L</DenseTableHead>
-                <DenseTableHead align="right">Total</DenseTableHead>
+                <DenseTableHead align="right" title="What the shock itself costs — P&L relative to the unshocked scenario.">
+                  Δ P&amp;L
+                </DenseTableHead>
+                <DenseTableHead align="right" title="Total P&L against cost basis at that price. A payoff figure, not a stress reading.">
+                  P&amp;L @exp
+                </DenseTableHead>
                 <DenseTableHead>Method</DenseTableHead>
               </DenseTableHeadRow>
             </DenseTableHeader>
@@ -209,7 +215,16 @@ export function UnderlyingDetailPanel({ entry: u }: Props) {
                   <DenseTableCell className={denseTableNumCell}>{fmtUsd(sc.options_pnl)}</DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>{fmtUsd(sc.stock_pnl)}</DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
-                    <InlinePnl value={sc.total_pnl}>{fmtUsd(sc.total_pnl)}</InlinePnl>
+                    {sc.pnl_change != null ? (
+                      <InlinePnl value={sc.pnl_change}>{fmtUsd(sc.pnl_change)}</InlinePnl>
+                    ) : (
+                      <span className="text-muted-foreground" title="This response predates bifrost-trade-core 0.19.0, which added the unshocked baseline.">
+                        —
+                      </span>
+                    )}
+                  </DenseTableCell>
+                  <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
+                    {fmtUsd(sc.total_pnl)}
                   </DenseTableCell>
                   <DenseTableCell>
                     <code className={modelAnalysisMethodCodeClass}>{sc.method ?? '—'}</code>

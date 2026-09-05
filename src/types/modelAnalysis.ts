@@ -10,7 +10,17 @@ export interface StressScenario {
   new_spot?: number
   options_pnl?: number
   stock_pnl?: number
+  /** P&L against cost basis at the shocked price — a payoff, not a stress reading. */
   total_pnl: number
+  /**
+   * P&L relative to the unshocked scenario: what the shock itself costs.
+   *
+   * Added in bifrost-trade-core 0.19.0. Absent from older responses, which is
+   * why it is optional — a book of long-held stock prints a large positive
+   * `total_pnl` under a 15% drop, and reading that as the stress result is the
+   * mistake this field exists to remove.
+   */
+  pnl_change?: number
   method?: string
 }
 

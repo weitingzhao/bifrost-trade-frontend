@@ -178,7 +178,12 @@ export function AccountStressSection({ data }: AccountStressProps) {
               <DenseTableHeadRow>
                 <DenseTableHead>Spot shock</DenseTableHead>
                 <DenseTableHead>IV shock</DenseTableHead>
-                <DenseTableHead align="right">P&amp;L</DenseTableHead>
+                <DenseTableHead align="right" title="What the shock itself costs — P&L relative to the unshocked scenario.">
+                  Δ P&amp;L
+                </DenseTableHead>
+                <DenseTableHead align="right" title="Total P&L against cost basis at that price. A payoff figure, not a stress reading — a long-held position stays profitable under a large drop.">
+                  P&amp;L @exp
+                </DenseTableHead>
               </DenseTableHeadRow>
             </DenseTableHeader>
             <DenseTableBody>
@@ -187,7 +192,16 @@ export function AccountStressSection({ data }: AccountStressProps) {
                   <DenseTableCell>{fmtSpotShockLabel(sc.spot_shock)}</DenseTableCell>
                   <DenseTableCell>{fmtIvShockLabel(sc.iv_shock)}</DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
-                    <InlinePnl value={sc.total_pnl}>{fmtUsd(sc.total_pnl)}</InlinePnl>
+                    {sc.pnl_change != null ? (
+                      <InlinePnl value={sc.pnl_change}>{fmtUsd(sc.pnl_change)}</InlinePnl>
+                    ) : (
+                      <span className="text-muted-foreground" title="This response predates bifrost-trade-core 0.19.0, which added the unshocked baseline.">
+                        —
+                      </span>
+                    )}
+                  </DenseTableCell>
+                  <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
+                    {fmtUsd(sc.total_pnl)}
                   </DenseTableCell>
                 </DenseTableRow>
               ))}

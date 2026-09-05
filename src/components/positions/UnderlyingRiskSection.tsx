@@ -50,10 +50,10 @@ const GREEKS_TOOLTIP =
   'Position theta, vega and delta from the market-data warehouse (Polygon), summed across the option legs held. Theta is dollars a day: positive means the book earns time decay. These are end-of-day values standing beside live prices — the date they were captured is printed, and a * means at least one leg had no vendor row and is missing from the totals.'
 
 const CAR_TOOLTIP =
-  'Capital at risk: what this underlying can actually cost you, from the payoff model. ∞ marks a leg whose loss is unbounded, which makes the return on it meaningless.'
+  'Capital at risk: the most this underlying can cost you, from the payoff model — capped at the position\'s worst case, so on appreciated stock it is well below what the position ties up. The returns beside it divide by that committed capital instead. ∞ marks a leg whose loss is unbounded.'
 
 const ROC_TOOLTIP =
-  'Annualised return on capital at risk. This is what makes two positions comparable — $500 on $5k for a week is not $500 on $20k for two months.'
+  'Annualised return, measured forward over the capital the position commits. Static is the premium alone — kept if nothing is assigned, which is the base case a premium seller lives on. If-called is every short call assigned at its strike, from today\'s price. Both divide by what closing the position would free up, not by what the stock once cost.'
 
 interface Row {
   accountId: string
@@ -201,7 +201,7 @@ export function UnderlyingRiskSection({
                     CAR
                   </DenseTableHead>
                   <DenseTableHead align="right" title={ROC_TOOLTIP}>
-                    Ann. ROC
+                    Static / if-called
                   </DenseTableHead>
                   <DenseTableHead align="right" title="Position delta and its dollar equivalent.">
                     Δ / Δ$
@@ -318,8 +318,13 @@ function UnderlyingRow({
         )}
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
-        <span className={pnlColorClass(entry.annualized_return_on_car)}>
-          {fmtRatioAsPct(entry.annualized_return_on_car)}
+        <span className="flex flex-col items-end leading-tight" title={ROC_TOOLTIP}>
+          <span className={pnlColorClass(entry.annualized_static_return ?? null)}>
+            {fmtRatioAsPct(entry.annualized_static_return ?? null)}
+          </span>
+          <span className="text-dense-caption text-muted-foreground">
+            {fmtRatioAsPct(entry.annualized_return_on_car)} called
+          </span>
         </span>
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>

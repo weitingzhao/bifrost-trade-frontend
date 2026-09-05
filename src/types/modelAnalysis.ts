@@ -73,7 +73,14 @@ export interface UnderlyingEntry {
   max_gain_sample_scenario: ScenarioBreakdown | null
   max_loss_scenario: ScenarioBreakdown | null
   capital_at_risk: CarInfo
+  /** If-called: every short call assigned at its strike, from today's price. */
   annualized_return_on_car: number | null
+  /** The premium alone, kept if nothing is assigned — the seller's base case. */
+  annualized_static_return?: number | null
+  /** What closing the position would free up. Not capital_at_risk, which is capped at what it can lose. */
+  capital_committed?: number | null
+  /** Shares the payoff, CAR and their ratio describe — not the whole holding. */
+  covered_shares_modeled?: number | null
   annualized_loss_on_car: number | null
   greeks: GreeksInfo
   stress: { available: boolean; iv_stress_available?: boolean; scenarios?: StressScenario[] }

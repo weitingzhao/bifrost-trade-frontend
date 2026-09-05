@@ -37,6 +37,12 @@ import {
   type ExposureSummary,
 } from '@/utils/assignmentExposure'
 import type { InstanceAllGroup, LivePositionRow } from '@/types/positions'
+import {
+  deriveBookVsBase,
+  riskCountsFromLadder,
+  type BookVsBase,
+  type RiskCounts,
+} from '@/utils/bookVsBase'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
 
@@ -75,6 +81,10 @@ export interface PositionsAlarm {
   coverRatio: number | null
   /** True when anything is in warn or danger — the strip's own reason to exist. */
   anyFiring: boolean
+  /** The ladder collapsed to the counts the risk gauge grades on. */
+  riskCounts: RiskCounts
+  /** The four gauges, demand against supply, and the base by role. */
+  book: BookVsBase
 }
 
 export function usePositionsAlarm({
@@ -82,6 +92,10 @@ export function usePositionsAlarm({
   quotesBySymbol,
   accounts,
   liveStocks,
+  coreStocks,
+  incomeEtfs,
+  cashLike,
+  thetaPerDay,
   modelAnalysisAccountIds,
   cushionTightPct,
 }: {
@@ -90,6 +104,12 @@ export function usePositionsAlarm({
   accounts: IbAccountSnapshot[]
   /** Stock rows in scope, for allocating shares against short calls. */
   liveStocks: LivePositionRow[]
+  /** The same stocks split by role, for the base layers. */
+  coreStocks: LivePositionRow[]
+  incomeEtfs: LivePositionRow[]
+  cashLike: LivePositionRow[]
+  /** Portfolio theta a day from the vendor Greeks; null while loading. */
+  thetaPerDay: number | null
   modelAnalysisAccountIds: string[]
   cushionTightPct: number
 }): PositionsAlarm {
@@ -143,13 +163,27 @@ export function usePositionsAlarm({
   const buyingPower = margin.accounts.reduce((n, a) => n + (a.buyingPower ?? 0), 0)
   const coverRatio = assignmentCoverRatio(exposure.putAssignmentCash, buyingPower || null)
 
+  const riskCounts = riskCountsFromLadder(ladderRows, NEAR_EXPIRY_DAYS)
+
   const checks = buildChecks({
+    riskCounts,
     ladderRows,
     nakedCalls,
     margin,
     feedAgeSec,
     cushionTightPct,
     coverRatio,
+  })
+
+  const book = deriveBookVsBase({
+    margin,
+    exposure,
+    risk: riskCounts,
+    thetaPerDay,
+    coreStocks,
+    incomeEtfs,
+    cashLike,
+    accounts,
   })
 
   return {
@@ -159,6 +193,8 @@ export function usePositionsAlarm({
     exposure,
     coverRatio,
     anyFiring: checks.some((c) => c.tone !== 'ok'),
+    riskCounts,
+    book,
   }
 }
 
@@ -174,6 +210,7 @@ export const ASSIGN_CRITICAL = 1
  * earned rather than defaulted to.
  */
 export function buildChecks({
+  riskCounts,
   ladderRows,
   nakedCalls,
   margin,
@@ -181,6 +218,8 @@ export function buildChecks({
   cushionTightPct,
   coverRatio,
 }: {
+  /** Pre-collapsed counts; pass them so the gauge and the checks cannot drift. */
+  riskCounts?: RiskCounts
   ladderRows: readonly ExpiryLadderRow[]
   nakedCalls: number
   margin: MarginRollup
@@ -189,24 +228,13 @@ export function buildChecks({
   /** Assignment cash / buying power. Null when buying power is unknown. */
   coverRatio?: number | null
 }): AlarmCheck[] {
-  let itm = 0
-  let unpriced = 0
-  let nearShorts = 0
-  let zeroDteShorts = 0
-  let pastShorts = 0
-  let tightest: number | null = null
-
-  for (const r of ladderRows) {
-    itm += r.itmShortCount
-    unpriced += r.unpricedShortCount
-    if (r.tightestCushionPct != null) {
-      if (tightest == null || r.tightestCushionPct < tightest) tightest = r.tightestCushionPct
-    }
-    if (r.dte == null) continue
-    if (r.dte < 0) pastShorts += r.shortContracts
-    else if (r.dte === 0) zeroDteShorts += r.shortContracts
-    if (r.dte >= 0 && r.dte <= NEAR_EXPIRY_DAYS) nearShorts += r.shortContracts
-  }
+  const c = riskCounts ?? riskCountsFromLadder(ladderRows, NEAR_EXPIRY_DAYS)
+  const itm = c.itm
+  const unpriced = c.unpriced
+  const nearShorts = c.near7d
+  const zeroDteShorts = c.zeroDte
+  const pastShorts = c.past
+  const tightest = c.tightest
 
   const checks: AlarmCheck[] = [
     {

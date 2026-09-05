@@ -48,7 +48,7 @@ const TIGHTEST_TOOLTIP =
 const LADDER_TOOLTIP =
   'Option legs from the instance table above, regrouped by expiry date. Follows the same filters. ITM counts short legs whose strike the underlying has already passed — the ones that can be assigned.'
 
-const COL_SPAN = 8
+const COL_SPAN_FULL = 8
 
 /** Past this, the quote path itself is suspect — the page polls every 8 seconds. */
 const STALE_FEED_SEC = 60
@@ -91,6 +91,10 @@ export function ExpiryLadderSection({
   }, [rows])
 
   if (rows.length === 0) return null
+
+  // With nothing priced, ITM and Tightest are a column of dashes each. The
+  // unpriced count already sits in the header; the columns step out.
+  const showPriced = rows.some((r) => r.tightestCushionPct != null || r.itmShortCount > 0)
 
   return (
     <CollapsibleGroup>
@@ -155,19 +159,23 @@ export function ExpiryLadderSection({
                   <DenseTableHead align="right" title="Long contracts expiring on this date.">
                     Long
                   </DenseTableHead>
-                  <DenseTableHead title="Short legs already past their strike — assignable.">
-                    ITM
-                  </DenseTableHead>
+                  {showPriced ? (
+                    <DenseTableHead title="Short legs already past their strike — assignable.">
+                      ITM
+                    </DenseTableHead>
+                  ) : null}
                   <DenseTableHead>Symbols</DenseTableHead>
                   <DenseTableHead align="right" title="Strategy instances with legs on this date.">
                     Inst
                   </DenseTableHead>
-                  <DenseTableHead align="right" title={TIGHTEST_TOOLTIP}>
-                    Tightest
-                  </DenseTableHead>
+                  {showPriced ? (
+                    <DenseTableHead align="right" title={TIGHTEST_TOOLTIP}>
+                      Tightest
+                    </DenseTableHead>
+                  ) : null}
                 </DenseTableHeadRow>
               </DenseTableHeader>
-              <DenseTableBody>{renderBuckets(rows, cushionTightPct)}</DenseTableBody>
+              <DenseTableBody>{renderBuckets(rows, cushionTightPct, showPriced)}</DenseTableBody>
             </DenseDataTable>
           </div>
         </CollapsibleGroupBody>
@@ -176,7 +184,8 @@ export function ExpiryLadderSection({
   )
 }
 
-function renderBuckets(rows: ExpiryLadderRow[], tightPct: number) {
+function renderBuckets(rows: ExpiryLadderRow[], tightPct: number, showPriced: boolean) {
+  const colSpan = showPriced ? COL_SPAN_FULL : COL_SPAN_FULL - 2
   const byBucket = new Map<ExpiryBucket, ExpiryLadderRow[]>()
   for (const r of rows) {
     const b = expiryBucket(r.dte)
@@ -193,7 +202,7 @@ function renderBuckets(rows: ExpiryLadderRow[], tightPct: number) {
     out.push(
       <GroupHeaderRow
         key={`bucket-${bucket}`}
-        colSpan={COL_SPAN}
+        colSpan={colSpan}
         label={
           <span className={cn(bucket === 'expired' && 'text-loss')}>
             {EXPIRY_BUCKET_LABEL[bucket]}
@@ -204,12 +213,21 @@ function renderBuckets(rows: ExpiryLadderRow[], tightPct: number) {
         }
       />,
     )
-    for (const r of bucketRows) out.push(<LadderRow key={r.expiry} row={r} tightPct={tightPct} />)
+    for (const r of bucketRows)
+      out.push(<LadderRow key={r.expiry} row={r} tightPct={tightPct} showPriced={showPriced} />)
   }
   return out
 }
 
-function LadderRow({ row, tightPct }: { row: ExpiryLadderRow; tightPct: number }) {
+function LadderRow({
+  row,
+  tightPct,
+  showPriced,
+}: {
+  row: ExpiryLadderRow
+  tightPct: number
+  showPriced: boolean
+}) {
   const urgent = row.dte != null && row.dte >= 0 && row.dte <= 7
   const past = row.dte != null && row.dte < 0
 
@@ -232,6 +250,7 @@ function LadderRow({ row, tightPct }: { row: ExpiryLadderRow; tightPct: number }
       <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
         {row.longContracts || '—'}
       </DenseTableCell>
+      {showPriced ? (
       <DenseTableCell className="text-xs">
         {row.itmShortCount > 0 ? (
           <DenseTag variant="danger" size="cell">
@@ -248,6 +267,7 @@ function LadderRow({ row, tightPct }: { row: ExpiryLadderRow; tightPct: number }
           <span className="text-muted-foreground">—</span>
         )}
       </DenseTableCell>
+      ) : null}
       <DenseTableCell className="text-xs">
         <span className="inline-flex flex-wrap gap-1">
           {row.symbols.map((sym) => (
@@ -260,6 +280,7 @@ function LadderRow({ row, tightPct }: { row: ExpiryLadderRow; tightPct: number }
       <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
         {row.instanceCount}
       </DenseTableCell>
+      {showPriced ? (
       <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
         {row.tightestCushionPct == null ? (
           <span className="text-muted-foreground">—</span>
@@ -278,6 +299,7 @@ function LadderRow({ row, tightPct }: { row: ExpiryLadderRow; tightPct: number }
           </span>
         )}
       </DenseTableCell>
+      ) : null}
     </DenseTableRow>
   )
 }

@@ -2,6 +2,7 @@ import type { IbAccountSnapshot, IbPositionRow } from '@/types/monitor'
 import type { LivePositionRow, StockCoverageItem } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import { assignColor, type DonutSegment } from '@/utils/donutChart'
+import type { BookVsBase } from '@/utils/bookVsBase'
 import { isLedgerCashLikeCategory, isLedgerFixedIncomeCategory, ibPositionMarketValue } from '@/utils/stockCategories'
 import { fmtUsd } from '@/utils/positions'
 
@@ -597,4 +598,24 @@ export function buildOptionStockMix(
     backingKeys,
     otherKeys,
   }
+}
+
+/**
+ * The base split by what it does for the option book — the segments behind
+ * BaseRoleCard. Same derivation the gauges grade on; the ring is its picture.
+ */
+export function baseRoleSegments(book: BookVsBase): ChartDonutSegment[] {
+  const stocks = book.base.find((l) => l.role === 'stocks')
+  const income = book.base.find((l) => l.role === 'income')
+  const cash = book.base.find((l) => l.role === 'cash')
+
+  const rows: Array<[string, number]> = [
+    ['Backing calls', stocks?.backingValue ?? 0],
+    ['Backing puts', cash?.backingValue ?? 0],
+    ['Free', (stocks?.freeValue ?? 0) + (cash?.freeValue ?? 0)],
+    ['Not option collateral', income?.marketValue ?? 0],
+  ]
+  return rows
+    .filter(([, v]) => v > 0)
+    .map(([label, value], i) => ({ label, value, color: assignColor(i) }))
 }

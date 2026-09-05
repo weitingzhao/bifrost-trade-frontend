@@ -53,6 +53,7 @@ import {
   InstancePayoffCell,
 } from './InstanceRiskCells'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
+import { compareInstanceRisk, summarizeCushion, summarizeExpiry } from '@/utils/positionsOptionRisk'
 import type { PositionGreeks } from '@/hooks/useOptionGreeks'
 
 const EXEC_QTY_TITLE =
@@ -185,6 +186,24 @@ export function InstanceTab({
   const spotOfLeg = (leg: OpenOptionPosition): number | null =>
     quotesBySymbol[extractUnderlyingRootSymbol(leg.symbol)]?.last ?? null
 
+  // Most dangerous first. The label order the groups arrive in put the row
+  // that could be assigned tonight wherever the alphabet left it.
+  const ranked = groups
+    .map((group) => ({
+      group,
+      cushion: summarizeCushion(group.options, spotOfLeg),
+      expiry: summarizeExpiry(group.options),
+    }))
+    .sort(compareInstanceRisk)
+    .map((r) => r.group)
+
+  // A column of n/a is not information. When no short leg could be priced the
+  // Moneyness column steps out and the unpriced count stays on the cockpit.
+  const showMoneyness = ranked.some(
+    (g) => summarizeCushion(g.options, spotOfLeg).cushionPct != null,
+  )
+  const colSpan = showMoneyness ? COL_SPAN : COL_SPAN - 1
+
   return (
     <div className={instancePanel.tableWrap}>
       <DenseDataTable tableClassName="min-w-[66.5rem] table-fixed">
@@ -194,7 +213,7 @@ export function InstanceTab({
           <col style={{ width: '7.5rem' }} />
           <col style={{ width: '6rem' }} />
           <col style={{ width: '4.75rem' }} />
-          <col style={{ width: '5.75rem' }} />
+          {showMoneyness ? <col style={{ width: '5.75rem' }} /> : null}
           <col style={{ width: '5.5rem' }} />
           <col style={{ width: '5rem' }} />
           <col style={{ width: '6.5rem' }} />
@@ -209,7 +228,9 @@ export function InstanceTab({
             <DenseTableHead>Contract Type</DenseTableHead>
             <DenseTableHead>Symbols</DenseTableHead>
             <DenseTableHead title={DTE_TITLE}>DTE</DenseTableHead>
-            <DenseTableHead title={CUSHION_TITLE}>Moneyness</DenseTableHead>
+            {showMoneyness ? (
+              <DenseTableHead title={CUSHION_TITLE}>Moneyness</DenseTableHead>
+            ) : null}
             <DenseTableHead title={EXEC_QTY_TITLE}>Exec Qty</DenseTableHead>
             <DenseTableHead>Underlying</DenseTableHead>
             <DenseTableHead align="right">Opt PNL</DenseTableHead>
@@ -219,7 +240,7 @@ export function InstanceTab({
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
-          {groups.flatMap((group) => {
+          {ranked.flatMap((group) => {
             const instKey = instanceGroupKey(group)
             const id = group.strategy_instance_id
             const isExpanded = expandedKeys.has(instKey)
@@ -321,7 +342,6 @@ export function InstanceTab({
                           {instLabel}
                         </DenseOptionCategoryLabel>
                       )}
-                      {openedMeta}
                     </div>
                   ) : (
                     <span className="inline-flex flex-wrap gap-1">
@@ -388,13 +408,15 @@ export function InstanceTab({
                 <DenseTableCell className="text-xs">
                   <InstanceDteCell legs={group.options} />
                 </DenseTableCell>
-                <DenseTableCell className="text-xs">
-                  <InstanceCushionCell
-                    legs={group.options}
-                    spotOf={spotOfLeg}
-                    tightPct={cushionTightPct}
-                  />
-                </DenseTableCell>
+                {showMoneyness ? (
+                  <DenseTableCell className="text-xs">
+                    <InstanceCushionCell
+                      legs={group.options}
+                      spotOf={spotOfLeg}
+                      tightPct={cushionTightPct}
+                    />
+                  </DenseTableCell>
+                ) : null}
                 <DenseTableCell
                   className={cn(
                     'font-mono text-xs text-muted-foreground',
@@ -437,8 +459,11 @@ export function InstanceTab({
                 key={`inst-detail-${instKey}`}
                 className={instancePanel.detailRow}
               >
-                <DenseTableCell colSpan={COL_SPAN} className={instancePanel.detailCell}>
+                <DenseTableCell colSpan={colSpan} className={instancePanel.detailCell}>
                   <div className={instancePanel.detailStack}>
+                    {openedMeta ? (
+                      <div className="px-2 text-dense-caption text-muted-foreground">Opened {openedMeta}</div>
+                    ) : null}
                     <InstanceOptionSubTable
                       group={group}
                       options={group.options}
@@ -474,7 +499,7 @@ export function InstanceTab({
             return detailRow ? [mainRow, detailRow] : [mainRow]
           })}
           <GrandTotalRow
-            labelColSpan={8}
+            labelColSpan={showMoneyness ? 8 : 7}
             label={`Total (${groups.length} ${groups.length === 1 ? 'strategy' : 'strategies'})`}
           >
             <DenseTableCell className={cn(denseTableNumCell, 'text-xs font-semibold')}>

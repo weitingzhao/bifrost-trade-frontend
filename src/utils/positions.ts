@@ -197,3 +197,9 @@ export function fmtSignedPct(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '—'
   return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`
 }
+
+/** Today in the local calendar, as the vendor stamps dates. */
+export function localDayStamp(now: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`
+}

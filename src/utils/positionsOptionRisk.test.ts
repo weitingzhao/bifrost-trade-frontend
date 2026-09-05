@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   buildExpiryLadder,
+  compareInstanceRisk,
   cushionBand,
   expiryBucket,
   normalizeRight,
@@ -273,5 +274,52 @@ describe('expiryBucket', () => {
     expect(expiryBucket(35)).toBe('this_month')
     expect(expiryBucket(36)).toBe('later')
     expect(expiryBucket(null)).toBe('later')
+  })
+})
+
+describe('compareInstanceRisk', () => {
+  const mk = (o: {
+    shorts?: number
+    itm?: number
+    cushion?: number | null
+    dte?: number | null
+  }) => ({
+    cushion: {
+      cushionPct: o.cushion === undefined ? 0.1 : o.cushion,
+      leg: null,
+      spot: null,
+      itmShortCount: o.itm ?? 0,
+      shortLegCount: o.shorts ?? 1,
+      unpricedShortCount: 0,
+    },
+    expiry: { dte: o.dte === undefined ? 30 : o.dte, expiry: null, expiryCount: 1 },
+  })
+
+  it('puts a breached short ahead of everything', () => {
+    const order = [mk({ cushion: 0.2 }), mk({ itm: 1, cushion: -0.05 })].sort(compareInstanceRisk)
+    expect(order[0]?.cushion.itmShortCount).toBe(1)
+  })
+
+  it('treats an unpriced short as more urgent than a comfortable one', () => {
+    const order = [mk({ cushion: 0.3 }), mk({ cushion: null })].sort(compareInstanceRisk)
+    expect(order[0]?.cushion.cushionPct).toBeNull()
+  })
+
+  it('orders priced shorts by tightest cushion, then nearest expiry', () => {
+    const order = [
+      mk({ cushion: 0.2, dte: 5 }),
+      mk({ cushion: 0.02, dte: 40 }),
+      mk({ cushion: 0.02, dte: 10 }),
+    ].sort(compareInstanceRisk)
+    expect(order.map((x) => [x.cushion.cushionPct, x.expiry.dte])).toEqual([
+      [0.02, 10],
+      [0.02, 40],
+      [0.2, 5],
+    ])
+  })
+
+  it('leaves instances with no short legs last', () => {
+    const order = [mk({ shorts: 0 }), mk({ cushion: 0.5 })].sort(compareInstanceRisk)
+    expect(order[1]?.cushion.shortLegCount).toBe(0)
   })
 })

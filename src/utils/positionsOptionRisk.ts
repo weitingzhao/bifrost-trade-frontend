@@ -298,3 +298,42 @@ export const EXPIRY_BUCKET_LABEL: Record<ExpiryBucket, string> = {
   this_month: '15–35 days',
   later: '> 35 days',
 }
+
+
+// ── Ordering the book by what needs attention ────────────────────────────────
+
+/**
+ * Sort key for instances: the most dangerous first.
+ *
+ * The table was sorted by instance label, so the row that could be assigned
+ * tonight sat wherever the alphabet put it. Tiers, in order:
+ *
+ *   0  a short leg is already in the money
+ *   1  short legs exist but none could be priced — unknown is not safe
+ *   2  priced and out of the money, tightest cushion first
+ *   3  no short legs at all
+ *
+ * Within a tier, nearer expiry first. Returns a comparator result.
+ */
+export function compareInstanceRisk(
+  a: { cushion: CushionSummary; expiry: ExpirySummary },
+  b: { cushion: CushionSummary; expiry: ExpirySummary },
+): number {
+  const tier = (x: { cushion: CushionSummary }): number => {
+    if (x.cushion.shortLegCount === 0) return 3
+    if (x.cushion.itmShortCount > 0) return 0
+    if (x.cushion.cushionPct == null) return 1
+    return 2
+  }
+  const ta = tier(a)
+  const tb = tier(b)
+  if (ta !== tb) return ta - tb
+  if (ta === 0 || ta === 2) {
+    const ca = a.cushion.cushionPct ?? 0
+    const cb = b.cushion.cushionPct ?? 0
+    if (ca !== cb) return ca - cb
+  }
+  const da = a.expiry.dte ?? Number.MAX_SAFE_INTEGER
+  const db = b.expiry.dte ?? Number.MAX_SAFE_INTEGER
+  return da - db
+}

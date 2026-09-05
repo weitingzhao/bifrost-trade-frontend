@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react'
-import type { IbAccountSnapshot } from '@/types/monitor'
-import type { LivePositionRow, StockCoverageItem } from '@/types/positions'
-import type { QuoteItem } from '@/types/market'
-import type { OptionStockMixCategory, UnderlyingCategoryFilter } from '@/utils/positionsCharts'
-import { filterStocksByBucket } from '@/utils/positionsGrouping'
-import { AccountAssetMixCard } from './charts/AccountAssetMixCard'
-import { UnderlyingCategoryCard } from './charts/UnderlyingCategoryCard'
-import { OptionChartsCard } from './charts/OptionChartsCard'
-import { SegmentControl as BubbleSwitch, DEFAULT_SEGMENT_SIZE as POSITIONS_BUBBLE_SIZE } from '@/components/data-display'
-import styles from './PositionsChartsSection.module.css'
+/**
+ * The composition block, now one ring: the base by the role it plays.
+ *
+ * This used to hold three allocation donuts — asset mix, underlying category,
+ * option backing — with their own account switch and filters. They answered how
+ * capital is distributed, which is a monthly question, and they opened the page
+ * at 455px. The single ring here answers the page's question instead: of what
+ * sits under the options, how much is backing a call, a put, free, or unable to
+ * back anything. It reads the same derivation the gauges do, so the picture and
+ * the grades cannot disagree.
+ *
+ * Open by default because the Owner reads it; collapsible and remembered.
+ */
 import {
   CollapsibleChevron,
   CollapsibleGroup,
@@ -17,6 +19,9 @@ import {
   CollapsibleGroupStats,
   CollapsibleGroupTitle,
 } from '@/components/data-display'
+import styles from './PositionsChartsSection.module.css'
+import { BaseRoleCard } from './charts/BaseRoleCard'
+import type { BookVsBase } from '@/utils/bookVsBase'
 
 export type OpenTab = 'instance' | 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 
@@ -24,193 +29,34 @@ interface Props {
   /** Controlled and persisted by the page — see usePositionsSections. */
   open: boolean
   onToggle: () => void
-  accounts: IbAccountSnapshot[]
-  allStocks: LivePositionRow[]
-  hostAccountId: string
-  secondaryAccountId: string
-  quotesBySymbol: Record<string, QuoteItem>
-  quotesByCk: Record<string, QuoteItem>
-  watchlistCoverageItems: StockCoverageItem[]
-  chartAccountId: string
-  onChartAccountIdChange: (id: string) => void
-  filterSymbol: string
-  onFilterSymbolChange: (sym: string) => void
-  onTabChange: (tab: OpenTab) => void
-  optionStockMixFilter: OptionStockMixCategory | null
-  onOptionStockMixFilterChange: (v: OptionStockMixCategory | null) => void
+  /** The base by role, derived once in usePositionsAlarm. */
+  book: BookVsBase
 }
 
-export function PositionsChartsSection({
-  open,
-  onToggle,
-  accounts,
-  allStocks,
-  hostAccountId,
-  secondaryAccountId,
-  quotesBySymbol,
-  quotesByCk,
-  watchlistCoverageItems,
-  chartAccountId,
-  onChartAccountIdChange,
-  filterSymbol,
-  onFilterSymbolChange,
-  onTabChange,
-  optionStockMixFilter,
-  onOptionStockMixFilterChange,
-}: Props) {
-  const [underlyingCategoryFilter, setUnderlyingCategoryFilter] = useState<
-    Record<UnderlyingCategoryFilter, boolean>
-  >({
-    Stocks: true,
-    'Fixed Income': true,
-    'Cash-like': true,
-  })
-  const [activeOptionDetail, setActiveOptionDetail] = useState<string | null>(null)
-  const [activeCategoryWeight, setActiveCategoryWeight] = useState<string | null>(null)
-
-  const coreStocks = useMemo(() => filterStocksByBucket(allStocks, 'core'), [allStocks])
-  const fixedIncomeStocks = useMemo(() => filterStocksByBucket(allStocks, 'fixed_income'), [allStocks])
-  const cashLikeStocks = useMemo(() => filterStocksByBucket(allStocks, 'cash_like'), [allStocks])
-
-  const activeSymbol = filterSymbol.trim().toUpperCase()
-
-  const accountOptions = useMemo(
-    () => [
-      { id: 'all', label: 'All' },
-      ...(hostAccountId ? [{ id: hostAccountId, label: hostAccountId }] : []),
-      ...(secondaryAccountId && secondaryAccountId !== hostAccountId
-        ? [{ id: secondaryAccountId, label: secondaryAccountId }]
-        : []),
-    ],
-    [hostAccountId, secondaryAccountId],
-  )
-
-  function handleSymbolClick(sym: string) {
-    const next = activeSymbol === sym ? '' : sym
-    onFilterSymbolChange(next)
-  }
-
-  function handleCategoryWeight(label: string | null) {
-    if (label == null) {
-      setActiveCategoryWeight(null)
-      return
-    }
-    const next = activeCategoryWeight === label ? null : label
-    setActiveCategoryWeight(next)
-    if (next === 'Fixed Income') onTabChange('fixed_income')
-    else if (next === 'Cash-like') onTabChange('cash_like')
-    else if (next === 'Stocks') onTabChange('stocks')
-  }
-
-  function handleOptionDetail(label: string | null) {
-    if (label == null) {
-      setActiveOptionDetail(null)
-      return
-    }
-    const next = activeOptionDetail === label ? null : label
-    setActiveOptionDetail(next)
-    if (next) {
-      const sym = label.split(' ')[0] ?? ''
-      if (sym) onFilterSymbolChange(sym)
-      onTabChange('options')
-    }
-  }
-
-  function handleOptionCategory(label: string | null) {
-    if (label == null) {
-      onOptionStockMixFilterChange(null)
-      return
-    }
-    const cat = label as OptionStockMixCategory
-    if (optionStockMixFilter === cat) {
-      onOptionStockMixFilterChange(null)
-      return
-    }
-    onOptionStockMixFilterChange(cat)
-    if (cat === 'Cash-like') onTabChange('cash_like')
-    else onTabChange('stocks')
-  }
-
-  const hasAnyData = accounts.some((a) => (a.positions?.length ?? 0) > 0)
-  if (!hasAnyData) return null
+export function PositionsChartsSection({ open, onToggle, book }: Props) {
+  const total = book.base.reduce((n, l) => n + l.marketValue, 0)
+  if (total <= 0) return null
 
   return (
     <CollapsibleGroup>
       <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
         <CollapsibleChevron expanded={open} />
-        <CollapsibleGroupTitle>Composition</CollapsibleGroupTitle>
+        <CollapsibleGroupTitle>Base by role</CollapsibleGroupTitle>
         <CollapsibleGroupStats>
           <span className="text-xs text-muted-foreground">
-            Asset mix · underlying category · option backing — how capital is allocated
+            What the holdings under the options are doing for them
           </span>
         </CollapsibleGroupStats>
       </CollapsibleGroupHeader>
-      {!open ? null : (
-      <CollapsibleGroupBody>
-    <section className={styles.section} aria-label="Portfolio charts">
-      <div className={styles.row}>
-        <div className={styles.col}>
-          <div className={styles.panel}>
-            <div className={`${styles.toolbar} ${styles.accountToolbar}`}>
-              <span className={styles.toolbarLabel}>Account</span>
-              <div className={styles.accountFilter} role="group" aria-label="Account filter for charts">
-                <BubbleSwitch
-                  size={POSITIONS_BUBBLE_SIZE}
-                  options={accountOptions.map((o) => ({ value: o.id, label: o.label }))}
-                  value={chartAccountId}
-                  onChange={onChartAccountIdChange}
-                />
-              </div>
+      {open ? (
+        <CollapsibleGroupBody>
+          <section className={styles.section} aria-label="Base holdings by role">
+            <div className={styles.panel}>
+              <BaseRoleCard book={book} />
             </div>
-            <AccountAssetMixCard
-              accounts={accounts}
-              coreStocks={coreStocks}
-              fixedIncomeStocks={fixedIncomeStocks}
-              cashLikeStocks={cashLikeStocks}
-              chartAccountId={chartAccountId}
-            />
-          </div>
-        </div>
-
-        <div className={styles.col}>
-          <div className={styles.panel}>
-            <UnderlyingCategoryCard
-              accounts={accounts}
-              chartAccountId={chartAccountId}
-              quotesBySymbol={quotesBySymbol}
-              quotesByCk={quotesByCk}
-              categoryFilter={underlyingCategoryFilter}
-              onCategoryFilterChange={(cat) =>
-                setUnderlyingCategoryFilter((prev) => ({ ...prev, [cat]: !prev[cat] }))
-              }
-              activeSymbol={activeSymbol}
-              onSymbolClick={handleSymbolClick}
-              activeCategoryWeight={activeCategoryWeight}
-              onCategoryWeightClick={handleCategoryWeight}
-            />
-          </div>
-        </div>
-
-        <div className={styles.col}>
-          <div className={styles.panel}>
-            <OptionChartsCard
-              accounts={accounts}
-              chartAccountId={chartAccountId}
-              liveStocks={allStocks}
-              watchlistCoverageItems={watchlistCoverageItems}
-              quotesBySymbol={quotesBySymbol}
-              quotesByCk={quotesByCk}
-              activeOptionDetail={activeOptionDetail}
-              onOptionDetailClick={handleOptionDetail}
-              activeOptionCategory={optionStockMixFilter}
-              onOptionCategoryClick={handleOptionCategory}
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-      </CollapsibleGroupBody>
-      )}
+          </section>
+        </CollapsibleGroupBody>
+      ) : null}
     </CollapsibleGroup>
   )
 }

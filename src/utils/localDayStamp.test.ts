@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localDayStamp } from './OptionLegGreeksCell'
+import { localDayStamp } from './positions'
 
 describe('localDayStamp', () => {
   it('formats the local calendar day the way the vendor stamps it', () => {

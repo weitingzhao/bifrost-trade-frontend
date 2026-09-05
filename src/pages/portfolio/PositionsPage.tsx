@@ -61,9 +61,9 @@ import { buildCanonicalOptContractKeySet } from '@/utils/execAttributionSync'
 import { buildInstanceGroups } from '@/utils/buildInstanceGroups'
 import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
-import { buildOptionStockMix, liveStockRowCovKey, type OptionStockMixCategory } from '@/utils/positionsCharts'
 import { CoverageSummarySection } from '@/components/positions/CoverageSummarySection'
-import { PositionsAlarmStrip } from '@/components/positions/PositionsAlarmStrip'
+import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
+import { BaseLayersSection } from '@/components/positions/BaseLayersSection'
 import { usePositionsAlarm, type AlarmTarget } from '@/hooks/usePositionsAlarm'
 import { usePositionsSections } from '@/hooks/usePositionsSections'
 import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
@@ -110,8 +110,9 @@ export default function PositionsPage() {
     })
   }, [openSection])
   const [detailViewMode, setDetailViewMode] = useState<DetailViewMode>('accordion')
-  const [optionStockMixFilter, setOptionStockMixFilter] = useState<OptionStockMixCategory | null>(null)
-  const [chartAccountId, setChartAccountId] = useState('all')
+  // The chart-local account switch retired with the allocation donuts; the
+  // coverage pools follow the page's Host / Secondary toggles like everything else.
+  const chartAccountId = 'all'
   const [instanceFilters, setInstanceFilters] = useState<InstanceFilterValues>({
     structureType: 'all',
     oppName: 'all',
@@ -303,29 +304,16 @@ export default function PositionsPage() {
     setInspector({ type: 'strategy', id })
   }, [])
 
-  const watchlistCoverageItems = useMemo(
-    () => stockCoverageItems.filter((i) => i.optionable_supported !== false),
-    [stockCoverageItems],
-  )
 
   const accountOptions = [...new Set(accounts.map((a) => a.account_id ?? '').filter(Boolean))]
 
-  const optionStockMixKeys = useMemo(
-    () => buildOptionStockMix(allStocks, watchlistCoverageItems, 'all'),
-    [allStocks, watchlistCoverageItems],
-  )
 
   const filteredCoreStocks = useMemo(() => {
     let list = coreStocks
     const sym = filterSymbol.trim().toUpperCase()
     if (sym) list = list.filter((p) => (p.symbol ?? '').toUpperCase().includes(sym))
-    if (!optionStockMixFilter) return list
-    if (optionStockMixFilter === 'Cash-like') return []
-    if (optionStockMixFilter === 'Backing Pool') {
-      return list.filter((p) => optionStockMixKeys.backingKeys.has(liveStockRowCovKey(p)))
-    }
-    return list.filter((p) => optionStockMixKeys.otherKeys.has(liveStockRowCovKey(p)))
-  }, [coreStocks, filterSymbol, optionStockMixFilter, optionStockMixKeys])
+    return list
+  }, [coreStocks, filterSymbol])
 
   const filteredFixedIncomeStocks = useMemo(() => {
     const sym = filterSymbol.trim().toUpperCase()
@@ -339,16 +327,7 @@ export default function PositionsPage() {
     return cashLikeStocks.filter((p) => (p.symbol ?? '').toUpperCase().includes(sym))
   }, [cashLikeStocks, filterSymbol])
 
-  const stocksTabEmptyHint = useMemo(() => {
-    if (
-      optionStockMixFilter &&
-      filteredCoreStocks.length === 0 &&
-      coreStocks.length > 0
-    ) {
-      return `No stock positions match the ${optionStockMixFilter} filter from the chart. Clear the filter or pick another slice.`
-    }
-    return 'No open stock positions under the current filters.'
-  }, [optionStockMixFilter, filteredCoreStocks.length, coreStocks.length])
+  const stocksTabEmptyHint = 'No open stock positions under the current filters.'
 
   const fixedIncomeTabEmptyHint = useMemo(() => {
     if (filterSymbol.trim() && filteredFixedIncomeStocks.length === 0 && fixedIncomeStocks.length > 0) {
@@ -375,15 +354,6 @@ export default function PositionsPage() {
   const portfolioPositionCount = useMemo(() => flattenPositions(accounts).length, [accounts])
   const hasAccountSelection =
     (!hostAccountId && !secondaryAccountId) || accountFilter.host || accountFilter.secondary
-  // One derivation feeding both the strip and the ladder table below it.
-  const alarm = usePositionsAlarm({
-    groups: filteredInstanceGroups,
-    quotesBySymbol,
-    accounts,
-    liveStocks: allStocks,
-    modelAnalysisAccountIds,
-    cushionTightPct,
-  })
 
   // Vendor Greeks for the legs actually held (Owner decision 2026-09-05: the
   // Golden Source is the authority, not a second in-house derivation).
@@ -397,6 +367,20 @@ export default function PositionsPage() {
     })),
   )
   const greeks = useOptionGreeks(greekLegs)
+
+  // One derivation feeding the cockpit, the ladder and the base layers.
+  const alarm = usePositionsAlarm({
+    groups: filteredInstanceGroups,
+    quotesBySymbol,
+    accounts,
+    liveStocks: allStocks,
+    coreStocks,
+    incomeEtfs: fixedIncomeStocks,
+    cashLike: cashLikeStocks,
+    thetaPerDay: greeks.matched > 0 ? greeks.theta : null,
+    modelAnalysisAccountIds,
+    cushionTightPct,
+  })
 
   const showOpenPositionsPanel = accounts.length > 0
 
@@ -484,24 +468,6 @@ export default function PositionsPage() {
 
 
 
-      <PositionsChartsSection
-        open={openSections.charts}
-        onToggle={() => toggleSection('charts')}
-        accounts={accounts}
-        allStocks={allStocks}
-        hostAccountId={hostAccountId}
-        secondaryAccountId={secondaryAccountId}
-        quotesBySymbol={quotesBySymbol}
-        quotesByCk={quotesByCk}
-        watchlistCoverageItems={watchlistCoverageItems}
-        chartAccountId={chartAccountId}
-        onChartAccountIdChange={setChartAccountId}
-        filterSymbol={filterSymbol}
-        onFilterSymbolChange={setFilterSymbol}
-        onTabChange={setOpenTab}
-        optionStockMixFilter={optionStockMixFilter}
-        onOptionStockMixFilterChange={setOptionStockMixFilter}
-      />
 
       {!showOpenPositionsPanel ? (
         <EmptyState
@@ -547,7 +513,11 @@ export default function PositionsPage() {
             ) : (
               <>
               <TabsContent value="instance" className="mt-3 outline-none">
-                <PositionsAlarmStrip checks={alarm.checks} onOpenTarget={openSectionFromAlarm} />
+                <BookVsBaseCockpit
+                  book={alarm.book}
+                  checks={alarm.checks}
+                  onOpenTarget={openSectionFromAlarm}
+                />
                 <InstanceFilters
                   structureTypes={instanceFilterOptions.structureTypes}
                   oppNames={instanceFilterOptions.oppNames}
@@ -555,15 +525,6 @@ export default function PositionsPage() {
                   values={instanceFilters}
                   onChange={setInstanceFilters}
                 />
-                <div id="positions-section-ladder">
-                  <ExpiryLadderSection
-                    rows={alarm.ladderRows}
-                    quotesBySymbol={quotesBySymbol}
-                    cushionTightPct={cushionTightPct}
-                    open={openSections.ladder}
-                    onToggle={() => toggleSection('ladder')}
-                  />
-                </div>
                 <InstanceTab
                   groups={filteredInstanceGroups}
                   totalInstanceCount={instanceAllGroups.length}
@@ -595,6 +556,21 @@ export default function PositionsPage() {
                     })
                   }
                 />
+                <BaseLayersSection layers={alarm.book.base} />
+                <PositionsChartsSection
+                  open={openSections.charts}
+                  onToggle={() => toggleSection('charts')}
+                  book={alarm.book}
+                />
+                <div id="positions-section-ladder">
+                  <ExpiryLadderSection
+                    rows={alarm.ladderRows}
+                    quotesBySymbol={quotesBySymbol}
+                    cushionTightPct={cushionTightPct}
+                    open={openSections.ladder}
+                    onToggle={() => toggleSection('ladder')}
+                  />
+                </div>
                 <div id="positions-section-capital">
                   <UnderlyingRiskSection
                     accountIds={modelAnalysisAccountIds}

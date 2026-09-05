@@ -66,7 +66,10 @@ describe('OptionSnapshotsResponseSchema', () => {
   })
 
   it('rejects a row with no ticker to join on', () => {
-    const { option_ticker: _drop, ...noTicker } = REAL_RESPONSE.rows[0]
+    const noTicker = { ...REAL_RESPONSE.rows[0] } as Partial<
+      (typeof REAL_RESPONSE)['rows'][number]
+    >
+    delete noTicker.option_ticker
     const broken = { ...REAL_RESPONSE, rows: [noTicker] }
     expect(OptionSnapshotsResponseSchema.safeParse(broken).success).toBe(false)
   })

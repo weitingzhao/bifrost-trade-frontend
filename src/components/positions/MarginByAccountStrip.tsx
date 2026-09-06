@@ -125,8 +125,11 @@ export function MarginByAccountStrip({
     <section
       id="positions-margin"
       aria-label="Margin by account"
-      className="rounded-md border border-border bg-secondary/40 px-3 py-1"
+      className="rounded-md border border-border bg-secondary/40 px-3 py-1.5"
     >
+      <span className="mb-1 block text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
+        Margin by account
+      </span>
       {rows.length === 0 ? (
         <p className="text-dense-body text-warning">n/a — no funded account reported margin</p>
       ) : (

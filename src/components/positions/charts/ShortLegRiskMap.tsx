@@ -230,9 +230,6 @@ export function ShortLegRiskMap({
             </text>
           </g>
         ))}
-        <text x={2} y={bands.plot.y0 + 8} textAnchor="start" className={styles.label}>
-          cushion
-        </text>
         <line x1={bands.plot.x0} x2={bands.plot.x1} y1={bands.zeroY} y2={bands.zeroY} className={styles.zeroLine} />
         <text x={bands.plot.x1} y={bands.zeroY + 9} textAnchor="end" className={styles.label}>
           ITM below zero
@@ -250,8 +247,10 @@ export function ShortLegRiskMap({
         </text>
 
         <line x1={bands.plot.x0} x2={bands.plot.x1} y1={axisY} y2={axisY} className={styles.axisLine} />
-        <text x={bands.plot.x1} y={axisY - 3} textAnchor="end" className={styles.label}>
-          days to expiry →
+        {/* The scale's name, in the corner nothing else uses: under the axis, left of
+            the first date. The dates name the x axis themselves. */}
+        <text x={2} y={labelY} textAnchor="start" className={styles.label}>
+          cushion ↑
         </text>
         {ticks.map((t, i) => {
           const active = t.expiry != null && activeExpiry != null && t.expiry === activeExpiry

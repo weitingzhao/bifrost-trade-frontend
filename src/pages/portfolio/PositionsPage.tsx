@@ -306,30 +306,31 @@ export default function PositionsPage() {
             />
           ) : (
             <div className="min-w-0 space-y-3">
-              {/* Band 1, a 2×2: the accounts on the left (cockpit, margin, capital),
-                  the base on the right (backing pool, holdings). Two rings share
-                  each row, so their circles sit on one line. */}
+              {/* Band 1, a 2×2. Row one: the cockpit, and beside it the margin
+                  strip its Pressure gauge opens plus the Backing pool its Backing
+                  gauge grades. Row two: the accounts' capital and the holdings
+                  by symbol — two rings on one line. */}
               <div className="grid min-w-0 grid-cols-1 items-start gap-3 xl:grid-cols-2">
-                <div className="min-w-0 space-y-2">
-                  <BookVsBaseCockpit
-                    book={book.alarm.book}
-                    checks={book.alarm.checks}
-                    cushionTightPct={cushionTightPct}
-                    onOpenTarget={openTarget}
-                    headerLink={{ to: MODEL_ANALYSIS_PATH, label: 'Model analysis →' }}
-                    spotMix={book.alarm.spotMix}
-                    explain={explain}
-                  />
+                <BookVsBaseCockpit
+                  book={book.alarm.book}
+                  checks={book.alarm.checks}
+                  cushionTightPct={cushionTightPct}
+                  onOpenTarget={openTarget}
+                  headerLink={{ to: MODEL_ANALYSIS_PATH, label: 'Model analysis →' }}
+                  spotMix={book.alarm.spotMix}
+                  explain={explain}
+                />
+                <div className="min-w-0 space-y-3">
                   <MarginByAccountStrip
                     margin={book.marginAllAccounts}
                     hostId={book.hostAccountId}
                     secondaryId={book.secondaryAccountId}
                     accountFilter={accountFilter}
                   />
+                  <RingCard title="Backing pool">
+                    <BackingPoolCard book={book.alarm.book} onSegmentClick={openFromBackingSegment} />
+                  </RingCard>
                 </div>
-                <RingCard title="Backing pool">
-                  <BackingPoolCard book={book.alarm.book} onSegmentClick={openFromBackingSegment} />
-                </RingCard>
                 {/* The accounts' capital, beside the accounts' margin: net liq and
                     buying power in the centre, the layers around them. */}
                 <RingCard title="Asset mix">

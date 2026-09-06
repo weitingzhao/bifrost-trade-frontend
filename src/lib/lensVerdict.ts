@@ -27,6 +27,7 @@ const TONES: Record<string, ToneMap> = {
   order_sentiment: { hot: 'success', cold: 'danger', neutral: 'warning' },
   skew: RISK_WHEN_HOT,
   gex_regime: { hot: 'danger', cold: 'success' },
+  term_slope: RISK_WHEN_HOT,
   terrain_regime: { hot: 'danger', lean_hot: 'warning', neutral: 'success' },
   opex_pin: { hot: 'warning', neutral: 'neutral' },
 }
@@ -47,7 +48,15 @@ const LABELS: Record<string, LabelMap> = {
     lean_cold: 'Leaning buy-vol',
     cold: 'Buy-vol edge',
   },
-  skew: { hot: 'Skew extreme — size carefully', lean_hot: 'Skew elevated — prefer defined risk', neutral: 'Skew calm — structure freer' },
+  // C2: skew is a percentile of the symbol's own year, so every band has a name.
+  skew: {
+    hot: 'Skew extreme for this name — size wings carefully',
+    lean_hot: 'Skew elevated for this name — prefer defined risk',
+    neutral: 'Skew normal for this name — structure freer',
+    lean_cold: 'Skew low for this name — wings cheap',
+    cold: 'Skew at its floor — wings cheapest, structures freest',
+  },
+  term_slope: { hot: 'Backwardation — front loaded', neutral: 'Normal term curve', cold: 'Steep contango — calendars pay' },
   gex_regime: { hot: 'Negative gamma — dealers chase', cold: 'Positive gamma — dealers damp' },
   terrain_regime: { hot: 'Crash-risk — do not add', lean_hot: 'Trending — wait for confirmation', neutral: 'Range — fade extremes' },
   opex_pin: { hot: 'Pin magnet within 1%', neutral: 'Not near the pin' },

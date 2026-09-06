@@ -5,6 +5,8 @@
  * IV surface, order flow, event radar, settlement).
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { withValidation } from '@/lib/apiValidation'
+import { ForecastCalibrationSchema } from '@/lib/schemas/research'
 import type { LampColor } from '@/lib/researchFreshness'
 import type { IvPercentileRow } from '@/types/ivRadar'
 
@@ -592,6 +594,39 @@ export function fetchForecastHitRate(symbol: string, lookbackDays = 30) {
     lookback_days: String(lookbackDays),
   })
   return get<ForecastHitRateSummary>(`/research/forecast/hit-rate?${params}`)
+}
+
+/** One terrain regime's forecast reliability — C2 (research-loop-automation). */
+export interface ForecastCalibrationRow {
+  regime: string
+  n: number
+  hits: number
+  hit_rate: number | null
+  /** Mean probability the session assigned to the path it called. */
+  avg_top_prob: number | null
+  /** hit_rate − avg_top_prob: positive = under-confident, negative = over-confident. */
+  calibration_gap: number | null
+  avg_close_miss_pct: number | null
+}
+
+export interface ForecastCalibrationResponse {
+  symbol: string
+  days: number
+  rows: ForecastCalibrationRow[]
+  overall: { n: number; hits: number; hit_rate: number | null }
+}
+
+const validateCalibration = withValidation<ForecastCalibrationResponse>(
+  ForecastCalibrationSchema,
+  'research/forecast/calibration',
+)
+
+export async function fetchForecastCalibration(symbol: string, days = 180) {
+  const params = new URLSearchParams({
+    symbol: symbol.trim().toUpperCase(),
+    days: String(days),
+  })
+  return validateCalibration(await get<unknown>(`/research/forecast/calibration?${params}`))
 }
 
 export function fetchTerrainHistory(symbol: string, limit = 30) {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQueries } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { Radar } from 'lucide-react'
 import {
   DenseDataTable,
@@ -31,6 +31,8 @@ import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { fetchIvRankHistory } from '@/api/research/ivRadar'
+import { fetchSignalDecayBySymbol } from '@/api/research/signalDecay'
+import { hitCellText } from '@/lib/analyzeDepth'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
@@ -248,6 +250,19 @@ export function IvRankSection() {
     return ordered.filter((r) => allowed.has(r.symbol))
   }, [rows, sortMode, universe, filterSymbols])
   const allMissing = counts.total > 0 && counts.noData === counts.total
+
+  // C2: each row's own hit record on the iv_rank lens, not the universe pool.
+  const recordSymbols = useMemo(
+    () => sorted.filter((r) => r.bucket !== 'no_data').map((r) => r.symbol),
+    [sorted],
+  )
+  const recordsQ = useQuery({
+    queryKey: ['signal-decay-by-symbol', 'iv_rank', 365, recordSymbols.join(',')],
+    queryFn: () => fetchSignalDecayBySymbol({ lens: 'iv_rank', symbols: recordSymbols, windowDays: 365 }),
+    enabled: recordSymbols.length > 0,
+    staleTime: 5 * 60_000,
+  })
+  const records = recordsQ.data?.rows
 
   const focusRow = useMemo(() => {
     const sym = contextSymbol.trim().toUpperCase()
@@ -492,15 +507,16 @@ export function IvRankSection() {
       ) : viewMode === 'gauge' ? (
         <GaugeGridView rows={sorted} navigate={navigate} />
       ) : (
-        <DenseDataTable tableClassName="min-w-[720px]">
+        <DenseDataTable tableClassName="min-w-[820px]">
           <colgroup>
             <col style={{ width: '12%' }} />
+            <col style={{ width: '8%' }} />
             <col style={{ width: '10%' }} />
             <col style={{ width: '12%' }} />
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '10%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '16%' }} />
             <col style={{ width: '18%' }} />
-            <col style={{ width: '14%' }} />
+            <col style={{ width: '16%' }} />
           </colgroup>
           <DenseTableHeader>
             <DenseTableHeadRow>
@@ -509,6 +525,9 @@ export function IvRankSection() {
               <DenseTableHead className="text-right">IV Rank</DenseTableHead>
               <DenseTableHead className="text-right">IV Percentile</DenseTableHead>
               <DenseTableHead className="text-right">Lookback</DenseTableHead>
+              <DenseTableHead className="text-right" title="This symbol's own hit rate on the iv_rank lens, 5d / 20d, last 365 days, on the side its bucket sits">
+                Own hit 5d / 20d
+              </DenseTableHead>
               <DenseTableHead>Source</DenseTableHead>
               <DenseTableHead>As-of</DenseTableHead>
             </DenseTableHeadRow>
@@ -547,6 +566,9 @@ export function IvRankSection() {
                 </DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>
                   {row.data?.lookback_days != null ? String(row.data.lookback_days) : '—'}
+                </DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>
+                  {recordsQ.isLoading ? '…' : hitCellText(records, row.symbol, row.bucket)}
                 </DenseTableCell>
                 <DenseTableCell className="text-dense-meta">
                   {formatIvRadarSource(row.sources)}

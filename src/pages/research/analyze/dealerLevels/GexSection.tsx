@@ -29,6 +29,7 @@ import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { vrpLinkLine } from '@/lib/analyzeDepth'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { copilotViewStore } from '@/store/copilotViewStore'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
@@ -100,6 +101,8 @@ export function GexSection() {
   const activeIdx = selectedIdx ?? (rows.length > 0 ? rows.length - 1 : null)
   const active: GexIntraday | null = activeIdx != null ? rows[activeIdx] ?? null : null
   const exhibitQ = useExhibit('gex_regime', symbol)
+  // C2: the realised-vol half of the gamma claim, from the same exhibit.
+  const vrpLink = vrpLinkLine(exhibitQ.data)
   const verdict = verdictView('gex_regime', exhibitQ.data, { missing: 'No GEX levels — wait' })
 
   const bars = useMemo(
@@ -200,7 +203,7 @@ export function GexSection() {
         verdictLabel={verdict.label}
         narrative={
           active
-            ? `${symbol} spot ${fmtNumLocale(active.spot, 2)} ${active.zero_gamma != null && active.spot != null && active.spot < active.zero_gamma ? 'below' : 'above'} zero-γ ${fmtNumLocale(active.zero_gamma, 0)} · put wall ${fmtNumLocale(active.major_put_wall, 0)} · call wall ${fmtNumLocale(active.major_call_wall, 0)}. ${verdict.means ?? 'Trade the walls, not the mid.'}`
+            ? `${symbol} spot ${fmtNumLocale(active.spot, 2)} ${active.zero_gamma != null && active.spot != null && active.spot < active.zero_gamma ? 'below' : 'above'} zero-γ ${fmtNumLocale(active.zero_gamma, 0)} · put wall ${fmtNumLocale(active.major_put_wall, 0)} · call wall ${fmtNumLocale(active.major_call_wall, 0)}. ${verdict.means ?? 'Trade the walls, not the mid.'}${vrpLink ? ` ${vrpLink}.` : ''}`
             : 'Load a GEX snapshot to decide whether to fade walls or follow a zero-γ break.'
         }
         trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}

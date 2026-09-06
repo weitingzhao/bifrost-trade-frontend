@@ -21,6 +21,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { settlementFineGrain } from '@/lib/researchSettlement'
 import {
+  fetchForecastCalibration,
+  type ForecastCalibrationRow,
   fetchForecastHitRate,
   fetchForecastSessionDetail,
   fetchForecastSessions,
@@ -73,6 +75,76 @@ function regimeVariant(
   return 'neutral'
 }
 
+function fmtRate(v: number | null | undefined): string {
+  return v != null ? `${(v * 100).toFixed(0)}%` : '—'
+}
+
+function fmtGap(v: number | null | undefined): string {
+  if (v == null) return '—'
+  const pts = v * 100
+  return `${pts >= 0 ? '+' : '−'}${Math.abs(pts).toFixed(0)} pts`
+}
+
+/** Hit rate against claimed probability per regime; the gap says which way the model leans. */
+function CalibrationTable({
+  rows,
+  overall,
+}: {
+  rows: ForecastCalibrationRow[]
+  overall: { n: number; hits: number; hit_rate: number | null } | null
+}) {
+  return (
+    <DenseDataTable tableClassName="min-w-[520px]">
+      <DenseTableHeader>
+        <DenseTableHeadRow>
+          <DenseTableHead>Regime</DenseTableHead>
+          <DenseTableHead className="text-right">n</DenseTableHead>
+          <DenseTableHead className="text-right">Hit</DenseTableHead>
+          <DenseTableHead className="text-right">Claimed</DenseTableHead>
+          <DenseTableHead className="text-right" title="hit − claimed: + under-confident, − over-confident">
+            Gap
+          </DenseTableHead>
+          <DenseTableHead className="text-right">Avg |miss|</DenseTableHead>
+        </DenseTableHeadRow>
+      </DenseTableHeader>
+      <DenseTableBody>
+        {rows.map((r) => (
+          <DenseTableRow key={r.regime}>
+            <DenseTableCell>
+              <DenseTag variant="neutral">{r.regime}</DenseTag>
+            </DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>{r.n}</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>{fmtRate(r.hit_rate)}</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>{fmtRate(r.avg_top_prob)}</DenseTableCell>
+            <DenseTableCell
+              className={cn(
+                denseTableNumCell,
+                r.calibration_gap != null && r.calibration_gap < -0.1 && 'text-loss',
+                r.calibration_gap != null && r.calibration_gap > 0.1 && 'text-profit',
+              )}
+            >
+              {fmtGap(r.calibration_gap)}
+            </DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>
+              {r.avg_close_miss_pct != null ? `${(r.avg_close_miss_pct * 100).toFixed(1)}%` : '—'}
+            </DenseTableCell>
+          </DenseTableRow>
+        ))}
+        {overall && overall.n > 0 ? (
+          <DenseTableRow>
+            <DenseTableCell className={denseTable.mutedMeta}>All regimes</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>{overall.n}</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>{fmtRate(overall.hit_rate)}</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
+            <DenseTableCell className={denseTableNumCell}>—</DenseTableCell>
+          </DenseTableRow>
+        ) : null}
+      </DenseTableBody>
+    </DenseDataTable>
+  )
+}
+
 export function SessionsSection() {
   const { symbol, apiDate } = useResearchContext()
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -110,6 +182,15 @@ export function SessionsSection() {
     enabled: symbol.length > 0,
     staleTime: 60_000,
   })
+
+  // C2: how reliable this symbol's path calls were per terrain regime.
+  const calibrationQ = useQuery({
+    queryKey: ['forecast-calibration', symbol, 180],
+    queryFn: () => fetchForecastCalibration(symbol, 180),
+    enabled: symbol.length > 0,
+    staleTime: 60_000,
+  })
+  const calibrationRows = calibrationQ.data?.rows ?? []
 
   const sessions = listData?.rows ?? []
   const settlement = settlementData?.rows?.[0]
@@ -337,6 +418,29 @@ export function SessionsSection() {
                     bear={detail.session.prob_bear}
                     squeeze={detail.session.prob_squeeze}
                   />
+                </CardContent>
+              </Card>
+
+              {/* Calibration by regime (C2) */}
+              <Card variant="elevated" size="sm" className="p-3">
+                <CardContent className="p-0 space-y-2">
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-dense-label font-semibold">Calibration · by regime</span>
+                    <span className="text-dense-meta text-muted-foreground">
+                      {symbol} · last {calibrationQ.data?.days ?? 180} days · hit rate vs the probability the session claimed
+                    </span>
+                  </div>
+                  {calibrationQ.isLoading ? (
+                    <Skeleton className="h-16 w-full" />
+                  ) : calibrationQ.isError ? (
+                    <QueryErrorAlert error={calibrationQ.error} onRetry={() => void calibrationQ.refetch()} />
+                  ) : calibrationRows.length === 0 ? (
+                    <p className="text-dense-meta text-muted-foreground">
+                      No settled sessions in the window — calibration needs closed sessions with a path verdict.
+                    </p>
+                  ) : (
+                    <CalibrationTable rows={calibrationRows} overall={calibrationQ.data?.overall ?? null} />
+                  )}
                 </CardContent>
               </Card>
 

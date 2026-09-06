@@ -29,6 +29,7 @@ import { AnalyzeVerdictStrip, type AnalyzeVerdictTone } from '@/components/resea
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, labelForBand, similarLine, toneForBand, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { pinMagnetLine } from '@/lib/analyzeDepth'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { copilotViewStore } from '@/store/copilotViewStore'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
@@ -269,9 +270,12 @@ export function OpexSection() {
   const calLabel = useMemo(() => calendarLabel(dteToday, isOpexWeekToday), [dteToday, isOpexWeekToday])
   const tone: Tone = pinVerdict.band === 'hot' ? toneForBand('opex_pin', 'hot') : calTone
   const label = pinVerdict.band === 'hot' ? `${labelForBand('opex_pin', 'hot')} · ${calLabel}` : calLabel
+  // C2: the magnet strike and this name's own pin record lead the sentence.
+  const magnet = pinMagnetLine(exhibitQ.data)
   const verdict = useMemo(
-    () => `${verdictLine(symbol, row, dteToday, nextOpex)}${pinVerdict.means ? ` ${pinVerdict.means}` : ''}`,
-    [symbol, row, dteToday, nextOpex, pinVerdict.means],
+    () =>
+      `${magnet ? `${magnet}. ` : ''}${verdictLine(symbol, row, dteToday, nextOpex)}${pinVerdict.means ? ` ${pinVerdict.means}` : ''}`,
+    [magnet, symbol, row, dteToday, nextOpex, pinVerdict.means],
   )
 
   const verdictBorderClass =
@@ -424,7 +428,7 @@ export function OpexSection() {
                 ? ` · Charm₀ ${fmtNumLocale(row.charm_zero_strike)}`
                 : ''}
               {pinRate != null
-                ? ` · pin rate (24 cycles) ${fmtPctFromFraction(pinRate, 1)}`
+                ? ` · pin rate (${pinRows.length} settled cycle${pinRows.length === 1 ? '' : 's'}) ${fmtPctFromFraction(pinRate, 1)}`
                 : ''}
             </span>
           </div>

@@ -28,9 +28,10 @@ import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisBu
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
-import { useExhibit, useLensSpec } from '@/hooks/useLensRegistry'
-import { bandForSeverity, chipTone, labelForBand, similarLine, toneForBand, trackRecordLine, verdictView } from '@/lib/lensVerdict'
-import type { LensBand, LensBands } from '@/api/research/lenses'
+import { useExhibit } from '@/hooks/useLensRegistry'
+import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import type { LensBand } from '@/api/research/lenses'
+import { richCheapStrikes, skewPercentileText, termStructureView, type StrikeResidual } from '@/lib/analyzeDepth'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { copilotViewStore } from '@/store/copilotViewStore'
 import { TermStructureChart } from '@/components/charts/TermStructureChart'
@@ -57,8 +58,17 @@ function fmtSlope(v: number | null | undefined): string {
   return `${sign}${v.toFixed(3)}`
 }
 
-/** The reading in words; severity comes from the exhibit's band, not a threshold here. */
-function skewSummary(anchor: VolSurfaceFitRow | null, band: LensBand | null, means: string | null): string {
+/**
+ * The reading in words. Severity is the exhibit's band, which since C2 is the
+ * slope's percentile within this symbol's own year — so the sentence names
+ * that percentile, not a cross-symbol threshold.
+ */
+function skewSummary(
+  anchor: VolSurfaceFitRow | null,
+  band: LensBand | null,
+  means: string | null,
+  percentile: string | null,
+): string {
   if (!anchor) return 'No SVI fit yet — wait before pricing wings or ratio spreads.'
   const slope = anchor.atm_slope
   if (slope == null || !band) {
@@ -66,7 +76,12 @@ function skewSummary(anchor: VolSurfaceFitRow | null, band: LensBand | null, mea
   }
   const dir = slope < 0 ? 'call skew' : 'put skew'
   const dte = anchor.dte != null ? `${anchor.dte}d` : '30d'
-  return `${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPctFromFraction(anchor.atm_vol)} — ${means ?? 'no registry reading'}`
+  const own = percentile ? `, ${percentile}` : ''
+  return `${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir})${own}, ATM vol ${fmtPctFromFraction(anchor.atm_vol)} — ${means ?? 'no registry reading'}`
+}
+
+function strikeList(items: StrikeResidual[]): string {
+  return items.map((s) => `${s.strike} (${s.z > 0 ? '+' : '−'}${Math.abs(s.z).toFixed(1)}σ)`).join(', ')
 }
 
 function pickAnchor(rows: VolSurfaceFitRow[]): VolSurfaceFitRow | null {
@@ -80,17 +95,19 @@ function pickAnchor(rows: VolSurfaceFitRow[]): VolSurfaceFitRow | null {
   })
 }
 
+/**
+ * Raw ATM slopes across symbols. Rows are deliberately ungraded: the skew
+ * verdict is each name's percentile of its own year, and grading every row
+ * against one absolute slope contradicted that in the strip above.
+ */
 function SkewExtremesTable({
   rows,
   onPick,
   asOf,
-  bands,
 }: {
   rows: VolSurfaceFitRow[]
   onPick: (symbol: string) => void
   asOf: string | null
-  /** The skew lens' severity bands from the registry; rows are graded against them. */
-  bands: LensBands | undefined
 }) {
   if (rows.length === 0) {
     return (
@@ -129,7 +146,6 @@ function SkewExtremesTable({
         </DenseTableHeader>
         <DenseTableBody>
           {rows.map((row) => {
-            const tone = toneForBand('skew', bandForSeverity(bands, Math.abs(row.atm_slope ?? 0)))
             return (
               <DenseTableRow key={`${row.symbol}-${row.expiry}`}>
                 <DenseTableCell className={denseTableEntityCell}>
@@ -140,16 +156,8 @@ function SkewExtremesTable({
                       ariaLabel={`Load ${row.symbol} in Vol Surface Lab`}
                       onClick={() => onPick(row.symbol)}
                     />
-                    <DenseTag
-                      variant={
-                        tone === 'danger'
-                          ? 'danger'
-                          : tone === 'warning'
-                            ? 'warning'
-                            : 'success'
-                      }
-                    >
-                      {labelForBand('skew', bandForSeverity(bands, Math.abs(row.atm_slope ?? 0)), 'No fit — wait')}
+                    <DenseTag variant={(row.atm_slope ?? 0) < 0 ? 'success' : 'neutral'}>
+                      {(row.atm_slope ?? 0) < 0 ? 'Call skew' : 'Put skew'}
                     </DenseTag>
                   </div>
                 </DenseTableCell>
@@ -202,11 +210,14 @@ export function SkewSection() {
   const residualQ = useResiduals(symbol, effectiveExpiry ?? '', apiDate)
 
   const exhibitQ = useExhibit('skew', symbol)
-  const skewBands = useLensSpec('skew')?.bands
+  const termExhibitQ = useExhibit('term_slope', symbol)
   const verdict = verdictView('skew', exhibitQ.data, { missing: 'No fit — wait' })
   const verdictTone = verdict.tone
   const verdictLabel = verdict.label
-  const verdictLine = skewSummary(anchor, verdict.band, verdict.means)
+  const percentile = skewPercentileText(exhibitQ.data?.readings)
+  const verdictLine = skewSummary(anchor, verdict.band, verdict.means, percentile)
+  const term = termStructureView(termExhibitQ.data)
+  const strikes = useMemo(() => richCheapStrikes(residualQ.data ?? []), [residualQ.data])
 
   const verdictBorderClass =
     verdictTone === 'danger'
@@ -292,6 +303,19 @@ export function SkewSection() {
             ? [
                 { label: 'ATM', value: fmtPctFromFraction(anchor.atm_vol) },
                 { label: 'Slope', value: fmtSlope(anchor.atm_slope) },
+                {
+                  label: 'Own pctl',
+                  value:
+                    typeof exhibitQ.data?.readings.slope_pctile_252d === 'number'
+                      ? `${Math.round(exhibitQ.data.readings.slope_pctile_252d)}`
+                      : '—',
+                },
+                {
+                  label: 'Term',
+                  value: term
+                    ? `${term.label === 'backwardation' ? 'Back' : term.label === 'contango' ? 'Contango' : 'Flat'} ${term.backwardation >= 0 ? '+' : '−'}${(Math.abs(term.backwardation) * 100).toFixed(1)}`
+                    : '—',
+                },
                 { label: 'RMSE', value: fmtSlope(anchor.fit_rmse) },
               ]
             : []
@@ -318,6 +342,31 @@ export function SkewSection() {
               rho={anchor.svi_rho?.toFixed(3) ?? '—'} · m={anchor.svi_m?.toFixed(3) ?? '—'} ·
               sigma={anchor.svi_sigma?.toFixed(3) ?? '—'}
             </p>
+            {term ? (
+              <p className="text-dense-caption text-muted-foreground">
+                Term structure: <span className="text-foreground">{term.line}</span>
+                {term.label === 'backwardation'
+                  ? ' — front month carries the event; calendars sell it.'
+                  : term.label === 'contango'
+                    ? ' — back months carry the premium; calendars buy the front.'
+                    : ''}
+              </p>
+            ) : null}
+            {strikes.rich.length > 0 || strikes.cheap.length > 0 ? (
+              <p className="text-dense-caption text-muted-foreground">
+                Rich vs SVI fit (sell):{' '}
+                <span className="font-mono text-foreground">{strikes.rich.length ? strikeList(strikes.rich) : '—'}</span>
+                {' · '}Cheap (buy):{' '}
+                <span className="font-mono text-foreground">{strikes.cheap.length ? strikeList(strikes.cheap) : '—'}</span>
+                {effectiveExpiry ? <span> · expiry {effectiveExpiry}</span> : null}
+                <span> · within ±30% of spot, ≥1σ off the fit</span>
+              </p>
+            ) : (residualQ.data?.length ?? 0) > 0 ? (
+              <p className="text-dense-caption text-muted-foreground">
+                No strike within ±30% of spot sits more than 1σ off the SVI fit
+                {effectiveExpiry ? ` (${effectiveExpiry})` : ''} — the smile is clean; no rich or cheap wing to pick.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
@@ -437,6 +486,9 @@ export function SkewSection() {
       <Card variant="elevated">
         <CardContent className="space-y-2 px-3 py-2">
           <p className="text-dense-label font-medium text-foreground">Skew extremes (cross-symbol)</p>
+          <p className="text-dense-caption text-muted-foreground">
+            Raw ATM slopes, steepest first. Each name is judged against its own year in the strip above — a slope that is extreme for one name is routine for another.
+          </p>
           {skewQ.isLoading ? (
             <div className="space-y-1">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -445,7 +497,6 @@ export function SkewSection() {
             </div>
           ) : (
             <SkewExtremesTable
-              bands={skewBands}
               rows={skewQ.data?.rows ?? []}
               asOf={skewQ.data?.as_of ?? null}
               onPick={(sym) => {

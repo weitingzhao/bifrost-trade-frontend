@@ -30,6 +30,7 @@ import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibb
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { fwd20Line } from '@/lib/analyzeDepth'
 import type { LensBand } from '@/api/research/lenses'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
@@ -319,6 +320,8 @@ export function VrpSection() {
   const verdictTone = verdict.tone
   const verdictLabel = verdict.label
   const verdictTextValue = vrpSummary(latest, verdict.band, verdict.means)
+  // C2: what this name did over the next 20 sessions from each VRP extreme.
+  const ownRecord = fwd20Line(exhibitQ.data)
   const symbolOutOfUniverse =
     universe !== 'all' &&
     Boolean(symbol.trim()) &&
@@ -438,6 +441,10 @@ export function VrpSection() {
           },
         ]}
       />
+
+      {ownRecord ? (
+        <p className="px-1 text-dense-micro text-muted-foreground">{ownRecord}</p>
+      ) : null}
 
       <SimilarRegimeCard
         lens="vrp"

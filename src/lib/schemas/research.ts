@@ -306,3 +306,23 @@ export const ExhibitSchema = z
     similar: z.object({ n: z.number(), n_resolved: z.number() }).passthrough().nullable().optional(),
   })
   .passthrough()
+
+/** GET /research/signal-decay/by-symbol — per-symbol hit rates on one lens (C2). */
+export const SignalDecayBySymbolSchema = z
+  .object({
+    lens: z.string(),
+    window_days: z.number(),
+    symbols: z.array(z.string()),
+    rows: z.record(z.string(), z.record(z.string(), z.object({ n: z.number() }).passthrough())),
+  })
+  .passthrough()
+
+/** GET /research/forecast/calibration — reliability per terrain regime (C2). */
+export const ForecastCalibrationSchema = z
+  .object({
+    symbol: z.string(),
+    days: z.number(),
+    rows: z.array(z.object({ regime: z.string(), n: z.number(), hits: z.number() }).passthrough()),
+    overall: z.object({ n: z.number(), hits: z.number() }).passthrough(),
+  })
+  .passthrough()

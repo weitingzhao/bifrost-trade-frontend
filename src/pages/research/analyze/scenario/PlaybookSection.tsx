@@ -29,9 +29,11 @@ import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { EmptyHint } from '@/components/research/EmptyHint'
+import { calibrationLine } from '@/lib/analyzeDepth'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import {
+  fetchForecastCalibration,
   fetchPlaybookHitRate,
   fetchPlaybookTriggers,
   fetchTerrainIntraday,
@@ -58,6 +60,8 @@ interface ScenarioCardProps {
   latest: TerrainIntraday
   live?: boolean
   wide?: boolean
+  /** C2: how often this symbol's path calls hit in the current regime. */
+  calibration?: string | null
 }
 
 const SCENARIO_META: Record<
@@ -130,7 +134,7 @@ function scenarioLevels(
   }
 }
 
-function ScenarioCard({ kind, probability, latest, live, wide }: ScenarioCardProps) {
+function ScenarioCard({ kind, probability, latest, live, wide, calibration }: ScenarioCardProps) {
   const meta = SCENARIO_META[kind]
   const levels = scenarioLevels(kind, latest)
   return (
@@ -161,6 +165,9 @@ function ScenarioCard({ kind, probability, latest, live, wide }: ScenarioCardPro
         <p className="text-dense-caption text-muted-foreground leading-snug">
           {invalidateLine(kind, latest)}
         </p>
+        {calibration ? (
+          <p className="text-dense-micro text-muted-foreground leading-snug">{calibration}.</p>
+        ) : null}
       </CardContent>
     </Card>
   )
@@ -234,6 +241,13 @@ export function PlaybookSection() {
 
   const rows = useMemo(() => intradayQ.data?.rows ?? [], [intradayQ.data])
   const triggerRows = useMemo(() => triggersQ.data?.rows ?? [], [triggersQ.data])
+  // C2: reliability of this symbol's path calls in the regime the snapshot is in.
+  const calibrationQ = useQuery({
+    queryKey: ['forecast-calibration', symbol, 180],
+    queryFn: () => fetchForecastCalibration(symbol, 180),
+    enabled: symbol.length > 0,
+    staleTime: 60_000,
+  })
   const hitRate = hitRateQ.data?.hit_rate ?? null
   const hitEval = hitRateQ.data?.evaluated_count ?? 0
   const hitCount = hitRateQ.data?.hit_count ?? 0
@@ -243,6 +257,7 @@ export function PlaybookSection() {
     effectiveIdx != null && effectiveIdx >= 0 ? rows[effectiveIdx] ?? null : null
   const selectedKind = selected ? liveScenario(selected) : null
   const intradayVerdict = useIntradayVerdict(selected)
+  const calibration = calibrationLine(calibrationQ.data?.rows, selected?.regime)
 
   const transitions = useMemo(() => buildPathTransitions(rows), [rows])
 
@@ -351,7 +366,7 @@ export function PlaybookSection() {
         }
         narrative={
           selected
-            ? `${intradayVerdict.headline}. ${intradayVerdict.invalidate} Observe only — do not arm live orders (D10).`
+            ? `${intradayVerdict.headline}. ${intradayVerdict.invalidate}${calibration ? ` ${calibration}.` : ''} Observe only — do not arm live orders (D10).`
             : 'Load intraday terrain to pick a LIVE scenario bias before the open.'
         }
         signals={
@@ -542,6 +557,7 @@ export function PlaybookSection() {
                   latest={selected}
                   live={selectedKind === kind}
                   wide={selectedKind === kind}
+                  calibration={selectedKind === kind ? calibration : null}
                 />
               )
             })}

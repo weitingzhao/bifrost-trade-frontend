@@ -2,7 +2,9 @@
  * Signal decay / lens hit-rate — Analyze Waves I / L.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { withValidation } from '@/lib/apiValidation'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { SignalDecayBySymbolSchema } from '@/lib/schemas/research'
 
 export type SignalDecayLens =
   | 'iv_rank'
@@ -117,5 +119,43 @@ export async function fetchSignalDecayIntersect(params: {
   if (params.regime && params.regime !== 'any') q.set('regime', params.regime)
   return unwrap(
     await fetch(`${researchEngineUrl('/research/signal-decay/intersect')}?${q}`),
+  )
+}
+
+/* ------------------------------------------------------ per-symbol (C2) */
+
+export interface SignalDecaySymbolSide {
+  n: number
+  evaluated_5d: number
+  hit_rate_5d: number | null
+  evaluated_20d: number
+  hit_rate_20d: number | null
+}
+
+export interface SignalDecayBySymbolResponse {
+  lens: SignalDecayLens | string
+  window_days: number
+  symbols: string[]
+  /** SYMBOL → side ('hot' | 'cold') → its own record; symbols without triggers are absent. */
+  rows: Record<string, Partial<Record<'hot' | 'cold', SignalDecaySymbolSide>>>
+}
+
+const validateBySymbol = withValidation<SignalDecayBySymbolResponse>(
+  SignalDecayBySymbolSchema,
+  'research/signal-decay/by-symbol',
+)
+
+/** One lens, many symbols: each name's own hit record instead of the universe pool. */
+export async function fetchSignalDecayBySymbol(params: {
+  lens: SignalDecayLens
+  symbols: readonly string[]
+  windowDays?: number
+}): Promise<SignalDecayBySymbolResponse> {
+  const q = new URLSearchParams()
+  q.set('lens', params.lens)
+  q.set('symbols', params.symbols.map((s) => s.trim().toUpperCase()).filter(Boolean).join(','))
+  q.set('window_days', String(params.windowDays ?? 365))
+  return validateBySymbol(
+    unwrap(await fetch(`${researchEngineUrl('/research/signal-decay/by-symbol')}?${q}`)),
   )
 }

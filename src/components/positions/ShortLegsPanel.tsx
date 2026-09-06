@@ -17,18 +17,15 @@ interface Props {
 }
 
 export function ShortLegsPanel({ legs, tightPct, activeExpiry, onLegClick, onExpiryClick, onUnpricedClick }: Props) {
-  const unpriced = legs.filter((l) => l.cushionPct == null).length
+  // The map prints its own leg and unpriced counts (the unpriced one is a link);
+  // the panel adds only the title.
   return (
     <section
       className="rounded-md border border-border bg-secondary/40 px-3 py-1.5"
       aria-label="Short legs against the tightness line"
     >
-      <span className="mb-1 flex items-baseline justify-between text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-        <span>Short legs — days to expiry against cushion</span>
-        <span className="font-mono normal-case tracking-normal tabular-nums">
-          {legs.length} legs
-          {unpriced > 0 ? <span className="text-warning"> · {unpriced} unpriced</span> : null}
-        </span>
+      <span className="mb-1 block text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
+        Short legs — days to expiry against cushion
       </span>
       <ShortLegRiskMap
         legs={legs}

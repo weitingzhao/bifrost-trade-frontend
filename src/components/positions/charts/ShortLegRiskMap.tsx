@@ -204,15 +204,18 @@ export function ShortLegRiskMap({
         ) : null}
 
         <line x1={bands.plot.x0} x2={bands.plot.x1} y1={bands.zeroY} y2={bands.zeroY} className={styles.zeroLine} />
-        <text x={bands.plot.x1} y={bands.zeroY - 2} textAnchor="end" className={styles.label}>
+        {/* Under its line, inside the band it names; the tight label sits above
+            its own line at the other end, so the two never overprint however
+            close the threshold is to zero. */}
+        <text x={bands.plot.x1} y={bands.zeroY + 9} textAnchor="end" className={styles.label}>
           ITM below
         </text>
 
         <line x1={bands.plot.x0} x2={bands.plot.x1} y1={tightY} y2={tightY} className={styles.tightLine} />
         <text
-          x={bands.plot.x1}
+          x={bands.plot.x0 + 2}
           y={tightY - 2}
-          textAnchor="end"
+          textAnchor="start"
           className={cn(styles.label, styles.labelWarning)}
           data-testid="tight-label"
         >

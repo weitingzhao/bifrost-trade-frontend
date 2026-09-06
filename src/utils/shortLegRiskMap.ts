@@ -266,8 +266,11 @@ export function layoutRiskMap(
 
   // Past-expiry legs sit at day 0: the domain runs forward from today, and a
   // contract still open after its date is the same emergency as one expiring now.
+  // The time axis is the book's, priced or not: with every leg unpriced (a
+  // weekend, a feed outage) the domain used to collapse to one day and the
+  // "≤7d" band filled the whole plot for a book expiring 41–132 days out.
   let observedMax = 0
-  for (const leg of priced) observedMax = Math.max(observedMax, leg.dte as number)
+  for (const leg of legs) if (isPlaceable(leg.dte)) observedMax = Math.max(observedMax, leg.dte as number)
   const maxDte = Math.max(1, isPlaceable(opts.maxDte) ? opts.maxDte : observedMax)
 
   const xOf = (dte: number): number => {
@@ -296,8 +299,10 @@ export function layoutRiskMap(
 
   // One tick per distinct expiry, carrying its real DTE so a past date is not
   // relabelled as "today" — only its x is pinned to the start of the domain.
+  // Unpriced legs still have a date, and the date is what the tick is for.
   const tickByExpiry = new Map<string, number>()
-  for (const leg of priced) {
+  for (const leg of legs) {
+    if (!isPlaceable(leg.dte)) continue
     if (!tickByExpiry.has(leg.expiry)) tickByExpiry.set(leg.expiry, leg.dte as number)
   }
   const ticks: RiskMapTick[] = Array.from(tickByExpiry, ([expiry, dte]) => ({

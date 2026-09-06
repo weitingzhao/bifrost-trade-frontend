@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
 import {
   CollapsibleGroup,
   CollapsibleGroupBody,
@@ -23,9 +22,9 @@ import { ProbabilityBar } from '@/components/charts/ProbabilityBar'
 import { ScenarioFanChart } from '@/components/charts/ScenarioFanChart'
 import { SessionTimelineChart } from '@/components/charts/SessionTimelineChart'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
@@ -201,7 +200,7 @@ function buildPathTransitions(rows: TerrainIntraday[]): { time: string; from: st
   return transitions
 }
 
-export default function IntradayPlaybookPage() {
+export function PlaybookSection() {
   const { symbol, apiDate } = useResearchContext()
   const [transitionsExplicit, setTransitionsExplicit] = useState<boolean | undefined>(undefined)
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
@@ -271,48 +270,40 @@ export default function IntradayPlaybookPage() {
   const transitionsExpanded = transitionsExplicit ?? transitions.length > 0
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="Intraday Playbook"
-        description="Scenario fan, LIVE bias, and path transitions — observe only (D10)"
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="intraday-playbook"
-              originLabel="Intraday Playbook"
-              symbol={symbol}
-              date={apiDate}
-              snapshot={compactSnapshot({
-                headline: intradayVerdict.headline,
-                bias: intradayVerdict.biasTag,
-                live_kind: selectedKind,
-                spot: selected?.spot,
-              })}
-              suggestedPrompt={`Given the live intraday playbook for ${symbol}, what bias should I observe and what would invalidate it?`}
-            />
-            <SaveAsHypothesisButton
-              originPage="intraday-playbook"
-              defaultTitle={`${symbol} intraday ${intradayVerdict.biasTag} hypothesis`}
-              defaultThesis={`${intradayVerdict.headline}. Invalidate: ${intradayVerdict.invalidate}`}
-              defaultSymbols={[symbol]}
-              defaultTags={['intraday', 'playbook', 'scenario']}
-              originRef={withWatchlistContractKey(
-                {
-                  symbol,
-                  date: apiDate || null,
-                  bias: intradayVerdict.biasTag,
-                  live_kind: selectedKind,
-                  spot: selected?.spot ?? null,
-                  invalidate: intradayVerdict.invalidate,
-                },
-                symbol,
-              )}
-            />
-          </div>
-        }
-      />
-
-      <ResearchContextBar />
+    <div className="space-y-3">
+      <LabToolbar>
+        <AskCopilotButton
+          originPage="intraday-playbook"
+          originLabel="Intraday Playbook"
+          symbol={symbol}
+          date={apiDate}
+          snapshot={compactSnapshot({
+            headline: intradayVerdict.headline,
+            bias: intradayVerdict.biasTag,
+            live_kind: selectedKind,
+            spot: selected?.spot,
+          })}
+          suggestedPrompt={`Given the live intraday playbook for ${symbol}, what bias should I observe and what would invalidate it?`}
+        />
+        <SaveAsHypothesisButton
+          originPage="intraday-playbook"
+          defaultTitle={`${symbol} intraday ${intradayVerdict.biasTag} hypothesis`}
+          defaultThesis={`${intradayVerdict.headline}. Invalidate: ${intradayVerdict.invalidate}`}
+          defaultSymbols={[symbol]}
+          defaultTags={['intraday', 'playbook', 'scenario']}
+          originRef={withWatchlistContractKey(
+            {
+              symbol,
+              date: apiDate || null,
+              bias: intradayVerdict.biasTag,
+              live_kind: selectedKind,
+              spot: selected?.spot ?? null,
+              invalidate: intradayVerdict.invalidate,
+            },
+            symbol,
+          )}
+        />
+      </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
 
@@ -640,7 +631,7 @@ export default function IntradayPlaybookPage() {
             <EmptyHint
               title="No intraday data"
               hint={`No terrain intraday rows for ${symbol}. Check that the terrain intraday CronJob has run.`}
-              to="/research/intraday-playbook"
+              to="/research/scenario?view=playbook"
               triggerId="terrain-intraday"
               triggerLabel="Trigger terrain intraday"
               invalidateKeys={[['terrain-intraday', symbol, apiDate ?? '']]}
@@ -653,7 +644,7 @@ export default function IntradayPlaybookPage() {
         Intraday playbook — observe only (D10). Not investment advice.
       </p>
       </SymbolContextGuard>
-    </PageShell>
+    </div>
   )
 }
 

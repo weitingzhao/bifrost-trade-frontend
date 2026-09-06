@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { fmtNumLocale } from '@/lib/format'
-// lucide-react icons used only in navConfig; PageHeader has no icon prop
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
 import { ForecastStructureCards } from '@/components/research/ForecastStructureCards'
+import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -33,7 +32,6 @@ import { ForecastPathOverlay } from '@/components/charts/ForecastPathOverlay'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
@@ -75,7 +73,7 @@ function regimeVariant(
   return 'neutral'
 }
 
-export default function ForecastSessionsPage() {
+export function SessionsSection() {
   const { symbol, apiDate } = useResearchContext()
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -129,51 +127,44 @@ export default function ForecastSessionsPage() {
       : rollingMiss
 
   return (
-    <PageShell padding="compact">
-      <PageHeader
-        title="Forecast"
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="forecast-sessions"
-              originLabel="Forecast"
-              symbol={symbol}
-              date={apiDate}
-              snapshot={compactSnapshot({
-                session_count: sessions.length,
-                selected_id: selectedId,
-                path_hit_rate: pathHitRate,
-                avg_miss_pct: avgMissPct,
-              })}
-              suggestedPrompt={`Review the ${symbol} forecast sessions and tell me which paths look most / least reliable.`}
-            />
-            <SaveAsHypothesisButton
-              originPage="forecast-sessions"
-              defaultTitle={`${symbol} forecast path hypothesis`}
-              defaultThesis={
-                pathHitRate != null
-                  ? `${symbol} selected session path hit ${(pathHitRate * 100).toFixed(0)}% · avg miss ${avgMissPct != null ? `${(avgMissPct * 100).toFixed(1)}%` : '—'}. Trust paths only when hit-rate ≥ 60%.`
-                  : `${symbol}: ${sessions.length} forecast session(s). Settle closed sessions before sizing from path calls.`
-              }
-              defaultSymbols={[symbol]}
-              defaultTags={['forecast', 'path', 'settlement']}
-              originRef={withWatchlistContractKey(
-                {
-                  symbol,
-                  date: apiDate || null,
-                  selected_id: selectedId,
-                  path_hit_rate: pathHitRate,
-                  avg_miss_pct: avgMissPct,
-                  session_count: sessions.length,
-                },
-                symbol,
-              )}
-            />
-          </div>
-        }
-      />
-
-      <ResearchContextBar />
+    <div className="space-y-3">
+      <LabToolbar>
+        <AskCopilotButton
+          originPage="forecast-sessions"
+          originLabel="Forecast"
+          symbol={symbol}
+          date={apiDate}
+          snapshot={compactSnapshot({
+            session_count: sessions.length,
+            selected_id: selectedId,
+            path_hit_rate: pathHitRate,
+            avg_miss_pct: avgMissPct,
+          })}
+          suggestedPrompt={`Review the ${symbol} forecast sessions and tell me which paths look most / least reliable.`}
+        />
+        <SaveAsHypothesisButton
+          originPage="forecast-sessions"
+          defaultTitle={`${symbol} forecast path hypothesis`}
+          defaultThesis={
+            pathHitRate != null
+              ? `${symbol} selected session path hit ${(pathHitRate * 100).toFixed(0)}% · avg miss ${avgMissPct != null ? `${(avgMissPct * 100).toFixed(1)}%` : '—'}. Trust paths only when hit-rate ≥ 60%.`
+              : `${symbol}: ${sessions.length} forecast session(s). Settle closed sessions before sizing from path calls.`
+          }
+          defaultSymbols={[symbol]}
+          defaultTags={['forecast', 'path', 'settlement']}
+          originRef={withWatchlistContractKey(
+            {
+              symbol,
+              date: apiDate || null,
+              selected_id: selectedId,
+              path_hit_rate: pathHitRate,
+              avg_miss_pct: avgMissPct,
+              session_count: sessions.length,
+            },
+            symbol,
+          )}
+        />
+      </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
 
@@ -503,7 +494,7 @@ export default function ForecastSessionsPage() {
         </div>
       </div>
       </SymbolContextGuard>
-    </PageShell>
+    </div>
   )
 }
 

@@ -120,7 +120,7 @@ export function useDailyVerdict(input: DailyVerdictInput): DailyVerdict {
 
     let narrativeText: string
     let narrativeLamp: LampColor
-    let narrativeTo = '/research/analysis-model'
+    let narrativeTo = '/research/scenario?view=model'
 
     if (terrain) {
       narrativeText = `${symbol} ${terrain.regime} — ${spotVsClose(terrain.spot, terrain.expected_close)}`
@@ -128,7 +128,7 @@ export function useDailyVerdict(input: DailyVerdictInput): DailyVerdict {
     } else if (forecastLatest) {
       narrativeText = `${symbol} ${forecastLatest.regime} — E[close] ${forecastLatest.expected_close.toFixed(2)}`
       narrativeLamp = forecastLamp
-      narrativeTo = '/research/forecast-sessions'
+      narrativeTo = '/research/scenario?view=sessions'
     } else {
       narrativeText = `No terrain narrative for ${symbol}`
       narrativeLamp = terrainError ? 'red' : 'gray'
@@ -148,13 +148,13 @@ export function useDailyVerdict(input: DailyVerdictInput): DailyVerdict {
       if (distPut < 0.5) {
         riskText = `Near put wall ${gexLatest.major_put_wall.toFixed(0)} (${distPut.toFixed(2)}% from spot)`
         riskLamp = gexLamp
-        riskTo = '/research/gex-intraday'
+        riskTo = '/research/dealer-levels?view=gex'
       } else if (ivRow?.iv_rank_1y != null && Number.isFinite(ivRow.iv_rank_1y)) {
         const bucket = ivBucket(ivRow.iv_rank_1y)
         if (bucket === 'High' || bucket === 'Low') {
           riskText = `IV rank ${ivRow.iv_rank_1y.toFixed(0)} — ${bucket} vol regime`
           riskLamp = ivLamp
-          riskTo = '/research/iv-radar'
+          riskTo = '/research/vol-regime?view=iv-rank'
         } else {
           riskText = 'No elevated event or GEX tail risk flagged'
           riskLamp = 'green'
@@ -167,7 +167,7 @@ export function useDailyVerdict(input: DailyVerdictInput): DailyVerdict {
       const bucket = ivBucket(ivRow.iv_rank_1y)
       riskText = `IV rank ${ivRow.iv_rank_1y.toFixed(0)} — ${bucket}`
       riskLamp = ivLamp
-      riskTo = '/research/iv-radar'
+      riskTo = '/research/vol-regime?view=iv-rank'
     } else {
       riskText = 'No risk signals loaded'
       riskLamp = eventsError || gexError || ivError ? 'red' : 'gray'

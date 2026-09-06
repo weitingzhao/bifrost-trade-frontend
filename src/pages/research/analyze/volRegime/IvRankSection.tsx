@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { Radar } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
   DenseLinkButton,
@@ -26,8 +25,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { IvGauge } from '@/components/charts/IvGauge'
 import { IvRankStrip } from '@/components/charts/IvRankStrip'
 import { DenseSparkline } from '@/components/charts/DenseSparkline'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
+import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
@@ -232,7 +231,7 @@ function GaugeGridView({
   )
 }
 
-export default function IvRadarPage() {
+export function IvRankSection() {
   const navigate = useNavigate()
   const { symbol: contextSymbol } = useResearchContext()
   const [filter, setFilter] = useState<IvRadarUniverseFilter>('all')
@@ -277,39 +276,31 @@ export default function IvRadarPage() {
   )
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="IV Radar"
-        description="Underlying IV Rank regime for Benchmarks ∪ optionable Watchlist ∪ Holdings. Drill into Option Discovery for chain/structure. Observe-only (D10)."
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="iv-radar"
-              originLabel="IV Radar"
-              snapshot={compactSnapshot({
-                universe: filter,
-                sort: sortMode,
-                view: viewMode,
-                top_symbols: topIvSymbols,
-              })}
-              suggestedPrompt="From this IV Rank universe, which names look interesting for short-vol observation?"
-            />
-            <SaveAsHypothesisButton
-              originPage="iv-radar"
-              defaultTitle="IV Radar hypothesis"
-              defaultSymbols={topIvSymbols}
-              defaultTags={['iv-regime']}
-              originRef={{
-                universe: filter,
-                sort: sortMode,
-                view: viewMode,
-              }}
-            />
-          </div>
-        }
-      />
-
-      <ResearchContextBar showDate={false} />
+    <div className="space-y-3">
+      <LabToolbar>
+        <AskCopilotButton
+          originPage="iv-radar"
+          originLabel="IV Radar"
+          snapshot={compactSnapshot({
+            universe: filter,
+            sort: sortMode,
+            view: viewMode,
+            top_symbols: topIvSymbols,
+          })}
+          suggestedPrompt="From this IV Rank universe, which names look interesting for short-vol observation?"
+        />
+        <SaveAsHypothesisButton
+          originPage="iv-radar"
+          defaultTitle="IV Radar hypothesis"
+          defaultSymbols={topIvSymbols}
+          defaultTags={['iv-regime']}
+          originRef={{
+            universe: filter,
+            sort: sortMode,
+            view: viewMode,
+          }}
+        />
+      </LabToolbar>
 
       <SymbolContextGuard symbol={contextSymbol}>
 
@@ -358,7 +349,7 @@ export default function IvRadarPage() {
             label: 'Option Discovery',
             href: `/research/discovery?symbol=${encodeURIComponent(focusSymbol)}`,
           },
-          { label: 'VRP Lab', href: `/research/vrp-lab?symbol=${encodeURIComponent(focusSymbol)}` },
+          { label: 'VRP Lab', href: `/research/vol-regime?view=vrp&symbol=${encodeURIComponent(focusSymbol)}` },
         ]}
       />
 
@@ -574,6 +565,6 @@ export default function IvRadarPage() {
         D10: no live order execution from this page.
       </p>
       </SymbolContextGuard>
-    </PageShell>
+    </div>
   )
 }

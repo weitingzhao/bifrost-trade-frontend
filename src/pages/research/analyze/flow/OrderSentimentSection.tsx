@@ -1,8 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { fmtNumLocale } from '@/lib/format'
-// lucide-react icons used only in navConfig; PageHeader has no icon prop
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -24,9 +22,9 @@ import {
   type OrderSentiment,
 } from '@/api/researchEngine'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
@@ -56,7 +54,7 @@ function sentimentSummary(s: OrderSentiment | undefined, band: LensBand | null, 
   return `${s.symbol} tape score ${s.sentiment_score.toFixed(1)} — ${means ?? ''} PCR vol ${fmtNumLocale(s.pcr_volume)}.`
 }
 
-export default function OrderSentimentPage() {
+export function OrderSentimentSection() {
   const { symbol, dateInput } = useResearchContext()
   const date = dateInput
 
@@ -100,46 +98,39 @@ export default function OrderSentimentPage() {
   }, [multiLegRows.length])
 
   return (
-    <PageShell padding="compact">
-      <PageHeader
-        title="Order Sentiment"
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="order-sentiment"
-              originLabel="Order Sentiment"
-              symbol={symbol}
-              date={date || undefined}
-              snapshot={compactSnapshot({
-                data_source: sentiment?.data_source,
-                sentiment_score: sentiment?.sentiment_score,
-                pcr_volume: sentiment?.pcr_volume,
-                multi_leg_count: multiLegRows.length,
-              })}
-              suggestedPrompt={`Interpret ${symbol} order-flow / sentiment from this tape snapshot. What stands out?`}
-            />
-            <SaveAsHypothesisButton
-              originPage="order-sentiment"
-              defaultTitle={`${symbol} order-flow hypothesis`}
-              defaultThesis={verdictSummary}
-              defaultSymbols={[symbol]}
-              defaultTags={['order-flow', 'sentiment', 'tape']}
-              originRef={withWatchlistContractKey(
-                {
-                  symbol,
-                  date: date || null,
-                  sentiment_score: sentiment?.sentiment_score ?? null,
-                  pcr_volume: sentiment?.pcr_volume ?? null,
-                  multi_leg_count: multiLegRows.length,
-                },
-                symbol,
-              )}
-            />
-          </div>
-        }
-      />
-
-      <ResearchContextBar />
+    <div className="space-y-3">
+      <LabToolbar>
+        <AskCopilotButton
+          originPage="order-sentiment"
+          originLabel="Order Sentiment"
+          symbol={symbol}
+          date={date || undefined}
+          snapshot={compactSnapshot({
+            data_source: sentiment?.data_source,
+            sentiment_score: sentiment?.sentiment_score,
+            pcr_volume: sentiment?.pcr_volume,
+            multi_leg_count: multiLegRows.length,
+          })}
+          suggestedPrompt={`Interpret ${symbol} order-flow / sentiment from this tape snapshot. What stands out?`}
+        />
+        <SaveAsHypothesisButton
+          originPage="order-sentiment"
+          defaultTitle={`${symbol} order-flow hypothesis`}
+          defaultThesis={verdictSummary}
+          defaultSymbols={[symbol]}
+          defaultTags={['order-flow', 'sentiment', 'tape']}
+          originRef={withWatchlistContractKey(
+            {
+              symbol,
+              date: date || null,
+              sentiment_score: sentiment?.sentiment_score ?? null,
+              pcr_volume: sentiment?.pcr_volume ?? null,
+              multi_leg_count: multiLegRows.length,
+            },
+            symbol,
+          )}
+        />
+      </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
 
@@ -185,7 +176,7 @@ export default function OrderSentimentPage() {
             label: 'Option Discovery',
             href: `/research/discovery?symbol=${encodeURIComponent(symbol)}`,
           },
-          { label: 'IV Radar', href: `/research/iv-radar?symbol=${encodeURIComponent(symbol)}` },
+          { label: 'IV Radar', href: `/research/vol-regime?view=iv-rank&symbol=${encodeURIComponent(symbol)}` },
         ]}
       />
 
@@ -386,7 +377,7 @@ export default function OrderSentimentPage() {
           <p className={denseTable.emptyHint}>No order sentiment data available</p>
         )}
       </SymbolContextGuard>
-    </PageShell>
+    </div>
   )
 }
 

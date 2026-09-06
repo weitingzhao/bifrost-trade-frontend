@@ -76,11 +76,11 @@ const PRESET_OPTIONS: { value: ScanPreset; label: string }[] = [
 ]
 
 const LAB_LINKS: { key: string; label: string; path: (sym: string) => string }[] = [
-  { key: 'iv', label: 'IV Radar', path: () => '/research/iv-radar' },
-  { key: 'vrp', label: 'VRP', path: (s) => `/research/vrp-lab?symbol=${s}` },
-  { key: 'surface', label: 'Surface', path: (s) => `/research/vol-surface-lab?symbol=${s}` },
-  { key: 'opex', label: 'OpEx', path: (s) => `/research/opex-cycle-lab?symbol=${s}` },
-  { key: 'gex', label: 'GEX', path: (s) => `/research/gex-intraday?symbol=${s}` },
+  { key: 'iv', label: 'IV Radar', path: () => '/research/vol-regime?view=iv-rank' },
+  { key: 'vrp', label: 'VRP', path: (s) => `/research/vol-regime?view=vrp&symbol=${s}` },
+  { key: 'surface', label: 'Surface', path: (s) => `/research/vol-regime?view=skew&symbol=${s}` },
+  { key: 'opex', label: 'OpEx', path: (s) => `/research/dealer-levels?view=opex&symbol=${s}` },
+  { key: 'gex', label: 'GEX', path: (s) => `/research/dealer-levels?view=gex&symbol=${s}` },
 ]
 
 type RegimePicker = 'auto' | SimilarRegimeLens

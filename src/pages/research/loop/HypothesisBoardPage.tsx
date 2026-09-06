@@ -26,7 +26,7 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 function analyzeHref(symbols: string[]): string | undefined {
   const sym = symbols[0]?.trim().toUpperCase()
   if (!sym) return undefined
-  return `/research/iv-radar?symbol=${encodeURIComponent(sym)}`
+  return `/research/vol-regime?view=iv-rank&symbol=${encodeURIComponent(sym)}`
 }
 
 export default function HypothesisBoardPage() {

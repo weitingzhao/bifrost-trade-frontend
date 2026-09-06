@@ -4,6 +4,7 @@
  * Labels and routes come from the lens registry; the lens set is the five hubs' lenses.
  */
 import { Link } from 'react-router-dom'
+import { flowHref, labHref, withSymbolParam } from '@/lib/analyzeHubs'
 import { useQuery } from '@tanstack/react-query'
 import { StatusLamp } from '@/components/StatusLamp'
 import type { LampColor } from '@/lib/researchFreshness'
@@ -36,14 +37,14 @@ export const RIBBON_LENSES = ['iv_rank', 'vrp', 'skew', 'gex_regime', 'opex_pin'
 
 // Fallback names when the registry has not loaded; the registry wins once it has.
 const LENS_ROUTES: Record<string, string> = {
-  vrp: '/research/vrp-lab',
-  iv_rank: '/research/iv-radar',
-  skew: '/research/vol-surface-lab',
-  gex_regime: '/research/gex-intraday',
-  opex_pin: '/research/opex-cycle-lab',
-  terrain: '/research/analysis-model',
-  terrain_regime: '/research/analysis-model',
-  order_sentiment: '/research/order-sentiment',
+  vrp: '/research/vol-regime?view=vrp',
+  iv_rank: '/research/vol-regime?view=iv-rank',
+  skew: '/research/vol-regime?view=skew',
+  gex_regime: '/research/dealer-levels?view=gex',
+  opex_pin: '/research/dealer-levels?view=opex',
+  terrain: '/research/scenario?view=model',
+  terrain_regime: '/research/scenario?view=model',
+  order_sentiment: '/research/flow',
 }
 
 const LENS_LABELS: Record<string, string> = {
@@ -71,20 +72,12 @@ function lampFromFreshness(freshness: string): LampColor {
   return 'red'
 }
 
-const FALLBACK_LENSES = (symbol: string): RegimeLensItem[] => {
-  const q = symbol ? `?symbol=${encodeURIComponent(symbol)}` : ''
-  return [
-    { id: 'vrp', label: 'VRP', href: `/research/vrp-lab${q}`, lamp: 'yellow' },
-    { id: 'iv_rank', label: 'IV Rank', href: `/research/iv-radar${q}`, lamp: 'yellow' },
-    { id: 'terrain', label: 'Terrain', href: `/research/analysis-model${q}`, lamp: 'yellow' },
-    {
-      id: 'order_sentiment',
-      label: 'Sentiment',
-      href: `/research/order-sentiment${q}`,
-      lamp: 'yellow',
-    },
-  ]
-}
+const FALLBACK_LENSES = (symbol: string): RegimeLensItem[] => [
+  { id: 'vrp', label: 'VRP', href: labHref('vrp', symbol), lamp: 'yellow' },
+  { id: 'iv_rank', label: 'IV Rank', href: labHref('iv-rank', symbol), lamp: 'yellow' },
+  { id: 'terrain', label: 'Terrain', href: labHref('model', symbol), lamp: 'yellow' },
+  { id: 'order_sentiment', label: 'Sentiment', href: flowHref(symbol), lamp: 'yellow' },
+]
 
 async function fetchComposite(symbol: string): Promise<ExhibitItem[]> {
   const q = new URLSearchParams({ symbol, lenses: RIBBON_LENSES.join(',') })
@@ -124,7 +117,7 @@ export function CompositeRegimeRibbon({
           return {
             id: ex.lens,
             label: band ? `${label} ${band}` : label,
-            href: `${spec?.page_route ?? LENS_ROUTES[ex.lens] ?? '/research'}?symbol=${encodeURIComponent(sym)}`,
+            href: withSymbolParam(spec?.page_route ?? LENS_ROUTES[ex.lens] ?? '/research', sym),
             lamp: lampFromFreshness(ex.freshness),
           }
         })

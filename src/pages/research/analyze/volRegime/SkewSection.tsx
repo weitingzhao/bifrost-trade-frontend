@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LineChart } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
   DenseLinkButton,
@@ -21,8 +20,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
+import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
@@ -181,7 +180,7 @@ function SkewExtremesTable({
   )
 }
 
-export default function VolSurfaceLabPage() {
+export function SkewSection() {
   const navigate = useNavigate()
   const { symbol, apiDate, setSymbol } = useResearchContext()
   const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>('residual_z')
@@ -230,44 +229,36 @@ export default function VolSurfaceLabPage() {
   )
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="Vol Surface Lab (SVI)"
-        description="Gatheral raw SVI fit per expiry. Surface term structure, per-strike residuals, and cross-symbol skew extremes. Observe-only (D10)."
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="vol-surface-lab"
-              originLabel="Vol Surface Lab"
-              symbol={symbol}
-              date={anchor?.trade_date ?? apiDate}
-              snapshot={compactSnapshot({
-                expiry: anchor?.expiry,
-                atm_vol: anchor?.atm_vol,
-                atm_slope: anchor?.atm_slope,
-                fit_rmse: anchor?.fit_rmse,
-              })}
-              suggestedPrompt={`Interpret unusual points on the ${symbol} volatility surface.`}
-            />
-            <SaveAsHypothesisButton
-              originPage="vol-surface-lab"
-              defaultTitle={`${symbol} SVI hypothesis`}
-              defaultSymbols={[symbol]}
-              defaultTags={['vol-surface', 'svi']}
-              originRef={{
-                symbol,
-                trade_date: anchor?.trade_date ?? null,
-                expiry: anchor?.expiry ?? null,
-                atm_vol: anchor?.atm_vol ?? null,
-                atm_slope: anchor?.atm_slope ?? null,
-                fit_rmse: anchor?.fit_rmse ?? null,
-              }}
-            />
-          </div>
-        }
-      />
-
-      <ResearchContextBar />
+    <div className="space-y-3">
+      <LabToolbar>
+        <AskCopilotButton
+          originPage="vol-surface-lab"
+          originLabel="Vol Surface Lab"
+          symbol={symbol}
+          date={anchor?.trade_date ?? apiDate}
+          snapshot={compactSnapshot({
+            expiry: anchor?.expiry,
+            atm_vol: anchor?.atm_vol,
+            atm_slope: anchor?.atm_slope,
+            fit_rmse: anchor?.fit_rmse,
+          })}
+          suggestedPrompt={`Interpret unusual points on the ${symbol} volatility surface.`}
+        />
+        <SaveAsHypothesisButton
+          originPage="vol-surface-lab"
+          defaultTitle={`${symbol} SVI hypothesis`}
+          defaultSymbols={[symbol]}
+          defaultTags={['vol-surface', 'svi']}
+          originRef={{
+            symbol,
+            trade_date: anchor?.trade_date ?? null,
+            expiry: anchor?.expiry ?? null,
+            atm_vol: anchor?.atm_vol ?? null,
+            atm_slope: anchor?.atm_slope ?? null,
+            fit_rmse: anchor?.fit_rmse ?? null,
+          }}
+        />
+      </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
 
@@ -308,11 +299,11 @@ export default function VolSurfaceLabPage() {
         nextMoves={[
           {
             label: 'IV Radar',
-            href: `/research/iv-radar?symbol=${encodeURIComponent(symbol)}`,
+            href: `/research/vol-regime?view=iv-rank&symbol=${encodeURIComponent(symbol)}`,
           },
           {
             label: 'VRP Lab',
-            href: `/research/vrp-lab?symbol=${encodeURIComponent(symbol)}`,
+            href: `/research/vol-regime?view=vrp&symbol=${encodeURIComponent(symbol)}`,
           },
         ]}
       />
@@ -459,7 +450,7 @@ export default function VolSurfaceLabPage() {
               asOf={skewQ.data?.as_of ?? null}
               onPick={(sym) => {
                 setSymbol(sym)
-                navigate(`/research/vol-surface-lab?symbol=${encodeURIComponent(sym)}`)
+                navigate(`/research/vol-regime?view=skew&symbol=${encodeURIComponent(sym)}`)
               }}
             />
           )}
@@ -472,6 +463,6 @@ export default function VolSurfaceLabPage() {
         D10: no live order execution from this page.
       </p>
       </SymbolContextGuard>
-    </PageShell>
+    </div>
   )
 }

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Waves } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
   DenseLinkButton,
@@ -21,8 +20,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
+import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
@@ -295,7 +294,7 @@ function ExtremesTable({
   )
 }
 
-export default function VrpLabPage() {
+export function VrpSection() {
   const navigate = useNavigate()
   const { symbol, setSymbol } = useResearchContext()
   const [bucket, setBucket] = useState<Bucket>('high')
@@ -329,47 +328,39 @@ export default function VrpLabPage() {
   const anyError = latestQ.isError || historyQ.isError
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="IV-RV Spread Lab"
-        description="Volatility Risk Premium (IV − RV) percentile regime. Sell-vol edge when VRP high, buy-vol edge when VRP low. Observe-only (D10)."
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="vrp-lab"
-              originLabel="VRP Lab"
-              symbol={symbol}
-              date={latest?.trade_date ?? undefined}
-              snapshot={compactSnapshot({
-                vrp_pct: latest?.vrp_pct_252d,
-                vrp_60d: latest?.vrp_60d,
-                atm_iv_30d: latest?.atm_iv_30d,
-                rv_60d: latest?.rv_60d,
-              })}
-              suggestedPrompt={`Explain ${symbol} current VRP / IV rank and comparable historical regimes.`}
-            />
-            <SaveAsHypothesisButton
-              originPage="vrp-lab"
-              defaultTitle={`${symbol} VRP hypothesis`}
-              defaultSymbols={[symbol]}
-              defaultTags={['vrp', 'iv-rv']}
-              originRef={withWatchlistContractKey(
-                {
-                  symbol,
-                  date: latest?.trade_date ?? null,
-                  vrp_pct: latest?.vrp_pct_252d ?? null,
-                  vrp_60d: latest?.vrp_60d ?? null,
-                  atm_iv_30d: latest?.atm_iv_30d ?? null,
-                  rv_60d: latest?.rv_60d ?? null,
-                },
-                symbol,
-              )}
-            />
-          </div>
-        }
-      />
-
-      <ResearchContextBar showDate={false} />
+    <div className="space-y-3">
+      <LabToolbar>
+        <AskCopilotButton
+          originPage="vrp-lab"
+          originLabel="VRP Lab"
+          symbol={symbol}
+          date={latest?.trade_date ?? undefined}
+          snapshot={compactSnapshot({
+            vrp_pct: latest?.vrp_pct_252d,
+            vrp_60d: latest?.vrp_60d,
+            atm_iv_30d: latest?.atm_iv_30d,
+            rv_60d: latest?.rv_60d,
+          })}
+          suggestedPrompt={`Explain ${symbol} current VRP / IV rank and comparable historical regimes.`}
+        />
+        <SaveAsHypothesisButton
+          originPage="vrp-lab"
+          defaultTitle={`${symbol} VRP hypothesis`}
+          defaultSymbols={[symbol]}
+          defaultTags={['vrp', 'iv-rv']}
+          originRef={withWatchlistContractKey(
+            {
+              symbol,
+              date: latest?.trade_date ?? null,
+              vrp_pct: latest?.vrp_pct_252d ?? null,
+              vrp_60d: latest?.vrp_60d ?? null,
+              atm_iv_30d: latest?.atm_iv_30d ?? null,
+              rv_60d: latest?.rv_60d ?? null,
+            },
+            symbol,
+          )}
+        />
+      </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
 
@@ -443,7 +434,7 @@ export default function VrpLabPage() {
           },
           {
             label: 'IV Radar',
-            href: `/research/iv-radar`,
+            href: `/research/vol-regime?view=iv-rank`,
           },
         ]}
       />
@@ -555,7 +546,7 @@ export default function VrpLabPage() {
               bucket={bucket}
               onPick={(sym) => {
                 setSymbol(sym)
-                navigate(`/research/vrp-lab?symbol=${encodeURIComponent(sym)}`)
+                navigate(`/research/vol-regime?view=vrp&symbol=${encodeURIComponent(sym)}`)
               }}
             />
           )}
@@ -567,6 +558,6 @@ export default function VrpLabPage() {
         edge only — not investment advice. D10: no live order execution from this page.
       </p>
       </SymbolContextGuard>
-    </PageShell>
+    </div>
   )
 }

@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
@@ -454,7 +453,7 @@ function IvSurfaceCard({
   )
 }
 
-export default function AnalysisModelPage() {
+export function ModelSection() {
   const { symbol } = useResearchContext()
   const sym = symbol.trim().toUpperCase() || 'SPX'
   const [universe, setUniverse] = useState<PortfolioUniverse>('all')
@@ -533,45 +532,38 @@ export default function AnalysisModelPage() {
   const verdictSummary = terrainVerdictSummary(terrain, sym)
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="Analysis Model"
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="analysis-model"
-              originLabel="Analysis Model"
-              symbol={sym}
-              snapshot={compactSnapshot({
-                regime: terrain?.regime,
-                spot: terrain?.spot ?? smile?.spot,
-                atm_iv: atm?.atm_iv,
-              })}
-              suggestedPrompt={`Walk through the ${sym} analysis-model terrain and smile — what regime is this?`}
-            />
-            <SaveAsHypothesisButton
-              originPage="analysis-model"
-              defaultTitle={`${sym} terrain ${terrain?.regime ?? 'regime'} hypothesis`}
-              defaultThesis={verdictSummary}
-              defaultSymbols={[sym]}
-              defaultTags={['terrain', 'regime', 'analysis-model']}
-              originRef={withWatchlistContractKey(
-                {
-                  symbol: sym,
-                  regime: terrain?.regime ?? null,
-                  spot: terrain?.spot ?? null,
-                  pin_score: terrain?.pin_score ?? null,
-                  tail_risk: terrain?.tail_risk ?? null,
-                  atm_iv: atm?.atm_iv ?? null,
-                },
-                sym,
-              )}
-            />
-          </div>
-        }
-      />
-
-      <ResearchContextBar showDate={false} />
+    <div className="space-y-3">
+      <LabToolbar>
+        <AskCopilotButton
+          originPage="analysis-model"
+          originLabel="Analysis Model"
+          symbol={sym}
+          snapshot={compactSnapshot({
+            regime: terrain?.regime,
+            spot: terrain?.spot ?? smile?.spot,
+            atm_iv: atm?.atm_iv,
+          })}
+          suggestedPrompt={`Walk through the ${sym} analysis-model terrain and smile — what regime is this?`}
+        />
+        <SaveAsHypothesisButton
+          originPage="analysis-model"
+          defaultTitle={`${sym} terrain ${terrain?.regime ?? 'regime'} hypothesis`}
+          defaultThesis={verdictSummary}
+          defaultSymbols={[sym]}
+          defaultTags={['terrain', 'regime', 'analysis-model']}
+          originRef={withWatchlistContractKey(
+            {
+              symbol: sym,
+              regime: terrain?.regime ?? null,
+              spot: terrain?.spot ?? null,
+              pin_score: terrain?.pin_score ?? null,
+              tail_risk: terrain?.tail_risk ?? null,
+              atm_iv: atm?.atm_iv ?? null,
+            },
+            sym,
+          )}
+        />
+      </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
 
@@ -637,9 +629,9 @@ export default function AnalysisModelPage() {
         nextMoves={[
           {
             label: 'Intraday Playbook',
-            href: `/research/intraday-playbook?symbol=${encodeURIComponent(sym)}`,
+            href: `/research/scenario?view=playbook&symbol=${encodeURIComponent(sym)}`,
           },
-          { label: 'GEX Intraday', href: `/research/gex-intraday?symbol=${encodeURIComponent(sym)}` },
+          { label: 'GEX Intraday', href: `/research/dealer-levels?view=gex&symbol=${encodeURIComponent(sym)}` },
         ]}
       />
 
@@ -685,6 +677,6 @@ export default function AnalysisModelPage() {
         Terrain model output — observe only (D10). Not investment advice.
       </p>
       </SymbolContextGuard>
-    </PageShell>
+    </div>
   )
 }

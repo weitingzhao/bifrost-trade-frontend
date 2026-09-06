@@ -1,7 +1,6 @@
 import { fmtNumLocale, fmtPctFromFraction } from '@/lib/format'
 import { useMemo, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -19,8 +18,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
+import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
@@ -243,7 +242,7 @@ function PinRiskTable({ rows }: { rows: OpexPinRow[] }) {
   )
 }
 
-export default function OpExCycleLabPage() {
+export function OpexSection() {
   const { symbol, apiDate } = useResearchContext()
   const [universe, setUniverse] = useState<PortfolioUniverse>('all')
   const { filterSymbols } = usePortfolioSymbols()
@@ -292,48 +291,40 @@ export default function OpExCycleLabPage() {
   const recentCycles = useMemo(() => (historyQ.data ?? []).slice(0, 3), [historyQ.data])
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="OpEx Cycle Lab"
-        description="Third-Friday OpEx cycle — dealer Vanna & Charm, per-strike exposure map, and historical pin-risk. Observe-only (D10)."
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="opex-cycle-lab"
-              originLabel="OpEx Cycle Lab"
-              symbol={symbol}
-              date={row?.trade_date ?? apiDate}
-              snapshot={compactSnapshot({
-                next_opex_date: nextOpex,
-                dte_to_opex_today: dteToday,
-                is_opex_week_today: isOpexWeekToday,
-                total_vanna: row?.total_vanna,
-                total_charm: row?.total_charm,
-              })}
-              suggestedPrompt={`What do current OpEx Vanna/Charm dynamics imply for ${symbol}?`}
-            />
-            <SaveAsHypothesisButton
-              originPage="opex-cycle-lab"
-              defaultTitle={`${symbol} OpEx cycle hypothesis`}
-              defaultSymbols={[symbol]}
-              defaultTags={['opex-cycle', 'vanna', 'charm']}
-              originRef={{
-                symbol,
-                trade_date: row?.trade_date ?? null,
-                next_opex_date: nextOpex,
-                dte_to_opex_today: dteToday,
-                is_opex_week_today: isOpexWeekToday,
-                total_vanna: row?.total_vanna ?? null,
-                total_charm: row?.total_charm ?? null,
-                vanna_zero_strike: row?.vanna_zero_strike ?? null,
-                charm_zero_strike: row?.charm_zero_strike ?? null,
-              }}
-            />
-          </div>
-        }
-      />
-
-      <ResearchContextBar />
+    <div className="space-y-3">
+      <LabToolbar>
+        <AskCopilotButton
+          originPage="opex-cycle-lab"
+          originLabel="OpEx Cycle Lab"
+          symbol={symbol}
+          date={row?.trade_date ?? apiDate}
+          snapshot={compactSnapshot({
+            next_opex_date: nextOpex,
+            dte_to_opex_today: dteToday,
+            is_opex_week_today: isOpexWeekToday,
+            total_vanna: row?.total_vanna,
+            total_charm: row?.total_charm,
+          })}
+          suggestedPrompt={`What do current OpEx Vanna/Charm dynamics imply for ${symbol}?`}
+        />
+        <SaveAsHypothesisButton
+          originPage="opex-cycle-lab"
+          defaultTitle={`${symbol} OpEx cycle hypothesis`}
+          defaultSymbols={[symbol]}
+          defaultTags={['opex-cycle', 'vanna', 'charm']}
+          originRef={{
+            symbol,
+            trade_date: row?.trade_date ?? null,
+            next_opex_date: nextOpex,
+            dte_to_opex_today: dteToday,
+            is_opex_week_today: isOpexWeekToday,
+            total_vanna: row?.total_vanna ?? null,
+            total_charm: row?.total_charm ?? null,
+            vanna_zero_strike: row?.vanna_zero_strike ?? null,
+            charm_zero_strike: row?.charm_zero_strike ?? null,
+          }}
+        />
+      </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
 
@@ -399,11 +390,11 @@ export default function OpExCycleLabPage() {
         nextMoves={[
           {
             label: 'GEX Intraday',
-            href: `/research/gex-intraday?symbol=${encodeURIComponent(symbol)}`,
+            href: `/research/dealer-levels?view=gex&symbol=${encodeURIComponent(symbol)}`,
           },
           {
             label: 'Analysis Model',
-            href: `/research/analysis-model?symbol=${encodeURIComponent(symbol)}`,
+            href: `/research/scenario?view=model&symbol=${encodeURIComponent(symbol)}`,
           },
         ]}
       />
@@ -572,6 +563,6 @@ export default function OpExCycleLabPage() {
         pain| ≤ 0.5 % (pinned), ≤ 1.5 % (near), &gt; 1.5 % (off). D10: observe-only.
       </p>
       </SymbolContextGuard>
-    </PageShell>
+    </div>
   )
 }

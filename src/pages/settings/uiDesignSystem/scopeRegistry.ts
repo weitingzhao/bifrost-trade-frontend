@@ -92,7 +92,10 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/research/screener', label: 'Option Screener', domain: 'research', pathGlobs: ['pages/research/data/ScreenerPage.tsx', 'pages/research/data/optionScreener/**'] },
   { route: '/settings/data-readiness', label: 'Data Readiness', domain: 'settings', pathGlobs: ['pages/research/data/StockDataPage.tsx', 'pages/research/data/stockDataReadiness/**'] },
   { route: '/research/discovery', label: 'Option Discovery', domain: 'research', pathGlobs: ['pages/research/analyze/DiscoveryPage.tsx'] },
-  { route: '/research/iv-radar', label: 'IV Radar', domain: 'research', pathGlobs: ['pages/research/analyze/IvRadarPage.tsx', 'utils/ivRadar/**', 'hooks/useIvRadarData.ts', 'hooks/useHoldingSymbols.ts', 'api/research/ivRadar.ts'] },
+  { route: '/research/vol-regime', label: 'Vol Regime', domain: 'research', pathGlobs: ['pages/research/analyze/volRegime/**', 'pages/research/analyze/hub/**', 'utils/ivRadar/**', 'hooks/useIvRadarData.ts', 'hooks/useHoldingSymbols.ts', 'api/research/ivRadar.ts'] },
+  { route: '/research/dealer-levels', label: 'Dealer Levels', domain: 'research', pathGlobs: ['pages/research/analyze/dealerLevels/**'] },
+  { route: '/research/scenario', label: 'Scenario Model', domain: 'research', pathGlobs: ['pages/research/analyze/scenario/**'] },
+  { route: '/research/flow', label: 'Flow', domain: 'research', pathGlobs: ['pages/research/analyze/flow/**'] },
   { route: '/research/greeks', label: 'Contract Greeks', domain: 'research', pathGlobs: ['pages/research/analyze/GreeksPage.tsx'] },
   { route: '/research/backtest', label: 'Backtest', domain: 'research', pathGlobs: ['pages/research/validate/BacktestPage.tsx'] },
 

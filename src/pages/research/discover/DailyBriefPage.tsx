@@ -332,8 +332,9 @@ export default function DailyBriefPage() {
     return q.toString()
   }, [sym, dateInput])
 
+  // Hub views already carry ?view=, so the context joins with & there.
   const withContext = (path: string) =>
-    `${path}${researchQuery ? `?${researchQuery}` : ''}`
+    `${path}${researchQuery ? `${path.includes('?') ? '&' : '?'}${researchQuery}` : ''}`
 
   return (
     <PageShell padding="default" className="space-y-3">
@@ -422,7 +423,7 @@ export default function DailyBriefPage() {
                     ? `No terrain for ${sym}`
                     : `${terrain.regime} · pin ${terrain.pin_score.toFixed(0)} · tail ${terrain.tail_risk.toFixed(0)}`)
                 }
-                openTo={withContext('/research/analysis-model')}
+                openTo={withContext('/research/scenario?view=model')}
               >
                 {terrain ? (
                   <p className="text-dense-meta text-muted-foreground">
@@ -432,7 +433,7 @@ export default function DailyBriefPage() {
                   <EmptyHint
                     title="No terrain row"
                     hint="Terrain is produced by the forecast engine; intraday snapshots every 15min."
-                    to={withContext('/research/analysis-model')}
+                    to={withContext('/research/scenario?view=model')}
                     triggerId="terrain-forecast"
                     triggerLabel="Trigger terrain forecast"
                     invalidateKeys={[['daily-brief-synth', sym, apiDate ?? '']]}
@@ -450,13 +451,13 @@ export default function DailyBriefPage() {
                     ? `No GEX snapshots for ${sym}`
                     : `Spot ${gexLatest.spot.toFixed(0)} vs call ${gexLatest.major_call_wall.toFixed(0)} / 0γ ${gexLatest.zero_gamma.toFixed(0)} / put ${gexLatest.major_put_wall.toFixed(0)}`)
                 }
-                openTo={withContext('/research/gex-intraday')}
+                openTo={withContext('/research/dealer-levels?view=gex')}
               >
                 {gexLatest == null ? (
                   <EmptyHint
                     title="No GEX data"
                     hint="Try SPY / QQQ — SPX OI may not be backfilled yet."
-                    to={withContext('/research/gex-intraday')}
+                    to={withContext('/research/dealer-levels?view=gex')}
                     linkLabel="Open GEX Intraday"
                     triggerId="gex-intraday"
                     triggerLabel="Trigger GEX intraday"
@@ -475,7 +476,7 @@ export default function DailyBriefPage() {
                     ? `No forecast session for ${sym}`
                     : `${forecastLatest.regime} · E[close] ${forecastLatest.expected_close.toFixed(2)}`)
                 }
-                openTo={withContext('/research/forecast-sessions')}
+                openTo={withContext('/research/scenario?view=sessions')}
               >
                 {forecastLatest ? (
                   lastSettlement ? (
@@ -493,7 +494,7 @@ export default function DailyBriefPage() {
                   <EmptyHint
                     title="No forecast session"
                     hint="Forecast session engine needs heuristic or LLM output."
-                    to={withContext('/research/forecast-sessions')}
+                    to={withContext('/research/scenario?view=sessions')}
                     triggerId="terrain-forecast"
                     triggerLabel="Trigger forecast"
                     invalidateKeys={[['daily-brief-synth', sym, apiDate ?? '']]}
@@ -584,7 +585,7 @@ export default function DailyBriefPage() {
                         ? `No IV row for ${sym}`
                         : `Rank ${ivRow.iv_rank_1y?.toFixed(0) ?? '—'} · ${ivBucket(ivRow.iv_rank_1y)}`
                     }
-                    openTo={withContext('/research/iv-radar')}
+                    openTo={withContext('/research/vol-regime?view=iv-rank')}
                   >
                     {ivRow ? (
                       <p className="text-dense-meta text-muted-foreground">
@@ -594,7 +595,7 @@ export default function DailyBriefPage() {
                       <EmptyHint
                         title="No IV percentile"
                         hint="IV percentile requires the volatility engine run."
-                        to={withContext('/research/iv-radar')}
+                        to={withContext('/research/vol-regime?view=iv-rank')}
                         triggerId="iv-percentile"
                         triggerLabel="Trigger IV percentile"
                         invalidateKeys={[['daily-brief-synth', sym, apiDate ?? '']]}
@@ -647,7 +648,7 @@ export default function DailyBriefPage() {
                         ? `No sentiment for ${sym}`
                         : `Net bias proxy · date ${sentimentRow.trade_date ?? '—'}`
                     }
-                    openTo={withContext('/research/order-sentiment')}
+                    openTo={withContext('/research/flow')}
                   >
                     {sentimentRow ? (
                       <p className="text-dense-meta text-muted-foreground">
@@ -657,7 +658,7 @@ export default function DailyBriefPage() {
                       <EmptyHint
                         title="No sentiment row"
                         hint="Options tape ingest may not be enabled."
-                        to={withContext('/research/order-sentiment')}
+                        to={withContext('/research/flow')}
                       />
                     )}
                   </BriefCard>

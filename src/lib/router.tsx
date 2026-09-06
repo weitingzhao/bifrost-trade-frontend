@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { LabRedirect } from '@/pages/research/analyze/hub/LabRedirect'
 import { AppLayout } from '@/layout/AppLayout'
 import { SettingsLayout } from '@/layout/SettingsLayout'
 import RouteErrorPage from '@/pages/RouteErrorPage'
@@ -101,6 +102,32 @@ export const router = createBrowserRouter([
         path: 'research/discovery',
         lazy: lazyPage(() => import('@/pages/research/analyze/DiscoveryPage')),
       },
+      /* research-loop-automation C1 — five Analyze hubs; the retired labs redirect with their query intact */
+      {
+        path: 'research/vol-regime',
+        lazy: lazyPage(() => import('@/pages/research/analyze/volRegime/VolRegimePage')),
+      },
+      {
+        path: 'research/dealer-levels',
+        lazy: lazyPage(() => import('@/pages/research/analyze/dealerLevels/DealerLevelsPage')),
+      },
+      {
+        path: 'research/scenario',
+        lazy: lazyPage(() => import('@/pages/research/analyze/scenario/ScenarioPage')),
+      },
+      {
+        path: 'research/flow',
+        lazy: lazyPage(() => import('@/pages/research/analyze/flow/FlowPage')),
+      },
+      { path: 'research/iv-radar', element: <LabRedirect from="/research/iv-radar" /> },
+      { path: 'research/vrp-lab', element: <LabRedirect from="/research/vrp-lab" /> },
+      { path: 'research/vol-surface-lab', element: <LabRedirect from="/research/vol-surface-lab" /> },
+      { path: 'research/gex-intraday', element: <LabRedirect from="/research/gex-intraday" /> },
+      { path: 'research/opex-cycle-lab', element: <LabRedirect from="/research/opex-cycle-lab" /> },
+      { path: 'research/analysis-model', element: <LabRedirect from="/research/analysis-model" /> },
+      { path: 'research/forecast-sessions', element: <LabRedirect from="/research/forecast-sessions" /> },
+      { path: 'research/intraday-playbook', element: <LabRedirect from="/research/intraday-playbook" /> },
+      { path: 'research/order-sentiment', element: <LabRedirect from="/research/order-sentiment" /> },
       {
         path: 'research/scan',
         lazy: lazyPage(() => import('@/pages/research/discover/ScanPage')),
@@ -124,24 +151,8 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/validate/SignalDecayPage')),
       },
       {
-        path: 'research/iv-radar',
-        lazy: lazyPage(() => import('@/pages/research/analyze/IvRadarPage')),
-      },
-      {
-        path: 'research/vrp-lab',
-        lazy: lazyPage(() => import('@/pages/research/analyze/VrpLabPage')),
-      },
-      {
         path: 'research/signal-health',
         lazy: lazyPage(() => import('@/pages/research/data/SignalHealthPage')),
-      },
-      {
-        path: 'research/vol-surface-lab',
-        lazy: lazyPage(() => import('@/pages/research/analyze/VolSurfaceLabPage')),
-      },
-      {
-        path: 'research/opex-cycle-lab',
-        lazy: lazyPage(() => import('@/pages/research/analyze/OpExCycleLabPage')),
       },
       {
         path: 'research/greeks',
@@ -152,32 +163,12 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/validate/BacktestPage')),
       },
       {
-        path: 'research/analysis-model',
-        lazy: lazyPage(() => import('@/pages/research/analyze/AnalysisModelPage')),
-      },
-      {
-        path: 'research/intraday-playbook',
-        lazy: lazyPage(() => import('@/pages/research/analyze/IntradayPlaybookPage')),
-      },
-      {
         path: 'research/momentum-radar',
         lazy: lazyPage(() => import('@/pages/research/discover/MomentumRadarPage')),
       },
       {
         path: 'research/sepa-daily-core',
         lazy: lazyPage(() => import('@/pages/research/discover/SepaDailyCorePage')),
-      },
-      {
-        path: 'research/gex-intraday',
-        lazy: lazyPage(() => import('@/pages/research/analyze/GexIntradayPage')),
-      },
-      {
-        path: 'research/forecast-sessions',
-        lazy: lazyPage(() => import('@/pages/research/analyze/ForecastSessionsPage')),
-      },
-      {
-        path: 'research/order-sentiment',
-        lazy: lazyPage(() => import('@/pages/research/analyze/OrderSentimentPage')),
       },
       {
         path: 'research/event-radar',

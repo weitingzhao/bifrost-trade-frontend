@@ -168,7 +168,7 @@ export default function CandidatePoolPage() {
                   <DenseTableCell className={denseTableEntityCell}>
                     <div className="flex items-center gap-1.5">
                       <Link
-                        to={`/research/iv-radar?symbol=${encodeURIComponent(row.symbol)}`}
+                        to={`/research/vol-regime?view=iv-rank&symbol=${encodeURIComponent(row.symbol)}`}
                         className="text-entity-symbol font-semibold hover:underline"
                       >
                         {row.symbol}

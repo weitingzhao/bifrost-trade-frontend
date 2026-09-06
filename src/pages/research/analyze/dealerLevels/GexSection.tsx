@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
 import { fmtNumLocale } from '@/lib/format'
-// lucide-react icons used only in navConfig; PageHeader has no icon prop
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -21,10 +19,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { fetchGexIntraday, type GexIntraday } from '@/api/researchEngine'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
@@ -80,7 +78,7 @@ function fmtTime(ts: string): string {
   }
 }
 
-export default function GexIntradayPage() {
+export function GexSection() {
   const { symbol, dateInput, setSymbol, setDate } = useResearchContext()
   const date = dateInput
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
@@ -110,54 +108,46 @@ export default function GexIntradayPage() {
   )
 
   return (
-    <PageShell padding="compact">
-      <PageHeader
-        title="GEX Intraday"
-        description="OI-GEX (solid) vs Volume-GEX (inner bar) by strike · pick a snapshot row or scroll timeline"
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="gex-intraday"
-              originLabel="GEX Intraday"
-              symbol={symbol}
-              date={date || undefined}
-              snapshot={compactSnapshot({
-                spot: active?.spot,
-                zero_gamma: active?.zero_gamma,
-                major_call_wall: active?.major_call_wall,
-                major_put_wall: active?.major_put_wall,
-                asof_ts: active?.asof_ts,
-              })}
-              suggestedPrompt={`Explain the current GEX walls and zero-gamma for ${symbol} and what they imply for the session.`}
-            />
-            <SaveAsHypothesisButton
-              originPage="gex-intraday"
-              defaultTitle={`${symbol} GEX walls hypothesis`}
-              defaultThesis={
-                active
-                  ? `${symbol} spot ${fmtNumLocale(active.spot, 2)} between put wall ${fmtNumLocale(active.major_put_wall, 0)} and call wall ${fmtNumLocale(active.major_call_wall, 0)}; zero-γ ${fmtNumLocale(active.zero_gamma, 0)}. Prefer mean-reversion above zero-γ / breakout below.`
-                  : undefined
-              }
-              defaultSymbols={[symbol]}
-              defaultTags={['gex', 'walls', 'intraday']}
-              originRef={withWatchlistContractKey(
-                {
-                  symbol,
-                  date: date || null,
-                  spot: active?.spot ?? null,
-                  zero_gamma: active?.zero_gamma ?? null,
-                  major_call_wall: active?.major_call_wall ?? null,
-                  major_put_wall: active?.major_put_wall ?? null,
-                  asof_ts: active?.asof_ts ?? null,
-                },
-                symbol,
-              )}
-            />
-          </div>
-        }
-      />
-
-      <ResearchContextBar />
+    <div className="space-y-3">
+      <LabToolbar>
+        <AskCopilotButton
+          originPage="gex-intraday"
+          originLabel="GEX Intraday"
+          symbol={symbol}
+          date={date || undefined}
+          snapshot={compactSnapshot({
+            spot: active?.spot,
+            zero_gamma: active?.zero_gamma,
+            major_call_wall: active?.major_call_wall,
+            major_put_wall: active?.major_put_wall,
+            asof_ts: active?.asof_ts,
+          })}
+          suggestedPrompt={`Explain the current GEX walls and zero-gamma for ${symbol} and what they imply for the session.`}
+        />
+        <SaveAsHypothesisButton
+          originPage="gex-intraday"
+          defaultTitle={`${symbol} GEX walls hypothesis`}
+          defaultThesis={
+            active
+              ? `${symbol} spot ${fmtNumLocale(active.spot, 2)} between put wall ${fmtNumLocale(active.major_put_wall, 0)} and call wall ${fmtNumLocale(active.major_call_wall, 0)}; zero-γ ${fmtNumLocale(active.zero_gamma, 0)}. Prefer mean-reversion above zero-γ / breakout below.`
+              : undefined
+          }
+          defaultSymbols={[symbol]}
+          defaultTags={['gex', 'walls', 'intraday']}
+          originRef={withWatchlistContractKey(
+            {
+              symbol,
+              date: date || null,
+              spot: active?.spot ?? null,
+              zero_gamma: active?.zero_gamma ?? null,
+              major_call_wall: active?.major_call_wall ?? null,
+              major_put_wall: active?.major_put_wall ?? null,
+              asof_ts: active?.asof_ts ?? null,
+            },
+            symbol,
+          )}
+        />
+      </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
 
@@ -382,6 +372,6 @@ export default function GexIntradayPage() {
         />
       )}
       </SymbolContextGuard>
-    </PageShell>
+    </div>
   )
 }

@@ -1,4 +1,6 @@
 /** Copilot model catalog (D-RS-E-c · RS-F DeepSeek). Keys stay server-side. */
+import { flowHref, labHref } from '@/lib/analyzeHubs'
+
 
 export type CopilotModelId =
   | 'deepseek-chat'
@@ -166,15 +168,15 @@ export function labPathForTool(toolName: string, symbol?: string): string | null
   if (name.startsWith('research.backtest.')) {
     return `/research/backtest?tab=event-query${symbol ? `&symbol=${encodeURIComponent(symbol)}` : ''}`
   }
-  if (name.startsWith('research.vrp.')) return `/research/vrp-lab${sym}`
-  if (name.startsWith('research.vol_surface.')) return `/research/vol-surface-lab${sym}`
-  if (name.startsWith('research.opex_cycle.')) return `/research/opex-cycle-lab${sym}`
+  if (name.startsWith('research.vrp.')) return labHref('vrp', symbol)
+  if (name.startsWith('research.vol_surface.')) return labHref('skew', symbol)
+  if (name.startsWith('research.opex_cycle.')) return labHref('opex', symbol)
   if (name.startsWith('research.discovery.')) return `/research/discovery${sym}`
   if (name.includes('sepa')) return `/research/sepa-daily-core${sym}`
   if (name.includes('event_radar')) return `/research/event-radar${sym}`
   if (name.includes('momentum')) return `/research/momentum-radar${sym}`
-  if (name.includes('gex')) return `/research/gex-intraday${sym}`
-  if (name.includes('flow')) return `/research/order-sentiment${sym}`
+  if (name.includes('gex')) return labHref('gex', symbol)
+  if (name.includes('flow')) return flowHref(symbol)
   if (name.includes('forecast') || name.includes('daily_brief')) {
     return `/research/daily-brief${sym}`
   }

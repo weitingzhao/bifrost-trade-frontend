@@ -362,7 +362,7 @@ export function DiscoveryHitList({
         title="IV extremes"
         icon={Radar}
         hint="Rank distance from 50 across watchlist ∪ holdings"
-        link={{ to: '/research/iv-radar', label: 'View all' }}
+        link={{ to: '/research/vol-regime?view=iv-rank', label: 'View all' }}
         isLoading={isLoading && ivExtremes.length === 0}
         isEmpty={!isLoading && ivExtremes.length === 0}
         emptyLabel="No IV data"
@@ -429,7 +429,7 @@ export function DiscoveryHitList({
         title="Sentiment anomalies"
         icon={Activity}
         hint="Largest |sentiment_score| across latest sentiment rows"
-        link={{ to: '/research/order-sentiment', label: 'View all' }}
+        link={{ to: '/research/flow', label: 'View all' }}
         isLoading={isLoading && sentimentAnomalies.length === 0}
         isEmpty={!isLoading && sentimentAnomalies.length === 0}
         emptyLabel="No sentiment rows"

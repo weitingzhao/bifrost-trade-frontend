@@ -20,8 +20,8 @@ import {
   type MarginAccountTone,
 } from '@/utils/marginByAccount'
 
-import { ExplanationBlock } from './ExplanationBlock'
-import { explainMarginRow } from '@/utils/bookExplanations'
+import { DerivationBlock } from './DerivationBlock'
+import { marginDerivation } from '@/utils/marginDerivation'
 
 const TONE_FILL: Record<MarginAccountTone, string> = {
   profit: 'bg-profit',
@@ -139,6 +139,9 @@ export function MarginByAccountStrip({
       id="positions-margin"
       aria-label="Margin by account"
       className="rounded-md border border-border bg-secondary/40 px-3 py-1.5"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && openId) setOpenId(null)
+      }}
     >
       <span className="mb-1 block text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
         Margin by account
@@ -157,9 +160,9 @@ export function MarginByAccountStrip({
           ))}
         </div>
       )}
-      <p className="text-dense-caption text-muted-foreground">cockpit pressure: accounts in scope · ? opens the broker fields behind a row</p>
+      <p className="text-dense-caption text-muted-foreground">cockpit pressure: accounts in scope · ? walks the broker fields behind a row</p>
       {openRow ? (
-        <ExplanationBlock explanation={explainMarginRow(openRow.facts, openRow.label)} onClose={() => setOpenId(null)} className="mb-1" />
+        <DerivationBlock derivation={marginDerivation(openRow.facts, openRow.label)} onClose={() => setOpenId(null)} className="mb-1" />
       ) : null}
     </section>
   )

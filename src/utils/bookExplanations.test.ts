@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { explainBook, explainMarginRow, litSegments, potentialSegments, type ExplainInputs } from './bookExplanations'
+import { explainBook, litSegments, potentialSegments, type ExplainInputs } from './bookExplanations'
 import { deriveBookVsBase } from './bookVsBase'
 import { summarizeAssignmentExposure } from './assignmentExposure'
 import { rollupMargin } from './marginPressure'
@@ -83,39 +83,5 @@ describe('segments', () => {
     const inp = inputs()
     expect(potentialSegments(inp.book)).toBe(0)
     expect(potentialSegments({ ...inp.book, supply: { ...inp.book.supply, sharesHeld: 1000, sharesFree: 480 } })).toBe(2)
-  })
-})
-
-describe('explainMarginRow', () => {
-  it('names each broker field behind the row and re-runs the broker identities on them', () => {
-    const f = inputs().margin.accounts[0]
-    const e = explainMarginRow(f, 'Host')
-    expect(e.title).toBe('Host — U1')
-    expect(e.lines[0]).toContain("field of the broker's account summary")
-    expect(e.lines[1]).toContain('Pressure 27% = 1 − Cushion 0.7300')
-    // 730,000 / 1,000,000 = 0.73 agrees with Cushion; 1,000,000 − 270,000 = 730,000 agrees with both funds fields.
-    expect(e.lines[2]).toContain('= 0.7300 — agrees')
-    expect(e.lines[3]).toContain('= $730,000.00 — agrees')
-    expect(e.lines[4]).toContain('= $730,000.00 — agrees')
-    expect(e.rows?.map((r) => r.label)).toEqual([
-      'NetLiquidation',
-      'EquityWithLoanValue',
-      'MaintMarginReq',
-      'InitMarginReq',
-      'ExcessLiquidity',
-      'Cushion',
-      'BuyingPower',
-      'AvailableFunds',
-      'TotalCashValue',
-    ])
-    expect(e.rows?.[6].value).toContain('$1,870,000.00')
-  })
-  it('says by how much an identity misses, and never replaces the broker figure', () => {
-    const f = inputs().margin.accounts[0]
-    const e = explainMarginRow({ ...f, excessLiquidity: 730_326.02 }, 'Host')
-    expect(e.lines[4]).toContain('differs by $326.02 (0.04%)')
-    expect(e.lines[1]).toContain('$730,326.02 of $1,000,000.00')
-    const missing = explainMarginRow({ ...f, equityWithLoanValue: null }, 'Host')
-    expect(missing.lines[3]).toContain('cannot be checked')
   })
 })

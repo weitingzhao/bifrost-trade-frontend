@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MarginByAccountStrip } from './MarginByAccountStrip'
 import { rollupMargin } from '@/utils/marginPressure'
 
@@ -106,5 +106,15 @@ describe('MarginByAccountStrip', () => {
     const hostRow = screen.getByText('Host').closest('[data-account]') as HTMLElement
     expect(hostRow).not.toHaveClass('opacity-50')
     expect(hostRow.title.startsWith('not in scope')).toBe(false)
+  })
+
+  it('the ? on a row opens that account’s derivation, and again closes it', () => {
+    renderStrip([HOST, SECONDARY])
+    fireEvent.click(screen.getByRole('button', { name: 'How Host margin is computed' }))
+    const block = screen.getByTestId('explanation')
+    expect(block).toHaveAccessibleName('How Host — U17123565 is computed')
+    expect(within(block).getAllByTestId('derivation-row').map((r) => r.getAttribute('data-var'))).toContain('Pressure')
+    fireEvent.click(screen.getByRole('button', { name: 'How Host margin is computed' }))
+    expect(screen.queryByTestId('explanation')).toBeNull()
   })
 })

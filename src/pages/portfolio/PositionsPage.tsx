@@ -129,7 +129,7 @@ export default function PositionsPage() {
     () => (selectedLeg ? book.alarm.ladderRows.filter((r) => r.expiry === selectedLeg.expiry) : book.alarm.ladderRows),
     [book.alarm.ladderRows, selectedLeg],
   )
-  const { ceiling, setCeiling } = usePressureCeiling()
+  const { ceiling, setLevel } = usePressureCeiling()
   const roomFull = useMemo(
     () =>
       computeRoomToAdd({
@@ -391,7 +391,7 @@ export default function PositionsPage() {
                   onSelect={setPickedLeg}
                 />
   <div className="min-w-0">
-                  <RoomToAddSection room={roomFull} coverRows={book.coverRows} ceiling={ceiling} onCeilingChange={setCeiling} />
+                  <RoomToAddSection room={roomFull} coverRows={book.coverRows} ceiling={ceiling} onLevelChange={setLevel} />
                 </div>
               </div>
 

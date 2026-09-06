@@ -22,7 +22,7 @@ import {
   POINT_R_MAX,
   POINT_R_MIN,
   fmtNotional,
-  legNotional,
+  legPremium,
   pointRadius,
   fmtTickDte,
   fmtTightPct,
@@ -124,9 +124,9 @@ function LegPoint({
 }
 
 /**
- * A dot's area is what assignment would move, so the legend shows the two ends
- * the book actually holds — not an abstract scale, the smallest and largest
- * legs on this plot.
+ * A dot's area is the credit the leg brought in, so the legend shows the two
+ * ends the book actually holds — not an abstract scale, the smallest and
+ * largest legs on this plot.
  */
 function SizeLegend({ minNotional, maxNotional }: { minNotional: number; maxNotional: number }) {
   if (maxNotional <= 0) return null
@@ -134,14 +134,14 @@ function SizeLegend({ minNotional, maxNotional }: { minNotional: number; maxNoti
   return (
     <span
       className="inline-flex items-center gap-1"
-      title="A leg's area is what assignment would move: strike × 100 × contracts. Ten small-strike contracts can be a smaller dot than one large-strike contract."
+      title="A leg's area is the credit it brought in: its price × 100 × contracts, the same figure the grid's OPT PNL column shows. Hover a dot for what assignment would move."
     >
       <svg width={w} height={2 * POINT_R_MAX} viewBox={`0 0 ${w} ${2 * POINT_R_MAX}`} aria-hidden="true" className="shrink-0">
         <circle cx={POINT_R_MIN + 1} cy={POINT_R_MAX} r={pointRadius(minNotional, maxNotional)} className={styles.legendDot} />
         <circle cx={w - POINT_R_MAX - 1} cy={POINT_R_MAX} r={POINT_R_MAX} className={styles.legendDot} />
       </svg>
       <span className="font-mono tabular-nums" data-testid="size-legend">
-        {fmtNotional(minNotional)}–{fmtNotional(maxNotional)} if assigned
+        {fmtNotional(minNotional)}–{fmtNotional(maxNotional)} credit
       </span>
     </span>
   )
@@ -174,7 +174,7 @@ export function ShortLegRiskMap({
     null,
   )
   const noExpiryCount = layout.noExpiry.length
-  const notionals = legs.map(legNotional).filter((n): n is number => n != null && n > 0)
+  const notionals = legs.map(legPremium).filter((n): n is number => n != null && n > 0)
   const maxNotional = notionals.length > 0 ? Math.max(...notionals) : 0
   const minNotional = notionals.length > 0 ? Math.min(...notionals) : 0
   const tightLabel = `tight ${fmtTightPct(tightPct)}`

@@ -7,9 +7,9 @@ import { fixture, NOW } from '@/utils/roomToAdd.fixture'
 function renderSection(ceiling = 0.5) {
   const f = fixture()
   const room = computeRoomToAdd({ ...f, ceiling, nowSec: NOW })
-  const onCeilingChange = vi.fn()
-  render(<RoomToAddSection room={room} coverRows={f.coverRows} ceiling={ceiling} onCeilingChange={onCeilingChange} />)
-  return { onCeilingChange }
+  const onLevelChange = vi.fn()
+  render(<RoomToAddSection room={room} coverRows={f.coverRows} ceiling={ceiling} onLevelChange={onLevelChange} />)
+  return { onLevelChange }
 }
 
 describe('RoomToAddSection', () => {
@@ -20,15 +20,19 @@ describe('RoomToAddSection', () => {
     expect(screen.getByTestId('room-stats')).toHaveTextContent('+0 calls · +2 puts · +56 on margin · ≈ +$58.1k/cycle')
 
     const now = screen.getByTestId('room-row-now')
+    expect(now).toHaveTextContent('What is already sold')
     expect(now).toHaveTextContent('5 calls · 1 puts')
     expect(now).toHaveTextContent('$5,990')
     expect(now).toHaveTextContent('27%')
     const backed = screen.getByTestId('room-row-backed')
-    expect(backed).toHaveTextContent('+0 calls · +2 puts · no new margin')
+    expect(backed).toHaveTextContent('+ Sell against what you own')
+    expect(backed).toHaveTextContent('Shares and cash already there, nothing borrowed')
+    expect(backed).toHaveTextContent('+0 calls · +2 puts')
     expect(backed).toHaveTextContent('+$2,333')
     const margin = screen.getByTestId('room-row-margin')
-    expect(margin).toHaveTextContent('+ Margin to 50%')
-    expect(margin).toHaveTextContent('+56 puts on margin')
+    expect(margin).toHaveTextContent('+ Sell on margin')
+    expect(margin).toHaveTextContent('up to balanced risk, 50% pressure')
+    expect(margin).toHaveTextContent('+56 puts · calls need shares, not margin')
     expect(margin).toHaveTextContent('+$55,720')
 
     // The ladder accumulates: each step's meter reads the total up to it, on one scale.
@@ -38,12 +42,12 @@ describe('RoomToAddSection', () => {
     expect(screen.getByTestId('ladder-margin')).toHaveAttribute('aria-valuenow', String(total))
     expect(screen.getByTestId('ladder-margin')).toHaveAttribute('aria-valuemax', String(total))
     expect(screen.getAllByRole('meter')).toHaveLength(6)
-    expect(within(margin).getByRole('meter', { name: '+ Margin to 50%: pressure after' })).toHaveAttribute('aria-valuenow', '50')
+    expect(within(margin).getByRole('meter', { name: '+ Sell on margin: pressure after' })).toHaveAttribute('aria-valuenow', '50')
   })
 
   it('each step has its own ?, naming the contracts, legs and broker fields behind that row', () => {
     renderSection()
-    fireEvent.click(screen.getByRole('button', { name: 'How Now is computed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'How Open now is computed' }))
     let block = screen.getByTestId('explanation')
     expect(block).toHaveAccessibleName('How Now — the book in scope is computed')
     const rows = () => within(block).getAllByTestId('derivation-row').map((r) => r.getAttribute('data-var'))
@@ -73,7 +77,7 @@ describe('RoomToAddSection', () => {
     expect(block).toHaveTextContent('Thin bar - pressure after this step')
 
     // A second ? swaps the block to that step; clicking the open one closes it.
-    fireEvent.click(screen.getByRole('button', { name: 'How + Margin to 50% is computed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'How + Sell on margin is computed' }))
     block = screen.getByTestId('explanation')
     expect(block).toHaveAccessibleName('How Margin — headroom to 50% is computed')
     expect(rows()).toEqual([
@@ -90,16 +94,17 @@ describe('RoomToAddSection', () => {
       'PremiumPerPut',
       'PressureAfter',
     ])
-    fireEvent.click(screen.getByRole('button', { name: 'How + Margin to 50% is computed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'How + Sell on margin is computed' }))
     expect(screen.queryByTestId('explanation')).toBeNull()
   })
 
-  it('the ceiling is a setting on the section, and the header ? walks the whole model', () => {
-    const { onCeilingChange } = renderSection()
-    const input = screen.getByLabelText('Pressure ceiling for the margin step, percent')
-    expect(input).toHaveValue(50)
-    fireEvent.change(input, { target: { value: '60' } })
-    expect(onCeilingChange).toHaveBeenCalledWith(0.6)
+  it('risk is chosen by name, not by typing a percentage, and the header ? walks the whole model', () => {
+    const { onLevelChange } = renderSection()
+    const levels = screen.getByRole('group', { name: 'How much of the cushion the margin step may spend' })
+    expect(within(levels).getAllByRole('button').map((b) => b.textContent)).toEqual(['Cautious 35%', 'Balanced 50%', 'Bold 65%'])
+    expect(within(levels).getByRole('button', { name: /Balanced/ })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(within(levels).getByRole('button', { name: /Bold/ }))
+    expect(onLevelChange).toHaveBeenCalledWith('bold')
 
     fireEvent.click(screen.getByRole('button', { name: 'How Room to add is computed' }))
     const block = screen.getByTestId('explanation')

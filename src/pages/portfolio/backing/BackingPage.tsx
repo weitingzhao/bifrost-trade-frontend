@@ -57,7 +57,7 @@ export default function BackingPage() {
   })
   const [obligationsOpen, setObligationsOpen] = useState(true)
   const [holdingsOpen, setHoldingsOpen] = useState(true)
-  const { ceiling, setCeiling } = usePressureCeiling()
+  const { ceiling, setLevel } = usePressureCeiling()
   const room = useMemo(
     () =>
       computeRoomToAdd({
@@ -213,7 +213,7 @@ export default function BackingPage() {
               </div>
 
               <div id={ANCHOR.room}>
-                <RoomToAddSection room={room} coverRows={book.coverRows} ceiling={ceiling} onCeilingChange={setCeiling} />
+                <RoomToAddSection room={room} coverRows={book.coverRows} ceiling={ceiling} onLevelChange={setLevel} />
               </div>
               <div id={ANCHOR.coverage}>
                 <ObligationsRoomSection

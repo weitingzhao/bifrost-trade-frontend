@@ -15,15 +15,16 @@ import { cn } from '@/lib/utils'
 import { pressureLevel, type CoverRow, type GaugeLevel } from '@/utils/bookVsBase'
 import { PRESSURE_TICKS, usdAbbrev } from '@/utils/marginByAccount'
 import { fmtUsd } from '@/utils/positions'
+import { SegmentControl } from '@/components/data-display'
 import { roomDerivation, type RoomView } from './roomDerivation'
 import type { RoomToAdd } from '@/utils/roomToAdd'
-import { PRESSURE_CEILING_MAX, PRESSURE_CEILING_MIN } from '@/hooks/usePressureCeiling'
+import { riskLevelFor, RISK_LEVELS, type RiskLevelId } from '@/hooks/usePressureCeiling'
 
 interface Props {
   room: RoomToAdd
   coverRows: readonly CoverRow[]
   ceiling: number
-  onCeilingChange: (ceiling: number) => void
+  onLevelChange: (id: RiskLevelId) => void
 }
 
 type TierId = 'now' | 'backed' | 'margin'
@@ -42,7 +43,7 @@ const TIER_TEXT: Record<TierId, string> = {
 const BAND: Record<GaugeLevel, string> = { 0: 'idle', 1: 'normal', 2: 'heavy', 3: 'critical' }
 const BAND_TEXT: Record<GaugeLevel, string> = { 0: 'text-muted-foreground', 1: 'text-foreground', 2: 'text-warning', 3: 'text-loss' }
 const BAND_FILL: Record<GaugeLevel, string> = { 0: 'bg-profit', 1: 'bg-profit', 2: 'bg-warning', 3: 'bg-loss' }
-const GRID = 'grid grid-cols-[7.5rem_minmax(0,1fr)_4.75rem_3.5rem] items-center gap-x-2'
+const GRID = 'grid grid-cols-[11rem_minmax(0,1fr)_4.75rem_3.5rem] items-center gap-x-2'
 
 const plus = (n: number | null) => (n == null ? '—' : `+${n.toLocaleString()}`)
 const pct0 = (v: number | null) => (v == null ? '—' : `${Math.round(v * 100)}%`)
@@ -52,6 +53,8 @@ const bandOf = (v: number | null): GaugeLevel | null => (v == null ? null : pres
 interface Tier {
   id: TierId
   label: string
+  /** What this step means for the account, in the reader's terms. */
+  meaning: string
   counts: string
   /** This step's premium per cycle; the Now row is the book's entry premium. */
   premium: number | null
@@ -120,30 +123,34 @@ function How({ view, label, open, onToggle }: { view: RoomView; label: string; o
   )
 }
 
-export function RoomToAddSection({ room, coverRows, ceiling, onCeilingChange }: Props) {
+export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange }: Props) {
   const [openView, setOpenView] = useState<RoomView | null>(null)
   const r = room
   const ceilingPct = Math.round(ceiling * 100)
   const toggle = (v: RoomView) => setOpenView((cur) => (cur === v ? null : v))
+  const level = riskLevelFor(ceiling)
   const tiers: Tier[] = [
     {
       id: 'now',
-      label: 'Now',
+      label: 'Open now',
+      meaning: 'What is already sold',
       counts: `${r.now.calls.toLocaleString()} calls · ${r.now.puts.toLocaleString()} puts`,
       premium: r.now.netPremium,
       pressure: r.now.pressure,
     },
     {
       id: 'backed',
-      label: '+ Backed',
-      counts: `${plus(r.backed.calls)} calls · ${plus(r.backed.puts)} puts · no new margin`,
+      label: '+ Sell against what you own',
+      meaning: 'Shares and cash already there, nothing borrowed',
+      counts: `${plus(r.backed.calls)} calls · ${plus(r.backed.puts)} puts`,
       premium: r.backed.income,
       pressure: r.backed.pressureAfter,
     },
     {
       id: 'margin',
-      label: `+ Margin to ${ceilingPct}%`,
-      counts: `${plus(r.margin.puts)} puts on margin`,
+      label: '+ Sell on margin',
+      meaning: `Borrow against the account up to ${level.label.toLowerCase()} risk, ${ceilingPct}% pressure`,
+      counts: `${plus(r.margin.puts)} puts · calls need shares, not margin`,
       premium: r.margin.income,
       pressure: r.margin.pressureAfter,
     },
@@ -167,35 +174,32 @@ export function RoomToAddSection({ room, coverRows, ceiling, onCeilingChange }: 
           {plus(r.backed.calls)} calls · {plus(r.backed.puts)} puts · {plus(r.margin.puts)} on margin
           {added != null ? ` · ≈ +${usdAbbrev(added)}/cycle` : ''}
         </span>
-        <span className="ml-auto flex items-center">
-          <label
-            className="flex h-6 items-center gap-1 rounded-md border border-border bg-card px-1.5"
-            title="The pressure the margin step may run up to. 50% is where the gauge turns heavy."
-          >
-            <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">Ceiling</span>
-            <input
-              type="number"
-              min={PRESSURE_CEILING_MIN * 100}
-              max={PRESSURE_CEILING_MAX * 100}
-              step={5}
-              value={ceilingPct}
-              onChange={(e) => {
-                const n = Number(e.target.value)
-                if (Number.isFinite(n)) onCeilingChange(n / 100)
-              }}
-              className="w-9 bg-transparent text-right font-mono text-dense-body tabular-nums text-foreground outline-none"
-              aria-label="Pressure ceiling for the margin step, percent"
-            />
-            <span className="text-dense-caption">%</span>
-          </label>
+        <span className="ml-auto flex items-center gap-1.5">
+          <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">Risk</span>
+          <SegmentControl
+            size="sm"
+            ariaLabel="How much of the cushion the margin step may spend"
+            value={level.id}
+            onChange={(v) => onLevelChange(v as RiskLevelId)}
+            options={RISK_LEVELS.map((l) => ({
+              value: l.id,
+              label: (
+                <span title={l.meaning}>
+                  {l.label} <span className="font-mono tabular-nums opacity-70">{Math.round(l.pct * 100)}%</span>
+                </span>
+              ),
+            }))}
+          />
           <How view="all" label="Room to add" open={openView === 'all'} onToggle={toggle} />
         </span>
       </div>
 
       <p className="mb-1.5 text-dense-caption text-muted-foreground">
-        yield {r.pool.yieldPerCycle != null ? `${(r.pool.yieldPerCycle * 100).toFixed(1)}%` : '—'}/cycle{tenor ? ` of ${tenor}` : ''} · Reg T{' '}
-        {r.margin.marginPerPut != null ? usdAbbrev(r.margin.marginPerPut) : '—'}/put
-        {r.margin.leverage != null ? ` (${r.margin.leverage.toFixed(1)}× less than cash-secured)` : ''} · estimates, not the broker's what-if
+        <span className="text-foreground">Premium</span> is what those contracts would bring in over one cycle
+        {tenor ? ` of ${tenor}` : ''}, at the {r.pool.yieldPerCycle != null ? `${(r.pool.yieldPerCycle * 100).toFixed(1)}%` : '—'} this book was
+        sold at. <span className="text-foreground">Pressure</span> is how much of the accounts' cushion would be spent; the broker liquidates at
+        100%. Margin costs {r.margin.marginPerPut != null ? usdAbbrev(r.margin.marginPerPut) : '—'} a put
+        {r.margin.leverage != null ? `, ${r.margin.leverage.toFixed(1)}× less than setting cash aside` : ''} · estimates, not the broker's what-if
       </p>
 
       <div className={cn(GRID, 'text-dense-label font-semibold uppercase tracking-wide text-muted-foreground')}>
@@ -211,10 +215,15 @@ export function RoomToAddSection({ room, coverRows, ceiling, onCeilingChange }: 
             <div key={t.id} className={GRID} data-testid={`room-row-${t.id}`}>
               <span className="min-w-0">
                 <span className="flex items-center">
-                  <span className={cn('truncate text-dense-body font-medium', TIER_TEXT[t.id])}>{t.label}</span>
+                  <span className={cn('truncate text-dense-body font-medium', TIER_TEXT[t.id])} title={t.label}>
+                    {t.label}
+                  </span>
                   <How view={t.id} label={t.label} open={openView === t.id} onToggle={toggle} />
                 </span>
-                <span className="block truncate text-dense-caption text-muted-foreground" title={t.counts}>
+                <span className="block truncate text-dense-caption text-muted-foreground" title={`${t.meaning}. ${t.counts}`}>
+                  {t.meaning}
+                </span>
+                <span className="block truncate font-mono text-dense-caption tabular-nums text-muted-foreground" title={t.counts}>
                   {t.counts}
                 </span>
               </span>

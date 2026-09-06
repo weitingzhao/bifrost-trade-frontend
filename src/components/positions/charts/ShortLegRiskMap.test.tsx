@@ -12,6 +12,8 @@ const leg = (o: Partial<RiskMapLeg> = {}): RiskMapLeg => ({
   expiry: '20261120',
   dte: 76,
   contracts: 3,
+  // $10.05 a share over three contracts — the credit the label prints and the dot draws.
+  premium: 3015,
   cushionPct: 0.124,
   spotSource: 'live',
   ...o,
@@ -20,7 +22,7 @@ const leg = (o: Partial<RiskMapLeg> = {}): RiskMapLeg => ({
 /** Circles inside the plot itself — the legend draws two of its own outside it. */
 const plotCircles = () => document.querySelector('svg[role="group"]')?.querySelectorAll('circle') ?? []
 
-const PRICED_TITLE = 'MU 20261120 C 250 · 3 contracts · $75k if assigned · cushion +12.4% · 76d'
+const PRICED_TITLE = 'MU 20261120 C 250 · 3 contracts · $3.0k credit · $75k if assigned · cushion +12.4% · 76d'
 
 /** The circle that owns a given <title> — getByTitle only sees direct children of <svg>. */
 function pointFor(title: string): SVGCircleElement {
@@ -42,8 +44,8 @@ describe('ShortLegRiskMap', () => {
     const c = pointFor(PRICED_TITLE)
     expect(c.dataset.band).toBe('comfortable')
     // The label carries the size too: three contracts, not one.
-    expect(screen.getByTestId('point-label')).toHaveTextContent('MU 250C ×3 $75k +12.4%')
-    expect(screen.getByTestId('size-legend')).toHaveTextContent('$75k–$75k if assigned')
+    expect(screen.getByTestId('point-label')).toHaveTextContent('MU 250C ×3 $3.0k +12.4%')
+    expect(screen.getByTestId('size-legend')).toHaveTextContent('$3.0k–$3.0k credit')
     // The cushion scale is drawn, so the height of a point can be read.
     expect(screen.getAllByTestId('y-tick').map((t) => t.textContent)).toEqual(['-10%', '0%', '+10%', '+20%', '+30%', '+40%'])
   })
@@ -79,7 +81,7 @@ describe('ShortLegRiskMap', () => {
 
   it('draws an in-the-money leg below zero in the loss band and never banded safe', () => {
     render(<ShortLegRiskMap legs={[leg({ cushionPct: -0.05 })]} tightPct={0.03} />)
-    const c = pointFor('MU 20261120 C 250 · 3 contracts · $75k if assigned · cushion -5.0% · 76d')
+    const c = pointFor('MU 20261120 C 250 · 3 contracts · $3.0k credit · $75k if assigned · cushion -5.0% · 76d')
     expect(c.dataset.band).toBe('breached')
   })
 

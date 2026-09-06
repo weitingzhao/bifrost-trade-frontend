@@ -40,6 +40,13 @@ export interface RiskMapLeg {
   expiry: string
   dte: number | null
   contracts: number
+  /**
+   * What the leg itself is worth: the credit taken in when it was sold, from
+   * its average cost per share × 100 × contracts. The account snapshot carries
+   * no option marks, so this is the entry credit — the same figure the grid's
+   * OPT PNL column shows — not a live mark-to-market. Null when unknown.
+   */
+  premium?: number | null
   cushionPct: number | null
   /** How the spot behind cushionPct was priced; null or absent when there was none. */
   spotSource?: SpotSource | null
@@ -76,7 +83,13 @@ function rightFromContractKey(contractKey: string): 'C' | 'P' | null {
  * test pins that gap so it cannot widen unnoticed.
  */
 export function buildRiskMapLegs(input: {
-  legs: readonly (LadderLeg & { instanceKey: string; contractKey: string; accountId?: string })[]
+  legs: readonly (LadderLeg & {
+    instanceKey: string
+    contractKey: string
+    accountId?: string
+    /** Entry cost per share, IB's ×100 already unwound. */
+    avgCostPerShare?: number | null
+  })[]
   /** A bare number is taken as live — the ladder's contract; a Spot carries its source. */
   spotOf: (leg: LadderLeg) => Spot | number | null
 }): RiskMapLeg[] {
@@ -107,6 +120,10 @@ export function buildRiskMapLegs(input: {
       expiry: leg.expiry,
       dte: daysUntilExpiry(leg.expiry),
       contracts: Math.abs(leg.qty),
+      premium:
+        typeof leg.avgCostPerShare === 'number' && Number.isFinite(leg.avgCostPerShare)
+          ? Math.round(Math.abs(leg.avgCostPerShare) * SHARES_PER_CONTRACT * Math.abs(leg.qty) * 100) / 100
+          : null,
       cushionPct,
       spotSource: spot?.source ?? null,
       spotAsOf: spot && 'asOf' in spot ? (spot.asOf ?? null) : null,
@@ -196,7 +213,7 @@ export interface RiskMapLabel {
 export interface RiskMapLabelParts {
   /** "NVDA 245C ×5" — what it is and how many. */
   head: string
-  /** "$123k" — what assignment would move; the same number the dot's area draws. */
+  /** "$5.0k" — the credit the leg brought in; the same number the dot's area draws. */
   value: string | null
   /** "+6.0%" — how far the spot is from the strike. */
   cushion: string | null
@@ -237,17 +254,28 @@ export interface RiskMapLayout {
 
 /**
  * Size is the third thing a short leg has to say, and the count alone does not
- * say it: one MU 1200 call delivers $120,000 and ten HIMS 40 calls deliver
- * $40,000, so drawing the ten-lot four times larger would rank the book by the
- * wrong number. Size is what assignment would move — strike × 100 × contracts,
- * the same arithmetic the put-cash figure on the cockpit uses — and the dot's
- * *area* carries it, which is what the eye compares. The largest leg in view
- * fills the scale, so the picture always uses its whole range; a floor keeps
- * the smallest leg a dot rather than a speck, and clickable.
+ * say it: a nine-lot sold for $3 a share is a smaller position than a one-lot
+ * sold for $84. Size is the option's own money — its price × 100 × contracts,
+ * the credit taken at entry, the same figure the grid's OPT PNL column shows —
+ * and the dot's *area* carries it, which is what the eye compares. What
+ * assignment would move is a different quantity and stays in the hover. The
+ * largest leg in view fills the scale, so the picture always uses its whole
+ * range; a floor keeps the smallest leg a dot rather than a speck, and clickable.
  */
 export const POINT_R_MIN = 4
 export const POINT_R_MAX = 12
 const SHARES_PER_CONTRACT = 100
+
+/**
+ * What the leg itself brought in: the credit taken at entry. This is the
+ * option's own money — its price × 100 × contracts — which is what the dot's
+ * area draws and the label prints. Assignment value is a different quantity
+ * (see `legNotional`) and stays in the hover.
+ */
+export function legPremium(leg: Pick<RiskMapLeg, 'premium'>): number | null {
+  const p = leg.premium
+  return typeof p === 'number' && Number.isFinite(p) && p > 0 ? p : null
+}
 
 /** What assignment would move: strike × 100 × contracts. Null when the strike will not parse. */
 export function legNotional(leg: Pick<RiskMapLeg, 'strike' | 'contracts'>): number | null {
@@ -257,17 +285,22 @@ export function legNotional(leg: Pick<RiskMapLeg, 'strike' | 'contracts'>): numb
   return k * SHARES_PER_CONTRACT * c
 }
 
-/** The book's largest assignment value, the scale every dot is drawn against. */
+/** The book's largest premium, the scale every dot is drawn against. */
+export function maxPremiumOf(legs: readonly RiskMapLeg[]): number {
+  return legs.reduce((n, l) => Math.max(n, legPremium(l) ?? 0), 0)
+}
+
+/** The book's largest assignment value; the hover quotes it, the plot does not scale by it. */
 export function maxNotionalOf(legs: readonly RiskMapLeg[]): number {
   return legs.reduce((n, l) => Math.max(n, legNotional(l) ?? 0), 0)
 }
 
-export function pointRadius(notional: number | null, maxNotional: number): number {
-  if (notional == null || !isPlaceable(notional) || notional <= 0 || !isPlaceable(maxNotional) || maxNotional <= 0) {
+export function pointRadius(value: number | null, maxValue: number): number {
+  if (value == null || !isPlaceable(value) || value <= 0 || !isPlaceable(maxValue) || maxValue <= 0) {
     return POINT_R_MIN
   }
-  // Area ∝ notional, so radius goes with its square root; the biggest fills the scale.
-  return Math.min(POINT_R_MAX, Math.max(POINT_R_MIN, POINT_R_MAX * Math.sqrt(Math.min(1, notional / maxNotional))))
+  // Area ∝ value, so radius goes with its square root; the biggest fills the scale.
+  return Math.min(POINT_R_MAX, Math.max(POINT_R_MIN, POINT_R_MAX * Math.sqrt(Math.min(1, value / maxValue))))
 }
 
 function clampOf(cushion: number): RiskMapClamp {
@@ -292,7 +325,7 @@ function stackInGutter(
   y0: number,
   y1: number,
   place: (leg: RiskMapLeg, stackedY: number) => Pick<RiskMapGutterPoint, 'y' | 'band' | 'clamped'>,
-  maxNotional: number,
+  maxPremium: number,
 ): RiskMapGutterPoint[] {
   const n = legs.length
   const cols = Math.min(GUTTER_MAX_COLS, Math.max(1, Math.ceil(n / GUTTER_MAX_ROWS)))
@@ -305,7 +338,7 @@ function stackInGutter(
     return {
       leg,
       x: x0 + col * GUTTER_COL_STEP,
-      r: pointRadius(legNotional(leg), maxNotional),
+      r: pointRadius(legPremium(leg), maxPremium),
       ...place(leg, y0 + row * step),
     }
   })
@@ -322,7 +355,7 @@ export function layoutRiskMap(
   const { width, height, tightPct } = opts
   // One scale for the whole picture, gutters included: a leg does not change
   // size because it lost its quote.
-  const maxNotional = maxNotionalOf(legs)
+  const maxPremium = maxPremiumOf(legs)
 
   const priced: RiskMapLeg[] = []
   const unpricedLegs: RiskMapLeg[] = []
@@ -374,7 +407,7 @@ export function layoutRiskMap(
       leg,
       x: xOf(leg.dte as number),
       y: yOf(c),
-      r: pointRadius(legNotional(leg), maxNotional),
+      r: pointRadius(legPremium(leg), maxPremium),
       band: cushionBand(c, tightPct),
       clamped: clampOf(c),
     }
@@ -403,7 +436,7 @@ export function layoutRiskMap(
         // their clamp ring — the gutter only takes away the x.
         const c = leg.cushionPct as number
         return { y: yOf(c), band: cushionBand(c, tightPct), clamped: clampOf(c) }
-      }, maxNotional)
+      }, maxPremium)
     : []
 
   const zeroY = yOf(0)
@@ -459,7 +492,10 @@ export function fmtTightPct(v: number): string {
 export function fmtNotional(v: number | null): string {
   if (!isPlaceable(v)) return '—'
   if (Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`
-  if (Math.abs(v) >= 1_000) return `$${Math.round(v / 1_000)}k`
+  // A leg's credit is often a few thousand dollars, where a whole $k would
+  // round two different positions to the same label.
+  if (Math.abs(v) >= 10_000) return `$${Math.round(v / 1_000)}k`
+  if (Math.abs(v) >= 1_000) return `$${(v / 1_000).toFixed(1)}k`
   return `$${Math.round(v)}`
 }
 
@@ -474,15 +510,17 @@ export function fmtTickDte(dte: number): string {
   return dte < 0 ? 'past' : `${dte}d`
 }
 
-/** "SYM 20261120 C 250 · 3 contracts · $75.0k if assigned · cushion +12.4% · 76d" */
+/** "SYM 20261120 C 250 · 3 contracts · $3.0k credit · $75k if assigned · cushion +12.4% · 76d" */
 export function riskMapLegTitle(leg: RiskMapLeg): string {
   const contracts = `${leg.contracts} contract${leg.contracts === 1 ? '' : 's'}`
   const cushion = isPlaceable(leg.cushionPct)
     ? `cushion ${fmtCushionPct(leg.cushionPct)}`
     : 'cushion n/a (no quote)'
+  const p = legPremium(leg)
+  const credit = p == null ? 'credit n/a' : `${fmtNotional(p)} credit`
   const n = legNotional(leg)
-  const size = n == null ? 'size n/a' : `${fmtNotional(n)} if assigned`
-  return `${leg.symbol} ${leg.expiry} ${leg.right} ${leg.strike} · ${contracts} · ${size} · ${cushion} · ${fmtDte(leg.dte)}`
+  const size = n == null ? 'assignment n/a' : `${fmtNotional(n)} if assigned`
+  return `${leg.symbol} ${leg.expiry} ${leg.right} ${leg.strike} · ${contracts} · ${credit} · ${size} · ${cushion} · ${fmtDte(leg.dte)}`
 }
 
 /** "NVDA 245C" — the name a point wears on the plot and a no-quote chip carries. */
@@ -491,19 +529,19 @@ export function riskMapLegShort(leg: RiskMapLeg): string {
 }
 
 /**
- * "NVDA 245C ×5 · $123k · +6.0%" — the plot label in its three readings: what it
- * is and how many, what assignment would move, and how far the spot is from the
- * strike. The dot draws the middle one as area and the height draws the last;
- * writing both keeps the picture readable without measuring pixels by eye. The
- * ×N is dropped on a single contract, where it would be noise on every small leg.
+ * "NVDA 245C ×5 $5.0k +6.0%" — the plot label in its three readings: what it is
+ * and how many, what it brought in, and how far the spot is from the strike.
+ * The dot draws the middle one as area and the height draws the last; writing
+ * both keeps the picture readable without measuring pixels by eye. The ×N is
+ * dropped on a single contract, where it would be noise on every small leg.
  */
 export function riskMapLegLabelParts(leg: RiskMapLeg): RiskMapLabelParts {
   const size = leg.contracts > 1 ? ` ×${leg.contracts}` : ''
-  const n = legNotional(leg)
+  const p = legPremium(leg)
   const c = leg.cushionPct
   return {
     head: `${riskMapLegShort(leg)}${size}`,
-    value: n == null ? null : fmtNotional(n),
+    value: p == null ? null : fmtNotional(p),
     cushion: isPlaceable(c) ? `${c >= 0 ? '+' : ''}${(c * 100).toFixed(1)}%` : null,
   }
 }

@@ -328,8 +328,9 @@ export default function PositionsPage() {
               {/* Band 1, a 2×2. Row one: the cockpit, and beside it the margin
                   strip its Pressure gauge opens plus the Backing pool its Backing
                   gauge grades. Row two: the accounts' capital and the holdings
-                  by symbol — two rings on one line. */}
-              <div className="grid min-w-0 grid-cols-1 items-start gap-3 xl:grid-cols-2">
+                  by symbol — two rings on one line. The cells stretch, so each
+                  row ends on one line however tall its two panels want to be. */}
+              <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
                 <BookVsBaseCockpit
                   book={book.alarm.book}
                   checks={book.alarm.checks}
@@ -339,6 +340,7 @@ export default function PositionsPage() {
                   spotMix={book.alarm.spotMix}
                   explain={explain}
                   room={room}
+                  className="h-full"
                 />
                 <div className="min-w-0 space-y-3">
                   <MarginByAccountStrip

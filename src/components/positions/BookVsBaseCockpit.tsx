@@ -148,6 +148,7 @@ export function BookVsBaseCockpit({
   spotMix,
   explain,
   room,
+  className,
 }: {
   book: BookVsBase
   /** All nine checks; each is a chip with a place to land, quiet ones in grey. */
@@ -169,6 +170,12 @@ export function BookVsBaseCockpit({
   explain?: Omit<ExplainInputs, 'book' | 'tightPct' | 'spotMix'>
   /** Room to add in one line; the Potential row shows it and links to the section that walks it. */
   room?: RoomSummary
+  /**
+   * Extra classes for the panel itself. The Positions page passes `h-full` so
+   * its row ends on one line; the Backing page must not, because there this
+   * block shares a column with two more panels and would swallow their height.
+   */
+  className?: string
 }) {
   const { pressure, backing, risk, potential, demand, supply } = book
   const full = variant === 'full'
@@ -189,7 +196,7 @@ export function BookVsBaseCockpit({
 
   return (
     <section
-      className="rounded-md border border-border bg-secondary/40 px-3 py-2.5"
+      className={cn('rounded-md border border-border bg-secondary/40 px-3 py-2.5', className)}
       aria-label="Option book against the base"
     >
       <div className="mb-2 flex items-baseline justify-between gap-2">

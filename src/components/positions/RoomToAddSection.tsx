@@ -120,10 +120,10 @@ export function RoomToAddSection({ open, onToggle, room, coverRows, ceiling, onC
           <DenseDataTable scrollX={false} tableClassName="table-fixed min-w-0">
             <colgroup>
               <col />
-              <col style={{ width: '6rem' }} />
-              <col style={{ width: '6rem' }} />
-              <col style={{ width: '9rem' }} />
-              <col style={{ width: '9rem' }} />
+              <col style={{ width: '4.5rem' }} />
+              <col style={{ width: '4.5rem' }} />
+              <col style={{ width: '7rem' }} />
+              <col style={{ width: '7.5rem' }} />
             </colgroup>
             <DenseTableHeader>
               <DenseTableHeadRow>

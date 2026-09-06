@@ -205,14 +205,14 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/loop/LoopRunPipelinePage')),
       },
 
-      /* Wave Z — Risk Model moved under Portfolio (alias keeps /research/risk) */
+      /* The Risk Model page is retired: its four daemon figures live on the Daemon page. Old links land there. */
       {
         path: 'portfolio/risk',
-        lazy: lazyPage(() => import('@/pages/portfolio/RiskModelPage')),
+        element: <Navigate to="/operations/daemon" replace />,
       },
       {
         path: 'research/risk',
-        element: <Navigate to="/portfolio/risk" replace />,
+        element: <Navigate to="/operations/daemon" replace />,
       },
 
       { path: 'strategy/instances/:instanceId?', element: <InstancesPage /> },

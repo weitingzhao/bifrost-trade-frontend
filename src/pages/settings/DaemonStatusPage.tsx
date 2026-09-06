@@ -11,6 +11,8 @@ import { useMonitorStatus, useOperations } from '@/hooks/useMonitorStatus'
 import { OpsHostEnvPill } from '@/pages/settings/socket/OpsHostEnvPill'
 import { DaemonEngineOpsSection } from './daemon/DaemonEngineOpsSection'
 import { StrategyTradingDaemonCard } from './daemon/StrategyTradingDaemonCard'
+import { RiskModelCard } from './daemon/RiskModelCard'
+import { useRiskSummary } from '@/hooks/useRiskSummary'
 import { AccountSyncDaemonCard } from './daemon/AccountSyncDaemonCard'
 import { RecentOperationsTable } from './daemon/RecentOperationsTable'
 import { useDaemonEngineOps } from './daemon/useDaemonEngineOps'
@@ -25,6 +27,7 @@ function DaemonCardSkeleton() {
 
 export default function DaemonStatusPage() {
   const { data, isLoading, isError, error } = useMonitorStatus()
+  const risk = useRiskSummary()
   const { data: opsData } = useOperations(20)
   const qc = useQueryClient()
   const [nextAsdHb, setNextAsdHb] = useState<number | null>(null)
@@ -105,6 +108,18 @@ export default function DaemonStatusPage() {
       <Card variant="elevated" size="sm">
         <CardContent className={daemonElevatedCardClass}>
           <StrategyTradingDaemonCard data={data} onInvalidate={invalidate} />
+        </CardContent>
+      </Card>
+
+      <Card variant="elevated" size="sm">
+        <CardContent className={daemonElevatedCardClass}>
+          <RiskModelCard
+            data={risk.data}
+            isLoading={risk.isLoading}
+            isFetching={risk.isFetching}
+            error={risk.error}
+            onRefresh={() => void risk.refetch()}
+          />
         </CardContent>
       </Card>
 

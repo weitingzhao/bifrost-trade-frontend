@@ -28,7 +28,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/research/scan': 'Scan',
   '/research/signal-decay': 'Signal Decay',
   '/research/greeks': 'Contract Greeks',
-  '/research/risk': 'Risk Model',
   '/research/backtest': 'Backtest',
   '/research/analysis-model': 'Analysis Model',
   '/research/intraday-playbook': 'Intraday Playbook',

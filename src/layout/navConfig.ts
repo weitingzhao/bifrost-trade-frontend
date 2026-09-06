@@ -1,7 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
-  AlertCircle,
   ArrowLeftRight,
   BarChart2,
   BookOpen,
@@ -64,7 +63,6 @@ export const NAV_GROUPS: ShellNavGroup[] = [
           route('Backing', '/portfolio/backing', Layers),
           route('Performance', '/portfolio/performance', LineChart),
           route('Model Analysis', '/portfolio/model-analysis', BarChart2),
-          route('Risk Model', '/portfolio/risk', AlertCircle),
         ],
       },
       {

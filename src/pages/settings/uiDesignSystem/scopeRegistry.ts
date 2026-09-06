@@ -94,7 +94,6 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/research/discovery', label: 'Option Discovery', domain: 'research', pathGlobs: ['pages/research/analyze/DiscoveryPage.tsx'] },
   { route: '/research/iv-radar', label: 'IV Radar', domain: 'research', pathGlobs: ['pages/research/analyze/IvRadarPage.tsx', 'utils/ivRadar/**', 'hooks/useIvRadarData.ts', 'hooks/useHoldingSymbols.ts', 'api/research/ivRadar.ts'] },
   { route: '/research/greeks', label: 'Contract Greeks', domain: 'research', pathGlobs: ['pages/research/analyze/GreeksPage.tsx'] },
-  { route: '/research/risk', label: 'Risk Model', domain: 'research', pathGlobs: ['pages/portfolio/RiskModelPage.tsx'] },
   { route: '/research/backtest', label: 'Backtest', domain: 'research', pathGlobs: ['pages/research/validate/BacktestPage.tsx'] },
 
   { route: '/strategy/instances', label: 'Instances', domain: 'strategy', pathGlobs: ['pages/strategy/InstancesPage.tsx', 'components/strategy/instanceDetail/**', 'components/strategy/InstancesGroupedTable.tsx'] },

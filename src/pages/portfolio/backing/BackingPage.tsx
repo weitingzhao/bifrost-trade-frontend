@@ -157,6 +157,13 @@ export default function BackingPage() {
                       openTarget(t)
                     }}
                     headerLink={{ to: positionsHref, label: 'Positions →' }}
+                    explain={{
+                      exposure: book.alarm.exposure,
+                      margin: book.alarm.margin,
+                      accounts: book.scopedAccounts,
+                      cashLikeRows: book.cashLikeStocks,
+                      coverRows: book.coverRows,
+                    }}
                   />
                   <MarginByAccountStrip
                     margin={book.marginAllAccounts}

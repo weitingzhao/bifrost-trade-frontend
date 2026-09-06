@@ -45,6 +45,9 @@ export interface RiskMapLeg {
   spotSource?: SpotSource | null
   /** When that spot was priced (unix seconds); the caption dates a close by it. */
   spotAsOf?: number | null
+  /** The contract and the account, so a selection can narrow the grid to exactly this leg. */
+  contractKey?: string
+  accountId?: string
 }
 
 /** A number that can be placed. null, undefined and NaN all mean "unknown". */
@@ -73,7 +76,7 @@ function rightFromContractKey(contractKey: string): 'C' | 'P' | null {
  * test pins that gap so it cannot widen unnoticed.
  */
 export function buildRiskMapLegs(input: {
-  legs: readonly (LadderLeg & { instanceKey: string; contractKey: string })[]
+  legs: readonly (LadderLeg & { instanceKey: string; contractKey: string; accountId?: string })[]
   /** A bare number is taken as live — the ladder's contract; a Spot carries its source. */
   spotOf: (leg: LadderLeg) => Spot | number | null
 }): RiskMapLeg[] {
@@ -96,6 +99,8 @@ export function buildRiskMapLegs(input: {
     out.push({
       key: n === 0 ? base : `${base}#${n}`,
       instanceKey: leg.instanceKey,
+      contractKey: leg.contractKey,
+      accountId: leg.accountId,
       symbol: leg.underlying,
       right,
       strike: leg.strike,

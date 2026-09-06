@@ -62,7 +62,7 @@ export function PositionsOpenControls({
               className={segmentButtonClass(accountFilter.host)}
               aria-pressed={accountFilter.host}
             >
-              HOST
+              Host
             </button>
           )}
           {secondaryAccountId && secondaryAccountId !== hostAccountId && (

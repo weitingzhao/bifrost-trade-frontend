@@ -50,14 +50,14 @@ describe('MarginByAccountStrip', () => {
     expect(root).toHaveAttribute('aria-label', 'Margin by account')
     expect(screen.getByText('n/a — no funded account reported margin')).toBeInTheDocument()
     expect(screen.queryByRole('meter')).toBeNull()
-    expect(screen.getByText('cockpit pressure: accounts in scope')).toBeInTheDocument()
+    expect(screen.getByText(/cockpit pressure: accounts in scope/)).toBeInTheDocument()
   })
 
   it('draws one bar per account, host first, on the broker’s numbers', () => {
     renderStrip([SECONDARY, HOST])
     const meters = screen.getAllByRole('meter')
     expect(meters).toHaveLength(2)
-    expect(meters[0]).toHaveAttribute('aria-label', 'HOST margin pressure')
+    expect(meters[0]).toHaveAttribute('aria-label', 'Host margin pressure')
     expect(meters[0]).toHaveAttribute('aria-valuenow', '27')
     expect(meters[1]).toHaveAttribute('aria-label', 'Secondary margin pressure')
     expect(meters[1]).toHaveAttribute('aria-valuenow', '24')
@@ -66,7 +66,7 @@ describe('MarginByAccountStrip', () => {
     expect(fills[0]).toHaveClass('bg-profit')
     expect(fills[0]).toHaveStyle({ width: '27%' })
 
-    const hostRow = screen.getByText('HOST').closest('[data-account]') as HTMLElement
+    const hostRow = screen.getByText('Host').closest('[data-account]') as HTMLElement
     expect(within(hostRow).getByText('27%')).toBeInTheDocument()
     expect(
       within(hostRow).getByText('· cushion 73% · excess $468.9k · BP $1.87M')
@@ -103,7 +103,7 @@ describe('MarginByAccountStrip', () => {
     expect(secondaryRow).toHaveClass('opacity-50')
     expect(secondaryRow.title.split('\n')[0]).toBe('not in scope')
     expect(secondaryRow).toHaveAttribute('data-in-scope', 'false')
-    const hostRow = screen.getByText('HOST').closest('[data-account]') as HTMLElement
+    const hostRow = screen.getByText('Host').closest('[data-account]') as HTMLElement
     expect(hostRow).not.toHaveClass('opacity-50')
     expect(hostRow.title.startsWith('not in scope')).toBe(false)
   })

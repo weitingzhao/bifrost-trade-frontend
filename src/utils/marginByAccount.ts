@@ -25,8 +25,10 @@ export type MarginAccountTone = 'profit' | 'warning' | 'loss'
 export interface MarginAccountRow {
   accountId: string
   role: MarginAccountRole
-  /** HOST / Secondary / the raw id for anything else. */
+  /** Host / Secondary / the raw id for anything else. */
   label: string
+  /** The broker fields the row was read from, for the explanation. */
+  facts: MarginFacts
   /** False when the page's account filter has this account toggled off. */
   inScope: boolean
   /** 1 − the broker's Cushion; null when the broker did not report one. */
@@ -85,7 +87,7 @@ function roleOf(accountId: string, hostId: string, secondaryId: string): MarginA
 const ROLE_ORDER: Record<MarginAccountRole, number> = { host: 0, secondary: 1, other: 2 }
 
 function labelOf(role: MarginAccountRole, accountId: string): string {
-  if (role === 'host') return 'HOST'
+  if (role === 'host') return 'Host'
   if (role === 'secondary') return 'Secondary'
   return accountId
 }
@@ -125,6 +127,7 @@ export function marginAccountRows(
         accountId: f.accountId,
         role,
         label,
+        facts: f,
         inScope: role === 'host' ? filter.host : role === 'secondary' ? filter.secondary : true,
         pressure: f.pressure,
         cushion: f.cushion,

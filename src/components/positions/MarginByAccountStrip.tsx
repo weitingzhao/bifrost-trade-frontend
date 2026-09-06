@@ -1,3 +1,4 @@
+import { useState } from 'react'
 /**
  * How far each account is from liquidation.
  *
@@ -18,6 +19,9 @@ import {
   type MarginAccountRow,
   type MarginAccountTone,
 } from '@/utils/marginByAccount'
+
+import { ExplanationBlock } from './ExplanationBlock'
+import { explainMarginRow } from '@/utils/bookExplanations'
 
 const TONE_FILL: Record<MarginAccountTone, string> = {
   profit: 'bg-profit',
@@ -62,7 +66,7 @@ function PressureBar({
   )
 }
 
-function AccountRow({ row }: { row: MarginAccountRow }) {
+function AccountRow({ row, open, onToggle }: { row: MarginAccountRow; open: boolean; onToggle: () => void }) {
   const known = row.pressure != null && row.tone != null && row.pctText != null
   return (
     <div
@@ -74,7 +78,16 @@ function AccountRow({ row }: { row: MarginAccountRow }) {
       data-account={row.accountId}
       data-in-scope={row.inScope ? 'true' : 'false'}
     >
-      <span className="truncate text-dense-body font-medium text-foreground">{row.label}</span>
+      {/* The label opens how the row was computed, field by field. */}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={open}
+        aria-label={`How ${row.label} margin is computed`}
+        className="truncate text-left text-dense-body font-medium text-foreground hover:text-link hover:underline"
+      >
+        {row.label}
+      </button>
       {row.pressure != null && row.tone != null ? (
         <PressureBar label={row.label} pressure={row.pressure} tone={row.tone} />
       ) : (
@@ -106,6 +119,8 @@ export function MarginByAccountStrip({
   accountFilter: { host: boolean; secondary: boolean }
 }) {
   const rows = marginAccountRows(margin, hostId, secondaryId, accountFilter)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const openRow = rows.find((r) => r.accountId === openId) ?? null
   return (
     <section
       id="positions-margin"
@@ -117,11 +132,19 @@ export function MarginByAccountStrip({
       ) : (
         <div className="flex flex-col gap-y-0.5">
           {rows.map((r) => (
-            <AccountRow key={r.accountId} row={r} />
+            <AccountRow
+              key={r.accountId}
+              row={r}
+              open={openId === r.accountId}
+              onToggle={() => setOpenId((cur) => (cur === r.accountId ? null : r.accountId))}
+            />
           ))}
         </div>
       )}
-      <p className="text-dense-caption text-muted-foreground">cockpit pressure: accounts in scope</p>
+      <p className="text-dense-caption text-muted-foreground">cockpit pressure: accounts in scope · click an account for its fields</p>
+      {openRow ? (
+        <ExplanationBlock explanation={explainMarginRow(openRow.facts, openRow.label)} onClose={() => setOpenId(null)} className="mb-1" />
+      ) : null}
     </section>
   )
 }

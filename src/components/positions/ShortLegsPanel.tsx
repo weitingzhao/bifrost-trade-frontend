@@ -6,7 +6,7 @@
  * click itself; the first version narrowed the page silently and left no
  * obvious way back. The way back is now on the panel too.
  */
-import { useState, type KeyboardEvent } from 'react'
+import type { KeyboardEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { ShortLegRiskMap } from './charts/ShortLegRiskMap'
 import { riskMapLegTitle, type RiskMapLeg } from '@/utils/shortLegRiskMap'
@@ -22,7 +22,9 @@ interface Props {
   onUnpricedClick: () => void
   onScopeSymbol: (symbol: string) => void
   onClearSymbol: () => void
-  onShowInGrid: (leg: RiskMapLeg) => void
+  /** Selection lives with the page: the grid below narrows to the selected leg. */
+  selected: RiskMapLeg | null
+  onSelect: (leg: RiskMapLeg | null) => void
 }
 
 function pricedAs(leg: RiskMapLeg): string {
@@ -40,12 +42,10 @@ export function ShortLegsPanel({
   onUnpricedClick,
   onScopeSymbol,
   onClearSymbol,
-  onShowInGrid,
+  selected,
+  onSelect,
 }: Props) {
-  const [picked, setSelected] = useState<RiskMapLeg | null>(null)
-  // A selection outlives the legs it came from only as long as the leg exists:
-  // derived, not synced, so a scope change cannot leave a ghost strip behind.
-  const selected = picked && legs.some((l) => l.key === picked.key) ? picked : null
+  const setSelected = onSelect
 
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && selected) {
@@ -96,9 +96,7 @@ export function ShortLegsPanel({
                 Scope to {selected.symbol}
               </Button>
             )}
-            <Button variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={() => onShowInGrid(selected)}>
-              Show in grid
-            </Button>
+            <span className="text-muted-foreground">grid below shows this leg</span>
             <Button
               variant="ghost"
               size="sm"

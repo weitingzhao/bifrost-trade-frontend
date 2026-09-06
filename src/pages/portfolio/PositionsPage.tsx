@@ -52,6 +52,8 @@ import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
 import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
 import type { AlarmTarget } from '@/hooks/usePositionsAlarm'
+import { instanceGroupKey } from '@/utils/instanceSheetExec'
+import { riskMapLegShort, type RiskMapLeg } from '@/utils/shortLegRiskMap'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
 import type { Execution } from '@/types/positions'
 
@@ -88,6 +90,11 @@ export default function PositionsPage() {
     ['accordion', 'multi'],
   )
   const [instanceFilters, setInstanceFilters] = useState<InstanceFilterValues>(CLEAR_FILTERS)
+  // A leg picked on the risk map. It narrows the grid's views to that leg —
+  // grid-only, like the toolbar filters, so the cockpit is untouched — and it
+  // lives only as long as the leg is in scope.
+  const [pickedLeg, setPickedLeg] = useState<RiskMapLeg | null>(null)
+  const selectedLeg = pickedLeg && book.riskLegs.some((l) => l.key === pickedLeg.key) ? pickedLeg : null
 
   const [editExec, setEditExec] = useState<Execution | null>(null)
   const [editExecConfirm, setEditExecConfirm] = useState<{ open: boolean; exec: Execution | null }>({
@@ -100,12 +107,34 @@ export default function PositionsPage() {
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
   const closeInspector = () => setInspector({ type: null })
 
-  const filteredInstanceGroups = useMemo(
+  const filteredInstanceGroups = useMemo(() => {
+    const groups = sortInstanceGroupOptions(
+      filterInstanceGroups({ groups: book.instanceAllGroups, filterSymbol, filters: instanceFilters }),
+    )
+    return selectedLeg ? groups.filter((g) => instanceGroupKey(g) === selectedLeg.instanceKey) : groups
+  }, [book.instanceAllGroups, filterSymbol, instanceFilters, selectedLeg])
+  const contractsInView = useMemo(
     () =>
-      sortInstanceGroupOptions(
-        filterInstanceGroups({ groups: book.instanceAllGroups, filterSymbol, filters: instanceFilters }),
-      ),
-    [book.instanceAllGroups, filterSymbol, instanceFilters],
+      selectedLeg
+        ? book.filteredOptions.filter(
+            (p) => p.contract_key === selectedLeg.contractKey && (!selectedLeg.accountId || p.account_id === selectedLeg.accountId),
+          )
+        : book.filteredOptions,
+    [book.filteredOptions, selectedLeg],
+  )
+  const expiriesInView = useMemo(
+    () => (selectedLeg ? book.alarm.ladderRows.filter((r) => r.expiry === selectedLeg.expiry) : book.alarm.ladderRows),
+    [book.alarm.ladderRows, selectedLeg],
+  )
+  const explain = useMemo(
+    () => ({
+      exposure: book.alarm.exposure,
+      margin: book.alarm.margin,
+      accounts: book.scopedAccounts,
+      cashLikeRows: book.cashLikeStocks,
+      coverRows: book.coverRows,
+    }),
+    [book.alarm.exposure, book.alarm.margin, book.scopedAccounts, book.cashLikeStocks, book.coverRows],
   )
 
   const scrollTo = (id: string) =>
@@ -286,6 +315,7 @@ export default function PositionsPage() {
                     onOpenTarget={openTarget}
                     headerLink={{ to: MODEL_ANALYSIS_PATH, label: 'Model analysis →' }}
                     spotMix={book.alarm.spotMix}
+                    explain={explain}
                   />
                   <MarginByAccountStrip
                     margin={book.marginAllAccounts}
@@ -302,12 +332,8 @@ export default function PositionsPage() {
                     onUnpricedClick={() => openTarget('ladder')}
                     onScopeSymbol={setFilterSymbol}
                     onClearSymbol={() => setFilterSymbol('')}
-                    onShowInGrid={(leg) => {
-                      setLinesView('strategy')
-                      requestAnimationFrame(() =>
-                        document.getElementById(`lines-row-${leg.instanceKey}`)?.scrollIntoView({ block: 'center' }),
-                      )
-                    }}
+                    selected={selectedLeg}
+                    onSelect={setPickedLeg}
                   />
                 </div>
                 <PositionsDashboard
@@ -341,7 +367,9 @@ export default function PositionsPage() {
                   onChange={setInstanceFilters}
                   shown={filteredInstanceGroups.length}
                   total={book.instanceAllGroups.length}
-                  expiryCount={book.alarm.ladderRows.length}
+                  expiryCount={expiriesInView.length}
+                  selectionLabel={selectedLeg ? riskMapLegShort(selectedLeg) : null}
+                  onClearSelection={() => setPickedLeg(null)}
                 />
                 {linesView === 'strategy' ? (
                   <InstanceTab
@@ -374,7 +402,7 @@ export default function PositionsPage() {
                   />
                 ) : linesView === 'contract' ? (
                   <OptionsTab
-                    positions={book.filteredOptions}
+                    positions={contractsInView}
                     quotesBySymbol={book.quotesBySymbol}
                     quotesByCk={book.quotesByCk}
                     filterSymbol={filterSymbol}
@@ -393,7 +421,7 @@ export default function PositionsPage() {
                   />
                 ) : (
                   <ExpiriesView
-                    rows={book.alarm.ladderRows}
+                    rows={expiriesInView}
                     quotesBySymbol={book.quotesBySymbol}
                     cushionTightPct={cushionTightPct}
                     activeExpiry={activeExpiry}

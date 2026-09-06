@@ -8,6 +8,7 @@
  * for the same reason: it is about how rows expand, not what the page is about.
  */
 import {
+  DenseTagButton,
   SegmentControl,
   segmentButtonClass as bubbleButtonClass,
   segmentGroupClass as bubbleGroupClass,
@@ -44,6 +45,9 @@ interface Props {
   total: number
   /** Dates with legs in scope, for the expiries view's count. */
   expiryCount: number
+  /** A leg selected on the risk map narrows every view to it; the chip is the way out. */
+  selectionLabel?: string | null
+  onClearSelection?: () => void
 }
 
 function BubbleRadio({
@@ -89,6 +93,8 @@ export function LinesToolbar({
   shown,
   total,
   expiryCount,
+  selectionLabel,
+  onClearSelection,
 }: Props) {
   const hasActiveFilter =
     values.structureType !== 'all' ||
@@ -131,6 +137,16 @@ export function LinesToolbar({
         value={view}
         onChange={(v) => onViewChange(v as LinesView)}
       />
+      {selectionLabel ? (
+        <DenseTagButton
+          variant="category"
+          size="cell"
+          title="The risk map's selected leg — every view shows only it. Click to clear."
+          onClick={onClearSelection}
+        >
+          Map: {selectionLabel} ×
+        </DenseTagButton>
+      ) : null}
       {view === 'expiries' ? (
         <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
           {expiryCount} {expiryCount === 1 ? 'date' : 'dates'}

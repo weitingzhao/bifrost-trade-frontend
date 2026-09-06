@@ -13,8 +13,17 @@
  * Everything here is derived once in usePositionsAlarm. Nothing is recomputed,
  * so the gauge cannot disagree with the tables it summarises.
  */
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { ExplanationBlock } from './ExplanationBlock'
+import {
+  explainBook,
+  litSegments,
+  potentialSegments,
+  type ExplainInputs,
+  type ExplainTopic,
+} from '@/utils/bookExplanations'
 import { DenseTagButton } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import type { BookVsBase, GaugeLevel } from '@/utils/bookVsBase'
@@ -30,28 +39,51 @@ const LEVEL_TONE: Record<GaugeLevel, string> = {
   3: 'bg-loss',
 }
 
+/** The `?` that opens how a line was computed. */
+function How({ topic, active, onToggle }: { topic: ExplainTopic; active: boolean; onToggle: (t: ExplainTopic) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(topic)}
+      aria-pressed={active}
+      aria-label={`How ${topic} is computed`}
+      title="How is this computed?"
+      className={cn(
+        'ml-1 inline-flex h-4 w-4 items-center justify-center rounded-sm border border-border/60 font-mono text-dense-caption leading-none',
+        active ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
+      )}
+    >
+      ?
+    </button>
+  )
+}
+
 function Gauge({
   label,
   level,
+  lit,
   tone,
   children,
   title,
   onOpen,
+  how,
 }: {
   label: string
   level: GaugeLevel | null
+  /** Segments lit, 0–4. A graded gauge lights level + 1; Potential is a meter. */
+  lit: number
   /** Override the level colour — potential is an opportunity, not a warning. */
   tone?: string
-  children: React.ReactNode
+  children: ReactNode
   title: string
   /** The section holding this gauge's detail; the label is the way in. */
   onOpen: () => void
+  how?: ReactNode
 }) {
   const fill = tone ?? (level == null ? 'bg-muted-foreground/40' : LEVEL_TONE[level])
-  const lit = level == null ? 0 : level + 1
   return (
     <div
-      className="grid grid-cols-[5.25rem_4.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5"
+      className="grid grid-cols-[5.25rem_6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5"
       title={`${title}\nClick the label to open the detail.`}
     >
       <button
@@ -61,18 +93,22 @@ function Gauge({
       >
         {label}
       </button>
-      <span className="flex gap-0.5" aria-label={level == null ? 'not graded' : `level ${level} of 3`}>
-        {[0, 1, 2, 3].map((i) => (
-          <span
-            key={i}
-            className={cn(
-              'block h-2 w-3.5 rounded-sm border border-border/60',
-              i < lit ? fill : 'bg-secondary',
-            )}
-          />
-        ))}
+      <span className="flex items-center gap-1.5">
+        <span className="flex gap-0.5" aria-label={`${lit} of 4 segments`}>
+          {[0, 1, 2, 3].map((i) => (
+            <span
+              key={i}
+              className={cn('block h-2 w-3.5 rounded-sm border border-border/60', i < lit ? fill : 'bg-secondary')}
+            />
+          ))}
+        </span>
+        {/* The scale in the open: four segments, this many lit. */}
+        <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">{lit}/4</span>
       </span>
-      <span className="min-w-0 text-dense-body leading-snug text-muted-foreground">{children}</span>
+      <span className="min-w-0 text-dense-body leading-snug text-muted-foreground">
+        {children}
+        {how}
+      </span>
     </div>
   )
 }
@@ -104,6 +140,7 @@ export function BookVsBaseCockpit({
   variant = 'full',
   headerLink,
   spotMix,
+  explain,
 }: {
   book: BookVsBase
   /** All nine checks; each is a chip with a place to land, quiet ones in grey. */
@@ -121,9 +158,16 @@ export function BookVsBaseCockpit({
   headerLink?: { to: string; label: string }
   /** How the Risk line's underlyings were priced; a mark is not live and says so. */
   spotMix?: SpotMix
+  /** The rows behind the totals; when given, every line grows a `?` that opens its arithmetic. */
+  explain?: Omit<ExplainInputs, 'book' | 'tightPct' | 'spotMix'>
 }) {
   const { pressure, backing, risk, potential, demand, supply } = book
   const full = variant === 'full'
+  const [how, setHow] = useState<ExplainTopic | null>(null)
+  const toggleHow = (t: ExplainTopic) => setHow((cur) => (cur === t ? null : t))
+  const howFor = (t: ExplainTopic) => (explain ? <How topic={t} active={how === t} onToggle={toggleHow} /> : null)
+  const explanation =
+    how && explain ? explainBook(how, { ...explain, book, tightPct: cushionTightPct, spotMix }) : null
   const tightest = risk.counts.tightest
   const tightestTone =
     tightest == null
@@ -187,6 +231,8 @@ export function BookVsBaseCockpit({
           label="Pressure"
           onOpen={() => onOpenTarget('margin')}
           level={pressure.pct == null ? null : pressure.level}
+          lit={litSegments(pressure.pct == null ? null : pressure.level)}
+          how={howFor('pressure')}
           title="1 − the broker's own Cushion. At 100% excess liquidity is gone and it starts closing positions; level 3 begins at 75%."
         >
           <Num>{pct0(pressure.pct)}</Num> of margin used · cushion {pct0(pressure.cushion)} · broker
@@ -198,6 +244,8 @@ export function BookVsBaseCockpit({
           label="Backing"
           onOpen={() => onOpenTarget('coverage', 'cash')}
           level={backing.level}
+          lit={litSegments(backing.level)}
+          how={howFor('backing')}
           title="What the options need against what actually backs them. Any naked call is level 2; puts leaning on margin rather than cash is level 1."
         >
           <Num>
@@ -223,6 +271,8 @@ export function BookVsBaseCockpit({
           label="Risk"
           onOpen={() => onOpenTarget('ladder')}
           level={risk.level}
+          lit={litSegments(risk.level)}
+          how={howFor('risk')}
           title="Short legs already past their strike, or expiring within a week. Unpriced legs are excluded from both counts and are not known to be safe."
         >
           <Num tone={risk.counts.itm > 0 ? 'text-loss' : undefined}>{risk.counts.itm}</Num> in the
@@ -275,9 +325,11 @@ export function BookVsBaseCockpit({
         <Gauge
           label="Potential"
           onOpen={() => onOpenTarget('coverage', 'spare')}
-          level={3}
+          level={null}
+          lit={potentialSegments(book)}
           tone="bg-link"
-          title="What is still free to sell against, and what the book earns a day. An opportunity, not a warning — so it is not graded."
+          how={howFor('potential')}
+          title="What is still free to sell against, and what the book earns a day. A meter, not a warning: the segments are the share of held shares still free."
         >
           <Num>{potential.moreCalls}</Num> more calls on {potential.sharesFree.toLocaleString()} free
           shares
@@ -310,7 +362,7 @@ export function BookVsBaseCockpit({
         </span>
 
         <span>
-          Puts need <Num>{usdK(demand.putCash)}</Num> cash
+          Puts need <Num>{usdK(demand.putCash)}</Num> cash{howFor('putCash')}
         </span>
         <span className="text-center text-muted-foreground">→</span>
         <span>
@@ -320,17 +372,21 @@ export function BookVsBaseCockpit({
               {' · '}buying power <Num>{usdK(supply.buyingPower)}</Num>
             </>
           ) : null}
+          {howFor('cashLike')}
         </span>
 
         <span>
-          Calls need <Num>{demand.callShares.toLocaleString()}</Num> shares
+          Calls need <Num>{demand.callShares.toLocaleString()}</Num> shares{howFor('callShares')}
         </span>
         <span className="text-center text-muted-foreground">→</span>
         <span>
           Held <Num>{supply.sharesHeld.toLocaleString()}</Num> · free{' '}
           <Num>{supply.sharesFree.toLocaleString()}</Num>
+          {howFor('shares')}
         </span>
       </div>
+
+      {explanation ? <ExplanationBlock explanation={explanation} onClose={() => setHow(null)} /> : null}
     </section>
   )
 }

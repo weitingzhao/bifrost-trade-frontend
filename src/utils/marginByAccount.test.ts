@@ -88,7 +88,7 @@ describe('marginAccountRows', () => {
       other2.account_id,
       other1.account_id,
     ])
-    expect(rows.map((r) => r.label)).toEqual(['HOST', 'Secondary', 'U00000002', 'U00000001'])
+    expect(rows.map((r) => r.label)).toEqual(['Host', 'Secondary', 'U00000002', 'U00000001'])
     expect(rows.map((r) => r.role)).toEqual(['host', 'secondary', 'other', 'other'])
   })
 
@@ -109,7 +109,7 @@ describe('marginAccountRows', () => {
   it('prints every raw broker field in the hover title, one per line', () => {
     const [host] = marginAccountRows(rollupMargin([HOST]), HOST.account_id, '', BOTH)
     expect(host.rawTitle.split('\n')).toEqual([
-      'U17123565 — HOST',
+      'U17123565 — Host',
       'NetLiquidation $644,944.21',
       'MaintMarginReq $214,021.13',
       'ExcessLiquidity $468,859.46',

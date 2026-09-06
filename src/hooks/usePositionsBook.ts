@@ -235,11 +235,16 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
     () => buildRiskMapLegs({ legs: alarm.legs, spotOf: (leg) => alarm.resolveSpot(leg.underlying) }),
     [alarm.legs, alarm.resolveSpot],
   )
+  /** Per account × symbol: held, backing, spare — the rows Potential and the obligations are summed from. */
+  const coverRows = useMemo(
+    () => coverByAccountSymbol(scopedCoreStocks, alarm.exposure.byAccountSymbol).rows,
+    [scopedCoreStocks, alarm.exposure.byAccountSymbol],
+  )
   /** Unsorted; the Backing page sorts by the column the reader chose. */
-  const obligationsRows = useMemo(() => {
-    const cover = coverByAccountSymbol(scopedCoreStocks, alarm.exposure.byAccountSymbol)
-    return buildObligationsRows(alarm.exposure.byAccountSymbol, cover.rows, scopedCoreStocks)
-  }, [scopedCoreStocks, alarm.exposure.byAccountSymbol])
+  const obligationsRows = useMemo(
+    () => buildObligationsRows(alarm.exposure.byAccountSymbol, coverRows, scopedCoreStocks),
+    [scopedCoreStocks, alarm.exposure.byAccountSymbol, coverRows],
+  )
 
   return {
     isLoading,
@@ -276,6 +281,7 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
     alarm,
     marginAllAccounts,
     riskLegs,
+    coverRows,
     obligationsRows,
   }
 }

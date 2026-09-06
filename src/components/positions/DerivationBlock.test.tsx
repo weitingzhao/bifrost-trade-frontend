@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { DerivationBlock } from './DerivationBlock'
-import { marginDerivation } from '@/utils/marginDerivation'
+import { holdingsOf, marginDerivation } from '@/utils/marginDerivation'
 import { rollupMargin } from '@/utils/marginPressure'
 import type { IbAccountSnapshot } from '@/types/monitor'
+import type { LivePositionRow } from '@/types/positions'
 
 const HOST = {
   account_id: 'U17123565',
@@ -45,7 +46,7 @@ describe('DerivationBlock', () => {
       'InitMarginReq',
     ])
     const verdicts = screen.getAllByTestId('verdict').map((v) => v.textContent)
-    expect(verdicts).toEqual(['✓ agrees', 'Δ $326.02 (0.07%)', '✓ agrees', '✓ agrees'])
+    expect(verdicts).toEqual(['✓ agrees', '≈ Δ $326.02 (0.07%)', '✓ agrees', '✓ agrees'])
     expect(screen.queryByTestId('variable-card')).toBeNull()
   })
 
@@ -59,7 +60,7 @@ describe('DerivationBlock', () => {
     expect(card).toHaveTextContent('EquityWithLoanValue $682,554.57')
     expect(card).toHaveTextContent('MaintMarginReq $214,021.13')
     expect(card).toHaveTextContent('→ $468,533.44')
-    expect(card).toHaveTextContent('Δ $326.02 (0.07%)')
+    expect(card).toHaveTextContent('≈ Δ $326.02 (0.07%)')
     expect(card).toHaveTextContent('feeds Cushion')
 
     // An input named inside the card is itself a link to its own card.
@@ -85,5 +86,28 @@ describe('DerivationBlock', () => {
     expect(linkIn(rows, 'Cushion')).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(linkIn(rows, 'Cushion'))
     expect(screen.queryByTestId('variable-card')).toBeNull()
+  })
+
+  it('lists the holdings behind a summed variable inside its card', () => {
+    const rows = [
+      { account_id: 'U17123565', symbol: 'NVDA', secType: 'STK', position: 500.67, price: 228.45, category: 'Option leg' },
+      { account_id: 'U17123565', symbol: 'SGOV', secType: 'STK', position: 570.88, price: 100.43, category: 'Cash' },
+      { account_id: 'U17123565', symbol: 'NVDA', secType: 'OPT', position: -5, right: 'C', strike: 245, lastTradeDateOrContractMonth: '20261120' },
+    ] as LivePositionRow[]
+    const d = marginDerivation(rollupMargin([HOST]).accounts[0], 'Host', holdingsOf(rows, 'U17123565', () => null))
+    render(<DerivationBlock derivation={d} onClose={() => {}} />)
+    const rowsEl = screen.getByTestId('derivation-rows')
+    expect(screen.getAllByTestId('derivation-row').map((r) => r.getAttribute('data-var'))).toContain('StockValue')
+    fireEvent.click(linkIn(rowsEl, 'StockValue'))
+    const items = screen.getByTestId('variable-items')
+    expect(items).toHaveTextContent('NVDA')
+    expect(items).toHaveTextContent('500.67 sh × $228.45 · mark')
+    expect(items).toHaveTextContent('SGOV')
+    // StockValue is a sum over rows, not over variables, so its card feeds nowhere the option side is;
+    // walk to OptionValue from the tree instead.
+    fireEvent.click(linkIn(rowsEl, 'OptionValue'))
+    expect(screen.getByTestId('variable-card')).toHaveAccessibleName('OptionValue explained')
+    expect(screen.getByTestId('variable-items')).toHaveTextContent('NVDA 245C 11/20/26')
+    expect(screen.getByTestId('variable-items')).toHaveTextContent('-5 contracts · mark not in snapshot')
   })
 })

@@ -21,7 +21,9 @@ import {
 } from '@/utils/marginByAccount'
 
 import { DerivationBlock } from './DerivationBlock'
-import { marginDerivation } from '@/utils/marginDerivation'
+import { holdingsOf, marginDerivation } from '@/utils/marginDerivation'
+import type { LivePositionRow } from '@/types/positions'
+import type { SpotResolver } from '@/utils/spotPrice'
 
 const TONE_FILL: Record<MarginAccountTone, string> = {
   profit: 'bg-profit',
@@ -125,15 +127,21 @@ export function MarginByAccountStrip({
   hostId,
   secondaryId,
   accountFilter,
+  positions,
+  resolveSpot,
 }: {
   margin: MarginRollup
   hostId: string
   secondaryId: string
   accountFilter: { host: boolean; secondary: boolean }
+  /** Every account's rows, repriced; the derivation values the open account's holdings from them. */
+  positions?: readonly LivePositionRow[]
+  resolveSpot?: SpotResolver | null
 }) {
   const rows = marginAccountRows(margin, hostId, secondaryId, accountFilter)
   const [openId, setOpenId] = useState<string | null>(null)
   const openRow = rows.find((r) => r.accountId === openId) ?? null
+  const holdings = openRow && positions ? holdingsOf(positions, openRow.accountId, resolveSpot) : undefined
   return (
     <section
       id="positions-margin"
@@ -162,7 +170,11 @@ export function MarginByAccountStrip({
       )}
       <p className="text-dense-caption text-muted-foreground">cockpit pressure: accounts in scope · ? walks the broker fields behind a row</p>
       {openRow ? (
-        <DerivationBlock derivation={marginDerivation(openRow.facts, openRow.label)} onClose={() => setOpenId(null)} className="mb-1" />
+        <DerivationBlock
+          derivation={marginDerivation(openRow.facts, openRow.label, holdings)}
+          onClose={() => setOpenId(null)}
+          className="mb-1"
+        />
       ) : null}
     </section>
   )

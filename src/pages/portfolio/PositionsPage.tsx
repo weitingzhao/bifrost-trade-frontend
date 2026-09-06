@@ -326,6 +326,8 @@ export default function PositionsPage() {
                     hostId={book.hostAccountId}
                     secondaryId={book.secondaryAccountId}
                     accountFilter={accountFilter}
+                    positions={book.allPositions}
+                    resolveSpot={book.alarm.resolveSpot}
                   />
                   <RingCard title="Backing pool">
                     <BackingPoolCard book={book.alarm.book} onSegmentClick={openFromBackingSegment} />

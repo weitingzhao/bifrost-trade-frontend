@@ -170,6 +170,8 @@ export default function BackingPage() {
                     hostId={book.hostAccountId}
                     secondaryId={book.secondaryAccountId}
                     accountFilter={accountFilter}
+                    positions={book.allPositions}
+                    resolveSpot={book.alarm.resolveSpot}
                   />
                 </div>
                 <section className={styles.panel} aria-label="Backing pool">

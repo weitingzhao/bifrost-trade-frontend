@@ -11,14 +11,16 @@
  * inputs in braces — '{ExcessLiquidity} ÷ {NetLiquidation}' — so the same
  * string drives both the display and the graph.
  */
-export type VariableSource = 'broker' | 'page'
-export type CheckVerdict = 'agrees' | 'differs' | 'unchecked'
+/** broker: a field read verbatim · page: a step this page adds · implied: the difference of two broker fields. */
+export type VariableSource = 'broker' | 'page' | 'implied'
+/** near: within timing noise of the reported figure — the two were not priced at the same moment. */
+export type CheckVerdict = 'agrees' | 'near' | 'differs' | 'unchecked'
 
 export interface VariableCheck {
   verdict: CheckVerdict
   /** The re-run result, formatted like the variable's value. */
   computed: string
-  /** How far the re-run lands from the reported figure — 'differs' only. */
+  /** How far the re-run lands from the reported figure — 'near' and 'differs'. */
   gap?: string
   /** What the verdict means for the reader. */
   note: string
@@ -37,6 +39,17 @@ export interface Variable {
   /** Inputs in braces: '{EquityWithLoanValue} − {MaintMarginReq}'. */
   formula?: string
   check?: VariableCheck
+  warn?: boolean
+  /** The rows a sum was taken over — holdings, legs — shown in the card. */
+  items?: VariableItem[]
+  itemsCaption?: string
+}
+
+export interface VariableItem {
+  label: string
+  /** How the row's value was arrived at: '500.67 sh × $228.45 · close 09-04'. */
+  sub?: string
+  value: string
   warn?: boolean
 }
 

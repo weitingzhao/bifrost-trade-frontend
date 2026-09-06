@@ -259,6 +259,7 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
     totalPositions,
     portfolioPositionCount,
     accountOptions,
+    allPositions,
     allStocks,
     coreStocks,
     fixedIncomeStocks,

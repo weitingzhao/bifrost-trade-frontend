@@ -20,7 +20,7 @@ import {
   type VariableCheck,
 } from '@/utils/derivation'
 
-const DEPTH_PAD = ['', 'pl-4', 'pl-8', 'pl-12'] as const
+const DEPTH_PAD = ['', 'pl-4', 'pl-8', 'pl-12', 'pl-16'] as const
 
 function VarLink({
   name,
@@ -59,13 +59,17 @@ function VarLink({
   )
 }
 
+const SOURCE_BADGE: Record<Variable['source'], { text: string; title: string }> = {
+  broker: { text: 'IB', title: 'An IB account-summary field, read verbatim' },
+  page: { text: 'page', title: 'A step this page adds' },
+  implied: { text: 'implied', title: 'Not a reported field: the difference of two broker fields' },
+}
+
 function SourceBadge({ source }: { source: Variable['source'] }) {
+  const b = SOURCE_BADGE[source]
   return (
-    <span
-      className="rounded-sm border border-border/60 px-1 text-dense-label uppercase tracking-wide text-muted-foreground"
-      title={source === 'broker' ? 'An IB account-summary field, read verbatim' : 'One step this page adds'}
-    >
-      {source === 'broker' ? 'IB' : 'page'}
+    <span className="rounded-sm border border-border/60 px-1 text-dense-label uppercase tracking-wide text-muted-foreground" title={b.title}>
+      {b.text}
     </span>
   )
 }
@@ -75,6 +79,12 @@ function VerdictTag({ check }: { check: VariableCheck }) {
     return (
       <span className="whitespace-nowrap text-profit" data-testid="verdict">
         ✓ agrees
+      </span>
+    )
+  if (check.verdict === 'near')
+    return (
+      <span className="whitespace-nowrap text-muted-foreground" data-testid="verdict" title="Within timing noise of the reported figure">
+        ≈ Δ {check.gap}
       </span>
     )
   if (check.verdict === 'differs')
@@ -244,6 +254,23 @@ export function DerivationBlock({
             </p>
           ) : null}
           {open.check ? <p className="leading-snug text-muted-foreground">{open.check.note}</p> : null}
+          {open.items && open.items.length > 0 ? (
+            <div
+              className="mt-1 grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 font-mono tabular-nums"
+              data-testid="variable-items"
+            >
+              {open.items.map((it, i) => (
+                <Fragment key={i}>
+                  <span className="text-foreground">{it.label}</span>
+                  <span className="min-w-0 truncate text-muted-foreground" title={it.sub}>
+                    {it.sub}
+                  </span>
+                  <span className={cn('text-right', it.warn ? 'text-warning' : 'text-foreground')}>{it.value}</span>
+                </Fragment>
+              ))}
+            </div>
+          ) : null}
+          {open.itemsCaption ? <p className="mt-0.5 leading-snug text-muted-foreground">{open.itemsCaption}</p> : null}
           {feeds.length > 0 ? (
             <p className="mt-1 leading-snug text-muted-foreground">
               feeds{' '}

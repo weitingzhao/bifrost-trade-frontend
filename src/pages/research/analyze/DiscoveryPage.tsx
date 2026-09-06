@@ -186,8 +186,6 @@ export default function DiscoveryPage() {
   }, [selectedExpiration, greeksCoverage])
 
   const {
-    liquidityLastTrade,
-    liquidityQuoteCount,
     liquidityLoading,
     serverLiquidity,
     serverRelativeValue,
@@ -342,8 +340,6 @@ export default function DiscoveryPage() {
                     eventContextWarnings={eventContextWarnings}
                     greeksSource={greeksSource}
                     onGreeksSourceChange={setGreeksSource}
-                    liquidityLastTrade={liquidityLastTrade}
-                    liquidityQuoteCount={liquidityQuoteCount}
                     liquidityLoading={liquidityLoading}
                     serverLiquidity={serverLiquidity}
                     serverRelativeValue={serverRelativeValue}

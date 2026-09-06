@@ -1,29 +1,25 @@
 import { useEffect, useState } from 'react'
 /* eslint-disable react-hooks/set-state-in-effect -- fetches on drawer open */
 import type { OptionSnapshotRow, LiquiditySummaryResponse, RelativeValueResponse } from '@/types/optionDiscovery'
-import {
-  fetchPolygonLastTrade,
-  fetchPolygonHistQuotes,
-  fetchLiquiditySummary,
-  fetchRelativeValue,
-} from '@/api/research/optionDiscovery'
-import { buildPolygonOptionsTicker } from '@/utils/polygonOptionsTicker'
+import { fetchLiquiditySummary, fetchRelativeValue } from '@/api/research/optionDiscovery'
 
+/**
+ * Liquidity and relative value for the selected contract, from the Plugin's
+ * PostgreSQL snapshot. Last-trade and quote-tape lookups used to run here
+ * too; those vendor endpoints need an Options Developer plan, so the panel
+ * reads what the subscription actually carries: spread, OI, snapshot age.
+ */
 export function useOptionContractLiquidity(
   symbol: string,
   expiration: string,
   selectedRow: OptionSnapshotRow | null,
 ) {
-  const [liquidityLastTrade, setLiquidityLastTrade] = useState<Record<string, unknown> | null>(null)
-  const [liquidityQuoteCount, setLiquidityQuoteCount] = useState<number | null>(null)
   const [liquidityLoading, setLiquidityLoading] = useState(false)
   const [serverLiquidity, setServerLiquidity] = useState<LiquiditySummaryResponse | null>(null)
   const [serverRelativeValue, setServerRelativeValue] = useState<RelativeValueResponse | null>(null)
 
   useEffect(() => {
     if (selectedRow == null) {
-      setLiquidityLastTrade(null)
-      setLiquidityQuoteCount(null)
       setServerLiquidity(null)
       setServerRelativeValue(null)
       return
@@ -31,32 +27,19 @@ export function useOptionContractLiquidity(
     const sym = symbol.trim()
     const exp = expiration.trim()
     if (!sym || !exp) return
-    const optTicker = buildPolygonOptionsTicker(sym, exp, selectedRow.strike, selectedRow.right)
     let cancelled = false
     setLiquidityLoading(true)
-    Promise.allSettled([
-      fetchPolygonLastTrade(optTicker),
-      fetchPolygonHistQuotes(optTicker, { limit: 50 }),
-      fetchLiquiditySummary(sym, exp, selectedRow.strike, selectedRow.right, 'massive'),
-    ]).then(([tradeRes, quotesRes, liqRes]) => {
-      if (cancelled) return
-      if (tradeRes.status === 'fulfilled' && tradeRes.value.ok && tradeRes.value.results) {
-        setLiquidityLastTrade(tradeRes.value.results)
-      } else {
-        setLiquidityLastTrade(null)
-      }
-      if (quotesRes.status === 'fulfilled' && quotesRes.value.ok && quotesRes.value.count != null) {
-        setLiquidityQuoteCount(quotesRes.value.count)
-      } else {
-        setLiquidityQuoteCount(null)
-      }
-      if (liqRes.status === 'fulfilled' && liqRes.value.ok) {
-        setServerLiquidity(liqRes.value)
-      } else {
-        setServerLiquidity(null)
-      }
-      setLiquidityLoading(false)
-    })
+    fetchLiquiditySummary(sym, exp, selectedRow.strike, selectedRow.right, 'massive')
+      .then(r => {
+        if (cancelled) return
+        setServerLiquidity(r.ok ? r : null)
+      })
+      .catch(() => {
+        if (!cancelled) setServerLiquidity(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLiquidityLoading(false)
+      })
     return () => {
       cancelled = true
     }
@@ -84,8 +67,6 @@ export function useOptionContractLiquidity(
   }, [selectedRow, symbol, expiration])
 
   return {
-    liquidityLastTrade,
-    liquidityQuoteCount,
     liquidityLoading,
     serverLiquidity,
     serverRelativeValue,

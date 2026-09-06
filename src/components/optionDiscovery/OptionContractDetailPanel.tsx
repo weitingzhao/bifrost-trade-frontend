@@ -68,8 +68,6 @@ export interface OptionContractDetailPanelProps {
   eventContextWarnings: string[]
   greeksSource: 'snapshot' | 'bs'
   onGreeksSourceChange: (v: 'snapshot' | 'bs') => void
-  liquidityLastTrade: Record<string, unknown> | null
-  liquidityQuoteCount: number | null
   liquidityLoading: boolean
   serverLiquidity: LiquiditySummaryResponse | null
   serverRelativeValue: RelativeValueResponse | null
@@ -89,8 +87,6 @@ export function OptionContractDetailPanel({
   eventContextWarnings,
   greeksSource,
   onGreeksSourceChange,
-  liquidityLastTrade,
-  liquidityQuoteCount,
   liquidityLoading,
   serverLiquidity,
   serverRelativeValue,
@@ -471,10 +467,7 @@ export function OptionContractDetailPanel({
           </RightInspectorCollapsibleSection>
 
           {(() => {
-            const lastTradeTs =
-              liquidityLastTrade?.sip_timestamp != null ? Number(liquidityLastTrade.sip_timestamp) / 1e9 : null
-            const lastTradeAge = lastTradeTs != null ? Date.now() / 1000 - lastTradeTs : null
-            const tradability = computeTradabilityScore(selectedRow, snapshotRows, lastTradeAge, liquidityQuoteCount)
+            const tradability = computeTradabilityScore(selectedRow)
             const spreadRows = snapshotRows
               .filter(r => {
                 if (r.right !== selectedRow.right) return false
@@ -500,7 +493,7 @@ export function OptionContractDetailPanel({
                 onToggle={() => toggleSection('liquidity')}
               >
                 {liquidityLoading && <DiscoveryHint className="">Loading liquidity data…</DiscoveryHint>}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className={inspectorShell.card}>
                   <div className={inspectorShell.cardLabel}>Tradability Score</div>
                     <div className={optionDiscoveryTradabilityScoreClass}>
@@ -564,36 +557,6 @@ export function OptionContractDetailPanel({
                       )}
                     </div>
                   </div>
-                <div className={inspectorShell.card}>
-                  <div className={inspectorShell.cardLabel}>Last Trade</div>
-                    {liquidityLastTrade ? (
-                      <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
-                        <span className="text-xs text-muted-foreground">Price</span>
-                        <span className="font-medium tabular-nums">{fmtUsd(Number(liquidityLastTrade.price))}</span>
-                        <span className="text-xs text-muted-foreground">Size</span>
-                        <span className="font-medium tabular-nums">{String(liquidityLastTrade.size ?? '—')}</span>
-                        <span className="text-xs text-muted-foreground">Age</span>
-                        <span className="font-medium tabular-nums">
-                          {lastTradeAge != null
-                            ? lastTradeAge < 3600
-                              ? `${Math.round(lastTradeAge / 60)}m ago`
-                              : `${(lastTradeAge / 3600).toFixed(1)}h ago`
-                            : '—'}
-                        </span>
-                        <span className="text-xs text-muted-foreground">Exchange</span>
-                        <span className="font-medium tabular-nums">{String(liquidityLastTrade.exchange ?? '—')}</span>
-                      </div>
-                    ) : (
-                      <DiscoveryHint className="">{liquidityLoading ? 'Loading…' : 'No last trade data available.'}</DiscoveryHint>
-                    )}
-                  </div>
-                <div className={inspectorShell.card}>
-                  <div className={inspectorShell.cardLabel}>Quote Activity</div>
-                    <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm">
-                      <span className="text-xs text-muted-foreground">Recent Quotes</span>
-                      <span className="font-medium tabular-nums">{liquidityQuoteCount != null ? `${liquidityQuoteCount} updates` : '—'}</span>
-                    </div>
-                  </div>
                 </div>
 
                 <div className={optionDiscoveryExecGuidanceClass}>
@@ -606,9 +569,6 @@ export function OptionContractDetailPanel({
                   )}
                   {(selectedRow.open_interest == null || selectedRow.open_interest < 10) && (
                     <DenseTag variant="warning" size="pill">Low OI — thin liquidity</DenseTag>
-                  )}
-                  {lastTradeAge != null && lastTradeAge > 3600 && (
-                    <DenseTag variant="warning" size="pill">Stale tape — last trade &gt;1h</DenseTag>
                   )}
                   {selectedRow.bid == null && selectedRow.ask == null && effectiveQuotePremium(selectedRow) != null && (
                     <DenseTag variant="warning" size="pill">No live NBBO — mark uses mid/day-bar fallback (not a live quote)</DenseTag>

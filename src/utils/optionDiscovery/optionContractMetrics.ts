@@ -134,12 +134,13 @@ export interface TradabilityResult {
   factors: { label: string; contribution: number; detail: string }[]
 }
 
-export function computeTradabilityScore(
-  row: OptionSnapshotRow,
-  _allRows: OptionSnapshotRow[],
-  lastTradeAge: number | null,
-  quoteUpdateCount: number | null,
-): TradabilityResult {
+/**
+ * How easily this contract trades, from what the snapshot carries: the quoted
+ * spread, open interest and the session's volume. Last-trade age and quote
+ * activity used to weigh in; they come from vendor endpoints outside the
+ * subscription, so the score is now the three fields we always have.
+ */
+export function computeTradabilityScore(row: OptionSnapshotRow): TradabilityResult {
   const factors: TradabilityResult['factors'] = []
   let total = 0
   const bid = row.bid
@@ -147,7 +148,7 @@ export function computeTradabilityScore(
   const mid = row.mid
   if (bid != null && ask != null && mid != null && mid > 0) {
     const spreadPct = ((ask - bid) / mid) * 100
-    const spreadScore = spreadPct < 2 ? 30 : spreadPct < 5 ? 22 : spreadPct < 10 ? 14 : spreadPct < 20 ? 6 : 0
+    const spreadScore = spreadPct < 2 ? 45 : spreadPct < 5 ? 34 : spreadPct < 10 ? 22 : spreadPct < 20 ? 10 : 0
     factors.push({ label: 'Spread', contribution: spreadScore, detail: `${spreadPct.toFixed(1)}%` })
     total += spreadScore
   } else {
@@ -155,33 +156,19 @@ export function computeTradabilityScore(
   }
   const oi = row.open_interest
   if (oi != null && Number.isFinite(oi)) {
-    const oiScore = oi >= 1000 ? 25 : oi >= 500 ? 20 : oi >= 100 ? 14 : oi >= 10 ? 7 : 2
+    const oiScore = oi >= 1000 ? 35 : oi >= 500 ? 28 : oi >= 100 ? 20 : oi >= 10 ? 10 : 3
     factors.push({ label: 'Open Interest', contribution: oiScore, detail: String(oi) })
     total += oiScore
   } else {
     factors.push({ label: 'Open Interest', contribution: 0, detail: 'N/A' })
   }
-  if (quoteUpdateCount != null) {
-    const qScore =
-      quoteUpdateCount >= 20 ? 20 : quoteUpdateCount >= 10 ? 15 : quoteUpdateCount >= 5 ? 10 : quoteUpdateCount >= 1 ? 5 : 0
-    factors.push({ label: 'Quote Activity', contribution: qScore, detail: `${quoteUpdateCount} updates` })
-    total += qScore
+  const volume = row.day_volume
+  if (volume != null && Number.isFinite(volume)) {
+    const vScore = volume >= 500 ? 20 : volume >= 100 ? 15 : volume >= 20 ? 10 : volume >= 1 ? 5 : 0
+    factors.push({ label: 'Session Volume', contribution: vScore, detail: `${volume} contracts` })
+    total += vScore
   } else {
-    factors.push({ label: 'Quote Activity', contribution: 5, detail: 'Unknown' })
-    total += 5
-  }
-  if (lastTradeAge != null) {
-    const ageMin = lastTradeAge / 60
-    const tScore = ageMin < 5 ? 25 : ageMin < 30 ? 18 : ageMin < 120 ? 10 : ageMin < 1440 ? 4 : 0
-    factors.push({
-      label: 'Last Trade',
-      contribution: tScore,
-      detail: ageMin < 60 ? `${Math.round(ageMin)}m ago` : `${(ageMin / 60).toFixed(1)}h ago`,
-    })
-    total += tScore
-  } else {
-    factors.push({ label: 'Last Trade', contribution: 3, detail: 'Unknown' })
-    total += 3
+    factors.push({ label: 'Session Volume', contribution: 0, detail: 'N/A' })
   }
   return { score: Math.min(100, Math.max(0, total)), factors: factors.sort((a, b) => b.contribution - a.contribution) }
 }

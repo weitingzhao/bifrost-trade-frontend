@@ -323,18 +323,6 @@ export default function PositionsPage() {
                     secondaryId={book.secondaryAccountId}
                     accountFilter={accountFilter}
                   />
-                  <ShortLegsPanel
-                    legs={book.riskLegs}
-                    tightPct={cushionTightPct}
-                    activeExpiry={activeExpiry}
-                    activeSymbol={filterSymbol}
-                    onExpiryClick={toggleExpiryScope}
-                    onUnpricedClick={() => openTarget('ladder')}
-                    onScopeSymbol={setFilterSymbol}
-                    onClearSymbol={() => setFilterSymbol('')}
-                    selected={selectedLeg}
-                    onSelect={setPickedLeg}
-                  />
                 </div>
                 <PositionsDashboard
                   open={openSections.charts}
@@ -353,7 +341,22 @@ export default function PositionsPage() {
                 />
               </div>
 
-              {/* Band 2: the lines, most dangerous first. */}
+              {/* Band 2: every short leg on one wide time axis — the whole width, so a
+                  book of a dozen legs on four dates still reads name by name. */}
+              <ShortLegsPanel
+                legs={book.riskLegs}
+                tightPct={cushionTightPct}
+                activeExpiry={activeExpiry}
+                activeSymbol={filterSymbol}
+                onExpiryClick={toggleExpiryScope}
+                onUnpricedClick={() => openTarget('ladder')}
+                onScopeSymbol={setFilterSymbol}
+                onClearSymbol={() => setFilterSymbol('')}
+                selected={selectedLeg}
+                onSelect={setPickedLeg}
+              />
+
+              {/* Band 3: the lines, most dangerous first. */}
               <div id="positions-lines" className="min-w-0">
                 <LinesToolbar
                   view={linesView}

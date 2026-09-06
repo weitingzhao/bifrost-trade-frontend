@@ -83,16 +83,19 @@ function Gauge({
   const fill = tone ?? (level == null ? 'bg-muted-foreground/40' : LEVEL_TONE[level])
   return (
     <div
-      className="grid grid-cols-[5.25rem_6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5"
+      className="grid grid-cols-[6.25rem_6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5"
       title={`${title}\nClick the label to open the detail.`}
     >
-      <button
-        type="button"
-        onClick={onOpen}
-        className="text-left text-dense-body font-medium text-foreground hover:text-link hover:underline"
-      >
-        {label}
-      </button>
+      <span className="flex items-center">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="text-left text-dense-body font-medium text-foreground hover:text-link hover:underline"
+        >
+          {label}
+        </button>
+        {how}
+      </span>
       <span className="flex items-center gap-1.5">
         <span className="flex gap-0.5" aria-label={`${lit} of 4 segments`}>
           {[0, 1, 2, 3].map((i) => (
@@ -105,10 +108,7 @@ function Gauge({
         {/* The scale in the open: four segments, this many lit. */}
         <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">{lit}/4</span>
       </span>
-      <span className="min-w-0 text-dense-body leading-snug text-muted-foreground">
-        {children}
-        {how}
-      </span>
+      <span className="min-w-0 truncate text-dense-body text-muted-foreground">{children}</span>
     </div>
   )
 }
@@ -193,7 +193,8 @@ export function BookVsBaseCockpit({
               {headerLink.label}
             </Link>
           ) : null}
-          {(full ? checks : []).map((c) =>
+          {/* Only what fires: the quiet counts are already on the gauge lines. */}
+          {(full ? checks.filter((c) => c.tone !== 'ok') : []).map((c) =>
             c.tone === 'ok' || !c.target ? (
               // Quiet, or nowhere to land (the feed age is a fact, not a section).
               <button
@@ -235,8 +236,7 @@ export function BookVsBaseCockpit({
           how={howFor('pressure')}
           title="1 − the broker's own Cushion. At 100% excess liquidity is gone and it starts closing positions; level 3 begins at 75%."
         >
-          <Num>{pct0(pressure.pct)}</Num> of margin used · cushion {pct0(pressure.cushion)} · broker
-          liquidates at 100%
+          <Num>{pct0(pressure.pct)}</Num> used · cushion {pct0(pressure.cushion)} · liquidation at 100%
         </Gauge>
         ) : null}
 
@@ -249,7 +249,7 @@ export function BookVsBaseCockpit({
           title="What the options need against what actually backs them. Any naked call is level 2; puts leaning on margin rather than cash is level 1."
         >
           <Num>
-            {backing.callsCovered} / {backing.callsTotal}
+            {backing.callsCovered}/{backing.callsTotal}
           </Num>{' '}
           calls covered
           {backing.nakedCalls > 0 ? (
@@ -260,8 +260,7 @@ export function BookVsBaseCockpit({
           ) : null}
           {backing.putCashNeeded > 0 ? (
             <>
-              {' · '}puts need <Num>{usdK(backing.putCashNeeded)}</Num>, cash holds{' '}
-              <Num>{usdK(backing.cashLike)}</Num>
+              {' · '}puts <Num>{usdK(backing.putCashNeeded)}</Num> vs cash <Num>{usdK(backing.cashLike)}</Num>
             </>
           ) : null}
         </Gauge>
@@ -275,9 +274,8 @@ export function BookVsBaseCockpit({
           how={howFor('risk')}
           title="Short legs already past their strike, or expiring within a week. Unpriced legs are excluded from both counts and are not known to be safe."
         >
-          <Num tone={risk.counts.itm > 0 ? 'text-loss' : undefined}>{risk.counts.itm}</Num> in the
-          money · <Num tone={risk.counts.near7d > 0 ? 'text-warning' : undefined}>{risk.counts.near7d}</Num>{' '}
-          expiring within 7d
+          <Num tone={risk.counts.itm > 0 ? 'text-loss' : undefined}>{risk.counts.itm}</Num> ITM ·{' '}
+          <Num tone={risk.counts.near7d > 0 ? 'text-warning' : undefined}>{risk.counts.near7d}</Num> ≤7d
           {risk.counts.zeroDte > 0 ? (
             <>
               {' · '}
@@ -331,12 +329,11 @@ export function BookVsBaseCockpit({
           how={howFor('potential')}
           title="What is still free to sell against, and what the book earns a day. A meter, not a warning: the segments are the share of held shares still free."
         >
-          <Num>{potential.moreCalls}</Num> more calls on {potential.sharesFree.toLocaleString()} free
-          shares
+          <Num>{potential.moreCalls}</Num> more calls · {potential.sharesFree.toLocaleString()} free sh
           {potential.unusedBuyingPower != null ? (
             <>
               {' · '}
-              <Num>{usdK(potential.unusedBuyingPower)}</Num> buying power unused
+              BP unused <Num>{usdK(potential.unusedBuyingPower)}</Num>
             </>
           ) : null}
           {potential.thetaPerDay != null ? (
@@ -346,7 +343,7 @@ export function BookVsBaseCockpit({
                 θ {potential.thetaPerDay >= 0 ? '+' : ''}
                 {fmtUsd(potential.thetaPerDay, true)}
               </Num>
-              /day
+              /d
             </>
           ) : null}
         </Gauge>

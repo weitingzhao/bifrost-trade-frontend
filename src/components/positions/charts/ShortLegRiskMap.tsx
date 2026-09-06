@@ -14,7 +14,8 @@
  * colour that means "fine", or hide the warning line the colours are judged
  * against. The tight threshold is a user setting, so its label reads the prop.
  */
-import type { KeyboardEvent, MouseEvent } from 'react'
+import { useRef, type KeyboardEvent, type MouseEvent } from 'react'
+import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { cn } from '@/lib/utils'
 import { DenseTagButton } from '@/components/data-display'
 import {
@@ -34,8 +35,9 @@ import type { CushionBand } from '@/utils/positionsOptionRisk'
 import { fmtSpotDate } from '@/utils/spotPrice'
 import styles from './ShortLegRiskMap.module.css'
 
-const WIDTH = 650
-const HEIGHT = 84
+/** Laid out in the container's real pixels — a scaled drawing smears its labels. */
+const FALLBACK_WIDTH = 650
+const HEIGHT = 200
 
 const BAND_CLASS: Record<CushionBand, string> = {
   comfortable: styles.pointComfortable,
@@ -118,6 +120,8 @@ export function ShortLegRiskMap({
   onExpiryClick,
   onUnpricedClick,
 }: ShortLegRiskMapProps) {
+  const host = useRef<HTMLDivElement>(null)
+  const WIDTH = useContainerWidth(host, FALLBACK_WIDTH)
   if (legs.length === 0) {
     return <p className="text-dense-label text-muted-foreground">No short legs in scope.</p>
   }
@@ -139,7 +143,7 @@ export function ShortLegRiskMap({
   const labelY = HEIGHT - 3
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1" ref={host}>
       <div className="flex items-baseline justify-between gap-2 text-dense-caption text-muted-foreground">
         <span>
           Short legs · cushion vs DTE · {legs.length} leg{legs.length === 1 ? '' : 's'} · click a leg to see it

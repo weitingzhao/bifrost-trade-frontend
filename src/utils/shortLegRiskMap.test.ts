@@ -318,7 +318,10 @@ describe('labelPoints', () => {
     )
     const [a, b] = l.labels.filter((x) => x.key !== 'far')
     expect([a?.text, b?.text].sort()).toEqual(['NVDA 245C', 'NVDA 255C'])
-    expect(Math.abs((a?.y ?? 0) - (b?.y ?? 0))).toBeGreaterThanOrEqual(9)
+    // Two names on one date never share a spot: the second takes the other
+    // side of the point, or the next line when both sides are taken.
+    const apart = a!.anchor !== b!.anchor || Math.abs(a!.y - b!.y) >= 9
+    expect(apart).toBe(true)
     expect(a?.anchor).toBe('start')
   })
   it('flips a name to the left of a point at the right edge, and stays inside the plot', () => {

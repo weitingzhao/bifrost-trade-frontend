@@ -436,32 +436,44 @@ export function labelPoints(
 ): RiskMapLabel[] {
   const placed: RiskMapLabel[] = []
   const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y)
+  const spanOf = (l: RiskMapLabel) => {
+    const w = l.text.length * LABEL_CHAR_W
+    const left = l.anchor === 'start' ? l.x : l.x - w
+    return { left, right: left + w }
+  }
   for (const p of sorted) {
     const text = riskMapLegShort(p.leg)
     const width = text.length * LABEL_CHAR_W
-    const anchor: 'start' | 'end' = p.x + p.r + 3 + width > plot.x1 ? 'end' : 'start'
-    const x = anchor === 'start' ? p.x + p.r + 3 : p.x - p.r - 3
-    const left = anchor === 'start' ? x : x - width
-    const collides = (yy: number) =>
-      placed.some((l) => {
-        const lLeft = l.anchor === 'start' ? l.x : l.x - l.text.length * LABEL_CHAR_W
-        const lRight = lLeft + l.text.length * LABEL_CHAR_W
-        return lRight > left && lLeft < left + width && Math.abs(l.y - yy) < LABEL_LINE_H
+    const fitsRight = p.x + p.r + 3 + width <= plot.x1
+    const fitsLeft = p.x - p.r - 3 - width >= plot.x0
+    const sides: Array<'start' | 'end'> = fitsRight && fitsLeft ? ['start', 'end'] : fitsRight ? ['start'] : ['end']
+    const collides = (anchor: 'start' | 'end', yy: number) => {
+      const x = anchor === 'start' ? p.x + p.r + 3 : p.x - p.r - 3
+      const mine = spanOf({ key: '', x, y: yy, text, anchor })
+      return placed.some((l) => {
+        const s = spanOf(l)
+        return s.right > mine.left && s.left < mine.right && Math.abs(l.y - yy) < LABEL_LINE_H
       })
-    let y = p.y + 3
-    let tries = 0
-    while (collides(y) && tries < 6) {
-      y += LABEL_LINE_H
-      tries += 1
     }
-    if (y > plot.y1 - 1) {
-      y = p.y + 3
-      tries = 0
-      while (collides(y) && tries < 6) {
-        y -= LABEL_LINE_H
-        tries += 1
+    // Candidates in order of preference: beside the point on either side, then
+    // a line down, then a line up, alternating sides — so a cluster on one
+    // expiry fans its names out to both sides instead of stacking one column.
+    const offsets = [0, LABEL_LINE_H, -LABEL_LINE_H, 2 * LABEL_LINE_H, -2 * LABEL_LINE_H, 3 * LABEL_LINE_H, -3 * LABEL_LINE_H]
+    let chosen: { anchor: 'start' | 'end'; y: number } | null = null
+    for (const dy of offsets) {
+      const y = p.y + 3 + dy
+      if (y < plot.y0 + LABEL_LINE_H || y > plot.y1 - 1) continue
+      for (const anchor of sides) {
+        if (!collides(anchor, y)) {
+          chosen = { anchor, y }
+          break
+        }
       }
+      if (chosen) break
     }
+    const anchor = chosen?.anchor ?? sides[0]
+    const y = chosen?.y ?? p.y + 3
+    const x = anchor === 'start' ? p.x + p.r + 3 : p.x - p.r - 3
     placed.push({ key: p.leg.key, x, y, text, anchor })
   }
   return placed

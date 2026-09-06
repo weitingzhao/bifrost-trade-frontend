@@ -50,7 +50,7 @@ describe('MarginByAccountStrip', () => {
     expect(root).toHaveAttribute('aria-label', 'Margin by account')
     expect(screen.getByText('n/a — no funded account reported margin')).toBeInTheDocument()
     expect(screen.queryByRole('meter')).toBeNull()
-    expect(screen.getByText('cockpit pressure: both accounts')).toBeInTheDocument()
+    expect(screen.getByText('cockpit pressure: accounts in scope')).toBeInTheDocument()
   })
 
   it('draws one bar per account, host first, on the broker’s numbers', () => {

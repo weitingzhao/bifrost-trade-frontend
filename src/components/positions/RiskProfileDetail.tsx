@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { computeRiskProfile } from '@/utils/riskProfile'
 import type { RiskProfile } from '@/utils/riskProfile'
 import { fmtUsd } from '@/utils/positions'
 import { formatRiskHedgedBreakdown } from '@/utils/riskProfile'
 import { RiskProfilePayoffChart } from './RiskProfilePayoffChart'
+import { SegmentControl } from '@/components/data-display'
 import { RiskProfileScenarioMatrix } from './RiskProfileScenarioMatrix'
 import { cn } from '@/lib/utils'
 import { instancePanel } from './instancePanelClasses'
@@ -15,6 +16,52 @@ interface Props {
   hideHeading?: boolean
   /** Lighter shell for instance detail drawer (no accordion sheet chrome). */
   variant?: 'sheet' | 'instanceDetail'
+}
+
+type PayoffScope = 'with_coverage' | 'options_only'
+
+/**
+ * One payoff chart with a scope switch, where there used to be two side by
+ * side. The pair made every covered instance's expanded row ~170px taller to
+ * answer a question asked once — "what if I ignore the shares?" — so that
+ * question is now a click, and the default is the position as it is.
+ */
+function PayoffWithScope({
+  profile,
+  ctx,
+  profileOptionsOnly,
+  ctxOptionsOnly,
+}: {
+  profile: RiskProfile
+  ctx: NonNullable<RiskProfile['calc_context']>
+  profileOptionsOnly: RiskProfile
+  ctxOptionsOnly: NonNullable<RiskProfile['calc_context']>
+}) {
+  const [scope, setScope] = useState<PayoffScope>('with_coverage')
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <SegmentControl
+        size="sm"
+        ariaLabel="Payoff scope"
+        options={[
+          { value: 'with_coverage', label: 'With coverage' },
+          { value: 'options_only', label: 'Options only' },
+        ]}
+        value={scope}
+        onChange={(v) => setScope(v as PayoffScope)}
+      />
+      {scope === 'options_only' ? (
+        <RiskProfilePayoffChart
+          profile={profileOptionsOnly}
+          ctx={ctxOptionsOnly}
+          variant="compact"
+          payoffScope="options_only"
+        />
+      ) : (
+        <RiskProfilePayoffChart profile={profile} ctx={ctx} variant="compact" payoffScope="with_coverage" />
+      )}
+    </div>
+  )
 }
 
 export function RiskProfileDetail({ profile, hideHeading = false, variant = 'sheet' }: Props) {
@@ -120,22 +167,14 @@ export function RiskProfileDetail({ profile, hideHeading = false, variant = 'she
                 <RiskProfileScenarioMatrix profile={profile} />
               </div>
             </div>
-            <div className={cn(styles.payoffCol, showDualPayoffCharts && styles.payoffColDual)}>
+            <div className={styles.payoffCol}>
               {showDualPayoffCharts && ctxOptionsOnly && profileOptionsOnly ? (
-                <div className={styles.payoffCharts}>
-                  <RiskProfilePayoffChart
-                    profile={profileOptionsOnly}
-                    ctx={ctxOptionsOnly}
-                    variant="compact"
-                    payoffScope="options_only"
-                  />
-                  <RiskProfilePayoffChart
-                    profile={profile}
-                    ctx={ctx!}
-                    variant="compact"
-                    payoffScope="with_coverage"
-                  />
-                </div>
+                <PayoffWithScope
+                  profile={profile}
+                  ctx={ctx!}
+                  profileOptionsOnly={profileOptionsOnly}
+                  ctxOptionsOnly={ctxOptionsOnly}
+                />
               ) : (
                 <RiskProfilePayoffChart profile={profile} ctx={ctx!} variant="compact" />
               )}
@@ -153,20 +192,12 @@ export function RiskProfileDetail({ profile, hideHeading = false, variant = 'she
           </div>
         ) : hasPayoffChart ? (
           showDualPayoffCharts && ctxOptionsOnly && profileOptionsOnly ? (
-            <div className={styles.payoffCharts}>
-              <RiskProfilePayoffChart
-                profile={profileOptionsOnly}
-                ctx={ctxOptionsOnly}
-                variant="compact"
-                payoffScope="options_only"
-              />
-              <RiskProfilePayoffChart
-                profile={profile}
-                ctx={ctx!}
-                variant="compact"
-                payoffScope="with_coverage"
-              />
-            </div>
+            <PayoffWithScope
+              profile={profile}
+              ctx={ctx!}
+              profileOptionsOnly={profileOptionsOnly}
+              ctxOptionsOnly={ctxOptionsOnly}
+            />
           ) : (
             <RiskProfilePayoffChart profile={profile} ctx={ctx!} variant="compact" />
           )

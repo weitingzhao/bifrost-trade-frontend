@@ -8,6 +8,9 @@ import { usePositionAttribution } from '@/hooks/usePositionAttribution'
 import { useExecutionsFinal, useExecutionsTws, useExecutionsCanonical } from '@/hooks/useExecutions'
 import { useOpportunities, useStructures, useStrategyInstances } from '@/hooks/useStrategies'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
+import { usePersistedChoice } from '@/hooks/usePersistedChoice'
+import { STORAGE_KEYS } from '@/constants/storage'
+import { rollupMargin } from '@/utils/marginPressure'
 import { deleteExecution } from '@/api/trading'
 import { PageHeader, PageShell } from '@/components/layout'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
@@ -122,8 +125,17 @@ export default function PositionsPage() {
   const { open: openSections, toggle: toggleSection, openSection } = usePositionsSections()
 
   // Grid-only state: changes what the grid shows, never what the cockpit grades.
-  const [linesView, setLinesView] = useState<LinesView>('strategy')
-  const [detailViewMode, setDetailViewMode] = useState<DetailViewMode>('accordion')
+  // The view and the expand mode are remembered; the filters are not.
+  const [linesView, setLinesView] = usePersistedChoice<LinesView>(
+    STORAGE_KEYS.positionsLinesView,
+    'strategy',
+    ['strategy', 'contract'],
+  )
+  const [detailViewMode, setDetailViewMode] = usePersistedChoice<DetailViewMode>(
+    STORAGE_KEYS.positionsDetailMode,
+    'accordion',
+    ['accordion', 'multi'],
+  )
   const [instanceFilters, setInstanceFilters] = useState<InstanceFilterValues>(CLEAR_FILTERS)
   const [obligationsSort, setObligationsSort] = useState<ObligationsSort>('cash')
 
@@ -364,11 +376,14 @@ export default function PositionsPage() {
   )
   const greeks = useOptionGreeks(greekLegs)
 
-  // One derivation feeding the cockpit, the dashboard, the ladder and the obligations.
+  // One derivation feeding the cockpit, the dashboard, the ladder and the
+  // obligations. Margin, cash and buying power follow the HOST / Secondary
+  // toggles like the legs do (Owner decision 2026-09-05): with one account
+  // switched off, Pressure is that account's pressure, not a two-account blend.
   const alarm = usePositionsAlarm({
     groups: scopedInstanceGroups,
     quotesBySymbol,
-    accounts,
+    accounts: scopedAccounts,
     liveStocks: allStocks,
     coreStocks,
     incomeEtfs: fixedIncomeStocks,
@@ -376,6 +391,9 @@ export default function PositionsPage() {
     thetaPerDay: greeks.matched > 0 ? greeks.theta : null,
     cushionTightPct,
   })
+
+  // The strip keeps every funded account so a switched-off one is still visible, dimmed.
+  const marginAllAccounts = useMemo(() => rollupMargin(accounts), [accounts])
 
   const riskLegs: RiskMapLeg[] = useMemo(
     () =>
@@ -540,7 +558,7 @@ export default function PositionsPage() {
                     onOpenTarget={openTarget}
                   />
                   <MarginByAccountStrip
-                    margin={alarm.margin}
+                    margin={marginAllAccounts}
                     hostId={hostAccountId}
                     secondaryId={secondaryAccountId}
                     accountFilter={accountFilter}

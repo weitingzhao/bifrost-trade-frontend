@@ -121,7 +121,7 @@ export function MarginByAccountStrip({
           ))}
         </div>
       )}
-      <p className="text-dense-caption text-muted-foreground">cockpit pressure: both accounts</p>
+      <p className="text-dense-caption text-muted-foreground">cockpit pressure: accounts in scope</p>
     </section>
   )
 }

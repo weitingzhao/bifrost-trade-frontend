@@ -19,6 +19,11 @@ export function pickWorseRiskProfile(a: RiskProfile, b: RiskProfile): RiskProfil
   return a
 }
 
+/** "NVDA" from "NVDA", "NVDA 261120C00250000" or "NVDA  ..." — the root the stock row is keyed by. */
+function rootSymbol(raw: string | null | undefined): string {
+  return (raw ?? '').trim().split(/\s+/)[0]?.toUpperCase() ?? ''
+}
+
 /** Same risk inputs as Positions `buildInstanceAllGroups` (live option qty + capped stock hedge). */
 export function computeInstanceRiskProfileFromOpenOptions(
   optionsForRisk: OpenOptionPosition[],
@@ -54,6 +59,29 @@ export function computeInstanceRiskProfileFromOpenOptions(
     let covShares = 0
     let covAvgCost = 0
     const covRows = computeInstanceStockCoverage(optsInAcct, structure)
+    if (covRows.length === 0) {
+      // The template names no underlying leg (most covered-call templates do
+      // not), so the shares actually held in this account are set against the
+      // instance's short calls — the same arithmetic the Backing gauge and the
+      // Covered badge use. Without this the payoff modelled a covered call as
+      // naked and printed "+ unlimited" beside a badge that said Covered.
+      const shortCallContracts = riskPositions
+        .filter((r) => r.right === 'C' && r.qty < 0)
+        .reduce((n, r) => n + Math.abs(r.qty), 0)
+      const acct = (optsInAcct[0]?.account_id ?? '').trim()
+      const sym = rootSymbol(optsInAcct[0]?.symbol)
+      if (shortCallContracts > 0 && sym) {
+        const heldPos = liveStocks.find(
+          (st) =>
+            (st.symbol ?? '').toUpperCase() === sym &&
+            (st.account_id ?? '').trim() === acct &&
+            Number(st.position) > 0,
+        )
+        const held = heldPos ? Math.floor(Number(heldPos.position) || 0) : 0
+        covShares = Math.min(held, shortCallContracts * 100)
+        covAvgCost = heldPos?.avgCost != null ? Number(heldPos.avgCost) : 0
+      }
+    }
     if (covRows.length > 0) {
       const optSym = (optsInAcct[0]?.symbol ?? '').toUpperCase()
       const row = covRows.find((c) => c.symbol.toUpperCase() === optSym) ?? covRows[0]

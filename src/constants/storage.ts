@@ -8,4 +8,6 @@ export const STORAGE_KEYS = {
   optionDiscoveryPrefs: 'optionDiscoveryPrefs',
   positionsCushionPct: 'bifrost-positions-cushion-pct',
   positionsSections: 'bifrost-positions-sections',
+  positionsLinesView: 'bifrost-positions-lines-view',
+  positionsDetailMode: 'bifrost-positions-detail-mode',
 } as const

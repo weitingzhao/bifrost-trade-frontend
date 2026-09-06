@@ -60,24 +60,8 @@
   align-self: stretch;
 }
 
-.payoffColDual {
-  flex: 1 1 28rem;
-  width: min(100%, 38rem);
-  max-width: 38rem;
-}
 
-.payoffCharts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.65rem 0.85rem;
-  width: 100%;
-}
 
-.payoffCharts .payoffChart {
-  flex: 1 1 12.5rem;
-  min-width: 0;
-}
 
 @media (max-width: 640px) {
   .payoffCol {

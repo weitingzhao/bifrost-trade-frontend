@@ -27,6 +27,11 @@ function pickWorseRiskProfile(a: RiskProfile, b: RiskProfile): RiskProfile {
  * execution net legs + stock only when instance structure has an `underlying` leg
  * (full account stock position, not Positions-table min(held, required)).
  */
+/** "NVDA" from "NVDA", "NVDA 261120C00250000" or "NVDA  ..." — the root the stock row is keyed by. */
+function rootSymbol(raw: string | null | undefined): string {
+  return (raw ?? '').trim().split(/\s+/)[0]?.toUpperCase() ?? ''
+}
+
 export function computeInstanceRiskProfile(
   executions: Execution[],
   structure: StrategyStructure | null,
@@ -81,19 +86,33 @@ export function computeInstanceRiskProfile(
 
     let covShares = 0
     let covAvgCost: number | null = null
-    if (hasUnderlying && portfolioAccounts) {
-      const sym = (exs[0]?.symbol ?? '').toUpperCase()
+    if (portfolioAccounts) {
+      const sym = rootSymbol(exs[0]?.symbol)
       const acct = (exs[0]?.account_id ?? '').trim()
       if (sym && acct) {
         const accRow = portfolioAccounts.find((a) => (a.account_id ?? '').trim() === acct)
         const stk = accRow?.positions?.find(
           (p) =>
             (p.secType ?? '').toUpperCase() !== 'OPT' &&
-            (p.symbol ?? '').toUpperCase() === sym,
+            (p.symbol ?? '').toUpperCase() === sym &&
+            Number(p.position) > 0,
         )
         if (stk) {
-          covShares = Math.abs(Number(stk.position) || 0)
-          covAvgCost = stk.avgCost != null ? Number(stk.avgCost) : null
+          const held = Math.floor(Math.abs(Number(stk.position) || 0))
+          if (hasUnderlying) {
+            covShares = held
+          } else {
+            // The template names no underlying leg (most covered-call templates
+            // do not). The shares held in this account still cover this
+            // account's short calls — the same arithmetic the Covered badge and
+            // the Backing gauge use. Modelling them as naked printed
+            // "+ unlimited" beside a badge that said Covered.
+            const shortCallContracts = positions
+              .filter((p) => p.right === 'C' && p.qty < 0)
+              .reduce((n, p) => n + Math.abs(p.qty), 0)
+            covShares = Math.min(held, shortCallContracts * 100)
+          }
+          covAvgCost = covShares > 0 && stk.avgCost != null ? Number(stk.avgCost) : null
         }
       }
     }

@@ -74,7 +74,7 @@ const accountsWithNvda: IbAccountSnapshot[] = [
 ]
 
 describe('computeInstanceRiskProfile (Legacy StrategyInstanceDetailPage parity)', () => {
-  it('uses no stock hedge when instance structure has no underlying leg', () => {
+  it('with no underlying leg, same-account shares still cover the short calls (min of held and needed)', () => {
     const executions: Execution[] = [
       {
         account_executions_id: 1,
@@ -89,11 +89,14 @@ describe('computeInstanceRiskProfile (Legacy StrategyInstanceDetailPage parity)'
       },
     ]
 
+    // Legacy modelled this as naked because the template said nothing about
+    // stock. The Positions page's Covered badge and Backing gauge count the
+    // shares actually held, and one page must not print two answers.
     const profile = computeInstanceRiskProfile(executions, nakedShortCallStructure, accountsWithNvda)
     expect(profile).not.toBeNull()
-    expect(profile!.risk_type).toBe('unlimited')
-    expect(profile!.calc_context?.covered_shares).toBe(0)
-    expect(profile!.max_loss).toBeNull()
+    expect(profile!.risk_type).not.toBe('unlimited')
+    expect(profile!.calc_context?.covered_shares).toBe(100)
+    expect(profile!.max_loss).not.toBeNull()
   })
 
   it('uses full account stock (not min required) when structure has underlying leg', () => {

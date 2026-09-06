@@ -38,6 +38,8 @@ export const QUERY_KEYS = {
     watchlist:      ['research', 'watchlist']        as const,
     performanceKelly: ['research', 'performance-kelly'] as const,
     universeReach:  ['research', 'universe-reach']    as const,
+    lenses:         ['research', 'lenses']            as const,
+    exhibit:        (lens: string, symbol: string) => ['research', 'exhibit', lens, symbol] as const,
     candidateOutcome: {
       summary:     ['research', 'candidate-outcome', 'summary'] as const,
       rows:        ['research', 'candidate-outcome', 'rows']    as const,

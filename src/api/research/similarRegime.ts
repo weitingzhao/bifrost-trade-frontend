@@ -31,6 +31,23 @@ export interface SimilarRegimeRow {
   regime?: string | null
 }
 
+export interface SimilarRegimeSummary {
+  horizon: number
+  n: number
+  n_resolved: number
+  median_fwd: number | null
+  p25_fwd: number | null
+  p75_fwd: number | null
+  share_positive: number | null
+}
+
+export interface SimilarRegimeHygiene {
+  fetched: number
+  dropped_unresolved: number
+  dropped_clustered: number
+  min_gap_days: number
+}
+
 export interface SimilarRegimeResponse {
   lens: SimilarRegimeLens
   symbol: string
@@ -40,6 +57,9 @@ export interface SimilarRegimeResponse {
   source: string
   rows: SimilarRegimeRow[]
   count: number
+  /** A3: over resolved, de-clustered neighbours only. */
+  summary?: SimilarRegimeSummary | null
+  hygiene?: SimilarRegimeHygiene | null
 }
 
 export async function fetchSimilarRegime(opts: {

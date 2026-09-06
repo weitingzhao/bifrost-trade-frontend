@@ -29,6 +29,9 @@ import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisBu
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { useExhibit } from '@/hooks/useLensRegistry'
+import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import type { LensBand } from '@/api/research/lenses'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
@@ -63,41 +66,17 @@ function fmtPercentile(n: number | null | undefined): string {
   return n.toFixed(0)
 }
 
-function percentileBandTone(
-  pct: number | null | undefined,
-): 'success' | 'warning' | 'danger' | 'neutral' {
-  if (pct == null || !Number.isFinite(pct)) return 'neutral'
-  if (pct >= 80) return 'success'
-  if (pct <= 20) return 'danger'
-  return 'warning'
-}
-
-function percentileBandLabel(pct: number | null | undefined): string {
-  if (pct == null || !Number.isFinite(pct)) return 'No VRP — wait'
-  if (pct >= 80) return 'Sell-vol edge'
-  if (pct <= 20) return 'Buy-vol edge'
-  return 'No VRP edge — flat'
-}
-
-function verdictText(row: VrpRow | null | undefined): string {
+/** The reading in words; the band and its meaning come from the exhibit, not a threshold here. */
+function vrpSummary(row: VrpRow | null | undefined, band: LensBand | null, means: string | null): string {
   if (!row) return 'No VRP yet — wait for 252d history before sizing vol.'
   const pct = row.vrp_pct_252d
-  if (pct == null || !Number.isFinite(pct)) {
+  if (pct == null || !Number.isFinite(pct) || !band) {
     return `${row.symbol}: VRP percentile not ready (needs ≥252d) — do not size from this page.`
   }
-  const iv = row.atm_iv_30d
-  const rv = row.rv_60d
-  const spread = row.vrp_60d
-  const ivStr = iv != null ? fmtPctFromFraction(iv) : '—'
-  const rvStr = rv != null ? fmtPctFromFraction(rv) : '—'
-  const spreadStr = spread != null ? fmtSpread(spread) : '—'
-  if (pct >= 80) {
-    return `Prefer short premium in ${row.symbol}: VRP ${fmtPercentile(pct)}th pctl (IV ${ivStr} > RV ${rvStr}, spread ${spreadStr}). Confirm with IV Rank.`
-  }
-  if (pct <= 20) {
-    return `Prefer long premium in ${row.symbol}: VRP ${fmtPercentile(pct)}th pctl (IV ${ivStr} < RV ${rvStr}, spread ${spreadStr}). Confirm with IV Rank.`
-  }
-  return `${row.symbol} VRP mid-band (${fmtPercentile(pct)}th) — no standalone sell/buy-vol edge (IV ${ivStr}, RV60 ${rvStr}).`
+  const ivStr = row.atm_iv_30d != null ? fmtPctFromFraction(row.atm_iv_30d) : '—'
+  const rvStr = row.rv_60d != null ? fmtPctFromFraction(row.rv_60d) : '—'
+  const spreadStr = row.vrp_60d != null ? fmtSpread(row.vrp_60d) : '—'
+  return `${row.symbol} VRP ${fmtPercentile(pct)}th pctl (IV ${ivStr} vs RV60 ${rvStr}, spread ${spreadStr}) — ${means ?? 'no registry reading'}`
 }
 
 function DistributionBar({
@@ -336,9 +315,11 @@ export default function VrpLabPage() {
     return rows.filter((r) => allowed.has(r.symbol))
   }, [extremesQ.data?.rows, universe, filterSymbols])
 
-  const verdictTone = percentileBandTone(latest?.vrp_pct_252d)
-  const verdictLabel = percentileBandLabel(latest?.vrp_pct_252d)
-  const verdictTextValue = verdictText(latest)
+  const exhibitQ = useExhibit('vrp', symbol)
+  const verdict = verdictView('vrp', exhibitQ.data, { missing: 'No VRP — wait' })
+  const verdictTone = verdict.tone
+  const verdictLabel = verdict.label
+  const verdictTextValue = vrpSummary(latest, verdict.band, verdict.means)
   const symbolOutOfUniverse =
     universe !== 'all' &&
     Boolean(symbol.trim()) &&
@@ -419,10 +400,10 @@ export default function VrpLabPage() {
 
       <CompositeRegimeRibbon symbol={symbol} />
 
-      {(verdictTone === 'success' || verdictTone === 'danger') && latest ? (
+      {verdict.decisive && latest ? (
         <CopilotAutoInsightChip
           message={`${symbol} VRP percentile ${fmtPercentile(latest.vrp_pct_252d)} looks ${verdictLabel.toLowerCase()}.`}
-          tone={verdictTone}
+          tone={chipTone(verdictTone)}
           onAsk={() => {
             copilotViewStore.unsuppress()
             askCopilotIntentStore.open({
@@ -443,6 +424,8 @@ export default function VrpLabPage() {
         tone={verdictTone}
         verdictLabel={verdictLabel}
         narrative={verdictTextValue}
+        trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        similar={similarLine(exhibitQ.data?.similar)}
         signals={[
           { label: 'VRP60', value: fmtSpread(latest?.vrp_60d) },
           { label: 'ATM IV', value: fmtPctFromFraction(latest?.atm_iv_30d) },

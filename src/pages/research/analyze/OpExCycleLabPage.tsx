@@ -26,7 +26,12 @@ import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
-import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { AnalyzeVerdictStrip, type AnalyzeVerdictTone } from '@/components/research/AnalyzeVerdictStrip'
+import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
+import { useExhibit } from '@/hooks/useLensRegistry'
+import { chipTone, labelForBand, similarLine, toneForBand, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
+import { copilotViewStore } from '@/store/copilotViewStore'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { VannaCharmMap } from '@/components/charts/VannaCharmMap'
 import {
@@ -43,7 +48,7 @@ import { useResearchContext } from '@/hooks/useResearchContext'
 import { cn } from '@/lib/utils'
 import type { OpexDailyRow, OpexHistoryRow, OpexPinRow } from '@/api/research/opexCycle'
 
-type Tone = 'success' | 'warning' | 'danger' | 'neutral'
+type Tone = AnalyzeVerdictTone
 
 function fmtSigned(v: number | null | undefined, digits = 2): string {
   if (v == null || !Number.isFinite(v)) return '—'
@@ -78,14 +83,15 @@ function pinBandLabel(pctDistance: number | null | undefined): string {
   return 'No pin data'
 }
 
-function verdictTone(row: OpexDailyRow | null, dteToday: number): Tone {
+/** Where the calendar stands: the cycle's own question, not a lens threshold. */
+function calendarTone(row: OpexDailyRow | null, dteToday: number): Tone {
   if (!row) return 'neutral'
   if (row.total_vanna == null && row.total_charm == null) return 'neutral'
   if (dteToday <= 3) return 'warning'
   return 'success'
 }
 
-function verdictLabel(dteToday: number, isOpexWeek: boolean): string {
+function calendarLabel(dteToday: number, isOpexWeek: boolean): string {
   if (dteToday <= 0) return 'OpEx day — reduce size'
   if (dteToday <= 3) return 'OpEx imminent — hedge/roll'
   if (isOpexWeek) return 'OpEx week — watch pin'
@@ -256,11 +262,17 @@ export default function OpExCycleLabPage() {
   const dteToday = currentQ.data?.dte_to_opex_today ?? 0
   const isOpexWeekToday = currentQ.data?.is_opex_week_today ?? false
 
-  const tone = useMemo(() => verdictTone(row, dteToday), [row, dteToday])
-  const label = useMemo(() => verdictLabel(dteToday, isOpexWeekToday), [dteToday, isOpexWeekToday])
+  // The pin lens (registry band: within 1% of max pain) leads the verdict; the
+  // calendar phrase rides along so the strip still says where the cycle is.
+  const exhibitQ = useExhibit('opex_pin', symbol)
+  const pinVerdict = verdictView('opex_pin', exhibitQ.data)
+  const calTone = useMemo(() => calendarTone(row, dteToday), [row, dteToday])
+  const calLabel = useMemo(() => calendarLabel(dteToday, isOpexWeekToday), [dteToday, isOpexWeekToday])
+  const tone: Tone = pinVerdict.band === 'hot' ? toneForBand('opex_pin', 'hot') : calTone
+  const label = pinVerdict.band === 'hot' ? `${labelForBand('opex_pin', 'hot')} · ${calLabel}` : calLabel
   const verdict = useMemo(
-    () => verdictLine(symbol, row, dteToday, nextOpex),
-    [symbol, row, dteToday, nextOpex],
+    () => `${verdictLine(symbol, row, dteToday, nextOpex)}${pinVerdict.means ? ` ${pinVerdict.means}` : ''}`,
+    [symbol, row, dteToday, nextOpex, pinVerdict.means],
   )
 
   const verdictBorderClass =
@@ -352,10 +364,29 @@ export default function OpExCycleLabPage() {
 
       <CompositeRegimeRibbon symbol={symbol} />
 
+      {pinVerdict.band === 'hot' && row ? (
+        <CopilotAutoInsightChip
+          message={`${symbol} sits within 1% of max pain into OpEx (${dteToday}d).`}
+          tone={chipTone(tone)}
+          onAsk={() => {
+            copilotViewStore.unsuppress()
+            askCopilotIntentStore.open({
+              originPage: 'opex-cycle-lab',
+              originLabel: 'OpEx Cycle Lab',
+              symbol,
+              suggestedPrompt: `Explain ${symbol} OpEx pin setup — how often did a pin this close hold in the track record?`,
+              snapshot: compactSnapshot({ dte_to_opex: dteToday, pin_pct_distance: latestPinPct }),
+            })
+          }}
+        />
+      ) : null}
+
       <AnalyzeVerdictStrip
         tone={tone}
         verdictLabel={label}
         narrative={verdict}
+        trackRecord={trackRecordLine(exhibitQ.data?.track_record, pinVerdict.band)}
+        similar={similarLine(exhibitQ.data?.similar)}
         signals={
           row
             ? [

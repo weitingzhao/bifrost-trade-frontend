@@ -28,6 +28,11 @@ import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
+import { useExhibit } from '@/hooks/useLensRegistry'
+import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
+import { copilotViewStore } from '@/store/copilotViewStore'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { useResearchContext } from '@/hooks/useResearchContext'
@@ -96,6 +101,8 @@ export default function GexIntradayPage() {
 
   const activeIdx = selectedIdx ?? (rows.length > 0 ? rows.length - 1 : null)
   const active: GexIntraday | null = activeIdx != null ? rows[activeIdx] ?? null : null
+  const exhibitQ = useExhibit('gex_regime', symbol)
+  const verdict = verdictView('gex_regime', exhibitQ.data, { missing: 'No GEX levels — wait' })
 
   const bars = useMemo(
     () => active?.levels_json ?? [],
@@ -181,22 +188,33 @@ export default function GexIntradayPage() {
 
       <CompositeRegimeRibbon symbol={symbol} />
 
+      {verdict.decisive && active ? (
+        <CopilotAutoInsightChip
+          message={`${symbol} gamma regime reads ${verdict.label.toLowerCase()}.`}
+          tone={chipTone(verdict.tone)}
+          onAsk={() => {
+            copilotViewStore.unsuppress()
+            askCopilotIntentStore.open({
+              originPage: 'gex-intraday',
+              originLabel: 'GEX Intraday',
+              symbol,
+              suggestedPrompt: `Explain ${symbol} gamma regime and how large the moves were after similar readings.`,
+              snapshot: compactSnapshot({ spot: active.spot, zero_gamma: active.zero_gamma, total_net_gex: active.total_net_gex }),
+            })
+          }}
+        />
+      ) : null}
+
       <AnalyzeVerdictStrip
-        tone={
-          active?.zero_gamma != null && active.spot != null && active.spot < active.zero_gamma
-            ? 'warning'
-            : 'neutral'
-        }
-        verdictLabel={
-          active?.zero_gamma != null && active.spot != null && active.spot < active.zero_gamma
-            ? 'Below zero-γ — trend risk'
-            : 'Above zero-γ — mean-revert bias'
-        }
+        tone={verdict.tone}
+        verdictLabel={verdict.label}
         narrative={
           active
-            ? `${symbol} spot ${fmtNumLocale(active.spot, 2)} · put wall ${fmtNumLocale(active.major_put_wall, 0)} · call wall ${fmtNumLocale(active.major_call_wall, 0)} · zero-γ ${fmtNumLocale(active.zero_gamma, 0)}. Trade the walls, not the mid.`
+            ? `${symbol} spot ${fmtNumLocale(active.spot, 2)} ${active.zero_gamma != null && active.spot != null && active.spot < active.zero_gamma ? 'below' : 'above'} zero-γ ${fmtNumLocale(active.zero_gamma, 0)} · put wall ${fmtNumLocale(active.major_put_wall, 0)} · call wall ${fmtNumLocale(active.major_call_wall, 0)}. ${verdict.means ?? 'Trade the walls, not the mid.'}`
             : 'Load a GEX snapshot to decide whether to fade walls or follow a zero-γ break.'
         }
+        trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        similar={similarLine(exhibitQ.data?.similar)}
       />
 
       <SimilarRegimeCard

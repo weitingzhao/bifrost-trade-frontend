@@ -9,10 +9,9 @@ import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
-import {
-  AnalyzeVerdictStrip,
-  type AnalyzeVerdictTone,
-} from '@/components/research/AnalyzeVerdictStrip'
+import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { useExhibit } from '@/hooks/useLensRegistry'
+import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
@@ -47,11 +46,6 @@ function regimeVariant(r: string): 'danger' | 'warning' | 'success' | 'neutral' 
   if (lo.includes('low') || lo.includes('calm')) return 'success'
   if (lo.includes('transition') || lo.includes('squeeze')) return 'warning'
   return 'neutral'
-}
-
-function regimeVerdictTone(r: string | undefined): AnalyzeVerdictTone {
-  if (!r) return 'neutral'
-  return regimeVariant(r)
 }
 
 function terrainVerdictSummary(terrain: TerrainData | undefined, sym: string): string {
@@ -531,8 +525,11 @@ export default function AnalysisModelPage() {
   const isLoading = terrainQ.isLoading
   const isError = terrainQ.isError
 
-  const verdictTone = regimeVerdictTone(terrain?.regime)
-  const verdictLabel = terrain?.regime ?? 'Observe'
+  const exhibitQ = useExhibit('terrain_regime', sym)
+  const verdict = verdictView('terrain_regime', exhibitQ.data, { missing: 'Observe' })
+  const verdictTone = verdict.band ? verdict.tone : regimeVariant(terrain?.regime ?? '')
+  // Registry band leads the headline ("Range — fade extremes"); the raw regime word is the fallback.
+  const verdictLabel = verdict.band ? verdict.label : (terrain?.regime ?? verdict.label)
   const verdictSummary = terrainVerdictSummary(terrain, sym)
 
   return (
@@ -601,10 +598,10 @@ export default function AnalysisModelPage() {
 
       <CompositeRegimeRibbon symbol={sym} />
 
-      {(verdictTone === 'success' || verdictTone === 'danger') && terrain ? (
+      {(verdict.band === 'hot' || verdict.band === 'neutral') && terrain ? (
         <CopilotAutoInsightChip
           message={`${sym} terrain reads ${terrain.regime.toLowerCase()} — tail risk ${terrain.tail_risk.toFixed(0)}.`}
-          tone={verdictTone}
+          tone={chipTone(verdictTone)}
           onAsk={() => {
             copilotViewStore.unsuppress()
             askCopilotIntentStore.open({
@@ -626,6 +623,8 @@ export default function AnalysisModelPage() {
         tone={verdictTone}
         verdictLabel={verdictLabel}
         narrative={verdictSummary}
+        trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        similar={similarLine(exhibitQ.data?.similar)}
         signals={
           terrain
             ? [

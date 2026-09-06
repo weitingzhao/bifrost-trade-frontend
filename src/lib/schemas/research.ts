@@ -260,3 +260,49 @@ export const PolicyValidationSchema = z
     warnings: z.array(z.string()),
   })
   .passthrough()
+
+
+/**
+ * Lens registry — research-loop-automation A1. Bands are the contract the
+ * pages read; everything else is passthrough so a new lens field never warns.
+ */
+export const LensSpecSchema = z
+  .object({
+    id: z.string(),
+    label: z.string(),
+    kind: z.string(),
+    page_route: z.string(),
+    bands: z
+      .object({
+        hot: z.number().nullable(),
+        lean_hot: z.number().nullable(),
+        lean_cold: z.number().nullable(),
+        cold: z.number().nullable(),
+      })
+      .passthrough(),
+    hot_means: z.string(),
+    cold_means: z.string(),
+  })
+  .passthrough()
+
+export const LensRegistrySchema = z
+  .object({
+    version: z.number(),
+    lenses: z.array(LensSpecSchema),
+    count: z.number(),
+  })
+  .passthrough()
+
+/** Analyze Exhibit — Wave 15 shape plus the A2 additions (all optional / nullable). */
+export const ExhibitSchema = z
+  .object({
+    lens: z.string(),
+    symbol: z.string(),
+    freshness: z.enum(['fresh', 'stale', 'missing']),
+    readings: z.record(z.string(), z.unknown()),
+    caveats: z.array(z.string()),
+    verdict: z.object({ band: z.string(), label: z.string(), means: z.string() }).passthrough().nullable().optional(),
+    track_record: z.object({ n: z.number(), symbol_scoped: z.boolean() }).passthrough().nullable().optional(),
+    similar: z.object({ n: z.number(), n_resolved: z.number() }).passthrough().nullable().optional(),
+  })
+  .passthrough()

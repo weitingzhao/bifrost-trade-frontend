@@ -27,6 +27,10 @@ export interface AnalyzeVerdictStripProps {
   summary?: string
   signals?: AnalyzeVerdictSignal[]
   nextMoves?: AnalyzeVerdictNextMove[]
+  /** How this lens' triggers settled — from the exhibit's track_record (A5). */
+  trackRecord?: string | null
+  /** What followed readings like this one — from the exhibit's similar block (A5). */
+  similar?: string | null
   className?: string
 }
 
@@ -53,9 +57,12 @@ export function AnalyzeVerdictStrip({
   summary,
   signals = [],
   nextMoves = [],
+  trackRecord,
+  similar,
   className,
 }: AnalyzeVerdictStripProps) {
   const body = narrative ?? summary
+  const evidence = [trackRecord, similar].filter((s): s is string => Boolean(s))
   return (
     <Card variant="elevated" className={cn('border', TONE_BORDER[tone], className)}>
       <CardContent className="flex flex-col gap-2 px-3 py-2">
@@ -65,6 +72,11 @@ export function AnalyzeVerdictStrip({
             <span className="text-dense-label text-foreground min-w-0 flex-1">{body}</span>
           ) : null}
         </div>
+        {evidence.length > 0 ? (
+          <p className="text-dense-caption text-muted-foreground" data-testid="verdict-evidence">
+            <span className="font-medium text-foreground">Track record</span> {evidence.join(' · ')}
+          </p>
+        ) : null}
         {signals.length > 0 ? (
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-dense-caption text-muted-foreground">
             {signals.map((s) => (

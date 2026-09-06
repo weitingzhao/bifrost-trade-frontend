@@ -1,5 +1,8 @@
 /**
  * Similar-regime card — Wave 14 / F.1 Dense UI (numeric + categorical lenses).
+ *
+ * A5: the neighbours are resolved-only and de-clustered (A3), so the card
+ * leads with the distribution of what followed and says what it dropped.
  */
 import {
   DenseDataTable,
@@ -21,6 +24,25 @@ function fmtRet(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '—'
   const sign = n > 0 ? '+' : ''
   return `${sign}${(n * 100).toFixed(1)}%`
+}
+
+function summaryLine(
+  s: { n_resolved: number; median_fwd: number | null; p25_fwd: number | null; p75_fwd: number | null; share_positive: number | null } | null | undefined,
+  horizon: number,
+): string | null {
+  if (!s || s.n_resolved === 0) return null
+  const share = s.share_positive == null ? '—' : `${Math.round(s.share_positive * 100)}%`
+  return `${horizon}d after: median ${fmtRet(s.median_fwd)} · IQR ${fmtRet(s.p25_fwd)}…${fmtRet(s.p75_fwd)} · ${share} positive (n=${s.n_resolved})`
+}
+
+function hygieneLine(
+  h: { dropped_unresolved: number; dropped_clustered: number; min_gap_days: number } | null | undefined,
+): string | null {
+  if (!h) return null
+  const parts: string[] = []
+  if (h.dropped_unresolved > 0) parts.push(`${h.dropped_unresolved} unsettled`)
+  if (h.dropped_clustered > 0) parts.push(`${h.dropped_clustered} within ${h.min_gap_days}d of a kept date`)
+  return parts.length > 0 ? `dropped ${parts.join(', ')}` : 'resolved and de-clustered'
 }
 
 function fmtLens(v: number | string | null | undefined): string {
@@ -88,8 +110,17 @@ export function SimilarRegimeCard({
             {q.error instanceof Error ? q.error.message : 'Similar regime failed'}
           </p>
         ) : (q.data?.rows.length ?? 0) === 0 ? (
-          <p className="text-dense-meta text-muted-foreground py-2">No similar dates found.</p>
+          <p className="text-dense-meta text-muted-foreground py-2">No settled similar dates found.</p>
         ) : (
+          <>
+          {summaryLine(q.data?.summary, horizon) ? (
+            <p className="text-dense-caption text-foreground" data-testid="similar-summary">
+              {summaryLine(q.data?.summary, horizon)}
+              {hygieneLine(q.data?.hygiene) ? (
+                <span className="text-muted-foreground"> · {hygieneLine(q.data?.hygiene)}</span>
+              ) : null}
+            </p>
+          ) : null}
           <DenseDataTable tableClassName="min-w-[420px]">
             <DenseTableHeader>
               <DenseTableHeadRow>
@@ -118,6 +149,7 @@ export function SimilarRegimeCard({
               ))}
             </DenseTableBody>
           </DenseDataTable>
+          </>
         )}
       </CardContent>
     </Card>

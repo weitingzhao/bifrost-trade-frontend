@@ -4,7 +4,14 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 
-export type SignalDecayLens = 'iv_rank' | 'vrp' | 'opex_pin'
+export type SignalDecayLens =
+  | 'iv_rank'
+  | 'vrp'
+  | 'opex_pin'
+  | 'skew'
+  | 'gex_regime'
+  | 'terrain_regime'
+  | 'order_sentiment'
 
 export type SignalDecayRegime = 'any' | 'bull' | 'rangy' | 'bear'
 

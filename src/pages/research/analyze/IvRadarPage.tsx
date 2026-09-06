@@ -34,10 +34,10 @@ import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisBu
 import { fetchIvRankHistory } from '@/api/research/ivRadar'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
-import {
-  AnalyzeVerdictStrip,
-  type AnalyzeVerdictTone,
-} from '@/components/research/AnalyzeVerdictStrip'
+import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { useExhibit } from '@/hooks/useLensRegistry'
+import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import type { LensBand } from '@/api/research/lenses'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { useIvRadarData } from '@/hooks/useIvRadarData'
@@ -88,33 +88,14 @@ function bucketLabel(bucket: IvRadarBucket): string {
   return 'No data'
 }
 
-function ivRankVerdictTone(rank: number | null | undefined): AnalyzeVerdictTone {
-  if (rank == null || !Number.isFinite(rank)) return 'neutral'
-  if (rank >= 60) return 'danger'
-  if (rank <= 30) return 'success'
-  return 'warning'
-}
-
-function ivRankVerdictLabel(rank: number | null | undefined): string {
-  if (rank == null || !Number.isFinite(rank)) return 'No IV Rank — wait'
-  if (rank >= 60) return 'Sell premium bias'
-  if (rank <= 30) return 'Buy premium bias'
-  return 'No edge — stay flat'
-}
-
-function ivRankVerdictSummary(row: IvRadarRow | null): string {
+/** The reading in words; the band and its meaning come from the exhibit, not a threshold here. */
+function ivRankSummary(row: IvRadarRow | null, band: LensBand | null, means: string | null): string {
   if (!row) return 'No IV Rank for this symbol — wait for radar compute before sizing vol.'
   const rank = row.data?.iv_rank_1y
-  if (rank == null || !Number.isFinite(rank)) {
+  if (rank == null || !Number.isFinite(rank) || !band) {
     return `${row.symbol}: IV Rank not computed yet — do not size from this row.`
   }
-  if (rank >= 60) {
-    return `${row.symbol} IV Rank ${fmtRankPct(rank)} (${bucketLabel(row.bucket)}) — prefer short premium / defined-risk shorts if VRP agrees. IV ${fmtIv(row.data?.iv_current)}.`
-  }
-  if (rank <= 30) {
-    return `${row.symbol} IV Rank ${fmtRankPct(rank)} (${bucketLabel(row.bucket)}) — prefer long premium / debit structures. IV ${fmtIv(row.data?.iv_current)}.`
-  }
-  return `${row.symbol} IV Rank ${fmtRankPct(rank)} mid-band — no standalone vol edge; wait for VRP or GEX confirmation.`
+  return `${row.symbol} IV Rank ${fmtRankPct(rank)} (${bucketLabel(row.bucket)}) — ${means ?? 'no registry reading'} IV ${fmtIv(row.data?.iv_current)}.`
 }
 
 function sortRows(rows: IvRadarRow[], mode: SortMode): IvRadarRow[] {
@@ -280,9 +261,11 @@ export default function IvRadarPage() {
 
   const focusSymbol = focusRow?.symbol ?? contextSymbol.trim().toUpperCase()
   const focusIvRank = focusRow?.data?.iv_rank_1y
-  const verdictTone = ivRankVerdictTone(focusIvRank)
-  const verdictLabel = ivRankVerdictLabel(focusIvRank)
-  const verdictSummary = ivRankVerdictSummary(focusRow)
+  const exhibitQ = useExhibit('iv_rank', focusSymbol)
+  const verdict = verdictView('iv_rank', exhibitQ.data, { missing: 'No IV Rank — wait' })
+  const verdictTone = verdict.tone
+  const verdictLabel = verdict.label
+  const verdictSummary = ivRankSummary(focusRow, verdict.band, verdict.means)
   const focusOutOfUniverse =
     universe !== 'all' &&
     Boolean(focusSymbol) &&
@@ -342,10 +325,10 @@ export default function IvRadarPage() {
 
       <CompositeRegimeRibbon symbol={focusSymbol} />
 
-      {(verdictTone === 'success' || verdictTone === 'danger') && focusRow ? (
+      {verdict.decisive && focusRow ? (
         <CopilotAutoInsightChip
           message={`${focusSymbol} IV Rank ${fmtRankPct(focusIvRank)} looks ${verdictLabel.toLowerCase()}.`}
-          tone={verdictTone}
+          tone={chipTone(verdictTone)}
           onAsk={() => {
             copilotViewStore.unsuppress()
             askCopilotIntentStore.open({
@@ -363,6 +346,8 @@ export default function IvRadarPage() {
         tone={verdictTone}
         verdictLabel={verdictLabel}
         narrative={verdictSummary}
+        trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        similar={similarLine(exhibitQ.data?.similar)}
         signals={[
           { label: 'Rank', value: fmtRankPct(focusIvRank) },
           { label: 'IV', value: fmtIv(focusRow?.data?.iv_current) },

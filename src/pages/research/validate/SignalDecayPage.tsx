@@ -46,6 +46,9 @@ const LENS_OPTIONS: { value: SignalDecayLens; label: string }[] = [
   { value: 'iv_rank', label: 'IV Rank' },
   { value: 'vrp', label: 'VRP' },
   { value: 'opex_pin', label: 'OpEx Pin' },
+  { value: 'skew', label: 'Skew' },
+  { value: 'gex_regime', label: 'Gamma' },
+  { value: 'terrain_regime', label: 'Terrain' },
 ]
 
 const WINDOW_OPTIONS = [
@@ -354,7 +357,8 @@ export default function SignalDecayPage() {
   const symbol = symbolParam?.trim().toUpperCase() || undefined
   const [searchParams, setSearchParams] = useSearchParams()
   const [lens, setLens] = useState<SignalDecayLens>('iv_rank')
-  const [windowDays, setWindowDays] = useState(30)
+  // 90d by default: the 20-session horizon has settled rows to show, 30d never did.
+  const [windowDays, setWindowDays] = useState(90)
   const regime = parseRegime(searchParams.get('regime'))
 
   const setRegime = useCallback(
@@ -450,7 +454,7 @@ export default function SignalDecayPage() {
       <PageHeader
         title="Signal Decay"
         titleSize="default"
-        description="Lens trigger → forward return hit-rate (IV Rank / VRP / OpEx Pin)."
+        description="Lens trigger → forward return hit-rate for the registry's decay lenses (IV Rank / VRP / OpEx Pin / Skew / Gamma / Terrain)."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <AskCopilotButton
@@ -608,6 +612,8 @@ export default function SignalDecayPage() {
                         <DenseTableHead className="text-right">Trigger</DenseTableHead>
                         <DenseTableHead className="text-right">Hit 5d</DenseTableHead>
                         <DenseTableHead className="text-right">Fwd 5d</DenseTableHead>
+                        <DenseTableHead className="text-right">Hit 20d</DenseTableHead>
+                        <DenseTableHead className="text-right">Fwd 20d</DenseTableHead>
                       </DenseTableHeadRow>
                     </DenseTableHeader>
                     <DenseTableBody>
@@ -623,6 +629,10 @@ export default function SignalDecayPage() {
                           <DenseTableCell className={denseTableNumCell}>{fmtHit(row.hit_5d)}</DenseTableCell>
                           <DenseTableCell className={denseTableNumCell}>
                             {fmtNum(row.fwd_return_5d, 3)}
+                          </DenseTableCell>
+                          <DenseTableCell className={denseTableNumCell}>{fmtHit(row.hit_20d)}</DenseTableCell>
+                          <DenseTableCell className={denseTableNumCell}>
+                            {fmtNum(row.fwd_return_20d, 3)}
                           </DenseTableCell>
                         </DenseTableRow>
                       ))}

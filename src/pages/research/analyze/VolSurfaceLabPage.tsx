@@ -28,6 +28,12 @@ import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
+import { useExhibit, useLensSpec } from '@/hooks/useLensRegistry'
+import { bandForSeverity, chipTone, labelForBand, similarLine, toneForBand, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import type { LensBand, LensBands } from '@/api/research/lenses'
+import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
+import { copilotViewStore } from '@/store/copilotViewStore'
 import { TermStructureChart } from '@/components/charts/TermStructureChart'
 import { VolSurfaceHeatmap } from '@/components/charts/VolSurface3DChart'
 import { VolSurface2DChart } from '@/components/charts/VolSurface2DChart'
@@ -52,20 +58,16 @@ function fmtSlope(v: number | null | undefined): string {
   return `${sign}${v.toFixed(3)}`
 }
 
-function slopeSeverityTone(
-  absSlope: number | null | undefined,
-): 'success' | 'warning' | 'danger' | 'neutral' {
-  if (absSlope == null || !Number.isFinite(absSlope)) return 'neutral'
-  if (absSlope >= 0.25) return 'danger'
-  if (absSlope >= 0.12) return 'warning'
-  return 'success'
-}
-
-function slopeSeverityLabel(absSlope: number | null | undefined): string {
-  if (absSlope == null || !Number.isFinite(absSlope)) return 'No fit — wait'
-  if (absSlope >= 0.25) return 'Skew extreme — size carefully'
-  if (absSlope >= 0.12) return 'Skew elevated — prefer defined risk'
-  return 'Skew calm — structure freer'
+/** The reading in words; severity comes from the exhibit's band, not a threshold here. */
+function skewSummary(anchor: VolSurfaceFitRow | null, band: LensBand | null, means: string | null): string {
+  if (!anchor) return 'No SVI fit yet — wait before pricing wings or ratio spreads.'
+  const slope = anchor.atm_slope
+  if (slope == null || !band) {
+    return `${anchor.symbol}: SVI converged (RMSE ${fmtSlope(anchor.fit_rmse)}) but ATM slope missing — do not size skew trades.`
+  }
+  const dir = slope < 0 ? 'call skew' : 'put skew'
+  const dte = anchor.dte != null ? `${anchor.dte}d` : '30d'
+  return `${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPctFromFraction(anchor.atm_vol)} — ${means ?? 'no registry reading'}`
 }
 
 function pickAnchor(rows: VolSurfaceFitRow[]): VolSurfaceFitRow | null {
@@ -79,33 +81,17 @@ function pickAnchor(rows: VolSurfaceFitRow[]): VolSurfaceFitRow | null {
   })
 }
 
-function verdictText(anchor: VolSurfaceFitRow | null): string {
-  if (!anchor) return 'No SVI fit yet — wait before pricing wings or ratio spreads.'
-  const slope = anchor.atm_slope
-  if (slope == null) {
-    return `${anchor.symbol}: SVI converged (RMSE ${fmtSlope(anchor.fit_rmse)}) but ATM slope missing — do not size skew trades.`
-  }
-  const dir = slope < 0 ? 'call skew' : 'put skew'
-  const abs = Math.abs(slope)
-  const sev = slopeSeverityLabel(abs)
-  const dte = anchor.dte != null ? `${anchor.dte}d` : '30d'
-  if (abs >= 0.25) {
-    return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}). Prefer defined-risk; avoid naked wings.`
-  }
-  if (abs >= 0.12) {
-    return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPctFromFraction(anchor.atm_vol)}. Prefer defined-risk skew expressions.`
-  }
-  return `${sev} on ${anchor.symbol} (${dte}): ATM slope ${fmtSlope(slope)} (${dir}), ATM vol ${fmtPctFromFraction(anchor.atm_vol)}. Structure freer if VRP agrees.`
-}
-
 function SkewExtremesTable({
   rows,
   onPick,
   asOf,
+  bands,
 }: {
   rows: VolSurfaceFitRow[]
   onPick: (symbol: string) => void
   asOf: string | null
+  /** The skew lens' severity bands from the registry; rows are graded against them. */
+  bands: LensBands | undefined
 }) {
   if (rows.length === 0) {
     return (
@@ -144,7 +130,7 @@ function SkewExtremesTable({
         </DenseTableHeader>
         <DenseTableBody>
           {rows.map((row) => {
-            const tone = slopeSeverityTone(Math.abs(row.atm_slope ?? 0))
+            const tone = toneForBand('skew', bandForSeverity(bands, Math.abs(row.atm_slope ?? 0)))
             return (
               <DenseTableRow key={`${row.symbol}-${row.expiry}`}>
                 <DenseTableCell className={denseTableEntityCell}>
@@ -164,7 +150,7 @@ function SkewExtremesTable({
                             : 'success'
                       }
                     >
-                      {slopeSeverityLabel(Math.abs(row.atm_slope ?? 0))}
+                      {labelForBand('skew', bandForSeverity(bands, Math.abs(row.atm_slope ?? 0)), 'No fit — wait')}
                     </DenseTag>
                   </div>
                 </DenseTableCell>
@@ -216,9 +202,12 @@ export default function VolSurfaceLabPage() {
 
   const residualQ = useResiduals(symbol, effectiveExpiry ?? '', apiDate)
 
-  const verdictTone = slopeSeverityTone(anchor?.atm_slope != null ? Math.abs(anchor.atm_slope) : null)
-  const verdictLabel = slopeSeverityLabel(anchor?.atm_slope != null ? Math.abs(anchor.atm_slope) : null)
-  const verdictLine = verdictText(anchor)
+  const exhibitQ = useExhibit('skew', symbol)
+  const skewBands = useLensSpec('skew')?.bands
+  const verdict = verdictView('skew', exhibitQ.data, { missing: 'No fit — wait' })
+  const verdictTone = verdict.tone
+  const verdictLabel = verdict.label
+  const verdictLine = skewSummary(anchor, verdict.band, verdict.means)
 
   const verdictBorderClass =
     verdictTone === 'danger'
@@ -284,10 +273,29 @@ export default function VolSurfaceLabPage() {
 
       <CompositeRegimeRibbon symbol={symbol} />
 
+      {verdict.band === 'hot' && anchor ? (
+        <CopilotAutoInsightChip
+          message={`${symbol} skew is extreme (ATM slope ${fmtSlope(anchor.atm_slope)}).`}
+          tone={chipTone(verdictTone)}
+          onAsk={() => {
+            copilotViewStore.unsuppress()
+            askCopilotIntentStore.open({
+              originPage: 'vol-surface-lab',
+              originLabel: 'Vol Surface Lab',
+              symbol,
+              suggestedPrompt: `Explain ${symbol} skew extreme and what it did to forward returns in similar readings.`,
+              snapshot: compactSnapshot({ atm_slope: anchor.atm_slope, atm_vol: anchor.atm_vol }),
+            })
+          }}
+        />
+      ) : null}
+
       <AnalyzeVerdictStrip
         tone={verdictTone}
         verdictLabel={verdictLabel}
         narrative={verdictLine}
+        trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        similar={similarLine(exhibitQ.data?.similar)}
         signals={
           anchor
             ? [
@@ -446,6 +454,7 @@ export default function VolSurfaceLabPage() {
             </div>
           ) : (
             <SkewExtremesTable
+              bands={skewBands}
               rows={skewQ.data?.rows ?? []}
               asOf={skewQ.data?.as_of ?? null}
               onPick={(sym) => {

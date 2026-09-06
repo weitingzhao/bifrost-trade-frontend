@@ -29,10 +29,10 @@ import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisBu
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
-import {
-  AnalyzeVerdictStrip,
-  type AnalyzeVerdictTone,
-} from '@/components/research/AnalyzeVerdictStrip'
+import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
+import { useExhibit } from '@/hooks/useLensRegistry'
+import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import type { LensBand } from '@/api/research/lenses'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { useResearchContext } from '@/hooks/useResearchContext'
@@ -47,30 +47,13 @@ function fmtNotional(v: number): string {
   return `$${v.toFixed(0)}`
 }
 
-function sentimentVerdictTone(score: number | undefined): AnalyzeVerdictTone {
-  if (score == null || !Number.isFinite(score)) return 'neutral'
-  if (score >= 30) return 'success'
-  if (score <= -30) return 'danger'
-  return 'warning'
-}
-
-function sentimentVerdictLabel(score: number | undefined): string {
-  if (score == null || !Number.isFinite(score)) return 'No tape — wait'
-  if (score >= 30) return 'Lean long with flow'
-  if (score <= -30) return 'Lean short with flow'
-  return 'Fade extremes — mixed tape'
-}
-
-function sentimentVerdictSummary(s: OrderSentiment | undefined): string {
+/** The tape in words; the band comes from the exhibit and is absent without a trades tape. */
+function sentimentSummary(s: OrderSentiment | undefined, band: LensBand | null, means: string | null): string {
   if (!s) return 'No order-flow sentiment yet — do not size from tape until snapshot lands.'
-  const score = s.sentiment_score
-  if (score >= 30) {
-    return `Follow bullish flow in ${s.symbol} (score ${score.toFixed(1)}); confirm with GEX walls before adding. PCR vol ${fmtNumLocale(s.pcr_volume)}.`
+  if (!band) {
+    return `${s.symbol}: ${means ?? 'no options trades tape — the score is an OI proxy and carries no verdict'}. Call ${fmtNotional(s.call_notional)} vs put ${fmtNotional(s.put_notional)}.`
   }
-  if (score <= -30) {
-    return `Follow bearish flow in ${s.symbol} (score ${score.toFixed(1)}); confirm put wall / zero-γ before adding. PCR vol ${fmtNumLocale(s.pcr_volume)}.`
-  }
-  return `${s.symbol} tape is mixed (score ${score.toFixed(1)}) — prefer mean-reversion / wait for clearer PCR. Call ${fmtNotional(s.call_notional)} vs put ${fmtNotional(s.put_notional)}.`
+  return `${s.symbol} tape score ${s.sentiment_score.toFixed(1)} — ${means ?? ''} PCR vol ${fmtNumLocale(s.pcr_volume)}.`
 }
 
 export default function OrderSentimentPage() {
@@ -104,9 +87,11 @@ export default function OrderSentimentPage() {
     [multiLegRows],
   )
 
-  const verdictTone = sentimentVerdictTone(sentiment?.sentiment_score)
-  const verdictLabel = sentimentVerdictLabel(sentiment?.sentiment_score)
-  const verdictSummary = sentimentVerdictSummary(sentiment)
+  const exhibitQ = useExhibit('order_sentiment', symbol)
+  const verdict = verdictView('order_sentiment', exhibitQ.data, { missing: 'No tape — no verdict' })
+  const verdictTone = verdict.tone
+  const verdictLabel = verdict.label
+  const verdictSummary = sentimentSummary(sentiment, verdict.band, verdict.means)
 
   useEffect(() => {
     if (window.location.hash === '#multi-leg') {
@@ -160,10 +145,10 @@ export default function OrderSentimentPage() {
 
       <CompositeRegimeRibbon symbol={symbol} />
 
-      {(verdictTone === 'success' || verdictTone === 'danger') && sentiment ? (
+      {verdict.decisive && sentiment ? (
         <CopilotAutoInsightChip
           message={`${symbol} order flow looks ${verdictLabel.toLowerCase()} (score ${sentiment.sentiment_score.toFixed(1)}).`}
-          tone={verdictTone}
+          tone={chipTone(verdictTone)}
           onAsk={() => {
             copilotViewStore.unsuppress()
             askCopilotIntentStore.open({
@@ -184,6 +169,8 @@ export default function OrderSentimentPage() {
         tone={verdictTone}
         verdictLabel={verdictLabel}
         narrative={verdictSummary}
+        trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        similar={similarLine(exhibitQ.data?.similar)}
         signals={
           sentiment
             ? [

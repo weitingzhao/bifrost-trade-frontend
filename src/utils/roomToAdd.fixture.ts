@@ -5,7 +5,7 @@ import { rollupMargin } from '@/utils/marginPressure'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { LivePositionRow } from '@/types/positions'
 import type { SpotResolver } from '@/utils/spotPrice'
-import type { RoomLeg } from './roomToAdd'
+import type { RoomLeg } from '@/utils/roomToAdd'
 
 const account = (account_id: string, summary: Record<string, string>): IbAccountSnapshot =>
   ({ account_id, summary, positions: [] }) as unknown as IbAccountSnapshot

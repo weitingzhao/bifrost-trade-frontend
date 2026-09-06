@@ -27,8 +27,8 @@ import { pressureLevel, type CoverRow, type GaugeLevel } from '@/utils/bookVsBas
 import { usdAbbrev } from '@/utils/marginByAccount'
 import { fmtUsd } from '@/utils/positions'
 import { roomDerivation } from './roomDerivation'
-import type { RoomToAdd } from './roomToAdd'
-import { PRESSURE_CEILING_MAX, PRESSURE_CEILING_MIN } from './usePressureCeiling'
+import type { RoomToAdd } from '@/utils/roomToAdd'
+import { PRESSURE_CEILING_MAX, PRESSURE_CEILING_MIN } from '@/hooks/usePressureCeiling'
 
 interface Props {
   open: boolean

@@ -10,8 +10,8 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { RoomToAddSection } from './RoomToAddSection'
-import { computeRoomToAdd } from './roomToAdd'
-import { usePressureCeiling } from './usePressureCeiling'
+import { computeRoomToAdd, summarizeRoom } from '@/utils/roomToAdd'
+import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { usePositionsScope } from '@/hooks/usePositionsScope'
@@ -71,6 +71,7 @@ export default function BackingPage() {
       }),
     [book.alarm.book, book.alarm.margin, book.alarm.legs, book.coverRows, book.alarm.resolveSpot, ceiling],
   )
+  const roomSummary = useMemo(() => summarizeRoom(room), [room])
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
 
   const rows = useMemo(() => sortObligations(book.obligationsRows, sort), [book.obligationsRows, sort])
@@ -183,7 +184,9 @@ export default function BackingPage() {
                       accounts: book.scopedAccounts,
                       cashLikeRows: book.cashLikeStocks,
                       coverRows: book.coverRows,
+                      room: roomSummary,
                     }}
+                    room={roomSummary}
                   />
                   <MarginByAccountStrip
                     margin={book.marginAllAccounts}

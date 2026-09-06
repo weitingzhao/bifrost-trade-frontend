@@ -122,6 +122,18 @@ export interface RoomToAdd {
   }
 }
 
+/** The three figures the cockpit's Potential line carries, with a link to the rest. */
+export interface RoomSummary {
+  calls: number
+  puts: number | null
+  marginPuts: number | null
+  ceiling: number
+}
+
+export function summarizeRoom(r: RoomToAdd): RoomSummary {
+  return { calls: r.backed.calls, puts: r.backed.puts, marginPuts: r.margin.puts, ceiling: r.ceiling }
+}
+
 /**
  * IB's Reg T requirement for a naked equity put, per contract: the premium
  * plus the greater of 20% of the underlying less the out-of-the-money amount

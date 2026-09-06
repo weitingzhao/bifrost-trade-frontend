@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { RoomToAddSection } from './RoomToAddSection'
-import { computeRoomToAdd } from './roomToAdd'
-import { fixture, NOW } from './roomToAdd.fixture'
+import { computeRoomToAdd } from '@/utils/roomToAdd'
+import { fixture, NOW } from '@/utils/roomToAdd.fixture'
 
 
 function renderSection(ceiling = 0.5) {

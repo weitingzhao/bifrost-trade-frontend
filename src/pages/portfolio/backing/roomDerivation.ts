@@ -8,7 +8,7 @@
 import type { Derivation, Variable, VariableItem } from '@/utils/derivation'
 import type { CoverRow } from '@/utils/bookVsBase'
 import { fmtExpiry, fmtUsd } from '@/utils/positions'
-import type { RoomToAdd } from './roomToAdd'
+import type { RoomToAdd } from '@/utils/roomToAdd'
 
 const money = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : fmtUsd(v))
 const money0 = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : fmtUsd(v, true))

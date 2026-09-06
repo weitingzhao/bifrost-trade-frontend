@@ -30,6 +30,7 @@ import type { BookVsBase, GaugeLevel } from '@/utils/bookVsBase'
 import type { AlarmCheck, AlarmTarget } from '@/hooks/usePositionsAlarm'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
 import { fmtSpotDate, type SpotMix } from '@/utils/spotPrice'
+import type { RoomSummary } from '@/utils/roomToAdd'
 import { cushionBand } from '@/utils/positionsOptionRisk'
 
 const LEVEL_TONE: Record<GaugeLevel, string> = {
@@ -64,6 +65,7 @@ function Gauge({
   lit,
   tone,
   children,
+  wrap = false,
   title,
   onOpen,
   how,
@@ -75,6 +77,8 @@ function Gauge({
   /** Override the level colour — potential is an opportunity, not a warning. */
   tone?: string
   children: ReactNode
+  /** Let the line wrap instead of truncating — for the one row whose answer is longer than the column. */
+  wrap?: boolean
   title: string
   /** The section holding this gauge's detail; the label is the way in. */
   onOpen: () => void
@@ -108,7 +112,9 @@ function Gauge({
         {/* The scale in the open: four segments, this many lit. */}
         <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">{lit}/4</span>
       </span>
-      <span className="min-w-0 truncate text-dense-body text-muted-foreground">{children}</span>
+      <span className={cn('min-w-0 text-dense-body text-muted-foreground', wrap ? 'whitespace-normal leading-snug' : 'truncate')}>
+        {children}
+      </span>
     </div>
   )
 }
@@ -141,6 +147,7 @@ export function BookVsBaseCockpit({
   headerLink,
   spotMix,
   explain,
+  room,
 }: {
   book: BookVsBase
   /** All nine checks; each is a chip with a place to land, quiet ones in grey. */
@@ -160,6 +167,8 @@ export function BookVsBaseCockpit({
   spotMix?: SpotMix
   /** The rows behind the totals; when given, every line grows a `?` that opens its arithmetic. */
   explain?: Omit<ExplainInputs, 'book' | 'tightPct' | 'spotMix'>
+  /** Room to add in one line; the Potential row shows it and links to the section that walks it. */
+  room?: RoomSummary
 }) {
   const { pressure, backing, risk, potential, demand, supply } = book
   const full = variant === 'full'
@@ -322,23 +331,30 @@ export function BookVsBaseCockpit({
 
         <Gauge
           label="Potential"
-          onOpen={() => onOpenTarget('coverage', 'spare')}
+          onOpen={() => onOpenTarget('room')}
           level={null}
           lit={potentialSegments(book)}
           tone="bg-link"
           how={howFor('potential')}
-          title="What is still free to sell against, and what the book earns a day. A meter, not a warning: the segments are the share of held shares still free."
+          wrap
+          title="Room to add: what the free base still backs, what margin adds up to your ceiling, and what the book earns a day. A meter, not a warning: the segments are the share of held shares still free."
         >
-          <Num>{potential.moreCalls}</Num> more calls · {potential.sharesFree.toLocaleString()} free sh
-          {' · '}
-          <button
-            type="button"
-            onClick={() => onOpenTarget('room')}
-            className="text-link hover:underline"
-            title="Room to add: the contracts and premium the free base, and margin up to your ceiling, could carry"
-          >
-            room →
-          </button>
+          {room ? (
+            <button
+              type="button"
+              onClick={() => onOpenTarget('room')}
+              className="text-link hover:underline"
+              title="Room to add on the Backing page: the three steps, the premium each would bring, and where pressure lands"
+              data-testid="potential-room"
+            >
+              Room <Num tone="text-link">+{room.calls}</Num> calls · <Num tone="text-link">{room.puts == null ? '—' : `+${room.puts}`}</Num> puts backed ·{' '}
+              <Num tone="text-link">{room.marginPuts == null ? '—' : `+${room.marginPuts}`}</Num> on margin{'\u00a0'}to{'\u00a0'}{Math.round(room.ceiling * 100)}%{'\u00a0'}→
+            </button>
+          ) : (
+            <>
+              <Num>{potential.moreCalls}</Num> more calls · {potential.sharesFree.toLocaleString()} free sh
+            </>
+          )}
           {potential.thetaPerDay != null ? (
             <>
               {' · '}

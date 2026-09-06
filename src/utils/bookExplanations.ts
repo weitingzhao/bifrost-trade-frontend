@@ -16,6 +16,7 @@ import type { ExposureSummary } from './assignmentExposure'
 import type { MarginRollup } from './marginPressure'
 import { summaryNum } from './marginPressure'
 import type { SpotMix } from './spotPrice'
+import type { RoomSummary } from './roomToAdd'
 import { fmtSpotDate } from './spotPrice'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { LivePositionRow } from '@/types/positions'
@@ -58,6 +59,7 @@ export interface ExplainInputs {
   coverRows: readonly CoverRow[]
   tightPct: number
   spotMix?: SpotMix
+  room?: RoomSummary
 }
 
 const pct = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${Math.round(v * 100)}%`)
@@ -166,7 +168,10 @@ export function explainBook(topic: ExplainTopic, input: ExplainInputs): Explanat
         title: 'Potential',
         lines: [
           `${p.moreCalls} more calls: per account × symbol, whole shares not already backing a call, ÷ 100, summed — spare RKLB shares cannot back an NVDA call.`,
-          'Room to add on the Backing page turns the free shares and cash-like into contracts and premium, with and without margin. Buying power is not the constraint for selling options; excess liquidity is.',
+          input.room
+            ? `Room to add: +${input.room.calls} calls from the spare shares, ${input.room.puts == null ? 'no put size to extrapolate from' : `+${input.room.puts} cash-secured puts from the free cash-like`}, ${input.room.marginPuts == null ? 'margin puts not modelled' : `+${input.room.marginPuts} puts on margin before pressure reaches ${Math.round(input.room.ceiling * 100)}%`} — the Backing page walks each step and the premium it would bring.`
+            : 'Room to add on the Backing page turns the free shares and cash-like into contracts and premium, with and without margin.',
+          'Buying power is not the constraint for selling options; excess liquidity is.',
           p.thetaPerDay != null ? `θ ${usd(p.thetaPerDay)}/day is the vendor's theta summed over the legs in scope.` : 'θ/day: no vendor Greeks matched the legs in scope.',
         ],
         rows,

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { roomDerivation } from './roomDerivation'
-import { computeRoomToAdd } from './roomToAdd'
-import { fixture, NOW } from './roomToAdd.fixture'
+import { computeRoomToAdd } from '@/utils/roomToAdd'
+import { fixture, NOW } from '@/utils/roomToAdd.fixture'
 import { derivationFields, derivationRows } from '@/utils/derivation'
 
 

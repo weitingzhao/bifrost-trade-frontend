@@ -54,6 +54,8 @@ import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
 import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
 import type { AlarmTarget } from '@/hooks/usePositionsAlarm'
+import { usePressureCeiling } from '@/hooks/usePressureCeiling'
+import { computeRoomToAdd, summarizeRoom } from '@/utils/roomToAdd'
 import { instanceGroupKey } from '@/utils/instanceSheetExec'
 import { riskMapLegShort, type RiskMapLeg } from '@/utils/shortLegRiskMap'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
@@ -126,6 +128,21 @@ export default function PositionsPage() {
     () => (selectedLeg ? book.alarm.ladderRows.filter((r) => r.expiry === selectedLeg.expiry) : book.alarm.ladderRows),
     [book.alarm.ladderRows, selectedLeg],
   )
+  const { ceiling } = usePressureCeiling()
+  const room = useMemo(
+    () =>
+      summarizeRoom(
+        computeRoomToAdd({
+          book: book.alarm.book,
+          margin: book.alarm.margin,
+          legs: book.alarm.legs,
+          coverRows: book.coverRows,
+          resolveSpot: book.alarm.resolveSpot,
+          ceiling,
+        }),
+      ),
+    [book.alarm.book, book.alarm.margin, book.alarm.legs, book.coverRows, book.alarm.resolveSpot, ceiling],
+  )
   const explain = useMemo(
     () => ({
       exposure: book.alarm.exposure,
@@ -133,8 +150,9 @@ export default function PositionsPage() {
       accounts: book.scopedAccounts,
       cashLikeRows: book.cashLikeStocks,
       coverRows: book.coverRows,
+      room,
     }),
-    [book.alarm.exposure, book.alarm.margin, book.scopedAccounts, book.cashLikeStocks, book.coverRows],
+    [book.alarm.exposure, book.alarm.margin, book.scopedAccounts, book.cashLikeStocks, book.coverRows, room],
   )
 
   const scrollTo = (id: string) =>
@@ -318,6 +336,7 @@ export default function PositionsPage() {
                   headerLink={{ to: MODEL_ANALYSIS_PATH, label: 'Model analysis →' }}
                   spotMix={book.alarm.spotMix}
                   explain={explain}
+                  room={room}
                 />
                 <div className="min-w-0 space-y-3">
                   <MarginByAccountStrip

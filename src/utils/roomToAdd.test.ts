@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { computeRoomToAdd, daysToExpiry, regTShortPutMargin } from './roomToAdd'
-import { fixture, NOW } from './roomToAdd.fixture'
+import { computeRoomToAdd, daysToExpiry, regTShortPutMargin } from '@/utils/roomToAdd'
+import { fixture, NOW } from '@/utils/roomToAdd.fixture'
 
 describe('regTShortPutMargin', () => {
   it('is premium plus the greater of 20% of spot less the OTM amount and 10% of strike, per contract', () => {

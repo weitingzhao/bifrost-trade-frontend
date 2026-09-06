@@ -8,6 +8,10 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src'),
     },
+    // @bifrost/ui is linked from ../bifrost-ui, which carries its own react and
+    // lucide-react; without dedupe a component rendering one of its icons runs
+    // hooks against a second React copy and dies on a null dispatcher.
+    dedupe: ['react', 'react-dom', 'lucide-react'],
   },
   test: {
     globals: true,

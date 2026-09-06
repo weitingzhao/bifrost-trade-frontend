@@ -330,12 +330,15 @@ export function BookVsBaseCockpit({
           title="What is still free to sell against, and what the book earns a day. A meter, not a warning: the segments are the share of held shares still free."
         >
           <Num>{potential.moreCalls}</Num> more calls · {potential.sharesFree.toLocaleString()} free sh
-          {potential.unusedBuyingPower != null ? (
-            <>
-              {' · '}
-              BP unused <Num>{usdK(potential.unusedBuyingPower)}</Num>
-            </>
-          ) : null}
+          {' · '}
+          <button
+            type="button"
+            onClick={() => onOpenTarget('room')}
+            className="text-link hover:underline"
+            title="Room to add: the contracts and premium the free base, and margin up to your ceiling, could carry"
+          >
+            room →
+          </button>
           {potential.thetaPerDay != null ? (
             <>
               {' · '}

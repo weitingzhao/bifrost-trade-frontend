@@ -9,6 +9,9 @@
  * away: the two tables are the page.
  */
 import { useEffect, useMemo, useState } from 'react'
+import { RoomToAddSection } from './RoomToAddSection'
+import { computeRoomToAdd } from './roomToAdd'
+import { usePressureCeiling } from './usePressureCeiling'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { usePositionsScope } from '@/hooks/usePositionsScope'
@@ -32,9 +35,10 @@ import type { AlarmTarget } from '@/hooks/usePositionsAlarm'
 const POSITIONS_PATH = '/portfolio/positions'
 const SORTS: readonly ObligationsSort[] = ['cash', 'calls', 'spare', 'symbol']
 
-const ANCHOR: Record<'coverage' | 'independent', string> = {
+const ANCHOR: Record<'coverage' | 'independent' | 'room', string> = {
   coverage: 'backing-obligations',
   independent: 'backing-holdings',
+  room: 'backing-room',
 }
 
 export default function BackingPage() {
@@ -53,6 +57,20 @@ export default function BackingPage() {
   })
   const [obligationsOpen, setObligationsOpen] = useState(true)
   const [holdingsOpen, setHoldingsOpen] = useState(true)
+  const [roomOpen, setRoomOpen] = useState(true)
+  const { ceiling, setCeiling } = usePressureCeiling()
+  const room = useMemo(
+    () =>
+      computeRoomToAdd({
+        book: book.alarm.book,
+        margin: book.alarm.margin,
+        legs: book.alarm.legs,
+        coverRows: book.coverRows,
+        resolveSpot: book.alarm.resolveSpot,
+        ceiling,
+      }),
+    [book.alarm.book, book.alarm.margin, book.alarm.legs, book.coverRows, book.alarm.resolveSpot, ceiling],
+  )
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
 
   const rows = useMemo(() => sortObligations(book.obligationsRows, sort), [book.obligationsRows, sort])
@@ -60,14 +78,16 @@ export default function BackingPage() {
   // #obligations / #holdings from a Positions gauge: scroll once the tables exist.
   useEffect(() => {
     const hash = location.hash.replace('#', '')
-    const id = hash === 'obligations' ? ANCHOR.coverage : hash === 'holdings' ? ANCHOR.independent : null
+    const id =
+      hash === 'obligations' ? ANCHOR.coverage : hash === 'holdings' ? ANCHOR.independent : hash === 'room' ? ANCHOR.room : null
     if (!id || book.isLoading) return
     const t = window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }), 50)
     return () => window.clearTimeout(t)
   }, [location.hash, book.isLoading])
 
   const openTarget = (t: AlarmTarget) => {
-    if (t === 'coverage' || t === 'independent') {
+    if (t === 'coverage' || t === 'independent' || t === 'room') {
+      if (t === 'room') setRoomOpen(true)
       document.getElementById(ANCHOR[t])?.scrollIntoView({ block: 'start' })
     } else if (t === 'margin') {
       document.getElementById('positions-margin')?.scrollIntoView({ block: 'nearest' })
@@ -191,6 +211,16 @@ export default function BackingPage() {
                 </section>
               </div>
 
+              <div id={ANCHOR.room}>
+                <RoomToAddSection
+                  open={roomOpen}
+                  onToggle={() => setRoomOpen((v) => !v)}
+                  room={room}
+                  coverRows={book.coverRows}
+                  ceiling={ceiling}
+                  onCeilingChange={setCeiling}
+                />
+              </div>
               <div id={ANCHOR.coverage}>
                 <ObligationsRoomSection
                   open={obligationsOpen}

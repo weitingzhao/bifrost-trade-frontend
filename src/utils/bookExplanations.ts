@@ -166,7 +166,7 @@ export function explainBook(topic: ExplainTopic, input: ExplainInputs): Explanat
         title: 'Potential',
         lines: [
           `${p.moreCalls} more calls: per account × symbol, whole shares not already backing a call, ÷ 100, summed — spare RKLB shares cannot back an NVDA call.`,
-          `Buying power unused ${usd(p.unusedBuyingPower)} = Σ BuyingPower ${usd(book.supply.buyingPower)} − put cash ${usd(book.demand.putCash)}.`,
+          'Room to add on the Backing page turns the free shares and cash-like into contracts and premium, with and without margin. Buying power is not the constraint for selling options; excess liquidity is.',
           p.thetaPerDay != null ? `θ ${usd(p.thetaPerDay)}/day is the vendor's theta summed over the legs in scope.` : 'θ/day: no vendor Greeks matched the legs in scope.',
         ],
         rows,

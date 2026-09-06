@@ -10,4 +10,5 @@ export const STORAGE_KEYS = {
   positionsSections: 'bifrost-positions-sections',
   positionsLinesView: 'bifrost-positions-lines-view',
   positionsDetailMode: 'bifrost-positions-detail-mode',
+  backingPressureCeiling: 'bifrost-backing-pressure-ceiling',
 } as const

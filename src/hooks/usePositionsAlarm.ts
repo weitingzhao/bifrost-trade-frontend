@@ -45,7 +45,7 @@ import type { QuoteItem } from '@/types/market'
 
 /** Which section a chip opens. Null when the chip has nowhere useful to go. */
 /** Where a chip or gauge label lands: a collapsible section, or an anchor on the page. */
-export type AlarmTarget = 'ladder' | 'capital' | 'coverage' | 'independent' | 'margin' | 'lines'
+export type AlarmTarget = 'ladder' | 'capital' | 'coverage' | 'independent' | 'margin' | 'lines' | 'room'
 
 export type AlarmTone = 'ok' | 'warn' | 'danger'
 
@@ -70,8 +70,8 @@ function pct1(v: number): string {
   return `${p > 0 ? '+' : ''}${p.toFixed(1)}%`
 }
 
-/** A leg as the page flattens it: ladder fields plus the account and contract that own it. */
-export type AlarmLeg = LadderLeg & { accountId: string; contractKey: string }
+/** A leg as the page flattens it: ladder fields plus the account and contract that own it, and its entry cost per share. */
+export type AlarmLeg = LadderLeg & { accountId: string; contractKey: string; avgCostPerShare?: number | null }
 
 export interface PositionsAlarm {
   ladderRows: ExpiryLadderRow[]
@@ -134,6 +134,9 @@ export function usePositionsAlarm({
         instanceKey: key,
         accountId: (pos.account_id ?? '').trim(),
         contractKey: pos.contract_key ?? '',
+        // Instance groups already carry the cost per share (IB's ×100 unwound upstream); normalising again would
+        // shrink every leg sold above $10 a share by a hundredfold.
+        avgCostPerShare: pos.avg_cost ?? null,
       })
     }
   }

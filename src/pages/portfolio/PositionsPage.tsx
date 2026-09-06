@@ -63,10 +63,9 @@ const BACKING_PATH = '/portfolio/backing'
 const MODEL_ANALYSIS_PATH = '/portfolio/model-analysis'
 
 /** Where a Backing-page target lands, as a hash the Backing page scrolls to. */
-const BACKING_ANCHOR: Record<'coverage' | 'independent', string> = {
+const BACKING_ANCHOR: Record<'coverage' | 'independent' | 'room', string> = {
   coverage: 'obligations',
-  independent: 'holdings',
-}
+  independent: 'holdings', room: 'room' }
 
 export default function PositionsPage() {
   const navigate = useNavigate()

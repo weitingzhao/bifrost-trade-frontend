@@ -327,35 +327,7 @@ export default function PositionsPage() {
             />
           ) : (
             <div className="min-w-0 space-y-3">
-              {/* Band 1: the short-leg map and, beside it, Room to add — the risk in what
-                  is held and the room for what is not, three parts to two. Below 2xl they
-                  stack, the map first. */}
-              <div className="grid min-w-0 grid-cols-1 items-start gap-3 2xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-                <ShortLegsPanel
-                  legs={book.riskLegs}
-                  tightPct={cushionTightPct}
-                  activeExpiry={activeExpiry}
-                  activeSymbol={filterSymbol}
-                  onExpiryClick={toggleExpiryScope}
-                  onUnpricedClick={() => openTarget('ladder')}
-                  onScopeSymbol={setFilterSymbol}
-                  onClearSymbol={() => setFilterSymbol('')}
-                  selected={selectedLeg}
-                  onSelect={setPickedLeg}
-                />
-                <div id="positions-room" className="min-w-0">
-                  <RoomToAddSection
-                    open={roomOpen}
-                    onToggle={() => setRoomOpen((v) => !v)}
-                    room={roomFull}
-                    coverRows={book.coverRows}
-                    ceiling={ceiling}
-                    onCeilingChange={setCeiling}
-                  />
-                </div>
-              </div>
-
-              {/* Band 2, a 2×2. Row one: the cockpit, and beside it the margin
+              {/* Band 1, a 2×2. Row one: the cockpit, and beside it the margin
                   strip its Pressure gauge opens plus the Backing pool its Backing
                   gauge grades. Row two: the accounts' capital and the holdings
                   by symbol — two rings on one line. */}
@@ -402,6 +374,34 @@ export default function PositionsPage() {
                     onSymbolClick={toggleSymbolScope}
                   />
                 </RingCard>
+              </div>
+
+              {/* Band 2: the short-leg map and, beside it, Room to add — the risk in what
+                  is held and the room for what is not, three parts to two, directly above
+                  the grid the map narrows. Below 2xl they stack, the map first. */}
+              <div className="grid min-w-0 grid-cols-1 items-start gap-3 2xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                <ShortLegsPanel
+                  legs={book.riskLegs}
+                  tightPct={cushionTightPct}
+                  activeExpiry={activeExpiry}
+                  activeSymbol={filterSymbol}
+                  onExpiryClick={toggleExpiryScope}
+                  onUnpricedClick={() => openTarget('ladder')}
+                  onScopeSymbol={setFilterSymbol}
+                  onClearSymbol={() => setFilterSymbol('')}
+                  selected={selectedLeg}
+                  onSelect={setPickedLeg}
+                />
+                <div id="positions-room" className="min-w-0">
+                  <RoomToAddSection
+                    open={roomOpen}
+                    onToggle={() => setRoomOpen((v) => !v)}
+                    room={roomFull}
+                    coverRows={book.coverRows}
+                    ceiling={ceiling}
+                    onCeilingChange={setCeiling}
+                  />
+                </div>
               </div>
 
               {/* Band 3: the lines, most dangerous first. */}

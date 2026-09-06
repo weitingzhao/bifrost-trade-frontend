@@ -14,6 +14,7 @@ import {
   isActionableDraft,
   isDecisionKind,
   isHitRateWarnActive,
+  parseAgentVerdicts,
   policySuggestionMergeCount,
 } from './harnessDraftHelpers'
 
@@ -85,6 +86,114 @@ describe('personaEvalModeLabel', () => {
         persona_eval: { mode: 'agent', fallback_used: true },
       })?.label,
     ).toBe('agent (fallback)')
+  })
+
+  it('counts the judges when two models sat (B2)', async () => {
+    const { personaEvalModeLabel } = await import('./harnessDraftHelpers')
+    const info = personaEvalModeLabel({
+      persona_eval: {
+        mode: 'agent',
+        models: [
+          { model: 'deepseek-chat', provider: 'deepseek', calls: 8, cost_usd: 0.004 },
+          { model: 'gpt-4o-mini', provider: 'openai', calls: 8, cost_usd: 0.05 },
+        ],
+      },
+    })
+    expect(info?.label).toBe('agent × 2')
+    expect(info?.models).toEqual(['deepseek-chat', 'gpt-4o-mini'])
+    expect(info?.hint).toContain('deepseek-chat and gpt-4o-mini')
+  })
+})
+
+describe('judges and agreement (B2)', () => {
+  const rows = [
+    { agent: 'analyze', stance: 'support', summary: 's', source: 'agent', model: 'deepseek-chat' },
+    { agent: 'verdict', stance: 'support', summary: 's', source: 'agent', model: 'deepseek-chat' },
+    {
+      agent: 'analyze',
+      stance: 'caution',
+      summary: 'h',
+      source: 'heuristic_fallback',
+      model: 'gpt-4o-mini',
+    },
+    {
+      agent: 'verdict',
+      stance: 'caution',
+      summary: 'h',
+      source: 'heuristic_fallback',
+      model: 'gpt-4o-mini',
+    },
+  ]
+
+  it('parseAgentVerdicts keeps the judge on each row', () => {
+    const parsed = parseAgentVerdicts({ agent_verdicts: rows } as never)
+    expect(parsed.map((v) => v.model)).toEqual([
+      'deepseek-chat',
+      'deepseek-chat',
+      'gpt-4o-mini',
+      'gpt-4o-mini',
+    ])
+  })
+
+  it('verdictsByModel groups in first-seen order and flags a stand-in judge', async () => {
+    const { verdictsByModel } = await import('./harnessDraftHelpers')
+    const groups = verdictsByModel(parseAgentVerdicts({ agent_verdicts: rows } as never))
+    expect(groups.map((g) => [g.model, g.verdicts.length, g.fallback])).toEqual([
+      ['deepseek-chat', 2, false],
+      ['gpt-4o-mini', 2, true],
+    ])
+    // Heuristic rows carry no model and land in one unnamed group.
+    const heuristic = verdictsByModel(
+      parseAgentVerdicts({ agent_verdicts: [{ agent: 'verdict', stance: 'caution', summary: 'x' }] } as never),
+    )
+    expect(heuristic).toEqual([
+      { model: null, verdicts: [{ agent: 'verdict', stance: 'caution', summary: 'x' }], fallback: false },
+    ])
+  })
+
+  it('candidateAgreement reads the item first, then the evidence, and rejects noise', async () => {
+    const { candidateAgreement } = await import('./harnessDraftHelpers')
+    const [item] = candidateBatchItems({
+      items: [{ id: 'c1', symbol: 'AAPL', agreement: 'dissent', evidence: { agreement: 'agree' } }],
+    })
+    expect(candidateAgreement(item)).toBe('dissent')
+    const [fromEvidence] = candidateBatchItems({
+      items: [{ id: 'c2', symbol: 'MSFT', evidence: { agreement: 'agree' } }],
+    })
+    expect(candidateAgreement(fromEvidence)).toBe('agree')
+    const [noise] = candidateBatchItems({
+      items: [{ id: 'c3', symbol: 'NVDA', agreement: 'maybe' }],
+    })
+    expect(candidateAgreement(noise)).toBeNull()
+  })
+
+  it('personaJudgeSummaries and personaDissentCount read the Inbox payload', async () => {
+    const { personaJudgeSummaries, personaDissentCount } = await import('./harnessDraftHelpers')
+    const payload = {
+      persona_eval: {
+        mode: 'agent',
+        dissent_count: 3,
+        models: [
+          { model: 'gpt-4o-mini', provider: 'openai', calls: 8, cost_usd: 0.05, cap_usd: 2, spent_today_usd: 0.31 },
+          { provider: 'nobody' },
+        ],
+      },
+    }
+    expect(personaJudgeSummaries(payload)).toEqual([
+      {
+        model: 'gpt-4o-mini',
+        provider: 'openai',
+        calls: 8,
+        fallback: null,
+        cap_exceeded: null,
+        elapsed_ms: null,
+        cost_usd: 0.05,
+        cap_usd: 2,
+        spent_today_usd: 0.31,
+      },
+    ])
+    expect(personaDissentCount(payload)).toBe(3)
+    expect(personaDissentCount({})).toBeNull()
   })
 })
 

@@ -266,6 +266,124 @@ export function tracePersonaEval(trace: HarnessTrace): HarnessTraceEvent | undef
   return trace.events.find((e) => e.step === 'persona_evaluate')
 }
 
+export function numberOrNull(v: unknown): number | null {
+  return typeof v === 'number' && Number.isFinite(v) ? v : null
+}
+
+/* ------------------------------------------------------------ B2: judges */
+
+/** One judge's totals for a run, as the trace records them. */
+export interface PersonaJudge {
+  model: string
+  provider: string | null
+  calls: number | null
+  ok: number | null
+  fallback: number | null
+  cap_exceeded: number | null
+  elapsed_ms: number | null
+  cost_usd: number | null
+  cap_usd: number | null
+  spent_today_usd: number | null
+}
+
+/**
+ * The judges that sat on this run, in configured order.
+ *
+ * Empty before research 0.69.0 and in heuristic mode — which is the point: a
+ * batch with no judges listed was scored by a rule, not read by a model, and
+ * the console must not dress it up as the latter.
+ */
+export function personaJudges(trace: HarnessTrace): PersonaJudge[] {
+  const ev = tracePersonaEval(trace)
+  const raw = Array.isArray(ev?.models) ? (ev.models as Record<string, unknown>[]) : []
+  return raw
+    .filter((m) => m && typeof m === 'object' && typeof m.model === 'string')
+    .map((m) => ({
+      model: String(m.model),
+      provider: typeof m.provider === 'string' ? m.provider : null,
+      calls: numberOrNull(m.calls),
+      ok: numberOrNull(m.ok),
+      fallback: numberOrNull(m.fallback),
+      cap_exceeded: numberOrNull(m.cap_exceeded),
+      elapsed_ms: numberOrNull(m.elapsed_ms),
+      cost_usd: numberOrNull(m.cost_usd),
+      cap_usd: numberOrNull(m.cap_usd),
+      spent_today_usd: numberOrNull(m.spent_today_usd),
+    }))
+}
+
+export interface PersonaAgreement {
+  agree: number
+  dissent: number
+  single: number
+}
+
+/** How many candidates the judges agreed on, split on, or saw alone. */
+export function personaAgreement(trace: HarnessTrace): PersonaAgreement | null {
+  const raw = tracePersonaEval(trace)?.agreement
+  if (!raw || typeof raw !== 'object') return null
+  const a = raw as Record<string, unknown>
+  return {
+    agree: numberOrNull(a.agree) ?? 0,
+    dissent: numberOrNull(a.dissent) ?? 0,
+    single: numberOrNull(a.single) ?? 0,
+  }
+}
+
+/* ----------------------------------------------------------- B1: the plan */
+
+export interface PlanAttempt {
+  model: string
+  provider: string | null
+  ok: boolean
+  elapsed_ms: number | null
+  error: string | null
+  cost_usd: number | null
+}
+
+export interface PlanProvenance {
+  generatedBy: string
+  /** The model that produced the plan; null for the heuristic template. */
+  model: string | null
+  provider: string | null
+  /** Every hop the planner tried, in order — including the ones that failed. */
+  attempts: PlanAttempt[]
+  fallbackReason: string | null
+}
+
+/**
+ * Who wrote the plan, and what it took.
+ *
+ * `generated_by` alone read "heuristic" on every DEV run for weeks without
+ * saying why; the hops are what turn that into "the reasoner timed out, the
+ * chat model was never asked".
+ */
+export function planProvenance(planJson: Record<string, unknown> | null): PlanProvenance | null {
+  if (!planJson || typeof planJson !== 'object') return null
+  const generatedBy = typeof planJson.generated_by === 'string' ? planJson.generated_by : null
+  if (!generatedBy) return null
+  const rawAttempts = Array.isArray(planJson.llm_attempts)
+    ? (planJson.llm_attempts as Record<string, unknown>[])
+    : []
+  return {
+    generatedBy,
+    model: typeof planJson.llm_model === 'string' ? planJson.llm_model : null,
+    provider: typeof planJson.llm_provider === 'string' ? planJson.llm_provider : null,
+    attempts: rawAttempts
+      .filter((a) => a && typeof a === 'object' && typeof a.model === 'string')
+      .map((a) => ({
+        model: String(a.model),
+        provider: typeof a.provider === 'string' ? a.provider : null,
+        ok: a.ok === true,
+        elapsed_ms: numberOrNull(a.elapsed_ms),
+        error: typeof a.error === 'string' ? a.error : null,
+        cost_usd: numberOrNull(a.cost_usd),
+      })),
+    fallbackReason:
+      typeof planJson.fallback_reason === 'string' ? planJson.fallback_reason : null,
+  }
+}
+
 export function runDurationMs(
   started: string | null | undefined,
   finished: string | null | undefined,

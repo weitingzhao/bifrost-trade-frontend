@@ -10,25 +10,37 @@ import {
   DenseTag,
   type DenseTagVariant,
 } from '@/components/data-display'
+import { fmtJudgeCost } from '@/components/research/harness/harnessFormat'
 import {
+  candidateAgreement,
   candidateBatchDataSource,
   candidateBatchItems,
   hitRateFailingLenses,
   isHitRateWarnActive,
   isPersonaDissentActive,
   parseAgentVerdicts,
+  personaDissentCount,
   personaEvalModeLabel,
+  personaJudgeSummaries,
   stanceCounts,
-  type AgentStance,
+  verdictsByModel,
+  type CandidateAgreement,
 } from '@/lib/harness/harnessDraftHelpers'
 
 /** Above this a decision card turns into a spreadsheet; batches are policy-capped at 50. */
 const MAX_ROWS = 20
 
-function stanceVariant(stance: AgentStance): DenseTagVariant {
+/** `net` may also be `dissent` — the judges split, which is a warning, not a stance. */
+function stanceVariant(stance: string): DenseTagVariant {
   if (stance === 'support') return 'success'
   if (stance === 'oppose') return 'danger'
-  if (stance === 'caution') return 'warning'
+  if (stance === 'caution' || stance === 'dissent') return 'warning'
+  return 'neutral'
+}
+
+function agreementVariant(agreement: CandidateAgreement): DenseTagVariant {
+  if (agreement === 'agree') return 'success'
+  if (agreement === 'dissent') return 'warning'
   return 'neutral'
 }
 
@@ -58,6 +70,8 @@ export function CandidateBatchBody({
   const shown = items.slice(0, MAX_ROWS)
   const modeInfo = personaEvalModeLabel(payload)
   const holdingsGap = hasPortfolioHoldingsGap(items)
+  const judges = personaJudgeSummaries(payload)
+  const dissentCount = personaDissentCount(payload)
 
   return (
     <div className="space-y-2">
@@ -91,6 +105,24 @@ export function CandidateBatchBody({
 
       {desc ? (
         <p className="max-w-prose text-foreground/80">{desc}</p>
+      ) : null}
+
+      {judges.length > 0 ? (
+        <p className="text-dense-micro text-muted-foreground" data-testid="batch-judges">
+          Judges:{' '}
+          {judges.map((j, i) => (
+            <span key={j.model} className="font-mono">
+              {i > 0 ? ' · ' : ''}
+              {j.model}
+              {j.calls != null ? ` ${j.calls} call${j.calls === 1 ? '' : 's'}` : ''}
+              {j.fallback ? ` (${j.fallback} fell back)` : ''}
+              {j.cap_exceeded ? ` (${j.cap_exceeded} over cap)` : ''}
+              {j.cost_usd != null
+                ? ` ${fmtJudgeCost(j.cost_usd)}${j.cap_usd != null ? ` of ${fmtJudgeCost(j.cap_usd)}/day` : ''}`
+                : ''}
+            </span>
+          ))}
+        </p>
       ) : null}
 
       {modeInfo?.mode === 'heuristic' || modeInfo?.fallback ? (
@@ -150,7 +182,9 @@ export function CandidateBatchBody({
               Persona dissent / validate block
             </p>
             <p className="text-dense-micro text-muted-foreground">
-              At least one candidate was opposed by validate or net_stance=oppose.
+              {dissentCount != null && dissentCount > 0
+                ? `The judges split on ${dissentCount} candidate${dissentCount === 1 ? '' : 's'} (net = dissent), or a candidate was blocked by validate or opposed. `
+                : 'At least one candidate was opposed by validate or net_stance=oppose. '}
               Trust L0 batch mode will not auto-approve this draft.
             </p>
           </div>
@@ -189,7 +223,9 @@ export function CandidateBatchBody({
                 )
                 const verdicts = parseAgentVerdicts(item.evidence)
                 const counts = stanceCounts(verdicts)
-                const net = (item.net_stance || 'abstain') as AgentStance
+                const net = item.net_stance || 'abstain'
+                const agreement = candidateAgreement(item)
+                const byModel = verdictsByModel(verdicts)
                 return (
                   <DenseTableRow key={item.id}>
                     <DenseTableCell>
@@ -206,9 +242,24 @@ export function CandidateBatchBody({
                       </span>
                     </DenseTableCell>
                     <DenseTableCell>
-                      <DenseTag variant={stanceVariant(net)} size="cell">
-                        {net}
-                      </DenseTag>
+                      <div className="flex flex-wrap items-center gap-0.5">
+                        <DenseTag variant={stanceVariant(net)} size="cell">
+                          {net}
+                        </DenseTag>
+                        {agreement && agreement !== 'single' ? (
+                          <DenseTag
+                            variant={agreementVariant(agreement)}
+                            size="cell"
+                            title={
+                              agreement === 'agree'
+                                ? 'Every judge reached the same verdict.'
+                                : 'The judges split, or one fell back to the heuristic — never counted as agreement.'
+                            }
+                          >
+                            {agreement}
+                          </DenseTag>
+                        ) : null}
+                      </div>
                     </DenseTableCell>
                     <DenseTableCell>
                       {sel?.path ? (
@@ -242,22 +293,40 @@ export function CandidateBatchBody({
                             +{counts.support} / !{counts.caution} / −{counts.oppose} / ~
                             {counts.abstain}
                           </p>
-                          <div className="flex flex-wrap gap-0.5">
-                            {verdicts.map((v) => (
-                              <DenseTag
-                                key={`${item.id}-${v.agent}`}
-                                variant={stanceVariant(v.stance)}
-                                size="cell"
-                                title={
-                                  v.source
-                                    ? `${v.summary} · source=${v.source}`
-                                    : v.summary
-                                }
-                              >
-                                {v.agent}:{v.stance}
-                              </DenseTag>
-                            ))}
-                          </div>
+                          {byModel.map((group) => (
+                            <div
+                              key={`${item.id}-${group.model ?? 'heuristic'}`}
+                              className="flex flex-wrap items-center gap-0.5"
+                            >
+                              {group.model ? (
+                                <span
+                                  className="mr-0.5 font-mono text-dense-micro text-muted-foreground"
+                                  title={
+                                    group.fallback
+                                      ? `${group.model} failed on this symbol; the heuristic stood in (counts as dissent).`
+                                      : group.model
+                                  }
+                                >
+                                  {group.model}
+                                  {group.fallback ? ' ⚠' : ''}:
+                                </span>
+                              ) : null}
+                              {group.verdicts.map((v) => (
+                                <DenseTag
+                                  key={`${item.id}-${group.model ?? ''}-${v.agent}`}
+                                  variant={stanceVariant(v.stance)}
+                                  size="cell"
+                                  title={
+                                    v.source
+                                      ? `${v.summary} · source=${v.source}`
+                                      : v.summary
+                                  }
+                                >
+                                  {v.agent}:{v.stance}
+                                </DenseTag>
+                              ))}
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         <span className="text-muted-foreground">—</span>

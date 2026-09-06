@@ -16,3 +16,9 @@ export function pct(n: number, d: number): string {
   if (!d) return '—'
   return `${((n / d) * 100).toFixed(n / d < 0.01 ? 2 : 1)}%`
 }
+
+/** "$0.0003" for cents-of-a-cent LLM spend, "$1.23" once it is money. */
+export function fmtJudgeCost(usd: number): string {
+  if (usd === 0) return '$0'
+  return `$${usd.toFixed(Math.abs(usd) < 0.01 ? 4 : 2)}`
+}

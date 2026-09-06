@@ -5,6 +5,7 @@
  * component and the logic gets its own unit tests.
  */
 import type { AiDraft } from '@/api/researchDrafts'
+import { numberOrNull } from '@/lib/harness/harnessTrace'
 
 /**
  * Fields approving a policy_suggestion actually writes — the backend's
@@ -133,6 +134,49 @@ export interface PersonaEvalModeInfo {
   fallback: boolean
   label: string
   hint: string
+  /** The judges that sat (B2); empty in heuristic mode and before 0.69.0. */
+  models: string[]
+}
+
+/** One judge's totals as the Inbox payload carries them (B2). */
+export interface PersonaJudgeSummary {
+  model: string
+  provider: string | null
+  calls: number | null
+  fallback: number | null
+  cap_exceeded: number | null
+  elapsed_ms: number | null
+  cost_usd: number | null
+  cap_usd: number | null
+  spent_today_usd: number | null
+}
+
+export function personaJudgeSummaries(payload: Record<string, unknown>): PersonaJudgeSummary[] {
+  const raw = _dict(payload.persona_eval).models
+  if (!Array.isArray(raw)) return []
+  const out: PersonaJudgeSummary[] = []
+  for (const r of raw) {
+    if (!r || typeof r !== 'object') continue
+    const rec = r as Record<string, unknown>
+    if (typeof rec.model !== 'string' || !rec.model) continue
+    out.push({
+      model: rec.model,
+      provider: typeof rec.provider === 'string' ? rec.provider : null,
+      calls: numberOrNull(rec.calls),
+      fallback: numberOrNull(rec.fallback),
+      cap_exceeded: numberOrNull(rec.cap_exceeded),
+      elapsed_ms: numberOrNull(rec.elapsed_ms),
+      cost_usd: numberOrNull(rec.cost_usd),
+      cap_usd: numberOrNull(rec.cap_usd),
+      spent_today_usd: numberOrNull(rec.spent_today_usd),
+    })
+  }
+  return out
+}
+
+/** How many candidates the judges split on; null when the batch predates B2. */
+export function personaDissentCount(payload: Record<string, unknown>): number | null {
+  return numberOrNull(_dict(payload.persona_eval).dissent_count)
 }
 
 /** Inbox / Pipeline badge for persona_eval.mode (heuristic vs real agents). */
@@ -143,22 +187,28 @@ export function personaEvalModeLabel(
   const modeRaw = typeof pe.mode === 'string' ? pe.mode : ''
   if (!modeRaw) return null
   const fallback = pe.fallback_used === true
+  const models = personaJudgeSummaries(payload).map((m) => m.model)
   if (modeRaw === 'heuristic') {
     return {
       mode: 'heuristic',
       fallback: false,
       label: 'heuristic',
       hint: 'Deterministic Persona eval from evidence — not a live multi-agent run.',
+      models: [],
     }
   }
   if (modeRaw === 'agent') {
+    const judges = models.length > 1 ? `agent × ${models.length}` : 'agent'
     return {
       mode: 'agent',
       fallback,
-      label: fallback ? 'agent (fallback)' : 'agent',
+      label: fallback ? `${judges} (fallback)` : judges,
       hint: fallback
-        ? 'LLM agents requested but at least one symbol fell back to heuristic.'
-        : 'LLM Persona agents (BIFROST_PERSONA_EVAL_AGENTS=1).',
+        ? `LLM judges${models.length ? ` (${models.join(', ')})` : ''} — at least one judge fell back to the heuristic on some symbol, which counts as dissent.`
+        : models.length > 1
+          ? `Every candidate was read by ${models.join(' and ')}; the batch keeps only what they agree on.`
+          : 'LLM Persona agents (BIFROST_PERSONA_EVAL_AGENTS=1).',
+      models,
     }
   }
   return {
@@ -166,6 +216,7 @@ export function personaEvalModeLabel(
     fallback,
     label: fallback ? `${modeRaw} (fallback)` : modeRaw,
     hint: 'Persona eval mode from harness run outputs.',
+    models,
   }
 }
 
@@ -177,6 +228,8 @@ export interface AgentVerdict {
   summary: string
   confidence?: number
   source?: string
+  /** The judge that produced this row (B2); absent on heuristic rows. */
+  model?: string
 }
 
 export function parseAgentVerdicts(evidence: CandidateEvidence | null): AgentVerdict[] {
@@ -200,6 +253,7 @@ export function parseAgentVerdicts(evidence: CandidateEvidence | null): AgentVer
       row.confidence = rec.confidence
     }
     if (typeof rec.source === 'string') row.source = rec.source
+    if (typeof rec.model === 'string' && rec.model) row.model = rec.model
     out.push(row)
   }
   return out
@@ -214,6 +268,51 @@ export function stanceCounts(verdicts: AgentVerdict[]): Record<AgentStance, numb
   }
   for (const v of verdicts) c[v.stance] += 1
   return c
+}
+
+export interface ModelVerdictGroup {
+  /** null when the rows carry no judge — the heuristic path, or a run before B2. */
+  model: string | null
+  verdicts: AgentVerdict[]
+  /** Every row is the heuristic standing in for a judge that failed. */
+  fallback: boolean
+}
+
+/**
+ * A symbol's verdict rows grouped by the judge that wrote them, first-seen order.
+ *
+ * Eight chips in one line read as one persona panel twice; split by judge they
+ * read as two opinions — which is what the batch's agree / dissent is about.
+ */
+export function verdictsByModel(verdicts: AgentVerdict[]): ModelVerdictGroup[] {
+  const order: (string | null)[] = []
+  const by = new Map<string | null, AgentVerdict[]>()
+  for (const v of verdicts) {
+    const key = v.model ?? null
+    let rows = by.get(key)
+    if (!rows) {
+      rows = []
+      by.set(key, rows)
+      order.push(key)
+    }
+    rows.push(v)
+  }
+  return order.map((model) => {
+    const rows = by.get(model) ?? []
+    return {
+      model,
+      verdicts: rows,
+      fallback: rows.length > 0 && rows.every((v) => v.source === 'heuristic_fallback'),
+    }
+  })
+}
+
+export type CandidateAgreement = 'agree' | 'dissent' | 'single'
+
+/** How the judges landed on one candidate; null before B2. */
+export function candidateAgreement(item: CandidateItem): CandidateAgreement | null {
+  const raw = item.agreement ?? item.evidence?.agreement
+  return raw === 'agree' || raw === 'dissent' || raw === 'single' ? raw : null
 }
 
 /** Extract failing lens keys from a `candidate_batch` draft (empty when none). */
@@ -243,6 +342,8 @@ export interface CandidateEvidence {
   /** Wave 1 — Persona eval chain stances. */
   agent_verdicts?: AgentVerdict[]
   net_stance?: AgentStance | string
+  /** B2 — agree / dissent / single. */
+  agreement?: string
 }
 
 export interface CandidateItem {
@@ -252,6 +353,7 @@ export interface CandidateItem {
   evidence: CandidateEvidence | null
   net_stance?: string | null
   blocked_by_validate?: boolean
+  agreement?: string | null
 }
 export function candidateBatchItems(payload: Record<string, unknown>): CandidateItem[] {
   const raw = payload.items
@@ -282,6 +384,9 @@ export function candidateBatchItems(payload: Record<string, unknown>): Candidate
       evidence,
       net_stance: net,
       blocked_by_validate: rec.blocked_by_validate === true,
+      // Only present when the backend said something: a missing key is a run
+      // before B2, not a judgement of "no agreement".
+      ...(typeof rec.agreement === 'string' ? { agreement: rec.agreement } : {}),
     })
   }
   return out

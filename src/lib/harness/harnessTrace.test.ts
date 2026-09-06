@@ -4,6 +4,9 @@ import {
   funnelReach,
   groupIdenticalRuns,
   parseHarnessTrace,
+  personaAgreement,
+  personaJudges,
+  planProvenance,
   stageDurationsMs,
   traceFunnel,
 } from './harnessTrace'
@@ -238,5 +241,73 @@ describe('stageDurationsMs', () => {
   it('never reports a negative stage', () => {
     const d = stageDurationsMs(stamped([['scan_universe', 900], ['plan', 100]]))
     expect([...d.values()].every((v) => v >= 0)).toBe(true)
+  })
+})
+
+describe('personaJudges / personaAgreement (B2)', () => {
+  const run = parseHarnessTrace({
+    events: [
+      {
+        step: 'persona_evaluate',
+        mode: 'agent',
+        agreement: { agree: 5, dissent: 3, single: 0 },
+        models: [
+          {
+            model: 'deepseek-chat',
+            provider: 'deepseek',
+            calls: 8,
+            ok: 8,
+            fallback: 0,
+            cap_exceeded: 0,
+            elapsed_ms: 41000,
+            cost_usd: 0.004,
+            cap_usd: 2,
+            spent_today_usd: 0.012,
+          },
+          { model: 'gpt-4o-mini', provider: 'openai', calls: 8, ok: 7, fallback: 1 },
+          { provider: 'nobody' },
+        ],
+      },
+    ],
+  })
+
+  it('lists the judges in configured order with what the trace recorded', () => {
+    const judges = personaJudges(run)
+    expect(judges.map((j) => j.model)).toEqual(['deepseek-chat', 'gpt-4o-mini'])
+    expect(judges[0]).toMatchObject({ provider: 'deepseek', calls: 8, cost_usd: 0.004, cap_usd: 2 })
+    expect(judges[1]).toMatchObject({ fallback: 1, cost_usd: null, cap_usd: null })
+  })
+
+  it('reads the agreement counts, and is null for a run before B2', () => {
+    expect(personaAgreement(run)).toEqual({ agree: 5, dissent: 3, single: 0 })
+    expect(personaAgreement(parseHarnessTrace({ events: [{ step: 'persona_evaluate' }] }))).toBeNull()
+    expect(personaJudges(parseHarnessTrace({ events: [] }))).toEqual([])
+  })
+})
+
+describe('planProvenance (B1)', () => {
+  it('names the model and every hop, failed ones included', () => {
+    const plan = planProvenance({
+      generated_by: 'llm',
+      llm_model: 'gpt-4o-mini',
+      llm_provider: 'openai',
+      llm_attempts: [
+        { model: 'deepseek-chat', provider: 'deepseek', ok: false, elapsed_ms: 60012, error: 'timeout after 60s' },
+        { model: 'gpt-4o-mini', provider: 'openai', ok: true, elapsed_ms: 4275, cost_usd: 0.00533 },
+      ],
+    })
+    expect(plan).toMatchObject({ generatedBy: 'llm', model: 'gpt-4o-mini', provider: 'openai', fallbackReason: null })
+    expect(plan?.attempts.map((a) => [a.model, a.ok, a.error])).toEqual([
+      ['deepseek-chat', false, 'timeout after 60s'],
+      ['gpt-4o-mini', true, null],
+    ])
+  })
+
+  it('keeps the fallback reason on a heuristic plan and is null without provenance', () => {
+    expect(
+      planProvenance({ generated_by: 'heuristic', fallback_reason: 'llm_failed: deepseek-chat@deepseek HTTP 401' }),
+    ).toMatchObject({ generatedBy: 'heuristic', model: null, attempts: [], fallbackReason: 'llm_failed: deepseek-chat@deepseek HTTP 401' })
+    expect(planProvenance(null)).toBeNull()
+    expect(planProvenance({ steps: [] })).toBeNull()
   })
 })

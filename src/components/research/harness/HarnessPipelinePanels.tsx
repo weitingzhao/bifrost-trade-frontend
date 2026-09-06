@@ -6,20 +6,63 @@
  * they rendered the run as a pile of simultaneous panels rather than a sequence.
  * What remains is detail: raw plan steps, raw trace, and run outputs.
  */
+import { fmtJudgeCost, fmtStageMs } from '@/components/research/harness/harnessFormat'
 import {
   parseHarnessTrace,
+  planProvenance,
   traceScanEvent,
   type ObjectiveRunDetail,
 } from '@/lib/harness/harnessTrace'
+
+/** Who wrote the plan and every hop it took to get there (B1). */
+function PlanAttempts({ planJson }: { planJson: Record<string, unknown> | null }) {
+  const plan = planProvenance(planJson)
+  if (!plan) return null
+  return (
+    <div className="space-y-0.5 text-dense-meta" data-testid="plan-attempts">
+      <p>
+        <span className="font-medium">{plan.generatedBy}</span>
+        {plan.model ? <span className="font-mono"> · {plan.model}</span> : null}
+        {plan.fallbackReason ? (
+          <span className="text-warning"> · {plan.fallbackReason}</span>
+        ) : null}
+      </p>
+      {plan.attempts.length > 0 ? (
+        <ul className="space-y-0.5 font-mono text-muted-foreground">
+          {plan.attempts.map((a, i) => (
+            <li key={`${a.model}-${i}`}>
+              {a.model}
+              {a.provider ? `@${a.provider}` : ''} ·{' '}
+              {a.ok ? (
+                <span className="text-success">ok</span>
+              ) : (
+                <span className="text-destructive">{a.error ?? 'failed'}</span>
+              )}
+              {a.elapsed_ms != null && a.elapsed_ms > 0 ? ` · ${fmtStageMs(a.elapsed_ms)}` : ''}
+              {a.cost_usd != null && a.cost_usd > 0 ? ` · ${fmtJudgeCost(a.cost_usd)}` : ''}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  )
+}
 
 export function HarnessPlanStepper({ planJson }: { planJson: Record<string, unknown> | null }) {
   const steps = Array.isArray(planJson?.steps)
     ? (planJson!.steps as Record<string, unknown>[])
     : []
   if (steps.length === 0) {
-    return <p className="text-dense-meta text-muted-foreground">No plan steps recorded.</p>
+    return (
+      <div className="space-y-2">
+        <PlanAttempts planJson={planJson} />
+        <p className="text-dense-meta text-muted-foreground">No plan steps recorded.</p>
+      </div>
+    )
   }
   return (
+    <div className="space-y-2">
+    <PlanAttempts planJson={planJson} />
     <ol className="space-y-2 border-l border-border/60 pl-3">
       {steps.map((step, i) => (
         <li key={`${step.op ?? i}`} className="space-y-0.5">
@@ -30,6 +73,7 @@ export function HarnessPlanStepper({ planJson }: { planJson: Record<string, unkn
         </li>
       ))}
     </ol>
+    </div>
   )
 }
 

@@ -14,17 +14,22 @@ import type { ReactNode } from 'react'
 import { Check, ChevronDown, ChevronRight } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
 import { cn } from '@/lib/utils'
-import { fmtStageMs, num, pct } from '@/components/research/harness/harnessFormat'
+import { fmtJudgeCost, fmtStageMs, num, pct } from '@/components/research/harness/harnessFormat'
 import {
   PIPELINE_PHASES,
   PIPELINE_STAGES,
   completedProgressSteps,
   funnelReach,
+  numberOrNull,
+  personaAgreement,
+  personaJudges,
+  planProvenance,
   stageDurationsMs,
   traceFunnel,
   tracePersonaEval,
   type HarnessFunnelStep,
   type HarnessTrace,
+  type PersonaJudge,
   type PipelinePhaseId,
 } from '@/lib/harness/harnessTrace'
 
@@ -234,6 +239,20 @@ export interface PersonaVerdict {
   stance: string
   confidence: number | null
   summary: string
+  /** The judge that wrote the row (B2); null on heuristic rows. */
+  model: string | null
+}
+
+/** One judge's reading of one symbol (B2). */
+export interface PersonaRowModel {
+  model: string
+  net: string | null
+  validate: string | null
+  ok: boolean
+  fallback: boolean
+  elapsed_ms: number | null
+  cost_usd: number | null
+  error: string | null
 }
 
 export interface PersonaRow {
@@ -241,6 +260,9 @@ export interface PersonaRow {
   net: string
   validate: string
   blocked: boolean
+  /** agree / dissent / single; null before B2. */
+  agreement: string | null
+  models: PersonaRowModel[]
   verdicts: PersonaVerdict[]
 }
 
@@ -252,6 +274,19 @@ export function personaRows(trace: HarnessTrace): PersonaRow[] {
     net: String(r.net_stance ?? '—'),
     validate: String(r.validate_stance ?? '—'),
     blocked: r.blocked_by_validate === true,
+    agreement: typeof r.agreement === 'string' ? r.agreement : null,
+    models: (Array.isArray(r.models) ? (r.models as Record<string, unknown>[]) : [])
+      .filter((m) => m && typeof m === 'object' && typeof m.model === 'string')
+      .map((m) => ({
+        model: String(m.model),
+        net: typeof m.net === 'string' ? m.net : null,
+        validate: typeof m.validate === 'string' ? m.validate : null,
+        ok: m.ok === true,
+        fallback: m.fallback === true,
+        elapsed_ms: numberOrNull(m.elapsed_ms),
+        cost_usd: numberOrNull(m.cost_usd),
+        error: typeof m.error === 'string' ? m.error : null,
+      })),
     verdicts: (Array.isArray(r.verdicts) ? (r.verdicts as Record<string, unknown>[]) : []).map(
       (v) => ({
         agent: String(v.agent ?? '—'),
@@ -259,9 +294,27 @@ export function personaRows(trace: HarnessTrace): PersonaRow[] {
         stance: String(v.stance ?? '—'),
         confidence: typeof v.confidence === 'number' ? v.confidence : null,
         summary: String(v.summary ?? ''),
+        model: typeof v.model === 'string' ? v.model : null,
       }),
     ),
   }))
+}
+
+/** "deepseek-chat · 8 calls · 41s · $0.01 of $2.00" — one judge in one line. */
+export function judgeLine(j: PersonaJudge): string {
+  const parts = [j.model]
+  if (j.calls != null) parts.push(`${j.calls} call${j.calls === 1 ? '' : 's'}`)
+  if (j.fallback) parts.push(`${j.fallback} fell back`)
+  if (j.cap_exceeded) parts.push(`${j.cap_exceeded} over cap`)
+  if (j.elapsed_ms != null) parts.push(fmtStageMs(j.elapsed_ms))
+  if (j.cost_usd != null) {
+    parts.push(
+      j.cap_usd != null
+        ? `${fmtJudgeCost(j.cost_usd)} of ${fmtJudgeCost(j.cap_usd)}/day`
+        : fmtJudgeCost(j.cost_usd),
+    )
+  }
+  return parts.join(' · ')
 }
 
 /**
@@ -290,7 +343,7 @@ export function personaVerdictSummary(rows: PersonaRow[]): string {
  */
 function verdictShape(row: PersonaRow): string {
   return row.verdicts
-    .map((v) => `${v.agent}:${v.stance}:${v.summary.replace(/[\d.]+/g, '#')}`)
+    .map((v) => `${v.model ?? ''}:${v.agent}:${v.stance}:${v.summary.replace(/[\d.]+/g, '#')}`)
     .join('|')
 }
 
@@ -323,7 +376,7 @@ export function groupPersonaRows(rows: PersonaRow[]): PersonaGroup[] {
 
 function stanceClass(stance: string): string {
   if (stance === 'support') return 'text-success'
-  if (stance === 'caution') return 'text-warning'
+  if (stance === 'caution' || stance === 'dissent') return 'text-warning'
   if (stance === 'oppose' || stance === 'block') return 'text-destructive'
   return 'text-muted-foreground'
 }
@@ -336,10 +389,20 @@ function VerdictList({ verdicts }: { verdicts: PersonaVerdict[] }) {
       </p>
     )
   }
+  const judged = verdicts.some((v) => v.model)
   return (
     <ul className="space-y-1">
       {verdicts.map((v) => (
-        <li key={v.agent} className="flex gap-2 text-dense-caption">
+        <li key={`${v.model ?? ''}:${v.agent}`} className="flex gap-2 text-dense-caption">
+          {judged ? (
+            <span
+              className="w-24 shrink-0 truncate font-mono text-muted-foreground/80"
+              title={v.source === 'heuristic_fallback' ? `${v.model} fell back to the heuristic` : v.model ?? undefined}
+            >
+              {v.model ?? 'heuristic'}
+              {v.source === 'heuristic_fallback' ? ' ⚠' : ''}
+            </span>
+          ) : null}
           <span className="w-16 shrink-0 font-medium">{v.agent}</span>
           <span className={cn('w-14 shrink-0', stanceClass(v.stance))}>{v.stance}</span>
           <span className="w-8 shrink-0 tabular-nums text-muted-foreground/70">
@@ -368,6 +431,9 @@ export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
   const isLlm = mode === 'agent' && !fallback
   const agents = [...new Set(rows.flatMap((r) => r.verdicts.map((v) => v.agent)))]
   const groups = groupPersonaRows(rows)
+  const judges = personaJudges(trace)
+  const agreement = personaAgreement(trace)
+  const budgetExhausted = numberOrNull(ev.budget_exhausted_symbols) ?? 0
 
   return (
     <div className="space-y-2">
@@ -376,7 +442,14 @@ export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
           over the same evidence, and that difference decides how much the
           verdicts are worth. */}
       <p className="text-dense-caption">
-        {isLlm ? (
+        {isLlm && judges.length > 1 ? (
+          <>
+            <span className="text-info font-medium">{judges.length} judges</span> read each
+            candidate — {judges.map((j) => j.model).join(', ')}. The batch keeps only what they
+            agree on; a split is <span className="text-warning">dissent</span> and holds
+            auto-approve.
+          </>
+        ) : isLlm ? (
           <>
             <span className="text-info font-medium">LLM persona agents</span> read each
             candidate{agents.length > 0 ? ` — ${agents.join(', ')}` : ''}.
@@ -393,7 +466,36 @@ export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
         )}
       </p>
 
+      {judges.length > 0 ? (
+        <ul className="space-y-0.5 text-dense-caption text-muted-foreground" data-testid="persona-judges">
+          {judges.map((j) => (
+            <li key={j.model} className="font-mono">
+              {judgeLine(j)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-1">
+        {agreement ? (
+          <DenseTag
+            variant={agreement.dissent > 0 ? 'warning' : 'success'}
+            size="cell"
+            title="Candidates every judge agreed on, and candidates the judges split on (a judge that fell back counts as a split)."
+          >
+            {agreement.agree} agree · {agreement.dissent} dissent
+            {agreement.single ? ` · ${agreement.single} single` : ''}
+          </DenseTag>
+        ) : null}
+        {budgetExhausted > 0 ? (
+          <DenseTag
+            variant="warning"
+            size="cell"
+            title="The judge stage ran out of its wall-clock budget; these symbols were scored by the heuristic."
+          >
+            {budgetExhausted} past budget
+          </DenseTag>
+        ) : null}
         <DenseTag
           variant={Number(ev.blocked_by_validate) > 0 ? 'danger' : 'success'}
           size="cell"
@@ -432,12 +534,18 @@ export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
             {g.members.map((m) => (
               <DenseTag
                 key={m.symbol}
-                variant={m.blocked ? 'danger' : 'symbol'}
+                variant={m.blocked ? 'danger' : m.agreement === 'dissent' ? 'warning' : 'symbol'}
                 size="cell"
-                title={`net ${m.net} · validate ${m.validate}`}
+                title={[
+                  `net ${m.net} · validate ${m.validate}`,
+                  ...m.models.map(
+                    (j) =>
+                      `${j.model}: ${j.fallback ? `fell back (${j.error ?? 'failed'})` : `${j.net ?? '—'} / validate ${j.validate ?? '—'}`}`,
+                  ),
+                ].join('\n')}
               >
                 {m.symbol}
-                {m.blocked ? ' · blocked' : ''}
+                {m.blocked ? ' · blocked' : m.agreement === 'dissent' ? ' · dissent' : ''}
               </DenseTag>
             ))}
           </div>
@@ -491,15 +599,22 @@ export function stageViews(
   const draft = trace.events.find((e) => e.step === 'draft_candidate_batch')
   const planOps = trace.events.find((e) => e.step === 'plan_ops')
   const ops = Array.isArray(planOps?.ops) ? (planOps.ops as unknown[]).length : null
-  const generatedBy =
-    typeof planJson?.generated_by === 'string' ? planJson.generated_by : null
+  const plan = planProvenance(planJson)
+  const failedHops = plan ? plan.attempts.filter((a) => !a.ok).length : 0
 
   const summaryFor = (step: string): ReactNode => {
     switch (step) {
       case 'plan':
-        return [generatedBy, ops != null ? `${ops} ops` : null]
-          .filter(Boolean)
-          .join(' · ') || '—'
+        return (
+          [
+            plan?.generatedBy ?? null,
+            plan?.model ?? null,
+            failedHops > 0 ? `${failedHops} hop${failedHops === 1 ? '' : 's'} failed` : null,
+            ops != null ? `${ops} ops` : null,
+          ]
+            .filter(Boolean)
+            .join(' · ') || '—'
+        )
       case 'scan_universe': {
         if (!reach) return '—'
         const cuts = funnel.filter((s) => s.out_count < s.in_count).length

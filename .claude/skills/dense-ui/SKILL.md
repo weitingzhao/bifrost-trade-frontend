@@ -63,7 +63,7 @@ Copy and track:
 | Instance option / coverage subtables | `src/components/positions/InstanceOptionSubTable.tsx`, `InstanceCoverageSubTable.tsx` |
 | Live market streams (hybrid sticky table) | `src/pages/market/live/MarketStreamsTable.tsx` |
 | Live open orders | `src/pages/market/live/OpenOrdersPane.tsx` |
-| Model Analysis (expand + nested stress) | `src/pages/portfolio/modelAnalysis/ModelAnalysisSections.tsx`, `UnderlyingDetailPanel.tsx` |
+| Model band on Backing & Model (expand + nested stress) | `src/pages/portfolio/backing/model/ModelAnalysisSections.tsx`, `UnderlyingDetailPanel.tsx`, `ModelBandSection.tsx` |
 | Transfer Pay transactions / summary | `src/pages/portfolio/transferPay/TransferPayTransactionsTable.tsx`, `TransferPaySummaryTable.tsx` |
 | Stock Screener readiness results | `src/pages/research/data/stockScreener/ReadinessResultsTable.tsx` |
 | Option Screener symbol groups + contracts | `src/pages/research/data/optionScreener/OptionScreenerSymbolGroup.tsx`, `OptionScreenerContractsTable.tsx` |

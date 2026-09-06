@@ -626,15 +626,16 @@ Daily/SINCE stacked columns (% then $): [LiveStackedPnlCell.tsx](../src/pages/ma
 
 **Reference:** [MarketStreamsTable.tsx](../src/pages/market/live/MarketStreamsTable.tsx) · [OpenOrdersPane.tsx](../src/pages/market/live/OpenOrdersPane.tsx) (full `DenseDataTable`)
 
-## Model Analysis (expand row + nested stress tables)
+## Model band on Backing & Model (expand row + nested stress tables)
 
-Page tokens: [modelAnalysisUi.ts](../src/pages/portfolio/modelAnalysis/modelAnalysisUi.ts)
+Page tokens: [modelAnalysisUi.ts](../src/pages/portfolio/backing/model/modelAnalysisUi.ts)
 
-- Main per-underlying table: hybrid shell + `ExpandToggleCell` + detail `colSpan` row
+- The band: `ModelBandSection` (pure props) + `useModelBand` (query, account, table state); `<h2>` title, read-only account tag or `SegmentControl` depending on the page scope
+- Main per-underlying table: `CollapsibleGroup` (collapsed by default, controlled) + hybrid shell + `ExpandToggleCell` + detail `colSpan` row; `?symbol=` opens a row
 - Account stress matrix: `CollapsibleGroup` + `NestedDenseTable`
 - Expanded symbol detail: 3× `NestedDenseTable` (CAR legs, option Greeks, per-symbol stress)
 
-**Reference:** [ModelAnalysisSections.tsx](../src/pages/portfolio/modelAnalysis/ModelAnalysisSections.tsx) · [UnderlyingDetailPanel.tsx](../src/pages/portfolio/modelAnalysis/UnderlyingDetailPanel.tsx)
+**Reference:** [ModelBandSection.tsx](../src/pages/portfolio/backing/model/ModelBandSection.tsx) · [ModelAnalysisSections.tsx](../src/pages/portfolio/backing/model/ModelAnalysisSections.tsx) · [UnderlyingDetailPanel.tsx](../src/pages/portfolio/backing/model/UnderlyingDetailPanel.tsx)
 
 ## Filter interaction layer
 

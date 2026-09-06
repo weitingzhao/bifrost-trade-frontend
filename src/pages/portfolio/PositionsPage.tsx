@@ -61,14 +61,7 @@ import { instanceGroupKey } from '@/utils/instanceSheetExec'
 import { riskMapLegShort, type RiskMapLeg } from '@/utils/shortLegRiskMap'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
 import type { Execution } from '@/types/positions'
-
-const BACKING_PATH = '/portfolio/backing'
-const MODEL_ANALYSIS_PATH = '/portfolio/model-analysis'
-
-/** Where a Backing-page target lands, as a hash the Backing page scrolls to. */
-const BACKING_ANCHOR: Record<'coverage' | 'independent' | 'room', string> = {
-  coverage: 'obligations',
-  independent: 'holdings', room: 'room' }
+import { BACKING_TARGET_ANCHOR, backingHref, isBackingTarget } from '@/utils/backingAnchors'
 
 export default function PositionsPage() {
   const navigate = useNavigate()
@@ -169,15 +162,10 @@ export default function PositionsPage() {
         scrollTo('positions-lines')
       } else if (t === 'margin') {
         scrollTo('positions-margin')
-      } else if (t === 'capital') {
-        navigate(MODEL_ANALYSIS_PATH)
       } else if (t === 'room') {
         scrollTo('positions-room')
-      } else {
-        const params = new URLSearchParams(scopeSearch)
-        if (sort) params.set('sort', sort)
-        const qs = params.toString()
-        navigate(`${BACKING_PATH}${qs ? `?${qs}` : ''}#${BACKING_ANCHOR[t]}`)
+      } else if (isBackingTarget(t)) {
+        navigate(backingHref({ scopeSearch, sort, anchor: BACKING_TARGET_ANCHOR[t] }))
       }
     },
     [navigate, scopeSearch, setLinesView],
@@ -336,7 +324,7 @@ export default function PositionsPage() {
                   checks={book.alarm.checks}
                   cushionTightPct={cushionTightPct}
                   onOpenTarget={openTarget}
-                  headerLink={{ to: MODEL_ANALYSIS_PATH, label: 'Model analysis →' }}
+                  headerLink={{ to: backingHref({ scopeSearch, anchor: 'model' }), label: 'Model →' }}
                   spotMix={book.alarm.spotMix}
                   explain={explain}
                   room={room}

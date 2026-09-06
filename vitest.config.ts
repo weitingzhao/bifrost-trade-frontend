@@ -18,5 +18,13 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    server: {
+      deps: {
+        // Radix under the linked @bifrost/ui is a node_modules dep, which vitest
+        // externalises — Node then resolves its `react` to bifrost-ui's copy,
+        // past the dedupe above. Inlining it routes that import through Vite.
+        inline: [/radix-ui/],
+      },
+    },
   },
 })

@@ -89,15 +89,15 @@ npm run lint && npm run build && npm run check:legacy-css
 
 **Scope**
 
-- [`modelAnalysisUi.ts`](../src/pages/portfolio/modelAnalysis/modelAnalysisUi.ts) + [`ModelAnalysisAccountPills.tsx`](../src/pages/portfolio/modelAnalysis/ModelAnalysisAccountPills.tsx)
-- [`ModelAnalysisPage.tsx`](../src/pages/portfolio/ModelAnalysisPage.tsx) — PageHeader + segment account pills
-- [`ModelAnalysisSections.tsx`](../src/pages/portfolio/modelAnalysis/ModelAnalysisSections.tsx) — main table + stress collapsible + KPI strip
-- [`UnderlyingDetailPanel.tsx`](../src/pages/portfolio/modelAnalysis/UnderlyingDetailPanel.tsx) — 3× NestedDenseTable
+- [`modelAnalysisUi.ts`](../src/pages/portfolio/backing/model/modelAnalysisUi.ts) + [`ModelAnalysisAccountPills.tsx`](../src/pages/portfolio/backing/model/ModelAnalysisAccountPills.tsx)
+- `ModelAnalysisPage.tsx` — PageHeader + segment account pills (since merged into [`BackingPage.tsx`](../src/pages/portfolio/backing/BackingPage.tsx) as the model band, [`ModelBandSection.tsx`](../src/pages/portfolio/backing/model/ModelBandSection.tsx))
+- [`ModelAnalysisSections.tsx`](../src/pages/portfolio/backing/model/ModelAnalysisSections.tsx) — main table + stress collapsible + KPI strip
+- [`UnderlyingDetailPanel.tsx`](../src/pages/portfolio/backing/model/UnderlyingDetailPanel.tsx) — 3× NestedDenseTable
 - Delete [`modelAnalysis.module.css`](../src/pages/portfolio/modelAnalysis.module.css) (372 lines → 0)
 
 **CI**
 
-- No `styles.(compactTable|tableWrap|nestedTable|pnlPositive|…)` in `src/pages/portfolio/modelAnalysis/**/*.tsx`
+- No `styles.(compactTable|tableWrap|nestedTable|pnlPositive|…)` in `src/pages/portfolio/backing/model/**/*.tsx`
 - `modelAnalysis.module.css` absent or ≤ 80 lines
 
 **Acceptance**

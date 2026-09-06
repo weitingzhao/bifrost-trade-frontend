@@ -83,7 +83,7 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/portfolio/accounts', label: 'Accounts', domain: 'portfolio', pathGlobs: ['pages/portfolio/AccountsPage.tsx', 'components/accounts/**'] },
   { route: '/portfolio/positions', label: 'Positions', domain: 'portfolio', pathGlobs: ['pages/portfolio/PositionsPage.tsx', 'components/positions/**'] },
   { route: '/portfolio/performance', label: 'Performance', domain: 'portfolio', pathGlobs: ['pages/portfolio/PerformancePage.tsx', 'pages/portfolio/performance/**', 'components/performance/**'] },
-  { route: '/portfolio/model-analysis', label: 'Model Analysis', domain: 'portfolio', pathGlobs: ['pages/portfolio/ModelAnalysisPage.tsx', 'pages/portfolio/modelAnalysis/**'] },
+  { route: '/portfolio/backing', label: 'Backing & Model', domain: 'portfolio', pathGlobs: ['pages/portfolio/backing/**'] },
   { route: '/portfolio/ledger', label: 'Trade Ledger', domain: 'portfolio', pathGlobs: ['pages/portfolio/TradeLedgerPage.tsx', 'pages/portfolio/ledger/**'] },
   { route: '/portfolio/transfer', label: 'Transfer & Pay', domain: 'portfolio', pathGlobs: ['pages/portfolio/TransferPayPage.tsx'] },
 

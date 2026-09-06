@@ -50,10 +50,6 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/portfolio/PerformancePage')),
       },
       {
-        path: 'portfolio/model-analysis',
-        lazy: lazyPage(() => import('@/pages/portfolio/ModelAnalysisPage')),
-      },
-      {
         path: 'portfolio/ledger',
         lazy: lazyPage(() => import('@/pages/portfolio/TradeLedgerPage')),
       },
@@ -64,6 +60,11 @@ export const router = createBrowserRouter([
       {
         path: 'portfolio/trade-history',
         element: <Navigate to="/portfolio/ledger" replace />,
+      },
+      /* Model Analysis merged into Backing & Model as its lower band. */
+      {
+        path: 'portfolio/model-analysis',
+        element: <Navigate to="/portfolio/backing#model" replace />,
       },
 
       {

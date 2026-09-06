@@ -4,10 +4,12 @@ import { z } from 'zod'
 export const ModelAnalysisResponseSchema = z
   .object({
     account_id: z.string(),
+    // Core answers `{}` for an account it has no summary for; each field is
+    // optional so that validates instead of failing the whole response.
     account_summary: z.object({
-      net_liquidation: z.number().nullable(),
-      total_cash: z.number().nullable(),
-      buying_power: z.number().nullable(),
+      net_liquidation: z.number().nullable().optional(),
+      total_cash: z.number().nullable().optional(),
+      buying_power: z.number().nullable().optional(),
     }),
     per_underlying: z.array(z.record(z.string(), z.unknown())),
     account_rollups: z.object({

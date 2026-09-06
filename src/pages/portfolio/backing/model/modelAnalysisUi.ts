@@ -15,7 +15,17 @@ export const modelAnalysisTable = {
   expandedRow: 'bg-primary/[0.04]',
 } as const
 
-export const modelAnalysisPageStackClass = 'flex flex-col gap-3 min-w-0'
+/** The model band on Backing & Model: the same shell as Room to add, its header line, and its body stack. */
+export const modelBandSectionClass = 'min-w-0 rounded-md border border-border bg-secondary/40 px-3 py-1.5'
+
+export const modelBandHeaderClass = 'mb-1 flex flex-wrap items-center gap-x-2 gap-y-1'
+
+export const modelBandTitleClass =
+  'flex items-center gap-1.5 text-dense-label font-semibold uppercase tracking-wide text-muted-foreground'
+
+export const modelBandScopeLineClass = 'mb-1.5 text-dense-caption text-muted-foreground'
+
+export const modelBandBodyClass = 'flex min-w-0 flex-col gap-2 pb-1'
 
 export const modelAnalysisHypotheticalBadgeClass =
   'inline-flex items-center gap-1 rounded-md border border-warning/40 bg-warning-soft px-2 py-0.5 text-dense-meta font-semibold tracking-wide text-warning whitespace-nowrap'

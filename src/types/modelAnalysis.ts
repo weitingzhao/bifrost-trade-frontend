@@ -88,10 +88,11 @@ export interface UnderlyingEntry {
 
 export interface ModelAnalysisResponse {
   account_id: string
+  /** `{}` when core has no summary for the account. */
   account_summary: {
-    net_liquidation: number | null
-    total_cash: number | null
-    buying_power: number | null
+    net_liquidation?: number | null
+    total_cash?: number | null
+    buying_power?: number | null
   }
   per_underlying: UnderlyingEntry[]
   account_rollups: {

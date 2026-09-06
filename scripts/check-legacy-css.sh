@@ -484,12 +484,13 @@ if [[ -f "$live_css" ]]; then
   fi
 fi
 
-# Model Analysis: Dense migration — no legacy table module class references
+# Model Analysis: Dense migration — no legacy table module class references.
+# The band moved into the Backing feature when the two pages merged.
 ma_legacy=$(grep -rE 'styles\.(compactTable|tableWrap|nestedTable|pnlPositive|pnlNegative|riskDefined|riskUnlimited|stressCollapsible|accountPill|summaryStrip|detailCell)' \
-  src/pages/portfolio/modelAnalysis --include='*.tsx' 2>/dev/null || true)
+  src/pages/portfolio/backing/model --include='*.tsx' 2>/dev/null || true)
 if [[ -n "$ma_legacy" ]]; then
   echo "$ma_legacy" >&2
-  report "legacy modelAnalysis.module.css class references in src/pages/portfolio/modelAnalysis"
+  report "legacy modelAnalysis.module.css class references in src/pages/portfolio/backing/model"
 fi
 
 ma_css=src/pages/portfolio/modelAnalysis.module.css

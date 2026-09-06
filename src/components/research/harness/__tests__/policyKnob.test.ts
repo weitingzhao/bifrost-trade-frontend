@@ -98,6 +98,7 @@ describe('editable fields', () => {
       'option_overlay',
       'preset',
       'require_validate_pass',
+      'resolution',
       'universe_mode',
     ])
   })

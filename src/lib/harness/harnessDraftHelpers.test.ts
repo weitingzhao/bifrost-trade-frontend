@@ -562,6 +562,7 @@ describe('policy diff covers every field approval writes', () => {
       'option_overlay',
       'preset',
       'require_validate_pass',
+      'resolution',
       'universe_mode',
     ])
   })

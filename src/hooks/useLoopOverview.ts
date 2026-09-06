@@ -15,6 +15,8 @@ import { useQueries } from '@tanstack/react-query'
 import { fetchObjectiveRuns, fetchObjectives } from '@/api/research/harness'
 import { fetchCandidateOutcomeSummary } from '@/api/research/candidateOutcome'
 import { listResearchDrafts } from '@/api/researchDrafts'
+import { listHypotheses } from '@/api/researchHypothesis'
+import { isRuleResolved } from '@/lib/hypothesisResolution'
 
 /** Business window. Cumulative counts flatter a loop that stopped weeks ago. */
 export const LOOP_WINDOW_DAYS = 30
@@ -49,6 +51,8 @@ export interface LoopInputs {
   tracked: number
   settled: number
   judged: number
+  /** Theses the outcome rule settled without a click (B3). */
+  resolvedByRule?: number
   now?: number
 }
 
@@ -103,7 +107,9 @@ export function deriveLoopSegments(input: LoopInputs, windowDays: number): LoopS
       label: 'Came back scored',
       value: input.judged,
       unit: 'judged',
-      detail: `${input.tracked} tracked · ${input.settled} reached their horizon`,
+      detail:
+        `${input.tracked} tracked · ${input.settled} reached their horizon` +
+        (input.resolvedByRule ? ` · ${input.resolvedByRule} theses settled by rule` : ''),
       starved: input.judged === 0,
     },
   ]
@@ -157,10 +163,21 @@ export function useLoopOverview(windowDays: number = LOOP_WINDOW_DAYS): LoopOver
           listResearchDrafts({ status: 'approved', kind: 'policy_suggestion', limit: 200 }),
         staleTime: 60_000,
       },
+      {
+        queryKey: ['loop-overview', 'hypotheses', 'validated'],
+        queryFn: () => listHypotheses({ status: 'validated', limit: 200 }),
+        staleTime: 60_000,
+      },
+      {
+        queryKey: ['loop-overview', 'hypotheses', 'rejected'],
+        queryFn: () => listHypotheses({ status: 'rejected', limit: 200 }),
+        staleTime: 60_000,
+      },
     ],
   })
 
-  const [objectivesQ, runsQ, pendingQ, approvedQ, outcomesQ, sugPendingQ, sugApprovedQ] = results
+  const [objectivesQ, runsQ, pendingQ, approvedQ, outcomesQ, sugPendingQ, sugApprovedQ, validatedQ, rejectedQ] =
+    results
   const isLoading = results.some((r) => r.isLoading)
   const isError = results.some((r) => r.isError)
 
@@ -177,6 +194,11 @@ export function useLoopOverview(windowDays: number = LOOP_WINDOW_DAYS): LoopOver
   const settled = (outcomes?.horizons ?? []).reduce((n, h) => n + (h.settled ?? 0), 0)
   const judged = (outcomes?.horizons ?? []).reduce((n, h) => n + (h.judged ?? 0), 0)
   const tracked = outcomes?.candidates ?? 0
+  // Only theses with a receipt count: a status someone clicked is a decision,
+  // not the loop learning on its own.
+  const resolvedByRule = [...(validatedQ.data?.rows ?? []), ...(rejectedQ.data?.rows ?? [])].filter(
+    (h) => isRuleResolved(h) && withinWindow(h.updated_at, windowDays),
+  ).length
 
   const segments = deriveLoopSegments(
     {
@@ -187,6 +209,7 @@ export function useLoopOverview(windowDays: number = LOOP_WINDOW_DAYS): LoopOver
       tracked,
       settled,
       judged,
+      resolvedByRule,
     },
     windowDays,
   )

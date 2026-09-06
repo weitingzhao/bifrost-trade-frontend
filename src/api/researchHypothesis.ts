@@ -9,6 +9,38 @@ import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
 
 export type HypothesisStatus = 'active' | 'validated' | 'rejected' | 'archived'
 
+/**
+ * How an outcome rule settled a hypothesis (research 0.70.0, B3): the receipt
+ * behind a validated / rejected status that nobody clicked.
+ */
+export interface HypothesisResolution {
+  rule_version?: number
+  resolved_at?: string
+  resolved_by?: string
+  decision?: 'validated' | 'rejected' | string
+  reason?: string
+  rule?: {
+    enabled?: boolean
+    horizon_days?: number
+    validate_excess?: number
+    reject_excess?: number
+    benchmark?: string
+  }
+  outcome?: {
+    candidate_id?: string
+    symbol?: string
+    trade_date?: string | null
+    horizon_days?: number
+    exit_date?: string | null
+    forward_return?: number | null
+    benchmark_symbol?: string | null
+    benchmark_return?: number | null
+    excess_return?: number | null
+    hit?: boolean | null
+  }
+  lineage?: Record<string, unknown> | null
+}
+
 export interface Hypothesis {
   id: string
   title: string
@@ -24,6 +56,8 @@ export interface Hypothesis {
   created_at: string
   updated_at: string
   retired_at: string | null
+  /** Present only when an outcome rule settled the status (B3). */
+  resolution_json?: HypothesisResolution | null
 }
 
 export interface HypothesisListResponse {

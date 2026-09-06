@@ -29,6 +29,7 @@ export const POLICY_SUGGESTION_KEYS = [
   'option_overlay',
   'require_validate_pass',
   'discovery_assist',
+  'resolution',
 ] as const
 
 export type PolicyKey = (typeof POLICY_SUGGESTION_KEYS)[number]
@@ -61,6 +62,8 @@ export const POLICY_FIELD_HELP: Record<PolicyKey, string> = {
     'When true, a validate persona opposing a candidate blocks auto-approve for the whole batch.',
   discovery_assist:
     'Playbook-driven boost/veto at the funnel exit. Reorders and can veto; disabled by default.',
+  resolution:
+    'Outcome rule that settles candidate-born hypotheses without a click: at horizon_days sessions, excess return over the benchmark ≥ validate_excess validates, ≤ reject_excess rejects, in between drafts for you. Defaults 20 sessions, ±3% vs SPY.',
 }
 
 export interface PolicyDiffRow {

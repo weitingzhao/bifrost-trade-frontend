@@ -44,7 +44,7 @@ export default function HypothesisBoardPage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Hypothesis Board"
-        description="Active theses and outcomes. Open Analyze with the first symbol on each card."
+        description="Active theses and outcomes. Candidate-born theses settle by the objective's outcome rule at its horizon; the rest wait for you. Open Analyze with the first symbol on each card."
       />
 
       <div className="flex flex-wrap items-center gap-2">

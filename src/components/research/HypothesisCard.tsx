@@ -18,6 +18,7 @@ import { DenseTag, type DenseTagVariant } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { isRuleResolved, resolutionLine } from '@/lib/hypothesisResolution'
 import type { Hypothesis, HypothesisStatus } from '@/api/researchHypothesis'
 
 const STATUS_VARIANT: Record<HypothesisStatus, DenseTagVariant> = {
@@ -85,6 +86,14 @@ export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProp
             {hypothesis.linked_backtest_ids.length > 0 ? (
               <DenseTag variant="success">Evidence</DenseTag>
             ) : null}
+            {isRuleResolved(hypothesis) ? (
+              <DenseTag
+                variant="info"
+                title="Settled by the objective's outcome rule at its horizon — no click involved."
+              >
+                By rule
+              </DenseTag>
+            ) : null}
           </div>
           <Button
             asChild
@@ -108,6 +117,11 @@ export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProp
             </p>
           ) : null}
         </div>
+        {isRuleResolved(hypothesis) && resolutionLine(hypothesis.resolution_json) ? (
+          <p className="text-dense-micro text-muted-foreground" data-testid="hypothesis-resolution">
+            {resolutionLine(hypothesis.resolution_json)}
+          </p>
+        ) : null}
         {(symbols.length > 0 || tags.length > 0) && (
           <div className="flex flex-wrap items-center gap-1">
             {symbols.map((sym) => (

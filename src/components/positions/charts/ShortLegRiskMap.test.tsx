@@ -155,4 +155,22 @@ describe('ShortLegRiskMap', () => {
     fireEvent.click(screen.getAllByTestId('point-label')[1])
     expect(onSelect).toHaveBeenCalledWith(null)
   })
+
+  it('marks the selected leg apart from a leg merely priced at a close', () => {
+    const legs = [
+      leg({ key: 'a', symbol: 'MU', strike: 1200, spotSource: 'close', spotAsOf: 1_788_480_000 }),
+      leg({ key: 'b', symbol: 'FN', strike: 350, spotSource: 'close', spotAsOf: 1_788_480_000, dte: 40 }),
+    ]
+    const { rerender } = render(<ShortLegRiskMap legs={legs} tightPct={0.03} activeExpiry={null} />)
+    // Nothing selected: no halo anywhere, though both legs are priced at a close.
+    expect(screen.queryAllByTestId('point-halo')).toHaveLength(0)
+    expect([...plotCircles()].every((c) => c.getAttribute('data-selected') == null)).toBe(true)
+
+    rerender(<ShortLegRiskMap legs={legs} tightPct={0.03} activeExpiry={null} selectedKey="a" />)
+    // Exactly one halo, on the selected leg only.
+    expect(screen.getAllByTestId('point-halo')).toHaveLength(1)
+    const marked = [...plotCircles()].filter((c) => c.getAttribute('data-selected') === 'true')
+    expect(marked).toHaveLength(1)
+    expect(marked[0].querySelector('title')?.textContent).toContain('MU')
+  })
 })

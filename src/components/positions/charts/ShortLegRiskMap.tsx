@@ -100,6 +100,10 @@ function LegPoint({
 }) {
   const toggle = onSelect ? () => onSelect(selected ? null : point.leg) : undefined
   return (
+    <>
+      {selected ? (
+        <circle cx={point.x} cy={point.y} r={point.r + 3} className={styles.pointHalo} data-testid="point-halo" aria-hidden="true" />
+      ) : null}
     <circle
       cx={point.x}
       cy={point.y}
@@ -120,6 +124,7 @@ function LegPoint({
     >
       <title>{riskMapLegTitle(point.leg)}</title>
     </circle>
+    </>
   )
 }
 

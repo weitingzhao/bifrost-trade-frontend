@@ -118,10 +118,13 @@
   fill: var(--color-loss);
 }
 
-/* Priced at the broker's mark, not live: the band colour stays (it is a real
-   price) but the ring is dashed so it cannot pass for a live reading. */
+/* Priced at a close or the broker's mark, not live: the band colour stays (it
+   is a real price) but the ring is dashed so it cannot pass for a live reading.
+   Muted on purpose — it was drawn in the foreground colour, and with a whole
+   book priced at one close every dot wore a bright ring that read as selected. */
 .pointMark {
-  stroke: var(--foreground);
+  stroke: var(--muted-foreground);
+  stroke-opacity: 0.7;
   stroke-dasharray: 2 2;
   fill-opacity: 0.6;
 }
@@ -144,6 +147,26 @@
 .pointClamped {
   stroke: var(--foreground);
   stroke-width: 1.5;
+}
+
+/* The selected point: a solid foreground ring, and the dash of a stale price
+   dropped, so selection is never confused with how the leg was priced. */
+.pointSelected {
+  stroke: var(--foreground);
+  stroke-width: 2;
+  stroke-dasharray: none;
+  stroke-opacity: 1;
+  fill-opacity: 1;
+}
+
+/* A halo outside the dot: the one mark that reads at every size, including the
+   4px legs where a 2px ring is most of the circle. */
+.pointHalo {
+  fill: none;
+  stroke: var(--foreground);
+  stroke-width: 1.25;
+  stroke-opacity: 0.9;
+  pointer-events: none;
 }
 
 /* Every point wears its name; the selected one is the one the panel is talking about. */
@@ -169,11 +192,6 @@
 .pointLabelSelected {
   fill: var(--foreground);
   font-weight: 600;
-}
-
-.pointSelected {
-  stroke: var(--foreground);
-  stroke-width: 2;
 }
 
 /* The scale's faint rules; the zero line and the tight line stay louder than these. */

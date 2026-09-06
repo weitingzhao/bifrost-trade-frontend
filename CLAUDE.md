@@ -11,6 +11,19 @@ parity-ids: dense-ui-system-v1, ui-confirm-dialogs-v1, module-placement-v1
 
 与本项目用户对话一律使用中文回复（无论用户用何种语言提问）；UI 字符串与代码标识符使用 English。
 
+## 工作区定位（2026-09-06）
+
+| 项 | 值 |
+|---|---|
+| 域 / 载荷 | Trade (OLTP) · **两个 payload 共用的驾驶舱 SPA**（Portfolio / Strategy / Market + Research UI），随 Satellite 链发布 |
+| 验收位置 | 本机 Vite `:5173`（`npm run dev:k3s`）对 DEV API `192.168.10.73:30882`；Prod 刷新是 L2 发布闸门，不是日常回归 |
+| 发布链 | GitHub main → `bifrost-deliver-{stg,prod}`（含 `bifrost-ui` 的 mirror-sync）；`bifrost-ci-frontend` 由 Gitea push webhook 触发 |
+| 仓库可见性 | GitHub **PUBLIC**（12 个 repo 全部公开）—— `.env`、Secret YAML、dump、kubeconfig、账户内容永不入库 |
+| 硬边界 | D10 交易执行冻结（BLOCKED）· D13 三域边界 · 平台/业务解耦（Flywheel A/B） |
+| 事实基线 | `../AGENT_FACTS.md`（§8c 运行时与安全事实）· 规则 `../CLAUDE.md`（§8 Claude Code 运行配置） |
+
+会话请在工作区根 `/stocks` 启动（加载治理层 hooks / auto mode / 共享记忆）；运行时与安全事实以 `../AGENT_FACTS.md` §8c 为准。
+
 ---
 
 ## 职责范围

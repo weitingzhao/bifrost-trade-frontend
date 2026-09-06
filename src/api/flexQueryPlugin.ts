@@ -49,9 +49,15 @@ async function pluginPost<T>(path: string, body: unknown): Promise<T> {
   return json as T
 }
 
+/**
+ * Synchronous Flex fetch through the plugin. One request per account by
+ * default; `fallback: true` re-enables the query-default / last-365-days
+ * widening when the window comes back empty — three requests per account,
+ * which is what trips IB's [1018] right after another run.
+ */
 export async function pluginFlexTrigger(
   kind: 'trades' | 'transactions',
-  extra?: { from_date?: string; to_date?: string },
+  extra?: { from_date?: string; to_date?: string; fallback?: boolean },
 ): Promise<FlexFetchResponse & TransactionsFetchResponse> {
   return pluginPost('/flex/ingest/trigger', { kind, ...(extra ?? {}) })
 }

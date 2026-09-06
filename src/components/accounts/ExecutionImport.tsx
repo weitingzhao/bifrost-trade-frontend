@@ -71,6 +71,9 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine 
   const [twsResult, setTwsResult] = useState<{ msg: string; isError: boolean } | null>(null)
 
   const [flexUseUpload, setFlexUseUpload] = useState(false)
+  // Off: one IB request per account. On: widen to the query's default period
+  // when the window is empty (three requests) — enough to trip IB's throttle.
+  const [flexWiden, setFlexWiden] = useState(false)
   const [flexLoading, setFlexLoading] = useState(false)
   const [flexResult, setFlexResult] = useState<FlexResult | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -105,7 +108,7 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine 
     setFlexLoading(true)
     setFlexResult(null)
     try {
-      const r = await pluginFlexTrigger('trades')
+      const r = await pluginFlexTrigger('trades', flexWiden ? { fallback: true } : undefined)
       if (r.ok) {
         setFlexResult({
           summary: buildFlexSuccessMessage(r),
@@ -219,6 +222,23 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine 
                   Use local Flex XML
                 </label>
               </div>
+              {!flexUseUpload ? (
+                <div
+                  className="flex items-center gap-2"
+                  title="Off: one IB request per account (the safe default). On: if the window comes back empty, also try the query's default period and the last 365 days — three requests per account, which can trip IB's rate limit right after another run."
+                >
+                  <Switch
+                    checked={flexWiden}
+                    onCheckedChange={setFlexWiden}
+                    disabled={busy}
+                    id="flex-widen-toggle"
+                    className="scale-90"
+                  />
+                  <label htmlFor="flex-widen-toggle" className="text-xs text-muted-foreground cursor-pointer whitespace-nowrap">
+                    Widen if empty
+                  </label>
+                </div>
+              ) : null}
               <Button
                 variant="outline"
                 size="sm"

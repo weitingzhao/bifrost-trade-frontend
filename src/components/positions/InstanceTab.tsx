@@ -54,7 +54,7 @@ import {
 } from './InstanceRiskCells'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { compareInstanceRisk, summarizeCushion, summarizeExpiry } from '@/utils/positionsOptionRisk'
-import { buildSpotResolver } from '@/utils/spotPrice'
+import type { SpotResolver } from '@/utils/spotPrice'
 import type { PositionGreeks } from '@/hooks/useOptionGreeks'
 
 const EXEC_QTY_TITLE =
@@ -66,6 +66,9 @@ interface Props {
   groups: InstanceAllGroup[]
   totalInstanceCount: number
   quotesBySymbol: Record<string, QuoteItem>
+  /** The page's spot resolver — live, then the dated close, then the mark — so a
+   *  leg cannot be unpriced here and priced on the cockpit. */
+  resolveSpot: SpotResolver
   quotesByCk: Record<string, QuoteItem>
   benchBySymbol: Record<string, DailyBenchmark>
   liveStocks: LivePositionRow[]
@@ -117,6 +120,7 @@ export function InstanceTab({
   groups,
   totalInstanceCount,
   quotesBySymbol,
+  resolveSpot,
   quotesByCk,
   benchBySymbol,
   liveStocks,
@@ -152,9 +156,6 @@ export function InstanceTab({
     structures,
     portfolioAccounts,
   )
-  // Live quote first, broker mark second — the same resolver the cockpit and
-  // the risk map price through, so a leg cannot be "unpriced" here and priced there.
-  const resolveSpot = useMemo(() => buildSpotResolver(quotesBySymbol, liveStocks), [quotesBySymbol, liveStocks])
 
   if (groups.length === 0) {
     return (
@@ -296,6 +297,7 @@ export function InstanceTab({
             const mainRow = (
               <DenseTableRow
                 key={`inst-${instKey}`}
+                id={`lines-row-${instKey}`}
                 className={cn(
                   instancePanel.sheetRow,
                   isExpanded && instancePanel.sheetRowExpanded,

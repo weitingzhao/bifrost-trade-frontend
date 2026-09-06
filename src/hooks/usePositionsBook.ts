@@ -20,6 +20,8 @@ import { useExecutionsFinal, useExecutionsTws, useExecutionsCanonical } from './
 import { useOpportunities, useStructures, useStrategyInstances } from './useStrategies'
 import { useOptionGreeks, type GreekLeg } from './useOptionGreeks'
 import { usePositionsAlarm } from './usePositionsAlarm'
+import { useLatestBars } from './useLatestBars'
+import { buildSpotResolver, repriceRows } from '@/utils/spotPrice'
 import type { PositionsScope } from './usePositionsScope'
 import {
   buildQuoteMap,
@@ -77,23 +79,13 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
     [accounts, accountFilter, hostAccountId, secondaryAccountId],
   )
 
-  const allPositions = useMemo(
+  const rawPositions = useMemo(
     () =>
       flattenPositions(accounts).filter((p) =>
         positionMatchesAccountFilter(p.account_id, accountFilter, hostAccountId, secondaryAccountId),
       ),
     [accounts, accountFilter, hostAccountId, secondaryAccountId],
   )
-  const { stocks: allStocks, options: allOptions } = useMemo(() => splitBySecType(allPositions), [allPositions])
-  const coreStocks = useMemo(() => filterStocksByBucket(allStocks, 'core'), [allStocks])
-  // A symbol scope narrows the book on both sides: that symbol's legs and that
-  // symbol's shares. Cash and income ETFs are not symbol-specific and stay.
-  const scopedCoreStocks = useMemo(
-    () => (filterSymbol ? coreStocks.filter((p) => (p.symbol ?? '').toUpperCase().includes(filterSymbol)) : coreStocks),
-    [coreStocks, filterSymbol],
-  )
-  const fixedIncomeStocks = useMemo(() => filterStocksByBucket(allStocks, 'fixed_income'), [allStocks])
-  const cashLikeStocks = useMemo(() => filterStocksByBucket(allStocks, 'cash_like'), [allStocks])
 
   // Include the underlyings of held options, not just held stock: a short put
   // on a symbol with no share position still needs a spot to be measured against.
@@ -104,6 +96,27 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
   const quotesBySymbol = buildQuoteMap(quotesData)
   const quotesByCk = buildCkMap(quotesData)
   const benchBySymbol = useMemo(() => benchData?.benchmarks ?? {}, [benchData?.benchmarks])
+  const barsBySymbol = useLatestBars(stkSymbols)
+
+  // The snapshot's price on a stock row is the broker's mark, and on DEV it
+  // has read March for six months. Every reader of row.price — market values,
+  // cover valuation, the rings — gets the rows re-priced once through the same
+  // resolver the risk side uses: live, then the dated close, then the mark only
+  // if it is fresher than the close.
+  const allPositions = useMemo(() => {
+    const resolve = buildSpotResolver(quotesBySymbol, rawPositions, barsBySymbol)
+    return repriceRows(rawPositions, resolve, barsBySymbol)
+  }, [rawPositions, quotesBySymbol, barsBySymbol])
+  const { stocks: allStocks, options: allOptions } = useMemo(() => splitBySecType(allPositions), [allPositions])
+  const coreStocks = useMemo(() => filterStocksByBucket(allStocks, 'core'), [allStocks])
+  // A symbol scope narrows the book on both sides: that symbol's legs and that
+  // symbol's shares. Cash and income ETFs are not symbol-specific and stay.
+  const scopedCoreStocks = useMemo(
+    () => (filterSymbol ? coreStocks.filter((p) => (p.symbol ?? '').toUpperCase().includes(filterSymbol)) : coreStocks),
+    [coreStocks, filterSymbol],
+  )
+  const fixedIncomeStocks = useMemo(() => filterStocksByBucket(allStocks, 'fixed_income'), [allStocks])
+  const cashLikeStocks = useMemo(() => filterStocksByBucket(allStocks, 'cash_like'), [allStocks])
 
   const executionsFinal = useMemo(() => execFinalData?.items ?? [], [execFinalData])
   const executionsTws = useMemo(() => execTwsData?.items ?? [], [execTwsData?.items])
@@ -213,6 +226,7 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
     cashLike: cashLikeStocks,
     thetaPerDay: greeks.matched > 0 ? greeks.theta : null,
     cushionTightPct,
+    barsBySymbol,
   })
   /** Every funded account, so a switched-off one is still visible, dimmed. */
   const marginAllAccounts = useMemo(() => rollupMargin(accounts), [accounts])

@@ -297,12 +297,17 @@ export default function PositionsPage() {
                     legs={book.riskLegs}
                     tightPct={cushionTightPct}
                     activeExpiry={activeExpiry}
-                    onLegClick={(leg) => {
-                      setFilterSymbol(leg.symbol)
-                      scrollTo('positions-lines')
-                    }}
+                    activeSymbol={filterSymbol}
                     onExpiryClick={toggleExpiryScope}
                     onUnpricedClick={() => openTarget('ladder')}
+                    onScopeSymbol={setFilterSymbol}
+                    onClearSymbol={() => setFilterSymbol('')}
+                    onShowInGrid={(leg) => {
+                      setLinesView('strategy')
+                      requestAnimationFrame(() =>
+                        document.getElementById(`lines-row-${leg.instanceKey}`)?.scrollIntoView({ block: 'center' }),
+                      )
+                    }}
                   />
                 </div>
                 <PositionsDashboard
@@ -343,6 +348,7 @@ export default function PositionsPage() {
                     groups={filteredInstanceGroups}
                     totalInstanceCount={book.instanceAllGroups.length}
                     quotesBySymbol={book.quotesBySymbol}
+                    resolveSpot={book.alarm.resolveSpot}
                     quotesByCk={book.quotesByCk}
                     benchBySymbol={book.benchBySymbol}
                     liveStocks={book.allStocks}

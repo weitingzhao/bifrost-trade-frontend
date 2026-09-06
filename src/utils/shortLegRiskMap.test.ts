@@ -10,7 +10,7 @@ import {
   riskMapLegTitle,
   CUSHION_MAX,
   CUSHION_MIN,
-  LEFT_GUTTER_W,
+  labelPoints,
   PLOT_PAD_Y,
   RIGHT_GUTTER_W,
   type RiskMapLeg,
@@ -143,7 +143,7 @@ describe('layoutRiskMap', () => {
     expect(b?.x).toBe(l.bands.plot.x1)
     expect(a?.y).toBe(l.bands.zeroY)
     expect(b?.y).toBeLessThan(a?.y as number)
-    expect(a?.x).toBeGreaterThan(LEFT_GUTTER_W)
+    expect(a?.x).toBeGreaterThan(0)
     expect(l.bands.rightGutter).toBeNull()
     expect(l.bands.plot.x1).toBeLessThan(OPTS.width)
   })
@@ -154,12 +154,9 @@ describe('layoutRiskMap', () => {
       OPTS,
     )
     expect(l.points.map((p) => p.leg.key)).toEqual(['p'])
-    expect(l.unpriced.map((p) => p.leg.key)).toEqual(['u'])
-    const u = l.unpriced[0]
-    expect(u?.x).toBeGreaterThan(0)
-    expect(u?.x).toBeLessThan(LEFT_GUTTER_W)
-    expect(u?.band).toBeNull()
-    expect(u?.clamped).toBeNull()
+    // Listed by name under the plot, never placed in it.
+    expect(l.unpriced.map((p) => p.key)).toEqual(['u'])
+    expect(l.labels.map((x) => x.key)).toEqual(['p'])
   })
 
   it('treats a non-finite cushion as unpriced and a non-finite dte as no expiry', () => {
@@ -173,16 +170,16 @@ describe('layoutRiskMap', () => {
       OPTS,
     )
     expect(l.points.map((p) => p.leg.key)).toEqual(['ok'])
-    expect(l.unpriced.map((p) => p.leg.key).sort()).toEqual(['inf', 'nan'])
+    expect(l.unpriced.map((p) => p.key).sort()).toEqual(['inf', 'nan'])
     expect(l.noExpiry.map((p) => p.leg.key)).toEqual(['nand'])
-    for (const p of [...l.points, ...l.unpriced, ...l.noExpiry]) {
+    for (const p of [...l.points, ...l.noExpiry]) {
       expect(Number.isFinite(p.x)).toBe(true)
       expect(Number.isFinite(p.y)).toBe(true)
     }
     expect(l.ticks.every((t) => Number.isFinite(t.x))).toBe(true)
   })
 
-  it('orders the unpriced gutter by dte, nulls last, top to bottom', () => {
+  it('orders the unpriced list by dte, nulls last', () => {
     const l = layoutRiskMap(
       [
         mapLeg({ key: 'far', dte: 60, cushionPct: null }),
@@ -191,10 +188,7 @@ describe('layoutRiskMap', () => {
       ],
       OPTS,
     )
-    expect(l.unpriced.map((p) => p.leg.key)).toEqual(['near', 'far', 'none'])
-    const ys = l.unpriced.map((p) => p.y)
-    expect(ys[0]).toBeLessThan(ys[1] as number)
-    expect(ys[1]).toBeLessThan(ys[2] as number)
+    expect(l.unpriced.map((p) => p.key)).toEqual(['near', 'far', 'none'])
     // A priced-less leg with no date still lands on the unpriced side.
     expect(l.noExpiry).toHaveLength(0)
     expect(l.bands.rightGutter).toBeNull()
@@ -302,26 +296,37 @@ describe('layoutRiskMap', () => {
     expect(fixed.points[0]?.x).toBeLessThan(fixed.bands.near.x1)
   })
 
-  it('keeps a crowded unpriced gutter inside its 56px column', () => {
-    const many = Array.from({ length: 15 }, (_, i) =>
-      mapLeg({ key: `u${i}`, dte: i, cushionPct: null, contracts: 1 }),
-    )
-    const l = layoutRiskMap(many, OPTS)
-    expect(l.unpriced).toHaveLength(15)
-    for (const p of l.unpriced) {
-      expect(p.x - p.r).toBeGreaterThanOrEqual(0)
-      expect(p.x + p.r).toBeLessThanOrEqual(LEFT_GUTTER_W)
-      expect(p.y).toBeGreaterThanOrEqual(l.bands.plot.y0)
-      expect(p.y).toBeLessThanOrEqual(l.bands.plot.y1)
-    }
-  })
-
   it('returns an empty layout for no legs without dividing by zero', () => {
     const l = layoutRiskMap([], OPTS)
     expect(l.points).toEqual([])
     expect(l.ticks).toEqual([])
     expect(Number.isFinite(l.tightY)).toBe(true)
     expect(Number.isFinite(l.bands.near.x1)).toBe(true)
+  })
+})
+
+describe('labelPoints', () => {
+  it('names each point beside it and nudges a second name on the same expiry clear of the first', () => {
+    const l = layoutRiskMap(
+      [
+        mapLeg({ key: 'a', symbol: 'NVDA', strike: 245, dte: 76, cushionPct: 0.249 }),
+        mapLeg({ key: 'b', symbol: 'NVDA', strike: 255, dte: 76, cushionPct: 0.279 }),
+        // A farther leg, so the two above sit mid-plot rather than on the right edge.
+        mapLeg({ key: 'far', symbol: 'DAVE', strike: 280, dte: 200, cushionPct: 0.2 }),
+      ],
+      OPTS,
+    )
+    const [a, b] = l.labels.filter((x) => x.key !== 'far')
+    expect([a?.text, b?.text].sort()).toEqual(['NVDA 245C', 'NVDA 255C'])
+    expect(Math.abs((a?.y ?? 0) - (b?.y ?? 0))).toBeGreaterThanOrEqual(9)
+    expect(a?.anchor).toBe('start')
+  })
+  it('flips a name to the left of a point at the right edge, and stays inside the plot', () => {
+    const l = layoutRiskMap([mapLeg({ key: 'edge', symbol: 'DAVE', strike: 280, dte: 132, cushionPct: 0.2 })], OPTS)
+    const label = l.labels[0]
+    expect(label?.anchor).toBe('end')
+    expect(label?.x).toBeLessThanOrEqual(l.bands.plot.x1)
+    expect(labelPoints([], l.bands.plot)).toEqual([])
   })
 })
 

@@ -27,7 +27,7 @@ import {
   type LadderLeg,
 } from '@/utils/positionsOptionRisk'
 import { marginBand, rollupMargin, type MarginRollup } from '@/utils/marginPressure'
-import { buildSpotResolver, spotMixOf, type SpotMix, type SpotResolver } from '@/utils/spotPrice'
+import { buildSpotResolver, spotMixOf, type LatestBar, type SpotMix, type SpotResolver } from '@/utils/spotPrice'
 import {
   assignmentCoverRatio,
   summarizeAssignmentExposure,
@@ -104,6 +104,7 @@ export function usePositionsAlarm({
   cashLike,
   thetaPerDay,
   cushionTightPct,
+  barsBySymbol,
 }: {
   groups: InstanceAllGroup[]
   quotesBySymbol: Record<string, QuoteItem>
@@ -117,6 +118,8 @@ export function usePositionsAlarm({
   /** Portfolio theta a day from the vendor Greeks; null while loading. */
   thetaPerDay: number | null
   cushionTightPct: number
+  /** Dated closes; without them the resolver only knows live quotes and marks. */
+  barsBySymbol?: Readonly<Record<string, LatestBar>>
 }): PositionsAlarm {
   const legs: AlarmLeg[] = []
   for (const group of groups) {
@@ -134,7 +137,7 @@ export function usePositionsAlarm({
       })
     }
   }
-  const resolveSpot = buildSpotResolver(quotesBySymbol, liveStocks)
+  const resolveSpot = buildSpotResolver(quotesBySymbol, liveStocks, barsBySymbol)
   const ladderRows = buildExpiryLadder(legs, (leg) => resolveSpot(leg.underlying)?.price ?? null)
   // Counted per short leg, like every other count on the Risk line.
   const spotMix = spotMixOf(

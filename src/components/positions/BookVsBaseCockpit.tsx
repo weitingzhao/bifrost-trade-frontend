@@ -20,7 +20,7 @@ import { fmtUsd } from '@/utils/positions'
 import type { BookVsBase, GaugeLevel } from '@/utils/bookVsBase'
 import type { AlarmCheck, AlarmTarget } from '@/hooks/usePositionsAlarm'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
-import type { SpotMix } from '@/utils/spotPrice'
+import { fmtSpotDate, type SpotMix } from '@/utils/spotPrice'
 import { cushionBand } from '@/utils/positionsOptionRisk'
 
 const LEVEL_TONE: Record<GaugeLevel, string> = {
@@ -240,11 +240,19 @@ export function BookVsBaseCockpit({
               <Num tone="text-warning">{risk.counts.unpriced} unpriced</Num>
             </>
           ) : null}
+          {spotMix && spotMix.close > 0 ? (
+            <>
+              {' · '}
+              <Num tone="text-warning" title="Priced at the latest daily close in the warehouse, not a live quote.">
+                {spotMix.close} at close {fmtSpotDate(spotMix.oldestCloseAsOf, 'close')}
+              </Num>
+            </>
+          ) : null}
           {spotMix && spotMix.mark > 0 ? (
             <>
               {' · '}
-              <Num tone="text-warning" title="Priced at the broker's last mark from the account snapshot, not a live quote.">
-                {spotMix.mark} at broker mark
+              <Num tone="text-warning" title="Priced at the broker's mark on the position row — its own time stamp is shown.">
+                {spotMix.mark} at mark {fmtSpotDate(spotMix.oldestMarkAsOf)}
               </Num>
             </>
           ) : null}

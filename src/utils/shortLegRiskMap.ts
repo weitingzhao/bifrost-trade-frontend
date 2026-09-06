@@ -43,6 +43,8 @@ export interface RiskMapLeg {
   cushionPct: number | null
   /** How the spot behind cushionPct was priced; null or absent when there was none. */
   spotSource?: SpotSource | null
+  /** When that spot was priced (unix seconds); the caption dates a close by it. */
+  spotAsOf?: number | null
 }
 
 /** A number that can be placed. null, undefined and NaN all mean "unknown". */
@@ -82,7 +84,8 @@ export function buildRiskMapLegs(input: {
     const right = normalizeRight(leg.right) ?? rightFromContractKey(leg.contractKey)
     if (right == null) continue
     const resolved = input.spotOf(leg)
-    const spot = resolved == null ? null : typeof resolved === 'number' ? { price: resolved, source: 'live' as const } : resolved
+    const spot =
+      resolved == null ? null : typeof resolved === 'number' ? { price: resolved, source: 'live' as const, asOf: null } : resolved
     // Same expression as buildExpiryLadder, so the two never diverge on a leg.
     const cushionPct = spot == null ? null : shortLegCushion(leg.right, leg.strike, spot.price)
     // One instance can hold the same contract across two accounts; the key
@@ -101,6 +104,7 @@ export function buildRiskMapLegs(input: {
       contracts: Math.abs(leg.qty),
       cushionPct,
       spotSource: spot?.source ?? null,
+      spotAsOf: spot && 'asOf' in spot ? (spot.asOf ?? null) : null,
     })
   }
   return out
@@ -117,7 +121,6 @@ export const NEAR_DTE = 7
 export const MONTH_DTE = 35
 
 /** The strip's own margins, in SVG user units. */
-export const LEFT_GUTTER_W = 56
 export const RIGHT_GUTTER_W = 48
 const PLOT_PAD_X = 8
 /**
@@ -167,8 +170,17 @@ export interface RiskMapTick {
   expiry?: string
 }
 
+/** A point's name, placed beside it and nudged clear of its neighbours. */
+export interface RiskMapLabel {
+  key: string
+  x: number
+  y: number
+  text: string
+  anchor: 'start' | 'end'
+}
+
 export interface RiskMapBands {
-  /** Priced area, excluding both gutters. */
+  /** Priced area, excluding the no-expiry gutter. */
   plot: { x0: number; x1: number; y0: number; y1: number }
   /** DTE ≤ NEAR_DTE. */
   near: { x0: number; x1: number }
@@ -177,14 +189,16 @@ export interface RiskMapBands {
   /** Cushion < 0 — the strike is breached. */
   itm: { y0: number; y1: number }
   zeroY: number
-  leftGutter: { x0: number; x1: number }
   /** Null when no priced leg lacks an expiry; the plot then runs to the right edge. */
   rightGutter: { x0: number; x1: number } | null
 }
 
 export interface RiskMapLayout {
   points: RiskMapPoint[]
-  unpriced: RiskMapGutterPoint[]
+  /** Every point's name, laid out once so labels never cover each other. */
+  labels: RiskMapLabel[]
+  /** Legs with no spot, nearest expiry first — listed under the plot, never placed in it. */
+  unpriced: RiskMapLeg[]
   noExpiry: RiskMapGutterPoint[]
   ticks: RiskMapTick[]
   tightY: number
@@ -264,7 +278,7 @@ export function layoutRiskMap(
   const rightGutter =
     noExpiryLegs.length > 0 ? { x0: width - RIGHT_GUTTER_W, x1: width } : null
   const plot = {
-    x0: LEFT_GUTTER_W + PLOT_PAD_X,
+    x0: PLOT_PAD_X,
     x1: (rightGutter ? rightGutter.x0 : width) - PLOT_PAD_X,
     y0: PLOT_TOP,
     y1: height - AXIS_H,
@@ -319,11 +333,7 @@ export function layoutRiskMap(
 
   const gutterTop = yTop
   const gutterBottom = yBottom
-  const unpriced = stackInGutter(unpricedLegs, LEFT_GUTTER_W / 2, gutterTop, gutterBottom, (_leg, stackedY) => ({
-    y: stackedY,
-    band: null,
-    clamped: null,
-  }))
+  const unpriced = unpricedLegs
   const noExpiry = rightGutter
     ? stackInGutter(noExpiryLegs, (rightGutter.x0 + rightGutter.x1) / 2, gutterTop, gutterBottom, (leg) => {
         // These legs do have a cushion, so they keep their y, their colour and
@@ -334,8 +344,10 @@ export function layoutRiskMap(
     : []
 
   const zeroY = yOf(0)
+  const labels = labelPoints(points, plot)
   return {
     points,
+    labels,
     unpriced,
     noExpiry,
     ticks,
@@ -346,7 +358,6 @@ export function layoutRiskMap(
       month: { x0: plot.x0, x1: xOf(MONTH_DTE) },
       itm: { y0: zeroY, y1: plot.y1 },
       zeroY,
-      leftGutter: { x0: 0, x1: LEFT_GUTTER_W },
       rightGutter,
     },
   }
@@ -397,4 +408,56 @@ export function riskMapLegTitle(leg: RiskMapLeg): string {
     ? `cushion ${fmtCushionPct(leg.cushionPct)}`
     : 'cushion n/a (no quote)'
   return `${leg.symbol} ${leg.expiry} ${leg.right} ${leg.strike} · ${contracts} · ${cushion} · ${fmtDte(leg.dte)}`
+}
+
+/** "NVDA 245C" — the name a point wears on the plot and a no-quote chip carries. */
+export function riskMapLegShort(leg: RiskMapLeg): string {
+  return `${leg.symbol} ${leg.strike}${leg.right}`
+}
+
+/** Roughly how wide a label is in SVG units, for the 8.5px monospace it is drawn in. */
+const LABEL_CHAR_W = 5.2
+const LABEL_LINE_H = 9
+
+/**
+ * Place each point's name to its right (or its left, near the edge), then nudge
+ * it down a line at a time while it would overprint a label already placed;
+ * if that runs off the plot, nudge up instead. Two legs on one expiry — the
+ * usual case, a call and a put, or two strikes — get two readable names.
+ */
+export function labelPoints(
+  points: readonly RiskMapPoint[],
+  plot: { x0: number; x1: number; y0: number; y1: number },
+): RiskMapLabel[] {
+  const placed: RiskMapLabel[] = []
+  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y)
+  for (const p of sorted) {
+    const text = riskMapLegShort(p.leg)
+    const width = text.length * LABEL_CHAR_W
+    const anchor: 'start' | 'end' = p.x + p.r + 3 + width > plot.x1 ? 'end' : 'start'
+    const x = anchor === 'start' ? p.x + p.r + 3 : p.x - p.r - 3
+    const left = anchor === 'start' ? x : x - width
+    const collides = (yy: number) =>
+      placed.some((l) => {
+        const lLeft = l.anchor === 'start' ? l.x : l.x - l.text.length * LABEL_CHAR_W
+        const lRight = lLeft + l.text.length * LABEL_CHAR_W
+        return lRight > left && lLeft < left + width && Math.abs(l.y - yy) < LABEL_LINE_H
+      })
+    let y = p.y + 3
+    let tries = 0
+    while (collides(y) && tries < 6) {
+      y += LABEL_LINE_H
+      tries += 1
+    }
+    if (y > plot.y1 - 1) {
+      y = p.y + 3
+      tries = 0
+      while (collides(y) && tries < 6) {
+        y -= LABEL_LINE_H
+        tries += 1
+      }
+    }
+    placed.push({ key: p.leg.key, x, y, text, anchor })
+  }
+  return placed
 }

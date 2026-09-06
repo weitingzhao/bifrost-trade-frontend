@@ -3,6 +3,12 @@
  * left. The corner that matters is bottom-left — near and tight — and the two
  * background bands mark the week and the roll window so the eye finds it.
  *
+ * Every point wears its name. The first version made the reader click a dot to
+ * learn which contract it was, and the click silently narrowed the whole page
+ * to that symbol with no obvious way back. Now a click only *selects* — the
+ * panel around this map shows the leg and offers the actions — and the legs
+ * with no price are listed by name under the plot, not hidden in a gutter.
+ *
  * The geometry is `layoutRiskMap`; this file only draws it. Three things the
  * drawing must never do: put an unpriced leg in the priced area, give it a
  * colour that means "fine", or hide the warning line the colours are judged
@@ -16,6 +22,7 @@ import {
   fmtTightPct,
   labelTicks,
   layoutRiskMap,
+  riskMapLegShort,
   riskMapLegTitle,
   MONTH_DTE,
   NEAR_DTE,
@@ -24,6 +31,7 @@ import {
   type RiskMapPoint,
 } from '@/utils/shortLegRiskMap'
 import type { CushionBand } from '@/utils/positionsOptionRisk'
+import { fmtSpotDate } from '@/utils/spotPrice'
 import styles from './ShortLegRiskMap.module.css'
 
 const WIDTH = 650
@@ -35,11 +43,7 @@ const BAND_CLASS: Record<CushionBand, string> = {
   breached: styles.pointBreached,
 }
 
-/**
- * Activation handlers for an SVG element playing a button. Both stop
- * propagation: a point inside the unpriced gutter is the leg, not the gutter,
- * and that has to hold for a key press as much as for a click.
- */
+/** Activation handlers for an SVG element playing a button. */
 function activate(fn: () => void) {
   return {
     onClick: (e: MouseEvent) => {
@@ -60,31 +64,45 @@ export interface ShortLegRiskMapProps {
   legs: RiskMapLeg[]
   tightPct: number
   activeExpiry?: string | null
-  onLegClick?: (leg: RiskMapLeg) => void
+  /** The selected leg's key; selection lives with the caller, which shows the detail. */
+  selectedKey?: string | null
+  /** Click a point or a no-quote chip: select it, or clear when it was already selected. */
+  onSelect?: (leg: RiskMapLeg | null) => void
   onExpiryClick?: (expiry: string) => void
+  /** The "N unpriced" count opens the calendar view, where the dates are. */
   onUnpricedClick?: () => void
 }
 
 function LegPoint({
   point,
   className,
-  onLegClick,
+  selected,
+  onSelect,
 }: {
   point: RiskMapPoint | RiskMapGutterPoint
   className: string
-  onLegClick?: (leg: RiskMapLeg) => void
+  selected: boolean
+  onSelect?: (leg: RiskMapLeg | null) => void
 }) {
+  const toggle = onSelect ? () => onSelect(selected ? null : point.leg) : undefined
   return (
     <circle
       cx={point.x}
       cy={point.y}
       r={point.r}
-      className={cn(className, point.clamped && styles.pointClamped, point.leg.spotSource === 'mark' && styles.pointMark)}
+      className={cn(
+        className,
+        point.clamped && styles.pointClamped,
+        point.leg.spotSource != null && point.leg.spotSource !== 'live' && styles.pointMark,
+        selected && styles.pointSelected,
+      )}
       data-band={point.band ?? 'unpriced'}
       data-clamped={point.clamped ?? undefined}
-      role={onLegClick ? 'button' : undefined}
-      tabIndex={onLegClick ? 0 : undefined}
-      {...(onLegClick ? activate(() => onLegClick(point.leg)) : {})}
+      data-selected={selected ? 'true' : undefined}
+      role={toggle ? 'button' : undefined}
+      tabIndex={toggle ? 0 : undefined}
+      aria-pressed={toggle ? selected : undefined}
+      {...(toggle ? activate(toggle) : {})}
     >
       <title>{riskMapLegTitle(point.leg)}</title>
     </circle>
@@ -95,7 +113,8 @@ export function ShortLegRiskMap({
   legs,
   tightPct,
   activeExpiry,
-  onLegClick,
+  selectedKey,
+  onSelect,
   onExpiryClick,
   onUnpricedClick,
 }: ShortLegRiskMapProps) {
@@ -108,27 +127,38 @@ export function ShortLegRiskMap({
   const labeled = labelTicks(ticks, activeExpiry)
   const unpricedCount = layout.unpriced.length
   const markCount = legs.filter((l) => l.spotSource === 'mark').length
+  const closeCount = legs.filter((l) => l.spotSource === 'close').length
+  const closeAsOf = legs.reduce<number | null>(
+    (oldest, l) =>
+      l.spotSource === 'close' && l.spotAsOf != null && (oldest == null || l.spotAsOf < oldest) ? l.spotAsOf : oldest,
+    null,
+  )
   const noExpiryCount = layout.noExpiry.length
   const tightLabel = `tight ${fmtTightPct(tightPct)}`
   const axisY = bands.plot.y1
   const labelY = HEIGHT - 3
-  // An empty gutter has nothing to open; it only becomes a control once there
-  // is a leg in it to look at.
-  const gutterOpens = onUnpricedClick != null && unpricedCount > 0
 
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-2 text-dense-caption text-muted-foreground">
         <span>
-          Short legs · cushion vs DTE · {legs.length} leg{legs.length === 1 ? '' : 's'}
+          Short legs · cushion vs DTE · {legs.length} leg{legs.length === 1 ? '' : 's'} · click a leg to see it
         </span>
         <span className="flex items-center gap-1">
+          {closeCount > 0 ? (
+            <span
+              className="font-mono tabular-nums text-warning"
+              title={`Priced at the latest daily close (${fmtSpotDate(closeAsOf, 'close')}), not a live quote. Drawn dashed.`}
+            >
+              {closeCount} at close {fmtSpotDate(closeAsOf, 'close')}
+            </span>
+          ) : null}
           {markCount > 0 ? (
             <span
               className="font-mono tabular-nums text-warning"
-              title="Priced at the broker's last mark from the account snapshot, not a live quote. Drawn dashed."
+              title="Priced at the broker's mark on the position row, not a live quote. Drawn dashed."
             >
-              {markCount} at broker mark
+              {markCount} at mark
             </span>
           ) : null}
           {unpricedCount > 0 ? (
@@ -137,7 +167,7 @@ export function ShortLegRiskMap({
               size="cell"
               className="font-mono tabular-nums text-warning"
               onClick={onUnpricedClick}
-              title="Short legs with no underlying quote — no cushion, not known to be safe."
+              title="Short legs with no underlying price — no cushion, not known to be safe. Opens the calendar view."
             >
               {unpricedCount} unpriced
             </DenseTagButton>
@@ -154,36 +184,6 @@ export function ShortLegRiskMap({
         aria-label={`Short legs by cushion and days to expiry: ${legs.length} legs, ${unpricedCount} unpriced, warning line at ${fmtTightPct(tightPct)}`}
         className={styles.svg}
       >
-        {/* Left gutter: no quote, no y, no verdict. */}
-        <g
-          className={cn(gutterOpens && styles.gutterClickable)}
-          role={gutterOpens ? 'button' : undefined}
-          tabIndex={gutterOpens ? 0 : undefined}
-          aria-label={`${unpricedCount} unpriced short legs`}
-          data-testid="unpriced-gutter"
-          {...(gutterOpens ? activate(onUnpricedClick) : {})}
-        >
-          <rect
-            x={bands.leftGutter.x0}
-            y={bands.plot.y0}
-            width={bands.leftGutter.x1 - bands.leftGutter.x0}
-            height={bands.plot.y1 - bands.plot.y0}
-            className={styles.gutter}
-          />
-          <text
-            x={(bands.leftGutter.x0 + bands.leftGutter.x1) / 2}
-            y={labelY}
-            textAnchor="middle"
-            className={cn(styles.label, unpricedCount > 0 && styles.labelWarning)}
-          >
-            no quote
-          </text>
-          {layout.unpriced.map((p) => (
-            <LegPoint key={p.leg.key} point={p} className={styles.pointUnpriced} onLegClick={onLegClick} />
-          ))}
-        </g>
-
-        {/* Priced area. */}
         <rect
           x={bands.month.x0}
           y={bands.plot.y0}
@@ -215,9 +215,6 @@ export function ShortLegRiskMap({
         ) : null}
 
         <line x1={bands.plot.x0} x2={bands.plot.x1} y1={bands.zeroY} y2={bands.zeroY} className={styles.zeroLine} />
-        {/* Under its line, inside the band it names; the tight label sits above
-            its own line at the other end, so the two never overprint however
-            close the threshold is to zero. */}
         <text x={bands.plot.x1} y={bands.zeroY + 9} textAnchor="end" className={styles.label}>
           ITM below
         </text>
@@ -251,12 +248,7 @@ export function ShortLegRiskMap({
             >
               <line x1={t.x} x2={t.x} y1={axisY} y2={axisY + 3} className={styles.tickMark} />
               {labeled[i] ? (
-                <text
-                  x={t.x}
-                  y={labelY}
-                  textAnchor="middle"
-                  className={cn(styles.label, active && styles.labelActive)}
-                >
+                <text x={t.x} y={labelY} textAnchor="middle" className={cn(styles.label, active && styles.labelActive)}>
                   {fmtTickDte(t.dte)}
                 </text>
               ) : null}
@@ -264,8 +256,27 @@ export function ShortLegRiskMap({
           )
         })}
 
+        {/* Names first, points on top, so a label never covers the dot it names. */}
+        {layout.labels.map((l) => (
+          <text
+            key={l.key}
+            x={l.x}
+            y={l.y}
+            textAnchor={l.anchor}
+            className={cn(styles.pointLabel, l.key === selectedKey && styles.pointLabelSelected)}
+            data-testid="point-label"
+          >
+            {l.text}
+          </text>
+        ))}
         {layout.points.map((p) => (
-          <LegPoint key={p.leg.key} point={p} className={cn(styles.point, BAND_CLASS[p.band])} onLegClick={onLegClick} />
+          <LegPoint
+            key={p.leg.key}
+            point={p}
+            className={cn(styles.point, BAND_CLASS[p.band])}
+            selected={p.leg.key === selectedKey}
+            onSelect={onSelect}
+          />
         ))}
 
         {/* Right gutter: priced, but the date would not parse — no x to place it on. */}
@@ -292,12 +303,36 @@ export function ShortLegRiskMap({
                 key={p.leg.key}
                 point={p}
                 className={cn(styles.point, p.band ? BAND_CLASS[p.band] : styles.pointUnpriced)}
-                onLegClick={onLegClick}
+                selected={p.leg.key === selectedKey}
+                onSelect={onSelect}
               />
             ))}
           </g>
         ) : null}
       </svg>
+
+      {/* No price, no place on the plot — but a name, a strike and a date, in the open. */}
+      {unpricedCount > 0 ? (
+        <div className="flex flex-wrap items-center gap-1 text-dense-caption" data-testid="unpriced-list">
+          <span className="text-warning">no quote:</span>
+          {layout.unpriced.map((leg) => {
+            const selected = leg.key === selectedKey
+            return (
+              <DenseTagButton
+                key={leg.key}
+                variant="warning"
+                size="cell"
+                className={cn('font-mono tabular-nums', selected && 'ring-1 ring-foreground')}
+                aria-pressed={selected}
+                title={riskMapLegTitle(leg)}
+                onClick={() => onSelect?.(selected ? null : leg)}
+              >
+                {riskMapLegShort(leg)} · {leg.dte == null ? 'no expiry' : `${leg.dte}d`}
+              </DenseTagButton>
+            )
+          })}
+        </div>
+      ) : null}
     </div>
   )
 }

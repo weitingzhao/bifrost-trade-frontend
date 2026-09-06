@@ -145,3 +145,21 @@
   stroke: var(--foreground);
   stroke-width: 1.5;
 }
+
+/* Every point wears its name; the selected one is the one the panel is talking about. */
+.pointLabel {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 8.5px;
+  fill: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.pointLabelSelected {
+  fill: var(--foreground);
+  font-weight: 600;
+}
+
+.pointSelected {
+  stroke: var(--foreground);
+  stroke-width: 2;
+}

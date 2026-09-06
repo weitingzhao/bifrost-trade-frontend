@@ -1,28 +1,66 @@
 /**
- * The short-leg risk map in its panel, under the cockpit: every short leg as
- * days-to-expiry against cushion, with the tightness line drawn where it is
- * set. It sits with the gauges rather than the dashboard because it is a
- * picture of the Risk gauge, not of the base.
+ * The short-leg risk map in its panel, under the cockpit, with the selection
+ * it needs to be usable: click a leg and this panel names it, says how it was
+ * priced, and offers the two things the reader might want next — scope the
+ * page to that symbol, or jump to its row in the grid. Neither happens on the
+ * click itself; the first version narrowed the page silently and left no
+ * obvious way back. The way back is now on the panel too.
  */
+import { useState, type KeyboardEvent } from 'react'
+import { Button } from '@/components/ui/button'
 import { ShortLegRiskMap } from './charts/ShortLegRiskMap'
-import type { RiskMapLeg } from '@/utils/shortLegRiskMap'
+import { riskMapLegTitle, type RiskMapLeg } from '@/utils/shortLegRiskMap'
+import { fmtSpotDate } from '@/utils/spotPrice'
 
 interface Props {
   legs: RiskMapLeg[]
   tightPct: number
   activeExpiry: string | null
-  onLegClick: (leg: RiskMapLeg) => void
+  /** The page's symbol scope, so the panel can say it is on and offer to clear it. */
+  activeSymbol: string
   onExpiryClick: (expiry: string) => void
   onUnpricedClick: () => void
+  onScopeSymbol: (symbol: string) => void
+  onClearSymbol: () => void
+  onShowInGrid: (leg: RiskMapLeg) => void
 }
 
-export function ShortLegsPanel({ legs, tightPct, activeExpiry, onLegClick, onExpiryClick, onUnpricedClick }: Props) {
-  // The map prints its own leg and unpriced counts (the unpriced one is a link);
-  // the panel adds only the title.
+function pricedAs(leg: RiskMapLeg): string {
+  if (leg.spotSource == null) return 'no quote'
+  if (leg.spotSource === 'live') return 'live'
+  return `${leg.spotSource} ${fmtSpotDate(leg.spotAsOf ?? null, leg.spotSource)}`
+}
+
+export function ShortLegsPanel({
+  legs,
+  tightPct,
+  activeExpiry,
+  activeSymbol,
+  onExpiryClick,
+  onUnpricedClick,
+  onScopeSymbol,
+  onClearSymbol,
+  onShowInGrid,
+}: Props) {
+  const [picked, setSelected] = useState<RiskMapLeg | null>(null)
+  // A selection outlives the legs it came from only as long as the leg exists:
+  // derived, not synced, so a scope change cannot leave a ghost strip behind.
+  const selected = picked && legs.some((l) => l.key === picked.key) ? picked : null
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && selected) {
+      e.stopPropagation()
+      setSelected(null)
+    }
+  }
+  const scopedToSelected = selected != null && activeSymbol === selected.symbol
+
   return (
     <section
       className="rounded-md border border-border bg-secondary/40 px-3 py-1.5"
       aria-label="Short legs against the tightness line"
+      tabIndex={-1}
+      onKeyDown={onKeyDown}
     >
       <span className="mb-1 block text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
         Short legs — days to expiry against cushion
@@ -31,10 +69,58 @@ export function ShortLegsPanel({ legs, tightPct, activeExpiry, onLegClick, onExp
         legs={legs}
         tightPct={tightPct}
         activeExpiry={activeExpiry}
-        onLegClick={onLegClick}
+        selectedKey={selected?.key ?? null}
+        onSelect={setSelected}
         onExpiryClick={onExpiryClick}
         onUnpricedClick={onUnpricedClick}
       />
+      {selected ? (
+        <div
+          className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border/60 pt-1 text-dense-caption"
+          data-testid="selected-leg"
+        >
+          <span className="font-mono tabular-nums text-foreground">{riskMapLegTitle(selected)}</span>
+          <span className="text-muted-foreground">· priced {pricedAs(selected)}</span>
+          <span className="ml-auto flex items-center gap-1">
+            {scopedToSelected ? (
+              <Button variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onClearSymbol}>
+                Clear scope
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-dense-caption"
+                onClick={() => onScopeSymbol(selected.symbol)}
+              >
+                Scope to {selected.symbol}
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={() => onShowInGrid(selected)}>
+              Show in grid
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-1.5 text-dense-caption text-muted-foreground"
+              onClick={() => setSelected(null)}
+              aria-label="Clear selection"
+              title="Clear selection (Esc)"
+            >
+              ×
+            </Button>
+          </span>
+        </div>
+      ) : activeSymbol ? (
+        <div className="mt-1 flex items-center gap-2 border-t border-border/60 pt-1 text-dense-caption text-muted-foreground">
+          <span>
+            Page scoped to <span className="font-mono text-foreground">{activeSymbol}</span>
+          </span>
+          <Button variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onClearSymbol}>
+            Clear scope
+          </Button>
+        </div>
+      ) : null}
     </section>
   )
 }

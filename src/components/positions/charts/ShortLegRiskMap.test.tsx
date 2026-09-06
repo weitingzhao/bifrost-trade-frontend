@@ -13,15 +13,13 @@ const leg = (o: Partial<RiskMapLeg> = {}): RiskMapLeg => ({
   dte: 76,
   contracts: 3,
   cushionPct: 0.124,
+  spotSource: 'live',
   ...o,
 })
 
 const PRICED_TITLE = 'MU 20261120 C 250 · 3 contracts · cushion +12.4% · 76d'
 
-/**
- * The circle that owns a given <title>. testing-library's getByTitle only
- * matches a <title> that is a direct child of <svg>, so walk the circles.
- */
+/** The circle that owns a given <title> — getByTitle only sees direct children of <svg>. */
 function pointFor(title: string): SVGCircleElement {
   for (const c of Array.from(document.querySelectorAll('circle'))) {
     if (c.querySelector('title')?.textContent === title) return c
@@ -29,230 +27,86 @@ function pointFor(title: string): SVGCircleElement {
   throw new Error(`no circle for ${title}`)
 }
 
-function isSafeBanded(c: SVGCircleElement): boolean {
-  return /Comfortable|Tight/.test(c.className.baseVal) || c.dataset.band === 'comfortable'
-}
-
 describe('ShortLegRiskMap', () => {
   it('renders the empty line and nothing else when there are no short legs', () => {
-    const { container } = render(<ShortLegRiskMap legs={[]} tightPct={0.03} />)
+    render(<ShortLegRiskMap legs={[]} tightPct={0.03} />)
     expect(screen.getByText('No short legs in scope.')).toBeInTheDocument()
-    expect(container.querySelector('svg')).toBeNull()
+    expect(document.querySelector('svg')).toBeNull()
   })
 
-  it('draws a priced leg in the priced area with its band and full title', () => {
+  it('draws a priced leg in the plot with its band, its title and its name beside it', () => {
     render(<ShortLegRiskMap legs={[leg()]} tightPct={0.03} />)
     const c = pointFor(PRICED_TITLE)
     expect(c.dataset.band).toBe('comfortable')
-    expect(c.dataset.clamped).toBeUndefined()
-    expect(Number(c.getAttribute('cx'))).toBeGreaterThan(56)
-    expect(screen.queryByText(/unpriced/)).toBeNull()
-    // Interactive children need an exposed parent, not an image.
-    expect(screen.getByRole('group', { name: /Short legs by cushion/ })).toBeInTheDocument()
+    expect(screen.getByTestId('point-label')).toHaveTextContent('MU 250C')
   })
 
-  it('keeps an unpriced leg in the gutter, hollow, counted, and never banded safe', () => {
-    render(
-      <ShortLegRiskMap
-        legs={[leg({ key: 'p' }), leg({ key: 'u', symbol: 'RKLB', strike: 40, contracts: 1, dte: 5, cushionPct: null })]}
-        tightPct={0.03}
-      />,
-    )
-    const u = pointFor('RKLB 20261120 C 40 · 1 contract · cushion n/a (no quote) · 5d')
-    expect(u.dataset.band).toBe('unpriced')
-    expect(u.className.baseVal).not.toMatch(/Comfortable|Tight|Breached/)
-    expect(Number(u.getAttribute('cx'))).toBeLessThan(56)
-    expect(screen.getByTestId('unpriced-gutter')).toContainElement(u)
-
-    const count = screen.getByRole('button', { name: '1 unpriced' })
-    expect(count).toHaveClass('text-warning')
-    expect(screen.getByText('no quote')).toBeInTheDocument()
+  it('lists an unpriced leg by name under the plot and never draws it as a point', () => {
+    render(<ShortLegRiskMap legs={[leg({ key: 'u', symbol: 'DDOG', strike: 200, right: 'P', dte: 41, cushionPct: null, spotSource: null })]} tightPct={0.03} />)
+    expect(document.querySelectorAll('circle')).toHaveLength(0)
+    const list = screen.getByTestId('unpriced-list')
+    expect(list).toHaveTextContent('no quote:')
+    expect(screen.getByRole('button', { name: /DDOG 200P · 41d/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '1 unpriced' })).toBeInTheDocument()
   })
 
-  it('still draws the strip when every leg is unpriced', () => {
-    const { container } = render(
-      <ShortLegRiskMap
-        legs={[leg({ key: 'a', cushionPct: null }), leg({ key: 'b', symbol: 'ZZ', cushionPct: null, dte: 2 })]}
-        tightPct={0.03}
-      />,
-    )
-    expect(container.querySelector('svg')).not.toBeNull()
-    expect(screen.getByText('2 unpriced')).toBeInTheDocument()
-    expect(screen.getByText('no quote')).toBeInTheDocument()
-    expect(screen.getByTestId('tight-label')).toHaveTextContent('tight 3%')
-    const circles = Array.from(container.querySelectorAll('circle'))
-    expect(circles).toHaveLength(2)
-    for (const c of circles) {
-      expect(c.dataset.band).toBe('unpriced')
-      expect(Number(c.getAttribute('cx'))).toBeLessThan(56)
-      expect(Number.isFinite(Number(c.getAttribute('cy')))).toBe(true)
-    }
+  it('a click selects a leg and a second click clears it; the plot never changes scope itself', () => {
+    const onSelect = vi.fn()
+    const priced = leg()
+    const { rerender } = render(<ShortLegRiskMap legs={[priced]} tightPct={0.03} onSelect={onSelect} />)
+    fireEvent.click(pointFor(PRICED_TITLE))
+    expect(onSelect).toHaveBeenLastCalledWith(priced)
+    rerender(<ShortLegRiskMap legs={[priced]} tightPct={0.03} onSelect={onSelect} selectedKey="k" />)
+    expect(pointFor(PRICED_TITLE).dataset.selected).toBe('true')
+    fireEvent.click(pointFor(PRICED_TITLE))
+    expect(onSelect).toHaveBeenLastCalledWith(null)
   })
 
-  it('treats a NaN cushion as unpriced rather than banding it safe', () => {
-    render(<ShortLegRiskMap legs={[leg({ key: 'nan', cushionPct: Number.NaN })]} tightPct={0.03} />)
-    const c = pointFor('MU 20261120 C 250 · 3 contracts · cushion n/a (no quote) · 76d')
-    expect(isSafeBanded(c)).toBe(false)
-    expect(c.dataset.band).toBe('unpriced')
-    expect(Number(c.getAttribute('cx'))).toBeLessThan(56)
-    expect(Number.isFinite(Number(c.getAttribute('cy')))).toBe(true)
-    expect(screen.getByText('1 unpriced')).toBeInTheDocument()
+  it('a no-quote chip selects too', () => {
+    const onSelect = vi.fn()
+    const unpriced = leg({ key: 'u', symbol: 'FN', strike: 350, right: 'P', dte: 41, cushionPct: null, spotSource: null })
+    render(<ShortLegRiskMap legs={[unpriced]} tightPct={0.03} onSelect={onSelect} />)
+    fireEvent.click(screen.getByRole('button', { name: /FN 350P/ }))
+    expect(onSelect).toHaveBeenCalledWith(unpriced)
   })
 
-  it('draws an in-the-money leg below zero in the loss band', () => {
-    render(<ShortLegRiskMap legs={[leg({ key: 'itm', cushionPct: -0.04 }), leg({ key: 'ok' })]} tightPct={0.03} />)
-    const itm = pointFor('MU 20261120 C 250 · 3 contracts · cushion -4.0% · 76d')
-    const ok = pointFor(PRICED_TITLE)
-    expect(itm.dataset.band).toBe('breached')
-    expect(Number(itm.getAttribute('cy'))).toBeGreaterThan(Number(ok.getAttribute('cy')))
+  it('draws an in-the-money leg below zero in the loss band and never banded safe', () => {
+    render(<ShortLegRiskMap legs={[leg({ cushionPct: -0.05 })]} tightPct={0.03} />)
+    const c = pointFor('MU 20261120 C 250 · 3 contracts · cushion -5.0% · 76d')
+    expect(c.dataset.band).toBe('breached')
   })
 
-  it('rings a clamped point and keeps the true cushion in its title, in both the plot and the right gutter', () => {
-    render(
-      <ShortLegRiskMap
-        legs={[leg({ key: 'deep', cushionPct: -0.3 }), leg({ key: 'deepNoDate', expiry: 'later', dte: null, cushionPct: -0.3 })]}
-        tightPct={0.03}
-      />,
-    )
-    const deep = pointFor('MU 20261120 C 250 · 3 contracts · cushion -30.0% · 76d')
-    expect(deep.dataset.clamped).toBe('low')
-    expect(deep.className.baseVal).toMatch(/pointClamped/)
-    expect(deep.dataset.band).toBe('breached')
-
-    const noDate = pointFor('MU later C 250 · 3 contracts · cushion -30.0% · no expiry')
-    expect(noDate.dataset.clamped).toBe('low')
-    expect(noDate.className.baseVal).toMatch(/pointClamped/)
-    expect(screen.getByTestId('no-expiry-gutter')).toContainElement(noDate)
+  it('draws a leg priced at a close dashed and says so with the date', () => {
+    render(<ShortLegRiskMap legs={[leg({ spotSource: 'close', spotAsOf: 1_788_480_000 })]} tightPct={0.03} />)
+    expect(pointFor(PRICED_TITLE).getAttribute('class')).toMatch(/pointMark/)
+    expect(document.body.textContent).toContain('1 at close 09-04')
   })
 
   it('labels the tight line from the prop, not a constant', () => {
-    const { rerender } = render(<ShortLegRiskMap legs={[leg()]} tightPct={0.03} />)
-    expect(screen.getByTestId('tight-label')).toHaveTextContent('tight 3%')
-    rerender(<ShortLegRiskMap legs={[leg()]} tightPct={0.05} />)
-    expect(screen.getByTestId('tight-label')).toHaveTextContent('tight 5%')
-    expect(pointFor(PRICED_TITLE).dataset.band).toBe('comfortable')
-    rerender(<ShortLegRiskMap legs={[leg()]} tightPct={0.2} />)
-    expect(pointFor(PRICED_TITLE).dataset.band).toBe('tight')
+    render(<ShortLegRiskMap legs={[leg()]} tightPct={0.055} />)
+    expect(screen.getByTestId('tight-label')).toHaveTextContent('tight 5.5%')
   })
 
-  it('fills both gutters at once, with the no-expiry label in the warning tone', () => {
-    render(
-      <ShortLegRiskMap
-        legs={[
-          leg({ key: 'p' }),
-          leg({ key: 'x', expiry: 'later', dte: null }),
-          leg({ key: 'u', symbol: 'ZZ', cushionPct: null }),
-        ]}
-        tightPct={0.03}
-      />,
-    )
-    const x = pointFor('MU later C 250 · 3 contracts · cushion +12.4% · no expiry')
-    expect(screen.getByTestId('no-expiry-gutter')).toContainElement(x)
-    expect(x.dataset.band).toBe('comfortable')
-    expect(Number(x.getAttribute('cx'))).toBeGreaterThan(650 - 48)
-    expect(screen.getByTestId('no-expiry-label')).toHaveTextContent('no expiry')
-    expect(screen.getByTestId('no-expiry-label').getAttribute('class')).toMatch(/labelWarning/)
-
-    const u = pointFor('ZZ 20261120 C 250 · 3 contracts · cushion n/a (no quote) · 76d')
-    expect(screen.getByTestId('unpriced-gutter')).toContainElement(u)
-    expect(Number(pointFor(PRICED_TITLE).getAttribute('cx'))).toBeLessThan(650 - 48)
-  })
-
-  it('labels a past-expiry tick "past", agreeing with the point title', () => {
-    render(<ShortLegRiskMap legs={[leg({ key: 'late', expiry: '20260101', dte: -3 })]} tightPct={0.03} />)
-    expect(pointFor('MU 20260101 C 250 · 3 contracts · cushion +12.4% · 3d past')).toBeInTheDocument()
-    expect(screen.getByText('past')).toBeInTheDocument()
-    expect(screen.queryByText('0d')).toBeNull()
-  })
-
-  it('wires the three click targets and highlights the active expiry', () => {
-    const onLegClick = vi.fn()
+  it('a tick click reports its expiry and the active one is pressed', () => {
     const onExpiryClick = vi.fn()
-    const onUnpricedClick = vi.fn()
-    const legs = [leg({ key: 'p' }), leg({ key: 'u', symbol: 'ZZ', cushionPct: null, dte: 3 })]
-    render(
-      <ShortLegRiskMap
-        legs={legs}
-        tightPct={0.03}
-        activeExpiry="20261120"
-        onLegClick={onLegClick}
-        onExpiryClick={onExpiryClick}
-        onUnpricedClick={onUnpricedClick}
-      />,
-    )
-
-    fireEvent.click(pointFor(PRICED_TITLE))
-    expect(onLegClick).toHaveBeenCalledWith(legs[0])
-
-    const tick = screen.getByRole('button', { name: 'expiry 20261120, 76 days' })
+    render(<ShortLegRiskMap legs={[leg()]} tightPct={0.03} onExpiryClick={onExpiryClick} activeExpiry="20261120" />)
+    const tick = screen.getByRole('button', { name: /expiry 20261120/ })
     expect(tick).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(tick)
     expect(onExpiryClick).toHaveBeenCalledWith('20261120')
-
-    fireEvent.click(screen.getByTestId('unpriced-gutter'))
-    expect(onUnpricedClick).toHaveBeenCalledTimes(1)
-
-    // A point inside the gutter is the leg, not the gutter.
-    fireEvent.click(pointFor('ZZ 20261120 C 250 · 3 contracts · cushion n/a (no quote) · 3d'))
-    expect(onLegClick).toHaveBeenLastCalledWith(legs[1])
-    expect(onUnpricedClick).toHaveBeenCalledTimes(1)
-
-    fireEvent.click(screen.getByRole('button', { name: '1 unpriced' }))
-    expect(onUnpricedClick).toHaveBeenCalledTimes(2)
   })
 
-  it('reaches every control from the keyboard without a gutter point also opening the gutter', () => {
-    const onLegClick = vi.fn()
-    const onExpiryClick = vi.fn()
-    const onUnpricedClick = vi.fn()
-    const legs = [leg({ key: 'p' }), leg({ key: 'u', symbol: 'ZZ', cushionPct: null, dte: 3 })]
+  it('still draws the strip when every leg is unpriced, with the dates on the axis', () => {
     render(
       <ShortLegRiskMap
-        legs={legs}
+        legs={[leg({ key: 'a', cushionPct: null, spotSource: null }), leg({ key: 'b', symbol: 'FN', dte: 41, expiry: '20261016', cushionPct: null, spotSource: null })]}
         tightPct={0.03}
-        onLegClick={onLegClick}
-        onExpiryClick={onExpiryClick}
-        onUnpricedClick={onUnpricedClick}
       />,
     )
-
-    const gutterPoint = pointFor('ZZ 20261120 C 250 · 3 contracts · cushion n/a (no quote) · 3d')
-    expect(gutterPoint).toHaveAttribute('tabindex', '0')
-    fireEvent.keyDown(gutterPoint, { key: 'Enter' })
-    expect(onLegClick).toHaveBeenCalledTimes(1)
-    expect(onLegClick).toHaveBeenCalledWith(legs[1])
-    expect(onUnpricedClick).not.toHaveBeenCalled()
-
-    fireEvent.keyDown(screen.getByTestId('unpriced-gutter'), { key: ' ' })
-    expect(onUnpricedClick).toHaveBeenCalledTimes(1)
-
-    fireEvent.keyDown(pointFor(PRICED_TITLE), { key: ' ' })
-    expect(onLegClick).toHaveBeenLastCalledWith(legs[0])
-
-    fireEvent.keyDown(screen.getByRole('button', { name: 'expiry 20261120, 76 days' }), { key: 'Enter' })
-    expect(onExpiryClick).toHaveBeenCalledWith('20261120')
-
-    // Other keys do nothing.
-    fireEvent.keyDown(pointFor(PRICED_TITLE), { key: 'a' })
-    expect(onLegClick).toHaveBeenCalledTimes(2)
-  })
-
-  it('does not make an empty unpriced gutter a control', () => {
-    const onUnpricedClick = vi.fn()
-    render(<ShortLegRiskMap legs={[leg()]} tightPct={0.03} onUnpricedClick={onUnpricedClick} />)
-    const gutter = screen.getByTestId('unpriced-gutter')
-    expect(gutter).not.toHaveAttribute('role')
-    expect(gutter).not.toHaveAttribute('tabindex')
-    fireEvent.click(gutter)
-    fireEvent.keyDown(gutter, { key: 'Enter' })
-    expect(onUnpricedClick).not.toHaveBeenCalled()
-    expect(screen.queryByText(/unpriced/)).toBeNull()
-  })
-
-  it('renders nothing as a control when no handlers are given', () => {
-    render(<ShortLegRiskMap legs={[leg(), leg({ key: 'u', cushionPct: null })]} tightPct={0.03} />)
-    expect(screen.queryByRole('button', { name: /expiry/ })).toBeNull()
-    expect(pointFor(PRICED_TITLE)).not.toHaveAttribute('role')
-    expect(screen.getByTestId('unpriced-gutter')).not.toHaveAttribute('role')
+    expect(document.querySelector('svg')).not.toBeNull()
+    expect(document.querySelectorAll('circle')).toHaveLength(0)
+    // The dates are still on the axis: the time axis is the book's, priced or not.
+    expect(screen.getByLabelText(/expiry 20261016/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/expiry 20261120/)).toBeInTheDocument()
   })
 })

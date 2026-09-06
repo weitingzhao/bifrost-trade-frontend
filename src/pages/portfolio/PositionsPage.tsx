@@ -41,6 +41,7 @@ import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
 import { MarginByAccountStrip } from '@/components/positions/MarginByAccountStrip'
 import { AssetMixCard } from '@/components/positions/charts/AssetMixCard'
 import { ShortLegsPanel } from '@/components/positions/ShortLegsPanel'
+import { RoomToAddSection } from '@/components/positions/RoomToAddSection'
 import { EditExecutionConfirmDialog } from '@/components/positions/EditExecutionConfirmDialog'
 import { ExecutionFormModal } from '@/components/positions/ExecutionFormModal'
 import { LinkExecutionModal, type LinkExecutionContext } from '@/components/positions/LinkExecutionModal'
@@ -128,21 +129,21 @@ export default function PositionsPage() {
     () => (selectedLeg ? book.alarm.ladderRows.filter((r) => r.expiry === selectedLeg.expiry) : book.alarm.ladderRows),
     [book.alarm.ladderRows, selectedLeg],
   )
-  const { ceiling } = usePressureCeiling()
-  const room = useMemo(
+  const { ceiling, setCeiling } = usePressureCeiling()
+  const roomFull = useMemo(
     () =>
-      summarizeRoom(
-        computeRoomToAdd({
-          book: book.alarm.book,
-          margin: book.alarm.margin,
-          legs: book.alarm.legs,
-          coverRows: book.coverRows,
-          resolveSpot: book.alarm.resolveSpot,
-          ceiling,
-        }),
-      ),
+      computeRoomToAdd({
+        book: book.alarm.book,
+        margin: book.alarm.margin,
+        legs: book.alarm.legs,
+        coverRows: book.coverRows,
+        resolveSpot: book.alarm.resolveSpot,
+        ceiling,
+      }),
     [book.alarm.book, book.alarm.margin, book.alarm.legs, book.coverRows, book.alarm.resolveSpot, ceiling],
   )
+  const room = useMemo(() => summarizeRoom(roomFull), [roomFull])
+  const [roomOpen, setRoomOpen] = useState(true)
   const explain = useMemo(
     () => ({
       exposure: book.alarm.exposure,
@@ -171,6 +172,9 @@ export default function PositionsPage() {
         scrollTo('positions-margin')
       } else if (t === 'capital') {
         navigate(MODEL_ANALYSIS_PATH)
+      } else if (t === 'room') {
+        setRoomOpen(true)
+        scrollTo('positions-room')
       } else {
         const params = new URLSearchParams(scopeSearch)
         if (sort) params.set('sort', sort)
@@ -372,7 +376,20 @@ export default function PositionsPage() {
                 </RingCard>
               </div>
 
-              {/* Band 2: every short leg on one wide time axis — the whole width, so a
+              {/* Band 2: room to add — the Potential gauge's answer in full: what the free
+                  base backs, what margin adds up to the ceiling, where pressure lands. */}
+              <div id="positions-room" className="min-w-0">
+                <RoomToAddSection
+                  open={roomOpen}
+                  onToggle={() => setRoomOpen((v) => !v)}
+                  room={roomFull}
+                  coverRows={book.coverRows}
+                  ceiling={ceiling}
+                  onCeilingChange={setCeiling}
+                />
+              </div>
+
+              {/* Band 3: every short leg on one wide time axis — the whole width, so a
                   book of a dozen legs on four dates still reads name by name. */}
               <ShortLegsPanel
                 legs={book.riskLegs}
@@ -387,7 +404,7 @@ export default function PositionsPage() {
                 onSelect={setPickedLeg}
               />
 
-              {/* Band 3: the lines, most dangerous first. */}
+              {/* Band 4: the lines, most dangerous first. */}
               <div id="positions-lines" className="min-w-0">
                 <LinesToolbar
                   view={linesView}

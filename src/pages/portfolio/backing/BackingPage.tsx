@@ -9,7 +9,7 @@
  * away: the two tables are the page.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { RoomToAddSection } from './RoomToAddSection'
+import { RoomToAddSection } from '@/components/positions/RoomToAddSection'
 import { computeRoomToAdd, summarizeRoom } from '@/utils/roomToAdd'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'

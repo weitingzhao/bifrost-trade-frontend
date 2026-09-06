@@ -21,7 +21,7 @@ import {
   DenseTableRow,
   denseTableNumCell,
 } from '@/components/data-display'
-import { DerivationBlock } from '@/components/positions/DerivationBlock'
+import { DerivationBlock } from './DerivationBlock'
 import { cn } from '@/lib/utils'
 import { pressureLevel, type CoverRow, type GaugeLevel } from '@/utils/bookVsBase'
 import { usdAbbrev } from '@/utils/marginByAccount'

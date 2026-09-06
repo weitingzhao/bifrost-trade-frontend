@@ -71,23 +71,36 @@ function AccountRow({ row, open, onToggle }: { row: MarginAccountRow; open: bool
   return (
     <div
       className={cn(
-        'grid grid-cols-[5.25rem_minmax(6rem,11rem)_minmax(0,1fr)] items-center gap-x-3',
+        'grid grid-cols-[6.25rem_minmax(6rem,11rem)_minmax(0,1fr)] items-center gap-x-3',
         !row.inScope && 'opacity-50'
       )}
       title={row.inScope ? row.rawTitle : `not in scope\n${row.rawTitle}`}
       data-account={row.accountId}
       data-in-scope={row.inScope ? 'true' : 'false'}
     >
-      {/* The label opens how the row was computed, field by field. */}
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-pressed={open}
-        aria-label={`How ${row.label} margin is computed`}
-        className="truncate text-left text-dense-body font-medium text-foreground hover:text-link hover:underline"
-      >
-        {row.label}
-      </button>
+      {/* The label and its `?` open how the row was computed, field by field. */}
+      <span className="flex min-w-0 items-center">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="truncate text-left text-dense-body font-medium text-foreground hover:text-link hover:underline"
+        >
+          {row.label}
+        </button>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-pressed={open}
+          aria-label={`How ${row.label} margin is computed`}
+          title="Which broker fields these are, and how they check out"
+          className={cn(
+            'ml-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-border/60 font-mono text-dense-caption leading-none',
+            open ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          ?
+        </button>
+      </span>
       {row.pressure != null && row.tone != null ? (
         <PressureBar label={row.label} pressure={row.pressure} tone={row.tone} />
       ) : (
@@ -144,7 +157,7 @@ export function MarginByAccountStrip({
           ))}
         </div>
       )}
-      <p className="text-dense-caption text-muted-foreground">cockpit pressure: accounts in scope · click an account for its fields</p>
+      <p className="text-dense-caption text-muted-foreground">cockpit pressure: accounts in scope · ? opens the broker fields behind a row</p>
       {openRow ? (
         <ExplanationBlock explanation={explainMarginRow(openRow.facts, openRow.label)} onClose={() => setOpenId(null)} className="mb-1" />
       ) : null}

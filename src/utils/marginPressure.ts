@@ -40,6 +40,10 @@ export interface MarginFacts {
   cushion: number | null
   buyingPower: number | null
   grossPositionValue: number | null
+  /** The broker's own margin and cash figures the explanation quotes; null when not reported. */
+  initMarginReq: number | null
+  availableFunds: number | null
+  totalCashValue: number | null
   /**
    * 1 − cushion. Reaching 1 means excess liquidity is gone, which is the point
    * the broker starts closing positions. This is the pressure ratio.
@@ -104,6 +108,9 @@ export function readMarginFacts(acc: IbAccountSnapshot | undefined): MarginFacts
     cushion,
     buyingPower: summaryNum(s, 'BuyingPower'),
     grossPositionValue: summaryNum(s, 'GrossPositionValue'),
+    initMarginReq: summaryNum(s, 'InitMarginReq'),
+    availableFunds: summaryNum(s, 'AvailableFunds'),
+    totalCashValue: summaryNum(s, 'TotalCashValue'),
     pressure: cushion == null ? null : 1 - cushion,
     maintToNlv: nlv != null && nlv > 0 && maint != null ? maint / nlv : null,
   }

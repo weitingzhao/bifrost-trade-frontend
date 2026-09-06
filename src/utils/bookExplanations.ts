@@ -61,6 +61,7 @@ export interface ExplainInputs {
 }
 
 const pct = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${Math.round(v * 100)}%`)
+const pct2 = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${(v * 100).toFixed(2)}%`)
 const pct1 = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${(v * 100).toFixed(1)}%`)
 const usd = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : fmtUsd(v))
 const n = (v: number) => v.toLocaleString()
@@ -246,17 +247,59 @@ export function explainBook(topic: ExplainTopic, input: ExplainInputs): Explanat
   }
 }
 
-/** One account's row on the margin strip, field by field. */
+/**
+ * One account's row on the margin strip: which broker field each number is,
+ * what the broker means by it, the one step of arithmetic this page adds
+ * (pressure = 1 − Cushion), and the broker's own identities re-run on its
+ * own fields — so a reader can see the numbers agree with each other, not
+ * just that they were typed in. Where an identity does not close exactly the
+ * line says by how much; the broker's figure stays the one on the strip.
+ */
 export function explainMarginRow(f: MarginFacts, label: string): Explanation {
+  const check = (lhs: number | null, rhs: number | null, asUsd = true) => {
+    if (lhs == null || rhs == null) return 'cannot be checked — a field is missing'
+    const gap = Math.abs(lhs - rhs)
+    if (gap < (asUsd ? 1 : 0.0005)) return 'agrees'
+    const rel = rhs !== 0 ? ` (${pct2(gap / Math.abs(rhs))})` : ''
+    return `differs by ${asUsd ? usd(gap) : gap.toFixed(4)}${rel}`
+  }
+  const cushionFromFields = f.excessLiquidity != null && f.netLiquidation ? f.excessLiquidity / f.netLiquidation : null
+  const availableFromFields =
+    f.equityWithLoanValue != null && f.initMarginReq != null ? f.equityWithLoanValue - f.initMarginReq : null
+  const excessFromFields =
+    f.equityWithLoanValue != null && f.maintMarginReq != null ? f.equityWithLoanValue - f.maintMarginReq : null
+  const rows: ExplanationRow[] = [
+    { label: 'NetLiquidation', value: `${usd(f.netLiquidation)} — every position at the broker's marks, plus cash` },
+    {
+      label: 'EquityWithLoanValue',
+      value: `${usd(f.equityWithLoanValue)} — cash + stock + bond + fund value, without US option value; so it sits above NetLiquidation when the book is net short options`,
+    },
+    { label: 'MaintMarginReq', value: `${usd(f.maintMarginReq)} — margin required to keep the positions open` },
+    { label: 'InitMarginReq', value: `${usd(f.initMarginReq)} — margin the same book would need to open today` },
+    {
+      label: 'ExcessLiquidity',
+      value: `${usd(f.excessLiquidity)} — equity with loan value less maintenance margin: the room before a margin call`,
+      warn: f.excessLiquidity != null && f.excessLiquidity <= 0,
+    },
+    { label: 'Cushion', value: `${f.cushion == null ? '—' : f.cushion.toFixed(4)} — ExcessLiquidity / NetLiquidation, as the broker reports it` },
+    { label: 'BuyingPower', value: `${usd(f.buyingPower)} — what the broker will let this account buy on margin` },
+    { label: 'AvailableFunds', value: `${usd(f.availableFunds)} — equity with loan value less initial margin` },
+    { label: 'TotalCashValue', value: `${usd(f.totalCashValue)} — settled cash, before any SGOV-class holding` },
+  ]
   return {
     title: `${label} — ${f.accountId}`,
     lines: [
+      "Every figure below is a field of the broker's account summary (IB), read from the account snapshot verbatim. This page adds one step: pressure = 1 − Cushion.",
       f.cushion == null
         ? 'The broker reported no Cushion and no ExcessLiquidity for this account, so its pressure is unknown.'
-        : `Pressure ${pct(f.pressure)} = 1 − Cushion ${pct(f.cushion)}. Cushion is read from the broker's own field (= ExcessLiquidity / NetLiquidation), never recomputed.`,
-      `excess ${usd(f.excessLiquidity)} = ExcessLiquidity · BP ${usd(f.buyingPower)} = BuyingPower · NLV ${usd(f.netLiquidation)} = NetLiquidation · maintenance ${usd(f.maintMarginReq)} = MaintMarginReq${f.maintToNlv != null ? ` (${pct(f.maintToNlv)} of NLV — a different ratio from 1 − Cushion)` : ''}.`,
-      'The cockpit\'s Pressure blends the accounts in scope; this row is the account on its own.',
+        : `Pressure ${pct(f.pressure)} = 1 − Cushion ${f.cushion.toFixed(4)}. Bar: ${usd(f.excessLiquidity)} of ${usd(f.netLiquidation)} is still free; at 100% the broker starts closing positions.`,
+      `Check · Cushion = ExcessLiquidity / NetLiquidation = ${cushionFromFields == null ? '—' : cushionFromFields.toFixed(4)} — ${check(cushionFromFields, f.cushion, false)} with the broker's Cushion.`,
+      `Check · AvailableFunds = EquityWithLoanValue − InitMarginReq = ${usd(availableFromFields)} — ${check(availableFromFields, f.availableFunds)} with the broker's AvailableFunds.`,
+      `Check · ExcessLiquidity = EquityWithLoanValue − MaintMarginReq = ${usd(excessFromFields)} — ${check(excessFromFields, f.excessLiquidity)} with the broker's ExcessLiquidity. A gap of a few hundred dollars is the broker's own adjustment and is normal; thousands would mean the fields are not from the same moment. (NetLiquidation − MaintMarginReq is a different, larger number and is not used.)`,
+      `MaintMarginReq is ${pct(f.maintToNlv)} of NetLiquidation — a different ratio from 1 − Cushion, so the two are never swapped.`,
+      "The cockpit's Pressure blends the accounts in scope; this row is the account on its own.",
     ],
+    rows,
     scale: [
       `1/4 below ${pct(PRESSURE_BANDS.idle)} · 2/4 to ${pct(PRESSURE_BANDS.heavy)} · 3/4 to ${pct(PRESSURE_BANDS.critical)} · 4/4 from ${pct(PRESSURE_BANDS.critical)} (broker liquidates at 100%)`,
     ],

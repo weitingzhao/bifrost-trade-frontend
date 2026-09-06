@@ -13,7 +13,7 @@ const stk = (account_id: string, symbol: string, position: number, price: number
 
 function inputs(): ExplainInputs {
   const accounts = [
-    account('U1', { NetLiquidation: '1000000', ExcessLiquidity: '730000', Cushion: '0.73', BuyingPower: '1870000', MaintMarginReq: '270000', TotalCashValue: '15374.70' }),
+    account('U1', { NetLiquidation: '1000000', EquityWithLoanValue: '1000000', ExcessLiquidity: '730000', AvailableFunds: '730000', Cushion: '0.73', BuyingPower: '1870000', MaintMarginReq: '270000', InitMarginReq: '270000', TotalCashValue: '15374.70' }),
   ]
   const margin = rollupMargin(accounts)
   const exposure = summarizeAssignmentExposure(
@@ -87,11 +87,35 @@ describe('segments', () => {
 })
 
 describe('explainMarginRow', () => {
-  it('names each broker field behind the row', () => {
+  it('names each broker field behind the row and re-runs the broker identities on them', () => {
     const f = inputs().margin.accounts[0]
     const e = explainMarginRow(f, 'Host')
     expect(e.title).toBe('Host — U1')
-    expect(e.lines[0]).toBe("Pressure 27% = 1 − Cushion 73%. Cushion is read from the broker's own field (= ExcessLiquidity / NetLiquidation), never recomputed.")
-    expect(e.lines[1]).toContain('BP $1,870,000.00 = BuyingPower')
+    expect(e.lines[0]).toContain("field of the broker's account summary")
+    expect(e.lines[1]).toContain('Pressure 27% = 1 − Cushion 0.7300')
+    // 730,000 / 1,000,000 = 0.73 agrees with Cushion; 1,000,000 − 270,000 = 730,000 agrees with both funds fields.
+    expect(e.lines[2]).toContain('= 0.7300 — agrees')
+    expect(e.lines[3]).toContain('= $730,000.00 — agrees')
+    expect(e.lines[4]).toContain('= $730,000.00 — agrees')
+    expect(e.rows?.map((r) => r.label)).toEqual([
+      'NetLiquidation',
+      'EquityWithLoanValue',
+      'MaintMarginReq',
+      'InitMarginReq',
+      'ExcessLiquidity',
+      'Cushion',
+      'BuyingPower',
+      'AvailableFunds',
+      'TotalCashValue',
+    ])
+    expect(e.rows?.[6].value).toContain('$1,870,000.00')
+  })
+  it('says by how much an identity misses, and never replaces the broker figure', () => {
+    const f = inputs().margin.accounts[0]
+    const e = explainMarginRow({ ...f, excessLiquidity: 730_326.02 }, 'Host')
+    expect(e.lines[4]).toContain('differs by $326.02 (0.04%)')
+    expect(e.lines[1]).toContain('$730,326.02 of $1,000,000.00')
+    const missing = explainMarginRow({ ...f, equityWithLoanValue: null }, 'Host')
+    expect(missing.lines[3]).toContain('cannot be checked')
   })
 })

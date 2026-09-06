@@ -493,7 +493,7 @@ export function OptionContractDetailPanel({
                 onToggle={() => toggleSection('liquidity')}
               >
                 {liquidityLoading && <DiscoveryHint className="">Loading liquidity data…</DiscoveryHint>}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 <div className={inspectorShell.card}>
                   <div className={inspectorShell.cardLabel}>Tradability Score</div>
                     <div className={optionDiscoveryTradabilityScoreClass}>
@@ -556,6 +556,16 @@ export function OptionContractDetailPanel({
                         </>
                       )}
                     </div>
+                  </div>
+                <div className={inspectorShell.card} data-testid="liquidity-tape-placeholder">
+                  <div className={inspectorShell.cardLabel}>Trades &amp; Quotes</div>
+                    <DenseTag variant="category" size="pill">Not in the current plan</DenseTag>
+                    <DiscoveryHint className="mt-1.5">
+                      Last trade and quote tape come from vendor endpoints that need Options Developer.
+                      Today&apos;s plan is Options Starter; its snapshot data is being put to work first.
+                      This card comes back when the subscription is upgraded — a sequencing choice, not a
+                      permanent gap.
+                    </DiscoveryHint>
                   </div>
                 </div>
 

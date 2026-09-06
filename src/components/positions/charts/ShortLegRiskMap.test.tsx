@@ -173,4 +173,27 @@ describe('ShortLegRiskMap', () => {
     expect(marked).toHaveLength(1)
     expect(marked[0].querySelector('title')?.textContent).toContain('MU')
   })
+
+  it('a leg past the end of the axis wears its own band colour, never the selection ring', () => {
+    render(
+      <ShortLegRiskMap
+        legs={[
+          leg({ key: 'over', symbol: 'NBIS', strike: 145, cushionPct: 0.561 }),
+          leg({ key: 'under', symbol: 'DAVE', strike: 280, cushionPct: -0.36, dte: 131 }),
+          leg({ key: 'inside', symbol: 'MU', strike: 1200, cushionPct: 0.153, dte: 40 }),
+        ]}
+        tightPct={0.03}
+        activeExpiry={null}
+      />,
+    )
+    const byName = (n: string) => [...plotCircles()].find((c) => (c.querySelector('title')?.textContent || '').startsWith(n))
+    expect(byName('NBIS')?.getAttribute('data-clamped')).toBe('high')
+    expect(byName('DAVE')?.getAttribute('data-clamped')).toBe('low')
+    expect(byName('MU')?.getAttribute('data-clamped')).toBeNull()
+    // A clamped leg keeps its band, and nothing here is selected.
+    expect(byName('NBIS')?.getAttribute('data-band')).toBe('comfortable')
+    expect(byName('DAVE')?.getAttribute('data-band')).toBe('breached')
+    expect(screen.queryAllByTestId('point-halo')).toHaveLength(0)
+    expect([...plotCircles()].every((c) => c.getAttribute('data-selected') == null)).toBe(true)
+  })
 })

@@ -106,16 +106,22 @@
   outline: none;
 }
 
+/* The band sets `color`, and fill and stroke both follow it, so a ring drawn on
+   a dot is that dot's own colour and can never be mistaken for the white one
+   that means selected. */
 .pointComfortable {
-  fill: var(--color-profit);
+  color: var(--color-profit);
+  fill: currentColor;
 }
 
 .pointTight {
-  fill: var(--color-warning);
+  color: var(--color-warning);
+  fill: currentColor;
 }
 
 .pointBreached {
-  fill: var(--color-loss);
+  color: var(--color-loss);
+  fill: currentColor;
 }
 
 /* Priced at a close or the broker's mark, not live: the band colour stays (it
@@ -144,9 +150,19 @@
   outline: none;
 }
 
+/*
+ * A leg whose cushion is past the end of the axis sits on the edge wearing a
+ * ring in its own band colour — beyond the scale, and the label says by how
+ * much. It used to be drawn in the foreground colour, the same as the selection
+ * ring, so four legs off the scale read as four selected legs. A caret outside
+ * the dot would say the direction too, but the largest dots sit hard against
+ * the axis and there is no room for one.
+ */
 .pointClamped {
-  stroke: var(--foreground);
-  stroke-width: 1.5;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-opacity: 1;
+  stroke-dasharray: none;
 }
 
 /* The selected point: a solid foreground ring, and the dash of a stale price

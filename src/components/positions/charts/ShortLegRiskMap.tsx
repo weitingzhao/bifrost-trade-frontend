@@ -110,8 +110,8 @@ function LegPoint({
       r={point.r}
       className={cn(
         className,
-        point.clamped && styles.pointClamped,
         point.leg.spotSource != null && point.leg.spotSource !== 'live' && styles.pointMark,
+        point.clamped && styles.pointClamped,
         selected && styles.pointSelected,
       )}
       data-band={point.band ?? 'unpriced'}

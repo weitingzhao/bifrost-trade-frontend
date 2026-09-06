@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { InstanceFilterValues } from '@/utils/filterInstanceGroups'
 
 export type { InstanceFilterValues }
-export type LinesView = 'strategy' | 'contract'
+export type LinesView = 'strategy' | 'contract' | 'expiries'
 export type DetailViewMode = 'accordion' | 'multi'
 
 export const CLEAR_FILTERS: InstanceFilterValues = {
@@ -42,6 +42,8 @@ interface Props {
   /** "N of M" for the strategy view; the contract view prints its own count. */
   shown: number
   total: number
+  /** Dates with legs in scope, for the expiries view's count. */
+  expiryCount: number
 }
 
 function BubbleRadio({
@@ -86,6 +88,7 @@ export function LinesToolbar({
   onChange,
   shown,
   total,
+  expiryCount,
 }: Props) {
   const hasActiveFilter =
     values.structureType !== 'all' ||
@@ -123,10 +126,16 @@ export function LinesToolbar({
         options={[
           { value: 'strategy', label: 'Strategies' },
           { value: 'contract', label: 'Contracts' },
+          { value: 'expiries', label: 'Expiries' },
         ]}
         value={view}
         onChange={(v) => onViewChange(v as LinesView)}
       />
+      {view === 'expiries' ? (
+        <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
+          {expiryCount} {expiryCount === 1 ? 'date' : 'dates'}
+        </span>
+      ) : null}
       {view === 'strategy' ? (
         <>
           <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
@@ -180,6 +189,7 @@ export function LinesToolbar({
         </>
       ) : null}
 
+      {view !== 'expiries' ? (
       <div className="ml-auto flex shrink-0 items-center gap-1" role="radiogroup" aria-label="Detail view mode">
         <span className="whitespace-nowrap text-dense-label font-semibold text-muted-foreground">Detail</span>
         <SegmentControl
@@ -193,6 +203,7 @@ export function LinesToolbar({
           onChange={(v) => onDetailViewModeChange(v as DetailViewMode)}
         />
       </div>
+      ) : null}
     </div>
   )
 }

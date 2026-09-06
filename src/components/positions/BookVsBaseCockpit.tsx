@@ -13,6 +13,7 @@
  * Everything here is derived once in usePositionsAlarm. Nothing is recomputed,
  * so the gauge cannot disagree with the tables it summarises.
  */
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { DenseTagButton } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
@@ -95,6 +96,8 @@ export function BookVsBaseCockpit({
   checks,
   cushionTightPct,
   onOpenTarget,
+  variant = 'full',
+  headerLink,
 }: {
   book: BookVsBase
   /** All nine checks; each is a chip with a place to land, quiet ones in grey. */
@@ -102,8 +105,17 @@ export function BookVsBaseCockpit({
   /** The tightness setting, so the Risk line can say how close the closest leg is to it. */
   cushionTightPct: number
   onOpenTarget: (t: AlarmTarget, sort?: ObligationsSort) => void
+  /**
+   * 'full' is the Positions opening screen. 'backing' is the same block on the
+   * Backing page, holding only the two gauges that page answers — the thin
+   * context strip professional tools carry from screen to screen.
+   */
+  variant?: 'full' | 'backing'
+  /** The other page, one click away. */
+  headerLink?: { to: string; label: string }
 }) {
   const { pressure, backing, risk, potential, demand, supply } = book
+  const full = variant === 'full'
   const tightest = risk.counts.tightest
   const tightestTone =
     tightest == null
@@ -121,10 +133,15 @@ export function BookVsBaseCockpit({
     >
       <div className="mb-2 flex items-baseline justify-between gap-2">
         <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-          Option book against the base
+          {full ? 'Option book against the base' : 'Backing — the options against the base'}
         </span>
         <span className="flex flex-wrap items-center justify-end gap-1">
-          {checks.map((c) =>
+          {headerLink ? (
+            <Link to={headerLink.to} className="mr-1 text-dense-caption text-link hover:underline">
+              {headerLink.label}
+            </Link>
+          ) : null}
+          {(full ? checks : []).map((c) =>
             c.tone === 'ok' || !c.target ? (
               // Quiet, or nowhere to land (the feed age is a fact, not a section).
               <button
@@ -157,6 +174,7 @@ export function BookVsBaseCockpit({
       </div>
 
       <div className="flex flex-col gap-1.5">
+        {full ? (
         <Gauge
           label="Pressure"
           onOpen={() => onOpenTarget('margin')}
@@ -166,6 +184,7 @@ export function BookVsBaseCockpit({
           <Num>{pct0(pressure.pct)}</Num> of margin used · cushion {pct0(pressure.cushion)} · broker
           liquidates at 100%
         </Gauge>
+        ) : null}
 
         <Gauge
           label="Backing"
@@ -191,6 +210,7 @@ export function BookVsBaseCockpit({
           ) : null}
         </Gauge>
 
+        {full ? (
         <Gauge
           label="Risk"
           onOpen={() => onOpenTarget('ladder')}
@@ -226,6 +246,7 @@ export function BookVsBaseCockpit({
             </>
           )}
         </Gauge>
+        ) : null}
 
         <Gauge
           label="Potential"

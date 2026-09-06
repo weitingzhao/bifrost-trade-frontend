@@ -14,7 +14,7 @@
 import { createPersistedStore } from '@/lib/cockpit/externalStore'
 import { STORAGE_KEYS } from '@/constants/storage'
 
-export type PositionsSectionId = 'charts' | 'ladder' | 'capital' | 'coverage' | 'independent'
+export type PositionsSectionId = 'charts'
 
 export type PositionsSectionState = Record<PositionsSectionId, boolean>
 
@@ -24,10 +24,6 @@ export type PositionsSectionState = Record<PositionsSectionId, boolean>
  */
 export const DEFAULT_SECTION_STATE: PositionsSectionState = {
   charts: true,
-  ladder: false,
-  capital: false,
-  coverage: false,
-  independent: false,
 }
 
 const store = createPersistedStore<PositionsSectionState>(

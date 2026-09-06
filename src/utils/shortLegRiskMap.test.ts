@@ -12,6 +12,8 @@ import {
   POINT_R_MAX,
   POINT_R_MIN,
   riskMapLegTitle,
+  riskMapLegLabel,
+  riskMapLegLabelParts,
   CUSHION_MAX,
   CUSHION_MIN,
   labelPoints,
@@ -321,7 +323,7 @@ describe('labelPoints', () => {
       OPTS,
     )
     const [a, b] = l.labels.filter((x) => x.key !== 'far')
-    expect([a?.text, b?.text].sort()).toEqual(['NVDA 245C +24.9%', 'NVDA 255C +27.9%'])
+    expect([a?.text, b?.text].sort()).toEqual(['NVDA 245C $25k +24.9%', 'NVDA 255C $26k +27.9%'])
     // Two names on one date never share a spot: the second takes the other
     // side of the point, or the next line when both sides are taken.
     const apart = a!.anchor !== b!.anchor || Math.abs(a!.y - b!.y) >= 9
@@ -347,6 +349,21 @@ describe('labelTicks', () => {
   it('always labels the active expiry and measures the next gap from it', () => {
     expect(labelTicks([tick(100, 'a'), tick(110, 'b'), tick(130, 'c')], 'b')).toEqual([true, true, false])
     expect(labelTicks([], 'b')).toEqual([])
+  })
+})
+
+describe('riskMapLegLabelParts', () => {
+  it('reads the leg three ways: what it is and how many, what it is worth, how far it can fall', () => {
+    const leg = mapLeg({ symbol: 'NVDA', strike: 245, contracts: 5, cushionPct: 0.06 })
+    expect(riskMapLegLabelParts(leg)).toEqual({ head: 'NVDA 245C ×5', value: '$123k', cushion: '+6.0%' })
+    expect(riskMapLegLabel(leg)).toBe('NVDA 245C ×5 $123k +6.0%')
+    // A single contract drops the ×N; a leg with no quote drops the cushion.
+    expect(riskMapLegLabelParts(mapLeg({ symbol: 'MU', strike: 1200, contracts: 1, cushionPct: 0.153 }))).toEqual({
+      head: 'MU 1200C',
+      value: '$120k',
+      cushion: '+15.3%',
+    })
+    expect(riskMapLegLabelParts(mapLeg({ contracts: 2, cushionPct: null })).cushion).toBeNull()
   })
 })
 

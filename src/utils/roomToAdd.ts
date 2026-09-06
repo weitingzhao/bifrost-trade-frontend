@@ -59,9 +59,25 @@ export interface PutMarginModel {
   margin: number
 }
 
+/** One leg's entry premium, kept so the explanation can name where the total came from. */
+export interface LegPremium {
+  accountId: string
+  underlying: string
+  strike: number
+  right: string
+  expiry: string
+  /** Absolute contracts; `side` carries the sign. */
+  contracts: number
+  side: 'short' | 'long'
+  /** Credit for a short, debit for a long; always positive. */
+  premium: number
+}
+
 export interface RoomAccount {
   accountId: string
   pressure: number | null
+  cushion: number | null
+  excessLiquidity: number | null
   netLiquidation: number | null
   availableFunds: number | null
   /** (ceiling − pressure) × NLV, capped by AvailableFunds; null when the broker left a field out. */
@@ -83,6 +99,8 @@ export interface RoomToAdd {
     /** Broker sums over the accounts in scope — what the pressure arithmetic runs on. */
     excessLiquidity: number
     netLiquidation: number
+    /** Every leg's entry premium, so the total can be walked back to its legs. */
+    legs: LegPremium[]
   }
   pool: {
     /** Backing the current contracts hold: shares behind calls at price, cash behind puts. */
@@ -102,6 +120,7 @@ export interface RoomToAdd {
     cashPerPut: number | null
     puts: number | null
     income: number | null
+    putMargin: number | null
     pressureAfter: number | null
   }
   margin: {
@@ -174,12 +193,23 @@ export function computeRoomToAdd(input: RoomInputs): RoomToAdd {
   let shortPuts = 0
   let unmodelledPuts = 0
   const models: PutMarginModel[] = []
+  const legRows: LegPremium[] = []
   let tenor: { min: number; max: number } | null = null
   for (const leg of legs) {
     const contracts = Math.abs(leg.qty)
     if (!finite(leg.qty) || contracts === 0) continue
     const premPerShare = finite(leg.avgCostPerShare) ? Math.abs(leg.avgCostPerShare) : null
     const premium = premPerShare == null ? 0 : cents(premPerShare * SHARES_PER_CONTRACT * contracts)
+    legRows.push({
+      accountId: leg.accountId,
+      underlying: leg.underlying,
+      strike: leg.strike,
+      right: (leg.right ?? '').toUpperCase(),
+      expiry: leg.expiry,
+      contracts,
+      side: leg.qty < 0 ? 'short' : 'long',
+      premium,
+    })
     if (leg.qty < 0) {
       netPremium += premium
       const dte = daysToExpiry(leg.expiry, nowSec)
@@ -231,7 +261,15 @@ export function computeRoomToAdd(input: RoomInputs): RoomToAdd {
     const known = a.pressure != null && a.netLiquidation != null
     const raw = known ? cents(Math.max(0, (ceiling - (a.pressure as number)) * (a.netLiquidation as number))) : null
     const headroom = raw == null ? null : a.availableFunds != null ? Math.min(raw, Math.max(0, a.availableFunds)) : raw
-    return { accountId: a.accountId, pressure: a.pressure, netLiquidation: a.netLiquidation, availableFunds: a.availableFunds, headroom }
+    return {
+      accountId: a.accountId,
+      pressure: a.pressure,
+      cushion: a.cushion,
+      excessLiquidity: a.excessLiquidity,
+      netLiquidation: a.netLiquidation,
+      availableFunds: a.availableFunds,
+      headroom,
+    }
   })
   const knownAccounts = accounts.filter((a) => a.headroom != null)
   const headroom = knownAccounts.length > 0 ? knownAccounts.reduce((n, a) => n + (a.headroom as number), 0) : null
@@ -250,6 +288,7 @@ export function computeRoomToAdd(input: RoomInputs): RoomToAdd {
     if (marginPerPut == null || nlvTotal <= 0) return null
     return Math.min(1, Math.max(0, 1 - (excessTotal - puts * marginPerPut) / nlvTotal))
   }
+  const backedPutMargin = backedPuts != null && marginPerPut != null ? backedPuts * marginPerPut : null
   const pressureAfterBacked = pressureWith(backedPuts)
   const pressureAfterMargin = marginPuts == null ? null : pressureWith((backedPuts ?? 0) + marginPuts)
 
@@ -265,6 +304,7 @@ export function computeRoomToAdd(input: RoomInputs): RoomToAdd {
       tenor,
       excessLiquidity: excessTotal,
       netLiquidation: nlvTotal,
+      legs: legRows,
     },
     pool: {
       used,
@@ -281,6 +321,8 @@ export function computeRoomToAdd(input: RoomInputs): RoomToAdd {
       cashPerPut,
       puts: backedPuts,
       income: backedIncome,
+      /** Reg T the backed puts take even though cash stands behind them. */
+      putMargin: backedPutMargin,
       pressureAfter: pressureAfterBacked,
     },
     margin: {

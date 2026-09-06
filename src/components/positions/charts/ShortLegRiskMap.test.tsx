@@ -42,7 +42,7 @@ describe('ShortLegRiskMap', () => {
     const c = pointFor(PRICED_TITLE)
     expect(c.dataset.band).toBe('comfortable')
     // The label carries the size too: three contracts, not one.
-    expect(screen.getByTestId('point-label')).toHaveTextContent('MU 250C ×3 +12.4%')
+    expect(screen.getByTestId('point-label')).toHaveTextContent('MU 250C ×3 $75k +12.4%')
     expect(screen.getByTestId('size-legend')).toHaveTextContent('$75k–$75k if assigned')
     // The cushion scale is drawn, so the height of a point can be read.
     expect(screen.getAllByTestId('y-tick').map((t) => t.textContent)).toEqual(['-10%', '0%', '+10%', '+20%', '+30%', '+40%'])

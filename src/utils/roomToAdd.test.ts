@@ -41,7 +41,17 @@ describe('computeRoomToAdd', () => {
 
   it('margin step: headroom to the ceiling, capped by available funds, less the backed puts, ÷ Reg T per put', () => {
     const m = room.margin
-    expect(m.accounts).toEqual([{ accountId: 'U1', pressure: 0.27, netLiquidation: 1_000_000, availableFunds: 700_000, headroom: 230_000 }])
+    expect(m.accounts).toEqual([
+      {
+        accountId: 'U1',
+        pressure: 0.27,
+        cushion: 0.73,
+        excessLiquidity: 730_000,
+        netLiquidation: 1_000_000,
+        availableFunds: 700_000,
+        headroom: 230_000,
+      },
+    ])
     expect(m.headroom).toBeCloseTo(230_000, 6)
     expect(m.headroomAfterBacked).toBeCloseTo(230_000 - 7_910, 6)
     expect(m.models).toHaveLength(1)

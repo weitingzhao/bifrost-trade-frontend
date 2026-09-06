@@ -143,7 +143,6 @@ export default function PositionsPage() {
     [book.alarm.book, book.alarm.margin, book.alarm.legs, book.coverRows, book.alarm.resolveSpot, ceiling],
   )
   const room = useMemo(() => summarizeRoom(roomFull), [roomFull])
-  const [roomOpen, setRoomOpen] = useState(true)
   const explain = useMemo(
     () => ({
       exposure: book.alarm.exposure,
@@ -173,7 +172,6 @@ export default function PositionsPage() {
       } else if (t === 'capital') {
         navigate(MODEL_ANALYSIS_PATH)
       } else if (t === 'room') {
-        setRoomOpen(true)
         scrollTo('positions-room')
       } else {
         const params = new URLSearchParams(scopeSearch)
@@ -392,15 +390,8 @@ export default function PositionsPage() {
                   selected={selectedLeg}
                   onSelect={setPickedLeg}
                 />
-                <div id="positions-room" className="min-w-0">
-                  <RoomToAddSection
-                    open={roomOpen}
-                    onToggle={() => setRoomOpen((v) => !v)}
-                    room={roomFull}
-                    coverRows={book.coverRows}
-                    ceiling={ceiling}
-                    onCeilingChange={setCeiling}
-                  />
+  <div className="min-w-0">
+                  <RoomToAddSection room={roomFull} coverRows={book.coverRows} ceiling={ceiling} onCeilingChange={setCeiling} />
                 </div>
               </div>
 

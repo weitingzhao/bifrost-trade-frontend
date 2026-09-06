@@ -50,6 +50,13 @@ const BAND_CLASS: Record<CushionBand, string> = {
   breached: styles.pointBreached,
 }
 
+/** The cushion reads in the band's colour, so a breached leg is red in words as well as in ink. */
+const BAND_TEXT_CLASS: Record<CushionBand, string> = {
+  comfortable: styles.labelComfortable,
+  tight: styles.labelTight,
+  breached: styles.labelBreached,
+}
+
 /** Activation handlers for an SVG element playing a button. */
 function activate(fn: () => void) {
   return {
@@ -322,7 +329,12 @@ export function ShortLegRiskMap({
             className={cn(styles.pointLabel, l.key === selectedKey && styles.pointLabelSelected)}
             data-testid="point-label"
           >
-            {l.text}
+            {/* Three readings, three colours: what it is, what it is worth, how far it has to fall. */}
+            <tspan>{l.parts.head}</tspan>
+            {l.parts.value ? <tspan className={styles.labelValue}> {l.parts.value}</tspan> : null}
+            {l.parts.cushion ? (
+              <tspan className={l.band ? BAND_TEXT_CLASS[l.band] : undefined}> {l.parts.cushion}</tspan>
+            ) : null}
           </text>
         ))}
         {layout.points.map((p) => (

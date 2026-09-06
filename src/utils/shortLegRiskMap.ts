@@ -184,8 +184,22 @@ export interface RiskMapLabel {
   key: string
   x: number
   y: number
+  /** The whole line, and the only thing the de-overlap pass measures. */
   text: string
+  /** The same line in its three readings, so each can be drawn in its own colour. */
+  parts: RiskMapLabelParts
+  /** The cushion's band, which colours the percentage; null when there is none. */
+  band: CushionBand | null
   anchor: 'start' | 'end'
+}
+
+export interface RiskMapLabelParts {
+  /** "NVDA 245C ×5" — what it is and how many. */
+  head: string
+  /** "$123k" — what assignment would move; the same number the dot's area draws. */
+  value: string | null
+  /** "+6.0%" — how far the spot is from the strike. */
+  cushion: string | null
 }
 
 export interface RiskMapBands {
@@ -477,20 +491,37 @@ export function riskMapLegShort(leg: RiskMapLeg): string {
 }
 
 /**
- * "NVDA 245C ×5 +6.0%" — the plot label: the name, the size, and the height, so
- * the y axis and the dot's area both read in words at every point. The ×N is
- * dropped on a single contract, where it would be noise on every small leg.
+ * "NVDA 245C ×5 · $123k · +6.0%" — the plot label in its three readings: what it
+ * is and how many, what assignment would move, and how far the spot is from the
+ * strike. The dot draws the middle one as area and the height draws the last;
+ * writing both keeps the picture readable without measuring pixels by eye. The
+ * ×N is dropped on a single contract, where it would be noise on every small leg.
  */
-export function riskMapLegLabel(leg: RiskMapLeg): string {
+export function riskMapLegLabelParts(leg: RiskMapLeg): RiskMapLabelParts {
   const size = leg.contracts > 1 ? ` ×${leg.contracts}` : ''
+  const n = legNotional(leg)
   const c = leg.cushionPct
-  if (!isPlaceable(c)) return `${riskMapLegShort(leg)}${size}`
-  return `${riskMapLegShort(leg)}${size} ${c >= 0 ? '+' : ''}${(c * 100).toFixed(1)}%`
+  return {
+    head: `${riskMapLegShort(leg)}${size}`,
+    value: n == null ? null : fmtNotional(n),
+    cushion: isPlaceable(c) ? `${c >= 0 ? '+' : ''}${(c * 100).toFixed(1)}%` : null,
+  }
+}
+
+export function riskMapLegLabel(leg: RiskMapLeg): string {
+  const p = riskMapLegLabelParts(leg)
+  return [p.head, p.value, p.cushion].filter(Boolean).join(' ')
 }
 
 /** Roughly how wide a label is in SVG units, for the 8.5px monospace it is drawn in. */
 const LABEL_CHAR_W = 5.2
-const LABEL_LINE_H = 9
+/**
+ * A line of label, and the vertical distance at which two of them stop
+ * touching. It is a shade taller than the glyphs: at exactly the glyph height
+ * two labels one line apart still shared a pixel row, which read as a collision
+ * to the eye while the collision test called them clear.
+ */
+const LABEL_LINE_H = 10.5
 
 /**
  * Place each point's name to its right (or its left, near the edge), then nudge
@@ -511,13 +542,14 @@ export function labelPoints(
   }
   for (const p of sorted) {
     const text = riskMapLegLabel(p.leg)
+    const parts = riskMapLegLabelParts(p.leg)
     const width = text.length * LABEL_CHAR_W
     const fitsRight = p.x + p.r + 3 + width <= plot.x1
     const fitsLeft = p.x - p.r - 3 - width >= plot.x0
     const sides: Array<'start' | 'end'> = fitsRight && fitsLeft ? ['start', 'end'] : fitsRight ? ['start'] : ['end']
     const collides = (anchor: 'start' | 'end', yy: number) => {
       const x = anchor === 'start' ? p.x + p.r + 3 : p.x - p.r - 3
-      const mine = spanOf({ key: '', x, y: yy, text, anchor })
+      const mine = spanOf({ key: '', x, y: yy, text, parts, band: p.band, anchor })
       return placed.some((l) => {
         const s = spanOf(l)
         return s.right > mine.left && s.left < mine.right && Math.abs(l.y - yy) < LABEL_LINE_H
@@ -526,7 +558,17 @@ export function labelPoints(
     // Candidates in order of preference: beside the point on either side, then
     // a line down, then a line up, alternating sides — so a cluster on one
     // expiry fans its names out to both sides instead of stacking one column.
-    const offsets = [0, LABEL_LINE_H, -LABEL_LINE_H, 2 * LABEL_LINE_H, -2 * LABEL_LINE_H, 3 * LABEL_LINE_H, -3 * LABEL_LINE_H]
+    const offsets = [
+      0,
+      LABEL_LINE_H,
+      -LABEL_LINE_H,
+      2 * LABEL_LINE_H,
+      -2 * LABEL_LINE_H,
+      3 * LABEL_LINE_H,
+      -3 * LABEL_LINE_H,
+      4 * LABEL_LINE_H,
+      -4 * LABEL_LINE_H,
+    ]
     let chosen: { anchor: 'start' | 'end'; y: number } | null = null
     for (const dy of offsets) {
       const y = p.y + 3 + dy
@@ -542,7 +584,7 @@ export function labelPoints(
     const anchor = chosen?.anchor ?? sides[0]
     const y = chosen?.y ?? p.y + 3
     const x = anchor === 'start' ? p.x + p.r + 3 : p.x - p.r - 3
-    placed.push({ key: p.leg.key, x, y, text, anchor })
+    placed.push({ key: p.leg.key, x, y, text, parts, band: p.band, anchor })
   }
   return placed
 }

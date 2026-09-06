@@ -1,33 +1,25 @@
 /**
- * Room to add — three steps: what the free base backs on its own, what
- * margin adds up to the ceiling, and where the Pressure gauge lands after
- * each. Each step is a row of two meters: the premium per cycle, drawn as
- * a ladder that accumulates step over step so the eye reads how much each
- * adds to the last, and the pressure after it on the gauge's own 0–100%
- * scale with the band ticks. The header carries the answer; the ? walks
- * every number back to the fields it came from.
+ * Room to add - three steps: what the free base backs on its own, what margin
+ * adds up to the ceiling, and where the Pressure gauge lands after each.
+ *
+ * Always open: it answers a standing question, and a reader who has to expand
+ * it first will not ask. Each step is a row of two meters - a premium ladder
+ * that accumulates step over step on one scale, so the eye reads how much each
+ * step adds to the last, and the pressure after it on the gauge's own 0-100%
+ * scale with the band ticks - and each carries a ? that walks that row's
+ * numbers back to the contracts, legs and broker fields they came from.
  */
 import { useState } from 'react'
-import {
-  CollapsibleChevron,
-  CollapsibleGroup,
-  CollapsibleGroupBody,
-  CollapsibleGroupHeader,
-  CollapsibleGroupStats,
-  CollapsibleGroupTitle,
-} from '@/components/data-display'
 import { DerivationBlock } from './DerivationBlock'
 import { cn } from '@/lib/utils'
 import { pressureLevel, type CoverRow, type GaugeLevel } from '@/utils/bookVsBase'
 import { PRESSURE_TICKS, usdAbbrev } from '@/utils/marginByAccount'
 import { fmtUsd } from '@/utils/positions'
-import { roomDerivation } from './roomDerivation'
+import { roomDerivation, type RoomView } from './roomDerivation'
 import type { RoomToAdd } from '@/utils/roomToAdd'
 import { PRESSURE_CEILING_MAX, PRESSURE_CEILING_MIN } from '@/hooks/usePressureCeiling'
 
 interface Props {
-  open: boolean
-  onToggle: () => void
   room: RoomToAdd
   coverRows: readonly CoverRow[]
   ceiling: number
@@ -50,6 +42,7 @@ const TIER_TEXT: Record<TierId, string> = {
 const BAND: Record<GaugeLevel, string> = { 0: 'idle', 1: 'normal', 2: 'heavy', 3: 'critical' }
 const BAND_TEXT: Record<GaugeLevel, string> = { 0: 'text-muted-foreground', 1: 'text-foreground', 2: 'text-warning', 3: 'text-loss' }
 const BAND_FILL: Record<GaugeLevel, string> = { 0: 'bg-profit', 1: 'bg-profit', 2: 'bg-warning', 3: 'bg-loss' }
+const GRID = 'grid grid-cols-[7.5rem_minmax(0,1fr)_4.75rem_3.5rem] items-center gap-x-2'
 
 const plus = (n: number | null) => (n == null ? '—' : `+${n.toLocaleString()}`)
 const pct0 = (v: number | null) => (v == null ? '—' : `${Math.round(v * 100)}%`)
@@ -89,7 +82,7 @@ function PremiumLadder({ tiers, upTo, max }: { tiers: Tier[]; upTo: number; max:
   )
 }
 
-/** Pressure after the step, on the gauge's scale with its band ticks — the margin strip's bar, thinner. */
+/** Pressure after the step, on the gauge's scale with its band ticks - the margin strip's bar, thinner. */
 function PressureAfter({ label, pressure }: { label: string; pressure: number | null }) {
   const band = bandOf(pressure)
   const pct = pressure == null ? 0 : Math.round(Math.min(1, Math.max(0, pressure)) * 100)
@@ -110,12 +103,36 @@ function PressureAfter({ label, pressure }: { label: string; pressure: number | 
   )
 }
 
-export function RoomToAddSection({ open, onToggle, room, coverRows, ceiling, onCeilingChange }: Props) {
-  const [how, setHow] = useState(false)
+function How({ view, label, open, onToggle }: { view: RoomView; label: string; open: boolean; onToggle: (v: RoomView) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(view)}
+      aria-pressed={open}
+      aria-label={`How ${label} is computed`}
+      className={cn(
+        'ml-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-border/60 font-mono text-dense-caption leading-none',
+        open ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
+      )}
+    >
+      ?
+    </button>
+  )
+}
+
+export function RoomToAddSection({ room, coverRows, ceiling, onCeilingChange }: Props) {
+  const [openView, setOpenView] = useState<RoomView | null>(null)
   const r = room
   const ceilingPct = Math.round(ceiling * 100)
+  const toggle = (v: RoomView) => setOpenView((cur) => (cur === v ? null : v))
   const tiers: Tier[] = [
-    { id: 'now', label: 'Now', counts: `${r.now.calls.toLocaleString()} calls · ${r.now.puts.toLocaleString()} puts`, premium: r.now.netPremium, pressure: r.now.pressure },
+    {
+      id: 'now',
+      label: 'Now',
+      counts: `${r.now.calls.toLocaleString()} calls · ${r.now.puts.toLocaleString()} puts`,
+      premium: r.now.netPremium,
+      pressure: r.now.pressure,
+    },
     {
       id: 'backed',
       label: '+ Backed',
@@ -136,105 +153,105 @@ export function RoomToAddSection({ open, onToggle, room, coverRows, ceiling, onC
   const tenor = r.now.tenor ? `${r.now.tenor.min}–${r.now.tenor.max} d` : null
 
   return (
-    <CollapsibleGroup>
-      <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
-        <CollapsibleChevron expanded={open} />
-        {/* The title never gives way to the figures: it stays whole, the figures wrap. */}
-        <CollapsibleGroupTitle className="shrink-0">Room to add</CollapsibleGroupTitle>
-        <CollapsibleGroupStats className="min-w-0 shrink justify-end">
-          <span className="font-mono text-xs tabular-nums text-muted-foreground" data-testid="room-stats">
-            {plus(r.backed.calls)} calls · {plus(r.backed.puts)} puts · {plus(r.margin.puts)} on margin
-            {added != null ? ` · ≈ +${usdAbbrev(added)}/cycle` : ''}
-          </span>
-        </CollapsibleGroupStats>
-      </CollapsibleGroupHeader>
-      {open ? (
-        <CollapsibleGroupBody>
-          <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-dense-caption text-muted-foreground">
-            <label
-              className="flex h-7 items-center gap-1 rounded-md border border-border bg-card px-1.5"
-              title="The pressure the margin step may run up to. 50% is where the gauge turns heavy."
-            >
-              <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">Ceiling</span>
-              <input
-                type="number"
-                min={PRESSURE_CEILING_MIN * 100}
-                max={PRESSURE_CEILING_MAX * 100}
-                step={5}
-                value={ceilingPct}
-                onChange={(e) => {
-                  const n = Number(e.target.value)
-                  if (Number.isFinite(n)) onCeilingChange(n / 100)
-                }}
-                className="w-10 bg-transparent text-right font-mono text-sm tabular-nums text-foreground outline-none"
-                aria-label="Pressure ceiling for the margin step, percent"
-              />
-              <span className="text-sm">%</span>
-            </label>
-            <span className="min-w-0">
-              yield {r.pool.yieldPerCycle != null ? `${(r.pool.yieldPerCycle * 100).toFixed(1)}%` : '—'}/cycle{tenor ? ` of ${tenor}` : ''} · Reg T{' '}
-              {r.margin.marginPerPut != null ? usdAbbrev(r.margin.marginPerPut) : '—'}/put
-              {r.margin.leverage != null ? ` (${r.margin.leverage.toFixed(1)}× less than cash-secured)` : ''} · estimates
-            </span>
-            <button
-              type="button"
-              onClick={() => setHow((v) => !v)}
-              aria-pressed={how}
-              aria-label="How Room to add is computed"
-              className={cn(
-                'ml-auto inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-border/60 font-mono leading-none',
-                how ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              ?
-            </button>
-          </div>
+    <section
+      id="positions-room"
+      aria-label="Room to add"
+      className="rounded-md border border-border bg-secondary/40 px-3 py-1.5"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && openView) setOpenView(null)
+      }}
+    >
+      <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">Room to add</span>
+        <span className="font-mono text-dense-caption tabular-nums text-muted-foreground" data-testid="room-stats">
+          {plus(r.backed.calls)} calls · {plus(r.backed.puts)} puts · {plus(r.margin.puts)} on margin
+          {added != null ? ` · ≈ +${usdAbbrev(added)}/cycle` : ''}
+        </span>
+        <span className="ml-auto flex items-center">
+          <label
+            className="flex h-6 items-center gap-1 rounded-md border border-border bg-card px-1.5"
+            title="The pressure the margin step may run up to. 50% is where the gauge turns heavy."
+          >
+            <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">Ceiling</span>
+            <input
+              type="number"
+              min={PRESSURE_CEILING_MIN * 100}
+              max={PRESSURE_CEILING_MAX * 100}
+              step={5}
+              value={ceilingPct}
+              onChange={(e) => {
+                const n = Number(e.target.value)
+                if (Number.isFinite(n)) onCeilingChange(n / 100)
+              }}
+              className="w-9 bg-transparent text-right font-mono text-dense-body tabular-nums text-foreground outline-none"
+              aria-label="Pressure ceiling for the margin step, percent"
+            />
+            <span className="text-dense-caption">%</span>
+          </label>
+          <How view="all" label="Room to add" open={openView === 'all'} onToggle={toggle} />
+        </span>
+      </div>
 
-          {/* Column heads, then one row a step: label and counts · the two meters · the figures. */}
-          <div className="grid grid-cols-[6.75rem_minmax(0,1fr)_4.75rem_3.75rem] items-end gap-x-2 text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-            <span>Step</span>
-            <span>Premium / cycle · pressure after</span>
-            <span className="text-right">Premium</span>
-            <span className="text-right">Pressure</span>
-          </div>
-          <div className="mt-1 flex flex-col gap-y-1.5" data-testid="room-tiers">
-            {tiers.map((t, i) => {
-              const band = bandOf(t.pressure)
-              return (
-                <div
-                  key={t.id}
-                  className="grid grid-cols-[6.75rem_minmax(0,1fr)_4.75rem_3.75rem] items-center gap-x-2"
-                  data-testid={`room-row-${t.id}`}
-                >
-                  <span className="min-w-0">
-                    <span className={cn('block truncate text-dense-body font-medium', TIER_TEXT[t.id])}>{t.label}</span>
-                    <span className="block truncate text-dense-caption text-muted-foreground" title={t.counts}>
-                      {t.counts}
-                    </span>
-                  </span>
-                  <span className="flex flex-col gap-y-1">
-                    <PremiumLadder tiers={tiers} upTo={i} max={max} />
-                    <PressureAfter label={t.label} pressure={t.pressure} />
-                  </span>
-                  <span className={cn('text-right font-mono text-dense-body tabular-nums', TIER_TEXT[t.id])}>
-                    {t.premium == null ? '—' : `${i > 0 ? '+' : ''}${fmtUsd(t.premium, true)}`}
-                  </span>
-                  <span className={cn('text-right font-mono text-dense-body tabular-nums', band == null ? 'text-muted-foreground' : BAND_TEXT[band])} title={band == null ? undefined : BAND[band]}>
-                    {pct0(t.pressure)}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-dense-caption text-muted-foreground">
-            <span className="inline-flex items-center gap-1"><span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.now)} />held</span>
-            <span className="inline-flex items-center gap-1"><span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.backed)} />backed</span>
-            <span className="inline-flex items-center gap-1"><span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.margin)} />on margin</span>
-            <span>· ladder = premium per cycle, each step on the last · thin bar = pressure after, ticks at 10 · 50 · 75%</span>
-          </p>
-          {how ? <DerivationBlock derivation={roomDerivation(r, coverRows)} onClose={() => setHow(false)} className="mb-1" /> : null}
-        </CollapsibleGroupBody>
+      <p className="mb-1.5 text-dense-caption text-muted-foreground">
+        yield {r.pool.yieldPerCycle != null ? `${(r.pool.yieldPerCycle * 100).toFixed(1)}%` : '—'}/cycle{tenor ? ` of ${tenor}` : ''} · Reg T{' '}
+        {r.margin.marginPerPut != null ? usdAbbrev(r.margin.marginPerPut) : '—'}/put
+        {r.margin.leverage != null ? ` (${r.margin.leverage.toFixed(1)}× less than cash-secured)` : ''} · estimates, not the broker's what-if
+      </p>
+
+      <div className={cn(GRID, 'text-dense-label font-semibold uppercase tracking-wide text-muted-foreground')}>
+        <span>Step</span>
+        <span>Premium / cycle · pressure after</span>
+        <span className="text-right">Premium</span>
+        <span className="text-right">Pressure</span>
+      </div>
+      <div className="mt-1 flex flex-col gap-y-1.5" data-testid="room-tiers">
+        {tiers.map((t, i) => {
+          const band = bandOf(t.pressure)
+          return (
+            <div key={t.id} className={GRID} data-testid={`room-row-${t.id}`}>
+              <span className="min-w-0">
+                <span className="flex items-center">
+                  <span className={cn('truncate text-dense-body font-medium', TIER_TEXT[t.id])}>{t.label}</span>
+                  <How view={t.id} label={t.label} open={openView === t.id} onToggle={toggle} />
+                </span>
+                <span className="block truncate text-dense-caption text-muted-foreground" title={t.counts}>
+                  {t.counts}
+                </span>
+              </span>
+              <span className="flex flex-col gap-y-1">
+                <PremiumLadder tiers={tiers} upTo={i} max={max} />
+                <PressureAfter label={t.label} pressure={t.pressure} />
+              </span>
+              <span className={cn('text-right font-mono text-dense-body tabular-nums', TIER_TEXT[t.id])}>
+                {t.premium == null ? '—' : `${i > 0 ? '+' : ''}${fmtUsd(t.premium, true)}`}
+              </span>
+              <span
+                className={cn('text-right font-mono text-dense-body tabular-nums', band == null ? 'text-muted-foreground' : BAND_TEXT[band])}
+                title={band == null ? undefined : BAND[band]}
+              >
+                {pct0(t.pressure)}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-dense-caption text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.now)} />held
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.backed)} />backed
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.margin)} />on margin
+        </span>
+        <span>· wide bar = premium, each step on the last · thin bar = pressure after, ticks at 10 · 50 · 75%</span>
+      </p>
+
+      {openView ? (
+        <DerivationBlock derivation={roomDerivation(r, coverRows, openView)} onClose={() => setOpenView(null)} className="mb-1" />
       ) : null}
-    </CollapsibleGroup>
+    </section>
   )
 }

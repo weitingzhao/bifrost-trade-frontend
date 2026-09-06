@@ -57,7 +57,6 @@ export default function BackingPage() {
   })
   const [obligationsOpen, setObligationsOpen] = useState(true)
   const [holdingsOpen, setHoldingsOpen] = useState(true)
-  const [roomOpen, setRoomOpen] = useState(true)
   const { ceiling, setCeiling } = usePressureCeiling()
   const room = useMemo(
     () =>
@@ -88,7 +87,6 @@ export default function BackingPage() {
 
   const openTarget = (t: AlarmTarget) => {
     if (t === 'coverage' || t === 'independent' || t === 'room') {
-      if (t === 'room') setRoomOpen(true)
       document.getElementById(ANCHOR[t])?.scrollIntoView({ block: 'start' })
     } else if (t === 'margin') {
       document.getElementById('positions-margin')?.scrollIntoView({ block: 'nearest' })
@@ -215,14 +213,7 @@ export default function BackingPage() {
               </div>
 
               <div id={ANCHOR.room}>
-                <RoomToAddSection
-                  open={roomOpen}
-                  onToggle={() => setRoomOpen((v) => !v)}
-                  room={room}
-                  coverRows={book.coverRows}
-                  ceiling={ceiling}
-                  onCeilingChange={setCeiling}
-                />
+                <RoomToAddSection room={room} coverRows={book.coverRows} ceiling={ceiling} onCeilingChange={setCeiling} />
               </div>
               <div id={ANCHOR.coverage}>
                 <ObligationsRoomSection

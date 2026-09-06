@@ -178,3 +178,23 @@
   stroke: var(--muted-foreground);
   stroke-width: 1;
 }
+
+/* The label's middle reading: what assignment would move. Quieter than the
+   name, because the dot's area already draws it. */
+.labelValue {
+  fill: var(--muted-foreground);
+  opacity: 0.85;
+}
+
+/* The cushion in its band's colour — the same verdict the dot wears. */
+.labelComfortable {
+  fill: var(--color-profit);
+}
+
+.labelTight {
+  fill: var(--color-warning);
+}
+
+.labelBreached {
+  fill: var(--color-loss);
+}

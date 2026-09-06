@@ -221,10 +221,39 @@ export interface RiskMapLayout {
   bands: RiskMapBands
 }
 
-/** Area scales with contracts; a 1-lot and a 20-lot must both stay legible. */
-export function pointRadius(contracts: number): number {
-  const c = Number.isFinite(contracts) && contracts > 0 ? contracts : 1
-  return Math.min(8, Math.max(3, 2.5 + 1.2 * Math.sqrt(c)))
+/**
+ * Size is the third thing a short leg has to say, and the count alone does not
+ * say it: one MU 1200 call delivers $120,000 and ten HIMS 40 calls deliver
+ * $40,000, so drawing the ten-lot four times larger would rank the book by the
+ * wrong number. Size is what assignment would move — strike × 100 × contracts,
+ * the same arithmetic the put-cash figure on the cockpit uses — and the dot's
+ * *area* carries it, which is what the eye compares. The largest leg in view
+ * fills the scale, so the picture always uses its whole range; a floor keeps
+ * the smallest leg a dot rather than a speck, and clickable.
+ */
+export const POINT_R_MIN = 4
+export const POINT_R_MAX = 12
+const SHARES_PER_CONTRACT = 100
+
+/** What assignment would move: strike × 100 × contracts. Null when the strike will not parse. */
+export function legNotional(leg: Pick<RiskMapLeg, 'strike' | 'contracts'>): number | null {
+  const k = leg.strike
+  const c = leg.contracts
+  if (!isPlaceable(k) || k <= 0 || !isPlaceable(c) || c <= 0) return null
+  return k * SHARES_PER_CONTRACT * c
+}
+
+/** The book's largest assignment value, the scale every dot is drawn against. */
+export function maxNotionalOf(legs: readonly RiskMapLeg[]): number {
+  return legs.reduce((n, l) => Math.max(n, legNotional(l) ?? 0), 0)
+}
+
+export function pointRadius(notional: number | null, maxNotional: number): number {
+  if (notional == null || !isPlaceable(notional) || notional <= 0 || !isPlaceable(maxNotional) || maxNotional <= 0) {
+    return POINT_R_MIN
+  }
+  // Area ∝ notional, so radius goes with its square root; the biggest fills the scale.
+  return Math.min(POINT_R_MAX, Math.max(POINT_R_MIN, POINT_R_MAX * Math.sqrt(Math.min(1, notional / maxNotional))))
 }
 
 function clampOf(cushion: number): RiskMapClamp {
@@ -249,6 +278,7 @@ function stackInGutter(
   y0: number,
   y1: number,
   place: (leg: RiskMapLeg, stackedY: number) => Pick<RiskMapGutterPoint, 'y' | 'band' | 'clamped'>,
+  maxNotional: number,
 ): RiskMapGutterPoint[] {
   const n = legs.length
   const cols = Math.min(GUTTER_MAX_COLS, Math.max(1, Math.ceil(n / GUTTER_MAX_ROWS)))
@@ -261,7 +291,7 @@ function stackInGutter(
     return {
       leg,
       x: x0 + col * GUTTER_COL_STEP,
-      r: pointRadius(leg.contracts),
+      r: pointRadius(legNotional(leg), maxNotional),
       ...place(leg, y0 + row * step),
     }
   })
@@ -276,6 +306,9 @@ export function layoutRiskMap(
   opts: { width: number; height: number; tightPct: number; maxDte?: number },
 ): RiskMapLayout {
   const { width, height, tightPct } = opts
+  // One scale for the whole picture, gutters included: a leg does not change
+  // size because it lost its quote.
+  const maxNotional = maxNotionalOf(legs)
 
   const priced: RiskMapLeg[] = []
   const unpricedLegs: RiskMapLeg[] = []
@@ -327,7 +360,7 @@ export function layoutRiskMap(
       leg,
       x: xOf(leg.dte as number),
       y: yOf(c),
-      r: pointRadius(leg.contracts),
+      r: pointRadius(legNotional(leg), maxNotional),
       band: cushionBand(c, tightPct),
       clamped: clampOf(c),
     }
@@ -356,7 +389,7 @@ export function layoutRiskMap(
         // their clamp ring — the gutter only takes away the x.
         const c = leg.cushionPct as number
         return { y: yOf(c), band: cushionBand(c, tightPct), clamped: clampOf(c) }
-      })
+      }, maxNotional)
     : []
 
   const zeroY = yOf(0)
@@ -408,6 +441,14 @@ export function fmtTightPct(v: number): string {
   return `${Number((v * 100).toFixed(2))}%`
 }
 
+/** $120.0k / $1.20M — the map's own short money, so a legend and a tooltip agree. */
+export function fmtNotional(v: number | null): string {
+  if (!isPlaceable(v)) return '—'
+  if (Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`
+  if (Math.abs(v) >= 1_000) return `$${Math.round(v / 1_000)}k`
+  return `$${Math.round(v)}`
+}
+
 export function fmtDte(dte: number | null): string {
   if (!isPlaceable(dte)) return 'no expiry'
   if (dte < 0) return `${-dte}d past`
@@ -419,13 +460,15 @@ export function fmtTickDte(dte: number): string {
   return dte < 0 ? 'past' : `${dte}d`
 }
 
-/** "SYM 20261120 C 250 · 3 contracts · cushion +12.4% · 76d" */
+/** "SYM 20261120 C 250 · 3 contracts · $75.0k if assigned · cushion +12.4% · 76d" */
 export function riskMapLegTitle(leg: RiskMapLeg): string {
   const contracts = `${leg.contracts} contract${leg.contracts === 1 ? '' : 's'}`
   const cushion = isPlaceable(leg.cushionPct)
     ? `cushion ${fmtCushionPct(leg.cushionPct)}`
     : 'cushion n/a (no quote)'
-  return `${leg.symbol} ${leg.expiry} ${leg.right} ${leg.strike} · ${contracts} · ${cushion} · ${fmtDte(leg.dte)}`
+  const n = legNotional(leg)
+  const size = n == null ? 'size n/a' : `${fmtNotional(n)} if assigned`
+  return `${leg.symbol} ${leg.expiry} ${leg.right} ${leg.strike} · ${contracts} · ${size} · ${cushion} · ${fmtDte(leg.dte)}`
 }
 
 /** "NVDA 245C" — the name a point wears on the plot and a no-quote chip carries. */
@@ -433,11 +476,16 @@ export function riskMapLegShort(leg: RiskMapLeg): string {
   return `${leg.symbol} ${leg.strike}${leg.right}`
 }
 
-/** "NVDA 245C +6.0%" — the plot label: the name and the height, so the y axis reads at every point. */
+/**
+ * "NVDA 245C ×5 +6.0%" — the plot label: the name, the size, and the height, so
+ * the y axis and the dot's area both read in words at every point. The ×N is
+ * dropped on a single contract, where it would be noise on every small leg.
+ */
 export function riskMapLegLabel(leg: RiskMapLeg): string {
+  const size = leg.contracts > 1 ? ` ×${leg.contracts}` : ''
   const c = leg.cushionPct
-  if (!isPlaceable(c)) return riskMapLegShort(leg)
-  return `${riskMapLegShort(leg)} ${c >= 0 ? '+' : ''}${(c * 100).toFixed(1)}%`
+  if (!isPlaceable(c)) return `${riskMapLegShort(leg)}${size}`
+  return `${riskMapLegShort(leg)}${size} ${c >= 0 ? '+' : ''}${(c * 100).toFixed(1)}%`
 }
 
 /** Roughly how wide a label is in SVG units, for the 8.5px monospace it is drawn in. */

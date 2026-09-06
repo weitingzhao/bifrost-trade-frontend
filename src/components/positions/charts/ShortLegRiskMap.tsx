@@ -19,6 +19,11 @@ import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { cn } from '@/lib/utils'
 import { DenseTagButton } from '@/components/data-display'
 import {
+  POINT_R_MAX,
+  POINT_R_MIN,
+  fmtNotional,
+  legNotional,
+  pointRadius,
   fmtTickDte,
   fmtTightPct,
   labelTicks,
@@ -111,6 +116,30 @@ function LegPoint({
   )
 }
 
+/**
+ * A dot's area is what assignment would move, so the legend shows the two ends
+ * the book actually holds — not an abstract scale, the smallest and largest
+ * legs on this plot.
+ */
+function SizeLegend({ minNotional, maxNotional }: { minNotional: number; maxNotional: number }) {
+  if (maxNotional <= 0) return null
+  const w = 2 * POINT_R_MAX + 6
+  return (
+    <span
+      className="inline-flex items-center gap-1"
+      title="A leg's area is what assignment would move: strike × 100 × contracts. Ten small-strike contracts can be a smaller dot than one large-strike contract."
+    >
+      <svg width={w} height={2 * POINT_R_MAX} viewBox={`0 0 ${w} ${2 * POINT_R_MAX}`} aria-hidden="true" className="shrink-0">
+        <circle cx={POINT_R_MIN + 1} cy={POINT_R_MAX} r={pointRadius(minNotional, maxNotional)} className={styles.legendDot} />
+        <circle cx={w - POINT_R_MAX - 1} cy={POINT_R_MAX} r={POINT_R_MAX} className={styles.legendDot} />
+      </svg>
+      <span className="font-mono tabular-nums" data-testid="size-legend">
+        {fmtNotional(minNotional)}–{fmtNotional(maxNotional)} if assigned
+      </span>
+    </span>
+  )
+}
+
 export function ShortLegRiskMap({
   legs,
   tightPct,
@@ -138,6 +167,9 @@ export function ShortLegRiskMap({
     null,
   )
   const noExpiryCount = layout.noExpiry.length
+  const notionals = legs.map(legNotional).filter((n): n is number => n != null && n > 0)
+  const maxNotional = notionals.length > 0 ? Math.max(...notionals) : 0
+  const minNotional = notionals.length > 0 ? Math.min(...notionals) : 0
   const tightLabel = `tight ${fmtTightPct(tightPct)}`
   const axisY = bands.plot.y1
   const labelY = HEIGHT - 3
@@ -145,8 +177,11 @@ export function ShortLegRiskMap({
   return (
     <div className="flex min-w-0 flex-col gap-1" ref={host}>
       <div className="flex items-baseline justify-between gap-2 text-dense-caption text-muted-foreground">
-        <span>
-          Short legs · cushion vs DTE · {legs.length} leg{legs.length === 1 ? '' : 's'} · click a leg to see it
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5">
+          <span>
+            Short legs · cushion vs DTE · {legs.length} leg{legs.length === 1 ? '' : 's'} · click a leg to see it
+          </span>
+          <SizeLegend minNotional={minNotional} maxNotional={maxNotional} />
         </span>
         <span className="flex items-center gap-1">
           {closeCount > 0 ? (

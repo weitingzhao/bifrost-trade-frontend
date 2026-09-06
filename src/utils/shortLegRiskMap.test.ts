@@ -7,6 +7,10 @@ import {
   labelTicks,
   layoutRiskMap,
   pointRadius,
+  legNotional,
+  maxNotionalOf,
+  POINT_R_MAX,
+  POINT_R_MIN,
   riskMapLegTitle,
   CUSHION_MAX,
   CUSHION_MIN,
@@ -346,14 +350,35 @@ describe('labelTicks', () => {
   })
 })
 
-describe('pointRadius', () => {
-  it('grows with contracts and stays within 3..8', () => {
-    expect(pointRadius(1)).toBeGreaterThanOrEqual(3)
-    expect(pointRadius(1)).toBeLessThan(pointRadius(5))
-    expect(pointRadius(5)).toBeLessThan(pointRadius(20))
-    expect(pointRadius(500)).toBe(8)
-    expect(pointRadius(0)).toBe(pointRadius(1))
-    expect(pointRadius(Number.NaN)).toBe(pointRadius(1))
+describe('point size', () => {
+  it('is what assignment would move, not the contract count', () => {
+    // One MU 1200 call delivers $120,000; ten HIMS 40 calls deliver $40,000.
+    const mu = mapLeg({ symbol: 'MU', strike: 1200, contracts: 1 })
+    const hims = mapLeg({ symbol: 'HIMS', strike: 40, contracts: 10 })
+    expect(legNotional(mu)).toBe(120_000)
+    expect(legNotional(hims)).toBe(40_000)
+    const max = maxNotionalOf([mu, hims])
+    expect(max).toBe(120_000)
+    expect(pointRadius(legNotional(mu), max)).toBeGreaterThan(pointRadius(legNotional(hims), max))
+  })
+
+  it('gives the largest leg the whole scale, keeps area proportional, and floors the smallest', () => {
+    const max = 400_000
+    expect(pointRadius(max, max)).toBe(POINT_R_MAX)
+    // Area ∝ notional: a quarter of the value covers a quarter of the ink.
+    const area = (n: number) => Math.PI * pointRadius(n, max) ** 2
+    expect(area(100_000) / area(400_000)).toBeCloseTo(0.25, 6)
+    // Below the floor a dot stays a dot: visible, and big enough to click.
+    expect(pointRadius(1_000, max)).toBe(POINT_R_MIN)
+    expect(pointRadius(null, max)).toBe(POINT_R_MIN)
+    expect(pointRadius(120_000, 0)).toBe(POINT_R_MIN)
+  })
+
+  it('has no size for a leg whose strike or count will not parse', () => {
+    expect(legNotional({ strike: Number.NaN, contracts: 3 })).toBeNull()
+    expect(legNotional({ strike: 0, contracts: 3 })).toBeNull()
+    expect(legNotional({ strike: 250, contracts: 0 })).toBeNull()
+    expect(maxNotionalOf([])).toBe(0)
   })
 })
 
@@ -379,9 +404,9 @@ describe('labels', () => {
       riskMapLegTitle(
         mapLeg({ symbol: 'MU', expiry: '20261120', right: 'C', strike: 250, contracts: 3, cushionPct: 0.124, dte: 76 }),
       ),
-    ).toBe('MU 20261120 C 250 · 3 contracts · cushion +12.4% · 76d')
+    ).toBe('MU 20261120 C 250 · 3 contracts · $75k if assigned · cushion +12.4% · 76d')
     expect(riskMapLegTitle(mapLeg({ contracts: 1, cushionPct: null, dte: 5 }))).toBe(
-      'AAA 20250620 C 100 · 1 contract · cushion n/a (no quote) · 5d',
+      'AAA 20250620 C 100 · 1 contract · $10k if assigned · cushion n/a (no quote) · 5d',
     )
     expect(riskMapLegTitle(mapLeg({ cushionPct: Number.NaN, dte: 5 }))).toContain('cushion n/a (no quote)')
     expect(riskMapLegTitle(mapLeg({ cushionPct: -0.02, dte: null }))).toContain('cushion -2.0% · no expiry')

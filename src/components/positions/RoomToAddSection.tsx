@@ -1,8 +1,11 @@
 /**
  * Room to add — three steps: what the free base backs on its own, what
  * margin adds up to the ceiling, and where the Pressure gauge lands after
- * each. The header carries the answer, the body is the table, the ceiling
- * setting, and the ? that walks every number back to the fields it came from.
+ * each. Each step is a row of two meters: the premium per cycle, drawn as
+ * a ladder that accumulates step over step so the eye reads how much each
+ * adds to the last, and the pressure after it on the gauge's own 0–100%
+ * scale with the band ticks. The header carries the answer; the ? walks
+ * every number back to the fields it came from.
  */
 import { useState } from 'react'
 import {
@@ -12,19 +15,11 @@ import {
   CollapsibleGroupHeader,
   CollapsibleGroupStats,
   CollapsibleGroupTitle,
-  DenseDataTable,
-  DenseTableBody,
-  DenseTableCell,
-  DenseTableHead,
-  DenseTableHeadRow,
-  DenseTableHeader,
-  DenseTableRow,
-  denseTableNumCell,
 } from '@/components/data-display'
 import { DerivationBlock } from './DerivationBlock'
 import { cn } from '@/lib/utils'
 import { pressureLevel, type CoverRow, type GaugeLevel } from '@/utils/bookVsBase'
-import { usdAbbrev } from '@/utils/marginByAccount'
+import { PRESSURE_TICKS, usdAbbrev } from '@/utils/marginByAccount'
 import { fmtUsd } from '@/utils/positions'
 import { roomDerivation } from './roomDerivation'
 import type { RoomToAdd } from '@/utils/roomToAdd'
@@ -39,20 +34,78 @@ interface Props {
   onCeilingChange: (ceiling: number) => void
 }
 
+type TierId = 'now' | 'backed' | 'margin'
+
+/** The ladder's colours: what is held, what the base would back, what margin would carry. */
+const TIER_FILL: Record<TierId, string> = {
+  now: 'bg-muted-foreground/50',
+  backed: 'bg-profit',
+  margin: 'bg-warning',
+}
+const TIER_TEXT: Record<TierId, string> = {
+  now: 'text-foreground',
+  backed: 'text-profit',
+  margin: 'text-warning',
+}
 const BAND: Record<GaugeLevel, string> = { 0: 'idle', 1: 'normal', 2: 'heavy', 3: 'critical' }
-const BAND_TONE: Record<GaugeLevel, string> = { 0: 'text-muted-foreground', 1: 'text-foreground', 2: 'text-warning', 3: 'text-loss' }
+const BAND_TEXT: Record<GaugeLevel, string> = { 0: 'text-muted-foreground', 1: 'text-foreground', 2: 'text-warning', 3: 'text-loss' }
+const BAND_FILL: Record<GaugeLevel, string> = { 0: 'bg-profit', 1: 'bg-profit', 2: 'bg-warning', 3: 'bg-loss' }
 
 const plus = (n: number | null) => (n == null ? '—' : `+${n.toLocaleString()}`)
-const plusUsd = (v: number | null) => (v == null ? '—' : `+${fmtUsd(v, true)}`)
 const pct0 = (v: number | null) => (v == null ? '—' : `${Math.round(v * 100)}%`)
+/** The band is read off the rounded figure the reader sees: a 49.9% that prints as 50% is heavy. */
+const bandOf = (v: number | null): GaugeLevel | null => (v == null ? null : pressureLevel(Math.round(v * 100) / 100))
 
-/** The band is read off the rounded figure the reader sees: a 49.9% that prints as 50% is heavy, not normal. */
-function Pressure({ pct }: { pct: number | null }) {
-  if (pct == null) return <span className="text-muted-foreground">—</span>
-  const level = pressureLevel(Math.round(pct * 100) / 100)
+interface Tier {
+  id: TierId
+  label: string
+  counts: string
+  /** This step's premium per cycle; the Now row is the book's entry premium. */
+  premium: number | null
+  pressure: number | null
+}
+
+/** The premium ladder: every step up to this one, each in its own colour, on one scale. */
+function PremiumLadder({ tiers, upTo, max }: { tiers: Tier[]; upTo: number; max: number }) {
+  const shown = tiers.slice(0, upTo + 1)
+  const cumulative = shown.reduce((n, t) => n + (t.premium ?? 0), 0)
   return (
-    <span className={BAND_TONE[level]}>
-      {pct0(pct)} <span className="text-muted-foreground">· {BAND[level]}</span>
+    <span
+      role="meter"
+      aria-label={`${tiers[upTo].label}: premium per cycle, cumulative`}
+      aria-valuemin={0}
+      aria-valuemax={Math.round(max)}
+      aria-valuenow={Math.round(cumulative)}
+      className="flex h-2 w-full overflow-hidden rounded-sm border border-border/60 bg-secondary"
+      data-testid={`ladder-${tiers[upTo].id}`}
+    >
+      {shown.map((t) =>
+        t.premium != null && t.premium > 0 && max > 0 ? (
+          // Width is data, not styling.
+          <span key={t.id} className={cn('block h-full', TIER_FILL[t.id])} style={{ width: `${(100 * t.premium) / max}%` }} />
+        ) : null,
+      )}
+    </span>
+  )
+}
+
+/** Pressure after the step, on the gauge's scale with its band ticks — the margin strip's bar, thinner. */
+function PressureAfter({ label, pressure }: { label: string; pressure: number | null }) {
+  const band = bandOf(pressure)
+  const pct = pressure == null ? 0 : Math.round(Math.min(1, Math.max(0, pressure)) * 100)
+  return (
+    <span
+      role="meter"
+      aria-label={`${label}: pressure after`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={pct}
+      className="relative block h-1.5 w-full overflow-hidden rounded-sm border border-border/60 bg-secondary"
+    >
+      {band != null ? <span className={cn('absolute inset-y-0 left-0', BAND_FILL[band])} style={{ width: `${pct}%` }} /> : null}
+      {PRESSURE_TICKS.map((t) => (
+        <span key={t} aria-hidden="true" className="absolute inset-y-0 w-px bg-foreground/40" style={{ left: `${t * 100}%` }} />
+      ))}
     </span>
   )
 }
@@ -61,18 +114,37 @@ export function RoomToAddSection({ open, onToggle, room, coverRows, ceiling, onC
   const [how, setHow] = useState(false)
   const r = room
   const ceilingPct = Math.round(ceiling * 100)
-  const totalIncome = r.backed.income == null && r.margin.income == null ? null : (r.backed.income ?? 0) + (r.margin.income ?? 0)
+  const tiers: Tier[] = [
+    { id: 'now', label: 'Now', counts: `${r.now.calls.toLocaleString()} calls · ${r.now.puts.toLocaleString()} puts`, premium: r.now.netPremium, pressure: r.now.pressure },
+    {
+      id: 'backed',
+      label: '+ Backed',
+      counts: `${plus(r.backed.calls)} calls · ${plus(r.backed.puts)} puts · no new margin`,
+      premium: r.backed.income,
+      pressure: r.backed.pressureAfter,
+    },
+    {
+      id: 'margin',
+      label: `+ Margin to ${ceilingPct}%`,
+      counts: `${plus(r.margin.puts)} puts on margin`,
+      premium: r.margin.income,
+      pressure: r.margin.pressureAfter,
+    },
+  ]
+  const max = tiers.reduce((n, t) => n + (t.premium ?? 0), 0)
+  const added = r.backed.income == null && r.margin.income == null ? null : (r.backed.income ?? 0) + (r.margin.income ?? 0)
   const tenor = r.now.tenor ? `${r.now.tenor.min}–${r.now.tenor.max} d` : null
 
   return (
     <CollapsibleGroup>
       <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
         <CollapsibleChevron expanded={open} />
-        <CollapsibleGroupTitle>Room to add</CollapsibleGroupTitle>
-        <CollapsibleGroupStats>
+        {/* The title never gives way to the figures: it stays whole, the figures wrap. */}
+        <CollapsibleGroupTitle className="shrink-0">Room to add</CollapsibleGroupTitle>
+        <CollapsibleGroupStats className="min-w-0 shrink justify-end">
           <span className="font-mono text-xs tabular-nums text-muted-foreground" data-testid="room-stats">
-            backed {plus(r.backed.calls)} calls · {plus(r.backed.puts)} puts · margin to {ceilingPct}% {plus(r.margin.puts)} puts
-            {totalIncome != null ? ` · ≈ ${plusUsd(totalIncome)}/cycle` : ''}
+            {plus(r.backed.calls)} calls · {plus(r.backed.puts)} puts · {plus(r.margin.puts)} on margin
+            {added != null ? ` · ≈ +${usdAbbrev(added)}/cycle` : ''}
           </span>
         </CollapsibleGroupStats>
       </CollapsibleGroupHeader>
@@ -99,10 +171,10 @@ export function RoomToAddSection({ open, onToggle, room, coverRows, ceiling, onC
               />
               <span className="text-sm">%</span>
             </label>
-            <span>
-              at the book’s own yield{r.pool.yieldPerCycle != null ? ` ${(r.pool.yieldPerCycle * 100).toFixed(1)}% per cycle` : ''}
-              {tenor ? ` of ${tenor}` : ''} · Reg T margin {r.margin.marginPerPut != null ? usdAbbrev(r.margin.marginPerPut) : '—'} per put
-              {r.margin.leverage != null ? ` (${r.margin.leverage.toFixed(1)}× less than cash-secured)` : ''} · estimates, not the broker’s what-if
+            <span className="min-w-0">
+              yield {r.pool.yieldPerCycle != null ? `${(r.pool.yieldPerCycle * 100).toFixed(1)}%` : '—'}/cycle{tenor ? ` of ${tenor}` : ''} · Reg T{' '}
+              {r.margin.marginPerPut != null ? usdAbbrev(r.margin.marginPerPut) : '—'}/put
+              {r.margin.leverage != null ? ` (${r.margin.leverage.toFixed(1)}× less than cash-secured)` : ''} · estimates
             </span>
             <button
               type="button"
@@ -117,68 +189,49 @@ export function RoomToAddSection({ open, onToggle, room, coverRows, ceiling, onC
               ?
             </button>
           </div>
-          <DenseDataTable scrollX={false} tableClassName="table-fixed min-w-0">
-            <colgroup>
-              <col />
-              <col style={{ width: '4.5rem' }} />
-              <col style={{ width: '4.5rem' }} />
-              <col style={{ width: '7rem' }} />
-              <col style={{ width: '7.5rem' }} />
-            </colgroup>
-            <DenseTableHeader>
-              <DenseTableHeadRow>
-                <DenseTableHead>Step</DenseTableHead>
-                <DenseTableHead className="text-right">Calls</DenseTableHead>
-                <DenseTableHead className="text-right">Puts</DenseTableHead>
-                <DenseTableHead className="text-right">Premium / cycle</DenseTableHead>
-                <DenseTableHead className="text-right">Pressure after</DenseTableHead>
-              </DenseTableHeadRow>
-            </DenseTableHeader>
-            <DenseTableBody>
-              <DenseTableRow data-testid="room-row-now">
-                <DenseTableCell>
-                  <span className="text-foreground">Now</span>
-                  <span className="text-muted-foreground"> · entry premium of the book in scope</span>
-                </DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{r.now.calls.toLocaleString()}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{r.now.puts.toLocaleString()}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{fmtUsd(r.now.netPremium, true)}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>
-                  <Pressure pct={r.now.pressure} />
-                </DenseTableCell>
-              </DenseTableRow>
-              <DenseTableRow data-testid="room-row-backed">
-                <DenseTableCell>
-                  <span className="text-foreground">+ Backed</span>
-                  <span className="text-muted-foreground">
-                    {' '}· {r.backed.freeShares.toLocaleString()} free sh and {usdAbbrev(r.backed.cashFree)} free cash-like, no new margin
+
+          {/* Column heads, then one row a step: label and counts · the two meters · the figures. */}
+          <div className="grid grid-cols-[6.75rem_minmax(0,1fr)_4.75rem_3.75rem] items-end gap-x-2 text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
+            <span>Step</span>
+            <span>Premium / cycle · pressure after</span>
+            <span className="text-right">Premium</span>
+            <span className="text-right">Pressure</span>
+          </div>
+          <div className="mt-1 flex flex-col gap-y-1.5" data-testid="room-tiers">
+            {tiers.map((t, i) => {
+              const band = bandOf(t.pressure)
+              return (
+                <div
+                  key={t.id}
+                  className="grid grid-cols-[6.75rem_minmax(0,1fr)_4.75rem_3.75rem] items-center gap-x-2"
+                  data-testid={`room-row-${t.id}`}
+                >
+                  <span className="min-w-0">
+                    <span className={cn('block truncate text-dense-body font-medium', TIER_TEXT[t.id])}>{t.label}</span>
+                    <span className="block truncate text-dense-caption text-muted-foreground" title={t.counts}>
+                      {t.counts}
+                    </span>
                   </span>
-                </DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'text-profit')}>{plus(r.backed.calls)}</DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'text-profit')}>{plus(r.backed.puts)}</DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'text-profit')}>{plusUsd(r.backed.income)}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>
-                  <Pressure pct={r.backed.pressureAfter} />
-                </DenseTableCell>
-              </DenseTableRow>
-              <DenseTableRow data-testid="room-row-margin">
-                <DenseTableCell>
-                  <span className="text-foreground">+ Margin to {ceilingPct}%</span>
-                  <span className="text-muted-foreground">
-                    {' '}· {r.margin.headroomAfterBacked != null ? usdAbbrev(r.margin.headroomAfterBacked) : '—'} headroom left after the backed puts, puts only
+                  <span className="flex flex-col gap-y-1">
+                    <PremiumLadder tiers={tiers} upTo={i} max={max} />
+                    <PressureAfter label={t.label} pressure={t.pressure} />
                   </span>
-                </DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>
-                  <span className="text-muted-foreground" title="A call needs shares behind it, not margin">—</span>
-                </DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'text-profit')}>{plus(r.margin.puts)}</DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'text-profit')}>{plusUsd(r.margin.income)}</DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>
-                  <Pressure pct={r.margin.pressureAfter} />
-                </DenseTableCell>
-              </DenseTableRow>
-            </DenseTableBody>
-          </DenseDataTable>
+                  <span className={cn('text-right font-mono text-dense-body tabular-nums', TIER_TEXT[t.id])}>
+                    {t.premium == null ? '—' : `${i > 0 ? '+' : ''}${fmtUsd(t.premium, true)}`}
+                  </span>
+                  <span className={cn('text-right font-mono text-dense-body tabular-nums', band == null ? 'text-muted-foreground' : BAND_TEXT[band])} title={band == null ? undefined : BAND[band]}>
+                    {pct0(t.pressure)}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-dense-caption text-muted-foreground">
+            <span className="inline-flex items-center gap-1"><span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.now)} />held</span>
+            <span className="inline-flex items-center gap-1"><span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.backed)} />backed</span>
+            <span className="inline-flex items-center gap-1"><span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.margin)} />on margin</span>
+            <span>· ladder = premium per cycle, each step on the last · thin bar = pressure after, ticks at 10 · 50 · 75%</span>
+          </p>
           {how ? <DerivationBlock derivation={roomDerivation(r, coverRows)} onClose={() => setHow(false)} className="mb-1" /> : null}
         </CollapsibleGroupBody>
       ) : null}

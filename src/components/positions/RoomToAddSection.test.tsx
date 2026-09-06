@@ -4,7 +4,6 @@ import { RoomToAddSection } from './RoomToAddSection'
 import { computeRoomToAdd } from '@/utils/roomToAdd'
 import { fixture, NOW } from '@/utils/roomToAdd.fixture'
 
-
 function renderSection(ceiling = 0.5) {
   const f = fixture()
   const room = computeRoomToAdd({ ...f, ceiling, nowSec: NOW })
@@ -16,27 +15,35 @@ function renderSection(ceiling = 0.5) {
 }
 
 describe('RoomToAddSection', () => {
-  it('answers in the header and lays the three steps out as rows', () => {
+  it('keeps its title whole, answers in the header, and draws each step as a premium ladder and a pressure bar', () => {
     renderSection()
-    expect(screen.getByTestId('room-stats')).toHaveTextContent('backed +0 calls · +2 puts · margin to 50% +56 puts · ≈ +$58,053/cycle')
+    expect(screen.getByText('Room to add')).toHaveClass('shrink-0')
+    expect(screen.getByTestId('room-stats')).toHaveTextContent('+0 calls · +2 puts · +56 on margin · ≈ +$58.1k/cycle')
+
     const now = screen.getByTestId('room-row-now')
-    expect(within(now).getAllByRole('cell').map((c) => c.textContent)).toEqual([
-      'Now · entry premium of the book in scope',
-      '5',
-      '1',
-      '$5,990',
-      '27% · normal',
-    ])
+    expect(now).toHaveTextContent('Now')
+    expect(now).toHaveTextContent('5 calls · 1 puts')
+    expect(now).toHaveTextContent('$5,990')
+    expect(now).toHaveTextContent('27%')
     const backed = screen.getByTestId('room-row-backed')
-    expect(backed).toHaveTextContent('+2')
+    expect(backed).toHaveTextContent('+0 calls · +2 puts · no new margin')
     expect(backed).toHaveTextContent('+$2,333')
-    expect(backed).toHaveTextContent('28% · normal')
+    expect(backed).toHaveTextContent('28%')
     const margin = screen.getByTestId('room-row-margin')
     expect(margin).toHaveTextContent('+ Margin to 50%')
-    expect(margin).toHaveTextContent('+56')
+    expect(margin).toHaveTextContent('+56 puts on margin')
     expect(margin).toHaveTextContent('+$55,720')
-    // 49.9% prints as 50%, and 50% is where the gauge turns heavy.
-    expect(margin).toHaveTextContent('50% · heavy')
+    expect(margin).toHaveTextContent('50%')
+
+    // The ladder accumulates: each step's meter reads the total up to it, on one scale.
+    const total = 5990 + 2333 + 55720
+    expect(screen.getByTestId('ladder-now')).toHaveAttribute('aria-valuenow', '5990')
+    expect(screen.getByTestId('ladder-backed')).toHaveAttribute('aria-valuenow', String(5990 + 2333))
+    expect(screen.getByTestId('ladder-margin')).toHaveAttribute('aria-valuenow', String(total))
+    expect(screen.getByTestId('ladder-margin')).toHaveAttribute('aria-valuemax', String(total))
+    // Three steps, two meters each.
+    expect(screen.getAllByRole('meter')).toHaveLength(6)
+    expect(within(margin).getByRole('meter', { name: '+ Margin to 50%: pressure after' })).toHaveAttribute('aria-valuenow', '50')
   })
 
   it('the ceiling is a setting on the section, and ? opens the derivation', () => {

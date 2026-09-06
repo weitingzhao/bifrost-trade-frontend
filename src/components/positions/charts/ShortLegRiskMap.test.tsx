@@ -17,11 +17,14 @@ const leg = (o: Partial<RiskMapLeg> = {}): RiskMapLeg => ({
   ...o,
 })
 
-const PRICED_TITLE = 'MU 20261120 C 250 · 3 contracts · cushion +12.4% · 76d'
+/** Circles inside the plot itself — the legend draws two of its own outside it. */
+const plotCircles = () => document.querySelector('svg[role="group"]')?.querySelectorAll('circle') ?? []
+
+const PRICED_TITLE = 'MU 20261120 C 250 · 3 contracts · $75k if assigned · cushion +12.4% · 76d'
 
 /** The circle that owns a given <title> — getByTitle only sees direct children of <svg>. */
 function pointFor(title: string): SVGCircleElement {
-  for (const c of Array.from(document.querySelectorAll('circle'))) {
+  for (const c of Array.from(plotCircles())) {
     if (c.querySelector('title')?.textContent === title) return c
   }
   throw new Error(`no circle for ${title}`)
@@ -38,14 +41,16 @@ describe('ShortLegRiskMap', () => {
     render(<ShortLegRiskMap legs={[leg()]} tightPct={0.03} />)
     const c = pointFor(PRICED_TITLE)
     expect(c.dataset.band).toBe('comfortable')
-    expect(screen.getByTestId('point-label')).toHaveTextContent('MU 250C +12.4%')
+    // The label carries the size too: three contracts, not one.
+    expect(screen.getByTestId('point-label')).toHaveTextContent('MU 250C ×3 +12.4%')
+    expect(screen.getByTestId('size-legend')).toHaveTextContent('$75k–$75k if assigned')
     // The cushion scale is drawn, so the height of a point can be read.
     expect(screen.getAllByTestId('y-tick').map((t) => t.textContent)).toEqual(['-10%', '0%', '+10%', '+20%', '+30%', '+40%'])
   })
 
   it('lists an unpriced leg by name under the plot and never draws it as a point', () => {
     render(<ShortLegRiskMap legs={[leg({ key: 'u', symbol: 'DDOG', strike: 200, right: 'P', dte: 41, cushionPct: null, spotSource: null })]} tightPct={0.03} />)
-    expect(document.querySelectorAll('circle')).toHaveLength(0)
+    expect(plotCircles()).toHaveLength(0)
     const list = screen.getByTestId('unpriced-list')
     expect(list).toHaveTextContent('no quote:')
     expect(screen.getByRole('button', { name: /DDOG 200P · 41d/ })).toBeInTheDocument()
@@ -74,7 +79,7 @@ describe('ShortLegRiskMap', () => {
 
   it('draws an in-the-money leg below zero in the loss band and never banded safe', () => {
     render(<ShortLegRiskMap legs={[leg({ cushionPct: -0.05 })]} tightPct={0.03} />)
-    const c = pointFor('MU 20261120 C 250 · 3 contracts · cushion -5.0% · 76d')
+    const c = pointFor('MU 20261120 C 250 · 3 contracts · $75k if assigned · cushion -5.0% · 76d')
     expect(c.dataset.band).toBe('breached')
   })
 
@@ -106,7 +111,7 @@ describe('ShortLegRiskMap', () => {
       />,
     )
     expect(document.querySelector('svg')).not.toBeNull()
-    expect(document.querySelectorAll('circle')).toHaveLength(0)
+    expect(plotCircles()).toHaveLength(0)
     // The dates are still on the axis: the time axis is the book's, priced or not.
     expect(screen.getByLabelText(/expiry 20261016/)).toBeInTheDocument()
     expect(screen.getByLabelText(/expiry 20261120/)).toBeInTheDocument()

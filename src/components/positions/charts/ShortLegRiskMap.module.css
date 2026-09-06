@@ -170,3 +170,11 @@
   stroke-opacity: 0.6;
   stroke-width: 1;
 }
+
+/* The size legend's two reference dots: shape only, no band verdict. */
+.legendDot {
+  fill: var(--muted-foreground);
+  fill-opacity: 0.45;
+  stroke: var(--muted-foreground);
+  stroke-width: 1;
+}

@@ -2,8 +2,8 @@
 import { cn } from '@/lib/utils'
 
 export const instancePanel = {
-  filters:
-    'mb-3 flex min-w-0 flex-nowrap items-center gap-x-3 gap-y-2 dense-scroll-x',
+  // Wraps rather than scrolls: a toolbar with a scrollbar hides its own controls.
+  filters: 'mb-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5',
   filterBubbleRow: 'inline-flex shrink-0 flex-nowrap items-center gap-x-2 gap-y-1',
   filterBubbleLabel:
     'shrink-0 whitespace-nowrap text-dense-label font-semibold uppercase tracking-wide text-muted-foreground',

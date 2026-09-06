@@ -107,7 +107,7 @@ export function LinesToolbar({
       .filter((s) => s !== '')
       .map((s) => ({
         value: s,
-        label: s === 'watchlist_stk' ? 'Watchlist (stocks)' : s === 'explicit_symbols' ? 'Explicit symbols' : s,
+        label: s === 'watchlist_stk' ? 'Watchlist' : s === 'explicit_symbols' ? 'Explicit' : s,
       })),
   ]
 
@@ -170,7 +170,7 @@ export function LinesToolbar({
           </Select>
 
           <BubbleRadio
-            label="Symbol scope"
+            label="Scope"
             options={scopeOptions}
             value={values.scopeType}
             onChange={(v) => update({ scopeType: v })}

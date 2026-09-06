@@ -218,8 +218,8 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
   const marginAllAccounts = useMemo(() => rollupMargin(accounts), [accounts])
 
   const riskLegs = useMemo(
-    () => buildRiskMapLegs({ legs: alarm.legs, spotOf: (leg) => quotesBySymbol[leg.underlying]?.last ?? null }),
-    [alarm.legs, quotesBySymbol],
+    () => buildRiskMapLegs({ legs: alarm.legs, spotOf: (leg) => alarm.resolveSpot(leg.underlying) }),
+    [alarm.legs, alarm.resolveSpot],
   )
   /** Unsorted; the Backing page sorts by the column the reader chose. */
   const obligationsRows = useMemo(() => {

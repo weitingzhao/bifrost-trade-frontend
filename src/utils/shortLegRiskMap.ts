@@ -29,6 +29,7 @@ import {
   type CushionBand,
   type LadderLeg,
 } from './positionsOptionRisk'
+import type { Spot, SpotSource } from './spotPrice'
 
 export interface RiskMapLeg {
   key: string
@@ -40,6 +41,8 @@ export interface RiskMapLeg {
   dte: number | null
   contracts: number
   cushionPct: number | null
+  /** How the spot behind cushionPct was priced; null or absent when there was none. */
+  spotSource?: SpotSource | null
 }
 
 /** A number that can be placed. null, undefined and NaN all mean "unknown". */
@@ -69,7 +72,8 @@ function rightFromContractKey(contractKey: string): 'C' | 'P' | null {
  */
 export function buildRiskMapLegs(input: {
   legs: readonly (LadderLeg & { instanceKey: string; contractKey: string })[]
-  spotOf: (leg: LadderLeg) => number | null
+  /** A bare number is taken as live — the ladder's contract; a Spot carries its source. */
+  spotOf: (leg: LadderLeg) => Spot | number | null
 }): RiskMapLeg[] {
   const out: RiskMapLeg[] = []
   const seen = new Map<string, number>()
@@ -77,9 +81,10 @@ export function buildRiskMapLegs(input: {
     if (!(leg.qty < 0)) continue
     const right = normalizeRight(leg.right) ?? rightFromContractKey(leg.contractKey)
     if (right == null) continue
-    const spot = input.spotOf(leg)
+    const resolved = input.spotOf(leg)
+    const spot = resolved == null ? null : typeof resolved === 'number' ? { price: resolved, source: 'live' as const } : resolved
     // Same expression as buildExpiryLadder, so the two never diverge on a leg.
-    const cushionPct = spot == null ? null : shortLegCushion(leg.right, leg.strike, spot)
+    const cushionPct = spot == null ? null : shortLegCushion(leg.right, leg.strike, spot.price)
     // One instance can hold the same contract across two accounts; the key
     // still has to be unique so React and the click handler can tell them apart.
     const base = `${leg.instanceKey}|${leg.contractKey}`
@@ -95,6 +100,7 @@ export function buildRiskMapLegs(input: {
       dte: daysUntilExpiry(leg.expiry),
       contracts: Math.abs(leg.qty),
       cushionPct,
+      spotSource: spot?.source ?? null,
     })
   }
   return out

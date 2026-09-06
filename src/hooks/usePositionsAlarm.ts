@@ -27,6 +27,7 @@ import {
   type LadderLeg,
 } from '@/utils/positionsOptionRisk'
 import { marginBand, rollupMargin, type MarginRollup } from '@/utils/marginPressure'
+import { buildSpotResolver, spotMixOf, type SpotMix, type SpotResolver } from '@/utils/spotPrice'
 import {
   assignmentCoverRatio,
   summarizeAssignmentExposure,
@@ -74,6 +75,10 @@ export type AlarmLeg = LadderLeg & { accountId: string; contractKey: string }
 
 export interface PositionsAlarm {
   ladderRows: ExpiryLadderRow[]
+  /** Live quote first, broker mark second, with provenance — every risk figure prices through this. */
+  resolveSpot: SpotResolver
+  /** How the short legs' underlyings were priced; the caption every risk figure owes the reader. */
+  spotMix: SpotMix
   /** Every option leg in scope, flattened once for the ladder, the exposure, and the risk map. */
   legs: AlarmLeg[]
   checks: AlarmCheck[]
@@ -129,7 +134,13 @@ export function usePositionsAlarm({
       })
     }
   }
-  const ladderRows = buildExpiryLadder(legs, (leg) => quotesBySymbol[leg.underlying]?.last ?? null)
+  const resolveSpot = buildSpotResolver(quotesBySymbol, liveStocks)
+  const ladderRows = buildExpiryLadder(legs, (leg) => resolveSpot(leg.underlying)?.price ?? null)
+  // Counted per short leg, like every other count on the Risk line.
+  const spotMix = spotMixOf(
+    legs.filter((l) => l.qty < 0).map((l) => l.underlying),
+    resolveSpot,
+  )
 
   const margin = rollupMargin(accounts)
   const feedAgeSec = quoteFeedAgeSec(Object.values(quotesBySymbol))
@@ -181,6 +192,8 @@ export function usePositionsAlarm({
 
   return {
     ladderRows,
+    resolveSpot,
+    spotMix,
     legs,
     checks,
     margin,

@@ -118,6 +118,14 @@
   fill: var(--color-loss);
 }
 
+/* Priced at the broker's mark, not live: the band colour stays (it is a real
+   price) but the ring is dashed so it cannot pass for a live reading. */
+.pointMark {
+  stroke: var(--foreground);
+  stroke-dasharray: 2 2;
+  fill-opacity: 0.6;
+}
+
 /* Unknown is hollow and grey: no fill that could read as a verdict. */
 .pointUnpriced {
   fill: none;

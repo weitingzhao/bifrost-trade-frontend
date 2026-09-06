@@ -20,6 +20,7 @@ import { fmtUsd } from '@/utils/positions'
 import type { BookVsBase, GaugeLevel } from '@/utils/bookVsBase'
 import type { AlarmCheck, AlarmTarget } from '@/hooks/usePositionsAlarm'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
+import type { SpotMix } from '@/utils/spotPrice'
 import { cushionBand } from '@/utils/positionsOptionRisk'
 
 const LEVEL_TONE: Record<GaugeLevel, string> = {
@@ -76,8 +77,12 @@ function Gauge({
   )
 }
 
-function Num({ children, tone }: { children: React.ReactNode; tone?: string }) {
-  return <span className={cn('font-mono tabular-nums text-foreground', tone)}>{children}</span>
+function Num({ children, tone, title }: { children: React.ReactNode; tone?: string; title?: string }) {
+  return (
+    <span className={cn('font-mono tabular-nums text-foreground', tone)} title={title}>
+      {children}
+    </span>
+  )
 }
 
 function pct0(v: number | null): string {
@@ -98,6 +103,7 @@ export function BookVsBaseCockpit({
   onOpenTarget,
   variant = 'full',
   headerLink,
+  spotMix,
 }: {
   book: BookVsBase
   /** All nine checks; each is a chip with a place to land, quiet ones in grey. */
@@ -113,6 +119,8 @@ export function BookVsBaseCockpit({
   variant?: 'full' | 'backing'
   /** The other page, one click away. */
   headerLink?: { to: string; label: string }
+  /** How the Risk line's underlyings were priced; a mark is not live and says so. */
+  spotMix?: SpotMix
 }) {
   const { pressure, backing, risk, potential, demand, supply } = book
   const full = variant === 'full'
@@ -230,6 +238,14 @@ export function BookVsBaseCockpit({
             <>
               {' · '}
               <Num tone="text-warning">{risk.counts.unpriced} unpriced</Num>
+            </>
+          ) : null}
+          {spotMix && spotMix.mark > 0 ? (
+            <>
+              {' · '}
+              <Num tone="text-warning" title="Priced at the broker's last mark from the account snapshot, not a live quote.">
+                {spotMix.mark} at broker mark
+              </Num>
             </>
           ) : null}
           {' · '}

@@ -285,6 +285,7 @@ export default function PositionsPage() {
                     cushionTightPct={cushionTightPct}
                     onOpenTarget={openTarget}
                     headerLink={{ to: MODEL_ANALYSIS_PATH, label: 'Model analysis →' }}
+                    spotMix={book.alarm.spotMix}
                   />
                   <MarginByAccountStrip
                     margin={book.marginAllAccounts}

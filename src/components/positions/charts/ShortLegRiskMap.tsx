@@ -79,7 +79,7 @@ function LegPoint({
       cx={point.x}
       cy={point.y}
       r={point.r}
-      className={cn(className, point.clamped && styles.pointClamped)}
+      className={cn(className, point.clamped && styles.pointClamped, point.leg.spotSource === 'mark' && styles.pointMark)}
       data-band={point.band ?? 'unpriced'}
       data-clamped={point.clamped ?? undefined}
       role={onLegClick ? 'button' : undefined}
@@ -107,6 +107,7 @@ export function ShortLegRiskMap({
   const { bands, ticks, tightY } = layout
   const labeled = labelTicks(ticks, activeExpiry)
   const unpricedCount = layout.unpriced.length
+  const markCount = legs.filter((l) => l.spotSource === 'mark').length
   const noExpiryCount = layout.noExpiry.length
   const tightLabel = `tight ${fmtTightPct(tightPct)}`
   const axisY = bands.plot.y1
@@ -121,17 +122,27 @@ export function ShortLegRiskMap({
         <span>
           Short legs · cushion vs DTE · {legs.length} leg{legs.length === 1 ? '' : 's'}
         </span>
-        {unpricedCount > 0 ? (
-          <DenseTagButton
-            variant="warning"
-            size="cell"
-            className="font-mono tabular-nums text-warning"
-            onClick={onUnpricedClick}
-            title="Short legs with no underlying quote — no cushion, not known to be safe."
-          >
-            {unpricedCount} unpriced
-          </DenseTagButton>
-        ) : null}
+        <span className="flex items-center gap-1">
+          {markCount > 0 ? (
+            <span
+              className="font-mono tabular-nums text-warning"
+              title="Priced at the broker's last mark from the account snapshot, not a live quote. Drawn dashed."
+            >
+              {markCount} at broker mark
+            </span>
+          ) : null}
+          {unpricedCount > 0 ? (
+            <DenseTagButton
+              variant="warning"
+              size="cell"
+              className="font-mono tabular-nums text-warning"
+              onClick={onUnpricedClick}
+              title="Short legs with no underlying quote — no cushion, not known to be safe."
+            >
+              {unpricedCount} unpriced
+            </DenseTagButton>
+          ) : null}
+        </span>
       </div>
 
       {/* A group, not an image: the points and ticks inside are real controls. */}

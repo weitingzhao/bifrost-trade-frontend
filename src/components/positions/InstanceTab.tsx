@@ -54,6 +54,7 @@ import {
 } from './InstanceRiskCells'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { compareInstanceRisk, summarizeCushion, summarizeExpiry } from '@/utils/positionsOptionRisk'
+import { buildSpotResolver } from '@/utils/spotPrice'
 import type { PositionGreeks } from '@/hooks/useOptionGreeks'
 
 const EXEC_QTY_TITLE =
@@ -151,6 +152,9 @@ export function InstanceTab({
     structures,
     portfolioAccounts,
   )
+  // Live quote first, broker mark second — the same resolver the cockpit and
+  // the risk map price through, so a leg cannot be "unpriced" here and priced there.
+  const resolveSpot = useMemo(() => buildSpotResolver(quotesBySymbol, liveStocks), [quotesBySymbol, liveStocks])
 
   if (groups.length === 0) {
     return (
@@ -181,10 +185,8 @@ export function InstanceTab({
   const totalOptPnl = groups.reduce((s, g) => s + g.options_unrealized_pnl, 0)
   const oppMap = new Map(opportunities.map((o) => [o.strategy_opportunity_id, o]))
 
-  /** Spot for an option leg, via its underlying root — the same source the
-   *  expanded sub-table compares strikes against. */
   const spotOfLeg = (leg: OpenOptionPosition): number | null =>
-    quotesBySymbol[extractUnderlyingRootSymbol(leg.symbol)]?.last ?? null
+    resolveSpot(extractUnderlyingRootSymbol(leg.symbol))?.price ?? null
 
   // Most dangerous first. The label order the groups arrive in put the row
   // that could be assigned tonight wherever the alphabet left it.
@@ -289,9 +291,7 @@ export function InstanceTab({
             // A breakeven is a price on one underlying. With two underlyings in
             // the instance there is no single spot to measure it against.
             const beSpot =
-              fromOptions.length === 1
-                ? (quotesBySymbol[fromOptions[0] as string]?.last ?? null)
-                : null
+              fromOptions.length === 1 ? (resolveSpot(fromOptions[0] as string)?.price ?? null) : null
 
             const mainRow = (
               <DenseTableRow

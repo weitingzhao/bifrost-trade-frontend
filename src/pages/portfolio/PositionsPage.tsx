@@ -38,6 +38,7 @@ import { PositionsDashboard, type BackingSegmentTarget } from '@/components/posi
 import { PositionsOpenControls } from '@/components/positions/PositionsOpenControls'
 import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
 import { MarginByAccountStrip } from '@/components/positions/MarginByAccountStrip'
+import { AssetMixCard } from '@/components/positions/charts/AssetMixCard'
 import { ShortLegsPanel } from '@/components/positions/ShortLegsPanel'
 import { EditExecutionConfirmDialog } from '@/components/positions/EditExecutionConfirmDialog'
 import { ExecutionFormModal } from '@/components/positions/ExecutionFormModal'
@@ -323,16 +324,22 @@ export default function PositionsPage() {
                     secondaryId={book.secondaryAccountId}
                     accountFilter={accountFilter}
                   />
+                  {/* The accounts' capital, beside the accounts' margin: net liq and
+                      buying power in the centre, the layers around them. */}
+                  <section className="rounded-md border border-border bg-secondary/40 px-3 py-1.5" aria-label="Asset mix">
+                    <AssetMixCard
+                      accounts={book.scopedAccounts}
+                      coreStocks={book.coreStocks}
+                      incomeEtfs={book.fixedIncomeStocks}
+                      cashLike={book.cashLikeStocks}
+                    />
+                  </section>
                 </div>
                 <PositionsDashboard
                   open={openSections.charts}
                   onToggle={() => toggleSection('charts')}
                   book={book.alarm.book}
                   stocks={book.allStocks}
-                  coreStocks={book.coreStocks}
-                  incomeEtfs={book.fixedIncomeStocks}
-                  cashLike={book.cashLikeStocks}
-                  accounts={book.scopedAccounts}
                   quotesBySymbol={book.quotesBySymbol}
                   quotesByCk={book.quotesByCk}
                   activeSymbol={filterSymbol}

@@ -146,23 +146,6 @@ export function AssetMixCard({ accounts, coreStocks, incomeEtfs, cashLike }: Ass
 
   return (
     <div className="flex min-w-0 flex-col gap-2" aria-label="Account asset mix">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-          Asset mix
-        </span>
-        <SegmentControl
-          size={DEFAULT_SEGMENT_SIZE}
-          className="shrink-0"
-          ariaLabel="Legend values"
-          options={[
-            { value: 'pct', label: '%' },
-            { value: 'usd', label: '$' },
-          ]}
-          value={legendMode}
-          onChange={(v) => setLegendMode(v as LegendMode)}
-        />
-      </div>
-
       <div className={cn(styles.donutRow, styles.donutRowStart)}>
         <DonutChart
           segments={ringSegments}
@@ -179,8 +162,19 @@ export function AssetMixCard({ accounts, coreStocks, incomeEtfs, cashLike }: Ass
               title="Sum of the slices drawn. Buying power is a capacity, not a holding, so this is larger than net liq."
             >
               <span className="text-muted-foreground">Ring basis</span>
-              <span className="font-mono tabular-nums text-foreground">
-                {fmtSlice(pie.denom, legendMode)}
+              <span className="flex items-center gap-2">
+                <span className="font-mono tabular-nums text-foreground">{fmtSlice(pie.denom, legendMode)}</span>
+                <SegmentControl
+                  size={DEFAULT_SEGMENT_SIZE}
+                  className="shrink-0"
+                  ariaLabel="Legend values"
+                  options={[
+                    { value: 'pct', label: '%' },
+                    { value: 'usd', label: '$' },
+                  ]}
+                  value={legendMode}
+                  onChange={(v) => setLegendMode(v as LegendMode)}
+                />
               </span>
             </div>
           ) : null}

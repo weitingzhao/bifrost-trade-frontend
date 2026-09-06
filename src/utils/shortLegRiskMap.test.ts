@@ -317,7 +317,7 @@ describe('labelPoints', () => {
       OPTS,
     )
     const [a, b] = l.labels.filter((x) => x.key !== 'far')
-    expect([a?.text, b?.text].sort()).toEqual(['NVDA 245C', 'NVDA 255C'])
+    expect([a?.text, b?.text].sort()).toEqual(['NVDA 245C +24.9%', 'NVDA 255C +27.9%'])
     // Two names on one date never share a spot: the second takes the other
     // side of the point, or the next line when both sides are taken.
     const apart = a!.anchor !== b!.anchor || Math.abs(a!.y - b!.y) >= 9

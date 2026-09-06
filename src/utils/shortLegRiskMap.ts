@@ -128,6 +128,10 @@ export const MONTH_DTE = 35
 /** The strip's own margins, in SVG user units. */
 export const RIGHT_GUTTER_W = 48
 const PLOT_PAD_X = 8
+/** Room on the left for the cushion scale: "+40%" in 9px mono, plus a tick. */
+export const Y_AXIS_W = 34
+/** Where the scale is labelled. Zero and the tight line are drawn separately. */
+export const Y_TICK_PCTS = [-0.1, 0, 0.1, 0.2, 0.3, 0.4] as const
 /**
  * Inset of the cushion scale from the plot's top and bottom edges. The bottom
  * edge is the x-axis, and a deep-ITM leg pinned exactly onto it would sit
@@ -198,8 +202,15 @@ export interface RiskMapBands {
   rightGutter: { x0: number; x1: number } | null
 }
 
+export interface RiskMapYTick {
+  pct: number
+  y: number
+}
+
 export interface RiskMapLayout {
   points: RiskMapPoint[]
+  /** The cushion scale: one tick per 10% across the drawn range. */
+  yTicks: RiskMapYTick[]
   /** Every point's name, laid out once so labels never cover each other. */
   labels: RiskMapLabel[]
   /** Legs with no spot, nearest expiry first — listed under the plot, never placed in it. */
@@ -283,7 +294,7 @@ export function layoutRiskMap(
   const rightGutter =
     noExpiryLegs.length > 0 ? { x0: width - RIGHT_GUTTER_W, x1: width } : null
   const plot = {
-    x0: PLOT_PAD_X,
+    x0: Y_AXIS_W + PLOT_PAD_X,
     x1: (rightGutter ? rightGutter.x0 : width) - PLOT_PAD_X,
     y0: PLOT_TOP,
     y1: height - AXIS_H,
@@ -350,8 +361,10 @@ export function layoutRiskMap(
 
   const zeroY = yOf(0)
   const labels = labelPoints(points, plot)
+  const yTicks: RiskMapYTick[] = Y_TICK_PCTS.map((pct) => ({ pct, y: yOf(pct) }))
   return {
     points,
+    yTicks,
     labels,
     unpriced,
     noExpiry,
@@ -420,6 +433,13 @@ export function riskMapLegShort(leg: RiskMapLeg): string {
   return `${leg.symbol} ${leg.strike}${leg.right}`
 }
 
+/** "NVDA 245C +6.0%" — the plot label: the name and the height, so the y axis reads at every point. */
+export function riskMapLegLabel(leg: RiskMapLeg): string {
+  const c = leg.cushionPct
+  if (!isPlaceable(c)) return riskMapLegShort(leg)
+  return `${riskMapLegShort(leg)} ${c >= 0 ? '+' : ''}${(c * 100).toFixed(1)}%`
+}
+
 /** Roughly how wide a label is in SVG units, for the 8.5px monospace it is drawn in. */
 const LABEL_CHAR_W = 5.2
 const LABEL_LINE_H = 9
@@ -442,7 +462,7 @@ export function labelPoints(
     return { left, right: left + w }
   }
   for (const p of sorted) {
-    const text = riskMapLegShort(p.leg)
+    const text = riskMapLegLabel(p.leg)
     const width = text.length * LABEL_CHAR_W
     const fitsRight = p.x + p.r + 3 + width <= plot.x1
     const fitsLeft = p.x - p.r - 3 - width >= plot.x0

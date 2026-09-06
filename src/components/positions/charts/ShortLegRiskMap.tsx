@@ -218,9 +218,24 @@ export function ShortLegRiskMap({
           </text>
         ) : null}
 
+        {/* The cushion scale: the height of a point means something, so say what. */}
+        {layout.yTicks.map((t) => (
+          <g key={t.pct}>
+            {t.pct !== 0 ? (
+              <line x1={bands.plot.x0} x2={bands.plot.x1} y1={t.y} y2={t.y} className={styles.gridLine} />
+            ) : null}
+            <text x={bands.plot.x0 - 4} y={t.y + 3} textAnchor="end" className={styles.label} data-testid="y-tick">
+              {t.pct > 0 ? '+' : ''}
+              {Math.round(t.pct * 100)}%
+            </text>
+          </g>
+        ))}
+        <text x={2} y={bands.plot.y0 + 8} textAnchor="start" className={styles.label}>
+          cushion
+        </text>
         <line x1={bands.plot.x0} x2={bands.plot.x1} y1={bands.zeroY} y2={bands.zeroY} className={styles.zeroLine} />
         <text x={bands.plot.x1} y={bands.zeroY + 9} textAnchor="end" className={styles.label}>
-          ITM below
+          ITM below zero
         </text>
 
         <line x1={bands.plot.x0} x2={bands.plot.x1} y1={tightY} y2={tightY} className={styles.tightLine} />
@@ -235,6 +250,9 @@ export function ShortLegRiskMap({
         </text>
 
         <line x1={bands.plot.x0} x2={bands.plot.x1} y1={axisY} y2={axisY} className={styles.axisLine} />
+        <text x={bands.plot.x1} y={axisY - 3} textAnchor="end" className={styles.label}>
+          days to expiry →
+        </text>
         {ticks.map((t, i) => {
           const active = t.expiry != null && activeExpiry != null && t.expiry === activeExpiry
           const expiry = t.expiry

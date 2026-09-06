@@ -38,7 +38,9 @@ describe('ShortLegRiskMap', () => {
     render(<ShortLegRiskMap legs={[leg()]} tightPct={0.03} />)
     const c = pointFor(PRICED_TITLE)
     expect(c.dataset.band).toBe('comfortable')
-    expect(screen.getByTestId('point-label')).toHaveTextContent('MU 250C')
+    expect(screen.getByTestId('point-label')).toHaveTextContent('MU 250C +12.4%')
+    // The cushion scale is drawn, so the height of a point can be read.
+    expect(screen.getAllByTestId('y-tick').map((t) => t.textContent)).toEqual(['-10%', '0%', '+10%', '+20%', '+30%', '+40%'])
   })
 
   it('lists an unpriced leg by name under the plot and never draws it as a point', () => {

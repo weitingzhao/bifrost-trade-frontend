@@ -14,7 +14,6 @@ import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
 import { usePositionsScope } from '@/hooks/usePositionsScope'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
-import { usePositionsSections } from '@/hooks/usePositionsSections'
 import { STORAGE_KEYS } from '@/constants/storage'
 import { deleteExecution } from '@/api/trading'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -34,7 +33,9 @@ import {
 import { OptionsTab } from '@/components/positions/OptionsTab'
 import { InstanceTab } from '@/components/positions/InstanceTab'
 import { ExpiriesView } from '@/components/positions/ExpiriesView'
-import { PositionsDashboard, type BackingSegmentTarget } from '@/components/positions/PositionsDashboard'
+import { RingCard } from '@/components/positions/RingCard'
+import { BackingPoolCard } from '@/components/positions/charts/BackingPoolCard'
+import { HoldingsBySymbolCard } from '@/components/positions/charts/HoldingsBySymbolCard'
 import { PositionsOpenControls } from '@/components/positions/PositionsOpenControls'
 import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
 import { MarginByAccountStrip } from '@/components/positions/MarginByAccountStrip'
@@ -75,7 +76,6 @@ export default function PositionsPage() {
   const { scope, setAccountFilter, setFilterSymbol, setFilterExpiry, scopeSearch } = usePositionsScope()
   const { accountFilter, filterSymbol, filterExpiry } = scope
   const { pct: cushionTightPct, setPct: setCushionTightPct } = useCushionThreshold()
-  const { open: openSections, toggle: toggleSection } = usePositionsSections()
   const book = usePositionsBook(scope, cushionTightPct)
 
   // Grid-only state: changes what the grid shows, never what the cockpit grades.
@@ -164,7 +164,7 @@ export default function PositionsPage() {
     [navigate, scopeSearch, setLinesView],
   )
   const openFromBackingSegment = useCallback(
-    (target: BackingSegmentTarget) => {
+    (target: 'calls' | 'puts' | 'free' | 'income') => {
       if (target === 'income') openTarget('independent')
       else openTarget('coverage', target === 'puts' ? 'cash' : target === 'free' ? 'spare' : 'calls')
     },
@@ -306,8 +306,10 @@ export default function PositionsPage() {
             />
           ) : (
             <div className="min-w-0 space-y-3">
-              {/* Band 1: the state of the book on the left, the Owner's pictures of the base on the right. */}
-              <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+              {/* Band 1, a 2×2: the accounts on the left (cockpit, margin, capital),
+                  the base on the right (backing pool, holdings). Two rings share
+                  each row, so their circles sit on one line. */}
+              <div className="grid min-w-0 grid-cols-1 items-start gap-3 xl:grid-cols-2">
                 <div className="min-w-0 space-y-2">
                   <BookVsBaseCockpit
                     book={book.alarm.book}
@@ -324,28 +326,29 @@ export default function PositionsPage() {
                     secondaryId={book.secondaryAccountId}
                     accountFilter={accountFilter}
                   />
-                  {/* The accounts' capital, beside the accounts' margin: net liq and
-                      buying power in the centre, the layers around them. */}
-                  <section className="rounded-md border border-border bg-secondary/40 px-3 py-1.5" aria-label="Asset mix">
-                    <AssetMixCard
-                      accounts={book.scopedAccounts}
-                      coreStocks={book.coreStocks}
-                      incomeEtfs={book.fixedIncomeStocks}
-                      cashLike={book.cashLikeStocks}
-                    />
-                  </section>
                 </div>
-                <PositionsDashboard
-                  open={openSections.charts}
-                  onToggle={() => toggleSection('charts')}
-                  book={book.alarm.book}
-                  stocks={book.allStocks}
-                  quotesBySymbol={book.quotesBySymbol}
-                  quotesByCk={book.quotesByCk}
-                  activeSymbol={filterSymbol}
-                  onSymbolClick={toggleSymbolScope}
-                  onBackingSegment={openFromBackingSegment}
-                />
+                <RingCard title="Backing pool">
+                  <BackingPoolCard book={book.alarm.book} onSegmentClick={openFromBackingSegment} />
+                </RingCard>
+                {/* The accounts' capital, beside the accounts' margin: net liq and
+                    buying power in the centre, the layers around them. */}
+                <RingCard title="Asset mix">
+                  <AssetMixCard
+                    accounts={book.scopedAccounts}
+                    coreStocks={book.coreStocks}
+                    incomeEtfs={book.fixedIncomeStocks}
+                    cashLike={book.cashLikeStocks}
+                  />
+                </RingCard>
+                <RingCard title="Holdings by symbol">
+                  <HoldingsBySymbolCard
+                    stocks={book.allStocks}
+                    quotesBySymbol={book.quotesBySymbol}
+                    quotesByCk={book.quotesByCk}
+                    activeSymbol={filterSymbol}
+                    onSymbolClick={toggleSymbolScope}
+                  />
+                </RingCard>
               </div>
 
               {/* Band 2: every short leg on one wide time axis — the whole width, so a

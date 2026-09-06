@@ -375,9 +375,9 @@ export default function PositionsPage() {
               </div>
 
               {/* Band 2: the short-leg map and, beside it, Room to add — the risk in what
-                  is held and the room for what is not, three parts to two, directly above
-                  the grid the map narrows. Below 2xl they stack, the map first. */}
-              <div className="grid min-w-0 grid-cols-1 items-start gap-3 2xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                  is held and the room for what is not, an even split, directly above the
+                  grid the map narrows. Below 2xl they stack, the map first. */}
+              <div className="grid min-w-0 grid-cols-1 items-start gap-3 2xl:grid-cols-2">
                 <ShortLegsPanel
                   legs={book.riskLegs}
                   tightPct={cushionTightPct}

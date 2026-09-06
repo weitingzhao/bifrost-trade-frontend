@@ -174,6 +174,7 @@ export function ShortLegRiskMap({
     null,
   )
   const noExpiryCount = layout.noExpiry.length
+  const legByKey = new Map(layout.points.map((p) => [p.leg.key, p.leg]))
   const notionals = legs.map(legPremium).filter((n): n is number => n != null && n > 0)
   const maxNotional = notionals.length > 0 ? Math.max(...notionals) : 0
   const minNotional = notionals.length > 0 ? Math.min(...notionals) : 0
@@ -319,8 +320,13 @@ export function ShortLegRiskMap({
           )
         })}
 
-        {/* Names first, points on top, so a label never covers the dot it names. */}
-        {layout.labels.map((l) => (
+        {/* Names first, points on top, so a label never covers the dot it names. A
+            name is a control in its own right: it is a far larger target than the
+            dot beside it, and on a crowded plot it is the one the pointer finds. */}
+        {layout.labels.map((l) => {
+          const leg = legByKey.get(l.key)
+          const toggle = leg && onSelect ? () => onSelect(l.key === selectedKey ? null : leg) : undefined
+          return (
           <text
             key={l.key}
             x={l.x}
@@ -328,6 +334,10 @@ export function ShortLegRiskMap({
             textAnchor={l.anchor}
             className={cn(styles.pointLabel, l.key === selectedKey && styles.pointLabelSelected)}
             data-testid="point-label"
+            role={toggle ? 'button' : undefined}
+            tabIndex={toggle ? 0 : undefined}
+            aria-pressed={toggle ? l.key === selectedKey : undefined}
+            {...(toggle ? activate(toggle) : {})}
           >
             {/* Three readings, three colours: what it is, what it is worth, how far it has to fall. */}
             <tspan>{l.parts.head}</tspan>
@@ -335,17 +345,24 @@ export function ShortLegRiskMap({
             {l.parts.cushion ? (
               <tspan className={l.band ? BAND_TEXT_CLASS[l.band] : undefined}> {l.parts.cushion}</tspan>
             ) : null}
+            {leg ? <title>{riskMapLegTitle(leg)}</title> : null}
           </text>
-        ))}
-        {layout.points.map((p) => (
-          <LegPoint
-            key={p.leg.key}
-            point={p}
-            className={cn(styles.point, BAND_CLASS[p.band])}
-            selected={p.leg.key === selectedKey}
-            onSelect={onSelect}
-          />
-        ))}
+          )
+        })}
+        {/* Largest first: a small dot sitting inside a big one is painted last, so it
+            is the one the pointer finds. Drawn the other way round, a $995 leg behind a
+            $8.4k leg could be seen and not clicked. */}
+        {[...layout.points]
+          .sort((a, b) => b.r - a.r)
+          .map((p) => (
+            <LegPoint
+              key={p.leg.key}
+              point={p}
+              className={cn(styles.point, BAND_CLASS[p.band])}
+              selected={p.leg.key === selectedKey}
+              onSelect={onSelect}
+            />
+          ))}
 
         {/* Right gutter: priced, but the date would not parse — no x to place it on. */}
         {bands.rightGutter ? (

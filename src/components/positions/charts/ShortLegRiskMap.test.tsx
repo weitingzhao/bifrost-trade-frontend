@@ -118,4 +118,41 @@ describe('ShortLegRiskMap', () => {
     expect(screen.getByLabelText(/expiry 20261016/)).toBeInTheDocument()
     expect(screen.getByLabelText(/expiry 20261120/)).toBeInTheDocument()
   })
+
+  it('paints a small dot over a big one it sits inside, so the small one is clickable', () => {
+    const onSelect = vi.fn()
+    render(
+      <ShortLegRiskMap
+        legs={[
+          leg({ key: 'big', symbol: 'DAVE', strike: 280, contracts: 1, premium: 8415, cushionPct: 0.06, dte: 76 }),
+          leg({ key: 'small', symbol: 'GOOG', strike: 370, contracts: 1, premium: 1538, cushionPct: 0.062, dte: 76 }),
+        ]}
+        tightPct={0.03}
+        activeExpiry={null}
+        onSelect={onSelect}
+      />,
+    )
+    const order = [...plotCircles()].map((c) => Number(c.getAttribute('r')))
+    // Painted largest to smallest: the last circle in the document is the smallest.
+    expect(order).toEqual([...order].sort((a, b) => b - a))
+    const drawn = [...plotCircles()]
+    const smallest = drawn[drawn.length - 1] as SVGCircleElement
+    fireEvent.click(smallest)
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ symbol: 'GOOG' }))
+  })
+
+  it('selects the leg from its name as well as its dot — the name is the bigger target', () => {
+    const onSelect = vi.fn()
+    render(<ShortLegRiskMap legs={[leg()]} tightPct={0.03} activeExpiry={null} onSelect={onSelect} />)
+    const label = screen.getByTestId('point-label')
+    expect(label).toHaveAttribute('role', 'button')
+    expect(label).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(label)
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ symbol: 'MU' }))
+    // And it closes the selection again, like the dot does.
+    onSelect.mockClear()
+    render(<ShortLegRiskMap legs={[leg()]} tightPct={0.03} activeExpiry={null} selectedKey="k" onSelect={onSelect} />)
+    fireEvent.click(screen.getAllByTestId('point-label')[1])
+    expect(onSelect).toHaveBeenCalledWith(null)
+  })
 })

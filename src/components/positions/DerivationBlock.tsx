@@ -65,10 +65,16 @@ const SOURCE_BADGE: Record<Variable['source'], { text: string; title: string }> 
   implied: { text: 'implied', title: 'Not a reported field: the difference of two broker fields' },
 }
 
-function SourceBadge({ source }: { source: Variable['source'] }) {
+function SourceBadge({ source, strong = false }: { source: Variable['source']; strong?: boolean }) {
   const b = SOURCE_BADGE[source]
   return (
-    <span className="rounded-sm border border-border/60 px-1 text-dense-label uppercase tracking-wide text-muted-foreground" title={b.title}>
+    <span
+      className={cn(
+        'text-dense-label uppercase tracking-wide text-muted-foreground/70',
+        strong && 'rounded-sm border border-border/60 px-1 text-muted-foreground',
+      )}
+      title={b.title}
+    >
       {b.text}
     </span>
   )
@@ -117,7 +123,7 @@ function Formula({
     <span className="font-mono">
       {formulaTokens(formula).map((t, i) =>
         t.kind === 'text' ? (
-          <span key={i} className="text-muted-foreground">
+          <span key={i} className="text-muted-foreground/70">
             {t.text}
           </span>
         ) : (
@@ -186,7 +192,11 @@ export function DerivationBlock({
           return (
             <div
               key={name}
-              className={cn('flex min-w-0 flex-wrap items-baseline gap-x-2', DEPTH_PAD[Math.min(depth, DEPTH_PAD.length - 1)])}
+              className={cn(
+                'flex min-w-0 flex-wrap items-baseline gap-x-2 rounded-sm px-1 -mx-1 hover:bg-muted/30',
+                openName === name && 'bg-muted/40',
+                DEPTH_PAD[Math.min(depth, DEPTH_PAD.length - 1)],
+              )}
               data-testid="derivation-row"
               data-var={name}
             >
@@ -196,10 +206,12 @@ export function DerivationBlock({
                 </span>
               ) : null}
               <VarLink name={name} strong active={openName === name} onClick={() => pick(name)} />
-              <span className={cn('font-mono tabular-nums', v.warn ? 'text-warning' : 'text-foreground')}>{v.value}</span>
+              <span className={cn('font-mono text-dense-body font-semibold tabular-nums', v.warn ? 'text-warning' : 'text-foreground')}>
+                {v.value}
+              </span>
               {v.formula ? (
                 <>
-                  <span className="font-mono text-muted-foreground">=</span>
+                  <span className="font-mono text-muted-foreground/70">=</span>
                   <Formula formula={v.formula} variables={d.variables} activeName={openName} onPick={pick} />
                 </>
               ) : null}
@@ -214,7 +226,7 @@ export function DerivationBlock({
 
       {fields.length > 0 ? (
         <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5" data-testid="derivation-fields">
-          <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">{fieldsLabel}</span>
+          <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground/70">{fieldsLabel}</span>
           {fields.map((name) => (
             <VarLink
               key={name}
@@ -236,8 +248,10 @@ export function DerivationBlock({
         >
           <div className="flex flex-wrap items-baseline gap-x-2">
             <span className="font-mono font-semibold text-foreground">{open.name}</span>
-            <SourceBadge source={open.source} />
-            <span className={cn('ml-auto font-mono tabular-nums', open.warn ? 'text-warning' : 'text-foreground')}>{open.value}</span>
+            <SourceBadge source={open.source} strong />
+            <span className={cn('ml-auto font-mono text-dense-body font-semibold tabular-nums', open.warn ? 'text-warning' : 'text-foreground')}>
+              {open.value}
+            </span>
           </div>
           <p className="mt-0.5 leading-snug text-foreground">{open.meaning}</p>
           {open.note ? <p className="leading-snug text-muted-foreground">{open.note}</p> : null}
@@ -261,11 +275,20 @@ export function DerivationBlock({
             >
               {open.items.map((it, i) => (
                 <Fragment key={i}>
-                  <span className="text-foreground">{it.label}</span>
-                  <span className="min-w-0 truncate text-muted-foreground" title={it.sub}>
+                  <span className={cn(it.dim ? 'text-muted-foreground/60' : 'text-foreground')} data-dim={it.dim ? 'true' : undefined}>
+                    {it.label}
+                  </span>
+                  <span className={cn('min-w-0 truncate', it.dim ? 'text-muted-foreground/50' : 'text-muted-foreground')} title={it.sub}>
                     {it.sub}
                   </span>
-                  <span className={cn('text-right', it.warn ? 'text-warning' : 'text-foreground')}>{it.value}</span>
+                  <span
+                    className={cn(
+                      'text-right font-semibold',
+                      it.warn ? 'text-warning' : it.dim ? 'font-normal text-muted-foreground/60' : 'text-foreground',
+                    )}
+                  >
+                    {it.value}
+                  </span>
                 </Fragment>
               ))}
             </div>

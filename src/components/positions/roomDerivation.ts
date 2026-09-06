@@ -63,16 +63,26 @@ function contractItems(legs: readonly LegPremium[], right: 'C' | 'P'): VariableI
       label: r.label,
       sub: `strike${r.strikes.length === 1 ? '' : 's'} ${[...new Set(r.strikes)].sort((a, b) => a - b).join(', ')}`,
       value: count(r.contracts),
+      dim: r.contracts === 0,
     }))
 }
 
+/**
+ * Every holding that was considered, with the ones that actually add a contract
+ * in the open and the rest dimmed — the reader asking "which twenty-five?" needs
+ * to see that RKLB carries sixteen of them and that NVDA was looked at and had
+ * nothing spare.
+ */
 function callItems(rows: readonly CoverRow[]): VariableItem[] {
   return rows
     .filter((r) => r.held > 0)
+    .slice()
+    .sort((a, b) => b.moreCalls - a.moreCalls || a.accountId.localeCompare(b.accountId) || a.symbol.localeCompare(b.symbol))
     .map((r) => ({
       label: `${r.accountId} ${r.symbol}`,
       sub: `${num(r.held)} held − ${num(r.backing)} backing = ${num(r.spare)} spare ÷ 100`,
       value: plus(r.moreCalls),
+      dim: r.moreCalls === 0,
     }))
 }
 
@@ -139,7 +149,11 @@ export function roomDerivation(r: RoomToAdd, coverRows: readonly CoverRow[], vie
       meaning:
         'Covered calls the shares not already behind a call could back: whole 100-share lots, settled inside one account and one symbol - spare RKLB shares cannot back an NVDA call.',
       items: callItems(coverRows),
-      itemsCaption: `${num(r.backed.freeShares)} free shares in all`,
+      itemsCaption: (() => {
+        const rows = callItems(coverRows)
+        const adds = rows.filter((i) => !i.dim).length
+        return `${plus(r.backed.calls)} calls from ${adds} of ${rows.length} holdings · ${num(r.backed.freeShares)} free shares in all`
+      })(),
     },
     {
       name: 'Puts',

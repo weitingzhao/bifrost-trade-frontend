@@ -51,8 +51,8 @@ describe('roomDerivation', () => {
   it('reads the book back to its contracts, its legs and its accounts', () => {
     const v = view('now').variables
     expect(v.CallsNow.value).toBe('5')
-    expect(v.CallsNow.items).toEqual([{ label: 'U1 NVDA', sub: 'strike 245', value: '5' }])
-    expect(v.PutsNow.items).toEqual([{ label: 'U1 DDOG', sub: 'strike 200', value: '1' }])
+    expect(v.CallsNow.items).toEqual([{ label: 'U1 NVDA', sub: 'strike 245', value: '5', dim: false }])
+    expect(v.PutsNow.items).toEqual([{ label: 'U1 DDOG', sub: 'strike 200', value: '1', dim: false }])
     expect(v.NetPremium.value).toBe('$5,990.00')
     expect(v.NetPremium.items?.map((i) => [i.label, i.sub, i.value])).toEqual([
       ['U1 NVDA 245C 11/20/26', 'sold 5 × $9.99/share × 100', '+$4,995.00'],

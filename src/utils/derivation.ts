@@ -51,6 +51,12 @@ export interface VariableItem {
   sub?: string
   value: string
   warn?: boolean
+  /**
+   * This row contributes nothing to the total. Shown, because a reader checking
+   * "which twenty-five" needs to see that RKLB was considered and ANET was not,
+   * but dimmed, so the lines that do add up are the ones the eye lands on.
+   */
+  dim?: boolean
 }
 
 export interface Derivation {

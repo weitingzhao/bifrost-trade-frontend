@@ -555,11 +555,12 @@ export function riskMapLegLabel(leg: RiskMapLeg): string {
 const LABEL_CHAR_W = 5.2
 /**
  * A line of label, and the vertical distance at which two of them stop
- * touching. It is a shade taller than the glyphs: at exactly the glyph height
- * two labels one line apart still shared a pixel row, which read as a collision
- * to the eye while the collision test called them clear.
+ * touching. It is the drawn box, not the glyph height: an 8.5px monospace
+ * label measures about 12 units tall with its ascender and descender, and two
+ * labels closer than that share a pixel row — a collision to the eye while the
+ * test called them clear.
  */
-const LABEL_LINE_H = 10.5
+const LABEL_LINE_H = 12
 
 /**
  * Place each point's name to its right (or its left, near the edge), then nudge

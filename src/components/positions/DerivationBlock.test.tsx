@@ -110,4 +110,21 @@ describe('DerivationBlock', () => {
     expect(screen.getByTestId('variable-items')).toHaveTextContent('NVDA 245C 11/20/26')
     expect(screen.getByTestId('variable-items')).toHaveTextContent('-5 contracts · mark not in snapshot')
   })
+
+  it('weights the value, quiets the operators, and dims a line that adds nothing', () => {
+    const d = marginDerivation(rollupMargin([HOST]).accounts[0], 'Host')
+    d.variables.Pressure.items = [
+      { label: 'U1', sub: 'excess ÷ NLV', value: '27%' },
+      { label: 'U2', sub: 'nothing to add', value: '+0', dim: true },
+    ]
+    render(<DerivationBlock derivation={d} onClose={() => {}} />)
+    const rows = screen.getByTestId('derivation-rows')
+    // The figure being explained carries the weight, not the badge beside it.
+    const value = within(screen.getAllByTestId('derivation-row')[0]).getByText('27%')
+    expect(value.className).toContain('font-semibold')
+    fireEvent.click(linkIn(rows, 'Pressure'))
+    const items = screen.getByTestId('variable-items')
+    expect(within(items).getByText('U2')).toHaveAttribute('data-dim', 'true')
+    expect(within(items).getByText('U1')).not.toHaveAttribute('data-dim')
+  })
 })

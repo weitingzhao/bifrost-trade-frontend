@@ -151,7 +151,19 @@
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 8.5px;
   fill: var(--muted-foreground);
-  pointer-events: none;
+  cursor: pointer;
+}
+
+/* The name is a target too, so it has to answer to the pointer like one. */
+.pointLabel:hover,
+.pointLabel:focus-visible {
+  fill: var(--foreground);
+  outline: none;
+}
+
+.pointLabel:hover tspan,
+.pointLabel:focus-visible tspan {
+  fill: var(--foreground);
 }
 
 .pointLabelSelected {

@@ -66,6 +66,15 @@ function fmtPercentile(n: number | null | undefined): string {
   return n.toFixed(0)
 }
 
+/** "21st", "42nd", "11th" — the same word the Daily Brief card uses. */
+function ordinalPctl(n: number): string {
+  const r = Math.round(n)
+  const mod100 = r % 100
+  if (mod100 >= 11 && mod100 <= 13) return `${r}th`
+  const suffix = ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[r % 10] ?? 'th'
+  return `${r}${suffix}`
+}
+
 /** The reading in words; the band and its meaning come from the exhibit, not a threshold here. */
 function vrpSummary(row: VrpRow | null | undefined, band: LensBand | null, means: string | null): string {
   if (!row) return 'No VRP yet — wait for 252d history before sizing vol.'
@@ -76,7 +85,7 @@ function vrpSummary(row: VrpRow | null | undefined, band: LensBand | null, means
   const ivStr = row.atm_iv_30d != null ? fmtPctFromFraction(row.atm_iv_30d) : '—'
   const rvStr = row.rv_60d != null ? fmtPctFromFraction(row.rv_60d) : '—'
   const spreadStr = row.vrp_60d != null ? fmtSpread(row.vrp_60d) : '—'
-  return `${row.symbol} VRP ${fmtPercentile(pct)}th pctl (IV ${ivStr} vs RV60 ${rvStr}, spread ${spreadStr}) — ${means ?? 'no registry reading'}`
+  return `${row.symbol} VRP ${ordinalPctl(pct)} pctl (IV ${ivStr} vs RV60 ${rvStr}, spread ${spreadStr}) — ${means ?? 'no registry reading'}`
 }
 
 function DistributionBar({

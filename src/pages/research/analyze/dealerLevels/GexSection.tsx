@@ -29,7 +29,7 @@ import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
-import { vrpLinkLine } from '@/lib/analyzeDepth'
+import { dailyLevelSignals, vrpLinkLine } from '@/lib/analyzeDepth'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { copilotViewStore } from '@/store/copilotViewStore'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
@@ -208,6 +208,7 @@ export function GexSection() {
         }
         trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
         similar={similarLine(exhibitQ.data?.similar)}
+        signals={dailyLevelSignals(exhibitQ.data)}
       />
 
       <SimilarRegimeCard

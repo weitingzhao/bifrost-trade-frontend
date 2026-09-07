@@ -168,6 +168,22 @@ export function vrpLinkLine(exhibit: ExhibitPayload | undefined): string | null 
     .join(' — ')
 }
 
+/**
+ * The daily dealer levels the verdict is judged on — shown next to the intraday
+ * snapshot so the strip carries the same numbers as the Daily Brief's GEX card.
+ */
+export function dailyLevelSignals(exhibit: ExhibitPayload | undefined): { label: string; value: string }[] {
+  const r = exhibit?.readings
+  const zero = finiteOrNull(r?.zero_gamma)
+  if (zero == null) return []
+  const put = finiteOrNull(r?.major_put_wall)
+  const call = finiteOrNull(r?.major_call_wall)
+  const out = [{ label: 'Daily zero-γ', value: zero.toFixed(0) }]
+  if (put != null && call != null) out.push({ label: 'Daily walls', value: `${put.toFixed(0)} / ${call.toFixed(0)}` })
+  if (exhibit?.as_of) out.push({ label: 'As of', value: exhibit.as_of })
+  return out
+}
+
 /* ------------------------------------------------------------------- vrp */
 
 /** "Own record: VRP ≥ 80 → 20d median +1.4%, 58% positive (n=12) · ≤ 20 → …" */

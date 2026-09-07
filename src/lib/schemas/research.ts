@@ -326,3 +326,23 @@ export const ForecastCalibrationSchema = z
     overall: z.object({ n: z.number(), hits: z.number() }).passthrough(),
   })
   .passthrough()
+
+const BriefSegmentSchema = z.object({ label: z.string(), text: z.string(), lamp: z.string() }).passthrough()
+
+/** GET /research/daily-brief/synth — cards from the exhibit readers (C3). */
+export const DailyBriefSynthSchema = z
+  .object({
+    symbol: z.string(),
+    trade_date: z.string(),
+    verdict: z
+      .object({
+        narrative: BriefSegmentSchema,
+        risk: BriefSegmentSchema,
+        opportunity: BriefSegmentSchema,
+        action_hint: z.object({ label: z.string(), to: z.string() }).passthrough(),
+      })
+      .passthrough(),
+    freshness: z.record(z.string(), z.string()),
+    cards: z.record(z.string(), z.object({ present: z.boolean(), verdict: z.string(), lamp: z.string(), to: z.string() }).passthrough()),
+  })
+  .passthrough()

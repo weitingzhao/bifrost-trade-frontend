@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ExhibitPayload } from '@/api/research/exhibit'
 import {
   calibrationLine,
+  dailyLevelSignals,
   fwd20Line,
   hitCellText,
   pinMagnetLine,
@@ -114,5 +115,16 @@ describe('C2 depth lines', () => {
     expect(calibrationLine(rows, 'Range')).toBe('Paths in range regimes hit 62% of the time against 58% claimed (n=13)')
     expect(calibrationLine(rows, 'trending')).toBeNull()
     expect(calibrationLine(rows, null)).toBeNull()
+  })
+
+  it('puts the daily dealer levels the verdict rests on next to the intraday snapshot', () => {
+    expect(
+      dailyLevelSignals(exhibit({ lens: 'gex_regime', readings: { zero_gamma: 246.2, major_put_wall: 200, major_call_wall: 250 } })),
+    ).toEqual([
+      { label: 'Daily zero-γ', value: '246' },
+      { label: 'Daily walls', value: '200 / 250' },
+      { label: 'As of', value: '2026-09-04' },
+    ])
+    expect(dailyLevelSignals(exhibit({ readings: {} }))).toEqual([])
   })
 })

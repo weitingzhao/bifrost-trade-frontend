@@ -6,9 +6,10 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { ForecastCalibrationSchema } from '@/lib/schemas/research'
+import { DailyBriefSynthSchema, ForecastCalibrationSchema } from '@/lib/schemas/research'
 import type { LampColor } from '@/lib/researchFreshness'
-import type { IvPercentileRow } from '@/types/ivRadar'
+import type { LensBand } from '@/api/research/lenses'
+import type { ExhibitFreshness, ExhibitSimilar, ExhibitTrackRecord } from '@/api/research/exhibit'
 
 async function get<T = unknown>(path: string): Promise<T> {
   const res = await fetch(researchEngineUrl(path))
@@ -825,21 +826,7 @@ export async function fetchSepaCandidates(opts?: { trade_date?: string; top?: nu
   return res.json() as Promise<SepaCandidatesResponse>
 }
 
-// --- Daily Brief Synth (Wave R8) ---
-
-export class DailyBriefSynthUnavailableError extends Error {
-  readonly status: number
-
-  constructor(status: number, message?: string) {
-    super(message ?? `Daily Brief synth unavailable (${status})`)
-    this.name = 'DailyBriefSynthUnavailableError'
-    this.status = status
-  }
-}
-
-export function isDailyBriefSynthUnavailable(err: unknown): boolean {
-  return err instanceof DailyBriefSynthUnavailableError
-}
+// --- Daily Brief Synth (Wave R8 · exhibit-sourced since research-loop-automation C3) ---
 
 export interface SynthVerdictSegment {
   label: string
@@ -849,16 +836,56 @@ export interface SynthVerdictSegment {
   meta?: string | null
 }
 
-export interface DailyBriefSynthCard {
+/**
+ * A brief card built from the same exhibit the hub view reads: the registry
+ * verdict (band / label / means), the readings, the as-of date and the hub
+ * view (`to`) that shows the same numbers.
+ */
+export interface DailyBriefLensCard {
   present: boolean
+  /** The card's own line — the numbers, from the exhibit readings. */
   verdict: string
+  lens: string
+  band: LensBand | null
+  label: string | null
+  means: string | null
+  as_of: string | null
+  freshness: ExhibitFreshness
+  lamp: LampColor
+  to: string
+  readings: Record<string, unknown>
+  track_record?: ExhibitTrackRecord | null
+  similar?: ExhibitSimilar | null
+  caveats: string[]
   detail?: Record<string, unknown> | null
   settlement?: ForecastSettlement | null
   candidates?: SepaScoreRow[]
+  own?: Record<string, unknown> | null
   sample_symbols?: string[]
   count?: number
-  rows?: EventRadarRow[]
+  tape?: boolean
 }
+
+export interface DailyBriefEventsCard {
+  present: boolean
+  verdict: string
+  lamp: LampColor
+  to: string
+  rows: EventRadarRow[]
+}
+
+export type DailyBriefLensKey =
+  | 'terrain'
+  | 'gex'
+  | 'opex'
+  | 'forecast'
+  | 'iv'
+  | 'vrp'
+  | 'skew'
+  | 'term_slope'
+  | 'sepa'
+  | 'momentum'
+  | 'sentiment'
 
 export interface DailyBriefSynth {
   symbol: string
@@ -870,75 +897,15 @@ export interface DailyBriefSynth {
     action_hint: { label: string; to: string }
   }
   freshness: Record<string, LampColor>
-  cards: {
-    terrain: DailyBriefSynthCard
-    gex: DailyBriefSynthCard
-    forecast: DailyBriefSynthCard
-    sepa: DailyBriefSynthCard
-    momentum: DailyBriefSynthCard
-    iv: DailyBriefSynthCard
-    events: DailyBriefSynthCard
-    sentiment: DailyBriefSynthCard
-  }
+  cards: Record<DailyBriefLensKey, DailyBriefLensCard> & { events: DailyBriefEventsCard }
   regime_context: Record<string, unknown> | null
+  lenses?: string[]
 }
+
+const validateDailyBrief = withValidation<DailyBriefSynth>(DailyBriefSynthSchema, 'research/daily-brief/synth')
 
 export async function fetchDailyBriefSynth(symbol: string, date?: string): Promise<DailyBriefSynth> {
   const params = new URLSearchParams({ symbol })
   if (date) params.set('date', date)
-  const path = `/research/daily-brief/synth?${params}`
-  const res = await fetch(researchEngineUrl(path))
-  if (res.status === 404 || res.status === 503) {
-    throw new DailyBriefSynthUnavailableError(res.status)
-  }
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!')) {
-      throw new Error(
-        `Research Engine unreachable (got HTML). Start research-api :8795 and set VITE_API_RESEARCH_ENGINE.`,
-      )
-    }
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  return res.json() as Promise<DailyBriefSynth>
-}
-
-/** Map synth API verdict to FE DailyVerdict shape (no client-side rules). */
-export function mapSynthVerdict(synth: DailyBriefSynth): {
-  narrative: SynthVerdictSegment
-  risk: SynthVerdictSegment
-  opportunity: SynthVerdictSegment
-  actionHint: { label: string; to: string }
-} {
-  return {
-    narrative: synth.verdict.narrative,
-    risk: synth.verdict.risk,
-    opportunity: synth.verdict.opportunity,
-    actionHint: synth.verdict.action_hint,
-  }
-}
-
-/** Extract typed card details from synth response for BriefCard rendering. */
-export function synthTerrainDetail(synth: DailyBriefSynth): TerrainData | null {
-  const d = synth.cards.terrain.detail
-  return d ? (d as unknown as TerrainData) : null
-}
-
-export function synthGexDetail(synth: DailyBriefSynth): GexIntraday | null {
-  const d = synth.cards.gex.detail
-  return d ? (d as unknown as GexIntraday) : null
-}
-
-export function synthForecastDetail(synth: DailyBriefSynth): ForecastSession | null {
-  const d = synth.cards.forecast.detail
-  return d ? (d as unknown as ForecastSession) : null
-}
-
-export function synthSettlement(synth: DailyBriefSynth): ForecastSettlement | null {
-  return synth.cards.forecast.settlement ?? null
-}
-
-export function synthIvDetail(synth: DailyBriefSynth): IvPercentileRow | null {
-  const d = synth.cards.iv.detail
-  return d ? (d as unknown as IvPercentileRow) : null
+  return validateDailyBrief(await get<unknown>(`/research/daily-brief/synth?${params}`))
 }

@@ -7,6 +7,8 @@
  */
 import { POLICY_SUGGESTION_KEYS } from '@/lib/harness/harnessDraftHelpers'
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { withValidation } from '@/lib/apiValidation'
+import { RunEstimateSchema } from '@/lib/schemas/research'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 
@@ -291,6 +293,11 @@ export interface RunEstimate {
   summary: string
 }
 
+const validateEstimate = withValidation<RunEstimate>(
+  RunEstimateSchema,
+  'research/objectives/run-estimate',
+)
+
 export async function fetchRunEstimate(
   objectiveId: string,
   params?: { candidates?: number; models?: string[] },
@@ -299,10 +306,12 @@ export async function fetchRunEstimate(
   if (params?.candidates != null) q.set('candidates', String(params.candidates))
   if (params?.models?.length) q.set('models', params.models.join(','))
   const qs = q.toString()
-  return unwrap<RunEstimate>(
-    await fetch(
-      researchEngineUrl(
-        `/research/objectives/${encodeURIComponent(objectiveId)}/run-estimate${qs ? `?${qs}` : ''}`,
+  return validateEstimate(
+    unwrap<RunEstimate>(
+      await fetch(
+        researchEngineUrl(
+          `/research/objectives/${encodeURIComponent(objectiveId)}/run-estimate${qs ? `?${qs}` : ''}`,
+        ),
       ),
     ),
   )

@@ -228,6 +228,35 @@ export const CandidateOutcomeRowsSchema = z
   })
   .passthrough()
 
+// ── Run cost estimate ───────────────────────────────────────────────────
+// The one number in this file the Owner spends money on the strength of, so it
+// is validated where the rest of the harness client is not. `.passthrough()`
+// as everywhere else: the estimate gains fields as the run does, and the schema
+// guards the shape the dialog reads, not the whole payload.
+
+export const RunEstimateModelSchema = z
+  .object({
+    model: z.string(),
+    usd_per_candidate: z.number(),
+    usd: z.number(),
+    source: z.string(),
+    runs: z.number(),
+  })
+  .passthrough()
+
+export const RunEstimateSchema = z
+  .object({
+    objective_id: z.string(),
+    candidates: z.number(),
+    models: z.array(RunEstimateModelSchema),
+    triage_usd: z.number(),
+    total_usd: z.number(),
+    source: z.string(),
+    runs_sampled: z.number(),
+    summary: z.string(),
+  })
+  .passthrough()
+
 // ── Loop policy templates (P0-2) ────────────────────────────────────────
 // The Loop's strategy is data now, not a constant compiled into two codebases.
 // `.passthrough()` throughout: policy_json is the runtime's LoopPolicy dump and

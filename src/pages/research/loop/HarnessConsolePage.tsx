@@ -343,12 +343,12 @@ export default function HarnessConsolePage() {
               title={trust?.reason ?? 'Loading Trust…'}
             >
               <StatusLamp
-                lamp={trust?.l0 ? 'green' : 'yellow'}
+                lamp={(trust?.matrix_l0 ?? trust?.l0) ? 'green' : 'yellow'}
                 variant="dot"
-                title={trust?.l0 ? 'Trust L0' : 'Trust not L0'}
+                title={trust?.reason ?? ((trust?.matrix_l0 ?? trust?.l0) ? 'Trust L0' : 'Trust not L0')}
               />
               <span className="text-dense-caption text-muted-foreground">
-                Trust {trust?.l0 ? 'L0' : 'not L0'}
+                Trust {trust?.matrix_level ?? (trust?.l0 ? 'L0' : 'not L0')}
               </span>
             </div>
             <Button
@@ -460,7 +460,7 @@ export default function HarnessConsolePage() {
                     }
                     running={batchBusy}
                     anyRunPending={batchMut.isPending}
-                    trustL0={Boolean(trust?.l0)}
+                    trustL0={Boolean(trust?.matrix_l0 ?? trust?.l0)}
                     onRun={() => setRunDialog(row)}
                     onArchive={() => setRetiring({ objective: row, mode: 'archive' })}
                     onRestore={() => archiveMut.mutate({ id: row.id, status: 'active' })}

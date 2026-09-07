@@ -64,8 +64,8 @@ import {
   traceTriage,
 } from '@/lib/harness/harnessTrace'
 import { useApproveAllRun, useCurateRun, useObjectiveRun } from '@/hooks/useLoopHarness'
-import { useQuery } from '@tanstack/react-query'
-import { fetchObjectiveRuns } from '@/api/research/harness'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { fetchObjectiveRuns, rateRun } from '@/api/research/harness'
 
 function fmtDuration(ms: number | null): string {
   if (ms == null) return '—'
@@ -93,6 +93,14 @@ export function LoopRunPipelineBody({
   // The memo is the page; the process is a fold. Open by default only when the
   // run has no rating to lead with — an old run, or one that proposed nothing.
   const [processOpen, setProcessOpen] = useState(false)
+  const queryClient = useQueryClient()
+  const rateMut = useMutation({
+    mutationFn: (id: string) => rateRun(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-run', runId] })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
+    },
+  })
   const [inspectorWidth, setInspectorWidth] = useInspectorWidth()
 
   const run = runQ.data
@@ -266,7 +274,11 @@ export function LoopRunPipelineBody({
             rows={personaRowsForExport}
             considered={reach?.considered ?? null}
             spendUsd={spend.total_usd > 0 ? spend.total_usd : null}
+            canRate={draftIds.length > 0}
+            rating={rateMut.isPending}
+            onRate={() => rateMut.mutate(run.id)}
           />
+          {rateMut.isError ? <QueryErrorAlert error={rateMut.error} /> : null}
 
           <CollapsibleGroup variant="inset" className="mt-2">
             <CollapsibleGroupHeader expanded={processOpen} onToggle={() => setProcessOpen((o) => !o)}>

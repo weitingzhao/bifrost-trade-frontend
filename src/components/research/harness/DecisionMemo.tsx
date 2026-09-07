@@ -10,8 +10,9 @@
  * nothing is recomputed on the page.
  */
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { StanceMark, VerdictList, CopyCandidates, ReasonText } from '@/components/research/harness/PersonaVerdicts'
 import type { PersonaRow } from '@/components/research/harness/HarnessPipelineStepper'
@@ -24,11 +25,18 @@ export function DecisionMemo({
   rows,
   considered,
   spendUsd,
+  onRate,
+  rating,
+  canRate,
 }: {
   ratings: CandidateRating[]
   rows: PersonaRow[]
   considered: number | null
   spendUsd: number | null
+  /** Rate this run after the fact; offered only when the run has a batch to rate from. */
+  onRate?: () => void
+  rating?: boolean
+  canRate?: boolean
 }) {
   const [open, setOpen] = useState<string | null>(ratings[0]?.symbol ?? null)
   const bySymbol = new Map(rows.map((r) => [r.symbol.toUpperCase(), r]))
@@ -36,11 +44,21 @@ export function DecisionMemo({
 
   if (ratings.length === 0) {
     return (
-      <div className="rounded-md border border-border/60 bg-secondary/40 px-3 py-2">
-        <p className="text-dense-meta">No rating on this run.</p>
-        <p className="text-dense-caption text-muted-foreground">
-          It predates the rating stage, or nothing was proposed. The stages below still read.
-        </p>
+      <div className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 bg-secondary/40 px-3 py-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-dense-meta">No rating on this run.</p>
+          <p className="text-dense-caption text-muted-foreground">
+            {canRate
+              ? 'It predates the rating stage. The rating is a pure function of what the run stored, so it can be rated now and reads as it would have on the day.'
+              : 'It predates the rating stage, or nothing was proposed. The stages below still read.'}
+          </p>
+        </div>
+        {canRate && onRate ? (
+          <Button size="sm" variant="outline" className="h-7 px-2 text-dense-meta" disabled={rating} onClick={onRate}>
+            <Sparkles className="mr-0.5 size-3" />
+            {rating ? 'Rating…' : 'Rate this run'}
+          </Button>
+        ) : null}
       </div>
     )
   }

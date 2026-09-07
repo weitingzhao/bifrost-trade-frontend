@@ -189,7 +189,8 @@ export function parseRating(raw: unknown): CandidateRating | null {
 
 /** The run's ratings, in the order the run ranked them (best first). */
 export function traceRatings(trace: HarnessTrace): CandidateRating[] {
-  const ev = trace.events.find((e) => e.step === 'rate')
+  // A run can be rated again after the fact; the newest event is the rating.
+  const ev = [...trace.events].reverse().find((e) => e.step === 'rate' && Array.isArray(e.ratings))
   if (!ev || !Array.isArray(ev.ratings)) return []
   return (ev.ratings as unknown[]).map(parseRating).filter((r): r is CandidateRating => r !== null)
 }

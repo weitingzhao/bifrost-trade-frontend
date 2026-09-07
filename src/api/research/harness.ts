@@ -247,6 +247,10 @@ export interface LoopTrustStatus {
   l0: boolean
   reason: string
   advisory?: string
+  /** What the Owner granted on the platform matrix — "L0", "L1", … or null when unreachable. */
+  matrix_level?: string | null
+  /** The grant alone. The console pill reads this; `l0` is whether *this* process may act on it. */
+  matrix_l0?: boolean
 }
 
 export async function fetchLoopTrust(): Promise<LoopTrustStatus> {
@@ -437,6 +441,20 @@ export async function curateRun(runId: string): Promise<CurateRunResult> {
 // that owner into the audit ledger, so the call has to carry one. Without it the
 // ledger recorded whoever the caller claimed to be, and once RESEARCH_USERS is
 // set the request is refused outright.
+/**
+ * Rate a run after the fact. The rating is a pure function of what the run
+ * stored, so a run made before the stage existed reads as it would have on
+ * the day. Research drafts only.
+ */
+export async function rateRun(runId: string): Promise<{ run_id: string; decision: string }> {
+  return unwrap(
+    await fetch(researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}/rate`), {
+      method: 'POST',
+      headers: { ...getResearchAuthHeaders() },
+    }),
+  )
+}
+
 export async function approveAllRun(runId: string): Promise<ApproveAllResult> {
   return unwrap(
     await fetch(

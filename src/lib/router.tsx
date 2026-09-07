@@ -193,6 +193,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/loop/HarnessConsolePage')),
       },
       {
+        path: 'research/loop/objectives/:objectiveId',
+        lazy: lazyPage(() => import('@/pages/research/loop/ObjectivePage')),
+      },
+      {
         path: 'research/loop/runs/:runId',
         lazy: lazyPage(() => import('@/pages/research/loop/LoopRunPipelinePage')),
       },

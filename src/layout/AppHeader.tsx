@@ -76,7 +76,9 @@ interface AppHeaderProps {
 export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: AppHeaderProps) {
   const location = useLocation()
   const { mode, cycleMode } = useThemeMode()
-  const title = PAGE_TITLES[location.pathname] ?? 'Bifrost Trade'
+  const title =
+    PAGE_TITLES[location.pathname] ??
+    (location.pathname.startsWith('/research/loop/objectives/') ? 'Objective' : 'Bifrost Trade')
 
   return (
     <header

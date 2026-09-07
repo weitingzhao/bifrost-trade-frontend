@@ -1,4 +1,15 @@
-import { useCallback, useState } from 'react'
+/**
+ * Create an objective — then go and configure it.
+ *
+ * This dialog used to ask for max candidates, preset, flag filter and seed
+ * symbols in one modal, and that was the last time the policy had a form.
+ * Now it asks only what a new objective needs to exist: a name, what it is
+ * for, when it runs, which policy template to start from and who judges. The
+ * policy itself is configured on the objective's own page, where every knob
+ * has room to be explained.
+ */
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,34 +31,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createObjective, type ObjectiveCreateBody } from '@/api/research/harness'
+import { usePolicyTemplates } from '@/hooks/useLoopHarness'
+import { PERSONAS, SCHEDULES, objectivePath } from '@/lib/harness/objectivePolicy'
 
 const TEXTAREA_CLASS =
   'w-full text-dense-body min-h-[70px] resize-y rounded-md border border-input bg-background px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
-
-type Schedule = 'adhoc' | 'daily_open' | 'daily_eod' | 'weekly'
-
-const SCHEDULE_OPTIONS: { value: Schedule; label: string; hint: string }[] = [
-  { value: 'adhoc', label: 'Adhoc', hint: 'Manual runs only (Run button)' },
-  { value: 'daily_open', label: 'Daily @ open', hint: 'Cron before session (currently harness cron suspended)' },
-  { value: 'daily_eod', label: 'Daily @ EOD', hint: 'Cron after session (currently harness cron suspended)' },
-  { value: 'weekly', label: 'Weekly', hint: 'Weekly schedule (currently harness cron suspended)' },
-]
-
-type Preset = 'neutral' | 'momentum' | 'mean_revert' | 'adaptive_30d'
-
-const PRESET_OPTIONS: { value: Preset; label: string }[] = [
-  { value: 'neutral', label: 'Neutral' },
-  { value: 'momentum', label: 'Momentum' },
-  { value: 'mean_revert', label: 'Mean revert' },
-  { value: 'adaptive_30d', label: 'Adaptive 30d' },
-]
-
-function parseSymbols(input: string): string[] {
-  return input
-    .split(/[\s,]+/)
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean)
-}
 
 export interface NewObjectiveDialogProps {
   triggerLabel?: string
@@ -55,246 +43,161 @@ export interface NewObjectiveDialogProps {
 
 export function NewObjectiveDialog({ triggerLabel = 'New Objective' }: NewObjectiveDialogProps) {
   const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button type="button" size="sm" onClick={() => setOpen(true)} className="h-7 px-2 text-dense-meta">
+        <Plus className="mr-1 size-3" />
+        {triggerLabel}
+      </Button>
+      {/* Mounted only while open, so every opening starts blank. */}
+      {open ? <NewObjectiveForm onClose={() => setOpen(false)} /> : null}
+    </>
+  )
+}
+
+function NewObjectiveForm({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const templatesQ = usePolicyTemplates()
+  const templates = templatesQ.data?.items ?? []
+  const defaultTemplate = templates.find((t) => t.is_default)?.id ?? templates[0]?.id ?? ''
+
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [schedule, setSchedule] = useState<Schedule>('adhoc')
-  const [maxCandidates, setMaxCandidates] = useState<number>(3)
-  const [seedSymbols, setSeedSymbols] = useState('')
-  const [preset, setPreset] = useState<Preset>('neutral')
-  const [flagFilter, setFlagFilter] = useState('')
+  const [schedule, setSchedule] = useState('adhoc')
   const [persona, setPersona] = useState('loop_curator')
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-
-  const queryClient = useQueryClient()
-
-  const reset = useCallback(() => {
-    setTitle('')
-    setDescription('')
-    setSchedule('adhoc')
-    setMaxCandidates(3)
-    setSeedSymbols('')
-    setPreset('neutral')
-    setFlagFilter('')
-    setPersona('loop_curator')
-    setErrorMsg(null)
-  }, [])
+  const [templateId, setTemplateId] = useState<string | null>(null)
+  const chosenTemplate = templates.find((t) => t.id === (templateId ?? defaultTemplate)) ?? null
 
   const mutation = useMutation({
     mutationFn: (body: ObjectiveCreateBody) => createObjective(body),
-    onSuccess: () => {
+    onSuccess: (created) => {
       void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-      setOpen(false)
-      reset()
-    },
-    onError: (err) => {
-      setErrorMsg(err instanceof Error ? err.message : String(err))
+      void queryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+      onClose()
+      navigate(objectivePath(created.id))
     },
   })
-
   const submitting = mutation.isPending
   const canSubmit = title.trim().length > 0 && description.trim().length > 0 && !submitting
 
   const submit = () => {
-    setErrorMsg(null)
-    const parsedSymbols = parseSymbols(seedSymbols)
-    const filter = flagFilter.trim()
-    const body: ObjectiveCreateBody = {
+    mutation.mutate({
       title: title.trim(),
       description: description.trim(),
       schedule,
       persona,
-      policy_json: {
-        max_candidates: Math.max(1, Math.min(20, maxCandidates)),
-        seed_symbols: parsedSymbols,
-        source: 'harness',
-        preset,
-        ...(filter ? { flag_filter: filter } : {}),
-      },
-    }
-    mutation.mutate(body)
+      policy_json: { ...(chosenTemplate?.policy_json ?? {}), source: 'harness' },
+    })
   }
 
   return (
-    <>
-      <Button
-        type="button"
-        size="sm"
-        onClick={() => setOpen(true)}
-        className="h-7 px-2 text-dense-meta"
-      >
-        <Plus className="mr-1 size-3" />
-        {triggerLabel}
-      </Button>
+    <Dialog open onOpenChange={(next) => (submitting || next ? undefined : onClose())}>
+      <DialogContent className="sm:max-w-md" showCloseButton={!submitting}>
+        <DialogHeader>
+          <DialogTitle>New objective</DialogTitle>
+          <DialogDescription>
+            An objective is one standing hunt the autopilot runs. Name it, say what it is for, and
+            pick a policy to start from — you configure every knob on its page next. Advisory only,
+            D10 BLOCKED.
+          </DialogDescription>
+        </DialogHeader>
 
-      <Dialog open={open} onOpenChange={(next) => (submitting ? undefined : setOpen(next))}>
-        <DialogContent className="sm:max-w-md" showCloseButton={!submitting}>
-          <DialogHeader>
-            <DialogTitle>New Harness Objective</DialogTitle>
-            <DialogDescription>
-              Advisory only — D10 BLOCKED. Policy picks symbols; Personas evaluate them
-              (default Loop Curator). Auto-approve is research drafts only. Persona eval
-              defaults to heuristic — set{' '}
-              <span className="font-mono">BIFROST_PERSONA_EVAL_AGENTS=1</span> for LLM agents
-              (not a prod default). Cron schedules are configured but currently suspended in DEV.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3">
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label htmlFor="objective-title">Title</Label>
+            <Input
+              id="objective-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Morning IV Hot Watch"
+              autoFocus
+              disabled={submitting}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="objective-description">What it is for</Label>
+            <textarea
+              id="objective-description"
+              className={TEXTAREA_CLASS}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Every open — find SETUP/PIVOT names with SEPA ≥ 70 and an option-flag confirmation; propose up to 8."
+              rows={3}
+              disabled={submitting}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="objective-template">Start from policy</Label>
+            <Select
+              value={templateId ?? defaultTemplate}
+              onValueChange={setTemplateId}
+              disabled={submitting || templates.length === 0}
+            >
+              <SelectTrigger id="objective-template">
+                <SelectValue placeholder={templatesQ.isLoading ? 'Loading templates…' : 'No templates'} />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                    {t.is_default ? ' (default)' : ''} · {t.universe_mode}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-dense-caption text-muted-foreground">
+              {chosenTemplate?.description || 'Copied into the objective; edit it freely on the objective page.'}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label htmlFor="objective-title">Title</Label>
-              <Input
-                id="objective-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Morning IV Hot Watch"
-                autoFocus
-                disabled={submitting}
-              />
+              <Label htmlFor="objective-schedule">Schedule</Label>
+              <Select value={schedule} onValueChange={setSchedule} disabled={submitting}>
+                <SelectTrigger id="objective-schedule">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SCHEDULES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-
             <div className="space-y-1">
-              <Label htmlFor="objective-description">Description</Label>
-              <textarea
-                id="objective-description"
-                className={TEXTAREA_CLASS}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Every open — pick 3 candidates with iv_rank>=90 and vrp:hot, propose for approval."
-                rows={3}
-                disabled={submitting}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="objective-persona">Persona (how to judge)</Label>
-              <Select
-                value={persona}
-                onValueChange={setPersona}
-                disabled={submitting}
-              >
+              <Label htmlFor="objective-persona">Judged by</Label>
+              <Select value={persona} onValueChange={setPersona} disabled={submitting}>
                 <SelectTrigger id="objective-persona">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="loop_curator">Loop Curator (default)</SelectItem>
-                  <SelectItem value="curator">Curator</SelectItem>
-                  <SelectItem value="verdict">Verdict</SelectItem>
-                  <SelectItem value="discovery">Discovery</SelectItem>
+                  {PERSONAS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <p className="text-dense-caption text-muted-foreground">
-                Policy = what to pick. Persona = how Harness judges / curates after the funnel.
-              </p>
             </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label htmlFor="objective-schedule">Schedule</Label>
-                <Select
-                  value={schedule}
-                  onValueChange={(v) => setSchedule(v as Schedule)}
-                  disabled={submitting}
-                >
-                  <SelectTrigger id="objective-schedule">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SCHEDULE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-dense-caption text-muted-foreground">
-                  {SCHEDULE_OPTIONS.find((o) => o.value === schedule)?.hint}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="objective-max">Max candidates</Label>
-                <Input
-                  id="objective-max"
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={maxCandidates}
-                  onChange={(e) => setMaxCandidates(Number(e.target.value) || 1)}
-                  disabled={submitting}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label htmlFor="objective-preset">Scan preset</Label>
-                <Select
-                  value={preset}
-                  onValueChange={(v) => setPreset(v as Preset)}
-                  disabled={submitting}
-                >
-                  <SelectTrigger id="objective-preset">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRESET_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="objective-flag">Flag filter</Label>
-                <Input
-                  id="objective-flag"
-                  value={flagFilter}
-                  onChange={(e) => setFlagFilter(e.target.value)}
-                  placeholder="iv_rank:hot,vrp:hot"
-                  disabled={submitting}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="objective-symbols">Seed symbols (fallback)</Label>
-              <Input
-                id="objective-symbols"
-                value={seedSymbols}
-                onChange={(e) => setSeedSymbols(e.target.value)}
-                placeholder="AAPL, MSFT, TSLA"
-                disabled={submitting}
-              />
-              <p className="text-dense-caption text-muted-foreground">
-                Runtime reads scan first; falls back to these seeds when scan is empty. Advanced
-                policy fields (min_composite_score / min_hit_rate) go into policy_json via API.
-              </p>
-            </div>
-
-            {errorMsg ? (
-              <p className="text-dense-meta text-destructive" role="alert">
-                {errorMsg}
-              </p>
-            ) : null}
           </div>
+          {mutation.isError ? (
+            <p className="text-dense-label text-destructive">
+              {mutation.error instanceof Error ? mutation.error.message : String(mutation.error)}
+            </p>
+          ) : null}
+        </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={submitting}
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="button" disabled={!canSubmit} onClick={submit}>
-              {submitting ? 'Creating…' : 'Create Objective'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        <DialogFooter>
+          <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button type="button" size="sm" onClick={submit} disabled={!canSubmit}>
+            {submitting ? 'Creating…' : 'Create and configure'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

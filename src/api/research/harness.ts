@@ -419,6 +419,44 @@ export async function batchRunObjective(
 }
 
 /** Archive an objective (or bring it back). Runs and lineage are untouched. */
+/**
+ * Edit what an objective is called, says, and when it runs — in place.
+ *
+ * The policy is deliberately not here: it moves through a draft
+ * (`proposePolicyChange`) so the change carries a rationale and lands in the
+ * same ledger a model's suggestion would.
+ */
+export interface ObjectivePatchBody {
+  status?: 'active' | 'archived'
+  title?: string
+  description?: string
+  schedule?: string
+  persona?: string
+}
+
+export async function patchObjective(
+  objectiveId: string,
+  body: ObjectivePatchBody,
+): Promise<ResearchObjective> {
+  return unwrap<ResearchObjective>(
+    await fetch(researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}`), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
+      body: JSON.stringify(body),
+    }),
+  )
+}
+
+/** One objective, wherever it sits — the list endpoints are the only readers. */
+export async function fetchObjective(objectiveId: string): Promise<ResearchObjective | null> {
+  const [active, archived] = await Promise.all([
+    fetchObjectives({ status: 'active', limit: 200 }),
+    fetchObjectives({ status: 'archived', limit: 200 }),
+  ])
+  const rows = [...(active.items ?? []), ...(archived.items ?? [])]
+  return rows.find((o) => o.id === objectiveId) ?? null
+}
+
 export async function setObjectiveStatus(
   objectiveId: string,
   status: 'active' | 'archived',

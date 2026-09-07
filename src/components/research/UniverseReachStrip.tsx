@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
 import { useUniverseReach } from '@/hooks/useUniverseReach'
 import { fmtInt } from '@/lib/format'
@@ -10,8 +12,22 @@ import { fmtInt } from '@/lib/format'
  * by how many symbols were bought. Without this strip that gap is invisible: the
  * run says `scan`, and you have to query the warehouse to learn it means 28.
  */
+/**
+ * What each layer is, in the reader's terms. The strip's numbers are five
+ * different populations and read as one funnel; this says which population
+ * each one counts and why the last chip is the one that matters.
+ */
+const LAYER_MEANING: Record<string, string> = {
+  daily_bars: 'Every symbol with a priced daily bar in the warehouse — the widest set, bought or derived.',
+  financials: 'Symbols with fundamentals loaded; SEPA needs these to grade a name.',
+  sepa: 'Symbols the SEPA pipeline could grade today — the stock-first universe the loop screens.',
+  scan: 'Symbols in the option scan snapshot — bounded by how many names have option data, not by how many were bought.',
+  option_bars: 'Symbols with option bars ingested; the ceiling for any option-lens objective.',
+}
+
 export function UniverseReachStrip() {
   const { data, isLoading, isError } = useUniverseReach()
+  const [open, setOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -31,8 +47,18 @@ export function UniverseReachStrip() {
   const modes = data.universe_modes?.length ? data.universe_modes.join(' + ') : null
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border/60 bg-secondary/50 px-3 py-2">
-      <span className="text-dense-label font-medium">Universe reach</span>
+    <div className="rounded-md border border-border/60 bg-secondary/50 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 text-dense-label font-medium hover:underline"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        title="What these numbers count"
+      >
+        {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+        Universe reach
+      </button>
       {data.layers.map((layer, i) => (
         <span key={layer.key} className="flex items-center gap-2">
           {i > 0 ? <span className="text-muted-foreground/50">→</span> : null}
@@ -64,6 +90,32 @@ export function UniverseReachStrip() {
           reach not measured
         </DenseTag>
       )}
+    </div>
+    {open ? (
+      <div className="mt-2 grid gap-1.5 border-t border-border/40 pt-2 text-dense-label leading-relaxed text-muted-foreground md:grid-cols-2">
+        <p className="md:col-span-2">
+          Five populations, not one funnel. Each chip counts how many symbols a layer of the warehouse
+          covers today. The loop can only propose from what its objective's universe mode reads:
+          a stock-first objective screens the SEPA layer, an option-lens objective the scan snapshot.
+          {pct != null ? (
+            <>
+              {' '}
+              <span className="text-foreground">Loop sees {pct}%</span> is the loop's own universe as a share
+              of the widest priced layer{modes ? ` (${modes})` : ''}. A low figure means the objective's
+              instrument is thinly covered, not that the screen is strict.
+            </>
+          ) : null}
+        </p>
+        {data.layers.map((layer) => (
+          <p key={layer.key}>
+            <span className="text-foreground">{layer.label}</span>
+            {layer.symbols != null ? ` · ${fmtInt(layer.symbols)}` : ' · not measured'}
+            {LAYER_MEANING[layer.key] ? ` — ${LAYER_MEANING[layer.key]}` : ''}
+            {layer.status !== 'ok' ? ` (${layer.status})` : ''}
+          </p>
+        ))}
+      </div>
+    ) : null}
     </div>
   )
 }

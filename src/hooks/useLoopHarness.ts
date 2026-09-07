@@ -13,7 +13,12 @@ import {
   fetchObjectives,
   runObjective,
   fetchAutopilotStanding,
+  fetchObjective,
+  patchObjective,
+  proposePolicyChange,
+  type ObjectivePatchBody,
 } from '@/api/research/harness'
+import { approveResearchDraft } from '@/api/researchDrafts'
 import {
   createPolicyTemplate,
   deletePolicyTemplate,
@@ -38,6 +43,47 @@ export function useAwaitingRuns() {
     staleTime: 10_000,
     refetchInterval: 15_000,
     refetchOnWindowFocus: false,
+  })
+}
+
+export function useObjective(objectiveId: string | null) {
+  return useQuery({
+    queryKey: ['research', 'objective', objectiveId],
+    queryFn: () => fetchObjective(objectiveId!),
+    enabled: Boolean(objectiveId),
+  })
+}
+
+export function usePatchObjective() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { objectiveId: string; body: ObjectivePatchBody }) => patchObjective(v.objectiveId, v.body),
+    onSuccess: (_d, v) => {
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objective', v.objectiveId] })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+    },
+  })
+}
+
+/**
+ * Change an objective's policy the way the Owner does: propose a draft with a
+ * rationale, then approve it. One click for the Owner, and the ledger reads the
+ * same as when a model proposes.
+ */
+export function useChangePolicy() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (v: { objectiveId: string; suggestion: Record<string, unknown>; rationale: string }) => {
+      const { draft } = await proposePolicyChange(v.objectiveId, v.suggestion, v.rationale)
+      return approveResearchDraft(draft.id)
+    },
+    onSuccess: (_d, v) => {
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objective', v.objectiveId] })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+      void queryClient.invalidateQueries({ queryKey: ['research', 'drafts'] })
+    },
   })
 }
 

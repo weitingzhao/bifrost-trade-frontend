@@ -6,12 +6,14 @@
  * ratchet, and because this row is the unit the Autopilot page is made of.
  * Single user, so it stays beside the page (module-placement-v1).
  */
+import { Link } from 'react-router-dom'
 import { Archive, ArchiveRestore, Play, Trash2 } from 'lucide-react'
 import { DenseTag, IconActionButton } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { fmtIsoTs } from '@/lib/format'
 import { groupSpend, fmtUsd } from '@/lib/harness/runSpend'
 import { stars } from '@/lib/harness/rating'
+import { objectivePath } from '@/lib/harness/objectivePolicy'
 import type { RunGroup } from '@/lib/harness/harnessTrace'
 import type { AutopilotObjective, ResearchObjective } from '@/api/research/harness'
 import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
@@ -69,7 +71,11 @@ export function ObjectiveRows({
           dense tokens; this page is the other posture. */}
       <div className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1.6fr)_auto]">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold leading-snug">{row.title}</h3>
+          <h3 className="text-base font-semibold leading-snug">
+            <Link to={objectivePath(row.id)} className="hover:underline" title="Open the objective — configure and manage it">
+              {row.title}
+            </Link>
+          </h3>
           <p className="mt-0.5 text-dense-label leading-relaxed text-muted-foreground">
             {brief?.hunts || row.description}
           </p>

@@ -95,6 +95,7 @@ describe('editable fields', () => {
       'max_candidates',
       'min_composite_score',
       'min_hit_rate',
+      'min_source_hit_rate',
       'option_overlay',
       'preset',
       'require_validate_pass',

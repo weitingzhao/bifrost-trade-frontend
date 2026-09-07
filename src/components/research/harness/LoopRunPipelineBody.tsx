@@ -116,7 +116,7 @@ export function LoopRunPipelineBody({
     const outputs = run?.outputs ?? null
     if (!outputs) return null
     const approveAll = outputs.approve_all as
-      | { count?: number; held_count?: number; skipped_batch?: boolean }
+      | { count?: number; held_count?: number; skipped_batch?: boolean; accepted?: string[]; held_symbols?: { symbol?: string }[] }
       | undefined
     const approveSkipped = outputs.approve_skipped === true
     const trust = outputs.trust as { reason?: string } | undefined
@@ -364,7 +364,7 @@ function DecisionStage({
   terminalLabel: string | null
   draftCount: number
   batchMeta: {
-    approveAll?: { count?: number; held_count?: number; skipped_batch?: boolean }
+    approveAll?: { count?: number; held_count?: number; skipped_batch?: boolean; accepted?: string[]; held_symbols?: { symbol?: string }[] }
     approveSkipped: boolean
     trustReason: string | null
   } | null
@@ -390,8 +390,11 @@ function DecisionStage({
               </DenseTag>
             ) : (
               <DenseTag variant="success" size="cell">
-                Auto-approved {batchMeta.approveAll?.count ?? 0} · held{' '}
-                {batchMeta.approveAll?.held_count ?? 0}
+                {Array.isArray(batchMeta.approveAll?.accepted) || Array.isArray(batchMeta.approveAll?.held_symbols)
+                  ? `Leash accepted ${(batchMeta.approveAll?.accepted ?? []).join(', ') || 'none'} · held ${
+                      (batchMeta.approveAll?.held_symbols ?? []).map((h) => h.symbol ?? '?').join(', ') || 'none'
+                    }`
+                  : `Auto-approved ${batchMeta.approveAll?.count ?? 0} · held ${batchMeta.approveAll?.held_count ?? 0}`}
               </DenseTag>
             )}
           </div>

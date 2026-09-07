@@ -5,6 +5,7 @@ import {
   LOOP_KINDS,
   POLICY_FIELD_HELP,
   POLICY_SUGGESTION_KEYS,
+  batchLeash,
   candidateBatchDataSource,
   candidateBatchItems,
   computePolicySuggestionRows,
@@ -559,6 +560,7 @@ describe('policy diff covers every field approval writes', () => {
       'max_candidates',
       'min_composite_score',
       'min_hit_rate',
+      'min_source_hit_rate',
       'option_overlay',
       'preset',
       'require_validate_pass',
@@ -572,5 +574,18 @@ describe('policy diff covers every field approval writes', () => {
     for (const k of POLICY_SUGGESTION_KEYS) {
       expect(POLICY_FIELD_HELP[k], k).toBeTruthy()
     }
+  })
+
+  it('reads what the leash accepted and held on a batch (D3)', () => {
+    expect(batchLeash({})).toBeNull()
+    const leash = batchLeash({
+      leash: { min_source_hit_rate: 0.45, accepted: [{ id: 'c1', symbol: 'WT' }], held: [{ id: 'c2', symbol: 'RKLB', reasons: ['judges did not agree (dissent)'] }], decided_by: 'system:loop_batch' },
+    })
+    expect(leash).toEqual({
+      min_source_hit_rate: 0.45,
+      accepted: [{ id: 'c1', symbol: 'WT' }],
+      held: [{ id: 'c2', symbol: 'RKLB', reasons: ['judges did not agree (dissent)'] }],
+      decided_by: 'system:loop_batch',
+    })
   })
 })

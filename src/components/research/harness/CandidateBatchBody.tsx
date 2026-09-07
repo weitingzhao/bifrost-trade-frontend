@@ -27,6 +27,7 @@ import {
   type CandidateAgreement,
 } from '@/lib/harness/harnessDraftHelpers'
 import { openCandidateInCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { batchLeash } from '@/lib/harness/harnessDraftHelpers'
 import { IconActionButton } from '@/components/data-display'
 
 /** Above this a decision card turns into a spreadsheet; batches are policy-capped at 50. */
@@ -77,6 +78,10 @@ export function CandidateBatchBody({
   // D1: the run this batch came from — the Copilot answers from its record.
   const runId = typeof payload.run_id === 'string' ? payload.run_id : ''
   const objectiveTitle = typeof payload.title === 'string' ? payload.title : null
+  // D3: the leash's verdict on this batch — accepted names became hypotheses on their own.
+  const leash = batchLeash(payload)
+  const acceptedIds = new Set(leash?.accepted.map((a) => a.id) ?? [])
+  const heldById = new Map(leash?.held.map((h) => [h.id, h.reasons]) ?? [])
 
   return (
     <div className="space-y-2">
@@ -110,6 +115,16 @@ export function CandidateBatchBody({
 
       {desc ? (
         <p className="max-w-prose text-foreground/80">{desc}</p>
+      ) : null}
+
+      {leash ? (
+        <p className="text-dense-micro text-muted-foreground" data-testid="batch-leash">
+          Leash: {leash.accepted.length} accepted on its own
+          {leash.accepted.length > 0 ? ` (${leash.accepted.map((a) => a.symbol).join(', ')})` : ''} ·{' '}
+          {leash.held.length} held for you
+          {leash.min_source_hit_rate != null ? ` · source hit-rate floor ${Math.round(leash.min_source_hit_rate * 100)}%` : ''}
+          . Approve promotes only the held names.
+        </p>
       ) : null}
 
       {judges.length > 0 ? (
@@ -251,6 +266,15 @@ export function CandidateBatchBody({
                       {item.blocked_by_validate ? (
                         <DenseTag variant="danger" size="cell" className="ml-1">
                           blocked
+                        </DenseTag>
+                      ) : null}
+                      {acceptedIds.has(item.id) ? (
+                        <DenseTag variant="success" size="cell" className="ml-1" title="The leash accepted this name; it is a hypothesis now">
+                          accepted
+                        </DenseTag>
+                      ) : heldById.has(item.id) ? (
+                        <DenseTag variant="warning" size="cell" className="ml-1" title={(heldById.get(item.id) ?? []).join(' · ')}>
+                          held
                         </DenseTag>
                       ) : null}
                     </DenseTableCell>

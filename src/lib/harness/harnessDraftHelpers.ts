@@ -30,6 +30,7 @@ export const POLICY_SUGGESTION_KEYS = [
   'require_validate_pass',
   'discovery_assist',
   'resolution',
+  'min_source_hit_rate',
 ] as const
 
 export type PolicyKey = (typeof POLICY_SUGGESTION_KEYS)[number]
@@ -64,6 +65,8 @@ export const POLICY_FIELD_HELP: Record<PolicyKey, string> = {
     'Playbook-driven boost/veto at the funnel exit. Reorders and can veto; disabled by default.',
   resolution:
     'Outcome rule that settles candidate-born hypotheses without a click: at horizon_days sessions, excess return over the benchmark ≥ validate_excess validates, ≤ reject_excess rejects, in between drafts for you. Defaults 20 sessions, ±3% vs SPY.',
+  min_source_hit_rate:
+    'The leash: an unattended run accepts a candidate on its own only when the judges agree, validate did not block, the evidence is measured, and the source\'s settled hit rate (longest judged horizon, ≥ 5 outcomes) clears this floor. Default 0.45.',
 }
 
 export interface PolicyDiffRow {
@@ -524,3 +527,30 @@ function _newestFirst(a: AiDraft, b: AiDraft): number {
   // Unparsable or tied timestamps must still order deterministically.
   return a.id < b.id ? 1 : a.id > b.id ? -1 : 0
 }
+
+/** What the leash decided on a batch (D3): who it accepted on its own, who it held and why. */
+export interface BatchLeash {
+  min_source_hit_rate: number | null
+  accepted: { id: string; symbol: string }[]
+  held: { id: string; symbol: string; reasons: string[] }[]
+  decided_by: string | null
+}
+
+export function batchLeash(payload: Record<string, unknown>): BatchLeash | null {
+  const raw = payload.leash
+  if (!raw || typeof raw !== 'object') return null
+  const rec = raw as Record<string, unknown>
+  const rows = (v: unknown) =>
+    Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === 'object') : []
+  return {
+    min_source_hit_rate: typeof rec.min_source_hit_rate === 'number' ? rec.min_source_hit_rate : null,
+    accepted: rows(rec.accepted).map((a) => ({ id: String(a.id ?? ''), symbol: String(a.symbol ?? '') })),
+    held: rows(rec.held).map((h) => ({
+      id: String(h.id ?? ''),
+      symbol: String(h.symbol ?? ''),
+      reasons: Array.isArray(h.reasons) ? h.reasons.filter((r): r is string => typeof r === 'string') : [],
+    })),
+    decided_by: typeof rec.decided_by === 'string' ? rec.decided_by : null,
+  }
+}
+

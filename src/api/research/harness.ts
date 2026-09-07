@@ -115,6 +115,8 @@ export interface LoopPolicyV2 {
   flag_filter?: string | string[] | null
   min_composite_score?: number | null
   min_hit_rate?: number | null
+  /** D3 — the leash's source hit-rate floor for an unattended accept (default 0.45). */
+  min_source_hit_rate?: number | null
   max_candidates?: number
   seed_symbols?: string[]
   use_llm_plan?: boolean

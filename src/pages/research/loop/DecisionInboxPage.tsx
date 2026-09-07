@@ -52,10 +52,10 @@ const KIND_OPTIONS: { value: KindFilter; label: string }[] = [
  * without looking, which is how a real decision gets waved through.
  */
 export default function DecisionInboxPage() {
-  // Opens on what needs a call — unless today's digest is waiting (D2): then it
-  // opens on the digest, with the candidate batches one click away beneath it.
-  // Briefings keep their own count, so nothing is hidden — it just stops
-  // competing for the same attention.
+  // Opens on what needs a call (D3: the leash accepts the rest on its own, so
+  // what is left here is a real decision). Today's digest is one click away —
+  // a strip above the list says it is there. Briefings keep their own count,
+  // so nothing is hidden.
   const [chosenFilter, setChosenFilter] = useState<KindFilter | null>(null)
 
   const apiKind =
@@ -71,8 +71,8 @@ export default function DecisionInboxPage() {
   const approve = useApproveDraft()
   const dismiss = useDismissDraft()
 
-  const digestPending = (query.data?.rows ?? []).some(isDailyDigest)
-  const kindFilter: KindFilter = chosenFilter ?? (digestPending ? 'briefings' : 'decisions')
+  const digest = (query.data?.rows ?? []).find(isDailyDigest)
+  const kindFilter: KindFilter = chosenFilter ?? 'decisions'
   const setKindFilter = setChosenFilter
 
   const rows = useMemo(() => {
@@ -134,6 +134,22 @@ export default function DecisionInboxPage() {
           {counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}
         </span>
       </div>
+
+      {digest && kindFilter !== 'briefings' ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-500/35 bg-sky-500/[0.05] px-3 py-1.5 text-dense-meta">
+          <span className="font-medium">
+            {typeof digest.payload.title === 'string' ? digest.payload.title : 'Daily digest'}
+          </span>
+          <span className="text-muted-foreground">is waiting under Briefings.</span>
+          <button
+            type="button"
+            className="ml-auto text-dense-meta text-primary underline"
+            onClick={() => setKindFilter('briefings')}
+          >
+            Read it
+          </button>
+        </div>
+      ) : null}
 
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
       {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}

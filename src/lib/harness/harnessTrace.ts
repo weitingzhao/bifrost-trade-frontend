@@ -280,6 +280,8 @@ export interface TriageRank {
   symbol: string
   worth: number
   why: string
+  /** The same sentence in Chinese, when the model wrote one. */
+  why_zh: string | null
   /** True when this candidate went on to the judges. */
   deep: boolean
 }
@@ -314,6 +316,7 @@ export function traceTriage(trace: HarnessTrace): TriageView | null {
       symbol: String(r.symbol ?? '—'),
       worth: numberOrNull(r.worth) ?? 0,
       why: String(r.why ?? ''),
+      why_zh: typeof r.why_zh === 'string' ? r.why_zh : null,
       deep: deepSet.size === 0 || deepSet.has(String(r.symbol ?? '')),
     }))
   return {

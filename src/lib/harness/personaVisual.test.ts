@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { agentView, splitNumerics, stanceScore, stanceView } from './personaVisual'
+import { agentView, reasonFor, splitNumerics, stanceScore, stanceView } from './personaVisual'
 import { candidateMarkdown, personaStageMarkdown } from './personaExport'
 import type { PersonaRow } from '@/components/research/harness/HarnessPipelineStepper'
 
@@ -31,6 +31,28 @@ describe('stance as a position, not a word', () => {
     expect(agentView('portfolio').icon).toBe('briefcase')
     expect(agentView('nonsense')).toMatchObject({ label: 'nonsense', icon: 'dot' })
     expect(agentView(undefined).label).toBe('—')
+  })
+})
+
+describe('the sentence in the reader’s language', () => {
+  it('prefers the Chinese the judge wrote, and says when it fell back', () => {
+    const both = { summary: 'IV rank 19 is cold', summary_zh: 'IV rank 19 偏冷' }
+    expect(reasonFor(both, 'zh')).toEqual({ text: 'IV rank 19 偏冷', translated: true })
+    expect(reasonFor(both, 'en')).toEqual({ text: 'IV rank 19 is cold', translated: false })
+  })
+
+  it('falls back to English rather than showing a gap, and admits it did', () => {
+    // Heuristic rows and every run made before the judges were asked for
+    // Chinese have no zh field. Silently showing English while the reader has
+    // chosen Chinese is fine; pretending it is the translation is not.
+    const enOnly = { summary: 'no Chinese here' }
+    expect(reasonFor(enOnly, 'zh')).toEqual({ text: 'no Chinese here', translated: false })
+    expect(reasonFor({ summary: 'x', summary_zh: '   ' }, 'zh').translated).toBe(false)
+  })
+
+  it('reads the triage field names too', () => {
+    expect(reasonFor({ why: 'thin evidence', why_zh: '证据薄弱' }, 'zh').text).toBe('证据薄弱')
+    expect(reasonFor({}, 'zh')).toEqual({ text: '', translated: false })
   })
 })
 
@@ -69,8 +91,8 @@ const row: PersonaRow = {
     { model: 'gpt-4o-mini', net: 'support', validate: 'abstain', ok: true, fallback: false, elapsed_ms: 1, cost_usd: 0.01, error: null },
   ],
   verdicts: [
-    { agent: 'analyze', source: 'agent', stance: 'caution', confidence: null, summary: 'IV rank 19 (cold) | negative VRP', model: 'deepseek-chat' },
-    { agent: 'portfolio', source: 'agent', stance: 'oppose', confidence: 0.6, summary: 'Already the largest position', model: 'deepseek-chat' },
+    { agent: 'analyze', source: 'agent', stance: 'caution', confidence: null, summary: 'IV rank 19 (cold) | negative VRP', summary_zh: 'IV rank 19 偏冷 | VRP 为负', model: 'deepseek-chat' },
+    { agent: 'portfolio', source: 'agent', stance: 'oppose', confidence: 0.6, summary: 'Already the largest position', summary_zh: null, model: 'deepseek-chat' },
   ],
 }
 
@@ -89,10 +111,13 @@ describe('taking the judgement somewhere else', () => {
     expect(md).toContain('- Net stance: **caution**')
     expect(md).toContain('- Judges: **dissent**')
     expect(md).toContain('- gpt-4o-mini: support / validate abstain')
-    expect(md).toContain('| Judge | Asked | Stance | Confidence | Reasoning |')
-    expect(md).toContain('| deepseek-chat | portfolio | oppose | 0.60 |')
+    expect(md).toContain('| Judge | Asked | Stance | Confidence | Reasoning | 中文 |')
+    // One judge wrote Chinese and one did not; the column appears once and the
+    // row that has none says so rather than trailing an empty cell.
+    expect(md).toContain('| deepseek-chat | portfolio | oppose | 0.60 | Already the largest position | — |')
     // A pipe inside the prose would break the table wherever it is pasted.
     expect(md).toContain('IV rank 19 (cold) \\| negative VRP')
+    expect(md).toContain('IV rank 19 偏冷 \\| VRP 为负')
   })
 
   it('heads the export with enough context to be readable on its own', () => {
@@ -101,6 +126,13 @@ describe('taking the judgement somewhere else', () => {
     expect(md).toContain('- Run: `run_1a07c0fe66e48109e`')
     expect(md).toContain('- Funnel: 3,475 considered → 8 proposed')
     expect(md).toContain('## NVDA')
+  })
+
+  it('omits the Chinese column when no judge wrote one', () => {
+    const enOnly = { ...row, verdicts: row.verdicts.map((v) => ({ ...v, summary_zh: null })) }
+    const md = candidateMarkdown(enOnly)
+    expect(md).toContain('| Judge | Asked | Stance | Confidence | Reasoning |')
+    expect(md).not.toContain('中文')
   })
 
   it('says so plainly when there is nothing to export', () => {

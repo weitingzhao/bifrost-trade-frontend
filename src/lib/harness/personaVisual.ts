@@ -189,3 +189,24 @@ export function splitNumerics(text: string): { text: string; numeric: boolean }[
   if (last < src.length) out.push({ text: src.slice(last), numeric: false })
   return out.filter((p) => p.text !== '')
 }
+
+
+/**
+ * The judge's sentence in the reader's language, or the truth about why not.
+ *
+ * The judges are asked for both languages in the same call, which costs a few
+ * percent because the bill is input tokens and this is output. But a run made
+ * before that ask, a heuristic row, and a judge that skipped the field all
+ * leave the Chinese absent — so this reports whether what it returned is the
+ * translation or the original, and the caller says so rather than letting a
+ * reader assume they are looking at Chinese when they are not.
+ */
+export function reasonFor(
+  row: { summary?: string | null; summary_zh?: string | null; why?: string | null; why_zh?: string | null },
+  lang: 'zh' | 'en',
+): { text: string; translated: boolean } {
+  const en = String(row.summary ?? row.why ?? '')
+  const zh = String(row.summary_zh ?? row.why_zh ?? '').trim()
+  if (lang === 'zh' && zh) return { text: zh, translated: true }
+  return { text: en, translated: false }
+}

@@ -79,7 +79,7 @@ export function LoopRunPipelineBody({
   live?: boolean
   onClose?: () => void
 }) {
-  const [lang] = useCopilotPromptLang()
+  const [lang, setLang] = useCopilotPromptLang()
   const runQ = useObjectiveRun(runId, { live })
   const curate = useCurateRun()
   const approve = useApproveAllRun()
@@ -182,6 +182,19 @@ export function LoopRunPipelineBody({
                 <MessageCircle className="mr-0.5 size-3" />
                 {loopCopilotUi.discussShort(lang)}
               </Button>
+              {/* The judges write both languages in the same call, so this
+                  switches what is already there rather than asking for a
+                  translation. Shared with the Copilot's prompt language: one
+                  preference for the Research surface, not two that disagree. */}
+              <SegmentControl
+                value={lang}
+                options={[
+                  { value: 'zh', label: '中', title: '判词显示中文（判官同一次调用写的，不是事后翻译）' },
+                  { value: 'en', label: 'EN', title: 'Show the judges’ reasoning in English' },
+                ]}
+                onChange={(v) => setLang(v as typeof lang)}
+                ariaLabel="Reasoning language"
+              />
               {/* The reader decides how much of the screen a paragraph of
                   reasoning deserves, and the choice is remembered. */}
               <SegmentControl

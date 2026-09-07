@@ -20,16 +20,27 @@ export interface ExportContext {
   proposed: number | null
 }
 
+/** Pipes inside the prose would break the table for whoever receives it. */
+function cell(text: string | null | undefined): string {
+  return String(text ?? '').replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim()
+}
+
 function verdictLines(verdicts: PersonaVerdict[]): string[] {
   if (verdicts.length === 0) return ['_No per-persona verdicts recorded._']
-  const lines = ['| Judge | Asked | Stance | Confidence | Reasoning |', '|---|---|---|---|---|']
+  // The Chinese column appears only when a judge actually wrote one. An empty
+  // column on every row of an English-only run would read as missing data
+  // rather than as a field that was never asked for.
+  const bilingual = verdicts.some((v) => (v.summary_zh ?? '').trim())
+  const head = ['Judge', 'Asked', 'Stance', 'Confidence', 'Reasoning']
+  if (bilingual) head.push('中文')
+  const lines = [`| ${head.join(' | ')} |`, `|${head.map(() => '---').join('|')}|`]
   for (const v of verdicts) {
     const model = v.model ?? 'heuristic'
     const flag = v.source === 'heuristic_fallback' ? ' (fell back)' : ''
     const conf = v.confidence == null ? '—' : v.confidence.toFixed(2)
-    // Pipes inside the prose would break the table for whoever receives it.
-    const summary = v.summary.replace(/\|/g, '\\|').replace(/\n+/g, ' ').trim()
-    lines.push(`| ${model}${flag} | ${v.agent} | ${v.stance} | ${conf} | ${summary} |`)
+    const row = [`${model}${flag}`, v.agent, v.stance, conf, cell(v.summary)]
+    if (bilingual) row.push(cell(v.summary_zh) || '—')
+    lines.push(`| ${row.join(' | ')} |`)
   }
   return lines
 }

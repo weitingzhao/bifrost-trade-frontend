@@ -21,7 +21,8 @@ import {
   TriangleAlert,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { agentView, splitNumerics, stanceScore, stanceView } from '@/lib/harness/personaVisual'
+import { agentView, reasonFor, splitNumerics, stanceScore, stanceView } from '@/lib/harness/personaVisual'
+import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { candidateMarkdown, copyText } from '@/lib/harness/personaExport'
 import type { PersonaRow, PersonaVerdict } from '@/components/research/harness/HarnessPipelineStepper'
 import type { TriageView } from '@/lib/harness/harnessTrace'
@@ -111,6 +112,8 @@ export function ReasonText({ text }: { text: string }) {
 }
 
 export function VerdictList({ verdicts }: { verdicts: PersonaVerdict[] }) {
+  const [lang] = useCopilotPromptLang()
+  const reason = (v: PersonaVerdict) => reasonFor(v, lang)
   if (verdicts.length === 0) {
     return (
       <p className="text-dense-caption text-muted-foreground">
@@ -146,7 +149,15 @@ export function VerdictList({ verdicts }: { verdicts: PersonaVerdict[] }) {
               {v.confidence == null ? '—' : v.confidence.toFixed(2)}
             </span>
             <span className="min-w-0 flex-1 text-muted-foreground">
-              <ReasonText text={v.summary} />
+              <ReasonText text={reason(v).text} />
+              {lang === 'zh' && !reason(v).translated ? (
+                <span
+                  className="ml-1 text-dense-micro text-muted-foreground/60"
+                  title="This judge did not write a Chinese sentence — heuristic rows and runs made before the judges were asked for one have English only."
+                >
+                  EN
+                </span>
+              ) : null}
             </span>
           </li>
         )
@@ -192,6 +203,7 @@ export function CopyCandidates({ rows }: { rows: PersonaRow[] }) {
  * are dimmed and say so in words rather than only in colour.
  */
 export function TriageFold({ triage }: { triage: TriageView | null }) {
+  const [lang] = useCopilotPromptLang()
   if (!triage) {
     return (
       <p className="text-dense-meta text-muted-foreground">
@@ -267,7 +279,7 @@ export function TriageFold({ triage }: { triage: TriageView | null }) {
               )}
             </span>
             <span className="min-w-0 flex-1 text-muted-foreground">
-              <ReasonText text={r.why} />
+              <ReasonText text={reasonFor(r, lang).text} />
             </span>
           </li>
         ))}

@@ -245,6 +245,8 @@ export interface PersonaVerdict {
   stance: string
   confidence: number | null
   summary: string
+  /** The same sentence in Chinese, when the judge wrote one. */
+  summary_zh: string | null
   /** The judge that wrote the row (B2); null on heuristic rows. */
   model: string | null
 }
@@ -300,6 +302,9 @@ export function personaRows(trace: HarnessTrace): PersonaRow[] {
         stance: String(v.stance ?? '—'),
         confidence: typeof v.confidence === 'number' ? v.confidence : null,
         summary: String(v.summary ?? ''),
+        // Written by the same judge call as the English. Absent on heuristic
+        // rows and on every run made before the judges were asked for it.
+        summary_zh: typeof v.summary_zh === 'string' ? v.summary_zh : null,
         model: typeof v.model === 'string' ? v.model : null,
       }),
     ),

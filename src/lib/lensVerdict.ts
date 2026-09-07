@@ -141,7 +141,16 @@ export function trackRecordLine(tr: ExhibitTrackRecord | null | undefined, band:
   const s = tr.by_side[side]
   const scope = tr.symbol_scoped ? 'this symbol' : 'all symbols'
   if (s.n === 0) return `${side} side: no triggers in ${tr.window_days}d (${scope})`
-  return `${side} side hit 5d ${pctText(s.hit_rate_5d)} · 20d ${pctText(s.hit_rate_20d)} (n=${s.n}, ${scope}, ${tr.window_days}d)`
+  // Each rate carries its own denominator. `n` is every trigger in the window; the
+  // rates are computed over the triggers whose forward window has closed, and the
+  // 20-session one cannot have closed for the last ~20 trading days. Printing one `n`
+  // beside both overstated the 20d sample every time.
+  const pending = s.n - s.evaluated_20d
+  const tail = pending > 0 ? `, ${pending} pending` : ''
+  return (
+    `${side} side hit 5d ${pctText(s.hit_rate_5d)} (n=${s.evaluated_5d}) · ` +
+    `20d ${pctText(s.hit_rate_20d)} (n=${s.evaluated_20d}) — ${s.n} triggers${tail}, ${scope}, ${tr.window_days}d`
+  )
 }
 
 /** "similar readings: median +2.6% over 5d, 60% positive (n=5)" — or null. */

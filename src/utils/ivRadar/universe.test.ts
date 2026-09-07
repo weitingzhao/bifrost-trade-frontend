@@ -62,13 +62,17 @@ describe('assembleUniverse', () => {
 })
 
 describe('bucketByIvRank', () => {
-  it('matches High >60 / Neutral 30–60 / Low <30', () => {
-    expect(bucketByIvRank(60.1)).toBe('high')
+  it('follows the lens registry: High = hot (>= 80), Low = cold (<= 20)', () => {
+    // These were >60 / <30 — thresholds the registry retired. A rank of 65 was tagged
+    // red "High" on the same screen where the registry-driven verdict strip called it
+    // "leaning rich", and its hit-rate column then showed the >= 80 side's record.
     expect(bucketByIvRank(100)).toBe('high')
-    expect(bucketByIvRank(60)).toBe('neutral')
-    expect(bucketByIvRank(30)).toBe('neutral')
+    expect(bucketByIvRank(80)).toBe('high')
+    expect(bucketByIvRank(79.9)).toBe('neutral')
+    expect(bucketByIvRank(65)).toBe('neutral')
     expect(bucketByIvRank(45)).toBe('neutral')
-    expect(bucketByIvRank(29.9)).toBe('low')
+    expect(bucketByIvRank(25)).toBe('neutral')
+    expect(bucketByIvRank(20)).toBe('low')
     expect(bucketByIvRank(0)).toBe('low')
   })
 

@@ -62,8 +62,15 @@ describe('evidence lines', () => {
         cold: { n: 14, evaluated_5d: 12, hit_rate_5d: 0.4167, evaluated_20d: 10, hit_rate_20d: 0.6 },
       },
     }
-    expect(trackRecordLine(tr, 'cold')).toBe('cold side hit 5d 42% · 20d 60% (n=14, all symbols, 90d)')
-    expect(trackRecordLine(tr, 'hot')).toBe('hot side hit 5d 67% · 20d — (n=6, all symbols, 90d)')
+    // Each rate carries the count it was computed over. The old line printed the
+    // trigger count beside both, so the cold side read "(n=14)" next to a 20d rate
+    // computed over 10 — and the hot side's "20d —" over 0 looked like a sample of 6.
+    expect(trackRecordLine(tr, 'cold')).toBe(
+      'cold side hit 5d 42% (n=12) · 20d 60% (n=10) — 14 triggers, 4 pending, all symbols, 90d',
+    )
+    expect(trackRecordLine(tr, 'hot')).toBe(
+      'hot side hit 5d 67% (n=6) · 20d — (n=0) — 6 triggers, 6 pending, all symbols, 90d',
+    )
     expect(trackRecordLine({ ...tr, n: 0 }, 'hot')).toBeNull()
     const hotEmpty = { ...tr, by_side: { ...tr.by_side, hot: { n: 0, evaluated_5d: 0, hit_rate_5d: null, evaluated_20d: 0, hit_rate_20d: null } } }
     expect(trackRecordLine(hotEmpty, 'neutral')).toBe('hot side: no triggers in 90d (all symbols)')

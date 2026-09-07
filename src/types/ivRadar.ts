@@ -4,7 +4,7 @@ export type IvRadarUniverseFilter = 'all' | 'benchmarks' | 'watchlist' | 'holdin
 
 export type IvRadarSource = 'benchmark' | 'watchlist' | 'holdings'
 
-/** Bucket by IV Rank: High >60 / Neutral 30–60 / Low <30. */
+/** Bucket by IV Rank on the registry bands: High = hot (>= 80) / Low = cold (<= 20) / Neutral otherwise. */
 export type IvRadarBucket = 'high' | 'neutral' | 'low' | 'no_data'
 
 export interface IvPercentileRow {

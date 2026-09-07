@@ -1,3 +1,4 @@
+import { bandFromScore } from '@/lib/analyzeDepth'
 import type {
   IvRadarBucket,
   IvRadarSource,
@@ -9,9 +10,9 @@ import type {
 export const DEFAULT_IV_RADAR_BENCHMARKS = ['SPY', 'QQQ', 'IWM'] as const
 
 export const IV_RADAR_BUCKET_HINTS: Record<Exclude<IvRadarBucket, 'no_data'>, string> = {
-  high: 'IV Rank > 60 — elevated vs 1y range',
-  neutral: 'IV Rank 30–60 — mid-range regime',
-  low: 'IV Rank < 30 — cheap vs 1y range',
+  high: 'IV Rank ≥ 80 — elevated vs 1y range, and the side that triggers',
+  neutral: 'IV Rank 20–80 — no trigger on either side',
+  low: 'IV Rank ≤ 20 — cheap vs 1y range, and the side that triggers',
 }
 
 function normSym(s: string): string {
@@ -73,13 +74,19 @@ export function assembleUniverse(opts: {
 }
 
 /**
- * Primary regime buckets from IV Rank (not Percentile).
- * High >60 · Neutral 30–60 · Low <30 · missing → no_data.
+ * Primary regime buckets from IV Rank (not Percentile), on the registry's bands.
+ *
+ * These were >60 / <30 — thresholds the lens registry retired, and the exact
+ * inconsistency this program was opened to remove. A rank of 65 was tagged red
+ * "High" on the same screen where the registry-driven verdict strip called it
+ * "leaning rich", and the row's hit-rate column then showed the >= 80 side's record.
+ * High is now the hot band and Low the cold band, the only two that trigger.
  */
 export function bucketByIvRank(rank: number | null | undefined): IvRadarBucket {
-  if (rank == null || !Number.isFinite(rank)) return 'no_data'
-  if (rank > 60) return 'high'
-  if (rank < 30) return 'low'
+  const band = bandFromScore(rank ?? null)
+  if (band === null) return 'no_data'
+  if (band === 'hot') return 'high'
+  if (band === 'cold') return 'low'
   return 'neutral'
 }
 

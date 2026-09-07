@@ -225,16 +225,23 @@ export interface LensHitSide {
 
 export type LensHitBySymbol = Record<string, Partial<Record<'hot' | 'cold', LensHitSide>>>
 
-/** Which side of the lens an IV Radar bucket sits on; neutral has no record to show. */
-export function sideForBucket(bucket: string): 'hot' | 'cold' | null {
-  if (bucket === 'high') return 'hot'
-  if (bucket === 'low') return 'cold'
+/**
+ * Which side of the lens a reading sits on — and only the sides that trigger.
+ *
+ * signal_hit writes a row when the reading is hot (>= 80) or cold (<= 20); nothing
+ * else triggers. Taking the side from the coarse High/Low bucket meant a rank of 65
+ * was shown the >= 80 side's settled record, under a header claiming it was the
+ * record of the side this row sits on.
+ */
+export function sideForBand(band: LensBand | null | undefined): 'hot' | 'cold' | null {
+  if (band === 'hot') return 'hot'
+  if (band === 'cold') return 'cold'
   return null
 }
 
-/** "62% / 43% (n=22)" for the row's side, "—" when nothing settled. */
-export function hitCellText(records: LensHitBySymbol | undefined, symbol: string, bucket: string): string {
-  const side = sideForBucket(bucket)
+/** "62% / 43% (n=22)" for the row's side, "—" when the reading never triggers or nothing settled. */
+export function hitCellText(records: LensHitBySymbol | undefined, symbol: string, band: LensBand | null | undefined): string {
+  const side = sideForBand(band)
   if (!side) return '—'
   const rec = records?.[symbol.toUpperCase()]?.[side]
   if (!rec || rec.n === 0) return '—'
@@ -267,11 +274,17 @@ export function calibrationLine(rows: readonly CalibrationRow[] | undefined, reg
   return `Paths in ${row.regime} regimes hit ${pctText(row.hit_rate, 0)} of the time${claimed} (n=${row.n})`
 }
 
-export function bandFromScore(value: number | null): LensBand | null {
-  if (value == null) return null
+/**
+ * The registry's shared 0-100 bands (`lenses/registry.band_for_score`).
+ *
+ * 40 and 60 are inclusive ends of neutral on the backend, and this table used to
+ * call them lean_cold and lean_hot — so a score of exactly 60 got a different band
+ * on the page than in the exhibit it was rendering.
+ */
+export function bandFromScore(value: number | null | undefined): LensBand | null {
+  if (value == null || !Number.isFinite(value)) return null
   if (value >= 80) return 'hot'
-  if (value >= 60) return 'lean_hot'
   if (value <= 20) return 'cold'
-  if (value <= 40) return 'lean_cold'
-  return 'neutral'
+  if (value >= 40 && value <= 60) return 'neutral'
+  return value > 60 ? 'lean_hot' : 'lean_cold'
 }

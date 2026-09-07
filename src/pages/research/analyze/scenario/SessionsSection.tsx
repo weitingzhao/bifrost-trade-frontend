@@ -197,10 +197,11 @@ export function SessionsSection() {
   const rollingHit = hitRateData?.path_hit_rate ?? null
   const rollingMiss = hitRateData?.avg_close_miss_pct ?? null
   const rollingCount = hitRateData?.session_count ?? 0
-  const pathHitRate =
-    settlementData && settlementData.rows.length > 0
-      ? settlementData.rows.filter((r) => r.path_hit).length / settlementData.rows.length
-      : rollingHit
+  // The strip's verdict is the 30-day record, never the one session the Owner clicked.
+  // Selecting a settled session used to collapse this to that session's 0/1, flipping
+  // the label to green "Paths reliable — lean in" directly above a line still reading
+  // "30d path hit 0% across 15 settled session(s)".
+  const pathHitRate = rollingHit
   const avgMissPct =
     settlementData && settlementData.rows.length > 0
       ? settlementData.rows.reduce((s, r) => s + Math.abs(r.close_miss_pct), 0) /

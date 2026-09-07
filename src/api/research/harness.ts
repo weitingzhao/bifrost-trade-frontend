@@ -62,8 +62,16 @@ export interface ObjectiveCreateBody {
 export interface ApproveAllResult {
   approved: string[]
   held?: { draft_id?: string; reason?: string; blocked_by_validate?: unknown }[]
+  /** Drafts approved whole. A partial leash accept promotes names without approving the draft, so this is 0 there. */
   count: number
   held_count?: number
+  /** D3 — the names the leash let through, and the ones it kept with their reasons. */
+  accepted_symbols?: string[]
+  accepted_count?: number
+  held_symbols?: { draft_id?: string; symbol?: string; reasons?: string[] }[]
+  held_symbol_count?: number
+  partial?: string[]
+  leash?: { min_source_hit_rate?: number }
   skipped_batch?: boolean
   advisory?: string
   executed?: Record<string, unknown>[]

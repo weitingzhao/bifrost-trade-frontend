@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ExhibitPayload } from '@/api/research/exhibit'
 import {
+  bandFromScore,
   calibrationLine,
   dailyLevelSignals,
   fwd20Line,
@@ -99,12 +100,27 @@ describe('C2 depth lines', () => {
     expect(fwd20Line(exhibit({ history_summary: {} }))).toBeNull()
   })
 
-  it('shows the radar row’s own hit rates on its side', () => {
+  it('shows a row’s own hit rates only on a side that actually triggers', () => {
     const records = { NVDA: { hot: { n: 22, evaluated_5d: 22, hit_rate_5d: 0.6154, evaluated_20d: 14, hit_rate_20d: 0.4286 } } }
-    expect(hitCellText(records, 'nvda', 'high')).toBe('62% / 43% (n=22)')
-    expect(hitCellText(records, 'NVDA', 'low')).toBe('—')
+    expect(hitCellText(records, 'nvda', 'hot')).toBe('62% / 43% (n=22)')
+    expect(hitCellText(records, 'NVDA', 'cold')).toBe('—')
+    // Only hot and cold trigger; a lean reading has no record of its own to show, and
+    // used to be handed the hot side's because the coarse bucket called it "High".
+    expect(hitCellText(records, 'NVDA', 'lean_hot')).toBe('—')
     expect(hitCellText(records, 'NVDA', 'neutral')).toBe('—')
-    expect(hitCellText(undefined, 'NVDA', 'high')).toBe('—')
+    expect(hitCellText(records, 'NVDA', null)).toBe('—')
+    expect(hitCellText(undefined, 'NVDA', 'hot')).toBe('—')
+  })
+
+  it('bands a 0-100 score exactly as the registry does, including at 40 and 60', () => {
+    expect(bandFromScore(95)).toBe('hot')
+    expect(bandFromScore(80)).toBe('hot')
+    expect(bandFromScore(61)).toBe('lean_hot')
+    expect(bandFromScore(60)).toBe('neutral')   // inclusive end of neutral on the backend
+    expect(bandFromScore(40)).toBe('neutral')   // and the other end
+    expect(bandFromScore(39)).toBe('lean_cold')
+    expect(bandFromScore(20)).toBe('cold')
+    expect(bandFromScore(null)).toBeNull()
   })
 
   it('reads the calibration for the regime the playbook is in', () => {

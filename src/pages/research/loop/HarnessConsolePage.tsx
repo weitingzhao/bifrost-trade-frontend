@@ -176,12 +176,19 @@ export default function HarnessConsolePage() {
   const approveMut = useMutation({
     mutationFn: (runId: string) => approveAllRun(runId),
     onSuccess: (res) => {
-      const approvedN = res.count ?? res.approved?.length ?? 0
-      const heldN = res.held_count ?? res.held?.length ?? 0
+      // Report the candidates, not the drafts. On a partial leash accept the draft is
+      // never approved, so `count` is 0 while hypotheses were created — the toast read
+      // "Auto-approved 0" after doing the work. And the hold reason was hard-coded to
+      // "(dissent)" whatever the leash actually said.
+      const accepted = res.accepted_symbols ?? []
+      const heldNames = (res.held_symbols ?? []).map((h) => h.symbol).filter(Boolean)
+      const reasons = [...new Set((res.held_symbols ?? []).flatMap((h) => h.reasons ?? []))]
       setApproveFeedback(
-        res.skipped_batch
-          ? `Held batch (dissent) — auto-approved ${approvedN} / held ${heldN}`
-          : `Auto-approved ${approvedN} · held ${heldN} (dissent)`,
+        accepted.length === 0 && heldNames.length === 0
+          ? `Approved ${res.count ?? 0} draft${(res.count ?? 0) === 1 ? '' : 's'} · held ${res.held_count ?? 0}`
+          : `Accepted ${accepted.length}${accepted.length ? ` (${accepted.join(', ')})` : ''} · held ${heldNames.length}${
+              heldNames.length ? ` (${heldNames.join(', ')})` : ''
+            }${reasons.length ? ` — ${reasons[0]}` : ''}`,
       )
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })

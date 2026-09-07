@@ -32,7 +32,7 @@ import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { fetchIvRankHistory } from '@/api/research/ivRadar'
 import { fetchSignalDecayBySymbol } from '@/api/research/signalDecay'
-import { hitCellText } from '@/lib/analyzeDepth'
+import { bandFromScore, hitCellText } from '@/lib/analyzeDepth'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
@@ -464,7 +464,7 @@ export function IvRankSection() {
           <p className="text-dense-label font-medium text-foreground">How to read</p>
           <p className="text-dense-meta text-muted-foreground">
             <span className="font-medium text-foreground">IV Rank</span> (primary) = where current IV
-            sits in the 1y high–low range. Buckets: High &gt;60 · Neutral 30–60 · Low &lt;30.{' '}
+            sits in the 1y high–low range. Buckets follow the lens registry: High = hot (&ge;80) · Low = cold (&le;20) · Neutral in between, and only the two ends trigger.{' '}
             <span className="font-medium text-foreground">IV Percentile</span> = % of history days with
             lower IV (column only). Typical flow: Benchmarks (market weather) → Holdings (is the book
             expensive/cheap?) → Watchlist (candidates) → Option Discovery for structure.
@@ -525,7 +525,7 @@ export function IvRankSection() {
               <DenseTableHead className="text-right">IV Rank</DenseTableHead>
               <DenseTableHead className="text-right">IV Percentile</DenseTableHead>
               <DenseTableHead className="text-right">Lookback</DenseTableHead>
-              <DenseTableHead className="text-right" title="This symbol's own hit rate on the iv_rank lens, 5d / 20d, last 365 days, on the side its bucket sits">
+              <DenseTableHead className="text-right" title="This symbol's own hit rate on the iv_rank lens, 5d / 20d, last 365 days. Only hot (>= 80) and cold (<= 20) readings trigger, so rows in between show no record.">
                 Own hit 5d / 20d
               </DenseTableHead>
               <DenseTableHead>Source</DenseTableHead>
@@ -568,7 +568,7 @@ export function IvRankSection() {
                   {row.data?.lookback_days != null ? String(row.data.lookback_days) : '—'}
                 </DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>
-                  {recordsQ.isLoading ? '…' : hitCellText(records, row.symbol, row.bucket)}
+                  {recordsQ.isLoading ? '…' : hitCellText(records, row.symbol, bandFromScore(row.data?.iv_rank_1y))}
                 </DenseTableCell>
                 <DenseTableCell className="text-dense-meta">
                   {formatIvRadarSource(row.sources)}

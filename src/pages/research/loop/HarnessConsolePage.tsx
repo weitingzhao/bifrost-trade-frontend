@@ -27,14 +27,8 @@ import {
   CollapsibleGroupHeader,
   CollapsibleGroupTitle,
   CollapsibleChevron,
-  DenseDataTable,
-  DenseTableBody,
-  DenseTableHead,
-  DenseTableHeader,
-  DenseTableHeadRow,
   EmptyState,
   SegmentControl,
-  denseTable,
 } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Button } from '@/components/ui/button'
@@ -58,7 +52,6 @@ import {
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { NewObjectiveDialog } from '@/components/research/NewObjectiveDialog'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
-import { HarnessObjectivesColgroup } from '@/pages/research/loop/harnessConsoleColgroups'
 import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
 import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
@@ -66,7 +59,7 @@ import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
 
 import { inspectorWidthPx, useInspectorWidth } from '@/lib/harness/inspectorWidth'
 import { RunLoopDialog } from '@/components/research/harness/RunLoopDialog'
-import { AutopilotKpis, AutopilotLadder } from '@/components/research/harness/AutopilotStanding'
+import { AutopilotKpis } from '@/components/research/harness/AutopilotStanding'
 import { ObjectiveRows } from '@/pages/research/loop/ObjectiveBriefRow'
 import type { BatchRunOverrides } from '@/api/research/harness'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
@@ -365,9 +358,7 @@ export default function HarnessConsolePage() {
         }
       />
 
-      {/* Where this page sits, and whether the thing is switched on — before
-          any objective. */}
-      <AutopilotLadder />
+      {/* Whether the thing is switched on — before any objective. */}
       {standingQ.data ? <AutopilotKpis standing={standingQ.data} /> : null}
 
       <UniverseReachStrip />
@@ -392,8 +383,8 @@ export default function HarnessConsolePage() {
 
       <section className="min-w-0 space-y-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="shrink-0 text-dense-body font-semibold">Objectives</h2>
-          <span className="text-dense-caption text-muted-foreground">one standing brief each — expand for its runs</span>
+          <h2 className="shrink-0 text-base font-semibold">Objectives</h2>
+          <span className="text-dense-label text-muted-foreground">one standing brief each</span>
           <SegmentControl
             value={objStatus}
             onChange={(v) => setObjStatus(v as 'active' | 'archived')}
@@ -429,19 +420,7 @@ export default function HarnessConsolePage() {
             }
           />
         ) : (
-          <DenseDataTable scrollX={false}>
-            <HarnessObjectivesColgroup />
-            <DenseTableHeader>
-              <DenseTableHeadRow>
-                <DenseTableHead className={denseTable.expandCol} />
-                <DenseTableHead>Objective</DenseTableHead>
-                <DenseTableHead>Last memo</DenseTableHead>
-                <DenseTableHead>Track record</DenseTableHead>
-                <DenseTableHead>Cost · waiting</DenseTableHead>
-                <DenseTableHead>Actions</DenseTableHead>
-              </DenseTableHeadRow>
-            </DenseTableHeader>
-            <DenseTableBody>
+          <ul className="space-y-3">
               {objectives.map((row: ResearchObjective) => {
                 const batchBusy = batchMut.isPending && batchMut.variables?.objectiveId === row.id
                 const groups = groupsByObjective.get(row.id) ?? []
@@ -477,8 +456,7 @@ export default function HarnessConsolePage() {
                   />
                 )
               })}
-            </DenseTableBody>
-          </DenseDataTable>
+          </ul>
         )}
 
         {orphanGroups.length > 0 ? (

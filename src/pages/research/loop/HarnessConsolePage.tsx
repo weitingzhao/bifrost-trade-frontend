@@ -75,6 +75,8 @@ import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
 import { fmtUsd, groupSpend } from '@/lib/harness/runSpend'
 import { inspectorWidthPx, useInspectorWidth } from '@/lib/harness/inspectorWidth'
+import { RunLoopDialog } from '@/components/research/harness/RunLoopDialog'
+import type { BatchRunOverrides } from '@/api/research/harness'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { useLoopTrust } from '@/hooks/useLoopHarness'
 
@@ -114,6 +116,7 @@ export default function HarnessConsolePage() {
 
   const pipelineRunId = searchParams.get('run')
   const [inspectorWidth] = useInspectorWidth()
+  const [runDialog, setRunDialog] = useState<ResearchObjective | null>(null)
   const pipelineLive = searchParams.get('live') !== '0'
 
   function openPipeline(runId: string) {
@@ -164,7 +167,8 @@ export default function HarnessConsolePage() {
   })
 
   const batchMut = useMutation({
-    mutationFn: (objectiveId: string) => batchRunObjective(objectiveId),
+    mutationFn: (v: { objectiveId: string; overrides: BatchRunOverrides }) =>
+      batchRunObjective(v.objectiveId, v.overrides),
     onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
       void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
@@ -434,7 +438,7 @@ export default function HarnessConsolePage() {
             </DenseTableHeader>
             <DenseTableBody>
               {objectives.map((row: ResearchObjective) => {
-                const batchBusy = batchMut.isPending && batchMut.variables === row.id
+                const batchBusy = batchMut.isPending && batchMut.variables?.objectiveId === row.id
                 const groups = groupsByObjective.get(row.id) ?? []
                 const awaitingN = groups.filter(
                   (g) => g.run.status === 'awaiting_approval',
@@ -457,7 +461,7 @@ export default function HarnessConsolePage() {
                     running={batchBusy}
                     anyRunPending={batchMut.isPending}
                     trustL0={Boolean(trust?.l0)}
-                    onRun={() => batchMut.mutate(row.id)}
+                    onRun={() => setRunDialog(row)}
                     onArchive={() => setRetiring({ objective: row, mode: 'archive' })}
                     onRestore={() => archiveMut.mutate({ id: row.id, status: 'active' })}
                     onDelete={() => setRetiring({ objective: row, mode: 'delete' })}
@@ -552,6 +556,23 @@ export default function HarnessConsolePage() {
           else archiveMut.mutate({ id: retiring.objective.id, status: 'archived' })
         }}
       />
+
+      {runDialog ? (
+        <RunLoopDialog
+          open
+          onOpenChange={(o) => !o && setRunDialog(null)}
+          objectiveId={runDialog.id}
+          objectiveTitle={runDialog.title}
+          maxCandidates={
+            Number((runDialog.policy_json as Record<string, unknown> | null)?.max_candidates) || 8
+          }
+          pending={batchMut.isPending}
+          onRun={(overrides) => {
+            batchMut.mutate({ objectiveId: runDialog.id, overrides })
+            setRunDialog(null)
+          }}
+        />
+      ) : null}
 
       <RightInspectorShell
         open={Boolean(pipelineRunId)}

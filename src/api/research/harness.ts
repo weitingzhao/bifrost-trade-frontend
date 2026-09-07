@@ -263,18 +263,81 @@ export interface BatchRunResult {
   advisory?: string
 }
 
-/** Unattended batch: run → curate → Trust-L0 narrow auto-approve (D10 research drafts only). */
+/**
+ * What the next run would cost, from this objective's own history.
+ *
+ * The rate is dollars per candidate, because judging is close to linear in
+ * candidates. It is measured from recent runs of this objective rather than
+ * held as a constant, since it depends on how much evidence its candidates
+ * carry and how many tool rounds its judges take on them.
+ */
+export interface RunEstimateModel {
+  model: string
+  usd_per_candidate: number
+  usd: number
+  /** "measured" from this objective's runs, or "typical" when it has none. */
+  source: 'measured' | 'typical'
+  runs: number
+}
+
+export interface RunEstimate {
+  objective_id: string
+  candidates: number
+  models: RunEstimateModel[]
+  triage_usd: number
+  total_usd: number
+  source: 'measured' | 'typical'
+  runs_sampled: number
+  summary: string
+}
+
+export async function fetchRunEstimate(
+  objectiveId: string,
+  params?: { candidates?: number; models?: string[] },
+): Promise<RunEstimate> {
+  const q = new URLSearchParams()
+  if (params?.candidates != null) q.set('candidates', String(params.candidates))
+  if (params?.models?.length) q.set('models', params.models.join(','))
+  const qs = q.toString()
+  return unwrap<RunEstimate>(
+    await fetch(
+      researchEngineUrl(
+        `/research/objectives/${encodeURIComponent(objectiveId)}/run-estimate${qs ? `?${qs}` : ''}`,
+      ),
+    ),
+  )
+}
+
+/**
+ * Unattended batch: run → curate → Trust-L0 narrow auto-approve (D10 research
+ * drafts only).
+ *
+ * The three overrides shape this run only. They are folded into a copy of the
+ * objective's policy on the way in, never written back, so a run the Owner
+ * shaped by hand does not silently become tomorrow's scheduled behaviour.
+ */
+export interface BatchRunOverrides {
+  curate_after?: boolean
+  judge_models?: string[]
+  deep_judge_top_n?: number
+  symbols?: string[]
+}
+
 export async function batchRunObjective(
   objectiveId: string,
-  body?: { curate_after?: boolean },
+  body?: BatchRunOverrides,
 ): Promise<BatchRunResult> {
+  const payload: Record<string, unknown> = { curate_after: body?.curate_after ?? true }
+  if (body?.judge_models?.length) payload.judge_models = body.judge_models
+  if (body?.deep_judge_top_n != null) payload.deep_judge_top_n = body.deep_judge_top_n
+  if (body?.symbols?.length) payload.symbols = body.symbols
   return unwrap(
     await fetch(
       researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}/batch-run`),
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ curate_after: body?.curate_after ?? true }),
+        headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
+        body: JSON.stringify(payload),
       },
     ),
   )

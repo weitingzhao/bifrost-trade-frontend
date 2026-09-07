@@ -73,6 +73,7 @@ import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
 import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
+import { fmtUsd, groupSpend } from '@/lib/harness/runSpend'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { useLoopTrust } from '@/hooks/useLoopHarness'
 
@@ -608,6 +609,8 @@ function ObjectiveRows({
   archivePending: boolean
   runsTableProps: RunsTableProps
 }) {
+  // Re-runs are folded into their row but not out of the bill.
+  const spend = groups.reduce((sum, g) => sum + groupSpend(g).total_usd, 0)
   return (
     <>
       <DenseTableRow>
@@ -635,6 +638,19 @@ function ObjectiveRows({
               {groups.length} result{groups.length === 1 ? '' : 's'}
               {awaitingN > 0 ? (
                 <span className="text-warning"> · {awaitingN} awaiting</span>
+              ) : null}
+              {/* What those results cost. Running an objective is the only
+                  action on these pages that spends anything, so the total
+                  belongs on the row that carries the Run button. */}
+              {spend > 0 ? (
+                <span
+                  className="block text-dense-micro text-muted-foreground"
+                  title={`Models called across the ${groups.length} run${
+                    groups.length === 1 ? '' : 's'
+                  } listed here. Open a run for its own breakdown.`}
+                >
+                  {fmtUsd(spend)} spent
+                </span>
               ) : null}
             </span>
           ) : (

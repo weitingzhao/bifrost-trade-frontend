@@ -25,6 +25,14 @@ import { fmtInt, fmtIsoTs } from '@/lib/format'
 import { funnelReach, parseHarnessTrace, runDurationMs } from '@/lib/harness/harnessTrace'
 import type { RunGroup } from '@/lib/harness/harnessTrace'
 import { loopCopilotUi, openLoopRunInCopilot } from '@/lib/harness/loopCopilotPrefill'
+import {
+  fmtTokens,
+  fmtUsd,
+  groupSpend,
+  judgeMaxTurns,
+  modelSplitLine,
+  spendTooltip,
+} from '@/lib/harness/runSpend'
 import type { CopilotPromptLang } from '@/lib/copilot/promptLang'
 
 /**
@@ -78,6 +86,63 @@ export function RunFunnelCell({ trace }: { trace: unknown }) {
   )
 }
 
+/**
+ * What this run cost, beside what it produced.
+ *
+ * Every dollar the loop spends is spent here, in a run someone started or a
+ * schedule started for them. The console used to show only the result, so the
+ * spend arrived on a provider bill with nothing on the page to tie it back to.
+ * The dominant number is almost always one model's input tokens: a judge is an
+ * agent with tools, and every tool round re-sends the conversation.
+ */
+export function RunSpendCell({ group }: { group: RunGroup }) {
+  const { run: spend, repeats_usd, repeats_n } = groupSpend(group)
+  const run = group.run
+  if (!spend.billed) {
+    return (
+      <span
+        className="text-dense-caption text-muted-foreground"
+        title="No model was called — heuristic judges cost nothing."
+      >
+        no model
+      </span>
+    )
+  }
+  const tip = spendTooltip(spend, judgeMaxTurns(run))
+  return (
+    <div className="min-w-0" title={tip}>
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="font-mono tabular-nums text-dense-meta">{fmtUsd(spend.total_usd)}</span>
+        {spend.capped ? (
+          <DenseTag variant="danger" size="cell">
+            over cap
+          </DenseTag>
+        ) : spend.fellBack ? (
+          <DenseTag variant="warning" size="cell">
+            fell back
+          </DenseTag>
+        ) : null}
+      </div>
+      {/* Wraps rather than truncates: which model spent the money is the point
+          of the cell, and a clipped model name answers nothing. */}
+      <span className="block text-dense-micro text-muted-foreground">
+        {modelSplitLine(spend)}
+      </span>
+      <span className="block font-mono tabular-nums text-dense-micro text-muted-foreground">
+        {fmtTokens(spend.input_tokens)} in · {fmtTokens(spend.output_tokens)} out
+      </span>
+      {repeats_n > 0 ? (
+        <span
+          className="block text-dense-micro text-warning"
+          title={`Folded into this row are ${repeats_n} earlier run(s) that screened the same ground to the same names. They cost this much again.`}
+        >
+          +{fmtUsd(repeats_usd)} re-run
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 export function HarnessRunsTable({
   groups,
   lang,
@@ -115,6 +180,7 @@ export function HarnessRunsTable({
         <DenseTableHeadRow>
           <DenseTableHead>Run</DenseTableHead>
           <DenseTableHead>Funnel</DenseTableHead>
+          <DenseTableHead>Spend</DenseTableHead>
           <DenseTableHead>Started</DenseTableHead>
           <DenseTableHead>Status</DenseTableHead>
           <DenseTableHead>Actions</DenseTableHead>
@@ -172,6 +238,9 @@ export function HarnessRunsTable({
               </DenseTableCell>
               <DenseTableCell>
                 <RunFunnelCell trace={row.trace_json} />
+              </DenseTableCell>
+              <DenseTableCell>
+                <RunSpendCell group={{ run: row, repeats }} />
               </DenseTableCell>
               <DenseTableCell className="truncate text-dense-meta text-muted-foreground">
                 {fmtIsoTs(row.started_at)}

@@ -50,6 +50,9 @@ import { INSPECTOR_WIDTH_OPTIONS, useInspectorWidth } from '@/lib/harness/inspec
 import { copyText, personaStageMarkdown } from '@/lib/harness/personaExport'
 import { SegmentControl } from '@/components/data-display'
 import { TriageFold } from '@/components/research/harness/PersonaVerdicts'
+import { DecisionMemo } from '@/components/research/harness/DecisionMemo'
+import { traceRatings } from '@/lib/harness/rating'
+import { fmtUsd, runSpend } from '@/lib/harness/runSpend'
 import { cn } from '@/lib/utils'
 import {
   funnelReach,
@@ -87,6 +90,9 @@ export function LoopRunPipelineBody({
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [traceOpen, setTraceOpen] = useState(false)
   const [copied, setCopied] = useState<'stage' | null>(null)
+  // The memo is the page; the process is a fold. Open by default only when the
+  // run has no rating to lead with — an old run, or one that proposed nothing.
+  const [processOpen, setProcessOpen] = useState(false)
   const [inspectorWidth, setInspectorWidth] = useInspectorWidth()
 
   const run = runQ.data
@@ -115,6 +121,8 @@ export function LoopRunPipelineBody({
   const terminal = traceTerminalState(trace)
   const reach = funnelReach(trace)
   const personaRowsForExport = useMemo(() => personaRows(trace), [trace])
+  const ratings = useMemo(() => traceRatings(trace), [trace])
+  const spend = useMemo(() => runSpend(run ?? null), [run])
   const scan = traceScanEvent(trace)
   const universeMode =
     (typeof scan?.universe_mode === 'string' && scan.universe_mode) ||
@@ -250,6 +258,29 @@ export function LoopRunPipelineBody({
             </div>
           </div>
 
+          {/* The deliverable first: the picks, rated, with the case behind each.
+              The stages that produced them fold beneath — an audit trail, not
+              the story. */}
+          <DecisionMemo
+            ratings={ratings}
+            rows={personaRowsForExport}
+            considered={reach?.considered ?? null}
+            spendUsd={spend.total_usd > 0 ? spend.total_usd : null}
+          />
+
+          <CollapsibleGroup variant="inset" className="mt-2">
+            <CollapsibleGroupHeader expanded={processOpen} onToggle={() => setProcessOpen((o) => !o)}>
+              <CollapsibleChevron expanded={processOpen} />
+              <CollapsibleGroupTitle className="text-dense-meta font-medium">How it got here</CollapsibleGroupTitle>
+              <span className="ml-2 text-dense-caption text-muted-foreground/70">
+                {stages.filter((st) => st.state === 'done').length} of {stages.length} stages
+                {spend.total_usd > 0 ? ` · ${fmtUsd(spend.total_usd)}` : ''}
+                {' · '}
+                {fmtDuration(runDurationMs(run.started_at, run.finished_at))}
+              </span>
+            </CollapsibleGroupHeader>
+            {processOpen ? (
+              <CollapsibleGroupBody className="px-1 pb-1">
           {phases.map((phase) => (
             <section key={phase.id} className="space-y-0.5">
               <div className="flex items-baseline gap-2 px-1.5 pt-1.5">
@@ -336,6 +367,9 @@ export function LoopRunPipelineBody({
               </ol>
             </section>
           ))}
+              </CollapsibleGroupBody>
+            ) : null}
+          </CollapsibleGroup>
 
           {/* Not a step. The pipeline above is what the run did; this is the
               record it left. Kept behind its own rule and labelled as raw so it

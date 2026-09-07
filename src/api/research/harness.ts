@@ -7,6 +7,7 @@
  */
 import { POLICY_SUGGESTION_KEYS } from '@/lib/harness/harnessDraftHelpers'
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 
 export type ObjectiveStatus = 'active' | 'paused' | 'retired'
@@ -328,7 +329,7 @@ export async function proposePolicyChange(
       ),
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
         body: JSON.stringify({ suggestion, rationale }),
       },
     ),
@@ -360,11 +361,15 @@ export async function curateRun(runId: string): Promise<CurateRunResult> {
   )
 }
 
+// These two endpoints resolve the acting owner from the bearer token and write
+// that owner into the audit ledger, so the call has to carry one. Without it the
+// ledger recorded whoever the caller claimed to be, and once RESEARCH_USERS is
+// set the request is refused outright.
 export async function approveAllRun(runId: string): Promise<ApproveAllResult> {
   return unwrap(
     await fetch(
       researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}/approve-all`),
-      { method: 'POST' },
+      { method: 'POST', headers: { ...getResearchAuthHeaders() } },
     ),
   )
 }

@@ -13,6 +13,11 @@
 import type { ReactNode } from 'react'
 import { Check, ChevronDown, ChevronRight } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
+import {
+  CopyCandidates,
+  StanceBar,
+  VerdictList,
+} from '@/components/research/harness/PersonaVerdicts'
 import { cn } from '@/lib/utils'
 import { fmtJudgeCost, fmtStageMs, num, pct } from '@/components/research/harness/harnessFormat'
 import {
@@ -374,47 +379,6 @@ export function groupPersonaRows(rows: PersonaRow[]): PersonaGroup[] {
   }))
 }
 
-function stanceClass(stance: string): string {
-  if (stance === 'support') return 'text-success'
-  if (stance === 'caution' || stance === 'dissent') return 'text-warning'
-  if (stance === 'oppose' || stance === 'block') return 'text-destructive'
-  return 'text-muted-foreground'
-}
-
-function VerdictList({ verdicts }: { verdicts: PersonaVerdict[] }) {
-  if (verdicts.length === 0) {
-    return (
-      <p className="text-dense-caption text-muted-foreground">
-        No per-persona verdicts recorded.
-      </p>
-    )
-  }
-  const judged = verdicts.some((v) => v.model)
-  return (
-    <ul className="space-y-1">
-      {verdicts.map((v) => (
-        <li key={`${v.model ?? ''}:${v.agent}`} className="flex gap-2 text-dense-caption">
-          {judged ? (
-            <span
-              className="w-24 shrink-0 truncate font-mono text-muted-foreground/80"
-              title={v.source === 'heuristic_fallback' ? `${v.model} fell back to the heuristic` : v.model ?? undefined}
-            >
-              {v.model ?? 'heuristic'}
-              {v.source === 'heuristic_fallback' ? ' ⚠' : ''}
-            </span>
-          ) : null}
-          <span className="w-16 shrink-0 font-medium">{v.agent}</span>
-          <span className={cn('w-14 shrink-0', stanceClass(v.stance))}>{v.stance}</span>
-          <span className="w-8 shrink-0 tabular-nums text-muted-foreground/70">
-            {v.confidence == null ? '—' : v.confidence.toFixed(2)}
-          </span>
-          <span className="min-w-0 flex-1 text-muted-foreground">{v.summary}</span>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
 export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
   const rows = personaRows(trace)
   const ev = tracePersonaEval(trace)
@@ -530,7 +494,7 @@ export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
               </span>
             )}
           </p>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             {g.members.map((m) => (
               <DenseTag
                 key={m.symbol}
@@ -548,6 +512,9 @@ export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
                 {m.blocked ? ' · blocked' : m.agreement === 'dissent' ? ' · dissent' : ''}
               </DenseTag>
             ))}
+            {/* The one question the four paragraphs answer, answered first. */}
+            <StanceBar verdicts={g.verdicts} />
+            <CopyCandidates rows={g.members} />
           </div>
           <VerdictList verdicts={g.verdicts} />
         </div>

@@ -74,6 +74,7 @@ import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
 import { fmtUsd, groupSpend } from '@/lib/harness/runSpend'
+import { inspectorWidthPx, useInspectorWidth } from '@/lib/harness/inspectorWidth'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { useLoopTrust } from '@/hooks/useLoopHarness'
 
@@ -112,6 +113,7 @@ export default function HarnessConsolePage() {
   const trust = trustQ.data
 
   const pipelineRunId = searchParams.get('run')
+  const [inspectorWidth] = useInspectorWidth()
   const pipelineLive = searchParams.get('live') !== '0'
 
   function openPipeline(runId: string) {
@@ -554,7 +556,7 @@ export default function HarnessConsolePage() {
       <RightInspectorShell
         open={Boolean(pipelineRunId)}
         ariaLabel="Smart Decision Run"
-        panelWidthPx={560}
+        panelWidthPx={inspectorWidthPx(inspectorWidth)}
       >
         {pipelineRunId ? (
           <LoopRunPipelineBody

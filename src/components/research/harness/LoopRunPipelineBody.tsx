@@ -9,7 +9,7 @@
  * where a reader arrives having seen what it is based on.
  */
 import { useMemo, useState } from 'react'
-import { Check, MessageCircle, Sparkles } from 'lucide-react'
+import { Check, ClipboardCopy, MessageCircle, Sparkles } from 'lucide-react'
 import {
   CollapsibleGroup,
   CollapsibleGroupBody,
@@ -31,6 +31,7 @@ import {
   HarnessFunnelBars,
   HarnessPersonaFold,
   PipelineStageRow,
+  personaRows,
   phaseViews,
   stageViews,
 } from '@/components/research/harness/HarnessPipelineStepper'
@@ -45,6 +46,9 @@ import {
   openLoopRunInCopilot,
 } from '@/lib/harness/loopCopilotPrefill'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
+import { INSPECTOR_WIDTH_OPTIONS, useInspectorWidth } from '@/lib/harness/inspectorWidth'
+import { copyText, personaStageMarkdown } from '@/lib/harness/personaExport'
+import { SegmentControl } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import {
   funnelReach,
@@ -80,6 +84,8 @@ export function LoopRunPipelineBody({
 
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [traceOpen, setTraceOpen] = useState(false)
+  const [copied, setCopied] = useState<'stage' | null>(null)
+  const [inspectorWidth, setInspectorWidth] = useInspectorWidth()
 
   const run = runQ.data
   const draftIds = Array.isArray(run?.outputs?.draft_ids)
@@ -106,6 +112,7 @@ export function LoopRunPipelineBody({
   const phases = useMemo(() => phaseViews(stages), [stages])
   const terminal = traceTerminalState(trace)
   const reach = funnelReach(trace)
+  const personaRowsForExport = useMemo(() => personaRows(trace), [trace])
   const scan = traceScanEvent(trace)
   const universeMode =
     (typeof scan?.universe_mode === 'string' && scan.universe_mode) ||
@@ -133,16 +140,55 @@ export function LoopRunPipelineBody({
         meta={running ? 'Live' : (run?.status ?? '…')}
         actions={
           run ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-dense-meta"
-              onClick={() => openLoopRunInCopilot({ runId: run.id, title, lang, runDetail: run })}
-            >
-              <MessageCircle className="mr-0.5 size-3" />
-              {loopCopilotUi.discussShort(lang)}
-            </Button>
+            <>
+              {/* The judgement is the most considered thing this run produced,
+                  and it could only ever be read here. One click takes it
+                  somewhere else — another model, a note, a message. */}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-dense-meta"
+                disabled={personaRowsForExport.length === 0}
+                title={
+                  personaRowsForExport.length === 0
+                    ? 'Nothing judged yet'
+                    : 'Copy every candidate and its judges’ reasoning as Markdown'
+                }
+                onClick={() => {
+                  void copyText(
+                    personaStageMarkdown(personaRowsForExport, {
+                      runId: run.id,
+                      objective: title,
+                      asOf: run.started_at ?? null,
+                      considered: reach?.considered ?? null,
+                      proposed: reach?.proposed ?? null,
+                    }),
+                  ).then((ok) => setCopied(ok ? 'stage' : null))
+                }}
+              >
+                <ClipboardCopy className="mr-0.5 size-3" />
+                {copied === 'stage' ? 'Copied' : 'Copy'}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-dense-meta"
+                onClick={() => openLoopRunInCopilot({ runId: run.id, title, lang, runDetail: run })}
+              >
+                <MessageCircle className="mr-0.5 size-3" />
+                {loopCopilotUi.discussShort(lang)}
+              </Button>
+              {/* The reader decides how much of the screen a paragraph of
+                  reasoning deserves, and the choice is remembered. */}
+              <SegmentControl
+                value={inspectorWidth}
+                options={INSPECTOR_WIDTH_OPTIONS}
+                onChange={(v) => setInspectorWidth(v as typeof inspectorWidth)}
+                ariaLabel="Panel width"
+              />
+            </>
           ) : null
         }
         onClose={onClose}

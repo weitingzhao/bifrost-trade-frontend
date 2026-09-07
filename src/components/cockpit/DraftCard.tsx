@@ -10,6 +10,7 @@ import {
 import type { AiDraft } from '@/api/researchDrafts'
 import { isHitRateWarnActive, isPersonaDissentActive } from '@/lib/harness/harnessDraftHelpers'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
+import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
 import { cn } from '@/lib/utils'
 
 /**
@@ -53,6 +54,12 @@ const KIND_ACCENT: Record<
     muted: 'border-sky-500/20 border-l-sky-500/40 bg-sky-500/[0.02]',
     tag: 'info',
   },
+  // D2: the one post a day. Same calm hue as the morning post it replaced.
+  daily_digest: {
+    normal: 'border-sky-500/35 border-l-sky-500/70 bg-sky-500/[0.05]',
+    muted: 'border-sky-500/20 border-l-sky-500/40 bg-sky-500/[0.02]',
+    tag: 'info',
+  },
   eod_verdict: {
     normal: 'border-border/60 border-l-border bg-secondary/40',
     muted: 'border-border/40 border-l-border/70 bg-transparent',
@@ -68,6 +75,7 @@ const DEFAULT_ACCENT = {
 
 function kindLabel(kind: string): string {
   if (kind === 'morning_brief') return 'Morning'
+  if (kind === 'daily_digest') return 'Digest'
   if (kind === 'eod_verdict') return 'EOD'
   if (kind === 'hypothesis_suggestion') return 'Suggestion'
   if (kind === 'candidate_batch') return 'Candidate Batch'
@@ -196,6 +204,8 @@ export function DraftCard({
 
       {draft.kind === 'candidate_batch' ? (
         <CandidateBatchBody payload={draft.payload} />
+      ) : draft.kind === 'daily_digest' ? (
+        <DailyDigestBody payload={draft.payload} />
       ) : draft.kind === 'policy_suggestion' ? (
         <PolicySuggestionBody payload={draft.payload} />
       ) : prose !== null ? (

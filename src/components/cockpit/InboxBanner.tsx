@@ -6,6 +6,7 @@ import {
   useResearchDrafts,
 } from '@/hooks/useResearchDrafts'
 import { useCockpitDrawer } from '@/hooks/useCockpitDrawer'
+import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
 import { cn } from '@/lib/utils'
 
 /**
@@ -28,8 +29,10 @@ export function InboxBanner({ className }: { className?: string }) {
   const approve = useApproveDraft()
   const dismiss = useDismissDraft()
 
-  const rows = data?.rows ?? []
+  // D2: the day's digest opens the queue; everything else follows it.
+  const rows = digestFirst(data?.rows ?? [])
   const count = data?.pending_count ?? rows.length
+  const digest = rows.find(isDailyDigest)
 
   // Nothing pending and nothing to report — stay out of the way entirely.
   if (!isError && count === 0) return null
@@ -81,7 +84,9 @@ export function InboxBanner({ className }: { className?: string }) {
         )}
         <Inbox className="size-3.5 shrink-0 text-primary" aria-hidden />
         <span className="min-w-0 flex-1 truncate font-medium">
-          {count} draft{count === 1 ? '' : 's'} pending
+          {digest
+            ? `Daily digest${count > 1 ? ` · ${count - 1} more pending` : ''}`
+            : `${count} draft${count === 1 ? '' : 's'} pending`}
         </span>
         <span className="shrink-0 text-dense-caption text-muted-foreground">
           {inboxOpen ? 'Hide' : 'Review'}

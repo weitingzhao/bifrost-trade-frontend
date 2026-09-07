@@ -434,7 +434,7 @@ function _valuesEqual(a: unknown, b: unknown): boolean {
 }
 
 /** Recurring agent posts — they accumulate and should not crowd out decisions. */
-export const BRIEFING_KINDS = new Set<string>(['morning_brief', 'eod_verdict'])
+export const BRIEFING_KINDS = new Set<string>(['morning_brief', 'eod_verdict', 'daily_digest'])
 
 /** Loop drafts. A narrower view, not a separate inbox. */
 export const LOOP_KINDS = new Set<string>(['candidate_batch', 'policy_suggestion'])

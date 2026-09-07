@@ -26,6 +26,7 @@ import {
   isActionableDraft,
   isDecisionKind,
 } from '@/lib/harness/harnessDraftHelpers'
+import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
 
 type KindFilter = 'all' | 'decisions' | 'briefings' | 'loop' | DraftKind
 
@@ -51,21 +52,28 @@ const KIND_OPTIONS: { value: KindFilter; label: string }[] = [
  * without looking, which is how a real decision gets waved through.
  */
 export default function DecisionInboxPage() {
-  // Opens on what needs a call. Briefings stay one click away with their own
-  // count, so nothing is hidden — it just stops competing for the same attention.
-  const [kindFilter, setKindFilter] = useState<KindFilter>('decisions')
+  // Opens on what needs a call — unless today's digest is waiting (D2): then it
+  // opens on the digest, with the candidate batches one click away beneath it.
+  // Briefings keep their own count, so nothing is hidden — it just stops
+  // competing for the same attention.
+  const [chosenFilter, setChosenFilter] = useState<KindFilter | null>(null)
 
   const apiKind =
-    kindFilter === 'all' ||
-    kindFilter === 'decisions' ||
-    kindFilter === 'briefings' ||
-    kindFilter === 'loop'
+    chosenFilter === null ||
+    chosenFilter === 'all' ||
+    chosenFilter === 'decisions' ||
+    chosenFilter === 'briefings' ||
+    chosenFilter === 'loop'
       ? undefined
-      : (kindFilter as DraftKind)
+      : (chosenFilter as DraftKind)
 
   const query = useResearchDrafts({ status: 'pending', kind: apiKind })
   const approve = useApproveDraft()
   const dismiss = useDismissDraft()
+
+  const digestPending = (query.data?.rows ?? []).some(isDailyDigest)
+  const kindFilter: KindFilter = chosenFilter ?? (digestPending ? 'briefings' : 'decisions')
+  const setKindFilter = setChosenFilter
 
   const rows = useMemo(() => {
     const all = query.data?.rows ?? []
@@ -73,7 +81,7 @@ export default function DecisionInboxPage() {
       return all.filter((d) => isDecisionKind(d.kind))
     }
     if (kindFilter === 'briefings') {
-      return all.filter((d) => BRIEFING_KINDS.has(d.kind))
+      return digestFirst(all.filter((d) => BRIEFING_KINDS.has(d.kind)))
     }
     if (kindFilter === 'loop') {
       return all.filter((d) => LOOP_KINDS.has(d.kind))
@@ -107,7 +115,7 @@ export default function DecisionInboxPage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Decision Inbox"
-        description="Drafts that need a call. Recurring agent posts live under Briefings."
+        description="Drafts that need a call. The daily digest and other agent posts live under Briefings."
         actions={<NewDraftDialog />}
       />
 

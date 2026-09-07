@@ -13,6 +13,7 @@ import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
 export type DraftKind =
   | 'morning_brief'
   | 'eod_verdict'
+  | 'daily_digest'
   | 'hypothesis_suggestion'
   | 'playbook_rule'
   | 'playbook_note'

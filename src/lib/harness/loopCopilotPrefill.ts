@@ -41,8 +41,9 @@ export function buildLoopRunReviewPrompt(
     return (
       `请审阅 harness run ${params.runId}（objective「${params.title}」）。\n` +
       (funnel ? `${funnel}\n` : '') +
-      '总结 candidate 候选、policy_suggestion 与 hit_rate 警告。' +
-      'Option 字段缺失时不得当作淘汰理由（option_overlay.required=false 时）。' +
+      `先调用 research.loop.get_run("${params.runId}")，只引用这次 run 自己的记录并标注工具出处：` +
+      'plan 的来源、漏斗每一刀、hit_rate 门、每个候选各模型 judge 的立场与是否一致、report 的 why / settled / wrong_if。' +
+      'Option 字段缺失时不得当作淘汰理由（option_overlay.required=false 时）；not_measured 是覆盖度事实不是判定。' +
       `白盒 Pipeline：${pipelinePath} 。` +
       'D10 观察模式，请勿涉及实盘发单。'
     )
@@ -51,10 +52,62 @@ export function buildLoopRunReviewPrompt(
     `Review harness run ${params.runId} for objective "${params.title}".\n` +
     (funnel ? `${funnel}\n` : '') +
     `Data source: ${overlay || 'n/a'}. ` +
-    'Summarize candidates, policy_suggestion, and hit_rate warnings. ' +
-    'Missing option fields must NOT be treated as rejection reasons when option_overlay.required is false. ' +
+    `Start with research.loop.get_run("${params.runId}") and answer from the run's own record, citing the tool for each claim: ` +
+    'where the plan came from, each funnel cut, the hit-rate gate, every candidate with each judge\'s stance per model and whether they agreed, the report\'s why / settled / wrong_if. ' +
+    'Missing option fields must NOT be treated as rejection reasons when option_overlay.required is false; not_measured is a coverage fact, not a verdict. ' +
     `White-box pipeline: ${pipelinePath}. D10 observe-only.`
   )
+}
+
+/** "Why was WT proposed and what would unmake it" — answered from the run's own record (D1). */
+export function buildCandidateExplainPrompt(
+  params: { runId: string; symbol: string; title?: string | null },
+  lang: CopilotPromptLang = readCopilotPromptLang(),
+): string {
+  const sym = params.symbol.trim().toUpperCase()
+  const title = params.title ? `「${params.title}」` : ''
+  if (lang === 'zh') {
+    return (
+      `harness run ${params.runId}${title} 为什么提出 ${sym}？什么情况会推翻这个判断？\n` +
+      `请调用 research.loop.explain_candidate("${params.runId}", "${sym}")，只引用这次 run 自己的记录并标注出处：` +
+      '入选证据（SEPA 阶段 / 路径 / 分数）、价格位置、该来源的已结清记录、每个模型 judge 的立场与摘要（分歧要点名）、' +
+      'report 的 wrong_if / falsify、validate 是否 block。not_measured 与缺期权数据是覆盖度事实，不是判定。' +
+      '若要补今天的读数，用 research.exhibit.get 并注明是今天的。D10 观察模式。'
+    )
+  }
+  return (
+    `In harness run ${params.runId}${params.title ? ` ("${params.title}")` : ''}: why was ${sym} proposed, and what would unmake the call?\n` +
+    `Call research.loop.explain_candidate("${params.runId}", "${sym}") and answer from the run's own record, citing the tool for each claim: ` +
+    "the selection evidence (SEPA stage / path / score), price context, this source's settled record, each judge's stance and summary by model (name any dissent), " +
+    'the report\'s wrong_if / falsify, and whether validate blocked it. not_measured and missing option data are coverage facts, not verdicts. ' +
+    "Add today's reading only via research.exhibit.get, labelled as today's. D10 observe-only."
+  )
+}
+
+/** Prefill Copilot with one candidate of a run and open the panel — does not auto-send. */
+export function openCandidateInCopilot(params: {
+  runId: string
+  symbol: string
+  title?: string | null
+  lang?: CopilotPromptLang
+}) {
+  const lang = params.lang ?? readCopilotPromptLang()
+  const sym = params.symbol.trim().toUpperCase()
+  askCopilotIntentStore.open({
+    originPage: 'harness',
+    originLabel: lang === 'zh' ? `候选 ${sym}` : `Candidate ${sym}`,
+    symbol: sym,
+    suggestedPrompt: buildCandidateExplainPrompt(params, lang),
+    snapshot: {
+      run_id: params.runId,
+      symbol: sym,
+      objective_title: params.title ?? null,
+      prompt_lang: lang,
+      pipeline_path: loopPipelinePath(params.runId, { live: false }),
+    },
+  })
+  copilotBubbleStore.getState().open_()
+  cockpitDrawerStore.getState().setTab('copilot')
 }
 
 function loopRunOriginLabel(runId: string, lang: CopilotPromptLang): string {

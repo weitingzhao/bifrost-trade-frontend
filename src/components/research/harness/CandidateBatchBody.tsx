@@ -1,4 +1,4 @@
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, MessageCircle } from 'lucide-react'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -26,6 +26,8 @@ import {
   verdictsByModel,
   type CandidateAgreement,
 } from '@/lib/harness/harnessDraftHelpers'
+import { openCandidateInCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { IconActionButton } from '@/components/data-display'
 
 /** Above this a decision card turns into a spreadsheet; batches are policy-capped at 50. */
 const MAX_ROWS = 20
@@ -72,6 +74,9 @@ export function CandidateBatchBody({
   const holdingsGap = hasPortfolioHoldingsGap(items)
   const judges = personaJudgeSummaries(payload)
   const dissentCount = personaDissentCount(payload)
+  // D1: the run this batch came from — the Copilot answers from its record.
+  const runId = typeof payload.run_id === 'string' ? payload.run_id : ''
+  const objectiveTitle = typeof payload.title === 'string' ? payload.title : null
 
   return (
     <div className="space-y-2">
@@ -229,7 +234,20 @@ export function CandidateBatchBody({
                 return (
                   <DenseTableRow key={item.id}>
                     <DenseTableCell>
-                      <span className="font-mono font-semibold">{item.symbol}</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="font-mono font-semibold">{item.symbol}</span>
+                        {runId ? (
+                          <IconActionButton
+                            title={`Ask Copilot why ${item.symbol} was proposed and what would unmake it`}
+                            ariaLabel={`Ask Copilot about ${item.symbol}`}
+                            onClick={() =>
+                              openCandidateInCopilot({ runId, symbol: item.symbol, title: objectiveTitle })
+                            }
+                          >
+                            <MessageCircle className="size-3" />
+                          </IconActionButton>
+                        ) : null}
+                      </span>
                       {item.blocked_by_validate ? (
                         <DenseTag variant="danger" size="cell" className="ml-1">
                           blocked

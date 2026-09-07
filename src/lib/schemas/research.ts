@@ -346,3 +346,14 @@ export const DailyBriefSynthSchema = z
     cards: z.record(z.string(), z.object({ present: z.boolean(), verdict: z.string(), lamp: z.string(), to: z.string() }).passthrough()),
   })
   .passthrough()
+
+/** GET /research/verdicts/{symbol} — what Copilot and the Loop said about a symbol (D4). */
+export const SymbolVerdictsSchema = z
+  .object({
+    symbol: z.string(),
+    digest: z.object({ line: z.string(), lenses: z.array(z.object({ lens: z.string() }).passthrough()) }).passthrough().nullable(),
+    proposals: z.array(z.object({ kind: z.string(), state: z.string() }).passthrough()),
+    counts: z.record(z.string(), z.number()),
+  })
+  .passthrough()
+

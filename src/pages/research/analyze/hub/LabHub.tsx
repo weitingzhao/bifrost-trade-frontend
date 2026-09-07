@@ -12,6 +12,7 @@ import { useSearchParams } from 'react-router-dom'
 import { SegmentControl } from '@/components/data-display'
 import { PageHeader, PageShell } from '@/components/layout'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
 import { VIEW_PARAM, type LabViewId } from '@/lib/analyzeHubs'
 
 export interface LabViewDef {
@@ -88,6 +89,8 @@ export function LabHub({
     <PageShell padding={active.padding ?? 'default'} className="space-y-3">
       <LabHubHeader title={title} views={views} active={active} onChange={setView} />
       <ResearchContextBar showDate={active.showDate ?? true} />
+      {/* D4: what Copilot and the Loop have said about the symbol, with approval states. */}
+      <CopilotVerdictStrip originPage={`hub:${active.id}`} originLabel={`${title} · ${active.label}`} />
       {/* Keyed so a view switch remounts the lab: its local state (selected
           row, sort, filters) belongs to that lab, not to its neighbour. */}
       <div key={active.id}>{active.render()}</div>

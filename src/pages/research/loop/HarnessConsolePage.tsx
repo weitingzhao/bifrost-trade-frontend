@@ -15,13 +15,9 @@ import { useSearchParams } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Archive,
-  ArchiveRestore,
   MessageCircle,
-  Play,
   ShieldAlert,
   Terminal,
-  Trash2,
 } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
@@ -33,16 +29,10 @@ import {
   CollapsibleChevron,
   DenseDataTable,
   DenseTableBody,
-  DenseTableCell,
-  DenseTableDetailRow,
   DenseTableHead,
   DenseTableHeader,
   DenseTableHeadRow,
-  DenseTableRow,
-  DenseTag,
   EmptyState,
-  ExpandToggleCell,
-  IconActionButton,
   SegmentControl,
   denseTable,
 } from '@/components/data-display'
@@ -73,12 +63,16 @@ import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
 import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
-import { fmtUsd, groupSpend } from '@/lib/harness/runSpend'
+
 import { inspectorWidthPx, useInspectorWidth } from '@/lib/harness/inspectorWidth'
 import { RunLoopDialog } from '@/components/research/harness/RunLoopDialog'
+import { AutopilotKpis, AutopilotLadder } from '@/components/research/harness/AutopilotStanding'
+import { ObjectiveRows } from '@/pages/research/loop/ObjectiveBriefRow'
 import type { BatchRunOverrides } from '@/api/research/harness'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
-import { useLoopTrust } from '@/hooks/useLoopHarness'
+import { useLoopTrust,
+  useAutopilotStanding,
+} from '@/hooks/useLoopHarness'
 
 type RunStatusFilter = ObjectiveRunStatus | 'all'
 
@@ -117,6 +111,11 @@ export default function HarnessConsolePage() {
   const pipelineRunId = searchParams.get('run')
   const [inspectorWidth] = useInspectorWidth()
   const [runDialog, setRunDialog] = useState<ResearchObjective | null>(null)
+  const standingQ = useAutopilotStanding()
+  const standingById = useMemo(
+    () => new Map((standingQ.data?.objectives ?? []).map((o) => [o.id, o])),
+    [standingQ.data],
+  )
   const pipelineLive = searchParams.get('live') !== '0'
 
   function openPipeline(runId: string) {
@@ -327,8 +326,8 @@ export default function HarnessConsolePage() {
   return (
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
       <PageHeader
-        title="Harness Console"
-        description="Objectives and the runs they produced. Open a run to see how it decided."
+        title="Autopilot"
+        description="Standing research objectives that run without you, judged by two models, rated, and held on a leash until you approve."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -366,6 +365,11 @@ export default function HarnessConsolePage() {
         }
       />
 
+      {/* Where this page sits, and whether the thing is switched on — before
+          any objective. */}
+      <AutopilotLadder />
+      {standingQ.data ? <AutopilotKpis standing={standingQ.data} /> : null}
+
       <UniverseReachStrip />
 
       <CollapsibleGroup variant="card" className="min-w-0">
@@ -389,6 +393,7 @@ export default function HarnessConsolePage() {
       <section className="min-w-0 space-y-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <h2 className="shrink-0 text-dense-body font-semibold">Objectives</h2>
+          <span className="text-dense-caption text-muted-foreground">one standing brief each — expand for its runs</span>
           <SegmentControl
             value={objStatus}
             onChange={(v) => setObjStatus(v as 'active' | 'archived')}
@@ -429,10 +434,10 @@ export default function HarnessConsolePage() {
             <DenseTableHeader>
               <DenseTableHeadRow>
                 <DenseTableHead className={denseTable.expandCol} />
-                <DenseTableHead>Title</DenseTableHead>
-                <DenseTableHead>Schedule</DenseTableHead>
-                <DenseTableHead>Runs</DenseTableHead>
-                <DenseTableHead>Status</DenseTableHead>
+                <DenseTableHead>Objective</DenseTableHead>
+                <DenseTableHead>Last memo</DenseTableHead>
+                <DenseTableHead>Track record</DenseTableHead>
+                <DenseTableHead>Cost · waiting</DenseTableHead>
                 <DenseTableHead>Actions</DenseTableHead>
               </DenseTableHeadRow>
             </DenseTableHeader>
@@ -467,6 +472,8 @@ export default function HarnessConsolePage() {
                     onDelete={() => setRetiring({ objective: row, mode: 'delete' })}
                     archivePending={archiveMut.isPending}
                     runsTableProps={runsTableProps}
+                    brief={standingById.get(row.id) ?? null}
+                    onOpenMemo={(runId) => openPipeline(runId)}
                   />
                 )
               })}
@@ -591,173 +598,12 @@ export default function HarnessConsolePage() {
   )
 }
 
-type RunsTableProps = Omit<
+export type RunsTableProps = Omit<
   Parameters<typeof HarnessRunsTable>[0],
   'groups' | 'objectiveTitle'
 >
 
 /** One objective, and — when opened — the runs it produced. */
-function ObjectiveRows({
-  row,
-  groups,
-  awaitingN,
-  hasRuns,
-  archived,
-  isOpen,
-  onToggle,
-  running,
-  anyRunPending,
-  trustL0,
-  onRun,
-  onArchive,
-  onRestore,
-  onDelete,
-  archivePending,
-  runsTableProps,
-}: {
-  row: ResearchObjective
-  groups: RunGroup[]
-  awaitingN: number
-  hasRuns: boolean
-  archived: boolean
-  isOpen: boolean
-  onToggle: () => void
-  running: boolean
-  anyRunPending: boolean
-  trustL0: boolean
-  onRun: () => void
-  onArchive: () => void
-  onRestore: () => void
-  onDelete: () => void
-  archivePending: boolean
-  runsTableProps: RunsTableProps
-}) {
-  // Re-runs are folded into their row but not out of the bill.
-  const spend = groups.reduce((sum, g) => sum + groupSpend(g).total_usd, 0)
-  return (
-    <>
-      <DenseTableRow>
-        <DenseTableCell className={denseTable.expandColCell}>
-          <ExpandToggleCell
-            expanded={isOpen}
-            onToggle={onToggle}
-            label={`${isOpen ? 'Collapse' : 'Expand'} runs for ${row.title}`}
-          />
-        </DenseTableCell>
-        <DenseTableCell>
-          <div className="min-w-0">
-            <p className="truncate text-dense-label font-medium">{row.title}</p>
-            <p className="truncate text-dense-caption text-muted-foreground">
-              {row.persona} · {row.description}
-            </p>
-          </div>
-        </DenseTableCell>
-        <DenseTableCell>
-          <DenseTag variant="neutral">{row.schedule}</DenseTag>
-        </DenseTableCell>
-        <DenseTableCell>
-          {hasRuns ? (
-            <span className="text-dense-meta tabular-nums">
-              {groups.length} result{groups.length === 1 ? '' : 's'}
-              {awaitingN > 0 ? (
-                <span className="text-warning"> · {awaitingN} awaiting</span>
-              ) : null}
-              {/* What those results cost. Running an objective is the only
-                  action on these pages that spends anything, so the total
-                  belongs on the row that carries the Run button. */}
-              {spend > 0 ? (
-                <span
-                  className="block text-dense-micro text-muted-foreground"
-                  title={`Models called across the ${groups.length} run${
-                    groups.length === 1 ? '' : 's'
-                  } listed here. Open a run for its own breakdown.`}
-                >
-                  {fmtUsd(spend)} spent
-                </span>
-              ) : null}
-            </span>
-          ) : (
-            <span className="text-dense-caption text-muted-foreground">never run</span>
-          )}
-        </DenseTableCell>
-        <DenseTableCell>
-          <DenseTag variant={archived ? 'neutral' : 'success'}>{row.status}</DenseTag>
-        </DenseTableCell>
-        <DenseTableCell>
-          <div className="flex flex-wrap items-center gap-0.5">
-            {archived ? null : (
-              /* One Run, not two. The pair was "Run" (a labelled button) beside
-                 "Run unattended" (a bare lightning icon) — wildly different
-                 visual weight for two controls whose difference nobody could
-                 read, and the second strictly contains the first: same
-                 proposal, then the Curator, then auto-approve once Trust is L0.
-                 Keeping the manual subset only offered a way to do less. */
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 px-2 text-dense-meta"
-                disabled={anyRunPending}
-                title={
-                  trustL0
-                    ? 'Propose → Curator → auto-approve research drafts (Trust L0). Runs an LLM curator pass.'
-                    : 'Propose → Curator. Will not auto-approve until Trust L0. Runs an LLM curator pass.'
-                }
-                onClick={onRun}
-              >
-                <Play className="mr-0.5 size-3 shrink-0" />
-                {running ? 'Running…' : 'Run loop'}
-              </Button>
-            )}
-            {archived ? (
-              <IconActionButton
-                title="Restore — brings it back to the active list"
-                ariaLabel={`Restore ${row.title}`}
-                disabled={archivePending}
-                onClick={onRestore}
-              >
-                <ArchiveRestore className="size-3.5" />
-              </IconActionButton>
-            ) : (
-              <IconActionButton
-                title="Archive — leaves the console, keeps its runs"
-                ariaLabel={`Archive ${row.title}`}
-                onClick={onArchive}
-              >
-                <Archive className="size-3.5" />
-              </IconActionButton>
-            )}
-            <IconActionButton
-              tone="danger"
-              title={
-                hasRuns
-                  ? 'Cannot delete — this objective has runs. Archive it instead.'
-                  : 'Delete — it has never run'
-              }
-              ariaLabel={`Delete ${row.title}`}
-              disabled={hasRuns}
-              onClick={onDelete}
-            >
-              <Trash2 className="size-3.5" />
-            </IconActionButton>
-          </div>
-        </DenseTableCell>
-      </DenseTableRow>
-      {isOpen ? (
-        <DenseTableDetailRow>
-          <DenseTableCell className={denseTable.expandColCell}>{null}</DenseTableCell>
-          <DenseTableCell colSpan={5} className="py-2 pl-2 pr-1">
-            <HarnessRunsTable
-              groups={groups}
-              objectiveTitle={row.title}
-              {...runsTableProps}
-            />
-          </DenseTableCell>
-        </DenseTableDetailRow>
-      ) : null}
-    </>
-  )
-}
 
 type Notice = { tone: 'warning' | 'success' | 'danger'; text: string } | null
 

@@ -38,7 +38,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/research/loop/candidates': 'Candidate Pool',
   '/research/loop/hypotheses': 'Hypothesis Board',
   '/research/loop/decisions': 'Decision Inbox',
-  '/research/loop/harness': 'Harness Console',
+  '/research/loop/harness': 'Autopilot',
   '/strategy/instances': 'Instances',
   '/strategy/structures': 'Structure',
   '/strategy/opportunities': 'Opportunity',

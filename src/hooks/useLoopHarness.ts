@@ -12,6 +12,7 @@ import {
   fetchObjectiveRuns,
   fetchObjectives,
   runObjective,
+  fetchAutopilotStanding,
 } from '@/api/research/harness'
 import {
   createPolicyTemplate,
@@ -37,6 +38,14 @@ export function useAwaitingRuns() {
     staleTime: 10_000,
     refetchInterval: 15_000,
     refetchOnWindowFocus: false,
+  })
+}
+
+export function useAutopilotStanding() {
+  return useQuery({
+    queryKey: ['research', 'loop', 'autopilot'],
+    queryFn: fetchAutopilotStanding,
+    refetchInterval: 60_000,
   })
 }
 

@@ -175,5 +175,5 @@ export const loopCopilotUi = {
   review: (lang: CopilotPromptLang, open: boolean) =>
     open ? (lang === 'zh' ? '收起' : 'Hide') : lang === 'zh' ? '查看' : 'Review',
   moreInHarness: (lang: CopilotPromptLang, n: number) =>
-    lang === 'zh' ? `另有 ${n} 条见 Harness Console` : `+${n} more in Harness Console`,
+    lang === 'zh' ? `另有 ${n} 条见 Autopilot` : `+${n} more in Autopilot`,
 } as const

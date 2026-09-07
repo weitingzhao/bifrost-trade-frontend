@@ -8,7 +8,7 @@
 import { POLICY_SUGGESTION_KEYS } from '@/lib/harness/harnessDraftHelpers'
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { RunEstimateSchema } from '@/lib/schemas/research'
+import { AutopilotStandingSchema, RunEstimateSchema } from '@/lib/schemas/research'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 
@@ -251,6 +251,68 @@ export interface LoopTrustStatus {
   matrix_level?: string | null
   /** The grant alone. The console pill reads this; `l0` is whether *this* process may act on it. */
   matrix_l0?: boolean
+}
+
+
+/**
+ * The autopilot as standing: trust on the cluster matrix, the next unattended
+ * run, today's purse, memos waiting, and one brief per objective — what it
+ * hunts, what it said last, whether its picks have been right, what it costs.
+ * All reads; assembled by the run's own rules so it cannot disagree with the
+ * memos it summarises.
+ */
+export interface AutopilotTrackRecord {
+  status: 'ok' | 'none_settled' | 'unavailable' | string
+  /** "objective" when the objective's own picks have settled; "source" when the harness-wide record stands in. */
+  scope?: string | null
+  horizon_days: number | null
+  hit_rate: number | null
+  judged: number
+  avg_excess: number | null
+  pending?: number
+  days?: number
+}
+
+export interface AutopilotMemo {
+  run_id: string
+  started_at: string | null
+  status: string | null
+  headline: string
+  best_conviction: number
+  actionable: number
+  split: number
+  blocked: number
+  picks: { symbol: string; action: string; conviction: number; grade: string | null }[]
+  considered: number | null
+}
+
+export interface AutopilotObjective {
+  id: string
+  title: string | null
+  status: string | null
+  schedule: string | null
+  hunts: string
+  last_run: { id: string; started_at: string | null; finished_at: string | null; status: string | null } | null
+  last_memo: AutopilotMemo | null
+  track_record: AutopilotTrackRecord
+  spend_30d_usd: number
+  pending_memos: number
+  runs: number
+}
+
+export interface AutopilotStanding {
+  trust: { matrix_level: string | null; matrix_l0: boolean; source?: string; note: string }
+  next_run_at: string
+  purse: { spent_usd: number; cap_usd: number; providers: { provider: string; spent_usd: number; cap_usd: number; exhausted: boolean }[] }
+  pending_memos: number
+  best_conviction: number
+  objectives: AutopilotObjective[]
+}
+
+const validateStanding = withValidation<AutopilotStanding>(AutopilotStandingSchema, 'research/loop/autopilot')
+
+export async function fetchAutopilotStanding(): Promise<AutopilotStanding> {
+  return validateStanding(unwrap<AutopilotStanding>(await fetch(researchEngineUrl('/research/loop/autopilot'))))
 }
 
 export async function fetchLoopTrust(): Promise<LoopTrustStatus> {

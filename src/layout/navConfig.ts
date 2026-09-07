@@ -75,30 +75,43 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Research',
     icon: BookOpen,
+    // Grouped by how much the system does for the Owner, top down — the
+    // reading the product is built around — rather than by what kind of page
+    // a thing is. Routes are unchanged; only labels and order moved.
     subGroups: [
       {
-        label: 'Home',
-        items: [route('Research Home', '/research', Home)],
-      },
-      {
-        label: 'Loop',
+        // Level 3. Objectives run unattended, get judged, rated and leashed;
+        // the Owner approves. The most capable page sits first, not fourth in
+        // a group named after a mechanism.
+        label: 'Autopilot · unattended',
         items: [
-          route('Candidate Pool', '/research/loop/candidates', ListFilter),
-          route('Hypothesis Board', '/research/loop/hypotheses', BookOpen),
+          route('Autopilot', '/research/loop/harness', Terminal),
           route('Decision Inbox', '/research/loop/decisions', ClipboardList),
-          route('Harness Console', '/research/loop/harness', Terminal),
+          route('Hypothesis Board', '/research/loop/hypotheses', BookOpen),
+          route('Candidate Pool', '/research/loop/candidates', ListFilter),
         ],
       },
       {
-        label: 'Discover',
+        // Level 2. The models work when asked: a brief each morning, a chat
+        // that reads every page, the personas and the playbook they follow.
+        label: 'Copilot · on request',
         items: [
-          route('Overview', '/research/daily-brief', ClipboardList),
+          route('Daily Brief', '/research/daily-brief', ClipboardList),
+          route('Ask the Copilot', '/research?copilot=open', Home),
+          route('Agent Personas', '/research/agent-personas', Users),
+          route('My Trading System', '/research/playbook', BookOpen),
+        ],
+      },
+      {
+        // Level 1. The Owner opens the pages.
+        label: 'Workbench · Discover',
+        items: [
           route('Stock Explorer', '/research/explorer', Compass),
           route('Option Scan', '/research/scan', ScanSearch),
         ],
       },
       {
-        label: 'Analyze',
+        label: 'Workbench · Analyze',
         // research-loop-automation C1 (D-RLA-1): five hubs, each with ?view= tabs.
         items: [
           route('Vol Regime', '/research/vol-regime', Radar),
@@ -109,16 +122,14 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         ],
       },
       {
-        label: 'Validate',
+        label: 'Workbench · Validate',
         items: [
           route('Signal Decay', '/research/signal-decay', Activity),
           route('Backtest', '/research/backtest', History),
-          route('Agent Personas', '/research/agent-personas', Users),
-          route('My Trading System', '/research/playbook', BookOpen),
         ],
       },
       {
-        label: 'Data',
+        label: 'Workbench · Data',
         items: [
           route('Stock Data Readiness', '/settings/data-readiness', Server),
           route('Signal Health', '/research/signal-health', Activity),

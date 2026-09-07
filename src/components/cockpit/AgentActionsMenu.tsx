@@ -200,7 +200,7 @@ export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
           onSelect={() => navigate('/research/loop/harness')}
         >
           <Terminal className="mr-2 size-3.5" />
-          <span className="flex-1">Open Harness Console</span>
+          <span className="flex-1">Open Autopilot</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

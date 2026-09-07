@@ -257,6 +257,57 @@ export const RunEstimateSchema = z
   })
   .passthrough()
 
+// ── Autopilot standing ──────────────────────────────────────────────────
+// The page the Owner opens to see what the autopilot is: trust, next run,
+// purse, memos waiting, and one brief per objective. `.passthrough()` as
+// everywhere: the brief gains fields as the loop does.
+
+export const AutopilotTrackRecordSchema = z
+  .object({
+    status: z.string(),
+    scope: z.string().nullable().optional(),
+    horizon_days: z.number().nullable(),
+    hit_rate: z.number().nullable(),
+    judged: z.number(),
+    avg_excess: z.number().nullable(),
+  })
+  .passthrough()
+
+export const AutopilotObjectiveSchema = z
+  .object({
+    id: z.string(),
+    title: z.string().nullable(),
+    status: z.string().nullable(),
+    schedule: z.string().nullable(),
+    hunts: z.string(),
+    last_run: z.record(z.string(), z.unknown()).nullable(),
+    last_memo: z.record(z.string(), z.unknown()).nullable(),
+    track_record: AutopilotTrackRecordSchema,
+    spend_30d_usd: z.number(),
+    pending_memos: z.number(),
+    runs: z.number(),
+  })
+  .passthrough()
+
+export const AutopilotStandingSchema = z
+  .object({
+    trust: z
+      .object({ matrix_level: z.string().nullable(), matrix_l0: z.boolean(), note: z.string() })
+      .passthrough(),
+    next_run_at: z.string(),
+    purse: z
+      .object({
+        spent_usd: z.number(),
+        cap_usd: z.number(),
+        providers: z.array(z.record(z.string(), z.unknown())),
+      })
+      .passthrough(),
+    pending_memos: z.number(),
+    best_conviction: z.number(),
+    objectives: z.array(AutopilotObjectiveSchema),
+  })
+  .passthrough()
+
 // ── Loop policy templates (P0-2) ────────────────────────────────────────
 // The Loop's strategy is data now, not a constant compiled into two codebases.
 // `.passthrough()` throughout: policy_json is the runtime's LoopPolicy dump and

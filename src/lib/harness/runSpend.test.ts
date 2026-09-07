@@ -26,6 +26,16 @@ const real = {
     ],
   },
   outputs: {
+    triage: {
+      status: 'ok',
+      source: 'llm',
+      model: 'gpt-4o-mini',
+      provider: 'openai',
+      calls: 1,
+      input_tokens: 558,
+      output_tokens: 81,
+      cost_usd: 0.000133,
+    },
     persona_eval: {
       judge_max_turns: 8,
       models: [
@@ -61,16 +71,22 @@ const real = {
 } as unknown as ObjectiveRun
 
 describe('runSpend', () => {
-  it('adds the planner to the judges and merges a model that did both', () => {
+  it('adds the planner and triage to the judges, merging a model that did more than one', () => {
     const s = runSpend(real)
-    expect(s.total_usd).toBeCloseTo(0.231643, 6)
+    expect(s.total_usd).toBeCloseTo(0.231776, 6)
     expect(s.plan_usd).toBeCloseTo(0.000165, 6)
+    expect(s.triage_usd).toBeCloseTo(0.000133, 6)
     expect(s.judge_usd).toBeCloseTo(0.231478, 6)
+    // The comparison the stage exists for: choosing cost a hundredth of a cent,
+    // judging cost a quarter of a dollar.
+    expect(s.judge_usd / s.triage_usd).toBeGreaterThan(1000)
     // deepseek planned and judged; one row, both stages, four calls.
     expect(s.models.map((m) => m.model)).toEqual(['deepseek-chat', 'gpt-4o-mini'])
     expect(s.models[0]).toMatchObject({ calls: 4, stages: ['plan', 'judge'], fallback: 1 })
+    // gpt-4o-mini ran triage as well as judging, so it is one row with both stages.
+    expect(s.models[1]).toMatchObject({ calls: 4, stages: ['triage', 'judge'] })
     expect(s.models[0].input_tokens).toBe(1370363)
-    expect(s.input_tokens).toBe(1558844)
+    expect(s.input_tokens).toBe(1559402)
     expect(s.billed).toBe(true)
     expect(s.fellBack).toBe(true)
     expect(s.capped).toBe(false)
@@ -107,7 +123,7 @@ describe('runSpend', () => {
   })
 
   it('totals an objective across its runs', () => {
-    expect(objectiveSpend([real, real])).toBeCloseTo(0.463286, 6)
+    expect(objectiveSpend([real, real])).toBeCloseTo(0.463552, 6)
     expect(objectiveSpend([])).toBe(0)
   })
 
@@ -116,10 +132,10 @@ describe('runSpend', () => {
     // Folding that into one headline figure would hide the waste the fold
     // itself created.
     const g = groupSpend({ run: real, repeats: [real, real, real] })
-    expect(g.run.total_usd).toBeCloseTo(0.231643, 6)
-    expect(g.repeats_usd).toBeCloseTo(0.694929, 6)
+    expect(g.run.total_usd).toBeCloseTo(0.231776, 6)
+    expect(g.repeats_usd).toBeCloseTo(0.695328, 6)
     expect(g.repeats_n).toBe(3)
-    expect(g.total_usd).toBeCloseTo(0.926572, 6)
+    expect(g.total_usd).toBeCloseTo(0.927104, 6)
     expect(groupSpend({ run: real }).repeats_usd).toBe(0)
   })
 
@@ -151,7 +167,7 @@ describe('formatting', () => {
     expect(tip).toContain('deepseek-chat: $0.200 · 4 calls · 1.4M in / 30k out')
     expect(tip).toContain('1 fell back to heuristic')
     expect(tip).toContain('cap $1.500/day')
-    expect(tip).toContain('Planning $0.0002 · judging $0.231')
+    expect(tip).toContain('Planning $0.0002 · triage $0.0001 · judging $0.231')
     expect(tip).toContain('capped at 8 turns')
   })
 })

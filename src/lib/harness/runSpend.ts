@@ -21,7 +21,7 @@ export interface RunSpendModel {
   output_tokens: number
   cost_usd: number
   /** Which stages of the run used this model. */
-  stages: ('plan' | 'judge')[]
+  stages: ('plan' | 'triage' | 'judge')[]
   /** Judge calls that fell back to the heuristic after the model failed. */
   fallback: number
   /** Judge calls refused because the provider's daily purse was empty. */
@@ -33,6 +33,7 @@ export interface RunSpendModel {
 export interface RunSpend {
   total_usd: number
   plan_usd: number
+  triage_usd: number
   judge_usd: number
   input_tokens: number
   output_tokens: number
@@ -84,6 +85,7 @@ export function runSpend(run: Pick<ObjectiveRun, 'plan_json' | 'outputs'> | null
   const empty: RunSpend = {
     total_usd: 0,
     plan_usd: 0,
+    triage_usd: 0,
     judge_usd: 0,
     input_tokens: 0,
     output_tokens: 0,
@@ -116,6 +118,23 @@ export function runSpend(run: Pick<ObjectiveRun, 'plan_json' | 'outputs'> | null
     planUsd += finite(a.cost_usd)
   }
 
+  // Triage is one call with no tools, so it bills like the planner rather than
+  // like a judge. It is kept separate because the comparison is the reason the
+  // stage exists: a run should show the cent it spent choosing beside the
+  // dollar it spent judging.
+  const triage = (run.outputs?.triage ?? null) as Record<string, unknown> | null
+  let triageUsd = 0
+  const triageModel = text(triage?.model)
+  if (triageModel && finite(triage?.calls) > 0) {
+    const row = take(triageModel, text(triage?.provider))
+    row.calls += finite(triage?.calls)
+    row.input_tokens += finite(triage?.input_tokens)
+    row.output_tokens += finite(triage?.output_tokens)
+    row.cost_usd += finite(triage?.cost_usd)
+    if (!row.stages.includes('triage')) row.stages.push('triage')
+    triageUsd += finite(triage?.cost_usd)
+  }
+
   const personaEval = (run.outputs?.persona_eval ?? null) as Record<string, unknown> | null
   let judgeUsd = 0
   for (const m of rows(personaEval?.models)) {
@@ -135,8 +154,9 @@ export function runSpend(run: Pick<ObjectiveRun, 'plan_json' | 'outputs'> | null
 
   const models = [...byModel.values()].sort((a, b) => b.cost_usd - a.cost_usd)
   return {
-    total_usd: planUsd + judgeUsd,
+    total_usd: planUsd + triageUsd + judgeUsd,
     plan_usd: planUsd,
+    triage_usd: triageUsd,
     judge_usd: judgeUsd,
     input_tokens: models.reduce((s, m) => s + m.input_tokens, 0),
     output_tokens: models.reduce((s, m) => s + m.output_tokens, 0),
@@ -204,7 +224,9 @@ export function spendTooltip(spend: RunSpend, maxTurns: number | null): string {
     if (m.cap_usd != null) parts.push(`cap ${fmtUsd(m.cap_usd)}/day`)
     lines.push(parts.join(' · '))
   }
-  lines.push(`Planning ${fmtUsd(spend.plan_usd)} · judging ${fmtUsd(spend.judge_usd)}.`)
+  lines.push(
+    `Planning ${fmtUsd(spend.plan_usd)} · triage ${fmtUsd(spend.triage_usd)} · judging ${fmtUsd(spend.judge_usd)}.`,
+  )
   lines.push(
     'A judge is an agent with tools: each tool round re-sends the whole conversation, ' +
       'so input tokens compound with the number of rounds' +

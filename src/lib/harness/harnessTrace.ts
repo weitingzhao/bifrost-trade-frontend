@@ -153,6 +153,16 @@ export const PIPELINE_STAGES = [
     governedBy: ['min_composite_score', 'min_hit_rate', 'flag_filter', 'seed_symbols'],
   },
   {
+    // The cheap question before the expensive one: of the candidates that
+    // survived the funnel, which are worth a judge's tool loop? Ranking the
+    // batch costs a fraction of a cent; judging it costs about $0.077 a name.
+    step: 'triage',
+    phase: 'judge',
+    label: 'Triage',
+    blurb: 'Rank the candidates by whether a deep review is worth it',
+    governedBy: ['triage'],
+  },
+  {
     step: 'persona_evaluate',
     phase: 'judge',
     label: 'Personas',
@@ -264,6 +274,58 @@ export function funnelReach(trace: HarnessTrace): FunnelReach | null {
 
 export function tracePersonaEval(trace: HarnessTrace): HarnessTraceEvent | undefined {
   return trace.events.find((e) => e.step === 'persona_evaluate')
+}
+
+export interface TriageRank {
+  symbol: string
+  worth: number
+  why: string
+  /** True when this candidate went on to the judges. */
+  deep: boolean
+}
+
+export interface TriageView {
+  source: string
+  model: string | null
+  ranked: TriageRank[]
+  deep: string[]
+  held: string[]
+  costUsd: number | null
+  /** 0 means every candidate was judged and the ranking was advisory. */
+  topN: number
+  error: string | null
+}
+
+/**
+ * The triage stage as the stepper needs it.
+ *
+ * `held` is the number that matters: with the cap unset the ranking is advice
+ * and every candidate still reaches the judges, so a reader must be able to see
+ * at a glance whether this stage actually narrowed anything or merely sorted it.
+ */
+export function traceTriage(trace: HarnessTrace): TriageView | null {
+  const ev = trace.events.find((e) => e.step === 'triage')
+  if (!ev) return null
+  const deep = Array.isArray(ev.deep) ? (ev.deep as string[]).map((s) => String(s)) : []
+  const deepSet = new Set(deep)
+  const ranked = (Array.isArray(ev.ranked) ? (ev.ranked as Record<string, unknown>[]) : [])
+    .filter((r) => r && typeof r === 'object')
+    .map((r) => ({
+      symbol: String(r.symbol ?? '—'),
+      worth: numberOrNull(r.worth) ?? 0,
+      why: String(r.why ?? ''),
+      deep: deepSet.size === 0 || deepSet.has(String(r.symbol ?? '')),
+    }))
+  return {
+    source: typeof ev.source === 'string' ? ev.source : 'unknown',
+    model: typeof ev.model === 'string' ? ev.model : null,
+    ranked,
+    deep,
+    held: Array.isArray(ev.held) ? (ev.held as string[]).map((s) => String(s)) : [],
+    costUsd: numberOrNull(ev.cost_usd),
+    topN: numberOrNull(ev.deep_judge_top_n) ?? 0,
+    error: typeof ev.error === 'string' ? ev.error : null,
+  }
 }
 
 export function numberOrNull(v: unknown): number | null {

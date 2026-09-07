@@ -32,6 +32,7 @@ import {
   stageDurationsMs,
   traceFunnel,
   tracePersonaEval,
+  traceTriage,
   type HarnessFunnelStep,
   type HarnessTrace,
   type PersonaJudge,
@@ -562,6 +563,7 @@ export function stageViews(
   const funnel = traceFunnel(trace)
   const persona = personaRows(trace)
   const proposeCount = trace.events.find((e) => e.step === 'propose_candidates')?.count
+  const triage = traceTriage(trace)
   const report = trace.events.find((e) => e.step === 'compose_report')
   const draft = trace.events.find((e) => e.step === 'draft_candidate_batch')
   const planOps = trace.events.find((e) => e.step === 'plan_ops')
@@ -589,6 +591,17 @@ export function stageViews(
       }
       case 'propose_candidates':
         return typeof proposeCount === 'number' ? `${proposeCount} candidates` : '—'
+      case 'triage': {
+        if (!triage) return '—'
+        if (triage.error) return `failed — judged all (${triage.error.slice(0, 60)})`
+        const cost = triage.costUsd != null ? ` · ${fmtJudgeCost(triage.costUsd)}` : ''
+        // "advisory" is the honest word when the cap is unset: the stage sorted
+        // the batch and narrowed nothing, and a reader must not have to infer
+        // that from a held count of zero.
+        return triage.held.length === 0
+          ? `${triage.ranked.length} ranked · advisory${cost}`
+          : `${triage.deep.length} judged · ${triage.held.length} held${cost}`
+      }
       case 'persona_evaluate':
         return personaVerdictSummary(persona)
       case 'compose_report':

@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils'
 import { agentView, splitNumerics, stanceScore, stanceView } from '@/lib/harness/personaVisual'
 import { candidateMarkdown, copyText } from '@/lib/harness/personaExport'
 import type { PersonaRow, PersonaVerdict } from '@/components/research/harness/HarnessPipelineStepper'
+import type { TriageView } from '@/lib/harness/harnessTrace'
 
 const STANCE_ICON = { check: CircleCheck, alert: TriangleAlert, ban: Ban, dash: Minus } as const
 const AGENT_ICON = {
@@ -178,5 +179,99 @@ export function CopyCandidates({ rows }: { rows: PersonaRow[] }) {
       <ClipboardCopy className="size-3 shrink-0" aria-hidden />
       {done ? 'copied' : 'copy'}
     </button>
+  )
+}
+
+/**
+ * What triage decided, and whether it decided anything.
+ *
+ * The stage always ranks. It only narrows when the objective sets a cap, and
+ * the difference is the whole point of reading this: a ranked list that changed
+ * nothing is advice, and a ranked list that held five candidates back is a
+ * decision about where the run's money went. The bar shows worth; the held rows
+ * are dimmed and say so in words rather than only in colour.
+ */
+export function TriageFold({ triage }: { triage: TriageView | null }) {
+  if (!triage) {
+    return (
+      <p className="text-dense-meta text-muted-foreground">
+        No triage step — the run predates it, or the objective turned it off.
+      </p>
+    )
+  }
+  if (triage.error) {
+    return (
+      <p className="text-dense-meta text-warning">
+        Triage failed ({triage.error}). Every candidate went to the judges, which is
+        what the run did before this stage existed.
+      </p>
+    )
+  }
+  return (
+    <div className="space-y-1.5">
+      <p className="text-dense-caption text-muted-foreground">
+        {triage.source === 'llm' ? (
+          <>
+            <span className="font-mono text-foreground/80">{triage.model}</span> read the
+            compact evidence for {triage.ranked.length} candidate
+            {triage.ranked.length === 1 ? '' : 's'} in one call, with no tools.
+          </>
+        ) : (
+          <>
+            Ranked by the selection score, without a model
+            {triage.error ? '' : ' — the ranking model was unavailable'}.
+          </>
+        )}{' '}
+        {triage.held.length === 0 ? (
+          <span className="text-warning">
+            Advisory only: every candidate still went to the judges. Set
+            <span className="font-mono"> triage.deep_judge_top_n</span> on the objective to
+            act on this ranking.
+          </span>
+        ) : (
+          <span>
+            The top <span className="tabular-nums">{triage.topN}</span> went on to the
+            judges; <span className="tabular-nums">{triage.held.length}</span>{' '}
+            {triage.held.length === 1 ? 'was' : 'were'} held here, unjudged, and cannot be
+            auto-accepted.
+          </span>
+        )}
+      </p>
+      <ul className="space-y-0.5">
+        {triage.ranked.map((r) => (
+          <li
+            key={r.symbol}
+            className={cn('flex items-center gap-2 text-dense-caption', !r.deep && 'opacity-55')}
+          >
+            <span className="w-16 shrink-0 font-mono font-medium">{r.symbol}</span>
+            <span
+              className="relative h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-border"
+              title={`worth ${r.worth.toFixed(2)}`}
+            >
+              <span
+                className={cn(
+                  'absolute inset-y-0 left-0 rounded-full',
+                  r.worth >= 0.6 ? 'bg-success' : r.worth >= 0.3 ? 'bg-warning' : 'bg-muted-foreground/60',
+                )}
+                style={{ width: `${Math.max(3, r.worth * 100).toFixed(0)}%` }}
+              />
+            </span>
+            <span className="w-8 shrink-0 font-mono tabular-nums text-muted-foreground/70">
+              {r.worth.toFixed(2)}
+            </span>
+            <span className="w-12 shrink-0 text-dense-micro">
+              {r.deep ? (
+                <span className="text-muted-foreground">judged</span>
+              ) : (
+                <span className="text-warning">held</span>
+              )}
+            </span>
+            <span className="min-w-0 flex-1 text-muted-foreground">
+              <ReasonText text={r.why} />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

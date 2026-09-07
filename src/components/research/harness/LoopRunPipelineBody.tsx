@@ -49,6 +49,7 @@ import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { INSPECTOR_WIDTH_OPTIONS, useInspectorWidth } from '@/lib/harness/inspectorWidth'
 import { copyText, personaStageMarkdown } from '@/lib/harness/personaExport'
 import { SegmentControl } from '@/components/data-display'
+import { TriageFold } from '@/components/research/harness/PersonaVerdicts'
 import { cn } from '@/lib/utils'
 import {
   funnelReach,
@@ -57,6 +58,7 @@ import {
   statusVariant,
   traceScanEvent,
   traceTerminalState,
+  traceTriage,
 } from '@/lib/harness/harnessTrace'
 import { useApproveAllRun, useCurateRun, useObjectiveRun } from '@/hooks/useLoopHarness'
 import { useQuery } from '@tanstack/react-query'
@@ -291,6 +293,7 @@ export function LoopRunPipelineBody({
                       {s.step === 'plan' ? <HarnessPlanStepper planJson={run.plan_json} /> : null}
                       {s.step === 'scan_universe' ? <HarnessFunnelBars trace={trace} /> : null}
                       {s.step === 'propose_candidates' ? <ProposedSymbols trace={trace} /> : null}
+                      {s.step === 'triage' ? <TriageFold triage={traceTriage(trace)} /> : null}
                       {s.step === 'persona_evaluate' ? <HarnessPersonaFold trace={trace} /> : null}
                       {s.step === 'compose_report' ? <ReportStanceCounts trace={trace} /> : null}
                       {isDecision ? (

@@ -229,6 +229,8 @@ export async function deleteObjectiveRun(
   deleted?: boolean
   force?: boolean
   candidates_removed?: number
+  /** Candidates left behind because they already have a settled outcome. */
+  candidates_kept?: number
   drafts_dismissed?: number
 }> {
   const q = opts?.force ? '?force=true' : ''

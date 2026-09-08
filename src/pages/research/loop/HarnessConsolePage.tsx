@@ -227,16 +227,19 @@ export default function HarnessConsolePage() {
   const deleteRunMut = useMutation({
     mutationFn: async (v: { runIds: string[]; force?: boolean }) => {
       let candidates_removed = 0
+      let candidates_kept = 0
       let drafts_dismissed = 0
       for (const runId of v.runIds) {
         const res = await deleteObjectiveRun(runId, { force: v.force ?? true })
         candidates_removed += res.candidates_removed ?? 0
+        candidates_kept += res.candidates_kept ?? 0
         drafts_dismissed += res.drafts_dismissed ?? 0
       }
       return {
         deleted: v.runIds.length,
         runIds: v.runIds,
         candidates_removed,
+        candidates_kept,
         drafts_dismissed,
       }
     },
@@ -248,12 +251,14 @@ export default function HarnessConsolePage() {
       void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
       const removed = res.candidates_removed ?? 0
+      const kept = res.candidates_kept ?? 0
       const dismissed = res.drafts_dismissed ?? 0
       const n = res.deleted
+      // Naming what survived matters as much as naming what went: a settled
+      // outcome is the only record of what the market did after a pick.
+      const keptNote = kept > 0 ? ` Kept ${kept} candidate(s) that have settled outcomes.` : ''
       setApproveFeedback(
-        n > 1
-          ? `Deleted ${n} runs — removed ${removed} candidate(s), dismissed ${dismissed} draft(s). Hypotheses kept.`
-          : `Deleted run — removed ${removed} candidate(s), dismissed ${dismissed} draft(s). Hypotheses kept.`,
+        `Deleted ${n > 1 ? `${n} runs` : 'run'} — removed ${removed} candidate(s), dismissed ${dismissed} draft(s). Hypotheses kept.${keptNote}`,
       )
     },
   })
@@ -503,10 +508,12 @@ export default function HarnessConsolePage() {
                   nCand != null && nCand > 0
                     ? `This also deletes ${nCand}+ candidate(s) that point at them and dismisses pending drafts.`
                     : 'This also deletes any candidates that still point at them and dismisses pending drafts.'
+                const evidence =
+                  ' Candidates that already have a settled outcome are kept — that measurement is what the leash and the track record read.'
                 if (ids.length > 1) {
-                  return `Delete ${deletingGroup.run.id} and ${ids.length - 1} identical re-run(s)? Their funnels and traces go with them. ${lineage} Promoted hypotheses are kept.`
+                  return `Delete ${deletingGroup.run.id} and ${ids.length - 1} identical re-run(s)? Their funnels and traces go with them. ${lineage} Promoted hypotheses are kept.${evidence}`
                 }
-                return `Delete ${deletingGroup.run.id}? Its funnel and trace go with it. ${lineage} Promoted hypotheses are kept.`
+                return `Delete ${deletingGroup.run.id}? Its funnel and trace go with it. ${lineage} Promoted hypotheses are kept.${evidence}`
               })()
             : ''
         }

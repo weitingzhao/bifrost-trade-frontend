@@ -49,14 +49,21 @@ export function ObjectiveRunsSection({ objectiveId, objectiveTitle }: { objectiv
   const curateMut = useMutation({ mutationFn: (runId: string) => curateRun(runId), onSuccess: invalidate })
   const deleteMut = useMutation({
     mutationFn: async (runIds: string[]) => {
-      for (const id of runIds) await deleteObjectiveRun(id, { force: true })
-      return runIds.length
+      let kept = 0
+      for (const id of runIds) {
+        const res = await deleteObjectiveRun(id, { force: true })
+        kept += res.candidates_kept ?? 0
+      }
+      return { deleted: runIds.length, kept }
     },
-    onSuccess: (n) => {
+    onSuccess: ({ deleted, kept }) => {
       setDeleting(null)
       invalidate()
       void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
-      setNotice(`Deleted ${n} run${n === 1 ? '' : 's'}. Hypotheses kept.`)
+      setNotice(
+        `Deleted ${deleted} run${deleted === 1 ? '' : 's'}. Hypotheses kept.` +
+          (kept > 0 ? ` Kept ${kept} candidate(s) that have settled outcomes.` : ''),
+      )
     },
   })
 
@@ -91,7 +98,7 @@ export function ObjectiveRunsSection({ objectiveId, objectiveTitle }: { objectiv
         title="Delete run"
         message={
           deleting
-            ? `Delete ${ids(deleting).length > 1 ? `${ids(deleting).length} runs` : deleting.run.id}? Funnels and traces go with them, candidates that point at them are removed and pending drafts dismissed. Promoted hypotheses are kept.`
+            ? `Delete ${ids(deleting).length > 1 ? `${ids(deleting).length} runs` : deleting.run.id}? Funnels and traces go with them, candidates that point at them are removed and pending drafts dismissed. Promoted hypotheses are kept, and so is any candidate that already has a settled outcome.`
             : ''
         }
         confirmLabel="Delete"

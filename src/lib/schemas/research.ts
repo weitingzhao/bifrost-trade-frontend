@@ -304,6 +304,16 @@ export const AutopilotStandingSchema = z
       .passthrough(),
     pending_memos: z.number(),
     pending_drafts: z.number().optional(),
+    pending_decisions: z
+      .object({
+        calls: z.number(),
+        drafts: z.number(),
+        folded: z.number(),
+        inert: z.number(),
+        briefings: z.number(),
+      })
+      .passthrough()
+      .optional(),
     best_conviction: z.number(),
     objectives: z.array(AutopilotObjectiveSchema),
   })

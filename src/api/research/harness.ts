@@ -318,8 +318,22 @@ export interface AutopilotStanding {
   trust: { matrix_level: string | null; matrix_l0: boolean; source?: string; note: string }
   next_run_at: string
   purse: { spent_usd: number; cap_usd: number; providers: { provider: string; spent_usd: number; cap_usd: number; exhausted: boolean }[] }
+  /** Candidate batches waiting, across the active objectives. */
   pending_memos: number
   pending_drafts?: number
+  /**
+   * The whole Decision Inbox queue, counted the way that page counts it: a
+   * briefing is not a call, repeats of one batch are one call, and a policy
+   * suggestion that would write nothing is not a call. Optional because an
+   * older backend does not send it.
+   */
+  pending_decisions?: {
+    calls: number
+    drafts: number
+    folded: number
+    inert: number
+    briefings: number
+  }
   best_conviction: number
   objectives: AutopilotObjective[]
 }

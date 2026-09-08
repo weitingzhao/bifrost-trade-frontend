@@ -17,6 +17,7 @@ import {
   useApproveDraft,
   useDismissDraft,
   useResearchDrafts,
+  DRAFTS_PAGE_MAX,
 } from '@/hooks/useResearchDrafts'
 import type { DraftKind } from '@/api/researchDrafts'
 import {
@@ -67,7 +68,9 @@ export default function DecisionInboxPage() {
       ? undefined
       : (chosenFilter as DraftKind)
 
-  const query = useResearchDrafts({ status: 'pending', kind: apiKind })
+  // The whole queue, not a page of it: every count on this page is computed
+  // from what comes back, and the cards are the work itself.
+  const query = useResearchDrafts({ status: 'pending', kind: apiKind, limit: DRAFTS_PAGE_MAX })
   const approve = useApproveDraft()
   const dismiss = useDismissDraft()
 
@@ -103,13 +106,21 @@ export default function DecisionInboxPage() {
   const counts = useMemo(() => {
     const all = query.data?.rows ?? []
     const decisionGroups = groupIdenticalDrafts(all.filter((d) => isDecisionKind(d.kind)))
+    const total = query.data?.pending_count ?? all.length
     return {
       decisions: decisionGroups.filter((g) => isActionableDraft(g.draft)).length,
       inert: decisionGroups.filter((g) => !isActionableDraft(g.draft)).length,
       collapsed: decisionGroups.reduce((n, g) => n + g.superseded.length, 0),
       briefings: all.filter((d) => BRIEFING_KINDS.has(d.kind)).length,
+      total,
+      // Every other number here is counted off the rows that arrived. When the
+      // queue is longer than one page they describe a subset while `total`
+      // describes the queue, and the line reads as though they agree — which
+      // is how "24 to decide · 77 pending" came to mean twenty-seven drafts
+      // nobody could see.
+      unseen: Math.max(0, total - all.length),
     }
-  }, [query.data?.rows])
+  }, [query.data?.rows, query.data?.pending_count])
 
   return (
     <PageShell padding="default" className="space-y-3">
@@ -129,9 +140,14 @@ export default function DecisionInboxPage() {
         <span className="text-dense-meta text-muted-foreground ml-auto">
           {counts.decisions} to decide
           {counts.inert > 0 ? ` · ${counts.inert} nothing to merge` : ''} ·{' '}
-          {counts.briefings} briefing{counts.briefings === 1 ? '' : 's'} ·{' '}
-          {query.data?.pending_count ?? rows.length} pending
+          {counts.briefings} briefing{counts.briefings === 1 ? '' : 's'} · {counts.total} pending
           {counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}
+          {counts.unseen > 0 ? (
+            <span className="text-amber-500" title={`Showing the newest ${DRAFTS_PAGE_MAX}.`}>
+              {' '}
+              · {counts.unseen} not shown
+            </span>
+          ) : null}
         </span>
       </div>
 

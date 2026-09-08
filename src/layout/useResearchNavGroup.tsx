@@ -29,11 +29,16 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
   const extras = useMemo(() => {
     const byPath = new Map<string, ReactNode>()
     if (standing) {
-      if (standing.pending_memos > 0) {
+      // The badge sits on the Decision Inbox, so it counts the Inbox — not
+      // candidate batches, which is what `pending_memos` counts and what the
+      // objective rows below want. The badge said three while the page it
+      // opened offered twenty-four calls.
+      const inbox = standing.pending_decisions?.calls ?? standing.pending_memos
+      if (inbox > 0) {
         byPath.set(
           AUTOPILOT_PAGES.inbox.to!,
-          <DenseTag variant="warning" size="cell" title="Memos waiting on you">
-            {standing.pending_memos}
+          <DenseTag variant="warning" size="cell" title="Drafts waiting on a call">
+            {inbox}
           </DenseTag>,
         )
       }

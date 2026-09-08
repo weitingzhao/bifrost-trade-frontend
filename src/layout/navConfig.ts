@@ -41,30 +41,20 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Portfolio',
     icon: LayoutDashboard,
-    // Two homes, each with its pages beneath (Owner decision, 2026-09-07).
-    // The book: Performance is how it is doing, Positions what is in it,
-    // Backing & Model what backs it. The ledger: Accounts is what the broker
-    // says, Trade Ledger what was traded, Transfer & Pay what cash moved.
-    // The Trading Copilot lives with the Copilot seat under Research.
-    subGroups: [
-      {
-        label: 'Book',
-        items: [
-          route('Performance', '/portfolio/performance', LineChart, [
-            route('Positions', '/portfolio/positions', TrendingUp),
-            route('Backing & Model', '/portfolio/backing', Layers),
-          ]),
-        ],
-      },
-      {
-        label: 'Ledger',
-        items: [
-          route('Accounts', '/portfolio/accounts', LayoutDashboard, [
-            route('Trade Ledger', '/portfolio/ledger', ClipboardList),
-            route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
-          ]),
-        ],
-      },
+    // Two homes, each with its pages beneath, and no section labels — the
+    // homes are the labels (Owner decision, 2026-09-07). Performance is the
+    // book: how it is doing, then what is in it, then what backs it. Accounts
+    // is the ledger: what the broker says, then what was traded, then what
+    // cash moved. The Trading Copilot lives with the Copilot seat under Research.
+    items: [
+      route('Performance', '/portfolio/performance', LineChart, [
+        route('Positions', '/portfolio/positions', TrendingUp),
+        route('Backing & Model', '/portfolio/backing', Layers),
+      ]),
+      route('Accounts', '/portfolio/accounts', LayoutDashboard, [
+        route('Trade Ledger', '/portfolio/ledger', ClipboardList),
+        route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
+      ]),
     ],
   },
   {

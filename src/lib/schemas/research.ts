@@ -308,6 +308,41 @@ export const AutopilotStandingSchema = z
   })
   .passthrough()
 
+export const CopilotStandingSchema = z
+  .object({
+    day_utc: z.string().nullable(),
+    brief: z
+      .object({
+        draft_id: z.string().nullable(),
+        status: z.string().nullable(),
+        created_at: z.string().nullable(),
+        headline: z.string(),
+        model: z.string().nullable().optional(),
+      })
+      .passthrough()
+      .nullable(),
+    sessions: z
+      .object({
+        today: z.number(),
+        recent: z.array(
+          z
+            .object({
+              id: z.string(),
+              title: z.string(),
+              updated_at: z.string().nullable(),
+              model: z.string().nullable().optional(),
+              turns: z.number().nullable().optional(),
+            })
+            .passthrough(),
+        ),
+      })
+      .passthrough(),
+    approvals: z.record(z.string(), z.number()),
+    usage: CopilotUsageSchema,
+    db_ok: z.boolean().optional(),
+  })
+  .passthrough()
+
 // ── Loop policy templates (P0-2) ────────────────────────────────────────
 // The Loop's strategy is data now, not a constant compiled into two codebases.
 // `.passthrough()` throughout: policy_json is the runtime's LoopPolicy dump and

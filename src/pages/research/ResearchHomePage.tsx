@@ -1,24 +1,22 @@
 /**
- * Research Home page (Wave RS-A4).
+ * Research Home — `/research`.
  *
- * `/research` landing: workflow-oriented view that treats the 17 existing
- * Research pages as nodes in a pipeline. Layered as three sections:
- *
- *   1. Verdict Strip — "N active hypotheses · M new discoveries · K backtests"
- *   2. Active Hypotheses — recent hypothesis cards
- *   3. Today's Discoveries — 4-column top-3 hit lists with Save-as-Hypothesis
- *   4. Recent Backtests — placeholder until Wave RS-C4 fills it
+ * Opens with the three postures the product is built around, side by side
+ * and each in its own density: Autopilot (level 3, unattended), Copilot
+ * (level 2, on request), Workbench (level 1, by hand). Then the circuit the
+ * three share, and the workbench material that was here before: active
+ * hypotheses, today's discoveries, recent backtests.
  */
 import { Link } from 'react-router-dom'
 import { Beaker, ClipboardList, Compass, Plus, Radar } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { LoopOverviewStrip } from '@/pages/research/home/LoopOverviewStrip'
+import { ResearchPostures } from '@/pages/research/home/ResearchPostures'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import { EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DiscoveryHitList } from '@/components/research/DiscoveryHitList'
 import { HypothesisCard } from '@/components/research/HypothesisCard'
@@ -29,78 +27,7 @@ import { useActiveHypotheses } from '@/hooks/useHypotheses'
 import { useResearchHomeData } from '@/hooks/useResearchHomeData'
 import { useBacktestRuns } from '@/hooks/useBacktestEventQuery'
 import { pnlColorClass } from '@/utils/dailyChange'
-import type { LampColor } from '@/lib/researchFreshness'
 import type { BacktestRunRow } from '@/api/research/backtestEvent'
-
-function VerdictSummary({
-  totalActive,
-  totalDiscoveries,
-  totalBacktests,
-  lampDiscoveries,
-  lampHypotheses,
-  lampBacktests,
-}: {
-  totalActive: number
-  totalDiscoveries: number
-  totalBacktests: number
-  lampDiscoveries: LampColor
-  lampHypotheses: LampColor
-  lampBacktests: LampColor
-}) {
-  return (
-    <Card variant="elevated">
-      <CardContent className="grid grid-cols-1 gap-3 px-4 py-3 md:grid-cols-3">
-        <SummaryLine
-          lamp={lampHypotheses}
-          label="Active hypotheses"
-          value={totalActive}
-          hint={
-            totalActive === 0
-              ? 'No live theses — start one from a Discovery hit or a per-page Save button.'
-              : 'Snapshot from research.hypothesis (Golden Source).'
-          }
-        />
-        <SummaryLine
-          lamp={lampDiscoveries}
-          label="New discoveries today"
-          value={totalDiscoveries}
-          hint="SEPA hits · events · IV extremes · sentiment anomalies."
-        />
-        <SummaryLine
-          lamp={lampBacktests}
-          label="Backtest runs (recent)"
-          value={totalBacktests}
-          hint="Latest event-driven runs from research.backtest_run (RS-C4)."
-        />
-      </CardContent>
-    </Card>
-  )
-}
-
-function SummaryLine({
-  lamp,
-  label,
-  value,
-  hint,
-}: {
-  lamp: LampColor
-  label: string
-  value: number
-  hint: string
-}) {
-  return (
-    <div className="min-w-0 space-y-1">
-      <div className="flex items-center gap-2">
-        <StatusLamp lamp={lamp} className="h-2.5 w-2.5 shrink-0" />
-        <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <p className="ml-auto font-mono text-lg font-semibold tabular-nums">{value}</p>
-      </div>
-      <p className="text-dense-meta text-muted-foreground leading-snug">{hint}</p>
-    </div>
-  )
-}
 
 export default function ResearchHomePage() {
   const activeQ = useActiveHypotheses(5)
@@ -111,21 +38,6 @@ export default function ResearchHomePage() {
   const recent = activeQ.data?.recent_active ?? []
   const recentBacktests = backtestsQ.data?.rows ?? []
 
-  const lampHypotheses: LampColor = activeQ.isError
-    ? 'red'
-    : activeCount > 0
-      ? 'green'
-      : 'yellow'
-  const lampDiscoveries: LampColor = home.isError
-    ? 'red'
-    : home.totalDiscoveries > 0
-      ? 'green'
-      : 'yellow'
-  const lampBacktests: LampColor = backtestsQ.isError
-    ? 'red'
-    : recentBacktests.length > 0
-      ? 'green'
-      : 'yellow'
 
   const hardError = activeQ.isError && home.isError
 
@@ -133,7 +45,7 @@ export default function ResearchHomePage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Research"
-        description="Workflow-oriented landing: active hypotheses, today's discoveries, and recent backtests. Observe-only (D10)."
+        description="Three ways it works for you — it runs on its own, it works when asked, or you open the pages. Advisory only, D10 BLOCKED."
         actions={
           <div className="flex items-center gap-2">
             <AskCopilotButton
@@ -162,20 +74,15 @@ export default function ResearchHomePage() {
         }
       />
 
-      {/* The circuit first. Every section below shows one segment of it, and a
-          segment looks healthy on its own while the loop is open. */}
+      <ResearchPostures activeHypotheses={activeCount} discoveries={home.totalDiscoveries} />
+
+      {/* The circuit the three postures share. Every section below shows one
+          segment of it, and a segment looks healthy on its own while the loop
+          is open. */}
       <LoopOverviewStrip />
 
       <UniverseReachStrip />
 
-      <VerdictSummary
-        totalActive={activeCount}
-        totalDiscoveries={home.totalDiscoveries}
-        totalBacktests={recentBacktests.length}
-        lampDiscoveries={lampDiscoveries}
-        lampHypotheses={lampHypotheses}
-        lampBacktests={lampBacktests}
-      />
 
       {hardError ? (
         <QueryErrorAlert

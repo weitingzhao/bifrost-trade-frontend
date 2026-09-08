@@ -10,6 +10,14 @@ import { withValidation } from '@/lib/apiValidation'
 import { DraftListResponseSchema } from '@/lib/schemas/research'
 import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
 
+/**
+ * Every kind the backend will accept, mirroring `repositories/ai_draft`'s
+ * `_ALLOWED_KINDS`. The last three were missing here while the Decision Inbox
+ * was already showing them — sixty decision_draft rows and fourteen
+ * order_intent rows exist. Nothing broke, because the Inbox denies by kind
+ * rather than allowing by kind, but a switch written against this union would
+ * have looked exhaustive and silently dropped them.
+ */
 export type DraftKind =
   | 'morning_brief'
   | 'eod_verdict'
@@ -18,6 +26,9 @@ export type DraftKind =
   | 'playbook_rule'
   | 'playbook_note'
   | 'candidate_batch'
+  | 'hypothesis_draft'
+  | 'decision_draft'
+  | 'order_intent'
   | 'policy_suggestion'
 export type DraftStatus = 'pending' | 'approved' | 'dismissed' | 'expired'
 
@@ -111,7 +122,11 @@ export async function dismissResearchDraft(
   )
 }
 
-export type ManualDraftKind = 'hypothesis_suggestion' | 'morning_brief' | 'eod_verdict'
+/** The subset a person may create by hand — deliberately narrower than DraftKind. */
+export type ManualDraftKind = Extract<
+  DraftKind,
+  'hypothesis_suggestion' | 'morning_brief' | 'eod_verdict'
+>
 
 export interface CreateResearchDraftBody {
   kind: ManualDraftKind

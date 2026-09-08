@@ -46,6 +46,9 @@ export const OWNER_POLICY_KEYS: readonly string[] = [
   'use_llm_plan',
   'llm_model',
   'seed_symbols',
+  // Owner-only on purpose: a model that proposes candidates must not be able to
+  // propose loosening the gate that suppresses the ones already refused.
+  'decline_memory',
 ]
 
 export const UNIVERSE_MODES = [
@@ -395,6 +398,40 @@ export const POLICY_SECTIONS: PolicySection[] = [
         kind: 'text',
         defaultValue: 'SPY',
         help: 'The symbol excess return is measured against.',
+      },
+    ],
+  },
+  {
+    id: 'decline',
+    title: 'Declined names',
+    lead: 'A name you refused comes back only when something about it got better.',
+    fields: [
+      {
+        path: 'decline_memory.enabled',
+        label: 'Remember refusals',
+        kind: 'bool',
+        defaultValue: true,
+        help: 'On: a dismissed name is proposed again only when its reading improved, and the card says what changed. Off: every run re-proposes it. This is why the same eleven symbols arrived two mornings running.',
+      },
+      {
+        path: 'decline_memory.lookback_days',
+        label: 'Remember for (days)',
+        kind: 'number',
+        min: 1,
+        max: 365,
+        step: 1,
+        defaultValue: 90,
+        help: 'How far back a refusal is remembered. Not a cooldown — nothing is re-proposed because time passed. Past this the run simply has no record of the decline.',
+      },
+      {
+        path: 'decline_memory.min_score_delta',
+        label: 'Score move that counts',
+        kind: 'number',
+        min: 0,
+        max: 100,
+        step: 0.5,
+        defaultValue: 5,
+        help: 'How far the score must rise before a refused name is worth showing again. A fall never counts. The other triggers — path advancing, grade up a notch, a new qualifying event, a regime flip — are definitions, not thresholds, so they are not editable here.',
       },
     ],
   },

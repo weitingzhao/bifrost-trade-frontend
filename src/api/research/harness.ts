@@ -12,7 +12,16 @@ import { AutopilotStandingSchema, RunEstimateSchema } from '@/lib/schemas/resear
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 
-export type ObjectiveStatus = 'active' | 'paused' | 'retired'
+/**
+ * The whole vocabulary. This said `'active' | 'paused' | 'retired'` while the
+ * archive button, the objective page and the backend all used `archived` —
+ * three call sites in this file wrote the real pair as inline literals, so the
+ * exported type was a fiction nothing type-checked against. Backend authority
+ * is `repositories/objective.OBJECTIVE_STATUSES`, which now refuses anything
+ * else with a 422 rather than writing a status no list can find.
+ */
+export const OBJECTIVE_STATUSES = ['active', 'archived'] as const
+export type ObjectiveStatus = (typeof OBJECTIVE_STATUSES)[number]
 export type ObjectiveRunStatus =
   | 'running'
   | 'awaiting_approval'
@@ -433,7 +442,7 @@ export async function batchRunObjective(
  * same ledger a model's suggestion would.
  */
 export interface ObjectivePatchBody {
-  status?: 'active' | 'archived'
+  status?: ObjectiveStatus
   title?: string
   description?: string
   schedule?: string
@@ -465,7 +474,7 @@ export async function fetchObjective(objectiveId: string): Promise<ResearchObjec
 
 export async function setObjectiveStatus(
   objectiveId: string,
-  status: 'active' | 'archived',
+  status: ObjectiveStatus,
 ): Promise<ResearchObjective> {
   return unwrap<ResearchObjective>(
     await fetch(researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}`), {

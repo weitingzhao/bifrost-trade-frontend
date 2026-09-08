@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ExternalLink, Network, ScrollText } from 'lucide-react'
+import { Blocks, ExternalLink, Network } from 'lucide-react'
 import { shellNavCollapsedIconButtonClass, useSidebar } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
 import {
@@ -7,11 +7,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useLogPanel } from '@/hooks/useLogPanel'
+import { OPS_CONSOLE_URL } from '@/lib/opsConsole'
+import { usePlatformPanel } from '@/hooks/usePlatformPanel'
 import { useReactorMap } from '@/hooks/useReactorMap'
 import { SETTINGS_ICON, SETTINGS_ITEM } from './navConfig'
 
-const OPS_CONSOLE_URL = import.meta.env.VITE_OPS_CONSOLE_URL ?? 'http://127.0.0.1:5180'
 
 /**
  * The Ops Console, as one icon rather than a two-line card.
@@ -38,7 +38,7 @@ function OpsConsoleButton({ className }: { className: string }) {
 
 function LogAndSettingsFooter() {
   const location = useLocation()
-  const { open: logsOpen, toggle: toggleLogs, errorCount } = useLogPanel()
+  const { open: pluginsOpen, toggle: togglePlugins, attentionCount } = usePlatformPanel()
   const { open: reactorOpen, toggle: toggleReactor, alertCount } = useReactorMap()
   const settingsActive = location.pathname.startsWith('/settings')
 
@@ -84,20 +84,20 @@ function LogAndSettingsFooter() {
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <button onClick={toggleLogs} className={cn(iconBtn, logsOpen ? btnActive : btnIdle)}>
+          <button onClick={togglePlugins} className={cn(iconBtn, pluginsOpen ? btnActive : btnIdle)}>
             <div className="relative">
-              <ScrollText className="h-3.5 w-3.5 opacity-70" />
-              {errorCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-red-500 text-[7px] font-bold text-white leading-none">
-                  {errorCount > 9 ? '9+' : errorCount}
+              <Blocks className="h-3.5 w-3.5 opacity-70" />
+              {attentionCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-amber-500 text-[7px] font-bold text-white leading-none">
+                  {attentionCount > 9 ? '9+' : attentionCount}
                 </span>
               )}
             </div>
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs font-medium">
-          {logsOpen ? 'Close logs' : 'Logs'}
-          {errorCount > 0 ? ` · ${errorCount} error${errorCount > 1 ? 's' : ''}` : ''}
+          {pluginsOpen ? 'Close platform plugins' : 'Platform plugins'}
+          {attentionCount > 0 ? ` · ${attentionCount} need${attentionCount > 1 ? '' : 's'} a look` : ''}
         </TooltipContent>
       </Tooltip>
     </div>
@@ -129,7 +129,7 @@ function CollapsedReactorButton() {
 }
 
 function CollapsedLogButton() {
-  const { open, toggle, errorCount } = useLogPanel()
+  const { open, toggle, attentionCount } = usePlatformPanel()
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -137,16 +137,16 @@ function CollapsedLogButton() {
           onClick={toggle}
           className={cn('relative', shellNavCollapsedIconButtonClass(open))}
         >
-          <ScrollText className="h-4 w-4 shrink-0" />
-          {errorCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-dense-micro font-bold text-white leading-none">
-              {errorCount > 9 ? '9+' : errorCount}
+          <Blocks className="h-4 w-4 shrink-0" />
+          {attentionCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-dense-micro font-bold text-white leading-none">
+              {attentionCount > 9 ? '9+' : attentionCount}
             </span>
           )}
         </button>
       </TooltipTrigger>
       <TooltipContent side="right" className="text-xs font-medium">
-        Logs {errorCount > 0 ? `· ${errorCount} error${errorCount > 1 ? 's' : ''}` : ''}
+        Platform plugins {attentionCount > 0 ? `· ${attentionCount} need${attentionCount > 1 ? '' : 's'} a look` : ''}
       </TooltipContent>
     </Tooltip>
   )

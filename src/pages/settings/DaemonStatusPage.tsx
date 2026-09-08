@@ -21,7 +21,7 @@ import { useDaemonEngineOps } from './daemon/useDaemonEngineOps'
 import { daemonElevatedCardClass } from './daemon/daemonUi'
 
 const DAEMON_PAGE_INFO =
-  'Ops start/stop for Strategy Trading Engine and Account Sync; monitor status, suspend/resume hedging, and recent automated operations. Logs: footer LogPanel → Daemon sources.'
+  'Ops start/stop for Strategy Trading Engine and Account Sync; monitor status, suspend/resume hedging, and recent automated operations.'
 
 function DaemonCardSkeleton() {
   return <Skeleton className="h-40 w-full rounded-lg" />

@@ -10,9 +10,9 @@ import { AppHeader } from './AppHeader'
 import { TopNav } from './TopNav'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
 import { MessageDrawer } from '@/components/MessageCenter/MessageDrawer'
-import { LogPanel } from '@/components/LogPanel'
+import { PlatformStatusPanel } from '@/components/PlatformStatusPanel'
 import { ReactorMapPanel } from '@/components/topology/ReactorMapPanel'
-import { LogPanelProvider } from '@/context/LogPanelContext'
+import { PlatformPanelProvider } from '@/context/PlatformPanelContext'
 import { ReactorMapProvider } from '@/context/ReactorMapContext'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useNavMode } from '@/hooks/useNavMode'
@@ -76,7 +76,7 @@ export function AppLayout() {
   if (effectiveMode === 'topnav') {
     return (
       <ReactorMapProvider>
-        <LogPanelProvider>
+        <PlatformPanelProvider>
           <div className="flex flex-col h-svh bg-card">
             <TopNav
               activeMsgCount={activeMsgCount}
@@ -88,18 +88,18 @@ export function AppLayout() {
               <BoundedOutlet />
             </main>
             <ReactorMapPanel />
-            <LogPanel />
+            <PlatformStatusPanel />
             {msgCenter}
             <CopilotFloatingBubble />
           </div>
-        </LogPanelProvider>
+        </PlatformPanelProvider>
       </ReactorMapProvider>
     )
   }
 
   return (
     <ReactorMapProvider>
-      <LogPanelProvider>
+      <PlatformPanelProvider>
         <SidebarProvider defaultOpen={readSidebarCookie()}>
           <AppSidebar />
           {/* h-svh + overflow-hidden keeps dock panels inside the viewport */}
@@ -114,12 +114,12 @@ export function AppLayout() {
               <BoundedOutlet />
             </main>
             <ReactorMapPanel />
-            <LogPanel />
+            <PlatformStatusPanel />
           </SidebarInset>
           {msgCenter}
           <CopilotFloatingBubble />
         </SidebarProvider>
-      </LogPanelProvider>
+      </PlatformPanelProvider>
     </ReactorMapProvider>
   )
 }

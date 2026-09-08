@@ -54,7 +54,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/strategy/allocations': 'Allocations',
   '/strategy/option-category': 'Option Category',
   '/operations/daemon': 'System · Daemon',
-  '/operations/logs': 'System · Logs',
+  '/operations/platform': 'Platform Plugins',
   '/settings/daemon':                'System · Daemon Status',
   '/settings/api':                   'Settings · API Health',
   '/settings/api/architecture':      'Settings · API — Architecture',

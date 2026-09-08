@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useLogPanel } from '@/hooks/useLogPanel'
+import { usePlatformPanel } from '@/hooks/usePlatformPanel'
 
-/** Route alias: opens the footer LogPanel and redirects to Live. */
-export default function LogsPage() {
-  const { open, toggle } = useLogPanel()
+/** Route alias: opens the docked Platform Plugins panel and redirects to Live. */
+export default function PlatformStatusPage() {
+  const { open, toggle } = usePlatformPanel()
 
   useEffect(() => {
     if (!open) toggle()

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, Moon, Network, PanelLeft, ScrollText, Sun, SunMoon } from 'lucide-react'
-import { useLogPanel } from '@/hooks/useLogPanel'
+import { Bell, Blocks, ChevronDown, Moon, Network, PanelLeft, Sun, SunMoon } from 'lucide-react'
+import { usePlatformPanel } from '@/hooks/usePlatformPanel'
 import { useReactorMap } from '@/hooks/useReactorMap'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -170,7 +170,7 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
   const iconOnly = useTopNavIconOnly()
   const { mode, cycleMode } = useThemeMode()
   const { open: reactorOpen, toggle: toggleReactor, alertCount } = useReactorMap()
-  const { open: logsOpen, toggle: toggleLogs, errorCount } = useLogPanel()
+  const { open: pluginsOpen, toggle: togglePlugins, attentionCount } = usePlatformPanel()
   const handleClose = () => setOpenGroup(null)
 
   const settingsLink = (
@@ -264,19 +264,19 @@ export function TopNav({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: 
             <Button
               variant="ghost"
               size="icon"
-              className={cn('relative h-8 w-8', logsOpen && 'bg-muted')}
-              onClick={toggleLogs}
-              aria-label="Logs"
+              className={cn('relative h-8 w-8', pluginsOpen && 'bg-muted')}
+              onClick={togglePlugins}
+              aria-label="Platform plugins"
             >
-              <ScrollText className="h-4 w-4" />
-              {errorCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-dense-micro font-bold text-white leading-none">
-                  {errorCount > 9 ? '9+' : errorCount}
+              <Blocks className="h-4 w-4" />
+              {attentionCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-0.5 text-dense-micro font-bold text-white leading-none">
+                  {attentionCount > 9 ? '9+' : attentionCount}
                 </span>
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">Logs</TooltipContent>
+          <TooltipContent side="bottom">Platform plugins</TooltipContent>
         </Tooltip>
 
         {/* Nav mode toggle: switch to Sidebar */}

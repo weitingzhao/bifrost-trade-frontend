@@ -77,6 +77,21 @@ export function platformApiUrl(path: string): string {
 }
 
 /**
+ * Ops Platform plugin status — platform-api GET /api/v1/plugins/{name}/status.
+ *
+ * One string works in both environments because both rewrite it the same way:
+ * DEV: Vite proxies `/api/platform` → localhost:8780 and rewrites to `/api/v1`
+ * PROD/STG: Trade Traefik matches `/api/platform/plugins/<name>/status`, strips
+ *   `/api/platform` and adds `/api/v1` → platform-api:8780 @ bifrost-platform-prod
+ *
+ * Read-only by construction — the gateway rule matches `/status` and nothing
+ * else, so the rest of the control plane is not on the Trade origin.
+ */
+export function platformPluginStatusUrl(name: string): string {
+  return `/api/platform/plugins/${encodeURIComponent(name)}/status`
+}
+
+/**
  * Market Data Plugin (same-origin preferred).
  *
  * DEV: `/api/plugin/market-data/…` → Vite proxy → platform-api / plugin API

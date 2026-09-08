@@ -40,7 +40,8 @@ describe('useExhibitComposite', () => {
   afterEach(() => vi.unstubAllGlobals())
 
   it('asks once and seeds the per-lens cache the hub sections read', async () => {
-    const fetchMock = vi.fn(async () => ({
+    const fetchMock = vi.fn(async (url: string) => ({
+      url,
       ok: true,
       json: async () => ({ ok: true, data: { exhibits: EXHIBITS } }),
     }))
@@ -68,7 +69,7 @@ describe('useExhibitComposite', () => {
   })
 
   it('asks nothing without a symbol', () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi.fn<(url: string) => Promise<unknown>>()
     vi.stubGlobal('fetch', fetchMock)
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 

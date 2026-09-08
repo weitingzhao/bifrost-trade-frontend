@@ -34,7 +34,28 @@ export const POLICY_SUGGESTION_KEYS = [
   'min_source_hit_rate',
 ] as const
 
-export type PolicyKey = (typeof POLICY_SUGGESTION_KEYS)[number]
+/**
+ * What the Owner may change and a model may not.
+ *
+ * Mirrors the extra half of `repositories/objective.OWNER_POLICY_WHITELIST`.
+ * These decide how a run is planned, judged and seeded — a suggestion that
+ * could switch its own planner or judges off is not one a model should be able
+ * to make — and `decline_memory` encodes the Owner's own refusals, so a model
+ * that could propose loosening it could propose undoing them.
+ */
+export const OWNER_ONLY_POLICY_KEYS = [
+  'triage',
+  'persona_evaluate',
+  'use_llm_plan',
+  'llm_model',
+  'seed_symbols',
+  'decline_memory',
+] as const
+
+/** Every key an Owner-authored suggestion may carry. */
+export const OWNER_POLICY_KEYS = [...POLICY_SUGGESTION_KEYS, ...OWNER_ONLY_POLICY_KEYS] as const
+
+export type PolicyKey = (typeof OWNER_POLICY_KEYS)[number]
 
 /**
  * What each whitelist field gates, and what leaving it unset means.
@@ -68,6 +89,18 @@ export const POLICY_FIELD_HELP: Record<PolicyKey, string> = {
     'Outcome rule that settles candidate-born hypotheses without a click: at horizon_days sessions, excess return over the benchmark ≥ validate_excess validates, ≤ reject_excess rejects, in between drafts for you. Defaults 20 sessions, ±3% vs SPY.',
   min_source_hit_rate:
     'The leash: an unattended run accepts a candidate on its own only when the judges agree, validate did not block, the evidence is measured, and the source\'s settled hit rate (longest judged horizon, ≥ 5 outcomes) clears this floor. Default 0.45.',
+  triage:
+    'Which candidates go to the judges and which are held before they cost anything. Owner-only.',
+  persona_evaluate:
+    'Whether the judge personas sit at all. Off means every candidate reaches the Inbox unjudged. Owner-only.',
+  use_llm_plan:
+    'Whether a model writes the run plan, or the heuristic template does. Owner-only.',
+  llm_model:
+    'The model that writes the plan when the planner is on. Not set = the default for the provider. Owner-only.',
+  seed_symbols:
+    'Symbols fed in ahead of the funnel. A fallback for when the scan layer returns nothing. Owner-only.',
+  decline_memory:
+    'A name you dismissed comes back only when its reading improved — score up by min_score_delta, path or grade advanced, a new qualifying event, a regime flip — and the card says what changed. Off means every run re-proposes it. Owner-only.',
 }
 
 export interface PolicyDiffRow {
@@ -90,7 +123,13 @@ export function computePolicySuggestionRows(
   const current = _dict(payload.current_policy)
   const suggestion = _dict(payload.suggestion)
   const rows: PolicyDiffRow[] = []
-  for (const key of POLICY_SUGGESTION_KEYS) {
+  // The whitelist follows the author, exactly as `api/agents.py` chooses it at
+  // approval time. Walking only the model's keys made an Owner-authored change
+  // to a knob a model may not touch — the planner, the judges, the declined-name
+  // gate — render an empty diff and count as zero fields to merge: the Inbox
+  // called a real change reading material.
+  const keys = _isOwnerAuthored(payload) ? OWNER_POLICY_KEYS : POLICY_SUGGESTION_KEYS
+  for (const key of keys) {
     const inSug = Object.prototype.hasOwnProperty.call(suggestion, key)
     const inCur = Object.prototype.hasOwnProperty.call(current, key)
     if (!inSug && !inCur) continue
@@ -104,6 +143,11 @@ export function computePolicySuggestionRows(
     })
   }
   return rows
+}
+
+/** Owner-authored drafts carry this; the endpoint stamps it (`api/harness.py`). */
+function _isOwnerAuthored(payload: Record<string, unknown>): boolean {
+  return payload.manual === true || payload.source === 'owner'
 }
 
 /** How many whitelist fields a `policy_suggestion` would actually write. */

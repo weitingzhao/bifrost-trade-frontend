@@ -10,7 +10,10 @@
  * endpoint accepts. It never decides a value: defaults mirror
  * `copilot/harness/policy_schema.py` and are shown as such.
  */
-import { POLICY_FIELD_HELP, POLICY_SUGGESTION_KEYS } from '@/lib/harness/harnessDraftHelpers'
+import { OWNER_POLICY_KEYS, POLICY_FIELD_HELP } from '@/lib/harness/harnessDraftHelpers'
+
+/** Re-exported: the list lives beside the model's, which it extends. */
+export { OWNER_POLICY_KEYS }
 
 export type PolicyFieldKind = 'text' | 'number' | 'bool' | 'select' | 'symbols' | 'stages'
 
@@ -37,19 +40,6 @@ export interface PolicySection {
   lead: string
   fields: PolicyField[]
 }
-
-/** Top-level keys the Owner may change through the propose → approve path. */
-export const OWNER_POLICY_KEYS: readonly string[] = [
-  ...POLICY_SUGGESTION_KEYS,
-  'triage',
-  'persona_evaluate',
-  'use_llm_plan',
-  'llm_model',
-  'seed_symbols',
-  // Owner-only on purpose: a model that proposes candidates must not be able to
-  // propose loosening the gate that suppresses the ones already refused.
-  'decline_memory',
-]
 
 export const UNIVERSE_MODES = [
   { value: 'stock_composite', label: 'Stock composite — SEPA · momentum · events funnel' },
@@ -577,7 +567,8 @@ export function buildSuggestion(edits: Record<string, unknown>): Record<string, 
   let patch: Record<string, unknown> = {}
   for (const [path, value] of Object.entries(edits)) {
     const top = path.split('.')[0]
-    if (!OWNER_POLICY_KEYS.includes(top)) throw new Error(`${top} is not an Owner-editable policy key`)
+    if (!(OWNER_POLICY_KEYS as readonly string[]).includes(top))
+      throw new Error(`${top} is not an Owner-editable policy key`)
     patch = setPath(patch, path, value)
   }
   return patch

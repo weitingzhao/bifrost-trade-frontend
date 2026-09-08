@@ -4,6 +4,7 @@ import {
   BRIEFING_KINDS,
   LOOP_KINDS,
   POLICY_FIELD_HELP,
+  OWNER_POLICY_KEYS,
   POLICY_SUGGESTION_KEYS,
   batchLeash,
   candidateBatchDataSource,
@@ -299,14 +300,65 @@ describe('candidateBatch helpers', () => {
   })
 })
 
+describe('the diff follows the draft author', () => {
+  /**
+   * `api/agents.py` picks the whitelist by author at approval time: a manual
+   * draft gets the Owner's set, a model's gets the narrower one. The diff table
+   * walked only the model's, so an Owner change to a knob a model may not touch
+   * showed an empty table and counted as zero fields to merge — the Inbox
+   * called a real change reading material and left it out of "to decide".
+   */
+  const ownerDraft = (suggestion: Record<string, unknown>, current: Record<string, unknown> = {}) => ({
+    manual: true,
+    current_policy: current,
+    suggestion,
+  })
+
+  it('shows an Owner-only key as a change', () => {
+    const payload = ownerDraft({ decline_memory: { enabled: false } })
+    expect(policySuggestionMergeCount(payload)).toBe(1)
+    const row = computePolicySuggestionRows(payload).find((r) => r.key === 'decline_memory')
+    expect(row?.changed).toBe(true)
+    expect(row?.proposed).toEqual({ enabled: false })
+  })
+
+  it.each(['triage', 'persona_evaluate', 'use_llm_plan', 'llm_model', 'seed_symbols', 'decline_memory'])(
+    'counts %s when the Owner proposes it',
+    (key) => {
+      expect(policySuggestionMergeCount(ownerDraft({ [key]: 'x' }))).toBe(1)
+    },
+  )
+
+  it('still hides an Owner-only key from a model-authored draft — the backend would drop it', () => {
+    const modelDraft = { current_policy: {}, suggestion: { decline_memory: { enabled: false } } }
+    expect(policySuggestionMergeCount(modelDraft)).toBe(0)
+    expect(computePolicySuggestionRows(modelDraft)).toEqual([])
+  })
+
+  it('accepts either marker the endpoint stamps', () => {
+    const bySource = { source: 'owner', current_policy: {}, suggestion: { use_llm_plan: true } }
+    expect(policySuggestionMergeCount(bySource)).toBe(1)
+  })
+
+  it('an Owner draft that changes nothing is still not a call', () => {
+    const payload = ownerDraft({ decline_memory: { enabled: true } }, { decline_memory: { enabled: true } })
+    expect(policySuggestionMergeCount(payload)).toBe(0)
+  })
+
+  it('the Owner list is the model list plus the knobs a model may not turn', () => {
+    expect(OWNER_POLICY_KEYS.slice(0, POLICY_SUGGESTION_KEYS.length)).toEqual([...POLICY_SUGGESTION_KEYS])
+    expect(OWNER_POLICY_KEYS.length).toBeGreaterThan(POLICY_SUGGESTION_KEYS.length)
+  })
+})
+
 describe('POLICY_FIELD_HELP', () => {
   it('explains every whitelist field', () => {
     // A key added to the whitelist without help text ships a column the reader
     // has to ask about — which is how "null" got into the UI in the first place.
-    for (const key of POLICY_SUGGESTION_KEYS) {
+    for (const key of OWNER_POLICY_KEYS) {
       expect(POLICY_FIELD_HELP[key], `missing help for ${key}`).toBeTruthy()
     }
-    expect(Object.keys(POLICY_FIELD_HELP).sort()).toEqual([...POLICY_SUGGESTION_KEYS].sort())
+    expect(Object.keys(POLICY_FIELD_HELP).sort()).toEqual([...OWNER_POLICY_KEYS].sort())
   })
 
   it('says what leaving an optional gate unset does', () => {

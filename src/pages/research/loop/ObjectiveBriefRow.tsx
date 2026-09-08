@@ -62,6 +62,7 @@ export function ObjectiveRows({
   // Re-runs are folded into their row but not out of the bill.
   const spend = groups.reduce((sum, g) => sum + groupSpend(g).total_usd, 0)
   const memo = brief?.last_memo ?? null
+  const foldedHere = Math.max(0, (brief?.pending_drafts ?? brief?.pending_memos ?? 0) - (brief?.pending_memos ?? 0))
   const rec = brief?.track_record ?? null
   return (
     <li className="rounded-lg border border-border bg-secondary/40 shadow-[0_2px_6px_rgba(0,0,0,0.15)]">
@@ -131,12 +132,27 @@ export function ObjectiveRows({
               <span className="font-mono text-base font-semibold tabular-nums">{spend > 0 ? fmtUsd(spend) : '$0'}</span>
               <span className="text-muted-foreground"> · {groups.length} run{groups.length === 1 ? '' : 's'}</span>
             </Fact>
+            {/* The call is what waits on the Owner; the run count that used to
+                sit here answered a different question and is kept in the title. */}
             <Fact label="Waiting on you">
-              {awaitingN > 0 ? (
-                <span className="font-mono text-base font-semibold tabular-nums text-warning">{awaitingN}</span>
-              ) : (
-                <span className="text-muted-foreground">nothing</span>
-              )}
+              <span
+                title={[
+                  foldedHere > 0
+                    ? `${brief?.pending_drafts} draft rows in the Inbox; ${foldedHere} repeat the same names and fold in.`
+                    : null,
+                  `${awaitingN} run${awaitingN === 1 ? '' : 's'} awaiting approval.`,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                <span className="font-mono text-base font-semibold tabular-nums text-warning">
+                  {brief?.pending_memos ?? 0}
+                </span>{' '}
+                <span className="text-muted-foreground">
+                  {(brief?.pending_memos ?? 0) === 1 ? 'call' : 'calls'}
+                  {foldedHere > 0 ? ` · ${foldedHere} folded` : ''}
+                </span>
+              </span>
             </Fact>
           </dl>
         </div>

@@ -298,7 +298,10 @@ export interface AutopilotObjective {
   last_memo: AutopilotMemo | null
   track_record: AutopilotTrackRecord
   spend_30d_usd: number
+  /** Distinct decisions waiting — repeats of the same names count once. */
   pending_memos: number
+  /** The draft rows behind those decisions; the difference was folded. */
+  pending_drafts?: number
   runs: number
 }
 
@@ -307,6 +310,7 @@ export interface AutopilotStanding {
   next_run_at: string
   purse: { spent_usd: number; cap_usd: number; providers: { provider: string; spent_usd: number; cap_usd: number; exhausted: boolean }[] }
   pending_memos: number
+  pending_drafts?: number
   best_conviction: number
   objectives: AutopilotObjective[]
 }

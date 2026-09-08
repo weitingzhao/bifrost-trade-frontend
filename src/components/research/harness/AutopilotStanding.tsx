@@ -26,6 +26,9 @@ export function AutopilotKpis({ standing }: { standing: AutopilotStanding }) {
   const t = standing.trust
   const p = standing.purse
   const exhausted = p.providers.filter((x) => x.exhausted).map((x) => x.provider)
+  // Re-running an objective proposes the same names again; the Inbox has folded
+  // those into one call for a while, and this counted the rows.
+  const folded = Math.max(0, (standing.pending_drafts ?? standing.pending_memos) - standing.pending_memos)
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
       <Kpi label="Trust · cluster matrix" title={t.note}>
@@ -53,11 +56,19 @@ export function AutopilotKpis({ standing }: { standing: AutopilotStanding }) {
           </DenseTag>
         ) : null}
       </Kpi>
-      <Kpi label="Waiting on you" title="Candidate batches still pending in the Decision Inbox">
+      <Kpi
+        label="Waiting on you"
+        title={
+          folded > 0
+            ? `${standing.pending_drafts} draft rows in the Inbox; ${folded} are the same objective proposing the same names again and fold into the call above it.`
+            : 'Candidate batches still pending in the Decision Inbox'
+        }
+      >
         <span className="font-mono text-lg font-semibold tabular-nums">{standing.pending_memos}</span>
         <span className="text-dense-label text-muted-foreground">
-          {standing.pending_memos === 1 ? 'memo' : 'memos'}
+          {standing.pending_memos === 1 ? 'call' : 'calls'}
           {standing.best_conviction > 0 ? ` · best ${stars(standing.best_conviction).replace(/☆+$/, '')}` : ''}
+          {folded > 0 ? ` · ${folded} repeat${folded === 1 ? '' : 's'} folded` : ''}
         </span>
       </Kpi>
     </div>

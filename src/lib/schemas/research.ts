@@ -303,6 +303,7 @@ export const AutopilotStandingSchema = z
       })
       .passthrough(),
     pending_memos: z.number(),
+    pending_drafts: z.number().optional(),
     best_conviction: z.number(),
     objectives: z.array(AutopilotObjectiveSchema),
   })

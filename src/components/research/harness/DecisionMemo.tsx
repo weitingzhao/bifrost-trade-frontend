@@ -15,6 +15,7 @@ import { DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { StanceMark, VerdictList, CopyCandidates, ReasonText } from '@/components/research/harness/PersonaVerdicts'
+import { SymbolHandoff } from '@/components/research/SymbolHandoff'
 import type { PersonaRow } from '@/components/research/harness/HarnessPipelineStepper'
 import { actionTone, fmtPct, fmtPx, memoHeadline, stars, summarize } from '@/lib/harness/rating'
 import type { CandidateRating } from '@/lib/harness/rating'
@@ -240,6 +241,7 @@ function RatingCase({ r, row }: { r: CandidateRating; row: PersonaRow | null }) 
             <dd>{r.action_label} — {r.action_reason}</dd>
           </dl>
         </Box>
+        <SymbolHandoff symbol={r.symbol} className="px-0.5" />
         <Box title="Exit if">
           {b?.invalidation.length ? (
             <ul className="list-disc space-y-0.5 pl-4 text-dense-caption">

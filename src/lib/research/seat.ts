@@ -13,7 +13,7 @@
  */
 import { Bot, MessageCircle, Wrench, type LucideIcon } from 'lucide-react'
 import { STORAGE_KEYS } from '@/constants/storage'
-import { createPersistedStore } from '@/lib/cockpit/externalStore'
+import { createSeatModel } from '@/lib/nav/seatModel'
 
 export type ResearchSeat = 'autopilot' | 'copilot' | 'workbench'
 
@@ -57,25 +57,13 @@ export const SEAT_META: Record<ResearchSeat, SeatMeta> = {
   },
 }
 
-export function isResearchSeat(v: unknown): v is ResearchSeat {
-  return typeof v === 'string' && (RESEARCH_SEATS as readonly string[]).includes(v)
-}
+const model = createSeatModel<ResearchSeat>({
+  storageKey: STORAGE_KEYS.researchSeat,
+  seats: RESEARCH_SEATS,
+  fallback: 'autopilot',
+})
 
-const store = createPersistedStore<{ seat: ResearchSeat }>(
-  STORAGE_KEYS.researchSeat,
-  { seat: 'autopilot' },
-  (s) => ({ seat: s.seat }),
-)
-
-export function useResearchSeat(): ResearchSeat {
-  return store.useStore().seat
-}
-
-export function getResearchSeat(): ResearchSeat {
-  return store.getState().seat
-}
-
-export function setResearchSeat(seat: ResearchSeat): void {
-  if (!isResearchSeat(seat)) return
-  store.setState({ seat })
-}
+export const isResearchSeat = model.isSeat
+export const useResearchSeat = model.useSeat
+export const getResearchSeat = model.getSeat
+export const setResearchSeat = model.setSeat

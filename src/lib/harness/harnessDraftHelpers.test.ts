@@ -17,6 +17,8 @@ import {
   isHitRateWarnActive,
   parseAgentVerdicts,
   policySuggestionMergeCount,
+  modelNets,
+  describeSplit,
 } from './harnessDraftHelpers'
 
 describe('computePolicySuggestionRows', () => {
@@ -620,5 +622,59 @@ describe('policy diff covers every field approval writes', () => {
       held: [{ id: 'c2', symbol: 'RKLB', reasons: ['judges did not agree (dissent)'] }],
       decided_by: 'system:loop_batch',
     })
+  })
+})
+
+describe('what made the judges disagree', () => {
+  const v = (model: string, agent: string, stance: string, source = 'agent') => ({
+    model,
+    agent,
+    stance,
+    summary: '',
+    source,
+  })
+
+  it('a judge’s net is its verdict persona, not its other three', () => {
+    const rows = [
+      v('deepseek-chat', 'analyze', 'oppose'),
+      v('deepseek-chat', 'portfolio', 'oppose'),
+      v('deepseek-chat', 'verdict', 'support'),
+      v('gpt-4o-mini', 'analyze', 'support'),
+      v('gpt-4o-mini', 'verdict', 'caution'),
+    ] as never
+    expect(modelNets(rows)).toEqual([
+      { model: 'deepseek-chat', net: 'support', fellBack: false },
+      { model: 'gpt-4o-mini', net: 'caution', fellBack: false },
+    ])
+  })
+
+  it('a judge with no verdict row abstains rather than borrowing another persona', () => {
+    const rows = [v('deepseek-chat', 'analyze', 'support')] as never
+    expect(modelNets(rows)).toEqual([{ model: 'deepseek-chat', net: 'abstain', fellBack: false }])
+  })
+
+  it('names both sides of the split', () => {
+    const rows = [
+      v('deepseek-chat', 'verdict', 'support'),
+      v('gpt-4o-mini', 'verdict', 'caution'),
+    ] as never
+    expect(describeSplit(rows)).toBe('deepseek-chat says support · gpt-4o-mini says caution')
+  })
+
+  it('a judge that fell back is named as such, not quoted as if it spoke', () => {
+    // A whole run had deepseek-chat fall back on every candidate. Both nets read
+    // caution, the tag said dissent, and "both say caution" made the tag look wrong.
+    const rows = [
+      v('deepseek-chat', 'verdict', 'caution', 'heuristic_fallback'),
+      v('gpt-4o-mini', 'verdict', 'caution'),
+    ] as never
+    expect(describeSplit(rows)).toBe(
+      'deepseek-chat fell back to the heuristic · gpt-4o-mini says caution',
+    )
+  })
+
+  it('one judge is not a split', () => {
+    expect(describeSplit([v('deepseek-chat', 'verdict', 'support')] as never)).toBeNull()
+    expect(describeSplit([])).toBeNull()
   })
 })

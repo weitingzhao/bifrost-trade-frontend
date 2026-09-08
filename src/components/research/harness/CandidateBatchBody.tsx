@@ -27,7 +27,7 @@ import {
   type CandidateAgreement,
 } from '@/lib/harness/harnessDraftHelpers'
 import { openCandidateInCopilot } from '@/lib/harness/loopCopilotPrefill'
-import { batchLeash } from '@/lib/harness/harnessDraftHelpers'
+import { NET_AGENT, batchLeash, describeSplit } from '@/lib/harness/harnessDraftHelpers'
 import { actionTone, fmtPct, fmtPx, stars, type CandidateRating } from '@/lib/harness/rating'
 import { IconActionButton } from '@/components/data-display'
 
@@ -249,6 +249,7 @@ export function CandidateBatchBody({
                 const net = item.net_stance || 'abstain'
                 const agreement = candidateAgreement(item)
                 const byModel = verdictsByModel(verdicts)
+                const split = agreement === 'dissent' ? describeSplit(verdicts) : null
                 return (
                   <DenseTableRow key={item.id}>
                     <DenseTableCell>
@@ -299,9 +300,14 @@ export function CandidateBatchBody({
                             variant={agreementVariant(agreement)}
                             size="cell"
                             title={
-                              agreement === 'agree'
-                                ? 'Every judge reached the same verdict.'
-                                : 'The judges split, or one fell back to the heuristic — never counted as agreement.'
+                              [
+                                agreement === 'agree'
+                                  ? 'Every judge reached the same verdict.'
+                                  : 'The judges split, or one fell back to the heuristic — never counted as agreement. Only the verdict persona decides a judge’s net.',
+                                split,
+                              ]
+                                .filter(Boolean)
+                                .join(' ')
                             }
                           >
                             {agreement}
@@ -364,10 +370,14 @@ export function CandidateBatchBody({
                                   key={`${item.id}-${group.model ?? ''}-${v.agent}`}
                                   variant={stanceVariant(v.stance)}
                                   size="cell"
+                                  // The verdict persona is the judge's net; the
+                                  // other three inform it. Four identical chips
+                                  // hid which one the leash actually reads.
+                                  className={v.agent === NET_AGENT ? 'ring-1 ring-foreground/30' : undefined}
                                   title={
-                                    v.source
-                                      ? `${v.summary} · source=${v.source}`
-                                      : v.summary
+                                    (v.agent === NET_AGENT
+                                      ? 'This is the judge’s net — the judges agree only when these match. '
+                                      : '') + (v.source ? `${v.summary} · source=${v.source}` : v.summary)
                                   }
                                 >
                                   {v.agent}:{v.stance}

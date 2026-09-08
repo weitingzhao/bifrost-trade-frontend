@@ -291,6 +291,49 @@ export interface ModelVerdictGroup {
  * Eight chips in one line read as one persona panel twice; split by judge they
  * read as two opinions — which is what the batch's agree / dissent is about.
  */
+/**
+ * The persona whose stance is the model's net.
+ *
+ * Mirrors `persona_heuristic.net_stance_from_verdicts`: of the four personas a
+ * judge runs, only the verdict one decides, and two judges agree only when
+ * these two match. Four identical-looking chips hid that, so a row held for
+ * "dissent" gave no way to see which pair disagreed.
+ */
+export const NET_AGENT = 'verdict'
+
+export interface ModelNet {
+  model: string | null
+  net: AgentStance
+  /** Every row came from the heuristic: this judge did not answer. */
+  fellBack: boolean
+}
+
+/** Each judge's net stance, in the order the judges appear. */
+export function modelNets(verdicts: AgentVerdict[]): ModelNet[] {
+  return verdictsByModel(verdicts).map((g) => ({
+    model: g.model,
+    net: (g.verdicts.find((v) => v.agent === NET_AGENT)?.stance ?? 'abstain') as AgentStance,
+    fellBack: g.fallback,
+  }))
+}
+
+/**
+ * Why the judges were not in agreement, in one line.
+ *
+ * A judge that fell back to the heuristic counts as dissent however its stance
+ * reads, so saying only the stances produces "both say caution" beside a
+ * dissent tag — which reads as a bug in the tag rather than a judge that never
+ * answered. Observed on a whole run where deepseek-chat fell back on every
+ * candidate: the surface said the judges disagreed; they had not spoken.
+ */
+export function describeSplit(verdicts: AgentVerdict[]): string | null {
+  const nets = modelNets(verdicts).filter((n) => n.model)
+  if (nets.length < 2) return null
+  return nets
+    .map((n) => (n.fellBack ? `${n.model} fell back to the heuristic` : `${n.model} says ${n.net}`))
+    .join(' · ')
+}
+
 export function verdictsByModel(verdicts: AgentVerdict[]): ModelVerdictGroup[] {
   const order: (string | null)[] = []
   const by = new Map<string | null, AgentVerdict[]>()

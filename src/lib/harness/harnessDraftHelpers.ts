@@ -237,6 +237,8 @@ export interface AgentVerdict {
   source?: string
   /** The judge that produced this row (B2); absent on heuristic rows. */
   model?: string
+  /** Why this judge did not answer, on a heuristic-fallback row. */
+  agentError?: string
 }
 
 export function parseAgentVerdicts(evidence: CandidateEvidence | null): AgentVerdict[] {
@@ -261,6 +263,7 @@ export function parseAgentVerdicts(evidence: CandidateEvidence | null): AgentVer
     }
     if (typeof rec.source === 'string') row.source = rec.source
     if (typeof rec.model === 'string' && rec.model) row.model = rec.model
+    if (typeof rec.agent_error === 'string' && rec.agent_error) row.agentError = rec.agent_error
     out.push(row)
   }
   return out
@@ -306,15 +309,21 @@ export interface ModelNet {
   net: AgentStance
   /** Every row came from the heuristic: this judge did not answer. */
   fellBack: boolean
+  /** What stopped it — a cap, a timeout, an unparseable reply. */
+  reason?: string
 }
 
 /** Each judge's net stance, in the order the judges appear. */
 export function modelNets(verdicts: AgentVerdict[]): ModelNet[] {
-  return verdictsByModel(verdicts).map((g) => ({
-    model: g.model,
-    net: (g.verdicts.find((v) => v.agent === NET_AGENT)?.stance ?? 'abstain') as AgentStance,
-    fellBack: g.fallback,
-  }))
+  return verdictsByModel(verdicts).map((g) => {
+    const reason = g.verdicts.find((v) => v.agentError)?.agentError
+    return {
+      model: g.model,
+      net: (g.verdicts.find((v) => v.agent === NET_AGENT)?.stance ?? 'abstain') as AgentStance,
+      fellBack: g.fallback,
+      ...(g.fallback && reason ? { reason } : {}),
+    }
+  })
 }
 
 /**
@@ -330,7 +339,14 @@ export function describeSplit(verdicts: AgentVerdict[]): string | null {
   const nets = modelNets(verdicts).filter((n) => n.model)
   if (nets.length < 2) return null
   return nets
-    .map((n) => (n.fellBack ? `${n.model} fell back to the heuristic` : `${n.model} says ${n.net}`))
+    .map((n) =>
+      n.fellBack
+        ? // Naming the cause matters: ten of fourteen fallbacks on DEV were the
+          // deepseek daily cap, which is a budget the Owner sets, not a model
+          // that disagreed.
+          `${n.model} did not answer${n.reason ? ` — ${n.reason}` : ''}`
+        : `${n.model} says ${n.net}`,
+    )
     .join(' · ')
 }
 

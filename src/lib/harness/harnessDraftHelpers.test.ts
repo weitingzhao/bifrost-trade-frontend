@@ -626,12 +626,13 @@ describe('policy diff covers every field approval writes', () => {
 })
 
 describe('what made the judges disagree', () => {
-  const v = (model: string, agent: string, stance: string, source = 'agent') => ({
+  const v = (model: string, agent: string, stance: string, source = 'agent', agentError?: string) => ({
     model,
     agent,
     stance,
     summary: '',
     source,
+    ...(agentError ? { agentError } : {}),
   })
 
   it('a judge’s net is its verdict persona, not its other three', () => {
@@ -669,8 +670,23 @@ describe('what made the judges disagree', () => {
       v('gpt-4o-mini', 'verdict', 'caution'),
     ] as never
     expect(describeSplit(rows)).toBe(
-      'deepseek-chat fell back to the heuristic · gpt-4o-mini says caution',
+      'deepseek-chat did not answer · gpt-4o-mini says caution',
     )
+  })
+
+  it('names why the judge did not answer when the run recorded it', () => {
+    // Ten of fourteen fallbacks on DEV were this: the deepseek purse ran out,
+    // and every candidate after that was held as if the judges had disagreed.
+    const cap = 'daily cap reached for deepseek (PERSONA_EVAL_DAILY_CAP_USD_DEEPSEEK=1.50)'
+    const rows = [
+      v('deepseek-chat', 'analyze', 'abstain', 'heuristic_fallback', cap),
+      v('deepseek-chat', 'verdict', 'abstain', 'heuristic_fallback', cap),
+      v('gpt-4o-mini', 'verdict', 'caution'),
+    ] as never
+    expect(describeSplit(rows)).toBe(
+      `deepseek-chat did not answer — ${cap} · gpt-4o-mini says caution`,
+    )
+    expect(modelNets(rows)[0].reason).toBe(cap)
   })
 
   it('one judge is not a split', () => {

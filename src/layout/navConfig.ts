@@ -73,24 +73,25 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Strategy',
     icon: GitBranch,
-    subGroups: [
-      {
-        label: 'Operations',
-        items: [
-          route('Instances', '/strategy/instances', GitBranch),
-          route('Win Rate', '/strategy/win-rate', Trophy),
-        ],
-      },
-      {
-        label: 'Configuration',
-        items: [
-          route('Structure', '/strategy/structures', Cpu),
-          route('Opportunity', '/strategy/opportunities', Star),
-          route('Allocations', '/strategy/allocations', PieChart),
-          route('Gates', '/strategy/gates', Shield),
-          route('Option Category', '/strategy/option-category', Layers),
-        ],
-      },
+    // Two homes, same as Portfolio and Research: the headings are pages
+    // (Owner decision, extended here 2026-09-08). "Operations" and
+    // "Configuration" were labels you could not click, and they split the
+    // one chain this domain is built on — a structure becomes an
+    // opportunity, opportunities are bundled into an allocation, the daemon
+    // runs that allocation as instances, and the instances produce a win
+    // rate. Instances is what is running, with how it has gone beneath it.
+    // Allocations is what the daemon was told to run, with the parts it was
+    // assembled from beneath it, in the order they nest.
+    items: [
+      home('Instances', '/strategy/instances', GitBranch, [
+        route('Win Rate', '/strategy/win-rate', Trophy),
+      ]),
+      home('Allocations', '/strategy/allocations', PieChart, [
+        route('Opportunity', '/strategy/opportunities', Star),
+        route('Structure', '/strategy/structures', Cpu),
+        route('Option Category', '/strategy/option-category', Layers),
+        route('Gates', '/strategy/gates', Shield),
+      ]),
     ],
   },
 ]

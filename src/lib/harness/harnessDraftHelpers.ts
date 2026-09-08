@@ -5,6 +5,7 @@
  * component and the logic gets its own unit tests.
  */
 import type { AiDraft } from '@/api/researchDrafts'
+import { parseRating, type CandidateRating } from '@/lib/harness/rating'
 import { numberOrNull } from '@/lib/harness/harnessTrace'
 
 /**
@@ -360,6 +361,12 @@ export interface CandidateItem {
   net_stance?: string | null
   blocked_by_validate?: boolean
   agreement?: string | null
+  /**
+   * The run's rating for this name, when the run had a rating stage.
+   * Null for runs that predate it — an absence, never a verdict of "unrated
+   * because it is bad".
+   */
+  rating: CandidateRating | null
 }
 export function candidateBatchItems(payload: Record<string, unknown>): CandidateItem[] {
   const raw = payload.items
@@ -390,6 +397,7 @@ export function candidateBatchItems(payload: Record<string, unknown>): Candidate
       evidence,
       net_stance: net,
       blocked_by_validate: rec.blocked_by_validate === true,
+      rating: parseRating(rec.rating),
       // Only present when the backend said something: a missing key is a run
       // before B2, not a judgement of "no agreement".
       ...(typeof rec.agreement === 'string' ? { agreement: rec.agreement } : {}),

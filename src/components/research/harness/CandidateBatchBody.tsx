@@ -28,6 +28,7 @@ import {
 } from '@/lib/harness/harnessDraftHelpers'
 import { openCandidateInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { batchLeash } from '@/lib/harness/harnessDraftHelpers'
+import { actionTone, fmtPct, fmtPx, stars, type CandidateRating } from '@/lib/harness/rating'
 import { IconActionButton } from '@/components/data-display'
 
 /** Above this a decision card turns into a spreadsheet; batches are policy-capped at 50. */
@@ -216,16 +217,18 @@ export function CandidateBatchBody({
           <DenseDataTable tableClassName="min-w-[60rem]">
             <colgroup>
               <col style={{ width: '8%' }} />
-              <col style={{ width: '7%' }} />
+              <col style={{ width: '17%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '9%' }} />
               <col style={{ width: '10%' }} />
-              <col style={{ width: '11%' }} />
-              <col style={{ width: '11%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '39%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '29%' }} />
             </colgroup>
             <DenseTableHeader>
               <DenseTableHeadRow>
                 <DenseTableHead>Symbol</DenseTableHead>
+                <DenseTableHead>Rating</DenseTableHead>
                 <DenseTableHead>Score</DenseTableHead>
                 <DenseTableHead>Net</DenseTableHead>
                 <DenseTableHead>Selection</DenseTableHead>
@@ -277,6 +280,9 @@ export function CandidateBatchBody({
                           held
                         </DenseTag>
                       ) : null}
+                    </DenseTableCell>
+                    <DenseTableCell>
+                      <RatingCell rating={item.rating} />
                     </DenseTableCell>
                     <DenseTableCell>
                       <span className="font-mono tabular-nums text-muted-foreground">
@@ -395,6 +401,54 @@ export function CandidateBatchBody({
         Approve promotes these candidates and creates hypotheses. Next hop:
         Hypothesis Board / Candidate Pool. Auto-approve never places orders (D10).
       </p>
+    </div>
+  )
+}
+
+/**
+ * The run's own verdict on this name, where the decision is actually made.
+ *
+ * The rating was computed on the run and shown in the memo drawer; the Inbox —
+ * the page the Owner approves from — listed score, stance and personas and
+ * never the grade, the conviction or the price levels. Reading the deliverable
+ * required opening a second surface.
+ *
+ * An unrated row says so plainly. It means the run predates the rating stage,
+ * not that the name failed one.
+ */
+function RatingCell({ rating }: { rating: CandidateRating | null }) {
+  if (!rating) {
+    return (
+      <span
+        className="text-dense-caption text-muted-foreground"
+        title="This run has no rating stage. Open it and use Rate this run — the rating is a pure function of what the run already stored."
+      >
+        not rated
+      </span>
+    )
+  }
+  const lv = rating.levels
+  const levelTitle = lv
+    ? `Buy ${fmtPx(lv.entry_lo)}–${fmtPx(lv.entry_hi)} · stop ${fmtPx(lv.stop)} (${fmtPct(-lv.risk_pct, false)} risk, ${lv.stop_source}) · target ${fmtPx(lv.target_2r)}`
+    : 'No price levels recorded for this name.'
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="flex flex-wrap items-center gap-1">
+        {rating.grade ? (
+          <DenseTag variant="category" size="cell" title={`SEPA grade ${rating.grade}`}>
+            {rating.grade}
+          </DenseTag>
+        ) : null}
+        <span className="font-mono text-warning" title={rating.conviction_reason}>
+          {stars(rating.conviction)}
+        </span>
+        <DenseTag variant={actionTone(rating.action)} size="cell" title={rating.action_reason}>
+          {rating.action_label}
+        </DenseTag>
+      </span>
+      <span className="font-mono text-dense-micro tabular-nums text-muted-foreground" title={levelTitle}>
+        {lv ? `${fmtPx(lv.entry_lo)}–${fmtPx(lv.entry_hi)} · ✕${fmtPx(lv.stop)}` : 'no levels'}
+      </span>
     </div>
   )
 }

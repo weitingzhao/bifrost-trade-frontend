@@ -241,6 +241,7 @@ describe('candidateBatch helpers', () => {
         evidence: null,
         net_stance: null,
         blocked_by_validate: false,
+        rating: null,
       },
       {
         id: 'c2',
@@ -249,8 +250,40 @@ describe('candidateBatch helpers', () => {
         evidence: null,
         net_stance: null,
         blocked_by_validate: false,
+        rating: null,
       },
     ])
+  })
+
+  it('candidateBatchItems carries the run rating onto the item', () => {
+    // The Inbox is where the Owner approves; the grade, the conviction and the
+    // price levels have to travel with the row, not stay in the memo drawer.
+    const [item] = candidateBatchItems({
+      items: [
+        {
+          id: 'c1',
+          symbol: 'halo',
+          score: 80,
+          rating: {
+            symbol: 'HALO',
+            grade: 'A',
+            conviction: 3,
+            action: 'buy_zone',
+            action_label: 'Buy zone',
+            levels: { entry_lo: 100, entry_hi: 105, stop: 92, target_2r: 121, risk_pct: 8 },
+          },
+        },
+      ],
+    })
+    expect(item.rating?.grade).toBe('A')
+    expect(item.rating?.conviction).toBe(3)
+    expect(item.rating?.action).toBe('buy_zone')
+    expect(item.rating?.levels?.stop).toBe(92)
+  })
+
+  it('an item with no rating reads as absent, not as a bad rating', () => {
+    const [item] = candidateBatchItems({ items: [{ id: 'c1', symbol: 'AAPL', score: 1 }] })
+    expect(item.rating).toBeNull()
   })
 
   it('candidateBatchDataSource returns string or null', () => {

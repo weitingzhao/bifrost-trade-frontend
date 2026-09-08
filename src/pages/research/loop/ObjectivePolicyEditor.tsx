@@ -23,6 +23,7 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import {
   POLICY_SECTIONS,
   buildSuggestion,
+  defaultFor,
   describeEdits,
   effectiveValue,
   fieldText,
@@ -31,6 +32,7 @@ import {
   valuesEqual,
   type PolicyField,
 } from '@/lib/harness/objectivePolicy'
+import { usePolicyDefaults } from '@/hooks/useLoopHarness'
 
 export function ObjectivePolicyEditor({
   policy,
@@ -45,6 +47,9 @@ export function ObjectivePolicyEditor({
   error: string | null
   lastResult: string | null
 }) {
+  // The runtime's own defaults, so a "default" chip names what the run will do
+  // rather than a constant copied from the backend's schema.
+  const serverDefaults = usePolicyDefaults().data?.policy_json ?? null
   const [edits, setEdits] = useState<Record<string, unknown>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [rationale, setRationale] = useState('')
@@ -114,6 +119,7 @@ export function ObjectivePolicyEditor({
                   key={field.path}
                   field={field}
                   policy={policy}
+                  serverDefaults={serverDefaults}
                   edited={field.path in edits}
                   editValue={edits[field.path]}
                   error={errors[field.path]}
@@ -196,6 +202,7 @@ function setPathShallow(obj: Record<string, unknown>, path: string, value: unkno
 function FieldRow({
   field,
   policy,
+  serverDefaults,
   edited,
   editValue,
   error,
@@ -203,14 +210,19 @@ function FieldRow({
 }: {
   field: PolicyField
   policy: Record<string, unknown>
+  serverDefaults: Record<string, unknown> | null
   edited: boolean
   editValue: unknown
   error: string | undefined
   onChange: (raw: string) => void
 }) {
   const stored = getPath(policy, field.path)
-  const effective = effectiveValue(policy, field)
-  const isDefault = (stored === undefined || stored === null) && field.defaultValue !== undefined
+  const fallbackDefault = defaultFor(field, serverDefaults)
+  const effective = effectiveValue(policy, field, serverDefaults)
+  // The server normalises an unset optional to null; that is an absence, not a
+  // default worth labelling. Only a real value earns the chip.
+  const hasDefault = fallbackDefault !== undefined && fallbackDefault !== null
+  const isDefault = (stored === undefined || stored === null) && hasDefault
   const shown = edited ? editValue : stored
   const inputText = shown == null ? '' : Array.isArray(shown) ? shown.join(', ') : String(shown)
 
@@ -220,7 +232,11 @@ function FieldRow({
         {field.label}
         <InfoTooltip text={field.help} />
         {isDefault && !edited ? (
-          <DenseTag variant="neutral" size="cell" title="Not stored on this objective; the runtime default applies">
+          <DenseTag
+            variant="neutral"
+            size="cell"
+            title={`Not stored on this objective; the runtime applies ${fieldText(field, fallbackDefault)}.`}
+          >
             default
           </DenseTag>
         ) : null}
@@ -261,7 +277,7 @@ function FieldRow({
             value={inputText}
             onChange={(e) => onChange(e.target.value)}
             placeholder={
-              field.placeholder ?? (field.defaultValue !== undefined ? `default ${fieldText(field, field.defaultValue)}` : 'not set')
+              field.placeholder ?? (hasDefault ? `default ${fieldText(field, fallbackDefault)}` : 'not set')
             }
             inputMode={field.kind === 'number' ? 'decimal' : undefined}
             className={`h-7 font-mono text-dense-body ${error ? 'border-destructive' : ''}`}

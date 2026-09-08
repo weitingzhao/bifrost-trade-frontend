@@ -444,10 +444,32 @@ export function setPath(
   return { ...obj, [head]: setPath(rec(obj[head]), rest.join('.'), value) }
 }
 
-/** The value the runtime will use: the stored one, else the schema default. */
-export function effectiveValue(policy: Record<string, unknown>, field: PolicyField): unknown {
+/**
+ * The default the runtime will apply for a field.
+ *
+ * Prefers the server's own normalisation over the constant in this file: the
+ * constants are a copy of `policy_schema.py` and a copy is a drift waiting to
+ * happen. They stand in when the backend cannot be reached.
+ */
+export function defaultFor(
+  field: PolicyField,
+  serverDefaults?: Record<string, unknown> | null,
+): unknown {
+  if (serverDefaults) {
+    const fromServer = getPath(serverDefaults, field.path)
+    if (fromServer !== undefined) return fromServer
+  }
+  return field.defaultValue
+}
+
+/** The value the runtime will use: the stored one, else the default. */
+export function effectiveValue(
+  policy: Record<string, unknown>,
+  field: PolicyField,
+  serverDefaults?: Record<string, unknown> | null,
+): unknown {
   const v = getPath(policy, field.path)
-  return v === undefined || v === null ? field.defaultValue : v
+  return v === undefined || v === null ? defaultFor(field, serverDefaults) : v
 }
 
 export function fieldText(field: PolicyField, value: unknown): string {

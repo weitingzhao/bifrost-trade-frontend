@@ -24,6 +24,7 @@ import {
   deletePolicyTemplate,
   fetchPolicyTemplates,
   patchPolicyTemplate,
+  validatePolicy,
 } from '@/api/research/policyTemplate'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
@@ -171,6 +172,26 @@ export function useApproveAllRun() {
 
 // --- Policy templates (P0-2) ---
 // The Loop's strategy is data now, not a constant compiled into two codebases.
+
+/**
+ * The policy defaults the runtime actually applies.
+ *
+ * Normalising an empty policy returns every default `LoopPolicy` holds, so the
+ * editor can label a field "default" with the value the run will use instead of
+ * a number copied from the Python model. Twenty-five such copies lived in
+ * `objectivePolicy.ts`; they agreed on the day they were written, which is what
+ * every drift looks like the day before it starts. Those constants remain as a
+ * fallback for an unreachable or older backend.
+ */
+export function usePolicyDefaults() {
+  return useQuery({
+    queryKey: ['research', 'policy-defaults'],
+    queryFn: () => validatePolicy({}),
+    staleTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  })
+}
 
 export function usePolicyTemplates() {
   return useQuery({

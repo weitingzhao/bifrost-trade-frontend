@@ -8,6 +8,7 @@ import {
   getPath,
   parseFieldInput,
   setPath,
+  defaultFor,
 } from './objectivePolicy'
 
 const field = (path: string) => {
@@ -74,5 +75,33 @@ describe('objectivePolicy', () => {
   it('describeEdits reads before → after in the field vocabulary', () => {
     const text = describeEdits({ max_candidates: 3 }, { max_candidates: 8, 'triage.enabled': false })
     expect(text).toBe('max_candidates 3 → 8 · triage.enabled not set → off')
+  })
+})
+
+describe('defaults come from the runtime, not from this file', () => {
+  const maxCandidates = field('max_candidates')
+  const stop = field('min_source_hit_rate')
+
+  it('prefers the server’s normalised value over the local copy', () => {
+    // The constants here were copied from policy_schema.py. They agreed on the
+    // day they were written, which is what every drift looks like the day
+    // before it starts.
+    expect(defaultFor(maxCandidates, { max_candidates: 8 })).toBe(8)
+    expect(effectiveValue({}, maxCandidates, { max_candidates: 8 })).toBe(8)
+  })
+
+  it('reads nested paths the same way', () => {
+    const sepa = field('layers.sepa.min_score')
+    expect(defaultFor(sepa, { layers: { sepa: { min_score: 55 } } })).toBe(55)
+  })
+
+  it('falls back to the local constant when the backend says nothing', () => {
+    expect(defaultFor(maxCandidates, null)).toBe(3)
+    expect(defaultFor(maxCandidates, {})).toBe(3)
+    expect(defaultFor(stop, undefined)).toBe(0.45)
+  })
+
+  it('a stored value still wins over any default', () => {
+    expect(effectiveValue({ max_candidates: 12 }, maxCandidates, { max_candidates: 8 })).toBe(12)
   })
 })

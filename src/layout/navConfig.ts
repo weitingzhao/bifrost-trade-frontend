@@ -10,9 +10,7 @@ import {
   LayoutDashboard,
   MessageCircle,
   LineChart,
-  Network,
   PieChart,
-  Server,
   Settings,
   Shield,
   Star,
@@ -97,14 +95,16 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     ],
   },
   {
+    // One entry, not three. The API board showed eight lamps for four
+    // processes and the Ops Console does cluster health better; its OpenAPI
+    // directory lives on with the health board at /settings/api. The Socket
+    // page's four upstream services are an Ops responsibility and now appear
+    // read-only under Daemon, which is the page that says whether the
+    // background processes are alive.
     label: 'System',
     icon: Terminal,
     dividerBefore: true,
-    items: [
-      route('API', '/settings/api', Server),
-      route('Daemon', '/operations/daemon', Cpu),
-      route('Socket', '/settings/socket', Network),
-    ],
+    items: [route('Daemon', '/operations/daemon', Cpu)],
   },
 ]
 

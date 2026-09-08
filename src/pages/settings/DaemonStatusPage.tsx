@@ -10,6 +10,7 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { useMonitorStatus, useOperations } from '@/hooks/useMonitorStatus'
 import { OpsHostEnvPill } from '@/pages/settings/socket/OpsHostEnvPill'
 import { DaemonEngineOpsSection } from './daemon/DaemonEngineOpsSection'
+import { UpstreamIngestSection } from './daemon/UpstreamIngestSection'
 import { StrategyTradingDaemonCard } from './daemon/StrategyTradingDaemonCard'
 import { RiskModelCard } from './daemon/RiskModelCard'
 import { useRiskSummary } from '@/hooks/useRiskSummary'
@@ -93,7 +94,7 @@ export default function DaemonStatusPage() {
           </span>
         }
         titleSize="large"
-        description="This Ops instance (config / executor) · Ops start/stop via shared token with Settings → Socket"
+        description="Is the process alive, is the broker connected, what has it done. Hedge controls live on Strategy · Instances; the upstream services below are run by the Ops platform."
       />
 
       <Card variant="elevated" size="sm">
@@ -102,6 +103,11 @@ export default function DaemonStatusPage() {
         </CardHeader>
         <CardContent className={daemonElevatedCardClass}>
           <DaemonEngineOpsSection status={data} ops={ops} />
+          <UpstreamIngestSection
+            services={ops.allServices}
+            isLoading={ops.ingestLoading}
+            isError={ops.ingestError}
+          />
         </CardContent>
       </Card>
 

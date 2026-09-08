@@ -122,6 +122,9 @@ export function useDaemonEngineOps(status: StatusResponse | null) {
     actionError,
     setActionError,
     daemonServices,
+    // Every ingest row, so the page can also show the upstream ones it does
+    // not control (Polygon socket, IB Gateway processes).
+    allServices,
     engineConfigMissing,
     opsErr,
     ingestLoading,

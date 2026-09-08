@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { AlertTriangle, Play, Settings2 } from 'lucide-react'
-import { postSuspend, postResume, postFlatten } from '@/api/monitor'
+import { Link } from 'react-router-dom'
 import type { StatusResponse } from '@/types/monitor'
 import { DenseTag } from '@/components/data-display'
-import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -30,13 +27,11 @@ import {
   daemonIbServiceListClass,
   useCtrlAction,
 } from './daemonShared'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import {
   daemonBlockReasonClass,
   daemonCardStatusSubtitleClass,
   daemonCardTitleRowClass,
   daemonConnectionsBlockClass,
-  daemonControlBarClass,
   daemonGroupTitleClass,
   daemonHedgeStatusRowClass,
   daemonIbGroupSummaryClass,
@@ -44,7 +39,6 @@ import {
   daemonMetricGridClass,
   daemonMetricLabelClass,
   daemonMetricValueClass,
-  daemonResumeButtonClass,
   daemonSocketLinkClass,
   daemonThreeColGridClass,
 } from './daemonUi'
@@ -77,11 +71,8 @@ export function StrategyTradingDaemonCard({
   data: StatusResponse
   onInvalidate: () => void
 }) {
-  const navigate = useNavigate()
   const [nextHb, setNextHb] = useState<number | null>(null)
   const [nowSec, setNowSec] = useState(() => Date.now() / 1000)
-  const [flattenOpen, setFlattenOpen] = useState(false)
-  const [flattenBusy, setFlattenBusy] = useState(false)
 
   const ctrl = useCtrlAction(onInvalidate)
   const hedgeCtrl = useCtrlAction()
@@ -144,19 +135,6 @@ export function StrategyTradingDaemonCard({
     ({ label }) => label !== 'Updated at' && label !== 'Daemon state',
   )
 
-  async function handleFlatten() {
-    setFlattenBusy(true)
-    try {
-      await hedgeCtrl.run(postFlatten, {
-        loading: 'Requesting flatten…',
-        success: 'Flatten sent — hedge process will consume and execute.',
-      })
-      setFlattenOpen(false)
-      onInvalidate()
-    } finally {
-      setFlattenBusy(false)
-    }
-  }
 
   return (
     <div className="space-y-4">
@@ -268,81 +246,21 @@ export function StrategyTradingDaemonCard({
             ))}
           </div>
 
-          {(data.strategy?.active?.structure?.name || data.strategy?.active?.gate_safety?.name) && (
-            <>
-              <Separator />
-              <div className="space-y-1">
-                {data.strategy.active.structure?.name && (
-                  <Row label="Structure">
-                    <span className="max-w-[140px] truncate">{data.strategy.active.structure.name}</span>
-                  </Row>
-                )}
-                {data.strategy.active.gate_safety?.name && (
-                  <Row label="Gate set">
-                    <span className="max-w-[140px] truncate">{data.strategy.active.gate_safety.name}</span>
-                  </Row>
-                )}
-              </div>
-            </>
-          )}
-
-          <div className={daemonControlBarClass}>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs"
-              disabled={suspended}
-              onClick={() => ctrl.run(postSuspend, {
-                loading: 'Setting suspend…',
-                success: 'Suspend set — daemon will pause hedging on next heartbeat.',
-              })}
-            >
-              Suspend
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className={daemonResumeButtonClass}
-              disabled={!suspended}
-              onClick={() => ctrl.run(postResume, {
-                loading: 'Setting resume…',
-                success: 'Resume set — daemon will resume hedging on next heartbeat.',
-              })}
-            >
-              <Play className="mr-1 h-3 w-3" />
-              Resume
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs"
-              onClick={() => navigate('/strategy/instances')}
-            >
-              <Settings2 className="mr-1 h-3 w-3" />
-              Manage
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              className="h-8 gap-1 text-xs"
-              onClick={() => setFlattenOpen(true)}
-            >
-              <AlertTriangle className="h-3 w-3" />
-              Emergency
-            </Button>
-          </div>
+          {/* Hedging controls and the active structure / gate set moved to
+              Strategy → Instances: suspending hedging or flattening the book is
+              a trading decision, not daemon telemetry. This page keeps whether
+              the process is alive, whether the broker is connected, and what it
+              has done. */}
+          <p className="text-dense-caption text-muted-foreground">
+            Hedge controls and the active strategy live on{' '}
+            <Link to="/strategy/instances" className="hover:underline">
+              Strategy · Instances
+            </Link>
+            .
+          </p>
         </div>
       </div>
 
-      <ConfirmDialog
-        open={flattenOpen}
-        title="Emergency flatten"
-        message="Request immediate flatten of hedge positions? This sends POST /control/flatten to the daemon."
-        confirmLabel="Confirm flatten"
-        confirming={flattenBusy}
-        onConfirm={() => void handleFlatten()}
-        onCancel={() => setFlattenOpen(false)}
-      />
     </div>
   )
 }

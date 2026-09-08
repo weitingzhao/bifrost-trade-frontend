@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { fetchOpsCapabilities, getOpsToken } from '@/api/ops'
 import { OpsAuthBar } from '@/pages/settings/socket/OpsAuthBar'
+import { DOC_SERVICES } from '@/utils/apiHealthConfig'
 import { ApiDocsTable } from './ApiDocsTable'
 import { ApiServiceHealthCard } from './ApiServiceHealthCard'
 import type { ServiceDef } from '@/utils/apiHealthConfig'
@@ -74,7 +75,7 @@ export function ApiCategoryTabContent({
       <Card variant="elevated" size="sm" className={apiHealthElevatedSectionClass}>
         <div className={apiHealthDocsSectionClass}>
           <h3 className={apiHealthSectionTitleClass}>Documentation</h3>
-          <ApiDocsTable services={services} />
+          <ApiDocsTable services={DOC_SERVICES} />
         </div>
       </Card>
 

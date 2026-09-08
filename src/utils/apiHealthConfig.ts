@@ -11,24 +11,54 @@ export interface ServiceDef {
 
 export type Lamp = 'green' | 'yellow' | 'red'
 
+/**
+ * The processes behind the gateway, one entry each.
+ *
+ * There used to be eight: monitor, ops, docs, trading, portfolio, strategy,
+ * research, market. Probing every `/health` shows what they actually are —
+ * monitor, ops and docs are all `bifrost-monitor`; trading, portfolio and
+ * strategy are all `bifrost-account`. Eight lamps could only ever tell four
+ * stories, and three of them always went red together. The gateway paths they
+ * served are still real and still listed in the docs table below; they are
+ * routes, not services, and a health board that counts routes as services
+ * reports redundancy as coverage.
+ *
+ * Cluster-wide health, history and alerting live in the Ops Console
+ * (Observability, Control Room, connectivity matrix). This board answers a
+ * narrower question: can this frontend reach each API process right now.
+ */
 export const ARCH_SERVICES: ServiceDef[] = [
-  { key: 'monitor', name: 'Monitor',   base: domainOrigin('monitor'), port: '8765', description: 'Daemon status & control', healthPath: '/health' },
-  { key: 'ops',     name: 'Ops',       base: domainOrigin('ops'),     port: '8768', description: 'Operations control',       healthPath: '/health' },
-  { key: 'docs',    name: 'Docs',      base: domainOrigin('docs'),    port: '8767', description: 'OpenAPI gateway',           healthPath: '/health' },
+  { key: 'monitor', name: 'Monitor',   base: domainOrigin('monitor'), port: '8765', description: 'Daemon status, ops control and the OpenAPI gateway', healthPath: '/health' },
 ]
 
 export const ACCOUNT_SERVICES: ServiceDef[] = [
-  { key: 'trading',   name: 'Trading',   base: domainOrigin('trading'),   port: '8769', description: 'Orders & positions',   healthPath: '/health' },
-  { key: 'portfolio', name: 'Portfolio', base: domainOrigin('portfolio'), port: '8771', description: 'Multi-account Greeks', healthPath: '/health' },
+  { key: 'trading',   name: 'Account',   base: domainOrigin('trading'),   port: '8769', description: 'Orders, positions, Greeks and the strategy gate', healthPath: '/health' },
 ]
 
 export const RESEARCH_SERVICES: ServiceDef[] = [
   { key: 'research', name: 'Research', base: domainOrigin('research'), port: '8773', description: 'SEPA screener & backtest',  healthPath: '/health' },
-  { key: 'strategy', name: 'Strategy', base: domainOrigin('strategy'), port: '8770', description: 'Strategy gate',             healthPath: '/health' },
   { key: 'market',   name: 'Market',   base: domainOrigin('market'),   port: '8772', description: 'Real-time quotes SSE',      healthPath: '/health' },
 ]
 
 export const ALL_SERVICES = [...ARCH_SERVICES, ...ACCOUNT_SERVICES, ...RESEARCH_SERVICES]
+
+/**
+ * Every gateway route that publishes an OpenAPI document.
+ *
+ * Kept at eight while the health board collapsed to four: these are routes the
+ * gateway really serves, and a developer looking for the strategy schema needs
+ * `/strategy/docs` whether or not `bifrost-account` also answers to `/trading`.
+ */
+export const DOC_SERVICES: ServiceDef[] = [
+  { key: 'monitor',   name: 'Monitor',   base: domainOrigin('monitor'),   port: '8765', description: 'Daemon status & control',  healthPath: '/health' },
+  { key: 'ops',       name: 'Ops',       base: domainOrigin('ops'),       port: '8768', description: 'Operations control',       healthPath: '/health' },
+  { key: 'docs',      name: 'Docs',      base: domainOrigin('docs'),      port: '8767', description: 'OpenAPI gateway',          healthPath: '/health' },
+  { key: 'trading',   name: 'Trading',   base: domainOrigin('trading'),   port: '8769', description: 'Orders & positions',       healthPath: '/health' },
+  { key: 'portfolio', name: 'Portfolio', base: domainOrigin('portfolio'), port: '8771', description: 'Multi-account Greeks',     healthPath: '/health' },
+  { key: 'strategy',  name: 'Strategy',  base: domainOrigin('strategy'),  port: '8770', description: 'Strategy gate',            healthPath: '/health' },
+  { key: 'research',  name: 'Research',  base: domainOrigin('research'),  port: '8773', description: 'SEPA screener & backtest', healthPath: '/health' },
+  { key: 'market',    name: 'Market',    base: domainOrigin('market'),    port: '8772', description: 'Real-time quotes SSE',     healthPath: '/health' },
+]
 
 export const DOC_PATHS: Record<string, { swagger: string; redoc: string; openapi: string | null }> = {
   monitor:   { swagger: '/docs',                  redoc: '/redoc',                  openapi: '/openapi.json'           },

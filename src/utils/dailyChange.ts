@@ -99,7 +99,7 @@ export function computeSinceChange(
   return { sinceDollar, sincePct }
 }
 
-/** Realized PnL — site-wide tokens: profit green / loss red (see /settings/ui-design-system). */
+/** Realized PnL — site-wide tokens: profit green / loss red (see /docs/ui-design-system). */
 export function pnlColorClass(value: number | null | undefined): string {
   if (value == null || value === 0) return 'text-muted-foreground'
   return value > 0 ? 'text-profit' : 'text-loss'

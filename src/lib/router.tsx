@@ -276,54 +276,42 @@ export const router = createBrowserRouter([
       },
 
       {
+        path: 'docs/tech-stack',
+        lazy: lazyPage(() => import('@/pages/docs/TechStackPage')),
+      },
+      {
+        path: 'docs/ui-design-system',
+        lazy: lazyPage(() => import('@/pages/docs/UiDesignSystemPage')),
+      },
+      {
         path: 'settings',
         element: <SettingsLayout />,
         children: [
-          { index: true, element: <Navigate to="/settings/coverage/overview" replace /> },
-
+          { index: true, element: <Navigate to="/settings/coverage" replace /> },
           {
-            path: 'subscribe',
-            lazy: lazyPage(() => import('@/pages/settings/SubscribePage')),
+            path: 'coverage',
+            lazy: lazyPage(() => import('@/pages/settings/CoveragePage')),
           },
-
+          // The four pages Coverage replaced, and the two-link Feed shell.
+          { path: 'coverage/overview', element: <Navigate to="/settings/coverage?view=watchlist" replace /> },
+          { path: 'coverage/overview-detail', element: <Navigate to="/settings/coverage?view=watchlist" replace /> },
+          { path: 'coverage/option', element: <Navigate to="/settings/coverage?view=option" replace /> },
+          { path: 'coverage/stock-ib', element: <Navigate to="/settings/coverage?view=stock" replace /> },
           {
-            path: 'coverage/overview',
-            lazy: lazyPage(() => import('@/pages/settings/CoverageOverviewPage')),
+            path: 'feed',
+            lazy: lazyPage(() => import('@/pages/settings/FeedPage')),
           },
-          {
-            path: 'coverage/overview-detail',
-            lazy: lazyPage(() => import('@/pages/settings/CoverageOverviewDetailPage')),
-          },
-          {
-            path: 'coverage/option',
-            lazy: lazyPage(() => import('@/pages/settings/CoverageOptionPage')),
-          },
-          {
-            path: 'coverage/stock-ib',
-            lazy: lazyPage(() => import('@/pages/settings/CoverageStockIbPage')),
-          },
+          { path: 'subscribe', element: <Navigate to="/settings/feed" replace /> },
+          { path: 'feed/ib', element: <Navigate to="/settings/feed" replace /> },
+          // Data Readiness is a Research page; Research owns its menu entry.
           {
             path: 'data-readiness',
             lazy: lazyPage(() => import('@/pages/research/data/StockDataPage')),
           },
-
-          {
-            path: 'feed/ib',
-            lazy: lazyPage(() => import('@/pages/settings/FeedIbPage')),
-          },
-
-          {
-            path: 'daemon-app',
-            lazy: lazyPage(() => import('@/pages/settings/DaemonAppPage')),
-          },
-          {
-            path: 'tech-stack',
-            lazy: lazyPage(() => import('@/pages/settings/TechStackPage')),
-          },
-          {
-            path: 'ui-design-system',
-            lazy: lazyPage(() => import('@/pages/settings/UiDesignSystemPage')),
-          },
+          // Reference, not settings.
+          { path: 'daemon-app', element: <Navigate to="/operations/daemon" replace /> },
+          { path: 'tech-stack', element: <Navigate to="/docs/tech-stack" replace /> },
+          { path: 'ui-design-system', element: <Navigate to="/docs/ui-design-system" replace /> },
           {
             path: 'ib',
             lazy: lazyPage(() => import('@/pages/settings/IbConnectionPage')),

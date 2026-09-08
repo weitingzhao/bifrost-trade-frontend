@@ -68,7 +68,7 @@
     --color-text-dim: var(--color-text-dim);
     --color-accent-soft: var(--color-accent-soft);
 
-    /* Business semantic colors — PnL + entity identity (see /settings/ui-design-system) */
+    /* Business semantic colors — PnL + entity identity (see /docs/ui-design-system) */
     --color-profit: var(--color-profit);
     --color-loss: var(--color-loss);
     --color-unrealized: var(--color-unrealized);

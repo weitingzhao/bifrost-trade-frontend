@@ -11,6 +11,7 @@ import { useMonitorStatus, useOperations } from '@/hooks/useMonitorStatus'
 import { OpsHostEnvPill } from '@/pages/settings/socket/OpsHostEnvPill'
 import { DaemonEngineOpsSection } from './daemon/DaemonEngineOpsSection'
 import { UpstreamIngestSection } from './daemon/UpstreamIngestSection'
+import { DaemonAppForm } from './DaemonAppPage'
 import { StrategyTradingDaemonCard } from './daemon/StrategyTradingDaemonCard'
 import { RiskModelCard } from './daemon/RiskModelCard'
 import { useRiskSummary } from '@/hooks/useRiskSummary'
@@ -143,6 +144,16 @@ export default function DaemonStatusPage() {
       <Card variant="elevated" size="sm">
         <CardContent className={daemonElevatedCardClass}>
           <RecentOperationsTable operations={opsData?.operations ?? []} />
+        </CardContent>
+      </Card>
+
+      {/* The intervals that govern the heartbeats above, beside them. */}
+      <Card variant="elevated" size="sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Heartbeat intervals</CardTitle>
+        </CardHeader>
+        <CardContent className={daemonElevatedCardClass}>
+          <DaemonAppForm status={data} />
         </CardContent>
       </Card>
     </PageShell>

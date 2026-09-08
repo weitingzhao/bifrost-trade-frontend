@@ -110,7 +110,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
 
 export const SETTINGS_ITEM: ShellNavItem = route(
   'Settings',
-  '/settings/coverage/overview',
+  '/settings/coverage',
   Settings,
 )
 

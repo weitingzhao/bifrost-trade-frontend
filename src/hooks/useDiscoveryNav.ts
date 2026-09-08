@@ -6,6 +6,6 @@ export function useDiscoveryNav() {
   return {
     goToScreener: () => navigate('/research/screener'),
     /** Polygon feed coverage settings (stock IB coverage page). */
-    openPolygonFeed: () => navigate('/settings/coverage/stock-ib'),
+    openPolygonFeed: () => navigate('/settings/coverage?view=stock'),
   }
 }

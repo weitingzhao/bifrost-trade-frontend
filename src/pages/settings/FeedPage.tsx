@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsPanel, TabsPanelContent, TabsTrigger } from '@/components/ui/tabs'
+import { Link } from 'react-router-dom'
 import { PageShell } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -10,7 +11,18 @@ import { SnapshotTab } from '@/pages/settings/subscribe/SnapshotTab'
 import { RedisTab } from '@/pages/settings/subscribe/RedisTab'
 import { ServicesTab } from '@/pages/settings/subscribe/ServicesTab'
 
-export default function SubscribePage() {
+/**
+ * Feed — `/settings/feed`.
+ *
+ * Trade's view of what it consumes: the snapshot it takes, the Redis keys it
+ * reads off the shared bus, and the IB services those keys come from. The
+ * console that can restart any of it is the Ops Console; this page is the
+ * consumption side, which is the side that explains a stale quote.
+ *
+ * Absorbed the two-link `Feed · Interactive Brokers` page, which had no
+ * content of its own.
+ */
+export default function FeedPage() {
   const { data: status, isLoading, isError, error, refetch, dataUpdatedAt } = useMonitorStatus()
   const executionsQuery = useSubscribeExecutions(dataUpdatedAt)
 
@@ -38,6 +50,24 @@ export default function SubscribePage() {
   return (
     <PageShell className="space-y-4">
       <SubscribePageHeader status={status} statusTick={statusTick} />
+
+      <p className="text-dense-label text-muted-foreground">
+        Reading only. Starting, stopping or reconnecting these services is the
+        Ops platform's job —{' '}
+        <a
+          href={`${import.meta.env.VITE_OPS_CONSOLE_URL ?? 'http://127.0.0.1:5180'}/#ib-client`}
+          target="_blank"
+          rel="noreferrer"
+          className="hover:underline"
+        >
+          Ops Console · IB Client
+        </a>
+        , or the upstream block on{' '}
+        <Link to="/operations/daemon" className="hover:underline">
+          Daemon
+        </Link>
+        .
+      </p>
 
       <Tabs defaultValue="snapshot">
         <TabsPanel>

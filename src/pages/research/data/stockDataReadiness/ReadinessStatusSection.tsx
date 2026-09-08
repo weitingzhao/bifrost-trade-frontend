@@ -96,7 +96,7 @@ export function ReadinessStatusSection({
                 View Jobs
               </Button>
               <Button size="sm" variant="ghost" asChild>
-                <Link to="/settings/coverage/overview">Data Coverage →</Link>
+                <Link to="/settings/coverage">Data Coverage →</Link>
               </Button>
             </div>
           </div>

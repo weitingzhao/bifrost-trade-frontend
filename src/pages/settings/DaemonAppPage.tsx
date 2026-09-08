@@ -22,7 +22,15 @@ const DAEMON_APP_INFO =
 
 // ─── Inner form — receives loaded status as props ─────────────────────────────
 
-function DaemonAppForm({ status }: { status: StatusResponse }) {
+/**
+ * Heartbeat write intervals — the two numbers this page exists for.
+ *
+ * Exported so the Daemon page can show them beside the heartbeats they govern:
+ * a settings page whose whole content is two intervals, one menu level away
+ * from the page that displays those intervals ticking, is a click that teaches
+ * nothing.
+ */
+export function DaemonAppForm({ status }: { status: StatusResponse }) {
   const invalidateStatus = useInvalidateStatus()
 
   const [daemonSec, setDaemonSec] = useState(

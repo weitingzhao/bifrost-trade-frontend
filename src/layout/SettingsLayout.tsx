@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   BarChart2, ChevronDown, ChevronRight,
-  Cpu, Database, HardDrive,
-  Layers, Layers2, Palette, Plug, Radio, Wifi,
+  Cpu, HardDrive,
+  Layers, Layers2, Palette, Plug, Radio,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -41,29 +41,26 @@ function branch(label: string, icon: React.ElementType, children: NavLeaf[]): Na
   return { kind: 'branch', label, icon, children }
 }
 
+/**
+ * Three things the Owner would actually change or check.
+ *
+ * There were eleven entries across two groups, and they were four different
+ * kinds of thing: watchlist coverage, feed plumbing, business configuration,
+ * and two documentation pages with no live data at all. Coverage's four pages
+ * became one with views; the Feed shell that held only two links is gone;
+ * Data Readiness is a Research page and keeps its entry there; the heartbeat
+ * intervals moved beside the heartbeats on Daemon; Tech Stack and the UI
+ * Design System moved to /docs, which is what they are.
+ */
 const NAV: NavGroup[] = [
   {
-    group: 'Data & Feed',
+    group: 'Data',
     sections: [
       {
-        section: 'Data Coverage',
+        section: '',
         items: [
-          branch('Overview', BarChart2, [
-            leaf('Summary', '/settings/coverage/overview',        BarChart2),
-            leaf('Detail',  '/settings/coverage/overview-detail', Layers),
-          ]),
-          leaf('Option', '/settings/coverage/option', Layers),
-          branch('Stock', HardDrive, [
-            leaf('IB Live (Redis)', '/settings/coverage/stock-ib', Wifi),
-          ]),
-          leaf('Data Readiness', '/settings/data-readiness', Database),
-        ],
-      },
-      {
-        section: 'Feed',
-        items: [
-          leaf('Subscribe',           '/settings/subscribe', Radio),
-          leaf('Interactive Brokers', '/settings/feed/ib',   Plug),
+          leaf('Coverage', '/settings/coverage', BarChart2),
+          leaf('Feed', '/settings/feed', Radio),
         ],
       },
     ],
@@ -72,11 +69,8 @@ const NAV: NavGroup[] = [
     group: 'Configuration',
     sections: [
       {
-        section: 'Configuration',
+        section: '',
         items: [
-          leaf('Daemon App', '/settings/daemon-app', Cpu),
-          leaf('Tech Stack', '/settings/tech-stack', Layers2),
-          leaf('UI Design System', '/settings/ui-design-system', Palette),
           branch('IB Configure', Plug, [
             leaf('User (YAML)',       '/settings/ib#ib-users',       Plug),
             leaf('Client ID (YAML)',  '/settings/ib#ib-client-ids',  Cpu),
@@ -88,6 +82,12 @@ const NAV: NavGroup[] = [
       },
     ],
   },
+]
+
+/** Reference material, kept reachable without pretending it is a setting. */
+const REFERENCE: NavLeaf[] = [
+  leaf('Tech Stack', '/docs/tech-stack', Layers2),
+  leaf('UI Design System', '/docs/ui-design-system', Palette),
 ]
 
 // ─── Nav components ───────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ export function SettingsLayout() {
   const location = useLocation()
 
   if (location.pathname === '/settings' || location.pathname === '/settings/') {
-    navigate('/settings/coverage/overview', { replace: true })
+    navigate('/settings/coverage', { replace: true })
   }
 
   return (
@@ -174,9 +174,11 @@ export function SettingsLayout() {
 
               {group.sections.map((section) => (
                 <div key={section.section} className="mb-3">
-                  <p className="px-2 mb-1 text-dense-meta font-semibold text-muted-foreground/80 select-none">
-                    {section.section}
-                  </p>
+                  {section.section ? (
+                    <p className="px-2 mb-1 text-dense-meta font-semibold text-muted-foreground/80 select-none">
+                      {section.section}
+                    </p>
+                  ) : null}
                   <div className="space-y-0.5">
                     {section.items.map((item) =>
                       item.kind === 'leaf'
@@ -188,6 +190,18 @@ export function SettingsLayout() {
               ))}
             </div>
           ))}
+
+          <div>
+            <div className="border-t border-border/60 mb-5" />
+            <p className="px-2 mb-2 text-dense-caption font-bold uppercase tracking-[0.12em] text-muted-foreground/60 select-none">
+              Reference
+            </p>
+            <div className="space-y-0.5">
+              {REFERENCE.map((item) => (
+                <LeafItem key={item.to} item={item} />
+              ))}
+            </div>
+          </div>
         </div>
       </aside>
 

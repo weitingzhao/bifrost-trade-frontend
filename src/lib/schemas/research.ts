@@ -500,3 +500,16 @@ export const SymbolVerdictsSchema = z
   })
   .passthrough()
 
+
+/** A document the research-api serves from inside its package (`GET /research/docs/{slug}`). */
+export const ResearchDocSchema = z
+  .object({
+    slug: z.string(),
+    title: z.string(),
+    version: z.string().nullable(),
+    updated: z.string().nullable(),
+    status: z.string().nullable(),
+    markdown: z.string(),
+    path: z.string(),
+  })
+  .passthrough()

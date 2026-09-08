@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   BarChart2, ChevronDown, ChevronRight,
   Activity, Cpu, HardDrive,
-  Layers, Layers2, Palette, Plug, Radio,
+  BookOpen, Layers, Layers2, Palette, Plug, Radio,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -106,6 +106,7 @@ const NAV: NavGroup[] = [
 
 /** Reference material, kept reachable without pretending it is a setting. */
 const REFERENCE: NavLeaf[] = [
+  leaf('Research Blueprint', '/docs/research-blueprint', BookOpen),
   leaf('Tech Stack', '/docs/tech-stack', Layers2),
   leaf('UI Design System', '/docs/ui-design-system', Palette),
 ]

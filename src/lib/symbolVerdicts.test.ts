@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { SymbolVerdicts } from '@/api/research/symbolVerdicts'
 import { toneForBand } from '@/lib/lensVerdict'
-import { proposalLabel, proposalTone, verdictChips } from './symbolVerdicts'
+import type { SymbolProposal } from '@/api/research/symbolVerdicts'
+import { decisionChips, lensChips, proposalChips, proposalLabel, proposalTone, verdictChips, verdictSummary } from './symbolVerdicts'
 
 const data: SymbolVerdicts = {
   symbol: 'NVDA',
@@ -56,5 +57,34 @@ describe('symbol verdict chips (D4)', () => {
     expect(proposalTone({ kind: 'action', status: 'error' })).toBe('danger')
     expect(proposalTone({ kind: 'draft', status: 'dismissed' })).toBe('neutral')
     expect(proposalLabel({ kind: 'candidate', id: 'c', status: 'open', state: 'proposed', title: null, by_copilot: false, created_at: null, source: 'harness' })).toBe('Candidate · proposed (harness)')
+  })
+})
+
+describe('verdict summary — the strip folds the proposals into one line', () => {
+  it('counts each kind with how many are still in play, how many wait on a decision, and what happened last', () => {
+    const s = verdictSummary(data)
+    expect(s.total).toBe(4)
+    expect(s.parts).toEqual(['1 candidate (1 open)', '1 hypothesis', '1 draft (1 pending)', '1 action'])
+    expect(s.waiting).toBe(2) // the open candidate and the pending draft; the executed action waits on nobody
+    expect(s.last).toEqual({ label: 'propose candidate · executed', day: '2026-09-07', to: '/research/loop/decisions' })
+  })
+
+  it('splits the chips by who said them; the full list keeps the reading order', () => {
+    expect(lensChips(data).map((c) => c.label)).toEqual(['iv_rank: Buy premium bias'])
+    expect(decisionChips(data).map((c) => c.label)).toEqual(['Held: judges did not agree (dissent)', 'Judges split'])
+    expect(proposalChips(data)).toHaveLength(4)
+    expect(verdictChips(data)).toEqual([...lensChips(data), ...decisionChips(data), ...proposalChips(data)])
+  })
+
+  it('is empty without data, pluralises by count, and picks the newest by time rather than by position', () => {
+    expect(verdictSummary(undefined)).toEqual({ total: 0, parts: [], waiting: 0, last: null })
+    const extra: SymbolProposal[] = [
+      { kind: 'candidate', id: 'c2', status: 'dismissed', state: 'dismissed', title: null, by_copilot: false, created_at: '2026-09-05T00:00:00+00:00' },
+      { kind: 'action', id: 'a2', status: 'proposed', state: 'proposed', title: 'size the trade', by_copilot: true, created_at: '2026-09-08T00:00:00+00:00', tool: 'x' },
+    ]
+    const s = verdictSummary({ ...data, proposals: [...data.proposals, ...extra] })
+    expect(s.parts).toEqual(['2 candidates (1 open)', '1 hypothesis', '1 draft (1 pending)', '2 actions (1 awaiting)'])
+    expect(s.waiting).toBe(3)
+    expect(s.last).toEqual({ label: 'size the trade · proposed', day: '2026-09-08', to: '/research/loop/decisions' })
   })
 })

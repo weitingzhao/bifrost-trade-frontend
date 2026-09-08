@@ -40,6 +40,13 @@ export function workbenchStops(symbolRaw: string, date?: string | null): SymbolS
   if (!symbol) return []
   return [
     {
+      id: 'dossier',
+      label: 'Dossier',
+      why: 'Every face at once — trend, volatility, positioning, events, forecast, validation — with the lab behind each.',
+      to: withSymbol('/research/dossier', symbol, date),
+      seat: 'workbench',
+    },
+    {
       id: 'vol-regime',
       label: 'Vol Regime',
       why: 'IV rank, VRP and skew — whether its volatility is priced rich or cheap right now.',

@@ -125,6 +125,10 @@ export const router = createBrowserRouter([
       },
       /* research-loop-automation C1 — five Analyze hubs; the retired labs redirect with their query intact */
       {
+        path: 'research/dossier',
+        lazy: lazyPage(() => import('@/pages/research/analyze/dossier/DossierPage')),
+      },
+      {
         path: 'research/vol-regime',
         lazy: lazyPage(() => import('@/pages/research/analyze/volRegime/VolRegimePage')),
       },

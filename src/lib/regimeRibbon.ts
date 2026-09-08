@@ -59,6 +59,11 @@ const LENS_ROUTES: Record<string, string> = {
   terrain: '/research/scenario?view=model',
   terrain_regime: '/research/scenario?view=model',
   order_sentiment: '/research/flow',
+  iv_percentile: '/research/vol-regime?view=iv-rank',
+  term_slope: '/research/vol-regime?view=skew',
+  momentum: '/research/momentum-radar',
+  sepa: '/research/explorer',
+  forecast_path: '/research/scenario?view=sessions',
 }
 
 const LENS_LABELS: Record<string, string> = {
@@ -70,6 +75,11 @@ const LENS_LABELS: Record<string, string> = {
   terrain: 'Terrain',
   terrain_regime: 'Terrain',
   order_sentiment: 'Sentiment',
+  iv_percentile: 'IV Percentile',
+  term_slope: 'Term slope',
+  momentum: 'Momentum',
+  sepa: 'SEPA',
+  forecast_path: 'Forecast path',
 }
 
 export function lampFromFreshness(freshness: string): LampColor {

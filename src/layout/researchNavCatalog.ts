@@ -98,6 +98,7 @@ export const BENCHES: Bench[] = [
     label: 'Analyze',
     icon: Radar,
     items: [
+      route('Dossier', '/research/dossier', BookOpen),
       route('Vol Regime', '/research/vol-regime', Radar),
       route('Dealer Levels', '/research/dealer-levels', BarChart2),
       route('Scenario Model', '/research/scenario', TrendingUp),

@@ -19,6 +19,8 @@ export const ANALYZE_HUB = {
   scenario: '/research/scenario',
   flow: '/research/flow',
   discovery: '/research/discovery',
+  /** One symbol, every face — the Analyze entry; the hubs are its drill-downs. */
+  dossier: '/research/dossier',
 } as const
 
 export type LabViewId = 'iv-rank' | 'vrp' | 'skew' | 'gex' | 'opex' | 'model' | 'sessions' | 'playbook'

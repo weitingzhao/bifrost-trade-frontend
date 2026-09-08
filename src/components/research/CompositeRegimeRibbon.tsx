@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query'
 import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { useLensRegistry } from '@/hooks/useLensRegistry'
+import { ANALYZE_HUB, withSymbolParam } from '@/lib/analyzeHubs'
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import {
   canonicalLens,
@@ -70,7 +71,13 @@ export function CompositeRegimeRibbon({
       )}
       data-testid="composite-regime-ribbon"
     >
-      <span className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">{`${sym || '—'} regime`}</span>
+      <Link
+        to={withSymbolParam(ANALYZE_HUB.dossier, sym)}
+        title="Open the dossier — every face of this symbol"
+        className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground no-underline hover:text-foreground"
+      >
+        {`${sym || '—'} regime`}
+      </Link>
       {q.isLoading ? (
         <span className="text-dense-caption text-muted-foreground">Loading exhibits…</span>
       ) : (

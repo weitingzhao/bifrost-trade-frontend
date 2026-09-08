@@ -11,7 +11,7 @@ import { fetchExhibit, type ExhibitLens, type ExhibitPayload } from '@/api/resea
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
 const REGISTRY_STALE_MS = 60 * 60_000
-const EXHIBIT_STALE_MS = 60_000
+export const EXHIBIT_STALE_MS = 60_000
 
 export function useLensRegistry() {
   return useQuery<LensRegistry>({

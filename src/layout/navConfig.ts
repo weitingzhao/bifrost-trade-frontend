@@ -31,6 +31,11 @@ function route(
   return { id: to, label, to, icon, children }
 }
 
+/** A home page: a route whose pages beneath it start open. */
+function home(label: string, to: string, icon: LucideIcon, children: ShellNavItem[]): ShellNavItem {
+  return { ...route(label, to, icon, children), defaultOpen: true }
+}
+
 export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Market',
@@ -47,11 +52,11 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // is the ledger: what the broker says, then what was traded, then what
     // cash moved. The Trading Copilot lives with the Copilot seat under Research.
     items: [
-      route('Performance', '/portfolio/performance', LineChart, [
+      home('Performance', '/portfolio/performance', LineChart, [
         route('Positions', '/portfolio/positions', TrendingUp),
         route('Backing & Model', '/portfolio/backing', Layers),
       ]),
-      route('Accounts', '/portfolio/accounts', LayoutDashboard, [
+      home('Accounts', '/portfolio/accounts', LayoutDashboard, [
         route('Trade Ledger', '/portfolio/ledger', ClipboardList),
         route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
       ]),

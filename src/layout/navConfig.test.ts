@@ -11,6 +11,7 @@ describe('Portfolio nav', () => {
     expect(portfolio.items!.map((i) => i.to)).toEqual(['/portfolio/performance', '/portfolio/accounts'])
     expect(performance.children?.map((c) => c.to)).toEqual(['/portfolio/positions', '/portfolio/backing'])
     expect(accounts.children?.map((c) => c.to)).toEqual(['/portfolio/ledger', '/portfolio/transfer'])
+    expect([performance.defaultOpen, accounts.defaultOpen]).toEqual([true, true])
   })
   it('does not carry the Copilot — that is a Copilot-seat page under Research', () => {
     const all = portfolio.items!.flatMap((i) => [i.to, ...(i.children?.map((c) => c.to) ?? [])])

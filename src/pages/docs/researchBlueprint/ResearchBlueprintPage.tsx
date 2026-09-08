@@ -1,23 +1,36 @@
 /**
- * The Research blueprint — `/docs/research-blueprint`.
+ * The Research blueprint and its calibration — `/docs/research-blueprint`
+ * and `/docs/research-calibration`.
  *
- * What Research should be, written down once so the code can be measured
- * against it. The text lives in bifrost-research and arrives through the API;
- * this page renders it and says which version it is looking at.
+ * Two documents, kept apart on purpose: the blueprint says what Research
+ * should be and changes only when the understanding changes; the calibration
+ * says what it is today, contract by contract, and changes every time someone
+ * measures. Both live in bifrost-research and arrive through the API, so this
+ * page can never show a version the repository does not hold.
  */
 import { useQuery } from '@tanstack/react-query'
 import { ExternalLink } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import { fetchResearchDoc } from '@/api/research/docs'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { PageHeader, PageShell } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DenseTag } from '@/components/data-display'
+import { DenseTag, SegmentControl } from '@/components/data-display'
+
+const DOCS = [
+  { slug: 'blueprint', path: '/docs/research-blueprint', label: 'Blueprint', lead: 'What Research should be. Changes only when the understanding does.' },
+  { slug: 'calibration', path: '/docs/research-calibration', label: 'Calibration', lead: 'What Research is today, contract by contract. Changes every time someone measures.' },
+] as const
 
 export default function ResearchBlueprintPage() {
+  // Which document is decided by the route, so the same page serves both.
+  const { pathname } = useLocation()
+  const current = DOCS.find((d) => d.path === pathname)?.slug ?? 'blueprint'
+  const meta = DOCS.find((d) => d.slug === current)!
   const q = useQuery({
-    queryKey: ['research', 'docs', 'blueprint'],
-    queryFn: () => fetchResearchDoc('blueprint'),
+    queryKey: ['research', 'docs', current],
+    queryFn: () => fetchResearchDoc(current),
     staleTime: 5 * 60_000,
   })
   const doc = q.data
@@ -25,8 +38,8 @@ export default function ResearchBlueprintPage() {
   return (
     <PageShell padding="default" className="space-y-3">
       <PageHeader
-        title={doc?.title ?? 'Research Blueprint'}
-        description="The target, not the feature list. Calibration compares the code against the numbered contracts here; the numbers are stable, the text is not."
+        title={doc?.title ?? `Research ${meta.label}`}
+        description={meta.lead}
         actions={
           doc ? (
             <div className="flex items-center gap-2 text-dense-meta text-muted-foreground">
@@ -41,6 +54,13 @@ export default function ResearchBlueprintPage() {
           ) : null
         }
       />
+      <div className="flex items-center gap-2">
+        <SegmentControl
+          value={current}
+          onChange={() => undefined}
+          options={DOCS.map((d) => ({ value: d.slug, label: <Link to={d.path}>{d.label}</Link> }))}
+        />
+      </div>
       {q.isError ? (
         <QueryErrorAlert error={q.error} />
       ) : q.isLoading || !doc ? (

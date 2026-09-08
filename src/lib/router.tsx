@@ -293,6 +293,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/docs/researchBlueprint/ResearchBlueprintPage')),
       },
       {
+        path: 'docs/research-calibration',
+        lazy: lazyPage(() => import('@/pages/docs/researchBlueprint/ResearchBlueprintPage')),
+      },
+      {
         path: 'settings',
         element: <SettingsLayout />,
         children: [

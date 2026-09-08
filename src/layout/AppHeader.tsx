@@ -64,6 +64,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/settings/socket':                'Settings · Socket',
   '/settings/coverage':              'Settings · Data Coverage',
   '/docs/research-blueprint':        'Research Blueprint',
+  '/docs/research-calibration':      'Research Calibration',
   '/docs/tech-stack':                'Tech Stack',
   '/docs/ui-design-system':          'UI Design System',
   '/settings/data-readiness':        'Settings · Data Readiness',

@@ -107,6 +107,7 @@ const NAV: NavGroup[] = [
 /** Reference material, kept reachable without pretending it is a setting. */
 const REFERENCE: NavLeaf[] = [
   leaf('Research Blueprint', '/docs/research-blueprint', BookOpen),
+  leaf('Research Calibration', '/docs/research-calibration', BookOpen),
   leaf('Tech Stack', '/docs/tech-stack', Layers2),
   leaf('UI Design System', '/docs/ui-design-system', Palette),
 ]

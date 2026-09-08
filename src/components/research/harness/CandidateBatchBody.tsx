@@ -428,6 +428,7 @@ function RatingCell({ rating }: { rating: CandidateRating | null }) {
     )
   }
   const lv = rating.levels
+  const inst = rating.instrument
   const levelTitle = lv
     ? `Buy ${fmtPx(lv.entry_lo)}–${fmtPx(lv.entry_hi)} · stop ${fmtPx(lv.stop)} (${fmtPct(-lv.risk_pct, false)} risk, ${lv.stop_source}) · target ${fmtPx(lv.target_2r)}`
     : 'No price levels recorded for this name.'
@@ -446,9 +447,24 @@ function RatingCell({ rating }: { rating: CandidateRating | null }) {
           {rating.action_label}
         </DenseTag>
       </span>
-      <span className="font-mono text-dense-micro tabular-nums text-muted-foreground" title={levelTitle}>
-        {lv ? `${fmtPx(lv.entry_lo)}–${fmtPx(lv.entry_hi)} · ✕${fmtPx(lv.stop)}` : 'no levels'}
-      </span>
+      {lv ? (
+        <span className="font-mono text-dense-micro tabular-nums text-muted-foreground" title={levelTitle}>
+          {fmtPx(lv.entry_lo)}–{fmtPx(lv.entry_hi)} · ✕{fmtPx(lv.stop)}
+        </span>
+      ) : inst.suggestion ? (
+        // An option-lens name has no pivot to buy against; its actionable read
+        // is the Stage × IV cell. Showing "no levels" there hid the only thing
+        // the rating had to say about it.
+        <span className="text-dense-micro text-muted-foreground" title={inst.note || levelTitle}>
+          {inst.stage_row?.replace('_', ' ')} × IV {inst.iv_col}
+          {inst.iv_rank != null ? ` ${inst.iv_rank.toFixed(0)}` : ''} →{' '}
+          <span className="text-foreground/80">{inst.suggestion}</span>
+        </span>
+      ) : (
+        <span className="text-dense-micro text-muted-foreground" title={inst.note || levelTitle}>
+          {inst.note || 'no levels'}
+        </span>
+      )}
     </div>
   )
 }

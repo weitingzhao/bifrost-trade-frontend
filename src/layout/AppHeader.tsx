@@ -32,6 +32,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/research/stock-data': 'Settings · Data Readiness',
   '/research/discovery': 'Option Discovery',
   '/research/dossier': 'Dossier',
+  '/research/lens-coverage': 'Lens Coverage',
   '/research/vol-regime': 'Vol Regime',
   '/research/dealer-levels': 'Dealer Levels',
   '/research/scenario': 'Scenario Model',

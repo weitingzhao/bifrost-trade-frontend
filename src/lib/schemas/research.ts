@@ -436,6 +436,30 @@ export const LensRegistrySchema = z
   })
   .passthrough()
 
+/** Lens coverage — how much of the universe each blueprint face actually covers. */
+export const LensCoverageSchema = z
+  .object({
+    universe: z.number(),
+    tiers: z.array(z.string()),
+    lenses: z.array(
+      z
+        .object({
+          lens: z.string(),
+          label: z.string(),
+          face: z.string(),
+          read: z.number().nullable(),
+          of: z.number(),
+          unscreenable: z.string().nullable().optional(),
+        })
+        .passthrough(),
+    ),
+    every_face: z.number(),
+    no_option_face: z.number(),
+    screenable_lenses: z.number(),
+    unscreenable: z.record(z.string(), z.string()),
+  })
+  .passthrough()
+
 /** Analyze Exhibit — Wave 15 shape plus the A2 additions (all optional / nullable). */
 export const ExhibitSchema = z
   .object({

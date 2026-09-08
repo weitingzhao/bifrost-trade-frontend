@@ -118,6 +118,7 @@ export const BENCHES: Bench[] = [
     icon: Server,
     items: [
       route('Stock Data Readiness', '/settings/data-readiness', Server),
+      route('Lens Coverage', '/research/lens-coverage', Radar),
       route('Signal Health', '/research/signal-health', Activity),
       route('Stock Watchlist', '/research/watchlist', Star),
       route('Stock Screener', '/research/stock-screener', ListFilter),

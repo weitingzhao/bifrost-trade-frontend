@@ -86,6 +86,8 @@ function PositionRow({
   benchBySymbol: Record<string, DailyBenchmark>
 }) {
   const sym = pos.symbol?.toUpperCase() ?? ''
+  // The line this holding belongs to on Positions: the instance first, else the opportunity.
+  const bookLabel = pos.strategy_instance_label?.trim() || pos.strategy_opportunity_name?.trim() || ''
   const r = computeStockPositionRowMetrics(
     pos,
     quotesBySymbol[sym],

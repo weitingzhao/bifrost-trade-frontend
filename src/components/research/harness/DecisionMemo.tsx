@@ -160,6 +160,11 @@ function RatingCard({
               split
             </DenseTag>
           ) : null}
+          {r.returning ? (
+            <DenseTag variant="info" size="cell" title={r.returning.summary}>
+              returning
+            </DenseTag>
+          ) : null}
           {r.outlook && r.outlook !== 'stable' ? (
             <DenseTag variant={r.outlook === 'improving' ? 'success' : 'warning'} size="cell" title={r.score_drift ? `score ${r.score_drift.from} → ${r.score_drift.to}` : undefined}>
               {r.outlook}
@@ -220,6 +225,12 @@ function RatingCase({ r, row }: { r: CandidateRating; row: PersonaRow | null }) 
                 <dd className="font-mono tabular-nums">
                   {fmtPct(r.timing.pct_vs_50d)} / {b.close != null && b.sma_200 ? fmtPct((b.close / b.sma_200 - 1) * 100) : '—'}
                 </dd>
+              </>
+            ) : null}
+            {r.returning ? (
+              <>
+                <dt className="text-muted-foreground">Declined before</dt>
+                <dd>{r.returning.summary}</dd>
               </>
             ) : null}
             <dt className="text-muted-foreground">Source record</dt>

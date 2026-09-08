@@ -27,7 +27,13 @@ import {
   type CandidateAgreement,
 } from '@/lib/harness/harnessDraftHelpers'
 import { openCandidateInCopilot } from '@/lib/harness/loopCopilotPrefill'
-import { NET_AGENT, batchLeash, describeSplit } from '@/lib/harness/harnessDraftHelpers'
+import {
+  NET_AGENT,
+  batchLeash,
+  changePhrase,
+  declinedSuppressed,
+  describeSplit,
+} from '@/lib/harness/harnessDraftHelpers'
 import { actionTone, fmtPct, fmtPx, stars, type CandidateRating } from '@/lib/harness/rating'
 import { IconActionButton } from '@/components/data-display'
 
@@ -81,6 +87,9 @@ export function CandidateBatchBody({
   const objectiveTitle = typeof payload.title === 'string' ? payload.title : null
   // D3: the leash's verdict on this batch — accepted names became hypotheses on their own.
   const leash = batchLeash(payload)
+  // Names this run deliberately did not bring back. A shorter list with no
+  // explanation is the failure the decline gate exists to avoid.
+  const suppressed = declinedSuppressed(payload)
   const acceptedIds = new Set(leash?.accepted.map((a) => a.id) ?? [])
   const heldById = new Map(leash?.held.map((h) => [h.id, h.reasons]) ?? [])
 
@@ -212,6 +221,15 @@ export function CandidateBatchBody({
         </div>
       ) : null}
 
+      {suppressed.length > 0 ? (
+        <p className="text-dense-micro text-muted-foreground" data-testid="batch-declined-suppressed">
+          Not re-proposed:{' '}
+          <span className="font-mono">{suppressed.map((x) => x.symbol).join(', ')}</span> — you
+          declined {suppressed.length === 1 ? 'this' : 'these'} and nothing material has changed
+          since. The run’s funnel carries the reason for each.
+        </p>
+      ) : null}
+
       {items.length > 0 ? (
         <>
           <DenseDataTable tableClassName="min-w-[60rem]">
@@ -272,6 +290,16 @@ export function CandidateBatchBody({
                           blocked
                         </DenseTag>
                       ) : null}
+                      {item.returning ? (
+                        <DenseTag
+                          variant="info"
+                          size="cell"
+                          className="ml-1"
+                          title={item.returning.summary}
+                        >
+                          returning
+                        </DenseTag>
+                      ) : null}
                       {acceptedIds.has(item.id) ? (
                         <DenseTag variant="success" size="cell" className="ml-1" title="The leash accepted this name; it is a hypothesis now">
                           accepted
@@ -284,6 +312,18 @@ export function CandidateBatchBody({
                     </DenseTableCell>
                     <DenseTableCell>
                       <RatingCell rating={item.rating} />
+                      {item.returning ? (
+                        <span
+                          className="mt-0.5 block text-dense-micro text-info"
+                          title={item.returning.summary}
+                        >
+                          {item.returning.declined_on
+                            ? `declined ${item.returning.declined_on.slice(5)} · `
+                            : ''}
+                          {item.returning.changes.map(changePhrase).join(' · ') ||
+                            'nothing to compare'}
+                        </span>
+                      ) : null}
                     </DenseTableCell>
                     <DenseTableCell>
                       <span className="font-mono tabular-nums text-muted-foreground">

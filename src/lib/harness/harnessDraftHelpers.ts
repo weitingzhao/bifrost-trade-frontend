@@ -412,6 +412,20 @@ export interface CandidateEvidence {
   agreement?: string
 }
 
+export interface CandidateChange {
+  rule: string
+  field: string
+  from?: string | number | null
+  to?: string | number | null
+}
+
+/** Why a name the Owner declined is being proposed again. */
+export interface CandidateReturning {
+  declined_on: string | null
+  changes: CandidateChange[]
+  summary: string
+}
+
 export interface CandidateItem {
   id: string
   symbol: string
@@ -426,7 +440,60 @@ export interface CandidateItem {
    * because it is bad".
    */
   rating: CandidateRating | null
+  /**
+   * Present when this name was declined before and something improved.
+   * Absent on a fresh name and on runs that predate the decline gate — an
+   * absence, never a claim that nothing changed.
+   */
+  returning: CandidateReturning | null
 }
+function parseReturning(raw: unknown): CandidateReturning | null {
+  const r = _dict(raw)
+  const summary = typeof r.summary === 'string' ? r.summary : ''
+  if (!summary) return null
+  const changes = Array.isArray(r.changes)
+    ? (r.changes as unknown[]).map(_dict).map((c) => ({
+        rule: String(c.rule ?? ''),
+        field: String(c.field ?? ''),
+        from: (c.from ?? null) as string | number | null,
+        to: (c.to ?? null) as string | number | null,
+      }))
+    : []
+  return {
+    declined_on: typeof r.declined_on === 'string' ? r.declined_on : null,
+    changes,
+    summary,
+  }
+}
+
+/** "score 78 → 84", "now PIVOT" — the phrase the memo and the card share. */
+export function changePhrase(change: CandidateChange): string {
+  switch (change.rule) {
+    case 'score_improved':
+      return `score ${change.from} → ${change.to}`
+    case 'path_advanced':
+      return `now ${change.to}`
+    case 'grade_improved':
+      return `grade ${change.from} → ${change.to}`
+    case 'new_event':
+      return `event ${change.to}`
+    case 'regime_flip':
+      return `regime ${change.from} → ${change.to}`
+    default:
+      return change.field || change.rule || 'changed'
+  }
+}
+
+/** Names this run did not re-propose, and why. */
+export function declinedSuppressed(payload: Record<string, unknown>): { symbol: string; reason: string }[] {
+  const raw = payload.declined_suppressed
+  if (!Array.isArray(raw)) return []
+  return (raw as unknown[])
+    .map(_dict)
+    .filter((r) => typeof r.symbol === 'string' && r.symbol)
+    .map((r) => ({ symbol: String(r.symbol), reason: String(r.reason ?? 'declined') }))
+}
+
 export function candidateBatchItems(payload: Record<string, unknown>): CandidateItem[] {
   const raw = payload.items
   if (!Array.isArray(raw)) return []
@@ -457,6 +524,7 @@ export function candidateBatchItems(payload: Record<string, unknown>): Candidate
       net_stance: net,
       blocked_by_validate: rec.blocked_by_validate === true,
       rating: parseRating(rec.rating),
+      returning: parseReturning(rec.returning),
       // Only present when the backend said something: a missing key is a run
       // before B2, not a judgement of "no agreement".
       ...(typeof rec.agreement === 'string' ? { agreement: rec.agreement } : {}),

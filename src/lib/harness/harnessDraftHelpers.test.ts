@@ -19,6 +19,8 @@ import {
   policySuggestionMergeCount,
   modelNets,
   describeSplit,
+  changePhrase,
+  declinedSuppressed,
 } from './harnessDraftHelpers'
 
 describe('computePolicySuggestionRows', () => {
@@ -244,6 +246,7 @@ describe('candidateBatch helpers', () => {
         net_stance: null,
         blocked_by_validate: false,
         rating: null,
+        returning: null,
       },
       {
         id: 'c2',
@@ -253,6 +256,7 @@ describe('candidateBatch helpers', () => {
         net_stance: null,
         blocked_by_validate: false,
         rating: null,
+        returning: null,
       },
     ])
   })
@@ -692,5 +696,53 @@ describe('what made the judges disagree', () => {
   it('one judge is not a split', () => {
     expect(describeSplit([v('deepseek-chat', 'verdict', 'support')] as never)).toBeNull()
     expect(describeSplit([])).toBeNull()
+  })
+})
+
+
+describe('a name that was declined before', () => {
+  it('carries why it came back', () => {
+    const [item] = candidateBatchItems({
+      items: [
+        {
+          id: 'c1',
+          symbol: 'HALO',
+          score: 84,
+          returning: {
+            declined_on: '2026-09-04',
+            summary: 'declined 09-04; score 78.0 → 84.0, now PIVOT',
+            changes: [
+              { rule: 'score_improved', field: 'score', from: 78, to: 84 },
+              { rule: 'path_advanced', field: 'path', from: 'SETUP', to: 'PIVOT' },
+            ],
+          },
+        },
+      ],
+    })
+    expect(item.returning?.declined_on).toBe('2026-09-04')
+    expect(item.returning?.changes.map(changePhrase)).toEqual([
+      'score 78 → 84',
+      'now PIVOT',
+    ])
+  })
+
+  it('a fresh name has no returning block, and that is an absence not a claim', () => {
+    const [item] = candidateBatchItems({ items: [{ id: 'c1', symbol: 'NVDA', score: 80 }] })
+    expect(item.returning).toBeNull()
+  })
+
+  it('names the run did not re-propose are listed with their reason', () => {
+    expect(
+      declinedSuppressed({
+        declined_suppressed: [
+          { symbol: 'WT', reason: 'declined and nothing material changed' },
+          { symbol: 'BG', reason: 'declined; no snapshot to compare' },
+        ],
+      }),
+    ).toEqual([
+      { symbol: 'WT', reason: 'declined and nothing material changed' },
+      { symbol: 'BG', reason: 'declined; no snapshot to compare' },
+    ])
+    expect(declinedSuppressed({})).toEqual([])
   })
 })

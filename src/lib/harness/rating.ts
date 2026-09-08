@@ -80,6 +80,8 @@ export interface CandidateRating {
   }
   basis: RatingBasis | null
   why: string
+  /** Set when this name was declined before and something improved since. */
+  returning: { declined_on: string | null; changes: unknown[]; summary: string } | null
 }
 
 const ACTIONS = new Set<RatingAction>(['buy_zone', 'extended', 'accumulate', 'watch', 'hold_no_add', 'avoid'])
@@ -184,6 +186,16 @@ export function parseRating(raw: unknown): CandidateRating | null {
         }
       : null,
     why: String(r.why ?? ''),
+    returning: (() => {
+      const ret = rec(r.returning)
+      const summary = text(ret.summary)
+      if (!summary) return null
+      return {
+        declined_on: text(ret.declined_on),
+        changes: Array.isArray(ret.changes) ? (ret.changes as unknown[]) : [],
+        summary,
+      }
+    })(),
   }
 }
 

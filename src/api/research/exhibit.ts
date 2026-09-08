@@ -85,7 +85,29 @@ const validate = withValidation<ExhibitPayload>(ExhibitSchema, 'research/exhibit
 export async function fetchExhibit(lens: ExhibitLens, symbol: string): Promise<ExhibitPayload> {
   const q = new URLSearchParams({ symbol: symbol.trim().toUpperCase() })
   const data = await unwrap<ExhibitPayload>(
-    await fetch(`${researchEngineUrl(`/research/exhibit/${encodeURIComponent(lens)}`)}?${q}`),
+    await fetch(`${researchEngineUrl(`/research/exhibit/${encodeURIComponent(lens)}`)}?${q}`)
   )
   return validate(data)
+}
+
+/**
+ * The batch — every lens for one symbol in one request. The server fans them
+ * across a few workers on one connection each; a lens that failed comes back
+ * as itself, `missing`, with a `lens failed:` caveat, so a bad lens is visible
+ * rather than absent.
+ */
+export async function fetchExhibitComposite(
+  lenses: readonly string[],
+  symbol: string
+): Promise<ExhibitPayload[]> {
+  const q = new URLSearchParams({ symbol: symbol.trim().toUpperCase(), lenses: lenses.join(',') })
+  const data = await unwrap<{ symbol: string; lenses: string[]; exhibits: ExhibitPayload[] }>(
+    await fetch(`${researchEngineUrl('/research/exhibit/composite')}?${q}`)
+  )
+  return (data.exhibits ?? []).map(validate)
+}
+
+/** True when the batch stubbed this lens because its builder threw. */
+export function exhibitFailed(ex: ExhibitPayload): boolean {
+  return ex.freshness === 'missing' && (ex.caveats ?? []).some((c) => c.startsWith('lens failed:'))
 }

@@ -7,6 +7,7 @@ import { labelForBand } from '@/lib/lensVerdict'
 import { CompositeRegimeRibbon } from './CompositeRegimeRibbon'
 
 vi.mock('@/hooks/useLensRegistry', () => ({
+  EXHIBIT_STALE_MS: 60_000,
   useLensRegistry: () => ({
     data: {
       lenses: [

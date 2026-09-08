@@ -9,19 +9,12 @@
  * labels and routes come from the lens registry.
  */
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
+import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useLensRegistry } from '@/hooks/useLensRegistry'
 import { ANALYZE_HUB, withSymbolParam } from '@/lib/analyzeHubs'
-import { researchEngineUrl } from '@/lib/devApiUrl'
-import {
-  canonicalLens,
-  placeholderExhibits,
-  regimeItems,
-  RIBBON_LENSES,
-  type RegimeExhibit,
-} from '@/lib/regimeRibbon'
+import { canonicalLens, placeholderExhibits, regimeItems, RIBBON_LENSES } from '@/lib/regimeRibbon'
 import { cn } from '@/lib/utils'
 
 export type { RegimeLensItem } from '@/lib/regimeRibbon'
@@ -33,15 +26,6 @@ export interface CompositeRegimeRibbonProps {
   className?: string
 }
 
-async function fetchComposite(symbol: string): Promise<RegimeExhibit[]> {
-  const q = new URLSearchParams({ symbol, lenses: RIBBON_LENSES.join(',') })
-  const r = await fetch(researchEngineUrl(`/research/exhibit/composite?${q}`))
-  if (!r.ok) throw new Error(`exhibit composite HTTP ${r.status}`)
-  const body = (await r.json()) as { ok: boolean; data: { exhibits: RegimeExhibit[] } }
-  if (!body.ok) throw new Error('exhibit composite failed')
-  return body.data.exhibits ?? []
-}
-
 export function CompositeRegimeRibbon({
   symbol,
   activeLens,
@@ -49,12 +33,7 @@ export function CompositeRegimeRibbon({
 }: CompositeRegimeRibbonProps) {
   const sym = symbol.trim().toUpperCase()
   const registry = useLensRegistry()
-  const q = useQuery({
-    queryKey: ['research', 'exhibit-composite', sym, RIBBON_LENSES.join(',')],
-    queryFn: () => fetchComposite(sym),
-    enabled: sym.length > 0,
-    staleTime: 60_000,
-  })
+  const q = useExhibitComposite(RIBBON_LENSES, sym)
   const specOf = (canonical: string) => registry.data?.lenses.find((l) => l.id === canonical)
   // No exhibits yet (or none at all): every lens with no reading, lamp amber.
   const exhibits = q.data && q.data.length > 0 ? q.data : placeholderExhibits()

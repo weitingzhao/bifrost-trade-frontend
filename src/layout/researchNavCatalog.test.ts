@@ -1,14 +1,21 @@
 /**
- * The seat layouts, held to the Portfolio standard.
+ * One page, one row, one lit seat.
  *
- * Research used to open each seat with dead section headings — "Now",
- * "Objects", "Copilot · on request" — and two of the three sat directly above
- * a row of the same name that was a link and did the same job. The heading is
- * now the home page itself, as Portfolio has read since 2026-09-07.
+ * The menu used to carry all twenty-seven Research pages in every seat, the
+ * other two seats folded into a row each — so sitting in Autopilot, half the
+ * top-level rows were menus for postures you were not in, and the rail above
+ * already offered them. Each seat now carries its own pages only, and the seat
+ * follows the route so nothing goes missing.
  */
 import { describe, expect, it } from 'vitest'
 import { RESEARCH_SEATS } from '@/lib/research/seat'
-import { allResearchRoutes, buildResearchNavGroup, seatItems, staticResearchSubGroups } from './researchNavCatalog'
+import {
+  allResearchRoutes,
+  buildResearchNavGroup,
+  seatForRoute,
+  seatItems,
+  staticResearchSubGroups,
+} from './researchNavCatalog'
 import type { ShellNavItem } from '@bifrost/ui'
 
 const ctx = {
@@ -24,48 +31,58 @@ const HOMES = {
   workbench: '/research/workbench',
 } as const
 
-/**
- * Every page a seat reaches.
- *
- * A fold is a category with no page of its own, so its row borrows its first
- * child's route; counting it would double that page. A home owns its route,
- * so it counts.
- */
-function routesOf(items: ShellNavItem[]): string[] {
-  const out: string[] = []
-  const walk = (item: ShellNavItem) => {
-    if (!item.id.startsWith('fold:')) out.push(item.to ?? item.id)
-    for (const child of item.children ?? []) walk(child)
-  }
-  items.forEach(walk)
-  return out
-}
+const OVERVIEW = '/research/overview'
 
 function flatten(items: ShellNavItem[]): ShellNavItem[] {
   return items.flatMap((i) => [i, ...flatten(i.children ?? [])])
 }
 
-describe('research seat layouts', () => {
-  it('every seat reaches every Research route exactly once; the two model seats list the objectives', () => {
-    const all = allResearchRoutes()
+/**
+ * Every page a seat reaches. A fold owns no page — its row borrows its first
+ * child's route — so counting it would count that page twice.
+ */
+function routesOf(items: ShellNavItem[]): string[] {
+  return flatten(items)
+    .filter((i) => !i.id.startsWith('fold:'))
+    .map((i) => i.to ?? i.id)
+}
+
+describe('a seat carries its own pages and no others', () => {
+  it('splits every page across the three seats, each page in exactly one', () => {
+    const seen = new Map<string, string[]>()
     for (const seat of RESEARCH_SEATS) {
-      const routes = routesOf(seatItems(seat, ctx))
-      const objectiveRoutes = routes.filter((r) => r.startsWith('/research/loop/objectives/'))
-      const pageRoutes = routes.filter((r) => !r.startsWith('/research/loop/objectives/'))
-      expect(new Set(pageRoutes).size, seat).toBe(pageRoutes.length)
-      expect([...pageRoutes].sort(), seat).toEqual([...all].sort())
-      expect(objectiveRoutes, seat).toEqual(
-        seat === 'workbench' ? [] : ['/research/loop/objectives/obj-a', '/research/loop/objectives/obj-b'],
-      )
+      for (const r of routesOf(seatItems(seat, ctx))) {
+        if (r === OVERVIEW || r.startsWith('/research/loop/objectives/')) continue
+        seen.set(r, [...(seen.get(r) ?? []), seat])
+      }
+    }
+    for (const [route, seats] of seen) {
+      expect(seats, `${route} appears in ${seats.join(' and ')}`).toHaveLength(1)
+    }
+    expect([...seen.keys()].sort()).toEqual([...allResearchRoutes()].filter((r) => r !== OVERVIEW).sort())
+  })
+
+  it('shows Overview in every seat — it is the page about all three', () => {
+    for (const seat of RESEARCH_SEATS) {
+      expect(routesOf(seatItems(seat, ctx)), seat).toContain(OVERVIEW)
     }
   })
 
-  it('opens on the seat home, and the home is a page you can go to', () => {
+  it('leads with the seat home, open, and nothing else at the top but Overview', () => {
     for (const seat of RESEARCH_SEATS) {
-      const [first] = seatItems(seat, ctx)
-      expect(first.to, seat).toBe(HOMES[seat])
-      expect(first.defaultOpen, seat).toBe(true)
-      expect(first.children?.length, seat).toBeGreaterThan(0)
+      const items = seatItems(seat, ctx)
+      expect(items.map((i) => i.to), seat).toEqual([HOMES[seat], OVERVIEW])
+      expect(items[0].defaultOpen, seat).toBe(true)
+      expect(items[0].children?.length, seat).toBeGreaterThan(0)
+    }
+  })
+
+  it('carries no other seat as a row', () => {
+    for (const seat of RESEARCH_SEATS) {
+      const mine = HOMES[seat]
+      const others = Object.values(HOMES).filter((h) => h !== mine)
+      expect(routesOf(seatItems(seat, ctx)), seat).not.toContain(others[0])
+      expect(routesOf(seatItems(seat, ctx)), seat).not.toContain(others[1])
     }
   })
 
@@ -74,41 +91,78 @@ describe('research seat layouts', () => {
       expect(buildResearchNavGroup(seat, ctx).subGroups, seat).toBeUndefined()
     }
   })
+})
 
-  it('the other two seats are present as folded homes, one click from their landing page', () => {
+describe('no page lights two rows', () => {
+  it('gives every row a route of its own, folds excluded', () => {
     for (const seat of RESEARCH_SEATS) {
-      const items = seatItems(seat, ctx)
-      const homes = items.filter((i) => i.id.startsWith('home:'))
-      expect(homes.map((h) => h.to).sort(), seat).toEqual([...Object.values(HOMES)].sort())
-      for (const h of homes.filter((h) => h.to !== HOMES[seat])) {
-        expect(h.defaultOpen, `${seat} / ${h.label}`).toBe(false)
+      const routes = routesOf(seatItems(seat, ctx))
+      expect(new Set(routes).size, seat).toBe(routes.length)
+    }
+  })
+
+  it('sends Objectives to an objective, not to the console above it', () => {
+    // It used to borrow the Autopilot home's route, so standing on the console
+    // lit both rows and either one went to the same page.
+    const [objectives] = flatten(seatItems('autopilot', ctx)).filter((i) => i.label === 'Objectives')
+    expect(objectives.to).toBe('/research/loop/objectives/obj-a')
+    expect(objectives.to).not.toBe(HOMES.autopilot)
+  })
+
+  it('drops the Objectives row when there is nothing to list', () => {
+    expect(flatten(seatItems('autopilot', { objectives: [] })).filter((i) => i.label === 'Objectives')).toEqual([])
+  })
+
+  it('folded categories land on their first page and carry the rest', () => {
+    const folds = flatten(seatItems('workbench', ctx)).filter((i) => i.id.startsWith('fold:'))
+    expect(folds.map((f) => f.label)).toEqual(['Analyze', 'Validate', 'Data'])
+    expect(folds.every((f) => f.id.startsWith('fold:workbench:'))).toBe(true)
+    for (const f of folds) {
+      expect(f.to, f.label).toBe(f.children?.[0].to)
+    }
+  })
+})
+
+describe('the seat follows the route', () => {
+  it('sends every page to the seat that carries it', () => {
+    for (const seat of RESEARCH_SEATS) {
+      for (const r of routesOf(seatItems(seat, ctx))) {
+        if (r === OVERVIEW) continue
+        // "Ask the Copilot" is a command, not a page: its path is the Research
+        // root, which belongs to no seat.
+        if (r.startsWith('/research?')) continue
+        expect(seatForRoute(r), `${r} in ${seat}`).toBe(seat)
       }
     }
   })
 
-  it('ends on Overview', () => {
-    for (const seat of RESEARCH_SEATS) {
-      const items = seatItems(seat, ctx)
-      expect(items[items.length - 1].to, seat).toBe('/research/overview')
-    }
+  it('follows an objective row to Autopilot', () => {
+    expect(seatForRoute('/research/loop/objectives/obj-a')).toBe('autopilot')
   })
 
-  it('folded categories land on their first page and carry the rest as children', () => {
-    const folds = flatten(seatItems('autopilot', ctx)).filter((i) => i.id.startsWith('fold:'))
-    expect(folds.map((f) => f.label)).toEqual(['Objectives', 'Analyze', 'Validate', 'Data'])
-    expect(folds.every((f) => f.id.startsWith('fold:autopilot:'))).toBe(true)
-    for (const f of folds) {
-      expect(f.to, f.label).toBeTruthy()
-      expect(f.children?.length, f.label).toBeGreaterThan(0)
-    }
+  it('leaves the rail alone on the seatless pages', () => {
+    expect(seatForRoute(OVERVIEW)).toBeNull()
+    expect(seatForRoute('/research')).toBeNull()
   })
 
-  it('drops the Objectives fold when there is nothing to list', () => {
-    const folds = flatten(seatItems('autopilot', { objectives: [] })).filter((i) => i.label === 'Objectives')
-    expect(folds).toEqual([])
+  it('does not answer for routes outside Research', () => {
+    expect(seatForRoute('/portfolio/performance')).toBeNull()
+    expect(seatForRoute('/strategy/instances')).toBeNull()
   })
 
-  it('the seat-less layout lists the three levels top down', () => {
+  it('never lets the Copilot claim the whole domain', () => {
+    // "Ask the Copilot" strips to `/research`, every Research route's prefix.
+    expect(seatForRoute('/research/workbench')).toBe('workbench')
+    expect(seatForRoute('/research/loop/harness')).toBe('autopilot')
+  })
+
+  it('matches on whole segments, not on characters', () => {
+    expect(seatForRoute('/research/scanner-that-does-not-exist')).toBeNull()
+  })
+})
+
+describe('the seat-less layout', () => {
+  it('lists the three levels top down for the top nav and the home page', () => {
     expect(staticResearchSubGroups().map((s) => s.label)).toEqual([
       '',
       'Autopilot · unattended',

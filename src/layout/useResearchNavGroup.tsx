@@ -2,20 +2,32 @@
  * The Research group as the current seat lays it out, with live objectives
  * under "Objects" and the badges the seat cares about.
  */
-import { useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
-import { useResearchSeat } from '@/lib/research/seat'
+import { setResearchSeat, useResearchSeat } from '@/lib/research/seat'
 import { objectivePath } from '@/lib/harness/objectivePolicy'
 import type { ShellNavGroup, ShellNavItem } from '@bifrost/ui'
-import { AUTOPILOT_PAGES, buildResearchNavGroup } from './researchNavCatalog'
+import { AUTOPILOT_PAGES, buildResearchNavGroup, seatForRoute } from './researchNavCatalog'
 import { ResearchSeatRail } from './ResearchSeatRail'
 
 export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: ShellNavItem) => ReactNode } {
   const seat = useResearchSeat()
+  const { pathname } = useLocation()
   const standingQ = useAutopilotStanding()
   const standing = standingQ.data
+
+  // The seat follows the route. Each seat carries only its own pages, so
+  // landing on another seat's page — a link out of a memo, a deep link, the
+  // back button — would otherwise leave the sidebar showing a menu the current
+  // page is not in. Overview and the Research root are seatless and leave the
+  // rail where it was.
+  useEffect(() => {
+    const owner = seatForRoute(pathname)
+    if (owner != null && owner !== seat) setResearchSeat(owner)
+  }, [pathname, seat])
 
   const group = useMemo(
     () =>

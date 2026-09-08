@@ -2,17 +2,25 @@
  * The Research pages as a catalog, and the sidebar group each seat builds
  * from it.
  *
- * Every seat reads the same way: this seat's home open with its pages under
- * it, the other two homes folded, Overview last. Every route appears in every
- * seat exactly once (a test holds that), so switching seats re-lays the same
- * twenty-seven pages rather than hiding any.
+ * Each seat carries its own pages and no others. Every page belongs to exactly
+ * one seat, and the rail above the menu is how you move between them — so the
+ * menu answers "what can I do from here", not "what exists in Research".
  *
- * There are no section headings. A heading you cannot click costs a row and
- * answers nothing, and the three headings here — "Now", "Objects", "Copilot ·
- * on request" — sat directly above a row of the same name that did the same
- * job and was a link. The home page is the heading, which is how Portfolio
- * has read since 2026-09-07 (Owner decision, extended to Research
- * 2026-09-08). The chevron still folds; the row still navigates.
+ * It used to carry all twenty-seven pages in every seat, the other two seats
+ * folded into a row each. That made every menu mostly other menus: sitting in
+ * Autopilot, two of the four top-level rows were Copilot and Workbench, which
+ * the rail already offers one click away (Owner, 2026-09-08: "why do the
+ * Copilot and Workbench menus appear under the Autopilot view?").
+ *
+ * Nothing became unreachable, because the seat now follows the route: land on
+ * a page belonging to another seat and the rail moves with you
+ * (`seatForRoute`). One page, one row, one lit seat.
+ *
+ * There are no section headings either. A heading you cannot click costs a row
+ * and answers nothing, and the three that were here — "Now", "Objects",
+ * "Copilot · on request" — sat directly above a row of the same name that did
+ * the same job and was a link. The home page is the heading, which is how
+ * Portfolio has read since 2026-09-07. The chevron folds; the row navigates.
  */
 import type { ReactNode } from 'react'
 import {
@@ -178,7 +186,6 @@ function home(
   label: string,
   page: ShellNavItem,
   children: ShellNavItem[],
-  { open = false }: { open?: boolean } = {},
 ): ShellNavItem {
   return {
     id: `home:${seat}:${page.id}`,
@@ -186,59 +193,52 @@ function home(
     to: page.to,
     icon: page.icon,
     children,
-    defaultOpen: open,
+    // The seat's only home, so it opens with the seat.
+    defaultOpen: true,
   }
 }
 
+/**
+ * The objectives, folded under one row.
+ *
+ * The row used to point at the Autopilot console, which is also the seat home
+ * — so standing on the console lit two rows, and clicking either went to the
+ * same place (Owner, 2026-09-08: "I clicked Autopilot and Objectives was
+ * selected too"). It now lands on the first objective, like every other fold:
+ * a row that goes where its children live, not where its parent does.
+ */
 function objectivesItem(seat: ResearchSeat, objectives: ObjectiveNavRow[]): ShellNavItem[] {
   if (objectives.length === 0) return []
-  return [
-    {
-      id: `fold:${seat}:Objectives`,
-      label: 'Objectives',
-      icon: Target,
-      to: AUTOPILOT_PAGES.autopilot.to,
-      children: objectives.map((o) => route(o.title, objectivePath(o.id), Target)),
-    },
-  ]
+  const rows = objectives.map((o) => route(o.title, objectivePath(o.id), Target))
+  return [fold(seat, 'Objectives', Target, rows)]
 }
 
 /**
- * The seat's sidebar: three homes and Overview, in the order this seat works.
+ * The seat's sidebar: one home, its pages, and Overview.
  *
- * The seat's own home is open; the other two are folded but one click from
- * their landing page. Nothing is hidden — the same twenty-seven pages are
- * reachable from every seat, just at different depths.
+ * The home is open. Everything under it belongs to this seat and to no other,
+ * so the menu is short enough to read at a glance and every row is something
+ * this posture actually does.
  */
 export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem[] {
   const A = AUTOPILOT_PAGES
   const C = COPILOT_PAGES
   const [discover, analyze, validate, data] = BENCHES
-  const objectives = objectivesItem(seat, ctx.objectives)
-
-  /** Every bench page under Workbench, with the three page-less benches folded. */
-  const benchPages = (lead: ShellNavItem[], dataItems: ShellNavItem[]): ShellNavItem[] => [
-    ...lead,
-    fold(seat, analyze.label, analyze.icon, analyze.items),
-    fold(seat, validate.label, validate.icon, validate.items),
-    fold(seat, data.label, data.icon, dataItems),
-  ]
-
-  const copilotRest = [C.brief, C.ask, C.trading, C.personas, C.playbook]
 
   switch (seat) {
     case 'autopilot':
       return [
-        home(seat, 'Autopilot', A.autopilot, [A.inbox, ...objectives, A.hypotheses, A.candidates], { open: true }),
-        home(seat, 'Copilot', C.desk, copilotRest),
-        home(seat, 'Workbench', WORKBENCH_PAGE, benchPages(discover.items, data.items)),
+        home(seat, 'Autopilot', A.autopilot, [
+          A.inbox,
+          ...objectivesItem(seat, ctx.objectives),
+          A.hypotheses,
+          A.candidates,
+        ]),
         OVERVIEW_PAGE,
       ]
     case 'copilot':
       return [
-        home(seat, 'Copilot Desk', C.desk, [...copilotRest, A.hypotheses, ...objectives], { open: true }),
-        home(seat, 'Autopilot', A.autopilot, [A.inbox, A.candidates]),
-        home(seat, 'Workbench', WORKBENCH_PAGE, benchPages(discover.items, data.items)),
+        home(seat, 'Copilot Desk', C.desk, [C.brief, C.ask, C.trading, C.personas, C.playbook]),
         OVERVIEW_PAGE,
       ]
     case 'workbench': {
@@ -246,20 +246,60 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
       // you check before trusting anything else on the bench.
       const health = data.items[1]
       return [
-        home(
-          seat,
-          'Workbench',
-          WORKBENCH_PAGE,
-          benchPages([...discover.items, health], data.items.filter((i) => i !== health)),
-          { open: true },
-        ),
-        home(seat, 'Autopilot', A.autopilot, [A.inbox, A.hypotheses, A.candidates]),
-        home(seat, 'Copilot', C.desk, copilotRest),
+        home(seat, 'Workbench', WORKBENCH_PAGE, [
+          ...discover.items,
+          health,
+          fold(seat, analyze.label, analyze.icon, analyze.items),
+          fold(seat, validate.label, validate.icon, validate.items),
+          fold(seat, data.label, data.icon, data.items.filter((i) => i !== health)),
+        ]),
         OVERVIEW_PAGE,
       ]
     }
   }
 }
+
+/**
+ * The seat a Research route belongs to, or null when it belongs to none.
+ *
+ * This is what lets a seat carry only its own pages: land on a page from
+ * another posture — a link out of a memo, a deep link, the browser's back
+ * button — and the rail moves to the seat that page lives in, so the sidebar
+ * is never showing a menu the current page is absent from. Overview is
+ * deliberately seatless: it is the page about all three, so it leaves the rail
+ * where it was.
+ */
+export function seatForRoute(pathname: string): ResearchSeat | null {
+  for (const [seat, paths] of SEAT_ROUTES) {
+    if (paths.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return seat
+  }
+  return null
+}
+
+/** The Research landing page. Seatless, like Overview — it introduces all three. */
+const RESEARCH_ROOT = '/research'
+
+/**
+ * A nav item's own path.
+ *
+ * The query string goes: "Ask the Copilot" is `/research?copilot=open`, a
+ * command that opens the panel and strips the parameter, not a page. Stripped
+ * it becomes the Research root, which is every other Research route's prefix —
+ * so it is dropped from the map rather than allowed to claim the whole domain
+ * for the Copilot seat.
+ */
+function seatPaths(items: ShellNavItem[]): string[] {
+  return items.map((i) => (i.to ?? i.id).split('?')[0]).filter((p) => p !== RESEARCH_ROOT)
+}
+
+/** Where an objective's own page lives. The rows are per objective, the prefix is not. */
+const OBJECTIVES_PREFIX = '/research/loop/objectives'
+
+const SEAT_ROUTES: [ResearchSeat, string[]][] = [
+  ['autopilot', [...seatPaths(Object.values(AUTOPILOT_PAGES)), OBJECTIVES_PREFIX]],
+  ['copilot', seatPaths(Object.values(COPILOT_PAGES))],
+  ['workbench', seatPaths([WORKBENCH_PAGE, ...BENCHES.flatMap((b) => b.items)])],
+]
 
 export function buildResearchNavGroup(seat: ResearchSeat, ctx: SeatNavContext): ShellNavGroup {
   return {

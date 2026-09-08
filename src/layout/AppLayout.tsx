@@ -1,6 +1,7 @@
 import { Suspense, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
+import { useResearchSeatDeepLink } from '@/hooks/useResearchSeatDeepLink'
 import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
 import { GlobalMarketStatusBar } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
@@ -47,6 +48,7 @@ function BoundedOutlet() {
 export function AppLayout() {
   const { pathname } = useLocation()
   useCopilotDeepLink()
+  useResearchSeatDeepLink()
   const showMarketStrip = shouldShowGlobalMarketStrip(pathname)
   const { effectiveMode, toggle, isTooNarrow } = useNavMode()
   const { messages, dismissedIds, activeMsgCount, dismissMessage, dismissAll } = useSystemMessages()

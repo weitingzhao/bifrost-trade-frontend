@@ -10,6 +10,8 @@ import { NavSubItemIcon } from '@/components/layout/SystemNavIcon'
 import { SystemNavLampProvider } from '@/components/layout/SystemNavLampProvider'
 import { STORAGE_KEYS } from '@/constants/storage'
 import { NAV_GROUPS } from './navConfig'
+import { useResearchNavGroup } from './useResearchNavGroup'
+import { useMemo } from 'react'
 import { TradeSidebarFooter } from './TradeSidebarFooter'
 
 const LIVE_NAV_PATH = '/market/live'
@@ -41,12 +43,18 @@ function renderInAppLink({
 export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const research = useResearchNavGroup()
+  // Same groups, same order; only Research is re-laid for the seat.
+  const navGroups = useMemo(
+    () => NAV_GROUPS.map((g) => (g.label === 'Research' ? research.group : g)),
+    [research.group],
+  )
 
   return (
     <SystemNavLampProvider>
       <ShellNavSidebar
         productName="Bifrost Trade"
-        navGroups={NAV_GROUPS}
+        navGroups={navGroups}
         activeId={location.pathname}
         matchActive={shellNavMatchByPathPrefix}
         onSelect={(item: ShellNavItem) => {
@@ -54,7 +62,7 @@ export function AppSidebar() {
         }}
         renderItemIcon={(item) => <NavSubItemIcon item={item} />}
         renderItemExtras={(item) =>
-          (item.to ?? item.id) === LIVE_NAV_PATH ? <LiveNavLamp /> : null
+          (item.to ?? item.id) === LIVE_NAV_PATH ? <LiveNavLamp /> : research.extras(item)
         }
         renderInAppLink={renderInAppLink}
         peerApp={{

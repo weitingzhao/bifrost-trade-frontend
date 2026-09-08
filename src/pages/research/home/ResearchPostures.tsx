@@ -29,6 +29,7 @@ import { stars } from '@/lib/harness/rating'
 import { loopPipelinePath, openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { objectivePath } from '@/lib/harness/objectivePolicy'
 import type { LampColor } from '@/lib/researchFreshness'
+import { setResearchSeat } from '@/lib/research/seat'
 
 const WORKBENCH = NAV_GROUPS.find((g) => g.label === 'Research')?.subGroups?.filter((s) =>
   s.label.startsWith('Workbench'),
@@ -125,7 +126,7 @@ function AutopilotPosture() {
       cta={
         <>
           <Button asChild size="sm" className="h-7">
-            <Link to="/research/loop/harness">
+            <Link to="/research/loop/harness" onClick={() => setResearchSeat('autopilot')}>
               Open Autopilot <ArrowRight className="ml-1 size-3" />
             </Link>
           </Button>
@@ -206,7 +207,15 @@ function CopilotPosture() {
       lampTitle={s?.brief ? 'Today’s digest is in' : 'No digest yet today'}
       cta={
         <>
-          <Button type="button" size="sm" className="h-7" onClick={() => openResearchCopilot()}>
+          <Button
+            type="button"
+            size="sm"
+            className="h-7"
+            onClick={() => {
+              setResearchSeat('copilot')
+              openResearchCopilot()
+            }}
+          >
             Ask the Copilot <ArrowRight className="ml-1 size-3" />
           </Button>
           <Button asChild size="sm" variant="ghost" className="h-7">
@@ -305,7 +314,7 @@ function WorkbenchPosture({ activeHypotheses, discoveries }: { activeHypotheses:
       cta={
         <>
           <Button asChild size="sm" className="h-7">
-            <Link to="/research/explorer">
+            <Link to="/research/explorer" onClick={() => setResearchSeat('workbench')}>
               Stock Explorer <ArrowRight className="ml-1 size-3" />
             </Link>
           </Button>

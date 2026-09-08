@@ -4,6 +4,7 @@ export const STORAGE_KEYS = {
   navMode: 'bifrost-nav-mode',
   sidebarAccordion: 'bifrost-sidebar-accordion',
   sidebarOpenGroups: 'bifrost-sidebar-open-groups',
+  researchSeat: 'bifrost-research-seat',
   optionScreenerFilters: 'optionScreenerFilters',
   optionDiscoveryPrefs: 'optionDiscoveryPrefs',
   positionsCushionPct: 'bifrost-positions-cushion-pct',

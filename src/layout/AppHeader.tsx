@@ -1,5 +1,7 @@
 import { Bell, Moon, PanelTop, Sun, SunMoon } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import { DenseTag } from '@/components/data-display'
+import { SEAT_META, useResearchSeat } from '@/lib/research/seat'
 import { AlertBell } from '@/components/research/AlertBell'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -74,6 +76,16 @@ interface AppHeaderProps {
   onToggleNavMode?: () => void
 }
 
+function ResearchSeatChip() {
+  const seat = useResearchSeat()
+  const m = SEAT_META[seat]
+  return (
+    <DenseTag variant="neutral" size="cell" title={`${m.level} — ${m.claim}`} className="hidden md:inline-flex">
+      {m.label} seat
+    </DenseTag>
+  )
+}
+
 export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: AppHeaderProps) {
   const location = useLocation()
   const { mode, cycleMode } = useThemeMode()
@@ -93,6 +105,7 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
       <span className="min-w-0 flex-1 truncate font-medium text-sm md:flex-none md:max-w-none">
         {title}
       </span>
+      {location.pathname.startsWith('/research') ? <ResearchSeatChip /> : null}
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
         {onToggleNavMode && (

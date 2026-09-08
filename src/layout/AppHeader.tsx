@@ -23,6 +23,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/portfolio/positions': 'Positions',
   '/portfolio/backing': 'Backing & Model',
   '/portfolio/performance': 'Performance',
+  '/portfolio/copilot': 'Trading Copilot',
   '/portfolio/ledger': 'Trade Ledger',
   '/portfolio/transfer': 'Transfer & Pay',
   '/research/daily-brief': 'Daily Brief',

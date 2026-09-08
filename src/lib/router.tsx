@@ -47,6 +47,10 @@ export const router = createBrowserRouter([
       { path: 'market/live', element: <LivePage /> },
       { path: 'market/watchlist', element: <Navigate to="/research/watchlist" replace /> },
 
+      {
+        path: 'portfolio/copilot',
+        lazy: lazyPage(() => import('@/pages/portfolio/copilot/TradingCopilotPage')),
+      },
       { path: 'research/watchlist', element: <StockWatchlistPage /> },
 
       {

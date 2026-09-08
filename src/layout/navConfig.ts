@@ -8,6 +8,7 @@ import {
   GitBranch,
   Layers,
   LayoutDashboard,
+  MessageCircle,
   LineChart,
   Network,
   PieChart,
@@ -52,6 +53,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
           route('Positions', '/portfolio/positions', TrendingUp),
           route('Backing & Model', '/portfolio/backing', Layers),
           route('Performance', '/portfolio/performance', LineChart),
+          route('Copilot', '/portfolio/copilot', MessageCircle),
         ],
       },
       {

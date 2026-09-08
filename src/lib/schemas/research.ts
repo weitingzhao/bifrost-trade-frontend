@@ -308,6 +308,23 @@ export const AutopilotStandingSchema = z
   })
   .passthrough()
 
+export const CopilotToolListSchema = z
+  .object({
+    tools: z.array(
+      z
+        .object({
+          name: z.string(),
+          description: z.string(),
+          write: z.boolean(),
+          domain: z.string(),
+        })
+        .passthrough(),
+    ),
+    count: z.number(),
+    error: z.string().optional(),
+  })
+  .passthrough()
+
 export const CopilotStandingSchema = z
   .object({
     day_utc: z.string().nullable(),

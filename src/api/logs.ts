@@ -60,9 +60,14 @@ const OFFLINE_NO_PROCESS =
 const OFFLINE_NO_HANDLER =
   'Process runs, but scripts/run_server.py no longer writes a Redis console stream'
 
-/** IB edge services live on the Windows TWS hosts, not in K3s. */
-const OFFLINE_OFF_CLUSTER =
-  'Runs on the Windows TWS hosts, outside K3s — it has no Redis console stream'
+/**
+ * Superseded by the Ops Platform. The ops catalog still lists these three as
+ * Trade services, but their Deployments (ib-operator / ib-market-gateway /
+ * ib-account-agent) exist in no namespace; IB connectivity now runs as
+ * data/ib-gateway on bifrost-platform-plugin-ib-gateway.
+ */
+const OFFLINE_PLATFORM_GATEWAY =
+  'Superseded by the Ops Platform IB gateway (data/ib-gateway) — the Trade-side deployment is gone'
 
 /** Strategy daemon logs to stdout only (kubectl logs / Loki). */
 const OFFLINE_STDOUT_ONLY =
@@ -100,10 +105,10 @@ export const LOG_SOURCES: LogSourceDef[] = [
   { key: 'strategy',  label: 'Strategy',  api: makeLogApi('/api/strategy/logs'),  group: 'api', offlineReason: OFFLINE_NO_PROCESS },
   { key: 'ops',       label: 'Ops',       api: makeLogApi('/api/ops/logs'),       group: 'api', offlineReason: OFFLINE_NO_PROCESS },
   { key: 'docs',      label: 'Docs',      api: makeLogApi('/api/docs/logs'),      group: 'api', offlineReason: OFFLINE_NO_PROCESS },
-  // Socket Services — IB edge, hosted on the Windows TWS machines
-  { key: 'ib_ingestor',      label: 'IB INGESTOR',   api: makeLogApi('/api/ib-ingestor/logs'),      group: 'edge', offlineReason: OFFLINE_OFF_CLUSTER },
-  { key: 'ib_account_agent', label: 'IB ACCT AGENT', api: makeLogApi('/api/ib-account-agent/logs'), group: 'edge', offlineReason: OFFLINE_OFF_CLUSTER },
-  { key: 'ib_operator',      label: 'IB OPERATOR',   api: makeLogApi('/api/ib-operator/logs'),      group: 'edge', offlineReason: OFFLINE_OFF_CLUSTER },
+  // Socket Services — now fronted by the platform IB gateway plugin
+  { key: 'ib_ingestor',      label: 'IB INGESTOR',   api: makeLogApi('/api/ib-ingestor/logs'),      group: 'edge', offlineReason: OFFLINE_PLATFORM_GATEWAY },
+  { key: 'ib_account_agent', label: 'IB ACCT AGENT', api: makeLogApi('/api/ib-account-agent/logs'), group: 'edge', offlineReason: OFFLINE_PLATFORM_GATEWAY },
+  { key: 'ib_operator',      label: 'IB OPERATOR',   api: makeLogApi('/api/ib-operator/logs'),      group: 'edge', offlineReason: OFFLINE_PLATFORM_GATEWAY },
   // Daemon — Redis console streams
   { key: 'daemon_trading', label: 'Strategy Trading', api: makeLogApi('/api/daemon/logs'),               group: 'daemon', offlineReason: OFFLINE_STDOUT_ONLY },
   { key: 'account_sync',   label: 'Account Sync',     api: makeLogApi('/api/account-sync-daemon/logs'), group: 'daemon', offlineReason: null },

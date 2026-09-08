@@ -36,6 +36,16 @@ export const LAB_VIEW_HUB: Record<LabViewId, string> = {
   playbook: ANALYZE_HUB.scenario,
 }
 
+/** The registry lens each lab view is the skin of; the narrative views (sessions, playbook) have none. */
+export const LAB_VIEW_LENS: Partial<Record<LabViewId, string>> = {
+  'iv-rank': 'iv_rank',
+  vrp: 'vrp',
+  skew: 'skew',
+  gex: 'gex_regime',
+  opex: 'opex_pin',
+  model: 'terrain_regime',
+}
+
 /** Append `symbol=` whether or not the route already carries a query. */
 export function withSymbolParam(route: string, symbol?: string | null): string {
   const sym = (symbol ?? '').trim().toUpperCase()

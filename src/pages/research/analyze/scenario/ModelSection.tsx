@@ -7,7 +7,6 @@ import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
@@ -587,8 +586,6 @@ export function ModelSection() {
           />
         </CardContent>
       </Card>
-
-      <CompositeRegimeRibbon symbol={sym} />
 
       {(verdict.band === 'hot' || verdict.band === 'neutral') && terrain ? (
         <CopilotAutoInsightChip

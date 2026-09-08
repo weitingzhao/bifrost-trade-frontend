@@ -18,7 +18,9 @@ import {
   DenseTag,
 } from '@/components/data-display'
 import { PageHeader, PageShell } from '@/components/layout'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { useResearchContext } from '@/hooks/useResearchContext'
 import { OrderSentimentSection } from './OrderSentimentSection'
 
 export const FLOW_PLACEHOLDER_REASON =
@@ -28,6 +30,7 @@ export const FLOW_PLACEHOLDER_REASON =
 export default function FlowPage() {
   // Open by default: a page whose only content is folded away reads as empty.
   const [proxyOpen, setProxyOpen] = useState(true)
+  const { symbol } = useResearchContext()
   return (
     <PageShell padding="compact" className="space-y-3">
       <PageHeader
@@ -40,6 +43,7 @@ export default function FlowPage() {
         }
       />
       <ResearchContextBar />
+      {symbol ? <CompositeRegimeRibbon symbol={symbol} /> : null}
 
       <div
         role="status"

@@ -34,7 +34,6 @@ import { fetchIvRankHistory } from '@/api/research/ivRadar'
 import { fetchSignalDecayBySymbol } from '@/api/research/signalDecay'
 import { bandFromScore, hitCellText } from '@/lib/analyzeDepth'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
@@ -328,8 +327,6 @@ export function IvRankSection() {
           ) : null}
         </div>
       ) : null}
-
-      <CompositeRegimeRibbon symbol={focusSymbol} />
 
       {verdict.decisive && focusRow ? (
         <CopilotAutoInsightChip

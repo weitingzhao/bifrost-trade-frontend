@@ -24,7 +24,6 @@ import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { useExhibit } from '@/hooks/useLensRegistry'
@@ -178,8 +177,6 @@ export function GexSection() {
           />
         </CardContent>
       </Card>
-
-      <CompositeRegimeRibbon symbol={symbol} />
 
       {verdict.decisive && active ? (
         <CopilotAutoInsightChip

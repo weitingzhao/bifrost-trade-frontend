@@ -12,17 +12,53 @@ const fixture = vi.hoisted(() => ({
       day: '2026-09-08',
       draft_id: 'drf',
       status: 'pending',
-      lenses: [{ lens: 'iv_rank', band: 'cold', value: 18.7, means: 'premium cheap', as_of: '2026-09-04' }],
+      lenses: [
+        { lens: 'iv_rank', band: 'cold', value: 18.7, means: 'premium cheap', as_of: '2026-09-04' },
+      ],
       proposed: true,
-      batches: [{ run_id: 'run_1', objective_title: 'Daily Loop Stock Explorer', status: 'awaiting_approval', auto_accepted: false, held_reasons: ['judges did not agree (dissent)'] }],
+      batches: [
+        {
+          run_id: 'run_1',
+          objective_title: 'Daily Loop Stock Explorer',
+          status: 'awaiting_approval',
+          auto_accepted: false,
+          held_reasons: ['judges did not agree (dissent)'],
+        },
+      ],
       dissent: null,
       resolution: null,
       line: 'iv_rank cold · held',
     },
     proposals: [
-      { kind: 'candidate', id: 'c1', status: 'open', state: 'proposed', title: 'Candidate · copilot', by_copilot: true, created_at: '2026-09-08T03:00:00+00:00', source: 'copilot' },
-      { kind: 'hypothesis', id: 'h1', status: 'active', state: 'active', title: 'NVDA IV extreme short', by_copilot: true, created_at: '2026-09-07T20:00:00+00:00' },
-      { kind: 'draft', id: 'd1', status: 'pending', state: 'awaiting approval', title: 'NVDA short strangle', by_copilot: true, created_at: '2026-09-07T01:00:00+00:00', draft_kind: 'order_intent' },
+      {
+        kind: 'candidate',
+        id: 'c1',
+        status: 'open',
+        state: 'proposed',
+        title: 'Candidate · copilot',
+        by_copilot: true,
+        created_at: '2026-09-08T03:00:00+00:00',
+        source: 'copilot',
+      },
+      {
+        kind: 'hypothesis',
+        id: 'h1',
+        status: 'active',
+        state: 'active',
+        title: 'NVDA IV extreme short',
+        by_copilot: true,
+        created_at: '2026-09-07T20:00:00+00:00',
+      },
+      {
+        kind: 'draft',
+        id: 'd1',
+        status: 'pending',
+        state: 'awaiting approval',
+        title: 'NVDA short strangle',
+        by_copilot: true,
+        created_at: '2026-09-07T01:00:00+00:00',
+        draft_kind: 'order_intent',
+      },
     ],
     counts: { candidate: 1, hypothesis: 1, draft: 1 },
     advisory: 'D10 BLOCKED',
@@ -30,29 +66,29 @@ const fixture = vi.hoisted(() => ({
 }))
 
 vi.mock('@/hooks/useResearchContext', () => ({ useResearchContext: () => ({ symbol: 'NVDA' }) }))
-vi.mock('@/hooks/useSymbolVerdicts', () => ({ useSymbolVerdicts: () => ({ data: fixture.verdicts, isLoading: false }) }))
+vi.mock('@/hooks/useSymbolVerdicts', () => ({
+  useSymbolVerdicts: () => ({ data: fixture.verdicts, isLoading: false }),
+}))
 vi.mock('@/components/research/AskCopilotButton', () => ({
-  AskCopilotButton: () => (
-    <button type="button">
-      Ask Copilot
-    </button>
-  ),
+  AskCopilotButton: () => <button type="button">Ask Copilot</button>,
 }))
 
 function mount() {
   return render(
     <MemoryRouter>
       <CopilotVerdictStrip originPage="hub:vrp" originLabel="Vol Regime · VRP" />
-    </MemoryRouter>,
+    </MemoryRouter>
   )
 }
 
 describe('CopilotVerdictStrip', () => {
-  it('shows the digest chips and one summary line; the proposal chips stay folded', () => {
+  it('shows the decision chips and one summary line; the lens line is the regime row above', () => {
     mount()
-    expect(screen.getByText('iv_rank: Buy premium bias')).toBeTruthy()
+    expect(screen.queryByText('iv_rank: Buy premium bias')).toBeNull()
     expect(screen.getByText('Held: judges did not agree (dissent)')).toBeTruthy()
-    expect(screen.getByText('1 candidate (1 open) · 1 hypothesis (1 active) · 1 draft (1 pending)')).toBeTruthy()
+    expect(
+      screen.getByText('1 candidate (1 open) · 1 hypothesis (1 active) · 1 draft (1 pending)')
+    ).toBeTruthy()
     expect(screen.getByText('2 waiting')).toBeTruthy()
     expect(screen.getByText(/Candidate · proposed \(Copilot\) · 2026-09-08/)).toBeTruthy()
     expect(screen.queryByTestId('copilot-verdict-proposals')).toBeNull()

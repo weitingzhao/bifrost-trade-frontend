@@ -35,7 +35,6 @@ import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { useResearchContext } from '@/hooks/useResearchContext'
@@ -249,8 +248,6 @@ export function SessionsSection() {
       </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
-
-      <CompositeRegimeRibbon symbol={symbol} />
 
       <AnalyzeVerdictStrip
         tone={

@@ -24,7 +24,6 @@ import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip, type AnalyzeVerdictTone } from '@/components/research/AnalyzeVerdictStrip'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { useExhibit } from '@/hooks/useLensRegistry'
@@ -356,8 +355,6 @@ export function OpexSection() {
           />
         </CardContent>
       </Card>
-
-      <CompositeRegimeRibbon symbol={symbol} />
 
       {pinVerdict.band === 'hot' && row ? (
         <CopilotAutoInsightChip

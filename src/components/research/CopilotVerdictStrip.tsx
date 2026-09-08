@@ -1,8 +1,8 @@
 /**
  * Copilot's verdicts back on the page — research-loop-automation D4.
  *
- * One row under the context bar on every hub: what today's digest said about
- * the symbol, what the leash decided, and the chat-side proposals folded into
+ * One row under the regime row on every hub: what the leash decided about the
+ * symbol (the digest's lens line lives in the regime row), and the chat-side proposals folded into
  * one line — how many of each kind, how many still wait on a decision, what
  * happened last — with every proposal chip behind a disclosure. Renders
  * nothing when nobody has said anything.
@@ -15,7 +15,12 @@ import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { useSymbolVerdicts } from '@/hooks/useSymbolVerdicts'
-import { decisionChips, lensChips, proposalChips, verdictSummary, type VerdictChip } from '@/lib/symbolVerdicts'
+import {
+  decisionChips,
+  proposalChips,
+  verdictSummary,
+  type VerdictChip,
+} from '@/lib/symbolVerdicts'
 import { cn } from '@/lib/utils'
 
 function Chip({ chip }: { chip: VerdictChip }) {
@@ -35,16 +40,21 @@ function Chip({ chip }: { chip: VerdictChip }) {
   )
 }
 
-export function CopilotVerdictStrip({ originPage, originLabel }: { originPage: string; originLabel: string }) {
+export function CopilotVerdictStrip({
+  originPage,
+  originLabel,
+}: {
+  originPage: string
+  originLabel: string
+}) {
   const { symbol } = useResearchContext()
   const q = useSymbolVerdicts(symbol)
   const [open, setOpen] = useState(false)
   const listId = useId()
-  const lenses = lensChips(q.data)
   const decisions = decisionChips(q.data)
   const proposals = proposalChips(q.data)
   const summary = verdictSummary(q.data)
-  if (!symbol || (lenses.length === 0 && decisions.length === 0 && proposals.length === 0)) return null
+  if (!symbol || (decisions.length === 0 && proposals.length === 0)) return null
   const digest = q.data?.digest
   return (
     <div
@@ -56,10 +66,9 @@ export function CopilotVerdictStrip({ originPage, originLabel }: { originPage: s
       <span className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
         Copilot on {symbol}
       </span>
-      {digest?.day ? <span className="text-dense-micro text-muted-foreground">digest {digest.day}</span> : null}
-      {lenses.map((c) => (
-        <Chip key={c.key} chip={c} />
-      ))}
+      {digest?.day ? (
+        <span className="text-dense-micro text-muted-foreground">digest {digest.day}</span>
+      ) : null}
       {decisions.map((c) => (
         <Chip key={c.key} chip={c} />
       ))}
@@ -76,7 +85,11 @@ export function CopilotVerdictStrip({ originPage, originLabel }: { originPage: s
             </span>
           ) : null}
           {summary.waiting > 0 ? (
-            <Link to="/research/loop/decisions" className="no-underline" title="Proposals still waiting on a decision">
+            <Link
+              to="/research/loop/decisions"
+              className="no-underline"
+              title="Proposals still waiting on a decision"
+            >
               <DenseTag variant="warning" size="cell">
                 {summary.waiting} waiting
               </DenseTag>
@@ -90,7 +103,10 @@ export function CopilotVerdictStrip({ originPage, originLabel }: { originPage: s
             className="inline-flex items-center gap-0.5 text-dense-micro text-muted-foreground hover:text-foreground"
           >
             {summary.total} {summary.total === 1 ? 'proposal' : 'proposals'}
-            <ChevronDown className={cn('size-3 transition-transform', open && 'rotate-180')} aria-hidden />
+            <ChevronDown
+              className={cn('size-3 transition-transform', open && 'rotate-180')}
+              aria-hidden
+            />
           </button>
         </>
       ) : null}
@@ -111,7 +127,11 @@ export function CopilotVerdictStrip({ originPage, originLabel }: { originPage: s
         />
       </span>
       {open && summary.total > 0 ? (
-        <div id={listId} className="flex basis-full flex-wrap items-center gap-1.5 pt-1" data-testid="copilot-verdict-proposals">
+        <div
+          id={listId}
+          className="flex basis-full flex-wrap items-center gap-1.5 pt-1"
+          data-testid="copilot-verdict-proposals"
+        >
           {proposals.map((c) => (
             <Chip key={c.key} chip={c} />
           ))}

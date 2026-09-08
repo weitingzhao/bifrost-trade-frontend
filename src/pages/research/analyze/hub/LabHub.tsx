@@ -12,8 +12,10 @@ import { useSearchParams } from 'react-router-dom'
 import { SegmentControl } from '@/components/data-display'
 import { PageHeader, PageShell } from '@/components/layout'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
-import { VIEW_PARAM, type LabViewId } from '@/lib/analyzeHubs'
+import { useResearchContext } from '@/hooks/useResearchContext'
+import { VIEW_PARAM, type LabViewId, LAB_VIEW_LENS } from '@/lib/analyzeHubs'
 
 export interface LabViewDef {
   id: LabViewId
@@ -85,10 +87,13 @@ export function LabHub({
   defaultView: LabViewId
 }) {
   const [active, setView] = useLabView(views, defaultView)
+  const { symbol } = useResearchContext()
   return (
     <PageShell padding={active.padding ?? 'default'} className="space-y-3">
       <LabHubHeader title={title} views={views} active={active} onChange={setView} />
       <ResearchContextBar showDate={active.showDate ?? true} />
+      {/* The symbol's regime in one row: every hub lens, coloured by band, in the lab's words. */}
+      {symbol ? <CompositeRegimeRibbon symbol={symbol} activeLens={LAB_VIEW_LENS[active.id]} /> : null}
       {/* D4: what Copilot and the Loop have said about the symbol, with approval states. */}
       <CopilotVerdictStrip originPage={`hub:${active.id}`} originLabel={`${title} · ${active.label}`} />
       {/* Keyed so a view switch remounts the lab: its local state (selected

@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   ANALYZE_HUB,
+  LAB_VIEW_HUB,
   RETIRED_ANALYZE_PATHS,
   flowHref,
   labHref,
   redirectTarget,
   withSymbolParam,
+  LAB_VIEW_LENS,
+  type LabViewId,
 } from './analyzeHubs'
 
 describe('analyze hubs', () => {
@@ -42,5 +45,15 @@ describe('analyze hubs', () => {
     expect(redirectTarget('/research/order-sentiment', '', '')).toBe('/research/flow')
     expect(redirectTarget('/research/discovery', '', '')).toBeNull()
     expect(Object.keys(RETIRED_ANALYZE_PATHS)).toHaveLength(9)
+  })
+})
+
+describe('LAB_VIEW_LENS', () => {
+  it('names the registry lens behind every lab view except the two narrative ones', () => {
+    for (const view of Object.keys(LAB_VIEW_HUB) as LabViewId[]) {
+      const lens = LAB_VIEW_LENS[view]
+      if (view === 'sessions' || view === 'playbook') expect(lens).toBeUndefined()
+      else expect(lens).toMatch(/^[a-z_]+$/)
+    }
   })
 })

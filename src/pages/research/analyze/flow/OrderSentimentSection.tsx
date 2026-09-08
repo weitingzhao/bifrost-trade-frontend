@@ -26,7 +26,6 @@ import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
@@ -133,8 +132,6 @@ export function OrderSentimentSection() {
       </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
-
-      <CompositeRegimeRibbon symbol={symbol} />
 
       {verdict.decisive && sentiment ? (
         <CopilotAutoInsightChip

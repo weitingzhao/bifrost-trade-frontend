@@ -26,7 +26,6 @@ import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { EmptyHint } from '@/components/research/EmptyHint'
 import { calibrationLine } from '@/lib/analyzeDepth'
@@ -346,8 +345,6 @@ export function PlaybookSection() {
           />
         </CardContent>
       </Card>
-
-      <CompositeRegimeRibbon symbol={symbol} />
 
       <AnalyzeVerdictStrip
         tone={

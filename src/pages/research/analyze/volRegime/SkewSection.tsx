@@ -25,7 +25,6 @@ import { LabToolbar } from '@/pages/research/analyze/hub/LabToolbar'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { useExhibit } from '@/hooks/useLensRegistry'
@@ -272,8 +271,6 @@ export function SkewSection() {
       </LabToolbar>
 
       <SymbolContextGuard symbol={symbol}>
-
-      <CompositeRegimeRibbon symbol={symbol} />
 
       {verdict.band === 'hot' && anchor ? (
         <CopilotAutoInsightChip

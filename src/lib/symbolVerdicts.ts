@@ -28,10 +28,25 @@ function toneOfVerdict(tone: string): ChipTone {
 
 export function proposalTone(p: Pick<SymbolProposal, 'kind' | 'status'>): ChipTone {
   const s = p.status ?? ''
-  if (p.kind === 'candidate') return s === 'promoted' ? 'success' : s === 'open' ? 'info' : 'neutral'
-  if (p.kind === 'hypothesis') return s === 'validated' ? 'success' : s === 'rejected' ? 'danger' : s === 'active' ? 'info' : 'neutral'
-  if (p.kind === 'draft') return s === 'pending' ? 'warning' : s === 'approved' ? 'success' : 'neutral'
-  return s === 'executed' ? 'success' : s === 'error' || s === 'rejected' ? 'danger' : s === 'proposed' || s === 'approved' ? 'warning' : 'neutral'
+  if (p.kind === 'candidate')
+    return s === 'promoted' ? 'success' : s === 'open' ? 'info' : 'neutral'
+  if (p.kind === 'hypothesis')
+    return s === 'validated'
+      ? 'success'
+      : s === 'rejected'
+        ? 'danger'
+        : s === 'active'
+          ? 'info'
+          : 'neutral'
+  if (p.kind === 'draft')
+    return s === 'pending' ? 'warning' : s === 'approved' ? 'success' : 'neutral'
+  return s === 'executed'
+    ? 'success'
+    : s === 'error' || s === 'rejected'
+      ? 'danger'
+      : s === 'proposed' || s === 'approved'
+        ? 'warning'
+        : 'neutral'
 }
 
 export function proposalPath(p: SymbolProposal, symbol: string): string {
@@ -75,10 +90,28 @@ export function decisionChips(data: SymbolVerdicts | undefined): VerdictChip[] {
   if (b) {
     chips.push(
       b.auto_accepted
-        ? { key: 'leash', label: 'Auto-accepted by the leash', tone: 'success', title: `${b.objective_title ?? 'Loop'} · run ${b.run_id ?? '?'}`, to: b.run_id ? `/research/loop/harness?run=${encodeURIComponent(b.run_id)}` : undefined }
+        ? {
+            key: 'leash',
+            label: 'Auto-accepted by the leash',
+            tone: 'success',
+            title: `${b.objective_title ?? 'Loop'} · run ${b.run_id ?? '?'}`,
+            to: b.run_id ? `/research/loop/harness?run=${encodeURIComponent(b.run_id)}` : undefined,
+          }
         : b.held_reasons.length > 0
-          ? { key: 'leash', label: `Held: ${b.held_reasons[0]}`, tone: 'warning', title: b.held_reasons.join(' · '), to: '/research/loop/decisions' }
-          : { key: 'leash', label: `Proposed by ${b.objective_title ?? 'the Loop'}`, tone: 'info', title: `run ${b.run_id ?? '?'} · ${b.status ?? ''}`, to: '/research/loop/decisions' },
+          ? {
+              key: 'leash',
+              label: `Held: ${b.held_reasons[0]}`,
+              tone: 'warning',
+              title: b.held_reasons.join(' · '),
+              to: '/research/loop/decisions',
+            }
+          : {
+              key: 'leash',
+              label: `Proposed by ${b.objective_title ?? 'the Loop'}`,
+              tone: 'info',
+              title: `run ${b.run_id ?? '?'} · ${b.status ?? ''}`,
+              to: '/research/loop/decisions',
+            }
     )
   }
   if (d.dissent) {
@@ -121,7 +154,12 @@ export function verdictChips(data: SymbolVerdicts | undefined): VerdictChip[] {
 }
 
 const KIND_ORDER: readonly ProposalKind[] = ['candidate', 'hypothesis', 'draft', 'action']
-const PLURAL: Record<ProposalKind, string> = { candidate: 'candidates', hypothesis: 'hypotheses', draft: 'drafts', action: 'actions' }
+const PLURAL: Record<ProposalKind, string> = {
+  candidate: 'candidates',
+  hypothesis: 'hypotheses',
+  draft: 'drafts',
+  action: 'actions',
+}
 /** The status that means a proposal is still in play, and the word the summary uses for it. */
 const IN_PLAY: Record<ProposalKind, { status: readonly string[]; word: string }> = {
   candidate: { status: ['open'], word: 'open' },
@@ -130,7 +168,12 @@ const IN_PLAY: Record<ProposalKind, { status: readonly string[]; word: string }>
   action: { status: ['proposed', 'approved'], word: 'awaiting' },
 }
 /** In play *and* waiting on a person — an approved action only waits on its executor. */
-const WAITING: Record<ProposalKind, readonly string[]> = { candidate: ['open'], hypothesis: [], draft: ['pending'], action: ['proposed'] }
+const WAITING: Record<ProposalKind, readonly string[]> = {
+  candidate: ['open'],
+  hypothesis: [],
+  draft: ['pending'],
+  action: ['proposed'],
+}
 
 export interface VerdictSummary {
   total: number
@@ -153,7 +196,9 @@ export function verdictSummary(data: SymbolVerdicts | undefined): VerdictSummary
     const inPlay = of.filter((p) => IN_PLAY[kind].status.includes(p.status ?? '')).length
     waiting += of.filter((p) => WAITING[kind].includes(p.status ?? '')).length
     const noun = of.length === 1 ? kind : PLURAL[kind]
-    parts.push(inPlay > 0 ? `${of.length} ${noun} (${inPlay} ${IN_PLAY[kind].word})` : `${of.length} ${noun}`)
+    parts.push(
+      inPlay > 0 ? `${of.length} ${noun} (${inPlay} ${IN_PLAY[kind].word})` : `${of.length} ${noun}`
+    )
   }
   let newest: SymbolProposal | undefined
   for (const p of proposals) {
@@ -163,6 +208,13 @@ export function verdictSummary(data: SymbolVerdicts | undefined): VerdictSummary
     total: proposals.length,
     parts,
     waiting,
-    last: newest && data ? { label: proposalLabel(newest), day: newest.created_at?.slice(0, 10) ?? null, to: proposalPath(newest, data.symbol) } : null,
+    last:
+      newest && data
+        ? {
+            label: proposalLabel(newest),
+            day: newest.created_at?.slice(0, 10) ?? null,
+            to: proposalPath(newest, data.symbol),
+          }
+        : null,
   }
 }

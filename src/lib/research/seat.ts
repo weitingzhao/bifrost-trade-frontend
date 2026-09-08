@@ -45,7 +45,7 @@ export const SEAT_META: Record<ResearchSeat, SeatMeta> = {
     level: 'Level 2',
     claim: 'You ask; it reads the pages for you.',
     icon: MessageCircle,
-    home: '/research/daily-brief',
+    home: '/research/copilot',
   },
   workbench: {
     id: 'workbench',
@@ -53,7 +53,7 @@ export const SEAT_META: Record<ResearchSeat, SeatMeta> = {
     level: 'Level 1',
     claim: 'You open the pages.',
     icon: Wrench,
-    home: '/research/explorer',
+    home: '/research/workbench',
   },
 }
 

@@ -17,6 +17,7 @@ import {
   Eye,
   History,
   Home,
+  LayoutGrid,
   ListFilter,
   MessageCircle,
   Radar,
@@ -28,6 +29,7 @@ import {
   TrendingUp,
   Users,
   Wand2,
+  Wrench,
   type LucideIcon,
 } from 'lucide-react'
 import type { IconComponent, ShellNavGroup, ShellNavItem, ShellNavSubGroup } from '@bifrost/ui'
@@ -47,6 +49,7 @@ export const AUTOPILOT_PAGES = {
 }
 
 export const COPILOT_PAGES = {
+  desk: route('Copilot Desk', '/research/copilot', MessageCircle),
   brief: route('Daily Brief', '/research/daily-brief', ClipboardList),
   ask: route('Ask the Copilot', '/research?copilot=open', Home),
   personas: route('Agent Personas', '/research/agent-personas', Users),
@@ -59,6 +62,12 @@ export interface Bench {
   icon: LucideIcon
   items: ShellNavItem[]
 }
+
+/** The workbench's own landing: today's discoveries, theses, backtests. */
+export const WORKBENCH_PAGE = route('Workbench', '/research/workbench', Wrench)
+
+/** The seat overview — the three postures side by side. */
+export const OVERVIEW_PAGE = route('Overview', '/research/overview', LayoutGrid)
 
 export const BENCHES: Bench[] = [
   {
@@ -103,8 +112,10 @@ export const BENCHES: Bench[] = [
 /** Every Research route the catalog knows, in one flat list. */
 export function allResearchRoutes(): string[] {
   return [
+    OVERVIEW_PAGE,
     ...Object.values(AUTOPILOT_PAGES),
     ...Object.values(COPILOT_PAGES),
+    WORKBENCH_PAGE,
     ...BENCHES.flatMap((b) => b.items),
   ].map((i) => i.to ?? i.id)
 }
@@ -112,9 +123,11 @@ export function allResearchRoutes(): string[] {
 /** The seat-less group: the three levels top down, every page visible. */
 export function staticResearchSubGroups(): ShellNavSubGroup[] {
   return [
+    { label: '', items: [OVERVIEW_PAGE] },
     { label: 'Autopilot · unattended', items: Object.values(AUTOPILOT_PAGES) },
     { label: 'Copilot · on request', items: Object.values(COPILOT_PAGES) },
-    ...BENCHES.map((b) => ({ label: `Workbench · ${b.label}`, items: b.items })),
+    { label: 'Workbench · Discover', items: [WORKBENCH_PAGE, ...BENCHES[0].items] },
+    ...BENCHES.slice(1).map((b) => ({ label: `Workbench · ${b.label}`, items: b.items })),
   ]
 }
 
@@ -130,18 +143,20 @@ export interface SeatNavContext {
 }
 
 /** A folded entry: one row whose children are the pages. Clicking it lands on the first. */
-function fold(label: string, icon: IconComponent, items: ShellNavItem[]): ShellNavItem {
+/**
+ * A folded entry: one row whose children are the pages. Clicking it lands on
+ * the first. The id carries the seat so an open fold in one seat is not an
+ * open fold in the next — React keeps state by key, and the same key across
+ * two layouts read as the layout remembering something it never chose.
+ */
+function fold(seat: ResearchSeat, label: string, icon: IconComponent, items: ShellNavItem[]): ShellNavItem {
   const first = items[0]
-  return { id: `fold:${label}`, label, icon, to: first?.to ?? first?.id, children: items }
+  return { id: `fold:${seat}:${label}`, label, icon, to: first?.to ?? first?.id, children: items }
 }
 
-function foldedBenches(): ShellNavItem[] {
-  return BENCHES.map((b) => fold(b.label, b.icon, b.items))
-}
-
-function objectivesItem(objectives: ObjectiveNavRow[]): ShellNavItem {
+function objectivesItem(seat: ResearchSeat, objectives: ObjectiveNavRow[]): ShellNavItem {
   return {
-    id: 'fold:Objectives',
+    id: `fold:${seat}:Objectives`,
     label: 'Objectives',
     icon: Target,
     to: AUTOPILOT_PAGES.autopilot.to,
@@ -152,38 +167,44 @@ function objectivesItem(objectives: ObjectiveNavRow[]): ShellNavItem {
 export function seatSubGroups(seat: ResearchSeat, ctx: SeatNavContext): ShellNavSubGroup[] {
   const A = AUTOPILOT_PAGES
   const C = COPILOT_PAGES
+  const [discover, analyze, validate, data] = BENCHES
+  const copilotAll = [C.desk, C.brief, C.ask, C.personas, C.playbook]
+  const autopilotAll = [A.autopilot, A.inbox, A.hypotheses, A.candidates]
+  const benchesAll = [WORKBENCH_PAGE, ...BENCHES.flatMap((b) => b.items)]
   switch (seat) {
     case 'autopilot':
       return [
         { label: 'Now', items: [A.autopilot, A.inbox] },
-        { label: 'Objects', items: [objectivesItem(ctx.objectives), A.hypotheses, A.candidates] },
-        { label: 'Copilot · on request', items: [fold('Copilot', MessageCircle, [C.brief, C.ask, C.personas, C.playbook])] },
-        { label: 'Workbench · by hand', items: foldedBenches() },
+        { label: 'Objects', items: [objectivesItem(seat, ctx.objectives), A.hypotheses, A.candidates] },
+        { label: 'Copilot · on request', items: [fold(seat, 'Copilot', MessageCircle, copilotAll)] },
+        {
+          label: 'Workbench · by hand',
+          items: [fold(seat, 'Workbench', Wrench, [WORKBENCH_PAGE, ...discover.items]), ...BENCHES.slice(1).map((b) => fold(seat, b.label, b.icon, b.items))],
+        },
+        { label: '', items: [OVERVIEW_PAGE] },
       ]
     case 'copilot':
       return [
-        { label: 'Now', items: [C.brief, C.ask] },
-        { label: 'Objects', items: [objectivesItem(ctx.objectives), C.personas, C.playbook, A.hypotheses] },
-        { label: 'Autopilot · unattended', items: [fold('Autopilot', Terminal, [A.autopilot, A.inbox, A.candidates])] },
-        { label: 'Workbench · by hand', items: foldedBenches() },
+        { label: 'Now', items: [C.desk, C.brief, C.ask] },
+        { label: 'Objects', items: [objectivesItem(seat, ctx.objectives), C.personas, C.playbook, A.hypotheses] },
+        { label: 'Autopilot · unattended', items: [fold(seat, 'Autopilot', Terminal, [A.autopilot, A.inbox, A.candidates])] },
+        { label: 'Workbench · by hand', items: [fold(seat, 'Workbench', Wrench, benchesAll)] },
+        { label: '', items: [OVERVIEW_PAGE] },
       ]
     case 'workbench': {
-      const [discover, analyze, validate, data] = BENCHES
       const explorer = discover.items[0]
       const health = data.items[1]
       return [
-        { label: 'Now', items: [explorer, health] },
+        { label: 'Now', items: [WORKBENCH_PAGE, explorer, health] },
         { label: 'Discover', items: discover.items.filter((i) => i !== explorer) },
         { label: 'Analyze', items: analyze.items },
         { label: 'Validate', items: validate.items },
-        { label: 'Data', items: [fold('Data', data.icon, data.items.filter((i) => i !== health))] },
+        { label: 'Data', items: [fold(seat, 'Data', data.icon, data.items.filter((i) => i !== health))] },
         {
           label: 'Autopilot · Copilot',
-          items: [
-            fold('Autopilot', Terminal, [A.autopilot, A.inbox, A.hypotheses, A.candidates]),
-            fold('Copilot', MessageCircle, [C.brief, C.ask, C.personas, C.playbook]),
-          ],
+          items: [fold(seat, 'Autopilot', Terminal, autopilotAll), fold(seat, 'Copilot', MessageCircle, copilotAll)],
         },
+        { label: '', items: [OVERVIEW_PAGE] },
       ]
     }
   }

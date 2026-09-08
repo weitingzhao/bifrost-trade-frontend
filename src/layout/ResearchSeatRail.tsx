@@ -6,7 +6,7 @@
  * lit seat means, so the word "Autopilot" on a menu is never the only
  * explanation of what it does.
  */
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { RESEARCH_SEATS, SEAT_META, setResearchSeat, useResearchSeat, type ResearchSeat } from '@/lib/research/seat'
 
@@ -54,8 +54,13 @@ export function ResearchSeatRail() {
           )
         })}
       </div>
-      <p className="mt-1 px-1 text-dense-micro leading-snug text-sidebar-foreground/50">
-        <span className="text-sidebar-foreground/70">{meta.level}</span> · {meta.claim}
+      <p className="mt-1 flex items-baseline gap-1 px-1 text-dense-micro leading-snug text-sidebar-foreground/50">
+        <span className="min-w-0 flex-1">
+          <span className="text-sidebar-foreground/70">{meta.level}</span> · {meta.claim}
+        </span>
+        <Link to="/research/overview" className="shrink-0 hover:text-sidebar-foreground hover:underline" title="The three postures side by side">
+          all three
+        </Link>
       </p>
     </div>
   )

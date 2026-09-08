@@ -13,6 +13,9 @@ import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
 const PAGE_TITLES: Record<string, string> = {
   '/research': 'Research',
+  '/research/overview': 'Research',
+  '/research/copilot': 'Copilot',
+  '/research/workbench': 'Workbench',
   '/market/live': 'Live',
   '/market/watchlist': 'Stock Watchlist',
   '/research/watchlist': 'Stock Watchlist',

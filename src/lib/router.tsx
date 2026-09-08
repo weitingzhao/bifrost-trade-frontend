@@ -31,6 +31,18 @@ export const router = createBrowserRouter([
         path: 'research',
         lazy: lazyPage(() => import('@/pages/research/ResearchHomePage')),
       },
+      {
+        path: 'research/overview',
+        lazy: lazyPage(() => import('@/pages/research/seats/ResearchOverviewPage')),
+      },
+      {
+        path: 'research/copilot',
+        lazy: lazyPage(() => import('@/pages/research/seats/CopilotDeskPage')),
+      },
+      {
+        path: 'research/workbench',
+        lazy: lazyPage(() => import('@/pages/research/seats/WorkbenchPage')),
+      },
 
       { path: 'market/live', element: <LivePage /> },
       { path: 'market/watchlist', element: <Navigate to="/research/watchlist" replace /> },

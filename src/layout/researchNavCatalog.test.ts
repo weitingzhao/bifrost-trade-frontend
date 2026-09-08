@@ -38,7 +38,7 @@ describe('research seat layouts', () => {
   })
 
   it('opens with Now, and Now holds the seat home', () => {
-    const homes = { autopilot: '/research/loop/harness', copilot: '/research/daily-brief', workbench: '/research/explorer' }
+    const homes = { autopilot: '/research/loop/harness', copilot: '/research/copilot', workbench: '/research/workbench' }
     for (const seat of RESEARCH_SEATS) {
       const g = buildResearchNavGroup(seat, ctx)
       expect(g.subGroups?.[0].label).toBe('Now')
@@ -49,7 +49,8 @@ describe('research seat layouts', () => {
   it('folded entries land on their first page and carry the rest as children', () => {
     const g = buildResearchNavGroup('autopilot', ctx)
     const folds = getAllNavItems(g).filter((i) => i.id.startsWith('fold:'))
-    expect(folds.map((f) => f.label)).toEqual(['Objectives', 'Copilot', 'Discover', 'Analyze', 'Validate', 'Data'])
+    expect(folds.map((f) => f.label)).toEqual(['Objectives', 'Copilot', 'Workbench', 'Analyze', 'Validate', 'Data'])
+    expect(folds.every((f) => f.id.startsWith('fold:autopilot:'))).toBe(true)
     for (const f of folds) {
       expect(f.to, f.label).toBeTruthy()
       expect(f.children?.length, f.label).toBeGreaterThan(0)
@@ -58,6 +59,7 @@ describe('research seat layouts', () => {
 
   it('the seat-less layout lists the three levels top down', () => {
     expect(staticResearchSubGroups().map((s) => s.label)).toEqual([
+      '',
       'Autopilot · unattended',
       'Copilot · on request',
       'Workbench · Discover',

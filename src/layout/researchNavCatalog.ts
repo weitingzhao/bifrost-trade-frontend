@@ -2,10 +2,17 @@
  * The Research pages as a catalog, and the sidebar group each seat builds
  * from it.
  *
- * Three zones, in the order the Ops Console taught: what this seat looks at
- * now, the objects the work is about, and everything else folded — reachable,
- * not gone. Every route appears in every seat exactly once (a test holds that),
- * so switching seats re-lays the same twenty-nine pages rather than hiding any.
+ * Every seat reads the same way: this seat's home open with its pages under
+ * it, the other two homes folded, Overview last. Every route appears in every
+ * seat exactly once (a test holds that), so switching seats re-lays the same
+ * twenty-seven pages rather than hiding any.
+ *
+ * There are no section headings. A heading you cannot click costs a row and
+ * answers nothing, and the three headings here — "Now", "Objects", "Copilot ·
+ * on request" — sat directly above a row of the same name that did the same
+ * job and was a link. The home page is the heading, which is how Portfolio
+ * has read since 2026-09-07 (Owner decision, extended to Research
+ * 2026-09-08). The chevron still folds; the row still navigates.
  */
 import type { ReactNode } from 'react'
 import {
@@ -144,69 +151,111 @@ export interface SeatNavContext {
   prefix?: ReactNode
 }
 
-/** A folded entry: one row whose children are the pages. Clicking it lands on the first. */
 /**
  * A folded entry: one row whose children are the pages. Clicking it lands on
- * the first. The id carries the seat so an open fold in one seat is not an
- * open fold in the next — React keeps state by key, and the same key across
- * two layouts read as the layout remembering something it never chose.
+ * the first. For a category that owns no page of its own — Analyze, Validate,
+ * Data — this is as close to a home as it gets: the row still goes somewhere.
+ *
+ * The id carries the seat so an open fold in one seat is not an open fold in
+ * the next — React keeps state by key, and the same key across two layouts
+ * read as the layout remembering something it never chose.
  */
 function fold(seat: ResearchSeat, label: string, icon: IconComponent, items: ShellNavItem[]): ShellNavItem {
   const first = items[0]
   return { id: `fold:${seat}:${label}`, label, icon, to: first?.to ?? first?.id, children: items }
 }
 
-function objectivesItem(seat: ResearchSeat, objectives: ObjectiveNavRow[]): ShellNavItem {
+/**
+ * A home: a real page that is also the heading for the pages beneath it.
+ *
+ * This is the Portfolio pattern. The row navigates to its own page — not to
+ * the first child, the way a fold does — so the heading is somewhere you can
+ * go, and the pages under it are the rest of that area rather than an
+ * expansion of a label.
+ */
+function home(
+  seat: ResearchSeat,
+  label: string,
+  page: ShellNavItem,
+  children: ShellNavItem[],
+  { open = false }: { open?: boolean } = {},
+): ShellNavItem {
   return {
-    id: `fold:${seat}:Objectives`,
-    label: 'Objectives',
-    icon: Target,
-    to: AUTOPILOT_PAGES.autopilot.to,
-    children: objectives.map((o) => route(o.title, objectivePath(o.id), Target)),
+    id: `home:${seat}:${page.id}`,
+    label,
+    to: page.to,
+    icon: page.icon,
+    children,
+    defaultOpen: open,
   }
 }
 
-export function seatSubGroups(seat: ResearchSeat, ctx: SeatNavContext): ShellNavSubGroup[] {
+function objectivesItem(seat: ResearchSeat, objectives: ObjectiveNavRow[]): ShellNavItem[] {
+  if (objectives.length === 0) return []
+  return [
+    {
+      id: `fold:${seat}:Objectives`,
+      label: 'Objectives',
+      icon: Target,
+      to: AUTOPILOT_PAGES.autopilot.to,
+      children: objectives.map((o) => route(o.title, objectivePath(o.id), Target)),
+    },
+  ]
+}
+
+/**
+ * The seat's sidebar: three homes and Overview, in the order this seat works.
+ *
+ * The seat's own home is open; the other two are folded but one click from
+ * their landing page. Nothing is hidden — the same twenty-seven pages are
+ * reachable from every seat, just at different depths.
+ */
+export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem[] {
   const A = AUTOPILOT_PAGES
   const C = COPILOT_PAGES
   const [discover, analyze, validate, data] = BENCHES
-  const copilotAll = [C.desk, C.brief, C.ask, C.trading, C.personas, C.playbook]
-  const autopilotAll = [A.autopilot, A.inbox, A.hypotheses, A.candidates]
-  const benchesAll = [WORKBENCH_PAGE, ...BENCHES.flatMap((b) => b.items)]
+  const objectives = objectivesItem(seat, ctx.objectives)
+
+  /** Every bench page under Workbench, with the three page-less benches folded. */
+  const benchPages = (lead: ShellNavItem[], dataItems: ShellNavItem[]): ShellNavItem[] => [
+    ...lead,
+    fold(seat, analyze.label, analyze.icon, analyze.items),
+    fold(seat, validate.label, validate.icon, validate.items),
+    fold(seat, data.label, data.icon, dataItems),
+  ]
+
+  const copilotRest = [C.brief, C.ask, C.trading, C.personas, C.playbook]
+
   switch (seat) {
     case 'autopilot':
       return [
-        { label: 'Now', items: [A.autopilot, A.inbox] },
-        { label: 'Objects', items: [objectivesItem(seat, ctx.objectives), A.hypotheses, A.candidates] },
-        { label: 'Copilot · on request', items: [fold(seat, 'Copilot', MessageCircle, copilotAll)] },
-        {
-          label: 'Workbench · by hand',
-          items: [fold(seat, 'Workbench', Wrench, [WORKBENCH_PAGE, ...discover.items]), ...BENCHES.slice(1).map((b) => fold(seat, b.label, b.icon, b.items))],
-        },
-        { label: '', items: [OVERVIEW_PAGE] },
+        home(seat, 'Autopilot', A.autopilot, [A.inbox, ...objectives, A.hypotheses, A.candidates], { open: true }),
+        home(seat, 'Copilot', C.desk, copilotRest),
+        home(seat, 'Workbench', WORKBENCH_PAGE, benchPages(discover.items, data.items)),
+        OVERVIEW_PAGE,
       ]
     case 'copilot':
       return [
-        { label: 'Now', items: [C.desk, C.brief, C.ask, C.trading] },
-        { label: 'Objects', items: [objectivesItem(seat, ctx.objectives), C.personas, C.playbook, A.hypotheses] },
-        { label: 'Autopilot · unattended', items: [fold(seat, 'Autopilot', Terminal, [A.autopilot, A.inbox, A.candidates])] },
-        { label: 'Workbench · by hand', items: [fold(seat, 'Workbench', Wrench, benchesAll)] },
-        { label: '', items: [OVERVIEW_PAGE] },
+        home(seat, 'Copilot Desk', C.desk, [...copilotRest, A.hypotheses, ...objectives], { open: true }),
+        home(seat, 'Autopilot', A.autopilot, [A.inbox, A.candidates]),
+        home(seat, 'Workbench', WORKBENCH_PAGE, benchPages(discover.items, data.items)),
+        OVERVIEW_PAGE,
       ]
     case 'workbench': {
-      const explorer = discover.items[0]
+      // Signal Health rides up out of Data: on this seat it is the first thing
+      // you check before trusting anything else on the bench.
       const health = data.items[1]
       return [
-        { label: 'Now', items: [WORKBENCH_PAGE, explorer, health] },
-        { label: 'Discover', items: discover.items.filter((i) => i !== explorer) },
-        { label: 'Analyze', items: analyze.items },
-        { label: 'Validate', items: validate.items },
-        { label: 'Data', items: [fold(seat, 'Data', data.icon, data.items.filter((i) => i !== health))] },
-        {
-          label: 'Autopilot · Copilot',
-          items: [fold(seat, 'Autopilot', Terminal, autopilotAll), fold(seat, 'Copilot', MessageCircle, copilotAll)],
-        },
-        { label: '', items: [OVERVIEW_PAGE] },
+        home(
+          seat,
+          'Workbench',
+          WORKBENCH_PAGE,
+          benchPages([...discover.items, health], data.items.filter((i) => i !== health)),
+          { open: true },
+        ),
+        home(seat, 'Autopilot', A.autopilot, [A.inbox, A.hypotheses, A.candidates]),
+        home(seat, 'Copilot', C.desk, copilotRest),
+        OVERVIEW_PAGE,
       ]
     }
   }
@@ -217,6 +266,6 @@ export function buildResearchNavGroup(seat: ResearchSeat, ctx: SeatNavContext): 
     label: 'Research',
     icon: BookOpen,
     prefix: ctx.prefix,
-    subGroups: seatSubGroups(seat, ctx),
+    items: seatItems(seat, ctx),
   }
 }

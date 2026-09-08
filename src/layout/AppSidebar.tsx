@@ -15,9 +15,6 @@ import { useMemo } from 'react'
 import { TradeSidebarFooter } from './TradeSidebarFooter'
 
 const LIVE_NAV_PATH = '/market/live'
-const OPS_CONSOLE_URL =
-  import.meta.env.VITE_OPS_CONSOLE_URL ?? 'http://127.0.0.1:5180'
-
 function renderInAppLink({
   item,
   children,
@@ -65,11 +62,6 @@ export function AppSidebar() {
           (item.to ?? item.id) === LIVE_NAV_PATH ? <LiveNavLamp /> : research.extras(item)
         }
         renderInAppLink={renderInAppLink}
-        peerApp={{
-          label: 'Open Bifrost Ops',
-          href: OPS_CONSOLE_URL,
-          description: 'Environment matrix & release program',
-        }}
         footer={<TradeSidebarFooter />}
         openGroupsStorageKey={STORAGE_KEYS.sidebarOpenGroups}
         accordionStorageKey={STORAGE_KEYS.sidebarAccordion}

@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { Network, ScrollText } from 'lucide-react'
+import { ExternalLink, Network, ScrollText } from 'lucide-react'
 import { shellNavCollapsedIconButtonClass, useSidebar } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
 import {
@@ -10,6 +10,31 @@ import {
 import { useLogPanel } from '@/hooks/useLogPanel'
 import { useReactorMap } from '@/hooks/useReactorMap'
 import { SETTINGS_ICON, SETTINGS_ITEM } from './navConfig'
+
+const OPS_CONSOLE_URL = import.meta.env.VITE_OPS_CONSOLE_URL ?? 'http://127.0.0.1:5180'
+
+/**
+ * The Ops Console, as one icon rather than a two-line card.
+ *
+ * It was a permanent block above this row spending about fifty pixels of
+ * sidebar to say "Environment matrix & release program" — a description the
+ * Owner reads once and then never again. The destination matters; the sales
+ * copy for it does not.
+ */
+function OpsConsoleButton({ className }: { className: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <a href={OPS_CONSOLE_URL} target="_blank" rel="noreferrer" className={className}>
+          <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+        </a>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs font-medium">
+        Open Bifrost Ops · environment matrix &amp; release program
+      </TooltipContent>
+    </Tooltip>
+  )
+}
 
 function LogAndSettingsFooter() {
   const location = useLocation()
@@ -35,6 +60,8 @@ function LogAndSettingsFooter() {
       </NavLink>
 
       <div className="flex-1" />
+
+      <OpsConsoleButton className={cn(iconBtn, btnIdle)} />
 
       <Tooltip>
         <TooltipTrigger asChild>
@@ -153,6 +180,21 @@ export function TradeSidebarFooter() {
   if (isCollapsed) {
     return (
       <>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href={OPS_CONSOLE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className={shellNavCollapsedIconButtonClass(false)}
+            >
+              <ExternalLink className="h-4 w-4 shrink-0" />
+            </a>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="text-xs font-medium">
+            Open Bifrost Ops
+          </TooltipContent>
+        </Tooltip>
         <CollapsedReactorButton />
         <CollapsedLogButton />
         <CollapsedSettingsButton />

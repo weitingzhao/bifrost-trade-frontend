@@ -74,6 +74,28 @@ function buildAccountSyncNode(status: StatusResponse | null | undefined): Pick<T
   return { lamp: daemonToTopologyLamp(sync.lamp), subtitle: truncateSubtitle(sync.title.split('.')[0] ?? subtitle) }
 }
 
+/**
+ * Which probe answers for a topology node.
+ *
+ * The health board once listed eight services and probing each `/health` showed
+ * only four processes behind them: monitor, ops and docs are all
+ * `bifrost-monitor`; trading, portfolio and strategy are all `bifrost-account`.
+ * The board collapsed to the four, and these four nodes were left with no probe
+ * of their own — drawn yellow, which reads as "unknown" when the truth is that
+ * a neighbour already answered for them. The gateway routes are real and worth
+ * drawing; the process behind them is what has a lamp.
+ */
+const PROBE_ALIAS: Record<string, string> = {
+  ops: 'monitor',
+  docs: 'monitor',
+  portfolio: 'trading',
+  strategy: 'trading',
+}
+
+function probeKeyFor(key: string): string {
+  return PROBE_ALIAS[key] ?? key
+}
+
 export function useSystemTopologyHealth(enabled: boolean) {
   const probeResults = useQueries({
     queries: ALL_SERVICES.map(svc => {
@@ -110,7 +132,7 @@ export function useSystemTopologyHealth(enabled: boolean) {
       }
 
       if (def.kind === 'api') {
-        const svcIndex = ALL_SERVICES.findIndex(s => s.key === def.key)
+        const svcIndex = ALL_SERVICES.findIndex(s => s.key === probeKeyFor(def.key))
         const svc = ALL_SERVICES[svcIndex]
         const r = probeResults[svcIndex]
         if (!svc || !r) return base

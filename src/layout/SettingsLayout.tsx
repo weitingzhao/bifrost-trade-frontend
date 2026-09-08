@@ -5,7 +5,10 @@ import {
   Activity, Cpu, HardDrive,
   Layers, Layers2, Palette, Plug, Radio,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SystemNavIcon } from '@/components/layout/SystemNavIcon'
+import { SystemNavLampProvider } from '@/components/layout/SystemNavLampProvider'
 
 // ─── Nav tree ────────────────────────────────────────────────────────────────
 
@@ -125,7 +128,10 @@ function LeafItem({ item, depth = 0 }: { item: NavLeaf; depth?: number }) {
           : 'text-muted-foreground hover:bg-background/60 hover:text-foreground',
       )}
     >
-      <item.icon className="h-3.5 w-3.5 shrink-0" />
+      {/* The System items carry a service-health tint in the main sidebar; they
+          kept it when they moved in here, because a nav row that can say
+          "unreachable" without being opened is why the tint exists. */}
+      <SystemNavIcon path={basePath} icon={item.icon as LucideIcon} />
       <span>{item.label}</span>
     </NavLink>
   )
@@ -178,6 +184,7 @@ export function SettingsLayout() {
   }
 
   return (
+    <SystemNavLampProvider>
     <div className="flex h-full">
       <aside className="w-60 shrink-0 border-r border-border bg-muted/20 overflow-y-auto">
         <div className="px-3 py-4 space-y-5">
@@ -226,5 +233,6 @@ export function SettingsLayout() {
         <Outlet />
       </main>
     </div>
+    </SystemNavLampProvider>
   )
 }

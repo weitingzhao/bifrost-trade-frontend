@@ -40,6 +40,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/seats/CopilotDeskPage')),
       },
       {
+        path: 'research/copilot/trading',
+        lazy: lazyPage(() => import('@/pages/research/seats/TradingCopilotPage')),
+      },
+      {
         path: 'research/workbench',
         lazy: lazyPage(() => import('@/pages/research/seats/WorkbenchPage')),
       },
@@ -47,10 +51,6 @@ export const router = createBrowserRouter([
       { path: 'market/live', element: <LivePage /> },
       { path: 'market/watchlist', element: <Navigate to="/research/watchlist" replace /> },
 
-      {
-        path: 'portfolio/copilot',
-        lazy: lazyPage(() => import('@/pages/portfolio/copilot/TradingCopilotPage')),
-      },
       { path: 'research/watchlist', element: <StockWatchlistPage /> },
 
       {
@@ -77,6 +77,11 @@ export const router = createBrowserRouter([
       {
         path: 'portfolio/trade-history',
         element: <Navigate to="/portfolio/ledger" replace />,
+      },
+      /* The Trading Copilot moved from Portfolio to the Copilot seat. */
+      {
+        path: 'portfolio/copilot',
+        element: <Navigate to="/research/copilot/trading" replace />,
       },
       /* Model Analysis merged into Backing & Model as its lower band. */
       {

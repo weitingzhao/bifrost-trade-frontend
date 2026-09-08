@@ -52,6 +52,8 @@ export const COPILOT_PAGES = {
   desk: route('Copilot Desk', '/research/copilot', MessageCircle),
   brief: route('Daily Brief', '/research/daily-brief', ClipboardList),
   ask: route('Ask the Copilot', '/research?copilot=open', Home),
+  /** The book as it stands and the questions worth asking about it — level 2 on the Trade side. */
+  trading: route('Trading Copilot', '/research/copilot/trading', TrendingUp),
   personas: route('Agent Personas', '/research/agent-personas', Users),
   playbook: route('My Trading System', '/research/playbook', BookOpen),
 }
@@ -168,7 +170,7 @@ export function seatSubGroups(seat: ResearchSeat, ctx: SeatNavContext): ShellNav
   const A = AUTOPILOT_PAGES
   const C = COPILOT_PAGES
   const [discover, analyze, validate, data] = BENCHES
-  const copilotAll = [C.desk, C.brief, C.ask, C.personas, C.playbook]
+  const copilotAll = [C.desk, C.brief, C.ask, C.trading, C.personas, C.playbook]
   const autopilotAll = [A.autopilot, A.inbox, A.hypotheses, A.candidates]
   const benchesAll = [WORKBENCH_PAGE, ...BENCHES.flatMap((b) => b.items)]
   switch (seat) {
@@ -185,7 +187,7 @@ export function seatSubGroups(seat: ResearchSeat, ctx: SeatNavContext): ShellNav
       ]
     case 'copilot':
       return [
-        { label: 'Now', items: [C.desk, C.brief, C.ask] },
+        { label: 'Now', items: [C.desk, C.brief, C.ask, C.trading] },
         { label: 'Objects', items: [objectivesItem(seat, ctx.objectives), C.personas, C.playbook, A.hypotheses] },
         { label: 'Autopilot · unattended', items: [fold(seat, 'Autopilot', Terminal, [A.autopilot, A.inbox, A.candidates])] },
         { label: 'Workbench · by hand', items: [fold(seat, 'Workbench', Wrench, benchesAll)] },

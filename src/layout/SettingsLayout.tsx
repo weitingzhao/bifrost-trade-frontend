@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   BarChart2, ChevronDown, ChevronRight,
-  Cpu, HardDrive,
+  Activity, Cpu, HardDrive,
   Layers, Layers2, Palette, Plug, Radio,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -61,6 +61,23 @@ const NAV: NavGroup[] = [
         items: [
           leaf('Coverage', '/settings/coverage', BarChart2),
           leaf('Feed', '/settings/feed', Radio),
+        ],
+      },
+    ],
+  },
+  {
+    // Not settings, and labelled so. These are live surfaces — is the process
+    // alive, can this frontend reach each API, what is the bus doing — but a
+    // top-level group holding one item is a label that teaches nothing, and
+    // API Health had no entry point at all after System was collapsed.
+    group: 'System',
+    sections: [
+      {
+        section: '',
+        items: [
+          leaf('Daemon', '/operations/daemon', Cpu),
+          leaf('API Health', '/settings/api', Activity),
+          leaf('Socket', '/settings/socket', Radio),
         ],
       },
     ],

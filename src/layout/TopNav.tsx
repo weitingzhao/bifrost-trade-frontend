@@ -26,7 +26,9 @@ function DropdownItem({ item, onClose, depth = 0 }: { item: ShellNavItem; onClos
   const childActive = hasChildren
     ? item.children!.some((c) => location.pathname.startsWith(itemPath(c)))
     : false
-  const [open, setOpen] = useState(location.pathname.startsWith(path) || childActive)
+  // A menu is for seeing what there is: nested pages start open here, and
+  // the chevron folds them away for the reader who knows the way.
+  const [open, setOpen] = useState(true)
   const pl = depth === 0 ? 'px-3' : 'pl-6 pr-3'
 
   return (
@@ -78,7 +80,9 @@ function GroupMenu({ group, isOpen, onToggle, onClose, iconOnly = false }: Group
   const location = useLocation()
   const ref = useRef<HTMLDivElement>(null)
   const allItems = getAllNavItems(group)
-  const isActive = allItems.some((i) => location.pathname.startsWith(itemPath(i)))
+  const matches = (i: ShellNavItem): boolean =>
+    location.pathname.startsWith(itemPath(i)) || (i.children?.some(matches) ?? false)
+  const isActive = allItems.some(matches)
   const GroupIcon = group.icon
 
   useEffect(() => {

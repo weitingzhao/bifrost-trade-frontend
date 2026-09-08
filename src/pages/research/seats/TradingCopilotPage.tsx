@@ -1,5 +1,5 @@
 /**
- * Trading Copilot — `/portfolio/copilot`.
+ * Trading Copilot — `/research/copilot/trading`, a Copilot-seat page about the book.
  *
  * Level 2 for the book, given a front door.
  *

@@ -8,13 +8,11 @@ import {
   GitBranch,
   Layers,
   LayoutDashboard,
-  MessageCircle,
   LineChart,
   PieChart,
   Settings,
   Shield,
   Star,
-  Terminal,
   TrendingUp,
   Trophy,
 } from 'lucide-react'
@@ -43,22 +41,28 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Portfolio',
     icon: LayoutDashboard,
+    // Two homes, each with its pages beneath (Owner decision, 2026-09-07).
+    // The book: Performance is how it is doing, Positions what is in it,
+    // Backing & Model what backs it. The ledger: Accounts is what the broker
+    // says, Trade Ledger what was traded, Transfer & Pay what cash moved.
+    // The Trading Copilot lives with the Copilot seat under Research.
     subGroups: [
       {
-        label: 'Overview',
+        label: 'Book',
         items: [
-          route('Accounts', '/portfolio/accounts', LayoutDashboard),
-          route('Positions', '/portfolio/positions', TrendingUp),
-          route('Backing & Model', '/portfolio/backing', Layers),
-          route('Performance', '/portfolio/performance', LineChart),
-          route('Copilot', '/portfolio/copilot', MessageCircle),
+          route('Performance', '/portfolio/performance', LineChart, [
+            route('Positions', '/portfolio/positions', TrendingUp),
+            route('Backing & Model', '/portfolio/backing', Layers),
+          ]),
         ],
       },
       {
-        label: 'Activity & Cash',
+        label: 'Ledger',
         items: [
-          route('Trade Ledger', '/portfolio/ledger', ClipboardList),
-          route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
+          route('Accounts', '/portfolio/accounts', LayoutDashboard, [
+            route('Trade Ledger', '/portfolio/ledger', ClipboardList),
+            route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
+          ]),
         ],
       },
     ],
@@ -93,18 +97,6 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         ],
       },
     ],
-  },
-  {
-    // One entry, not three. The API board showed eight lamps for four
-    // processes and the Ops Console does cluster health better; its OpenAPI
-    // directory lives on with the health board at /settings/api. The Socket
-    // page's four upstream services are an Ops responsibility and now appear
-    // read-only under Daemon, which is the page that says whether the
-    // background processes are alive.
-    label: 'System',
-    icon: Terminal,
-    dividerBefore: true,
-    items: [route('Daemon', '/operations/daemon', Cpu)],
   },
 ]
 

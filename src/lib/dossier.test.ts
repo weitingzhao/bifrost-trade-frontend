@@ -137,14 +137,20 @@ describe('the dossier faces', () => {
         verdict: { band: 'cold', label: 'Cold', value: 0, unit: 'x', means: 'cheap' },
         track_record: record(23, 0.72, 'cold'),
       }),
+      exhibit('gex_regime', {
+        verdict: { band: 'hot', label: 'Hot', value: 0, unit: 'x', means: 'chase' },
+        track_record: { ...record(5, 0.5), symbol_scoped: false },
+      }),
     ]
     const v = faceView(face('validation'), exhibits, 'NVDA', noSpec)
     expect(v.rows.map((r) => [r.id, r.means])).toEqual([
       ['sepa', null],
       ['vrp', null],
+      ['gex_regime', null],
     ])
     expect(v.rows[0].record).toContain('hot side hit 5d 33%')
-    expect(v.headline).toBe('2 lenses have a settled record on NVDA')
+    expect(v.headline).toBe('2 lenses have a settled record on NVDA; 1 reads all symbols')
+    expect(v.rows[2].record).toContain('all symbols')
     expect(v.lamp).toBe('green')
     expect(faceView(face('validation'), [], 'NVDA', noSpec)).toMatchObject({
       headline: 'No settled track record on NVDA yet',

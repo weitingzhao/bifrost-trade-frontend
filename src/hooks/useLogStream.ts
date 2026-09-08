@@ -7,7 +7,13 @@ export type LogLevel = 'ERROR' | 'WARN' | 'INFO' | 'DEBUG' | 'OTHER'
 
 export interface LogEntry {
   id: number
-  ts: string       // "HH:mm:ss" display time
+  /**
+   * Full "YYYY-MM-DD HH:mm:ss" in the emitting process's clock (UTC for every
+   * Bifrost service). Kept whole so entries sort chronologically across days —
+   * a time-only string puts yesterday 23:00 after today 04:00. Render it
+   * through `formatLogTs`.
+   */
+  ts: string
   level: LogLevel
   service: string
   message: string
@@ -29,6 +35,16 @@ function normalizeLevel(raw: string): LogLevel {
   return 'OTHER'
 }
 
+/** UTC, matching the timestamp every service writes — not the browser's zone. */
+function nowUtc(): string {
+  return new Date().toISOString().slice(0, 19).replace('T', ' ')
+}
+
+/** "2026-09-07 10:58:52" → "09-07 10:58:52". The year is noise in a log tail. */
+export function formatLogTs(ts: string): string {
+  return ts.length === 19 ? ts.slice(5) : ts
+}
+
 // Matches Python standard logging: "2024-01-15 12:34:56,123 [INFO] ..."
 // Also handles no-brackets variant: "2024-01-15 12:34:56,123 INFO ..."
 const LINE_RE = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})(?:[,.]\d+)?\s+\[?(ERROR|WARN(?:ING)?|INFO|DEBUG)\]?\s+(.*)/i
@@ -38,7 +54,7 @@ export function parseLine(service: string, raw: string): LogEntry {
   if (m) {
     return {
       id: nextId++,
-      ts: m[1].slice(11),
+      ts: m[1],
       level: normalizeLevel(m[2]),
       service,
       message: m[3].trim(),
@@ -46,7 +62,7 @@ export function parseLine(service: string, raw: string): LogEntry {
   }
   return {
     id: nextId++,
-    ts: new Date().toTimeString().slice(0, 8),
+    ts: nowUtc(),
     level: 'OTHER',
     service,
     message: raw,

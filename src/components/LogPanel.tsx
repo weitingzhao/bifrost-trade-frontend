@@ -3,8 +3,8 @@ import { X, Trash2, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { dangerIconBtnClass } from '@/lib/uiClasses'
 import { useLogPanel } from '@/hooks/useLogPanel'
-import { LOG_SOURCES, LOG_SOURCE_GROUPS, LOG_SOURCE_TAGS } from '@/api/logs'
-import { useLogStream, type LogEntry } from '@/hooks/useLogStream'
+import { LIVE_LOG_SOURCES, LOG_SOURCES, LOG_SOURCE_GROUPS, LOG_SOURCE_TAGS } from '@/api/logs'
+import { formatLogTs, useLogStream, type LogEntry } from '@/hooks/useLogStream'
 import {
   DEFAULT_LEVEL_FILTER,
   filterLogEntries,
@@ -31,7 +31,7 @@ function LogRow({ entry }: { entry: LogEntry }) {
   const tagCls = LOG_SOURCE_TAGS[entry.service] ?? 'bg-muted text-muted-foreground'
   return (
     <div className={cn('flex items-baseline gap-2 px-3 py-[2px] text-xs hover:bg-muted/40 min-w-0 font-mono', s.row)}>
-      <span className="shrink-0 text-muted-foreground/60 w-[62px]">{entry.ts}</span>
+      <span className="shrink-0 text-muted-foreground/60 w-[112px]" title={entry.ts}>{formatLogTs(entry.ts)}</span>
       <span className={cn('shrink-0 rounded px-1 font-semibold text-dense-caption leading-4 w-[34px] text-center', s.badge)}>
         {LEVEL_LABELS[entry.level]}
       </span>
@@ -43,19 +43,20 @@ function LogRow({ entry }: { entry: LogEntry }) {
   )
 }
 
-/** Docked global log panel (sidebar toggle). Uses LogConsole shared styles; single SSE subscription. */
+/** Docked global log panel (sidebar toggle). One SSE subscription per live source. */
 export function LogPanel() {
   const { open, toggle, reportErrorCount } = useLogPanel()
 
   const [height, setHeight] = useState(240)
+  // Offline sources can never be enabled — their chips exist to say why.
   const [enabledSources, setEnabledSources] = useState<Record<string, boolean>>(
-    () => Object.fromEntries(LOG_SOURCES.map(s => [s.key, true])),
+    () => Object.fromEntries(LIVE_LOG_SOURCES.map(s => [s.key, true])),
   )
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(DEFAULT_LEVEL_FILTER)
   const [search, setSearch] = useState('')
 
   const activeSources = useMemo(
-    () => LOG_SOURCES.filter(s => enabledSources[s.key]),
+    () => LIVE_LOG_SOURCES.filter(s => enabledSources[s.key]),
     [enabledSources],
   )
 
@@ -212,42 +213,60 @@ export function LogPanel() {
       <div className="flex items-center gap-2 px-3 py-1 border-b border-border shrink-0 flex-wrap">
         {LOG_SOURCE_GROUPS.map((group, gi) => {
           const groupSources = LOG_SOURCES.filter(s => s.group === group.key)
-          const allEnabled = groupSources.every(s => enabledSources[s.key])
-          const someEnabled = groupSources.some(s => enabledSources[s.key])
+          const liveSources = groupSources.filter(s => s.offlineReason === null)
+          const allEnabled = liveSources.length > 0 && liveSources.every(s => enabledSources[s.key])
+          const someEnabled = liveSources.some(s => enabledSources[s.key])
           return (
             <div key={group.key} className="flex items-center gap-1 flex-wrap">
               {gi > 0 && <div className="w-px h-3 bg-border shrink-0" />}
               <button
+                type="button"
+                disabled={liveSources.length === 0}
+                title={
+                  liveSources.length === 0
+                    ? `Nothing in ${group.label} writes a Redis console stream`
+                    : undefined
+                }
                 onClick={() => {
                   const enable = !allEnabled
                   setEnabledSources(prev => {
                     const u = { ...prev }
-                    groupSources.forEach(s => { u[s.key] = enable })
+                    liveSources.forEach(s => { u[s.key] = enable })
                     return u
                   })
                 }}
                 className={cn(
-                  'px-1.5 py-0.5 rounded text-dense-caption font-semibold transition-colors select-none',
-                  someEnabled
-                    ? 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                    : 'text-muted-foreground/35 hover:text-muted-foreground hover:bg-muted',
+                  'flex items-center gap-1 px-1.5 py-0.5 rounded text-dense-caption font-semibold transition-colors select-none',
+                  liveSources.length === 0
+                    ? 'text-muted-foreground/30 cursor-not-allowed'
+                    : someEnabled
+                      ? 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      : 'text-muted-foreground/35 hover:text-muted-foreground hover:bg-muted',
                 )}
               >
                 {group.label}
+                <span className="tabular-nums font-normal text-muted-foreground/40">
+                  {liveSources.length}/{groupSources.length}
+                </span>
               </button>
               {groupSources.map(src => {
                 const tagCls = LOG_SOURCE_TAGS[src.key]
                 const on = enabledSources[src.key]
+                const offline = src.offlineReason !== null
                 return (
                   <button
                     key={src.key}
                     type="button"
+                    disabled={offline}
+                    title={src.offlineReason ?? undefined}
                     onClick={() => setEnabledSources(prev => ({ ...prev, [src.key]: !prev[src.key] }))}
                     className={cn(
                       'rounded px-2 py-0.5 text-dense-caption font-semibold uppercase tracking-wide border transition-colors',
-                      on
-                        ? (tagCls ?? 'bg-primary/10 text-primary border-primary/20')
-                        : 'bg-muted/30 text-muted-foreground/50 border-transparent line-through',
+                      offline
+                        ? 'border-dashed border-border/60 text-muted-foreground/30 cursor-not-allowed'
+                        : on
+                          ? (tagCls ?? 'bg-primary/10 text-primary border-primary/20')
+                          : 'bg-muted/30 text-muted-foreground/50 border-transparent line-through',
                     )}
                   >
                     {src.label}

@@ -3,6 +3,10 @@
 // Paths: GET /api/{service}/logs?tail=N  →  { lines: string[] }
 //        GET /api/{service}/logs/stream  →  SSE  data: { line: string }
 // DEV: monitorUrl() → /api/monitor/api/{service}/logs (Vite proxy → K3s)
+//
+// Every one of these endpoints reads a Redis Stream under `bifrost:console:*`.
+// A service only appears there if it installs a RedisStreamLogHandler at
+// startup. On K3s exactly one still does — see OFFLINE_* below.
 
 import { openSseWithBackoff } from '@/lib/sse'
 import { monitorUrl } from '@/lib/devApiUrl'
@@ -42,31 +46,28 @@ function makeLogApi(path: string): LogApi {
   }
 }
 
-// ── Per-service log clients (all routed through Monitor) ─────────────────────
+// ── Why a source is silent ────────────────────────────────────────────────────
+// Verified 2026-09-08 against the cluster: `--scan --pattern '*console*'` over
+// all five Redis instances (dev, live-stg, live-prod, ib, massive) returns a
+// single key, `bifrost:console:account_sync_daemon`. Every other endpoint below
+// answers HTTP 200 with `{"lines":[]}` and always will until a producer exists.
 
-export const LOG_APIS = {
-  monitor:          makeLogApi('/api/monitor/logs'),
-  trading:          makeLogApi('/api/trading/logs'),
-  portfolio:        makeLogApi('/api/portfolio/logs'),
-  research:         makeLogApi('/api/research/logs'),
-  strategy:         makeLogApi('/api/strategy/logs'),
-  market:           makeLogApi('/api/market/logs'),
-  ops:              makeLogApi('/api/ops/logs'),
-  docs:             makeLogApi('/api/docs/logs'),
-  // Socket / market ingest edge services (proxied through Monitor API)
-  ib_ingestor:      makeLogApi('/api/ib-ingestor/logs'),
-  ib_account_agent: makeLogApi('/api/ib-account-agent/logs'),
-  ib_operator:      makeLogApi('/api/ib-operator/logs'),
-} as const
+/** Process is gone: the eight API domains run as four Deployments. */
+const OFFLINE_NO_PROCESS =
+  'No such process — the API domains run as api-monitor / api-account / api-market / api-research'
 
-/** Redis console streams for long-running daemon processes (not in global LOG_APIS). */
-export const DAEMON_LOG_APIS = {
-  daemon_trading: makeLogApi('/api/daemon/logs'),
-  account_sync:   makeLogApi('/api/account-sync-daemon/logs'),
-} as const
+/** Process runs, but its launcher no longer installs the Redis log handler. */
+const OFFLINE_NO_HANDLER =
+  'Process runs, but scripts/run_server.py no longer writes a Redis console stream'
 
-export type LogSourceKey = keyof typeof LOG_APIS
-export type DaemonLogSourceKey = keyof typeof DAEMON_LOG_APIS
+/** IB edge services live on the Windows TWS hosts, not in K3s. */
+const OFFLINE_OFF_CLUSTER =
+  'Runs on the Windows TWS hosts, outside K3s — it has no Redis console stream'
+
+/** Strategy daemon logs to stdout only (kubectl logs / Loki). */
+const OFFLINE_STDOUT_ONLY =
+  'The daemon logs to stdout only — bifrost:console:*:daemon_trading has no producer'
+
 export type LogSourceGroup = 'api' | 'edge' | 'daemon'
 
 export interface LogSourceGroupDef {
@@ -84,49 +85,41 @@ export interface LogSourceDef {
   key: string
   label: string
   api: LogApi
-  group?: LogSourceGroup
+  group: LogSourceGroup
+  /** `null` when a live producer writes this stream; otherwise why it is empty. */
+  offlineReason: string | null
 }
 
 export const LOG_SOURCES: LogSourceDef[] = [
   // API Services — FastAPI microservices
-  { key: 'monitor',          label: 'Monitor',       api: LOG_APIS.monitor,          group: 'api'  },
-  { key: 'trading',          label: 'Trading',       api: LOG_APIS.trading,          group: 'api'  },
-  { key: 'portfolio',        label: 'Portfolio',     api: LOG_APIS.portfolio,        group: 'api'  },
-  { key: 'research',         label: 'Research',      api: LOG_APIS.research,         group: 'api'  },
-  { key: 'strategy',         label: 'Strategy',      api: LOG_APIS.strategy,         group: 'api'  },
-  { key: 'market',           label: 'Market',        api: LOG_APIS.market,           group: 'api'  },
-  { key: 'ops',              label: 'Ops',           api: LOG_APIS.ops,              group: 'api'  },
-  { key: 'docs',             label: 'Docs',          api: LOG_APIS.docs,             group: 'api'  },
-  // Socket Services — IB edge + Polygon Options WS (Settings → Socket page)
-  { key: 'ib_ingestor',      label: 'IB INGESTOR',   api: LOG_APIS.ib_ingestor,      group: 'edge' },
-  { key: 'ib_account_agent', label: 'IB ACCT AGENT', api: LOG_APIS.ib_account_agent, group: 'edge' },
-  { key: 'ib_operator',      label: 'IB OPERATOR',   api: LOG_APIS.ib_operator,      group: 'edge' },
-  // Daemon — Redis console streams (Strategy Trading + Account Sync)
-  { key: 'daemon_trading', label: 'Strategy Trading', api: DAEMON_LOG_APIS.daemon_trading, group: 'daemon' },
-  { key: 'account_sync',   label: 'Account Sync',     api: DAEMON_LOG_APIS.account_sync,   group: 'daemon' },
+  { key: 'monitor',   label: 'Monitor',   api: makeLogApi('/api/monitor/logs'),   group: 'api', offlineReason: OFFLINE_NO_HANDLER },
+  { key: 'research',  label: 'Research',  api: makeLogApi('/api/research/logs'),  group: 'api', offlineReason: OFFLINE_NO_HANDLER },
+  { key: 'market',    label: 'Market',    api: makeLogApi('/api/market/logs'),    group: 'api', offlineReason: OFFLINE_NO_HANDLER },
+  { key: 'trading',   label: 'Trading',   api: makeLogApi('/api/trading/logs'),   group: 'api', offlineReason: OFFLINE_NO_PROCESS },
+  { key: 'portfolio', label: 'Portfolio', api: makeLogApi('/api/portfolio/logs'), group: 'api', offlineReason: OFFLINE_NO_PROCESS },
+  { key: 'strategy',  label: 'Strategy',  api: makeLogApi('/api/strategy/logs'),  group: 'api', offlineReason: OFFLINE_NO_PROCESS },
+  { key: 'ops',       label: 'Ops',       api: makeLogApi('/api/ops/logs'),       group: 'api', offlineReason: OFFLINE_NO_PROCESS },
+  { key: 'docs',      label: 'Docs',      api: makeLogApi('/api/docs/logs'),      group: 'api', offlineReason: OFFLINE_NO_PROCESS },
+  // Socket Services — IB edge, hosted on the Windows TWS machines
+  { key: 'ib_ingestor',      label: 'IB INGESTOR',   api: makeLogApi('/api/ib-ingestor/logs'),      group: 'edge', offlineReason: OFFLINE_OFF_CLUSTER },
+  { key: 'ib_account_agent', label: 'IB ACCT AGENT', api: makeLogApi('/api/ib-account-agent/logs'), group: 'edge', offlineReason: OFFLINE_OFF_CLUSTER },
+  { key: 'ib_operator',      label: 'IB OPERATOR',   api: makeLogApi('/api/ib-operator/logs'),      group: 'edge', offlineReason: OFFLINE_OFF_CLUSTER },
+  // Daemon — Redis console streams
+  { key: 'daemon_trading', label: 'Strategy Trading', api: makeLogApi('/api/daemon/logs'),               group: 'daemon', offlineReason: OFFLINE_STDOUT_ONLY },
+  { key: 'account_sync',   label: 'Account Sync',     api: makeLogApi('/api/account-sync-daemon/logs'), group: 'daemon', offlineReason: null },
 ]
 
-/** Socket Services page — fixed 3-source log console. */
-export const SOCKET_LOG_SOURCES: LogSourceDef[] = LOG_SOURCES.filter(s =>
-  (['ib_operator', 'ib_ingestor', 'ib_account_agent'] as LogSourceKey[]).includes(s.key as LogSourceKey),
-)
+/** The only sources that can ever return lines. */
+export const LIVE_LOG_SOURCES: LogSourceDef[] = LOG_SOURCES.filter(s => s.offlineReason === null)
 
-export const SOCKET_LOG_SOURCE_TAGS: Record<string, string> = {
-  ib_operator: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-  ib_ingestor: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
-  ib_account_agent: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
-}
-
-export const ARCHITECTURE_LOG_SOURCE_TAGS: Record<string, string> = {
+/** Colored service badges for the global LogPanel. */
+export const LOG_SOURCE_TAGS: Record<string, string> = {
   monitor: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
   docs: 'bg-violet-500/15 text-violet-400 border-violet-500/30',
   ops: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-}
-
-/** Colored service badges for global LogPanel / LogConsole. */
-export const LOG_SOURCE_TAGS: Record<string, string> = {
-  ...ARCHITECTURE_LOG_SOURCE_TAGS,
-  ...SOCKET_LOG_SOURCE_TAGS,
+  ib_operator: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+  ib_ingestor: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
+  ib_account_agent: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
   trading: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   portfolio: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   research: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
@@ -134,100 +127,4 @@ export const LOG_SOURCE_TAGS: Record<string, string> = {
   market: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
   daemon_trading: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
   account_sync: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
-}
-
-/** Daemon Redis consoles (subset of global LOG_SOURCES). */
-export const DAEMON_LOG_SOURCES: LogSourceDef[] = LOG_SOURCES.filter(s => s.group === 'daemon')
-
-async function clearLogStream(path: string): Promise<{ ok: boolean; error?: string }> {
-  try {
-    const r = await fetch(monitorUrl(path), { method: 'DELETE' })
-    const j = await r.json().catch(() => ({})) as { ok?: boolean; error?: string }
-    return { ok: r.ok && j.ok !== false, error: j.error }
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Clear failed' }
-  }
-}
-
-export async function clearIbOperatorLogs(): Promise<{ ok: boolean; error?: string }> {
-  return clearLogStream('/api/ib-operator/logs')
-}
-
-export async function clearIbIngestorLogs(): Promise<{ ok: boolean; error?: string }> {
-  return clearLogStream('/api/ib-ingestor/logs')
-}
-
-export async function clearIbAccountAgentLogs(): Promise<{ ok: boolean; error?: string }> {
-  return clearLogStream('/api/ib-account-agent/logs')
-}
-
-export async function clearDaemonTradingLogs(): Promise<{ ok: boolean; error?: string }> {
-  return clearLogStream('/api/daemon/logs')
-}
-
-export async function clearAccountSyncDaemonLogs(): Promise<{ ok: boolean; error?: string }> {
-  return clearLogStream('/api/account-sync-daemon/logs')
-}
-
-export async function clearAllDaemonLogs(): Promise<{ ok: boolean; errors: string[] }> {
-  const results = await Promise.allSettled([
-    clearDaemonTradingLogs(),
-    clearAccountSyncDaemonLogs(),
-  ])
-  const errors: string[] = []
-  let ok = true
-  for (const r of results) {
-    if (r.status === 'rejected') {
-      ok = false
-      errors.push(r.reason instanceof Error ? r.reason.message : String(r.reason))
-    } else if (!r.value.ok) {
-      ok = false
-      if (r.value.error) errors.push(r.value.error)
-    }
-  }
-  return { ok, errors }
-}
-
-export const ARCHITECTURE_LOG_SOURCES: LogSourceDef[] = LOG_SOURCES.filter((s) =>
-  (['monitor', 'docs', 'ops'] as LogSourceKey[]).includes(s.key as LogSourceKey),
-)
-
-export async function clearArchitectureApiLogs(): Promise<{ ok: boolean; errors: string[] }> {
-  const results = await Promise.allSettled([
-    clearLogStream('/api/monitor/logs'),
-    clearLogStream('/api/docs/logs'),
-    clearLogStream('/api/ops/logs'),
-  ])
-  const errors: string[] = []
-  let ok = true
-  for (const r of results) {
-    if (r.status === 'rejected') {
-      ok = false
-      errors.push(r.reason instanceof Error ? r.reason.message : String(r.reason))
-    } else if (!r.value.ok) {
-      ok = false
-      if (r.value.error) errors.push(r.value.error)
-    }
-  }
-  return { ok, errors }
-}
-
-export async function clearAllSocketServiceLogs(): Promise<{ ok: boolean; errors: string[] }> {
-  const results = await Promise.allSettled([
-    clearIbOperatorLogs(),
-    clearIbIngestorLogs(),
-    clearIbAccountAgentLogs(),
-  ])
-  const errors: string[] = []
-  let ok = true
-  for (const r of results) {
-    if (r.status === 'rejected') {
-      ok = false
-      errors.push(r.reason instanceof Error ? r.reason.message : String(r.reason))
-    } else if (!r.value.ok) {
-      ok = false
-      if (r.value.error) errors.push(r.value.error)
-    }
-  }
-  return { ok, errors }
 }

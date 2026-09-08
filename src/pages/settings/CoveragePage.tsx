@@ -15,17 +15,17 @@ import { useSearchParams } from 'react-router-dom'
 import { PageHeader, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { CoverageOverviewSummaryBody } from '@/pages/settings/coverage/overview/CoverageOverviewSummaryBody'
+import { WatchlistCoverageBody } from '@/pages/settings/coverage/watchlist/WatchlistCoverageBody'
 import { OptionCoverageBody } from '@/pages/settings/coverage/option/OptionCoverageBody'
 import { StockIbCoverageBody } from '@/pages/settings/coverage/stock/StockIbCoverageBody'
 
-// Option and Stock lead because they are the two that work. The watchlist
-// summary is last and says plainly that it was never finished, rather than
-// sitting first and sending the reader to a frontend that no longer exists.
+// Watchlist leads again: it is the question the page exists for, and it now
+// reads live from the plugin instead of pointing at a frontend that was
+// archived under spine D8.
 const VIEWS = [
+  { value: 'watchlist', label: 'Watchlist', description: 'The plugin’s verdict on your watchlist: the checks behind it, what the warehouse holds, and the option rows per symbol.' },
   { value: 'option', label: 'Option', description: 'Daily option pipeline, Greeks and IV coverage, and the plugin’s snapshot tools.' },
   { value: 'stock', label: 'Stock', description: 'Polygon-backed coverage of watchlist stocks and reference indices, with pull and EOD enqueue.' },
-  { value: 'watchlist', label: 'Watchlist', description: 'Per-symbol summary across every source. Unfinished — see the note.' },
 ] as const
 
 type ViewId = (typeof VIEWS)[number]['value']
@@ -67,7 +67,7 @@ export default function CoveragePage() {
       <div key={active.value}>
         {active.value === 'option' ? <OptionCoverageBody /> : null}
         {active.value === 'stock' ? <StockIbCoverageBody /> : null}
-        {active.value === 'watchlist' ? <CoverageOverviewSummaryBody /> : null}
+        {active.value === 'watchlist' ? <WatchlistCoverageBody /> : null}
       </div>
     </PageShell>
   )

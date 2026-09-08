@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { HelpCircle, RefreshCw, Tag } from 'lucide-react'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
+import { useLatestBars } from '@/hooks/useLatestBars'
 import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
 import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
 import { useAccountsRefresh } from '@/hooks/useAccountsRefresh'
@@ -22,12 +24,18 @@ import { OverviewDashboard } from '@/components/accounts/OverviewDashboard'
 import { OverviewCompact } from '@/components/accounts/OverviewCompact'
 import { PortfolioCategoryRing } from '@/components/accounts/PortfolioCategoryRing'
 import { NetLiqChart } from '@/components/accounts/NetLiqChart'
+import { AssetMixCard } from '@/components/accounts/AssetMixCard'
+import { HoldingsBySymbolCard } from '@/components/accounts/HoldingsBySymbolCard'
+import styles from '@/components/positions/PositionsChartsSection.module.css'
 import { StockPositionsTable } from '@/components/accounts/StockPositionsTable'
 import { OptionPositionsTable } from '@/components/accounts/OptionPositionsTable'
 import { CategoriesModal } from '@/components/accounts/CategoriesModal'
 import { ExecutionImport } from '@/components/accounts/ExecutionImport'
 import { AccountSummaryCard } from '@/components/accounts/AccountSummaryCard'
 import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys } from '@/utils/positions'
+import { filterStocksByBucket, flattenPositions, splitBySecType } from '@/utils/positionsGrouping'
+import { buildSpotResolver, repriceRows } from '@/utils/spotPrice'
+import { positionsSymbolHref } from '@/utils/portfolioLinks'
 import {
   clockLabel,
   flexPullStale,
@@ -81,20 +89,37 @@ function DualClockBadge({
   )
 }
 
+/** The chrome the category ring and the net liq chart already wear, for the two rings that moved here. */
+function ChartPanel({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className={cn(styles.panel, styles.accountPanelBody, 'w-full self-start')} aria-label={title}>
+      <div className={styles.chartSectionHeader}>
+        <span className={styles.chartSectionTitle}>{title}</span>
+      </div>
+      {children}
+    </section>
+  )
+}
+
 export default function AccountsPage() {
   const queryClient = useQueryClient()
   const { data, isLoading, isError, error } = useMonitorStatus()
+  const navigate = useNavigate()
   const [selectedIdx, setSelectedIdx] = useState(0)
   const [categoriesOpen, setCategoriesOpen] = useState(false)
 
   const accountsFetchedAt = data?.portfolio.accounts_fetched_at
   const { refresh, isRefreshing, feedback } = useAccountsRefresh(accountsFetchedAt)
 
-  const accounts = [...(data?.portfolio.accounts ?? [])].sort((a, b) => {
-    const nlqA = parseFloat(a.summary?.NetLiquidation ?? '0') || 0
-    const nlqB = parseFloat(b.summary?.NetLiquidation ?? '0') || 0
-    return nlqB - nlqA
-  })
+  const accounts = useMemo(
+    () =>
+      [...(data?.portfolio.accounts ?? [])].sort((a, b) => {
+        const nlqA = parseFloat(a.summary?.NetLiquidation ?? '0') || 0
+        const nlqB = parseFloat(b.summary?.NetLiquidation ?? '0') || 0
+        return nlqB - nlqA
+      }),
+    [data],
+  )
   const hasAccounts = accounts.length > 0
   const clampedIdx = Math.min(selectedIdx, Math.max(0, accounts.length - 1))
   const account = accounts[clampedIdx]
@@ -114,9 +139,17 @@ export default function AccountsPage() {
   const flexRecTs = latestFlexFreshness(execItems)?.latest_exec_ts ?? null
   const flexClockLine = pullAndRecLine(flexPullTs, flexRecTs)
 
-  const quotesBySymbol = buildQuoteMap(quotesData)
-  const quotesByCk = buildCkMap(quotesData)
+  const quotesBySymbol = useMemo(() => buildQuoteMap(quotesData), [quotesData])
+  const quotesByCk = useMemo(() => buildCkMap(quotesData), [quotesData])
   const benchBySymbol = benchData?.benchmarks ?? {}
+
+  // Every holding across both accounts, re-priced the way Positions and
+  // Backing price theirs, so the rings here agree with the rings there.
+  const barsBySymbol = useLatestBars(stkSymbols)
+  const allStocks = useMemo(() => {
+    const raw = flattenPositions(accounts)
+    return splitBySecType(repriceRows(raw, buildSpotResolver(quotesBySymbol, raw, barsBySymbol), barsBySymbol)).stocks
+  }, [accounts, quotesBySymbol, barsBySymbol])
 
   const stkPositions = account?.positions?.filter((p) => p.secType?.toUpperCase() === 'STK') ?? []
   const optPositions = account?.positions?.filter((p) => p.secType?.toUpperCase() === 'OPT') ?? []
@@ -249,8 +282,30 @@ export default function AccountsPage() {
         <>
           <OverviewDashboard accounts={accounts} />
 
+          {/* Two compositions, then the base by symbol beside the history: by
+              the Owner's own categories, by the role each layer plays for the
+              option book, which symbols the base is, and how net liq got here.
+              A symbol opens its lines on Positions — the ledger's way into
+              the book. */}
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 xl:items-start">
             <PortfolioCategoryRing accounts={accounts} />
+            <ChartPanel title="Asset mix">
+              <AssetMixCard
+                accounts={accounts}
+                coreStocks={filterStocksByBucket(allStocks, 'core')}
+                incomeEtfs={filterStocksByBucket(allStocks, 'fixed_income')}
+                cashLike={filterStocksByBucket(allStocks, 'cash_like')}
+              />
+            </ChartPanel>
+            <ChartPanel title="Holdings by symbol">
+              <HoldingsBySymbolCard
+                stocks={allStocks}
+                quotesBySymbol={quotesBySymbol}
+                quotesByCk={quotesByCk}
+                activeSymbol=""
+                onSymbolClick={(symbol) => navigate(positionsSymbolHref(symbol))}
+              />
+            </ChartPanel>
             <NetLiqChart accounts={accounts} />
           </div>
 

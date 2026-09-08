@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { fmtPctSigned } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import {
@@ -12,7 +13,6 @@ import {
   GroupHeaderRow,
   GroupSubtotalRow,
   InlinePnl,
-  DenseOptionCategoryLabel,
   denseTable,
   denseTableEntityCell,
   denseTableEntityLink,
@@ -25,6 +25,7 @@ import {
   stockGroupPctFromTotals,
 } from '@/utils/accountsStockPositions'
 import { fmtUsd, formatLastUpdate } from '@/utils/positions'
+import { positionsSymbolHref } from '@/utils/portfolioLinks'
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 
@@ -35,9 +36,11 @@ interface Props {
   onCategoryClick?: () => void
 }
 
-const COL_SPAN = 13
+const COL_SPAN = 12
 const LABEL_COL_SPAN = 3
-const TRAILING_COL_SPAN = 3
+const TRAILING_COL_SPAN = 2
+
+const BOOK_TITLE = "Open this symbol's lines on Positions"
 
 const CATEGORY_HEADER_TITLE = 'Manage categories and assign to positions'
 
@@ -130,19 +133,14 @@ function PositionRow({
         {formatLastUpdate(r.updTs)}
       </DenseTableCell>
       <DenseTableCell className={denseTableEntityCell}>
-        {pos.strategy_opportunity_name?.trim() ? (
-          <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
-            {pos.strategy_opportunity_name.trim()}
-          </DenseOptionCategoryLabel>
-        ) : (
-          '—'
-        )}
-      </DenseTableCell>
-      <DenseTableCell className={denseTableEntityCell}>
-        {pos.strategy_instance_label?.trim() ? (
-          <DenseOptionCategoryLabel variant="instance" className="whitespace-normal font-mono">
-            {pos.strategy_instance_label.trim()}
-          </DenseOptionCategoryLabel>
+        {bookLabel && pos.symbol?.trim() ? (
+          <Link
+            to={positionsSymbolHref(pos.symbol)}
+            className={cn(denseTableEntityLink, 'text-dense-meta whitespace-normal')}
+            title={BOOK_TITLE}
+          >
+            {bookLabel}
+          </Link>
         ) : (
           '—'
         )}
@@ -188,8 +186,7 @@ export function StockPositionsTable({
             <DenseTableHead align="right">Chg %</DenseTableHead>
             <DenseTableHead align="right">Chg $</DenseTableHead>
             <DenseTableHead align="right">Upd</DenseTableHead>
-            <DenseTableHead>Strategy</DenseTableHead>
-            <DenseTableHead>Instance</DenseTableHead>
+            <DenseTableHead title="The strategy line this holding belongs to, on Positions">Book</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>

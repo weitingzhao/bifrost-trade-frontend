@@ -27,8 +27,8 @@ import {
   type ChartDonutSegment,
   type UnderlyingCategoryFilter,
 } from '@/utils/positionsCharts'
-import { DonutChart } from './DonutChart'
-import { ChartLegend } from './ChartLegend'
+import { DonutChart } from '@/components/positions/charts/DonutChart'
+import { ChartLegend } from '@/components/positions/charts/ChartLegend'
 
 /** Rows the legend shows in full; the rest collapse to one line of tags. */
 const LEGEND_TOP = 5

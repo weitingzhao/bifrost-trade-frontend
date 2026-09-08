@@ -2,7 +2,7 @@
  * Positions — what is in the book and where it is tight.
  *
  * One screen, one question. The scope bar decides what the page is about;
- * the cockpit grades the book; the Owner's three rings picture the base; the
+ * the cockpit grades the book; the Backing pool ring pictures the base; the
  * grid ranks the lines by danger, in three views (strategies, contracts,
  * expiries). What the options need and what backs them is the next page —
  * Backing — reached from the gauges and the rings, with the same scope.
@@ -35,11 +35,9 @@ import { InstanceTab } from '@/components/positions/InstanceTab'
 import { ExpiriesView } from '@/components/positions/ExpiriesView'
 import { RingCard } from '@/components/positions/RingCard'
 import { BackingPoolCard } from '@/components/positions/charts/BackingPoolCard'
-import { HoldingsBySymbolCard } from '@/components/positions/charts/HoldingsBySymbolCard'
 import { PositionsOpenControls } from '@/components/positions/PositionsOpenControls'
 import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
 import { MarginByAccountStrip } from '@/components/positions/MarginByAccountStrip'
-import { AssetMixCard } from '@/components/positions/charts/AssetMixCard'
 import { ShortLegsPanel } from '@/components/positions/ShortLegsPanel'
 import { RoomToAddSection } from '@/components/positions/RoomToAddSection'
 import { EditExecutionConfirmDialog } from '@/components/positions/EditExecutionConfirmDialog'
@@ -179,10 +177,6 @@ export default function PositionsPage() {
   )
 
   const activeExpiry = filterExpiry.length === 8 ? filterExpiry : null
-  const toggleSymbolScope = useCallback(
-    (symbol: string) => setFilterSymbol(filterSymbol === symbol ? '' : symbol),
-    [filterSymbol, setFilterSymbol],
-  )
   const toggleExpiryScope = useCallback(
     (expiry: string) => setFilterExpiry(filterExpiry === expiry ? '' : expiry),
     [filterExpiry, setFilterExpiry],
@@ -313,11 +307,10 @@ export default function PositionsPage() {
             />
           ) : (
             <div className="min-w-0 space-y-3">
-              {/* Band 1, a 2×2. Row one: the cockpit, and beside it the margin
-                  strip its Pressure gauge opens plus the Backing pool its Backing
-                  gauge grades. Row two: the accounts' capital and the holdings
-                  by symbol — two rings on one line. The cells stretch, so each
-                  row ends on one line however tall its two panels want to be. */}
+              {/* Band 1: the cockpit, and beside it the margin strip its Pressure
+                  gauge opens plus the Backing pool its Backing gauge grades. The
+                  accounts' asset mix and holdings by symbol live on Accounts now,
+                  where the ledger is; a symbol there opens its lines here. */}
               <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
                 <BookVsBaseCockpit
                   book={book.alarm.book}
@@ -343,25 +336,6 @@ export default function PositionsPage() {
                     <BackingPoolCard book={book.alarm.book} onSegmentClick={openFromBackingSegment} />
                   </RingCard>
                 </div>
-                {/* The accounts' capital, beside the accounts' margin: net liq and
-                    buying power in the centre, the layers around them. */}
-                <RingCard title="Asset mix">
-                  <AssetMixCard
-                    accounts={book.scopedAccounts}
-                    coreStocks={book.coreStocks}
-                    incomeEtfs={book.fixedIncomeStocks}
-                    cashLike={book.cashLikeStocks}
-                  />
-                </RingCard>
-                <RingCard title="Holdings by symbol">
-                  <HoldingsBySymbolCard
-                    stocks={book.allStocks}
-                    quotesBySymbol={book.quotesBySymbol}
-                    quotesByCk={book.quotesByCk}
-                    activeSymbol={filterSymbol}
-                    onSymbolClick={toggleSymbolScope}
-                  />
-                </RingCard>
               </div>
 
               {/* Band 2: the short-leg map and, beside it, Room to add — the risk in what

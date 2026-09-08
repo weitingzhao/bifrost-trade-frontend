@@ -1,4 +1,4 @@
-import { fmtPctSigned } from '@/lib/format'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import {
   DenseDataTable,
@@ -10,7 +10,6 @@ import {
   DenseTableRow,
   GrandTotalRow,
   InlinePnl,
-  DenseOptionCategoryLabel,
   denseTable,
   denseTableEntityCell,
   denseTableEntityLink,
@@ -23,6 +22,7 @@ import {
   computeOptionPositionRowMetrics,
 } from '@/utils/accountsOptionPositions'
 import { fmtUsd, formatLastUpdate, fmtExpiry, rightLabel } from '@/utils/positions'
+import { positionsSymbolHref } from '@/utils/portfolioLinks'
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
 
@@ -33,7 +33,9 @@ interface Props {
 }
 
 const LABEL_COL_SPAN = 7
-const TRAILING_COL_SPAN = 7
+const TRAILING_COL_SPAN = 4
+
+const BOOK_TITLE = "Open this contract's line on Positions"
 
 function PositionRow({
   pos,
@@ -68,32 +70,24 @@ function PositionRow({
       <DenseTableCell className={denseTableNumCell}>
         <InlinePnl value={m.premium}>{fmtUsd(m.premium)}</InlinePnl>
       </DenseTableCell>
-      <DenseTableCell className={cn(denseTableEntityCell, 'align-top')}>
-        {m.intrinsic != null && (
-          <span className={cn(denseTable.mutedMeta, 'block font-mono tabular-nums')}>
-            {fmtUsd(m.intrinsic)} intr.
-          </span>
-        )}
-        {pos.strategy_opportunity_name?.trim() ? (
-          <DenseOptionCategoryLabel variant="opportunity" className="mt-0.5 whitespace-normal">
-            {pos.strategy_opportunity_name.trim()}
-          </DenseOptionCategoryLabel>
-        ) : null}
-      </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>
         <InlinePnl value={m.lastDelta}>{fmtUsd(m.currPrice)}</InlinePnl>
       </DenseTableCell>
-      <DenseTableCell className={denseTableNumCell}>
-        <InlinePnl value={m.dailyPct}>{fmtPctSigned(m.dailyPct)}</InlinePnl>
-      </DenseTableCell>
-      <DenseTableCell className={denseTableNumCell}>
-        <InlinePnl value={m.dailyUsd}>{fmtUsd(m.dailyUsd)}</InlinePnl>
-      </DenseTableCell>
-      <DenseTableCell className={denseTableNumCell}>
-        <InlinePnl value={m.changePct}>{fmtPctSigned(m.changePct)}</InlinePnl>
-      </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>
         <InlinePnl value={m.changeUsd}>{fmtUsd(m.changeUsd)}</InlinePnl>
+      </DenseTableCell>
+      <DenseTableCell className={denseTableEntityCell}>
+        {pos.symbol?.trim() ? (
+          <Link
+            to={positionsSymbolHref(pos.symbol)}
+            className={cn(denseTableEntityLink, 'text-dense-meta whitespace-normal')}
+            title={BOOK_TITLE}
+          >
+            {pos.strategy_opportunity_name?.trim() || 'Book →'}
+          </Link>
+        ) : (
+          '—'
+        )}
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, denseTable.mutedMeta)}>
         {formatLastUpdate(m.updTs)}
@@ -118,7 +112,10 @@ export function OptionPositionsTable({ positions, quotesByCk, quotesBySymbol }: 
   return (
     <div className={denseTable.sectionBlock}>
       <h5 className={denseTable.sectionTitle}>Option positions</h5>
-      <DenseDataTable tableClassName="min-w-[1100px] table-fixed">
+      <p className={denseTable.emptyHint}>
+        As the broker reports them. Daily change, cushion and the strategy each contract belongs to are on Positions.
+      </p>
+      <DenseDataTable tableClassName="min-w-[900px] table-fixed">
         <DenseTableHeader>
           <DenseTableHeadRow>
             <DenseTableHead className="min-w-[5.5rem]">Contract</DenseTableHead>
@@ -129,12 +126,11 @@ export function OptionPositionsTable({ positions, quotesByCk, quotesBySymbol }: 
             <DenseTableHead>Side</DenseTableHead>
             <DenseTableHead align="right">Cost</DenseTableHead>
             <DenseTableHead align="right">Premium</DenseTableHead>
-            <DenseTableHead>Details</DenseTableHead>
             <DenseTableHead align="right">Last</DenseTableHead>
-            <DenseTableHead align="right">Daily %</DenseTableHead>
-            <DenseTableHead align="right">Daily $</DenseTableHead>
-            <DenseTableHead align="right">Chg %</DenseTableHead>
-            <DenseTableHead align="right">Chg $</DenseTableHead>
+            <DenseTableHead align="right" title="IB's unrealized P&L for the contract">
+              Unrealized
+            </DenseTableHead>
+            <DenseTableHead>Book</DenseTableHead>
             <DenseTableHead align="right">Upd</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>

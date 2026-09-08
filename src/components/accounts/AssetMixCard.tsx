@@ -33,9 +33,9 @@ import {
 } from '@/utils/positionsCharts'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { LivePositionRow } from '@/types/positions'
-import { DonutChart } from './DonutChart'
-import { ChartLegend } from './ChartLegend'
-import styles from '../PositionsChartsSection.module.css'
+import { DonutChart } from '@/components/positions/charts/DonutChart'
+import { ChartLegend } from '@/components/positions/charts/ChartLegend'
+import styles from '@/components/positions/PositionsChartsSection.module.css'
 
 export interface AssetMixCardProps {
   accounts: readonly IbAccountSnapshot[]

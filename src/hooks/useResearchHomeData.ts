@@ -69,7 +69,15 @@ export interface ResearchHomeData {
   sepaTradeDate: string | null
   totalDiscoveries: number
   isLoading: boolean
+  /** Every source failed. A single failed source is in `failed`. */
   isError: boolean
+  /**
+   * Which sources failed, one flag each. The columns render independently, so
+   * a column whose own query failed must say so rather than borrow the empty
+   * state — which asserts a cause ("waiting for the dbt mart") that is wrong
+   * when the request never landed.
+   */
+  failed: { sepa: boolean; events: boolean; iv: boolean; sentiment: boolean }
   refetch: () => void
 }
 
@@ -199,6 +207,13 @@ export function useResearchHomeData(): ResearchHomeData {
   const isError =
     sepaQ.isError && eventsQ.isError && sentimentQ.isError && iv.isError
 
+  const failed = {
+    sepa: sepaQ.isError,
+    events: eventsQ.isError,
+    iv: iv.isError,
+    sentiment: sentimentQ.isError,
+  }
+
   return {
     sepaHits,
     eventHits,
@@ -208,6 +223,7 @@ export function useResearchHomeData(): ResearchHomeData {
     totalDiscoveries,
     isLoading,
     isError,
+    failed,
     refetch: () => {
       void sepaQ.refetch()
       void eventsQ.refetch()

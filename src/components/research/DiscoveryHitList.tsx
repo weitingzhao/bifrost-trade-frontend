@@ -13,7 +13,7 @@
  * nothing but automated harness entries.
  */
 import { Link } from 'react-router-dom'
-import type { LucideIcon } from 'lucide-react'
+import { AlertTriangle, type LucideIcon } from 'lucide-react'
 import {
   Activity,
   ArrowUpRight,
@@ -44,6 +44,8 @@ interface HitColumnProps {
   hint?: string
   link?: { to: string; label: string }
   isLoading?: boolean
+  /** This column's own query failed — not the same as having no hits. */
+  isError?: boolean
   isEmpty?: boolean
   emptyLabel?: string
   emptyDescription?: string
@@ -56,6 +58,7 @@ function HitColumn({
   hint,
   link,
   isLoading,
+  isError,
   isEmpty,
   emptyLabel = 'No hits',
   emptyDescription,
@@ -91,15 +94,26 @@ function HitColumn({
             ? Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-12 w-full rounded-md" />
               ))
-            : isEmpty
+            : isError
               ? (
+                // Not the empty state: nothing was read, so "no hits" would be
+                // a claim this column cannot make.
                 <EmptyState
-                  title={emptyLabel}
-                  description={emptyDescription}
+                  icon={<AlertTriangle className="text-warning" />}
+                  title="Source unavailable"
+                  description="This lens did not answer — whether it has hits is unknown."
                   className="py-4"
                 />
               )
-              : children}
+              : isEmpty
+                ? (
+                  <EmptyState
+                    title={emptyLabel}
+                    description={emptyDescription}
+                    className="py-4"
+                  />
+                )
+                : children}
         </div>
       </CardContent>
     </Card>
@@ -146,6 +160,8 @@ export interface DiscoveryHitListProps {
   sentimentAnomalies: SentimentAnomalyHit[]
   sepaTradeDate: string | null
   isLoading: boolean
+  /** Per-source failure, so a column that did not answer says so. */
+  failed?: { sepa: boolean; events: boolean; iv: boolean; sentiment: boolean }
 }
 
 function fmtIv(n: number | null | undefined): string {
@@ -194,6 +210,7 @@ export function DiscoveryHitList({
   sentimentAnomalies,
   sepaTradeDate,
   isLoading,
+  failed,
 }: DiscoveryHitListProps) {
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -203,7 +220,8 @@ export function DiscoveryHitList({
         hint={sepaTradeDate ? `Trade date ${sepaTradeDate}` : 'SETUP / PIVOT short-list'}
         link={{ to: '/research/sepa-daily-core', label: 'View all' }}
         isLoading={isLoading && sepaHits.length === 0}
-        isEmpty={!isLoading && sepaHits.length === 0}
+        isError={failed?.sepa === true && sepaHits.length === 0}
+        isEmpty={!isLoading && !failed?.sepa && sepaHits.length === 0}
         emptyLabel="No SEPA candidates"
         emptyDescription="Waiting for dbt SEPA mart (04:15 UTC)."
       >
@@ -290,7 +308,8 @@ export function DiscoveryHitList({
         hint="High-importance events flagged today"
         link={{ to: '/research/event-radar', label: 'View all' }}
         isLoading={isLoading && eventHits.length === 0}
-        isEmpty={!isLoading && eventHits.length === 0}
+        isError={failed?.events === true && eventHits.length === 0}
+        isEmpty={!isLoading && !failed?.events && eventHits.length === 0}
         emptyLabel="No events today"
         emptyDescription="Drop CSV / MD into Research-workspace ingest, or wait for scheduled sweep."
       >
@@ -364,7 +383,8 @@ export function DiscoveryHitList({
         hint="Rank distance from 50 across watchlist ∪ holdings"
         link={{ to: '/research/vol-regime?view=iv-rank', label: 'View all' }}
         isLoading={isLoading && ivExtremes.length === 0}
-        isEmpty={!isLoading && ivExtremes.length === 0}
+        isError={failed?.iv === true && ivExtremes.length === 0}
+        isEmpty={!isLoading && !failed?.iv && ivExtremes.length === 0}
         emptyLabel="No IV data"
         emptyDescription="Volatility engine has not published rows for the current universe yet."
       >
@@ -431,7 +451,8 @@ export function DiscoveryHitList({
         hint="Largest |sentiment_score| across latest sentiment rows"
         link={{ to: '/research/flow', label: 'View all' }}
         isLoading={isLoading && sentimentAnomalies.length === 0}
-        isEmpty={!isLoading && sentimentAnomalies.length === 0}
+        isError={failed?.sentiment === true && sentimentAnomalies.length === 0}
+        isEmpty={!isLoading && !failed?.sentiment && sentimentAnomalies.length === 0}
         emptyLabel="No sentiment rows"
         emptyDescription="Order sentiment engine has not published anomalies for today."
       >

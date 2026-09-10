@@ -141,6 +141,7 @@ export default function WorkbenchPage() {
           sentimentAnomalies={home.sentimentAnomalies}
           sepaTradeDate={home.sepaTradeDate}
           isLoading={home.isLoading}
+          failed={home.failed}
         />
       </section>
 

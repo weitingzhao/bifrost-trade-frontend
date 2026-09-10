@@ -11,6 +11,12 @@ const LIVE_PATH = '/market/live'
 export interface UseGlobalMarketStripResult {
   model: StreamStripModel | null
   isLoading: boolean
+  /**
+   * Monitor status did not answer, so the subscribed-symbol list is unknown.
+   * Without this the strip's popover said "No symbols in stream." — a claim
+   * about the live feed made from a request that never landed.
+   */
+  isError: boolean
   symbolCount: number
 }
 
@@ -22,7 +28,7 @@ export function useGlobalMarketStrip(enabled: boolean): UseGlobalMarketStripResu
   const { pathname } = useLocation()
   const isLivePage = pathname === LIVE_PATH
 
-  const { data: status, isLoading: statusLoading } = useMonitorStatus()
+  const { data: status, isLoading: statusLoading, isError: statusError } = useMonitorStatus()
 
   const subscribedSymbols = useMemo(
     () => (enabled ? [...new Set(status?.live_ui?.subscribed_tickers ?? [])] : []),
@@ -72,6 +78,7 @@ export function useGlobalMarketStrip(enabled: boolean): UseGlobalMarketStripResu
   return {
     model,
     isLoading,
+    isError: statusError,
     symbolCount: watchlistSymbols.length,
   }
 }

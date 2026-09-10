@@ -11,9 +11,10 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
-  EmptyState,
+  DataStateBlock, EmptyState,
   denseTableNumCell,
 } from '@/components/data-display'
+import { dataState } from '@/lib/dataState'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -159,9 +160,16 @@ function MacroPanel() {
           {gapQ.isLoading ? (
             <Skeleton className="h-24 w-full" />
           ) : gapRows.length === 0 ? (
-            <EmptyState
-              title="Macro pipeline pending"
-              description="Drop CSV into Research-workspace macro/input/ or run macro_ingest Cron"
+            // "Pipeline pending" names a cause. A failed query has a different one.
+            <DataStateBlock
+              state={dataState({ isError: gapQ.isError, isEmpty: true })}
+              sourceLabel="Macro gap"
+              onRetry={() => void gapQ.refetch()}
+              empty={{
+                title: 'Macro pipeline pending',
+                description:
+                  'Drop CSV into Research-workspace macro/input/ or run macro_ingest Cron',
+              }}
             />
           ) : (
             <DenseDataTable>
@@ -195,9 +203,15 @@ function MacroPanel() {
           {fwdQ.isLoading ? (
             <Skeleton className="h-24 w-full" />
           ) : fwdRows.length === 0 ? (
-            <EmptyState
-              title="No forward macro rows"
-              description="Forward releases appear when macro CSV includes forward_flag rows"
+            <DataStateBlock
+              state={dataState({ isError: fwdQ.isError, isEmpty: true })}
+              sourceLabel="Macro forward"
+              onRetry={() => void fwdQ.refetch()}
+              empty={{
+                title: 'No forward macro rows',
+                description:
+                  'Forward releases appear when macro CSV includes forward_flag rows',
+              }}
             />
           ) : (
             <DenseDataTable>

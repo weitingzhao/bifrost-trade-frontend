@@ -222,6 +222,8 @@ export default function PerformancePage() {
             optOpenLegs={bulk?.optOpenLegs ?? null}
             asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
             isLoading={bulkQuery.isLoading}
+            isError={bulkQuery.isError}
+            onRetry={() => void bulkQuery.refetch()}
             className={pageStyles.byDayTableWrap}
           />
         </section>

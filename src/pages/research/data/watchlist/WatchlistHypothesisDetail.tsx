@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { DenseTag, SegmentControl } from '@/components/data-display'
+import { DataStateBlock, DenseTag, SegmentControl } from '@/components/data-display'
+import { dataState } from '@/lib/dataState'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHypothesisList } from '@/hooks/useHypotheses'
@@ -123,9 +124,15 @@ export function WatchlistHypothesisDetail({ symbol }: { symbol: string }) {
           {listQ.isLoading ? (
             <Skeleton className="h-12 w-full" />
           ) : hyps.length === 0 ? (
-            <p className="text-dense-caption text-muted-foreground">
-              No hypotheses linked to this symbol yet. Save from an Analyze page.
-            </p>
+            <DataStateBlock
+              state={dataState({ isError: listQ.isError, isEmpty: true })}
+              sourceLabel="Journal"
+              onRetry={() => void listQ.refetch()}
+              empty={{
+                title: 'No hypotheses linked to this symbol yet.',
+                description: 'Save from an Analyze page.',
+              }}
+            />
           ) : (
             <ul className="space-y-2">
               {hyps.slice(0, 8).map((h) => (
@@ -172,6 +179,15 @@ export function WatchlistHypothesisDetail({ symbol }: { symbol: string }) {
           </div>
           {trajQ.isLoading ? (
             <Skeleton className="h-16 w-full" />
+          ) : trajQ.isError ? (
+            // "No PnL series yet" would be a statement about the cohort. The
+            // trajectory query did not answer, so there is nothing to state.
+            <DataStateBlock
+              state="failed"
+              sourceLabel="Trajectory"
+              onRetry={() => void trajQ.refetch()}
+              empty={{ title: 'No PnL series yet.' }}
+            />
           ) : (
             <MiniPnlSpark values={pnls} />
           )}

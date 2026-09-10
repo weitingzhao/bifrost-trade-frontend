@@ -24,6 +24,8 @@ import {
   type EventRadarRow,
 } from '@/api/researchEngine'
 import { EventRadarDashboard } from '@/components/research/EventRadarDashboard'
+import { DataStateBlock } from '@/components/data-display'
+import { dataState } from '@/lib/dataState'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
@@ -205,6 +207,13 @@ export function EventRadarBody({ state: injected }: { state?: EventRadarState } 
                 <Skeleton key={i} className="h-8 w-full" />
               ))}
             </div>
+          ) : filteredEvents.length === 0 && eventsQ.isError ? (
+            <DataStateBlock
+              state="failed"
+              sourceLabel="Event radar"
+              onRetry={() => void eventsQ.refetch()}
+              empty={{ title: 'No events yet' }}
+            />
           ) : filteredEvents.length === 0 ? (
             <EmptyState
               title={
@@ -296,7 +305,16 @@ export function EventRadarBody({ state: injected }: { state?: EventRadarState } 
               <Skeleton key={i} className="h-24 w-full" />
             ))
           ) : !themesQ.data?.rows?.length ? (
-            <EmptyState title="No themes" description="Process events to generate theme aggregates" />
+            <DataStateBlock
+              className="md:col-span-2 lg:col-span-3"
+              state={dataState({ isError: themesQ.isError, isEmpty: true })}
+              sourceLabel="Themes"
+              onRetry={() => void themesQ.refetch()}
+              empty={{
+                title: 'No themes',
+                description: 'Process events to generate theme aggregates',
+              }}
+            />
           ) : (
             themesQ.data.rows.map((t) => (
               <Card key={t.theme} variant="elevated">
@@ -337,7 +355,17 @@ export function EventRadarBody({ state: injected }: { state?: EventRadarState } 
               ))}
             </div>
           ) : !calendarQ.data?.rows?.length ? (
-            <EmptyState title="No upcoming events" description="No forward-looking events detected" />
+            // "No upcoming events" is a claim about the calendar, not about
+            // whether the calendar answered.
+            <DataStateBlock
+              state={dataState({ isError: calendarQ.isError, isEmpty: true })}
+              sourceLabel="Event calendar"
+              onRetry={() => void calendarQ.refetch()}
+              empty={{
+                title: 'No upcoming events',
+                description: 'No forward-looking events detected',
+              }}
+            />
           ) : (
             <DenseDataTable>
               <DenseTableHeader>

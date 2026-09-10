@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronDown, ListOrdered, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
+import { DataStateBlock } from '@/components/data-display'
+import { dataState } from '@/lib/dataState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -34,7 +36,7 @@ interface GlobalMarketStatusBarProps {
 
 export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
   const navigate = useNavigate()
-  const { model, isLoading, symbolCount } = useGlobalMarketStrip(enabled)
+  const { model, isLoading, isError, symbolCount } = useGlobalMarketStrip(enabled)
 
   if (!enabled) return null
 
@@ -132,7 +134,12 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
               </p>
             </div>
             {model.symbolRows.length === 0 ? (
-              <p className="px-3 py-4 text-xs text-muted-foreground">No symbols in stream.</p>
+              <DataStateBlock
+                className="px-3 py-4"
+                state={dataState({ isError, isEmpty: true })}
+                sourceLabel="Monitor status"
+                empty={{ title: 'No symbols in stream.' }}
+              />
             ) : (
               <div className="max-h-72 overflow-auto">
                 <Table>

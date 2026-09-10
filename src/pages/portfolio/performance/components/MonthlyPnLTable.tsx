@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DataStateBlock } from '@/components/data-display'
+import { dataState } from '@/lib/dataState'
 import type { ByDayRangeData } from '@/types/trading'
 import type { OpenOptCashLeg } from '@/utils/ledger/optAsOfPnL'
 import OpenOptInventoryDialog from '@/pages/portfolio/performance/components/OpenOptInventoryDialog'
@@ -14,6 +16,9 @@ interface MonthlyPnLTableProps {
   optOpenLegs?: OpenOptCashLeg[] | null
   asOfDateStr?: string | null
   isLoading?: boolean
+  /** The range query failed. Distinct from having no PnL in the range. */
+  isError?: boolean
+  onRetry?: () => void
   className?: string
 }
 
@@ -69,6 +74,8 @@ export default function MonthlyPnLTable({
   optOpenLegs,
   asOfDateStr,
   isLoading,
+  isError,
+  onRetry,
   className,
 }: MonthlyPnLTableProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
@@ -149,7 +156,10 @@ export default function MonthlyPnLTable({
     ),
   )
 
-  if (isLoading) {
+  // "No PnL in the range" is a statement about the book. It must not be what a
+  // failed range query says.
+  const state = dataState({ isPending: isLoading, isError, isEmpty: !hasData })
+  if (state === 'loading') {
     return (
       <div className="space-y-2">
         <Skeleton className="h-8 w-full" />
@@ -160,11 +170,14 @@ export default function MonthlyPnLTable({
     )
   }
 
-  if (!hasData) {
+  if (state !== 'ready') {
     return (
-      <p className="text-sm text-muted-foreground">
-        No Option or Stock PnL in the selected range.
-      </p>
+      <DataStateBlock
+        state={state}
+        sourceLabel="Range PnL"
+        onRetry={onRetry}
+        empty={{ title: 'No Option or Stock PnL in the selected range.' }}
+      />
     )
   }
 

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
+  bellBadgeClass,
+  bellState,
   rankAlerts,
   severityBadgeClass,
   severityRank,
@@ -95,5 +97,39 @@ describe('tone classes', () => {
     expect(severityBadgeClass('warn')).toContain('bg-warning')
     expect(severityBadgeClass('info')).toContain('bg-muted-foreground')
     expect(severityBadgeClass('high')).not.toContain('amber')
+  })
+})
+
+describe('bellState — silence is not all-clear', () => {
+  const q = (o: Partial<Parameters<typeof bellState>[0]>) =>
+    bellState({ isPending: false, isError: false, items: [], ...o })
+
+  it('does not report "clear" when the check itself failed', () => {
+    // The bell used to destructure only `data`, so a failed fetch dropped the
+    // badge and the popover read "No analyze alerts" — identical to all-clear.
+    expect(q({ isError: true, items: [] }).kind).toBe('unavailable')
+    expect(q({ isError: true, items: undefined }).kind).toBe('unavailable')
+  })
+
+  it('separates "not asked yet" from "asked, nothing there"', () => {
+    expect(q({ isPending: true, items: undefined }).kind).toBe('checking')
+    expect(q({ items: [] }).kind).toBe('clear')
+  })
+
+  it('prefers a stale list over an error — something beats nothing', () => {
+    const s = q({ isError: true, items: [a('high', '2026-09-01')] })
+    expect(s.kind).toBe('alerts')
+    expect(s.kind === 'alerts' && s.worst).toBe('high')
+  })
+
+  it('counts and ranks what it has', () => {
+    const s = q({ items: [a('info', '2026-09-02'), a('warn', '2026-09-01')] })
+    expect(s).toEqual({ kind: 'alerts', count: 2, worst: 'warn' })
+  })
+
+  it('gives the unknown badge a grey that is not a severity', () => {
+    expect(bellBadgeClass({ kind: 'unavailable' })).toContain('bg-lamp-gray')
+    expect(bellBadgeClass({ kind: 'unavailable' })).not.toContain('destructive')
+    expect(bellBadgeClass({ kind: 'alerts', count: 1, worst: 'high' })).toContain('bg-destructive')
   })
 })

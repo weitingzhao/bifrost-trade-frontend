@@ -85,3 +85,40 @@ export function severityBadgeClass(severity: string | null | undefined): string 
       return 'bg-muted-foreground text-white'
   }
 }
+
+/* ── What the bell is entitled to say ──────────────────────────────────── */
+
+/**
+ * An alert surface that goes quiet when its own fetch fails is worse than no
+ * alert surface: the bell dropped its badge and the popover read "No analyze
+ * alerts", which is exactly what it says when everything is genuinely fine.
+ * Silence has to be told apart from all-clear.
+ */
+export type BellState =
+  /** Nothing known yet — the first fetch is still out. */
+  | { kind: 'checking' }
+  /** The check itself failed. We do not know whether there are alerts. */
+  | { kind: 'unavailable' }
+  /** Answered, and there is genuinely nothing. */
+  | { kind: 'clear' }
+  | { kind: 'alerts'; count: number; worst: string | null }
+
+export function bellState(q: {
+  isPending: boolean
+  isError: boolean
+  items: readonly RankableAlert[] | undefined
+}): BellState {
+  // A stale list still beats a blank one, so cached items win over the error.
+  if (q.items && q.items.length > 0) {
+    return { kind: 'alerts', count: q.items.length, worst: worstSeverity(q.items) }
+  }
+  if (q.isError) return { kind: 'unavailable' }
+  if (q.isPending) return { kind: 'checking' }
+  return { kind: 'clear' }
+}
+
+/** Badge fill for a bell state. `unavailable` is not a severity — it is louder than quiet and quieter than a fault. */
+export function bellBadgeClass(state: BellState): string {
+  if (state.kind === 'alerts') return severityBadgeClass(state.worst)
+  return 'bg-lamp-gray text-white'
+}

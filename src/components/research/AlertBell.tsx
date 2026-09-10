@@ -9,10 +9,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { cn } from '@/lib/utils'
 import {
+  bellBadgeClass,
+  bellState,
   rankAlerts,
-  severityBadgeClass,
   severityTextClass,
-  worstSeverity,
 } from '@/lib/alertRanking'
 
 function reasonSummary(item: AnalyzeAlert): string {
@@ -57,7 +57,7 @@ export function AlertBell() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
 
-  const { data } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: QUERY_KEYS.research.alerts,
     queryFn: () => fetchAlerts({ limit: 20, days: 14 }),
     refetchInterval: 120_000,
@@ -65,12 +65,12 @@ export function AlertBell() {
   })
 
   const items = data?.items ?? []
-  const badgeCount = items.length
   // Severity first. The API answers newest-first, so slicing an unranked list
   // was hiding a `high` behind whatever happened to arrive today. The list
   // container already scrolls, so every fetched alert is reachable.
   const ranked = rankAlerts(items)
-  const worst = worstSeverity(items)
+  // A bell that hides its badge when its own fetch fails reads as all-clear.
+  const state = bellState({ isPending, isError, items })
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -84,25 +84,33 @@ export function AlertBell() {
               aria-label="Analyze alerts"
             >
               <Radar className="h-4 w-4" />
-              {badgeCount > 0 && (
+              {state.kind !== 'clear' && state.kind !== 'checking' && (
                 <span
                   className={cn(
                     'absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-dense-micro font-bold leading-none',
-                    severityBadgeClass(worst),
+                    bellBadgeClass(state),
                   )}
                 >
-                  {badgeCount > 9 ? '9+' : badgeCount}
+                  {state.kind === 'unavailable'
+                    ? '?'
+                    : state.count > 9
+                      ? '9+'
+                      : state.count}
                 </span>
               )}
             </Button>
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {badgeCount > 0
-            ? `${badgeCount} analyze alert${badgeCount > 1 ? 's' : ''}${
-                worst ? ` · worst: ${worst}` : ''
+          {state.kind === 'alerts'
+            ? `${state.count} analyze alert${state.count > 1 ? 's' : ''}${
+                state.worst ? ` · worst: ${state.worst}` : ''
               }`
-            : 'Analyze alerts'}
+            : state.kind === 'unavailable'
+              ? 'Alert check failed — unknown whether there are alerts'
+              : state.kind === 'checking'
+                ? 'Checking analyze alerts…'
+                : 'No analyze alerts'}
         </TooltipContent>
       </Tooltip>
 
@@ -112,7 +120,24 @@ export function AlertBell() {
             Analyze alerts
           </p>
         </div>
-        {ranked.length === 0 ? (
+        {state.kind === 'unavailable' ? (
+          <div className="space-y-1.5 px-3 py-4">
+            <p className="text-dense-meta text-warning">Alert check failed.</p>
+            <p className="text-dense-caption text-muted-foreground">
+              This is not an all-clear — whether anything fired is unknown. Verify
+              research-api :8795.
+            </p>
+            <button
+              type="button"
+              className="text-dense-caption underline underline-offset-2 hover:text-foreground"
+              onClick={() => void refetch()}
+            >
+              Check again
+            </button>
+          </div>
+        ) : state.kind === 'checking' ? (
+          <p className="px-3 py-4 text-dense-meta text-muted-foreground">Checking…</p>
+        ) : ranked.length === 0 ? (
           <p className="px-3 py-4 text-dense-meta text-muted-foreground">No analyze alerts</p>
         ) : (
           <ul className="max-h-72 overflow-auto py-1">

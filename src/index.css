@@ -2,7 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
-@source "../../bifrost-ui/src/**/*.{ts,tsx}";
+/* Built output, not source: the class strings survive tsc verbatim. */
+@source "../../bifrost-ui/dist/**/*.js";
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

@@ -140,9 +140,9 @@ export default defineConfig(({ mode }) => {
         { find: '@', replacement: resolve(__dirname, 'src') },
         {
           find: '@bifrost/ui/styles',
-          replacement: resolve(uiRoot, 'src/styles/bifrost-ui.css'),
+          replacement: resolve(uiRoot, 'dist/styles/bifrost-ui.css'),
         },
-        { find: '@bifrost/ui', replacement: resolve(uiRoot, 'src/index.ts') },
+        { find: '@bifrost/ui', replacement: resolve(uiRoot, 'dist/index.js') },
       ],
     },
     build: {

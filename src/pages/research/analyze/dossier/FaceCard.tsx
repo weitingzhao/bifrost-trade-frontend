@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import type { DossierFaceView } from '@/lib/dossier'
 
 export function FaceCard({ view, loading }: { view: DossierFaceView; loading: boolean }) {
-  const { face, rows, headline, lamp, coverage, href } = view
+  const { face, rows, headline, lamp, coverage, href, recordScopes } = view
   return (
     <Card variant="elevated" data-testid={`face-${face.id}`}>
       <CardContent className="space-y-1.5 px-3 py-3">
@@ -62,6 +62,30 @@ export function FaceCard({ view, loading }: { view: DossierFaceView; loading: bo
             ))}
           </ul>
         ) : null}
+          {recordScopes ? (
+            // Names, not readings. Each of these lenses already shows its record
+            // on the face that owns it; what is only knowable here is which of
+            // them settled on this symbol and which are borrowing a pooled one.
+            <div className="space-y-1 pt-0.5">
+              {(
+                [
+                  ['On this symbol', recordScopes.scoped, 'success'],
+                  ['Pooled across symbols', recordScopes.pooled, 'neutral'],
+                ] as const
+              ).map(([label, names, tone]) =>
+                names.length > 0 ? (
+                  <div key={label} className="flex flex-wrap items-center gap-1">
+                    <span className="text-dense-micro text-muted-foreground">{label}</span>
+                    {names.map((n) => (
+                      <DenseTag key={n} variant={tone} size="cell">
+                        {n}
+                      </DenseTag>
+                    ))}
+                  </div>
+                ) : null,
+              )}
+            </div>
+          ) : null}
       </CardContent>
     </Card>
   )

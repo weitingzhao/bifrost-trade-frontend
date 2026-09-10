@@ -123,7 +123,7 @@ describe('the dossier faces', () => {
     expect(v.href).toBe('/docs/research-calibration?symbol=NVDA')
   })
 
-  it('builds the validation face from every lens with a settled record, without repeating the meaning', () => {
+  it('reports which lenses settled on this symbol instead of re-listing their readings', () => {
     const exhibits = [
       exhibit('sepa', {
         verdict: { band: 'hot', label: 'Hot', value: 80, unit: 'x', means: 'setup' },
@@ -143,18 +143,22 @@ describe('the dossier faces', () => {
       }),
     ]
     const v = faceView(face('validation'), exhibits, 'NVDA', noSpec)
-    expect(v.rows.map((r) => [r.id, r.means])).toEqual([
-      ['sepa', null],
-      ['vrp', null],
-      ['gex_regime', null],
-    ])
-    expect(v.rows[0].record).toContain('hot side hit 5d 33%')
+    // No rows: FaceCard renders `record` on every face, so each of these lenses
+    // already shows its track record on the face that owns it. Repeating them
+    // here put the same eight lines on screen twice.
+    expect(v.rows).toEqual([])
+    // What only this face knows is the split — settled here versus borrowed
+    // from a pooled record — and that is a list of names.
+    expect(v.recordScopes?.scoped).toHaveLength(2)
+    expect(v.recordScopes?.pooled).toHaveLength(1)
     expect(v.headline).toBe('2 lenses have a settled record on NVDA; 1 reads all symbols')
-    expect(v.rows[2].record).toContain('all symbols')
     expect(v.lamp).toBe('green')
+    // A lens with no settled trigger is in neither list — momentum has n=0.
+    expect([...(v.recordScopes?.scoped ?? []), ...(v.recordScopes?.pooled ?? [])]).toHaveLength(3)
     expect(faceView(face('validation'), [], 'NVDA', noSpec)).toMatchObject({
       headline: 'No settled track record on NVDA yet',
       lamp: 'yellow',
+      recordScopes: { scoped: [], pooled: [] },
     })
   })
 })

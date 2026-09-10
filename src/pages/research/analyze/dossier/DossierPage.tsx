@@ -48,7 +48,13 @@ export default function DossierPage() {
               grid row is as tall as its tallest cell, so equal cells meant one
               card clipped while another sat 97% empty. CSS columns balance by
               real height, which no row-span estimate can match. */}
-          <div className="gap-3 md:columns-2 xl:columns-3 [&>*]:mb-3 [&>*]:break-inside-avoid">
+          {/* Two columns at every width above md, not three. Measured on NVDA:
+              three columns are 33px shorter but leave 665px of ragged column
+              remainder against 93px for two — 48% of the layout box empty
+              versus 12% — and halve the card width, which these long record
+              lines spend on wrapping. Both fit the viewport, so the shorter one
+              is not the better one. */}
+          <div className="gap-3 md:columns-2 [&>*]:mb-3 [&>*]:break-inside-avoid">
             {views.map((v) => (
               <FaceCard key={v.face.id} view={v} loading={loading} />
             ))}

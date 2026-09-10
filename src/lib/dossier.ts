@@ -97,6 +97,17 @@ export interface DossierFaceView {
   lamp: LampColor
   /** Lenses with a reading over lenses the face has; null when the face has no lens at all. */
   coverage: { read: number; of: number } | null
+  /**
+   * Validation only: which lenses have settled on *this* symbol and which are
+   * reading a pooled record, by name.
+   *
+   * The face used to re-list every settled lens as a full row — label, verdict
+   * and record line — but FaceCard already renders `record` on every face, so
+   * each of those lines was its second appearance on the same screen. What this
+   * face alone knows is the split, and a split is a list of names rather than
+   * eight repeated readings.
+   */
+  recordScopes: { scoped: string[]; pooled: string[] } | null
   href: string
 }
 
@@ -138,11 +149,15 @@ export function faceView(
           (pooled > 0 ? `; ${pooled} ${pooled === 1 ? 'reads' : 'read'} all symbols` : '')
     return {
       face,
-      rows,
+      rows: [],
       headline,
       tone: 'neutral',
       lamp: scoped > 0 ? 'green' : 'yellow',
       coverage: null,
+      recordScopes: {
+        scoped: items.filter((_, i) => own[i].track_record?.symbol_scoped).map((it) => it.label),
+        pooled: items.filter((_, i) => !own[i].track_record?.symbol_scoped).map((it) => it.label),
+      },
       href,
     }
   }
@@ -153,6 +168,7 @@ export function faceView(
       headline: NOT_MEASURED,
       tone: 'neutral',
       lamp: 'red',
+      recordScopes: null,
       coverage: null,
       href,
     }
@@ -172,6 +188,7 @@ export function faceView(
           ? 'green'
           : 'yellow',
     coverage: { read: read.length, of: face.lenses.length },
+    recordScopes: null,
     href,
   }
 }

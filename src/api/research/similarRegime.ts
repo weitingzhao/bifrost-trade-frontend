@@ -3,6 +3,21 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  SignalHealthResponseSchema,
+  SimilarRegimeResponseSchema,
+} from '@/lib/schemas/researchData'
+
+const validateSimilar = withValidation<SimilarRegimeResponse>(
+  SimilarRegimeResponseSchema,
+  'research/similar-regime',
+)
+const validateSignalHealth = withValidation<SignalHealthResponse>(
+  SignalHealthResponseSchema,
+  'research/signal-health',
+)
+
 
 export type SimilarRegimeLens =
   | 'vrp'
@@ -76,7 +91,9 @@ export async function fetchSimilarRegime(opts: {
     horizon: String(opts.horizon ?? 5),
     k: String(opts.k ?? 5),
   })
-  return unwrap(await fetch(`${researchEngineUrl('/research/similar-regime')}?${q}`))
+  return validateSimilar(
+    await unwrap(await fetch(`${researchEngineUrl('/research/similar-regime')}?${q}`)),
+  )
 }
 
 export interface SignalFreshnessItem {
@@ -119,5 +136,7 @@ export interface SignalHealthResponse {
 }
 
 export async function fetchSignalHealth(): Promise<SignalHealthResponse> {
-  return unwrap(await fetch(researchEngineUrl('/research/signal-health')))
+  return validateSignalHealth(
+    await unwrap(await fetch(researchEngineUrl('/research/signal-health'))),
+  )
 }

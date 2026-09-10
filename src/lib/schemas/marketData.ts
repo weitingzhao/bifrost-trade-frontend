@@ -32,3 +32,12 @@ export const OptionSnapshotsResponseSchema = z
     count: z.number(),
   })
   .passthrough()
+
+/**
+ * Ticker search from the Market Data Plugin. Only `symbol` is guaranteed — the
+ * vendor omits the descriptive fields for thinly-listed names, and the picker
+ * has to render those rows anyway.
+ */
+export const TickerHitSchema = z.object({ symbol: z.string() }).passthrough()
+
+export const TickerSearchResponseSchema = z.array(TickerHitSchema)

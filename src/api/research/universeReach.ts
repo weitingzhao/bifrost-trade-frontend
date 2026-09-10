@@ -5,7 +5,9 @@
  */
 import { withValidation } from '@/lib/apiValidation'
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { UniverseReachSchema } from '@/lib/schemas/research'
+import {
+  UniverseReachSchema,
+} from '@/lib/schemas/research'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 
 export interface UniverseReachLayer {

@@ -4,7 +4,9 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
-import { SignalDecayBySymbolSchema } from '@/lib/schemas/research'
+import {
+  SignalDecayBySymbolSchema,
+} from '@/lib/schemas/research'
 
 export type SignalDecayLens =
   | 'iv_rank'

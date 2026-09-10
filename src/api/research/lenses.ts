@@ -8,7 +8,9 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
-import { LensRegistrySchema } from '@/lib/schemas/research'
+import {
+  LensRegistrySchema,
+} from '@/lib/schemas/research'
 
 export type LensBand = 'hot' | 'lean_hot' | 'neutral' | 'lean_cold' | 'cold'
 export type LensKind = 'score' | 'signed' | 'severity' | 'distance' | 'categorical'

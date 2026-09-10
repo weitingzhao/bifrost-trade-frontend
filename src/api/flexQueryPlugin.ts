@@ -6,6 +6,20 @@ import type {
   FlexUploadResponse,
   TransactionsFetchResponse,
 } from '@/types/trading'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  FlexConfigSummarySchema,
+  FlexCoverageFreshnessResponseSchema,
+} from '@/lib/schemas/platform'
+
+const validateFlexConfig = withValidation<FlexConfigSummary>(
+  FlexConfigSummarySchema,
+  'plugin/flex/config',
+)
+const validateFlexCoverage = withValidation<FlexCoverageFreshnessResponse>(
+  FlexCoverageFreshnessResponseSchema,
+  'plugin/flex/coverage-freshness',
+)
 
 export type FlexConfigSummary = {
   tokens: {
@@ -33,7 +47,7 @@ export async function pluginFlexConfigSummary(): Promise<FlexConfigSummary> {
   if (!res.ok) {
     throw new Error(pluginErrorMessage(json, `Flex Plugin /flex/config/summary: ${res.status}`))
   }
-  return json as FlexConfigSummary
+  return validateFlexConfig(json)
 }
 
 async function pluginPost<T>(path: string, body: unknown): Promise<T> {
@@ -108,5 +122,7 @@ export async function pluginFlexCoverageFreshness(): Promise<FlexCoverageFreshne
     throw new Error(pluginErrorMessage(json, `Flex Plugin /flex/coverage/freshness: ${res.status}`))
   }
   const rec = json as Partial<FlexCoverageFreshnessResponse>
-  return { dimensions: Array.isArray(rec.dimensions) ? rec.dimensions : [] }
+  return validateFlexCoverage({
+    dimensions: Array.isArray(rec.dimensions) ? rec.dimensions : [],
+  })
 }

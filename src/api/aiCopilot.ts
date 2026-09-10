@@ -4,7 +4,9 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { CopilotUsageSchema } from '@/lib/schemas/research'
+import {
+  CopilotUsageSchema,
+} from '@/lib/schemas/research'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import type { CopilotModelId } from '@/lib/cockpit/modelCatalog'
 

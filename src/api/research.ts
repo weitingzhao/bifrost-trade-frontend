@@ -13,6 +13,27 @@ import type {
   SymbolStatementsData,
   SymbolOptionPcrData,
 } from '@/types/research'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  DataReadinessSummarySchema,
+  GreeksResponseSchema,
+  ScreenerResponseSchema,
+  TickerOverviewSchema,
+} from '@/lib/schemas/researchData'
+
+const validateScreener = withValidation<ScreenerResponse>(
+  ScreenerResponseSchema,
+  'research/screener',
+)
+const validateGreeksShape = withValidation<unknown>(GreeksResponseSchema, 'research/greeks')
+const validateReadiness = withValidation<DataReadinessSummary>(
+  DataReadinessSummarySchema,
+  'research/data/readiness-summary',
+)
+const validateTickerOverview = withValidation<TickerOverview>(
+  TickerOverviewSchema,
+  'research/data/ticker-overview',
+)
 
 export async function fetchScreenerResults(filters: ScreenerFilters): Promise<ScreenerResponse> {
   const controller = new AbortController()
@@ -32,7 +53,7 @@ export async function fetchScreenerResults(filters: ScreenerFilters): Promise<Sc
     if (!res.ok) {
       throw new Error(j.error ?? `POST /research/screener: ${res.status}`)
     }
-    return { ...j, groups: j.groups ?? [] }
+    return validateScreener({ ...j, groups: j.groups ?? [] })
   } finally {
     clearTimeout(timeout)
   }
@@ -60,7 +81,10 @@ export async function fetchGreeks(params: FetchGreeksParams): Promise<GreeksResp
     if (params.right) qs.set('right', params.right)
     if (params.limit != null) qs.set('limit', String(params.limit))
     const res = await fetch(researchUrl(`/research/greeks?${qs}`))
-    const j = await res.json().catch(() => ({})) as Record<string, unknown>
+    const raw = await res.json().catch(() => ({}))
+    // The coercion below already keeps the UI safe; the schema is here to say
+    // so in dev when the shape moves, which the coercion never does.
+    const j = validateGreeksShape(raw) as Record<string, unknown>
     return {
       ok: Boolean(j.ok),
       symbol: typeof j.symbol === 'string' ? j.symbol : s,
@@ -102,7 +126,7 @@ export async function fetchGreeksAvailableDates(symbol: string): Promise<string[
 export async function fetchDataReadinessSummary(): Promise<DataReadinessSummary> {
   const res = await fetch(researchUrl('/research/data/readiness/summary'))
   if (!res.ok) throw new Error(`GET /research/data/readiness/summary: ${res.status}`)
-  return res.json() as Promise<DataReadinessSummary>
+  return res.json().then(validateReadiness)
 }
 
 export async function fetchTickerOverview(symbol: string): Promise<TickerOverview> {
@@ -112,7 +136,7 @@ export async function fetchTickerOverview(symbol: string): Promise<TickerOvervie
     const detail = await res.text().catch(() => '')
     throw new Error(`GET /research/data/ticker-overview: ${res.status} — ${detail}`)
   }
-  return res.json() as Promise<TickerOverview>
+  return res.json().then(validateTickerOverview)
 }
 
 export async function fetchSymbolFundamentalConditions(symbol: string): Promise<FundamentalConditionsData> {

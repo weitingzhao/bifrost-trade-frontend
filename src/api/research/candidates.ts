@@ -6,6 +6,16 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  CandidateListResponseSchema,
+} from '@/lib/schemas/researchData'
+
+const validateCandidates = withValidation<CandidateListResponse>(
+  CandidateListResponseSchema,
+  'research/candidates',
+)
+
 
 export type CandidateStatus = 'open' | 'promoted' | 'dismissed' | 'expired'
 export type CandidateSource =
@@ -74,8 +84,10 @@ export async function fetchCandidates(params?: {
   if (params?.source) q.set('source', params.source)
   if (params?.days != null) q.set('days', String(params.days))
   const qs = q.toString()
-  return unwrap(
-    await fetch(`${researchEngineUrl('/research/candidates')}${qs ? `?${qs}` : ''}`),
+  return validateCandidates(
+    await unwrap(
+      await fetch(`${researchEngineUrl('/research/candidates')}${qs ? `?${qs}` : ''}`),
+    ),
   )
 }
 

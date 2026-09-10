@@ -1,5 +1,15 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  PlaybookCaseListSchema,
+  PlaybookNoteListSchema,
+  PlaybookRuleListSchema,
+} from '@/lib/schemas/researchData'
+
+const validateRules = withValidation<PlaybookRule[]>(PlaybookRuleListSchema, 'research/playbook/rules')
+const validateNotes = withValidation<PlaybookNote[]>(PlaybookNoteListSchema, 'research/playbook/notes')
+const validateCases = withValidation<PlaybookCase[]>(PlaybookCaseListSchema, 'research/playbook/cases')
 
 export type PlaybookRule = {
   id: string
@@ -44,7 +54,7 @@ async function playbookFetch<T>(path: string, init?: RequestInit): Promise<T> {
 export async function fetchPlaybookRules(category?: string): Promise<PlaybookRule[]> {
   const q = category ? `?category=${encodeURIComponent(category)}` : ''
   const data = await playbookFetch<{ rows: PlaybookRule[] }>(`/research/playbook/rules${q}`)
-  return data.rows ?? []
+  return validateRules(data.rows ?? [])
 }
 
 export async function createPlaybookRule(input: {
@@ -69,7 +79,7 @@ export async function retirePlaybookRule(id: string): Promise<void> {
 
 export async function fetchPlaybookNotes(): Promise<PlaybookNote[]> {
   const data = await playbookFetch<{ rows: PlaybookNote[] }>('/research/playbook/notes')
-  return data.rows ?? []
+  return validateNotes(data.rows ?? [])
 }
 
 export async function createPlaybookNote(input: {
@@ -86,7 +96,7 @@ export async function createPlaybookNote(input: {
 
 export async function fetchPlaybookCases(): Promise<PlaybookCase[]> {
   const data = await playbookFetch<{ rows: PlaybookCase[] }>('/research/playbook/cases')
-  return data.rows ?? []
+  return validateCases(data.rows ?? [])
 }
 
 export async function createPlaybookCaseFromBridge(input: {

@@ -8,7 +8,9 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
-import { LensCoverageSchema } from '@/lib/schemas/research'
+import {
+  LensCoverageSchema,
+} from '@/lib/schemas/research'
 
 export type CoverageFace = 'trend' | 'volatility' | 'positioning' | 'forecast' | 'validation'
 

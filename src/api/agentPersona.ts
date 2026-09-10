@@ -1,5 +1,12 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { withValidation } from '@/lib/apiValidation'
+import { AgentPersonaListSchema } from '@/lib/schemas/platform'
+
+const validatePersonas = withValidation<AgentPersona[]>(
+  AgentPersonaListSchema,
+  'research/agent_persona',
+)
 
 export type PersonaPreferences = {
   symbol_class?: string[]
@@ -44,7 +51,7 @@ export async function fetchAgentPersonas(): Promise<AgentPersona[]> {
   const body = await personaFetch<{ ok: boolean; agents: AgentPersona[] }>(
     '/research/agent_persona',
   )
-  return body.agents ?? []
+  return validatePersonas(body.agents ?? [])
 }
 
 export async function fetchAgentPersona(agent: string): Promise<AgentPersona> {

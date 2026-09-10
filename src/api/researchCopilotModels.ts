@@ -1,7 +1,9 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
-import { CopilotModelsResponseSchema } from '@/lib/schemas/research'
+import {
+  CopilotModelsResponseSchema,
+} from '@/lib/schemas/research'
 
 /**
  * Model catalog returned by the Research API — reflects which providers

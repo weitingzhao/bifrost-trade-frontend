@@ -7,6 +7,15 @@ import type {
 } from '@/types/stockDataReadiness'
 import type { SepaCriteriaStats } from '@/types/stockScreener'
 import { researchUrl } from '@/lib/devApiUrl'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  SepaReadinessSummaryResponseSchema,
+} from '@/lib/schemas/researchData'
+
+const validateReadiness = withValidation<SepaReadinessSummaryResponse>(
+  SepaReadinessSummaryResponseSchema,
+  'research/sepa/readiness-summary',
+)
 
 async function fetchJson<T>(
   url: string,
@@ -43,10 +52,12 @@ async function postJson<T>(url: string, body: unknown, timeoutMs: number): Promi
 
 export async function fetchSepaReadinessSummary(): Promise<SepaReadinessSummaryResponse> {
   try {
-    return await fetchJson<SepaReadinessSummaryResponse>(
-      researchUrl('/research/data/readiness/summary'),
-      { method: 'GET' },
-      45_000,
+    return validateReadiness(
+      await fetchJson<SepaReadinessSummaryResponse>(
+        researchUrl('/research/data/readiness/summary'),
+        { method: 'GET' },
+        45_000,
+      ),
     )
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Network error'

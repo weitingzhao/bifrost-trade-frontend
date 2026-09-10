@@ -5,7 +5,9 @@
 import { withValidation } from '@/lib/apiValidation'
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
-import { CopilotToolListSchema } from '@/lib/schemas/research'
+import {
+  CopilotToolListSchema,
+} from '@/lib/schemas/research'
 
 export interface CopilotTool {
   name: string

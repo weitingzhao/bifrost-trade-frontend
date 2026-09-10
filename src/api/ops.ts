@@ -1,4 +1,6 @@
 import { postControlShutdown } from '@/api/apiControl'
+import { withValidation } from '@/lib/apiValidation'
+import { OpsCapabilitiesSchema } from '@/lib/schemas/platform'
 import { opsUrl } from '@/lib/devApiUrl'
 
 // ── Ops token (sessionStorage) ───────────────────────────────────────────────
@@ -31,6 +33,11 @@ function authHeaders(explicitToken?: string): Record<string, string> {
 function jsonAuthHeaders(explicitToken?: string): Record<string, string> {
   return { 'Content-Type': 'application/json', ...authHeaders(explicitToken) }
 }
+
+const validateCapabilities = withValidation<OpsCapabilities>(
+  OpsCapabilitiesSchema,
+  'ops/capabilities',
+)
 
 async function parseJson<T>(r: Response): Promise<T> {
   const text = await r.text()
@@ -163,7 +170,7 @@ export async function fetchOpsHealth(): Promise<OpsHealthResponse> {
 
 export async function fetchOpsCapabilities(explicitToken?: string): Promise<OpsCapabilities> {
   const r = await fetch(opsUrl('/ops/auth/capabilities'), { headers: authHeaders(explicitToken) })
-  return parseJson(r)
+  return validateCapabilities(await parseJson(r))
 }
 
 /** Terminate the Ops FastAPI process. Requires operator role. */

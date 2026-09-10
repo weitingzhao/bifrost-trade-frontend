@@ -1,4 +1,11 @@
 import { marketDataPluginUrl } from '@/lib/devApiUrl'
+import { withValidation } from '@/lib/apiValidation'
+import { TickerSearchResponseSchema } from '@/lib/schemas/marketData'
+
+const validateTickers = withValidation<TickerHit[]>(
+  TickerSearchResponseSchema,
+  'market/reference/tickers/search',
+)
 
 export interface TickerHit {
   symbol: string
@@ -28,7 +35,7 @@ export async function fetchTickerSearch(q: string, limit = 20): Promise<TickerHi
     if (!r.ok) return []
     const body = (await r.json()) as { ok?: boolean; results?: TickerHit[] }
     if (!body.ok || !Array.isArray(body.results)) return []
-    return body.results
+    return validateTickers(body.results)
   } catch {
     return []
   }

@@ -9,7 +9,9 @@ import { withValidation } from '@/lib/apiValidation'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
-import { CopilotStandingSchema } from '@/lib/schemas/research'
+import {
+  CopilotStandingSchema,
+} from '@/lib/schemas/research'
 import type { CopilotUsage } from '@/api/aiCopilot'
 
 export interface CopilotBriefToday {

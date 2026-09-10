@@ -6,7 +6,10 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { DailyBriefSynthSchema, ForecastCalibrationSchema } from '@/lib/schemas/research'
+import {
+  DailyBriefSynthSchema,
+  ForecastCalibrationSchema,
+} from '@/lib/schemas/research'
 import type { LampColor } from '@/lib/researchFreshness'
 import type { LensBand } from '@/api/research/lenses'
 import type { ExhibitFreshness, ExhibitSimilar, ExhibitTrackRecord } from '@/api/research/exhibit'

@@ -8,6 +8,21 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  CanonicalCoverageResponseSchema,
+  CanonicalTrajectoryResponseSchema,
+} from '@/lib/schemas/researchData'
+
+const validateCoverage = withValidation<CanonicalCoverageResponse>(
+  CanonicalCoverageResponseSchema,
+  'research/canonical-pnl/coverage',
+)
+const validateTrajectory = withValidation<CanonicalTrajectoryResponse>(
+  CanonicalTrajectoryResponseSchema,
+  'research/canonical-pnl/trajectory',
+)
+
 
 export type CanonicalStructure =
   | 'short_strangle'
@@ -70,8 +85,8 @@ export async function fetchCanonicalStructures(): Promise<string[]> {
 }
 
 export async function fetchCanonicalCoverage(): Promise<CanonicalCoverageResponse> {
-  return unwrap<CanonicalCoverageResponse>(
-    await fetch(researchEngineUrl('/research/canonical-pnl/coverage')),
+  return validateCoverage(
+    await unwrap(await fetch(researchEngineUrl('/research/canonical-pnl/coverage'))),
   )
 }
 
@@ -87,8 +102,10 @@ export async function fetchCanonicalTrajectory(opts: {
     structure: opts.structure ?? 'short_strangle',
   })
   if (opts.paramsHash) q.set('params_hash', opts.paramsHash)
-  return unwrap<CanonicalTrajectoryResponse>(
-    await fetch(`${researchEngineUrl('/research/canonical-pnl/trajectory')}?${q}`),
+  return validateTrajectory(
+    await unwrap(
+      await fetch(`${researchEngineUrl('/research/canonical-pnl/trajectory')}?${q}`),
+    ),
   )
 }
 

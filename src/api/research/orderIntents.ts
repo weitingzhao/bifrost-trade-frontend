@@ -6,6 +6,16 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  OrderIntentListResponseSchema,
+} from '@/lib/schemas/researchData'
+
+const validateIntents = withValidation<OrderIntentListResponse>(
+  OrderIntentListResponseSchema,
+  'research/order-intents',
+)
+
 
 export interface OrderIntentPayload {
   hypothesis_id?: string
@@ -47,7 +57,9 @@ export async function fetchOrderIntents(params?: {
   if (params?.status != null) q.set('status', params.status)
   if (params?.limit != null) q.set('limit', String(params.limit))
   const qs = q.toString()
-  return unwrap(
-    await fetch(`${researchEngineUrl('/research/order-intents')}${qs ? `?${qs}` : ''}`),
+  return validateIntents(
+    await unwrap(
+      await fetch(`${researchEngineUrl('/research/order-intents')}${qs ? `?${qs}` : ''}`),
+    ),
   )
 }

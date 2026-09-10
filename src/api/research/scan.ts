@@ -3,6 +3,13 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  ScanResponseSchema,
+} from '@/lib/schemas/researchData'
+
+const validateScan = withValidation<ScanResponse>(ScanResponseSchema, 'research/scan')
+
 
 export type ScanSortBy =
   | 'composite_score'
@@ -99,5 +106,7 @@ export async function fetchScan(params: FetchScanParams = {}): Promise<ScanRespo
   if (params.limit != null) q.set('limit', String(params.limit))
   if (params.offset != null) q.set('offset', String(params.offset))
   const qs = q.toString()
-  return unwrap(await fetch(`${researchEngineUrl('/research/scan')}${qs ? `?${qs}` : ''}`))
+  return validateScan(
+    await unwrap(await fetch(`${researchEngineUrl('/research/scan')}${qs ? `?${qs}` : ''}`)),
+  )
 }

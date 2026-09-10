@@ -8,7 +8,9 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
-import { ResearchDocSchema } from '@/lib/schemas/research'
+import {
+  ResearchDocSchema,
+} from '@/lib/schemas/research'
 
 export interface ResearchDoc {
   slug: string

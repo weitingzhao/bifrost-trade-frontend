@@ -1,6 +1,20 @@
 import { marketDataPluginUrl, researchEngineUrl } from '@/lib/devApiUrl'
 import type { IvPercentileRow } from '@/types/ivRadar'
 import { numOrNull } from '@/lib/researchParseHelpers'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  IvPercentileRowSchema,
+} from '@/lib/schemas/researchData'
+
+/**
+ * parseRow coerces and drops unusable rows, which keeps the UI alive but says
+ * nothing when the contract moves. The schema is the half that speaks up: it
+ * warns in dev on drift, then hands the row to parseRow either way.
+ */
+const validateIvRow = withValidation<Record<string, unknown>>(
+  IvPercentileRowSchema,
+  'research/iv-percentile',
+)
 
 function parseRow(raw: Record<string, unknown>): IvPercentileRow | null {
   const symbol = typeof raw.symbol === 'string' ? raw.symbol.trim().toUpperCase() : ''
@@ -39,7 +53,7 @@ export async function fetchIvPercentile(symbol: string): Promise<IvPercentileRow
   const rows = Array.isArray(j.rows) ? j.rows : []
   if (rows.length === 0) return null
   // API orders trade_date DESC — take the latest
-  return parseRow(rows[0] as Record<string, unknown>)
+  return parseRow(validateIvRow(rows[0]))
 }
 
 /** Bounded-concurrency map for symbol lists (Wave A — no batch API required). */

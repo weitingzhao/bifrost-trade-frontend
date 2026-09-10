@@ -7,7 +7,9 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
-import { SymbolVerdictsSchema } from '@/lib/schemas/research'
+import {
+  SymbolVerdictsSchema,
+} from '@/lib/schemas/research'
 import type { LensBand } from '@/api/research/lenses'
 
 export interface VerdictLensLine {

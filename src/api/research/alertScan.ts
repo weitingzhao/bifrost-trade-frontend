@@ -4,6 +4,13 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  AlertsResponseSchema,
+} from '@/lib/schemas/researchData'
+
+const validateAlerts = withValidation<AlertsResponse>(AlertsResponseSchema, 'research/alerts')
+
 
 export type AlertKind = 'composite_high' | 'weight_shift' | 'hit_rate_drop'
 export type AlertSeverity = 'high' | 'warn' | 'info' | string
@@ -37,5 +44,7 @@ export async function fetchAlerts(params: FetchAlertsParams = {}): Promise<Alert
   if (params.days != null) q.set('days', String(params.days))
   if (params.kind) q.set('kind', params.kind)
   const qs = q.toString()
-  return unwrap(await fetch(`${researchEngineUrl('/research/alerts')}${qs ? `?${qs}` : ''}`))
+  return validateAlerts(
+    await unwrap(await fetch(`${researchEngineUrl('/research/alerts')}${qs ? `?${qs}` : ''}`)),
+  )
 }

@@ -6,6 +6,12 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  HypothesisListResponseSchema,
+  HypothesisSchema,
+  HypothesisSummaryActiveSchema,
+} from '@/lib/schemas/researchData'
 
 export type HypothesisStatus = 'active' | 'validated' | 'rejected' | 'archived'
 
@@ -102,6 +108,16 @@ function unwrap<T>(res: Response): Promise<T> {
   return unwrapResearchEnvelope(res, { apiLabel: 'Hypothesis API' })
 }
 
+const validateList = withValidation<HypothesisListResponse>(
+  HypothesisListResponseSchema,
+  'research/hypothesis',
+)
+const validateOne = withValidation<Hypothesis>(HypothesisSchema, 'research/hypothesis/{id}')
+const validateActive = withValidation<HypothesisSummaryActive>(
+  HypothesisSummaryActiveSchema,
+  'research/hypothesis/summary/active',
+)
+
 async function get<T>(path: string): Promise<T> {
   return unwrap<T>(await fetch(researchEngineUrl(path)))
 }
@@ -134,15 +150,15 @@ export function listHypotheses(opts: ListHypothesesQuery = {}): Promise<Hypothes
   if (opts.limit) params.set('limit', String(opts.limit))
   if (opts.offset) params.set('offset', String(opts.offset))
   const suffix = params.toString() ? `?${params.toString()}` : ''
-  return get<HypothesisListResponse>(`/research/hypothesis${suffix}`)
+  return get(`/research/hypothesis${suffix}`).then(validateList)
 }
 
 export function getHypothesis(id: string): Promise<Hypothesis> {
-  return get<Hypothesis>(`/research/hypothesis/${encodeURIComponent(id)}`)
+  return get(`/research/hypothesis/${encodeURIComponent(id)}`).then(validateOne)
 }
 
 export function fetchActiveSummary(topN = 5): Promise<HypothesisSummaryActive> {
-  return get<HypothesisSummaryActive>(`/research/hypothesis/summary/active?top_n=${topN}`)
+  return get(`/research/hypothesis/summary/active?top_n=${topN}`).then(validateActive)
 }
 
 export function createHypothesis(body: HypothesisCreateInput): Promise<Hypothesis> {

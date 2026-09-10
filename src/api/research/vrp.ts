@@ -5,7 +5,9 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
+import {
+  ResearchEnvelopeSchema,
+} from '@/lib/schemas/research'
 import { numOrNull } from '@/lib/researchParseHelpers'
 
 export interface VrpRow {

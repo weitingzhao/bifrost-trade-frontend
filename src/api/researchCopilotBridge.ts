@@ -1,5 +1,14 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  BridgePresetsSchema,
+} from '@/lib/schemas/researchData'
+
+const validatePresets = withValidation<BridgePresets>(
+  BridgePresetsSchema,
+  'research/copilot/bridge/presets',
+)
 
 export type BridgeFocus = 'portfolio_risk' | 'strategy_validation' | 'event_driven' | 'coding_landing'
 export type BridgeDepth = 'brief' | 'standard' | 'deep'
@@ -41,7 +50,7 @@ export async function fetchBridgePresets(signal?: AbortSignal): Promise<BridgePr
   })
   if (!res.ok) throw new Error(`bridge presets HTTP ${res.status}`)
   const body = (await res.json()) as { data: BridgePresets }
-  return body.data
+  return validatePresets(body.data)
 }
 
 export async function postCopilotBridge(

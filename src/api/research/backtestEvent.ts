@@ -6,6 +6,15 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  EventQueryResponseSchema,
+} from '@/lib/schemas/researchData'
+
+const validateEventQuery = withValidation<EventQueryResponse>(
+  EventQueryResponseSchema,
+  'research/backtest/event-query',
+)
 
 export type EventKind =
   | 'earnings'
@@ -121,12 +130,14 @@ function unwrap<T>(res: Response): Promise<T> {
 }
 
 export async function postEventQuery(input: EventQueryInput): Promise<EventQueryResponse> {
-  return unwrap<EventQueryResponse>(
+  return validateEventQuery(
+    await unwrap(
     await fetch(researchEngineUrl('/research/backtest/event-query'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     }),
+    ),
   )
 }
 

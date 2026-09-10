@@ -1,5 +1,12 @@
 import { getOpsToken } from '@/api/ops'
 import { platformApiUrl } from '@/lib/devApiUrl'
+import { withValidation } from '@/lib/apiValidation'
+import { ResearchCronJobTriggerResponseSchema } from '@/lib/schemas/platform'
+
+const validateTrigger = withValidation<ResearchCronJobTriggerResponse>(
+  ResearchCronJobTriggerResponseSchema,
+  'platform/research/cronjobs/trigger',
+)
 
 export interface ResearchCronJobTriggerResponse {
   ok: boolean
@@ -28,5 +35,5 @@ export async function triggerResearchCronJob(triggerId: string): Promise<Researc
     const msg = body.message ?? (body as { error?: string }).error ?? text
     throw new Error(msg || `Platform API ${res.status}`)
   }
-  return body as ResearchCronJobTriggerResponse
+  return validateTrigger(body)
 }

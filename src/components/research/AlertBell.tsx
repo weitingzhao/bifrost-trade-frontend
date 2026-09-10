@@ -8,6 +8,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { cn } from '@/lib/utils'
+import {
+  rankAlerts,
+  severityBadgeClass,
+  severityTextClass,
+  worstSeverity,
+} from '@/lib/alertRanking'
 
 function reasonSummary(item: AnalyzeAlert): string {
   const r = item.reason
@@ -47,12 +53,6 @@ function alertHref(item: AnalyzeAlert): string {
   return '/research/scan'
 }
 
-function severityClass(severity: string): string {
-  if (severity === 'high') return 'text-destructive'
-  if (severity === 'warn') return 'text-warning'
-  return 'text-muted-foreground'
-}
-
 export function AlertBell() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -66,7 +66,11 @@ export function AlertBell() {
 
   const items = data?.items ?? []
   const badgeCount = items.length
-  const top3 = items.slice(0, 3)
+  // Severity first. The API answers newest-first, so slicing an unranked list
+  // was hiding a `high` behind whatever happened to arrive today. The list
+  // container already scrolls, so every fetched alert is reachable.
+  const ranked = rankAlerts(items)
+  const worst = worstSeverity(items)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -81,7 +85,12 @@ export function AlertBell() {
             >
               <Radar className="h-4 w-4" />
               {badgeCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-0.5 text-dense-micro font-bold text-white leading-none">
+                <span
+                  className={cn(
+                    'absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-dense-micro font-bold leading-none',
+                    severityBadgeClass(worst),
+                  )}
+                >
                   {badgeCount > 9 ? '9+' : badgeCount}
                 </span>
               )}
@@ -90,7 +99,9 @@ export function AlertBell() {
         </TooltipTrigger>
         <TooltipContent side="bottom">
           {badgeCount > 0
-            ? `${badgeCount} analyze alert${badgeCount > 1 ? 's' : ''}`
+            ? `${badgeCount} analyze alert${badgeCount > 1 ? 's' : ''}${
+                worst ? ` · worst: ${worst}` : ''
+              }`
             : 'Analyze alerts'}
         </TooltipContent>
       </Tooltip>
@@ -101,11 +112,11 @@ export function AlertBell() {
             Analyze alerts
           </p>
         </div>
-        {top3.length === 0 ? (
+        {ranked.length === 0 ? (
           <p className="px-3 py-4 text-dense-meta text-muted-foreground">No analyze alerts</p>
         ) : (
           <ul className="max-h-72 overflow-auto py-1">
-            {top3.map((item, idx) => {
+            {ranked.map((item, idx) => {
               const summary = reasonSummary(item)
               const label = [
                 item.kind,
@@ -125,7 +136,7 @@ export function AlertBell() {
                     }}
                   >
                     <span className="text-dense-meta leading-snug">
-                      <span className={cn('font-medium', severityClass(String(item.severity)))}>
+                      <span className={cn('font-medium', severityTextClass(item.severity))}>
                         [{item.severity}]
                       </span>{' '}
                       <span className="text-foreground">{label}</span>

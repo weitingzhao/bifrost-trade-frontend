@@ -27,7 +27,7 @@ import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { AnalyzeVerdictStrip, type AnalyzeVerdictTone } from '@/components/research/AnalyzeVerdictStrip'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { useExhibit } from '@/hooks/useLensRegistry'
-import { chipTone, labelForBand, similarLine, toneForBand, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { chipTone, labelForBand, similarLine, toneForBand, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import { pinMagnetLine } from '@/lib/analyzeDepth'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { copilotViewStore } from '@/store/copilotViewStore'
@@ -378,6 +378,7 @@ export function OpexSection() {
         verdictLabel={label}
         narrative={verdict}
         trackRecord={trackRecordLine(exhibitQ.data?.track_record, pinVerdict.band)}
+        trackRecordDetail={trackRecordDetail(exhibitQ.data?.track_record, pinVerdict.band)}
         similar={similarLine(exhibitQ.data?.similar)}
         signals={
           row

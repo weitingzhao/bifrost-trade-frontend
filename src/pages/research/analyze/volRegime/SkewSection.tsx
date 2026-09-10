@@ -28,7 +28,7 @@ import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisBu
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { useExhibit } from '@/hooks/useLensRegistry'
-import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { chipTone, similarLine, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import type { LensBand } from '@/api/research/lenses'
 import { richCheapStrikes, skewPercentileText, termStructureView, type StrikeResidual } from '@/lib/analyzeDepth'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
@@ -294,6 +294,7 @@ export function SkewSection() {
         verdictLabel={verdictLabel}
         narrative={verdictLine}
         trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        trackRecordDetail={trackRecordDetail(exhibitQ.data?.track_record, verdict.band)}
         similar={similarLine(exhibitQ.data?.similar)}
         signals={
           anchor

@@ -27,7 +27,7 @@ import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { useExhibit } from '@/hooks/useLensRegistry'
-import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { chipTone, similarLine, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import { dailyLevelSignals, vrpLinkLine } from '@/lib/analyzeDepth'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { copilotViewStore } from '@/store/copilotViewStore'
@@ -204,6 +204,7 @@ export function GexSection() {
             : 'Load a GEX snapshot to decide whether to fade walls or follow a zero-γ break.'
         }
         trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        trackRecordDetail={trackRecordDetail(exhibitQ.data?.track_record, verdict.band)}
         similar={similarLine(exhibitQ.data?.similar)}
         signals={dailyLevelSignals(exhibitQ.data)}
       />

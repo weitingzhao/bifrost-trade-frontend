@@ -36,7 +36,7 @@ import { bandFromScore, hitCellText } from '@/lib/analyzeDepth'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
-import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { chipTone, similarLine, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import type { LensBand } from '@/api/research/lenses'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
@@ -350,6 +350,7 @@ export function IvRankSection() {
         verdictLabel={verdictLabel}
         narrative={verdictSummary}
         trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        trackRecordDetail={trackRecordDetail(exhibitQ.data?.track_record, verdict.band)}
         similar={similarLine(exhibitQ.data?.similar)}
         signals={[
           { label: 'Rank', value: fmtRankPct(focusIvRank) },

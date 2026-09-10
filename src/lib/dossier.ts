@@ -10,7 +10,7 @@
 import type { ExhibitLens, ExhibitPayload } from '@/api/research/exhibit'
 import type { AnalyzeVerdictTone } from '@/components/research/AnalyzeVerdictStrip'
 import { ANALYZE_HUB, withSymbolParam } from '@/lib/analyzeHubs'
-import { trackRecordLine } from '@/lib/lensVerdict'
+import { trackRecordDetail, trackRecordLine } from '@/lib/lensVerdict'
 import { canonicalLens, regimeItems, type RegimeLensItem } from '@/lib/regimeRibbon'
 import type { LampColor } from '@/lib/researchFreshness'
 
@@ -86,6 +86,8 @@ export const DOSSIER_LENSES: readonly ExhibitLens[] = [
 export interface DossierRow extends RegimeLensItem {
   /** The lens's track record on this symbol, in words — or null before any trigger settled. */
   record: string | null
+  /** The same record with its pipeline state, for the hover — never the only home of a fact. */
+  recordDetail: string | null
 }
 
 export interface DossierFaceView {
@@ -136,6 +138,7 @@ export function faceView(
     // The validation face is the record itself; the meaning line would repeat the face above.
     means: face.id === 'validation' ? null : it.means,
     record: trackRecordLine(own[i].track_record, it.band),
+    recordDetail: trackRecordDetail(own[i].track_record, it.band),
   }))
   const href = withSymbolParam(face.openTo, symbol)
   if (face.id === 'validation') {

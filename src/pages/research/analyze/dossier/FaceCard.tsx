@@ -56,7 +56,12 @@ export function FaceCard({ view, loading }: { view: DossierFaceView; loading: bo
                   <p className="text-dense-meta leading-snug text-muted-foreground">{row.means}</p>
                 ) : null}
                 {row.record ? (
-                  <p className="text-dense-caption text-muted-foreground">{row.record}</p>
+                  <p
+                    className="text-dense-caption text-muted-foreground"
+                    title={row.recordDetail ?? undefined}
+                  >
+                    {row.record}
+                  </p>
                 ) : null}
               </li>
             ))}

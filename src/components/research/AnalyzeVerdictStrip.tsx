@@ -29,6 +29,13 @@ export interface AnalyzeVerdictStripProps {
   nextMoves?: AnalyzeVerdictNextMove[]
   /** How this lens' triggers settled — from the exhibit's track_record (A5). */
   trackRecord?: string | null
+  /**
+   * The long form of `trackRecord` — trigger counts, what is still inside its
+   * forward window, the measurement window — for the hover. The caption carries
+   * the rates and their samples; this keeps the pipeline behind them reachable
+   * rather than gone.
+   */
+  trackRecordDetail?: string | null
   /** What followed readings like this one — from the exhibit's similar block (A5). */
   similar?: string | null
   className?: string
@@ -58,6 +65,7 @@ export function AnalyzeVerdictStrip({
   signals = [],
   nextMoves = [],
   trackRecord,
+  trackRecordDetail,
   similar,
   className,
 }: AnalyzeVerdictStripProps) {
@@ -73,7 +81,11 @@ export function AnalyzeVerdictStrip({
           ) : null}
         </div>
         {evidence.length > 0 ? (
-          <p className="text-dense-caption text-muted-foreground" data-testid="verdict-evidence">
+          <p
+            className="text-dense-caption text-muted-foreground"
+            data-testid="verdict-evidence"
+            title={trackRecordDetail ?? undefined}
+          >
             <span className="font-medium text-foreground">Track record</span> {evidence.join(' · ')}
           </p>
         ) : null}

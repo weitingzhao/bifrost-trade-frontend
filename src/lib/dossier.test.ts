@@ -83,7 +83,8 @@ describe('the dossier faces', () => {
     expect(v.coverage).toEqual({ read: 2, of: 6 })
     expect(v.lamp).toBe('yellow')
     expect(v.rows.map((r) => r.id)).toEqual(['iv_rank', 'vrp', 'skew']) // the face's order, not the payload's
-    expect(v.rows[0].record).toContain('cold side hit 5d 72%')
+    expect(v.rows[0].record).toContain('cold 72%')
+    expect(v.rows[0].recordDetail).toContain('cold side hit 5d 72%')
     expect(v.rows[2].verdict).toBe('no reading')
     expect(v.href).toBe('/research/vol-regime?symbol=NVDA')
   })

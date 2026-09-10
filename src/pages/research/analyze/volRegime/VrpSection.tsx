@@ -28,7 +28,7 @@ import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisBu
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
-import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { chipTone, similarLine, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import { fwd20Line } from '@/lib/analyzeDepth'
 import type { LensBand } from '@/api/research/lenses'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
@@ -425,6 +425,7 @@ export function VrpSection() {
         verdictLabel={verdictLabel}
         narrative={verdictTextValue}
         trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        trackRecordDetail={trackRecordDetail(exhibitQ.data?.track_record, verdict.band)}
         similar={similarLine(exhibitQ.data?.similar)}
         signals={[
           { label: 'VRP60', value: fmtSpread(latest?.vrp_60d) },

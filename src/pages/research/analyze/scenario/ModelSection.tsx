@@ -9,7 +9,7 @@ import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
-import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { chipTone, similarLine, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
@@ -613,6 +613,7 @@ export function ModelSection() {
         verdictLabel={verdictLabel}
         narrative={verdictSummary}
         trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        trackRecordDetail={trackRecordDetail(exhibitQ.data?.track_record, verdict.band)}
         similar={similarLine(exhibitQ.data?.similar)}
         signals={
           terrain

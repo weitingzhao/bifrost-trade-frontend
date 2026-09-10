@@ -28,7 +28,7 @@ import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisBu
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
-import { chipTone, similarLine, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { chipTone, similarLine, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import type { LensBand } from '@/api/research/lenses'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
@@ -158,6 +158,7 @@ export function OrderSentimentSection() {
         verdictLabel={verdictLabel}
         narrative={verdictSummary}
         trackRecord={trackRecordLine(exhibitQ.data?.track_record, verdict.band)}
+        trackRecordDetail={trackRecordDetail(exhibitQ.data?.track_record, verdict.band)}
         similar={similarLine(exhibitQ.data?.similar)}
         signals={
           sentiment

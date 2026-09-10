@@ -134,22 +134,56 @@ function signedPct(v: number | null | undefined): string {
   return `${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}%`
 }
 
-/** "hot side hit 5d 62% · 20d 43% (n=13, this symbol)" — or null when nothing settled. */
+/**
+ * "hot 62% (n=21) · 43% (n=13) · this symbol" — or null when nothing settled.
+ *
+ * Each rate keeps its own denominator, and that is not negotiable: `n` here
+ * runs to single digits, where 57% over three observations and 57% over three
+ * hundred are different claims. A rate shown without its sample would be the
+ * cheapest kind of wrong.
+ *
+ * What did move out is the pipeline behind the rates — how many triggers fired
+ * and how many are still inside their forward window. `n` already carries that:
+ * the 20-session rate cannot have closed for the last ~20 trading days, which
+ * is exactly why its denominator is the smaller one. Saying "15 pending" as
+ * well restated the same fact in the same line. `trackRecordDetail` keeps it
+ * for the hover.
+ */
 export function trackRecordLine(tr: ExhibitTrackRecord | null | undefined, band: LensBand | null): string | null {
   if (!tr || tr.n === 0) return null
-  const side = band === 'cold' || band === 'lean_cold' ? 'cold' : 'hot'
+  const side = sideForBand(band)
   const s = tr.by_side[side]
   const scope = tr.symbol_scoped ? 'this symbol' : 'all symbols'
   if (s.n === 0) return `${side} side: no triggers in ${tr.window_days}d (${scope})`
-  // Each rate carries its own denominator. `n` is every trigger in the window; the
-  // rates are computed over the triggers whose forward window has closed, and the
-  // 20-session one cannot have closed for the last ~20 trading days. Printing one `n`
-  // beside both overstated the 20d sample every time.
+  return (
+    `${side} ${pctText(s.hit_rate_5d)} (n=${s.evaluated_5d}) · ` +
+    `${pctText(s.hit_rate_20d)} (n=${s.evaluated_20d}) · ${scope}`
+  )
+}
+
+function sideForBand(band: LensBand | null): 'hot' | 'cold' {
+  return band === 'cold' || band === 'lean_cold' ? 'cold' : 'hot'
+}
+
+/**
+ * The long form, for the title attribute: the same rates plus the pipeline
+ * state and the window they were measured over. Nothing is only here — this is
+ * the line the caption used to be, kept reachable rather than kept on screen.
+ */
+export function trackRecordDetail(
+  tr: ExhibitTrackRecord | null | undefined,
+  band: LensBand | null,
+): string | null {
+  if (!tr || tr.n === 0) return null
+  const side = sideForBand(band)
+  const s = tr.by_side[side]
+  const scope = tr.symbol_scoped ? 'this symbol' : 'all symbols'
+  if (s.n === 0) return `${side} side: no triggers in ${tr.window_days}d (${scope})`
   const pending = s.n - s.evaluated_20d
-  const tail = pending > 0 ? `, ${pending} pending` : ''
+  const tail = pending > 0 ? `, ${pending} still inside their forward window` : ''
   return (
     `${side} side hit 5d ${pctText(s.hit_rate_5d)} (n=${s.evaluated_5d}) · ` +
-    `20d ${pctText(s.hit_rate_20d)} (n=${s.evaluated_20d}) — ${s.n} triggers${tail}, ${scope}, ${tr.window_days}d`
+    `20d ${pctText(s.hit_rate_20d)} (n=${s.evaluated_20d}) — ${s.n} triggers${tail}, ${scope}, ${tr.window_days}d window`
   )
 }
 

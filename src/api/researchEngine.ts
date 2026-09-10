@@ -105,45 +105,30 @@ export interface TerrainRegimePoint {
 }
 
 /**
- * Up to `limit` recent daily terrain regimes for a symbol.
- * There is no dedicated history endpoint — probes prior calendar weekdays
- * via `fetchTerrain(symbol, date)`. Returns only dates that actually exist.
+ * The last `limit` regimes, newest last, from history rows already in hand.
+ *
+ * This used to be a fetcher, and it cost five requests to answer: one
+ * `forecast/terrain` for the latest point, then one more per prior weekday,
+ * walked back a day at a time. Two of those were pure waste — the caller
+ * already ran a `['terrain', sym]` query hitting the identical URL, which
+ * React Query could not dedupe because the keys differed, and the same page
+ * already fetched `forecast/terrain/history?limit=30`, whose rows carry both
+ * `trade_date` and `regime`.
+ *
+ * So it is not a fetch. It is a read of rows the page has.
  */
-export async function fetchRecentTerrainRegimes(
-  symbol: string,
-  opts?: { limit?: number; lookbackCalendarDays?: number },
-): Promise<TerrainRegimePoint[]> {
-  const limit = opts?.limit ?? 5
-  const lookback = opts?.lookbackCalendarDays ?? 12
-  const latest = await fetchTerrain(symbol)
-  if (!latest?.terrain) return []
-
+export function recentTerrainRegimes(
+  rows: readonly TerrainData[] | null | undefined,
+  limit = 5,
+): TerrainRegimePoint[] {
+  if (!rows?.length) return []
   const byDate = new Map<string, string>()
-  const push = (t: TerrainData) => {
-    const d = String(t.trade_date).slice(0, 10)
-    if (!d || byDate.has(d)) return
+  for (const t of rows) {
+    const d = String(t?.trade_date ?? '').slice(0, 10)
+    // Newest first from the API; keep the first reading for each day.
+    if (!d || !t?.regime || byDate.has(d)) continue
     byDate.set(d, t.regime)
   }
-  push(latest.terrain)
-
-  if (byDate.size < limit) {
-    const base = new Date(`${String(latest.terrain.trade_date).slice(0, 10)}T12:00:00`)
-    const priorDates: string[] = []
-    for (let i = 1; i <= lookback && priorDates.length < limit - 1; i++) {
-      const d = new Date(base)
-      d.setDate(d.getDate() - i)
-      const dow = d.getDay()
-      if (dow === 0 || dow === 6) continue
-      priorDates.push(
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
-      )
-    }
-    const rows = await Promise.all(priorDates.map((d) => fetchTerrain(symbol, d)))
-    for (const row of rows) {
-      if (row?.terrain) push(row.terrain)
-    }
-  }
-
   return [...byDate.entries()]
     .map(([trade_date, regime]) => ({ trade_date, regime }))
     .sort((a, b) => a.trade_date.localeCompare(b.trade_date))

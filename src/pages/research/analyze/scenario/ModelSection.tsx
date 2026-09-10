@@ -26,7 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import {
   fetchAtmIv,
-  fetchRecentTerrainRegimes,
+  recentTerrainRegimes,
   fetchTerrain,
   fetchTerrainHistory,
   fetchVolatilitySmile,
@@ -467,13 +467,6 @@ export function ModelSection() {
     refetchInterval: 60_000,
   })
 
-  const terrainHistoryQ = useQuery({
-    queryKey: ['terrain-regime-history', sym],
-    queryFn: () => fetchRecentTerrainRegimes(sym, { limit: 5 }),
-    enabled: sym.length > 0,
-    refetchInterval: 60_000,
-  })
-
   const terrainScoreHistoryQ = useQuery({
     queryKey: ['terrain-score-history', sym],
     queryFn: async () => {
@@ -499,13 +492,16 @@ export function ModelSection() {
   })
 
   const terrain = terrainQ.data?.terrain ?? undefined
-  // Prefer probed history; fall back to the single current terrain point (no fake days).
-  const regimePoints: TerrainRegimePoint[] =
-    terrainHistoryQ.data && terrainHistoryQ.data.length > 0
-      ? terrainHistoryQ.data
-      : terrain
-        ? [{ trade_date: String(terrain.trade_date).slice(0, 10), regime: terrain.regime }]
-        : []
+  // Read from the history this page already fetched, rather than probing five
+  // more requests for days it is holding. Falls back to the single current
+  // point — never to invented days.
+  const regimePoints: TerrainRegimePoint[] = useMemo(() => {
+    const fromHistory = recentTerrainRegimes(terrainScoreHistoryQ.data, 5)
+    if (fromHistory.length > 0) return fromHistory
+    return terrain
+      ? [{ trade_date: String(terrain.trade_date).slice(0, 10), regime: terrain.regime }]
+      : []
+  }, [terrainScoreHistoryQ.data, terrain])
   const scoreHistory = useMemo(() => {
     const rows = terrainScoreHistoryQ.data ?? []
     return [...rows].sort((a, b) =>

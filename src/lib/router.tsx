@@ -6,10 +6,6 @@ import { SettingsLayout } from '@/layout/SettingsLayout'
 import RouteErrorPage from '@/pages/RouteErrorPage'
 
 /** Eager — high-traffic monitoring entry points */
-import LivePage from '@/pages/market/LivePage'
-import StockWatchlistPage from '@/pages/research/data/StockWatchlistPage'
-import PositionsPage from '@/pages/portfolio/PositionsPage'
-import InstancesPage from '@/pages/strategy/InstancesPage'
 
 function lazyPage(
   factory: () => Promise<{ default: ComponentType<unknown> }>,
@@ -48,16 +44,16 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/seats/WorkbenchPage')),
       },
 
-      { path: 'market/live', element: <LivePage /> },
+      { path: 'market/live', lazy: lazyPage(() => import('@/pages/market/LivePage')) },
       { path: 'market/watchlist', element: <Navigate to="/research/watchlist" replace /> },
 
-      { path: 'research/watchlist', element: <StockWatchlistPage /> },
+      { path: 'research/watchlist', lazy: lazyPage(() => import('@/pages/research/data/StockWatchlistPage')) },
 
       {
         path: 'portfolio/accounts',
         lazy: lazyPage(() => import('@/pages/portfolio/AccountsPage')),
       },
-      { path: 'portfolio/positions', element: <PositionsPage /> },
+      { path: 'portfolio/positions', lazy: lazyPage(() => import('@/pages/portfolio/PositionsPage')) },
       {
         path: 'portfolio/backing',
         lazy: lazyPage(() => import('@/pages/portfolio/backing/BackingPage')),
@@ -240,7 +236,7 @@ export const router = createBrowserRouter([
         element: <Navigate to="/operations/daemon" replace />,
       },
 
-      { path: 'strategy/instances/:instanceId?', element: <InstancesPage /> },
+      { path: 'strategy/instances/:instanceId?', lazy: lazyPage(() => import('@/pages/strategy/InstancesPage')) },
       {
         path: 'strategy/win-rate',
         lazy: lazyPage(() => import('@/pages/strategy/WinRatePage')),

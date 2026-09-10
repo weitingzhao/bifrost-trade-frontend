@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import {
   Expand,
   History,
@@ -15,13 +15,33 @@ import {
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ResearchUserSwitcher, type ResearchUserSwitcherHandle } from '@/components/auth/ResearchUserSwitcher'
-import { CockpitTabs } from '@/components/cockpit/CockpitTabs'
 import { AskCopilotIntentHost } from '@/components/cockpit/AskCopilotIntentHost'
 import { CockpitSaveHypothesisHost } from '@/components/cockpit/CockpitSaveHypothesisHost'
-import { BridgeDialog } from '@/components/cockpit/BridgeDialog'
-import { ExportSessionMenu } from '@/components/cockpit/ExportSessionMenu'
-import { SessionListSidebar } from '@/components/cockpit/SessionListSidebar'
 import { CopilotPanelMoreMenu } from '@/components/copilot/CopilotPanelMoreMenu'
+
+/**
+ * The panel's own weight, deferred until it opens.
+ *
+ * These four render only behind `if (!open) return`, but a static import puts
+ * them — and the whole markdown stack CockpitTabs pulls for message bodies —
+ * in the entry chunk, so every page load paid for a Copilot nobody had opened
+ * yet. The two deep-link hosts below stay static: they render in the *closed*
+ * branch and have to be listening before the panel exists.
+ */
+const CockpitTabs = lazy(() =>
+  import('@/components/cockpit/CockpitTabs').then((m) => ({ default: m.CockpitTabs })),
+)
+const BridgeDialog = lazy(() =>
+  import('@/components/cockpit/BridgeDialog').then((m) => ({ default: m.BridgeDialog })),
+)
+const ExportSessionMenu = lazy(() =>
+  import('@/components/cockpit/ExportSessionMenu').then((m) => ({ default: m.ExportSessionMenu })),
+)
+const SessionListSidebar = lazy(() =>
+  import('@/components/cockpit/SessionListSidebar').then((m) => ({
+    default: m.SessionListSidebar,
+  })),
+)
 import {
   copilotBubbleStore,
   useCopilotBubble,
@@ -204,7 +224,8 @@ export function CopilotFloatingBubble() {
       : { bottom: DEFAULT_MARGIN, right: DEFAULT_MARGIN }
 
   return (
-    <>
+    <Suspense fallback={null}>
+      <>
       <aside
         ref={panelRef}
         role="dialog"
@@ -407,5 +428,6 @@ export function CopilotFloatingBubble() {
       <CockpitSaveHypothesisHost />
       <AskCopilotIntentHost />
     </>
+    </Suspense>
   )
 }

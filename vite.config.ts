@@ -160,6 +160,27 @@ export default defineConfig(({ mode }) => {
             if (id.includes('@tanstack')) return 'vendor-query'
             if (id.includes('radix-ui') || id.includes('@radix-ui')) return 'vendor-radix'
             if (id.includes('lucide-react')) return 'vendor-icons'
+            // Everything below used to fall through into the entry chunk, which
+            // is how a terminal you open every morning came to ship a markdown
+            // parser before it drew a single row.
+            if (id.includes('/zod/')) return 'vendor-zod'
+            if (
+              id.includes('react-markdown') ||
+              id.includes('/remark-') ||
+              id.includes('/rehype-') ||
+              id.includes('/micromark') ||
+              id.includes('/mdast-') ||
+              id.includes('/hast-') ||
+              id.includes('/unified/') ||
+              id.includes('/vfile') ||
+              id.includes('/unist-') ||
+              id.includes('property-information') ||
+              id.includes('/decode-named-character-reference/') ||
+              id.includes('/character-entities')
+            ) {
+              return 'vendor-markdown'
+            }
+            if (id.includes('tailwind-merge')) return 'vendor-tw'
           },
         },
       },

@@ -43,7 +43,19 @@ const TIER_TEXT: Record<TierId, string> = {
 const BAND: Record<GaugeLevel, string> = { 0: 'idle', 1: 'normal', 2: 'heavy', 3: 'critical' }
 const BAND_TEXT: Record<GaugeLevel, string> = { 0: 'text-muted-foreground', 1: 'text-foreground', 2: 'text-warning', 3: 'text-loss' }
 const BAND_FILL: Record<GaugeLevel, string> = { 0: 'bg-profit', 1: 'bg-profit', 2: 'bg-warning', 3: 'bg-loss' }
-const GRID = 'grid grid-cols-[11rem_minmax(0,1fr)_4.75rem_3.5rem] items-center gap-x-2'
+/**
+ * The step column was a fixed 11rem, which is narrower than three of the five
+ * strings it holds: "Borrow against the account up to balanced 50%" wants
+ * 290px and got 176. Every row truncated its meaning and its counts, so the
+ * column that says *what each step is* was the one paying for the bars.
+ *
+ * It can now take up to 19rem when the section has the width, and still falls
+ * back to 11rem — with the truncation behind it — when it does not. The bars
+ * keep a 9rem floor; they are proportional, so they read fine narrower, which
+ * the text does not.
+ */
+const GRID =
+  'grid grid-cols-[minmax(11rem,19rem)_minmax(9rem,1fr)_4.75rem_4.25rem] items-center gap-x-2'
 
 const plus = (n: number | null) => (n == null ? '—' : `+${n.toLocaleString()}`)
 const pct0 = (v: number | null) => (v == null ? '—' : `${Math.round(v * 100)}%`)
@@ -157,7 +169,6 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange }: Pr
   ]
   const max = tiers.reduce((n, t) => n + (t.premium ?? 0), 0)
   const added = r.backed.income == null && r.margin.income == null ? null : (r.backed.income ?? 0) + (r.margin.income ?? 0)
-  const tenor = r.now.tenor ? `${r.now.tenor.min}–${r.now.tenor.max} d` : null
 
   return (
     <section
@@ -194,12 +205,19 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange }: Pr
         </span>
       </div>
 
+      {/* Three lines of prose sat here explaining premium, pressure, what
+          margin costs, and that these are estimates. Every one of those is
+          already a variable in the derivation the `?` opens — NetPremium's
+          tenor note, PressureNow's "at 100% pressure the broker starts closing
+          positions", MarginPuts, and the intro's "Not the broker's what-if."
+          It was a second copy of the same explanation, in the smallest type,
+          permanently occupying the top of a dense panel.
+
+          The caveat stays: a panel about money should say what kind of number
+          it is without being asked. */}
       <p className="mb-1.5 text-dense-caption text-muted-foreground">
-        <span className="text-foreground">Premium</span> is what those contracts would bring in over one cycle
-        {tenor ? ` of ${tenor}` : ''}, at the {r.pool.yieldPerCycle != null ? `${(r.pool.yieldPerCycle * 100).toFixed(1)}%` : '—'} this book was
-        sold at. <span className="text-foreground">Pressure</span> is how much of the accounts' cushion would be spent; the broker liquidates at
-        100%. Margin costs {r.margin.marginPerPut != null ? usdAbbrev(r.margin.marginPerPut) : '—'} a put
-        {r.margin.leverage != null ? `, ${r.margin.leverage.toFixed(1)}× less than setting cash aside` : ''} · estimates, not the broker's what-if
+        Page estimates from the book&rsquo;s own numbers, not the broker&rsquo;s what-if —{' '}
+        <span className="text-foreground">?</span> for how each figure is built.
       </p>
 
       <div className={cn(GRID, 'text-dense-label font-semibold uppercase tracking-wide text-muted-foreground')}>

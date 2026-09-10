@@ -3,9 +3,14 @@
  *
  * Renders one `Hypothesis` as an elevated Card with:
  *   - status DenseTag + optional origin_page
- *   - title + 2-line clamped thesis
+ *   - title (opaque run id split off) + 2-line clamped thesis
  *   - symbol / tag chips
  *   - relative updated timestamp + Open button
+ *
+ * Everything the card truncates is ranked first — see
+ * `@/lib/hypothesisCardModel`. Cards written by the daily loop share one
+ * template, so cutting by position alone produced a grid of identical-looking
+ * cards whose grades and scores had been clipped away.
  *
  * The card itself is a clickable link. Consumers can override the target via
  * `to`, otherwise it navigates to `/research/hypothesis/{id}` (detail page is
@@ -19,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { isRuleResolved, resolutionLine } from '@/lib/hypothesisResolution'
+import { rankTags, salientThesis, splitTitleRef } from '@/lib/hypothesisCardModel'
 import type { Hypothesis, HypothesisStatus } from '@/api/researchHypothesis'
 
 const STATUS_VARIANT: Record<HypothesisStatus, DenseTagVariant> = {
@@ -67,8 +73,13 @@ export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProp
   }`
   const symbols = hypothesis.symbols.slice(0, 4)
   const extraSymbols = Math.max(0, hypothesis.symbols.length - symbols.length)
-  const tags = hypothesis.tags.slice(0, 3)
-  const extraTags = Math.max(0, hypothesis.tags.length - tags.length)
+  // Rank, then slice. The loop appends its plumbing tags first, so an unranked
+  // slice(0, 3) showed `harness, candidate_batch, stock` on every card it wrote.
+  const rankedTags = rankTags(hypothesis.tags)
+  const tags = rankedTags.slice(0, 3)
+  const extraTags = Math.max(0, rankedTags.length - tags.length)
+  const { title, ref } = splitTitleRef(hypothesis.title)
+  const thesis = salientThesis(hypothesis.thesis)
   return (
     <Card
       variant="elevated"
@@ -101,7 +112,7 @@ export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProp
             size="sm"
             className="h-6 px-2 text-dense-meta shrink-0"
           >
-            <Link to={target} aria-label={`Open hypothesis ${hypothesis.title}`}>
+            <Link to={target} aria-label={`Open hypothesis ${title}`}>
               Open
               <ArrowUpRight className="ml-1 h-3 w-3" />
             </Link>
@@ -109,11 +120,22 @@ export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProp
         </div>
         <div className="space-y-1">
           <h3 className="text-dense-label font-semibold leading-snug line-clamp-2">
-            {hypothesis.title}
+            {title}
           </h3>
-          {hypothesis.thesis ? (
+          {ref ? (
+            // Kept, because two cards sharing a run id came from the same batch
+            // and that adjacency is worth seeing — just not in the title, where
+            // it pushed the symbol toward the clamp.
+            <p
+              className="truncate font-mono text-dense-micro text-muted-foreground/70"
+              title={ref}
+            >
+              {ref}
+            </p>
+          ) : null}
+          {thesis ? (
             <p className="text-dense-meta text-muted-foreground line-clamp-2 leading-snug">
-              {hypothesis.thesis}
+              {thesis}
             </p>
           ) : null}
         </div>
@@ -163,7 +185,7 @@ export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProp
           >
             <Link
               to={backtestTarget}
-              aria-label={`Backtest hypothesis ${hypothesis.title}`}
+              aria-label={`Backtest hypothesis ${title}`}
             >
               <FlaskConical className="mr-1 h-3 w-3" />
               {hypothesis.linked_backtest_ids.length > 0 ? 'Backtest again' : 'Backtest'}

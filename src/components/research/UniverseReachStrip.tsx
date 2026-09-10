@@ -46,6 +46,14 @@ export function UniverseReachStrip() {
   // Name the mode: 0.19% and 23.4% are both true, of different modes.
   const modes = data.universe_modes?.length ? data.universe_modes.join(' + ') : null
 
+  // A layer with no count says the same nothing as the layer beside it. Rendered
+  // one chip each, five of them plus the reach chip spent a whole row of a dense
+  // page repeating "not measured" six times. Show the layers that have a number
+  // as the funnel they are, and summarise the rest in one chip. The disclosure
+  // below still names every layer and its status.
+  const measured = data.layers.filter((l) => l.symbols != null)
+  const unmeasured = data.layers.length - measured.length
+
   return (
     <div className="rounded-md border border-border/60 bg-secondary/50 px-3 py-2">
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -59,17 +67,31 @@ export function UniverseReachStrip() {
         {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
         Universe reach
       </button>
-      {data.layers.map((layer, i) => (
+      {measured.map((layer, i) => (
         <span key={layer.key} className="flex items-center gap-2">
           {i > 0 ? <span className="text-muted-foreground/50">→</span> : null}
           <span className="text-dense-meta text-muted-foreground" title={layer.table}>
             {layer.label}
           </span>
           <DenseTag variant={layer.status === 'ok' ? 'neutral' : 'warning'} size="cell">
-            {layer.symbols == null ? 'not measured' : fmtInt(layer.symbols)}
+            {fmtInt(layer.symbols as number)}
           </DenseTag>
         </span>
       ))}
+      {unmeasured > 0 ? (
+        <DenseTag
+          variant="warning"
+          size="cell"
+          title={`Counts unavailable: ${data.layers
+            .filter((l) => l.symbols == null)
+            .map((l) => l.label)
+            .join(', ')}. Open the strip for what each one counts.`}
+        >
+          {measured.length === 0
+            ? `${unmeasured} layers not measured`
+            : `+${unmeasured} not measured`}
+        </DenseTag>
+      ) : null}
       {pct != null ? (
         // The modes moved into the tooltip: spelled out, this chip was long
         // enough to wrap onto its own line, so a strip meant to be one line was
@@ -85,11 +107,11 @@ export function UniverseReachStrip() {
         >
           Loop sees {pct}%
         </DenseTag>
-      ) : (
+      ) : unmeasured === 0 ? (
         <DenseTag variant="warning" size="cell">
           reach not measured
         </DenseTag>
-      )}
+      ) : null}
     </div>
     {open ? (
       <div className="mt-2 grid gap-1.5 border-t border-border/40 pt-2 text-dense-label leading-relaxed text-muted-foreground md:grid-cols-2">

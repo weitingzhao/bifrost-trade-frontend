@@ -525,3 +525,34 @@
 
 /* Print goes through a hidden iframe (exportSerializer.printHtml).
    Do not hide body * here — that + position:fixed only captures page 1. */
+/* Accessibility — honour the OS "reduce motion" setting.
+
+   Unlayered on purpose: the animation utilities above live in @layer utilities,
+   and unlayered rules win over layered ones, so this needs no fight with
+   specificity beyond the !important that an a11y override warrants.
+
+   Durations collapse to 0.01ms rather than `none` so transitionend /
+   animationend still fire — logic that awaits them must not stall.
+   animation-iteration-count: 1 is what actually stops the infinite pulses
+   (.animate-lamp-pulse-*, animate-pulse, animate-ping); each settles on its
+   100% keyframe, which is the fully-opaque state, so no lamp goes dark and
+   colour still carries the status.
+
+   Spinners are deliberately exempt. A 12-16px rotating icon is not a
+   vestibular trigger, and freezing it destroys the only signal that work is
+   still in flight — several call sites (e.g. the RefreshCw buttons in
+   ExecutionImport, OpenOptionExecTableRow) have no accompanying text. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-spin {
+    animation: var(--animate-spin, spin 1s linear infinite) !important;
+  }
+}

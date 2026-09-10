@@ -16,8 +16,8 @@ import {
 } from '@/utils/socketIngestLamp'
 import {
   socketMassiveAgeBadgeClass,
-  LAMP_BG,
 } from './socketIngestUi'
+import { lampFillClass } from '@/lib/lampTone'
 
 function formatMassiveAgeLabel(ageS: number): string {
   if (ageS < 60) return `${Math.floor(ageS)}s`
@@ -117,13 +117,15 @@ export function ConnectionCell({
             <span
               className={cn(
                 'inline-block h-2 w-2 rounded-full',
-                restOnly
-                  ? LAMP_BG.green
-                  : wsConnected === true
-                    ? LAMP_BG.green
+                // `null` is "state unknown", which lands on the same grey as
+                // every other unknown rather than its own muted spelling.
+                lampFillClass(
+                  restOnly || wsConnected === true
+                    ? 'green'
                     : wsConnected === false
-                      ? LAMP_BG.red
-                      : 'bg-muted-foreground/40',
+                      ? 'red'
+                      : 'gray',
+                ),
               )}
               aria-hidden
             />

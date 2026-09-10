@@ -20,9 +20,9 @@ import {
   ibBrokerHeartbeatBadgeClass,
   ibBrokerProbeBadgeClass,
   ibBrokerSlotDotClass,
-  LAMP_BG,
   socketConnectionRetryBadgeClass,
 } from '@/pages/settings/socket/socketIngestUi'
+import { lampFillClass } from '@/lib/lampTone'
 
 function ConnectionColumn({
   label,
@@ -157,7 +157,7 @@ function IbSlotColumn({
       ? ibBrokerSlotDotClass(true)
       : lamp === 'red'
         ? ibBrokerSlotDotClass(false)
-        : LAMP_BG.gray
+        : lampFillClass('gray')
   const colTitle = slot.label
     ? `${slot.label} client ${slot.clientId ?? '—'}`
     : `Client ${slot.clientId ?? '—'}`

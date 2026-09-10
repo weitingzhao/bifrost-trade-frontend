@@ -1,13 +1,7 @@
 import { cn } from '@/lib/utils'
+import { lampTextClass } from '@/lib/lampTone'
 import { denseTable } from '@/components/data-display'
 import type { Lamp } from '@/utils/apiHealthConfig'
-
-/** Small glow for tab lamps and compact indicators. */
-export const LAMP_GLOW: Record<Lamp, string> = {
-  green: 'shadow-[0_0_5px_1px_var(--color-lamp-green)]',
-  yellow: 'shadow-[0_0_5px_1px_var(--color-lamp-yellow)]',
-  red: 'shadow-[0_0_5px_1px_var(--color-lamp-red)]',
-}
 
 export const apiHealthSectionTitleClass = denseTable.sectionTitle
 
@@ -56,12 +50,9 @@ export const apiHealthServiceCardActionsClass = cn('flex shrink-0 items-center g
 export const apiHealthServiceCardNameClass = cn('min-w-0 truncate text-sm font-semibold')
 
 export function apiHealthServiceStatusClass(lamp: Lamp): string {
-  return cn(
-    'shrink-0 font-mono text-xs tabular-nums',
-    lamp === 'green' && 'text-success',
-    lamp === 'red' && 'text-danger',
-    lamp === 'yellow' && 'text-warning',
-  )
+  // The lamp family, not the semantic one: the glow beside this label is lit
+  // from --color-lamp-*, which is a brighter value in dark mode.
+  return cn('shrink-0 font-mono text-xs tabular-nums', lampTextClass(lamp))
 }
 
 export const apiHealthServiceKvGridClass = cn(

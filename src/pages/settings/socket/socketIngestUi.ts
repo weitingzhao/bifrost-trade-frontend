@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { lampFillClass } from '@/lib/lampTone'
 import { denseTable } from '@/components/data-display'
 import type { IngestLamp } from '@/utils/socketIngestLamp'
 import type { OpsHostEnvPill as OpsHostEnvPillType } from '@/utils/ingestOpsShared'
@@ -74,16 +75,9 @@ export const socketSubheadLabelClass = cn(
 
 export const socketMonitorHintClass = cn('text-xs text-muted-foreground mt-3')
 
-export const LAMP_BG: Record<IngestLamp | 'none', string> = {
-  green: 'bg-lamp-green',
-  yellow: 'bg-lamp-yellow',
-  red: 'bg-lamp-red',
-  gray: 'bg-lamp-gray',
-  none: 'bg-lamp-gray',
-}
-
+/** Flat dot, no glow — these sit in a dense table where a glow would smear. */
 export function socketLampDotClass(lamp: IngestLamp): string {
-  return cn('inline-block h-2.5 w-2.5 rounded-full shrink-0', LAMP_BG[lamp])
+  return cn('inline-block h-2.5 w-2.5 rounded-full shrink-0', lampFillClass(lamp))
 }
 
 export function opsHostEnvPillVariantClass(variant: OpsHostEnvPillType['pillVariant']): string {
@@ -200,7 +194,7 @@ export function socketConnectionRetryBadgeClass(retrying: boolean): string {
 
 /** IB Broker Connection — unified dot size (matches Status lamp h-2 w-2). */
 export function ibBrokerSlotDotClass(live: boolean): string {
-  return cn('h-2 w-2', live ? LAMP_BG.green : LAMP_BG.red)
+  return cn('h-2 w-2', lampFillClass(live ? 'green' : 'red'))
 }
 
 export const ibBrokerClientIdClass = socketIbClientIdClass

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { lampDotClass } from '@/lib/lampTone'
 import type { EnvLamp } from '@/utils/apiHealthEnv'
 
 export const apiHealthOverviewSectionClass = cn('space-y-4')
@@ -50,12 +51,9 @@ export const apiHealthDiagramLineClass = cn(
 )
 
 export function apiHealthDiagramNodeClass(lamp: EnvLamp): string {
-  return cn(
-    'h-2.5 w-2.5 shrink-0 rounded-full mt-1',
-    lamp === 'green' && 'bg-green-500 shadow-[0_0_5px_1px_var(--color-lamp-green)]',
-    lamp === 'red' && 'bg-red-500 shadow-[0_0_5px_1px_var(--color-lamp-red)]',
-    lamp === 'none' && 'bg-muted-foreground/30',
-  )
+  // Fill and glow used to come from different families — a raw palette class
+  // lit by a lamp token — so the two could drift apart.
+  return cn('h-2.5 w-2.5 shrink-0 rounded-full mt-1', lampDotClass(lamp))
 }
 
 export const apiHealthDiagramLabelClass = cn('text-xs font-medium shrink-0 w-24')

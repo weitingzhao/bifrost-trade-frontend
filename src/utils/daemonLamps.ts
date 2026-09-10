@@ -61,7 +61,9 @@ export function computeAccountSyncIbGroupLamp(
   if (!status) return { lamp: 'none', title: 'Monitor status not loaded.' }
   const aa = ibServiceLamp('ib_account_agent', status)
   const sync = computeAccountSyncLamp(status)
-  const syncLamp: ServiceLamp = sync.lamp === 'none' ? 'red' : sync.lamp
+  // Unknown degrades the rollup, it does not fail it — the same call this
+  // file's mapIngestLampToServiceLamp already makes.
+  const syncLamp: ServiceLamp = sync.lamp === 'none' ? 'yellow' : sync.lamp
   const roll = worst([aa.lamp, syncLamp])
   if (roll === 'green') {
     return { lamp: 'green', title: 'IB Account Agent and Account Sync Daemon healthy.' }
@@ -80,6 +82,6 @@ export function computeStrategyTradingDaemonLamp(
   if (!hb) return 'none'
   if (!hb.daemon_alive) return 'red'
   const heartbeatL: ServiceLamp = 'green'
-  const ibL: ServiceLamp = ibGroupLamp === 'none' ? 'red' : ibGroupLamp
+  const ibL: ServiceLamp = ibGroupLamp === 'none' ? 'yellow' : ibGroupLamp
   return worst([heartbeatL, ibL])
 }

@@ -44,7 +44,8 @@ export function AccountSyncDaemonCard({
   const { lamp: asdLamp, title: asdTitle } = computeAccountSyncLamp(data)
   const { lamp: ibAccountGroupLamp, title: ibAccountGroupTitle } = computeAccountSyncIbGroupLamp(data)
   const aaLamp = ingestRedisHealthLamp('ib_account_agent', data)
-  const displayAsdLamp = asdLamp === 'none' ? 'red' : asdLamp
+  // `none` means no heartbeat row yet, which is unknown, not failed.
+  const displayAsdLamp = asdLamp
 
   const statusLabel = !asd
     ? 'No heartbeat row'

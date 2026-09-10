@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { lampTextClass } from '@/lib/lampTone'
 import { denseTable } from '@/components/data-display'
 import type { DaemonLamp } from '@/utils/daemonLamps'
 
@@ -29,12 +30,9 @@ export const daemonIbServiceRowClass = cn('flex items-center justify-between px-
 export const daemonIbServiceRowInnerClass = cn('flex items-center gap-1.5')
 
 export function daemonLampTextClass(lamp: DaemonLamp): string {
-  return cn(
-    'font-mono text-xs tabular-nums',
-    lamp === 'green' && 'text-success',
-    (lamp === 'red' || lamp === 'none') && 'text-red-500',
-    lamp === 'yellow' && 'text-yellow-500',
-  )
+  // `none` means the daemon is not running, which under D10 is the correct
+  // standing posture — it is grey, not the red a fault gets.
+  return cn('font-mono text-xs tabular-nums', lampTextClass(lamp))
 }
 
 export const daemonBlockReasonClass = cn('text-destructive')

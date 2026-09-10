@@ -30,8 +30,10 @@ export function Row({ label, children, className }: { label: string; children: R
 }
 
 export function LampDot({ lamp, title }: { lamp: DaemonLamp; title?: string }) {
-  const mapped = lamp === 'none' ? 'red' : lamp
-  return <StatusLamp lamp={mapped} title={title} className="h-2.5 w-2.5 shrink-0" />
+  // `none` is "monitor status not loaded" — StatusLamp already renders that
+  // grey. This used to override it to red, so a missing reading looked like a
+  // failed service.
+  return <StatusLamp lamp={lamp} title={title} className="h-2.5 w-2.5 shrink-0" />
 }
 
 export function IbServiceRow({ label, svcId, status }: {

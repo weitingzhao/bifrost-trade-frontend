@@ -29,7 +29,12 @@ const FACE_ORDER = ['trend', 'volatility', 'positioning', 'forecast', 'validatio
 
 export function coverageLamp(lens: CoverageLens): LampColor {
   if (lens.unscreenable) return 'gray'
-  if (lens.read == null || lens.read === 0) return 'red'
+  // `read == null` is "no reading", which coveragePct already renders as '—'.
+  // Today every null also carries an `unscreenable` reason and is caught above,
+  // so this is consistency rather than a live fix — but the two functions
+  // disagreed about the same field, and only one of them could be right.
+  if (lens.read == null) return 'gray'
+  if (lens.read === 0) return 'red'
   const share = lens.of > 0 ? lens.read / lens.of : 0
   return share >= 0.9 ? 'green' : share >= 0.25 ? 'yellow' : 'red'
 }
@@ -47,7 +52,7 @@ function LensRow({ lens }: { lens: CoverageLens }) {
         <StatusLamp lamp={coverageLamp(lens)} className="h-2 w-2 shrink-0" />
         <span className="min-w-0 flex-1 truncate text-dense-meta">{lens.label}</span>
         <span className="text-dense-micro tabular-nums text-muted-foreground">
-          {lens.unscreenable ? '—' : `${lens.read ?? 0} / ${lens.of}`}
+          {lens.unscreenable || lens.read == null ? '—' : `${lens.read} / ${lens.of}`}
         </span>
         <span className="w-10 text-right text-dense-micro tabular-nums">{coveragePct(lens)}</span>
       </div>

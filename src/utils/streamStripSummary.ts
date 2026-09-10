@@ -5,7 +5,7 @@ import {
   computeMarketStreamsLamp,
   computeMarketStreamsOk,
   computeOpenOrdersLamp,
-  type LampColor,
+  type LiveLamp,
 } from '@/utils/livePageLamps'
 import { computeMarketStreamDailyChange } from '@/utils/marketStreamsDailyTotals'
 import { computeAccountSyncLamp } from '@/utils/daemonLamps'
@@ -24,8 +24,8 @@ export interface StreamStripSymbolRow {
 
 export interface StreamStripModel {
   streamsOnline: boolean
-  streamsLamp: LampColor
-  ordersLamp: LampColor
+  streamsLamp: LiveLamp
+  ordersLamp: LiveLamp
   openOrderCount: number
   ordersLampTitle: string
   totalDailyDollar: number

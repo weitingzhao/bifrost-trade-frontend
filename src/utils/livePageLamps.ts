@@ -1,4 +1,5 @@
 import type { StatusResponse } from '@/types/monitor'
+import type { LampTone } from '@/lib/lampTone'
 import type { QuoteItem } from '@/types/market'
 import { ibBrokerPlatformGatewayLabel, isPlatformIbGatewayActive } from '@/utils/platformIbGateway'
 import { ingestRedisHealthLamp, ingestRedisTruthyConnected } from '@/utils/socketIngestLamp'
@@ -18,7 +19,13 @@ function liveIbServiceLabel(
 const RECENT_QUOTE_MAX_AGE_S = 60
 export const ACCOUNT_SYNC_HEARTBEAT_MAX_AGE_S = 35
 
-export type LampColor = 'green' | 'yellow' | 'red' | 'none'
+/**
+ * A lamp that can also be absent. `none` is not a spelling of grey: grey is a
+ * lamp reading unknown, `none` is no lamp at all — navLampIcon renders it as
+ * sidebar chrome. Named apart from the freshness lamp type because the two
+ * used to share one name while holding different sets of states.
+ */
+export type LiveLamp = LampTone | 'none'
 
 export function computeMarketStreamsOk(
   status: StatusResponse | null | undefined,
@@ -38,7 +45,7 @@ export function computeMarketStreamsOk(
 export function computeMarketStreamsLamp(
   status: StatusResponse | undefined,
   quotesMap: Record<string, QuoteItem> = {},
-): LampColor {
+): LiveLamp {
   if (!status) return 'none'
   if (computeMarketStreamsOk(status, quotesMap)) return 'green'
   const quotesOk = status.market_data?.quotes_redis_reader_ok ?? false
@@ -62,7 +69,7 @@ export function computeOpenOrdersSectionOk(
   return true
 }
 
-export function computeOpenOrdersLamp(status: StatusResponse | undefined): LampColor {
+export function computeOpenOrdersLamp(status: StatusResponse | undefined): LiveLamp {
   if (!status) return 'none'
   if (computeOpenOrdersSectionOk(status)) return 'green'
   const hb = status.account_sync_daemon?.heartbeat
@@ -76,9 +83,12 @@ export function computeOpenOrdersLamp(status: StatusResponse | undefined): LampC
 export function computeLiveNavLamp(
   status: StatusResponse | null | undefined,
   daemonAlive: boolean,
-): { color: LampColor; title: string } {
+): { color: LiveLamp; title: string } {
   if (!status) {
-    return { color: 'red', title: 'Monitor status not loaded — cannot determine Live health.' }
+    // Its own title says "cannot determine", and the two sibling lamps in this
+    // file answer 'none' to the same input. Red here meant the sidebar showed a
+    // fault on every page load until the monitor query resolved.
+    return { color: 'none', title: 'Monitor status not loaded — cannot determine Live health.' }
   }
 
   const op = ingestRedisHealthLamp('ib_operator', status)

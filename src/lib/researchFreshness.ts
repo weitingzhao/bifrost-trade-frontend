@@ -1,4 +1,10 @@
-export type LampColor = 'green' | 'yellow' | 'red' | 'gray'
+import type { LampTone } from '@/lib/lampTone'
+
+/**
+ * The same four states `lampTone` renders. Kept under this name because 16
+ * modules already speak it; there is only one definition now.
+ */
+export type LampColor = LampTone
 
 export function todayIso(): string {
   const d = new Date()

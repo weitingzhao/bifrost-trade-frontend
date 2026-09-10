@@ -22,8 +22,8 @@ function msgIsRecent(msg: SystemMessage): boolean {
 function getLevelIcon(level: SystemMessageLevel) {
   switch (level) {
     case 'success': return <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
-    case 'warning': return <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
-    case 'error':   return <XCircle className="h-4 w-4 shrink-0 text-red-500" />
+    case 'warning': return <AlertTriangle className="h-4 w-4 shrink-0 text-lamp-yellow" />
+    case 'error':   return <XCircle className="h-4 w-4 shrink-0 text-lamp-red" />
     default:        return <Info className="h-4 w-4 shrink-0 text-muted-foreground" />
   }
 }
@@ -50,13 +50,27 @@ export function MessageToastStack({ messages, dismissedIds, onDismiss }: Props) 
     .filter(m => !dismissedIds.has(m.message_id) && msgIsRecent(m))
     .slice(0, MAX_TOASTS)
 
-  if (toasts.length === 0) return null
 
   return (
-    <div className="fixed top-14 right-4 z-50 flex flex-col gap-2 w-[284px] pointer-events-none">
+    // The container is always mounted, even with nothing in it: a live region
+    // that appears at the same moment as its first message is not announced by
+    // most screen readers — it has to be there to be watched.
+    //
+    // A toast that appears in silence is not a notification for anyone using a
+    // screen reader. `polite` waits for a pause — right for a stack that mostly
+    // reports what already happened; error toasts opt into `alert` below,
+    // because a rejected order or a dropped feed should not wait its turn.
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+      aria-relevant="additions"
+      className="fixed top-14 right-4 z-50 flex flex-col gap-2 w-[284px] pointer-events-none"
+    >
       {toasts.map(msg => (
         <div
           key={msg.message_id}
+          role={msg.level === 'error' ? 'alert' : undefined}
           className={cn(
             'relative overflow-hidden flex gap-2.5 rounded-[14px] border border-white/[0.085] p-3 pointer-events-auto',
             'bg-[rgba(18,23,31,0.91)] dark:bg-[rgba(18,23,31,0.91)] backdrop-blur-[22px] backdrop-saturate-[160%]',

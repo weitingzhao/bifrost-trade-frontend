@@ -3,7 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
 import { useResearchSeatDeepLink } from '@/hooks/useResearchSeatDeepLink'
 import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
-import { GlobalMarketStatusBar } from '@/components/layout'
+import { GlobalMarketStatusBar, SkipToContent } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
@@ -77,6 +77,7 @@ export function AppLayout() {
     return (
       <ReactorMapProvider>
         <PlatformPanelProvider>
+          <SkipToContent />
           <div className="flex flex-col h-svh bg-card">
             <TopNav
               activeMsgCount={activeMsgCount}
@@ -84,7 +85,7 @@ export function AppLayout() {
               onToggleNavMode={isTooNarrow ? undefined : toggle}
             />
             <GlobalMarketStatusBar enabled={showMarketStrip} />
-            <main className="flex-1 overflow-auto min-w-0">
+            <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto min-w-0 outline-none">
               <BoundedOutlet />
             </main>
             <ReactorMapPanel />
@@ -101,6 +102,9 @@ export function AppLayout() {
     <ReactorMapProvider>
       <PlatformPanelProvider>
         <SidebarProvider defaultOpen={readSidebarCookie()}>
+          {/* Before the sidebar, not after: the ~40 nav links are exactly what
+              this exists to skip. */}
+          <SkipToContent />
           <AppSidebar />
           {/* h-svh + overflow-hidden keeps dock panels inside the viewport */}
           <SidebarInset className="h-svh overflow-hidden bg-card">
@@ -110,7 +114,7 @@ export function AppLayout() {
               onToggleNavMode={isTooNarrow ? undefined : toggle}
             />
             <GlobalMarketStatusBar enabled={showMarketStrip} />
-            <main className="flex-1 overflow-auto min-w-0 bg-card">
+            <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto min-w-0 bg-card outline-none">
               <BoundedOutlet />
             </main>
             <ReactorMapPanel />

@@ -696,6 +696,7 @@ Three tiers by scope.
 |---------|---------|
 | Table with no rows | `denseTable.emptyHint` centered text |
 | Section / card with no data | `EmptyState` from `data-display` — icon + title + optional subtitle + action button |
+| Section / card backed by a query | `dataState()` from `@/lib/dataState` + `DataStateBlock` — see below. **Never branch on emptiness alone.** |
 | Filter yields no results | `denseTable.emptyHint` with distinct message ("No results match filters") |
 
 ## Operation feedback
@@ -737,3 +738,40 @@ All coding agents (Cursor, Claude Code, Codex, GPT) working in this repo MUST fo
 | `.cursor/skills/dense-ui/SKILL.md` | Implementation workflow for tables/migration |
 
 After UI changes: `npm run lint && npm run build && npm run check:legacy-css`.
+
+
+## Data states — not knowing is its own state
+
+A surface backed by a query says one of four things, and three of them are not
+"empty":
+
+```tsx
+const state = dataState({ isPending: q.isPending, isError: q.isError, isEmpty: rows.length === 0 })
+return state !== 'ready'
+  ? <DataStateBlock state={state} sourceLabel="Event calendar" onRetry={() => void q.refetch()}
+      empty={{ title: 'No upcoming events', description: 'No forward-looking events detected' }} />
+  : <EventTable rows={rows} />
+```
+
+**Why this is not optional.** Empty copy is rarely neutral — on this app it
+asserts things like *"No Option or Stock PnL in the selected range."*,
+*"No upcoming events"*, *"No option data found for NVDA"*. Every one of those is
+a claim about the market or the book, and a component that branches on
+`rows.length === 0` alone makes that claim just as confidently when the request
+never landed. On a trading surface a wrong answer costs more than no answer.
+
+Rules:
+
+- Content wins over an error — a stale list beats a blank panel, so `isEmpty`
+  is the caller's own row count and `ready` short-circuits everything else.
+- The failure branch never reuses the empty copy, and never borrows its cause.
+  `DataStateBlock` says the source did not answer and that what is there is
+  unknown.
+- `loading` and `empty` stay distinct: "not asked yet" is not "asked, nothing
+  there".
+- `sourceLabel` names the lens that went quiet, so a grid of panels says which
+  one it was.
+
+`StockBarDataSection` reached the same shape by hand before this existed
+(`chartInfo && !chartError`) and is a fine reference for the pattern in a
+component that owns its own error string.

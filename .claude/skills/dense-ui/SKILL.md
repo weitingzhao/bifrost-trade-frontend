@@ -35,6 +35,7 @@ Need UI for data-heavy view?
 ├─ Expandable group → CollapsibleGroup (+ ExpandToggleCell in tables)
 ├─ Chart / payoff SVG → scoped module CSS (exception only)
 ├─ Moneyness / DTE / VRP tone or band → @/lib/optionSemantics (never inline)
+├─ Panel backed by a query → dataState() + DataStateBlock (never branch on empty alone)
 └─ Generic button/dialog → shadcn/ui
 ```
 
@@ -63,6 +64,7 @@ Copy and track:
 - [ ] Numeric columns use denseTableNumCell or PnlCell
 - [ ] PnL uses pnlColorClass (not module pnl classes)
 - [ ] Moneyness / DTE / VRP tones come from @/lib/optionSemantics
+- [ ] Query-backed panels use dataState() — a failed fetch never renders the empty copy
 - [ ] Row actions use IconActionButton
 - [ ] Category labels use DenseTag variant="category" (not stkPillCategoryClass / inline purple CSS)
 - [ ] No window.confirm / window.alert

@@ -42,6 +42,10 @@ import {
 } from '@/utils/bookVsBase'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
+import { NEAR_EXPIRY_DAYS } from '@/lib/optionSemantics'
+
+/** Re-exported: the alarm's public surface has always carried it. */
+export { NEAR_EXPIRY_DAYS }
 
 /** Which section a chip opens. Null when the chip has nowhere useful to go. */
 /** Where a chip or gauge label lands: a collapsible section, or an anchor on the page. */
@@ -62,8 +66,6 @@ export interface AlarmCheck {
 /** Past this the quote path is suspect — the page polls every 8 seconds. */
 export const STALE_FEED_SEC = 60
 
-/** Shorts landing inside this window are the week's work. */
-export const NEAR_EXPIRY_DAYS = 7
 
 function pct1(v: number): string {
   const p = v * 100

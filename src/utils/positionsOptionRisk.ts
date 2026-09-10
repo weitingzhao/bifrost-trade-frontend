@@ -279,25 +279,6 @@ export function buildExpiryLadder(
   return rows.sort((a, b) => a.expiry.localeCompare(b.expiry))
 }
 
-/** Operating buckets, in the language a seller schedules rolls in. */
-export type ExpiryBucket = 'expired' | 'this_week' | 'next_week' | 'this_month' | 'later'
-
-export function expiryBucket(dte: number | null): ExpiryBucket {
-  if (dte == null) return 'later'
-  if (dte < 0) return 'expired'
-  if (dte <= 7) return 'this_week'
-  if (dte <= 14) return 'next_week'
-  if (dte <= 35) return 'this_month'
-  return 'later'
-}
-
-export const EXPIRY_BUCKET_LABEL: Record<ExpiryBucket, string> = {
-  expired: 'Past expiry',
-  this_week: '≤ 7 days',
-  next_week: '8–14 days',
-  this_month: '15–35 days',
-  later: '> 35 days',
-}
 
 
 // ── Ordering the book by what needs attention ────────────────────────────────

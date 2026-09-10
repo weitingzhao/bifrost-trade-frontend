@@ -34,8 +34,24 @@ Need UI for data-heavy view?
 ├─ Edit/Delete/Link icon → IconActionButton
 ├─ Expandable group → CollapsibleGroup (+ ExpandToggleCell in tables)
 ├─ Chart / payoff SVG → scoped module CSS (exception only)
+├─ Moneyness / DTE / VRP tone or band → @/lib/optionSemantics (never inline)
 └─ Generic button/dialog → shadcn/ui
 ```
+
+## Domain semantics live in one file
+
+`data-display` holds *structural* primitives. What an option's numbers **mean** —
+moneyness tone, expiry bands, VRP bands — lives in **`src/lib/optionSemantics.ts`**,
+the frontend counterpart to the Massive Plugin's `contracts.py`.
+
+Moneyness has no tone until you say which side you hold: ITM is intrinsic value to a
+buyer and assignment risk to a seller. Two pages had each worked that out privately
+and rendered the same word in opposite colours. Take the tone from
+`moneynessTone(label, side)`; never re-decide it in a component.
+
+Likewise `NEAR_EXPIRY_DAYS`, `THETA_BURN_DAYS`, `expiryBucket`, `dteToneClass`,
+`vrpBandLabel`. A new threshold, band or tone for a traded instrument is added
+there with a test — not inlined at the call site, however small it looks.
 
 ## Implementation checklist
 
@@ -46,6 +62,7 @@ Copy and track:
 - [ ] Imports from @/components/data-display (not deprecated positions/ui re-exports)
 - [ ] Numeric columns use denseTableNumCell or PnlCell
 - [ ] PnL uses pnlColorClass (not module pnl classes)
+- [ ] Moneyness / DTE / VRP tones come from @/lib/optionSemantics
 - [ ] Row actions use IconActionButton
 - [ ] Category labels use DenseTag variant="category" (not stkPillCategoryClass / inline purple CSS)
 - [ ] No window.confirm / window.alert

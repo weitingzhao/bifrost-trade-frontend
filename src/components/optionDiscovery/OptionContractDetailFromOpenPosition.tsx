@@ -12,6 +12,7 @@ import type { OpenOptionPosition } from '@/types/positions'
 import { OptionContractDetailPanel } from './OptionContractDetailPanel'
 import { computeDerivedMetrics, normalizeOptionRight, parseDteNumeric } from '@/utils/optionDiscovery/optionContractMetrics'
 import { useOptionContractLiquidity } from './useOptionContractLiquidity'
+import { THETA_BURN_DAYS } from '@/lib/optionSemantics'
 
 function expirationDigitsFromPosition(pos: OpenOptionPosition): string {
   const fromKey = parseOptionContractKey(pos.contract_key).expiry
@@ -203,7 +204,8 @@ export function OptionContractDetailFromOpenPosition({
   useEffect(() => {
     const warnings: string[] = []
     const dte = parseDteNumeric(expirationDisplay)
-    if (dte != null && dte <= 3) warnings.push(`DTE is ${dte} — high theta decay, exercise/assignment risk.`)
+    if (dte != null && dte <= THETA_BURN_DAYS)
+      warnings.push(`DTE is ${dte} — high theta decay, exercise/assignment risk.`)
     if (dte != null && dte === 0) warnings.push('Expiration day — avoid market orders, liquidity may vanish.')
     if (greeksCoverage?.freshness?.stale_rows != null && greeksCoverage.freshness.stale_rows > 0) {
       warnings.push(`${greeksCoverage.freshness.stale_rows} stale snapshot row(s) older than 24h.`)

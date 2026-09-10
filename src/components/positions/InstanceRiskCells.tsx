@@ -10,6 +10,7 @@
 import { cn } from '@/lib/utils'
 import { DenseTag, InlinePnl } from '@/components/data-display'
 import { fmtExpiry, fmtUsd } from '@/utils/positions'
+import { dteToneClass } from '@/lib/optionSemantics'
 import {
   cushionBand,
   summarizeBreakeven,
@@ -42,7 +43,7 @@ export function InstanceDteCell({ legs }: { legs: readonly OptionLegLike[] }) {
 
   const expired = dte < 0
   const label = expired ? `${-dte}d ago` : dte === 0 ? 'today' : `${dte}d`
-  const tone = expired ? 'text-loss' : dte <= 7 ? 'text-warning' : undefined
+  const tone = dteToneClass(dte)
 
   return (
     <span

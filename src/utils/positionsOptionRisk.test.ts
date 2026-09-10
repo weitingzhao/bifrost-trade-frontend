@@ -3,7 +3,6 @@ import {
   buildExpiryLadder,
   compareInstanceRisk,
   cushionBand,
-  expiryBucket,
   normalizeRight,
   shortLegCushion,
   summarizeBreakeven,
@@ -261,19 +260,6 @@ describe('buildExpiryLadder', () => {
     const [row] = buildExpiryLadder([mk({ qty: -1 })], () => null)
     expect(row?.unpricedShortCount).toBe(1)
     expect(row?.itmShortCount).toBe(0)
-  })
-})
-
-describe('expiryBucket', () => {
-  it('buckets on the boundaries a roll schedule actually uses', () => {
-    expect(expiryBucket(-1)).toBe('expired')
-    expect(expiryBucket(0)).toBe('this_week')
-    expect(expiryBucket(7)).toBe('this_week')
-    expect(expiryBucket(8)).toBe('next_week')
-    expect(expiryBucket(14)).toBe('next_week')
-    expect(expiryBucket(35)).toBe('this_month')
-    expect(expiryBucket(36)).toBe('later')
-    expect(expiryBucket(null)).toBe('later')
   })
 })
 

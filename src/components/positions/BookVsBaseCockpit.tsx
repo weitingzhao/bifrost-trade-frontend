@@ -32,6 +32,9 @@ import type { ObligationsSort } from '@/utils/obligationsRoom'
 import { fmtSpotDate, type SpotMix } from '@/utils/spotPrice'
 import type { RoomSummary } from '@/utils/roomToAdd'
 import { cushionBand } from '@/utils/positionsOptionRisk'
+import { moneynessTone, moneynessToneClass } from '@/lib/optionSemantics'
+
+const ITM_SHORT_TONE = moneynessToneClass(moneynessTone('ITM', 'short'))
 
 const LEVEL_TONE: Record<GaugeLevel, string> = {
   0: 'bg-profit',
@@ -290,7 +293,8 @@ export function BookVsBaseCockpit({
           how={howFor('risk')}
           title="Short legs already past their strike, or expiring within a week. Unpriced legs are excluded from both counts and are not known to be safe."
         >
-          <Num tone={risk.counts.itm > 0 ? 'text-loss' : undefined}>{risk.counts.itm}</Num> ITM ·{' '}
+          {/* These are short legs that went ITM — assignment risk, not intrinsic value. */}
+          <Num tone={risk.counts.itm > 0 ? ITM_SHORT_TONE : undefined}>{risk.counts.itm}</Num> ITM ·{' '}
           <Num tone={risk.counts.near7d > 0 ? 'text-warning' : undefined}>{risk.counts.near7d}</Num> ≤7d
           {risk.counts.zeroDte > 0 ? (
             <>

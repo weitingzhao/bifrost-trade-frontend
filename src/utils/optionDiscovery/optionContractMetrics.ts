@@ -1,4 +1,5 @@
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
+import { moneynessFromPct, moneynessPct } from '@/lib/optionSemantics'
 
 export function normalizeOptionRight(r: string): 'C' | 'P' | null {
   const x = (r || '').trim().toUpperCase()
@@ -89,11 +90,8 @@ export function computeDerivedMetrics(row: OptionSnapshotRow, underlying: number
       extrinsic = Math.max(0, mark - (intrinsic ?? 0))
       breakeven = isCall ? strike + mark : strike - mark
     }
-    moneyness = ((underlying - strike) / underlying) * 100 * (isCall ? 1 : -1)
-    const threshold = 0.5
-    if (Math.abs(moneyness) < threshold) moneynessLabel = 'ATM'
-    else if (moneyness > 0) moneynessLabel = 'ITM'
-    else moneynessLabel = 'OTM'
+    moneyness = moneynessPct(underlying, strike, isCall)
+    moneynessLabel = moneynessFromPct(moneyness) ?? '—'
   }
   return { spread, spreadPct, intrinsic, extrinsic, breakeven, moneyness, moneynessLabel }
 }

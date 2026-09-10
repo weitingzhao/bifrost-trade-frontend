@@ -7,6 +7,7 @@ import type { GreeksCoverageResponse, LiquiditySummaryResponse, RelativeValueRes
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { fmtUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { moneynessBadgeClass } from '@/lib/optionSemantics'
 import { SegmentControl, DenseTag } from '@/components/data-display'
 import { DiscoveryContractGreeksTable } from './DiscoveryContractGreeksTable'
 import { DiscoveryScenarioTable } from './DiscoveryScenarioTable'
@@ -130,9 +131,13 @@ export function OptionContractDetailPanel({
             <span
               className={cn(
                 'rounded-full border px-1.5 py-0.5 text-xs font-semibold uppercase',
-                selectedDerived.moneynessLabel === 'ATM' && 'border-primary/50 bg-primary/10',
-                selectedDerived.moneynessLabel === 'ITM' && 'border-success/40 bg-success-soft text-success',
-                selectedDerived.moneynessLabel === 'OTM' && 'border-muted-foreground/40 bg-muted text-muted-foreground',
+                // Discovery shows a contract you might buy, so moneyness reads
+                // from the long side. The same label on a short leg is the
+                // opposite signal — see moneynessTone.
+                moneynessBadgeClass(
+                  selectedDerived.moneynessLabel === '—' ? null : selectedDerived.moneynessLabel,
+                  'long',
+                ),
               )}
             >
               {selectedDerived.moneynessLabel}

@@ -29,10 +29,3 @@ export function freshnessLamp(
   if (td === target) return 'green'
   return 'yellow'
 }
-
-export function ivBucket(rank: number | null): string {
-  if (rank == null || !Number.isFinite(rank)) return 'no row'
-  if (rank > 60) return 'High'
-  if (rank >= 30) return 'Neutral'
-  return 'Low'
-}

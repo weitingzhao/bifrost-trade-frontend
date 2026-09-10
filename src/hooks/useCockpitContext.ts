@@ -9,6 +9,7 @@ import { useCockpitPins } from '@/hooks/useCockpitPins'
 import { useHypothesis } from '@/hooks/useHypotheses'
 import type { LampColor } from '@/lib/researchFreshness'
 import { datePrefix, todayIso } from '@/lib/researchFreshness'
+import { vrpBandLabel } from '@/lib/optionSemantics'
 
 function tradingDaysAgo(isoDate: string | null | undefined): number | null {
   const td = datePrefix(isoDate)
@@ -37,11 +38,7 @@ export function useCockpitContext() {
 
   const ivRank = vrpQ.data?.vrp_pct_252d ?? null
   const regimeTag = useMemo(() => {
-    if (ivRank == null || !Number.isFinite(ivRank)) return null
-    if (ivRank >= 80) return 'Elevated VRP'
-    if (ivRank >= 50) return 'Neutral VRP'
-    if (ivRank >= 20) return 'Compressed VRP'
-    return 'Deep negative VRP'
+    return vrpBandLabel(ivRank)
   }, [ivRank])
 
   const freshnessLamp = vrpFreshnessLamp(vrpQ.data?.trade_date, vrpQ.isError)

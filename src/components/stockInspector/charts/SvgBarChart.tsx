@@ -1,4 +1,5 @@
-import { chartAxisTickFill } from '@/lib/chartTokens'
+import { chartAxisTickFill, chartTokens } from '@/lib/chartTokens'
+import { linearScale, niceTicks } from '@/lib/chartScale'
 import { fmtMini, type ChartSeries } from './chartUtils'
 
 interface Props {
@@ -17,10 +18,6 @@ export function SvgBarChart({ labels, series, h = 110, vw = 960, className }: Pr
   )
   if (allVals.length === 0) return null
 
-  const vMin = Math.min(0, ...allVals)
-  const vMax = Math.max(0, ...allVals)
-  const range = vMax - vMin || 1
-
   const VW = vw
   const PL = 46
   const PR = 6
@@ -28,11 +25,15 @@ export function SvgBarChart({ labels, series, h = 110, vw = 960, className }: Pr
   const PB = 22
   const cW = VW - PL - PR
   const cH = h - PT - PB
-  const zY = PT + (vMax / range) * cH
+  // includeZero: these are bars, so a column's height has to read as a
+  // magnitude against a zero baseline.
+  const y = linearScale(allVals, { size: h, padStart: PT, padEnd: PB, includeZero: true })
+  const { min: vMin, max: vMax, range } = y
+  const zY = y.zero == null ? PT + cH : y.atInverted(0)
   const ns = series.length
   const gW = cW / n
   const bW = Math.max(3, (gW * 0.74) / ns)
-  const ticks = [vMin, vMin + range * 0.5, vMax]
+  const ticks = niceTicks(vMin, vMax, 3)
 
   return (
     <svg
@@ -44,7 +45,7 @@ export function SvgBarChart({ labels, series, h = 110, vw = 960, className }: Pr
       style={{ display: 'block' }}
     >
       {ticks.map((tv, ti) => {
-        const ty = PT + ((vMax - tv) / range) * cH
+        const ty = y.atInverted(tv)
         return (
           <g key={ti}>
             <line
@@ -52,7 +53,8 @@ export function SvgBarChart({ labels, series, h = 110, vw = 960, className }: Pr
               y1={ty}
               x2={VW - PR}
               y2={ty}
-              stroke="rgba(148,163,184,0.12)"
+              stroke={chartTokens.grid}
+              opacity={0.35}
               strokeWidth={0.7}
             />
             <text x={PL - 4} y={ty + 4} textAnchor="end" fontSize={9} fill={chartAxisTickFill}>
@@ -61,7 +63,7 @@ export function SvgBarChart({ labels, series, h = 110, vw = 960, className }: Pr
           </g>
         )
       })}
-      <line x1={PL} y1={zY} x2={VW - PR} y2={zY} stroke="rgba(148,163,184,0.35)" strokeWidth={1} />
+      <line x1={PL} y1={zY} x2={VW - PR} y2={zY} stroke={chartTokens.axis} strokeWidth={1} />
       {labels.map((lbl, gi) => {
         const gX = PL + gi * gW + gW * 0.12
         return (

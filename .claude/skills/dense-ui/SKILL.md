@@ -36,6 +36,7 @@ Need UI for data-heavy view?
 ├─ Chart / payoff SVG → scoped module CSS (exception only)
 ├─ Moneyness / DTE / VRP tone or band → @/lib/optionSemantics (never inline)
 ├─ Panel backed by a query → dataState() + DataStateBlock (never branch on empty alone)
+├─ Chart / payoff SVG → linearScale + niceTicks + chartTokens (see docs/CHART_STANDARDS.md)
 └─ Generic button/dialog → shadcn/ui
 ```
 
@@ -65,6 +66,7 @@ Copy and track:
 - [ ] PnL uses pnlColorClass (not module pnl classes)
 - [ ] Moneyness / DTE / VRP tones come from @/lib/optionSemantics
 - [ ] Query-backed panels use dataState() — a failed fetch never renders the empty copy
+- [ ] Charts scale via linearScale/niceTicks and colour via chartTokens — no inline min/max, no raw rgba
 - [ ] Row actions use IconActionButton
 - [ ] Category labels use DenseTag variant="category" (not stkPillCategoryClass / inline purple CSS)
 - [ ] No window.confirm / window.alert

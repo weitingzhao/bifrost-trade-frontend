@@ -115,7 +115,8 @@ describe('and reject the drift they exist to catch', () => {
   })
 
   it('flags a dropped required field rather than passing it through', () => {
-    const { total_active: _drop, ...rest } = ACTIVE
+    const rest: Record<string, unknown> = { ...ACTIVE }
+    delete rest.total_active
     expect(HypothesisSummaryActiveSchema.safeParse(rest).success).toBe(false)
   })
 

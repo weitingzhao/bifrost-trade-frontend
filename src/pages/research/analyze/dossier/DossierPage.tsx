@@ -43,7 +43,12 @@ export default function DossierPage() {
               {`${failed.length} ${failed.length === 1 ? 'lens' : 'lenses'} did not answer: ${failed.join(', ')}`}
             </p>
           ) : null}
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {/* Columns, not a grid: the six faces carry wildly different amounts —
+              Events reads one line, Volatility and Validation read eight — and a
+              grid row is as tall as its tallest cell, so equal cells meant one
+              card clipped while another sat 97% empty. CSS columns balance by
+              real height, which no row-span estimate can match. */}
+          <div className="gap-3 md:columns-2 xl:columns-3 [&>*]:mb-3 [&>*]:break-inside-avoid">
             {views.map((v) => (
               <FaceCard key={v.face.id} view={v} loading={loading} />
             ))}

@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { formatLastUpdate } from '@/utils/positions'
 import type { SystemMessage, SystemMessageLevel } from '@/types/messages'
 import { IbConnectionMessageTitle } from '@/components/MessageCenter/IbConnectionSlotBadge'
+import { shouldToast } from '@/components/MessageCenter/toastPolicy'
 
 interface Props {
   messages: SystemMessage[]
@@ -47,7 +48,7 @@ export function MessageToastStack({ messages, dismissedIds, onDismiss }: Props) 
   }, [])
 
   const toasts = messages
-    .filter(m => !dismissedIds.has(m.message_id) && msgIsRecent(m))
+    .filter(m => shouldToast(m) && !dismissedIds.has(m.message_id) && msgIsRecent(m))
     .slice(0, MAX_TOASTS)
 
 

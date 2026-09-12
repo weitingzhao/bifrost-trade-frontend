@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchSystemMessages, subscribeSystemMessages } from '@/api/messages'
 import type { SystemMessage } from '@/types/messages'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
 const INITIAL_LIMIT = 50
-const IB_CONN_DISMISS_SEC = 30
 const CLIENT_TTL_SEC = 3600
 
 function mergeMessages(prev: SystemMessage[], incoming: SystemMessage[]): SystemMessage[] {
@@ -22,7 +21,6 @@ function pruned(msgs: SystemMessage[]): SystemMessage[] {
 export function useSystemMessages() {
   const queryClient = useQueryClient()
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
-  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   // Initial load via TanStack Query — gives proper loading/error states.
   const { data: messages = [] } = useQuery<SystemMessage[]>({
@@ -46,38 +44,19 @@ export function useSystemMessages() {
     return unsub
   }, [queryClient])
 
-  // Auto-dismiss ib.connection messages after 30 seconds.
-  useEffect(() => {
-    const tm = timersRef.current
-    for (const msg of messages) {
-      if (tm.has(msg.message_id)) continue
-      if (msg.topic !== 'ib.connection') continue
-      const age = Date.now() / 1000 - msg.occurred_at
-      const ms = Math.max(0, (IB_CONN_DISMISS_SEC - age) * 1000)
-      const id = msg.message_id
-      tm.set(
-        id,
-        setTimeout(() => {
-          setDismissedIds((prev) => new Set([...prev, id]))
-          tm.delete(id)
-        }, ms),
-      )
-    }
-  }, [messages])
-
+  // `ib.connection` messages used to auto-dismiss after 30 seconds. That was a
+  // workaround for the toast: every message interrupted, so the noisiest topic
+  // was given a timer to make it stop. Now that it never toasts (see
+  // `toastPolicy.ts`), the timer would leave it neither shown nor kept — it
+  // would vanish from the Inbox count half a minute after arriving, which is
+  // the one place it was supposed to end up. `CLIENT_TTL_SEC` still bounds the
+  // list; dismissal is the reader's call again.
   const dismissMessage = useCallback((id: string) => {
     setDismissedIds((prev) => new Set([...prev, id]))
-    const t = timersRef.current.get(id)
-    if (t != null) {
-      clearTimeout(t)
-      timersRef.current.delete(id)
-    }
   }, [])
 
   const dismissAll = useCallback(() => {
     setDismissedIds(new Set(messages.map((m) => m.message_id)))
-    for (const t of timersRef.current.values()) clearTimeout(t)
-    timersRef.current.clear()
   }, [messages])
 
   const activeMsgCount = messages.filter((m) => !dismissedIds.has(m.message_id)).length

@@ -28,6 +28,7 @@ import { Inbox, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePlatformPlugins } from '@/hooks/usePlatformPlugins'
 import { useBookCushion } from '@/hooks/useBookCushion'
+import { SystemPopover } from './SystemPopover'
 import { SHELL_STATUS_BAR_HEIGHT_CLASS } from './shellChrome'
 
 /** Wall clock to the minute — the anchor every other reading on the page is "as of". */
@@ -109,10 +110,16 @@ export function ShellStatusBar({ activeMsgCount, onOpenMessages }: ShellStatusBa
       )}
 
       <div className="ml-auto flex items-center gap-1">
-        <Link to="/system/platform" className={segmentClass} title={system.title}>
-          <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', system.dot)} />
-          <span className="font-mono tabular-nums">{system.text}</span>
-        </Link>
+        {/* The lamp summarises the plugins, which is what it can afford to
+            watch all day; the panel probes every service, but only while it
+            is open. Thirteen /health calls every 20s from every page is a
+            different load profile from one page that asked for them. */}
+        <SystemPopover>
+          <button type="button" className={segmentClass} title={system.title}>
+            <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', system.dot)} />
+            <span className="font-mono tabular-nums">{system.text}</span>
+          </button>
+        </SystemPopover>
 
         <button type="button" onClick={onOpenMessages} className={segmentClass} title="Messages">
           <Inbox className="h-3 w-3" aria-hidden />

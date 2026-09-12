@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { SegmentControl } from '@/components/data-display'
 import { makeProbeQuery } from '@/hooks/useApiHealthProbes'
 import { ApiDetailKvCard, DetailKV } from '../ApiDetailKvList'
-import { ARCH_SERVICES } from '@/utils/apiHealthConfig'
+import { API_ROUTES } from '@/utils/apiHealthConfig'
 import {
   apiHealthDetailEmptyClass,
   apiHealthDetailHintClass,
@@ -15,12 +15,10 @@ import {
 export function ArchDetailsPanel() {
   const [tab, setTab] = useState<'monitor' | 'ops' | 'docs'>('monitor')
 
-  const monitorSvc = ARCH_SERVICES.find((s) => s.key === 'monitor')!
-  const docsSvc = ARCH_SERVICES.find((s) => s.key === 'docs')!
-  const opsSvc = ARCH_SERVICES.find((s) => s.key === 'ops')!
-
-  const { data: monitorData } = useQuery(makeProbeQuery(monitorSvc))
-  const { data: docsData } = useQuery(makeProbeQuery(docsSvc))
+  // Monitor, Ops and Docs are one process behind three gateway routes; the
+  // lamp board lists the process, these tabs read the routes.
+  const { data: monitorData } = useQuery(makeProbeQuery(API_ROUTES.monitor))
+  const { data: docsData } = useQuery(makeProbeQuery(API_ROUTES.docs))
   const monitorBody = monitorData?.body ?? null
   const docsBody = docsData?.body ?? null
 
@@ -78,10 +76,10 @@ export function ArchDetailsPanel() {
           <p className={apiHealthDetailHintClass}>Resolved OpenAPI endpoints used by tooling.</p>
           <ApiDetailKvCard>
             <DetailKV label="Main API" mono>
-              {monitorSvc.base}/openapi.json
+              {API_ROUTES.monitor.base}/openapi.json
             </DetailKV>
             <DetailKV label="Ops API" mono>
-              {opsSvc.base}/ops/openapi.json
+              {API_ROUTES.ops.base}/ops/openapi.json
             </DetailKV>
           </ApiDetailKvCard>
         </div>

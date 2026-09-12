@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { SegmentControl } from '@/components/data-display'
 import { ApiDetailKvCard, DetailKV } from '../ApiDetailKvList'
-import { ACCOUNT_SERVICES } from '@/utils/apiHealthConfig'
+import { API_ROUTES } from '@/utils/apiHealthConfig'
 import {
   apiHealthDetailPanelClass,
   apiHealthDetailSectionClass,
@@ -11,8 +11,8 @@ import {
 
 export function AccountDetailsPanel() {
   const [tab, setTab] = useState<'trading' | 'portfolio'>('trading')
-  const tradingBase = ACCOUNT_SERVICES.find((s) => s.key === 'trading')!.base
-  const portfolioBase = ACCOUNT_SERVICES.find((s) => s.key === 'portfolio')!.base
+  const tradingBase = API_ROUTES.trading.base
+  const portfolioBase = API_ROUTES.portfolio.base
 
   return (
     <div className={apiHealthDetailPanelClass}>

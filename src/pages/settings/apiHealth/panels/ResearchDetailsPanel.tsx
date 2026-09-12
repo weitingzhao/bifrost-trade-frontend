@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { SegmentControl } from '@/components/data-display'
 import { ApiDetailKvCard, DetailKV } from '../ApiDetailKvList'
-import { RESEARCH_SERVICES } from '@/utils/apiHealthConfig'
+import { API_ROUTES } from '@/utils/apiHealthConfig'
 import {
   apiHealthDetailPanelClass,
   apiHealthDetailSectionClass,
@@ -11,9 +11,9 @@ import {
 
 export function ResearchDetailsPanel() {
   const [tab, setTab] = useState<'research' | 'strategy' | 'market'>('research')
-  const researchBase = RESEARCH_SERVICES.find((s) => s.key === 'research')!.base
-  const strategyBase = RESEARCH_SERVICES.find((s) => s.key === 'strategy')!.base
-  const marketBase = RESEARCH_SERVICES.find((s) => s.key === 'market')!.base
+  const researchBase = API_ROUTES.research.base
+  const strategyBase = API_ROUTES.strategy.base
+  const marketBase = API_ROUTES.market.base
 
   return (
     <div className={apiHealthDetailPanelClass}>

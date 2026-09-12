@@ -9,69 +9,8 @@ import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 import { cn } from '@/lib/utils'
+import { routeFor } from './routeRegistry'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
-
-const PAGE_TITLES: Record<string, string> = {
-  '/research': 'Research',
-  '/research/overview': 'Research',
-  '/research/copilot': 'Copilot',
-  '/research/copilot/trading': 'Trading Copilot',
-  '/research/workbench': 'Workbench',
-  '/market/live': 'Live',
-  '/market/watchlist': 'Stock Watchlist',
-  '/research/watchlist': 'Stock Watchlist',
-  '/portfolio/accounts': 'Accounts',
-  '/portfolio/positions': 'Positions',
-  '/portfolio/backing': 'Backing & Model',
-  '/portfolio/performance': 'Performance',
-  '/portfolio/ledger': 'Trade Ledger',
-  '/portfolio/transfer': 'Transfer & Pay',
-  '/research/daily-brief': 'Daily Brief',
-  '/research/stock-screener': 'Stock Screener',
-  '/research/screener': 'Option Screener',
-  '/research/stock-data': 'Settings · Data Readiness',
-  '/research/discovery': 'Option Discovery',
-  '/research/dossier': 'Dossier',
-  '/research/lens-coverage': 'Lens Coverage',
-  '/research/vol-regime': 'Vol Regime',
-  '/research/dealer-levels': 'Dealer Levels',
-  '/research/scenario': 'Scenario Model',
-  '/research/flow': 'Flow',
-  '/research/scan': 'Scan',
-  '/research/signal-decay': 'Signal Decay',
-  '/research/greeks': 'Contract Greeks',
-  '/research/backtest': 'Backtest',
-  '/research/momentum-radar': 'Momentum Radar',
-  '/research/sepa-daily-core': 'SEPA Daily Core',
-  '/research/event-radar': 'Event Radar',
-  '/research/loop/candidates': 'Candidate Pool',
-  '/research/loop/hypotheses': 'Hypothesis Board',
-  '/research/loop/decisions': 'Decision Inbox',
-  '/research/loop/harness': 'Autopilot',
-  '/strategy/instances': 'Instances',
-  '/strategy/structures': 'Structure',
-  '/strategy/opportunities': 'Opportunity',
-  '/strategy/gates': 'Gates',
-  '/strategy/win-rate': 'Win Rate',
-  '/strategy/allocations': 'Allocations',
-  '/strategy/option-category': 'Option Category',
-  '/operations/daemon': 'System · Daemon',
-  '/operations/platform': 'Platform Plugins',
-  '/settings/daemon':                'System · Daemon Status',
-  '/settings/api':                   'Settings · API Health',
-  '/settings/api/architecture':      'Settings · API — Architecture',
-  '/settings/api/account':           'Settings · API — Account',
-  '/settings/api/research':          'Settings · API — Research',
-  '/settings/feed':                  'Settings · Feed',
-  '/settings/socket':                'Settings · Socket',
-  '/settings/coverage':              'Settings · Data Coverage',
-  '/docs/research-blueprint':        'Research Blueprint',
-  '/docs/research-calibration':      'Research Calibration',
-  '/docs/tech-stack':                'Tech Stack',
-  '/docs/ui-design-system':          'UI Design System',
-  '/settings/data-readiness':        'Settings · Data Readiness',
-  '/settings/ib':                    'Settings · IB Configure',
-}
 
 interface AppHeaderProps {
   activeMsgCount?: number
@@ -92,9 +31,7 @@ function ResearchSeatChip() {
 export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: AppHeaderProps) {
   const location = useLocation()
   const { mode, cycleMode } = useThemeMode()
-  const title =
-    PAGE_TITLES[location.pathname] ??
-    (location.pathname.startsWith('/research/loop/objectives/') ? 'Objective' : 'Bifrost Trade')
+  const { label, crumbs } = routeFor(location.pathname)
 
   return (
     <header
@@ -105,9 +42,20 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
     >
       <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />
       <Separator orientation="vertical" className="h-4" />
-      <span className="min-w-0 flex-1 truncate font-medium text-sm md:flex-none md:max-w-none">
-        {title}
-      </span>
+      <nav
+        aria-label="Breadcrumb"
+        className="flex min-w-0 flex-1 items-center gap-1.5 text-sm md:flex-none md:max-w-none"
+      >
+        {crumbs?.map((crumb) => (
+          <span key={crumb} className="hidden shrink-0 items-center gap-1.5 text-muted-foreground sm:flex">
+            {crumb}
+            <span aria-hidden="true" className="text-border">/</span>
+          </span>
+        ))}
+        <span aria-current="page" className="min-w-0 truncate font-medium">
+          {label}
+        </span>
+      </nav>
       {location.pathname.startsWith('/research') ? <ResearchSeatChip /> : null}
 
       <div className="ml-auto flex shrink-0 items-center gap-1">

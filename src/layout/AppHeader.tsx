@@ -1,4 +1,4 @@
-import { Bell, Moon, PanelTop, Sun, SunMoon } from 'lucide-react'
+import { Bell, Moon, Sun, SunMoon } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { SEAT_META, useResearchSeat } from '@/lib/research/seat'
@@ -15,7 +15,6 @@ import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 interface AppHeaderProps {
   activeMsgCount?: number
   onOpenMessages?: () => void
-  onToggleNavMode?: () => void
 }
 
 function ResearchSeatChip() {
@@ -28,7 +27,7 @@ function ResearchSeatChip() {
   )
 }
 
-export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode }: AppHeaderProps) {
+export function AppHeader({ activeMsgCount = 0, onOpenMessages }: AppHeaderProps) {
   const location = useLocation()
   const { mode, cycleMode } = useThemeMode()
   const { label, crumbs } = routeFor(location.pathname)
@@ -59,17 +58,6 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages, onToggleNavMode 
       {location.pathname.startsWith('/research') ? <ResearchSeatChip /> : null}
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
-        {onToggleNavMode && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggleNavMode} aria-label="Switch to top navigation">
-                <PanelTop className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Switch to top navigation</TooltipContent>
-          </Tooltip>
-        )}
-
         <AlertBell />
 
         <Tooltip>

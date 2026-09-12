@@ -76,8 +76,23 @@ export const PLATFORM_PLUGINS: PlatformPluginDef[] = [
 
 const validate = withValidation<PluginStatus>(PluginStatusSchema, 'platform/plugin-status')
 
+/**
+ * A probe that never answers is worse than one that says no: the status bar
+ * polls this on every page, so a hanging request would stack a new pair of
+ * sockets every interval and leave the lamp mid-read forever. Eight seconds is
+ * past any healthy answer and short of the gateway's own ceiling.
+ */
+const PROBE_TIMEOUT_MS = 8_000
+
+function withDeadline(signal?: AbortSignal): AbortSignal | undefined {
+  const deadline = AbortSignal.timeout?.(PROBE_TIMEOUT_MS)
+  if (!deadline) return signal
+  if (!signal) return deadline
+  return AbortSignal.any?.([signal, deadline]) ?? deadline
+}
+
 export async function fetchPluginStatus(key: string, signal?: AbortSignal): Promise<PluginStatus> {
-  const res = await fetch(platformPluginStatusUrl(key), { signal })
+  const res = await fetch(platformPluginStatusUrl(key), { signal: withDeadline(signal) })
   if (!res.ok) throw new Error(`platform plugin ${key}: HTTP ${res.status}`)
   return validate(await res.json())
 }

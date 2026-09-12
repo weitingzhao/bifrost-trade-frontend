@@ -1,4 +1,4 @@
-import { Suspense, useState } from 'react'
+import { Suspense, useState, type CSSProperties } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
 import { useResearchSeatDeepLink } from '@/hooks/useResearchSeatDeepLink'
@@ -7,7 +7,8 @@ import { GlobalMarketStatusBar, SkipToContent } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
-import { TopNav } from './TopNav'
+import { ShellStatusBar } from './ShellStatusBar'
+import { SHELL_SIDEBAR_WIDTH } from './shellChrome'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
 import { MessageDrawer } from '@/components/MessageCenter/MessageDrawer'
 import { PlatformStatusPanel } from '@/components/PlatformStatusPanel'
@@ -15,7 +16,6 @@ import { ReactorMapPanel } from '@/components/topology/ReactorMapPanel'
 import { PlatformPanelProvider } from '@/context/PlatformPanelContext'
 import { ReactorMapProvider } from '@/context/ReactorMapContext'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
-import { useNavMode } from '@/hooks/useNavMode'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
 import { CopilotFloatingBubble } from '@/components/copilot/CopilotFloatingBubble'
@@ -50,7 +50,6 @@ export function AppLayout() {
   useCopilotDeepLink()
   useResearchSeatDeepLink()
   const showMarketStrip = shouldShowGlobalMarketStrip(pathname)
-  const { effectiveMode, toggle, isTooNarrow } = useNavMode()
   const { messages, dismissedIds, activeMsgCount, dismissMessage, dismissAll } = useSystemMessages()
   const [drawerOpen, setDrawerOpen] = useState(false)
   useCockpitKeybinds()
@@ -73,50 +72,28 @@ export function AppLayout() {
     </>
   )
 
-  if (effectiveMode === 'topnav') {
-    return (
-      <ReactorMapProvider>
-        <PlatformPanelProvider>
-          <SkipToContent />
-          <div className="flex flex-col h-svh bg-card">
-            <TopNav
-              activeMsgCount={activeMsgCount}
-              onOpenMessages={() => setDrawerOpen(true)}
-              onToggleNavMode={isTooNarrow ? undefined : toggle}
-            />
-            <GlobalMarketStatusBar enabled={showMarketStrip} />
-            <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto min-w-0 outline-none">
-              <BoundedOutlet />
-            </main>
-            <ReactorMapPanel />
-            <PlatformStatusPanel />
-            {msgCenter}
-            <CopilotFloatingBubble />
-          </div>
-        </PlatformPanelProvider>
-      </ReactorMapProvider>
-    )
-  }
-
   return (
     <ReactorMapProvider>
       <PlatformPanelProvider>
-        <SidebarProvider defaultOpen={readSidebarCookie()}>
+        <SidebarProvider
+          defaultOpen={readSidebarCookie()}
+          style={{ '--sidebar-width': SHELL_SIDEBAR_WIDTH } as CSSProperties}
+        >
           {/* Before the sidebar, not after: the ~40 nav links are exactly what
               this exists to skip. */}
           <SkipToContent />
           <AppSidebar />
           {/* h-svh + overflow-hidden keeps dock panels inside the viewport */}
           <SidebarInset className="h-svh overflow-hidden bg-card">
-            <AppHeader
-              activeMsgCount={activeMsgCount}
-              onOpenMessages={() => setDrawerOpen(true)}
-              onToggleNavMode={isTooNarrow ? undefined : toggle}
-            />
+            <AppHeader activeMsgCount={activeMsgCount} onOpenMessages={() => setDrawerOpen(true)} />
             <GlobalMarketStatusBar enabled={showMarketStrip} />
             <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto min-w-0 bg-card outline-none">
               <BoundedOutlet />
             </main>
+            <ShellStatusBar
+              activeMsgCount={activeMsgCount}
+              onOpenMessages={() => setDrawerOpen(true)}
+            />
             <ReactorMapPanel />
             <PlatformStatusPanel />
           </SidebarInset>

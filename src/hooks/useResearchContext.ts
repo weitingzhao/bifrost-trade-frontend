@@ -1,27 +1,9 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { todayIso } from '@/lib/researchFreshness'
-
-const STORAGE_KEY = 'bifrost-research-context'
-
-function readStoredContext(): { symbol?: string; date?: string } {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw) as { symbol?: string; date?: string }
-    return parsed ?? {}
-  } catch {
-    return {}
-  }
-}
-
-function writeStoredContext(symbol: string, date: string) {
-  try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ symbol, date }))
-  } catch {
-    // ignore quota / private mode
-  }
-}
+// The held symbol is shell-wide now, not Research's own — same record, same
+// query parameter, one owner. See `lib/symbolContext`.
+import { readStoredContext, writeStoredContext } from '@/lib/symbolContext'
 
 export function useResearchContext() {
   const [searchParams, setSearchParams] = useSearchParams()

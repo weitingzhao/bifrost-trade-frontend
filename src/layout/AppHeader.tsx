@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 import { cn } from '@/lib/utils'
 import { routeFor } from './routeRegistry'
+import { SymbolChip } from './SymbolChip'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
 interface AppHeaderProps {
@@ -55,6 +56,7 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages }: AppHeaderProps
           {label}
         </span>
       </nav>
+      <SymbolChip />
       {location.pathname.startsWith('/research') ? <ResearchSeatChip /> : null}
 
       <div className="ml-auto flex shrink-0 items-center gap-1">

@@ -26,6 +26,18 @@ export interface RouteEntry {
   label: string
   /** Ancestors, outermost first. Omitted for top-level pages. */
   crumbs?: readonly string[]
+  /**
+   * The page reads `?symbol=`. Set from what the code actually does — a page
+   * that only receives symbol-carrying links is not scoped; a page that reads
+   * the param and narrows itself is.
+   */
+  symbolScope?: boolean
+  /**
+   * Unit of analysis, which is not the same question as where the data comes
+   * from: `underlying` is one answer per symbol, `contract` is an answer per
+   * strike x expiry. The sidebar marks the row `stk` or `opt` from this.
+   */
+  scope?: 'underlying' | 'contract'
 }
 
 const MARKET = ['Market'] as const
@@ -58,30 +70,30 @@ export const ROUTES: readonly RouteEntry[] = [
 
   // ── Research · Copilot ─────────────────────────────────────────────────
   { path: '/research/copilot', label: 'Copilot Desk', crumbs: RESEARCH },
-  { path: '/research/daily-brief', label: 'Daily Brief', crumbs: COPILOT },
+  { path: '/research/daily-brief', label: 'Daily Brief', crumbs: COPILOT, symbolScope: true },
   { path: '/research/copilot/trading', label: 'Trading Copilot', crumbs: COPILOT },
   { path: '/research/agent-personas', label: 'Agent Personas', crumbs: COPILOT },
   { path: '/research/playbook', label: 'My Trading System', crumbs: COPILOT },
 
   // ── Research · Workbench · Discover ────────────────────────────────────
-  { path: '/research/explorer', label: 'Stock Explorer', crumbs: DISCOVER },
-  { path: '/research/scan', label: 'Option Scan', crumbs: DISCOVER },
+  { path: '/research/explorer', label: 'Stock Explorer', crumbs: DISCOVER, scope: 'underlying' },
+  { path: '/research/scan', label: 'Option Scan', crumbs: DISCOVER, scope: 'contract' },
   { path: '/research/momentum-radar', label: 'Momentum Radar', crumbs: DISCOVER },
   { path: '/research/sepa-daily-core', label: 'SEPA Daily Core', crumbs: DISCOVER },
   { path: '/research/event-radar', label: 'Event Radar', crumbs: DISCOVER },
 
   // ── Research · Workbench · Analyze ─────────────────────────────────────
-  { path: '/research/dossier', label: 'Dossier', crumbs: ANALYZE },
-  { path: '/research/vol-regime', label: 'Vol Regime', crumbs: ANALYZE },
-  { path: '/research/dealer-levels', label: 'Dealer Levels', crumbs: ANALYZE },
-  { path: '/research/scenario', label: 'Scenario Model', crumbs: ANALYZE },
-  { path: '/research/flow', label: 'Flow', crumbs: ANALYZE },
-  { path: '/research/discovery', label: 'Option Discovery', crumbs: ANALYZE },
+  { path: '/research/dossier', label: 'Dossier', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
+  { path: '/research/vol-regime', label: 'Vol Regime', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
+  { path: '/research/dealer-levels', label: 'Dealer Levels', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
+  { path: '/research/scenario', label: 'Scenario Model', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
+  { path: '/research/flow', label: 'Flow', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
+  { path: '/research/discovery', label: 'Option Discovery', crumbs: ANALYZE, symbolScope: true, scope: 'contract' },
 
   // ── Research · Workbench · Validate ────────────────────────────────────
   { path: '/research/signal-decay', label: 'Signal Decay', crumbs: VALIDATE },
   { path: '/research/signal-decay/:symbol', label: 'Signal Decay', crumbs: VALIDATE },
-  { path: '/research/backtest', label: 'Backtest', crumbs: VALIDATE },
+  { path: '/research/backtest', label: 'Backtest', crumbs: VALIDATE, symbolScope: true },
 
   // ── Research · Workbench · Data ────────────────────────────────────────
   { path: '/research/lens-coverage', label: 'Lens Coverage', crumbs: DATA },
@@ -89,22 +101,22 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/watchlist', label: 'Stock Watchlist', crumbs: DATA },
   { path: '/research/stock-screener', label: 'Stock Screener', crumbs: DATA },
   { path: '/research/screener', label: 'Option Screener', crumbs: DATA },
-  { path: '/research/greeks', label: 'Contract Greeks', crumbs: DATA },
+  { path: '/research/greeks', label: 'Contract Greeks', crumbs: DATA, scope: 'contract' },
 
   // ── Market ─────────────────────────────────────────────────────────────
   { path: '/market/live', label: 'Live', crumbs: MARKET },
 
   // ── Portfolio ──────────────────────────────────────────────────────────
   { path: '/portfolio/performance', label: 'Performance', crumbs: PORTFOLIO },
-  { path: '/portfolio/positions', label: 'Positions', crumbs: PORTFOLIO },
-  { path: '/portfolio/backing', label: 'Backing & Model', crumbs: PORTFOLIO },
+  { path: '/portfolio/positions', label: 'Positions', crumbs: PORTFOLIO, symbolScope: true },
+  { path: '/portfolio/backing', label: 'Backing & Model', crumbs: PORTFOLIO, symbolScope: true },
   { path: '/portfolio/accounts', label: 'Accounts', crumbs: PORTFOLIO },
   { path: '/portfolio/ledger', label: 'Trade Ledger', crumbs: PORTFOLIO },
   { path: '/portfolio/transfer', label: 'Transfer & Pay', crumbs: PORTFOLIO },
 
   // ── Strategy ───────────────────────────────────────────────────────────
-  { path: '/strategy/instances', label: 'Instances', crumbs: STRATEGY },
-  { path: '/strategy/instances/:instanceId', label: 'Instances', crumbs: STRATEGY },
+  { path: '/strategy/instances', label: 'Instances', crumbs: STRATEGY, symbolScope: true },
+  { path: '/strategy/instances/:instanceId', label: 'Instances', crumbs: STRATEGY, symbolScope: true },
   { path: '/strategy/win-rate', label: 'Win Rate', crumbs: STRATEGY },
   { path: '/strategy/allocations', label: 'Allocations', crumbs: STRATEGY },
   { path: '/strategy/opportunities', label: 'Opportunity', crumbs: STRATEGY },

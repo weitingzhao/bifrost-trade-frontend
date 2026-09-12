@@ -10,6 +10,7 @@ import { NavSubItemIcon } from '@/components/layout/SystemNavIcon'
 import { SystemNavLampProvider } from '@/components/layout/SystemNavLampProvider'
 import { STORAGE_KEYS } from '@/constants/storage'
 import { NAV_GROUPS } from './navConfig'
+import { ScopeMark } from './ScopeMark'
 import { useResearchNavGroup } from './useResearchNavGroup'
 import { useMemo } from 'react'
 import { TradeSidebarFooter } from './TradeSidebarFooter'
@@ -58,9 +59,18 @@ export function AppSidebar() {
           navigate(item.to ?? item.id)
         }}
         renderItemIcon={(item) => <NavSubItemIcon item={item} />}
-        renderItemExtras={(item) =>
-          (item.to ?? item.id) === LIVE_NAV_PATH ? <LiveNavLamp /> : research.extras(item)
-        }
+        renderItemExtras={(item) => {
+          const to = item.to ?? item.id
+          if (to === LIVE_NAV_PATH) return <LiveNavLamp />
+          // A badge outranks the scope mark: a count is news, the unit of
+          // analysis is a standing fact about the page.
+          //
+          // `item.id`, not `to`: a fold row borrows its first child's `to`, so
+          // keying on `to` marked the Analyze heading with Dossier's unit. A
+          // real page row has its own path as its id; a fold's is `fold:...`
+          // and matches no route, which is the answer we want for a heading.
+          return research.extras(item) ?? <ScopeMark path={item.id} />
+        }}
         renderInAppLink={renderInAppLink}
         footer={<TradeSidebarFooter />}
         openGroupsStorageKey={STORAGE_KEYS.sidebarOpenGroups}

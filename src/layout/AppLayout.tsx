@@ -20,6 +20,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
 import { CopilotFloatingBubble } from '@/components/copilot/CopilotFloatingBubble'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
+import { useHeldSymbolSync } from '@/lib/symbolContext'
 
 function readSidebarCookie(): boolean {
   const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
@@ -49,6 +50,7 @@ export function AppLayout() {
   const { pathname } = useLocation()
   useCopilotDeepLink()
   useResearchSeatDeepLink()
+  useHeldSymbolSync()
   const showMarketStrip = shouldShowGlobalMarketStrip(pathname)
   const { messages, dismissedIds, activeMsgCount, dismissMessage, dismissAll } = useSystemMessages()
   const [drawerOpen, setDrawerOpen] = useState(false)

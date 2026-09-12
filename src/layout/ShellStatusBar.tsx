@@ -7,16 +7,28 @@
  * the segment is the way there.
  *
  * Design: `design/trade/Shell Spec Draft.md` §12.3, which specifies six
- * segments. Three are here. The other three — book intraday P&L (with its
- * Book Live drawer), the short-leg cushion warning, and the business event
- * ticker — each need a data source this app does not read yet, and land with
- * that source rather than as an empty box now.
+ * segments. Four are here. Two are not, and each for a reason found by
+ * checking rather than by taste:
+ *
+ * - Book intraday P&L would be a half-truth. The stock side is computable, the
+ *   option legs are not — the Trade side has no previous close for an option
+ *   contract — and on a premium-selling book the option legs are where the
+ *   day's money is.
+ * - The business event ticker has no data source named anywhere in the design.
+ *
+ * Portfolio delta was dropped deliberately: it is the only reading here with no
+ * threshold, so it cannot be acted on at a glance, and the cheap way to compute
+ * it would put a second delta on screen disagreeing with Backing & Model. Worth
+ * revisiting if D10 unlocks — hedging would make it drive an immediate decision
+ * — or if it is given a band.
  */
 import { useEffect, useState } from 'react'
-import { Inbox } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Inbox, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePlatformPanel } from '@/hooks/usePlatformPanel'
 import { usePlatformPlugins } from '@/hooks/usePlatformPlugins'
+import { useBookCushion } from '@/hooks/useBookCushion'
 import { SHELL_STATUS_BAR_HEIGHT_CLASS } from './shellChrome'
 
 /** Wall clock to the minute — the anchor every other reading on the page is "as of". */
@@ -32,6 +44,10 @@ function useWallClock(): string {
 const segmentClass =
   'inline-flex items-center gap-1.5 rounded px-1.5 text-dense-micro text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground'
 
+function pctLabel(pct: number): string {
+  return `${(pct * 100).toFixed(pct * 100 < 1 ? 1 : 0)}%`
+}
+
 interface ShellStatusBarProps {
   activeMsgCount: number
   onOpenMessages: () => void
@@ -43,6 +59,7 @@ export function ShellStatusBar({ activeMsgCount, onOpenMessages }: ShellStatusBa
   // the two share a query key, so this is one request either way.
   const { rows, isLoading } = usePlatformPlugins(true)
   const { toggle } = usePlatformPanel()
+  const cushion = useBookCushion(true)
 
   // Grey is "not probed", not "broken" — the same HealthLamp semantics the rest
   // of the app uses. A plugin whose probe we could not run is an unknown, and
@@ -67,6 +84,31 @@ export function ShellStatusBar({ activeMsgCount, onOpenMessages }: ShellStatusBa
       aria-label="Status bar"
     >
       <span className="font-mono text-dense-micro text-muted-foreground tabular-nums">{clock}</span>
+
+      {cushion.tightCount > 0 && (
+        <Link
+          to="/portfolio/positions"
+          className={cn(segmentClass, 'text-warning hover:text-warning')}
+          title={
+            `${cushion.tightCount} of ${cushion.shortLegCount} short legs within ${pctLabel(cushion.tightPct)} of the strike` +
+            (cushion.breachedCount > 0 ? `, ${cushion.breachedCount} in the money` : '')
+          }
+        >
+          <ShieldAlert className="h-3 w-3" aria-hidden />
+          <span className="font-mono tabular-nums">
+            {cushion.tightCount} {cushion.tightCount === 1 ? 'leg' : 'legs'} &lt;{pctLabel(cushion.tightPct)}
+          </span>
+        </Link>
+      )}
+
+      {cushion.unpricedCount > 0 && (
+        <span
+          className={cn(segmentClass, 'cursor-default')}
+          title={`${cushion.unpricedCount} short leg(s) whose underlying carries no quote — unknown, not safe`}
+        >
+          <span className="font-mono tabular-nums">{cushion.unpricedCount} unpriced</span>
+        </span>
+      )}
 
       <div className="ml-auto flex items-center gap-1">
         <button type="button" onClick={toggle} className={segmentClass} title={system.title}>

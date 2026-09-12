@@ -1,4 +1,5 @@
 import { fmtNumLocale, fmtPctFromFraction } from '@/lib/format'
+import { labHref } from '@/lib/analyzeHubs'
 import { useMemo, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import {
@@ -392,11 +393,11 @@ export function OpexSection() {
         nextMoves={[
           {
             label: 'GEX Intraday',
-            href: `/research/dealer-levels?view=gex&symbol=${encodeURIComponent(symbol)}`,
+            href: labHref('gex', symbol),
           },
           {
             label: 'Analysis Model',
-            href: `/research/scenario?view=model&symbol=${encodeURIComponent(symbol)}`,
+            href: labHref('model', symbol),
           },
         ]}
       />

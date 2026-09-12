@@ -30,6 +30,8 @@ import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, similarLine, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import { fwd20Line } from '@/lib/analyzeDepth'
+import { ANALYZE_HUB, labHref } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 import type { LensBand } from '@/api/research/lenses'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
@@ -436,7 +438,7 @@ export function VrpSection() {
         nextMoves={[
           {
             label: 'Option Discovery',
-            href: `/research/discovery?symbol=${encodeURIComponent(symbol)}`,
+            href: withSymbolParam(ANALYZE_HUB.discovery, symbol),
           },
           {
             label: 'Watchlist',
@@ -560,7 +562,7 @@ export function VrpSection() {
               bucket={bucket}
               onPick={(sym) => {
                 setSymbol(sym)
-                navigate(`/research/vol-regime?view=vrp&symbol=${encodeURIComponent(sym)}`)
+                navigate(labHref('vrp', sym))
               }}
             />
           )}

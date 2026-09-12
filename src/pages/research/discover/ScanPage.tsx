@@ -42,6 +42,7 @@ import {
   useScanData,
   type ScanUniverseFilter,
 } from '@/hooks/useScanUniverse'
+import { labHref, type LabViewId } from '@/lib/analyzeHubs'
 import { cn } from '@/lib/utils'
 import type { SimilarRegimeLens } from '@/api/research/similarRegime'
 import { fmtNum, fmtPctFromFraction } from '@/lib/format'
@@ -75,12 +76,12 @@ const PRESET_OPTIONS: { value: ScanPreset; label: string }[] = [
   { value: 'adaptive_30d', label: 'Adaptive-30d' },
 ]
 
-const LAB_LINKS: { key: string; label: string; path: (sym: string) => string }[] = [
-  { key: 'iv', label: 'IV Radar', path: () => '/research/vol-regime?view=iv-rank' },
-  { key: 'vrp', label: 'VRP', path: (s) => `/research/vol-regime?view=vrp&symbol=${s}` },
-  { key: 'surface', label: 'Surface', path: (s) => `/research/vol-regime?view=skew&symbol=${s}` },
-  { key: 'opex', label: 'OpEx', path: (s) => `/research/dealer-levels?view=opex&symbol=${s}` },
-  { key: 'gex', label: 'GEX', path: (s) => `/research/dealer-levels?view=gex&symbol=${s}` },
+const LAB_LINKS: { key: string; label: string; view: LabViewId }[] = [
+  { key: 'iv', label: 'IV Radar', view: 'iv-rank' },
+  { key: 'vrp', label: 'VRP', view: 'vrp' },
+  { key: 'surface', label: 'Surface', view: 'skew' },
+  { key: 'opex', label: 'OpEx', view: 'opex' },
+  { key: 'gex', label: 'GEX', view: 'gex' },
 ]
 
 type RegimePicker = 'auto' | SimilarRegimeLens
@@ -470,7 +471,7 @@ export default function ScanPage() {
                           {LAB_LINKS.map((lab) => (
                             <Link
                               key={lab.key}
-                              to={lab.path(row.symbol)}
+                              to={labHref(lab.view, row.symbol)}
                               className={cn(
                                 denseTable.mutedMeta,
                                 'underline-offset-2 hover:underline',

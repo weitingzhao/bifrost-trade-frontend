@@ -31,6 +31,7 @@ import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, similarLine, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
 import type { LensBand } from '@/api/research/lenses'
 import { richCheapStrikes, skewPercentileText, termStructureView, type StrikeResidual } from '@/lib/analyzeDepth'
+import { labHref } from '@/lib/analyzeHubs'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { copilotViewStore } from '@/store/copilotViewStore'
 import { TermStructureChart } from '@/components/charts/TermStructureChart'
@@ -321,11 +322,11 @@ export function SkewSection() {
         nextMoves={[
           {
             label: 'IV Radar',
-            href: `/research/vol-regime?view=iv-rank&symbol=${encodeURIComponent(symbol)}`,
+            href: labHref('iv-rank', symbol),
           },
           {
             label: 'VRP Lab',
-            href: `/research/vol-regime?view=vrp&symbol=${encodeURIComponent(symbol)}`,
+            href: labHref('vrp', symbol),
           },
         ]}
       />
@@ -499,7 +500,7 @@ export function SkewSection() {
               asOf={skewQ.data?.as_of ?? null}
               onPick={(sym) => {
                 setSymbol(sym)
-                navigate(`/research/vol-regime?view=skew&symbol=${encodeURIComponent(sym)}`)
+                navigate(labHref('skew', sym))
               }}
             />
           )}

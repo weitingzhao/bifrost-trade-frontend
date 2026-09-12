@@ -8,6 +8,7 @@ import { BookOpen } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { EmptyState, SegmentControl } from '@/components/data-display'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { labHref } from '@/lib/analyzeHubs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HypothesisCard } from '@/components/research/HypothesisCard'
 import { useHypothesisList } from '@/hooks/useHypotheses'
@@ -24,9 +25,8 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 ]
 
 function analyzeHref(symbols: string[]): string | undefined {
-  const sym = symbols[0]?.trim().toUpperCase()
-  if (!sym) return undefined
-  return `/research/vol-regime?view=iv-rank&symbol=${encodeURIComponent(sym)}`
+  const sym = symbols[0]?.trim()
+  return sym ? labHref('iv-rank', sym) : undefined
 }
 
 export default function HypothesisBoardPage() {

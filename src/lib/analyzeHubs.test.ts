@@ -6,22 +6,11 @@ import {
   flowHref,
   labHref,
   redirectTarget,
-  withSymbolParam,
   LAB_VIEW_LENS,
   type LabViewId,
 } from './analyzeHubs'
 
 describe('analyze hubs', () => {
-  it('appends the symbol whether or not the route has a query', () => {
-    expect(withSymbolParam('/research/vol-regime?view=vrp', 'nvda')).toBe(
-      '/research/vol-regime?view=vrp&symbol=NVDA',
-    )
-    expect(withSymbolParam('/research/flow', 'SPY')).toBe('/research/flow?symbol=SPY')
-    expect(withSymbolParam('/research/flow#multi-leg', 'SPY')).toBe('/research/flow?symbol=SPY#multi-leg')
-    expect(withSymbolParam('/research/flow', '')).toBe('/research/flow')
-    expect(withSymbolParam('/research/flow', null)).toBe('/research/flow')
-  })
-
   it('builds hub view links from the view id alone', () => {
     expect(labHref('iv-rank')).toBe('/research/vol-regime?view=iv-rank')
     expect(labHref('gex', 'NVDA')).toBe('/research/dealer-levels?view=gex&symbol=NVDA')

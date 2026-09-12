@@ -10,6 +10,7 @@ import type { CandidateOutcomeRow } from '@/api/research/candidateOutcome'
 import { CandidateOutcomeSummary } from '@/components/research/CandidateOutcomeSummary'
 import { useCandidateOutcomeByCandidate } from '@/hooks/useCandidateOutcome'
 import { fmtPctSigned } from '@/lib/format'
+import { labHref } from '@/lib/analyzeHubs'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -168,7 +169,7 @@ export default function CandidatePoolPage() {
                   <DenseTableCell className={denseTableEntityCell}>
                     <div className="flex items-center gap-1.5">
                       <Link
-                        to={`/research/vol-regime?view=iv-rank&symbol=${encodeURIComponent(row.symbol)}`}
+                        to={labHref('iv-rank', row.symbol)}
                         className="text-entity-symbol font-semibold hover:underline"
                       >
                         {row.symbol}

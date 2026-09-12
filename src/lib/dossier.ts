@@ -9,7 +9,8 @@
  */
 import type { ExhibitLens, ExhibitPayload } from '@/api/research/exhibit'
 import type { AnalyzeVerdictTone } from '@/components/research/AnalyzeVerdictStrip'
-import { ANALYZE_HUB, withSymbolParam } from '@/lib/analyzeHubs'
+import { ANALYZE_HUB } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { trackRecordDetail, trackRecordLine } from '@/lib/lensVerdict'
 import { canonicalLens, regimeItems, type RegimeLensItem } from '@/lib/regimeRibbon'
 import type { LampColor } from '@/lib/researchFreshness'

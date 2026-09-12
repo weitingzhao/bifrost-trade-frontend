@@ -34,11 +34,11 @@ import { InspectorDrawer, type InspectorState } from '@/components/positions/Ins
 import styles from '@/components/positions/PositionsChartsSection.module.css'
 import { sortObligations, type ObligationsSort } from '@/utils/obligationsRoom'
 import { BACKING_ANCHOR_ID, BACKING_TARGET_ANCHOR, backingAnchorId, isBackingTarget } from '@/utils/backingAnchors'
+import { POSITIONS_PATH } from '@/utils/portfolioLinks'
 import type { AlarmTarget } from '@/hooks/usePositionsAlarm'
 import { ModelBandSection } from './model/ModelBandSection'
 import { useModelBand } from './model/useModelBand'
 
-const POSITIONS_PATH = '/portfolio/positions'
 const SORTS: readonly ObligationsSort[] = ['cash', 'calls', 'spare', 'symbol']
 
 export default function BackingPage() {

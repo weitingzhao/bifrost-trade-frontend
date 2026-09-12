@@ -1,5 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { fmtNumLocale } from '@/lib/format'
+import { ANALYZE_HUB, labHref } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { useQuery } from '@tanstack/react-query'
 import {
   DenseDataTable,
@@ -172,9 +174,9 @@ export function OrderSentimentSection() {
         nextMoves={[
           {
             label: 'Option Discovery',
-            href: `/research/discovery?symbol=${encodeURIComponent(symbol)}`,
+            href: withSymbolParam(ANALYZE_HUB.discovery, symbol),
           },
-          { label: 'IV Radar', href: `/research/vol-regime?view=iv-rank&symbol=${encodeURIComponent(symbol)}` },
+          { label: 'IV Radar', href: labHref('iv-rank', symbol) },
         ]}
       />
 

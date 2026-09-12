@@ -33,6 +33,8 @@ import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisBu
 import { fetchIvRankHistory } from '@/api/research/ivRadar'
 import { fetchSignalDecayBySymbol } from '@/api/research/signalDecay'
 import { bandFromScore, hitCellText } from '@/lib/analyzeDepth'
+import { ANALYZE_HUB, labHref } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { SimilarRegimeCard } from '@/components/research/SimilarRegimeCard'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
@@ -203,7 +205,7 @@ function GaugeGridView({
             key={row.symbol}
             variant="elevated"
             className="cursor-pointer transition-shadow hover:shadow-md"
-            onClick={() => navigate(`/research/discovery?symbol=${encodeURIComponent(row.symbol)}`)}
+            onClick={() => navigate(withSymbolParam(ANALYZE_HUB.discovery, row.symbol))}
           >
             <CardContent className="flex flex-col items-center gap-1 px-2 py-3">
               <IvGauge value={rank} size={90} />
@@ -360,9 +362,9 @@ export function IvRankSection() {
         nextMoves={[
           {
             label: 'Option Discovery',
-            href: `/research/discovery?symbol=${encodeURIComponent(focusSymbol)}`,
+            href: withSymbolParam(ANALYZE_HUB.discovery, focusSymbol),
           },
-          { label: 'VRP Lab', href: `/research/vol-regime?view=vrp&symbol=${encodeURIComponent(focusSymbol)}` },
+          { label: 'VRP Lab', href: labHref('vrp', focusSymbol) },
         ]}
       />
 
@@ -540,7 +542,7 @@ export function IvRankSection() {
                       label={row.symbol}
                       ariaLabel={`Open ${row.symbol} in Option Discovery`}
                       onClick={() =>
-                        navigate(`/research/discovery?symbol=${encodeURIComponent(row.symbol)}`)
+                        navigate(withSymbolParam(ANALYZE_HUB.discovery, row.symbol))
                       }
                     />
                     <PortfolioTag symbol={row.symbol} variant="row-suffix" />

@@ -13,6 +13,8 @@
  * through it, and every link in the app goes through `labHref` so a rename
  * happens once.
  */
+import { withSymbolParam } from '@/lib/symbolLink'
+
 export const ANALYZE_HUB = {
   volRegime: '/research/vol-regime',
   dealerLevels: '/research/dealer-levels',
@@ -46,15 +48,6 @@ export const LAB_VIEW_LENS: Partial<Record<LabViewId, string>> = {
   gex: 'gex_regime',
   opex: 'opex_pin',
   model: 'terrain_regime',
-}
-
-/** Append `symbol=` whether or not the route already carries a query. */
-export function withSymbolParam(route: string, symbol?: string | null): string {
-  const sym = (symbol ?? '').trim().toUpperCase()
-  if (!sym) return route
-  const [pathAndQuery, hash] = route.split('#', 2)
-  const joiner = pathAndQuery.includes('?') ? '&' : '?'
-  return `${pathAndQuery}${joiner}symbol=${encodeURIComponent(sym)}${hash ? `#${hash}` : ''}`
 }
 
 /** The hub view for a lab, with the symbol carried along. */

@@ -10,6 +10,7 @@ import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { chipTone, similarLine, trackRecordDetail, trackRecordLine, verdictView } from '@/lib/lensVerdict'
+import { labHref } from '@/lib/analyzeHubs'
 import { CopilotAutoInsightChip } from '@/components/research/CopilotAutoInsightChip'
 import { withWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
@@ -623,9 +624,9 @@ export function ModelSection() {
         nextMoves={[
           {
             label: 'Intraday Playbook',
-            href: `/research/scenario?view=playbook&symbol=${encodeURIComponent(sym)}`,
+            href: labHref('playbook', sym),
           },
-          { label: 'GEX Intraday', href: `/research/dealer-levels?view=gex&symbol=${encodeURIComponent(sym)}` },
+          { label: 'GEX Intraday', href: labHref('gex', sym) },
         ]}
       />
 

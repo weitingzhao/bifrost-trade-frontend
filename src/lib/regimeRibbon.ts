@@ -8,7 +8,7 @@
  */
 import type { LensBand } from '@/api/research/lenses'
 import type { AnalyzeVerdictTone } from '@/components/research/AnalyzeVerdictStrip'
-import { withSymbolParam } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { labelForBand, toneForBand } from '@/lib/lensVerdict'
 import type { LampColor } from '@/lib/researchFreshness'
 

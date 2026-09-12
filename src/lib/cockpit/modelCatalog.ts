@@ -1,5 +1,6 @@
 /** Copilot model catalog (D-RS-E-c · RS-F DeepSeek). Keys stay server-side. */
-import { flowHref, labHref } from '@/lib/analyzeHubs'
+import { ANALYZE_HUB, flowHref, labHref } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 
 
 export type CopilotModelId =
@@ -163,24 +164,20 @@ export function writeStoredModel(id: CopilotModelId) {
 /** Map MCP tool domain → Lab route for source chips. */
 export function labPathForTool(toolName: string, symbol?: string): string | null {
   const name = toolName.toLowerCase()
-  const sym = symbol ? `?symbol=${encodeURIComponent(symbol)}` : ''
-  if (name.startsWith('research.hypothesis.')) return `/research${sym}`
-  if (name.startsWith('research.backtest.')) {
-    return `/research/backtest?tab=event-query${symbol ? `&symbol=${encodeURIComponent(symbol)}` : ''}`
-  }
+  const at = (route: string) => withSymbolParam(route, symbol)
+  if (name.startsWith('research.hypothesis.')) return at('/research')
+  if (name.startsWith('research.backtest.')) return at('/research/backtest?tab=event-query')
   if (name.startsWith('research.vrp.')) return labHref('vrp', symbol)
   if (name.startsWith('research.vol_surface.')) return labHref('skew', symbol)
   if (name.startsWith('research.opex_cycle.')) return labHref('opex', symbol)
-  if (name.startsWith('research.discovery.')) return `/research/discovery${sym}`
-  if (name.includes('sepa')) return `/research/sepa-daily-core${sym}`
-  if (name.includes('event_radar')) return `/research/event-radar${sym}`
-  if (name.includes('momentum')) return `/research/momentum-radar${sym}`
+  if (name.startsWith('research.discovery.')) return at(ANALYZE_HUB.discovery)
+  if (name.includes('sepa')) return at('/research/sepa-daily-core')
+  if (name.includes('event_radar')) return at('/research/event-radar')
+  if (name.includes('momentum')) return at('/research/momentum-radar')
   if (name.includes('gex')) return labHref('gex', symbol)
   if (name.includes('flow')) return flowHref(symbol)
-  if (name.includes('forecast') || name.includes('daily_brief')) {
-    return `/research/daily-brief${sym}`
-  }
-  if (name.includes('regime')) return `/research/backtest${sym}`
+  if (name.includes('forecast') || name.includes('daily_brief')) return at('/research/daily-brief')
+  if (name.includes('regime')) return at('/research/backtest')
   return null
 }
 

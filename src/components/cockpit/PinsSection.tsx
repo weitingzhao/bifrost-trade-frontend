@@ -3,6 +3,7 @@ import { PinChip, PinSectionHeader } from '@/components/cockpit/PinChip'
 import { useCockpitPins } from '@/hooks/useCockpitPins'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { useHypothesisList } from '@/hooks/useHypotheses'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { cn } from '@/lib/utils'
 
 /**
@@ -32,7 +33,7 @@ export function PinsSection({ className }: { className?: string }) {
 
   function jumpSymbol(sym: string) {
     setSymbol(sym)
-    navigate(`/research/daily-brief?symbol=${encodeURIComponent(sym)}`)
+    navigate(withSymbolParam('/research/daily-brief', sym))
   }
 
   function jumpHypothesis(id: string) {

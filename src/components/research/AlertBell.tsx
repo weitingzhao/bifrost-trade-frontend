@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { cn } from '@/lib/utils'
 import {
   bellBadgeClass,
@@ -41,8 +42,7 @@ function reasonSummary(item: AnalyzeAlert): string {
 
 function alertHref(item: AnalyzeAlert): string {
   if (item.kind === 'composite_high') {
-    const sym = item.symbol?.trim()
-    return sym ? `/research/scan?symbol=${encodeURIComponent(sym)}` : '/research/scan'
+    return withSymbolParam('/research/scan', item.symbol)
   }
   if (item.kind === 'hit_rate_drop' || item.kind === 'weight_shift') {
     const lens = item.lens?.trim()

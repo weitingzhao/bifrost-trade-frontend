@@ -9,6 +9,7 @@
  */
 import type { ProposalKind, SymbolProposal, SymbolVerdicts } from '@/api/research/symbolVerdicts'
 import { labelForBand, toneForBand } from '@/lib/lensVerdict'
+import { withSymbolParam } from '@/lib/symbolLink'
 
 export type ChipTone = 'success' | 'danger' | 'warning' | 'info' | 'neutral'
 
@@ -50,9 +51,8 @@ export function proposalTone(p: Pick<SymbolProposal, 'kind' | 'status'>): ChipTo
 }
 
 export function proposalPath(p: SymbolProposal, symbol: string): string {
-  const sym = encodeURIComponent(symbol)
-  if (p.kind === 'candidate') return `/research/loop/candidates?symbol=${sym}`
-  if (p.kind === 'hypothesis') return `/research/loop/hypotheses?symbol=${sym}`
+  if (p.kind === 'candidate') return withSymbolParam('/research/loop/candidates', symbol)
+  if (p.kind === 'hypothesis') return withSymbolParam('/research/loop/hypotheses', symbol)
   return '/research/loop/decisions'
 }
 

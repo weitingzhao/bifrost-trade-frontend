@@ -38,6 +38,12 @@ export interface RouteEntry {
    * strike x expiry. The sidebar marks the row `stk` or `opt` from this.
    */
   scope?: 'underlying' | 'contract'
+  /**
+   * The path only redirects. Named so the breadcrumb does not flash the
+   * fallback during the frame before `<Navigate>` fires, but never offered as
+   * somewhere to go.
+   */
+  redirect?: boolean
 }
 
 const MARKET = ['Market'] as const
@@ -147,37 +153,40 @@ export const ROUTES: readonly RouteEntry[] = [
   // ── Redirect-only paths ────────────────────────────────────────────────
   // They render for one frame before `<Navigate>` fires. Named so that frame
   // shows where you are going rather than the fallback.
-  { path: '/market/watchlist', label: 'Stock Watchlist', crumbs: DATA },
-  { path: '/research/sepa', label: 'Stock Screener', crumbs: DATA },
-  { path: '/research/stock-data', label: 'Data Readiness', crumbs: SETTINGS },
-  { path: '/research/option-scan', label: 'Option Scan', crumbs: DISCOVER },
-  { path: '/research/risk', label: 'Daemon', crumbs: OPERATIONS },
-  { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE },
-  { path: '/research/vrp-lab', label: 'VRP Lab', crumbs: ANALYZE },
-  { path: '/research/vol-surface-lab', label: 'Vol Surface Lab', crumbs: ANALYZE },
-  { path: '/research/gex-intraday', label: 'GEX Intraday', crumbs: ANALYZE },
-  { path: '/research/opex-cycle-lab', label: 'OpEx Cycle Lab', crumbs: ANALYZE },
-  { path: '/research/analysis-model', label: 'Analysis Model', crumbs: ANALYZE },
-  { path: '/research/forecast-sessions', label: 'Forecast Sessions', crumbs: ANALYZE },
-  { path: '/research/intraday-playbook', label: 'Intraday Playbook', crumbs: ANALYZE },
-  { path: '/research/order-sentiment', label: 'Order Sentiment', crumbs: ANALYZE },
-  { path: '/portfolio/trade-history', label: 'Trade Ledger', crumbs: PORTFOLIO },
-  { path: '/portfolio/copilot', label: 'Trading Copilot', crumbs: COPILOT },
-  { path: '/portfolio/model-analysis', label: 'Backing & Model', crumbs: PORTFOLIO },
-  { path: '/portfolio/risk', label: 'Daemon', crumbs: OPERATIONS },
-  { path: '/settings/subscribe', label: 'Feed', crumbs: SETTINGS },
-  { path: '/settings/feed/ib', label: 'Feed', crumbs: SETTINGS },
-  { path: '/settings/coverage/overview', label: 'Data Coverage', crumbs: SETTINGS },
-  { path: '/settings/coverage/overview-detail', label: 'Data Coverage', crumbs: SETTINGS },
-  { path: '/settings/coverage/option', label: 'Data Coverage', crumbs: SETTINGS },
-  { path: '/settings/coverage/stock-ib', label: 'Data Coverage', crumbs: SETTINGS },
-  { path: '/settings/daemon-app', label: 'Daemon', crumbs: OPERATIONS },
-  { path: '/settings/tech-stack', label: 'Tech Stack', crumbs: DOCS },
-  { path: '/settings/ui-design-system', label: 'UI Design System', crumbs: DOCS },
+  { path: '/market/watchlist', label: 'Stock Watchlist', crumbs: DATA, redirect: true },
+  { path: '/research/sepa', label: 'Stock Screener', crumbs: DATA, redirect: true },
+  { path: '/research/stock-data', label: 'Data Readiness', crumbs: SETTINGS, redirect: true },
+  { path: '/research/option-scan', label: 'Option Scan', crumbs: DISCOVER, redirect: true },
+  { path: '/research/risk', label: 'Daemon', crumbs: OPERATIONS, redirect: true },
+  { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE, redirect: true },
+  { path: '/research/vrp-lab', label: 'VRP Lab', crumbs: ANALYZE, redirect: true },
+  { path: '/research/vol-surface-lab', label: 'Vol Surface Lab', crumbs: ANALYZE, redirect: true },
+  { path: '/research/gex-intraday', label: 'GEX Intraday', crumbs: ANALYZE, redirect: true },
+  { path: '/research/opex-cycle-lab', label: 'OpEx Cycle Lab', crumbs: ANALYZE, redirect: true },
+  { path: '/research/analysis-model', label: 'Analysis Model', crumbs: ANALYZE, redirect: true },
+  { path: '/research/forecast-sessions', label: 'Forecast Sessions', crumbs: ANALYZE, redirect: true },
+  { path: '/research/intraday-playbook', label: 'Intraday Playbook', crumbs: ANALYZE, redirect: true },
+  { path: '/research/order-sentiment', label: 'Order Sentiment', crumbs: ANALYZE, redirect: true },
+  { path: '/portfolio/trade-history', label: 'Trade Ledger', crumbs: PORTFOLIO, redirect: true },
+  { path: '/portfolio/copilot', label: 'Trading Copilot', crumbs: COPILOT, redirect: true },
+  { path: '/portfolio/model-analysis', label: 'Backing & Model', crumbs: PORTFOLIO, redirect: true },
+  { path: '/portfolio/risk', label: 'Daemon', crumbs: OPERATIONS, redirect: true },
+  { path: '/settings/subscribe', label: 'Feed', crumbs: SETTINGS, redirect: true },
+  { path: '/settings/feed/ib', label: 'Feed', crumbs: SETTINGS, redirect: true },
+  { path: '/settings/coverage/overview', label: 'Data Coverage', crumbs: SETTINGS, redirect: true },
+  { path: '/settings/coverage/overview-detail', label: 'Data Coverage', crumbs: SETTINGS, redirect: true },
+  { path: '/settings/coverage/option', label: 'Data Coverage', crumbs: SETTINGS, redirect: true },
+  { path: '/settings/coverage/stock-ib', label: 'Data Coverage', crumbs: SETTINGS, redirect: true },
+  { path: '/settings/daemon-app', label: 'Daemon', crumbs: OPERATIONS, redirect: true },
+  { path: '/settings/tech-stack', label: 'Tech Stack', crumbs: DOCS, redirect: true },
+  { path: '/settings/ui-design-system', label: 'UI Design System', crumbs: DOCS, redirect: true },
 ]
 
+/** Everywhere you can actually go — what the Omnibar and any page list offer. */
+export const PAGE_ROUTES: readonly RouteEntry[] = ROUTES.filter((r) => !r.redirect)
+
 /** Shown when a pathname matches nothing — a 404, or a route added without an entry. */
-export const FALLBACK_ROUTE: RouteEntry = { path: '*', label: 'Bifrost Trade' }
+export const FALLBACK_ROUTE: RouteEntry = { path: '*', label: 'Bifrost Trade', redirect: true }
 
 const STATIC_ROUTES = new Map(ROUTES.filter((r) => !r.path.includes(':')).map((r) => [r.path, r]))
 const DYNAMIC_ROUTES = ROUTES.filter((r) => r.path.includes(':'))

@@ -22,16 +22,22 @@ function Command({
 function CommandDialog({
   title = 'Command Palette',
   description = 'Search for a command to run…',
+  // Off when the caller filters its own results — a prefix-driven palette
+  // ('>' for commands) has an input value that matches no item text.
+  shouldFilter,
+  contentClassName,
   children,
   ...props
 }: React.ComponentProps<typeof Dialog> & {
   title?: string
   description?: string
+  shouldFilter?: boolean
+  contentClassName?: string
 }) {
   return (
     <Dialog {...props}>
-      <DialogContent className="overflow-hidden p-0">
-        <Command className="[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:size-4 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-2 [&_[cmdk-item]_svg]:size-4">
+      <DialogContent className={cn('overflow-hidden p-0', contentClassName)}>
+        <Command shouldFilter={shouldFilter} className="[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:size-4 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-2 [&_[cmdk-item]_svg]:size-4">
           <div className="hidden">
             <p>{title}</p>
             <p>{description}</p>

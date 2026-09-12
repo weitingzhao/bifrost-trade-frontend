@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun, SunMoon } from 'lucide-react'
+import { Bell, Moon, Search, Sun, SunMoon } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { SEAT_META, useResearchSeat } from '@/lib/research/seat'
@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 import { cn } from '@/lib/utils'
+import { omnibar } from '@/lib/omnibar'
 import { routeFor } from './routeRegistry'
 import { SymbolChip } from './SymbolChip'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
@@ -56,6 +57,17 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages }: AppHeaderProps
           {label}
         </span>
       </nav>
+      <button
+        type="button"
+        onClick={omnibar.open}
+        className="hidden h-6 max-w-[460px] flex-1 items-center gap-2 rounded border border-border bg-secondary/40 px-2 text-dense-micro text-muted-foreground transition-colors hover:bg-secondary md:flex"
+        aria-label="Open the Omnibar"
+      >
+        <Search className="h-3 w-3" aria-hidden />
+        <span>Symbol, page, or command</span>
+        <kbd className="ml-auto font-mono opacity-70">⌘K</kbd>
+      </button>
+
       <SymbolChip />
       {location.pathname.startsWith('/research') ? <ResearchSeatChip /> : null}
 

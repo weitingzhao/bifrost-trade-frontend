@@ -21,6 +21,8 @@ import { PageRouteFallback } from '@/components/layout'
 import { CopilotFloatingBubble } from '@/components/copilot/CopilotFloatingBubble'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
+import { useRecentPagesTrail } from '@/lib/omnibar'
+import { Omnibar } from './Omnibar'
 
 function readSidebarCookie(): boolean {
   const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
@@ -51,6 +53,7 @@ export function AppLayout() {
   useCopilotDeepLink()
   useResearchSeatDeepLink()
   useHeldSymbolSync()
+  useRecentPagesTrail()
   const showMarketStrip = shouldShowGlobalMarketStrip(pathname)
   const { messages, dismissedIds, activeMsgCount, dismissMessage, dismissAll } = useSystemMessages()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -99,6 +102,7 @@ export function AppLayout() {
             <ReactorMapPanel />
             <PlatformStatusPanel />
           </SidebarInset>
+          <Omnibar />
           {msgCenter}
           <CopilotFloatingBubble />
         </SidebarProvider>

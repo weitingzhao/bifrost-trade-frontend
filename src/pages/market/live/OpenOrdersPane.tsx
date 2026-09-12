@@ -74,7 +74,7 @@ export function OpenOrdersPane({
           <button
             type="button"
             className={liveIconBtnClass}
-            onClick={() => navigate('/settings/subscribe')}
+            onClick={() => navigate('/system/feed')}
             title="Open Subscribe page (IB Event Subscribe — account agent stream)"
             aria-label="Open Subscribe page"
           >

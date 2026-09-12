@@ -11,9 +11,9 @@ import {
   type AggregateIngestLamp,
 } from '@/utils/socketIngestLamp'
 
-export const SYSTEM_NAV_API_PATH = '/settings/api'
-export const SYSTEM_NAV_DAEMON_PATH = '/operations/daemon'
-export const SYSTEM_NAV_SOCKET_PATH = '/settings/socket'
+export const SYSTEM_NAV_API_PATH = '/system/api'
+export const SYSTEM_NAV_DAEMON_PATH = '/system/daemon'
+export const SYSTEM_NAV_SOCKET_PATH = '/system/socket'
 
 const SYSTEM_NAV_PATHS = new Set([
   SYSTEM_NAV_API_PATH,

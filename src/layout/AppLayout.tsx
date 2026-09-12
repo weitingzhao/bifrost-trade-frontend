@@ -11,10 +11,6 @@ import { ShellStatusBar } from './ShellStatusBar'
 import { SHELL_SIDEBAR_WIDTH } from './shellChrome'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
 import { MessageDrawer } from '@/components/MessageCenter/MessageDrawer'
-import { PlatformStatusPanel } from '@/components/PlatformStatusPanel'
-import { ReactorMapPanel } from '@/components/topology/ReactorMapPanel'
-import { PlatformPanelProvider } from '@/context/PlatformPanelContext'
-import { ReactorMapProvider } from '@/context/ReactorMapContext'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
@@ -78,35 +74,29 @@ export function AppLayout() {
   )
 
   return (
-    <ReactorMapProvider>
-      <PlatformPanelProvider>
-        <SidebarProvider
-          defaultOpen={readSidebarCookie()}
-          style={{ '--sidebar-width': SHELL_SIDEBAR_WIDTH } as CSSProperties}
-        >
-          {/* Before the sidebar, not after: the ~40 nav links are exactly what
-              this exists to skip. */}
-          <SkipToContent />
-          <AppSidebar />
-          {/* h-svh + overflow-hidden keeps dock panels inside the viewport */}
-          <SidebarInset className="h-svh overflow-hidden bg-card">
-            <AppHeader activeMsgCount={activeMsgCount} onOpenMessages={() => setDrawerOpen(true)} />
-            <GlobalMarketStatusBar enabled={showMarketStrip} />
-            <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto min-w-0 bg-card outline-none">
-              <BoundedOutlet />
-            </main>
-            <ShellStatusBar
-              activeMsgCount={activeMsgCount}
-              onOpenMessages={() => setDrawerOpen(true)}
-            />
-            <ReactorMapPanel />
-            <PlatformStatusPanel />
-          </SidebarInset>
-          <Omnibar />
-          {msgCenter}
-          <CopilotFloatingBubble />
-        </SidebarProvider>
-      </PlatformPanelProvider>
-    </ReactorMapProvider>
+    <SidebarProvider
+      defaultOpen={readSidebarCookie()}
+      style={{ '--sidebar-width': SHELL_SIDEBAR_WIDTH } as CSSProperties}
+    >
+      {/* Before the sidebar, not after: the ~40 nav links are exactly what
+          this exists to skip. */}
+      <SkipToContent />
+      <AppSidebar />
+      {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport */}
+      <SidebarInset className="h-svh overflow-hidden bg-card">
+        <AppHeader activeMsgCount={activeMsgCount} onOpenMessages={() => setDrawerOpen(true)} />
+        <GlobalMarketStatusBar enabled={showMarketStrip} />
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto min-w-0 bg-card outline-none">
+          <BoundedOutlet />
+        </main>
+        <ShellStatusBar
+          activeMsgCount={activeMsgCount}
+          onOpenMessages={() => setDrawerOpen(true)}
+        />
+      </SidebarInset>
+      <Omnibar />
+      {msgCenter}
+      <CopilotFloatingBubble />
+    </SidebarProvider>
   )
 }

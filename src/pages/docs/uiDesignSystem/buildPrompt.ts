@@ -10,7 +10,7 @@ const CONTEXT = `你是 bifrost-trade-frontend（React 18 + Vite + Tailwind CSS 
 - docs/DENSE_UI.md
 - .cursor/rules/dense-ui-system.mdc
 - src/index.css（design token）
-- 活体契约页：/settings/ui-design-system（UiDesignSystemPage.tsx）
+- 活体契约页：/docs/ui-design-system（UiDesignSystemPage.tsx）
 
 **你必须在指定 scope 内直接修改代码**，不要只输出审计报告。`
 

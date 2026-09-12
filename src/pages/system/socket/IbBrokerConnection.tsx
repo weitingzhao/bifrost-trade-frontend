@@ -21,7 +21,7 @@ import {
   ibBrokerProbeBadgeClass,
   ibBrokerSlotDotClass,
   socketConnectionRetryBadgeClass,
-} from '@/pages/settings/socket/socketIngestUi'
+} from '@/pages/system/socket/socketIngestUi'
 import { lampFillClass } from '@/lib/lampTone'
 
 function ConnectionColumn({

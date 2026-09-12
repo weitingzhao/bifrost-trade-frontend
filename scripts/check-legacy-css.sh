@@ -510,47 +510,47 @@ if [[ -n "$stk_tag_legacy" ]]; then
 fi
 
 # Settings API Health: Dense migration (Phase 4.16)
-if [[ -f src/pages/settings/apiHealth/apiHealthSections.tsx ]]; then
+if [[ -f src/pages/system/apiHealth/apiHealthSections.tsx ]]; then
   report "apiHealthSections.tsx must be deleted (split into apiHealth/* components)"
 fi
-if api_health_raw_table=$(grep -rE '<table' src/pages/settings/apiHealth --include='*.tsx' 2>/dev/null || true); then
+if api_health_raw_table=$(grep -rE '<table' src/pages/system/apiHealth --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$api_health_raw_table" ]]; then
     echo "$api_health_raw_table" >&2
-    report "raw <table under src/pages/settings/apiHealth (use DenseDataTable; ServiceTopologyOverview SVG exempt)"
+    report "raw <table under src/pages/system/apiHealth (use DenseDataTable; ServiceTopologyOverview SVG exempt)"
   fi
 fi
-if api_health_ui_table=$(grep -rl '@/components/ui/table' src/pages/settings/apiHealth --include='*.tsx' 2>/dev/null || true); then
+if api_health_ui_table=$(grep -rl '@/components/ui/table' src/pages/system/apiHealth --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$api_health_ui_table" ]]; then
     echo "$api_health_ui_table" >&2
-    report "shadcn Table under src/pages/settings/apiHealth (use DenseDataTable)"
+    report "shadcn Table under src/pages/system/apiHealth (use DenseDataTable)"
   fi
 fi
 
 # Settings Socket: Dense migration (Phase 4.18)
-if socket_ui_table=$(grep -rl '@/components/ui/table' src/pages/settings/socket --include='*.tsx' 2>/dev/null || true); then
+if socket_ui_table=$(grep -rl '@/components/ui/table' src/pages/system/socket --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$socket_ui_table" ]]; then
     echo "$socket_ui_table" >&2
-    report "shadcn Table under src/pages/settings/socket (use DenseDataTable)"
+    report "shadcn Table under src/pages/system/socket (use DenseDataTable)"
   fi
 fi
 
 # Settings Daemon: Dense migration (Phase 4.19)
 if daemon_ui_table=$(grep -rl '@/components/ui/table' \
-  src/pages/settings/DaemonStatusPage.tsx \
-  src/pages/settings/daemon \
+  src/pages/system/DaemonStatusPage.tsx \
+  src/pages/system/daemon \
   --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$daemon_ui_table" ]]; then
     echo "$daemon_ui_table" >&2
     report "shadcn Table under DaemonStatusPage or settings/daemon (use DenseDataTable)"
   fi
 fi
-if daemon_pnl_class=$(grep -rE '\bpnlClass\b' src/pages/settings/daemon --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if daemon_pnl_class=$(grep -rE '\bpnlClass\b' src/pages/system/daemon --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$daemon_pnl_class" ]]; then
     echo "$daemon_pnl_class" >&2
     report "pnlClass under settings/daemon (use pnlColorClass / daemonLampTextClass)"
   fi
 fi
-if daemon_inline_lamp=$(grep -rE "text-green-600|text-red-500|text-yellow-500" src/pages/settings/daemon \
+if daemon_inline_lamp=$(grep -rE "text-green-600|text-red-500|text-yellow-500" src/pages/system/daemon \
   --include='*.tsx' 2>/dev/null | grep -v daemonUi.ts || true); then
   if [[ -n "$daemon_inline_lamp" ]]; then
     echo "$daemon_inline_lamp" >&2
@@ -558,7 +558,7 @@ if daemon_inline_lamp=$(grep -rE "text-green-600|text-red-500|text-yellow-500" s
   fi
 fi
 if daemon_legacy_strings=$(grep -rE 'daemon-group-|table-operations|ib-connection-table' \
-  src/pages/settings/daemon src/pages/settings/DaemonStatusPage.tsx --include='*.tsx' 2>/dev/null || true); then
+  src/pages/system/daemon src/pages/system/DaemonStatusPage.tsx --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$daemon_legacy_strings" ]]; then
     echo "$daemon_legacy_strings" >&2
     report "legacy daemon CSS class strings under settings/daemon paths"
@@ -575,7 +575,7 @@ fi
 
 # Dense typography ratchet: hardcoded text-[Npx] / text-[0.NNrem] should only go DOWN.
 # Allowed exceptions: text-[7px], text-[8px], and sizing/winRate responsive gradations.
-HARDCODED_TYPO_BASELINE=23
+HARDCODED_TYPO_BASELINE=21
 hardcoded_typo_count=$(grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$hardcoded_typo_count" -gt "$HARDCODED_TYPO_BASELINE" ]]; then
   grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null >&2

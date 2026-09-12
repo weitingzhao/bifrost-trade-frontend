@@ -5,8 +5,7 @@ export type PromptDomainId =
   | 'portfolio'
   | 'research'
   | 'strategy'
-  | 'operations'
-  | 'settings'
+  | 'system'
 
 export type PromptScope =
   | { kind: 'site' }
@@ -66,14 +65,12 @@ export const PROMPT_DOMAINS: PromptDomainDef[] = [
     pathGlobs: ['pages/strategy/**', 'components/strategy/**', 'hooks/useStrategies.ts'],
   },
   {
-    id: 'operations',
-    label: 'Operations',
-    pathGlobs: ['pages/operations/**'],
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    pathGlobs: ['pages/settings/**', 'layout/SettingsLayout.tsx'],
+    // `operations` and `settings` were two domains over one subject. The
+    // second navigation shell that made them feel separate is gone with
+    // `SettingsLayout`; the pages live under `pages/system/`.
+    id: 'system',
+    label: 'System',
+    pathGlobs: ['pages/system/**', 'components/topology/**'],
   },
 ]
 
@@ -90,7 +87,7 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/research/watchlist', label: 'Stock Watchlist', domain: 'research', pathGlobs: ['pages/research/data/StockWatchlistPage.tsx', 'pages/research/data/watchlist/**'] },
   { route: '/research/stock-screener', label: 'Stock Screener', domain: 'research', pathGlobs: ['pages/research/data/StockScreenerPage.tsx', 'pages/research/data/stockScreener/**'] },
   { route: '/research/screener', label: 'Option Screener', domain: 'research', pathGlobs: ['pages/research/data/ScreenerPage.tsx', 'pages/research/data/optionScreener/**'] },
-  { route: '/settings/data-readiness', label: 'Data Readiness', domain: 'settings', pathGlobs: ['pages/research/data/StockDataPage.tsx', 'pages/research/data/stockDataReadiness/**'] },
+  { route: '/system/data-readiness', label: 'Data Readiness', domain: 'system', pathGlobs: ['pages/research/data/StockDataPage.tsx', 'pages/research/data/stockDataReadiness/**'] },
   { route: '/research/discovery', label: 'Option Discovery', domain: 'research', pathGlobs: ['pages/research/analyze/DiscoveryPage.tsx'] },
   { route: '/research/vol-regime', label: 'Vol Regime', domain: 'research', pathGlobs: ['pages/research/analyze/volRegime/**', 'pages/research/analyze/hub/**', 'utils/ivRadar/**', 'hooks/useIvRadarData.ts', 'hooks/useHoldingSymbols.ts', 'api/research/ivRadar.ts'] },
   { route: '/research/dealer-levels', label: 'Dealer Levels', domain: 'research', pathGlobs: ['pages/research/analyze/dealerLevels/**'] },
@@ -107,16 +104,17 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/strategy/gates', label: 'Gates', domain: 'strategy', pathGlobs: ['pages/strategy/GatesPage.tsx'] },
   { route: '/strategy/option-category', label: 'Option Category', domain: 'strategy', pathGlobs: ['pages/strategy/OptionCategoryPage.tsx'] },
 
-  { route: '/operations/daemon', label: 'Daemon', domain: 'operations', pathGlobs: ['pages/operations/DaemonPage.tsx'] },
-  { route: '/operations/platform', label: 'Platform Plugins', domain: 'operations', pathGlobs: ['pages/operations/PlatformStatusPage.tsx'] },
+  { route: '/system/coverage', label: 'Coverage', domain: 'system', pathGlobs: ['pages/system/CoveragePage.tsx', 'pages/system/coverage/**'] },
+  { route: '/system/feed', label: 'Feed', domain: 'system', pathGlobs: ['pages/system/FeedPage.tsx', 'pages/system/subscribe/**'] },
+  { route: '/system/topology', label: 'Topology', domain: 'system', pathGlobs: ['pages/system/TopologyPage.tsx', 'components/topology/**'] },
+  { route: '/system/daemon', label: 'Daemon', domain: 'system', pathGlobs: ['pages/system/DaemonStatusPage.tsx', 'pages/system/daemon/**'] },
+  { route: '/system/api', label: 'API Health', domain: 'system', pathGlobs: ['pages/system/ApiHealthPage.tsx', 'pages/system/apiHealth/**'] },
+  { route: '/system/socket', label: 'Socket', domain: 'system', pathGlobs: ['pages/system/SocketPage.tsx', 'pages/system/socket/**'] },
+  { route: '/system/platform', label: 'Platform', domain: 'system', pathGlobs: ['pages/system/PlatformPluginsPage.tsx'] },
+  { route: '/system/ib', label: 'IB Connection', domain: 'system', pathGlobs: ['pages/system/IbConnectionPage.tsx'] },
 
-  { route: '/settings/ui-design-system', label: 'UI Design System', domain: 'settings', pathGlobs: ['pages/settings/UiDesignSystemPage.tsx', 'pages/settings/uiDesignSystem/**'] },
-  { route: '/settings/coverage/overview', label: 'Coverage Overview', domain: 'settings', pathGlobs: ['pages/settings/CoverageOverviewPage.tsx', 'pages/settings/coverage/**'] },
-  { route: '/settings/subscribe', label: 'Subscribe', domain: 'settings', pathGlobs: ['pages/settings/SubscribePage.tsx', 'pages/settings/subscribe/**'] },
-  { route: '/settings/tech-stack', label: 'Tech Stack', domain: 'settings', pathGlobs: ['pages/settings/TechStackPage.tsx'] },
-  { route: '/settings/ib', label: 'IB Connection', domain: 'settings', pathGlobs: ['pages/settings/IbConnectionPage.tsx'] },
-  { route: '/settings/socket', label: 'Socket', domain: 'settings', pathGlobs: ['pages/settings/SocketPage.tsx'] },
-  { route: '/settings/api', label: 'API Health', domain: 'settings', pathGlobs: ['pages/settings/ApiHealthPage.tsx'] },
+  { route: '/docs/ui-design-system', label: 'UI Design System', domain: 'system', pathGlobs: ['pages/docs/UiDesignSystemPage.tsx', 'pages/docs/uiDesignSystem/**'] },
+  { route: '/docs/tech-stack', label: 'Tech Stack', domain: 'system', pathGlobs: ['pages/docs/TechStackPage.tsx'] },
 ]
 
 const SITE_PATH_GLOBS = ['pages/**', 'components/**', 'hooks/**', 'utils/**', 'layout/**']

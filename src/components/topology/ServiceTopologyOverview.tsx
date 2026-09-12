@@ -197,9 +197,13 @@ export function ServiceTopologyOverview({
         </div>
       </div>
 
+      {/* The aspect is the layout: nodes are placed as percentages of this box,
+          so without it they pile into whatever height the container happens to
+          have. Page mode had no consumer until System > Topology — the dock
+          always passed `embedded` — which is why it shipped without one. */}
       <div
         className={embedded ? topologyCanvasEmbeddedClass : topologyCanvasPageClass}
-        style={embedded ? aspectStyle : undefined}
+        style={aspectStyle}
       >
         <div className={embedded ? topologyCanvasEmbeddedInnerClass : 'relative h-full w-full'}>
           <svg

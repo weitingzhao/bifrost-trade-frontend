@@ -26,7 +26,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Inbox, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { usePlatformPanel } from '@/hooks/usePlatformPanel'
 import { usePlatformPlugins } from '@/hooks/usePlatformPlugins'
 import { useBookCushion } from '@/hooks/useBookCushion'
 import { SHELL_STATUS_BAR_HEIGHT_CLASS } from './shellChrome'
@@ -55,10 +54,9 @@ interface ShellStatusBarProps {
 
 export function ShellStatusBar({ activeMsgCount, onOpenMessages }: ShellStatusBarProps) {
   const clock = useWallClock()
-  // The bar is the always-on reader; the panel polls only while it is open, and
-  // the two share a query key, so this is one request either way.
+  // The bar is the always-on reader; System › Platform polls the same query
+  // key while it is open, so this stays one request either way.
   const { rows, isLoading } = usePlatformPlugins(true)
-  const { toggle } = usePlatformPanel()
   const cushion = useBookCushion(true)
 
   // Grey is "not probed", not "broken" — the same HealthLamp semantics the rest
@@ -111,10 +109,10 @@ export function ShellStatusBar({ activeMsgCount, onOpenMessages }: ShellStatusBa
       )}
 
       <div className="ml-auto flex items-center gap-1">
-        <button type="button" onClick={toggle} className={segmentClass} title={system.title}>
+        <Link to="/system/platform" className={segmentClass} title={system.title}>
           <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', system.dot)} />
           <span className="font-mono tabular-nums">{system.text}</span>
-        </button>
+        </Link>
 
         <button type="button" onClick={onOpenMessages} className={segmentClass} title="Messages">
           <Inbox className="h-3 w-3" aria-hidden />

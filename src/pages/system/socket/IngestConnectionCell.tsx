@@ -5,7 +5,7 @@ import {
   ConnectionRetryControl,
   IbBrokerConnectionCell,
   ServiceHeartbeatBadge,
-} from '@/pages/settings/socket/IbBrokerConnection'
+} from '@/pages/system/socket/IbBrokerConnection'
 import { ingestProcessRunningForIbClientId } from '@/utils/ibBrokerConnectionModel'
 import {
   ingestRedisTruthyConnected,

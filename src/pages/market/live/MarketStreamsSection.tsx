@@ -141,7 +141,7 @@ export function MarketStreamsSection({
           <button
             type="button"
             className={liveIconBtnClass}
-            onClick={() => navigate('/settings/subscribe')}
+            onClick={() => navigate('/system/feed')}
             title="Open Subscribe page"
             aria-label="Open Subscribe page"
           >

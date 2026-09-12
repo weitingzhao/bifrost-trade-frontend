@@ -2,7 +2,6 @@ import type { ComponentType } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { LabRedirect } from '@/pages/research/analyze/hub/LabRedirect'
 import { AppLayout } from '@/layout/AppLayout'
-import { SettingsLayout } from '@/layout/SettingsLayout'
 import RouteErrorPage from '@/pages/RouteErrorPage'
 
 /** Eager — high-traffic monitoring entry points */
@@ -229,11 +228,11 @@ export const router = createBrowserRouter([
       /* The Risk Model page is retired: its four daemon figures live on the Daemon page. Old links land there. */
       {
         path: 'portfolio/risk',
-        element: <Navigate to="/operations/daemon" replace />,
+        element: <Navigate to="/system/daemon" replace />,
       },
       {
         path: 'research/risk',
-        element: <Navigate to="/operations/daemon" replace />,
+        element: <Navigate to="/system/daemon" replace />,
       },
 
       { path: 'strategy/instances/:instanceId?', lazy: lazyPage(() => import('@/pages/strategy/InstancesPage')) },
@@ -262,26 +261,48 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/strategy/OptionCategoryPage')),
       },
 
+      // ── System ───────────────────────────────────────────────────────
+      // One shell: these render inside AppLayout like every other page. They
+      // used to sit under a `SettingsLayout` that grew a navigation aside of
+      // its own, which cost the breadcrumb, the Omnibar, the symbol chip and
+      // the Inbox the moment you opened one of them.
       {
-        path: 'operations/daemon',
-        lazy: lazyPage(() => import('@/pages/operations/DaemonPage')),
+        path: 'system/coverage',
+        lazy: lazyPage(() => import('@/pages/system/CoveragePage')),
       },
       {
-        path: 'operations/platform',
-        lazy: lazyPage(() => import('@/pages/operations/PlatformStatusPage')),
+        path: 'system/feed',
+        lazy: lazyPage(() => import('@/pages/system/FeedPage')),
       },
-
+      // Data Readiness is a Research page. System lists it because "is the
+      // data there" gets asked from here too; Research keeps its own entry.
       {
-        path: 'settings/daemon',
-        lazy: lazyPage(() => import('@/pages/settings/DaemonStatusPage')),
-      },
-      {
-        path: 'settings/api',
-        lazy: lazyPage(() => import('@/pages/settings/ApiHealthPage')),
+        path: 'system/data-readiness',
+        lazy: lazyPage(() => import('@/pages/research/data/StockDataPage')),
       },
       {
-        path: 'settings/socket',
-        lazy: lazyPage(() => import('@/pages/settings/SocketPage')),
+        path: 'system/topology',
+        lazy: lazyPage(() => import('@/pages/system/TopologyPage')),
+      },
+      {
+        path: 'system/daemon',
+        lazy: lazyPage(() => import('@/pages/system/DaemonStatusPage')),
+      },
+      {
+        path: 'system/api',
+        lazy: lazyPage(() => import('@/pages/system/ApiHealthPage')),
+      },
+      {
+        path: 'system/socket',
+        lazy: lazyPage(() => import('@/pages/system/SocketPage')),
+      },
+      {
+        path: 'system/platform',
+        lazy: lazyPage(() => import('@/pages/system/PlatformPluginsPage')),
+      },
+      {
+        path: 'system/ib',
+        lazy: lazyPage(() => import('@/pages/system/IbConnectionPage')),
       },
 
       {
@@ -300,41 +321,28 @@ export const router = createBrowserRouter([
         path: 'docs/research-calibration',
         lazy: lazyPage(() => import('@/pages/docs/researchBlueprint/ResearchBlueprintPage')),
       },
-      {
-        path: 'settings',
-        element: <SettingsLayout />,
-        children: [
-          { index: true, element: <Navigate to="/settings/coverage" replace /> },
-          {
-            path: 'coverage',
-            lazy: lazyPage(() => import('@/pages/settings/CoveragePage')),
-          },
-          // The four pages Coverage replaced, and the two-link Feed shell.
-          { path: 'coverage/overview', element: <Navigate to="/settings/coverage?view=watchlist" replace /> },
-          { path: 'coverage/overview-detail', element: <Navigate to="/settings/coverage?view=watchlist" replace /> },
-          { path: 'coverage/option', element: <Navigate to="/settings/coverage?view=option" replace /> },
-          { path: 'coverage/stock-ib', element: <Navigate to="/settings/coverage?view=stock" replace /> },
-          {
-            path: 'feed',
-            lazy: lazyPage(() => import('@/pages/settings/FeedPage')),
-          },
-          { path: 'subscribe', element: <Navigate to="/settings/feed" replace /> },
-          { path: 'feed/ib', element: <Navigate to="/settings/feed" replace /> },
-          // Data Readiness is a Research page; Research owns its menu entry.
-          {
-            path: 'data-readiness',
-            lazy: lazyPage(() => import('@/pages/research/data/StockDataPage')),
-          },
-          // Reference, not settings.
-          { path: 'daemon-app', element: <Navigate to="/operations/daemon" replace /> },
-          { path: 'tech-stack', element: <Navigate to="/docs/tech-stack" replace /> },
-          { path: 'ui-design-system', element: <Navigate to="/docs/ui-design-system" replace /> },
-          {
-            path: 'ib',
-            lazy: lazyPage(() => import('@/pages/settings/IbConnectionPage')),
-          },
-        ],
-      },
+      // The old names, kept working. `/settings/*` and `/operations/*` were
+      // two words for the same machine; bookmarks and old links predate the
+      // rename and must not 404.
+      { path: 'settings', element: <Navigate to="/system/coverage" replace /> },
+      { path: 'settings/coverage', element: <Navigate to="/system/coverage" replace /> },
+      { path: 'settings/coverage/overview', element: <Navigate to="/system/coverage?view=watchlist" replace /> },
+      { path: 'settings/coverage/overview-detail', element: <Navigate to="/system/coverage?view=watchlist" replace /> },
+      { path: 'settings/coverage/option', element: <Navigate to="/system/coverage?view=option" replace /> },
+      { path: 'settings/coverage/stock-ib', element: <Navigate to="/system/coverage?view=stock" replace /> },
+      { path: 'settings/feed', element: <Navigate to="/system/feed" replace /> },
+      { path: 'settings/subscribe', element: <Navigate to="/system/feed" replace /> },
+      { path: 'settings/feed/ib', element: <Navigate to="/system/feed" replace /> },
+      { path: 'settings/data-readiness', element: <Navigate to="/system/data-readiness" replace /> },
+      { path: 'settings/ib', element: <Navigate to="/system/ib" replace /> },
+      { path: 'settings/api', element: <Navigate to="/system/api" replace /> },
+      { path: 'settings/socket', element: <Navigate to="/system/socket" replace /> },
+      { path: 'settings/daemon', element: <Navigate to="/system/daemon" replace /> },
+      { path: 'settings/daemon-app', element: <Navigate to="/system/daemon" replace /> },
+      { path: 'settings/tech-stack', element: <Navigate to="/docs/tech-stack" replace /> },
+      { path: 'settings/ui-design-system', element: <Navigate to="/docs/ui-design-system" replace /> },
+      { path: 'operations/daemon', element: <Navigate to="/system/daemon" replace /> },
+      { path: 'operations/platform', element: <Navigate to="/system/platform" replace /> },
     ],
   },
 ])

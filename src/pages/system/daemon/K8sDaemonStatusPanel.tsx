@@ -2,7 +2,7 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { DenseTag } from '@/components/data-display'
 import type { OpsHealthResponse, OpsK8sWorkloadStatus } from '@/api/ops'
 import type { IngestLamp } from '@/utils/socketIngestLamp'
-import { socketSectionTitleClass } from '@/pages/settings/socket/socketIngestUi'
+import { socketSectionTitleClass } from '@/pages/system/socket/socketIngestUi'
 
 type WorkloadLamp = Extract<IngestLamp, 'green' | 'yellow' | 'red' | 'gray'>
 

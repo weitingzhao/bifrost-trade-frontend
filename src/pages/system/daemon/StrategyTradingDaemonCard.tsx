@@ -217,7 +217,7 @@ export function StrategyTradingDaemonCard({
             <IbServiceRow label="IB Ingestor" svcId="ib_ingestor" status={data} />
             <IbServiceRow label="IB Account Agent" svcId="ib_account_agent" status={data} />
           </div>
-          <Link to="/settings/socket" className={daemonSocketLinkClass}>
+          <Link to="/system/socket" className={daemonSocketLinkClass}>
             Open Socket services…
           </Link>
         </div>

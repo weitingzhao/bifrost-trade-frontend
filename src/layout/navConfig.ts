@@ -2,14 +2,22 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
   ArrowLeftRight,
+  BarChart2,
+  Blocks,
   BookOpen,
   ClipboardList,
   Cpu,
+  Database,
   GitBranch,
   Layers,
+  Layers2,
   LayoutDashboard,
   LineChart,
+  Network,
+  Palette,
   PieChart,
+  Plug,
+  Radio,
   Settings,
   Shield,
   Star,
@@ -34,6 +42,24 @@ function route(
 /** A home page: a route whose pages beneath it start open. */
 function home(label: string, to: string, icon: LucideIcon, children: ShellNavItem[]): ShellNavItem {
   return { ...route(label, to, icon, children), defaultOpen: true }
+}
+
+/**
+ * A fold whose header is also one of its rows.
+ *
+ * `route()` keys an item by its path, which collides when the fold and its
+ * first child are the same destination — as `Data` and `Coverage` are. The
+ * fold gets its own id so the two are distinct rows to React and to the
+ * open-groups store.
+ */
+function fold(
+  id: string,
+  label: string,
+  to: string,
+  icon: LucideIcon,
+  children: ShellNavItem[],
+): ShellNavItem {
+  return { id, label, to, icon, children, defaultOpen: true }
 }
 
 export const NAV_GROUPS: ShellNavGroup[] = [
@@ -96,13 +122,54 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   },
 ]
 
-export const SETTINGS_ITEM: ShellNavItem = route(
-  'Settings',
-  '/settings/coverage',
-  Settings,
-)
+/**
+ * The machine under the desk.
+ *
+ * This replaces the business tree rather than joining it as a ninth group
+ * (`isSystemRoute` in `routeRegistry.ts` decides which one renders). Before,
+ * it was `SettingsLayout`: a second navigation aside that took the breadcrumb,
+ * the Omnibar, the symbol chip and the Inbox with it every time you opened a
+ * settings page. Same rows, one shell.
+ *
+ * `Data` / `Runtime` / `Configuration` split by what a row can tell you: what
+ * we hold, whether the machinery is answering, and what it was told to do.
+ * `/settings/*` and `/operations/*` were two names for this one thing.
+ */
+export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
+  {
+    label: 'System',
+    icon: Settings,
+    defaultOpen: true,
+    items: [
+      fold('system:data', 'Data', '/system/coverage', Database, [
+        route('Coverage', '/system/coverage', BarChart2),
+        route('Feed', '/system/feed', Radio),
+        route('Data Readiness', '/system/data-readiness', Database),
+      ]),
+      fold('system:runtime', 'Runtime', '/system/topology', Cpu, [
+        route('Topology', '/system/topology', Network),
+        route('Daemon', '/system/daemon', Cpu),
+        route('API Health', '/system/api', Activity),
+        route('Socket', '/system/socket', Radio),
+        route('Platform', '/system/platform', Blocks),
+      ]),
+      fold('system:config', 'Configuration', '/system/ib', Plug, [
+        route('IB Connection', '/system/ib', Plug),
+      ]),
+      fold('system:reference', 'Reference', '/docs/research-blueprint', BookOpen, [
+        route('Research Blueprint', '/docs/research-blueprint', BookOpen),
+        route('Research Calibration', '/docs/research-calibration', BookOpen),
+        route('Tech Stack', '/docs/tech-stack', Layers2),
+        route('UI Design System', '/docs/ui-design-system', Palette),
+      ]),
+    ],
+  },
+]
 
-export { Settings as SETTINGS_ICON }
+/** The way in, from the sidebar footer. */
+export const SYSTEM_ITEM: ShellNavItem = route('System', '/system/topology', Settings)
+
+export { Settings as SYSTEM_ICON }
 
 /** @deprecated Use getAllNavItems from @bifrost/ui */
 export const getAllItems = getAllNavItems

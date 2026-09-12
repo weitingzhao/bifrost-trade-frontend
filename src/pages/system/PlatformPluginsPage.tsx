@@ -1,10 +1,20 @@
-import { useEffect, useState } from 'react'
-import { X, RefreshCw, ChevronRight, ExternalLink } from 'lucide-react'
+import { useState } from 'react'
+import { RefreshCw, ChevronRight, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { usePlatformPanel } from '@/hooks/usePlatformPanel'
+import { Button } from '@/components/ui/button'
+import { PageHeader, PageShell } from '@/components/layout'
 import { usePlatformPlugins, type PluginRow } from '@/hooks/usePlatformPlugins'
 import type { PluginLamp } from '@/api/platformPlugins'
 import { OPS_CONSOLE_URL } from '@/lib/opsConsole'
+
+/**
+ * The Ops Platform plugins Trade runs on, as a page.
+ *
+ * `/operations/platform` used to be a fourteen-line route that opened the
+ * docked panel and then navigated away — a menu entry pretending to be a
+ * destination. The rows are the same; they now have somewhere to live, and the
+ * status bar's system lamp has somewhere to point.
+ */
 
 const LAMP: Record<PluginLamp, { dot: string; label: string }> = {
   ok: { dot: 'bg-green-500', label: 'ok' },
@@ -111,84 +121,43 @@ function PluginRowView({ row }: { row: PluginRow }) {
   )
 }
 
-/** Docked global panel (sidebar toggle): the Ops Platform plugins Trade runs on. */
-export function PlatformStatusPanel() {
-  const { open, toggle, reportAttentionCount } = usePlatformPanel()
-  const [height, setHeight] = useState(200)
-  const { rows, attentionCount, isLoading, refetch } = usePlatformPlugins(open)
-
-  useEffect(() => {
-    reportAttentionCount(attentionCount)
-  }, [attentionCount, reportAttentionCount])
-
-  const onResizeStart = (e: React.MouseEvent) => {
-    if (e.button !== 0) return
-    const startY = e.clientY
-    const startH = height
-    const onMove = (ev: MouseEvent) => setHeight(Math.min(520, Math.max(96, startH + (startY - ev.clientY))))
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
-    document.body.style.cursor = 'ns-resize'
-    document.body.style.userSelect = 'none'
-  }
-
-  if (!open) return null
-
+export default function PlatformPluginsPage() {
+  const { rows, attentionCount, isLoading, refetch } = usePlatformPlugins(true)
   const generatedAt = rows.find(r => r.status?.generated_at)?.status?.generated_at
+
   return (
-    <div className="shrink-0 border-t border-border bg-background flex flex-col overflow-hidden" style={{ height }}>
-      <div
-        className="h-1 cursor-ns-resize bg-transparent hover:bg-primary/20 transition-colors shrink-0"
-        onMouseDown={onResizeStart}
-        title="Drag to resize"
+    <PageShell padding="default" className="space-y-3">
+      <PageHeader
+        title="Platform"
+        titleSize="large"
+        description={
+          attentionCount === 0
+            ? 'Every plugin reported ok'
+            : `${attentionCount} plugin${attentionCount > 1 ? 's' : ''} need${attentionCount > 1 ? '' : 's'} a look`
+        }
+        actions={
+          <>
+            {generatedAt && (
+              <span className="text-dense-caption text-muted-foreground/60 tabular-nums">
+                checked {generatedAt.slice(11, 19)} UTC
+              </span>
+            )}
+            <Button variant="outline" size="sm" asChild className="shrink-0 gap-1.5">
+              <a href={OPS_CONSOLE_URL} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4" />
+                Bifrost Ops
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="shrink-0 gap-1.5">
+              <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+              Re-check
+            </Button>
+          </>
+        }
       />
-      <div className="flex items-center gap-2 px-3 py-1 border-b border-border/50 shrink-0">
-        <span className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
-          Platform Plugins
-        </span>
-        <span className="text-dense-caption text-muted-foreground/50">
-          {attentionCount === 0 ? 'all ok' : `${attentionCount} need${attentionCount > 1 ? '' : 's'} a look`}
-        </span>
-        <div className="flex-1" />
-        {generatedAt && (
-          <span className="text-dense-caption text-muted-foreground/40 tabular-nums">
-            checked {generatedAt.slice(11, 19)} UTC
-          </span>
-        )}
-        <div className="w-px h-3 bg-border shrink-0" />
-        <a
-          href={OPS_CONSOLE_URL}
-          target="_blank"
-          rel="noreferrer"
-          title="Open Bifrost Ops"
-          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
-        >
-          <ExternalLink className="h-3 w-3" />
-        </a>
-        <button
-          onClick={refetch}
-          title="Re-check now"
-          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
-        >
-          <RefreshCw className={cn('h-3 w-3', isLoading && 'animate-spin')} />
-        </button>
-        <button
-          onClick={toggle}
-          title="Close panel"
-          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
-        >
-          <X className="h-3 w-3" />
-        </button>
-      </div>
-      <div className="flex-1 overflow-auto">
+      <div className="rounded-md border border-border">
         {rows.map(row => <PluginRowView key={row.def.key} row={row} />)}
       </div>
-    </div>
+    </PageShell>
   )
 }

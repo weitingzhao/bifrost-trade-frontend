@@ -6,13 +6,13 @@ import { PageShell } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useSubscribeExecutions } from '@/hooks/useSubscribeExecutions'
-import { SubscribePageHeader } from '@/pages/settings/subscribe/SubscribePageHeader'
-import { SnapshotTab } from '@/pages/settings/subscribe/SnapshotTab'
-import { RedisTab } from '@/pages/settings/subscribe/RedisTab'
-import { ServicesTab } from '@/pages/settings/subscribe/ServicesTab'
+import { SubscribePageHeader } from '@/pages/system/subscribe/SubscribePageHeader'
+import { SnapshotTab } from '@/pages/system/subscribe/SnapshotTab'
+import { RedisTab } from '@/pages/system/subscribe/RedisTab'
+import { ServicesTab } from '@/pages/system/subscribe/ServicesTab'
 
 /**
- * Feed — `/settings/feed`.
+ * Feed — `/system/feed`.
  *
  * Trade's view of what it consumes: the snapshot it takes, the Redis keys it
  * reads off the shared bus, and the IB services those keys come from. The
@@ -63,7 +63,7 @@ export default function FeedPage() {
           Ops Console · IB Client
         </a>
         , or the upstream block on{' '}
-        <Link to="/operations/daemon" className="hover:underline">
+        <Link to="/system/daemon" className="hover:underline">
           Daemon
         </Link>
         .

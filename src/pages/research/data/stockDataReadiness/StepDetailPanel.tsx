@@ -272,7 +272,7 @@ export function StepDetailPanel(props: Props) {
                   ? `Gaps (${fmt(derived.priceGap)}) →`
                   : 'View gaps →'}
             </ReadinessGapsButton>
-            <ReadinessGhostLink to="/settings/coverage?view=stock">Open Stock IB Coverage →</ReadinessGhostLink>
+            <ReadinessGhostLink to="/system/coverage?view=stock">Open Stock IB Coverage →</ReadinessGhostLink>
           </div>
           <ReadinessOperationLog ok={groupedHistoryOk}>{groupedHistoryMsg}</ReadinessOperationLog>
         </div>

@@ -31,12 +31,12 @@ import {
   ingestControlConfirmDescription,
 } from '@/utils/ingestOpsShared'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { SocketPageHeader } from '@/pages/settings/socket/SocketPageHeader'
-import { IngestServicesTable } from '@/pages/settings/socket/IngestServicesTable'
+import { SocketPageHeader } from '@/pages/system/socket/SocketPageHeader'
+import { IngestServicesTable } from '@/pages/system/socket/IngestServicesTable'
 import {
   CLOSED_SOCKET_CONFIRM,
   type SocketConfirmState,
-} from '@/pages/settings/socket/socketIngestControls'
+} from '@/pages/system/socket/socketIngestControls'
 import {
   socketConflictAlertClass,
   socketConflictClearButtonClass,
@@ -44,7 +44,7 @@ import {
   socketMonitorHintClass,
   socketSectionBlockClass,
   socketSectionTitleClass,
-} from '@/pages/settings/socket/socketIngestUi'
+} from '@/pages/system/socket/socketIngestUi'
 
 export default function SocketPage() {
   const [token, setToken] = useState<string>(() => getOpsToken())

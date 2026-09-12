@@ -1,7 +1,7 @@
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { IbStockCoveragePanel } from '@/pages/settings/coverage/stock/IbStockCoveragePanel'
-import { WatchlistEodPreviewDialog } from '@/pages/settings/coverage/stock/WatchlistEodPreviewDialog'
-import { useBarsCoverage } from '@/pages/settings/coverage/stock/useBarsCoverage'
+import { IbStockCoveragePanel } from '@/pages/system/coverage/stock/IbStockCoveragePanel'
+import { WatchlistEodPreviewDialog } from '@/pages/system/coverage/stock/WatchlistEodPreviewDialog'
+import { useBarsCoverage } from '@/pages/system/coverage/stock/useBarsCoverage'
 
 export function StockIbCoverageBody() {
   const cov = useBarsCoverage()

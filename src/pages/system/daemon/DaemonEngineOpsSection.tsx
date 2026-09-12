@@ -16,8 +16,8 @@ import {
   ingestControlActionLabel,
   ingestControlConfirmDescription,
 } from '@/utils/ingestOpsShared'
-import { OpsAuthBar } from '@/pages/settings/socket/OpsAuthBar'
-import { IngestServicesTable } from '@/pages/settings/socket/IngestServicesTable'
+import { OpsAuthBar } from '@/pages/system/socket/OpsAuthBar'
+import { IngestServicesTable } from '@/pages/system/socket/IngestServicesTable'
 import type { MarketIngestServiceRow } from '@/utils/socketIngestLamp'
 import {
   CLOSED_DAEMON_CONFIRM,

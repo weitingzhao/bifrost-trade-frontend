@@ -112,7 +112,7 @@ export function AccountSyncDaemonCard({
               </div>
             </div>
           </div>
-          <Link to="/settings/socket" className={daemonSocketLinkClass}>
+          <Link to="/system/socket" className={daemonSocketLinkClass}>
             Open Socket services…
           </Link>
         </div>

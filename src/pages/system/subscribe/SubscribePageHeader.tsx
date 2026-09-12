@@ -130,7 +130,7 @@ export function SubscribePageHeader({
         Redis stream health from Monitor GET /status (
         <code className={subscribeInlineCodeClass}>socket</code>). Ticker release is a daemon control
         action (requires engine running).{' '}
-        <Link to="/settings/socket" className="text-primary underline-offset-4 hover:underline">
+        <Link to="/system/socket" className="text-primary underline-offset-4 hover:underline">
           Open Socket services
         </Link>
       </p>

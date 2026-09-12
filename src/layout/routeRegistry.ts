@@ -10,8 +10,8 @@
  *
  * `label` is the page's own name — the leaf. `crumbs` are its ancestors,
  * outermost first, and never repeat the label. So the header can render
- * `Settings / API Health` from one entry, where before it rendered the
- * hand-punctuated string `Settings · API Health`.
+ * `System / Runtime / API Health` from one entry, where before it rendered
+ * the hand-punctuated string `Settings · API Health`.
  *
  * Redirect-only paths are in here too. They render for one frame before the
  * `<Navigate>` fires, and naming them keeps that frame from flashing the
@@ -56,9 +56,13 @@ const ANALYZE = ['Research', 'Analyze'] as const
 const VALIDATE = ['Research', 'Validate'] as const
 const DATA = ['Research', 'Data'] as const
 const STRATEGY = ['Strategy'] as const
-const OPERATIONS = ['Operations'] as const
-const SETTINGS = ['Settings'] as const
-const DOCS = ['Docs'] as const
+// One group, three folds. `/settings` and `/operations` were two names for one
+// thing — the machine under the desk — and Settings additionally ran a second
+// navigation shell of its own. Both are `/system/*` now; the old paths redirect.
+const SYSTEM_DATA = ['System', 'Data'] as const
+const SYSTEM_RUNTIME = ['System', 'Runtime'] as const
+const SYSTEM_CONFIG = ['System', 'Configuration'] as const
+const DOCS = ['System', 'Reference'] as const
 
 export const ROUTES: readonly RouteEntry[] = [
   // ── Research · home and seats ──────────────────────────────────────────
@@ -130,34 +134,31 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/strategy/option-category', label: 'Option Category', crumbs: STRATEGY },
   { path: '/strategy/gates', label: 'Gates', crumbs: STRATEGY },
 
-  // ── Operations ─────────────────────────────────────────────────────────
-  { path: '/operations/daemon', label: 'Daemon', crumbs: OPERATIONS },
-  { path: '/operations/platform', label: 'Platform Plugins', crumbs: OPERATIONS },
+  // ── System ─────────────────────────────────────────────────────────────
+  { path: '/system/coverage', label: 'Coverage', crumbs: SYSTEM_DATA },
+  { path: '/system/feed', label: 'Feed', crumbs: SYSTEM_DATA },
+  { path: '/system/data-readiness', label: 'Data Readiness', crumbs: SYSTEM_DATA },
+  { path: '/system/topology', label: 'Topology', crumbs: SYSTEM_RUNTIME },
+  { path: '/system/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME },
+  { path: '/system/api', label: 'API Health', crumbs: SYSTEM_RUNTIME },
+  { path: '/system/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME },
+  { path: '/system/platform', label: 'Platform', crumbs: SYSTEM_RUNTIME },
+  { path: '/system/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG },
 
-  // ── Settings ───────────────────────────────────────────────────────────
-  { path: '/settings', label: 'Settings' },
-  { path: '/settings/coverage', label: 'Data Coverage', crumbs: SETTINGS },
-  { path: '/settings/feed', label: 'Feed', crumbs: SETTINGS },
-  { path: '/settings/data-readiness', label: 'Data Readiness', crumbs: SETTINGS },
-  { path: '/settings/ib', label: 'IB Configure', crumbs: SETTINGS },
-  { path: '/settings/daemon', label: 'Daemon Status', crumbs: SETTINGS },
-  { path: '/settings/api', label: 'API Health', crumbs: SETTINGS },
-  { path: '/settings/socket', label: 'Socket', crumbs: SETTINGS },
-
-  // ── Docs ───────────────────────────────────────────────────────────────
-  { path: '/docs/tech-stack', label: 'Tech Stack', crumbs: DOCS },
-  { path: '/docs/ui-design-system', label: 'UI Design System', crumbs: DOCS },
+  // ── System · Reference ─────────────────────────────────────────────────
   { path: '/docs/research-blueprint', label: 'Research Blueprint', crumbs: DOCS },
   { path: '/docs/research-calibration', label: 'Research Calibration', crumbs: DOCS },
+  { path: '/docs/tech-stack', label: 'Tech Stack', crumbs: DOCS },
+  { path: '/docs/ui-design-system', label: 'UI Design System', crumbs: DOCS },
 
   // ── Redirect-only paths ────────────────────────────────────────────────
   // They render for one frame before `<Navigate>` fires. Named so that frame
   // shows where you are going rather than the fallback.
   { path: '/market/watchlist', label: 'Stock Watchlist', crumbs: DATA, redirect: true },
   { path: '/research/sepa', label: 'Stock Screener', crumbs: DATA, redirect: true },
-  { path: '/research/stock-data', label: 'Data Readiness', crumbs: SETTINGS, redirect: true },
+  { path: '/research/stock-data', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: true },
   { path: '/research/option-scan', label: 'Option Scan', crumbs: DISCOVER, redirect: true },
-  { path: '/research/risk', label: 'Daemon', crumbs: OPERATIONS, redirect: true },
+  { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
   { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE, redirect: true },
   { path: '/research/vrp-lab', label: 'VRP Lab', crumbs: ANALYZE, redirect: true },
   { path: '/research/vol-surface-lab', label: 'Vol Surface Lab', crumbs: ANALYZE, redirect: true },
@@ -170,14 +171,26 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/portfolio/trade-history', label: 'Trade Ledger', crumbs: PORTFOLIO, redirect: true },
   { path: '/portfolio/copilot', label: 'Trading Copilot', crumbs: COPILOT, redirect: true },
   { path: '/portfolio/model-analysis', label: 'Backing & Model', crumbs: PORTFOLIO, redirect: true },
-  { path: '/portfolio/risk', label: 'Daemon', crumbs: OPERATIONS, redirect: true },
-  { path: '/settings/subscribe', label: 'Feed', crumbs: SETTINGS, redirect: true },
-  { path: '/settings/feed/ib', label: 'Feed', crumbs: SETTINGS, redirect: true },
-  { path: '/settings/coverage/overview', label: 'Data Coverage', crumbs: SETTINGS, redirect: true },
-  { path: '/settings/coverage/overview-detail', label: 'Data Coverage', crumbs: SETTINGS, redirect: true },
-  { path: '/settings/coverage/option', label: 'Data Coverage', crumbs: SETTINGS, redirect: true },
-  { path: '/settings/coverage/stock-ib', label: 'Data Coverage', crumbs: SETTINGS, redirect: true },
-  { path: '/settings/daemon-app', label: 'Daemon', crumbs: OPERATIONS, redirect: true },
+  { path: '/portfolio/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
+  // The `/settings/*` and `/operations/*` names, kept working. Bookmarks and
+  // anything that linked them predate the rename and must not 404.
+  { path: '/settings', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/coverage', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/feed', label: 'Feed', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/data-readiness', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: true },
+  { path: '/settings/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: true },
+  { path: '/settings/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: true },
+  { path: '/settings/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
+  { path: '/operations/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
+  { path: '/operations/platform', label: 'Platform', crumbs: SYSTEM_RUNTIME, redirect: true },
+  { path: '/settings/subscribe', label: 'Feed', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/feed/ib', label: 'Feed', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/coverage/overview', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/coverage/overview-detail', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/coverage/option', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/coverage/stock-ib', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
+  { path: '/settings/daemon-app', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
   { path: '/settings/tech-stack', label: 'Tech Stack', crumbs: DOCS, redirect: true },
   { path: '/settings/ui-design-system', label: 'UI Design System', crumbs: DOCS, redirect: true },
 ]
@@ -205,4 +218,18 @@ export function routeFor(pathname: string): RouteEntry {
     if (matchPath(entry.path, pathname)) return entry
   }
   return FALLBACK_ROUTE
+}
+
+/**
+ * Whether a pathname belongs to the System tree rather than the business tree.
+ *
+ * The sidebar swaps its whole tree here instead of carrying System as a ninth
+ * business group. The two are read at different times and for different
+ * reasons — one is the desk, the other is the machine under it — and a reader
+ * inside System is not scanning for a position. What it must NOT do is what
+ * the old `SettingsLayout` did: grow a second navigation shell that also
+ * dropped the breadcrumb, the Omnibar, the symbol chip and the Inbox.
+ */
+export function isSystemRoute(pathname: string): boolean {
+  return pathname.startsWith('/system/') || pathname.startsWith('/docs/')
 }

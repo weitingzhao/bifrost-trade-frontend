@@ -1,5 +1,5 @@
 /**
- * Data Coverage — `/settings/coverage`.
+ * Data Coverage — `/system/coverage`.
  *
  * One page, four views, where there used to be four pages in a tree two levels
  * deep. The question underneath them is single: are the symbols I actually
@@ -15,9 +15,9 @@ import { useSearchParams } from 'react-router-dom'
 import { PageHeader, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { WatchlistCoverageBody } from '@/pages/settings/coverage/watchlist/WatchlistCoverageBody'
-import { OptionCoverageBody } from '@/pages/settings/coverage/option/OptionCoverageBody'
-import { StockIbCoverageBody } from '@/pages/settings/coverage/stock/StockIbCoverageBody'
+import { WatchlistCoverageBody } from '@/pages/system/coverage/watchlist/WatchlistCoverageBody'
+import { OptionCoverageBody } from '@/pages/system/coverage/option/OptionCoverageBody'
+import { StockIbCoverageBody } from '@/pages/system/coverage/stock/StockIbCoverageBody'
 
 // Watchlist leads again: it is the question the page exists for, and it now
 // reads live from the plugin instead of pointing at a frontend that was

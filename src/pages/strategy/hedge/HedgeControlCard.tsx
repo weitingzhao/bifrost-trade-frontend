@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Card, CardContent } from '@/components/ui/card'
-import { Row, useCtrlAction } from '@/pages/settings/daemon/daemonShared'
+import { Row, useCtrlAction } from '@/pages/system/daemon/daemonShared'
 
 export function HedgeControlCard({
   data,
@@ -63,7 +63,7 @@ export function HedgeControlCard({
             {suspended ? 'Suspended' : alive ? 'Hedge enabled' : 'Daemon not running'}
           </DenseTag>
           <Link
-            to="/operations/daemon"
+            to="/system/daemon"
             className="ml-auto text-dense-label text-muted-foreground hover:underline"
             title="Heartbeat, broker connection and what the daemon has done"
           >

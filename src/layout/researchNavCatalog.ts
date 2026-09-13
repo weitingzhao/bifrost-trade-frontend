@@ -25,11 +25,9 @@
 import type { ReactNode } from 'react'
 import {
   Activity,
-  BarChart2,
   BookOpen,
   ClipboardList,
   Compass,
-  Eye,
   History,
   Home,
   LayoutGrid,
@@ -97,14 +95,10 @@ export const BENCHES: Bench[] = [
     id: 'analyze',
     label: 'Analyze',
     icon: Radar,
-    items: [
-      route('Dossier', '/research/dossier', BookOpen),
-      route('Vol Regime', '/research/vol-regime', Radar),
-      route('Dealer Levels', '/research/dealer-levels', BarChart2),
-      route('Scenario Model', '/research/scenario', TrendingUp),
-      route('Flow', '/research/flow', Activity),
-      route('Option Discovery', '/research/discovery', Eye),
-    ],
+    // Six rows became one page with six tabs. A row per tab would put the
+    // reader back where the merge found them — leaving the name to read
+    // another of its faces.
+    items: [route('Symbol', '/research/symbol', BookOpen)],
   },
   {
     id: 'validate',

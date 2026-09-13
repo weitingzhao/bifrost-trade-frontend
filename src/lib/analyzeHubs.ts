@@ -50,14 +50,52 @@ export const LAB_VIEW_LENS: Partial<Record<LabViewId, string>> = {
   model: 'terrain_regime',
 }
 
-/** The hub view for a lab, with the symbol carried along. */
-export function labHref(view: LabViewId, symbol?: string | null): string {
-  return withSymbolParam(`${LAB_VIEW_HUB[view]}?${VIEW_PARAM}=${view}`, symbol)
+export const SYMBOL_PATH = '/research/symbol'
+export const TAB_PARAM = 'tab'
+
+export type SymbolTabId = 'overview' | 'volatility' | 'dealer' | 'scenario' | 'flow' | 'chain'
+
+/**
+ * Which Symbol tab a lab view lives in.
+ *
+ * Second generation of the same rename this file exists for: twelve labs became
+ * five hub views (C1), and the five hubs are now tabs on one page. It lives
+ * here for the same stated reason `labHref` does — every link in the app goes
+ * through these, so a rename happens once.
+ */
+export const VIEW_TAB: Record<LabViewId, SymbolTabId> = {
+  'iv-rank': 'volatility',
+  vrp: 'volatility',
+  skew: 'volatility',
+  gex: 'dealer',
+  opex: 'dealer',
+  model: 'scenario',
+  sessions: 'scenario',
+  playbook: 'scenario',
 }
 
-/** The Flow placeholder, optionally at its multi-leg anchor. */
+/** The hub paths the Symbol page replaces → the tab each one becomes. */
+export const RETIRED_HUB_TAB: Record<string, SymbolTabId> = {
+  [ANALYZE_HUB.dossier]: 'overview',
+  [ANALYZE_HUB.volRegime]: 'volatility',
+  [ANALYZE_HUB.dealerLevels]: 'dealer',
+  [ANALYZE_HUB.scenario]: 'scenario',
+  [ANALYZE_HUB.flow]: 'flow',
+  [ANALYZE_HUB.discovery]: 'chain',
+}
+
+/**
+ * A lab view on the Symbol page: its tab, and the section anchor it used to be
+ * a page of. Callers did not change when the hubs merged — that is what this
+ * indirection was for.
+ */
+export function labHref(view: LabViewId, symbol?: string | null): string {
+  return withSymbolParam(`${SYMBOL_PATH}?${TAB_PARAM}=${VIEW_TAB[view]}`, symbol) + `#${view}`
+}
+
+/** The Flow tab, optionally at its multi-leg anchor. */
 export function flowHref(symbol?: string | null, anchor?: 'multi-leg'): string {
-  return withSymbolParam(`${ANALYZE_HUB.flow}${anchor ? `#${anchor}` : ''}`, symbol)
+  return withSymbolParam(`${SYMBOL_PATH}?${TAB_PARAM}=flow`, symbol) + (anchor ? `#${anchor}` : '')
 }
 
 export interface RetiredAnalyzePath {

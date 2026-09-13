@@ -1,11 +1,8 @@
 /**
- * Flow — a placeholder with the reason on it (D-RLA-4).
- * `/research/flow` (+ `#multi-leg`)
+ * The Flow tab's body — the placeholder and its reason, without a shell.
  *
- * Options trades and quotes are not on the current Massive plan: the tape
- * endpoints return 403, so what this page can show is an OI × volume proxy
- * from the daily option snapshot. The proxy stays reachable under a section
- * that says what it is, so the real tape drops in here without a rebuild.
+ * `Flow` was a page; the merge makes it the Symbol page's Flow tab, so the
+ * header, context bar and regime ribbon are the container's now.
  */
 import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
@@ -17,34 +14,17 @@ import {
   CollapsibleGroupTitle,
   DenseTag,
 } from '@/components/data-display'
-import { PageHeader, PageShell } from '@/components/layout'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
-import { useResearchContext } from '@/hooks/useResearchContext'
 import { OrderSentimentSection } from './OrderSentimentSection'
 
 export const FLOW_PLACEHOLDER_REASON =
   'Options trades and quotes are not on the current Massive plan (Options Starter) — the tape endpoints answer 403. ' +
   'What follows is an OI × volume proxy built from the daily option snapshot, not order flow.'
 
-export default function FlowPage() {
-  // Open by default: a page whose only content is folded away reads as empty.
+export function FlowBody() {
+  // Open by default: a tab whose only content is folded away reads as empty.
   const [proxyOpen, setProxyOpen] = useState(true)
-  const { symbol } = useResearchContext()
   return (
-    <PageShell padding="compact" className="space-y-3">
-      <PageHeader
-        title="Flow"
-        description="Order sentiment and multi-leg flow — placeholder until the options tape is on the plan."
-        actions={
-          <DenseTag variant="warning" size="cell" title="Owner decision D-RLA-4">
-            placeholder · D-RLA-4
-          </DenseTag>
-        }
-      />
-      <ResearchContextBar />
-      {symbol ? <CompositeRegimeRibbon symbol={symbol} /> : null}
-
+    <div className="space-y-3">
       <div
         role="status"
         className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2"
@@ -52,11 +32,16 @@ export default function FlowPage() {
       >
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
         <div className="min-w-0 space-y-0.5">
-          <p className="text-dense-meta font-medium text-warning">No options tape on this plan</p>
+          <p className="text-dense-meta font-medium text-warning">
+            No options tape on this plan{' '}
+            <DenseTag variant="warning" size="cell" title="Owner decision D-RLA-4">
+              placeholder · D-RLA-4
+            </DenseTag>
+          </p>
           <p className="text-dense-micro text-muted-foreground">
             {FLOW_PLACEHOLDER_REASON} Real tape lands here when the subscription is upgraded
             (follow-on: program market-data-subscription-focus, options tape); nothing else on
-            this page needs rebuilding.
+            this tab needs rebuilding.
           </p>
         </div>
       </div>
@@ -75,6 +60,6 @@ export default function FlowPage() {
           </CollapsibleGroupBody>
         ) : null}
       </CollapsibleGroup>
-    </PageShell>
+    </div>
   )
 }

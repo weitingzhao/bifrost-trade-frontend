@@ -93,12 +93,8 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/event-radar', label: 'Event Radar', crumbs: DISCOVER },
 
   // ── Research · Workbench · Analyze ─────────────────────────────────────
-  { path: '/research/dossier', label: 'Dossier', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
-  { path: '/research/vol-regime', label: 'Vol Regime', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
-  { path: '/research/dealer-levels', label: 'Dealer Levels', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
-  { path: '/research/scenario', label: 'Scenario Model', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
-  { path: '/research/flow', label: 'Flow', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
-  { path: '/research/discovery', label: 'Option Discovery', crumbs: ANALYZE, symbolScope: true, scope: 'contract' },
+  // One name, every face. The six pages this replaced are `?tab=` on it.
+  { path: '/research/symbol', label: 'Symbol', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
 
   // ── Research · Workbench · Validate ────────────────────────────────────
   { path: '/research/signal-decay', label: 'Signal Decay', crumbs: VALIDATE },
@@ -168,6 +164,13 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/forecast-sessions', label: 'Forecast Sessions', crumbs: ANALYZE, redirect: true },
   { path: '/research/intraday-playbook', label: 'Intraday Playbook', crumbs: ANALYZE, redirect: true },
   { path: '/research/order-sentiment', label: 'Order Sentiment', crumbs: ANALYZE, redirect: true },
+  // The six Analyze pages the Symbol merge retired.
+  { path: '/research/dossier', label: 'Symbol', crumbs: ANALYZE, redirect: true },
+  { path: '/research/vol-regime', label: 'Symbol', crumbs: ANALYZE, redirect: true },
+  { path: '/research/dealer-levels', label: 'Symbol', crumbs: ANALYZE, redirect: true },
+  { path: '/research/scenario', label: 'Symbol', crumbs: ANALYZE, redirect: true },
+  { path: '/research/flow', label: 'Symbol', crumbs: ANALYZE, redirect: true },
+  { path: '/research/discovery', label: 'Symbol', crumbs: ANALYZE, redirect: true },
   { path: '/portfolio/trade-history', label: 'Trade Ledger', crumbs: PORTFOLIO, redirect: true },
   { path: '/portfolio/copilot', label: 'Trading Copilot', crumbs: COPILOT, redirect: true },
   { path: '/portfolio/model-analysis', label: 'Backing & Model', crumbs: PORTFOLIO, redirect: true },

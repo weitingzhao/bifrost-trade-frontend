@@ -21,7 +21,10 @@ describe('the page list the omnibar offers', () => {
   it('leaves out redirect-only paths — you cannot choose to go to one', () => {
     expect(PAGE_ROUTES.some((r) => r.redirect)).toBe(false)
     expect(PAGE_ROUTES.some((r) => r.path === '/research/iv-radar')).toBe(false)
-    expect(PAGE_ROUTES.some((r) => r.path === '/research/vol-regime')).toBe(true)
+    // `/research/vol-regime` is a redirect now — the Symbol merge made it a
+    // tab — so the page the Omnibar should offer is the one you can land on.
+    expect(PAGE_ROUTES.some((r) => r.path === '/research/vol-regime')).toBe(false)
+    expect(PAGE_ROUTES.some((r) => r.path === '/research/symbol')).toBe(true)
   })
 
   it('is the registry minus the redirects and nothing else', () => {

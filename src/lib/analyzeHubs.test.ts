@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  ANALYZE_HUB,
   LAB_VIEW_HUB,
   RETIRED_ANALYZE_PATHS,
   flowHref,
@@ -11,12 +10,15 @@ import {
 } from './analyzeHubs'
 
 describe('analyze hubs', () => {
-  it('builds hub view links from the view id alone', () => {
-    expect(labHref('iv-rank')).toBe('/research/vol-regime?view=iv-rank')
-    expect(labHref('gex', 'NVDA')).toBe('/research/dealer-levels?view=gex&symbol=NVDA')
-    expect(labHref('playbook', 'spy')).toBe('/research/scenario?view=playbook&symbol=SPY')
-    expect(flowHref('NVDA', 'multi-leg')).toBe('/research/flow?symbol=NVDA#multi-leg')
-    expect(flowHref()).toBe(ANALYZE_HUB.flow)
+  it('builds Symbol tab links from the view id alone', () => {
+    // The point of the indirection: the hubs became tabs on one page and not
+    // one of the thirty-odd call sites changed. A view is now a tab plus the
+    // section anchor it used to be a page of.
+    expect(labHref('iv-rank')).toBe('/research/symbol?tab=volatility#iv-rank')
+    expect(labHref('gex', 'NVDA')).toBe('/research/symbol?tab=dealer&symbol=NVDA#gex')
+    expect(labHref('playbook', 'spy')).toBe('/research/symbol?tab=scenario&symbol=SPY#playbook')
+    expect(flowHref('NVDA', 'multi-leg')).toBe('/research/symbol?tab=flow&symbol=NVDA#multi-leg')
+    expect(flowHref()).toBe('/research/symbol?tab=flow')
   })
 
   it('redirects every retired path and keeps what the link carried', () => {

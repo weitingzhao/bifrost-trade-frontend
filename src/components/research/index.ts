@@ -1,7 +1,6 @@
 /**
  * Research shell / Analyze shared components.
  */
-export { AlertBell } from './AlertBell'
 export { AnalyzeVerdictStrip } from './AnalyzeVerdictStrip'
 export type {
   AnalyzeVerdictStripProps,

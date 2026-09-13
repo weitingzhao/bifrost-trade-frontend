@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils'
 import { usePlatformPlugins } from '@/hooks/usePlatformPlugins'
 import { useBookCushion } from '@/hooks/useBookCushion'
 import { SystemPopover } from './SystemPopover'
+import type { InboxSummary } from '@/hooks/useInbox'
 import { SHELL_STATUS_BAR_HEIGHT_CLASS } from './shellChrome'
 
 /** Wall clock to the minute — the anchor every other reading on the page is "as of". */
@@ -49,11 +50,11 @@ function pctLabel(pct: number): string {
 }
 
 interface ShellStatusBarProps {
-  activeMsgCount: number
-  onOpenMessages: () => void
+  inbox: InboxSummary
+  onOpenInbox: () => void
 }
 
-export function ShellStatusBar({ activeMsgCount, onOpenMessages }: ShellStatusBarProps) {
+export function ShellStatusBar({ inbox, onOpenInbox }: ShellStatusBarProps) {
   const clock = useWallClock()
   // The bar is the always-on reader; System › Platform polls the same query
   // key while it is open, so this stays one request either way.
@@ -121,9 +122,17 @@ export function ShellStatusBar({ activeMsgCount, onOpenMessages }: ShellStatusBa
           </button>
         </SystemPopover>
 
-        <button type="button" onClick={onOpenMessages} className={segmentClass} title="Messages">
+        <button
+          type="button"
+          onClick={onOpenInbox}
+          className={segmentClass}
+          title={inbox.incomplete ? `Inbox — ${inbox.unreachable.join(', ')} unreachable, the count may be short` : 'Inbox'}
+        >
           <Inbox className="h-3 w-3" aria-hidden />
-          <span className="font-mono tabular-nums">{activeMsgCount}</span>
+          <span className="font-mono tabular-nums">
+            {inbox.count}
+            {inbox.incomplete ? '+?' : ''}
+          </span>
         </button>
       </div>
     </footer>

@@ -44,7 +44,7 @@ const rowClass =
 const headClass =
   'px-2 pb-0.5 pt-2 text-dense-micro font-semibold uppercase tracking-[0.12em] text-muted-foreground/60'
 
-function Row({ to, lamp, name, sub, meta, onNavigate }: {
+function ServiceRow({ to, lamp, name, sub, meta, onNavigate }: {
   to: string
   lamp: string
   name: string
@@ -112,7 +112,7 @@ export function SystemPopover({ children }: SystemPopoverProps) {
             <div key={zone.id}>
               <p className={headClass}>{zone.label}</p>
               {zoneNodes.map((node) => (
-                <Row
+                <ServiceRow
                   key={node.key}
                   to={PAGE_FOR_KIND[node.kind]}
                   lamp={node.lamp}
@@ -130,7 +130,7 @@ export function SystemPopover({ children }: SystemPopoverProps) {
           <div>
             <p className={headClass}>Ops plugins</p>
             {plugins.map((row) => (
-              <Row
+              <ServiceRow
                 key={row.def.key}
                 to="/system/platform"
                 lamp={row.fetchError ? 'unknown' : row.lamp}

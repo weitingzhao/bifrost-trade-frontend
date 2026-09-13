@@ -1,5 +1,5 @@
 import { Suspense, useState, type CSSProperties } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
 import { useResearchSeatDeepLink } from '@/hooks/useResearchSeatDeepLink'
 import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
@@ -10,8 +10,9 @@ import { AppHeader } from './AppHeader'
 import { ShellStatusBar } from './ShellStatusBar'
 import { SHELL_SIDEBAR_WIDTH } from './shellChrome'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
-import { MessageDrawer } from '@/components/MessageCenter/MessageDrawer'
+import { InboxDrawer } from '@/components/MessageCenter/InboxDrawer'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
+import { useInbox } from '@/hooks/useInbox'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
 import { CopilotFloatingBubble } from '@/components/copilot/CopilotFloatingBubble'
@@ -46,29 +47,33 @@ function BoundedOutlet() {
 
 export function AppLayout() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   useCopilotDeepLink()
   useResearchSeatDeepLink()
   useHeldSymbolSync()
   useRecentPagesTrail()
   const showMarketStrip = shouldShowGlobalMarketStrip(pathname)
-  const { messages, dismissedIds, activeMsgCount, dismissMessage, dismissAll } = useSystemMessages()
+  // One SSE subscription, two readers: the Inbox groups it by source, the
+  // toast stack decides which of it is allowed to interrupt.
+  const stream = useSystemMessages()
+  const { groups, summary } = useInbox(stream)
   const [drawerOpen, setDrawerOpen] = useState(false)
   useCockpitKeybinds()
 
   const msgCenter = (
     <>
       <MessageToastStack
-        messages={messages}
-        dismissedIds={dismissedIds}
-        onDismiss={dismissMessage}
+        messages={stream.messages}
+        dismissedIds={stream.dismissedIds}
+        onDismiss={stream.dismissMessage}
       />
-      <MessageDrawer
+      <InboxDrawer
         open={drawerOpen}
-        messages={messages}
-        dismissedIds={dismissedIds}
-        onDismiss={dismissMessage}
-        onDismissAll={dismissAll}
+        groups={groups}
+        count={summary.count}
+        onDismissAll={stream.dismissAll}
         onClose={() => setDrawerOpen(false)}
+        onNavigate={navigate}
       />
     </>
   )
@@ -84,15 +89,12 @@ export function AppLayout() {
       <AppSidebar />
       {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport */}
       <SidebarInset className="h-svh overflow-hidden bg-card">
-        <AppHeader activeMsgCount={activeMsgCount} onOpenMessages={() => setDrawerOpen(true)} />
+        <AppHeader inbox={summary} onOpenInbox={() => setDrawerOpen(true)} />
         <GlobalMarketStatusBar enabled={showMarketStrip} />
         <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto min-w-0 bg-card outline-none">
           <BoundedOutlet />
         </main>
-        <ShellStatusBar
-          activeMsgCount={activeMsgCount}
-          onOpenMessages={() => setDrawerOpen(true)}
-        />
+        <ShellStatusBar inbox={summary} onOpenInbox={() => setDrawerOpen(true)} />
       </SidebarInset>
       <Omnibar />
       {msgCenter}

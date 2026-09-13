@@ -1,8 +1,7 @@
-import { Bell, Moon, Search, Sun, SunMoon } from 'lucide-react'
+import { Moon, Search, Sun, SunMoon } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { SEAT_META, useResearchSeat } from '@/lib/research/seat'
-import { AlertBell } from '@/components/research/AlertBell'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
@@ -10,13 +9,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 import { cn } from '@/lib/utils'
 import { omnibar } from '@/lib/omnibar'
+import { InboxBell } from './InboxBell'
+import type { InboxSummary } from '@/hooks/useInbox'
 import { routeFor } from './routeRegistry'
 import { SymbolChip } from './SymbolChip'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
 interface AppHeaderProps {
-  activeMsgCount?: number
-  onOpenMessages?: () => void
+  inbox: InboxSummary
+  onOpenInbox: () => void
 }
 
 function ResearchSeatChip() {
@@ -29,7 +30,7 @@ function ResearchSeatChip() {
   )
 }
 
-export function AppHeader({ activeMsgCount = 0, onOpenMessages }: AppHeaderProps) {
+export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
   const location = useLocation()
   const { mode, cycleMode } = useThemeMode()
   const { label, crumbs } = routeFor(location.pathname)
@@ -72,23 +73,11 @@ export function AppHeader({ activeMsgCount = 0, onOpenMessages }: AppHeaderProps
       {location.pathname.startsWith('/research') ? <ResearchSeatChip /> : null}
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
-        <AlertBell />
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-8 w-8" onClick={onOpenMessages} aria-label="Open messages">
-              <Bell className="h-4 w-4" />
-              {activeMsgCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-dense-micro font-bold text-white leading-none">
-                  {activeMsgCount > 9 ? '9+' : activeMsgCount}
-                </span>
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {activeMsgCount > 0 ? `${activeMsgCount} unread message${activeMsgCount > 1 ? 's' : ''}` : 'Messages'}
-          </TooltipContent>
-        </Tooltip>
+        {/* One bell. There were two here — a Radar for analyze alerts with a
+            popover of its own, and this one for system messages — either of
+            which could be showing a count with no way to tell which mattered
+            more. Both are groups inside the Inbox now. */}
+        <InboxBell summary={inbox} onOpen={onOpenInbox} />
 
         <Tooltip>
           <TooltipTrigger asChild>

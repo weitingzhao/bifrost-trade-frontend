@@ -28,23 +28,30 @@ import { useSymbolSearch } from '@/hooks/useSymbolSearch'
 import { omnibar, omnibarStore, parseQuery, readRecentPaths } from '@/lib/omnibar'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { useSymbolContext } from '@/lib/symbolContext'
-import { PAGE_ROUTES, routeFor, type RouteEntry } from './routeRegistry'
+import { PAGE_ROUTES, routeFor } from './routeRegistry'
+import { matches, trail } from './omnibarMatch'
+import { symbolTabHref } from '@/lib/symbolTabs'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 
 /** Where a symbol goes when the page you are on has no use for one. */
-const SYMBOL_HOME = '/research/dossier'
+const SYMBOL_HOME = SYMBOL_PATH
 
-/** The other places a symbol is worth opening, offered as rows rather than a hidden key. */
-const SYMBOL_DESTINATIONS = ['/research/dossier', '/portfolio/positions', '/research/vol-regime', '/research/discovery']
-
-function trail(entry: RouteEntry): string {
-  return [...(entry.crumbs ?? []), entry.label].join(' / ')
-}
-
-function matches(entry: RouteEntry, term: string): boolean {
-  if (!term) return true
-  const needle = term.toLowerCase()
-  return trail(entry).toLowerCase().includes(needle) || entry.path.toLowerCase().includes(needle)
-}
+/**
+ * The other places a symbol is worth opening, offered as rows rather than a
+ * hidden key.
+ *
+ * Three of the four used to be retired paths — `/research/dossier`,
+ * `/research/vol-regime`, `/research/discovery` — so the group rendered
+ * `routeFor()` on three redirect rows that all read `Research / Analyze /
+ * Symbol`: three identical rows, each costing a redirect hop. They are the
+ * Symbol page's tabs now, which is what they became.
+ */
+const SYMBOL_DESTINATIONS: { label: string; href: string }[] = [
+  { label: 'Symbol · Overview', href: symbolTabHref('overview') },
+  { label: 'Positions', href: '/portfolio/positions' },
+  { label: 'Symbol · Volatility', href: symbolTabHref('volatility') },
+  { label: 'Symbol · Chain', href: symbolTabHref('chain') },
+]
 
 /** Ticker shape. Confirming it is a real one is a separate question — see `ticker` below. */
 function tickerShaped(term: string): string | null {
@@ -169,13 +176,13 @@ export function Omnibar() {
 
         {ticker && (
           <CommandGroup heading={`Open ${ticker} in`}>
-            {SYMBOL_DESTINATIONS.map((path) => (
+            {SYMBOL_DESTINATIONS.map((dest) => (
               <CommandItem
-                key={`dest-${path}`}
-                value={`dest-${path}`}
-                onSelect={() => goToSymbol(ticker, path)}
+                key={`dest-${dest.href}`}
+                value={`dest-${dest.href}`}
+                onSelect={() => goToSymbol(ticker, dest.href)}
               >
-                <Hash /> {trail(routeFor(path))}
+                <Hash /> {dest.label}
               </CommandItem>
             ))}
           </CommandGroup>

@@ -1,8 +1,11 @@
 import type { ComponentType } from 'react'
+import type { RouteObject } from 'react-router-dom'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { LabRedirect } from '@/pages/research/analyze/hub/LabRedirect'
 import { AppLayout } from '@/layout/AppLayout'
 import RouteErrorPage from '@/pages/RouteErrorPage'
+import { REDIRECT_ROUTES } from '@/layout/routeRegistry'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 
 /** Eager — high-traffic monitoring entry points */
 
@@ -15,6 +18,31 @@ function lazyPage(
   }
 }
 
+/**
+ * The retired paths, from the one table that knows them.
+ *
+ * These were 43 hand-written `<Navigate>` rows here and 43 `redirect` rows in
+ * `routeRegistry.ts`, kept in step by hand — the duplication `Docs Gaps.dc.html`
+ * F5 asks to remove. The registry is the authority now; adding or renaming a
+ * path is one line there.
+ *
+ * Two mechanisms, and the target picks which: a redirect to the Symbol page is
+ * a redirect to a *tab*, so it has to carry the reader's `?symbol=` and land on
+ * the right section — `LabRedirect` does that through `analyzeRedirect`. Every
+ * other target is a page, where a plain `<Navigate>` is the whole job.
+ */
+function redirectRoutes(): RouteObject[] {
+  return REDIRECT_ROUTES.map((entry) => ({
+    path: entry.path.slice(1),
+    element:
+      entry.redirect === SYMBOL_PATH ? (
+        <LabRedirect from={entry.path} />
+      ) : (
+        <Navigate to={entry.redirect} replace />
+      ),
+  }))
+}
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -22,6 +50,7 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <Navigate to="/research" replace /> },
+      ...redirectRoutes(),
       {
         path: 'research',
         lazy: lazyPage(() => import('@/pages/research/ResearchHomePage')),
@@ -44,7 +73,6 @@ export const router = createBrowserRouter([
       },
 
       { path: 'market/live', lazy: lazyPage(() => import('@/pages/market/LivePage')) },
-      { path: 'market/watchlist', element: <Navigate to="/research/watchlist" replace /> },
 
       { path: 'research/watchlist', lazy: lazyPage(() => import('@/pages/research/data/StockWatchlistPage')) },
 
@@ -69,20 +97,6 @@ export const router = createBrowserRouter([
         path: 'portfolio/transfer',
         lazy: lazyPage(() => import('@/pages/portfolio/TransferPayPage')),
       },
-      {
-        path: 'portfolio/trade-history',
-        element: <Navigate to="/portfolio/ledger" replace />,
-      },
-      /* The Trading Copilot moved from Portfolio to the Copilot seat. */
-      {
-        path: 'portfolio/copilot',
-        element: <Navigate to="/research/copilot/trading" replace />,
-      },
-      /* Model Analysis merged into Backing & Model as its lower band. */
-      {
-        path: 'portfolio/model-analysis',
-        element: <Navigate to="/portfolio/backing#model" replace />,
-      },
 
       {
         path: 'research/daily-brief',
@@ -92,19 +106,9 @@ export const router = createBrowserRouter([
         path: 'research/stock-screener',
         lazy: lazyPage(() => import('@/pages/research/data/StockScreenerPage')),
       },
-      /* Legacy URL — the page is a Stock Screener; SEPA is one of its condition
-         families, not its identity. Kept so existing bookmarks resolve. */
-      {
-        path: 'research/sepa',
-        element: <Navigate to="/research/stock-screener" replace />,
-      },
       {
         path: 'research/screener',
         lazy: lazyPage(() => import('@/pages/research/data/ScreenerPage')),
-      },
-      {
-        path: 'research/stock-data',
-        element: <Navigate to="/settings/data-readiness" replace />,
       },
       {
         path: 'research/playbook',
@@ -114,8 +118,6 @@ export const router = createBrowserRouter([
         path: 'research/agent-personas',
         lazy: lazyPage(() => import('@/pages/copilot/AgentPersonaPage')),
       },
-      /* One name, one page. The five Analyze hubs (C1) and the Dossier are its
-         tabs; both generations of retired URL resolve in one hop. */
       {
         path: 'research/symbol',
         lazy: lazyPage(() => import('@/pages/research/analyze/symbol/SymbolPage')),
@@ -124,29 +126,9 @@ export const router = createBrowserRouter([
         path: 'research/lens-coverage',
         lazy: lazyPage(() => import('@/pages/research/data/lensCoverage/LensCoveragePage')),
       },
-      { path: 'research/dossier', element: <LabRedirect from="/research/dossier" /> },
-      { path: 'research/vol-regime', element: <LabRedirect from="/research/vol-regime" /> },
-      { path: 'research/dealer-levels', element: <LabRedirect from="/research/dealer-levels" /> },
-      { path: 'research/scenario', element: <LabRedirect from="/research/scenario" /> },
-      { path: 'research/flow', element: <LabRedirect from="/research/flow" /> },
-      { path: 'research/discovery', element: <LabRedirect from="/research/discovery" /> },
-      { path: 'research/iv-radar', element: <LabRedirect from="/research/iv-radar" /> },
-      { path: 'research/vrp-lab', element: <LabRedirect from="/research/vrp-lab" /> },
-      { path: 'research/vol-surface-lab', element: <LabRedirect from="/research/vol-surface-lab" /> },
-      { path: 'research/gex-intraday', element: <LabRedirect from="/research/gex-intraday" /> },
-      { path: 'research/opex-cycle-lab', element: <LabRedirect from="/research/opex-cycle-lab" /> },
-      { path: 'research/analysis-model', element: <LabRedirect from="/research/analysis-model" /> },
-      { path: 'research/forecast-sessions', element: <LabRedirect from="/research/forecast-sessions" /> },
-      { path: 'research/intraday-playbook', element: <LabRedirect from="/research/intraday-playbook" /> },
-      { path: 'research/order-sentiment', element: <LabRedirect from="/research/order-sentiment" /> },
       {
         path: 'research/scan',
         lazy: lazyPage(() => import('@/pages/research/discover/ScanPage')),
-      },
-      /* Wave Discover-IA — /research/option-scan alias to Scan */
-      {
-        path: 'research/option-scan',
-        element: <Navigate to="/research/scan" replace />,
       },
       /* Wave Discover-IA — new grouped Stock Explorer (SEPA + Momentum + Events + Rules link) */
       {
@@ -210,16 +192,6 @@ export const router = createBrowserRouter([
       {
         path: 'research/loop/runs/:runId',
         lazy: lazyPage(() => import('@/pages/research/loop/LoopRunPipelinePage')),
-      },
-
-      /* The Risk Model page is retired: its four daemon figures live on the Daemon page. Old links land there. */
-      {
-        path: 'portfolio/risk',
-        element: <Navigate to="/system/daemon" replace />,
-      },
-      {
-        path: 'research/risk',
-        element: <Navigate to="/system/daemon" replace />,
       },
 
       { path: 'strategy/instances/:instanceId?', lazy: lazyPage(() => import('@/pages/strategy/InstancesPage')) },
@@ -311,25 +283,6 @@ export const router = createBrowserRouter([
       // The old names, kept working. `/settings/*` and `/operations/*` were
       // two words for the same machine; bookmarks and old links predate the
       // rename and must not 404.
-      { path: 'settings', element: <Navigate to="/system/coverage" replace /> },
-      { path: 'settings/coverage', element: <Navigate to="/system/coverage" replace /> },
-      { path: 'settings/coverage/overview', element: <Navigate to="/system/coverage?view=watchlist" replace /> },
-      { path: 'settings/coverage/overview-detail', element: <Navigate to="/system/coverage?view=watchlist" replace /> },
-      { path: 'settings/coverage/option', element: <Navigate to="/system/coverage?view=option" replace /> },
-      { path: 'settings/coverage/stock-ib', element: <Navigate to="/system/coverage?view=stock" replace /> },
-      { path: 'settings/feed', element: <Navigate to="/system/feed" replace /> },
-      { path: 'settings/subscribe', element: <Navigate to="/system/feed" replace /> },
-      { path: 'settings/feed/ib', element: <Navigate to="/system/feed" replace /> },
-      { path: 'settings/data-readiness', element: <Navigate to="/system/data-readiness" replace /> },
-      { path: 'settings/ib', element: <Navigate to="/system/ib" replace /> },
-      { path: 'settings/api', element: <Navigate to="/system/api" replace /> },
-      { path: 'settings/socket', element: <Navigate to="/system/socket" replace /> },
-      { path: 'settings/daemon', element: <Navigate to="/system/daemon" replace /> },
-      { path: 'settings/daemon-app', element: <Navigate to="/system/daemon" replace /> },
-      { path: 'settings/tech-stack', element: <Navigate to="/docs/tech-stack" replace /> },
-      { path: 'settings/ui-design-system', element: <Navigate to="/docs/ui-design-system" replace /> },
-      { path: 'operations/daemon', element: <Navigate to="/system/daemon" replace /> },
-      { path: 'operations/platform', element: <Navigate to="/system/platform" replace /> },
     ],
   },
 ])

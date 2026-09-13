@@ -13,9 +13,10 @@
  * `System / Runtime / API Health` from one entry, where before it rendered
  * the hand-punctuated string `Settings · API Health`.
  *
- * Redirect-only paths are in here too. They render for one frame before the
- * `<Navigate>` fires, and naming them keeps that frame from flashing the
- * fallback.
+ * Redirect-only paths are in here too, each carrying where it goes. They render
+ * for one frame before the `<Navigate>` fires, and naming them keeps that frame
+ * from flashing the fallback. `router.tsx` builds its redirect rows from them,
+ * and the Omnibar searches them so a retired name still finds the page.
  */
 import { matchPath } from 'react-router-dom'
 
@@ -39,11 +40,22 @@ export interface RouteEntry {
    */
   scope?: 'underlying' | 'contract'
   /**
-   * The path only redirects. Named so the breadcrumb does not flash the
-   * fallback during the frame before `<Navigate>` fires, but never offered as
-   * somewhere to go.
+   * The path only redirects, and this is where to.
+   *
+   * The target lives here rather than in `router.tsx` because it was in both:
+   * 43 hand-written `<Navigate>` rows against 43 `redirect` rows, kept in step
+   * by hand (`Docs Gaps.dc.html` F5). The router derives its rows from this
+   * now, so a rename is one edit and the two cannot drift.
+   *
+   * The row keeps its own `label` and `crumbs`: they name what the path used
+   * to be, which is both what the breadcrumb shows during the frame before the
+   * redirect fires, and what the Omnibar searches so an old name still finds
+   * the page (F5's `aliases`, kept on the old name so the name survives).
+   *
+   * May carry a query or hash — `/system/coverage?view=option`. Never another
+   * redirect: `routeRegistry.test.ts` fails a two-hop.
    */
-  redirect?: boolean
+  redirect?: string
 }
 
 const MARKET = ['Market'] as const
@@ -150,59 +162,95 @@ export const ROUTES: readonly RouteEntry[] = [
   // ── Redirect-only paths ────────────────────────────────────────────────
   // They render for one frame before `<Navigate>` fires. Named so that frame
   // shows where you are going rather than the fallback.
-  { path: '/market/watchlist', label: 'Stock Watchlist', crumbs: DATA, redirect: true },
-  { path: '/research/sepa', label: 'Stock Screener', crumbs: DATA, redirect: true },
-  { path: '/research/stock-data', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/research/option-scan', label: 'Option Scan', crumbs: DISCOVER, redirect: true },
-  { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
-  { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE, redirect: true },
-  { path: '/research/vrp-lab', label: 'VRP Lab', crumbs: ANALYZE, redirect: true },
-  { path: '/research/vol-surface-lab', label: 'Vol Surface Lab', crumbs: ANALYZE, redirect: true },
-  { path: '/research/gex-intraday', label: 'GEX Intraday', crumbs: ANALYZE, redirect: true },
-  { path: '/research/opex-cycle-lab', label: 'OpEx Cycle Lab', crumbs: ANALYZE, redirect: true },
-  { path: '/research/analysis-model', label: 'Analysis Model', crumbs: ANALYZE, redirect: true },
-  { path: '/research/forecast-sessions', label: 'Forecast Sessions', crumbs: ANALYZE, redirect: true },
-  { path: '/research/intraday-playbook', label: 'Intraday Playbook', crumbs: ANALYZE, redirect: true },
-  { path: '/research/order-sentiment', label: 'Order Sentiment', crumbs: ANALYZE, redirect: true },
-  // The six Analyze pages the Symbol merge retired.
-  { path: '/research/dossier', label: 'Symbol', crumbs: ANALYZE, redirect: true },
-  { path: '/research/vol-regime', label: 'Symbol', crumbs: ANALYZE, redirect: true },
-  { path: '/research/dealer-levels', label: 'Symbol', crumbs: ANALYZE, redirect: true },
-  { path: '/research/scenario', label: 'Symbol', crumbs: ANALYZE, redirect: true },
-  { path: '/research/flow', label: 'Symbol', crumbs: ANALYZE, redirect: true },
-  { path: '/research/discovery', label: 'Symbol', crumbs: ANALYZE, redirect: true },
-  { path: '/portfolio/trade-history', label: 'Trade Ledger', crumbs: PORTFOLIO, redirect: true },
-  { path: '/portfolio/copilot', label: 'Trading Copilot', crumbs: COPILOT, redirect: true },
-  { path: '/portfolio/model-analysis', label: 'Backing & Model', crumbs: PORTFOLIO, redirect: true },
-  { path: '/portfolio/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
+  { path: '/market/watchlist', label: 'Stock Watchlist', crumbs: DATA, redirect: '/research/watchlist' },
+  { path: '/research/sepa', label: 'Stock Screener', crumbs: DATA, redirect: '/research/stock-screener' },
+  // Went to `/settings/data-readiness`, which is itself a redirect — two hops
+  // and two history entries. Points at the page now; the test forbids the shape.
+  { path: '/research/stock-data', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: '/system/data-readiness' },
+  { path: '/research/option-scan', label: 'Option Scan', crumbs: DISCOVER, redirect: '/research/scan' },
+  { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
+  { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/vrp-lab', label: 'VRP Lab', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/vol-surface-lab', label: 'Vol Surface Lab', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/gex-intraday', label: 'GEX Intraday', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/opex-cycle-lab', label: 'OpEx Cycle Lab', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/analysis-model', label: 'Analysis Model', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/forecast-sessions', label: 'Forecast Sessions', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/intraday-playbook', label: 'Intraday Playbook', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/order-sentiment', label: 'Order Sentiment', crumbs: ANALYZE, redirect: '/research/symbol' },
+  // The six Analyze pages the Symbol merge retired. They carry the name they
+  // were retired under, not the name they resolve to: that is what someone
+  // types into the Omnibar looking for them, and the destination's own name is
+  // one frame away regardless.
+  { path: '/research/dossier', label: 'Dossier', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/vol-regime', label: 'Vol Regime', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/dealer-levels', label: 'Dealer Levels', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/scenario', label: 'Scenario', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/flow', label: 'Flow', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/research/discovery', label: 'Option Discovery', crumbs: ANALYZE, redirect: '/research/symbol' },
+  { path: '/portfolio/trade-history', label: 'Trade Ledger', crumbs: PORTFOLIO, redirect: '/portfolio/ledger' },
+  { path: '/portfolio/copilot', label: 'Trading Copilot', crumbs: COPILOT, redirect: '/research/copilot/trading' },
+  { path: '/portfolio/model-analysis', label: 'Backing & Model', crumbs: PORTFOLIO, redirect: '/portfolio/backing#model' },
+  { path: '/portfolio/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
   // The `/settings/*` and `/operations/*` names, kept working. Bookmarks and
   // anything that linked them predate the rename and must not 404.
-  { path: '/settings', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/coverage', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/feed', label: 'Feed', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/data-readiness', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: true },
-  { path: '/settings/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: true },
-  { path: '/settings/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: true },
-  { path: '/settings/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
-  { path: '/operations/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
-  { path: '/operations/platform', label: 'Platform', crumbs: SYSTEM_RUNTIME, redirect: true },
-  { path: '/settings/subscribe', label: 'Feed', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/feed/ib', label: 'Feed', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/coverage/overview', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/coverage/overview-detail', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/coverage/option', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/coverage/stock-ib', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: true },
-  { path: '/settings/daemon-app', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: true },
-  { path: '/settings/tech-stack', label: 'Tech Stack', crumbs: DOCS, redirect: true },
-  { path: '/settings/ui-design-system', label: 'UI Design System', crumbs: DOCS, redirect: true },
+  { path: '/settings', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage' },
+  { path: '/settings/coverage', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage' },
+  { path: '/settings/feed', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
+  { path: '/settings/data-readiness', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: '/system/data-readiness' },
+  { path: '/settings/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/system/ib' },
+  { path: '/settings/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: '/system/api' },
+  { path: '/settings/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: '/system/socket' },
+  { path: '/settings/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
+  { path: '/operations/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
+  { path: '/operations/platform', label: 'Platform', crumbs: SYSTEM_RUNTIME, redirect: '/system/platform' },
+  { path: '/settings/subscribe', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
+  { path: '/settings/feed/ib', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
+  { path: '/settings/coverage/overview', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage?view=watchlist' },
+  { path: '/settings/coverage/overview-detail', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage?view=watchlist' },
+  { path: '/settings/coverage/option', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage?view=option' },
+  { path: '/settings/coverage/stock-ib', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage?view=stock' },
+  { path: '/settings/daemon-app', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
+  { path: '/settings/tech-stack', label: 'Tech Stack', crumbs: DOCS, redirect: '/docs/tech-stack' },
+  { path: '/settings/ui-design-system', label: 'UI Design System', crumbs: DOCS, redirect: '/docs/ui-design-system' },
 ]
 
 /** Everywhere you can actually go — what the Omnibar and any page list offer. */
 export const PAGE_ROUTES: readonly RouteEntry[] = ROUTES.filter((r) => !r.redirect)
 
-/** Shown when a pathname matches nothing — a 404, or a route added without an entry. */
-export const FALLBACK_ROUTE: RouteEntry = { path: '*', label: 'Bifrost Trade', redirect: true }
+/** The old names, each with the path it now resolves to. `router.tsx` builds its rows from this. */
+export const REDIRECT_ROUTES: readonly (RouteEntry & { redirect: string })[] = ROUTES.filter(
+  (r): r is RouteEntry & { redirect: string } => typeof r.redirect === 'string',
+)
+
+/**
+ * The old names a page answers to.
+ *
+ * `Docs Gaps.dc.html` F5 asks for `aliases` so that typing a retired name in
+ * the Omnibar still finds the page. Rather than a second list to keep in step,
+ * this inverts the redirect table: a redirect row already says "this old name
+ * means that page", which is the same fact read the other way.
+ *
+ * Keyed by the destination with its query and hash stripped, because that is
+ * the page — `/system/coverage?view=option` and `/system/coverage` are one
+ * destination with two openings.
+ */
+const ALIASES: ReadonlyMap<string, readonly RouteEntry[]> = REDIRECT_ROUTES.reduce((map, entry) => {
+  const page = entry.redirect.split(/[?#]/)[0]
+  map.set(page, [...(map.get(page) ?? []), entry])
+  return map
+}, new Map<string, RouteEntry[]>())
+
+export function aliasesFor(pathname: string): readonly RouteEntry[] {
+  return ALIASES.get(pathname) ?? []
+}
+
+/**
+ * Shown when a pathname matches nothing — a 404, or a route added without an
+ * entry. Not a redirect: it has nowhere to send you. `'*'` is what keeps it out
+ * of the Omnibar and the recent-pages trail.
+ */
+export const FALLBACK_ROUTE: RouteEntry = { path: '*', label: 'Bifrost Trade' }
 
 const STATIC_ROUTES = new Map(ROUTES.filter((r) => !r.path.includes(':')).map((r) => [r.path, r]))
 const DYNAMIC_ROUTES = ROUTES.filter((r) => r.path.includes(':'))

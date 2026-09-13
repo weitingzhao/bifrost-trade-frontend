@@ -168,7 +168,7 @@ describe('the old names', () => {
     for (const path of renamed) {
       const entry = routeFor(path)
       expect(entry.path, `${path} fell through to the fallback`).toBe(path)
-      expect(entry.redirect, `${path} should be redirect-only now`).toBe(true)
+      expect(entry.redirect, `${path} should be redirect-only now`).toBeTruthy()
     }
   })
 })

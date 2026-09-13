@@ -104,18 +104,26 @@ Legacy 前端（`bifrost-trader-engine/frontend`，已随 D8 归档，不可访�
 - 导航分组与 API 域对齐：
 
 ```
-Market       → Live、WatchList
-Portfolio    → Accounts、Positions、Performance
-Research     → Screener、Discovery、Greeks、SEPA
-Strategy     → Instances、Structures、Opportunities、Gates
-Operations   → Daemon、Logs
-Settings     → Config、IB Connection
+Market       → Live
+Portfolio    → Performance › Positions / Backing & Model
+                Accounts › Trade Ledger / Transfer & Pay
+Research     → 按 seat 裁剪（Autopilot / Copilot / Workbench）+ Overview，rail 在组顶
+Strategy     → Instances › Win Rate · Allocations › Opportunity / Structure / Option Category / Gates
 ```
+
+**System 不进业务组**：`/system/*` 与 `/docs/*` 走侧栏脚的 `System` 入口，进入后整棵树切换为
+Data / Runtime / Configuration / Reference，脚部变 `Back to Trade`（`isSystemRoute`）。
+`/settings/*`、`/operations/*` 是这套的旧名，全部登记为 redirect。
+
+**组名与路由的权威是 `src/layout/routeRegistry.ts`**，不是本文件；改菜单先改它。
 
 ### 右侧面板规范
 
-- **RightInspectorDrawer**（浮层，不遮挡背后内容）：用于行情 Inspector、策略实例详情
-- **DetailSidebar**（Modal 或 Docked）：用于需要聚焦编辑的详情页
+- **RightInspectorShell**（`components/layout/`）：唯一的右侧面板底座 —— 行情 Inspector、
+  期权合约详情、策略实例详情都是它的 body。视口 ≥ 面板宽 + 840px 时**停靠**成右列（主内容让位），
+  否则悬浮；默认 560px，调用方可用 `panelWidthPx` 指定更宽档。`RightInspectorDrawer` /
+  `OptionContractDrawer` 两层纯透传已删除（`db15278`），不要再建新的包装层
+- 面板内的栅格用**容器查询**（`@container inspector`），不要用视口断点 —— 面板宽度与视口无关
 
 ---
 

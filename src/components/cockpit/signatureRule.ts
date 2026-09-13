@@ -50,7 +50,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
  * ground is. `toLocaleDateString` also disagrees with itself across runtimes
  * ("Sep" vs "Sept" for the same locale), which a signature cannot afford.
  */
-function shortDate(iso: string): string {
+export function shortDate(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`

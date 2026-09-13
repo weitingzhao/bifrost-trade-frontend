@@ -4,6 +4,7 @@ import { CheckIcon, Crosshair, Send, Square, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AgentActionsMenu } from '@/components/cockpit/AgentActionsMenu'
 import { CopilotContextPopover } from '@/components/cockpit/CopilotContextPopover'
+import { CopilotFreshness } from '@/components/cockpit/CopilotFreshness'
 import { CopilotPromptLangToggle } from '@/components/cockpit/CopilotPromptLangToggle'
 import {
   Select,
@@ -276,6 +277,9 @@ function ComposerForm({
           <div className="ml-auto" aria-hidden />
           <AgentActionsMenu disabled={inputDisabled} />
         </div>
+        {/* Under the chips, above the box: how old the ground is, before you
+            ask for something built on it. */}
+        <CopilotFreshness />
         <textarea
           data-testid="copilot-composer-input"
           value={text}

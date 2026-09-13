@@ -9,14 +9,17 @@
  */
 import { describe, expect, it } from 'vitest'
 import { RESEARCH_SEATS } from '@/lib/research/seat'
+import { isSystemRoute } from './routeRegistry'
 import {
   allResearchRoutes,
+  BENCHES,
   buildResearchNavGroup,
   MARKET_PAGES,
   seatForRoute,
   SEATLESS_ROUTES,
   seatItems,
   staticResearchSubGroups,
+  WORKBENCH_LIFTED_FROM_DATA,
 } from './researchNavCatalog'
 import type { ShellNavItem } from '@bifrost/ui'
 
@@ -100,6 +103,28 @@ describe('a seat carries its own pages and no others', () => {
     }
   })
 
+  it('lifts Signal Health out of Data on the bench, and only that one', () => {
+    // It lifted by index. `data.items[1]` was Signal Health when that was
+    // written and became Lens Coverage as soon as a row was inserted above it,
+    // so the bench showed the wrong page for 39 commits and nothing here
+    // noticed. The lift is by path now; this pins which page.
+    expect(WORKBENCH_LIFTED_FROM_DATA).toBe('/research/signal-health')
+    const top = seatItems('workbench', ctx)[0].children ?? []
+    const lifted = top.filter((i) => !i.id.startsWith('fold:')).map((i) => i.to)
+    expect(lifted).toContain(WORKBENCH_LIFTED_FROM_DATA)
+
+    const data = flatten(seatItems('workbench', ctx)).find((i) => i.label === 'Data')
+    const inFold = (data?.children ?? []).map((i) => i.to)
+    expect(inFold, 'the lifted page is still in the fold as well').not.toContain(
+      WORKBENCH_LIFTED_FROM_DATA,
+    )
+    // Everything else stays put — a lift is one page, not a habit.
+    const bench = BENCHES.find((b) => b.id === 'data')!
+    expect([...inFold, WORKBENCH_LIFTED_FROM_DATA].sort()).toEqual(
+      bench.items.map((i) => i.to).sort(),
+    )
+  })
+
   it('carries no other seat as a row', () => {
     for (const seat of RESEARCH_SEATS) {
       const mine = HOMES[seat]
@@ -121,6 +146,19 @@ describe('no page lights two rows', () => {
     for (const seat of RESEARCH_SEATS) {
       const routes = routesOf(seatItems(seat, ctx))
       expect(new Set(routes).size, seat).toBe(routes.length)
+    }
+  })
+
+  it('never lets a heading leave the business tree', () => {
+    // A fold's row borrows its first child's route. `Data` led with Stock Data
+    // Readiness, which is a `/system/*` page — so clicking the Research
+    // heading `Data` navigated into System and swapped the entire sidebar for
+    // the System tree. The row may cross (it is the one that earns it); the
+    // heading may not.
+    for (const seat of RESEARCH_SEATS) {
+      for (const f of flatten(seatItems(seat, ctx)).filter((i) => i.children?.length)) {
+        expect(isSystemRoute(f.to ?? ''), `${seat}: heading "${f.label}" -> ${f.to}`).toBe(false)
+      }
     }
   })
 

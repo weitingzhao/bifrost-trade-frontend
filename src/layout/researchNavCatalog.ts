@@ -127,6 +127,17 @@ export const WORKBENCH_PAGE = route('Workbench', '/research/workbench', Wrench)
 /** The seat overview — the three postures side by side. */
 export const OVERVIEW_PAGE = route('Overview', '/research/overview', LayoutGrid)
 
+/**
+ * The page the Workbench seat lifts out of `Data`.
+ *
+ * By path, not by position. It was `data.items[1]`, which was Signal Health
+ * when it was written and became Lens Coverage the moment a row was inserted
+ * above it (`5079379`, 39 commits later) — so the seat quietly lifted the
+ * wrong page and buried the one the comment names. An index into a list
+ * someone else maintains is not a reference to anything.
+ */
+export const WORKBENCH_LIFTED_FROM_DATA = '/research/signal-health'
+
 export const BENCHES: Bench[] = [
   {
     id: 'discover',
@@ -153,14 +164,22 @@ export const BENCHES: Bench[] = [
     id: 'data',
     label: 'Data',
     icon: Server,
+    // Data Readiness is last, and that is load-bearing: a fold's heading
+    // borrows its first child's route (`fold()` below), and this row is the
+    // one business row that points into `/system/*`. First, it made clicking
+    // the Research heading `Data` navigate to a System page and swap the whole
+    // sidebar for the System tree — the heading of a Research section threw
+    // you out of Research. Kept as a row, because "is the data there" is asked
+    // from the bench as often as from the machine room; moved off the front,
+    // because a heading is not the place to leave the domain.
     items: [
-      route('Stock Data Readiness', '/system/data-readiness', Server),
       route('Lens Coverage', '/research/lens-coverage', Radar),
       route('Signal Health', '/research/signal-health', Activity),
       route('Stock Watchlist', '/research/watchlist', Star),
       route('Stock Screener', '/research/stock-screener', ListFilter),
       route('Option Screener', '/research/screener', ListFilter),
       route('Contract Greeks', '/research/greeks', Wand2),
+      route('Stock Data Readiness', '/system/data-readiness', Server),
     ],
   },
 ]
@@ -287,7 +306,7 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
     case 'workbench': {
       // Signal Health rides up out of Data: on this seat it is the first thing
       // you check before trusting anything else on the bench.
-      const health = data.items[1]
+      const health = data.items.find((i) => i.to === WORKBENCH_LIFTED_FROM_DATA)!
       return [
         home(seat, 'Workbench', WORKBENCH_PAGE, [
           ...discover.items,

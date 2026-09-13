@@ -25,9 +25,18 @@ function frameKind(frame: PersistedCopilotFrame): string {
   return 'text'
 }
 
+/**
+ * @param model The session's recorded model. Frames do not carry one of their
+ *   own, so this is the best attribution available for a replayed turn — and
+ *   it beats the alternative the §2.2 signature would otherwise fall back to,
+ *   which is whatever model happens to be selected now. It is per session, so
+ *   a session whose model was switched part-way attributes its earlier turns
+ *   to the later model; recording it per frame is a backend change.
+ */
 export function hydrateCopilotMessages(
   frames: PersistedCopilotFrame[],
   sessionId: string,
+  model?: string,
 ): CopilotUiMessage[] {
   const out: CopilotUiMessage[] = []
   let seq = 0
@@ -38,6 +47,8 @@ export function hydrateCopilotMessages(
       role: 'assistant',
       content: '',
       toolCalls: [],
+      origin: 'model',
+      model,
     }
     out.push(msg)
     return msg
@@ -58,6 +69,8 @@ export function hydrateCopilotMessages(
           from: String(frame.agent_from ?? 'triage'),
           to: String(frame.agent_to ?? 'specialist'),
         },
+        origin: 'model',
+        model,
       })
       continue
     }
@@ -137,6 +150,8 @@ export function hydrateCopilotMessages(
         role: 'assistant',
         content,
         toolCalls: [],
+        origin: 'model',
+        model,
         agent: frame.agent ? String(frame.agent) : undefined,
       }
       out.push(currentAssistant)

@@ -112,7 +112,7 @@ export function SessionListSidebar({
     if (editingId === id) return
     try {
       const detail = await fetchCopilotSession(id)
-      const msgs = hydrateCopilotMessages(detail.messages ?? [], id)
+      const msgs = hydrateCopilotMessages(detail.messages ?? [], id, detail.session?.model)
       copilotSessionStore.setState({
         messages: msgs,
         sessionId: id,

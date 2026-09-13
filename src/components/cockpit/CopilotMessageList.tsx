@@ -13,6 +13,7 @@ import { useResearchContext } from '@/hooks/useResearchContext'
 import { copilotSessionStore, useCopilotSession, type CopilotUiMessage } from '@/hooks/useCopilotSession'
 import { extractDiffPreview } from '@/lib/cockpit/extractDiffPreview'
 import { cn } from '@/lib/utils'
+import { CopilotSignature } from '@/components/cockpit/CopilotSignature'
 import { Bot, MessageSquare } from 'lucide-react'
 
 export function CopilotMessageList({
@@ -145,6 +146,7 @@ export function CopilotMessageList({
               </p>
             )
           ) : null}
+          <CopilotSignature message={m} />
         </div>
       ))}
       <div ref={bottomRef} />

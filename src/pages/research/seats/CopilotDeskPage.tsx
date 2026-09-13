@@ -203,7 +203,7 @@ function Threads() {
     try {
       const detail = await fetchCopilotSession(id)
       copilotSessionStore.setState({
-        messages: hydrateCopilotMessages(detail.messages ?? [], id),
+        messages: hydrateCopilotMessages(detail.messages ?? [], id, detail.session?.model),
         sessionId: id,
         streaming: false,
         lastError: null,

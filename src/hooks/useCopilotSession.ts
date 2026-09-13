@@ -43,6 +43,16 @@ export type CopilotUiMessage = {
   handoff?: { from: string; to: string }
   /** RS-PS: specialist that produced this assistant text */
   agent?: string
+  /**
+   * Who is speaking. `model` is Copilot output and carries the §2.2 signature;
+   * `app` is this frontend's own note ("Write executed successfully") and must
+   * not be signed as a draft — attributing our own string to a provider is the
+   * exact misattribution the signature exists to prevent. Absent on hydrated
+   * history, which is model output whose model was never recorded.
+   */
+  origin?: 'model' | 'app'
+  /** The model that produced it, when known. Persisted frames do not record one. */
+  model?: string
 }
 
 export type AgentTrailEntry = {
@@ -169,6 +179,8 @@ function applyEvent(ev: CopilotSseEvent) {
       role: 'assistant',
       content: '',
       handoff: { from: ev.from, to: ev.to },
+      origin: 'model',
+      model: state.model,
     })
     store.setState({
       messages: msgs,
@@ -203,6 +215,8 @@ function applyEvent(ev: CopilotSseEvent) {
         content: ev.text || '',
         streaming: true,
         toolCalls: [],
+        origin: 'model',
+        model: state.model,
       })
     }
     store.setState({ messages: msgs, lastError: null })
@@ -220,6 +234,8 @@ function applyEvent(ev: CopilotSseEvent) {
         content: '',
         streaming: true,
         toolCalls: [],
+        origin: 'model',
+        model: state.model,
       }
       msgs.push(last)
     }
@@ -417,6 +433,7 @@ export const copilotSessionStore = {
         ? 'Write executed successfully.'
         : `Write failed: ${JSON.stringify(execResult).slice(0, 400)}`,
       error: !executed.ok,
+      origin: 'app',
     }
     store.setState({ messages: [...store.getState().messages, note] })
   },
@@ -471,6 +488,7 @@ export const copilotSessionStore = {
       role: 'assistant',
       content:
         'Action rejected by user. You can ask me to adjust the proposal or try a different approach.',
+      origin: 'app',
     }
     store.setState({ messages: [...store.getState().messages, note] })
   },

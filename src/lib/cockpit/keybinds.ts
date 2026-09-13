@@ -16,6 +16,7 @@
 import { useEffect } from 'react'
 import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { omnibar } from '@/lib/omnibar'
+import { KEY_COPILOT, KEY_OMNIBAR } from './shortcuts'
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
@@ -29,12 +30,12 @@ export function useCockpitKeybinds() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const meta = e.metaKey || e.ctrlKey
-      if (meta && (e.key === 'k' || e.key === 'K')) {
+      if (meta && e.key.toLowerCase() === KEY_OMNIBAR) {
         e.preventDefault()
         omnibar.toggle()
         return
       }
-      if (meta && (e.key === 'j' || e.key === 'J')) {
+      if (meta && e.key.toLowerCase() === KEY_COPILOT) {
         e.preventDefault()
         copilotDockStore.getState().toggle()
         return

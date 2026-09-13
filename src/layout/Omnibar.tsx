@@ -29,6 +29,7 @@ import { omnibar, omnibarStore, parseQuery, readRecentPaths } from '@/lib/omniba
 import { withSymbolParam } from '@/lib/symbolLink'
 import { useSymbolContext } from '@/lib/symbolContext'
 import { PAGE_ROUTES, routeFor } from './routeRegistry'
+import { SHORTCUTS } from '@/lib/cockpit/shortcuts'
 import { matches, trail } from './omnibarMatch'
 import { symbolTabHref } from '@/lib/symbolTabs'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
@@ -73,7 +74,7 @@ export function Omnibar() {
   const search = useSymbolSearch(tickerTerm, open && tickerTerm.length >= 1)
 
   const pages = useMemo(() => {
-    if (mode === 'commands') return []
+    if (mode === 'commands' || mode === 'shortcuts') return []
     // Empty and unprefixed is the resting state: what you were just doing, not
     // the first eight rows of the sitemap. `/` with nothing after it is a
     // deliberate ask for the page list, so that one does list them.
@@ -188,6 +189,23 @@ export function Omnibar() {
           </CommandGroup>
         )}
 
+        {mode === 'shortcuts' && (
+          <CommandGroup heading="Keyboard">
+            {SHORTCUTS.filter(
+              (s) =>
+                !term ||
+                `${s.keys} ${s.what} ${s.scope}`.toLowerCase().includes(term.toLowerCase()),
+            ).map((s) => (
+              <CommandItem key={s.keys} value={`key-${s.keys}`}>
+                <CommandIcon />
+                <span className="font-mono text-dense-caption">{s.keys}</span>
+                <span className="truncate">{s.what}</span>
+                <CommandShortcut>{s.scope}</CommandShortcut>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
         {pages.length > 0 && (
           <CommandGroup heading="Pages">
             {pages.map((entry) => (
@@ -202,7 +220,7 @@ export function Omnibar() {
           </CommandGroup>
         )}
 
-        {recents.length > 0 && (
+        {mode !== 'shortcuts' && recents.length > 0 && (
           <CommandGroup heading="Recent pages">
             {recents.map((entry) => (
               <CommandItem
@@ -216,7 +234,7 @@ export function Omnibar() {
           </CommandGroup>
         )}
 
-        {mode !== 'pages' && (
+        {mode !== 'pages' && mode !== 'shortcuts' && (
           <CommandGroup heading="Commands">
             <CommandItem
               value="cmd-copilot"

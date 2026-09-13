@@ -8,7 +8,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
 import { ShellStatusBar } from './ShellStatusBar'
-import { SHELL_SIDEBAR_WIDTH } from './shellChrome'
+import { initialSidebarOpen, SHELL_SIDEBAR_WIDTH } from './shellChrome'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
 import { InboxDrawer } from '@/components/MessageCenter/InboxDrawer'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
@@ -22,11 +22,6 @@ import { useRecentPagesTrail } from '@/lib/omnibar'
 import { Omnibar } from './Omnibar'
 import { InspectorSlotContext } from '@/components/layout/inspectorSlot'
 import { layerForPath } from '@/lib/design/layers'
-
-function readSidebarCookie(): boolean {
-  const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
-  return match ? match[1] === 'true' : true
-}
 
 /** Stable ErrorBoundary key — keep Instances mounted when opening/closing detail. */
 function outletBoundaryKey(pathname: string): string {
@@ -91,7 +86,7 @@ export function AppLayout() {
   return (
     <InspectorSlotContext.Provider value={inspectorSlot}>
       <SidebarProvider
-        defaultOpen={readSidebarCookie()}
+        defaultOpen={initialSidebarOpen(document.cookie, window.innerWidth)}
         style={{ '--sidebar-width': SHELL_SIDEBAR_WIDTH } as CSSProperties}
       >
         {/* Before the sidebar, not after: the ~40 nav links are exactly what

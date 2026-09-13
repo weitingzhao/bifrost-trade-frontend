@@ -11,12 +11,14 @@ import { createExternalStore } from '@/lib/cockpit/externalStore'
 import { routeFor } from '@/layout/routeRegistry'
 
 /** One input, three kinds of result — which kind is decided by the first character. */
-export type OmnibarMode = 'all' | 'pages' | 'commands'
+export type OmnibarMode = 'all' | 'pages' | 'commands' | 'shortcuts'
 
 export function parseQuery(raw: string): { mode: OmnibarMode; term: string } {
   const q = raw.trimStart()
   if (q.startsWith('/')) return { mode: 'pages', term: q.slice(1).trim() }
   if (q.startsWith('>') || q.startsWith('\u203a')) return { mode: 'commands', term: q.slice(1).trim() }
+  // `?` is the only way to find out what the keys are (Docs Gaps B7).
+  if (q.startsWith('?')) return { mode: 'shortcuts', term: q.slice(1).trim() }
   return { mode: 'all', term: q.trim() }
 }
 

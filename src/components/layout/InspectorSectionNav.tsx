@@ -2,11 +2,6 @@ import type { LucideIcon } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { inspectorShell } from './rightInspectorUi'
-import {
-  inspectorNavIconClass,
-  inspectorNavTriggerClass,
-  type InspectorNavTone,
-} from './inspectorNavTones'
 
 export interface InspectorNavItem<T extends string = string> {
   id: T
@@ -15,7 +10,6 @@ export interface InspectorNavItem<T extends string = string> {
   /** Optional longer title on collapsible section headers. */
   sectionLabel?: string
   icon: LucideIcon
-  tone: InspectorNavTone
 }
 
 interface Props<T extends string> {
@@ -40,17 +34,19 @@ export function InspectorSectionNav<T extends string>({
         }}
       >
         <TabsList variant="line" className={inspectorShell.sectionNavList}>
-          {items.map(({ id, label, icon: Icon, tone }) => (
-            <TabsTrigger
-              key={id}
-              value={id}
-              className={cn(
-                'group/nav-tab',
-                inspectorShell.sectionNavTrigger,
-                inspectorNavTriggerClass(tone),
-              )}
-            >
-              <Icon className={cn(inspectorShell.sectionNavIcon, inspectorNavIconClass(tone))} aria-hidden />
+          {items.map(({ id, label, icon: Icon }) => (
+            <TabsTrigger key={id} value={id} className={cn('group/nav-tab', inspectorShell.sectionNavTrigger)}>
+              {/* One accent, and it belongs to the layer. The DS line variant
+                  already underlines the active tab in `--primary`, which the
+                  layer ramp now owns — so the section that is open is marked
+                  by where you are standing, not by a hue of its own. */}
+              <Icon
+                className={cn(
+                  inspectorShell.sectionNavIcon,
+                  'text-muted-foreground group-data-[state=active]/nav-tab:text-foreground',
+                )}
+                aria-hidden
+              />
               <span className={inspectorShell.sectionNavLabel}>{label}</span>
             </TabsTrigger>
           ))}

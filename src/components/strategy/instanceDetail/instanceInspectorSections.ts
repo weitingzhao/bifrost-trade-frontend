@@ -26,11 +26,11 @@ export const INSTANCE_INSPECTOR_SECTION_DOM_ID: Record<InstanceInspectorSectionI
 }
 
 export const INSTANCE_INSPECTOR_NAV: InspectorNavItem<InstanceInspectorSectionId>[] = [
-  { id: 'overview', label: 'Overview', icon: LayoutList, tone: 'sky' },
-  { id: 'pnl', label: 'PnL', sectionLabel: 'PnL & Commission', icon: DollarSign, tone: 'emerald' },
-  { id: 'chart', label: 'Chart', sectionLabel: 'K-line Chart', icon: LineChart, tone: 'violet' },
-  { id: 'risk', label: 'Risk', sectionLabel: 'Risk Profile (at expiration)', icon: Shield, tone: 'amber' },
-  { id: 'executions', label: 'Executions', icon: ListOrdered, tone: 'cyan' },
+  { id: 'overview', label: 'Overview', icon: LayoutList },
+  { id: 'pnl', label: 'PnL', sectionLabel: 'PnL & Commission', icon: DollarSign },
+  { id: 'chart', label: 'Chart', sectionLabel: 'K-line Chart', icon: LineChart },
+  { id: 'risk', label: 'Risk', sectionLabel: 'Risk Profile (at expiration)', icon: Shield },
+  { id: 'executions', label: 'Executions', icon: ListOrdered },
 ]
 
 export const INSTANCE_INSPECTOR_NAV_BY_ID = indexInspectorNav(INSTANCE_INSPECTOR_NAV)

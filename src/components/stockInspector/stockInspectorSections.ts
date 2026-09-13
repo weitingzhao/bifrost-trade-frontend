@@ -12,10 +12,10 @@ export const INSPECTOR_SECTION_IDS = ['sepa', 'barData', 'putCall', 'statements'
 export type InspectorSectionId = (typeof INSPECTOR_SECTION_IDS)[number]
 
 export const INSPECTOR_SECTION_NAV: InspectorNavItem<InspectorSectionId>[] = [
-  { id: 'sepa', label: 'SEPA', sectionLabel: 'SEPA Conditions', icon: TrendingUp, tone: 'emerald' },
-  { id: 'barData', label: 'Bar Data', icon: BarChart3, tone: 'violet' },
-  { id: 'putCall', label: 'Put/Call', sectionLabel: 'Put/Call Ratio', icon: Scale, tone: 'orange' },
-  { id: 'statements', label: 'Statements', icon: FileSpreadsheet, tone: 'indigo' },
+  { id: 'sepa', label: 'SEPA', sectionLabel: 'SEPA Conditions', icon: TrendingUp },
+  { id: 'barData', label: 'Bar Data', icon: BarChart3 },
+  { id: 'putCall', label: 'Put/Call', sectionLabel: 'Put/Call Ratio', icon: Scale },
+  { id: 'statements', label: 'Statements', icon: FileSpreadsheet },
 ]
 
 export const INSPECTOR_SECTION_NAV_BY_ID = indexInspectorNav(INSPECTOR_SECTION_NAV)

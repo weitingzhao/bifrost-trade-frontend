@@ -286,7 +286,7 @@ export default function TechStackPage() {
         <MonoList
           items={[
             'Shell — RightInspectorShell + rightInspectorShell.module.css',
-            'Line tabs — InspectorSectionNav (icon + semantic tone per section)',
+            'Line tabs — InspectorSectionNav (icon + label; the active underline is the layer accent)',
             'Collapsible headers — RightInspectorCollapsibleSection with the same navItem as tabs',
             'Config — stockInspectorSections.ts, optionInspectorSections.ts, instanceInspectorSections.ts',
           ]}

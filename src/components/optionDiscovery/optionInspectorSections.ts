@@ -28,12 +28,12 @@ export const OPTION_INSPECTOR_SECTION_DOM_ID: Record<OptionInspectorSectionId, s
 }
 
 export const OPTION_INSPECTOR_NAV: InspectorNavItem<OptionInspectorSectionId>[] = [
-  { id: 'overview', label: 'Overview', icon: LayoutList, tone: 'sky' },
-  { id: 'bs', label: 'BS vs Snap', sectionLabel: 'BS vs Snapshot', icon: Scale, tone: 'orange' },
-  { id: 'chart', label: 'Chart', sectionLabel: 'Chart (K-line)', icon: BarChart3, tone: 'violet' },
-  { id: 'liquidity', label: 'Liquidity', icon: Droplets, tone: 'cyan' },
-  { id: 'risk', label: 'Risk', icon: Shield, tone: 'amber' },
-  { id: 'relative', label: 'Relative', sectionLabel: 'Relative Value', icon: TrendingUp, tone: 'rose' },
+  { id: 'overview', label: 'Overview', icon: LayoutList },
+  { id: 'bs', label: 'BS vs Snap', sectionLabel: 'BS vs Snapshot', icon: Scale },
+  { id: 'chart', label: 'Chart', sectionLabel: 'Chart (K-line)', icon: BarChart3 },
+  { id: 'liquidity', label: 'Liquidity', icon: Droplets },
+  { id: 'risk', label: 'Risk', icon: Shield },
+  { id: 'relative', label: 'Relative', sectionLabel: 'Relative Value', icon: TrendingUp },
 ]
 
 export const OPTION_INSPECTOR_NAV_BY_ID = indexInspectorNav(OPTION_INSPECTOR_NAV)

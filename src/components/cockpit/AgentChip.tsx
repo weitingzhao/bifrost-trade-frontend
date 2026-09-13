@@ -1,28 +1,26 @@
+import { DenseTag } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 
-const AGENT_COLORS: Record<string, string> = {
-  triage: 'bg-muted text-foreground',
-  discovery: 'bg-sky-500/15 text-sky-700 dark:text-sky-300',
-  analyze: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
-  validate: 'bg-amber-500/15 text-amber-800 dark:text-amber-200',
-  write: 'bg-orange-500/15 text-orange-800 dark:text-orange-200',
-  explain: 'bg-teal-500/15 text-teal-800 dark:text-teal-200',
-  verdict: 'bg-indigo-500/15 text-indigo-800 dark:text-indigo-200',
-}
-
+/**
+ * Which agent produced a thing.
+ *
+ * It used to be seven hues — sky, violet, amber, orange, teal, indigo — one
+ * per agent. Contract §7 cancels category colour: the accent channel carries
+ * one emphasis per screen and that emphasis now belongs to the layer, so a
+ * taxonomy competing for it makes the screen say two things at once. One of
+ * the seven was teal, which since `0503be6` means a profit — a category badge
+ * was reading in the direction channel.
+ *
+ * The name is the distinction. `DenseTag`'s `category` variant is where this
+ * codebase puts a taxonomy that is not a state.
+ */
 export function AgentChip({ agent, className }: { agent: string; className?: string }) {
-  const key = agent.toLowerCase()
-  const label = key.charAt(0).toUpperCase() + key.slice(1)
+  const key = agent.trim()
+  const label = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase()
   return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded px-1.5 py-0.5 text-dense-caption font-medium',
-        AGENT_COLORS[key] ?? 'bg-secondary text-secondary-foreground',
-        className,
-      )}
-    >
+    <DenseTag variant="category" className={className}>
       {label}
-    </span>
+    </DenseTag>
   )
 }
 

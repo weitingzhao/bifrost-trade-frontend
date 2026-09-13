@@ -40,6 +40,12 @@ export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
       className={cn(
         SHELL_TOP_BAR_HEIGHT_CLASS,
         'flex items-center gap-2 border-b border-border bg-card px-4',
+        // The layer's one accent line, on the top bar's bottom edge — the
+        // design puts it here rather than on the page header, which renders as
+        // an unclassed div with nothing stable to hook. Dark only, like the
+        // ramp it reads from: in light mode there are no layers, so a 2px bar
+        // of `--primary` would be a heavy line saying nothing.
+        'dark:border-b-2 dark:border-primary',
       )}
     >
       <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />

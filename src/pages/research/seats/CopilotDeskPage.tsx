@@ -9,8 +9,8 @@
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Users } from 'lucide-react'
+import { useQueries, useQuery } from '@tanstack/react-query'
+import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Users, Zap } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { DenseTag, EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,8 @@ import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
 import { fetchCopilotSession, fetchCopilotSessions } from '@/api/researchCopilotSessions'
 import { listResearchDrafts, type DraftStatus } from '@/api/researchDrafts'
+import { AgentActionsMenu } from '@/components/cockpit/AgentActionsMenu'
+import { agentsThatWroteOn, humanKind, nyDate } from '@/pages/research/seats/agentActivity'
 import { useCopilotStanding } from '@/hooks/useCopilotStanding'
 import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { copilotSessionStore } from '@/hooks/useCopilotSession'
@@ -96,6 +98,16 @@ export default function CopilotDeskPage() {
           <DigestToday draftId={s?.brief?.draft_id ?? null} status={s?.brief?.status ?? null} loading={standingQ.isLoading} />
         </section>
         <div className="min-w-0 space-y-3">
+          <section className="space-y-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-dense-body font-semibold">Ran today</h2>
+              <span className="text-dense-meta text-muted-foreground">scheduled agents · ET</span>
+              <span className="ml-auto">
+                <AgentActionsMenu />
+              </span>
+            </div>
+            <RanToday />
+          </section>
           <section className="space-y-2">
             <h2 className="text-dense-body font-semibold">Threads</h2>
             <Threads />
@@ -187,6 +199,91 @@ function DigestToday({ draftId, status, loading }: { draftId: string | null; sta
       </div>
       <DailyDigestBody payload={draft.payload} />
     </div>
+  )
+}
+
+/**
+ * Which scheduled agents wrote today.
+ *
+ * Drafts are the record: the agents already write `generated_by`,
+ * `created_at` and `kind`, so this reads the rows the Decision Inbox reads
+ * instead of a second table that could disagree with it. The design's fourth
+ * column, Cost, is not recorded anywhere in this system — it says so rather
+ * than showing a zero, which on a spend column would be a claim.
+ *
+ * All four statuses, because an agent that ran and whose drafts you have since
+ * approved still ran. The backend filters to `pending` when the parameter is
+ * omitted, so each status is asked for separately; a status that comes back
+ * full may be hiding more, and the count says so instead of rounding down
+ * silently.
+ */
+const DRAFT_STATUSES: DraftStatus[] = ['pending', 'approved', 'dismissed', 'expired']
+const DRAFT_PAGE = 100
+
+function RanToday() {
+  const queries = useQueries({
+    queries: DRAFT_STATUSES.map((status) => ({
+      queryKey: ['research', 'drafts', 'ran-today', status],
+      queryFn: () => listResearchDrafts({ status, limit: DRAFT_PAGE }),
+      staleTime: 60_000,
+    })),
+  })
+
+  const isLoading = queries.some((q) => q.isLoading)
+  const errored = queries.filter((q) => q.isError)
+  const rows = useMemo(() => {
+    const drafts = queries.flatMap((q) => q.data?.rows ?? [])
+    return agentsThatWroteOn(drafts, nyDate(new Date()))
+  }, [queries])
+  // A page that came back full is a page that may have been cut off.
+  const maybeShort = queries.some((q) => (q.data?.rows.length ?? 0) >= DRAFT_PAGE)
+
+  if (isLoading) return <Skeleton className="h-24 w-full" />
+  // Partial is not clean: some agents may be missing from this list entirely.
+  if (errored.length === DRAFT_STATUSES.length) {
+    return <QueryErrorAlert error={errored[0].error} onRetry={() => queries.forEach((q) => void q.refetch())} />
+  }
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        icon={<Zap />}
+        title="Nothing has run yet today"
+        description="Morning Prep and the EOD review write into the Decision Inbox when they run. Run one from Agents."
+      />
+    )
+  }
+
+  return (
+    <>
+      <ul className="divide-y divide-border rounded-lg border border-border bg-secondary/40">
+        {rows.map((r) => (
+          <li key={r.agent} className="flex items-start gap-2 px-3 py-2">
+            <Zap className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-mono text-dense-label">{r.agent}</span>
+              <span className="block text-dense-meta text-muted-foreground">
+                {r.produced.map((p) => `${p.n} ${humanKind(p.kind)}`).join(' · ')}
+              </span>
+            </span>
+            <span className="shrink-0 text-right">
+              <span className="block font-mono text-dense-meta tabular-nums text-muted-foreground">
+                {fmtIsoTs(r.lastAt)}
+              </span>
+              <span className="block text-dense-micro text-muted-foreground/60" title="No agent run in this system records what it spent">
+                cost not recorded
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {(errored.length > 0 || maybeShort) && (
+        <p className="text-dense-meta text-warning">
+          {errored.length > 0
+            ? `${errored.length} of ${DRAFT_STATUSES.length} draft states could not be read — an agent may be missing from this list.`
+            : 'A draft page came back full, so these counts are a floor.'}
+        </p>
+      )}
+    </>
   )
 }
 

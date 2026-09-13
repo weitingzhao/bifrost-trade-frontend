@@ -12,8 +12,11 @@
  * — instance compare mode at 1360 needs 2200 before docking is honest.
  */
 
-/** The reading width. Wide tiers are the caller's to ask for. */
-export const INSPECTOR_WIDTH_DEFAULT_PX = 560
+/** The reading width — the default, and what `useInspectorWide` toggles away from. */
+export const INSPECTOR_WIDTH_READ_PX = 560
+
+/** The panel as the work: a compare, a judge's paragraph (design §5b). */
+export const INSPECTOR_WIDTH_WIDE_PX = 1040
 
 /**
  * What the page must keep.

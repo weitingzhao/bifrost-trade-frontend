@@ -20,8 +20,41 @@ import {
   soleExpandedSection,
   type InspectorSectionId,
 } from './stockInspectorSections'
-import { inspectorShell } from '@/components/layout/rightInspectorUi'
 import { RightInspectorHeader } from '@/components/layout/RightInspectorHeader'
+import { Pin, PinOff } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useCockpitPins } from '@/hooks/useCockpitPins'
+import { inspectorShell } from '@/components/layout/rightInspectorUi'
+
+/**
+ * Pin to Cockpit — design §5b's first header action.
+ *
+ * Not new behaviour: the cockpit pin store has held symbols since RS-E1.2 and
+ * the Omnibar and the symbol picker already read it. This is the affordance in
+ * the place the design puts it — beside the entity it pins.
+ */
+function PinToCockpit({ symbol }: { symbol: string }) {
+  const pins = useCockpitPins()
+  const pinned = pins.isSymbolPinned(symbol)
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className={inspectorShell.headerClose}
+          aria-pressed={pinned}
+          aria-label={pinned ? `Unpin ${symbol} from the Cockpit` : `Pin ${symbol} to the Cockpit`}
+          onClick={() => (pinned ? pins.unpinSymbol(symbol) : pins.pinSymbol(symbol))}
+        >
+          {pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-xs">
+        {pinned ? `Unpin ${symbol}` : `Pin ${symbol} to the Cockpit`}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
 
 export interface StockInspectorPanelProps {
   symbol: string
@@ -94,6 +127,7 @@ function StockInspectorPanelBody({
           </>
         }
         meta={accountId ? `· ${accountId}` : undefined}
+        actions={<PinToCockpit symbol={sym} />}
         onClose={onClose}
         closeLabel="Close stock inspector"
       />

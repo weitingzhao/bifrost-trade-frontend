@@ -570,6 +570,7 @@ export default function HarnessConsolePage() {
         open={Boolean(pipelineRunId)}
         ariaLabel="Smart Decision Run"
         panelWidthPx={inspectorWidthPx(inspectorWidth)}
+        onClose={closePipeline}
       >
         {pipelineRunId ? (
           <LoopRunPipelineBody

@@ -1,9 +1,11 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { inspectorShell } from './rightInspectorUi'
-import { INSPECTOR_WIDTH_DEFAULT_PX, inspectorDocksAt } from './inspectorDock'
+import { inspectorDocksAt, INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX } from './inspectorDock'
+import { registerInspectorEscape } from '@/lib/cockpit/inspectorEscape'
+import { useInspectorWide } from '@/hooks/useInspectorWide'
 import { useInspectorSlot } from './inspectorSlot'
 
 interface Props {
@@ -12,6 +14,8 @@ interface Props {
   children: ReactNode
   /** Override the reading width — e.g. instance compare mode, the run inspector's S/M/L. */
   panelWidthPx?: number
+  /** Bound to Escape while the panel is open, ahead of the Copilot's. */
+  onClose?: () => void
 }
 
 /**
@@ -28,13 +32,20 @@ export function RightInspectorShell({
   ariaLabel = 'Inspector',
   children,
   panelWidthPx,
+  onClose,
 }: Props) {
   const slot = useInspectorSlot()
   const viewport = useWindowWidth()
+  const { wide } = useInspectorWide()
+
+  useEffect(() => {
+    if (!open || !onClose) return
+    return registerInspectorEscape(onClose)
+  }, [open, onClose])
 
   if (!open) return null
 
-  const width = panelWidthPx ?? INSPECTOR_WIDTH_DEFAULT_PX
+  const width = panelWidthPx ?? (wide ? INSPECTOR_WIDTH_WIDE_PX : INSPECTOR_WIDTH_READ_PX)
   const docked = slot != null && inspectorDocksAt(width, viewport)
 
   const panel = (

@@ -3,7 +3,8 @@
  *
  *   ⌘K / Ctrl+K — Omnibar
  *   ⌘J / Ctrl+J — toggle Research Copilot panel
- *   Esc        — close the Copilot panel (unless focus is inside an editable field)
+ *   Esc        — close the topmost inspector, else the Copilot panel
+ *                (either way, not while focus is inside an editable field)
  *
  * ⌘K used to be a second key for the Copilot, which meant the app's most
  * conventional shortcut opened a chat panel rather than the place you go to
@@ -17,6 +18,7 @@ import { useEffect } from 'react'
 import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { omnibar } from '@/lib/omnibar'
 import { KEY_COPILOT, KEY_OMNIBAR } from './shortcuts'
+import { closeTopInspector } from './inspectorEscape'
 
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
@@ -40,10 +42,19 @@ export function useCockpitKeybinds() {
         copilotDockStore.getState().toggle()
         return
       }
-      if (e.key === 'Escape' && copilotDockStore.getState().open) {
+      if (e.key === 'Escape') {
         if (isEditableTarget(e.target)) return
-        e.preventDefault()
-        copilotDockStore.getState().close()
+        // The inspector first: it is the thing the reader just opened, and it
+        // sits over the page the Copilot is talking about. Stated here rather
+        // than left to which listener happened to mount first.
+        if (closeTopInspector()) {
+          e.preventDefault()
+          return
+        }
+        if (copilotDockStore.getState().open) {
+          e.preventDefault()
+          copilotDockStore.getState().close()
+        }
       }
     }
     window.addEventListener('keydown', onKeyDown)

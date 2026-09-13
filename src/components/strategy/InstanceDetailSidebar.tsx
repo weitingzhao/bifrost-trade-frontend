@@ -103,8 +103,10 @@ export function InstanceDetailSidebar({
       open
       ariaLabel="Strategy instance detail"
       panelWidthPx={panelWidthPx}
+      onClose={onClose}
     >
       <RightInspectorHeader
+        hideWide
         title={headerTitle}
         meta={headerMeta}
         onClose={onClose}

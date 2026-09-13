@@ -479,7 +479,11 @@ export default function PositionsPage() {
         }}
       />
       <InspectorDrawer state={inspectorDrawerState} onClose={closeInspector} />
-      <RightInspectorShell open={Boolean(openOptionPosition)} ariaLabel="Option contract detail">
+      <RightInspectorShell
+        open={Boolean(openOptionPosition)}
+        ariaLabel="Option contract detail"
+        onClose={closeInspector}
+      >
         {openOptionPosition ? (
           <OptionContractDetailFromOpenPosition
             position={openOptionPosition}

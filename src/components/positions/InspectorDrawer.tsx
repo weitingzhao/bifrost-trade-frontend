@@ -41,10 +41,7 @@ export function InspectorDrawer({ state, onClose }: Props) {
   }
 
   return (
-    <RightInspectorShell
-      open
-      ariaLabel="Stock detail"
-    >
+    <RightInspectorShell open ariaLabel="Stock detail" onClose={onClose}>
       {state.type === 'stock' && state.symbol ? (
         <StockInspectorPanel
           symbol={state.symbol}

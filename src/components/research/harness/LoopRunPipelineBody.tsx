@@ -154,6 +154,7 @@ export function LoopRunPipelineBody({
   return (
     <div className="space-y-2 px-1 pb-3">
       <RightInspectorHeader
+        hideWide
         title="Smart Decision Run"
         meta={running ? 'Live' : (run?.status ?? '…')}
         actions={

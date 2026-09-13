@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ScanSearch } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -43,6 +43,7 @@ import {
   type ScanUniverseFilter,
 } from '@/hooks/useScanUniverse'
 import { labHref, type LabViewId } from '@/lib/analyzeHubs'
+import { publishSymbolTrail } from '@/lib/symbolTrail'
 import { cn } from '@/lib/utils'
 import type { SimilarRegimeLens } from '@/api/research/similarRegime'
 import { fmtNum, fmtPctFromFraction } from '@/lib/format'
@@ -243,6 +244,24 @@ export default function ScanPage() {
     preset,
     symbolSearch,
   })
+
+  // What this list is ranking, in the order it is ranking it — so the Symbol
+  // page can say `From Underlyings · 3/40` and step the list without coming
+  // back here. The reason is the row's own hot/cold flags, in its own words.
+  useEffect(() => {
+    if (rows.length === 0) return
+    publishSymbolTrail({
+      label: 'Underlyings',
+      href: '/research/scan',
+      items: rows.map((r) => {
+        const flags = r.lens_flags || {}
+        const called = Object.entries(flags)
+          .filter(([, v]) => v === 'hot' || v === 'cold')
+          .map(([lens, v]) => `${lens} ${String(v)}`)
+        return { symbol: r.symbol, why: called.length > 0 ? called.join(' · ') : undefined }
+      }),
+    })
+  }, [rows])
 
   const verdict = useMemo(() => {
     const { hot, cold, total } = flagCounts

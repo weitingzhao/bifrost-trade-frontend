@@ -27,7 +27,8 @@ import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
 import { useDossier } from '@/hooks/useDossier'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { verdictView } from '@/lib/lensVerdict'
-import { SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
+import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
+import { SymbolOriginRail } from '@/pages/research/analyze/symbol/SymbolOriginRail'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
 import { IvRankSection } from '@/pages/research/analyze/volRegime/IvRankSection'
 import { VrpSection } from '@/pages/research/analyze/volRegime/VrpSection'
@@ -117,6 +118,9 @@ export default function SymbolPage() {
             />
           }
         />
+        {/* Where this name came from, and the way through that list — stepping
+            it keeps the tab you are reading. */}
+        <SymbolOriginRail symbol={symbol} tabQuery={`${SYMBOL_PATH}?${TAB_PARAM}=${active}`} />
         <ResearchContextBar showDate={active === 'dealer' || active === 'chain'} />
         {symbol ? <CompositeRegimeRibbon symbol={symbol} /> : null}
         <CopilotVerdictStrip originPage={`symbol:${active}`} originLabel={`Symbol · ${active}`} />

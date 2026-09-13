@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react'
 import { discoveryRootClass } from '@/components/optionDiscovery/discoveryUi'
 import { postWatchlistItem } from '@/api/market'
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
-import { PageShell } from '@/components/layout'
 import { useDiscoveryNav } from '@/hooks/useDiscoveryNav'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
@@ -25,13 +24,13 @@ import { useDiscoverySnapshots } from '@/hooks/useDiscoverySnapshots'
 import { useDiscoveryIvTerm } from '@/hooks/useDiscoveryIvTerm'
 import { parseDteNumeric } from '@/utils/optionDiscovery/optionContractMetrics'
 import { expirationDaysFromToday } from '@/utils/optionDiscovery/expirationMeta'
-import { DiscoveryUnderlyingBar } from './discovery/DiscoveryUnderlyingBar'
-import { DiscoveryIvTermBlock } from './discovery/DiscoveryIvTermBlock'
-import { DiscoveryChainLayers } from './discovery/DiscoveryChainLayers'
-import { useDiscoveryStrikeWindow } from './discovery/useDiscoveryStrikeWindow'
-import { useDiscoveryChainTable } from './discovery/useDiscoveryChainTable'
+import { DiscoveryUnderlyingBar } from './DiscoveryUnderlyingBar'
+import { DiscoveryIvTermBlock } from './DiscoveryIvTermBlock'
+import { DiscoveryChainLayers } from './DiscoveryChainLayers'
+import { useDiscoveryStrikeWindow } from './useDiscoveryStrikeWindow'
+import { useDiscoveryChainTable } from './useDiscoveryChainTable'
 
-export default function DiscoveryPage() {
+export function DiscoveryBody() {
   const { openPolygonFeed } = useDiscoveryNav()
   const { symbols: stkSymbols } = useWatchlistStkSymbols()
   const { data: pluginStatus } = useMarketDataPluginStatus()
@@ -199,7 +198,7 @@ export default function DiscoveryPage() {
     selectedSymbol.trim() !== '' && selectedExpiration.trim() !== '' && !snapshots.snapshotLoading
 
   return (
-    <PageShell padding="default" className={discoveryRootClass}>
+    <div className={discoveryRootClass}>
       <DiscoveryPageHeader
         pluginStatus={pluginStatus ?? null}
         extraActions={
@@ -367,6 +366,6 @@ export default function DiscoveryPage() {
           </div>
         </div>
       </div>
-    </PageShell>
+    </div>
   )
 }

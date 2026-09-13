@@ -28,7 +28,6 @@ import { useDossier } from '@/hooks/useDossier'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { verdictView } from '@/lib/lensVerdict'
 import { SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
-import { cn } from '@/lib/utils'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
 import { IvRankSection } from '@/pages/research/analyze/volRegime/IvRankSection'
 import { VrpSection } from '@/pages/research/analyze/volRegime/VrpSection'
@@ -39,7 +38,7 @@ import { ModelSection } from '@/pages/research/analyze/scenario/ModelSection'
 import { SessionsSection } from '@/pages/research/analyze/scenario/SessionsSection'
 import { PlaybookSection } from '@/pages/research/analyze/scenario/PlaybookSection'
 import { FlowBody } from '@/pages/research/analyze/flow/FlowBody'
-import DiscoveryPage from '@/pages/research/analyze/DiscoveryPage'
+import { DiscoveryBody } from '@/pages/research/analyze/discovery/DiscoveryBody'
 
 const TAB_DESCRIPTION: Record<SymbolTabId, string> = {
   overview: 'One symbol, every face. Observe-only (D10).',
@@ -95,8 +94,8 @@ export default function SymbolPage() {
   }
 
   return (
-    <PageShell padding={active === 'chain' ? 'none' : 'compact'} className="space-y-3">
-      <div className={cn(active === 'chain' && 'space-y-3 px-4 pt-4')}>
+    <PageShell padding="compact" className="space-y-3">
+      <div>
         <PageHeader
           title="Symbol"
           description={TAB_DESCRIPTION[active]}
@@ -148,11 +147,7 @@ export default function SymbolPage() {
           </div>
         )}
         {active === 'flow' && <FlowBody />}
-        {/* Chain still brings its own shell. Discovery is 6.6k lines behind its
-            own header and root class; separating its body is its own cut, and
-            wrapping it half-way would leave the page in two idioms. The
-            container drops its padding here so the two shells do not stack. */}
-        {active === 'chain' && <DiscoveryPage />}
+        {active === 'chain' && <DiscoveryBody />}
       </div>
     </PageShell>
   )

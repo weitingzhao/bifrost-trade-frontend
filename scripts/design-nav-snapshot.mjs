@@ -46,6 +46,29 @@ globalThis.document = {
 }
 globalThis.localStorage = window.localStorage
 
+/**
+ * Which round of the design a prototype belongs to.
+ *
+ * `Docs Index.dc.html` marks each one NEW / OLD / REDO. It matters for
+ * sequencing: an OLD prototype is an early round that later contract decisions
+ * may have overtaken, and the package's own rule is that where a prototype and
+ * a contract disagree, the contract wins. Aligning a page to an OLD prototype
+ * can therefore align it to something already superseded.
+ */
+function roundsByFile(dir) {
+  const out = new Map()
+  try {
+    const idx = readFileSync(join(dir, 'Docs Index.dc.html'), 'utf8')
+    const re = /\['[^']+', '([^']+\.dc\.html)', '\/[^']*', (NEW|OLD|REDO),/g
+    for (const m of idx.matchAll(re)) out.set(m[1], m[2])
+  } catch {
+    /* index not in this export */
+  }
+  return out
+}
+
+const ROUND = roundsByFile(pkg)
+
 const src = readFileSync(join(pkg, 'shell-registry.js'), 'utf8')
 new Function(src)()
 const R = window.ShellRegistry
@@ -83,6 +106,7 @@ const entries = all.map((r) => {
     // build backlog. It cannot be "adopted", so it is out of the denominator.
     designed: R.fileFor(r.path) !== '_Shell Stub.dc.html',
     file: R.fileFor(r.path),
+    round: ROUND.get(R.fileFor(r.path)) ?? null,
     inNav: nav != null,
     group: nav?.group ?? null,
   }
@@ -109,6 +133,12 @@ export interface DesignRoute {
   designed: boolean
   /** The prototype file, or the stub. */
   file: string
+  /**
+   * The design round the prototype belongs to, from Docs Index.dc.html.
+   * NEW is this round's work; OLD is an early round a later contract may have
+   * overtaken; null when the route has no prototype.
+   */
+  round: 'NEW' | 'OLD' | 'REDO' | null
   /** In the design's sidebar. A route can exist and be reachable only by link. */
   inNav: boolean
   /** Top-level group in the design's tree, when it has a row. */

@@ -62,13 +62,23 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
         {rows.map((r) => (
           <DenseTableRow key={r.path}>
             <DenseTableCell>
-              {state === 'unbuilt' ? (
-                trail(r)
-              ) : (
-                <Link to={r.path} className="text-link hover:underline">
-                  {trail(r)}
-                </Link>
-              )}
+              <span className="mr-2">
+                {state === 'unbuilt' ? (
+                  trail(r)
+                ) : (
+                  <Link to={r.path} className="text-link hover:underline">
+                    {trail(r)}
+                  </Link>
+                )}
+              </span>
+              {/* NEW is this round's work; OLD is an early round a later
+                  contract may have overtaken, so aligning to it can align to
+                  something already superseded. */}
+              {r.design?.round ? (
+                <DenseTag variant={r.design.round === 'NEW' ? 'info' : 'neutral'}>
+                  {r.design.round}
+                </DenseTag>
+              ) : null}
             </DenseTableCell>
             <DenseTableCell>
               <div className="font-mono text-dense-caption text-muted-foreground">{r.path}</div>

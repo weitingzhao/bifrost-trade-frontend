@@ -265,6 +265,10 @@ export const router = createBrowserRouter([
       },
 
       {
+        path: 'docs/design-adoption',
+        lazy: lazyPage(() => import('@/pages/docs/designAdoption/DesignAdoptionPage')),
+      },
+      {
         path: 'docs/tech-stack',
         lazy: lazyPage(() => import('@/pages/docs/TechStackPage')),
       },

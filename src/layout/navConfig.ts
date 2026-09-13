@@ -11,6 +11,7 @@ import {
   GitBranch,
   Layers,
   Layers2,
+  ListChecks,
   LayoutDashboard,
   LineChart,
   Network,
@@ -159,7 +160,8 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
       fold('system:config', 'Configuration', '/system/ib', Plug, [
         route('IB Connection', '/system/ib', Plug),
       ]),
-      fold('system:reference', 'Reference', '/docs/research-blueprint', BookOpen, [
+      fold('system:reference', 'Reference', '/docs/design-adoption', BookOpen, [
+        route('Design Adoption', '/docs/design-adoption', ListChecks),
         route('Research Blueprint', '/docs/research-blueprint', BookOpen),
         route('Research Calibration', '/docs/research-calibration', BookOpen),
         route('Tech Stack', '/docs/tech-stack', Layers2),

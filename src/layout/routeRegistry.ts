@@ -19,6 +19,7 @@
  * and the Omnibar searches them so a retired name still finds the page.
  */
 import { matchPath } from 'react-router-dom'
+import type { DesignTag } from '@/lib/design/tag'
 
 export interface RouteEntry {
   /** Absolute path, exactly as `router.tsx` resolves it. May carry `:params`. */
@@ -56,6 +57,15 @@ export interface RouteEntry {
    * redirect: `routeRegistry.test.ts` fails a two-hop.
    */
   redirect?: string
+  /**
+   * Where this page stands against `design/trade`.
+   *
+   * Written only for the exceptions: a page the design dissolves elsewhere
+   * (`moving`), one it has no home for (`staging`), and one already walked
+   * (`aligned`). Everything else is `pending` by derivation — see
+   * `src/lib/design/adoption.ts`, and `/docs/design-adoption` for the readout.
+   */
+  design?: DesignTag
 }
 
 // Market is a fold inside Research, not a group of its own — see `navConfig.ts`.
@@ -79,7 +89,14 @@ const DOCS = ['System', 'Reference'] as const
 
 export const ROUTES: readonly RouteEntry[] = [
   // ── Research · home and seats ──────────────────────────────────────────
-  { path: '/research', label: 'Research' },
+  {
+    path: '/research',
+    label: 'Research',
+    design: {
+      state: 'staging',
+      note: 'The Research landing. The design has Overview and the three seat homes but no group root — is this Overview, or does it go?',
+    },
+  },
   { path: '/research/overview', label: 'Overview', crumbs: RESEARCH },
   { path: '/research/workbench', label: 'Workbench', crumbs: RESEARCH },
 
@@ -93,20 +110,53 @@ export const ROUTES: readonly RouteEntry[] = [
 
   // ── Research · Copilot ─────────────────────────────────────────────────
   { path: '/research/copilot', label: 'Copilot Desk', crumbs: RESEARCH },
-  { path: '/research/daily-brief', label: 'Daily Brief', crumbs: COPILOT, symbolScope: true },
+  {
+    path: '/research/daily-brief',
+    label: 'Daily Brief',
+    crumbs: COPILOT,
+    symbolScope: true,
+    design: {
+      state: 'staging',
+      note: 'Not in the design. Owner keeps it — ask whether it dissolved into the Copilot page or was missed',
+    },
+  },
   { path: '/research/copilot/trading', label: 'Trading Copilot', crumbs: COPILOT },
   { path: '/research/agent-personas', label: 'Agent Personas', crumbs: COPILOT },
-  { path: '/research/playbook', label: 'My Trading System', crumbs: COPILOT },
+  {
+    path: '/research/playbook',
+    label: 'My Trading System',
+    crumbs: COPILOT,
+    design: {
+      state: 'moving',
+      note: 'Trade › Playbook — Design 2026-09-12: it moves out of the Copilot seat into Trade',
+    },
+  },
 
   // ── Research · Workbench · Discover ────────────────────────────────────
   { path: '/research/explorer', label: 'Stock Explorer', crumbs: DISCOVER, scope: 'underlying' },
   { path: '/research/scan', label: 'Option Scan', crumbs: DISCOVER, scope: 'contract' },
-  { path: '/research/momentum-radar', label: 'Momentum Radar', crumbs: DISCOVER },
-  { path: '/research/sepa-daily-core', label: 'SEPA Daily Core', crumbs: DISCOVER },
+  {
+    path: '/research/momentum-radar',
+    label: 'Momentum Radar',
+    crumbs: DISCOVER,
+    design: { state: 'moving', note: 'Stock Explorer — a tab on it, page retires (Docs Gaps B4)' },
+  },
+  {
+    path: '/research/sepa-daily-core',
+    label: 'SEPA Daily Core',
+    crumbs: DISCOVER,
+    design: { state: 'moving', note: 'Stock Explorer — a tab on it, page retires (Docs Gaps B4)' },
+  },
 
   // ── Research · Workbench · Analyze ─────────────────────────────────────
   // One name, every face. The six pages this replaced are `?tab=` on it.
-  { path: '/research/symbol', label: 'Symbol', crumbs: ANALYZE, symbolScope: true, scope: 'underlying' },
+  {
+    path: '/research/symbol',
+    label: 'Symbol',
+    crumbs: ANALYZE,
+    symbolScope: true,
+    scope: 'underlying',
+  },
 
   // ── Research · Workbench · Validate ────────────────────────────────────
   { path: '/research/signal-decay', label: 'Signal Decay', crumbs: VALIDATE },
@@ -117,7 +167,15 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/lens-coverage', label: 'Lens Coverage', crumbs: DATA },
   { path: '/research/signal-health', label: 'Signal Health', crumbs: DATA },
   { path: '/research/watchlist', label: 'Stock Watchlist', crumbs: DATA },
-  { path: '/research/stock-screener', label: 'Stock Screener', crumbs: DATA },
+  {
+    path: '/research/stock-screener',
+    label: 'Stock Screener',
+    crumbs: DATA,
+    design: {
+      state: 'staging',
+      note: "The design's Discover › Screener has Stocks (= our Explorer) and Contracts; /research/screener there is the screener home, which is our Option Screener. Same paths, different meanings — needs untangling",
+    },
+  },
   { path: '/research/screener', label: 'Option Screener', crumbs: DATA },
   { path: '/research/greeks', label: 'Contract Greeks', crumbs: DATA, scope: 'contract' },
 
@@ -134,14 +192,67 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/portfolio/transfer', label: 'Transfer & Pay', crumbs: PORTFOLIO },
 
   // ── Strategy ───────────────────────────────────────────────────────────
-  { path: '/strategy/instances', label: 'Instances', crumbs: STRATEGY, symbolScope: true },
-  { path: '/strategy/instances/:instanceId', label: 'Instances', crumbs: STRATEGY, symbolScope: true },
-  { path: '/strategy/win-rate', label: 'Win Rate', crumbs: STRATEGY },
-  { path: '/strategy/allocations', label: 'Allocations', crumbs: STRATEGY },
-  { path: '/strategy/opportunities', label: 'Opportunity', crumbs: STRATEGY },
-  { path: '/strategy/structures', label: 'Structure', crumbs: STRATEGY },
-  { path: '/strategy/option-category', label: 'Option Category', crumbs: STRATEGY },
-  { path: '/strategy/gates', label: 'Gates', crumbs: STRATEGY },
+  {
+    path: '/strategy/instances',
+    label: 'Instances',
+    crumbs: STRATEGY,
+    symbolScope: true,
+    design: {
+      state: 'moving',
+      note: 'Trade › Rules — the Instances column of the lineage chain; its running-state summary also lands on the Desk status strip',
+    },
+  },
+  {
+    path: '/strategy/instances/:instanceId',
+    label: 'Instances',
+    crumbs: STRATEGY,
+    symbolScope: true,
+  },
+  {
+    path: '/strategy/win-rate',
+    label: 'Win Rate',
+    crumbs: STRATEGY,
+    design: {
+      state: 'moving',
+      note: 'Review › Playbook stats — merges in as a grouping switch (by playbook rule / by structure), not a row beside it',
+    },
+  },
+  {
+    path: '/strategy/allocations',
+    label: 'Allocations',
+    crumbs: STRATEGY,
+    design: { state: 'moving', note: 'Trade › Rules — the Allocations · gates column' },
+  },
+  {
+    path: '/strategy/opportunities',
+    label: 'Opportunity',
+    crumbs: STRATEGY,
+    design: { state: 'moving', note: 'Trade › Rules — the Opportunities column' },
+  },
+  {
+    path: '/strategy/structures',
+    label: 'Structure',
+    crumbs: STRATEGY,
+    design: { state: 'moving', note: 'Trade › Rules — the Structures column' },
+  },
+  {
+    path: '/strategy/option-category',
+    label: 'Option Category',
+    crumbs: STRATEGY,
+    design: {
+      state: 'moving',
+      note: 'Trade › Rules — no route of its own: the filter on the Structures column plus one field in the Structure edit sheet',
+    },
+  },
+  {
+    path: '/strategy/gates',
+    label: 'Gates',
+    crumbs: STRATEGY,
+    design: {
+      state: 'moving',
+      note: 'Trade › Rules — shares the Allocations column; a gate is never read apart from the allocation that applies it',
+    },
+  },
 
   // ── System ─────────────────────────────────────────────────────────────
   { path: '/system/coverage', label: 'Coverage', crumbs: SYSTEM_DATA },
@@ -155,6 +266,7 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/system/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG },
 
   // ── System · Reference ─────────────────────────────────────────────────
+  { path: '/docs/design-adoption', label: 'Design Adoption', crumbs: DOCS },
   { path: '/docs/research-blueprint', label: 'Research Blueprint', crumbs: DOCS },
   { path: '/docs/research-calibration', label: 'Research Calibration', crumbs: DOCS },
   { path: '/docs/tech-stack', label: 'Tech Stack', crumbs: DOCS },
@@ -163,57 +275,192 @@ export const ROUTES: readonly RouteEntry[] = [
   // ── Redirect-only paths ────────────────────────────────────────────────
   // They render for one frame before `<Navigate>` fires. Named so that frame
   // shows where you are going rather than the fallback.
-  { path: '/market/watchlist', label: 'Stock Watchlist', crumbs: DATA, redirect: '/research/watchlist' },
-  { path: '/research/sepa', label: 'Stock Screener', crumbs: DATA, redirect: '/research/stock-screener' },
+  {
+    path: '/market/watchlist',
+    label: 'Stock Watchlist',
+    crumbs: DATA,
+    redirect: '/research/watchlist',
+  },
+  {
+    path: '/research/sepa',
+    label: 'Stock Screener',
+    crumbs: DATA,
+    redirect: '/research/stock-screener',
+  },
   // Went to `/settings/data-readiness`, which is itself a redirect — two hops
   // and two history entries. Points at the page now; the test forbids the shape.
-  { path: '/research/stock-data', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: '/system/data-readiness' },
-  { path: '/research/option-scan', label: 'Option Scan', crumbs: DISCOVER, redirect: '/research/scan' },
+  {
+    path: '/research/stock-data',
+    label: 'Data Readiness',
+    crumbs: SYSTEM_DATA,
+    redirect: '/system/data-readiness',
+  },
+  {
+    path: '/research/option-scan',
+    label: 'Option Scan',
+    crumbs: DISCOVER,
+    redirect: '/research/scan',
+  },
   { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
   { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE, redirect: '/research/symbol' },
   { path: '/research/vrp-lab', label: 'VRP Lab', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/vol-surface-lab', label: 'Vol Surface Lab', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/gex-intraday', label: 'GEX Intraday', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/opex-cycle-lab', label: 'OpEx Cycle Lab', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/analysis-model', label: 'Analysis Model', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/forecast-sessions', label: 'Forecast Sessions', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/intraday-playbook', label: 'Intraday Playbook', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/order-sentiment', label: 'Order Sentiment', crumbs: ANALYZE, redirect: '/research/symbol' },
+  {
+    path: '/research/vol-surface-lab',
+    label: 'Vol Surface Lab',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
+  {
+    path: '/research/gex-intraday',
+    label: 'GEX Intraday',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
+  {
+    path: '/research/opex-cycle-lab',
+    label: 'OpEx Cycle Lab',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
+  {
+    path: '/research/analysis-model',
+    label: 'Analysis Model',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
+  {
+    path: '/research/forecast-sessions',
+    label: 'Forecast Sessions',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
+  {
+    path: '/research/intraday-playbook',
+    label: 'Intraday Playbook',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
+  {
+    path: '/research/order-sentiment',
+    label: 'Order Sentiment',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
   // The six Analyze pages the Symbol merge retired. They carry the name they
   // were retired under, not the name they resolve to: that is what someone
   // types into the Omnibar looking for them, and the destination's own name is
   // one frame away regardless.
   { path: '/research/dossier', label: 'Dossier', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/vol-regime', label: 'Vol Regime', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/dealer-levels', label: 'Dealer Levels', crumbs: ANALYZE, redirect: '/research/symbol' },
+  {
+    path: '/research/vol-regime',
+    label: 'Vol Regime',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
+  {
+    path: '/research/dealer-levels',
+    label: 'Dealer Levels',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
   { path: '/research/scenario', label: 'Scenario', crumbs: ANALYZE, redirect: '/research/symbol' },
   { path: '/research/flow', label: 'Flow', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/research/discovery', label: 'Option Discovery', crumbs: ANALYZE, redirect: '/research/symbol' },
-  { path: '/portfolio/trade-history', label: 'Trade Ledger', crumbs: PORTFOLIO, redirect: '/portfolio/ledger' },
-  { path: '/portfolio/copilot', label: 'Trading Copilot', crumbs: COPILOT, redirect: '/research/copilot/trading' },
-  { path: '/portfolio/model-analysis', label: 'Backing & Model', crumbs: PORTFOLIO, redirect: '/portfolio/backing#model' },
+  {
+    path: '/research/discovery',
+    label: 'Option Discovery',
+    crumbs: ANALYZE,
+    redirect: '/research/symbol',
+  },
+  {
+    path: '/portfolio/trade-history',
+    label: 'Trade Ledger',
+    crumbs: PORTFOLIO,
+    redirect: '/portfolio/ledger',
+  },
+  {
+    path: '/portfolio/copilot',
+    label: 'Trading Copilot',
+    crumbs: COPILOT,
+    redirect: '/research/copilot/trading',
+  },
+  {
+    path: '/portfolio/model-analysis',
+    label: 'Backing & Model',
+    crumbs: PORTFOLIO,
+    redirect: '/portfolio/backing#model',
+  },
   { path: '/portfolio/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
   // The `/settings/*` and `/operations/*` names, kept working. Bookmarks and
   // anything that linked them predate the rename and must not 404.
   { path: '/settings', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage' },
-  { path: '/settings/coverage', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage' },
+  {
+    path: '/settings/coverage',
+    label: 'Coverage',
+    crumbs: SYSTEM_DATA,
+    redirect: '/system/coverage',
+  },
   { path: '/settings/feed', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
-  { path: '/settings/data-readiness', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: '/system/data-readiness' },
+  {
+    path: '/settings/data-readiness',
+    label: 'Data Readiness',
+    crumbs: SYSTEM_DATA,
+    redirect: '/system/data-readiness',
+  },
   { path: '/settings/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/system/ib' },
   { path: '/settings/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: '/system/api' },
   { path: '/settings/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: '/system/socket' },
   { path: '/settings/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
-  { path: '/operations/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
-  { path: '/operations/platform', label: 'Platform', crumbs: SYSTEM_RUNTIME, redirect: '/system/platform' },
+  {
+    path: '/operations/daemon',
+    label: 'Daemon',
+    crumbs: SYSTEM_RUNTIME,
+    redirect: '/system/daemon',
+  },
+  {
+    path: '/operations/platform',
+    label: 'Platform',
+    crumbs: SYSTEM_RUNTIME,
+    redirect: '/system/platform',
+  },
   { path: '/settings/subscribe', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
   { path: '/settings/feed/ib', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
-  { path: '/settings/coverage/overview', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage?view=watchlist' },
-  { path: '/settings/coverage/overview-detail', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage?view=watchlist' },
-  { path: '/settings/coverage/option', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage?view=option' },
-  { path: '/settings/coverage/stock-ib', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage?view=stock' },
-  { path: '/settings/daemon-app', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
+  {
+    path: '/settings/coverage/overview',
+    label: 'Coverage',
+    crumbs: SYSTEM_DATA,
+    redirect: '/system/coverage?view=watchlist',
+  },
+  {
+    path: '/settings/coverage/overview-detail',
+    label: 'Coverage',
+    crumbs: SYSTEM_DATA,
+    redirect: '/system/coverage?view=watchlist',
+  },
+  {
+    path: '/settings/coverage/option',
+    label: 'Coverage',
+    crumbs: SYSTEM_DATA,
+    redirect: '/system/coverage?view=option',
+  },
+  {
+    path: '/settings/coverage/stock-ib',
+    label: 'Coverage',
+    crumbs: SYSTEM_DATA,
+    redirect: '/system/coverage?view=stock',
+  },
+  {
+    path: '/settings/daemon-app',
+    label: 'Daemon',
+    crumbs: SYSTEM_RUNTIME,
+    redirect: '/system/daemon',
+  },
   { path: '/settings/tech-stack', label: 'Tech Stack', crumbs: DOCS, redirect: '/docs/tech-stack' },
-  { path: '/settings/ui-design-system', label: 'UI Design System', crumbs: DOCS, redirect: '/docs/ui-design-system' },
+  {
+    path: '/settings/ui-design-system',
+    label: 'UI Design System',
+    crumbs: DOCS,
+    redirect: '/docs/ui-design-system',
+  },
 ]
 
 /** Everywhere you can actually go — what the Omnibar and any page list offer. */
@@ -221,7 +468,7 @@ export const PAGE_ROUTES: readonly RouteEntry[] = ROUTES.filter((r) => !r.redire
 
 /** The old names, each with the path it now resolves to. `router.tsx` builds its rows from this. */
 export const REDIRECT_ROUTES: readonly (RouteEntry & { redirect: string })[] = ROUTES.filter(
-  (r): r is RouteEntry & { redirect: string } => typeof r.redirect === 'string',
+  (r): r is RouteEntry & { redirect: string } => typeof r.redirect === 'string'
 )
 
 /**

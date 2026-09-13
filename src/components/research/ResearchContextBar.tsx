@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { SymbolPicker } from '@/components/symbol'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
-import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
+import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
 import { cn } from '@/lib/utils'
 
@@ -59,7 +59,7 @@ export function ResearchContextBar({
   })()
 
   function openMention() {
-    copilotBubbleStore.getState().open_()
+    copilotDockStore.getState().open_()
     cockpitDrawerStore.getState().setTab('copilot')
     if (mention) copilotSessionStore.requestScrollTo(mention.id)
   }

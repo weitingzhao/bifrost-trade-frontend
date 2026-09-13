@@ -14,7 +14,7 @@
  * Mount once via `useCockpitKeybinds()` from App layout.
  */
 import { useEffect } from 'react'
-import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
+import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { omnibar } from '@/lib/omnibar'
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -36,13 +36,13 @@ export function useCockpitKeybinds() {
       }
       if (meta && (e.key === 'j' || e.key === 'J')) {
         e.preventDefault()
-        copilotBubbleStore.getState().toggle()
+        copilotDockStore.getState().toggle()
         return
       }
-      if (e.key === 'Escape' && copilotBubbleStore.getState().open) {
+      if (e.key === 'Escape' && copilotDockStore.getState().open) {
         if (isEditableTarget(e.target)) return
         e.preventDefault()
-        copilotBubbleStore.getState().close()
+        copilotDockStore.getState().close()
       }
     }
     window.addEventListener('keydown', onKeyDown)

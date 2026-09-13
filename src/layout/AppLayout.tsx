@@ -15,7 +15,7 @@ import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useInbox } from '@/hooks/useInbox'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
-import { CopilotFloatingBubble } from '@/components/copilot/CopilotFloatingBubble'
+import { CopilotDock } from '@/components/copilot/CopilotDock'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
 import { useRecentPagesTrail } from '@/lib/omnibar'
@@ -96,9 +96,12 @@ export function AppLayout() {
         </main>
         <ShellStatusBar inbox={summary} onOpenInbox={() => setDrawerOpen(true)} />
       </SidebarInset>
+      {/* A peer of the nav sidebar, not a layer over the page: `SidebarProvider`
+          renders a flex row, so at the reading width on a wide screen the dock
+          takes its space from the content instead of covering it. */}
+      <CopilotDock />
       <Omnibar />
       {msgCenter}
-      <CopilotFloatingBubble />
     </SidebarProvider>
   )
 }

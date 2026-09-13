@@ -22,7 +22,7 @@ import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
 import { fetchCopilotSession, fetchCopilotSessions } from '@/api/researchCopilotSessions'
 import { listResearchDrafts, type DraftStatus } from '@/api/researchDrafts'
 import { useCopilotStanding } from '@/hooks/useCopilotStanding'
-import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
+import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { copilotSessionStore } from '@/hooks/useCopilotSession'
 import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 import { fmtIsoTs } from '@/lib/format'
@@ -211,7 +211,7 @@ function Threads() {
       openResearchCopilot()
     } catch {
       // best effort — the panel's own list can still open it
-      copilotBubbleStore.getState().setSessionsOpen(true)
+      copilotDockStore.getState().setSessionsOpen(true)
       openResearchCopilot()
     } finally {
       setOpening(null)

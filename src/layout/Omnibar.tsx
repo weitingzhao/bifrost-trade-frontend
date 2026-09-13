@@ -21,7 +21,7 @@ import {
   CommandShortcut,
 } from '@/components/ui/command'
 import { useSidebar } from '@/components/ui/sidebar'
-import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
+import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { useCockpitPins } from '@/hooks/useCockpitPins'
 import { useSymbolPickerUniverse } from '@/hooks/useSymbolPickerUniverse'
 import { useSymbolSearch } from '@/hooks/useSymbolSearch'
@@ -213,7 +213,7 @@ export function Omnibar() {
           <CommandGroup heading="Commands">
             <CommandItem
               value="cmd-copilot"
-              onSelect={() => run(() => copilotBubbleStore.getState().toggle())}
+              onSelect={() => run(() => copilotDockStore.getState().toggle())}
             >
               <CommandIcon /> Toggle Copilot <CommandShortcut>⌘J</CommandShortcut>
             </CommandItem>

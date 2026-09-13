@@ -34,7 +34,7 @@ import {
 } from '@/hooks/useLoopHarness'
 import { useRunEodAgent, useRunMorningAgent } from '@/hooks/useResearchDrafts'
 import { openCopilotInbox } from '@/lib/harness/loopCopilotPrefill'
-import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
+import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { saveHypothesisIntentStore } from '@/store/saveHypothesisIntentStore'
 
 /**
@@ -66,7 +66,7 @@ export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
   function runAndRevealInbox(run: typeof morning) {
     run.mutate(undefined, {
       onSuccess: () => {
-        copilotBubbleStore.getState().open_()
+        copilotDockStore.getState().open_()
         cockpitDrawerStore.getState().revealInbox()
       },
     })

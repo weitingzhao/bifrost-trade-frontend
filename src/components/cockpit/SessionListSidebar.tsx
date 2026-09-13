@@ -39,7 +39,7 @@ import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 /**
  * Session history rail (Wave RS-UX3 → RS-UX5, QA follow-up).
  *
- * Sits in the left column of `CopilotFloatingBubble` when the user has the
+ * Sits in the left column of `CopilotDock` when the user has the
  * rail visible.  Delivers full session management:
  *   - `+ New chat` primary button
  *   - Pinned group at the top

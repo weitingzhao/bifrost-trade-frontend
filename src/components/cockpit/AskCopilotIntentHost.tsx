@@ -4,7 +4,7 @@
  */
 import { useEffect } from 'react'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
-import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
+import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { useAskCopilotIntent } from '@/store/askCopilotIntentStore'
 
 export function AskCopilotIntentHost() {
@@ -12,7 +12,7 @@ export function AskCopilotIntentHost() {
 
   useEffect(() => {
     if (!intent.open) return
-    copilotBubbleStore.getState().open_()
+    copilotDockStore.getState().open_()
     cockpitDrawerStore.getState().setTab('copilot')
   }, [intent.open, intent.nonce])
 

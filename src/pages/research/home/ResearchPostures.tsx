@@ -21,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatusLamp } from '@/components/StatusLamp'
 import { NAV_GROUPS } from '@/layout/navConfig'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
-import { copilotBubbleStore } from '@/hooks/useCopilotBubble'
+import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { useCopilotStanding, useSignalHealthSummary } from '@/hooks/useCopilotStanding'
 import { fmtIsoTs } from '@/lib/format'
 import { fmtUsd } from '@/lib/harness/runSpend'
@@ -195,7 +195,7 @@ function CopilotPosture() {
   const a = s?.approvals ?? {}
   const openThreads = () => {
     openResearchCopilot()
-    copilotBubbleStore.getState().setSessionsOpen(true)
+    copilotDockStore.getState().setSessionsOpen(true)
   }
   return (
     <Posture

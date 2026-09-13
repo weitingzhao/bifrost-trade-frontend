@@ -190,10 +190,26 @@
     --color-dashboard-tile: rgba(0, 0, 0, 0.04);
     --color-dashboard-shadow: rgba(0, 0, 0, 0.08);
 
-    /* Business semantics — PnL (light) — classic green/red (aligned with --color-success / --color-danger) */
-    --color-profit: var(--color-success); /* green-600 #16a34a */
-    --color-loss: var(--color-danger); /* red-600 #dc2626 */
-    --color-unrealized: var(--color-warning); /* unrealized PnL — site-wide yellow */
+    /* Business semantics — PnL (light).
+       Direction is teal / orange, never green / red (DESIGN_CONTRACTS §11.9,
+       Owner-signed). Red now means exactly one thing — a real fault — and the
+       reason it had to move is that these three were, hex for hex, the three
+       lamp colours: profit was --color-lamp-green, loss was --color-lamp-red,
+       unrealized was --color-lamp-yellow. Not close; identical.
+
+       The contract's #2dd4bf / #fb923c are its dark values — the design is
+       dark-only. On white they read 1.86:1 and 2.26:1, so light takes the same
+       hues at the 700 step (5.47:1 and 5.18:1). Same hue, same meaning, a
+       ground it can be read on.
+
+       Unrealized withdraws from the hue channel entirely (§11.12): the number,
+       its sign and its alignment are unchanged, but no colour is assigned,
+       because an open position's mark is not a conclusion. It is plain ink
+       rather than the tier below — dimming a P&L figure to caption weight
+       would say "less important", and the claim is "no verdict". */
+    --color-profit: #0f766e; /* teal-700 */
+    --color-loss: #c2410c; /* orange-700 */
+    --color-unrealized: var(--color-foreground);
 
     /* Business semantics — entity identity (light) */
     --color-entity-symbol: var(--primary);
@@ -334,10 +350,11 @@
     --color-dashboard-tile: rgba(255, 255, 255, 0.05);
     --color-dashboard-shadow: rgba(0, 0, 0, 0.25);
 
-    /* Business semantics — PnL (dark) — classic green/red, not teal/coral */
-    --color-profit: var(--color-success); /* green-500 #22c55e */
-    --color-loss: var(--color-danger); /* red-500 #ef4444 */
-    --color-unrealized: var(--color-warning);
+    /* Business semantics — PnL (dark). The contract's own two values; both
+       clear the ground here by a wide margin (10.5:1 and 8.7:1 on #0a0c0f). */
+    --color-profit: #2dd4bf; /* teal-400 */
+    --color-loss: #fb923c; /* orange-400 */
+    --color-unrealized: var(--color-foreground);
 
     /* Business semantics — entity identity (dark) */
     --color-entity-symbol: var(--primary);

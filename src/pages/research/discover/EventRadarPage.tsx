@@ -62,7 +62,7 @@ function sentimentBar(score: number) {
   return (
     <svg width={60} height={12} viewBox="0 0 60 12" role="img" aria-label={`Sentiment ${score}`}>
       <rect x={0} y={2} width={60} height={8} rx={2} fill="var(--border)" />
-      <rect x={0} y={2} width={(pct / 100) * 60} height={8} rx={2} fill={score >= 0 ? 'var(--color-profit, #22c55e)' : 'var(--color-loss, #ef4444)'} />
+      <rect x={0} y={2} width={(pct / 100) * 60} height={8} rx={2} fill={score >= 0 ? 'var(--color-profit, #2dd4bf)' : 'var(--color-loss, #fb923c)'} />
     </svg>
   )
 }

@@ -90,8 +90,8 @@ export function GexStrikeChart({
         const isPos = bar.net_gex >= 0
         const x = isPos ? midX : midX - w
         const fill = isPos
-          ? 'var(--color-profit, #22c55e)'
-          : 'var(--color-loss, #ef4444)'
+          ? 'var(--color-profit, #2dd4bf)'
+          : 'var(--color-loss, #fb923c)'
         const volPos = (bar.volume_net_gex ?? 0) >= 0
         const xVol = volPos ? midX : midX - wVol
 
@@ -146,8 +146,8 @@ export function GexStrikeChart({
       {/* Key level annotations — clear English labels (visible when props set) */}
       {[
         { val: zeroGamma, label: 'Zero γ', color: 'var(--color-chart-3, #fbbf24)' },
-        { val: callWall, label: 'Call Wall', color: 'var(--color-profit, #22c55e)' },
-        { val: putWall, label: 'Put Wall', color: 'var(--color-loss, #ef4444)' },
+        { val: callWall, label: 'Call Wall', color: 'var(--color-profit, #2dd4bf)' },
+        { val: putWall, label: 'Put Wall', color: 'var(--color-loss, #fb923c)' },
       ]
         .filter((l) => l.val != null && Number.isFinite(l.val))
         .map((level) => {

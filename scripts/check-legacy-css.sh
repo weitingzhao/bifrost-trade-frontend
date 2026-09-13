@@ -584,21 +584,26 @@ elif [[ "$hardcoded_typo_count" -lt "$HARDCODED_TYPO_BASELINE" ]]; then
   echo "check-legacy-css: hardcoded typography count $hardcoded_typo_count < baseline $HARDCODED_TYPO_BASELINE — lower HARDCODED_TYPO_BASELINE in scripts/check-legacy-css.sh" >&2
 fi
 
-# Business semantic tokens (see /settings/ui-design-system):
-# PnL must use pnlColorClass / text-profit / text-loss / text-unrealized — NOT raw palette classes.
-# Ratchet: existing raw emerald/red usages outside data-display are grandfathered;
-# the count must only go DOWN. Lower the baseline as pages migrate.
-RAW_PNL_PALETTE_BASELINE=34
+# Raw emerald / red, outside data-display. Ratchet: only ever down.
+#
+# The name says PnL for historical reasons; direction has not lived here for a
+# while. Every survivor is a judgement or a state — a pass/fail badge, an
+# ok/gap chip, a failed-to-load line — and their target is the lamp four-state
+# (`lamp-green` / `-yellow` / `-red` / `-gray`), not the PnL tokens. Direction
+# itself goes through `pnlColorClass` / `text-profit` / `text-loss`, which are
+# teal and orange now (DESIGN_CONTRACTS §11.9); putting one of these classes on
+# a signed number would re-create the collision that move exists to end.
+RAW_PALETTE_BASELINE=34
 raw_pnl_count=$(grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
   --include='*.tsx' --include='*.ts' 2>/dev/null \
   | grep -v 'src/components/data-display' | wc -l | tr -d ' ')
-if [[ "$raw_pnl_count" -gt "$RAW_PNL_PALETTE_BASELINE" ]]; then
+if [[ "$raw_pnl_count" -gt "$RAW_PALETTE_BASELINE" ]]; then
   grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
     --include='*.tsx' --include='*.ts' 2>/dev/null \
     | grep -v 'src/components/data-display' >&2
-  report "raw emerald/red palette classes increased ($raw_pnl_count > baseline $RAW_PNL_PALETTE_BASELINE) — use pnlColorClass / text-profit / text-loss / text-unrealized"
-elif [[ "$raw_pnl_count" -lt "$RAW_PNL_PALETTE_BASELINE" ]]; then
-  echo "check-legacy-css: raw PnL palette count $raw_pnl_count < baseline $RAW_PNL_PALETTE_BASELINE — lower RAW_PNL_PALETTE_BASELINE in scripts/check-legacy-css.sh" >&2
+  report "raw emerald/red palette classes increased ($raw_pnl_count > baseline $RAW_PALETTE_BASELINE) — severity goes to lamp-green/yellow/red/gray; direction goes to pnlColorClass (teal/orange), never a raw class"
+elif [[ "$raw_pnl_count" -lt "$RAW_PALETTE_BASELINE" ]]; then
+  echo "check-legacy-css: raw emerald/red count $raw_pnl_count < baseline $RAW_PALETTE_BASELINE — lower RAW_PALETTE_BASELINE in scripts/check-legacy-css.sh" >&2
 fi
 
 # Self-check: every directory this script scans must exist.

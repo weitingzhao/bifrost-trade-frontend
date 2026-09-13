@@ -1,4 +1,4 @@
-import { Suspense, useState, type CSSProperties } from 'react'
+import { Suspense, useEffect, useState, type CSSProperties } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
 import { useResearchSeatDeepLink } from '@/hooks/useResearchSeatDeepLink'
@@ -21,6 +21,7 @@ import { useHeldSymbolSync } from '@/lib/symbolContext'
 import { useRecentPagesTrail } from '@/lib/omnibar'
 import { Omnibar } from './Omnibar'
 import { InspectorSlotContext } from '@/components/layout/inspectorSlot'
+import { layerForPath } from '@/lib/design/layers'
 
 function readSidebarCookie(): boolean {
   const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
@@ -60,6 +61,13 @@ export function AppLayout() {
   const { groups, summary } = useInbox(stream)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [inspectorSlot, setInspectorSlot] = useState<HTMLElement | null>(null)
+
+  // The layer the current group belongs to, stamped on the root so the ramp in
+  // `index.css` applies. Standing in Research does not look like standing in
+  // Portfolio — that is the design's point, and the group is the key.
+  useEffect(() => {
+    document.documentElement.dataset.layer = layerForPath(pathname)
+  }, [pathname])
   useCockpitKeybinds()
 
   const msgCenter = (

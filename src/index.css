@@ -281,32 +281,63 @@
 }
 
 .dark {
-    /* Backgrounds — Legacy 3-layer blue-gray */
-    --background: #0a0c0f;
-    --foreground: #e4e9ef;
-    --card: #13171d;
-    --card-foreground: #e4e9ef;
-    --popover: #13171d;
-    --popover-foreground: #e4e9ef;
+    /*
+     * The layer ramp — one neutral per top-level group (`design/trade`,
+     * `shell-registry.js` SKINS). The values below are the base layer; the
+     * `[data-layer]` blocks after this one redefine only these seven-plus
+     * primitives, and every DS token below reads them through `var()`, so a
+     * layer is one small block rather than a second palette.
+     *
+     * Dark only, deliberately. The design is dark-only and gives no light
+     * ramps; deriving seven of them here would be inventing design rather than
+     * adopting it. In light mode every layer reads as the base palette, and
+     * that is a stated gap, not an oversight (Owner, 2026-09-13, option A).
+     */
+    --sk-ground: #0a0c0f;
+    --sk-surface: #1a1f26;
+    --sk-raised: #0e1116;
+    --sk-raised2: #12161c;
+    --sk-line: #2a313c;
+    --sk-line2: #3d4754;
+    --sk-ink: #e4e9ef;
+    --sk-soft: #c3cad4;
+    --sk-mute: #98a2b0;
+    --sk-accent: #a3e635;
 
-    /* Primary — lime accent */
-    --primary: #a3e635;
-    --primary-foreground: #0a0c0f;
+    /* Backgrounds — Legacy 3-layer blue-gray */
+    --background: var(--sk-ground);
+    --foreground: var(--sk-ink);
+    /*
+     * The app's canvas ladder is ground < card < secondary, and the repo's
+     * three-surface rule depends on it. The design maps card, muted and
+     * secondary all to `surface`, which collapses Canvas into Elevated and
+     * would erase every `Card variant="elevated"` sitting on a page. Card
+     * takes `raised2` instead — the design's own value, in the slot that keeps
+     * the ladder. Reported to Design; see the receipt.
+     */
+    --card: var(--sk-raised2);
+    --card-foreground: var(--sk-ink);
+    --popover: var(--sk-raised2);
+    --popover-foreground: var(--sk-ink);
+
+    /* Primary — the layer's accent, the one emphasis per screen */
+    --primary: var(--sk-accent);
+    --primary-foreground: var(--sk-ground);
 
     /* Secondary / Muted / Accent — surface-elevated */
-    --secondary: #1a1f26;
-    --secondary-foreground: #e4e9ef;
-    --muted: #1a1f26;
-    --muted-foreground: #7a8492;
-    --accent: #1a1f26;
-    --accent-foreground: #e4e9ef;
+    --secondary: var(--sk-surface);
+    --secondary-foreground: var(--sk-soft);
+    --muted: var(--sk-surface);
+    --muted-foreground: var(--sk-mute);
+    --accent: var(--sk-surface);
+    --accent-foreground: var(--sk-ink);
 
     --destructive: #ef4444;
 
     /* Borders — solid blue-gray */
-    --border: #2a313c;
-    --input: #3d4754;
-    --ring: #a3e635;
+    --border: var(--sk-line);
+    --input: var(--sk-line2);
+    --ring: var(--sk-accent);
 
     /* Charts */
     --chart-1: #a3e635;
@@ -315,15 +346,15 @@
     --chart-4: #eab308;
     --chart-5: #ef4444;
 
-    /* Sidebar */
-    --sidebar: #13171d;
-    --sidebar-foreground: #e4e9ef;
-    --sidebar-primary: #a3e635;
-    --sidebar-primary-foreground: #0a0c0f;
-    --sidebar-accent: #1a1f26;
-    --sidebar-accent-foreground: #e4e9ef;
-    --sidebar-border: #2a313c;
-    --sidebar-ring: #a3e635;
+    /* Sidebar — same ladder, so the nav moves with the layer it is showing */
+    --sidebar: var(--sk-raised2);
+    --sidebar-foreground: var(--sk-soft);
+    --sidebar-primary: var(--sk-accent);
+    --sidebar-primary-foreground: var(--sk-ground);
+    --sidebar-accent: var(--sk-surface);
+    --sidebar-accent-foreground: var(--sk-ink);
+    --sidebar-border: var(--sk-line);
+    --sidebar-ring: var(--sk-accent);
 
     /* Trading semantic colors */
     --color-success: #22c55e;
@@ -412,6 +443,77 @@
     --scrollbar-thumb: rgba(148, 163, 184, 0.32);
     --scrollbar-thumb-hover: rgba(148, 163, 184, 0.52);
 }
+
+/*
+ * The layers. Each block redefines only the ramp; every DS token above reads
+ * it through `var()`, so a layer is these few lines and nothing else.
+ *
+ * Values are the design's own (`shell-registry.js` SKINS), not derived here.
+ * `execution` and `home` share the base neutrals on purpose — Trade is the
+ * product's centre of gravity and Home belongs to no layer; only their accents
+ * differ, and Home's is a cool neutral rather than any layer's hue because on
+ * a surface whose every row is a link an ink accent would read as prose.
+ */
+.dark[data-layer='execution'] {
+    --sk-accent: #a3e635;
+}
+
+.dark[data-layer='home'] {
+    --sk-accent: #cbd5e1;
+}
+
+.dark[data-layer='result'] {
+    --sk-ground: #0b0d0d;
+    --sk-surface: #171a19;
+    --sk-raised: #0f1211;
+    --sk-raised2: #131716;
+    --sk-line: #2b3130;
+    --sk-line2: #3e4644;
+    --sk-ink: #e7eae8;
+    --sk-soft: #c5cac7;
+    --sk-mute: #9aa39f;
+    --sk-accent: #d6d3d1;
+}
+
+.dark[data-layer='analysis'] {
+    --sk-ground: #0a0c12;
+    --sk-surface: #12141d;
+    --sk-raised: #0e1019;
+    --sk-raised2: #12151f;
+    --sk-line: #242a3a;
+    --sk-line2: #363e52;
+    --sk-ink: #e4e8f2;
+    --sk-soft: #c0c7d8;
+    --sk-mute: #949db4;
+    --sk-accent: #60a5fa;
+}
+
+.dark[data-layer='risk'] {
+    --sk-ground: #100c0e;
+    --sk-surface: #1a1417;
+    --sk-raised: #140f12;
+    --sk-raised2: #1c1519;
+    --sk-line: #382a30;
+    --sk-line2: #4d3a42;
+    --sk-ink: #f2e4e7;
+    --sk-soft: #d8c4c9;
+    --sk-mute: #b8a0a6;
+    --sk-accent: #fda4af;
+}
+
+.dark[data-layer='review'] {
+    --sk-ground: #0b0a10;
+    --sk-surface: #151221;
+    --sk-raised: #0f0c18;
+    --sk-raised2: #12101c;
+    --sk-line: #2c2542;
+    --sk-line2: #3b3452;
+    --sk-ink: #e6e4ef;
+    --sk-soft: #c9c4da;
+    --sk-mute: #a49cba;
+    --sk-accent: #a78bfa;
+}
+
 
 @layer base {
   * {

@@ -77,16 +77,17 @@ export function AppSidebar() {
           navigate(item.to ?? item.id)
         }}
         renderItemIcon={(item) => <NavSubItemIcon item={item} />}
+        // `item.id`, not `item.to`: a fold row borrows its first child's `to`,
+        // so keying on `to` gives the heading its child's marks — the Analyze
+        // heading wore Dossier's unit, and the Market heading lit a second
+        // session lamp above Live's. A real page row has its own path as its
+        // id; a fold's is `fold:...` and matches no route, which is the answer
+        // a heading wants.
+        //
+        // A badge outranks the scope mark: a count is news, the unit of
+        // analysis is a standing fact about the page.
         renderItemExtras={(item) => {
-          const to = item.to ?? item.id
-          if (to === LIVE_NAV_PATH) return <LiveNavLamp />
-          // A badge outranks the scope mark: a count is news, the unit of
-          // analysis is a standing fact about the page.
-          //
-          // `item.id`, not `to`: a fold row borrows its first child's `to`, so
-          // keying on `to` marked the Analyze heading with Dossier's unit. A
-          // real page row has its own path as its id; a fold's is `fold:...`
-          // and matches no route, which is the answer we want for a heading.
+          if (item.id === LIVE_NAV_PATH) return <LiveNavLamp />
           return research.extras(item) ?? <ScopeMark path={item.id} />
         }}
         renderInAppLink={renderInAppLink}

@@ -71,6 +71,49 @@ export const COPILOT_PAGES = {
   playbook: route('My Trading System', '/research/playbook', BookOpen),
 }
 
+/**
+ * The tape. Not a posture, so not a seat.
+ *
+ * Design (`shell-registry.js`, `fold:market`) puts Market inside Research
+ * rather than beside it: a group is defined by whose facts it states, and
+ * these state the market's — the same subject Research is about. It used to be
+ * a top-level group of one page here, which is a group only in the sense that
+ * it had a heading.
+ *
+ * In the design it is a peer of the seats. Here that means it stands in all
+ * three of them: whether the session is open is worth knowing from Autopilot
+ * as much as from the bench, and none of the three owns it.
+ */
+export const MARKET_PAGES = {
+  live: route('Live', '/market/live', Activity),
+  /**
+   * The design splits this in two — `/research/events` for the 30-day calendar
+   * and `/research/event-radar` labelled `Alerts`. This page is still both: it
+   * fetches the calendar alongside the alerts. It keeps its own name until
+   * Events exists to take the calendar off it.
+   *
+   * It had no row at all before this — a live route, in the registry and the
+   * breadcrumb, that the menu could not reach.
+   */
+  radar: route('Event Radar', '/research/event-radar', Radar),
+}
+
+/**
+ * One id, not one per seat.
+ *
+ * `fold()` below keys by seat so an open fold in one seat is not an open fold
+ * in the next. Market is the exception on purpose: it is the same fold in all
+ * three, so opening it once should open it everywhere. The id matches the
+ * design's own `fold:market`.
+ */
+export const MARKET_ITEM: ShellNavItem = {
+  id: 'fold:market',
+  label: 'Market',
+  to: MARKET_PAGES.live.to,
+  icon: Activity,
+  children: [MARKET_PAGES.live, MARKET_PAGES.radar],
+}
+
 export interface Bench {
   id: 'discover' | 'analyze' | 'validate' | 'data'
   label: string
@@ -130,6 +173,7 @@ export function allResearchRoutes(): string[] {
     ...Object.values(COPILOT_PAGES),
     WORKBENCH_PAGE,
     ...BENCHES.flatMap((b) => b.items),
+    ...Object.values(MARKET_PAGES),
   ].map((i) => i.to ?? i.id)
 }
 
@@ -137,6 +181,7 @@ export function allResearchRoutes(): string[] {
 export function staticResearchSubGroups(): ShellNavSubGroup[] {
   return [
     { label: '', items: [OVERVIEW_PAGE] },
+    { label: 'Market', items: Object.values(MARKET_PAGES) },
     { label: 'Autopilot · unattended', items: Object.values(AUTOPILOT_PAGES) },
     { label: 'Copilot · on request', items: Object.values(COPILOT_PAGES) },
     { label: 'Workbench · Discover', items: [WORKBENCH_PAGE, ...BENCHES[0].items] },
@@ -230,11 +275,13 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
           A.hypotheses,
           A.candidates,
         ]),
+        MARKET_ITEM,
         OVERVIEW_PAGE,
       ]
     case 'copilot':
       return [
         home(seat, 'Copilot Desk', C.desk, [C.brief, C.ask, C.trading, C.personas, C.playbook]),
+        MARKET_ITEM,
         OVERVIEW_PAGE,
       ]
     case 'workbench': {
@@ -249,6 +296,7 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
           fold(seat, validate.label, validate.icon, validate.items),
           fold(seat, data.label, data.icon, data.items.filter((i) => i !== health)),
         ]),
+        MARKET_ITEM,
         OVERVIEW_PAGE,
       ]
     }
@@ -274,6 +322,17 @@ export function seatForRoute(pathname: string): ResearchSeat | null {
 
 /** The Research landing page. Seatless, like Overview — it introduces all three. */
 const RESEARCH_ROOT = '/research'
+
+/**
+ * Pages that stand in every seat, so none of them owns one.
+ *
+ * `seatForRoute` must return null for these or landing on Live would drag the
+ * rail to whichever seat happened to list it first.
+ */
+export const SEATLESS_ROUTES: readonly string[] = [
+  OVERVIEW_PAGE.to!,
+  ...Object.values(MARKET_PAGES).map((p) => p.to!),
+]
 
 /**
  * A nav item's own path.

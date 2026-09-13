@@ -62,13 +62,16 @@ function fold(
   return { id, label, to, icon, children, defaultOpen: true }
 }
 
+/**
+ * The business tree.
+ *
+ * `Market` was a top-level group here with exactly one row in it — a heading
+ * over a single page. The design files Market as a fold inside Research
+ * (`shell-registry.js` `fold:market`), on the reasoning that a group is
+ * defined by whose facts it states and the market's are Research's subject.
+ * It lives in `researchNavCatalog.ts` now, in all three seats.
+ */
 export const NAV_GROUPS: ShellNavGroup[] = [
-  {
-    label: 'Market',
-    icon: Activity,
-    defaultOpen: true,
-    items: [route('Live', '/market/live', Activity)],
-  },
   {
     label: 'Portfolio',
     icon: LayoutDashboard,

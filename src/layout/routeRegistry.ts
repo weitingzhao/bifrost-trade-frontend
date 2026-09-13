@@ -58,7 +58,8 @@ export interface RouteEntry {
   redirect?: string
 }
 
-const MARKET = ['Market'] as const
+// Market is a fold inside Research, not a group of its own — see `navConfig.ts`.
+const MARKET = ['Research', 'Market'] as const
 const PORTFOLIO = ['Portfolio'] as const
 const RESEARCH = ['Research'] as const
 const AUTOPILOT = ['Research', 'Autopilot'] as const
@@ -102,7 +103,6 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/scan', label: 'Option Scan', crumbs: DISCOVER, scope: 'contract' },
   { path: '/research/momentum-radar', label: 'Momentum Radar', crumbs: DISCOVER },
   { path: '/research/sepa-daily-core', label: 'SEPA Daily Core', crumbs: DISCOVER },
-  { path: '/research/event-radar', label: 'Event Radar', crumbs: DISCOVER },
 
   // ── Research · Workbench · Analyze ─────────────────────────────────────
   // One name, every face. The six pages this replaced are `?tab=` on it.
@@ -121,8 +121,9 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/screener', label: 'Option Screener', crumbs: DATA },
   { path: '/research/greeks', label: 'Contract Greeks', crumbs: DATA, scope: 'contract' },
 
-  // ── Market ─────────────────────────────────────────────────────────────
+  // ── Research · Market ──────────────────────────────────────────────────
   { path: '/market/live', label: 'Live', crumbs: MARKET },
+  { path: '/research/event-radar', label: 'Event Radar', crumbs: MARKET },
 
   // ── Portfolio ──────────────────────────────────────────────────────────
   { path: '/portfolio/performance', label: 'Performance', crumbs: PORTFOLIO },

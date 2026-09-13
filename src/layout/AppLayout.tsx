@@ -20,6 +20,7 @@ import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
 import { useRecentPagesTrail } from '@/lib/omnibar'
 import { Omnibar } from './Omnibar'
+import { InspectorSlotContext } from '@/components/layout/inspectorSlot'
 
 function readSidebarCookie(): boolean {
   const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
@@ -58,6 +59,7 @@ export function AppLayout() {
   const stream = useSystemMessages()
   const { groups, summary } = useInbox(stream)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [inspectorSlot, setInspectorSlot] = useState<HTMLElement | null>(null)
   useCockpitKeybinds()
 
   const msgCenter = (
@@ -79,29 +81,41 @@ export function AppLayout() {
   )
 
   return (
-    <SidebarProvider
-      defaultOpen={readSidebarCookie()}
-      style={{ '--sidebar-width': SHELL_SIDEBAR_WIDTH } as CSSProperties}
-    >
-      {/* Before the sidebar, not after: the ~40 nav links are exactly what
+    <InspectorSlotContext.Provider value={inspectorSlot}>
+      <SidebarProvider
+        defaultOpen={readSidebarCookie()}
+        style={{ '--sidebar-width': SHELL_SIDEBAR_WIDTH } as CSSProperties}
+      >
+        {/* Before the sidebar, not after: the ~40 nav links are exactly what
           this exists to skip. */}
-      <SkipToContent />
-      <AppSidebar />
-      {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport */}
-      <SidebarInset className="h-svh overflow-hidden bg-card">
-        <AppHeader inbox={summary} onOpenInbox={() => setDrawerOpen(true)} />
-        <GlobalMarketStatusBar enabled={showMarketStrip} />
-        <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto min-w-0 bg-card outline-none">
-          <BoundedOutlet />
-        </main>
-        <ShellStatusBar inbox={summary} onOpenInbox={() => setDrawerOpen(true)} />
-      </SidebarInset>
-      {/* A peer of the nav sidebar, not a layer over the page: `SidebarProvider`
+        <SkipToContent />
+        <AppSidebar />
+        {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport */}
+        <SidebarInset className="h-svh overflow-hidden bg-card">
+          <AppHeader inbox={summary} onOpenInbox={() => setDrawerOpen(true)} />
+          <GlobalMarketStatusBar enabled={showMarketStrip} />
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="flex-1 overflow-auto min-w-0 bg-card outline-none"
+          >
+            <BoundedOutlet />
+          </main>
+          <ShellStatusBar inbox={summary} onOpenInbox={() => setDrawerOpen(true)} />
+        </SidebarInset>
+        {/* A docked inspector portals in here — a page opens it, but a panel that
+          takes width from the content has to be the content's sibling, not its
+          child. It sits between the page it explains and the Copilot, which is
+          about the whole desk rather than one row. `display: contents` so an
+          empty slot costs the row nothing. */}
+        <div ref={setInspectorSlot} className="contents" />
+        {/* A peer of the nav sidebar, not a layer over the page: `SidebarProvider`
           renders a flex row, so at the reading width on a wide screen the dock
           takes its space from the content instead of covering it. */}
-      <CopilotDock />
-      <Omnibar />
-      {msgCenter}
-    </SidebarProvider>
+        <CopilotDock />
+        <Omnibar />
+        {msgCenter}
+      </SidebarProvider>
+    </InspectorSlotContext.Provider>
   )
 }

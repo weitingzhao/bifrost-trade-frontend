@@ -498,7 +498,7 @@ export function OptionContractDetailPanel({
                 onToggle={() => toggleSection('liquidity')}
               >
                 {liquidityLoading && <DiscoveryHint className="">Loading liquidity data…</DiscoveryHint>}
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3">
                 <div className={inspectorShell.card}>
                   <div className={inspectorShell.cardLabel}>Tradability Score</div>
                     <div className={optionDiscoveryTradabilityScoreClass}>
@@ -671,7 +671,7 @@ export function OptionContractDetailPanel({
                 expanded={expandedSections.relative}
                 onToggle={() => toggleSection('relative')}
               >
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 @lg:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4">
                 <div className={inspectorShell.card}>
                   <div className={inspectorShell.cardLabel}>
                       IV Relative Value {hasServer && <span className={optionDiscoveryKvDimClass}>(server)</span>}

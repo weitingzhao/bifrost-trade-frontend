@@ -47,7 +47,7 @@ import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
 import { QuickCloseModal } from '@/components/positions/QuickCloseModal'
 import { DeleteConfirmDialog } from '@/components/positions/DeleteConfirmDialog'
 import { InspectorDrawer, type InspectorState } from '@/components/positions/InspectorDrawer'
-import { OptionContractDrawer } from '@/components/optionDiscovery/OptionContractDrawer'
+import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { OptionContractDetailFromOpenPosition } from '@/components/optionDiscovery/OptionContractDetailFromOpenPosition'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
 import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
@@ -479,7 +479,7 @@ export default function PositionsPage() {
         }}
       />
       <InspectorDrawer state={inspectorDrawerState} onClose={closeInspector} />
-      <OptionContractDrawer open={Boolean(openOptionPosition)}>
+      <RightInspectorShell open={Boolean(openOptionPosition)} ariaLabel="Option contract detail">
         {openOptionPosition ? (
           <OptionContractDetailFromOpenPosition
             position={openOptionPosition}
@@ -492,7 +492,7 @@ export default function PositionsPage() {
             }}
           />
         ) : null}
-      </OptionContractDrawer>
+      </RightInspectorShell>
     </PageShell>
   )
 }

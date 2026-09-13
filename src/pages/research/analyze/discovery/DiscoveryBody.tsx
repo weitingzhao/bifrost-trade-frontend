@@ -10,7 +10,7 @@ import { DiscoveryPageHeader } from '@/components/optionDiscovery/DiscoveryPageH
 import { OdSessionBar } from '@/components/optionDiscovery/OdSessionBar'
 import { OdStickyToc } from '@/components/optionDiscovery/OdStickyToc'
 import { OptionDiscoveryCompareDrawer } from '@/components/optionDiscovery/OptionDiscoveryCompareDrawer'
-import { OptionContractDrawer } from '@/components/optionDiscovery/OptionContractDrawer'
+import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { OptionContractDetailPanel } from '@/components/optionDiscovery/OptionContractDetailPanel'
 import { useOptionContractLiquidity } from '@/components/optionDiscovery/useOptionContractLiquidity'
 import { useDiscoverySession } from '@/hooks/useDiscoverySession'
@@ -326,7 +326,10 @@ export function DiscoveryBody() {
                 openPolygonFeed={openPolygonFeed}
               />
 
-              <OptionContractDrawer open={Boolean(chainTable.selectedRow && chainTable.selectedDerived)}>
+              <RightInspectorShell
+                open={Boolean(chainTable.selectedRow && chainTable.selectedDerived)}
+                ariaLabel="Option contract detail"
+              >
                 {chainTable.selectedRow && chainTable.selectedDerived ? (
                   <OptionContractDetailPanel
                     symbol={selectedSymbol}
@@ -350,7 +353,7 @@ export function DiscoveryBody() {
                     }}
                   />
                 ) : null}
-              </OptionContractDrawer>
+              </RightInspectorShell>
 
               <OptionDiscoveryCompareDrawer
                 open={compareOpen}

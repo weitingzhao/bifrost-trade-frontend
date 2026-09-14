@@ -86,6 +86,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/trade/plans/TradePlansPage')),
       },
       {
+        path: 'trade/playbook',
+        lazy: lazyPage(() => import('@/pages/trade/PlaybookPage')),
+      },
+      {
         path: 'portfolio/backing',
         lazy: lazyPage(() => import('@/pages/portfolio/backing/BackingPage')),
       },
@@ -113,10 +117,6 @@ export const router = createBrowserRouter([
       {
         path: 'research/screener',
         lazy: lazyPage(() => import('@/pages/research/data/ScreenerPage')),
-      },
-      {
-        path: 'research/playbook',
-        lazy: lazyPage(() => import('@/pages/copilot/PlaybookPage')),
       },
       {
         path: 'research/agent-personas',

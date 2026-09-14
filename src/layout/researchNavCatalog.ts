@@ -71,8 +71,6 @@ export const COPILOT_PAGES = {
   desk: route('Desk', '/research/copilot', MessageCircle),
   brief: route('Daily Brief', '/research/daily-brief', ClipboardList),
   personas: route('Personas', '/research/agent-personas', Users),
-  /** ⛔ Awaiting the Owner's call on Trade › Playbook (B3) — parked at the fold's end, route untouched. */
-  playbook: route('My Trading System', '/research/playbook', BookOpen),
 }
 
 /**

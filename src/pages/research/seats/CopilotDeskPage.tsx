@@ -120,8 +120,8 @@ export default function CopilotDeskPage() {
                 <span className="text-muted-foreground"> — who judges, and how each one argues.</span>
               </li>
               <li>
-                <Link to="/research/playbook" className="inline-flex items-center gap-2 hover:underline">
-                  <BookOpen className="size-3.5 text-muted-foreground" /> My Trading System
+                <Link to="/trade/playbook" className="inline-flex items-center gap-2 hover:underline">
+                  <BookOpen className="size-3.5 text-muted-foreground" /> Playbook
                 </Link>
                 <span className="text-muted-foreground"> — the rules, cases and notes it is told to follow.</span>
               </li>

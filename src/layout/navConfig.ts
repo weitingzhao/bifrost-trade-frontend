@@ -5,6 +5,7 @@ import {
   BarChart2,
   Blocks,
   BookOpen,
+  Briefcase,
   ClipboardList,
   Cpu,
   Database,
@@ -73,6 +74,16 @@ function fold(
  * It lives in `researchNavCatalog.ts` now, in all three seats.
  */
 export const NAV_GROUPS: ShellNavGroup[] = [
+  {
+    label: 'Trade',
+    icon: Briefcase,
+    // Design group order is Home · Trade · Portfolio · Research · … (Owner (a),
+    // 2026-09-14). Playbook moved here from the Copilot fold; the group is one
+    // row until the rest of Trade is built. Plans stays a route, not a row.
+    items: [
+      route('Playbook', '/trade/playbook', BookOpen),
+    ],
+  },
   {
     label: 'Portfolio',
     icon: LayoutDashboard,

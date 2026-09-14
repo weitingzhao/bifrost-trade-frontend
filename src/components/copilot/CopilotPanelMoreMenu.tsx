@@ -56,9 +56,9 @@ export function CopilotPanelMoreMenu({
           ) : null}
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/research/playbook" onClick={onClosePanel}>
+          <Link to="/trade/playbook" onClick={onClosePanel}>
             <BookOpen className="mr-2 h-3.5 w-3.5" />
-            My Trading System
+            Playbook
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

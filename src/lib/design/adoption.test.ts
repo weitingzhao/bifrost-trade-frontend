@@ -59,11 +59,11 @@ describe('design adoption', () => {
     expect(counts.aligned + counts.byState.stale).toBe(0)
     // 11: the ten the design dissolves elsewhere, plus Backtest, which Docs Index
     // marks LAB — handed to Lab, the Trade original deleted in the design.
-    expect(counts.byState.moving).toBe(13)
-    // Down from 3 on 2026-09-14: /research/daily-brief entered the design
-    // registry (89 routes), so it derives `pending` instead of carrying a
-    // staging tag. Up from 11 → 12 (/trade/plans C1-c) → 13 (/research/symbol
-    // tagged moving after C1-a–d).
+    expect(counts.byState.moving).toBe(12)
+    // Down from 13: /research/playbook left PAGE_ROUTES (B3 redirect onto
+    // /trade/playbook). That page is a design stub, so it derives `pending`.
+    // Staging unchanged: /research/daily-brief entered the design registry
+    // (89 routes) on 2026-09-14; /trade/plans and /research/symbol are moving.
     expect(counts.byState.staging).toBe(2)
   })
 })

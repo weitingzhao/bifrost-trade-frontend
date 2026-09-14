@@ -119,15 +119,6 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/daily-brief', label: 'Daily Brief', crumbs: COPILOT, symbolScope: true },
   { path: '/research/copilot/trading', label: 'Trading Copilot', crumbs: COPILOT },
   { path: '/research/agent-personas', label: 'Agent Personas', crumbs: COPILOT },
-  {
-    path: '/research/playbook',
-    label: 'My Trading System',
-    crumbs: COPILOT,
-    design: {
-      state: 'moving',
-      note: 'Trade › Playbook — Design 2026-09-12: it moves out of the Copilot seat into Trade',
-    },
-  },
 
   // ── Research · Workbench · Discover ────────────────────────────────────
   { path: '/research/explorer', label: 'Stock Explorer', crumbs: DISCOVER, scope: 'underlying' },
@@ -201,7 +192,12 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/portfolio/ledger', label: 'Trade Ledger', crumbs: PORTFOLIO },
   { path: '/portfolio/transfer', label: 'Transfer & Pay', crumbs: PORTFOLIO },
 
-  // ── Trade › Desk (Plans receives ＋ Plan this; nav row waits on B3 Trade group)
+  // ── Trade ──────────────────────────────────────────────────────────────
+  {
+    path: '/trade/playbook',
+    label: 'Playbook',
+    crumbs: TRADE,
+  },
   {
     path: '/trade/plans',
     label: 'Plans',
@@ -209,7 +205,7 @@ export const ROUTES: readonly RouteEntry[] = [
     symbolScope: true,
     design: {
       state: 'moving',
-      note: 'C1-c thin receiver for Plan-this handoffs (source · rule · contract). Full Trade Plans.dc.html desk still ahead; not in nav until B3 Trade group.',
+      note: 'C1-c thin receiver for Plan-this handoffs. Full Trade Plans.dc.html desk still ahead.',
     },
   },
 
@@ -404,6 +400,12 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Trading Copilot',
     crumbs: COPILOT,
     redirect: '/research/copilot/trading',
+  },
+  {
+    path: '/research/playbook',
+    label: 'My Trading System',
+    crumbs: COPILOT,
+    redirect: '/trade/playbook',
   },
   {
     path: '/portfolio/model-analysis',

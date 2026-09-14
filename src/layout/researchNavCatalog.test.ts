@@ -91,7 +91,6 @@ describe('a seat carries its own pages and no others', () => {
         '/research/copilot',
         '/research/daily-brief',
         '/research/agent-personas',
-        '/research/playbook',
         '/research/copilot/trading',
       ].sort(),
     )
@@ -124,8 +123,7 @@ describe('a seat carries its own pages and no others', () => {
   it('carries the Copilot fold in both seats: Desk · Daily Brief · Personas, one id', () => {
     // §11.0: conversation is an action, its sediment is pages. The fold is
     // seat-free like Market — same id everywhere, the design's own
-    // `fold:copilot`. My Trading System is parked at the end awaiting the
-    // Owner's call on Trade › Playbook (B3); the first three are the design's.
+    // `fold:copilot`. Playbook left for Trade (Owner (a), 2026-09-14).
     for (const seat of RESEARCH_SEATS) {
       const fold = flatten(seatItems(seat, ctx)).find((i) => i.id === 'fold:copilot')
       expect(fold, seat).toBeTruthy()
@@ -134,7 +132,6 @@ describe('a seat carries its own pages and no others', () => {
         ['Desk', '/research/copilot'],
         ['Daily Brief', '/research/daily-brief'],
         ['Personas', '/research/agent-personas'],
-        ['My Trading System', '/research/playbook'],
       ])
     }
   })
@@ -255,6 +252,7 @@ describe('the seat follows the route', () => {
   it('does not answer for routes outside Research', () => {
     expect(seatForRoute('/portfolio/performance')).toBeNull()
     expect(seatForRoute('/strategy/instances')).toBeNull()
+    expect(seatForRoute('/trade/playbook')).toBeNull()
   })
 
   it('never lets the Copilot claim the whole domain', () => {

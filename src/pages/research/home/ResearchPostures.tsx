@@ -264,8 +264,8 @@ function CopilotPosture() {
                 who judges
               </Link>
               <span className="text-muted-foreground"> · </span>
-              <Link to="/research/playbook" className="hover:underline">
-                my trading system
+              <Link to="/trade/playbook" className="hover:underline">
+                playbook
               </Link>
             </Line>
           </div>

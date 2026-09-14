@@ -81,7 +81,7 @@ export function draftLandsIn(kind: string): DraftLanding | null {
       return { label: 'Autopilot objective', to: '/research/loop/harness' }
     case 'playbook_rule':
     case 'playbook_note':
-      return { label: 'My Trading System', to: '/research/playbook' }
+      return { label: 'Playbook', to: '/trade/playbook' }
     default:
       return null
   }

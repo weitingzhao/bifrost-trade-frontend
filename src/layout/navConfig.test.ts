@@ -3,6 +3,7 @@ import { NAV_GROUPS, SYSTEM_NAV_GROUPS } from './navConfig'
 import { isSystemRoute, routeFor } from './routeRegistry'
 import { COPILOT_PAGES } from './researchNavCatalog'
 
+const trade = NAV_GROUPS.find((g) => g.label === 'Trade')!
 const portfolio = NAV_GROUPS.find((g) => g.label === 'Portfolio')!
 const strategy = NAV_GROUPS.find((g) => g.label === 'Strategy')!
 
@@ -10,6 +11,29 @@ const strategy = NAV_GROUPS.find((g) => g.label === 'Strategy')!
 function routesOf(group: (typeof NAV_GROUPS)[number]): (string | undefined)[] {
   return (group.items ?? []).flatMap((i) => [i.to, ...(i.children?.map((c) => c.to) ?? [])])
 }
+
+describe('Trade nav', () => {
+  it('stands before Portfolio, with Playbook as the only row', () => {
+    // Owner (a), 2026-09-14: new top-level Trade group, design order Home ·
+    // Trade · Portfolio · Research · …, one row until the rest of Trade exists.
+    expect(NAV_GROUPS.map((g) => g.label).slice(0, 4)).toEqual([
+      'Trade',
+      'Portfolio',
+      'Research',
+      'Strategy',
+    ])
+    expect(trade.items!.map((i) => [i.label, i.to])).toEqual([['Playbook', '/trade/playbook']])
+    const entry = routeFor('/trade/playbook')
+    expect(entry.path).toBe('/trade/playbook')
+    expect(entry.redirect ?? false).toBe(false)
+  })
+
+  it('keeps the old Copilot address as a one-hop redirect onto Playbook', () => {
+    const retired = routeFor('/research/playbook')
+    expect(retired.redirect).toBe('/trade/playbook')
+    expect(routeFor(retired.redirect!).redirect ?? false).toBe(false)
+  })
+})
 
 describe('Portfolio nav', () => {
   it('is two homes with their pages beneath and no section labels: the book under Performance, the ledger under Accounts', () => {

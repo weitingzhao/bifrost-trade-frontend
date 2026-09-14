@@ -37,6 +37,7 @@ import { fmtIsoTs } from '@/lib/format'
 import { fmtUsd, runSpend } from '@/lib/harness/runSpend'
 import { fetchObjectiveRunIfKept } from '@/api/research/harness'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { WaitingOnYou } from '@/pages/research/seats/WaitingOnYou'
 
 export default function CopilotDeskPage() {
   const standingQ = useCopilotStanding()
@@ -98,6 +99,10 @@ export default function CopilotDeskPage() {
           <span className="text-dense-label text-muted-foreground">/ {s ? fmtUsd(s.usage.cap_usd) : '—'}</span>
         </Fact>
       </div>
+
+      {/* First, as in the design's Today: what is waiting for an answer comes
+          before what already happened. */}
+      <WaitingOnYou />
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <section className="min-w-0 space-y-2">

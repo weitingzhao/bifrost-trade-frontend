@@ -1,3 +1,4 @@
+import { draftKindLabel, draftTitle } from '@/lib/harness/draftText'
 import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -73,16 +74,6 @@ const DEFAULT_ACCENT = {
   tag: 'category' as DenseTagVariant,
 }
 
-function kindLabel(kind: string): string {
-  if (kind === 'morning_brief') return 'Morning'
-  if (kind === 'daily_digest') return 'Digest'
-  if (kind === 'eod_verdict') return 'EOD'
-  if (kind === 'hypothesis_suggestion') return 'Suggestion'
-  if (kind === 'candidate_batch') return 'Candidate Batch'
-  if (kind === 'policy_suggestion') return 'Policy Suggestion'
-  return kind
-}
-
 /**
  * The draft's prose, or null when the payload carries none.
  *
@@ -121,10 +112,7 @@ export function DraftCard({
   className?: string
 }) {
   const busy = Boolean(approving || dismissing)
-  const title =
-    (typeof draft.payload.title === 'string' && draft.payload.title) ||
-    (typeof draft.payload.hypothesis_title === 'string' && draft.payload.hypothesis_title) ||
-    (draft.scope === 'global' ? "Today's Discoveries" : draft.scope)
+  const title = draftTitle(draft)
   const proposed =
     typeof draft.payload.proposed_status === 'string'
       ? draft.payload.proposed_status
@@ -169,7 +157,7 @@ export function DraftCard({
       */}
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
         <DenseTag variant={accent.tag} size="cell">
-          {kindLabel(draft.kind)}
+          {draftKindLabel(draft.kind)}
         </DenseTag>
         {proposed ? (
           <DenseTag

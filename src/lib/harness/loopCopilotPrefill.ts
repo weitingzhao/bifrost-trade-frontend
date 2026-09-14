@@ -138,6 +138,48 @@ export function openLoopRunInCopilot(params: {
   cockpitDrawerStore.getState().setTab('copilot')
 }
 
+/**
+ * Prefill the Copilot with one pending draft and open the panel — does not
+ * auto-send.
+ *
+ * The Copilot Desk's "Ask" on a waiting call. It asks about the draft rather
+ * than acting on it: approving is the reader's call, and the prompt carries
+ * what approving would actually change — which for several kinds is nothing.
+ */
+export function openDraftInCopilot(params: {
+  id: string
+  kind: string
+  title: string
+  askedBy: string
+  landsIn: string | null
+  lang?: CopilotPromptLang
+}) {
+  const lang = params.lang ?? readCopilotPromptLang()
+  const effect = params.landsIn
+    ? lang === 'zh'
+      ? `批准后写入：${params.landsIn}`
+      : `Approving writes to ${params.landsIn}`
+    : lang === 'zh'
+      ? '批准只改变它的状态，不写入任何东西'
+      : 'Approving only changes its status; nothing is written'
+  askCopilotIntentStore.open({
+    originPage: 'research-copilot-desk',
+    originLabel: lang === 'zh' ? `待决 · ${params.kind}` : `Waiting · ${params.kind}`,
+    suggestedPrompt:
+      lang === 'zh'
+        ? `解释这条待决草稿（${params.kind}，由 ${params.askedBy} 提出）：「${params.title}」。它依据什么？我该不该批准？${effect}。D10 observe-only。`
+        : `Explain this pending draft (${params.kind}, asked by ${params.askedBy}): "${params.title}". What is it based on, and should I approve it? ${effect}. D10 observe-only.`,
+    snapshot: {
+      draft_id: params.id,
+      kind: params.kind,
+      lands_in: params.landsIn,
+      prompt_lang: lang,
+    },
+  })
+  copilotDockStore.getState().open_()
+  cockpitDrawerStore.getState().setTab('copilot')
+}
+
 export function openResearchCopilot() {
   copilotDockStore.getState().open_()
   cockpitDrawerStore.getState().setTab('copilot')

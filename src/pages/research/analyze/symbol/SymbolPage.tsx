@@ -22,6 +22,7 @@ import { useSearchParams } from 'react-router-dom'
 import { SegmentControl } from '@/components/data-display'
 import { PageHeader, PageShell } from '@/components/layout'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
 import { useDossier } from '@/hooks/useDossier'
@@ -121,7 +122,10 @@ export default function SymbolPage() {
         {/* Where this name came from, and the way through that list — stepping
             it keeps the tab you are reading. */}
         <SymbolOriginRail symbol={symbol} tabQuery={`${SYMBOL_PATH}?${TAB_PARAM}=${active}`} />
-        <ResearchContextBar showDate={active === 'dealer' || active === 'chain'} />
+        <ResearchContextBar
+          showDate={active === 'dealer' || active === 'chain'}
+          asof={symbol ? <SymbolAsofTag symbol={symbol} /> : null}
+        />
         {symbol ? <CompositeRegimeRibbon symbol={symbol} /> : null}
         <CopilotVerdictStrip originPage={`symbol:${active}`} originLabel={`Symbol · ${active}`} />
       </div>

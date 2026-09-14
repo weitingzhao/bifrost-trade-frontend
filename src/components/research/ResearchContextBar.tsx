@@ -11,6 +11,11 @@ import { cn } from '@/lib/utils'
 export interface ResearchContextBarProps {
   /** Hide date picker when the page has no date dimension */
   showDate?: boolean
+  /**
+   * The page's AsofTag (contract §11.10: the context bar carries asof and its
+   * verdict for every page that uses it). Right-aligned, before the Copilot mention.
+   */
+  asof?: React.ReactNode
   symbolPlaceholder?: string
   className?: string
 }
@@ -40,6 +45,7 @@ function messageMentionsSymbol(content: string, symbol: string): boolean {
 
 export function ResearchContextBar({
   showDate = true,
+  asof,
   symbolPlaceholder = 'SPX',
   className,
 }: ResearchContextBarProps) {
@@ -86,12 +92,14 @@ export function ResearchContextBar({
             />
           </>
         ) : null}
+        {asof ? <span className="ml-auto flex min-w-0 items-center">{asof}</span> : null}
         {mention ? (
           <button
             type="button"
             onClick={openMention}
             className={cn(
-              'ml-auto inline-flex items-center gap-1 rounded-md border border-border/60',
+              asof ? '' : 'ml-auto',
+              'inline-flex items-center gap-1 rounded-md border border-border/60',
               'bg-secondary/60 px-1.5 py-0.5 text-dense-caption text-muted-foreground',
               'hover:border-primary/40 hover:text-foreground',
             )}

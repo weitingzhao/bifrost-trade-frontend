@@ -36,11 +36,13 @@ import {
 /** Reserve the lamp colours for state; a count is not a fault. */
 const TAG: Record<AdoptionState, DenseTagVariant> = {
   aligned: 'success',
+  reviewing: 'info',
   stale: 'warning',
   pending: 'neutral',
   unbuilt: 'neutral',
   moving: 'info',
   staging: 'warning',
+  backlog: 'neutral',
 }
 
 function trail(row: AdoptionRow): string {
@@ -49,13 +51,14 @@ function trail(row: AdoptionRow): string {
 
 function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
   const showsFile = state === 'unbuilt'
+  const showsApp = state === 'backlog'
   return (
     <DenseDataTable>
       <DenseTableHeader>
         <DenseTableHeadRow>
           <DenseTableHead>Page</DenseTableHead>
           <DenseTableHead>Route</DenseTableHead>
-          <DenseTableHead>{showsFile ? 'Prototype' : 'Note'}</DenseTableHead>
+          <DenseTableHead>{showsFile ? 'Prototype' : showsApp ? 'App' : 'Note'}</DenseTableHead>
         </DenseTableHeadRow>
       </DenseTableHeader>
       <DenseTableBody>
@@ -63,12 +66,12 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
           <DenseTableRow key={r.path}>
             <DenseTableCell>
               <span className="mr-2">
-                {state === 'unbuilt' ? (
-                  trail(r)
-                ) : (
+                {r.inApp ? (
                   <Link to={r.path} className="text-link hover:underline">
                     {trail(r)}
                   </Link>
+                ) : (
+                  trail(r)
                 )}
               </span>
               {/* NEW is this round's work; OLD is an early round a later
@@ -90,13 +93,9 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
             </DenseTableCell>
             <DenseTableCell className="text-muted-foreground">
               {showsFile ? (
-                r.design?.designed ? (
-                  <span className="font-mono text-dense-caption">{r.design.file}</span>
-                ) : (
-                  // The design's own backlog: in its menu, no prototype behind
-                  // it. Not work this side can start.
-                  <span className="text-dense-caption">no prototype in the design yet</span>
-                )
+                <span className="font-mono text-dense-caption">{r.design?.file}</span>
+              ) : showsApp ? (
+                <span className="text-dense-caption">{r.inApp ? 'page here' : 'no page here'}</span>
               ) : (
                 (r.note ?? (r.rev ? `walked against rev ${r.rev}` : ''))
               )}
@@ -123,7 +122,7 @@ export default function DesignAdoptionPage() {
       <PageHeader
         breadcrumb={<p className="text-xs font-medium text-primary/90">System / Reference</p>}
         title="Design Adoption"
-        description="Every page of design/trade and where the app stands on it. The work is done when the four “to” lists are empty."
+        description="Every page of design/trade and where the app stands on it. The work is done when the five “to” lists are empty."
         actions={
           <div className="flex items-center gap-3">
             <span className="font-mono text-dense-caption uppercase tracking-wide text-muted-foreground">
@@ -131,7 +130,11 @@ export default function DesignAdoptionPage() {
             </span>
             <span className="text-sm tabular-nums">
               <span className="font-semibold text-foreground">{counts.aligned}</span>
-              <span className="text-muted-foreground"> / {counts.designed} walked</span>
+              <span className="text-muted-foreground"> / {counts.designed} in place</span>
+              <span className="text-muted-foreground">
+                {' · '}
+                {counts.byState.reviewing} to confirm
+              </span>
             </span>
           </div>
         }
@@ -140,10 +143,10 @@ export default function DesignAdoptionPage() {
       <Card variant="elevated">
         <CardContent className="py-3 text-dense-body text-muted-foreground">
           The denominator is the {counts.designed} design routes that have a prototype, not the
-          app’s page count: {byState.get('unbuilt')?.length ?? 0} design routes have no page here at
-          all, so counting against the app would read near complete with much of the design
-          unbuilt. The design’s other {88 - counts.designed} routes are in its menu with no
-          prototype behind them — its own backlog, and nothing this side can adopt.
+          app’s page count: {counts.byState.unbuilt} of them have no page here at all, so counting
+          against the app would read near complete with much of the design unbuilt. The design’s
+          other {counts.stubs} routes are in its menu with no prototype behind them — listed last as
+          its backlog, and nothing this side can adopt.
         </CardContent>
       </Card>
 

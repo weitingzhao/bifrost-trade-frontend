@@ -9,35 +9,41 @@
  * The states are what a route can honestly be, and they are different facts —
  * "we have not looked at this yet" is not "the design has no home for it":
  *
- *   aligned   walked with the Owner against a design rev, and it matches
- *   stale     walked, but against an older rev — the design has moved since
- *   pending   the design has this page and we have not walked it
- *   moving    the design dissolves it into another page; waiting on that page
- *   staging   no home found in the design, and nobody has decided yet
- *   unbuilt   the design has the page, the app does not
+ *   aligned    walked with the Owner against a design rev, and it matches
+ *   reviewing  walked and built against the design; waiting for the Owner's look
+ *   stale      walked, but against an older rev — the design has moved since
+ *   pending    the design has a prototype for this page and we have not walked it
+ *   moving     the design dissolves it into another page; waiting on that page
+ *   staging    no home found in the design, and nobody has decided yet
+ *   unbuilt    the design has a prototype, the app has no page
+ *   backlog    the design lists the route but has no prototype behind it yet
  *
- * Only `aligned`, `moving` and `staging` are written down (`RouteEntry.design`).
- * `pending` is what an untagged app route in the design table means, and
- * `unbuilt` is what a design route missing from the app table means — deriving
- * the two big states keeps the hand-maintained set at a dozen rows.
+ * Only `aligned`, `reviewing`, `moving` and `staging` are written down
+ * (`RouteEntry.design`). `pending`, `unbuilt` and `backlog` are derived from the
+ * two tables, which keeps the hand-maintained set at about a dozen rows.
+ *
+ * `reviewing` is not `aligned`: the walk and the build are this side's work,
+ * and only the Owner's look puts a page "in place".
+ *
+ * `backlog` is split out of `pending` and `unbuilt` because a stub has nothing
+ * to walk or build against. Counted there, the "to" lists disagreed with the
+ * denominator.
  */
 import { PAGE_ROUTES, REDIRECT_ROUTES, type RouteEntry } from '@/layout/routeRegistry'
 import { DESIGN_REV, DESIGN_ROUTES, type DesignRoute } from './designRoutes.generated'
 
-export type AdoptionState = 'aligned' | 'stale' | 'pending' | 'moving' | 'staging' | 'unbuilt'
+export type AdoptionState =
+  | 'aligned'
+  | 'reviewing'
+  | 'stale'
+  | 'pending'
+  | 'moving'
+  | 'staging'
+  | 'unbuilt'
+  | 'backlog'
 
-/** What a route's own entry may declare. `pending` is never written — it is the default. */
-export interface DesignTag {
-  state: 'aligned' | 'moving' | 'staging'
-  /**
-   * The design rev it was walked against. An `aligned` route whose rev is not
-   * the current one reads as `stale`: the judgement was real, and it was about
-   * a document that has since changed.
-   */
-  rev?: string
-  /** `moving`: where it goes, and what has to exist first. `staging`: the open question. */
-  note?: string
-}
+/** What a route's own entry may declare — one definition, in `tag.ts`. */
+export type { DesignTag } from './tag'
 
 export interface AdoptionRow {
   path: string
@@ -58,6 +64,8 @@ export interface AdoptionRow {
    * work left would have inflated the backlog by five.
    */
   aliasOf?: readonly string[]
+  /** Whether the app has a page at this path (false for rows only the design has). */
+  inApp: boolean
 }
 
 const DESIGN_BY_PATH = new Map(DESIGN_ROUTES.map((d) => [d.path, d]))
@@ -84,7 +92,8 @@ function stateOf(entry: RouteEntry, design: DesignRoute | null): AdoptionState {
   const tag = entry.design
   if (tag?.state === 'aligned') return tag.rev === DESIGN_REV ? 'aligned' : 'stale'
   if (tag) return tag.state
-  return design ? 'pending' : 'staging'
+  if (!design) return 'staging'
+  return design.designed ? 'pending' : 'backlog'
 }
 
 /** Every app page, and every design page the app does not have. */
@@ -114,6 +123,7 @@ export function adoptionRows(): AdoptionRow[] {
       rev: r.design?.rev,
       note: r.design?.note,
       aliasOf,
+      inApp: true,
     }
   })
   const covered = new Set([...rows.map((r) => r.path), ...[...byTarget.values()].flat()])
@@ -123,8 +133,9 @@ export function adoptionRows(): AdoptionRow[] {
       path: d.path,
       label: d.label,
       crumbs: d.crumbs,
-      state: 'unbuilt',
+      state: d.designed ? 'unbuilt' : 'backlog',
       design: d,
+      inApp: false,
     })
   }
   return rows
@@ -134,13 +145,15 @@ export interface AdoptionCounts {
   /**
    * The denominator: design routes that have a prototype.
    *
-   * Not the app's page count — 43 of the design's routes have no app page at
-   * all, so counting against the app would read near 100% with half the design
-   * unbuilt. And not all 89 either: a route the design resolves to
-   * `_Shell Stub` has nothing to adopt, and the design calls those its own
-   * backlog.
+   * Not the app's page count — dozens of the design's prototypes have no app
+   * page at all (the `unbuilt` list), so counting against the app would read
+   * near 100% with much of the design unbuilt. And not every design route
+   * either: a route the design resolves to `_Shell Stub` has nothing to adopt
+   * (the `backlog` list).
    */
   designed: number
+  /** Design routes that fall to `_Shell Stub` — the design's own backlog. */
+  stubs: number
   aligned: number
   byState: Record<AdoptionState, number>
 }
@@ -148,15 +161,19 @@ export interface AdoptionCounts {
 export function adoptionCounts(rows: readonly AdoptionRow[]): AdoptionCounts {
   const byState = {
     aligned: 0,
+    reviewing: 0,
     stale: 0,
     pending: 0,
     moving: 0,
     staging: 0,
     unbuilt: 0,
+    backlog: 0,
   } as Record<AdoptionState, number>
   for (const r of rows) byState[r.state] += 1
+  const designed = DESIGN_ROUTES.filter((d) => d.designed).length
   return {
-    designed: DESIGN_ROUTES.filter((d) => d.designed).length,
+    designed,
+    stubs: DESIGN_ROUTES.length - designed,
     aligned: byState.aligned,
     byState,
   }
@@ -165,6 +182,11 @@ export function adoptionCounts(rows: readonly AdoptionRow[]): AdoptionCounts {
 export const ADOPTION_SECTIONS: { state: AdoptionState; title: string; blurb: string }[] = [
   { state: 'aligned', title: 'In place', blurb: 'Walked against the design and matching.' },
   {
+    state: 'reviewing',
+    title: 'To confirm',
+    blurb: 'Walked and built against the design. In place once the Owner has looked.',
+  },
+  {
     state: 'stale',
     title: 'Walked, then the design moved',
     blurb: 'Aligned against an older rev. Worth a second look, not a rebuild.',
@@ -172,12 +194,12 @@ export const ADOPTION_SECTIONS: { state: AdoptionState; title: string; blurb: st
   {
     state: 'pending',
     title: 'To walk',
-    blurb: 'The design has this page and the app has it. Nobody has compared them yet.',
+    blurb: 'The design has a prototype for this page and the app has it. Nobody has compared them yet.',
   },
   {
     state: 'unbuilt',
     title: 'To build',
-    blurb: 'The design has the page, the app does not.',
+    blurb: 'The design has a prototype, the app has no page.',
   },
   {
     state: 'moving',
@@ -188,6 +210,12 @@ export const ADOPTION_SECTIONS: { state: AdoptionState; title: string; blurb: st
     state: 'staging',
     title: 'To ask',
     blurb: 'No home found in the design. Absent from the design is not retired — ask before moving.',
+  },
+  {
+    state: 'backlog',
+    title: 'The design’s backlog',
+    blurb:
+      'In the design’s menu with no prototype behind it yet. Nothing to walk or build against — the design’s work, not a “to” list here.',
   },
 ]
 

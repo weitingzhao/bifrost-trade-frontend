@@ -103,7 +103,16 @@ export const ROUTES: readonly RouteEntry[] = [
 
   // ── Research · Autopilot ───────────────────────────────────────────────
   { path: '/research/loop/harness', label: 'Autopilot', crumbs: RESEARCH },
-  { path: '/research/loop/decisions', label: 'Decision Inbox', crumbs: AUTOPILOT },
+  {
+    path: '/research/loop/decisions',
+    label: 'Decision Inbox',
+    crumbs: AUTOPILOT,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-12.6',
+      note: 'Walked 2026-09-13 against Research Autopilot Decisions.dc.html (OLD) and the design response of that day; digest actions, kind colour and the approval strip changed 2026-09-14. Owner to look before aligned.',
+    },
+  },
   { path: '/research/loop/hypotheses', label: 'Hypothesis Board', crumbs: AUTOPILOT },
   { path: '/research/loop/candidates', label: 'Candidate Pool', crumbs: AUTOPILOT },
   { path: '/research/loop/objectives/:objectiveId', label: 'Objective', crumbs: AUTOPILOT },
@@ -144,9 +153,12 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     scope: 'underlying',
+    // rev is the package's own label at the walk; the design did not bump it
+    // for the 2026-09-13 and 2026-09-14 rounds.
     design: {
-      state: 'moving',
-      note: 'C1 判定表已过；C1-a–d 施工（legs / since-snapshot / Plan this / Structure）。aligned 等 Owner 过目。',
+      state: 'reviewing',
+      rev: '2026-09-12.6',
+      note: 'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner to look before aligned.',
     },
   },
 
@@ -202,11 +214,9 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/trade/plans',
     label: 'Plans',
     crumbs: TRADE,
+    // A thin receiver for ＋ Plan this (C1-c). The design keeps this page, so it
+    // is not moving; the Trade Plans desk itself is not walked, so it reads pending.
     symbolScope: true,
-    design: {
-      state: 'moving',
-      note: 'C1-c thin receiver for Plan-this handoffs. Full Trade Plans.dc.html desk still ahead.',
-    },
   },
 
   // ── Strategy ───────────────────────────────────────────────────────────

@@ -9,9 +9,13 @@
  * fails until it says which. See `adoption.ts` for the full state list.
  */
 export interface DesignTag {
-  state: 'aligned' | 'moving' | 'staging'
+  state: 'aligned' | 'reviewing' | 'moving' | 'staging'
   /** The design rev walked against — an `aligned` route on an older rev reads as stale. */
   rev?: string
-  /** `moving`: where it goes, and what must exist first. `staging`: the open question. */
+  /**
+   * `moving`: where it goes, and what must exist first. `staging`: the open
+   * question. `reviewing`: what was walked and built, and when — it stays there
+   * until the Owner has looked.
+   */
   note?: string
 }

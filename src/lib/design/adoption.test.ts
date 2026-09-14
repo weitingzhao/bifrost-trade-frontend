@@ -12,16 +12,17 @@ describe('design adoption', () => {
     // so a new page added without a thought lands in "to ask" — which is the
     // right default, but only if someone reads it. This fails instead: say
     // where it goes (`moving`) or that nobody knows yet (`staging`), in the
-    // entry, with a note.
+    // entry, with a note. A page waiting for the Owner's look says what was
+    // walked and when.
     const unexplained = rows
-      .filter((r) => r.state === 'staging' && !r.note)
+      .filter((r) => (r.state === 'staging' || r.state === 'reviewing') && !r.note)
       .map((r) => r.path)
-    expect(unexplained, 'staging without a note').toEqual([])
+    expect(unexplained, 'staging or reviewing without a note').toEqual([])
   })
 
   it('counts against the design, not against itself', () => {
-    // 43 design routes have no page here. A denominator taken from the app
-    // would read near complete while most of the design is unbuilt.
+    // Dozens of design prototypes have no page here. A denominator taken from
+    // the app would read near complete while most of the design is unbuilt.
     expect(counts.designed).toBe(DESIGN_ROUTES.filter((d) => d.designed).length)
     expect(counts.designed).toBeLessThan(PAGE_ROUTES.length + counts.byState.unbuilt)
   })
@@ -54,16 +55,35 @@ describe('design adoption', () => {
     expect(rows.map((r) => r.path)).not.toContain('/docs/design-adoption')
   })
 
-  it('starts with nothing walked', () => {
-    // Replace this as pages are walked — it is the one number the Owner reads.
+  it('keeps stubs out of the walk and the build', () => {
+    // A stub has no prototype: nothing to compare a page against, nothing to
+    // build from. Counted under "to walk" and "to build", those lists read 40
+    // and 41 against a denominator they could never reach.
+    for (const r of rows) {
+      if (r.aliasOf) continue
+      if (r.state === 'pending' || r.state === 'unbuilt') {
+        expect(r.design?.designed, r.path).toBe(true)
+      }
+      if (r.state === 'backlog') expect(r.design?.designed, r.path).toBe(false)
+    }
+    expect(counts.stubs).toBe(DESIGN_ROUTES.length - counts.designed)
+    expect(counts.byState.backlog).toBeLessThanOrEqual(counts.stubs)
+  })
+
+  it('reads the walk as it stands', () => {
+    // Replace these as pages are walked — they are the numbers the Owner reads.
     expect(counts.aligned + counts.byState.stale).toBe(0)
-    // 11: the ten the design dissolves elsewhere, plus Backtest, which Docs Index
-    // marks LAB — handed to Lab, the Trade original deleted in the design.
-    expect(counts.byState.moving).toBe(12)
-    // Down from 13: /research/playbook left PAGE_ROUTES (B3 redirect onto
-    // /trade/playbook). That page is a design stub, so it derives `pending`.
-    // Staging unchanged: /research/daily-brief entered the design registry
-    // (89 routes) on 2026-09-14; /trade/plans and /research/symbol are moving.
+    // Walked and built, waiting for the Owner's look (2026-09-14).
+    expect(
+      rows
+        .filter((r) => r.state === 'reviewing')
+        .map((r) => r.path)
+        .sort(),
+    ).toEqual(['/research/loop/decisions', '/research/symbol'])
+    // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
+    // dissolves elsewhere, plus Backtest, handed to Lab. Symbol and Plans left:
+    // the design keeps both pages.
+    expect(counts.byState.moving).toBe(10)
     expect(counts.byState.staging).toBe(2)
   })
 })

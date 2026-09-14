@@ -12,6 +12,7 @@ import type { AiDraft } from '@/api/researchDrafts'
 import { isHitRateWarnActive, isPersonaDissentActive } from '@/lib/harness/harnessDraftHelpers'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
+import { DecisionDraftBody } from '@/components/research/harness/DecisionDraftBody'
 import { cn } from '@/lib/utils'
 
 /**
@@ -226,6 +227,10 @@ export function DraftCard({
         <DailyDigestBody payload={draft.payload} />
       ) : draft.kind === 'policy_suggestion' ? (
         <PolicySuggestionBody payload={draft.payload} />
+      ) : draft.kind === 'decision_draft' ? (
+        // Its rationale used to be the whole card: the verdict, the stop and
+        // what would prove it wrong were in the payload and never shown.
+        <DecisionDraftBody payload={draft.payload} />
       ) : prose !== null ? (
         // Briefings arrive as markdown and were dumped raw, so `**PAYS pivot —
         // SEPA A**` and `## Today's Discoveries` rendered with their syntax

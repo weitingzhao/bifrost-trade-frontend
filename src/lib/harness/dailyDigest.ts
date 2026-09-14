@@ -3,6 +3,8 @@
  * one post per trading day with the candidate batches folded beneath it.
  */
 import type { AiDraft } from '@/api/researchDrafts'
+import { rowLamp } from '@/lib/harness/runLamp'
+import type { LampTone } from '@/lib/lampTone'
 
 export const DIGEST_KIND = 'daily_digest'
 
@@ -155,4 +157,71 @@ export function digestResolutions(payload: Record<string, unknown>): DigestResol
       },
     ]
   })
+}
+
+export interface DigestLamp {
+  label: string
+  lamp: LampTone
+  why: string
+}
+
+/**
+ * The digest's four lamps (Design, Copilot Desk response ④), each read from the
+ * digest itself — a past digest shows what was true when it was written, not
+ * what is true now.
+ *
+ * - book: `holdings_status` applied is green; anything else is grey.
+ * - lenses: the worst freshness among readings that are present (any stale is
+ *   amber). Missing readings are coverage: they are counted in the label, not
+ *   coloured. No reading at all is grey.
+ * - loop: the runs the digest recorded, lit the way Ran today lights runs. No
+ *   run since the previous digest is grey.
+ * - events: no source yet, so grey — never green until there is one.
+ */
+export function digestLamps(payload: Record<string, unknown>): DigestLamp[] {
+  const holdings = str(payload.holdings_status)
+  const book: DigestLamp =
+    holdings === 'applied'
+      ? { label: 'book', lamp: 'green', why: 'Holdings were applied to the digest' }
+      : {
+          label: 'book',
+          lamp: 'gray',
+          why: holdings ? `Holdings ${holdings} — the names are the Loop's candidates` : 'Holdings status not reported',
+        }
+
+  const rows = digestExhibits(payload)
+  const total = rows.length * digestLenses(rows).length
+  const present = rows.flatMap((r) => r.readings).filter((x) => x.freshness === 'fresh' || x.freshness === 'stale')
+  const stale = present.filter((x) => x.freshness === 'stale').length
+  const lenses: DigestLamp = {
+    label: `lenses ${present.length}/${total}`,
+    lamp: present.length === 0 ? 'gray' : stale > 0 ? 'yellow' : 'green',
+    why:
+      present.length === 0
+        ? 'No lens reading behind this digest'
+        : `${present.length} of ${total} readings present, ${stale > 0 ? `${stale} stale` : 'all fresh'} — missing ones are coverage, counted rather than coloured`,
+  }
+
+  const loopBlock =
+    payload.loop && typeof payload.loop === 'object' && !Array.isArray(payload.loop)
+      ? (payload.loop as Record<string, unknown>)
+      : {}
+  const runs = records(loopBlock.runs).flatMap((r) => {
+    const id = str(r.id) ?? str(r.run_id)
+    return id ? [{ id, status: str(r.status) ?? 'error' }] : []
+  })
+  const loop: DigestLamp =
+    runs.length === 0
+      ? { label: 'loop', lamp: 'gray', why: 'No loop run since the previous digest' }
+      : (() => {
+          const { lamp, why } = rowLamp(
+            runs.map((r) => r.id),
+            new Map(runs.map((r) => [r.id, r.status])),
+          )
+          return { label: 'loop', lamp, why: `${why} when the digest was written` }
+        })()
+
+  const events: DigestLamp = { label: 'events', lamp: 'gray', why: 'No source for events yet — grey until there is one' }
+
+  return [book, lenses, loop, events]
 }

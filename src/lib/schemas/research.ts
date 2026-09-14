@@ -537,3 +537,21 @@ export const ResearchDocSchema = z
     path: z.string(),
   })
   .passthrough()
+
+/** GET /research/orchestration/status — Dagster schedules: on or not, and how the last run ended. */
+export const OrchestrationStatusSchema = z
+  .object({
+    schedules: z.array(
+      z
+        .object({
+          name: z.string(),
+          job_name: z.string(),
+          status: z.string(),
+          last_run_status: z.string().nullable(),
+          last_run_ended_at: z.string().nullable(),
+          last_run_id: z.string().nullable(),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough()

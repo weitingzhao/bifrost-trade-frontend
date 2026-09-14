@@ -1,5 +1,4 @@
 import type { AiDraft } from '@/api/researchDrafts'
-import type { LampTone } from '@/lib/lampTone'
 
 /**
  * Which scheduled agents wrote today, and what they wrote.
@@ -137,53 +136,6 @@ export function rowCost(runIds: readonly string[], costByRun: ReadonlyMap<string
   }
 }
 
-/** One run's status as the page knows it: the run's own word, still fetching, no longer kept, or failed to load. */
-export type RunStatusRead = string | 'loading' | 'gone' | 'error'
-
-const RUN_STATUS_WORD: Record<string, string> = {
-  running: 'still running',
-  awaiting_approval: 'awaiting approval',
-  cancelled: 'cancelled',
-  failed: 'failed',
-  completed: 'completed',
-}
-
-function tallyWords(statuses: readonly string[]): string {
-  const n = new Map<string, number>()
-  for (const s of statuses) n.set(s, (n.get(s) ?? 0) + 1)
-  return [...n.entries()].map(([s, k]) => `${k} ${RUN_STATUS_WORD[s] ?? s}`).join(' · ')
-}
-
-/**
- * A row's lamp, from the runs its drafts came from.
- *
- * Red is a run that failed — a fault. Amber is a run that has not finished its
- * business: still running, waiting on you, or cancelled part-way. Green is every
- * linked run completed, or a row that links no run at all: it wrote today, and
- * agents outside the objective runs record nothing more to check. Grey is not
- * knowing — still loading, or none of its runs readable, or a status this page
- * does not recognise — because not knowing is not a fault.
- */
-export function rowLamp(
-  runIds: readonly string[],
-  statusByRun: ReadonlyMap<string, RunStatusRead>,
-): { lamp: LampTone; why: string } {
-  if (runIds.length === 0) {
-    return { lamp: 'green', why: 'Wrote today. It links no objective run, so there is no run status to check.' }
-  }
-  const statuses = runIds.map((id) => statusByRun.get(id) ?? 'loading')
-  if (statuses.includes('loading')) return { lamp: 'gray', why: 'Reading run status…' }
-  const known = statuses.filter((s) => s !== 'gone' && s !== 'error')
-  if (known.length === 0) {
-    return { lamp: 'gray', why: `None of its ${runIds.length} run${runIds.length === 1 ? '' : 's'} could be read.` }
-  }
-  const why = tallyWords(known) + (known.length < statuses.length ? ` · ${statuses.length - known.length} unreadable` : '')
-  if (known.includes('failed')) return { lamp: 'red', why }
-  if (known.some((s) => s === 'running' || s === 'awaiting_approval' || s === 'cancelled')) return { lamp: 'yellow', why }
-  if (known.every((s) => s === 'completed')) return { lamp: 'green', why }
-  return { lamp: 'gray', why: `${why} — a status this page does not recognise` }
-}
-
 /** The schedule the harness CronJob picks up (`k8s/engines/cronjob-harness.yaml`, `--schedule=daily_open`). */
 export const UNATTENDED_SCHEDULE = 'daily_open'
 
@@ -220,5 +172,55 @@ export function nyWhen(at: Date): string {
   }).formatToParts(at)
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
   return `${get('weekday')} ${get('day')} ${get('month')} ${get('hour')}:${get('minute')} ET`
+}
+
+/**
+ * The Dagster schedules behind the agents Ran today lists, keyed by the
+ * `generated_by` each writes as (DEV drafts, 2026-09-13). Morning Prep has no
+ * entry: it runs inside the digest schedule now, and its manual button stays in
+ * Run one now (Design, Copilot Desk response ⑦).
+ */
+export const AGENT_SCHEDULES: readonly { schedule: string; agent: string; label: string }[] = [
+  { schedule: 'research_daily_digest_schedule', agent: 'digest_agent', label: 'Daily digest' },
+  { schedule: 'research_eod_review_schedule', agent: 'eod_agent', label: 'EOD review' },
+  { schedule: 'research_weekly_policy_review_schedule', agent: 'weekly_policy_review', label: 'Weekly policy review' },
+]
+
+export interface ScheduleEntry {
+  name: string
+  status: string
+  last_run_status?: string | null
+  last_run_ended_at?: string | null
+}
+
+export interface ScheduledRow {
+  schedule: string
+  label: string
+  state: 'on' | 'off' | 'unknown'
+  lastAt: string | null
+  lastFailed: boolean
+}
+
+/**
+ * A scheduled row for each agent that has not written today: whether its
+ * schedule is on and when it last ran — both facts — and no next time, because
+ * Research does not report one. An agent that already wrote is in the list
+ * above; a schedule missing from the status is unknown, not off.
+ */
+export function scheduledRows(schedules: readonly ScheduleEntry[], wroteToday: ReadonlySet<string>): ScheduledRow[] {
+  return AGENT_SCHEDULES.flatMap(({ schedule, agent, label }): ScheduledRow[] => {
+    if (wroteToday.has(agent)) return []
+    const s = schedules.find((x) => x.name === schedule)
+    if (!s) return [{ schedule, label, state: 'unknown', lastAt: null, lastFailed: false }]
+    return [
+      {
+        schedule,
+        label,
+        state: s.status === 'RUNNING' ? 'on' : s.status === 'STOPPED' ? 'off' : 'unknown',
+        lastAt: s.last_run_ended_at ?? null,
+        lastFailed: s.last_run_status === 'FAILURE',
+      },
+    ]
+  })
 }
 

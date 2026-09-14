@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AiDraft } from '@/api/researchDrafts'
-import { digestBatches, digestDissents, digestExhibits, digestFirst, digestLenses, digestResolutions, isDailyDigest } from './dailyDigest'
+import { digestBatches, digestDissents, digestExhibits, digestFirst, digestLamps, digestLenses, digestResolutions, isDailyDigest } from './dailyDigest'
 
 const draft = (kind: string, created_at: string) => ({ kind, created_at }) as Pick<AiDraft, 'kind' | 'created_at'>
 
@@ -52,5 +52,44 @@ describe('daily digest (D2)', () => {
     expect(rows[1].readings[1]).toEqual({ lens: 'gex_regime', freshness: 'missing', band: null, means: null, as_of: null })
     expect(digestLenses(rows)).toEqual(['vrp', 'iv_rank', 'gex_regime'])
     expect(digestExhibits({ exhibits: [] })).toEqual([])
+  })
+
+  it('lights its four lamps from what the digest recorded', () => {
+    const payload = {
+      holdings_status: 'applied',
+      symbols: ['FN', 'NVDA'],
+      exhibits: {
+        FN: [{ lens: 'iv_rank', freshness: 'fresh' }, { lens: 'vrp', freshness: 'missing' }],
+        NVDA: [{ lens: 'iv_rank', freshness: 'fresh' }, { lens: 'vrp', freshness: 'fresh' }],
+      },
+      // 2026-09-09 on DEV: the digest recorded one run, awaiting approval.
+      loop: { runs: [{ id: 'run_1', objective_id: 'obj', status: 'awaiting_approval' }] },
+    }
+    // Missing is counted in the label, not coloured: 3 of 4 present, all fresh, so green.
+    expect(digestLamps(payload).map((l) => [l.label, l.lamp])).toEqual([
+      ['book', 'green'],
+      ['lenses 3/4', 'green'],
+      ['loop', 'yellow'],
+      ['events', 'gray'],
+    ])
+  })
+
+  it('goes amber on a stale reading, and grey where it cannot say', () => {
+    const stale = digestLamps({
+      holdings_status: 'unavailable',
+      symbols: ['FN'],
+      exhibits: { FN: [{ lens: 'iv_rank', freshness: 'stale' }] },
+      loop: { runs: [] },
+    })
+    expect(stale.map((l) => [l.label, l.lamp])).toEqual([
+      ['book', 'gray'],
+      ['lenses 1/1', 'yellow'],
+      ['loop', 'gray'],
+      ['events', 'gray'],
+    ])
+    expect(digestLamps({ symbols: ['FN'], exhibits: { FN: [{ lens: 'vrp', freshness: 'missing' }] } })[1]).toMatchObject({
+      label: 'lenses 0/1',
+      lamp: 'gray',
+    })
   })
 })

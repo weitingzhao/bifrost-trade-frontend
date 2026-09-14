@@ -9,7 +9,7 @@
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Zap } from 'lucide-react'
 import { EmptyState } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
@@ -29,6 +29,7 @@ import { useActiveObjectives, useAutopilotStanding, useAwaitingRuns, useCurateRu
 import { fmtIsoTs } from '@/lib/format'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { fmtUsd, runSpend } from '@/lib/harness/runSpend'
+import { rowLamp, type RunStatusRead } from '@/lib/harness/runLamp'
 import {
   agentsThatWroteOn,
   humanKind,
@@ -36,10 +37,10 @@ import {
   nyWhen,
   objectiveSchedule,
   rowCost,
-  rowLamp,
+  scheduledRows,
   type RunCost,
-  type RunStatusRead,
 } from '@/pages/research/seats/agentActivity'
+import { fetchOrchestrationStatus } from '@/api/research/orchestration'
 
 /**
  * Drafts are the record: the agents already write `generated_by`, `created_at`
@@ -155,24 +156,34 @@ export function RanToday() {
             : 'A draft page came back full, so these counts are a floor.'}
         </p>
       ) : null}
-      <NextUnattended />
+      <Scheduled wroteToday={isLoading ? null : new Set(rows.map((r) => r.agent))} />
       <RunOneNow />
     </div>
   )
 }
 
 /**
- * The design's grey "scheduled" rows, for the one next run the page can know:
- * the Autopilot's. The digest (which Morning Prep folded into) and the EOD
- * review run on Dagster schedules; `/research/orchestration/status` reports
- * whether each is on and when it last ran, but not when it next fires, so they
- * get no row rather than a guessed time.
+ * The design's grey "scheduled" rows (Copilot Desk response ⑦).
+ *
+ * The Autopilot's objectives get a next run time — the one the page can know.
+ * The digest (Morning Prep folded into it), the EOD review and the weekly policy
+ * review run on Dagster schedules, and `/research/orchestration/status` says
+ * whether each is on and when it last ran but not when it next fires. So their
+ * rows read `schedule on · last Fri 11 Sep 07:30 ET`, and become a time when
+ * Research reports one. Red only when that last run failed.
  */
-function NextUnattended() {
+function Scheduled({ wroteToday }: { wroteToday: ReadonlySet<string> | null }) {
   const standing = useAutopilotStanding()
   const objectivesQ = useActiveObjectives()
+  const orchestration = useQuery({
+    queryKey: ['research', 'orchestration', 'status'],
+    queryFn: fetchOrchestrationStatus,
+    staleTime: 5 * 60_000,
+  })
   const rows = objectiveSchedule(objectivesQ.data?.items ?? [], standing.data?.next_run_at ?? null)
-  if (rows.length === 0) return null
+  // Until today's drafts are read, every agent would look as if it had not run.
+  const schedules = wroteToday && orchestration.data ? scheduledRows(orchestration.data.schedules, wroteToday) : []
+  if (rows.length === 0 && schedules.length === 0 && !orchestration.isError) return null
   return (
     <ul className="space-y-1 px-3 text-dense-meta text-muted-foreground">
       {rows.map((o) => (
@@ -193,6 +204,29 @@ function NextUnattended() {
           </span>
         </li>
       ))}
+      {schedules.map((s) => (
+        <li key={s.schedule} className="flex items-center gap-2">
+          <StatusLamp
+            lamp={s.lastFailed ? 'red' : 'gray'}
+            variant="dot"
+            title={s.lastFailed ? 'Its last run failed' : 'Scheduled, not run yet today'}
+          />
+          <span className="min-w-0 truncate">{s.label}</span>
+          <span
+            className="ml-auto shrink-0 font-mono tabular-nums"
+            title={`Dagster ${s.schedule}. Research reports whether it is on and when it last ran — not when it next fires.`}
+          >
+            schedule {s.state} ·{' '}
+            {s.lastAt ? `last ${s.lastFailed ? 'failed ' : ''}${nyWhen(new Date(s.lastAt))}` : 'no run recorded'}
+          </span>
+        </li>
+      ))}
+      {orchestration.isError ? (
+        <li className="flex items-center gap-2">
+          <StatusLamp lamp="gray" variant="dot" title="Schedule status could not be read" />
+          <span>Digest and EOD schedules could not be read</span>
+        </li>
+      ) : null}
     </ul>
   )
 }

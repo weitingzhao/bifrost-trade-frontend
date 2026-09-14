@@ -6,9 +6,8 @@ import {
   nyWhen,
   objectiveSchedule,
   rowCost,
-  rowLamp,
+  scheduledRows,
   type RunCost,
-  type RunStatusRead,
 } from './agentActivity'
 import type { AiDraft } from '@/api/researchDrafts'
 
@@ -170,32 +169,6 @@ describe('rowCost', () => {
   })
 })
 
-describe('rowLamp', () => {
-  const statuses = (entries: [string, RunStatusRead][]) => new Map(entries)
-
-  it('is green for a row that wrote and links no run', () => {
-    expect(rowLamp([], statuses([])).lamp).toBe('green')
-  })
-
-  it('is red only for a failed run, amber for one not finished, green when all completed', () => {
-    expect(rowLamp(['a', 'b'], statuses([['a', 'completed'], ['b', 'failed']])).lamp).toBe('red')
-    // 2026-09-11 on DEV: the harness run finished and is waiting on the Owner.
-    expect(rowLamp(['a'], statuses([['a', 'awaiting_approval']]))).toEqual({ lamp: 'yellow', why: '1 awaiting approval' })
-    expect(rowLamp(['a', 'b'], statuses([['a', 'completed'], ['b', 'completed']]))).toEqual({ lamp: 'green', why: '2 completed' })
-  })
-
-  it('is grey when it does not know — loading, unreadable, or a word it has not seen', () => {
-    expect(rowLamp(['a'], statuses([])).lamp).toBe('gray')
-    expect(rowLamp(['a', 'b'], statuses([['a', 'gone'], ['b', 'error']])).lamp).toBe('gray')
-    expect(rowLamp(['a'], statuses([['a', 'paused']])).lamp).toBe('gray')
-    // One unreadable run does not hide what the readable one says.
-    expect(rowLamp(['a', 'b'], statuses([['a', 'running'], ['b', 'gone']]))).toEqual({
-      lamp: 'yellow',
-      why: '1 still running · 1 unreadable',
-    })
-  })
-})
-
 describe('objectiveSchedule', () => {
   it('gives the next unattended run only to objectives the CronJob selects', () => {
     const next = '2026-09-14T13:30:00+00:00'
@@ -215,6 +188,33 @@ describe('objectiveSchedule', () => {
 
   it('words the time in ET', () => {
     expect(nyWhen(new Date('2026-09-14T13:30:00Z'))).toBe('Mon 14 Sep 09:30 ET')
+  })
+})
+
+describe('scheduledRows', () => {
+  it('rows each scheduled agent that has not written today, with its schedule and last run as facts', () => {
+    const rows = scheduledRows(
+      [
+        { name: 'research_daily_digest_schedule', status: 'RUNNING', last_run_status: 'SUCCESS', last_run_ended_at: '2026-09-11T11:30:22Z' },
+        { name: 'research_eod_review_schedule', status: 'RUNNING', last_run_status: 'FAILURE', last_run_ended_at: '2026-09-11T21:30:43Z' },
+        { name: 'research_weekly_policy_review_schedule', status: 'RUNNING', last_run_status: 'SUCCESS', last_run_ended_at: '2026-09-13T22:00:30Z' },
+      ],
+      // DEV 2026-09-13: only the weekly policy review wrote today.
+      new Set(['weekly_policy_review']),
+    )
+    expect(rows).toEqual([
+      { schedule: 'research_daily_digest_schedule', label: 'Daily digest', state: 'on', lastAt: '2026-09-11T11:30:22Z', lastFailed: false },
+      { schedule: 'research_eod_review_schedule', label: 'EOD review', state: 'on', lastAt: '2026-09-11T21:30:43Z', lastFailed: true },
+    ])
+  })
+
+  it('says unknown, not off, for a schedule the status does not list', () => {
+    expect(scheduledRows([{ name: 'research_eod_review_schedule', status: 'STOPPED' }], new Set(['digest_agent', 'weekly_policy_review']))).toEqual([
+      { schedule: 'research_eod_review_schedule', label: 'EOD review', state: 'off', lastAt: null, lastFailed: false },
+    ])
+    expect(scheduledRows([], new Set(['eod_agent', 'weekly_policy_review']))).toEqual([
+      { schedule: 'research_daily_digest_schedule', label: 'Daily digest', state: 'unknown', lastAt: null, lastFailed: false },
+    ])
   })
 })
 

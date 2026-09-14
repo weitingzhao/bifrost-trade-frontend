@@ -10,7 +10,8 @@ import { DenseTag } from '@/components/data-display'
 import { DigestReadings } from '@/components/cockpit/DigestReadings'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
-import { digestBatches, digestDissents, digestExhibits, digestResolutions } from '@/lib/harness/dailyDigest'
+import { StatusLamp } from '@/components/StatusLamp'
+import { digestBatches, digestDissents, digestExhibits, digestLamps, digestResolutions } from '@/lib/harness/dailyDigest'
 
 export function DailyDigestBody({
   payload,
@@ -30,6 +31,14 @@ export function DailyDigestBody({
 
   return (
     <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-3 text-dense-meta text-muted-foreground">
+        {digestLamps(payload).map((l) => (
+          <span key={l.label} className="inline-flex items-center gap-1.5" title={l.why}>
+            <StatusLamp lamp={l.lamp} variant="dot" title={l.why} />
+            <span className="font-mono">{l.label}</span>
+          </span>
+        ))}
+      </div>
       <div className="flex flex-wrap items-center gap-1.5">
         <DenseTag variant="neutral" size="cell">
           {batches.length} batch{batches.length === 1 ? '' : 'es'}

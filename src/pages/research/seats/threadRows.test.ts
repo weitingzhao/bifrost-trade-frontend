@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PersistedCopilotFrame } from '@/api/researchCopilotSessions'
-import { threadInFilter, threadPersona, threadTurns, threadWriteCount } from './threadRows'
+import { threadCostUsd, threadInFilter, threadPersona, threadTurns, threadWriteCount } from './threadRows'
 
 const frame = (agent?: string, kind = 'text'): PersistedCopilotFrame => ({ kind, role: agent ? 'assistant' : 'user', agent })
 
@@ -27,6 +27,18 @@ describe('threadTurns', () => {
     const frames = [frame(), frame('triage', 'tool_call'), { kind: 'tool_result' }, frame('triage'), frame(), frame('portfolio', 'handoff')]
     expect(threadTurns(frames)).toBe(2)
     expect(threadTurns([])).toBe(0)
+  })
+
+  it('prefers the server turns field when present', () => {
+    expect(threadTurns([frame(), frame()], { turns: 7 })).toBe(7)
+  })
+})
+
+describe('threadCostUsd', () => {
+  it('hides zero and missing spend as null', () => {
+    expect(threadCostUsd({})).toBeNull()
+    expect(threadCostUsd({ cost_usd: 0 })).toBeNull()
+    expect(threadCostUsd({ cost_usd: 0.0042 })).toBe(0.0042)
   })
 })
 

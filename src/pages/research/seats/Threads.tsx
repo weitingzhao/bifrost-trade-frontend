@@ -36,12 +36,14 @@ import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { nyDate } from '@/pages/research/seats/agentActivity'
 import {
   THREAD_FILTERS,
+  threadCostUsd,
   threadInFilter,
   threadPersona,
   threadTurns,
   threadWriteCount,
   type ThreadFilter,
 } from '@/pages/research/seats/threadRows'
+import { fmtUsd } from '@/lib/harness/runSpend'
 
 const BridgeDialog = lazy(() =>
   import('@/components/cockpit/BridgeDialog').then((m) => ({ default: m.BridgeDialog })),
@@ -157,6 +159,9 @@ export function Threads() {
               <DenseTableHead className="text-right" title="ai_action_log rows linked to this session">
                 Writes
               </DenseTableHead>
+              <DenseTableHead className="text-right" title="Sum of chat_turn cost_usd for this session">
+                Cost
+              </DenseTableHead>
               <DenseTableHead>Last</DenseTableHead>
               <DenseTableHead />
             </DenseTableHeadRow>
@@ -167,6 +172,7 @@ export function Threads() {
               const persona = detail?.data ? threadPersona(frames) : undefined
               const title = row.title || '(untitled)'
               const writes = threadWriteCount(row)
+              const cost = threadCostUsd(row)
               return (
                 <DenseTableRow key={row.id}>
                   <DenseTableCell className="max-w-[18rem]">
@@ -217,10 +223,13 @@ export function Threads() {
                     )}
                   </DenseTableCell>
                   <DenseTableCell className="text-right font-mono tabular-nums">
-                    {detail?.data ? threadTurns(frames) : '—'}
+                    {typeof row.turns === 'number' ? row.turns : detail?.data ? threadTurns(frames, row) : '—'}
                   </DenseTableCell>
                   <DenseTableCell className="text-right font-mono tabular-nums text-muted-foreground">
                     {writes > 0 ? writes : '—'}
+                  </DenseTableCell>
+                  <DenseTableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                    {cost != null ? fmtUsd(cost) : '—'}
                   </DenseTableCell>
                   <DenseTableCell className="font-mono text-dense-meta tabular-nums text-muted-foreground">
                     {fmtIsoTs(row.updated_at ?? null)}

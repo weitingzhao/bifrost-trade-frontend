@@ -11,7 +11,7 @@
  *   `origin_label` / `origin_symbol` on the session (D1). Old threads stay `—`.
  * - Writes: `ai_action_log` carries `session_id`, but no read endpoint lists it
  *   until D2.
- * - Cost: chat spend was process memory until D3.
+ * - Cost: ``chat_turn`` rows on ``ai_action_log`` → ``cost_usd`` (D3).
  * - Persona: assistant frames name the `agent` that spoke.
  *
  * So this file does Persona and the filters that need nothing else.
@@ -32,11 +32,14 @@ export function threadPersona(frames: readonly PersistedCopilotFrame[]): string[
 }
 
 /**
- * How many times the reader asked. `message_count` on the list counts every
- * frame — tool calls, tool results, handoffs — so a 41-frame run review read
- * as 41 turns. A turn is a question: a user text frame.
+ * How many times the reader asked. Prefer server ``turns`` (D5); fall back to
+ * counting user text frames when an older API omits the field.
  */
-export function threadTurns(frames: readonly PersistedCopilotFrame[]): number {
+export function threadTurns(
+  frames: readonly PersistedCopilotFrame[],
+  row?: Pick<CopilotSessionSummary, 'turns'>,
+): number {
+  if (row && typeof row.turns === 'number' && Number.isFinite(row.turns)) return row.turns
   return frames.filter((f) => f.role === 'user' && (f.kind ?? 'text') === 'text').length
 }
 
@@ -54,6 +57,13 @@ export function threadWriteCount(row: Pick<CopilotSessionSummary, 'writes'>): nu
   const w = row.writes
   if (!w) return 0
   return Object.values(w).reduce((a, n) => a + (Number.isFinite(n) ? n : 0), 0)
+}
+
+/** Chat spend for a thread; null when the ledger has no chat_turn rows yet. */
+export function threadCostUsd(row: Pick<CopilotSessionSummary, 'cost_usd'>): number | null {
+  const c = row.cost_usd
+  if (c == null || !Number.isFinite(c) || c <= 0) return null
+  return c
 }
 
 /** Whether a thread belongs under a filter. "Today" is the ET trading day, as everywhere on the Desk. */

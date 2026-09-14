@@ -11,12 +11,16 @@ export type CopilotSessionSummary = {
   model?: string
   updated_at?: string
   message_count?: number
+  /** User questions only (D5). Prefer over counting frames client-side. */
+  turns?: number
   pinned?: boolean
   group_name?: string | null
   origin_page?: string | null
   origin_label?: string | null
   origin_symbol?: string | null
   writes?: Record<string, number>
+  /** Sum of chat_turn cost_usd for this session (D3). Missing / null → show —. */
+  cost_usd?: number | null
 }
 
 export type CopilotSessionDetail = {

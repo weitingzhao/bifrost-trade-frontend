@@ -5,6 +5,7 @@ import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { inspectorShell } from './rightInspectorUi'
 import { inspectorDocksAt, INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX } from './inspectorDock'
 import { registerInspectorEscape } from '@/lib/cockpit/inspectorEscape'
+import { copilotDockPushes, useCopilotDock } from '@/hooks/useCopilotDock'
 import { useInspectorWide } from '@/hooks/useInspectorWide'
 import { useInspectorSlot } from './inspectorSlot'
 
@@ -37,6 +38,7 @@ export function RightInspectorShell({
   const slot = useInspectorSlot()
   const viewport = useWindowWidth()
   const { wide } = useInspectorWide()
+  const copilot = useCopilotDock()
 
   useEffect(() => {
     if (!open || !onClose) return
@@ -46,7 +48,10 @@ export function RightInspectorShell({
   if (!open) return null
 
   const width = panelWidthPx ?? (wide ? INSPECTOR_WIDTH_WIDE_PX : INSPECTOR_WIDTH_READ_PX)
-  const docked = slot != null && inspectorDocksAt(width, viewport)
+  // While the Copilot is pushing the page, the inspector always floats — the
+  // page never pays for two docked columns at once (Design 09-14 ③).
+  const docked =
+    slot != null && !copilotDockPushes(copilot, viewport) && inspectorDocksAt(width, viewport)
 
   const panel = (
     <aside

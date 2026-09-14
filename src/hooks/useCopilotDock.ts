@@ -12,6 +12,7 @@
  * is whether it is open, how wide, and whether the session rail is showing.
  */
 import { createExternalStore } from '@/lib/cockpit/externalStore'
+import { panelDocks } from '@/lib/panelDocks'
 
 const OPEN_STORAGE_KEY = 'bifrost.copilot.dock.open'
 const WIDE_STORAGE_KEY = 'bifrost.copilot.dock.wide'
@@ -20,16 +21,6 @@ const SESSIONS_STORAGE_KEY = 'bifrost.copilot.dock.sessions'
 /** The two tiers. 440 is the reading width; 760 is for a thread you are working in. */
 export const COPILOT_DOCK_WIDTH = 440
 export const COPILOT_DOCK_WIDTH_WIDE = 760
-
-/**
- * Below this the dock overlays rather than pushes.
- *
- * Pushing costs the page its width for as long as the dock is open. On a
- * 1440-wide screen, 440 of it is a third of the desk — the tables the Copilot
- * is answering about stop being readable, which defeats the point of docking
- * it beside them.
- */
-export const COPILOT_DOCK_PUSH_MIN_VIEWPORT = 1680
 
 function read(key: string, fallback: boolean): boolean {
   try {
@@ -101,6 +92,30 @@ export const copilotDockStore = {
   getState: base.getState,
   setState: base.setState,
   subscribe: base.subscribe,
+}
+
+/**
+ * Whether the Copilot is pushing the page (docked) rather than overlaying it.
+ *
+ * Push or overlay comes from the shared formula (`panelDocks`, Design 09-14 ③):
+ * at the 440 reading width the dock pushes from 1440 up. The threshold that
+ * used to live here (1680) reasoned from proportion — "440 on a 1440 screen is
+ * a third of the desk" — and the design overturned that: what a table needs to
+ * stay readable is the absolute 760px floor, not a share of the glass, and at
+ * 1440 a docked 440 panel still leaves it.
+ *
+ * The wide tier (760) always overlays. Wide is the thread as the work; a page
+ * squeezed beside it would be pretense, and you get the page back by dropping
+ * to the reading width.
+ *
+ * The inspector also reads this: while the Copilot is pushing, the inspector
+ * always floats — the page never pays for two docked columns at once.
+ */
+export function copilotDockPushes(
+  state: Pick<DockState, 'open' | 'wide'>,
+  viewportWidthPx: number,
+): boolean {
+  return state.open && !state.wide && panelDocks(COPILOT_DOCK_WIDTH, viewportWidthPx)
 }
 
 /** Hook: subscribe to dock state. */

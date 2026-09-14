@@ -85,17 +85,15 @@ export function useApprovedStripState(
   result: ApprovedDraftResult | undefined,
 ): ApprovedDraftResult | null {
   const id = result?.draft?.id ?? null
-  const [visibleId, setVisibleId] = useState<string | null>(null)
+  // A fresh approval shows at once because its id has not expired yet; the
+  // effect only ever arms the expiry timer, so no render is triggered inside it.
+  const [expiredId, setExpiredId] = useState<string | null>(null)
   useEffect(() => {
     if (!id) return
-    setVisibleId(id)
-    const timer = setTimeout(
-      () => setVisibleId((current) => (current === id ? null : current)),
-      APPROVED_STRIP_MS,
-    )
+    const timer = setTimeout(() => setExpiredId(id), APPROVED_STRIP_MS)
     return () => clearTimeout(timer)
   }, [id])
-  return result && visibleId === result.draft.id ? result : null
+  return result && id && expiredId !== id ? result : null
 }
 
 export function ApprovedStrip({

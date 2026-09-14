@@ -6,11 +6,17 @@
  * column so the table it explains stays usable — the same move the Copilot
  * dock made, and for the same reason.
  *
- * The threshold is derived, not chosen: the page keeps a readable width or the
- * panel floats. At the default width that reproduces the spec's 1400px
- * (560 + 840) without hard-coding it, and it still holds for the wider panels
- * — instance compare mode at 1360 needs 2200 before docking is honest.
+ * The threshold is the one shared docking formula (`src/lib/panelDocks.ts`,
+ * Design 09-14 ③): sidebar 240 + content floor 760 + panel width. At the
+ * reading width that is 1560. The `panelW + 840` this file used to keep — the
+ * one that reproduced the spec's old 1400px — is retired with that spec line.
+ *
+ * Panels wider than the reading width never dock. Wide (1040), instance
+ * compare (1360) and the run inspector's M/L are the panel as the work; docked
+ * beside a page they would leave it a sliver that only pretends to be usable,
+ * so they float and the page is whole again the moment they close.
  */
+import { panelDocks } from '@/lib/panelDocks'
 
 /** The reading width — the default, and what `useInspectorWide` toggles away from. */
 export const INSPECTOR_WIDTH_READ_PX = 560
@@ -18,15 +24,7 @@ export const INSPECTOR_WIDTH_READ_PX = 560
 /** The panel as the work: a compare, a judge's paragraph (design §5b). */
 export const INSPECTOR_WIDTH_WIDE_PX = 1040
 
-/**
- * What the page must keep.
- *
- * The 240px nav sidebar plus a table that still has columns. Below this the
- * panel is taking the page rather than sitting beside it, so it floats and the
- * page underneath is whole again the moment it closes.
- */
-export const INSPECTOR_DOCK_MIN_CONTENT_PX = 840
-
 export function inspectorDocksAt(panelWidthPx: number, viewportWidthPx: number): boolean {
-  return viewportWidthPx >= panelWidthPx + INSPECTOR_DOCK_MIN_CONTENT_PX
+  if (panelWidthPx > INSPECTOR_WIDTH_READ_PX) return false
+  return panelDocks(panelWidthPx, viewportWidthPx)
 }

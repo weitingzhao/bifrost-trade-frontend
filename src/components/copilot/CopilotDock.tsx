@@ -32,9 +32,9 @@ const SessionListSidebar = lazy(() =>
   })),
 )
 import {
-  COPILOT_DOCK_PUSH_MIN_VIEWPORT,
   COPILOT_DOCK_WIDTH,
   COPILOT_DOCK_WIDTH_WIDE,
+  copilotDockPushes,
   useCopilotDock,
 } from '@/hooks/useCopilotDock'
 import { useCopilotSession } from '@/hooks/useCopilotSession'
@@ -57,10 +57,11 @@ const RAIL_MIN_DOCK_W = COPILOT_DOCK_WIDTH_WIDE
  * Ask, which is where the question actually starts. Nothing renders when it is
  * closed except the two deep-link hosts, which have to keep listening.
  *
- * Push or overlay is decided by room, not preference: below
- * `COPILOT_DOCK_PUSH_MIN_VIEWPORT`, or at the wide tier, taking the width out
- * of the page would leave the tables unreadable, so it floats over the right
- * edge instead. Above it, at the reading width, it pushes and nothing overlaps.
+ * Push or overlay is decided by room, not preference: `copilotDockPushes`
+ * applies the one shared docking formula (sidebar 240 + content floor 760 +
+ * panel width — `src/lib/panelDocks.ts`). At the reading width that means
+ * pushing from 1440 up; below that, or at the wide tier, it floats over the
+ * right edge and the page keeps its columns.
  */
 export function CopilotDock() {
   const { open, wide, sessionsOpen, close, toggleWide, toggleSessions } = useCopilotDock()
@@ -85,7 +86,7 @@ export function CopilotDock() {
   }
 
   const width = wide ? COPILOT_DOCK_WIDTH_WIDE : COPILOT_DOCK_WIDTH
-  const overlay = wide || viewport < COPILOT_DOCK_PUSH_MIN_VIEWPORT
+  const overlay = !copilotDockPushes({ open, wide }, viewport)
   const mobile = viewport < 768
   const showRail = sessionsOpen && width >= RAIL_MIN_DOCK_W
 

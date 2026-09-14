@@ -185,6 +185,13 @@ export default function DecisionInboxPage() {
               ? `No draft needs a call. ${counts.briefings} agent briefing${counts.briefings === 1 ? '' : 's'} waiting under Briefings.`
               : 'No pending drafts. Morning Prep / EOD agents write here when they run.'
           }
+          action={
+            kindFilter === 'decisions' && counts.briefings > 0 ? (
+              <Button type="button" size="sm" variant="outline" onClick={() => setKindFilter('briefings')}>
+                Read briefings
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
         // Cards were capped at 48rem, using 57% of the canvas while candidate

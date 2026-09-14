@@ -26,7 +26,7 @@ import {
   isActionableDraft,
   isDecisionKind,
 } from '@/lib/harness/harnessDraftHelpers'
-import { draftAskedBy, draftKindLabel, draftLandsIn, draftTitle } from '@/lib/harness/draftText'
+import { approveEffect, draftAskedBy, draftKindLabel, draftTitle } from '@/lib/harness/draftText'
 import { openDraftInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { fmtSince } from '@/lib/format'
 
@@ -116,7 +116,8 @@ export function WaitingOnYou() {
               {shown.map(({ draft, superseded }) => {
                 const title = draftTitle(draft)
                 const askedBy = draftAskedBy(draft.generated_by)
-                const lands = draftLandsIn(draft.kind)
+                // Per draft, not per kind: a policy suggestion that merges nothing lands nowhere.
+                const lands = approveEffect(draft)
                 const actionable = isActionableDraft(draft)
                 const approving = approve.isPending && approve.variables === draft.id
                 const dismissing = dismiss.isPending && dismiss.variables === draft.id

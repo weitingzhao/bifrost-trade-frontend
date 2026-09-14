@@ -1,4 +1,4 @@
-import { draftKindLabel, draftTitle } from '@/lib/harness/draftText'
+import { approveEffect, draftKindLabel, draftTitle } from '@/lib/harness/draftText'
 import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -135,6 +135,9 @@ export function DraftCard({
     draft.kind === 'candidate_batch' && isPersonaDissentActive(draft.payload)
   const accent = KIND_ACCENT[draft.kind] ?? DEFAULT_ACCENT
   const prose = payloadProse(draft.payload)
+  // What Approve writes, read from the server's branches and this payload — so
+  // the button can name it, and a card whose Approve writes nothing says that.
+  const effect = approveEffect(draft)
   // A playbook entry is filed by the names and tags it carries; on the card they
   // say what it is about before the note does. Only these kinds: the EOD verdicts
   // carry symbols too, and a row of chips on each of a hundred posts is noise.
@@ -271,7 +274,7 @@ export function DraftCard({
           onClick={onApprove}
         >
           <Check className="size-3.5" />
-          {approving ? 'Approving…' : 'Approve'}
+          {approving ? 'Approving…' : effect ? `Approve → ${effect.label}` : 'Approve'}
         </Button>
         <Button
           type="button"
@@ -284,6 +287,18 @@ export function DraftCard({
           <X className="size-3.5" />
           {dismissing ? 'Dismissing…' : 'Dismiss'}
         </Button>
+        <span className="min-w-0 text-dense-micro text-muted-foreground">
+          {effect ? (
+            <>
+              Approve {effect.detail} —{' '}
+              <Link to={effect.to} className="hover:underline">
+                {effect.label}
+              </Link>
+            </>
+          ) : (
+            'Approve only records your answer — nothing is written'
+          )}
+        </span>
       </div>
     </div>
   )

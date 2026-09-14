@@ -7,6 +7,7 @@
  * as the same queue.
  */
 import type { AiDraft } from '@/api/researchDrafts'
+import { policySuggestionMergeCount } from '@/lib/harness/harnessDraftHelpers'
 
 /** Short label for a draft kind. */
 export function draftKindLabel(kind: string): string {
@@ -79,6 +80,68 @@ export function draftLandsIn(kind: string): DraftLanding | null {
     case 'playbook_rule':
     case 'playbook_note':
       return { label: 'My Trading System', to: '/research/playbook' }
+    default:
+      return null
+  }
+}
+
+export interface ApproveEffect extends DraftLanding {
+  /** What Approve writes, as the rest of a sentence that starts "Approve …". */
+  detail: string
+}
+
+/** Statuses `apply_draft_approval` will write onto a hypothesis from an EOD verdict. */
+const EOD_STATUSES = new Set(['active', 'validated', 'rejected', 'archived'])
+
+/**
+ * What approving this particular draft writes, or `null` when it writes nothing.
+ *
+ * `draftLandsIn` answers by kind; some kinds only write when their payload says
+ * so, and the server checks the payload (`apply_draft_approval`). An EOD verdict
+ * sets its hypothesis's status — the Owner kept Approve on briefings for exactly
+ * that (2026-09-13, over the design's "no Approve on briefings"), on condition
+ * that the button says what it does. A morning brief creates a hypothesis only
+ * when it asks to. A policy suggestion whose fields are all unchanged merges
+ * nothing. Each of those says so here instead of borrowing its kind's answer.
+ */
+export function approveEffect(draft: Pick<AiDraft, 'kind' | 'payload' | 'scope'>): ApproveEffect | null {
+  const p = draft.payload
+  switch (draft.kind) {
+    case 'eod_verdict': {
+      const hyp = (typeof p.hypothesis_id === 'string' && p.hypothesis_id) || draft.scope
+      const status = typeof p.proposed_status === 'string' ? p.proposed_status : null
+      if (!hyp || !status || !EOD_STATUSES.has(status)) return null
+      return {
+        label: `Hypothesis → ${status}`,
+        to: '/research/loop/hypotheses',
+        detail: `sets the hypothesis to ${status}`,
+      }
+    }
+    case 'morning_brief': {
+      const asks = p.create_hypothesis === true
+      const complete = typeof p.title === 'string' && p.title.trim() && typeof p.thesis === 'string' && p.thesis.trim()
+      return asks && complete
+        ? { label: 'Hypothesis Board', to: '/research/loop/hypotheses', detail: 'creates a hypothesis from this brief' }
+        : null
+    }
+    case 'policy_suggestion': {
+      const n = policySuggestionMergeCount(p)
+      const landing = draftLandsIn(draft.kind)
+      return n > 0 && landing
+        ? { ...landing, detail: `merges ${n} field${n === 1 ? '' : 's'} into the objective's policy` }
+        : null
+    }
+    case 'candidate_batch': {
+      const landing = draftLandsIn(draft.kind)
+      return landing ? { ...landing, detail: 'promotes the batch into the pool and opens a hypothesis per name' } : null
+    }
+    case 'playbook_rule':
+    case 'playbook_note': {
+      const landing = draftLandsIn(draft.kind)
+      return landing
+        ? { ...landing, detail: draft.kind === 'playbook_rule' ? 'adds this rule to your trading system' : 'adds this note to your trading system' }
+        : null
+    }
     default:
       return null
   }

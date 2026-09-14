@@ -159,6 +159,12 @@ export function DraftCard({
     : []
   const runId =
     typeof draft.payload.run_id === 'string' ? draft.payload.run_id : null
+  // A digest needs reading, not a verdict (its own self-description). Its
+  // Approve wrote nothing and the recorded answer had no reader, so the button
+  // came off the card (Design 2026-09-13 ③ / 2026-09-14 ④). What remains is
+  // Mark read (header) and Dismiss — leaving the queue is a server-side fact,
+  // read state is not.
+  const isDigest = draft.kind === 'daily_digest'
 
   return (
     <div
@@ -286,17 +292,19 @@ export function DraftCard({
           whose own footer says approving it changes no field — exactly the
           mismatch that teaches you to clear the queue without reading.
         */}
-        <Button
-          type="button"
-          size="sm"
-          variant={muted ? 'outline' : 'default'}
-          className="h-7 gap-1 text-dense-meta"
-          disabled={busy}
-          onClick={onApprove}
-        >
-          <Check className="size-3.5" />
-          {approving ? 'Approving…' : effect ? `Approve → ${effect.label}` : 'Approve'}
-        </Button>
+        {isDigest ? null : (
+          <Button
+            type="button"
+            size="sm"
+            variant={muted ? 'outline' : 'default'}
+            className="h-7 gap-1 text-dense-meta"
+            disabled={busy}
+            onClick={onApprove}
+          >
+            <Check className="size-3.5" />
+            {approving ? 'Approving…' : effect ? `Approve → ${effect.label}` : 'Approve'}
+          </Button>
+        )}
         <Button
           type="button"
           size="sm"
@@ -313,18 +321,20 @@ export function DraftCard({
             {l.label} →
           </Link>
         ))}
-        <span className="min-w-0 text-dense-micro text-muted-foreground">
-          {effect ? (
-            <>
-              Approve {effect.detail} —{' '}
-              <Link to={effect.to} className="hover:underline">
-                {effect.label}
-              </Link>
-            </>
-          ) : (
-            'Approve only records your answer — nothing is written'
-          )}
-        </span>
+        {isDigest ? null : (
+          <span className="min-w-0 text-dense-micro text-muted-foreground">
+            {effect ? (
+              <>
+                Approve {effect.detail} —{' '}
+                <Link to={effect.to} className="hover:underline">
+                  {effect.label}
+                </Link>
+              </>
+            ) : (
+              'Approve only records your answer — nothing is written'
+            )}
+          </span>
+        )}
       </div>
     </div>
   )

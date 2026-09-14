@@ -84,6 +84,9 @@ export const CopilotSessionSummarySchema = z
     message_count: z.number().optional(),
     pinned: z.boolean().optional(),
     group_name: z.string().nullish(),
+    origin_page: z.string().nullish(),
+    origin_label: z.string().nullish(),
+    origin_symbol: z.string().nullish(),
   })
   .passthrough()
 

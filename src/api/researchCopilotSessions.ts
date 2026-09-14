@@ -13,6 +13,9 @@ export type CopilotSessionSummary = {
   message_count?: number
   pinned?: boolean
   group_name?: string | null
+  origin_page?: string | null
+  origin_label?: string | null
+  origin_symbol?: string | null
 }
 
 export type CopilotSessionDetail = {

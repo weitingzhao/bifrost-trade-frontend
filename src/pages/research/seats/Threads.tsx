@@ -1,10 +1,8 @@
 /**
  * Threads — the conversations you had, who answered them, a pin, and export.
  *
- * Design's table also has Origin, Symbol, Writes and Cost, and a "With writes"
- * filter. None of those is recorded per session; `threadRows.ts` says where
- * each one stops, and they wait on the Research side rather than being guessed
- * here.
+ * Origin / Symbol come from the session summary once Research D1 lands them;
+ * Writes / Cost / With writes follow D2–D3.
  */
 import { lazy, Suspense, useState } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -143,6 +141,8 @@ export function Threads() {
           <DenseTableHeader>
             <DenseTableHeadRow>
               <DenseTableHead>Thread</DenseTableHead>
+              <DenseTableHead title="Page the first question was asked from">Origin</DenseTableHead>
+              <DenseTableHead title="Symbol carried on the first question">Symbol</DenseTableHead>
               <DenseTableHead title="The agent that answered — triage unless it handed the thread to a specialist">
                 Persona
               </DenseTableHead>
@@ -179,6 +179,12 @@ export function Threads() {
                         </span>
                       </span>
                     </button>
+                  </DenseTableCell>
+                  <DenseTableCell className="max-w-[10rem] truncate text-dense-meta text-muted-foreground" title={row.origin_page ?? undefined}>
+                    {row.origin_label || row.origin_page || '—'}
+                  </DenseTableCell>
+                  <DenseTableCell className="font-mono text-dense-meta tabular-nums">
+                    {row.origin_symbol || '—'}
                   </DenseTableCell>
                   <DenseTableCell>
                     {detail?.isLoading ? (

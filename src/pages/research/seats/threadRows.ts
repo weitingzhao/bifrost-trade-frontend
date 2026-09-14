@@ -7,15 +7,14 @@
  * Pinned / With writes. What a session actually records decides which of those
  * exist here:
  *
- * - Origin and Symbol: not recorded. The page context a question was asked from
- *   is sent with the turn (`client_context`) and not kept.
- * - Writes: `ai_action_log` carries `session_id`, but no read endpoint lists it.
- * - Cost: the chat's spend is a per-day counter in process memory
- *   (`copilot/rate_limit.py`), not a per-session record.
- * - Persona: `agent_trail` is written by nothing and empty on DEV — but every
- *   assistant frame names the `agent` that spoke, which is the answer.
+ * - Origin and Symbol: first-turn `client_context` → `origin_page` /
+ *   `origin_label` / `origin_symbol` on the session (D1). Old threads stay `—`.
+ * - Writes: `ai_action_log` carries `session_id`, but no read endpoint lists it
+ *   until D2.
+ * - Cost: chat spend was process memory until D3.
+ * - Persona: assistant frames name the `agent` that spoke.
  *
- * So this file does Persona and the three filters that need nothing else.
+ * So this file does Persona and the filters that need nothing else.
  */
 import type { CopilotSessionSummary, PersistedCopilotFrame } from '@/api/researchCopilotSessions'
 import { nyDate } from '@/pages/research/seats/agentActivity'

@@ -203,17 +203,33 @@ describe('scheduledRows', () => {
       new Set(['weekly_policy_review']),
     )
     expect(rows).toEqual([
-      { schedule: 'research_daily_digest_schedule', label: 'Daily digest', state: 'on', lastAt: '2026-09-11T11:30:22Z', lastFailed: false },
-      { schedule: 'research_eod_review_schedule', label: 'EOD review', state: 'on', lastAt: '2026-09-11T21:30:43Z', lastFailed: true },
+      { schedule: 'research_daily_digest_schedule', label: 'Daily digest', state: 'on', lastAt: '2026-09-11T11:30:22Z', lastFailed: false, nextAt: null },
+      { schedule: 'research_eod_review_schedule', label: 'EOD review', state: 'on', lastAt: '2026-09-11T21:30:43Z', lastFailed: true, nextAt: null },
     ])
+  })
+
+  it('prefers next_tick_at when the schedule is running', () => {
+    const rows = scheduledRows(
+      [
+        {
+          name: 'research_daily_digest_schedule',
+          status: 'RUNNING',
+          last_run_status: 'SUCCESS',
+          last_run_ended_at: '2026-09-11T11:30:22Z',
+          next_tick_at: '2026-09-15T03:00:00Z',
+        },
+      ],
+      new Set(),
+    )
+    expect(rows[0]?.nextAt).toBe('2026-09-15T03:00:00Z')
   })
 
   it('says unknown, not off, for a schedule the status does not list', () => {
     expect(scheduledRows([{ name: 'research_eod_review_schedule', status: 'STOPPED' }], new Set(['digest_agent', 'weekly_policy_review']))).toEqual([
-      { schedule: 'research_eod_review_schedule', label: 'EOD review', state: 'off', lastAt: null, lastFailed: false },
+      { schedule: 'research_eod_review_schedule', label: 'EOD review', state: 'off', lastAt: null, lastFailed: false, nextAt: null },
     ])
     expect(scheduledRows([], new Set(['eod_agent', 'weekly_policy_review']))).toEqual([
-      { schedule: 'research_daily_digest_schedule', label: 'Daily digest', state: 'unknown', lastAt: null, lastFailed: false },
+      { schedule: 'research_daily_digest_schedule', label: 'Daily digest', state: 'unknown', lastAt: null, lastFailed: false, nextAt: null },
     ])
   })
 })

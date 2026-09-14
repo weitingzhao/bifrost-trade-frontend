@@ -556,6 +556,8 @@ export const OrchestrationStatusSchema = z
           last_run_status: z.string().nullable(),
           last_run_ended_at: z.string().nullable(),
           last_run_id: z.string().nullable(),
+          cron_schedule: z.string().nullish(),
+          next_tick_at: z.string().nullish(),
         })
         .passthrough(),
     ),

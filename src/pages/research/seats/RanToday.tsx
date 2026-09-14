@@ -167,10 +167,9 @@ export function RanToday() {
  *
  * The Autopilot's objectives get a next run time — the one the page can know.
  * The digest (Morning Prep folded into it), the EOD review and the weekly policy
- * review run on Dagster schedules, and `/research/orchestration/status` says
- * whether each is on and when it last ran but not when it next fires. So their
- * rows read `schedule on · last Fri 11 Sep 07:30 ET`, and become a time when
- * Research reports one. Red only when that last run failed.
+ * review run on Dagster schedules. When Research reports `next_tick_at`, the
+ * row shows that time; otherwise it falls back to last-run facts. Red only when
+ * that last run failed.
  */
 function Scheduled({ wroteToday }: { wroteToday: ReadonlySet<string> | null }) {
   const standing = useAutopilotStanding()
@@ -214,10 +213,17 @@ function Scheduled({ wroteToday }: { wroteToday: ReadonlySet<string> | null }) {
           <span className="min-w-0 truncate">{s.label}</span>
           <span
             className="ml-auto shrink-0 font-mono tabular-nums"
-            title={`Dagster ${s.schedule}. Research reports whether it is on and when it last ran — not when it next fires.`}
+            title={
+              s.nextAt
+                ? `Dagster ${s.schedule}. Next tick from the schedule cron (UTC), converted to ET for display.`
+                : `Dagster ${s.schedule}. Research reports whether it is on and when it last ran.`
+            }
           >
-            schedule {s.state} ·{' '}
-            {s.lastAt ? `last ${s.lastFailed ? 'failed ' : ''}${nyWhen(new Date(s.lastAt))}` : 'no run recorded'}
+            {s.nextAt
+              ? `next ${nyWhen(new Date(s.nextAt))}`
+              : `schedule ${s.state} · ${
+                  s.lastAt ? `last ${s.lastFailed ? 'failed ' : ''}${nyWhen(new Date(s.lastAt))}` : 'no run recorded'
+                }`}
           </span>
         </li>
       ))}

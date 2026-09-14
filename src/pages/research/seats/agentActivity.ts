@@ -191,6 +191,7 @@ export interface ScheduleEntry {
   status: string
   last_run_status?: string | null
   last_run_ended_at?: string | null
+  next_tick_at?: string | null
 }
 
 export interface ScheduledRow {
@@ -199,19 +200,20 @@ export interface ScheduledRow {
   state: 'on' | 'off' | 'unknown'
   lastAt: string | null
   lastFailed: boolean
+  nextAt: string | null
 }
 
 /**
  * A scheduled row for each agent that has not written today: whether its
- * schedule is on and when it last ran — both facts — and no next time, because
- * Research does not report one. An agent that already wrote is in the list
- * above; a schedule missing from the status is unknown, not off.
+ * schedule is on, when it last ran, and the next tick when Research reports one.
+ * An agent that already wrote is in the list above; a schedule missing from the
+ * status is unknown, not off.
  */
 export function scheduledRows(schedules: readonly ScheduleEntry[], wroteToday: ReadonlySet<string>): ScheduledRow[] {
   return AGENT_SCHEDULES.flatMap(({ schedule, agent, label }): ScheduledRow[] => {
     if (wroteToday.has(agent)) return []
     const s = schedules.find((x) => x.name === schedule)
-    if (!s) return [{ schedule, label, state: 'unknown', lastAt: null, lastFailed: false }]
+    if (!s) return [{ schedule, label, state: 'unknown', lastAt: null, lastFailed: false, nextAt: null }]
     return [
       {
         schedule,
@@ -219,6 +221,7 @@ export function scheduledRows(schedules: readonly ScheduleEntry[], wroteToday: R
         state: s.status === 'RUNNING' ? 'on' : s.status === 'STOPPED' ? 'off' : 'unknown',
         lastAt: s.last_run_ended_at ?? null,
         lastFailed: s.last_run_status === 'FAILURE',
+        nextAt: s.status === 'RUNNING' ? (s.next_tick_at ?? null) : null,
       },
     ]
   })

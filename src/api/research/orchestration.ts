@@ -1,10 +1,8 @@
 /**
  * Dagster schedule status — `GET /research/orchestration/status`.
  *
- * Whether each Research schedule is on and how its last run ended. It carries
- * no cron and no next tick (requested of Research,
- * `REQUEST-research-copilot-desk-2026-09-13.md` ④), so a reader can say when a
- * schedule last ran but not when it will run next.
+ * Whether each Research schedule is on, when it last ran, and (D4) when it
+ * next fires when RUNNING (`next_tick_at` from croniter on the stored cron).
  */
 import { withValidation } from '@/lib/apiValidation'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
@@ -20,6 +18,10 @@ export interface OrchestrationSchedule {
   last_run_status: string | null
   last_run_ended_at: string | null
   last_run_id: string | null
+  /** Cron expression from Dagster (UTC), when known. */
+  cron_schedule?: string | null
+  /** Next fire time when status is RUNNING; omitted/null when stopped. */
+  next_tick_at?: string | null
 }
 
 export interface OrchestrationStatus {

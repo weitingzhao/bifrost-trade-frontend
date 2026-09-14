@@ -13,6 +13,11 @@ describe('approveEffect', () => {
     })
     // The server falls back to the draft's scope for the hypothesis.
     expect(approveEffect(draft('eod_verdict', { proposed_status: 'active' }, 'hyp-2'))?.label).toBe('Hypothesis → active')
+    // And writes the verdict's rationale as the conclusion — on DEV, the part of Approve that changes anything.
+    expect(approveEffect(draft('eod_verdict', { hypothesis_id: 'h1', proposed_status: 'active', rationale: 'no material change' }))?.detail).toBe(
+      'sets the hypothesis to active and records this verdict as its conclusion',
+    )
+    expect(approveEffect(draft('eod_verdict', { proposed_status: 'active' }, 'hyp-2'))?.detail).toBe('sets the hypothesis to active')
     // A status it does not write, or nothing to write it on: Approve writes nothing.
     expect(approveEffect(draft('eod_verdict', { hypothesis_id: 'h1', proposed_status: 'keep' }))).toBeNull()
     expect(approveEffect(draft('eod_verdict', { proposed_status: 'rejected' }))).toBeNull()

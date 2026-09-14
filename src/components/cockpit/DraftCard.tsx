@@ -1,4 +1,4 @@
-import { approveEffect, draftKindLabel, draftTitle } from '@/lib/harness/draftText'
+import { approveEffect, draftKindLabel, draftLinks, draftTitle } from '@/lib/harness/draftText'
 import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -138,6 +138,9 @@ export function DraftCard({
   // What Approve writes, read from the server's branches and this payload — so
   // the button can name it, and a card whose Approve writes nothing says that.
   const effect = approveEffect(draft)
+  // Where to check the card first. A link that is also Approve's destination is
+  // already on the line below the buttons.
+  const links = draftLinks(draft).filter((l) => l.to !== effect?.to)
   // A playbook entry is filed by the names and tags it carries; on the card they
   // say what it is about before the note does. Only these kinds: the EOD verdicts
   // carry symbols too, and a row of chips on each of a hundred posts is noise.
@@ -287,6 +290,11 @@ export function DraftCard({
           <X className="size-3.5" />
           {dismissing ? 'Dismissing…' : 'Dismiss'}
         </Button>
+        {links.map((l) => (
+          <Link key={l.to} to={l.to} className="text-dense-micro text-primary hover:underline">
+            {l.label} →
+          </Link>
+        ))}
         <span className="min-w-0 text-dense-micro text-muted-foreground">
           {effect ? (
             <>

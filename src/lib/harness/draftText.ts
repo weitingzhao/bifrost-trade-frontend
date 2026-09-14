@@ -8,6 +8,8 @@
  */
 import type { AiDraft } from '@/api/researchDrafts'
 import { policySuggestionMergeCount } from '@/lib/harness/harnessDraftHelpers'
+import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
+import { objectivePath } from '@/lib/harness/objectivePolicy'
 
 /** Short label for a draft kind. */
 export function draftKindLabel(kind: string): string {
@@ -90,6 +92,30 @@ export interface ApproveEffect extends DraftLanding {
   detail: string
 }
 
+/**
+ * Where a reader goes to check a card before answering it — the design's
+ * per-card links ("Objective #7 →", "Backtest →"). Only places that exist and
+ * that the payload names. The run's pipeline is already in the card's header,
+ * and the caller drops a link that repeats Approve's own destination.
+ */
+export function draftLinks(draft: Pick<AiDraft, 'kind' | 'payload'>): DraftLanding[] {
+  const p = draft.payload
+  const links: DraftLanding[] = []
+  const objectiveId = typeof p.objective_id === 'string' && p.objective_id ? p.objective_id : null
+  if (objectiveId && (draft.kind === 'candidate_batch' || draft.kind === 'policy_suggestion')) {
+    links.push({ label: 'Objective', to: objectivePath(objectiveId) })
+  }
+  if (draft.kind === 'eod_verdict' && typeof p.hypothesis_id === 'string' && p.hypothesis_id) {
+    links.push({ label: 'Hypothesis Board', to: '/research/loop/hypotheses' })
+  }
+  // A playbook note filed by a curator run names the run it came out of.
+  const hasRun = typeof p.run_id === 'string' && p.run_id
+  if (!hasRun && typeof p.source_session_id === 'string' && p.source_session_id.startsWith('run_')) {
+    links.push({ label: 'Source run', to: loopPipelinePath(p.source_session_id, { live: false }) })
+  }
+  return links
+}
+
 /** Statuses `apply_draft_approval` will write onto a hypothesis from an EOD verdict. */
 const EOD_STATUSES = new Set(['active', 'validated', 'rejected', 'archived'])
 
@@ -111,10 +137,16 @@ export function approveEffect(draft: Pick<AiDraft, 'kind' | 'payload' | 'scope'>
       const hyp = (typeof p.hypothesis_id === 'string' && p.hypothesis_id) || draft.scope
       const status = typeof p.proposed_status === 'string' ? p.proposed_status : null
       if (!hyp || !status || !EOD_STATUSES.has(status)) return null
+      // The server also writes the verdict's rationale (or markdown) as the
+      // hypothesis's conclusion. On DEV every pending verdict proposes `active`
+      // for a hypothesis that already is — the conclusion is what Approve changes.
+      const records = (typeof p.rationale === 'string' && p.rationale.trim()) || (typeof p.markdown === 'string' && p.markdown.trim())
       return {
         label: `Hypothesis → ${status}`,
         to: '/research/loop/hypotheses',
-        detail: `sets the hypothesis to ${status}`,
+        detail: records
+          ? `sets the hypothesis to ${status} and records this verdict as its conclusion`
+          : `sets the hypothesis to ${status}`,
       }
     }
     case 'morning_brief': {

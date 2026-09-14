@@ -136,7 +136,7 @@ export interface AdoptionCounts {
    *
    * Not the app's page count — 43 of the design's routes have no app page at
    * all, so counting against the app would read near 100% with half the design
-   * unbuilt. And not all 88 either: a route the design resolves to
+   * unbuilt. And not all 89 either: a route the design resolves to
    * `_Shell Stub` has nothing to adopt, and the design calls those its own
    * backlog.
    */

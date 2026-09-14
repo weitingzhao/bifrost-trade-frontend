@@ -60,6 +60,9 @@ describe('design adoption', () => {
     // 11: the ten the design dissolves elsewhere, plus Backtest, which Docs Index
     // marks LAB — handed to Lab, the Trade original deleted in the design.
     expect(counts.byState.moving).toBe(11)
-    expect(counts.byState.staging).toBe(3)
+    // Down from 3 on 2026-09-14: /research/daily-brief entered the design
+    // registry (89 routes), so it derives `pending` instead of carrying a
+    // staging tag.
+    expect(counts.byState.staging).toBe(2)
   })
 })

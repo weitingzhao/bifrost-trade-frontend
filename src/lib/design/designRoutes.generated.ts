@@ -5,8 +5,8 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 88 routes, 63 with a designed page,
- * 25 resolving to the stub. One route per line, so a
+ * Derived, not typed: 89 routes, 63 with a designed page,
+ * 26 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
 
@@ -71,7 +71,8 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/lens-coverage","label":"Lens Coverage","crumbs":["Research","Workbench","Data"],"designed":true,"file":"Research Lens Coverage.dc.html","round":"OLD","inNav":true,"group":"Research"},
   {"path":"/research/watchlist","label":"Watchlist","crumbs":["Research","Workbench","Data"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Research"},
   {"path":"/research/greeks","label":"Contract Greeks","crumbs":["Research","Workbench","Data"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Research"},
-  {"path":"/research/copilot","label":"Copilot","crumbs":["Research"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","inNav":true,"group":"Research"},
+  {"path":"/research/copilot","label":"Desk","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","inNav":true,"group":"Research"},
+  {"path":"/research/daily-brief","label":"Daily Brief","crumbs":["Research","Copilot"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Research"},
   {"path":"/research/copilot/trading","label":"Book starters","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","inNav":false,"group":null},
   {"path":"/research/agent-personas","label":"Personas","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","inNav":true,"group":"Research"},
   {"path":"/research/loop/harness","label":"Autopilot","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","inNav":true,"group":"Research"},

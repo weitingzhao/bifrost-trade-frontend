@@ -110,16 +110,10 @@ export const ROUTES: readonly RouteEntry[] = [
 
   // ── Research · Copilot ─────────────────────────────────────────────────
   { path: '/research/copilot', label: 'Copilot Desk', crumbs: RESEARCH },
-  {
-    path: '/research/daily-brief',
-    label: 'Daily Brief',
-    crumbs: COPILOT,
-    symbolScope: true,
-    design: {
-      state: 'staging',
-      note: 'Not in the design. Owner keeps it — ask whether it dissolved into the Copilot page or was missed',
-    },
-  },
+  // In the design registry since 2026-09-14 (Owner kept it — a morning agent's
+  // written product, filed under the Copilot fold); its state derives from the
+  // snapshot now, no tag needed.
+  { path: '/research/daily-brief', label: 'Daily Brief', crumbs: COPILOT, symbolScope: true },
   { path: '/research/copilot/trading', label: 'Trading Copilot', crumbs: COPILOT },
   { path: '/research/agent-personas', label: 'Agent Personas', crumbs: COPILOT },
   {

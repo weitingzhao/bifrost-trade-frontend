@@ -1,20 +1,24 @@
 import { ArrowRight, Sparkles, User } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
 import { PolicyEvidence } from '@/components/research/harness/PolicyEvidence'
-import {
-  computePolicySuggestionRows,
-  formatPolicyValue,
-  POLICY_FIELD_HELP,
-  policySuggestionMergeCount,
-} from '@/lib/harness/harnessDraftHelpers'
-import { cn } from '@/lib/utils'
+import { POLICY_FIELD_HELP, policySuggestionMergeCount } from '@/lib/harness/harnessDraftHelpers'
+import { formatPolicyLeaf, policyDiffView } from '@/lib/harness/policyDiff'
 
+/**
+ * A policy suggestion, in the order a reader decides on it: who proposed it and
+ * why, exactly what Approve would change, what stays as it is, then the evidence.
+ *
+ * The change is shown leaf by leaf against the server's own merge
+ * (`lib/harness/policyDiff.ts`). Whole values side by side put three nested
+ * layers of JSON in one cell and ran off the card; unchanged fields in the same
+ * table showed "—" under Proposed, which read as "cleared".
+ */
 export function PolicySuggestionBody({
   payload,
 }: {
   payload: Record<string, unknown>
 }) {
-  const rows = computePolicySuggestionRows(payload)
+  const diff = policyDiffView(payload)
   const mergeCount = policySuggestionMergeCount(payload)
   const reasoning =
     typeof payload.llm_reasoning === 'string' && payload.llm_reasoning
@@ -73,73 +77,55 @@ export function PolicySuggestionBody({
           {rationale}
         </p>
       ) : null}
+      {reasoning ? <p className="max-w-prose text-dense-meta text-foreground/85">{reasoning}</p> : null}
 
-      {/*
-        Reasoning and diff are one thought — what the model concluded and what it
-        would write. Stacked they push the card tall and leave the right half of
-        a wide canvas empty; side by side they read together. Both cap their own
-        width so neither follows the card out to 1280px.
-      */}
-      <div className="flex flex-col gap-x-6 gap-y-2 lg:flex-row lg:items-start">
-      {reasoning ? (
-        <blockquote className="max-w-prose lg:flex-1 border-l-2 border-border/60 pl-2 text-dense-meta italic text-foreground/80">
-          {reasoning}
-        </blockquote>
-      ) : null}
-
-      {rows.length > 0 ? (
-        <table className="w-full max-w-xl lg:shrink-0 text-dense-meta font-mono tabular-nums">
+      {diff.changes.length > 0 ? (
+        <table className="text-dense-meta font-mono tabular-nums">
           <thead>
             <tr className="text-left text-dense-micro text-muted-foreground">
-              <th className="font-medium py-0.5 pr-2">Field</th>
-              <th className="font-medium py-0.5 pr-2">Current</th>
-              <th className="font-medium py-0.5 pr-2" aria-hidden="true">
-                {' '}
-              </th>
-              <th className="font-medium py-0.5">Proposed</th>
+              <th className="py-0.5 pr-4 font-medium">Approve changes</th>
+              <th className="py-0.5 pr-2 font-medium">Now</th>
+              <th className="py-0.5 pr-2 font-medium" aria-hidden="true" />
+              <th className="py-0.5 font-medium">After</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.key}
-                className={cn(
-                  'border-t border-border/40',
-                  row.changed ? 'bg-warning/5' : '',
-                )}
-              >
+            {diff.changes.map((c) => (
+              <tr key={c.path} className="border-t border-border/40">
                 <td
-                  className="py-0.5 pr-2 text-muted-foreground underline decoration-dotted decoration-border underline-offset-2 cursor-help"
-                  title={POLICY_FIELD_HELP[row.key]}
+                  className="cursor-help py-0.5 pr-4 text-muted-foreground underline decoration-border decoration-dotted underline-offset-2"
+                  title={POLICY_FIELD_HELP[c.key]}
                 >
-                  {row.key}
+                  {c.path}
                 </td>
-                <td className="py-0.5 pr-2 text-foreground/80">
-                  {formatPolicyValue(row.current)}
-                </td>
+                <td className="py-0.5 pr-2 text-foreground/80">{formatPolicyLeaf(c.from)}</td>
                 <td className="py-0.5 pr-2 text-muted-foreground">
                   <ArrowRight className="size-3" aria-hidden="true" />
                 </td>
-                <td
-                  className={cn(
-                    'py-0.5',
-                    row.changed
-                      ? 'text-warning font-semibold'
-                      : 'text-foreground/80',
-                  )}
-                >
-                  {formatPolicyValue(row.proposed)}
-                </td>
+                <td className="py-0.5 font-semibold text-warning">{formatPolicyLeaf(c.to)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        <p className="text-dense-meta text-muted-foreground italic">
-          No policy fields to change.
-        </p>
+        <p className="text-dense-meta italic text-muted-foreground">No policy value would change.</p>
       )}
-      </div>
+
+      {diff.unchanged.length > 0 ? (
+        <details className="text-dense-micro text-muted-foreground">
+          <summary className="cursor-pointer select-none">
+            {diff.unchanged.length} field{diff.unchanged.length === 1 ? '' : 's'} unchanged
+          </summary>
+          <dl className="mt-1 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-0.5 font-mono">
+            {diff.unchanged.map((u) => (
+              <div key={u.key} className="contents">
+                <dt title={POLICY_FIELD_HELP[u.key]}>{u.key}</dt>
+                <dd className="break-all text-foreground/70">{formatPolicyLeaf(u.value)}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      ) : null}
 
       {/* The evidence after the proposal: what would change and why first, then what it rests on. */}
       {evidence ? <PolicyEvidence evidence={evidence} /> : null}

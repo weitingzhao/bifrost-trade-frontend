@@ -68,21 +68,11 @@ export default function CopilotDeskPage() {
         <QueryErrorAlert error={standingQ.error} onRetry={() => void standingQ.refetch()} />
       ) : null}
 
-      {/* Spend moved to the header chip, where the design has it. These three have no
-          place in the design's header; they stay until the Owner decides. */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <Fact label="Today’s digest" title="The daily digest runs at 11:30 UTC on trading days">
-          {s?.brief ? (
-            <DenseTag variant={s.brief.status === 'pending' ? 'warning' : 'neutral'} size="cell">
-              {s.brief.status}
-            </DenseTag>
-          ) : (
-            <span className="text-dense-label text-muted-foreground">not yet</span>
-          )}
-        </Fact>
-        <Fact label="Conversations today">
-          <span className="font-mono text-lg font-semibold tabular-nums">{s?.sessions.today ?? '—'}</span>
-        </Fact>
+      {/* Design dissolved the three tiles into what each counts (Copilot Desk response ⑫):
+          the digest's status lives on the digest panel, today's conversations on the
+          Threads heading. This one's home is the Writes panel, which waits on a
+          Research read route — so it stays until that panel exists (Owner, 2026-09-13). */}
+      <div className="flex">
         <Fact label="Chat asked to write" title="Writes the chat proposed today, by what happened to them in the ledger">
           <span className="font-mono text-lg font-semibold tabular-nums">{a.proposed ?? 0}</span>
           <span className="text-dense-label text-muted-foreground">
@@ -109,7 +99,15 @@ export default function CopilotDeskPage() {
             <RanToday />
           </section>
           <section className="space-y-2">
-            <h2 className="text-dense-body font-semibold">Threads</h2>
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-dense-body font-semibold">Threads</h2>
+              <span
+                className="font-mono text-dense-meta tabular-nums text-muted-foreground"
+                title="Conversations that moved today — every thread, not only the latest shown below"
+              >
+                {s ? `${s.sessions.today} today` : '—'}
+              </span>
+            </div>
             <Threads />
           </section>
           <section className="rounded-lg border border-border bg-secondary/40 px-4 py-3">

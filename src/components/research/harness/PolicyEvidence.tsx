@@ -28,6 +28,11 @@ import { fmtUsd } from '@/lib/harness/runSpend'
 export function PolicyEvidence({ evidence }: { evidence: Record<string, unknown> }) {
   const [openSymbol, setOpenSymbol] = useState<string | null>(null)
   const { outcomes, persona } = policyEvidenceView(evidence)
+  // One column per judge model, so a row stays one line: the models' split on a
+  // name reads across, instead of wrapping inside one cell.
+  const modelCols = persona
+    ? [...new Set([...persona.models.map((m) => m.model), ...persona.symbols.flatMap((s) => s.byModel.map((m) => m.model))])]
+    : []
   const zh = readCopilotPromptLang() === 'zh'
 
   return (
@@ -80,7 +85,11 @@ export function PolicyEvidence({ evidence }: { evidence: Record<string, unknown>
                   <DenseTableHead title="Whether the judge models reached one stance">Judges</DenseTableHead>
                   <DenseTableHead>Net</DenseTableHead>
                   <DenseTableHead>Validate</DenseTableHead>
-                  <DenseTableHead>By model · net / validate</DenseTableHead>
+                  {modelCols.map((col) => (
+                    <DenseTableHead key={col} title={`${col}: net stance / validate stance`} className="whitespace-nowrap">
+                      {col} <span className="font-normal normal-case text-muted-foreground">net / validate</span>
+                    </DenseTableHead>
+                  ))}
                   <DenseTableHead />
                 </DenseTableHeadRow>
               </DenseTableHeader>
@@ -111,9 +120,14 @@ export function PolicyEvidence({ evidence }: { evidence: Record<string, unknown>
                             ) : null}
                           </span>
                         </DenseTableCell>
-                        <DenseTableCell className="text-muted-foreground">
-                          {s.byModel.map((m) => `${m.model} ${m.net ?? '—'} / ${m.validate ?? '—'}${m.fallback ? ' (fell back)' : ''}`).join(' · ') || '—'}
-                        </DenseTableCell>
+                        {modelCols.map((col) => {
+                          const m = s.byModel.find((x) => x.model === col)
+                          return (
+                            <DenseTableCell key={col} className="whitespace-nowrap text-muted-foreground">
+                              {m ? `${m.net ?? '—'} / ${m.validate ?? '—'}${m.fallback ? ' · fell back' : ''}` : '—'}
+                            </DenseTableCell>
+                          )
+                        })}
                         <DenseTableCell className="text-right">
                           {s.verdicts.length > 0 ? (
                             <button
@@ -129,7 +143,7 @@ export function PolicyEvidence({ evidence }: { evidence: Record<string, unknown>
                       </DenseTableRow>
                       {open ? (
                         <DenseTableRow>
-                          <DenseTableCell colSpan={6}>
+                          <DenseTableCell colSpan={5 + modelCols.length}>
                             <ul className="max-w-prose space-y-1 whitespace-normal py-1">
                               {s.verdicts.map((v, i) => (
                                 <li key={`${v.agent}-${v.model}-${i}`}>

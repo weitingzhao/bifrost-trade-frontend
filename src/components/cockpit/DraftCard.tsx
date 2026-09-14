@@ -84,6 +84,11 @@ function payloadProse(payload: Record<string, unknown>): string | null {
   if (typeof payload.markdown === 'string' && payload.markdown.trim()) {
     return payload.markdown
   }
+  // A playbook note's body. It arrived as `note_md`, which nothing here read, so
+  // every note printed as its whole payload in JSON.
+  if (typeof payload.note_md === 'string' && payload.note_md.trim()) {
+    return payload.note_md
+  }
   if (Array.isArray(payload.bullets) && payload.bullets.length > 0) {
     return (payload.bullets as unknown[]).map((b) => `- ${String(b)}`).join('\n')
   }
@@ -129,6 +134,16 @@ export function DraftCard({
     draft.kind === 'candidate_batch' && isPersonaDissentActive(draft.payload)
   const accent = KIND_ACCENT[draft.kind] ?? DEFAULT_ACCENT
   const prose = payloadProse(draft.payload)
+  // A playbook entry is filed by the names and tags it carries; on the card they
+  // say what it is about before the note does. Only these kinds: the EOD verdicts
+  // carry symbols too, and a row of chips on each of a hundred posts is noise.
+  const isPlaybook = draft.kind === 'playbook_note' || draft.kind === 'playbook_rule'
+  const filedSymbols = isPlaybook && Array.isArray(draft.payload.symbols)
+    ? draft.payload.symbols.filter((v): v is string => typeof v === 'string')
+    : []
+  const filedTags = isPlaybook && Array.isArray(draft.payload.tags)
+    ? draft.payload.tags.filter((v): v is string => typeof v === 'string')
+    : []
   const runId =
     typeof draft.payload.run_id === 'string' ? draft.payload.run_id : null
 
@@ -189,6 +204,21 @@ export function DraftCard({
           ) : null}
         </span>
       </div>
+
+      {filedSymbols.length > 0 || filedTags.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1">
+          {filedSymbols.map((sym) => (
+            <DenseTag key={`s:${sym}`} variant="neutral" size="cell" className="font-mono">
+              {sym}
+            </DenseTag>
+          ))}
+          {filedTags.map((tag) => (
+            <span key={`t:${tag}`} className="text-dense-micro text-muted-foreground">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {draft.kind === 'candidate_batch' ? (
         <CandidateBatchBody payload={draft.payload} />

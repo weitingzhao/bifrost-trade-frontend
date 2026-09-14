@@ -67,7 +67,7 @@ export function LeashPanel() {
                 floor {leashPct(o.floor)}
                 {o.floorIsDefault ? ' (default)' : ''} · record{' '}
                 {o.hitRate != null
-                  ? `${leashPct(o.hitRate)} on${o.judged}${o.horizonDays ? ` at T+${o.horizonDays}` : ''}`
+                  ? `${leashPct(o.hitRate)} on ${o.judged}${o.horizonDays ? ` at T+${o.horizonDays}` : ''}`
                   : 'none yet'}
               </p>
               <p>

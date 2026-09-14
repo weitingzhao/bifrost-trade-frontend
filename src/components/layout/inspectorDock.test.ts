@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX, inspectorDocksAt } from './inspectorDock'
+import { INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX, inspectorDocksAt, inspectorOverlayInsetRightPx } from './inspectorDock'
+import { COPILOT_DOCK_WIDTH } from '@/hooks/useCopilotDock'
 
 describe('inspectorDocksAt', () => {
   it('docks the reading width by the shared formula: sidebar 240 + floor 760 + panel', () => {
@@ -20,5 +21,17 @@ describe('inspectorDocksAt', () => {
   it('docks a narrower override sooner — the formula, not a stored threshold', () => {
     expect(inspectorDocksAt(400, 1400)).toBe(true)
     expect(inspectorDocksAt(400, 1399)).toBe(false)
+  })
+})
+
+describe('inspectorOverlayInsetRightPx', () => {
+  const copilotOpen = { open: true, wide: false }
+
+  it('yields the Copilot column when that column is pushing, otherwise 0', () => {
+    expect(inspectorOverlayInsetRightPx(copilotOpen, 1560)).toBe(COPILOT_DOCK_WIDTH)
+    expect(inspectorOverlayInsetRightPx(copilotOpen, 1440)).toBe(COPILOT_DOCK_WIDTH)
+    expect(inspectorOverlayInsetRightPx(copilotOpen, 1439)).toBe(0)
+    expect(inspectorOverlayInsetRightPx({ open: true, wide: true }, 2560)).toBe(0)
+    expect(inspectorOverlayInsetRightPx({ open: false, wide: false }, 1920)).toBe(0)
   })
 })

@@ -8,6 +8,7 @@ import {
   INSPECTOR_WIDTH_READ_PX,
   INSPECTOR_WIDTH_WIDE_PX,
   inspectorDocksAt,
+  inspectorOverlayInsetRightPx,
 } from '@/components/layout/inspectorDock'
 
 const copilotOpen = { open: true, wide: false }
@@ -76,5 +77,11 @@ describe('the docking table (Design 09-14 ③)', () => {
 
   it('a closed Copilot never pushes', () => {
     expect(copilotDockPushes({ open: false, wide: false }, 1920)).toBe(false)
+  })
+
+  it('the floating inspector yields 440px when Copilot pushes, else sits flush right', () => {
+    expect(inspectorOverlayInsetRightPx(copilotOpen, 1560)).toBe(COPILOT_DOCK_WIDTH)
+    expect(inspectorOverlayInsetRightPx(copilotOpen, 1439)).toBe(0)
+    expect(inspectorOverlayInsetRightPx(copilotWide, 2560)).toBe(0)
   })
 })

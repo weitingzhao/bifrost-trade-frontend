@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { inspectorShell } from './rightInspectorUi'
-import { inspectorDocksAt, INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX } from './inspectorDock'
+import { inspectorDocksAt, inspectorOverlayInsetRightPx, INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX } from './inspectorDock'
 import { registerInspectorEscape } from '@/lib/cockpit/inspectorEscape'
 import { copilotDockPushes, useCopilotDock } from '@/hooks/useCopilotDock'
 import { useInspectorWide } from '@/hooks/useInspectorWide'
@@ -72,8 +72,13 @@ export function RightInspectorShell({
 
   if (docked) return createPortal(panel, slot)
 
+  const overlayRight = inspectorOverlayInsetRightPx(copilot, viewport)
   return (
-    <div className="pointer-events-none fixed inset-0 z-[200] flex justify-end" role="presentation">
+    <div
+      className="pointer-events-none fixed inset-y-0 left-0 z-[200] flex justify-end"
+      style={{ right: overlayRight }}
+      role="presentation"
+    >
       {panel}
     </div>
   )

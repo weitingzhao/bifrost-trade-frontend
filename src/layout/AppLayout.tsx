@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState, type CSSProperties } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useAmbientPageContext } from '@/hooks/useAmbientPageContext'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
 import { useResearchSeatDeepLink } from '@/hooks/useResearchSeatDeepLink'
 import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
@@ -48,6 +49,8 @@ export function AppLayout() {
   useCopilotDeepLink()
   useResearchSeatDeepLink()
   useHeldSymbolSync()
+  // After the held-symbol sync: the page context reads the URL the sync just settled.
+  useAmbientPageContext()
   useRecentPagesTrail()
   const showMarketStrip = shouldShowGlobalMarketStrip(pathname)
   // One SSE subscription, two readers: the Inbox groups it by source, the

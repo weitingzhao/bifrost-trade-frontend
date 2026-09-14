@@ -7,8 +7,10 @@
  * have to take on trust. No session is grey, never red: an unreported session
  * is not a failed one.
  */
+import { useEffect, useId } from 'react'
 import { Link } from 'react-router-dom'
 import { asofHolding, type AsofFlag } from '@/lib/asofTag'
+import { asofRegistry } from '@/lib/copilotPageContext'
 import { cn } from '@/lib/utils'
 
 export interface AsofTagProps {
@@ -32,6 +34,14 @@ const CHIP =
 export function AsofTag({ asof, expected, sessions, flag, judgedBy, href, className }: AsofTagProps) {
   const behind = asofHolding(asof, expected, sessions)
   const holding = behind > 0
+
+  // The tag is the page's statement of which session it shows, so it is also
+  // the source the Copilot's page context reads the snapshot date from (§11.0).
+  const registryId = useId()
+  useEffect(() => {
+    asofRegistry.publish(registryId, asof)
+    return () => asofRegistry.publish(registryId, null)
+  }, [registryId, asof])
 
   const asofTitle = !asof
     ? `No session reported for this view. Unknown is not the same as stale — open ${judgedBy}'s page to see why.`

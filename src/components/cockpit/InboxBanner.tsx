@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronRight, Inbox } from 'lucide-react'
+import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
 import { DraftCard } from '@/components/cockpit/DraftCard'
 import {
   useApproveDraft,
@@ -28,14 +29,20 @@ export function InboxBanner({ className }: { className?: string }) {
   })
   const approve = useApproveDraft()
   const dismiss = useDismissDraft()
+  // Approving the last draft empties the queue and would unmount this banner
+  // with it — the strip's few seconds keep the confirmation on screen.
+  const approvedStrip = useApprovedStripState(approve.data)
 
   // D2: the day's digest opens the queue; everything else follows it.
   const rows = digestFirst(data?.rows ?? [])
   const count = data?.pending_count ?? rows.length
   const digest = rows.find(isDailyDigest)
 
-  // Nothing pending and nothing to report — stay out of the way entirely.
-  if (!isError && count === 0) return null
+  // Nothing pending and nothing to report — stay out of the way entirely,
+  // once the last approval's confirmation has had its moment.
+  if (!isError && count === 0) {
+    return approvedStrip ? <ApprovedStrip state={approvedStrip} className={className} /> : null
+  }
 
   if (isError) {
     return (
@@ -95,6 +102,7 @@ export function InboxBanner({ className }: { className?: string }) {
 
       {inboxOpen ? (
         <div className="max-h-64 space-y-2 overflow-y-auto border-t border-primary/20 px-2 py-2">
+          <ApprovedStrip state={approvedStrip} />
           {isLoading ? (
             <p className="text-dense-meta text-muted-foreground">Loading drafts…</p>
           ) : (

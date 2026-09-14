@@ -26,6 +26,7 @@ import {
   isActionableDraft,
   isDecisionKind,
 } from '@/lib/harness/harnessDraftHelpers'
+import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
 import { approveEffect, draftAskedBy, draftKindLabel, draftTitle } from '@/lib/harness/draftText'
 import { openDraftInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { fmtSince } from '@/lib/format'
@@ -58,6 +59,8 @@ export function WaitingOnYou() {
   const query = useResearchDrafts({ status: 'pending', limit: DRAFTS_PAGE_MAX })
   const approve = useApproveDraft()
   const dismiss = useDismissDraft()
+  // Same confirmation as the Inbox's: the row leaves, the strip says what was written.
+  const approvedStrip = useApprovedStripState(approve.data)
 
   const groups = useMemo(
     () => groupIdenticalDrafts((query.data?.rows ?? []).filter((d) => isDecisionKind(d.kind))),
@@ -88,6 +91,7 @@ export function WaitingOnYou() {
 
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
       {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}
+      <ApprovedStrip state={approvedStrip} />
 
       {query.isLoading ? (
         <Skeleton className="h-28 w-full" />

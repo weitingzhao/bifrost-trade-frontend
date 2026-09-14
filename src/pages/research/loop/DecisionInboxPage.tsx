@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
 import { DraftCard } from '@/components/cockpit/DraftCard'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
 import {
@@ -101,6 +102,9 @@ export default function DecisionInboxPage() {
   const query = useResearchDrafts({ status: 'pending', kind: apiKind, limit: DRAFTS_PAGE_MAX })
   const approve = useApproveDraft()
   const dismiss = useDismissDraft()
+  // The card leaves on approval (no Undo — the server cannot take it back);
+  // this strip above the queue is the confirmation, gone after a few seconds.
+  const approvedStrip = useApprovedStripState(approve.data)
 
   const digest = (query.data?.rows ?? []).find(isDailyDigest)
 
@@ -236,6 +240,7 @@ export default function DecisionInboxPage() {
 
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
       {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}
+      <ApprovedStrip state={approvedStrip} />
 
       {/* The queue, and beside it the leash: what reaches this page is what the
           leash did not accept on its own, so the rule sits next to its result. */}

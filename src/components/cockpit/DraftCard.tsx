@@ -2,7 +2,7 @@ import { approveEffect, draftKindLabel, draftLinks, draftTitle } from '@/lib/har
 import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DenseTag, type DenseTagVariant } from '@/components/data-display'
+import { DenseTag } from '@/components/data-display'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import {
   CandidateBatchBody,
@@ -16,63 +16,18 @@ import { DecisionDraftBody } from '@/components/research/harness/DecisionDraftBo
 import { cn } from '@/lib/utils'
 
 /**
- * Colour a draft by what kind of call it is.
- *
- * Every kind used to render the same purple tag on the same grey card, so a
- * queue of eleven read as one wall — you had to parse the label text to tell a
- * candidate batch from a policy change. The hue is carried by the left rail,
- * the border and the kind tag together, so the start of each decision is
- * unmistakable at a glance. Tokens only — no new palette.
- *
- * `muted` is the same hue at lower weight, for a draft whose Approve would
- * write nothing: still legible, no longer competing.
+ * One neutral face for every kind (§7: classification is not colour — Design
+ * 2026-09-13 ④). Kinds used to carry entity hues on the border and left rail
+ * and the briefings a sky tint; the queue read apart by hue, but that put the
+ * palette on a semantic slot it does not own. A kind now reads from its tag's
+ * text. `muted` is the same face at lower weight, for a draft whose Approve
+ * would write nothing — weight, not hue, carries that distinction. The card's
+ * real states keep their colour: warn / dissent below, and the EOD verdict's
+ * own status tag (active / validated / rejected).
  */
-const KIND_ACCENT: Record<
-  string,
-  { normal: string; muted: string; tag: DenseTagVariant }
-> = {
-  candidate_batch: {
-    normal: 'border-entity-category/45 border-l-entity-category bg-entity-category/[0.07]',
-    muted: 'border-entity-category/25 border-l-entity-category/50 bg-entity-category/[0.03]',
-    tag: 'category',
-  },
-  policy_suggestion: {
-    normal: 'border-entity-instance/45 border-l-entity-instance bg-entity-instance/[0.07]',
-    muted: 'border-entity-instance/25 border-l-entity-instance/50 bg-entity-instance/[0.03]',
-    tag: 'instance',
-  },
-  hypothesis_suggestion: {
-    normal: 'border-entity-strategy/45 border-l-entity-strategy bg-entity-strategy/[0.07]',
-    muted: 'border-entity-strategy/25 border-l-entity-strategy/50 bg-entity-strategy/[0.03]',
-    tag: 'strategy',
-  },
-  // Recurring posts stay quieter than decisions on purpose — they need reading,
-  // not a call. They still need telling apart: on the Briefings tab thirteen of
-  // them in one grey ran together. Morning takes the calm hue; the EOD verdict
-  // stays neutral because its own status tag (active / validated / rejected)
-  // already carries a colour, and two competing hues on one card read as noise.
-  morning_brief: {
-    normal: 'border-sky-500/35 border-l-sky-500/70 bg-sky-500/[0.05]',
-    muted: 'border-sky-500/20 border-l-sky-500/40 bg-sky-500/[0.02]',
-    tag: 'info',
-  },
-  // D2: the one post a day. Same calm hue as the morning post it replaced.
-  daily_digest: {
-    normal: 'border-sky-500/35 border-l-sky-500/70 bg-sky-500/[0.05]',
-    muted: 'border-sky-500/20 border-l-sky-500/40 bg-sky-500/[0.02]',
-    tag: 'info',
-  },
-  eod_verdict: {
-    normal: 'border-border/60 border-l-border bg-secondary/40',
-    muted: 'border-border/40 border-l-border/70 bg-transparent',
-    tag: 'neutral',
-  },
-}
-
-const DEFAULT_ACCENT = {
+const ACCENT = {
   normal: 'border-border/60 border-l-border bg-secondary/40',
   muted: 'border-border/35 border-l-border/60 bg-transparent',
-  tag: 'category' as DenseTagVariant,
 }
 
 /**
@@ -139,7 +94,6 @@ export function DraftCard({
   const warnActive = draft.kind === 'candidate_batch' && isHitRateWarnActive(draft.payload)
   const dissentActive =
     draft.kind === 'candidate_batch' && isPersonaDissentActive(draft.payload)
-  const accent = KIND_ACCENT[draft.kind] ?? DEFAULT_ACCENT
   const prose = payloadProse(draft.payload)
   // What Approve writes, read from the server's branches and this payload — so
   // the button can name it, and a card whose Approve writes nothing says that.
@@ -178,8 +132,8 @@ export function DraftCard({
           : warnActive
             ? 'border-warning/50 border-l-warning bg-warning/5'
             : muted
-              ? accent.muted
-              : accent.normal,
+              ? ACCENT.muted
+              : ACCENT.normal,
         read ? 'opacity-70' : '',
         className,
       )}
@@ -191,7 +145,7 @@ export function DraftCard({
         read left, provenance sits right where it stops competing.
       */}
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <DenseTag variant={accent.tag} size="cell">
+        <DenseTag variant="category" size="cell">
           {draftKindLabel(draft.kind)}
         </DenseTag>
         {proposed ? (

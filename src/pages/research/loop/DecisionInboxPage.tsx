@@ -216,9 +216,10 @@ export default function DecisionInboxPage() {
         </span>
       </div>
 
-      {/* Until it is read: the strip exists to say the digest is waiting, and a read digest is not. */}
+      {/* Until it is read: the strip exists to say the digest is waiting, and a read digest is not.
+          Neutral, not a hue: classification is not colour (§7 / Design 09-13 ④). */}
       {digest && !read.has(digest.id) && view !== 'briefings' && narrow === 'any' ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-500/35 bg-sky-500/[0.05] px-3 py-1.5 text-dense-meta">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-secondary/40 px-3 py-1.5 text-dense-meta">
           <span className="font-medium">
             {typeof digest.payload.title === 'string' ? digest.payload.title : 'Daily digest'}
           </span>

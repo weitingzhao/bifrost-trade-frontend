@@ -3,6 +3,8 @@ import {
   buildStructureLegs,
   premiumOf,
   structureTitle,
+  wingPremiumOnChain,
+  adjacentStrikeStep,
   wingStrike,
 } from './discoveryStructure'
 import type { OptionSnapshotRow } from '@/types/optionDiscovery'
@@ -31,7 +33,7 @@ describe('discoveryStructure', () => {
   })
 
   it('builds a credit put vertical with a lower wing', () => {
-    const { legs, wing } = buildStructureLegs({
+    const { legs, wing, unquotedWing } = buildStructureLegs({
       row,
       kind: 'vertical',
       side: 'short',
@@ -40,8 +42,35 @@ describe('discoveryStructure', () => {
       wingMid: 1.2,
     })
     expect(wing).toBe(240)
+    expect(unquotedWing).toBe(false)
     expect(legs.map((l) => l.qty)).toEqual([-1, 1])
     expect(structureTitle('vertical', 'short', row, wing)).toContain('Credit put vertical')
+  })
+
+  it('does not invent a wing premium when the wing is unquoted', () => {
+    const built = buildStructureLegs({
+      row,
+      kind: 'vertical',
+      side: 'short',
+      spot: 250,
+      stepHint: 5,
+    })
+    expect(built.unquotedWing).toBe(true)
+    expect(built.legs).toEqual([])
+    expect(built.wing).toBe(240)
+  })
+
+  it('reads the wing premium from the chain row, not a fraction of the selected mid', () => {
+    const chain: OptionSnapshotRow[] = [row, { ...row, strike: 240, mid: 1.2 }]
+    const { wing, wingMid } = wingPremiumOnChain(row, chain, 250, 5)
+    expect(wing).toBe(240)
+    expect(wingMid).toBe(1.2)
+    expect(wingPremiumOnChain(row, [row], 250, 5).wingMid).toBeNull()
+  })
+
+  it('adjacentStrikeStep uses the next listed strike, not 5% of spot', () => {
+    expect(adjacentStrikeStep([240, 245, 250], 245, 'P')).toBe(5)
+    expect(adjacentStrikeStep([240, 245, 250], 245, 'C')).toBe(5)
   })
 
   it('covered call shorts the call and covers 100 shares', () => {

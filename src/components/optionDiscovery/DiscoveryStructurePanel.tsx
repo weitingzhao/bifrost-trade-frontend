@@ -12,8 +12,11 @@ import { PlanThisButton } from '@/components/research/PlanThisButton'
 import { RiskProfilePayoffChart } from '@/components/positions/RiskProfilePayoffChart'
 import { fmtUsd } from '@/lib/format'
 import {
+  adjacentStrikeStep,
   buildStructureLegs,
+  rightOf,
   structureTitle,
+  wingPremiumOnChain,
   type StructureKind,
   type StructureSide,
 } from '@/utils/optionDiscovery/discoveryStructure'
@@ -28,20 +31,25 @@ export function DiscoveryStructurePanel({
   expiration,
   row,
   spot,
+  chain,
+  strikes,
 }: {
   symbol: string
   expiration: string
   row: OptionSnapshotRow
   spot: number | null
+  chain: readonly OptionSnapshotRow[]
+  strikes: readonly number[]
 }) {
   const [kind, setKind] = useState<StructureKind>('single')
   const [side, setSide] = useState<StructureSide>('short')
   const sym = symbol.trim().toUpperCase()
 
-  const built = useMemo(
-    () => buildStructureLegs({ row, kind, side, spot }),
-    [row, kind, side, spot],
-  )
+  const built = useMemo(() => {
+    const stepHint = adjacentStrikeStep(strikes, row.strike, rightOf(row))
+    const { wingMid } = wingPremiumOnChain(row, chain, spot, stepHint)
+    return buildStructureLegs({ row, kind, side, spot, wingMid, stepHint })
+  }, [row, kind, side, spot, chain, strikes])
 
   const title = structureTitle(kind, side, row, built.wing)
   const contractLabel = `${sym} ${expiration || '—'} ${row.strike}${
@@ -58,8 +66,11 @@ export function DiscoveryStructurePanel({
   )
 
   const profile = useMemo(
-    () => computeRiskProfile(built.legs, Math.abs(built.coveredShares), spot),
-    [built.legs, built.coveredShares, spot],
+    () =>
+      built.unquotedWing
+        ? null
+        : computeRiskProfile(built.legs, Math.abs(built.coveredShares), spot),
+    [built.unquotedWing, built.legs, built.coveredShares, spot],
   )
 
   return (
@@ -114,7 +125,10 @@ export function DiscoveryStructurePanel({
 
       <div className="flex flex-wrap gap-2 text-dense-meta">
         <span className="text-muted-foreground">Legs</span>
-        {built.legs.map((g, i) => (
+        {built.unquotedWing ? (
+          <span className="text-foreground">Wing unquoted</span>
+        ) : (
+          built.legs.map((g, i) => (
           <span key={`${g.strike}-${g.right}-${i}`} className="inline-flex gap-1 font-mono tabular-nums">
             <span className="text-muted-foreground">{g.qty > 0 ? `+${g.qty}` : String(g.qty)}</span>
             <span className="text-foreground">
@@ -123,7 +137,8 @@ export function DiscoveryStructurePanel({
             </span>
             <span className="text-muted-foreground">@ {fmtUsd(g.avg_cost)}</span>
           </span>
-        ))}
+          ))
+        )}
         {built.coveredShares !== 0 ? (
           <span className="font-mono tabular-nums text-muted-foreground">
             {built.coveredShares > 0 ? '+' : ''}
@@ -132,6 +147,15 @@ export function DiscoveryStructurePanel({
         ) : null}
       </div>
 
+      {built.unquotedWing || !profile ? (
+        built.unquotedWing ? (
+        <p className="text-dense-meta text-muted-foreground">
+          Wing unquoted — the adjacent strike has no mid on this chain, so Vertical has no
+          payoff. Not estimated (§2.1).
+        </p>
+        ) : null
+      ) : (
+        <>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Metric
           label="Max profit"
@@ -169,6 +193,8 @@ export function DiscoveryStructurePanel({
       <p className="text-dense-micro text-muted-foreground">
         At expiry · per 1 contract · before commissions. Observe-only (D10).
       </p>
+        </>
+      )}
     </section>
   )
 }

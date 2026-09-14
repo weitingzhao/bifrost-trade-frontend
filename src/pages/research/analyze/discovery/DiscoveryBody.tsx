@@ -333,6 +333,8 @@ export function DiscoveryBody() {
                   expiration={selectedExpiration}
                   row={chainTable.selectedRow}
                   spot={snapshots.underlyingPrice}
+                  chain={snapshots.snapshotRows}
+                  strikes={chainTable.chainStrikesSorted}
                 />
               ) : null}
 

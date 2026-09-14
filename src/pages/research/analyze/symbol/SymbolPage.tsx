@@ -30,6 +30,7 @@ import { useResearchContext } from '@/hooks/useResearchContext'
 import { verdictView } from '@/lib/lensVerdict'
 import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
 import { SymbolMyLegs } from '@/pages/research/analyze/symbol/SymbolMyLegs'
+import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSinceSnapshot'
 import { SymbolOriginRail } from '@/pages/research/analyze/symbol/SymbolOriginRail'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
 import { IvRankSection } from '@/pages/research/analyze/volRegime/IvRankSection'
@@ -132,6 +133,7 @@ export default function SymbolPage() {
         {/* Contract §11.7 — the judgement is read against what you already
             carry on this name, so the leg rail sits with the ribbon. */}
         {symbol ? <SymbolMyLegs symbol={symbol} /> : null}
+        {symbol ? <SymbolSinceSnapshot symbol={symbol} /> : null}
       </div>
 
       {/* Keyed so a tab switch remounts: a lab's selected row, sort and filters

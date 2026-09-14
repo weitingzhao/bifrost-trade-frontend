@@ -66,7 +66,7 @@ const LENS_ROUTES: Record<string, string> = {
   forecast_path: '/research/scenario?view=sessions',
 }
 
-const LENS_LABELS: Record<string, string> = {
+export const LENS_LABELS: Record<string, string> = {
   vrp: 'VRP',
   iv_rank: 'IV Rank',
   skew: 'Skew',

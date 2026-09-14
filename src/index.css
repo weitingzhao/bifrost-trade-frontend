@@ -477,7 +477,7 @@
 
 .dark[data-layer='analysis'] {
     --sk-ground: #0a0c12;
-    --sk-surface: #12141d;
+    --sk-surface: #1a1d29;
     --sk-raised: #0e1019;
     --sk-raised2: #12151f;
     --sk-line: #242a3a;
@@ -490,7 +490,7 @@
 
 .dark[data-layer='risk'] {
     --sk-ground: #100c0e;
-    --sk-surface: #1a1417;
+    --sk-surface: #241d21;
     --sk-raised: #140f12;
     --sk-raised2: #1c1519;
     --sk-line: #382a30;

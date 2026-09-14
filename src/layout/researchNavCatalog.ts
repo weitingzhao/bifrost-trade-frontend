@@ -274,9 +274,11 @@ function objectivesItem(seat: ResearchSeat, objectives: ObjectiveNavRow[]): Shel
 }
 
 /**
- * The seat's sidebar: one home, its pages, and Overview.
+ * The seat's sidebar: Overview, one home with its pages, and Market.
  *
- * The home is open. Everything under it belongs to this seat and to no other,
+ * The order is the design's (`shell-registry.js` `navGroups`, 2026-09-13):
+ * Overview and Market state facts rather than belonging to a workflow, so they
+ * bracket the seat instead of trailing it. The home is open. Everything under it belongs to this seat and to no other,
  * so the menu is short enough to read at a glance and every row is something
  * this posture actually does.
  */
@@ -288,6 +290,7 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
   switch (seat) {
     case 'autopilot':
       return [
+        OVERVIEW_PAGE,
         home(seat, 'Autopilot', A.autopilot, [
           A.inbox,
           ...objectivesItem(seat, ctx.objectives),
@@ -295,19 +298,19 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
           A.candidates,
         ]),
         MARKET_ITEM,
-        OVERVIEW_PAGE,
       ]
     case 'copilot':
       return [
+        OVERVIEW_PAGE,
         home(seat, 'Copilot Desk', C.desk, [C.brief, C.ask, C.trading, C.personas, C.playbook]),
         MARKET_ITEM,
-        OVERVIEW_PAGE,
       ]
     case 'workbench': {
       // Signal Health rides up out of Data: on this seat it is the first thing
       // you check before trusting anything else on the bench.
       const health = data.items.find((i) => i.to === WORKBENCH_LIFTED_FROM_DATA)!
       return [
+        OVERVIEW_PAGE,
         home(seat, 'Workbench', WORKBENCH_PAGE, [
           ...discover.items,
           health,
@@ -316,7 +319,6 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
           fold(seat, data.label, data.icon, data.items.filter((i) => i !== health)),
         ]),
         MARKET_ITEM,
-        OVERVIEW_PAGE,
       ]
     }
   }

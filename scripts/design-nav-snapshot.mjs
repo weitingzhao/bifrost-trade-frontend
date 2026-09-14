@@ -73,6 +73,9 @@ const src = readFileSync(join(pkg, 'shell-registry.js'), 'utf8')
 new Function(src)()
 const R = window.ShellRegistry
 
+/** The design's Research seats — the keys of `SEAT_HOME` in `shell-registry.js`. */
+const SEATS = ['workbench', 'lab', 'copilot', 'autopilot']
+
 /** Every row the design's sidebar renders, with the group and fold it sits in. */
 function rows() {
   const found = []
@@ -88,7 +91,12 @@ function rows() {
       walk(kids, group, borrows ? [...trail, it.label] : trail)
     }
   }
-  for (const g of R.navGroups({ route: '/home' })) walk(g.items, g.label, [])
+  // Since 2026-09-13 the design's Research group carries only the current
+  // seat's pages. Asking for one seat would drop every other seat's pages out
+  // of the menu; a page is in the nav if any seat shows it.
+  for (const seat of SEATS) {
+    for (const g of R.navGroups({ route: '/home', seat })) walk(g.items, g.label, [])
+  }
   for (const g of R.systemGroups()) walk(g.items, 'System', [])
   return found
 }

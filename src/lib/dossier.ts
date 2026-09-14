@@ -171,7 +171,8 @@ export function faceView(
       rows,
       headline: NOT_MEASURED,
       tone: 'neutral',
-      lamp: 'red',
+      // Not measured is a coverage fact, not a fault: grey (DESIGN_CONTRACTS 2026-09-13.1).
+      lamp: 'gray',
       recordScopes: null,
       coverage: null,
       href,
@@ -187,7 +188,8 @@ export function faceView(
     tone: pick?.tone ?? 'neutral',
     lamp:
       read.length === 0
-        ? 'red'
+        ? // Nothing read yet is unknown, not failed: grey, never red.
+          'gray'
         : allFresh && read.length === face.lenses.length
           ? 'green'
           : 'yellow',

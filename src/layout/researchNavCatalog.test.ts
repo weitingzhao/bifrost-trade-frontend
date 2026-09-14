@@ -90,16 +90,19 @@ describe('a seat carries its own pages and no others', () => {
     }
   })
 
-  it('leads with the seat home, open, then only the seatless rows', () => {
+  it('brackets the open seat home with the seatless rows: Overview, home, Market', () => {
+    // The design's order since 2026-09-13 (`navGroups` in shell-registry.js):
+    // Overview and Market state facts, so they sit either side of the workflow.
     for (const seat of RESEARCH_SEATS) {
       const items = seatItems(seat, ctx)
       expect(items.map((i) => i.to), seat).toEqual([
+        OVERVIEW,
         HOMES[seat],
         MARKET_PAGES.live.to,
-        OVERVIEW,
       ])
-      expect(items[0].defaultOpen, seat).toBe(true)
-      expect(items[0].children?.length, seat).toBeGreaterThan(0)
+      const home = items.find((i) => i.to === HOMES[seat])
+      expect(home?.defaultOpen, seat).toBe(true)
+      expect(home?.children?.length, seat).toBeGreaterThan(0)
     }
   })
 
@@ -109,7 +112,7 @@ describe('a seat carries its own pages and no others', () => {
     // so the bench showed the wrong page for 39 commits and nothing here
     // noticed. The lift is by path now; this pins which page.
     expect(WORKBENCH_LIFTED_FROM_DATA).toBe('/research/signal-health')
-    const top = seatItems('workbench', ctx)[0].children ?? []
+    const top = seatItems('workbench', ctx).find((i) => i.to === HOMES.workbench)?.children ?? []
     const lifted = top.filter((i) => !i.id.startsWith('fold:')).map((i) => i.to)
     expect(lifted).toContain(WORKBENCH_LIFTED_FROM_DATA)
 

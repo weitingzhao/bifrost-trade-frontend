@@ -92,7 +92,8 @@ describe('the dossier faces', () => {
   it('reads as empty before any exhibit lands, and fully green only when every lens is fresh and read', () => {
     expect(faceView(face('forecast'), [], 'NVDA', noSpec)).toMatchObject({
       headline: 'No reading yet',
-      lamp: 'red',
+      // Grey, not red: no reading is not a fault (DESIGN_CONTRACTS 2026-09-13.1).
+      lamp: 'gray',
       coverage: { read: 0, of: 2 },
     })
     const all = [
@@ -120,7 +121,7 @@ describe('the dossier faces', () => {
       'NVDA',
       noSpec
     )
-    expect(v).toMatchObject({ headline: NOT_MEASURED, rows: [], coverage: null, lamp: 'red' })
+    expect(v).toMatchObject({ headline: NOT_MEASURED, rows: [], coverage: null, lamp: 'gray' })
     expect(v.href).toBe('/docs/research-calibration?symbol=NVDA')
   })
 

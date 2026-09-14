@@ -301,6 +301,7 @@ export const AutopilotStandingSchema = z
       .object({ matrix_level: z.string().nullable(), matrix_l0: z.boolean(), note: z.string() })
       .passthrough(),
     next_run_at: z.string(),
+    next_run_source: z.string().optional(),
     purse: z
       .object({
         spent_usd: z.number(),

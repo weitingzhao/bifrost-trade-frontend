@@ -337,6 +337,8 @@ export interface AutopilotObjective {
 export interface AutopilotStanding {
   trust: { matrix_level: string | null; matrix_l0: boolean; source?: string; note: string }
   next_run_at: string
+  /** How next_run_at was produced — "computed" for the harness CronJob. */
+  next_run_source?: string
   purse: { spent_usd: number; cap_usd: number; providers: { provider: string; spent_usd: number; cap_usd: number; exhausted: boolean }[] }
   /** Candidate batches waiting, across the active objectives. */
   pending_memos: number

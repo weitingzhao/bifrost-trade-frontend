@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   inboxReadDrafts: 'bifrost-inbox-read-drafts',
   // Last exhibit the Symbol page saw per symbol — prior half of "Since last snapshot".
   symbolExhibitSnapshot: 'bifrost-symbol-exhibit-snapshot',
+  // Plan-this handoffs queued for Trade › Plans (session-scoped, advisory).
+  planHandoffs: 'bifrost-plan-handoffs',
   optionScreenerFilters: 'optionScreenerFilters',
   optionDiscoveryPrefs: 'optionDiscoveryPrefs',
   positionsCushionPct: 'bifrost-positions-cushion-pct',

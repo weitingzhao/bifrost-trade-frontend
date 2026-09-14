@@ -71,6 +71,7 @@ export interface RouteEntry {
 // Market is a fold inside Research, not a group of its own — see `navConfig.ts`.
 const MARKET = ['Research', 'Market'] as const
 const PORTFOLIO = ['Portfolio'] as const
+const TRADE = ['Trade'] as const
 const RESEARCH = ['Research'] as const
 const AUTOPILOT = ['Research', 'Autopilot'] as const
 const COPILOT = ['Research', 'Copilot'] as const
@@ -195,6 +196,18 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/portfolio/accounts', label: 'Accounts', crumbs: PORTFOLIO },
   { path: '/portfolio/ledger', label: 'Trade Ledger', crumbs: PORTFOLIO },
   { path: '/portfolio/transfer', label: 'Transfer & Pay', crumbs: PORTFOLIO },
+
+  // ── Trade › Desk (Plans receives ＋ Plan this; nav row waits on B3 Trade group)
+  {
+    path: '/trade/plans',
+    label: 'Plans',
+    crumbs: TRADE,
+    symbolScope: true,
+    design: {
+      state: 'moving',
+      note: 'C1-c thin receiver for Plan-this handoffs (source · rule · contract). Full Trade Plans.dc.html desk still ahead; not in nav until B3 Trade group.',
+    },
+  },
 
   // ── Strategy ───────────────────────────────────────────────────────────
   {

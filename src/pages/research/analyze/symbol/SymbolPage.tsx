@@ -29,6 +29,7 @@ import { useDossier } from '@/hooks/useDossier'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { verdictView } from '@/lib/lensVerdict'
 import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
+import { PlanThisButton } from '@/components/research/PlanThisButton'
 import { SymbolMyLegs } from '@/pages/research/analyze/symbol/SymbolMyLegs'
 import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSinceSnapshot'
 import { SymbolOriginRail } from '@/pages/research/analyze/symbol/SymbolOriginRail'
@@ -104,21 +105,31 @@ export default function SymbolPage() {
           title="Symbol"
           description={TAB_DESCRIPTION[active]}
           actions={
-            <SegmentControl
-              ariaLabel="Symbol tab"
-              size="sm"
-              value={active}
-              onChange={(v) => setTab(v as SymbolTabId)}
-              options={SYMBOL_TABS.map((t) => {
-                const dot = dotFor(t)
-                return {
-                  value: t.id,
-                  // The worst band inside a tab, on the tab: a name's problem is
-                  // visible without opening the tab that holds it.
-                  label: dot ? `${t.label} ●` : t.label,
-                }
-              })}
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              {symbol ? (
+                <PlanThisButton
+                  symbol={symbol}
+                  source={`symbol:${active}`}
+                  sourceLabel={`Symbol · ${active}`}
+                  variant="primary"
+                />
+              ) : null}
+              <SegmentControl
+                ariaLabel="Symbol tab"
+                size="sm"
+                value={active}
+                onChange={(v) => setTab(v as SymbolTabId)}
+                options={SYMBOL_TABS.map((t) => {
+                  const dot = dotFor(t)
+                  return {
+                    value: t.id,
+                    // The worst band inside a tab, on the tab: a name's problem is
+                    // visible without opening the tab that holds it.
+                    label: dot ? `${t.label} ●` : t.label,
+                  }
+                })}
+              />
+            </div>
           }
         />
         {/* Where this name came from, and the way through that list — stepping

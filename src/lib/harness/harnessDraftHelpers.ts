@@ -164,8 +164,33 @@ export function policySuggestionMergeCount(payload: Record<string, unknown>): nu
  * batches and eight no-ops were waiting — and an Approve button that does
  * nothing teaches you to clear the queue without looking.
  */
+/**
+ * Draft kinds whose Approve writes something.
+ *
+ * Mirrors the branches of `apply_draft_approval` (bifrost-research
+ * `api/agents.py`), which `POST /research/drafts/{id}/approve` calls directly.
+ * A kind with no branch there falls into its `else` — "advisory pass-through;
+ * no side-effect write" — and only its status changes. Today that is
+ * `order_intent` and `decision_draft`, which the Inbox was offering as calls
+ * with a primary Approve that did nothing, and `hypothesis_suggestion` and
+ * `hypothesis_draft` as well. The briefing kinds that write conditionally
+ * (`eod_verdict`, `morning_brief`) are not decisions at all, so not listed.
+ *
+ * An allowlist here beside exclusion in `isDecisionKind` is deliberate: they
+ * answer different questions. Whether a draft is shown — never drop a kind the
+ * UI does not model. Whether its Approve is the primary action — never promote
+ * it for a kind nobody can say writes anything.
+ */
+export const APPROVE_WRITES_KINDS = new Set<string>([
+  'candidate_batch',
+  'policy_suggestion',
+  'playbook_rule',
+  'playbook_note',
+])
+
 export function isActionableDraft(draft: AiDraft): boolean {
   if (!isDecisionKind(draft.kind)) return false
+  if (!APPROVE_WRITES_KINDS.has(draft.kind)) return false
   if (draft.kind === 'policy_suggestion') return policySuggestionMergeCount(draft.payload) > 0
   return true
 }

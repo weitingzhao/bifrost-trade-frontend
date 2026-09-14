@@ -217,6 +217,23 @@ export async function fetchObjectiveRun(runId: string): Promise<ObjectiveRunDeta
   )
 }
 
+/**
+ * A run, or `null` when the Research service no longer has it.
+ *
+ * Drafts outlive the runs they came out of: on DEV every harness draft from
+ * 2026-09-04 and 09-07 names a run that now answers 404 "run not found". A
+ * reader that only wants to know what a run cost should not treat that as a
+ * failure, and `unwrapResearchEnvelope` cannot tell a 404 from any other error
+ * once it has thrown — so the status is read here first, the way
+ * `researchEngine.ts` and `ivRadar.ts` already do. `fetchObjectiveRun` keeps
+ * throwing: the run pages want a missing run to be an error they show.
+ */
+export async function fetchObjectiveRunIfKept(runId: string): Promise<ObjectiveRunDetail | null> {
+  const res = await fetch(researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}`))
+  if (res.status === 404) return null
+  return unwrap(res)
+}
+
 export async function fetchObjectiveRuns(params?: {
   status?: string
   objective_id?: string

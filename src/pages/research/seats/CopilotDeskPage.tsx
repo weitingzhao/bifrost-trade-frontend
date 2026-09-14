@@ -22,13 +22,20 @@ import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
 import { fetchCopilotSession, fetchCopilotSessions } from '@/api/researchCopilotSessions'
 import { listResearchDrafts, type DraftStatus } from '@/api/researchDrafts'
 import { AgentActionsMenu } from '@/components/cockpit/AgentActionsMenu'
-import { agentsThatWroteOn, humanKind, nyDate } from '@/pages/research/seats/agentActivity'
+import {
+  agentsThatWroteOn,
+  humanKind,
+  nyDate,
+  rowCost,
+  type RunCost,
+} from '@/pages/research/seats/agentActivity'
 import { useCopilotStanding } from '@/hooks/useCopilotStanding'
 import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { copilotSessionStore } from '@/hooks/useCopilotSession'
 import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 import { fmtIsoTs } from '@/lib/format'
-import { fmtUsd } from '@/lib/harness/runSpend'
+import { fmtUsd, runSpend } from '@/lib/harness/runSpend'
+import { fetchObjectiveRunIfKept } from '@/api/research/harness'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 
 export default function CopilotDeskPage() {
@@ -208,8 +215,9 @@ function DigestToday({ draftId, status, loading }: { draftId: string | null; sta
  * Drafts are the record: the agents already write `generated_by`,
  * `created_at` and `kind`, so this reads the rows the Decision Inbox reads
  * instead of a second table that could disagree with it. The design's fourth
- * column, Cost, is not recorded anywhere in this system — it says so rather
- * than showing a zero, which on a spend column would be a claim.
+ * column, Cost, is recorded per objective run: a row sums the runs its drafts
+ * link, and a row that links none says its spend is not recorded rather than
+ * showing a zero, which on a spend column would be a claim.
  *
  * All four statuses, because an agent that ran and whose drafts you have since
  * approved still ran. The backend filters to `pending` when the parameter is
@@ -237,6 +245,27 @@ function RanToday() {
   }, [queries])
   // A page that came back full is a page that may have been cut off.
   const maybeShort = queries.some((q) => (q.data?.rows.length ?? 0) >= DRAFT_PAGE)
+
+  // One request per distinct run, shared by every row that links it.
+  const runIds = useMemo(() => [...new Set(rows.flatMap((r) => r.runIds))].sort(), [rows])
+  const runQueries = useQueries({
+    queries: runIds.map((id) => ({
+      queryKey: ['research', 'objective-run', id],
+      queryFn: () => fetchObjectiveRunIfKept(id),
+      // A finished run's spend does not change.
+      staleTime: 5 * 60_000,
+    })),
+  })
+  const costByRun = new Map<string, RunCost>(
+    runIds.map((id, i) => {
+      const q = runQueries[i]
+      if (!q || q.isLoading) return [id, 'loading']
+      if (q.isError) return [id, 'error']
+      if (q.data === null) return [id, 'gone']
+      if (!q.data) return [id, 'error']
+      return [id, runSpend(q.data).total_usd]
+    }),
+  )
 
   if (isLoading) return <Skeleton className="h-24 w-full" />
   // Partial is not clean: some agents may be missing from this list entirely.
@@ -269,9 +298,7 @@ function RanToday() {
               <span className="block font-mono text-dense-meta tabular-nums text-muted-foreground">
                 {fmtIsoTs(r.lastAt)}
               </span>
-              <span className="block text-dense-micro text-muted-foreground/60" title="No agent run in this system records what it spent">
-                cost not recorded
-              </span>
+              <RowCost runIds={r.runIds} costByRun={costByRun} />
             </span>
           </li>
         ))}
@@ -285,6 +312,60 @@ function RanToday() {
       )}
     </>
   )
+}
+
+/**
+ * The Cost cell. What it says is decided by `rowCost`; this only words it.
+ */
+function RowCost({
+  runIds,
+  costByRun,
+}: {
+  runIds: readonly string[]
+  costByRun: ReadonlyMap<string, RunCost>
+}) {
+  const cost = rowCost(runIds, costByRun)
+  const quiet = 'block text-dense-micro text-muted-foreground/60'
+  switch (cost.state) {
+    case 'unrecorded':
+      return (
+        <span className={quiet} title="Its drafts link no objective run, and only objective runs record spend">
+          cost not recorded
+        </span>
+      )
+    case 'loading':
+      return <span className={quiet}>cost …</span>
+    case 'gone':
+      return (
+        <span
+          className={quiet}
+          title={`The Research service no longer keeps ${cost.runs === 1 ? 'the run' : `the ${cost.runs} runs`} these drafts came from, and a run's spend is recorded on the run`}
+        >
+          run no longer kept
+        </span>
+      )
+    case 'unreadable':
+      return (
+        <span
+          className={quiet}
+          title={`${cost.runs} linked run${cost.runs === 1 ? '' : 's'}, and none could be read`}
+        >
+          cost unreadable
+        </span>
+      )
+    case 'total':
+      return (
+        <span
+          className="block font-mono text-dense-micro tabular-nums text-muted-foreground"
+          title={`Spend across ${cost.runs} run${cost.runs === 1 ? '' : 's'}${
+            cost.unread ? ` · ${cost.unread} gone or unreadable, so this is a floor` : ''
+          }`}
+        >
+          {fmtUsd(cost.usd)}
+          {cost.unread ? '+' : ''}
+        </span>
+      )
+  }
 }
 
 function Threads() {

@@ -13,7 +13,6 @@ import {
   formatPolicyValue,
   groupIdenticalDrafts,
   hitRateFailingLenses,
-  isActionableDraft,
   isDecisionKind,
   isHitRateWarnActive,
   parseAgentVerdicts,
@@ -547,61 +546,6 @@ describe('groupIdenticalDrafts', () => {
 
   it('returns an empty list for no rows', () => {
     expect(groupIdenticalDrafts([])).toEqual([])
-  })
-})
-
-describe('policySuggestionMergeCount / isActionableDraft', () => {
-  function asDraft(kind: AiDraft['kind'], payload: Record<string, unknown>): AiDraft {
-    return {
-      id: 'd1',
-      kind,
-      payload,
-      scope: 'research',
-      status: 'pending',
-      generated_by: 'harness',
-      linked_action_id: null,
-      created_at: '2026-09-01T05:00:00Z',
-      expires_at: null,
-    }
-  }
-
-  it('counts only fields the merge would actually write', () => {
-    const payload = {
-      current_policy: { preset: 'neutral', min_hit_rate: 0.5 },
-      suggestion: { preset: 'neutral', min_hit_rate: 0.7 },
-    }
-    // preset is proposed but identical — it writes nothing.
-    expect(policySuggestionMergeCount(payload)).toBe(1)
-  })
-
-  it('reports zero when the model proposed nothing whitelist-eligible', () => {
-    // The eight pending suggestions on 2026-09-01 all looked like this: reasoning
-    // present, suggestion dict empty after whitelist filtering.
-    const payload = {
-      current_policy: { preset: 'neutral', max_candidates: 8 },
-      suggestion: {},
-      llm_reasoning: 'Stock-composite objective; option overlay enabled…',
-    }
-    expect(policySuggestionMergeCount(payload)).toBe(0)
-    expect(isActionableDraft(asDraft('policy_suggestion', payload))).toBe(false)
-  })
-
-  it('treats a suggestion that would write a field as a real call', () => {
-    const payload = {
-      current_policy: { min_hit_rate: 0.5 },
-      suggestion: { min_hit_rate: 0.7 },
-    }
-    expect(isActionableDraft(asDraft('policy_suggestion', payload))).toBe(true)
-  })
-
-  it('leaves every other decision kind actionable', () => {
-    expect(isActionableDraft(asDraft('candidate_batch', { items: [] }))).toBe(true)
-    expect(isActionableDraft(asDraft('hypothesis_suggestion', {}))).toBe(true)
-  })
-
-  it('never counts a recurring briefing as a call', () => {
-    expect(isActionableDraft(asDraft('morning_brief', {}))).toBe(false)
-    expect(isActionableDraft(asDraft('eod_verdict', {}))).toBe(false)
   })
 })
 

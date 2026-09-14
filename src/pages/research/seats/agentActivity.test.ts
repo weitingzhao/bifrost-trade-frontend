@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { agentsThatWroteOn, humanKind, nyDate } from './agentActivity'
+import { agentsThatWroteOn, humanKind, nyDate, rowCost, type RunCost } from './agentActivity'
 import type { AiDraft } from '@/api/researchDrafts'
 
-function draft(generated_by: string, kind: string, created_at: string): AiDraft {
+function draft(
+  generated_by: string,
+  kind: string,
+  created_at: string,
+  payload: Record<string, unknown> = {},
+): AiDraft {
   return {
     id: `${generated_by}-${created_at}`,
     kind: kind as AiDraft['kind'],
-    payload: {},
+    payload,
     scope: 's',
     status: 'pending',
     generated_by,
@@ -69,6 +74,34 @@ describe('agentsThatWroteOn', () => {
     expect(out).toEqual([expect.objectContaining({ agent: 'unattributed', writes: 1 })])
   })
 
+  it('collects the runs a row\'s drafts came out of, today only', () => {
+    // Spend is recorded per objective run; the page sums what these runs cost.
+    const out = agentsThatWroteOn(
+      [
+        draft('harness', 'candidate_batch', '2026-09-11T13:34:00Z', { run_id: 'run_b' }),
+        draft('harness', 'policy_suggestion', '2026-09-11T13:35:00Z', { run_id: 'run_a' }),
+        draft('harness', 'candidate_batch', '2026-09-11T13:36:00Z', { run_id: 'run_b' }),
+        draft('harness', 'candidate_batch', '2026-09-10T13:34:00Z', { run_id: 'run_yesterday' }),
+      ],
+      '2026-09-11',
+    )
+    expect(out[0].runIds).toEqual(['run_a', 'run_b'])
+  })
+
+  it('gives a row no runs when its drafts link none — its spend is not recorded, not zero', () => {
+    const out = agentsThatWroteOn(
+      [
+        draft('eod_agent', 'eod_verdict', '2026-09-11T21:30:00Z'),
+        draft('loop_curator', 'decision_draft', '2026-09-11T14:00:00Z', { run_id: 42 }),
+      ],
+      '2026-09-11',
+    )
+    expect(out.map((r) => [r.agent, r.runIds])).toEqual([
+      ['eod_agent', []],
+      ['loop_curator', []],
+    ])
+  })
+
   it('ignores a row with an unreadable timestamp instead of bucketing it', () => {
     expect(agentsThatWroteOn([draft('eod_agent', 'eod_verdict', 'nonsense')], '2026-09-11')).toEqual([])
   })
@@ -80,3 +113,50 @@ describe('humanKind', () => {
     expect(humanKind('daily_digest')).toBe('daily digest')
   })
 })
+
+describe('rowCost', () => {
+  const costs = (entries: [string, RunCost][]) => new Map(entries)
+
+  it('says spend is not recorded when the row links no run', () => {
+    expect(rowCost([], costs([]))).toEqual({ state: 'unrecorded' })
+  })
+
+  it('waits while any run is still loading', () => {
+    expect(rowCost(['a', 'b'], costs([['a', 0.3], ['b', 'loading']]))).toEqual({ state: 'loading' })
+    // A run the page has not asked about yet is loading, not free.
+    expect(rowCost(['a'], costs([]))).toEqual({ state: 'loading' })
+  })
+
+  it('says the runs are gone when the service no longer has any of them', () => {
+    // 2026-09-04 and 09-07 on DEV: two harness runs each, both 404 "run not
+    // found" — the drafts outlived them. The first version rendered "$0.00+".
+    expect(rowCost(['a', 'b'], costs([['a', 'gone'], ['b', 'gone']]))).toEqual({
+      state: 'gone',
+      runs: 2,
+    })
+  })
+
+  it('does not print a total when no run could be read', () => {
+    expect(rowCost(['a', 'b'], costs([['a', 'error'], ['b', 'gone']]))).toEqual({
+      state: 'unreadable',
+      runs: 2,
+    })
+  })
+
+  it('totals what it could read and says how much it is missing', () => {
+    expect(rowCost(['a', 'b', 'c'], costs([['a', 0.3019], ['b', 'error'], ['c', 'gone']]))).toEqual({
+      state: 'total',
+      usd: 0.3019,
+      runs: 3,
+      unread: 2,
+    })
+    expect(rowCost(['a', 'b'], costs([['a', 0.3019], ['b', 'error']]))).toEqual({
+      state: 'total',
+      usd: 0.3019,
+      runs: 2,
+      unread: 1,
+    })
+    expect(rowCost(['a', 'b'], costs([['a', 0.1], ['b', 0.2]]))).toMatchObject({ state: 'total', unread: 0 })
+  })
+})
+

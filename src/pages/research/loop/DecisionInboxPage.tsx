@@ -139,7 +139,9 @@ export default function DecisionInboxPage() {
         />
         <span className="text-dense-meta text-muted-foreground ml-auto">
           {counts.decisions} to decide
-          {counts.inert > 0 ? ` · ${counts.inert} nothing to merge` : ''} ·{' '}
+          {/* Not "nothing to merge": since the kinds the server passes through
+              joined this bucket, most of it is not a merge at all. */}
+          {counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''} ·{' '}
           {counts.briefings} briefing{counts.briefings === 1 ? '' : 's'} · {counts.total} pending
           {counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}
           {counts.unseen > 0 ? (

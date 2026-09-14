@@ -10,6 +10,7 @@ import { PageHeader, PageShell } from '@/components/layout'
 import { EmptyState, SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DraftCard } from '@/components/cockpit/DraftCard'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
@@ -29,18 +30,36 @@ import {
 } from '@/lib/harness/harnessDraftHelpers'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
 
-type KindFilter = 'all' | 'decisions' | 'briefings' | 'loop' | DraftKind
+type View = 'decisions' | 'briefings' | 'all'
+type Narrow = 'any' | 'loop' | DraftKind
 
-const KIND_OPTIONS: { value: KindFilter; label: string }[] = [
+/**
+ * Three views, as in the design (`Research Autopilot Decisions.dc.html`):
+ * what needs a call, what needs reading, everything. The page used to offer
+ * nine peers in one row — the three views beside six kinds — so "EOD" sat next
+ * to "Decisions" as if it were another answer to the same question.
+ */
+const VIEW_OPTIONS: { value: View; label: string }[] = [
   { value: 'decisions', label: 'Decisions' },
   { value: 'briefings', label: 'Briefings' },
-  { value: 'loop', label: 'Loop' },
   { value: 'all', label: 'All' },
-  { value: 'hypothesis_suggestion', label: 'Hypothesis' },
-  { value: 'morning_brief', label: 'Morning' },
-  { value: 'eod_verdict', label: 'EOD' },
-  { value: 'candidate_batch', label: 'Candidates' },
-  { value: 'policy_suggestion', label: 'Policy' },
+]
+
+/** Narrowing to one kind is still one step away — every kind the API knows, and the Loop as a group. */
+const NARROW_OPTIONS: { value: Narrow; label: string }[] = [
+  { value: 'any', label: 'Any kind' },
+  { value: 'loop', label: 'Loop · batches + policy' },
+  { value: 'candidate_batch', label: 'Candidate batches' },
+  { value: 'policy_suggestion', label: 'Policy suggestions' },
+  { value: 'decision_draft', label: 'Curator decisions' },
+  { value: 'playbook_rule', label: 'Playbook rules' },
+  { value: 'playbook_note', label: 'Playbook notes' },
+  { value: 'hypothesis_suggestion', label: 'Hypothesis suggestions' },
+  { value: 'hypothesis_draft', label: 'Hypothesis drafts' },
+  { value: 'order_intent', label: 'Order intents' },
+  { value: 'eod_verdict', label: 'EOD verdicts' },
+  { value: 'morning_brief', label: 'Morning briefs' },
+  { value: 'daily_digest', label: 'Daily digests' },
 ]
 
 /**
@@ -57,16 +76,23 @@ export default function DecisionInboxPage() {
   // what is left here is a real decision). Today's digest is one click away —
   // a strip above the list says it is there. Briefings keep their own count,
   // so nothing is hidden.
-  const [chosenFilter, setChosenFilter] = useState<KindFilter | null>(null)
+  const [view, setViewState] = useState<View>('decisions')
+  const [narrow, setNarrowState] = useState<Narrow>('any')
+  // A kind belongs to one view or another; narrowing inside the wrong one would
+  // show an empty list for a kind that has drafts. So a kind widens to All, and
+  // picking a view lets go of the kind.
+  const setView = (next: View) => {
+    setViewState(next)
+    setNarrowState('any')
+  }
+  const setNarrow = (next: Narrow) => {
+    setNarrowState(next)
+    if (next !== 'any') setViewState('all')
+  }
 
-  const apiKind =
-    chosenFilter === null ||
-    chosenFilter === 'all' ||
-    chosenFilter === 'decisions' ||
-    chosenFilter === 'briefings' ||
-    chosenFilter === 'loop'
-      ? undefined
-      : (chosenFilter as DraftKind)
+  // A concrete kind is filtered by the server, so a kind longer than one page
+  // still lists in full. The Loop group is two kinds, filtered here.
+  const apiKind = narrow === 'any' || narrow === 'loop' ? undefined : narrow
 
   // The whole queue, not a page of it: every count on this page is computed
   // from what comes back, and the cards are the work itself.
@@ -75,22 +101,19 @@ export default function DecisionInboxPage() {
   const dismiss = useDismissDraft()
 
   const digest = (query.data?.rows ?? []).find(isDailyDigest)
-  const kindFilter: KindFilter = chosenFilter ?? 'decisions'
-  const setKindFilter = setChosenFilter
 
   const rows = useMemo(() => {
     const all = query.data?.rows ?? []
-    if (kindFilter === 'decisions') {
+    if (narrow === 'loop') return all.filter((d) => LOOP_KINDS.has(d.kind))
+    if (narrow !== 'any') return all
+    if (view === 'decisions') {
       return all.filter((d) => isDecisionKind(d.kind))
     }
-    if (kindFilter === 'briefings') {
+    if (view === 'briefings') {
       return digestFirst(all.filter((d) => BRIEFING_KINDS.has(d.kind)))
     }
-    if (kindFilter === 'loop') {
-      return all.filter((d) => LOOP_KINDS.has(d.kind))
-    }
     return all
-  }, [query.data?.rows, kindFilter])
+  }, [query.data?.rows, view, narrow])
 
   // One card per decision, not per draft. Repeated runs of the same objective
   // post an identical batch each time; they are folded into the newest and
@@ -106,7 +129,11 @@ export default function DecisionInboxPage() {
   const counts = useMemo(() => {
     const all = query.data?.rows ?? []
     const decisionGroups = groupIdenticalDrafts(all.filter((d) => isDecisionKind(d.kind)))
-    const total = query.data?.pending_count ?? all.length
+    // `pending_count` is the whole queue's, whatever `kind` the query asked for:
+    // narrowed to EOD verdicts on DEV it still said 182 beside 118 rows, and the
+    // line read "182 pending of this kind · 64 not shown". On a narrowed query the
+    // rows are the count, and only a full page can be hiding more.
+    const total = apiKind ? all.length : (query.data?.pending_count ?? all.length)
     return {
       decisions: decisionGroups.filter((g) => isActionableDraft(g.draft)).length,
       inert: decisionGroups.filter((g) => !isActionableDraft(g.draft)).length,
@@ -118,9 +145,12 @@ export default function DecisionInboxPage() {
       // describes the queue, and the line reads as though they agree — which
       // is how "24 to decide · 77 pending" came to mean twenty-seven drafts
       // nobody could see.
-      unseen: Math.max(0, total - all.length),
+      unseen: apiKind ? 0 : Math.max(0, total - all.length),
+      pageFull: all.length >= DRAFTS_PAGE_MAX,
     }
-  }, [query.data?.rows, query.data?.pending_count])
+  }, [query.data?.rows, query.data?.pending_count, apiKind])
+
+  const narrowLabel = NARROW_OPTIONS.find((o) => o.value === narrow)?.label ?? narrow
 
   return (
     <PageShell padding="default" className="space-y-3">
@@ -131,21 +161,39 @@ export default function DecisionInboxPage() {
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-dense-meta font-medium text-muted-foreground shrink-0">Kind:</span>
-        <SegmentControl
-          value={kindFilter}
-          onChange={(v) => setKindFilter(v as KindFilter)}
-          options={KIND_OPTIONS}
-        />
+        <span className="text-dense-meta font-medium text-muted-foreground shrink-0">View:</span>
+        <SegmentControl value={view} onChange={(v) => setView(v as View)} options={VIEW_OPTIONS} />
+        <Select value={narrow} onValueChange={(v) => setNarrow(v as Narrow)}>
+          <SelectTrigger className="h-7 w-52 text-dense-meta" aria-label="Narrow to one kind">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {NARROW_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value} className="text-dense-meta">
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <span className="text-dense-meta text-muted-foreground ml-auto">
-          {counts.decisions} to decide
-          {/* Not "nothing to merge": since the kinds the server passes through
-              joined this bucket, most of it is not a merge at all. */}
-          {counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''} ·{' '}
-          {counts.briefings} briefing{counts.briefings === 1 ? '' : 's'} · {counts.total} pending
-          {counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}
+          {narrow !== 'any' ? (
+            // Counts of decisions and briefings are meaningless on one kind: the
+            // query itself is narrowed. Say what the list is instead.
+            `${groups.length} ${narrowLabel.toLowerCase()} shown · ${counts.total} pending${
+              apiKind && counts.pageFull ? ` — the newest ${DRAFTS_PAGE_MAX}; older ones not shown` : ''
+            }`
+          ) : (
+            <>
+              {counts.decisions} to decide
+              {/* Not "nothing to merge": since the kinds the server passes through
+                  joined this bucket, most of it is not a merge at all. */}
+              {counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''} ·{' '}
+              {counts.briefings} briefing{counts.briefings === 1 ? '' : 's'} · {counts.total} pending
+              {counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}
+            </>
+          )}
           {counts.unseen > 0 ? (
-            <span className="text-amber-500" title={`Showing the newest ${DRAFTS_PAGE_MAX}.`}>
+            <span className="text-warning" title={`Showing the newest ${DRAFTS_PAGE_MAX}.`}>
               {' '}
               · {counts.unseen} not shown
             </span>
@@ -153,7 +201,7 @@ export default function DecisionInboxPage() {
         </span>
       </div>
 
-      {digest && kindFilter !== 'briefings' ? (
+      {digest && view !== 'briefings' && narrow === 'any' ? (
         <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-500/35 bg-sky-500/[0.05] px-3 py-1.5 text-dense-meta">
           <span className="font-medium">
             {typeof digest.payload.title === 'string' ? digest.payload.title : 'Daily digest'}
@@ -162,7 +210,7 @@ export default function DecisionInboxPage() {
           <button
             type="button"
             className="ml-auto text-dense-meta text-primary underline"
-            onClick={() => setKindFilter('briefings')}
+            onClick={() => setView('briefings')}
           >
             Read it
           </button>
@@ -179,15 +227,17 @@ export default function DecisionInboxPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           icon={<Inbox />}
-          title={kindFilter === 'decisions' ? 'Nothing to decide' : 'Inbox clear'}
+          title={view === 'decisions' && narrow === 'any' ? 'Nothing to decide' : 'Inbox clear'}
           description={
-            kindFilter === 'decisions' && counts.briefings > 0
+            view === 'decisions' && narrow === 'any' && counts.briefings > 0
               ? `No draft needs a call. ${counts.briefings} agent briefing${counts.briefings === 1 ? '' : 's'} waiting under Briefings.`
-              : 'No pending drafts. Morning Prep / EOD agents write here when they run.'
+              : narrow !== 'any'
+                ? `No pending ${narrowLabel.toLowerCase()}.`
+                : 'No pending drafts. Morning Prep / EOD agents write here when they run.'
           }
           action={
-            kindFilter === 'decisions' && counts.briefings > 0 ? (
-              <Button type="button" size="sm" variant="outline" onClick={() => setKindFilter('briefings')}>
+            view === 'decisions' && narrow === 'any' && counts.briefings > 0 ? (
+              <Button type="button" size="sm" variant="outline" onClick={() => setView('briefings')}>
                 Read briefings
               </Button>
             ) : undefined

@@ -1,4 +1,5 @@
 import type { AiDraft } from '@/api/researchDrafts'
+import type { LampTone } from '@/lib/lampTone'
 
 /**
  * Which scheduled agents wrote today, and what they wrote.
@@ -134,5 +135,90 @@ export function rowCost(runIds: readonly string[], costByRun: ReadonlyMap<string
     runs: runIds.length,
     unread: costs.length - known.length,
   }
+}
+
+/** One run's status as the page knows it: the run's own word, still fetching, no longer kept, or failed to load. */
+export type RunStatusRead = string | 'loading' | 'gone' | 'error'
+
+const RUN_STATUS_WORD: Record<string, string> = {
+  running: 'still running',
+  awaiting_approval: 'awaiting approval',
+  cancelled: 'cancelled',
+  failed: 'failed',
+  completed: 'completed',
+}
+
+function tallyWords(statuses: readonly string[]): string {
+  const n = new Map<string, number>()
+  for (const s of statuses) n.set(s, (n.get(s) ?? 0) + 1)
+  return [...n.entries()].map(([s, k]) => `${k} ${RUN_STATUS_WORD[s] ?? s}`).join(' · ')
+}
+
+/**
+ * A row's lamp, from the runs its drafts came from.
+ *
+ * Red is a run that failed — a fault. Amber is a run that has not finished its
+ * business: still running, waiting on you, or cancelled part-way. Green is every
+ * linked run completed, or a row that links no run at all: it wrote today, and
+ * agents outside the objective runs record nothing more to check. Grey is not
+ * knowing — still loading, or none of its runs readable, or a status this page
+ * does not recognise — because not knowing is not a fault.
+ */
+export function rowLamp(
+  runIds: readonly string[],
+  statusByRun: ReadonlyMap<string, RunStatusRead>,
+): { lamp: LampTone; why: string } {
+  if (runIds.length === 0) {
+    return { lamp: 'green', why: 'Wrote today. It links no objective run, so there is no run status to check.' }
+  }
+  const statuses = runIds.map((id) => statusByRun.get(id) ?? 'loading')
+  if (statuses.includes('loading')) return { lamp: 'gray', why: 'Reading run status…' }
+  const known = statuses.filter((s) => s !== 'gone' && s !== 'error')
+  if (known.length === 0) {
+    return { lamp: 'gray', why: `None of its ${runIds.length} run${runIds.length === 1 ? '' : 's'} could be read.` }
+  }
+  const why = tallyWords(known) + (known.length < statuses.length ? ` · ${statuses.length - known.length} unreadable` : '')
+  if (known.includes('failed')) return { lamp: 'red', why }
+  if (known.some((s) => s === 'running' || s === 'awaiting_approval' || s === 'cancelled')) return { lamp: 'yellow', why }
+  if (known.every((s) => s === 'completed')) return { lamp: 'green', why }
+  return { lamp: 'gray', why: `${why} — a status this page does not recognise` }
+}
+
+/** The schedule the harness CronJob picks up (`k8s/engines/cronjob-harness.yaml`, `--schedule=daily_open`). */
+export const UNATTENDED_SCHEDULE = 'daily_open'
+
+/**
+ * Each active objective with when it next runs unattended — or null, for one
+ * that runs only when someone starts it.
+ *
+ * `next_run_at` is one time for the whole harness, computed from the CronJob's
+ * schedule rather than read from the cluster; it applies only to objectives the
+ * CronJob selects. Giving it to a manual objective would promise a run nothing
+ * will start.
+ */
+export function objectiveSchedule(
+  objectives: readonly { id: string; title: string; schedule: string }[],
+  nextRunAt: string | null,
+): { id: string; title: string; next: string | null }[] {
+  return objectives.map((o) => ({
+    id: o.id,
+    title: o.title,
+    next: o.schedule === UNATTENDED_SCHEDULE ? nextRunAt : null,
+  }))
+}
+
+/** "Mon 14 Sep 09:30 ET" — built from parts for the same reason `nyDate` is. */
+export function nyWhen(at: Date): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(at)
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
+  return `${get('weekday')} ${get('day')} ${get('month')} ${get('hour')}:${get('minute')} ET`
 }
 

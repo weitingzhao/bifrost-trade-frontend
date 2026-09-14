@@ -161,7 +161,16 @@ export const ROUTES: readonly RouteEntry[] = [
   // ── Research · Workbench · Validate ────────────────────────────────────
   { path: '/research/signal-decay', label: 'Signal Decay', crumbs: VALIDATE },
   { path: '/research/signal-decay/:symbol', label: 'Signal Decay', crumbs: VALIDATE },
-  { path: '/research/backtest', label: 'Backtest', crumbs: VALIDATE, symbolScope: true },
+  {
+    path: '/research/backtest',
+    label: 'Backtest',
+    crumbs: VALIDATE,
+    symbolScope: true,
+    design: {
+      state: 'moving',
+      note: 'Lab — Docs Index marks it LAB: "handed to lab (2026-09-12.3), the Trade original is deleted". Lab is not built here, so it stays until it is; absent from Trade is not retired',
+    },
+  },
 
   // ── Research · Workbench · Data ────────────────────────────────────────
   { path: '/research/lens-coverage', label: 'Lens Coverage', crumbs: DATA },

@@ -21,9 +21,10 @@ export interface DesignRoute {
   /**
    * The design round the prototype belongs to, from Docs Index.dc.html.
    * NEW is this round's work; OLD is an early round a later contract may have
-   * overtaken; null when the route has no prototype.
+   * overtaken; LAB means the design handed the page to Lab — for a page the app
+   * has, that is a move, not a target; null when the route has no prototype.
    */
-  round: 'NEW' | 'OLD' | 'REDO' | null
+  round: 'NEW' | 'OLD' | 'REDO' | 'LAB' | null
   /** In the design's sidebar. A route can exist and be reachable only by link. */
   inNav: boolean
   /** Top-level group in the design's tree, when it has a row. */
@@ -57,15 +58,15 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/payoff","label":"Payoff","crumbs":["Research","Workbench","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","inNav":false,"group":null},
   {"path":"/research/compare","label":"Compare","crumbs":["Research","Workbench","Analyze"],"designed":true,"file":"Research Compare.dc.html","round":"NEW","inNav":true,"group":"Research"},
   {"path":"/research/history","label":"History","crumbs":["Research","Workbench","Analyze"],"designed":true,"file":"Research History.dc.html","round":"NEW","inNav":true,"group":"Research"},
-  {"path":"/research/lab/today","label":"Today · queue","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Today.dc.html","round":null,"inNav":true,"group":"Research"},
-  {"path":"/research/lab/screener","label":"Screener · authoring","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Screener.dc.html","round":null,"inNav":true,"group":"Research"},
-  {"path":"/research/lab/symbol","label":"Symbol lab","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Symbol.dc.html","round":null,"inNav":true,"group":"Research"},
-  {"path":"/research/lab/history","label":"History · method","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab History.dc.html","round":null,"inNav":true,"group":"Research"},
-  {"path":"/research/lab/calibration","label":"Calibration","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Calibration.dc.html","round":null,"inNav":true,"group":"Research"},
-  {"path":"/research/lab/discover-model","label":"Discover model","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Discover Model.dc.html","round":null,"inNav":true,"group":"Research"},
+  {"path":"/research/lab/today","label":"Today · queue","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Today.dc.html","round":"LAB","inNav":true,"group":"Research"},
+  {"path":"/research/lab/screener","label":"Screener · authoring","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Screener.dc.html","round":"LAB","inNav":true,"group":"Research"},
+  {"path":"/research/lab/symbol","label":"Symbol lab","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Symbol.dc.html","round":"LAB","inNav":true,"group":"Research"},
+  {"path":"/research/lab/history","label":"History · method","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab History.dc.html","round":"LAB","inNav":true,"group":"Research"},
+  {"path":"/research/lab/calibration","label":"Calibration","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Calibration.dc.html","round":"LAB","inNav":true,"group":"Research"},
+  {"path":"/research/lab/discover-model","label":"Discover model","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Discover Model.dc.html","round":"LAB","inNav":true,"group":"Research"},
   {"path":"/review/playbook-stats","label":"Playbook stats","crumbs":["Review"],"designed":true,"file":"Review Playbook Stats.dc.html","round":"NEW","inNav":true,"group":"Review"},
   {"path":"/research/signal-decay","label":"Signal Decay","crumbs":["Research","Workbench","Validate"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Research"},
-  {"path":"/research/backtest","label":"Backtest","crumbs":["Research","Workbench","Validate"],"designed":true,"file":"Research Backtest.dc.html","round":null,"inNav":true,"group":"Research"},
+  {"path":"/research/backtest","label":"Backtest","crumbs":["Research","Workbench","Validate"],"designed":true,"file":"Research Backtest.dc.html","round":"LAB","inNav":true,"group":"Research"},
   {"path":"/research/signal-health","label":"Signal Health","crumbs":["Research","Workbench","Data"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Research"},
   {"path":"/research/lens-coverage","label":"Lens Coverage","crumbs":["Research","Workbench","Data"],"designed":true,"file":"Research Lens Coverage.dc.html","round":"OLD","inNav":true,"group":"Research"},
   {"path":"/research/watchlist","label":"Watchlist","crumbs":["Research","Workbench","Data"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Research"},

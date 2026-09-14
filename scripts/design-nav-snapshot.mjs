@@ -59,7 +59,7 @@ function roundsByFile(dir) {
   const out = new Map()
   try {
     const idx = readFileSync(join(dir, 'Docs Index.dc.html'), 'utf8')
-    const re = /\['[^']+', '([^']+\.dc\.html)', '\/[^']*', (NEW|OLD|REDO),/g
+    const re = /\['[^']+', '([^']+\.dc\.html)', '\/[^']*', (NEW|OLD|REDO|LAB),/g
     for (const m of idx.matchAll(re)) out.set(m[1], m[2])
   } catch {
     /* index not in this export */
@@ -136,9 +136,10 @@ export interface DesignRoute {
   /**
    * The design round the prototype belongs to, from Docs Index.dc.html.
    * NEW is this round's work; OLD is an early round a later contract may have
-   * overtaken; null when the route has no prototype.
+   * overtaken; LAB means the design handed the page to Lab — for a page the app
+   * has, that is a move, not a target; null when the route has no prototype.
    */
-  round: 'NEW' | 'OLD' | 'REDO' | null
+  round: 'NEW' | 'OLD' | 'REDO' | 'LAB' | null
   /** In the design's sidebar. A route can exist and be reachable only by link. */
   inNav: boolean
   /** Top-level group in the design's tree, when it has a row. */

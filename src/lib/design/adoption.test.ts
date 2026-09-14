@@ -57,7 +57,9 @@ describe('design adoption', () => {
   it('starts with nothing walked', () => {
     // Replace this as pages are walked — it is the one number the Owner reads.
     expect(counts.aligned + counts.byState.stale).toBe(0)
-    expect(counts.byState.moving).toBe(10)
+    // 11: the ten the design dissolves elsewhere, plus Backtest, which Docs Index
+    // marks LAB — handed to Lab, the Trade original deleted in the design.
+    expect(counts.byState.moving).toBe(11)
     expect(counts.byState.staging).toBe(3)
   })
 })

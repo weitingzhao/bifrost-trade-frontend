@@ -73,13 +73,14 @@ describe('design adoption', () => {
   it('reads the walk as it stands', () => {
     // Replace these as pages are walked — they are the numbers the Owner reads.
     expect(counts.aligned + counts.byState.stale).toBe(0)
-    // Walked and built, waiting for the Owner's look (2026-09-14).
+    // Walked and built, waiting for the Owner's look (2026-09-14; Desk added on
+    // the Owner's call 2026-09-15).
     expect(
       rows
         .filter((r) => r.state === 'reviewing')
         .map((r) => r.path)
         .sort(),
-    ).toEqual(['/research/loop/decisions', '/research/symbol'])
+    ).toEqual(['/research/copilot', '/research/loop/decisions', '/research/symbol'])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
     // dissolves elsewhere, plus Backtest, handed to Lab. Symbol and Plans left:
     // the design keeps both pages.

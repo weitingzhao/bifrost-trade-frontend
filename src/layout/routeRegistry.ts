@@ -121,7 +121,16 @@ export const ROUTES: readonly RouteEntry[] = [
   // ── Research · Copilot (a seat-free fold since 2026-09-14 — §11.0) ─────
   // The menu row and crumbs read Research › Copilot › Desk; the page's own
   // title stays "Copilot Desk" (Design ②: the two are compatible).
-  { path: '/research/copilot', label: 'Desk', crumbs: COPILOT },
+  {
+    path: '/research/copilot',
+    label: 'Desk',
+    crumbs: COPILOT,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-12.6',
+      note: 'Walked 2026-09-13 against Research Copilot.dc.html (REDO), six steps built; Threads Origin / Symbol / Writes / Cost and Ran today next tick restored 2026-09-14. Open for the Owner: whether the three tiles go, and dark-only.',
+    },
+  },
   // In the design registry since 2026-09-14 (Owner kept it — a morning agent's
   // written product, filed under the Copilot fold); its state derives from the
   // snapshot now, no tag needed.

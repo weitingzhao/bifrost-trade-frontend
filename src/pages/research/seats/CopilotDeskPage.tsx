@@ -39,12 +39,14 @@ import { fetchObjectiveRunIfKept } from '@/api/research/harness'
 import { openDigestInCopilot, openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { digestExhibits } from '@/lib/harness/dailyDigest'
 import { WaitingOnYou } from '@/pages/research/seats/WaitingOnYou'
+import { ProviderChip, SpendChip } from '@/pages/research/seats/DeskHeaderChips'
+import { spendAgainstCap } from '@/pages/research/seats/deskHeader'
 
 export default function CopilotDeskPage() {
   const standingQ = useCopilotStanding()
   const s = standingQ.data
   const a = s?.approvals ?? {}
-  const spent = s ? s.usage.cost_estimate_usd + (s.usage.bridge_cost_usd_today ?? 0) : 0
+  const spent = s ? spendAgainstCap(s.usage).spent : 0
 
   return (
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
@@ -52,7 +54,9 @@ export default function CopilotDeskPage() {
         title="Copilot"
         description="Level 2 · on request. A brief each morning, a chat that reads every page, writes only with your approval. Advisory only, D10 BLOCKED."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <SpendChip usage={s?.usage} />
+            <ProviderChip />
             <AskCopilotButton
               originPage="research-copilot-desk"
               originLabel="Copilot Desk"
@@ -76,7 +80,9 @@ export default function CopilotDeskPage() {
         <QueryErrorAlert error={standingQ.error} onRetry={() => void standingQ.refetch()} />
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      {/* Spend moved to the header chip, where the design has it. These three have no
+          place in the design's header; they stay until the Owner decides. */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <Fact label="Today’s digest" title="The daily digest runs at 11:30 UTC on trading days">
           {s?.brief ? (
             <DenseTag variant={s.brief.status === 'pending' ? 'warning' : 'neutral'} size="cell">
@@ -94,10 +100,6 @@ export default function CopilotDeskPage() {
           <span className="text-dense-label text-muted-foreground">
             proposed · {a.executed ?? 0} ran · {a.rejected ?? 0} refused
           </span>
-        </Fact>
-        <Fact label="Spent today" title="Chat and bridge spend against the daily cap">
-          <span className="font-mono text-lg font-semibold tabular-nums">{fmtUsd(spent)}</span>
-          <span className="text-dense-label text-muted-foreground">/ {s ? fmtUsd(s.usage.cap_usd) : '—'}</span>
         </Fact>
       </div>
 

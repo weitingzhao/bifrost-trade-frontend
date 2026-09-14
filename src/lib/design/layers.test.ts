@@ -38,8 +38,10 @@ describe('layerForPath', () => {
     }
   })
 
-  it('splits the app across the three layers it has pages for today', () => {
+  it('splits the app across the layers it has pages for today', () => {
+    // /trade/plans (C1-c) put a real page on the execution layer; home/risk/review
+    // still have design routes but no PAGE_ROUTES yet.
     const seen = new Set(PAGE_ROUTES.map((r) => layerForPath(r.path)))
-    expect([...seen].sort()).toEqual(['analysis', 'base', 'result'])
+    expect([...seen].sort()).toEqual(['analysis', 'base', 'execution', 'result'])
   })
 })

@@ -34,7 +34,25 @@ describe('research seat', () => {
     seat.setResearchSeat('autopilot')
     seat.setResearchSeat('pilot' as never)
     expect(seat.getResearchSeat()).toBe('autopilot')
-    expect(seat.isResearchSeat('copilot')).toBe(true)
+    // Not a seat since 2026-09-14 (§11.0) — conversation is an action, not a place.
+    expect(seat.isResearchSeat('copilot')).toBe(false)
     expect(seat.isResearchSeat('x')).toBe(false)
+  })
+
+  it('falls back to autopilot on a stored copilot residue', async () => {
+    // A browser that sat in the Copilot seat before 2026-09-14 still carries
+    // `{"seat":"copilot"}`. The store reads storage at import, so a fresh
+    // import is the residue's arrival.
+    localStorage.setItem('bifrost-research-seat', JSON.stringify({ seat: 'copilot' }))
+    vi.resetModules()
+    const fresh = await import('./seat')
+    expect(fresh.getResearchSeat()).toBe('autopilot')
+  })
+
+  it('keeps the rail order manual-to-automatic, apart from the default', () => {
+    // Rail order and default landing are two different decisions (Design (5)):
+    // the rail reads Workbench · Autopilot; a first-time reader lands in
+    // Autopilot, because the day's first question is what ran overnight.
+    expect(seat.RESEARCH_SEATS).toEqual(['workbench', 'autopilot'])
   })
 })

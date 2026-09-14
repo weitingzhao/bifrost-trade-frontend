@@ -14,6 +14,7 @@ import {
   allResearchRoutes,
   BENCHES,
   buildResearchNavGroup,
+  COPILOT_PAGES,
   MARKET_PAGES,
   seatForRoute,
   SEATLESS_ROUTES,
@@ -32,9 +33,11 @@ const ctx = {
 
 const HOMES = {
   autopilot: '/research/loop/harness',
-  copilot: '/research/copilot',
   workbench: '/research/workbench',
 } as const
+
+/** In every seat's menu; the trading route is a deep-link alias, not a row. */
+const SEATLESS_MENU_ROWS = SEATLESS_ROUTES.filter((r) => r !== '/research/copilot/trading')
 
 const OVERVIEW = '/research/overview'
 const SEATLESS = new Set<string>(SEATLESS_ROUTES)
@@ -54,7 +57,7 @@ function routesOf(items: ShellNavItem[]): string[] {
 }
 
 describe('a seat carries its own pages and no others', () => {
-  it('splits every page across the three seats, each page in exactly one', () => {
+  it('splits every page across the two seats, each page in exactly one', () => {
     const seen = new Map<string, string[]>()
     for (const seat of RESEARCH_SEATS) {
       for (const r of routesOf(seatItems(seat, ctx))) {
@@ -72,37 +75,67 @@ describe('a seat carries its own pages and no others', () => {
     )
   })
 
-  it('stands the seatless pages in all three — they belong to no posture', () => {
-    // Overview is about the three seats; Market is about neither — whether the
-    // session is open is worth knowing from Autopilot as much as the bench.
+  it('stands the seatless pages in both seats — they belong to no posture', () => {
+    // Overview is about the seats; Market and the Copilot fold are about
+    // neither — whether the session is open, and what the conversation has
+    // deposited, are worth knowing from Autopilot as much as the bench.
     for (const seat of RESEARCH_SEATS) {
       const routes = routesOf(seatItems(seat, ctx))
-      for (const r of SEATLESS_ROUTES) expect(routes, `${r} missing from ${seat}`).toContain(r)
+      for (const r of SEATLESS_MENU_ROWS) expect(routes, `${r} missing from ${seat}`).toContain(r)
     }
     expect([...SEATLESS_ROUTES].sort()).toEqual(
-      [OVERVIEW, MARKET_PAGES.live.to, MARKET_PAGES.radar.to].sort(),
+      [
+        OVERVIEW,
+        MARKET_PAGES.live.to,
+        MARKET_PAGES.radar.to,
+        '/research/copilot',
+        '/research/daily-brief',
+        '/research/agent-personas',
+        '/research/playbook',
+        '/research/copilot/trading',
+      ].sort(),
     )
   })
 
-  it('shows Overview in every seat — it is the page about all three', () => {
+  it('shows Overview in every seat — it is the page about them all', () => {
     for (const seat of RESEARCH_SEATS) {
       expect(routesOf(seatItems(seat, ctx)), seat).toContain(OVERVIEW)
     }
   })
 
-  it('brackets the open seat home with the seatless rows: Overview, home, Market', () => {
-    // The design's order since 2026-09-13 (`navGroups` in shell-registry.js):
-    // Overview and Market state facts, so they sit either side of the workflow.
+  it('brackets the open seat home with the seatless rows: Overview, home, Copilot, Market', () => {
+    // The design's order since 2026-09-14 (`navGroups` in shell-registry.js):
+    // Overview and the two seat-free folds state facts, so they sit either
+    // side of the workflow.
     for (const seat of RESEARCH_SEATS) {
       const items = seatItems(seat, ctx)
       expect(items.map((i) => i.to), seat).toEqual([
         OVERVIEW,
         HOMES[seat],
+        COPILOT_PAGES.desk.to,
         MARKET_PAGES.live.to,
       ])
       const home = items.find((i) => i.to === HOMES[seat])
       expect(home?.defaultOpen, seat).toBe(true)
       expect(home?.children?.length, seat).toBeGreaterThan(0)
+    }
+  })
+
+  it('carries the Copilot fold in both seats: Desk · Daily Brief · Personas, one id', () => {
+    // §11.0: conversation is an action, its sediment is pages. The fold is
+    // seat-free like Market — same id everywhere, the design's own
+    // `fold:copilot`. My Trading System is parked at the end awaiting the
+    // Owner's call on Trade › Playbook (B3); the first three are the design's.
+    for (const seat of RESEARCH_SEATS) {
+      const fold = flatten(seatItems(seat, ctx)).find((i) => i.id === 'fold:copilot')
+      expect(fold, seat).toBeTruthy()
+      expect(fold!.label, seat).toBe('Copilot')
+      expect(fold!.children?.map((c) => [c.label, c.to]), seat).toEqual([
+        ['Desk', '/research/copilot'],
+        ['Daily Brief', '/research/daily-brief'],
+        ['Personas', '/research/agent-personas'],
+        ['My Trading System', '/research/playbook'],
+      ])
     }
   })
 
@@ -132,8 +165,9 @@ describe('a seat carries its own pages and no others', () => {
     for (const seat of RESEARCH_SEATS) {
       const mine = HOMES[seat]
       const others = Object.values(HOMES).filter((h) => h !== mine)
-      expect(routesOf(seatItems(seat, ctx)), seat).not.toContain(others[0])
-      expect(routesOf(seatItems(seat, ctx)), seat).not.toContain(others[1])
+      for (const other of others) {
+        expect(routesOf(seatItems(seat, ctx)), seat).not.toContain(other)
+      }
     }
   })
 
@@ -179,15 +213,17 @@ describe('no page lights two rows', () => {
 
   it('folded categories land on their first page and carry the rest', () => {
     const folds = flatten(seatItems('workbench', ctx)).filter((i) => i.id.startsWith('fold:'))
-    expect(folds.map((f) => f.label)).toEqual(['Analyze', 'Validate', 'Data', 'Market'])
+    expect(folds.map((f) => f.label)).toEqual(['Analyze', 'Validate', 'Data', 'Copilot', 'Market'])
     for (const f of folds) {
       expect(f.to, f.label).toBe(f.children?.[0].to)
     }
     // Seat-keyed, so an open fold in one seat is not an open fold in the next
-    // — except Market, which is the same fold in all three and keeps one id.
-    const perSeat = folds.filter((f) => f.label !== 'Market')
+    // — except Copilot and Market, which are the same fold in every seat and
+    // keep one id each.
+    const perSeat = folds.filter((f) => f.label !== 'Market' && f.label !== 'Copilot')
     expect(perSeat.every((f) => f.id.startsWith('fold:workbench:'))).toBe(true)
     expect(flatten(seatItems('autopilot', ctx)).some((i) => i.id === 'fold:market')).toBe(true)
+    expect(flatten(seatItems('autopilot', ctx)).some((i) => i.id === 'fold:copilot')).toBe(true)
   })
 })
 
@@ -196,9 +232,6 @@ describe('the seat follows the route', () => {
     for (const seat of RESEARCH_SEATS) {
       for (const r of routesOf(seatItems(seat, ctx))) {
         if (SEATLESS.has(r)) continue
-        // "Ask the Copilot" is a command, not a page: its path is the Research
-        // root, which belongs to no seat.
-        if (r.startsWith('/research?')) continue
         expect(seatForRoute(r), `${r} in ${seat}`).toBe(seat)
       }
     }
@@ -211,9 +244,12 @@ describe('the seat follows the route', () => {
   it('leaves the rail alone on the seatless pages', () => {
     expect(seatForRoute(OVERVIEW)).toBeNull()
     expect(seatForRoute('/research')).toBeNull()
-    // Market stands in all three seats, so no seat may claim it — landing on
-    // Live would otherwise drag the rail to whichever listed it first.
+    // Market and the Copilot fold stand in both seats, so no seat may claim
+    // them — landing on Live or Desk would otherwise drag the rail to
+    // whichever listed it first.
     for (const r of SEATLESS_ROUTES) expect(seatForRoute(r), r).toBeNull()
+    expect(seatForRoute('/research/agent-personas')).toBeNull()
+    expect(seatForRoute('/research/copilot/trading')).toBeNull()
   })
 
   it('does not answer for routes outside Research', () => {
@@ -222,7 +258,7 @@ describe('the seat follows the route', () => {
   })
 
   it('never lets the Copilot claim the whole domain', () => {
-    // "Ask the Copilot" strips to `/research`, every Research route's prefix.
+    // `?copilot=open` strips to `/research`, every Research route's prefix.
     expect(seatForRoute('/research/workbench')).toBe('workbench')
     expect(seatForRoute('/research/loop/harness')).toBe('autopilot')
   })

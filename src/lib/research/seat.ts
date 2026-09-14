@@ -1,23 +1,29 @@
 /**
- * The Research seat: which of the three postures the Owner is sitting in.
+ * The Research seat: which of the two postures the Owner is sitting in.
  *
- * One dimension the sidebar did not have. Research is used three ways — it
- * runs on its own, it works when asked, or the Owner opens the pages — and a
- * one-column list had to carry all three at once, so twenty-one workbench
- * pages sat beside the two things an autopilot session actually needs. The
- * seat picks which posture the Research group is laid out for; every route
- * stays reachable from every seat, folded rather than hidden.
+ * One dimension the sidebar did not have. Research runs on its own or the
+ * Owner opens the pages — manual and automatic, the two modes the business
+ * actually has — and a one-column list had to carry both at once. The seat
+ * picks which posture the Research group is laid out for; every route stays
+ * reachable from every seat, folded rather than hidden.
+ *
+ * The Copilot was the third seat until 2026-09-14 (§11.0): conversation is an
+ * action, not a place — ⌘J raises the panel on any page — so its rail slot is
+ * gone and its pages (Desk · Daily Brief · Personas) live in the seat-free
+ * `fold:copilot` beside Market. A stored `'copilot'` fails `isSeat` and falls
+ * back to autopilot.
  *
  * Borrowed from the Ops Console's task-mode seats, scoped to Research only
  * (Owner's choice A, 2026-09-08). Persisted per browser; `?seat=` overrides.
  */
-import { Bot, MessageCircle, Wrench, type LucideIcon } from 'lucide-react'
+import { Bot, Wrench, type LucideIcon } from 'lucide-react'
 import { STORAGE_KEYS } from '@/constants/storage'
 import { createSeatModel } from '@/lib/nav/seatModel'
 
-export type ResearchSeat = 'autopilot' | 'copilot' | 'workbench'
+export type ResearchSeat = 'autopilot' | 'workbench'
 
-export const RESEARCH_SEATS: readonly ResearchSeat[] = ['autopilot', 'copilot', 'workbench']
+/** Rail order (the design's): manual to automatic. The default landing is separate — see `fallback`. */
+export const RESEARCH_SEATS: readonly ResearchSeat[] = ['workbench', 'autopilot']
 
 export interface SeatMeta {
   id: ResearchSeat
@@ -38,14 +44,6 @@ export const SEAT_META: Record<ResearchSeat, SeatMeta> = {
     claim: 'It runs, judges and rates; you approve.',
     icon: Bot,
     home: '/research/loop/harness',
-  },
-  copilot: {
-    id: 'copilot',
-    label: 'Copilot',
-    level: 'Level 2',
-    claim: 'You ask; it reads the pages for you.',
-    icon: MessageCircle,
-    home: '/research/copilot',
   },
   workbench: {
     id: 'workbench',

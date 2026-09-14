@@ -73,8 +73,8 @@ const src = readFileSync(join(pkg, 'shell-registry.js'), 'utf8')
 new Function(src)()
 const R = window.ShellRegistry
 
-/** The design's Research seats — the keys of `SEAT_HOME` in `shell-registry.js`. */
-const SEATS = ['workbench', 'lab', 'copilot', 'autopilot']
+/** The design's Research seats — the keys of `SEAT_HOME` in `shell-registry.js`. Copilot left the rail 2026-09-14 (§11.0). */
+const SEATS = ['workbench', 'lab', 'autopilot']
 
 /** Every row the design's sidebar renders, with the group and fold it sits in. */
 function rows() {

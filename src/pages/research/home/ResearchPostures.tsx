@@ -207,14 +207,12 @@ function CopilotPosture() {
       lampTitle={s?.brief ? 'Today’s digest is in' : 'No digest yet today'}
       cta={
         <>
+          {/* Not a seat since 2026-09-14 (§11.0): asking opens the panel, the rail stays. */}
           <Button
             type="button"
             size="sm"
             className="h-7"
-            onClick={() => {
-              setResearchSeat('copilot')
-              openResearchCopilot()
-            }}
+            onClick={() => openResearchCopilot()}
           >
             Ask the Copilot <ArrowRight className="ml-1 size-3" />
           </Button>

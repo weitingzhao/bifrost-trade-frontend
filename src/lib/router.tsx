@@ -53,7 +53,7 @@ export const router = createBrowserRouter([
       ...redirectRoutes(),
       {
         path: 'research',
-        lazy: lazyPage(() => import('@/pages/research/ResearchHomePage')),
+        lazy: lazyPage(() => import('@/pages/research/home/ResearchHomePage')),
       },
       {
         path: 'research/overview',

@@ -69,7 +69,12 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
         }
       }
     }
-    return (item: ShellNavItem) => byPath.get(item.to ?? item.id) ?? null
+    // Fold rows borrow their first child's `to` (fold:copilot carries Desk's,
+    // fold:market Live's) — keying them by `to` would pin the child's badge on
+    // the heading too. A fold's id matches no path, which is the answer a
+    // heading wants.
+    return (item: ShellNavItem) =>
+      item.id.startsWith('fold:') ? null : (byPath.get(item.to ?? item.id) ?? null)
   }, [standing])
 
   return { group, extras }

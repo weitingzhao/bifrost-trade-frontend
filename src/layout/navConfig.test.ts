@@ -20,10 +20,13 @@ describe('Portfolio nav', () => {
     expect(accounts.children?.map((c) => c.to)).toEqual(['/portfolio/ledger', '/portfolio/transfer'])
     expect([performance.defaultOpen, accounts.defaultOpen]).toEqual([true, true])
   })
-  it('does not carry the Copilot — that is a Copilot-seat page under Research', () => {
+  it('does not carry the Copilot — its pages live under Research, in the seat-free fold', () => {
     const all = routesOf(portfolio)
     expect(all.some((to) => to?.includes('copilot'))).toBe(false)
-    expect(COPILOT_PAGES.trading.to).toBe('/research/copilot/trading')
+    expect(COPILOT_PAGES.desk.to).toBe('/research/copilot')
+    // Out of the menu (Design 2026-09-14 ①) but still a route — reached from
+    // the panel empty state's "all starters →" link.
+    expect(routeFor('/research/copilot/trading').path).toBe('/research/copilot/trading')
   })
 })
 

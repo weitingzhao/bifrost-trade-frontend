@@ -29,7 +29,6 @@ import {
   ClipboardList,
   Compass,
   History,
-  Home,
   LayoutGrid,
   ListFilter,
   MessageCircle,
@@ -39,7 +38,6 @@ import {
   Star,
   Target,
   Terminal,
-  TrendingUp,
   Users,
   Wand2,
   Wrench,
@@ -61,14 +59,33 @@ export const AUTOPILOT_PAGES = {
   candidates: route('Candidate Pool', '/research/loop/candidates', ListFilter),
 }
 
+/**
+ * The conversation's sediment — pages, where the conversation itself is not
+ * one (Owner 2026-09-14, §11.0). Two former rows are gone on the same
+ * decision: "Ask the Copilot" is a command (⌘J, the top-bar button, a page's
+ * Ask — `?copilot=open` stays as the deep-link convention), and the Trading
+ * Copilot is a prompt catalogue reached from the empty state's "The book"
+ * group (`all starters →`), its route kept as a deep-link alias.
+ */
 export const COPILOT_PAGES = {
-  desk: route('Copilot Desk', '/research/copilot', MessageCircle),
+  desk: route('Desk', '/research/copilot', MessageCircle),
   brief: route('Daily Brief', '/research/daily-brief', ClipboardList),
-  ask: route('Ask the Copilot', '/research?copilot=open', Home),
-  /** The book as it stands and the questions worth asking about it — level 2 on the Trade side. */
-  trading: route('Trading Copilot', '/research/copilot/trading', TrendingUp),
-  personas: route('Agent Personas', '/research/agent-personas', Users),
+  personas: route('Personas', '/research/agent-personas', Users),
+  /** ⛔ Awaiting the Owner's call on Trade › Playbook (B3) — parked at the fold's end, route untouched. */
   playbook: route('My Trading System', '/research/playbook', BookOpen),
+}
+
+/**
+ * The seat-free Copilot fold, beside Market and shaped like it: one id in
+ * every seat (`fold:copilot`, the design's own), the row borrowing its first
+ * child's route. Order per the design registry: Desk · Daily Brief · Personas.
+ */
+export const COPILOT_ITEM: ShellNavItem = {
+  id: 'fold:copilot',
+  label: 'Copilot',
+  to: COPILOT_PAGES.desk.to,
+  icon: MessageCircle,
+  children: Object.values(COPILOT_PAGES),
 }
 
 /**
@@ -274,17 +291,18 @@ function objectivesItem(seat: ResearchSeat, objectives: ObjectiveNavRow[]): Shel
 }
 
 /**
- * The seat's sidebar: Overview, one home with its pages, and Market.
+ * The seat's sidebar: Overview, one home with its pages, then Copilot and
+ * Market — the two seat-free folds.
  *
- * The order is the design's (`shell-registry.js` `navGroups`, 2026-09-13):
- * Overview and Market state facts rather than belonging to a workflow, so they
- * bracket the seat instead of trailing it. The home is open. Everything under it belongs to this seat and to no other,
- * so the menu is short enough to read at a glance and every row is something
- * this posture actually does.
+ * The order is the design's (`shell-registry.js` `navGroups`, 2026-09-14):
+ * Overview, the seat home, `fold:copilot`, `fold:market`. Overview and the
+ * folds state facts rather than belonging to a workflow, so they bracket the
+ * seat instead of trailing it. The home is open. Everything under it belongs
+ * to this seat and to no other, so the menu is short enough to read at a
+ * glance and every row is something this posture actually does.
  */
 export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem[] {
   const A = AUTOPILOT_PAGES
-  const C = COPILOT_PAGES
   const [discover, analyze, validate, data] = BENCHES
 
   switch (seat) {
@@ -297,12 +315,7 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
           A.hypotheses,
           A.candidates,
         ]),
-        MARKET_ITEM,
-      ]
-    case 'copilot':
-      return [
-        OVERVIEW_PAGE,
-        home(seat, 'Copilot Desk', C.desk, [C.brief, C.ask, C.trading, C.personas, C.playbook]),
+        COPILOT_ITEM,
         MARKET_ITEM,
       ]
     case 'workbench': {
@@ -318,6 +331,7 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
           fold(seat, validate.label, validate.icon, validate.items),
           fold(seat, data.label, data.icon, data.items.filter((i) => i !== health)),
         ]),
+        COPILOT_ITEM,
         MARKET_ITEM,
       ]
     }
@@ -353,6 +367,11 @@ const RESEARCH_ROOT = '/research'
 export const SEATLESS_ROUTES: readonly string[] = [
   OVERVIEW_PAGE.to!,
   ...Object.values(MARKET_PAGES).map((p) => p.to!),
+  // The Copilot fold's pages stand in both seats, as Market's do (§11.0).
+  ...Object.values(COPILOT_PAGES).map((p) => p.to!),
+  // Not a menu row — a deep-link alias reached from the empty state's "The
+  // book" group — but landing on it must not drag the rail either.
+  '/research/copilot/trading',
 ]
 
 /**
@@ -373,7 +392,6 @@ const OBJECTIVES_PREFIX = '/research/loop/objectives'
 
 const SEAT_ROUTES: [ResearchSeat, string[]][] = [
   ['autopilot', [...seatPaths(Object.values(AUTOPILOT_PAGES)), OBJECTIVES_PREFIX]],
-  ['copilot', seatPaths(Object.values(COPILOT_PAGES))],
   ['workbench', seatPaths([WORKBENCH_PAGE, ...BENCHES.flatMap((b) => b.items)])],
 ]
 

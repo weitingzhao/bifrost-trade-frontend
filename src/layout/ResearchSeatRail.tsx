@@ -1,5 +1,9 @@
 /**
- * The seat rail at the top of the Research group: three postures, one lit.
+ * The seat rail at the top of the Research group: two postures, one lit.
+ *
+ * Manual and automatic — Workbench and Autopilot. The Copilot's slot is gone
+ * (Owner 2026-09-14, §11.0): conversation is an action raised by ⌘J on any
+ * page, and its pages live in the seat-free Copilot fold below.
  *
  * Switching a seat re-lays the group beneath it and lands on that seat's
  * home; it does not hide anything. The caption under the rail says what the
@@ -26,7 +30,7 @@ export function ResearchSeatRail() {
       <div
         role="radiogroup"
         aria-label="Research seat"
-        className="grid grid-cols-3 gap-0.5 rounded-md border border-sidebar-border/60 bg-sidebar-accent/30 p-0.5"
+        className="grid grid-cols-2 gap-0.5 rounded-md border border-sidebar-border/60 bg-sidebar-accent/30 p-0.5"
       >
         {RESEARCH_SEATS.map((id) => {
           const m = SEAT_META[id]
@@ -58,8 +62,8 @@ export function ResearchSeatRail() {
         <span className="min-w-0 flex-1">
           <span className="text-sidebar-foreground/70">{meta.level}</span> · {meta.claim}
         </span>
-        <Link to="/research/overview" className="shrink-0 hover:text-sidebar-foreground hover:underline" title="The three postures side by side">
-          all three
+        <Link to="/research/overview" className="shrink-0 hover:text-sidebar-foreground hover:underline" title="The postures side by side">
+          overview
         </Link>
       </p>
     </div>

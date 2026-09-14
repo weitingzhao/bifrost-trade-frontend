@@ -108,8 +108,10 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/loop/objectives/:objectiveId', label: 'Objective', crumbs: AUTOPILOT },
   { path: '/research/loop/runs/:runId', label: 'Loop Run', crumbs: AUTOPILOT },
 
-  // ── Research · Copilot ─────────────────────────────────────────────────
-  { path: '/research/copilot', label: 'Copilot Desk', crumbs: RESEARCH },
+  // ── Research · Copilot (a seat-free fold since 2026-09-14 — §11.0) ─────
+  // The menu row and crumbs read Research › Copilot › Desk; the page's own
+  // title stays "Copilot Desk" (Design ②: the two are compatible).
+  { path: '/research/copilot', label: 'Desk', crumbs: COPILOT },
   // In the design registry since 2026-09-14 (Owner kept it — a morning agent's
   // written product, filed under the Copilot fold); its state derives from the
   // snapshot now, no tag needed.

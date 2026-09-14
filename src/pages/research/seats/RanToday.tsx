@@ -215,7 +215,7 @@ function Scheduled({ wroteToday }: { wroteToday: ReadonlySet<string> | null }) {
             className="ml-auto shrink-0 font-mono tabular-nums"
             title={
               s.nextAt
-                ? `Dagster ${s.schedule}. Next tick from the schedule cron (UTC), converted to ET for display.`
+                ? `Dagster ${s.schedule}. Next tick from the schedule cron in its execution timezone, converted to ET for display.`
                 : `Dagster ${s.schedule}. Research reports whether it is on and when it last ran.`
             }
           >

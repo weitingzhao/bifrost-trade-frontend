@@ -106,6 +106,8 @@ export function DraftCard({
   onApprove,
   onDismiss,
   muted,
+  read,
+  onToggleRead,
   className,
 }: {
   draft: AiDraft
@@ -115,6 +117,10 @@ export function DraftCard({
   onDismiss: () => void
   /** Same hue, lower weight — for a draft whose Approve would write nothing. */
   muted?: boolean
+  /** Marked read by this viewer. Briefings only; a decision is answered, not read. */
+  read?: boolean
+  /** Given, the card offers "Mark read" / undo. */
+  onToggleRead?: () => void
   className?: string
 }) {
   const busy = Boolean(approving || dismissing)
@@ -168,6 +174,7 @@ export function DraftCard({
             : muted
               ? accent.muted
               : accent.normal,
+        read ? 'opacity-70' : '',
         className,
       )}
     >
@@ -210,6 +217,17 @@ export function DraftCard({
             </>
           ) : null}
         </span>
+        {onToggleRead ? (
+          <button
+            type="button"
+            onClick={onToggleRead}
+            aria-pressed={Boolean(read)}
+            className="shrink-0 text-dense-micro text-muted-foreground hover:text-foreground hover:underline"
+            title={read ? 'Marked read in this browser — click to mark unread' : 'Mark read — kept in this browser only'}
+          >
+            {read ? 'Read · undo' : 'Mark read'}
+          </button>
+        ) : null}
       </div>
 
       {filedSymbols.length > 0 || filedTags.length > 0 ? (

@@ -29,6 +29,7 @@ import {
   isDecisionKind,
 } from '@/lib/harness/harnessDraftHelpers'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
+import { unreadCount, useReadDrafts } from '@/pages/research/loop/inboxRead'
 
 type View = 'decisions' | 'briefings' | 'all'
 type Narrow = 'any' | 'loop' | DraftKind
@@ -102,6 +103,14 @@ export default function DecisionInboxPage() {
 
   const digest = (query.data?.rows ?? []).find(isDailyDigest)
 
+  // Read state for briefings, kept in this browser (see inboxRead.ts). It is
+  // pruned only against the whole queue: a narrowed list, or a page that could
+  // not hold every pending draft, would un-read everything it did not contain.
+  const allRows = query.data?.rows ?? []
+  const wholeQueue =
+    query.data != null && narrow === 'any' && (query.data.pending_count ?? 0) <= allRows.length
+  const { read, setRead } = useReadDrafts(wholeQueue ? allRows.map((d) => d.id) : null)
+
   const rows = useMemo(() => {
     const all = query.data?.rows ?? []
     if (narrow === 'loop') return all.filter((d) => LOOP_KINDS.has(d.kind))
@@ -147,8 +156,12 @@ export default function DecisionInboxPage() {
       // nobody could see.
       unseen: apiKind ? 0 : Math.max(0, total - all.length),
       pageFull: all.length >= DRAFTS_PAGE_MAX,
+      unreadBriefings: unreadCount(
+        all.filter((d) => BRIEFING_KINDS.has(d.kind)).map((d) => d.id),
+        read,
+      ),
     }
-  }, [query.data?.rows, query.data?.pending_count, apiKind])
+  }, [query.data?.rows, query.data?.pending_count, apiKind, read])
 
   const narrowLabel = NARROW_OPTIONS.find((o) => o.value === narrow)?.label ?? narrow
 
@@ -188,7 +201,8 @@ export default function DecisionInboxPage() {
               {/* Not "nothing to merge": since the kinds the server passes through
                   joined this bucket, most of it is not a merge at all. */}
               {counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''} ·{' '}
-              {counts.briefings} briefing{counts.briefings === 1 ? '' : 's'} · {counts.total} pending
+              {counts.unreadBriefings} of {counts.briefings} briefing{counts.briefings === 1 ? '' : 's'} unread ·{' '}
+              {counts.total} pending
               {counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}
             </>
           )}
@@ -201,12 +215,13 @@ export default function DecisionInboxPage() {
         </span>
       </div>
 
-      {digest && view !== 'briefings' && narrow === 'any' ? (
+      {/* Until it is read: the strip exists to say the digest is waiting, and a read digest is not. */}
+      {digest && !read.has(digest.id) && view !== 'briefings' && narrow === 'any' ? (
         <div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-500/35 bg-sky-500/[0.05] px-3 py-1.5 text-dense-meta">
           <span className="font-medium">
             {typeof digest.payload.title === 'string' ? digest.payload.title : 'Daily digest'}
           </span>
-          <span className="text-muted-foreground">is waiting under Briefings.</span>
+          <span className="text-muted-foreground">is waiting under Briefings — it needs reading, not a verdict.</span>
           <button
             type="button"
             className="ml-auto text-dense-meta text-primary underline"
@@ -265,6 +280,11 @@ export default function DecisionInboxPage() {
                   dismissing={dismiss.isPending && dismiss.variables === draft.id}
                   onApprove={() => approve.mutate(draft.id)}
                   onDismiss={() => dismiss.mutate(draft.id)}
+                  // Briefings are read, decisions are answered: only a briefing can be marked read.
+                  read={BRIEFING_KINDS.has(draft.kind) ? read.has(draft.id) : undefined}
+                  onToggleRead={
+                    BRIEFING_KINDS.has(draft.kind) ? () => setRead(draft.id, !read.has(draft.id)) : undefined
+                  }
                 />
                 {superseded.length > 0 ? (
                   // Indented under its own card: unattached, this line sat

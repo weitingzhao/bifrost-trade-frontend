@@ -9,6 +9,9 @@ export const STORAGE_KEYS = {
   // business tree's own — walk in and out and your Portfolio folds were gone.
   sidebarSystemOpenGroups: 'bifrost-sidebar-system-open-groups',
   researchSeat: 'bifrost-research-seat',
+  // Briefings you marked read in the Decision Inbox. Per browser: the Research
+  // service keeps no read state on drafts.
+  inboxReadDrafts: 'bifrost-inbox-read-drafts',
   optionScreenerFilters: 'optionScreenerFilters',
   optionDiscoveryPrefs: 'optionDiscoveryPrefs',
   positionsCushionPct: 'bifrost-positions-cushion-pct',

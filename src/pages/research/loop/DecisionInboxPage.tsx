@@ -30,6 +30,7 @@ import {
 } from '@/lib/harness/harnessDraftHelpers'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
 import { unreadCount, useReadDrafts } from '@/pages/research/loop/inboxRead'
+import { LeashPanel } from '@/pages/research/loop/LeashPanel'
 
 type View = 'decisions' | 'briefings' | 'all'
 type Narrow = 'any' | 'loop' | DraftKind
@@ -235,6 +236,10 @@ export default function DecisionInboxPage() {
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
       {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}
 
+      {/* The queue, and beside it the leash: what reaches this page is what the
+          leash did not accept on its own, so the rule sits next to its result. */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
+      <div className="min-w-0">
       {query.isError ? (
         <QueryErrorAlert error={query.error} />
       ) : query.isLoading ? (
@@ -313,6 +318,9 @@ export default function DecisionInboxPage() {
           })}
         </div>
       )}
+      </div>
+      <LeashPanel />
+      </div>
     </PageShell>
   )
 }

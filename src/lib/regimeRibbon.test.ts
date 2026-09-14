@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { labelForBand } from '@/lib/lensVerdict'
-import { canonicalLens, placeholderExhibits, regimeItems, RIBBON_LENSES } from './regimeRibbon'
+import { canonicalLens, lampFromFreshness, placeholderExhibits, regimeItems, RIBBON_LENSES } from './regimeRibbon'
 
 const EXHIBITS = [
   {
@@ -42,6 +42,20 @@ describe('regimeItems', () => {
     expect(items[1].href).toBe('/research/dealer-levels?view=gex&symbol=NVDA') // fallback route until the registry loads
     expect(items[2].means).toBe('No terrain reading yet') // the first caveat stands in for a missing verdict
     expect(canonicalLens('terrain')).toBe('terrain_regime')
+  })
+
+  it('lights a lens with no data grey — missing is not a fault', () => {
+    const [missing, stale] = regimeItems(
+      [
+        { lens: 'vrp', freshness: 'missing' },
+        { lens: 'skew', freshness: 'stale' },
+      ],
+      'NVDA',
+      () => undefined
+    )
+    expect([missing.lamp, missing.verdict]).toEqual(['gray', 'no reading'])
+    expect(stale.lamp).toBe('yellow')
+    expect(['fresh', 'stale', 'missing', ''].map(lampFromFreshness)).toEqual(['green', 'yellow', 'gray', 'gray'])
   })
 
   it('shows every lens with no reading before exhibits arrive', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AiDraft } from '@/api/researchDrafts'
-import { digestBatches, digestDissents, digestFirst, digestResolutions, isDailyDigest } from './dailyDigest'
+import { digestBatches, digestDissents, digestExhibits, digestFirst, digestLenses, digestResolutions, isDailyDigest } from './dailyDigest'
 
 const draft = (kind: string, created_at: string) => ({ kind, created_at }) as Pick<AiDraft, 'kind' | 'created_at'>
 
@@ -32,5 +32,25 @@ describe('daily digest (D2)', () => {
     expect(digestDissents(payload)[0]).toMatchObject({ symbol: 'WT', judges: ['deepseek-chat/analyze: support'] })
     expect(digestResolutions(payload)[0]).toMatchObject({ title: 'LPG breakout', status: 'validated', excess: 0.0343, by_rule: true })
     expect(digestBatches({})).toEqual([])
+  })
+
+  it('reads the exhibits behind the digest, one row per name on its list', () => {
+    const payload = {
+      symbols: ['FN', 'NVDA', 'SGOV'],
+      exhibits: {
+        NVDA: [
+          { lens: 'iv_rank', band: 'lean_cold', means: 'premium is cheap', as_of: '2026-09-10', freshness: 'fresh' },
+          { lens: 'gex_regime', band: null, means: '', as_of: null, freshness: 'missing' },
+        ],
+        FN: [{ lens: 'vrp', band: 'hot', freshness: 'fresh' }, { band: 'hot' }],
+        SPY: [{ lens: 'iv_rank', band: 'neutral', freshness: 'fresh' }],
+      },
+    }
+    const rows = digestExhibits(payload)
+    // SGOV is on the list with nothing read: it keeps a row. SPY was read but not listed: it comes last.
+    expect(rows.map((r) => [r.symbol, r.readings.length])).toEqual([['FN', 1], ['NVDA', 2], ['SGOV', 0], ['SPY', 1]])
+    expect(rows[1].readings[1]).toEqual({ lens: 'gex_regime', freshness: 'missing', band: null, means: null, as_of: null })
+    expect(digestLenses(rows)).toEqual(['vrp', 'iv_rank', 'gex_regime'])
+    expect(digestExhibits({ exhibits: [] })).toEqual([])
   })
 })

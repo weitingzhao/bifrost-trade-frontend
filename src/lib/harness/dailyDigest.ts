@@ -97,6 +97,49 @@ export function digestDissents(payload: Record<string, unknown>): DigestDissent[
   })
 }
 
+/** One lens reading the digest was written from. `band` is null when the lens had nothing to say. */
+export interface DigestReading {
+  lens: string
+  freshness: string
+  band: string | null
+  means: string | null
+  as_of: string | null
+}
+
+export interface DigestSymbol {
+  symbol: string
+  readings: DigestReading[]
+}
+
+/**
+ * The lens readings behind the digest, one row per name.
+ *
+ * `payload.exhibits` is keyed by symbol and `payload.symbols` is the list the
+ * digest covered. A name on the list with no exhibits keeps its row, empty, so
+ * it reads as unread instead of dropping out — a missing row and a quiet name
+ * look the same otherwise. Order follows the list, then any exhibit it omits.
+ */
+export function digestExhibits(payload: Record<string, unknown>): DigestSymbol[] {
+  const raw =
+    payload.exhibits && typeof payload.exhibits === 'object' && !Array.isArray(payload.exhibits)
+      ? (payload.exhibits as Record<string, unknown>)
+      : {}
+  const order = [...new Set([...strings(payload.symbols), ...Object.keys(raw)])]
+  return order.map((symbol) => ({
+    symbol,
+    readings: records(raw[symbol]).flatMap((r) => {
+      const lens = str(r.lens)
+      if (!lens) return []
+      return [{ lens, freshness: str(r.freshness) ?? '', band: str(r.band), means: str(r.means), as_of: str(r.as_of) }]
+    }),
+  }))
+}
+
+/** Every lens any row carries, in the order first met — the table's columns. */
+export function digestLenses(rows: readonly DigestSymbol[]): string[] {
+  return [...new Set(rows.flatMap((r) => r.readings.map((x) => x.lens)))]
+}
+
 export function digestResolutions(payload: Record<string, unknown>): DigestResolution[] {
   return records(payload.resolutions).flatMap((r) => {
     const id = str(r.id)

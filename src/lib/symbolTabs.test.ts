@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   SYMBOL_TABS,
   isSymbolTab,
+  lensHref,
   symbolRedirectTarget,
   symbolTabHref,
   tabFor,
@@ -79,6 +80,17 @@ describe('the tab table', () => {
   it('carries the symbol on a tab link', () => {
     expect(symbolTabHref('volatility', 'NVDA')).toBe('/research/symbol?tab=volatility&symbol=NVDA')
     expect(symbolTabHref('overview', null)).toBe('/research/symbol?tab=overview')
+  })
+
+  it('sends a lens to the section it is read in, not through a retired hub', () => {
+    expect(lensHref('vrp', 'NVDA')).toBe('/research/symbol?tab=volatility&symbol=NVDA#vrp')
+    expect(lensHref('terrain_regime', 'FN')).toBe('/research/symbol?tab=scenario&symbol=FN#model')
+    // term_slope never had a lab view of its own: it lands on the tab that answers for it.
+    expect(lensHref('term_slope', 'FN')).toBe('/research/symbol?tab=volatility&symbol=FN')
+    expect(lensHref('sepa', 'FN')).toBeNull()
+    for (const lens of Object.values(LAB_VIEW_LENS)) {
+      expect(lensHref(lens!, 'X'), `${lens} has no section`).toContain('#')
+    }
   })
 
   it('knows its own tabs', () => {

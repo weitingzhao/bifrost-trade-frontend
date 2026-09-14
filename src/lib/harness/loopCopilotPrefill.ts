@@ -180,6 +180,59 @@ export function openDraftInCopilot(params: {
   cockpitDrawerStore.getState().setTab('copilot')
 }
 
+/**
+ * "Walk me through today's digest", tied back to the readings it was written from.
+ *
+ * The digest's prose is a model's rewrite of lens exhibits, so the prompt asks
+ * for each claim to cite one. Two things it says outright because the answer
+ * goes wrong without them: a missing reading is a coverage fact, not a verdict
+ * to fill in; and a reading fetched now is today's, not the digest's.
+ */
+export function buildDigestAskPrompt(
+  params: { draftId: string; day: string | null; symbols: readonly string[] },
+  lang: CopilotPromptLang = readCopilotPromptLang(),
+): string {
+  const n = params.symbols.length
+  const names = params.symbols.join(', ')
+  if (lang === 'zh') {
+    return (
+      `解读 ${params.day ?? '今天'} 的每日 digest（草稿 ${params.draftId}）。它覆盖 ${n} 个标的${n ? `：${names}` : ''}。\n` +
+      '逐个说明它的 lens 读数意味着什么，每一句都标出是哪个 lens、as_of 哪天。' +
+      '没有读数（missing）是覆盖度事实，不是判定，不要替它补结论。' +
+      '若用 research.exhibit.get 补读数，注明那是今天的，并指出与 digest 不同之处。D10 observe-only。'
+    )
+  }
+  return (
+    `Walk me through the daily digest for ${params.day ?? 'today'} (draft ${params.draftId}). It covers ${n} name${n === 1 ? '' : 's'}${n ? `: ${names}` : ''}.\n` +
+    'For each name, say what its lens readings mean, and cite the lens and its as_of for every claim. ' +
+    'A missing reading is a coverage fact, not a verdict — do not fill one in. ' +
+    "If you fetch a reading with research.exhibit.get, label it as today's and say where it differs from the digest. D10 observe-only."
+  )
+}
+
+/** Prefill the Copilot with one day's digest and open the panel — does not auto-send. */
+export function openDigestInCopilot(params: {
+  draftId: string
+  day: string | null
+  symbols: readonly string[]
+  lang?: CopilotPromptLang
+}) {
+  const lang = params.lang ?? readCopilotPromptLang()
+  askCopilotIntentStore.open({
+    originPage: 'research-copilot-desk',
+    originLabel: lang === 'zh' ? `Digest ${params.day ?? ''}`.trim() : `Digest ${params.day ?? 'today'}`,
+    suggestedPrompt: buildDigestAskPrompt(params, lang),
+    snapshot: {
+      draft_id: params.draftId,
+      day: params.day,
+      symbols: [...params.symbols],
+      prompt_lang: lang,
+    },
+  })
+  copilotDockStore.getState().open_()
+  cockpitDrawerStore.getState().setTab('copilot')
+}
+
 export function openResearchCopilot() {
   copilotDockStore.getState().open_()
   cockpitDrawerStore.getState().setTab('copilot')

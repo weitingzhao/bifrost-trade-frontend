@@ -36,7 +36,8 @@ import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 import { fmtIsoTs } from '@/lib/format'
 import { fmtUsd, runSpend } from '@/lib/harness/runSpend'
 import { fetchObjectiveRunIfKept } from '@/api/research/harness'
-import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { openDigestInCopilot, openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { digestExhibits } from '@/lib/harness/dailyDigest'
 import { WaitingOnYou } from '@/pages/research/seats/WaitingOnYou'
 
 export default function CopilotDeskPage() {
@@ -205,11 +206,26 @@ function DigestToday({ draftId, status, loading }: { draftId: string | null; sta
         <DenseTag variant={draft.status === 'pending' ? 'warning' : 'neutral'} size="cell">
           {draft.status}
         </DenseTag>
-        <Link to="/research/loop/decisions" className="ml-auto inline-flex items-center gap-1 hover:underline">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="ml-auto h-6 gap-1 px-2"
+          title="Prefills the Copilot with this digest — does not send"
+          onClick={() =>
+            openDigestInCopilot({
+              draftId: draft.id,
+              day: typeof draft.payload.day === 'string' ? draft.payload.day : null,
+              symbols: digestExhibits(draft.payload).map((r) => r.symbol),
+            })
+          }
+        >
+          <MessageCircle className="size-3.5" /> Ask about it
+        </Button>
+        <Link to="/research/loop/decisions" className="inline-flex items-center gap-1 hover:underline">
           {draft.status === 'pending' ? 'Approve or dismiss in the Inbox' : 'Open in the Inbox'} <ArrowRight className="size-3" />
         </Link>
       </div>
-      <DailyDigestBody payload={draft.payload} />
+      <DailyDigestBody payload={draft.payload} readingsOpen />
     </div>
   )
 }

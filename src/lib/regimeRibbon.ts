@@ -82,10 +82,17 @@ const LENS_LABELS: Record<string, string> = {
   forecast_path: 'Forecast path',
 }
 
+/**
+ * Freshness → lamp. The exhibit vocabulary is `fresh | stale | missing`
+ * (`lenses/exhibit_model.py`), and none of the three is a fault: `missing`
+ * means the lens had no data for this name. That is grey — `lampTone.ts`'s
+ * rule — and it used to be red, which lit sixteen of the 2026-09-11 digest's
+ * seventy-six readings as outages.
+ */
 export function lampFromFreshness(freshness: string): LampColor {
   if (freshness === 'fresh') return 'green'
   if (freshness === 'stale') return 'yellow'
-  return 'red'
+  return 'gray'
 }
 
 /** Every lens with no reading and an amber lamp — the row before exhibits arrive, or when none exist. */

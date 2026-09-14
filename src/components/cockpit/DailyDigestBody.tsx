@@ -7,11 +7,19 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
+import { DigestReadings } from '@/components/cockpit/DigestReadings'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
-import { digestBatches, digestDissents, digestResolutions } from '@/lib/harness/dailyDigest'
+import { digestBatches, digestDissents, digestExhibits, digestResolutions } from '@/lib/harness/dailyDigest'
 
-export function DailyDigestBody({ payload }: { payload: Record<string, unknown> }) {
+export function DailyDigestBody({
+  payload,
+  readingsOpen = false,
+}: {
+  payload: Record<string, unknown>
+  /** Open the readings table on arrival — the Desk reads the digest; the Inbox decides on it. */
+  readingsOpen?: boolean
+}) {
   const [batchesOpen, setBatchesOpen] = useState(false)
   const batches = digestBatches(payload)
   const dissents = digestDissents(payload)
@@ -36,7 +44,8 @@ export function DailyDigestBody({ payload }: { payload: Record<string, unknown> 
             {resolutions.length} resolved
           </DenseTag>
         ) : null}
-        {holdings && holdings !== 'ok' ? (
+        {/* `applied` is the digest's success word (daily_digest.py); this compared against `ok`, which it never writes, and flagged every digest. */}
+        {holdings && holdings !== 'applied' ? (
           <DenseTag variant="warning" size="cell" title="Holdings were not applied; the symbol list is the Loop's candidates">
             holdings {holdings}
           </DenseTag>
@@ -49,6 +58,8 @@ export function DailyDigestBody({ payload }: { payload: Record<string, unknown> 
           <MarkdownContent className="text-foreground/90">{markdown}</MarkdownContent>
         </div>
       ) : null}
+
+      <DigestReadings rows={digestExhibits(payload)} defaultOpen={readingsOpen} />
 
       {batches.length > 0 ? (
         <div className="rounded-sm border border-border/60">

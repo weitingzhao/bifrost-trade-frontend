@@ -18,10 +18,12 @@
  */
 import { withSymbolParam } from '@/lib/symbolLink'
 import {
+  LAB_VIEW_LENS,
   RETIRED_HUB_TAB,
   SYMBOL_PATH,
   TAB_PARAM,
   VIEW_TAB,
+  labHref,
   redirectTarget,
   type LabViewId,
   type SymbolTabId,
@@ -76,6 +78,25 @@ export function tabFor(tab: string | null, view: string | null): SymbolTabId {
 /** A link to one tab, with the symbol carried. */
 export function symbolTabHref(tab: SymbolTabId, symbol?: string | null): string {
   return withSymbolParam(`${SYMBOL_PATH}?${TAB_PARAM}=${tab}`, symbol)
+}
+
+/** The lab view each lens is the skin of — `LAB_VIEW_LENS` read the other way. */
+const LENS_VIEW = new Map(
+  (Object.entries(LAB_VIEW_LENS) as [LabViewId, string][]).map(([view, lens]) => [lens, view]),
+)
+
+/**
+ * Where one registry lens is read, on one symbol: its section when it had a
+ * lab view, else the tab answerable for it, else null.
+ *
+ * The registry's own `page_route` still names the retired hubs, which redirect
+ * — a link built from it costs a bounce through a URL that no longer exists.
+ */
+export function lensHref(lens: string, symbol?: string | null): string | null {
+  const view = LENS_VIEW.get(lens)
+  if (view) return labHref(view, symbol)
+  const tab = SYMBOL_TABS.find((t) => t.lenses.includes(lens))
+  return tab ? symbolTabHref(tab.id, symbol) : null
 }
 
 /**

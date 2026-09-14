@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCandidateExplainPrompt, buildLoopRunReviewPrompt } from './loopCopilotPrefill'
+import { buildCandidateExplainPrompt, buildDigestAskPrompt, buildLoopRunReviewPrompt } from './loopCopilotPrefill'
 
 describe('loop Copilot prefill (D1)', () => {
   it('sends the run review through research.loop.get_run with citations', () => {
@@ -20,5 +20,17 @@ describe('loop Copilot prefill (D1)', () => {
     const zh = buildCandidateExplainPrompt({ runId: 'run_abc', symbol: 'wt' }, 'zh')
     expect(zh).toContain('为什么提出 WT')
     expect(zh).toContain('research.loop.explain_candidate("run_abc", "WT")')
+  })
+
+  it('asks about a digest reading by reading, and will not fill in a missing one', () => {
+    const params = { draftId: 'drf_1', day: '2026-09-11', symbols: ['FN', 'NVDA'] }
+    const en = buildDigestAskPrompt(params, 'en')
+    expect(en).toContain('daily digest for 2026-09-11 (draft drf_1). It covers 2 names: FN, NVDA.')
+    expect(en).toContain('cite the lens and its as_of')
+    expect(en).toContain('A missing reading is a coverage fact, not a verdict')
+    expect(en).toContain("label it as today's")
+    const zh = buildDigestAskPrompt({ ...params, symbols: [] }, 'zh')
+    expect(zh).toContain('它覆盖 0 个标的。')
+    expect(zh).toContain('不要替它补结论')
   })
 })

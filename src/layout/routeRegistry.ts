@@ -153,6 +153,10 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     scope: 'underlying',
+    design: {
+      state: 'moving',
+      note: 'C1 判定表已过；C1-a–d 施工（legs / since-snapshot / Plan this / Structure）。aligned 等 Owner 过目。',
+    },
   },
 
   // ── Research · Workbench · Validate ────────────────────────────────────

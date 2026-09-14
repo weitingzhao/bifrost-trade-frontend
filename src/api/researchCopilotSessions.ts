@@ -16,6 +16,7 @@ export type CopilotSessionSummary = {
   origin_page?: string | null
   origin_label?: string | null
   origin_symbol?: string | null
+  writes?: Record<string, number>
 }
 
 export type CopilotSessionDetail = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PersistedCopilotFrame } from '@/api/researchCopilotSessions'
-import { threadInFilter, threadPersona, threadTurns } from './threadRows'
+import { threadInFilter, threadPersona, threadTurns, threadWriteCount } from './threadRows'
 
 const frame = (agent?: string, kind = 'text'): PersistedCopilotFrame => ({ kind, role: agent ? 'assistant' : 'user', agent })
 
@@ -42,5 +42,11 @@ describe('threadInFilter', () => {
     expect(threadInFilter({ pinned: true }, 'pinned', '2026-09-13')).toBe(true)
     expect(threadInFilter({ pinned: false }, 'pinned', '2026-09-13')).toBe(false)
     expect(threadInFilter({ pinned: false }, 'all', '2026-09-13')).toBe(true)
+  })
+
+  it('filters With writes by the summary writes map', () => {
+    expect(threadInFilter({ writes: { proposed: 1 } }, 'with_writes', '2026-09-13')).toBe(true)
+    expect(threadInFilter({ writes: {} }, 'with_writes', '2026-09-13')).toBe(false)
+    expect(threadWriteCount({ writes: { proposed: 2, executed: 1 } })).toBe(3)
   })
 })

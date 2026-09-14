@@ -39,6 +39,7 @@ import {
   threadInFilter,
   threadPersona,
   threadTurns,
+  threadWriteCount,
   type ThreadFilter,
 } from '@/pages/research/seats/threadRows'
 
@@ -134,7 +135,11 @@ export function Threads() {
 
       {shown.length === 0 ? (
         <p className="px-1 text-dense-label text-muted-foreground">
-          {filter === 'pinned' ? 'No pinned threads among the latest.' : 'No thread moved today.'}
+          {filter === 'pinned'
+            ? 'No pinned threads among the latest.'
+            : filter === 'with_writes'
+              ? 'No thread among the latest asked the Copilot to write.'
+              : 'No thread moved today.'}
         </p>
       ) : (
         <DenseDataTable>
@@ -149,6 +154,9 @@ export function Threads() {
               <DenseTableHead className="text-right" title="Questions asked, not frames">
                 Turns
               </DenseTableHead>
+              <DenseTableHead className="text-right" title="ai_action_log rows linked to this session">
+                Writes
+              </DenseTableHead>
               <DenseTableHead>Last</DenseTableHead>
               <DenseTableHead />
             </DenseTableHeadRow>
@@ -158,6 +166,7 @@ export function Threads() {
               const frames = detail?.data?.messages ?? []
               const persona = detail?.data ? threadPersona(frames) : undefined
               const title = row.title || '(untitled)'
+              const writes = threadWriteCount(row)
               return (
                 <DenseTableRow key={row.id}>
                   <DenseTableCell className="max-w-[18rem]">
@@ -209,6 +218,9 @@ export function Threads() {
                   </DenseTableCell>
                   <DenseTableCell className="text-right font-mono tabular-nums">
                     {detail?.data ? threadTurns(frames) : '—'}
+                  </DenseTableCell>
+                  <DenseTableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                    {writes > 0 ? writes : '—'}
                   </DenseTableCell>
                   <DenseTableCell className="font-mono text-dense-meta tabular-nums text-muted-foreground">
                     {fmtIsoTs(row.updated_at ?? null)}

@@ -87,6 +87,7 @@ export const CopilotSessionSummarySchema = z
     origin_page: z.string().nullish(),
     origin_label: z.string().nullish(),
     origin_symbol: z.string().nullish(),
+    writes: z.record(z.string(), z.number()).optional(),
   })
   .passthrough()
 

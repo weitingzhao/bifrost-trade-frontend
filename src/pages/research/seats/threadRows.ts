@@ -40,21 +40,30 @@ export function threadTurns(frames: readonly PersistedCopilotFrame[]): number {
   return frames.filter((f) => f.role === 'user' && (f.kind ?? 'text') === 'text').length
 }
 
-export type ThreadFilter = 'all' | 'today' | 'pinned'
+export type ThreadFilter = 'all' | 'today' | 'pinned' | 'with_writes'
 
 export const THREAD_FILTERS: { value: ThreadFilter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'today', label: 'Today' },
   { value: 'pinned', label: 'Pinned' },
+  { value: 'with_writes', label: 'With writes' },
 ]
+
+/** Total write actions recorded against a thread (any status). */
+export function threadWriteCount(row: Pick<CopilotSessionSummary, 'writes'>): number {
+  const w = row.writes
+  if (!w) return 0
+  return Object.values(w).reduce((a, n) => a + (Number.isFinite(n) ? n : 0), 0)
+}
 
 /** Whether a thread belongs under a filter. "Today" is the ET trading day, as everywhere on the Desk. */
 export function threadInFilter(
-  row: Pick<CopilotSessionSummary, 'pinned' | 'updated_at'>,
+  row: Pick<CopilotSessionSummary, 'pinned' | 'updated_at' | 'writes'>,
   filter: ThreadFilter,
   today: string,
 ): boolean {
   if (filter === 'pinned') return Boolean(row.pinned)
+  if (filter === 'with_writes') return threadWriteCount(row) > 0
   if (filter === 'today') {
     if (!row.updated_at) return false
     const at = new Date(row.updated_at)

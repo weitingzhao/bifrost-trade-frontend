@@ -7,7 +7,7 @@
  * from, the personas and your trading system. The panel stays global; this
  * page opens it with the thread you pick.
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Users } from 'lucide-react'
@@ -19,17 +19,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
-import { fetchCopilotSession, fetchCopilotSessions } from '@/api/researchCopilotSessions'
 import { listResearchDrafts, type DraftStatus } from '@/api/researchDrafts'
 import { useCopilotStanding } from '@/hooks/useCopilotStanding'
-import { copilotDockStore } from '@/hooks/useCopilotDock'
-import { copilotSessionStore } from '@/hooks/useCopilotSession'
-import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 import { fmtIsoTs } from '@/lib/format'
-import { openDigestInCopilot, openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { openDigestInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { digestExhibits } from '@/lib/harness/dailyDigest'
 import { WaitingOnYou } from '@/pages/research/seats/WaitingOnYou'
 import { RanToday } from '@/pages/research/seats/RanToday'
+import { Threads } from '@/pages/research/seats/Threads'
 import { ProviderChip, SpendChip } from '@/pages/research/seats/DeskHeaderChips'
 import { spendAgainstCap } from '@/pages/research/seats/deskHeader'
 
@@ -220,75 +217,3 @@ function DigestToday({ draftId, status, loading }: { draftId: string | null; sta
   )
 }
 
-function Threads() {
-  const q = useQuery({
-    queryKey: ['research', 'copilot', 'sessions', 'desk'],
-    queryFn: () => fetchCopilotSessions(8),
-    staleTime: 30_000,
-  })
-  const [opening, setOpening] = useState<string | null>(null)
-
-  async function open(id: string) {
-    setOpening(id)
-    try {
-      const detail = await fetchCopilotSession(id)
-      copilotSessionStore.setState({
-        messages: hydrateCopilotMessages(detail.messages ?? [], id, detail.session?.model),
-        sessionId: id,
-        streaming: false,
-        lastError: null,
-      })
-      openResearchCopilot()
-    } catch {
-      // best effort — the panel's own list can still open it
-      copilotDockStore.getState().setSessionsOpen(true)
-      openResearchCopilot()
-    } finally {
-      setOpening(null)
-    }
-  }
-
-  if (q.isLoading) return <Skeleton className="h-32 w-full" />
-  if (q.isError) return <QueryErrorAlert error={q.error} onRetry={() => void q.refetch()} />
-  const rows = q.data ?? []
-  if (rows.length === 0) {
-    return (
-      <EmptyState
-        icon={<MessageCircle />}
-        title="No threads yet"
-        description="Ask the Copilot from any page; the conversation is kept here."
-      />
-    )
-  }
-  return (
-    <ul className="divide-y divide-border rounded-lg border border-border bg-secondary/40">
-      {rows.map((r) => (
-        <li key={r.id}>
-          <button
-            type="button"
-            className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-muted/40 disabled:opacity-60"
-            disabled={opening === r.id}
-            onClick={() => void open(r.id)}
-            title="Open this thread in the Copilot panel"
-          >
-            <MessageCircle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-dense-body">{r.title || '(untitled)'}</span>
-              <span className="block text-dense-meta text-muted-foreground">
-                {fmtIsoTs(r.updated_at ?? null)}
-                {r.model ? ` · ${r.model}` : ''}
-                {r.message_count != null ? ` · ${r.message_count} turns` : ''}
-                {r.group_name ? ` · ${r.group_name}` : ''}
-              </span>
-            </span>
-            {r.pinned ? (
-              <DenseTag variant="neutral" size="cell">
-                pinned
-              </DenseTag>
-            ) : null}
-          </button>
-        </li>
-      ))}
-    </ul>
-  )
-}

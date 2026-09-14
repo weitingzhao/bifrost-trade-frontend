@@ -162,9 +162,11 @@ export function RanToday() {
 }
 
 /**
- * The design's grey "scheduled" rows, for the one schedule the page can know:
- * the Autopilot's. Morning Prep and the EOD review run on platform cronjobs this
- * app cannot read, so they get no row rather than a guessed time.
+ * The design's grey "scheduled" rows, for the one next run the page can know:
+ * the Autopilot's. The digest (which Morning Prep folded into) and the EOD
+ * review run on Dagster schedules; `/research/orchestration/status` reports
+ * whether each is on and when it last ran, but not when it next fires, so they
+ * get no row rather than a guessed time.
  */
 function NextUnattended() {
   const standing = useAutopilotStanding()

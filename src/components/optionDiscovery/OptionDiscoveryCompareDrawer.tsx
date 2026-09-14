@@ -49,8 +49,10 @@ export function OptionDiscoveryCompareDrawer({
           </Button>
         </div>
         <DiscoveryHint className="px-4">
-          {symbol.trim().toUpperCase()} · {expiration || '—'}
-          {dteLabel && dteLabel !== '—' ? ` · ${dteLabel}` : ''} · max {MAX_SLOTS} legs
+          Keeps contracts across expiries and symbols · max {MAX_SLOTS} · current page{' '}
+          {symbol.trim().toUpperCase() || '—'}
+          {expiration ? ` · ${expiration}` : ''}
+          {dteLabel && dteLabel !== '—' ? ` · ${dteLabel}` : ''}
         </DiscoveryHint>
         {rows.length === 0 ? (
           <DiscoveryHint className="px-4">Add contracts from the chain or contract header (Add to compare).</DiscoveryHint>

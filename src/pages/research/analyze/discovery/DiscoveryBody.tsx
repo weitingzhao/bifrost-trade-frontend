@@ -27,6 +27,7 @@ import { expirationDaysFromToday } from '@/utils/optionDiscovery/expirationMeta'
 import { DiscoveryUnderlyingBar } from './DiscoveryUnderlyingBar'
 import { DiscoveryIvTermBlock } from './DiscoveryIvTermBlock'
 import { DiscoveryChainLayers } from './DiscoveryChainLayers'
+import { DiscoveryStructurePanel } from '@/components/optionDiscovery/DiscoveryStructurePanel'
 import { useDiscoveryStrikeWindow } from './useDiscoveryStrikeWindow'
 import { useDiscoveryChainTable } from './useDiscoveryChainTable'
 
@@ -326,6 +327,15 @@ export function DiscoveryBody() {
                 openPolygonFeed={openPolygonFeed}
               />
 
+              {chainTable.selectedRow ? (
+                <DiscoveryStructurePanel
+                  symbol={selectedSymbol}
+                  expiration={selectedExpiration}
+                  row={chainTable.selectedRow}
+                  spot={snapshots.underlyingPrice}
+                />
+              ) : null}
+
               <RightInspectorShell
                 open={Boolean(chainTable.selectedRow && chainTable.selectedDerived)}
                 ariaLabel="Option contract detail"
@@ -348,7 +358,7 @@ export function DiscoveryBody() {
                     onClose={() => snapshots.setSelectedContractKey(null)}
                     onAddToWatchlist={() => void handleAddToWatchlist(chainTable.selectedRow!)}
                     onAddToCompare={() => {
-                      handleAddToCompare(chainTable.selectedRow!)
+                      handleAddToCompare(chainTable.selectedRow!, selectedSymbol)
                       setCompareOpen(true)
                     }}
                   />

@@ -28,6 +28,7 @@ export function DiscoveryCompareTable({ rows, onRemove }: Props) {
     <DenseDataTable wrapClassName="rounded-md border-0" tableClassName="text-xs">
       <DenseTableHeader>
         <DenseTableHeadRow>
+          <DenseTableHead>Symbol</DenseTableHead>
           <DenseTableHead>Side</DenseTableHead>
           <DenseTableHead className={denseTableNumCell}>Strike</DenseTableHead>
           <DenseTableHead className={denseTableNumCell}>Bid</DenseTableHead>
@@ -39,7 +40,10 @@ export function DiscoveryCompareTable({ rows, onRemove }: Props) {
       </DenseTableHeader>
       <DenseTableBody>
         {rows.map((r, i) => (
-          <DenseTableRow key={`${r.strike}-${r.right}-${i}`}>
+          <DenseTableRow key={`${r.underlying_ticker ?? ''}-${r.strike}-${r.right}-${i}`}>
+            <DenseTableCell className="font-mono">
+              {(r.underlying_ticker ?? '—').toString().toUpperCase() || '—'}
+            </DenseTableCell>
             <DenseTableCell>{r.right === 'P' || r.right === 'PUT' ? 'Put' : 'Call'}</DenseTableCell>
             <DenseTableCell className={denseTableNumCell}>{r.strike.toFixed(2)}</DenseTableCell>
             <DenseTableCell className={denseTableNumCell}>{r.bid != null ? fmtUsd(r.bid) : '—'}</DenseTableCell>

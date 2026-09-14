@@ -1,6 +1,5 @@
 /** All localStorage keys used across the app. */
 export const STORAGE_KEYS = {
-  theme: 'bifrost-theme',
   sidebarAccordion: 'bifrost-sidebar-accordion',
   sidebarOpenGroups: 'bifrost-sidebar-open-groups',
   // The System tree keeps its own folds. Sharing one key had two costs: the

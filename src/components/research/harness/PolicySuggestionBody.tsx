@@ -1,5 +1,6 @@
 import { ArrowRight, Sparkles, User } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
+import { PolicyEvidence } from '@/components/research/harness/PolicyEvidence'
 import {
   computePolicySuggestionRows,
   formatPolicyValue,
@@ -73,13 +74,6 @@ export function PolicySuggestionBody({
         </p>
       ) : null}
 
-      {evidence ? (
-        <p className="text-dense-micro text-muted-foreground">
-          Evidence from recent Persona eval:{' '}
-          <code className="font-mono">{JSON.stringify(evidence)}</code>
-        </p>
-      ) : null}
-
       {/*
         Reasoning and diff are one thought — what the model concluded and what it
         would write. Stacked they push the card tall and leave the right half of
@@ -146,6 +140,9 @@ export function PolicySuggestionBody({
         </p>
       )}
       </div>
+
+      {/* The evidence after the proposal: what would change and why first, then what it rests on. */}
+      {evidence ? <PolicyEvidence evidence={evidence} /> : null}
 
       {mergeCount > 0 ? (
         <p className="text-dense-micro text-muted-foreground">

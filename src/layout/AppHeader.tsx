@@ -1,12 +1,9 @@
-import { Moon, Search, Sun, SunMoon } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { SEAT_META, useResearchSeat } from '@/lib/research/seat'
-import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useThemeMode, THEME_LABELS } from '@/hooks/useThemeMode'
 import { cn } from '@/lib/utils'
 import { omnibar } from '@/lib/omnibar'
 import { InboxBell } from './InboxBell'
@@ -32,7 +29,6 @@ function ResearchSeatChip() {
 
 export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
   const location = useLocation()
-  const { mode, cycleMode } = useThemeMode()
   const { label, crumbs } = routeFor(location.pathname)
 
   return (
@@ -42,10 +38,9 @@ export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
         'flex items-center gap-2 border-b border-border bg-card px-4',
         // The layer's one accent line, on the top bar's bottom edge — the
         // design puts it here rather than on the page header, which renders as
-        // an unclassed div with nothing stable to hook. Dark only, like the
-        // ramp it reads from: in light mode there are no layers, so a 2px bar
-        // of `--primary` would be a heavy line saying nothing.
-        'dark:border-b-2 dark:border-primary',
+        // an unclassed div with nothing stable to hook. The product is dark
+        // only (Owner, 2026-09-13), so there is no light mode to exempt.
+        'border-b-2 border-primary',
       )}
     >
       <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />
@@ -84,17 +79,6 @@ export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
             which could be showing a count with no way to tell which mattered
             more. Both are groups inside the Inbox now. */}
         <InboxBell summary={inbox} onOpen={onOpenInbox} />
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={cycleMode} aria-label="Toggle theme">
-              {mode === 'auto'  && <SunMoon className="h-4 w-4" />}
-              {mode === 'light' && <Sun    className="h-4 w-4" />}
-              {mode === 'dark'  && <Moon   className="h-4 w-4" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{THEME_LABELS[mode]}</TooltipContent>
-        </Tooltip>
       </div>
     </header>
   )

@@ -1,8 +1,8 @@
 /**
- * Since last snapshot — band flips and within-band moves on this name.
+ * Since you last looked — band flips and within-band moves on this name.
  *
  * Prototype: `Research Symbol.dc.html` Overview aside. Research exhibits carry
- * only the current reading; the prior half is the last snapshot this desk
+ * only the current reading; the prior half is the last snapshot this browser
  * stored for the symbol (`symbolSnapshotStore`). When `as_of` advances, the
  * rail lists what moved — flips first, within-band grey. Renders nothing on a
  * first visit or when nothing moved.
@@ -97,11 +97,15 @@ export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
   return (
     <section
       className="rounded border border-border/60 bg-muted/20 px-2 py-1.5"
-      aria-label="Since last snapshot"
+      aria-label="Since you last looked"
+      title="Prior readings come from this browser, not Research's last snapshot."
     >
       <header className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <span className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
-          Since last snapshot
+        <span
+          className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground"
+          title="Prior readings come from this browser, not Research's last snapshot."
+        >
+          Since you last looked
         </span>
         <span className="text-dense-meta text-foreground">
           {rows.length} reading{rows.length === 1 ? '' : 's'} moved

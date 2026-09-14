@@ -1,5 +1,5 @@
 /**
- * Last exhibit the desk saw for a symbol — the prior half of "Since last snapshot".
+ * Last exhibit this browser saw for a symbol — the prior half of "Since you last looked".
  *
  * Research does not yet return a previous band on the exhibit. Until it does,
  * the Symbol page keeps one snapshot per symbol in localStorage and diffs when

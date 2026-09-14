@@ -12,7 +12,7 @@ export const STORAGE_KEYS = {
   // Briefings you marked read in the Decision Inbox. Per browser: the Research
   // service keeps no read state on drafts.
   inboxReadDrafts: 'bifrost-inbox-read-drafts',
-  // Last exhibit the Symbol page saw per symbol — prior half of "Since last snapshot".
+  // Last exhibit this browser saw per symbol — prior half of "Since you last looked".
   symbolExhibitSnapshot: 'bifrost-symbol-exhibit-snapshot',
   // Plan-this handoffs queued for Trade › Plans (session-scoped, advisory).
   planHandoffs: 'bifrost-plan-handoffs',

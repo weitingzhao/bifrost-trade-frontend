@@ -3,6 +3,7 @@ import type { CopilotSessionSummary } from '@/api/researchCopilotSessions'
 import {
   THREAD_SWITCHER_NEW_TITLE,
   THREAD_SWITCHER_RECENT_MAX,
+  THREAD_SWITCHER_UNTITLED,
   threadSwitcherGroups,
   threadSwitcherTitle,
   threadSwitcherWhen,
@@ -45,6 +46,13 @@ describe('threadSwitcherTitle', () => {
     expect(
       threadSwitcherTitle('t1', 0, [row('t1', { title: 'PLTR · sell-vol' })]),
     ).toBe('PLTR · sell-vol')
+  })
+
+  it('is Untitled thread when the open session has messages but no saved title', () => {
+    expect(threadSwitcherTitle('t1', 3, [row('t1', { title: '' })])).toBe(
+      THREAD_SWITCHER_UNTITLED,
+    )
+    expect(threadSwitcherTitle('fresh-id', 2, [])).toBe(THREAD_SWITCHER_UNTITLED)
   })
 })
 

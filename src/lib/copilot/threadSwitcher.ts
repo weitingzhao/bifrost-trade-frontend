@@ -10,6 +10,7 @@ import type { CopilotSessionSummary } from '@/api/researchCopilotSessions'
 export const THREAD_SWITCHER_RECENT_MAX = 4
 
 export const THREAD_SWITCHER_NEW_TITLE = 'New thread'
+export const THREAD_SWITCHER_UNTITLED = 'Untitled thread'
 
 export function threadSwitcherGroups(rows: CopilotSessionSummary[]): {
   pinned: CopilotSessionSummary[]
@@ -33,7 +34,7 @@ export function threadSwitcherTitle(
   const named = hit?.title?.trim()
   if (named) return named
   if (messageCount === 0) return THREAD_SWITCHER_NEW_TITLE
-  return THREAD_SWITCHER_NEW_TITLE
+  return THREAD_SWITCHER_UNTITLED
 }
 
 export function threadSwitcherWhen(

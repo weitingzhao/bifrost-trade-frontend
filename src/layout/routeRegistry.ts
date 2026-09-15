@@ -135,8 +135,26 @@ export const ROUTES: readonly RouteEntry[] = [
   // written product, filed under the Copilot fold); its state derives from the
   // snapshot now, no tag needed.
   { path: '/research/daily-brief', label: 'Daily Brief', crumbs: COPILOT, symbolScope: true },
-  { path: '/research/copilot/trading', label: 'Trading Copilot', crumbs: COPILOT },
-  { path: '/research/agent-personas', label: 'Agent Personas', crumbs: COPILOT },
+  {
+    path: '/research/copilot/trading',
+    label: 'Trading Copilot',
+    crumbs: COPILOT,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-14.4',
+      note: 'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner to look before aligned.',
+    },
+  },
+  {
+    path: '/research/agent-personas',
+    label: 'Agent Personas',
+    crumbs: COPILOT,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-14.4',
+      note: 'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner to look before aligned.',
+    },
+  },
 
   // ── Research · Workbench · Discover ────────────────────────────────────
   { path: '/research/explorer', label: 'Stock Explorer', crumbs: DISCOVER, scope: 'underlying' },

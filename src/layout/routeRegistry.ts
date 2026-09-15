@@ -128,7 +128,7 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       state: 'reviewing',
       rev: '2026-09-12.6',
-      note: 'Walked 2026-09-13 against Research Copilot.dc.html (REDO), six steps built; Threads Origin / Symbol / Writes / Cost and Ran today next tick restored 2026-09-14. Open for the Owner: whether the three tiles go, and dark-only.',
+      note: 'Walked 2026-09-13 against Research Copilot.dc.html (REDO), six steps built; Threads Origin / Symbol / Writes / Cost and Ran today next tick restored 2026-09-14. Owner 2026-09-15: three tiles stay dissolved (Design ⑫); Desk is dark-only (R8). Owner to look before aligned.',
     },
   },
   // In the design registry since 2026-09-14 (Owner kept it — a morning agent's

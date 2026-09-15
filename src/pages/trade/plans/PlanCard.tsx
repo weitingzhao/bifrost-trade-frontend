@@ -104,8 +104,8 @@ function LinkFillPicker({ plan, onDone }: { plan: StrategyPlan; onDone: () => vo
       ) : null}
       {candidates.length === 0 ? (
         <p className="text-dense-meta text-muted-foreground">
-          No instance opened in {plan.account_id} since this plan was marked intended names{' '}
-          {plan.symbol}. Open the instance first, then come back.
+          No instance opened in {plan.account_id} since this plan was marked intended has{' '}
+          {plan.symbol} in its name. Open the instance first, then come back.
         </p>
       ) : (
         <ul className="space-y-1">

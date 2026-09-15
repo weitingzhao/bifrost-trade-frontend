@@ -5,8 +5,8 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 89 routes, 63 with a designed page,
- * 26 resolving to the stub. One route per line, so a
+ * Derived, not typed: 89 routes, 64 with a designed page,
+ * 25 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
 
@@ -31,7 +31,7 @@ export interface DesignRoute {
   group: string | null
 }
 
-export const DESIGN_REV = "2026-09-12.6"
+export const DESIGN_REV = "2026-09-14.4"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","inNav":true,"group":"Home"},
@@ -90,7 +90,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/review/proposals","label":"Rule proposals","crumbs":["Review"],"designed":true,"file":"Review Queue.dc.html","round":null,"inNav":true,"group":"Review"},
   {"path":"/portfolio/performance","label":"Performance","crumbs":["Portfolio"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","inNav":true,"group":"Portfolio"},
-  {"path":"/portfolio/backing","label":"Backing & Model","crumbs":["Portfolio","Performance"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/backing","label":"Backing & Model","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Backing.dc.html","round":null,"inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/outcome","label":"Outcome","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Outcome.dc.html","round":"OLD","inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/accounts","label":"Accounts","crumbs":["Portfolio"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/ledger","label":"Trade Ledger","crumbs":["Portfolio","Accounts"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"inNav":true,"group":"Portfolio"},

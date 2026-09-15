@@ -86,5 +86,10 @@ describe('design adoption', () => {
     // the design keeps both pages.
     expect(counts.byState.moving).toBe(10)
     expect(counts.byState.staging).toBe(2)
+    // Rev 2026-09-14.4 gave Backing & Model a prototype (Portfolio Backing.dc.html).
+    // It leaves the stub backlog (26→25) and enters the walk (pending 20→21).
+    expect(counts.designed).toBe(64)
+    expect(counts.byState.pending).toBe(21)
+    expect(counts.byState.backlog).toBe(25)
   })
 })

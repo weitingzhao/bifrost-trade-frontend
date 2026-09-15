@@ -9,12 +9,13 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
-import { useStrategyInstances } from '@/hooks/useStrategies'
+import { useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
 import {
   useCancelStrategyPlan,
   useIntendStrategyPlan,
   useLinkStrategyPlanFill,
 } from '@/hooks/useStrategyPlans'
+import { instancesTradingSymbol } from '@/lib/plans/planLinkFill'
 import { planEstCredit, planExitSummary, planStatusLabel } from '@/lib/plans/planMath'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
@@ -88,14 +89,16 @@ function LinkFillPicker({ plan, onDone }: { plan: StrategyPlan; onDone: () => vo
     accountId: plan.account_id,
     openedAtFrom: Number.isFinite(since) ? since : undefined,
   })
-  // Instances carry no symbol column, so the match is on what they are called.
-  const candidates = useMemo(() => {
-    const rows = instances.data?.items ?? []
-    const symbol = plan.symbol.toUpperCase()
-    return rows.filter((row) =>
-      `${row.label ?? ''} ${row.strategy_opportunity_name ?? ''}`.toUpperCase().includes(symbol),
-    )
-  }, [instances.data, plan.symbol])
+  const opportunities = useOpportunities()
+  const candidates = useMemo(
+    () =>
+      instancesTradingSymbol(
+        instances.data?.items ?? [],
+        opportunities.data?.items ?? [],
+        plan.symbol,
+      ),
+    [instances.data, opportunities.data, plan.symbol],
+  )
 
   return (
     <div className="space-y-1">
@@ -104,8 +107,7 @@ function LinkFillPicker({ plan, onDone }: { plan: StrategyPlan; onDone: () => vo
       ) : null}
       {candidates.length === 0 ? (
         <p className="text-dense-meta text-muted-foreground">
-          No instance opened in {plan.account_id} since this plan was marked intended has{' '}
-          {plan.symbol} in its name. Open the instance first, then come back.
+          No instance in this account opened after the plan was intended trades {plan.symbol}.
         </p>
       ) : (
         <ul className="space-y-1">

@@ -135,6 +135,12 @@ export const QUERY_KEYS = {
     allocations: ['strategy', 'allocations'] as const,
     winRate: ['strategy', 'win-rate'] as const,
   },
+  strategyPlans: {
+    /** Every plan query hangs off this, so one write refreshes them all. */
+    root: ['strategy-plans'] as const,
+    list: ['strategy-plans', 'list'] as const,
+    detail: ['strategy-plans', 'detail'] as const,
+  },
   settings: {
     apiHealth: ['settings', 'api-health'] as const,
     apiHealthMarketData: ['settings', 'api-health', 'market-data-status'] as const,

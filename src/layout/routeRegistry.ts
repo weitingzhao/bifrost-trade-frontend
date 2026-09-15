@@ -252,9 +252,12 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/trade/plans',
     label: 'Plans',
     crumbs: TRADE,
-    // A thin receiver for ＋ Plan this (C1-c). The design keeps this page, so it
-    // is not moving; the Trade Plans desk itself is not walked, so it reads pending.
     symbolScope: true,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-15.5',
+      note: 'Built against Trade Plans.dc.html on the new strategy_plan table (core 0.22.0): status filter, plan table, plan card with exit rules, Plan a trade form, Plan this posts a draft. Not built: Import from Inbox and Create order intent (D10), Cash / margin and Pressure after (no per-plan margin service). Owner to look before aligned.',
+    },
   },
 
   // ── Strategy ───────────────────────────────────────────────────────────

@@ -54,27 +54,27 @@ function LegsTable({ plan }: { plan: StrategyPlan }) {
     <table className="w-full text-dense-meta">
       <thead className="text-dense-micro uppercase tracking-wide text-muted-foreground">
         <tr>
-          <th className="text-left font-medium">Side</th>
-          <th className="text-left font-medium">Right</th>
-          <th className="text-right font-medium">Strike</th>
-          <th className="text-left font-medium">Expiry</th>
-          <th className="text-right font-medium">Ratio</th>
-          <th className="text-right font-medium">Mid at plan</th>
-          <th className="text-left font-medium">Quote as of</th>
+          <th className="px-2 text-left font-medium">Side</th>
+          <th className="px-2 text-left font-medium">Right</th>
+          <th className="px-2 text-right font-medium">Strike</th>
+          <th className="px-2 text-left font-medium">Expiry</th>
+          <th className="px-2 text-right font-medium">Ratio</th>
+          <th className="px-2 text-right font-medium">Mid at plan</th>
+          <th className="px-2 text-left font-medium">Quote as of</th>
         </tr>
       </thead>
       <tbody className="font-mono">
         {plan.legs_json.map((leg, i) => (
           <tr key={`${leg.contract_key ?? 'leg'}-${i}`}>
-            <td className={cn('text-left', leg.side === 'sell' ? 'text-loss' : 'text-profit')}>
+            <td className={cn('px-2 text-left', leg.side === 'sell' ? 'text-loss' : 'text-profit')}>
               {leg.side === 'sell' ? 'Sell' : 'Buy'}
             </td>
-            <td className="text-left">{leg.right ?? (leg.sec_type === 'STK' ? 'STK' : '—')}</td>
-            <td className="text-right">{leg.strike ?? '—'}</td>
-            <td className="text-left">{leg.expiry ?? '—'}</td>
-            <td className="text-right">{leg.ratio}</td>
-            <td className="text-right">{leg.mid_at_plan ?? '—'}</td>
-            <td className="text-left text-muted-foreground">{leg.quote_asof ?? '—'}</td>
+            <td className="px-2 text-left">{leg.right ?? (leg.sec_type === 'STK' ? 'STK' : '—')}</td>
+            <td className="px-2 text-right">{leg.strike ?? '—'}</td>
+            <td className="px-2 text-left">{leg.expiry ?? '—'}</td>
+            <td className="px-2 text-right">{leg.ratio}</td>
+            <td className="px-2 text-right">{leg.mid_at_plan ?? '—'}</td>
+            <td className="px-2 text-left text-muted-foreground">{leg.quote_asof ?? '—'}</td>
           </tr>
         ))}
       </tbody>

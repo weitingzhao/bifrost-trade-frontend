@@ -65,7 +65,7 @@ export function BackingJudgmentStrip({ judgment }: { judgment: BackingJudgment }
       <BackingStripStat
         cap="Space under gate"
         value={empty ? '—' : fmtMvAbbrev(judgment.spendable)}
-        hint="what Sizing may spend against this line"
+        hint="headroom under the 85% house line"
         tone="accent"
       />
       <p className="ml-auto max-w-sm text-dense-caption text-muted-foreground">

@@ -14,5 +14,7 @@ describe('BackingJudgmentStrip', () => {
     expect(screen.getByText('$500.0k')).toBeInTheDocument()
     expect(screen.getByText('$350.0k')).toBeInTheDocument()
     expect(screen.getByText(/1 − Cushion/)).toBeInTheDocument()
+    expect(screen.getByText('headroom under the 85% house line')).toBeInTheDocument()
+    expect(screen.queryByText(/Sizing/)).not.toBeInTheDocument()
   })
 })

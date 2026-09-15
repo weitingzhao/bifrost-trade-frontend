@@ -4,11 +4,10 @@ import { AgentChip } from '@/components/cockpit/AgentChip'
 import { CopilotComposer } from '@/components/cockpit/CopilotComposer'
 import { CopilotMessageList } from '@/components/cockpit/CopilotMessageList'
 import { CopilotTracePanel } from '@/components/cockpit/CopilotTracePanel'
-import { InboxBanner } from '@/components/cockpit/InboxBanner'
-import { LoopBanner } from '@/components/cockpit/LoopBanner'
 import { PersonaMiniCard } from '@/components/cockpit/PersonaMiniCard'
 import { QuickPromptChips } from '@/components/cockpit/QuickPromptChips'
 import { CopilotAlreadyKnows } from '@/components/copilot/CopilotAlreadyKnows'
+import { CopilotWaitingQueue } from '@/components/copilot/CopilotWaitingQueue'
 import { fetchCopilotUsage } from '@/api/aiCopilot'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
 import { cn } from '@/lib/utils'
@@ -82,11 +81,7 @@ export function CopilotChatBody({ className }: Props) {
         )}
       </div>
 
-      {/* Pending agent drafts (RS-UX6) — expands in place so the chat stays
-          visible while approving; renders nothing when the queue is empty. */}
-      <InboxBanner />
-
-      <LoopBanner />
+      <CopilotWaitingQueue />
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
         {isEmpty ? (

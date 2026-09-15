@@ -6,6 +6,7 @@ import { ResearchUserSwitcher, type ResearchUserSwitcherHandle } from '@/compone
 import { AskCopilotIntentHost } from '@/components/cockpit/AskCopilotIntentHost'
 import { CockpitSaveHypothesisHost } from '@/components/cockpit/CockpitSaveHypothesisHost'
 import { CopilotPanelMoreMenu } from '@/components/copilot/CopilotPanelMoreMenu'
+import { CopilotThreadSwitcher } from '@/components/copilot/CopilotThreadSwitcher'
 import { useRef } from 'react'
 
 /**
@@ -114,9 +115,7 @@ export function CopilotDock() {
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15">
               <MessageCircle className="h-3.5 w-3.5 text-primary" strokeWidth={2.25} />
             </span>
-            <span className="truncate text-dense-body font-semibold text-foreground">
-              Research Copilot
-            </span>
+            <CopilotThreadSwitcher />
             {streaming ? (
               <span
                 className="ml-1 inline-flex h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-primary"

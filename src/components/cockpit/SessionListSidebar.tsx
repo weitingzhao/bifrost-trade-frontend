@@ -30,11 +30,10 @@ import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSessio
 import { cn } from '@/lib/utils'
 import {
   archiveCopilotSession,
-  fetchCopilotSession,
   patchCopilotSession,
   type CopilotSessionSummary,
 } from '@/api/researchCopilotSessions'
-import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
+import { openCopilotSession } from '@/lib/copilot/openCopilotSession'
 
 /**
  * Session history rail (Wave RS-UX3 → RS-UX5, QA follow-up).
@@ -111,14 +110,7 @@ export function SessionListSidebar({
     if (id === currentSessionId) return
     if (editingId === id) return
     try {
-      const detail = await fetchCopilotSession(id)
-      const msgs = hydrateCopilotMessages(detail.messages ?? [], id, detail.session?.model)
-      copilotSessionStore.setState({
-        messages: msgs,
-        sessionId: id,
-        streaming: false,
-        lastError: null,
-      })
+      await openCopilotSession(id)
       onLoaded?.(id)
     } catch {
       // ignore — session list is best-effort

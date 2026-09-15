@@ -3,13 +3,10 @@ import {
   ClipboardList,
   Compass,
   LineChart,
-  Radar,
   RefreshCw,
   ShieldQuestion,
   Sliders,
   Sparkles,
-  Sunrise,
-  Sunset,
   TrendingUp,
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
@@ -25,6 +22,10 @@ import {
   starterToolCaption,
   type StarterGroupId,
 } from '@/lib/copilot/starterGroupOrder'
+import {
+  TRADE_QUESTIONS,
+  type TradeQuestionGroup,
+} from '@/lib/copilot/tradePrompts'
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -49,72 +50,29 @@ type LocalizedPrompt = {
   tools?: string[]
 }
 
+const BOOK_GROUP_ICON: Record<TradeQuestionGroup, Icon> = {
+  positions: BarChart3,
+  gates: ShieldQuestion,
+  executions: LineChart,
+  strategy: TrendingUp,
+}
+
+/** Same catalogue as `/research/copilot/trading` — not a second set of questions. */
+const BOOK_PROMPTS: LocalizedPrompt[] = TRADE_QUESTIONS.map((q) => ({
+  id: q.id,
+  group: 'book',
+  Icon: BOOK_GROUP_ICON[q.group],
+  label: q.label,
+  prompt: q.prompt,
+  tools: q.tools,
+}))
+
 /**
- * Common conversation starters — surfaced above the composer when the chat is
- * empty. Bilingual (default zh) so a Chinese-first trader can trigger a
- * pre-market brief in one click; specialist agents accept both languages.
+ * This page / The loop stay panel-local. The book is TRADE_QUESTIONS so the
+ * empty state and the Trading Copilot page cannot drift.
  */
 const PROMPTS: LocalizedPrompt[] = [
-  {
-    id: 'premarket',
-    group: 'book',
-    Icon: Sunrise,
-    label: { zh: '盘前简报', en: 'Pre-market brief' },
-    prompt: {
-      zh: '给我一份盘前简报：昨夜市场变化、今日重要宏观事件，以及它们对我当前持仓和 watchlist 的影响。请注明使用的工具。',
-      en: 'Give me a pre-market brief: overnight news, macro events today, and how they affect my current portfolio and watchlist. Cite the tools you used.',
-    },
-  },
-  {
-    id: 'postmarket',
-    group: 'book',
-    Icon: Sunset,
-    label: { zh: '盘后复盘', en: 'Post-market recap' },
-    prompt: {
-      zh: '盘后复盘：今日市场关键动向、我组合的显著变化，以及值得为明日记录的假设。',
-      en: 'Post-market recap: key market moves today, notable changes in my portfolio, and any hypotheses worth logging for tomorrow.',
-    },
-  },
-  {
-    id: 'portfolio-risk',
-    group: 'book',
-    Icon: BarChart3,
-    label: { zh: '持仓风险', en: 'Portfolio risk' },
-    prompt: {
-      zh: '分析我当前持仓的风险暴露：集中度、净 delta/vega、各标的 IV，以及任何需要减仓或对冲的头寸。',
-      en: 'Analyze my current portfolio risk exposure — concentration, delta/vega net, IV of my names, and any positions worth trimming or hedging.',
-    },
-  },
-  {
-    id: 'vol-overview',
-    group: 'book',
-    Icon: LineChart,
-    label: { zh: '波动率关注', en: 'Volatility watch' },
-    prompt: {
-      zh: '给出我 watchlist 和持仓标的的波动率概览：IV rank、期限结构异常，以及值得探索的事件驱动波动率交易。',
-      en: 'Volatility overview for my watchlist and portfolio names: IV rank, term-structure anomalies, and event-driven vol trades worth exploring.',
-    },
-  },
-  {
-    id: 'sepa',
-    group: 'book',
-    Icon: TrendingUp,
-    label: { zh: 'SEPA 候选', en: 'SEPA candidates' },
-    prompt: {
-      zh: '给我今日 SEPA 筛选器中动量最强的候选，并交叉验证我目前活跃的假设。',
-      en: "Show me today's top SEPA screener candidates with strong momentum, and cross-check with the latest hypotheses I have active.",
-    },
-  },
-  {
-    id: 'event-radar',
-    group: 'book',
-    Icon: Radar,
-    label: { zh: '事件雷达', en: 'Event radar' },
-    prompt: {
-      zh: '未来 5 个交易日有哪些财报、宏观事件或异常资金流信号值得关注 —— 尤其是与我持仓相关的？',
-      en: 'Any earnings, macro events, or unusual flow signals I should watch in the next 5 trading days — especially anything touching my portfolio.',
-    },
-  },
+  ...BOOK_PROMPTS,
   {
     id: 'hypotheses',
     group: 'loop',
@@ -123,19 +81,6 @@ const PROMPTS: LocalizedPrompt[] = [
     prompt: {
       zh: '总结我目前活跃的假设、当前市场背景，以及下一步的验证步骤。',
       en: 'Summarize my active hypotheses, their current market backdrop, and next validation steps.',
-    },
-  },
-  {
-    // Surfaces the trade.strategy.gate_safety tool added in program
-    // research-copilot-reach P5 — entry gating was previously unaskable.
-    id: 'gates',
-    group: 'book',
-    Icon: ShieldQuestion,
-    label: { zh: '开仓门控', en: 'Entry gates' },
-    tools: ['trade.strategy.gate_safety'],
-    prompt: {
-      zh: '当前的 safety gate 配置是什么？结合我的持仓和策略实例说明：现在有什么在阻止开仓？（D10 冻结中，仅需观察说明）',
-      en: 'What is the current safety gate configuration? Combined with my positions and strategy instances, explain what is currently blocking entries. (D10 frozen — observation only.)',
     },
   },
   {

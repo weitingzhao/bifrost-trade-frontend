@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 /**
- * The empty state's starters after the Copilot left the seat rail (§11.2.7):
- * three groups — This page / The book / The loop — no seat filtering, nothing
- * deleted, and The book's header carries the one remaining road to the
- * Trading Copilot's full catalogue (Design 2026-09-14 ①).
+ * The empty state's starters: This page / The book / The loop.
+ * The book is TRADE_QUESTIONS — the same catalogue as Trading Copilot.
  */
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
+import { starterToolCaption } from '@/lib/copilot/starterGroupOrder'
+import { TRADE_QUESTIONS } from '@/lib/copilot/tradePrompts'
 import { QuickPromptChips } from './QuickPromptChips'
 
 function renderChips(path = '/') {
@@ -25,33 +25,36 @@ function groupOrder(container: HTMLElement): string[] {
 }
 
 describe('QuickPromptChips', () => {
-  it('shows the three groups in order, every starter kept', () => {
+  it('shows the three groups in default order', () => {
     const { container } = renderChips()
     const groups = ['This page', 'The book', 'The loop']
     for (const g of groups) expect(screen.getByText(g)).toBeTruthy()
     expect(groupOrder(container)).toEqual(['page', 'book', 'loop'])
-    // 13 starters as before the regroup — none deleted, none seat-filtered.
     const counts = groups.map(
       (g) => within(screen.getByLabelText(g)).getAllByRole('button').length,
     )
-    expect(counts).toEqual([1, 7, 5])
+    expect(counts).toEqual([1, TRADE_QUESTIONS.length, 5])
   })
 
-  it('leads with The book on Portfolio, counts unchanged', () => {
+  it('leads with The book on Portfolio, same TRADE_QUESTIONS catalogue', () => {
     const { container } = renderChips('/portfolio/positions')
     expect(groupOrder(container)).toEqual(['book', 'page', 'loop'])
     const groups = ['The book', 'This page', 'The loop']
     const counts = groups.map(
       (g) => within(screen.getByLabelText(g)).getAllByRole('button').length,
     )
-    expect(counts).toEqual([7, 1, 5])
+    expect(counts).toEqual([TRADE_QUESTIONS.length, 1, 5])
   })
 
-  it('names the tools on Entry gates, and does not invent them on the rest of The book', () => {
+  it('The book is TRADE_QUESTIONS — labels and tools, not the old 7', () => {
     renderChips()
     const book = screen.getByLabelText('The book')
-    expect(within(book).getByText('trade.strategy.gate_safety')).toBeTruthy()
-    expect(within(book).queryAllByText(/trade\./).length).toBe(1)
+    expect(within(book).getAllByRole('button')).toHaveLength(TRADE_QUESTIONS.length)
+    for (const q of TRADE_QUESTIONS) {
+      expect(within(book).getByText(q.label.zh)).toBeTruthy()
+      expect(within(book).getByText(starterToolCaption(q.tools)!)).toBeTruthy()
+    }
+    expect(within(book).queryByText('盘前简报')).toBeNull()
   })
 
   it("links The book's header to the full catalogue", () => {

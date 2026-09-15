@@ -119,10 +119,16 @@ Data / Runtime / Configuration / Reference，脚部变 `Back to Trade`（`isSyst
 
 ### 右侧面板规范
 
-- **RightInspectorShell**（`components/layout/`）：唯一的右侧面板底座 —— 行情 Inspector、
-  期权合约详情、策略实例详情都是它的 body。视口 ≥ 面板宽 + 840px 时**停靠**成右列（主内容让位），
-  否则悬浮；默认 560px，调用方可用 `panelWidthPx` 指定更宽档。`RightInspectorDrawer` /
-  `OptionContractDrawer` 两层纯透传已删除（`db15278`），不要再建新的包装层
+- **停靠公式**（唯一出处 `src/lib/panelDocks.ts`，Design 09-14 ③）：
+  `viewport ≥ sidebar 240 + content floor 760 + panel width`。
+  Inspector 读宽 560 → **1560 以上才停靠**；Copilot 读宽 440 → 1440 停靠。
+  **宽档永远悬浮**（Copilot 760、Inspector 1040 及更宽）。侧栏按展开 240 计入，即使当时折成 icon rail。
+  旧写法「视口 ≥ 面板宽 + 840px」（560+840=1400）已废，不要再写回代码或文档。
+- Copilot 停靠推页时，Inspector **一律悬浮**，浮层从视口右缘让出 440
+  （`inspectorOverlayInsetRightPx` / `copilotDockPushes`）。不要两列同时停靠。
+- **RightInspectorShell**（`components/layout/`）：唯一的右侧 Inspector 底座 —— 行情 Inspector、
+  期权合约详情、策略实例详情都是它的 body。默认 560px，调用方可用 `panelWidthPx` 指定更宽档。
+  `RightInspectorDrawer` / `OptionContractDrawer` 两层纯透传已删除（`db15278`），不要再建新的包装层
 - 面板内的栅格用**容器查询**（`@container inspector`），不要用视口断点 —— 面板宽度与视口无关
 
 ---

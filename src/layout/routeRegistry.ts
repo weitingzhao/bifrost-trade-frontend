@@ -213,7 +213,11 @@ export const ROUTES: readonly RouteEntry[] = [
       note: "The design's Discover › Screener has Stocks (= our Explorer) and Contracts; /research/screener there is the screener home, which is our Option Screener. Same paths, different meanings — needs untangling",
     },
   },
-  { path: '/research/screener', label: 'Option Screener', crumbs: DATA },
+  // The design's Discover › Screener has Stocks and Contracts under it, and
+  // this page is Contracts (Design 2026-09-15). `/research/screener` is the
+  // design's screener home, which the app has not built, so the page moves off
+  // that path rather than squatting on it.
+  { path: '/research/contract-screener', label: 'Option Screener', crumbs: DISCOVER },
   { path: '/research/greeks', label: 'Contract Greeks', crumbs: DATA, scope: 'contract' },
 
   // ── Research · Market ──────────────────────────────────────────────────
@@ -362,6 +366,15 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Option Scan',
     crumbs: DISCOVER,
     redirect: '/research/scan',
+  },
+  // The Option Screener's own path until 2026-09-15. It stays a redirect so
+  // saved links keep working, and it is left free for the design's screener
+  // home — which is a different prototype, and unbuilt.
+  {
+    path: '/research/screener',
+    label: 'Option Screener',
+    crumbs: DATA,
+    redirect: '/research/contract-screener',
   },
   { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
   { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE, redirect: '/research/symbol' },

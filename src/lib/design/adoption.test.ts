@@ -51,6 +51,29 @@ describe('design adoption', () => {
     )
   })
 
+  it('only calls a redirect an alias when both paths are the same prototype', () => {
+    // `/research/screener` is the design's screener home
+    // (`Research Screener.dc.html`); the app's Option Screener is its Contracts
+    // page (`Research Contract Screener.dc.html`) and moved onto its own path
+    // on 2026-09-15. Counting the forward as adoption would have retired the
+    // home from "to build" without anyone building it.
+    const home = rows.find((r) => r.path === '/research/screener')
+    expect(home?.state).toBe('unbuilt')
+    expect(home?.inApp).toBe(false)
+    const contracts = rows.find((r) => r.path === '/research/contract-screener')
+    expect(contracts?.state).toBe('pending')
+    expect(contracts?.aliasOf).toBeUndefined()
+    // The Analyze hubs are the case the rule has to keep: all of them resolve
+    // to the prototype the Symbol page was built from.
+    expect(rows.find((r) => r.path === '/research/symbol')?.aliasOf).toEqual([
+      '/research/vol-regime',
+      '/research/dealer-levels',
+      '/research/scenario',
+      '/research/flow',
+      '/research/discovery',
+    ])
+  })
+
   it('keeps the tracker out of its own list', () => {
     expect(rows.map((r) => r.path)).not.toContain('/docs/design-adoption')
   })

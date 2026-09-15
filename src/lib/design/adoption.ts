@@ -73,16 +73,25 @@ const DESIGN_BY_PATH = new Map(DESIGN_ROUTES.map((d) => [d.path, d]))
 /**
  * Design routes the app answers with a redirect, grouped by where they land.
  *
- * A design path the app redirects to a real page is adopted through that page.
+ * A design path the app redirects to a real page is adopted through that page —
+ * but only when both paths are the same prototype. The six retired Analyze hubs
+ * all resolve to `Research Symbol.dc.html`, so the Symbol page really does
+ * answer for them. A redirect between two different prototypes does not:
+ * `/research/screener` is the design's screener home and
+ * `/research/contract-screener` is Contracts, and forwarding one to the other
+ * would have marked the home adopted by a page that was never built.
+ *
  * Only redirects whose target is itself a page count — a redirect to a path the
  * app does not have covers nothing.
  */
 function aliasesByTarget(pages: ReadonlySet<string>): Map<string, string[]> {
   const byTarget = new Map<string, string[]>()
   for (const r of REDIRECT_ROUTES) {
-    if (!DESIGN_BY_PATH.has(r.path)) continue
+    const from = DESIGN_BY_PATH.get(r.path)
+    if (!from) continue
     const target = r.redirect.split(/[?#]/)[0]
     if (!pages.has(target)) continue
+    if (DESIGN_BY_PATH.get(target)?.file !== from.file) continue
     byTarget.set(target, [...(byTarget.get(target) ?? []), r.path])
   }
   return byTarget

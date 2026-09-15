@@ -117,7 +117,7 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/data/StockScreenerPage')),
       },
       {
-        path: 'research/screener',
+        path: 'research/contract-screener',
         lazy: lazyPage(() => import('@/pages/research/data/ScreenerPage')),
       },
       {

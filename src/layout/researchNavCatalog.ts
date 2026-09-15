@@ -158,7 +158,14 @@ export const BENCHES: Bench[] = [
     id: 'discover',
     label: 'Discover',
     icon: Compass,
-    items: [route('Stock Explorer', '/research/explorer', Compass), route('Option Scan', '/research/scan', ScanSearch)],
+    // Option Screener sits here, not under Data: the design's Discover ›
+    // Screener holds Stocks and Contracts, and this page is Contracts. Data is
+    // for what the desk knows about the feed, not for picking contracts.
+    items: [
+      route('Stock Explorer', '/research/explorer', Compass),
+      route('Option Screener', '/research/contract-screener', ListFilter),
+      route('Option Scan', '/research/scan', ScanSearch),
+    ],
   },
   {
     id: 'analyze',
@@ -192,7 +199,6 @@ export const BENCHES: Bench[] = [
       route('Signal Health', '/research/signal-health', Activity),
       route('Stock Watchlist', '/research/watchlist', Star),
       route('Stock Screener', '/research/stock-screener', ListFilter),
-      route('Option Screener', '/research/screener', ListFilter),
       route('Contract Greeks', '/research/greeks', Wand2),
       route('Stock Data Readiness', '/system/data-readiness', Server),
     ],

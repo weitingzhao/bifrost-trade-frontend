@@ -75,7 +75,9 @@ describe('design adoption', () => {
     // Owner list 2026-09-15: all five at Rev 2026-09-15.5.
     expect(counts.aligned + counts.byState.stale).toBe(5)
     expect(counts.aligned).toBe(5)
-    expect(counts.byState.reviewing).toBe(0)
+    // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
+    // it waits for the Owner's look (pending 19→18).
+    expect(counts.byState.reviewing).toBe(1)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -88,7 +90,7 @@ describe('design adoption', () => {
       '/research/loop/decisions',
       '/research/symbol',
     ])
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path)).toEqual([])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path)).toEqual(['/portfolio/backing'])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
     // dissolves elsewhere, plus Backtest, handed to Lab. Symbol and Plans left:
     // the design keeps both pages.
@@ -96,10 +98,11 @@ describe('design adoption', () => {
     expect(counts.byState.staging).toBe(2)
     // Rev 2026-09-15.5: registry dropped /docs/omnibar (it was a designed
     // prototype with no app page → unbuilt 34→33). Denominator 64→63.
-    // Stub backlog unchanged (25). Pending unchanged (19).
+    // Stub backlog unchanged (25). Pending 19, then 18 once Backing & Model
+    // moved to reviewing.
     expect(counts.designed).toBe(63)
     expect(counts.byState.unbuilt).toBe(33)
-    expect(counts.byState.pending).toBe(19)
+    expect(counts.byState.pending).toBe(18)
     expect(counts.byState.backlog).toBe(25)
   })
 })

@@ -226,7 +226,17 @@ export const ROUTES: readonly RouteEntry[] = [
   // ── Portfolio ──────────────────────────────────────────────────────────
   { path: '/portfolio/performance', label: 'Performance', crumbs: PORTFOLIO },
   { path: '/portfolio/positions', label: 'Positions', crumbs: PORTFOLIO, symbolScope: true },
-  { path: '/portfolio/backing', label: 'Backing & Model', crumbs: PORTFOLIO, symbolScope: true },
+  {
+    path: '/portfolio/backing',
+    label: 'Backing & Model',
+    crumbs: PORTFOLIO,
+    symbolScope: true,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-14.4',
+      note: 'Walked 2026-09-15 against Portfolio Backing.dc.html (C6 judgment table). Built: judgment strip (pool · used · 85% house gate · space under gate), plan reserves grey lamp (no structured plans), assumptions table with the 85% gate and the 50% pressure ceiling as two rows, obligations caption. Gate hit stays Not computed until a service computes it, as the Rev 2026-09-15.5 prototype also says. On STG since 769a03c. Owner to look before aligned.',
+    },
+  },
   { path: '/portfolio/accounts', label: 'Accounts', crumbs: PORTFOLIO },
   { path: '/portfolio/ledger', label: 'Trade Ledger', crumbs: PORTFOLIO },
   { path: '/portfolio/transfer', label: 'Transfer & Pay', crumbs: PORTFOLIO },

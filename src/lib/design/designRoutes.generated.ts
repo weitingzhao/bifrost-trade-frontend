@@ -21,7 +21,8 @@ export interface DesignRoute {
   /**
    * The design round the prototype belongs to, from Docs Index.dc.html.
    * NEW is this round's work; OLD is an early round a later contract may have
-   * overtaken; LAB means the design handed the page to Lab — for a page the app
+   * overtaken (including Docs Index OLDC, 「早期轮次 · 部分被契约覆盖」);
+   * LAB means the design handed the page to Lab — for a page the app
    * has, that is a move, not a target; null when the route has no prototype.
    */
   round: 'NEW' | 'OLD' | 'REDO' | 'LAB' | null

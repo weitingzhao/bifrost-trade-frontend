@@ -276,8 +276,8 @@ export function HarnessRunsTable({
                     </span>
                   ) : null}
                   <IconActionButton
-                    title={loopCopilotUi.viewPipeline(lang)}
-                    ariaLabel={`${loopCopilotUi.viewPipeline(lang)} ${row.id}`}
+                    title={loopCopilotUi.viewPipeline}
+                    ariaLabel={`${loopCopilotUi.viewPipeline} ${row.id}`}
                     onClick={() => onOpenPipeline(row.id)}
                   >
                     <Terminal className="size-3.5" />
@@ -293,8 +293,8 @@ export function HarnessRunsTable({
                         <Sparkles className="size-3.5" />
                       </IconActionButton>
                       <IconActionButton
-                        title={loopCopilotUi.discuss(lang)}
-                        ariaLabel={`${loopCopilotUi.discuss(lang)} ${row.id}`}
+                        title={loopCopilotUi.discuss}
+                        ariaLabel={`${loopCopilotUi.discuss} ${row.id}`}
                         onClick={() =>
                           openLoopRunInCopilot({ runId: row.id, title: objectiveTitle, lang })
                         }

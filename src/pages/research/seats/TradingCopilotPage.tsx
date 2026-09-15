@@ -56,7 +56,7 @@ export default function TradingCopilotPage() {
     copilotViewStore.unsuppress()
     askCopilotIntentStore.open({
       originPage: ORIGIN,
-      originLabel: lang === 'zh' ? '交易副驾' : 'Trading Copilot',
+      originLabel: 'Trading Copilot',
       snapshot: {
         accounts: accounts.length,
         positions,
@@ -78,25 +78,25 @@ export default function TradingCopilotPage() {
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <BookFact
-          label={lang === 'zh' ? '持仓' : 'The book'}
+          label="The book"
           value={status.isLoading ? null : String(positions)}
           sub={`${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'}`}
           to="/portfolio/positions"
         />
         <BookFact
-          label={lang === 'zh' ? '在途委托' : 'Open orders'}
+          label="Open orders"
           value={status.isLoading ? null : String(openOrders)}
           sub={openOrders === 0 ? 'nothing working' : 'placed by hand'}
           to="/market/live"
         />
         <BookFact
-          label={lang === 'zh' ? '生效门控' : 'Gates armed'}
+          label="Gates armed"
           value={gates.isLoading ? null : String(activeGates)}
           sub={`of ${totalGates} configured`}
           to="/strategy/gates"
         />
         <BookFact
-          label={lang === 'zh' ? '成交记录' : 'Executions'}
+          label="Executions"
           value={execs.isLoading ? null : String(fills)}
           sub="in the ledger"
           to="/portfolio/ledger"
@@ -106,8 +106,8 @@ export default function TradingCopilotPage() {
       <section className="grid gap-3 md:grid-cols-2">
         {TRADE_QUESTION_GROUPS.map((group) => (
           <div key={group.id} className="rounded-lg border border-border bg-secondary/40 px-4 py-3">
-            <h2 className="text-dense-body font-semibold">{group.label[lang]}</h2>
-            <p className="text-dense-label text-muted-foreground">{group.lead[lang]}</p>
+            <h2 className="text-dense-body font-semibold">{group.label.en}</h2>
+            <p className="text-dense-label text-muted-foreground">{group.lead.en}</p>
             <ul className="mt-2 space-y-2">
               {questionsFor(group.id).map((q) => {
                 const missing = q.tools.filter((t) => known.size > 0 && !known.has(t))
@@ -121,7 +121,7 @@ export default function TradingCopilotPage() {
                     >
                       <MessageCircle className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-dense-body">{q.label[lang]}</span>
+                        <span className="block text-dense-body">{q.label.en}</span>
                         <span className="mt-0.5 flex flex-wrap gap-1">
                           {q.tools.map((t) => (
                             <span

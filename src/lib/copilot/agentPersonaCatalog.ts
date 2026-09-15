@@ -263,7 +263,7 @@ export const PERSONA_CANNOT_LINES = [
 
 export function agentLabel(agentName: string, lang: PersonaUiLang, apiLabel?: string): string {
   if (lang === 'zh') return AGENT_LABELS_ZH[agentName] ?? apiLabel ?? agentName
-  return apiLabel ?? AGENT_LABELS_EN[agentName] ?? agentName
+  return AGENT_LABELS_EN[agentName] ?? apiLabel ?? agentName
 }
 
 export const SLOT_LABELS: Record<PersonaUiLang, Record<string, string>> = {

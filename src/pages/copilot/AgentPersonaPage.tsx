@@ -321,7 +321,7 @@ function AgentPersonaEditor({
     },
   })
 
-  const displayLabel = agentLabel(persona.agent_name, lang, persona.label)
+  const displayLabel = agentLabel(persona.agent_name, 'en')
   const role = AGENT_ROLE_KIND[persona.agent_name]
 
   return (
@@ -499,7 +499,7 @@ function AgentPersonaNav({
               const persona = byName.get(name)
               if (!persona) return null
               const active = selected === name
-              const label = agentLabel(name, lang, persona.label)
+              const label = agentLabel(name, 'en')
               return (
                 <li key={name}>
                   <button
@@ -529,7 +529,6 @@ function AgentPersonaNav({
 
 export function AgentPersonaPage() {
   const qc = useQueryClient()
-  const [uiLang, setUiLang] = useState<PersonaUiLang>('zh')
   const [selected, setSelected] = useState<string | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
 
@@ -558,36 +557,20 @@ export function AgentPersonaPage() {
     }
   }
 
-  const copy = PAGE_COPY[uiLang]
+  const copy = PAGE_COPY.en
 
   return (
     <PageShell padding="default">
       <PageHeader
         title={copy.title}
         description={copy.description}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-dense-micro text-muted-foreground">{copy.uiLang}</span>
-            <SegmentControl
-              ariaLabel={copy.uiLang}
-              value={uiLang}
-              onChange={(v) => setUiLang(v as PersonaUiLang)}
-              options={[
-                { value: 'zh', label: '中文' },
-                { value: 'en', label: 'EN' },
-              ]}
-            />
-            <ResearchUserSwitcher />
-          </div>
-        }
+        actions={<ResearchUserSwitcher />}
       />
 
       <p className="text-dense-caption text-muted-foreground">{copy.originPick}</p>
 
       {isLoading ? (
-        <p className="text-dense-meta text-muted-foreground">
-          {uiLang === 'zh' ? '加载 Persona…' : 'Loading personas…'}
-        </p>
+        <p className="text-dense-meta text-muted-foreground">Loading personas…</p>
       ) : null}
       {isError ? (
         <p className="text-dense-meta text-destructive">
@@ -600,7 +583,7 @@ export function AgentPersonaPage() {
           <AgentOrchestrationDiagram
             activeAgent={activeAgentName}
             onSelect={handleSelect}
-            lang={uiLang}
+            lang="en"
             agentApiLabels={agentApiLabels}
           />
 
@@ -612,14 +595,14 @@ export function AgentPersonaPage() {
               agents={agents}
               selected={activeAgentName ?? ''}
               onSelect={handleSelect}
-              lang={uiLang}
+              lang="en"
             />
             <div className="min-w-0 flex-1">
               {selectedPersona ? (
                 <AgentPersonaEditor
                   key={`${selectedPersona.agent_name}:${selectedPersona.updated_at}`}
                   persona={selectedPersona}
-                  lang={uiLang}
+                  lang="en"
                   onSaved={() => qc.invalidateQueries({ queryKey: ['agent-personas'] })}
                 />
               ) : (

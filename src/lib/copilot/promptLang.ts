@@ -1,6 +1,7 @@
 /**
- * Copilot prompt / prefill language — persisted per browser (default zh).
- * Shared by QuickPromptChips, Loop Discuss prefill, and LoopBanner labels.
+ * Language of the prompt sent to the model — persisted per browser (default zh).
+ * UI chrome is always English (Design 2026-09-15 Q1=A). Starter labels, page
+ * headers and field names do not follow this switch.
  */
 import { useSyncExternalStore } from 'react'
 

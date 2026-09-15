@@ -28,9 +28,10 @@ export function CopilotPromptLangToggle({
     <div
       className={cn('inline-flex items-center gap-1.5 text-dense-caption text-muted-foreground', className)}
       role="group"
-      aria-label={lang === 'zh' ? 'Copilot 语言' : 'Copilot language'}
+      aria-label="Prompt language"
+      title="Prompt language — the question sent to the model, not the labels on this page"
     >
-      {showLabel ? <span>{lang === 'zh' ? '语言' : 'Language'}</span> : null}
+      {showLabel ? <span>Prompt language</span> : null}
       <div className="inline-flex rounded-full border border-border/60 bg-secondary p-0.5">
         <LangButton lang="zh" active={lang === 'zh'} onSelect={setLang} className={pill(lang === 'zh')}>
           中文

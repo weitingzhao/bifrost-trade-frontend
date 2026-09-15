@@ -8,6 +8,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { starterToolCaption } from '@/lib/copilot/starterGroupOrder'
 import { TRADE_QUESTIONS } from '@/lib/copilot/tradePrompts'
+import { writeCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { QuickPromptChips } from './QuickPromptChips'
 
 function renderChips(path = '/') {
@@ -51,7 +52,7 @@ describe('QuickPromptChips', () => {
     const book = screen.getByLabelText('The book')
     expect(within(book).getAllByRole('button')).toHaveLength(TRADE_QUESTIONS.length)
     for (const q of TRADE_QUESTIONS) {
-      expect(within(book).getByText(q.label.zh)).toBeTruthy()
+      expect(within(book).getByText(q.label.en)).toBeTruthy()
       expect(within(book).getByText(starterToolCaption(q.tools)!)).toBeTruthy()
     }
     expect(within(book).queryByText('盘前简报')).toBeNull()
@@ -61,5 +62,21 @@ describe('QuickPromptChips', () => {
     renderChips()
     const link = screen.getByRole('link', { name: /all starters/i })
     expect(link.getAttribute('href')).toBe('/research/copilot/trading')
+  })
+
+  it('keeps English labels when the prompt language is zh, and puts the Chinese prompt on title', () => {
+    writeCopilotPromptLang('zh')
+    renderChips()
+    const book = screen.getByLabelText('The book')
+    for (const q of TRADE_QUESTIONS) {
+      expect(within(book).getByText(q.label.en)).toBeTruthy()
+      expect(within(book).queryByText(q.label.zh)).toBeNull()
+    }
+    const first = TRADE_QUESTIONS[0]
+    expect(within(book).getByRole('button', { name: new RegExp(first.label.en) }).getAttribute('title')).toBe(
+      first.prompt.zh,
+    )
+    expect(screen.getByText('One symbol, every lens')).toBeTruthy()
+    expect(screen.queryByText('标的全景')).toBeNull()
   })
 })

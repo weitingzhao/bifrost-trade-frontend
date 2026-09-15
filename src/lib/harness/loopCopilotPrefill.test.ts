@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildCandidateExplainPrompt, buildDigestAskPrompt, buildLoopRunReviewPrompt } from './loopCopilotPrefill'
+import {
+  buildCandidateExplainPrompt,
+  buildDigestAskPrompt,
+  buildLoopRunReviewPrompt,
+  loopCopilotUi,
+} from './loopCopilotPrefill'
 
 describe('loop Copilot prefill (D1)', () => {
   it('sends the run review through research.loop.get_run with citations', () => {
@@ -32,5 +37,14 @@ describe('loop Copilot prefill (D1)', () => {
     const zh = buildDigestAskPrompt({ ...params, symbols: [] }, 'zh')
     expect(zh).toContain('它覆盖 0 个标的。')
     expect(zh).toContain('不要替它补结论')
+  })
+
+  it('keeps Loop chrome in English even though prompt bodies still follow lang', () => {
+    expect(loopCopilotUi.discuss).toBe('Discuss in Copilot')
+    expect(loopCopilotUi.discussShort).toBe('Discuss')
+    expect(loopCopilotUi.inbox).toBe('Inbox')
+    expect(loopCopilotUi.awaitingBanner(2)).toBe('2 runs awaiting approval')
+    expect(loopCopilotUi.review(false)).toBe('Review')
+    expect(JSON.stringify(loopCopilotUi)).not.toMatch(/[\u4e00-\u9fff]/)
   })
 })

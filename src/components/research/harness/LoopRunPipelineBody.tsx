@@ -197,7 +197,7 @@ export function LoopRunPipelineBody({
                 onClick={() => openLoopRunInCopilot({ runId: run.id, title, lang, runDetail: run })}
               >
                 <MessageCircle className="mr-0.5 size-3" />
-                {loopCopilotUi.discussShort(lang)}
+                {loopCopilotUi.discussShort}
               </Button>
               {/* The judges write both languages in the same call, so this
                   switches what is already there rather than asking for a
@@ -206,7 +206,7 @@ export function LoopRunPipelineBody({
               <SegmentControl
                 value={lang}
                 options={[
-                  { value: 'zh', label: '中', title: '判词显示中文（判官同一次调用写的，不是事后翻译）' },
+                  { value: 'zh', label: '中', title: 'Show the judges’ reasoning in Chinese (written in the same call, not a later translation)' },
                   { value: 'en', label: 'EN', title: 'Show the judges’ reasoning in English' },
                 ]}
                 onChange={(v) => setLang(v as typeof lang)}
@@ -364,7 +364,7 @@ export function LoopRunPipelineBody({
                           onCurate={() => curate.mutate(run.id)}
                           onApprove={() => approve.mutate(run.id)}
                           onInbox={() => openCopilotInbox()}
-                          inboxLabel={loopCopilotUi.inbox(lang)}
+                          inboxLabel={loopCopilotUi.inbox}
                         />
                       ) : null}
                       {/* The drafts are what this stage produced. As a sibling

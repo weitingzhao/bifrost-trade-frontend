@@ -199,7 +199,7 @@ export function QuickPromptChips({ onPick, disabled, className }: Props) {
                     )}
                   >
                     <p.Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate">{p.label[lang]}</span>
+                    <span className="min-w-0 flex-1 truncate">{p.label.en}</span>
                     {tools ? (
                       <span className="max-w-[9rem] shrink-0 truncate font-mono text-dense-caption leading-none text-muted-foreground">
                         {tools}

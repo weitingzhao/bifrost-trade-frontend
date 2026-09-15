@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils'
 import type { CopilotModelId } from '@/lib/cockpit/modelCatalog'
 import { askCopilotIntentStore, useAskCopilotIntent } from '@/store/askCopilotIntentStore'
 import { copilotViewStore, useCopilotView } from '@/store/copilotViewStore'
-import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 
 function contextChipLabel(ctx: { originLabel: string; symbol?: string; date?: string }): string {
   const parts = [ctx.originLabel]
@@ -67,7 +66,6 @@ function ComposerForm({
   autoFocus: boolean
 }) {
   const [text, setText] = useState(initialText)
-  const [lang] = useCopilotPromptLang()
   const { view, suppressed } = useCopilotView()
   const showChip = Boolean(view && !suppressed)
   const inputDisabled = disabled
@@ -152,12 +150,8 @@ function ComposerForm({
           onKeyDown={onKeyDown}
           placeholder={
             streaming
-              ? lang === 'zh'
-                ? '生成中… 点击右侧方块停止'
-                : 'Generating… click square to stop'
-              : lang === 'zh'
-                ? '问持仓、VRP、OpEx、策略…'
-                : 'Ask about positions, VRP, OpEx, strategy…'
+              ? 'Generating… click square to stop'
+              : 'Ask about positions, VRP, OpEx, strategy…'
           }
           disabled={inputDisabled}
           autoFocus={autoFocus}
@@ -175,9 +169,9 @@ function ComposerForm({
           <CopilotSpendHint model={model} />
           <div className="min-w-0 flex-1" aria-hidden />
           <CopilotPromptLangToggle showLabel={false} className="shrink-0" />
-          {streaming ? (
+              {streaming ? (
             <span className="shrink-0 text-dense-caption text-muted-foreground">
-              {lang === 'zh' ? '生成中…' : 'Generating…'}
+              Generating…
             </span>
           ) : null}
           {streaming && onStop ? (

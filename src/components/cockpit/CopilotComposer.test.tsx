@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { CopilotComposer } from './CopilotComposer'
+import { writeCopilotPromptLang } from '@/lib/copilot/promptLang'
 
 vi.mock('@/hooks/useCockpitPins', () => ({
   useCockpitPins: () => ({ focusedHypothesisId: null, hypothesisIds: [] }),
@@ -45,5 +46,20 @@ describe('CopilotComposer', () => {
     expect(screen.getByRole('button', { name: 'Send' })).toBeTruthy()
     expect(screen.queryByRole('combobox', { name: 'Model' })).toBeNull()
     expect(screen.getByTestId('copilot-spend-hint')).toBeTruthy()
+  })
+
+  it('keeps the placeholder in English when prompt language is zh', () => {
+    writeCopilotPromptLang('zh')
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <CopilotComposer model="deepseek-chat" onSend={() => {}} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    const ph = screen.getByTestId('copilot-composer-input').getAttribute('placeholder') ?? ''
+    expect(ph).toMatch(/Ask about positions/)
+    expect(ph).not.toMatch(/[\u4e00-\u9fff]/)
   })
 })

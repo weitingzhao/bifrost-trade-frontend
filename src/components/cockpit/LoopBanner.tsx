@@ -52,16 +52,14 @@ export function LoopBanner({ className }: { className?: string }) {
         <span className="min-w-0 flex-1 truncate text-dense-meta text-destructive">
           {awaitingQ.error instanceof Error
             ? awaitingQ.error.message
-            : lang === 'zh'
-              ? '加载 Loop runs 失败'
-              : 'Failed to load loop runs'}
+            : 'Failed to load loop runs'}
         </span>
         <button
           type="button"
           className="shrink-0 text-dense-meta text-primary underline"
           onClick={() => void awaitingQ.refetch()}
         >
-          {lang === 'zh' ? '重试' : 'Retry'}
+          Retry
         </button>
       </div>
     )
@@ -93,10 +91,10 @@ export function LoopBanner({ className }: { className?: string }) {
         )}
         <RefreshCw className="size-3.5 shrink-0 text-warning" aria-hidden />
         <span className="min-w-0 flex-1 truncate font-medium">
-          {loopCopilotUi.awaitingBanner(lang, count, awaitingQ.isLoading)}
+          {loopCopilotUi.awaitingBanner(count, awaitingQ.isLoading)}
         </span>
         <span className="shrink-0 text-dense-caption text-muted-foreground">
-          {loopCopilotUi.review(lang, open)}
+          {loopCopilotUi.review(open)}
         </span>
       </button>
 
@@ -104,7 +102,7 @@ export function LoopBanner({ className }: { className?: string }) {
         <div className="max-h-72 space-y-2 overflow-y-auto border-t border-warning/20 px-2 py-2">
           {awaitingQ.isLoading ? (
             <p className="text-dense-meta text-muted-foreground">
-              {lang === 'zh' ? '加载中…' : 'Loading…'}
+              Loading…
             </p>
           ) : (
             rows.slice(0, MAX_ROWS).map((run) => {
@@ -132,7 +130,7 @@ export function LoopBanner({ className }: { className?: string }) {
                       }
                     >
                       <MessageCircle className="mr-1 size-3 shrink-0" />
-                      {loopCopilotUi.discussShort(lang)}
+                      {loopCopilotUi.discussShort}
                     </Button>
                     <Button
                       type="button"
@@ -142,7 +140,7 @@ export function LoopBanner({ className }: { className?: string }) {
                       asChild
                     >
                       <Link to={loopPipelinePath(run.id)}>
-                        {loopCopilotUi.viewPipeline(lang)}
+                        {loopCopilotUi.viewPipeline}
                       </Link>
                     </Button>
                     <Button
@@ -154,7 +152,7 @@ export function LoopBanner({ className }: { className?: string }) {
                       onClick={() => void curate.mutateAsync(run.id)}
                     >
                       <Sparkles className="mr-1 size-3 shrink-0" />
-                      {loopCopilotUi.curator(lang, curating)}
+                      {loopCopilotUi.curator(curating)}
                     </Button>
                     <Button
                       type="button"
@@ -163,7 +161,7 @@ export function LoopBanner({ className }: { className?: string }) {
                       className="h-7 px-2 text-dense-meta"
                       onClick={() => openCopilotInbox()}
                     >
-                      {loopCopilotUi.inbox(lang)}
+                      {loopCopilotUi.inbox}
                     </Button>
                   </div>
                 </div>
@@ -172,7 +170,7 @@ export function LoopBanner({ className }: { className?: string }) {
           )}
           {count > MAX_ROWS ? (
             <p className="text-center text-dense-caption text-muted-foreground">
-              {loopCopilotUi.moreInHarness(lang, count - MAX_ROWS)}
+              {loopCopilotUi.moreInHarness(count - MAX_ROWS)}
             </p>
           ) : null}
         </div>

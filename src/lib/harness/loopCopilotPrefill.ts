@@ -95,7 +95,7 @@ export function openCandidateInCopilot(params: {
   const sym = params.symbol.trim().toUpperCase()
   askCopilotIntentStore.open({
     originPage: 'harness',
-    originLabel: lang === 'zh' ? `候选 ${sym}` : `Candidate ${sym}`,
+    originLabel: `Candidate ${sym}`,
     symbol: sym,
     suggestedPrompt: buildCandidateExplainPrompt(params, lang),
     snapshot: {
@@ -110,9 +110,9 @@ export function openCandidateInCopilot(params: {
   cockpitDrawerStore.getState().setTab('copilot')
 }
 
-function loopRunOriginLabel(runId: string, lang: CopilotPromptLang): string {
+function loopRunOriginLabel(runId: string): string {
   const short = runId.slice(0, 8)
-  return lang === 'zh' ? `运行 ${short}` : `Run ${short}`
+  return `Run ${short}`
 }
 
 /** Prefill Copilot composer and open the floating panel — does not auto-send. */
@@ -125,7 +125,7 @@ export function openLoopRunInCopilot(params: {
   const lang = params.lang ?? readCopilotPromptLang()
   askCopilotIntentStore.open({
     originPage: 'harness',
-    originLabel: loopRunOriginLabel(params.runId, lang),
+    originLabel: loopRunOriginLabel(params.runId),
     suggestedPrompt: buildLoopRunReviewPrompt(params, lang),
     snapshot: {
       run_id: params.runId,
@@ -164,7 +164,7 @@ export function openDraftInCopilot(params: {
       : 'Approving only changes its status; nothing is written'
   askCopilotIntentStore.open({
     originPage: 'research-copilot-desk',
-    originLabel: lang === 'zh' ? `待决 · ${params.kind}` : `Waiting · ${params.kind}`,
+    originLabel: `Waiting · ${params.kind}`,
     suggestedPrompt:
       lang === 'zh'
         ? `解释这条待决草稿（${params.kind}，由 ${params.askedBy} 提出）：「${params.title}」。它依据什么？我该不该批准？${effect}。D10 observe-only。`
@@ -220,7 +220,7 @@ export function openDigestInCopilot(params: {
   const lang = params.lang ?? readCopilotPromptLang()
   askCopilotIntentStore.open({
     originPage: 'research-copilot-desk',
-    originLabel: lang === 'zh' ? `Digest ${params.day ?? ''}`.trim() : `Digest ${params.day ?? 'today'}`,
+    originLabel: `Digest ${params.day ?? 'today'}`,
     suggestedPrompt: buildDigestAskPrompt(params, lang),
     snapshot: {
       draft_id: params.draftId,
@@ -250,25 +250,17 @@ export function loopPipelinePath(runId: string, opts?: { live?: boolean }): stri
   return `/research/loop/harness?${q.toString()}`
 }
 
-/** LoopBanner / Harness action labels keyed by prompt language. */
+/** LoopBanner / Harness action labels — English UI (Design 2026-09-15 Q1=A). */
 export const loopCopilotUi = {
-  discuss: (lang: CopilotPromptLang) =>
-    lang === 'zh' ? '在 Copilot 讨论' : 'Discuss in Copilot',
-  discussShort: (lang: CopilotPromptLang) => (lang === 'zh' ? '讨论' : 'Discuss'),
-  viewPipeline: (lang: CopilotPromptLang) =>
-    lang === 'zh' ? '查看运行' : 'View run',
-  curator: (lang: CopilotPromptLang, curating?: boolean) => {
-    if (curating) return lang === 'zh' ? '整理中…' : 'Curating…'
-    return 'Curator'
-  },
-  inbox: (lang: CopilotPromptLang) => (lang === 'zh' ? '收件箱' : 'Inbox'),
-  awaitingBanner: (lang: CopilotPromptLang, count: number, loading?: boolean) => {
-    if (loading) return lang === 'zh' ? '加载 Loop runs…' : 'Loading loop runs…'
-    if (lang === 'zh') return `${count} 条 run 待审批`
+  discuss: 'Discuss in Copilot',
+  discussShort: 'Discuss',
+  viewPipeline: 'View run',
+  curator: (curating?: boolean) => (curating ? 'Curating…' : 'Curator'),
+  inbox: 'Inbox',
+  awaitingBanner: (count: number, loading?: boolean) => {
+    if (loading) return 'Loading loop runs…'
     return `${count} run${count === 1 ? '' : 's'} awaiting approval`
   },
-  review: (lang: CopilotPromptLang, open: boolean) =>
-    open ? (lang === 'zh' ? '收起' : 'Hide') : lang === 'zh' ? '查看' : 'Review',
-  moreInHarness: (lang: CopilotPromptLang, n: number) =>
-    lang === 'zh' ? `另有 ${n} 条见 Autopilot` : `+${n} more in Autopilot`,
+  review: (open: boolean) => (open ? 'Hide' : 'Review'),
+  moreInHarness: (n: number) => `+${n} more in Autopilot`,
 } as const

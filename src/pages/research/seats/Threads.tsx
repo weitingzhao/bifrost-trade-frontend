@@ -1,12 +1,13 @@
 /**
  * Threads — the conversations you had, who answered them, a pin, and export.
  *
- * Origin / Symbol come from the session summary once Research D1 lands them;
- * Writes / Cost / With writes follow D2–D3.
+ * Design 2026-09-15 D1: rename + archive in the row menu; search in the
+ * table header (title + message content, server `q`). Groups stay off the
+ * product UI. Origin / Symbol / Writes / Cost come from the session summary.
  */
-import { lazy, Suspense, useState } from 'react'
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowUpRight, MessageCircle, Pin, PinOff } from 'lucide-react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { useQueries, useQueryClient } from '@tanstack/react-query'
+import { ArrowUpRight, MessageCircle, MoreHorizontal, Pencil, Pin, PinOff, Search, Trash2 } from 'lucide-react'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -19,23 +20,34 @@ import {
   EmptyState,
   SegmentControl,
 } from '@/components/data-display'
+import { SessionRenameField } from '@/components/copilot/SessionRenameField'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  archiveCopilotSession,
   fetchCopilotSession,
-  fetchCopilotSessions,
   patchCopilotSession,
   type CopilotSessionSummary,
 } from '@/api/researchCopilotSessions'
 import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { copilotSessionStore } from '@/hooks/useCopilotSession'
+import { useCopilotSessions } from '@/hooks/useCopilotSessions'
 import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 import { fmtIsoTs } from '@/lib/format'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { nyDate } from '@/pages/research/seats/agentActivity'
 import {
   THREAD_FILTERS,
+  deskThreadsQuery,
   threadCostUsd,
   threadInFilter,
   threadPersona,
@@ -49,18 +61,19 @@ const BridgeDialog = lazy(() =>
   import('@/components/cockpit/BridgeDialog').then((m) => ({ default: m.BridgeDialog })),
 )
 
-/** How many recent threads the Desk reads. The panel's own list goes further back. */
-const DESK_THREADS = 12
-
 const sessionKey = (row: CopilotSessionSummary) => ['research', 'copilot', 'session', row.id, row.updated_at ?? null]
 
 export function Threads() {
   const queryClient = useQueryClient()
-  const listQ = useQuery({
-    queryKey: ['research', 'copilot', 'sessions', 'desk'],
-    queryFn: () => fetchCopilotSessions(DESK_THREADS),
-    staleTime: 30_000,
-  })
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+  useEffect(() => {
+    const t = window.setTimeout(() => setSearch(searchInput.trim()), 200)
+    return () => window.clearTimeout(t)
+  }, [searchInput])
+  const searching = search.length > 0
+  const { limit, q } = deskThreadsQuery(search)
+  const listQ = useCopilotSessions(limit, q)
   const rows = listQ.data ?? []
   // Persona and turns are in the frames. Keyed by updated_at, so a thread that moved is read again.
   const details = useQueries({
@@ -75,7 +88,11 @@ export function Threads() {
   const [opening, setOpening] = useState<string | null>(null)
   const [pinning, setPinning] = useState<string | null>(null)
   const [pinError, setPinError] = useState<unknown>(null)
+  const [rowError, setRowError] = useState<unknown>(null)
   const [exportFor, setExportFor] = useState<string | null>(null)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [archiveTarget, setArchiveTarget] = useState<CopilotSessionSummary | null>(null)
+  const [archiving, setArchiving] = useState(false)
 
   async function open(row: CopilotSessionSummary) {
     setOpening(row.id)
@@ -110,38 +127,81 @@ export function Threads() {
     }
   }
 
-  if (listQ.isLoading) return <Skeleton className="h-32 w-full" />
-  if (listQ.isError) return <QueryErrorAlert error={listQ.error} onRetry={() => void listQ.refetch()} />
-  if (rows.length === 0) {
-    return (
-      <EmptyState
-        icon={<MessageCircle />}
-        title="No threads yet"
-        description="Ask the Copilot from any page; the conversation is kept here."
-      />
-    )
+  async function commitRename(id: string, next: string) {
+    setRenamingId(null)
+    const trimmed = next.trim()
+    const row = rows.find((r) => r.id === id)
+    if (!trimmed || trimmed === (row?.title ?? '').trim()) return
+    setRowError(null)
+    try {
+      await patchCopilotSession(id, { title: trimmed })
+      await queryClient.invalidateQueries({ queryKey: ['research', 'copilot', 'sessions'] })
+    } catch (err) {
+      setRowError(err)
+    }
   }
+
+  async function confirmArchive() {
+    if (!archiveTarget) return
+    setArchiving(true)
+    setRowError(null)
+    try {
+      await archiveCopilotSession(archiveTarget.id)
+      if (copilotSessionStore.getState().sessionId === archiveTarget.id) {
+        copilotSessionStore.clearSession()
+      }
+      await queryClient.invalidateQueries({ queryKey: ['research', 'copilot', 'sessions'] })
+      setArchiveTarget(null)
+    } catch (err) {
+      setRowError(err)
+    } finally {
+      setArchiving(false)
+    }
+  }
+
+  if (listQ.isLoading && rows.length === 0 && !searching) return <Skeleton className="h-32 w-full" />
+  if (listQ.isError) return <QueryErrorAlert error={listQ.error} onRetry={() => void listQ.refetch()} />
 
   const today = nyDate(new Date())
   const shown = rows.flatMap((row, i) => (threadInFilter(row, filter, today) ? [{ row, detail: details[i] }] : []))
+  const emptyBook = rows.length === 0 && !searching
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <SegmentControl value={filter} onChange={(v) => setFilter(v as ThreadFilter)} options={THREAD_FILTERS} />
+        <div className="relative min-w-[10rem] flex-1">
+          <Search className="pointer-events-none absolute left-1.5 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search titles and messages…"
+            aria-label="Search threads"
+            className="h-7 pl-6 text-dense-meta"
+          />
+        </div>
         <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">
-          {shown.length} of the latest {rows.length}
+          {searching ? `${shown.length} match` : `${shown.length} of the latest ${rows.length}`}
         </span>
       </div>
       {pinError ? <QueryErrorAlert error={pinError} /> : null}
+      {rowError ? <QueryErrorAlert error={rowError} /> : null}
 
-      {shown.length === 0 ? (
+      {emptyBook ? (
+        <EmptyState
+          icon={<MessageCircle />}
+          title="No threads yet"
+          description="Ask the Copilot from any page; the conversation is kept here."
+        />
+      ) : shown.length === 0 ? (
         <p className="px-1 text-dense-label text-muted-foreground">
-          {filter === 'pinned'
-            ? 'No pinned threads among the latest.'
-            : filter === 'with_writes'
-              ? 'No thread among the latest asked the Copilot to write.'
-              : 'No thread moved today.'}
+          {searching
+            ? 'No threads match that search.'
+            : filter === 'pinned'
+              ? 'No pinned threads among the latest.'
+              : filter === 'with_writes'
+                ? 'No thread among the latest asked the Copilot to write.'
+                : 'No thread moved today.'}
         </p>
       ) : (
         <DenseDataTable>
@@ -173,27 +233,35 @@ export function Threads() {
               const title = row.title || '(untitled)'
               const writes = threadWriteCount(row)
               const cost = threadCostUsd(row)
+              const renaming = renamingId === row.id
               return (
                 <DenseTableRow key={row.id}>
                   <DenseTableCell className="max-w-[18rem]">
-                    <button
-                      type="button"
-                      className="flex w-full min-w-0 items-start gap-1.5 text-left hover:underline disabled:opacity-60"
-                      disabled={opening === row.id}
-                      onClick={() => void open(row)}
-                      title="Open this thread in the Copilot panel"
-                    >
-                      {row.pinned ? (
-                        <Pin className="mt-0.5 size-3 shrink-0 text-primary" aria-label="Pinned" />
-                      ) : null}
-                      <span className="min-w-0">
-                        <span className="block truncate">{title}</span>
-                        <span className="block truncate text-dense-micro text-muted-foreground">
-                          {row.model ?? 'model not recorded'}
-                          {row.group_name ? ` · ${row.group_name}` : ''}
+                    {renaming ? (
+                      <SessionRenameField
+                        initial={row.title || ''}
+                        onCommit={(next) => void commitRename(row.id, next)}
+                        onCancel={() => setRenamingId(null)}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        className="flex w-full min-w-0 items-start gap-1.5 text-left hover:underline disabled:opacity-60"
+                        disabled={opening === row.id}
+                        onClick={() => void open(row)}
+                        title="Open this thread in the Copilot panel"
+                      >
+                        {row.pinned ? (
+                          <Pin className="mt-0.5 size-3 shrink-0 text-primary" aria-label="Pinned" />
+                        ) : null}
+                        <span className="min-w-0">
+                          <span className="block truncate">{title}</span>
+                          <span className="block truncate text-dense-micro text-muted-foreground">
+                            {row.model ?? 'model not recorded'}
+                          </span>
                         </span>
-                      </span>
-                    </button>
+                      </button>
+                    )}
                   </DenseTableCell>
                   <DenseTableCell className="max-w-[10rem] truncate text-dense-meta text-muted-foreground" title={row.origin_page ?? undefined}>
                     {row.origin_label || row.origin_page || '—'}
@@ -258,6 +326,29 @@ export function Threads() {
                       >
                         <ArrowUpRight className="size-3.5" />
                       </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="size-7 p-0"
+                            aria-label={`More actions for "${title}"`}
+                          >
+                            <MoreHorizontal className="size-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-[10rem]">
+                          <DropdownMenuItem onSelect={() => setRenamingId(row.id)}>
+                            <Pencil className="mr-2 size-3.5" /> Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => setArchiveTarget(row)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 size-3.5" /> Archive
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </DenseTableCell>
                 </DenseTableRow>
@@ -272,6 +363,20 @@ export function Threads() {
           <BridgeDialog open onOpenChange={(o) => !o && setExportFor(null)} sessionId={exportFor} />
         </Suspense>
       ) : null}
+
+      <ConfirmDialog
+        open={archiveTarget != null}
+        title="Archive thread"
+        message={
+          archiveTarget
+            ? `Archive “${archiveTarget.title?.trim() || 'Untitled thread'}”? It leaves the Desk and the switcher. Messages stay on the server.`
+            : ''
+        }
+        confirmLabel="Archive"
+        confirming={archiving}
+        onConfirm={() => void confirmArchive()}
+        onCancel={() => setArchiveTarget(null)}
+      />
     </div>
   )
 }

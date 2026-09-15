@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  Check,
   FolderPlus,
   Loader2,
   MessageSquare,
@@ -14,6 +13,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
+import { SessionRenameField } from '@/components/copilot/SessionRenameField'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PinsSection } from '@/components/cockpit/PinsSection'
@@ -39,8 +39,9 @@ import { openCopilotSession } from '@/lib/copilot/openCopilotSession'
  * Session history module (Wave RS-UX3 → RS-UX5, QA follow-up).
  *
  * The Copilot dock no longer mounts this (C2-a2 / §11.2.1): switching is
- * the title menu. The file stays because pin / rename / archive / groups
- * still live here; Desk Threads is a different table. Do not delete.
+ * the title menu. Design 2026-09-15 D1 put rename on the switcher + Desk,
+ * archive/search on Desk, and retired groups from product UI. This file
+ * stays unmounted (R4). Do not delete.
  *   - `+ New chat` primary button
  *   - Pinned group at the top
  *   - Custom groups (folders) — user-defined labels via row menu → "Move to group"
@@ -172,6 +173,7 @@ export function SessionListSidebar({
         {editing ? (
           <SessionRenameField
             initial={row.title || 'Untitled'}
+            ariaLabel="Rename session"
             onCommit={(next) => commitRename(row.id, next)}
             onCancel={() => setEditingId(null)}
           />
@@ -383,61 +385,6 @@ export function SessionListSidebar({
           }}
         />
       ) : null}
-    </div>
-  )
-}
-
-function SessionRenameField({
-  initial,
-  onCommit,
-  onCancel,
-}: {
-  initial: string
-  onCommit: (v: string) => void
-  onCancel: () => void
-}) {
-  const [text, setText] = useState(initial)
-  return (
-    <div className="flex min-w-0 flex-1 items-center gap-1">
-      <Input
-        autoFocus
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            onCommit(text)
-          } else if (e.key === 'Escape') {
-            e.preventDefault()
-            onCancel()
-          }
-        }}
-        onBlur={() => onCommit(text)}
-        className="h-6 px-1.5 text-dense-meta"
-        aria-label="Rename session"
-      />
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="h-5 w-5 text-success"
-        aria-label="Save rename"
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => onCommit(text)}
-      >
-        <Check className="size-3" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="h-5 w-5 text-muted-foreground"
-        aria-label="Cancel rename"
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={onCancel}
-      >
-        <X className="size-3" />
-      </Button>
     </div>
   )
 }

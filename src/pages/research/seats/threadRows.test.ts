@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PersistedCopilotFrame } from '@/api/researchCopilotSessions'
-import { threadCostUsd, threadInFilter, threadPersona, threadTurns, threadWriteCount } from './threadRows'
+import { threadCostUsd, threadInFilter, threadPersona, threadTurns, threadWriteCount, deskThreadsQuery, DESK_THREADS_LIMIT, DESK_THREADS_SEARCH_LIMIT } from './threadRows'
 
 const frame = (agent?: string, kind = 'text'): PersistedCopilotFrame => ({ kind, role: agent ? 'assistant' : 'user', agent })
 
@@ -60,5 +60,12 @@ describe('threadInFilter', () => {
     expect(threadInFilter({ writes: { proposed: 1 } }, 'with_writes', '2026-09-13')).toBe(true)
     expect(threadInFilter({ writes: {} }, 'with_writes', '2026-09-13')).toBe(false)
     expect(threadWriteCount({ writes: { proposed: 2, executed: 1 } })).toBe(3)
+  })
+})
+
+describe('deskThreadsQuery', () => {
+  it('uses the latest-12 window until there is a search term, then the API cap', () => {
+    expect(deskThreadsQuery('')).toEqual({ limit: DESK_THREADS_LIMIT, q: '' })
+    expect(deskThreadsQuery('  sell-vol  ')).toEqual({ limit: DESK_THREADS_SEARCH_LIMIT, q: 'sell-vol' })
   })
 })

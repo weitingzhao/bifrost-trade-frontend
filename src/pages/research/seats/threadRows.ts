@@ -52,6 +52,17 @@ export const THREAD_FILTERS: { value: ThreadFilter; label: string }[] = [
   { value: 'with_writes', label: 'With writes' },
 ]
 
+/** Latest threads the Desk shows when the search box is empty. */
+export const DESK_THREADS_LIMIT = 12
+/** API cap (`list_sessions` max 50). Search is for old threads, so take the cap. */
+export const DESK_THREADS_SEARCH_LIMIT = 50
+
+/** Which list call the Desk should make for the current search box. */
+export function deskThreadsQuery(search: string): { limit: number; q: string } {
+  const q = search.trim()
+  return { limit: q ? DESK_THREADS_SEARCH_LIMIT : DESK_THREADS_LIMIT, q }
+}
+
 /** Total write actions recorded against a thread (any status). */
 export function threadWriteCount(row: Pick<CopilotSessionSummary, 'writes'>): number {
   const w = row.writes

@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { List, Plus } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { List, Pencil, Plus } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { SessionRenameField } from '@/components/copilot/SessionRenameField'
 import { useCopilotSessions } from '@/hooks/useCopilotSessions'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
 import { openCopilotSession } from '@/lib/copilot/openCopilotSession'
@@ -16,23 +19,46 @@ import {
   threadSwitcherTitle,
   threadSwitcherWhen,
 } from '@/lib/copilot/threadSwitcher'
-import type { CopilotSessionSummary } from '@/api/researchCopilotSessions'
+import { patchCopilotSession, type CopilotSessionSummary } from '@/api/researchCopilotSessions'
 import { cn } from '@/lib/utils'
 
 /**
  * Title-bar thread switcher (§11.2.5). Lives in the dock header at both 440
  * and 760 — the sessions rail only fits at the wide tier, so switching must
  * not wait on that rail.
+ *
+ * Design 2026-09-15 D1: rename the open thread here (inline). Archive, search,
+ * and groups do not live in this menu.
  */
 export function CopilotThreadSwitcher() {
+  const queryClient = useQueryClient()
   const { data } = useCopilotSessions(50)
   const { sessionId, messages } = useCopilotSession()
   const rows = data ?? []
   const { pinned, recent } = threadSwitcherGroups(rows)
   const title = threadSwitcherTitle(sessionId, messages.length, rows)
+  const current = sessionId ? rows.find((r) => r.id === sessionId) : undefined
+  const [renaming, setRenaming] = useState(false)
+
+  async function commitRename(next: string) {
+    if (!current) return
+    const trimmed = next.trim()
+    setRenaming(false)
+    if (!trimmed || trimmed === (current.title ?? '').trim()) return
+    try {
+      await patchCopilotSession(current.id, { title: trimmed })
+      await queryClient.invalidateQueries({ queryKey: ['research', 'copilot', 'sessions'] })
+    } catch {
+      // list is best-effort
+    }
+  }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu
+      onOpenChange={(open) => {
+        if (!open) setRenaming(false)
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <button
           type="button"
@@ -49,6 +75,33 @@ export function CopilotThreadSwitcher() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[18.75rem] z-[220]">
+        {current ? (
+          <>
+            <DropdownMenuLabel className="text-dense-caption font-normal text-muted-foreground">
+              This thread
+            </DropdownMenuLabel>
+            {renaming ? (
+              <div className="px-1.5 py-1">
+                <SessionRenameField
+                  initial={current.title?.trim() || title}
+                  onCommit={(next) => void commitRename(next)}
+                  onCancel={() => setRenaming(false)}
+                />
+              </div>
+            ) : (
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault()
+                  setRenaming(true)
+                }}
+              >
+                <Pencil className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                Rename
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
         {pinned.length > 0 ? (
           <>
             <DropdownMenuLabel className="text-dense-caption font-normal text-muted-foreground">

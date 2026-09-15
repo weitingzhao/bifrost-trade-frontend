@@ -255,6 +255,12 @@ export const ORCHESTRATION_RUNTIME = {
   d10Locked: true,
 } as const
 
+export const PERSONA_CANNOT_LINES = [
+  'Place, modify, or cancel orders (D10)',
+  'Write without a card you approve',
+  "Read someone else's accounts",
+] as const
+
 export function agentLabel(agentName: string, lang: PersonaUiLang, apiLabel?: string): string {
   if (lang === 'zh') return AGENT_LABELS_ZH[agentName] ?? apiLabel ?? agentName
   return apiLabel ?? AGENT_LABELS_EN[agentName] ?? agentName
@@ -349,6 +355,9 @@ export const PAGE_COPY: Record<
     harnessStripTitle: string
     harnessStripHint: string
     policyVsPersona: string
+    originPick: string
+    toolsItMayCall: string
+    cannot: string
   }
 > = {
   zh: {
@@ -400,6 +409,10 @@ export const PAGE_COPY: Record<
     harnessStripHint:
       'Policy 漏斗选股 → Personas 评议（analyze→portfolio→validate→verdict）→ Decision Inbox。默认 persona = loop_curator。与上方 Chat Triage 分流无关。',
     policyVsPersona: 'Policy = 选什么 · Personas = 怎么评',
+    originPick:
+      'The panel picks a persona from the page you are on. This page edits that persona; it does not override the live stream.',
+    toolsItMayCall: 'Tools it may call',
+    cannot: 'Cannot',
   },
   en: {
     title: 'Agent Personas',
@@ -450,5 +463,9 @@ export const PAGE_COPY: Record<
     harnessStripHint:
       'Policy funnel → Persona eval (analyze→portfolio→validate→verdict) → Decision Inbox. Default persona = loop_curator. Separate from Chat Triage above.',
     policyVsPersona: 'Policy = what to pick · Personas = how to judge',
+    originPick:
+      'The panel picks a persona from the page you are on. This page edits that persona; it does not override the live stream.',
+    toolsItMayCall: 'Tools it may call',
+    cannot: 'Cannot',
   },
 }

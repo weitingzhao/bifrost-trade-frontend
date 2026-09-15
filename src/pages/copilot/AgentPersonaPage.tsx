@@ -31,9 +31,11 @@ import { Label } from '@/components/ui/label'
 import {
   AGENT_DESCRIPTIONS,
   AGENT_GROUPS,
+  AGENT_MCP_SCOPES,
   AGENT_ROLE_KIND,
   agentLabel,
   PAGE_COPY,
+  PERSONA_CANNOT_LINES,
   ROLE_ACCENT,
   ROLE_LABELS,
   SLOT_LABELS,
@@ -384,6 +386,8 @@ function AgentPersonaEditor({
         apiLabel={persona.label}
       />
 
+      <PersonaToolsCannot agentName={persona.agent_name} copy={copy} />
+
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="space-y-2 min-w-0">
           <div className="space-y-1">
@@ -424,6 +428,49 @@ function AgentPersonaEditor({
         </div>
       </div>
     </Card>
+  )
+}
+
+function PersonaToolsCannot({
+  agentName,
+  copy,
+}: {
+  agentName: string
+  copy: (typeof PAGE_COPY)[PersonaUiLang]
+}) {
+  const tools = AGENT_MCP_SCOPES[agentName] ?? []
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="space-y-1.5">
+        <p className="text-dense-micro uppercase tracking-wide text-muted-foreground">
+          {copy.toolsItMayCall}
+        </p>
+        {tools.length === 0 ? (
+          <p className="text-dense-caption text-muted-foreground">{copy.noMcp}</p>
+        ) : (
+          <div className="flex flex-wrap gap-1">
+            {tools.map((t) => (
+              <span
+                key={t}
+                className="rounded-md border border-border/60 bg-secondary/60 px-1.5 py-0.5 font-mono text-dense-caption"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        <p className="text-dense-micro uppercase tracking-wide text-muted-foreground">
+          {copy.cannot}
+        </p>
+        <ul className="space-y-0.5 text-dense-caption text-muted-foreground">
+          {PERSONA_CANNOT_LINES.map((line) => (
+            <li key={line}>· {line}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
   )
 }
 
@@ -534,6 +581,8 @@ export function AgentPersonaPage() {
           </div>
         }
       />
+
+      <p className="text-dense-caption text-muted-foreground">{copy.originPick}</p>
 
       {isLoading ? (
         <p className="text-dense-meta text-muted-foreground">

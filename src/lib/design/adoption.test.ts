@@ -72,9 +72,15 @@ describe('design adoption', () => {
 
   it('reads the walk as it stands', () => {
     // Replace these as pages are walked — they are the numbers the Owner reads.
-    expect(counts.aligned + counts.byState.stale).toBe(0)
-    // Walked and built, waiting for the Owner's look (2026-09-14; Desk added on
-    // the Owner's call 2026-09-15; Personas + Trading Copilot after G1/G2 DEV).
+    // Owner list 2026-09-15: Symbol, Decision Inbox. Desk / Personas / Trading
+    // Copilot wait on L1/L2 (language + 401 empty).
+    expect(counts.aligned + counts.byState.stale).toBe(2)
+    expect(
+      rows
+        .filter((r) => r.state === 'aligned')
+        .map((r) => r.path)
+        .sort(),
+    ).toEqual(['/research/loop/decisions', '/research/symbol'])
     expect(
       rows
         .filter((r) => r.state === 'reviewing')
@@ -84,8 +90,6 @@ describe('design adoption', () => {
       '/research/agent-personas',
       '/research/copilot',
       '/research/copilot/trading',
-      '/research/loop/decisions',
-      '/research/symbol',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
     // dissolves elsewhere, plus Backtest, handed to Lab. Symbol and Plans left:

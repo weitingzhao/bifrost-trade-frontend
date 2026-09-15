@@ -108,9 +108,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Decision Inbox',
     crumbs: AUTOPILOT,
     design: {
-      state: 'reviewing',
-      rev: '2026-09-12.6',
-      note: 'Walked 2026-09-13 against Research Autopilot Decisions.dc.html (OLD) and the design response of that day; digest actions, kind colour and the approval strip changed 2026-09-14. Owner to look before aligned.',
+      state: 'aligned',
+      rev: '2026-09-15.3',
+      note: 'Walked 2026-09-13 against Research Autopilot Decisions.dc.html (OLD) and the design response of that day; digest actions, kind colour and the approval strip changed 2026-09-14. Owner signed off on STG 2026-09-15.',
     },
   },
   { path: '/research/loop/hypotheses', label: 'Hypothesis Board', crumbs: AUTOPILOT },
@@ -183,9 +183,9 @@ export const ROUTES: readonly RouteEntry[] = [
     // rev is the package's own label at the walk; the design did not bump it
     // for the 2026-09-13 and 2026-09-14 rounds.
     design: {
-      state: 'reviewing',
-      rev: '2026-09-12.6',
-      note: 'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner to look before aligned.',
+      state: 'aligned',
+      rev: '2026-09-15.3',
+      note: 'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner signed off on STG 2026-09-15.',
     },
   },
 

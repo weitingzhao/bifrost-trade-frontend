@@ -410,7 +410,7 @@ export const PAGE_COPY: Record<
       'Policy 漏斗选股 → Personas 评议（analyze→portfolio→validate→verdict）→ Decision Inbox。默认 persona = loop_curator。与上方 Chat Triage 分流无关。',
     policyVsPersona: 'Policy = 选什么 · Personas = 怎么评',
     originPick:
-      'The panel picks a persona from the page you are on. This page edits that persona; it does not override the live stream.',
+      'Answers go through triage first. The chip shows who answered; before that it shows this page\'s default. This page edits the persona — it does not choose who the live stream calls.',
     toolsItMayCall: 'Tools it may call',
     cannot: 'Cannot',
   },
@@ -464,7 +464,7 @@ export const PAGE_COPY: Record<
       'Policy funnel → Persona eval (analyze→portfolio→validate→verdict) → Decision Inbox. Default persona = loop_curator. Separate from Chat Triage above.',
     policyVsPersona: 'Policy = what to pick · Personas = how to judge',
     originPick:
-      'The panel picks a persona from the page you are on. This page edits that persona; it does not override the live stream.',
+      'Answers go through triage first. The chip shows who answered; before that it shows this page\'s default. This page edits the persona — it does not choose who the live stream calls.',
     toolsItMayCall: 'Tools it may call',
     cannot: 'Cannot',
   },

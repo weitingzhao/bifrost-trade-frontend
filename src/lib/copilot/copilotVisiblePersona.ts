@@ -1,9 +1,9 @@
 import { AGENT_LABELS_EN } from '@/lib/copilot/agentPersonaCatalog'
 
 /**
- * Visible `as {persona}` chip. Stream has no preferred_agent override, so
- * this is a readout: triage's active agent if the thread has one, otherwise
- * the origin default. Clicking it opens Personas; it does not change the stream.
+ * Visible persona chip. Stream has no preferred_agent, so this is a readout:
+ * triage's active agent once someone has answered, otherwise this page's
+ * default. Clicking it opens Personas; it does not change the stream.
  */
 export function copilotPersonaForOrigin(pathname: string): string | null {
   if (pathname.startsWith('/portfolio')) return 'portfolio'
@@ -12,6 +12,14 @@ export function copilotPersonaForOrigin(pathname: string): string | null {
     return 'analyze'
   }
   return null
+}
+
+export type CopilotPersonaChipSource = 'triage' | 'default'
+
+export function copilotPersonaChipSource(
+  activeAgent: string | null | undefined,
+): CopilotPersonaChipSource | null {
+  return activeAgent?.trim() ? 'triage' : 'default'
 }
 
 export function copilotVisiblePersona(
@@ -25,4 +33,13 @@ export function copilotVisiblePersona(
 
 export function copilotPersonaChipLabel(agentId: string): string {
   return AGENT_LABELS_EN[agentId] ?? agentId
+}
+
+/** Default is labelled as such so it cannot be read as who already answered. */
+export function copilotPersonaChipText(
+  agentId: string,
+  source: CopilotPersonaChipSource,
+): string {
+  const label = copilotPersonaChipLabel(agentId)
+  return source === 'triage' ? `as ${label}` : `default · ${label}`
 }

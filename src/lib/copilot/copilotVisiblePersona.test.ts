@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   copilotPersonaChipLabel,
+  copilotPersonaChipSource,
+  copilotPersonaChipText,
   copilotPersonaForOrigin,
   copilotVisiblePersona,
 } from './copilotVisiblePersona'
@@ -19,8 +21,12 @@ describe('copilotVisiblePersona', () => {
     expect(copilotVisiblePersona(null, '/portfolio/positions')).toBe('portfolio')
   })
 
-  it('labels in English for the chip', () => {
+  it('labels a default chip as default, not as who answered', () => {
+    expect(copilotPersonaChipSource(null)).toBe('default')
+    expect(copilotPersonaChipSource('  ')).toBe('default')
+    expect(copilotPersonaChipSource('portfolio')).toBe('triage')
+    expect(copilotPersonaChipText('portfolio', 'default')).toBe('default · Portfolio')
+    expect(copilotPersonaChipText('portfolio', 'triage')).toBe('as Portfolio')
     expect(copilotPersonaChipLabel('loop_curator')).toBe('Loop Curator')
-    expect(copilotPersonaChipLabel('portfolio')).toBe('Portfolio')
   })
 })

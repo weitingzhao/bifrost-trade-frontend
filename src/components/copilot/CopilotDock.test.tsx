@@ -101,7 +101,7 @@ describe('CopilotDock thread switcher', () => {
   it('shows as Portfolio on Positions, linking to Personas — not a stream override', async () => {
     copilotDockStore.getState().open_()
     renderDock('/portfolio/positions')
-    const chip = await screen.findByRole('link', { name: 'as Portfolio' })
+    const chip = await screen.findByRole('link', { name: 'default · Portfolio' })
     expect(chip.getAttribute('href')).toBe('/research/agent-personas')
   })
 })

@@ -1,5 +1,6 @@
 /**
  * Intent store: open Save-as-Hypothesis dialog from Cockpit Actions (Wave RS-E1.4).
+ * Design 2026-09-15 D2: no caller remains; Analyze uses SaveAsHypothesisButton.
  */
 import { createExternalStore } from '@/lib/cockpit/externalStore'
 

@@ -1,5 +1,7 @@
 /**
- * Global Save-as-Hypothesis dialog host for Cockpit Actions (Wave RS-E1.4).
+ * Global Save-as-Hypothesis dialog host for the old composer action.
+ * Design 2026-09-15 D2 retired that entry — hypotheses are saved from Analyze
+ * row buttons. This file stays unmounted (R4). Do not delete.
  * Opens when `saveHypothesisIntentStore.open(...)` is called.
  */
 import { useMemo, useState } from 'react'

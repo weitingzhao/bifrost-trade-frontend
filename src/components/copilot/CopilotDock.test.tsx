@@ -27,9 +27,6 @@ vi.mock('@/components/auth/ResearchUserSwitcher', () => ({
 vi.mock('@/components/cockpit/AskCopilotIntentHost', () => ({
   AskCopilotIntentHost: () => null,
 }))
-vi.mock('@/components/cockpit/CockpitSaveHypothesisHost', () => ({
-  CockpitSaveHypothesisHost: () => null,
-}))
 vi.mock('@/components/copilot/CopilotPanelMoreMenu', () => ({
   CopilotPanelMoreMenu: () => null,
 }))

@@ -35,7 +35,8 @@ import { cn } from '@/lib/utils'
  * Run ▾ — only actions that produce a draft (C2-a3 / §11.2 composer).
  *
  * Navigation (Inbox, Autopilot, Save as Hypothesis) left the composer.
- * D10: observe-only. Nothing here places or arms an order.
+ * Design 2026-09-15 D2 confirmed Save as Hypothesis stays off Run — Analyze
+ * row buttons are the entry. D10: observe-only. Nothing here places or arms an order.
  */
 export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
   const navigate = useNavigate()

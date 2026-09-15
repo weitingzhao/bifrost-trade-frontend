@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ResearchUserSwitcher, type ResearchUserSwitcherHandle } from '@/components/auth/ResearchUserSwitcher'
 import { AskCopilotIntentHost } from '@/components/cockpit/AskCopilotIntentHost'
-import { CockpitSaveHypothesisHost } from '@/components/cockpit/CockpitSaveHypothesisHost'
 import { CopilotPanelMoreMenu } from '@/components/copilot/CopilotPanelMoreMenu'
 import { CopilotPersonaChip } from '@/components/copilot/CopilotPersonaChip'
 import { CopilotThreadSwitcher } from '@/components/copilot/CopilotThreadSwitcher'
@@ -16,8 +15,8 @@ import { useRef } from 'react'
  * These three render only behind `if (!open)`, but a static import puts them —
  * and the whole markdown stack CockpitTabs pulls for message bodies — in the
  * entry chunk, so every page load paid for a Copilot nobody had opened yet.
- * The two deep-link hosts below stay static: they render in the *closed*
- * branch and have to be listening before the dock exists.
+ * AskCopilotIntentHost stays static: it renders in the *closed*
+ * branch and has to be listening before the dock exists.
  */
 const CockpitTabs = lazy(() =>
   import('@/components/cockpit/CockpitTabs').then((m) => ({ default: m.CockpitTabs })),
@@ -48,7 +47,7 @@ import { cn } from '@/lib/utils'
  *
  * So there is no launcher here at all. ⌘J opens it, and so does any page's own
  * Ask, which is where the question actually starts. Nothing renders when it is
- * closed except the two deep-link hosts, which have to keep listening.
+ * closed except `AskCopilotIntentHost`, which has to keep listening.
  *
  * Push or overlay is decided by room, not preference: `copilotDockPushes`
  * applies the one shared docking formula (sidebar 240 + content floor 760 +
@@ -56,6 +55,8 @@ import { cn } from '@/lib/utils'
  * pushing from 1440 up; below that, or at the wide tier, it floats over the
  * right edge and the page keeps its columns. Thread switching is the title
  * (`CopilotThreadSwitcher`); the old sessions rail is not mounted here.
+ * Composer Save-as-Hypothesis is gone (Design 2026-09-15 D2); Ask still has
+ * to listen while the dock is closed.
  */
 export function CopilotDock() {
   const { open, wide, close, toggleWide } = useCopilotDock()
@@ -71,12 +72,7 @@ export function CopilotDock() {
   }, [])
 
   if (!open) {
-    return (
-      <>
-        <CockpitSaveHypothesisHost />
-        <AskCopilotIntentHost />
-      </>
-    )
+    return <AskCopilotIntentHost />
   }
 
   const width = wide ? COPILOT_DOCK_WIDTH_WIDE : COPILOT_DOCK_WIDTH
@@ -170,7 +166,6 @@ export function CopilotDock() {
       </aside>
       <ResearchUserSwitcher ref={userSwitcherRef} showTrigger={false} dialogStackLayer="elevated" />
       <BridgeDialog open={bridgeOpen} onOpenChange={setBridgeOpen} sessionId={sessionId} />
-      <CockpitSaveHypothesisHost />
       <AskCopilotIntentHost />
     </Suspense>
   )

@@ -14,7 +14,7 @@ import {
   useDismissDraft,
   useResearchDrafts,
 } from '@/hooks/useResearchDrafts'
-import { useActiveObjectives, useAwaitingRuns } from '@/hooks/useLoopHarness'
+import { useActiveObjectives, useAutopilotStanding, useAwaitingRuns } from '@/hooks/useLoopHarness'
 import {
   waitingBriefingDrafts,
   waitingQueueCallCount,
@@ -41,6 +41,7 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
   const approvedStrip = useApprovedStripState(approve.data)
   const awaitingQ = useAwaitingRuns()
   const objectivesQ = useActiveObjectives()
+  const standingQ = useAutopilotStanding()
 
   const objectiveTitleById = useMemo(() => {
     const map = new Map<string, string>()
@@ -50,7 +51,8 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
 
   const draftRows = draftsQ.data?.rows
   const runRows = awaitingQ.data?.items
-  const callCount = waitingQueueCallCount(draftRows ?? [])
+  const callCount =
+    standingQ.data?.pending_decisions?.calls ?? waitingQueueCallCount(draftRows ?? [])
   const items = useMemo(
     () => waitingQueueItems(draftRows ?? [], runRows ?? [], objectiveTitleById),
     [draftRows, objectiveTitleById, runRows],

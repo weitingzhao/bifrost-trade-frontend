@@ -84,6 +84,9 @@ vi.mock('@/hooks/useLoopHarness', () => ({
   useActiveObjectives: () => ({
     data: { items: [{ id: 'o1', title: 'Daily Loop Stock Explorer' }] },
   }),
+  useAutopilotStanding: () => ({
+    data: { pending_decisions: { calls: 45, drafts: 50, folded: 5, inert: 0, briefings: 2 } },
+  }),
 }))
 
 vi.mock('@/lib/harness/loopCopilotPrefill', () => ({
@@ -98,13 +101,14 @@ describe('CopilotWaitingQueue', () => {
   it('counts Inbox calls and hides Approve on eod_verdict and decision_draft', async () => {
     cockpitDrawerStore.getState().setInboxOpen(false)
     render(<CopilotWaitingQueue />)
-    // Badge口径: batch + decision_draft. Digest and EOD are briefings.
-    expect(screen.getByText('2 waiting on you')).toBeTruthy()
+    // Badge口径: standing.pending_decisions.calls, not the truncated drafts page.
+    expect(screen.getByText('45 waiting on you')).toBeTruthy()
     expect(screen.getByText('Briefings · 1 run')).toBeTruthy()
+    expect(screen.queryByText('2 waiting on you')).toBeNull()
     expect(screen.queryByText('4 waiting on you')).toBeNull()
     expect(screen.queryByText(/224 waiting/)).toBeNull()
 
-    await userEvent.click(screen.getByText('2 waiting on you'))
+    await userEvent.click(screen.getByText('45 waiting on you'))
     expect(screen.getByText('Daily digest · 1 more')).toBeTruthy()
     expect(screen.getByText('Batch A')).toBeTruthy()
     expect(screen.getByText('Hold NVDA')).toBeTruthy()

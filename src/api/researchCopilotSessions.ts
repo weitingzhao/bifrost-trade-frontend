@@ -1,5 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { researchThrowHttp } from '@/lib/auth/researchHttpError'
 import { withValidation } from '@/lib/apiValidation'
 import {
   CopilotSessionDetailSchema,
@@ -74,7 +75,7 @@ export async function fetchCopilotSessions(
   const res = await fetch(researchEngineUrl(`/research/copilot/sessions?${params}`), {
     headers: getResearchAuthHeaders(),
   })
-  if (!res.ok) throw new Error(`sessions HTTP ${res.status}`)
+  if (!res.ok) researchThrowHttp(res, 'sessions')
   const body = validateSessionList(await res.json())
   return body.rows ?? []
 }
@@ -83,7 +84,7 @@ export async function fetchCopilotSession(id: string): Promise<CopilotSessionDet
   const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
     headers: getResearchAuthHeaders(),
   })
-  if (!res.ok) throw new Error(`session HTTP ${res.status}`)
+  if (!res.ok) researchThrowHttp(res, 'session')
   return validateSessionDetail(await res.json())
 }
 
@@ -92,7 +93,7 @@ export async function archiveCopilotSession(id: string): Promise<void> {
     method: 'DELETE',
     headers: getResearchAuthHeaders(),
   })
-  if (!res.ok) throw new Error(`archive HTTP ${res.status}`)
+  if (!res.ok) researchThrowHttp(res, 'archive')
 }
 
 export async function patchCopilotSession(
@@ -109,7 +110,7 @@ export async function patchCopilotSession(
     headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
     body: JSON.stringify(changes),
   })
-  if (!res.ok) throw new Error(`patch HTTP ${res.status}`)
+  if (!res.ok) researchThrowHttp(res, 'patch')
   const body = (await res.json()) as { session: CopilotSessionSummary }
   return body.session
 }

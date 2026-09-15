@@ -14,6 +14,7 @@ import {
 } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   DRAFTS_PAGE_MAX,
@@ -96,7 +97,7 @@ export function WaitingOnYou() {
       {query.isLoading ? (
         <Skeleton className="h-28 w-full" />
       ) : query.isError ? (
-        <QueryErrorAlert error={query.error} onRetry={() => void query.refetch()} />
+        <ResearchAuthGap error={query.error} onRetry={() => void query.refetch()} />
       ) : groups.length === 0 ? (
         <EmptyState
           icon={<ClipboardList />}

@@ -9,6 +9,7 @@ import {
   type PersonaPreferences,
 } from '@/api/agentPersona'
 import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { AgentInteractionsCard } from '@/components/copilot/AgentInteractionsCard'
 import { AgentOrchestrationDiagram } from '@/components/copilot/AgentOrchestrationDiagram'
 import {
@@ -573,9 +574,7 @@ export function AgentPersonaPage() {
         <p className="text-dense-meta text-muted-foreground">Loading personas…</p>
       ) : null}
       {isError ? (
-        <p className="text-dense-meta text-destructive">
-          {error instanceof Error ? error.message : 'Failed to load personas'}
-        </p>
+        <ResearchAuthGap error={error} />
       ) : null}
 
       {!isLoading && !isError && agents.length > 0 ? (

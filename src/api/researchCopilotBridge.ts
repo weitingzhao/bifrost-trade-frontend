@@ -1,5 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { ResearchHttpError, researchThrowHttp } from '@/lib/auth/researchHttpError'
 import { withValidation } from '@/lib/apiValidation'
 import {
   BridgePresetsSchema,
@@ -48,7 +49,7 @@ export async function fetchBridgePresets(signal?: AbortSignal): Promise<BridgePr
     signal,
     headers: getResearchAuthHeaders(),
   })
-  if (!res.ok) throw new Error(`bridge presets HTTP ${res.status}`)
+  if (!res.ok) researchThrowHttp(res, 'bridge presets')
   const body = (await res.json()) as { data: BridgePresets }
   return validatePresets(body.data)
 }
@@ -81,7 +82,7 @@ export async function postCopilotBridge(
   }
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(`bridge HTTP ${res.status}${text ? `: ${text}` : ''}`)
+    throw new ResearchHttpError(res.status, `bridge HTTP ${res.status}${text ? `: ${text}` : ''}`)
   }
   return (await res.json()) as BridgeResponse
 }

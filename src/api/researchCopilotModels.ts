@@ -1,5 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { researchThrowHttp } from '@/lib/auth/researchHttpError'
 import { withValidation } from '@/lib/apiValidation'
 import {
   CopilotModelsResponseSchema,
@@ -45,8 +46,6 @@ export async function fetchCopilotModels(
     signal,
     headers: getResearchAuthHeaders(),
   })
-  if (!resp.ok) {
-    throw new Error(`copilot/models failed: ${resp.status}`)
-  }
+  if (!resp.ok) researchThrowHttp(resp, 'copilot/models')
   return validateModels(await resp.json())
 }

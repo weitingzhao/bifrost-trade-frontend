@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
 import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { digestExhibits, isDailyDigest } from '@/lib/harness/dailyDigest'
 import { draftAskedBy, draftLandsIn, draftTitle } from '@/lib/harness/draftText'
 import {
@@ -78,35 +80,15 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
 
   if (n === 0 && briefingDraftCount === 0 && runCount === 0 && (draftsFailed || runsFailed)) {
     return (
-      <div
-        role="alert"
-        className={cn(
-          'flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5',
-          className
-        )}
-      >
-        <span className="min-w-0 flex-1 truncate text-dense-meta text-destructive">
-          {draftsFailed && runsFailed
-            ? 'Failed to load waiting queue'
-            : draftsFailed
-              ? draftsQ.error instanceof Error
-                ? draftsQ.error.message
-                : 'Failed to load drafts'
-              : awaitingQ.error instanceof Error
-                ? awaitingQ.error.message
-                : 'Failed to load loop runs'}
-        </span>
-        <button
-          type="button"
-          className="shrink-0 text-dense-meta text-primary underline"
-          onClick={() => {
-            if (draftsFailed) void draftsQ.refetch()
-            if (runsFailed) void awaitingQ.refetch()
-          }}
-        >
-          Retry
-        </button>
-      </div>
+      <ResearchAuthGap
+        error={firstResearchAuthGapError(draftsQ.error, awaitingQ.error) ?? draftsQ.error ?? awaitingQ.error}
+        onRetry={() => {
+          if (draftsFailed) void draftsQ.refetch()
+          if (runsFailed) void awaitingQ.refetch()
+        }}
+        layout="banner"
+        className={className}
+      />
     )
   }
 

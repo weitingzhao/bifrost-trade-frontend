@@ -1,5 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { researchThrowHttp } from '@/lib/auth/researchHttpError'
 import { withValidation } from '@/lib/apiValidation'
 import { AgentPersonaListSchema } from '@/lib/schemas/platform'
 
@@ -43,7 +44,7 @@ async function personaFetch<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.headers ?? {}),
     },
   })
-  if (!res.ok) throw new Error(`agent persona HTTP ${res.status}`)
+  if (!res.ok) researchThrowHttp(res, 'agent persona')
   return (await res.json()) as T
 }
 

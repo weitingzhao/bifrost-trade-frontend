@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchCopilotUsage } from '@/api/aiCopilot'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { COPILOT_MODELS, PROVIDER_LABELS, type CopilotModelId } from '@/lib/cockpit/modelCatalog'
 import { copilotSpendLine } from '@/lib/copilot/copilotSpendLine'
 
@@ -14,6 +15,18 @@ export function CopilotSpendHint({ model }: { model: CopilotModelId }) {
   const local = COPILOT_MODELS.find((m) => m.id === model)
   const provider = local ? PROVIDER_LABELS[local.provider] : null
   const cost = q.isSuccess ? q.data.cost_estimate_usd : null
+  if (q.isError) {
+    return (
+      <div data-testid="copilot-spend-hint">
+        <ResearchAuthGap
+          error={q.error}
+          onRetry={() => void q.refetch()}
+          layout="banner"
+          className="min-w-0"
+        />
+      </div>
+    )
+  }
   return (
     <p
       data-testid="copilot-spend-hint"

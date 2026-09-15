@@ -1,5 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { researchThrowHttp } from '@/lib/auth/researchHttpError'
 import { withValidation } from '@/lib/apiValidation'
 import {
   PlaybookCaseListSchema,
@@ -46,7 +47,7 @@ async function playbookFetch<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.headers ?? {}),
     },
   })
-  if (!res.ok) throw new Error(`playbook HTTP ${res.status}`)
+  if (!res.ok) researchThrowHttp(res, 'playbook')
   const body = (await res.json()) as { ok?: boolean; data: T }
   return body.data
 }

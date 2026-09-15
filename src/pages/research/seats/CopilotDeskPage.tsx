@@ -14,7 +14,7 @@ import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Users } from 'lucid
 import { PageHeader, PageShell } from '@/components/layout'
 import { DenseTag, EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
@@ -65,7 +65,7 @@ export default function CopilotDeskPage() {
       />
 
       {standingQ.isError ? (
-        <QueryErrorAlert error={standingQ.error} onRetry={() => void standingQ.refetch()} />
+        <ResearchAuthGap error={standingQ.error} onRetry={() => void standingQ.refetch()} />
       ) : null}
 
       {/* Design dissolved the three tiles into what each counts (Copilot Desk response ⑫):
@@ -172,7 +172,7 @@ function DigestToday({ draftId, status, loading }: { draftId: string | null; sta
       />
     )
   }
-  if (q.isError) return <QueryErrorAlert error={q.error} onRetry={() => void q.refetch()} />
+  if (q.isError) return <ResearchAuthGap error={q.error} onRetry={() => void q.refetch()} />
   if (!draft) {
     return (
       <p className="text-dense-label text-muted-foreground">

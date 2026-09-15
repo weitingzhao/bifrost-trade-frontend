@@ -3,6 +3,7 @@
  *
  * Research responses are `{ ok, data, error? }`. Callers get `data` or throw.
  */
+import { ResearchHttpError } from '@/lib/auth/researchHttpError'
 
 export interface ResearchEnvelope<T> {
   ok: boolean
@@ -21,6 +22,8 @@ export type UnwrapResearchOpts = {
  * Default path: JSON parse + throw when `!res.ok` or `body.ok === false`.
  * With `apiLabel`: detect HTML proxy errors and include the label in throws
  * (Drafts / Hypothesis / Backtest event).
+ * HTTP failures carry `ResearchHttpError.status` so 401 empty-states do not
+ * scrape the message string.
  */
 export async function unwrapResearchEnvelope<T>(
   res: Response,
@@ -33,7 +36,8 @@ export async function unwrapResearchEnvelope<T>(
     if (!res.ok) {
       const text = await res.text().catch(() => res.statusText)
       if (text.trimStart().startsWith('<!') || ct.includes('text/html')) {
-        throw new Error(
+        throw new ResearchHttpError(
+          res.status,
           `${label} unreachable (got HTML instead of JSON). ` +
             'Ensure research-api :8795 is running and VITE_API_RESEARCH_ENGINE is set.',
         )
@@ -45,7 +49,7 @@ export async function unwrapResearchEnvelope<T>(
       } catch {
         /* keep raw text */
       }
-      throw new Error(`${label} ${res.status}: ${detail}`)
+      throw new ResearchHttpError(res.status, `${label} ${res.status}: ${detail}`)
     }
     const body = (await res.json()) as ResearchEnvelope<T>
     if (!body.ok) {
@@ -59,7 +63,9 @@ export async function unwrapResearchEnvelope<T>(
   }
   if (!res.ok || body.ok === false) {
     const msg = body.error ?? body.detail ?? `HTTP ${res.status}`
-    throw new Error(typeof msg === 'string' ? msg : `HTTP ${res.status}`)
+    const text = typeof msg === 'string' ? msg : `HTTP ${res.status}`
+    if (!res.ok) throw new ResearchHttpError(res.status, text)
+    throw new Error(text)
   }
   return body.data
 }

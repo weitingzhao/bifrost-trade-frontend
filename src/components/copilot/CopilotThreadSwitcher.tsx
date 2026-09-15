@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SessionRenameField } from '@/components/copilot/SessionRenameField'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { useCopilotSessions } from '@/hooks/useCopilotSessions'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
 import { openCopilotSession } from '@/lib/copilot/openCopilotSession'
@@ -32,7 +33,7 @@ import { cn } from '@/lib/utils'
  */
 export function CopilotThreadSwitcher() {
   const queryClient = useQueryClient()
-  const { data } = useCopilotSessions(50)
+  const { data, isError, error, refetch } = useCopilotSessions(50)
   const { sessionId, messages } = useCopilotSession()
   const rows = data ?? []
   const { pinned, recent } = threadSwitcherGroups(rows)
@@ -75,6 +76,11 @@ export function CopilotThreadSwitcher() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[18.75rem] z-[220]">
+        {isError ? (
+          <div className="px-1.5 py-1">
+            <ResearchAuthGap error={error} onRetry={() => void refetch()} layout="banner" />
+          </div>
+        ) : null}
         {current ? (
           <>
             <DropdownMenuLabel className="text-dense-caption font-normal text-muted-foreground">

@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   archiveCopilotSession,
@@ -160,7 +160,7 @@ export function Threads() {
   }
 
   if (listQ.isLoading && rows.length === 0 && !searching) return <Skeleton className="h-32 w-full" />
-  if (listQ.isError) return <QueryErrorAlert error={listQ.error} onRetry={() => void listQ.refetch()} />
+  if (listQ.isError) return <ResearchAuthGap error={listQ.error} onRetry={() => void listQ.refetch()} />
 
   const today = nyDate(new Date())
   const shown = rows.flatMap((row, i) => (threadInFilter(row, filter, today) ? [{ row, detail: details[i] }] : []))
@@ -184,8 +184,8 @@ export function Threads() {
           {searching ? `${shown.length} match` : `${shown.length} of the latest ${rows.length}`}
         </span>
       </div>
-      {pinError ? <QueryErrorAlert error={pinError} /> : null}
-      {rowError ? <QueryErrorAlert error={rowError} /> : null}
+      {pinError ? <ResearchAuthGap error={pinError} /> : null}
+      {rowError ? <ResearchAuthGap error={rowError} /> : null}
 
       {emptyBook ? (
         <EmptyState

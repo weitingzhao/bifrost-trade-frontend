@@ -8,6 +8,7 @@ import {
   CopilotUsageSchema,
 } from '@/lib/schemas/research'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { ResearchHttpError, researchThrowHttp } from '@/lib/auth/researchHttpError'
 import type { CopilotModelId } from '@/lib/cockpit/modelCatalog'
 
 export type CopilotChatMessage = {
@@ -124,9 +125,7 @@ export async function fetchCopilotUsage(signal?: AbortSignal): Promise<CopilotUs
     signal,
     headers: getResearchAuthHeaders(),
   })
-  if (!res.ok) {
-    throw new Error(`usage HTTP ${res.status}`)
-  }
+  if (!res.ok) researchThrowHttp(res, 'usage')
   return validateUsage(await res.json())
 }
 
@@ -174,7 +173,7 @@ export function streamCopilot(
       }
 
       if (!res.ok || !res.body) {
-        throw new Error(`copilot stream HTTP ${res.status}`)
+        throw new ResearchHttpError(res.status, `copilot stream HTTP ${res.status}`)
       }
 
       const reader = res.body.getReader()
@@ -240,7 +239,10 @@ export async function approveCopilotWrite(body: {
   })
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
-    throw new Error(`approve HTTP ${res.status}${detail ? `: ${detail}` : ''}`)
+    throw new ResearchHttpError(
+      res.status,
+      `approve HTTP ${res.status}${detail ? `: ${detail}` : ''}`,
+    )
   }
   return (await res.json()) as ApproveWriteResponse
 }
@@ -268,7 +270,10 @@ export async function executeCopilotWrite(body: {
   })
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
-    throw new Error(`execute HTTP ${res.status}${detail ? `: ${detail}` : ''}`)
+    throw new ResearchHttpError(
+      res.status,
+      `execute HTTP ${res.status}${detail ? `: ${detail}` : ''}`,
+    )
   }
   return (await res.json()) as ExecuteWriteResponse
 }

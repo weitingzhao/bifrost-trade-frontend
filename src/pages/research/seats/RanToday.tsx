@@ -14,7 +14,7 @@ import { Zap } from 'lucide-react'
 import { EmptyState } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Button } from '@/components/ui/button'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RunLoopDialog } from '@/components/research/harness/RunLoopDialog'
 import { listResearchDrafts, type DraftStatus } from '@/api/researchDrafts'
@@ -108,7 +108,7 @@ export function RanToday() {
     body = <Skeleton className="h-24 w-full" />
   } else if (errored.length === DRAFT_STATUSES.length) {
     // Partial is not clean: some agents may be missing from this list entirely.
-    body = <QueryErrorAlert error={errored[0].error} onRetry={() => queries.forEach((q) => void q.refetch())} />
+    body = <ResearchAuthGap error={errored[0].error} onRetry={() => queries.forEach((q) => void q.refetch())} />
   } else if (rows.length === 0) {
     body = (
       <EmptyState
@@ -342,7 +342,7 @@ function RunOneNow() {
       ) : curate.isSuccess ? (
         <p>Curator finished on {curate.data.run_id}.</p>
       ) : null}
-      {failed ? <QueryErrorAlert error={failed.error} /> : null}
+      {failed ? <ResearchAuthGap error={failed.error} /> : null}
 
       {dialogFor ? (
         <RunLoopDialog

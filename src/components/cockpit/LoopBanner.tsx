@@ -2,12 +2,8 @@ import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronRight, MessageCircle, RefreshCw, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  loopCopilotUi,
-  loopPipelinePath,
-  openCopilotInbox,
-  openLoopRunInCopilot,
-} from '@/lib/harness/loopCopilotPrefill'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { loopCopilotUi, loopPipelinePath, openCopilotInbox, openLoopRunInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import {
   useAwaitingRuns,
   useCurateRun,
@@ -42,26 +38,12 @@ export function LoopBanner({ className }: { className?: string }) {
 
   if (awaitingQ.isError) {
     return (
-      <div
-        role="alert"
-        className={cn(
-          'flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5',
-          className,
-        )}
-      >
-        <span className="min-w-0 flex-1 truncate text-dense-meta text-destructive">
-          {awaitingQ.error instanceof Error
-            ? awaitingQ.error.message
-            : 'Failed to load loop runs'}
-        </span>
-        <button
-          type="button"
-          className="shrink-0 text-dense-meta text-primary underline"
-          onClick={() => void awaitingQ.refetch()}
-        >
-          Retry
-        </button>
-      </div>
+      <ResearchAuthGap
+        error={awaitingQ.error}
+        onRetry={() => void awaitingQ.refetch()}
+        layout="banner"
+        className={className}
+      />
     )
   }
 

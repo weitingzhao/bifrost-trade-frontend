@@ -82,12 +82,15 @@ export async function updateStructure(
 export async function fetchStrategyInstances(params?: {
   opportunityId?: number
   accountId?: string
+  /** Unix seconds; the plan's `intended_at` when looking for the fill it caused. */
+  openedAtFrom?: number
 }): Promise<StrategyInstancesResponse> {
   const sp = new URLSearchParams()
   if (params?.opportunityId != null) {
     sp.set('strategy_opportunity_id', String(params.opportunityId))
   }
   if (params?.accountId) sp.set('account_id', params.accountId)
+  if (params?.openedAtFrom != null) sp.set('opened_at_from', String(params.openedAtFrom))
   const qs = sp.toString()
   const res = await fetch(strategyUrl(`/strategies/instances${qs ? `?${qs}` : ''}`))
   if (!res.ok) throw new Error(`Strategy /instances: ${res.status}`)

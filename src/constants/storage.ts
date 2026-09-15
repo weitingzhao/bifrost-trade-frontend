@@ -14,8 +14,6 @@ export const STORAGE_KEYS = {
   inboxReadDrafts: 'bifrost-inbox-read-drafts',
   // Last exhibit this browser saw per symbol — prior half of "Since you last looked".
   symbolExhibitSnapshot: 'bifrost-symbol-exhibit-snapshot',
-  // Plan-this handoffs queued for Trade › Plans (session-scoped, advisory).
-  planHandoffs: 'bifrost-plan-handoffs',
   // Option Discovery compare drawer — survives symbol / expiry switches.
   discoveryCompare: 'bifrost-discovery-compare',
   optionScreenerFilters: 'optionScreenerFilters',

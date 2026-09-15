@@ -26,9 +26,18 @@ export function useGateSafety() {
   })
 }
 
-export function useStrategyInstances(params?: { opportunityId?: number; accountId?: string }) {
+export function useStrategyInstances(params?: {
+  opportunityId?: number
+  accountId?: string
+  openedAtFrom?: number
+}) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.strategy.instances, params?.opportunityId ?? null, params?.accountId ?? null],
+    queryKey: [
+      ...QUERY_KEYS.strategy.instances,
+      params?.opportunityId ?? null,
+      params?.accountId ?? null,
+      params?.openedAtFrom ?? null,
+    ],
     queryFn: () => fetchStrategyInstances(params),
     refetchInterval: 30_000,
   })

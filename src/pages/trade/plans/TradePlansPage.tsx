@@ -1,152 +1,176 @@
 /**
- * Trade › Plans — landing for ＋ Plan this handoffs.
+ * Trade › Plans — the structured plan desk (`Trade Plans.dc.html`).
  *
- * The full Plans desk (Trade Plans.dc.html) is still unbuilt. This page is the
- * thin receiver: it lists advisory drafts queued from Symbol / Chain with
- * source · rule · contract, and refuses order placement (D10). Growing it into
- * the designed sheet is a later walk — not this exit's job.
+ * A plan is a record: what I intend, how I exit, what filled. It is stored on
+ * the server (`strategy_plan`, core 0.22.0), so a plan written on one machine is
+ * there on the next, and Review has something to compare a fill against.
+ *
+ * Two things in the prototype are absent on purpose. `Import from Inbox` and
+ * `Create order intent` both write order intents, which D10 forbids; an
+ * unresponsive button would be worse than no button. And `Cash / margin` /
+ * `Pressure after` are grey: nothing computes what one plan would cost in
+ * margin, so the column says so.
  */
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { EmptyState, SegmentControl } from '@/components/data-display'
 import { PageHeader, PageShell } from '@/components/layout'
-import { Button } from '@/components/ui/button'
+import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import {
-  clearPlanHandoffs,
-  dismissPlanHandoff,
-  listPlanHandoffs,
-  type PlanHandoff,
-} from '@/lib/planHandoff'
-import { withSymbolParam } from '@/lib/symbolLink'
-import { SYMBOL_PATH } from '@/lib/symbolTabs'
-import { cn } from '@/lib/utils'
+  INSPECTOR_WIDTH_READ_PX,
+  INSPECTOR_WIDTH_WIDE_PX,
+} from '@/components/layout/inspectorDock'
+import { Button } from '@/components/ui/button'
+import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useStrategyPlans } from '@/hooks/useStrategyPlans'
+import { PlanCard } from './PlanCard'
+import { PlanForm } from './PlanForm'
+import { PlansTable } from './PlansTable'
+import {
+  PLAN_FILTERS,
+  PLAN_FILTER_LABELS,
+  filterPlans,
+  isPlanFilter,
+  planFilterCounts,
+  sortPlans,
+  type PlanFilterValue,
+} from './planRows'
 
-function formatWhen(iso: string): string {
-  const t = Date.parse(iso)
-  if (!Number.isFinite(t)) return iso
-  return new Date(t).toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
+/** The form is a local mode; which card is open is the URL's business. */
+type Form = { kind: 'new' } | { kind: 'edit'; id: number } | null
 
 export default function TradePlansPage() {
-  const [params] = useSearchParams()
-  const highlight = params.get('handoff')
-  const [tick, setTick] = useState(0)
-  const items = useMemo(() => {
-    void tick
-    return listPlanHandoffs()
-  }, [tick])
+  const [params, setParams] = useSearchParams()
+  const symbol = (params.get('symbol') ?? '').trim().toUpperCase()
+  const statusParam = params.get('status')
+  const filter: PlanFilterValue = isPlanFilter(statusParam) ? statusParam : 'all'
+  const planParam = Number(params.get('plan'))
+  const openId = Number.isFinite(planParam) && planParam > 0 ? planParam : null
+  const [form, setForm] = useState<Form>(null)
 
-  function refresh() {
-    setTick((n) => n + 1)
+  const query = useStrategyPlans({ symbol: symbol || undefined })
+  const plans = useMemo(() => query.data?.items ?? [], [query.data])
+
+  const counts = useMemo(() => planFilterCounts(plans), [plans])
+  const rows = useMemo(() => sortPlans(filterPlans(plans, filter)), [plans, filter])
+  const cardId = form?.kind === 'edit' ? form.id : openId
+  const selected = useMemo(
+    () => (cardId == null ? null : (plans.find((p) => p.strategy_plan_id === cardId) ?? null)),
+    [cardId, plans],
+  )
+
+  function setParam(key: string, value: string | null) {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (value == null) next.delete(key)
+        else next.set(key, value)
+        return next
+      },
+      { replace: true },
+    )
+  }
+
+  function openPlan(strategyPlanId: number) {
+    setForm(null)
+    setParam('plan', String(strategyPlanId))
+  }
+
+  function closePanel() {
+    setForm(null)
+    setParam('plan', null)
   }
 
   return (
     <PageShell padding="compact" className="space-y-3">
       <PageHeader
         title="Plans"
-        description="Advisory drafts from Research. Observe-only (D10) — nothing here places an order."
+        description="Structured plans — what I intend, how I exit, what filled. Advisory only; nothing here places an order."
         actions={
-          items.length > 0 ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 text-dense-meta"
-              onClick={() => {
-                clearPlanHandoffs()
-                refresh()
-              }}
-            >
-              Clear queue
-            </Button>
-          ) : null
+          <Button
+            type="button"
+            size="sm"
+            className="h-7 text-dense-meta"
+            onClick={() => {
+              setForm({ kind: 'new' })
+              setParam('plan', null)
+            }}
+          >
+            ＋ Plan a trade
+          </Button>
         }
       />
 
-      {items.length === 0 ? (
-        <p className="rounded border border-border/60 bg-muted/20 px-3 py-4 text-dense-meta text-muted-foreground">
-          No plan drafts on this desk yet. From Symbol, press{' '}
-          <span className="text-foreground">＋ Plan this</span> — the handoff
-          lands here with source · rule · contract.
-        </p>
-      ) : (
-        <ul className="divide-y divide-border/50 rounded border border-border/60">
-          {items.map((h) => (
-            <PlanRow
-              key={h.id}
-              handoff={h}
-              highlight={h.id === highlight}
-              onDismiss={() => {
-                dismissPlanHandoff(h.id)
-                refresh()
-              }}
-            />
-          ))}
-        </ul>
-      )}
-    </PageShell>
-  )
-}
-
-function PlanRow({
-  handoff: h,
-  highlight,
-  onDismiss,
-}: {
-  handoff: PlanHandoff
-  highlight: boolean
-  onDismiss: () => void
-}) {
-  return (
-    <li
-      className={cn(
-        'flex flex-wrap items-start gap-x-3 gap-y-1 px-3 py-2 text-dense-meta',
-        highlight && 'bg-primary/5',
-      )}
-    >
-      <div className="min-w-0 flex-1 space-y-0.5">
-        <div className="flex flex-wrap items-baseline gap-x-2">
-          <Link
-            to={withSymbolParam(SYMBOL_PATH, h.symbol)}
-            className="font-mono font-semibold text-foreground hover:underline"
+      <div className="flex flex-wrap items-center gap-2">
+        <SegmentControl
+          ariaLabel="Plan status"
+          size="sm"
+          value={filter}
+          onChange={(v) => setParam('status', v === 'all' ? null : v)}
+          options={PLAN_FILTERS.map((value) => ({
+            value,
+            label: `${PLAN_FILTER_LABELS[value]} ${counts[value]}`,
+          }))}
+        />
+        {symbol ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-6 text-dense-micro"
+            onClick={() => setParam('symbol', null)}
           >
-            {h.symbol}
-          </Link>
-          <span className="text-muted-foreground">{h.sourceLabel}</span>
-          <span className="font-mono text-dense-micro text-muted-foreground/70">
-            {formatWhen(h.createdAt)}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-x-3 text-muted-foreground">
-          {h.rule ? (
-            <span>
-              rule <span className="font-mono text-foreground">{h.rule}</span>
-            </span>
-          ) : null}
-          {h.contract ? (
-            <span>
-              contract <span className="font-mono text-foreground">{h.contract}</span>
-            </span>
-          ) : null}
-          {h.note ? <span className="text-foreground/80">{h.note}</span> : null}
-        </div>
-        <p className="text-dense-micro text-muted-foreground">
-          Advisory draft · not an order intent · D10 blocked
-        </p>
+            {symbol} ✕
+          </Button>
+        ) : null}
       </div>
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        className="h-7 text-dense-meta text-muted-foreground"
-        onClick={onDismiss}
+
+      {query.isError ? (
+        <QueryErrorAlert error={query.error} onRetry={() => void query.refetch()} />
+      ) : null}
+      {query.isLoading ? <Skeleton className="h-32 w-full" /> : null}
+
+      {!query.isLoading && rows.length === 0 ? (
+        <EmptyState
+          title="No plans here yet"
+          description={
+            filter === 'all'
+              ? 'Press ＋ Plan a trade, or send one over from Symbol with ＋ Plan this.'
+              : `No plan is ${PLAN_FILTER_LABELS[filter].toLowerCase()} right now.`
+          }
+        />
+      ) : null}
+
+      {rows.length > 0 ? (
+        <PlansTable
+          plans={rows}
+          selectedId={selected?.strategy_plan_id ?? null}
+          onSelect={(plan) => openPlan(plan.strategy_plan_id)}
+        />
+      ) : null}
+
+      <RightInspectorShell
+        open={form != null || selected != null}
+        ariaLabel={form == null ? 'Plan' : 'Plan a trade'}
+        panelWidthPx={form == null ? INSPECTOR_WIDTH_READ_PX : INSPECTOR_WIDTH_WIDE_PX}
+        onClose={closePanel}
       >
-        Dismiss
-      </Button>
-    </li>
+        {form == null && selected ? (
+          <PlanCard
+            plan={selected}
+            onClose={closePanel}
+            onEdit={(plan) => setForm({ kind: 'edit', id: plan.strategy_plan_id })}
+          />
+        ) : null}
+        {form != null ? (
+          <PlanForm
+            editing={form.kind === 'edit' ? selected : null}
+            onDone={openPlan}
+            onCancel={closePanel}
+          />
+        ) : null}
+      </RightInspectorShell>
+    </PageShell>
   )
 }

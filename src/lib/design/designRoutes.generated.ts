@@ -5,7 +5,7 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 89 routes, 64 with a designed page,
+ * Derived, not typed: 88 routes, 63 with a designed page,
  * 25 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
@@ -31,7 +31,7 @@ export interface DesignRoute {
   group: string | null
 }
 
-export const DESIGN_REV = "2026-09-15.3"
+export const DESIGN_REV = "2026-09-15.5"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","inNav":true,"group":"Home"},
@@ -122,5 +122,4 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/docs/gaps","label":"Gap Review","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Gaps.dc.html","round":null,"inNav":true,"group":"System"},
   {"path":"/docs/options-kit","label":"Options Kit","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Options Kit.dc.html","round":null,"inNav":true,"group":"System"},
   {"path":"/docs/drilldown","label":"Drill-down","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Drilldown.dc.html","round":null,"inNav":true,"group":"System"},
-  {"path":"/docs/omnibar","label":"Omnibar Spec","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Omnibar Spec.dc.html","round":null,"inNav":true,"group":"System"},
 ]

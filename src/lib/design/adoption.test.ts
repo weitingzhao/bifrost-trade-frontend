@@ -72,12 +72,13 @@ describe('design adoption', () => {
 
   it('reads the walk as it stands', () => {
     // Replace these as pages are walked — they are the numbers the Owner reads.
-    // Owner list 2026-09-15: Symbol, Decision Inbox. Desk / Personas / Trading
-    // Copilot wait on L1/L2 (language + 401 empty).
+    // Rev 2026-09-15.5 retired /docs/omnibar. Symbol and Decision Inbox are still
+    // tagged aligned at .3, so they read stale until the Owner restamp (R8-2).
     expect(counts.aligned + counts.byState.stale).toBe(2)
+    expect(counts.aligned).toBe(0)
     expect(
       rows
-        .filter((r) => r.state === 'aligned')
+        .filter((r) => r.state === 'stale')
         .map((r) => r.path)
         .sort(),
     ).toEqual(['/research/loop/decisions', '/research/symbol'])
@@ -96,10 +97,11 @@ describe('design adoption', () => {
     // the design keeps both pages.
     expect(counts.byState.moving).toBe(10)
     expect(counts.byState.staging).toBe(2)
-    // Rev 2026-09-14.4 gave Backing & Model a prototype (Portfolio Backing.dc.html).
-    // It leaves the stub backlog (26→25) and enters the walk (pending 20→21).
-    // Personas + Trading Copilot moved pending → reviewing on 2026-09-15 (21→19).
-    expect(counts.designed).toBe(64)
+    // Rev 2026-09-15.5: registry dropped /docs/omnibar (it was a designed
+    // prototype with no app page → unbuilt 34→33). Denominator 64→63.
+    // Stub backlog unchanged (25). Pending unchanged (19).
+    expect(counts.designed).toBe(63)
+    expect(counts.byState.unbuilt).toBe(33)
     expect(counts.byState.pending).toBe(19)
     expect(counts.byState.backlog).toBe(25)
   })

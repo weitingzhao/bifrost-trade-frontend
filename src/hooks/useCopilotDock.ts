@@ -9,7 +9,9 @@
  * to the table. Owner confirmed the dock, 2026-09-12.
  *
  * So `position`, the drag, and the fullscreen tier are gone. What a dock needs
- * is whether it is open, how wide, and whether the session rail is showing.
+ * is whether it is open and how wide. Thread switching is the title switcher
+ * (`CopilotThreadSwitcher`); `sessionsOpen` is leftover storage from the
+ * retired in-dock rail and is not read by the dock.
  */
 import { createExternalStore } from '@/lib/cockpit/externalStore'
 import { panelDocks } from '@/lib/panelDocks'
@@ -45,7 +47,7 @@ type DockState = {
   open: boolean
   /** 760 rather than 440. Always overlays — see the push threshold. */
   wide: boolean
-  /** Session history rail inside the dock. Only fits at the wide tier. */
+  /** Leftover: the in-dock sessions rail is gone (C2-a2). Callers still set it. */
   sessionsOpen: boolean
   open_: () => void
   close: () => void
@@ -59,8 +61,7 @@ type DockState = {
 const base = createExternalStore<DockState>({
   open: read(OPEN_STORAGE_KEY, false),
   wide: read(WIDE_STORAGE_KEY, false),
-  // Default open — the rail is the primary way to switch threads, and it only
-  // renders where it fits.
+  // Leftover flag from the in-dock rail. Switching is the title now.
   sessionsOpen: read(SESSIONS_STORAGE_KEY, true),
   open_: () => undefined,
   close: () => undefined,

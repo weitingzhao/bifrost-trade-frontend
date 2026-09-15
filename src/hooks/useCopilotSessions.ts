@@ -8,7 +8,7 @@ import { fetchCopilotSessions } from '@/api/researchCopilotSessions'
  * The `copilot:turn-done` window event is dispatched by `useCopilotSession`
  * when the SSE stream emits a `done` frame — that's exactly when the backend
  * persists the session (best-effort). Invalidating the query at that point
- * guarantees a new session shows up in the "Chat history" rail without waiting
+ * guarantees a new session shows up in the title switcher without waiting
  * for the 15s staleTime.
  */
 export function useCopilotSessions(limit = 20, search?: string) {

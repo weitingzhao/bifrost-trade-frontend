@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { History, MessageCircle, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, X } from 'lucide-react'
+import { MessageCircle, PanelRightClose, PanelRightOpen, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ResearchUserSwitcher, type ResearchUserSwitcherHandle } from '@/components/auth/ResearchUserSwitcher'
@@ -12,7 +12,7 @@ import { useRef } from 'react'
 /**
  * The panel's own weight, deferred until it opens.
  *
- * These four render only behind `if (!open)`, but a static import puts them —
+ * These three render only behind `if (!open)`, but a static import puts them —
  * and the whole markdown stack CockpitTabs pulls for message bodies — in the
  * entry chunk, so every page load paid for a Copilot nobody had opened yet.
  * The two deep-link hosts below stay static: they render in the *closed*
@@ -27,11 +27,6 @@ const BridgeDialog = lazy(() =>
 const ExportSessionMenu = lazy(() =>
   import('@/components/cockpit/ExportSessionMenu').then((m) => ({ default: m.ExportSessionMenu })),
 )
-const SessionListSidebar = lazy(() =>
-  import('@/components/cockpit/SessionListSidebar').then((m) => ({
-    default: m.SessionListSidebar,
-  })),
-)
 import {
   COPILOT_DOCK_WIDTH,
   COPILOT_DOCK_WIDTH_WIDE,
@@ -40,10 +35,6 @@ import {
 } from '@/hooks/useCopilotDock'
 import { useCopilotSession } from '@/hooks/useCopilotSession'
 import { cn } from '@/lib/utils'
-
-const SESSIONS_RAIL_W = 240
-/** Below this the rail leaves the chat too narrow to read, so it does not render. */
-const RAIL_MIN_DOCK_W = COPILOT_DOCK_WIDTH_WIDE
 
 /**
  * Research Copilot — a dock on the right, a peer of the nav sidebar.
@@ -62,10 +53,11 @@ const RAIL_MIN_DOCK_W = COPILOT_DOCK_WIDTH_WIDE
  * applies the one shared docking formula (sidebar 240 + content floor 760 +
  * panel width — `src/lib/panelDocks.ts`). At the reading width that means
  * pushing from 1440 up; below that, or at the wide tier, it floats over the
- * right edge and the page keeps its columns.
+ * right edge and the page keeps its columns. Thread switching is the title
+ * (`CopilotThreadSwitcher`); the old sessions rail is not mounted here.
  */
 export function CopilotDock() {
-  const { open, wide, sessionsOpen, close, toggleWide, toggleSessions } = useCopilotDock()
+  const { open, wide, close, toggleWide } = useCopilotDock()
   const { streaming, messages, sessionId } = useCopilotSession()
   const [bridgeOpen, setBridgeOpen] = useState(false)
   const [viewport, setViewport] = useState(() => window.innerWidth)
@@ -89,7 +81,6 @@ export function CopilotDock() {
   const width = wide ? COPILOT_DOCK_WIDTH_WIDE : COPILOT_DOCK_WIDTH
   const overlay = !copilotDockPushes({ open, wide }, viewport)
   const mobile = viewport < 768
-  const showRail = sessionsOpen && width >= RAIL_MIN_DOCK_W
 
   return (
     <Suspense fallback={null}>
@@ -124,29 +115,6 @@ export function CopilotDock() {
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
-            {width >= RAIL_MIN_DOCK_W ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={toggleSessions}
-                    aria-label={sessionsOpen ? 'Hide threads' : 'Show threads'}
-                    aria-pressed={sessionsOpen}
-                  >
-                    {sessionsOpen ? (
-                      <PanelLeftClose className="h-3.5 w-3.5" />
-                    ) : (
-                      <PanelLeftOpen className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {sessionsOpen ? 'Hide threads' : 'Thread history'}
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -193,20 +161,6 @@ export function CopilotDock() {
         </header>
 
         <div className="flex min-h-0 flex-1">
-          {showRail ? (
-            <div
-              className="hidden shrink-0 flex-col border-r border-border bg-background md:flex"
-              style={{ width: SESSIONS_RAIL_W }}
-            >
-              <div className="flex items-center gap-1.5 border-b border-border bg-secondary px-2.5 py-2">
-                <History className="h-3.5 w-3.5 text-primary" />
-                <span className="text-dense-label font-semibold text-foreground">Chat history</span>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
-                <SessionListSidebar onLoaded={() => undefined} />
-              </div>
-            </div>
-          ) : null}
           <div className="flex min-w-0 flex-1 flex-col bg-card p-3">
             <CockpitTabs />
           </div>

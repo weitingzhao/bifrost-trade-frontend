@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
  * Thread switching used to live only on the ≥760 sessions rail, so the 440
- * reading dock had no way to change threads. The title switcher must render
- * at both widths; the rail toggle stays wide-only until C2-a2 removes it.
+ * reading dock had no way to change threads. The title switcher is the
+ * switcher at both widths; the rail is gone (C2-a2).
  */
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -20,9 +20,6 @@ vi.mock('@/components/cockpit/BridgeDialog', () => ({
 }))
 vi.mock('@/components/cockpit/ExportSessionMenu', () => ({
   ExportSessionMenu: () => null,
-}))
-vi.mock('@/components/cockpit/SessionListSidebar', () => ({
-  SessionListSidebar: () => <div data-testid="sessions-rail" />,
 }))
 vi.mock('@/components/auth/ResearchUserSwitcher', () => ({
   ResearchUserSwitcher: () => null,
@@ -84,10 +81,10 @@ describe('CopilotDock thread switcher', () => {
     expect(screen.getByRole('button', { name: 'Switch thread' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Hide threads' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Show threads' })).toBeNull()
-    expect(screen.queryByTestId('sessions-rail')).toBeNull()
+    expect(screen.queryByText('Chat history')).toBeNull()
   })
 
-  it('keeps Switch thread at 760, where the sessions rail still fits', async () => {
+  it('keeps Switch thread at 760, with no sessions rail', async () => {
     copilotDockStore.getState().open_()
     copilotDockStore.getState().setWide(true)
     copilotDockStore.getState().setSessionsOpen(true)
@@ -95,7 +92,9 @@ describe('CopilotDock thread switcher', () => {
     const aside = await screen.findByRole('complementary', { name: 'Research Copilot' })
     expect(aside.style.width).toBe('760px')
     expect(screen.getByRole('button', { name: 'Switch thread' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Hide threads' })).toBeTruthy()
-    expect(screen.getByTestId('sessions-rail')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Hide threads' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Show threads' })).toBeNull()
+    expect(screen.queryByText('Chat history')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'New chat' })).toBeNull()
   })
 })

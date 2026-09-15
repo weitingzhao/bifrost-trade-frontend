@@ -36,10 +36,11 @@ import {
 import { openCopilotSession } from '@/lib/copilot/openCopilotSession'
 
 /**
- * Session history rail (Wave RS-UX3 → RS-UX5, QA follow-up).
+ * Session history module (Wave RS-UX3 → RS-UX5, QA follow-up).
  *
- * Sits in the left column of `CopilotDock` when the user has the
- * rail visible.  Delivers full session management:
+ * The Copilot dock no longer mounts this (C2-a2 / §11.2.1): switching is
+ * the title menu. The file stays because pin / rename / archive / groups
+ * still live here; Desk Threads is a different table. Do not delete.
  *   - `+ New chat` primary button
  *   - Pinned group at the top
  *   - Custom groups (folders) — user-defined labels via row menu → "Move to group"

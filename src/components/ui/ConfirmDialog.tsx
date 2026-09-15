@@ -22,6 +22,11 @@ export interface ConfirmDialogProps {
    * like the destructive action "did nothing".
    */
   stackLayer?: 'default' | 'elevated'
+  /**
+   * Archive and other non-deletes stay the default button. True deletes keep
+   * `destructive` (the default) so red still means gone.
+   */
+  confirmVariant?: 'default' | 'destructive'
   onConfirm: () => void
   onCancel: () => void
 }
@@ -34,6 +39,7 @@ export function ConfirmDialog({
   confirming = false,
   bodyExtra,
   stackLayer = 'elevated',
+  confirmVariant = 'destructive',
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -49,7 +55,7 @@ export function ConfirmDialog({
           <Button variant="outline" disabled={confirming} onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="destructive" disabled={confirming} onClick={onConfirm}>
+          <Button variant={confirmVariant} disabled={confirming} onClick={onConfirm}>
             {confirming ? '…' : confirmLabel}
           </Button>
         </DialogFooter>

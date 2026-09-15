@@ -7,7 +7,7 @@
  */
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useQueries, useQueryClient } from '@tanstack/react-query'
-import { ArrowUpRight, MessageCircle, MoreHorizontal, Pencil, Pin, PinOff, Search, Trash2 } from 'lucide-react'
+import { ArrowUpRight, Archive, MessageCircle, MoreHorizontal, Pencil, Pin, PinOff, Search } from 'lucide-react'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -341,11 +341,8 @@ export function Threads() {
                           <DropdownMenuItem onSelect={() => setRenamingId(row.id)}>
                             <Pencil className="mr-2 size-3.5" /> Rename
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => setArchiveTarget(row)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="mr-2 size-3.5" /> Archive
+                          <DropdownMenuItem onSelect={() => setArchiveTarget(row)}>
+                            <Archive className="mr-2 size-3.5" /> Archive
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -373,6 +370,7 @@ export function Threads() {
             : ''
         }
         confirmLabel="Archive"
+        confirmVariant="default"
         confirming={archiving}
         onConfirm={() => void confirmArchive()}
         onCancel={() => setArchiveTarget(null)}

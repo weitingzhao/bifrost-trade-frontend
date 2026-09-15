@@ -95,7 +95,13 @@ describe('design adoption', () => {
     // dissolves elsewhere, plus Backtest, handed to Lab. Symbol and Plans left:
     // the design keeps both pages.
     expect(counts.byState.moving).toBe(10)
-    expect(counts.byState.staging).toBe(2)
+    // Design 2026-09-15 answered the one open question `/research` was asking:
+    // it is Overview. A redirect is not a page, so the row leaves the walk
+    // (staging 2 → 1) and only `/research/stock-screener` is still asking.
+    expect(counts.byState.staging).toBe(1)
+    expect(rows.filter((r) => r.state === 'staging').map((r) => r.path)).toEqual([
+      '/research/stock-screener',
+    ])
     // Rev 2026-09-15.5: registry dropped /docs/omnibar (it was a designed
     // prototype with no app page → unbuilt 34→33). Denominator 64→63.
     // Stub backlog unchanged (25). Pending 19, then 18 once Backing & Model

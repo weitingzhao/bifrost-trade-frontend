@@ -1,11 +1,12 @@
 import type { ComponentType } from 'react'
 import type { RouteObject } from 'react-router-dom'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom'
 import { LabRedirect } from '@/pages/research/analyze/hub/LabRedirect'
 import { AppLayout } from '@/layout/AppLayout'
 import RouteErrorPage from '@/pages/RouteErrorPage'
 import { REDIRECT_ROUTES } from '@/layout/routeRegistry'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
+import { redirectTargetFor } from '@/lib/redirectTarget'
 
 /** Eager — high-traffic monitoring entry points */
 
@@ -27,18 +28,23 @@ function lazyPage(
  * path is one line there.
  *
  * Two mechanisms, and the target picks which: a redirect to the Symbol page is
- * a redirect to a *tab*, so it has to carry the reader's `?symbol=` and land on
- * the right section — `LabRedirect` does that through `analyzeRedirect`. Every
- * other target is a page, where a plain `<Navigate>` is the whole job.
+ * a redirect to a *tab*, so it has to land on the right section — `LabRedirect`
+ * does that through `analyzeRedirect`. Every other target is a page, where
+ * forwarding the reader's query and hash is the whole job.
  */
-function redirectRoutes(): RouteObject[] {
+function RedirectKeepingQuery({ to }: { to: string }) {
+  const location = useLocation()
+  return <Navigate to={redirectTargetFor(to, location.search, location.hash)} replace />
+}
+
+export function redirectRoutes(): RouteObject[] {
   return REDIRECT_ROUTES.map((entry) => ({
     path: entry.path.slice(1),
     element:
       entry.redirect === SYMBOL_PATH ? (
         <LabRedirect from={entry.path} />
       ) : (
-        <Navigate to={entry.redirect} replace />
+        <RedirectKeepingQuery to={entry.redirect} />
       ),
   }))
 }
@@ -51,10 +57,6 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/research" replace /> },
       ...redirectRoutes(),
-      {
-        path: 'research',
-        lazy: lazyPage(() => import('@/pages/research/home/ResearchHomePage')),
-      },
       {
         path: 'research/overview',
         lazy: lazyPage(() => import('@/pages/research/seats/ResearchOverviewPage')),

@@ -1,9 +1,9 @@
 /**
  * Research Home aggregator (Wave RS-A4).
  *
- * Pulls today's snapshot from the four Discovery-tier sources so the
- * ResearchHomePage can render a "Today's Discoveries" strip alongside
- * active Hypotheses without touching each engine's page.
+ * Pulls today's snapshot from the four Discovery-tier sources so Overview and
+ * Workbench can render a "Today's Discoveries" strip alongside active
+ * Hypotheses without touching each engine's page.
  *
  * Empty/degraded sources return empty arrays instead of surfacing errors —
  * the Home page renders graceful EmptyState per column.

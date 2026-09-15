@@ -90,14 +90,11 @@ const DOCS = ['System', 'Reference'] as const
 
 export const ROUTES: readonly RouteEntry[] = [
   // ── Research · home and seats ──────────────────────────────────────────
-  {
-    path: '/research',
-    label: 'Research',
-    design: {
-      state: 'staging',
-      note: 'The Research landing. The design has Overview and the three seat homes but no group root — is this Overview, or does it go?',
-    },
-  },
+  // The design has Overview and the seat homes but no group root, and answered
+  // the open question on 2026-09-15: `/research` is Overview. It forwards
+  // rather than rendering a landing of its own, so the group has one root and
+  // one page behind it.
+  { path: '/research', label: 'Research', redirect: '/research/overview' },
   { path: '/research/overview', label: 'Overview', crumbs: RESEARCH },
   { path: '/research/workbench', label: 'Workbench', crumbs: RESEARCH },
 

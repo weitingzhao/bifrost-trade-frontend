@@ -19,8 +19,7 @@ interface Props {
 
 /**
  * Copilot chat body — messages, composer, trace.
- * Session history is hosted in the parent panel's left rail (RS-UX3),
- * so this component no longer renders its own inline session list.
+ * Thread switching is the dock title (`CopilotThreadSwitcher`).
  */
 export function CopilotChatBody({ className }: Props) {
   const {
@@ -35,7 +34,6 @@ export function CopilotChatBody({ className }: Props) {
     sessionId,
     send,
     stop,
-    setModel,
     approveWrite,
     rejectWrite,
     setTraceCollapsed,
@@ -112,7 +110,6 @@ export function CopilotChatBody({ className }: Props) {
       />
       <CopilotComposer
         model={model}
-        onModelChange={setModel}
         onSend={send}
         onStop={stop}
         streaming={streaming}

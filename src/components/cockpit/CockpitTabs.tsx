@@ -16,12 +16,10 @@ import { cn } from '@/lib/utils'
  * Those surfaces now sit where their job is done:
  *   inbox   → `InboxBanner` above the message list
  *   context → `CopilotContextPopover` on the composer chip
- *   actions → `AgentActionsMenu` in the composer (Lab links dropped — the
- *             sidebar already routes to every one of them)
- *   pins    → `PinsSection` in the session rail
+ *   actions → `AgentActionsMenu` (Run ▾) in the composer
  *
  * What is left is a single work surface plus a settings view reachable from the
- * panel's More menu, so the panel reads as: rail (jump) · chat (work) ·
+ * panel's More menu, so the panel reads as: title (jump) · chat (work) ·
  * composer (context + command).
  */
 export function CockpitTabs({ className }: { className?: string }) {

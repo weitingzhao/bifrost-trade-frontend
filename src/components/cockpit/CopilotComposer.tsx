@@ -1,87 +1,16 @@
-import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { Select as SelectPrimitive } from 'radix-ui'
-import { CheckIcon, Crosshair, Send, Square, X } from 'lucide-react'
+import { useState, type FormEvent, type KeyboardEvent } from 'react'
+import { Crosshair, Send, Square, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AgentActionsMenu } from '@/components/cockpit/AgentActionsMenu'
 import { CopilotContextPopover } from '@/components/cockpit/CopilotContextPopover'
 import { CopilotFreshness } from '@/components/cockpit/CopilotFreshness'
 import { CopilotPromptLangToggle } from '@/components/cockpit/CopilotPromptLangToggle'
-import {
-  Select,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { CopilotSpendHint } from '@/components/copilot/CopilotSpendHint'
 import { cn } from '@/lib/utils'
-import { COPILOT_MODELS, PROVIDER_LABELS, type CopilotModelId } from '@/lib/cockpit/modelCatalog'
-import {
-  COPILOT_MODEL_PICKER_HINT,
-  getModelPracticalAdvice,
-} from '@/lib/cockpit/modelPickerAdvice'
-import {
-  TIER_LABELS,
-  TIER_ORDER,
-  compareModels,
-  getModelMeta,
-  modelPickerPrefs,
-  type ModelTier,
-} from '@/lib/cockpit/modelPreferences'
-import { useCopilotModels } from '@/hooks/useCopilotModels'
-import {
-  askCopilotIntentStore,
-  useAskCopilotIntent,
-} from '@/store/askCopilotIntentStore'
+import type { CopilotModelId } from '@/lib/cockpit/modelCatalog'
+import { askCopilotIntentStore, useAskCopilotIntent } from '@/store/askCopilotIntentStore'
 import { copilotViewStore, useCopilotView } from '@/store/copilotViewStore'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
-
-type ModelOption = {
-  id: CopilotModelId | string
-  label: string
-  provider: keyof typeof PROVIDER_LABELS
-  note: string | null
-}
-
-/**
- * Custom select row.  We put the (visible) model label inside
- * `SelectPrimitive.ItemText` — Radix uses it to render the trigger value
- * and to power keyboard type-ahead.  The advice line sits below as an
- * independent span, and the check indicator lives in an absolutely
- * positioned corner so it never re-flows the two-line layout.
- */
-function ModelSelectItem({
-  value,
-  label,
-  advice,
-}: {
-  value: string
-  label: string
-  advice: string
-}) {
-  return (
-    <SelectPrimitive.Item
-      value={value}
-      textValue={`${label} ${advice}`}
-      className={cn(
-        'group relative flex w-full cursor-default select-none flex-col rounded-md px-2 py-1.5 pr-8',
-        'text-dense-meta outline-none',
-        'focus:bg-accent focus:text-accent-foreground',
-        'data-disabled:pointer-events-none data-disabled:opacity-50',
-      )}
-    >
-      <SelectPrimitive.ItemText asChild>
-        <span className="text-dense-label font-medium text-foreground">{label}</span>
-      </SelectPrimitive.ItemText>
-      <span className="mt-0.5 text-dense-caption leading-snug text-muted-foreground line-clamp-2">
-        {advice}
-      </span>
-      <span className="pointer-events-none absolute right-2 top-2 flex size-4 items-center justify-center">
-        <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="size-3.5 text-primary" />
-        </SelectPrimitive.ItemIndicator>
-      </span>
-    </SelectPrimitive.Item>
-  )
-}
 
 function contextChipLabel(ctx: { originLabel: string; symbol?: string; date?: string }): string {
   const parts = [ctx.originLabel]
@@ -92,14 +21,12 @@ function contextChipLabel(ctx: { originLabel: string; symbol?: string; date?: st
 
 export function CopilotComposer({
   model,
-  onModelChange,
   onSend,
   onStop,
   streaming = false,
   disabled,
 }: {
   model: CopilotModelId
-  onModelChange: (id: CopilotModelId) => void
   onSend: (text: string) => void
   onStop?: () => void
   streaming?: boolean
@@ -112,7 +39,6 @@ export function CopilotComposer({
     <ComposerForm
       key={intent.nonce}
       model={model}
-      onModelChange={onModelChange}
       onSend={onSend}
       onStop={onStop}
       streaming={streaming}
@@ -125,7 +51,6 @@ export function CopilotComposer({
 
 function ComposerForm({
   model,
-  onModelChange,
   onSend,
   onStop,
   streaming = false,
@@ -134,7 +59,6 @@ function ComposerForm({
   autoFocus,
 }: {
   model: CopilotModelId
-  onModelChange: (id: CopilotModelId) => void
   onSend: (text: string) => void
   onStop?: () => void
   streaming?: boolean
@@ -146,61 +70,6 @@ function ComposerForm({
   const [lang] = useCopilotPromptLang()
   const { view, suppressed } = useCopilotView()
   const showChip = Boolean(view && !suppressed)
-  const { data: modelData } = useCopilotModels()
-  const hidden = modelPickerPrefs.useHidden()
-
-  const options: ModelOption[] = useMemo(() => {
-    const rows = modelData?.available ?? []
-    const src =
-      rows.length > 0
-        ? rows.map((m) => ({
-            id: m.id,
-            label: m.label,
-            provider: m.provider as keyof typeof PROVIDER_LABELS,
-            note: m.note ?? null,
-          }))
-        : COPILOT_MODELS.map((m) => ({
-            id: m.id,
-            label: m.label,
-            provider: m.provider,
-            note: null as string | null,
-          }))
-    return [...src].sort((a, b) => compareModels(a.id, b.id))
-  }, [modelData])
-
-  useEffect(() => {
-    if (!modelData) return
-    const ids = new Set(modelData.available.map((m) => m.id))
-    if (ids.size === 0) return
-    if (!ids.has(model) && modelData.default) {
-      onModelChange(modelData.default as CopilotModelId)
-    }
-  }, [modelData, model, onModelChange])
-
-  const active = options.find((m) => m.id === model)
-  const practicalAdvice = getModelPracticalAdvice(model, active?.note)
-
-  // Hidden ids get filtered out — but the currently active one always
-  // stays visible so the trigger label stays consistent with the user's
-  // choice even if they hide it in Settings after selecting.
-  const visibleOptions = useMemo(
-    () => options.filter((m) => m.id === model || !hidden.has(m.id)),
-    [options, hidden, model],
-  )
-
-  const byTier = useMemo(() => {
-    const acc: Record<ModelTier, ModelOption[]> = {
-      recommended: [],
-      reasoning: [],
-      advanced: [],
-      trial: [],
-    }
-    for (const m of visibleOptions) {
-      acc[getModelMeta(m.id).tier].push(m)
-    }
-    return acc
-  }, [visibleOptions])
-
   const inputDisabled = disabled
   const canSend = !inputDisabled && text.trim().length > 0
 
@@ -235,8 +104,6 @@ function ComposerForm({
           'focus-within:border-primary/35 focus-within:ring-1 focus-within:ring-primary/15',
         )}
       >
-        {/* Context chip doubles as the session-context editor (RS-UX6): the old
-            `Context` tab was a third place showing the same symbol/date. */}
         <div className="flex items-center gap-1 px-2 pt-1.5">
           {showChip && view ? (
             <span
@@ -277,8 +144,6 @@ function ComposerForm({
           <div className="ml-auto" aria-hidden />
           <AgentActionsMenu disabled={inputDisabled} />
         </div>
-        {/* Under the chips, above the box: how old the ground is, before you
-            ask for something built on it. */}
         <CopilotFreshness />
         <textarea
           data-testid="copilot-composer-input"
@@ -306,77 +171,15 @@ function ComposerForm({
           )}
         />
 
-        {/* Footer: model + send. The always-on advice paragraph used to live here
-            and out-weighed the send button for what is a set-once decision
-            (program research-copilot-reach P4) — it now shows only on hover/focus
-            of the picker, and in full inside the picker panel. */}
         <div className="flex items-center gap-2 border-t border-border/40 px-2 py-1.5">
-          <CopilotPromptLangToggle showLabel={false} className="shrink-0" />
-          <Select
-            value={model}
-            onValueChange={(v) => onModelChange(v as CopilotModelId)}
-            disabled={inputDisabled}
-          >
-            <SelectTrigger
-              size="sm"
-              className={cn(
-                'h-7 shrink-0 gap-1 border-border/50 bg-card px-2 shadow-none',
-                'text-dense-caption font-medium',
-                'w-auto min-w-[8.5rem] max-w-[14rem]',
-                '[&_[data-slot=select-value]]:line-clamp-none',
-                '[&_[data-slot=select-value]]:whitespace-nowrap',
-              )}
-              aria-label="Model"
-              title={practicalAdvice}
-            >
-              <SelectValue placeholder="Model">{active?.label ?? model}</SelectValue>
-            </SelectTrigger>
-            <SelectContent
-              align="start"
-              position="popper"
-              side="top"
-              sideOffset={6}
-              className={cn(
-                'z-[250] min-w-[min(22rem,calc(100vw-2rem))] max-w-[26rem]',
-                'border border-border bg-card text-foreground shadow-lg',
-                'max-h-[min(360px,55vh)] p-1',
-              )}
-            >
-              <div className="mx-0.5 mb-1 rounded-md border border-border/50 bg-secondary px-2 py-1.5 text-dense-caption leading-snug text-foreground/85">
-                {COPILOT_MODEL_PICKER_HINT}
-              </div>
-              {TIER_ORDER.map((tier) => {
-                const rows = byTier[tier]
-                if (rows.length === 0) return null
-                return (
-                  <SelectPrimitive.Group key={tier} className="p-0.5">
-                    <SelectPrimitive.Label className="px-2 pb-0.5 pt-1 text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
-                      {TIER_LABELS[tier]}
-                    </SelectPrimitive.Label>
-                    {rows.map((m) => (
-                      <ModelSelectItem
-                        key={m.id}
-                        value={m.id}
-                        label={m.label}
-                        advice={getModelPracticalAdvice(m.id, m.note)}
-                      />
-                    ))}
-                  </SelectPrimitive.Group>
-                )
-              })}
-            </SelectContent>
-          </Select>
-
-          {/* Advice stays reachable (title tooltip on the picker + full text in
-              the picker panel) without permanently occupying the row. */}
+          <CopilotSpendHint model={model} />
           <div className="min-w-0 flex-1" aria-hidden />
-
+          <CopilotPromptLangToggle showLabel={false} className="shrink-0" />
           {streaming ? (
             <span className="shrink-0 text-dense-caption text-muted-foreground">
               {lang === 'zh' ? '生成中…' : 'Generating…'}
             </span>
           ) : null}
-
           {streaming && onStop ? (
             <Button
               type="button"

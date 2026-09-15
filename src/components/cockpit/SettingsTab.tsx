@@ -95,7 +95,7 @@ export function SettingsTab() {
           <div className="min-w-0">
             <p className="text-dense-label font-medium">Model</p>
             <p className="text-dense-caption leading-snug text-muted-foreground">
-              开关控制是否显示在聊天框的下拉里；点击行切换当前使用的模型。
+              Click a row to use that model. Preference persists in localStorage.
             </p>
           </div>
           {isLoading ? (

@@ -1,15 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import {
   Beaker,
-  BookmarkPlus,
   ChevronRight,
   Moon,
   Play,
-  RefreshCw,
   Sparkles,
   Sunrise,
-  Terminal,
-  Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,7 +19,6 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useCockpitContext } from '@/hooks/useCockpitContext'
 import { useCockpitPins } from '@/hooks/useCockpitPins'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
 import {
@@ -33,18 +28,17 @@ import {
   useRunObjective,
 } from '@/hooks/useLoopHarness'
 import { useRunEodAgent, useRunMorningAgent } from '@/hooks/useResearchDrafts'
-import { openCopilotInbox } from '@/lib/harness/loopCopilotPrefill'
 import { copilotDockStore } from '@/hooks/useCopilotDock'
-import { saveHypothesisIntentStore } from '@/store/saveHypothesisIntentStore'
+import { cn } from '@/lib/utils'
 
 /**
- * Agent + workspace commands (Wave RS-UX6 + HC-2 Loop).
+ * Run ▾ — only actions that produce a draft (C2-a3 / §11.2 composer).
  *
+ * Navigation (Inbox, Autopilot, Save as Hypothesis) left the composer.
  * D10: observe-only. Nothing here places or arms an order.
  */
 export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
   const navigate = useNavigate()
-  const ctx = useCockpitContext()
   const pins = useCockpitPins()
   const hypId = pins.focusedHypothesisId ?? pins.hypothesisIds[0] ?? null
   const morning = useRunMorningAgent()
@@ -89,12 +83,15 @@ export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
           variant="ghost"
           size="sm"
           disabled={disabled}
-          className="h-6 shrink-0 gap-1 px-1.5 text-dense-caption text-muted-foreground hover:text-foreground"
-          aria-label="Agent actions"
-          title="Agent actions"
+          className={cn(
+            'h-6 shrink-0 gap-1 px-1.5 text-dense-caption text-muted-foreground hover:text-foreground',
+            busy && 'text-primary',
+          )}
+          aria-label="Run"
+          title="Run now — drafts land in the inbox"
         >
-          <Zap className={busy ? 'size-3 animate-pulse text-primary' : 'size-3'} />
-          Agents
+          Run
+          <span className="text-dense-caption font-normal">▾</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" className="z-[250] min-w-[15rem]">
@@ -188,39 +185,6 @@ export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
           ) : null}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onSelect={(e) => {
-            e.preventDefault()
-            openCopilotInbox()
-          }}
-        >
-          <RefreshCw className="mr-2 size-3.5" />
-          <span className="flex-1">Open Decision Inbox</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={() => navigate('/research/loop/harness')}
-        >
-          <Terminal className="mr-2 size-3.5" />
-          <span className="flex-1">Open Autopilot</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-dense-caption font-normal text-muted-foreground">
-          This session
-        </DropdownMenuLabel>
-        <DropdownMenuItem
-          onSelect={() =>
-            saveHypothesisIntentStore.open({
-              originPage: 'cockpit',
-              defaultTitle: `${ctx.symbol} research note`,
-              defaultSymbols: [ctx.symbol],
-              defaultTags: ['cockpit'],
-            })
-          }
-        >
-          <BookmarkPlus className="mr-2 size-3.5" />
-          Save as Hypothesis
-        </DropdownMenuItem>
-        <DropdownMenuItem
           disabled={!hypId}
           onSelect={() => {
             if (!hypId) return
@@ -230,7 +194,7 @@ export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
           }}
         >
           <Beaker className="mr-2 size-3.5" />
-          <span className="flex-1">Run Event Query</span>
+          <span className="flex-1">Event query</span>
           {!hypId ? (
             <span className="text-dense-micro text-muted-foreground">pin one</span>
           ) : null}

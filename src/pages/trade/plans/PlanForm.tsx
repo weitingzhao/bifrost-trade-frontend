@@ -13,14 +13,21 @@ import { Button } from '@/components/ui/button'
 import { useStructures } from '@/hooks/useStrategies'
 import { usePlanAccounts } from '@/hooks/usePlanAccounts'
 import { useCreateStrategyPlan, useUpdateStrategyPlan } from '@/hooks/useStrategyPlans'
+import {
+  planLegsFromContract,
+  type PlanLegDraft,
+} from '@/lib/plans/planLegFromContract'
 import type { PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { NOT_COMPUTED, NOT_COMPUTED_HINT } from './PlansTable'
 
 const FIELD = 'h-6 w-full rounded border border-border bg-background px-1.5 text-dense-label'
 const LABEL = 'text-dense-micro uppercase tracking-wide text-muted-foreground'
+const CHOOSE_SIDE = 'Choose buy or sell'
+
+type LegSide = 'sell' | 'buy' | ''
 
 type LegDraft = {
-  side: 'sell' | 'buy'
+  side: LegSide
   sec_type: 'OPT' | 'STK'
   right: '' | 'C' | 'P'
   strike: string
@@ -29,7 +36,37 @@ type LegDraft = {
 }
 
 function emptyLeg(): LegDraft {
-  return { side: 'sell', sec_type: 'OPT', right: 'P', strike: '', expiry: '', ratio: '1' }
+  return { side: '', sec_type: 'OPT', right: 'P', strike: '', expiry: '', ratio: '1' }
+}
+
+function contractToDraft(draft: PlanLegDraft): LegDraft {
+  return {
+    side: '',
+    sec_type: draft.sec_type,
+    right: draft.right,
+    strike: String(draft.strike),
+    expiry: draft.expiry,
+    ratio: String(draft.ratio),
+  }
+}
+
+function contractSources(plan: StrategyPlan | null): { text: string; drafts: PlanLegDraft[] }[] {
+  if (!plan) return []
+  return plan.source_json
+    .filter((entry) => entry.kind === 'contract' && (entry.text ?? '').trim() !== '')
+    .map((entry) => ({
+      text: entry.text as string,
+      drafts: planLegsFromContract(entry.text),
+    }))
+    .filter((row) => row.drafts.length > 0)
+}
+
+function isBlankLeg(leg: LegDraft): boolean {
+  return leg.side === '' && leg.strike.trim() === '' && leg.expiry.trim() === ''
+}
+
+function writtenLeg(leg: LegDraft): boolean {
+  return leg.strike.trim() !== '' || leg.expiry.trim() !== '' || leg.side !== ''
 }
 
 function legToDraft(leg: PlanLeg): LegDraft {
@@ -45,6 +82,9 @@ function legToDraft(leg: PlanLeg): LegDraft {
 
 /** Empty fields drop out; the server owns the rules about which combinations hold. */
 function draftToLeg(draft: LegDraft): PlanLeg {
+  if (draft.side !== 'buy' && draft.side !== 'sell') {
+    throw new Error(CHOOSE_SIDE)
+  }
   return {
     side: draft.side,
     sec_type: draft.sec_type,
@@ -118,17 +158,32 @@ export function PlanForm({
   const [exitBy, setExitBy] = useState(editing?.exit_by ?? '')
   const [expiresAt, setExpiresAt] = useState(editing?.expires_at?.slice(0, 10) ?? '')
   const [rationale, setRationale] = useState(editing?.rationale ?? '')
+  const [sideBlocked, setSideBlocked] = useState(false)
 
   const pending = create.isPending || update.isPending
   const error = (create.error ?? update.error) as Error | null | undefined
+  const fromContract = contractSources(editing)
 
   function setLeg(index: number, patch: Partial<LegDraft>) {
     setLegs((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)))
   }
 
+  function addFromContract(drafts: PlanLegDraft[]) {
+    setLegs((rows) => {
+      const added = drafts.map(contractToDraft)
+      const onlyBlank = rows.length === 1 && isBlankLeg(rows[0])
+      return onlyBlank ? added : [...rows, ...added]
+    })
+  }
+
   function submit(event: React.FormEvent) {
     event.preventDefault()
-    const written = legs.filter((leg) => leg.strike.trim() !== '' || leg.expiry.trim() !== '')
+    const written = legs.filter(writtenLeg)
+    if (written.some((leg) => leg.side !== 'buy' && leg.side !== 'sell')) {
+      setSideBlocked(true)
+      return
+    }
+    setSideBlocked(false)
     const body = {
       account_id: accountId.trim(),
       symbol: symbol.trim().toUpperCase(),
@@ -245,8 +300,20 @@ export function PlanForm({
         </div>
 
         <section className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className={LABEL}>Legs</span>
+            {fromContract.map((row) => (
+              <Button
+                key={row.text}
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-5 px-1.5 text-dense-micro"
+                onClick={() => addFromContract(row.drafts)}
+              >
+                Add leg from {row.text}
+              </Button>
+            ))}
             <Button
               type="button"
               size="sm"
@@ -259,13 +326,15 @@ export function PlanForm({
           </div>
           <div className="space-y-1">
             {legs.map((leg, i) => (
-              <div key={i} className="flex items-center gap-1">
+              <div key={i} className="space-y-0.5">
+              <div className="flex items-center gap-1">
                 <select
                   aria-label={`Leg ${i + 1} side`}
-                  className={`${FIELD} w-16`}
+                  className={`${FIELD} w-24`}
                   value={leg.side}
                   onChange={(e) => setLeg(i, { side: e.target.value as LegDraft['side'] })}
                 >
+                  <option value="">Choose…</option>
                   <option value="sell">Sell</option>
                   <option value="buy">Buy</option>
                 </select>
@@ -321,6 +390,10 @@ export function PlanForm({
                 >
                   ✕
                 </Button>
+              </div>
+              {sideBlocked && writtenLeg(leg) && (leg.side !== 'buy' && leg.side !== 'sell') ? (
+                <p className="text-dense-micro text-destructive">{CHOOSE_SIDE}</p>
+              ) : null}
               </div>
             ))}
           </div>

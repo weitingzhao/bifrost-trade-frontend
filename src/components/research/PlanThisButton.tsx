@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { usePlanAccounts } from '@/hooks/usePlanAccounts'
 import { useCreateStrategyPlan } from '@/hooks/useStrategyPlans'
-import { planLegsFromContract } from '@/lib/plans/planLegFromContract'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
@@ -54,7 +53,9 @@ export function PlanThisButton({
         symbol: sym,
         structure_label: 'Unspecified',
         qty: 1,
-        legs: planLegsFromContract(contract),
+        // The contract label never carries a side, so the draft is posted
+        // without legs. The card keeps the label under source kind=contract.
+        legs: [],
         rationale: note ?? null,
         source_kind: 'symbol',
         source_ref: source,

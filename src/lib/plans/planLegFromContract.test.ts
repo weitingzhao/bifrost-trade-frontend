@@ -2,26 +2,24 @@ import { describe, expect, it } from 'vitest'
 import { planLegsFromContract } from './planLegFromContract'
 
 describe('planLegsFromContract', () => {
-  it('reads the chain’s label into one leg', () => {
+  it('reads the chain’s label into a draft with no side', () => {
     expect(planLegsFromContract('NVDA 2026-11-20 245C')).toEqual([
       {
-        side: 'sell',
         sec_type: 'OPT',
         right: 'C',
         strike: 245,
         expiry: '2026-11-20',
         ratio: 1,
         contract_key: 'NVDA|OPT|20261120|245|C',
-        mid_at_plan: null,
-        quote_asof: null,
       },
     ])
+    expect(planLegsFromContract('NVDA 2026-11-20 245C')[0]).not.toHaveProperty('side')
   })
 
   it('reads both legs of a vertical, in the order they were written', () => {
     const legs = planLegsFromContract('NVDA 2026-11-20 245C / NVDA 2026-11-20 250C')
     expect(legs.map((l) => l.strike)).toEqual([245, 250])
-    expect(legs.every((l) => l.side === 'sell')).toBe(true)
+    expect(legs.every((l) => !('side' in l))).toBe(true)
   })
 
   it('keeps a fractional strike as written', () => {

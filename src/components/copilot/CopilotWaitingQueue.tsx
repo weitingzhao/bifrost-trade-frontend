@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
-import { digestExhibits, digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
-import { draftAskedBy, draftKindLabel, draftLandsIn, draftTitle } from '@/lib/harness/draftText'
+import { digestExhibits, isDailyDigest } from '@/lib/harness/dailyDigest'
+import { draftAskedBy, draftLandsIn, draftTitle } from '@/lib/harness/draftText'
 import {
   openDigestInCopilot,
   openDraftInCopilot,
@@ -9,40 +9,31 @@ import {
 } from '@/lib/harness/loopCopilotPrefill'
 import { useCockpitDrawer } from '@/hooks/useCockpitDrawer'
 import {
+  DRAFTS_PAGE_MAX,
   useApproveDraft,
   useDismissDraft,
   useResearchDrafts,
 } from '@/hooks/useResearchDrafts'
 import { useActiveObjectives, useAwaitingRuns } from '@/hooks/useLoopHarness'
 import {
+  waitingBriefingDrafts,
+  waitingQueueCallCount,
   waitingQueueHeadline,
-  waitingQueueShowsApprove,
-  waitingQueueShowsDismiss,
+  waitingQueueItems,
   waitingQueueSummary,
-  waitingQueueTotal,
 } from '@/lib/copilot/waitingQueue'
 import { cn } from '@/lib/utils'
 
-type QueueKind = 'digest' | 'draft' | 'run'
-
-type QueueRow = {
-  key: string
-  kind: QueueKind
-  kindLabel: string
-  what: string
-  ask: () => void
-  approve?: () => void
-  dismiss?: () => void
-}
-
 /**
- * Inbox drafts and awaiting loop runs as one collapsed row. Chat writes stay
- * in the thread (C2-a5 option a). InboxBanner / LoopBanner files remain (R4).
+ * The Desk / Inbox waiting queue, one collapsed row. Same fetch and the same
+ * call-count as the Decision Inbox badge. Chat writes stay in the thread.
+ * InboxBanner / LoopBanner files remain (R4).
  */
 export function CopilotWaitingQueue({ className }: { className?: string }) {
   const { inboxOpen, setInboxOpen } = useCockpitDrawer()
   const draftsQ = useResearchDrafts({
     status: 'pending',
+    limit: DRAFTS_PAGE_MAX,
     refetchIntervalMs: 15_000,
   })
   const approve = useApproveDraft()
@@ -57,81 +48,35 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
     return map
   }, [objectivesQ.data?.items])
 
-  const draftRows = digestFirst(draftsQ.data?.rows ?? [])
-  const draftPending = draftsQ.data?.pending_count ?? draftRows.length
-  const runRows = awaitingQ.data?.items ?? []
-  const runCount = awaitingQ.data?.count ?? runRows.length
-  const digest = draftRows.find(isDailyDigest)
-  const n = waitingQueueTotal(draftPending, runCount)
+  const draftRows = draftsQ.data?.rows
+  const runRows = awaitingQ.data?.items
+  const callCount = waitingQueueCallCount(draftRows ?? [])
+  const items = useMemo(
+    () => waitingQueueItems(draftRows ?? [], runRows ?? [], objectiveTitleById),
+    [draftRows, objectiveTitleById, runRows],
+  )
+  const briefingDraftCount = waitingBriefingDrafts(draftRows ?? []).length
+  const runCount = awaitingQ.data?.count ?? runRows?.length ?? 0
+  const n = callCount
   const summary = waitingQueueSummary({
-    digest: Boolean(digest),
-    draftPending,
+    briefingCount: briefingDraftCount,
     runCount,
   })
-
-  const rows: QueueRow[] = useMemo(() => {
-    const out: QueueRow[] = []
-    for (const draft of draftRows) {
-      const kind: QueueKind = isDailyDigest(draft) ? 'digest' : 'draft'
-      out.push({
-        key: `draft:${draft.id}`,
-        kind,
-        kindLabel: draftKindLabel(draft.kind),
-        what: draftTitle(draft),
-        ask: () => {
-          if (isDailyDigest(draft)) {
-            openDigestInCopilot({
-              draftId: draft.id,
-              day: typeof draft.payload.day === 'string' ? draft.payload.day : null,
-              symbols: digestExhibits(draft.payload).map((r) => r.symbol),
-            })
-          } else {
-            openDraftInCopilot({
-              id: draft.id,
-              kind: draft.kind,
-              title: draftTitle(draft),
-              askedBy: draftAskedBy(draft.generated_by),
-              landsIn: draftLandsIn(draft.kind)?.label ?? null,
-            })
-          }
-        },
-        approve: waitingQueueShowsApprove(kind)
-          ? () => approve.mutate(draft.id)
-          : undefined,
-        dismiss: waitingQueueShowsDismiss(kind)
-          ? () => dismiss.mutate(draft.id)
-          : undefined,
-      })
-    }
-    for (const run of runRows) {
-      const title = objectiveTitleById.get(run.objective_id) ?? run.objective_id
-      out.push({
-        key: `run:${run.id}`,
-        kind: 'run',
-        kindLabel: 'Run',
-        what: title,
-        ask: () => openLoopRunInCopilot({ runId: run.id, title }),
-      })
-    }
-    return out
-  }, [approve, dismiss, draftRows, objectiveTitleById, runRows])
 
   const draftsFailed = draftsQ.isError
   const runsFailed = awaitingQ.isError
 
-  if (!draftsFailed && !runsFailed && n === 0) {
-    return approvedStrip ? (
-      <ApprovedStrip state={approvedStrip} className={className} />
-    ) : null
+  if (!draftsFailed && !runsFailed && n === 0 && briefingDraftCount === 0 && runCount === 0) {
+    return approvedStrip ? <ApprovedStrip state={approvedStrip} className={className} /> : null
   }
 
-  if (n === 0 && (draftsFailed || runsFailed)) {
+  if (n === 0 && briefingDraftCount === 0 && runCount === 0 && (draftsFailed || runsFailed)) {
     return (
       <div
         role="alert"
         className={cn(
           'flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5',
-          className,
+          className
         )}
       >
         <span className="min-w-0 flex-1 truncate text-dense-meta text-destructive">
@@ -160,7 +105,12 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
   }
 
   return (
-    <div className={cn('min-w-0 overflow-hidden rounded-md border border-warning/40 bg-warning/5', className)}>
+    <div
+      className={cn(
+        'min-w-0 overflow-hidden rounded-md border border-warning/40 bg-warning/5',
+        className
+      )}
+    >
       <button
         type="button"
         onClick={() => setInboxOpen(!inboxOpen)}
@@ -168,18 +118,13 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
         className={cn(
           'flex w-full items-center gap-1.5 px-2 py-1.5 text-left',
           'text-dense-label text-foreground hover:bg-warning/10',
-          inboxOpen ? 'rounded-t-md' : 'rounded-md',
+          inboxOpen ? 'rounded-t-md' : 'rounded-md'
         )}
       >
-        <span
-          className="size-1.5 shrink-0 rounded-full bg-warning"
-          aria-hidden
-        />
+        <span className="size-1.5 shrink-0 rounded-full bg-warning" aria-hidden />
         <span className="shrink-0 font-semibold">{waitingQueueHeadline(n)}</span>
         {summary ? (
-          <span className="min-w-0 flex-1 truncate text-muted-foreground">
-            {summary}
-          </span>
+          <span className="min-w-0 flex-1 truncate text-muted-foreground">{summary}</span>
         ) : (
           <span className="min-w-0 flex-1" />
         )}
@@ -191,7 +136,7 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
       {inboxOpen ? (
         <div className="max-h-64 overflow-y-auto border-t border-warning/20">
           <ApprovedStrip state={approvedStrip} />
-          {rows.map((row) => (
+          {items.map((row) => (
             <div
               key={row.key}
               className="flex min-w-0 items-center gap-1 border-b border-border/40 px-2 py-1 last:border-b-0"
@@ -207,26 +152,57 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
                   type="button"
                   className="h-5 px-1 text-dense-caption hover:bg-secondary"
                   title="Prefill the composer — does not send"
-                  onClick={row.ask}
+                  onClick={() => {
+                    if (row.kind === 'briefings' && row.draft) {
+                      if (isDailyDigest(row.draft)) {
+                        openDigestInCopilot({
+                          draftId: row.draft.id,
+                          day:
+                            typeof row.draft.payload.day === 'string'
+                              ? row.draft.payload.day
+                              : null,
+                          symbols: digestExhibits(row.draft.payload).map((r) => r.symbol),
+                        })
+                      } else {
+                        openDraftInCopilot({
+                          id: row.draft.id,
+                          kind: row.draft.kind,
+                          title: draftTitle(row.draft),
+                          askedBy: draftAskedBy(row.draft.generated_by),
+                          landsIn: draftLandsIn(row.draft.kind)?.label ?? null,
+                        })
+                      }
+                    } else if (row.kind === 'decision' && row.draft) {
+                      openDraftInCopilot({
+                        id: row.draft.id,
+                        kind: row.draft.kind,
+                        title: draftTitle(row.draft),
+                        askedBy: draftAskedBy(row.draft.generated_by),
+                        landsIn: draftLandsIn(row.draft.kind)?.label ?? null,
+                      })
+                    } else if (row.kind === 'run' && row.runId) {
+                      openLoopRunInCopilot({ runId: row.runId, title: row.what })
+                    }
+                  }}
                 >
                   Ask
                 </button>
-                {row.approve ? (
+                {row.showApprove && row.draft ? (
                   <button
                     type="button"
                     className="h-5 px-1 text-dense-caption text-primary hover:bg-secondary"
                     disabled={approve.isPending}
-                    onClick={row.approve}
+                    onClick={() => approve.mutate(row.draft!.id)}
                   >
                     ✓
                   </button>
                 ) : null}
-                {row.dismiss ? (
+                {row.showDismiss && row.draft ? (
                   <button
                     type="button"
                     className="h-5 px-1 text-dense-caption hover:bg-secondary"
                     disabled={dismiss.isPending}
-                    onClick={row.dismiss}
+                    onClick={() => dismiss.mutate(row.draft!.id)}
                   >
                     ✕
                   </button>

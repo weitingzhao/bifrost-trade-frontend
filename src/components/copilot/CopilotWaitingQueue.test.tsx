@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
 
 vi.mock('@/hooks/useResearchDrafts', () => ({
+  DRAFTS_PAGE_MAX: 200,
   useResearchDrafts: () => ({
     data: {
       rows: [
@@ -20,6 +21,17 @@ vi.mock('@/hooks/useResearchDrafts', () => ({
           expires_at: null,
         },
         {
+          id: 'eod',
+          kind: 'eod_verdict',
+          payload: { title: 'NVDA EOD' },
+          scope: 'NVDA',
+          status: 'pending',
+          generated_by: 'eod_agent',
+          linked_action_id: null,
+          created_at: '2026-09-14T12:30:00Z',
+          expires_at: null,
+        },
+        {
           id: 'd2',
           kind: 'candidate_batch',
           payload: { title: 'Batch A' },
@@ -30,8 +42,19 @@ vi.mock('@/hooks/useResearchDrafts', () => ({
           created_at: '2026-09-14T13:00:00Z',
           expires_at: null,
         },
+        {
+          id: 'dec',
+          kind: 'decision_draft',
+          payload: { title: 'Hold NVDA' },
+          scope: 'NVDA',
+          status: 'pending',
+          generated_by: 'curator',
+          linked_action_id: null,
+          created_at: '2026-09-14T13:10:00Z',
+          expires_at: null,
+        },
       ],
-      pending_count: 2,
+      pending_count: 4,
     },
     isLoading: false,
     isError: false,
@@ -72,20 +95,22 @@ vi.mock('@/lib/harness/loopCopilotPrefill', () => ({
 import { CopilotWaitingQueue } from './CopilotWaitingQueue'
 
 describe('CopilotWaitingQueue', () => {
-  it('collapses drafts and runs into one waiting row', async () => {
+  it('counts Inbox calls and hides Approve on eod_verdict and decision_draft', async () => {
     cockpitDrawerStore.getState().setInboxOpen(false)
     render(<CopilotWaitingQueue />)
-    expect(screen.getByText('3 waiting on you')).toBeTruthy()
-    expect(screen.getByText('Daily digest · 1 draft · 1 run')).toBeTruthy()
-    expect(screen.queryByText(/10 条 run/)).toBeNull()
-    expect(screen.queryByRole('button', { name: /Daily digest · 213/ })).toBeNull()
+    // Badge口径: batch + decision_draft. Digest and EOD are briefings.
+    expect(screen.getByText('2 waiting on you')).toBeTruthy()
+    expect(screen.getByText('Briefings · 1 run')).toBeTruthy()
+    expect(screen.queryByText('4 waiting on you')).toBeNull()
+    expect(screen.queryByText(/224 waiting/)).toBeNull()
 
-    await userEvent.click(screen.getByText('3 waiting on you'))
-    expect(screen.getByText('Tuesday digest')).toBeTruthy()
+    await userEvent.click(screen.getByText('2 waiting on you'))
+    expect(screen.getByText('Daily digest · 1 more')).toBeTruthy()
     expect(screen.getByText('Batch A')).toBeTruthy()
+    expect(screen.getByText('Hold NVDA')).toBeTruthy()
     expect(screen.getByText('Daily Loop Stock Explorer')).toBeTruthy()
-    expect(screen.getAllByText('Ask')).toHaveLength(3)
-    // Digest: Ask + dismiss, no Approve. Batch: Ask + both. Run: Ask only.
+    expect(screen.queryByText('NVDA EOD')).toBeNull()
+    expect(screen.getAllByText('Ask')).toHaveLength(4)
     expect(screen.getAllByText('✓')).toHaveLength(1)
     expect(screen.getAllByText('✕')).toHaveLength(2)
   })

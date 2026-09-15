@@ -6,6 +6,7 @@ import { ResearchUserSwitcher, type ResearchUserSwitcherHandle } from '@/compone
 import { AskCopilotIntentHost } from '@/components/cockpit/AskCopilotIntentHost'
 import { CockpitSaveHypothesisHost } from '@/components/cockpit/CockpitSaveHypothesisHost'
 import { CopilotPanelMoreMenu } from '@/components/copilot/CopilotPanelMoreMenu'
+import { CopilotPersonaChip } from '@/components/copilot/CopilotPersonaChip'
 import { CopilotThreadSwitcher } from '@/components/copilot/CopilotThreadSwitcher'
 import { useRef } from 'react'
 
@@ -115,6 +116,7 @@ export function CopilotDock() {
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
+            <CopilotPersonaChip />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

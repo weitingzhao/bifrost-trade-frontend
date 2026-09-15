@@ -42,12 +42,12 @@ vi.mock('@/hooks/useCopilotSessions', () => ({
 
 import { CopilotDock } from './CopilotDock'
 
-function renderDock() {
+function renderDock(path = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
       <TooltipProvider>
-        <MemoryRouter>
+        <MemoryRouter initialEntries={[path]}>
           <CopilotDock />
         </MemoryRouter>
       </TooltipProvider>
@@ -96,5 +96,12 @@ describe('CopilotDock thread switcher', () => {
     expect(screen.queryByRole('button', { name: 'Show threads' })).toBeNull()
     expect(screen.queryByText('Chat history')).toBeNull()
     expect(screen.queryByRole('button', { name: 'New chat' })).toBeNull()
+  })
+
+  it('shows as Portfolio on Positions, linking to Personas — not a stream override', async () => {
+    copilotDockStore.getState().open_()
+    renderDock('/portfolio/positions')
+    const chip = await screen.findByRole('link', { name: 'as Portfolio' })
+    expect(chip.getAttribute('href')).toBe('/research/agent-personas')
   })
 })

@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AgentChip } from '@/components/cockpit/AgentChip'
 import { CopilotComposer } from '@/components/cockpit/CopilotComposer'
 import { CopilotMessageList } from '@/components/cockpit/CopilotMessageList'
 import { CopilotTracePanel } from '@/components/cockpit/CopilotTracePanel'
@@ -27,7 +26,6 @@ export function CopilotChatBody({ className }: Props) {
     streaming,
     lastError,
     capBreached,
-    activeAgent,
     traceEvents,
     traceCollapsed,
     sessionId,
@@ -70,16 +68,6 @@ export function CopilotChatBody({ className }: Props) {
       {lastError && !capBreached ? (
         <p className="text-dense-meta text-destructive leading-snug">{lastError}</p>
       ) : null}
-
-      <div className="min-w-0 flex items-center gap-1 text-dense-caption text-muted-foreground">
-        {activeAgent ? (
-          <>
-            Active agent: <AgentChip agent={activeAgent} />
-          </>
-        ) : (
-          <span>Research Copilot</span>
-        )}
-      </div>
 
       <CopilotWaitingQueue />
 

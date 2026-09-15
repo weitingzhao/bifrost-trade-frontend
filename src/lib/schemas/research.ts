@@ -478,6 +478,12 @@ export const ExhibitSchema = z
     verdict: z.object({ band: z.string(), label: z.string(), means: z.string() }).passthrough().nullable().optional(),
     track_record: z.object({ n: z.number(), symbol_scoped: z.boolean() }).passthrough().nullable().optional(),
     similar: z.object({ n: z.number(), n_resolved: z.number() }).passthrough().nullable().optional(),
+    /** R9 F2 — the same lens on the previous session; null when there is only one. */
+    prior: z
+      .object({ as_of: z.string().nullable(), value: z.unknown(), band: z.string().nullable() })
+      .passthrough()
+      .nullable()
+      .optional(),
   })
   .passthrough()
 
@@ -559,6 +565,64 @@ export const OrchestrationStatusSchema = z
           last_run_id: z.string().nullable(),
           cron_schedule: z.string().nullish(),
           next_tick_at: z.string().nullish(),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough()
+
+/** GET /analytics/risk/beta — beta per symbol and window; null where the window is not filled (R9 F4). */
+export const RiskBetaSchema = z
+  .object({
+    as_of: z.string().nullable(),
+    benchmark: z.string(),
+    min_fill: z.number(),
+    items: z.array(
+      z
+        .object({
+          symbol: z.string(),
+          window: z.number(),
+          beta: z.number().nullable(),
+          n: z.number(),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough()
+
+/** GET /analytics/risk/correlation — pairwise rho, each cell with its own sample size (R9 F4). */
+export const RiskCorrelationSchema = z
+  .object({
+    as_of: z.string().nullable(),
+    window: z.number(),
+    min_fill: z.number(),
+    symbols: z.array(z.string()),
+    matrix: z.record(
+      z.string(),
+      z.record(z.string(), z.object({ rho: z.number().nullable(), n: z.number() }).passthrough()),
+    ),
+    n_pairs: z.number(),
+  })
+  .passthrough()
+
+/** GET /analytics/vol/rv-cone — realised-vol percentiles per tenor plus today's reading (R9 F4). */
+export const RvConeSchema = z
+  .object({
+    as_of: z.string().nullable(),
+    symbol: z.string(),
+    years: z.number(),
+    sessions: z.number(),
+    tenors: z.array(
+      z
+        .object({
+          days: z.number(),
+          n: z.number(),
+          p05: z.number().nullable(),
+          p20: z.number().nullable(),
+          p50: z.number().nullable(),
+          p80: z.number().nullable(),
+          p95: z.number().nullable(),
+          current: z.number().nullable(),
         })
         .passthrough(),
     ),

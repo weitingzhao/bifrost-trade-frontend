@@ -12,7 +12,7 @@ import {
   Sunset,
   TrendingUp,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import type { ComponentType, SVGProps } from 'react'
 import { cn } from '@/lib/utils'
 import { CopilotPromptLangToggle } from '@/components/cockpit/CopilotPromptLangToggle'
@@ -20,6 +20,11 @@ import {
   useCopilotPromptLang,
   type CopilotPromptLang,
 } from '@/lib/copilot/promptLang'
+import {
+  starterGroupOrder,
+  starterToolCaption,
+  type StarterGroupId,
+} from '@/lib/copilot/starterGroupOrder'
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -32,7 +37,7 @@ export type QuickPromptLang = CopilotPromptLang
  * 2026-09-14, §11.0) — the panel opens on any page, so the question is what
  * you are asking about, not which posture you sat in.
  */
-type StarterGroup = 'page' | 'book' | 'loop'
+type StarterGroup = StarterGroupId
 
 type LocalizedPrompt = {
   id: string
@@ -40,6 +45,8 @@ type LocalizedPrompt = {
   label: { zh: string; en: string }
   prompt: { zh: string; en: string }
   group: StarterGroup
+  /** Tool names this starter should reach. Omitted when we do not know. */
+  tools?: string[]
 }
 
 /**
@@ -125,6 +132,7 @@ const PROMPTS: LocalizedPrompt[] = [
     group: 'book',
     Icon: ShieldQuestion,
     label: { zh: '开仓门控', en: 'Entry gates' },
+    tools: ['trade.strategy.gate_safety'],
     prompt: {
       zh: '当前的 safety gate 配置是什么？结合我的持仓和策略实例说明：现在有什么在阻止开仓？（D10 冻结中，仅需观察说明）',
       en: 'What is the current safety gate configuration? Combined with my positions and strategy instances, explain what is currently blocking entries. (D10 frozen — observation only.)',
@@ -187,11 +195,11 @@ const PROMPTS: LocalizedPrompt[] = [
  * prompt catalogue — that page left the menu (Design 2026-09-14 ①), and this
  * link is how it stays reachable.
  */
-const STARTER_GROUPS: { id: StarterGroup; label: string }[] = [
-  { id: 'page', label: 'This page' },
-  { id: 'book', label: 'The book' },
-  { id: 'loop', label: 'The loop' },
-]
+const STARTER_GROUP_LABEL: Record<StarterGroup, string> = {
+  page: 'This page',
+  book: 'The book',
+  loop: 'The loop',
+}
 
 interface Props {
   onPick: (prompt: string) => void
@@ -201,51 +209,64 @@ interface Props {
 
 export function QuickPromptChips({ onPick, disabled, className }: Props) {
   const [lang] = useCopilotPromptLang()
+  const { pathname } = useLocation()
+  const groups = starterGroupOrder(pathname)
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <CopilotPromptLangToggle className="justify-center" />
-      {STARTER_GROUPS.map((g) => (
-        <div key={g.id} className="flex flex-col gap-1">
-          <div className="flex items-baseline justify-center gap-2 text-dense-micro uppercase tracking-wide text-muted-foreground">
-            <span>{g.label}</span>
-            {g.id === 'book' ? (
-              <Link
-                to="/research/copilot/trading"
-                className="normal-case tracking-normal text-primary hover:underline"
-                title="The full prompt catalogue for the book"
-              >
-                all starters →
-              </Link>
-            ) : null}
+      <CopilotPromptLangToggle />
+      {groups.map((id) => {
+        const label = STARTER_GROUP_LABEL[id]
+        return (
+          <div key={id} className="flex flex-col gap-1">
+            <div className="flex items-baseline gap-2 text-dense-micro uppercase tracking-wide text-muted-foreground">
+              <span>{label}</span>
+              {id === 'book' ? (
+                <Link
+                  to="/research/copilot/trading"
+                  className="normal-case tracking-normal text-primary hover:underline"
+                  title="The full prompt catalogue for the book"
+                >
+                  all starters →
+                </Link>
+              ) : null}
+            </div>
+            <div
+              className="flex flex-col gap-0.5"
+              aria-label={label}
+              data-starter-group={id}
+            >
+              {PROMPTS.filter((p) => p.group === id).map((p) => {
+                const tools = starterToolCaption(p.tools)
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onPick(p.prompt[lang])}
+                    title={p.prompt[lang]}
+                    className={cn(
+                      'flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left',
+                      'text-dense-caption text-foreground',
+                      'transition-colors hover:bg-secondary/80',
+                      'disabled:cursor-not-allowed disabled:opacity-50',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                    )}
+                  >
+                    <p.Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate">{p.label[lang]}</span>
+                    {tools ? (
+                      <span className="max-w-[9rem] shrink-0 truncate font-mono text-dense-caption leading-none text-muted-foreground">
+                        {tools}
+                      </span>
+                    ) : null}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-          <div
-            className="flex flex-wrap justify-center gap-1"
-            aria-label={g.label}
-          >
-            {PROMPTS.filter((p) => p.group === g.id).map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                disabled={disabled}
-                onClick={() => onPick(p.prompt[lang])}
-                title={p.prompt[lang]}
-                className={cn(
-                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5',
-                  'text-dense-caption text-primary',
-                  'border border-primary/25 bg-primary/[0.06]',
-                  'transition-colors hover:border-primary/40 hover:bg-primary/15',
-                  'disabled:cursor-not-allowed disabled:opacity-50',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-                )}
-              >
-                <p.Icon className="size-3" aria-hidden />
-                {p.label[lang]}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

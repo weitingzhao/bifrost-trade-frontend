@@ -8,9 +8,9 @@ import { InboxBanner } from '@/components/cockpit/InboxBanner'
 import { LoopBanner } from '@/components/cockpit/LoopBanner'
 import { PersonaMiniCard } from '@/components/cockpit/PersonaMiniCard'
 import { QuickPromptChips } from '@/components/cockpit/QuickPromptChips'
+import { CopilotAlreadyKnows } from '@/components/copilot/CopilotAlreadyKnows'
 import { fetchCopilotUsage } from '@/api/aiCopilot'
 import { copilotSessionStore, useCopilotSession } from '@/hooks/useCopilotSession'
-import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -126,26 +126,13 @@ function CopilotEmptyIntro({
   onPickPrompt: (prompt: string) => void
   disabled?: boolean
 }) {
-  // Best-effort read of Copilot prompt language (shared with QuickPromptChips / Discuss prefill).
-  const [lang] = useCopilotPromptLang()
   return (
-    <div className="flex h-full flex-col justify-center gap-3 px-1 py-4">
-      <div className="text-center">
-        <h3 className="text-dense-body font-semibold text-foreground">
-          {lang === 'zh' ? 'Research Copilot 今天能为你做什么？' : 'How can Research Copilot help today?'}
-        </h3>
-        <p className="mt-1 text-dense-caption text-muted-foreground">
-          {lang === 'zh'
-            ? '可以问假设、组合风险、波动率或 SEPA 候选，选一个快捷提示或直接输入你的问题。'
-            : 'Ask about hypotheses, portfolio risk, volatility, or SEPA candidates. Pick a shortcut or type your own question.'}
-        </p>
-      </div>
-      <PersonaMiniCard />
+    <div className="flex h-full flex-col justify-start gap-3 px-1 py-3">
+      <CopilotAlreadyKnows />
       <QuickPromptChips onPick={onPickPrompt} disabled={disabled} />
-      <p className="text-center text-dense-micro text-muted-foreground/70">
-        {lang === 'zh'
-          ? 'Research engines — 仅供观察 (D10)，非投资建议。'
-          : 'Research engines — observe only (D10). Not investment advice.'}
+      <PersonaMiniCard className="text-left" />
+      <p className="text-dense-micro text-muted-foreground/70">
+        Research engines — observe only (D10). Not investment advice.
       </p>
     </div>
   )

@@ -34,6 +34,7 @@ import {
   fmtMvAbbrev,
   type BackingPoolTarget,
 } from '@/utils/positionsCharts'
+import { backingPoolUsage } from '@/utils/backingJudgment'
 import { fmtUsd } from '@/utils/positions'
 import type { BaseLayer, BaseRole, BookVsBase } from '@/utils/bookVsBase'
 import styles from '../PositionsChartsSection.module.css'
@@ -162,15 +163,11 @@ export function BackingPoolCard({
   onSegmentClick?: (target: 'calls' | 'puts' | 'free' | 'income') => void
 }) {
   const segments = baseRoleSegments(book)
-  const total = segments.reduce((n, s) => n + s.value, 0)
+  const { pool: total, used: inUse } = backingPoolUsage(book)
 
   if (total <= 0) {
     return <p className="text-dense-body text-muted-foreground">No base holdings to show.</p>
   }
-
-  const inUse = segments
-    .filter((s) => s.target === 'calls' || s.target === 'puts')
-    .reduce((n, s) => n + s.value, 0)
   const hasValueByLabel = new Set<string>(segments.map((s) => s.label))
   const targetByLabel = new Map<string, BackingPoolTarget>(segments.map((s) => [s.label, s.target]))
 

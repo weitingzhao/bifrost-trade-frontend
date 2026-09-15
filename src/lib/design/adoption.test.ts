@@ -72,26 +72,23 @@ describe('design adoption', () => {
 
   it('reads the walk as it stands', () => {
     // Replace these as pages are walked — they are the numbers the Owner reads.
-    // Rev 2026-09-15.5 retired /docs/omnibar. Symbol and Decision Inbox are still
-    // tagged aligned at .3, so they read stale until the Owner restamp (R8-2).
-    expect(counts.aligned + counts.byState.stale).toBe(2)
-    expect(counts.aligned).toBe(0)
+    // Owner list 2026-09-15: all five at Rev 2026-09-15.5.
+    expect(counts.aligned + counts.byState.stale).toBe(5)
+    expect(counts.aligned).toBe(5)
+    expect(counts.byState.reviewing).toBe(0)
     expect(
       rows
-        .filter((r) => r.state === 'stale')
-        .map((r) => r.path)
-        .sort(),
-    ).toEqual(['/research/loop/decisions', '/research/symbol'])
-    expect(
-      rows
-        .filter((r) => r.state === 'reviewing')
+        .filter((r) => r.state === 'aligned')
         .map((r) => r.path)
         .sort(),
     ).toEqual([
       '/research/agent-personas',
       '/research/copilot',
       '/research/copilot/trading',
+      '/research/loop/decisions',
+      '/research/symbol',
     ])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path)).toEqual([])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
     // dissolves elsewhere, plus Backtest, handed to Lab. Symbol and Plans left:
     // the design keeps both pages.

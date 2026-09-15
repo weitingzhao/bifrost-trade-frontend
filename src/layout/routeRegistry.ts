@@ -109,8 +109,8 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: AUTOPILOT,
     design: {
       state: 'aligned',
-      rev: '2026-09-15.3',
-      note: 'Walked 2026-09-13 against Research Autopilot Decisions.dc.html (OLD) and the design response of that day; digest actions, kind colour and the approval strip changed 2026-09-14. Owner signed off on STG 2026-09-15.',
+      rev: '2026-09-15.5',
+      note: 'Walked 2026-09-13 against Research Autopilot Decisions.dc.html (OLD) and the design response of that day; digest actions, kind colour and the approval strip changed 2026-09-14. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page).',
     },
   },
   { path: '/research/loop/hypotheses', label: 'Hypothesis Board', crumbs: AUTOPILOT },
@@ -126,9 +126,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Desk',
     crumbs: COPILOT,
     design: {
-      state: 'reviewing',
-      rev: '2026-09-12.6',
-      note: 'Walked 2026-09-13 against Research Copilot.dc.html (REDO), six steps built; Threads Origin / Symbol / Writes / Cost and Ran today next tick restored 2026-09-14. Owner 2026-09-15: three tiles stay dissolved (Design ⑫); Desk is dark-only (R8). Owner to look before aligned.',
+      state: 'aligned',
+      rev: '2026-09-15.5',
+      note: 'Walked 2026-09-13 against Research Copilot.dc.html (REDO), six steps built; Threads Origin / Symbol / Writes / Cost and Ran today next tick restored 2026-09-14. Owner 2026-09-15: three tiles stay dissolved (Design ⑫); Desk is dark-only (R8). Owner signed off on STG 2026-09-15 after L1/L2.',
     },
   },
   // In the design registry since 2026-09-14 (Owner kept it — a morning agent's
@@ -140,9 +140,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Trading Copilot',
     crumbs: COPILOT,
     design: {
-      state: 'reviewing',
-      rev: '2026-09-14.4',
-      note: 'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner to look before aligned.',
+      state: 'aligned',
+      rev: '2026-09-15.5',
+      note: 'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner signed off on STG 2026-09-15 after L1/L2.',
     },
   },
   {
@@ -150,9 +150,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Agent Personas',
     crumbs: COPILOT,
     design: {
-      state: 'reviewing',
-      rev: '2026-09-14.4',
-      note: 'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner to look before aligned.',
+      state: 'aligned',
+      rev: '2026-09-15.5',
+      note: 'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner signed off on STG 2026-09-15 after L1/L2.',
     },
   },
 
@@ -184,8 +184,8 @@ export const ROUTES: readonly RouteEntry[] = [
     // for the 2026-09-13 and 2026-09-14 rounds.
     design: {
       state: 'aligned',
-      rev: '2026-09-15.3',
-      note: 'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner signed off on STG 2026-09-15.',
+      rev: '2026-09-15.5',
+      note: 'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page).',
     },
   },
 

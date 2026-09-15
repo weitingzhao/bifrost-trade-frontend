@@ -54,6 +54,15 @@ export function waitingQueueHeadline(n: number): string {
   return `${n} waiting on you`
 }
 
+/**
+ * When the drafts page cannot list every Inbox call, say so. Equal counts
+ * stay quiet — the list already matches the title.
+ */
+export function waitingQueueTruncationLine(listed: number, headline: number): string | null {
+  if (!(listed < headline)) return null
+  return `${listed} of ${headline} listed · Open Decision Inbox →`
+}
+
 export function waitingQueueSummary(opts: { briefingCount: number; runCount: number }): string {
   const bits: string[] = []
   if (opts.briefingCount > 0) bits.push('Briefings')

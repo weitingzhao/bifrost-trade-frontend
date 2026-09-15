@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
 
@@ -100,7 +101,11 @@ import { CopilotWaitingQueue } from './CopilotWaitingQueue'
 describe('CopilotWaitingQueue', () => {
   it('counts Inbox calls and hides Approve on eod_verdict and decision_draft', async () => {
     cockpitDrawerStore.getState().setInboxOpen(false)
-    render(<CopilotWaitingQueue />)
+    render(
+      <MemoryRouter>
+        <CopilotWaitingQueue />
+      </MemoryRouter>,
+    )
     // Badge口径: standing.pending_decisions.calls, not the truncated drafts page.
     expect(screen.getByText('45 waiting on you')).toBeTruthy()
     expect(screen.getByText('Briefings · 1 run')).toBeTruthy()
@@ -117,5 +122,7 @@ describe('CopilotWaitingQueue', () => {
     expect(screen.getAllByText('Ask')).toHaveLength(4)
     expect(screen.getAllByText('✓')).toHaveLength(1)
     expect(screen.getAllByText('✕')).toHaveLength(2)
+    const truncation = screen.getByRole('link', { name: '2 of 45 listed · Open Decision Inbox →' })
+    expect(truncation).toHaveAttribute('href', '/research/loop/decisions')
   })
 })

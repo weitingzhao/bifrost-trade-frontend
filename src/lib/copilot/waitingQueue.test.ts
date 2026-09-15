@@ -6,6 +6,7 @@ import {
   waitingQueueItems,
   waitingQueueShowsApprove,
   waitingQueueSummary,
+  waitingQueueTruncationLine,
 } from './waitingQueue'
 
 function draft(kind: AiDraft['kind'], id: string, payload: Record<string, unknown> = {}): AiDraft {
@@ -100,5 +101,11 @@ describe('waitingQueue', () => {
       )
     ).toBe('2 waiting on you')
     expect(waitingQueueSummary({ briefingCount: 2, runCount: 1 })).toBe('Briefings · 1 run')
+  })
+
+  it('names the missing calls only when the page lists fewer than the title', () => {
+    expect(waitingQueueTruncationLine(42, 47)).toBe('42 of 47 listed · Open Decision Inbox →')
+    expect(waitingQueueTruncationLine(47, 47)).toBeNull()
+    expect(waitingQueueTruncationLine(48, 47)).toBeNull()
   })
 })

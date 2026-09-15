@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
 import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
 import { digestExhibits, isDailyDigest } from '@/lib/harness/dailyDigest'
@@ -21,6 +22,7 @@ import {
   waitingQueueHeadline,
   waitingQueueItems,
   waitingQueueSummary,
+  waitingQueueTruncationLine,
 } from '@/lib/copilot/waitingQueue'
 import { cn } from '@/lib/utils'
 
@@ -51,8 +53,10 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
 
   const draftRows = draftsQ.data?.rows
   const runRows = awaitingQ.data?.items
+  const listedCallCount = waitingQueueCallCount(draftRows ?? [])
   const callCount =
-    standingQ.data?.pending_decisions?.calls ?? waitingQueueCallCount(draftRows ?? [])
+    standingQ.data?.pending_decisions?.calls ?? listedCallCount
+  const truncationLine = waitingQueueTruncationLine(listedCallCount, callCount)
   const items = useMemo(
     () => waitingQueueItems(draftRows ?? [], runRows ?? [], objectiveTitleById),
     [draftRows, objectiveTitleById, runRows],
@@ -212,6 +216,14 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
               </span>
             </div>
           ))}
+          {truncationLine ? (
+            <Link
+              to="/research/loop/decisions"
+              className="flex min-w-0 items-center border-t border-warning/20 px-2 py-1.5 text-dense-caption text-muted-foreground hover:bg-warning/10 hover:text-foreground"
+            >
+              {truncationLine}
+            </Link>
+          ) : null}
         </div>
       ) : null}
     </div>

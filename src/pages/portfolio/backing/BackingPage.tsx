@@ -33,11 +33,20 @@ import { BaseHoldingsSection } from '@/components/positions/BaseHoldingsSection'
 import { InspectorDrawer, type InspectorState } from '@/components/positions/InspectorDrawer'
 import styles from '@/components/positions/PositionsChartsSection.module.css'
 import { sortObligations, type ObligationsSort } from '@/utils/obligationsRoom'
-import { BACKING_ANCHOR_ID, BACKING_TARGET_ANCHOR, backingAnchorId, isBackingTarget } from '@/utils/backingAnchors'
+import {
+  BACKING_ANCHOR_ID,
+  BACKING_TARGET_ANCHOR,
+  backingAnchorId,
+  isBackingTarget,
+} from '@/utils/backingAnchors'
 import { POSITIONS_PATH } from '@/utils/portfolioLinks'
 import type { AlarmTarget } from '@/hooks/usePositionsAlarm'
 import { ModelBandSection } from './model/ModelBandSection'
 import { useModelBand } from './model/useModelBand'
+import { BackingJudgmentStrip } from './BackingJudgmentStrip'
+import { BackingAssumptionsTable } from './BackingAssumptionsTable'
+import { PlanReservesSection } from './PlanReservesSection'
+import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment'
 
 const SORTS: readonly ObligationsSort[] = ['cash', 'calls', 'spare', 'symbol']
 
@@ -45,7 +54,8 @@ export default function BackingPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const { scope, setAccountFilter, setFilterSymbol, setFilterExpiry, scopeSearch } = usePositionsScope()
+  const { scope, setAccountFilter, setFilterSymbol, setFilterExpiry, scopeSearch } =
+    usePositionsScope()
   const { accountFilter, filterSymbol, filterExpiry } = scope
   const { pct: cushionTightPct, setPct: setCushionTightPct } = useCushionThreshold()
   const book = usePositionsBook(scope, cushionTightPct)
@@ -68,26 +78,45 @@ export default function BackingPage() {
         resolveSpot: book.alarm.resolveSpot,
         ceiling,
       }),
-    [book.alarm.book, book.alarm.margin, book.alarm.legs, book.coverRows, book.alarm.resolveSpot, ceiling],
+    [
+      book.alarm.book,
+      book.alarm.margin,
+      book.alarm.legs,
+      book.coverRows,
+      book.alarm.resolveSpot,
+      ceiling,
+    ]
   )
   const roomSummary = useMemo(() => summarizeRoom(room), [room])
+  const judgment = useMemo(
+    () => deriveBackingJudgment(backingPoolUsage(book.alarm.book)),
+    [book.alarm.book]
+  )
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
 
-  const rows = useMemo(() => sortObligations(book.obligationsRows, sort), [book.obligationsRows, sort])
+  const rows = useMemo(
+    () => sortObligations(book.obligationsRows, sort),
+    [book.obligationsRows, sort]
+  )
   const model = useModelBand(scope)
 
   // #obligations / #holdings / #room / #model from a link: scroll once the tables exist.
   useEffect(() => {
     const id = backingAnchorId(location.hash)
     if (!id || book.isLoading) return
-    const t = window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }), 50)
+    const t = window.setTimeout(
+      () => document.getElementById(id)?.scrollIntoView({ block: 'start' }),
+      50
+    )
     return () => window.clearTimeout(t)
   }, [location.hash, book.isLoading])
 
   const positionsHref = `${POSITIONS_PATH}${scopeSearch ? `?${scopeSearch}` : ''}`
   const openTarget = (t: AlarmTarget) => {
     if (isBackingTarget(t)) {
-      document.getElementById(BACKING_ANCHOR_ID[BACKING_TARGET_ANCHOR[t]])?.scrollIntoView({ block: 'start' })
+      document
+        .getElementById(BACKING_ANCHOR_ID[BACKING_TARGET_ANCHOR[t]])
+        ?.scrollIntoView({ block: 'start' })
     } else if (t === 'margin') {
       document.getElementById('positions-margin')?.scrollIntoView({ block: 'nearest' })
     } else {
@@ -114,118 +143,130 @@ export default function BackingPage() {
       description="Position data comes from account snapshots. Ensure IB is connected and Account Sync is running."
     />
   ) : (
-        <>
-          <PositionsOpenControls
-            filterSymbol={filterSymbol}
-            onFilterSymbolChange={setFilterSymbol}
-            filterExpiry={filterExpiry}
-            onFilterExpiryChange={setFilterExpiry}
-            hostAccountId={book.hostAccountId}
-            secondaryAccountId={book.secondaryAccountId}
-            accountFilter={accountFilter}
-            onAccountFilterChange={setAccountFilter}
-            cushionTightPct={cushionTightPct}
-            onCushionTightPctChange={setCushionTightPct}
-            scopedCount={scopedCount}
-          />
+    <>
+      <PositionsOpenControls
+        filterSymbol={filterSymbol}
+        onFilterSymbolChange={setFilterSymbol}
+        filterExpiry={filterExpiry}
+        onFilterExpiryChange={setFilterExpiry}
+        hostAccountId={book.hostAccountId}
+        secondaryAccountId={book.secondaryAccountId}
+        accountFilter={accountFilter}
+        onAccountFilterChange={setAccountFilter}
+        cushionTightPct={cushionTightPct}
+        onCushionTightPctChange={setCushionTightPct}
+        scopedCount={scopedCount}
+      />
 
-          {!book.hasAccountSelection ? (
-            <EmptyState
-              title="Select an account"
-              description="Turn on HOST and/or Secondary above to show the base for those accounts."
-            />
-          ) : (
-            <div className="min-w-0 space-y-3">
-              <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
-                <div className="min-w-0 space-y-2">
-                  <BookVsBaseCockpit
-                    variant="backing"
-                    book={book.alarm.book}
-                    checks={book.alarm.checks}
-                    cushionTightPct={cushionTightPct}
-                    onOpenTarget={(t, s) => {
-                      if (s) setSort(s)
-                      openTarget(t)
-                    }}
-                    headerLink={{ to: positionsHref, label: 'Positions →' }}
-                    explain={{
-                      exposure: book.alarm.exposure,
-                      margin: book.alarm.margin,
-                      accounts: book.scopedAccounts,
-                      cashLikeRows: book.cashLikeStocks,
-                      coverRows: book.coverRows,
-                      room: roomSummary,
-                    }}
-                    room={roomSummary}
-                  />
-                  <MarginByAccountStrip
-                    margin={book.marginAllAccounts}
-                    hostId={book.hostAccountId}
-                    secondaryId={book.secondaryAccountId}
-                    accountFilter={accountFilter}
-                    positions={book.allPositions}
-                    resolveSpot={book.alarm.resolveSpot}
-                  />
-                </div>
-                <section className={styles.panel} aria-label="Backing pool">
-                  <span className="mb-1 block text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-                    Backing pool
-                  </span>
-                  <BackingPoolCard
-                    book={book.alarm.book}
-                    onSegmentClick={(target) => {
-                      if (target === 'income') openTarget('independent')
-                      else {
-                        setSort(target === 'puts' ? 'cash' : target === 'free' ? 'spare' : 'calls')
-                        openTarget('coverage')
-                      }
-                    }}
-                  />
-                </section>
-              </div>
-
-              <div id={BACKING_ANCHOR_ID.room}>
-                <RoomToAddSection room={room} coverRows={book.coverRows} ceiling={ceiling} onLevelChange={setLevel} />
-              </div>
-              <div id={BACKING_ANCHOR_ID.obligations}>
-                <ObligationsRoomSection
-                  open={obligationsOpen}
-                  onToggle={() => setObligationsOpen((v) => !v)}
-                  rows={rows}
-                  exposure={book.alarm.exposure}
-                  coverRatio={book.alarm.coverRatio}
-                  moreCalls={book.alarm.book.potential.moreCalls}
-                  cashLikeTotal={book.alarm.book.backing.cashLike}
-                  buyingPower={book.alarm.book.supply.buyingPower}
-                  sort={sort}
-                  onSortChange={setSort}
-                  onSymbolClick={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
-                  onNakedClick={(symbol) => setFilterSymbol(symbol)}
-                />
-              </div>
-              <div id={BACKING_ANCHOR_ID.holdings}>
-                <BaseHoldingsSection
-                  open={holdingsOpen}
-                  onToggle={() => setHoldingsOpen((v) => !v)}
-                  layers={book.alarm.book.base}
-                  coreStocks={book.coreStocks}
-                  incomeEtfs={book.fixedIncomeStocks}
-                  cashLike={book.cashLikeStocks}
-                  filterSymbol={filterSymbol}
-                  onInspectStock={(pos) =>
-                    setInspector({
-                      type: 'stock',
-                      symbol: (pos.symbol ?? '').toUpperCase(),
-                      accountId: pos.account_id,
-                      livePosition: pos,
-                    })
-                  }
-                />
-              </div>
+      {!book.hasAccountSelection ? (
+        <EmptyState
+          title="Select an account"
+          description="Turn on HOST and/or Secondary above to show the base for those accounts."
+        />
+      ) : (
+        <div className="min-w-0 space-y-3">
+          <BackingJudgmentStrip judgment={judgment} />
+          <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+            <div className="min-w-0 space-y-2">
+              <BookVsBaseCockpit
+                variant="backing"
+                book={book.alarm.book}
+                checks={book.alarm.checks}
+                cushionTightPct={cushionTightPct}
+                onOpenTarget={(t, s) => {
+                  if (s) setSort(s)
+                  openTarget(t)
+                }}
+                headerLink={{ to: positionsHref, label: 'Positions →' }}
+                explain={{
+                  exposure: book.alarm.exposure,
+                  margin: book.alarm.margin,
+                  accounts: book.scopedAccounts,
+                  cashLikeRows: book.cashLikeStocks,
+                  coverRows: book.coverRows,
+                  room: roomSummary,
+                }}
+                room={roomSummary}
+              />
+              <MarginByAccountStrip
+                margin={book.marginAllAccounts}
+                hostId={book.hostAccountId}
+                secondaryId={book.secondaryAccountId}
+                accountFilter={accountFilter}
+                positions={book.allPositions}
+                resolveSpot={book.alarm.resolveSpot}
+              />
             </div>
-          )}
-        </>
-      )
+            <section className={styles.panel} aria-label="Backing pool">
+              <span className="mb-1 block text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
+                Backing pool
+              </span>
+              <BackingPoolCard
+                book={book.alarm.book}
+                onSegmentClick={(target) => {
+                  if (target === 'income') openTarget('independent')
+                  else {
+                    setSort(target === 'puts' ? 'cash' : target === 'free' ? 'spare' : 'calls')
+                    openTarget('coverage')
+                  }
+                }}
+              />
+            </section>
+          </div>
+
+          <div id={BACKING_ANCHOR_ID.room}>
+            <RoomToAddSection
+              room={room}
+              coverRows={book.coverRows}
+              ceiling={ceiling}
+              onLevelChange={setLevel}
+            />
+          </div>
+          <div id={BACKING_ANCHOR_ID.obligations}>
+            <ObligationsRoomSection
+              open={obligationsOpen}
+              onToggle={() => setObligationsOpen((v) => !v)}
+              rows={rows}
+              exposure={book.alarm.exposure}
+              coverRatio={book.alarm.coverRatio}
+              moreCalls={book.alarm.book.potential.moreCalls}
+              cashLikeTotal={book.alarm.book.backing.cashLike}
+              buyingPower={book.alarm.book.supply.buyingPower}
+              sort={sort}
+              onSortChange={setSort}
+              onSymbolClick={(symbol, accountId) =>
+                setInspector({ type: 'stock', symbol, accountId })
+              }
+              onNakedClick={(symbol) => setFilterSymbol(symbol)}
+            />
+          </div>
+          <div id={BACKING_ANCHOR_ID.holdings}>
+            <BaseHoldingsSection
+              open={holdingsOpen}
+              onToggle={() => setHoldingsOpen((v) => !v)}
+              layers={book.alarm.book.base}
+              coreStocks={book.coreStocks}
+              incomeEtfs={book.fixedIncomeStocks}
+              cashLike={book.cashLikeStocks}
+              filterSymbol={filterSymbol}
+              onInspectStock={(pos) =>
+                setInspector({
+                  type: 'stock',
+                  symbol: (pos.symbol ?? '').toUpperCase(),
+                  accountId: pos.account_id,
+                  livePosition: pos,
+                })
+              }
+            />
+          </div>
+          <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+            <BackingAssumptionsTable judgment={judgment} pressureCeiling={ceiling} />
+            <PlanReservesSection />
+          </div>
+        </div>
+      )}
+    </>
+  )
 
   return (
     <PageShell className="space-y-3">

@@ -76,6 +76,11 @@ export function ObligationsRoomSection({
             onSymbolClick={onSymbolClick}
             onNakedClick={onNakedClick}
           />
+          <p className="px-3 pb-2 text-dense-caption leading-relaxed text-muted-foreground">
+            Cash if assigned is what taking the stock would cost, not broker maintenance.
+            Per-position MaintMarginReq is not on this page — account Cushion is on the margin
+            strip.
+          </p>
         </CollapsibleGroupBody>
       ) : null}
     </CollapsibleGroup>

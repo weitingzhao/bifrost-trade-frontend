@@ -7,7 +7,7 @@
  * in the shared package, where changing it would silently re-chrome another
  * product.
  *
- * Source: `design/trade/Shell Spec Draft.md` — top bar 42px single row, status
+ * Source: `design/trade/Shell Spec.md` — top bar 42px single row, status
  * bar 24px always present, sidebar 240px expanded.
  */
 

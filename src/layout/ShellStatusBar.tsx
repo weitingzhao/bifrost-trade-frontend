@@ -6,7 +6,7 @@
  * and never grows — the full version of any reading on it lives on a page, and
  * the segment is the way there.
  *
- * Design: `design/trade/Shell Spec Draft.md` §12.3, which specifies six
+ * Design: `design/trade/Shell Spec.md` §12.3, which specifies six
  * segments. Four are here. Two are not, and each for a reason found by
  * checking rather than by taste:
  *

@@ -2,7 +2,7 @@
  * When the inspector docks instead of covering the page.
  *
  * It always floated: `fixed inset-0`, 72rem wide, over whatever you were
- * reading. Design (`design/trade/Shell Spec Draft.md` §5b) docks it as a right
+ * reading. Design (`design/trade/Shell Spec.md` §5b) docks it as a right
  * column so the table it explains stays usable — the same move the Copilot
  * dock made, and for the same reason.
  *

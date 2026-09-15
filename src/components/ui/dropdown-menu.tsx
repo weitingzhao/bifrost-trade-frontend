@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { DropdownMenu as RadixDropdownMenu } from 'radix-ui'
 import { Check, ChevronRight, Circle } from 'lucide-react'
+import { stopMenuEscapeFromClosingDock } from '@/lib/cockpit/menuEscape'
 import { cn } from '@/lib/utils'
 
 /**
@@ -40,7 +41,7 @@ DropdownMenuSubTrigger.displayName = 'DropdownMenuSubTrigger'
 const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof RadixDropdownMenu.SubContent>,
   React.ComponentPropsWithoutRef<typeof RadixDropdownMenu.SubContent>
->(({ className, ...props }, ref) => (
+>(({ className, onEscapeKeyDown, ...props }, ref) => (
   <RadixDropdownMenu.SubContent
     ref={ref}
     className={cn(
@@ -48,6 +49,10 @@ const DropdownMenuSubContent = React.forwardRef<
       'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
       className,
     )}
+    onEscapeKeyDown={(event) => {
+      stopMenuEscapeFromClosingDock(event)
+      onEscapeKeyDown?.(event)
+    }}
     {...props}
   />
 ))
@@ -56,7 +61,7 @@ DropdownMenuSubContent.displayName = 'DropdownMenuSubContent'
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof RadixDropdownMenu.Content>,
   React.ComponentPropsWithoutRef<typeof RadixDropdownMenu.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, sideOffset = 4, onEscapeKeyDown, ...props }, ref) => (
   <RadixDropdownMenu.Portal>
     <RadixDropdownMenu.Content
       ref={ref}
@@ -68,6 +73,10 @@ const DropdownMenuContent = React.forwardRef<
         'data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         className,
       )}
+      onEscapeKeyDown={(event) => {
+        stopMenuEscapeFromClosingDock(event)
+        onEscapeKeyDown?.(event)
+      }}
       {...props}
     />
   </RadixDropdownMenu.Portal>

@@ -128,12 +128,20 @@ export interface PerformanceResponse {
 export interface AccountTransaction {
   account_transactions_id?: number
   account_id: string
-  ts: number
+  /**
+   * Epoch seconds, but the API sends it as a string: the SQL behind
+   * /api/trading/transactions selects `extract(epoch from ts)` without a
+   * `::bigint`, so PG returns numeric and psycopg2 maps it to Decimal, which
+   * serialises as a JSON string. Convert with `Number()` before any arithmetic
+   * or `Number.isFinite` check.
+   */
+  ts: number | string
   amount: number
   type: string
   currency?: string | null
   description?: string | null
-  created_at?: number
+  /** ISO-8601 string in practice, not epoch seconds. */
+  created_at?: number | string
 }
 
 export interface AccountTransactionsResponse {

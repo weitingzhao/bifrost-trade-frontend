@@ -14,9 +14,17 @@ import {
 import { fmtUsd } from '@/lib/format'
 import type { AccountTransaction } from '@/types/trading'
 
-function fmtTxDate(ts: number | null | undefined): string {
-  if (ts == null || !Number.isFinite(ts)) return '—'
-  return new Date(ts > 1e12 ? ts : ts * 1000).toLocaleDateString('en-CA')
+/**
+ * The API sends `ts` as a string, so convert first — the same `Number(ts)` the
+ * summary table's `getPeriodKey` already used. Read it in UTC: every ts in the
+ * ledger is midnight UTC, so the transaction date is the UTC date, and the
+ * summary table groups by `getUTC*`. Reading the browser's zone west of
+ * Greenwich would show the day before and disagree with the summary.
+ */
+function fmtTxDate(ts: number | string | null | undefined): string {
+  const sec = Number(ts)
+  if (ts == null || ts === '' || !Number.isFinite(sec)) return '—'
+  return new Date(sec > 1e12 ? sec : sec * 1000).toLocaleDateString('en-CA', { timeZone: 'UTC' })
 }
 
 type Props = {

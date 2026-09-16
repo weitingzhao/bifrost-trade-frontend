@@ -324,15 +324,94 @@ export const ROUTES: readonly RouteEntry[] = [
   },
 
   // ── System ─────────────────────────────────────────────────────────────
-  { path: '/system/coverage', label: 'Coverage', crumbs: SYSTEM_DATA },
-  { path: '/system/feed', label: 'Feed', crumbs: SYSTEM_DATA },
-  { path: '/system/data-readiness', label: 'Data Readiness', crumbs: SYSTEM_DATA },
-  { path: '/system/topology', label: 'Topology', crumbs: SYSTEM_RUNTIME },
-  { path: '/system/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME },
-  { path: '/system/api', label: 'API Health', crumbs: SYSTEM_RUNTIME },
-  { path: '/system/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME },
-  { path: '/system/platform', label: 'Platform', crumbs: SYSTEM_RUNTIME },
-  { path: '/system/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG },
+  // Design Rev 2026-09-15.13 collapsed these nine into `/system/status` plus
+  // `/settings` (the Owner's OLTP/OLAP/Ops ruling): this console answers the
+  // trader's three questions — can I trade, can I see, did the data land —
+  // while diagnosis and operation belong to the Ops Console the sidebar footer
+  // already links. The pages stay until that split is built here; each says
+  // where the design sends it, so none of them sits in "to ask" without an
+  // answer.
+  {
+    path: '/system/coverage',
+    label: 'Coverage',
+    crumbs: SYSTEM_DATA,
+    design: {
+      state: 'staging',
+      note: 'Removed by design Rev 2026-09-15.13. Ingest and coverage detail is Ops Console work; this console keeps only the nightly-data lamp on /system/status.',
+    },
+  },
+  {
+    path: '/system/feed',
+    label: 'Feed',
+    crumbs: SYSTEM_DATA,
+    design: {
+      state: 'staging',
+      note: 'Removed by design Rev 2026-09-15.13. Feed diagnosis moves to the Ops Console; the trade-facing half is the market-data row on /system/status.',
+    },
+  },
+  {
+    path: '/system/data-readiness',
+    label: 'Data Readiness',
+    crumbs: SYSTEM_DATA,
+    design: {
+      state: 'staging',
+      note: 'Removed by design Rev 2026-09-15.13. "Did the data land" is answered by Signal Health and the nightly-data row on /system/status.',
+    },
+  },
+  {
+    path: '/system/topology',
+    label: 'Topology',
+    crumbs: SYSTEM_RUNTIME,
+    design: {
+      state: 'staging',
+      note: 'Removed by design Rev 2026-09-15.13 — cluster topology is Ops Console material, not a trading question.',
+    },
+  },
+  {
+    path: '/system/daemon',
+    label: 'Daemon',
+    crumbs: SYSTEM_RUNTIME,
+    design: {
+      state: 'staging',
+      note: 'Removed by design Rev 2026-09-15.13. "Can I trade" survives as the trading row on /system/status; the daemon detail is Ops.',
+    },
+  },
+  {
+    path: '/system/api',
+    label: 'API Health',
+    crumbs: SYSTEM_RUNTIME,
+    design: {
+      state: 'staging',
+      note: 'Removed by design Rev 2026-09-15.13 — API latency is diagnosis, and diagnosis is the Ops Console.',
+    },
+  },
+  {
+    path: '/system/socket',
+    label: 'Socket',
+    crumbs: SYSTEM_RUNTIME,
+    design: {
+      state: 'staging',
+      note: 'Removed by design Rev 2026-09-15.13 — socket state is Ops Console material; the trader sees the market-data lamp instead.',
+    },
+  },
+  {
+    path: '/system/platform',
+    label: 'Platform',
+    crumbs: SYSTEM_RUNTIME,
+    design: {
+      state: 'staging',
+      note: 'Removed by design Rev 2026-09-15.13 — plugin scheduling belongs to the Ops Console.',
+    },
+  },
+  {
+    path: '/system/ib',
+    label: 'IB Connection',
+    crumbs: SYSTEM_CONFIG,
+    design: {
+      state: 'staging',
+      note: 'Absorbed by design Rev 2026-09-15.13 into `/settings` (IB user, client id, account) — trader-owned configuration, not a system view.',
+    },
+  },
 
   // ── System · Reference ─────────────────────────────────────────────────
   { path: '/docs/design-adoption', label: 'Design Adoption', crumbs: DOCS },

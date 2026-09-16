@@ -31,6 +31,7 @@
  */
 import { PAGE_ROUTES, REDIRECT_ROUTES, type RouteEntry } from '@/layout/routeRegistry'
 import { DESIGN_REV, DESIGN_ROUTES, type DesignRoute } from './designRoutes.generated'
+import { revIsNewer } from './rev'
 
 export type AdoptionState =
   | 'aligned'
@@ -99,7 +100,14 @@ function aliasesByTarget(pages: ReadonlySet<string>): Map<string, string[]> {
 
 function stateOf(entry: RouteEntry, design: DesignRoute | null): AdoptionState {
   const tag = entry.design
-  if (tag?.state === 'aligned') return tag.rev === DESIGN_REV ? 'aligned' : 'stale'
+  if (tag?.state === 'aligned') {
+    // Per-page rev when the design stamps one, the package rev when it does not.
+    // Comparing every page against the global rev made a page stale because a
+    // different page moved; the design now carries the rev of each page's own
+    // last substantive change.
+    const pageRev = design?.rev ?? DESIGN_REV
+    return revIsNewer(pageRev, tag.rev) ? 'stale' : 'aligned'
+  }
   if (tag) return tag.state
   if (!design) return 'staging'
   return design.designed ? 'pending' : 'backlog'

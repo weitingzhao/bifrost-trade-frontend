@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { PAGE_ROUTES } from '@/layout/routeRegistry'
-import { adoptionCounts, adoptionRows } from './adoption'
+import { adoptionCounts, adoptionRows, DESIGN_REV } from './adoption'
 import { DESIGN_ROUTES } from './designRoutes.generated'
+import { revIsNewer } from './rev'
 
 const rows = adoptionRows()
 const counts = adoptionCounts(rows)
@@ -122,20 +123,48 @@ describe('design adoption', () => {
     // dissolves elsewhere, plus Backtest, handed to Lab. Symbol and Plans left:
     // the design keeps both pages.
     expect(counts.byState.moving).toBe(10)
-    // Design 2026-09-15 answered the one open question `/research` was asking:
-    // it is Overview. A redirect is not a page, so the row leaves the walk
-    // (staging 2 → 1) and only `/research/stock-screener` is still asking.
-    expect(counts.byState.staging).toBe(1)
-    expect(rows.filter((r) => r.state === 'staging').map((r) => r.path)).toEqual([
+    // Rev 2026-09-15.13 collapsed nine `/system/*` routes into `/system/status`
+    // and `/settings` (the Owner's OLTP/OLAP/Ops ruling). The app still has the
+    // nine pages, so each one asks where it goes — that is nine new rows in "to
+    // ask", beside `/research/stock-screener`, which is still waiting on Design.
+    expect(counts.byState.staging).toBe(10)
+    expect(rows.filter((r) => r.state === 'staging').map((r) => r.path).sort()).toEqual([
       '/research/stock-screener',
+      '/system/api',
+      '/system/coverage',
+      '/system/daemon',
+      '/system/data-readiness',
+      '/system/feed',
+      '/system/ib',
+      '/system/platform',
+      '/system/socket',
+      '/system/topology',
     ])
-    // Rev 2026-09-15.5: registry dropped /docs/omnibar (it was a designed
-    // prototype with no app page → unbuilt 34→33). Denominator 64→63.
-    // Stub backlog unchanged (25). Pending 19, then 17 once Backing & Model and
-    // Plans moved to reviewing.
-    expect(counts.designed).toBe(63)
-    expect(counts.byState.unbuilt).toBe(33)
-    expect(counts.byState.pending).toBe(17)
-    expect(counts.byState.backlog).toBe(25)
+    // Rev 2026-09-15.13: the design filled almost all of its own backlog — the
+    // Risk layer, the Portfolio accounts cluster, the market and workbench data
+    // pages, Copilot/Autopilot, Assignment. 82 routes, 78 with a prototype, and
+    // only four stubs left (all `/docs/*` reference pages, deliberately last).
+    // The denominator nearly doubled, so "to build" grew with it: those pages
+    // now have a design to build against, which they did not before.
+    expect(counts.designed).toBe(78)
+    expect(counts.byState.unbuilt).toBe(43)
+    expect(counts.byState.pending).toBe(22)
+    expect(counts.byState.backlog).toBe(4)
+  })
+
+  it('does not call a walked page stale because some other page moved', () => {
+    // The package's global Rev moves on every registry change; a page's own rev
+    // moves only when that page's design does. Comparing against the global one
+    // marked all five walked pages stale the moment `/docs/omnibar` retired, and
+    // again when Rev went .5 → .13 for work on entirely different pages.
+    expect(DESIGN_REV).toBe('2026-09-15.13')
+    expect(counts.byState.stale).toBe(0)
+    for (const row of rows) {
+      if (row.state !== 'aligned') continue
+      // Every walked page carries the rev it was walked against, and the design
+      // still stamps that page no later than it.
+      expect(row.rev, row.path).toBeTruthy()
+      expect(revIsNewer(row.design?.rev, row.rev), row.path).toBe(false)
+    }
   })
 })

@@ -114,7 +114,15 @@ function generate(pkg) {
     getElementById: () => stubEl(),
     createElement: stubEl,
     head: { appendChild() {} },
+    body: stubEl(),
     querySelector: () => stubEl(),
+    querySelectorAll: () => [],
+    // The registry wires listeners at load time (Rev 2026-09-15.13 remembers the
+    // sidebar's collapsed state on click). Reading the route table must not
+    // depend on a DOM: a missing stub method here fails the whole sync with a
+    // TypeError from inside the design's own file.
+    addEventListener() {},
+    removeEventListener() {},
   }
   globalThis.localStorage = window.localStorage
 
@@ -166,6 +174,11 @@ function generate(pkg) {
       designed: R.fileFor(r.path) !== '_Shell Stub.dc.html',
       file: R.fileFor(r.path),
       round: ROUND.get(R.fileFor(r.path)) ?? null,
+      // Per-page rev (design's DECISIONS 2026-09-15, option C): the Rev of that
+      // page's last substantive design change. The global Rev moves on every
+      // registry change, so comparing against it marked every walked page stale
+      // the moment any other page moved. Stub rows carry none.
+      rev: typeof r.rev === 'string' && r.rev ? r.rev : null,
       inNav: nav != null,
       group: nav?.group ?? null,
     }
@@ -200,6 +213,12 @@ export interface DesignRoute {
    * has, that is a move, not a target; null when the route has no prototype.
    */
   round: 'NEW' | 'OLD' | 'REDO' | 'LAB' | null
+  /**
+   * The Rev of this page's last substantive design change, from the registry's
+   * 5th element. Null on stub rows. A walked page goes stale only when its own
+   * rev moves — the global Rev moves whenever any page does.
+   */
+  rev: string | null
   /** In the design's sidebar. A route can exist and be reachable only by link. */
   inNav: boolean
   /** Top-level group in the design's tree, when it has a row. */

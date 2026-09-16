@@ -38,7 +38,7 @@ export interface DesignRoute {
   group: string | null
 }
 
-export const DESIGN_REV = "2026-09-15.13"
+export const DESIGN_REV = "2026-09-16.9"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-12.1","inNav":true,"group":"Home"},

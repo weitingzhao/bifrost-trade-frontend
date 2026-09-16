@@ -157,7 +157,13 @@ describe('design adoption', () => {
     // moves only when that page's design does. Comparing against the global one
     // marked all five walked pages stale the moment `/docs/omnibar` retired, and
     // again when Rev went .5 → .13 for work on entirely different pages.
-    expect(DESIGN_REV).toBe('2026-09-15.13')
+    //
+    // R11 re-froze the snapshot at Rev 2026-09-16.9, the Portfolio redo. The
+    // whole diff on `designRoutes.generated.ts` was this one line: 82 routes and
+    // 78 designed both held, and no per-page rev moved — the design's own
+    // `shell-registry.js` still stamps the six redone Portfolio pages at
+    // 2026-09-15.10, so none of the five walked pages went stale.
+    expect(DESIGN_REV).toBe('2026-09-16.9')
     expect(counts.byState.stale).toBe(0)
     for (const row of rows) {
       if (row.state !== 'aligned') continue

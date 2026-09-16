@@ -104,6 +104,26 @@ export function getSummaryType(raw: string | null | undefined): SummaryTypeKey {
   return 'other'
 }
 
+/** A period with no predecessor to divide by — not a percentage. */
+export const NO_PRIOR_BASE = 'no_prior_base'
+
+export type PctChange = number | typeof NO_PRIOR_BASE | null
+
+/**
+ * Period-over-period rate of change. The denominator is the previous period:
+ * dividing by the current one (as this page did) makes the same absolute change
+ * read larger whenever the current figure happens to be small.
+ *
+ * A previous period of zero has no base, so there is no rate. Reporting
+ * "0 → 35,000" as +100% would be a different claim than the one the data
+ * supports; the caller shows `no prior base` instead.
+ */
+export function pctChangeVsPrev(cur: number, prev: number): PctChange {
+  if (!Number.isFinite(cur) || !Number.isFinite(prev)) return null
+  if (prev === 0) return NO_PRIOR_BASE
+  return ((cur - prev) / Math.abs(prev)) * 100
+}
+
 export function getPeriodKey(ts: number | string, mode: SummaryMode): string {
   const sec = Number(ts)
   if (!Number.isFinite(sec)) return ''

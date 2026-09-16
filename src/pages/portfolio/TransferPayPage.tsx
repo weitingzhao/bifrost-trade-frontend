@@ -18,6 +18,7 @@ import { pluginFlexTrigger } from '@/api/flexQueryPlugin'
 import { cn } from '@/lib/utils'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import {
+  type PctChange,
   type RangePreset,
   type SummaryMode,
   type SummaryTypeKey,
@@ -25,6 +26,7 @@ import {
   getRangeForPreset,
   getSummaryType,
   getPeriodKey,
+  pctChangeVsPrev,
 } from '@/utils/transferPay'
 import type { AccountTransaction } from '@/types/trading'
 import { TransferPayToolbar } from '@/pages/portfolio/transferPay/TransferPayToolbar'
@@ -131,12 +133,11 @@ export default function TransferPayPage() {
   }, [transactions, summaryMode])
 
   const changes = useMemo(() => {
-    const ct: Record<string, number | null> = {}
-    const cd: Record<string, number | null> = {}
-    const cw: Record<string, number | null> = {}
-    const cdv: Record<string, number | null> = {}
-    const co: Record<string, number | null> = {}
-    const pctOf = (cur: number, prev: number) => (cur !== 0 ? ((cur - prev) / Math.abs(cur)) * 100 : null)
+    const ct: Record<string, PctChange> = {}
+    const cd: Record<string, PctChange> = {}
+    const cw: Record<string, PctChange> = {}
+    const cdv: Record<string, PctChange> = {}
+    const co: Record<string, PctChange> = {}
     for (let i = 0; i < chronologicalKeys.length; i++) {
       const pk = chronologicalKeys[i]
       if (i === 0) {
@@ -150,11 +151,11 @@ export default function TransferPayPage() {
       const tPrev = summaryByType[ppk] ?? { deposit: 0, withdrawal: 0, dividend: 0, other: 0 }
       const total = accountIds.reduce((s, id) => s + (row[id] ?? 0), 0)
       const prevTotal = accountIds.reduce((s, id) => s + (prev[id] ?? 0), 0)
-      ct[pk] = pctOf(total, prevTotal)
-      cd[pk] = pctOf(tRow.deposit, tPrev.deposit)
-      cw[pk] = pctOf(tRow.withdrawal, tPrev.withdrawal)
-      cdv[pk] = pctOf(tRow.dividend, tPrev.dividend)
-      co[pk] = pctOf(tRow.other, tPrev.other)
+      ct[pk] = pctChangeVsPrev(total, prevTotal)
+      cd[pk] = pctChangeVsPrev(tRow.deposit, tPrev.deposit)
+      cw[pk] = pctChangeVsPrev(tRow.withdrawal, tPrev.withdrawal)
+      cdv[pk] = pctChangeVsPrev(tRow.dividend, tPrev.dividend)
+      co[pk] = pctChangeVsPrev(tRow.other, tPrev.other)
     }
     return { ct, cd, cw, cdv, co }
   }, [chronologicalKeys, summaryByPeriod, summaryByType, accountIds])

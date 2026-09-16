@@ -14,7 +14,7 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import { fmtUsdRound } from '@/lib/format'
-import type { SummaryMode, SummaryTypeKey } from '@/utils/transferPay'
+import type { PctChange, SummaryMode, SummaryTypeKey } from '@/utils/transferPay'
 import { TransferPayChangeVsPrev } from './TransferPayChangeVsPrev'
 import { transferPayUi } from './transferPayUi'
 
@@ -26,11 +26,11 @@ type Props = {
   summaryByPeriod: Record<string, Record<string, number>>
   summaryByType: Record<string, Record<SummaryTypeKey, number>>
   changes: {
-    ct: Record<string, number | null>
-    cd: Record<string, number | null>
-    cw: Record<string, number | null>
-    cdv: Record<string, number | null>
-    co: Record<string, number | null>
+    ct: Record<string, PctChange>
+    cd: Record<string, PctChange>
+    cw: Record<string, PctChange>
+    cdv: Record<string, PctChange>
+    co: Record<string, PctChange>
   }
   emptyHint?: string
 }
@@ -40,7 +40,7 @@ function SummaryAmountCell({
   pct,
 }: {
   value: number
-  pct: number | null | undefined
+  pct: PctChange | undefined
 }) {
   return (
     <DenseTableCell className={denseTableNumCell}>

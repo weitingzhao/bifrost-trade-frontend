@@ -104,9 +104,9 @@ describe('design adoption', () => {
     // Performance at its page rev 2026-09-16.11 (nine walked).
     // Rev 2026-09-17.1 (§14.7, colour tokens only) moved Accounts, Ledger,
     // Transfer & Pay, Symbol and Performance, so those five read stale until the
-    // Owner's colour look; the four Research pages it did not touch stay aligned.
+    // Owner's colour look; the Owner re-signed all five at .17.1 the same day.
     expect(counts.aligned + counts.byState.stale).toBe(9)
-    expect(counts.aligned).toBe(4)
+    expect(counts.aligned).toBe(9)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -124,10 +124,15 @@ describe('design adoption', () => {
         .map((r) => r.path)
         .sort(),
     ).toEqual([
+      '/portfolio/accounts',
+      '/portfolio/ledger',
+      '/portfolio/performance',
+      '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
       '/research/copilot/trading',
       '/research/loop/decisions',
+      '/research/symbol',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/backing',
@@ -192,15 +197,9 @@ describe('design adoption', () => {
     // moved direction and unrealized colours on 61 routes, five of them walked.
     // The package's HANDOFF header still reads Rev 2026-09-16.11 (Design did not
     // bump it), so DESIGN_REV holds there while the page stamps say .17.1.
+    // The Owner re-signed all five on the colour look, so none stays stale.
     expect(DESIGN_REV).toBe('2026-09-16.11')
-    expect(counts.byState.stale).toBe(5)
-    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
-      '/portfolio/accounts',
-      '/portfolio/ledger',
-      '/portfolio/performance',
-      '/portfolio/transfer',
-      '/research/symbol',
-    ])
+    expect(counts.byState.stale).toBe(0)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

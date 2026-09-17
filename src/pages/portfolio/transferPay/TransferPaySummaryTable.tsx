@@ -98,10 +98,15 @@ export function TransferPaySummaryTable({
         </div>
       </div>
 
+      {/*
+        Nine columns today, and one more for every account that joins: the
+        prototype's 1040px floor is what keeps the account columns readable
+        instead of letting them compress as the book grows.
+      */}
       {emptyHint ? (
         <p className={transferPayUi.sectionHint}>{emptyHint}</p>
       ) : (
-        <DenseDataTable wrapClassName={cn(denseTable.scrollX)}>
+        <DenseDataTable wrapClassName={cn(denseTable.scrollX)} tableClassName="min-w-[1040px]">
           <DenseTableHeader>
             <DenseTableHeadRow>
               <DenseTableHead>Period</DenseTableHead>

@@ -62,7 +62,25 @@ export function TransferPayTransactionsTable({
 
   return (
     <div>
-      <DenseDataTable wrapClassName={denseTable.scrollX}>
+      <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[980px]">
+        {/*
+          Seven columns with nothing declared share the width equally, which is
+          the wrong answer twice over: Ccy is three characters and never needs
+          193px, while Description is the only column carrying a sentence and
+          was clipping 13 of 15 rows. The widths below come from what each
+          column's content actually measures, so the description gets the room
+          the others were holding. `min-w` matches the prototype's own 980px
+          floor: below it the table scrolls rather than squeezing further.
+        */}
+        <colgroup>
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '33%' }} />
+        </colgroup>
         <DenseTableHeader>
           <DenseTableHeadRow>
             <DenseTableHead>Date</DenseTableHead>

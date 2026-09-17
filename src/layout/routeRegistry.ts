@@ -248,7 +248,17 @@ export const ROUTES: readonly RouteEntry[] = [
       note: 'Walked 2026-09-16 against Portfolio Accounts.dc.html at that rev, on DEV data (FETCHED clocks, seven broker tiles, a dormant row). Built: two clocks that never merge Pull with Rec; IB three-state colour (teal FETCHED, grey DISCONNECTED, red DAEMON DOWN); the five-row account×source freshness table plus Ingest with Widen default off; What the broker says as seven tiles and one table instead of tabs; How it is composed as Category / Asset mix / By symbol in one panel; Holdings following the selected account with Price as of on the stock table; the right inspector as Symbol (existing stock drawer) plus Categories (CRUD, tag, delete confirm). Dormant stays visible and does not alarm. Review fixes before sign-off: the idle account reads not in use with no Cushion reading; Data from reads in ET with the date token; every figure whole at each table floor; CategoriesModal, AccountSummaryCard and OverviewDashboard removed. Owner signed off 2026-09-16 on local DEV (:5173). Re-stamped on Rev 2026-09-16.11: the design moved the role word of the idle account to not in use and the Data from string to ET with the date token, both already built that way; Owner re-signed 2026-09-16.',
     },
   },
-  { path: '/portfolio/ledger', label: 'Trade Ledger', crumbs: PORTFOLIO, symbolScope: true },
+  {
+    path: '/portfolio/ledger',
+    label: 'Trade Ledger',
+    crumbs: PORTFOLIO,
+    symbolScope: true,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-16.9',
+      note: 'Walked 2026-09-16–17 against Portfolio Ledger.dc.html at that page rev (package 2026-09-16.14 @ Rev 2026-09-16.11; the page stamp did not move), on local DEV (:5173). Built: PageHeader with history · no polling; a five-tile health band from live counts (Closed P&L, Executions by source, Commissions on charged book rows, Unlinked with Options-only default, Canonical vs book); seven-dimension filters keyed on trade_date; Attribution (Strategy · Instance) and Instruments (Options · Stocks · Fixed income · Cash-like · Combos · All) chips, empty chips grey and clickable; four views and five tables pinned to the §14.6 floors; Summary months from the group\'s last trade_date; right inspector Explain · Reconcile · Links · Journal plus the existing stock Symbol drawer; Links as the option↔stock face (three columns, grey empty not a zero slippage, ±7-day candidates, remove kept with confirm); Journal Close a gap and Expired worthless with idle→confirm→done (R25) and no trade_date field (F9). Booking: ExchTrade unmarked, BOOK · expired / BOOK · assigned / BOOK / not reported by this source. Four production defects fixed first (edit wall-clock, expired-close side and net qty, opposite-leg error, stock unrealized copy). Not this round: Assignment writes (POST has no transaction_type); turning the shared edit / instance-link / delete dialogs into inspector faces (D:74, wait for Positions); Since default stays 1 month, not the prototype quarter. Owner to look before aligned.',
+    },
+  },
   {
     path: '/portfolio/transfer',
     label: 'Transfer & Pay',

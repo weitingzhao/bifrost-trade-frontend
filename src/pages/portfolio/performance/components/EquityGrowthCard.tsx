@@ -8,7 +8,21 @@ import { GROWTH_LAYERS } from '@/utils/ledger/equityGrowthChart'
 import type { FiBarChartData } from '@/utils/ledger/fiBarChart'
 import { EQUITY_GROWTH_INFO } from '@/pages/portfolio/performance/performanceConstants'
 import { fmtPnl, fmtUsd } from '@/pages/portfolio/performance/performanceFormatters'
+import { perfUi } from '@/pages/portfolio/performance/performanceUi'
 import styles from './equityGrowth.module.css'
+
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** `Jul → Sep 2026`, `Sep 2026`, or `Nov 2025 → Feb 2026`. */
+function rangeTitle(firstDate: string, lastDate: string): string {
+  const [fy, fm] = firstDate.split('-').map(Number)
+  const [ly, lm] = lastDate.split('-').map(Number)
+  if (!fy || !ly) return ''
+  const f = MONTH_SHORT[fm - 1]
+  const l = MONTH_SHORT[lm - 1]
+  if (fy === ly && fm === lm) return `${l} ${ly}`
+  return fy === ly ? `${f} → ${l} ${ly}` : `${f} ${fy} → ${l} ${ly}`
+}
 
 function fmtLayerValue(key: GrowthLayer, v: number, isPct: boolean): string {
   if (isPct) return `${v.toFixed(2)}%`
@@ -121,91 +135,55 @@ export function EquityGrowthCard({
   const hoverHit = hoverIdx != null ? chartData.growthChartHit[hoverIdx] : null
   const hoverPt: GrowthPoint | undefined = hoverIdx != null ? chartData.points[hoverIdx] : undefined
 
+  const totalLabel = isPct ? `${last.totalVisible.toFixed(2)}%` : fmtPnl(last.totalRawVisible)
+
   return (
-    <section className={styles.growthCard} aria-label="Portfolio equity growth">
-      <div className={styles.growthHeader}>
-        <div className={styles.titleRow}>
-          <h3>Portfolio Equity Growth</h3>
+    <section className={perfUi.panel} aria-label="Portfolio equity growth">
+      <header className={perfUi.panelHead}>
+        <span className={perfUi.cap}>Portfolio equity growth</span>
+        <span className={perfUi.panelTitle}>{rangeTitle(chartData.first.dateStr, last.dateStr)}</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Options PnL path Book Economic or Total"
+          options={[
+            { value: 'book', label: 'Book' },
+            { value: 'economic', label: 'Economic' },
+            { value: 'total', label: 'Total' },
+          ]}
+          value={optionsPnLMode}
+          onChange={(v) => onOptionsPnLModeChange(v as OptionsPnLMode)}
+        />
+        <SegmentControl
+          size="xs"
+          ariaLabel="Growth chart and Fixed Income Stream bar units"
+          options={[
+            { value: 'usd', label: '$' },
+            { value: 'pct', label: '%', disabled: !chartData.hasCapitalBase },
+          ]}
+          value={growthUnit}
+          onChange={(v) => onGrowthUnitChange(v as 'pct' | 'usd')}
+        />
+        <span className="inline-flex items-center gap-1 text-dense-meta text-muted-foreground">
+          how the Total line is built
           <InfoTooltip text={EQUITY_GROWTH_INFO} />
-        </div>
+        </span>
+        <span className="max-w-64 text-dense-caption text-muted-foreground text-pretty">
+          Both switches reach this curve only. The monthly table and the calendar below stay in dollars, on Book.
+        </span>
+        <span className="ml-auto flex gap-3.5">
+          <span className="flex flex-col items-end">
+            <span className={perfUi.cap}>Total</span>
+            <span className={cn(perfUi.mono, 'text-sm font-bold', pnlColorClass(last.totalRawVisible))}>{totalLabel}</span>
+          </span>
+          <span className="flex flex-col items-end">
+            <span className={perfUi.cap}>Net PnL</span>
+            <span className={cn(perfUi.mono, 'text-sm font-bold', pnlColorClass(last.totalRaw))}>{fmtPnl(last.totalRaw)}</span>
+          </span>
+        </span>
+      </header>
 
-        <div className={styles.growthControls}>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Options PnL path Book Economic or Total"
-            options={[
-              { value: 'book', label: 'Book' },
-              { value: 'economic', label: 'Economic' },
-              { value: 'total', label: 'Total' },
-            ]}
-            value={optionsPnLMode}
-            onChange={(v) => onOptionsPnLModeChange(v as OptionsPnLMode)}
-          />
-          <SegmentControl
-            size="xs"
-            ariaLabel="Growth chart and Fixed Income Stream bar units"
-            options={[
-              { value: 'pct', label: '%', disabled: !chartData.hasCapitalBase },
-              { value: 'usd', label: '$' },
-            ]}
-            value={growthUnit}
-            onChange={(v) => onGrowthUnitChange(v as 'pct' | 'usd')}
-          />
-
-          <div className={styles.kpis}>
-            <span>
-              Total
-              <strong className={pnlColorClass(last.totalRawVisible)}>
-                {isPct ? `${last.totalVisible.toFixed(2)}%` : fmtPnl(last.totalRawVisible)}
-              </strong>
-            </span>
-            <span>
-              Net PnL
-              <strong className={pnlColorClass(last.totalRaw)}>
-                {fmtPnl(last.totalRaw)}
-              </strong>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className={styles.growthBody}>
-        <div className={styles.legendSide} aria-label="Equity growth legend">
-          <span className={styles.legendHint}>PnL by asset class</span>
-          {GROWTH_LAYERS.map((l) => {
-            const on = layersVisible[l.key]
-            const val = last[l.key]
-            return (
-              <label
-                key={l.key}
-                className={cn(styles.legendRow, !on && styles.legendRowOff)}
-              >
-                <input
-                  type="checkbox"
-                  className={styles.legendCheckbox}
-                  checked={on}
-                  onChange={() => onLayerToggle(l.key)}
-                  aria-label={`Plot ${l.label}`}
-                />
-                <span className={styles.legendSwatch} style={{ background: l.color }} />
-                <span className={styles.legendLabel} style={{ color: l.color }}>{l.label}</span>
-                <span className={styles.legendValue} style={{ color: l.color }}>
-                  {fmtLayerValue(l.key, val, isPct)}
-                </span>
-              </label>
-            )
-          })}
-          <div className={cn(styles.legendRow, styles.legendRowTotal)}>
-            <span className={styles.legendSwatch} style={{ background: 'rgb(255,255,255)' }} />
-            <span className={styles.legendLabel}>Total</span>
-            <span className={styles.legendValue}>
-              {isPct ? `${last.totalVisible.toFixed(2)}%` : fmtPnl(last.totalRawVisible)}
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.mainCharts}>
-          <div className={styles.chartWrap} ref={wrapRef}>
+      <div className="flex flex-wrap items-start gap-x-3 gap-y-2.5 px-3 pt-2.5 pb-3">
+          <div className={cn(styles.chartWrap, 'flex-[1_1_21rem]')} ref={wrapRef}>
             <svg
               className={styles.growthChart}
               viewBox={`0 0 ${chartData.W} ${chartData.H}`}
@@ -331,6 +309,43 @@ export function EquityGrowthCard({
           </div>
 
           {fiBarData && <FiBarPanel data={fiBarData} />}
+
+        <div
+          className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/60 pt-2"
+          aria-label="PnL by asset class"
+        >
+          <span className={perfUi.cap}>PnL by asset class</span>
+          {GROWTH_LAYERS.map((l) => {
+            const on = layersVisible[l.key]
+            return (
+              <button
+                key={l.key}
+                type="button"
+                aria-pressed={on}
+                onClick={() => onLayerToggle(l.key)}
+                title={`${on ? 'Drop' : 'Add'} ${l.label} on the curve`}
+                className="flex cursor-pointer items-center gap-1.75 rounded-sm border-0 bg-transparent px-1 py-0.75 text-left hover:bg-secondary/40"
+              >
+                <span
+                  className="h-2.75 w-2.75 flex-none rounded-[2px] border"
+                  style={{ background: on ? l.color : 'transparent', borderColor: on ? l.color : 'var(--muted-foreground)' }}
+                />
+                <span className="text-dense-body" style={{ color: on ? l.color : 'var(--muted-foreground)' }}>{l.label}</span>
+                <span className={cn(perfUi.mono, 'text-dense-body', on ? pnlColorClass(last[l.key]) : 'text-muted-foreground')}>
+                  {fmtLayerValue(l.key, last[l.key], isPct)}
+                </span>
+              </button>
+            )
+          })}
+          <span className="flex items-center gap-1.75 px-1">
+            <span className="h-0.5 w-4 flex-none bg-foreground" />
+            <span className="text-dense-body font-semibold text-foreground">Total</span>
+            <span className={cn(perfUi.mono, 'text-dense-body font-bold text-foreground')}>{totalLabel}</span>
+          </span>
+          <span className="flex items-center gap-1.75 px-1" title="Full book — not filtered by the switches">
+            <span className="text-dense-body text-muted-foreground">Net PnL</span>
+            <span className={cn(perfUi.mono, 'text-dense-body text-muted-foreground')}>{fmtPnl(last.totalRaw)}</span>
+          </span>
         </div>
       </div>
     </section>
@@ -444,13 +459,15 @@ function FiBarPanel({ data }: { data: FiBarChartData }) {
       [styles.fiBarCaptionZero]: tone === 'zero',
     })
 
+  const rangeTotal = data.bars.reduce((sum, bar) => sum + bar.monthlyNotional, 0)
   return (
     <div className={styles.fiBarPanel} aria-label={`Fixed Income Stream by ${data.bucket}`}>
-      <div className={styles.fiBarHead}>
-        <div className={styles.fiBarTitleRow}>
-          <span className={styles.fiBarKicker}>Fixed Income Stream</span>
+      <div className="flex flex-col gap-0.5 pb-1">
+        <span className="inline-flex items-center gap-1">
+          <span className={perfUi.cap}>Fixed income stream</span>
           <InfoTooltip text={data.useRatio ? FI_BAR_INFO_RATIO : FI_BAR_INFO_USD} />
-        </div>
+        </span>
+        <span className="text-dense-caption text-muted-foreground">cash in and out per {data.bucket} · not P&amp;L</span>
       </div>
 
       <svg
@@ -520,6 +537,9 @@ function FiBarPanel({ data }: { data: FiBarChartData }) {
           </g>
         ))}
       </svg>
+      <span className={cn(perfUi.mono, 'border-t border-border/60 pt-1 text-dense-meta text-muted-foreground')}>
+        range total {fmtUsd(rangeTotal)}
+      </span>
     </div>
   )
 }

@@ -1,10 +1,5 @@
 import { useCallback, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import {
-  CollapsibleGroup,
-  CollapsibleGroupHeader,
-  CollapsibleGroupTitle,
-  CollapsibleGroupStats,
-  CollapsibleGroupBody,
   CollapsibleChevron,
   CollapsibleBucketHeader,
   DenseDataTable,
@@ -17,7 +12,9 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { fmtUsd } from '@/lib/format'
+import { cn } from '@/lib/utils'
+import { fmtIsoDateToken, fmtUsd } from '@/lib/format'
+import { perfUi } from '@/pages/portfolio/performance/performanceUi'
 import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import type { SameDayRollEvent } from '@/utils/ledger/sameDayOptionRolls'
 import type { ByDayRangeData } from '@/types/trading'
@@ -76,7 +73,7 @@ function ChainDayBlocks({
               onToggle={() => onToggleDay(dayKey)}
               label={
                 <span className="inline-flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                  <span className="tabular-nums font-semibold text-foreground">{day.dateStr}</span>
+                  <span className="font-mono tabular-nums font-semibold text-foreground">{fmtIsoDateToken(day.dateStr)}</span>
                   <span className="text-dense-meta font-normal text-muted-foreground">
                     Cash statement
                   </span>
@@ -114,7 +111,7 @@ function ChainDayBlocks({
                         </span>
                       </p>
                     ) : null}
-                    <DenseDataTable>
+                    <DenseDataTable wrapClassName="rounded-sm" tableClassName="min-w-[560px]">
                       <colgroup>
                         <col style={{ width: '8%' }} />
                         <col style={{ width: '28%' }} />
@@ -247,68 +244,46 @@ export default function OptionsModeBridgePanel({
     return null
   }
 
+  const headStats: { label: string; value: number; tone: string; title?: string }[] = [
+    { label: 'Book R', value: summary.bookR, tone: pnlColorClass(summary.bookR) },
+    { label: 'Σ roll adj', value: summary.sumRollAdj, tone: pnlColorClass(summary.sumRollAdj) },
+    { label: 'Economic', value: summary.economic, tone: pnlColorClass(summary.economic) },
+    { label: 'Open', value: summary.open, tone: unrealizedPnlColorClass(summary.open) },
+    { label: 'Total', value: summary.total, tone: pnlColorClass(summary.total) },
+    { label: 'Econ − Total', value: summary.econMinusTotal, tone: pnlColorClass(summary.econMinusTotal), title: 'Economic − Total (= Σ roll adj − Open)' },
+  ]
+
   return (
-    <CollapsibleGroup variant="card" className="min-w-0">
-      <CollapsibleGroupHeader
-        expanded={expanded}
-        onToggle={() => setExpanded((o) => !o)}
-      >
-        <CollapsibleChevron expanded={expanded} />
-        <CollapsibleGroupTitle className="inline-flex items-center gap-1.5">
-          Options path bridge
-          <span
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-            role="presentation"
-          >
-            <InfoTooltip text={BRIDGE_HELP} />
+    <section className={perfUi.panel} aria-label="Options path bridge">
+      <div className="flex items-center rounded-t-md bg-secondary/40">
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((o) => !o)}
+          className="flex min-w-0 flex-1 cursor-pointer flex-wrap items-center gap-2.5 border-0 bg-transparent px-3 py-2 text-left text-foreground hover:bg-secondary"
+        >
+          <CollapsibleChevron expanded={expanded} className={cn('h-3 w-3', expanded ? 'rotate-0' : '-rotate-90')} />
+          <span className={perfUi.cap}>Options path bridge</span>
+          <span className={perfUi.panelTitle}>Book → Economic → Total</span>
+          <span className="ml-auto flex flex-wrap gap-x-3.5 gap-y-1">
+            {headStats.map((h) => (
+              <span key={h.label} className="flex items-baseline gap-1.25" title={h.title}>
+                <span className={cn(perfUi.cap, 'text-dense-micro')}>{h.label}</span>
+                <span className={cn(perfUi.mono, 'text-dense-body font-semibold', h.tone)}>{fmtUsd(h.value)}</span>
+              </span>
+            ))}
           </span>
-        </CollapsibleGroupTitle>
-        <CollapsibleGroupStats>
-          <span>
-            Book R{' '}
-            <span className={`tabular-nums font-medium text-foreground ${pnlColorClass(summary.bookR)}`}>
-              {fmtUsd(summary.bookR)}
-            </span>
-          </span>
-          <span>
-            Σ roll adj{' '}
-            <span className={`tabular-nums font-medium text-foreground ${pnlColorClass(summary.sumRollAdj)}`}>
-              {fmtUsd(summary.sumRollAdj)}
-            </span>
-          </span>
-          <span>
-            Economic{' '}
-            <span className={`tabular-nums font-medium text-foreground ${pnlColorClass(summary.economic)}`}>
-              {fmtUsd(summary.economic)}
-            </span>
-          </span>
-          <span>
-            Open{' '}
-            <span className={`tabular-nums font-medium text-foreground ${unrealizedPnlColorClass(summary.open)}`}>
-              {fmtUsd(summary.open)}
-            </span>
-          </span>
-          <span>
-            Total{' '}
-            <span className={`tabular-nums font-medium text-foreground ${pnlColorClass(summary.total)}`}>
-              {fmtUsd(summary.total)}
-            </span>
-          </span>
-          <span title="Economic − Total (= Σ roll adj − Open)">
-            Econ−Total{' '}
-            <span className={`tabular-nums font-semibold text-foreground ${pnlColorClass(summary.econMinusTotal)}`}>
-              {fmtUsd(summary.econMinusTotal)}
-            </span>
-          </span>
-        </CollapsibleGroupStats>
-      </CollapsibleGroupHeader>
+        </button>
+        <span className="pr-3">
+          <InfoTooltip text={BRIDGE_HELP} />
+        </span>
+      </div>
 
       {expanded ? (
-        <CollapsibleGroupBody className="px-3 pb-1">
-          <p className="text-dense-meta text-muted-foreground mb-1">
+        <div className="border-t border-border px-3 pb-1">
+          <p className={cn(perfUi.mono, 'my-0 border-b border-border/50 py-1.75 text-dense-meta text-muted-foreground')}>
             Economic = Book R + Σ roll adj · Total = Book R + Open
-            {asOfDateStr ? ` (as of ${asOfDateStr})` : ''}.
+            {asOfDateStr ? ` (as of ${fmtIsoDateToken(asOfDateStr)})` : ''}.
             {' '}Underlying → chain → roll day (cash statement) → fills.
           </p>
           {groups.length === 0 ? (
@@ -325,7 +300,7 @@ export default function OptionsModeBridgePanel({
                         onToggle={() => toggleSet(setExpandedUnd, g.underlying)}
                         label={
                           <span className="inline-flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                            <span className="text-entity-symbol font-semibold">{g.underlying}</span>
+                            <span className="font-mono font-bold text-sky-400">{g.underlying}</span>
                             <span className="text-dense-meta font-normal text-muted-foreground">
                               {g.chains.length} chain{g.chains.length === 1 ? '' : 's'} · {g.rolls} roll
                               {g.rolls === 1 ? '' : 's'}
@@ -385,8 +360,8 @@ export default function OptionsModeBridgePanel({
               />
             </div>
           )}
-        </CollapsibleGroupBody>
+        </div>
       ) : null}
-    </CollapsibleGroup>
+    </section>
   )
 }

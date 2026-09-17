@@ -5,6 +5,7 @@ import {
   groupSameDayRollsByUndAndChain,
   rollAdjustment,
   shortOptContractKey,
+  shortOptLegLabel,
 } from '@/utils/ledger/optionsModeBridge'
 import type { ByDayRangeData } from '@/types/trading'
 import type { SameDayRollEvent } from '@/utils/ledger/sameDayOptionRolls'
@@ -72,10 +73,9 @@ describe('buildOptionsModeBridgeSummary', () => {
 })
 
 describe('shortOptContractKey', () => {
-  it('formats pipe contract keys', () => {
-    expect(shortOptContractKey('RKLB  260515C00090000|OPT|20260515|90.0|C')).toBe(
-      'RKLB 90.0C 20260515',
-    )
+  it('writes the contract token: SYM DDMMMYY strike+C/P (§14.4)', () => {
+    expect(shortOptContractKey('ZZZ  260515C00090000|OPT|20260515|90.0|C')).toBe('ZZZ 15MAY26 90C')
+    expect(shortOptLegLabel('ZZZ|OPT|20260515|7.5|P')).toBe('15MAY26 7.5P')
   })
 })
 

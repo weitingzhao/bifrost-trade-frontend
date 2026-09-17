@@ -249,7 +249,7 @@ export default function PerformancePage() {
           label="Shape"
           note="how it got here · the switches on the curve reach the curve only"
         />
-        <section className={pageStyles.timeRangeBlock} aria-label="Equity growth and options path">
+        <div className="flex flex-col gap-3.5">
           <EquityGrowthCard
             chartData={equityGrowthChart}
             fiBarData={fiBarData}
@@ -268,7 +268,7 @@ export default function PerformancePage() {
             asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
             optionsPnLMode={optionsPnLMode}
           />
-        </section>
+        </div>
 
         <PerformanceCalendarSection
           calendarMonth={calendarMonth}

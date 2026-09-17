@@ -4,6 +4,7 @@
 
 import type { SameDayRollEvent } from '@/utils/ledger/sameDayOptionRolls'
 import type { ByDayRangeData } from '@/types/trading'
+import { fmtIsoDateToken } from '@/lib/format'
 
 export type OptionsModeBridgeSummary = {
   bookR: number
@@ -88,28 +89,26 @@ export function buildOptionsModeBridgeSummary(params: {
 }
 
 /** Short label for roll table: underlying strike right expiry. */
-export function shortOptContractKey(ck: string): string {
+function legParts(ck: string): { und: string; leg: string } | null {
   const parts = ck.split('|')
-  if (parts.length >= 5) {
-    const und = (parts[0] ?? '').trim().split(/\s+/)[0] ?? ''
-    const exp = parts[2] ?? ''
-    const strike = parts[3] ?? ''
-    const right = (parts[4] ?? '').toUpperCase().startsWith('P') ? 'P' : 'C'
-    return `${und} ${strike}${right} ${exp}`
-  }
+  if (parts.length < 5) return null
+  const und = (parts[0] ?? '').trim().split(/\s+/)[0] ?? ''
+  const strikeNum = Number(parts[3])
+  const strike = Number.isFinite(strikeNum) ? String(strikeNum) : (parts[3] ?? '')
+  const right = (parts[4] ?? '').toUpperCase().startsWith('P') ? 'P' : 'C'
+  return { und, leg: `${fmtIsoDateToken(parts[2] ?? '')} ${strike}${right}` }
+}
+
+/** The contract token (§14.4): `RKLB 15MAY26 90C`. */
+export function shortOptContractKey(ck: string): string {
+  const p = legParts(ck)
+  if (p) return `${p.und} ${p.leg}`
   return ck.length > 36 ? `${ck.slice(0, 34)}…` : ck
 }
 
-/** Compact strike+right+expiry without repeating underlying. */
+/** The same token without the underlying, for a chain inside one symbol: `15MAY26 90C`. */
 export function shortOptLegLabel(ck: string): string {
-  const parts = ck.split('|')
-  if (parts.length >= 5) {
-    const exp = parts[2] ?? ''
-    const strike = parts[3] ?? ''
-    const right = (parts[4] ?? '').toUpperCase().startsWith('P') ? 'P' : 'C'
-    return `${strike}${right} ${exp}`
-  }
-  return shortOptContractKey(ck)
+  return legParts(ck)?.leg ?? shortOptContractKey(ck)
 }
 
 function chainPathLabel(rows: RollWithAdj[]): string {

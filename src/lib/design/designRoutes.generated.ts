@@ -38,14 +38,14 @@ export interface DesignRoute {
   group: string | null
 }
 
-export const DESIGN_REV = "2026-09-16.9"
+export const DESIGN_REV = "2026-09-16.10"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-12.1","inNav":true,"group":"Home"},
   {"path":"/research/events","label":"Events","crumbs":["Research","Market"],"designed":true,"file":"Research Events.dc.html","round":"NEW","rev":"2026-09-12.1","inNav":true,"group":"Research"},
   {"path":"/market/live","label":"Live","crumbs":["Research","Market"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-15.9","inNav":true,"group":"Research"},
   {"path":"/risk/portfolio","label":"Portfolio Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-15.5","inNav":true,"group":"Risk"},
-  {"path":"/portfolio/pnl-explain","label":"P&L Explain","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio PnL Explain.dc.html","round":"NEW","rev":"2026-09-12.1","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/pnl-explain","label":"P&L Explain","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio PnL Explain.dc.html","round":"NEW","rev":"2026-09-16.7","inNav":true,"group":"Portfolio"},
   {"path":"/trade/expiration","label":"Expiration","crumbs":["Trade","Desk"],"designed":true,"file":"Trade Expiration.dc.html","round":"NEW","rev":"2026-09-12.1","inNav":true,"group":"Trade"},
   {"path":"/research/overview","label":"Overview","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-14.1","inNav":true,"group":"Research"},
   {"path":"/research/workbench","label":"Workbench","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-14.1","inNav":true,"group":"Research"},
@@ -95,14 +95,14 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/review/fit","label":"Single trade","crumbs":["Review"],"designed":true,"file":"Review Fit.dc.html","round":null,"rev":"2026-09-14.1","inNav":true,"group":"Review"},
   {"path":"/review/habits","label":"Habits","crumbs":["Review"],"designed":true,"file":"Review Habits.dc.html","round":null,"rev":"2026-09-14.1","inNav":true,"group":"Review"},
   {"path":"/review/proposals","label":"Rule proposals","crumbs":["Review"],"designed":true,"file":"Review Queue.dc.html","round":null,"rev":"2026-09-14.1","inNav":true,"group":"Review"},
-  {"path":"/portfolio/performance","label":"Performance","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Performance.dc.html","round":null,"rev":"2026-09-15.10","inNav":true,"group":"Portfolio"},
-  {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-14.1","inNav":true,"group":"Portfolio"},
-  {"path":"/portfolio/backing","label":"Backing & Model","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Backing.dc.html","round":null,"rev":"2026-09-15.5","inNav":true,"group":"Portfolio"},
-  {"path":"/portfolio/outcome","label":"Outcome","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Outcome.dc.html","round":"OLD","rev":"2026-09-14.1","inNav":true,"group":"Portfolio"},
-  {"path":"/portfolio/accounts","label":"Accounts","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Accounts.dc.html","round":null,"rev":"2026-09-15.10","inNav":true,"group":"Portfolio"},
-  {"path":"/portfolio/ledger","label":"Trade Ledger","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Ledger.dc.html","round":null,"rev":"2026-09-15.10","inNav":true,"group":"Portfolio"},
-  {"path":"/portfolio/transfer","label":"Transfer & Pay","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Transfer.dc.html","round":null,"rev":"2026-09-15.10","inNav":true,"group":"Portfolio"},
-  {"path":"/portfolio/corporate-actions","label":"Corporate Actions","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Corporate Actions.dc.html","round":null,"rev":"2026-09-15.10","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/performance","label":"Performance","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Performance.dc.html","round":null,"rev":"2026-09-16.9","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-16.9","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/backing","label":"Backing & Model","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Backing.dc.html","round":null,"rev":"2026-09-16.9","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/outcome","label":"Outcome","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Outcome.dc.html","round":"OLD","rev":"2026-09-16.8","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/accounts","label":"Accounts","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Accounts.dc.html","round":null,"rev":"2026-09-16.9","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/ledger","label":"Trade Ledger","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Ledger.dc.html","round":null,"rev":"2026-09-16.9","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/transfer","label":"Transfer & Pay","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Transfer.dc.html","round":null,"rev":"2026-09-16.9","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/corporate-actions","label":"Corporate Actions","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Corporate Actions.dc.html","round":null,"rev":"2026-09-16.8","inNav":true,"group":"Portfolio"},
   {"path":"/trade/assignment","label":"Assignment","crumbs":["Trade","Desk"],"designed":true,"file":"Trade Assignment.dc.html","round":null,"rev":"2026-09-15.12","inNav":true,"group":"Trade"},
   {"path":"/risk/sizing","label":"Sizing","crumbs":["Risk"],"designed":true,"file":"Risk Sizing.dc.html","round":null,"rev":"2026-09-15.7","inNav":true,"group":"Risk"},
   {"path":"/risk/budget","label":"Risk Budget","crumbs":["Risk"],"designed":true,"file":"Risk Budget.dc.html","round":null,"rev":"2026-09-15.8","inNav":true,"group":"Risk"},

@@ -238,7 +238,16 @@ export const ROUTES: readonly RouteEntry[] = [
       note: 'Walked 2026-09-15 against Portfolio Backing.dc.html (C6 judgment table). Built: judgment strip (pool · used · 85% house gate · space under gate), plan reserves grey lamp (no structured plans), assumptions table with the 85% gate and the 50% pressure ceiling as two rows, obligations caption. Gate hit stays Not computed until a service computes it, as the Rev 2026-09-15.5 prototype also says. On STG since 769a03c. Owner to look before aligned.',
     },
   },
-  { path: '/portfolio/accounts', label: 'Accounts', crumbs: PORTFOLIO },
+  {
+    path: '/portfolio/accounts',
+    label: 'Accounts',
+    crumbs: PORTFOLIO,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-16.9',
+      note: 'Walked 2026-09-16 against Portfolio Accounts.dc.html at that rev, on DEV data (FETCHED clocks, seven broker tiles, a dormant row). Built: two clocks that never merge Pull with Rec; IB three-state colour (teal FETCHED, grey DISCONNECTED, red DAEMON DOWN); the five-row account×source freshness table plus Ingest with Widen default off; What the broker says as seven tiles and one table instead of tabs; How it is composed as Category / Asset mix / By symbol in one panel; Holdings following the selected account with Price as of on the stock table; the right inspector as Symbol (existing stock drawer) plus Categories (CRUD, tag, delete confirm). Dormant stays visible and does not alarm. Owner to look before aligned.',
+    },
+  },
   { path: '/portfolio/ledger', label: 'Trade Ledger', crumbs: PORTFOLIO },
   {
     path: '/portfolio/transfer',

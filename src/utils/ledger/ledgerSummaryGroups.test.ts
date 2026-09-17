@@ -39,6 +39,30 @@ describe('buildOptionsSummaryByMonth', () => {
     expect(rows[0]![1].count).toBe(1)
   })
 
+  it('files a group closed by an undated row under no month, not the month it opened', () => {
+    const fill = (id: number, tradeDate: string | null, side: string) =>
+      ({ account_executions_id: id, trade_date: tradeDate, time: 1_700_000_000, quantity: 1, price: 1, side }) as unknown as OptExecutionGroup['trades'][number]
+    const group = {
+      contract_key: 'AAA|OPT|C|10|20240621',
+      symbol: 'AAA',
+      strike: 10,
+      expiry: '20240621',
+      option_right: 'C',
+      account_id: 'U0000001',
+      net_qty: 0,
+      buy_volume: 1,
+      sell_volume: 1,
+      buy_avg_price: 1,
+      sell_avg_price: 1,
+      buy_cost: 100,
+      sell_premium: 100,
+      realized_pnl: 0,
+      status: 'realized',
+      trades: [fill(1, '2024-02-15', 'Buy'), fill(2, null, 'Sell')],
+    } as OptExecutionGroup
+    expect(buildOptionsSummaryByMonth([group])).toEqual([])
+  })
+
   it('omits a group whose fills have no trade_date', () => {
     const group: OptExecutionGroup = {
       contract_key: 'AAA|OPT|P|10|20240621',

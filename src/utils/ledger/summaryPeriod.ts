@@ -160,7 +160,6 @@ export function getSinceTradeDateRange(
 /**
  * Calendar trade date only. Empty `trade_date` is undated — never fall back to
  * `time` (that is the write / ingest clock, not the trade date).
- * `timeSec` is accepted so existing call sites compile; it is ignored.
  */
 export function ledgerExecutionDateKey(
   tradeDate: string | null | undefined,

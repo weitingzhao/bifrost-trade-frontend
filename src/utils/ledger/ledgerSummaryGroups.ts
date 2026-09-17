@@ -25,13 +25,18 @@ export function closedGroupSummaryPnl(g: OptExecutionGroup): number {
 
 /**
  * Bucket closed groups by the last fill's `trade_date` month.
- * Groups with no trade date on any fill are omitted here and counted in Total / undated.
+ *
+ * A group with any undated fill falls into no month and is counted in Total /
+ * undated. Its close cannot be dated: on DEV the undated rows are journal
+ * closes, and bucketing by the latest dated fill filed each one's P&L under the
+ * month it was *opened* — while the page said undated rows fall into no month.
  */
 export function buildOptionsSummaryByMonth(
   groups: OptExecutionGroup[],
 ): [string, OptionSummaryMonthEntry][] {
   const byMonth = new Map<string, OptionSummaryMonthEntry>()
   for (const g of groups) {
+    if ((g.trades ?? []).some(t => !ledgerExecutionDateKey(t.trade_date))) continue
     const d = lastFillTradeDate(g)
     if (!d) continue
     const monthStr = d.slice(0, 7)

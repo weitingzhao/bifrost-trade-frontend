@@ -19,9 +19,11 @@ import {
   Palette,
   PieChart,
   Plug,
+  Radar,
   Radio,
   Settings,
   Shield,
+  ShieldAlert,
   Star,
   Target,
   TrendingUp,
@@ -104,6 +106,16 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         route('Trade Ledger', '/portfolio/ledger', ClipboardList),
         route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
       ]),
+    ],
+  },
+  {
+    label: 'Risk',
+    icon: ShieldAlert,
+    // The design files Risk as its own group of six (shell-registry `G.Risk`).
+    // One row until the rest are built: Portfolio Exposure is the only one whose
+    // data exists — β and correlation from Research, Δ$ from the model service.
+    items: [
+      route('Portfolio Exposure', '/risk/portfolio', Radar),
     ],
   },
   {

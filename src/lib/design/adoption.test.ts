@@ -125,8 +125,10 @@ describe('design adoption', () => {
     // (unbuilt 43→42, reviewing 3→4), then aligned on the Owner's look
     // (reviewing 4→3). P&L Explain is the second built from nothing, and the
     // first whose central identity the data cannot evaluate at all
-    // (unbuilt 42→41, reviewing 3→4).
-    expect(counts.byState.reviewing).toBe(4)
+    // (unbuilt 42→41, reviewing 3→4). Risk Portfolio Exposure is the first
+    // page outside the Portfolio group, built under the Owner's option-b ruling
+    // (unbuilt 41→40, reviewing 4→5).
+    expect(counts.byState.reviewing).toBe(5)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -148,6 +150,7 @@ describe('design adoption', () => {
       '/portfolio/backing',
       '/portfolio/pnl-explain',
       '/portfolio/positions',
+      '/risk/portfolio',
       '/trade/plans',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
@@ -178,7 +181,7 @@ describe('design adoption', () => {
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
-    expect(counts.byState.unbuilt).toBe(41)
+    expect(counts.byState.unbuilt).toBe(40)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.

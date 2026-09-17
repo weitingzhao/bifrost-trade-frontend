@@ -16,9 +16,12 @@ describe('Trade nav', () => {
   it('stands before Portfolio, with Playbook as the only row', () => {
     // Owner (a), 2026-09-14: new top-level Trade group, design order Home ·
     // Trade · Portfolio · Research · …, one row until the rest of Trade exists.
-    expect(NAV_GROUPS.map((g) => g.label).slice(0, 4)).toEqual([
+    // Risk joined 2026-09-17 with its first built row (Portfolio Exposure); the
+    // design files it as its own group of six, after Portfolio.
+    expect(NAV_GROUPS.map((g) => g.label).slice(0, 5)).toEqual([
       'Trade',
       'Portfolio',
+      'Risk',
       'Research',
       'Strategy',
     ])

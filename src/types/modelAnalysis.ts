@@ -38,6 +38,14 @@ export interface GreeksInfo {
   degraded: boolean
   degraded_leg_count?: number
   per_leg?: GreeksLeg[]
+  /**
+   * Why there is no reading, in core's own word (`no_spot` on DEV today).
+   *
+   * Sent alongside `degraded: true` when the service could not price the
+   * underlying at all. A page showing the reason is telling the reader it is
+   * unknown; one showing a zero is telling them something false.
+   */
+  reason?: string | null
 }
 
 export interface CarLegDetail {

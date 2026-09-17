@@ -308,3 +308,40 @@ export const SepaReadinessSummaryResponseSchema = z
   .object({ ok: z.boolean() })
   .passthrough()
 
+
+/**
+ * Beta and correlation (research `RS2`, compute-on-read).
+ *
+ * Every reading carries the sample it rests on: a window filled under the
+ * endpoint's `min_fill` comes back as `beta: null` with its `n`, because a
+ * 252-day beta from 40 sessions is not a 252-day beta. `as_of` is the last bar
+ * that took part, never today's date — so the page can say how old the reading
+ * is instead of implying it is live.
+ */
+export const RiskBetaResponseSchema = z
+  .object({
+    as_of: z.string().nullable(),
+    benchmark: z.string(),
+    min_fill: z.number(),
+    items: z.array(
+      z
+        .object({
+          symbol: z.string(),
+          window: z.number(),
+          beta: z.number().nullable(),
+          n: z.number(),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough()
+
+export const RiskCorrelationResponseSchema = z
+  .object({
+    as_of: z.string().nullable(),
+    window: z.number(),
+    min_fill: z.number(),
+    symbols: z.array(z.string()),
+    matrix: z.record(z.string(), z.record(z.string(), z.object({ rho: z.number().nullable(), n: z.number() }).passthrough())),
+  })
+  .passthrough()

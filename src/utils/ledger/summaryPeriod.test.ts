@@ -59,7 +59,7 @@ describe('formatPeriodLabel', () => {
   })
 
   it('formats month', () => {
-    expect(formatPeriodLabel('2024-03', 'month')).toBe('2024-03')
+    expect(formatPeriodLabel('2024-03', 'month')).toBe('MAR 2024')
   })
 
   it('formats quarter', () => {
@@ -95,7 +95,7 @@ describe('rollupOptionsFromMonthly', () => {
     const yearRows = rollupOptionsFromMonthly(monthly, 'year')
 
     expect(monthRows[0]?.[0]).toBe('2026-05')
-    expect(formatPeriodLabel(monthRows[0]![0], 'month')).toBe('2026-05')
+    expect(formatPeriodLabel(monthRows[0]![0], 'month')).toBe('MAY 2026')
     expect(quarterRows[0]?.[0]).toBe('2026-Q2')
     expect(formatPeriodLabel(quarterRows[0]![0], 'quarter')).toBe('2026 Q2')
     expect(yearRows[0]?.[0]).toBe('2026')
@@ -126,16 +126,15 @@ describe('getSinceTradeDateRange', () => {
 
 describe('ledgerExecutionDateKey', () => {
   it('prefers trade_date over time', () => {
-    expect(ledgerExecutionDateKey('2024-03-15', 1700000000)).toBe('2024-03-15')
+    expect(ledgerExecutionDateKey('2024-03-15')).toBe('2024-03-15')
   })
 
-  it('falls back to time if no trade_date', () => {
-    const key = ledgerExecutionDateKey(null, 1700000000)
-    expect(key).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  it('does not fall back to time if no trade_date', () => {
+    expect(ledgerExecutionDateKey(null)).toBeNull()
   })
 
   it('returns null if both missing', () => {
-    expect(ledgerExecutionDateKey(null, null)).toBeNull()
+    expect(ledgerExecutionDateKey(null)).toBeNull()
   })
 })
 
@@ -158,15 +157,19 @@ describe('executionMatchesLedgerTradePeriod', () => {
   const range = { start: '2024-03-01', end: '2024-03-31' }
 
   it('matches date within range', () => {
-    expect(executionMatchesLedgerTradePeriod('2024-03-15', null, range)).toBe(true)
+    expect(executionMatchesLedgerTradePeriod('2024-03-15', range)).toBe(true)
   })
 
   it('matches boundary dates', () => {
-    expect(executionMatchesLedgerTradePeriod('2024-03-01', null, range)).toBe(true)
-    expect(executionMatchesLedgerTradePeriod('2024-03-31', null, range)).toBe(true)
+    expect(executionMatchesLedgerTradePeriod('2024-03-01', range)).toBe(true)
+    expect(executionMatchesLedgerTradePeriod('2024-03-31', range)).toBe(true)
   })
 
   it('rejects date outside range', () => {
-    expect(executionMatchesLedgerTradePeriod('2024-04-01', null, range)).toBe(false)
+    expect(executionMatchesLedgerTradePeriod('2024-04-01', range)).toBe(false)
+  })
+
+  it('includes undated rows instead of dropping them', () => {
+    expect(executionMatchesLedgerTradePeriod(null, range)).toBe(true)
   })
 })

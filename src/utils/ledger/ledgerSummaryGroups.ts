@@ -1,39 +1,40 @@
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import type { Execution } from '@/types/positions'
+import { ledgerExecutionDateKey } from '@/utils/ledger/summaryPeriod'
 
 export type OptionSummaryMonthEntry = { count: number; realizedPnl: number }
 export type StockSummaryMonthEntry = { count: number; notional: number; realizedPnl: number }
 
-/** Legacy LedgerView: execution time → UTC YYYY-MM (trade_date ignored). */
-export function legacyUtcMonthKeyFromTimeSec(timeSec: number | null | undefined): string | null {
-  const ts = Number(timeSec) || 0
-  if (ts <= 0) return null
-  return new Date(ts * 1000).toISOString().slice(0, 7)
+export function lastFillTradeDate(g: OptExecutionGroup): string | null {
+  let last: string | null = null
+  for (const t of g.trades ?? []) {
+    const d = ledgerExecutionDateKey(t.trade_date)
+    if (d && (last == null || d > last)) last = d
+  }
+  return last
 }
 
-/** Legacy: bucket closed group by max trade execution time (UTC month). */
-function monthKeyForClosedOptGroup(g: OptExecutionGroup): string | null {
-  const times = (g.trades ?? []).map(t => t.time ?? 0).filter(Boolean)
-  const ts = times.length > 0 ? Math.max(...times) : 0
-  return legacyUtcMonthKeyFromTimeSec(ts)
+export function monthKeyFromTradeDate(tradeDate: string | null | undefined): string | null {
+  const d = ledgerExecutionDateKey(tradeDate)
+  return d ? d.slice(0, 7) : null
 }
 
-/**
- * Legacy LedgerView: all closed groups; month from max(time) UTC;
- * cell PnL = group.realized_pnl (premium-based, no option–stock slippage layer).
- */
 export function closedGroupSummaryPnl(g: OptExecutionGroup): number {
   return Number(g.realized_pnl) || 0
 }
 
-/** Legacy: Summary always uses all closed option groups (not tab-scoped). */
+/**
+ * Bucket closed groups by the last fill's `trade_date` month.
+ * Groups with no trade date on any fill are omitted here and counted in Total / undated.
+ */
 export function buildOptionsSummaryByMonth(
   groups: OptExecutionGroup[],
 ): [string, OptionSummaryMonthEntry][] {
   const byMonth = new Map<string, OptionSummaryMonthEntry>()
   for (const g of groups) {
-    const monthStr = monthKeyForClosedOptGroup(g)
-    if (!monthStr) continue
+    const d = lastFillTradeDate(g)
+    if (!d) continue
+    const monthStr = d.slice(0, 7)
     const cur = byMonth.get(monthStr) ?? { count: 0, realizedPnl: 0 }
     cur.count += 1
     cur.realizedPnl += closedGroupSummaryPnl(g)
@@ -42,11 +43,11 @@ export function buildOptionsSummaryByMonth(
   return Array.from(byMonth.entries()).sort(([a], [b]) => b.localeCompare(a))
 }
 
-/** Legacy LedgerView STK summary: execution time → UTC month. */
+/** Stock summary by `trade_date` month. Undated fills are omitted from month cells. */
 export function buildStocksSummaryByMonth(execs: Execution[]): [string, StockSummaryMonthEntry][] {
   const byMonth = new Map<string, StockSummaryMonthEntry>()
   for (const e of execs) {
-    const monthStr = legacyUtcMonthKeyFromTimeSec(e.time)
+    const monthStr = monthKeyFromTradeDate(e.trade_date)
     if (!monthStr) continue
     const cur = byMonth.get(monthStr) ?? { count: 0, notional: 0, realizedPnl: 0 }
     cur.count += 1

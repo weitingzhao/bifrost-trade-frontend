@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned } from '@/lib/format'
+import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned, fmtIsoDateToken, fmtMonthKeyToken } from '@/lib/format'
 
 /**
  * The two percentage families must stay distinguishable.
@@ -44,5 +44,16 @@ describe('percentage formatting families', () => {
   it('fmtPct2 keeps two decimals where fmtPct1 keeps one', () => {
     expect(fmtPct1(56.539)).toBe('56.5%')
     expect(fmtPct2(56.539)).toBe('56.54%')
+  })
+})
+
+describe('ISO date tokens', () => {
+  it('fmtIsoDateToken writes DDMMMYY from a calendar date', () => {
+    expect(fmtIsoDateToken('2026-09-16')).toBe('16SEP26')
+    expect(fmtIsoDateToken('')).toBe('—')
+  })
+
+  it('fmtMonthKeyToken writes SEP 2026 from a month key', () => {
+    expect(fmtMonthKeyToken('2026-09')).toBe('SEP 2026')
   })
 })

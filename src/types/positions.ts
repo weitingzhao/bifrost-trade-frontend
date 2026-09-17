@@ -145,6 +145,8 @@ export interface Execution {
   report_date?: string | null
   exec_id?: string
   source?: string
+  /** Flex booking class. Empty on TWS and journal rows — they stay in Type = All. */
+  transaction_type?: string | null
   commission?: number | null
   realized_pnl?: number | null
   net_cash?: number | null

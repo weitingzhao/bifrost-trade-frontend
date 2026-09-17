@@ -13,6 +13,7 @@ export const ExecutionSchema = z.object({
   price: z.number(),
   time: z.number().nullable(),
   trade_date: z.string().nullable().optional(),
+  transaction_type: z.string().nullable().optional(),
   commission: z.number().nullable().optional(),
   realized_pnl: z.number().nullable().optional(),
   net_cash: z.number().nullable().optional(),

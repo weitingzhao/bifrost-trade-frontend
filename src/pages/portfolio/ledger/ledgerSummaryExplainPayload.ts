@@ -3,6 +3,8 @@ import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { formatPeriodLabel, monthKeyToPeriodKey, type LedgerSummaryPeriod } from '@/utils/ledger/summaryPeriod'
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
 import { fmtCcy, fmtTsShort } from '@/pages/portfolio/ledger/ledgerFormat'
+import { lastFillTradeDate, monthKeyFromTradeDate } from '@/utils/ledger/ledgerSummaryGroups'
+import { fmtMonthKeyToken } from '@/lib/format'
 
 export const LEDGER_METRIC_EXPLAIN_MAX_ROWS = 50
 
@@ -21,9 +23,7 @@ export interface LedgerMetricExplainPayload {
 }
 
 function monthStrFromExecution(ex: Execution): string | null {
-  const ts = ex.time ?? 0
-  if (!ts) return null
-  return new Date(ts * 1000).toISOString().slice(0, 7)
+  return monthKeyFromTradeDate(ex.trade_date)
 }
 
 function stockExecsInPeriodBucket(
@@ -47,9 +47,8 @@ function closedGroupsInPeriodBucket(
 ): OptExecutionGroup[] {
   const out: OptExecutionGroup[] = []
   for (const g of groups) {
-    const times = (g.trades ?? []).map(t => t.time ?? 0).filter(Boolean)
-    const ts = times.length > 0 ? Math.max(...times) : 0
-    const monthStr = ts ? new Date(ts * 1000).toISOString().slice(0, 7) : ''
+    const d = lastFillTradeDate(g)
+    const monthStr = d ? d.slice(0, 7) : ''
     if (!monthStr) continue
     if (monthKeyToPeriodKey(monthStr, period) === bucketKey) out.push(g)
   }
@@ -149,13 +148,11 @@ export function buildLedgerMetricExplainPayload(
     const groups = closedGroupsInPeriodBucket(closedOptionGroups, period, bucketKey)
     const sum = groups.reduce((acc, g) => acc + (Number(g.realized_pnl) || 0), 0)
     const allRows = groups.map((g, i) => {
-      const times = (g.trades ?? []).map(t => t.time ?? 0).filter(Boolean)
-      const ts = times.length > 0 ? Math.max(...times) : 0
-      const monthStr = ts ? new Date(ts * 1000).toISOString().slice(0, 7) : '—'
+      const d = lastFillTradeDate(g)
       return {
         '#': i + 1,
         contract: (g.contract_key ?? '—').slice(0, 48),
-        month_bucket: monthStr,
+        month_bucket: d ? fmtMonthKeyToken(d.slice(0, 7)) : 'undated',
         realized_pnl: fmtCcy(Number(g.realized_pnl) || 0),
       }
     })
@@ -178,13 +175,11 @@ export function buildLedgerMetricExplainPayload(
   if (kind === 'options_total_realized') {
     const sum = closedOptGroupsPnlSum
     const allRows = closedOptionGroups.map((g, i) => {
-      const times = (g.trades ?? []).map(t => t.time ?? 0).filter(Boolean)
-      const ts = times.length > 0 ? Math.max(...times) : 0
-      const monthStr = ts ? new Date(ts * 1000).toISOString().slice(0, 7) : '—'
+      const d = lastFillTradeDate(g)
       return {
         '#': i + 1,
         contract: (g.contract_key ?? '—').slice(0, 48),
-        month_bucket: monthStr,
+        month_bucket: d ? fmtMonthKeyToken(d.slice(0, 7)) : 'undated',
         realized_pnl: fmtCcy(Number(g.realized_pnl) || 0),
       }
     })

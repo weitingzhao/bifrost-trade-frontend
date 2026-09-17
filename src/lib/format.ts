@@ -209,6 +209,27 @@ export function fmtMonthToken(ts: number | string | null | undefined): string {
   return `${MONTH_TOKENS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
 }
 
+/** `11SEP26` from a `YYYY-MM-DD` (or `YYYYMMDD`) calendar date, no timezone. */
+export function fmtIsoDateToken(iso: string | null | undefined): string {
+  if (iso == null || String(iso).trim() === '') return '—'
+  const s = String(iso).trim()
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s) ?? /^(\d{4})(\d{2})(\d{2})$/.exec(s)
+  if (!m) return s
+  const month = Number(m[2]) - 1
+  if (month < 0 || month > 11) return s
+  return `${m[3]}${MONTH_TOKENS[month]}${m[1].slice(2)}`
+}
+
+/** `SEP 2026` from a `YYYY-MM` bucket key. */
+export function fmtMonthKeyToken(monthKey: string | null | undefined): string {
+  if (monthKey == null || String(monthKey).trim() === '') return '—'
+  const m = /^(\d{4})-(\d{2})$/.exec(String(monthKey).trim())
+  if (!m) return monthKey
+  const month = Number(m[2]) - 1
+  if (month < 0 || month > 11) return monthKey
+  return `${MONTH_TOKENS[month]} ${m[1]}`
+}
+
 export function fmtTs(ts: number | null | undefined): string {
   if (ts == null) return '—'
   return new Date(ts * 1000).toLocaleString()

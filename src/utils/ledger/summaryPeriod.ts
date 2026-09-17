@@ -1,3 +1,5 @@
+import { fmtMonthKeyToken } from '@/lib/format'
+
 export type LedgerSummaryPeriod = 'month' | 'quarter' | 'half_year' | 'year'
 
 export const LEDGER_SUMMARY_PERIOD_TABS: { id: LedgerSummaryPeriod; label: string }[] = [
@@ -69,7 +71,7 @@ export function formatPeriodLabel(key: string, period: LedgerSummaryPeriod): str
     const n = Number(key)
     return Number.isFinite(n) ? String(n) : key
   }
-  if (period === 'month') return key
+  if (period === 'month') return fmtMonthKeyToken(key)
   const q = /^(\d{4})-Q([1-4])$/.exec(key)
   if (q) return `${q[1]} Q${q[2]}`
   const h = /^(\d{4})-H([12])$/.exec(key)
@@ -155,27 +157,30 @@ export function getSinceTradeDateRange(
   return { start: localYmd(startDate), end }
 }
 
+/**
+ * Calendar trade date only. Empty `trade_date` is undated — never fall back to
+ * `time` (that is the write / ingest clock, not the trade date).
+ * `timeSec` is accepted so existing call sites compile; it is ignored.
+ */
 export function ledgerExecutionDateKey(
   tradeDate: string | null | undefined,
-  timeSec: number | null | undefined,
 ): string | null {
-  if (tradeDate) {
-    const d = tradeDate.slice(0, 10)
-    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d
-  }
-  if (timeSec != null && timeSec > 0) {
-    return localYmd(new Date(timeSec * 1000))
-  }
+  if (tradeDate == null) return null
+  const raw = String(tradeDate).trim()
+  if (!raw) return null
+  const iso = raw.slice(0, 10)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso
+  const ymd = raw.replace(/\D/g, '')
+  if (ymd.length === 8) return `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}`
   return null
 }
 
 export function executionMatchesLedgerTradePeriod(
   tradeDate: string | null | undefined,
-  timeSec: number | null | undefined,
   range: { start: string; end: string },
 ): boolean {
-  const d = ledgerExecutionDateKey(tradeDate, timeSec)
-  if (!d) return false
+  const d = ledgerExecutionDateKey(tradeDate)
+  if (!d) return true
   return d >= range.start && d <= range.end
 }
 

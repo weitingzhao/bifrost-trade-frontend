@@ -42,7 +42,7 @@ export function fmtLedgerExpiry(expiry: string | null | undefined): string {
 }
 
 export function execMonthKey(e: Execution): string {
-  const d = ledgerExecutionDateKey(e.trade_date ?? null, e.time)
+  const d = ledgerExecutionDateKey(e.trade_date ?? null)
   if (!d) return '0000-00'
   return d.slice(0, 7)
 }

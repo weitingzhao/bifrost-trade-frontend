@@ -112,10 +112,11 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     label: 'Risk',
     icon: ShieldAlert,
     // The design files Risk as its own group of six (shell-registry `G.Risk`).
-    // One row until the rest are built: Portfolio Exposure is the only one whose
-    // data exists — β and correlation from Research, Δ$ from the model service.
+    // Two rows so far, in the order a reader needs them: Exposure summarises
+    // what a move costs, Stress & Scenario is where that summary opens up.
     items: [
       route('Portfolio Exposure', '/risk/portfolio', Radar),
+      route('Stress & Scenario', '/risk/stress', Activity),
     ],
   },
   {

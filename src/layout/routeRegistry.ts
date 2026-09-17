@@ -290,6 +290,16 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    path: '/risk/stress',
+    label: 'Stress & Scenario',
+    crumbs: RISK,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: 'Walked 2026-09-17 against Risk Stress.dc.html at page rev 2026-09-17.1, on local DEV (:5173). The drill-down Exposure points at: Exposure says what a spot move costs the book, this page says which column and who pays for it. The spot axis and the per-underlying attribution are the model service\'s own figures, quoted (\u00a714.2) \u2014 the row that reads here is the same figure Exposure summarises. Built: the matrix keeping the design\'s vol rows so the shape reads, with the flat row live and clickable across the seven spot shocks the service carries; Who pays, the per-underlying cost of the selected column with its shares, shocked price and the shares / options split, worst first; After the shock, with the book figure and the partial flag the service sets when it could only price part of the book. Marked, not dropped: the design\'s SPY \u00d7 vol matrix is one real row \u2014 the service reports iv_stress_available: false, so the other three vol rows carry the \u26a0 no vol axis marker rather than a number; and none of the four named scenarios can be read, because each moves vol as well as spot and lands between the columns the grid carries. Nothing here is interpolated: a number between two measured points is a guess wearing a measurement\'s clothes, and the panel says which two things each scenario would need. Everything unreadable says so: a name the service could not stress is absent from Who pays rather than a zero (7 of 19 on DEV), the count is printed, and a name that gains on the shock carries no share of the loss. Not built: Backing after shock, which re-prices the pool and is Backing & Model\'s to compute \u2014 cited, never interpolated between two bars. StressScenario gained contributors / partial, which core sends and the page prints. Owner to look before aligned.',
+    },
+  },
+  {
     path: '/portfolio/accounts',
     label: 'Accounts',
     crumbs: PORTFOLIO,

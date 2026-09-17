@@ -22,6 +22,15 @@ export interface StressScenario {
    */
   pnl_change?: number
   method?: string
+  /**
+   * Underlyings that took part in this scenario — account rows only.
+   *
+   * With `partial`, it is how the service says the column is thinner than the
+   * book: a stress computed over twelve of nineteen names is a reading about
+   * twelve, and the page prints the count rather than implying the whole book.
+   */
+  contributors?: number
+  partial?: boolean
 }
 
 export interface GreeksLeg {

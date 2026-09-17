@@ -323,7 +323,9 @@ export default function PerformancePage() {
           netCashFlow={perf?.transaction?.net_cash_flow ?? null}
         />
         {derivation && (
-          <DerivationBlock derivation={derivation} onClose={() => setTree(null)} className="mt-0" />
+          <div id="performance-derivation">
+            <DerivationBlock derivation={derivation} onClose={() => setTree(null)} className="mt-0" />
+          </div>
         )}
         <PerformanceReadingPanel rangeLabel={RANGE_WORD[timeRange]} metrics={readingMetrics} />
         <PerformanceReturnBasis perf={perf} rangeEndsToday={rangeEndsToday} />
@@ -369,6 +371,12 @@ export default function PerformancePage() {
           rightTab={dayPanel}
           onRightTab={setDayPanel}
           slotRef={daySlotRef}
+          rangeStart={sinceStr}
+          rangeLabel={RANGE_WORD[timeRange]}
+          onExplainCell={() => {
+            setTree('calendar')
+            requestAnimationFrame(() => document.getElementById('performance-derivation')?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
+          }}
         />
 
         <PerformanceTier

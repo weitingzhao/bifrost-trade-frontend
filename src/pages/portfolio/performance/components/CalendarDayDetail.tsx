@@ -1,6 +1,9 @@
 import { useState, useMemo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { fmtIsoDateToken, fmtOccContractToken, fmtUsd } from '@/lib/format'
+import { DenseTag } from '@/components/data-display'
+import { daysBetween } from '@/pages/portfolio/performance/performanceDayRecords'
+import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
 import {
   Dialog,
   DialogContent,
@@ -32,11 +35,10 @@ import {
   realizedPnlFifoMatchPlusStock,
   scaledLedgerOptDetailRowPnl,
   getOptionStockLinkDetailForExecution,
-  executionLegPnlToneClass,
 } from '@/utils/ledger/ledgerOptHelpers'
 import { getStkLedgerBucketForExecution } from '@/utils/ledger/stkBuckets'
 import { stkSignedTradeNotionalUsd, stkFillNotional, stkFixedIncomeStreamUsd } from '@/utils/ledger/performanceBulk'
-import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
+import { pnlColorClass } from '@/utils/dailyChange'
 
 // ─── Format helpers ───
 
@@ -57,6 +59,8 @@ interface CalendarDayDetailProps {
   rawExecsWindow: Execution[]
   linkByOptionId: Record<number, OptionStockLinkSummary>
   positionCategoryByAccountContract: Map<string, string>
+  /** First day of the selected range, `YYYY-MM-DD`: a matched leg before it is flagged. */
+  rangeStart: string
 }
 
 // ─── Main Component ───
@@ -67,6 +71,7 @@ export function CalendarDayDetail({
   rawExecsWindow,
   linkByOptionId,
   positionCategoryByAccountContract,
+  rangeStart,
 }: CalendarDayDetailProps) {
   if (calendarAssetTab === 'options') {
     return (
@@ -74,6 +79,7 @@ export function CalendarDayDetail({
         selectedDay={selectedDay}
         rawExecsWindow={rawExecsWindow}
         linkByOptionId={linkByOptionId}
+        rangeStart={rangeStart}
       />
     )
   }
@@ -100,6 +106,7 @@ interface OptionsDayDetailProps {
   selectedDay: string
   rawExecsWindow: Execution[]
   linkByOptionId: Record<number, OptionStockLinkSummary>
+  rangeStart: string
 }
 
 interface LinkDialogState {
@@ -252,13 +259,19 @@ function buildOptionsDayComputed(
   }
 }
 
+// ─── Shared table cells (prototype `.pf-th` / `.pf-td`) ───
+
+const th = 'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
+const thLeft = cn(th, 'text-left')
+const td = 'whitespace-nowrap border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums'
+const tdLeft = cn(td, 'text-left')
+
 function OptionsDayDetail({
   selectedDay,
   rawExecsWindow,
   linkByOptionId,
+  rangeStart,
 }: OptionsDayDetailProps) {
-  const [realizedSymbolTab, setRealizedSymbolTab] = useState<string | null>(null)
-  const [unrealizedSymbolTab, setUnrealizedSymbolTab] = useState<string | null>(null)
   const [linkDialog, setLinkDialog] = useState<LinkDialogState>({
     open: false, title: '', links: [], slippageTotal: null,
   })
@@ -276,50 +289,35 @@ function OptionsDayDetail({
   )
 
   if (computed.contractKeys.length === 0) {
-    return (
-      <DayDetailShell>
-        <p className="text-sm text-muted-foreground py-4">
-          No Option executions in DB for this trade date.
-        </p>
-      </DayDetailShell>
-    )
+    return <p className="m-0 px-3 py-4 text-xs text-muted-foreground">No option executions on this trade date.</p>
   }
 
-  const realizedCount = computed.symbolsRealized.reduce(
-    (n, s) => n + (computed.keysBySymbolRealized.get(s) ?? []).length,
-    0,
-  )
-  const unrealizedCount = computed.symbolsUnrealized.reduce(
-    (n, s) => n + (computed.keysBySymbolUnrealized.get(s) ?? []).length,
-    0,
-  )
+  const count = (m: Map<string, string[]>, syms: string[]) => syms.reduce((n, s) => n + (m.get(s) ?? []).length, 0)
 
   return (
-    <DayDetailShell>
-      <p className="mb-3 text-dense-meta leading-relaxed text-muted-foreground">
-        Realized: FIFO matched legs and pairs (Match PnL plus prorated linked-stock slippage).
-        Each Match row shows Open cash (open-leg premium) · Close cash (cover cost) · Net.
-        Unrealized: open quantity on unmatched fills. Commission shown in yellow beside each total.
+    <div className="min-w-0">
+      <p className="m-0 border-b border-border/55 px-3 py-2 text-dense-meta leading-relaxed text-muted-foreground text-pretty">
+        Realized: FIFO-matched legs and pairs — each Match row carries open cash (opening premium), close cash (cover
+        cost) and net, plus prorated slippage from the linked stock fill. Unrealized: open quantity on unmatched fills,
+        shown without direction colour. Commission sits beside each total.
       </p>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,23.75rem),1fr))] items-start gap-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,23.75rem),1fr))] gap-px bg-border">
         <OptionsPnlColumn
           variant="realized"
           computed={computed}
-          contractCount={realizedCount}
-          symbolTab={realizedSymbolTab}
-          onSymbolTab={setRealizedSymbolTab}
+          contractCount={count(computed.keysBySymbolRealized, computed.symbolsRealized)}
           linkByOptionId={linkByOptionId}
           onViewLinks={handleViewLinks}
+          rangeStart={rangeStart}
         />
         <OptionsPnlColumn
           variant="unrealized"
           computed={computed}
-          contractCount={unrealizedCount}
-          symbolTab={unrealizedSymbolTab}
-          onSymbolTab={setUnrealizedSymbolTab}
+          contractCount={count(computed.keysBySymbolUnrealized, computed.symbolsUnrealized)}
           linkByOptionId={linkByOptionId}
           onViewLinks={handleViewLinks}
+          rangeStart={rangeStart}
         />
       </div>
 
@@ -330,7 +328,7 @@ function OptionsDayDetail({
         slippageTotal={linkDialog.slippageTotal}
         onClose={() => setLinkDialog((s) => ({ ...s, open: false }))}
       />
-    </DayDetailShell>
+    </div>
   )
 }
 
@@ -338,104 +336,63 @@ interface OptionsPnlColumnProps {
   variant: 'realized' | 'unrealized'
   computed: OptionsDayComputed
   contractCount: number
-  symbolTab: string | null
-  onSymbolTab: (symbol: string) => void
   linkByOptionId: Record<number, OptionStockLinkSummary>
   onViewLinks: (links: OptionStockLinkSummary['links'], title: string, slippageTotal: number | null) => void
+  rangeStart: string
 }
 
+/** One side of the day: every contract that realized, or every contract left unmatched — all listed, no tabs. */
 function OptionsPnlColumn({
   variant,
   computed,
   contractCount,
-  symbolTab,
-  onSymbolTab,
   linkByOptionId,
   onViewLinks,
+  rangeStart,
 }: OptionsPnlColumnProps) {
   const isRealized = variant === 'realized'
   const keysBySymbol = isRealized ? computed.keysBySymbolRealized : computed.keysBySymbolUnrealized
   const symbols = isRealized ? computed.symbolsRealized : computed.symbolsUnrealized
-  const symbolSum = isRealized ? computed.symbolSumRealized : computed.symbolSumUnrealized
-  const symbolComm = isRealized ? computed.symbolCommRealized : computed.symbolCommUnrealized
   const total = isRealized ? computed.totalRealizedSum : computed.totalUnrealizedSum
   const commission = isRealized ? computed.totalCommRealized : computed.totalCommUnrealized
-  const effectiveSymbol =
-    (symbolTab && symbols.includes(symbolTab) ? symbolTab : symbols[0]) ?? null
+  const keys = symbols.flatMap((sym) => keysBySymbol.get(sym) ?? [])
 
   return (
     <section
-      className="flex min-h-0 flex-col rounded-lg border border-border/60 bg-muted/10 p-2.5"
+      className="flex min-w-0 flex-col gap-2 bg-[var(--sk-raised)] px-3 pt-2.25 pb-3"
       aria-label={isRealized ? 'Realized PnL' : 'Unrealized PnL'}
     >
-      <PnlColumnHeader
-        label={isRealized ? 'Realized' : 'Unrealized'}
-        subtitle={
-          isRealized
-            ? 'Matched legs and pairs by contract (FIFO)'
-            : 'Executions by contract (unmatched quantity)'
-        }
-        count={contractCount}
-        total={total}
-        commission={commission}
-        isRealized={isRealized}
-      />
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span className="text-dense-body font-bold text-foreground">{isRealized ? 'Realized' : 'Unrealized'}</span>
+        <span className="font-mono text-dense-meta text-muted-foreground">({contractCount})</span>
+        <span className={cn('font-mono text-dense-body font-bold tabular-nums', isRealized ? pnlColorClass(total) : 'text-secondary-foreground')}>
+          {fmtSignedUsd0(total)}
+        </span>
+        <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">comm {fmtUsd(Math.abs(commission))}</span>
+        {!isRealized && <DenseTag variant="category" size="cell">UNREALIZED</DenseTag>}
+      </div>
+      <span className="text-dense-meta text-muted-foreground">
+        {isRealized
+          ? 'Matched legs and pairs by contract (FIFO) · sums to Realized above'
+          : 'Executions by contract · unmatched quantity · sums to Unrealized above'}
+      </span>
 
-      {symbols.length > 0 ? (
-        <>
-          <div
-            className="mb-2 flex flex-wrap gap-1"
-            role="tablist"
-            aria-label={`${isRealized ? 'Realized' : 'Unrealized'} symbol`}
-          >
-            {symbols.map((sym) => {
-              const sum = symbolSum.get(sym) ?? 0
-              const comm = symbolComm.get(sym) ?? 0
-              return (
-                <button
-                  key={sym}
-                  type="button"
-                  role="tab"
-                  aria-selected={sym === effectiveSymbol}
-                  onClick={() => onSymbolTab(sym)}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-dense-meta font-medium transition-colors',
-                    sym === effectiveSymbol
-                      ? 'border-primary bg-primary/10 text-foreground'
-                      : 'border-border text-muted-foreground hover:bg-muted',
-                  )}
-                >
-                  <span className="font-mono" title={sym}>{fmtOccContractToken(sym)}</span>
-                  <span className={cn('tabular-nums', isRealized ? pnlColorClass(sum) : unrealizedPnlColorClass(sum))}>
-                    {fmtUsd(sum)}
-                  </span>
-                  <span className="tabular-nums text-warning">{fmtUsd(comm)}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="max-h-[min(28rem,50vh)] min-h-0 overflow-auto pr-0.5">
-            {effectiveSymbol &&
-              (keysBySymbol.get(effectiveSymbol) ?? []).map((key) => (
-                <ContractGroup
-                  key={key}
-                  contractKey={key}
-                  execs={computed.byContract.get(key) ?? []}
-                  pairs={computed.pairByKey.get(key) ?? []}
-                  execById={computed.execById}
-                  linkByOptionId={linkByOptionId}
-                  isRealized={isRealized}
-                  onViewLinks={onViewLinks}
-                />
-              ))}
-          </div>
-        </>
+      {keys.length > 0 ? (
+        keys.map((key) => (
+          <ContractGroup
+            key={key}
+            execs={computed.byContract.get(key) ?? []}
+            pairs={computed.pairByKey.get(key) ?? []}
+            execById={computed.execById}
+            linkByOptionId={linkByOptionId}
+            isRealized={isRealized}
+            onViewLinks={onViewLinks}
+            rangeStart={rangeStart}
+          />
+        ))
       ) : (
-        <p className="py-3 text-xs text-muted-foreground">
-          {isRealized
-            ? 'No realized (matched BUY↔SELL) pairs for this day.'
-            : 'No unrealized (unmatched) executions for this day.'}
+        <p className="m-0 py-1 text-xs text-muted-foreground">
+          {isRealized ? 'No matched pairs closed this day.' : 'No unmatched quantity from this day’s fills.'}
         </p>
       )}
     </section>
@@ -445,13 +402,27 @@ function OptionsPnlColumn({
 // ─── Contract Group ───
 
 interface ContractGroupProps {
-  contractKey: string
   execs: Execution[]
   pairs: BackendOptPair[]
   execById: Map<number, Execution>
   linkByOptionId: Record<number, OptionStockLinkSummary>
   isRealized: boolean
   onViewLinks: (links: OptionStockLinkSummary['links'], title: string, slippageTotal: number | null) => void
+  rangeStart: string
+}
+
+/** Open and close legs of one match, in the order they happened. */
+function matchLegs(pair: BackendOptPair, execById: Map<number, Execution>) {
+  const legC = pair.leg_c_execution_id != null ? execById.get(pair.leg_c_execution_id) : undefined
+  const legP = pair.leg_p_execution_id != null ? execById.get(pair.leg_p_execution_id) : undefined
+  const { cashC, cashP } = matchPairLegCashFlows(pair)
+  const cFirst = matchLegSortKey(legC) <= matchLegSortKey(legP)
+  const dateOf = (e: Execution | undefined) => (e ? executionDateStr(e) : '')
+  return {
+    open: { date: dateOf(cFirst ? legC : legP), side: cFirst ? pair.c_side : pair.p_side, px: cFirst ? pair.c_price : pair.p_price, cash: cFirst ? cashC : cashP },
+    close: { date: dateOf(cFirst ? legP : legC), side: cFirst ? pair.p_side : pair.c_side, px: cFirst ? pair.p_price : pair.c_price, cash: cFirst ? cashP : cashC },
+    net: pair.net_pnl ?? matchPnl(pair),
+  }
 }
 
 function ContractGroup({
@@ -461,6 +432,7 @@ function ContractGroup({
   linkByOptionId,
   isRealized,
   onViewLinks,
+  rangeStart,
 }: ContractGroupProps) {
   // The group key is account · symbol · expiry · strike, not a contract key; the
   // token is built from the fill itself (§14.4), the broker symbol kept for hover.
@@ -499,7 +471,7 @@ function ContractGroup({
     | { type: 'Execution'; e: Execution; ratio: number }
     | { type: 'Match'; p: BackendOptPair }
 
-  const { rows, tabPnl, tabComm } = useMemo(() => {
+  const { rows, tabPnl, tabComm, pairNetSum } = useMemo(() => {
     const pairedLegIdSet = new Set<number>()
     for (const p of pairs) {
       if (p.leg_c_execution_id != null) pairedLegIdSet.add(p.leg_c_execution_id)
@@ -524,7 +496,7 @@ function ContractGroup({
       const pairNetSum = pairs.reduce((s, p) => s + (p.net_pnl ?? matchPnl(p)), 0)
       const tabPnl = realizedPnlFifoMatchPlusStock(pairNetSum, sortedExecs, matchedQtyById, linkByOptionId)
       const tabComm = pairs.reduce((s, p) => s + (Number(p.commission) || 0), 0)
-      return { rows, tabPnl, tabComm }
+      return { rows, tabPnl, tabComm, pairNetSum }
     }
 
     let tabPnl = 0
@@ -543,43 +515,44 @@ function ContractGroup({
       }
     }
     const rows: Row[] = unmatchedRows.map(({ e, unmatchedRatio }) => ({ type: 'Execution' as const, e, ratio: unmatchedRatio }))
-
-    return { rows, tabPnl, tabComm }
+    return { rows, tabPnl, tabComm, pairNetSum: 0 }
   }, [isRealized, sortedExecs, pairs, matchedQtyById, linkByOptionId])
 
   if (rows.length === 0) return null
 
+  const matches = isRealized ? pairs.map((p) => matchLegs(p, execById)) : []
+  const slippage = tabPnl - pairNetSum
+  const earliestOpen = matches.map((m) => m.open.date).filter(Boolean).sort()[0]
+  const outsideDays = earliestOpen && earliestOpen < rangeStart ? daysBetween(earliestOpen, rangeStart) : 0
+
   return (
-    <div className="mb-4 last:mb-0">
-      {/* Contract header */}
-      <div className="flex items-baseline gap-2 mb-1.5 px-1">
-        <span className="font-mono text-xs font-semibold text-foreground" title={occ}>
-          {token}
+    <div className="overflow-hidden rounded-sm border border-border">
+      <div className="flex flex-wrap items-baseline gap-2 bg-[var(--sk-raised2)] px-2.25 py-1.5">
+        <span className="font-mono text-xs text-foreground" title={occ}>{token}</span>
+        <span className="text-dense-meta text-muted-foreground">{isRealized ? 'matched FIFO' : 'unmatched quantity'}</span>
+        <span className={cn('ml-auto font-mono text-xs font-semibold tabular-nums', isRealized ? pnlColorClass(tabPnl) : 'text-secondary-foreground')}>
+          {fmtSignedUsd0(tabPnl)}
         </span>
-        <span className={cn('text-xs font-semibold tabular-nums', isRealized ? pnlColorClass(tabPnl) : unrealizedPnlColorClass(tabPnl))}>
-          {fmtUsd(tabPnl)}
-        </span>
-        <span className="text-xs tabular-nums text-yellow-600 dark:text-yellow-400">{fmtUsd(tabComm)}</span>
+        <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">{fmtUsd(Math.abs(tabComm))}</span>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border overflow-hidden">
+      <div className="overflow-x-auto">
         {/* §14.6: nine columns, 720 floor; the panel scrolls sideways below it. */}
-        <Table className="min-w-[720px]">
-          <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-dense-caption uppercase tracking-wider w-[80px]">Record type</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider">Id</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider">Account</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider">Trade Date</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider">Side</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Qty</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Price</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Commission</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider text-right">PnL</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <table className="w-full min-w-[720px] border-collapse">
+          <thead>
+            <tr>
+              <th className={thLeft}>Record</th>
+              <th className={thLeft}>Id</th>
+              <th className={thLeft}>Account</th>
+              <th className={thLeft}>Trade date</th>
+              <th className={thLeft}>Side</th>
+              <th className={th}>Qty</th>
+              <th className={th}>Price</th>
+              <th className={th}>Comm</th>
+              <th className={th}>P&amp;L</th>
+            </tr>
+          </thead>
+          <tbody>
             {rows.map((row, idx) =>
               row.type === 'Match' ? (
                 <MatchRow key={`match-${idx}`} pair={row.p} execById={execById} />
@@ -594,9 +567,46 @@ function ContractGroup({
                 />
               ),
             )}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
+
+      {matches.length > 0 && (
+        <div className="flex flex-col gap-1 border-t border-border/55 px-2.25 py-1.5 text-dense-meta">
+          {matches.map((m, i) => (
+            <span key={i} className="flex flex-wrap gap-x-4 gap-y-1">
+              <span className="flex items-baseline gap-1.25">
+                <span className="text-muted-foreground">Open {fmtIsoDateToken(m.open.date)} · {m.open.side} @ {fmtUsd(m.open.px)}</span>
+                <span className={cn('font-mono font-semibold tabular-nums', pnlColorClass(m.open.cash))}>{fmtSignedUsd0(m.open.cash)}</span>
+              </span>
+              <span className="flex items-baseline gap-1.25">
+                <span className="text-muted-foreground">Close {fmtIsoDateToken(m.close.date)} · {m.close.side} @ {fmtUsd(m.close.px)}</span>
+                <span className={cn('font-mono font-semibold tabular-nums', pnlColorClass(m.close.cash))}>{fmtSignedUsd0(m.close.cash)}</span>
+              </span>
+              <span className="flex items-baseline gap-1.25">
+                <span className="text-muted-foreground">Net</span>
+                <span className={cn('font-mono font-semibold tabular-nums', pnlColorClass(m.net))}>{fmtSignedUsd0(m.net)}</span>
+              </span>
+            </span>
+          ))}
+          {Math.abs(slippage) >= 0.5 && (
+            <span className="flex items-baseline gap-1.25">
+              <span className="text-muted-foreground">Linked stock slippage (prorated)</span>
+              <span className={cn('font-mono font-semibold tabular-nums', pnlColorClass(slippage))}>{fmtSignedUsd0(slippage)}</span>
+            </span>
+          )}
+        </div>
+      )}
+
+      {outsideDays > 0 && (
+        <div className="flex flex-wrap items-center gap-2 border-t border-border/55 px-2.25 py-1.5">
+          <DenseTag variant="warning" size="cell">leg outside range</DenseTag>
+          <span className="text-dense-meta text-muted-foreground text-pretty">
+            The opening leg is {outsideDays} {outsideDays === 1 ? 'day' : 'days'} before the selected range — pairing
+            looks back 365 days, so this realized figure will not reconcile against range-only sums.
+          </span>
+        </div>
+      )}
     </div>
   )
 }
@@ -624,10 +634,6 @@ function ExecutionRow({
     ? scaledLedgerOptDetailRowPnl(ex, ratio, linkByOptionId)
     : { displayPnl: ledgerOptionExecutionCashFlowSigned(ex) * ratio, hasCombinedStock: false }
 
-  const pnlClass = isRealized
-    ? pnlColorClass(displayPnl)
-    : executionLegPnlToneClass(ex, displayPnl)
-
   const { linkIds, links, slippageTotal } = getOptionStockLinkDetailForExecution(ex, linkByOptionId)
 
   const sym0 = (ex.symbol ?? '').trim().split(/\s+/)[0]?.trim() ?? ''
@@ -636,9 +642,9 @@ function ExecutionRow({
     .join(' ')
 
   return (
-    <TableRow>
-      <TableCell className="text-xs">Execution</TableCell>
-      <TableCell className="text-xs tabular-nums">
+    <tr>
+      <td className={cn(tdLeft, 'font-sans text-muted-foreground')}>Execution</td>
+      <td className={cn(tdLeft, 'text-muted-foreground')}>
         <span className="inline-flex items-center gap-1">
           {ex.account_executions_id ?? '—'}
           {isRealized && linkIds.length > 0 && (
@@ -655,7 +661,7 @@ function ExecutionRow({
                       slippageTotal,
                     )
                   }}
-                  className="inline-block rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1 py-px text-dense-micro font-mono cursor-pointer hover:bg-amber-500/30 transition-colors"
+                  className="inline-block cursor-pointer rounded bg-amber-500/20 px-1 py-px font-mono text-dense-micro text-amber-600 transition-colors hover:bg-amber-500/30 dark:text-amber-400"
                 >
                   #{lid}
                 </button>
@@ -663,20 +669,20 @@ function ExecutionRow({
             </span>
           )}
         </span>
-      </TableCell>
-      <TableCell className="text-xs">{ex.account_id ?? '—'}</TableCell>
-      <TableCell className="text-xs tabular-nums">{fmtIsoDateToken(ex.trade_date)}</TableCell>
-      <TableCell className="text-xs">{ex.side ?? '—'}</TableCell>
-      <TableCell className="text-xs text-right tabular-nums">{displayQty}</TableCell>
-      <TableCell className="text-xs text-right tabular-nums">{fmtUsd(ex.price)}</TableCell>
-      <TableCell className="text-xs text-right tabular-nums">{fmtUsd(ec)}</TableCell>
-      <TableCell
-        className={cn('text-xs text-right tabular-nums font-medium', pnlClass)}
+      </td>
+      <td className={cn(tdLeft, 'text-muted-foreground')}>{ex.account_id ?? '—'}</td>
+      <td className={cn(tdLeft, 'text-secondary-foreground')}>{fmtIsoDateToken(ex.trade_date)}</td>
+      <td className={cn(tdLeft, 'text-secondary-foreground')}>{ex.side ?? '—'}</td>
+      <td className={cn(td, 'text-secondary-foreground')}>{displayQty}</td>
+      <td className={cn(td, 'text-secondary-foreground')}>{fmtUsd(ex.price)}</td>
+      <td className={cn(td, 'text-muted-foreground')}>{fmtUsd(ec)}</td>
+      <td
+        className={cn(td, 'font-semibold', isRealized ? pnlColorClass(displayPnl) : 'text-secondary-foreground')}
         title={isRealized && hasCombinedStock ? 'Option premium cash flow for matched quantity plus linked stock slippage' : undefined}
       >
         {fmtPnl(displayPnl)}
-      </TableCell>
-    </TableRow>
+      </td>
+    </tr>
   )
 }
 
@@ -707,82 +713,24 @@ function MatchRow({
       : dateC !== '—'
         ? dateC
         : dateP
-
-  const { cashC, cashP } = matchPairLegCashFlows(pair)
   const mp = pair.net_pnl ?? matchPnl(pair)
 
-  const cFirst = matchLegSortKey(legC) <= matchLegSortKey(legP)
-  const openCash = cFirst ? cashC : cashP
-  const closeCash = cFirst ? cashP : cashC
-  const openDate = cFirst ? dateC : dateP
-  const closeDate = cFirst ? dateP : dateC
-  const openSide = cFirst ? pair.c_side : pair.p_side
-  const closeSide = cFirst ? pair.p_side : pair.c_side
-  const openPx = cFirst ? pair.c_price : pair.p_price
-  const closePx = cFirst ? pair.p_price : pair.c_price
-
   return (
-    <>
-      <TableRow className="bg-muted/20">
-        <TableCell className="text-xs font-medium text-muted-foreground">Match</TableCell>
-        <TableCell className="text-xs tabular-nums text-muted-foreground">
-          {pair.leg_c_execution_id != null && pair.leg_p_execution_id != null
-            ? `${pair.leg_c_execution_id} / ${pair.leg_p_execution_id}`
-            : '—'}
-        </TableCell>
-        <TableCell className="text-xs text-muted-foreground">{pair.account_id || '—'}</TableCell>
-        <TableCell className="text-xs tabular-nums text-muted-foreground">{tradeDateStr}</TableCell>
-        <TableCell className="text-xs text-muted-foreground">{`${pair.c_side} / ${pair.p_side}`}</TableCell>
-        <TableCell className="text-xs text-right tabular-nums text-muted-foreground">{String(pair.quantity)}</TableCell>
-        <TableCell className="text-xs text-right tabular-nums text-muted-foreground">
-          {`${fmtUsd(pair.c_price)} / ${fmtUsd(pair.p_price)}`}
-        </TableCell>
-        <TableCell className="text-xs text-right tabular-nums text-muted-foreground">{fmtUsd(pair.commission)}</TableCell>
-        <TableCell className={cn('text-xs text-right tabular-nums font-medium', pnlColorClass(mp))}>
-          {fmtPnl(mp)}
-        </TableCell>
-      </TableRow>
-      <TableRow className="bg-muted/10 hover:bg-muted/10">
-        <TableCell colSpan={9} className="py-1.5">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-0.5 text-dense-meta text-muted-foreground">
-            <span>
-              Open{' '}
-              <span className="tabular-nums text-foreground/80">{openDate}</span>
-              {' · '}
-              <span className="text-foreground/80">{openSide}</span>
-              {' @ '}
-              <span className="tabular-nums text-foreground/80">{fmtUsd(openPx)}</span>
-              {': '}
-              <span className={cn('tabular-nums font-medium', pnlColorClass(openCash))}>
-                {fmtPnl(openCash)}
-              </span>
-            </span>
-            <span className="text-border" aria-hidden>
-              ·
-            </span>
-            <span>
-              Close{' '}
-              <span className="tabular-nums text-foreground/80">{closeDate}</span>
-              {' · '}
-              <span className="text-foreground/80">{closeSide}</span>
-              {' @ '}
-              <span className="tabular-nums text-foreground/80">{fmtUsd(closePx)}</span>
-              {': '}
-              <span className={cn('tabular-nums font-medium', pnlColorClass(closeCash))}>
-                {fmtPnl(closeCash)}
-              </span>
-            </span>
-            <span className="text-border" aria-hidden>
-              ·
-            </span>
-            <span>
-              Net:{' '}
-              <span className={cn('tabular-nums font-medium', pnlColorClass(mp))}>{fmtPnl(mp)}</span>
-            </span>
-          </div>
-        </TableCell>
-      </TableRow>
-    </>
+    <tr>
+      <td className={cn(tdLeft, 'font-sans text-foreground')}>Match</td>
+      <td className={cn(tdLeft, 'text-muted-foreground')}>
+        {pair.leg_c_execution_id != null && pair.leg_p_execution_id != null
+          ? `${pair.leg_c_execution_id} / ${pair.leg_p_execution_id}`
+          : '—'}
+      </td>
+      <td className={cn(tdLeft, 'text-muted-foreground')}>{pair.account_id || '—'}</td>
+      <td className={cn(tdLeft, 'text-secondary-foreground')}>{tradeDateStr}</td>
+      <td className={cn(tdLeft, 'text-secondary-foreground')}>{`${pair.c_side} / ${pair.p_side}`}</td>
+      <td className={cn(td, 'text-secondary-foreground')}>{String(pair.quantity)}</td>
+      <td className={cn(td, 'text-secondary-foreground')}>{`${fmtUsd(pair.c_price)} / ${fmtUsd(pair.p_price)}`}</td>
+      <td className={cn(td, 'text-muted-foreground')}>{fmtUsd(pair.commission)}</td>
+      <td className={cn(td, 'font-semibold', pnlColorClass(mp))}>{fmtPnl(mp)}</td>
+    </tr>
   )
 }
 
@@ -811,90 +759,58 @@ function StkDayDetail({
   const label = STK_TAB_LABELS[assetTab] ?? assetTab
 
   if (bucketExecs.length === 0) {
-    return (
-      <DayDetailShell>
-        <p className="text-sm text-muted-foreground py-4">
-          No {label} executions on this trade date in the loaded window.
-        </p>
-      </DayDetailShell>
-    )
+    return <p className="m-0 px-3 py-4 text-xs text-muted-foreground">No {label} fills on this trade date in the loaded window.</p>
   }
 
   return (
-    <DayDetailShell>
-      <p className="text-sm font-medium text-foreground/80 mb-1">STK executions ({label})</p>
-      <p className="text-dense-meta text-muted-foreground mb-3 leading-relaxed">
-        Calendar daily realized is the sum of broker realized_pnl on fills for this trade date in this bucket.
+    <div className="min-w-0">
+      <p className="m-0 border-b border-border/55 px-3 py-2 text-dense-meta leading-relaxed text-muted-foreground text-pretty">
+        {label}: daily realized is the sum of broker realized_pnl on the day’s fills in this bucket.
         {assetTab === 'cash_like'
-          ? ' Cash-like Notional uses |qty|×price.'
+          ? ' Notional is |qty| × price.'
           : assetTab === 'fixed_income'
-            ? ' Fixed Income Stream is money flow: BUY positive, SELL negative (|qty|×price).'
-            : ' Stocks Notional is signed trade size (SELL +, BUY −).'}
+            ? ' Stream is money flow: buy +, sell −.'
+            : ' Notional is signed trade size: sell +, buy −.'}
       </p>
-
-      <div className="rounded-md border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-dense-caption uppercase tracking-wider">Account</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider">Symbol</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider">Side</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Qty</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Price</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider text-right">
-                {assetTab === 'fixed_income' ? 'Stream' : 'Notional'}
-              </TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Realized PnL</TableHead>
-              <TableHead className="text-dense-caption uppercase tracking-wider text-right">Commission</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="overflow-x-auto px-3 py-2.5">
+        <table className="w-full min-w-[560px] border-collapse rounded-sm border border-border">
+          <thead>
+            <tr>
+              <th className={thLeft}>Account</th>
+              <th className={thLeft}>Symbol</th>
+              <th className={thLeft}>Side</th>
+              <th className={th}>Qty</th>
+              <th className={th}>Price</th>
+              <th className={th}>{assetTab === 'fixed_income' ? 'Stream' : 'Notional'}</th>
+              <th className={th}>Realized</th>
+              <th className={th}>Comm</th>
+            </tr>
+          </thead>
+          <tbody>
             {bucketExecs.map((ex) => {
-              const signedNv =
-                assetTab === 'fixed_income'
-                  ? stkFixedIncomeStreamUsd(ex)
-                  : stkSignedTradeNotionalUsd(ex)
+              const signedNv = assetTab === 'fixed_income' ? stkFixedIncomeStreamUsd(ex) : stkSignedTradeNotionalUsd(ex)
               const notionalDisplay = assetTab === 'cash_like' ? stkFillNotional(ex) : signedNv
-              const notionalColor =
-                assetTab === 'cash_like'
-                  ? ''
-                  : signedNv > 0
-                    ? 'text-profit'
-                    : signedNv < 0
-                      ? 'text-loss'
-                      : ''
+              const realized = Number(ex.realized_pnl) || 0
               return (
-                <TableRow key={ex.account_executions_id ?? `${ex.time}-${ex.symbol}`}>
-                  <TableCell className="text-xs">{ex.account_id ?? '—'}</TableCell>
-                  <TableCell className="text-xs">{ex.symbol ?? '—'}</TableCell>
-                  <TableCell className="text-xs">{ex.side ?? '—'}</TableCell>
-                  <TableCell className="text-xs text-right tabular-nums">
+                <tr key={ex.account_executions_id ?? `${ex.time}-${ex.symbol}`}>
+                  <td className={cn(tdLeft, 'text-muted-foreground')}>{ex.account_id ?? '—'}</td>
+                  <td className={cn(tdLeft, 'font-bold text-sky-400')}>{ex.symbol ?? '—'}</td>
+                  <td className={cn(tdLeft, 'text-secondary-foreground')}>{ex.side ?? '—'}</td>
+                  <td className={cn(td, 'text-secondary-foreground')}>
                     {ex.quantity != null ? Number(ex.quantity) : (ex.qty ?? '—')}
-                  </TableCell>
-                  <TableCell className="text-xs text-right tabular-nums">{fmtUsd(ex.price)}</TableCell>
-                  <TableCell className={cn('text-xs text-right tabular-nums', notionalColor)}>
-                    {fmtUsd(notionalDisplay)}
-                  </TableCell>
-                  <TableCell className="text-xs text-right tabular-nums">
-                    {fmtUsd(Number(ex.realized_pnl) || 0)}
-                  </TableCell>
-                  <TableCell className="text-xs text-right tabular-nums">
-                    {fmtUsd(ex.commission ?? 0)}
-                  </TableCell>
-                </TableRow>
+                  </td>
+                  <td className={cn(td, 'text-secondary-foreground')}>{fmtUsd(ex.price)}</td>
+                  <td className={cn(td, 'text-secondary-foreground')}>{fmtUsd(notionalDisplay)}</td>
+                  <td className={cn(td, 'font-semibold', pnlColorClass(realized))}>{realized === 0 ? '—' : fmtUsd(realized)}</td>
+                  <td className={cn(td, 'text-muted-foreground')}>{fmtUsd(ex.commission ?? 0)}</td>
+                </tr>
               )
             })}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
-    </DayDetailShell>
+    </div>
   )
-}
-
-// ─── Shared shell ───
-
-function DayDetailShell({ children }: { children: React.ReactNode }) {
-  return <div className="min-w-0 px-3 py-2.5">{children}</div>
 }
 
 // ─── Option-Stock Link Dialog ───
@@ -973,38 +889,3 @@ function OptionStockLinkDialog({
   )
 }
 
-// ─── PnL Column Header ───
-
-function PnlColumnHeader({
-  label,
-  subtitle,
-  count,
-  total,
-  commission,
-  isRealized,
-}: {
-  label: string
-  subtitle: string
-  count: number
-  total: number
-  commission: number
-  isRealized: boolean
-}) {
-  return (
-    <header className="mb-2 border-b border-border/50 pb-2">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <h3 className="text-xs font-semibold text-foreground">{label}</h3>
-        {count > 0 && (
-          <>
-            <span className="text-dense-meta text-muted-foreground">({count})</span>
-            <span className={cn('text-xs tabular-nums font-medium', isRealized ? pnlColorClass(total) : unrealizedPnlColorClass(total))}>
-              {fmtUsd(total)}
-            </span>
-            <span className="text-xs tabular-nums text-warning">{fmtUsd(commission)}</span>
-          </>
-        )}
-      </div>
-      <p className="mt-0.5 text-dense-caption leading-snug text-muted-foreground">{subtitle}</p>
-    </header>
-  )
-}

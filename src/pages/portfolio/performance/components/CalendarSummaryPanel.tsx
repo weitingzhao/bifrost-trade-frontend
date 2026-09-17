@@ -205,12 +205,17 @@ export function CalendarSummaryPanel({
 
   if (!summary) return null
 
+  // Prototype order; unrealized and unpaired premium carry no direction colour.
+  const unpaired = bulk?.optAsOf?.openUnrealized
   const optionMetrics: MetricDef[] = [
     { label: 'Realized', value: fmtUsd(optRealizedPnl), colorValue: optRealizedPnl },
-    { label: 'Comm', value: fmtUsd(rOpt?.commission ?? 0) },
+    ...(unpaired != null
+      ? [{ label: 'Unpaired premium', value: fmtUsd(unpaired), valueClassName: 'text-secondary-foreground' }]
+      : []),
+    { label: 'Unrealized', value: fmtUsd(optUnrealizedPnl), valueClassName: 'text-secondary-foreground' },
+    { label: 'Comm', value: fmtUsd(rOpt?.commission ?? 0), valueClassName: 'text-muted-foreground' },
     { label: 'Net', value: fmtUsd(optNetPnl), colorValue: optNetPnl },
     { label: 'Trades', value: String(rOpt?.trade_count ?? 0) },
-    { label: 'Unrealized', value: fmtUsd(optUnrealizedPnl), colorValue: optUnrealizedPnl, valueTone: 'unrealized' },
   ]
 
   const stocksMetrics = buildStkBucketMetrics({

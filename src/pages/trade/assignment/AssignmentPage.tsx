@@ -22,8 +22,6 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
-import { PositionsStat } from '@/components/positions/PositionsStat'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import { fmtCushionPct } from '@/utils/optionMoneyness'
@@ -168,75 +166,53 @@ export default function AssignmentPage() {
         ) : (
           <>
             <section className={positionsUi.panel} aria-label="Exposure">
-              <div className="flex flex-wrap items-start gap-x-7 gap-y-3 px-3.5 py-2.5">
-                <PositionsStat
-                  cap="Short legs"
-                  value={String(totals.legs)}
-                  sub={totals.unpriced > 0 ? `${totals.unpriced} the vendor could not price` : 'all priced'}
-                />
-                <PositionsStat
-                  cap="In the money"
-                  value={totals.itm > 0 ? String(totals.itm) : '—'}
-                  ink={totals.itm > 0 ? 'text-warning' : undefined}
-                  sub="what would be assigned if it stopped now"
-                />
-                <PositionsStat
-                  cap="Shares it would move"
-                  value={
-                    totals.sharesIn + totals.sharesOut > 0
-                      ? `${totals.sharesIn > 0 ? `+${totals.sharesIn.toLocaleString()}` : ''}${totals.sharesIn > 0 && totals.sharesOut > 0 ? ' / ' : ''}${totals.sharesOut > 0 ? `−${totals.sharesOut.toLocaleString()}` : ''}`
-                      : '—'
-                  }
-                  sub="acquired / called away"
-                />
-                <PositionsStat
-                  cap="Cash it would move"
-                  value={totals.cashIfAllItmAssign !== 0 ? fmtMvAbbrev(totals.cashIfAllItmAssign) : '—'}
-                  ink={pnlColorClass(totals.cashIfAllItmAssign)}
-                  sub="if every in-the-money leg assigns"
-                />
-                <PositionsStat
-                  cap="Thin time value"
-                  value={thin.length > 0 ? String(thin.length) : '—'}
-                  ink={thin.length > 0 ? 'text-warning' : undefined}
-                  sub={`under ${fmtUsd(THIN_EXTRINSIC)} left to give up`}
-                />
-                <span className="ml-auto">
-                  <PositionsStat
-                    cap="Source disagrees"
-                    value={totals.disagreeing > 0 ? String(totals.disagreeing) : '—'}
-                    ink={totals.disagreeing > 0 ? 'text-warning' : undefined}
-                    sub="delta and spot tell different stories"
-                  />
+              <header className={positionsUi.panelHead}>
+                <span className={positionsUi.cap}>Exposure</span>
+                <span className={positionsUi.panelTitle}>{totals.legs} short legs · assignment lens</span>
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1.5 text-dense-meta',
+                    totals.itm > 0 ? 'text-warning' : 'text-muted-foreground',
+                  )}
+                >
+                  <StatusLamp lamp={totals.itm > 0 ? 'yellow' : 'green'} variant="dot" title="In the money" />
+                  {totals.itm > 0 ? `${totals.itm} in the money` : 'none in the money'}
                 </span>
-              </div>
-              <p className={cn(FOOT, 'm-0')}>
-                Only what is in the money counts towards the shares and the cash: an out-of-the-money leg expires and
-                moves nothing. What the whole book is worth, and what backs it, is{' '}
-                <Link to="/portfolio/backing" className={positionsUi.link}>
-                  Backing &amp; Model&rsquo;s
-                </Link>
-                .
-              </p>
-            </section>
-
-            <PositionsTier
-              label="If everything ITM assigns"
-              note="tightest cushion first — the one nearest its strike is the one to watch"
-            />
-            <section className={positionsUi.panel} aria-label="Short legs">
+                {thin.length > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 text-dense-meta text-warning">
+                    <StatusLamp lamp="yellow" variant="dot" title="Almost no time value left" />
+                    {thin.length} with under {fmtUsd(THIN_EXTRINSIC)} of time value
+                  </span>
+                ) : null}
+                {totals.unpriced > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
+                    <StatusLamp lamp="gray" variant="dot" title="No vendor row" />
+                    {totals.unpriced} unpriced
+                  </span>
+                ) : null}
+                {totals.disagreeing > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 text-dense-meta text-warning">
+                    <StatusLamp lamp="yellow" variant="dot" title="The source disagrees with itself" />
+                    {totals.disagreeing} the source disagrees on
+                  </span>
+                ) : null}
+                <span className="ml-auto text-dense-meta text-muted-foreground">
+                  early risk is an ITM short with almost no time value left; otherwise the risk sits at expiry
+                </span>
+              </header>
               <div className="overflow-x-auto">
-                {/* §14.6: eight columns, the design's 980 floor. */}
+                {/* §14.6: nine columns — the design's eight plus Plan — at its 980 floor. */}
                 <table className="w-full min-w-[980px] table-fixed border-collapse">
                   <colgroup>
-                    <col style={{ width: '21%' }} />
+                    <col style={{ width: '19%' }} />
+                    <col style={{ width: '6%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '10%' }} />
                     <col style={{ width: '7%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '7%' }} />
+                    <col style={{ width: '6%' }} />
                     <col style={{ width: '18%' }} />
-                    <col style={{ width: '16%' }} />
+                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '12%' }} />
                   </colgroup>
                   <thead>
                     <tr>
@@ -252,6 +228,7 @@ export default function AssignmentPage() {
                       <th className={positionsUi.th}>DTE</th>
                       <th className={cn(positionsUi.th, 'text-left')}>What it becomes</th>
                       <th className={cn(positionsUi.th, 'text-left')}>Early trigger</th>
+                      <th className={cn(positionsUi.th, 'text-left')}>Plan</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -306,6 +283,11 @@ export default function AssignmentPage() {
                               no reading
                             </span>
                           </td>
+                          <td className={cn(positionsUi.td, 'text-left font-sans')}>
+                            <Link to="/trade/plans" className={positionsUi.link}>
+                              roll it →
+                            </Link>
+                          </td>
                         </tr>
                       )
                     })}
@@ -317,11 +299,65 @@ export default function AssignmentPage() {
                   Time value left is what a holder gives up by exercising now — under {fmtUsd(THIN_EXTRINSIC)} they give
                   up almost nothing, which is when early assignment stops being unlikely. {ASSIGNMENT_UNRECORDED.odds}
                 </span>
+                <span>
+                  Assignment itself needs no action — the shares simply arrive. The plan column is for when you would
+                  rather roll than take them, and whether the cash is there is{' '}
+                  <Link to="/risk/margin" className={positionsUi.link}>
+                    Margin&rsquo;s
+                  </Link>
+                  .
+                </span>
                 {totals.disagreeing > 0 ? <span>{ASSIGNMENT_UNRECORDED.disagree}</span> : null}
               </div>
             </section>
 
             <div className={positionsUi.bandGrid}>
+              <section className={positionsUi.panel} aria-label="If everything ITM assigns">
+                <header className={positionsUi.panelHead}>
+                  <span className={positionsUi.cap}>If everything ITM assigns</span>
+                  <span className={positionsUi.panelTitle}>worst-case book</span>
+                </header>
+                <div className="flex flex-col">
+                  {[
+                    {
+                      k: 'Shares taken',
+                      v: totals.sharesIn > 0 ? `+${totals.sharesIn.toLocaleString()} sh` : 'none',
+                      ink: totals.sharesIn > 0 ? 'text-foreground' : 'text-muted-foreground',
+                    },
+                    {
+                      k: 'Stock delivered away',
+                      v: totals.sharesOut > 0 ? `−${totals.sharesOut.toLocaleString()} sh` : 'none',
+                      ink: totals.sharesOut > 0 ? 'text-foreground' : 'text-muted-foreground',
+                    },
+                    {
+                      k: 'Cash it would move',
+                      v: totals.cashIfAllItmAssign !== 0 ? fmtMvAbbrev(totals.cashIfAllItmAssign) : '$0',
+                      ink: pnlColorClass(totals.cashIfAllItmAssign),
+                    },
+                    { k: 'Backing after', v: 'not computed', ink: 'text-muted-foreground' },
+                  ].map((row) => (
+                    <div
+                      key={row.k}
+                      className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border/55 px-3 py-1.75 last:border-b-0"
+                    >
+                      <span className="text-xs leading-normal text-muted-foreground">{row.k}</span>
+                      <span className={cn(positionsUi.mono, 'text-xs font-semibold', row.ink)}>{row.v}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className={cn(FOOT, 'm-0')}>
+                  {totals.itm === 0
+                    ? 'Nothing is in the money, so the worst case is that everything expires and the book does not move.'
+                    : `${totals.itm} of ${totals.legs} legs are in the money — only those count here.`}{' '}
+                  What backing becomes after the shares land is Backing &amp; Model&rsquo;s to compute, and whether the
+                  cash is there is{' '}
+                  <Link to="/risk/margin" className={positionsUi.link}>
+                    Margin&rsquo;s
+                  </Link>
+                  .
+                </p>
+              </section>
+
               <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Early trigger">
                 <header className={positionsUi.panelHead}>
                   <span className={positionsUi.cap}>Early trigger</span>

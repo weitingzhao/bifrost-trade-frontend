@@ -26,6 +26,13 @@ describe('syncOppositeLegAttribution', () => {
     })
   })
 
+  it('reports a request that never reached the API instead of throwing past the row', async () => {
+    const update = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
+    await expect(
+      syncOppositeLegAttribution(update, 42, { opportunity_id: 7, instance_id: 11 }),
+    ).resolves.toEqual({ ok: false, error: 'Failed to fetch' })
+  })
+
   it('reports ok when the PUT succeeds', async () => {
     const update = vi.fn().mockResolvedValue({ ok: true })
     await expect(

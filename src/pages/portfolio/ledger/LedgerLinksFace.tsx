@@ -23,6 +23,7 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import { LedgerWriteCommitButton } from './LedgerWriteCommitButton'
+import { writeStockLinks } from './ledgerStockLinkWrites'
 import {
   LEDGER_CONFIRM_LINKS,
   LEDGER_WRITE_FOOTER_LINKS,
@@ -54,8 +55,11 @@ function stockFillLabel(row: OptionStockLink): string {
   const qty = row.stock_quantity ?? row.quantity
   const px = row.stock_price ?? row.price
   const id = row.stock_account_executions_id ?? row.stock_execution_id
-  return `${sym} · ${side} ${qty ?? '—'} @ ${px ?? '—'}`.trim() + (id != null ? ` · #${id}` : '')
+  const role = row.role ? ` · ${row.role}` : ''
+  return `${sym} · ${side} ${qty ?? '—'} @ ${px ?? '—'}`.trim() + (id != null ? ` · #${id}` : '') + role
 }
+
+type LinkRole = '' | 'exercise' | 'assignment'
 
 export function LedgerLinksFace({
   execution,
@@ -69,6 +73,8 @@ export function LedgerLinksFace({
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [unlinkId, setUnlinkId] = useState<number | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [linkRole, setLinkRole] = useState<LinkRole>('')
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['ledgerLinksFace', accountId, optId],
@@ -101,25 +107,52 @@ export function LedgerLinksFace({
   const subject = `${execution.symbol ?? ''} #${optId}`.trim()
 
   async function linkSelected() {
-    if (!accountId || optId == null || selected.size === 0) return
+    if (!accountId || optId == null) return
     setFormError(null)
-    for (const sid of selected) {
-      const res = await createOptionStockLink({
-        account_id: accountId,
-        option_account_executions_id: optId,
-        stock_account_executions_id: sid,
-      })
-      if (!res.ok) throw new Error(res.error ?? 'Link failed')
+    setNotice(null)
+    let warnings: string[] | undefined
+    try {
+      const done = await writeStockLinks(
+        [...selected],
+        sid =>
+          createOptionStockLink({
+            account_id: accountId,
+            option_account_executions_id: optId,
+            stock_account_executions_id: sid,
+            role: linkRole || undefined,
+          }),
+        sid =>
+          setSelected(prev => {
+            const next = new Set(prev)
+            next.delete(sid)
+            return next
+          }),
+      )
+      warnings = done.warnings
+      setLinkRole('')
+    } catch (e) {
+      warnings = (e as { warnings?: string[] }).warnings ?? []
+      throw e
+    } finally {
+      if (warnings && warnings.length > 0) setNotice(warnings.join(' '))
+      await refetch()
+      await onLinked()
     }
-    setSelected(new Set())
-    await refetch()
-    await onLinked()
   }
 
   async function confirmUnlink() {
     if (unlinkId == null || !accountId) return
-    const res = await deleteOptionStockLink(unlinkId, accountId)
-    if (!res.ok) throw new Error(res.error ?? 'Remove link failed')
+    setFormError(null)
+    try {
+      const res = await deleteOptionStockLink(unlinkId, accountId)
+      if (!res.ok) {
+        setFormError(res.error ?? 'Remove link failed')
+        return
+      }
+    } catch (e) {
+      setFormError(e instanceof Error && e.message ? e.message : 'Remove link failed — nothing was removed')
+      return
+    }
     await refetch()
     await onLinked()
   }
@@ -138,6 +171,11 @@ export function LedgerLinksFace({
       {formError || data?.error ? (
         <p className="text-dense-meta text-destructive" role="alert">
           {formError ?? data?.error}
+        </p>
+      ) : null}
+      {notice ? (
+        <p className="text-dense-meta text-[var(--color-warning)]" role="status">
+          {notice}
         </p>
       ) : null}
 
@@ -230,6 +268,19 @@ export function LedgerLinksFace({
           })
         )}
       </div>
+
+      <label className="flex flex-wrap items-center gap-2 text-dense-meta">
+        <span className="text-muted-foreground">Role for new links</span>
+        <select
+          className="h-7 rounded-md border border-border bg-background px-1.5 text-dense-meta"
+          value={linkRole}
+          onChange={e => setLinkRole(e.target.value as LinkRole)}
+        >
+          <option value="">(unspecified)</option>
+          <option value="exercise">exercise</option>
+          <option value="assignment">assignment</option>
+        </select>
+      </label>
 
       <div className="flex flex-wrap gap-1.5">
         <LedgerWriteCommitButton

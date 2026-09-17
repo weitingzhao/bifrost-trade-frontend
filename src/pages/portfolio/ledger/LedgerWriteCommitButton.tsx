@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { LEDGER_WRITE_DONE } from './ledgerWriteConfirm'
 
@@ -19,8 +19,16 @@ export function LedgerWriteCommitButton({
 }) {
   const [step, setStep] = useState<'idle' | 'confirm' | 'done'>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [writing, setWriting] = useState(false)
+  // A ref, not only state: two clicks in one tick both read `writing` as false,
+  // and each would send its own POST — a duplicate journal row or stock link.
+  const inFlight = useRef(false)
+  const locked = Boolean(busy) || writing
 
   async function confirm() {
+    if (inFlight.current) return
+    inFlight.current = true
+    setWriting(true)
     setError(null)
     try {
       await onCommit()
@@ -28,6 +36,9 @@ export function LedgerWriteCommitButton({
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Write failed')
       setStep('confirm')
+    } finally {
+      inFlight.current = false
+      setWriting(false)
     }
   }
 
@@ -54,17 +65,17 @@ export function LedgerWriteCommitButton({
             type="button"
             size="sm"
             className="h-7 text-xs"
-            disabled={busy}
+            disabled={locked}
             onClick={() => void confirm()}
           >
-            {busy ? 'Writing…' : 'Confirm'}
+            {locked ? 'Writing…' : 'Confirm'}
           </Button>
           <Button
             type="button"
             size="sm"
             variant="outline"
             className="h-7 text-xs"
-            disabled={busy}
+            disabled={locked}
             onClick={() => setStep('idle')}
           >
             Cancel
@@ -79,7 +90,7 @@ export function LedgerWriteCommitButton({
       type="button"
       size="sm"
       className="h-7 text-xs"
-      disabled={disabled || busy}
+      disabled={disabled || locked}
       onClick={() => setStep('confirm')}
     >
       {idleLabel}

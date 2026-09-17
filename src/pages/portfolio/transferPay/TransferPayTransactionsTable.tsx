@@ -7,72 +7,170 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
+  DenseTag,
   InlinePnl,
   denseTable,
   denseTableNumCell,
+  type DenseTagVariant,
 } from '@/components/data-display'
-import { fmtUsd } from '@/lib/format'
+import { fmtDateToken, fmtUsd } from '@/lib/format'
+import { cancelNoteOf, kindOf, type TransactionKind } from './kindRules'
+import { buildTransferPayRows, txAmount } from './transferPayRows'
+import { transferPayUi } from './transferPayUi'
 import type { AccountTransaction } from '@/types/trading'
 
+const COL_COUNT = 7
+
 /**
- * The API sends `ts` as a string, so convert first — the same `Number(ts)` the
- * summary table's `getPeriodKey` already used. Read it in UTC: every ts in the
- * ledger is midnight UTC, so the transaction date is the UTC date, and the
- * summary table groups by `getUTC*`. Reading the browser's zone west of
- * Greenwich would show the day before and disagree with the summary.
+ * Kind carries a judgement, so it takes a tag colour: a cost is amber, income is
+ * teal, a reversal is violet, a broker label is sky. Financing is the exception
+ * the Owner ruled — it holds both directions, so its tag takes the sign of the
+ * row rather than one colour for the class (F-T2).
  */
-function fmtTxDate(ts: number | string | null | undefined): string {
-  const sec = Number(ts)
-  if (ts == null || ts === '' || !Number.isFinite(sec)) return '—'
-  return new Date(sec > 1e12 ? sec : sec * 1000).toLocaleDateString('en-CA', { timeZone: 'UTC' })
+const KIND_VARIANT: Record<TransactionKind, DenseTagVariant> = {
+  'Data fee': 'warning',
+  Lending: 'success',
+  Financing: 'neutral',
+  Tax: 'warning',
+  Cancel: 'category',
+  Transfer: 'info',
+  Dividend: 'info',
+  Other: 'neutral',
+}
+
+function kindVariant(kind: TransactionKind, amount: number): DenseTagVariant {
+  if (kind !== 'Financing') return KIND_VARIANT[kind]
+  return amount >= 0 ? 'success' : 'warning'
 }
 
 type Props = {
   rows: AccountTransaction[]
+  filtered: AccountTransaction[]
+  groupByMonth: boolean
+  rangeLabel: string
+  emptyWhy: string
 }
 
-export function TransferPayTransactionsTable({ rows }: Props) {
+export function TransferPayTransactionsTable({
+  rows,
+  filtered,
+  groupByMonth,
+  rangeLabel,
+  emptyWhy,
+}: Props) {
+  const display = buildTransferPayRows({ page: rows, filtered, groupByMonth })
+
   return (
-    <DenseDataTable>
-      <DenseTableHeader>
-        <DenseTableHeadRow>
-          <DenseTableHead>Date</DenseTableHead>
-          <DenseTableHead>Account</DenseTableHead>
-          <DenseTableHead>Type</DenseTableHead>
-          <DenseTableHead className={denseTableNumCell}>Amount</DenseTableHead>
-          <DenseTableHead>Currency</DenseTableHead>
-          <DenseTableHead>Description</DenseTableHead>
-        </DenseTableHeadRow>
-      </DenseTableHeader>
-      <DenseTableBody>
-        {rows.length === 0 ? (
-          <DenseTableRow>
-            <DenseTableCell colSpan={6} className="py-10 text-center">
-              <span className={denseTable.emptyHint}>No transactions for this selection.</span>
-            </DenseTableCell>
-          </DenseTableRow>
-        ) : (
-          rows.map(tx => (
-            <DenseTableRow key={`${tx.account_id}-${tx.ts}-${tx.amount}-${tx.type}`}>
-              <DenseTableCell>{fmtTxDate(tx.ts)}</DenseTableCell>
-              <DenseTableCell>{tx.account_id ?? '—'}</DenseTableCell>
-              <DenseTableCell>{tx.type ?? '—'}</DenseTableCell>
-              <DenseTableCell className={denseTableNumCell}>
-                <InlinePnl value={tx.amount} className="font-medium">
-                  {fmtUsd(tx.amount)}
-                </InlinePnl>
-              </DenseTableCell>
-              <DenseTableCell>{tx.currency ?? '—'}</DenseTableCell>
-              <DenseTableCell
-                className={cn(denseTable.detailCellClip, denseTable.mutedMeta)}
-                title={tx.description ?? undefined}
-              >
-                <span className="block truncate">{tx.description ?? '—'}</span>
+    <div>
+      <DenseDataTable wrapClassName={denseTable.scrollX}>
+        <DenseTableHeader>
+          <DenseTableHeadRow>
+            <DenseTableHead>Date</DenseTableHead>
+            <DenseTableHead>Account</DenseTableHead>
+            <DenseTableHead>Type</DenseTableHead>
+            <DenseTableHead>Kind</DenseTableHead>
+            <DenseTableHead className={denseTableNumCell}>Amount</DenseTableHead>
+            <DenseTableHead>Ccy</DenseTableHead>
+            <DenseTableHead>Description</DenseTableHead>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
+          {display.length === 0 ? (
+            <DenseTableRow>
+              <DenseTableCell colSpan={COL_COUNT} className="py-8 text-center">
+                <span className="inline-flex max-w-[26rem] flex-col items-center gap-1.5">
+                  <span className="text-dense-body font-semibold text-foreground/85">
+                    No cash events match this selection
+                  </span>
+                  <span className={denseTable.emptyHint}>{emptyWhy}</span>
+                </span>
               </DenseTableCell>
             </DenseTableRow>
-          ))
-        )}
-      </DenseTableBody>
-    </DenseDataTable>
+          ) : (
+            display.map(item => {
+              if (item.row === 'month') {
+                return (
+                  <DenseTableRow key={item.key} className="bg-secondary/50">
+                    <DenseTableCell colSpan={COL_COUNT} className="py-1">
+                      <span className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+                        <span className={transferPayUi.monthLabel}>{item.label}</span>
+                        <span className={transferPayUi.monthMeta}>
+                          {item.events} {item.events === 1 ? 'event' : 'events'}
+                        </span>
+                        <InlinePnl value={item.net} className={transferPayUi.monthNet}>
+                          {fmtUsd(item.net)}
+                        </InlinePnl>
+                      </span>
+                    </DenseTableCell>
+                  </DenseTableRow>
+                )
+              }
+
+              const tx = item.tx
+              const amount = txAmount(tx)
+              const kind = kindOf(tx)
+              const cancel = cancelNoteOf(tx)
+              return (
+                <DenseTableRow
+                  key={item.key}
+                  className={cn(kind === 'Cancel' && transferPayUi.cancelRowTint)}
+                >
+                  <DenseTableCell>{fmtDateToken(tx.ts)}</DenseTableCell>
+                  <DenseTableCell className={denseTable.mutedMeta}>
+                    {tx.account_id ?? '—'}
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTable.mutedMeta}>{tx.type ?? '—'}</DenseTableCell>
+                  <DenseTableCell>
+                    <DenseTag variant={kindVariant(kind, amount)}>{kind}</DenseTag>
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTableNumCell}>
+                    <InlinePnl value={amount} className="font-medium">
+                      {fmtUsd(amount)}
+                    </InlinePnl>
+                  </DenseTableCell>
+                  <DenseTableCell className={denseTable.mutedMeta}>
+                    {tx.currency ?? '—'}
+                  </DenseTableCell>
+                  <DenseTableCell
+                    className={cn(denseTable.detailCellClip, denseTable.mutedMeta)}
+                    title={tx.description ?? undefined}
+                  >
+                    <span className="block truncate">{tx.description ?? '—'}</span>
+                    {cancel?.state === 'named' && (
+                      <span
+                        className={cn(transferPayUi.cancelNote, transferPayUi.cancelNoteNamed)}
+                      >
+                        reverses · {cancel.ref}
+                        {cancel.period ? ` · ${cancel.period}` : ''}
+                      </span>
+                    )}
+                    {cancel?.state === 'unidentified' && (
+                      <span className={cn(transferPayUi.cancelNote, transferPayUi.cancelNoteBare)}>
+                        reverses an earlier charge · not identified
+                      </span>
+                    )}
+                  </DenseTableCell>
+                </DenseTableRow>
+              )
+            })
+          )}
+        </DenseTableBody>
+      </DenseDataTable>
+
+      <div className={transferPayUi.tableFoot}>
+        <span>
+          A negative amount is money leaving, not a fault — it is orange because it has direction,
+          never red.
+        </span>
+        <span>
+          Cancellations keep their own row so the net stays right. A bracketed one names the
+          subscription it reverses; a bare <span className="font-mono">CANCELLATION</span> names
+          nothing, and says so in grey rather than guessing.
+        </span>
+        <span className={transferPayUi.tableFootRight}>
+          Showing {rows.length} of {filtered.length} filtered · {rangeLabel}
+        </span>
+      </div>
+    </div>
   )
 }

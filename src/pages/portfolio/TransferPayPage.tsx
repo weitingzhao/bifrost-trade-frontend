@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { RefreshCw } from 'lucide-react'
+import { HelpCircle, RefreshCw } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
-import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -29,18 +28,29 @@ import {
   pctChangeVsPrev,
 } from '@/utils/transferPay'
 import type { AccountTransaction } from '@/types/trading'
-import { TransferPayToolbar } from '@/pages/portfolio/transferPay/TransferPayToolbar'
+import { TransferPayLookingAt } from '@/pages/portfolio/transferPay/TransferPayLookingAt'
 import { TransferPayTransactionsTable } from '@/pages/portfolio/transferPay/TransferPayTransactionsTable'
 import { TransferPaySummaryTable } from '@/pages/portfolio/transferPay/TransferPaySummaryTable'
+import { TransferPayWhatPanel } from '@/pages/portfolio/transferPay/TransferPayWhatPanel'
+import { TransferPayDownstream } from '@/pages/portfolio/transferPay/TransferPayDownstream'
+import type { TransactionKind } from '@/pages/portfolio/transferPay/kindRules'
+import { netOf } from '@/pages/portfolio/transferPay/transferPayRows'
+import {
+  ALL_TYPES,
+  countByAccount,
+  countByKind,
+  countByType,
+  emptySelectionReason,
+  rangeLabelOf,
+  selectRows,
+} from '@/pages/portfolio/transferPay/transferPaySelection'
 import {
   transferPayPageCardClass,
   transferPayUi,
 } from '@/pages/portfolio/transferPay/transferPayUi'
 
-const TRANSFER_PAY_INFO =
-  'Data is stored in account_transactions and used for Performance net cash flow. Configure in Settings → IB Connection → Flex.'
-
-const ALL_TYPES: SummaryTypeKey[] = ['deposit', 'withdrawal', 'dividend', 'other']
+const PAGE_LEAD =
+  'Cash that crossed the account boundary. A record of what already happened — this page starts nothing.'
 
 export default function TransferPayPage() {
   const qc = useQueryClient()
@@ -48,12 +58,18 @@ export default function TransferPayPage() {
   const [rangePreset, setRangePreset] = useState<RangePreset>('last_365')
   const [activeAccountId, setActiveAccountId] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<Set<SummaryTypeKey>>(() => new Set(ALL_TYPES))
+  const [kindFilter, setKindFilter] = useState<Set<TransactionKind>>(() => new Set())
+  const [kindsOpen, setKindsOpen] = useState(true)
+  const [whatOpen, setWhatOpen] = useState(false)
+  const [groupByMonth, setGroupByMonth] = useState(true)
   const [summaryMode, setSummaryMode] = useState<SummaryMode>('year')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(15)
   const [fetchMsg, setFetchMsg] = useState<string | null>(null)
+  const [fetchWhen, setFetchWhen] = useState<string | null>(null)
 
   const { sinceTs, untilTs } = getRangeForPreset(rangePreset)
+  const rangeLabel = rangeLabelOf(rangePreset, RANGE_PRESET_OPTIONS)
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...QUERY_KEYS.trading.transactions, rangePreset],
@@ -75,9 +91,11 @@ export default function TransferPayPage() {
       } else {
         setFetchMsg(res.error ?? 'Fetch failed')
       }
+      setFetchWhen(new Date().toLocaleTimeString())
     },
     onError: (e: unknown) => {
       setFetchMsg(e instanceof Error ? e.message : 'Fetch failed')
+      setFetchWhen(new Date().toLocaleTimeString())
     },
   })
 
@@ -93,7 +111,13 @@ export default function TransferPayPage() {
     [transactions],
   )
 
-  const visibleByAccount = useMemo(
+  const selection = useMemo(
+    () => ({ accountId: activeAccountId, types: typeFilter, kinds: kindFilter }),
+    [activeAccountId, typeFilter, kindFilter],
+  )
+
+  /** Type and kind counts read within the chosen account; account counts read the whole ledger. */
+  const inAccount = useMemo(
     () =>
       activeAccountId === 'all'
         ? transactions
@@ -101,15 +125,12 @@ export default function TransferPayPage() {
     [transactions, activeAccountId],
   )
 
-  const filtered = useMemo(
-    () => visibleByAccount.filter(tx => typeFilter.has(getSummaryType(tx.type))),
-    [visibleByAccount, typeFilter],
-  )
+  const accountCounts = useMemo(() => countByAccount(transactions), [transactions])
+  const typeCounts = useMemo(() => countByType(inAccount), [inAccount])
+  const kindCounts = useMemo(() => countByKind(inAccount), [inAccount])
 
-  const totalNet = useMemo(
-    () => filtered.reduce((sum, tx) => sum + (Number.isFinite(tx.amount) ? tx.amount : 0), 0),
-    [filtered],
-  )
+  const filtered = useMemo(() => selectRows(transactions, selection), [transactions, selection])
+  const totalNet = useMemo(() => netOf(filtered), [filtered])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, totalPages)
@@ -177,6 +198,16 @@ export default function TransferPayPage() {
     setPage(1)
   }
 
+  function toggleKind(k: TransactionKind) {
+    setKindFilter(prev => {
+      const next = new Set(prev)
+      if (next.has(k)) next.delete(k)
+      else next.add(k)
+      return next
+    })
+    setPage(1)
+  }
+
   function handleAccountChange(id: string) {
     setActiveAccountId(id)
     setPage(1)
@@ -204,9 +235,18 @@ export default function TransferPayPage() {
           <PageHeader
             breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Transfer & Pay</p>}
             title={
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1.5">
                 Transfer & Pay
-                <InfoTooltip text={TRANSFER_PAY_INFO} />
+                <button
+                  type="button"
+                  className={transferPayUi.iconToggle}
+                  aria-expanded={whatOpen}
+                  title="What this page is for"
+                  aria-label="What this page is for"
+                  onClick={() => setWhatOpen(o => !o)}
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
+                </button>
               </span>
             }
             titleSize="large"
@@ -239,10 +279,11 @@ export default function TransferPayPage() {
               disabled={fetchMutation.isPending}
               onClick={() => {
                 setFetchMsg(null)
+                setFetchWhen(null)
                 fetchMutation.mutate()
               }}
               aria-busy={fetchMutation.isPending}
-              title="Pull cash transactions from IB Flex for selected range and write to account_transactions"
+              title={`Pulls cash transactions from IB Flex for ${rangeLabel.toLowerCase()} and writes them to account_transactions. It fetches; it never moves money.`}
             >
               <RefreshCw className={cn('h-3.5 w-3.5', fetchMutation.isPending && 'animate-spin')} />
               {fetchMutation.isPending ? 'Fetching…' : 'Fetch from IB'}
@@ -250,8 +291,23 @@ export default function TransferPayPage() {
           </div>
         </div>
 
+        <p className={transferPayUi.headerLead}>{PAGE_LEAD}</p>
+
+        {whatOpen && <TransferPayWhatPanel onClose={() => setWhatOpen(false)} />}
+
         {fetchMsg != null && (
-          <p className={fetchOk ? transferPayUi.feedbackOk : transferPayUi.feedbackErr}>{fetchMsg}</p>
+          <div
+            className={cn(
+              transferPayUi.feedbackRow,
+              fetchOk ? transferPayUi.feedbackOkTone : transferPayUi.feedbackErrTone,
+            )}
+          >
+            <span className={transferPayUi.feedbackDot} aria-hidden />
+            <span>{fetchMsg}</span>
+            {fetchWhen != null && (
+              <span className={transferPayUi.feedbackWhen}>fetched {fetchWhen}</span>
+            )}
+          </div>
         )}
 
         {error != null && <QueryErrorAlert error={error} onRetry={() => void refetch()} />}
@@ -263,24 +319,41 @@ export default function TransferPayPage() {
               <Skeleton className="h-48 w-full rounded-lg" />
             </div>
           ) : (
-            <>
-              <TransferPayToolbar
+            <div className="space-y-2">
+              <TransferPayLookingAt
                 accountIds={accountIds}
                 activeAccountId={activeAccountId}
                 onActiveAccountId={handleAccountChange}
+                accountCounts={accountCounts}
+                totalCount={transactions.length}
+                scopeCount={inAccount.length}
                 typeFilter={typeFilter}
+                typeCounts={typeCounts}
                 onToggleType={toggleType}
                 onToggleAllTypes={toggleAllTypes}
+                kindFilter={kindFilter}
+                kindCounts={kindCounts}
+                onToggleKind={toggleKind}
+                kindsOpen={kindsOpen}
+                onKindsOpen={setKindsOpen}
                 pageSize={pageSize}
                 onPageSize={handlePageSize}
+                groupByMonth={groupByMonth}
+                onGroupByMonth={setGroupByMonth}
                 totalNet={totalNet}
-                visibleCount={visibleByAccount.length}
+                filteredCount={filtered.length}
                 safePage={safePage}
                 totalPages={totalPages}
                 onPage={setPage}
               />
-              <TransferPayTransactionsTable rows={paged} />
-            </>
+              <TransferPayTransactionsTable
+                rows={paged}
+                filtered={filtered}
+                groupByMonth={groupByMonth}
+                rangeLabel={rangeLabel}
+                emptyWhy={emptySelectionReason(selection, rangeLabel)}
+              />
+            </div>
           )}
         </section>
 
@@ -297,6 +370,10 @@ export default function TransferPayPage() {
               emptyHint={summaryEmptyHint}
             />
           )}
+        </section>
+
+        <section className={transferPayUi.section} aria-label="Downstream readers">
+          <TransferPayDownstream />
         </section>
       </div>
     </PageShell>

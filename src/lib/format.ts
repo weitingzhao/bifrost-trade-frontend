@@ -168,6 +168,47 @@ export function parseOptionContractKey(contract_key: string | null | undefined):
   return { expiry, strike, right, rightLabel }
 }
 
+const MONTH_TOKENS = [
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
+] as const
+
+/**
+ * The app-wide date token (DESIGN_CONTRACTS §14.4): `11SEP26`. Same shape as the
+ * expiry inside an option contract label, so a date reads the same wherever it
+ * appears and never depends on the reader's locale.
+ *
+ * Takes epoch seconds or milliseconds, as a number or the string an API sends
+ * when the SQL forgot its `::bigint`, and reads it in UTC.
+ */
+export function fmtDateToken(ts: number | string | null | undefined): string {
+  const n = Number(ts)
+  if (ts == null || ts === '' || !Number.isFinite(n)) return '—'
+  const d = new Date(n > 1e12 ? n : n * 1000)
+  if (Number.isNaN(d.getTime())) return '—'
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `${day}${MONTH_TOKENS[d.getUTCMonth()]}${String(d.getUTCFullYear()).slice(2)}`
+}
+
+/** `SEP 2026` — the month a group of dated rows belongs to, same token family. */
+export function fmtMonthToken(ts: number | string | null | undefined): string {
+  const n = Number(ts)
+  if (ts == null || ts === '' || !Number.isFinite(n)) return '—'
+  const d = new Date(n > 1e12 ? n : n * 1000)
+  if (Number.isNaN(d.getTime())) return '—'
+  return `${MONTH_TOKENS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
+}
+
 export function fmtTs(ts: number | null | undefined): string {
   if (ts == null) return '—'
   return new Date(ts * 1000).toLocaleString()

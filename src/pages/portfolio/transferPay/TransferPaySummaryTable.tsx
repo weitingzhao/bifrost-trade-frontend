@@ -66,11 +66,22 @@ export function TransferPaySummaryTable({
 }: Props) {
   return (
     <div className={denseTable.sectionBlock}>
+      <div className={transferPayUi.tierRow}>
+        <span className={transferPayUi.tierLabel}>Summary by period</span>
+        <span className={transferPayUi.tierRule} />
+        <span className={transferPayUi.tierNote}>
+          the whole range, deliberately ignoring the type filter above
+        </span>
+      </div>
       <div className={transferPayUi.summaryHead}>
         <h3 className={transferPayUi.summaryTitle}>
-          Summary by period
-          <InfoTooltip text="Net cash flow per account and in total, grouped by year / quarter / month for the loaded range (last 365 days or current fetch window)." />
+          Cash by period and account
+          <InfoTooltip text="Net cash flow per account and in total for the whole loaded range. The type and kind chips above filter the detail table only — this table is deliberately unfiltered, so the two answer different questions." />
         </h3>
+        <span className={transferPayUi.summaryNote}>
+          {periodKeys.length} {periodKeys.length === 1 ? 'period' : 'periods'} · all types,
+          unfiltered · newest first
+        </span>
         <div className={transferPayUi.summaryView}>
           <span className={transferPayUi.viewLabel}>View:</span>
           <SegmentControl
@@ -134,6 +145,18 @@ export function TransferPaySummaryTable({
             })}
           </DenseTableBody>
         </DenseDataTable>
+      )}
+      {!emptyHint && (
+        <div className={transferPayUi.tableFoot}>
+          <span>
+            The first period has nothing before it, so its change reads{' '}
+            <span className="font-mono">—</span>. A dash is no reading; 0% would be a claim.
+          </span>
+          <span>
+            Totals are per currency. Every row is USD today, so there is one total; a second
+            currency would add its own row rather than being folded into this one.
+          </span>
+        </div>
       )}
     </div>
   )

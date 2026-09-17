@@ -36,6 +36,7 @@ import type { InstanceConsistencyState } from '@/utils/ledger/ledgerOptHelpers'
 import { useLedgerOptionStockLinks } from '@/hooks/useLedgerOptionStockLinks'
 import { getLedgerAccountTabs, getLedgerAccountIds } from '@/lib/ledgerAccountTabs'
 import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
+import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
 import { executionPassesLedgerFilters } from '@/pages/portfolio/ledger/ledgerFilterMatch'
 import { LEDGER_ROW_TYPE_TABS, countUnreportedTransactionType, type LedgerRowType } from '@/pages/portfolio/ledger/ledgerRowType'
 
@@ -82,6 +83,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     filterWishlistSymbol,
     rowType,
     groupBy,
+    instanceSubTab,
     optRightFilter,
     optSort,
     stkSort,
@@ -235,8 +237,24 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   return b
   }, [canonFiltered, catMap])
 
+  const comboExecs = useMemo(
+    () => canonFiltered.filter(e => (e.sec_type ?? '').toUpperCase() === 'BAG'),
+    [canonFiltered],
+  )
+
   const stkExecsSorted = useMemo(() => {
-  const execs = stkByBucket[activeTab as StkLedgerBucket] ?? []
+  let execs: Execution[]
+  if (activeTab === 'combos') execs = comboExecs
+  else if (activeTab === 'all') {
+    execs = [
+      ...stkByBucket.stocks,
+      ...stkByBucket.fixed_income,
+      ...stkByBucket.cash_like,
+      ...comboExecs,
+    ]
+  } else {
+    execs = stkByBucket[activeTab as StkLedgerBucket] ?? []
+  }
   return [...execs].sort((a, b) => {
     if (stkSort.col === 'realized_pnl') {
       const pa = a.realized_pnl ?? 0
@@ -248,19 +266,18 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     if (da !== db) return stkSort.dir === 'desc' ? db.localeCompare(da) : da.localeCompare(db)
     return stkSort.dir === 'desc' ? (b.time ?? 0) - (a.time ?? 0) : (a.time ?? 0) - (b.time ?? 0)
   })
-  }, [activeTab, stkByBucket, stkSort])
+  }, [activeTab, stkByBucket, stkSort, comboExecs])
 
   // STK category tabs
   const stkCategoryOptions = useMemo((): string[] => {
-  const bucket = activeTab as StkLedgerBucket
-  if (bucket !== 'stocks' && bucket !== 'fixed_income' && bucket !== 'cash_like') return ['All']
+  if (!isSharesTab(activeTab) || activeTab === 'combos') return ['All', 'Uncategorized']
   const cats = new Set<string>()
-  for (const e of stkByBucket[bucket] ?? []) {
+  for (const e of stkExecsSorted) {
     const c = catMap.get(`${e.account_id}|${e.contract_key?.trim() ?? ''}`) ?? '—'
     if (c !== '—') cats.add(c)
   }
   return ['All', ...Array.from(cats).sort(), 'Uncategorized']
-  }, [activeTab, stkByBucket, catMap])
+  }, [activeTab, stkExecsSorted, catMap])
 
   const effectiveStkCategoryTab = stkCategoryOptions.includes(stkCategoryTab)
   ? stkCategoryTab
@@ -470,11 +487,14 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
 
   const filteredInstanceGroups = useMemo(() => {
   let list = instanceGroupsRaw.withInst
-  if (instanceContainOpenFilter === 'yes') list = list.filter(ig => ig.groups.some(g => g.status === 'unrealized'))
-  if (instanceContainOpenFilter === 'no') list = list.filter(ig => ig.groups.every(g => g.status === 'realized'))
+  if (instanceSubTab === 'contains_open' || instanceContainOpenFilter === 'yes') {
+    list = list.filter(ig => ig.groups.some(g => g.status === 'unrealized'))
+  } else if (instanceContainOpenFilter === 'no') {
+    list = list.filter(ig => ig.groups.every(g => g.status !== 'unrealized'))
+  }
   if (optRightFilter) list = list.filter(ig => ig.groups.some(g => g.option_right.toUpperCase()[0] === optRightFilter))
   return list
-  }, [instanceGroupsRaw, instanceContainOpenFilter, optRightFilter])
+  }, [instanceGroupsRaw, instanceContainOpenFilter, instanceSubTab, optRightFilter])
 
   const noInstanceOptGroups = useMemo(
     () => buildOptExecutionGroups(instanceGroupsRaw.noInst),
@@ -539,6 +559,14 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
   const hasStkExecs = stkByBucket.stocks.length > 0
   const hasFixedIncomeExecs = stkByBucket.fixed_income.length > 0
   const hasCashLikeExecs = stkByBucket.cash_like.length > 0
+  const hasComboExecs = comboExecs.length > 0
+  const containsOpenCount = instanceGroupsRaw.withInst.filter(ig =>
+    ig.groups.some(g => g.status === 'unrealized'),
+  ).length
+  const uncategorizedCount = stkExecsSorted.filter(e => {
+    const c = catMap.get(`${e.account_id}|${e.contract_key?.trim() ?? ''}`) ?? '—'
+    return c === '—'
+  }).length
 
   // ── Period summaries (Legacy: all closedOptGroups; not tab-scoped) ───────
   const optionsSummaryByMonth = useMemo(
@@ -547,10 +575,8 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
   )
 
   const stocksSummaryByMonth = useMemo(() => {
-  const tab = activeTab as StkLedgerBucket
-  const execs = stkByBucket[tab] ?? []
-  return buildStocksSummaryByMonth(execs)
-  }, [activeTab, stkByBucket])
+  return buildStocksSummaryByMonth(stkExecsSorted)
+  }, [stkExecsSorted])
 
   const closedOptGroupsPnlSum = useMemo(
     () => closedOptGroups.reduce((s, g) => s + closedGroupSummaryPnl(g), 0),
@@ -624,6 +650,7 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
     filteredClosedOptGroups,
     sortedOpenOptGroups,
     stkByBucket,
+    comboExecs,
     stkExecsSorted,
     stkCategoryOptions,
     effectiveStkCategoryTab,
@@ -645,6 +672,9 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
     hasStkExecs,
     hasFixedIncomeExecs,
     hasCashLikeExecs,
+    hasComboExecs,
+    containsOpenCount,
+    uncategorizedCount,
     optionsSummaryByMonth,
     stocksSummaryByMonth,
     closedOptGroupsPnlSum,

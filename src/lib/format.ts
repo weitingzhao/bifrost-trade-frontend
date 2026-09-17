@@ -230,6 +230,18 @@ export function fmtMonthKeyToken(monthKey: string | null | undefined): string {
   return `${MONTH_TOKENS[month]} ${m[1]}`
 }
 
+export const ET_ZONE = 'America/New_York'
+
+export function fmtEtClock(d: Date): string {
+  return d.toLocaleTimeString('en-US', { hourCycle: 'h23', timeZone: ET_ZONE })
+}
+
+/** Epoch seconds as `HH:MM:SS ET` in America/New_York. One formatter for every source. */
+export function fmtEpochEtClock(sec: number | null | undefined): string {
+  if (sec == null || !Number.isFinite(sec)) return '—'
+  return `${fmtEtClock(new Date(sec * 1000))} ET`
+}
+
 export function fmtTs(ts: number | null | undefined): string {
   if (ts == null) return '—'
   return new Date(ts * 1000).toLocaleString()

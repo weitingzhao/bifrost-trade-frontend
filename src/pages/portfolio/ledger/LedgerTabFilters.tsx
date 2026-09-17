@@ -2,12 +2,12 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { SegmentControl, segmentButtonClass, segmentGroupClass } from '@/components/data-display'
 import { LedgerSortIcon as SortIcon } from './LedgerSortIcon'
 import type { GroupBy, InstanceSubTab, MainTab, OptInstanceFilter, OptSortCol, OptSubTab } from './ledgerTypes'
+import { isSharesTab } from './ledgerTypes'
 import { ledgerShell } from './ledgerShellUi'
 
 export type LedgerTabFilterProps = {
   activeTab: MainTab
   hasOptExecs: boolean
-  isStkTab: boolean
   groupBy: GroupBy
   setGroupBy: (v: GroupBy) => void
   optRightFilter: '' | 'C' | 'P'
@@ -19,8 +19,7 @@ export type LedgerTabFilterProps = {
   setInstanceSubTab: (v: InstanceSubTab) => void
   instanceGroupsWithCount: number
   noInstanceOptGroupsLength: number
-  instanceContainOpenFilter: 'all' | 'yes' | 'no'
-  setInstanceContainOpenFilter: (v: 'all' | 'yes' | 'no') => void
+  containsOpenCount: number
   filteredInstanceGroupsLength: number
   instanceGroupsLength: number
   optSubTab: OptSubTab
@@ -33,10 +32,11 @@ export type LedgerTabFilterProps = {
   toggleOptSort: (col: OptSortCol) => void
   groupByPosition: boolean
   setGroupByPosition: (v: boolean) => void
-  stkCategoryOptions: string[]
-  effectiveStkCategoryTab: string
+  stkCategoryTab: string
   setStkCategoryTab: (v: string) => void
-  setStkPage: (v: number) => void
+  uncategorizedCount: number
+  stkFillCount: number
+  stkGroupCount: number
 }
 
 function FilterRow({
@@ -161,7 +161,6 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
   const {
     activeTab,
     hasOptExecs,
-    isStkTab,
     groupBy,
     setGroupBy,
     optRightFilter,
@@ -173,8 +172,7 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
     setInstanceSubTab,
     instanceGroupsWithCount,
     noInstanceOptGroupsLength,
-    instanceContainOpenFilter,
-    setInstanceContainOpenFilter,
+    containsOpenCount,
     filteredInstanceGroupsLength,
     instanceGroupsLength,
     optSubTab,
@@ -187,16 +185,17 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
     toggleOptSort,
     groupByPosition,
     setGroupByPosition,
-    stkCategoryOptions,
-    effectiveStkCategoryTab,
+    stkCategoryTab,
     setStkCategoryTab,
-    setStkPage,
+    uncategorizedCount,
+    stkFillCount,
+    stkGroupCount,
   } = props
 
   const showStrategyInst = activeTab === 'strategy' && hasOptExecs
-  const showInstance = activeTab === 'instance' && hasOptExecs
-  const showOptions = activeTab === 'options' && hasOptExecs
-  const showStk = isStkTab && stkCategoryOptions.length > 2
+  const showInstance = activeTab === 'instance'
+  const showOptions = activeTab === 'options'
+  const showStk = isSharesTab(activeTab)
 
   if (!showStrategyInst && !showInstance && !showOptions && !showStk) return null
 
@@ -222,45 +221,27 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
 
         {showInstance && (
           <>
-            <div className={ledgerShell.filterSegmentInlineRow}>
-              <SegmentControl
-                size="sm"
-                ariaLabel="With instance and No instance"
-                value={instanceSubTab}
-                onChange={v => setInstanceSubTab(v as InstanceSubTab)}
-                options={[
-                  {
-                    value: 'with_instance',
-                    label: `With instance (${instanceGroupsWithCount})`,
-                    disabled: instanceGroupsWithCount === 0,
-                  },
-                  {
-                    value: 'no_instance',
-                    label: `No instance (${noInstanceOptGroupsLength})`,
-                    disabled: noInstanceOptGroupsLength === 0,
-                  },
-                ]}
-              />
-              <div className={instanceSubTab === 'no_instance' ? ledgerShell.containOpenDisabled : undefined}>
-                <FilterRow
-                  label="Contain open"
-                  tooltip="Filters the With instance list: Yes = at least one open (unrealized) option contract; No = only closed legs; All = every instance."
-                >
-                  <SegmentControl
-                    size="sm"
-                    ariaLabel="Contain open"
-                    value={instanceContainOpenFilter}
-                    onChange={v => setInstanceContainOpenFilter(v as 'all' | 'yes' | 'no')}
-                    options={[
-                      { value: 'all', label: 'All', disabled: instanceSubTab === 'no_instance' },
-                      { value: 'yes', label: 'Yes', disabled: instanceSubTab === 'no_instance' },
-                      { value: 'no', label: 'No', disabled: instanceSubTab === 'no_instance' },
-                    ]}
-                  />
-                </FilterRow>
-              </div>
-            </div>
-            {instanceSubTab === 'with_instance' && (
+            <SegmentControl
+              size="sm"
+              ariaLabel="Instance subviews"
+              value={instanceSubTab}
+              onChange={v => setInstanceSubTab(v as InstanceSubTab)}
+              options={[
+                {
+                  value: 'with_instance',
+                  label: `With instance (${instanceGroupsWithCount})`,
+                },
+                {
+                  value: 'no_instance',
+                  label: `No instance (${noInstanceOptGroupsLength})`,
+                },
+                {
+                  value: 'contains_open',
+                  label: `Contains open (${containsOpenCount})`,
+                },
+              ]}
+            />
+            {instanceSubTab !== 'no_instance' && (
               <GroupTypeInlineRow
                 groupBy={groupBy}
                 setGroupBy={setGroupBy}
@@ -269,9 +250,7 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
                 optionRights={strategyPanelOptionRights}
               />
             )}
-            {instanceSubTab === 'with_instance'
-              && instanceContainOpenFilter !== 'all'
-              && instanceGroupsLength > 0 && (
+            {instanceSubTab === 'contains_open' && instanceGroupsLength > 0 && (
               <span className={ledgerShell.filterMetaInline}>
                 Showing {filteredInstanceGroupsLength} of {instanceGroupsLength}
               </span>
@@ -283,16 +262,12 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
           <>
             <SegmentControl
               size="sm"
-              ariaLabel="Closed Option and Open Option"
+              ariaLabel="Closed and Open"
               value={optSubTab}
               onChange={v => setOptSubTab(v as OptSubTab)}
               options={[
-                { value: 'contracts', label: `Closed Option (${filteredClosedOptGroupsLength})` },
-                {
-                  value: 'orphans',
-                  label: `Open Option (${allOrphanGroupsLength})`,
-                  disabled: allOrphanGroupsLength === 0,
-                },
+                { value: 'contracts', label: `Closed (${filteredClosedOptGroupsLength})` },
+                { value: 'orphans', label: `Open (${allOrphanGroupsLength})` },
               ]}
             />
             <div className={ledgerShell.filterSegmentInlineRow}>
@@ -350,23 +325,27 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
           <div className={ledgerShell.filterSegmentInlineRow}>
             <SegmentControl
               size="sm"
-              ariaLabel="Stock view mode"
-              value={groupByPosition ? 'position' : 'flat'}
-              onChange={v => setGroupByPosition(v === 'position')}
-              options={[
-                { value: 'flat', label: 'Flat' },
-                { value: 'position', label: 'Position' },
-              ]}
-            />
-            <SegmentControl
-              size="sm"
-              ariaLabel="Stock category"
-              value={effectiveStkCategoryTab}
+              ariaLabel="Shares layout"
+              value={
+                stkCategoryTab === 'Uncategorized'
+                  ? 'uncat'
+                  : groupByPosition
+                    ? 'position'
+                    : 'flat'
+              }
               onChange={v => {
-                setStkCategoryTab(v)
-                setStkPage(0)
+                if (v === 'uncat') {
+                  setStkCategoryTab('Uncategorized')
+                  return
+                }
+                setStkCategoryTab('All')
+                setGroupByPosition(v === 'position')
               }}
-              options={stkCategoryOptions.map(cat => ({ value: cat, label: cat }))}
+              options={[
+                { value: 'position', label: `By position (${stkGroupCount})` },
+                { value: 'flat', label: `Flat (${stkFillCount})` },
+                { value: 'uncat', label: `Uncategorized (${uncategorizedCount})` },
+              ]}
             />
           </div>
         )}

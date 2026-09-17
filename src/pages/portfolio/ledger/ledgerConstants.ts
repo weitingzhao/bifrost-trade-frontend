@@ -1,23 +1,8 @@
-import type { MainTab } from './ledgerTypes'
-
 export const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 export const PAGE_SIZE = 50
 
-export const TAB_GROUPS: { label: string; tabs: { id: MainTab; label: string }[] }[] = [
-  {
-    label: 'Attribution',
-    tabs: [
-      { id: 'strategy', label: 'Strategy' },
-      { id: 'instance', label: 'Instance' },
-    ],
-  },
-  {
-    label: 'Instruments',
-    tabs: [
-      { id: 'options', label: 'Options' },
-      { id: 'stocks', label: 'Stocks' },
-      { id: 'fixed_income', label: 'Fixed Income' },
-      { id: 'cash_like', label: 'Cash-like' },
-    ],
-  },
-]
+export const SHARES_COMBOS_FOOTER =
+  'Combo orders are multi-leg TWS orders: no expiry, no realized P&L, no instance, and outside the performance book — so they change nothing on Performance. They live in this bucket rather than being squeezed into Options or Stocks, where their empty columns would read as missing data.'
+
+export const SHARES_DEFAULT_FOOTER =
+  'Grouped by symbol × account with the position it belongs to. Realized is a dash where the fill opened rather than closed — a dash is no reading, not a zero.'

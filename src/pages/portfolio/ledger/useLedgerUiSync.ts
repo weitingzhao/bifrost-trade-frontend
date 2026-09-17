@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { GroupBy, InstanceSubTab, MainTab } from '@/pages/portfolio/ledger/ledgerTypes'
+import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
+import { pruneExpandedKeys } from '@/pages/portfolio/ledger/ledgerExpandKeys'
 
 type DisplayBucket = { key: string }
 
@@ -21,6 +23,7 @@ export function useLedgerUiSync(params: {
   hasStkExecs: boolean
   hasFixedIncomeExecs: boolean
   hasCashLikeExecs: boolean
+  hasComboExecs: boolean
   isLoading: boolean
   setActiveTab: (t: MainTab) => void
 }) {
@@ -41,22 +44,25 @@ export function useLedgerUiSync(params: {
     hasStkExecs,
     hasFixedIncomeExecs,
     hasCashLikeExecs,
+    hasComboExecs,
     isLoading,
     setActiveTab,
   } = params
 
   useEffect(() => {
-    if (!stkCategoryOptions.includes(stkCategoryTab)) setStkCategoryTab('All')
+    if (stkCategoryTab !== 'All' && stkCategoryTab !== 'Uncategorized' && !stkCategoryOptions.includes(stkCategoryTab)) {
+      setStkCategoryTab('All')
+    }
   }, [stkCategoryOptions, stkCategoryTab, setStkCategoryTab])
 
   useEffect(() => {
-    if (groupBy === 'opportunity') {
-      setOuterStrategyExpanded(new Set())
-      setOuterInstanceExpanded(new Set())
-    } else {
-      setOuterStrategyExpanded(new Set(strategyDisplayBuckets.map(b => b.key)))
-      setOuterInstanceExpanded(new Set(instanceDisplayBuckets.map(b => b.key)))
-    }
+    const opp = groupBy === 'opportunity'
+    setOuterStrategyExpanded(prev =>
+      pruneExpandedKeys(prev, strategyDisplayBuckets.map(b => b.key), opp),
+    )
+    setOuterInstanceExpanded(prev =>
+      pruneExpandedKeys(prev, instanceDisplayBuckets.map(b => b.key), opp),
+    )
   }, [
     groupBy,
     strategyDisplayBuckets,
@@ -73,25 +79,20 @@ export function useLedgerUiSync(params: {
     if (instanceSubTab === 'no_instance' && !hasNoInst && hasWithInst) setInstanceSubTab('with_instance')
   }, [activeTab, instanceSubTab, instanceGroupsRaw, setInstanceSubTab])
 
-  // Keep default Strategy tab; only fall back when the *current* instrument tab has no rows.
   useEffect(() => {
     if (isLoading) return
-
-    if (activeTab === 'stocks' && !hasStkExecs) {
-      if (hasOptExecs) setActiveTab('strategy')
-      else if (hasFixedIncomeExecs) setActiveTab('fixed_income')
-      else if (hasCashLikeExecs) setActiveTab('cash_like')
-    }
-    if (activeTab === 'fixed_income' && !hasFixedIncomeExecs) {
-      if (hasOptExecs) setActiveTab('strategy')
-      else if (hasStkExecs) setActiveTab('stocks')
-      else if (hasCashLikeExecs) setActiveTab('cash_like')
-    }
-    if (activeTab === 'cash_like' && !hasCashLikeExecs) {
-      if (hasOptExecs) setActiveTab('strategy')
-      else if (hasStkExecs) setActiveTab('stocks')
-      else if (hasFixedIncomeExecs) setActiveTab('fixed_income')
-    }
+    if (!isSharesTab(activeTab)) return
+    const empty =
+      (activeTab === 'stocks' && !hasStkExecs) ||
+      (activeTab === 'fixed_income' && !hasFixedIncomeExecs) ||
+      (activeTab === 'cash_like' && !hasCashLikeExecs) ||
+      (activeTab === 'combos' && !hasComboExecs) ||
+      (activeTab === 'all' &&
+        !hasStkExecs &&
+        !hasFixedIncomeExecs &&
+        !hasCashLikeExecs &&
+        !hasComboExecs)
+    if (empty && hasOptExecs) setActiveTab('strategy')
   }, [
     activeTab,
     isLoading,
@@ -99,6 +100,7 @@ export function useLedgerUiSync(params: {
     hasStkExecs,
     hasFixedIncomeExecs,
     hasCashLikeExecs,
+    hasComboExecs,
     setActiveTab,
   ])
 }

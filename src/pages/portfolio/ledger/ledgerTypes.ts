@@ -2,12 +2,31 @@ import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 
-export type MainTab = 'strategy' | 'instance' | 'options' | 'stocks' | 'fixed_income' | 'cash_like'
+export type MainTab =
+  | 'strategy'
+  | 'instance'
+  | 'options'
+  | 'stocks'
+  | 'fixed_income'
+  | 'cash_like'
+  | 'combos'
+  | 'all'
+export type SharesTab = 'stocks' | 'fixed_income' | 'cash_like' | 'combos' | 'all'
 export type OptSortCol = 'expiry' | 'trade_date'
 export type StkSortCol = 'trade_date' | 'realized_pnl'
 export type GroupBy = 'opportunity' | 'structure' | 'watchlist_symbol'
 export type OptSubTab = 'contracts' | 'orphans'
-export type InstanceSubTab = 'with_instance' | 'no_instance'
+export type InstanceSubTab = 'with_instance' | 'no_instance' | 'contains_open'
+
+export function isSharesTab(tab: MainTab): tab is SharesTab {
+  return (
+    tab === 'stocks' ||
+    tab === 'fixed_income' ||
+    tab === 'cash_like' ||
+    tab === 'combos' ||
+    tab === 'all'
+  )
+}
 export type OptInstanceFilter = 'all' | 'has_instance' | 'no_instance' | 'mixed'
 
 export type OptGroupCallbacks = {

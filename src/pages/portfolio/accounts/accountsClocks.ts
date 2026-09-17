@@ -13,6 +13,7 @@
  * fault: the account-sync daemon itself not running, which is the only one of
  * the three the data lets us tell apart.
  */
+import { fmtEtClock } from '@/lib/format'
 import { clockLabel } from '@/utils/accountsFreshness'
 
 export type ClockTone = 'ok' | 'warn' | 'muted' | 'fault'
@@ -37,7 +38,7 @@ export const TWS_REC_WARN_DAYS = 14
 const ET = 'America/New_York'
 
 function etTime(d: Date): string {
-  return d.toLocaleTimeString('en-US', { hourCycle: 'h23', timeZone: ET })
+  return fmtEtClock(d)
 }
 
 function fetchedClock(ts: number): string {

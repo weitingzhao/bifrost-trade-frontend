@@ -1,10 +1,9 @@
 import { getContractLabelParts } from '@/lib/format'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
-import { adjustedRealizedPnlForOptGroup, getOptGroupKey } from '@/utils/ledger/ledgerOptHelpers'
-import type { OptionStockLinkSummary } from '@/types/trading'
-import { pnlColorClass } from '@/utils/dailyChange'
-import { cn } from '@/lib/utils'
-import { fmtCcy, fmtLedgerExpiry } from './ledgerFormat'
+import { getOptGroupKey } from '@/utils/ledger/ledgerOptHelpers'
+import { ledgerContractDisplay, fmtExpiryOccToken } from './ledgerContractMark'
+import { LedgerBookingTagForFills } from './LedgerBookingTag'
+import { ledgerTableMinClass } from './ledgerTableFloors'
 import {
   DenseTableBody,
   DenseTableCell,
@@ -19,12 +18,7 @@ import {
 type Props = {
   closedGroups: OptExecutionGroup[]
   openGroups: OptExecutionGroup[]
-  linkByOptionId?: Record<number, OptionStockLinkSummary>
-}
-
-function contractLabel(g: OptExecutionGroup): string {
-  const parts = getContractLabelParts(g.contract_key ?? '')
-  return parts.symbol || g.contract_key
+  onContractClick?: (group: OptExecutionGroup) => void
 }
 
 function typeLabel(g: OptExecutionGroup): string {
@@ -38,62 +32,56 @@ function typeLabel(g: OptExecutionGroup): string {
 
 function ContractTable({
   title,
-  closed,
   groups,
-  linkByOptionId,
+  onContractClick,
 }: {
   title: string
-  closed: boolean
   groups: OptExecutionGroup[]
-  linkByOptionId: Record<number, OptionStockLinkSummary>
+  onContractClick?: (group: OptExecutionGroup) => void
 }) {
   if (groups.length === 0) return null
 
   return (
     <div className="min-w-0">
-      <h6 className={cn(denseTable.sectionTitle, 'text-dense-meta uppercase tracking-wide')}>
+      <h6 className={`${denseTable.sectionTitle} text-dense-meta uppercase tracking-wide`}>
         {title}
       </h6>
-      <NestedDenseTable>
+      <NestedDenseTable tableClassName={ledgerTableMinClass.t1}>
         <DenseTableHeader>
           <DenseTableHeadRow>
             <DenseTableHead>Contract</DenseTableHead>
             <DenseTableHead>Expiry</DenseTableHead>
             <DenseTableHead>Strike</DenseTableHead>
             <DenseTableHead>Type</DenseTableHead>
-            {closed ? (
-              <>
-                <DenseTableHead align="right">Buy Qty</DenseTableHead>
-                <DenseTableHead align="right">Sell Qty</DenseTableHead>
-                <DenseTableHead align="right">PnL</DenseTableHead>
-              </>
-            ) : (
-              <DenseTableHead align="right">Net Qty</DenseTableHead>
-            )}
+            <DenseTableHead align="right">Net qty</DenseTableHead>
             <DenseTableHead align="right">Trades</DenseTableHead>
+            <DenseTableHead>Booking</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
           {groups.map(g => {
-            const pnl = closed ? adjustedRealizedPnlForOptGroup(g, linkByOptionId) : null
+            const { mark, occ } = ledgerContractDisplay(g)
             return (
-              <DenseTableRow key={getOptGroupKey(g)}>
-                <DenseTableCell>{contractLabel(g)}</DenseTableCell>
-                <DenseTableCell>{fmtLedgerExpiry(g.expiry)}</DenseTableCell>
+              <DenseTableRow
+                key={getOptGroupKey(g)}
+                className={onContractClick ? 'cursor-pointer' : undefined}
+                onClick={onContractClick ? () => onContractClick(g) : undefined}
+              >
+                <DenseTableCell title={occ}>
+                  <span className="font-mono text-foreground">{mark}</span>
+                </DenseTableCell>
+                <DenseTableCell>{fmtExpiryOccToken(g.expiry)}</DenseTableCell>
                 <DenseTableCell>{g.strike ?? '—'}</DenseTableCell>
                 <DenseTableCell>{typeLabel(g)}</DenseTableCell>
-                {closed ? (
-                  <>
-                    <DenseTableCell className="text-right font-mono tabular-nums">{g.buy_volume}</DenseTableCell>
-                    <DenseTableCell className="text-right font-mono tabular-nums">{g.sell_volume}</DenseTableCell>
-                    <DenseTableCell className="text-right font-mono tabular-nums">
-                      <span className={pnlColorClass(pnl)}>{fmtCcy(pnl)}</span>
-                    </DenseTableCell>
-                  </>
-                ) : (
-                  <DenseTableCell className="text-right font-mono tabular-nums">{g.net_qty ?? '—'}</DenseTableCell>
-                )}
-                <DenseTableCell className="text-right font-mono tabular-nums">{g.trades?.length ?? 0}</DenseTableCell>
+                <DenseTableCell className="text-right font-mono tabular-nums">
+                  {g.net_qty ?? '—'}
+                </DenseTableCell>
+                <DenseTableCell className="text-right font-mono tabular-nums">
+                  {g.trades?.length ?? 0}
+                </DenseTableCell>
+                <DenseTableCell>
+                  <LedgerBookingTagForFills fills={g.trades ?? []} />
+                </DenseTableCell>
               </DenseTableRow>
             )
           })}
@@ -103,17 +91,15 @@ function ContractTable({
   )
 }
 
-export function LedgerInstanceNest({ closedGroups, openGroups, linkByOptionId }: Props) {
+export function LedgerInstanceNest({ closedGroups, openGroups, onContractClick }: Props) {
   if (closedGroups.length === 0 && openGroups.length === 0) {
     return <p className={denseTable.emptyHint}>No contracts for this instance.</p>
   }
 
-  const links = linkByOptionId ?? {}
-
   return (
     <div className="flex flex-col gap-1.5">
-      <ContractTable title="Closed Option" closed groups={closedGroups} linkByOptionId={links} />
-      <ContractTable title="Open Option" closed={false} groups={openGroups} linkByOptionId={links} />
+      <ContractTable title="Closed Option" groups={closedGroups} onContractClick={onContractClick} />
+      <ContractTable title="Open Option" groups={openGroups} onContractClick={onContractClick} />
     </div>
   )
 }

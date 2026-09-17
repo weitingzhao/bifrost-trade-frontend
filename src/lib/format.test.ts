@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned, fmtIsoDateToken, fmtMonthKeyToken } from '@/lib/format'
+import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned, fmtIsoDateToken, fmtMonthKeyToken, fmtEpochEtClock } from '@/lib/format'
 
 /**
  * The two percentage families must stay distinguishable.
@@ -55,5 +55,13 @@ describe('ISO date tokens', () => {
 
   it('fmtMonthKeyToken writes SEP 2026 from a month key', () => {
     expect(fmtMonthKeyToken('2026-09')).toBe('SEP 2026')
+  })
+})
+
+describe('ET clock', () => {
+  it('fmtEpochEtClock writes a 24h America/New_York clock with an ET suffix', () => {
+    const sec = Date.parse('2026-09-16T16:30:00.000Z') / 1000
+    expect(fmtEpochEtClock(sec)).toBe('12:30:00 ET')
+    expect(fmtEpochEtClock(null)).toBe('—')
   })
 })

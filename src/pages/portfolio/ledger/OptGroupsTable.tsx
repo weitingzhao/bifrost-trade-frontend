@@ -3,6 +3,7 @@ import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
 import { getOptGroupKey } from '@/utils/ledger/ledgerOptHelpers'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { OptGroupRow } from './OptGroupRow'
+import { ledgerTableMinClass } from './ledgerTableFloors'
 import type { OptGroupCallbacks } from './ledgerTypes'
 import {
   DenseDataTable,
@@ -24,7 +25,7 @@ export function OptGroupsTable({
   keyPrefix?: string
 } & OptGroupCallbacks) {
   return (
-    <DenseDataTable wrapClassName="mt-1">
+    <DenseDataTable wrapClassName="mt-1" tableClassName={ledgerTableMinClass.t2}>
       <DenseTableHeader>
         <DenseTableHeadRow>
           <DenseTableHead className="w-8" aria-hidden />

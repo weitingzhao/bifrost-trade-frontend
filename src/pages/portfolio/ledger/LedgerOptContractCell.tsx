@@ -5,10 +5,11 @@ import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import {
   flattenLinksForOptGroup,
   getInstanceConsistencyState,
-  getLedgerOptContractLabelParts,
   getOptionStockLinkDetailForExecution,
   sumLinkSlippageForOptGroup,
 } from '@/utils/ledger/ledgerOptHelpers'
+import { ledgerContractDisplay } from '@/pages/portfolio/ledger/ledgerContractMark'
+import { LedgerConsistencyTag } from '@/pages/portfolio/ledger/ledgerConsistencyTag'
 import type { OptionStockLink, OptionStockLinkSummary } from '@/types/trading'
 
 const INSTANCE_ICON_CLASS: Record<string, string> = {
@@ -101,48 +102,7 @@ export function LedgerInstanceConsistencyIcon({
   trades: Execution[]
   className?: string
 }) {
-  const state = getInstanceConsistencyState(trades)
-  if (state === 'none') return null
-
-  const colorCls = INSTANCE_ICON_CLASS[state] ?? INSTANCE_ICON_CLASS.mixed
-  const icon = <InstanceSquareIcon className={colorCls} />
-
-  if (state === 'same') {
-    const instanceId = trades.find(
-      t => t.strategy_instance_id != null && Number.isFinite(t.strategy_instance_id),
-    )?.strategy_instance_id
-    if (instanceId != null) {
-      return (
-        <Link
-          to={`/strategy/instances/${instanceId}`}
-          className={cn('mr-1.5 inline-flex items-center', colorCls, className)}
-          title="All fills share one strategy instance (click to open)"
-          aria-label="View strategy instance"
-          onClick={e => e.stopPropagation()}
-        >
-          {icon}
-        </Link>
-      )
-    }
-  }
-
-  const title =
-    state === 'same'
-      ? 'All fills share one strategy instance'
-      : state === 'multiple'
-        ? 'All fills have an instance; more than one distinct instance ID in this group'
-        : 'At least one fill has no strategy instance in this group'
-
-  return (
-    <span
-      className={cn('mr-1.5 inline-flex items-center', colorCls, className)}
-      title={title}
-      role="img"
-      onClick={e => e.stopPropagation()}
-    >
-      {icon}
-    </span>
-  )
+  return <LedgerConsistencyTag state={getInstanceConsistencyState(trades)} className={className} />
 }
 
 export type ViewLinksPayload = {
@@ -171,7 +131,7 @@ export function LedgerOptContractCell({
   className,
 }: Props) {
   const trades = group.trades ?? []
-  const { namePart, rightLabel, strikeStr, full } = getLedgerOptContractLabelParts(group)
+  const { mark, occ } = ledgerContractDisplay(group)
 
   const fillExec =
     showExecId != null ? trades.find(t => t.account_executions_id === showExecId) : undefined
@@ -192,7 +152,7 @@ export function LedgerOptContractCell({
       : null
   const linkModalTitle = fillLinkDetail && showExecId != null
     ? `Fill #${showExecId} — stock links`
-    : `Linked stocks · ${full}`
+    : `Linked stocks · ${occ}`
 
   const isDetailRow = showExecId != null
   const InstanceIcon = isDetailRow ? (
@@ -215,21 +175,14 @@ export function LedgerOptContractCell({
       )}
     >
       {InstanceIcon}
-      <span className="min-w-0">
+      <span className="min-w-0" title={occ}>
         <strong
           className={cn(
-            prominent ? 'font-bold text-entity-option' : 'font-semibold text-foreground',
+            prominent ? 'font-bold text-foreground' : 'font-semibold text-foreground',
           )}
         >
-          {namePart}
+          {mark}
         </strong>
-        {rightLabel ? (
-          <span className={prominent ? 'font-semibold text-foreground' : undefined}>
-            {' '}
-            {rightLabel}
-            {strikeStr}
-          </span>
-        ) : null}
         {showExecId != null && (
           <span className="ml-1.5 text-[0.72em] font-medium text-muted-foreground/75">
             #{showExecId}

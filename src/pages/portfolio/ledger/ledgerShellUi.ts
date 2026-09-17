@@ -21,18 +21,18 @@ export const ledgerShell = {
     'grid grid-cols-[minmax(0,1fr)_auto] items-stretch',
     'border-b border-border/80',
   ),
-  toolbarSplit: 'grid min-w-0 grid-cols-[2fr_4fr]',
+  toolbarSplit: 'grid min-w-0 grid-cols-[minmax(9rem,2fr)_minmax(0,5fr)]',
   toolbarAttr: 'min-w-0 border-r border-border/80 px-[0.65rem] py-2',
   toolbarInst: 'min-w-0 px-[0.65rem] py-2',
   tabGroupCaption: tabGroupCaptionBase,
   attrTabRow: 'grid grid-cols-2 gap-0',
-  instTabRow: 'grid grid-cols-4 gap-0',
+  instTabRow: 'flex min-w-0 flex-wrap',
   splitTabBtn: cn(
     'min-w-0 cursor-pointer border-0 border-b-2 border-transparent bg-transparent',
     'px-2 py-2 text-center text-dense-body font-medium text-muted-foreground',
     'transition-colors hover:bg-muted/25 hover:text-foreground',
-    'disabled:cursor-not-allowed disabled:opacity-35',
   ),
+  splitTabBtnEmpty: 'opacity-45',
   splitTabBtnActive: cn(
     'border-b-success bg-success-soft/55 text-foreground',
   ),
@@ -63,10 +63,15 @@ export const ledgerShell = {
   symbolOptionActive: 'bg-muted',
 } as const
 
-export function ledgerSplitTabClass(active: boolean, instrumentsFirst?: boolean): string {
+export function ledgerSplitTabClass(
+  active: boolean,
+  instrumentsFirst?: boolean,
+  empty?: boolean,
+): string {
   return cn(
     ledgerShell.splitTabBtn,
     active && ledgerShell.splitTabBtnActive,
     instrumentsFirst && ledgerShell.splitTabBtnInstruments,
+    empty && !active && ledgerShell.splitTabBtnEmpty,
   )
 }

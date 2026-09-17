@@ -125,7 +125,9 @@ export function OptGroupRow({
           <DenseTableCell className={denseTableNumCell}>Side</DenseTableCell>
           <DenseTableCell className={denseTableNumCell}>Qty</DenseTableCell>
           <DenseTableCell className={denseTableNumCell}>Price</DenseTableCell>
-          <DenseTableCell className={denseTableNumCell}>PnL</DenseTableCell>
+          {!showNetQty && (
+            <DenseTableCell className={denseTableNumCell}>PnL</DenseTableCell>
+          )}
           <DenseTableCell className={denseTableNumCell}>Actions</DenseTableCell>
         </DenseTableSubheadRow>
       )}
@@ -176,9 +178,11 @@ export function OptGroupRow({
               </DenseTableCell>
               <DenseTableCell className={denseTableNumCell}>{q}</DenseTableCell>
               <DenseTableCell className={denseTableNumCell}>{fmtPrice(p)}</DenseTableCell>
-              <DenseTableCell className={cn(denseTableNumCell, pnlColorClass(fillPnl))}>
-                {!showNetQty ? fmtCcy(fillPnl) : '—'}
-              </DenseTableCell>
+              {!showNetQty && (
+                <DenseTableCell className={cn(denseTableNumCell, pnlColorClass(fillPnl))}>
+                  {fmtCcy(fillPnl)}
+                </DenseTableCell>
+              )}
               <DenseTableCell className={denseTableNumCell}>
                 <div onClick={ev => ev.stopPropagation()}>
                   <div className="flex items-center justify-end gap-0.5">

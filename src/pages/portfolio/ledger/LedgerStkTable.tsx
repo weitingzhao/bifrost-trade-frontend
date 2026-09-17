@@ -17,7 +17,7 @@ import {
   LedgerStkTimeCells,
   LedgerStkUrPnlGroupInline,
 } from './LedgerStkCells'
-import { PAGE_SIZE } from './ledgerConstants'
+import { PAGE_SIZE, SHARES_COMBOS_FOOTER, SHARES_DEFAULT_FOOTER } from './ledgerConstants'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { ledgerPagination } from './ledgerPaginationClasses'
 import {
@@ -111,7 +111,7 @@ function StkFillRow({
             {symbolMark}
           </DenseTag>
         ) : (
-          symbolMark
+          <span className="font-mono font-semibold text-sky-400">{symbolMark}</span>
         )}
       </button>
     ) : showPills ? (
@@ -119,7 +119,7 @@ function StkFillRow({
         {symbolMark}
       </DenseTag>
     ) : (
-      symbolMark
+      <span className="font-mono font-semibold text-sky-400">{symbolMark}</span>
     )
   return (
     <DenseTableRow>
@@ -291,8 +291,9 @@ export function LedgerStkTable({
   onAddJournal: (accountId: string, symbol: string) => void
   onSymbolClick?: (symbol: string, accountId?: string) => void
 }) {
-  const showPills = activeTab === 'stocks'
+  const showPills = activeTab === 'stocks' || activeTab === 'fixed_income' || activeTab === 'cash_like' || activeTab === 'all'
   const showSymbolCol = !groupByPosition
+  const footer = activeTab === 'combos' ? SHARES_COMBOS_FOOTER : SHARES_DEFAULT_FOOTER
 
   if (groupByPosition && positionGroups) {
     const sortedGroups = sortPositionGroups(positionGroups, stkSort)
@@ -338,6 +339,7 @@ export function LedgerStkTable({
           totalItems={sortedGroups.length}
           setPage={setPage}
         />
+        <p className="mt-2 text-dense-meta text-muted-foreground text-pretty">{footer}</p>
       </>
     )
   }
@@ -375,6 +377,7 @@ export function LedgerStkTable({
         totalItems={executions.length}
         setPage={setPage}
       />
+      <p className="mt-2 text-dense-meta text-muted-foreground text-pretty">{footer}</p>
     </>
   )
 }
@@ -410,20 +413,20 @@ function GroupBlock({
         className="border-0 bg-transparent p-0 cursor-pointer"
         onClick={() => onSymbolClick(pg.symbol, pg.accountId)}
       >
-        {showPills ? (
-          <DenseTag variant="symbol" size="pill">
-            {symbolMark}
-          </DenseTag>
-        ) : (
-          <span className="font-bold text-foreground">{symbolMark}</span>
-        )}
+                        {showPills ? (
+                          <DenseTag variant="symbol" size="pill">
+                            {symbolMark}
+                          </DenseTag>
+                        ) : (
+                          <span className="font-mono font-bold text-sky-400">{symbolMark}</span>
+                        )}
       </button>
     ) : showPills ? (
       <DenseTag variant="symbol" size="pill">
         {symbolMark}
       </DenseTag>
     ) : (
-      <span className="font-bold text-foreground">{symbolMark}</span>
+      <span className="font-mono font-bold text-sky-400">{symbolMark}</span>
     )
   return (
     <>

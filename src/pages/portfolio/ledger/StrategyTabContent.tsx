@@ -14,6 +14,8 @@ export function StrategyTabContent({
   toggleStrategyOpp,
   strategyInstExpanded,
   toggleStrategyInst,
+  onGoInstance,
+  onContractClick,
 }: {
   displayBuckets: { key: string; label: string; groups: StratOppGroup[] }[]
   groupBy: GroupBy
@@ -24,6 +26,8 @@ export function StrategyTabContent({
   toggleStrategyOpp: (oppId: number | 'none') => void
   strategyInstExpanded: Set<string>
   toggleStrategyInst: (oppId: number | 'none', instId: number | 'none') => void
+  onGoInstance?: (instanceId: number) => void
+  onContractClick?: (group: import('./ledgerTypes').OptExecutionGroup) => void
 }) {
   const allGroups = displayBuckets.flatMap(b => b.groups)
   if (allGroups.length === 0) {
@@ -48,7 +52,7 @@ export function StrategyTabContent({
             {bucketExpanded && (
               <div className={cn('space-y-2', showOuter && 'ml-2 mt-1')}>
                 {bucket.groups.map(og => (
-                  <LedgerStrategyGroup
+                    <LedgerStrategyGroup
                     key={String(og.opportunityId)}
                     og={og}
                     expanded={strategyOppExpanded.has(String(og.opportunityId))}
@@ -56,6 +60,8 @@ export function StrategyTabContent({
                     strategyInstExpanded={strategyInstExpanded}
                     onToggleInst={toggleStrategyInst}
                     linkByOptionId={linkByOptionId}
+                    onGoInstance={onGoInstance}
+                    onContractClick={onContractClick}
                   />
                 ))}
               </div>

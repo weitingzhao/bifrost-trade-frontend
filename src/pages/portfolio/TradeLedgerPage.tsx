@@ -26,6 +26,8 @@ import { LedgerHealthBand } from '@/pages/portfolio/ledger/LedgerHealthBand'
 import { LedgerInspector } from '@/pages/portfolio/ledger/LedgerInspector'
 import { ledgerPageCardClass } from '@/pages/portfolio/ledger/ledgerShellUi'
 import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
+import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
+import { buildAttributionChips, buildInstrumentChips } from '@/pages/portfolio/ledger/ledgerViewChips'
 import { OptionsTabContent } from '@/pages/portfolio/ledger/OptionsTabContent'
 import { StkTabContent } from '@/pages/portfolio/ledger/StkTabContent'
 import { StrategyTabContent } from '@/pages/portfolio/ledger/StrategyTabContent'
@@ -101,9 +103,6 @@ export default function TradeLedgerPage() {
   const [stkSort, setStkSort] = useState<{ col: StkSortCol; dir: 'asc' | 'desc' }>({ col: 'trade_date', dir: 'desc' })
   const [groupByPosition, setGroupByPosition] = useState(true)
 
-  // Instance tab filter
-  const [instanceContainOpenFilter, setInstanceContainOpenFilter] = useState<'all' | 'yes' | 'no'>('all')
-
   // Expansion state — shared across opt groups
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   // Strategy outer buckets (when groupBy !== 'opportunity')
@@ -115,7 +114,7 @@ export default function TradeLedgerPage() {
   const [outerInstanceExpanded, setOuterInstanceExpanded] = useState<Set<string>>(new Set())
 
   // Pagination + modals
-  const [stkPage, setStkPage] = useState(0)
+  const [stkPageState, setStkPageState] = useState({ scope: '', page: 0 })
   const [editExec, setEditExec] = useState<Execution | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   const [linkContext, setLinkContext] = useState<LinkExecutionContext | null>(null)
@@ -172,6 +171,11 @@ export default function TradeLedgerPage() {
     hasStkExecs,
     hasFixedIncomeExecs,
     hasCashLikeExecs,
+    hasComboExecs,
+    containsOpenCount,
+    uncategorizedCount,
+    stkByBucket,
+    comboExecs,
     stkCategoryOptions,
     effectiveStkCategoryTab,
     stkExecsForDisplay,
@@ -206,7 +210,7 @@ export default function TradeLedgerPage() {
     optSort,
     stkSort,
     groupByPosition,
-    instanceContainOpenFilter,
+    instanceContainOpenFilter: instanceSubTab === 'contains_open' ? 'yes' : 'all',
   })
 
   useLedgerUiSync({
@@ -226,6 +230,7 @@ export default function TradeLedgerPage() {
     hasStkExecs,
     hasFixedIncomeExecs,
     hasCashLikeExecs,
+    hasComboExecs,
     isLoading,
     setActiveTab,
   })
@@ -261,7 +266,47 @@ export default function TradeLedgerPage() {
     setSyncError,
   })
 
-  const isStkTab = activeTab === 'stocks' || activeTab === 'fixed_income' || activeTab === 'cash_like'
+  const isStkTab = isSharesTab(activeTab)
+  const stkPageScope = `${accountFilter}|${symbolFilter}|${activeTab}|${stkCategoryTab}|${groupByPosition}`
+  const stkPage = stkPageState.scope === stkPageScope ? stkPageState.page : 0
+  const setStkPage = (page: number) => setStkPageState({ scope: stkPageScope, page })
+
+  const attributionChips = useMemo(
+    () =>
+      buildAttributionChips({
+        opportunityCount: strategyOpportunityGroups.length,
+        instanceWith: instanceGroupsRaw.withInst.length,
+        instanceWithout: noInstanceOptGroups.length,
+      }),
+    [strategyOpportunityGroups.length, instanceGroupsRaw, noInstanceOptGroups.length],
+  )
+  const instrumentChips = useMemo(
+    () =>
+      buildInstrumentChips({
+        closedOpt: closedOptGroups.length,
+        openOpt: allOrphanGroups.length,
+        stocks: stkByBucket.stocks.length,
+        fixedIncome: stkByBucket.fixed_income.length,
+        cashLike: stkByBucket.cash_like.length,
+        combos: comboExecs.length,
+      }),
+    [
+      closedOptGroups.length,
+      allOrphanGroups.length,
+      stkByBucket,
+      comboExecs.length,
+    ],
+  )
+
+  function goToInstance(instanceId: number) {
+    setActiveTab('instance')
+    setInstanceSubTab('with_instance')
+    setExpandedGroups(prev => {
+      const next = accordionMode ? new Set<string>() : new Set(prev)
+      next.add(`inst-${instanceId}`)
+      return next
+    })
+  }
   const sinceDisabled = sincePreset !== 'all'
   const structureApplies = ledgerStructureFilterAppliesToTab(activeTab)
   const sinceLabel = LEDGER_SINCE_PRESET_TABS.find(t => t.id === sincePreset)?.label ?? sincePreset
@@ -290,7 +335,15 @@ export default function TradeLedgerPage() {
       kind: inspector.target.kind,
       id: inspector.target.id,
       ledgerTabLabel:
-        activeTab === 'fixed_income' ? 'Fixed income' : activeTab === 'cash_like' ? 'Cash-like' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1),
+        activeTab === 'fixed_income'
+          ? 'Fixed income'
+          : activeTab === 'cash_like'
+            ? 'Cash-like'
+            : activeTab === 'combos'
+              ? 'Combos'
+              : activeTab === 'all'
+                ? 'All'
+                : activeTab.charAt(0).toUpperCase() + activeTab.slice(1),
       summaryPeriodModeLabel: LEDGER_SUMMARY_PERIOD_TABS.find(t => t.id === summaryPeriod)?.label ?? summaryPeriod,
       ledgerSummaryPeriod: summaryPeriod,
       closedOptionGroups: closedOptGroups,
@@ -420,18 +473,15 @@ export default function TradeLedgerPage() {
         />
 
         <LedgerTabToolbar
+          attributionChips={attributionChips}
+          instrumentChips={instrumentChips}
           activeTab={activeTab}
           onTabChange={tab => { setActiveTab(tab); setStkPage(0) }}
-          hasOptExecs={hasOptExecs}
-          hasStkExecs={hasStkExecs}
-          hasFixedIncomeExecs={hasFixedIncomeExecs}
-          hasCashLikeExecs={hasCashLikeExecs}
           accordionMode={accordionMode}
           onAccordionModeChange={setAccordionMode}
           filters={{
             activeTab,
             hasOptExecs,
-            isStkTab,
             groupBy,
             setGroupBy,
             optRightFilter,
@@ -443,8 +493,7 @@ export default function TradeLedgerPage() {
             setInstanceSubTab,
             instanceGroupsWithCount: instanceGroupsRaw.withInst.length,
             noInstanceOptGroupsLength: noInstanceOptGroups.length,
-            instanceContainOpenFilter,
-            setInstanceContainOpenFilter,
+            containsOpenCount,
             filteredInstanceGroupsLength: filteredInstanceGroups.length,
             instanceGroupsLength: instanceGroupsRaw.withInst.length,
             optSubTab,
@@ -457,10 +506,11 @@ export default function TradeLedgerPage() {
             toggleOptSort,
             groupByPosition,
             setGroupByPosition,
-            stkCategoryOptions,
-            effectiveStkCategoryTab,
+            stkCategoryTab: effectiveStkCategoryTab,
             setStkCategoryTab,
-            setStkPage,
+            uncategorizedCount,
+            stkFillCount: stkExecsForDisplay.length,
+            stkGroupCount: stkPositionGroups?.length ?? 0,
           }}
         />
 
@@ -554,6 +604,8 @@ export default function TradeLedgerPage() {
             toggleStrategyOpp={toggleStrategyOpp}
             strategyInstExpanded={strategyInstExpanded}
             toggleStrategyInst={toggleStrategyInst}
+            onGoInstance={goToInstance}
+            onContractClick={() => setInspector({ type: 'links' })}
           />
           )
         )}
@@ -571,6 +623,7 @@ export default function TradeLedgerPage() {
             toggleOuter={toggleOuterInstance}
             expandedGroups={expandedGroups}
             toggleGroup={toggleGroup}
+            accordionMode={accordionMode}
             onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
             onDelete={setDeleteTarget}
             onLinkStrategy={handleLinkStrategy}

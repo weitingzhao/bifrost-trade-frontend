@@ -1,8 +1,9 @@
+import { ledgerTableMinClass } from './ledgerTableFloors'
 import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
 
 /** Closed Option groups table — Legacy `replay-opt-groups` column rhythm. */
-export const closedOptTableClass = 'min-w-[880px]'
+export const closedOptTableClass = ledgerTableMinClass.t3
 
 /** Primary header row (Contract, Expiry, BUY, …) — slightly larger than default DenseTableHead. */
 export const closedOptHeadPrimary =
@@ -41,12 +42,13 @@ export function ClosedOptColgroup() {
       <col style={{ width: '7.5%' }} />
       <col style={{ width: '8%' }} />
       <col style={{ width: '7.5%' }} />
+      <col style={{ width: '8%' }} />
     </colgroup>
   )
 }
 
 /** Details (per trade) — fit all columns in the card (no horizontal scrollbar). */
-export const closedOptDetailTableClass = 'w-full min-w-0'
+export const closedOptDetailTableClass = ledgerTableMinClass.t4
 
 export const closedOptDetailContractCell = cn(
   denseTable.entityCell,
@@ -61,19 +63,17 @@ export const closedOptDetailActionsHead = cn(closedOptHeadPrimary, closedOptDeta
 export function ClosedOptDetailColgroup() {
   return (
     <colgroup>
-      <col style={{ width: '15%' }} />
+      <col style={{ width: '18%' }} />
+      <col style={{ width: '16%' }} />
+      <col style={{ width: '9%' }} />
+      <col style={{ width: '6%' }} />
+      <col style={{ width: '5%' }} />
       <col style={{ width: '7%' }} />
       <col style={{ width: '6%' }} />
+      <col style={{ width: '7%' }} />
+      <col style={{ width: '7%' }} />
+      <col style={{ width: '8%' }} />
       <col style={{ width: '11%' }} />
-      <col style={{ width: '8%' }} />
-      <col style={{ width: '5%' }} />
-      <col style={{ width: '4%' }} />
-      <col style={{ width: '6%' }} />
-      <col style={{ width: '5%' }} />
-      <col style={{ width: '7%' }} />
-      <col style={{ width: '8%' }} />
-      <col style={{ width: '6%' }} />
-      <col style={{ width: '12%' }} />
     </colgroup>
   )
 }

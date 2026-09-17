@@ -1,8 +1,9 @@
+import { ledgerTableMinClass } from './ledgerTableFloors'
 import { cn } from '@/lib/utils'
 import { closedOptHeadPrimary } from './ledgerClosedOptionUi'
 
 /** Stock / Fixed Income / Cash-like ledger table — Actions column stays visible. */
-export const stkTableClass = 'min-w-[1080px]'
+export const stkTableClass = ledgerTableMinClass.t5
 
 export const stkHeadPrimary = closedOptHeadPrimary
 

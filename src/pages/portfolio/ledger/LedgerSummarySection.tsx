@@ -11,6 +11,7 @@ import {
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import type { Execution } from '@/types/positions'
 import type { MainTab } from './ledgerTypes'
+import { isSharesTab } from './ledgerTypes'
 import { fmtCcy, pnlClass } from './ledgerFormat'
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
 import { ledgerSummary } from './ledgerSummaryUi'
@@ -79,7 +80,7 @@ export function LedgerSummarySection({
   onShowUndated,
 }: Props) {
   const showOptions = activeTab === 'options' || activeTab === 'strategy' || activeTab === 'instance'
-  const showStocks = activeTab === 'stocks' || activeTab === 'fixed_income' || activeTab === 'cash_like'
+  const showStocks = isSharesTab(activeTab)
 
   const optionSummaryRows = useMemo(
     () => rollupOptionsFromMonthly(optionsSummaryByMonth, summaryPeriod),

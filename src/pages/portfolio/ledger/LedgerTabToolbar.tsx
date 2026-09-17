@@ -1,7 +1,7 @@
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { SegmentControl } from '@/components/data-display'
-import { TAB_GROUPS } from './ledgerConstants'
 import { LedgerTabFilterRow, type LedgerTabFilterProps } from './LedgerTabFilters'
+import type { LedgerViewChip } from './ledgerViewChips'
 import type { MainTab } from './ledgerTypes'
 import { ledgerShell, ledgerSplitTabClass } from './ledgerShellUi'
 
@@ -9,39 +9,50 @@ const DETAIL_VIEW_TOOLTIP =
   'Accordion keeps one expandable panel open (strategy group, instance card, option detail rows, or other sections on this tab). Multi allows several.'
 
 type Props = {
+  attributionChips: LedgerViewChip[]
+  instrumentChips: LedgerViewChip[]
   activeTab: MainTab
   onTabChange: (tab: MainTab) => void
-  hasOptExecs: boolean
-  hasStkExecs: boolean
-  hasFixedIncomeExecs: boolean
-  hasCashLikeExecs: boolean
   accordionMode: boolean
   onAccordionModeChange: (accordion: boolean) => void
   filters: LedgerTabFilterProps
 }
 
+function ViewChipButton({
+  chip,
+  active,
+  instrumentsFirst,
+  onSelect,
+}: {
+  chip: LedgerViewChip
+  active: boolean
+  instrumentsFirst?: boolean
+  onSelect: () => void
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      title={chip.title}
+      onClick={onSelect}
+      className={ledgerSplitTabClass(active, instrumentsFirst, chip.empty)}
+    >
+      {chip.label}
+      <span className="ml-1 font-mono font-normal opacity-80">{chip.countLabel}</span>
+    </button>
+  )
+}
+
 export function LedgerTabToolbar({
+  attributionChips,
+  instrumentChips,
   activeTab,
   onTabChange,
-  hasOptExecs,
-  hasStkExecs,
-  hasFixedIncomeExecs,
-  hasCashLikeExecs,
   accordionMode,
   onAccordionModeChange,
   filters,
 }: Props) {
-  function isDisabled(tabId: MainTab): boolean {
-    if (tabId === 'strategy' || tabId === 'instance' || tabId === 'options') return !hasOptExecs
-    if (tabId === 'stocks') return !hasStkExecs
-    if (tabId === 'fixed_income') return !hasFixedIncomeExecs
-    if (tabId === 'cash_like') return !hasCashLikeExecs
-    return false
-  }
-
-  const attrTabs = TAB_GROUPS[0].tabs
-  const instTabs = TAB_GROUPS[1].tabs
-
   return (
     <div className={ledgerShell.toolbarPanel}>
       <div className={ledgerShell.toolbarTop}>
@@ -49,46 +60,29 @@ export function LedgerTabToolbar({
           <div className={ledgerShell.toolbarAttr}>
             <div className={ledgerShell.tabGroupCaption}>Attribution</div>
             <div className={ledgerShell.attrTabRow} role="tablist" aria-label="Attribution tabs">
-              {attrTabs.map(t => {
-                const disabled = isDisabled(t.id)
-                const active = activeTab === t.id
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    disabled={disabled}
-                    onClick={() => onTabChange(t.id)}
-                    className={ledgerSplitTabClass(active)}
-                  >
-                    {t.label}
-                  </button>
-                )
-              })}
+              {attributionChips.map(chip => (
+                <ViewChipButton
+                  key={chip.id}
+                  chip={chip}
+                  active={activeTab === chip.id}
+                  onSelect={() => onTabChange(chip.id)}
+                />
+              ))}
             </div>
           </div>
 
           <div className={ledgerShell.toolbarInst}>
             <div className={ledgerShell.tabGroupCaption}>Instruments</div>
             <div className={ledgerShell.instTabRow} role="tablist" aria-label="Instrument tabs">
-              {instTabs.map((t, i) => {
-                const disabled = isDisabled(t.id)
-                const active = activeTab === t.id
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    disabled={disabled}
-                    onClick={() => onTabChange(t.id)}
-                    className={ledgerSplitTabClass(active, i === 0)}
-                  >
-                    {t.label}
-                  </button>
-                )
-              })}
+              {instrumentChips.map((chip, i) => (
+                <ViewChipButton
+                  key={chip.id}
+                  chip={chip}
+                  active={activeTab === chip.id}
+                  instrumentsFirst={i === 0}
+                  onSelect={() => onTabChange(chip.id)}
+                />
+              ))}
             </div>
           </div>
         </div>

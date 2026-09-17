@@ -1,5 +1,5 @@
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { fmtPctCompact, fmtTradeDate, fmtTs, fmtUsd, fmtUsdRound } from '@/lib/format'
+import { fmtPctCompact, fmtTradeDate, fmtEpochEtClock, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import {
@@ -65,7 +65,7 @@ export function LedgerStkUrPnlGroupInline({
         <span className="text-muted-foreground/60" aria-hidden>
           ·
         </span>
-        <span className={uFinite ? 'text-unrealized' : 'text-muted-foreground'}>
+        <span className={uFinite ? 'text-foreground' : 'text-muted-foreground'} title="UNREALIZED">
           <span className="mr-0.5 font-semibold opacity-90">U</span>
           {uFinite ? fmtUsdRound(unrealized as number) : '—'}
         </span>
@@ -124,7 +124,7 @@ export function LedgerStkTimeCells({
   timeClassName?: string
   tradeDateClassName?: string
 }) {
-  const timeLabel = ex.time != null ? fmtTs(ex.time) : '—'
+  const timeLabel = ex.time != null ? fmtEpochEtClock(ex.time) : '—'
   return (
     <>
       <DenseTableCell className={timeClassName} title={ex.time != null ? timeLabel : undefined}>
@@ -171,7 +171,7 @@ export function LedgerStkGroupBasisPct({
         ·{' '}
       </span>
       <span className={stkGroupSnapLabelClass}>U%</span>{' '}
-      <span className={uPct != null ? ledgerStkPnlClass(uPct) : 'text-muted-foreground'}>
+      <span className={uPct != null ? 'text-foreground' : 'text-muted-foreground'} title="UNREALIZED">
         {uPctStr}
       </span>
     </span>

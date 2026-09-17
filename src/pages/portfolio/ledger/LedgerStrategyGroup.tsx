@@ -13,7 +13,7 @@ import {
 } from '@/components/data-display'
 import { fmtCcy } from './ledgerFormat'
 import { LedgerInstanceNest } from './LedgerInstanceNest'
-import type { StratOppGroup } from './ledgerTypes'
+import type { OptExecutionGroup, StratOppGroup } from './ledgerTypes'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
 
@@ -24,6 +24,8 @@ type Props = {
   strategyInstExpanded: Set<string>
   onToggleInst: (oppId: number | 'none', instId: number | 'none') => void
   linkByOptionId: Record<number, OptionStockLinkSummary>
+  onGoInstance?: (instanceId: number) => void
+  onContractClick?: (group: OptExecutionGroup) => void
 }
 export function LedgerStrategyGroup({
   og,
@@ -32,6 +34,8 @@ export function LedgerStrategyGroup({
   strategyInstExpanded,
   onToggleInst,
   linkByOptionId,
+  onGoInstance,
+  onContractClick,
 }: Props) {
   let closedCount = 0
   let openCount = 0
@@ -92,9 +96,16 @@ export function LedgerStrategyGroup({
                               {sg.label}
                             </DenseOptionCategoryLabel>
                           ) : null}
-                          <DenseOptionCategoryLabel variant="instance" className="font-mono">
+                          <button
+                            type="button"
+                            className="border-0 bg-transparent p-0 font-mono font-bold text-[var(--color-instance-multi)] cursor-pointer"
+                            onClick={e => {
+                              e.stopPropagation()
+                              onGoInstance?.(sg.instanceId as number)
+                            }}
+                          >
                             #{String(sg.instanceId)}
-                          </DenseOptionCategoryLabel>
+                          </button>
                         </>
                       )}
                     </span>
@@ -129,7 +140,7 @@ export function LedgerStrategyGroup({
                     <LedgerInstanceNest
                       closedGroups={closedGs}
                       openGroups={openGs}
-                      linkByOptionId={linkByOptionId}
+                      onContractClick={onContractClick}
                     />
                   </CollapsibleGroupBody>
                 )}

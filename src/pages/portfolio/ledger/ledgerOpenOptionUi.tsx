@@ -1,9 +1,10 @@
+import { ledgerTableMinClass } from './ledgerTableFloors'
 import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
 import { closedOptHeadPrimary, closedOptNumCell } from './ledgerClosedOptionUi'
 
 /** Open Option groups table — balanced column rhythm (Contract wide, meta columns compact). */
-export const openOptTableClass = 'min-w-[960px]'
+export const openOptTableClass = ledgerTableMinClass.t3
 
 export const openOptHeadPrimary = closedOptHeadPrimary
 

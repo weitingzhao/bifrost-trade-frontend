@@ -20,7 +20,6 @@ import type { OptGroupCallbacks } from './ledgerTypes'
 import {
   OpenOptColgroup,
   OpenOptDetailColgroup,
-  openOptDetailTableClass,
   openOptContractCell,
   openOptContractHead,
   openOptExpandCell,
@@ -51,6 +50,7 @@ import {
   IconActionButton,
 } from '@/components/data-display'
 import { fmtLedgerTradeDate } from './ledgerTradeDate'
+import { ledgerTableMinClass } from './ledgerTableFloors'
 
 function tradesSummary(g: OptExecutionGroup): string {
   return (g.trades ?? [])
@@ -257,7 +257,7 @@ export function LedgerOpenOptionSection({
         Details (per trade)
         <InfoTooltip text="Click an open option row above to load its execution details." />
       </h5>
-      <DenseDataTable tableClassName={openOptDetailTableClass}>
+      <DenseDataTable tableClassName={ledgerTableMinClass.t4Open}>
         <OpenOptDetailColgroup />
         <DenseTableHeader>
           <DenseTableHeadRow>

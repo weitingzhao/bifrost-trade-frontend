@@ -26,9 +26,7 @@ export const openOptTradesCell = cn(
   'text-xs font-mono leading-snug align-top',
 )
 
-/** Open-option per-trade detail: T4's eleven columns plus Expiry, Strike and Account. */
-export const openOptDetailTableClass = ledgerTableMinClass.t4Open
-
+/** Open-option per-trade detail: T4's eleven columns plus Expiry, Strike and Account (floor `t4Open`). */
 export function OpenOptDetailColgroup() {
   return (
     <colgroup>

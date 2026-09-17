@@ -247,6 +247,16 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    path: '/portfolio/pnl-explain',
+    label: 'P&L Explain',
+    crumbs: PORTFOLIO,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: 'Walked 2026-09-17 against Portfolio PnL Explain.dc.html at page rev 2026-09-17.1, on local DEV (:5173). Built from nothing — the app had no P&L Explain page. The design writes it as two phases and this build keeps the line exactly where the design draws it. Data readiness was measured on DEV first and the finding is that the page\'s central identity cannot be evaluated: Day P&L = \u0394 + \u0393 + vega + \u03b8 + Unexplained, where Unexplained is *defined* as the difference — taking it needs the four attributions, the four need a per-day snapshot of positions, marks and vendor Greeks, and nothing stores one. So the difference is not taken, and the tie-out band says so with an amber \u26a0 the difference is not taken rather than printing a residual the page cannot stand behind. Built live: the header with Performance\'s own range vocabulary (the same four ranges, so the citation is literally the same window) and the range in DDMMMYY; the tie-out band quoting Performance\'s figure for the window (realized plus unrealized over the four asset classes it keeps apart, \u00a714.2 — this page quotes it, it does not build a second one) beside three grey readings and what the leads do add up to; and the Leads band, which is what the design\'s Unexplained band can honestly be today — every leak the book can name on its own, each with the page that settles it: rows the canonical source has and the performance book never took in, per underlying, priced rows only carrying an amount because a zero-price row is a combo wrapper and not cash (\u2192 Trade Ledger); cash that moved in the window by the type Transfer & Pay classifies it as, with deposits and withdrawals left out because returns are ruled net of external cash flow (\u00a714.5) and carrying no symbol at all, which the row says (\u2192 Transfer & Pay); and short legs carrying no mark, a count and never an amount (\u2192 Positions). Amber past 5% of the window\'s own P&L, green inside tolerance, grey where there is no reading. Marked, not dropped: the Attribution band keeps the design\'s shape — the five component rows and the per-underlying table over the names that actually carry legs, with their real leg counts — with every figure a dash, a NO SNAPSHOT quality tag and \u26a0 needs the daily snapshot on the panel edge, never by dimming text below the contrast floor; Judgment or luck keeps the sentence that is the whole point of it and states that it needs both the snapshot and a store of hypotheses, neither of which exists, pointing at Outcome for the reading that does. These are two of the four \u00a714.6 markers that must never be silently dropped. Not built: the Hypothesis Board link (that page does not exist), and the Today / WTD / MTD windows — the app has no daily snapshot, so a sub-range narrower than Performance\'s own would read from marks that are only current. Owner to look before aligned.',
+    },
+  },
+  {
     path: '/portfolio/backing',
     label: 'Backing & Model',
     crumbs: PORTFOLIO,

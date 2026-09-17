@@ -123,8 +123,10 @@ describe('design adoption', () => {
     // Outcome is the first page built from nothing: the design had a prototype
     // and the app had no page, so it leaves `unbuilt` rather than `pending`
     // (unbuilt 43→42, reviewing 3→4), then aligned on the Owner's look
-    // (reviewing 4→3).
-    expect(counts.byState.reviewing).toBe(3)
+    // (reviewing 4→3). P&L Explain is the second built from nothing, and the
+    // first whose central identity the data cannot evaluate at all
+    // (unbuilt 42→41, reviewing 3→4).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -144,6 +146,7 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/backing',
+      '/portfolio/pnl-explain',
       '/portfolio/positions',
       '/trade/plans',
     ])
@@ -175,7 +178,7 @@ describe('design adoption', () => {
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
-    expect(counts.byState.unbuilt).toBe(42)
+    expect(counts.byState.unbuilt).toBe(41)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.

@@ -96,6 +96,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     items: [
       home('Performance', '/portfolio/performance', LineChart, [
         route('Positions', '/portfolio/positions', TrendingUp),
+        route('P&L Explain', '/portfolio/pnl-explain', PieChart),
         route('Backing & Model', '/portfolio/backing', Layers),
         route('Outcome', '/portfolio/outcome', Target),
       ]),

@@ -42,6 +42,7 @@ describe('Portfolio nav', () => {
     expect(portfolio.items!.map((i) => i.to)).toEqual(['/portfolio/performance', '/portfolio/accounts'])
     expect(performance.children?.map((c) => c.to)).toEqual([
       '/portfolio/positions',
+      '/portfolio/pnl-explain',
       '/portfolio/backing',
       '/portfolio/outcome',
     ])

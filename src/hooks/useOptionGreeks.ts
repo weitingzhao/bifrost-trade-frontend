@@ -35,6 +35,14 @@ export interface PositionGreeks {
 export interface GreeksRollup {
   /** Per leg, keyed by the vendor ticker. */
   byTicker: Map<string, PositionGreeks>
+  /**
+   * The vendor's dated close per leg, keyed the same way.
+   *
+   * Kept apart from `byTicker` because it survives a row the vendor could not
+   * price: a contract with a close and no delta is a mark without a Greek, and
+   * a page that needs the mark should not lose it to the Greek's absence.
+   */
+  closeByTicker: Map<string, { close: number; asOf: string | null }>
   delta: number
   gamma: number
   theta: number
@@ -115,6 +123,7 @@ export function rollupGreeks(
   state: { isLoading: boolean; isError: boolean },
 ): GreeksRollup {
   const byTicker = new Map<string, PositionGreeks>()
+  const closeByTicker = new Map<string, { close: number; asOf: string | null }>()
   let delta = 0
   let gamma = 0
   let theta = 0
@@ -128,6 +137,9 @@ export function rollupGreeks(
   for (const leg of legs) {
     const ticker = buildOptionTicker(leg)
     const row = ticker ? rowByTicker.get(ticker) : undefined
+    if (ticker && row && row.day_close != null) {
+      closeByTicker.set(ticker, { close: row.day_close, asOf: row.snapshot_ts })
+    }
     if (!ticker || !row || row.delta == null) {
       unmatched += 1
       continue
@@ -161,6 +173,7 @@ export function rollupGreeks(
 
   return {
     byTicker,
+    closeByTicker,
     delta,
     gamma,
     theta,

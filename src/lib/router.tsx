@@ -104,6 +104,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/trade/PlaybookPage')),
       },
       {
+        path: 'trade/expiration',
+        lazy: lazyPage(() => import('@/pages/trade/expiration/ExpirationPage')),
+      },
+      {
         path: 'portfolio/backing',
         lazy: lazyPage(() => import('@/pages/portfolio/backing/BackingPage')),
       },

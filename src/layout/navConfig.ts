@@ -5,6 +5,7 @@ import {
   BarChart2,
   Blocks,
   BookOpen,
+  CalendarClock,
   Briefcase,
   ClipboardList,
   Cpu,
@@ -84,6 +85,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // 2026-09-14). Playbook moved here from the Copilot fold; the group is one
     // row until the rest of Trade is built. Plans stays a route, not a row.
     items: [
+      route('Expiration', '/trade/expiration', CalendarClock),
       route('Playbook', '/trade/playbook', BookOpen),
     ],
   },

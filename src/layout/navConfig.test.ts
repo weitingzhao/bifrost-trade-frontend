@@ -25,7 +25,12 @@ describe('Trade nav', () => {
       'Research',
       'Strategy',
     ])
-    expect(trade.items!.map((i) => [i.label, i.to])).toEqual([['Playbook', '/trade/playbook']])
+    // Expiration joined 2026-09-17, above Playbook: what expires next is the
+    // thing a desk opens the group for.
+    expect(trade.items!.map((i) => [i.label, i.to])).toEqual([
+      ['Expiration', '/trade/expiration'],
+      ['Playbook', '/trade/playbook'],
+    ])
     const entry = routeFor('/trade/playbook')
     expect(entry.path).toBe('/trade/playbook')
     expect(entry.redirect ?? false).toBe(false)

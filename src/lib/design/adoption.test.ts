@@ -139,7 +139,9 @@ describe('design adoption', () => {
     // (reviewing 5→4). Stress & Scenario is the drill-down Exposure points at
     // (unbuilt 40→39, reviewing 4→5). Positions and Backing & Model, built in
     // C6 and R14 and waiting since, signed off 2026-09-17 (reviewing 5→3).
-    expect(counts.byState.reviewing).toBe(3)
+    // Expiration Desk is the first page in the Trade group (unbuilt 39→38,
+    // reviewing 3→4).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -163,6 +165,7 @@ describe('design adoption', () => {
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/pnl-explain',
       '/risk/stress',
+      '/trade/expiration',
       '/trade/plans',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
@@ -193,7 +196,7 @@ describe('design adoption', () => {
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
-    expect(counts.byState.unbuilt).toBe(39)
+    expect(counts.byState.unbuilt).toBe(38)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.

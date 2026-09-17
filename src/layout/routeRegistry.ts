@@ -333,6 +333,16 @@ export const ROUTES: readonly RouteEntry[] = [
 
   // ── Trade ──────────────────────────────────────────────────────────────
   {
+    path: '/trade/expiration',
+    label: 'Expiration',
+    crumbs: TRADE,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: 'Walked 2026-09-17 against Trade Expiration.dc.html at page rev 2026-09-17.1, on local DEV (:5173). The design leads with \u201cthis Friday\u201d; the book rarely has a leg there \u2014 on DEV the nearest expiry is 29 days out \u2014 so the page leads with the nearest expiry it actually holds and says how far away it is. A desk with nothing to decide today should say so rather than show an empty Friday, and the ladder note says exactly that. Built: the ladder over every expiry the book holds (legs, ITM count, tightest cushion, cost to close, and whether it is inside the week) with the expiry segment selecting which one opens below; the legs table for the selected expiry, tightest first, with the leg token (\u00a714.4), signed quantity, mark, spot, distance to strike and what closing it would cost, each row carrying the two places it can be taken \u2014 Trade Plans and the line on Positions. A leg\'s mark is the vendor\'s dated close, the same snapshot Positions prices its Greeks from (\u00a714.2), and the header dates it: the attribution service\'s own price_mid is empty outside the session, so quoting it would blank the page after the close instead of dating it. To strike is signed towards trouble so both rights read the same way. Marked, not dropped: early assignment needs a corporate-action feed with future ex-dates, of which the book\'s 19 symbols have none; pin and flip are Dealer Levels\' computation and that page is not built; a roll candidate needs a quote on the target contract and the vendor snapshot carries a dated close but no bid or ask. Not built: the design\'s Decision control and Create plans. Writing a decision from here would be a new write path into the plan store \u2014 Trade Plans already owns that write, and the leg is one click from it (D10). Everything unreadable says so: an unpriced leg is counted and never summed as zero, and the count of legs the vendor could not price is in the panel header. useOptionGreeks gained closeByTicker, kept apart from the Greeks so a contract with a close and no delta still yields its mark. Owner to look before aligned.',
+    },
+  },
+  {
     path: '/trade/playbook',
     label: 'Playbook',
     crumbs: TRADE,

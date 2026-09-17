@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link2, Pencil, RefreshCw, Trash2 } from 'lucide-react'
 import { IconActionButton } from '@/components/data-display'
+import { LEDGER_CONFIRM_SYNC, LEDGER_WRITE_DONE } from './ledgerWriteConfirm'
 
 function LinkStockFillsIcon() {
   return (
@@ -34,11 +36,29 @@ export function LedgerOptActionButtons({
   onLink?: () => void
   onLinkStock?: () => void
   onDelete?: () => void
-  onSync?: () => void
+  onSync?: () => void | Promise<void>
   syncDisabled?: boolean
   syncSpinning?: boolean
   error?: string | null
 }) {
+  const [syncStep, setSyncStep] = useState<'idle' | 'confirm' | 'done'>('idle')
+
+  async function runSync() {
+    if (!onSync) return
+    if (syncStep === 'idle') {
+      setSyncStep('confirm')
+      return
+    }
+    if (syncStep === 'confirm') {
+      try {
+        await onSync()
+        setSyncStep('done')
+      } catch {
+        setSyncStep('idle')
+      }
+    }
+  }
+
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
     <span className="inline-flex items-center justify-end gap-0.5">
@@ -74,11 +94,21 @@ export function LedgerOptActionButtons({
       )}
       {onSync && (
         <IconActionButton
-          onClick={() => onSync()}
-          title="Apply strategy opportunity and instance from the opposite-side fill with the same quantity in this group"
-          ariaLabel="Sync attribution from opposite leg"
+          onClick={() => void runSync()}
+          title={
+            syncStep === 'confirm'
+              ? `${LEDGER_CONFIRM_SYNC.title} ${LEDGER_CONFIRM_SYNC.body}`
+              : syncStep === 'done'
+                ? LEDGER_WRITE_DONE
+                : 'Apply strategy opportunity and instance from the opposite-side fill with the same quantity in this group'
+          }
+          ariaLabel={
+            syncStep === 'confirm'
+              ? 'Confirm sync attribution from opposite leg'
+              : 'Sync attribution from opposite leg'
+          }
           size="dense"
-          disabled={syncDisabled}
+          disabled={syncDisabled || syncStep === 'done'}
           className="text-link hover:text-link-hover"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${syncSpinning ? 'animate-spin' : ''}`} />
@@ -96,6 +126,16 @@ export function LedgerOptActionButtons({
         </IconActionButton>
       )}
     </span>
+      {syncStep === 'confirm' ? (
+        <span className="max-w-[14rem] text-left text-dense-caption text-muted-foreground">
+          {LEDGER_CONFIRM_SYNC.title} Click again to confirm.
+        </span>
+      ) : null}
+      {syncStep === 'done' && !error ? (
+        <span className="max-w-[14rem] text-left text-dense-caption text-[var(--color-success)]" role="status">
+          {LEDGER_WRITE_DONE}
+        </span>
+      ) : null}
       {error ? (
         <span className="max-w-[14rem] text-left text-xs text-destructive" role="alert">
           {error}

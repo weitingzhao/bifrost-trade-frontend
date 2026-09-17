@@ -5,10 +5,8 @@ import { inspectorShell } from '@/components/layout/rightInspectorUi'
 import { cn } from '@/lib/utils'
 import { LedgerExplainFace } from '@/pages/portfolio/ledger/LedgerExplainFace'
 import { LedgerReconcileFace } from '@/pages/portfolio/ledger/LedgerReconcileFace'
-import {
-  LedgerJournalPlaceholderFace,
-  LedgerLinksPlaceholderFace,
-} from '@/pages/portfolio/ledger/LedgerPlaceholderFaces'
+import { LedgerLinksFace } from '@/pages/portfolio/ledger/LedgerLinksFace'
+import { LedgerJournalFace } from '@/pages/portfolio/ledger/LedgerJournalFace'
 import {
   faceOfInspector,
   type LedgerInspectorFace,
@@ -18,6 +16,7 @@ import type { LedgerMetricExplainPayload } from '@/pages/portfolio/ledger/ledger
 import type { LedgerHealthModel } from '@/pages/portfolio/ledger/ledgerHealth'
 import type { LedgerReconcileModel } from '@/pages/portfolio/ledger/ledgerReconcile'
 import type { LedgerUnlinkBasis } from '@/pages/portfolio/ledger/ledgerReconcile'
+import type { LedgerJournalSeed } from '@/pages/portfolio/ledger/ledgerJournalWrite'
 
 const FACES: { id: LedgerInspectorFace; label: string }[] = [
   { id: 'explain', label: 'Explain' },
@@ -25,6 +24,18 @@ const FACES: { id: LedgerInspectorFace; label: string }[] = [
   { id: 'links', label: 'Links' },
   { id: 'journal', label: 'Journal' },
 ]
+
+function journalSeedKey(seed: LedgerJournalSeed | undefined): string {
+  if (!seed) return 'gap'
+  return [
+    seed.mode,
+    seed.accountId ?? '',
+    seed.symbol ?? '',
+    seed.secType ?? '',
+    String(seed.netQty ?? ''),
+    String(seed.instanceId ?? ''),
+  ].join('|')
+}
 
 export function LedgerInspector({
   state,
@@ -34,6 +45,8 @@ export function LedgerInspector({
   health,
   unlinkBasis,
   reconcile,
+  accounts,
+  onWrote,
 }: {
   state: LedgerInspectorState
   onClose: () => void
@@ -42,6 +55,8 @@ export function LedgerInspector({
   health: LedgerHealthModel
   unlinkBasis: LedgerUnlinkBasis
   reconcile: LedgerReconcileModel
+  accounts: string[]
+  onWrote: () => void | Promise<void>
 }) {
   if (state.type === 'stock') {
     return (
@@ -91,8 +106,21 @@ export function LedgerInspector({
         {state.type === 'reconcile' ? (
           <LedgerReconcileFace model={reconcile} focus={state.focus} />
         ) : null}
-        {state.type === 'links' ? <LedgerLinksPlaceholderFace /> : null}
-        {state.type === 'journal' ? <LedgerJournalPlaceholderFace /> : null}
+        {state.type === 'links' ? (
+          <LedgerLinksFace
+            key={state.execution?.account_executions_id ?? 'empty'}
+            execution={state.execution}
+            onLinked={onWrote}
+          />
+        ) : null}
+        {state.type === 'journal' ? (
+          <LedgerJournalFace
+            key={journalSeedKey(state.seed)}
+            seed={state.seed}
+            accounts={accounts}
+            onWrote={onWrote}
+          />
+        ) : null}
       </div>
     </RightInspectorShell>
   )

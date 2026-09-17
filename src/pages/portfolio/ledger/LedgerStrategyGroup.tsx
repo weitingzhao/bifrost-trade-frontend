@@ -14,6 +14,7 @@ import {
 import { fmtCcy } from './ledgerFormat'
 import { LedgerInstanceNest } from './LedgerInstanceNest'
 import type { OptExecutionGroup, StratOppGroup } from './ledgerTypes'
+import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
 
@@ -26,6 +27,7 @@ type Props = {
   linkByOptionId: Record<number, OptionStockLinkSummary>
   onGoInstance?: (instanceId: number) => void
   onContractClick?: (group: OptExecutionGroup) => void
+  stockFills?: Execution[]
 }
 export function LedgerStrategyGroup({
   og,
@@ -36,6 +38,7 @@ export function LedgerStrategyGroup({
   linkByOptionId,
   onGoInstance,
   onContractClick,
+  stockFills,
 }: Props) {
   let closedCount = 0
   let openCount = 0
@@ -141,6 +144,7 @@ export function LedgerStrategyGroup({
                       closedGroups={closedGs}
                       openGroups={openGs}
                       onContractClick={onContractClick}
+                      stockFills={stockFills}
                     />
                   </CollapsibleGroupBody>
                 )}

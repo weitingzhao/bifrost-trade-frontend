@@ -5,11 +5,11 @@ import { deleteExecution, updateExecution } from '@/api/trading'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { OptSortCol, StkSortCol } from '@/pages/portfolio/ledger/ledgerTypes'
 import { syncOppositeLegAttribution } from '@/pages/portfolio/ledger/executionUpdateResult'
+import type { LedgerInspectorState } from '@/pages/portfolio/ledger/ledgerInspectorState'
+import { journalSeedFromStockAdd } from '@/pages/portfolio/ledger/ledgerJournalWrite'
 
 type Params = {
   accordionMode: boolean
-  accountFilter: string
-  accounts: string[]
   queryClient: QueryClient
   setExpandedGroups: Dispatch<SetStateAction<Set<string>>>
   setStrategyOppExpanded: Dispatch<SetStateAction<Set<string>>>
@@ -18,7 +18,7 @@ type Params = {
   setOuterInstanceExpanded: Dispatch<SetStateAction<Set<string>>>
   setOptSort: Dispatch<SetStateAction<{ col: OptSortCol; dir: 'asc' | 'desc' }>>
   setStkSort: Dispatch<SetStateAction<{ col: StkSortCol; dir: 'asc' | 'desc' }>>
-  setCreateSource: Dispatch<SetStateAction<'manual' | 'journal_closed'>>
+  setInspector: Dispatch<SetStateAction<LedgerInspectorState>>
   setEditExec: Dispatch<SetStateAction<Execution | null>>
   deleteTarget: Execution | null
   setSyncingId: Dispatch<SetStateAction<number | null>>
@@ -74,39 +74,11 @@ export function useTradeLedgerHandlers(p: Params) {
   }
 
   const handleAddJournal = (accountId: string, symbol: string) => {
-    p.setCreateSource('journal_closed')
-    p.setEditExec({
-      account_executions_id: undefined as unknown as number,
-      account_id: accountId,
-      symbol,
-      sec_type: 'STK',
-      side: 'Buy',
-      qty: 0,
-      quantity: 0,
-      price: 0,
-      time: null,
-    } as unknown as Execution)
-  }
-
-  const handleHeaderAddJournal = () => {
-    const accountId = p.accountFilter !== 'all' ? p.accountFilter : (p.accounts[0] ?? '')
-    p.setCreateSource('journal_closed')
-    p.setEditExec({
-      account_executions_id: undefined as unknown as number,
-      account_id: accountId,
-      symbol: '',
-      sec_type: 'STK',
-      side: 'Buy',
-      qty: 0,
-      quantity: 0,
-      price: 0,
-      time: null,
-    } as unknown as Execution)
+    p.setInspector({ type: 'journal', seed: journalSeedFromStockAdd(accountId, symbol) })
   }
 
   const handleCloseEditModal = () => {
     p.setEditExec(null)
-    p.setCreateSource('manual')
   }
 
   const handleDelete = async () => {
@@ -114,6 +86,7 @@ export function useTradeLedgerHandlers(p: Params) {
     await deleteExecution(p.deleteTarget.account_executions_id)
     void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
     void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executionsBook })
+    void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.optStockLinks })
   }
 
   const handleSyncOppositeLeg = async (
@@ -128,7 +101,7 @@ export function useTradeLedgerHandlers(p: Params) {
       const result = await syncOppositeLegAttribution(updateExecution, id, source)
       if (!result.ok) {
         p.setSyncError({ id, message: result.error })
-        return
+        throw new Error(result.error)
       }
       void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
       void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executionsBook })
@@ -146,7 +119,6 @@ export function useTradeLedgerHandlers(p: Params) {
     toggleOptSort,
     toggleStkSort,
     handleAddJournal,
-    handleHeaderAddJournal,
     handleCloseEditModal,
     handleDelete,
     handleSyncOppositeLeg,

@@ -2,14 +2,11 @@ import { Fragment } from 'react'
 import { cn } from '@/lib/utils'
 import { RotateCcw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
-import {
-  executionStrategyInstanceIds,
-  adjustedRealizedPnlForOptGroup,
-} from '@/utils/ledger/ledgerOptHelpers'
+import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
+import { oppositeLegSyncPayload } from './ledgerOppositeLeg'
 import { LedgerOptContractCell } from './LedgerOptContractCell'
 import { executionDateStr } from '@/utils/ledger/performanceUtils'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -28,25 +25,6 @@ import {
   IconActionButton,
 } from '@/components/data-display'
 export { ExecSourceBadge }
-
-function findOppositeLegAttribution(
-  ex: Execution,
-  groupTrades: Execution[],
-): { opportunity_id: number; instance_id: number } | null {
-  if (executionStrategyInstanceIds(ex).length > 0) return null
-  const mySide = (ex.side ?? '').toUpperCase()
-  const myIsBuy = mySide === 'BUY' || mySide === 'BOT' || mySide === 'B'
-  for (const t of groupTrades) {
-    if (t.account_executions_id === ex.account_executions_id) continue
-    const tSide = (t.side ?? '').toUpperCase()
-    const tIsBuy = tSide === 'BUY' || tSide === 'BOT' || tSide === 'B'
-    if (tIsBuy === myIsBuy) continue
-    const ids = executionStrategyInstanceIds(t)
-    if (ids.length === 0 || t.strategy_opportunity_id == null) continue
-    return { opportunity_id: t.strategy_opportunity_id, instance_id: ids[0] }
-  }
-  return null
-}
 
 export function OptGroupRow({
   group, expanded, expired, showNetQty, linkByOptionId, onToggle, onEdit, onDelete,
@@ -137,7 +115,7 @@ export function OptGroupRow({
           const oid = t.account_executions_id
           const linkCount =
             oid != null && linkByOptionId ? (linkByOptionId[oid]?.links?.length ?? 0) : 0
-          const oppSrc = findOppositeLegAttribution(t, group.trades)
+          const oppSrc = oppositeLegSyncPayload(group.trades, t)
           const tSide = (t.side ?? '').toUpperCase()
           const isBuy = tSide === 'BUY' || tSide === 'BOT' || tSide === 'B'
           const isSyncing = oid != null && syncingId === oid
@@ -189,8 +167,8 @@ export function OptGroupRow({
                   {onExpiredClose && isOptionExpired(group.expiry) && (
                     <IconActionButton
                       onClick={() => onExpiredClose(t, group.net_qty)}
-                      title="Close expired position"
-                      ariaLabel="Close expired position"
+                      title="Write expiry close"
+                      ariaLabel="Write expiry close"
                       tone="warn"
                       size="dense"
                     >

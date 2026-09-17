@@ -197,9 +197,17 @@ export function LedgerOptContractCell({
           aria-label="Linked stock fills"
           onClick={e => {
             e.stopPropagation()
+            const linkedOid =
+              showExecId ??
+              trades.find(t => {
+                const id = t.account_executions_id
+                return id != null && (linkByOptionId?.[id]?.links?.length ?? 0) > 0
+              })?.account_executions_id ??
+              linkRows[0]?.option_account_executions_id ??
+              linkRows[0]?.option_execution_id
             onViewLinks({
               title: linkModalTitle,
-              oid: showExecId ?? undefined,
+              oid: linkedOid ?? undefined,
               links: linkRows,
               slippageTotal: linkSlippageSum,
             })

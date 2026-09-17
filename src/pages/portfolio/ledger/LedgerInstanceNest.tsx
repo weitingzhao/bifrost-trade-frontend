@@ -1,4 +1,5 @@
 import { getContractLabelParts } from '@/lib/format'
+import type { Execution } from '@/types/positions'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { getOptGroupKey } from '@/utils/ledger/ledgerOptHelpers'
 import { ledgerContractDisplay, fmtExpiryOccToken } from './ledgerContractMark'
@@ -19,6 +20,7 @@ type Props = {
   closedGroups: OptExecutionGroup[]
   openGroups: OptExecutionGroup[]
   onContractClick?: (group: OptExecutionGroup) => void
+  stockFills?: Execution[]
 }
 
 function typeLabel(g: OptExecutionGroup): string {
@@ -34,10 +36,12 @@ function ContractTable({
   title,
   groups,
   onContractClick,
+  stockFills = [],
 }: {
   title: string
   groups: OptExecutionGroup[]
   onContractClick?: (group: OptExecutionGroup) => void
+  stockFills?: Execution[]
 }) {
   if (groups.length === 0) return null
 
@@ -80,7 +84,7 @@ function ContractTable({
                   {g.trades?.length ?? 0}
                 </DenseTableCell>
                 <DenseTableCell>
-                  <LedgerBookingTagForFills fills={g.trades ?? []} />
+                  <LedgerBookingTagForFills fills={g.trades ?? []} stockFills={stockFills} />
                 </DenseTableCell>
               </DenseTableRow>
             )
@@ -91,15 +95,15 @@ function ContractTable({
   )
 }
 
-export function LedgerInstanceNest({ closedGroups, openGroups, onContractClick }: Props) {
+export function LedgerInstanceNest({ closedGroups, openGroups, onContractClick, stockFills }: Props) {
   if (closedGroups.length === 0 && openGroups.length === 0) {
     return <p className={denseTable.emptyHint}>No contracts for this instance.</p>
   }
 
   return (
     <div className="flex flex-col gap-1.5">
-      <ContractTable title="Closed Option" groups={closedGroups} onContractClick={onContractClick} />
-      <ContractTable title="Open Option" groups={openGroups} onContractClick={onContractClick} />
+      <ContractTable title="Closed Option" groups={closedGroups} onContractClick={onContractClick} stockFills={stockFills} />
+      <ContractTable title="Open Option" groups={openGroups} onContractClick={onContractClick} stockFills={stockFills} />
     </div>
   )
 }

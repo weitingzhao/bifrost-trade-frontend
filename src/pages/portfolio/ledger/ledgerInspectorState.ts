@@ -1,4 +1,6 @@
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
+import type { Execution } from '@/types/positions'
+import type { LedgerJournalSeed } from './ledgerJournalWrite'
 
 export type LedgerExplainTarget =
   | { source: 'summary'; kind: LedgerMetricExplainKind; id: string }
@@ -8,8 +10,8 @@ export type LedgerInspectorState =
   | { type: null }
   | { type: 'explain'; target: LedgerExplainTarget | null }
   | { type: 'reconcile'; focus?: 'undated' | 'diff' }
-  | { type: 'links' }
-  | { type: 'journal' }
+  | { type: 'links'; execution?: Execution | null }
+  | { type: 'journal'; seed?: LedgerJournalSeed }
   | { type: 'stock'; symbol: string; accountId?: string }
 
 export type LedgerInspectorFace = 'explain' | 'reconcile' | 'links' | 'journal'

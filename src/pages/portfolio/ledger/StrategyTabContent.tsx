@@ -16,6 +16,7 @@ export function StrategyTabContent({
   toggleStrategyInst,
   onGoInstance,
   onContractClick,
+  stockFills,
 }: {
   displayBuckets: { key: string; label: string; groups: StratOppGroup[] }[]
   groupBy: GroupBy
@@ -28,6 +29,7 @@ export function StrategyTabContent({
   toggleStrategyInst: (oppId: number | 'none', instId: number | 'none') => void
   onGoInstance?: (instanceId: number) => void
   onContractClick?: (group: import('./ledgerTypes').OptExecutionGroup) => void
+  stockFills?: import('@/types/positions').Execution[]
 }) {
   const allGroups = displayBuckets.flatMap(b => b.groups)
   if (allGroups.length === 0) {
@@ -62,6 +64,7 @@ export function StrategyTabContent({
                     linkByOptionId={linkByOptionId}
                     onGoInstance={onGoInstance}
                     onContractClick={onContractClick}
+                    stockFills={stockFills}
                   />
                 ))}
               </div>

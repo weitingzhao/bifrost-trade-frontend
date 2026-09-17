@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import { executionDateStr } from '@/utils/ledger/performanceUtils'
-import { findOppositeLegAttributionSource, executionStrategyInstanceIds } from '@/utils/ledger/ledgerOptHelpers'
+import { oppositeLegSyncPayload } from './ledgerOppositeLeg'
 import { LedgerBookingTagForFill } from './LedgerBookingTag'
 import { ExecSourceBadge } from './ExecSourceBadge'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
@@ -26,6 +26,7 @@ function isBuy(ex: Execution): boolean {
 
 export function LedgerInstanceFillsTable({
   fills,
+  stockFills = [],
   onEdit,
   onDelete,
   onLinkStrategy,
@@ -35,6 +36,7 @@ export function LedgerInstanceFillsTable({
   onSyncOpposite,
 }: {
   fills: Execution[]
+  stockFills?: Execution[]
 } & OptGroupCallbacks) {
   return (
     <DenseDataTable wrapClassName="mt-1" tableClassName={ledgerTableMinClass.t2}>
@@ -55,12 +57,8 @@ export function LedgerInstanceFillsTable({
           const buy = isBuy(ex)
           const q = Math.abs(ex.quantity ?? ex.qty)
           const oid = ex.account_executions_id
-          const peer = findOppositeLegAttributionSource(fills, ex)
-          const showSync =
-            onSyncOpposite &&
-            oid != null &&
-            peer != null &&
-            (ex.strategy_instance_id == null || !Number.isFinite(Number(ex.strategy_instance_id)))
+          const syncSrc = oppositeLegSyncPayload(fills, ex)
+          const showSync = onSyncOpposite && oid != null && syncSrc != null
           return (
             <DenseTableRow key={oid ?? `${ex.time}-${ex.symbol}-${ex.price}`}>
               <DenseTableCell>
@@ -85,7 +83,7 @@ export function LedgerInstanceFillsTable({
                 {ex.commission != null ? fmtPrice(ex.commission) : '—'}
               </DenseTableCell>
               <DenseTableCell>
-                <LedgerBookingTagForFill ex={ex} />
+                <LedgerBookingTagForFill ex={ex} stockFills={stockFills} />
               </DenseTableCell>
               <DenseTableCell>
                 <LedgerOptActionButtons
@@ -94,12 +92,8 @@ export function LedgerInstanceFillsTable({
                   onEdit={onEdit ? () => onEdit(ex) : undefined}
                   onDelete={onDelete ? () => onDelete(ex) : undefined}
                   onSync={
-                    showSync && peer && onSyncOpposite
-                      ? () =>
-                          onSyncOpposite(ex, {
-                            opportunity_id: Number(peer.strategy_opportunity_id),
-                            instance_id: executionStrategyInstanceIds(peer)[0],
-                          })
+                    showSync && syncSrc && onSyncOpposite
+                      ? () => onSyncOpposite(ex, syncSrc)
                       : undefined
                   }
                   syncDisabled={oid != null && syncingId === oid}

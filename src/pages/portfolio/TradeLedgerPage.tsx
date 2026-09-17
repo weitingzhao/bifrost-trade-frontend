@@ -19,7 +19,7 @@ import type { LedgerSincePreset, LedgerSummaryPeriod } from '@/utils/ledger/summ
 import { LEDGER_SINCE_PRESET_TABS, LEDGER_SUMMARY_PERIOD_TABS } from '@/utils/ledger/summaryPeriod'
 import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
 import { LedgerTabToolbar } from '@/pages/portfolio/ledger/LedgerTabToolbar'
-import { TradeLedgerModals, type ExpiredCloseTarget } from '@/pages/portfolio/ledger/TradeLedgerModals'
+import { TradeLedgerModals } from '@/pages/portfolio/ledger/TradeLedgerModals'
 import { LedgerFilterBar } from '@/pages/portfolio/ledger/LedgerFilterBar'
 import { LedgerSummarySection } from '@/pages/portfolio/ledger/LedgerSummarySection'
 import { LedgerHealthBand } from '@/pages/portfolio/ledger/LedgerHealthBand'
@@ -53,6 +53,23 @@ import {
 } from '@/pages/portfolio/ledger/ledgerInspectorState'
 import { buildLedgerMetricExplainPayload } from '@/pages/portfolio/ledger/ledgerSummaryExplainPayload'
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
+import { journalSeedFromExpired } from '@/pages/portfolio/ledger/ledgerJournalWrite'
+import { fillFromViewLinks } from '@/pages/portfolio/ledger/ledgerViewLinks'
+import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
+import type { OptionStockLinkSummary } from '@/types/trading'
+
+function pickGroupFill(
+  group: OptExecutionGroup,
+  linkByOptionId: Record<number, OptionStockLinkSummary>,
+): Execution | undefined {
+  const trades = group.trades ?? []
+  return (
+    trades.find(t => {
+      const id = t.account_executions_id
+      return id != null && (linkByOptionId[id]?.links?.length ?? 0) > 0
+    }) ?? trades.find(t => t.account_executions_id != null)
+  )
+}
 
 const PAGE_LEAD =
   'What was traded, and whether the three sources agree. TWS is fast but not authoritative, Flex is authoritative but late, the journal closes what neither covers.'
@@ -118,6 +135,8 @@ export default function TradeLedgerPage() {
   const [editExec, setEditExec] = useState<Execution | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   const [linkContext, setLinkContext] = useState<LinkExecutionContext | null>(null)
+  const [syncingId, setSyncingId] = useState<number | null>(null)
+  const [syncError, setSyncError] = useState<{ id: number; message: string } | null>(null)
 
   const handleLinkStrategy = useCallback((ex: Execution, sameContractTrades?: Execution[]) => {
     const execId = ex.account_executions_id
@@ -132,14 +151,6 @@ export default function TradeLedgerPage() {
       ...(peerPicks.length > 0 ? { peer_instance_picks: peerPicks } : {}),
     })
   }, [])
-  const [expiredCloseTarget, setExpiredCloseTarget] = useState<ExpiredCloseTarget | null>(null)
-  const [viewLinksTarget, setViewLinksTarget] = useState<
-    import('./ledger/LedgerOptContractCell').ViewLinksPayload | null
-  >(null)
-  const [linkStockTarget, setLinkStockTarget] = useState<Execution | null>(null)
-  const [syncingId, setSyncingId] = useState<number | null>(null)
-  const [syncError, setSyncError] = useState<{ id: number; message: string } | null>(null)
-  const [createSource, setCreateSource] = useState<'manual' | 'journal_closed'>('manual')
 
   const {
     accountTabs,
@@ -249,8 +260,6 @@ export default function TradeLedgerPage() {
     handleSyncOppositeLeg,
   } = useTradeLedgerHandlers({
     accordionMode,
-    accountFilter,
-    accounts,
     queryClient,
     setExpandedGroups,
     setStrategyOppExpanded,
@@ -259,12 +268,27 @@ export default function TradeLedgerPage() {
     setOuterInstanceExpanded,
     setOptSort,
     setStkSort,
-    setCreateSource,
+    setInspector,
     setEditExec,
     deleteTarget,
     setSyncingId,
     setSyncError,
   })
+
+  const stockFills = useMemo(
+    () => (canonData?.items ?? []).filter(e => (e.sec_type ?? '').toUpperCase() === 'STK'),
+    [canonData],
+  )
+
+  const openLinks = useCallback((execution?: Execution | null) => {
+    setInspector({ type: 'links', execution: execution ?? undefined })
+  }, [])
+  const openLinksFromView = useCallback(
+    (ctx: import('@/pages/portfolio/ledger/LedgerOptContractCell').ViewLinksPayload) => {
+      openLinks(fillFromViewLinks(ctx, canonData?.items ?? []) ?? null)
+    },
+    [openLinks, canonData],
+  )
 
   const isStkTab = isSharesTab(activeTab)
   const stkPageScope = `${accountFilter}|${symbolFilter}|${activeTab}|${stkCategoryTab}|${groupByPosition}`
@@ -357,6 +381,7 @@ export default function TradeLedgerPage() {
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executionsBook })
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.optStockLinks })
+    void queryClient.invalidateQueries({ queryKey: ['ledgerLinksFace'] })
     void refetchCanon()
     void refetchBook()
   }, [queryClient, refetchCanon, refetchBook])
@@ -382,9 +407,25 @@ export default function TradeLedgerPage() {
   }
 
   function onInspectorFace(face: LedgerInspectorFace) {
-    if (face === 'explain') setInspector({ type: 'explain', target: inspector.type === 'explain' ? inspector.target : null })
-    else if (face === 'reconcile') setInspector({ type: 'reconcile' })
-    else setInspector({ type: face })
+    if (face === 'explain') {
+      setInspector({ type: 'explain', target: inspector.type === 'explain' ? inspector.target : null })
+      return
+    }
+    if (face === 'reconcile') {
+      setInspector({ type: 'reconcile' })
+      return
+    }
+    if (face === 'links') {
+      setInspector({
+        type: 'links',
+        execution: inspector.type === 'links' ? inspector.execution : undefined,
+      })
+      return
+    }
+    setInspector({
+      type: 'journal',
+      seed: inspector.type === 'journal' ? inspector.seed : undefined,
+    })
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -559,15 +600,18 @@ export default function TradeLedgerPage() {
             toggleOptSort={toggleOptSort}
             expandedGroups={expandedGroups}
             toggleGroup={toggleGroup}
-            onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
+            onEdit={setEditExec}
             onDelete={setDeleteTarget}
             onLinkStrategy={handleLinkStrategy}
-            onLinkStock={setLinkStockTarget}
-            onViewLinks={setViewLinksTarget}
-            onExpiredClose={(exec, netQty) => setExpiredCloseTarget({ exec, netQty })}
+            onLinkStock={openLinks}
+            onViewLinks={openLinksFromView}
+            onExpiredClose={(exec, netQty) =>
+              setInspector({ type: 'journal', seed: journalSeedFromExpired(exec, netQty) })
+            }
             syncingId={syncingId}
             syncError={syncError}
             onSyncOpposite={handleSyncOppositeLeg}
+            stockFills={stockFills}
           />
         )}
 
@@ -583,7 +627,7 @@ export default function TradeLedgerPage() {
             activeTab={activeTab}
             catMap={catMap}
             stkUnrealizedByKey={stkUnrealizedByKey}
-            onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
+            onEdit={setEditExec}
             onDelete={setDeleteTarget}
             onAddJournal={handleAddJournal}
             onSymbolClick={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
@@ -605,7 +649,8 @@ export default function TradeLedgerPage() {
             strategyInstExpanded={strategyInstExpanded}
             toggleStrategyInst={toggleStrategyInst}
             onGoInstance={goToInstance}
-            onContractClick={() => setInspector({ type: 'links' })}
+            onContractClick={g => openLinks(pickGroupFill(g, linkByOptionId) ?? null)}
+            stockFills={stockFills}
           />
           )
         )}
@@ -624,14 +669,15 @@ export default function TradeLedgerPage() {
             expandedGroups={expandedGroups}
             toggleGroup={toggleGroup}
             accordionMode={accordionMode}
-            onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
+            onEdit={setEditExec}
             onDelete={setDeleteTarget}
             onLinkStrategy={handleLinkStrategy}
-            onLinkStock={setLinkStockTarget}
-            onViewLinks={setViewLinksTarget}
+            onLinkStock={openLinks}
+            onViewLinks={openLinksFromView}
             syncingId={syncingId}
             syncError={syncError}
             onSyncOpposite={handleSyncOppositeLeg}
+            stockFills={stockFills}
           />
         )}
       </div>
@@ -639,21 +685,16 @@ export default function TradeLedgerPage() {
       <TradeLedgerModals
         accounts={accounts}
         opportunities={oppData?.items ?? []}
-        linkByOptionId={linkByOptionId}
         deleteTarget={deleteTarget}
         setDeleteTarget={setDeleteTarget}
         onDelete={handleDelete}
         editExec={editExec}
-        setEditExec={e => { if (e === null) handleCloseEditModal(); else setEditExec(e) }}
+        setEditExec={e => {
+          if (e === null) handleCloseEditModal()
+          else setEditExec(e)
+        }}
         linkContext={linkContext}
         setLinkContext={setLinkContext}
-        expiredCloseTarget={expiredCloseTarget}
-        setExpiredCloseTarget={setExpiredCloseTarget}
-        viewLinksTarget={viewLinksTarget}
-        setViewLinksTarget={setViewLinksTarget}
-        linkStockTarget={linkStockTarget}
-        setLinkStockTarget={setLinkStockTarget}
-        createSource={createSource}
       />
 
       <LedgerInspector
@@ -664,6 +705,8 @@ export default function TradeLedgerPage() {
         health={health}
         unlinkBasis={unlinkBasis}
         reconcile={reconcile}
+        accounts={accounts}
+        onWrote={refreshAll}
       />
     </PageShell>
   )

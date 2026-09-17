@@ -9,11 +9,11 @@ import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import {
   adjustedRealizedPnlForOptGroup,
   executionStrategyInstanceIds,
-  findOppositeLegAttributionSource,
   getInstanceConsistencyState,
   getOptGroupKey,
   ledgerOptDetailRowPnl,
 } from '@/utils/ledger/ledgerOptHelpers'
+import { oppositeLegSyncPayload } from './ledgerOppositeLeg'
 import { LedgerConsistencyTag } from './ledgerConsistencyTag'
 import { LedgerBookingTagForFill } from './LedgerBookingTag'
 import { LedgerOptContractCell } from './LedgerOptContractCell'
@@ -82,6 +82,7 @@ export function LedgerClosedOptionSection({
   onViewLinks,
   syncingId,
   syncError,
+  stockFills = [],
 }: Props) {
   const [closedPage, setClosedPage] = useState(1)
 
@@ -303,13 +304,8 @@ export function LedgerClosedOptionSection({
             closedExpandedGroups.flatMap(g =>
               (g.trades ?? []).map((ex, ti) => {
                 const groupTrades = g.trades ?? []
-                const oppositePeer = findOppositeLegAttributionSource(groupTrades, ex)
-                const showSync =
-                  onSyncOpposite &&
-                  ex.account_executions_id != null &&
-                  (ex.strategy_instance_id == null ||
-                    !Number.isFinite(Number(ex.strategy_instance_id))) &&
-                  oppositePeer != null
+                const syncSrc = oppositeLegSyncPayload(groupTrades, ex)
+                const showSync = onSyncOpposite && ex.account_executions_id != null && syncSrc != null
                 const { displayPnl, hasCombinedStock } = ledgerOptDetailRowPnl(ex, linkByOptionId)
 
                 return (
@@ -358,7 +354,7 @@ export function LedgerClosedOptionSection({
                       <ExecSourceBadge source={ex.source} />
                     </DenseTableCell>
                     <DenseTableCell>
-                      <LedgerBookingTagForFill ex={ex} />
+                      <LedgerBookingTagForFill ex={ex} stockFills={stockFills} />
                     </DenseTableCell>
                     <DenseTableCell className={closedOptDetailActionsCell}>
                       {ex.account_executions_id != null ? (
@@ -372,12 +368,8 @@ export function LedgerClosedOptionSection({
                           onLinkStock={onLinkStock ? () => onLinkStock(ex) : undefined}
                           onDelete={onDelete ? () => onDelete(ex) : undefined}
                           onSync={
-                            showSync && oppositePeer && onSyncOpposite
-                              ? () =>
-                                  onSyncOpposite(ex, {
-                                    opportunity_id: oppositePeer.strategy_opportunity_id!,
-                                    instance_id: executionStrategyInstanceIds(oppositePeer)[0],
-                                  })
+                            showSync && syncSrc && onSyncOpposite
+                              ? () => onSyncOpposite(ex, syncSrc)
                               : undefined
                           }
                           syncDisabled={syncingId === ex.account_executions_id}

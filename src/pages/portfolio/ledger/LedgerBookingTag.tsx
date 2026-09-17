@@ -10,6 +10,8 @@ import type { Execution } from '@/types/positions'
 const TONE: Record<LedgerBookingKind, string> = {
   exchange: 'text-muted-foreground border-border',
   book: 'text-[var(--color-warning)] border-[var(--color-warning)]/40',
+  book_expired: 'text-[var(--color-warning)] border-[var(--color-warning)]/40',
+  book_assigned: 'text-[var(--color-warning)] border-[var(--color-warning)]/40',
   mixed: 'text-sky-400 border-sky-400/40',
   unreported: 'text-muted-foreground/80 border-border',
 }
@@ -21,6 +23,8 @@ export function LedgerBookingTag({
   kind: LedgerBookingKind
   className?: string
 }) {
+  const label = ledgerBookingLabel(kind)
+  if (!label) return null
   return (
     <span
       className={cn(
@@ -30,15 +34,27 @@ export function LedgerBookingTag({
         className,
       )}
     >
-      {ledgerBookingLabel(kind)}
+      {label}
     </span>
   )
 }
 
-export function LedgerBookingTagForFills({ fills }: { fills: Execution[] }) {
-  return <LedgerBookingTag kind={ledgerBookingKind(fills)} />
+export function LedgerBookingTagForFills({
+  fills,
+  stockFills = [],
+}: {
+  fills: Execution[]
+  stockFills?: Execution[]
+}) {
+  return <LedgerBookingTag kind={ledgerBookingKind(fills, stockFills)} />
 }
 
-export function LedgerBookingTagForFill({ ex }: { ex: Execution }) {
-  return <LedgerBookingTag kind={ledgerBookingKindForFill(ex)} />
+export function LedgerBookingTagForFill({
+  ex,
+  stockFills = [],
+}: {
+  ex: Execution
+  stockFills?: Execution[]
+}) {
+  return <LedgerBookingTag kind={ledgerBookingKindForFill(ex, stockFills)} />
 }

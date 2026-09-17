@@ -39,6 +39,7 @@ export type OptGroupCallbacks = {
   syncingId?: number | null
   syncError?: { id: number; message: string } | null
   onSyncOpposite?: (e: Execution, src: { opportunity_id: number; instance_id: number }) => void
+  stockFills?: Execution[]
 }
 
 export type StkPositionGroup = {

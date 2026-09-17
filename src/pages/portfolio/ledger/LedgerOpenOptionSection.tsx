@@ -7,11 +7,12 @@ import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import {
-  findOppositeLegAttributionSource,
   getOptGroupKey,
   ledgerOptDetailRowPnl,
 } from '@/utils/ledger/ledgerOptHelpers'
+import { oppositeLegSyncPayload } from './ledgerOppositeLeg'
 import { ExecSourceBadge } from './ExecSourceBadge'
+import { LedgerBookingTagForFill } from './LedgerBookingTag'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { sideLabel } from './ledgerOptSideLabel'
 import { LedgerStgInsCell } from './LedgerStgInsCell'
@@ -160,8 +161,8 @@ function OpenGroupTable({
                     {onExpiredClose && g.trades?.[0] != null && (
                       <IconActionButton
                         onClick={() => onExpiredClose(g.trades[0], g.net_qty)}
-                        title="Close expired position"
-                        ariaLabel="Close expired position"
+                        title="Write expiry close"
+                        ariaLabel="Write expiry close"
                         tone="warn"
                         size="dense"
                       >
@@ -204,6 +205,7 @@ export function LedgerOpenOptionSection({
   onViewLinks,
   syncingId,
   syncError,
+  stockFills = [],
 }: Props) {
   if (openActiveGroups.length === 0 && openExpiredGroups.length === 0) {
     return <p className={denseTable.emptyHint}>No open option groups.</p>
@@ -270,6 +272,7 @@ export function LedgerOpenOptionSection({
             <DenseTableHead className={closedOptNumCell}>PnL</DenseTableHead>
             <DenseTableHead className={closedOptHeadPrimary}>Account</DenseTableHead>
             <DenseTableHead className={closedOptHeadPrimary}>Source</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Booking</DenseTableHead>
             <DenseTableHead className={closedOptDetailActionsHead}>Actions</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
@@ -277,7 +280,7 @@ export function LedgerOpenOptionSection({
           {openExpandedGroups.length === 0 ? (
             <DenseTableRow className="hover:bg-transparent">
               <DenseTableCell
-                colSpan={13}
+                colSpan={14}
                 className="py-4 text-center italic text-muted-foreground"
               >
                 Click an open option row above to load details
@@ -287,13 +290,8 @@ export function LedgerOpenOptionSection({
             openExpandedGroups.flatMap(g =>
               (g.trades ?? []).map((ex, ti) => {
                 const groupTrades = g.trades ?? []
-                const oppositePeer = findOppositeLegAttributionSource(groupTrades, ex)
-                const showSync =
-                  onSyncOpposite &&
-                  ex.account_executions_id != null &&
-                  (ex.strategy_instance_id == null ||
-                    !Number.isFinite(Number(ex.strategy_instance_id))) &&
-                  oppositePeer != null
+                const syncSrc = oppositeLegSyncPayload(groupTrades, ex)
+                const showSync = onSyncOpposite && ex.account_executions_id != null && syncSrc != null
                 const { displayPnl } = ledgerOptDetailRowPnl(ex, linkByOptionId)
 
                 return (
@@ -331,6 +329,9 @@ export function LedgerOpenOptionSection({
                     <DenseTableCell>
                       <ExecSourceBadge source={ex.source} />
                     </DenseTableCell>
+                    <DenseTableCell>
+                      <LedgerBookingTagForFill ex={ex} stockFills={stockFills} />
+                    </DenseTableCell>
                     <DenseTableCell className={closedOptDetailActionsCell}>
                       {ex.account_executions_id != null ? (
                         <LedgerOptActionButtons
@@ -341,12 +342,8 @@ export function LedgerOpenOptionSection({
                           onLinkStock={onLinkStock ? () => onLinkStock(ex) : undefined}
                           onDelete={onDelete ? () => onDelete(ex) : undefined}
                           onSync={
-                            showSync && oppositePeer && onSyncOpposite
-                              ? () =>
-                                  onSyncOpposite(ex, {
-                                    opportunity_id: oppositePeer.strategy_opportunity_id!,
-                                    instance_id: oppositePeer.strategy_instance_id!,
-                                  })
+                            showSync && syncSrc && onSyncOpposite
+                              ? () => onSyncOpposite(ex, syncSrc)
                               : undefined
                           }
                           syncDisabled={syncingId === ex.account_executions_id}

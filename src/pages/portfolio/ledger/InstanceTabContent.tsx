@@ -71,7 +71,7 @@ export function InstanceTabContent({
   groupBy, displayBuckets, outerExpanded, toggleOuter,
   expandedGroups, toggleGroup, accordionMode,
   onEdit, onDelete,
-  onLinkStrategy, onLinkStock, onViewLinks, syncingId, syncError, onSyncOpposite,
+  onLinkStrategy, onLinkStock, onViewLinks, syncingId, syncError, onSyncOpposite, stockFills,
 }: {
   instanceSubTab: InstanceSubTab
   filteredGroups: InstGroup[]
@@ -93,6 +93,7 @@ export function InstanceTabContent({
   syncingId?: number | null
   syncError?: { id: number; message: string } | null
   onSyncOpposite?: (e: Execution, src: { opportunity_id: number; instance_id: number }) => void
+  stockFills?: Execution[]
 }) {
   const [innerExpanded, setInnerExpanded] = useState<Set<string>>(new Set())
   const [rawPage, setRawPage] = useState(1)
@@ -109,7 +110,7 @@ export function InstanceTabContent({
   }
 
   const cbs: OptGroupCallbacks = {
-    onEdit, onDelete, onLinkStrategy, onLinkStock, onViewLinks, syncingId, syncError, onSyncOpposite,
+    onEdit, onDelete, onLinkStrategy, onLinkStock, onViewLinks, syncingId, syncError, onSyncOpposite, stockFills,
   }
 
   if (instanceSubTab === 'no_instance') {

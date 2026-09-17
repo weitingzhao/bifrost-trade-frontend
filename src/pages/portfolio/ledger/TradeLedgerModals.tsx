@@ -13,6 +13,8 @@ import type { OptionStockLinkSummary } from '@/types/trading'
 import type { ViewLinksPayload } from './LedgerOptContractCell'
 import { ViewOptionStockLinksModal } from './ViewOptionStockLinksModal'
 
+export type ExpiredCloseTarget = { exec: Execution; netQty: number }
+
 type Props = {
   accounts: string[]
   opportunities: StrategyOpportunity[]
@@ -24,8 +26,8 @@ type Props = {
   setEditExec: (e: Execution | null) => void
   linkContext: LinkExecutionContext | null
   setLinkContext: (ctx: LinkExecutionContext | null) => void
-  expiredCloseTarget: Execution | null
-  setExpiredCloseTarget: (e: Execution | null) => void
+  expiredCloseTarget: ExpiredCloseTarget | null
+  setExpiredCloseTarget: (t: ExpiredCloseTarget | null) => void
   viewLinksTarget: ViewLinksPayload | null
   setViewLinksTarget: (v: ViewLinksPayload | null) => void
   linkStockTarget: Execution | null
@@ -100,7 +102,8 @@ export function TradeLedgerModals({
         />
       )}
       <QuickCloseModal
-        exec={expiredCloseTarget}
+        exec={expiredCloseTarget?.exec ?? null}
+        netQty={expiredCloseTarget?.netQty}
         onClose={() => setExpiredCloseTarget(null)}
         onSuccess={() => {
           setExpiredCloseTarget(null)

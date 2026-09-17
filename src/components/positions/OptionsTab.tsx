@@ -67,7 +67,7 @@ interface Props {
   onEditExec?: (exec: Execution) => void
   onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
   onDeleteExec?: (exec: Execution) => void
-  onCloseExec?: (exec: Execution) => void
+  onCloseExec?: (exec: Execution, netQty: number) => void
   onInspect?: (pos: OpenOptionPosition) => void
   onOpenStrategy?: (instanceId: number) => void
   onRefreshExecs?: () => void
@@ -202,7 +202,7 @@ export function OptionsTab({
         onEdit={onEditExec ?? (() => {})}
         onLink={ex => onLinkExec?.(ex, execLists.merged)}
         onDelete={onDeleteExec ?? (() => {})}
-        onClose={pos.pool_label === 'Off' ? onCloseExec : undefined}
+        onClose={pos.pool_label === 'Off' && onCloseExec ? (ex) => onCloseExec(ex, pos.qty) : undefined}
         onOpenStrategy={onOpenStrategy}
         showSync={showSync}
         syncBusy={execId != null && syncingExecId === execId}

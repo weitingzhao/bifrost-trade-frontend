@@ -184,7 +184,7 @@ export function OptGroupRow({
                   <div className="flex items-center justify-end gap-0.5">
                   {onExpiredClose && isOptionExpired(group.expiry) && (
                     <IconActionButton
-                      onClick={() => onExpiredClose(t)}
+                      onClick={() => onExpiredClose(t, group.net_qty)}
                       title="Close expired position"
                       ariaLabel="Close expired position"
                       tone="warn"

@@ -96,7 +96,7 @@ export default function PositionsPage() {
     exec: null,
   })
   const [linkContext, setLinkContext] = useState<LinkExecutionContext | null>(null)
-  const [closeExec, setCloseExec] = useState<Execution | null>(null)
+  const [closeTarget, setCloseTarget] = useState<{ exec: Execution; netQty: number } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
   const closeInspector = () => setInspector({ type: null })
@@ -419,7 +419,7 @@ export default function PositionsPage() {
                     onEditExec={requestEditExec}
                     onLinkExec={openLinkExec}
                     onDeleteExec={setDeleteTarget}
-                    onCloseExec={setCloseExec}
+                    onCloseExec={(exec, netQty) => setCloseTarget({ exec, netQty })}
                     onRefreshExecs={refreshExecData}
                     canonicalOptContractKeys={book.canonicalOptContractKeys}
                     onInspect={(pos) => setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })}
@@ -465,7 +465,12 @@ export default function PositionsPage() {
         onClose={() => setLinkContext(null)}
         onSuccess={refreshExecData}
       />
-      <QuickCloseModal exec={closeExec} onClose={() => setCloseExec(null)} onSuccess={refreshExecData} />
+      <QuickCloseModal
+        exec={closeTarget?.exec ?? null}
+        netQty={closeTarget?.netQty}
+        onClose={() => setCloseTarget(null)}
+        onSuccess={refreshExecData}
+      />
       <DeleteConfirmDialog
         open={!!deleteTarget}
         title="Delete execution"

@@ -7,14 +7,17 @@ import { Input } from '@/components/ui/input'
 import { createExecution } from '@/api/trading'
 import { fmtUsd, fmtExpiry, rightLabel } from '@/utils/positions'
 import type { Execution } from '@/types/positions'
+import { closingFillFromNet, signedFillQty } from '@/components/positions/quickCloseOffset'
 
 interface Props {
   exec: Execution | null
+  /** Contract net when known; otherwise the opened fill's signed size. */
+  netQty?: number
   onClose: () => void
   onSuccess: () => void
 }
 
-export function QuickCloseModal({ exec, onClose, onSuccess }: Props) {
+export function QuickCloseModal({ exec, netQty, onClose, onSuccess }: Props) {
   const [price, setPrice] = useState('')
   const [commission, setCommission] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -22,20 +25,23 @@ export function QuickCloseModal({ exec, onClose, onSuccess }: Props) {
 
   if (!exec) return null
 
-  const closeSide = exec.side === 'Buy' ? 'SELL' : 'BUY'
+  const offset = closingFillFromNet(netQty ?? signedFillQty(exec))
+  const closeSide = offset?.side ?? 'BUY'
+  const closeQty = offset?.quantity ?? 0
 
   async function handleSubmit() {
     if (!exec) return
     setSubmitting(true)
     setError(null)
     try {
+      if (!offset) throw new Error('Nothing to close — net position is flat.')
       const res = await createExecution({
         account_id: exec.account_id,
         time: Math.floor(Date.now() / 1000),
         symbol: exec.symbol,
         sec_type: exec.sec_type as 'STK' | 'OPT',
-        side: closeSide as 'BUY' | 'SELL',
-        quantity: Math.abs(exec.qty),
+        side: offset.side,
+        quantity: offset.quantity,
         price: parseFloat(price) || 0,
         source: 'manual',
         expiry: exec.expiry,
@@ -67,7 +73,7 @@ export function QuickCloseModal({ exec, onClose, onSuccess }: Props) {
             <div><span className="text-muted-foreground">Symbol:</span> <span className="font-mono font-medium">{exec.symbol}</span></div>
             <div><span className="text-muted-foreground">Account:</span> <span className="font-mono">{exec.account_id}</span></div>
             <div><span className="text-muted-foreground">Side:</span> {closeSide}</div>
-            <div><span className="text-muted-foreground">Qty:</span> {Math.abs(exec.qty)}</div>
+            <div><span className="text-muted-foreground">Qty:</span> {closeQty || '—'}</div>
             {exec.sec_type === 'OPT' && (
               <>
                 <div><span className="text-muted-foreground">Right:</span> {rightLabel(exec.right)}</div>
@@ -109,7 +115,7 @@ export function QuickCloseModal({ exec, onClose, onSuccess }: Props) {
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" size="sm" onClick={onClose} disabled={submitting}>Cancel</Button>
-          <Button size="sm" onClick={handleSubmit} disabled={submitting}>
+          <Button size="sm" onClick={handleSubmit} disabled={submitting || !offset}>
             {submitting ? 'Closing…' : 'Close Position'}
           </Button>
         </div>

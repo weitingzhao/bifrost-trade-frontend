@@ -18,7 +18,7 @@ import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
 import type { LedgerSincePreset, LedgerSummaryPeriod } from '@/utils/ledger/summaryPeriod'
 import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
 import { LedgerTabToolbar } from '@/pages/portfolio/ledger/LedgerTabToolbar'
-import { TradeLedgerModals } from '@/pages/portfolio/ledger/TradeLedgerModals'
+import { TradeLedgerModals, type ExpiredCloseTarget } from '@/pages/portfolio/ledger/TradeLedgerModals'
 import { LedgerFilterBar } from '@/pages/portfolio/ledger/LedgerFilterBar'
 import { LedgerSummarySection } from '@/pages/portfolio/ledger/LedgerSummarySection'
 import { ledgerPageCardClass } from '@/pages/portfolio/ledger/ledgerShellUi'
@@ -106,7 +106,7 @@ export default function TradeLedgerPage() {
       ...(peerPicks.length > 0 ? { peer_instance_picks: peerPicks } : {}),
     })
   }, [])
-  const [expiredCloseTarget, setExpiredCloseTarget] = useState<Execution | null>(null)
+  const [expiredCloseTarget, setExpiredCloseTarget] = useState<ExpiredCloseTarget | null>(null)
   const [viewLinksTarget, setViewLinksTarget] = useState<
     import('./ledger/LedgerOptContractCell').ViewLinksPayload | null
   >(null)
@@ -393,7 +393,7 @@ export default function TradeLedgerPage() {
             onLinkStrategy={handleLinkStrategy}
             onLinkStock={setLinkStockTarget}
             onViewLinks={setViewLinksTarget}
-            onExpiredClose={setExpiredCloseTarget}
+            onExpiredClose={(exec, netQty) => setExpiredCloseTarget({ exec, netQty })}
             syncingId={syncingId}
             onSyncOpposite={handleSyncOppositeLeg}
           />

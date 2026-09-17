@@ -78,7 +78,7 @@ function OpenGroupTable({
   expandedDetailKeys: string[]
   toggleDetailExpand: (key: string) => void
   showExpiredClose?: boolean
-  onExpiredClose?: (ex: Execution) => void
+  onExpiredClose?: (ex: Execution, netQty: number) => void
   linkByOptionId: Record<number, OptionStockLinkSummary>
   onViewLinks?: OptGroupCallbacks['onViewLinks']
 }) {
@@ -159,7 +159,7 @@ function OpenGroupTable({
                   <div onClick={e => e.stopPropagation()}>
                     {onExpiredClose && g.trades?.[0] != null && (
                       <IconActionButton
-                        onClick={() => onExpiredClose(g.trades[0])}
+                        onClick={() => onExpiredClose(g.trades[0], g.net_qty)}
                         title="Close expired position"
                         ariaLabel="Close expired position"
                         tone="warn"

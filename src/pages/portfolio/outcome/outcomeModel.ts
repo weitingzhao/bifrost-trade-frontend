@@ -80,7 +80,8 @@ export const OUTCOME_SAMPLE_FLOOR = 10
 export const OUTCOME_UNRECORDED = {
   lens: 'No screener lens reaches a trade instance: a candidate in Research carries its lens, and nothing links that candidate to the instance that traded it.',
   run: 'No backtest run is linked to an instance either, so realised has nothing to be compared against.',
-  plan: 'Trade Plans stores no entry, target or stop yet, so there is nothing an exit can be measured against.',
+  plan:
+    'Trade Plans stores a target, a stop and a limit — the fields are there. No plan has reached a fill or been linked to an instance, so no closed idea has one to be measured against.',
 } as const
 
 const SELL = /^(s|sell|sld)$/i

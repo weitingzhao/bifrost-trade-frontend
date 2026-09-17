@@ -6,7 +6,8 @@
  * its fills. Two of the prototype's readings have nothing behind them yet and
  * say so rather than showing a zero: the screener lens that found an idea (and
  * the run that argued for it) never reaches a trade instance, and Trade Plans
- * stores no entry, target or stop, so no exit can be measured against a plan.
+ * stores a target and a stop, but no plan has ever reached a fill, so no exit
+ * can be measured against one.
  *
  * How a play performs and how the trader behaves are Review's questions, not
  * this page's — the boundary is written at the foot, where it can be read.
@@ -289,7 +290,7 @@ export default function OutcomePage() {
                 <header className={positionsUi.panelHead}>
                   <span className={positionsUi.panelTitle}>Did it do what the plan said</span>
                   <DenseTag variant="warning" size="cell">
-                    ⚠ needs plan storage
+                    ⚠ no plan ever filled
                   </DenseTag>
                 </header>
                 <div className="overflow-x-auto">

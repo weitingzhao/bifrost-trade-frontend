@@ -1,4 +1,5 @@
 import type { Execution } from '@/types/positions'
+import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
 
 export type LedgerBookingKind = 'exchange' | 'book' | 'book_expired' | 'book_assigned' | 'mixed' | 'unreported'
 
@@ -20,18 +21,25 @@ function near(a: number, b: number): boolean {
   return Math.abs(a - b) < 0.005
 }
 
-/** Same account, same underlying, same trade date, stock price equals the option strike. */
+/**
+ * Same account, same underlying, same trade date, stock price equals the option strike.
+ *
+ * The underlying is read out of the option's symbol: Flex writes the full OCC
+ * string there (`NVDA  260220C00220000`) while the stock fill says `NVDA`, so
+ * comparing the two symbols as written never matched and a real assignment read
+ * as expired.
+ */
 export function hasAssignmentStockFill(opt: Execution, stockFills: Execution[]): boolean {
   const strike = Number(opt.strike)
   if (!Number.isFinite(strike)) return false
   const day = ymd(opt.trade_date)
   const acct = (opt.account_id ?? '').trim()
-  const sym = (opt.symbol ?? '').trim().toUpperCase()
+  const sym = extractUnderlyingRootSymbol(opt.symbol)
   if (!day || !acct || !sym) return false
   return stockFills.some(s => {
     if (!isStk(s)) return false
     if ((s.account_id ?? '').trim() !== acct) return false
-    if ((s.symbol ?? '').trim().toUpperCase() !== sym) return false
+    if (extractUnderlyingRootSymbol(s.symbol) !== sym) return false
     if (ymd(s.trade_date) !== day) return false
     return near(Number(s.price) || 0, strike)
   })
@@ -46,10 +54,11 @@ export function classifyBookTradeFill(
   const price = Number(ex.price) || 0
   const expiryDay = ymd(ex.expiry)
   const tradeDay = ymd(ex.trade_date)
-  const expiredShape = near(price, 0) && expiryDay != null && tradeDay != null && expiryDay === tradeDay
-  if (!expiredShape) return 'book'
+  // Assignment first, on its own evidence: an early assignment is neither priced
+  // at zero nor dated on expiry, and gating it behind the expiry shape left it `BOOK`.
   if (hasAssignmentStockFill(ex, stockFills)) return 'assigned'
-  return 'expired'
+  const expiredShape = near(price, 0) && expiryDay != null && tradeDay != null && expiryDay === tradeDay
+  return expiredShape ? 'expired' : 'book'
 }
 
 export function ledgerBookingKind(execs: Execution[], stockFills: Execution[] = []): LedgerBookingKind {

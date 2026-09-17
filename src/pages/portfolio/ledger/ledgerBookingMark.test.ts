@@ -71,6 +71,22 @@ describe('ledgerBookingKind', () => {
     expect(ledgerBookingLabel('book_assigned')).toBe('BOOK · assigned')
   })
 
+  it('finds the assignment when the option symbol is the OCC string Flex writes', () => {
+    // Flex puts the full OCC string in `symbol`; the share fill says just the root.
+    const occ = opt({ symbol: 'ZZZ   240119P00050000' })
+    expect(classifyBookTradeFill(occ, [stk({})])).toBe('assigned')
+  })
+
+  it('does not match a different underlying that merely shares a prefix', () => {
+    const occ = opt({ symbol: 'ZZ    240119P00050000' })
+    expect(classifyBookTradeFill(occ, [stk({})])).toBe('expired')
+  })
+
+  it('marks an early assignment, which is neither zero-priced nor dated on expiry', () => {
+    const early = opt({ price: 0.35, trade_date: '2024-01-10', symbol: 'ZZZ   240119P00050000' })
+    expect(classifyBookTradeFill(early, [stk({ trade_date: '2024-01-10' })])).toBe('assigned')
+  })
+
   it('does not guess a subclass for a stock BookTrade', () => {
     const stockBook = stk({ transaction_type: 'BookTrade', price: 12 })
     expect(classifyBookTradeFill(stockBook, [])).toBe('book')

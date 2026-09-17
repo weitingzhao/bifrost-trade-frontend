@@ -193,6 +193,17 @@ export function fmtDaysAgo(epoch: number | null | undefined): string | null {
   return null
 }
 
+/**
+ * A share as a whole percent: `0.485` → `49%`.
+ *
+ * Unsigned on purpose — a share of something is not a direction, and the pages
+ * that show one were each carrying their own `pct` helper to say so.
+ */
+export function fmtPct0(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  return `${Math.round(v * 100)}%`
+}
+
 export function fmtSignedPct(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '—'
   return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`

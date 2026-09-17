@@ -12,40 +12,13 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
+import { PositionsStat } from '@/components/positions/PositionsStat'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { backingAssumptionRows } from '@/utils/backingAssumptions'
 import type { BackingJudgment } from '@/utils/backingJudgment'
 
 function sharePct(v: number | null): string {
   return v == null || !Number.isFinite(v) ? '—' : `${Math.round(v * 100)}%`
-}
-
-function Stat({
-  cap,
-  value,
-  hint,
-  tone,
-}: {
-  cap: string
-  value: string
-  hint: string
-  tone?: 'warning' | 'accent'
-}) {
-  return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <span className={positionsUi.cap}>{cap}</span>
-      <span
-        className={cn(
-          'font-mono text-lg leading-normal font-bold tabular-nums',
-          tone === 'warning' && 'text-warning',
-          tone === 'accent' && 'text-primary',
-        )}
-      >
-        {value}
-      </span>
-      <span className="text-dense-caption leading-normal text-muted-foreground">{hint}</span>
-    </div>
-  )
 }
 
 export function BackingVerdictPanel({
@@ -64,27 +37,27 @@ export function BackingVerdictPanel({
   return (
     <section className={positionsUi.panel} aria-label="Backing verdict" data-testid="backing-judgment-strip">
       <div className="flex flex-wrap items-end gap-x-7.5 gap-y-3 px-3.5 py-2.5">
-        <Stat
+        <PositionsStat
           cap="Backing pool"
           value={empty ? '—' : fmtMvAbbrev(judgment.pool)}
-          hint="priced stocks + cash/SGOV + income ETFs"
+          sub="priced stocks + cash/SGOV + income ETFs"
         />
-        <Stat
+        <PositionsStat
           cap="Used"
           value={empty ? '—' : fmtMvAbbrev(judgment.used)}
-          hint={`${sharePct(judgment.usedPct)} of pool · calls and puts`}
-          tone={judgment.overGate ? 'warning' : undefined}
+          sub={`${sharePct(judgment.usedPct)} of pool · calls and puts`}
+          ink={judgment.overGate ? 'text-warning' : undefined}
         />
-        <Stat
+        <PositionsStat
           cap="Gate · 85%"
           value={empty ? '—' : fmtMvAbbrev(judgment.gate)}
-          hint="House auto-derisk line · Rules does not read it yet"
+          sub="House auto-derisk line · Rules does not read it yet"
         />
-        <Stat
+        <PositionsStat
           cap="Space under gate"
           value={empty ? '—' : fmtMvAbbrev(judgment.spendable)}
-          hint="headroom under the 85% house line"
-          tone="accent"
+          sub="headroom under the 85% house line"
+          ink="text-primary"
         />
         <p className="m-0 ml-auto max-w-75 text-dense-meta leading-normal text-muted-foreground text-pretty">
           Two different house lines. The 85% gate is pool usage; the pressure ceiling on{' '}

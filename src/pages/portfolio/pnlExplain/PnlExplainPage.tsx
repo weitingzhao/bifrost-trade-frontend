@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
+import { PositionsStat } from '@/components/positions/PositionsStat'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
@@ -65,18 +66,6 @@ const READING_LAMP: Record<string, 'yellow' | 'green' | 'gray'> = {
 
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
-
-function Stat({ cap, value, sub, ink }: { cap: string; value: string; sub: string; ink?: string }) {
-  return (
-    <span className="flex min-w-0 flex-col gap-px border-l border-border pl-4 first:border-l-0 first:pl-0">
-      <span className={positionsUi.cap}>{cap}</span>
-      <span className={cn(positionsUi.mono, 'text-base leading-normal font-bold', ink ?? 'text-muted-foreground')}>
-        {value}
-      </span>
-      <span className="text-dense-caption leading-normal text-muted-foreground">{sub}</span>
-    </span>
-  )
-}
 
 export default function PnlExplainPage() {
   const [timeRange, setTimeRange] = useState<PerformanceTimeRange>('quarter')
@@ -187,20 +176,20 @@ export default function PnlExplainPage() {
             />
             <section className={positionsUi.panel} aria-label="Does it tie out">
               <div className="flex flex-wrap items-stretch gap-x-0 gap-y-2.5 px-3.5 py-2.5">
-                <Stat
+                <PositionsStat
                   cap="Window P&L · book"
                   value={fmtSignedUsd0(windowPnl)}
                   sub="Performance’s own figure, taken apart here"
                   ink={pnlColorClass(windowPnl)}
                 />
                 <span className="pl-4">
-                  <Stat cap="Explained · Δ Γ vega θ" value="—" sub="the four attributions, summed" />
+                  <PositionsStat cap="Explained · Δ Γ vega θ" value="—" sub="the four attributions, summed" />
                 </span>
                 <span className="pl-4">
-                  <Stat cap="Unexplained" value="—" sub="defined as the difference — so it needs the four" />
+                  <PositionsStat cap="Unexplained" value="—" sub="defined as the difference — so it needs the four" />
                 </span>
                 <span className="pl-4">
-                  <Stat cap="Leads that carry an amount" value={fmtSignedUsd0(total.amount)} sub={`${total.withAmount} with a figure · ${total.countOnly} a count only`} />
+                  <PositionsStat cap="Leads that carry an amount" value={fmtSignedUsd0(total.amount)} sub={`${total.withAmount} with a figure · ${total.countOnly} a count only`} />
                 </span>
                 <span className="ml-auto flex items-center pl-4">
                   <DenseTag variant="warning" size="cell">

@@ -120,6 +120,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     items: [
       route('Portfolio Exposure', '/risk/portfolio', Radar),
       route('Stress & Scenario', '/risk/stress', Activity),
+      route('Margin & Buying Power', '/risk/margin', Database),
     ],
   },
   {

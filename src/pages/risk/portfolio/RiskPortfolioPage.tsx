@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
+import { PositionsStat } from '@/components/positions/PositionsStat'
 import { CorrelationPanel } from './CorrelationPanel'
 import { STRESS_VOL_ROWS } from '@/pages/risk/stress/stressModel'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -57,28 +58,6 @@ const CORR_WINDOW = 60
 
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
-
-function Stat({
-  cap,
-  value,
-  sub,
-  ink,
-}: {
-  cap: string
-  value: string
-  sub?: React.ReactNode
-  ink?: string
-}) {
-  return (
-    <span className="flex min-w-0 flex-col gap-px">
-      <span className={positionsUi.cap}>{cap}</span>
-      <span className={cn(positionsUi.mono, 'text-base leading-normal font-bold', ink ?? 'text-foreground')}>
-        {value}
-      </span>
-      {sub ? <span className="text-dense-caption leading-normal text-muted-foreground">{sub}</span> : null}
-    </span>
-  )
-}
 
 
 export default function RiskPortfolioPage() {
@@ -319,8 +298,8 @@ export default function RiskPortfolioPage() {
           <>
             <section className={positionsUi.panel} aria-label="Book totals">
               <div className="flex flex-wrap items-start gap-x-7 gap-y-3 px-3.5 py-2.5">
-                <Stat cap="Net liq" value={netLiq > 0 ? fmtMvAbbrev(netLiq) : '—'} sub="broker, this scope" />
-                <Stat
+                <PositionsStat cap="Net liq" value={netLiq > 0 ? fmtMvAbbrev(netLiq) : '—'} sub="broker, this scope" />
+                <PositionsStat
                   cap="β-wtd Δ$ · SPY-eq"
                   value={totals.withBetaDelta > 0 ? fmtSignedUsd0(totals.betaDeltaDollars) : '—'}
                   ink={pnlColorClass(totals.betaDeltaDollars)}
@@ -330,20 +309,20 @@ export default function RiskPortfolioPage() {
                       : 'no name carries both a Δ$ and a β'
                   }
                 />
-                <Stat
+                <PositionsStat
                   cap="Γ · per point"
                   value={legs.length > 0 ? fmtSignedUsd0(totals.gamma) : '—'}
                   ink={totals.gamma < 0 ? 'text-warning' : undefined}
                   sub={totals.gamma < 0 ? 'short gamma — the move works against the book' : 'long gamma'}
                 />
-                <Stat cap="Vega · per vol pt" value={legs.length > 0 ? fmtSignedUsd0(totals.vega) : '—'} />
-                <Stat
+                <PositionsStat cap="Vega · per vol pt" value={legs.length > 0 ? fmtSignedUsd0(totals.vega) : '—'} />
+                <PositionsStat
                   cap="Θ · per day"
                   value={legs.length > 0 ? fmtSignedUsd0(totals.theta) : '—'}
                   ink={pnlColorClass(totals.theta)}
                 />
                 <span className="ml-auto">
-                  <Stat
+                  <PositionsStat
                     cap="Backing used"
                     value={judgment?.usedPct != null ? `${Math.round(judgment.usedPct * 100)}%` : '—'}
                     ink={judgment?.overGate ? 'text-warning' : undefined}

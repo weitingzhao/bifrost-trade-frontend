@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { createExecution } from '@/api/trading'
 import { fmtUsd, fmtExpiry, rightLabel } from '@/utils/positions'
 import type { Execution } from '@/types/positions'
-import { closingFillFromNet, signedFillQty } from '@/components/positions/quickCloseOffset'
+import { closingFillFromNet, signedFillQty, signedCloseQuantity } from '@/components/positions/quickCloseOffset'
 
 interface Props {
   exec: Execution | null
@@ -41,7 +41,7 @@ export function QuickCloseModal({ exec, netQty, onClose, onSuccess }: Props) {
         symbol: exec.symbol,
         sec_type: exec.sec_type as 'STK' | 'OPT',
         side: offset.side,
-        quantity: offset.quantity,
+        quantity: signedCloseQuantity(offset),
         price: parseFloat(price) || 0,
         source: 'manual',
         expiry: exec.expiry,

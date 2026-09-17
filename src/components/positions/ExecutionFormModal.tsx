@@ -510,6 +510,7 @@ function ExecutionFormModalBody({
         <ExecFormRow label="Time">
           <Input
             type="datetime-local"
+            step={1}
             value={execTime}
             onChange={(e) => setExecTime(e.target.value)}
             className={inputClass}

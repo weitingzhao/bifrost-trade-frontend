@@ -10,6 +10,15 @@ export function signedFillQty(exec: Execution): number {
   return 0
 }
 
+/**
+ * The quantity as the API stores it: negative for a sell, like every other writer
+ * (the execution form and the ledger journal). The close used to send a sell as a
+ * positive size — harmless only while it could never write SELL at all.
+ */
+export function signedCloseQuantity(close: { side: 'BUY' | 'SELL'; quantity: number }): number {
+  return close.side === 'SELL' ? -Math.abs(close.quantity) : Math.abs(close.quantity)
+}
+
 /** Offset that flattens a net position: long → SELL, short → BUY. */
 export function closingFillFromNet(
   netQty: number,

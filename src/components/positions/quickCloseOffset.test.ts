@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Execution } from '@/types/positions'
-import { closingFillFromNet, signedFillQty } from './quickCloseOffset'
+import { closingFillFromNet, signedCloseQuantity, signedFillQty } from './quickCloseOffset'
 
 function exec(partial: Pick<Execution, 'side'> & Partial<Execution>): Execution {
   return {
@@ -47,5 +47,12 @@ describe('the old Quick Close side test', () => {
     const oldSide = fill.side === 'Buy' ? 'SELL' : 'BUY'
     expect(oldSide).toBe('BUY')
     expect(closingFillFromNet(signedFillQty(fill))?.side).toBe('SELL')
+  })
+})
+
+describe('signedCloseQuantity', () => {
+  it('stores a sell as a negative size, like the execution form and the journal', () => {
+    expect(signedCloseQuantity({ side: 'SELL', quantity: 3 })).toBe(-3)
+    expect(signedCloseQuantity({ side: 'BUY', quantity: 3 })).toBe(3)
   })
 })

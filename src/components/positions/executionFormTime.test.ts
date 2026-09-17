@@ -16,6 +16,12 @@ describe('execution form time', () => {
     expect(datetimeLocalToEpochSeconds(box)).toBe(epoch)
   })
 
+  it('keeps the seconds, so re-saving a fill does not move it', () => {
+    // Fabricated 14:00:09 local — minute precision used to save it as 14:00:00.
+    const epoch = Math.floor(new Date(2024, 5, 15, 14, 0, 9).getTime() / 1000)
+    expect(datetimeLocalToEpochSeconds(epochSecondsToDatetimeLocal(epoch))).toBe(epoch)
+  })
+
   it('does not fill the box from UTC ISO, which used to shift the saved time', () => {
     const epoch = localMinuteEpoch()
     const utcIsoFill = new Date(epoch * 1000).toISOString().slice(0, 16)

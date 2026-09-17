@@ -59,3 +59,30 @@ describe('buildOffTrackPositions', () => {
     expect(buildOffTrackPositions(execs, undefined, '202507')).toHaveLength(0)
   })
 })
+
+describe('buildOffTrackPositions with rows as the API sends them', () => {
+  // Invented contract. The API carries `quantity` (signed) and IB sides; `qty` is absent.
+  const apiRow = (partial: Record<string, unknown>) =>
+    ({
+      account_executions_id: 1,
+      account_id: OFF_TRACK_ACCOUNT_ID,
+      contract_key: 'ZZZ|OPT|20240119|50.0|C',
+      symbol: 'ZZZ',
+      sec_type: 'OPT',
+      right: 'C',
+      strike: 50,
+      expiry: '20240119',
+      time: 1_700_000_000,
+      price: 2,
+      ...partial,
+    }) as unknown as Execution
+
+  it('nets BUY/SELL quantities instead of summing undefined into NaN', () => {
+    const [pos] = buildOffTrackPositions([
+      apiRow({ account_executions_id: 1, side: 'BUY', quantity: 3 }),
+      apiRow({ account_executions_id: 2, side: 'SLD', quantity: -1 }),
+    ])
+    expect(pos.qty).toBe(2)
+    expect(Number.isNaN(pos.qty)).toBe(false)
+  })
+})

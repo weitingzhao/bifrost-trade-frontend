@@ -1,4 +1,5 @@
 import type { Execution, OpenOptionPosition } from '@/types/positions'
+import { signedFillQty } from '@/components/positions/quickCloseOffset'
 
 export const OFF_TRACK_ACCOUNT_ID = 'Off-Track'
 
@@ -43,13 +44,14 @@ export function buildOffTrackPositions(
       groups.set(ck, group)
     }
 
-    const qty = ex.qty
-    group.net_qty += qty
-    if (ex.side === 'Buy') {
-      group.buy_cost += Math.abs(qty) * ex.price
-    } else {
-      group.sell_premium += Math.abs(qty) * ex.price
-    }
+    // The API sends `quantity` and IB sides (BUY / SELL / BOT / SLD); reading `qty`
+    // and comparing to 'Buy' summed undefined into NaN, which disabled Close.
+    const signed = signedFillQty(ex)
+    if (signed === 0) continue
+    group.net_qty += signed
+    const notional = Math.abs(signed) * (Number(ex.price) || 0)
+    if (signed > 0) group.buy_cost += notional
+    else group.sell_premium += notional
   }
 
   let positions: OpenOptionPosition[] = []

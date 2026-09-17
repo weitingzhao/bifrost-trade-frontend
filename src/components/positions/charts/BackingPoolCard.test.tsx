@@ -87,31 +87,30 @@ describe('BackingPoolCard', () => {
     expect(document.querySelector('svg')).toBeNull()
   })
 
-  it('renders the ring centre and one legend row per layer', () => {
+  it('renders the ring centre and one role row per layer', () => {
     render(<BackingPoolCard book={makeBook([STOCKS, INCOME, CASH])} />)
 
     // (6,000 + 2,000) / 20,000
     expect(screen.getByText('40%')).toBeInTheDocument()
     expect(screen.getByText('of $20.0k in use')).toBeInTheDocument()
 
-    expect(screen.getAllByRole('row')).toHaveLength(3)
-    expect(screen.getByText('$10,000')).toBeInTheDocument()
-    expect(screen.getByText('100 sh')).toBeInTheDocument()
-    expect(screen.getByText('60% in use')).toBeInTheDocument()
-    expect(screen.getByText('SGOV')).toBeInTheDocument()
-    expect(screen.getByText('PFF')).toBeInTheDocument()
-    expect(screen.getByText('BALI')).toBeInTheDocument()
-    // The role note is a hover on the layer label; Base holdings prints it in full.
-    expect(screen.getByText(STOCKS.label)).toHaveAttribute('title', STOCKS.note)
-    expect(screen.getByText(INCOME.label)).toHaveAttribute('title', INCOME.note)
+    const roles = document.querySelectorAll('[data-role]')
+    expect(roles).toHaveLength(3)
+    const stocks = document.querySelector('[data-role="stocks"]')!
+    expect(stocks).toHaveTextContent('$10,000')
+    expect(stocks).toHaveTextContent('100 sh')
+    expect(stocks).toHaveTextContent('60% in use')
+    expect(document.querySelector('[data-role="cash"]')).toHaveTextContent('SGOV')
+    const income = document.querySelector('[data-role="income"]')!
+    expect(income).toHaveTextContent('PFF')
+    expect(income).toHaveTextContent('BALI')
+    // Every role says what it does for the option book, in the Owner's words.
+    expect(stocks).toHaveTextContent(STOCKS.note)
+    expect(income).toHaveTextContent(INCOME.note)
+    // Income is never counted as cash, so it has no share in use.
+    expect(income).toHaveTextContent('—')
 
-    // Income ETFs carry exactly the Owner's wording; the in-use column stays a dash.
-    expect(screen.getByText('via buying power, not as cash')).toBeInTheDocument()
-    expect(screen.getByTitle('Income ETFs · via buying power, not as cash')).toBeInTheDocument()
-    const incomeRow = screen.getByText('Income ETFs').closest('tr')!
-    expect(incomeRow.lastElementChild).toHaveTextContent('—')
-
-    // Five slices, ring order matches the legend order.
+    // Five slices, ring order matches the role order.
     expect(slices(document.body)).toHaveLength(5)
   })
 
@@ -128,10 +127,9 @@ describe('BackingPoolCard', () => {
     }
     render(<BackingPoolCard book={makeBook([unpricedStocks, INCOME, CASH])} />)
 
-    const stocksRow = screen.getByText('Stocks').closest('tr')!
-    expect(stocksRow.children[1]).toHaveTextContent('—')
-    expect(stocksRow.children[3]).toHaveTextContent('—')
-    expect(screen.getByText('250 sh unpriced — not counted')).toHaveClass('text-warning')
+    const stocksRow = document.querySelector('[data-role="stocks"]')!
+    expect(stocksRow).toHaveTextContent('—')
+    expect(screen.getByText('· 250 sh unpriced — not counted')).toHaveClass('text-warning')
     expect(screen.queryByText('$0')).toBeNull()
 
     // 2,000 / 10,000, starred: the stock layer is missing from the denominator.
@@ -145,10 +143,10 @@ describe('BackingPoolCard', () => {
   it('flags a layer that is held but has no price', () => {
     const unpricedIncome = layer({ role: 'income', label: 'Income ETFs', symbols: ['PFF'] })
     render(<BackingPoolCard book={makeBook([STOCKS, unpricedIncome, CASH])} />)
-    const row = screen.getByText('Income ETFs').closest('tr')!
-    expect(row.children[1]).toHaveTextContent('—')
-    expect(screen.getByText('unpriced — not counted')).toHaveClass('text-warning')
-    expect(screen.getByText('PFF')).toBeInTheDocument()
+    const row = document.querySelector('[data-role="income"]')!
+    expect(row).toHaveTextContent('—')
+    expect(screen.getByText('· unpriced — not counted')).toHaveClass('text-warning')
+    expect(row).toHaveTextContent('PFF')
   })
 
   it('maps a slice click to its target', () => {

@@ -20,7 +20,7 @@ import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { usePositionsScope } from '@/hooks/usePositionsScope'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
 import { PageHeader, PageShell } from '@/components/layout'
-import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EmptyState } from '@/components/data-display'
@@ -31,7 +31,6 @@ import { BackingPoolCard } from '@/components/positions/charts/BackingPoolCard'
 import { ObligationsRoomSection } from '@/components/positions/ObligationsRoomSection'
 import { BaseHoldingsSection } from '@/components/positions/BaseHoldingsSection'
 import { InspectorDrawer, type InspectorState } from '@/components/positions/InspectorDrawer'
-import styles from '@/components/positions/PositionsChartsSection.module.css'
 import { sortObligations, type ObligationsSort } from '@/utils/obligationsRoom'
 import {
   BACKING_ANCHOR_ID,
@@ -43,8 +42,10 @@ import { POSITIONS_PATH } from '@/utils/portfolioLinks'
 import type { AlarmTarget } from '@/hooks/usePositionsAlarm'
 import { ModelBandSection } from './model/ModelBandSection'
 import { useModelBand } from './model/useModelBand'
-import { BackingJudgmentStrip } from './BackingJudgmentStrip'
-import { BackingAssumptionsTable } from './BackingAssumptionsTable'
+import { BackingVerdictPanel } from './BackingVerdictPanel'
+import { positionsUi } from '@/components/positions/positionsUi'
+import { PositionsTier } from '@/components/positions/PositionsTier'
+import { BookFetchMarker } from '@/components/positions/BookFetchMarker'
 import { PlanReservesSection } from './PlanReservesSection'
 import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment'
 
@@ -164,10 +165,16 @@ export default function BackingPage() {
           description="Turn on HOST and/or Secondary above to show the base for those accounts."
         />
       ) : (
-        <div className="min-w-0 space-y-3">
-          <BackingJudgmentStrip judgment={judgment} />
-          <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
-            <div className="min-w-0 space-y-2">
+        <>
+          <PositionsTier label="Verdict" note="one glance, then the model that produced it" />
+          <BackingVerdictPanel judgment={judgment} pressureCeiling={ceiling} />
+
+          <PositionsTier
+            label="Book against the base"
+            note="same two gauges as the Positions cockpit — one computation, read twice"
+          />
+          <div className={positionsUi.bandGrid}>
+            <div className="grid min-w-0 grid-cols-1 gap-3">
               <BookVsBaseCockpit
                 variant="backing"
                 book={book.alarm.book}
@@ -197,10 +204,12 @@ export default function BackingPage() {
                 resolveSpot={book.alarm.resolveSpot}
               />
             </div>
-            <section className={styles.panel} aria-label="Backing pool">
-              <span className="mb-1 block text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-                Backing pool
-              </span>
+            <section className={positionsUi.panel} aria-label="Backing pool">
+              <header className={positionsUi.panelHead}>
+                <span className={positionsUi.cap}>Backing pool</span>
+                <span className={positionsUi.panelTitle}>three roles, one pool</span>
+                <span className={cn(positionsUi.panelNote, 'ml-auto')}>click a role → its rows below</span>
+              </header>
               <BackingPoolCard
                 book={book.alarm.book}
                 onSegmentClick={(target) => {
@@ -214,6 +223,10 @@ export default function BackingPage() {
             </section>
           </div>
 
+          <PositionsTier
+            label="Room to add"
+            note="page estimates from the book’s own numbers, not the broker’s what-if"
+          />
           <div id={BACKING_ANCHOR_ID.room}>
             <RoomToAddSection
               room={room}
@@ -222,6 +235,10 @@ export default function BackingPage() {
               onLevelChange={setLevel}
             />
           </div>
+          <PositionsTier
+            label="Obligations and base"
+            note="two sides of the same symbols — what the options can force, and what is standing behind it"
+          />
           <div id={BACKING_ANCHOR_ID.obligations}>
             <ObligationsRoomSection
               open={obligationsOpen}
@@ -259,39 +276,42 @@ export default function BackingPage() {
               }
             />
           </div>
-          <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
-            <BackingAssumptionsTable judgment={judgment} pressureCeiling={ceiling} />
-            <PlanReservesSection />
-          </div>
-        </div>
+          <PlanReservesSection />
+        </>
       )}
     </>
   )
 
   return (
-    <PageShell className="space-y-3">
-      <PageHeader
-        title="Backing & Model"
-        description="What the options need, what backs them, what is left to sell against — and what the market can do to the book."
-        actions={
-          <div className="flex items-center gap-2">
-            {book.portfolioPositionCount > 0 ? (
-              <Badge variant="secondary" className="text-xs">
-                {scopedCount} position{scopedCount !== 1 ? 's' : ''}
-              </Badge>
-            ) : null}
-            <Link to={positionsHref} className="text-dense-body text-link hover:underline">
-              ← Positions
-            </Link>
-          </div>
-        }
-      />
+    <PageShell padding="compact" className="space-y-3">
+      <section className={positionsUi.pageCard} aria-label="Backing and model">
+        <PageHeader
+          breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Backing &amp; Model</p>}
+          title="Backing & Model"
+          titleSize="large"
+          description="What the options need, what backs them, what is left to sell against — and what the market can do to the book."
+          actions={
+            <span className="flex flex-wrap items-center gap-2.5">
+              <BookFetchMarker />
+              {book.portfolioPositionCount > 0 ? (
+                <span className={cn(positionsUi.mono, 'text-xs text-secondary-foreground')}>
+                  {scopedCount} position{scopedCount !== 1 ? 's' : ''}
+                </span>
+              ) : null}
+              <Link to={positionsHref} className={positionsUi.link}>
+                ← Positions
+              </Link>
+            </span>
+          }
+        />
 
-      {backingBody}
+        {backingBody}
 
-      <div id={BACKING_ANCHOR_ID.model}>
-        <ModelBandSection {...model} />
-      </div>
+        <PositionsTier label="Model" note="hypothetical · one account at a time, never summed" />
+        <div id={BACKING_ANCHOR_ID.model}>
+          <ModelBandSection {...model} />
+        </div>
+      </section>
 
       <InspectorDrawer state={inspector} onClose={() => setInspector({ type: null })} />
     </PageShell>

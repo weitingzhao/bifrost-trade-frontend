@@ -39,6 +39,7 @@ import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTa
 import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
 import { executionPassesLedgerFilters } from '@/pages/portfolio/ledger/ledgerFilterMatch'
 import { LEDGER_ROW_TYPE_TABS, countUnreportedTransactionType, type LedgerRowType } from '@/pages/portfolio/ledger/ledgerRowType'
+import { optGroupsForView } from './ledgerContractGroups'
 
 export type TradeLedgerModelParams = {
   status: StatusResponse | null | undefined
@@ -188,10 +189,32 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     )
     return countUnreportedTransactionType(rows)
   }, [canonData, accountFilter, symbolFilter, allowedOpportunityIds, activeTab, expiryFilterYear, expiryFilterMonth, sincePreset, dateRange])
-  const { data: linkByOptionId = {} } = useLedgerOptionStockLinks(bookFiltered)
-
   // ── OPT groups ───────────────────────────────────────────────────────────
-  const optGroups = useMemo(() => buildOptExecutionGroups(bookFiltered), [bookFiltered])
+  // Open or closed is decided on every fill of a contract; the window only
+  // chooses which contracts are shown (see optGroupsForView).
+  const contractFilterExec = useCallback((e: Execution): boolean => {
+    return executionPassesLedgerFilters(e, {
+      accountFilter,
+      symbolFilter,
+      allowedOpportunityIds,
+      activeTab,
+      expiryFilterYear,
+      expiryFilterMonth,
+      sincePreset: 'all',
+      dateRange,
+      rowType: 'all',
+    })
+  }, [dateRange, accountFilter, symbolFilter, expiryFilterYear, expiryFilterMonth, allowedOpportunityIds, activeTab])
+  const optGroups = useMemo(
+    () => optGroupsForView(bookData?.items ?? [], contractFilterExec, new Set(bookFiltered)),
+    [bookData, bookFiltered, contractFilterExec],
+  )
+  const optGroupFills = useMemo(() => {
+    const fills = new Set(bookFiltered)
+    for (const g of optGroups) for (const t of g.trades) fills.add(t)
+    return [...fills]
+  }, [bookFiltered, optGroups])
+  const { data: linkByOptionId = {} } = useLedgerOptionStockLinks(optGroupFills)
   const closedOptGroups = useMemo(() => optGroups.filter(g => g.status === 'realized'), [optGroups])
   const openOptGroups = useMemo(() => optGroups.filter(g => g.status === 'unrealized'), [optGroups])
 

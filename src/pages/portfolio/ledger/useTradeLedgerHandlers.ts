@@ -6,7 +6,6 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { OptSortCol, StkSortCol } from '@/pages/portfolio/ledger/ledgerTypes'
 import { syncOppositeLegAttribution } from '@/pages/portfolio/ledger/executionUpdateResult'
 import type { LedgerInspectorState } from '@/pages/portfolio/ledger/ledgerInspectorState'
-import { journalSeedFromStockAdd } from '@/pages/portfolio/ledger/ledgerJournalWrite'
 
 type Params = {
   accordionMode: boolean
@@ -20,6 +19,9 @@ type Params = {
   setStkSort: Dispatch<SetStateAction<{ col: StkSortCol; dir: 'asc' | 'desc' }>>
   setInspector: Dispatch<SetStateAction<LedgerInspectorState>>
   setEditExec: Dispatch<SetStateAction<Execution | null>>
+  setCreateSource: Dispatch<SetStateAction<'manual' | 'journal_closed'>>
+  accountFilter: string
+  accounts: string[]
   deleteTarget: Execution | null
   setSyncingId: Dispatch<SetStateAction<number | null>>
   setSyncError: Dispatch<SetStateAction<{ id: number; message: string } | null>>
@@ -73,9 +75,29 @@ export function useTradeLedgerHandlers(p: Params) {
     )
   }
 
-  const handleAddJournal = (accountId: string, symbol: string) => {
-    p.setInspector({ type: 'journal', seed: journalSeedFromStockAdd(accountId, symbol) })
+  // A new journal row goes through the full execution form: instrument, expiry,
+  // strike, right, commission and strategy are all needed to write a row the rest
+  // of the page can group. The Journal face writes only for a contract it was
+  // opened from. Account and symbol arrive filled from a Stocks group header.
+  const openJournalForm = (accountId: string, symbol: string) => {
+    p.setCreateSource('journal_closed')
+    p.setEditExec({
+      account_executions_id: undefined as unknown as number,
+      account_id: accountId,
+      symbol,
+      sec_type: 'STK',
+      side: 'Buy',
+      qty: 0,
+      quantity: 0,
+      price: 0,
+      time: null,
+    } as unknown as Execution)
   }
+
+  const handleAddJournal = (accountId: string, symbol: string) => openJournalForm(accountId, symbol)
+
+  const handleHeaderAddJournal = () =>
+    openJournalForm(p.accountFilter !== 'all' ? p.accountFilter : (p.accounts[0] ?? ''), '')
 
   const handleCloseEditModal = () => {
     p.setEditExec(null)
@@ -119,6 +141,7 @@ export function useTradeLedgerHandlers(p: Params) {
     toggleOptSort,
     toggleStkSort,
     handleAddJournal,
+    handleHeaderAddJournal,
     handleCloseEditModal,
     handleDelete,
     handleSyncOppositeLeg,

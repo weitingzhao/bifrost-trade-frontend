@@ -53,7 +53,7 @@ import {
 } from '@/pages/portfolio/ledger/ledgerInspectorState'
 import { buildLedgerMetricExplainPayload } from '@/pages/portfolio/ledger/ledgerSummaryExplainPayload'
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
-import { journalSeedFromExpired } from '@/pages/portfolio/ledger/ledgerJournalWrite'
+import { expiredCloseTarget } from '@/pages/portfolio/ledger/ledgerJournalWrite'
 import { fillFromViewLinks } from '@/pages/portfolio/ledger/ledgerViewLinks'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import type { OptionStockLinkSummary } from '@/types/trading'
@@ -133,6 +133,7 @@ export default function TradeLedgerPage() {
   // Pagination + modals
   const [stkPageState, setStkPageState] = useState({ scope: '', page: 0 })
   const [editExec, setEditExec] = useState<Execution | null>(null)
+  const [createSource, setCreateSource] = useState<'manual' | 'journal_closed'>('manual')
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   const [linkContext, setLinkContext] = useState<LinkExecutionContext | null>(null)
   const [syncingId, setSyncingId] = useState<number | null>(null)
@@ -255,6 +256,7 @@ export default function TradeLedgerPage() {
     toggleOptSort,
     toggleStkSort,
     handleAddJournal,
+    handleHeaderAddJournal,
     handleCloseEditModal,
     handleDelete,
     handleSyncOppositeLeg,
@@ -270,6 +272,9 @@ export default function TradeLedgerPage() {
     setStkSort,
     setInspector,
     setEditExec,
+    setCreateSource,
+    accountFilter,
+    accounts,
     deleteTarget,
     setSyncingId,
     setSyncError,
@@ -444,7 +449,7 @@ export default function TradeLedgerPage() {
                 size="sm"
                 variant="outline"
                 className="h-7 gap-1.5 text-xs"
-                onClick={() => setInspector({ type: 'journal' })}
+                onClick={handleHeaderAddJournal}
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add journal
@@ -605,9 +610,10 @@ export default function TradeLedgerPage() {
             onLinkStrategy={handleLinkStrategy}
             onLinkStock={openLinks}
             onViewLinks={openLinksFromView}
-            onExpiredClose={(exec, netQty) =>
-              setInspector({ type: 'journal', seed: journalSeedFromExpired(exec, netQty) })
-            }
+            onExpiredClose={group => {
+              const target = expiredCloseTarget(group)
+              if (target.ok) setInspector({ type: 'journal', seed: target.seed })
+            }}
             syncingId={syncingId}
             syncError={syncError}
             onSyncOpposite={handleSyncOppositeLeg}
@@ -693,6 +699,7 @@ export default function TradeLedgerPage() {
           if (e === null) handleCloseEditModal()
           else setEditExec(e)
         }}
+        createSource={createSource}
         linkContext={linkContext}
         setLinkContext={setLinkContext}
       />
@@ -705,8 +712,8 @@ export default function TradeLedgerPage() {
         health={health}
         unlinkBasis={unlinkBasis}
         reconcile={reconcile}
-        accounts={accounts}
         onWrote={refreshAll}
+        onOpenFullJournalForm={handleHeaderAddJournal}
       />
     </PageShell>
   )

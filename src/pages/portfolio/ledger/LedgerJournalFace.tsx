@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { createExecution } from '@/api/trading'
 import { Input } from '@/components/ui/input'
@@ -76,11 +77,53 @@ function Field({
 
 export function LedgerJournalFace({
   seed,
-  accounts,
   onWrote,
+  onOpenFullForm,
 }: {
   seed?: LedgerJournalSeed
-  accounts: string[]
+  onWrote: () => void | Promise<void>
+  onOpenFullForm: () => void
+}) {
+  if (!seed) return <JournalNeedsFullForm onOpenFullForm={onOpenFullForm} />
+  return <JournalFaceForContract seed={seed} onWrote={onWrote} />
+}
+
+/**
+ * The face writes only for a contract it was opened from, because only then does
+ * it hold the contract's key, expiry, strike and instance. A new contract or a
+ * stock row needs every field — the full execution form has them.
+ */
+function JournalNeedsFullForm({ onOpenFullForm }: { onOpenFullForm: () => void }) {
+  return (
+    <div className="flex flex-col gap-2.5 px-3 py-2.5">
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span className="text-dense-body font-bold">Journal entry</span>
+        <span className="rounded-sm border border-[var(--color-warning)] px-1 py-px font-mono text-dense-caption text-[var(--color-warning)]">
+          JOURNAL
+        </span>
+      </div>
+      <p className="text-dense-meta text-muted-foreground leading-relaxed">
+        Open this face from a contract row to close a gap or write an expiry for that contract. A journal row for a
+        contract with no fills here, or for shares, needs every field — account, instrument, expiry, strike, right,
+        commission and strategy — and the full form has them.
+      </p>
+      <div>
+        <Button type="button" size="sm" className="h-7 text-xs" onClick={onOpenFullForm}>
+          Open the full journal form
+        </Button>
+      </div>
+      <p className="border-t border-border/60 pt-2 text-dense-caption text-muted-foreground leading-relaxed">
+        {LEDGER_WRITE_FOOTER_JOURNAL}
+      </p>
+    </div>
+  )
+}
+
+function JournalFaceForContract({
+  seed,
+  onWrote,
+}: {
+  seed: LedgerJournalSeed
   onWrote: () => void | Promise<void>
 }) {
   const [draft, setDraft] = useState<LedgerJournalDraft>(() => journalDraftFromSeed(seed))
@@ -119,7 +162,7 @@ export function LedgerJournalFace({
       <div className="flex flex-wrap gap-1">
         {MODES.map(m => {
           const on = mode === m.id
-          const disabled = m.id === 'assigned' || (m.id === 'expired' && seed?.secType === 'STK')
+          const disabled = m.id === 'assigned'
           return (
             <button
               key={m.id}
@@ -127,9 +170,7 @@ export function LedgerJournalFace({
               disabled={disabled}
               title={
                 disabled
-                  ? m.id === 'assigned'
-                    ? JOURNAL_ASSIGNMENT_DISABLED_TITLE
-                    : 'Expired worthless is for option contracts'
+                  ? JOURNAL_ASSIGNMENT_DISABLED_TITLE
                   : LEAD[m.id]
               }
               onClick={() => setMode(m.id)}
@@ -149,27 +190,15 @@ export function LedgerJournalFace({
       <p className="text-dense-meta text-muted-foreground leading-relaxed">{LEAD[mode]}</p>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2">
-        <Field label="Account">
-          <select
-            className="h-7 rounded-md border border-border bg-background px-1.5 font-mono text-dense-meta"
-            value={draft.accountId}
-            disabled={seed?.lockAccount || assignedLocked}
-            onChange={e => patch({ accountId: e.target.value })}
-          >
-            <option value="">Select…</option>
-            {accounts.map(a => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
-          </select>
+        <Field label="Account" note="the account that holds it">
+          <Input className="h-7 font-mono text-dense-meta" value={draft.accountId} readOnly />
         </Field>
-        <Field label="Contract" note="symbol or full OCC">
+        <Field label="Contract" note="the row this face was opened from">
           <Input
             className="h-7 font-mono text-dense-meta text-sky-400"
             value={draft.symbol}
-            disabled={seed?.lockSymbol || assignedLocked}
-            onChange={e => patch({ symbol: e.target.value })}
+            title={draft.contractKey}
+            readOnly
           />
         </Field>
         <Field label="Side · qty">
@@ -202,15 +231,18 @@ export function LedgerJournalFace({
         <Field label="Source" note="not editable">
           <Input className="h-7 font-mono text-dense-meta text-[var(--color-warning)]" value="journal_closed" readOnly />
         </Field>
-        <Field label="Instance" note="optional, links on save">
+        <Field
+          label="Instance"
+          note={
+            draft.instanceId != null
+              ? "from this contract's fills, with its opportunity"
+              : 'none written — link it afterwards with ⛓'
+          }
+        >
           <Input
             className="h-7 font-mono text-dense-meta text-[var(--color-instance-multi)]"
-            value={draft.instanceId != null ? String(draft.instanceId) : ''}
-            disabled={assignedLocked}
-            onChange={e => {
-              const n = Number(e.target.value)
-              patch({ instanceId: Number.isFinite(n) && n > 0 ? n : undefined })
-            }}
+            value={draft.instanceId != null ? `#${draft.instanceId}` : '—'}
+            readOnly
           />
         </Field>
         <Field label="Note" note="why this row exists">

@@ -16,6 +16,7 @@ type Props = {
   onDelete: () => Promise<void>
   editExec: Execution | null
   setEditExec: (e: Execution | null) => void
+  createSource: 'manual' | 'journal_closed'
   linkContext: LinkExecutionContext | null
   setLinkContext: (ctx: LinkExecutionContext | null) => void
 }
@@ -28,6 +29,7 @@ export function TradeLedgerModals({
   onDelete,
   editExec,
   setEditExec,
+  createSource,
   linkContext,
   setLinkContext,
 }: Props) {
@@ -52,7 +54,7 @@ export function TradeLedgerModals({
           open
           exec={editExec}
           accountOptions={accounts.length > 0 ? accounts : [editExec.account_id]}
-          createSource="manual"
+          createSource={createSource}
           onClose={() => setEditExec(null)}
           onSuccess={() => {
             setEditExec(null)

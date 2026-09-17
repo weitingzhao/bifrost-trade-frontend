@@ -26,15 +26,10 @@ const FACES: { id: LedgerInspectorFace; label: string }[] = [
 ]
 
 function journalSeedKey(seed: LedgerJournalSeed | undefined): string {
-  if (!seed) return 'gap'
-  return [
-    seed.mode,
-    seed.accountId ?? '',
-    seed.symbol ?? '',
-    seed.secType ?? '',
-    String(seed.netQty ?? ''),
-    String(seed.instanceId ?? ''),
-  ].join('|')
+  if (!seed) return 'no-contract'
+  // The contract key, not just account and symbol: two contracts on one symbol
+  // must not share a draft or a half-confirmed write.
+  return [seed.mode, seed.accountId, seed.contractKey, String(seed.netQty ?? ''), String(seed.instanceId ?? '')].join('|')
 }
 
 export function LedgerInspector({
@@ -45,8 +40,8 @@ export function LedgerInspector({
   health,
   unlinkBasis,
   reconcile,
-  accounts,
   onWrote,
+  onOpenFullJournalForm,
 }: {
   state: LedgerInspectorState
   onClose: () => void
@@ -55,8 +50,9 @@ export function LedgerInspector({
   health: LedgerHealthModel
   unlinkBasis: LedgerUnlinkBasis
   reconcile: LedgerReconcileModel
-  accounts: string[]
   onWrote: () => void | Promise<void>
+  /** A journal row for a contract with no fills here, or for shares, needs the full form. */
+  onOpenFullJournalForm: () => void
 }) {
   if (state.type === 'stock') {
     return (
@@ -117,8 +113,8 @@ export function LedgerInspector({
           <LedgerJournalFace
             key={journalSeedKey(state.seed)}
             seed={state.seed}
-            accounts={accounts}
             onWrote={onWrote}
+            onOpenFullForm={onOpenFullJournalForm}
           />
         ) : null}
       </div>

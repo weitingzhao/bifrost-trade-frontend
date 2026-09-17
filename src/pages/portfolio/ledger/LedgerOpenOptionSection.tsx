@@ -3,7 +3,6 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { fmtExpiry, fmtTs, fmtUsd } from '@/lib/format'
 import { LedgerOptContractCell } from './LedgerOptContractCell'
 import { pnlColorClass } from '@/utils/dailyChange'
-import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import {
@@ -51,6 +50,7 @@ import {
 } from '@/components/data-display'
 import { fmtLedgerTradeDate } from './ledgerTradeDate'
 import { ledgerTableMinClass } from './ledgerTableFloors'
+import { expiredCloseTarget } from './ledgerJournalWrite'
 
 function tradesSummary(g: OptExecutionGroup): string {
   return (g.trades ?? [])
@@ -80,7 +80,7 @@ function OpenGroupTable({
   expandedDetailKeys: string[]
   toggleDetailExpand: (key: string) => void
   showExpiredClose?: boolean
-  onExpiredClose?: (ex: Execution, netQty: number) => void
+  onExpiredClose?: (group: OptExecutionGroup) => void
   linkByOptionId: Record<number, OptionStockLinkSummary>
   onViewLinks?: OptGroupCallbacks['onViewLinks']
 }) {
@@ -159,17 +159,21 @@ function OpenGroupTable({
               {showExpiredClose && (
                 <DenseTableCell className={openOptNumCell}>
                   <div onClick={e => e.stopPropagation()}>
-                    {onExpiredClose && g.trades?.[0] != null && (
-                      <IconActionButton
-                        onClick={() => onExpiredClose(g.trades[0], g.net_qty)}
-                        title="Write expiry close"
-                        ariaLabel="Write expiry close"
-                        tone="warn"
-                        size="dense"
-                      >
-                        ✕
-                      </IconActionButton>
-                    )}
+                    {onExpiredClose && (() => {
+                      const target = expiredCloseTarget(g)
+                      return (
+                        <IconActionButton
+                          onClick={() => onExpiredClose(g)}
+                          disabled={!target.ok}
+                          title={target.ok ? 'Write expiry close' : target.reason}
+                          ariaLabel="Write expiry close"
+                          tone="warn"
+                          size="dense"
+                        >
+                          ✕
+                        </IconActionButton>
+                      )
+                    })()}
                   </div>
                 </DenseTableCell>
               )}

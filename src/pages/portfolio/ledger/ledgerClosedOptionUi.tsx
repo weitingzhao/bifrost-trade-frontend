@@ -29,19 +29,20 @@ export const closedOptExpandCell = cn(denseTable.expandColCell, 'w-7 max-w-[1.75
 export function ClosedOptColgroup() {
   return (
     <colgroup>
+      {/* Measured on DEV at the 1240 floor: every figure whole; Contract takes the rest. */}
       <col style={{ width: '1.75rem' }} />
-      <col style={{ width: '28%' }} />
+      <col style={{ width: '15%' }} />
       <col style={{ width: '6.5%' }} />
+      <col style={{ width: '7.5%' }} />
+      <col style={{ width: '3.5%' }} />
       <col style={{ width: '6.5%' }} />
+      <col style={{ width: '8.5%' }} />
       <col style={{ width: '3.5%' }} />
-      <col style={{ width: '5%' }} />
-      <col style={{ width: '6%' }} />
-      <col style={{ width: '3.5%' }} />
-      <col style={{ width: '5%' }} />
-      <col style={{ width: '6%' }} />
+      <col style={{ width: '6.5%' }} />
+      <col style={{ width: '8.5%' }} />
+      <col style={{ width: '9.5%' }} />
       <col style={{ width: '7.5%' }} />
-      <col style={{ width: '8%' }} />
-      <col style={{ width: '7.5%' }} />
+      <col style={{ width: '6.5%' }} />
       <col style={{ width: '8%' }} />
     </colgroup>
   )
@@ -63,17 +64,18 @@ export const closedOptDetailActionsHead = cn(closedOptHeadPrimary, closedOptDeta
 export function ClosedOptDetailColgroup() {
   return (
     <colgroup>
-      <col style={{ width: '18%' }} />
-      <col style={{ width: '16%' }} />
-      <col style={{ width: '9%' }} />
-      <col style={{ width: '6%' }} />
+      {/* Stg / ins and Booking wrap (prototype L:356); the figures and the action buttons do not. */}
+      <col style={{ width: '15.5%' }} />
+      <col style={{ width: '15%' }} />
+      <col style={{ width: '7.5%' }} />
       <col style={{ width: '5%' }} />
+      <col style={{ width: '4.5%' }} />
+      <col style={{ width: '6.5%' }} />
+      <col style={{ width: '6.5%' }} />
+      <col style={{ width: '9.5%' }} />
       <col style={{ width: '7%' }} />
-      <col style={{ width: '6%' }} />
-      <col style={{ width: '7%' }} />
-      <col style={{ width: '7%' }} />
-      <col style={{ width: '8%' }} />
-      <col style={{ width: '11%' }} />
+      <col style={{ width: '10%' }} />
+      <col style={{ width: '13%' }} />
     </colgroup>
   )
 }

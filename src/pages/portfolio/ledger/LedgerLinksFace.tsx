@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { fmtTradeDate, fmtUsd } from '@/lib/format'
+import { fmtIsoDateToken, fmtUsd } from '@/lib/format'
 import type { Execution } from '@/types/positions'
 import type { OptionStockLink } from '@/types/trading'
 import {
@@ -80,7 +80,7 @@ export function LedgerLinksFace({
   const to = data?.to
   const windowLabel =
     from && to
-      ? `same underlying, trade date ±7 days · ${fmtTradeDate(from)} → ${fmtTradeDate(to)}`
+      ? `same underlying, trade date ±7 days · ${fmtIsoDateToken(from)} → ${fmtIsoDateToken(to)}`
       : 'same underlying, trade date ±7 days'
 
   if (!execution || optId == null) {

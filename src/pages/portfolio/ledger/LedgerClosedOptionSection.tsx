@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { fmtTradeDate, fmtTs, fmtUsd, fmtUsdRound } from '@/lib/format'
+import { fmtIsoDateToken, fmtTs, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { fmtExpiryOccToken } from './ledgerContractMark'
 import { pnlColorClass } from '@/utils/dailyChange'
 import type { OptionStockLinkSummary } from '@/types/trading'
@@ -49,6 +49,7 @@ import {
   DenseTableRow,
   ExpandToggleCell,
 } from '@/components/data-display'
+import { fmtLedgerTradeDate } from './ledgerTradeDate'
 
 const CLOSED_PAGE_SIZE = 50
 
@@ -232,7 +233,7 @@ export function LedgerClosedOptionSection({
                       .filter((d): d is string => d != null && String(d).trim() !== '')
                     if (dates.length === 0) return '—'
                     dates.sort()
-                    return fmtTradeDate(dates[0])
+                    return fmtIsoDateToken(dates[0])
                   })()}
                 </DenseTableCell>
                 <DenseTableCell>
@@ -325,12 +326,12 @@ export function LedgerClosedOptionSection({
                     <DenseTableCell
                       title={[
                         ex.time != null ? `Exec time: ${fmtTs(ex.time)}` : null,
-                        ex.report_date ? `Report date: ${fmtTradeDate(ex.report_date)}` : null,
+                        ex.report_date ? `Report date: ${fmtIsoDateToken(ex.report_date)}` : null,
                       ]
                         .filter(Boolean)
                         .join(' | ')}
                     >
-                      {fmtTradeDate(ex.trade_date)}
+                      {fmtLedgerTradeDate(ex.trade_date)}
                     </DenseTableCell>
                     <DenseTableCell>{sideLabel(ex)}</DenseTableCell>
                     <DenseTableCell className={closedOptNumCell}>

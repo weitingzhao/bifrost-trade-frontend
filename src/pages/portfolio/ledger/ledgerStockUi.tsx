@@ -22,37 +22,39 @@ export function StkColgroup({ showSymbolCol }: { showSymbolCol: boolean }) {
   if (showSymbolCol) {
     return (
       <colgroup>
-        <col style={{ width: '10.5rem' }} />
-        <col style={{ width: '6.5rem' }} />
-        <col style={{ width: '5%' }} />
-        <col style={{ width: '8%' }} />
-        <col style={{ width: '6%' }} />
-        <col style={{ width: '4%' }} />
-        <col style={{ width: '5%' }} />
-        <col style={{ width: '6%' }} />
         <col style={{ width: '8%' }} />
         <col style={{ width: '7%' }} />
-        <col style={{ width: '5%' }} />
-        <col style={{ width: '5%' }} />
-        <col style={{ width: '8.5rem' }} />
+        <col style={{ width: '7%' }} />
+        <col style={{ width: '7.5%' }} />
+        <col style={{ width: '8.5%' }} />
+        <col style={{ width: '4.5%' }} />
+        <col style={{ width: '7%' }} />
+        <col style={{ width: '7%' }} />
+        <col style={{ width: '10%' }} />
+        <col style={{ width: '9.5%' }} />
+        <col style={{ width: '7%' }} />
+        <col style={{ width: '8%' }} />
+        <col style={{ width: '9%' }} />
       </colgroup>
     )
   }
 
+  // Measured on DEV at the 1160 floor. Time was 10.5rem for an 11-character
+  // clock while Category, Qty and Comm. clipped; the widths now follow content.
   return (
     <colgroup>
-      <col style={{ width: '10.5rem' }} />
-      <col style={{ width: '6.5rem' }} />
       <col style={{ width: '9%' }} />
+      <col style={{ width: '7.5%' }} />
+      <col style={{ width: '8%' }} />
+      <col style={{ width: '10%' }} />
+      <col style={{ width: '5%' }} />
+      <col style={{ width: '7.5%' }} />
       <col style={{ width: '7%' }} />
-      <col style={{ width: '5%' }} />
-      <col style={{ width: '5%' }} />
-      <col style={{ width: '6%' }} />
-      <col style={{ width: '9%' }} />
-      <col style={{ width: '7%' }} />
-      <col style={{ width: '5%' }} />
-      <col style={{ width: '5%' }} />
-      <col style={{ width: '8.5rem' }} />
+      <col style={{ width: '10.5%' }} />
+      <col style={{ width: '10%' }} />
+      <col style={{ width: '7.5%' }} />
+      <col style={{ width: '8.5%' }} />
+      <col style={{ width: '9.5%' }} />
     </colgroup>
   )
 }

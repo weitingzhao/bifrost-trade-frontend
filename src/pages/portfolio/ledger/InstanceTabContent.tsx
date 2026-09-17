@@ -4,7 +4,6 @@ import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { adjustedRealizedPnlForOptGroup } from '@/utils/ledger/ledgerOptHelpers'
-import { executionDateStr } from '@/utils/ledger/performanceUtils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { LedgerInstanceCard } from './LedgerInstanceCard'
 import { LedgerInstanceFillsTable } from './LedgerInstanceFillsTable'
@@ -27,6 +26,7 @@ import {
   DenseTableRow,
   denseTableNumCell,
 } from '@/components/data-display'
+import { fmtLedgerTradeDate } from './ledgerTradeDate'
 
 function ContractFillBlock({
   group,
@@ -160,6 +160,15 @@ export function InstanceTabContent({
               Raw executions without instance (showing {rawSlice.length} of {rawTotal})
             </h3>
             <DenseDataTable tableClassName={ledgerTableMinClass.t2}>
+              <colgroup>
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '28%' }} />
+                <col style={{ width: '8%' }} />
+                <col style={{ width: '8%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '20%' }} />
+              </colgroup>
               <DenseTableHeader>
                 <DenseTableHeadRow>
                   <DenseTableHead>Date</DenseTableHead>
@@ -168,13 +177,13 @@ export function InstanceTabContent({
                   <DenseTableHead className={denseTableNumCell}>Qty</DenseTableHead>
                   <DenseTableHead className={denseTableNumCell}>Price</DenseTableHead>
                   <DenseTableHead className={denseTableNumCell}>PnL</DenseTableHead>
-                  <DenseTableHead className={`${denseTableNumCell} w-[4.5rem]`}>Actions</DenseTableHead>
+                  <DenseTableHead className={denseTableNumCell}>Actions</DenseTableHead>
                 </DenseTableHeadRow>
               </DenseTableHeader>
               <DenseTableBody>
                 {rawSlice.map(e => (
                   <DenseTableRow key={e.account_executions_id ?? `${e.time}-${e.symbol}`}>
-                    <DenseTableCell className="font-mono">{executionDateStr(e)}</DenseTableCell>
+                    <DenseTableCell className="font-mono">{fmtLedgerTradeDate(e.trade_date)}</DenseTableCell>
                     <DenseTableCell className="font-medium">{e.symbol}</DenseTableCell>
                     <DenseTableCell>{e.side}</DenseTableCell>
                     <DenseTableCell className={denseTableNumCell}>

@@ -26,6 +26,30 @@ export const openOptTradesCell = cn(
   'text-xs font-mono leading-snug align-top',
 )
 
+/** Open-option per-trade detail: T4's eleven columns plus Expiry, Strike and Account. */
+export const openOptDetailTableClass = ledgerTableMinClass.t4Open
+
+export function OpenOptDetailColgroup() {
+  return (
+    <colgroup>
+      <col style={{ width: '12%' }} />
+      <col style={{ width: '6%' }} />
+      <col style={{ width: '7%' }} />
+      <col style={{ width: '11.5%' }} />
+      <col style={{ width: '6%' }} />
+      <col style={{ width: '4%' }} />
+      <col style={{ width: '3.5%' }} />
+      <col style={{ width: '5.5%' }} />
+      <col style={{ width: '5.5%' }} />
+      <col style={{ width: '7.5%' }} />
+      <col style={{ width: '7%' }} />
+      <col style={{ width: '6%' }} />
+      <col style={{ width: '8%' }} />
+      <col style={{ width: '10.5%' }} />
+    </colgroup>
+  )
+}
+
 export function OpenOptColgroup({ showActions = false }: { showActions?: boolean }) {
   return (
     <colgroup>

@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
-import { executionDateStr } from '@/utils/ledger/performanceUtils'
 import { oppositeLegSyncPayload } from './ledgerOppositeLeg'
 import { LedgerBookingTagForFill } from './LedgerBookingTag'
 import { ExecSourceBadge } from './ExecSourceBadge'
@@ -18,6 +17,7 @@ import {
   DenseTableRow,
   denseTableNumCell,
 } from '@/components/data-display'
+import { fmtLedgerTradeDate } from './ledgerTradeDate'
 
 function isBuy(ex: Execution): boolean {
   const s = (ex.side ?? '').toUpperCase()
@@ -40,6 +40,17 @@ export function LedgerInstanceFillsTable({
 } & OptGroupCallbacks) {
   return (
     <DenseDataTable wrapClassName="mt-1" tableClassName={ledgerTableMinClass.t2}>
+      {/* Measured on DEV at the 820 floor: the five action buttons stay whole; Booking wraps. */}
+      <colgroup>
+        <col style={{ width: '21%' }} />
+        <col style={{ width: '11%' }} />
+        <col style={{ width: '7%' }} />
+        <col style={{ width: '6%' }} />
+        <col style={{ width: '9%' }} />
+        <col style={{ width: '8%' }} />
+        <col style={{ width: '20%' }} />
+        <col style={{ width: '18%' }} />
+      </colgroup>
       <DenseTableHeader>
         <DenseTableHeadRow>
           <DenseTableHead>Date · account</DenseTableHead>
@@ -62,7 +73,7 @@ export function LedgerInstanceFillsTable({
           return (
             <DenseTableRow key={oid ?? `${ex.time}-${ex.symbol}-${ex.price}`}>
               <DenseTableCell>
-                <span className="font-mono text-foreground">{executionDateStr(ex)}</span>
+                <span className="font-mono text-foreground">{fmtLedgerTradeDate(ex.trade_date)}</span>
                 {ex.account_id ? (
                   <span className="ml-1.5 font-mono text-dense-meta text-muted-foreground">
                     {ex.account_id}

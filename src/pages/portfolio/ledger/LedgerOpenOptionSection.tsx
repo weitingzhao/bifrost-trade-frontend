@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { fmtExpiry, fmtTradeDate, fmtTs, fmtUsd } from '@/lib/format'
+import { fmtExpiry, fmtTs, fmtUsd } from '@/lib/format'
 import { LedgerOptContractCell } from './LedgerOptContractCell'
 import { pnlColorClass } from '@/utils/dailyChange'
 import type { Execution } from '@/types/positions'
@@ -19,6 +19,8 @@ import { LedgerStgInsCell } from './LedgerStgInsCell'
 import type { OptGroupCallbacks } from './ledgerTypes'
 import {
   OpenOptColgroup,
+  OpenOptDetailColgroup,
+  openOptDetailTableClass,
   openOptContractCell,
   openOptContractHead,
   openOptExpandCell,
@@ -29,12 +31,10 @@ import {
   openOptTradesCell,
 } from './ledgerOpenOptionUi'
 import {
-  ClosedOptDetailColgroup,
   closedOptContractHead,
   closedOptDetailActionsCell,
   closedOptDetailActionsHead,
   closedOptDetailContractCell,
-  closedOptDetailTableClass,
   closedOptHeadPrimary,
   closedOptNumCell,
 } from './ledgerClosedOptionUi'
@@ -50,6 +50,7 @@ import {
   ExpandToggleCell,
   IconActionButton,
 } from '@/components/data-display'
+import { fmtLedgerTradeDate } from './ledgerTradeDate'
 
 function tradesSummary(g: OptExecutionGroup): string {
   return (g.trades ?? [])
@@ -256,8 +257,8 @@ export function LedgerOpenOptionSection({
         Details (per trade)
         <InfoTooltip text="Click an open option row above to load its execution details." />
       </h5>
-      <DenseDataTable scrollX={false} tableClassName={closedOptDetailTableClass}>
-        <ClosedOptDetailColgroup />
+      <DenseDataTable tableClassName={openOptDetailTableClass}>
+        <OpenOptDetailColgroup />
         <DenseTableHeader>
           <DenseTableHeadRow>
             <DenseTableHead className={closedOptContractHead}>Contract</DenseTableHead>
@@ -312,7 +313,7 @@ export function LedgerOpenOptionSection({
                       <LedgerStgInsCell ex={ex} />
                     </DenseTableCell>
                     <DenseTableCell title={ex.time != null ? `Exec time: ${fmtTs(ex.time)}` : undefined}>
-                      {fmtTradeDate(ex.trade_date)}
+                      {fmtLedgerTradeDate(ex.trade_date)}
                     </DenseTableCell>
                     <DenseTableCell>{sideLabel(ex)}</DenseTableCell>
                     <DenseTableCell className={closedOptNumCell}>

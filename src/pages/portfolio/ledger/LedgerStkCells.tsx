@@ -1,5 +1,5 @@
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { fmtPctCompact, fmtTradeDate, fmtEpochEtClock, fmtUsd, fmtUsdRound } from '@/lib/format'
+import { fmtPctCompact, fmtEpochEtClock, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import {
@@ -16,6 +16,7 @@ import {
   stkGroupSnapLabelClass,
 } from './ledgerSharedClasses'
 import { DenseTableCell, DenseTableHead, denseTable, denseTableNumCell } from '@/components/data-display'
+import { fmtLedgerTradeDate } from './ledgerTradeDate'
 
 export function LedgerStkNotionalCell({ ex }: { ex: Execution }) {
   const n = stkNotionalAbsUsd(ex)
@@ -130,7 +131,7 @@ export function LedgerStkTimeCells({
       <DenseTableCell className={timeClassName} title={ex.time != null ? timeLabel : undefined}>
         {timeLabel}
       </DenseTableCell>
-      <DenseTableCell className={tradeDateClassName}>{fmtTradeDate(ex.trade_date)}</DenseTableCell>
+      <DenseTableCell className={tradeDateClassName}>{fmtLedgerTradeDate(ex.trade_date)}</DenseTableCell>
     </>
   )
 }

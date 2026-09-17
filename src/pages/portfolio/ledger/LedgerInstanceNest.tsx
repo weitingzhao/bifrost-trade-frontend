@@ -51,6 +51,16 @@ function ContractTable({
         {title}
       </h6>
       <NestedDenseTable tableClassName={ledgerTableMinClass.t1}>
+        {/* Measured on DEV at the 660 floor; Booking wraps rather than clipping. */}
+        <colgroup>
+          <col style={{ width: '24%' }} />
+          <col style={{ width: '13%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '21%' }} />
+        </colgroup>
         <DenseTableHeader>
           <DenseTableHeadRow>
             <DenseTableHead>Contract</DenseTableHead>

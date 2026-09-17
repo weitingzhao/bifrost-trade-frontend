@@ -1,4 +1,4 @@
-import { fmtPct1, fmtPct2, fmtUsd } from '@/lib/format'
+import { fmtUsd } from '@/lib/format'
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
@@ -12,12 +12,6 @@ import type { StkLedgerBucket } from '@/utils/ledger/stkBuckets'
 import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 // ─── Formatting ───
-
-function fmtPF(v: number | null | undefined): string {
-  if (v == null) return '—'
-  if (!Number.isFinite(v)) return '∞'
-  return v.toFixed(2)
-}
 
 // ─── Types ───
 
@@ -279,29 +273,6 @@ export function CalendarSummaryPanel({
 
   if (!summary) return null
 
-  const totalPnl = summary.total_pnl ?? (summary.net_pnl + summary.total_unrealized_pnl)
-
-  const summaryMetrics: MetricDef[] = [
-    { label: 'Total PnL', value: fmtUsd(totalPnl), colorValue: totalPnl, emphasize: true },
-    { label: 'Realized', value: fmtUsd(summary.realized ?? summary.net_pnl) },
-    { label: 'Net', value: fmtUsd(summary.net_pnl), colorValue: summary.net_pnl, emphasize: true },
-    { label: 'Unrealized', value: fmtUsd(summary.total_unrealized_pnl), colorValue: summary.total_unrealized_pnl, valueTone: 'unrealized' },
-    { label: 'Comm', value: fmtUsd(summary.total_commission) },
-    { label: 'Trades', value: String(summary.trade_count ?? 0) },
-    { label: 'Win Rate', value: fmtPct1(summary.win_rate) },
-    { label: 'Return%', value: fmtPct2(summary.return_pct) },
-    { label: 'PF', value: fmtPF(summary.profit_factor) },
-    {
-      label: 'Max DD',
-      value: summary.max_drawdown != null ? fmtUsd(-Math.abs(summary.max_drawdown)) : '—',
-      colorValue: summary.max_drawdown != null ? -Math.abs(summary.max_drawdown) : undefined,
-    },
-    {
-      label: 'Avg W/L',
-      value: `${fmtUsd(summary.avg_win)} / ${fmtUsd(summary.avg_loss)}`,
-    },
-  ]
-
   const optionMetrics: MetricDef[] = [
     { label: 'Realized', value: fmtUsd(optRealizedPnl), colorValue: optRealizedPnl },
     { label: 'Comm', value: fmtUsd(rOpt?.commission ?? 0) },
@@ -352,14 +323,7 @@ export function CalendarSummaryPanel({
 
   return (
     <div className={cn('min-w-0 flex-col', styles.calendarSummaryPanel)}>
-      {/* Legacy: Summary row — type + metrics in one horizontal flow */}
-      <SummaryMetricRow
-        title="Summary"
-        metrics={summaryMetrics}
-        accentTitle
-        horizontalMetrics
-      />
-
+      {/* The range-level metrics moved to Reading (Design F1); by asset class stays here. */}
       {/* Legacy: Option | Stocks | FI | Cash-like */}
       <div className={cn('mt-1 grid grid-cols-2 xl:grid-cols-4', styles.summaryAssetGrid)}>
         <SummaryColumn title="Option" metrics={optionMetrics} empty={!hasOpt} />

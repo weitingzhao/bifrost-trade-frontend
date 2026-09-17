@@ -62,6 +62,8 @@ export interface FlexUploadResponse {
 export interface PerformanceSummary {
   net_pnl: number
   total_pnl?: number
+  /** What the API sends for realized P&L. */
+  total_realized_pnl?: number
   realized?: number
   total_commission: number
   trade_count: number

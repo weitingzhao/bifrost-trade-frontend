@@ -1,5 +1,4 @@
 import type { UseQueryResult } from '@tanstack/react-query'
-import type { ByDayRangeData, PerformanceDayPnLBulkResult } from '@/types/trading'
 import type { OpportunitiesResponse, StrategyInstancesResponse } from '@/types/strategy'
 import type { PerformanceTimeRange } from '@/utils/ledger/performanceUtils'
 import { cn } from '@/lib/utils'
@@ -11,15 +10,16 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { SegmentControl, type SegmentOption } from '@/components/data-display'
-import { fmtPnl, fmtUsd, formatRangeDate } from './performanceFormatters'
-import { computeByDayRangeTotals } from './performanceRangeTotals'
+import { formatRangeDate } from './performanceFormatters'
 import { TIME_RANGE_OPTIONS } from './performanceConstants'
-import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
+import { perfUi } from './performanceUi'
 
 const TIME_RANGE_SEGMENT_OPTIONS: SegmentOption[] = TIME_RANGE_OPTIONS.map(o => ({
   value: o.id,
   label: o.label,
 }))
+
+const selectTrigger = 'h-5.5 w-[10.5rem] rounded-sm border-border bg-background px-1.5 text-dense-body'
 
 interface PerformanceFilterBarProps {
   timeRange: PerformanceTimeRange
@@ -32,17 +32,12 @@ interface PerformanceFilterBarProps {
   onInstChange: (v: string) => void
   oppQuery: UseQueryResult<OpportunitiesResponse>
   instQuery: UseQueryResult<StrategyInstancesResponse>
-  byDayRangeData: ByDayRangeData | null | undefined
-  /** Options as-of-today snapshot from bulk (R in range + open U). */
-  optAsOf?: PerformanceDayPnLBulkResult['optAsOf']
+  /** `N active days · N trades · capital base $X`. */
+  scopeNote: string
   isLoading?: boolean
 }
 
-function toneClass(value: number): string {
-  if (Math.abs(value) < 0.005) return styles.sumNumber
-  return value >= 0 ? styles.tonePositive : styles.toneNegative
-}
-
+/** What the page is reading: the range, the strategy and instance it is narrowed to, and how much that holds. */
 export function PerformanceFilterBar({
   timeRange,
   onTimeRange,
@@ -54,127 +49,73 @@ export function PerformanceFilterBar({
   onInstChange,
   oppQuery,
   instQuery,
-  byDayRangeData,
-  optAsOf,
+  scopeNote,
   isLoading,
 }: PerformanceFilterBarProps) {
-  const totals = computeByDayRangeTotals(byDayRangeData)
-  const optionTitle =
-    'Option R = realized in range (Σ monthly OPT R). Open = still-unmatched option premium as of Chicago today (not Σ monthly OPT U). Total = R + Open. Monthly OPT U column stays a path metric.'
-
-
   return (
-    <div className={styles.filterBar} aria-label="Time range and daily statistics">
-      {isLoading && (
-        <p className="text-xs text-muted-foreground">Loading…</p>
-      )}
-      <div className={styles.filterGroup}>
-        <fieldset className={styles.filterFieldset} aria-label="Time range">
-          <span className={styles.filterLegend}>Time range</span>
-          <SegmentControl
-            size="sm"
-            options={TIME_RANGE_SEGMENT_OPTIONS}
-            value={timeRange}
-            onChange={v => onTimeRange(v as PerformanceTimeRange)}
-            ariaLabel="Time range"
-          />
-        </fieldset>
+    <div
+      className="flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-md border border-border bg-secondary/40 px-2.5 py-1.75"
+      aria-label="Time range and strategy scope"
+    >
+      <span className="inline-flex items-center gap-2">
+        <span className={perfUi.cap}>Time range</span>
+        <SegmentControl
+          size="xs"
+          options={TIME_RANGE_SEGMENT_OPTIONS}
+          value={timeRange}
+          onChange={v => onTimeRange(v as PerformanceTimeRange)}
+          ariaLabel="Time range"
+        />
+      </span>
 
-        <fieldset className={cn(styles.filterFieldset, styles.filterFieldsetCapsule)} aria-label="Strategy filter">
-          <span className={styles.filterLegend}>Strategy</span>
-          <Select
-            value={selectedOppId != null ? String(selectedOppId) : 'all'}
-            onValueChange={onOppChange}
-          >
-            <SelectTrigger className={cn(styles.filterSelect, 'w-[9.5rem]')}>
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {(oppQuery.data?.items ?? []).map((o) => (
-                <SelectItem key={o.strategy_opportunity_id} value={String(o.strategy_opportunity_id)}>
-                  {o.name ?? `#${o.strategy_opportunity_id}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </fieldset>
+      <label className="inline-flex items-center gap-1.5 text-dense-body text-muted-foreground">
+        Strategy
+        <Select value={selectedOppId != null ? String(selectedOppId) : 'all'} onValueChange={onOppChange}>
+          <SelectTrigger className={selectTrigger} aria-label="Strategy">
+            <SelectValue placeholder="All strategies" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All strategies</SelectItem>
+            {(oppQuery.data?.items ?? []).map(o => (
+              <SelectItem key={o.strategy_opportunity_id} value={String(o.strategy_opportunity_id)}>
+                {o.name ?? `#${o.strategy_opportunity_id}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </label>
 
-        <fieldset className={cn(styles.filterFieldset, styles.filterFieldsetCapsule)} aria-label="Instance filter">
-          <span className={styles.filterLegend}>Instance</span>
-          <Select
-            value={selectedInstId != null ? String(selectedInstId) : 'all'}
-            onValueChange={onInstChange}
-            disabled={selectedOppId == null}
-          >
-            <SelectTrigger className={cn(styles.filterSelect, 'w-[9.5rem]')}>
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {(instQuery.data?.items ?? []).map((i) => (
-                <SelectItem key={i.strategy_instance_id} value={String(i.strategy_instance_id)}>
-                  {i.label ?? `#${i.strategy_instance_id}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </fieldset>
+      <label className="inline-flex items-center gap-1.5 text-dense-body text-muted-foreground">
+        Instance
+        <Select
+          value={selectedInstId != null ? String(selectedInstId) : 'all'}
+          onValueChange={onInstChange}
+          disabled={selectedOppId == null}
+        >
+          <SelectTrigger className={selectTrigger} aria-label="Instance">
+            <SelectValue placeholder="All instances" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All instances</SelectItem>
+            {(instQuery.data?.items ?? []).map(i => (
+              <SelectItem key={i.strategy_instance_id} value={String(i.strategy_instance_id)}>
+                {i.label ?? `#${i.strategy_instance_id}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </label>
 
-        <span className={styles.rangeLabel} aria-label="Trade range">
-          <span className={styles.rangeLabelTitle}>Range</span>
-          {formatRangeDate(sinceStr)} ~ {formatRangeDate(untilStr)}
-        </span>
+      <span
+        className={cn(perfUi.mono, 'whitespace-nowrap rounded-sm border border-border px-1.75 py-0.5 text-dense-meta text-muted-foreground')}
+        aria-label="Trade range"
+      >
+        RANGE {formatRangeDate(sinceStr)} ~ {formatRangeDate(untilStr)}
+      </span>
 
-        {totals && (
-          <span className={styles.assetTotalsInline} aria-label="Total sum of all days">
-            <span className={styles.assetTotalKv} title={optionTitle}>
-              Option{' '}
-              <span className="text-muted-foreground">R </span>
-              <span className={toneClass(optAsOf?.realizedInRange ?? totals.optRealized)}>
-                {fmtPnl(optAsOf?.realizedInRange ?? totals.optRealized)}
-              </span>
-              {optAsOf != null ? (
-                <>
-                  {' · '}
-                  <span className="text-muted-foreground">Open </span>
-                  <span className={styles.sumNumber}>{fmtPnl(optAsOf.openUnrealized)}</span>
-                  {' · '}
-                  <span className="text-muted-foreground">Total </span>
-                  <span className={toneClass(optAsOf.total)}>{fmtPnl(optAsOf.total)}</span>
-                  <span className="text-muted-foreground">
-                    {' '}
-                    (as of {optAsOf.asOfDateStr.slice(5)})
-                  </span>
-                </>
-              ) : (
-                <>
-                  {' / '}
-                  <span className={styles.sumNumber}>{fmtPnl(totals.optUnrealized)}</span>
-                </>
-              )}
-            </span>
-            <span className={styles.assetTotalKv}>
-              Stocks{' '}
-              <span className={styles.sumNumber}>{fmtUsd(totals.stocksNotional)}</span>
-              {' / '}
-              <span className={toneClass(totals.stocksRealized)}>{fmtPnl(totals.stocksRealized)}</span>
-            </span>
-            <span className={styles.assetTotalKv}>
-              FI Stream{' '}
-              <span className={styles.sumNumber}>{fmtUsd(totals.fiNotional)}</span>
-              {' / '}
-              <span className={toneClass(totals.fiRealized)}>{fmtPnl(totals.fiRealized)}</span>
-            </span>
-            <span className={styles.assetTotalKv}>
-              Cash-like{' '}
-              <span className={styles.sumNumber}>{fmtUsd(totals.cashNotional)}</span>
-              {' / '}
-              <span className={toneClass(totals.cashRealized)}>{fmtPnl(totals.cashRealized)}</span>
-            </span>
-          </span>
-        )}
-      </div>
+      <span className={cn(perfUi.mono, 'ml-auto whitespace-nowrap text-dense-meta text-muted-foreground')}>
+        {isLoading ? 'Loading…' : scopeNote}
+      </span>
     </div>
   )
 }

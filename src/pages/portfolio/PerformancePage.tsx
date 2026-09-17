@@ -11,7 +11,6 @@ import { buildEquityGrowthChart, DEFAULT_LAYERS_VISIBLE, type GrowthLayer, type 
 import { buildFiBarChart } from '@/utils/ledger/fiBarChart'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { PageHeader, PageShell } from '@/components/layout'
-import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { EquityGrowthCard } from '@/pages/portfolio/performance/components/EquityGrowthCard'
 import MonthlyPnLTable from '@/pages/portfolio/performance/components/MonthlyPnLTable'
 import OptionsModeBridgePanel from '@/pages/portfolio/performance/components/OptionsModeBridgePanel'
@@ -20,15 +19,29 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { PerformanceFilterBar } from '@/pages/portfolio/performance/PerformanceFilterBar'
 import { PerformanceCalendarSection } from '@/pages/portfolio/performance/PerformanceCalendarSection'
 import { PerformanceOnTheFlySection } from '@/pages/portfolio/performance/PerformanceOnTheFlySection'
-import { PERFORMANCE_HELP } from '@/pages/portfolio/performance/performanceConstants'
+import { PerformanceTier } from '@/pages/portfolio/performance/PerformanceTier'
+import { PerformanceLayerChips, type LayerChipValues } from '@/pages/portfolio/performance/PerformanceLayerChips'
+import { PerformanceReadingPanel } from '@/pages/portfolio/performance/PerformanceReadingPanel'
+import { PerformanceReturnBasis } from '@/pages/portfolio/performance/PerformanceReturnBasis'
+import { buildReadingMetrics, buildScopeNote } from '@/pages/portfolio/performance/performanceReading'
+import { perfUi } from '@/pages/portfolio/performance/performanceUi'
 import {
   buildCalendarGrid,
   buildDayMapFromApi,
   buildDayMapFromBulk,
   type CalendarAssetTab,
 } from '@/pages/portfolio/performance/performanceCalendarModel'
-import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 import pageStyles from '@/pages/portfolio/performance/PerformancePage.module.css'
+
+const PAGE_LEAD =
+  'Did the system make money — by layer, by month, by day. Deposits and withdrawals recorded in Transfer & Pay are not P&L.'
+
+const RANGE_WORD: Record<PerformanceTimeRange, string> = {
+  quarter: 'this quarter',
+  halfyear: 'half year',
+  year: 'year',
+  '3year': '3 years',
+}
 
 export default function PerformancePage() {
   const [timeRange, setTimeRange] = useState<PerformanceTimeRange>('quarter')
@@ -105,6 +118,35 @@ export default function PerformancePage() {
     })
   }, [bulk, perf, growthUnit, growthLayersVisible, optionsPnLMode])
 
+  // The chips speak dollars whatever the curve's unit; same builder, same last point.
+  const chipValues = useMemo((): LayerChipValues | null => {
+    if (!bulk?.byDayRangeData) return null
+    const usd =
+      growthUnit === 'usd'
+        ? equityGrowthChart
+        : buildEquityGrowthChart({
+          byDayRangeData: bulk.byDayRangeData,
+          capitalBase: perf?.transaction?.capital_base ?? perf?.transaction?.start_equity ?? null,
+          growthUnit: 'usd',
+          layersVisible: growthLayersVisible,
+          optionsMode: optionsPnLMode,
+        })
+    if (!usd) return null
+    const { options, stocks, fixed_income, cash_like } = usd.last
+    return {
+      last: { options, stocks, fixed_income, cash_like },
+      optionsOpen: bulk.optAsOf?.openUnrealized ?? null,
+    }
+  }, [bulk, perf, growthUnit, equityGrowthChart, growthLayersVisible, optionsPnLMode])
+
+  const readingMetrics = useMemo(() => buildReadingMetrics(perf), [perf])
+  const scopeNote = useMemo(() => buildScopeNote(bulk?.byDayRangeData, perf), [bulk, perf])
+  const rangeEndsToday = useMemo(() => {
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    return untilStr >= today
+  }, [untilStr])
+
   const fiBarData = useMemo(() => {
     if (!bulk?.byDayRangeData) return null
     const fiMv = sumStkPositionMarketValueForBucket(monitorStatus, 'fixed_income')
@@ -159,15 +201,12 @@ export default function PerformancePage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={styles.pageCard} aria-label="Performance">
+      <section className={perfUi.pageCard} aria-label="Performance">
         <PageHeader
           breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Performance</p>}
-          title={
-            <span className="inline-flex items-center gap-1.5">
-              Performance
-              <InfoTooltip text={PERFORMANCE_HELP} />
-            </span>
-          }
+          title="Performance"
+          titleSize="large"
+          description={PAGE_LEAD}
         />
 
         {perfQuery.isError && (
@@ -177,26 +216,40 @@ export default function PerformancePage() {
           />
         )}
 
-        <section
-          className={pageStyles.timeRangeBlock}
-          aria-label="Time range and daily statistics"
-        >
-          <PerformanceFilterBar
-            timeRange={timeRange}
-            onTimeRange={setTimeRange}
-            sinceStr={sinceStr}
-            untilStr={untilStr}
-            selectedOppId={selectedOppId}
-            selectedInstId={selectedInstId}
-            onOppChange={handleOppChange}
-            onInstChange={handleInstChange}
-            oppQuery={oppQuery}
-            instQuery={instQuery}
-            byDayRangeData={bulk?.byDayRangeData}
-            optAsOf={bulk?.optAsOf}
-            isLoading={filtersLoading}
-          />
+        <PerformanceFilterBar
+          timeRange={timeRange}
+          onTimeRange={setTimeRange}
+          sinceStr={sinceStr}
+          untilStr={untilStr}
+          selectedOppId={selectedOppId}
+          selectedInstId={selectedInstId}
+          onOppChange={handleOppChange}
+          onInstChange={handleInstChange}
+          oppQuery={oppQuery}
+          instQuery={instQuery}
+          scopeNote={scopeNote}
+          isLoading={filtersLoading}
+        />
 
+        <PerformanceTier
+          label="Reading"
+          note="each chip carries what the layer made and switches that layer on the curve below"
+        />
+        <PerformanceLayerChips
+          values={chipValues}
+          layersVisible={growthLayersVisible}
+          onLayerToggle={handleLayerToggle}
+          optionsPnLMode={optionsPnLMode}
+          netCashFlow={perf?.transaction?.net_cash_flow ?? null}
+        />
+        <PerformanceReadingPanel rangeLabel={RANGE_WORD[timeRange]} metrics={readingMetrics} />
+        <PerformanceReturnBasis perf={perf} rangeEndsToday={rangeEndsToday} />
+
+        <PerformanceTier
+          label="Shape"
+          note="how it got here · the switches on the curve reach the curve only"
+        />
+        <section className={pageStyles.timeRangeBlock} aria-label="Equity growth and options path">
           <EquityGrowthCard
             chartData={equityGrowthChart}
             fiBarData={fiBarData}
@@ -215,17 +268,6 @@ export default function PerformancePage() {
             asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
             optionsPnLMode={optionsPnLMode}
           />
-
-          <MonthlyPnLTable
-            byDayRangeData={bulk?.byDayRangeData ?? null}
-            optOpenByOpenMonth={bulk?.byDayRangeData?.optOpenByOpenMonth ?? null}
-            optOpenLegs={bulk?.optOpenLegs ?? null}
-            asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
-            isLoading={bulkQuery.isLoading}
-            isError={bulkQuery.isError}
-            onRetry={() => void bulkQuery.refetch()}
-            className={pageStyles.byDayTableWrap}
-          />
         </section>
 
         <PerformanceCalendarSection
@@ -241,6 +283,21 @@ export default function PerformancePage() {
           bulk={bulk}
           isLoading={filtersLoading}
           positionCategoryByAccountContract={positionCategoryByAccountContract}
+        />
+
+        <PerformanceTier
+          label="Audit"
+          note="above looks at trend — below reconciles. Month rows open into days."
+        />
+        <MonthlyPnLTable
+          byDayRangeData={bulk?.byDayRangeData ?? null}
+          optOpenByOpenMonth={bulk?.byDayRangeData?.optOpenByOpenMonth ?? null}
+          optOpenLegs={bulk?.optOpenLegs ?? null}
+          asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
+          isLoading={bulkQuery.isLoading}
+          isError={bulkQuery.isError}
+          onRetry={() => void bulkQuery.refetch()}
+          className={pageStyles.byDayTableWrap}
         />
 
         <PerformanceOnTheFlySection

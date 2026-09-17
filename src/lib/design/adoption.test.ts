@@ -116,8 +116,9 @@ describe('design adoption', () => {
     // against page rev 2026-09-16.9 (pending 20→19, reviewing 2→3), then
     // aligned on the Owner's look (reviewing 3→2). Performance walked and built
     // 2026-09-17 against page rev 2026-09-16.11 (pending 19→18, reviewing 2→3),
-    // then signed off by the Owner (reviewing 3→2).
-    expect(counts.byState.reviewing).toBe(2)
+    // then signed off by the Owner (reviewing 3→2). Positions walked and built
+    // 2026-09-17 against page rev 2026-09-17.1 (pending 18→17, reviewing 2→3).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -136,6 +137,7 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/backing',
+      '/portfolio/positions',
       '/trade/plans',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
@@ -170,7 +172,7 @@ describe('design adoption', () => {
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.
-    expect(counts.byState.pending).toBe(18)
+    expect(counts.byState.pending).toBe(17)
     expect(counts.byState.backlog).toBe(4)
   })
 

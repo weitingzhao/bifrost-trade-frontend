@@ -240,7 +240,16 @@ export const ROUTES: readonly RouteEntry[] = [
   },
   { path: '/portfolio/accounts', label: 'Accounts', crumbs: PORTFOLIO },
   { path: '/portfolio/ledger', label: 'Trade Ledger', crumbs: PORTFOLIO },
-  { path: '/portfolio/transfer', label: 'Transfer & Pay', crumbs: PORTFOLIO },
+  {
+    path: '/portfolio/transfer',
+    label: 'Transfer & Pay',
+    crumbs: PORTFOLIO,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-16.9',
+      note: 'Walked 2026-09-16 against Portfolio Transfer.dc.html at that rev, on DEV data (116 rows, 77 inside the default last-365 window). Built: the four bands — header with the "A record, not an instrument" bubble and a fetch time; What I am looking at with a count on every account, type and kind chip and the classification rules printed; 7-column detail with DDMMMYY dates, month separators carrying each month\'s events and net, and cancellations in the two states the data has; Summary by period saying it ignores the type filter on purpose; Downstream stating both that returns are ruled net of these flows and that nothing subtracts them yet. Two production defects fixed alongside: the date column read a string ts as unusable and showed 116 em dashes, and the period-over-period rate divided by the current period (Total 2026 +1628.2% → +106.5%). Owner to look before aligned.',
+    },
+  },
 
   // ── Trade ──────────────────────────────────────────────────────────────
   {

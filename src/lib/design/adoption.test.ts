@@ -101,8 +101,9 @@ describe('design adoption', () => {
     expect(counts.aligned).toBe(5)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
-    // built on the strategy_plan table (pending 18→17).
-    expect(counts.byState.reviewing).toBe(2)
+    // built on the strategy_plan table. Transfer & Pay joined in R12, built in
+    // R11 against Rev 2026-09-16.9 (pending 22→21).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -117,6 +118,7 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/backing',
+      '/portfolio/transfer',
       '/trade/plans',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
@@ -148,7 +150,9 @@ describe('design adoption', () => {
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
     expect(counts.byState.unbuilt).toBe(43)
-    expect(counts.byState.pending).toBe(22)
+    // 22 until R12 tagged Transfer & Pay: `pending` is the built-but-unwalked
+    // pool, so a page leaving it for `reviewing` takes one off this count.
+    expect(counts.byState.pending).toBe(21)
     expect(counts.byState.backlog).toBe(4)
   })
 

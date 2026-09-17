@@ -557,7 +557,7 @@ import {
   colSpan={13}
   label="SEPA"
   variant="category"
-  onClick={openCategoriesModal}
+  onClick={onCategoryClick}
   title="Manage categories and assign to positions"
 />
 <GroupSubtotalRow labelColSpan={3} label="SEPA subtotal">

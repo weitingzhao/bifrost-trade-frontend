@@ -106,18 +106,13 @@ export function pnlColorClass(value: number | null | undefined): string {
 }
 
 /**
- * Unrealized PnL — site-wide neutral. Colour is withheld, not assigned.
+ * Unrealized PnL — orange for the whole column, whatever its sign
+ * (DESIGN_CONTRACTS §14.7, which replaces the uncoloured §11.12 treatment).
  *
- * The business rule has not changed: an open position's mark is not a
- * conclusion, so it does not get a direction colour. What changed is how that
- * is said. It used to be yellow, which was the same hex as `lamp-yellow`, so a
- * mark said "degraded" to anyone reading the lamps. Withdrawing the colour
- * says "not a conclusion" more precisely than another hue could, and it is the
- * move this codebase already makes elsewhere — below the sample floor a rate
- * is withheld and only its count is shown (DESIGN_CONTRACTS §11.12).
- *
- * The value, its sign and `tabular-nums` are untouched. Mixed realised /
- * unrealized tables distinguish by column header rather than a tag per row.
+ * An open position's mark is still not a conclusion, so it never takes the
+ * profit / loss colours. Orange is the old Trade System's reading and the one
+ * traders expect. It no longer collides with `lamp-yellow`: the lamp amber
+ * lives on dots and tags, this orange only on numbers.
  */
 export function unrealizedPnlColorClass(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return 'text-muted-foreground'

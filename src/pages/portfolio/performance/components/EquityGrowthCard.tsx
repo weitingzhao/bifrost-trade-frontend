@@ -239,7 +239,7 @@ export function EquityGrowthCard({
               {layersVisible.options && chartData.optionsUnrealPath && (
                 <path
                   d={chartData.optionsUnrealPath}
-                  fill="none" stroke="var(--muted-foreground)"
+                  fill="none" stroke="var(--color-unrealized)"
                   strokeWidth="1" strokeDasharray="3 3"
                   vectorEffect="non-scaling-stroke"
                 />

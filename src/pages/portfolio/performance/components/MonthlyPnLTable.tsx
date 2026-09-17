@@ -55,9 +55,13 @@ function fmtVal(v: number): string {
 /** The prototype's two greys (`--sk-mute`, `--sk-mute2`) are one colour on the Portfolio skin. */
 const dim = 'text-muted-foreground'
 
-/** Realized options, stocks and FI carry direction; path, inventory and flow columns do not. */
+/** Realized options, stocks and FI carry direction; Opt U is unrealized orange; inventory and flows are quiet. */
 function realizedInk(v: number): string {
   return Math.abs(v) < 0.5 ? dim : pnlColorClass(v)
+}
+
+function unrealizedInk(v: number): string {
+  return Math.abs(v) < 0.5 ? dim : 'text-unrealized'
 }
 
 function quietInk(v: number, tone: 'soft' | 'muted'): string {
@@ -326,7 +330,7 @@ function MonthSection({
           {expanded ? '▾' : '▸'} {group.label}
         </td>
         <td className={cn(td, monthCell, realizedInk(sums.optR))}>{fmtVal(sums.optR)}</td>
-        <td className={cn(td, monthCell, quietInk(sums.optU, 'soft'))}>{fmtVal(sums.optU)}</td>
+        <td className={cn(td, monthCell, unrealizedInk(sums.optU))}>{fmtVal(sums.optU)}</td>
         {showOpen && (
           <td
             className={cn(td, monthCell, 'text-muted-foreground')}
@@ -378,7 +382,7 @@ function MonthSection({
                 {fmtIsoDateToken(day.date)}
               </td>
               <td className={cn(td, dayCell, realizedInk(day.optR))}>{fmtVal(day.optR)}</td>
-              <td className={cn(td, dayCell, quietInk(day.optU, 'soft'))}>{fmtVal(day.optU)}</td>
+              <td className={cn(td, dayCell, unrealizedInk(day.optU))}>{fmtVal(day.optU)}</td>
               {showOpen && <td className={cn(td, dayCell, dim)}>—</td>}
               <td className={cn(td, dayCell, quietInk(day.stocksN, 'soft'))}>{fmtVal(day.stocksN)}</td>
               <td className={cn(td, dayCell, realizedInk(day.stocksR))}>{fmtVal(day.stocksR)}</td>

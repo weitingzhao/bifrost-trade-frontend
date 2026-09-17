@@ -158,8 +158,8 @@ export function LedgerMetricExplainContent({
           <ExplainList>
             <li>USD with no decimals in the Summary grid.</li>
             <li>
-              Color: <span className="text-[var(--color-success)]">positive</span> &gt; 0,{' '}
-              <span className="text-[var(--color-danger)]">negative</span> &lt; 0, muted gray for exactly 0.
+              Color: <span className="text-profit">positive</span> &gt; 0,{' '}
+              <span className="text-loss">negative</span> &lt; 0, muted gray for exactly 0.
             </li>
             <li>
               Same row also shows <code className="font-mono">N groups</code> and the period label (e.g.{' '}

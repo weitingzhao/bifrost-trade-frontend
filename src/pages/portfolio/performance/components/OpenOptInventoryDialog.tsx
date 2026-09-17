@@ -15,7 +15,6 @@ import {
   denseTableNumCell,
   denseTableEntityCell,
 } from '@/components/data-display'
-import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/lib/format'
 import {
   aggregateOpenOptLegsByContract,
@@ -72,7 +71,7 @@ export default function OpenOptInventoryDialog({
           Contracts: {rows.length}
           {' · '}
           Open cash:{' '}
-          <span className={`font-semibold tabular-nums ${unrealizedPnlColorClass(totalCash)}`}>
+          <span className={`font-semibold tabular-nums text-secondary-foreground`}>
             {fmtUsd(totalCash)}
           </span>
         </p>
@@ -116,7 +115,7 @@ export default function OpenOptInventoryDialog({
                     <DenseTableCell className="tabular-nums text-muted-foreground">
                       {row.openDateStr}
                     </DenseTableCell>
-                    <DenseTableCell className={`${denseTableNumCell} ${unrealizedPnlColorClass(row.cash)}`}>
+                    <DenseTableCell className={`${denseTableNumCell} text-secondary-foreground`}>
                       {fmtUsd(row.cash)}
                     </DenseTableCell>
                     <DenseTableCell className="tabular-nums text-muted-foreground">

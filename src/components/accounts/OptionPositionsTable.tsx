@@ -22,6 +22,7 @@ import {
   computeOptionPositionRowMetrics,
 } from '@/utils/accountsOptionPositions'
 import { fmtUsd, formatLastUpdate, fmtExpiry, rightLabel } from '@/utils/positions'
+import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { positionsSymbolHref } from '@/utils/portfolioLinks'
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
@@ -75,7 +76,7 @@ function PositionRow({
         <InlinePnl value={m.lastDelta}>{fmtUsd(m.currPrice)}</InlinePnl>
       </DenseTableCell>
       <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>
-        <InlinePnl value={m.changeUsd}>{fmtUsd(m.changeUsd)}</InlinePnl>
+        <span className={unrealizedPnlColorClass(m.changeUsd)}>{fmtUsd(m.changeUsd)}</span>
       </DenseTableCell>
       <DenseTableCell className={denseTableEntityCell}>
         {pos.symbol?.trim() ? (

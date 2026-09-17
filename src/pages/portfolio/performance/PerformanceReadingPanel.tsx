@@ -7,6 +7,7 @@ function toneClass(m: ReadingMetric): string {
   const byTone: Record<ReadingTone, string> = {
     pnl: pnlColorClass(m.raw),
     loss: 'text-loss',
+    unrealized: 'text-unrealized',
     plain: 'text-foreground',
     soft: 'text-foreground/80',
     muted: 'text-muted-foreground',

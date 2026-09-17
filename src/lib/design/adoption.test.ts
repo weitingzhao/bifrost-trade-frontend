@@ -100,9 +100,13 @@ describe('design adoption', () => {
     // Accounts and Transfer & Pay signed off at their page rev 2026-09-16.9.
     // Rev .11 moved Accounts to .11 (the role word and the Data from string,
     // both already built that way); the Owner re-signed it at .11 the same day.
-    // Owner 2026-09-17: Trade Ledger signed off at page rev 2026-09-16.9.
-    expect(counts.aligned + counts.byState.stale).toBe(8)
-    expect(counts.aligned).toBe(8)
+    // Owner 2026-09-17: Trade Ledger signed off at page rev 2026-09-16.9, then
+    // Performance at its page rev 2026-09-16.11 (nine walked).
+    // Rev 2026-09-17.1 (§14.7, colour tokens only) moved Accounts, Ledger,
+    // Transfer & Pay, Symbol and Performance, so those five read stale until the
+    // Owner's colour look; the four Research pages it did not touch stay aligned.
+    expect(counts.aligned + counts.byState.stale).toBe(9)
+    expect(counts.aligned).toBe(4)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -111,26 +115,22 @@ describe('design adoption', () => {
     // on the Owner's look (reviewing 4→2). Trade Ledger joined in R13, built
     // against page rev 2026-09-16.9 (pending 20→19, reviewing 2→3), then
     // aligned on the Owner's look (reviewing 3→2). Performance walked and built
-    // 2026-09-17 against page rev 2026-09-16.11 (pending 19→18, reviewing 2→3).
-    expect(counts.byState.reviewing).toBe(3)
+    // 2026-09-17 against page rev 2026-09-16.11 (pending 19→18, reviewing 2→3),
+    // then signed off by the Owner (reviewing 3→2).
+    expect(counts.byState.reviewing).toBe(2)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
         .map((r) => r.path)
         .sort(),
     ).toEqual([
-      '/portfolio/accounts',
-      '/portfolio/ledger',
-      '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
       '/research/copilot/trading',
       '/research/loop/decisions',
-      '/research/symbol',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/backing',
-      '/portfolio/performance',
       '/trade/plans',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
@@ -187,8 +187,20 @@ describe('design adoption', () => {
     // until the Owner re-signed it there. Performance, Positions and Backing
     // moved too (table floors only), but none of them is aligned, so none of
     // them can go stale.
+    //
+    // Rev 2026-09-17.1 is the first time a walked page is honestly stale: §14.7
+    // moved direction and unrealized colours on 61 routes, five of them walked.
+    // The package's HANDOFF header still reads Rev 2026-09-16.11 (Design did not
+    // bump it), so DESIGN_REV holds there while the page stamps say .17.1.
     expect(DESIGN_REV).toBe('2026-09-16.11')
-    expect(counts.byState.stale).toBe(0)
+    expect(counts.byState.stale).toBe(5)
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
+      '/portfolio/accounts',
+      '/portfolio/ledger',
+      '/portfolio/performance',
+      '/portfolio/transfer',
+      '/research/symbol',
+    ])
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

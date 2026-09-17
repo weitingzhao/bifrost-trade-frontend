@@ -1,4 +1,5 @@
 import type { Execution } from '@/types/positions'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { ledgerExecutionDateKey } from '@/utils/ledger/summaryPeriod'
 
 export function fmtCcy(n: number | null | undefined): string {
@@ -11,9 +12,9 @@ export function fmtPrice(n: number | null | undefined): string {
   return n.toFixed(2)
 }
 
+/** The site's P&L inks (§14.7), not the success / danger status colours. */
 export function pnlClass(n: number | null | undefined): string {
-  if (n == null || n === 0) return 'text-muted-foreground'
-  return n > 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'
+  return pnlColorClass(n)
 }
 
 export function fmtTsShort(ts: number): string {

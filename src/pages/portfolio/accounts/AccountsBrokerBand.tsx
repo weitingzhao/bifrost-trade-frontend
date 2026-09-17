@@ -9,13 +9,13 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   GrandTotalRow,
-  InlinePnl,
   denseTable,
   denseTableEntityCell,
   denseTableNumCell,
 } from '@/components/data-display'
 import { fmtPct1, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { TWS_REC_WARN_DAYS } from './accountsClocks'
 import type { BrokerAccountRow, BrokerTotals } from './accountsBrokerRows'
 import { accountsUi, formatAgeDays } from './accountsUi'
@@ -53,7 +53,7 @@ export function AccountsBrokerBand({
         <div className={accountsUi.tileRow}>
           <StatTile
             label="Unrealized PnL"
-            value={<InlinePnl value={unrealizedPnl}>{fmtUsd(unrealizedPnl)}</InlinePnl>}
+            value={<span className={unrealizedPnlColorClass(unrealizedPnl)}>{fmtUsd(unrealizedPnl)}</span>}
             sub="all accounts"
           />
           <StatTile label="Net liquidation" value={fmtUsdRound(nlv)} sub={`${rows.length} accounts`} />

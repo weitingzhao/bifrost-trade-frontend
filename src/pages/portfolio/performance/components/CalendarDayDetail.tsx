@@ -365,7 +365,7 @@ function OptionsPnlColumn({
       <div className="flex flex-wrap items-baseline gap-2">
         <span className="text-dense-body font-bold text-foreground">{isRealized ? 'Realized' : 'Unrealized'}</span>
         <span className="font-mono text-dense-meta text-muted-foreground">({contractCount})</span>
-        <span className={cn('font-mono text-dense-body font-bold tabular-nums', isRealized ? pnlColorClass(total) : 'text-secondary-foreground')}>
+        <span className={cn('font-mono text-dense-body font-bold tabular-nums', isRealized ? pnlColorClass(total) : 'text-unrealized')}>
           {fmtSignedUsd0(total)}
         </span>
         <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">comm {fmtUsd(Math.abs(commission))}</span>
@@ -530,7 +530,7 @@ function ContractGroup({
       <div className="flex flex-wrap items-baseline gap-2 bg-[var(--sk-raised2)] px-2.25 py-1.5">
         <span className="font-mono text-xs text-foreground" title={occ}>{token}</span>
         <span className="text-dense-meta text-muted-foreground">{isRealized ? 'matched FIFO' : 'unmatched quantity'}</span>
-        <span className={cn('ml-auto font-mono text-xs font-semibold tabular-nums', isRealized ? pnlColorClass(tabPnl) : 'text-secondary-foreground')}>
+        <span className={cn('ml-auto font-mono text-xs font-semibold tabular-nums', isRealized ? pnlColorClass(tabPnl) : 'text-unrealized')}>
           {fmtSignedUsd0(tabPnl)}
         </span>
         <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">{fmtUsd(Math.abs(tabComm))}</span>
@@ -677,7 +677,7 @@ function ExecutionRow({
       <td className={cn(td, 'text-secondary-foreground')}>{fmtUsd(ex.price)}</td>
       <td className={cn(td, 'text-muted-foreground')}>{fmtUsd(ec)}</td>
       <td
-        className={cn(td, 'font-semibold', isRealized ? pnlColorClass(displayPnl) : 'text-secondary-foreground')}
+        className={cn(td, 'font-semibold', isRealized ? pnlColorClass(displayPnl) : 'text-unrealized')}
         title={isRealized && hasCombinedStock ? 'Option premium cash flow for matched quantity plus linked stock slippage' : undefined}
       >
         {fmtPnl(displayPnl)}

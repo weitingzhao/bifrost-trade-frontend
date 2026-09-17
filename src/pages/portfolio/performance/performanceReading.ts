@@ -1,8 +1,8 @@
 import { fmtUsdRound } from '@/lib/format'
 import type { ByDayRangeData, PerformanceResponse } from '@/types/trading'
 
-/** How a figure is inked: direction, no direction (unrealized, counts), or quiet. */
-export type ReadingTone = 'pnl' | 'loss' | 'plain' | 'soft' | 'muted'
+/** How a figure is inked: direction, unrealized orange (§14.7), no direction (counts), or quiet. */
+export type ReadingTone = 'pnl' | 'loss' | 'unrealized' | 'plain' | 'soft' | 'muted'
 
 export interface ReadingMetric {
   label: string
@@ -56,7 +56,7 @@ export function buildReadingMetrics(perf: PerformanceResponse | undefined): Read
     { label: 'Profitability · total P&L', value: fmtSignedUsd0(total), raw: total, tone: 'pnl', groupHead: true,
       title: 'Net of fees plus unrealized' },
     { label: 'Realized', value: fmtSignedUsd0(realized), raw: realized, tone: 'pnl' },
-    { label: 'Unrealized', value: fmtSignedUsd0(unrealized), tone: 'soft',
+    { label: 'Unrealized', value: fmtSignedUsd0(unrealized), tone: 'unrealized',
       title: 'Every open position now — not limited to the range' },
     { label: 'Net of fees', value: fmtSignedUsd0(s.net_pnl), raw: s.net_pnl, tone: 'pnl' },
     { label: 'Commissions', value: fmtSignedUsd0(-Math.abs(s.total_commission ?? 0)), tone: 'muted',

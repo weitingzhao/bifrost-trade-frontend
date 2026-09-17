@@ -14,7 +14,7 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { cn } from '@/lib/utils'
 import { fmtIsoDateToken, fmtUsd } from '@/lib/format'
 import { perfUi } from '@/pages/portfolio/performance/performanceUi'
-import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
+import { pnlColorClass } from '@/utils/dailyChange'
 import type { SameDayRollEvent } from '@/utils/ledger/sameDayOptionRolls'
 import type { ByDayRangeData } from '@/types/trading'
 import {
@@ -280,7 +280,7 @@ export default function OptionsModeBridgePanel({
     { label: 'Book R', value: summary.bookR, tone: pnlColorClass(summary.bookR) },
     { label: 'Σ roll adj', value: summary.sumRollAdj, tone: pnlColorClass(summary.sumRollAdj) },
     { label: 'Economic', value: summary.economic, tone: pnlColorClass(summary.economic) },
-    { label: 'Open', value: summary.open, tone: unrealizedPnlColorClass(summary.open) },
+    { label: 'Open', value: summary.open, tone: 'text-secondary-foreground' },
     { label: 'Total', value: summary.total, tone: pnlColorClass(summary.total) },
     { label: 'Econ − Total', value: summary.econMinusTotal, tone: pnlColorClass(summary.econMinusTotal), title: 'Economic − Total (= Σ roll adj − Open)' },
   ]

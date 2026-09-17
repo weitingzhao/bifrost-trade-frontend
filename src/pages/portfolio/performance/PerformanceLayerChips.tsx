@@ -73,7 +73,11 @@ export function PerformanceLayerChips({
               <span className={cn(perfUi.mono, 'text-base font-bold', pnlColorClass(r))}>{fmtSignedUsd0(r)}</span>
               <span className={cn(perfUi.cap, 'ml-auto text-dense-micro tracking-[0.04em]')}>{isOptions ? 'Open' : 'U'}</span>
               <span
-                className={cn(perfUi.mono, 'text-dense-meta text-foreground/80')}
+                className={cn(
+                  perfUi.mono,
+                  'text-dense-meta',
+                  isOptions ? 'text-secondary-foreground' : u == null ? 'text-muted-foreground' : 'text-unrealized',
+                )}
                 title={isOptions ? 'Unpaired option premium as of today' : 'No unrealized reading for this layer on this page'}
               >
                 {fmtSignedUsd0(u)}

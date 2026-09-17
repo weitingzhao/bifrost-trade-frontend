@@ -11,7 +11,7 @@ import { LEDGER_UNLINK_BASIS_TABS, type LedgerUnlinkBasis } from '@/pages/portfo
 
 function tileValueClass(tile: LedgerHealthTile): string {
   if (tile.tone === 'amber') return 'text-[var(--color-warning)]'
-  if (tile.tone === 'cost') return tile.pnl && tile.pnl !== 0 ? 'text-[var(--color-danger)]' : 'text-muted-foreground'
+  if (tile.tone === 'cost') return tile.pnl && tile.pnl !== 0 ? 'text-loss' : 'text-muted-foreground'
   if (tile.tone === 'pnl') return pnlClass(tile.pnl)
   return 'text-foreground'
 }

@@ -8,7 +8,7 @@ export interface DayStat {
   value: string
   raw: number | null
   /** pnl: direction ink · soft: a figure with no direction (unrealized, inventory) · muted: cost. */
-  tone: 'pnl' | 'soft' | 'muted' | 'plain'
+  tone: 'pnl' | 'unrealized' | 'soft' | 'muted' | 'plain'
   title?: string
 }
 
@@ -38,7 +38,7 @@ export function buildDayStats(bulk: PerformanceDayPnLBulkResult | undefined, day
       title: 'Realized on options, stocks, fixed income and cash-like, less the day’s commissions',
     },
     { label: 'Options realized', value: fmtSignedUsd0(optR), raw: optR, tone: 'pnl' },
-    { label: 'Options unrealized', value: fmtSignedUsd0(optU), raw: optU, tone: 'soft', title: 'Premium from the day’s fills still unmatched — not added to Day P&L' },
+    { label: 'Options unrealized', value: fmtSignedUsd0(optU), raw: optU, tone: 'unrealized', title: 'Premium from the day’s fills still unmatched — not added to Day P&L' },
     { label: 'Stocks realized', value: stkR === 0 ? '—' : fmtSignedUsd0(stkR), raw: stkR, tone: 'pnl' },
     { label: 'Unpaired premium', value: fmtSignedUsd0(open), raw: open, tone: 'soft', title: 'Option premium still unpaired as of this day — an inventory' },
     { label: 'Comm', value: fmtSignedUsd0(-comm), raw: -comm, tone: 'muted' },

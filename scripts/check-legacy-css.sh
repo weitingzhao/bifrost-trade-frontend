@@ -36,6 +36,25 @@ if replay=$(grep -rE "('|\")replay-|('|\")pnl-positive|('|\")pnl-negative" src -
   fi
 fi
 
+# DESIGN_CONTRACTS §14.7: the teal/orange direction tokens are retired. Direction
+# is --color-profit / --color-loss, unrealized is --color-unrealized.
+if retired_dir=$(grep -rnE -- '--color-(up|dn)\b' src --include='*.ts' --include='*.tsx' --include='*.css' 2>/dev/null || true); then
+  if [[ -n "$retired_dir" ]]; then
+    echo "$retired_dir" >&2
+    report "retired --color-up / --color-dn (use --color-profit / --color-loss, §14.7)"
+  fi
+fi
+
+# §14.7 ②: P&L colours go on signed numbers only — a bordered badge or tag takes
+# a lamp colour. Two badges predate the rule (option moneyness, socket ingest);
+# the count may fall, never rise.
+pnl_borders=$(grep -rnE 'border-(profit|loss|unrealized)|border-\[var\(--color-(profit|loss|unrealized)' src --include='*.ts' --include='*.tsx' 2>/dev/null | grep -v '\.test\.' || true)
+pnl_border_count=$(printf '%s' "$pnl_borders" | grep -c . || true)
+if [[ "$pnl_border_count" -gt 2 ]]; then
+  echo "$pnl_borders" >&2
+  report "P&L colour on a border ($pnl_border_count, baseline 2) — tags and badges take lamp colours (§14.7)"
+fi
+
 # Positions domain: no replay-* in components/positions
 if pos_replay=$(grep -rE 'replay-' src/components/positions --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$pos_replay" ]]; then

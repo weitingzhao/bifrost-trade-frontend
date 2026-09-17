@@ -121,7 +121,7 @@ function NarrativeTimeline({ events }: { events: EventRadarRow[] }) {
           const t = new Date(p.date).getTime() - new Date(minDate).getTime()
           const pct = span <= 0 ? 50 : (t / span) * 100
           const color =
-            p.direction > 0 ? 'var(--color-profit, #2dd4bf)' : p.direction < 0 ? 'var(--color-loss, #fb923c)' : 'var(--muted-foreground)'
+            p.direction > 0 ? 'var(--color-profit, #4ade80)' : p.direction < 0 ? 'var(--color-loss, #f87171)' : 'var(--muted-foreground)'
           return (
             <div
               key={p.id}

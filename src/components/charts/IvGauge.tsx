@@ -11,9 +11,9 @@ interface IvGaugeProps {
 }
 
 function gaugeColor(value: number): string {
-  if (value >= 70) return 'var(--color-loss, #fb923c)'
+  if (value >= 70) return 'var(--color-loss, #f87171)'
   if (value >= 40) return 'var(--color-chart-3, #fbbf24)'
-  return 'var(--color-profit, #2dd4bf)'
+  return 'var(--color-profit, #4ade80)'
 }
 
 function gaugeZone(value: number): string {

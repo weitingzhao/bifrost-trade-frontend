@@ -165,7 +165,9 @@ function SecTypeStrip({
             </span>
             <span className="inline-flex items-baseline gap-1 text-muted-foreground">
               Unrealized (open){' '}
-              <span className={cn(perfUi.mono, 'text-secondary-foreground')}>{money(g.agg.unrealized)}</span>
+              <span className={cn(perfUi.mono, Math.abs(g.agg.unrealized) < 0.5 ? dim : 'text-unrealized')}>
+                {money(g.agg.unrealized)}
+              </span>
               <InfoTooltip text={g.help} />
             </span>
             <span className="text-muted-foreground">

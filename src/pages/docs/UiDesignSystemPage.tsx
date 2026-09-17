@@ -253,9 +253,9 @@ export default function UiDesignSystemPage() {
       {/* 1 — PnL semantics */}
       <SectionCard
         id="pnl-semantics"
-        title="1 · PnL Semantics — profit green / loss red / unrealized yellow"
+        title="1 · PnL Semantics — profit green / loss red / unrealized orange"
         specId="pnl"
-        description="Realized PnL uses classic green (profit) and red (loss) — same tokens as --color-success / --color-danger. Unrealized PnL is always yellow — never green/red. Zero or missing values are muted. Pages never pick these colors directly; they call the accessor functions."
+        description="Realized PnL uses classic green (profit) and red (loss), brighter than the lamp green / red so a number and a status dot never share a value (§14.7). Unrealized PnL is always orange, whatever its sign — never green/red. Zero or missing values are muted. Pages never pick these colors directly; they call the accessor functions."
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <TokenSwatch label="Profit (realized)" varName="--color-profit" />

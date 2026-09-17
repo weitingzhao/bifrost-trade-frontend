@@ -30,7 +30,7 @@ interface MetricDef {
   label: string
   value: string
   colorValue?: number | null
-  /** When set, value uses site-wide unrealized yellow instead of PnL green/red. */
+  /** When set, value uses the site-wide unrealized orange instead of PnL green/red. */
   valueTone?: 'pnl' | 'unrealized'
   emphasize?: boolean
   valueClassName?: string
@@ -205,14 +205,14 @@ export function CalendarSummaryPanel({
 
   if (!summary) return null
 
-  // Prototype order; unrealized and unpaired premium carry no direction colour.
+  // Prototype order. Unrealized is orange (§14.7); unpaired premium is an inventory and stays soft.
   const unpaired = bulk?.optAsOf?.openUnrealized
   const optionMetrics: MetricDef[] = [
     { label: 'Realized', value: fmtUsd(optRealizedPnl), colorValue: optRealizedPnl },
     ...(unpaired != null
       ? [{ label: 'Unpaired premium', value: fmtUsd(unpaired), valueClassName: 'text-secondary-foreground' }]
       : []),
-    { label: 'Unrealized', value: fmtUsd(optUnrealizedPnl), valueClassName: 'text-secondary-foreground' },
+    { label: 'Unrealized', value: fmtUsd(optUnrealizedPnl), valueClassName: 'text-unrealized' },
     { label: 'Comm', value: fmtUsd(rOpt?.commission ?? 0), valueClassName: 'text-muted-foreground' },
     { label: 'Net', value: fmtUsd(optNetPnl), colorValue: optNetPnl },
     { label: 'Trades', value: String(rOpt?.trade_count ?? 0) },

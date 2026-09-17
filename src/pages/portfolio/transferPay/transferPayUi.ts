@@ -18,7 +18,8 @@ export const transferPayUi = {
     'flex flex-wrap items-center gap-2 rounded-md border px-2.5 py-1.5',
     'text-dense-body',
   ),
-  feedbackOkTone: 'border-profit/35 bg-profit/[0.06] text-profit',
+  // A status row with a dot: lamp green, not the P&L green (§14.7).
+  feedbackOkTone: 'border-lamp-green/35 bg-lamp-green/[0.06] text-lamp-green',
   feedbackErrTone: 'border-destructive/40 bg-destructive/[0.06] text-destructive',
   feedbackDot: 'h-2 w-2 shrink-0 rounded-full bg-current',
   feedbackWhen: 'ml-auto font-mono text-dense-meta text-muted-foreground',

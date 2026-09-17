@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils'
 import { fmtUsd } from '@/utils/positions'
 import type { IbAccountSnapshot } from '@/types/monitor'
+import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 
 interface Props {
   accounts: IbAccountSnapshot[]
@@ -35,12 +36,6 @@ function computeOverviewTotals(accounts: IbAccountSnapshot[]) {
 
 export function OverviewCompact({ accounts, className }: Props) {
   const totals = computeOverviewTotals(accounts)
-  const pnlClass =
-    totals.unrealizedPnl > 0
-      ? 'text-success'
-      : totals.unrealizedPnl < 0
-        ? 'text-danger'
-        : undefined
 
   return (
     <p className={cn('text-sm text-muted-foreground', className)}>
@@ -61,7 +56,7 @@ export function OverviewCompact({ accounts, className }: Props) {
       <span className="mx-2 opacity-40">·</span>
       <span>
         <span className="font-medium text-foreground/70">Unrealized PnL</span>{' '}
-        <span className={cn('font-mono font-semibold', pnlClass)}>
+        <span className={cn('font-mono', unrealizedPnlColorClass(totals.unrealizedPnl))}>
           {fmtUsd(totals.unrealizedPnl)}
         </span>
       </span>

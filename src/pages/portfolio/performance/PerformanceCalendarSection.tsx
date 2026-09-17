@@ -41,6 +41,7 @@ function tabBtn(active: boolean, enabled = true): string {
 
 function statTone(s: DayStat): string {
   if (s.tone === 'pnl') return pnlColorClass(s.raw)
+  if (s.tone === 'unrealized') return 'text-unrealized'
   if (s.tone === 'soft') return 'text-secondary-foreground'
   if (s.tone === 'muted') return 'text-muted-foreground'
   return 'text-foreground'
@@ -260,7 +261,7 @@ export function PerformanceCalendarSection({
                       {showR && (
                         <CellFigure label="R" value={cell.realized} tone={cn('font-semibold', pnlColorClass(cell.realized))} />
                       )}
-                      {showU && <CellFigure label="U" value={cell.unrealized} tone="text-secondary-foreground" />}
+                      {showU && <CellFigure label="U" value={cell.unrealized} tone="text-unrealized" />}
                       {showN && <CellFigure label={flowMetricLabel} value={cell.notional} tone="text-secondary-foreground" />}
                     </button>
                   )

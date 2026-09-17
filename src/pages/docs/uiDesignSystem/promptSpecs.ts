@@ -27,14 +27,14 @@ export const PROMPT_SPECS: PromptSpec[] = [
 ## 设计规范
 - 已实现盈利 → \`--color-profit\` / \`text-profit\` / \`pnlColorClass(v)\`
 - 已实现亏损 → \`--color-loss\` / \`text-loss\`
-- **未实现盈亏 (Unrealized) → 一律黄色** \`--color-unrealized\` / \`unrealizedPnlColorClass(v)\`，禁止红绿
+- **未实现盈亏 (Unrealized) → 一律橘色、不分正负** \`--color-unrealized\` / \`unrealizedPnlColorClass(v)\`，禁止红绿（DESIGN_CONTRACTS §14.7）
 - 0 / null → \`text-muted-foreground\`
 - 合法入口：\`PnlCell\` / \`InlinePnl\` / \`pnlColorClass\` / \`unrealizedPnlColorClass\`（@/utils/dailyChange, @/components/data-display）
 - 数值列：\`font-mono tabular-nums\` 或 \`denseTableNumCell\`
 
 ## 硬违规（必须修）
 - 页面层 \`text-emerald-*\` / \`text-red-*\` / 内联红绿 hex 渲染 realized PnL
-- unrealized 字段走 \`pnlColorClass\`（红绿）而非 yellow token
+- unrealized 字段走 \`pnlColorClass\`（红绿）而非 orange token
 - \`pnl-positive\` / \`pnl-negative\` / 自建 PnL module 类
 
 ## 检测

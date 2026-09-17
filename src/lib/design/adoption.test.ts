@@ -142,8 +142,9 @@ describe('design adoption', () => {
     // C6 and R14 and waiting since, signed off 2026-09-17 (reviewing 5→3).
     // Expiration Desk is the first page in the Trade group (unbuilt 39→38,
     // reviewing 3→4), then Stress & Scenario aligned on the Owner's look
-    // (reviewing 4→3).
-    expect(counts.byState.reviewing).toBe(3)
+    // (reviewing 4→3). Orders & Fills is the desk's window on the ledger's own
+    // fills (unbuilt 38→37, reviewing 3→4).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -168,6 +169,7 @@ describe('design adoption', () => {
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/pnl-explain',
       '/trade/expiration',
+      '/trade/fills',
       '/trade/plans',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
@@ -198,7 +200,7 @@ describe('design adoption', () => {
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
-    expect(counts.byState.unbuilt).toBe(38)
+    expect(counts.byState.unbuilt).toBe(37)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.

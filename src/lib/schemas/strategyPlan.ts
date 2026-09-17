@@ -31,6 +31,21 @@ export const PlanSourceEntrySchema = z
   })
   .passthrough()
 
+/**
+ * A number the API sends as a string.
+ *
+ * `limit_price`, `target_value` and `stop_value` are PostgreSQL `numeric`, and
+ * psycopg2 maps numeric to `Decimal`, which serialises as a JSON string —
+ * the same trap `AccountTransaction.ts` documents for `ts`. Declaring them
+ * `number` made every plan fetch warn about drift that was not drift, and let
+ * `50.0` reach the page as the text "50.0" where a number would have read 50.
+ * Parsed here once, so nothing downstream has to remember.
+ */
+const apiNumeric = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() !== '' ? Number(v) : v),
+  z.number().nullable(),
+)
+
 export const StrategyPlanSchema = z
   .object({
     strategy_plan_id: z.number(),
@@ -42,11 +57,11 @@ export const StrategyPlanSchema = z
     legs_json: z.array(PlanLegSchema),
     qty: z.number(),
     price_effect: z.enum(['credit', 'debit']).nullable(),
-    limit_price: z.number().nullable(),
+    limit_price: apiNumeric,
     target_kind: z.enum(['credit_pct', 'option_price', 'underlying_price']).nullable(),
-    target_value: z.number().nullable(),
+    target_value: apiNumeric,
     stop_kind: z.enum(['credit_multiple', 'option_price', 'underlying_price']).nullable(),
-    stop_value: z.number().nullable(),
+    stop_value: apiNumeric,
     exit_by: z.string().nullable(),
     rationale: z.string().nullable(),
     source_kind: z.enum(['manual', 'symbol', 'hypothesis', 'inbox_draft', 'roll']),

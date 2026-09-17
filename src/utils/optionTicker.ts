@@ -48,3 +48,19 @@ export function positionGreek(perShare: number | null | undefined, qty: number):
   if (perShare == null || !Number.isFinite(perShare)) return null
   return perShare * qty * 100
 }
+
+/**
+ * OCC equity root is left-justified (often space-padded) before YYMMDD + C/P + strike.
+ * Examples: "FN    261016P00350000", "GOOG  261120C00370000"
+ */
+export function extractUnderlyingRootSymbol(raw: string | null | undefined): string {
+  const s = (raw ?? '').trim()
+  if (!s) return ''
+  const occ = s.match(/^([A-Za-z][A-Za-z0-9.]{0,9}?)\s+\d{6}[CPcp]/)
+  if (occ?.[1]) return occ[1].toUpperCase()
+  const beforeSpace = s.split(/\s+/)[0]?.trim()
+  if (beforeSpace && /^[A-Za-z][A-Za-z0-9.]{0,9}$/.test(beforeSpace)) {
+    return beforeSpace.toUpperCase()
+  }
+  return beforeSpace ? beforeSpace.toUpperCase() : ''
+}

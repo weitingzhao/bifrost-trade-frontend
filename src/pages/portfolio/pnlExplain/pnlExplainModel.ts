@@ -16,6 +16,7 @@
  */
 import { ledgerOptionExecutionCashFlowSigned } from '@/utils/ledger/performanceUtils'
 import { kindOf } from '@/utils/transactionKind'
+import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import type { Execution } from '@/types/positions'
 import type { AccountTransaction } from '@/types/trading'
 import type { ByDayRangeData, PerformanceDayPnLCell } from '@/types/trading'
@@ -76,10 +77,6 @@ function execKey(e: Execution): string {
   return `${e.account_executions_id ?? ''}|${e.exec_id ?? ''}|${e.account_id ?? ''}`
 }
 
-function underlyingOf(e: Execution): string {
-  return (e.symbol ?? '').trim().toUpperCase().split(/\s+/)[0] ?? ''
-}
-
 export interface BookGapRow {
   symbol: string
   n: number
@@ -98,7 +95,7 @@ export function bookGapFills(canonical: readonly Execution[], book: readonly Exe
   const bySymbol = new Map<string, BookGapRow>()
   for (const e of canonical) {
     if (inBook.has(execKey(e))) continue
-    const symbol = underlyingOf(e) || '—'
+    const symbol = extractUnderlyingRootSymbol(e.symbol) || '—'
     const row = bySymbol.get(symbol) ?? { symbol, n: 0, priced: 0, amount: 0 }
     row.n += 1
     // A combo (BAG) row is the wrapper around its legs: it carries a price but

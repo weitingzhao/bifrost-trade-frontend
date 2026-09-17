@@ -12,6 +12,7 @@
  */
 import { ledgerOptionExecutionCashFlowSigned } from '@/utils/ledger/performanceUtils'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
+import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import type { Execution } from '@/types/positions'
 import type { StrategyOpportunity } from '@/types/positions'
 
@@ -94,11 +95,6 @@ function signedQty(e: Execution): number {
   return fillQty(e) * (SELL.test(String(e.side ?? '')) ? -1 : 1)
 }
 
-/** The underlying, off the OCC string the fills carry (`RKLB  261218C00090000`). */
-function underlyingOf(e: Execution): string {
-  return (e.symbol ?? '').trim().toUpperCase().split(/\s+/)[0] ?? ''
-}
-
 function isOption(e: Execution): boolean {
   return (e.sec_type ?? '').toUpperCase() === 'OPT'
 }
@@ -168,7 +164,7 @@ export function buildOutcomeInstances(input: {
     const opp = oppId != null ? oppById.get(oppId) : undefined
     out.push({
       instanceId,
-      symbols: [...new Set(sorted.map(underlyingOf).filter(Boolean))].sort(),
+      symbols: [...new Set(sorted.map((e) => extractUnderlyingRootSymbol(e.symbol)).filter(Boolean))].sort(),
       contracts: [...new Set(sorted.map((e) => shortOptContractKey(e.contract_key)))].sort(),
       accountId: sorted[0]?.account_id ?? '',
       opportunityName: sorted.find((e) => e.strategy_opportunity_name)?.strategy_opportunity_name ?? opp?.name ?? null,

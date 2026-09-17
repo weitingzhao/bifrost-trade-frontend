@@ -28,6 +28,7 @@ describe('Trade nav', () => {
     // Expiration joined 2026-09-17, above Playbook: what expires next is the
     // thing a desk opens the group for.
     expect(trade.items!.map((i) => [i.label, i.to])).toEqual([
+      ['Orders & Fills', '/trade/fills'],
       ['Expiration', '/trade/expiration'],
       ['Playbook', '/trade/playbook'],
     ])

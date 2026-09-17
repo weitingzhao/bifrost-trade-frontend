@@ -110,12 +110,11 @@ describe('design adoption', () => {
     // Risk Portfolio Exposure signed off 2026-09-17 — the first page outside
     // the Portfolio group (aligned 10→11). Package 2026-09-17.4 then moved
     // Performance's own page rev to .2 for the one legend sentence P3 asked
-    // for, so it reads stale until the Owner re-signs it there; the app already
-    // draws what the corrected sentence says (orange on the curve, the calendar
-    // and the table alike), so the walk itself has nothing to redo.
+    // for, so it read stale for exactly as long as it took the Owner to look:
+    // the app already draws what the corrected sentence says, so there was
+    // nothing to rebuild and the re-stamp was the whole of the work.
     expect(counts.aligned + counts.byState.stale).toBe(11)
-    expect(counts.aligned).toBe(10)
-    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path)).toEqual(['/portfolio/performance'])
+    expect(counts.aligned).toBe(11)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -147,6 +146,7 @@ describe('design adoption', () => {
       '/portfolio/accounts',
       '/portfolio/ledger',
       '/portfolio/outcome',
+      '/portfolio/performance',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
@@ -225,7 +225,7 @@ describe('design adoption', () => {
     // Package 2026-09-17.4 fixed the header the app reads (P1), so DESIGN_REV
     // finally moves with the body instead of lagging it by two revs.
     expect(DESIGN_REV).toBe('2026-09-17.2')
-    expect(counts.byState.stale).toBe(1)
+    expect(counts.byState.stale).toBe(0)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

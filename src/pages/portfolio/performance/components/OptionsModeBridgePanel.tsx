@@ -111,14 +111,16 @@ function ChainDayBlocks({
                         </span>
                       </p>
                     ) : null}
-                    <DenseDataTable wrapClassName="rounded-sm" tableClassName="min-w-[560px]">
+                    {/* §14.6: the prototype's 560 floor raised to 640 — on DEV the widest contract token
+                        (142px) and the three money columns (≤105px each) do not fit in 560. */}
+                    <DenseDataTable wrapClassName="rounded-sm" tableClassName="min-w-[640px]">
                       <colgroup>
-                        <col style={{ width: '8%' }} />
-                        <col style={{ width: '28%' }} />
-                        <col style={{ width: '28%' }} />
-                        <col style={{ width: '12%' }} />
-                        <col style={{ width: '12%' }} />
-                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '7.5%' }} />
+                        <col style={{ width: '23.5%' }} />
+                        <col style={{ width: '20.5%' }} />
+                        <col style={{ width: '16.5%' }} />
+                        <col style={{ width: '15.5%' }} />
+                        <col style={{ width: '16.5%' }} />
                       </colgroup>
                       <DenseTableHeader>
                         <DenseTableHeadRow>

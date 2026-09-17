@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { fmtUsd } from '@/utils/positions'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import styles from '@/components/positions/PositionsChartsSection.module.css'
+import { lampDotClass } from '@/lib/lampTone'
 
 const LINE_COLORS = ['var(--color-success)', 'var(--color-link)', 'var(--color-warning)', 'var(--color-chart-option)']
 
@@ -36,17 +38,20 @@ export function NetLiqChart({ accounts }: Props) {
   return (
     <div className={cn(styles.panel, 'w-full self-start')}>
       <div className={styles.chartSectionHeader}>
-        <span className={styles.chartSectionTitle}>Net liquidation over time</span>
+        <span className={styles.chartSectionTitle}>Net liquidation</span>
+        <span className="text-sm font-semibold">by account · snapshot</span>
+        <Link
+          to="/portfolio/performance"
+          className="ml-auto text-dense-meta text-primary hover:underline"
+        >
+          history → Performance
+        </Link>
       </div>
 
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">No account data.</p>
       ) : (
         <div className="space-y-3">
-          <p className="text-dense-meta leading-snug text-muted-foreground">
-            Current snapshot by account. Historical series will appear when time-series data is stored.
-          </p>
-
           {total > 0 && (
             <div
               className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted/40"
@@ -95,6 +100,15 @@ export function NetLiqChart({ accounts }: Props) {
               <span className="font-mono font-semibold tabular-nums">{fmtUsd(total, true)}</span>
             </div>
           )}
+
+          <p className="flex items-start gap-1.5 text-dense-meta text-muted-foreground">
+            <span className={cn('mt-1 h-2 w-2 shrink-0 rounded-full', lampDotClass('gray'))} aria-hidden />
+            <span>
+              This is a snapshot, and the title says so. No net-liq time series is stored for this
+              page yet; when one lands, the curve appears above this split. The book&apos;s history
+              over time already lives on Performance.
+            </span>
+          </p>
         </div>
       )}
     </div>

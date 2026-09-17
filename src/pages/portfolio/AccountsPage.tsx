@@ -1,5 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { HelpCircle, RefreshCw, Tag } from 'lucide-react'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -12,101 +11,39 @@ import { useAccountsRefresh } from '@/hooks/useAccountsRefresh'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { PageHeader, PageShell } from '@/components/layout'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { OverviewDashboard } from '@/components/accounts/OverviewDashboard'
 import { OverviewCompact } from '@/components/accounts/OverviewCompact'
-import { PortfolioCategoryRing } from '@/components/accounts/PortfolioCategoryRing'
-import { NetLiqChart } from '@/components/accounts/NetLiqChart'
-import { AssetMixCard } from '@/components/accounts/AssetMixCard'
-import { HoldingsBySymbolCard } from '@/components/accounts/HoldingsBySymbolCard'
-import styles from '@/components/positions/PositionsChartsSection.module.css'
-import { StockPositionsTable } from '@/components/accounts/StockPositionsTable'
-import { OptionPositionsTable } from '@/components/accounts/OptionPositionsTable'
-import { CategoriesModal } from '@/components/accounts/CategoriesModal'
-import { ExecutionImport } from '@/components/accounts/ExecutionImport'
-import { AccountSummaryCard } from '@/components/accounts/AccountSummaryCard'
 import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys } from '@/utils/positions'
-import { filterStocksByBucket, flattenPositions, splitBySecType } from '@/utils/positionsGrouping'
+import { flattenPositions, splitBySecType } from '@/utils/positionsGrouping'
 import { buildSpotResolver, repriceRows } from '@/utils/spotPrice'
-import { positionsSymbolHref } from '@/utils/portfolioLinks'
 import {
-  clockLabel,
-  flexPullStale,
   flexPullTsFromCoverage,
   latestClientExecFreshness,
   latestFlexFreshness,
   pullAndRecLine,
 } from '@/utils/accountsFreshness'
 import { cn } from '@/lib/utils'
+import { flexClockReading, ibClockReading } from './accounts/accountsClocks'
+import { accountRoles, buildFreshnessRows } from './accounts/accountsFreshnessRows'
+import { buildBrokerRows, unrealizedPnlTotal } from './accounts/accountsBrokerRows'
+import { AccountsClockBadge } from './accounts/AccountsClockBadge'
+import { AccountsFreshnessBand } from './accounts/AccountsFreshnessBand'
+import { AccountsBrokerBand } from './accounts/AccountsBrokerBand'
+import { AccountsComposedBand } from './accounts/AccountsComposedBand'
+import { AccountsHoldingsBand } from './accounts/AccountsHoldingsBand'
+import { AccountsInspector, type AccountsInspectorState } from './accounts/AccountsInspector'
+import { accountsPageCardClass, accountsUi } from './accounts/accountsUi'
 
-const freshnessBadgeClass =
-  'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-dense-meta font-medium'
-
-function DualClockBadge({
-  name,
-  pullTs,
-  recTs,
-  tone,
-  title,
-}: {
-  name: string
-  pullTs: number | null
-  recTs: number | null
-  tone: 'ok' | 'off' | 'warn' | 'muted'
-  title: string
-}) {
-  const toneClass =
-    tone === 'ok'
-      ? 'bg-success-soft text-success'
-      : tone === 'off'
-        ? 'bg-danger-soft text-danger'
-        : tone === 'warn'
-          ? 'bg-secondary text-warning'
-          : 'bg-secondary text-muted-foreground'
-  const dotClass =
-    tone === 'ok'
-      ? 'bg-success'
-      : tone === 'off'
-        ? 'bg-danger'
-        : tone === 'warn'
-          ? 'bg-warning'
-          : 'bg-muted-foreground/50'
-  return (
-    <span className={cn(freshnessBadgeClass, toneClass)} title={title}>
-      <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', dotClass)} />
-      <span className="whitespace-nowrap">{name}</span>
-      <span className="font-normal text-dense-caption whitespace-nowrap opacity-90">
-        Pull {clockLabel(pullTs)} · Rec {clockLabel(recTs)}
-      </span>
-    </span>
-  )
-}
-
-/** The chrome the category ring and the net liq chart already wear, for the two rings that moved here. */
-function ChartPanel({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className={cn(styles.panel, styles.accountPanelBody, 'w-full self-start')} aria-label={title}>
-      <div className={styles.chartSectionHeader}>
-        <span className={styles.chartSectionTitle}>{title}</span>
-      </div>
-      {children}
-    </section>
-  )
-}
+const PAGE_LEAD =
+  'What the broker says, account by account. Freshness first — stale account data poisons every page downstream.'
 
 export default function AccountsPage() {
   const queryClient = useQueryClient()
   const { data, isLoading, isError, error } = useMonitorStatus()
-  const navigate = useNavigate()
-  const [selectedIdx, setSelectedIdx] = useState(0)
-  const [categoriesOpen, setCategoriesOpen] = useState(false)
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
+  const [clockHelp, setClockHelp] = useState(false)
+  const [inspector, setInspector] = useState<AccountsInspectorState>({ type: null })
 
   const accountsFetchedAt = data?.portfolio.accounts_fetched_at
   const { refresh, isRefreshing, feedback } = useAccountsRefresh(accountsFetchedAt)
@@ -121,8 +58,12 @@ export default function AccountsPage() {
     [data],
   )
   const hasAccounts = accounts.length > 0
-  const clampedIdx = Math.min(selectedIdx, Math.max(0, accounts.length - 1))
-  const account = accounts[clampedIdx]
+  const selected =
+    accounts.find((a) => a.account_id === selectedAccountId) ?? accounts[0] ?? null
+  const roles = useMemo(
+    () => accountRoles(accounts.map((a) => a.account_id ?? '')),
+    [accounts],
+  )
 
   const stkSymbols = uniqueSymbols(accounts)
   const optCks = uniqueContractKeys(accounts)
@@ -131,28 +72,49 @@ export default function AccountsPage() {
   const { data: benchData } = useBenchmarks(stkSymbols)
   const { data: freshnessData } = useExecutionsFreshness()
   const { data: flexCoverage } = useFlexCoverageFreshness()
-  const execItems = freshnessData?.items ?? []
-  const ibPullTs = data?.account_sync_daemon?.heartbeat.last_ts ?? null
-  const ibRecTs = latestClientExecFreshness(execItems)?.latest_exec_ts ?? null
-  const ibAlive = data?.account_sync_daemon?.heartbeat.daemon_alive === true
+  const execItems = useMemo(() => freshnessData?.items ?? [], [freshnessData])
+  const daemonAlive = data?.account_sync_daemon?.heartbeat.daemon_alive === true
+  const ibConnected = data?.daemon.heartbeat?.ib_connected === true
   const flexPullTs = flexPullTsFromCoverage(flexCoverage?.dimensions ?? [])
   const flexRecTs = latestFlexFreshness(execItems)?.latest_exec_ts ?? null
   const flexClockLine = pullAndRecLine(flexPullTs, flexRecTs)
+
+  const ibClock = ibClockReading({
+    daemonAlive,
+    ibConnected,
+    fetchedAt: accountsFetchedAt,
+    twsRecDays: latestClientExecFreshness(execItems)?.days_since_latest ?? null,
+  })
+  const flexClock = flexClockReading({
+    pullTs: flexPullTs,
+    recDays: latestFlexFreshness(execItems)?.days_since_latest ?? null,
+  })
 
   const quotesBySymbol = useMemo(() => buildQuoteMap(quotesData), [quotesData])
   const quotesByCk = useMemo(() => buildCkMap(quotesData), [quotesData])
   const benchBySymbol = benchData?.benchmarks ?? {}
 
-  // Every holding across both accounts, re-priced the way Positions and
-  // Backing price theirs, so the rings here agree with the rings there.
   const barsBySymbol = useLatestBars(stkSymbols)
-  const allStocks = useMemo(() => {
+  const allRows = useMemo(() => {
     const raw = flattenPositions(accounts)
-    return splitBySecType(repriceRows(raw, buildSpotResolver(quotesBySymbol, raw, barsBySymbol), barsBySymbol)).stocks
+    return repriceRows(raw, buildSpotResolver(quotesBySymbol, raw, barsBySymbol), barsBySymbol)
   }, [accounts, quotesBySymbol, barsBySymbol])
+  const { stocks: allStocks } = splitBySecType(allRows)
 
-  const stkPositions = account?.positions?.filter((p) => p.secType?.toUpperCase() === 'STK') ?? []
-  const optPositions = account?.positions?.filter((p) => p.secType?.toUpperCase() === 'OPT') ?? []
+  const freshnessRows = useMemo(
+    () => buildFreshnessRows(execItems, roles),
+    [execItems, roles],
+  )
+  const broker = useMemo(() => buildBrokerRows(accounts, execItems), [accounts, execItems])
+  const totalNetLiq = broker.totals.netLiq
+  const selectedBroker = broker.rows.find((r) => r.accountId === selected?.account_id)
+
+  const stkPositions = selected?.positions?.filter((p) => p.secType?.toUpperCase() === 'STK') ?? []
+  const optPositions = selected?.positions?.filter((p) => p.secType?.toUpperCase() === 'OPT') ?? []
+
+  function closeInspector() {
+    setInspector({ type: null })
+  }
 
   if (isLoading) {
     return (
@@ -160,9 +122,6 @@ export default function AccountsPage() {
         <div className="flex justify-between items-center">
           <Skeleton className="h-6 w-32" />
           <Skeleton className="h-8 w-48" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
         </div>
         <Skeleton className="h-48 rounded-lg" />
       </PageShell>
@@ -181,178 +140,172 @@ export default function AccountsPage() {
 
   return (
     <PageShell className="space-y-3">
-      <PageHeader
-        breadcrumb={
-          <p className="text-xs text-primary/90 font-medium">Portfolio / Accounts</p>
-        }
-        title="Accounts"
-        actions={
-          <>
-            {data?.account_sync_daemon && (
-              <DualClockBadge
-                name={ibAlive ? 'IB Client' : 'IB Client offline'}
-                pullTs={ibPullTs}
-                recTs={ibRecTs}
-                tone={ibAlive ? 'ok' : 'off'}
-                title="Pull = last Account Sync from TWS. Rec = newest TWS execution in DB vs now."
-              />
+      <div className={accountsPageCardClass}>
+        <div className={accountsUi.headerRow}>
+          <PageHeader
+            breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Accounts</p>}
+            title="Accounts"
+            titleSize="large"
+          />
+          <div className={accountsUi.headerActions}>
+            <AccountsClockBadge reading={ibClock} />
+            <AccountsClockBadge reading={flexClock} />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setClockHelp((v) => !v)}
+              aria-expanded={clockHelp}
+              aria-label="What Pull and Rec mean"
+              title="What Pull and Rec mean"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => setInspector({ type: 'categories' })}
+              aria-label="Manage position categories"
+            >
+              <Tag className="h-3.5 w-3.5" />
+              Categories
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => void refresh()}
+              disabled={isRefreshing}
+              aria-label="Refresh accounts and positions from IB"
+              aria-busy={isRefreshing}
+              title="Fetches accounts & positions from IB, writes to DB, then updates display"
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
+              {isRefreshing ? 'Refreshing…' : 'Refresh'}
+            </Button>
+          </div>
+        </div>
+
+        <p className={accountsUi.headerLead}>{PAGE_LEAD}</p>
+
+        {clockHelp ? (
+          <div className={accountsUi.helpPanel}>
+            <div className={accountsUi.helpHead}>
+              <span className={accountsUi.helpCap}>Two clocks, never one</span>
+              <p className={cn(accountsUi.helpProse, 'flex-1')}>
+                A fresh pull with an old record is the normal case: we asked today, and the newest
+                thing the broker had to give was days old. One merged &quot;updated&quot; number
+                would report that as fresh.
+              </p>
+              <button
+                type="button"
+                className={accountsUi.helpClose}
+                onClick={() => setClockHelp(false)}
+                aria-label="Close clock help"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={accountsUi.helpBody}>
+              <p className={accountsUi.helpProse}>
+                <span className="font-mono text-foreground/85">Pull</span> — when we last asked this
+                source. Late pull = our job. Three readings: a time,{' '}
+                <span className="font-mono">STALE</span> in amber when the link is up but the
+                snapshot is not advancing, and <span className="font-mono">DISCONNECTED</span> in
+                grey when TWS is not logged in.
+              </p>
+              <p className={accountsUi.helpProse}>
+                <span className="font-mono text-foreground/85">Rec</span> — the newest record that
+                arrived. Old record = either nothing happened, or the link is dry.
+              </p>
+              <p className={accountsUi.helpProse}>
+                Red is a real fault. Amber is degraded — connected and not advancing. Grey is no
+                reading: an unopened TWS session and a dormant account are both grey, never a zero
+                and never &quot;fine&quot;.
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {feedback != null && feedback !== '' ? (
+          <p
+            className={cn(
+              'text-xs',
+              feedback.startsWith('Refreshed') ? 'text-success' : 'text-muted-foreground',
             )}
-            <DualClockBadge
-              name="Flex"
-              pullTs={flexPullTs}
-              recTs={flexRecTs}
-              tone={flexPullStale(flexPullTs) ? 'warn' : 'muted'}
-              title="Pull = last Flex ingest job. Rec = newest Flex trade in DB vs now (not the same as Pull)."
-            />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-foreground"
-                  aria-label="Page info"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-sm">
-                Pull is last fetch; Rec is newest trade in DB. IB Client = TWS Account Sync + TWS executions. Flex = daily Flex Query ingest.
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setCategoriesOpen(true)}
-                  aria-label="Manage position categories"
-                >
-                  <Tag className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Manage position categories</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => void refresh()}
-                  disabled={isRefreshing}
-                  aria-label="Refresh accounts and positions from IB"
-                  aria-busy={isRefreshing}
-                >
-                  <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Monitor Account Client fetches accounts &amp; positions from IB, writes to DB, then updates display
-              </TooltipContent>
-            </Tooltip>
-          </>
-        }
-      />
-
-      <ExecutionImport
-        accountsFetchedAt={accountsFetchedAt}
-        hasAccounts={hasAccounts}
-        flexClockLine={flexClockLine}
-      />
-
-      {feedback != null && feedback !== '' && (
-        <p
-          className={cn(
-            'text-xs',
-            feedback.startsWith('Refreshed') ? 'text-success' : 'text-muted-foreground',
-          )}
-        >
-          {feedback}
-        </p>
-      )}
-
-      {!hasAccounts ? (
-        <>
-          <OverviewCompact accounts={accounts} />
-          <p className="text-sm text-muted-foreground">
-            No account data (IB not connected or daemon has not written yet; after connection, data is pulled on heartbeat and written to accounts / account_positions)
+          >
+            {feedback}
           </p>
-        </>
-      ) : (
-        <>
-          <OverviewDashboard accounts={accounts} />
+        ) : null}
 
-          {/* Two compositions, then the base by symbol beside the history: by
-              the Owner's own categories, by the role each layer plays for the
-              option book, which symbols the base is, and how net liq got here.
-              A symbol opens its lines on Positions — the ledger's way into
-              the book. */}
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 xl:items-start">
-            <PortfolioCategoryRing accounts={accounts} />
-            <ChartPanel title="Asset mix">
-              <AssetMixCard
-                accounts={accounts}
-                coreStocks={filterStocksByBucket(allStocks, 'core')}
-                incomeEtfs={filterStocksByBucket(allStocks, 'fixed_income')}
-                cashLike={filterStocksByBucket(allStocks, 'cash_like')}
-              />
-            </ChartPanel>
-            <ChartPanel title="Holdings by symbol">
-              <HoldingsBySymbolCard
-                stocks={allStocks}
+        <AccountsFreshnessBand
+          rows={freshnessRows}
+          fetchedAt={accountsFetchedAt}
+          hasAccounts={hasAccounts}
+          flexClockLine={flexClockLine}
+        />
+
+        {!hasAccounts ? (
+          <>
+            <OverviewCompact accounts={accounts} />
+            <p className="text-sm text-muted-foreground">
+              No account data (IB not connected or daemon has not written yet; after connection,
+              data is pulled on heartbeat and written to accounts / account_positions)
+            </p>
+          </>
+        ) : (
+          <>
+            <AccountsBrokerBand
+              rows={broker.rows}
+              totals={broker.totals}
+              selectedAccountId={selected?.account_id ?? null}
+              onSelect={setSelectedAccountId}
+              unrealizedPnl={unrealizedPnlTotal(accounts)}
+            />
+
+            <AccountsComposedBand
+              accounts={accounts}
+              allStocks={allStocks}
+              allPositions={allRows}
+              quotesBySymbol={quotesBySymbol}
+              benchBySymbol={benchBySymbol}
+              totalNetLiq={totalNetLiq}
+              onSymbolClick={(symbol) => setInspector({ type: 'stock', symbol })}
+            />
+
+            {selected ? (
+              <AccountsHoldingsBand
+                accountId={selected.account_id ?? '—'}
+                roleLabel={
+                  selectedBroker?.roleNote
+                    ? `${selectedBroker.role} · ${selectedBroker.roleNote}`
+                    : (selectedBroker?.role ?? roles[selected.account_id ?? ''] ?? '')
+                }
+                dormant={selectedBroker?.dormant === true}
+                stockPositions={stkPositions}
+                optionPositions={optPositions}
                 quotesBySymbol={quotesBySymbol}
                 quotesByCk={quotesByCk}
-                activeSymbol=""
-                onSymbolClick={(symbol) => navigate(positionsSymbolHref(symbol))}
+                benchBySymbol={benchBySymbol}
+                onSymbolClick={(symbol) =>
+                  setInspector({
+                    type: 'stock',
+                    symbol,
+                    accountId: selected.account_id,
+                  })
+                }
+                onCategoryClick={() => setInspector({ type: 'categories' })}
               />
-            </ChartPanel>
-            <NetLiqChart accounts={accounts} />
-          </div>
+            ) : null}
+          </>
+        )}
+      </div>
 
-          {accounts.length > 1 && (
-            <Tabs
-              value={String(clampedIdx)}
-              onValueChange={(v) => setSelectedIdx(Number(v))}
-            >
-              <TabsList variant="segment">
-                {accounts.map((a, i) => (
-                  <TabsTrigger key={a.account_id ?? i} value={String(i)}>
-                    {a.account_id ?? `Account ${i + 1}`}
-                    <span className="ml-1.5 text-xs opacity-60">
-                      ({a.positions?.length ?? 0})
-                    </span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          )}
-
-          {account && (
-            <AccountSummaryCard
-              account={account}
-              freshnessItems={freshnessData?.items ?? []}
-            />
-          )}
-
-          <StockPositionsTable
-            positions={stkPositions}
-            quotesBySymbol={quotesBySymbol}
-            benchBySymbol={benchBySymbol}
-            onCategoryClick={() => setCategoriesOpen(true)}
-          />
-
-          <OptionPositionsTable
-            positions={optPositions}
-            quotesByCk={quotesByCk}
-            quotesBySymbol={quotesBySymbol}
-          />
-        </>
-      )}
-
-      <CategoriesModal
-        open={categoriesOpen}
-        onOpenChange={setCategoriesOpen}
+      <AccountsInspector
+        state={inspector}
         accounts={accounts}
+        onClose={closeInspector}
         onRefreshed={() => {
           void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status })
         }}

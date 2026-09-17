@@ -17,6 +17,7 @@ const TOOLTIP =
 
 interface Props {
   accounts: IbAccountSnapshot[]
+  embedded?: boolean
 }
 
 function LegendItem({
@@ -69,7 +70,7 @@ function portfolioCategoryCenter(
   return { main: '—', sub: '', variant: 'basis' }
 }
 
-export function PortfolioCategoryRing({ accounts }: Props) {
+export function PortfolioCategoryRing({ accounts, embedded }: Props) {
   const [includeFi, setIncludeFi] = useState(false)
   const [includeOpt, setIncludeOpt] = useState(true)
 
@@ -115,13 +116,7 @@ export function PortfolioCategoryRing({ accounts }: Props) {
     includeOptInChart ? 'Options' : null,
   ].filter(Boolean) as string[]
 
-  return (
-    <div className={cn(styles.panel, styles.accountPanelBody, 'w-full self-start')}>
-      <div className={styles.chartSectionHeader}>
-        <span className={styles.chartSectionTitle}>Portfolio by category</span>
-        <InfoTooltip text={TOOLTIP} />
-      </div>
-
+  const body = (
       <div className={styles.mixBody}>
         <div className={styles.mixChartBlock}>
           <DonutChart
@@ -185,6 +180,17 @@ export function PortfolioCategoryRing({ accounts }: Props) {
           />
         </div>
       </div>
+  )
+
+  if (embedded) return body
+
+  return (
+    <div className={cn(styles.panel, styles.accountPanelBody, 'w-full self-start')}>
+      <div className={styles.chartSectionHeader}>
+        <span className={styles.chartSectionTitle}>Portfolio by category</span>
+        <InfoTooltip text={TOOLTIP} />
+      </div>
+      {body}
     </div>
   )
 }

@@ -24,6 +24,10 @@ interface Props {
   accountsFetchedAt?: number | null
   hasAccounts: boolean
   flexClockLine?: string
+  /** Hide the duplicate fetch-time line when the Freshness band already shows it. */
+  showFetchedAt?: boolean
+  /** Sit inside the Freshness panel without a second outer section. */
+  embedded?: boolean
 }
 
 function buildFlexSuccessMessage(r: {
@@ -64,7 +68,13 @@ function buildFlexSuccessMessage(r: {
 const pillGroupClass =
   'inline-flex flex-nowrap items-center gap-2 rounded-lg border border-border/60 bg-secondary/40 px-2.5 py-1.5 min-h-[30px] shrink-0'
 
-export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine }: Props) {
+export function ExecutionImport({
+  accountsFetchedAt,
+  hasAccounts,
+  flexClockLine,
+  showFetchedAt = true,
+  embedded = false,
+}: Props) {
   const queryClient = useQueryClient()
   const [twsDays, setTwsDays] = useState<TwsDays>(1)
   const [twsLoading, setTwsLoading] = useState(false)
@@ -156,8 +166,8 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine 
     }
   }
 
-  return (
-    <section aria-label="Execution import from Tws and Flex" className="w-full min-w-0 space-y-2">
+  const inner = (
+    <div className="w-full min-w-0 space-y-2">
       <div
         className={cn(
           'flex w-full min-w-0 items-center gap-3',
@@ -223,10 +233,7 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine 
                 </label>
               </div>
               {!flexUseUpload ? (
-                <div
-                  className="flex items-center gap-2"
-                  title="Off: one IB request per account (the safe default). On: if the window comes back empty, also try the query's default period and the last 365 days — three requests per account, which can trip IB's rate limit right after another run."
-                >
+                <div className="flex items-center gap-2">
                   <Switch
                     checked={flexWiden}
                     onCheckedChange={setFlexWiden}
@@ -262,6 +269,13 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine 
         )}
       </div>
 
+      {flexWiden && !flexUseUpload ? (
+        <p className="rounded-md border border-warning/40 bg-warning/[0.08] px-2.5 py-1.5 text-dense-meta text-warning">
+          Widen if empty sends three requests per account, which can trip IB&apos;s rate limit. Leave
+          it off unless a normal fetch came back empty.
+        </p>
+      ) : null}
+
       {twsLoading && (
         <p className="text-xs text-muted-foreground">Fetching executions from IB…</p>
       )}
@@ -278,17 +292,27 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine 
             {flexResult.summary}
           </p>
           {flexResult.perQuery && flexResult.perQuery.length > 0 && (
-            <div className="text-xs text-muted-foreground space-y-0.5 pl-2 border-l border-muted">
+            <div className="space-y-1">
+              <p className="text-dense-caption uppercase tracking-wide text-muted-foreground">
+                Last Flex run · per query
+              </p>
               {flexResult.perQuery.map((q) => {
                 const role =
                   q.role === 'host' || q.role === 'primary' ? 'Host'
                   : q.role === 'secondary' ? 'Secondary'
                   : 'Flex'
-                const span = q.data_from && q.data_to ? ` · ${q.data_from} – ${q.data_to}` : ''
+                const span = q.data_from && q.data_to ? `${q.data_from} – ${q.data_to}` : ''
                 return (
-                  <p key={q.query_id}>
-                    {role}{q.label ? ` ${q.label}` : ''} [{q.query_id}]: {q.rows} row(s){span}
-                  </p>
+                  <span key={q.query_id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                    <span className="inline-block min-w-[104px] font-mono text-dense-meta text-foreground/85">
+                      {role}{q.label ? ` ${q.label}` : ''}
+                    </span>
+                    <span className="font-mono text-dense-meta text-muted-foreground">query {q.query_id}</span>
+                    <span className="font-mono text-dense-meta">{q.rows} row(s)</span>
+                    {span ? (
+                      <span className="font-mono text-dense-meta text-muted-foreground">{span}</span>
+                    ) : null}
+                  </span>
                 )
               })}
             </div>
@@ -296,7 +320,7 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine 
         </div>
       )}
 
-      {accountsFetchedAt != null && (
+      {showFetchedAt && accountsFetchedAt != null && (
         <p className="text-xs text-muted-foreground">
           Data from {new Date(accountsFetchedAt * 1000).toLocaleString()}
           {', '}
@@ -305,6 +329,13 @@ export function ExecutionImport({ accountsFetchedAt, hasAccounts, flexClockLine 
       )}
 
       <input ref={fileRef} type="file" accept=".xml" className="hidden" onChange={handleFileSelected} />
+    </div>
+  )
+
+  if (embedded) return inner
+  return (
+    <section aria-label="Execution import from Tws and Flex">
+      {inner}
     </section>
   )
 }

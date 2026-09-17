@@ -30,6 +30,7 @@ interface Props {
   positions: IbPositionRow[]
   quotesByCk: Record<string, QuoteItem>
   quotesBySymbol?: Record<string, QuoteItem>
+  hideTitle?: boolean
 }
 
 const LABEL_COL_SPAN = 7
@@ -96,9 +97,11 @@ function PositionRow({
   )
 }
 
-export function OptionPositionsTable({ positions, quotesByCk, quotesBySymbol }: Props) {
+export function OptionPositionsTable({ positions, quotesByCk, quotesBySymbol, hideTitle }: Props) {
   if (positions.length === 0) {
-    return (
+    return hideTitle ? (
+      <p className={denseTable.emptyHint}>None</p>
+    ) : (
       <div className={denseTable.sectionBlock}>
         <h5 className={denseTable.sectionTitle}>Option positions</h5>
         <p className={denseTable.emptyHint}>None</p>
@@ -109,13 +112,22 @@ export function OptionPositionsTable({ positions, quotesByCk, quotesBySymbol }: 
   const totalPremium = calcOptionPremiumTotal(positions)
   const spotBySymbol = collectUnderlyingSpots(positions, quotesBySymbol)
 
-  return (
-    <div className={denseTable.sectionBlock}>
-      <h5 className={denseTable.sectionTitle}>Option positions</h5>
-      <p className={denseTable.emptyHint}>
-        As the broker reports them. Daily change, cushion and the strategy each contract belongs to are on Positions.
-      </p>
-      <DenseDataTable tableClassName="min-w-[900px] table-fixed">
+  const table = (
+      <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[1020px]">
+        <colgroup>
+          <col style={{ width: '16%' }} />
+          <col style={{ width: '6%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '6%' }} />
+          <col style={{ width: '6%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '7%' }} />
+        </colgroup>
         <DenseTableHeader>
           <DenseTableHeadRow>
             <DenseTableHead className="min-w-[5.5rem]">Contract</DenseTableHead>
@@ -165,6 +177,17 @@ export function OptionPositionsTable({ positions, quotesByCk, quotesBySymbol }: 
           </GrandTotalRow>
         </DenseTableBody>
       </DenseDataTable>
+  )
+
+  if (hideTitle) return table
+
+  return (
+    <div className={denseTable.sectionBlock}>
+      <h5 className={denseTable.sectionTitle}>Option positions</h5>
+      <p className={denseTable.emptyHint}>
+        As the broker reports them. Daily change, cushion and the strategy each contract belongs to are on Positions.
+      </p>
+      {table}
     </div>
   )
 }

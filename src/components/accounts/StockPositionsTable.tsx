@@ -9,6 +9,7 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
+  DenseLinkButton,
   GrandTotalRow,
   GroupHeaderRow,
   GroupSubtotalRow,
@@ -24,16 +25,21 @@ import {
   groupStockPositionsByCategory,
   stockGroupPctFromTotals,
 } from '@/utils/accountsStockPositions'
-import { fmtUsd, formatLastUpdate } from '@/utils/positions'
+import { fmtUsd, formatLastUpdate, quoteTimestamp } from '@/utils/positions'
 import { positionsSymbolHref } from '@/utils/portfolioLinks'
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
+
+const PRICE_AS_OF_STALE_TITLE =
+  "no live quote; showing the snapshot's price timestamp"
 
 interface Props {
   positions: IbPositionRow[]
   quotesBySymbol: Record<string, QuoteItem>
   benchBySymbol: Record<string, DailyBenchmark>
   onCategoryClick?: () => void
+  onSymbolClick?: (symbol: string) => void
+  hideTitle?: boolean
 }
 
 const COL_SPAN = 12
@@ -80,34 +86,43 @@ function PositionRow({
   pos,
   quotesBySymbol,
   benchBySymbol,
+  onSymbolClick,
 }: {
   pos: IbPositionRow
   quotesBySymbol: Record<string, QuoteItem>
   benchBySymbol: Record<string, DailyBenchmark>
+  onSymbolClick?: (symbol: string) => void
 }) {
   const sym = pos.symbol?.toUpperCase() ?? ''
-  // The line this holding belongs to on Positions: the instance first, else the opportunity.
   const bookLabel = pos.strategy_instance_label?.trim() || pos.strategy_opportunity_name?.trim() || ''
-  const r = computeStockPositionRowMetrics(
-    pos,
-    quotesBySymbol[sym],
-    benchBySymbol[sym],
-  )
+  const quote = quotesBySymbol[sym]
+  const r = computeStockPositionRowMetrics(pos, quote, benchBySymbol[sym])
   const lastDelta =
     pos.avgCost != null && r.currPrice != null ? r.currPrice - pos.avgCost : null
+  const liveQuote = quote?.last != null && Number.isFinite(quote.last)
+  const asOfTs = liveQuote ? quoteTimestamp(quote) : (pos.price_updated_at ?? r.updTs)
+  const asOfTitle = liveQuote ? undefined : PRICE_AS_OF_STALE_TITLE
 
   return (
     <DenseTableRow>
       <DenseTableCell className={denseTableEntityCell}>
         {pos.symbol?.trim() ? (
-          <span
-            className={cn(
-              denseTableEntityLink,
-              'font-semibold tracking-wide text-entity-symbol',
-            )}
-          >
-            {pos.symbol.trim().toUpperCase()}
-          </span>
+          onSymbolClick ? (
+            <DenseLinkButton
+              label={pos.symbol.trim().toUpperCase()}
+              ariaLabel={`Open ${pos.symbol.trim().toUpperCase()} in the inspector`}
+              onClick={() => onSymbolClick(pos.symbol!.trim().toUpperCase())}
+            />
+          ) : (
+            <span
+              className={cn(
+                denseTableEntityLink,
+                'font-semibold tracking-wide text-entity-symbol',
+              )}
+            >
+              {pos.symbol.trim().toUpperCase()}
+            </span>
+          )
         ) : (
           '—'
         )}
@@ -131,8 +146,11 @@ function PositionRow({
       <DenseTableCell className={cn(denseTableNumCell, 'font-semibold')}>
         <InlinePnl value={r.changeUsd}>{fmtUsd(r.changeUsd)}</InlinePnl>
       </DenseTableCell>
-      <DenseTableCell className={cn(denseTableNumCell, denseTable.mutedMeta)}>
-        {formatLastUpdate(r.updTs)}
+      <DenseTableCell
+        className={cn(denseTableNumCell, denseTable.mutedMeta, !liveQuote && 'text-muted-foreground/70')}
+        title={asOfTitle}
+      >
+        {formatLastUpdate(asOfTs)}
       </DenseTableCell>
       <DenseTableCell className={denseTableEntityCell}>
         {bookLabel && pos.symbol?.trim() ? (
@@ -156,9 +174,13 @@ export function StockPositionsTable({
   quotesBySymbol,
   benchBySymbol,
   onCategoryClick,
+  onSymbolClick,
+  hideTitle,
 }: Props) {
   if (positions.length === 0) {
-    return (
+    return hideTitle ? (
+      <p className={denseTable.emptyHint}>None</p>
+    ) : (
       <div className={denseTable.sectionBlock}>
         <h5 className={denseTable.sectionTitle}>Stock positions</h5>
         <p className={denseTable.emptyHint}>None</p>
@@ -169,10 +191,22 @@ export function StockPositionsTable({
   const categories = groupStockPositionsByCategory(positions)
   const grand = calcStockGroupTotals(positions, quotesBySymbol, benchBySymbol)
 
-  return (
-    <div className={denseTable.sectionBlock}>
-      <h5 className={denseTable.sectionTitle}>Stock positions</h5>
-      <DenseDataTable tableClassName="min-w-[960px]">
+  const table = (
+      <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[1080px]">
+        <colgroup>
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '6%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '15%' }} />
+        </colgroup>
         <DenseTableHeader>
           <DenseTableHeadRow>
             <DenseTableHead className="min-w-[5.5rem] max-w-none overflow-visible">
@@ -187,7 +221,12 @@ export function StockPositionsTable({
             <DenseTableHead align="right">Daily $</DenseTableHead>
             <DenseTableHead align="right">Chg %</DenseTableHead>
             <DenseTableHead align="right">Chg $</DenseTableHead>
-            <DenseTableHead align="right">Upd</DenseTableHead>
+            <DenseTableHead
+              align="right"
+              title="Quote time when a live last is present; otherwise the snapshot's price timestamp"
+            >
+              Price as of
+            </DenseTableHead>
             <DenseTableHead title="The strategy line this holding belongs to, on Positions">Book</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
@@ -209,6 +248,7 @@ export function StockPositionsTable({
                   pos={pos}
                   quotesBySymbol={quotesBySymbol}
                   benchBySymbol={benchBySymbol}
+                  onSymbolClick={onSymbolClick}
                 />
               )),
               <GroupSubtotalRow
@@ -225,6 +265,14 @@ export function StockPositionsTable({
           </GrandTotalRow>
         </DenseTableBody>
       </DenseDataTable>
+  )
+
+  if (hideTitle) return table
+
+  return (
+    <div className={denseTable.sectionBlock}>
+      <h5 className={denseTable.sectionTitle}>Stock positions</h5>
+      {table}
     </div>
   )
 }

@@ -23,6 +23,7 @@ import {
   Settings,
   Shield,
   Star,
+  Target,
   TrendingUp,
   Trophy,
 } from 'lucide-react'
@@ -96,6 +97,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       home('Performance', '/portfolio/performance', LineChart, [
         route('Positions', '/portfolio/positions', TrendingUp),
         route('Backing & Model', '/portfolio/backing', Layers),
+        route('Outcome', '/portfolio/outcome', Target),
       ]),
       home('Accounts', '/portfolio/accounts', LayoutDashboard, [
         route('Trade Ledger', '/portfolio/ledger', ClipboardList),

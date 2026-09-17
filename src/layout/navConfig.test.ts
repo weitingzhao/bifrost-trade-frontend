@@ -40,7 +40,11 @@ describe('Portfolio nav', () => {
     expect(portfolio.subGroups).toBeUndefined()
     const [performance, accounts] = portfolio.items!
     expect(portfolio.items!.map((i) => i.to)).toEqual(['/portfolio/performance', '/portfolio/accounts'])
-    expect(performance.children?.map((c) => c.to)).toEqual(['/portfolio/positions', '/portfolio/backing'])
+    expect(performance.children?.map((c) => c.to)).toEqual([
+      '/portfolio/positions',
+      '/portfolio/backing',
+      '/portfolio/outcome',
+    ])
     expect(accounts.children?.map((c) => c.to)).toEqual(['/portfolio/ledger', '/portfolio/transfer'])
     expect([performance.defaultOpen, accounts.defaultOpen]).toEqual([true, true])
   })

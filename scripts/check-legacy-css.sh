@@ -594,7 +594,7 @@ fi
 
 # Dense typography ratchet: hardcoded text-[Npx] / text-[0.NNrem] should only go DOWN.
 # Allowed exceptions: text-[7px], text-[8px], and sizing/winRate responsive gradations.
-HARDCODED_TYPO_BASELINE=21
+HARDCODED_TYPO_BASELINE=20
 hardcoded_typo_count=$(grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$hardcoded_typo_count" -gt "$HARDCODED_TYPO_BASELINE" ]]; then
   grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null >&2

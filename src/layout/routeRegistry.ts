@@ -258,6 +258,16 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    path: '/portfolio/outcome',
+    label: 'Outcome',
+    crumbs: PORTFOLIO,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: 'Walked 2026-09-17 against Portfolio Outcome.dc.html at page rev 2026-09-17.1, on local DEV (:5173). Built from nothing — the app had no Outcome page. Data readiness was measured on DEV first: the book stores no closed_at, so a finished idea is one whose option legs net to zero, and realised is the Trade Ledger\'s own signed cash flow summed over that instance\'s fills (§14.2 — this page quotes it, it does not recompute it). Built: the page card, PageHeader with a Since segment, an account segment built from the closed rows themselves and a closed count with its realised total; three tier headings (Where the ideas came from / Plan vs actual / The chain). Where the ideas came from is one panel cut by Source — Watchlist, Chosen by hand, No opportunity, read off the opportunity\'s scope_type — with n, hit rate, realised, average, worst and a sample lamp, over a floor that prints a count instead of a rate under ten closes. Plan vs actual is two panels: How they ended, with the exits the fills can tell apart (expired or written off, closed early, assigned, source did not say) each on a bar, and Did it do what the plan said, which stays dashes behind an amber needs plan storage tag. The chain is the closed-instance table (instance violet, symbol sky, source → opportunity, closed DDMMMYY, days, realised, plan, exit tag), a row click tracing that idea through Idea → Plan → Fills → Close beside a Gaps panel that counts where the chain breaks. Two readings the design asks for have no data behind them on this side and say so rather than showing a zero: the screener lens that found an idea (and the backtest run that argued for it) never reaches a trade instance, and Trade Plans stores no entry, target or stop — so the Lens chip is grey and disabled and plan-vs-actual keeps its ⚠ marker (§14.6, one of the four that must never be dropped silently). Not built: the design\'s structure and play cuts, which are Review Playbook Stats\' win rate — two pages computing one rate would disagree eventually, and that page does not exist yet. A defect found on the way and fixed first: ledgerOptionExecutionCashFlowSigned netted the commission against the premium before the sign flip, so a buy\'s commission read as a discount. Owner to look before aligned.',
+    },
+  },
+  {
     path: '/portfolio/accounts',
     label: 'Accounts',
     crumbs: PORTFOLIO,

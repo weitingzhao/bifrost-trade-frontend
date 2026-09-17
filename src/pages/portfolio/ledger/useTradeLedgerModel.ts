@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react'
+import { fmtIsoDateToken } from '@/lib/format'
 import type { StatusResponse } from '@/types/monitor'
 import type { Execution, StrategyOpportunity } from '@/types/positions'
 import type { ExecutionsResponse } from '@/types/positions'
@@ -47,6 +48,8 @@ export type TradeLedgerModelParams = {
   bookData: ExecutionsResponse | undefined
   oppData: { items?: StrategyOpportunity[] } | undefined
   sincePreset: LedgerSincePreset
+  /** `?date=`: one trade date instead of the Since window. */
+  tradeDay: string | null
   accountFilter: string
   symbolFilter: string
   activeTab: MainTab
@@ -75,6 +78,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     bookData,
     oppData,
     sincePreset,
+    tradeDay,
     accountFilter,
     symbolFilter,
     activeTab,
@@ -97,7 +101,10 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   // ── Derived config ───────────────────────────────────────────────────────
   const accountTabs = useMemo(() => getLedgerAccountTabs(status), [status])
   const accounts = useMemo(() => getLedgerAccountIds(status), [status])
-  const dateRange = useMemo(() => getSinceTradeDateRange(sincePreset), [sincePreset])
+  const dateRange = useMemo(
+    () => (tradeDay ? { start: tradeDay, end: tradeDay } : getSinceTradeDateRange(sincePreset)),
+    [sincePreset, tradeDay],
+  )
   const catMap = useMemo(() => buildPositionCategoryByAccountContract(status ?? null), [status])
 
   const opportunitiesMap = useMemo(() => {
@@ -168,8 +175,9 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
       sincePreset,
       dateRange,
       rowType,
+      tradeDay,
     })
-  }, [dateRange, accountFilter, symbolFilter, expiryFilterYear, expiryFilterMonth, allowedOpportunityIds, sincePreset, activeTab, rowType])
+  }, [dateRange, accountFilter, symbolFilter, expiryFilterYear, expiryFilterMonth, allowedOpportunityIds, sincePreset, activeTab, rowType, tradeDay])
 
   const canonFiltered = useMemo(() => (canonData?.items ?? []).filter(filterExec), [canonData, filterExec])
   const bookFiltered = useMemo(() => (bookData?.items ?? []).filter(filterExec), [bookData, filterExec])
@@ -185,10 +193,11 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
         sincePreset,
         dateRange,
         rowType: 'all',
+        tradeDay,
       }),
     )
     return countUnreportedTransactionType(rows)
-  }, [canonData, accountFilter, symbolFilter, allowedOpportunityIds, activeTab, expiryFilterYear, expiryFilterMonth, sincePreset, dateRange])
+  }, [canonData, accountFilter, symbolFilter, allowedOpportunityIds, activeTab, expiryFilterYear, expiryFilterMonth, sincePreset, dateRange, tradeDay])
   // ── OPT groups ───────────────────────────────────────────────────────────
   // Open or closed is decided on every fill of a contract; the window only
   // chooses which contracts are shown (see optGroupsForView).
@@ -434,7 +443,9 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   const activeFilterSummary = useMemo(() => {
   const parts: string[] = []
   if (symbolFilter.trim()) parts.push(`Symbol: ${symbolFilter.trim()}`)
-  if (sincePreset !== 'all' && !expiryFilterYear) {
+  if (tradeDay && !expiryFilterYear) {
+    parts.push(`Trade date: ${fmtIsoDateToken(tradeDay)}`)
+  } else if (sincePreset !== 'all' && !expiryFilterYear) {
     const tab = LEDGER_SINCE_PRESET_TABS.find(t => t.id === sincePreset)
     parts.push(`Since: ${tab?.label ?? sincePreset}`)
   }
@@ -460,6 +471,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   }, [
   symbolFilter,
   sincePreset,
+  tradeDay,
   expiryFilterYear,
   expiryFilterMonth,
   accountFilter,

@@ -35,6 +35,9 @@ const COMPACT_SELECT_TRIGGER = 'h-[1.875rem] min-w-[5.5rem] text-dense-body px-2
 
 type Props = {
   sincePreset: LedgerSincePreset
+  /** One trade date from `?date=`; it replaces the Since window until cleared. */
+  tradeDay?: string | null
+  onClearTradeDay?: () => void
   onSincePreset: (preset: LedgerSincePreset) => void
   dateRange: { start: string; end: string }
   accountTabs: LedgerAccountTab[]
@@ -68,6 +71,8 @@ type Props = {
 
 export function LedgerFilterBar({
   sincePreset,
+  tradeDay = null,
+  onClearTradeDay,
   onSincePreset,
   dateRange,
   accountTabs,
@@ -121,8 +126,8 @@ export function LedgerFilterBar({
               <button
                 type="button"
                 onClick={() => { onSincePreset('all'); clearExpiryFilters() }}
-                className={segmentButtonClass(sincePreset === 'all' && !expiryFilterYear, 'sm')}
-                aria-pressed={sincePreset === 'all' && !expiryFilterYear}
+                className={segmentButtonClass(sincePreset === 'all' && !expiryFilterYear && !tradeDay, 'sm')}
+                aria-pressed={sincePreset === 'all' && !expiryFilterYear && !tradeDay}
               >
                 All
               </button>
@@ -131,8 +136,8 @@ export function LedgerFilterBar({
                   key={t.id}
                   type="button"
                   onClick={() => { onSincePreset(t.id); clearExpiryFilters() }}
-                  className={segmentButtonClass(sincePreset === t.id && !expiryFilterYear, 'sm')}
-                  aria-pressed={sincePreset === t.id && !expiryFilterYear}
+                  className={segmentButtonClass(sincePreset === t.id && !expiryFilterYear && !tradeDay, 'sm')}
+                  aria-pressed={sincePreset === t.id && !expiryFilterYear && !tradeDay}
                 >
                   {t.label}
                 </button>
@@ -165,7 +170,28 @@ export function LedgerFilterBar({
             </div>
           )}
 
-          {sincePreset !== 'all' && !expiryFilterYear && (
+          {tradeDay && (
+            <span
+              className="inline-flex h-6 items-center gap-1.5 rounded-sm border border-[var(--sk-accent)] px-1.75 font-mono text-dense-meta text-[var(--sk-accent)]"
+              role="status"
+              title="From Performance: the fills with this trade date. Pick a Since window or clear to leave it."
+            >
+              Trade date {fmtIsoDateToken(tradeDay)}
+              {onClearTradeDay && (
+                <button
+                  type="button"
+                  onClick={onClearTradeDay}
+                  className="cursor-pointer border-0 bg-transparent p-0 text-inherit hover:text-foreground"
+                  aria-label="Clear the trade date"
+                  title="Clear the trade date"
+                >
+                  ✕
+                </button>
+              )}
+            </span>
+          )}
+
+          {!tradeDay && sincePreset !== 'all' && !expiryFilterYear && (
             <span
               className="inline-flex flex-wrap items-baseline font-mono text-dense-meta text-muted-foreground"
               role="status"

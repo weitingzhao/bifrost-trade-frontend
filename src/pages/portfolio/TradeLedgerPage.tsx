@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
+import { fmtIsoDateToken } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useOpportunities } from '@/hooks/useStrategies'
@@ -39,7 +41,7 @@ import {
   ledgerAccountIdFromScope,
   ledgerScopeFromAccountId,
 } from '@/lib/ledgerAccountTabs'
-import { ledgerStructureFilterAppliesToTab } from '@/pages/portfolio/ledger/ledgerFilterMatch'
+import { ledgerStructureFilterAppliesToTab, parseLedgerTradeDay } from '@/pages/portfolio/ledger/ledgerFilterMatch'
 import { buildLedgerHealth, type LedgerHealthTile } from '@/pages/portfolio/ledger/ledgerHealth'
 import {
   buildLedgerReconcile,
@@ -88,7 +90,22 @@ export default function TradeLedgerPage() {
 
   // ── Core filters ────────────────────────────────────────────────────────
   const { scope, setAccountFilter: setScopeAccount, setFilterSymbol } = usePositionsScope()
-  const [sincePreset, setSincePreset] = useState<LedgerSincePreset>('month')
+  const [sincePreset, setSincePresetState] = useState<LedgerSincePreset>('month')
+  // `?date=YYYY-MM-DD` (Performance → a day's records → Ledger · this day) narrows to one
+  // trade date. Picking a Since window, or clearing the chip, drops it.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tradeDay = parseLedgerTradeDay(searchParams.get('date'))
+  const clearTradeDay = useCallback(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('date')
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
+  const setSincePreset = useCallback((preset: LedgerSincePreset) => {
+    setSincePresetState(preset)
+    clearTradeDay()
+  }, [clearTradeDay])
   const [activeTab, setActiveTab] = useState<MainTab>('strategy')
   const [summaryPeriod, setSummaryPeriod] = useState<LedgerSummaryPeriod>('month')
   const [rowType, setRowType] = useState<LedgerRowType>('all')
@@ -152,7 +169,7 @@ export default function TradeLedgerPage() {
       execution: ex,
       ...(peerPicks.length > 0 ? { peer_instance_picks: peerPicks } : {}),
     })
-  }, [])
+  }, [setLinkContext])
 
   const {
     accountTabs,
@@ -207,6 +224,7 @@ export default function TradeLedgerPage() {
     bookData,
     oppData,
     sincePreset,
+    tradeDay,
     accountFilter,
     symbolFilter,
     activeTab,
@@ -288,7 +306,7 @@ export default function TradeLedgerPage() {
 
   const openLinks = useCallback((execution?: Execution | null) => {
     setInspector({ type: 'links', execution: execution ?? undefined })
-  }, [])
+  }, [setInspector])
   const openLinksFromView = useCallback(
     (ctx: import('@/pages/portfolio/ledger/LedgerOptContractCell').ViewLinksPayload) => {
       openLinks(fillFromViewLinks(ctx, canonData?.items ?? []) ?? null)
@@ -337,9 +355,11 @@ export default function TradeLedgerPage() {
       return next
     })
   }
-  const sinceDisabled = sincePreset !== 'all'
+  const sinceDisabled = sincePreset !== 'all' || tradeDay != null
   const structureApplies = ledgerStructureFilterAppliesToTab(activeTab)
-  const sinceLabel = LEDGER_SINCE_PRESET_TABS.find(t => t.id === sincePreset)?.label ?? sincePreset
+  const sinceLabel = tradeDay
+    ? fmtIsoDateToken(tradeDay)
+    : LEDGER_SINCE_PRESET_TABS.find(t => t.id === sincePreset)?.label ?? sincePreset
 
   const health = useMemo(
     () =>
@@ -489,6 +509,8 @@ export default function TradeLedgerPage() {
         <LedgerFilterBar
           sincePreset={sincePreset}
           onSincePreset={setSincePreset}
+          tradeDay={tradeDay}
+          onClearTradeDay={clearTradeDay}
           dateRange={dateRange}
           accountTabs={accountTabs}
           accountFilter={accountFilter}

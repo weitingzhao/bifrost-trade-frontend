@@ -96,21 +96,25 @@ describe('design adoption', () => {
 
   it('reads the walk as it stands', () => {
     // Replace these as pages are walked — they are the numbers the Owner reads.
-    // Owner list 2026-09-15: all five at Rev 2026-09-15.5.
-    expect(counts.aligned + counts.byState.stale).toBe(5)
-    expect(counts.aligned).toBe(5)
+    // Owner list 2026-09-15: all five at Rev 2026-09-15.5. Owner 2026-09-16:
+    // Accounts and Transfer & Pay signed off at their page rev 2026-09-16.9.
+    expect(counts.aligned + counts.byState.stale).toBe(7)
+    expect(counts.aligned).toBe(7)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
     // R11 against Rev 2026-09-16.9 (pending 22→21). Accounts joined in R12,
-    // built against Rev 2026-09-16.9 (pending 21→20).
-    expect(counts.byState.reviewing).toBe(4)
+    // built against Rev 2026-09-16.9 (pending 21→20). Both left for aligned
+    // on the Owner's look (reviewing 4→2).
+    expect(counts.byState.reviewing).toBe(2)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
         .map((r) => r.path)
         .sort(),
     ).toEqual([
+      '/portfolio/accounts',
+      '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
       '/research/copilot/trading',
@@ -118,9 +122,7 @@ describe('design adoption', () => {
       '/research/symbol',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/portfolio/accounts',
       '/portfolio/backing',
-      '/portfolio/transfer',
       '/trade/plans',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
@@ -170,7 +172,8 @@ describe('design adoption', () => {
     // .10, where Design filled those stamps in — nine Portfolio routes advanced
     // (six to .9, outcome and corporate-actions to .8, pnl-explain to .7). Route
     // and designed counts held at 82 / 78, and none of the walked pages went
-    // stale: no walked page is a Portfolio page yet.
+    // stale: no walked page was a Portfolio page yet. Accounts and Transfer &
+    // Pay are now, both at .9 — a Portfolio redo will surface here as stale.
     expect(DESIGN_REV).toBe('2026-09-16.10')
     expect(counts.byState.stale).toBe(0)
     for (const row of rows) {

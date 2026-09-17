@@ -243,9 +243,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Accounts',
     crumbs: PORTFOLIO,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-16.9',
-      note: 'Walked 2026-09-16 against Portfolio Accounts.dc.html at that rev, on DEV data (FETCHED clocks, seven broker tiles, a dormant row). Built: two clocks that never merge Pull with Rec; IB three-state colour (teal FETCHED, grey DISCONNECTED, red DAEMON DOWN); the five-row account×source freshness table plus Ingest with Widen default off; What the broker says as seven tiles and one table instead of tabs; How it is composed as Category / Asset mix / By symbol in one panel; Holdings following the selected account with Price as of on the stock table; the right inspector as Symbol (existing stock drawer) plus Categories (CRUD, tag, delete confirm). Dormant stays visible and does not alarm. Owner to look before aligned.',
+      note: 'Walked 2026-09-16 against Portfolio Accounts.dc.html at that rev, on DEV data (FETCHED clocks, seven broker tiles, a dormant row). Built: two clocks that never merge Pull with Rec; IB three-state colour (teal FETCHED, grey DISCONNECTED, red DAEMON DOWN); the five-row account×source freshness table plus Ingest with Widen default off; What the broker says as seven tiles and one table instead of tabs; How it is composed as Category / Asset mix / By symbol in one panel; Holdings following the selected account with Price as of on the stock table; the right inspector as Symbol (existing stock drawer) plus Categories (CRUD, tag, delete confirm). Dormant stays visible and does not alarm. Review fixes before sign-off: the idle account reads not in use with no Cushion reading; Data from reads in ET with the date token; every figure whole at each table floor; CategoriesModal, AccountSummaryCard and OverviewDashboard removed. Owner signed off 2026-09-16 on local DEV (:5173).',
     },
   },
   { path: '/portfolio/ledger', label: 'Trade Ledger', crumbs: PORTFOLIO },
@@ -254,9 +254,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Transfer & Pay',
     crumbs: PORTFOLIO,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-16.9',
-      note: 'Walked 2026-09-16 against Portfolio Transfer.dc.html at that rev, on DEV data (116 rows, 77 inside the default last-365 window). Built: the four bands — header with the "A record, not an instrument" bubble and a fetch time; What I am looking at with a count on every account, type and kind chip and the classification rules printed; 7-column detail with DDMMMYY dates, month separators carrying each month\'s events and net, and cancellations in the two states the data has; Summary by period saying it ignores the type filter on purpose; Downstream stating both that returns are ruled net of these flows and that nothing subtracts them yet. Two production defects fixed alongside: the date column read a string ts as unusable and showed 116 em dashes, and the period-over-period rate divided by the current period (Total 2026 +1628.2% → +106.5%). Owner to look before aligned.',
+      note: 'Walked 2026-09-16 against Portfolio Transfer.dc.html at that rev, on DEV data (116 rows, 77 inside the default last-365 window). Built: the four bands — header with the "A record, not an instrument" bubble and a fetch time; What I am looking at with a count on every account, type and kind chip and the classification rules printed; 7-column detail with DDMMMYY dates, month separators carrying each month\'s events and net, and cancellations in the two states the data has; Summary by period saying it ignores the type filter on purpose; Downstream stating both that returns are ruled net of these flows and that nothing subtracts them yet. Two production defects fixed alongside: the date column read a string ts as unusable and showed 116 em dashes, and the period-over-period rate divided by the current period (Total 2026 +1628.2% → +106.5%). Review fix before sign-off: Description given the width the other columns were holding. Owner signed off 2026-09-16 on local DEV (:5173).',
     },
   },
 

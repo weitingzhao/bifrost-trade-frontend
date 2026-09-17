@@ -352,7 +352,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Assignment',
     crumbs: TRADE,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-17.1',
       note: DESIGN_NOTES['/trade/assignment'],
     },

@@ -116,9 +116,10 @@ describe('design adoption', () => {
     // Positions and Backing & Model signed off the same day, closing the
     // Portfolio walk: every page in that group is now in place (aligned 11→13).
     // Stress & Scenario signed off the same day (aligned 13→14), then Orders
-    // & Fills (aligned 14→15), then Margin & Buying Power (aligned 15→16).
-    expect(counts.aligned + counts.byState.stale).toBe(16)
-    expect(counts.aligned).toBe(16)
+    // & Fills (aligned 14→15), then Margin & Buying Power (aligned 15→16)
+    // and Assignment (16→17).
+    expect(counts.aligned + counts.byState.stale).toBe(17)
+    expect(counts.aligned).toBe(17)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -148,8 +149,9 @@ describe('design adoption', () => {
     // (reviewing 4→3). Margin & Buying Power is the link Positions and Backing
     // both wanted (unbuilt 37→36, reviewing 3→4), then aligned on the Owner's
     // look (reviewing 4→3). Assignment is Expiration's other half
-    // (unbuilt 36→35, reviewing 3→4).
-    expect(counts.byState.reviewing).toBe(4)
+    // (unbuilt 36→35, reviewing 3→4), then aligned on the Owner's look
+    // (reviewing 4→3).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -171,11 +173,11 @@ describe('design adoption', () => {
       '/risk/margin',
       '/risk/portfolio',
       '/risk/stress',
+      '/trade/assignment',
       '/trade/fills',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/pnl-explain',
-      '/trade/assignment',
       '/trade/expiration',
       '/trade/plans',
     ])

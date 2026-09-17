@@ -1,23 +1,8 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
-import {
-  DenseDataTable,
-  DenseTableBody,
-  DenseTableCell,
-  DenseTableHead,
-  DenseTableHeader,
-  DenseTableHeadRow,
-  DenseTableRow,
-  ExpandToggleCell,
-  GrandTotalRow,
-  InlinePnl,
-  DenseLinkButton,
-  DenseOptionCategoryLabel,
-  DenseTag,
-  denseTable,
-  denseTableEntityLink,
-  denseTableNumCell,
-} from '@/components/data-display'
+import { DenseTag } from '@/components/data-display'
+import { positionsUi } from './positionsUi'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { RiskProfileDetail } from './RiskProfileDetail'
 import type { DetailViewMode } from './LinesToolbar'
 import { fmtUsd, fmtDate, fmtDaysAgo } from '@/utils/positions'
@@ -60,7 +45,29 @@ import type { PositionGreeks } from '@/hooks/useOptionGreeks'
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
 
-const COL_SPAN = 10
+const COL_SPAN = 9
+
+/** A head cell in the prototype's two lines: the word, and the code the page speaks. */
+function ColHead({
+  word,
+  code,
+  align = 'right',
+  title,
+}: {
+  word: string
+  code: string
+  align?: 'left' | 'right'
+  title?: string
+}) {
+  return (
+    <th className={cn(positionsUi.th, align === 'left' && 'text-left')} title={title}>
+      <span className={cn('flex flex-col gap-px', align === 'left' ? 'items-start' : 'items-end')}>
+        <span>{word}</span>
+        {code ? <span className="font-mono text-dense-micro leading-normal font-normal text-muted-foreground">{code}</span> : null}
+      </span>
+    </th>
+  )
+}
 
 interface Props {
   groups: InstanceAllGroup[]
@@ -112,7 +119,8 @@ function coverageBadge(
     if (held === 0) anyNaked = true
   }
   if (allCovered) return <DenseTag variant="success" size="cell">Covered</DenseTag>
-  if (anyNaked) return <DenseTag variant="danger" size="cell">Naked</DenseTag>
+  // Naked is jeopardy, not a fault: amber, never red (§14.7).
+  if (anyNaked) return <DenseTag variant="warning" size="cell">Naked</DenseTag>
   return <DenseTag variant="warning" size="cell">Partial</DenseTag>
 }
 
@@ -159,13 +167,18 @@ export function InstanceTab({
 
   if (groups.length === 0) {
     return (
-      <div className={instancePanel.tableWrap}>
-        <p className="text-sm font-medium mb-2">Strategy Instances</p>
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col items-center gap-1.5 px-4 py-6.5 text-center">
+        <span className={cn(positionsUi.cap, totalInstanceCount > 0 && 'text-warning')}>
+          {totalInstanceCount > 0 ? 'No match' : 'Nothing in the book'}
+        </span>
+        <span className="text-dense-label font-semibold text-foreground">
+          {totalInstanceCount > 0 ? 'Nothing matches these filters' : 'No strategy instance positions found'}
+        </span>
+        <span className="max-w-115 text-dense-meta text-muted-foreground text-pretty">
           {totalInstanceCount > 0
-            ? 'No strategies match the current filters.'
-            : 'No strategy instance positions found.'}
-        </p>
+            ? 'The book has positions, but none pass the current contract type, opportunity, scope or attribution filters.'
+            : 'The broker reports no option positions on a strategy for the accounts in scope.'}
+        </span>
       </div>
     )
   }
@@ -208,41 +221,35 @@ export function InstanceTab({
   const colSpan = showMoneyness ? COL_SPAN : COL_SPAN - 1
 
   return (
-    <div className={instancePanel.tableWrap}>
-      <DenseDataTable tableClassName="min-w-[66.5rem] table-fixed">
+    <div className="overflow-x-auto">
+      {/* §14.6: nine columns, the design's 940 floor. */}
+      <table className="w-full min-w-[940px] table-fixed border-collapse">
+        {/* Measured at the 940 floor with every row open: the name column takes the slack. */}
         <colgroup>
-          <col style={{ width: '2rem' }} />
-          <col style={{ width: '14rem' }} />
-          <col style={{ width: '7.5rem' }} />
-          <col style={{ width: '6rem' }} />
-          <col style={{ width: '4.75rem' }} />
-          {showMoneyness ? <col style={{ width: '5.75rem' }} /> : null}
-          <col style={{ width: '5.5rem' }} />
-          <col style={{ width: '5rem' }} />
-          <col style={{ width: '6.5rem' }} />
-          <col style={{ width: '9.5rem' }} />
+          <col style={{ width: '21%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '8.5%' }} />
+          <col style={{ width: '8%' }} />
+          {showMoneyness ? <col style={{ width: '8.5%' }} /> : null}
+          <col style={{ width: '6.5%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '11.5%' }} />
+          <col style={{ width: '17%' }} />
         </colgroup>
-        <DenseTableHeader>
-          <DenseTableHeadRow>
-            <DenseTableHead className="w-7" aria-label="Expand" />
-            <DenseTableHead title="Opportunity · strategy instance · when it was opened">
-              Opp
-            </DenseTableHead>
-            <DenseTableHead>Contract Type</DenseTableHead>
-            <DenseTableHead>Symbols</DenseTableHead>
-            <DenseTableHead title={DTE_TITLE}>DTE</DenseTableHead>
-            {showMoneyness ? (
-              <DenseTableHead title={CUSHION_TITLE}>Moneyness</DenseTableHead>
-            ) : null}
-            <DenseTableHead title={EXEC_QTY_TITLE}>Exec Qty</DenseTableHead>
-            <DenseTableHead>Underlying</DenseTableHead>
-            <DenseTableHead align="right">Opt PNL</DenseTableHead>
-            <DenseTableHead align="right" title={AT_EXPIRY_TITLE}>
-              Gain / Loss @exp
-            </DenseTableHead>
-          </DenseTableHeadRow>
-        </DenseTableHeader>
-        <DenseTableBody>
+        <thead>
+          <tr>
+            <ColHead word="Opportunity" code="Opp" align="left" title="Opportunity · strategy instance · when it was opened" />
+            <ColHead word="Contract type" code="" align="left" />
+            <ColHead word="Symbols" code="" align="left" />
+            <ColHead word="Days to expiry" code="DTE" title={DTE_TITLE} />
+            {showMoneyness ? <ColHead word="Moneyness" code="" title={CUSHION_TITLE} /> : null}
+            <ColHead word="Executed qty" code="Exec Qty" title={EXEC_QTY_TITLE} />
+            <ColHead word="Underlying" code="" />
+            <ColHead word="Option P&L · open" code="Opt PNL" />
+            <ColHead word="Gain / loss at expiry" code="Gain/Loss @exp" title={AT_EXPIRY_TITLE} />
+          </tr>
+        </thead>
+        <tbody>
           {ranked.flatMap((group) => {
             const instKey = instanceGroupKey(group)
             const id = group.strategy_instance_id
@@ -294,18 +301,21 @@ export function InstanceTab({
             const beSpot =
               fromOptions.length === 1 ? (resolveSpot(fromOptions[0] as string)?.price ?? null) : null
 
+            const rowBg = isExpanded ? '[&>td]:bg-[var(--sk-surface)]' : 'hover:[&>td]:bg-[var(--sk-raised2)]'
+            const name = oppName ?? instLabel
+            const sub = oppName ? instLabel : id == null ? 'not on any strategy' : 'unnamed instance'
+            const nameInk = oppName ? 'text-foreground' : id == null ? 'text-warning' : 'text-secondary-foreground'
+
             const mainRow = (
-              <DenseTableRow
+              <tr
                 key={`inst-${instKey}`}
                 id={`lines-row-${instKey}`}
-                className={cn(
-                  instancePanel.sheetRow,
-                  isExpanded && instancePanel.sheetRowExpanded,
-                )}
+                className={cn('cursor-pointer', rowBg)}
                 onClick={() => toggleExpand(instKey)}
                 role="button"
                 tabIndex={0}
                 aria-expanded={isExpanded}
+                title={isExpanded ? 'Collapse' : 'Open the legs behind this strategy'}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
@@ -313,73 +323,49 @@ export function InstanceTab({
                   }
                 }}
               >
-                <DenseTableCell className="px-2">
-                  <ExpandToggleCell expanded={isExpanded} onToggle={() => toggleExpand(instKey)} />
-                </DenseTableCell>
-                <DenseTableCell className={cn('text-xs', instancePanel.oppCell, denseTable.entityCell)}>
-                  {id != null ? (
-                    <div className="flex min-w-0 flex-col gap-0.5">
-                      {oppName ? (
-                        <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
-                          {oppName}
-                        </DenseOptionCategoryLabel>
-                      ) : null}
-                      {onOpenStrategy ? (
+                <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')}>
+                  <span className="flex items-baseline gap-1.5">
+                    <span className="w-2.5 flex-none text-muted-foreground">{isExpanded ? '▾' : '▸'}</span>
+                    <span className="flex min-w-0 flex-col gap-px">
+                      <span className={cn('text-xs font-semibold leading-normal', nameInk)}>{name}</span>
+                      {onOpenStrategy && id != null ? (
                         <span
                           className="inline"
                           onClick={(e) => e.stopPropagation()}
                           onKeyDown={(e) => e.stopPropagation()}
                           role="presentation"
                         >
-                          <DenseLinkButton
-                            variant="instance"
-                            label={instLabel}
-                            ariaLabel={`View strategy instance: ${instLabel}`}
+                          <button
+                            type="button"
+                            className={cn(
+                              positionsUi.mono,
+                              'cursor-pointer border-0 bg-transparent p-0 text-left text-dense-caption leading-normal text-muted-foreground hover:text-foreground hover:underline',
+                            )}
+                            aria-label={`View strategy instance: ${instLabel}`}
                             onClick={() => onOpenStrategy(id)}
-                            className={denseTableEntityLink}
-                          />
+                          >
+                            {sub}
+                          </button>
                         </span>
                       ) : (
-                        <DenseOptionCategoryLabel variant="instance" className="whitespace-normal font-mono">
-                          {instLabel}
-                        </DenseOptionCategoryLabel>
+                        <span className={cn(positionsUi.mono, 'text-dense-caption leading-normal text-muted-foreground')}>
+                          {sub}
+                        </span>
                       )}
-                    </div>
-                  ) : (
-                    <span className="inline-flex flex-wrap gap-1">
-                      {oppName ? (
-                        <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
-                          {oppName}
-                        </DenseOptionCategoryLabel>
-                      ) : null}
-                      {instLabel ? (
-                        <DenseOptionCategoryLabel variant="instance" className="whitespace-normal font-mono">
-                          {instLabel}
-                        </DenseOptionCategoryLabel>
-                      ) : null}
                     </span>
-                  )}
-                </DenseTableCell>
-                <DenseTableCell className={cn('text-xs', instancePanel.contractTypeCell)}>
-                  {group.structure_type ? (
-                    <DenseOptionCategoryLabel
-                      variant="structure"
-                      className="max-w-full whitespace-normal leading-snug"
-                    >
-                      {structLabel}
-                    </DenseOptionCategoryLabel>
-                  ) : (
-                    '—'
-                  )}
-                </DenseTableCell>
-                <DenseTableCell className={cn('text-xs', denseTable.entityCell)}>
+                  </span>
+                </td>
+                <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-secondary-foreground')}>
+                  {group.structure_type ? structLabel : <span className="text-muted-foreground">—</span>}
+                </td>
+                <td className={cn(positionsUi.td, 'text-left whitespace-normal')}>
                   {scopeType === 'watchlist_stk' ? (
                     <DenseTag variant="info" size="cell">
                       Watchlist
                     </DenseTag>
                   ) : scopeSymbols.length > 0 ? (
-                    <span className="inline-flex flex-wrap gap-1">
-                      {scopeSymbols.map(sym =>
+                    <span className="inline-flex flex-wrap gap-x-1.5 gap-y-0.5">
+                      {scopeSymbols.map((sym) =>
                         onOpenStock ? (
                           <span
                             key={sym}
@@ -388,84 +374,68 @@ export function InstanceTab({
                             onKeyDown={(e) => e.stopPropagation()}
                             role="presentation"
                           >
-                            <DenseLinkButton
-                              variant="stock"
-                              label={sym}
-                              ariaLabel={`Open ${sym}`}
+                            <button
+                              type="button"
+                              className="cursor-pointer border-0 bg-transparent p-0 font-mono text-xs font-bold text-[var(--color-entity-option)] hover:underline"
+                              aria-label={`Open ${sym}`}
                               onClick={() => onOpenStock(sym, defaultStockAcct)}
-                              className={cn(denseTableEntityLink, 'font-mono')}
-                            />
+                            >
+                              {sym}
+                            </button>
                           </span>
                         ) : (
-                          <DenseTag key={sym} variant="symbol" size="cell" className="font-mono">
+                          <span key={sym} className="font-mono text-xs font-bold text-[var(--color-entity-option)]">
                             {sym}
-                          </DenseTag>
+                          </span>
                         ),
                       )}
                     </span>
                   ) : (
-                    '—'
+                    <span className="text-muted-foreground">—</span>
                   )}
-                </DenseTableCell>
-                <DenseTableCell className="text-xs">
+                </td>
+                <td className={positionsUi.td}>
                   <InstanceDteCell legs={group.options} />
-                </DenseTableCell>
+                </td>
                 {showMoneyness ? (
-                  <DenseTableCell className="text-xs">
-                    <InstanceCushionCell
-                      legs={group.options}
-                      spotOf={spotOfLeg}
-                      tightPct={cushionTightPct}
-                    />
-                  </DenseTableCell>
+                  <td className={positionsUi.td}>
+                    <InstanceCushionCell legs={group.options} spotOf={spotOfLeg} tightPct={cushionTightPct} />
+                  </td>
                 ) : null}
-                <DenseTableCell
-                  className={cn(
-                    'font-mono text-xs text-muted-foreground',
-                    instancePanel.execQtyCell,
-                  )}
-                  title={EXEC_QTY_TITLE}
-                >
+                <td className={cn(positionsUi.td, 'text-muted-foreground')} title={EXEC_QTY_TITLE}>
                   {optN > 0 ? optExecQty : '—'}
-                </DenseTableCell>
-                <DenseTableCell>{coverageBadge(group.stock_coverage, liveStocks)}</DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'text-xs font-semibold')}>
-                  {optN > 0 ? (
-                    <InlinePnl value={group.options_unrealized_pnl}>
-                      {fmtUsd(group.options_unrealized_pnl)}
-                    </InlinePnl>
-                  ) : (
-                    '—'
+                </td>
+                <td className={cn(positionsUi.td, 'text-right')}>{coverageBadge(group.stock_coverage, liveStocks)}</td>
+                <td
+                  className={cn(
+                    positionsUi.td,
+                    'font-bold',
+                    optN > 0 ? pnlColorClass(group.options_unrealized_pnl) : 'text-muted-foreground',
                   )}
-                </DenseTableCell>
-                <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
+                >
+                  {optN > 0 ? fmtUsd(group.options_unrealized_pnl) : '—'}
+                </td>
+                <td className={positionsUi.td}>
                   {rp && rl ? (
                     <InstancePayoffCell
                       gainLabel={rl.gainLabel}
                       lossLabel={rl.lossLabel}
-                      maxGain={rp.max_gain}
-                      maxLoss={rp.max_loss}
                       unlimited={rp.risk_type === 'unlimited'}
                       prices={rp.breakeven_prices}
                       spot={beSpot}
                     />
                   ) : (
-                    '—'
+                    <span className="text-muted-foreground">—</span>
                   )}
-                </DenseTableCell>
-              </DenseTableRow>
+                </td>
+              </tr>
             )
 
             const detailRow = isExpanded ? (
-              <DenseTableRow
-                key={`inst-detail-${instKey}`}
-                className={instancePanel.detailRow}
-              >
-                <DenseTableCell colSpan={colSpan} className={instancePanel.detailCell}>
+              <tr key={`inst-detail-${instKey}`}>
+                <td colSpan={colSpan} className="border-b border-border bg-[var(--sk-raised2)] px-2.5 pt-1 pb-2.5 pl-6.5 align-top">
                   <div className={instancePanel.detailStack}>
-                    {openedMeta ? (
-                      <div className="px-2 text-dense-caption text-muted-foreground">Opened {openedMeta}</div>
-                    ) : null}
+                    {openedMeta ? <div className="text-dense-caption text-muted-foreground">Opened {openedMeta}</div> : null}
                     <InstanceOptionSubTable
                       group={group}
                       options={group.options}
@@ -494,23 +464,23 @@ export function InstanceTab({
                     />
                     {rp && <RiskProfileDetail profile={rp} />}
                   </div>
-                </DenseTableCell>
-              </DenseTableRow>
+                </td>
+              </tr>
             ) : null
 
             return detailRow ? [mainRow, detailRow] : [mainRow]
           })}
-          <GrandTotalRow
-            labelColSpan={showMoneyness ? 8 : 7}
-            label={`Total (${groups.length} ${groups.length === 1 ? 'strategy' : 'strategies'})`}
-          >
-            <DenseTableCell className={cn(denseTableNumCell, 'text-xs font-semibold')}>
-              <InlinePnl value={totalOptPnl}>{fmtUsd(totalOptPnl)}</InlinePnl>
-            </DenseTableCell>
-            <DenseTableCell colSpan={1} />
-          </GrandTotalRow>
-        </DenseTableBody>
-      </DenseDataTable>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td className={cn(positionsUi.td, 'border-b-0 pl-2 text-left font-sans font-bold text-foreground')} colSpan={colSpan - 2}>
+              Total ({groups.length} {groups.length === 1 ? 'strategy' : 'strategies'})
+            </td>
+            <td className={cn(positionsUi.td, 'border-b-0 font-bold', pnlColorClass(totalOptPnl))}>{fmtUsd(totalOptPnl)}</td>
+            <td className={cn(positionsUi.td, 'border-b-0')} />
+          </tr>
+        </tfoot>
+      </table>
     </div>
   )
 }

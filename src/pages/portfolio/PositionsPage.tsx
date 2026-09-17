@@ -409,7 +409,7 @@ export default function PositionsPage() {
                 ) : null}
 
                 <PositionsTier label="Lines" note="the rows themselves, tightest first · one thing at a time opens on the right" />
-                <div id="positions-lines" className="min-w-0">
+                <section id="positions-lines" className={positionsUi.panel} aria-label="Lines">
                   <LinesToolbar
                     view={linesView}
                     onViewChange={setLinesView}
@@ -483,7 +483,7 @@ export default function PositionsPage() {
                       onExpiryClick={toggleExpiryScope}
                     />
                   )}
-                </div>
+                </section>
               </>
             )}
           </>

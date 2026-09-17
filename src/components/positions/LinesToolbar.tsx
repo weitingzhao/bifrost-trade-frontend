@@ -7,15 +7,10 @@
  * describe strategies, not contracts. Detail mode moved here from the page bar
  * for the same reason: it is about how rows expand, not what the page is about.
  */
-import {
-  DenseTagButton,
-  SegmentControl,
-  segmentButtonClass as bubbleButtonClass,
-  segmentGroupClass as bubbleGroupClass,
-} from '@/components/data-display'
-import { Button } from '@/components/ui/button'
-import { instancePanel } from './instancePanelClasses'
+import { cn } from '@/lib/utils'
+import { DenseTagButton, SegmentControl } from '@/components/data-display'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { positionsUi } from './positionsUi'
 import type { InstanceFilterValues } from '@/utils/filterInstanceGroups'
 
 export type { InstanceFilterValues }
@@ -48,36 +43,6 @@ interface Props {
   /** A leg selected on the risk map narrows every view to it; the chip is the way out. */
   selectionLabel?: string | null
   onClearSelection?: () => void
-}
-
-function BubbleRadio({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string
-  options: { value: string; label: string }[]
-  value: string
-  onChange: (v: string) => void
-}) {
-  return (
-    <div className={instancePanel.filterBubbleRow}>
-      <span className={instancePanel.filterBubbleLabel}>{label}</span>
-      <div className={bubbleGroupClass()}>
-        {options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => onChange(opt.value)}
-            className={bubbleButtonClass(value === opt.value)}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
 }
 
 export function LinesToolbar({
@@ -124,10 +89,12 @@ export function LinesToolbar({
     { value: 'unassigned', label: 'Unassigned' },
   ]
 
+  const trigger = cn(positionsUi.input, 'h-5.5 font-sans text-dense-meta')
+
   return (
-    <div className={instancePanel.filters} role="toolbar" aria-label="Lines grid">
+    <header className={positionsUi.panelHead} role="toolbar" aria-label="Lines grid">
       <SegmentControl
-        size="sm"
+        size="xs"
         ariaLabel="Lines view"
         options={[
           { value: 'strategy', label: 'Strategies' },
@@ -148,21 +115,21 @@ export function LinesToolbar({
         </DenseTagButton>
       ) : null}
       {view === 'expiries' ? (
-        <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
+        <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>
           {expiryCount} {expiryCount === 1 ? 'date' : 'dates'}
         </span>
       ) : null}
       {view === 'strategy' ? (
         <>
-          <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
+          <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>
             {shown} / {total}
           </span>
           <Select value={values.structureType} onValueChange={(v) => update({ structureType: v })}>
-            <SelectTrigger className="h-7 w-40 shrink-0 text-xs">
-              <SelectValue placeholder="All Contract Types" />
+            <SelectTrigger className={cn(trigger, 'w-38')} aria-label="Contract type">
+              <SelectValue placeholder="All contract types" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Contract Types</SelectItem>
+              <SelectItem value="all">All contract types</SelectItem>
               {structureTypes.map((st) => (
                 <SelectItem key={st} value={st}>
                   {st.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
@@ -172,11 +139,11 @@ export function LinesToolbar({
           </Select>
 
           <Select value={values.oppName} onValueChange={(v) => update({ oppName: v })}>
-            <SelectTrigger className="h-7 w-44 shrink-0 text-xs">
-              <SelectValue placeholder="All Opportunities" />
+            <SelectTrigger className={cn(trigger, 'w-42')} aria-label="Opportunity">
+              <SelectValue placeholder="All opportunities" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Opportunities</SelectItem>
+              <SelectItem value="all">All opportunities</SelectItem>
               {oppNames.map((n) => (
                 <SelectItem key={n} value={n}>
                   {n}
@@ -185,41 +152,49 @@ export function LinesToolbar({
             </SelectContent>
           </Select>
 
-          <BubbleRadio
-            label="Scope"
-            options={scopeOptions}
-            value={values.scopeType}
-            onChange={(v) => update({ scopeType: v })}
-          />
-          <BubbleRadio
-            label="Attribution"
-            options={attrOptions}
-            value={values.attributionType}
-            onChange={(v) => update({ attributionType: v })}
-          />
+          <span className="flex items-center gap-1.5">
+            <span className={positionsUi.cap}>Scope</span>
+            <SegmentControl
+              size="xs"
+              ariaLabel="Scope"
+              options={scopeOptions}
+              value={values.scopeType}
+              onChange={(v) => update({ scopeType: v })}
+            />
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className={positionsUi.cap}>Attribution</span>
+            <SegmentControl
+              size="xs"
+              ariaLabel="Attribution"
+              options={attrOptions}
+              value={values.attributionType}
+              onChange={(v) => update({ attributionType: v })}
+            />
+          </span>
           {hasActiveFilter && (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => onChange(CLEAR_FILTERS)}>
-              Clear Filters
-            </Button>
+            <button type="button" className={positionsUi.btn} onClick={() => onChange(CLEAR_FILTERS)}>
+              Clear filters
+            </button>
           )}
         </>
       ) : null}
 
       {view !== 'expiries' ? (
-      <div className="ml-auto flex shrink-0 items-center gap-1" role="radiogroup" aria-label="Detail view mode">
-        <span className="whitespace-nowrap text-dense-label font-semibold text-muted-foreground">Detail</span>
-        <SegmentControl
-          size="sm"
-          ariaLabel="Detail view mode"
-          options={[
-            { value: 'accordion', label: 'Accordion' },
-            { value: 'multi', label: 'Multi' },
-          ]}
-          value={detailViewMode}
-          onChange={(v) => onDetailViewModeChange(v as DetailViewMode)}
-        />
-      </div>
+        <span className="ml-auto flex shrink-0 items-center gap-1.5">
+          <span className={positionsUi.cap}>Rows</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Detail view mode"
+            options={[
+              { value: 'accordion', label: 'Accordion' },
+              { value: 'multi', label: 'Multi' },
+            ]}
+            value={detailViewMode}
+            onChange={(v) => onDetailViewModeChange(v as DetailViewMode)}
+          />
+        </span>
       ) : null}
-    </div>
+    </header>
   )
 }

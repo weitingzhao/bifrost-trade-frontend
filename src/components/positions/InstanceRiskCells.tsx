@@ -8,8 +8,8 @@
  * means *risk* lives on the cushion and DTE only ever says *time*.
  */
 import { cn } from '@/lib/utils'
-import { DenseTag, InlinePnl } from '@/components/data-display'
-import { fmtExpiry, fmtUsd } from '@/utils/positions'
+import { fmtUsd } from '@/utils/positions'
+import { fmtIsoDateToken } from '@/lib/format'
 import { dteToneClass } from '@/lib/optionSemantics'
 import {
   cushionBand,
@@ -47,14 +47,14 @@ export function InstanceDteCell({ legs }: { legs: readonly OptionLegLike[] }) {
 
   return (
     <span
-      className="flex flex-col leading-tight"
-      title={`${DTE_TITLE}\nNearest: ${fmtExpiry(expiry ?? undefined)}${
+      className="flex flex-col items-end leading-normal"
+      title={`${DTE_TITLE}\nNearest: ${fmtIsoDateToken(expiry ?? undefined)}${
         expiryCount > 1 ? ` · ${expiryCount} distinct expiries` : ''
       }`}
     >
-      <span className={cn('font-mono font-semibold tabular-nums', tone)}>{label}</span>
-      <span className="text-dense-caption text-muted-foreground">
-        {fmtExpiry(expiry ?? undefined)}
+      <span className={cn('font-mono font-semibold tabular-nums', tone ?? 'text-secondary-foreground')}>{label}</span>
+      <span className="font-mono text-dense-caption text-muted-foreground">
+        {fmtIsoDateToken(expiry ?? undefined)}
         {expiryCount > 1 ? ` +${expiryCount - 1}` : ''}
       </span>
     </span>
@@ -95,12 +95,11 @@ export function InstanceCushionCell<T extends OptionLegLike>({
   }
 
   const band = cushionBand(s.cushionPct, tightPct)
-  const tone =
-    band === 'breached' ? 'text-loss' : band === 'tight' ? 'text-warning' : undefined
+  const tone = band === 'breached' ? 'text-loss' : band === 'tight' ? 'text-warning' : 'text-profit'
 
   return (
     <span
-      className="flex flex-col items-start gap-0.5 leading-tight"
+      className="flex flex-col items-end leading-normal"
       title={`${CUSHION_TITLE}\nTightest: ${
         s.leg ? legLabel(s.leg) : '—'
       } vs spot ${s.spot != null ? s.spot.toFixed(2) : '—'}${
@@ -113,15 +112,12 @@ export function InstanceCushionCell<T extends OptionLegLike>({
         {pct1(s.cushionPct)}
         {s.unpricedShortCount > 0 ? <span className="text-muted-foreground">*</span> : null}
       </span>
-      {s.itmShortCount > 0 ? (
-        <DenseTag variant="danger" size="cell">
-          {s.itmShortCount} ITM
-        </DenseTag>
-      ) : (
-        <span className="text-dense-caption font-mono text-muted-foreground">
-          {s.leg ? legLabel(s.leg) : ''}
-        </span>
-      )}
+      <span
+        className={cn('font-mono text-dense-caption', s.itmShortCount > 0 ? 'text-loss' : 'text-muted-foreground')}
+      >
+        {s.itmShortCount > 0 ? `${s.itmShortCount} ITM · ` : ''}
+        {s.leg ? legLabel(s.leg) : ''}
+      </span>
     </span>
   )
 }
@@ -144,16 +140,12 @@ export const AT_EXPIRY_TITLE =
 export function InstancePayoffCell({
   gainLabel,
   lossLabel,
-  maxGain,
-  maxLoss,
   unlimited,
   prices,
   spot,
 }: {
   gainLabel: string
   lossLabel: string
-  maxGain: number | null
-  maxLoss: number | null
   unlimited: boolean
   prices: readonly number[]
   /** Null when the instance spans more than one underlying — no single spot to compare. */
@@ -163,7 +155,7 @@ export function InstancePayoffCell({
 
   return (
     <span
-      className="flex flex-col items-end leading-tight"
+      className="flex flex-col items-end leading-normal"
       title={
         `${AT_EXPIRY_TITLE}\nMax gain ${gainLabel} · max loss ${lossLabel}` +
         (be.prices.length > 0
@@ -171,18 +163,12 @@ export function InstancePayoffCell({
           : '\nNo breakeven in the modelled range.')
       }
     >
-      <span className="font-mono tabular-nums">
-        <InlinePnl value={maxGain}>
-          <span>{gainLabel}</span>
-        </InlinePnl>
+      {/* At expiry is a model, not a mark: it carries no direction colour, as the
+          prototype draws it. Unlimited is the one word that stays amber. */}
+      <span className="font-mono tabular-nums text-secondary-foreground">
+        <span>{gainLabel}</span>
         <span className="text-muted-foreground"> / </span>
-        {unlimited ? (
-          <span className="text-loss">{lossLabel}</span>
-        ) : (
-          <InlinePnl value={maxLoss}>
-            <span>{lossLabel}</span>
-          </InlinePnl>
-        )}
+        <span className={unlimited ? 'text-warning' : undefined}>{lossLabel}</span>
       </span>
       <span className="text-dense-caption text-muted-foreground">
         {be.nearest != null ? (

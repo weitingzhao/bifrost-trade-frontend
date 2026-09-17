@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest'
-import { NO_PRIOR_BASE, getPeriodKey, pctChangeVsPrev } from './transferPay'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  NO_PRIOR_BASE,
+  RANGE_PRESET_OPTIONS,
+  getPeriodKey,
+  getRangeForPreset,
+  pctChangeVsPrev,
+} from './transferPay'
 
 /**
  * E2: the page divided by the current period instead of the previous one, so
@@ -40,5 +46,37 @@ describe('getPeriodKey', () => {
     expect(getPeriodKey('1789084800.000000', 'year')).toBe('2026')
     expect(getPeriodKey('1789084800.000000', 'quarter')).toBe('2026 Q3')
     expect(getPeriodKey('1789084800.000000', 'month')).toBe('2026-09')
+  })
+})
+
+describe('getRangeForPreset', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('offers all eight windows — tax, reconciliation and month-end each need a different one', () => {
+    expect(RANGE_PRESET_OPTIONS).toHaveLength(8)
+    expect(RANGE_PRESET_OPTIONS.map(o => o.value)).toContain('last_business_day')
+  })
+
+  it('reaches back three days on a Monday, not one', () => {
+    // Written on purpose: without it, "last business day" is empty every Monday.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 8, 14, 10)) // Monday 14 Sep 2026
+    expect(getRangeForPreset('last_business_day').fromDate).toBe('20260911')
+  })
+
+  it('reaches back one day midweek', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 8, 16, 10)) // Wednesday
+    expect(getRangeForPreset('last_business_day').fromDate).toBe('20260915')
+  })
+
+  it('hands back both a query window and the dates the Flex fetch sends', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 8, 16, 10))
+    const r = getRangeForPreset('ytd')
+    expect(r.fromDate).toBe('20260101')
+    expect(r.sinceTs).toBeLessThan(r.untilTs)
   })
 })

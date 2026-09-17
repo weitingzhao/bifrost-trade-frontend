@@ -46,6 +46,11 @@ import {
 const PAGE_LEAD =
   'Did the system make money — by layer, by month, by day. Deposits and withdrawals recorded in Transfer & Pay are not P&L.'
 
+function todayIso(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
 const RANGE_WORD: Record<PerformanceTimeRange, string> = {
   quarter: 'this quarter',
   halfyear: 'half year',
@@ -128,6 +133,7 @@ export default function PerformancePage() {
       growthUnit,
       layersVisible: growthLayersVisible,
       optionsMode: optionsPnLMode,
+      lastDate: todayIso(),
     })
   }, [bulk, perf, growthUnit, growthLayersVisible, optionsPnLMode])
 
@@ -143,6 +149,7 @@ export default function PerformancePage() {
           growthUnit: 'usd',
           layersVisible: growthLayersVisible,
           optionsMode: optionsPnLMode,
+          lastDate: todayIso(),
         })
     if (!usd) return null
     const { options, stocks, fixed_income, cash_like } = usd.last

@@ -5,16 +5,25 @@ export type GrowthLayer = 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 export interface GrowthLayerDef {
   key: GrowthLayer
   label: string
+  /** The asset-class hue (Portfolio Performance prototype, Owner ruling 2026-09-15). */
   color: string
   colorFill: string
+  /** Stroke weight and dash repeat the distinction, so the chart still reads without colour. */
+  strokeWidth: number
+  dash?: string
+  /** The word at the right end of the line. */
+  mark: string
 }
 
 export const GROWTH_LAYERS: GrowthLayerDef[] = [
-  { key: 'options', label: 'Options', color: 'rgb(163,230,53)', colorFill: 'rgba(163,230,53,0.28)' },
-  { key: 'stocks', label: 'Stocks', color: 'rgb(56,189,248)', colorFill: 'rgba(56,189,248,0.22)' },
-  { key: 'fixed_income', label: 'FI Stream', color: 'rgb(251,191,36)', colorFill: 'rgba(251,191,36,0.18)' },
-  { key: 'cash_like', label: 'Cash-like', color: 'rgb(167,139,250)', colorFill: 'rgba(167,139,250,0.18)' },
+  { key: 'options', label: 'Options', color: 'rgb(74,222,128)', colorFill: 'rgba(74,222,128,0.14)', strokeWidth: 2.5, mark: 'options' },
+  { key: 'stocks', label: 'Stocks', color: 'rgb(96,165,250)', colorFill: 'rgba(96,165,250,0.14)', strokeWidth: 1.75, mark: 'stocks' },
+  { key: 'fixed_income', label: 'FI Stream', color: 'rgb(251,191,36)', colorFill: 'rgba(251,191,36,0.14)', strokeWidth: 1.5, mark: 'fi' },
+  { key: 'cash_like', label: 'Cash-like', color: 'rgb(167,139,250)', colorFill: 'rgba(167,139,250,0.14)', strokeWidth: 1.25, dash: '1 3', mark: 'cash' },
 ]
+
+/** The one fill on the chart: the area under the Total line. */
+export const GROWTH_TOTAL_AREA_FILL = 'rgba(74,222,128,0.14)'
 
 export const DEFAULT_LAYERS_VISIBLE: Record<GrowthLayer, boolean> = {
   options: true,
@@ -69,6 +78,14 @@ export interface XTick {
   label: string
 }
 
+/** A label at the right end of a line, in viewBox y, nudged apart so none overlap. */
+export interface EndMark {
+  y: number
+  label: string
+  kind: 'layer' | 'total' | 'net'
+  color?: string
+}
+
 export interface HitPoint {
   cx: number
   cyTotal: number
@@ -80,6 +97,11 @@ export interface EquityGrowthChartData {
   PL: number; PR: number; PT: number; PB: number
   chartW: number; chartH: number
   totalPath: string
+  /** The area under the Total line, down to zero. */
+  totalArea: string
+  /** Net PnL on Book, all four layers — dashed, never switched. */
+  netPath: string
+  endMarks: EndMark[]
   layerAreas: LayerArea[]
   gridLines: GridLine[]
   xTicks: XTick[]
@@ -108,6 +130,8 @@ export function buildEquityGrowthChart(params: {
   layersVisible: Record<GrowthLayer, boolean>
   /** Book = FIFO realized path; Economic = B0 same-day roll cash adjustment. */
   optionsMode?: OptionsPnLMode
+  /** `YYYY-MM-DD`: days after it have no session yet and are left off the curve. */
+  lastDate?: string
 }): EquityGrowthChartData | null {
   const {
     byDayRangeData,
@@ -115,6 +139,7 @@ export function buildEquityGrowthChart(params: {
     growthUnit,
     layersVisible: vis,
     optionsMode = 'book',
+    lastDate,
   } = params
 
   const capitalBase = Number(rawCb)
@@ -139,7 +164,7 @@ export function buildEquityGrowthChart(params: {
     ...Object.keys(fiMap), ...Object.keys(fiNotionalMap), ...Object.keys(cashMap),
     ...(useEconomic ? Object.keys(economicOptByDay) : []),
     ...(useTotal && optOpenByDay != null ? Object.keys(optOpenByDay) : []),
-  ])].sort()
+  ])].filter((d) => lastDate == null || d <= lastDate).sort()
 
   if (allDates.length === 0) return null
 
@@ -230,6 +255,7 @@ export function buildEquityGrowthChart(params: {
     if (vis.fixed_income) valsForScale.push(p.fixed_income)
     if (vis.cash_like) valsForScale.push(p.cash_like)
     valsForScale.push(p.totalVisible)
+    valsForScale.push(p.total)
   }
 
   let minY = Math.min(0, ...valsForScale)
@@ -251,6 +277,8 @@ export function buildEquityGrowthChart(params: {
   }
 
   const totalPath = makePath(points.map((p) => p.totalVisible))
+  const totalArea = makeArea(points.map((p) => p.totalVisible))
+  const netPath = makePath(points.map((p) => p.total))
   const layerAreas: LayerArea[] = GROWTH_LAYERS.map((l) => ({
     ...l,
     area: makeArea(points.map((p) => p[l.key])),
@@ -264,14 +292,38 @@ export function buildEquityGrowthChart(params: {
     return { y: yScale(v), label: isPct ? `${v.toFixed(1)}%` : fmtUsdCompact(v) }
   })
 
-  const xTickCount = Math.min(points.length, 8)
-  const xTickStep = Math.max(1, Math.floor(points.length / xTickCount))
-  const xTicks: XTick[] = points
-    .filter((_, i) => i % xTickStep === 0 || i === points.length - 1)
-    .map((p) => ({ x: xScale(points.indexOf(p)), label: p.dateLabel }))
+  // Across months the ticks are the months, at the first day of each; inside one month, dates.
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthStarts = points
+    .map((p, i) => ({ p, i }))
+    .filter(({ p, i }) => i === 0 || p.dateStr.slice(0, 7) !== points[i - 1]!.dateStr.slice(0, 7))
+  let xTicks: XTick[]
+  if (monthStarts.length >= 2) {
+    xTicks = monthStarts.map(({ p, i }) => ({ x: xScale(i), label: MONTHS[Number(p.dateStr.slice(5, 7)) - 1] ?? '' }))
+  } else {
+    const xTickCount = Math.min(points.length, 6)
+    const xTickStep = Math.max(1, Math.floor(points.length / xTickCount))
+    xTicks = points
+      .map((p, i) => ({ p, i }))
+      .filter(({ i }) => i % xTickStep === 0)
+      .map(({ p, i }) => ({ x: xScale(i), label: p.dateLabel }))
+  }
 
   const zeroY = minY <= 0 && maxY >= 0 ? yScale(0) : null
   const last = points[points.length - 1]!
+
+  const rawMarks: EndMark[] = [
+    ...GROWTH_LAYERS.filter((l) => vis[l.key]).map((l): EndMark => ({ y: yScale(last[l.key]), label: l.mark, kind: 'layer', color: l.color })),
+    { y: yScale(last.totalVisible), label: 'total', kind: 'total' } as EndMark,
+    { y: yScale(last.total), label: 'net', kind: 'net' } as EndMark,
+  ].sort((a, b) => a.y - b.y)
+  const endMarks: EndMark[] = []
+  let prevY = -Infinity
+  for (const m of rawMarks) {
+    const y = Math.max(m.y, prevY + 12)
+    endMarks.push({ ...m, y })
+    prevY = y
+  }
   const first = points[0]!
 
   const nPts = points.length
@@ -302,7 +354,7 @@ export function buildEquityGrowthChart(params: {
 
   return {
     W, H, PL, PR, PT, PB, chartW, chartH,
-    totalPath, layerAreas, gridLines, xTicks, zeroY,
+    totalPath, totalArea, netPath, endMarks, layerAreas, gridLines, xTicks, zeroY,
     first, last, hasCapitalBase, isPct, points,
     monthBands,
     optionsUnrealPath,

@@ -4,7 +4,7 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import { SegmentControl } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import type { EquityGrowthChartData, GrowthLayer, GrowthPoint, OptionsPnLMode } from '@/utils/ledger/equityGrowthChart'
-import { GROWTH_LAYERS } from '@/utils/ledger/equityGrowthChart'
+import { GROWTH_LAYERS, GROWTH_TOTAL_AREA_FILL } from '@/utils/ledger/equityGrowthChart'
 import type { FiBarChartData } from '@/utils/ledger/fiBarChart'
 import { EQUITY_GROWTH_INFO } from '@/pages/portfolio/performance/performanceConstants'
 import { fmtPnl, fmtUsd } from '@/pages/portfolio/performance/performanceFormatters'
@@ -183,7 +183,7 @@ export function EquityGrowthCard({
       </header>
 
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2.5 px-3 pt-2.5 pb-3">
-          <div className={cn(styles.chartWrap, 'flex-[1_1_21rem]')} ref={wrapRef}>
+          <div className={cn(styles.chartWrap, 'flex-[1_1_21rem] pr-14')} ref={wrapRef}>
             <svg
               className={styles.growthChart}
               viewBox={`0 0 ${chartData.W} ${chartData.H}`}
@@ -191,26 +191,13 @@ export function EquityGrowthCard({
               role="img"
               aria-label={`Portfolio equity growth from ${chartData.first.dateLabel} to ${chartData.last.dateLabel}`}
             >
-              <g aria-hidden="true">
-                {chartData.monthBands.map((b, i) => (
-                  <rect
-                    key={i}
-                    x={b.x1}
-                    y={chartData.PT}
-                    width={Math.max(0, b.x2 - b.x1)}
-                    height={chartData.chartH}
-                    className={b.alt ? styles.monthBandAlt : undefined}
-                    fill={b.alt ? undefined : 'transparent'}
-                  />
-                ))}
-              </g>
-
               {chartData.gridLines.map((gl, i) => (
                 <Fragment key={i}>
                   <line
                     x1={chartData.PL} x2={chartData.W - chartData.PR}
                     y1={gl.y} y2={gl.y}
                     className={styles.gridLine}
+                    vectorEffect="non-scaling-stroke"
                   />
                   <text
                     x={chartData.PL + 4} y={gl.y - 4}
@@ -227,48 +214,48 @@ export function EquityGrowthCard({
                   x1={chartData.PL} x2={chartData.W - chartData.PR}
                   y1={chartData.zeroY} y2={chartData.zeroY}
                   className={styles.zeroLine}
+                  vectorEffect="non-scaling-stroke"
                 />
               )}
 
-              {chartData.xTicks.map((t, i) => (
-                <text
-                  key={i} x={t.x} y={chartData.H - 4}
-                  textAnchor="middle"
-                  className={styles.xLabel}
-                >
-                  {t.label}
-                </text>
-              ))}
+              {/* The one fill: under the Total line. Layers are lines told apart by hue, weight and dash. */}
+              <path d={chartData.totalArea} fill={GROWTH_TOTAL_AREA_FILL} stroke="none" />
 
               {chartData.layerAreas
                 .filter((l) => layersVisible[l.key])
-                .map((l) => (
-                  <path key={`fill-${l.key}`} d={l.area} fill={l.colorFill} />
-                ))}
-
-              {chartData.layerAreas
-                .filter((l) => layersVisible[l.key])
-                .map((l) => (
-                  <path
-                    key={`stroke-${l.key}`} d={l.path}
-                    fill="none" stroke={l.color} strokeWidth="1.5"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                ))}
+                .map((l) => {
+                  const def = GROWTH_LAYERS.find((g) => g.key === l.key)!
+                  return (
+                    <path
+                      key={`stroke-${l.key}`} d={l.path}
+                      fill="none" stroke={l.color} strokeWidth={def.strokeWidth}
+                      strokeDasharray={def.dash}
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )
+                })}
 
               {layersVisible.options && chartData.optionsUnrealPath && (
                 <path
                   d={chartData.optionsUnrealPath}
-                  fill="none" stroke={GROWTH_LAYERS[0]!.color}
-                  strokeWidth="1.5" strokeDasharray="4 3"
+                  fill="none" stroke="var(--muted-foreground)"
+                  strokeWidth="1" strokeDasharray="3 3"
                   vectorEffect="non-scaling-stroke"
-                  opacity={0.92}
                 />
               )}
 
               <path
+                d={chartData.netPath}
+                fill="none" stroke="var(--muted-foreground)"
+                strokeWidth="1.25" strokeDasharray="6 3"
+                vectorEffect="non-scaling-stroke"
+              />
+
+              <path
                 d={chartData.totalPath}
-                fill="none" stroke="white" strokeWidth="2"
+                fill="none" stroke="var(--foreground)" strokeWidth="2.25"
+                strokeLinejoin="round"
                 vectorEffect="non-scaling-stroke"
               />
 
@@ -296,6 +283,20 @@ export function EquityGrowthCard({
                 </g>
               )}
             </svg>
+
+            {chartData.endMarks.map((m) => (
+              <span
+                key={m.label}
+                className={cn(
+                  perfUi.mono,
+                  'pointer-events-none absolute right-0 -translate-y-1/2 whitespace-nowrap text-dense-caption',
+                  m.kind === 'total' ? 'font-bold text-foreground' : m.kind === 'net' ? 'text-muted-foreground' : 'font-semibold',
+                )}
+                style={{ top: `${(m.y / chartData.H) * 100}%`, color: m.kind === 'layer' ? m.color : undefined }}
+              >
+                {m.label}
+              </span>
+            ))}
 
             {hoverPt && tipPos && (
               <Tooltip
@@ -330,21 +331,29 @@ export function EquityGrowthCard({
                   className="h-2.75 w-2.75 flex-none rounded-[2px] border"
                   style={{ background: on ? l.color : 'transparent', borderColor: on ? l.color : 'var(--muted-foreground)' }}
                 />
-                <span className="text-dense-body" style={{ color: on ? l.color : 'var(--muted-foreground)' }}>{l.label}</span>
-                <span className={cn(perfUi.mono, 'text-dense-body', on ? pnlColorClass(last[l.key]) : 'text-muted-foreground')}>
+                <svg width="16" height="6" className="flex-none" aria-hidden>
+                  <line x1="0" y1="3" x2="16" y2="3" stroke={l.color} strokeWidth={l.strokeWidth} strokeDasharray={l.dash} />
+                </svg>
+                <span className="text-xs" style={{ color: on ? l.color : 'var(--muted-foreground)' }}>{l.label}</span>
+                <span className={cn(perfUi.mono, 'text-xs', pnlColorClass(last[l.key]))}>
                   {fmtLayerValue(l.key, last[l.key], isPct)}
                 </span>
               </button>
             )
           })}
           <span className="flex items-center gap-1.75 px-1">
-            <span className="h-0.5 w-4 flex-none bg-foreground" />
-            <span className="text-dense-body font-semibold text-foreground">Total</span>
-            <span className={cn(perfUi.mono, 'text-dense-body font-bold text-foreground')}>{totalLabel}</span>
+            <svg width="16" height="6" className="flex-none" aria-hidden>
+              <line x1="0" y1="3" x2="16" y2="3" stroke="var(--foreground)" strokeWidth="2.25" />
+            </svg>
+            <span className="text-xs text-foreground">Total</span>
+            <span className={cn(perfUi.mono, 'text-xs font-bold text-foreground')}>{totalLabel}</span>
           </span>
           <span className="flex items-center gap-1.75 px-1" title="Full book — not filtered by the switches">
-            <span className="text-dense-body text-muted-foreground">Net PnL</span>
-            <span className={cn(perfUi.mono, 'text-dense-body text-muted-foreground')}>{fmtPnl(last.totalRaw)}</span>
+            <svg width="16" height="6" className="flex-none" aria-hidden>
+              <line x1="0" y1="3" x2="16" y2="3" stroke="var(--muted-foreground)" strokeWidth="1.25" strokeDasharray="6 3" />
+            </svg>
+            <span className="text-xs text-muted-foreground">Net PnL</span>
+            <span className={cn(perfUi.mono, 'text-xs text-muted-foreground')}>{fmtPnl(last.totalRaw)}</span>
           </span>
         </div>
       </div>
@@ -504,6 +513,9 @@ function FiBarPanel({ data }: { data: FiBarChartData }) {
 
         {data.bars.map((b) => (
           <g key={b.key}>
+            {b.h > 0 && b.tone === 'pos' && (
+              <line className={styles.fiBarCap} x1={b.x} x2={b.x + b.w} y1={b.y + 1} y2={b.y + 1} />
+            )}
             {b.h > 0 && (
               <rect
                 className={barClass(b.tone)}

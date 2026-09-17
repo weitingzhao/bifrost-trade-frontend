@@ -21,8 +21,8 @@
 }
 
 .gridLine {
-  stroke: color-mix(in srgb, var(--border) 80%, transparent);
-  stroke-width: 0.5;
+  stroke: color-mix(in srgb, var(--border) 55%, transparent);
+  stroke-width: 1;
 }
 
 .zeroLine {
@@ -162,17 +162,21 @@
 }
 
 .fiBar {
-  stroke-width: 0.35;
+  stroke: none;
 }
 
+/* Prototype: the FI hue at 72% with a solid cap. A stream out is the same hue, fainter — it is not a loss. */
 .fiBarPos {
-  fill: rgba(251, 191, 36, 0.88);
-  stroke: rgba(217, 119, 6, 0.65);
+  fill: color-mix(in oklch, rgb(251, 191, 36) 72%, transparent);
 }
 
 .fiBarNeg {
-  fill: rgba(248, 113, 113, 0.72);
-  stroke: rgba(185, 28, 28, 0.45);
+  fill: color-mix(in oklch, rgb(251, 191, 36) 35%, transparent);
+}
+
+.fiBarCap {
+  stroke: rgb(251, 191, 36);
+  stroke-width: 2;
 }
 
 .fiBarZero {
@@ -181,34 +185,25 @@
 }
 
 .fiBarCaption {
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  paint-order: stroke fill;
-  stroke: color-mix(in srgb, var(--background) 96%, #000);
-  stroke-width: 3.25px;
-  stroke-linejoin: round;
 }
 
 .fiBarChartAnn .fiBarCaption {
-  font-size: 0.82rem;
+  font-size: 10px;
 }
 
-.fiBarCaptionPos {
-  fill: rgb(255, 251, 235);
-}
-
-.fiBarCaptionNeg {
-  fill: rgb(255, 237, 213);
-}
-
+.fiBarCaptionPos,
+.fiBarCaptionNeg,
 .fiBarCaptionZero {
-  fill: color-mix(in srgb, var(--foreground) 95%, transparent);
+  fill: var(--secondary-foreground);
 }
 
 .fiXlabel {
-  fill: color-mix(in srgb, var(--foreground) 88%, transparent);
-  font-size: 0.68rem;
-  font-weight: 600;
+  fill: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
 }

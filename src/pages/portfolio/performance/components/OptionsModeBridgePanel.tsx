@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import {
   CollapsibleChevron,
-  CollapsibleBucketHeader,
   DenseDataTable,
   DenseTableHeader,
   DenseTableBody,
@@ -46,6 +45,49 @@ function readStoredBodyHeight(): number {
   return BODY_H_DEFAULT
 }
 
+/** Prototype `.pf-th`: sentence case, 10px, soft — not the dense table's uppercase head. */
+const bridgeTh = 'bg-transparent text-dense-caption font-semibold normal-case tracking-normal text-secondary-foreground'
+
+/** One row in the bridge tree, prototype `.pf-node`: chevron, the item, its figures, a quiet tail on the right. */
+function BridgeNode({
+  open,
+  onToggle,
+  indent,
+  children,
+  tail,
+}: {
+  open: boolean
+  onToggle: () => void
+  indent: 0 | 1 | 2
+  children: React.ReactNode
+  tail?: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      onClick={onToggle}
+      className={cn(
+        'flex w-full cursor-pointer flex-wrap items-center gap-2 border-0 bg-transparent py-1.25 pr-2.5 text-left text-xs text-foreground hover:bg-[var(--sk-raised2)]',
+        indent === 0 ? 'pl-2.5' : indent === 1 ? 'pl-7' : 'pl-11.5',
+      )}
+    >
+      <CollapsibleChevron expanded={open} className={cn('h-3 w-3', open ? 'rotate-0' : '-rotate-90')} />
+      {children}
+      {tail ? <span className="ml-auto font-mono text-dense-meta text-muted-foreground">{tail}</span> : null}
+    </button>
+  )
+}
+
+function Figure({ label, value, tone }: { label: string; value: number; tone?: string }) {
+  return (
+    <span className="flex items-baseline gap-1.25">
+      <span className="whitespace-nowrap text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</span>
+      <span className={cn('font-mono tabular-nums', tone ?? pnlColorClass(value))}>{fmtUsd(value)}</span>
+    </span>
+  )
+}
+
 function ChainDayBlocks({
   chain,
   expandedDay,
@@ -67,33 +109,21 @@ function ChainDayBlocks({
             ? `${shortOptLegLabel(day.steps[0]!.closeContractKey)} → ${shortOptLegLabel(day.steps[0]!.openContractKey)}`
             : `${day.steps.length} bridges`
         return (
-          <div key={dayKey} className="ml-3 min-w-0 border-l border-border/40 pl-2">
-            <CollapsibleBucketHeader
-              expanded={dayOpen}
+          <div key={dayKey} className="min-w-0">
+            <BridgeNode
+              open={dayOpen}
               onToggle={() => onToggleDay(dayKey)}
-              label={
-                <span className="inline-flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                  <span className="font-mono tabular-nums font-semibold text-foreground">{fmtIsoDateToken(day.dateStr)}</span>
-                  <span className="text-dense-meta font-normal text-muted-foreground">
-                    Cash statement
-                  </span>
-                  <span className={`text-dense-meta font-normal tabular-nums ${pnlColorClass(day.cashRoll)}`}>
-                    Cash roll {fmtUsd(day.cashRoll)}
-                  </span>
-                  <span className={`text-dense-meta font-normal tabular-nums ${pnlColorClass(day.bookClose)}`}>
-                    Book close {fmtUsd(day.bookClose)}
-                  </span>
-                  <span className={`text-dense-meta font-normal tabular-nums ${pnlColorClass(day.adj)}`}>
-                    Adj {fmtUsd(day.adj)}
-                  </span>
-                  <span className="text-dense-meta font-normal text-muted-foreground">
-                    {day.fills} fill{day.fills === 1 ? '' : 's'} · {stepHint}
-                  </span>
-                </span>
-              }
-            />
+              indent={2}
+              tail={`${day.fills} fill${day.fills === 1 ? '' : 's'} · ${stepHint}`}
+            >
+              <span className="font-mono font-semibold tabular-nums">{fmtIsoDateToken(day.dateStr)}</span>
+              <span className="text-dense-meta text-muted-foreground">Cash statement</span>
+              <Figure label="Cash roll" value={day.cashRoll} tone="text-muted-foreground" />
+              <Figure label="Book close" value={day.bookClose} />
+              <Figure label="Adj" value={day.adj} />
+            </BridgeNode>
             {dayOpen ? (
-              <div className="space-y-2 pb-1">
+              <div className="space-y-2 pr-3 pb-2.5 pl-11.5">
                 {day.steps.map((step) => (
                   <div key={`${step.closeContractKey}|${step.openContractKey}`} className="min-w-0">
                     {day.steps.length > 1 ? (
@@ -113,7 +143,7 @@ function ChainDayBlocks({
                     ) : null}
                     {/* §14.6: the prototype's 560 floor raised to 640 — on DEV the widest contract token
                         (142px) and the three money columns (≤105px each) do not fit in 560. */}
-                    <DenseDataTable wrapClassName="rounded-sm" tableClassName="min-w-[640px]">
+                    <DenseDataTable wrapClassName="rounded-sm bg-[var(--sk-raised2)]" tableClassName="min-w-[640px]">
                       <colgroup>
                         <col style={{ width: '7.5%' }} />
                         <col style={{ width: '23.5%' }} />
@@ -124,12 +154,12 @@ function ChainDayBlocks({
                       </colgroup>
                       <DenseTableHeader>
                         <DenseTableHeadRow>
-                          <DenseTableHead className="text-right">Qty</DenseTableHead>
-                          <DenseTableHead>Close</DenseTableHead>
-                          <DenseTableHead>Open to</DenseTableHead>
-                          <DenseTableHead className="text-right">Book close</DenseTableHead>
-                          <DenseTableHead className="text-right">Cash roll</DenseTableHead>
-                          <DenseTableHead className="text-right">Adj</DenseTableHead>
+                          <DenseTableHead className={cn(bridgeTh, 'text-right')}>Qty</DenseTableHead>
+                          <DenseTableHead className={bridgeTh}>Close</DenseTableHead>
+                          <DenseTableHead className={bridgeTh}>Open to</DenseTableHead>
+                          <DenseTableHead className={cn(bridgeTh, 'text-right')}>Book close</DenseTableHead>
+                          <DenseTableHead className={cn(bridgeTh, 'text-right')}>Cash roll</DenseTableHead>
+                          <DenseTableHead className={cn(bridgeTh, 'text-right')}>Adj</DenseTableHead>
                         </DenseTableHeadRow>
                       </DenseTableHeader>
                       <DenseTableBody>
@@ -282,62 +312,48 @@ export default function OptionsModeBridgePanel({
       </div>
 
       {expanded ? (
-        <div className="border-t border-border px-3 pb-1">
-          <p className={cn(perfUi.mono, 'my-0 border-b border-border/50 py-1.75 text-dense-meta text-muted-foreground')}>
+        <div className="border-t border-border pb-1">
+          <p className={cn(perfUi.mono, 'my-0 border-b border-border/50 px-3 py-1.75 text-dense-meta text-muted-foreground')}>
             Economic = Book R + Σ roll adj · Total = Book R + Open
             {asOfDateStr ? ` (as of ${fmtIsoDateToken(asOfDateStr)})` : ''}.
             {' '}Underlying → chain → roll day (cash statement) → fills.
           </p>
           {groups.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">No same-day option rolls in this range.</p>
+            <p className="px-3 py-2 text-xs text-muted-foreground">No same-day option rolls in this range.</p>
           ) : (
-            <div className="flex flex-col min-w-0" style={{ height: bodyHeight }}>
-              <div className="min-h-0 flex-1 overflow-auto">
+            <div className="flex min-w-0 flex-col">
+              {/* The stored height caps the tree; a short tree takes only the room it needs. */}
+              <div className="min-h-0 overflow-auto" style={{ maxHeight: bodyHeight }}>
                 {groups.map((g) => {
                   const undOpen = expandedUnd.has(g.underlying)
                   return (
-                    <div key={g.underlying} className="min-w-0">
-                      <CollapsibleBucketHeader
-                        expanded={undOpen}
+                    <div key={g.underlying} className="min-w-0 border-b border-border/40 last:border-b-0">
+                      <BridgeNode
+                        open={undOpen}
                         onToggle={() => toggleSet(setExpandedUnd, g.underlying)}
-                        label={
-                          <span className="inline-flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                            <span className="font-mono font-bold text-sky-400">{g.underlying}</span>
-                            <span className="text-dense-meta font-normal text-muted-foreground">
-                              {g.chains.length} chain{g.chains.length === 1 ? '' : 's'} · {g.rolls} roll
-                              {g.rolls === 1 ? '' : 's'}
-                            </span>
-                            <span className={`text-dense-meta font-normal tabular-nums ${pnlColorClass(g.adj)}`}>
-                              Adj {fmtUsd(g.adj)}
-                            </span>
-                            <span className="text-dense-meta font-normal tabular-nums text-muted-foreground">
-                              Book close {fmtUsd(g.bookClose)} · Cash {fmtUsd(g.cashRoll)}
-                            </span>
-                          </span>
-                        }
-                      />
+                        indent={0}
+                        tail={`Book close ${fmtUsd(g.bookClose)} · Cash ${fmtUsd(g.cashRoll)}`}
+                      >
+                        <span className="font-mono font-bold text-sky-400">{g.underlying}</span>
+                        <span className="text-dense-meta text-muted-foreground">
+                          {g.chains.length} chain{g.chains.length === 1 ? '' : 's'} · {g.rolls} roll{g.rolls === 1 ? '' : 's'}
+                        </span>
+                        <Figure label="Adj" value={g.adj} />
+                      </BridgeNode>
                       {undOpen
                         ? g.chains.map((c) => {
                             const chainOpen = expandedChain.has(c.id)
                             return (
-                              <div key={c.id} className="ml-3 min-w-0 border-l border-border/50 pl-2">
-                                <CollapsibleBucketHeader
-                                  expanded={chainOpen}
-                                  onToggle={() => toggleSet(setExpandedChain, c.id)}
-                                  label={
-                                    <span className="inline-flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                                      <span className="font-mono text-dense-meta text-entity-option font-semibold">
-                                        {c.optionRight} · {c.pathLabel}
-                                      </span>
-                                      <span className="text-dense-meta font-normal text-muted-foreground">
-                                        {c.rolls} roll{c.rolls === 1 ? '' : 's'}
-                                      </span>
-                                      <span className={`text-dense-meta font-normal tabular-nums ${pnlColorClass(c.adj)}`}>
-                                        Adj {fmtUsd(c.adj)}
-                                      </span>
-                                    </span>
-                                  }
-                                />
+                              <div key={c.id} className="min-w-0">
+                                <BridgeNode open={chainOpen} onToggle={() => toggleSet(setExpandedChain, c.id)} indent={1}>
+                                  <span className="font-mono text-sky-400">
+                                    {c.optionRight} · {c.pathLabel}
+                                  </span>
+                                  <span className="text-dense-meta text-muted-foreground">
+                                    {c.rolls} roll{c.rolls === 1 ? '' : 's'}
+                                  </span>
+                                  <Figure label="Adj" value={c.adj} />
+                                </BridgeNode>
                                 {chainOpen ? (
                                   <ChainDayBlocks
                                     chain={c}

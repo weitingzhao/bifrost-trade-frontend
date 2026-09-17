@@ -12,7 +12,7 @@ import {
   type LedgerSincePreset,
 } from '@/utils/ledger/summaryPeriod'
 import { MONTH_NAMES } from './ledgerConstants'
-import { fmtMdHint } from './ledgerFormat'
+import { fmtIsoDateToken } from '@/lib/format'
 import { LedgerSymbolCombobox } from './LedgerSymbolCombobox'
 import type { LedgerAccountTab } from '@/lib/ledgerAccountTabs'
 import {
@@ -20,6 +20,11 @@ import {
   ledgerFilterRowClass,
   ledgerFilterLabelClass,
 } from '@/lib/ledgerUi'
+import {
+  LEDGER_ROW_TYPE_TABS,
+  type LedgerRowType,
+  unreportedTypeNote,
+} from '@/pages/portfolio/ledger/ledgerRowType'
 
 const SINCE_TOOLTIP =
   'Include executions whose trade date falls in a rolling window ending today: 1 month, 1 quarter, half-year, or 1 year back from today\'s date, or year-to-date from Jan 1. Mutually exclusive with expiry year/month.'
@@ -55,6 +60,10 @@ type Props = {
   groupByPosition: boolean
   onToggleGroupByPosition: () => void
   showStkControls: boolean
+  rowType: LedgerRowType
+  onRowType: (v: LedgerRowType) => void
+  unreportedTypeCount: number
+  structureApplies: boolean
 }
 
 export function LedgerFilterBar({
@@ -84,8 +93,12 @@ export function LedgerFilterBar({
   groupByPosition,
   onToggleGroupByPosition,
   showStkControls,
+  rowType,
+  onRowType,
+  unreportedTypeCount,
+  structureApplies,
 }: Props) {
-  const sincePresetLabel = SINCE_PRESET_TABS.find(t => t.id === sincePreset)?.label ?? sincePreset
+  const typeNote = unreportedTypeNote(unreportedTypeCount)
 
   function clearStructureFilters() {
     onFilterStructure('')
@@ -154,16 +167,11 @@ export function LedgerFilterBar({
 
           {sincePreset !== 'all' && !expiryFilterYear && (
             <span
-              className="inline-flex flex-wrap items-baseline text-dense-meta text-muted-foreground"
+              className="inline-flex flex-wrap items-baseline font-mono text-dense-meta text-muted-foreground"
               role="status"
               title={`Trade date window: ${dateRange.start} → ${dateRange.end}`}
             >
-              <span>
-                {fmtMdHint(dateRange.start)}–{fmtMdHint(dateRange.end)}
-              </span>
-              <span> · </span>
-              <span className="font-medium">Since </span>
-              <span className="font-bold text-link font-mono tabular-nums">{sincePresetLabel}</span>
+              {fmtIsoDateToken(dateRange.start)} → {fmtIsoDateToken(dateRange.end)} · by trade date, not batch date
             </span>
           )}
         </div>
@@ -180,10 +188,14 @@ export function LedgerFilterBar({
           </label>
 
           {structureOptions.length > 0 && (
-            <div className="inline-flex items-center gap-1.5 min-w-0">
+            <div
+              className={`inline-flex items-center gap-1.5 min-w-0 ${structureApplies ? '' : 'opacity-55'}`}
+              title={structureApplies ? undefined : 'applies to strategy-linked fills only'}
+            >
               <span className={ledgerFilterLabelClass}>Structure</span>
               <Select
                 value={filterStructure || '__all__'}
+                disabled={!structureApplies}
                 onValueChange={v => {
                   onFilterStructure(v === '__all__' ? '' : v)
                   onFilterWishlistSymbol('')
@@ -248,13 +260,17 @@ export function LedgerFilterBar({
           </div>
 
           {wishlistSymbolOptions.length > 0 && (
-            <div className="inline-flex items-center gap-1.5 min-w-0">
-              <span className={ledgerFilterLabelClass}>Wishlist</span>
+            <div
+              className={`inline-flex items-center gap-1.5 min-w-0 ${structureApplies ? '' : 'opacity-55'}`}
+              title={structureApplies ? undefined : 'applies to strategy-linked fills only'}
+            >
+              <span className={ledgerFilterLabelClass}>Watchlist</span>
               <Select
                 value={filterWishlistSymbol || '__all__'}
+                disabled={!structureApplies}
                 onValueChange={v => onFilterWishlistSymbol(v === '__all__' ? '' : v)}
               >
-                <SelectTrigger className={COMPACT_SELECT_TRIGGER} aria-label="Wishlist symbol filter">
+                <SelectTrigger className={COMPACT_SELECT_TRIGGER} aria-label="Watchlist symbol filter">
                   <SelectValue placeholder="All symbols" />
                 </SelectTrigger>
                 <SelectContent>
@@ -265,6 +281,9 @@ export function LedgerFilterBar({
                 </SelectContent>
               </Select>
             </div>
+          )}
+          {!structureApplies && (structureOptions.length > 0 || wishlistSymbolOptions.length > 0) && (
+            <span className="text-dense-caption text-muted-foreground">applies to strategy-linked fills only</span>
           )}
 
           {(filterStructure || filterWishlistSymbol) && (
@@ -283,6 +302,26 @@ export function LedgerFilterBar({
               By Position
             </button>
           )}
+
+          <span className="ml-auto inline-flex flex-wrap items-center gap-2">
+            <span className={ledgerFilterLabelClass}>Type</span>
+            <div className={segmentGroupClass('sm')} role="group" aria-label="Row type">
+              {LEDGER_ROW_TYPE_TABS.map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => onRowType(t.id)}
+                  className={segmentButtonClass(rowType === t.id, 'sm')}
+                  aria-pressed={rowType === t.id}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {typeNote ? (
+              <span className="max-w-[13rem] text-dense-caption text-muted-foreground text-pretty">{typeNote}</span>
+            ) : null}
+          </span>
         </div>
       </div>
 

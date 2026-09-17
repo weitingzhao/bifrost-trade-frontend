@@ -16,6 +16,7 @@ export function StkTabContent({
   onEdit,
   onDelete,
   onAddJournal,
+  onSymbolClick,
 }: {
   executions: Execution[]
   positionGroups: StkPositionGroup[] | null
@@ -30,6 +31,7 @@ export function StkTabContent({
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
   onAddJournal: (accountId: string, symbol: string) => void
+  onSymbolClick?: (symbol: string, accountId?: string) => void
 }) {
   return (
     <LedgerStkTable
@@ -46,6 +48,7 @@ export function StkTabContent({
       onEdit={onEdit}
       onDelete={onDelete}
       onAddJournal={onAddJournal}
+      onSymbolClick={onSymbolClick}
     />
   )
 }

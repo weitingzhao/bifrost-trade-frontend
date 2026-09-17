@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import type { LedgerMetricExplainPayload } from '@/pages/portfolio/ledger/ledgerSummaryExplainPayload'
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
-import { LEDGER_METRIC_EXPLAIN_MAX_ROWS } from '@/pages/portfolio/ledger/ledgerSummaryExplainPayload'
 function SectionTitle({ n, children }: { n: 1 | 2 | 3 | 4; children: ReactNode }) {
   return (
     <h4 className="mt-3 mb-1.5 text-sm font-semibold text-foreground first:mt-0">
@@ -84,12 +83,9 @@ function LiveExample({ payload }: { payload: LedgerMetricExplainPayload }) {
               ))}
             </tbody>
           </table>
-          {payload.truncatedCount > 0 ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              … and {payload.truncatedCount} more row(s) not shown (display limit{' '}
-              {LEDGER_METRIC_EXPLAIN_MAX_ROWS}).
-            </p>
-          ) : null}
+          <p className="mt-1 text-xs text-muted-foreground">
+            showing {payload.detailRows.length} of {payload.detailRows.length + payload.truncatedCount}
+          </p>
         </div>
       ) : null}
     </>
@@ -143,8 +139,8 @@ export function LedgerMetricExplainContent({
             </li>
             <li>
               For each <code className="font-mono">g ∈ G</code>, assign calendar month{' '}
-              <code className="font-mono">m(g) = YYYY-MM</code> from{' '}
-              <code className="font-mono">max( t.time | t ∈ g.trades )</code> (UTC, from Unix seconds).
+              <code className="font-mono">m(g) = YYYY-MM</code> from the last fill&apos;s{' '}
+              <code className="font-mono">trade_date</code> (not <code className="font-mono">time</code>).
             </li>
             <li>
               Map <code className="font-mono">m(g)</code> to the selected Summary period key <code className="font-mono">P</code>{' '}
@@ -167,7 +163,7 @@ export function LedgerMetricExplainContent({
             </li>
             <li>
               Same row also shows <code className="font-mono">N groups</code> and the period label (e.g.{' '}
-              <code className="font-mono">2026-03</code>).
+              <code className="font-mono">MAR 2026</code>).
             </li>
           </ExplainList>
         </>
@@ -222,8 +218,8 @@ export function LedgerMetricExplainContent({
               from IB commission report; missing → 0 in the sum.
             </li>
             <li>
-              <strong className="text-foreground">Time for bucketing:</strong> <code className="font-mono">execution.time</code>{' '}
-              (UTC month).
+              <strong className="text-foreground">Time for bucketing:</strong> <code className="font-mono">execution.trade_date</code>
+              {' '}(calendar month). Undated rows are not in a month.
             </li>
           </ExplainList>
           <SectionTitle n={2}>Formula and calculation</SectionTitle>
@@ -232,7 +228,7 @@ export function LedgerMetricExplainContent({
               Let <code className="font-mono">E</code> be in-scope stock executions.
             </li>
             <li>
-              Month bucket <code className="font-mono">m(e) = YYYY-MM</code> from <code className="font-mono">e.time</code> (UTC).
+              Month bucket <code className="font-mono">m(e) = YYYY-MM</code> from <code className="font-mono">e.trade_date</code>.
             </li>
             <li>Roll into Summary period key <code className="font-mono">P</code>.</li>
             <li>

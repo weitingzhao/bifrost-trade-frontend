@@ -5,9 +5,6 @@ import type { ExecutionsResponse } from '@/types/positions'
 import {
   LEDGER_SINCE_PRESET_TABS,
   getSinceTradeDateRange,
-  executionMatchesLedgerTradePeriod,
-  executionMatchesExpiryYearMonth,
-  shouldApplySinceTradeFilter,
 } from '@/utils/ledger/summaryPeriod'
 import {
   buildOptionsSummaryByMonth,
@@ -39,6 +36,8 @@ import type { InstanceConsistencyState } from '@/utils/ledger/ledgerOptHelpers'
 import { useLedgerOptionStockLinks } from '@/hooks/useLedgerOptionStockLinks'
 import { getLedgerAccountTabs, getLedgerAccountIds } from '@/lib/ledgerAccountTabs'
 import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
+import { executionPassesLedgerFilters } from '@/pages/portfolio/ledger/ledgerFilterMatch'
+import { LEDGER_ROW_TYPE_TABS, countUnreportedTransactionType, type LedgerRowType } from '@/pages/portfolio/ledger/ledgerRowType'
 
 export type TradeLedgerModelParams = {
   status: StatusResponse | null | undefined
@@ -54,6 +53,7 @@ export type TradeLedgerModelParams = {
   expiryFilterMonth: string
   filterStructure: string
   filterWishlistSymbol: string
+  rowType: LedgerRowType
   groupBy: GroupBy
   optSubTab: OptSubTab
   instanceSubTab: InstanceSubTab
@@ -80,6 +80,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     expiryFilterMonth,
     filterStructure,
     filterWishlistSymbol,
+    rowType,
     groupBy,
     optRightFilter,
     optSort,
@@ -154,22 +155,37 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
 
   // ── Filtering ────────────────────────────────────────────────────────────
   const filterExec = useCallback((e: Execution): boolean => {
-  if (accountFilter !== 'all' && e.account_id !== accountFilter) return false
-  if (symbolFilter && !e.symbol.toLowerCase().includes(symbolFilter.toLowerCase())) return false
-  if (allowedOpportunityIds !== null) {
-    const oppId = e.strategy_opportunity_id
-    if (oppId == null || !allowedOpportunityIds.has(oppId)) return false
-  }
-  const isOpt = (e.sec_type ?? '').toUpperCase() === 'OPT'
-  if (isOpt && expiryFilterYear) {
-    return executionMatchesExpiryYearMonth(e.expiry, expiryFilterYear, expiryFilterMonth)
-  }
-  if (!shouldApplySinceTradeFilter(sincePreset, expiryFilterYear)) return true
-  return executionMatchesLedgerTradePeriod(e.trade_date ?? null, e.time, dateRange)
-  }, [dateRange, accountFilter, symbolFilter, expiryFilterYear, expiryFilterMonth, allowedOpportunityIds, sincePreset])
+    return executionPassesLedgerFilters(e, {
+      accountFilter,
+      symbolFilter,
+      allowedOpportunityIds,
+      activeTab,
+      expiryFilterYear,
+      expiryFilterMonth,
+      sincePreset,
+      dateRange,
+      rowType,
+    })
+  }, [dateRange, accountFilter, symbolFilter, expiryFilterYear, expiryFilterMonth, allowedOpportunityIds, sincePreset, activeTab, rowType])
 
   const canonFiltered = useMemo(() => (canonData?.items ?? []).filter(filterExec), [canonData, filterExec])
   const bookFiltered = useMemo(() => (bookData?.items ?? []).filter(filterExec), [bookData, filterExec])
+  const unreportedTypeCount = useMemo(() => {
+    const rows = (canonData?.items ?? []).filter(e =>
+      executionPassesLedgerFilters(e, {
+        accountFilter,
+        symbolFilter,
+        allowedOpportunityIds,
+        activeTab,
+        expiryFilterYear,
+        expiryFilterMonth,
+        sincePreset,
+        dateRange,
+        rowType: 'all',
+      }),
+    )
+    return countUnreportedTransactionType(rows)
+  }, [canonData, accountFilter, symbolFilter, allowedOpportunityIds, activeTab, expiryFilterYear, expiryFilterMonth, sincePreset, dateRange])
   const { data: linkByOptionId = {} } = useLedgerOptionStockLinks(bookFiltered)
 
   // ── OPT groups ───────────────────────────────────────────────────────────
@@ -392,7 +408,11 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   }
   if (filterStructure) parts.push(`Structure: ${filterStructure}`)
   if (filterWishlistSymbol) parts.push(`Wishlist: ${filterWishlistSymbol}`)
-  if (optRightFilter) parts.push(`Type: ${optRightFilter === 'C' ? 'Call' : 'Put'}`)
+  if (rowType !== 'all') {
+    const t = LEDGER_ROW_TYPE_TABS.find(x => x.id === rowType)
+    parts.push(`Type: ${t?.label ?? rowType}`)
+  }
+  if (optRightFilter) parts.push(`Right: ${optRightFilter === 'C' ? 'Call' : 'Put'}`)
   return parts
   }, [
   symbolFilter,
@@ -403,6 +423,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   accountTabs,
   filterStructure,
   filterWishlistSymbol,
+  rowType,
   optRightFilter,
   ])
 
@@ -591,6 +612,7 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
     filterExec,
     canonFiltered,
     bookFiltered,
+    unreportedTypeCount,
     linkByOptionId,
     optGroups,
     closedOptGroups,

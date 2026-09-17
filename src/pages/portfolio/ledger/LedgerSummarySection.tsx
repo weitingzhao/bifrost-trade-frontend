@@ -1,6 +1,5 @@
-import { useCallback, useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useMemo, type MouseEvent } from 'react'
 import { cn } from '@/lib/utils'
-import { DraggableExplainPanel } from '@/components/DraggableExplainPanel'
 import { SegmentControl } from '@/components/data-display'
 import {
   LEDGER_SUMMARY_PERIOD_TABS,
@@ -13,12 +12,6 @@ import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import type { Execution } from '@/types/positions'
 import type { MainTab } from './ledgerTypes'
 import { fmtCcy, pnlClass } from './ledgerFormat'
-import { LedgerMetricExplainContent } from './LedgerMetricExplainContent'
-import {
-  buildLedgerMetricExplainPayload,
-  ledgerMetricExplainTitle,
-  type LedgerMetricExplainPayload,
-} from '@/pages/portfolio/ledger/ledgerSummaryExplainPayload'
 import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
 import { ledgerSummary } from './ledgerSummaryUi'
 
@@ -41,12 +34,10 @@ type Props = {
     realized: number
     unrealized: number | null
   }
-}
-
-function tabLabel(tab: MainTab): string {
-  if (tab === 'fixed_income') return 'Fixed income'
-  if (tab === 'cash_like') return 'Cash-like'
-  return tab.charAt(0).toUpperCase() + tab.slice(1)
+  undatedCount: number
+  undatedNote: string
+  onExplain: (kind: LedgerMetricExplainKind, id: string) => void
+  onShowUndated: () => void
 }
 
 function MetricTrigger({
@@ -81,21 +72,12 @@ export function LedgerSummarySection({
   stocksSummaryByMonth,
   summaryClosedGroups,
   closedOptGroupsPnlSum,
-  stkFilteredExecutions,
-  stkUnrealizedByKey,
   stkTotals,
+  undatedCount,
+  undatedNote,
+  onExplain,
+  onShowUndated,
 }: Props) {
-  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [explain, setExplain] = useState<{
-    kind: LedgerMetricExplainKind
-    id: string
-    anchor: { x: number; y: number }
-    payload: LedgerMetricExplainPayload
-  } | null>(null)
-
-  const periodLabel = LEDGER_SUMMARY_PERIOD_TABS.find(t => t.id === summaryPeriod)?.label ?? summaryPeriod
-  const ledgerTabLabel = tabLabel(activeTab)
-
   const showOptions = activeTab === 'options' || activeTab === 'strategy' || activeTab === 'instance'
   const showStocks = activeTab === 'stocks' || activeTab === 'fixed_income' || activeTab === 'cash_like'
 
@@ -109,45 +91,7 @@ export function LedgerSummarySection({
     [stocksSummaryByMonth, summaryPeriod],
   )
 
-  const buildPayload = useCallback((kind: LedgerMetricExplainKind, id: string): LedgerMetricExplainPayload => {
-    return buildLedgerMetricExplainPayload({
-      kind,
-      id,
-      ledgerTabLabel,
-      summaryPeriodModeLabel: periodLabel,
-      ledgerSummaryPeriod: summaryPeriod,
-      closedOptionGroups: summaryClosedGroups,
-      stockFilteredExecutions: stkFilteredExecutions,
-      closedOptGroupsPnlSum,
-      stkUnrealizedByAccountContract: stkUnrealizedByKey,
-    })
-  }, [
-    ledgerTabLabel,
-    periodLabel,
-    summaryPeriod,
-    summaryClosedGroups,
-    stkFilteredExecutions,
-    closedOptGroupsPnlSum,
-    stkUnrealizedByKey,
-  ])
-
-  const openExplain = useCallback((kind: LedgerMetricExplainKind, id: string, e: MouseEvent) => {
-    if (hoverTimer.current) {
-      clearTimeout(hoverTimer.current)
-      hoverTimer.current = null
-    }
-    setExplain({
-      kind,
-      id,
-      anchor: { x: e.clientX, y: e.clientY },
-      payload: buildPayload(kind, id),
-    })
-  }, [buildPayload])
-
-  const optionTotalGroups = useMemo(
-    () => optionsSummaryByMonth.reduce((s, [, d]) => s + d.count, 0),
-    [optionsSummaryByMonth],
-  )
+  const optionTotalGroups = summaryClosedGroups.length
 
   const periodOptions = LEDGER_SUMMARY_PERIOD_TABS.map(({ id, label }) => ({ value: id, label }))
 
@@ -160,10 +104,11 @@ export function LedgerSummarySection({
   }
 
   return (
-    <>
-      <section className={ledgerSummary.section} aria-label="Summary by period">
-        <div className={ledgerSummary.head}>
-          <span className={ledgerSummary.title}>Summary</span>
+    <section className={ledgerSummary.section} aria-label="Summary by period">
+      <div className={ledgerSummary.head}>
+        <span className={ledgerSummary.title}>Summary</span>
+        <span className="text-dense-meta text-muted-foreground">click any figure for its derivation</span>
+        <span className="ml-auto">
           <SegmentControl
             size="sm"
             ariaLabel="Summary aggregation period"
@@ -171,121 +116,121 @@ export function LedgerSummarySection({
             onChange={v => onSummaryPeriodChange(v as LedgerSummaryPeriod)}
             options={periodOptions}
           />
+        </span>
+      </div>
+
+      {showOptions && (
+        <div className={ledgerSummary.body}>
+          <ul
+            className={ledgerSummary.calendarGrid}
+            aria-label="Option closed groups by period"
+            key={summaryPeriod}
+          >
+            {optionSummaryRows.map(([key, { count, realizedPnl }]) => (
+              <li key={`${summaryPeriod}-${key}`} className={ledgerSummary.periodCell}>
+                <span className={ledgerSummary.periodCellLabel}>
+                  {formatPeriodLabel(key, summaryPeriod)}
+                </span>
+                <span className={ledgerSummary.periodCellMetrics}>
+                  <span>{count} groups</span>
+                  <span className={ledgerSummary.metricSep} aria-hidden>·</span>
+                  <MetricTrigger
+                    value={realizedPnl}
+                    ariaLabel="Open calculation details for this period realized PnL"
+                    onOpen={() => onExplain('options_period_realized', `opt-pnl-${key}`)}
+                  />
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className={ledgerSummary.summaryTotal} aria-label="Option summary totals">
+            <span className={ledgerSummary.summaryTotalLabel}>Total</span>
+            <span className={ledgerSummary.summaryTotalMetrics}>
+              <span>{optionTotalGroups} groups</span>
+              <span className={ledgerSummary.metricSep} aria-hidden>·</span>
+              <MetricTrigger
+                value={closedOptGroupsPnlSum}
+                ariaLabel="Open calculation details for total option realized PnL"
+                onOpen={() => onExplain('options_total_realized', 'opt-total')}
+              />
+            </span>
+          </div>
         </div>
-
-        {showOptions && (
-          <div className={ledgerSummary.body}>
-            <ul
-              className={ledgerSummary.calendarGrid}
-              aria-label="Option closed groups by period"
-              key={summaryPeriod}
-            >
-              {optionSummaryRows.map(([key, { count, realizedPnl }]) => (
-                <li key={`${summaryPeriod}-${key}`} className={ledgerSummary.periodCell}>
-                  <span className={ledgerSummary.periodCellLabel}>
-                    {formatPeriodLabel(key, summaryPeriod)}
-                  </span>
-                  <span className={ledgerSummary.periodCellMetrics}>
-                    <span>{count} groups</span>
-                    <span className={ledgerSummary.metricSep} aria-hidden>·</span>
-                    <MetricTrigger
-                      value={realizedPnl}
-                      ariaLabel="Open calculation details for this period realized PnL"
-                      onOpen={e => openExplain('options_period_realized', `opt-pnl-${key}`, e)}
-                    />
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <div className={ledgerSummary.summaryTotal} aria-label="Option summary totals">
-              <span className={ledgerSummary.summaryTotalLabel}>Total</span>
-              <span className={ledgerSummary.summaryTotalMetrics}>
-                <span>{optionTotalGroups} groups</span>
-                <span className={ledgerSummary.metricSep} aria-hidden>·</span>
-                <MetricTrigger
-                  value={closedOptGroupsPnlSum}
-                  ariaLabel="Open calculation details for total option realized PnL"
-                  onOpen={e => openExplain('options_total_realized', 'opt-total', e)}
-                />
-              </span>
-            </div>
-          </div>
-        )}
-
-        {showStocks && (
-          <div className={ledgerSummary.body}>
-            <ul
-              className={ledgerSummary.calendarGrid}
-              aria-label="Stock executions by period"
-              key={summaryPeriod}
-            >
-              {stkSummaryRows.map(([key, { count, notional, realizedPnl }]) => (
-                <li key={`${summaryPeriod}-${key}`} className={ledgerSummary.periodCell}>
-                  <span className={ledgerSummary.periodCellLabel}>
-                    {formatPeriodLabel(key, summaryPeriod)}
-                  </span>
-                  <span className={ledgerSummary.periodCellMetrics}>
-                    <span>{count} trades</span>
-                    <span className={ledgerSummary.metricSep} aria-hidden>·</span>
-                    <MetricTrigger
-                      value={realizedPnl}
-                      ariaLabel="Open calculation details for period realized PnL"
-                      onOpen={e => openExplain('stocks_period_realized', `stk-rz-${key}`, e)}
-                    />
-                  </span>
-                  <button
-                    type="button"
-                    className={cn(ledgerSummary.stocksNotionalLine, ledgerSummary.metricTrigger)}
-                    aria-label="Open calculation details for period notional"
-                    onClick={e => openExplain('stocks_period_notional', `stk-nv-${key}`, e)}
-                  >
-                    Notional {fmtCcy(notional)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <div className={ledgerSummary.summaryTotal} aria-label="Stock summary totals">
-              <span className={ledgerSummary.summaryTotalLabel}>Total</span>
-              <span className={ledgerSummary.summaryTotalMetrics}>
-                <span>{stkTotals.count} trades</span>
-                <span className={ledgerSummary.metricSep} aria-hidden>·</span>
-                <MetricTrigger
-                  value={stkTotals.realized}
-                  ariaLabel="Open calculation details for total realized PnL"
-                  onOpen={e => openExplain('stocks_total_realized', 'stk-total-rz', e)}
-                />
-                <span className={ledgerSummary.metricSep} aria-hidden>·</span>
-                <span className={ledgerSummary.metricInlineLabel}>U</span>
-                <MetricTrigger
-                  value={stkTotals.unrealized}
-                  ariaLabel="Open calculation details for total unrealized PnL"
-                  onOpen={e => openExplain('stocks_total_unrealized', 'stk-total-u', e)}
-                />
-                <span className={ledgerSummary.metricSep} aria-hidden>·</span>
-                <span className={ledgerSummary.metricInlineLabel}>nv</span>
-                <MetricTrigger
-                  value={stkTotals.notional}
-                  className={ledgerSummary.notionalValue}
-                  ariaLabel="Open calculation details for total notional"
-                  onOpen={e => openExplain('stocks_total_notional', 'stk-total-nv', e)}
-                />
-              </span>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {explain && (
-        <DraggableExplainPanel
-          open
-          explanationId={`${explain.kind}-${explain.id}`}
-          anchor={explain.anchor}
-          onClose={() => setExplain(null)}
-          title={ledgerMetricExplainTitle(explain.kind)}
-        >
-          <LedgerMetricExplainContent kind={explain.kind} payload={explain.payload} />
-        </DraggableExplainPanel>
       )}
-    </>
+
+      {showStocks && (
+        <div className={ledgerSummary.body}>
+          <ul
+            className={ledgerSummary.calendarGrid}
+            aria-label="Stock executions by period"
+            key={summaryPeriod}
+          >
+            {stkSummaryRows.map(([key, { count, notional, realizedPnl }]) => (
+              <li key={`${summaryPeriod}-${key}`} className={ledgerSummary.periodCell}>
+                <span className={ledgerSummary.periodCellLabel}>
+                  {formatPeriodLabel(key, summaryPeriod)}
+                </span>
+                <span className={ledgerSummary.periodCellMetrics}>
+                  <span>{count} trades</span>
+                  <span className={ledgerSummary.metricSep} aria-hidden>·</span>
+                  <MetricTrigger
+                    value={realizedPnl}
+                    ariaLabel="Open calculation details for period realized PnL"
+                    onOpen={() => onExplain('stocks_period_realized', `stk-rz-${key}`)}
+                  />
+                </span>
+                <button
+                  type="button"
+                  className={cn(ledgerSummary.stocksNotionalLine, ledgerSummary.metricTrigger)}
+                  aria-label="Open calculation details for period notional"
+                  onClick={() => onExplain('stocks_period_notional', `stk-nv-${key}`)}
+                >
+                  Notional {fmtCcy(notional)}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className={ledgerSummary.summaryTotal} aria-label="Stock summary totals">
+            <span className={ledgerSummary.summaryTotalLabel}>Total</span>
+            <span className={ledgerSummary.summaryTotalMetrics}>
+              <span>{stkTotals.count} trades</span>
+              <span className={ledgerSummary.metricSep} aria-hidden>·</span>
+              <MetricTrigger
+                value={stkTotals.realized}
+                ariaLabel="Open calculation details for total realized PnL"
+                onOpen={() => onExplain('stocks_total_realized', 'stk-total-rz')}
+              />
+              <span className={ledgerSummary.metricSep} aria-hidden>·</span>
+              <span className={ledgerSummary.metricInlineLabel}>U</span>
+              <MetricTrigger
+                value={stkTotals.unrealized}
+                ariaLabel="Open calculation details for total unrealized PnL"
+                onOpen={() => onExplain('stocks_total_unrealized', 'stk-total-u')}
+              />
+              <span className={ledgerSummary.metricSep} aria-hidden>·</span>
+              <span className={ledgerSummary.metricInlineLabel}>nv</span>
+              <MetricTrigger
+                value={stkTotals.notional}
+                className={ledgerSummary.notionalValue}
+                ariaLabel="Open calculation details for total notional"
+                onOpen={() => onExplain('stocks_total_notional', 'stk-total-nv')}
+              />
+            </span>
+          </div>
+        </div>
+      )}
+
+      {undatedCount > 0 ? (
+        <button
+          type="button"
+          onClick={onShowUndated}
+          className="mt-2 flex w-full flex-wrap items-center gap-1.5 border-0 border-t border-border bg-transparent px-0 pt-2 text-left"
+        >
+          <span className="size-2 shrink-0 rounded-full bg-slate-500" />
+          <span className="min-w-0 flex-1 text-dense-meta text-muted-foreground text-pretty">{undatedNote}</span>
+          <span className="text-dense-meta text-link">show them →</span>
+        </button>
+      ) : null}
+    </section>
   )
 }

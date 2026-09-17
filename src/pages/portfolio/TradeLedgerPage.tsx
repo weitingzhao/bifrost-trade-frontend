@@ -1,14 +1,14 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useOpportunities } from '@/hooks/useStrategies'
 import { useLedgerExecutions, useLedgerExecutionsBook } from '@/hooks/useLedgerExecutions'
+import { usePositionsScope } from '@/hooks/usePositionsScope'
 import { useLedgerUiSync } from '@/pages/portfolio/ledger/useLedgerUiSync'
 import { useTradeLedgerModel } from '@/pages/portfolio/ledger/useTradeLedgerModel'
 import { PageHeader, PageShell } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RefreshCw, Plus } from 'lucide-react'
@@ -16,11 +16,14 @@ import type { LinkExecutionContext } from '@/components/positions/LinkExecutionM
 import type { Execution } from '@/types/positions'
 import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
 import type { LedgerSincePreset, LedgerSummaryPeriod } from '@/utils/ledger/summaryPeriod'
+import { LEDGER_SINCE_PRESET_TABS, LEDGER_SUMMARY_PERIOD_TABS } from '@/utils/ledger/summaryPeriod'
 import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
 import { LedgerTabToolbar } from '@/pages/portfolio/ledger/LedgerTabToolbar'
 import { TradeLedgerModals, type ExpiredCloseTarget } from '@/pages/portfolio/ledger/TradeLedgerModals'
 import { LedgerFilterBar } from '@/pages/portfolio/ledger/LedgerFilterBar'
 import { LedgerSummarySection } from '@/pages/portfolio/ledger/LedgerSummarySection'
+import { LedgerHealthBand } from '@/pages/portfolio/ledger/LedgerHealthBand'
+import { LedgerInspector } from '@/pages/portfolio/ledger/LedgerInspector'
 import { ledgerPageCardClass } from '@/pages/portfolio/ledger/ledgerShellUi'
 import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
 import { OptionsTabContent } from '@/pages/portfolio/ledger/OptionsTabContent'
@@ -28,9 +31,29 @@ import { StkTabContent } from '@/pages/portfolio/ledger/StkTabContent'
 import { StrategyTabContent } from '@/pages/portfolio/ledger/StrategyTabContent'
 import { InstanceTabContent } from '@/pages/portfolio/ledger/InstanceTabContent'
 import { useTradeLedgerHandlers } from '@/pages/portfolio/ledger/useTradeLedgerHandlers'
+import { QUERY_KEYS } from '@/constants/queryKeys'
+import {
+  ledgerAccountIdFromScope,
+  ledgerScopeFromAccountId,
+} from '@/lib/ledgerAccountTabs'
+import { ledgerStructureFilterAppliesToTab } from '@/pages/portfolio/ledger/ledgerFilterMatch'
+import { buildLedgerHealth, type LedgerHealthTile } from '@/pages/portfolio/ledger/ledgerHealth'
+import {
+  buildLedgerReconcile,
+  isUndatedExecution,
+  undatedSummaryNote,
+  type LedgerUnlinkBasis,
+} from '@/pages/portfolio/ledger/ledgerReconcile'
+import type { LedgerRowType } from '@/pages/portfolio/ledger/ledgerRowType'
+import {
+  type LedgerInspectorFace,
+  type LedgerInspectorState,
+} from '@/pages/portfolio/ledger/ledgerInspectorState'
+import { buildLedgerMetricExplainPayload } from '@/pages/portfolio/ledger/ledgerSummaryExplainPayload'
+import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplainKinds'
 
-const LEDGER_HELP =
-  'Trade ledger is the workspace for open and closed trades, Flex/TWS imports, and manual journal entries (journal_closed) for reconciliation. Instance groups option trades by strategy opportunity and instance.'
+const PAGE_LEAD =
+  'What was traded, and whether the three sources agree. TWS is fast but not authoritative, Flex is authoritative but late, the journal closes what neither covers.'
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 
@@ -44,11 +67,15 @@ export default function TradeLedgerPage() {
   const isLoading = canonLoading || bookLoading
 
   // ── Core filters ────────────────────────────────────────────────────────
+  const { scope, setAccountFilter: setScopeAccount, setFilterSymbol } = usePositionsScope()
   const [sincePreset, setSincePreset] = useState<LedgerSincePreset>('month')
-  const [accountFilter, setAccountFilter] = useState('all')
-  const [symbolFilter, setSymbolFilter] = useState('')
   const [activeTab, setActiveTab] = useState<MainTab>('strategy')
   const [summaryPeriod, setSummaryPeriod] = useState<LedgerSummaryPeriod>('month')
+  const [rowType, setRowType] = useState<LedgerRowType>('all')
+  const [unlinkBasis, setUnlinkBasis] = useState<LedgerUnlinkBasis>('options')
+  const [inspector, setInspector] = useState<LedgerInspectorState>({ type: null })
+  const accountFilter = ledgerAccountIdFromScope(scope.accountFilter, status)
+  const symbolFilter = scope.filterSymbol
 
   // Expiry filter (OPT only, mutually exclusive with sincePreset)
   const [expiryFilterYear, setExpiryFilterYear] = useState('')
@@ -122,6 +149,7 @@ export default function TradeLedgerPage() {
     catMap,
     canonFiltered,
     bookFiltered,
+    unreportedTypeCount,
     linkByOptionId,
     structureOptions,
     wishlistSymbolOptions,
@@ -168,6 +196,7 @@ export default function TradeLedgerPage() {
     expiryFilterMonth,
     filterStructure,
     filterWishlistSymbol,
+    rowType,
     groupBy,
     optSubTab,
     instanceSubTab,
@@ -210,7 +239,6 @@ export default function TradeLedgerPage() {
     toggleOptSort,
     toggleStkSort,
     handleAddJournal,
-    handleHeaderAddJournal,
     handleCloseEditModal,
     handleDelete,
     handleSyncOppositeLeg,
@@ -235,6 +263,76 @@ export default function TradeLedgerPage() {
 
   const isStkTab = activeTab === 'stocks' || activeTab === 'fixed_income' || activeTab === 'cash_like'
   const sinceDisabled = sincePreset !== 'all'
+  const structureApplies = ledgerStructureFilterAppliesToTab(activeTab)
+  const sinceLabel = LEDGER_SINCE_PRESET_TABS.find(t => t.id === sincePreset)?.label ?? sincePreset
+
+  const health = useMemo(
+    () =>
+      buildLedgerHealth({
+        canon: canonFiltered,
+        book: bookFiltered,
+        closedPnl: closedOptGroupsPnlSum,
+        sinceLabel,
+        unlinkBasis,
+      }),
+    [canonFiltered, bookFiltered, closedOptGroupsPnlSum, sinceLabel, unlinkBasis],
+  )
+  const reconcile = useMemo(
+    () => buildLedgerReconcile(canonFiltered, bookFiltered),
+    [canonFiltered, bookFiltered],
+  )
+  const undatedRows = useMemo(() => canonFiltered.filter(isUndatedExecution), [canonFiltered])
+  const undatedNote = undatedSummaryNote(undatedRows)
+
+  const explainPayload = useMemo(() => {
+    if (inspector.type !== 'explain' || inspector.target?.source !== 'summary') return null
+    return buildLedgerMetricExplainPayload({
+      kind: inspector.target.kind,
+      id: inspector.target.id,
+      ledgerTabLabel:
+        activeTab === 'fixed_income' ? 'Fixed income' : activeTab === 'cash_like' ? 'Cash-like' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1),
+      summaryPeriodModeLabel: LEDGER_SUMMARY_PERIOD_TABS.find(t => t.id === summaryPeriod)?.label ?? summaryPeriod,
+      ledgerSummaryPeriod: summaryPeriod,
+      closedOptionGroups: closedOptGroups,
+      stockFilteredExecutions: stkExecsForDisplay,
+      closedOptGroupsPnlSum,
+      stkUnrealizedByAccountContract: stkUnrealizedByKey,
+    })
+  }, [inspector, activeTab, summaryPeriod, closedOptGroups, stkExecsForDisplay, closedOptGroupsPnlSum, stkUnrealizedByKey])
+
+  const refreshAll = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executionsBook })
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.optStockLinks })
+    void refetchCanon()
+    void refetchBook()
+  }, [queryClient, refetchCanon, refetchBook])
+
+  function openExplain(kind: LedgerMetricExplainKind, id: string) {
+    setInspector({ type: 'explain', target: { source: 'summary', kind, id } })
+  }
+
+  function onHealthTile(tile: LedgerHealthTile) {
+    if (tile.id === 'closed_pnl') {
+      setInspector({ type: 'explain', target: { source: 'summary', kind: 'options_total_realized', id: 'opt-total' } })
+      return
+    }
+    if (tile.id === 'commissions') {
+      setInspector({ type: 'explain', target: { source: 'health', kind: 'commissions' } })
+      return
+    }
+    if (tile.id === 'unlinked') {
+      setInspector({ type: 'explain', target: { source: 'health', kind: 'unlinked' } })
+      return
+    }
+    setInspector({ type: 'reconcile', focus: 'diff' })
+  }
+
+  function onInspectorFace(face: LedgerInspectorFace) {
+    if (face === 'explain') setInspector({ type: 'explain', target: inspector.type === 'explain' ? inspector.target : null })
+    else if (face === 'reconcile') setInspector({ type: 'reconcile' })
+    else setInspector({ type: face })
+  }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -242,15 +340,18 @@ export default function TradeLedgerPage() {
       <div className={ledgerPageCardClass}>
         <PageHeader
           breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Trade ledger</p>}
-          title={
-            <span className="inline-flex items-center gap-1.5">
-              Trade ledger
-              <InfoTooltip text={LEDGER_HELP} />
-            </span>
-          }
+          title="Trade ledger"
+          titleSize="large"
+          description={PAGE_LEAD}
           actions={
             <>
-              <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs" onClick={handleHeaderAddJournal}>
+              <span className="font-mono text-dense-caption text-muted-foreground">history · no polling</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1.5 text-xs"
+                onClick={() => setInspector({ type: 'journal' })}
+              >
                 <Plus className="h-3.5 w-3.5" />
                 Add journal
               </Button>
@@ -258,7 +359,7 @@ export default function TradeLedgerPage() {
                 size="sm"
                 variant="ghost"
                 className="h-7 gap-1.5 text-xs text-muted-foreground"
-                onClick={() => { void refetchCanon(); void refetchBook() }}
+                onClick={refreshAll}
                 disabled={isLoading}
               >
                 <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
@@ -271,7 +372,17 @@ export default function TradeLedgerPage() {
         {(canonError || bookError) && (
           <QueryErrorAlert
             error="Failed to load executions — check Trading API connection."
-            onRetry={() => { void refetchCanon(); void refetchBook() }}
+            onRetry={refreshAll}
+          />
+        )}
+
+        {!isLoading && (
+          <LedgerHealthBand
+            model={health}
+            unlinkBasis={unlinkBasis}
+            onUnlinkBasis={setUnlinkBasis}
+            onTile={onHealthTile}
+            onOpenReconcile={() => setInspector({ type: 'reconcile', focus: 'diff' })}
           />
         )}
 
@@ -281,9 +392,9 @@ export default function TradeLedgerPage() {
           dateRange={dateRange}
           accountTabs={accountTabs}
           accountFilter={accountFilter}
-          onAccountFilter={setAccountFilter}
+          onAccountFilter={id => setScopeAccount(ledgerScopeFromAccountId(id, status))}
           symbolFilter={symbolFilter}
-          onSymbolFilter={setSymbolFilter}
+          onSymbolFilter={setFilterSymbol}
           symbolSuggestions={symbolSuggestions}
           structureOptions={structureOptions}
           filterStructure={filterStructure}
@@ -302,6 +413,10 @@ export default function TradeLedgerPage() {
           groupByPosition={groupByPosition}
           onToggleGroupByPosition={() => setGroupByPosition(v => !v)}
           showStkControls={false}
+          rowType={rowType}
+          onRowType={setRowType}
+          unreportedTypeCount={unreportedTypeCount}
+          structureApplies={structureApplies}
         />
 
         <LedgerTabToolbar
@@ -361,6 +476,10 @@ export default function TradeLedgerPage() {
             stkFilteredExecutions={stkExecsForDisplay}
             stkUnrealizedByKey={stkUnrealizedByKey}
             stkTotals={stkTotals}
+            undatedCount={undatedRows.length}
+            undatedNote={undatedNote}
+            onExplain={openExplain}
+            onShowUndated={() => setInspector({ type: 'reconcile', focus: 'undated' })}
           />
         )}
 
@@ -417,6 +536,7 @@ export default function TradeLedgerPage() {
             onEdit={e => { setCreateSource('manual'); setEditExec(e) }}
             onDelete={setDeleteTarget}
             onAddJournal={handleAddJournal}
+            onSymbolClick={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
           />
         )}
 
@@ -481,6 +601,16 @@ export default function TradeLedgerPage() {
         linkStockTarget={linkStockTarget}
         setLinkStockTarget={setLinkStockTarget}
         createSource={createSource}
+      />
+
+      <LedgerInspector
+        state={inspector}
+        onClose={() => setInspector({ type: null })}
+        onFace={onInspectorFace}
+        explainPayload={explainPayload}
+        health={health}
+        unlinkBasis={unlinkBasis}
+        reconcile={reconcile}
       />
     </PageShell>
   )

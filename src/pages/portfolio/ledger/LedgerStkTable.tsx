@@ -87,6 +87,7 @@ function StkFillRow({
   catMap,
   onEdit,
   onDelete,
+  onSymbolClick,
 }: {
   ex: Execution
   showSymbolCol: boolean
@@ -94,8 +95,32 @@ function StkFillRow({
   catMap: Map<string, string>
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
+  onSymbolClick?: (symbol: string, accountId?: string) => void
 }) {
   const category = getExecCategory(ex, catMap)
+  const symbolMark = ex.symbol ?? '—'
+  const symbolNode =
+    onSymbolClick && ex.symbol ? (
+      <button
+        type="button"
+        className="border-0 bg-transparent p-0 cursor-pointer"
+        onClick={() => onSymbolClick(ex.symbol, ex.account_id)}
+      >
+        {showPills ? (
+          <DenseTag variant="symbol" size="cell">
+            {symbolMark}
+          </DenseTag>
+        ) : (
+          symbolMark
+        )}
+      </button>
+    ) : showPills ? (
+      <DenseTag variant="symbol" size="cell">
+        {symbolMark}
+      </DenseTag>
+    ) : (
+      symbolMark
+    )
   return (
     <DenseTableRow>
       <LedgerStkTimeCells
@@ -105,13 +130,7 @@ function StkFillRow({
       />
       {showSymbolCol && (
         <DenseTableCell className={stkMetaCell}>
-          {showPills ? (
-            <DenseTag variant="symbol" size="cell">
-              {ex.symbol ?? '—'}
-            </DenseTag>
-          ) : (
-            (ex.symbol ?? '—')
-          )}
+          {symbolNode}
         </DenseTableCell>
       )}
       <DenseTableCell className={stkMetaCell}>{ex.account_id ?? '—'}</DenseTableCell>
@@ -255,6 +274,7 @@ export function LedgerStkTable({
   onEdit,
   onDelete,
   onAddJournal,
+  onSymbolClick,
 }: {
   executions: Execution[]
   positionGroups: StkPositionGroup[] | null
@@ -269,6 +289,7 @@ export function LedgerStkTable({
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
   onAddJournal: (accountId: string, symbol: string) => void
+  onSymbolClick?: (symbol: string, accountId?: string) => void
 }) {
   const showPills = activeTab === 'stocks'
   const showSymbolCol = !groupByPosition
@@ -305,6 +326,7 @@ export function LedgerStkTable({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onAddJournal={onAddJournal}
+                  onSymbolClick={onSymbolClick}
                 />
               )
             })}
@@ -342,6 +364,7 @@ export function LedgerStkTable({
               catMap={catMap}
               onEdit={onEdit}
               onDelete={onDelete}
+              onSymbolClick={onSymbolClick}
             />
           ))}
         </DenseTableBody>
@@ -366,6 +389,7 @@ function GroupBlock({
   onEdit,
   onDelete,
   onAddJournal,
+  onSymbolClick,
 }: {
   pg: StkPositionGroup
   category: string
@@ -376,19 +400,37 @@ function GroupBlock({
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
   onAddJournal: (accountId: string, symbol: string) => void
+  onSymbolClick?: (symbol: string, accountId?: string) => void
 }) {
+  const symbolMark = pg.symbol || '—'
+  const symbolNode =
+    onSymbolClick && pg.symbol ? (
+      <button
+        type="button"
+        className="border-0 bg-transparent p-0 cursor-pointer"
+        onClick={() => onSymbolClick(pg.symbol, pg.accountId)}
+      >
+        {showPills ? (
+          <DenseTag variant="symbol" size="pill">
+            {symbolMark}
+          </DenseTag>
+        ) : (
+          <span className="font-bold text-foreground">{symbolMark}</span>
+        )}
+      </button>
+    ) : showPills ? (
+      <DenseTag variant="symbol" size="pill">
+        {symbolMark}
+      </DenseTag>
+    ) : (
+      <span className="font-bold text-foreground">{symbolMark}</span>
+    )
   return (
     <>
       <DenseTableRow className="bg-secondary/50 hover:bg-secondary/50">
         <DenseTableCell colSpan={12} className="py-2">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-muted-foreground">
-            {showPills ? (
-              <DenseTag variant="symbol" size="pill">
-                {pg.symbol || '—'}
-              </DenseTag>
-            ) : (
-              <span className="font-bold text-foreground">{pg.symbol || '—'}</span>
-            )}
+            {symbolNode}
             <span className="text-foreground">{pg.accountId || '—'}</span>
             {showPills ? (
               <DenseTag variant="category" size="pill">
@@ -426,6 +468,7 @@ function GroupBlock({
           catMap={catMap}
           onEdit={onEdit}
           onDelete={onDelete}
+          onSymbolClick={onSymbolClick}
         />
       ))}
     </>

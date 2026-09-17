@@ -50,6 +50,7 @@ import {
   ExpandToggleCell,
 } from '@/components/data-display'
 import { fmtLedgerTradeDate } from './ledgerTradeDate'
+import { closedGroupSummaryPnl } from '@/utils/ledger/ledgerSummaryGroups'
 
 const CLOSED_PAGE_SIZE = 50
 
@@ -164,7 +165,12 @@ export function LedgerClosedOptionSection({
         </DenseTableHeader>
         <DenseTableBody>
           {pagedClosedGroups.map(g => {
-            const displayGroupPnl = adjustedRealizedPnlForOptGroup(g, linkByOptionId)
+            // One Closed P&L (§14.2): the row reads the same realized figure as the
+            // health tile, Summary and Explain. Linked stock slippage is a different
+            // quantity and is shown under its own label, only where there is some.
+            const realized = closedGroupSummaryPnl(g)
+            const withSlippage = adjustedRealizedPnlForOptGroup(g, linkByOptionId)
+            const hasSlippage = Math.abs(withSlippage - realized) >= 0.005
             const uniqueAccounts = Array.from(
               new Set((g.trades ?? []).map(t => (t.account_id ?? '').trim()).filter(Boolean)),
             )
@@ -222,8 +228,16 @@ export function LedgerClosedOptionSection({
                 <DenseTableCell className={cn(closedOptNumCell, 'font-bold text-success')}>
                   {fmtUsd(g.sell_premium)}
                 </DenseTableCell>
-                <DenseTableCell className={cn(closedOptNumCell, pnlColorClass(displayGroupPnl))}>
-                  {fmtUsdRound(displayGroupPnl)}
+                <DenseTableCell className={cn(closedOptNumCell, pnlColorClass(realized))}>
+                  {fmtUsdRound(realized)}
+                  {hasSlippage ? (
+                    <span
+                      className="block whitespace-normal text-dense-caption text-muted-foreground"
+                      title="This contract's realized P&L plus the slippage of its linked stock fills against the Flex close."
+                    >
+                      incl. stock-link slippage {fmtUsdRound(withSlippage)}
+                    </span>
+                  ) : null}
                 </DenseTableCell>
                 <DenseTableCell className={closedOptNumCell}>{accountLabel}</DenseTableCell>
                 <DenseTableCell>

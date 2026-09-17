@@ -2,13 +2,13 @@ import { useMemo } from 'react'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import {
-  adjustedRealizedPnlForOptGroup,
   getOptGroupKey,
   ledgerOptDetailRowPnl,
 } from '@/utils/ledger/ledgerOptHelpers'
 import { LedgerClosedOptionSection } from './LedgerClosedOptionSection'
 import { LedgerOpenOptionSection } from './LedgerOpenOptionSection'
 import type { OptGroupCallbacks, OptSortCol, OptSubTab } from './ledgerTypes'
+import { closedGroupSummaryPnl } from '@/utils/ledger/ledgerSummaryGroups'
 
 export function OptionsTabContent({
   optSubTab,
@@ -44,9 +44,11 @@ export function OptionsTabContent({
     [openActiveGroups, openExpiredGroups, expandedGroups],
   )
 
+  // Same per-group figure as the health tile and Summary Total; linked stock
+  // slippage stays on the rows that have it, under its own label.
   const closedPnlSum = useMemo(
-    () => closedGroups.reduce((s, g) => s + adjustedRealizedPnlForOptGroup(g, linkByOptionId), 0),
-    [closedGroups, linkByOptionId],
+    () => closedGroups.reduce((s, g) => s + closedGroupSummaryPnl(g), 0),
+    [closedGroups],
   )
 
   const detailsTotalPnl = useMemo(() => {

@@ -105,8 +105,10 @@ describe('design adoption', () => {
     // Rev 2026-09-17.1 (§14.7, colour tokens only) moved Accounts, Ledger,
     // Transfer & Pay, Symbol and Performance, so those five read stale until the
     // Owner's colour look; the Owner re-signed all five at .17.1 the same day.
-    expect(counts.aligned + counts.byState.stale).toBe(9)
-    expect(counts.aligned).toBe(9)
+    // Outcome signed off 2026-09-17, the first page built from nothing rather
+    // than walked against a page the app already had (aligned 9→10).
+    expect(counts.aligned + counts.byState.stale).toBe(10)
+    expect(counts.aligned).toBe(10)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -120,8 +122,9 @@ describe('design adoption', () => {
     // 2026-09-17 against page rev 2026-09-17.1 (pending 18→17, reviewing 2→3).
     // Outcome is the first page built from nothing: the design had a prototype
     // and the app had no page, so it leaves `unbuilt` rather than `pending`
-    // (unbuilt 43→42, reviewing 3→4).
-    expect(counts.byState.reviewing).toBe(4)
+    // (unbuilt 43→42, reviewing 3→4), then aligned on the Owner's look
+    // (reviewing 4→3).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -130,6 +133,7 @@ describe('design adoption', () => {
     ).toEqual([
       '/portfolio/accounts',
       '/portfolio/ledger',
+      '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/transfer',
       '/research/agent-personas',
@@ -140,7 +144,6 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/backing',
-      '/portfolio/outcome',
       '/portfolio/positions',
       '/trade/plans',
     ])

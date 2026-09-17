@@ -225,7 +225,16 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/event-radar', label: 'Event Radar', crumbs: MARKET },
 
   // ── Portfolio ──────────────────────────────────────────────────────────
-  { path: '/portfolio/performance', label: 'Performance', crumbs: PORTFOLIO },
+  {
+    path: '/portfolio/performance',
+    label: 'Performance',
+    crumbs: PORTFOLIO,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-16.11',
+      note: 'Walked 2026-09-17 against Portfolio Performance.dc.html at that page rev, rendered side by side with the app on local DEV (:5173). Built: header with four Derivations (Options mode, Equity growth, Day cell · R/U/N, On the fly) on the shared derivation block; filter strip with a scope note (active days, trades, capital base); Reading as layer chips that switch the curve plus Net cash flow shown as excluded, and the eleven range-level metrics in one panel (Design F1); Return basis marked designed · not wired, with balance rows not recorded, both return methods not computed, and the formula Return on capital base uses today; Shape as panels — equity growth with the legend under the curve and a Fixed income range total, the options path bridge with §14.4 contract tokens; the calendar with one slot beside it, Summary by class for the month or the clicked day’s records with previous / next / close; Audit as a word-and-code table where a day row opens its records; On the fly as a collapsible panel. Production kept (diverged: production richer, intentional): the chart’s hover read-out and % unit, 3 Years range, the bridge’s resize handle, Stocks / FI / Cash-like calendar layers and their records, the Open inventory drill, OTF sec-type tabs and full columns. Defects fixed on the way: Win rate printed a fraction as a percent and divided by every fill; Realized read a field the API does not send (Reading and On the fly); Open option dates and contract names off §14.4. §14.6: Audit 820 and Records 720 hold at their floors; the bridge fills table rises from 560 to 640. No Month range and no AsofTag yet. Owner to look before aligned.',
+    },
+  },
   { path: '/portfolio/positions', label: 'Positions', crumbs: PORTFOLIO, symbolScope: true },
   {
     path: '/portfolio/backing',

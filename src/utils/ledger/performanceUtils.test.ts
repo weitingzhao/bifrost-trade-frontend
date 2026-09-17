@@ -11,6 +11,7 @@ import {
   computeOptionDayPnLForPerformanceDate,
   matchPairLegCashFlows,
   dateStrMinusDays,
+  ledgerOptionExecutionCashFlowSigned,
 } from './performanceUtils'
 import type { Execution } from '@/types/positions'
 
@@ -241,5 +242,20 @@ describe('computeOptionDayPnLForPerformanceDate OCC symbols', () => {
     // HIMS unmatched only: 4*3.8*100 - 2.833672
     expect(day.unrealized).toBeCloseTo(1517.166328, 2)
     expect(Math.abs(day.realized)).toBeGreaterThan(100)
+  })
+})
+
+describe('ledgerOptionExecutionCashFlowSigned', () => {
+  it('takes the commission off the signed figure, never off the premium', () => {
+    // Buying a leg back for 0.50 with a $1 commission costs $51, not $49 — the
+    // commission leaves the account whichever way the leg went. Netting it
+    // against the premium first turned every buy's commission into a discount.
+    const buy = makeExec({ side: 'Buy', qty: 1, quantity: 1, price: 0.5, commission: 1 })
+    expect(ledgerOptionExecutionCashFlowSigned(buy)).toBeCloseTo(-51, 6)
+    const sell = makeExec({ side: 'Sell', qty: 1, quantity: 1, price: 0.5, commission: 1 })
+    expect(ledgerOptionExecutionCashFlowSigned(sell)).toBeCloseTo(49, 6)
+    // The sign of the reported commission does not change what it costs.
+    const negCommission = makeExec({ side: 'Buy', qty: 1, quantity: 1, price: 0.5, commission: -1 })
+    expect(ledgerOptionExecutionCashFlowSigned(negCommission)).toBeCloseTo(-51, 6)
   })
 })

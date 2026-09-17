@@ -274,6 +274,11 @@ function sideUpper(e: Execution): string {
 /**
  * Signed cash flow for one option leg.
  * BUY = outflow (negative), SELL = inflow (positive).
+ *
+ * The commission leaves the account whichever way the leg went, so it is taken
+ * off the signed figure, not off the premium: a $0.50 buy with a $1 commission
+ * is −$51, not −$49. Netting it against the premium first made a commission
+ * look like a discount on every buy.
  */
 export function ledgerOptionExecutionCashFlowSigned(e: Execution): number {
   const s = sideUpper(e)
@@ -281,8 +286,8 @@ export function ledgerOptionExecutionCashFlowSigned(e: Execution): number {
   const q = execQty(e)
   const p = Number(e.price) || 0
   const c = Math.abs(Number(e.commission) || 0)
-  const value = q * p * 100 - c
-  return buy ? -value : value
+  const premium = q * p * 100
+  return (buy ? -premium : premium) - c
 }
 
 /** Per-row display PnL (ledger Details table): Sell uses abs for display. */

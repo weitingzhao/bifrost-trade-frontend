@@ -65,12 +65,12 @@ describe('ModelBandSection', () => {
     expect(table).toHaveTextContent('2 symbols · 1 undefined risk')
     expect(screen.queryByRole('table', { name: 'Model analysis per underlying' })).toBeNull()
   })
-  it('an open table with an expanded symbol shows that symbol on its CAR panel', () => {
+  it('marks the open symbol on its row — the CAR panel itself opens in the slot beside the page', () => {
     const { props } = renderBand({ table: { open: true, expandedSymbol: 'NVDA', onToggle: vi.fn(), onToggleSymbol: vi.fn() } })
     const table = screen.getByRole('table', { name: 'Model analysis per underlying' })
     expect(within(table).getByRole('button', { name: 'Collapse NVDA details' })).toBeInTheDocument()
-    expect(document.getElementById('car-heading-NVDA')).not.toBeNull()
-    expect(document.getElementById('car-heading-DDOG')).toBeNull()
+    // The detail is no longer a fourth level inside the table.
+    expect(document.getElementById('car-heading-NVDA')).toBeNull()
     fireEvent.click(within(table).getByRole('button', { name: 'Expand DDOG details' }))
     expect(props.table.onToggleSymbol).toHaveBeenCalledWith('DDOG')
   })

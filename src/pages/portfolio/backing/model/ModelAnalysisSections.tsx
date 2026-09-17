@@ -33,9 +33,7 @@ import {
   fmtSpotShockLabel,
   riskBadgeLabel,
 } from '@/utils/modelAnalysisFormat'
-import { UnderlyingDetailPanel } from './UnderlyingDetailPanel'
 import {
-  MAIN_TABLE_COL_SPAN,
   modelAnalysisEmptyHintClass,
   modelAnalysisStressNoteClass,
   modelAnalysisSummaryItemClass,
@@ -75,11 +73,14 @@ export function ModelAnalysisMainTable({ data, filterSymbol, open, onToggle, exp
             {shown.length !== entries.length ? `${shown.length} of ${entries.length}` : entries.length} symbol
             {entries.length !== 1 ? 's' : ''}
             {shown.length === 0 ? null : undefinedRisk > 0 ? (
-              <span className="text-loss"> · {undefinedRisk} undefined risk</span>
+              <span className="text-warning"> · {undefinedRisk} undefined risk</span>
             ) : (
               ' · all defined risk'
             )}
-            {nakedCalls > 0 ? <span className="text-loss"> · {nakedCalls} naked calls</span> : null}
+            {nakedCalls > 0 ? <span className="text-warning"> · {nakedCalls} naked calls</span> : null}
+          </span>
+          <span className="text-dense-meta leading-normal text-muted-foreground">
+            row → CAR and stress open on the right, not a third table inside this one
           </span>
         </CollapsibleGroupStats>
       </CollapsibleGroupHeader>
@@ -154,13 +155,6 @@ export function ModelAnalysisMainTable({ data, filterSymbol, open, onToggle, exp
                         </DenseTableCell>
                         <DenseTableCell className={denseTableNumCell}>{fmtUsd(u.greeks.delta_dollars)}</DenseTableCell>
                       </DenseTableRow>
-                      {expanded && (
-                        <DenseTableRow className="hover:bg-secondary/15">
-                          <DenseTableCell colSpan={MAIN_TABLE_COL_SPAN} className={modelAnalysisTable.detailCell}>
-                            <UnderlyingDetailPanel entry={u} />
-                          </DenseTableCell>
-                        </DenseTableRow>
-                      )}
                     </Fragment>
                   )
                 })}

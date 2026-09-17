@@ -47,6 +47,7 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { BookFetchMarker } from '@/components/positions/BookFetchMarker'
 import { PlanReservesSection } from './PlanReservesSection'
+import { BackingFaceSlot, type BackingFace, type SymbolFace } from './BackingFaceSlot'
 import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment'
 
 const SORTS: readonly ObligationsSort[] = ['cash', 'calls', 'spare', 'symbol']
@@ -96,6 +97,9 @@ export default function BackingPage() {
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
   /** One symbol held in both tables at once — the obligation row and the shares behind it. */
   const [focusSymbol, setFocusSymbol] = useState<string | null>(null)
+  // The slot beside the page: a modelled symbol's CAR and stress, or the symbol in focus.
+  const [face, setFace] = useState<BackingFace>('symbol')
+  const [slotOpen, setSlotOpen] = useState(false)
 
   const rows = useMemo(
     () => sortObligations(book.obligationsRows, sort),
@@ -111,6 +115,39 @@ export default function BackingPage() {
     }
   }, [focusSymbol, rows, book.coreStocks, book.fixedIncomeStocks, book.cashLikeStocks])
   const model = useModelBand(scope)
+  const modelEntry = useMemo(
+    () => (model.table.expandedSymbol ? (model.data?.per_underlying ?? []).find((u) => u.symbol === model.table.expandedSymbol) ?? null : null),
+    [model.data, model.table.expandedSymbol],
+  )
+  const openSymbolFace = (symbol: string) => {
+    setFocusSymbol(symbol.toUpperCase())
+    setFace('symbol')
+    setSlotOpen(true)
+  }
+  const openModelFace = (symbol: string) => {
+    if (model.table.expandedSymbol !== symbol) model.table.onToggleSymbol(symbol)
+    setFace('model')
+    setSlotOpen(true)
+  }
+  const symbolFace: SymbolFace | null = focusSymbol
+    ? {
+        symbol: focusSymbol,
+        rows: [...book.coreStocks, ...book.fixedIncomeStocks, ...book.cashLikeStocks].filter(
+          (p) => (p.symbol ?? '').toUpperCase() === focusSymbol,
+        ),
+        role:
+          book.alarm.book.base.find((l) =>
+            (l.role === 'stocks' ? book.coreStocks : l.role === 'income' ? book.fixedIncomeStocks : book.cashLikeStocks).some(
+              (p) => (p.symbol ?? '').toUpperCase() === focusSymbol,
+            ),
+          )?.note ?? null,
+        positionsHref: `${POSITIONS_PATH}?symbol=${encodeURIComponent(focusSymbol)}`,
+        onOpenModel: (model.data?.per_underlying ?? []).some((u) => u.symbol.toUpperCase() === focusSymbol)
+          ? () => openModelFace((model.data?.per_underlying ?? []).find((u) => u.symbol.toUpperCase() === focusSymbol)!.symbol)
+          : undefined,
+        onOpenStock: () => setInspector({ type: 'stock', symbol: focusSymbol }),
+      }
+    : null
 
   // #obligations / #holdings / #room / #model from a link: scroll once the tables exist.
   useEffect(() => {
@@ -285,10 +322,7 @@ export default function BackingPage() {
               sort={sort}
               onSortChange={setSort}
               focusSymbol={focusSymbol}
-              onSymbolClick={(symbol, accountId) => {
-                setFocusSymbol(symbol.toUpperCase())
-                setInspector({ type: 'stock', symbol, accountId })
-              }}
+              onSymbolClick={(symbol) => openSymbolFace(symbol)}
               onNakedClick={(symbol) => setFilterSymbol(symbol)}
             />
           </div>
@@ -302,15 +336,7 @@ export default function BackingPage() {
               cashLike={book.cashLikeStocks}
               filterSymbol={filterSymbol}
               focusSymbol={focusSymbol}
-              onInspectStock={(pos) => {
-                setFocusSymbol((pos.symbol ?? '').toUpperCase())
-                setInspector({
-                  type: 'stock',
-                  symbol: (pos.symbol ?? '').toUpperCase(),
-                  accountId: pos.account_id,
-                  livePosition: pos,
-                })
-              }}
+              onInspectStock={(pos) => openSymbolFace(pos.symbol ?? '')}
             />
           </div>
           </section>
@@ -322,6 +348,12 @@ export default function BackingPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
+      <div
+        className={cn(
+          'grid min-w-0 items-start gap-3',
+          slotOpen ? 'grid-cols-1 lg:grid-cols-[minmax(0,1fr)_min(26.25rem,38%)]' : 'grid-cols-1',
+        )}
+      >
       <section className={positionsUi.pageCard} aria-label="Backing and model">
         <PageHeader
           breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Backing &amp; Model</p>}
@@ -347,9 +379,30 @@ export default function BackingPage() {
 
         <PositionsTier label="Model" note="hypothetical · one account at a time, never summed" />
         <div id={BACKING_ANCHOR_ID.model}>
-          <ModelBandSection {...model} />
+          <ModelBandSection
+            {...model}
+            table={{
+              ...model.table,
+              onToggleSymbol: (symbol) => {
+                model.table.onToggleSymbol(symbol)
+                setFace('model')
+                setSlotOpen(model.table.expandedSymbol !== symbol)
+              },
+            }}
+          />
         </div>
       </section>
+      {slotOpen ? (
+        <BackingFaceSlot
+          face={face}
+          onFace={setFace}
+          onClose={() => setSlotOpen(false)}
+          entry={modelEntry}
+          accountLabel={model.account.accountId}
+          symbol={symbolFace}
+        />
+      ) : null}
+      </div>
 
       <InspectorDrawer state={inspector} onClose={() => setInspector({ type: null })} />
     </PageShell>

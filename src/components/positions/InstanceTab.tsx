@@ -3,7 +3,6 @@ import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { positionsUi } from './positionsUi'
 import { pnlColorClass } from '@/utils/dailyChange'
-import { RiskProfileDetail } from './RiskProfileDetail'
 import type { DetailViewMode } from './LinesToolbar'
 import { fmtUsd, fmtDate, fmtDaysAgo } from '@/utils/positions'
 import { InstanceOptionSubTable } from './InstanceOptionSubTable'
@@ -41,6 +40,7 @@ import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { compareInstanceRisk, summarizeCushion, summarizeExpiry } from '@/utils/positionsOptionRisk'
 import type { SpotResolver } from '@/utils/spotPrice'
 import type { PositionGreeks } from '@/hooks/useOptionGreeks'
+import type { RiskProfile } from '@/utils/riskProfile'
 
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
@@ -93,7 +93,8 @@ interface Props {
   onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
   onDeleteExec?: (exec: Execution) => void
   onRefreshExecs?: () => void
-  onOpenStrategy?: (instanceId: number) => void
+  /** The strategy's risk at expiry opens in the slot beside the grid; the sheet carries the rest. */
+  onOpenStrategy?: (instanceId: number, ctx?: { title: string; profile: RiskProfile | null }) => void
   onOpenStock?: (symbol: string, accountId: string) => void
   onOpenOption?: (position: OpenOptionPosition) => void
   canonicalOptContractKeys?: Set<string>
@@ -181,6 +182,12 @@ export function InstanceTab({
         </span>
       </div>
     )
+  }
+
+  /** A row opens its legs and, beside the grid, its risk at expiry — one click, both. */
+  function openRow(instKey: string, id: number | null, profile: RiskProfile | null, title: string) {
+    toggleExpand(instKey)
+    if (id != null) onOpenStrategy?.(id, { title, profile })
   }
 
   function toggleExpand(instKey: string) {
@@ -311,7 +318,7 @@ export function InstanceTab({
                 key={`inst-${instKey}`}
                 id={`lines-row-${instKey}`}
                 className={cn('cursor-pointer', rowBg)}
-                onClick={() => toggleExpand(instKey)}
+                onClick={() => openRow(instKey, id, rp, name)}
                 role="button"
                 tabIndex={0}
                 aria-expanded={isExpanded}
@@ -319,7 +326,7 @@ export function InstanceTab({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    toggleExpand(instKey)
+                    openRow(instKey, id, rp, name)
                   }
                 }}
               >
@@ -342,7 +349,7 @@ export function InstanceTab({
                               'cursor-pointer border-0 bg-transparent p-0 text-left text-dense-caption leading-normal text-muted-foreground hover:text-foreground hover:underline',
                             )}
                             aria-label={`View strategy instance: ${instLabel}`}
-                            onClick={() => onOpenStrategy(id)}
+                            onClick={() => onOpenStrategy(id, { title: name, profile: rp })}
                           >
                             {sub}
                           </button>
@@ -462,7 +469,6 @@ export function InstanceTab({
                       benchBySymbol={benchBySymbol}
                       onOpenStock={onOpenStock}
                     />
-                    {rp && <RiskProfileDetail profile={rp} />}
                   </div>
                 </td>
               </tr>

@@ -49,8 +49,12 @@ import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
 import { QuickCloseModal } from '@/components/positions/QuickCloseModal'
 import { DeleteConfirmDialog } from '@/components/positions/DeleteConfirmDialog'
 import { InspectorDrawer, type InspectorState } from '@/components/positions/InspectorDrawer'
-import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
-import { OptionContractDetailFromOpenPosition } from '@/components/optionDiscovery/OptionContractDetailFromOpenPosition'
+import {
+  PositionsFaceSlot,
+  type FaceRisk,
+  type LedgerMode,
+  type PositionsFace,
+} from '@/components/positions/PositionsFaceSlot'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
 import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
@@ -60,7 +64,8 @@ import { computeRoomToAdd, summarizeRoom } from '@/utils/roomToAdd'
 import { instanceGroupKey } from '@/utils/instanceSheetExec'
 import { riskMapLegShort, type RiskMapLeg } from '@/utils/shortLegRiskMap'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
-import type { Execution } from '@/types/positions'
+import type { Execution, OpenOptionPosition } from '@/types/positions'
+import type { RiskProfile } from '@/utils/riskProfile'
 import { BACKING_TARGET_ANCHOR, backingHref, isBackingTarget } from '@/utils/backingAnchors'
 
 export default function PositionsPage() {
@@ -102,6 +107,12 @@ export default function PositionsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
   const [pressureOpen, setPressureOpen] = useState(true)
+  // The one slot beside the grid: one thing at a time, on the face that answers it.
+  const [face, setFace] = useState<PositionsFace>('risk')
+  const [faceOpen, setFaceOpen] = useState(false)
+  const [faceContract, setFaceContract] = useState<OpenOptionPosition | null>(null)
+  const [faceRisk, setFaceRisk] = useState<FaceRisk | null>(null)
+  const [faceExec, setFaceExec] = useState<Execution | null>(null)
   const closeInspector = () => setInspector({ type: null })
 
   const filteredInstanceGroups = useMemo(() => {
@@ -186,8 +197,36 @@ export default function PositionsPage() {
     [filterExpiry, setFilterExpiry],
   )
 
-  const openOptionPosition = inspector.type === 'option' ? inspector.optionPosition : undefined
-  const openOptionQuote = openOptionPosition ? book.quotesByCk[openOptionPosition.contract_key] : undefined
+  const openContractFace = useCallback((pos: OpenOptionPosition) => {
+    setFaceContract(pos)
+    setFace('contract')
+    setFaceOpen(true)
+  }, [])
+  const openRiskFace = useCallback((id: number, ctx?: { title: string; profile: RiskProfile | null }) => {
+    setFaceRisk({ title: ctx?.title ?? `Strategy #${id}`, profile: ctx?.profile ?? null, onOpenInstance: () => setInspector({ type: 'strategy', id }) })
+    setFace('risk')
+    setFaceOpen(true)
+  }, [])
+  /** A face button runs the write it names, on the fill the face is about. */
+  const openLedgerMode = useCallback(
+    (mode: LedgerMode) => {
+      const ex = faceExec
+      if (!ex) return
+      if (mode === 'edit') setEditExecConfirm({ open: true, exec: ex })
+      else if (mode === 'close') setCloseTarget({ exec: ex, netQty: Math.abs(Number(ex.quantity ?? ex.qty ?? 0)) })
+      else if (mode === 'delete') setDeleteTarget(ex)
+      else if (ex.account_executions_id != null) setLinkContext({ account_executions_id: ex.account_executions_id, execution: ex })
+    },
+    [faceExec],
+  )
+
+  const openLedgerFace = useCallback((exec: Execution) => {
+    setFaceExec(exec)
+    setFace('ledger')
+    setFaceOpen(true)
+  }, [])
+
+  const openOptionPosition = faceContract
   const openOptionUnderlyingHint = useMemo(() => {
     if (!openOptionPosition) return null
     const sym = (openOptionPosition.symbol ?? '').trim().toUpperCase()
@@ -199,17 +238,28 @@ export default function PositionsPage() {
     return null
   }, [openOptionPosition, book.benchBySymbol, book.quotesBySymbol])
   const inspectorDrawerState: InspectorState = inspector.type === 'option' ? { type: null } : inspector
+  const faceSubject = faceExec
+    ? [
+        faceExec.account_executions_id != null ? `exec #${faceExec.account_executions_id}` : 'fill',
+        faceExec.symbol,
+        faceExec.strategy_instance_id != null ? `strategy #${faceExec.strategy_instance_id}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : null
 
   function refreshExecData() {
     queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
     queryClient.invalidateQueries({ queryKey: ['trading', 'position-attribution'] })
   }
   function requestEditExec(ex: Execution) {
+    openLedgerFace(ex)
     setEditExecConfirm({ open: true, exec: ex })
   }
   function openLinkExec(ex: Execution, sameContractTrades?: Execution[]) {
     const execId = ex.account_executions_id
     if (execId == null) return
+    openLedgerFace(ex)
     const peerPicks =
       sameContractTrades?.length && sameContractTrades.length > 0 ? collectPeerInstancePicks(sameContractTrades, execId) : []
     setLinkContext({
@@ -401,6 +451,12 @@ export default function PositionsPage() {
                       onClearSymbol={() => setFilterSymbol('')}
                       selected={selectedLeg}
                       onSelect={setPickedLeg}
+                      onOpenContract={(leg) => {
+                        const pos = book.filteredOptions.find(
+                          (p) => p.contract_key === leg.contractKey && (!leg.accountId || p.account_id === leg.accountId),
+                        )
+                        if (pos) openContractFace(pos)
+                      }}
                     />
                     <div className="min-w-0">
                       <RoomToAddSection room={roomFull} coverRows={book.coverRows} ceiling={ceiling} onLevelChange={setLevel} />
@@ -409,6 +465,12 @@ export default function PositionsPage() {
                 ) : null}
 
                 <PositionsTier label="Lines" note="the rows themselves, tightest first · one thing at a time opens on the right" />
+                <div
+                  className={cn(
+                    'grid min-w-0 items-start gap-3',
+                    faceOpen ? 'grid-cols-[repeat(auto-fit,minmax(min(100%,32.5rem),1fr))]' : 'grid-cols-1',
+                  )}
+                >
                 <section id="positions-lines" className={positionsUi.panel} aria-label="Lines">
                   <LinesToolbar
                     view={linesView}
@@ -448,12 +510,10 @@ export default function PositionsPage() {
                       onLinkExec={openLinkExec}
                       onDeleteExec={setDeleteTarget}
                       onRefreshExecs={refreshExecData}
-                      onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
+                      onOpenStrategy={openRiskFace}
                       canonicalOptContractKeys={book.canonicalOptContractKeys}
                       onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
-                      onOpenOption={(pos) =>
-                        setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })
-                      }
+                      onOpenOption={openContractFace}
                     />
                   ) : linesView === 'contract' ? (
                     <OptionsTab
@@ -471,8 +531,8 @@ export default function PositionsPage() {
                       onCloseExec={(exec, netQty) => setCloseTarget({ exec, netQty })}
                       onRefreshExecs={refreshExecData}
                       canonicalOptContractKeys={book.canonicalOptContractKeys}
-                      onInspect={(pos) => setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })}
-                      onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
+                      onInspect={openContractFace}
+                      onOpenStrategy={(id) => openRiskFace(id)}
                     />
                   ) : (
                     <ExpiriesView
@@ -484,6 +544,27 @@ export default function PositionsPage() {
                     />
                   )}
                 </section>
+                {faceOpen ? (
+                  <PositionsFaceSlot
+                    face={face}
+                    onFace={setFace}
+                    onClose={() => setFaceOpen(false)}
+                    contract={
+                      faceContract
+                        ? {
+                            position: faceContract,
+                            quote: book.quotesByCk[faceContract.contract_key],
+                            underlyingHint: openOptionUnderlyingHint,
+                            onOpenDiscovery: () => navigate(buildDiscoveryUrl(faceContract.symbol, faceContract.expiry)),
+                            onEditFill: faceExec ? () => setFace('ledger') : undefined,
+                          }
+                        : null
+                    }
+                    risk={faceRisk}
+                    ledger={{ subject: faceSubject, exec: faceExec, onMode: openLedgerMode }}
+                  />
+                ) : null}
+                </div>
               </>
             )}
           </>
@@ -534,24 +615,6 @@ export default function PositionsPage() {
         }}
       />
       <InspectorDrawer state={inspectorDrawerState} onClose={closeInspector} />
-      <RightInspectorShell
-        open={Boolean(openOptionPosition)}
-        ariaLabel="Option contract detail"
-        onClose={closeInspector}
-      >
-        {openOptionPosition ? (
-          <OptionContractDetailFromOpenPosition
-            position={openOptionPosition}
-            optionQuote={openOptionQuote}
-            underlyingHint={openOptionUnderlyingHint}
-            onClose={closeInspector}
-            onOpenOptionDiscovery={() => {
-              navigate(buildDiscoveryUrl(openOptionPosition.symbol, openOptionPosition.expiry))
-              closeInspector()
-            }}
-          />
-        ) : null}
-      </RightInspectorShell>
     </PageShell>
   )
 }

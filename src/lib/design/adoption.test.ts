@@ -115,8 +115,9 @@ describe('design adoption', () => {
     // nothing to rebuild and the re-stamp was the whole of the work.
     // Positions and Backing & Model signed off the same day, closing the
     // Portfolio walk: every page in that group is now in place (aligned 11→13).
-    expect(counts.aligned + counts.byState.stale).toBe(13)
-    expect(counts.aligned).toBe(13)
+    // Stress & Scenario signed off the same day (aligned 13→14).
+    expect(counts.aligned + counts.byState.stale).toBe(14)
+    expect(counts.aligned).toBe(14)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -140,8 +141,9 @@ describe('design adoption', () => {
     // (unbuilt 40→39, reviewing 4→5). Positions and Backing & Model, built in
     // C6 and R14 and waiting since, signed off 2026-09-17 (reviewing 5→3).
     // Expiration Desk is the first page in the Trade group (unbuilt 39→38,
-    // reviewing 3→4).
-    expect(counts.byState.reviewing).toBe(4)
+    // reviewing 3→4), then Stress & Scenario aligned on the Owner's look
+    // (reviewing 4→3).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -161,10 +163,10 @@ describe('design adoption', () => {
       '/research/loop/decisions',
       '/research/symbol',
       '/risk/portfolio',
+      '/risk/stress',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/pnl-explain',
-      '/risk/stress',
       '/trade/expiration',
       '/trade/plans',
     ])

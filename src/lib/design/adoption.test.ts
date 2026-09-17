@@ -113,8 +113,10 @@ describe('design adoption', () => {
     // for, so it read stale for exactly as long as it took the Owner to look:
     // the app already draws what the corrected sentence says, so there was
     // nothing to rebuild and the re-stamp was the whole of the work.
-    expect(counts.aligned + counts.byState.stale).toBe(11)
-    expect(counts.aligned).toBe(11)
+    // Positions and Backing & Model signed off the same day, closing the
+    // Portfolio walk: every page in that group is now in place (aligned 11→13).
+    expect(counts.aligned + counts.byState.stale).toBe(13)
+    expect(counts.aligned).toBe(13)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -135,8 +137,9 @@ describe('design adoption', () => {
     // page outside the Portfolio group, built under the Owner's option-b ruling
     // (unbuilt 41→40, reviewing 4→5), then aligned on the Owner's look
     // (reviewing 5→4). Stress & Scenario is the drill-down Exposure points at
-    // (unbuilt 40→39, reviewing 4→5).
-    expect(counts.byState.reviewing).toBe(5)
+    // (unbuilt 40→39, reviewing 4→5). Positions and Backing & Model, built in
+    // C6 and R14 and waiting since, signed off 2026-09-17 (reviewing 5→3).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -144,9 +147,11 @@ describe('design adoption', () => {
         .sort(),
     ).toEqual([
       '/portfolio/accounts',
+      '/portfolio/backing',
       '/portfolio/ledger',
       '/portfolio/outcome',
       '/portfolio/performance',
+      '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
@@ -156,9 +161,7 @@ describe('design adoption', () => {
       '/risk/portfolio',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/portfolio/backing',
       '/portfolio/pnl-explain',
-      '/portfolio/positions',
       '/risk/stress',
       '/trade/plans',
     ])

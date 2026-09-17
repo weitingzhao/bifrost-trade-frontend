@@ -194,18 +194,18 @@ export function StockPositionsTable({
   const table = (
       <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[1080px]">
         <colgroup>
-          <col style={{ width: '9%' }} />
-          <col style={{ width: '6%' }} />
-          <col style={{ width: '7%' }} />
-          <col style={{ width: '9%' }} />
-          <col style={{ width: '9%' }} />
-          <col style={{ width: '7%' }} />
           <col style={{ width: '7%' }} />
           <col style={{ width: '8%' }} />
           <col style={{ width: '7%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '9%' }} />
           <col style={{ width: '8%' }} />
+          <col style={{ width: '10%' }} />
           <col style={{ width: '8%' }} />
-          <col style={{ width: '15%' }} />
+          <col style={{ width: '9%' }} />
         </colgroup>
         <DenseTableHeader>
           <DenseTableHeadRow>

@@ -57,10 +57,10 @@ export function AccountsFreshnessBand({
         <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[620px]">
           <colgroup>
             <col style={{ width: '16%' }} />
-            <col style={{ width: '14%' }} />
+            <col style={{ width: '21%' }} />
             <col style={{ width: '12%' }} />
             <col style={{ width: '16%' }} />
-            <col style={{ width: '42%' }} />
+            <col style={{ width: '35%' }} />
           </colgroup>
           <DenseTableHeader>
             <DenseTableHeadRow>

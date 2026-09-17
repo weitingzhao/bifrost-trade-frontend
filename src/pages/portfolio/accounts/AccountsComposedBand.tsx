@@ -147,15 +147,17 @@ function BySymbolTable({
   const { rows, unrepresented } = reading
   return (
     <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[660px]">
+      {/* Measured at the 660 floor: every figure fits whole. Accounts gives up
+          the width — it is the one text column, and it carries its own title. */}
       <colgroup>
-        <col style={{ width: '12%' }} />
+        <col style={{ width: '10%' }} />
+        <col style={{ width: '13%' }} />
         <col style={{ width: '14%' }} />
-        <col style={{ width: '8%' }} />
+        <col style={{ width: '11%' }} />
+        <col style={{ width: '16%' }} />
+        <col style={{ width: '9%' }} />
         <col style={{ width: '10%' }} />
-        <col style={{ width: '12%' }} />
-        <col style={{ width: '10%' }} />
-        <col style={{ width: '10%' }} />
-        <col style={{ width: '24%' }} />
+        <col style={{ width: '17%' }} />
       </colgroup>
       <DenseTableHeader>
         <DenseTableHeadRow>
@@ -193,7 +195,7 @@ function BySymbolTable({
             <DenseTableCell className={denseTableNumCell}>
               <InlinePnl value={row.dayPct}>{fmtPctSigned(row.dayPct)}</InlinePnl>
             </DenseTableCell>
-            <DenseTableCell className="font-mono text-dense-meta text-muted-foreground" title={row.accountIds.join(' · ')}>
+            <DenseTableCell className="truncate font-mono text-dense-meta text-muted-foreground" title={row.accountIds.join(' · ')}>
               {row.accountIds.join(' · ')}
             </DenseTableCell>
           </DenseTableRow>

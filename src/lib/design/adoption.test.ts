@@ -147,8 +147,9 @@ describe('design adoption', () => {
     // fills (unbuilt 38→37, reviewing 3→4), then aligned on the Owner's look
     // (reviewing 4→3). Margin & Buying Power is the link Positions and Backing
     // both wanted (unbuilt 37→36, reviewing 3→4), then aligned on the Owner's
-    // look (reviewing 4→3).
-    expect(counts.byState.reviewing).toBe(3)
+    // look (reviewing 4→3). Assignment is Expiration's other half
+    // (unbuilt 36→35, reviewing 3→4).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -174,6 +175,7 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/pnl-explain',
+      '/trade/assignment',
       '/trade/expiration',
       '/trade/plans',
     ])
@@ -205,7 +207,7 @@ describe('design adoption', () => {
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
-    expect(counts.byState.unbuilt).toBe(36)
+    expect(counts.byState.unbuilt).toBe(35)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.

@@ -28,6 +28,7 @@ import { PositionsTier } from '@/components/positions/PositionsTier'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
+import { fmtCushionPct } from '@/utils/optionMoneyness'
 import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
 import { buildOptionTicker } from '@/utils/optionTicker'
@@ -51,10 +52,6 @@ const FOOT =
 
 function isoDay(expiry: string): string {
   return `${expiry.slice(0, 4)}-${expiry.slice(4, 6)}-${expiry.slice(6, 8)}`
-}
-
-function pctText(v: number | null): string {
-  return v == null ? '—' : `${v >= 0 ? '' : '−'}${Math.abs(v * 100).toFixed(1)}%`
 }
 
 export default function ExpirationPage() {
@@ -255,7 +252,7 @@ export default function ExpirationPage() {
                             {g.itm > 0 ? g.itm : '—'}
                           </td>
                           <td className={cn(positionsUi.td, (g.tightest ?? 1) < 0.05 ? 'text-warning' : 'text-secondary-foreground')}>
-                            {pctText(g.tightest)}
+                            {fmtCushionPct(g.tightest)}
                           </td>
                           <td className={cn(positionsUi.td, g.unpriced === g.legs.length ? 'text-muted-foreground' : pnlColorClass(-g.closeCost))}>
                             {g.unpriced === g.legs.length ? '—' : fmtSignedUsd0(-g.closeCost)}
@@ -349,7 +346,7 @@ export default function ExpirationPage() {
                                   : 'text-secondary-foreground',
                           )}
                         >
-                          {pctText(l.cushionPct)}
+                          {fmtCushionPct(l.cushionPct)}
                           {l.itm ? ' ITM' : ''}
                         </td>
                         <td className={cn(positionsUi.td, l.closeCost == null ? 'text-muted-foreground' : pnlColorClass(-l.closeCost))}>

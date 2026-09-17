@@ -348,6 +348,16 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    path: '/trade/assignment',
+    label: 'Assignment',
+    crumbs: TRADE,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/trade/assignment'],
+    },
+  },
+  {
     path: '/trade/expiration',
     label: 'Expiration',
     crumbs: TRADE,

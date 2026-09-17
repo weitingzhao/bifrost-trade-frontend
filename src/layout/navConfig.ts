@@ -87,6 +87,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     items: [
       route('Orders & Fills', '/trade/fills', ListChecks),
       route('Expiration', '/trade/expiration', CalendarClock),
+      route('Assignment', '/trade/assignment', ShieldAlert),
       route('Playbook', '/trade/playbook', BookOpen),
     ],
   },

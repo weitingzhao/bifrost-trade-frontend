@@ -13,6 +13,8 @@
  * with future events, and a decision written from here would be a new write
  * path — the page links to Trade Plans instead (D10).
  */
+import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
+import { cushionPct } from '@/utils/optionMoneyness'
 import type { PositionAttribution } from '@/types/positions'
 
 export interface ExpiryLeg {
@@ -72,20 +74,6 @@ function rightOf(a: PositionAttribution): 'C' | 'P' | '' {
 }
 
 /**
- * How much room the leg has before the strike is in play.
- *
- * Signed towards trouble, so both rights read the same way: positive is room
- * left, negative is in the money. A short call is troubled by spot above the
- * strike; a short put by spot below it.
- */
-export function cushionPct(spot: number | null, strike: number, right: 'C' | 'P' | ''): number | null {
-  if (spot == null || !Number.isFinite(spot) || spot <= 0 || !Number.isFinite(strike) || strike <= 0) return null
-  if (right === 'C') return (strike - spot) / spot
-  if (right === 'P') return (spot - strike) / spot
-  return null
-}
-
-/**
  * One row per contract, not per account row.
  *
  * The attribution service answers per account, so a contract held in two of
@@ -104,7 +92,7 @@ export function buildExpiryLegs(input: {
     if ((a.sec_type ?? '').toUpperCase() !== 'OPT') continue
     const qty = Number(a.position_qty ?? a.open_qty_est ?? 0)
     if (!Number.isFinite(qty) || qty === 0) continue
-    const symbol = (a.symbol ?? '').trim().toUpperCase().split(/\s+/)[0] ?? ''
+    const symbol = extractUnderlyingRootSymbol(a.symbol)
     const expiry = (a.expiry ?? '').replace(/\D/g, '').slice(0, 8)
     const strike = Number(a.strike ?? 0)
     const right = rightOf(a)

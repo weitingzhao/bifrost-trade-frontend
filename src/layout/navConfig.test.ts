@@ -30,6 +30,7 @@ describe('Trade nav', () => {
     expect(trade.items!.map((i) => [i.label, i.to])).toEqual([
       ['Orders & Fills', '/trade/fills'],
       ['Expiration', '/trade/expiration'],
+      ['Assignment', '/trade/assignment'],
       ['Playbook', '/trade/playbook'],
     ])
     const entry = routeFor('/trade/playbook')

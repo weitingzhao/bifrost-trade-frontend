@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PositionAttribution } from '@/types/positions'
-import { buildExpiryLegs, cushionPct, daysTo, groupByExpiry } from './expirationModel'
+import { cushionPct } from '@/utils/optionMoneyness'
+import { buildExpiryLegs, daysTo, groupByExpiry } from './expirationModel'
 
 function leg(over: Partial<PositionAttribution>): PositionAttribution {
   return {

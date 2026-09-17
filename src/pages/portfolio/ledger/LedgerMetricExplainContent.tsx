@@ -300,13 +300,17 @@ export function LedgerMetricExplainContent({
           <SectionTitle n={1}>Raw data sources</SectionTitle>
           <ExplainList>
             <li>
-              <code className="font-mono">GET /status</code> → portfolio positions (IB snapshot). Not on execution rows.
+              IB snapshot rows on <code className="font-mono">GET /status</code> (portfolio positions).
+              The figure is <code className="font-mono">position × (price − avgCost)</code> for each
+              distinct (account, STK contract_key), not the snapshot&apos;s{' '}
+              <code className="font-mono">unrealized_pnl</code> field.
             </li>
             <li>Keys: <code className="font-mono">account_id</code> + STK <code className="font-mono">contract_key</code>.</li>
           </ExplainList>
           <SectionTitle n={2}>Formula and calculation</SectionTitle>
           <FormulaBlock>
-            {`totalUnrealized = Σ  U(k)   over distinct (account, STK key) with a position row`}
+            {`totalUnrealized = Σ  position × (price − avgCost)
+  over distinct (account, STK key) with a non-zero position and a price`}
           </FormulaBlock>
           <SectionTitle n={3}>Result on screen</SectionTitle>
           <ExplainList>

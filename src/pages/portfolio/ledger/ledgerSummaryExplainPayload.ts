@@ -364,8 +364,8 @@ export function buildLedgerMetricExplainPayload(
     const truncated = Math.max(0, allRows.length - LEDGER_METRIC_EXPLAIN_MAX_ROWS)
     const formulaLines = anyPosition
       ? [
-          'For each distinct (account, STK contract_key) in filtered executions, take unrealized_pnl from GET /status portfolio positions (if present).',
-          `Σ unrealized_pnl = ${fmtCcy(sum)}`,
+          'For each distinct (account, STK contract_key) in filtered executions, unrealized = position × (price − avgCost) from the IB snapshot when position is non-zero and a price is present.',
+          `Σ unrealized = ${fmtCcy(sum)}`,
         ]
       : ['No matching STK position rows in the current status snapshot for in-scope execution keys.']
     return {

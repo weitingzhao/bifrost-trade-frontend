@@ -13,8 +13,12 @@ export const perfUi = {
   tierRule: 'h-px min-w-8 flex-1 bg-border',
   tierNote: 'text-dense-meta text-muted-foreground',
 
-  /** Prototype `.pf-panel`: the layer's raised surface, solid; the header one step up (raised2). */
-  panel: 'min-w-0 self-start rounded-md border border-border bg-[var(--sk-raised)]',
+  /**
+   * Prototype `.pf-panel`: the layer's raised surface, solid; the header one step up (raised2).
+   * No `self-start`: the prototype's page is a grid, where it aligns vertically; in this
+   * page's flex column it would shrink the panel to its content's width.
+   */
+  panel: 'min-w-0 rounded-md border border-border bg-[var(--sk-raised)]',
   panelHead: cn(
     'flex flex-wrap items-center gap-2.5 rounded-t-md border-b border-border',
     'bg-[var(--sk-raised2)] px-3 py-2',

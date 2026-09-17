@@ -1,44 +1,41 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { CollapsibleChevron } from '@/components/data-display'
-import { fmtIsoDateToken } from '@/lib/format'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { perfUi } from './performanceUi'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { ExecSourceBadge } from '@/pages/portfolio/ledger/ExecSourceBadge'
 import { usePerformanceOnTheFly } from '@/hooks/usePerformanceOnTheFly'
-import type { Execution } from '@/types/positions'
 import type { PerformanceTimeRange } from '@/utils/ledger/performanceUtils'
-import {
-  executionDateStr,
-  ledgerOptionExecutionDisplayPnl,
-  optionRightToFull,
-  stockOnTheFlyUnrealizedPnlLeg,
-} from '@/utils/ledger/performanceUtils'
-import {
-  fmtChicagoTime,
-  fmtPnl,
-  fmtUsd,
-} from '@/pages/portfolio/performance/performanceFormatters'
+import { fmtChicagoTime } from '@/pages/portfolio/performance/performanceFormatters'
 import { OTF_STK_UNREALIZED_HELP } from '@/pages/portfolio/performance/performanceConstants'
-import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
-
-type SecTab = 'all' | 'OPT' | 'STK'
+import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
+import { buildOtfRows, otfCountLabel, type OtfRow } from '@/pages/portfolio/performance/performanceOnTheFly'
 
 interface PerformanceOnTheFlySectionProps {
   timeRange: PerformanceTimeRange
   calendarMonth: string
   strategyOpportunityId: number | null
   strategyInstanceId: number | null
+  /** Open the On the fly derivation: which TWS fills end up here. */
+  onExplain?: () => void
 }
 
-function kvToneClass(n: number): string {
-  if (Math.abs(n) < 0.005) return ''
-  return n >= 0 ? styles.tonePositive : styles.toneNegative
+const OPT_UNREALIZED_HELP =
+  'Option legs use the same per-execution cash flow as Trade Ledger → Options → Details. Pairing uses backend opt pairs when available, else FIFO by contract.'
+
+const LEG_VALUE_HELP =
+  'Option rows: the premium by side, as the ledger shows it. Stock rows: shares × price, long positive. The unmatched legs sum to the Unrealized figures above.'
+
+/** The prototype's two greys are one colour on the Portfolio skin. */
+const dim = 'text-muted-foreground'
+const th = 'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption leading-normal font-semibold text-secondary-foreground'
+const td = 'whitespace-nowrap border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs leading-normal tabular-nums'
+
+function money(v: number | null): string {
+  return v == null || Math.abs(v) < 0.5 ? '—' : fmtSignedUsd0(v)
 }
 
-function optUnrealizedToneClass(n: number): string {
-  if (Math.abs(n) < 0.005) return ''
-  return styles.otfStkUnrealized
+function directionInk(v: number | null): string {
+  return v == null || Math.abs(v) < 0.5 ? dim : pnlColorClass(v)
 }
 
 export function PerformanceOnTheFlySection({
@@ -46,231 +43,158 @@ export function PerformanceOnTheFlySection({
   calendarMonth,
   strategyOpportunityId,
   strategyInstanceId,
+  onExplain,
 }: PerformanceOnTheFlySectionProps) {
   const [open, setOpen] = useState(false)
-  const [secTab, setSecTab] = useState<SecTab>('all')
 
+  // Fetched while collapsed too: the header says how many fills there are and what they made.
   const { data, isLoading, isError, error } = usePerformanceOnTheFly({
-    enabled: open,
+    enabled: true,
     timeRange,
     calendarMonth,
     strategyOpportunityId,
     strategyInstanceId,
   })
 
-  const execs = data?.executions ?? []
-  const filtered = execs.filter((e) => {
-    if (secTab === 'all') return true
-    return (e.sec_type ?? '').toUpperCase() === secTab
-  })
-
-  const tabCount = (tab: SecTab) => {
-    if (tab === 'all') return execs.length
-    return execs.filter((e) => (e.sec_type ?? '').toUpperCase() === tab).length
-  }
-
+  const rows = useMemo(() => buildOtfRows(data?.executions ?? []), [data?.executions])
   const net = data?.perf.summary?.net_pnl ?? null
+
+  const count = isLoading ? 'loading…' : isError ? 'failed to load' : data ? otfCountLabel(rows) : ''
 
   return (
     <section className={perfUi.panel} aria-label="On the fly executions">
-      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={cn(perfUi.panelToggle, 'rounded-md')}>
-        <CollapsibleChevron expanded={open} className={cn('h-3 w-3', open ? 'rotate-0' : '-rotate-90')} />
-        <span className={perfUi.cap}>On the fly</span>
-        <span className={perfUi.panelTitle}>outside every strategy</span>
-        <span className={cn(perfUi.mono, 'text-dense-body text-muted-foreground')}>
-          {open && data ? `${execs.length} ${execs.length === 1 ? 'fill' : 'fills'}` : 'TWS fills the official book does not cover'}
-        </span>
-        {open && net != null ? (
-          <span className={cn(perfUi.mono, 'ml-auto text-dense-label font-bold', kvToneClass(net))}>{fmtPnl(net)}</span>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          perfUi.panelToggle,
+          'text-dense-body leading-normal hover:bg-[var(--sk-raised2)]',
+          open ? 'rounded-t-md' : 'rounded-md',
+        )}
+      >
+        <span className="w-2.5 text-muted-foreground">{open ? '▾' : '▸'}</span>
+        <span className={cn(perfUi.cap, 'leading-normal')}>On the fly</span>
+        <span className={cn(perfUi.panelTitle, 'leading-normal')}>outside every strategy</span>
+        <span className={cn(perfUi.mono, 'text-xs leading-normal text-muted-foreground')}>{count}</span>
+        {net != null && rows.length > 0 ? (
+          <span className={cn(perfUi.mono, 'ml-auto text-dense-body leading-normal font-bold', directionInk(net))}>
+            {fmtSignedUsd0(net)}
+          </span>
         ) : null}
       </button>
 
       {open && (
-        <div className="flex flex-col gap-2 border-t border-border px-3 pt-2 pb-3">
-          <p className={cn(perfUi.note, 'm-0 text-pretty')}>
-            TWS-side executions that are not already covered by the official book (same account and contract as a row
-            in the Flex/Journal ledger). Option combo legs (<code className={styles.inlineCode}>BAG</code>) are
-            omitted. Same time range and strategy filters as above.
-          </p>
-        <>
-          {isLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
+        <div>
           {isError && (
-            <p className={cn('text-xs', styles.toneNegative)}>{error?.message ?? 'Failed to load on-the-fly data'}</p>
+            <p className="m-0 px-3 py-2 text-dense-meta text-destructive">{error?.message ?? 'Failed to load on-the-fly data'}</p>
           )}
-          {!isLoading && !isError && data?.perf.summary != null && (
-            <div className={styles.onTheFlySummary} aria-label="On the fly summary total">
-              <span className={styles.onTheFlySummaryKv}>
-                Trades <strong>{data.perf.summary.trade_count ?? 0}</strong>
-              </span>
-              <span className={styles.onTheFlySummaryKv}>
-                Net PnL{' '}
-                <strong className={kvToneClass(data.perf.summary.net_pnl ?? 0)}>
-                  {fmtPnl(data.perf.summary.net_pnl ?? 0)}
-                </strong>
-              </span>
-              <span className={styles.onTheFlySummaryKv}>
-                Realized <strong>{fmtPnl(data.perf.summary.total_realized_pnl ?? data.perf.summary.realized ?? 0)}</strong>
-              </span>
-              <span className={styles.onTheFlySummaryKv}>
-                Commission <strong>{fmtUsd(data.perf.summary.total_commission ?? 0)}</strong>
-              </span>
-            </div>
+          {!isLoading && !isError && rows.length === 0 && (
+            <p className={cn('m-0 px-3 py-2 text-dense-meta', dim)}>No on-the-fly fills in this range.</p>
           )}
-
-          {!isLoading && !isError && data?.computed != null && execs.length > 0 && (() => {
-            const optExecs = execs.filter((e) => (e.sec_type ?? '').toUpperCase() === 'OPT')
-            const stkExecs = execs.filter((e) => (e.sec_type ?? '').toUpperCase() === 'STK')
-            const optComm = optExecs.reduce((s, e) => s + (Number(e.commission) || 0), 0)
-            const stkComm = stkExecs.reduce((s, e) => s + (Number(e.commission) || 0), 0)
-            const { opt: oAg, stk: sAg } = data.computed
-            return (
-              <div className="space-y-2 mb-3" aria-label="On the fly by sec type">
-                <div className={styles.onTheFlySummary}>
-                  <span className="text-xs font-semibold text-foreground">Options (OPT)</span>
-                  <span className={styles.onTheFlySummaryKv}>
-                    Trades <strong>{optExecs.length}</strong>
-                  </span>
-                  <span className={styles.onTheFlySummaryKv}>
-                    Realized (FIFO){' '}
-                    <strong className={kvToneClass(oAg.realized)}>{fmtPnl(oAg.realized)}</strong>
-                  </span>
-                  <span className={styles.onTheFlySummaryKv}>
-                    Unrealized (open){' '}
-                    <strong className={optUnrealizedToneClass(oAg.unrealized)}>{fmtPnl(oAg.unrealized)}</strong>
-                    <InfoTooltip text="Option legs use the same per-execution cash flow as Trade Ledger → Options → Details (PnL column). Pairing uses backend opt pairs when available, else FIFO by contract. Trade date falls back to exec date when Flex trade_date is missing." />
-                  </span>
-                  <span className={styles.onTheFlySummaryKv}>
-                    Commission <strong>{fmtUsd(optComm)}</strong>
-                  </span>
-                </div>
-                <div className={styles.onTheFlySummary}>
-                  <span className="text-xs font-semibold text-foreground">Stocks (STK)</span>
-                  <span className={styles.onTheFlySummaryKv}>
-                    Trades <strong>{stkExecs.length}</strong>
-                  </span>
-                  <span className={styles.onTheFlySummaryKv}>
-                    Realized (FIFO){' '}
-                    <strong className={kvToneClass(sAg.realized)}>{fmtPnl(sAg.realized)}</strong>
-                  </span>
-                  <span className={styles.onTheFlySummaryKv}>
-                    Unrealized (open){' '}
-                    <strong className={optUnrealizedToneClass(sAg.unrealized)}>{fmtPnl(sAg.unrealized)}</strong>
-                    <InfoTooltip text={OTF_STK_UNREALIZED_HELP} />
-                  </span>
-                  <span className={styles.onTheFlySummaryKv}>
-                    Commission <strong>{fmtUsd(stkComm)}</strong>
-                  </span>
-                </div>
-              </div>
-            )
-          })()}
-
-          {!isLoading && !isError && execs.length === 0 && (
-            <p className="text-xs text-muted-foreground">No on-the-fly executions in this range.</p>
-          )}
-
-          {!isLoading && execs.length > 0 && (
+          {!isLoading && !isError && rows.length > 0 && (
             <>
-              <div className={styles.onTheFlySecTabs} role="tablist" aria-label="On the fly sec type">
-                {(['all', 'OPT', 'STK'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    role="tab"
-                    aria-selected={secTab === tab}
-                    className={cn(styles.onTheFlySecTab, secTab === tab && styles.onTheFlySecTabActive)}
-                    onClick={() => setSecTab(tab)}
-                  >
-                    {tab === 'all' ? 'All' : tab}
-                    <span className={styles.onTheFlySecTabCount}>{tabCount(tab)}</span>
-                  </button>
-                ))}
-              </div>
-              <div className={styles.tableWrap}>
-                <table className={styles.dataTable}>
+              {data?.computed != null && <SecTypeStrip rows={rows} computed={data.computed} />}
+              <div className="overflow-x-auto">
+                {/* §14.6: the prototype's 620 floor plus a Date column. */}
+                <table className="w-full min-w-[700px] border-collapse">
                   <thead>
                     <tr>
-                      <th>Sec</th>
-                      <th>Execution ID</th>
-                      <th>Trade date</th>
-                      <th>Time</th>
-                      <th>Account</th>
-                      <th>Symbol</th>
-                      <th>Expiry</th>
-                      <th>Strike</th>
-                      <th>Right</th>
-                      <th>Side</th>
-                      <th>Qty</th>
-                      <th>Price</th>
-                      <th>Source</th>
-                      <th>
-                        {secTab === 'STK'
-                          ? 'Unrealized PnL'
-                          : secTab === 'OPT'
-                            ? 'PnL'
-                            : 'PnL / Unrealized PnL'}
+                      <th className={cn(th, 'text-left')}>Date</th>
+                      <th className={cn(th, 'text-left')}>Fill</th>
+                      <th className={th}>Qty</th>
+                      <th className={th}>Price</th>
+                      <th className={th}>Comm</th>
+                      <th className={th}>Realized</th>
+                      <th className={th} title={LEG_VALUE_HELP}>
+                        Leg value
                       </th>
-                      <th>Realized PnL</th>
-                      <th>Commission</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((e) => (
-                      <OnTheFlyRow key={rowKey(e)} exec={e} />
+                    {rows.map((r) => (
+                      <OnTheFlyRow key={r.key} row={r} />
                     ))}
                   </tbody>
                 </table>
               </div>
             </>
           )}
-        </>
+          <footer className={cn(perfUi.panelFoot, 'py-1.75 leading-normal')}>
+            Grouped by sec type. TWS fills the Flex or journal book already records are left out, and so are BAG combo
+            legs, so a combo is not counted twice.{' '}
+            {onExplain ? (
+              <button type="button" className={cn(perfUi.link, 'leading-normal')} onClick={onExplain}>
+                how these fills are chosen →
+              </button>
+            ) : null}
+          </footer>
         </div>
       )}
     </section>
   )
 }
 
-function rowKey(e: Execution): string {
-  return String(e.account_executions_id ?? `${e.account_id}-${e.time}-${e.symbol}`)
+function SecTypeStrip({
+  rows,
+  computed,
+}: {
+  rows: OtfRow[]
+  computed: { opt: { realized: number; unrealized: number }; stk: { realized: number; unrealized: number } }
+}) {
+  const groups = [
+    { id: 'OPT', label: 'Options', agg: computed.opt, help: OPT_UNREALIZED_HELP },
+    { id: 'STK', label: 'Stocks', agg: computed.stk, help: OTF_STK_UNREALIZED_HELP },
+  ]
+    .map((g) => ({ ...g, rows: rows.filter((r) => r.group === g.id) }))
+    .filter((g) => g.rows.length > 0)
+  if (groups.length === 0) return null
+  return (
+    <div className="flex flex-col gap-1 border-b border-border px-3 py-2" aria-label="On the fly by sec type">
+      {groups.map((g) => {
+        const comm = g.rows.reduce((s, r) => s + (Number(r.comm) || 0), 0)
+        return (
+          <div key={g.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-dense-meta">
+            <span className="w-16 font-semibold text-secondary-foreground">{g.label}</span>
+            <span className={dim}>
+              {g.rows.length} {g.rows.length === 1 ? 'fill' : 'fills'}
+            </span>
+            <span className="text-muted-foreground">
+              Realized (FIFO){' '}
+              <span className={cn(perfUi.mono, 'font-semibold', directionInk(g.agg.realized))}>{money(g.agg.realized)}</span>
+            </span>
+            <span className="inline-flex items-baseline gap-1 text-muted-foreground">
+              Unrealized (open){' '}
+              <span className={cn(perfUi.mono, 'text-secondary-foreground')}>{money(g.agg.unrealized)}</span>
+              <InfoTooltip text={g.help} />
+            </span>
+            <span className="text-muted-foreground">
+              Comm <span className={cn(perfUi.mono, dim)}>{comm.toFixed(2)}</span>
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
-function OnTheFlyRow({ exec: e }: { exec: Execution }) {
-  const isOpt = (e.sec_type ?? '').toUpperCase() === 'OPT'
-  const isStk = (e.sec_type ?? '').toUpperCase() === 'STK'
-  const rp = e.realized_pnl
-  const rpNum = rp != null && typeof rp === 'number' && Number.isFinite(rp) ? rp : null
-  const tradeDateDisplay = fmtIsoDateToken((e.trade_date ?? '').trim() || executionDateStr(e))
-  const ledgerPnl = isOpt ? ledgerOptionExecutionDisplayPnl(e) : null
-  const stkUnrealLeg = isStk ? stockOnTheFlyUnrealizedPnlLeg(e) : null
-
+function OnTheFlyRow({ row: r }: { row: OtfRow }) {
   return (
-    <tr>
-      <td>{e.sec_type ?? '—'}</td>
-      <td>{e.account_executions_id ?? '—'}</td>
-      <td title={(e.trade_date ?? '').trim() ? undefined : 'Exec date (Chicago) — no Flex trade_date on this row'}>
-        {tradeDateDisplay}
+    <tr
+      className="hover:[&>td]:bg-[var(--sk-raised2)]"
+      title={`${r.account} · exec ${r.execId} · ${fmtChicagoTime(r.time)} CT`}
+    >
+      <td className={cn(td, 'text-left text-secondary-foreground')}>{r.date}</td>
+      <td className={cn(td, 'text-left')}>
+        <span className={cn(perfUi.mono, perfUi.sky, 'font-bold')}>{r.sym}</span>{' '}
+        <span className="text-muted-foreground">{r.what}</span>{' '}
+        <span className={cn('font-sans', dim)}>{r.group}</span>
       </td>
-      <td>{fmtChicagoTime(e.time)}</td>
-      <td>{e.account_id ?? '—'}</td>
-      <td>{e.symbol ?? '—'}</td>
-      <td>{isOpt ? fmtIsoDateToken(e.expiry) : '—'}</td>
-      <td>{isOpt ? (e.strike != null ? String(e.strike) : '—') : '—'}</td>
-      <td>{isOpt ? optionRightToFull(e.option_right) : '—'}</td>
-      <td>{e.side ?? '—'}</td>
-      <td>{e.quantity ?? '—'}</td>
-      <td>{fmtUsd(e.price)}</td>
-      <td><ExecSourceBadge source={e.source} /></td>
-      <td className={isOpt && ledgerPnl != null ? kvToneClass(ledgerPnl) : isStk && stkUnrealLeg != null ? styles.otfStkTableUnreal : ''}>
-        {isOpt && ledgerPnl != null
-          ? fmtPnl(ledgerPnl)
-          : isStk && stkUnrealLeg != null
-            ? fmtPnl(stkUnrealLeg)
-            : '—'}
-      </td>
-      <td className={rpNum == null ? '' : kvToneClass(rpNum)}>
-        {rpNum == null ? '—' : fmtPnl(rpNum)}
-      </td>
-      <td>{fmtUsd(e.commission)}</td>
+      <td className={cn(td, 'text-secondary-foreground')}>{r.qty}</td>
+      <td className={cn(td, 'text-secondary-foreground')}>{r.price}</td>
+      <td className={cn(td, dim)}>{r.comm}</td>
+      <td className={cn(td, 'font-semibold', directionInk(r.realized))}>{money(r.realized)}</td>
+      <td className={cn(td, 'text-secondary-foreground')}>{money(r.legValue)}</td>
     </tr>
   )
 }

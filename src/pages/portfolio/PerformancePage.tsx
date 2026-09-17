@@ -239,6 +239,14 @@ export default function PerformancePage() {
     [calendarMonth],
   )
 
+  /** Open a derivation from a panel's footer link and bring it into view. */
+  const explain = useCallback((id: PerformanceTree) => {
+    setTree(id)
+    requestAnimationFrame(() =>
+      document.getElementById('performance-derivation')?.scrollIntoView({ block: 'center', behavior: 'smooth' }),
+    )
+  }, [])
+
   /** From the audit table: open that day's records beside the calendar. */
   const openDayFromAudit = useCallback((date: string) => {
     setCalendarMonth(date.slice(0, 7))
@@ -373,15 +381,12 @@ export default function PerformancePage() {
           slotRef={daySlotRef}
           rangeStart={sinceStr}
           rangeLabel={RANGE_WORD[timeRange]}
-          onExplainCell={() => {
-            setTree('calendar')
-            requestAnimationFrame(() => document.getElementById('performance-derivation')?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
-          }}
+          onExplainCell={() => explain('calendar')}
         />
 
         <PerformanceTier
           label="Audit"
-          note="above looks at trend — below reconciles. Month rows open into days."
+          note="above looks at trend — below reconciles. Month rows open into days; a day opens its records beside the calendar, in the Summary slot."
         />
         <MonthlyPnLTable
           byDayRangeData={bulk?.byDayRangeData ?? null}
@@ -392,6 +397,8 @@ export default function PerformancePage() {
           isError={bulkQuery.isError}
           onRetry={() => void bulkQuery.refetch()}
           onOpenDay={openDayFromAudit}
+          selectedDay={dayPanel === 'records' ? selectedDay : null}
+          onGlossary={() => explain('calendar')}
         />
 
         <PerformanceOnTheFlySection
@@ -399,6 +406,7 @@ export default function PerformancePage() {
           calendarMonth={calendarMonth}
           strategyOpportunityId={selectedOppId}
           strategyInstanceId={selectedInstId}
+          onExplain={() => explain('otf')}
         />
       </section>
     </PageShell>

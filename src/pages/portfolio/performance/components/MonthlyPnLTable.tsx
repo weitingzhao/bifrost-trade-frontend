@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
-import { pnlColorClass, unrealizedPnlColorClass } from '@/utils/dailyChange'
+import { pnlColorClass } from '@/utils/dailyChange'
+import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataStateBlock } from '@/components/data-display'
 import { dataState } from '@/lib/dataState'
@@ -9,7 +10,6 @@ import OpenOptInventoryDialog from '@/pages/portfolio/performance/components/Ope
 import { cn } from '@/lib/utils'
 import { fmtIsoDateToken } from '@/lib/format'
 import { perfUi } from '@/pages/portfolio/performance/performanceUi'
-import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 interface MonthlyPnLTableProps {
   byDayRangeData: ByDayRangeData | null
@@ -24,13 +24,17 @@ interface MonthlyPnLTableProps {
   onRetry?: () => void
   /** Open a day's records beside the calendar. */
   onOpenDay?: (date: string) => void
+  /** The day whose records are open, marked in the table. */
+  selectedDay?: string | null
+  /** Open the R / U / N glossary (the Day cell derivation). */
+  onGlossary?: () => void
 }
 
 /** Word and code per column: the code is what the calendar and the tooltips call it. */
 const COLS: { word: string; code: string; openOnly?: boolean }[] = [
   { word: 'Options realized', code: 'Opt R' },
   { word: 'Unmatched that day', code: 'Opt U' },
-  { word: 'Still open today', code: 'Open', openOnly: true },
+  { word: 'Unpaired premium', code: 'Open', openOnly: true },
   { word: 'Stocks net', code: 'Stocks N' },
   { word: 'Stocks realized', code: 'Stocks R' },
   { word: 'FI cash stream', code: 'FI Stream' },
@@ -39,34 +43,26 @@ const COLS: { word: string; code: string; openOnly?: boolean }[] = [
   { word: 'Cash realized', code: 'Cash R' },
 ]
 
-const th = 'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom'
-const td = 'whitespace-nowrap border-b border-border/50 px-2 py-1.25 text-right font-mono text-dense-body tabular-nums'
+const th = 'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom leading-normal'
+const td = 'whitespace-nowrap border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs leading-normal tabular-nums'
 
+/** Prototype: whole dollars with a sign; an empty cell is a dash. */
 function fmtVal(v: number): string {
-  if (Math.abs(v) < 0.005) return '—'
-  return v.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+  if (Math.abs(v) < 0.5) return '—'
+  return fmtSignedUsd0(v)
 }
 
-function unrealizedColorClass(value: number): string {
-  if (Math.abs(value) < 0.005) return 'text-muted-foreground'
-  return unrealizedPnlColorClass(value)
+/** The prototype's two greys (`--sk-mute`, `--sk-mute2`) are one colour on the Portfolio skin. */
+const dim = 'text-muted-foreground'
+
+/** Realized options, stocks and FI carry direction; path, inventory and flow columns do not. */
+function realizedInk(v: number): string {
+  return Math.abs(v) < 0.5 ? dim : pnlColorClass(v)
 }
 
-function signedNotionalClass(val: number): string {
-  if (Math.abs(val) < 0.005) return ''
-  if (val > 0) return styles.notionalPos
-  if (val < 0) return styles.notionalNeg
-  return ''
-}
-
-function cashNotionalClass(val: number): string {
-  if (Math.abs(val) < 0.005) return ''
-  return styles.notionalCashLike
+function quietInk(v: number, tone: 'soft' | 'muted'): string {
+  if (Math.abs(v) < 0.5) return dim
+  return tone === 'soft' ? 'text-secondary-foreground' : 'text-muted-foreground'
 }
 
 interface DayRow {
@@ -97,6 +93,8 @@ export default function MonthlyPnLTable({
   isError,
   onRetry,
   onOpenDay,
+  selectedDay,
+  onGlossary,
 }: MonthlyPnLTableProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
   const [showOpen, setShowOpen] = useState(true)
@@ -108,7 +106,12 @@ export default function MonthlyPnLTable({
     // The range runs to the end of the quarter; a day that has not happened has no session to show.
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-    const dates = Object.keys(byDayRangeData.opt).filter((d) => d <= today).sort()
+    // A weekend is not a session: the prototype lists sessions only.
+    const isWeekend = (d: string) => {
+      const dow = new Date(`${d}T12:00:00Z`).getUTCDay()
+      return dow === 0 || dow === 6
+    }
+    const dates = Object.keys(byDayRangeData.opt).filter((d) => d <= today && !isWeekend(d)).sort()
     if (dates.length === 0) return []
 
     const rows: DayRow[] = dates.map((date) => ({
@@ -206,22 +209,21 @@ export default function MonthlyPnLTable({
 
   return (
     <section className={perfUi.panel} aria-label="Per-month and per-day P&L">
-      <header className={perfUi.panelHead}>
-        <span className={perfUi.cap}>Per-month · per-day</span>
-        <span className={perfUi.panelTitle}>nine measures</span>
-        <label className="flex cursor-pointer items-center gap-1.5 text-dense-meta text-muted-foreground">
+      <header className={cn(perfUi.panelHead, 'leading-normal')}>
+        <span className={cn(perfUi.cap, 'leading-normal')}>Per-month · per-day</span>
+        <span className={cn(perfUi.panelTitle, 'leading-normal')}>nine measures</span>
+        <label className="flex cursor-pointer items-center gap-1.5 text-dense-meta leading-normal text-muted-foreground">
           <input
             type="checkbox"
             checked={showOpen}
             onChange={() => setShowOpen((v) => !v)}
             className="accent-[var(--primary)]"
           />
-          Show still-open option premium
-          <span className="text-muted-foreground/80">— inventory, not P&amp;L</span>
+          Show unpaired option legs
+          <span className={dim}>— inventory, not P&amp;L</span>
         </label>
-        <span className={cn(perfUi.note, 'ml-auto')}>
+        <span className={cn(perfUi.note, 'ml-auto leading-normal')}>
           {monthGroups.length} {monthGroups.length === 1 ? 'month' : 'months'} · click a month to open its days
-          {onOpenDay ? ', a day to open its records' : ''}
         </span>
       </header>
       <div className="overflow-x-auto">
@@ -230,13 +232,13 @@ export default function MonthlyPnLTable({
           <thead>
             <tr>
               <th className={cn(th, 'text-left')}>
-                <span className="text-dense-caption font-semibold text-foreground/85">Date</span>
+                <span className="text-dense-caption leading-normal font-semibold text-secondary-foreground">Date</span>
               </th>
               {cols.map((c) => (
                 <th key={c.code} className={th}>
                   <span className="flex flex-col items-end gap-px">
-                    <span className="text-dense-caption font-semibold text-foreground/85">{c.word}</span>
-                    <span className="font-mono text-dense-micro font-normal text-muted-foreground">{c.code}</span>
+                    <span className="text-dense-caption leading-normal font-semibold text-secondary-foreground">{c.word}</span>
+                    <span className="font-mono text-dense-micro leading-normal font-normal text-muted-foreground">{c.code}</span>
                   </span>
                 </th>
               ))}
@@ -253,6 +255,7 @@ export default function MonthlyPnLTable({
                   showOpen={showOpen}
                   onToggle={() => toggleMonth(group.key)}
                   onOpenDay={onOpenDay}
+                  selectedDay={selectedDay ?? null}
                   openAsOfMonth={optOpenByOpenMonth?.[group.key] ?? 0}
                   onOpenDrill={
                     optOpenLegs != null && optOpenLegs.length > 0
@@ -265,9 +268,14 @@ export default function MonthlyPnLTable({
           </tbody>
         </table>
       </div>
-      <p className={cn(perfUi.panelFoot, 'm-0')}>
-        Opt U is a path figure — premium left unmatched on each day. Still open today is an as-of inventory — what is
-        unmatched now, by the month it opened. Different kinds of number; they never add up.
+      <p className={cn(perfUi.panelFoot, 'm-0 py-1.75 leading-normal')}>
+        Opt U is a path quantity over the period; Unpaired premium is an as-of inventory. They are different kinds of
+        number and never add up.{' '}
+        {onGlossary ? (
+          <button type="button" className={cn(perfUi.link, 'leading-normal')} onClick={onGlossary}>
+            glossary · R / U / N →
+          </button>
+        ) : null}
       </p>
 
       {openDrill != null && (
@@ -290,6 +298,7 @@ function MonthSection({
   showOpen,
   onToggle,
   onOpenDay,
+  selectedDay,
   openAsOfMonth,
   onOpenDrill,
 }: {
@@ -298,28 +307,29 @@ function MonthSection({
   showOpen: boolean
   onToggle: () => void
   onOpenDay?: (date: string) => void
+  selectedDay: string | null
   openAsOfMonth: number
   onOpenDrill?: () => void
 }) {
   const { sums } = group
-  const canDrill = onOpenDrill != null && Math.abs(openAsOfMonth) >= 0.005
+  const canDrill = onOpenDrill != null && Math.abs(openAsOfMonth) >= 0.5
+  const monthCell = 'bg-[var(--sk-raised2)] font-bold'
   return (
     <>
       <tr
-        className="cursor-pointer bg-secondary/40 hover:bg-secondary"
+        className="cursor-pointer"
         onClick={onToggle}
         title={expanded ? 'Collapse the month' : 'Expand into days'}
         aria-expanded={expanded}
       >
-        <td className={cn(td, 'text-left font-sans font-bold text-foreground')}>
-          <span className="mr-1.5 inline-block w-3 text-center text-muted-foreground">{expanded ? '▾' : '▸'}</span>
-          {group.label}
+        <td className={cn(td, monthCell, 'pl-2 text-left font-sans text-foreground')}>
+          {expanded ? '▾' : '▸'} {group.label}
         </td>
-        <td className={cn(td, 'font-bold', pnlColorClass(sums.optR))}>{fmtVal(sums.optR)}</td>
-        <td className={cn(td, 'font-bold', unrealizedColorClass(sums.optU))}>{fmtVal(sums.optU)}</td>
+        <td className={cn(td, monthCell, realizedInk(sums.optR))}>{fmtVal(sums.optR)}</td>
+        <td className={cn(td, monthCell, quietInk(sums.optU, 'soft'))}>{fmtVal(sums.optU)}</td>
         {showOpen && (
           <td
-            className={cn(td, 'font-bold', unrealizedColorClass(openAsOfMonth))}
+            className={cn(td, monthCell, 'text-muted-foreground')}
             onClick={
               canDrill
                 ? (e) => {
@@ -332,7 +342,7 @@ function MonthSection({
             {canDrill ? (
               <button
                 type="button"
-                className="cursor-pointer border-0 bg-transparent p-0 font-semibold hover:underline underline-offset-2"
+                className="cursor-pointer border-0 bg-transparent p-0 font-bold text-inherit hover:underline underline-offset-2"
                 title="Show still-open option contracts"
                 aria-label={`Open option inventory for ${group.label}`}
               >
@@ -343,35 +353,39 @@ function MonthSection({
             )}
           </td>
         )}
-        <td className={cn(td, 'font-bold', signedNotionalClass(sums.stocksN))}>{fmtVal(sums.stocksN)}</td>
-        <td className={cn(td, 'font-bold', pnlColorClass(sums.stocksR))}>{fmtVal(sums.stocksR)}</td>
-        <td className={cn(td, 'font-bold', signedNotionalClass(sums.fiN))}>{fmtVal(sums.fiN)}</td>
-        <td className={cn(td, 'font-bold', pnlColorClass(sums.fiR))}>{fmtVal(sums.fiR)}</td>
-        <td className={cn(td, 'font-bold', cashNotionalClass(sums.cashN))}>{fmtVal(sums.cashN)}</td>
-        <td className={cn(td, 'font-bold', pnlColorClass(sums.cashR))}>{fmtVal(sums.cashR)}</td>
+        <td className={cn(td, monthCell, quietInk(sums.stocksN, 'soft'))}>{fmtVal(sums.stocksN)}</td>
+        <td className={cn(td, monthCell, realizedInk(sums.stocksR))}>{fmtVal(sums.stocksR)}</td>
+        <td className={cn(td, monthCell, quietInk(sums.fiN, 'muted'))}>{fmtVal(sums.fiN)}</td>
+        <td className={cn(td, monthCell, realizedInk(sums.fiR))}>{fmtVal(sums.fiR)}</td>
+        <td className={cn(td, monthCell, dim)}>{fmtVal(sums.cashN)}</td>
+        <td className={cn(td, monthCell, dim)}>{fmtVal(sums.cashR)}</td>
       </tr>
       {expanded &&
         group.days.map((day) => {
           const active = [day.optR, day.optU, day.stocksN, day.stocksR, day.fiN, day.fiR, day.cashN, day.cashR]
             .some((v) => Math.abs(v) >= 0.005)
           const clickable = active && onOpenDay != null
+          const selected = selectedDay === day.date
+          const dayCell = selected ? 'bg-[var(--sk-surface)]' : ''
           return (
             <tr
               key={day.date}
-              className={cn(clickable && 'cursor-pointer hover:bg-secondary/40')}
+              className={cn('hover:[&>td]:bg-[var(--sk-raised2)]', clickable && 'cursor-pointer')}
               onClick={clickable ? () => onOpenDay(day.date) : undefined}
-              title={clickable ? "Open this day's records" : active ? undefined : 'No fills that day'}
+              title={clickable ? "Open this day's records" : 'No fills that day'}
             >
-              <td className={cn(td, 'pl-7 text-left text-foreground/80')}>{fmtIsoDateToken(day.date)}</td>
-              <td className={cn(td, pnlColorClass(day.optR))}>{fmtVal(day.optR)}</td>
-              <td className={cn(td, unrealizedColorClass(day.optU))}>{fmtVal(day.optU)}</td>
-              {showOpen && <td className={cn(td, 'text-muted-foreground')}>—</td>}
-              <td className={cn(td, signedNotionalClass(day.stocksN))}>{fmtVal(day.stocksN)}</td>
-              <td className={cn(td, pnlColorClass(day.stocksR))}>{fmtVal(day.stocksR)}</td>
-              <td className={cn(td, signedNotionalClass(day.fiN))}>{fmtVal(day.fiN)}</td>
-              <td className={cn(td, pnlColorClass(day.fiR))}>{fmtVal(day.fiR)}</td>
-              <td className={cn(td, cashNotionalClass(day.cashN))}>{fmtVal(day.cashN)}</td>
-              <td className={cn(td, pnlColorClass(day.cashR))}>{fmtVal(day.cashR)}</td>
+              <td className={cn(td, dayCell, 'pl-6.5 text-left font-sans', selected ? 'text-[var(--sk-accent)]' : 'text-secondary-foreground')}>
+                {fmtIsoDateToken(day.date)}
+              </td>
+              <td className={cn(td, dayCell, realizedInk(day.optR))}>{fmtVal(day.optR)}</td>
+              <td className={cn(td, dayCell, quietInk(day.optU, 'soft'))}>{fmtVal(day.optU)}</td>
+              {showOpen && <td className={cn(td, dayCell, dim)}>—</td>}
+              <td className={cn(td, dayCell, quietInk(day.stocksN, 'soft'))}>{fmtVal(day.stocksN)}</td>
+              <td className={cn(td, dayCell, realizedInk(day.stocksR))}>{fmtVal(day.stocksR)}</td>
+              <td className={cn(td, dayCell, quietInk(day.fiN, 'muted'))}>{fmtVal(day.fiN)}</td>
+              <td className={cn(td, dayCell, realizedInk(day.fiR))}>{fmtVal(day.fiR)}</td>
+              <td className={cn(td, dayCell, dim)}>{fmtVal(day.cashN)}</td>
+              <td className={cn(td, dayCell, dim)}>{fmtVal(day.cashR)}</td>
             </tr>
           )
         })}

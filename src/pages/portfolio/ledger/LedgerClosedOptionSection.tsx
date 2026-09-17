@@ -77,6 +77,7 @@ export function LedgerClosedOptionSection({
   onSyncOpposite,
   onViewLinks,
   syncingId,
+  syncError,
 }: Props) {
   const [closedPage, setClosedPage] = useState(1)
 
@@ -367,6 +368,9 @@ export function LedgerClosedOptionSection({
                           }
                           syncDisabled={syncingId === ex.account_executions_id}
                           syncSpinning={syncingId === ex.account_executions_id}
+                          error={
+                            syncError?.id === ex.account_executions_id ? syncError.message : undefined
+                          }
                         />
                       ) : (
                         '—'

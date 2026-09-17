@@ -50,7 +50,7 @@ function findOppositeLegAttribution(
 
 export function OptGroupRow({
   group, expanded, expired, showNetQty, linkByOptionId, onToggle, onEdit, onDelete,
-  onLinkStrategy, onLinkStock, onViewLinks, onExpiredClose, syncingId, onSyncOpposite,
+  onLinkStrategy, onLinkStock, onViewLinks, onExpiredClose, syncingId, syncError, onSyncOpposite,
 }: {
   group: OptExecutionGroup
   expanded: boolean
@@ -201,6 +201,7 @@ export function OptGroupRow({
                     }
                     syncDisabled={isSyncing}
                     syncSpinning={isSyncing}
+                    error={oid != null && syncError?.id === oid ? syncError.message : undefined}
                     onLink={onLinkStrategy ? () => onLinkStrategy(t, group.trades) : undefined}
                     onLinkStock={onLinkStock ? () => onLinkStock(t) : undefined}
                     onEdit={onEdit ? () => onEdit(t) : undefined}

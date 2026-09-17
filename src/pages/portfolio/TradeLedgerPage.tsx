@@ -112,6 +112,7 @@ export default function TradeLedgerPage() {
   >(null)
   const [linkStockTarget, setLinkStockTarget] = useState<Execution | null>(null)
   const [syncingId, setSyncingId] = useState<number | null>(null)
+  const [syncError, setSyncError] = useState<{ id: number; message: string } | null>(null)
   const [createSource, setCreateSource] = useState<'manual' | 'journal_closed'>('manual')
 
   const {
@@ -229,6 +230,7 @@ export default function TradeLedgerPage() {
     setEditExec,
     deleteTarget,
     setSyncingId,
+    setSyncError,
   })
 
   const isStkTab = activeTab === 'stocks' || activeTab === 'fixed_income' || activeTab === 'cash_like'
@@ -395,6 +397,7 @@ export default function TradeLedgerPage() {
             onViewLinks={setViewLinksTarget}
             onExpiredClose={(exec, netQty) => setExpiredCloseTarget({ exec, netQty })}
             syncingId={syncingId}
+            syncError={syncError}
             onSyncOpposite={handleSyncOppositeLeg}
           />
         )}
@@ -454,6 +457,7 @@ export default function TradeLedgerPage() {
             onLinkStock={setLinkStockTarget}
             onViewLinks={setViewLinksTarget}
             syncingId={syncingId}
+            syncError={syncError}
             onSyncOpposite={handleSyncOppositeLeg}
           />
         )}

@@ -4,6 +4,7 @@ import type { Execution } from '@/types/positions'
 import { deleteExecution, updateExecution } from '@/api/trading'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { OptSortCol, StkSortCol } from '@/pages/portfolio/ledger/ledgerTypes'
+import { syncOppositeLegAttribution } from '@/pages/portfolio/ledger/executionUpdateResult'
 
 type Params = {
   accordionMode: boolean
@@ -21,6 +22,7 @@ type Params = {
   setEditExec: Dispatch<SetStateAction<Execution | null>>
   deleteTarget: Execution | null
   setSyncingId: Dispatch<SetStateAction<number | null>>
+  setSyncError: Dispatch<SetStateAction<{ id: number; message: string } | null>>
 }
 
 export function useTradeLedgerHandlers(p: Params) {
@@ -121,11 +123,13 @@ export function useTradeLedgerHandlers(p: Params) {
     const id = ex.account_executions_id
     if (id == null) return
     p.setSyncingId(id)
+    p.setSyncError(null)
     try {
-      await updateExecution(id, {
-        strategy_opportunity_id: source.opportunity_id,
-        strategy_instance_id: source.instance_id,
-      })
+      const result = await syncOppositeLegAttribution(updateExecution, id, source)
+      if (!result.ok) {
+        p.setSyncError({ id, message: result.error })
+        return
+      }
       void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
       void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executionsBook })
     } finally {

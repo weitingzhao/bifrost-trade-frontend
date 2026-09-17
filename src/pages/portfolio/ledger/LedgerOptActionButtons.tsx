@@ -28,6 +28,7 @@ export function LedgerOptActionButtons({
   onSync,
   syncDisabled,
   syncSpinning,
+  error,
 }: {
   onEdit?: () => void
   onLink?: () => void
@@ -36,8 +37,10 @@ export function LedgerOptActionButtons({
   onSync?: () => void
   syncDisabled?: boolean
   syncSpinning?: boolean
+  error?: string | null
 }) {
   return (
+    <span className="inline-flex flex-col items-end gap-0.5">
     <span className="inline-flex items-center justify-end gap-0.5">
       {onEdit && (
         <IconActionButton
@@ -92,6 +95,12 @@ export function LedgerOptActionButtons({
           <Trash2 className="h-3.5 w-3.5" />
         </IconActionButton>
       )}
+    </span>
+      {error ? (
+        <span className="max-w-[14rem] text-left text-xs text-destructive" role="alert">
+          {error}
+        </span>
+      ) : null}
     </span>
   )
 }

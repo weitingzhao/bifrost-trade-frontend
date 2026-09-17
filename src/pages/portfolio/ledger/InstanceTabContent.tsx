@@ -28,7 +28,7 @@ export function InstanceTabContent({
   instanceSubTab, filteredGroups, noInstGroups, noInstExecs, linkByOptionId,
   groupBy, displayBuckets, outerExpanded, toggleOuter,
   expandedGroups, toggleGroup, onEdit, onDelete,
-  onLinkStrategy, onLinkStock, onViewLinks, syncingId, onSyncOpposite,
+  onLinkStrategy, onLinkStock, onViewLinks, syncingId, syncError, onSyncOpposite,
 }: {
   instanceSubTab: InstanceSubTab
   filteredGroups: InstGroup[]
@@ -47,6 +47,7 @@ export function InstanceTabContent({
   onLinkStock?: (e: Execution) => void
   onViewLinks?: (ctx: import('./LedgerOptContractCell').ViewLinksPayload) => void
   syncingId?: number | null
+  syncError?: { id: number; message: string } | null
   onSyncOpposite?: (e: Execution, src: { opportunity_id: number; instance_id: number }) => void
 }) {
   const [innerExpanded, setInnerExpanded] = useState<Set<string>>(new Set())
@@ -82,6 +83,7 @@ export function InstanceTabContent({
               onLinkStock={onLinkStock}
               onViewLinks={onViewLinks}
               syncingId={syncingId}
+              syncError={syncError}
               onSyncOpposite={onSyncOpposite}
             />
             {noInstGroups.some(g => g.status === 'unrealized') && (
@@ -102,6 +104,7 @@ export function InstanceTabContent({
                   onLinkStock={onLinkStock}
                   onViewLinks={onViewLinks}
                   syncingId={syncingId}
+                  syncError={syncError}
                   onSyncOpposite={onSyncOpposite}
                 />
               </>
@@ -210,6 +213,7 @@ export function InstanceTabContent({
                           onLinkStock={onLinkStock}
                           onViewLinks={onViewLinks}
                           syncingId={syncingId}
+                          syncError={syncError}
                           onSyncOpposite={onSyncOpposite}
                         />
                       )}
@@ -227,6 +231,7 @@ export function InstanceTabContent({
                           onLinkStock={onLinkStock}
                           onViewLinks={onViewLinks}
                           syncingId={syncingId}
+                          syncError={syncError}
                           onSyncOpposite={onSyncOpposite}
                         />
                       )}

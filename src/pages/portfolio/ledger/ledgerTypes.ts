@@ -18,6 +18,7 @@ export type OptGroupCallbacks = {
   onViewLinks?: (ctx: import('./LedgerOptContractCell').ViewLinksPayload) => void
   onExpiredClose?: (e: Execution, netQty: number) => void
   syncingId?: number | null
+  syncError?: { id: number; message: string } | null
   onSyncOpposite?: (e: Execution, src: { opportunity_id: number; instance_id: number }) => void
 }
 

@@ -203,6 +203,7 @@ export function LedgerOpenOptionSection({
   onSyncOpposite,
   onViewLinks,
   syncingId,
+  syncError,
 }: Props) {
   if (openActiveGroups.length === 0 && openExpiredGroups.length === 0) {
     return <p className={denseTable.emptyHint}>No open option groups.</p>
@@ -350,6 +351,9 @@ export function LedgerOpenOptionSection({
                           }
                           syncDisabled={syncingId === ex.account_executions_id}
                           syncSpinning={syncingId === ex.account_executions_id}
+                          error={
+                            syncError?.id === ex.account_executions_id ? syncError.message : undefined
+                          }
                         />
                       ) : (
                         '—'

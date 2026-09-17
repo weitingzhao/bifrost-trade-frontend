@@ -13,6 +13,7 @@ import {
 } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import { clockLabel } from '@/utils/accountsFreshness'
+import { fetchedStamp } from './accountsClocks'
 import type { FreshnessRow } from './accountsFreshnessRows'
 import { accountsUi, freshnessToneDot, freshnessToneText } from './accountsUi'
 
@@ -31,7 +32,7 @@ export function AccountsFreshnessBand({
 }) {
   const from =
     fetchedAt != null && Number.isFinite(fetchedAt)
-      ? `Data from ${new Date(fetchedAt * 1000).toLocaleString()} · ${clockLabel(fetchedAt)} · fetch time, not a session date`
+      ? `Data from ${fetchedStamp(fetchedAt)} · ${clockLabel(fetchedAt)} · fetch time, not a session date`
       : 'No snapshot fetch time yet'
 
   return (

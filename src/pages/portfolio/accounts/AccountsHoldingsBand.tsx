@@ -51,7 +51,7 @@ export function AccountsHoldingsBand({
             </span>
             <p className={accountsUi.emptyHoldingsBody}>
               {dormant
-                ? 'The account snapshot arrived, with cash, net liquidation and the fullest set of broker fields of the three accounts — it simply holds no positions, and is not expected to. Grey, not red: dormant is a standing state, not a failed fetch.'
+                ? 'The account snapshot arrived, with the fullest set of broker fields of the three accounts — it simply holds no positions, and is not expected to. Grey, not red: dormant is a standing state, not a failed fetch.'
                 : 'The snapshot arrived and this account currently holds no stock or option lines.'}
             </p>
           </div>

@@ -81,7 +81,9 @@ describe('the by-account table', () => {
     const dormant = rows[2]
     expect(dormant.dormant).toBe(true)
     expect(dormant.role).toBe('dormant')
-    expect(dormant.roleNote).toBe('funded, not in use')
+    expect(dormant.roleNote).toBe('not in use')
+    // The broker sends Cushion `1` with no net liquidation behind it.
+    expect(dormant.cushion).toBeNull()
     expect(dormant.flexRecDays).toBeNull()
     expect(dormant.twsRecDays).toBeNull()
     expect(dormant.positions).toBe(0)

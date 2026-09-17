@@ -15,8 +15,11 @@ import type { IbAccountSnapshot } from '@/types/monitor'
 import type { ExecutionFreshnessItem } from '@/types/trading'
 import { accountRoles, daysFor } from './accountsFreshnessRows'
 
-/** Owner's ruling: the third account is funded but standing idle, and will not be started. */
-export const DORMANT_ROLE_NOTE = 'funded, not in use'
+/**
+ * Owner's ruling: the third account stands idle long-term and is not expected to
+ * be started. It is not "funded" — the broker reports it with no balance.
+ */
+export const DORMANT_ROLE_NOTE = 'not in use'
 
 /** Below this the broker's own day-trade counter is worth showing (ruling F7). */
 export const DAY_TRADES_WARN_AT = 2
@@ -83,7 +86,10 @@ export function buildBrokerRows(
       buyingPower: summaryNum(s, 'BuyingPower'),
       maintenance: summaryNum(s, 'MaintMarginReq'),
       excessLiquidity: summaryNum(s, 'ExcessLiquidity'),
-      cushion: summaryNum(s, 'Cushion'),
+      // Cushion is excess over net liquidation. With no net liquidation that ratio
+      // does not exist, though the broker still sends `1` for it — a 100.0% the
+      // account has not earned.
+      cushion: netLiq ? summaryNum(s, 'Cushion') : null,
       positions,
       flexRecDays: daysFor(freshness, accountId, 'flex_trades'),
       twsRecDays: daysFor(freshness, accountId, 'tws_client'),

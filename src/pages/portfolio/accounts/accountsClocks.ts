@@ -34,13 +34,30 @@ export const FLEX_PULL_STALE_SEC = 36 * 3600
 /** TWS executions older than this are amber — not broken, but not the live path either. */
 export const TWS_REC_WARN_DAYS = 14
 
+const ET = 'America/New_York'
+
+function etTime(d: Date): string {
+  return d.toLocaleTimeString('en-US', { hourCycle: 'h23', timeZone: ET })
+}
+
 function fetchedClock(ts: number): string {
   // A fetch time, not an as-of date: the wall clock at which we asked.
-  const at = new Date(ts * 1000).toLocaleTimeString('en-US', {
-    hour12: false,
-    timeZone: 'America/New_York',
-  })
-  return `FETCHED ${at} ET`
+  return `FETCHED ${etTime(new Date(ts * 1000))} ET`
+}
+
+/**
+ * `16SEP26 21:30:00 ET` — the same moment as the FETCHED clock, in the same zone
+ * and the §14.4 date token. The date is read in ET too: after 20:00 ET the UTC
+ * date is already tomorrow, and a band showing two zones reads an hour or a day apart.
+ */
+export function fetchedStamp(ts: number): string {
+  const d = new Date(ts * 1000)
+  const part = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone: ET, day: '2-digit', month: 'short', year: '2-digit' })
+      .formatToParts(d)
+      .map((p) => [p.type, p.value]),
+  )
+  return `${part.day}${String(part.month).toUpperCase()}${part.year} ${etTime(d)} ET`
 }
 
 function recLabel(days: number | null | undefined): string {

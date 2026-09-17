@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { flexClockReading, ibClockReading } from './accountsClocks'
+import { fetchedStamp, flexClockReading, ibClockReading } from './accountsClocks'
 
 const NOW = 1789608275
 
@@ -99,5 +99,18 @@ describe('the Flex clock', () => {
     expect(c.pull).toBe('Pull —')
     expect(c.pullTone).toBe('muted')
     expect(c.rec).toBe('Rec —')
+  })
+})
+
+describe('the Data from stamp', () => {
+  it('reads the date in ET too, so it cannot sit a day ahead of the FETCHED clock', () => {
+    // 01:30 UTC on the 17th is still 21:30 on the 16th in New York.
+    const ts = Date.UTC(2026, 8, 17, 1, 30, 0) / 1000
+    expect(fetchedStamp(ts)).toBe('16SEP26 21:30:00 ET')
+  })
+
+  it('writes midnight as 00, not 24', () => {
+    const ts = Date.UTC(2026, 8, 17, 4, 0, 5) / 1000
+    expect(fetchedStamp(ts)).toBe('17SEP26 00:00:05 ET')
   })
 })

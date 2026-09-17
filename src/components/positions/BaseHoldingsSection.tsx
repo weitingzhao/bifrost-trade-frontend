@@ -42,6 +42,8 @@ interface Props {
   cashLike: LivePositionRow[]
   filterSymbol?: string
   onInspectStock?: (pos: LivePositionRow) => void
+  /** The symbol held in both tables at once; everything else dims. */
+  focusSymbol?: string | null
 }
 
 const COLS = 9
@@ -55,16 +57,19 @@ function filterBySymbol(rows: LivePositionRow[], filterSymbol: string): LivePosi
 function HoldingRow({
   position,
   onInspectStock,
+  dim,
 }: {
   position: LivePositionRow
   onInspectStock?: (pos: LivePositionRow) => void
+  /** Another symbol is in focus, so this row steps back rather than disappearing. */
+  dim?: boolean
 }) {
   const accId = (position.account_id ?? '').trim() || '—'
   const qty = Number(position.position)
   const m = computeIndependentHoldingMetrics(position)
 
   return (
-    <DenseTableRow>
+    <DenseTableRow className={dim ? 'opacity-50' : undefined}>
       <DenseTableCell>{accId}</DenseTableCell>
       <DenseTableCell>
         {onInspectStock ? (
@@ -106,6 +111,7 @@ export function BaseHoldingsSection({
   cashLike,
   filterSymbol = '',
   onInspectStock,
+  focusSymbol,
 }: Props) {
   const groups = useMemo(() => {
     const rowsByRole = { stocks: coreStocks, income: incomeEtfs, cash: cashLike } as const
@@ -120,7 +126,7 @@ export function BaseHoldingsSection({
   const total = layers.reduce((n, l) => n + l.marketValue, 0)
 
   return (
-    <CollapsibleGroup>
+    <CollapsibleGroup variant="inset">
       <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
         <CollapsibleChevron expanded={open} />
         <CollapsibleGroupTitle>Base holdings</CollapsibleGroupTitle>
@@ -174,6 +180,7 @@ export function BaseHoldingsSection({
                     key={`${layer.role}-${p.account_id}-${p.symbol}-${p.contract_key ?? 'stk'}`}
                     position={p}
                     onInspectStock={onInspectStock}
+                    dim={!!focusSymbol && (p.symbol ?? '').toUpperCase() !== focusSymbol}
                   />
                 )),
               ])}

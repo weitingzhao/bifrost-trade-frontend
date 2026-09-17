@@ -53,6 +53,8 @@ export interface ObligationsRoomTableProps {
   buyingPower: number | null
   sort: ObligationsSort
   onSortChange: (s: ObligationsSort) => void
+  /** The symbol held in both tables at once; everything else dims. */
+  focusSymbol?: string | null
   onSymbolClick: (symbol: string, accountId: string) => void
   onNakedClick?: (symbol: string) => void
 }
@@ -297,6 +299,7 @@ export function ObligationsRoomTable({
   onSortChange,
   onSymbolClick,
   onNakedClick,
+  focusSymbol,
 }: ObligationsRoomTableProps) {
   if (rows.length === 0) {
     return <p className={denseTable.emptyHint}>No option obligations in scope.</p>
@@ -358,7 +361,10 @@ export function ObligationsRoomTable({
         ? `${fmtUsd(r.cashIfAssigned)} of ${fmtUsd(cashLikeTotal)} cash-like — this name alone exceeds it; the rest sits on margin`
         : 'No cash-like layer — this demand sits entirely on margin.'
     return (
-      <DenseTableRow key={`${r.accountId}-${r.symbol}`}>
+      <DenseTableRow
+        key={`${r.accountId}-${r.symbol}`}
+        className={cn(focusSymbol && focusSymbol !== r.symbol && 'opacity-50')}
+      >
         <DenseTableCell className={denseTableEntityCell}>
           <SymbolLinkButton
             label={r.symbol}

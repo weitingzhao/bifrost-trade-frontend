@@ -94,11 +94,22 @@ export default function BackingPage() {
     [book.alarm.book]
   )
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
+  /** One symbol held in both tables at once — the obligation row and the shares behind it. */
+  const [focusSymbol, setFocusSymbol] = useState<string | null>(null)
 
   const rows = useMemo(
     () => sortObligations(book.obligationsRows, sort),
     [book.obligationsRows, sort]
   )
+  const focusCounts = useMemo(() => {
+    if (!focusSymbol) return { obligations: 0, holdings: 0 }
+    const same = (s: string | null | undefined) => (s ?? '').toUpperCase() === focusSymbol
+    return {
+      obligations: rows.filter((r) => same(r.symbol)).length,
+      holdings: [...book.coreStocks, ...book.fixedIncomeStocks, ...book.cashLikeStocks].filter((p) => same(p.symbol))
+        .length,
+    }
+  }, [focusSymbol, rows, book.coreStocks, book.fixedIncomeStocks, book.cashLikeStocks])
   const model = useModelBand(scope)
 
   // #obligations / #holdings / #room / #model from a link: scroll once the tables exist.
@@ -239,7 +250,29 @@ export default function BackingPage() {
             label="Obligations and base"
             note="two sides of the same symbols — what the options can force, and what is standing behind it"
           />
-          <div id={BACKING_ANCHOR_ID.obligations}>
+          <section className={positionsUi.panel} aria-label="Obligations and base">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border bg-[var(--sk-raised2)] px-3 py-1.5">
+              <span className={positionsUi.cap}>Focus</span>
+              {focusSymbol ? (
+                <>
+                  <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-[var(--color-entity-option)]')}>
+                    {focusSymbol}
+                  </span>
+                  <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>
+                    {focusCounts.obligations} obligation {focusCounts.obligations === 1 ? 'row' : 'rows'} ·{' '}
+                    {focusCounts.holdings} {focusCounts.holdings === 1 ? 'holding' : 'holdings'}
+                  </span>
+                  <button type="button" className={positionsUi.link} onClick={() => setFocusSymbol(null)}>
+                    clear
+                  </button>
+                </>
+              ) : (
+                <span className={positionsUi.panelNote}>
+                  click any symbol to hold it in both tables at once — the obligation row and the shares behind it
+                </span>
+              )}
+            </div>
+          <div id={BACKING_ANCHOR_ID.obligations} className="border-b border-border">
             <ObligationsRoomSection
               open={obligationsOpen}
               onToggle={() => setObligationsOpen((v) => !v)}
@@ -251,9 +284,11 @@ export default function BackingPage() {
               buyingPower={book.alarm.book.supply.buyingPower}
               sort={sort}
               onSortChange={setSort}
-              onSymbolClick={(symbol, accountId) =>
+              focusSymbol={focusSymbol}
+              onSymbolClick={(symbol, accountId) => {
+                setFocusSymbol(symbol.toUpperCase())
                 setInspector({ type: 'stock', symbol, accountId })
-              }
+              }}
               onNakedClick={(symbol) => setFilterSymbol(symbol)}
             />
           </div>
@@ -266,16 +301,19 @@ export default function BackingPage() {
               incomeEtfs={book.fixedIncomeStocks}
               cashLike={book.cashLikeStocks}
               filterSymbol={filterSymbol}
-              onInspectStock={(pos) =>
+              focusSymbol={focusSymbol}
+              onInspectStock={(pos) => {
+                setFocusSymbol((pos.symbol ?? '').toUpperCase())
                 setInspector({
                   type: 'stock',
                   symbol: (pos.symbol ?? '').toUpperCase(),
                   accountId: pos.account_id,
                   livePosition: pos,
                 })
-              }
+              }}
             />
           </div>
+          </section>
           <PlanReservesSection />
         </>
       )}

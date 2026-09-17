@@ -31,6 +31,8 @@ interface Props {
   onSortChange: (s: ObligationsSort) => void
   onSymbolClick: (symbol: string, accountId: string) => void
   onNakedClick: (symbol: string) => void
+  /** The symbol held in both tables at once; everything else dims. */
+  focusSymbol?: string | null
 }
 
 export function ObligationsRoomSection({
@@ -46,10 +48,11 @@ export function ObligationsRoomSection({
   onSortChange,
   onSymbolClick,
   onNakedClick,
+  focusSymbol,
 }: Props) {
   const total = rows.reduce((n, r) => n + r.cashIfAssigned, 0)
   return (
-    <CollapsibleGroup>
+    <CollapsibleGroup variant="inset">
       <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
         <CollapsibleChevron expanded={open} />
         <CollapsibleGroupTitle>Obligations &amp; room</CollapsibleGroupTitle>
@@ -59,7 +62,7 @@ export function ObligationsRoomSection({
             {coverRatio != null ? ` (${Math.round(coverRatio * 100)}% of BP)` : ''} ·{' '}
             {exposure.coveredCallContracts} calls covered
             {exposure.nakedCallContracts > 0 ? (
-              <span className="text-loss"> · {exposure.nakedCallContracts} naked</span>
+              <span className="text-warning"> · {exposure.nakedCallContracts} naked</span>
             ) : null}{' '}
             · room for {moreCalls} more
           </span>
@@ -75,6 +78,7 @@ export function ObligationsRoomSection({
             onSortChange={onSortChange}
             onSymbolClick={onSymbolClick}
             onNakedClick={onNakedClick}
+            focusSymbol={focusSymbol}
           />
           <p className="px-3 pb-2 text-dense-caption leading-relaxed text-muted-foreground">
             Cash if assigned is what taking the stock would cost, not broker maintenance.

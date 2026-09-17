@@ -98,8 +98,10 @@ describe('design adoption', () => {
     // Replace these as pages are walked — they are the numbers the Owner reads.
     // Owner list 2026-09-15: all five at Rev 2026-09-15.5. Owner 2026-09-16:
     // Accounts and Transfer & Pay signed off at their page rev 2026-09-16.9.
+    // Rev .11 moved Accounts to .11 (the role word and the Data from string,
+    // both already built that way), so it reads stale until the Owner re-stamps.
     expect(counts.aligned + counts.byState.stale).toBe(7)
-    expect(counts.aligned).toBe(7)
+    expect(counts.aligned).toBe(6)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -113,7 +115,6 @@ describe('design adoption', () => {
         .map((r) => r.path)
         .sort(),
     ).toEqual([
-      '/portfolio/accounts',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
@@ -174,8 +175,12 @@ describe('design adoption', () => {
     // and designed counts held at 82 / 78, and none of the walked pages went
     // stale: no walked page was a Portfolio page yet. Accounts and Transfer &
     // Pay are now, both at .9 — a Portfolio redo will surface here as stale.
-    expect(DESIGN_REV).toBe('2026-09-16.10')
-    expect(counts.byState.stale).toBe(0)
+    // Rev .11 did exactly that for Accounts: it moved to .11 and reads stale.
+    // Performance, Positions and Backing moved too (table floors only), but
+    // none of them is aligned, so none of them can go stale.
+    expect(DESIGN_REV).toBe('2026-09-16.11')
+    expect(counts.byState.stale).toBe(1)
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path)).toEqual(['/portfolio/accounts'])
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

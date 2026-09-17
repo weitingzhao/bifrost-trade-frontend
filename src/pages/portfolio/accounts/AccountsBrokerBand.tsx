@@ -16,7 +16,7 @@ import {
 import { fmtPct1, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
-import { TWS_REC_WARN_DAYS } from './accountsClocks'
+import { TWS_REC_WARN_DAYS } from '@/utils/accountsClocks'
 import type { BrokerAccountRow, BrokerTotals } from './accountsBrokerRows'
 import { accountsUi, formatAgeDays } from './accountsUi'
 

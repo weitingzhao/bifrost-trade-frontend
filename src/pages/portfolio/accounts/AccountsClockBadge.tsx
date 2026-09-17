@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { ClockReading } from './accountsClocks'
+import type { ClockReading } from '@/utils/accountsClocks'
 import { accountsUi, clockToneDot, clockToneText } from './accountsUi'
 
 export function AccountsClockBadge({ reading }: { reading: ClockReading }) {

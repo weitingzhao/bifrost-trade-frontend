@@ -5,12 +5,13 @@
  * the Owner asked to keep visible rather than a filter. Everything that only
  * changes the grid (contract type, opportunity, attribution, detail mode) lives
  * on the grid's own toolbar, so a filter there never quietly re-grades the
- * cockpit above it. The removable chips on the right say what is in force.
+ * cockpit above it. The scope is in the URL; the link copies it.
  */
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
-import { DenseTagButton, segmentGroupClass, segmentButtonClass } from '@/components/data-display'
+import { DenseTagButton } from '@/components/data-display'
 import type { AccountFilter } from '@/utils/positionsGrouping'
+import { positionsUi } from './positionsUi'
 
 export type { AccountFilter }
 
@@ -26,8 +27,27 @@ interface Props {
   /** Cushion warning line, as a fraction of strike. Persisted per browser. */
   cushionTightPct: number
   onCushionTightPctChange: (pct: number) => void
-  /** Positions inside the current scope; the header badge uses the same number. */
+  /** Positions inside the current scope; the header count uses the same number. */
   scopedCount: number
+  /** Holdings on no strategy — Positions shows the way to them when both accounts are in scope. */
+  offTrack?: { count: number; onOpen: () => void } | null
+}
+
+function AccountToggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      title={`${on ? 'In scope — click to drop' : 'Out of scope — click to add'} ${label}. Margin follows scope; the two are never mixed.`}
+      className={cn(
+        'h-5.5 cursor-pointer border-0 px-2.5 text-dense-meta font-semibold',
+        on ? 'bg-[var(--sk-surface)] text-primary' : 'bg-transparent text-muted-foreground hover:text-foreground',
+      )}
+    >
+      {label}
+    </button>
+  )
 }
 
 export function PositionsOpenControls({
@@ -42,71 +62,74 @@ export function PositionsOpenControls({
   cushionTightPct,
   onCushionTightPctChange,
   scopedCount,
+  offTrack,
 }: Props) {
-  const showAccountBubbles = !!(hostAccountId || secondaryAccountId)
+  const showAccountToggles = !!(hostAccountId || secondaryAccountId)
   const symbolChip = filterSymbol.trim().toUpperCase()
   const expiryChip = filterExpiry.trim()
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!copied) return
+    const t = window.setTimeout(() => setCopied(false), 1600)
+    return () => window.clearTimeout(t)
+  }, [copied])
 
   return (
     <div
-      className="mb-2 flex min-w-0 flex-nowrap items-center gap-x-2 gap-y-1.5 dense-scroll-x border-b border-border/60 py-1.5"
+      className={cn(
+        'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border',
+        'bg-[var(--sk-raised2)] px-2.5 py-1.75 leading-normal',
+      )}
       role="toolbar"
       aria-label="Page scope"
     >
-      {showAccountBubbles && (
-        <div className={cn(segmentGroupClass(), 'shrink-0 flex-nowrap')} aria-label="Accounts in scope">
+      <span className={positionsUi.cap}>Scope</span>
+      {showAccountToggles && (
+        <span
+          className="inline-flex overflow-hidden rounded-[5px] border border-border"
+          aria-label="Accounts in scope"
+        >
           {hostAccountId && (
-            <button
-              type="button"
+            <AccountToggle
+              label="Host"
+              on={accountFilter.host}
               onClick={() => onAccountFilterChange({ ...accountFilter, host: !accountFilter.host })}
-              className={segmentButtonClass(accountFilter.host)}
-              aria-pressed={accountFilter.host}
-            >
-              Host
-            </button>
+            />
           )}
           {secondaryAccountId && secondaryAccountId !== hostAccountId && (
-            <button
-              type="button"
-              onClick={() =>
-                onAccountFilterChange({ ...accountFilter, secondary: !accountFilter.secondary })
-              }
-              className={segmentButtonClass(accountFilter.secondary)}
-              aria-pressed={accountFilter.secondary}
-            >
-              Secondary
-            </button>
+            <AccountToggle
+              label="Secondary"
+              on={accountFilter.secondary}
+              onClick={() => onAccountFilterChange({ ...accountFilter, secondary: !accountFilter.secondary })}
+            />
           )}
-        </div>
+        </span>
       )}
 
-      <div className="flex shrink-0 items-center gap-1.5" aria-label="Symbol and expiry scope">
-        <Input
-          placeholder="Symbol"
-          value={filterSymbol}
-          onChange={(e) => onFilterSymbolChange(e.target.value)}
-          className="h-8 w-32 min-w-[6.5rem] max-w-40 shrink-0 font-mono text-sm"
-        />
-        <Input
-          placeholder="YYYYMMDD"
-          value={filterExpiry}
-          onChange={(e) => onFilterExpiryChange(e.target.value.replace(/\D/g, '').slice(0, 8))}
-          className="h-8 w-[7.5rem] max-w-36 shrink-0 font-mono text-sm"
-          maxLength={8}
-          title="Option expiry filter (YYYYMMDD prefix match)"
-          aria-label="Filter by option expiry YYYYMMDD"
-        />
-      </div>
+      <input
+        placeholder="Symbol"
+        value={filterSymbol}
+        onChange={(e) => onFilterSymbolChange(e.target.value)}
+        className={cn(positionsUi.input, 'w-24')}
+        aria-label="Symbol scope"
+      />
+      <input
+        placeholder="YYYYMMDD"
+        value={filterExpiry}
+        onChange={(e) => onFilterExpiryChange(e.target.value.replace(/\D/g, '').slice(0, 8))}
+        className={cn(positionsUi.input, 'w-26')}
+        maxLength={8}
+        title="Option expiry filter (YYYYMMDD prefix match)"
+        aria-label="Filter by option expiry YYYYMMDD"
+      />
 
       {/* A setting, not a filter: it changes what counts as tight everywhere
           cushion is drawn (cockpit, risk map, grid, ladder), never which rows exist. */}
       <label
-        className="flex h-8 shrink-0 items-center gap-1 rounded-md border border-border bg-card px-1.5"
+        className="inline-flex items-center gap-1.25 text-dense-meta text-muted-foreground"
         title="Short-leg cushion below this is shown as tight. In the money is always shown as breached, whatever this is set to."
       >
-        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-          Tight
-        </span>
+        TIGHT
         <input
           type="number"
           min={0}
@@ -117,36 +140,45 @@ export function PositionsOpenControls({
             const n = Number(e.target.value)
             if (Number.isFinite(n)) onCushionTightPctChange(n / 100)
           }}
-          className="w-11 bg-transparent text-right font-mono text-sm tabular-nums outline-none"
+          className={cn(positionsUi.input, 'w-13 text-right')}
           aria-label="Cushion warning threshold, percent of strike"
         />
-        <span className="text-sm text-muted-foreground">%</span>
+        <span className={positionsUi.cap}>%</span>
       </label>
 
-      <span className="ml-auto flex shrink-0 items-center gap-1" aria-label="Scope in force">
+      <button
+        type="button"
+        className={positionsUi.link}
+        onClick={() => {
+          void navigator.clipboard?.writeText(window.location.href).then(() => setCopied(true))
+        }}
+        title="The accounts, symbol and expiry are in the URL — the link opens this same scope"
+      >
+        {copied ? 'link copied · scope is in the URL' : 'copy link · scope is in the URL'}
+      </button>
+
+      <span className="ml-auto flex flex-wrap items-center gap-2.5" aria-label="Scope in force">
         {symbolChip ? (
-          <DenseTagButton
-            variant="category"
-            size="cell"
-            title="Symbol scope — click to clear"
-            onClick={() => onFilterSymbolChange('')}
-          >
+          <DenseTagButton variant="category" size="cell" title="Symbol scope — click to clear" onClick={() => onFilterSymbolChange('')}>
             {symbolChip} ×
           </DenseTagButton>
         ) : null}
         {expiryChip ? (
-          <DenseTagButton
-            variant="category"
-            size="cell"
-            title="Expiry scope — click to clear"
-            onClick={() => onFilterExpiryChange('')}
-          >
+          <DenseTagButton variant="category" size="cell" title="Expiry scope — click to clear" onClick={() => onFilterExpiryChange('')}>
             {expiryChip} ×
           </DenseTagButton>
         ) : null}
-        <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
-          {scopedCount} in scope
-        </span>
+        {offTrack && offTrack.count > 0 ? (
+          <button
+            type="button"
+            className={positionsUi.link}
+            onClick={offTrack.onOpen}
+            title="Holdings that are in the broker but not on any strategy — only shown when both accounts are in scope"
+          >
+            {offTrack.count} off-track {offTrack.count === 1 ? 'holding' : 'holdings'} →
+          </button>
+        ) : null}
+        <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{scopedCount} in scope</span>
       </span>
     </div>
   )

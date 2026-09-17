@@ -19,7 +19,7 @@ import { deleteExecution } from '@/api/trading'
 import { PageHeader, PageShell } from '@/components/layout'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
-import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EmptyState } from '@/components/data-display'
@@ -34,6 +34,9 @@ import { OptionsTab } from '@/components/positions/OptionsTab'
 import { InstanceTab } from '@/components/positions/InstanceTab'
 import { ExpiriesView } from '@/components/positions/ExpiriesView'
 import { RingCard } from '@/components/positions/RingCard'
+import { positionsUi } from '@/components/positions/positionsUi'
+import { PositionsTier } from '@/components/positions/PositionsTier'
+import { BookFetchMarker } from '@/components/positions/BookFetchMarker'
 import { BackingPoolCard } from '@/components/positions/charts/BackingPoolCard'
 import { PositionsOpenControls } from '@/components/positions/PositionsOpenControls'
 import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
@@ -99,6 +102,7 @@ export default function PositionsPage() {
   const [closeTarget, setCloseTarget] = useState<{ exec: Execution; netQty: number } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
+  const [pressureOpen, setPressureOpen] = useState(true)
   const closeInspector = () => setInspector({ type: null })
 
   const filteredInstanceGroups = useMemo(() => {
@@ -161,6 +165,7 @@ export default function PositionsPage() {
       } else if (t === 'margin') {
         scrollTo('positions-margin')
       } else if (t === 'room') {
+        setPressureOpen(true)
         scrollTo('positions-room')
       } else if (isBackingTarget(t)) {
         navigate(backingHref({ scopeSearch, sort, anchor: BACKING_TARGET_ANCHOR[t] }))
@@ -239,206 +244,249 @@ export default function PositionsPage() {
   }
 
   const scopedCount = book.hasAccountSelection ? book.totalPositions : 0
+  const rowsInView =
+    linesView === 'strategy' ? filteredInstanceGroups.length : linesView === 'contract' ? contractsInView.length : expiriesInView.length
+  const accountsWord =
+    accountFilter.host && accountFilter.secondary
+      ? 'both accounts'
+      : accountFilter.host
+        ? 'host'
+        : accountFilter.secondary
+          ? 'secondary'
+          : 'no account'
+  const carries = [
+    { strategy: 'strategies', contract: 'contracts', expiries: 'expiries' }[linesView],
+    `${rowsInView} rows`,
+    accountsWord,
+    filterSymbol || null,
+    filterExpiry || null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  const openOffTrack = () => {
+    setLinesView('strategy')
+    setInstanceFilters({ ...CLEAR_FILTERS, attributionType: 'unassigned' })
+    scrollTo('positions-lines')
+  }
 
   return (
-    <PageShell className="space-y-3">
-      <PageHeader
-        title="Positions"
-        description="What is in the book and where it is tight. What backs it is on the Backing page."
-        actions={
-          <div className="flex items-center gap-1.5">
-            {book.portfolioPositionCount > 0 ? (
-              <Badge variant="secondary" className="text-xs">
-                {scopedCount} position{scopedCount !== 1 ? 's' : ''}
-                {!book.hasAccountSelection ? ' (select account)' : ''}
-              </Badge>
-            ) : null}
-            {/* Program research-copilot-reach P1 — the Copilot already has
-                trade.portfolio_snapshot / portfolio_risk_summary; this hands it
-                the page's live context so the user need not retype it. */}
-            <AskCopilotButton
-              originPage="positions"
-              originLabel="Positions"
-              symbol={filterSymbol || undefined}
-              snapshot={compactSnapshot({
-                lines_view: linesView,
-                total_positions: scopedCount,
-                portfolio_position_count: book.portfolioPositionCount,
-                accounts: accountFilter,
-                filter_symbol: filterSymbol || undefined,
-                filter_expiry: filterExpiry || undefined,
-              })}
-              suggestedPrompt="分析我当前持仓的风险暴露：集中度、净 delta/vega、各标的 IV，以及任何需要减仓或对冲的头寸。"
-            />
-          </div>
-        }
-      />
-
-      {!book.showOpenPositionsPanel ? (
-        <EmptyState
-          title="No open positions"
-          description="Position data comes from account snapshots. Ensure IB is connected and Account Sync is running."
+    <PageShell padding="compact" className="space-y-3">
+      <section className={positionsUi.pageCard} aria-label="Positions">
+        <PageHeader
+          breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Positions</p>}
+          title="Positions"
+          titleSize="large"
+          description="What is in the book and where it is tight. What backs it is on the Backing page."
+          actions={
+            <span className="flex flex-wrap items-center gap-2.5">
+              <BookFetchMarker />
+              {book.portfolioPositionCount > 0 ? (
+                <span className={cn(positionsUi.mono, 'text-xs text-secondary-foreground')}>
+                  {scopedCount} position{scopedCount !== 1 ? 's' : ''}
+                  {!book.hasAccountSelection ? ' (select account)' : ''}
+                </span>
+              ) : null}
+              <span className="flex items-center gap-1.5">
+                {/* Program research-copilot-reach P1 — the Copilot already has
+                    trade.portfolio_snapshot / portfolio_risk_summary; this hands it
+                    the page's live context so the user need not retype it. */}
+                <AskCopilotButton
+                  originPage="positions"
+                  originLabel="Positions"
+                  symbol={filterSymbol || undefined}
+                  snapshot={compactSnapshot({
+                    lines_view: linesView,
+                    total_positions: scopedCount,
+                    portfolio_position_count: book.portfolioPositionCount,
+                    accounts: accountFilter,
+                    filter_symbol: filterSymbol || undefined,
+                    filter_expiry: filterExpiry || undefined,
+                  })}
+                  suggestedPrompt="分析我当前持仓的风险暴露：集中度、净 delta/vega、各标的 IV，以及任何需要减仓或对冲的头寸。"
+                />
+                <span
+                  className={cn(positionsUi.mono, 'text-dense-caption text-muted-foreground')}
+                  title="This is the page snapshot the question carries"
+                >
+                  carries {carries}
+                </span>
+              </span>
+            </span>
+          }
         />
-      ) : (
-        <>
-          <PositionsOpenControls
-            filterSymbol={filterSymbol}
-            onFilterSymbolChange={setFilterSymbol}
-            filterExpiry={filterExpiry}
-            onFilterExpiryChange={setFilterExpiry}
-            hostAccountId={book.hostAccountId}
-            secondaryAccountId={book.secondaryAccountId}
-            accountFilter={accountFilter}
-            onAccountFilterChange={setAccountFilter}
-            cushionTightPct={cushionTightPct}
-            onCushionTightPctChange={setCushionTightPct}
-            scopedCount={scopedCount}
+
+        {!book.showOpenPositionsPanel ? (
+          <EmptyState
+            title="No open positions"
+            description="Position data comes from account snapshots. Ensure IB is connected and Account Sync is running."
           />
-
-          {!book.hasAccountSelection ? (
-            <EmptyState
-              title="Select an account"
-              description="Turn on HOST and/or Secondary above to show open positions for those accounts."
+        ) : (
+          <>
+            <PositionsOpenControls
+              filterSymbol={filterSymbol}
+              onFilterSymbolChange={setFilterSymbol}
+              filterExpiry={filterExpiry}
+              onFilterExpiryChange={setFilterExpiry}
+              hostAccountId={book.hostAccountId}
+              secondaryAccountId={book.secondaryAccountId}
+              accountFilter={accountFilter}
+              onAccountFilterChange={setAccountFilter}
+              cushionTightPct={cushionTightPct}
+              onCushionTightPctChange={setCushionTightPct}
+              scopedCount={scopedCount}
+              offTrack={
+                accountFilter.host && accountFilter.secondary ? { count: book.offTrackCount, onOpen: openOffTrack } : null
+              }
             />
-          ) : book.totalPositions === 0 ? (
-            <EmptyState
-              title="No positions match filters"
-              description="No open positions under the current symbol, expiry, or account filters. Off-track options appear when both HOST and Secondary are enabled."
-            />
-          ) : (
-            <div className="min-w-0 space-y-3">
-              {/* Band 1: the cockpit, and beside it the margin strip its Pressure
-                  gauge opens plus the Backing pool its Backing gauge grades. The
-                  accounts' asset mix and holdings by symbol live on Accounts now,
-                  where the ledger is; a symbol there opens its lines here. */}
-              <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
-                <BookVsBaseCockpit
-                  book={book.alarm.book}
-                  checks={book.alarm.checks}
-                  cushionTightPct={cushionTightPct}
-                  onOpenTarget={openTarget}
-                  headerLink={{ to: backingHref({ scopeSearch, anchor: 'model' }), label: 'Model →' }}
-                  spotMix={book.alarm.spotMix}
-                  explain={explain}
-                  room={room}
-                  className="h-full"
-                />
-                <div className="min-w-0 space-y-3">
-                  <MarginByAccountStrip
-                    margin={book.marginAllAccounts}
-                    hostId={book.hostAccountId}
-                    secondaryId={book.secondaryAccountId}
-                    accountFilter={accountFilter}
-                    positions={book.allPositions}
-                    resolveSpot={book.alarm.resolveSpot}
-                  />
-                  <RingCard title="Backing pool">
-                    <BackingPoolCard book={book.alarm.book} onSegmentClick={openFromBackingSegment} />
-                  </RingCard>
-                </div>
-              </div>
 
-              {/* Band 2: the short-leg map and, beside it, Room to add — the risk in what
-                  is held and the room for what is not, an even split, directly above the
-                  grid the map narrows. Below 2xl they stack, the map first. */}
-              <div className="grid min-w-0 grid-cols-1 items-start gap-3 2xl:grid-cols-2">
-                <ShortLegsPanel
-                  legs={book.riskLegs}
-                  tightPct={cushionTightPct}
-                  activeExpiry={activeExpiry}
-                  activeSymbol={filterSymbol}
-                  onExpiryClick={toggleExpiryScope}
-                  onUnpricedClick={() => openTarget('ladder')}
-                  onScopeSymbol={setFilterSymbol}
-                  onClearSymbol={() => setFilterSymbol('')}
-                  selected={selectedLeg}
-                  onSelect={setPickedLeg}
-                />
-  <div className="min-w-0">
-                  <RoomToAddSection room={roomFull} coverRows={book.coverRows} ceiling={ceiling} onLevelChange={setLevel} />
-                </div>
-              </div>
-
-              {/* Band 3: the lines, most dangerous first. */}
-              <div id="positions-lines" className="min-w-0">
-                <LinesToolbar
-                  view={linesView}
-                  onViewChange={setLinesView}
-                  detailViewMode={detailViewMode}
-                  onDetailViewModeChange={setDetailViewMode}
-                  structureTypes={book.instanceFilterOptions.structureTypes}
-                  oppNames={book.instanceFilterOptions.oppNames}
-                  scopeTypes={book.instanceFilterOptions.scopeTypes}
-                  values={instanceFilters}
-                  onChange={setInstanceFilters}
-                  shown={filteredInstanceGroups.length}
-                  total={book.instanceAllGroups.length}
-                  expiryCount={expiriesInView.length}
-                  selectionLabel={selectedLeg ? riskMapLegShort(selectedLeg) : null}
-                  onClearSelection={() => setPickedLeg(null)}
-                />
-                {linesView === 'strategy' ? (
-                  <InstanceTab
-                    groups={filteredInstanceGroups}
-                    totalInstanceCount={book.instanceAllGroups.length}
-                    quotesBySymbol={book.quotesBySymbol}
-                    resolveSpot={book.alarm.resolveSpot}
-                    quotesByCk={book.quotesByCk}
-                    benchBySymbol={book.benchBySymbol}
-                    liveStocks={book.allStocks}
-                    executionsFinal={book.executionsFinal}
-                    executionsTws={book.executionsTws}
-                    opportunities={book.opportunities}
-                    structures={book.structures}
-                    attributions={book.attributions}
-                    instanceStructureById={book.instanceStructureById}
-                    portfolioAccounts={book.accounts}
-                    greeksByTicker={book.greeks.byTicker}
-                    detailViewMode={detailViewMode}
-                    onEditExec={requestEditExec}
-                    onLinkExec={openLinkExec}
-                    onDeleteExec={setDeleteTarget}
-                    onRefreshExecs={refreshExecData}
-                    onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
-                    canonicalOptContractKeys={book.canonicalOptContractKeys}
-                    onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
-                    onOpenOption={(pos) =>
-                      setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })
-                    }
-                  />
-                ) : linesView === 'contract' ? (
-                  <OptionsTab
-                    positions={contractsInView}
-                    quotesBySymbol={book.quotesBySymbol}
-                    quotesByCk={book.quotesByCk}
-                    filterSymbol={filterSymbol}
-                    filterExpiry={filterExpiry}
-                    executionsFinal={book.executionsFinal}
-                    executionsTws={book.executionsTws}
-                    detailViewMode={detailViewMode}
-                    onEditExec={requestEditExec}
-                    onLinkExec={openLinkExec}
-                    onDeleteExec={setDeleteTarget}
-                    onCloseExec={(exec, netQty) => setCloseTarget({ exec, netQty })}
-                    onRefreshExecs={refreshExecData}
-                    canonicalOptContractKeys={book.canonicalOptContractKeys}
-                    onInspect={(pos) => setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })}
-                    onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
-                  />
-                ) : (
-                  <ExpiriesView
-                    rows={expiriesInView}
-                    quotesBySymbol={book.quotesBySymbol}
+            {!book.hasAccountSelection ? (
+              <EmptyState
+                title="Select an account"
+                description="Turn on Host and/or Secondary above to show open positions for those accounts."
+              />
+            ) : book.totalPositions === 0 ? (
+              <EmptyState
+                title="No positions match filters"
+                description="No open positions under the current symbol, expiry, or account filters. Off-track options appear when both Host and Secondary are enabled."
+              />
+            ) : (
+              <>
+                <PositionsTier label="Book" note="how tight · how backed · how exposed · how much room — in that order" />
+                {/* The cockpit, and beside it the margin rows its Pressure gauge opens plus
+                    the Backing pool its Backing gauge grades. */}
+                <div className={positionsUi.bandGrid}>
+                  <BookVsBaseCockpit
+                    book={book.alarm.book}
+                    checks={book.alarm.checks}
                     cushionTightPct={cushionTightPct}
-                    activeExpiry={activeExpiry}
-                    onExpiryClick={toggleExpiryScope}
+                    onOpenTarget={openTarget}
+                    headerLink={{ to: backingHref({ scopeSearch, anchor: 'model' }), label: 'Model →' }}
+                    spotMix={book.alarm.spotMix}
+                    explain={explain}
+                    room={room}
                   />
-                )}
-              </div>
-            </div>
-          )}
-        </>
-      )}
+                  <div className="grid min-w-0 grid-cols-1 gap-3">
+                    <MarginByAccountStrip
+                      margin={book.marginAllAccounts}
+                      hostId={book.hostAccountId}
+                      secondaryId={book.secondaryAccountId}
+                      accountFilter={accountFilter}
+                      positions={book.allPositions}
+                      resolveSpot={book.alarm.resolveSpot}
+                    />
+                    <RingCard title="Backing pool">
+                      <BackingPoolCard book={book.alarm.book} onSegmentClick={openFromBackingSegment} />
+                    </RingCard>
+                  </div>
+                </div>
+
+                <PositionsTier
+                  label="Pressure points"
+                  note="which leg is closest to being run over, and what is still sellable"
+                  open={pressureOpen}
+                  onToggle={() => setPressureOpen((v) => !v)}
+                />
+                {pressureOpen ? (
+                  <div className={positionsUi.bandGrid}>
+                    <ShortLegsPanel
+                      legs={book.riskLegs}
+                      tightPct={cushionTightPct}
+                      activeExpiry={activeExpiry}
+                      activeSymbol={filterSymbol}
+                      onExpiryClick={toggleExpiryScope}
+                      onUnpricedClick={() => openTarget('ladder')}
+                      onScopeSymbol={setFilterSymbol}
+                      onClearSymbol={() => setFilterSymbol('')}
+                      selected={selectedLeg}
+                      onSelect={setPickedLeg}
+                    />
+                    <div className="min-w-0">
+                      <RoomToAddSection room={roomFull} coverRows={book.coverRows} ceiling={ceiling} onLevelChange={setLevel} />
+                    </div>
+                  </div>
+                ) : null}
+
+                <PositionsTier label="Lines" note="the rows themselves, tightest first · one thing at a time opens on the right" />
+                <div id="positions-lines" className="min-w-0">
+                  <LinesToolbar
+                    view={linesView}
+                    onViewChange={setLinesView}
+                    detailViewMode={detailViewMode}
+                    onDetailViewModeChange={setDetailViewMode}
+                    structureTypes={book.instanceFilterOptions.structureTypes}
+                    oppNames={book.instanceFilterOptions.oppNames}
+                    scopeTypes={book.instanceFilterOptions.scopeTypes}
+                    values={instanceFilters}
+                    onChange={setInstanceFilters}
+                    shown={filteredInstanceGroups.length}
+                    total={book.instanceAllGroups.length}
+                    expiryCount={expiriesInView.length}
+                    selectionLabel={selectedLeg ? riskMapLegShort(selectedLeg) : null}
+                    onClearSelection={() => setPickedLeg(null)}
+                  />
+                  {linesView === 'strategy' ? (
+                    <InstanceTab
+                      groups={filteredInstanceGroups}
+                      totalInstanceCount={book.instanceAllGroups.length}
+                      quotesBySymbol={book.quotesBySymbol}
+                      resolveSpot={book.alarm.resolveSpot}
+                      quotesByCk={book.quotesByCk}
+                      benchBySymbol={book.benchBySymbol}
+                      liveStocks={book.allStocks}
+                      executionsFinal={book.executionsFinal}
+                      executionsTws={book.executionsTws}
+                      opportunities={book.opportunities}
+                      structures={book.structures}
+                      attributions={book.attributions}
+                      instanceStructureById={book.instanceStructureById}
+                      portfolioAccounts={book.accounts}
+                      greeksByTicker={book.greeks.byTicker}
+                      detailViewMode={detailViewMode}
+                      onEditExec={requestEditExec}
+                      onLinkExec={openLinkExec}
+                      onDeleteExec={setDeleteTarget}
+                      onRefreshExecs={refreshExecData}
+                      onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
+                      canonicalOptContractKeys={book.canonicalOptContractKeys}
+                      onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
+                      onOpenOption={(pos) =>
+                        setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })
+                      }
+                    />
+                  ) : linesView === 'contract' ? (
+                    <OptionsTab
+                      positions={contractsInView}
+                      quotesBySymbol={book.quotesBySymbol}
+                      quotesByCk={book.quotesByCk}
+                      filterSymbol={filterSymbol}
+                      filterExpiry={filterExpiry}
+                      executionsFinal={book.executionsFinal}
+                      executionsTws={book.executionsTws}
+                      detailViewMode={detailViewMode}
+                      onEditExec={requestEditExec}
+                      onLinkExec={openLinkExec}
+                      onDeleteExec={setDeleteTarget}
+                      onCloseExec={(exec, netQty) => setCloseTarget({ exec, netQty })}
+                      onRefreshExecs={refreshExecData}
+                      canonicalOptContractKeys={book.canonicalOptContractKeys}
+                      onInspect={(pos) => setInspector({ type: 'option', contractKey: pos.contract_key, optionPosition: pos })}
+                      onOpenStrategy={(id) => setInspector({ type: 'strategy', id })}
+                    />
+                  ) : (
+                    <ExpiriesView
+                      rows={expiriesInView}
+                      quotesBySymbol={book.quotesBySymbol}
+                      cushionTightPct={cushionTightPct}
+                      activeExpiry={activeExpiry}
+                      onExpiryClick={toggleExpiryScope}
+                    />
+                  )}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </section>
 
       <EditExecutionConfirmDialog
         open={editExecConfirm.open}

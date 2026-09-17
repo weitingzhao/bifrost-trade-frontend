@@ -256,6 +256,8 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
     secondaryAccountId,
     hasAccountSelection,
     showOpenPositionsPanel: accounts.length > 0,
+    /** Option holdings on no strategy; only built while both accounts are in scope. */
+    offTrackCount: offTrackPositions.length,
     totalPositions,
     portfolioPositionCount,
     accountOptions,

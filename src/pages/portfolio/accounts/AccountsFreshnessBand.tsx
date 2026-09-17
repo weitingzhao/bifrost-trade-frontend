@@ -13,7 +13,7 @@ import {
 } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import { clockLabel } from '@/utils/accountsFreshness'
-import { fetchedStamp } from './accountsClocks'
+import { fetchedStamp } from '@/utils/accountsClocks'
 import type { FreshnessRow } from './accountsFreshnessRows'
 import { accountsUi, freshnessToneDot, freshnessToneText } from './accountsUi'
 

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
 import { lampDotClass, lampTextClass, type LampTone } from '@/lib/lampTone'
-import type { ClockTone } from './accountsClocks'
+import type { ClockTone } from '@/utils/accountsClocks'
 import type { FreshnessState } from './accountsFreshnessRows'
 import type { StockBucket } from '@/utils/positionsGrouping'
 

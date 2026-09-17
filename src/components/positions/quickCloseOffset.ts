@@ -1,4 +1,4 @@
-import type { Execution } from '@/types/positions'
+import type { CreateExecutionBody, Execution } from '@/types/positions'
 import { isBuySide, isSellSide } from '@/utils/instanceDetail/executionSide'
 
 /** Signed size of one fill. IB sides are BUY/SELL (or BOT/SLD), not 'Buy'. */
@@ -28,4 +28,43 @@ export function closingFillFromNet(
     side: netQty > 0 ? 'SELL' : 'BUY',
     quantity: Math.abs(netQty),
   }
+}
+
+/**
+ * The row a quick close writes.
+ *
+ * Source `journal_closed`, not `manual`: the API stores a manual write beside TWS
+ * rows (executions_raw_tws), outside the performance book, which reads Flex and
+ * journal only — so a close written as manual never closed the position there.
+ * The contract's own key goes with it, or the API builds one the stored rows do
+ * not share. The strategy travels only as a pair, like the ledger journal.
+ */
+export function quickCloseBody(
+  exec: Execution,
+  close: { side: 'BUY' | 'SELL'; quantity: number },
+  price: number,
+  commission: number | undefined,
+  nowEpoch: number,
+): CreateExecutionBody {
+  const body: CreateExecutionBody = {
+    account_id: exec.account_id,
+    time: nowEpoch,
+    symbol: exec.symbol,
+    sec_type: exec.sec_type as 'STK' | 'OPT',
+    side: close.side,
+    quantity: signedCloseQuantity(close),
+    price,
+    source: 'journal_closed',
+    expiry: exec.expiry,
+    strike: exec.strike,
+    option_right: exec.option_right ?? exec.right,
+    contract_key: exec.contract_key,
+    commission,
+    currency: 'USD',
+  }
+  if (exec.strategy_instance_id != null && exec.strategy_opportunity_id != null) {
+    body.strategy_instance_id = exec.strategy_instance_id
+    body.strategy_opportunity_id = exec.strategy_opportunity_id
+  }
+  return body
 }

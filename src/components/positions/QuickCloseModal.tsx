@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { createExecution } from '@/api/trading'
 import { fmtUsd, fmtExpiry, rightLabel } from '@/utils/positions'
 import type { Execution } from '@/types/positions'
-import { closingFillFromNet, signedFillQty, signedCloseQuantity } from '@/components/positions/quickCloseOffset'
+import { closingFillFromNet, quickCloseBody, signedFillQty } from '@/components/positions/quickCloseOffset'
 
 interface Props {
   exec: Execution | null
@@ -35,22 +35,15 @@ export function QuickCloseModal({ exec, netQty, onClose, onSuccess }: Props) {
     setError(null)
     try {
       if (!offset) throw new Error('Nothing to close — net position is flat.')
-      const res = await createExecution({
-        account_id: exec.account_id,
-        time: Math.floor(Date.now() / 1000),
-        symbol: exec.symbol,
-        sec_type: exec.sec_type as 'STK' | 'OPT',
-        side: offset.side,
-        quantity: signedCloseQuantity(offset),
-        price: parseFloat(price) || 0,
-        source: 'manual',
-        expiry: exec.expiry,
-        strike: exec.strike,
-        option_right: exec.right,
-        contract_key: exec.contract_key,
-        commission: parseFloat(commission) || undefined,
-        currency: 'USD',
-      })
+      const res = await createExecution(
+        quickCloseBody(
+          exec,
+          offset,
+          parseFloat(price) || 0,
+          parseFloat(commission) || undefined,
+          Math.floor(Date.now() / 1000),
+        ),
+      )
       if (!res.ok) throw new Error(res.error ?? 'Failed to close position')
       onSuccess()
       onClose()
@@ -69,6 +62,9 @@ export function QuickCloseModal({ exec, netQty, onClose, onSuccess }: Props) {
         </DialogHeader>
 
         <div className="space-y-3 text-sm">
+          <p className="text-xs text-muted-foreground">
+            Writes a journal entry to the ledger. Nothing is sent to the broker.
+          </p>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div><span className="text-muted-foreground">Symbol:</span> <span className="font-mono font-medium">{exec.symbol}</span></div>
             <div><span className="text-muted-foreground">Account:</span> <span className="font-mono">{exec.account_id}</span></div>

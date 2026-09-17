@@ -42,7 +42,7 @@ import styles from './ShortLegRiskMap.module.css'
 
 /** Laid out in the container's real pixels — a scaled drawing smears its labels. */
 const FALLBACK_WIDTH = 650
-const HEIGHT = 200
+const DEFAULT_HEIGHT = 200
 
 const BAND_CLASS: Record<CushionBand, string> = {
   comfortable: styles.pointComfortable,
@@ -85,6 +85,10 @@ export interface ShortLegRiskMapProps {
   onExpiryClick?: (expiry: string) => void
   /** The "N unpriced" count opens the calendar view, where the dates are. */
   onUnpricedClick?: () => void
+  /** Plot height in px; the Positions panel draws it at the prototype's 250. */
+  height?: number
+  /** The caption row above the plot; a panel that states the same in its header turns it off. */
+  caption?: boolean
 }
 
 function LegPoint({
@@ -160,6 +164,8 @@ export function ShortLegRiskMap({
   onSelect,
   onExpiryClick,
   onUnpricedClick,
+  height: HEIGHT = DEFAULT_HEIGHT,
+  caption = true,
 }: ShortLegRiskMapProps) {
   const host = useRef<HTMLDivElement>(null)
   const WIDTH = useContainerWidth(host, FALLBACK_WIDTH)
@@ -189,6 +195,7 @@ export function ShortLegRiskMap({
 
   return (
     <div className="flex min-w-0 flex-col gap-1" ref={host}>
+      {caption ? (
       <div className="flex items-baseline justify-between gap-2 text-dense-caption text-muted-foreground">
         <span className="flex min-w-0 flex-wrap items-center gap-x-1.5">
           <span>
@@ -226,6 +233,7 @@ export function ShortLegRiskMap({
           ) : null}
         </span>
       </div>
+      ) : null}
 
       {/* A group, not an image: the points and ticks inside are real controls. */}
       <svg
@@ -404,13 +412,13 @@ export function ShortLegRiskMap({
       {/* No price, no place on the plot — but a name, a strike and a date, in the open. */}
       {unpricedCount > 0 ? (
         <div className="flex flex-wrap items-center gap-1 text-dense-caption" data-testid="unpriced-list">
-          <span className="text-warning">no quote:</span>
+          <span className="text-muted-foreground">no quote:</span>
           {layout.unpriced.map((leg) => {
             const selected = leg.key === selectedKey
             return (
               <DenseTagButton
                 key={leg.key}
-                variant="warning"
+                variant="neutral"
                 size="cell"
                 className={cn('font-mono tabular-nums', selected && 'ring-1 ring-foreground')}
                 aria-pressed={selected}

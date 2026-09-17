@@ -12,10 +12,11 @@
 import { useState } from 'react'
 import { DerivationBlock } from './DerivationBlock'
 import { cn } from '@/lib/utils'
-import { pressureLevel, type CoverRow, type GaugeLevel } from '@/utils/bookVsBase'
-import { PRESSURE_TICKS, usdAbbrev } from '@/utils/marginByAccount'
+import type { CoverRow } from '@/utils/bookVsBase'
+import { usdAbbrev } from '@/utils/marginByAccount'
 import { fmtUsd } from '@/utils/positions'
 import { SegmentControl } from '@/components/data-display'
+import { positionsUi } from './positionsUi'
 import { roomDerivation, type RoomView } from './roomDerivation'
 import type { RoomToAdd } from '@/utils/roomToAdd'
 import { riskLevelFor, RISK_LEVELS, type RiskLevelId } from '@/hooks/usePressureCeiling'
@@ -31,36 +32,28 @@ type TierId = 'now' | 'backed' | 'margin'
 
 /** The ladder's colours: what is held, what the base would back, what margin would carry. */
 const TIER_FILL: Record<TierId, string> = {
-  now: 'bg-muted-foreground/50',
+  now: 'bg-[var(--sk-line2)]',
   backed: 'bg-profit',
   margin: 'bg-warning',
 }
-const TIER_TEXT: Record<TierId, string> = {
+const TIER_NAME: Record<TierId, string> = {
   now: 'text-foreground',
   backed: 'text-profit',
   margin: 'text-warning',
 }
-const BAND: Record<GaugeLevel, string> = { 0: 'idle', 1: 'normal', 2: 'heavy', 3: 'critical' }
-const BAND_TEXT: Record<GaugeLevel, string> = { 0: 'text-muted-foreground', 1: 'text-foreground', 2: 'text-warning', 3: 'text-loss' }
-const BAND_FILL: Record<GaugeLevel, string> = { 0: 'bg-profit', 1: 'bg-profit', 2: 'bg-warning', 3: 'bg-loss' }
-/**
- * The step column was a fixed 11rem, which is narrower than three of the five
- * strings it holds: "Borrow against the account up to balanced 50%" wants
- * 290px and got 176. Every row truncated its meaning and its counts, so the
- * column that says *what each step is* was the one paying for the bars.
- *
- * It can now take up to 19rem when the section has the width, and still falls
- * back to 11rem — with the truncation behind it — when it does not. The bars
- * keep a 9rem floor; they are proportional, so they read fine narrower, which
- * the text does not.
- */
-const GRID =
-  'grid grid-cols-[minmax(11rem,19rem)_minmax(9rem,1fr)_4.75rem_4.25rem] items-center gap-x-2'
+const TIER_PREMIUM: Record<TierId, string> = {
+  now: 'text-secondary-foreground',
+  backed: 'text-profit',
+  margin: 'text-warning',
+}
+
+/** Pressure after a step reads amber from 50%, the heavy line; it is risk, never a fault, so never red. */
+const HEAVY = 0.5
 
 const plus = (n: number | null) => (n == null ? '—' : `+${n.toLocaleString()}`)
 const pct0 = (v: number | null) => (v == null ? '—' : `${Math.round(v * 100)}%`)
-/** The band is read off the rounded figure the reader sees: a 49.9% that prints as 50% is heavy. */
-const bandOf = (v: number | null): GaugeLevel | null => (v == null ? null : pressureLevel(Math.round(v * 100) / 100))
+/** Read off the rounded figure the reader sees: a 49.9% that prints as 50% is heavy. */
+const heavy = (v: number | null) => v != null && Math.round(v * 100) / 100 >= HEAVY
 
 interface Tier {
   id: TierId
@@ -84,7 +77,7 @@ function PremiumLadder({ tiers, upTo, max }: { tiers: Tier[]; upTo: number; max:
       aria-valuemin={0}
       aria-valuemax={Math.round(max)}
       aria-valuenow={Math.round(cumulative)}
-      className="flex h-2 w-full overflow-hidden rounded-sm border border-border/60 bg-secondary"
+      className="flex h-2 w-full overflow-hidden rounded-sm bg-[var(--sk-surface)]"
       data-testid={`ladder-${tiers[upTo].id}`}
     >
       {shown.map((t) =>
@@ -97,9 +90,8 @@ function PremiumLadder({ tiers, upTo, max }: { tiers: Tier[]; upTo: number; max:
   )
 }
 
-/** Pressure after the step, on the gauge's scale with its band ticks - the margin strip's bar, thinner. */
+/** Pressure after the step, on the gauge's 0–100% scale. */
 function PressureAfter({ label, pressure }: { label: string; pressure: number | null }) {
-  const band = bandOf(pressure)
   const pct = pressure == null ? 0 : Math.round(Math.min(1, Math.max(0, pressure)) * 100)
   return (
     <span
@@ -108,12 +100,14 @@ function PressureAfter({ label, pressure }: { label: string; pressure: number | 
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={pct}
-      className="relative block h-1.5 w-full overflow-hidden rounded-sm border border-border/60 bg-secondary"
+      className="relative block h-1 w-full rounded-sm bg-[var(--sk-surface)]"
     >
-      {band != null ? <span className={cn('absolute inset-y-0 left-0', BAND_FILL[band])} style={{ width: `${pct}%` }} /> : null}
-      {PRESSURE_TICKS.map((t) => (
-        <span key={t} aria-hidden="true" className="absolute inset-y-0 w-px bg-foreground/40" style={{ left: `${t * 100}%` }} />
-      ))}
+      {pressure != null ? (
+        <span
+          className={cn('absolute inset-y-0 left-0 rounded-sm', heavy(pressure) ? 'bg-warning' : 'bg-profit')}
+          style={{ width: `${pct}%` }}
+        />
+      ) : null}
     </span>
   )
 }
@@ -125,10 +119,8 @@ function How({ view, label, open, onToggle }: { view: RoomView; label: string; o
       onClick={() => onToggle(view)}
       aria-pressed={open}
       aria-label={`How ${label} is computed`}
-      className={cn(
-        'ml-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-border/60 font-mono text-dense-caption leading-none',
-        open ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
-      )}
+      title={`How ${label} is built`}
+      className={cn(positionsUi.q, open && 'border-primary text-primary')}
     >
       ?
     </button>
@@ -174,21 +166,21 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange }: Pr
     <section
       id="positions-room"
       aria-label="Room to add"
-      className="rounded-md border border-border bg-secondary/40 px-3 py-1.5"
+      className={positionsUi.panel}
       onKeyDown={(e) => {
         if (e.key === 'Escape' && openView) setOpenView(null)
       }}
     >
-      <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">Room to add</span>
-        <span className="font-mono text-dense-caption tabular-nums text-muted-foreground" data-testid="room-stats">
+      <header className={positionsUi.panelHead}>
+        <span className={positionsUi.cap}>Room to add</span>
+        <span className={cn(positionsUi.mono, 'text-xs leading-normal text-secondary-foreground')} data-testid="room-stats">
           {plus(r.backed.calls)} calls · {plus(r.backed.puts)} puts · {plus(r.margin.puts)} on margin
           {added != null ? ` · ≈ +${usdAbbrev(added)}/cycle` : ''}
         </span>
         <span className="ml-auto flex items-center gap-1.5">
-          <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">Risk</span>
+          <span className={positionsUi.cap}>Risk</span>
           <SegmentControl
-            size="sm"
+            size="xs"
             ariaLabel="How much of the cushion the margin step may spend"
             value={level.id}
             onChange={(v) => onLevelChange(v as RiskLevelId)}
@@ -196,89 +188,73 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange }: Pr
               value: l.id,
               label: (
                 <span title={l.meaning}>
-                  {l.label} <span className="font-mono tabular-nums opacity-70">{Math.round(l.pct * 100)}%</span>
+                  {l.label} <span className="font-mono tabular-nums">{Math.round(l.pct * 100)}%</span>
                 </span>
               ),
             }))}
           />
           <How view="all" label="Room to add" open={openView === 'all'} onToggle={toggle} />
         </span>
-      </div>
+      </header>
 
-      {/* Three lines of prose sat here explaining premium, pressure, what
-          margin costs, and that these are estimates. Every one of those is
-          already a variable in the derivation the `?` opens — NetPremium's
-          tenor note, PressureNow's "at 100% pressure the broker starts closing
-          positions", MarginPuts, and the intro's "Not the broker's what-if."
-          It was a second copy of the same explanation, in the smallest type,
-          permanently occupying the top of a dense panel.
+      <div className="flex flex-col gap-2 px-3 pt-2 pb-3 leading-normal">
+        {/* The caveat stays: a panel about money says what kind of number it is without being asked. */}
+        <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
+          Page estimates from the book&rsquo;s own numbers, not the broker what-if. Each{' '}
+          <span className="font-mono">?</span> opens how the figure is built.
+        </span>
 
-          The caveat stays: a panel about money should say what kind of number
-          it is without being asked. */}
-      <p className="mb-1.5 text-dense-caption text-muted-foreground">
-        Page estimates from the book&rsquo;s own numbers, not the broker&rsquo;s what-if —{' '}
-        <span className="text-foreground">?</span> for how each figure is built.
-      </p>
-
-      <div className={cn(GRID, 'text-dense-label font-semibold uppercase tracking-wide text-muted-foreground')}>
-        <span>Step</span>
-        <span>Premium / cycle · pressure after</span>
-        <span className="text-right">Premium</span>
-        <span className="text-right">Pressure</span>
-      </div>
-      <div className="mt-1 flex flex-col gap-y-1.5" data-testid="room-tiers">
-        {tiers.map((t, i) => {
-          const band = bandOf(t.pressure)
-          return (
-            <div key={t.id} className={GRID} data-testid={`room-row-${t.id}`}>
-              <span className="min-w-0">
-                <span className="flex items-center">
-                  <span className={cn('truncate text-dense-body font-medium', TIER_TEXT[t.id])} title={t.label}>
-                    {t.label}
+        <div className="flex flex-col" data-testid="room-tiers">
+          {tiers.map((t, i) => (
+            <div key={t.id} className="border-t border-border/50 py-1.75" data-testid={`room-row-${t.id}`}>
+              <div className="grid grid-cols-[minmax(0,1fr)_minmax(5.625rem,8.75rem)_4.75rem_4rem] items-center gap-2">
+                <span className="flex min-w-0 flex-col gap-px">
+                  <span className="flex items-center gap-1.5">
+                    <span className={cn('text-xs font-semibold leading-normal', TIER_NAME[t.id])}>{t.label}</span>
+                    <How view={t.id} label={t.label} open={openView === t.id} onToggle={toggle} />
                   </span>
-                  <How view={t.id} label={t.label} open={openView === t.id} onToggle={toggle} />
+                  <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">{t.meaning}</span>
+                  <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>{t.counts}</span>
                 </span>
-                <span className="block truncate text-dense-caption text-muted-foreground" title={`${t.meaning}. ${t.counts}`}>
-                  {t.meaning}
+                <span className="flex flex-col gap-0.75">
+                  <PremiumLadder tiers={tiers} upTo={i} max={max} />
+                  <PressureAfter label={t.label} pressure={t.pressure} />
                 </span>
-                <span className="block truncate font-mono text-dense-caption tabular-nums text-muted-foreground" title={t.counts}>
-                  {t.counts}
+                <span className={cn(positionsUi.mono, 'text-right text-dense-body font-bold leading-normal', TIER_PREMIUM[t.id])}>
+                  {t.premium == null ? '—' : `${i > 0 ? '+' : ''}${fmtUsd(t.premium, true)}`}
                 </span>
-              </span>
-              <span className="flex flex-col gap-y-1">
-                <PremiumLadder tiers={tiers} upTo={i} max={max} />
-                <PressureAfter label={t.label} pressure={t.pressure} />
-              </span>
-              <span className={cn('text-right font-mono text-dense-body tabular-nums', TIER_TEXT[t.id])}>
-                {t.premium == null ? '—' : `${i > 0 ? '+' : ''}${fmtUsd(t.premium, true)}`}
-              </span>
-              <span
-                className={cn('text-right font-mono text-dense-body tabular-nums', band == null ? 'text-muted-foreground' : BAND_TEXT[band])}
-                title={band == null ? undefined : BAND[band]}
-              >
-                {pct0(t.pressure)}
-              </span>
+                <span
+                  className={cn(
+                    positionsUi.mono,
+                    'text-right text-xs leading-normal',
+                    t.pressure == null ? 'text-muted-foreground' : heavy(t.pressure) ? 'text-warning' : 'text-secondary-foreground',
+                  )}
+                >
+                  {pct0(t.pressure)}
+                </span>
+              </div>
             </div>
-          )
-        })}
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-x-3.5 gap-y-1 border-t border-border/50 pt-1.75 text-dense-caption leading-normal text-muted-foreground">
+          {(['now', 'backed', 'margin'] as const).map((id) => (
+            <span key={id} className="inline-flex items-center gap-1.25">
+              <span className={cn('h-2 w-2 rounded-[2px]', TIER_FILL[id])} />
+              {id === 'now' ? 'held' : id === 'backed' ? 'backed' : 'on margin'}
+            </span>
+          ))}
+          <span>wide bar = premium, each step on the last · thin bar = pressure after, amber from 50%</span>
+        </div>
+
+        {openView ? (
+          <DerivationBlock
+            derivation={roomDerivation(r, coverRows, openView)}
+            onClose={() => setOpenView(null)}
+            className="mt-0 rounded-[5px] border-[var(--sk-line2)] bg-[var(--sk-raised2)]"
+          />
+        ) : null}
       </div>
-
-      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-dense-caption text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.now)} />held
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.backed)} />backed
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <span className={cn('inline-block h-2 w-3 rounded-sm', TIER_FILL.margin)} />on margin
-        </span>
-        <span>· wide bar = premium, each step on the last · thin bar = pressure after, ticks at 10 · 50 · 75%</span>
-      </p>
-
-      {openView ? (
-        <DerivationBlock derivation={roomDerivation(r, coverRows, openView)} onClose={() => setOpenView(null)} className="mb-1" />
-      ) : null}
     </section>
   )
 }

@@ -1,15 +1,23 @@
 /**
- * The short-leg risk map in its panel, under the cockpit, with the selection
- * it needs to be usable: click a leg and this panel names it, says how it was
- * priced, and offers the two things the reader might want next — scope the
- * page to that symbol, or jump to its row in the grid. Neither happens on the
- * click itself; the first version narrowed the page silently and left no
- * obvious way back. The way back is now on the panel too.
+ * The short-leg risk map in its panel, with the selection it needs to be
+ * usable: click a leg and the panel names it in its own numbers — contracts,
+ * credit, what assignment would move, cushion, days left, how it was priced —
+ * and offers what the reader might want next: scope the page to that symbol,
+ * or open the leg on the right. Neither happens on the click itself; the first
+ * version narrowed the page silently and left no obvious way back.
  */
 import type { KeyboardEvent } from 'react'
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { fmtIsoDateToken } from '@/lib/format'
 import { ShortLegRiskMap } from './charts/ShortLegRiskMap'
-import { riskMapLegTitle, type RiskMapLeg } from '@/utils/shortLegRiskMap'
+import { positionsUi } from './positionsUi'
+import {
+  fmtCushionPct,
+  fmtNotional,
+  legNotional,
+  legPremium,
+  type RiskMapLeg,
+} from '@/utils/shortLegRiskMap'
 import { fmtSpotDate } from '@/utils/spotPrice'
 
 interface Props {
@@ -25,12 +33,43 @@ interface Props {
   /** Selection lives with the page: the grid below narrows to the selected leg. */
   selected: RiskMapLeg | null
   onSelect: (leg: RiskMapLeg | null) => void
+  /** Open the selected leg's contract, and its strategy's risk profile, on the right. */
+  onOpenContract?: (leg: RiskMapLeg) => void
+  onOpenRisk?: (leg: RiskMapLeg) => void
 }
 
 function pricedAs(leg: RiskMapLeg): string {
-  if (leg.spotSource == null) return 'no quote'
+  if (leg.spotSource == null) return 'no quote — not counted as safe'
   if (leg.spotSource === 'live') return 'live'
-  return `${leg.spotSource} ${fmtSpotDate(leg.spotAsOf ?? null, leg.spotSource)}`
+  return `priced ${leg.spotSource} ${fmtSpotDate(leg.spotAsOf ?? null, leg.spotSource)}`
+}
+
+function isPriced(leg: RiskMapLeg): boolean {
+  return typeof leg.cushionPct === 'number' && Number.isFinite(leg.cushionPct)
+}
+
+/** "14 legs · $899–$8.4k credit · 14 at close 09-16" — what the header says about the plot. */
+function legNote(legs: RiskMapLeg[]): string {
+  const credits = legs.map(legPremium).filter((n): n is number => n != null && n > 0)
+  const parts = [`${legs.length} leg${legs.length === 1 ? '' : 's'}`]
+  if (credits.length > 0) parts.push(`${fmtNotional(Math.min(...credits))}–${fmtNotional(Math.max(...credits))} credit`)
+  const closes = legs.filter((l) => l.spotSource === 'close')
+  if (closes.length > 0) {
+    const oldest = closes.reduce<number | null>((o, l) => (l.spotAsOf != null && (o == null || l.spotAsOf < o) ? l.spotAsOf : o), null)
+    parts.push(`${closes.length} at close ${fmtSpotDate(oldest, 'close')}`)
+  }
+  const marks = legs.filter((l) => l.spotSource === 'mark').length
+  if (marks > 0) parts.push(`${marks} at mark`)
+  return parts.join(' · ')
+}
+
+function LegFact({ k, v, ink = 'text-secondary-foreground' }: { k: string; v: string; ink?: string }) {
+  return (
+    <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>
+      {k ? `${k} ` : ''}
+      <span className={cn('font-semibold', ink)}>{v}</span>
+    </span>
+  )
 }
 
 export function ShortLegsPanel({
@@ -44,81 +83,136 @@ export function ShortLegsPanel({
   onClearSymbol,
   selected,
   onSelect,
+  onOpenContract,
+  onOpenRisk,
 }: Props) {
-  const setSelected = onSelect
-
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && selected) {
       e.stopPropagation()
-      setSelected(null)
+      onSelect(null)
     }
   }
   const scopedToSelected = selected != null && activeSymbol === selected.symbol
+  const unpriced = legs.filter((l) => !isPriced(l)).length
 
   return (
     <section
-      className="rounded-md border border-border bg-secondary/40 px-3 py-1.5"
+      className={positionsUi.panel}
       aria-label="Short legs against the tightness line"
       tabIndex={-1}
       onKeyDown={onKeyDown}
     >
-      <span className="mb-1 block text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-        Short legs — days to expiry against cushion
-      </span>
-      <ShortLegRiskMap
-        legs={legs}
-        tightPct={tightPct}
-        activeExpiry={activeExpiry}
-        selectedKey={selected?.key ?? null}
-        onSelect={setSelected}
-        onExpiryClick={onExpiryClick}
-        onUnpricedClick={onUnpricedClick}
-      />
-      {selected ? (
-        <div
-          className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border/60 pt-1 text-dense-caption"
-          data-testid="selected-leg"
-        >
-          <span className="font-mono tabular-nums text-foreground">{riskMapLegTitle(selected)}</span>
-          <span className="text-muted-foreground">· priced {pricedAs(selected)}</span>
-          <span className="ml-auto flex items-center gap-1">
-            {scopedToSelected ? (
-              <Button variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onClearSymbol}>
-                Clear scope
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 px-2 text-dense-caption"
-                onClick={() => onScopeSymbol(selected.symbol)}
+      <header className={positionsUi.panelHead}>
+        <span className={positionsUi.cap}>Short legs</span>
+        <span className={positionsUi.panelTitle}>days to expiry against cushion</span>
+        <span className={positionsUi.panelNote}>{legNote(legs)}</span>
+        {unpriced > 0 ? (
+          <button
+            type="button"
+            className={cn(positionsUi.btn, 'h-5 text-dense-caption')}
+            onClick={onUnpricedClick}
+            title="Short legs with no underlying price — grey, not counted as safe. Opens the calendar view."
+          >
+            {unpriced} unpriced
+          </button>
+        ) : null}
+        {selected ? (
+          <button type="button" className={cn(positionsUi.btn, 'ml-auto')} onClick={() => onSelect(null)} title="Clear selection (Esc)">
+            ✕ {selected.symbol} {selected.strike}
+            {selected.right}
+          </button>
+        ) : null}
+      </header>
+      <div className="px-3 pt-2.5 pb-3">
+        <ShortLegRiskMap
+          legs={legs}
+          tightPct={tightPct}
+          activeExpiry={activeExpiry}
+          selectedKey={selected?.key ?? null}
+          onSelect={onSelect}
+          onExpiryClick={onExpiryClick}
+          onUnpricedClick={onUnpricedClick}
+          height={250}
+          caption={false}
+        />
+        {selected ? (
+          <div
+            className="mt-2 flex flex-col gap-1.25 rounded-[5px] border border-[var(--sk-line2)] bg-[var(--sk-raised2)] px-2.5 py-1.75 leading-normal"
+            data-testid="selected-leg"
+          >
+            <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.75">
+              <span className={cn(positionsUi.mono, 'text-xs font-bold text-[var(--color-entity-option)]')}>
+                {selected.symbol} {fmtIsoDateToken(selected.expiry)} {selected.strike}
+                {selected.right}
+              </span>
+              <LegFact k="" v={`${selected.contracts} contract${selected.contracts === 1 ? '' : 's'}`} />
+              <LegFact k="credit" v={fmtNotional(legPremium(selected))} />
+              <LegFact k={selected.right === 'P' ? 'if assigned' : 'if called away'} v={fmtNotional(legNotional(selected))} />
+              {isPriced(selected) ? (
+                <LegFact
+                  k="cushion"
+                  v={fmtCushionPct(selected.cushionPct as number)}
+                  ink={(selected.cushionPct as number) < 0 ? 'text-loss' : 'text-profit'}
+                />
+              ) : null}
+              <LegFact
+                k="expires in"
+                v={selected.dte == null ? 'no expiry' : `${selected.dte}d`}
+                ink={selected.dte != null && selected.dte <= 7 ? 'text-warning' : 'text-secondary-foreground'}
+              />
+              <LegFact k="quote" v={pricedAs(selected)} ink="text-muted-foreground" />
+            </span>
+            <span className="flex flex-wrap items-center gap-1.5">
+              {scopedToSelected ? (
+                <button type="button" className={positionsUi.btn} onClick={onClearSymbol}>
+                  Clear scope
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={cn(positionsUi.btn, 'border-primary text-primary')}
+                  onClick={() => onScopeSymbol(selected.symbol)}
+                >
+                  Scope to {selected.symbol}
+                </button>
+              )}
+              {onOpenContract ? (
+                <button type="button" className={positionsUi.btn} onClick={() => onOpenContract(selected)}>
+                  Contract face →
+                </button>
+              ) : null}
+              {onOpenRisk ? (
+                <button type="button" className={positionsUi.btn} onClick={() => onOpenRisk(selected)}>
+                  Risk profile →
+                </button>
+              ) : null}
+              <span className="text-dense-meta text-muted-foreground">grid below shows this leg</span>
+              <button
+                type="button"
+                className={cn(positionsUi.btn, 'ml-auto h-5 px-1.5')}
+                onClick={() => onSelect(null)}
+                aria-label="Clear selection"
+                title="Clear selection (Esc)"
               >
-                Scope to {selected.symbol}
-              </Button>
-            )}
-            <span className="text-muted-foreground">grid below shows this leg</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-1.5 text-dense-caption text-muted-foreground"
-              onClick={() => setSelected(null)}
-              aria-label="Clear selection"
-              title="Clear selection (Esc)"
-            >
-              ×
-            </Button>
-          </span>
-        </div>
-      ) : activeSymbol ? (
-        <div className="mt-1 flex items-center gap-2 border-t border-border/60 pt-1 text-dense-caption text-muted-foreground">
-          <span>
-            Page scoped to <span className="font-mono text-foreground">{activeSymbol}</span>
-          </span>
-          <Button variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onClearSymbol}>
-            Clear scope
-          </Button>
-        </div>
-      ) : null}
+                ✕
+              </button>
+            </span>
+          </div>
+        ) : (
+          <p className="m-0 pt-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            {activeSymbol ? (
+              <>
+                Page scoped to <span className="font-mono text-foreground">{activeSymbol}</span>.{' '}
+                <button type="button" className={positionsUi.link} onClick={onClearSymbol}>
+                  Clear scope
+                </button>{' '}
+              </>
+            ) : null}
+            Click a leg to select it — the grid below filters to it and the leg’s own numbers appear here. Unpriced legs are
+            grey and are <em>not</em> counted as safe.
+          </p>
+        )}
+      </div>
     </section>
   )
 }

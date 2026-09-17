@@ -26,6 +26,17 @@ import { PerformanceReturnBasis } from '@/pages/portfolio/performance/Performanc
 import { buildReadingMetrics, buildScopeNote } from '@/pages/portfolio/performance/performanceReading'
 import { perfUi } from '@/pages/portfolio/performance/performanceUi'
 import {
+  PERFORMANCE_TREES,
+  dayCellDerivation,
+  equityGrowthDerivation,
+  onTheFlyDerivation,
+  optionsModeDerivation,
+  type PerformanceTree,
+} from '@/pages/portfolio/performance/performanceDerivations'
+import { DerivationBlock } from '@/components/positions/DerivationBlock'
+import { buildOptionsModeBridgeSummary } from '@/utils/ledger/optionsModeBridge'
+import { cn } from '@/lib/utils'
+import {
   buildCalendarGrid,
   buildDayMapFromApi,
   buildDayMapFromBulk,
@@ -53,6 +64,7 @@ export default function PerformancePage() {
   const [selectedInstId, setSelectedInstId] = useState<number | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [dayPanel, setDayPanel] = useState<'summary' | 'records'>('summary')
+  const [tree, setTree] = useState<PerformanceTree | null>(null)
   const daySlotRef = useRef<HTMLElement>(null)
   const [growthUnit, setGrowthUnit] = useState<'pct' | 'usd'>('usd')
   const [growthLayersVisible, setGrowthLayersVisible] = useState(DEFAULT_LAYERS_VISIBLE)
@@ -140,6 +152,15 @@ export default function PerformancePage() {
     }
   }, [bulk, perf, growthUnit, equityGrowthChart, growthLayersVisible, optionsPnLMode])
 
+  const bridgeSummary = useMemo(() => {
+    if (!bulk?.byDayRangeData) return null
+    return buildOptionsModeBridgeSummary({
+      byDayRangeData: bulk.byDayRangeData,
+      openUnrealized: bulk.optAsOf?.openUnrealized ?? 0,
+      sameDayRolls: bulk.sameDayRolls ?? [],
+    })
+  }, [bulk])
+
   const readingMetrics = useMemo(() => buildReadingMetrics(perf), [perf])
   const scopeNote = useMemo(() => buildScopeNote(bulk?.byDayRangeData, perf), [bulk, perf])
   const rangeEndsToday = useMemo(() => {
@@ -176,6 +197,27 @@ export default function PerformancePage() {
     () => buildCalendarGrid(calendarMonth, activeDayMap),
     [calendarMonth, activeDayMap],
   )
+
+  const derivation = useMemo(() => {
+    if (tree === 'bridge') return optionsModeDerivation(bridgeSummary, bulk?.optAsOf?.asOfDateStr ?? null)
+    if (tree === 'equity') {
+      return equityGrowthDerivation({
+        last: chipValues?.last ?? null,
+        netPnl: equityGrowthChart?.last.totalRaw ?? null,
+        bookR: bridgeSummary?.bookR ?? null,
+        visible: growthLayersVisible,
+        mode: optionsPnLMode,
+      })
+    }
+    if (tree === 'calendar') {
+      const cell = selectedDay
+        ? calendarGrid.flatMap((w) => w.days).find((c) => c?.date === selectedDay) ?? null
+        : null
+      return dayCellDerivation(calendarAssetTab, cell)
+    }
+    if (tree === 'otf') return onTheFlyDerivation()
+    return null
+  }, [tree, bridgeSummary, bulk, chipValues, equityGrowthChart, growthLayersVisible, optionsPnLMode, selectedDay, calendarGrid, calendarAssetTab])
 
   const shiftMonth = useCallback(
     (delta: number) => {
@@ -217,6 +259,27 @@ export default function PerformancePage() {
           title="Performance"
           titleSize="large"
           description={PAGE_LEAD}
+          actions={
+            <span className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Derivations">
+              <span className={perfUi.cap}>Derivations</span>
+              {PERFORMANCE_TREES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  aria-pressed={tree === t.id}
+                  onClick={() => setTree((cur) => (cur === t.id ? null : t.id))}
+                  className={cn(
+                    'inline-flex h-5.5 cursor-pointer items-center whitespace-nowrap rounded-sm border bg-transparent px-1.75 text-dense-meta',
+                    tree === t.id
+                      ? 'border-primary text-primary'
+                      : 'border-border text-foreground/80 hover:bg-secondary hover:text-foreground',
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </span>
+          }
         />
 
         {perfQuery.isError && (
@@ -252,6 +315,9 @@ export default function PerformancePage() {
           optionsPnLMode={optionsPnLMode}
           netCashFlow={perf?.transaction?.net_cash_flow ?? null}
         />
+        {derivation && (
+          <DerivationBlock derivation={derivation} onClose={() => setTree(null)} className="mt-0" />
+        )}
         <PerformanceReadingPanel rangeLabel={RANGE_WORD[timeRange]} metrics={readingMetrics} />
         <PerformanceReturnBasis perf={perf} rangeEndsToday={rangeEndsToday} />
 

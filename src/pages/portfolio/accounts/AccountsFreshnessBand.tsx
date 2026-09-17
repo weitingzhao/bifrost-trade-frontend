@@ -32,7 +32,7 @@ export function AccountsFreshnessBand({
 }) {
   const from =
     fetchedAt != null && Number.isFinite(fetchedAt)
-      ? `Data from ${fetchedStamp(fetchedAt)} · ${clockLabel(fetchedAt)} · fetch time, not a session date`
+      ? `Data from ${fetchedStamp(fetchedAt)} · ${clockLabel(fetchedAt)} ago · fetch time, not a session date`
       : 'No snapshot fetch time yet'
 
   return (

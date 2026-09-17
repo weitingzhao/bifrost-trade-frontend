@@ -220,6 +220,21 @@ export function fmtIsoDateToken(iso: string | null | undefined): string {
   return `${m[3]}${MONTH_TOKENS[month]}${m[1].slice(2)}`
 }
 
+/**
+ * The option contract token (§14.4) from a broker OCC symbol:
+ * `AMD   261120C00620000` → `AMD 20NOV26 620C`. Anything that is not an OCC
+ * symbol comes back unchanged, so a stock ticker passes straight through.
+ */
+export function fmtOccContractToken(symbol: string | null | undefined): string {
+  const s = String(symbol ?? '').trim()
+  const m = /^([A-Z0-9.]+)\s+(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec(s)
+  if (!m) return s
+  const month = Number(m[3]) - 1
+  if (month < 0 || month > 11) return s
+  const strike = Number(m[6]) / 1000
+  return `${m[1]} ${m[4]}${MONTH_TOKENS[month]}${m[2]} ${strike}${m[5]}`
+}
+
 /** `SEP 2026` from a `YYYY-MM` bucket key. */
 export function fmtMonthKeyToken(monthKey: string | null | undefined): string {
   if (monthKey == null || String(monthKey).trim() === '') return '—'

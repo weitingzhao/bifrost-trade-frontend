@@ -1,9 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { fmtUsd } from '@/lib/format'
-import { X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { fmtIsoDateToken, fmtOccContractToken, fmtUsd } from '@/lib/format'
 import {
   Dialog,
   DialogContent,
@@ -60,7 +57,6 @@ interface CalendarDayDetailProps {
   rawExecsWindow: Execution[]
   linkByOptionId: Record<number, OptionStockLinkSummary>
   positionCategoryByAccountContract: Map<string, string>
-  onClose: () => void
 }
 
 // ─── Main Component ───
@@ -71,7 +67,6 @@ export function CalendarDayDetail({
   rawExecsWindow,
   linkByOptionId,
   positionCategoryByAccountContract,
-  onClose,
 }: CalendarDayDetailProps) {
   if (calendarAssetTab === 'options') {
     return (
@@ -79,7 +74,6 @@ export function CalendarDayDetail({
         selectedDay={selectedDay}
         rawExecsWindow={rawExecsWindow}
         linkByOptionId={linkByOptionId}
-        onClose={onClose}
       />
     )
   }
@@ -90,7 +84,6 @@ export function CalendarDayDetail({
       rawExecsWindow={rawExecsWindow}
       positionCategoryByAccountContract={positionCategoryByAccountContract}
       assetTab={calendarAssetTab as Exclude<CalendarAssetTab, 'options'>}
-      onClose={onClose}
     />
   )
 }
@@ -107,7 +100,6 @@ interface OptionsDayDetailProps {
   selectedDay: string
   rawExecsWindow: Execution[]
   linkByOptionId: Record<number, OptionStockLinkSummary>
-  onClose: () => void
 }
 
 interface LinkDialogState {
@@ -264,7 +256,6 @@ function OptionsDayDetail({
   selectedDay,
   rawExecsWindow,
   linkByOptionId,
-  onClose,
 }: OptionsDayDetailProps) {
   const [realizedSymbolTab, setRealizedSymbolTab] = useState<string | null>(null)
   const [unrealizedSymbolTab, setUnrealizedSymbolTab] = useState<string | null>(null)
@@ -286,7 +277,7 @@ function OptionsDayDetail({
 
   if (computed.contractKeys.length === 0) {
     return (
-      <DayDetailShell title={selectedDay} onClose={onClose}>
+      <DayDetailShell>
         <p className="text-sm text-muted-foreground py-4">
           No Option executions in DB for this trade date.
         </p>
@@ -304,14 +295,14 @@ function OptionsDayDetail({
   )
 
   return (
-    <DayDetailShell title={selectedDay} onClose={onClose}>
+    <DayDetailShell>
       <p className="mb-3 text-dense-meta leading-relaxed text-muted-foreground">
         Realized: FIFO matched legs and pairs (Match PnL plus prorated linked-stock slippage).
         Each Match row shows Open cash (open-leg premium) · Close cash (cover cost) · Net.
         Unrealized: open quantity on unmatched fills. Commission shown in yellow beside each total.
       </p>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,23.75rem),1fr))] items-start gap-3">
         <OptionsPnlColumn
           variant="realized"
           computed={computed}
@@ -414,7 +405,7 @@ function OptionsPnlColumn({
                       : 'border-border text-muted-foreground hover:bg-muted',
                   )}
                 >
-                  {sym}
+                  <span className="font-mono" title={sym}>{fmtOccContractToken(sym)}</span>
                   <span className={cn('tabular-nums', isRealized ? pnlColorClass(sum) : unrealizedPnlColorClass(sum))}>
                     {fmtUsd(sum)}
                   </span>
@@ -471,19 +462,26 @@ function ContractGroup({
   isRealized,
   onViewLinks,
 }: ContractGroupProps) {
+  // The group key is account · symbol · expiry · strike, not a contract key; the
+  // token is built from the fill itself (§14.4), the broker symbol kept for hover.
   const first = execs[0]
   const firstPair = pairs[0]
-  const symbol = first?.symbol ?? firstPair?.symbol ?? '—'
-  const expiry = first?.expiry ?? firstPair?.expiry ?? '—'
-  const strike = first?.strike ?? firstPair?.strike ?? '—'
-  const rightFull = optionRightToFull(
-    first?.option_right ??
-      (firstPair?.leg_c_execution_id != null
-        ? execById.get(firstPair.leg_c_execution_id)?.option_right
-        : firstPair?.leg_p_execution_id != null
-          ? execById.get(firstPair.leg_p_execution_id)?.option_right
-          : undefined),
-  )
+  const occ = first?.symbol ?? firstPair?.symbol ?? ''
+  const token = (() => {
+    const fromOcc = fmtOccContractToken(occ)
+    if (fromOcc !== occ.trim()) return fromOcc
+    const right = (
+      first?.option_right ??
+      (firstPair?.leg_c_execution_id != null ? execById.get(firstPair.leg_c_execution_id)?.option_right : undefined) ??
+      ''
+    ).toUpperCase().slice(0, 1)
+    const strike = Number(first?.strike ?? firstPair?.strike)
+    return [
+      occ.trim().split(/\s+/)[0] || '—',
+      fmtIsoDateToken(first?.expiry ?? firstPair?.expiry ?? ''),
+      Number.isFinite(strike) && strike > 0 ? `${strike}${right === 'C' || right === 'P' ? right : ''}` : '',
+    ].filter((p) => p && p !== '—').join(' ') || '—'
+  })()
 
   const sortedExecs = useMemo(() => [...execs].sort(sortExecByExecutionDateThenTime), [execs])
 
@@ -555,8 +553,8 @@ function ContractGroup({
     <div className="mb-4 last:mb-0">
       {/* Contract header */}
       <div className="flex items-baseline gap-2 mb-1.5 px-1">
-        <span className="text-xs font-semibold text-foreground">
-          {symbol} {expiry} {strike} {rightFull !== '—' ? rightFull : ''}
+        <span className="font-mono text-xs font-semibold text-foreground" title={occ}>
+          {token}
         </span>
         <span className={cn('text-xs font-semibold tabular-nums', isRealized ? pnlColorClass(tabPnl) : unrealizedPnlColorClass(tabPnl))}>
           {fmtUsd(tabPnl)}
@@ -566,7 +564,8 @@ function ContractGroup({
 
       {/* Table */}
       <div className="rounded-md border overflow-hidden">
-        <Table>
+        {/* §14.6: nine columns, 720 floor; the panel scrolls sideways below it. */}
+        <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="text-dense-caption uppercase tracking-wider w-[80px]">Record type</TableHead>
@@ -666,7 +665,7 @@ function ExecutionRow({
         </span>
       </TableCell>
       <TableCell className="text-xs">{ex.account_id ?? '—'}</TableCell>
-      <TableCell className="text-xs tabular-nums">{(ex.trade_date ?? '').trim() || '—'}</TableCell>
+      <TableCell className="text-xs tabular-nums">{fmtIsoDateToken(ex.trade_date)}</TableCell>
       <TableCell className="text-xs">{ex.side ?? '—'}</TableCell>
       <TableCell className="text-xs text-right tabular-nums">{displayQty}</TableCell>
       <TableCell className="text-xs text-right tabular-nums">{fmtUsd(ex.price)}</TableCell>
@@ -700,8 +699,8 @@ function MatchRow({
 }) {
   const legC = pair.leg_c_execution_id != null ? execById.get(pair.leg_c_execution_id) : undefined
   const legP = pair.leg_p_execution_id != null ? execById.get(pair.leg_p_execution_id) : undefined
-  const dateC = legC ? executionDateStr(legC) : '—'
-  const dateP = legP ? executionDateStr(legP) : '—'
+  const dateC = legC ? fmtIsoDateToken(executionDateStr(legC)) : '—'
+  const dateP = legP ? fmtIsoDateToken(executionDateStr(legP)) : '—'
   const tradeDateStr =
     dateC !== '—' && dateP !== '—' && dateC !== dateP
       ? `${dateC} / ${dateP}`
@@ -794,7 +793,6 @@ interface StkDayDetailProps {
   rawExecsWindow: Execution[]
   positionCategoryByAccountContract: Map<string, string>
   assetTab: 'stocks' | 'fixed_income' | 'cash_like'
-  onClose: () => void
 }
 
 function StkDayDetail({
@@ -802,7 +800,6 @@ function StkDayDetail({
   rawExecsWindow,
   positionCategoryByAccountContract,
   assetTab,
-  onClose,
 }: StkDayDetailProps) {
   const bucketExecs = useMemo(() => {
     const dayExecs = rawExecsWindow.filter((e) => executionDateStr(e) === selectedDay)
@@ -815,7 +812,7 @@ function StkDayDetail({
 
   if (bucketExecs.length === 0) {
     return (
-      <DayDetailShell title={selectedDay} onClose={onClose}>
+      <DayDetailShell>
         <p className="text-sm text-muted-foreground py-4">
           No {label} executions on this trade date in the loaded window.
         </p>
@@ -824,7 +821,7 @@ function StkDayDetail({
   }
 
   return (
-    <DayDetailShell title={selectedDay} onClose={onClose}>
+    <DayDetailShell>
       <p className="text-sm font-medium text-foreground/80 mb-1">STK executions ({label})</p>
       <p className="text-dense-meta text-muted-foreground mb-3 leading-relaxed">
         Calendar daily realized is the sum of broker realized_pnl on fills for this trade date in this bucket.
@@ -896,28 +893,8 @@ function StkDayDetail({
 
 // ─── Shared shell ───
 
-function DayDetailShell({
-  title,
-  onClose,
-  children,
-}: {
-  title: string
-  onClose: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Records for {title}</CardTitle>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} aria-label="Close">
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
-  )
+function DayDetailShell({ children }: { children: React.ReactNode }) {
+  return <div className="min-w-0 px-3 py-2.5">{children}</div>
 }
 
 // ─── Option-Stock Link Dialog ───

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned, fmtIsoDateToken, fmtMonthKeyToken, fmtEpochEtClock } from '@/lib/format'
+import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned, fmtIsoDateToken, fmtMonthKeyToken, fmtEpochEtClock, fmtOccContractToken } from '@/lib/format'
 
 /**
  * The two percentage families must stay distinguishable.
@@ -63,5 +63,17 @@ describe('ET clock', () => {
     const sec = Date.parse('2026-09-16T16:30:00.000Z') / 1000
     expect(fmtEpochEtClock(sec)).toBe('12:30:00 ET')
     expect(fmtEpochEtClock(null)).toBe('—')
+  })
+})
+
+describe('fmtOccContractToken', () => {
+  it('turns a broker OCC symbol into the contract token (§14.4)', () => {
+    expect(fmtOccContractToken('ZZZ   261120C00620000')).toBe('ZZZ 20NOV26 620C')
+    expect(fmtOccContractToken('ZZZ 240119P00007500')).toBe('ZZZ 19JAN24 7.5P')
+  })
+
+  it('leaves anything else as it is', () => {
+    expect(fmtOccContractToken('ZZZ')).toBe('ZZZ')
+    expect(fmtOccContractToken(null)).toBe('')
   })
 })

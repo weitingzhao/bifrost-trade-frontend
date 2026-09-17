@@ -9,7 +9,7 @@ import type {
   PerformanceResponse,
 } from '@/types/trading'
 import type { StkLedgerBucket } from '@/utils/ledger/stkBuckets'
-import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
+import { perfUi } from '@/pages/portfolio/performance/performanceUi'
 
 // ─── Formatting ───
 
@@ -61,121 +61,53 @@ function sumNotionalMonth(
 
 // ─── Sub-components ───
 
-function MetricCell({
-  label,
-  value,
-  colorValue,
-  valueTone = 'pnl',
-  emphasize,
-  valueClassName,
-}: MetricDef) {
-  const toneClass =
-    valueClassName ??
-    (colorValue != null
-      ? valueTone === 'unrealized'
-        ? unrealizedPnlColorClass(colorValue)
-        : pnlColorClass(colorValue)
-      : 'text-foreground')
-  return (
-    <div className="shrink-0 rounded-md bg-background/70 px-1.5 py-1">
-      <span className="block text-dense-caption uppercase tracking-wide text-muted-foreground leading-tight">
-        {label}
-      </span>
-      <span
-        className={cn(
-          'block tabular-nums font-semibold leading-tight truncate',
-          emphasize ? 'text-dense-body' : 'text-xs',
-          toneClass,
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  )
+function toneFor({ colorValue, valueTone = 'pnl', valueClassName }: MetricDef): string {
+  if (valueClassName) return valueClassName
+  if (colorValue == null) return 'text-foreground/85'
+  return valueTone === 'unrealized' ? unrealizedPnlColorClass(colorValue) : pnlColorClass(colorValue)
 }
 
-/** Legacy performance-summary-row: type label + metrics flowing horizontally */
-function SummaryMetricRow({
-  title,
-  metrics,
-  accentTitle,
-  empty,
-  horizontalMetrics,
-  metricsNowrap,
-}: {
-  title: string
-  metrics: MetricDef[]
-  accentTitle?: boolean
-  empty?: boolean
-  /** Summary row: all metrics in one horizontal flow (Legacy default row layout) */
-  horizontalMetrics?: boolean
-  metricsNowrap?: boolean
-}) {
-  return (
-    <div className={cn('flex min-w-0 items-start gap-3 border-b border-border/40 last:border-b-0', styles.summaryMetricRow)}>
-      <span
-        className={cn(
-          'shrink-0 pt-0.5 text-xs font-bold leading-tight',
-          accentTitle ? 'w-16 text-primary' : 'w-[5.25rem] text-foreground',
-        )}
-      >
-        {title}
-      </span>
-      {empty ? (
-        <p className="text-xs italic text-muted-foreground">No data in the selected range.</p>
-      ) : (
-        <div
-          className={cn(
-            'min-w-0 flex-1',
-            horizontalMetrics
-              ? cn(
-                  'flex gap-x-2 gap-y-1',
-                  metricsNowrap ? 'flex-nowrap overflow-x-auto' : 'flex-wrap',
-                )
-              : 'grid grid-cols-[repeat(auto-fill,minmax(4.25rem,1fr))] gap-x-2 gap-y-1',
-          )}
-        >
-          {metrics.map((m) => (
-            <MetricCell key={m.label} {...m} />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** Legacy inside-calendar column card (Option / Stocks / FI / Cash-like) */
+/** One asset class for the month: a card of label · value lines. */
 function SummaryColumn({
   title,
   metrics,
-  accentTitle,
   empty,
 }: {
   title: string
   metrics: MetricDef[]
-  accentTitle?: boolean
   empty?: boolean
 }) {
   return (
-    <div className={cn('min-w-0 rounded-lg border border-border/60 bg-muted/20', styles.summaryColumn)}>
-      <p
-        className={cn(
-          'text-xs font-bold tracking-wide',
-          styles.summaryColumnTitle,
-          accentTitle ? 'text-primary' : 'text-foreground',
-        )}
-      >
-        {title}
-      </p>
+    <div className="flex min-w-0 flex-col gap-1 rounded-sm border border-border px-2.25 py-1.75">
+      <span className="text-dense-body font-semibold text-foreground">{title}</span>
       {empty ? (
-        <p className="text-xs italic text-muted-foreground">No data in the selected range.</p>
+        <span className="text-dense-meta italic text-muted-foreground text-pretty">No data in the selected range.</span>
       ) : (
-        <div className="space-y-1">
-          {metrics.map((m) => (
-            <MetricCell key={m.label} {...m} />
-          ))}
-        </div>
+        metrics.map((m) => (
+          <span key={m.label} className="flex items-baseline gap-1.5">
+            <span className={cn(perfUi.cap, 'min-w-0 flex-1 text-dense-micro')}>{m.label}</span>
+            <span className={cn(perfUi.mono, 'text-dense-body font-semibold', toneFor(m))}>{m.value}</span>
+          </span>
+        ))
       )}
+    </div>
+  )
+}
+
+/** The month's day counts beside the calendar — days, not trades (Design F1). */
+function MonthStats({ monthKey, metrics }: { monthKey: string; metrics: MetricDef[] }) {
+  return (
+    <div className="flex flex-wrap items-stretch gap-1.5 border-t border-border/60 pt-2">
+      <span className="flex min-w-19 flex-col justify-center">
+        <span className={perfUi.cap}>{monthKey}</span>
+        <span className="text-dense-meta text-muted-foreground">month stats</span>
+      </span>
+      {metrics.map((m) => (
+        <span key={m.label} className="flex min-w-0 flex-col gap-px rounded-sm border border-border px-2 py-1.25">
+          <span className={cn(perfUi.cap, 'text-dense-micro')}>{m.label}</span>
+          <span className={cn(perfUi.mono, 'text-dense-body font-semibold', toneFor(m))}>{m.value}</span>
+        </span>
+      ))}
     </div>
   )
 }
@@ -265,7 +197,7 @@ export function CalendarSummaryPanel({
 
   if (isLoading) {
     return (
-      <div className={cn('flex min-h-[8rem] items-center justify-center', styles.calendarSummaryPanel)}>
+      <div className="flex min-h-32 items-center justify-center">
         <p className="animate-pulse text-xs text-muted-foreground">Loading summary…</p>
       </div>
     )
@@ -322,60 +254,33 @@ export function CalendarSummaryPanel({
   })
 
   return (
-    <div className={cn('min-w-0 flex-col', styles.calendarSummaryPanel)}>
+    <div className="flex min-w-0 flex-col gap-2.5 px-3 pt-2.5 pb-3">
       {/* The range-level metrics moved to Reading (Design F1); by asset class stays here. */}
-      {/* Legacy: Option | Stocks | FI | Cash-like */}
-      <div className={cn('mt-1 grid grid-cols-2 xl:grid-cols-4', styles.summaryAssetGrid)}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,9.375rem),1fr))] gap-1.5">
         <SummaryColumn title="Option" metrics={optionMetrics} empty={!hasOpt} />
-        <SummaryColumn
-          title="Stocks"
-          metrics={stocksMetrics.metrics}
-          empty={!stocksMetrics.hasRow}
-        />
-        <SummaryColumn
-          title="Fixed Income Stream"
-          metrics={fiMetrics.metrics}
-          empty={!fiMetrics.hasRow}
-        />
-        <SummaryColumn
-          title="Cash-like"
-          metrics={cashMetrics.metrics}
-          empty={!cashMetrics.hasRow}
-        />
+        <SummaryColumn title="Stocks" metrics={stocksMetrics.metrics} empty={!stocksMetrics.hasRow} />
+        <SummaryColumn title="Fixed income stream" metrics={fiMetrics.metrics} empty={!fiMetrics.hasRow} />
+        <SummaryColumn title="Cash-like" metrics={cashMetrics.metrics} empty={!cashMetrics.hasRow} />
       </div>
 
       {monthStats && monthStats.totalDays > 0 && (
-        <SummaryMetricRow
-          title={`${calendarMonth} Stats`}
+        <MonthStats
+          monthKey={calendarMonth}
           metrics={[
-            { label: 'Trading', value: String(monthStats.totalDays) },
+            { label: 'Active days', value: String(monthStats.totalDays) },
+            { label: 'Win days', value: String(monthStats.winDays), valueClassName: 'text-profit' },
+            { label: 'Loss days', value: String(monthStats.lossDays), valueClassName: 'text-loss' },
             {
-              label: 'Win',
-              value: String(monthStats.winDays),
-              valueClassName: 'text-profit',
-            },
-            {
-              label: 'Loss',
-              value: String(monthStats.lossDays),
-              valueClassName: 'text-loss',
-            },
-            {
-              label: 'Win Rate',
+              label: 'Win days %',
               value: `${((monthStats.winDays / monthStats.totalDays) * 100).toFixed(1)}%`,
             },
             {
-              label: 'Avg Daily',
+              label: 'Avg daily',
               value: fmtUsd(monthStats.monthPnl / monthStats.totalDays),
               colorValue: monthStats.monthPnl / monthStats.totalDays,
             },
-            {
-              label: 'Month PnL',
-              value: fmtUsd(monthStats.monthPnl),
-              colorValue: monthStats.monthPnl,
-            },
+            { label: 'Month P&L', value: fmtUsd(monthStats.monthPnl), colorValue: monthStats.monthPnl },
           ]}
-          horizontalMetrics
-          metricsNowrap
         />
       )}
     </div>

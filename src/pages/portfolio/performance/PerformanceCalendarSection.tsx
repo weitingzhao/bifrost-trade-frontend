@@ -1,13 +1,12 @@
-import { useMemo } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { fmtIsoDateToken } from '@/lib/format'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import type { PerformanceDayPnLBulkResult, PerformanceResponse } from '@/types/trading'
 import type { PerformanceSummary } from '@/types/trading'
-import { Button } from '@/components/ui/button'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Skeleton } from '@/components/ui/skeleton'
-import { SegmentControl, type SegmentOption } from '@/components/data-display'
+import { DenseTag, SegmentControl, type SegmentOption } from '@/components/data-display'
 import { CalendarSummaryPanel } from '@/pages/portfolio/performance/components/CalendarSummaryPanel'
 import { CalendarDayDetail } from '@/pages/portfolio/performance/components/CalendarDayDetail'
 import {
@@ -18,6 +17,7 @@ import {
 } from './performanceCalendarModel'
 import { CALENDAR_HELP } from './performanceConstants'
 import { fmtMoney, fmtMoneyFull, fmtUsd } from './performanceFormatters'
+import { perfUi } from './performanceUi'
 import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 const CALENDAR_ASSET_SEGMENT_OPTIONS: SegmentOption[] = CALENDAR_ASSET_TABS.map(t => ({
@@ -26,6 +26,18 @@ const CALENDAR_ASSET_SEGMENT_OPTIONS: SegmentOption[] = CALENDAR_ASSET_TABS.map(
 }))
 
 const LOSS_DAY_THRESHOLD = -500
+
+const btn = cn(
+  'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-sm border border-border bg-transparent px-1.75',
+  'text-dense-meta text-foreground/80 hover:bg-secondary hover:text-foreground disabled:cursor-default disabled:opacity-50',
+)
+
+function tabBtn(active: boolean, enabled = true): string {
+  return cn(
+    btn,
+    active ? 'border-primary text-primary' : enabled ? '' : 'text-muted-foreground',
+  )
+}
 
 function calendarRealizedToneClass(value: number): string {
   if (Math.abs(value) < 0.005) return styles.calendarCellToneMuted
@@ -73,6 +85,11 @@ interface PerformanceCalendarSectionProps {
   positionCategoryByAccountContract: Map<string, string>
 }
 
+/**
+ * The calendar and, beside it, one slot with two faces: Summary by asset class
+ * for the month, or the records of the day just clicked. Never a third surface,
+ * never over the calendar.
+ */
 export function PerformanceCalendarSection({
   calendarMonth,
   calendarAssetTab,
@@ -87,9 +104,11 @@ export function PerformanceCalendarSection({
   isLoading,
   positionCategoryByAccountContract,
 }: PerformanceCalendarSectionProps) {
+  const [rightTab, setRightTab] = useState<'summary' | 'records'>('summary')
+
   const monthLabel = useMemo(() => {
     const [y, m] = calendarMonth.split('-').map(Number)
-    return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }, [calendarMonth])
 
   const optUnrealized = useMemo(() => {
@@ -101,65 +120,79 @@ export function PerformanceCalendarSection({
   const flowMetricLabel = isFiStreamTab ? 'S' : 'N'
   const flowMetricLegend = isFiStreamTab ? 'S = Stream' : 'N = Notional'
 
+  /** Days in this month that carry a reading on the current layer, for ↑ / ↓. */
+  const activeDays = useMemo(() => {
+    const out: string[] = []
+    for (const week of calendarGrid) {
+      for (const cell of week.days) {
+        if (!cell) continue
+        const has = Math.abs(cell.realized) >= 0.005
+          || (!isStkTab && Math.abs(cell.unrealized) >= 0.005)
+          || (isStkTab && Math.abs(cell.notional) >= 0.005)
+        if (has) out.push(cell.date)
+      }
+    }
+    return out.sort()
+  }, [calendarGrid, isStkTab])
+
+  const showRecords = selectedDay != null && rightTab === 'records'
+
+  function openDay(date: string | null) {
+    onSelectedDay(date)
+    setRightTab(date ? 'records' : 'summary')
+  }
+
+  function stepDay(delta: number) {
+    if (!selectedDay) return
+    const i = activeDays.indexOf(selectedDay)
+    const next = activeDays[i + delta]
+    if (next) onSelectedDay(next)
+  }
+
+  const selectedWeekday = selectedDay
+    ? WEEKDAY_LABELS[new Date(`${selectedDay}T12:00:00`).getDay()]
+    : null
+
   return (
-    <section className={cn(styles.sectionPane)} aria-label="Calendar">
-      <h3 className={styles.sectionSubtitle}>
-        Calendar
-        <InfoTooltip text={CALENDAR_HELP} />
-      </h3>
-      <div className={styles.calendarWithSummary}>
-        <div className={styles.calendarLeft}>
-          <div className={styles.calendarToolbar}>
-            <SegmentControl
-              size="sm"
-              options={CALENDAR_ASSET_SEGMENT_OPTIONS}
-              value={calendarAssetTab}
-              onChange={v => {
-                onCalendarAssetTab(v as CalendarAssetTab)
-                onSelectedDay(null)
-              }}
-              ariaLabel="Calendar asset class"
-            />
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,32.5rem),1fr))] items-start gap-3">
+      <section className={perfUi.panel} aria-label="Calendar">
+        <header className={perfUi.panelHead}>
+          <span className={perfUi.cap}>Calendar</span>
+          <span className="flex items-center gap-0.5">
+            <button type="button" className={btn} onClick={() => onShiftMonth(-1)} aria-label="Previous month">
+              ‹ Prev
+            </button>
+            <span className="min-w-29 text-center text-dense-label font-semibold">{monthLabel}</span>
+            <button type="button" className={btn} onClick={() => onShiftMonth(1)} aria-label="Next month">
+              Next ›
+            </button>
+          </span>
+          <span className="ml-auto flex gap-1.5">
+            <DenseTag variant="success" size="cell">R = Realized</DenseTag>
+            {isStkTab ? (
+              <DenseTag variant="neutral" size="cell">{flowMetricLegend}</DenseTag>
+            ) : (
+              <DenseTag variant="category" size="cell">U = Unrealized</DenseTag>
+            )}
+          </span>
+        </header>
 
-            <div className={cn(styles.calendarMonthNav, styles.calendarMonthNavCompact)}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-[1.625rem] px-2 text-dense-meta"
-                onClick={() => onShiftMonth(-1)}
-                aria-label="Previous month"
-              >
-                <ChevronLeft className="h-3 w-3 mr-0.5" />
-                Prev
-              </Button>
-              <span className={styles.calendarMonthLabel}>{monthLabel}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-[1.625rem] px-2 text-dense-meta"
-                onClick={() => onShiftMonth(1)}
-                aria-label="Next month"
-              >
-                Next
-                <ChevronRight className="h-3 w-3 ml-0.5" />
-              </Button>
-            </div>
-
-            <div className={styles.legendPills}>
-              <span className={cn(styles.legendPill, styles.legendRealized)}>R = Realized</span>
-              {!isStkTab && (
-                <span className={cn(styles.legendPill, styles.legendUnrealized)}>U = Unrealized</span>
-              )}
-              {isStkTab && (
-                <span className={cn(styles.legendPill, styles.legendNotional)}>{flowMetricLegend}</span>
-              )}
-            </div>
-          </div>
+        <div className="flex flex-col gap-2 px-3 pt-2 pb-3">
+          <SegmentControl
+            size="xs"
+            options={CALENDAR_ASSET_SEGMENT_OPTIONS}
+            value={calendarAssetTab}
+            onChange={v => {
+              onCalendarAssetTab(v as CalendarAssetTab)
+              openDay(null)
+            }}
+            ariaLabel="Calendar asset class"
+          />
 
           {calendarAssetTab === 'options' && optUnrealized != null && (
-            <p className={styles.calendarOptUnrealized}>
-              Option Unrealized (as of now):{' '}
-              <strong className={unrealizedPnlColorClass(optUnrealized)}>{fmtUsd(optUnrealized)}</strong>
+            <p className="m-0 text-dense-meta text-muted-foreground">
+              Option unrealized, as of now:{' '}
+              <strong className={cn(perfUi.mono, unrealizedPnlColorClass(optUnrealized))}>{fmtUsd(optUnrealized)}</strong>
             </p>
           )}
 
@@ -178,85 +211,155 @@ export function PerformanceCalendarSection({
                 {calendarGrid.map((week, wi) => (
                   <div key={wi} className={cn(styles.calendarGrid, styles.calendarGridWeek)}>
                     {week.days.map((cell, di) => {
-                    if (!cell) {
-                      return <div key={di} className={styles.calendarCellEmpty} />
-                    }
-                    const showN = isStkTab && Math.abs(cell.notional) >= 0.005
-                    const showU = !isStkTab && Math.abs(cell.unrealized) >= 0.005
-                    const showR = Math.abs(cell.realized) >= 0.005 || showN
-                    const hasData = showR || showU || showN
-                    const pnlLineCount = [showR, showU, showN].filter(Boolean).length
-                    const emphasizeMetrics = pnlLineCount === 1
-                    const isSelected = selectedDay === cell.date
-                    const dayNet = cell.realized + (isStkTab ? 0 : cell.unrealized)
-                    const isLossDay = hasData && dayNet <= LOSS_DAY_THRESHOLD
-                    const titleParts: string[] = []
-                    if (isStkTab) {
+                      if (!cell) {
+                        return <div key={di} className={styles.calendarCellEmpty} />
+                      }
+                      const showN = isStkTab && Math.abs(cell.notional) >= 0.005
+                      const showU = !isStkTab && Math.abs(cell.unrealized) >= 0.005
+                      const showR = Math.abs(cell.realized) >= 0.005 || showN
+                      const hasData = showR || showU || showN
+                      const pnlLineCount = [showR, showU, showN].filter(Boolean).length
+                      const emphasizeMetrics = pnlLineCount === 1
+                      const isSelected = selectedDay === cell.date
+                      const dayNet = cell.realized + (isStkTab ? 0 : cell.unrealized)
+                      const isLossDay = hasData && dayNet <= LOSS_DAY_THRESHOLD
+                      const titleParts: string[] = [fmtIsoDateToken(cell.date)]
                       titleParts.push(`Realized: ${fmtMoneyFull(cell.realized)}`)
-                      titleParts.push(
-                        `${isFiStreamTab ? 'Stream' : 'Notional'}: ${fmtMoneyFull(cell.notional)}`,
-                      )
-                    } else {
-                      titleParts.push(`Realized: ${fmtMoneyFull(cell.realized)}`)
-                      titleParts.push(`Unrealized: ${fmtMoneyFull(cell.unrealized)}`)
-                    }
-                    return (
-                      <button
-                        key={di}
-                        type="button"
-                        title={titleParts.join('\n')}
-                        onClick={() => onSelectedDay(isSelected ? null : cell.date)}
-                        className={cn(
-                          styles.calendarCell,
-                          hasData && styles.calendarCellHasData,
-                          isSelected && styles.calendarCellSelected,
-                          isLossDay && styles.calendarCellLoss,
-                        )}
-                      >
-                        <div className={styles.calendarCellHeader}>
-                          <span className={styles.calendarCellDay}>{cell.dayNum}</span>
-                        </div>
-                        {hasData && (
-                          <div className={styles.calendarCellBody}>
-                            <div className={styles.calendarCellMetricsBlock}>
-                              {showR && (
-                                <CalendarCellMetric
-                                  label="R"
-                                  value={fmtMoney(cell.realized)}
-                                  toneClass={calendarRealizedToneClass(cell.realized)}
-                                  emphasized={emphasizeMetrics}
-                                />
-                              )}
-                              {showU && (
-                                <CalendarCellMetric
-                                  label="U"
-                                  value={fmtMoney(cell.unrealized)}
-                                  toneClass={styles.calendarCellToneUnrealized}
-                                  emphasized={emphasizeMetrics}
-                                />
-                              )}
-                              {showN && (
-                                <CalendarCellMetric
-                                  label={flowMetricLabel}
-                                  value={fmtMoney(cell.notional)}
-                                  toneClass={calendarNotionalToneClass(calendarAssetTab, cell.notional)}
-                                  emphasized={emphasizeMetrics}
-                                />
-                              )}
-                            </div>
+                      if (isStkTab) {
+                        titleParts.push(`${isFiStreamTab ? 'Stream' : 'Notional'}: ${fmtMoneyFull(cell.notional)}`)
+                      } else {
+                        titleParts.push(`Unrealized: ${fmtMoneyFull(cell.unrealized)}`)
+                      }
+                      if (hasData) titleParts.push("Click for the day's records")
+                      return (
+                        <button
+                          key={di}
+                          type="button"
+                          title={titleParts.join('\n')}
+                          onClick={() => openDay(isSelected ? null : cell.date)}
+                          className={cn(
+                            styles.calendarCell,
+                            hasData && styles.calendarCellHasData,
+                            isSelected && styles.calendarCellSelected,
+                            isLossDay && styles.calendarCellLoss,
+                          )}
+                        >
+                          <div className={styles.calendarCellHeader}>
+                            <span className={styles.calendarCellDay}>{cell.dayNum}</span>
                           </div>
-                        )}
-                      </button>
-                    )
-                  })}
+                          {hasData && (
+                            <div className={styles.calendarCellBody}>
+                              <div className={styles.calendarCellMetricsBlock}>
+                                {showR && (
+                                  <CalendarCellMetric
+                                    label="R"
+                                    value={fmtMoney(cell.realized)}
+                                    toneClass={calendarRealizedToneClass(cell.realized)}
+                                    emphasized={emphasizeMetrics}
+                                  />
+                                )}
+                                {showU && (
+                                  <CalendarCellMetric
+                                    label="U"
+                                    value={fmtMoney(cell.unrealized)}
+                                    toneClass={styles.calendarCellToneUnrealized}
+                                    emphasized={emphasizeMetrics}
+                                  />
+                                )}
+                                {showN && (
+                                  <CalendarCellMetric
+                                    label={flowMetricLabel}
+                                    value={fmtMoney(cell.notional)}
+                                    toneClass={calendarNotionalToneClass(calendarAssetTab, cell.notional)}
+                                    emphasized={emphasizeMetrics}
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
                   </div>
                 ))}
               </div>
             </div>
           )}
-        </div>
 
-        <div className={styles.calendarRight}>
+          <p className="m-0 inline-flex flex-wrap items-center gap-1 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            {isStkTab
+              ? `R is broker-realized P&L on the day's fills; ${isFiStreamTab ? 'S is money in and out of the bucket' : 'N is signed trade size'}. An empty cell is no fill, not a flat day.`
+              : "R is realized on pairs closed that day; U is that day's unmatched premium — a path figure, not open P&L. Two kinds of number, never added. An empty cell is no fill, not a flat day."}
+            <InfoTooltip text={CALENDAR_HELP} />
+          </p>
+        </div>
+      </section>
+
+      <section className={perfUi.panel} aria-label="Summary and day records">
+        <header className={perfUi.panelHead}>
+          <span className="flex gap-1">
+            <button type="button" className={tabBtn(!showRecords)} onClick={() => setRightTab('summary')}>
+              Summary
+            </button>
+            <button
+              type="button"
+              className={tabBtn(showRecords, selectedDay != null)}
+              onClick={() => setRightTab(selectedDay ? 'records' : 'summary')}
+              title={selectedDay ? `The fills behind ${fmtIsoDateToken(selectedDay)}` : 'Click a day in the calendar'}
+            >
+              {selectedDay ? `Records · ${fmtIsoDateToken(selectedDay)}` : 'Records · pick a day'}
+            </button>
+          </span>
+          <span className="min-w-0 flex-[1_1_9rem] text-dense-body text-muted-foreground">
+            {showRecords
+              ? `${selectedWeekday} · every fill, its FIFO pair, and the linked stock`
+              : `by asset class · ${monthLabel}`}
+          </span>
+          {showRecords && (
+            <span className="flex gap-1">
+              <button
+                type="button"
+                className={btn}
+                onClick={() => stepDay(-1)}
+                disabled={activeDays.indexOf(selectedDay) <= 0}
+                title="Previous day with a reading"
+                aria-label="Previous day with a reading"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                className={btn}
+                onClick={() => stepDay(1)}
+                disabled={activeDays.indexOf(selectedDay) >= activeDays.length - 1}
+                title="Next day with a reading"
+                aria-label="Next day with a reading"
+              >
+                ↓
+              </button>
+              <button
+                type="button"
+                className={btn}
+                onClick={() => openDay(null)}
+                title="Back to Summary"
+                aria-label="Close the day's records"
+              >
+                ✕
+              </button>
+            </span>
+          )}
+        </header>
+
+        {showRecords && bulk ? (
+          <CalendarDayDetail
+            key={selectedDay}
+            selectedDay={selectedDay}
+            calendarAssetTab={calendarAssetTab}
+            rawExecsWindow={bulk.rawExecsWindow}
+            linkByOptionId={bulk.linkByOptionId}
+            positionCategoryByAccountContract={positionCategoryByAccountContract}
+          />
+        ) : (
           <CalendarSummaryPanel
             summary={summary}
             perf={perf}
@@ -265,22 +368,8 @@ export function PerformanceCalendarSection({
             calendarAssetTab={calendarAssetTab}
             isLoading={isLoading}
           />
-        </div>
-      </div>
-
-      {selectedDay && bulk && (
-        <div className="mt-3">
-          <CalendarDayDetail
-            key={selectedDay}
-            selectedDay={selectedDay}
-            calendarAssetTab={calendarAssetTab}
-            rawExecsWindow={bulk.rawExecsWindow}
-            linkByOptionId={bulk.linkByOptionId}
-            positionCategoryByAccountContract={positionCategoryByAccountContract}
-            onClose={() => onSelectedDay(null)}
-          />
-        </div>
-      )}
-    </section>
+        )}
+      </section>
+    </div>
   )
 }

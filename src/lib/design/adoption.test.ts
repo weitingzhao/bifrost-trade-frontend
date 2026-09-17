@@ -107,8 +107,15 @@ describe('design adoption', () => {
     // Owner's colour look; the Owner re-signed all five at .17.1 the same day.
     // Outcome signed off 2026-09-17, the first page built from nothing rather
     // than walked against a page the app already had (aligned 9→10).
-    expect(counts.aligned + counts.byState.stale).toBe(10)
+    // Risk Portfolio Exposure signed off 2026-09-17 — the first page outside
+    // the Portfolio group (aligned 10→11). Package 2026-09-17.4 then moved
+    // Performance's own page rev to .2 for the one legend sentence P3 asked
+    // for, so it reads stale until the Owner re-signs it there; the app already
+    // draws what the corrected sentence says (orange on the curve, the calendar
+    // and the table alike), so the walk itself has nothing to redo.
+    expect(counts.aligned + counts.byState.stale).toBe(11)
     expect(counts.aligned).toBe(10)
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path)).toEqual(['/portfolio/performance'])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -127,8 +134,9 @@ describe('design adoption', () => {
     // first whose central identity the data cannot evaluate at all
     // (unbuilt 42→41, reviewing 3→4). Risk Portfolio Exposure is the first
     // page outside the Portfolio group, built under the Owner's option-b ruling
-    // (unbuilt 41→40, reviewing 4→5).
-    expect(counts.byState.reviewing).toBe(5)
+    // (unbuilt 41→40, reviewing 4→5), then aligned on the Owner's look
+    // (reviewing 5→4).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -138,19 +146,18 @@ describe('design adoption', () => {
       '/portfolio/accounts',
       '/portfolio/ledger',
       '/portfolio/outcome',
-      '/portfolio/performance',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
       '/research/copilot/trading',
       '/research/loop/decisions',
       '/research/symbol',
+      '/risk/portfolio',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/backing',
       '/portfolio/pnl-explain',
       '/portfolio/positions',
-      '/risk/portfolio',
       '/trade/plans',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
@@ -213,8 +220,10 @@ describe('design adoption', () => {
     // The package's HANDOFF header still reads Rev 2026-09-16.11 (Design did not
     // bump it), so DESIGN_REV holds there while the page stamps say .17.1.
     // The Owner re-signed all five on the colour look, so none stays stale.
-    expect(DESIGN_REV).toBe('2026-09-16.11')
-    expect(counts.byState.stale).toBe(0)
+    // Package 2026-09-17.4 fixed the header the app reads (P1), so DESIGN_REV
+    // finally moves with the body instead of lagging it by two revs.
+    expect(DESIGN_REV).toBe('2026-09-17.2')
+    expect(counts.byState.stale).toBe(1)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

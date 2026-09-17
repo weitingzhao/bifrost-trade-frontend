@@ -38,7 +38,7 @@ export interface DesignRoute {
   group: string | null
 }
 
-export const DESIGN_REV = "2026-09-16.11"
+export const DESIGN_REV = "2026-09-17.2"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},
@@ -95,7 +95,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/review/fit","label":"Single trade","crumbs":["Review"],"designed":true,"file":"Review Fit.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Review"},
   {"path":"/review/habits","label":"Habits","crumbs":["Review"],"designed":true,"file":"Review Habits.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Review"},
   {"path":"/review/proposals","label":"Rule proposals","crumbs":["Review"],"designed":true,"file":"Review Queue.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Review"},
-  {"path":"/portfolio/performance","label":"Performance","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Performance.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/performance","label":"Performance","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Performance.dc.html","round":null,"rev":"2026-09-17.2","inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/backing","label":"Backing & Model","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Backing.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/outcome","label":"Outcome","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Outcome.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
@@ -121,6 +121,6 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/docs/audit","label":"UI Audit","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Audit.dc.html","round":null,"rev":"2026-09-12.1","inNav":true,"group":"System"},
   {"path":"/docs/capability","label":"Capability Map","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Capability.dc.html","round":null,"rev":"2026-09-12.1","inNav":true,"group":"System"},
   {"path":"/docs/gaps","label":"Gap Review","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Gaps.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"System"},
-  {"path":"/docs/options-kit","label":"Options Kit","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Options Kit.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"System"},
+  {"path":"/docs/options-kit","label":"Options Kit","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Options Kit.dc.html","round":null,"rev":"2026-09-17.2","inNav":true,"group":"System"},
   {"path":"/docs/drilldown","label":"Drill-down","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Drilldown.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"System"},
 ]

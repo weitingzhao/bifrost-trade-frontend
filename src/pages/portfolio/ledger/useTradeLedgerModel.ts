@@ -209,6 +209,10 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     () => optGroupsForView(bookData?.items ?? [], contractFilterExec, new Set(bookFiltered)),
     [bookData, bookFiltered, contractFilterExec],
   )
+  // Reconcile reads the same contract scope: a row reconciles or not whatever the
+  // date window or Type (see buildLedgerReconcile).
+  const canonContractScope = useMemo(() => (canonData?.items ?? []).filter(contractFilterExec), [canonData, contractFilterExec])
+  const bookContractScope = useMemo(() => (bookData?.items ?? []).filter(contractFilterExec), [bookData, contractFilterExec])
   const optGroupFills = useMemo(() => {
     const fills = new Set(bookFiltered)
     for (const g of optGroups) for (const t of g.trades) fills.add(t)
@@ -664,6 +668,8 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
     unreportedTypeCount,
     linkByOptionId,
     optGroups,
+    canonContractScope,
+    bookContractScope,
     closedOptGroups,
     openOptGroups,
     activeOpenOptGroups,

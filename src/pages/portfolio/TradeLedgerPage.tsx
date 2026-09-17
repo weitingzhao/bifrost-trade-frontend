@@ -160,6 +160,8 @@ export default function TradeLedgerPage() {
     catMap,
     canonFiltered,
     bookFiltered,
+    canonContractScope,
+    bookContractScope,
     unreportedTypeCount,
     linkByOptionId,
     structureOptions,
@@ -352,8 +354,8 @@ export default function TradeLedgerPage() {
     [canonFiltered, bookFiltered, closedOptGroupsPnlSum, sinceLabel, unlinkBasis],
   )
   const reconcile = useMemo(
-    () => buildLedgerReconcile(canonFiltered, bookFiltered),
-    [canonFiltered, bookFiltered],
+    () => buildLedgerReconcile(canonContractScope, bookContractScope, canonData?.items ?? []),
+    [canonContractScope, bookContractScope, canonData],
   )
   const undatedRows = useMemo(() => canonFiltered.filter(isUndatedExecution), [canonFiltered])
   const undatedNote = undatedSummaryNote(undatedRows)

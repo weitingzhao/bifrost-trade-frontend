@@ -164,6 +164,57 @@ describe('flex match key uses contract_key not symbol', () => {
   })
 })
 
+describe('reconcile scope and sources', () => {
+  const optFill = (partial: Partial<Execution>) =>
+    exec({
+      symbol: 'AAA  240621P00010000',
+      account_id: 'U0000001',
+      sec_type: 'OPT',
+      contract_key: 'AAA|OPT|P|10|20240621',
+      side: 'Buy',
+      qty: 2,
+      quantity: 2,
+      price: 1.5,
+      trade_date: '2024-03-15',
+      expiry: '20240621',
+      strike: 10,
+      option_right: 'P',
+      ...partial,
+    })
+
+  it('finds the Flex copy even when a filter has hidden it from the rows passed in', () => {
+    const tws = optFill({ source: 'tws_client' })
+    const flex = optFill({ source: 'flex_trades' })
+    const rec = buildLedgerReconcile([tws], [], [tws, flex])
+    expect(rec.groups.find(g => g.id === 'also_flex')?.count).toBe(1)
+    expect(rec.groups.find(g => g.id === 'unconfirmed')?.count).toBe(0)
+  })
+
+  it('reconciles a TWS stock fill instead of leaving it in no group', () => {
+    const stock = exec({ symbol: 'AAA', account_id: 'U0000001', sec_type: 'STK', contract_key: 'AAA', source: 'tws_client', side: 'Buy', quantity: 100, qty: 100, price: 10, trade_date: '2024-03-15' })
+    const rec = buildLedgerReconcile([stock], [])
+    const un = rec.groups.find(g => g.id === 'unconfirmed')
+    expect(un?.count).toBe(1)
+    expect(un?.label).toBe('Single fills Flex never confirmed')
+  })
+
+  it('keeps manual rows apart from journal: they sit beside TWS, outside the book', () => {
+    const manual = optFill({ source: 'manual' })
+    const journal = optFill({ source: 'journal_closed', account_executions_id: 9 })
+    const rec = buildLedgerReconcile([manual, journal], [journal])
+    expect(rec.manual).toBe(1)
+    expect(rec.groups.find(g => g.id === 'manual')?.count).toBe(1)
+    expect(rec.canonical - rec.book).toBe(rec.onlyTws + rec.manual)
+  })
+
+  it('names a row by the contract token and keeps the stored key for hover', () => {
+    const rec = buildLedgerReconcile([optFill({ source: 'tws_client' })], [])
+    const row = rec.groups.find(g => g.id === 'unconfirmed')?.rows[0]
+    expect(row?.name).toBe('AAA 21JUN24 10 P')
+    expect(row?.title).toBe('AAA|OPT|P|10|20240621')
+  })
+})
+
 describe('health commissions count rows that have a commission', () => {
   it('does not treat a null commission as a charged row', () => {
     const book = [

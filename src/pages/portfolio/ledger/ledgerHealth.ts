@@ -24,25 +24,26 @@ export type LedgerHealthTile = {
 export type LedgerHealthModel = {
   tiles: LedgerHealthTile[]
   unlink: { n: number; of: number; note: string; sub: string }
-  sourceCounts: { flex: number; tws: number; journal: number; other: number }
+  sourceCounts: { flex: number; tws: number; journal: number; manual: number; other: number }
   commissionSum: number
   commissionRows: number
   onlyTws: number
 }
 
-function sourceCountsOf(rows: Execution[]): { flex: number; tws: number; journal: number; other: number } {
-  const out = { flex: 0, tws: 0, journal: 0, other: 0 }
+function sourceCountsOf(rows: Execution[]): { flex: number; tws: number; journal: number; manual: number; other: number } {
+  const out = { flex: 0, tws: 0, journal: 0, manual: 0, other: 0 }
   for (const e of rows) {
     out[ledgerSourceBucket(e.source)] += 1
   }
   return out
 }
 
-function sourceSub(c: { flex: number; tws: number; journal: number; other: number }): string {
+function sourceSub(c: { flex: number; tws: number; journal: number; manual: number; other: number }): string {
   const parts: string[] = []
   if (c.flex) parts.push(`${c.flex} flex`)
   if (c.tws) parts.push(`${c.tws} tws`)
   if (c.journal) parts.push(`${c.journal} journal`)
+  if (c.manual) parts.push(`${c.manual} manual`)
   if (c.other) parts.push(`${c.other} other`)
   return parts.length > 0 ? parts.join(' · ') : 'no rows'
 }

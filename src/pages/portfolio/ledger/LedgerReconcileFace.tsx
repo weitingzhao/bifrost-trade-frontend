@@ -18,6 +18,7 @@ export function LedgerReconcileFace({
           { k: 'Canonical', v: String(model.canonical), amber: false },
           { k: 'Book', v: String(model.book), amber: false },
           { k: 'Only in TWS', v: String(model.onlyTws), amber: model.onlyTws > 0 },
+          ...(model.manual > 0 ? [{ k: 'Manual', v: String(model.manual), amber: true }] : []),
         ].map(s => (
           <span
             key={s.k}
@@ -36,8 +37,13 @@ export function LedgerReconcileFace({
         ))}
       </div>
       <p className="text-dense-meta text-muted-foreground leading-relaxed text-pretty">
-        The difference is every <span className="font-mono">tws_client</span> row. TWS is the fast
+        The difference is every <span className="font-mono">tws_client</span> row
+        {model.manual > 0 ? <> and every <span className="font-mono">manual</span> row</> : null}. TWS is the fast
         read and is deliberately outside the performance book, so a gap here is expected.
+      </p>
+      <p className="text-dense-caption text-muted-foreground leading-relaxed text-pretty">
+        Across all dates and types — a row reconciles or it does not, whatever the window. Account, symbol,
+        structure and expiry filters apply.
       </p>
       {model.groups.map(g => (
         <div key={g.id} className="rounded-md border border-border" data-reconcile-group={g.id}>
@@ -57,7 +63,7 @@ export function LedgerReconcileFace({
             <p className="text-dense-meta text-muted-foreground leading-relaxed text-pretty">{g.note}</p>
             {g.rows.slice(0, 50).map((r, i) => (
               <span key={`${g.id}-${i}`} className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                <span className="font-mono text-dense-meta text-foreground">{r.name}</span>
+                <span className="font-mono text-dense-meta text-foreground" title={r.title}>{r.name}</span>
                 <span className="font-mono text-dense-meta text-muted-foreground">{r.date}</span>
                 <span
                   className={cn(

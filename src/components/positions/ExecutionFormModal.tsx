@@ -16,6 +16,10 @@ import { fetchOpportunities, fetchStrategyInstances } from '@/api/strategy'
 import { formatInstanceOpenedDate } from '@/components/positions/linkExecutionModalHelpers'
 import type { Execution, StrategyInstance, CreateExecutionBody, UpdateExecutionBody } from '@/types/positions'
 import { cn } from '@/lib/utils'
+import {
+  datetimeLocalToEpochSeconds,
+  epochSecondsToDatetimeLocal,
+} from '@/components/positions/executionFormTime'
 
 interface Props {
   open: boolean
@@ -69,9 +73,7 @@ function ExecMetricField({
 function initFormFromExec(exec: Execution | null, accountOptions: string[]) {
   const defaultAccount = accountOptions[0] ?? ''
   if (!exec?.account_executions_id) {
-    const now = new Date()
-    const pad = (n: number) => String(n).padStart(2, '0')
-    const defaultTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+    const defaultTime = epochSecondsToDatetimeLocal(Date.now() / 1000)
     return {
       accountId: exec?.account_id?.trim() || defaultAccount,
       symbol: exec?.symbol ?? '',
@@ -106,7 +108,7 @@ function initFormFromExec(exec: Execution | null, accountOptions: string[]) {
     side: (isSell ? 'SELL' : 'BUY') as 'BUY' | 'SELL',
     quantity: qty > 0 ? String(qty) : '',
     price: exec.price != null ? String(exec.price) : '',
-    execTime: exec.time ? new Date(exec.time * 1000).toISOString().slice(0, 16) : '',
+    execTime: exec.time ? epochSecondsToDatetimeLocal(exec.time) : '',
     expiry: exec.expiry ?? '',
     strike: exec.strike != null ? String(exec.strike) : '',
     right: (r === 'P' ? 'P' : 'C') as 'C' | 'P',
@@ -244,7 +246,7 @@ function ExecutionFormModalBody({
       }
 
       const timeEpoch = execTime
-        ? Math.floor(new Date(execTime).getTime() / 1000)
+        ? datetimeLocalToEpochSeconds(execTime)
         : Math.floor(Date.now() / 1000)
       const quantityForDb = signedQuantity(q)
       const contractKey = buildContractKey(sym)

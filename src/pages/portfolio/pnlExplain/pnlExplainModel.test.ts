@@ -77,17 +77,29 @@ describe('cashInWindow', () => {
       [
         cash({ type: 'dividend', amount: 40 }),
         cash({ type: 'dividend', amount: 12 }),
-        cash({ type: 'other', amount: -7 }),
+        cash({ type: 'other', description: 'WITHHOLDING TAX', amount: -7 }),
         cash({ type: 'deposit', amount: 100_000 }),
         cash({ type: 'withdrawal', amount: -5_000 }),
-        cash({ type: 'other', amount: -900, ts: T0 - 90 * DAY }),
+        cash({ type: 'other', description: 'WITHHOLDING TAX', amount: -900, ts: T0 - 90 * DAY }),
       ],
       T0 - DAY,
       T0 + DAY,
     )
-    expect(groups.map((g) => g.type)).toEqual(['dividend', 'other'])
+    expect(groups.map((g) => g.type)).toEqual(['Dividend', 'Tax'])
     expect(groups[0]).toMatchObject({ n: 2, amount: 52 })
     expect(groups[1]).toMatchObject({ n: 1, amount: -7 })
+  })
+
+  it('reads Transfer & Pay’s own Kind, so a fee and a tax do not share one bucket', () => {
+    const groups = cashInWindow(
+      [
+        cash({ type: 'other', description: 'OPRA TOP OF BOOK', amount: -5 }),
+        cash({ type: 'other', description: 'WITHHOLDING TAX', amount: -20 }),
+      ],
+      T0 - DAY,
+      T0 + DAY,
+    )
+    expect(groups.map((g) => g.type).sort()).toEqual(['Data fee', 'Tax'])
   })
 
   it('reads the epoch the API sends as a string', () => {

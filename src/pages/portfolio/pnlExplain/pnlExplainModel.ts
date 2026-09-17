@@ -15,6 +15,7 @@
  * asserted as the answer.
  */
 import { ledgerOptionExecutionCashFlowSigned } from '@/utils/ledger/performanceUtils'
+import { kindOf } from '@/utils/transactionKind'
 import type { Execution } from '@/types/positions'
 import type { AccountTransaction } from '@/types/trading'
 import type { ByDayRangeData, PerformanceDayPnLCell } from '@/types/trading'
@@ -118,10 +119,15 @@ export interface CashGroup {
 }
 
 /**
- * Cash that moved in the window, by the type Transfer & Pay classifies it as.
- * Deposits and withdrawals are the Owner's own money and are excluded: returns
- * are ruled net of external cash flow (§14.5), so they were never part of the
- * P&L this page takes apart.
+ * Cash that moved in the window, by the Kind Transfer & Pay reads it as — that
+ * page's own classification, not a second one (§14.2). The broker labels three
+ * things and files the rest under `other`, which cannot answer for both a
+ * market-data subscription and lending income; Kind cuts the description, so a
+ * data fee and a withheld tax arrive here as themselves.
+ *
+ * Deposits, withdrawals and transfers are the Owner's own money and are left
+ * out: returns are ruled net of external cash flow (§14.5), so they were never
+ * part of the P&L this page takes apart.
  */
 export function cashInWindow(
   transactions: readonly AccountTransaction[],
@@ -130,11 +136,13 @@ export function cashInWindow(
 ): CashGroup[] {
   const byType = new Map<string, CashGroup>()
   for (const t of transactions) {
-    const type = (t.type ?? '').trim().toLowerCase()
-    if (type === 'deposit' || type === 'withdrawal') continue
+    const broker = (t.type ?? '').trim().toLowerCase()
+    if (broker === 'deposit' || broker === 'withdrawal') continue
     const ts = Number(t.ts)
     if (!Number.isFinite(ts) || ts < sinceSec || ts > untilSec) continue
-    const group = byType.get(type) ?? { type: type || 'unclassified', n: 0, amount: 0 }
+    const type = kindOf(t)
+    if (type === 'Transfer') continue
+    const group = byType.get(type) ?? { type, n: 0, amount: 0 }
     group.n += 1
     group.amount += Number(t.amount) || 0
     byType.set(type, group)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { KIND_RULE, cancelNoteOf, kindOf } from './kindRules'
+import { KIND_RULE, cancelNoteOf, kindOf } from '@/utils/transactionKind'
 
 const at = (type: string, description: string) => ({ type, description })
 

@@ -14,7 +14,7 @@ import {
   type DenseTagVariant,
 } from '@/components/data-display'
 import { fmtDateToken, fmtUsd } from '@/lib/format'
-import { cancelNoteOf, kindOf, type TransactionKind } from './kindRules'
+import { cancelNoteOf, kindOf, type TransactionKind } from '@/utils/transactionKind'
 import { buildTransferPayRows, txAmount } from './transferPayRows'
 import { transferPayUi } from './transferPayUi'
 import type { AccountTransaction } from '@/types/trading'

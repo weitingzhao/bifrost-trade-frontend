@@ -1,5 +1,5 @@
 import { getSummaryType, type RangePreset, type SummaryTypeKey } from '@/utils/transferPay'
-import { KIND_NAMES, kindOf, type TransactionKind } from './kindRules'
+import { KIND_NAMES, kindOf, type TransactionKind } from '@/utils/transactionKind'
 import type { AccountTransaction } from '@/types/trading'
 
 export const ALL_TYPES: SummaryTypeKey[] = ['deposit', 'withdrawal', 'dividend', 'other']

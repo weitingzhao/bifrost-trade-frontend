@@ -33,7 +33,7 @@ import { TransferPayTransactionsTable } from '@/pages/portfolio/transferPay/Tran
 import { TransferPaySummaryTable } from '@/pages/portfolio/transferPay/TransferPaySummaryTable'
 import { TransferPayWhatPanel } from '@/pages/portfolio/transferPay/TransferPayWhatPanel'
 import { TransferPayDownstream } from '@/pages/portfolio/transferPay/TransferPayDownstream'
-import type { TransactionKind } from '@/pages/portfolio/transferPay/kindRules'
+import type { TransactionKind } from '@/utils/transactionKind'
 import { netOf } from '@/pages/portfolio/transferPay/transferPayRows'
 import {
   ALL_TYPES,

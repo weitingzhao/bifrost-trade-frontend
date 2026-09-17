@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { TransferPayLookingAt } from './TransferPayLookingAt'
-import { KIND_NAMES, type TransactionKind } from './kindRules'
+import { KIND_NAMES, type TransactionKind } from '@/utils/transactionKind'
 import type { SummaryTypeKey } from '@/utils/transferPay'
 
 const A = 'U17123565'

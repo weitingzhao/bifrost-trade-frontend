@@ -9,7 +9,7 @@ import {
   selectRows,
 } from './transferPaySelection'
 import { RANGE_PRESET_OPTIONS } from '@/utils/transferPay'
-import type { TransactionKind } from './kindRules'
+import type { TransactionKind } from '@/utils/transactionKind'
 import type { AccountTransaction } from '@/types/trading'
 
 const A = 'U17123565'

@@ -10,7 +10,7 @@ import {
 import { fmtUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { SummaryTypeKey } from '@/utils/transferPay'
-import { KIND_BLURB, KIND_NAMES, KIND_RULE, type TransactionKind } from './kindRules'
+import { KIND_BLURB, KIND_NAMES, KIND_RULE, type TransactionKind } from '@/utils/transactionKind'
 import { transferPayUi } from './transferPayUi'
 
 const ALL_TYPES: SummaryTypeKey[] = ['deposit', 'withdrawal', 'dividend', 'other']

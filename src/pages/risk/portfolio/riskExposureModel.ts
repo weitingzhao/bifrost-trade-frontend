@@ -76,7 +76,7 @@ export const RISK_UNRECORDED = {
   gateHit:
     'Where usage would cross the 85% gate is Backing & Model’s to compute — this page cites it and never interpolates between two bars.',
   cluster:
-    'Naming a cluster needs a sector or theme for each symbol, which nothing on this side stores. Correlation says how much is one bet without naming it.',
+    'A cluster here is named by its members and the correlation floor that links them, not by a theme: naming it “AI” or “semis” would need a sector for each symbol, and the vendor’s ticker reference carries none.',
 } as const
 
 function sum(values: readonly (number | null)[]): { total: number; n: number } {
@@ -245,4 +245,70 @@ export function effectiveIndependentPositions(
     }
   }
   return { n: q > 0 ? 1 / q : null, counted: usable.length, unfilled }
+}
+
+/** Two names belong to the same cluster when they move together at least this much. */
+export const RISK_CLUSTER_RHO = 0.5
+
+export interface RiskCluster {
+  members: string[]
+  /** Share of the book's β-weighted Δ$, on absolute exposure. */
+  share: number
+  /** True when every member leans the same way — a cluster that cannot offset itself. */
+  oneWay: boolean
+}
+
+/**
+ * Clusters read off the correlation matrix, not off a sector list.
+ *
+ * The design names its clusters ("high-beta AI / semis"), which needs a theme
+ * per symbol that nothing on this side stores. The reading underneath the name
+ * is what matters and the matrix already carries it: names that all move
+ * together are one bet, and their combined share is how much of the book that
+ * bet is. So a cluster here is named by its members and the floor that links
+ * them, which is a fact, rather than by a theme, which would be a guess.
+ *
+ * Complete linkage, not single: a name joins only when it clears `rho` against
+ * **every** member already in the cluster. Single linkage chains — A moves with
+ * B and B with C puts C in even when A and C are unrelated — and on this book
+ * that chained a cash-like ETF into the equity cluster through a bond ETF and
+ * reported it as one bet. A cluster should mean "these all move together", and
+ * complete linkage is that sentence.
+ *
+ * The largest exposure seeds first, so the cluster a reader is warned about is
+ * built around the position that matters most rather than around whichever name
+ * sorted first.
+ */
+export function correlationClusters(
+  rows: readonly RiskExposureRow[],
+  matrix: Readonly<Record<string, Record<string, { rho: number | null }>>> | null,
+  rho: number = RISK_CLUSTER_RHO,
+): RiskCluster[] {
+  if (!matrix) return []
+  const usable = rows
+    .filter((r) => r.betaDeltaDollars != null && matrix[r.symbol])
+    .sort((a, b) => Math.abs(b.betaDeltaDollars ?? 0) - Math.abs(a.betaDeltaDollars ?? 0))
+  if (usable.length === 0) return []
+  const total = usable.reduce((a, r) => a + Math.abs(r.betaDeltaDollars ?? 0), 0)
+  if (total <= 0) return []
+
+  const groups: RiskExposureRow[][] = []
+  for (const r of usable) {
+    // An unfilled pair is not a link: it is left out rather than assumed together.
+    const fits = groups.find((g) => g.every((m) => (matrix[r.symbol]?.[m.symbol]?.rho ?? -1) >= rho))
+    if (fits) fits.push(r)
+    else groups.push([r])
+  }
+
+  return groups
+    .map((members) => {
+      const share = members.reduce((a, r) => a + Math.abs(r.betaDeltaDollars ?? 0), 0) / total
+      const signs = new Set(members.map((r) => Math.sign(r.betaDeltaDollars ?? 0)).filter((s) => s !== 0))
+      return {
+        members: members.map((r) => r.symbol).sort(),
+        share,
+        oneWay: signs.size <= 1,
+      }
+    })
+    .sort((a, b) => b.share - a.share)
 }

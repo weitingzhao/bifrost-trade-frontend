@@ -22,6 +22,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
+import { CorrelationPanel } from './CorrelationPanel'
+import { STRESS_VOL_ROWS } from '@/pages/risk/stress/stressModel'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
@@ -39,6 +41,7 @@ import {
   RISK_CONCENTRATION_FLOOR,
   RISK_UNRECORDED,
   buildRiskExposureRows,
+  correlationClusters,
   effectiveIndependentPositions,
   greeksByUnderlying,
   riskByExpiry,
@@ -77,16 +80,6 @@ function Stat({
   )
 }
 
-/** A correlation cell's ink: amber deepens with ρ, and the diagonal is not a reading. */
-function rhoTone(rho: number | null, self: boolean): { text: string; style?: React.CSSProperties } {
-  if (self) return { text: 'text-[var(--sk-line2)]' }
-  if (rho == null) return { text: 'text-muted-foreground' }
-  const a = Math.max(0, rho - 0.2) * 0.42
-  return {
-    text: rho > 0.7 ? 'text-foreground' : 'text-secondary-foreground',
-    style: { background: `color-mix(in oklab, var(--color-warning) ${Math.round(a * 100)}%, transparent)` },
-  }
-}
 
 export default function RiskPortfolioPage() {
   const { data: status, isLoading: statusLoading } = useMonitorStatus()
@@ -221,6 +214,10 @@ export default function RiskPortfolioPage() {
   const expiries = useMemo(() => riskByExpiry(legs), [legs])
   const enp = useMemo(
     () => effectiveIndependentPositions(rows, corrQuery.data?.matrix ?? null),
+    [rows, corrQuery.data?.matrix],
+  )
+  const clusters = useMemo(
+    () => correlationClusters(rows, corrQuery.data?.matrix ?? null),
     [rows, corrQuery.data?.matrix],
   )
   const corrSymbols = useMemo(
@@ -543,24 +540,49 @@ export default function RiskPortfolioPage() {
                     The model service reports no account stress for this scope.
                   </p>
                 ) : (
-                  stress.cells.map((c) => (
-                    <div key={c.shock} className="flex flex-wrap items-center gap-2.5 border-b border-border/55 px-3 py-1.5 last:border-b-0">
-                      <span className={cn(positionsUi.mono, 'w-16 text-xs text-secondary-foreground')}>
-                        {c.shock > 0 ? '+' : ''}
-                        {Math.round(c.shock * 100)}%
-                      </span>
-                      <span className="relative h-1.75 min-w-15 flex-[1_1_8rem] overflow-hidden rounded-sm bg-[var(--sk-surface)]">
-                        <span
-                          className={cn('absolute inset-y-0', c.pnl < 0 ? 'right-1/2 bg-loss/60' : 'left-1/2 bg-profit/60')}
-                          style={{ width: `${Math.round((Math.abs(c.pnl) / maxStress) * 50)}%` }}
-                        />
-                        <span className="absolute inset-y-0 left-1/2 w-px bg-[var(--sk-line2)]" />
-                      </span>
-                      <span className={cn(positionsUi.mono, 'w-24 text-right text-xs font-semibold', pnlColorClass(c.pnl))}>
-                        {fmtSignedUsd0(c.pnl)}
-                      </span>
-                    </div>
-                  ))
+                  <div className="overflow-x-auto">
+                    {/* The design's matrix, with the vol rows it draws — only flat carries a reading. */}
+                    <table className="w-full min-w-[500px] border-collapse [&_td]:px-1 [&_th]:px-1">
+                      <thead>
+                        <tr>
+                          <th className={cn(positionsUi.th, 'text-left')}>vol \ SPY</th>
+                          {stress.cells.map((c) => (
+                            <th key={c.shock} className={positionsUi.th}>
+                              {c.shock > 0 ? '+' : ''}
+                              {Math.round(c.shock * 100)}%
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {STRESS_VOL_ROWS.map((row) => (
+                          <tr key={row.label}>
+                            <td className={cn(positionsUi.td, 'pl-2 text-left font-sans text-muted-foreground')}>
+                              {row.label}
+                            </td>
+                            {stress.cells.map((c) =>
+                              row.ivShock == null ? (
+                                <td key={c.shock} className={cn(positionsUi.td, 'text-muted-foreground')} title={RISK_UNRECORDED.volShock}>
+                                  —
+                                </td>
+                              ) : (
+                                <td
+                                  key={c.shock}
+                                  className={cn(positionsUi.td, 'border border-[var(--sk-raised2)]', pnlColorClass(c.pnl))}
+                                  style={{
+                                    background: `color-mix(in oklab, ${c.pnl < 0 ? 'var(--color-loss)' : 'var(--color-profit)'} ${Math.round(Math.min(0.32, (Math.abs(c.pnl) / maxStress) * 0.32) * 100)}%, transparent)`,
+                                  }}
+                                  title={`SPY ${c.shock > 0 ? '+' : ''}${Math.round(c.shock * 100)}% · vol flat`}
+                                >
+                                  {fmtSignedUsd0(c.pnl)}
+                                </td>
+                              ),
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
                 <p className={cn(FOOT, 'm-0')}>
                   Each row is what the shock itself costs, not the payoff at that price. {RISK_UNRECORDED.volShock} The
@@ -614,141 +636,73 @@ export default function RiskPortfolioPage() {
               </section>
             </div>
 
-            <div className={positionsUi.bandGrid}>
-              <section className={positionsUi.panel} aria-label="One bet or five">
-                <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>One bet or many</span>
-                  <span className={positionsUi.panelTitle}>correlation · {CORR_WINDOW}d daily returns</span>
-                  <span className="ml-auto text-dense-meta text-muted-foreground">
-                    effective independent positions{' '}
-                    <span
-                      className={cn(
-                        positionsUi.mono,
-                        'font-bold',
-                        enp.n != null && enp.n < enp.counted * 0.6 ? 'text-warning' : 'text-foreground',
-                      )}
-                    >
-                      {enp.n == null ? '—' : enp.n.toFixed(1)}
-                    </span>{' '}
-                    of {enp.counted}
-                  </span>
-                </header>
-                {corrSymbols.length > 1 ? (
-                  <div className="overflow-x-auto px-3 py-2.5">
-                    <table className="border-collapse">
-                      <thead>
-                        <tr>
-                          <th className={cn(positionsUi.th, 'border-b-0 text-left')} />
-                          {corrSymbols.map((s) => (
-                            <th key={s} className={cn(positionsUi.th, 'border-b-0 px-1.5 text-center')}>
-                              {s}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {corrSymbols.map((a) => (
-                          <tr key={a}>
-                            <td className={cn(positionsUi.td, 'border-b-0 pr-2 text-left font-bold text-[var(--color-entity-option)]')}>
-                              {a}
-                            </td>
-                            {corrSymbols.map((b) => {
-                              const cell = corrQuery.data?.matrix?.[a]?.[b]
-                              const self = a === b
-                              const tone = rhoTone(cell?.rho ?? null, self)
-                              return (
-                                <td
-                                  key={b}
-                                  className={cn(positionsUi.td, 'border border-[var(--sk-raised2)] px-1.5 text-center', tone.text)}
-                                  style={tone.style}
-                                  title={`${a} / ${b} · ${CORR_WINDOW}d${cell?.n ? ` · n ${cell.n}` : ''}`}
-                                >
-                                  {self ? '—' : cell?.rho == null ? '·' : cell.rho.toFixed(2)}
-                                </td>
-                              )
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
-                    A matrix needs two names Research can fill; this scope has {corrSymbols.length}.
-                  </p>
-                )}
-                <p className={cn(FOOT, 'm-0')}>
-                  β-weighting says the book is spread over {totals.withBetaDelta} names;{' '}
-                  {enp.n == null
-                    ? 'correlation has no reading for this scope'
-                    : `correlation says it is ${enp.n.toFixed(1)} ${enp.n < 2 ? 'bet' : 'bets'}`}
-                  . A genuine diversifier is short-beta or long-vol, not another name.{' '}
-                  {enp.unfilled > 0
-                    ? `${enp.unfilled} pairs the matrix could not fill are left out rather than read as uncorrelated.`
-                    : ''}{' '}
-                  {RISK_UNRECORDED.cluster}
-                </p>
-              </section>
+            <CorrelationPanel
+              symbols={corrSymbols}
+              matrix={corrQuery.data?.matrix ?? null}
+              clusters={clusters}
+              window={CORR_WINDOW}
+              enp={enp}
+              names={totals.withBetaDelta}
+            />
 
-              <section className={positionsUi.panel} aria-label="By expiry">
-                <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>By expiry</span>
-                  <span className={positionsUi.panelTitle}>where Γ and Θ sit</span>
-                  <span className="ml-auto text-dense-meta text-muted-foreground">
-                    {legs.length} priced {legs.length === 1 ? 'leg' : 'legs'}
-                    {book.greeks.unmatched > 0 ? ` · ${book.greeks.unmatched} the vendor could not price` : ''}
-                  </span>
-                </header>
-                {expiries.length === 0 ? (
-                  <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No option legs in this scope.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    {/* §14.6: five columns, the design's 620 floor. */}
-                    <table className="w-full min-w-[620px] table-fixed border-collapse">
-                      <colgroup>
-                        <col style={{ width: '18%' }} />
-                        <col style={{ width: '12%' }} />
-                        <col style={{ width: '20%' }} />
-                        <col style={{ width: '20%' }} />
-                        <col style={{ width: '30%' }} />
-                      </colgroup>
-                      <thead>
-                        <tr>
-                          <th className={cn(positionsUi.th, 'text-left')}>Expiry</th>
-                          <th className={positionsUi.th}>Legs</th>
-                          <th className={positionsUi.th}>Γ /pt</th>
-                          <th className={positionsUi.th}>Θ /d</th>
-                          <th className={positionsUi.th}>Vega /pt</th>
+            <section className={positionsUi.panel} aria-label="By expiry">
+              <header className={positionsUi.panelHead}>
+                <span className={positionsUi.cap}>By expiry</span>
+                <span className={positionsUi.panelTitle}>where Γ and Θ sit</span>
+                <span className="ml-auto text-dense-meta text-muted-foreground">
+                  {legs.length} priced {legs.length === 1 ? 'leg' : 'legs'}
+                  {book.greeks.unmatched > 0 ? ` · ${book.greeks.unmatched} the vendor could not price` : ''}
+                </span>
+              </header>
+              {expiries.length === 0 ? (
+                <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No option legs in this scope.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  {/* §14.6: five columns, the design's 620 floor. */}
+                  <table className="w-full min-w-[620px] table-fixed border-collapse">
+                    <colgroup>
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '20%' }} />
+                      <col style={{ width: '20%' }} />
+                      <col style={{ width: '30%' }} />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th className={cn(positionsUi.th, 'text-left')}>Expiry</th>
+                        <th className={positionsUi.th}>Legs</th>
+                        <th className={positionsUi.th}>Γ /pt</th>
+                        <th className={positionsUi.th}>Θ /d</th>
+                        <th className={positionsUi.th}>Vega /pt</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {expiries.map((e) => (
+                        <tr key={e.expiry}>
+                          <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
+                            {fmtIsoDateToken(`${e.expiry.slice(0, 4)}-${e.expiry.slice(4, 6)}-${e.expiry.slice(6, 8)}`)}
+                          </td>
+                          <td className={cn(positionsUi.td, 'text-secondary-foreground')}>{e.legs}</td>
+                          <td className={cn(positionsUi.td, (e.gamma ?? 0) < 0 ? 'text-warning' : 'text-secondary-foreground')}>
+                            {e.gamma == null ? '—' : fmtSignedUsd0(e.gamma)}
+                          </td>
+                          <td className={cn(positionsUi.td, pnlColorClass(e.theta ?? 0))}>
+                            {e.theta == null ? '—' : fmtSignedUsd0(e.theta)}
+                          </td>
+                          <td className={cn(positionsUi.td, 'text-secondary-foreground')}>
+                            {e.vega == null ? '—' : fmtSignedUsd0(e.vega)}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {expiries.map((e) => (
-                          <tr key={e.expiry}>
-                            <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
-                              {fmtIsoDateToken(`${e.expiry.slice(0, 4)}-${e.expiry.slice(4, 6)}-${e.expiry.slice(6, 8)}`)}
-                            </td>
-                            <td className={cn(positionsUi.td, 'text-secondary-foreground')}>{e.legs}</td>
-                            <td className={cn(positionsUi.td, (e.gamma ?? 0) < 0 ? 'text-warning' : 'text-secondary-foreground')}>
-                              {e.gamma == null ? '—' : fmtSignedUsd0(e.gamma)}
-                            </td>
-                            <td className={cn(positionsUi.td, pnlColorClass(e.theta ?? 0))}>
-                              {e.theta == null ? '—' : fmtSignedUsd0(e.theta)}
-                            </td>
-                            <td className={cn(positionsUi.td, 'text-secondary-foreground')}>
-                              {e.vega == null ? '—' : fmtSignedUsd0(e.vega)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                <p className={cn(FOOT, 'm-0')}>
-                  Which expiry carries an event, and which strike the dealers sit at, is Events&rsquo; subject — this table
-                  only says where the book&rsquo;s convexity and carry are.
-                </p>
-              </section>
-            </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <p className={cn(FOOT, 'm-0')}>
+                Which expiry carries an event, and which strike the dealers sit at, is Events&rsquo; subject — this table
+                only says where the book&rsquo;s convexity and carry are.
+              </p>
+            </section>
 
             <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> This page asks how much of the

@@ -3,6 +3,7 @@ import {
   RISK_CONCENTRATION_FLOOR,
   buildRiskExposureRows,
   effectiveIndependentPositions,
+  correlationClusters,
   greeksByUnderlying,
   riskByExpiry,
   type LegGreeks,
@@ -138,5 +139,66 @@ describe('effectiveIndependentPositions', () => {
 
   it('has no reading at all when Research gave no matrix', () => {
     expect(effectiveIndependentPositions(rows, null)).toEqual({ n: null, counted: 0, unfilled: 0 })
+  })
+})
+
+describe('correlationClusters', () => {
+  function row(symbol: string, bd: number): RiskExposureRow {
+    return {
+      symbol,
+      beta: 1,
+      betaN: 60,
+      spot: 10,
+      deltaShares: 1,
+      deltaDollars: bd,
+      betaDeltaDollars: bd,
+      share: null,
+      gamma: null,
+      theta: null,
+      vega: null,
+      legs: 0,
+      degraded: false,
+      noReadingReason: null,
+    }
+  }
+
+  it('refuses to chain: A moves with B and B with C does not make A and C one bet', () => {
+    // Single linkage would put all three together through B. On the real book
+    // that chained a cash-like ETF into the equity cluster through a bond ETF.
+    const clusters = correlationClusters(
+      [row('A', 300), row('B', 100), row('C', 100), row('D', 100)],
+      {
+        A: { A: { rho: 1 }, B: { rho: 0.8 }, C: { rho: 0.1 }, D: { rho: 0 } },
+        B: { A: { rho: 0.8 }, B: { rho: 1 }, C: { rho: 0.7 }, D: { rho: 0 } },
+        C: { A: { rho: 0.1 }, B: { rho: 0.7 }, C: { rho: 1 }, D: { rho: 0 } },
+        D: { A: { rho: 0 }, B: { rho: 0 }, C: { rho: 0 }, D: { rho: 1 } },
+      },
+    )
+    // A is the largest exposure, so it seeds; B clears 0.8 against it; C clears
+    // B but not A, so it stands alone.
+    expect(clusters.map((c) => c.members)).toEqual([['A', 'B'], ['C'], ['D']])
+    expect(clusters[0].share).toBeCloseTo(400 / 600)
+    expect(clusters[0].oneWay).toBe(true)
+  })
+
+  it('says when a cluster can offset itself: one side short is not one bet the same way', () => {
+    const clusters = correlationClusters([row('A', 100), row('B', -100)], {
+      A: { A: { rho: 1 }, B: { rho: 0.9 } },
+      B: { A: { rho: 0.9 }, B: { rho: 1 } },
+    })
+    expect(clusters[0].members).toEqual(['A', 'B'])
+    expect(clusters[0].oneWay).toBe(false)
+  })
+
+  it('leaves a pair the matrix could not fill unlinked rather than guessing it together', () => {
+    const clusters = correlationClusters([row('A', 100), row('B', 100)], {
+      A: { A: { rho: 1 }, B: { rho: null } },
+      B: { A: { rho: null }, B: { rho: 1 } },
+    })
+    expect(clusters.map((c) => c.members)).toEqual([['A'], ['B']])
+  })
+
+  it('has nothing to say without a matrix', () => {
+    expect(correlationClusters([row('A', 100)], null)).toEqual([])
   })
 })

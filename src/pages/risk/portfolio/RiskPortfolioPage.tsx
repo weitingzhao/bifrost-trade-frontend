@@ -23,6 +23,7 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { PositionsStat } from '@/components/positions/PositionsStat'
+import { BackingHeadroomPanel } from '@/components/positions/BackingHeadroomPanel'
 import { CorrelationPanel } from './CorrelationPanel'
 import { STRESS_VOL_ROWS } from '@/pages/risk/stress/stressModel'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -237,23 +238,6 @@ export default function RiskPortfolioPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelStamp, scopeKey])
-
-  /**
-   * Backing usage now, and where a shock would put it.
-   *
-   * Only `now` is a reading: it is Backing's own judgment, cited. Usage under a
-   * shock needs the pool re-priced at the shocked price, which is that page's
-   * computation and not this one's — so those rows carry no bar at all rather
-   * than a projection this page cannot stand behind.
-   */
-  const headroomRows = useMemo(
-    () => [
-      { label: 'now', pct: judgment?.usedPct ?? null },
-      { label: 'SPY −5%', pct: null as number | null },
-      { label: 'SPY −10%', pct: null as number | null },
-    ],
-    [judgment?.usedPct],
-  )
 
   const topShare = rows[0]?.share ?? null
   const concentrated = topShare != null && topShare > RISK_CONCENTRATION_FLOOR
@@ -572,47 +556,19 @@ export default function RiskPortfolioPage() {
                 </p>
               </section>
 
-              <section className={positionsUi.panel} aria-label="Backing headroom under stress">
-                <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>Backing headroom under stress</span>
-                  <span className={positionsUi.panelTitle}>usage &rarr; gate 85%</span>
-                  <Link to="/portfolio/backing" className={cn(positionsUi.link, 'ml-auto')}>
+              <BackingHeadroomPanel
+                usedPct={judgment?.usedPct ?? null}
+                action={
+                  <Link to="/portfolio/backing" className={positionsUi.link}>
                     Backing &amp; Model &rarr;
                   </Link>
-                </header>
-                <div className="flex flex-col gap-2.5 px-3.5 py-3">
-                  {headroomRows.map((h) => (
-                    <div key={h.label} className="grid grid-cols-[5.75rem_minmax(0,1fr)_3.25rem] items-center gap-2.5">
-                      <span className="text-dense-meta leading-normal text-muted-foreground">{h.label}</span>
-                      <span className="relative block h-2 overflow-hidden rounded-sm bg-[var(--sk-surface)]">
-                        {h.pct == null ? null : (
-                          <span
-                            className={cn('absolute inset-y-0 left-0', h.pct > 0.85 ? 'bg-lamp-red' : 'bg-warning')}
-                            style={{ width: `${Math.min(100, Math.round(h.pct * 100))}%` }}
-                          />
-                        )}
-                        {/* The house gate, where Rules would trip auto-derisk. */}
-                        <span className="absolute -inset-y-0.5 left-[85%] w-0.5 bg-lamp-red" />
-                      </span>
-                      {h.pct == null ? (
-                        <span className="inline-flex items-center gap-1 text-dense-caption text-muted-foreground">
-                          <StatusLamp lamp="gray" variant="dot" title="Not computed here" />
-                          n/c
-                        </span>
-                      ) : (
-                        <span className={cn(positionsUi.mono, 'text-right text-xs font-semibold', h.pct > 0.85 ? 'text-loss' : 'text-foreground')}>
-                          {Math.round(h.pct * 100)}%
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <p className={cn(FOOT, 'm-0')}>
-                  The red line is the house gate, where Rules would trip auto-derisk. Only <em>now</em> is a reading:
-                  usage under a shock needs the pool re-priced at the shocked price, and where usage would cross the gate
-                  is Backing &amp; Model&rsquo;s to compute. {RISK_UNRECORDED.gateHit}
-                </p>
-              </section>
+                }
+                foot={
+                  <>
+                    The red line is the house gate, where Rules would trip auto-derisk. {RISK_UNRECORDED.gateHit}
+                  </>
+                }
+              />
             </div>
 
             <CorrelationPanel

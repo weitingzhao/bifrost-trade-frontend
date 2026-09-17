@@ -23,8 +23,11 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { PositionsStat } from '@/components/positions/PositionsStat'
+import { BackingHeadroomPanel } from '@/components/positions/BackingHeadroomPanel'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { fmtPct0 } from '@/utils/positions'
+import { pnlColorClass } from '@/utils/dailyChange'
+import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
 import { rollupMargin } from '@/utils/marginPressure'
 import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment'
 import { fetchModelAnalysis } from '@/api/portfolio'
@@ -78,6 +81,30 @@ export default function RiskMarginPage() {
   )
   const usersTotal = marginUsersTotal(users)
 
+  /**
+   * What a shock does to the two halves of the ratio.
+   *
+   * Net liq after the shock is a reading: the model service says what the shock
+   * costs the book, and that comes straight off net liquidation. The
+   * requirement is not — the broker would have to re-run its own margin at the
+   * shocked price, and nothing asks it to. So pressure after a shock has no
+   * reading either, and the panel says which half is missing rather than
+   * implying both are known.
+   */
+  const shocked = useMemo(() => {
+    const by = new Map<number, number>()
+    for (const q of modelQueries) {
+      for (const sc of q.data?.account_stress?.scenarios ?? []) {
+        if (sc.iv_shock !== 0 || sc.pnl_change == null) continue
+        by.set(sc.spot_shock, (by.get(sc.spot_shock) ?? 0) + sc.pnl_change)
+      }
+    }
+    return [-0.1, -0.05]
+      .filter((k) => by.has(k))
+      .map((k) => ({ shock: k, pnl: by.get(k) ?? 0, netLiqAfter: margin.netLiquidation + (by.get(k) ?? 0) }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelStamp, scopeKey, margin.netLiquidation])
+
   const book = usePositionsBook(
     {
       accountFilter:
@@ -97,6 +124,7 @@ export default function RiskMarginPage() {
   const loading = statusLoading
   const error = modelQueries.find((q) => q.error)?.error ?? null
   const maxCommitted = Math.max(1, ...users.map((u) => u.committed))
+  const buyingPower = margin.accounts.reduce((a, f) => a + (f.buyingPower ?? 0), 0)
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -149,17 +177,12 @@ export default function RiskMarginPage() {
                   }
                 />
                 <PositionsStat
-                  cap="Excess liquidity"
-                  value={margin.excessLiquidity > 0 ? fmtMvAbbrev(margin.excessLiquidity) : '—'}
-                  sub="what is left before the broker acts"
-                />
-                <PositionsStat
                   cap="Pressure · 1 − Cushion"
                   value={fmtPct0(margin.pressure)}
                   ink={(margin.pressure ?? 0) > PRESSURE_WARN ? 'text-warning' : undefined}
                   sub={
-                    margin.tightest
-                      ? `tightest ${margin.tightest.accountId} at ${fmtPct0(margin.tightest.pressure)}`
+                    margin.excessLiquidity > 0
+                      ? `${fmtMvAbbrev(margin.excessLiquidity)} excess left${margin.tightest ? ` · tightest ${margin.tightest.accountId}` : ''}`
                       : 'the broker’s Cushion, inverted'
                   }
                 />
@@ -169,12 +192,23 @@ export default function RiskMarginPage() {
                   ink={judgment?.overGate ? 'text-warning' : undefined}
                   sub={
                     <>
-                      house gate 85% ·{' '}
+                      of the pool ·{' '}
                       <Link to="/portfolio/backing" className={positionsUi.link}>
                         Backing →
                       </Link>
                     </>
                   }
+                />
+                <PositionsStat
+                  cap="Headroom to gate"
+                  value={judgment && judgment.spendable > 0 ? fmtMvAbbrev(judgment.spendable) : '—'}
+                  ink="text-primary"
+                  sub="under the 85% house line"
+                />
+                <PositionsStat
+                  cap="Options buying power"
+                  value={buyingPower > 0 ? fmtMvAbbrev(buyingPower) : '—'}
+                  sub="the broker’s own figure, summed over the scope"
                 />
               </div>
               <p className={cn(FOOT, 'm-0')}>
@@ -332,23 +366,60 @@ export default function RiskMarginPage() {
             </section>
 
             <div className={positionsUi.bandGrid}>
-              <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Under stress">
+              <BackingHeadroomPanel
+                usedPct={judgment?.usedPct ?? null}
+                action={
+                  <Link to="/risk/portfolio" className={positionsUi.link}>
+                    the same rulers &rarr; Exposure
+                  </Link>
+                }
+                foot={
+                  <>
+                    The same three rulers Risk &rsaquo; Exposure draws, from the same judgment &mdash; one computation,
+                    cited twice. The red line is the house gate; the broker&rsquo;s own line is Pressure above, and at 1
+                    it is the broker, not the house, that acts.
+                  </>
+                }
+              />
+
+              <section className={positionsUi.panel} aria-label="Under stress">
                 <header className={positionsUi.panelHead}>
                   <span className={positionsUi.cap}>Under stress</span>
-                  <span className={positionsUi.panelTitle}>what a shock does to the requirement</span>
-                  <DenseTag variant="warning" size="cell">
-                    ⚠ no reading
-                  </DenseTag>
-                </header>
-                <p className="m-0 px-3 py-2.5 text-xs leading-normal text-secondary-foreground text-pretty">
-                  The account summary carries the broker&rsquo;s look-ahead maintenance for the next session, and on this
-                  book it equals today&rsquo;s — a look-ahead is not a shocked requirement.
-                </p>
-                <p className={cn(FOOT, 'm-0')}>
-                  {MARGIN_UNRECORDED.stressed} What a shock does to the book&rsquo;s P&amp;L does have a reading —{' '}
-                  <Link to="/risk/stress" className={positionsUi.link}>
-                    Stress &amp; Scenario →
+                  <span className={positionsUi.panelTitle}>net liq after the shock</span>
+                  <Link to="/risk/stress" className={cn(positionsUi.link, 'ml-auto')}>
+                    who pays &rarr; Stress &amp; Scenario
                   </Link>
+                </header>
+                {shocked.length === 0 ? (
+                  <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
+                    The model service reports no account stress for this scope.
+                  </p>
+                ) : (
+                  shocked.map((r) => (
+                    <div
+                      key={r.shock}
+                      className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border/55 px-3 py-1.75 last:border-b-0"
+                    >
+                      <span className={cn(positionsUi.mono, 'w-16 text-xs text-secondary-foreground')}>
+                        SPY {Math.round(r.shock * 100)}%
+                      </span>
+                      <span className={cn(positionsUi.mono, 'text-xs font-semibold', pnlColorClass(r.pnl))}>
+                        {fmtSignedUsd0(r.pnl)}
+                      </span>
+                      <span className="text-dense-meta text-muted-foreground">net liq becomes</span>
+                      <span className={cn(positionsUi.mono, 'text-xs font-bold text-foreground')}>
+                        {fmtMvAbbrev(r.netLiqAfter)}
+                      </span>
+                      <span className="ml-auto inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
+                        <StatusLamp lamp="gray" variant="dot" title="Not computed here" />
+                        requirement n/c
+                      </span>
+                    </div>
+                  ))
+                )}
+                <p className={cn(FOOT, 'm-0')}>
+                  Only one half of the ratio moves here. {MARGIN_UNRECORDED.stressed} So pressure after a shock has no
+                  reading, and this panel shows the half that does.
                 </p>
               </section>
 

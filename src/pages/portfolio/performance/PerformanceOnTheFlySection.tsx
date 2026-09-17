@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import { CollapsibleChevron } from '@/components/data-display'
+import { fmtIsoDateToken } from '@/lib/format'
+import { perfUi } from './performanceUi'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { ExecSourceBadge } from '@/pages/portfolio/ledger/ExecSourceBadge'
 import { usePerformanceOnTheFly } from '@/hooks/usePerformanceOnTheFly'
@@ -67,28 +69,29 @@ export function PerformanceOnTheFlySection({
     return execs.filter((e) => (e.sec_type ?? '').toUpperCase() === tab).length
   }
 
+  const net = data?.perf.summary?.net_pnl ?? null
+
   return (
-    <section className={styles.sectionPane} aria-label="On the fly executions">
-      <div className={styles.onTheFlyHeader}>
-        <h3 className={styles.onTheFlyTitle}>On the fly</h3>
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="h-8"
-          aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
-        >
-          {open ? 'Hide' : 'Show'}
-        </Button>
-      </div>
-      <p className={styles.onTheFlyHint}>
-        TWS-side executions that are not already covered by the official book (same account and contract as a row in
-        the Flex/Journal ledger). Option combo legs (<code className={styles.inlineCode}>BAG</code>) are
-        omitted. Same time range and strategy filters as above.
-      </p>
+    <section className={perfUi.panel} aria-label="On the fly executions">
+      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={cn(perfUi.panelToggle, 'rounded-md')}>
+        <CollapsibleChevron expanded={open} className={cn('h-3 w-3', open ? 'rotate-0' : '-rotate-90')} />
+        <span className={perfUi.cap}>On the fly</span>
+        <span className={perfUi.panelTitle}>outside every strategy</span>
+        <span className={cn(perfUi.mono, 'text-dense-body text-muted-foreground')}>
+          {open && data ? `${execs.length} ${execs.length === 1 ? 'fill' : 'fills'}` : 'TWS fills the official book does not cover'}
+        </span>
+        {open && net != null ? (
+          <span className={cn(perfUi.mono, 'ml-auto text-dense-label font-bold', kvToneClass(net))}>{fmtPnl(net)}</span>
+        ) : null}
+      </button>
 
       {open && (
+        <div className="flex flex-col gap-2 border-t border-border px-3 pt-2 pb-3">
+          <p className={cn(perfUi.note, 'm-0 text-pretty')}>
+            TWS-side executions that are not already covered by the official book (same account and contract as a row
+            in the Flex/Journal ledger). Option combo legs (<code className={styles.inlineCode}>BAG</code>) are
+            omitted. Same time range and strategy filters as above.
+          </p>
         <>
           {isLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
           {isError && (
@@ -106,7 +109,7 @@ export function PerformanceOnTheFlySection({
                 </strong>
               </span>
               <span className={styles.onTheFlySummaryKv}>
-                Realized <strong>{fmtPnl(data.perf.summary.realized ?? 0)}</strong>
+                Realized <strong>{fmtPnl(data.perf.summary.total_realized_pnl ?? data.perf.summary.realized ?? 0)}</strong>
               </span>
               <span className={styles.onTheFlySummaryKv}>
                 Commission <strong>{fmtUsd(data.perf.summary.total_commission ?? 0)}</strong>
@@ -221,6 +224,7 @@ export function PerformanceOnTheFlySection({
             </>
           )}
         </>
+        </div>
       )}
     </section>
   )
@@ -235,7 +239,7 @@ function OnTheFlyRow({ exec: e }: { exec: Execution }) {
   const isStk = (e.sec_type ?? '').toUpperCase() === 'STK'
   const rp = e.realized_pnl
   const rpNum = rp != null && typeof rp === 'number' && Number.isFinite(rp) ? rp : null
-  const tradeDateDisplay = (e.trade_date ?? '').trim() || executionDateStr(e) || '—'
+  const tradeDateDisplay = fmtIsoDateToken((e.trade_date ?? '').trim() || executionDateStr(e))
   const ledgerPnl = isOpt ? ledgerOptionExecutionDisplayPnl(e) : null
   const stkUnrealLeg = isStk ? stockOnTheFlyUnrealizedPnlLeg(e) : null
 
@@ -249,7 +253,7 @@ function OnTheFlyRow({ exec: e }: { exec: Execution }) {
       <td>{fmtChicagoTime(e.time)}</td>
       <td>{e.account_id ?? '—'}</td>
       <td>{e.symbol ?? '—'}</td>
-      <td>{isOpt ? (e.expiry ?? '—') : '—'}</td>
+      <td>{isOpt ? fmtIsoDateToken(e.expiry) : '—'}</td>
       <td>{isOpt ? (e.strike != null ? String(e.strike) : '—') : '—'}</td>
       <td>{isOpt ? optionRightToFull(e.option_right) : '—'}</td>
       <td>{e.side ?? '—'}</td>

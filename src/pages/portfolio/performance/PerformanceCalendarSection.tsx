@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, type Ref } from 'react'
 import { cn } from '@/lib/utils'
 import { fmtIsoDateToken } from '@/lib/format'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
@@ -83,6 +83,10 @@ interface PerformanceCalendarSectionProps {
   bulk: PerformanceDayPnLBulkResult | undefined
   isLoading: boolean
   positionCategoryByAccountContract: Map<string, string>
+  /** Which face the slot beside the calendar shows; the page owns it so the audit table can open a day. */
+  rightTab: 'summary' | 'records'
+  onRightTab: (tab: 'summary' | 'records') => void
+  slotRef?: Ref<HTMLElement>
 }
 
 /**
@@ -103,9 +107,10 @@ export function PerformanceCalendarSection({
   bulk,
   isLoading,
   positionCategoryByAccountContract,
+  rightTab,
+  onRightTab: setRightTab,
+  slotRef,
 }: PerformanceCalendarSectionProps) {
-  const [rightTab, setRightTab] = useState<'summary' | 'records'>('summary')
-
   const monthLabel = useMemo(() => {
     const [y, m] = calendarMonth.split('-').map(Number)
     return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
@@ -295,7 +300,7 @@ export function PerformanceCalendarSection({
         </div>
       </section>
 
-      <section className={perfUi.panel} aria-label="Summary and day records">
+      <section ref={slotRef} className={cn(perfUi.panel, 'scroll-mt-16')} aria-label="Summary and day records">
         <header className={perfUi.panelHead}>
           <span className="flex gap-1">
             <button type="button" className={tabBtn(!showRecords)} onClick={() => setRightTab('summary')}>

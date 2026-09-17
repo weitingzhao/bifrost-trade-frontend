@@ -6,6 +6,9 @@ import { dataState } from '@/lib/dataState'
 import type { ByDayRangeData } from '@/types/trading'
 import type { OpenOptCashLeg } from '@/utils/ledger/optAsOfPnL'
 import OpenOptInventoryDialog from '@/pages/portfolio/performance/components/OpenOptInventoryDialog'
+import { cn } from '@/lib/utils'
+import { fmtIsoDateToken } from '@/lib/format'
+import { perfUi } from '@/pages/portfolio/performance/performanceUi'
 import styles from '@/pages/portfolio/performance/components/performanceCalendar.module.css'
 
 interface MonthlyPnLTableProps {
@@ -19,8 +22,25 @@ interface MonthlyPnLTableProps {
   /** The range query failed. Distinct from having no PnL in the range. */
   isError?: boolean
   onRetry?: () => void
-  className?: string
+  /** Open a day's records beside the calendar. */
+  onOpenDay?: (date: string) => void
 }
+
+/** Word and code per column: the code is what the calendar and the tooltips call it. */
+const COLS: { word: string; code: string; openOnly?: boolean }[] = [
+  { word: 'Options realized', code: 'Opt R' },
+  { word: 'Unmatched that day', code: 'Opt U' },
+  { word: 'Still open today', code: 'Open', openOnly: true },
+  { word: 'Stocks net', code: 'Stocks N' },
+  { word: 'Stocks realized', code: 'Stocks R' },
+  { word: 'FI cash stream', code: 'FI Stream' },
+  { word: 'FI realized', code: 'FI R' },
+  { word: 'Cash net', code: 'Cash N' },
+  { word: 'Cash realized', code: 'Cash R' },
+]
+
+const th = 'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom'
+const td = 'whitespace-nowrap border-b border-border/50 px-2 py-1.25 text-right font-mono text-dense-body tabular-nums'
 
 function fmtVal(v: number): string {
   if (Math.abs(v) < 0.005) return '—'
@@ -76,15 +96,19 @@ export default function MonthlyPnLTable({
   isLoading,
   isError,
   onRetry,
-  className,
+  onOpenDay,
 }: MonthlyPnLTableProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
+  const [showOpen, setShowOpen] = useState(true)
   const [openDrill, setOpenDrill] = useState<{ monthKey: string; monthLabel: string } | null>(null)
 
   const monthGroups = useMemo<MonthGroup[]>(() => {
     if (!byDayRangeData) return []
 
-    const dates = Object.keys(byDayRangeData.opt).sort()
+    // The range runs to the end of the quarter; a day that has not happened has no session to show.
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const dates = Object.keys(byDayRangeData.opt).filter((d) => d <= today).sort()
     if (dates.length === 0) return []
 
     const rows: DayRow[] = dates.map((date) => ({
@@ -106,10 +130,7 @@ export default function MonthlyPnLTable({
       grouped.get(monthKey)!.push(row)
     }
 
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
-    ]
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
     const groups: MonthGroup[] = []
     for (const [key, days] of grouped) {
@@ -181,45 +202,73 @@ export default function MonthlyPnLTable({
     )
   }
 
+  const cols = COLS.filter((c) => showOpen || !c.openOnly)
+
   return (
-    <div className={className ?? styles.tableWrap}>
-      <table className={styles.dataTable}>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Opt R</th>
-            <th>Opt U</th>
-            <th title="Still-open premium cash as of today that was opened in this month (not path Opt U). Click to list contracts.">
-              Open
-            </th>
-            <th>Stocks N</th>
-            <th>Stocks R</th>
-            <th>FI Stream</th>
-            <th>FI R</th>
-            <th>Cash N</th>
-            <th>Cash R</th>
-          </tr>
-        </thead>
-        <tbody>
-          {monthGroups.map((group) => {
-            const expanded = expandedMonths.has(group.key)
-            return (
-              <MonthSection
-                key={group.key}
-                group={group}
-                expanded={expanded}
-                onToggle={() => toggleMonth(group.key)}
-                openAsOfMonth={optOpenByOpenMonth?.[group.key] ?? 0}
-                onOpenDrill={
-                  optOpenLegs != null && optOpenLegs.length > 0
-                    ? () => setOpenDrill({ monthKey: group.key, monthLabel: group.label })
-                    : undefined
-                }
-              />
-            )
-          })}
-        </tbody>
-      </table>
+    <section className={perfUi.panel} aria-label="Per-month and per-day P&L">
+      <header className={perfUi.panelHead}>
+        <span className={perfUi.cap}>Per-month · per-day</span>
+        <span className={perfUi.panelTitle}>nine measures</span>
+        <label className="flex cursor-pointer items-center gap-1.5 text-dense-meta text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={showOpen}
+            onChange={() => setShowOpen((v) => !v)}
+            className="accent-[var(--primary)]"
+          />
+          Show still-open option premium
+          <span className="text-muted-foreground/80">— inventory, not P&amp;L</span>
+        </label>
+        <span className={cn(perfUi.note, 'ml-auto')}>
+          {monthGroups.length} {monthGroups.length === 1 ? 'month' : 'months'} · click a month to open its days
+          {onOpenDay ? ', a day to open its records' : ''}
+        </span>
+      </header>
+      <div className="overflow-x-auto">
+        {/* §14.6: ten columns, 820 floor. */}
+        <table className="w-full min-w-[820px] border-collapse">
+          <thead>
+            <tr>
+              <th className={cn(th, 'text-left')}>
+                <span className="text-dense-caption font-semibold text-foreground/85">Date</span>
+              </th>
+              {cols.map((c) => (
+                <th key={c.code} className={th}>
+                  <span className="flex flex-col items-end gap-px">
+                    <span className="text-dense-caption font-semibold text-foreground/85">{c.word}</span>
+                    <span className="font-mono text-dense-micro font-normal text-muted-foreground">{c.code}</span>
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {monthGroups.map((group) => {
+              const expanded = expandedMonths.has(group.key)
+              return (
+                <MonthSection
+                  key={group.key}
+                  group={group}
+                  expanded={expanded}
+                  showOpen={showOpen}
+                  onToggle={() => toggleMonth(group.key)}
+                  onOpenDay={onOpenDay}
+                  openAsOfMonth={optOpenByOpenMonth?.[group.key] ?? 0}
+                  onOpenDrill={
+                    optOpenLegs != null && optOpenLegs.length > 0
+                      ? () => setOpenDrill({ monthKey: group.key, monthLabel: group.label })
+                      : undefined
+                  }
+                />
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className={cn(perfUi.panelFoot, 'm-0')}>
+        Opt U is a path figure — premium left unmatched on each day. Still open today is an as-of inventory — what is
+        unmatched now, by the month it opened. Different kinds of number; they never add up.
+      </p>
 
       {openDrill != null && (
         <OpenOptInventoryDialog
@@ -231,20 +280,24 @@ export default function MonthlyPnLTable({
           legs={optOpenLegs ?? []}
         />
       )}
-    </div>
+    </section>
   )
 }
 
 function MonthSection({
   group,
   expanded,
+  showOpen,
   onToggle,
+  onOpenDay,
   openAsOfMonth,
   onOpenDrill,
 }: {
   group: MonthGroup
   expanded: boolean
+  showOpen: boolean
   onToggle: () => void
+  onOpenDay?: (date: string) => void
   openAsOfMonth: number
   onOpenDrill?: () => void
 }) {
@@ -252,61 +305,76 @@ function MonthSection({
   const canDrill = onOpenDrill != null && Math.abs(openAsOfMonth) >= 0.005
   return (
     <>
-      <tr className={styles.monthRow} onClick={onToggle}>
-        <td className="whitespace-nowrap">
-          <span className="mr-1.5 inline-block w-3 text-center">
-            {expanded ? '▼' : '►'}
-          </span>
+      <tr
+        className="cursor-pointer bg-secondary/40 hover:bg-secondary"
+        onClick={onToggle}
+        title={expanded ? 'Collapse the month' : 'Expand into days'}
+        aria-expanded={expanded}
+      >
+        <td className={cn(td, 'text-left font-sans font-bold text-foreground')}>
+          <span className="mr-1.5 inline-block w-3 text-center text-muted-foreground">{expanded ? '▾' : '▸'}</span>
           {group.label}
         </td>
-        <td className={pnlColorClass(sums.optR)}>{fmtVal(sums.optR)}</td>
-        <td className={unrealizedColorClass(sums.optU)}>{fmtVal(sums.optU)}</td>
-        <td
-          className={unrealizedColorClass(openAsOfMonth)}
-          onClick={
-            canDrill
-              ? (e) => {
-                  e.stopPropagation()
-                  onOpenDrill()
-                }
-              : undefined
-          }
-        >
-          {canDrill ? (
-            <button
-              type="button"
-              className="font-semibold hover:underline underline-offset-2"
-              title="Show still-open option contracts"
-              aria-label={`Open option inventory for ${group.label}`}
-            >
-              {fmtVal(openAsOfMonth)}
-            </button>
-          ) : (
-            fmtVal(openAsOfMonth)
-          )}
-        </td>
-        <td className={signedNotionalClass(sums.stocksN)}>{fmtVal(sums.stocksN)}</td>
-        <td className={pnlColorClass(sums.stocksR)}>{fmtVal(sums.stocksR)}</td>
-        <td className={signedNotionalClass(sums.fiN)}>{fmtVal(sums.fiN)}</td>
-        <td className={pnlColorClass(sums.fiR)}>{fmtVal(sums.fiR)}</td>
-        <td className={cashNotionalClass(sums.cashN)}>{fmtVal(sums.cashN)}</td>
-        <td className={pnlColorClass(sums.cashR)}>{fmtVal(sums.cashR)}</td>
+        <td className={cn(td, 'font-bold', pnlColorClass(sums.optR))}>{fmtVal(sums.optR)}</td>
+        <td className={cn(td, 'font-bold', unrealizedColorClass(sums.optU))}>{fmtVal(sums.optU)}</td>
+        {showOpen && (
+          <td
+            className={cn(td, 'font-bold', unrealizedColorClass(openAsOfMonth))}
+            onClick={
+              canDrill
+                ? (e) => {
+                    e.stopPropagation()
+                    onOpenDrill()
+                  }
+                : undefined
+            }
+          >
+            {canDrill ? (
+              <button
+                type="button"
+                className="cursor-pointer border-0 bg-transparent p-0 font-semibold hover:underline underline-offset-2"
+                title="Show still-open option contracts"
+                aria-label={`Open option inventory for ${group.label}`}
+              >
+                {fmtVal(openAsOfMonth)}
+              </button>
+            ) : (
+              fmtVal(openAsOfMonth)
+            )}
+          </td>
+        )}
+        <td className={cn(td, 'font-bold', signedNotionalClass(sums.stocksN))}>{fmtVal(sums.stocksN)}</td>
+        <td className={cn(td, 'font-bold', pnlColorClass(sums.stocksR))}>{fmtVal(sums.stocksR)}</td>
+        <td className={cn(td, 'font-bold', signedNotionalClass(sums.fiN))}>{fmtVal(sums.fiN)}</td>
+        <td className={cn(td, 'font-bold', pnlColorClass(sums.fiR))}>{fmtVal(sums.fiR)}</td>
+        <td className={cn(td, 'font-bold', cashNotionalClass(sums.cashN))}>{fmtVal(sums.cashN)}</td>
+        <td className={cn(td, 'font-bold', pnlColorClass(sums.cashR))}>{fmtVal(sums.cashR)}</td>
       </tr>
       {expanded &&
-        group.days.map((day) => (
-          <tr key={day.date}>
-            <td className="pl-7 whitespace-nowrap text-muted-foreground">{day.date}</td>
-            <td className={pnlColorClass(day.optR)}>{fmtVal(day.optR)}</td>
-            <td className={unrealizedColorClass(day.optU)}>{fmtVal(day.optU)}</td>
-            <td className="text-muted-foreground">—</td>
-            <td className={signedNotionalClass(day.stocksN)}>{fmtVal(day.stocksN)}</td>
-            <td className={pnlColorClass(day.stocksR)}>{fmtVal(day.stocksR)}</td>
-            <td className={signedNotionalClass(day.fiN)}>{fmtVal(day.fiN)}</td>
-            <td className={pnlColorClass(day.fiR)}>{fmtVal(day.fiR)}</td>
-            <td className={cashNotionalClass(day.cashN)}>{fmtVal(day.cashN)}</td>
-            <td className={pnlColorClass(day.cashR)}>{fmtVal(day.cashR)}</td>
-          </tr>
-        ))}
+        group.days.map((day) => {
+          const active = [day.optR, day.optU, day.stocksN, day.stocksR, day.fiN, day.fiR, day.cashN, day.cashR]
+            .some((v) => Math.abs(v) >= 0.005)
+          const clickable = active && onOpenDay != null
+          return (
+            <tr
+              key={day.date}
+              className={cn(clickable && 'cursor-pointer hover:bg-secondary/40')}
+              onClick={clickable ? () => onOpenDay(day.date) : undefined}
+              title={clickable ? "Open this day's records" : active ? undefined : 'No fills that day'}
+            >
+              <td className={cn(td, 'pl-7 text-left text-foreground/80')}>{fmtIsoDateToken(day.date)}</td>
+              <td className={cn(td, pnlColorClass(day.optR))}>{fmtVal(day.optR)}</td>
+              <td className={cn(td, unrealizedColorClass(day.optU))}>{fmtVal(day.optU)}</td>
+              {showOpen && <td className={cn(td, 'text-muted-foreground')}>—</td>}
+              <td className={cn(td, signedNotionalClass(day.stocksN))}>{fmtVal(day.stocksN)}</td>
+              <td className={cn(td, pnlColorClass(day.stocksR))}>{fmtVal(day.stocksR)}</td>
+              <td className={cn(td, signedNotionalClass(day.fiN))}>{fmtVal(day.fiN)}</td>
+              <td className={cn(td, pnlColorClass(day.fiR))}>{fmtVal(day.fiR)}</td>
+              <td className={cn(td, cashNotionalClass(day.cashN))}>{fmtVal(day.cashN)}</td>
+              <td className={cn(td, pnlColorClass(day.cashR))}>{fmtVal(day.cashR)}</td>
+            </tr>
+          )
+        })}
     </>
   )
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { useOpportunities, useStrategyInstances } from '@/hooks/useStrategies'
 import { usePerformanceBulk } from '@/hooks/usePerformanceBulk'
 import { usePerformanceQuery } from '@/hooks/usePerformanceQuery'
@@ -31,7 +31,6 @@ import {
   buildDayMapFromBulk,
   type CalendarAssetTab,
 } from '@/pages/portfolio/performance/performanceCalendarModel'
-import pageStyles from '@/pages/portfolio/performance/PerformancePage.module.css'
 
 const PAGE_LEAD =
   'Did the system make money — by layer, by month, by day. Deposits and withdrawals recorded in Transfer & Pay are not P&L.'
@@ -53,6 +52,8 @@ export default function PerformancePage() {
   const [selectedOppId, setSelectedOppId] = useState<number | null>(null)
   const [selectedInstId, setSelectedInstId] = useState<number | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [dayPanel, setDayPanel] = useState<'summary' | 'records'>('summary')
+  const daySlotRef = useRef<HTMLElement>(null)
   const [growthUnit, setGrowthUnit] = useState<'pct' | 'usd'>('usd')
   const [growthLayersVisible, setGrowthLayersVisible] = useState(DEFAULT_LAYERS_VISIBLE)
   const [optionsPnLMode, setOptionsPnLMode] = useState<OptionsPnLMode>('book')
@@ -184,9 +185,18 @@ export default function PerformancePage() {
       const nm = String(d.getMonth() + 1).padStart(2, '0')
       setCalendarMonth(`${ny}-${nm}`)
       setSelectedDay(null)
+      setDayPanel('summary')
     },
     [calendarMonth],
   )
+
+  /** From the audit table: open that day's records beside the calendar. */
+  const openDayFromAudit = useCallback((date: string) => {
+    setCalendarMonth(date.slice(0, 7))
+    setSelectedDay(date)
+    setDayPanel('records')
+    requestAnimationFrame(() => daySlotRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+  }, [])
 
   const handleOppChange = useCallback((v: string) => {
     setSelectedOppId(v === 'all' ? null : Number(v))
@@ -283,6 +293,9 @@ export default function PerformancePage() {
           bulk={bulk}
           isLoading={filtersLoading}
           positionCategoryByAccountContract={positionCategoryByAccountContract}
+          rightTab={dayPanel}
+          onRightTab={setDayPanel}
+          slotRef={daySlotRef}
         />
 
         <PerformanceTier
@@ -297,7 +310,7 @@ export default function PerformancePage() {
           isLoading={bulkQuery.isLoading}
           isError={bulkQuery.isError}
           onRetry={() => void bulkQuery.refetch()}
-          className={pageStyles.byDayTableWrap}
+          onOpenDay={openDayFromAudit}
         />
 
         <PerformanceOnTheFlySection

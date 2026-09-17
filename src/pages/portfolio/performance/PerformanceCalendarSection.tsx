@@ -26,6 +26,9 @@ const CALENDAR_ASSET_SEGMENT_OPTIONS: SegmentOption[] = CALENDAR_ASSET_TABS.map(
   label: t.tabLabel ?? t.label,
 }))
 
+/** A day whose net on the layer is at or below this reads as a loss day: amber, not red (red is for faults). */
+const LOSS_DAY_THRESHOLD = -500
+
 /** Prototype `.pf-btn`. */
 const btn = cn(
   'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-sm border border-border bg-transparent px-1.75',
@@ -223,10 +226,13 @@ export function PerformanceCalendarSection({
                   const isSelected = selectedDay === cell.date
                   const dow = new Date(`${cell.date}T12:00:00`).getDay()
                   const weekend = dow === 0 || dow === 6
+                  const dayNet = cell.realized + (isStkTab ? 0 : cell.unrealized)
+                  const lossDay = hasData && dayNet <= LOSS_DAY_THRESHOLD
                   const titleParts = [fmtIsoDateToken(cell.date)]
                   if (hasData) {
                     titleParts.push(`R ${fmtMoneyFull(cell.realized)}`)
                     titleParts.push(isStkTab ? `${flowMetricLabel} ${fmtMoneyFull(cell.notional)}` : `U ${fmtMoneyFull(cell.unrealized)}`)
+                    if (lossDay) titleParts.push(`loss day: net ${fmtMoneyFull(dayNet)}`)
                     titleParts.push("click for the day's records")
                   } else {
                     titleParts.push(weekend ? 'not a trading day' : 'no fills that day')
@@ -243,9 +249,11 @@ export function PerformanceCalendarSection({
                         hasData ? 'cursor-pointer hover:border-[var(--sk-accent)]' : 'cursor-default',
                         isSelected
                           ? 'border-[var(--sk-accent)] bg-[var(--sk-surface)]'
-                          : weekend
-                            ? 'border-border/35'
-                            : 'border-border',
+                          : lossDay
+                            ? 'border-[var(--color-warning)]/45 bg-[var(--color-warning)]/8'
+                            : weekend
+                              ? 'border-border/35'
+                              : 'border-border',
                       )}
                     >
                       <span className="text-dense-caption text-muted-foreground">{cell.dayNum}</span>
@@ -332,8 +340,8 @@ export function PerformanceCalendarSection({
             />
             <p className={cn(perfUi.panelFoot, 'm-0')}>
               Pairing looks back 365 days, so a matched leg can sit outside the selected range — flagged where it does.{' '}
-              <Link to="/portfolio/ledger" className={perfUi.link}>
-                Trade ledger →
+              <Link to={`/portfolio/ledger?date=${selectedDay}`} className={perfUi.link}>
+                Ledger · this day →
               </Link>
             </p>
           </div>

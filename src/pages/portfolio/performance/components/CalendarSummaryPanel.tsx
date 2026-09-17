@@ -84,9 +84,9 @@ function SummaryColumn({
         <span className="text-dense-meta italic text-muted-foreground text-pretty">No data in the selected range.</span>
       ) : (
         metrics.map((m) => (
-          <span key={m.label} className="flex items-baseline gap-1.5">
-            <span className={cn(perfUi.cap, 'min-w-0 flex-1 text-dense-micro')}>{m.label}</span>
-            <span className={cn(perfUi.mono, 'text-dense-body font-semibold', toneFor(m))}>{m.value}</span>
+          <span key={m.label} className="flex flex-wrap items-baseline justify-between gap-x-1.5">
+            <span className={cn(perfUi.cap, 'text-dense-micro')}>{m.label}</span>
+            <span className={cn(perfUi.mono, 'ml-auto text-dense-body font-semibold', toneFor(m))}>{m.value}</span>
           </span>
         ))
       )}

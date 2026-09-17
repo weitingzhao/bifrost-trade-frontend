@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 /**
  * How far each account is from liquidation.
  *
@@ -21,14 +21,24 @@ import {
 } from '@/utils/marginByAccount'
 
 import { DerivationBlock } from './DerivationBlock'
+import { positionsUi } from './positionsUi'
 import { holdingsOf, marginDerivation } from '@/utils/marginDerivation'
 import type { LivePositionRow } from '@/types/positions'
 import type { SpotResolver } from '@/utils/spotPrice'
 
+/**
+ * The prototype's reading: the fill stays green below the 75% critical line and
+ * turns amber past it, with the percent. Pressure is risk, not a fault — never red.
+ */
 const TONE_FILL: Record<MarginAccountTone, string> = {
   profit: 'bg-profit',
-  warning: 'bg-warning',
-  loss: 'bg-loss',
+  warning: 'bg-profit',
+  loss: 'bg-warning',
+}
+const TONE_INK: Record<MarginAccountTone, string> = {
+  profit: 'text-secondary-foreground',
+  warning: 'text-secondary-foreground',
+  loss: 'text-warning',
 }
 
 function PressureBar({
@@ -48,19 +58,22 @@ function PressureBar({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={pct}
-      className="relative block h-2 w-full overflow-hidden rounded-sm border border-border/60 bg-secondary"
+      className="relative block h-1.75 min-w-22.5 flex-[1_1_130px] rounded-sm bg-[var(--sk-surface)]"
     >
-      {/* Width is data, not styling — the only inline style on the page. */}
+      {/* Width is data, not styling. */}
       <span
         data-testid="pressure-fill"
-        className={cn('absolute inset-y-0 left-0', TONE_FILL[tone])}
+        className={cn('absolute inset-y-0 left-0 rounded-sm', TONE_FILL[tone])}
         style={{ width: `${pct}%` }}
       />
       {PRESSURE_TICKS.map((t) => (
         <span
           key={t}
           aria-hidden="true"
-          className="absolute inset-y-0 w-px bg-foreground/40"
+          className={cn(
+            'absolute -top-0.5 h-2.75 w-px',
+            t >= PRESSURE_TICKS[PRESSURE_TICKS.length - 1] ? 'bg-warning' : 'bg-[var(--sk-line2)]',
+          )}
           style={{ left: `${t * 100}%` }}
         />
       ))}
@@ -68,24 +81,39 @@ function PressureBar({
   )
 }
 
-function AccountRow({ row, open, onToggle }: { row: MarginAccountRow; open: boolean; onToggle: () => void }) {
+/** "cushion 73% · excess $468.9k · BP $1.87M" as three key · value pairs. */
+function tailPairs(detail: string): { k: string; v: string }[] {
+  return detail.split(' · ').map((part) => {
+    const i = part.indexOf(' ')
+    return i < 0 ? { k: part, v: '' } : { k: part.slice(0, i), v: part.slice(i + 1) }
+  })
+}
+
+function AccountRow({
+  row,
+  open,
+  onToggle,
+  children,
+}: {
+  row: MarginAccountRow
+  open: boolean
+  onToggle: () => void
+  children?: ReactNode
+}) {
   const known = row.pressure != null && row.tone != null && row.pctText != null
   return (
     <div
-      className={cn(
-        'grid grid-cols-[6.25rem_minmax(6rem,11rem)_minmax(0,1fr)] items-center gap-x-3',
-        !row.inScope && 'opacity-50'
-      )}
+      className={cn('border-b border-border/45 last:border-b-0', !row.inScope && 'opacity-50')}
       title={row.inScope ? row.rawTitle : `not in scope\n${row.rawTitle}`}
       data-account={row.accountId}
       data-in-scope={row.inScope ? 'true' : 'false'}
     >
-      {/* The label and its `?` open how the row was computed, field by field. */}
-      <span className="flex min-w-0 items-center">
+      <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 leading-normal">
+        {/* The label and its `?` open how the row was computed, field by field. */}
         <button
           type="button"
           onClick={onToggle}
-          className="truncate text-left text-dense-body font-medium text-foreground hover:text-link hover:underline"
+          className="min-w-17.5 cursor-pointer border-0 bg-transparent p-0 text-left text-xs font-semibold text-foreground hover:underline leading-normal"
         >
           {row.label}
         </button>
@@ -94,30 +122,28 @@ function AccountRow({ row, open, onToggle }: { row: MarginAccountRow; open: bool
           onClick={onToggle}
           aria-pressed={open}
           aria-label={`How ${row.label} margin is computed`}
-          title="Which broker fields these are, and how they check out"
-          className={cn(
-            'ml-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-border/60 font-mono text-dense-caption leading-none',
-            open ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
-          )}
+          title="Walk the broker fields behind this row"
+          className={cn(positionsUi.q, open && 'border-primary text-primary')}
         >
           ?
         </button>
-      </span>
-      {row.pressure != null && row.tone != null ? (
-        <PressureBar label={row.label} pressure={row.pressure} tone={row.tone} />
-      ) : (
-        <span />
-      )}
-      <span className="min-w-0 truncate font-mono text-dense-body tabular-nums">
-        {known ? (
+        {known && row.pressure != null && row.tone != null ? (
           <>
-            <span className="text-foreground">{row.pctText}</span>
-            <span className="text-muted-foreground"> · {row.detailText}</span>
+            <PressureBar label={row.label} pressure={row.pressure} tone={row.tone} />
+            <span className={cn(positionsUi.mono, 'text-dense-body font-bold leading-normal', TONE_INK[row.tone])}>{row.pctText}</span>
+            <span className="flex min-w-0 flex-[1_1_210px] flex-wrap gap-x-2.5 gap-y-0.5" data-testid="margin-tail">
+              {tailPairs(row.detailText ?? '').map((t) => (
+                <span key={t.k} className={cn(positionsUi.mono, 'whitespace-nowrap text-dense-meta text-muted-foreground/80 leading-normal')}>
+                  {t.k} <span className="text-muted-foreground">{t.v}</span>
+                </span>
+              ))}
+            </span>
           </>
         ) : (
-          <span className="text-warning">n/a — broker reported no cushion</span>
+          <span className="text-dense-meta text-warning leading-normal">n/a — broker reported no cushion</span>
         )}
-      </span>
+      </div>
+      {children}
     </div>
   )
 }
@@ -140,42 +166,44 @@ export function MarginByAccountStrip({
 }) {
   const rows = marginAccountRows(margin, hostId, secondaryId, accountFilter)
   const [openId, setOpenId] = useState<string | null>(null)
-  const openRow = rows.find((r) => r.accountId === openId) ?? null
-  const holdings = openRow && positions ? holdingsOf(positions, openRow.accountId, resolveSpot) : undefined
   return (
     <section
       id="positions-margin"
       aria-label="Margin by account"
-      className="rounded-md border border-border bg-secondary/40 px-3 py-1.5"
+      className={positionsUi.panel}
       onKeyDown={(e) => {
         if (e.key === 'Escape' && openId) setOpenId(null)
       }}
     >
-      <span className="mb-1 block text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-        Margin by account
-      </span>
+      <header className={positionsUi.panelHead}>
+        <span className={positionsUi.cap}>Margin by account</span>
+        <span className={positionsUi.panelNote}>cockpit pressure: accounts in scope · ? walks the broker fields behind a row</span>
+      </header>
       {rows.length === 0 ? (
-        <p className="text-dense-body text-warning">n/a — no funded account reported margin</p>
+        <p className="m-0 px-3 py-2 text-dense-body text-warning leading-normal">n/a — no funded account reported margin</p>
       ) : (
-        <div className="flex flex-col gap-y-0.5">
-          {rows.map((r) => (
-            <AccountRow
-              key={r.accountId}
-              row={r}
-              open={openId === r.accountId}
-              onToggle={() => setOpenId((cur) => (cur === r.accountId ? null : r.accountId))}
-            />
-          ))}
+        <div>
+          {rows.map((r) => {
+            const open = openId === r.accountId
+            return (
+              <AccountRow
+                key={r.accountId}
+                row={r}
+                open={open}
+                onToggle={() => setOpenId((cur) => (cur === r.accountId ? null : r.accountId))}
+              >
+                {open ? (
+                  <DerivationBlock
+                    derivation={marginDerivation(r.facts, r.label, positions ? holdingsOf(positions, r.accountId, resolveSpot) : undefined)}
+                    onClose={() => setOpenId(null)}
+                    className="mx-2.5 mt-0.5 mb-2.25 rounded-[5px] border-[var(--sk-line2)] bg-[var(--sk-raised2)]"
+                  />
+                ) : null}
+              </AccountRow>
+            )
+          })}
         </div>
       )}
-      <p className="text-dense-caption text-muted-foreground">cockpit pressure: accounts in scope · ? walks the broker fields behind a row</p>
-      {openRow ? (
-        <DerivationBlock
-          derivation={marginDerivation(openRow.facts, openRow.label, holdings)}
-          onClose={() => setOpenId(null)}
-          className="mb-1"
-        />
-      ) : null}
     </section>
   )
 }

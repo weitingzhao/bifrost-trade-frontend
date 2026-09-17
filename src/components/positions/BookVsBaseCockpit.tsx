@@ -17,6 +17,7 @@ import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { ExplanationBlock } from './ExplanationBlock'
+import { positionsUi } from './positionsUi'
 import {
   explainBook,
   litSegments,
@@ -24,109 +25,115 @@ import {
   type ExplainInputs,
   type ExplainTopic,
 } from '@/utils/bookExplanations'
-import { DenseTagButton } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
-import type { BookVsBase, GaugeLevel } from '@/utils/bookVsBase'
+import type { BookVsBase } from '@/utils/bookVsBase'
 import type { AlarmCheck, AlarmTarget } from '@/hooks/usePositionsAlarm'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
 import { fmtSpotDate, type SpotMix } from '@/utils/spotPrice'
 import type { RoomSummary } from '@/utils/roomToAdd'
-import { cushionBand } from '@/utils/positionsOptionRisk'
-import { moneynessTone, moneynessToneClass } from '@/lib/optionSemantics'
 
-const ITM_SHORT_TONE = moneynessToneClass(moneynessTone('ITM', 'short'))
-
-const LEVEL_TONE: Record<GaugeLevel, string> = {
-  0: 'bg-profit',
-  1: 'bg-profit',
-  2: 'bg-warning',
-  3: 'bg-loss',
+/** Where a chip lands, in the words the prototype prints after its arrow. */
+const TARGET_WORD: Record<AlarmTarget, string> = {
+  ladder: 'ladder',
+  lines: 'lines',
+  coverage: 'coverage',
+  independent: 'holdings',
+  margin: 'margin',
+  capital: 'capital',
+  room: 'room',
 }
 
-/** The `?` that opens how a line was computed. */
-function How({ topic, active, onToggle }: { topic: ExplainTopic; active: boolean; onToggle: (t: ExplainTopic) => void }) {
+/** Data-quality checks qualify the others: grey when they fire, never amber, never red. */
+const QUALITY_CHECKS = new Set(['feed', 'unpriced'])
+
+function CheckChip({ check, onOpen }: { check: AlarmCheck; onOpen: (t: AlarmTarget) => void }) {
+  const firing = check.tone !== 'ok'
+  const tone = !firing
+    ? 'border-border text-muted-foreground/80'
+    : QUALITY_CHECKS.has(check.id)
+      ? 'border-[var(--sk-line2)] text-muted-foreground'
+      : 'border-warning/40 bg-warning/10 text-warning'
   return (
     <button
       type="button"
-      onClick={() => onToggle(topic)}
-      aria-pressed={active}
-      aria-label={`How ${topic} is computed`}
-      title="How is this computed?"
+      disabled={!check.target}
+      title={check.target ? `${check.detail}\nClick to open the detail.` : check.detail}
+      onClick={() => check.target && onOpen(check.target)}
       className={cn(
-        'ml-1 inline-flex h-4 w-4 items-center justify-center rounded-sm border border-border/60 font-mono text-dense-caption leading-none',
-        active ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
+        'inline-flex h-5 items-center gap-1.25 whitespace-nowrap rounded-[4px] border px-1.75',
+        'text-dense-caption font-semibold uppercase leading-none tracking-[0.04em]',
+        check.target ? 'cursor-pointer hover:brightness-125' : 'cursor-default',
+        tone,
       )}
     >
-      ?
+      {check.label} {check.value}
+      {check.target ? <span className="font-mono font-normal opacity-75">→ {TARGET_WORD[check.target]}</span> : null}
     </button>
   )
 }
 
 function Gauge({
-  label,
-  level,
+  name,
   lit,
-  tone,
-  children,
-  wrap = false,
+  meter = false,
+  ink,
   title,
   onOpen,
+  topic,
   how,
+  onHow,
+  explanation,
+  children,
 }: {
-  label: string
-  level: GaugeLevel | null
+  name: string
   /** Segments lit, 0–4. A graded gauge lights level + 1; Potential is a meter. */
   lit: number
-  /** Override the level colour — potential is an opportunity, not a warning. */
-  tone?: string
-  children: ReactNode
-  /** Let the line wrap instead of truncating — for the one row whose answer is longer than the column. */
-  wrap?: boolean
+  /** Potential measures room, it does not grade danger: its segments stay green. */
+  meter?: boolean
+  ink: string
   title: string
-  /** The section holding this gauge's detail; the label is the way in. */
+  /** The section holding this gauge's detail; the name is the way in. */
   onOpen: () => void
-  how?: ReactNode
+  topic: ExplainTopic
+  how: ExplainTopic | null
+  onHow?: (t: ExplainTopic) => void
+  explanation: ReactNode
+  children: ReactNode
 }) {
-  const fill = tone ?? (level == null ? 'bg-muted-foreground/40' : LEVEL_TONE[level])
+  const litClass = meter || lit < 3 ? 'bg-profit' : 'bg-warning'
+  const open = how === topic
   return (
-    <div
-      className="grid grid-cols-[6.25rem_6rem_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5"
-      title={`${title}\nClick the label to open the detail.`}
-    >
-      <span className="flex items-center">
+    <div className="border-b border-border/45">
+      <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 leading-normal" title={`${title}\nClick the name to open the detail.`}>
         <button
           type="button"
           onClick={onOpen}
-          className="text-left text-dense-body font-medium text-foreground hover:text-link hover:underline"
+          className="min-w-15.5 cursor-pointer border-0 bg-transparent p-0 text-left text-xs font-semibold text-foreground hover:underline leading-normal"
         >
-          {label}
+          {name}
         </button>
-        {how}
-      </span>
-      <span className="flex items-center gap-1.5">
-        <span className="flex gap-0.5" aria-label={`${lit} of 4 segments`}>
+        {onHow ? (
+          <button
+            type="button"
+            onClick={() => onHow(topic)}
+            aria-pressed={open}
+            aria-label={`How ${topic} is computed`}
+            title={`How ${name.toLowerCase()} is computed`}
+            className={cn(positionsUi.q, open && 'border-primary text-primary')}
+          >
+            ?
+          </button>
+        ) : null}
+        <span className="inline-flex w-13 flex-none gap-0.5" aria-label={`${lit} of 4 segments`}>
           {[0, 1, 2, 3].map((i) => (
-            <span
-              key={i}
-              className={cn('block h-2 w-3.5 rounded-sm border border-border/60', i < lit ? fill : 'bg-secondary')}
-            />
+            <i key={i} className={cn('block h-1.75 flex-1 rounded-[1px]', i < lit ? litClass : 'bg-[var(--sk-surface)]')} />
           ))}
         </span>
-        {/* The scale in the open: four segments, this many lit. */}
-        <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">{lit}/4</span>
-      </span>
-      <span className={cn('min-w-0 text-dense-body text-muted-foreground', wrap ? 'whitespace-normal leading-snug' : 'truncate')}>
-        {children}
-      </span>
+        <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground leading-normal')}>{lit}/4</span>
+        <span className={cn(positionsUi.mono, 'min-w-0 flex-[1_1_240px] text-xs text-pretty leading-normal', ink)}>{children}</span>
+      </div>
+      {open ? explanation : null}
     </div>
-  )
-}
-
-function Num({ children, tone, title }: { children: React.ReactNode; tone?: string; title?: string }) {
-  return (
-    <span className={cn('font-mono tabular-nums text-foreground', tone)} title={title}>
-      {children}
-    </span>
   )
 }
 
@@ -139,6 +146,15 @@ function usdK(v: number | null): string {
   if (Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`
   if (Math.abs(v) >= 1_000) return `$${(v / 1_000).toFixed(1)}k`
   return fmtUsd(v)
+}
+
+function signedPct1(v: number): string {
+  return `${v >= 0 ? '+' : '−'}${Math.abs(v * 100).toFixed(1)}%`
+}
+
+/** A graded line reads amber from 3/4; below that it is plain soft ink — no colour inside the line. */
+function gradedInk(lit: number): string {
+  return lit >= 3 ? 'text-warning' : 'text-secondary-foreground'
 }
 
 export function BookVsBaseCockpit({
@@ -154,15 +170,14 @@ export function BookVsBaseCockpit({
   className,
 }: {
   book: BookVsBase
-  /** All nine checks; each is a chip with a place to land, quiet ones in grey. */
+  /** All nine checks; the firing ones are chips with a place to land, the quiet ones sit behind a count. */
   checks: AlarmCheck[]
   /** The tightness setting, so the Risk line can say how close the closest leg is to it. */
   cushionTightPct: number
   onOpenTarget: (t: AlarmTarget, sort?: ObligationsSort) => void
   /**
    * 'full' is the Positions opening screen. 'backing' is the same block on the
-   * Backing page, holding only the two gauges that page answers — the thin
-   * context strip professional tools carry from screen to screen.
+   * Backing page, holding only the two gauges that page answers.
    */
   variant?: 'full' | 'backing'
   /** The other page, one click away. */
@@ -171,249 +186,213 @@ export function BookVsBaseCockpit({
   spotMix?: SpotMix
   /** The rows behind the totals; when given, every line grows a `?` that opens its arithmetic. */
   explain?: Omit<ExplainInputs, 'book' | 'tightPct' | 'spotMix'>
-  /** Room to add in one line; the Potential row shows it and links to the section that walks it. */
+  /** Room to add in one line; the Potential row shows it and its name opens the section that walks it. */
   room?: RoomSummary
-  /**
-   * Extra classes for the panel itself. The Positions page passes `h-full` so
-   * its row ends on one line; the Backing page must not, because there this
-   * block shares a column with two more panels and would swallow their height.
-   */
   className?: string
 }) {
   const { pressure, backing, risk, potential, demand, supply } = book
   const full = variant === 'full'
   const [how, setHow] = useState<ExplainTopic | null>(null)
-  const toggleHow = (t: ExplainTopic) => setHow((cur) => (cur === t ? null : t))
-  const howFor = (t: ExplainTopic) => (explain ? <How topic={t} active={how === t} onToggle={toggleHow} /> : null)
-  const explanation =
-    how && explain ? explainBook(how, { ...explain, book, tightPct: cushionTightPct, spotMix }) : null
-  const tightest = risk.counts.tightest
-  const tightestTone =
-    tightest == null
-      ? 'text-warning'
-      : cushionBand(tightest, cushionTightPct) === 'breached'
-        ? 'text-loss'
-        : cushionBand(tightest, cushionTightPct) === 'tight'
-          ? 'text-warning'
-          : 'text-profit'
+  const [showQuiet, setShowQuiet] = useState(false)
+  const onHow = explain ? (t: ExplainTopic) => setHow((cur) => (cur === t ? null : t)) : undefined
+  const explanationFor = (t: ExplainTopic, boxClass?: string) =>
+    how === t && explain ? (
+      <ExplanationBlock
+        explanation={explainBook(t, { ...explain, book, tightPct: cushionTightPct, spotMix })}
+        onClose={() => setHow(null)}
+        className={boxClass}
+      />
+    ) : null
+
+  const firing = full ? checks.filter((c) => c.tone !== 'ok') : []
+  const quiet = full ? checks.filter((c) => c.tone === 'ok') : []
+  const chips = showQuiet ? [...firing, ...quiet] : firing
+
+  const pressureLit = litSegments(pressure.pct == null ? null : pressure.level)
+  const backingLit = litSegments(backing.level)
+  const riskLit = litSegments(risk.level)
+  const c = risk.counts
 
   return (
-    <section
-      className={cn('rounded-md border border-border bg-secondary/40 px-3 py-2.5', className)}
-      aria-label="Option book against the base"
-    >
-      <div className="mb-2 flex items-baseline justify-between gap-2">
-        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-          {full ? 'Option book against the base' : 'Backing — the options against the base'}
-        </span>
-        <span className="flex flex-wrap items-center justify-end gap-1">
-          {headerLink ? (
-            <Link to={headerLink.to} className="mr-1 text-dense-caption text-link hover:underline">
-              {headerLink.label}
-            </Link>
-          ) : null}
-          {/* Only what fires: the quiet counts are already on the gauge lines. */}
-          {(full ? checks.filter((c) => c.tone !== 'ok') : []).map((c) =>
-            c.tone === 'ok' || !c.target ? (
-              // Quiet, or nowhere to land (the feed age is a fact, not a section).
-              <button
-                key={c.id}
-                type="button"
-                disabled={!c.target}
-                title={c.target ? `${c.detail}\nClick to open the detail.` : c.detail}
-                onClick={() => c.target && onOpenTarget(c.target)}
-                className={cn(
-                  'rounded-sm px-1 text-dense-caption text-muted-foreground',
-                  c.tone !== 'ok' && 'text-warning',
-                  c.target && 'hover:text-foreground hover:underline',
-                )}
-              >
-                {c.label} <span className="font-mono tabular-nums">{c.value}</span>
-              </button>
-            ) : (
-              <DenseTagButton
-                key={c.id}
-                variant={c.tone === 'danger' ? 'danger' : 'warning'}
-                size="cell"
-                title={`${c.detail}\nClick to open the section with the detail.`}
-                onClick={() => onOpenTarget(c.target as AlarmTarget)}
-              >
-                {c.label} <span className="font-mono tabular-nums">{c.value}</span>
-              </DenseTagButton>
-            ),
-          )}
-        </span>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
+    <section id="positions-cockpit" className={cn(positionsUi.panel, className)} aria-label="Option book against the base">
+      <header className={positionsUi.panelHead}>
+        <span className={positionsUi.cap}>{full ? 'Option book against the base' : 'Backing — the options against the base'}</span>
+        {headerLink ? (
+          <Link to={headerLink.to} className={cn(positionsUi.link, !full && 'ml-auto')}>
+            {headerLink.label}
+          </Link>
+        ) : null}
         {full ? (
-        <Gauge
-          label="Pressure"
-          onOpen={() => onOpenTarget('margin')}
-          level={pressure.pct == null ? null : pressure.level}
-          lit={litSegments(pressure.pct == null ? null : pressure.level)}
-          how={howFor('pressure')}
-          title="1 − the broker's own Cushion. At 100% excess liquidity is gone and it starts closing positions; level 3 begins at 75%."
-        >
-          <Num>{pct0(pressure.pct)}</Num> used · cushion {pct0(pressure.cushion)} · liquidation at 100%
-        </Gauge>
+          <span className="ml-auto flex flex-wrap items-center justify-end gap-1">
+            {chips.map((ch) => (
+              <CheckChip key={ch.id} check={ch} onOpen={(t) => onOpenTarget(t)} />
+            ))}
+            {quiet.length > 0 ? (
+              <button
+                type="button"
+                className={cn(positionsUi.btn, 'h-5 text-dense-caption leading-normal')}
+                onClick={() => setShowQuiet((v) => !v)}
+                aria-expanded={showQuiet}
+                title="Checks that are not firing"
+              >
+                {showQuiet ? `hide ${quiet.length} quiet` : `${quiet.length} quiet checks`}
+              </button>
+            ) : null}
+          </span>
+        ) : null}
+      </header>
+
+      <div>
+        {full ? (
+          <Gauge
+            name="Pressure"
+            lit={pressureLit}
+            ink={gradedInk(pressureLit)}
+            onOpen={() => onOpenTarget('margin')}
+            topic="pressure"
+            how={how}
+            onHow={onHow}
+            explanation={explanationFor('pressure')}
+            title="1 − the broker's own Cushion. At 100% excess liquidity is gone and it starts closing positions; level 3 begins at 75%."
+          >
+            {pct0(pressure.pct)} used · cushion {pct0(pressure.cushion)} · liquidation at 100%
+          </Gauge>
         ) : null}
 
         <Gauge
-          label="Backing"
+          name="Backing"
+          lit={backingLit}
+          ink={gradedInk(backingLit)}
           onOpen={() => onOpenTarget('coverage', 'cash')}
-          level={backing.level}
-          lit={litSegments(backing.level)}
-          how={howFor('backing')}
+          topic="backing"
+          how={how}
+          onHow={onHow}
+          explanation={explanationFor('backing')}
           title="What the options need against what actually backs them. Any naked call is level 2; puts leaning on margin rather than cash is level 1."
         >
-          <Num>
-            {backing.callsCovered}/{backing.callsTotal}
-          </Num>{' '}
-          calls covered
-          {backing.nakedCalls > 0 ? (
-            <>
-              {' · '}
-              <Num tone="text-loss">{backing.nakedCalls} naked</Num>
-            </>
-          ) : null}
-          {backing.putCashNeeded > 0 ? (
-            <>
-              {' · '}puts <Num>{usdK(backing.putCashNeeded)}</Num> vs cash <Num>{usdK(backing.cashLike)}</Num>
-            </>
-          ) : null}
+          {backing.callsCovered}/{backing.callsTotal} calls covered
+          {backing.nakedCalls > 0 ? ` · ${backing.nakedCalls} naked` : ''}
+          {backing.putCashNeeded > 0 ? ` · puts ${usdK(backing.putCashNeeded)} vs cash ${usdK(backing.cashLike)}` : ''}
         </Gauge>
 
         {full ? (
-        <Gauge
-          label="Risk"
-          onOpen={() => onOpenTarget('ladder')}
-          level={risk.level}
-          lit={litSegments(risk.level)}
-          how={howFor('risk')}
-          title="Short legs already past their strike, or expiring within a week. Unpriced legs are excluded from both counts and are not known to be safe."
-        >
-          {/* These are short legs that went ITM — assignment risk, not intrinsic value. */}
-          <Num tone={risk.counts.itm > 0 ? ITM_SHORT_TONE : undefined}>{risk.counts.itm}</Num> ITM ·{' '}
-          <Num tone={risk.counts.near7d > 0 ? 'text-warning' : undefined}>{risk.counts.near7d}</Num> ≤7d
-          {risk.counts.zeroDte > 0 ? (
-            <>
-              {' · '}
-              <Num tone="text-loss">{risk.counts.zeroDte} today</Num>
-            </>
-          ) : null}
-          {risk.counts.unpriced > 0 ? (
-            <>
-              {' · '}
-              <Num tone="text-warning">{risk.counts.unpriced} unpriced</Num>
-            </>
-          ) : null}
-          {spotMix && spotMix.close > 0 ? (
-            <>
-              {' · '}
-              <Num tone="text-warning" title="Priced at the latest daily close in the warehouse, not a live quote.">
-                {spotMix.close} at close {fmtSpotDate(spotMix.oldestCloseAsOf, 'close')}
-              </Num>
-            </>
-          ) : null}
-          {spotMix && spotMix.mark > 0 ? (
-            <>
-              {' · '}
-              <Num tone="text-warning" title="Priced at the broker's mark on the position row — its own time stamp is shown.">
-                {spotMix.mark} at mark {fmtSpotDate(spotMix.oldestMarkAsOf)}
-              </Num>
-            </>
-          ) : null}
-          {' · '}
-          {tightest == null ? (
-            <Num tone={tightestTone}>tightest n/a</Num>
-          ) : (
-            <>
-              tightest{' '}
-              <Num tone={tightestTone}>
-                {tightest >= 0 ? '+' : ''}
-                {(tightest * 100).toFixed(1)}%
-              </Num>{' '}
-              vs {Math.round(cushionTightPct * 100)}%
-            </>
-          )}
-        </Gauge>
+          <Gauge
+            name="Risk"
+            lit={riskLit}
+            ink={gradedInk(riskLit)}
+            onOpen={() => onOpenTarget('ladder')}
+            topic="risk"
+            how={how}
+            onHow={onHow}
+            explanation={explanationFor('risk')}
+            title="Short legs already past their strike, or expiring within a week. Unpriced legs are excluded from both counts and are not known to be safe."
+          >
+            {c.itm} ITM · {c.near7d} ≤7d
+            {c.zeroDte > 0 ? ` · ${c.zeroDte} today` : ''}
+            {c.unpriced > 0 ? ` · ${c.unpriced} unpriced` : ''}
+            {spotMix && spotMix.close > 0 ? ` · ${spotMix.close} at close ${fmtSpotDate(spotMix.oldestCloseAsOf, 'close')}` : ''}
+            {spotMix && spotMix.mark > 0 ? ` · ${spotMix.mark} at mark ${fmtSpotDate(spotMix.oldestMarkAsOf)}` : ''}
+            {' · '}
+            {c.tightest == null
+              ? 'tightest n/a'
+              : `tightest ${signedPct1(c.tightest)} vs ${Math.round(cushionTightPct * 100)}%`}
+          </Gauge>
         ) : null}
 
         <Gauge
-          label="Potential"
-          onOpen={() => onOpenTarget('room')}
-          level={null}
+          name="Potential"
           lit={potentialSegments(book)}
-          tone="bg-link"
-          how={howFor('potential')}
-          wrap
-          title="Room to add: what the free base still backs, what margin adds up to your ceiling, and what the book earns a day. A meter, not a warning: the segments are the share of held shares still free."
+          meter
+          ink="text-primary"
+          onOpen={() => onOpenTarget('room')}
+          topic="potential"
+          how={how}
+          onHow={onHow}
+          explanation={explanationFor('potential')}
+          title="Room to add: what the free base still backs, what margin adds up to your ceiling, and what the book decays by a day. A meter, not a warning: the segments are the share of held shares still free."
         >
-          {room ? (
-            <button
-              type="button"
-              onClick={() => onOpenTarget('room')}
-              className="text-link hover:underline"
-              title="Room to add on the Backing page: the three steps, the premium each would bring, and where pressure lands"
-              data-testid="potential-room"
-            >
-              Room <Num tone="text-link">+{room.calls}</Num> calls · <Num tone="text-link">{room.puts == null ? '—' : `+${room.puts}`}</Num> puts backed ·{' '}
-              <Num tone="text-link">{room.marginPuts == null ? '—' : `+${room.marginPuts}`}</Num> on margin{'\u00a0'}to{'\u00a0'}{Math.round(room.ceiling * 100)}%{'\u00a0'}→
-            </button>
-          ) : (
-            <>
-              <Num>{potential.moreCalls}</Num> more calls · {potential.sharesFree.toLocaleString()} free sh
-            </>
-          )}
-          {potential.thetaPerDay != null ? (
-            <>
-              {' · '}
-              <Num tone={potential.thetaPerDay >= 0 ? 'text-profit' : 'text-loss'}>
-                θ {potential.thetaPerDay >= 0 ? '+' : ''}
-                {fmtUsd(potential.thetaPerDay, true)}
-              </Num>
-              /d
-            </>
-          ) : null}
+          {room
+            ? `Room +${room.calls} calls · ${room.puts == null ? '—' : `+${room.puts}`} puts backed · ${
+                room.marginPuts == null ? '—' : `+${room.marginPuts}`
+              } on margin to ${Math.round(room.ceiling * 100)}%`
+            : `${potential.moreCalls} more calls · ${potential.sharesFree.toLocaleString()} free sh`}
+          {potential.thetaPerDay != null
+            ? ` · θ ${potential.thetaPerDay >= 0 ? '+' : '−'}${fmtUsd(Math.abs(potential.thetaPerDay), true)}/d`
+            : ''}
         </Gauge>
       </div>
 
-      <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_1.25rem_minmax(0,1fr)] gap-x-2 gap-y-0.5 border-t border-border/60 pt-2 text-dense-body">
-        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-          Demand — what the options need
-        </span>
-        <span />
-        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
-          Supply — what backs them
-        </span>
-
-        <span>
-          Puts need <Num>{usdK(demand.putCash)}</Num> cash{howFor('putCash')}
-        </span>
-        <span className="text-center text-muted-foreground">→</span>
-        <span>
-          Cash and SGOV <Num>{usdK(supply.cashLike)}</Num>
-          {supply.buyingPower != null ? (
-            <>
-              {' · '}buying power <Num>{usdK(supply.buyingPower)}</Num>
-            </>
-          ) : null}
-          {howFor('cashLike')}
-        </span>
-
-        <span>
-          Calls need <Num>{demand.callShares.toLocaleString()}</Num> shares{howFor('callShares')}
-        </span>
-        <span className="text-center text-muted-foreground">→</span>
-        <span>
-          Held <Num>{supply.sharesHeld.toLocaleString()}</Num> · free{' '}
-          <Num>{supply.sharesFree.toLocaleString()}</Num>
-          {howFor('shares')}
-        </span>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,13.125rem),1fr))] gap-px rounded-b-md bg-border">
+        <DemandSupplyCell
+          name="Demand — what the options need"
+          items={[
+            { label: 'Puts need', value: `${usdK(demand.putCash)} cash`, topic: 'putCash' },
+            { label: 'Calls need', value: `${demand.callShares.toLocaleString()} shares`, topic: 'callShares' },
+          ]}
+          how={how}
+          onHow={onHow}
+          explanationFor={explanationFor}
+        />
+        <DemandSupplyCell
+          name="Supply — what backs them"
+          items={[
+            {
+              label: 'Cash and SGOV',
+              value: `${usdK(supply.cashLike)}${supply.buyingPower != null ? ` · buying power ${usdK(supply.buyingPower)}` : ''}`,
+              topic: 'cashLike',
+            },
+            {
+              label: 'Held',
+              value: `${supply.sharesHeld.toLocaleString()} · free ${supply.sharesFree.toLocaleString()}`,
+              topic: 'shares',
+            },
+          ]}
+          how={how}
+          onHow={onHow}
+          explanationFor={explanationFor}
+        />
       </div>
-
-      {explanation ? <ExplanationBlock explanation={explanation} onClose={() => setHow(null)} /> : null}
     </section>
+  )
+}
+
+function DemandSupplyCell({
+  name,
+  items,
+  how,
+  onHow,
+  explanationFor,
+}: {
+  name: string
+  items: { label: string; value: string; topic: ExplainTopic }[]
+  how: ExplainTopic | null
+  onHow?: (t: ExplainTopic) => void
+  explanationFor: (t: ExplainTopic, boxClass?: string) => ReactNode
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5 bg-[var(--sk-raised)] px-3 pt-2 pb-2.5 leading-normal first:rounded-bl-md last:rounded-br-md">
+      <span className={positionsUi.cap}>{name}</span>
+      {items.map((it) => (
+        <div key={it.topic} className="flex min-w-0 flex-col gap-0.5">
+          <span className="flex flex-wrap items-baseline gap-1.5">
+            <span className="text-xs text-secondary-foreground leading-normal">{it.label}</span>
+            <span className={cn(positionsUi.mono, 'text-xs font-semibold text-foreground leading-normal')}>{it.value}</span>
+            {onHow ? (
+              <button
+                type="button"
+                onClick={() => onHow(it.topic)}
+                aria-pressed={how === it.topic}
+                aria-label={`How ${it.topic} is computed`}
+                title={`How ${it.label.toLowerCase()} is built`}
+                className={cn(positionsUi.q, 'self-center', how === it.topic && 'border-primary text-primary')}
+              >
+                ?
+              </button>
+            ) : null}
+          </span>
+          {explanationFor(it.topic, 'mx-0 mt-1 mb-0.5')}
+        </div>
+      ))}
+    </div>
   )
 }

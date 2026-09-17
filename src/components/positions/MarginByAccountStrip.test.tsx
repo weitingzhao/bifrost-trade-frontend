@@ -68,21 +68,19 @@ describe('MarginByAccountStrip', () => {
 
     const hostRow = screen.getByText('Host').closest('[data-account]') as HTMLElement
     expect(within(hostRow).getByText('27%')).toBeInTheDocument()
-    expect(
-      within(hostRow).getByText('· cushion 73% · excess $468.9k · BP $1.87M')
-    ).toBeInTheDocument()
+    expect(within(hostRow).getByTestId('margin-tail')).toHaveTextContent('cushion 73%excess $468.9kBP $1.87M')
     expect(hostRow.title).toContain('NetLiquidation $644,944.21')
     expect(hostRow.title).toContain('Cushion 0.7270')
   })
 
-  it('colours a stretched account as loss and a heavy one as warning', () => {
+  it('turns a stretched account amber and keeps a heavy one green — pressure is never red', () => {
     renderStrip([
       { account_id: HOST.account_id, summary: { NetLiquidation: '1000', Cushion: '0.2' } },
       { account_id: SECONDARY.account_id, summary: { NetLiquidation: '1000', Cushion: '0.4' } },
     ])
     const fills = screen.getAllByTestId('pressure-fill')
-    expect(fills[0]).toHaveClass('bg-loss')
-    expect(fills[1]).toHaveClass('bg-warning')
+    expect(fills[0]).toHaveClass('bg-warning')
+    expect(fills[1]).toHaveClass('bg-profit')
   })
 
   it('shows a missing cushion as unknown — no bar, an explicit warning, never green', () => {

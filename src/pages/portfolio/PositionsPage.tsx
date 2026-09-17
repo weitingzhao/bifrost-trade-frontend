@@ -33,7 +33,6 @@ import {
 import { OptionsTab } from '@/components/positions/OptionsTab'
 import { InstanceTab } from '@/components/positions/InstanceTab'
 import { ExpiriesView } from '@/components/positions/ExpiriesView'
-import { RingCard } from '@/components/positions/RingCard'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { BookFetchMarker } from '@/components/positions/BookFetchMarker'
@@ -374,9 +373,12 @@ export default function PositionsPage() {
                       positions={book.allPositions}
                       resolveSpot={book.alarm.resolveSpot}
                     />
-                    <RingCard title="Backing pool">
-                      <BackingPoolCard book={book.alarm.book} onSegmentClick={openFromBackingSegment} />
-                    </RingCard>
+                    <BackingPoolCard
+                      variant="summary"
+                      book={book.alarm.book}
+                      onSegmentClick={openFromBackingSegment}
+                      backingLink={{ to: backingHref({ scopeSearch }), label: 'Backing & Model →' }}
+                    />
                   </div>
                 </div>
 

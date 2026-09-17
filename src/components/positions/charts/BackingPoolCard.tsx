@@ -18,6 +18,7 @@
  * asterisk, so a ring that looks calm cannot be read as complete.
  */
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import {
   DenseDataTable,
@@ -38,6 +39,7 @@ import { backingPoolUsage } from '@/utils/backingJudgment'
 import { fmtUsd } from '@/utils/positions'
 import type { BaseLayer, BaseRole, BookVsBase } from '@/utils/bookVsBase'
 import styles from '../PositionsChartsSection.module.css'
+import { positionsUi } from '../positionsUi'
 
 /** Legend rows follow the ring: stocks, then cash, then income. */
 const LAYER_ORDER: readonly BaseRole[] = ['stocks', 'cash', 'income']
@@ -155,13 +157,123 @@ function LayerRow({
   )
 }
 
+type PoolTarget = 'calls' | 'puts' | 'free' | 'income'
+
+const SUMMARY_FILL: Record<BaseRole, string> = {
+  stocks: 'bg-[var(--sk-line2)]',
+  cash: 'bg-primary/45',
+  income: 'bg-[var(--sk-surface)]',
+}
+const SUMMARY_TARGET: Record<BaseRole, PoolTarget> = { stocks: 'calls', cash: 'puts', income: 'income' }
+
+function summaryNote(layer: BaseLayer): string {
+  if (layer.role === 'stocks') return `${layer.shares.toLocaleString()} sh · backing calls`
+  if (layer.role === 'cash') return `${layer.symbols.join(' · ') || 'cash'} · backing puts`
+  return `${layer.symbols.join(' · ') || 'income ETFs'} — via buying power, not as cash`
+}
+
+/**
+ * Positions' form of the pool (Design F3): one bar, one row per layer, and the
+ * way to Backing & Model. The ring and its table stay there, the canonical page;
+ * this is a bridge, not a second computation — the same usage numbers.
+ */
+function BackingPoolSummary({
+  book,
+  onSegmentClick,
+  backingLink,
+}: {
+  book: BookVsBase
+  onSegmentClick?: (target: PoolTarget) => void
+  backingLink?: { to: string; label: string }
+}) {
+  const { pool: total, used: inUse } = backingPoolUsage(book)
+  const layers = LAYER_ORDER.map((role) => book.base.find((l) => l.role === role)).filter(
+    (l): l is BaseLayer => l != null
+  )
+  const unpriced = layers.find((l) => l.role === 'stocks')
+  const unpricedShares = unpriced ? unpricedSharesOf(unpriced) : 0
+  const pricedTotal = layers.reduce((a, l) => a + Math.max(0, l.marketValue), 0)
+  return (
+    <section id="positions-capital" className={positionsUi.panel} aria-label="Backing pool">
+      <header className={positionsUi.panelHead}>
+        <span className={positionsUi.cap}>Backing pool</span>
+        {total > 0 ? (
+          <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-foreground leading-normal')}>
+            {fmtMvAbbrev(total)} · {Math.round((inUse / total) * 100)}%{unpricedShares > 0 ? '*' : ''} in use
+          </span>
+        ) : null}
+        {backingLink ? (
+          <Link to={backingLink.to} className={cn(positionsUi.link, 'ml-auto')}>
+            {backingLink.label}
+          </Link>
+        ) : null}
+      </header>
+      {total <= 0 ? (
+        <p className="m-0 px-3 py-2 text-dense-body text-muted-foreground leading-normal">No base holdings to show.</p>
+      ) : (
+        <div className="flex flex-col gap-1.5 px-3 pt-2 pb-2.5 leading-normal">
+          <span className="flex h-2 overflow-hidden rounded-sm bg-[var(--sk-surface)]" aria-hidden="true">
+            {layers.map((l) => (
+              <span
+                key={l.role}
+                className={SUMMARY_FILL[l.role]}
+                style={{ width: `${pricedTotal > 0 ? (Math.max(0, l.marketValue) / pricedTotal) * 100 : 0}%` }}
+              />
+            ))}
+          </span>
+          {layers.map((l) => {
+            const unpricedHere = l.role === 'stocks' ? unpricedSharesOf(l) : 0
+            return (
+              <button
+                key={l.role}
+                type="button"
+                title={`${l.note}${onSegmentClick ? ' — click to open it on Backing & Model' : ''}`}
+                onClick={onSegmentClick ? () => onSegmentClick(SUMMARY_TARGET[l.role]) : undefined}
+                className={cn(
+                  'flex flex-wrap items-baseline gap-2 rounded-sm border-0 bg-transparent p-0 text-left',
+                  onSegmentClick ? 'cursor-pointer hover:bg-[var(--sk-raised2)]' : 'cursor-default',
+                )}
+              >
+                <span className={cn('h-2 w-2 flex-none self-center rounded-[2px]', SUMMARY_FILL[l.role])} />
+                <span className="min-w-26 text-xs text-secondary-foreground leading-normal">{l.label}</span>
+                <span className={cn(positionsUi.mono, 'text-xs font-semibold text-foreground leading-normal')}>
+                  {l.marketValue > 0 ? fmtUsd(l.marketValue, true) : '—'}
+                </span>
+                <span className="text-dense-meta text-muted-foreground leading-normal">{summaryNote(l)}</span>
+                {unpricedHere > 0 ? (
+                  <span className="text-dense-meta text-warning leading-normal">{unpricedHere.toLocaleString()} sh unpriced — not counted</span>
+                ) : null}
+                <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta leading-normal', usedTone(l.used))}>
+                  {l.used != null ? `${Math.round(l.used * 100)}% in use` : '—'}
+                </span>
+              </button>
+            )
+          })}
+          <span className="text-dense-meta text-muted-foreground text-pretty leading-normal">
+            The capital axis is canonical on Backing &amp; Model — this is a bridge, not a second computation.
+          </span>
+        </div>
+      )}
+    </section>
+  )
+}
+
 export function BackingPoolCard({
   book,
   onSegmentClick,
+  variant = 'ring',
+  backingLink,
 }: {
   book: BookVsBase
-  onSegmentClick?: (target: 'calls' | 'puts' | 'free' | 'income') => void
+  onSegmentClick?: (target: PoolTarget) => void
+  /** 'summary' is Positions' bridge (F3); 'ring' is the canonical picture on Backing & Model. */
+  variant?: 'ring' | 'summary'
+  /** Summary only: the way to the canonical page. */
+  backingLink?: { to: string; label: string }
 }) {
+  if (variant === 'summary') {
+    return <BackingPoolSummary book={book} onSegmentClick={onSegmentClick} backingLink={backingLink} />
+  }
   const segments = baseRoleSegments(book)
   const { pool: total, used: inUse } = backingPoolUsage(book)
 

@@ -100,16 +100,18 @@ describe('design adoption', () => {
     // Accounts and Transfer & Pay signed off at their page rev 2026-09-16.9.
     // Rev .11 moved Accounts to .11 (the role word and the Data from string,
     // both already built that way); the Owner re-signed it at .11 the same day.
-    expect(counts.aligned + counts.byState.stale).toBe(7)
-    expect(counts.aligned).toBe(7)
+    // Owner 2026-09-17: Trade Ledger signed off at page rev 2026-09-16.9.
+    expect(counts.aligned + counts.byState.stale).toBe(8)
+    expect(counts.aligned).toBe(8)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
     // R11 against Rev 2026-09-16.9 (pending 22→21). Accounts joined in R12,
     // built against Rev 2026-09-16.9 (pending 21→20). Both left for aligned
     // on the Owner's look (reviewing 4→2). Trade Ledger joined in R13, built
-    // against page rev 2026-09-16.9 (pending 20→19, reviewing 2→3).
-    expect(counts.byState.reviewing).toBe(3)
+    // against page rev 2026-09-16.9 (pending 20→19, reviewing 2→3), then
+    // aligned on the Owner's look (reviewing 3→2).
+    expect(counts.byState.reviewing).toBe(2)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -117,6 +119,7 @@ describe('design adoption', () => {
         .sort(),
     ).toEqual([
       '/portfolio/accounts',
+      '/portfolio/ledger',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
@@ -126,7 +129,6 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/backing',
-      '/portfolio/ledger',
       '/trade/plans',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design

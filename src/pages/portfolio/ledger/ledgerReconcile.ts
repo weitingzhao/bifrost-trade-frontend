@@ -118,11 +118,7 @@ export type LedgerReconcileModel = {
 /** The contract token (§14.4), not the pipe-joined key; the key goes to hover. */
 function rowName(e: Execution): string {
   const { mark } = ledgerContractDisplay(e)
-  if (secTypeOf(e) === 'BAG') return `${mark} combo`
-  if (secTypeOf(e) !== 'OPT') return mark
-  const strike = Number(e.strike)
-  const right = (e.option_right ?? e.right ?? '').trim().toUpperCase().slice(0, 1)
-  return [mark, Number.isFinite(strike) && strike > 0 ? String(strike) : '', right].filter(Boolean).join(' ')
+  return secTypeOf(e) === 'BAG' ? `${mark} combo` : mark
 }
 
 function rowDate(e: Execution): string {

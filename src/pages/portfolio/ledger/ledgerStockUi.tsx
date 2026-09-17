@@ -33,8 +33,9 @@ export function StkColgroup({ showSymbolCol }: { showSymbolCol: boolean }) {
         <col style={{ width: '10%' }} />
         <col style={{ width: '9.5%' }} />
         <col style={{ width: '7%' }} />
-        <col style={{ width: '8%' }} />
-        <col style={{ width: '9%' }} />
+        {/* Source holds `tws-client` (105px at the 1160 floor). */}
+        <col style={{ width: '9.5%' }} />
+        <col style={{ width: '7.5%' }} />
       </colgroup>
     )
   }
@@ -53,8 +54,9 @@ export function StkColgroup({ showSymbolCol }: { showSymbolCol: boolean }) {
       <col style={{ width: '10.5%' }} />
       <col style={{ width: '10%' }} />
       <col style={{ width: '7.5%' }} />
-      <col style={{ width: '8.5%' }} />
+      {/* Source holds `tws-client` on combo rows (105px). */}
       <col style={{ width: '9.5%' }} />
+      <col style={{ width: '8.5%' }} />
     </colgroup>
   )
 }

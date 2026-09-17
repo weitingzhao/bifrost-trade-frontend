@@ -210,7 +210,7 @@ describe('reconcile scope and sources', () => {
   it('names a row by the contract token and keeps the stored key for hover', () => {
     const rec = buildLedgerReconcile([optFill({ source: 'tws_client' })], [])
     const row = rec.groups.find(g => g.id === 'unconfirmed')?.rows[0]
-    expect(row?.name).toBe('AAA 21JUN24 10 P')
+    expect(row?.name).toBe('AAA 21JUN24 10P')
     expect(row?.title).toBe('AAA|OPT|P|10|20240621')
   })
 })

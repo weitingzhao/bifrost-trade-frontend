@@ -31,15 +31,15 @@ export function buildAttributionChips(c: {
     {
       id: 'strategy',
       label: 'Strategy',
-      countLabel: String(c.opportunityCount),
-      title: `${c.opportunityCount} opportunities`,
+      countLabel: `${c.opportunityCount} ${c.opportunityCount === 1 ? 'opportunity' : 'opportunities'}`,
+      title: 'Opportunity → instance → contract',
       empty: c.opportunityCount === 0,
     },
     {
       id: 'instance',
       label: 'Instance',
-      countLabel: `${c.instanceWith} · ${c.instanceWithout}`,
-      title: `${c.instanceWith} instances with · ${c.instanceWithout} without (${instTotal} total)`,
+      countLabel: `${c.instanceWith} with · ${c.instanceWithout} without`,
+      title: `One instance and the fills under it — ${c.instanceWith} instances, ${c.instanceWithout} option contracts with no instance`,
       empty: instTotal === 0,
     },
   ]
@@ -52,8 +52,8 @@ export function buildInstrumentChips(c: LedgerInstrumentCounts): LedgerViewChip[
     {
       id: 'options',
       label: 'Options',
-      countLabel: `${c.closedOpt} · ${c.openOpt}`,
-      title: `${c.closedOpt} closed groups · ${c.openOpt} open groups`,
+      countLabel: `${c.closedOpt} closed · ${c.openOpt} open`,
+      title: `Contracts rolled up, both sides — ${c.closedOpt} closed, ${c.openOpt} open`,
       empty: optTotal === 0,
     },
     {

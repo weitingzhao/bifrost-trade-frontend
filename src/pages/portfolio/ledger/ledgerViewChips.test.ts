@@ -35,13 +35,23 @@ describe('ledger view chips', () => {
     expect(chips.every(ch => ch.empty)).toBe(true)
   })
 
-  it('attribution titles name the unit', () => {
+  it('counts name their unit, as the prototype chips do', () => {
     const chips = buildAttributionChips({
       opportunityCount: 8,
       instanceWith: 13,
       instanceWithout: 7,
     })
-    expect(chips[0].title).toBe('8 opportunities')
-    expect(chips[1].title).toContain('instances with')
+    expect(chips.map(ch => ch.countLabel)).toEqual(['8 opportunities', '13 with · 7 without'])
+    expect(buildAttributionChips({ opportunityCount: 1, instanceWith: 0, instanceWithout: 0 })[0].countLabel)
+      .toBe('1 opportunity')
+    const options = buildInstrumentChips({
+      closedOpt: 18,
+      openOpt: 24,
+      stocks: 0,
+      fixedIncome: 0,
+      cashLike: 0,
+      combos: 0,
+    }).find(ch => ch.id === 'options')
+    expect(options?.countLabel).toBe('18 closed · 24 open')
   })
 })

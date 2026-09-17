@@ -12,7 +12,6 @@ type Params = {
   queryClient: QueryClient
   setExpandedGroups: Dispatch<SetStateAction<Set<string>>>
   setStrategyOppExpanded: Dispatch<SetStateAction<Set<string>>>
-  setStrategyInstExpanded: Dispatch<SetStateAction<Set<string>>>
   setOuterStrategyExpanded: Dispatch<SetStateAction<Set<string>>>
   setOuterInstanceExpanded: Dispatch<SetStateAction<Set<string>>>
   setOptSort: Dispatch<SetStateAction<{ col: OptSortCol; dir: 'asc' | 'desc' }>>
@@ -43,23 +42,6 @@ export function useTradeLedgerHandlers(p: Params) {
 
   const toggleGroup = (key: string) => toggleExpanded(key, p.setExpandedGroups)
   const toggleStrategyOpp = (oppId: number | 'none') => toggleExpanded(String(oppId), p.setStrategyOppExpanded)
-  const toggleStrategyInst = (oppId: number | 'none', instId: number | 'none') => {
-    const key = `${oppId}::${instId}`
-    p.setStrategyInstExpanded(prev => {
-      const next = new Set(prev)
-      if (next.has(key)) {
-        next.delete(key)
-        return next
-      }
-      if (p.accordionMode) {
-        for (const k of next) {
-          if (k.startsWith(`${oppId}::`) && k !== key) next.delete(k)
-        }
-      }
-      next.add(key)
-      return next
-    })
-  }
   const toggleOuterStrategy = (key: string) => toggleExpanded(key, p.setOuterStrategyExpanded)
   const toggleOuterInstance = (key: string) => toggleExpanded(key, p.setOuterInstanceExpanded)
 
@@ -135,7 +117,6 @@ export function useTradeLedgerHandlers(p: Params) {
   return {
     toggleGroup,
     toggleStrategyOpp,
-    toggleStrategyInst,
     toggleOuterStrategy,
     toggleOuterInstance,
     toggleOptSort,

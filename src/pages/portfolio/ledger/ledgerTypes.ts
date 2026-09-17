@@ -17,6 +17,8 @@ export type StkSortCol = 'trade_date' | 'realized_pnl'
 export type GroupBy = 'opportunity' | 'structure' | 'watchlist_symbol'
 export type OptSubTab = 'contracts' | 'orphans'
 export type InstanceSubTab = 'with_instance' | 'no_instance' | 'contains_open'
+/** Strategy view scope: every opportunity, or only the fills filed under none. */
+export type StrategyScope = 'all' | 'unlinked'
 
 export function isSharesTab(tab: MainTab): tab is SharesTab {
   return (

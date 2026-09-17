@@ -6,6 +6,7 @@ import {
   type LedgerHealthModel,
   type LedgerHealthTile,
 } from '@/pages/portfolio/ledger/ledgerHealth'
+import { ledgerShell } from '@/pages/portfolio/ledger/ledgerShellUi'
 import { LEDGER_UNLINK_BASIS_TABS, type LedgerUnlinkBasis } from '@/pages/portfolio/ledger/ledgerReconcile'
 
 function tileValueClass(tile: LedgerHealthTile): string {
@@ -32,12 +33,10 @@ export function LedgerHealthBand({
 
   return (
     <section className="space-y-1.5" aria-label="Is this book healthy">
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        <span className="text-dense-meta font-bold uppercase tracking-wide text-muted-foreground">
-          Is this book healthy
-        </span>
-        <span className="h-px min-w-8 flex-1 bg-border" />
-        <span className="text-dense-meta text-muted-foreground">
+      <div className={ledgerShell.tierRow}>
+        <span className={ledgerShell.tierLabel}>Is this book healthy</span>
+        <span className={ledgerShell.tierRule} />
+        <span className={ledgerShell.tierNote}>
           every figure opens its own derivation · unlinked and unreconciled are amber, never red
         </span>
       </div>

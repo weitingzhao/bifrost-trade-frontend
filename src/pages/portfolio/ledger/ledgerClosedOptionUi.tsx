@@ -5,16 +5,14 @@ import { denseTable } from '@/components/data-display'
 /** Closed Option groups table — Legacy `replay-opt-groups` column rhythm. */
 export const closedOptTableClass = ledgerTableMinClass.t3
 
-/** Primary header row (Contract, Expiry, BUY, …) — slightly larger than default DenseTableHead. */
-export const closedOptHeadPrimary =
-  '!text-dense-body font-semibold uppercase tracking-wide leading-snug text-muted-foreground'
+/**
+ * One header row, as the prototype draws it (`Buy size`, `Buy @`, …). The narrow size columns
+ * are measured for their figures, not their labels, so a label wraps to two lines at the floor.
+ */
+export const closedOptHeadPrimary = 'whitespace-normal align-bottom'
 
-/** BUY/SELL sub-header row (Size, @, Cost, …). */
-export const closedOptHeadSub =
-  '!text-dense-meta font-medium normal-case tracking-normal text-muted-foreground'
-
-/** Numeric body cells — left-aligned tabular (Legacy table-operations parity). */
-export const closedOptNumCell = 'font-mono tabular-nums text-left'
+/** Figures sit right, so digits line up (prototype `.lg-td`). */
+export const closedOptNumCell = 'font-mono tabular-nums text-right'
 
 /** Contract body cell — tight to expand chevron, room for long IB symbols. */
 export const closedOptContractCell = cn(
@@ -64,18 +62,20 @@ export const closedOptDetailActionsHead = cn(closedOptHeadPrimary, closedOptDeta
 export function ClosedOptDetailColgroup() {
   return (
     <colgroup>
-      {/* Stg / ins and Booking wrap (prototype L:356); the figures and the action buttons do not. */}
+      {/* Stg / ins and Booking wrap (prototype L:356); the figures and the action buttons do not.
+          At the 1080 floor: Actions holds five buttons when the opposite-leg sync shows (156px, 15%);
+          Source holds the `journal` badge (83px, 8%). */}
       <col style={{ width: '15.5%' }} />
-      <col style={{ width: '15%' }} />
+      <col style={{ width: '12%' }} />
       <col style={{ width: '7.5%' }} />
       <col style={{ width: '5%' }} />
       <col style={{ width: '4.5%' }} />
       <col style={{ width: '6.5%' }} />
       <col style={{ width: '6.5%' }} />
       <col style={{ width: '9.5%' }} />
-      <col style={{ width: '7%' }} />
+      <col style={{ width: '8%' }} />
       <col style={{ width: '10%' }} />
-      <col style={{ width: '13%' }} />
+      <col style={{ width: '15%' }} />
     </colgroup>
   )
 }

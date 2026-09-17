@@ -30,10 +30,11 @@ export const openOptTradesCell = cn(
 export function OpenOptDetailColgroup() {
   return (
     <colgroup>
+      {/* Stg/Ins wraps; Actions holds five buttons when the opposite-leg sync shows (156px, 12% of 1320). */}
       <col style={{ width: '12%' }} />
       <col style={{ width: '6%' }} />
       <col style={{ width: '7%' }} />
-      <col style={{ width: '11.5%' }} />
+      <col style={{ width: '10%' }} />
       <col style={{ width: '6%' }} />
       <col style={{ width: '4%' }} />
       <col style={{ width: '3.5%' }} />
@@ -43,7 +44,7 @@ export function OpenOptDetailColgroup() {
       <col style={{ width: '7%' }} />
       <col style={{ width: '6%' }} />
       <col style={{ width: '8%' }} />
-      <col style={{ width: '10.5%' }} />
+      <col style={{ width: '12%' }} />
     </colgroup>
   )
 }

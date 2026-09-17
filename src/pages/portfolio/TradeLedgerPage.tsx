@@ -25,9 +25,10 @@ import { LedgerSummarySection } from '@/pages/portfolio/ledger/LedgerSummarySect
 import { LedgerHealthBand } from '@/pages/portfolio/ledger/LedgerHealthBand'
 import { LedgerInspector } from '@/pages/portfolio/ledger/LedgerInspector'
 import { ledgerPageCardClass } from '@/pages/portfolio/ledger/ledgerShellUi'
-import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
+import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter, StrategyScope } from '@/pages/portfolio/ledger/ledgerTypes'
 import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
 import { buildAttributionChips, buildInstrumentChips } from '@/pages/portfolio/ledger/ledgerViewChips'
+import { unlinkedOpportunityCount } from '@/pages/portfolio/ledger/ledgerStrategyScope'
 import { OptionsTabContent } from '@/pages/portfolio/ledger/OptionsTabContent'
 import { StkTabContent } from '@/pages/portfolio/ledger/StkTabContent'
 import { StrategyTabContent } from '@/pages/portfolio/ledger/StrategyTabContent'
@@ -109,6 +110,7 @@ export default function TradeLedgerPage() {
   const [groupBy, setGroupBy] = useState<GroupBy>('opportunity')
   const [optSubTab, setOptSubTab] = useState<OptSubTab>('contracts')
   const [instanceSubTab, setInstanceSubTab] = useState<InstanceSubTab>('with_instance')
+  const [strategyScope, setStrategyScope] = useState<StrategyScope>('all')
   const [optInstanceFilter, setOptInstanceFilter] = useState<OptInstanceFilter>('all')
   const [stkCategoryTab, setStkCategoryTab] = useState('All')
 
@@ -126,7 +128,6 @@ export default function TradeLedgerPage() {
   const [outerStrategyExpanded, setOuterStrategyExpanded] = useState<Set<string>>(new Set())
   // Strategy Opportunity expand
   const [strategyOppExpanded, setStrategyOppExpanded] = useState<Set<string>>(new Set())
-  const [strategyInstExpanded, setStrategyInstExpanded] = useState<Set<string>>(new Set())
   // Instance outer buckets
   const [outerInstanceExpanded, setOuterInstanceExpanded] = useState<Set<string>>(new Set())
 
@@ -252,7 +253,6 @@ export default function TradeLedgerPage() {
   const {
     toggleGroup,
     toggleStrategyOpp,
-    toggleStrategyInst,
     toggleOuterStrategy,
     toggleOuterInstance,
     toggleOptSort,
@@ -267,7 +267,6 @@ export default function TradeLedgerPage() {
     queryClient,
     setExpandedGroups,
     setStrategyOppExpanded,
-    setStrategyInstExpanded,
     setOuterStrategyExpanded,
     setOuterInstanceExpanded,
     setOptSort,
@@ -537,6 +536,9 @@ export default function TradeLedgerPage() {
             strategyPanelOptionRights,
             strategyOpportunityGroupsLength: strategyOpportunityGroups.length,
             filteredStrategyOpportunityGroupsLength: filteredStrategyOpportunityGroups.length,
+            strategyScope,
+            setStrategyScope,
+            strategyUnlinkedCount: unlinkedOpportunityCount(filteredStrategyOpportunityGroups),
             instanceSubTab,
             setInstanceSubTab,
             instanceGroupsWithCount: instanceGroupsRaw.withInst.length,
@@ -649,13 +651,12 @@ export default function TradeLedgerPage() {
           <StrategyTabContent
             displayBuckets={strategyDisplayBuckets}
             groupBy={groupBy}
+            scope={strategyScope}
             linkByOptionId={linkByOptionId}
             outerExpanded={outerStrategyExpanded}
             toggleOuter={toggleOuterStrategy}
             strategyOppExpanded={strategyOppExpanded}
             toggleStrategyOpp={toggleStrategyOpp}
-            strategyInstExpanded={strategyInstExpanded}
-            toggleStrategyInst={toggleStrategyInst}
             onGoInstance={goToInstance}
             onContractClick={g => openLinks(pickGroupFill(g, linkByOptionId) ?? null)}
             stockFills={stockFills}

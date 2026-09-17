@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { fmtIsoDateToken, fmtTs, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { fmtExpiryOccToken } from './ledgerContractMark'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -28,7 +27,6 @@ import {
   ClosedOptDetailColgroup,
   closedOptExpandCell,
   closedOptHeadPrimary,
-  closedOptHeadSub,
   closedOptNumCell,
   closedOptTableClass,
 } from './ledgerClosedOptionUi'
@@ -37,6 +35,9 @@ import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { sideLabel } from './ledgerOptSideLabel'
 import { LedgerStgInsCell } from './LedgerStgInsCell'
 import { LedgerPaginationBar } from './LedgerPaginationBar'
+import { LedgerPanelBar } from './LedgerPanelBar'
+import { ledgerDetailsSubject } from './ledgerDetailsSubject'
+import { ledgerShell } from './ledgerShellUi'
 import type { OptGroupCallbacks, OptSortCol } from './ledgerTypes'
 import {
   denseTable,
@@ -53,6 +54,8 @@ import { fmtLedgerTradeDate } from './ledgerTradeDate'
 import { closedGroupSummaryPnl } from '@/utils/ledger/ledgerSummaryGroups'
 
 const CLOSED_PAGE_SIZE = 50
+
+const closedOptNumHead = cn(closedOptHeadPrimary, 'text-right')
 
 type Props = {
   sortedClosedGroups: OptExecutionGroup[]
@@ -120,47 +123,27 @@ export function LedgerClosedOptionSection({
   })
 
   return (
-    <section aria-label="Closed option positions and details">
-      <DenseDataTable wrapClassName="mb-0 rounded-b-none" tableClassName={closedOptTableClass}>
+    <section aria-label="Closed option positions and details" className={ledgerShell.panel}>
+      <DenseDataTable wrapClassName="rounded-none border-0" tableClassName={closedOptTableClass}>
         <ClosedOptColgroup />
         <DenseTableHeader>
           <DenseTableHeadRow>
-            <DenseTableHead rowSpan={2} className={cn(closedOptExpandCell, closedOptHeadPrimary)} aria-hidden />
-            <DenseTableHead rowSpan={2} className={closedOptContractHead}>
-              Contract
-            </DenseTableHead>
-            <DenseTableHead rowSpan={2} {...sortHeadProps('expiry', 'Sort by Expiry')}>
-              Expiry{sortMark('expiry')}
-            </DenseTableHead>
-            <DenseTableHead rowSpan={2} className={closedOptHeadPrimary}>
-              STRIKE
-            </DenseTableHead>
-            <DenseTableHead colSpan={3} className={closedOptHeadPrimary}>
-              BUY
-            </DenseTableHead>
-            <DenseTableHead colSpan={3} className={closedOptHeadPrimary}>
-              SELL
-            </DenseTableHead>
-            <DenseTableHead rowSpan={2} className={closedOptHeadPrimary}>
-              Realized PnL
-            </DenseTableHead>
-            <DenseTableHead rowSpan={2} className={closedOptHeadPrimary}>
-              Account
-            </DenseTableHead>
-            <DenseTableHead rowSpan={2} {...sortHeadProps('trade_date', 'Sort by Trade date')}>
+            <DenseTableHead className={cn(closedOptExpandCell, closedOptHeadPrimary)} aria-hidden />
+            <DenseTableHead className={closedOptContractHead}>Contract</DenseTableHead>
+            <DenseTableHead {...sortHeadProps('expiry', 'Sort by Expiry')}>Expiry{sortMark('expiry')}</DenseTableHead>
+            <DenseTableHead className={closedOptNumHead}>Strike</DenseTableHead>
+            <DenseTableHead className={closedOptNumHead}>Buy size</DenseTableHead>
+            <DenseTableHead className={closedOptNumHead}>Buy @</DenseTableHead>
+            <DenseTableHead className={closedOptNumHead}>Cost</DenseTableHead>
+            <DenseTableHead className={closedOptNumHead}>Sell size</DenseTableHead>
+            <DenseTableHead className={closedOptNumHead}>Sell @</DenseTableHead>
+            <DenseTableHead className={closedOptNumHead}>Premium</DenseTableHead>
+            <DenseTableHead className={closedOptNumHead}>Realized</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Account</DenseTableHead>
+            <DenseTableHead {...sortHeadProps('trade_date', 'Sort by Trade date')}>
               Trade date{sortMark('trade_date')}
             </DenseTableHead>
-            <DenseTableHead rowSpan={2} className={closedOptHeadPrimary}>
-              Instance
-            </DenseTableHead>
-          </DenseTableHeadRow>
-          <DenseTableHeadRow>
-            <DenseTableHead className={closedOptHeadSub}>Size</DenseTableHead>
-            <DenseTableHead className={closedOptHeadSub}>@</DenseTableHead>
-            <DenseTableHead className={closedOptHeadSub}>Cost</DenseTableHead>
-            <DenseTableHead className={closedOptHeadSub}>Size</DenseTableHead>
-            <DenseTableHead className={closedOptHeadSub}>@</DenseTableHead>
-            <DenseTableHead className={closedOptHeadSub}>Premium</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Instance</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
@@ -214,21 +197,19 @@ export function LedgerClosedOptionSection({
                     prominent
                   />
                 </DenseTableCell>
-                <DenseTableCell className={closedOptNumCell}>{fmtExpiryOccToken(g.expiry)}</DenseTableCell>
-                <DenseTableCell className={closedOptNumCell}>
-                  <strong>{fmtUsd(g.strike)}</strong>
-                </DenseTableCell>
+                <DenseTableCell className="font-mono text-muted-foreground">{fmtExpiryOccToken(g.expiry)}</DenseTableCell>
+                <DenseTableCell className={closedOptNumCell}>{fmtUsd(g.strike)}</DenseTableCell>
                 <DenseTableCell className={closedOptNumCell}>{g.buy_volume}</DenseTableCell>
                 <DenseTableCell className={closedOptNumCell}>{fmtUsd(g.buy_avg_price)}</DenseTableCell>
-                <DenseTableCell className={cn(closedOptNumCell, 'font-bold text-destructive')}>
+                <DenseTableCell className={cn(closedOptNumCell, 'text-loss')}>
                   {fmtUsd(g.buy_cost)}
                 </DenseTableCell>
                 <DenseTableCell className={closedOptNumCell}>{g.sell_volume}</DenseTableCell>
                 <DenseTableCell className={closedOptNumCell}>{fmtUsd(g.sell_avg_price)}</DenseTableCell>
-                <DenseTableCell className={cn(closedOptNumCell, 'font-bold text-success')}>
+                <DenseTableCell className={cn(closedOptNumCell, 'text-profit')}>
                   {fmtUsd(g.sell_premium)}
                 </DenseTableCell>
-                <DenseTableCell className={cn(closedOptNumCell, pnlColorClass(realized))}>
+                <DenseTableCell className={cn(closedOptNumCell, 'font-semibold', pnlColorClass(realized))}>
                   {fmtUsdRound(realized)}
                   {hasSlippage ? (
                     <span
@@ -239,8 +220,8 @@ export function LedgerClosedOptionSection({
                     </span>
                   ) : null}
                 </DenseTableCell>
-                <DenseTableCell className={closedOptNumCell}>{accountLabel}</DenseTableCell>
-                <DenseTableCell>
+                <DenseTableCell className="font-mono text-dense-meta text-muted-foreground">{accountLabel}</DenseTableCell>
+                <DenseTableCell className="font-mono text-muted-foreground">
                   {(() => {
                     const dates = trades
                       .map(t => t.trade_date)
@@ -255,7 +236,11 @@ export function LedgerClosedOptionSection({
                     <LedgerConsistencyTag state={getInstanceConsistencyState(trades)} />
                     {(() => {
                       const ids = [...new Set(trades.flatMap(t => executionStrategyInstanceIds(t)))]
-                      return ids.length === 0 ? '—' : ids.map(id => `#${id}`).join(' ')
+                      return ids.length === 0
+                        ? '—'
+                        : ids.map(id => (
+                          <span key={id} className="font-mono font-bold text-[var(--color-instance-multi)]">#{id}</span>
+                        ))
                     })()}
                   </span>
                 </DenseTableCell>
@@ -282,11 +267,12 @@ export function LedgerClosedOptionSection({
         onPage={p => setClosedPage(Math.max(1, Math.min(p, totalClosedPages)))}
       />
 
-      <h5 className="mb-2 mt-4 inline-flex items-center gap-1.5 text-dense-body font-semibold text-foreground">
-        Details (per trade)
-        <InfoTooltip text="Click a closed trade row above to load its execution details." />
-      </h5>
-      <DenseDataTable tableClassName={closedOptDetailTableClass}>
+      <LedgerPanelBar
+        title="Details · per trade"
+        subject={ledgerDetailsSubject(closedExpandedGroups)}
+        hint="the fills behind the row above"
+      />
+      <DenseDataTable wrapClassName="rounded-none border-0" tableClassName={closedOptDetailTableClass}>
         <ClosedOptDetailColgroup />
         <DenseTableHeader>
           <DenseTableHeadRow>
@@ -296,10 +282,10 @@ export function LedgerClosedOptionSection({
             </DenseTableHead>
             <DenseTableHead className={closedOptHeadPrimary}>Trade date</DenseTableHead>
             <DenseTableHead className={closedOptHeadPrimary}>Side</DenseTableHead>
-            <DenseTableHead className={closedOptNumCell}>Qty</DenseTableHead>
-            <DenseTableHead className={closedOptNumCell}>Price</DenseTableHead>
-            <DenseTableHead className={closedOptNumCell}>Comm.</DenseTableHead>
-            <DenseTableHead className={closedOptNumCell}>P&L</DenseTableHead>
+            <DenseTableHead className={cn(closedOptHeadPrimary, 'text-right')}>Qty</DenseTableHead>
+            <DenseTableHead className={cn(closedOptHeadPrimary, 'text-right')}>Price</DenseTableHead>
+            <DenseTableHead className={cn(closedOptHeadPrimary, 'text-right')}>Comm.</DenseTableHead>
+            <DenseTableHead className={cn(closedOptHeadPrimary, 'text-right')}>P&L</DenseTableHead>
             <DenseTableHead className={closedOptHeadPrimary}>Source</DenseTableHead>
             <DenseTableHead className={closedOptHeadPrimary}>Booking</DenseTableHead>
             <DenseTableHead className={closedOptDetailActionsHead}>Actions</DenseTableHead>

@@ -39,7 +39,7 @@ export function LedgerInstanceFillsTable({
   stockFills?: Execution[]
 } & OptGroupCallbacks) {
   return (
-    <DenseDataTable wrapClassName="mt-1" tableClassName={ledgerTableMinClass.t2}>
+    <DenseDataTable wrapClassName="rounded-sm" tableClassName={ledgerTableMinClass.t2}>
       {/* Measured on DEV at the 820 floor: the five action buttons stay whole; Booking wraps. */}
       <colgroup>
         <col style={{ width: '21%' }} />

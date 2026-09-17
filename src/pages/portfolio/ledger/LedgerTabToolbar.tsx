@@ -1,9 +1,10 @@
+import { cn } from '@/lib/utils'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { SegmentControl } from '@/components/data-display'
 import { LedgerTabFilterRow, type LedgerTabFilterProps } from './LedgerTabFilters'
 import type { LedgerViewChip } from './ledgerViewChips'
 import type { MainTab } from './ledgerTypes'
-import { ledgerShell, ledgerSplitTabClass } from './ledgerShellUi'
+import { ledgerChipClass, ledgerShell } from './ledgerShellUi'
 
 const DETAIL_VIEW_TOOLTIP =
   'Accordion keeps one expandable panel open (strategy group, instance card, option detail rows, or other sections on this tab). Multi allows several.'
@@ -18,32 +19,48 @@ type Props = {
   filters: LedgerTabFilterProps
 }
 
-function ViewChipButton({
-  chip,
-  active,
-  instrumentsFirst,
-  onSelect,
+function ViewChipGroup({
+  caption,
+  captionClass,
+  ariaLabel,
+  chips,
+  activeTab,
+  onTabChange,
 }: {
-  chip: LedgerViewChip
-  active: boolean
-  instrumentsFirst?: boolean
-  onSelect: () => void
+  caption: string
+  captionClass: string
+  ariaLabel: string
+  chips: LedgerViewChip[]
+  activeTab: MainTab
+  onTabChange: (tab: MainTab) => void
 }) {
   return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      title={chip.title}
-      onClick={onSelect}
-      className={ledgerSplitTabClass(active, instrumentsFirst, chip.empty)}
-    >
-      {chip.label}
-      <span className="ml-1 font-mono font-normal opacity-80">{chip.countLabel}</span>
-    </button>
+    <div className={ledgerShell.selectorGroup}>
+      <span className={cn(ledgerShell.cap, captionClass)}>{caption}</span>
+      <div className={ledgerShell.chipRow} role="tablist" aria-label={ariaLabel}>
+        {chips.map(chip => {
+          const active = activeTab === chip.id
+          return (
+            <button
+              key={chip.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              title={chip.title}
+              onClick={() => onTabChange(chip.id)}
+              className={ledgerChipClass(active, chip.empty)}
+            >
+              {chip.label}
+              <span className="font-mono font-normal opacity-80">{chip.countLabel}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
+/** "Which question": two lenses (attribution, instruments), four views, and the active view's own filters. */
 export function LedgerTabToolbar({
   attributionChips,
   instrumentChips,
@@ -54,56 +71,55 @@ export function LedgerTabToolbar({
   filters,
 }: Props) {
   return (
-    <div className={ledgerShell.toolbarPanel}>
-      <div className={ledgerShell.toolbarTop}>
-        <div className={ledgerShell.toolbarSplit}>
-          <div className={ledgerShell.toolbarAttr}>
-            <div className={ledgerShell.tabGroupCaption}>Attribution</div>
-            <div className={ledgerShell.attrTabRow} role="tablist" aria-label="Attribution tabs">
-              {attributionChips.map(chip => (
-                <ViewChipButton
-                  key={chip.id}
-                  chip={chip}
-                  active={activeTab === chip.id}
-                  onSelect={() => onTabChange(chip.id)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className={ledgerShell.toolbarInst}>
-            <div className={ledgerShell.tabGroupCaption}>Instruments</div>
-            <div className={ledgerShell.instTabRow} role="tablist" aria-label="Instrument tabs">
-              {instrumentChips.map((chip, i) => (
-                <ViewChipButton
-                  key={chip.id}
-                  chip={chip}
-                  active={activeTab === chip.id}
-                  instrumentsFirst={i === 0}
-                  onSelect={() => onTabChange(chip.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className={ledgerShell.detailViewToolbar} role="toolbar" aria-label="Detail view mode">
-          <span className={ledgerShell.detailViewLabel}>Detail view</span>
-          <InfoTooltip text={DETAIL_VIEW_TOOLTIP} />
-          <SegmentControl
-            size="sm"
-            ariaLabel="Detail view mode"
-            options={[
-              { value: 'accordion', label: 'Accordion' },
-              { value: 'multi', label: 'Multi' },
-            ]}
-            value={accordionMode ? 'accordion' : 'multi'}
-            onChange={v => onAccordionModeChange(v === 'accordion')}
-          />
-        </div>
+    <section className="space-y-1.5" aria-label="Which question">
+      <div className={ledgerShell.tierRow}>
+        <span className={ledgerShell.tierLabel}>Which question</span>
+        <span className={ledgerShell.tierRule} />
+        <span className={ledgerShell.tierNote}>
+          two lenses, four views — the share buckets are one view with a bucket filter, not separate tabs
+        </span>
       </div>
 
-      <LedgerTabFilterRow {...filters} />
-    </div>
+      <div className={ledgerShell.panel}>
+        <div className={ledgerShell.selectorTop}>
+          <ViewChipGroup
+            caption="Attribution — whose trade was it"
+            captionClass={ledgerShell.capAttribution}
+            ariaLabel="Attribution views"
+            chips={attributionChips}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+          />
+          <span className={ledgerShell.selectorDivider} aria-hidden />
+          <ViewChipGroup
+            caption="Instruments — what was traded"
+            captionClass={ledgerShell.capInstruments}
+            ariaLabel="Instrument views"
+            chips={instrumentChips}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+          />
+
+          <div className={ledgerShell.selectorDetail} role="group" aria-label="Detail view mode">
+            <span className="inline-flex items-center gap-1">
+              <span className={ledgerShell.cap}>Detail view</span>
+              <InfoTooltip text={DETAIL_VIEW_TOOLTIP} />
+            </span>
+            <SegmentControl
+              size="xs"
+              ariaLabel="Detail view mode"
+              options={[
+                { value: 'accordion', label: 'Accordion' },
+                { value: 'multi', label: 'Multi' },
+              ]}
+              value={accordionMode ? 'accordion' : 'multi'}
+              onChange={v => onAccordionModeChange(v === 'accordion')}
+            />
+          </div>
+        </div>
+
+        <LedgerTabFilterRow {...filters} />
+      </div>
+    </section>
   )
 }

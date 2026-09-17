@@ -372,10 +372,9 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
           // Legacy parity: allocation split happens in expandExecutionRowsForStrategyOptView;
           // do not slice again per instance or legs can mis-classify as open.
           const groups = buildOptExecutionGroups(instTrades)
+          // The row already shows the id; a label is only what a fill names the instance.
           const label = instId !== 'none'
-            ? (instTrades.find(t => executionInstanceLabel(t, instId as number))
-                ? executionInstanceLabel(instTrades[0], instId as number)
-                : `#${instId as number}`)
+            ? instTrades.map(t => executionInstanceLabel(t, instId as number)).find(l => l && l.trim()) ?? null
             : null
           return { instanceId: instId, label, groups }
         })

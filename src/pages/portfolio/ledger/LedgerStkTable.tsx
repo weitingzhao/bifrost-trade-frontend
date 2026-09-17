@@ -30,6 +30,7 @@ import {
   stkTimeCell,
   stkTradeDateCell,
 } from './ledgerStockUi'
+import { cn } from '@/lib/utils'
 import type { MainTab, StkPositionGroup, StkSortCol } from './ledgerTypes'
 import {
   denseTable,
@@ -44,6 +45,9 @@ import {
   IconActionButton,
   denseTableNumCell,
 } from '@/components/data-display'
+
+/** A bare symbol (§14.4): mono 700 sky, the same whether or not it can be clicked. */
+const LEDGER_SYMBOL_MARK = 'font-mono font-bold text-sky-400'
 
 function sortPositionGroups(
   groups: StkPositionGroup[],
@@ -98,28 +102,18 @@ function StkFillRow({
   onSymbolClick?: (symbol: string, accountId?: string) => void
 }) {
   const category = getExecCategory(ex, catMap)
-  const symbolMark = ex.symbol ?? '—'
+  const symbolMark = <span className={LEDGER_SYMBOL_MARK}>{ex.symbol ?? '—'}</span>
   const symbolNode =
     onSymbolClick && ex.symbol ? (
       <button
         type="button"
-        className="border-0 bg-transparent p-0 cursor-pointer"
+        className="cursor-pointer border-0 bg-transparent p-0 hover:underline"
         onClick={() => onSymbolClick(ex.symbol, ex.account_id)}
       >
-        {showPills ? (
-          <DenseTag variant="symbol" size="cell">
-            {symbolMark}
-          </DenseTag>
-        ) : (
-          <span className="font-mono font-semibold text-sky-400">{symbolMark}</span>
-        )}
-      </button>
-    ) : showPills ? (
-      <DenseTag variant="symbol" size="cell">
         {symbolMark}
-      </DenseTag>
+      </button>
     ) : (
-      <span className="font-mono font-semibold text-sky-400">{symbolMark}</span>
+      symbolMark
     )
   return (
     <DenseTableRow>
@@ -133,7 +127,7 @@ function StkFillRow({
           {symbolNode}
         </DenseTableCell>
       )}
-      <DenseTableCell className={stkMetaCell}>{ex.account_id ?? '—'}</DenseTableCell>
+      <DenseTableCell className={cn(stkMetaCell, 'font-mono text-muted-foreground')}>{ex.account_id ?? '—'}</DenseTableCell>
       <DenseTableCell className={stkMetaCell}>
         {showPills ? (
           <DenseTag variant="category" size="cell">
@@ -405,36 +399,26 @@ function GroupBlock({
   onAddJournal: (accountId: string, symbol: string) => void
   onSymbolClick?: (symbol: string, accountId?: string) => void
 }) {
-  const symbolMark = pg.symbol || '—'
+  const symbolMark = <span className={LEDGER_SYMBOL_MARK}>{pg.symbol || '—'}</span>
   const symbolNode =
     onSymbolClick && pg.symbol ? (
       <button
         type="button"
-        className="border-0 bg-transparent p-0 cursor-pointer"
+        className="cursor-pointer border-0 bg-transparent p-0 hover:underline"
         onClick={() => onSymbolClick(pg.symbol, pg.accountId)}
       >
-                        {showPills ? (
-                          <DenseTag variant="symbol" size="pill">
-                            {symbolMark}
-                          </DenseTag>
-                        ) : (
-                          <span className="font-mono font-bold text-sky-400">{symbolMark}</span>
-                        )}
-      </button>
-    ) : showPills ? (
-      <DenseTag variant="symbol" size="pill">
         {symbolMark}
-      </DenseTag>
+      </button>
     ) : (
-      <span className="font-mono font-bold text-sky-400">{symbolMark}</span>
+      symbolMark
     )
   return (
     <>
       <DenseTableRow className="bg-secondary/50 hover:bg-secondary/50">
         <DenseTableCell colSpan={12} className="py-2">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-dense-meta text-muted-foreground">
             {symbolNode}
-            <span className="text-foreground">{pg.accountId || '—'}</span>
+            <span className="font-mono text-muted-foreground">{pg.accountId || '—'}</span>
             {showPills ? (
               <DenseTag variant="category" size="pill">
                 {category}

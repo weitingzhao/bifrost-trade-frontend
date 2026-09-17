@@ -5,50 +5,31 @@ export const ledgerPageCardClass = cn(
   'flex flex-col gap-3 rounded-lg border border-border bg-card p-4',
 )
 
-const tabGroupCaptionBase = cn(
-  'mb-1.5 block w-full rounded-md border px-2 py-1 text-center',
-  'text-dense-meta font-bold uppercase tracking-[0.07em] leading-snug',
-  'border-sky-500/25 bg-gradient-to-b from-sky-500/15 to-sky-500/5',
-  'text-foreground shadow-[0_1px_0_rgba(0,0,0,0.12)]',
-)
-
 export const ledgerShell = {
-  toolbarPanel: cn(
-    'mb-3 mt-1 overflow-hidden rounded-[10px] border border-border',
-    'bg-muted/25 shadow-[inset_0_1px_0_color-mix(in_srgb,var(--foreground)_4%,transparent)]',
-  ),
-  toolbarTop: cn(
-    'grid grid-cols-[minmax(0,1fr)_auto] items-stretch',
-    'border-b border-border/80',
-  ),
-  toolbarSplit: 'grid min-w-0 grid-cols-[minmax(9rem,2fr)_minmax(0,5fr)]',
-  toolbarAttr: 'min-w-0 border-r border-border/80 px-[0.65rem] py-2',
-  toolbarInst: 'min-w-0 px-[0.65rem] py-2',
-  tabGroupCaption: tabGroupCaptionBase,
-  attrTabRow: 'grid grid-cols-2 gap-0',
-  instTabRow: 'flex min-w-0 flex-wrap',
-  splitTabBtn: cn(
-    'min-w-0 cursor-pointer border-0 border-b-2 border-transparent bg-transparent',
-    'px-2 py-2 text-center text-dense-body font-medium text-muted-foreground',
-    'transition-colors hover:bg-muted/25 hover:text-foreground',
-  ),
-  splitTabBtnEmpty: 'opacity-45',
-  splitTabBtnActive: cn(
-    'border-b-success bg-success-soft/55 text-foreground',
-  ),
-  splitTabBtnInstruments: 'border-l border-border/70',
-  detailViewToolbar: cn(
-    'flex min-w-36 shrink-0 flex-col items-start justify-center gap-1.5',
-    'border-l border-border/80 px-3 py-2',
-  ),
-  detailViewLabel: 'whitespace-nowrap text-dense-meta text-muted-foreground',
-  toolbarFilters: 'block w-full min-w-0 border-t border-border/80 px-[0.65rem] py-2',
-  toolbarFiltersInner: 'flex w-full min-w-0 flex-col gap-2',
-  filterSegmentInlineRow: 'flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1.5',
-  filterSegmentRow: 'flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1',
-  tabFilterLabel: 'shrink-0 text-xs font-semibold text-muted-foreground',
-  filterMetaInline: 'text-xs text-muted-foreground',
-  containOpenDisabled: 'pointer-events-none opacity-55',
+  /** Section heading above a panel ("Is this book healthy", "Which question"). Accounts and Transfer use the same. */
+  tierRow: 'flex flex-wrap items-center gap-x-2.5 gap-y-1',
+  tierLabel: 'text-dense-caption font-bold uppercase tracking-[0.16em] text-foreground/85',
+  tierRule: 'h-px min-w-8 flex-1 bg-border',
+  tierNote: 'text-dense-meta text-muted-foreground',
+
+  /** One bordered surface for the view selector and for each view's list. */
+  panel: 'min-w-0 rounded-md border border-border bg-background/40',
+  panelFoot: 'px-3 py-1.5 text-dense-meta text-muted-foreground text-pretty',
+
+  selectorTop: 'flex flex-wrap items-start gap-x-4.5 gap-y-2.5 px-3 py-2',
+  selectorGroup: 'flex min-w-0 flex-col gap-0.75',
+  selectorDivider: 'w-px self-stretch bg-border',
+  selectorDetail: 'ml-auto flex flex-col gap-0.75',
+  selectorSub: 'flex flex-wrap items-center gap-x-4 gap-y-2 px-3 pb-2.25',
+  chipRow: 'flex flex-wrap gap-1',
+  inlineControl: 'inline-flex flex-wrap items-center gap-1.75',
+  viewHint: 'ml-auto text-dense-meta text-muted-foreground',
+  filterMetaInline: 'text-dense-meta text-muted-foreground',
+
+  cap: 'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground',
+  capAttribution: 'text-[var(--color-link)]',
+  capInstruments: 'text-[var(--color-entity-category)]',
+
   symbolCombobox: 'relative min-w-28',
   symbolInput: cn(
     'h-[1.875rem] w-full min-w-28 rounded-sm border border-border bg-background',
@@ -63,15 +44,26 @@ export const ledgerShell = {
   symbolOptionActive: 'bg-muted',
 } as const
 
-export function ledgerSplitTabClass(
-  active: boolean,
-  instrumentsFirst?: boolean,
-  empty?: boolean,
-): string {
+/** A view or sub-view chip: lime when on, dim when it would show nothing. */
+export function ledgerChipClass(active: boolean, empty: boolean, filled = true): string {
   return cn(
-    ledgerShell.splitTabBtn,
-    active && ledgerShell.splitTabBtnActive,
-    instrumentsFirst && ledgerShell.splitTabBtnInstruments,
-    empty && !active && ledgerShell.splitTabBtnEmpty,
+    'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-sm border px-2',
+    'text-dense-meta font-semibold transition-colors',
+    active
+      ? cn('border-primary text-primary', filled && 'bg-primary/[0.08]')
+      : cn(
+        'border-border bg-transparent hover:border-[var(--color-border-strong)] hover:text-foreground',
+        empty ? 'text-[var(--color-text-dim)]' : 'text-muted-foreground',
+      ),
   )
 }
+
+const groupRowSurface = 'border-0 border-b border-border bg-secondary/40 hover:bg-secondary'
+const groupRowLayout =
+  'flex min-w-0 cursor-pointer flex-wrap items-baseline gap-2.5 px-2.5 py-1.75 text-left text-foreground'
+
+/** A collapsible row inside a view panel: an opportunity, an instance. */
+export const ledgerGroupRowClass = cn('w-full', groupRowLayout, groupRowSurface)
+/** The same row when it carries a link beside the toggle (a link cannot sit inside the button). */
+export const ledgerGroupRowWrapClass = cn('flex items-center', groupRowSurface)
+export const ledgerGroupRowButtonClass = cn('flex-1 border-0 bg-transparent', groupRowLayout)

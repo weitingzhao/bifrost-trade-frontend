@@ -1,7 +1,6 @@
 import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
 import { pnlColorClass } from '@/utils/dailyChange'
-import { rightLabel } from '@/utils/positions'
 import { normalizeIbOptionAvgCostPerShare } from '@/utils/optionLiveBasis'
 
 export type OpenOptSortCol =
@@ -100,9 +99,11 @@ export function optQuoteMid(quote: QuoteItem | undefined): number | null {
   return quote.last ?? null
 }
 
+/** `DAVE 280C` — §14.4: a contract always carries its strike and its right. */
 export function contractButtonLabel(pos: OpenOptionPosition): string {
-  const strikeStr = pos.strike != null ? ` ${pos.strike}` : ''
-  return `${pos.symbol} ${rightLabel(pos.right)}${strikeStr}`
+  const right = (pos.right ?? '').trim().toUpperCase().charAt(0)
+  const strikeStr = pos.strike != null ? ` ${pos.strike}${right}` : right ? ` ${right}` : ''
+  return `${pos.symbol}${strikeStr}`
 }
 
 export function sortOpenOptionPositions(

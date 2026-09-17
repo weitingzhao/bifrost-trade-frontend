@@ -19,6 +19,7 @@ import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 import type { InstanceStockCoverage, LivePositionRow } from '@/types/positions'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
 import { instancePanel } from './instancePanelClasses'
+import { positionsUi } from './positionsUi'
 
 interface Props {
   coverage: InstanceStockCoverage[]
@@ -104,10 +105,15 @@ export function InstanceCoverageSubTable({
   if (coverage.length === 0) return null
 
   return (
-    <section className={cn(instancePanel.subSection, instancePanel.subSectionCoverage)}>
-      <h4 className={instancePanel.subHeading}>Underlying Coverage</h4>
-      <div className={instancePanel.subTableWrap}>
-        <NestedDenseTable>
+    <section className="flex min-w-0 flex-col gap-1">
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span className={positionsUi.cap}>Coverage</span>
+        <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
+          What backs the short side of this strategy
+        </span>
+      </div>
+      <div className="overflow-x-auto rounded-[5px] border border-border bg-[var(--sk-raised)]">
+        <NestedDenseTable tableClassName="min-w-[1240px]">
           <DenseTableHeader>
             <DenseTableHeadRow>
               <DenseTableHead>Symbol</DenseTableHead>
@@ -155,7 +161,7 @@ export function InstanceCoverageSubTable({
                   <DenseTableCell className={denseTableNumCell}>{fmtUsd(m.cost_basis)}</DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>{fmtUsd(m.avg_cost)}</DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>{fmtUsd(m.live_last)}</DenseTableCell>
-                  <DenseTableCell className={denseTableNumCell}>
+                  <DenseTableCell className={cn(denseTableNumCell, 'whitespace-normal')}>
                     <InlinePnl value={m.daily_pnl}>{fmtUsd(m.daily_pnl)}</InlinePnl>
                     {m.daily_pct != null && (
                       <span className="ml-1">
@@ -163,7 +169,7 @@ export function InstanceCoverageSubTable({
                       </span>
                     )}
                   </DenseTableCell>
-                  <DenseTableCell className={denseTableNumCell}>
+                  <DenseTableCell className={cn(denseTableNumCell, 'whitespace-normal')}>
                     <InlinePnl value={m.total_pnl}>{fmtUsd(m.total_pnl)}</InlinePnl>
                     {m.total_pct != null && (
                       <span className="ml-1">

@@ -19,7 +19,6 @@ import {
 } from '@/components/data-display'
 import {
   fmtUsd,
-  fmtExpiry,
   fmtDate,
   fmtDaysAgo,
   daysUntilExpiry,
@@ -46,9 +45,11 @@ import type { QuoteItem } from '@/types/market'
 import type { DetailViewMode } from './LinesToolbar'
 import { scopedExecListsForPosition } from '@/utils/instanceSheetExec'
 import { instancePanel } from './instancePanelClasses'
+import { positionsUi } from './positionsUi'
 import { localDayStamp } from '@/utils/positions'
 import { LEG_GREEKS_TITLE, OptionLegGreeksCell } from './OptionLegGreeksCell'
 import { buildOptionTicker } from '@/utils/optionTicker'
+import { fmtIsoDateToken } from '@/lib/format'
 import { extractUnderlyingRootSymbol } from './linkExecutionModalHelpers'
 import type { PositionGreeks } from '@/hooks/useOptionGreeks'
 
@@ -189,10 +190,16 @@ export function InstanceOptionSubTable({
   }
 
   return (
-    <section className={instancePanel.subSection}>
-      <h4 className={instancePanel.subHeading}>Options ({options.length})</h4>
-      <div className={instancePanel.subTableWrap}>
-        <NestedDenseTable tableClassName="min-w-[72rem] table-fixed">
+    <section className="flex min-w-0 flex-col gap-1">
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span className={positionsUi.cap}>Options ({options.length})</span>
+        <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
+          Pool = which backing pool the leg draws on · Attr = attribution result
+        </span>
+      </div>
+      <div className="overflow-x-auto rounded-[5px] border border-border bg-[var(--sk-raised)]">
+        {/* §14.6: fourteen columns plus expand and actions — above the design's 1160 floor. */}
+        <NestedDenseTable tableClassName="min-w-[1240px] table-fixed">
           <colgroup>
             <col style={{ width: '2rem' }} />
             <col style={{ width: '9rem' }} />
@@ -209,7 +216,8 @@ export function InstanceOptionSubTable({
             <col style={{ width: '5rem' }} />
             <col style={{ width: '7rem' }} />
             <col style={{ width: '5.5rem' }} />
-            <col style={{ width: '2rem' }} />
+            <col style={{ width: '4rem' }} />
+            <col style={{ width: '3.5rem' }} />
           </colgroup>
           <DenseTableHeader>
             <DenseTableHeadRow>
@@ -334,7 +342,7 @@ export function InstanceOptionSubTable({
                     )}
                   </DenseTableCell>
                   <DenseTableCell>
-                    <div className="font-mono">{fmtExpiry(pos.expiry)}</div>
+                    <div className="font-mono">{fmtIsoDateToken(pos.expiry)}</div>
                     {dteLabel && (
                       <div className={instancePanel.subExpiryDte}>{dteLabel}</div>
                     )}

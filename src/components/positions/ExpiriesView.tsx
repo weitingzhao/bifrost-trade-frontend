@@ -22,7 +22,8 @@ import {
   DenseTag,
   denseTableNumCell,
 } from '@/components/data-display'
-import { fmtExpiry, quoteFeedAgeSec } from '@/utils/positions'
+import { quoteFeedAgeSec } from '@/utils/positions'
+import { fmtIsoDateToken } from '@/lib/format'
 import { cushionBand, type ExpiryLadderRow } from '@/utils/positionsOptionRisk'
 import type { QuoteItem } from '@/types/market'
 import { instancePanel } from './instancePanelClasses'
@@ -81,13 +82,13 @@ export function ExpiriesView({
           {totals.next ? (
             <>
               {' · next '}
-              <span className="font-mono">{fmtExpiry(totals.next.expiry)}</span>
+              <span className="font-mono">{fmtIsoDateToken(totals.next.expiry)}</span>
               {totals.next.dte != null ? ` (${totals.next.dte}d)` : null}
             </>
           ) : null}
         </span>
         {totals.itm > 0 ? (
-          <DenseTag variant="danger" size="cell">
+          <DenseTag variant="warning" size="cell">
             {totals.itm} ITM short
           </DenseTag>
         ) : null}
@@ -176,7 +177,7 @@ function ExpiryRow({
           aria-pressed={active}
           title={active ? 'Clear the expiry scope' : 'Scope the page to this expiry'}
         >
-          {fmtExpiry(row.expiry)}
+          {fmtIsoDateToken(row.expiry)}
         </button>
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
@@ -189,7 +190,7 @@ function ExpiryRow({
       {showPriced ? (
         <DenseTableCell className="text-xs">
           {row.itmShortCount > 0 ? (
-            <DenseTag variant="danger" size="cell">
+            <DenseTag variant="warning" size="cell">
               {row.itmShortCount}
             </DenseTag>
           ) : row.unpricedShortCount > 0 ? (

@@ -26,7 +26,6 @@ import {
 } from '@/utils/openOptionsTab'
 import {
   fmtUsd,
-  fmtExpiry,
   fmtDate,
   fmtDaysAgo,
   daysUntilExpiry,
@@ -38,6 +37,7 @@ import {
 } from '@/utils/optionLiveBasis'
 import type { OpenOptionPosition, Execution } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
+import { fmtIsoDateToken } from '@/lib/format'
 import type { DetailViewMode } from './LinesToolbar'
 import { OpenOptionExecTableRow } from './OpenOptionExecTableRow'
 import {
@@ -243,7 +243,6 @@ export function OptionsTab({
   if (sorted.length === 0) {
     return (
       <div className={denseTable.sectionBlock}>
-        <h4 className={denseTable.sectionTitle}>Option positions</h4>
         <p className={denseTable.emptyHint}>No open option positions under the current filters.</p>
       </div>
     )
@@ -251,7 +250,6 @@ export function OptionsTab({
 
   return (
     <div className={denseTable.sectionBlock}>
-      <h4 className={denseTable.sectionTitle}>Option positions</h4>
       <DenseDataTable>
         <colgroup>
           <col style={{ width: '2.25rem' }} />
@@ -371,7 +369,7 @@ export function OptionsTab({
                   )}
                 </DenseTableCell>
                 <DenseTableCell>
-                  <div>{fmtExpiry(pos.expiry)}</div>
+                  <div>{fmtIsoDateToken(pos.expiry)}</div>
                   {(() => {
                     const days = daysUntilExpiry(pos.expiry)
                     if (days == null) return null

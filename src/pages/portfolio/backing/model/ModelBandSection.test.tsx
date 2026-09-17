@@ -55,10 +55,11 @@ describe('ModelBandSection', () => {
     expect(screen.getByTestId('model-account-tag')).toHaveTextContent('Host')
     expect(screen.getByTestId('model-scope')).toHaveTextContent('Following the page scope: Host U111.')
   })
-  it('renders the summary strip open and the two collapsibles collapsed', () => {
+  it('renders the summary strip and the stress open, the per-underlying table collapsed', () => {
     const { band } = renderBand()
     expect(within(band).getByRole('status', { name: 'Account summary' })).toHaveTextContent('$1,000,000.00')
-    expect(screen.getByRole('button', { name: /Account Stress Matrix/ })).toHaveAttribute('aria-expanded', 'false')
+    // Stress is the band's own reading and opens with it; the symbol table is the detail.
+    expect(screen.getByRole('button', { name: /Account stress — spot only/ })).toHaveAttribute('aria-expanded', 'true')
     const table = screen.getByRole('button', { name: /Per underlying/ })
     expect(table).toHaveAttribute('aria-expanded', 'false')
     expect(table).toHaveTextContent('2 symbols · 1 undefined risk')

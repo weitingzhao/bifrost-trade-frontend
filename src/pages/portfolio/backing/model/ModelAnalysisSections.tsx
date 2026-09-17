@@ -21,6 +21,10 @@ import {
   NestedDenseTable,
   denseTableNumCell,
 } from '@/components/data-display'
+import { StatusLamp } from '@/components/StatusLamp'
+import { positionsUi } from '@/components/positions/positionsUi'
+import { pnlColorClass } from '@/utils/dailyChange'
+import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import {
   fmtIvShockLabel,
   fmtModelDelta,
@@ -174,29 +178,67 @@ interface AccountStressProps {
 }
 
 export function AccountStressSection({ data }: AccountStressProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   const stress = data.account_stress
   const scenarios = stress?.scenarios ?? []
 
   if (!stress?.available || scenarios.length === 0) return null
 
+  // The bars are the table, read at a glance: the shock on the x axis, what it
+  // costs on the y. Scale to the largest move so the smallest one is still visible.
+  const maxMove = scenarios.reduce((m, sc) => Math.max(m, Math.abs(sc.pnl_change ?? 0)), 0)
+
   return (
-    <CollapsibleGroup variant="card">
-      <CollapsibleGroupHeader expanded={open} onToggle={() => setOpen((v) => !v)}>
-        <CollapsibleChevron expanded={open} />
-        <CollapsibleGroupTitle>Account Stress Matrix</CollapsibleGroupTitle>
-        <CollapsibleGroupStats>
-          <span className="font-mono text-xs tabular-nums text-muted-foreground">{scenarios.length} scenarios</span>
-        </CollapsibleGroupStats>
-      </CollapsibleGroupHeader>
-      {open && (
-        <CollapsibleGroupBody className="px-3 pb-3">
-          <p className={modelAnalysisStressNoteClass}>
-            Values are the <strong>sum</strong> of per-symbol stress totals for the same (spot shock, IV shock) key. Open
-            any <strong>symbol</strong> row below for full CAR and stress methodology (formulas, Black–Scholes
-            assumptions).
-          </p>
-          <NestedDenseTable>
+    <section className="flex min-w-0 flex-col gap-1.5 border-t border-border pt-2.5">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-dense-body leading-normal font-semibold text-foreground"
+        >
+          <span className="w-2.5 text-muted-foreground">{open ? '▾' : '▸'}</span>
+          Account stress — spot only
+        </button>
+        <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>
+          {scenarios.length} scenarios
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-dense-meta leading-normal text-muted-foreground">
+          <StatusLamp lamp="gray" variant="dot" title="Unknown — not a fault" />
+          the IV axis is not wired, so every row is intrinsic-only
+        </span>
+      </div>
+
+      {open ? (
+        <>
+          <div
+            className="grid items-end gap-1 pt-1"
+            style={{ gridTemplateColumns: `repeat(${scenarios.length}, minmax(0, 1fr))` }}
+            aria-hidden="true"
+          >
+            {scenarios.map((sc, i) => {
+              const move = sc.pnl_change ?? 0
+              const h = maxMove > 0 ? Math.max(3, Math.round((Math.abs(move) / maxMove) * 64)) : 3
+              return (
+                <span key={i} className="flex flex-col items-center gap-1">
+                  <span className={cn(positionsUi.mono, 'text-dense-caption leading-normal', pnlColorClass(move))}>
+                    {sc.pnl_change == null ? '—' : fmtMvAbbrev(move)}
+                  </span>
+                  <span className="flex h-16 w-full flex-col justify-end">
+                    <span
+                      className={cn('block rounded-t-[2px]', move < 0 ? 'bg-loss/60' : 'bg-profit/60')}
+                      style={{ height: `${h}px` }}
+                    />
+                  </span>
+                  <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal font-bold text-secondary-foreground')}>
+                    {fmtSpotShockLabel(sc.spot_shock)}
+                  </span>
+                </span>
+              )
+            })}
+          </div>
+
+          <NestedDenseTable tableClassName="min-w-[460px]">
             <DenseTableHeader>
               <DenseTableHeadRow>
                 <DenseTableHead>Spot shock</DenseTableHead>
@@ -216,7 +258,7 @@ export function AccountStressSection({ data }: AccountStressProps) {
               {scenarios.map((sc, i) => (
                 <DenseTableRow key={i}>
                   <DenseTableCell>{fmtSpotShockLabel(sc.spot_shock)}</DenseTableCell>
-                  <DenseTableCell>{fmtIvShockLabel(sc.iv_shock)}</DenseTableCell>
+                  <DenseTableCell className="text-muted-foreground">{fmtIvShockLabel(sc.iv_shock)}</DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
                     {sc.pnl_change != null ? (
                       <InlinePnl value={sc.pnl_change}>{fmtUsd(sc.pnl_change)}</InlinePnl>
@@ -236,9 +278,13 @@ export function AccountStressSection({ data }: AccountStressProps) {
               ))}
             </DenseTableBody>
           </NestedDenseTable>
-        </CollapsibleGroupBody>
-      )}
-    </CollapsibleGroup>
+          <p className={modelAnalysisStressNoteClass}>
+            Values are the <strong>sum</strong> of per-symbol stress totals for the same spot shock, at expiry intrinsic
+            value. Open a <strong>symbol</strong> row below for its own CAR and stress, with the formulas.
+          </p>
+        </>
+      ) : null}
+    </section>
   )
 }
 

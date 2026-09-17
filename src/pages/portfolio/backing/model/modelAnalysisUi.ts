@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
+import { positionsUi } from '@/components/positions/positionsUi'
 
 /** Model Analysis table shell + sticky header bridge to Dense UI tokens. */
 export const modelAnalysisTable = {
@@ -15,17 +16,16 @@ export const modelAnalysisTable = {
   expandedRow: 'bg-primary/[0.04]',
 } as const
 
-/** The model band on Backing & Model: the same shell as Room to add, its header line, and its body stack. */
-export const modelBandSectionClass = 'min-w-0 rounded-md border border-border bg-secondary/40 px-3 py-1.5'
+/** The model band on Backing & Model: the page's panel, its header bar, and its body stack. */
+export const modelBandSectionClass = positionsUi.panel
 
-export const modelBandHeaderClass = 'mb-1 flex flex-wrap items-center gap-x-2 gap-y-1'
+export const modelBandHeaderClass = positionsUi.panelHead
 
-export const modelBandTitleClass =
-  'flex items-center gap-1.5 text-dense-label font-semibold uppercase tracking-wide text-muted-foreground'
+export const modelBandTitleClass = cn(positionsUi.cap, 'flex items-center gap-1.5')
 
-export const modelBandScopeLineClass = 'mb-1.5 text-dense-caption text-muted-foreground'
+export const modelBandScopeLineClass = cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')
 
-export const modelBandBodyClass = 'flex min-w-0 flex-col gap-2 pb-1'
+export const modelBandBodyClass = 'flex min-w-0 flex-col gap-2.5 px-3 pt-2.5 pb-3'
 
 export const modelAnalysisHypotheticalBadgeClass =
   'inline-flex items-center gap-1 rounded-md border border-warning/40 bg-warning-soft px-2 py-0.5 text-dense-meta font-semibold tracking-wide text-warning whitespace-nowrap'
@@ -36,16 +36,13 @@ export const modelAnalysisDisclaimerClass =
 export const modelAnalysisConfigHintClass =
   'rounded-md border border-dashed border-border bg-muted px-3 py-2 text-xs leading-relaxed text-muted-foreground max-w-2xl'
 
-export const modelAnalysisSummaryStripClass =
-  'flex flex-wrap gap-x-8 gap-y-2 border-b border-border py-3'
+export const modelAnalysisSummaryStripClass = 'flex flex-wrap gap-x-6.5 gap-y-2.5 border-b border-border pb-2.5'
 
-export const modelAnalysisSummaryItemClass = 'min-w-[6.5rem]'
+export const modelAnalysisSummaryItemClass = 'flex min-w-26 flex-col gap-0.5'
 
-export const modelAnalysisSummaryLabelClass =
-  'block text-dense-caption font-semibold uppercase tracking-wider text-muted-foreground mb-0.5'
+export const modelAnalysisSummaryLabelClass = positionsUi.cap
 
-export const modelAnalysisSummaryValueClass =
-  'text-[0.9375rem] font-semibold font-mono tabular-nums text-foreground'
+export const modelAnalysisSummaryValueClass = 'font-mono text-dense-label leading-normal font-bold tabular-nums text-foreground'
 
 export const modelAnalysisEmptyHintClass =
   'py-8 text-center text-sm text-muted-foreground'

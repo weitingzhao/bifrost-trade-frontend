@@ -68,14 +68,17 @@ export function ModelBandSection({
 
   return (
     <section className={modelBandSectionClass} aria-label="Model" data-testid="model-band">
-      <div className={modelBandHeaderClass}>
+      <header className={modelBandHeaderClass}>
         <h2 className={modelBandTitleClass}>
           Model
           <InfoTooltip text={MODEL_ANALYSIS_INFO} />
-          <span className={modelAnalysisHypotheticalBadgeClass} title="Hypothetical — not actual performance">
-            ⚠ Hypothetical
-          </span>
         </h2>
+        <span className={modelAnalysisHypotheticalBadgeClass} title="Hypothetical — not actual performance">
+          ⚠ Hypothetical
+        </span>
+        <span className={modelBandScopeLineClass} data-testid="model-scope">
+          {modelBandScopeSentence(account, accounts)}
+        </span>
         <span className="ml-auto flex items-center gap-1.5">
           <ModelAnalysisAccountPills
             side={account.side}
@@ -84,15 +87,12 @@ export function ModelBandSection({
             readOnly={account.locked}
             onSelect={onSideChange}
           />
-          <Button variant="outline" size="sm" disabled={!account.accountId || isFetching} onClick={onRefresh}>
-            <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} />
+          <Button variant="outline" size="sm" className="h-5.5 px-1.75 text-dense-meta" disabled={!account.accountId || isFetching} onClick={onRefresh}>
+            <RefreshCw className={cn('h-3 w-3', isFetching && 'animate-spin')} />
             {isFetching ? 'Loading…' : 'Refresh'}
           </Button>
         </span>
-      </div>
-      <p className={modelBandScopeLineClass} data-testid="model-scope">
-        {modelBandScopeSentence(account, accounts)}
-      </p>
+      </header>
 
       <div className={modelBandBodyClass}>
         <div className={modelAnalysisDisclaimerClass}>{data?.disclaimer ?? MODEL_ANALYSIS_DEFAULT_DISCLAIMER}</div>

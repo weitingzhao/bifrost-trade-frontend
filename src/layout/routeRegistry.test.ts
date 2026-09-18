@@ -88,7 +88,11 @@ describe('route registry', () => {
       '/portfolio/model-analysis',
     )
     expect(aliasesFor('/research/watchlist')).toHaveLength(1)
-    expect(aliasesFor('/portfolio/positions')).toEqual([])
+    // Positions gained one on 2026-09-18: `/strategy/instances/142` was an
+    // address people wrote down, and the sheet it opened lives here now.
+    expect(aliasesFor('/portfolio/positions').map((a) => a.path)).toEqual([
+      '/strategy/instances/:instanceId',
+    ])
   })
 
   it('falls back for an unknown path', () => {

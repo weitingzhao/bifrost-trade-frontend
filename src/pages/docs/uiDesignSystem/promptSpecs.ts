@@ -103,9 +103,9 @@ Option Category 与 Entity 分离。四类概念：
 
 ## 检测重点文件
 - src/pages/portfolio/ledger/LedgerStgInsCell.tsx
-- src/pages/strategy/InstancesPage.tsx · InstancesGroupedTable
-- src/pages/strategy/OpportunitiesPage.tsx · OpportunityFormModal
-- src/pages/strategy/StructuresPage.tsx · StructuresTable
+- src/components/strategy/InstancesGroupedTable.tsx
+- src/components/strategy/OpportunityFormModal.tsx
+- src/components/strategy/StructureFormSheet.tsx
 - src/components/positions/InstanceTab.tsx · LedgerStrategyGroup.tsx
 
 ## 参考

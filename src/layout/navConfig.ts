@@ -10,7 +10,6 @@ import {
   ClipboardList,
   Cpu,
   Database,
-  GitBranch,
   Layers,
   Layers2,
   ListChecks,
@@ -24,10 +23,8 @@ import {
   Radar,
   Radio,
   Settings,
-  Shield,
   ShieldAlert,
   Split,
-  Star,
   Target,
   TrendingUp,
   Trophy,
@@ -168,30 +165,6 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // sidebar re-lays this group per seat (researchNavCatalog.ts); this is
     // the seat-less layout the top nav and the home page read.
     subGroups: staticResearchSubGroups(),
-  },
-  {
-    label: 'Strategy',
-    icon: GitBranch,
-    // Two homes, same as Portfolio and Research: the headings are pages
-    // (Owner decision, extended here 2026-09-08). "Operations" and
-    // "Configuration" were labels you could not click, and they split the
-    // one chain this domain is built on — a structure becomes an
-    // opportunity, opportunities are bundled into an allocation, the daemon
-    // runs that allocation as instances, and the instances produce a win
-    // rate. Instances is what is running, with how it has gone beneath it.
-    // Allocations is what the daemon was told to run, with the parts it was
-    // assembled from beneath it, in the order they nest.
-    items: [
-      home('Instances', '/strategy/instances', GitBranch, [
-        route('Win Rate', '/strategy/win-rate', Trophy),
-      ]),
-      home('Allocations', '/strategy/allocations', PieChart, [
-        route('Opportunity', '/strategy/opportunities', Star),
-        route('Structure', '/strategy/structures', Cpu),
-        route('Option Category', '/strategy/option-category', Layers),
-        route('Gates', '/strategy/gates', Shield),
-      ]),
-    ],
   },
 ]
 

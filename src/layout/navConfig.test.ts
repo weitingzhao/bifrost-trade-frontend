@@ -5,7 +5,6 @@ import { COPILOT_PAGES } from './researchNavCatalog'
 
 const trade = NAV_GROUPS.find((g) => g.label === 'Trade')!
 const portfolio = NAV_GROUPS.find((g) => g.label === 'Portfolio')!
-const strategy = NAV_GROUPS.find((g) => g.label === 'Strategy')!
 
 /** Every route a group reaches, parents included. */
 function routesOf(group: (typeof NAV_GROUPS)[number]): (string | undefined)[] {
@@ -22,14 +21,15 @@ describe('Trade nav', () => {
     // belongs to no layer and cuts across all five by time of day.
     // Review joined 2026-09-17 with all five of its rows, filed after Risk as
     // the design has it: what was closed, and what it argues for.
-    expect(NAV_GROUPS.map((g) => g.label).slice(0, 7)).toEqual([
+    // Strategy left on 2026-09-18 when its seven pages retired into the chain,
+    // so the business tree is the design's six groups and nothing else.
+    expect(NAV_GROUPS.map((g) => g.label)).toEqual([
       'Home',
       'Trade',
       'Portfolio',
       'Risk',
       'Review',
       'Research',
-      'Strategy',
     ])
     // Expiration joined 2026-09-17, above Playbook: what expires next is the
     // thing a desk opens the group for. Rules joined 2026-09-18 as the home of
@@ -88,42 +88,25 @@ describe('Portfolio nav', () => {
   })
 })
 
-describe('Strategy nav', () => {
-  it('is two homes with their pages beneath and no section labels', () => {
-    expect(strategy.subGroups).toBeUndefined()
-    const [instances, allocations] = strategy.items!
-    expect(strategy.items!.map((i) => i.to)).toEqual(['/strategy/instances', '/strategy/allocations'])
-    expect([instances.defaultOpen, allocations.defaultOpen]).toEqual([true, true])
+describe('Strategy, retired', () => {
+  it('has no group of its own — the seven pages dissolved into the chain', () => {
+    // Design DECISIONS 2026-09-12 and 2026-09-18. The group went on
+    // 2026-09-18, once every capability it carried had a home: the chain and
+    // its edit sheets, the shared instance sheet on Positions, Playbook stats,
+    // and the Desk.
+    expect(NAV_GROUPS.some((g) => g.label === 'Strategy')).toBe(false)
+    expect(NAV_GROUPS.flatMap(routesOf).some((to) => to?.startsWith('/strategy/'))).toBe(false)
   })
 
-  it('puts how it has gone under what is running, and the parts under what was assembled', () => {
-    const [instances, allocations] = strategy.items!
-    expect(instances.children?.map((c) => c.to)).toEqual(['/strategy/win-rate'])
-    // The chain the domain is built on, outermost first: an allocation
-    // bundles opportunities, an opportunity names a structure, a structure
-    // comes from the category catalog, and gates bound the whole thing.
-    expect(allocations.children?.map((c) => c.to)).toEqual([
-      '/strategy/opportunities',
-      '/strategy/structures',
-      '/strategy/option-category',
-      '/strategy/gates',
-    ])
-  })
-
-  it('still reaches all seven pages, each exactly once', () => {
-    const routes = routesOf(strategy)
-    expect(new Set(routes).size).toBe(routes.length)
-    expect([...routes].sort()).toEqual(
-      [
-        '/strategy/allocations',
-        '/strategy/gates',
-        '/strategy/instances',
-        '/strategy/option-category',
-        '/strategy/opportunities',
-        '/strategy/structures',
-        '/strategy/win-rate',
-      ].sort(),
-    )
+  it('forwards each old address to where its subject now lives, in one hop', () => {
+    // Not all to one page: Win Rate became a cut of Playbook stats, and the
+    // whole instance book is a pick on the chain.
+    const target = (path: string) => routeFor(path).redirect
+    expect(target('/strategy/instances')).toBe('/trade/rules?pick=instance:all')
+    expect(target('/strategy/win-rate')).toBe('/review/playbook-stats?cut=structure')
+    for (const p of ['/strategy/allocations', '/strategy/opportunities', '/strategy/structures', '/strategy/gates', '/strategy/option-category']) {
+      expect(target(p), p).toBe('/trade/rules')
+    }
   })
 })
 

@@ -307,7 +307,7 @@ if inst_danger=$(grep -rE 'dangerGhostBtnClass' src/components/strategy/instance
     report "dangerGhostBtnClass under strategy instances list (use IconActionButton tone=danger)"
   fi
 fi
-if inst_legacy_strings=$(grep -rE 'strategy-instances-|instance-list-symbol-toolbar' src/components/strategy src/pages/strategy --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if inst_legacy_strings=$(grep -rE 'strategy-instances-|instance-list-symbol-toolbar' src/components/strategy --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$inst_legacy_strings" ]]; then
     echo "$inst_legacy_strings" >&2
     report "legacy strategy instances class strings"
@@ -325,42 +325,8 @@ if inst_detail_css=$(grep -rl 'InstanceDetail\.module\.css' src/components/strat
   fi
 fi
 
-# Phase 5 — emptied module CSS files must stay deleted
-for f in \
-  src/pages/strategy/InstancesPage.module.css \
-  src/pages/strategy/WinRatePage.module.css; do
-  if [[ -f "$f" ]]; then
-    report "$f must not exist (Phase 5: emptied file deleted)"
-  fi
-done
-
-# Win Rate: Dense migration (Phase 4.10)
-if [[ -f src/components/strategy/winRate/winRate.module.css ]]; then
-  report "winRate.module.css must not exist (use winRateUi.ts tokens)"
-fi
-if winrate_css=$(grep -rl 'winRate\.module\.css' src/components/strategy/winRate --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
-  if [[ -n "$winrate_css" ]]; then
-    echo "$winrate_css" >&2
-    report "winRate.module.css import under src/components/strategy/winRate"
-  fi
-fi
-if winrate_pnl=$(grep -rE 'kpiValuePositive|kpiValueNegative|pnl-positive|pnl-negative' src/components/strategy/winRate --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
-  if [[ -n "$winrate_pnl" ]]; then
-    echo "$winrate_pnl" >&2
-    report "legacy PnL class strings under src/components/strategy/winRate (use profitLossToneClass / winRateWinPctClass)"
-  fi
-fi
-if winrate_legacy=$(grep -rE 'strategy-win-rate-' src/components/strategy/winRate src/pages/strategy --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
-  if [[ -n "$winrate_legacy" ]]; then
-    echo "$winrate_legacy" >&2
-    report "legacy strategy-win-rate- class strings"
-  fi
-fi
-
 # Structures: Dense migration (Phase 4.11)
 for f in \
-  src/pages/strategy/StructuresPage.tsx \
-  src/components/strategy/StructuresTable.tsx \
   src/components/strategy/StrategyHistorySection.tsx \
   src/components/strategy/StructureFormSheet.tsx
 do
@@ -375,7 +341,7 @@ if struct_danger=$(grep -rE 'dangerTextBtnClass' src/components/strategy/Structu
     report "dangerTextBtnClass in StructureFormSheet (use IconActionButton tone=danger)"
   fi
 fi
-if struct_legacy=$(grep -rE 'structure-active-filter-|structure-sheet-|structure-wizard-' src/pages/strategy/StructuresPage.tsx src/components/strategy/StructuresTable.tsx src/components/strategy/StrategyHistorySection.tsx src/components/strategy/StructureFormSheet.tsx src/components/strategy/structures --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if struct_legacy=$(grep -rE 'structure-active-filter-|structure-sheet-|structure-wizard-' src/components/strategy/StrategyHistorySection.tsx src/components/strategy/StructureFormSheet.tsx src/components/strategy/structures --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$struct_legacy" ]]; then
     echo "$struct_legacy" >&2
     report "legacy structure-* class strings under strategy structures domain"
@@ -384,8 +350,6 @@ fi
 
 # Opportunities: Dense migration (Phase 4.12)
 for f in \
-  src/pages/strategy/OpportunitiesPage.tsx \
-  src/components/strategy/OpportunitiesTable.tsx \
   src/components/strategy/OpportunityFormModal.tsx
 do
   if [[ -f "$f" ]] && grep -q '@/components/ui/table' "$f" 2>/dev/null; then
@@ -399,7 +363,7 @@ if opp_danger=$(grep -rE 'dangerTextBtnClass' src/components/strategy/Opportunit
     report "dangerTextBtnClass in OpportunityFormModal (use IconActionButton tone=danger)"
   fi
 fi
-if opp_legacy=$(grep -rE 'opp-table-|opp-form-|opp-list-|structure-active-filter-' src/pages/strategy/OpportunitiesPage.tsx src/components/strategy/OpportunitiesTable.tsx src/components/strategy/OpportunityFormModal.tsx src/components/strategy/opportunities --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if opp_legacy=$(grep -rE 'opp-table-|opp-form-|opp-list-|structure-active-filter-' src/components/strategy/OpportunityFormModal.tsx src/components/strategy/opportunities --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$opp_legacy" ]]; then
     echo "$opp_legacy" >&2
     report "legacy opp-* / structure-active-filter-* class strings under strategy opportunities domain"
@@ -408,8 +372,6 @@ fi
 
 # Gates: Dense migration (Phase 4.13)
 for f in \
-  src/pages/strategy/GatesPage.tsx \
-  src/components/strategy/gates/GatesTable.tsx \
   src/components/strategy/gates/GateSafetyFormSheet.tsx
 do
   if [[ -f "$f" ]] && grep -q '@/components/ui/table' "$f" 2>/dev/null; then
@@ -417,13 +379,13 @@ do
     report "shadcn Table in $f (use DenseDataTable)"
   fi
 done
-if gates_danger=$(grep -rE 'dangerGhostBtnClass|dangerTextBtnClass' src/pages/strategy/GatesPage.tsx src/components/strategy/gates --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if gates_danger=$(grep -rE 'dangerGhostBtnClass|dangerTextBtnClass' src/components/strategy/gates --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$gates_danger" ]]; then
     echo "$gates_danger" >&2
     report "dangerGhostBtnClass/dangerTextBtnClass under strategy gates domain (use IconActionButton tone=danger)"
   fi
 fi
-if gates_legacy=$(grep -rE 'gates-form-|gate-safety-table-|strategy-gates-' src/pages/strategy/GatesPage.tsx src/components/strategy/gates --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if gates_legacy=$(grep -rE 'gates-form-|gate-safety-table-|strategy-gates-' src/components/strategy/gates --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$gates_legacy" ]]; then
     echo "$gates_legacy" >&2
     report "legacy gates-* class strings under strategy gates domain"
@@ -432,8 +394,6 @@ fi
 
 # Allocations: Dense migration (Phase 4.14)
 for f in \
-  src/pages/strategy/AllocationsPage.tsx \
-  src/components/strategy/AllocationsTable.tsx \
   src/components/strategy/AllocationFormModal.tsx
 do
   if [[ -f "$f" ]] && grep -q '@/components/ui/table' "$f" 2>/dev/null; then
@@ -441,7 +401,7 @@ do
     report "shadcn Table in $f (use DenseDataTable)"
   fi
 done
-if alloc_legacy=$(grep -rE 'gates-form-|data-table|btn-set-active|btn-manage' src/pages/strategy/AllocationsPage.tsx src/components/strategy/AllocationsTable.tsx src/components/strategy/AllocationFormModal.tsx src/components/strategy/allocations --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if alloc_legacy=$(grep -rE 'gates-form-|data-table|btn-set-active|btn-manage' src/components/strategy/AllocationFormModal.tsx src/components/strategy/allocations --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$alloc_legacy" ]]; then
     echo "$alloc_legacy" >&2
     report "legacy gates-form- / data-table / btn-set-active / btn-manage strings under strategy allocations domain"
@@ -450,22 +410,21 @@ fi
 
 # Option Category: Dense migration (Phase 4.15)
 for f in \
-  src/pages/strategy/OptionCategoryPage.tsx \
-  src/pages/strategy/optionCategory/OptionCategoryLegsSection.tsx \
-  src/pages/strategy/optionCategory/OptionCategoryMetaTable.tsx
+  src/components/strategy/templates/OptionCategoryLegsSection.tsx \
+  src/components/strategy/templates/OptionCategoryMetaTable.tsx
 do
   if [[ -f "$f" ]] && grep -q '@/components/ui/table' "$f" 2>/dev/null; then
     echo "$f" >&2
     report "shadcn Table in $f (use NestedDenseTable)"
   fi
 done
-if otc_danger=$(grep -rE 'dangerTextBtnClass' src/pages/strategy/optionCategory src/pages/strategy/OptionCategoryPage.tsx --include='*.tsx' 2>/dev/null || true); then
+if otc_danger=$(grep -rE 'dangerTextBtnClass' src/components/strategy/templates --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$otc_danger" ]]; then
     echo "$otc_danger" >&2
     report "dangerTextBtnClass under option category (use IconActionButton tone=danger)"
   fi
 fi
-if otc_legacy=$(grep -rE 'otc-|TemplateMetaEditor' src/pages/strategy/optionCategory src/pages/strategy/OptionCategoryPage.tsx --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
+if otc_legacy=$(grep -rE 'otc-|TemplateMetaEditor' src/components/strategy/templates --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$otc_legacy" ]]; then
     echo "$otc_legacy" >&2
     report "legacy otc-* or TemplateMetaEditor under option category domain"
@@ -594,7 +553,7 @@ fi
 
 # Dense typography ratchet: hardcoded text-[Npx] / text-[0.NNrem] should only go DOWN.
 # Allowed exceptions: text-[7px], text-[8px], and sizing/winRate responsive gradations.
-HARDCODED_TYPO_BASELINE=20
+HARDCODED_TYPO_BASELINE=16
 hardcoded_typo_count=$(grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$hardcoded_typo_count" -gt "$HARDCODED_TYPO_BASELINE" ]]; then
   grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null >&2
@@ -612,7 +571,7 @@ fi
 # itself goes through `pnlColorClass` / `text-profit` / `text-loss`, which are
 # teal and orange now (DESIGN_CONTRACTS §11.9); putting one of these classes on
 # a signed number would re-create the collision that move exists to end.
-RAW_PALETTE_BASELINE=32
+RAW_PALETTE_BASELINE=31
 raw_pnl_count=$(grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
   --include='*.tsx' --include='*.ts' 2>/dev/null \
   | grep -v 'src/components/data-display' | wc -l | tr -d ' ')

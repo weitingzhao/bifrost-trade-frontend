@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 import type { RouteObject } from 'react-router-dom'
-import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useLocation, useParams } from 'react-router-dom'
 import { LabRedirect } from '@/pages/research/analyze/hub/LabRedirect'
 import { AppLayout } from '@/layout/AppLayout'
 import RouteErrorPage from '@/pages/RouteErrorPage'
@@ -32,6 +32,18 @@ function lazyPage(
  * does that through `analyzeRedirect`. Every other target is a page, where
  * forwarding the reader's query and hash is the whole job.
  */
+/** `/strategy/instances/142` → the shared sheet, on that instance. */
+function InstanceRedirect() {
+  const { instanceId } = useParams()
+  const id = Number(instanceId)
+  return (
+    <Navigate
+      to={Number.isFinite(id) && id > 0 ? `/portfolio/positions?instance=${id}` : '/trade/rules?pick=instance:all'}
+      replace
+    />
+  )
+}
+
 function RedirectKeepingQuery({ to }: { to: string }) {
   const location = useLocation()
   return <Navigate to={redirectTargetFor(to, location.search, location.hash)} replace />
@@ -47,12 +59,18 @@ function RedirectKeepingQuery({ to }: { to: string }) {
  */
 export const INDEX_ROUTE = '/home'
 
+/** `/strategy/instances/142` — retired, but the id it carries still means something. */
+const INSTANCE_PATH = '/strategy/instances/:instanceId'
+
 export function redirectRoutes(): RouteObject[] {
   return REDIRECT_ROUTES.map((entry) => ({
     path: entry.path.slice(1),
     element:
       entry.redirect === SYMBOL_PATH ? (
         <LabRedirect from={entry.path} />
+      ) : entry.path === INSTANCE_PATH ? (
+        // The only forward whose target depends on the path: the id travels.
+        <InstanceRedirect />
       ) : (
         <RedirectKeepingQuery to={entry.redirect} />
       ),
@@ -288,32 +306,6 @@ export const router = createBrowserRouter([
       {
         path: 'research/loop/runs/:runId',
         lazy: lazyPage(() => import('@/pages/research/loop/LoopRunPipelinePage')),
-      },
-
-      { path: 'strategy/instances/:instanceId?', lazy: lazyPage(() => import('@/pages/strategy/InstancesPage')) },
-      {
-        path: 'strategy/win-rate',
-        lazy: lazyPage(() => import('@/pages/strategy/WinRatePage')),
-      },
-      {
-        path: 'strategy/structures',
-        lazy: lazyPage(() => import('@/pages/strategy/StructuresPage')),
-      },
-      {
-        path: 'strategy/opportunities',
-        lazy: lazyPage(() => import('@/pages/strategy/OpportunitiesPage')),
-      },
-      {
-        path: 'strategy/allocations',
-        lazy: lazyPage(() => import('@/pages/strategy/AllocationsPage')),
-      },
-      {
-        path: 'strategy/gates',
-        lazy: lazyPage(() => import('@/pages/strategy/GatesPage')),
-      },
-      {
-        path: 'strategy/option-category',
-        lazy: lazyPage(() => import('@/pages/strategy/OptionCategoryPage')),
       },
 
       // ── System ───────────────────────────────────────────────────────

@@ -83,7 +83,6 @@ import {
   RESEARCH,
   RISK,
   REVIEW,
-  STRATEGY,
   SYSTEM_CONFIG,
   SYSTEM_DATA,
   SYSTEM_RUNTIME,
@@ -487,69 +486,6 @@ export const ROUTES: readonly RouteEntry[] = [
       state: 'reviewing',
       rev: '2026-09-18.1',
       note: DESIGN_NOTES['/trade/plans'],
-    },
-  },
-
-  // ── Strategy ───────────────────────────────────────────────────────────
-  {
-    path: '/strategy/instances',
-    label: 'Instances',
-    crumbs: STRATEGY,
-    symbolScope: true,
-    design: {
-      state: 'moving',
-      note: DESIGN_NOTES['/strategy/instances'],
-    },
-  },
-  {
-    path: '/strategy/instances/:instanceId',
-    label: 'Instances',
-    crumbs: STRATEGY,
-    symbolScope: true,
-  },
-  {
-    path: '/strategy/win-rate',
-    label: 'Win Rate',
-    crumbs: STRATEGY,
-    design: {
-      state: 'moving',
-      note: DESIGN_NOTES['/strategy/win-rate'],
-    },
-  },
-  {
-    path: '/strategy/allocations',
-    label: 'Allocations',
-    crumbs: STRATEGY,
-    design: { state: 'moving', note: 'Trade › Rules — the Allocations · gates column' },
-  },
-  {
-    path: '/strategy/opportunities',
-    label: 'Opportunity',
-    crumbs: STRATEGY,
-    design: { state: 'moving', note: 'Trade › Rules — the Opportunities column' },
-  },
-  {
-    path: '/strategy/structures',
-    label: 'Structure',
-    crumbs: STRATEGY,
-    design: { state: 'moving', note: 'Trade › Rules — the Structures column' },
-  },
-  {
-    path: '/strategy/option-category',
-    label: 'Option Category',
-    crumbs: STRATEGY,
-    design: {
-      state: 'moving',
-      note: DESIGN_NOTES['/strategy/option-category'],
-    },
-  },
-  {
-    path: '/strategy/gates',
-    label: 'Gates',
-    crumbs: STRATEGY,
-    design: {
-      state: 'moving',
-      note: DESIGN_NOTES['/strategy/gates'],
     },
   },
 

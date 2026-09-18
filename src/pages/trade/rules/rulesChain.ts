@@ -45,7 +45,15 @@ export type ChainKind = 'structure' | 'opportunity' | 'allocation' | 'instance'
 
 export interface ChainSelection {
   kind: ChainKind
-  id: number
+  /**
+   * The card, or `null` for the whole column.
+   *
+   * `instance:all` is the book Strategy › Instances used to be — every
+   * instance, not the ones one lineage happens to reach. The retired page's
+   * address forwards here, and a reader who wants the whole book sorted by
+   * annualised return has somewhere to stand.
+   */
+  id: number | null
 }
 
 const KINDS: ChainKind[] = ['structure', 'opportunity', 'allocation', 'instance']
@@ -59,13 +67,15 @@ const KINDS: ChainKind[] = ['structure', 'opportunity', 'allocation', 'instance'
  */
 export function parsePick(raw: string | null | undefined): ChainSelection | null {
   const [kind, id] = String(raw ?? '').split(':')
+  if (!KINDS.includes(kind as ChainKind)) return null
+  if (id === 'all') return { kind: kind as ChainKind, id: null }
   const n = Number(id)
-  if (!KINDS.includes(kind as ChainKind) || !Number.isFinite(n)) return null
+  if (!Number.isFinite(n)) return null
   return { kind: kind as ChainKind, id: n }
 }
 
 export function formatPick(sel: ChainSelection): string {
-  return `${sel.kind}:${sel.id}`
+  return `${sel.kind}:${sel.id ?? 'all'}`
 }
 
 /** What every card in a column carries, whichever column it is in. */
@@ -111,7 +121,9 @@ export function lineageOf(sel: ChainSelection | null, d: ChainData): Lit {
     allocation: new Set(),
     instance: new Set(),
   }
-  if (sel == null) return lit
+  // A whole column lights nothing: everything is in scope, and dimming
+  // three columns to say so would read as a lineage rather than its absence.
+  if (sel == null || sel.id == null) return lit
 
   const allocsFor = (oppId: number) =>
     d.allocations.filter((a) => (a.strategy_opportunity_ids ?? []).includes(oppId))
@@ -502,6 +514,25 @@ export function detailOf(
         },
       ],
       rows,
+    }
+  }
+
+  if (sel.id == null) {
+    const open = d.instances.filter((x) => !x.closed).length
+    return {
+      kind: 'instance',
+      title: 'All instances',
+      lineage: 'every instance in the book, whatever the chain above is showing',
+      facts: [
+        { k: 'Open', v: String(open), note: 'still has legs, by its own fills' },
+        { k: 'Closed', v: String(d.instances.length - open), note: 'flat by its own fills' },
+        {
+          k: 'Opportunities',
+          v: String(new Set(d.instances.map((x) => x.opportunityId)).size),
+          note: 'the rules these instances ran under',
+        },
+      ],
+      rows: [...d.instances],
     }
   }
 

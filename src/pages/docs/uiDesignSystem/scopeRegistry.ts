@@ -62,7 +62,7 @@ export const PROMPT_DOMAINS: PromptDomainDef[] = [
   {
     id: 'strategy',
     label: 'Strategy',
-    pathGlobs: ['pages/strategy/**', 'components/strategy/**', 'hooks/useStrategies.ts'],
+    pathGlobs: ['pages/trade/rules/**', 'components/strategy/**', 'hooks/useStrategies.ts'],
   },
   {
     // `operations` and `settings` were two domains over one subject. The
@@ -96,13 +96,9 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/research/greeks', label: 'Contract Greeks', domain: 'research', pathGlobs: ['pages/research/analyze/GreeksPage.tsx'] },
   { route: '/research/backtest', label: 'Backtest', domain: 'research', pathGlobs: ['pages/research/validate/BacktestPage.tsx'] },
 
-  { route: '/strategy/instances', label: 'Instances', domain: 'strategy', pathGlobs: ['pages/strategy/InstancesPage.tsx', 'components/strategy/instanceDetail/**', 'components/strategy/InstancesGroupedTable.tsx'] },
-  { route: '/strategy/win-rate', label: 'Win Rate', domain: 'strategy', pathGlobs: ['pages/strategy/WinRatePage.tsx'] },
-  { route: '/strategy/structures', label: 'Structure', domain: 'strategy', pathGlobs: ['pages/strategy/StructuresPage.tsx', 'components/strategy/StructuresTable.tsx'] },
-  { route: '/strategy/opportunities', label: 'Opportunity', domain: 'strategy', pathGlobs: ['pages/strategy/OpportunitiesPage.tsx', 'components/strategy/OpportunitiesTable.tsx', 'components/strategy/OpportunityFormModal.tsx'] },
-  { route: '/strategy/allocations', label: 'Allocations', domain: 'strategy', pathGlobs: ['pages/strategy/AllocationsPage.tsx'] },
-  { route: '/strategy/gates', label: 'Gates', domain: 'strategy', pathGlobs: ['pages/strategy/GatesPage.tsx'] },
-  { route: '/strategy/option-category', label: 'Option Category', domain: 'strategy', pathGlobs: ['pages/strategy/OptionCategoryPage.tsx'] },
+  // The seven Strategy pages retired 2026-09-18 into the chain. Their scopes
+  // follow their code: the chain and its sheets, and the shared instance sheet.
+  { route: '/trade/rules', label: 'Rules', domain: 'strategy', pathGlobs: ['pages/trade/rules/**', 'components/strategy/**', 'components/strategy/templates/**'] },
 
   { route: '/system/coverage', label: 'Coverage', domain: 'system', pathGlobs: ['pages/system/CoveragePage.tsx', 'pages/system/coverage/**'] },
   { route: '/system/feed', label: 'Feed', domain: 'system', pathGlobs: ['pages/system/FeedPage.tsx', 'pages/system/subscribe/**'] },

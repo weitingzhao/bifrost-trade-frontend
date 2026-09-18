@@ -10,9 +10,35 @@
  * `routeRegistry.test.ts`.
  */
 import type { RouteEntry } from './routeRegistry'
-import { ANALYZE, COPILOT, DATA, DISCOVER, DOCS, PORTFOLIO, SYSTEM_CONFIG, SYSTEM_DATA, SYSTEM_RUNTIME } from './routeCrumbs'
+import { ANALYZE, COPILOT, DATA, DISCOVER, DOCS, PORTFOLIO, STRATEGY, SYSTEM_CONFIG, SYSTEM_DATA, SYSTEM_RUNTIME } from './routeCrumbs'
 
 export const REDIRECTS: readonly RouteEntry[] = [
+  // ── Strategy, retired 2026-09-18 ───────────────────────────────────────
+  // The seven pages dissolved into the chain (design DECISIONS 2026-09-12 and
+  // 2026-09-18). They forward rather than 404 because every one of them has
+  // been linked to from a note, a commit message and the Owner's own bookmarks
+  // for months, and a rule that used to have an address should still lead
+  // somewhere true.
+  //
+  // Each lands where its subject now lives, not all on one page: Win Rate
+  // became a cut of Playbook stats, and an instance's sheet is on Positions.
+  { path: '/strategy/instances', label: 'Instances', crumbs: STRATEGY, redirect: '/trade/rules?pick=instance:all' },
+  // The id has to travel, which a static target cannot do — `router.tsx`
+  // renders this one with a component, the way the Lab hubs are handled. The
+  // row is here so the registry still names the path and the crumb.
+  {
+    path: '/strategy/instances/:instanceId',
+    label: 'Instances',
+    crumbs: STRATEGY,
+    redirect: '/portfolio/positions',
+  },
+  { path: '/strategy/win-rate', label: 'Win Rate', crumbs: STRATEGY, redirect: '/review/playbook-stats?cut=structure' },
+  { path: '/strategy/allocations', label: 'Allocations', crumbs: STRATEGY, redirect: '/trade/rules' },
+  { path: '/strategy/opportunities', label: 'Opportunity', crumbs: STRATEGY, redirect: '/trade/rules' },
+  { path: '/strategy/structures', label: 'Structure', crumbs: STRATEGY, redirect: '/trade/rules' },
+  { path: '/strategy/gates', label: 'Gates', crumbs: STRATEGY, redirect: '/trade/rules' },
+  { path: '/strategy/option-category', label: 'Option Category', crumbs: STRATEGY, redirect: '/trade/rules' },
+
   // ── Research · home and seats ──────────────────────────────────────────
   // The design has Overview and the seat homes but no group root, and answered
   // the open question on 2026-09-15: `/research` is Overview. It forwards

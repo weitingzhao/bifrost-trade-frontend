@@ -208,40 +208,43 @@ export default function TradeRulesPage() {
    * where its scope lives (design DECISIONS 2026-09-18).
    */
   const detailActions = (kind: ChainSelection['kind']) => {
-    if (sel == null) return []
+    // A whole column has no single thing to act on — the actions belong to a
+    // card, and the list below is the answer for the column.
+    if (sel == null || sel.id == null) return []
+    const id = sel.id
     if (kind === 'structure') {
       return [
-        { label: 'Edit', onClick: () => setSheet({ kind: 'structure', mode: { kind: 'edit', id: sel.id } }) },
-        { label: 'Duplicate', onClick: () => setSheet({ kind: 'structure', mode: { kind: 'copy', id: sel.id } }) },
+        { label: 'Edit', onClick: () => setSheet({ kind: 'structure', mode: { kind: 'edit', id } }) },
+        { label: 'Duplicate', onClick: () => setSheet({ kind: 'structure', mode: { kind: 'copy', id } }) },
       ]
     }
     if (kind === 'opportunity') {
-      const initial = data.opportunities.find((o) => o.strategy_opportunity_id === sel.id)
+      const initial = data.opportunities.find((o) => o.strategy_opportunity_id === id)
       return [
         { label: 'Edit', onClick: () => setSheet({ kind: 'opportunity', initial }) },
         {
           label: duplicating ? 'Copying…' : 'Duplicate',
-          onClick: () => void duplicateOpportunity(sel.id),
+          onClick: () => void duplicateOpportunity(id),
           disabled: duplicating,
           title: 'Open a new opportunity prefilled from this one — structure, gate, scope and conditions',
         },
       ]
     }
     if (kind === 'allocation') {
-      const gateId = data.allocations.find((a) => a.strategy_allocation_id === sel.id)?.gate_safety_strategy_id
-      const isDaemons = daemon.allocationId === sel.id
+      const gateId = data.allocations.find((a) => a.strategy_allocation_id === id)?.gate_safety_strategy_id
+      const isDaemons = daemon.allocationId === id
       return [
         // The one active switch the design keeps. It edits the daemon's config,
         // not the allocation's own on-the-books flag, and it is a separate act
         // from saving the definition (design DECISIONS 2026-09-18).
         {
           label: isDaemons ? 'Clear active' : 'Set active',
-          onClick: () => setSetActiveFor(isDaemons ? null : sel.id),
+          onClick: () => setSetActiveFor(isDaemons ? null : id),
           title: isDaemons
             ? 'The daemon is on this one — clearing leaves it with no allocation to load'
             : 'Write this allocation into the config the daemon loads on its next start',
         },
-        { label: 'Edit', onClick: () => setSheet({ kind: 'allocation', mode: 'edit', editId: sel.id }) },
+        { label: 'Edit', onClick: () => setSheet({ kind: 'allocation', mode: 'edit', editId: id }) },
         ...(gateId == null
           ? []
           : [
@@ -257,8 +260,8 @@ export default function TradeRulesPage() {
       ]
     }
     if (kind === 'instance') {
-      const reading = data.instances.find((i) => i.id === sel.id)
-      const record = rawInstances.find((i) => i.strategy_instance_id === sel.id)
+      const reading = data.instances.find((r) => r.id === id)
+      const record = rawInstances.find((r) => r.strategy_instance_id === id)
       if (record == null) return []
       // The guard the design asks for, and the honest form of it: an instance
       // the fills have claimed cannot be deleted, and the reason is on the
@@ -267,7 +270,7 @@ export default function TradeRulesPage() {
       return [
         // The shared sheet (Positions) — its Overview, PnL, executions and
         // chart. Addressable by id, so a closed instance has an entrance too.
-        { label: 'Open sheet →', to: `/portfolio/positions?instance=${sel.id}` },
+        { label: 'Open sheet →', to: `/portfolio/positions?instance=${id}` },
         {
           label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete…',
           onClick: () => {
@@ -412,6 +415,9 @@ export default function TradeRulesPage() {
                   onExpand={() => setExpanded((e) => ({ ...e, [column.key]: true }))}
                   onPick={pick}
                   onNew={() => setSheet(NEW_SHEET[column.key])}
+                  onPickAll={
+                    column.key === 'instance' ? () => pick({ kind: 'instance', id: null }) : undefined
+                  }
                 />
               ))}
             </div>

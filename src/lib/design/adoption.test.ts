@@ -241,10 +241,11 @@ describe('design adoption', () => {
       '/trade/plans',
       '/trade/rules',
     ])
-    // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
-    // dissolves elsewhere, plus Backtest, handed to Lab. Symbol and Plans left:
-    // the design keeps both pages.
-    expect(counts.byState.moving).toBe(10)
+    // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
+    // and Backtest. The seven retired on 2026-09-18 once every capability they
+    // carried had a home — they are redirects now, and a redirect is not a row
+    // here, so `moving` is the three the design still dissolves elsewhere.
+    expect(counts.byState.moving).toBe(3)
     // Rev 2026-09-15.13 collapsed nine `/system/*` routes into `/system/status`
     // and `/settings` (the Owner's OLTP/OLAP/Ops ruling). The app still has the
     // nine pages, so each one asks where it goes — that is nine new rows in "to

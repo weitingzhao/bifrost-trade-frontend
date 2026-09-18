@@ -22,6 +22,7 @@ export function ChainColumnList({
   onExpand,
   onPick,
   onNew,
+  onPickAll,
 }: {
   column: ChainColumn
   expanded: boolean
@@ -29,6 +30,8 @@ export function ChainColumnList({
   onPick: (sel: ChainSelection) => void
   /** Opens this column's edit sheet on a new one. */
   onNew: () => void
+  /** Given, the column's count picks the whole column rather than a card. */
+  onPickAll?: () => void
 }) {
   const hidden = expanded ? 0 : Math.max(0, column.cards.length - COLUMN_CAP)
   const shown = expanded ? column.cards : column.cards.slice(0, COLUMN_CAP)
@@ -40,7 +43,21 @@ export function ChainColumnList({
           {column.step}
         </span>
         <span className="text-dense-body font-semibold text-foreground">{column.title}</span>
-        <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{column.count}</span>
+        {onPickAll ? (
+          // The count is the way into the whole column — every instance in the
+          // book, which is what Strategy › Instances was and where its address
+          // now lands.
+          <button
+            type="button"
+            className={cn(positionsUi.mono, positionsUi.link, 'text-dense-meta')}
+            onClick={onPickAll}
+            title="All of them, whatever the chain is showing"
+          >
+            {column.count}
+          </button>
+        ) : (
+          <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{column.count}</span>
+        )}
         <button type="button" className={cn(positionsUi.link, 'ml-auto')} onClick={onNew}>
           ＋ New
         </button>

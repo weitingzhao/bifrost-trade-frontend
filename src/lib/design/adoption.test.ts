@@ -125,8 +125,8 @@ describe('design adoption', () => {
     // keeps the thesis table's shape with a NO HYPOTHESIS STORE row, and the
     // second stopped blaming its feed for a calendar the issuers have not
     // declared yet.
-    expect(counts.aligned + counts.byState.stale).toBe(21)
-    expect(counts.aligned).toBe(21)
+    expect(counts.aligned + counts.byState.stale).toBe(25)
+    expect(counts.aligned).toBe(25)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -167,8 +167,11 @@ describe('design adoption', () => {
     // reviewing 7→12), and Today was signed off (reviewing 12→11). P&L Explain
     // and Corporate Actions were signed off together 2026-09-18 (11→9), which
     // emptied Portfolio's queue: every page still waiting for a look is now
-    // outside that group.
-    expect(counts.byState.reviewing).toBe(9)
+    // outside that group. The four Review pages rebuilt on 2026-09-18 — Single
+    // trade, Habits, Playbook stats and Rule proposals — were signed off the
+    // same day (aligned 21→25, reviewing 9→5). The Queue is not among them: it
+    // was walked at page rev 2026-09-17.1 and still waits for its own look.
+    expect(counts.byState.reviewing).toBe(5)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -190,6 +193,10 @@ describe('design adoption', () => {
       '/research/copilot/trading',
       '/research/loop/decisions',
       '/research/symbol',
+      '/review/fit',
+      '/review/habits',
+      '/review/playbook-stats',
+      '/review/proposals',
       '/risk/limits',
       '/risk/margin',
       '/risk/portfolio',
@@ -199,10 +206,6 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/review',
-      '/review/fit',
-      '/review/habits',
-      '/review/playbook-stats',
-      '/review/proposals',
       '/risk/budget',
       '/risk/sizing',
       '/trade/expiration',

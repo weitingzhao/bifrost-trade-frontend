@@ -106,7 +106,11 @@ describe('Trade › Plans', () => {
     renderPage()
     expect(await screen.findByText('Cash-secured put')).toBeTruthy()
     expect(screen.queryByText(/Create order intent/i)).toBeNull()
-    expect(screen.queryByText(/Import from Inbox/i)).toBeNull()
+    // Import from Inbox is a signpost to the Decision Inbox, not a write —
+    // the prototype's own button navigates there.
+    expect(
+      screen.getByRole('button', { name: /Import from Inbox/ }).getAttribute('title'),
+    ).toContain('opens the Decision Inbox')
     expect(screen.getByRole('button', { name: /Plan a trade/ })).toBeTruthy()
   })
 

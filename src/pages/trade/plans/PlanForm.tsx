@@ -9,6 +9,8 @@
  * service computes what one plan would cost in margin.
  */
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { useStructures } from '@/hooks/useStrategies'
 import { usePlanAccounts } from '@/hooks/usePlanAccounts'
@@ -18,11 +20,33 @@ import {
   type PlanLegDraft,
 } from '@/lib/plans/planLegFromContract'
 import type { PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
-import { NOT_COMPUTED, NOT_COMPUTED_HINT } from './PlansTable'
+import { NOT_COMPUTED_HINT } from './PlansTable'
 
 const FIELD = 'h-6 w-full rounded border border-border bg-background px-1.5 text-dense-label'
 const LABEL = 'text-dense-micro uppercase tracking-wide text-muted-foreground'
 const CHOOSE_SIDE = 'Choose buy or sell'
+
+/** The server's own enum — not the prototype's list, which names kinds no row can store. */
+const SOURCE_KINDS = ['manual', 'symbol', 'hypothesis', 'inbox_draft', 'roll'] as const
+const SOURCE_HINTS: Record<StrategyPlan['source_kind'], string> = {
+  manual: 'No upstream. Still gets matched to its fill.',
+  symbol: 'Came off the Symbol page — the chain pick travels in source_json.',
+  hypothesis: 'Names a hypothesis, so the outcome can flow back to the board.',
+  inbox_draft: 'Drafted by the Copilot or Autopilot and taken over here.',
+  roll: 'Replaces an earlier plan — name it in the ref.',
+}
+
+const previewUsd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`
+
+function PreviewRow({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="flex items-baseline gap-2 text-dense-meta">
+      <span className="flex-1 text-muted-foreground">{label}</span>
+      <span className="font-mono font-semibold">{value}</span>
+      <span className="w-40 text-right text-dense-micro text-muted-foreground">{note}</span>
+    </div>
+  )
+}
 
 type LegSide = 'sell' | 'buy' | ''
 
@@ -158,11 +182,35 @@ export function PlanForm({
   const [exitBy, setExitBy] = useState(editing?.exit_by ?? '')
   const [expiresAt, setExpiresAt] = useState(editing?.expires_at?.slice(0, 10) ?? '')
   const [rationale, setRationale] = useState(editing?.rationale ?? '')
+  const [sourceKind, setSourceKind] = useState<StrategyPlan['source_kind']>(
+    editing?.source_kind ?? 'manual',
+  )
+  const [sourceRef, setSourceRef] = useState(editing?.source_ref ?? '')
   const [sideBlocked, setSideBlocked] = useState(false)
 
   const pending = create.isPending || update.isPending
   const error = (create.error ?? update.error) as Error | null | undefined
   const fromContract = contractSources(editing)
+
+  // What the drafted legs themselves pin down, recomputed as you type.
+  const qtyN = Number(qty) || 1
+  const draftCash = (() => {
+    let sum = 0
+    let found = false
+    for (const leg of legs) {
+      if (leg.side !== 'sell' || leg.sec_type !== 'OPT' || leg.right !== 'P') continue
+      const strike = Number(leg.strike)
+      if (!Number.isFinite(strike) || strike <= 0) continue
+      found = true
+      sum += strike * 100 * qtyN * (Number(leg.ratio) || 1)
+    }
+    return found ? sum : null
+  })()
+  const limitN = Number(limitPrice)
+  const draftCredit =
+    limitPrice.trim() !== '' && Number.isFinite(limitN)
+      ? limitN * 100 * qtyN * (priceEffect === 'debit' ? -1 : 1)
+      : null
 
   function setLeg(index: number, patch: Partial<LegDraft>) {
     setLegs((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)))
@@ -201,6 +249,8 @@ export function PlanForm({
       // A date the reader picked means end of that day, not midnight before it.
       expires_at: expiresAt.trim() === '' ? null : `${expiresAt.trim()}T23:59:59Z`,
       rationale: textOrNull(rationale),
+      source_kind: sourceKind,
+      source_ref: textOrNull(sourceRef),
     }
     if (editing) {
       update.mutate(
@@ -208,10 +258,7 @@ export function PlanForm({
         { onSuccess: () => onDone(editing.strategy_plan_id) },
       )
     } else {
-      create.mutate(
-        { ...body, source_kind: 'manual' as const },
-        { onSuccess: (created) => onDone(created.strategy_plan_id) },
-      )
+      create.mutate(body, { onSuccess: (created) => onDone(created.strategy_plan_id) })
     }
   }
 
@@ -492,19 +539,64 @@ export function PlanForm({
           </Field>
         </div>
 
+        <Field label="Source">
+          <SegmentControl
+            ariaLabel="Plan source"
+            size="sm"
+            value={sourceKind}
+            onChange={(v) => setSourceKind(v as StrategyPlan['source_kind'])}
+            options={SOURCE_KINDS.map((k) => ({ value: k, label: k }))}
+          />
+          <p className="pt-0.5 text-dense-micro text-muted-foreground">{SOURCE_HINTS[sourceKind]}</p>
+        </Field>
+        <Field label="Source ref">
+          <input
+            className={FIELD}
+            value={sourceRef}
+            onChange={(e) => setSourceRef(e.target.value)}
+            placeholder="H-118 · run 7c1e · what it came from"
+          />
+        </Field>
+
+        <p className="text-dense-meta text-muted-foreground">
+          From chain:{' '}
+          <Link
+            to={symbol.trim() ? `/research/symbol?symbol=${symbol.trim().toUpperCase()}` : '/research/symbol'}
+            className="text-primary hover:underline"
+          >
+            Open Option Discovery →
+          </Link>{' '}
+          <span className="text-dense-micro">— pick a contract there; it lands on Symbol's chain</span>
+        </p>
+
         <Field label="Rationale">
           <textarea
             className="min-h-16 w-full rounded border border-border bg-background px-1.5 py-1 text-dense-label"
             value={rationale}
             onChange={(e) => setRationale(e.target.value)}
-            placeholder="Why this trade, in your words"
+            placeholder="Why this, why now, what makes you close it early."
           />
         </Field>
 
-        <section className="space-y-0.5 rounded border border-border/60 bg-muted/15 px-2 py-1.5">
+        {/* The design's live right-hand check, kept in its shape: the two
+            readings the drafted legs themselves pin down, and the cells that
+            need a spot mark or the account book marked, not guessed. */}
+        <section className="space-y-1 rounded border border-border/60 bg-muted/15 px-2 py-1.5">
           <span className={LABEL}>Backing check</span>
-          <p className="text-dense-meta text-muted-foreground" title={NOT_COMPUTED_HINT}>
-            {NOT_COMPUTED}
+          <div className="space-y-0.5 pt-0.5">
+            <PreviewRow label="Cash secured" value={draftCash == null ? '—' : previewUsd(draftCash)} note={draftCash == null ? 'no short put pins cash' : 'strike × 100 × qty'} />
+            <PreviewRow
+              label="Est. credit at limit"
+              value={draftCredit == null ? '—' : `${draftCredit < 0 ? '-' : '+'}${previewUsd(Math.abs(draftCredit))}`}
+              note={draftCredit == null ? 'no limit price yet' : priceEffect}
+            />
+            <PreviewRow label="Reg-T margin" value="—" note="needs a spot mark · not computed" />
+            <PreviewRow label="Pressure now → after" value="—" note="the account book is not read here" />
+            <PreviewRow label="Max at this strike" value="—" note="needs the two above" />
+          </div>
+          <p className="pt-0.5 text-dense-micro text-muted-foreground" title={NOT_COMPUTED_HINT}>
+            Same derivation as Room to add on Backing &amp; Model — not wired into this form; the
+            fit is judged there.
           </p>
         </section>
       </div>

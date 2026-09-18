@@ -135,9 +135,12 @@ describe('design adoption', () => {
     // Trade pages — Desk, Plans, Orders & Fills, Rules, Expiration — signed off
     // together 2026-09-18, after the sidebar itself was re-cut to the design's
     // shape (one Desk home row carrying all six) and Playbook was walked
-    // (aligned 27→32). Trade now waits on one look: Playbook's own.
-    expect(counts.aligned + counts.byState.stale).toBe(32)
-    expect(counts.aligned).toBe(32)
+    // (aligned 27→32). The same evening the Owner opened Plans against the
+    // prototype and found the walk had covered the handoff diff, not the whole
+    // page — scope bar, inbox signpost, inspector sections, footnotes. The
+    // sign-off is withdrawn while it is rebuilt (aligned 32→31).
+    expect(counts.aligned + counts.byState.stale).toBe(31)
+    expect(counts.aligned).toBe(31)
     // Empty again: every page Package 2026-09-18.1 moved has now been re-walked
     // against it. A stale row was never work lost — the page is built, and what
     // was stale is the comparison.
@@ -216,9 +219,11 @@ describe('design adoption', () => {
     // together 2026-09-18 once the Trade sidebar matched the design's shape
     // (aligned 27→32, reviewing 5→0). Playbook — the one Trade page never
     // walked — was walked and built the same day against its page rev
-    // 2026-09-17.1 (pending 17→16, reviewing 0→1), and is now the group's
-    // only open look.
-    expect(counts.byState.reviewing).toBe(1)
+    // 2026-09-17.1 (pending 17→16, reviewing 0→1). Plans rejoined it the same
+    // evening: the Owner's look found the page thinner than its prototype, so
+    // its sign-off is withdrawn while the full walk is built (aligned 32→31,
+    // reviewing 1→2) — Trade waits on two looks.
+    expect(counts.byState.reviewing).toBe(2)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -255,10 +260,10 @@ describe('design adoption', () => {
       '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
-      '/trade/plans',
       '/trade/rules',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/trade/plans',
       '/trade/playbook',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core

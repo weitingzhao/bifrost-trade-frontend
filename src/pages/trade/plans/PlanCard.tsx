@@ -1,9 +1,11 @@
 /**
- * One plan, opened.
+ * One plan, opened — the design's five sections (Legs · Backing check ·
+ * Source · Executions · Intent) plus the lifecycle strip on top.
  *
- * Everything here is the plan as written plus what the server says about it.
- * The actions that appear are the ones the plan's state allows, and a refusal
- * is shown in the server's own words — the desk does not restate the rule.
+ * Everything drawn is the plan as written plus what the server says about it.
+ * Backing cells that need the market or the account book are marked, not
+ * guessed; actions live in the Intent section, and a refusal is shown in the
+ * server's own words — the desk does not restate the rule.
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -14,23 +16,51 @@ import {
   useCancelStrategyPlan,
   useIntendStrategyPlan,
   useLinkStrategyPlanFill,
+  useUpdateStrategyPlan,
 } from '@/hooks/useStrategyPlans'
 import { instancesTradingSymbol } from '@/lib/plans/planLinkFill'
 import { planEstCredit, planExitSummary, planStatusLabel } from '@/lib/plans/planMath'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
-import { NOT_COMPUTED, NOT_COMPUTED_HINT } from './PlansTable'
+import { NOT_COMPUTED_HINT } from './PlansTable'
 import { planActions, planStatusVariant } from './planRows'
 import { SEND_TO_IB, planLineage } from './planLineage'
+import {
+  creditOnCash,
+  extendedExpiry,
+  planCashSecured,
+  planIntentJson,
+  planTimeline,
+  twsCopyText,
+} from './planCardModel'
 
 /** One spelling of the chain chips' link, used three times in the Rules row. */
 const LINK = 'text-dense-meta text-primary hover:underline'
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+const SECTIONS = [
+  ['plan-legs', 'Legs'],
+  ['plan-backing', 'Backing check'],
+  ['plan-source', 'Source'],
+  ['plan-execs', 'Executions'],
+  ['plan-intent', 'Intent'],
+] as const
+
+function Section({
+  id,
+  title,
+  meta,
+  children,
+}: {
+  id?: string
+  title: string
+  meta?: React.ReactNode
+  children: React.ReactNode
+}) {
   return (
-    <section className="space-y-1 border-t border-border/60 px-3 py-2 first:border-t-0">
+    <section id={id} className="space-y-1 border-t border-border/60 px-3 py-2 first:border-t-0">
       <h3 className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
+        {meta ? <span className="ml-2 font-normal normal-case tracking-normal">{meta}</span> : null}
       </h3>
       {children}
     </section>
@@ -42,6 +72,29 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="flex items-baseline justify-between gap-3 text-dense-meta">
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right">{value}</span>
+    </div>
+  )
+}
+
+/** A backing cell: caption, value, and the one-line note under it. */
+function BackingCell({
+  label,
+  value,
+  note,
+  muted,
+}: {
+  label: string
+  value: React.ReactNode
+  note: string
+  muted?: boolean
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={cn('font-mono text-dense-label font-semibold', muted && 'text-muted-foreground')}>
+        {value}
+      </div>
+      <div className="text-dense-micro text-muted-foreground">{note}</div>
     </div>
   )
 }
@@ -149,6 +202,8 @@ function LinkFillPicker({ plan, onDone }: { plan: StrategyPlan; onDone: () => vo
   )
 }
 
+const backingUsd = (n: number) => `$${Math.abs(Math.round(n)).toLocaleString('en-US')}`
+
 export function PlanCard({
   plan,
   onClose,
@@ -159,9 +214,12 @@ export function PlanCard({
   onEdit: (plan: StrategyPlan) => void
 }) {
   const [picking, setPicking] = useState(false)
+  const [copied, setCopied] = useState(false)
   const intend = useIntendStrategyPlan()
   const cancel = useCancelStrategyPlan()
+  const update = useUpdateStrategyPlan()
   const actions = planActions(plan.effective_status)
+  const status = plan.effective_status
 
   /**
    * Which rule covers this plan. A hand plan still goes through — it just says
@@ -176,6 +234,32 @@ export function PlanCard({
   )
   const exit = planExitSummary(plan)
   const credit = planEstCredit(plan)
+  const cashSecured = planCashSecured(plan)
+  const onCash = creditOnCash(credit, cashSecured)
+  const timeline = planTimeline(plan)
+
+  function scrollTo(id: string) {
+    document.getElementById(id)?.scrollIntoView({ block: 'start' })
+  }
+
+  async function copyForTws() {
+    try {
+      await navigator.clipboard.writeText(twsCopyText(plan))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  function pushExpiry() {
+    update.mutate({
+      id: plan.strategy_plan_id,
+      payload: { expires_at: extendedExpiry(new Date().toISOString()) },
+    })
+  }
+
+  const mutationError = (intend.error ?? cancel.error ?? update.error) as Error | null
 
   return (
     <div className="flex min-h-0 flex-col">
@@ -200,11 +284,56 @@ export function PlanCard({
         </Button>
       </header>
 
+      <nav
+        aria-label="Plan sections"
+        className="flex items-center gap-0.5 overflow-x-auto border-b border-border px-2"
+      >
+        {SECTIONS.map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className="whitespace-nowrap border-b-2 border-transparent px-2 py-1.5 text-dense-meta text-muted-foreground hover:text-foreground"
+            onClick={() => scrollTo(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/60 px-3 py-2">
+        {timeline.map((t, i) => (
+          <span
+            key={t.label}
+            className={cn(
+              'flex items-center gap-1.5 text-dense-micro',
+              t.on ? 'text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            <span
+              className={cn(
+                'inline-block size-1.5 rounded-full',
+                t.on
+                  ? t.label === 'Expired'
+                    ? 'bg-warning'
+                    : 'bg-success'
+                  : 'bg-border',
+              )}
+            />
+            <span className="font-semibold">{t.label}</span>
+            <span className="font-mono text-muted-foreground">{t.when ?? '—'}</span>
+            {i < timeline.length - 1 ? <span className="text-border">→</span> : null}
+          </span>
+        ))}
+      </div>
+
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <Section title={`Legs · ${plan.legs_json.length} · qty ${plan.qty}`}>
+        <Section id="plan-legs" title="Legs" meta={`${plan.legs_json.length} · qty ${plan.qty}`}>
           <LegsTable plan={plan} />
         </Section>
 
+        {/* Kept beyond the design's five: the exit is stored on the plan and
+            Review compares against it — absence from the prototype is not
+            deletion. */}
         <Section title="Exit">
           {exit ? (
             <p className="text-dense-meta">{exit}</p>
@@ -213,106 +342,146 @@ export function PlanCard({
               No exit written — Review will have nothing to compare against
             </p>
           )}
-          <Field
-            label="Est. credit"
-            value={
-              credit == null ? (
-                <span className="text-muted-foreground">—</span>
-              ) : (
-                <span className={cn('font-mono', credit < 0 ? 'text-loss' : 'text-profit')}>
-                  {credit < 0 ? '-' : '+'}${Math.abs(credit).toLocaleString('en-US')}
-                </span>
-              )
-            }
-          />
-          <Field
-            label="Cash / margin"
-            value={
-              <span className="text-muted-foreground" title={NOT_COMPUTED_HINT}>
-                {NOT_COMPUTED}
-              </span>
-            }
-          />
         </Section>
 
-        {plan.rationale ? (
-          <Section title="Rationale">
-            <p className="text-dense-meta">{plan.rationale}</p>
-          </Section>
-        ) : null}
-
-        <Section title="Rules">
-          <p
-            className={cn(
-              'text-dense-meta leading-normal text-pretty',
-              lineage.outsideRules ? 'text-warning' : 'text-secondary-foreground',
-            )}
-          >
-            {lineage.read}
+        <Section id="plan-backing" title="Backing check">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-0.5 @[26rem]:grid-cols-3">
+            <BackingCell
+              label="Cash secured"
+              value={cashSecured == null ? '—' : backingUsd(cashSecured)}
+              note={cashSecured == null ? 'no short put pins cash' : 'strike × 100 × qty'}
+              muted={cashSecured == null}
+            />
+            <BackingCell
+              label="Est. credit"
+              value={
+                credit == null ? (
+                  '—'
+                ) : (
+                  <span className={credit < 0 ? 'text-loss' : 'text-profit'}>
+                    {credit < 0 ? '-' : '+'}
+                    {backingUsd(credit)}
+                  </span>
+                )
+              }
+              note={credit == null ? 'no limit price yet' : (onCash ?? 'at the plan limit')}
+              muted={credit == null}
+            />
+            <BackingCell
+              label="Reg-T margin"
+              value="—"
+              note="needs a spot mark · not computed"
+              muted
+            />
+            <BackingCell
+              label="Free cash"
+              value="—"
+              note="the account book is not read here"
+              muted
+            />
+            <BackingCell label="Pressure after" value="—" note="needs the two above" muted />
+            <BackingCell label="Room left after" value="—" note="needs the two above" muted />
+          </div>
+          <p className="pt-1 text-dense-meta text-muted-foreground" title={NOT_COMPUTED_HINT}>
+            No service prices a plan's margin yet — whether it fits is judged on{' '}
+            <Link to={`/portfolio/backing?symbol=${plan.symbol}`} className={LINK}>
+              Backing &amp; Model →
+            </Link>
           </p>
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 pt-0.5 text-dense-meta">
-            {lineage.structure ? (
-              <Link to={`/trade/rules?pick=structure:${lineage.structure.id}`} className={LINK}>
-                {lineage.structure.name}
-              </Link>
-            ) : null}
-            {lineage.opportunity ? (
-              <>
-                <span className="text-muted-foreground">→</span>
-                <Link to={`/trade/rules?pick=opportunity:${lineage.opportunity.id}`} className={LINK}>
-                  {lineage.opportunity.name}
+        </Section>
+
+        <Section id="plan-source" title="Where it came from">
+          <div className="space-y-1 pt-0.5">
+            <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-2 text-dense-meta">
+              <span className="text-dense-micro uppercase tracking-wide text-muted-foreground">
+                {plan.source_kind}
+              </span>
+              <span>{plan.source_ref ?? '—'}</span>
+            </div>
+            {plan.source_json.map((entry, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-2 text-dense-meta"
+              >
+                <span className="text-dense-micro uppercase tracking-wide text-muted-foreground">
+                  {entry.kind ?? '·'}
+                </span>
+                {entry.to ? (
+                  <Link to={entry.to} className="underline hover:no-underline">
+                    {entry.text ?? entry.to}
+                  </Link>
+                ) : (
+                  <span>{entry.text}</span>
+                )}
+              </div>
+            ))}
+            <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-2 text-dense-meta">
+              <span className="text-dense-micro uppercase tracking-wide text-muted-foreground">
+                rules
+              </span>
+              <span
+                className={cn(
+                  'leading-normal text-pretty',
+                  lineage.outsideRules ? 'text-warning' : 'text-secondary-foreground',
+                )}
+              >
+                {lineage.read}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 pl-[6rem] text-dense-meta">
+              {lineage.structure ? (
+                <Link to={`/trade/rules?pick=structure:${lineage.structure.id}`} className={LINK}>
+                  {lineage.structure.name}
                 </Link>
-              </>
-            ) : null}
-            {lineage.allocation ? (
-              <>
-                <span className="text-muted-foreground">→</span>
-                <Link to={`/trade/rules?pick=allocation:${lineage.allocation.id}`} className={LINK}>
-                  {lineage.allocation.name}
-                </Link>
-              </>
-            ) : null}
-            {lineage.outsideRules ? (
-              <DenseTag variant="warning" size="cell">
-                OUTSIDE RULES
-              </DenseTag>
+              ) : null}
+              {lineage.opportunity ? (
+                <>
+                  <span className="text-muted-foreground">→</span>
+                  <Link
+                    to={`/trade/rules?pick=opportunity:${lineage.opportunity.id}`}
+                    className={LINK}
+                  >
+                    {lineage.opportunity.name}
+                  </Link>
+                </>
+              ) : null}
+              {lineage.allocation ? (
+                <>
+                  <span className="text-muted-foreground">→</span>
+                  <Link
+                    to={`/trade/rules?pick=allocation:${lineage.allocation.id}`}
+                    className={LINK}
+                  >
+                    {lineage.allocation.name}
+                  </Link>
+                </>
+              ) : null}
+              {lineage.outsideRules ? (
+                <DenseTag variant="warning" size="cell">
+                  OUTSIDE RULES
+                </DenseTag>
+              ) : null}
+            </div>
+            {plan.rationale ? (
+              <p className="mt-1 rounded-md border border-dashed border-border px-2.5 py-2 text-dense-meta text-secondary-foreground text-pretty">
+                {plan.rationale}
+              </p>
             ) : null}
           </div>
         </Section>
 
-        <Section title="Source">
-          <Field label="Kind" value={plan.source_kind} />
-          {plan.source_ref ? <Field label="Ref" value={plan.source_ref} /> : null}
-          {plan.source_json.length > 0 ? (
-            <ul className="space-y-1 pt-1">
-              {plan.source_json.map((entry, i) => (
-                <li key={i} className="text-dense-meta">
-                  {entry.kind ? (
-                    <span className="mr-1 text-dense-micro uppercase text-muted-foreground">
-                      {entry.kind}
-                    </span>
-                  ) : null}
-                  {entry.to ? (
-                    <Link to={entry.to} className="underline hover:no-underline">
-                      {entry.text ?? entry.to}
-                    </Link>
-                  ) : (
-                    <span>{entry.text}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </Section>
-
-        <Section title="Fill">
+        <Section
+          id="plan-execs"
+          title="Executions"
+          meta={plan.strategy_instance_id ? 'linked' : 'none yet'}
+        >
           {plan.strategy_instance_id ? (
             <>
               <Field
                 label="Instance"
                 value={
                   <Link
-                    to={`/strategy/instances/${plan.strategy_instance_id}`}
+                    to={`/portfolio/positions?instance=${plan.strategy_instance_id}`}
                     className="underline hover:no-underline"
                   >
                     #{plan.strategy_instance_id}
@@ -323,86 +492,142 @@ export function PlanCard({
             </>
           ) : (
             <p className="text-dense-meta text-muted-foreground">
-              Not linked to an instance. Orders are placed in TWS; linking is how the plan learns
-              what happened.
+              {status === 'intended'
+                ? `No fill linked yet. Fills arrive on Orders & Fills; link one there or here — nothing links itself today.`
+                : status === 'draft'
+                  ? 'Drafts have no intent, so nothing is watched.'
+                  : status === 'expired'
+                    ? 'Intent lapsed with no linked fill.'
+                    : 'Not linked to an instance. Orders are placed in TWS; linking is how the plan learns what happened.'}
             </p>
           )}
-          {picking ? <LinkFillPicker plan={plan} onDone={() => setPicking(false)} /> : null}
-        </Section>
-      </div>
-
-      {intend.error ? (
-        <p className="border-t border-border px-3 py-2 text-dense-meta text-destructive">
-          {(intend.error as Error).message}
-        </p>
-      ) : null}
-      {cancel.error ? (
-        <p className="border-t border-border px-3 py-2 text-dense-meta text-destructive">
-          {(cancel.error as Error).message}
-        </p>
-      ) : null}
-
-      {actions.canEdit || actions.canIntend || actions.canLinkFill || actions.canCancel ? (
-        <footer className="flex flex-wrap gap-2 border-t border-border px-3 py-2">
-          {actions.canEdit ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 text-dense-meta"
-              onClick={() => onEdit(plan)}
-            >
-              Edit
-            </Button>
-          ) : null}
-          {actions.canIntend ? (
-            <Button
-              type="button"
-              size="sm"
-              className="h-7 text-dense-meta"
-              disabled={intend.isPending}
-              onClick={() => intend.mutate(plan.strategy_plan_id)}
-            >
-              Mark intended
-            </Button>
-          ) : null}
           {actions.canLinkFill ? (
             <Button
               type="button"
               size="sm"
               variant="outline"
-              className="h-7 text-dense-meta"
+              className="h-6 text-dense-micro"
               onClick={() => setPicking((open) => !open)}
             >
               Link fill
             </Button>
           ) : null}
-          {actions.canIntend || plan.effective_status === 'intended' ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled
-              title={SEND_TO_IB.title}
-              className="h-7 cursor-not-allowed text-dense-meta opacity-50"
-            >
-              {SEND_TO_IB.label}
-            </Button>
+          {picking ? <LinkFillPicker plan={plan} onDone={() => setPicking(false)} /> : null}
+        </Section>
+
+        <Section
+          id="plan-intent"
+          title="Intent"
+          meta={`advisory · D10 · strategy_plan #${plan.strategy_plan_id}`}
+        >
+          <pre className="overflow-x-auto rounded-md border border-border bg-background px-2.5 py-2 font-mono text-dense-micro leading-relaxed text-secondary-foreground">
+            {planIntentJson(plan)}
+          </pre>
+          {mutationError ? (
+            <p className="text-dense-meta text-destructive">{mutationError.message}</p>
           ) : null}
-          {actions.canCancel ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-7 text-dense-meta text-muted-foreground"
-              disabled={cancel.isPending}
-              onClick={() => cancel.mutate(plan.strategy_plan_id)}
-            >
-              Cancel
-            </Button>
-          ) : null}
-        </footer>
-      ) : null}
+          <div className="flex flex-wrap gap-2 pt-1">
+            {actions.canIntend ? (
+              <Button
+                type="button"
+                size="sm"
+                className="h-7 text-dense-meta"
+                disabled={intend.isPending}
+                onClick={() => intend.mutate(plan.strategy_plan_id)}
+              >
+                Mark intended
+              </Button>
+            ) : null}
+            {actions.canEdit ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 text-dense-meta"
+                onClick={() => onEdit(plan)}
+              >
+                Edit
+              </Button>
+            ) : null}
+            {status === 'intended' ? (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-7 text-dense-meta"
+                  title="Copies the legs as a TWS basket line — the desk copies, TWS places"
+                  onClick={() => void copyForTws()}
+                >
+                  {copied ? 'Copied' : 'Copy for TWS'}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-dense-meta"
+                  disabled={update.isPending}
+                  title="Pushes expires_at seven days out on this same plan"
+                  onClick={pushExpiry}
+                >
+                  Extend 7 days
+                </Button>
+              </>
+            ) : null}
+            {status === 'expired' ? (
+              <Button
+                type="button"
+                size="sm"
+                className="h-7 text-dense-meta"
+                disabled={update.isPending}
+                title="Same legs, a new 7-day window — pushes expires_at on this same plan"
+                onClick={pushExpiry}
+              >
+                Re-issue intent
+              </Button>
+            ) : null}
+            {status === 'filled' ? (
+              <>
+                <Link
+                  to={`/portfolio/positions?symbol=${plan.symbol}`}
+                  className="inline-flex h-7 items-center rounded-md border border-border px-2.5 text-dense-meta hover:bg-secondary"
+                >
+                  Open in Positions
+                </Link>
+                <Link
+                  to="/portfolio/ledger"
+                  className="inline-flex h-7 items-center rounded-md border border-border px-2.5 text-dense-meta hover:bg-secondary"
+                >
+                  Open in Ledger
+                </Link>
+              </>
+            ) : null}
+            {actions.canIntend || plan.effective_status === 'intended' ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled
+                title={SEND_TO_IB.title}
+                className="h-7 cursor-not-allowed text-dense-meta opacity-50"
+              >
+                {SEND_TO_IB.label}
+              </Button>
+            ) : null}
+            {actions.canCancel ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-7 text-dense-meta text-muted-foreground"
+                disabled={cancel.isPending}
+                onClick={() => cancel.mutate(plan.strategy_plan_id)}
+              >
+                Cancel
+              </Button>
+            ) : null}
+          </div>
+        </Section>
+      </div>
     </div>
   )
 }

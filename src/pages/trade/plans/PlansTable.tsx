@@ -21,7 +21,7 @@ import {
 import { planEstCredit, planStatusLabel } from '@/lib/plans/planMath'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
-import { planLegsText, planSourceText, planStatusVariant, planWhenText } from './planRows'
+import { planLegsText, planSourceText, planStatusVariant, planWhenText, planWhenTone } from './planRows'
 
 export const NOT_COMPUTED = 'Not computed'
 export const NOT_COMPUTED_HINT =
@@ -107,7 +107,14 @@ export function PlansTable({
             <DenseTableCell className="text-dense-micro text-muted-foreground">
               {planSourceText(plan)}
             </DenseTableCell>
-            <DenseTableCell className="font-mono text-dense-micro text-muted-foreground">
+            <DenseTableCell
+              className={cn(
+                'font-mono text-dense-micro',
+                planWhenTone(plan.effective_status) === 'warning'
+                  ? 'text-warning'
+                  : 'text-muted-foreground',
+              )}
+            >
               {planWhenText(plan)}
             </DenseTableCell>
           </DenseTableRow>

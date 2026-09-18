@@ -62,6 +62,7 @@ vi.mock('@/hooks/useStrategyPlans', () => ({
   useIntendStrategyPlan: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useCancelStrategyPlan: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useLinkStrategyPlanFill: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+  useUpdateStrategyPlan: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
 
 import { PlanCard } from './PlanCard'

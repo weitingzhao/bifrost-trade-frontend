@@ -488,7 +488,7 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: TRADE_DESK,
     symbolScope: true,
     design: {
-      state: 'aligned',
+      state: 'reviewing',
       rev: '2026-09-18.1',
       note: DESIGN_NOTES['/trade/plans'],
     },

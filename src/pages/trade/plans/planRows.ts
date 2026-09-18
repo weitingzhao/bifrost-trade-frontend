@@ -7,26 +7,41 @@
  */
 import type { PlanEffectiveStatus, PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
 
-export const PLAN_FILTERS = ['all', 'draft', 'intended', 'expired', 'filled', 'cancelled'] as const
+/**
+ * The design's five segments. `Open` is draft + intended — the book you are
+ * still working — and the default. Draft-only and cancelled-only views retired
+ * with the design's own list; `All` still reaches every row.
+ */
+export const PLAN_FILTERS = ['open', 'intended', 'filled', 'expired', 'all'] as const
 export type PlanFilterValue = (typeof PLAN_FILTERS)[number]
 
 export const PLAN_FILTER_LABELS: Record<PlanFilterValue, string> = {
-  all: 'All',
-  draft: 'Draft',
+  open: 'Open',
   intended: 'Intended',
-  expired: 'Expired',
   filled: 'Filled',
-  cancelled: 'Cancelled',
+  expired: 'Expired',
+  all: 'All',
 }
 
+/** Old links said `?status=draft` / `?status=cancelled`; they land on the scope that contains them. */
 export function isPlanFilter(value: string | null | undefined): value is PlanFilterValue {
   return value != null && (PLAN_FILTERS as readonly string[]).includes(value)
 }
 
-/** Counts per segment, by `effective_status` — so `Expired` counts intents, not a stored state. */
-export function planFilterCounts(plans: readonly StrategyPlan[]): Record<PlanFilterValue, number> {
-  const counts: Record<PlanFilterValue, number> = {
+export function coercePlanFilter(value: string | null | undefined): PlanFilterValue {
+  if (isPlanFilter(value)) return value
+  if (value === 'draft') return 'open'
+  if (value === 'cancelled') return 'all'
+  return 'open'
+}
+
+/** Counts by `effective_status` — so `expired` counts intents past their window, not a stored state. */
+export function planFilterCounts(
+  plans: readonly StrategyPlan[],
+): Record<PlanEffectiveStatus | 'all' | 'open', number> {
+  const counts: Record<PlanEffectiveStatus | 'all' | 'open', number> = {
     all: plans.length,
+    open: 0,
     draft: 0,
     intended: 0,
     expired: 0,
@@ -34,6 +49,7 @@ export function planFilterCounts(plans: readonly StrategyPlan[]): Record<PlanFil
     cancelled: 0,
   }
   for (const plan of plans) counts[plan.effective_status] += 1
+  counts.open = counts.draft + counts.intended
   return counts
 }
 
@@ -42,14 +58,36 @@ export function filterPlans(
   filter: PlanFilterValue,
 ): StrategyPlan[] {
   if (filter === 'all') return [...plans]
+  if (filter === 'open') {
+    return plans.filter(
+      (plan) => plan.effective_status === 'draft' || plan.effective_status === 'intended',
+    )
+  }
   return plans.filter((plan) => plan.effective_status === filter)
 }
 
+/**
+ * The design's two account toggles. A plan on an account that is neither the
+ * host nor the secondary is never hidden by them — a toggle only speaks for
+ * the account it names.
+ */
+export function planInAccountScope(
+  plan: Pick<StrategyPlan, 'account_id'>,
+  scope: { host: boolean; secondary: boolean },
+  hostAccountId: string,
+  secondaryAccountId: string,
+): boolean {
+  if (hostAccountId && plan.account_id === hostAccountId) return scope.host
+  if (secondaryAccountId && plan.account_id === secondaryAccountId) return scope.secondary
+  return true
+}
+
+/** The design's order — the live book first, the record after it. */
 const STATUS_ORDER: Record<PlanEffectiveStatus, number> = {
   intended: 0,
-  expired: 1,
-  draft: 2,
-  filled: 3,
+  draft: 1,
+  filled: 2,
+  expired: 3,
   cancelled: 4,
 }
 
@@ -117,6 +155,11 @@ export function planWhenText(
     return expires ? `expires ${expires}` : 'no expiry'
   }
   return 'draft'
+}
+
+/** The design ambers a waiting intent's date; everything else stays quiet. */
+export function planWhenTone(status: PlanEffectiveStatus): 'warning' | 'muted' {
+  return status === 'intended' ? 'warning' : 'muted'
 }
 
 /** Which actions a plan's state allows. `filled` and `cancelled` are read-only. */

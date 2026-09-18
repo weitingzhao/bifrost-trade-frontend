@@ -334,6 +334,29 @@ export default function RiskLimitsPage() {
                         {r.citedFrom.label} →
                       </Link>
                     ) : null}
+                    {/* The design draws this slot on every breach and lets the
+                        severity fill it: a hard line cannot be acknowledged at
+                        all, a soft one can — except that acknowledging is a
+                        write, and nothing stores one. Drawn and disabled, so
+                        the row does not read as "nothing to decide". */}
+                    <button
+                      type="button"
+                      disabled
+                      title={
+                        r.kind === 'hard'
+                          ? 'A hard limit is not acknowledged — it is brought back inside the line'
+                          : r.kind === 'gate'
+                            ? 'The daemon logs a gate hit itself; there is nothing to acknowledge'
+                            : 'Acknowledging a soft breach is a write, and nothing stores one'
+                      }
+                      className={cn(positionsUi.btn, 'cursor-not-allowed text-muted-foreground/60')}
+                    >
+                      {r.kind === 'hard'
+                        ? 'hard — cannot ack'
+                        : r.kind === 'gate'
+                          ? 'gate — logged, not acked'
+                          : 'Acknowledge · not stored'}
+                    </button>
                   </div>
                 ))
               )}
@@ -548,10 +571,41 @@ export default function RiskLimitsPage() {
                     ⚠ nothing records it
                   </DenseTag>
                 </header>
-                <p className="m-0 px-3 py-2.5 text-xs leading-normal text-secondary-foreground text-pretty">
+                <p className="m-0 px-3 pt-2.5 pb-1.5 text-xs leading-normal text-secondary-foreground text-pretty">
                   The useful question is not whether a line is crossed now — the table above answers that — but how long
                   it stayed crossed and what ended it. That needs a row written every time a reading passes a line.
                 </p>
+                {/* The design's four columns, kept: a band that drops its shape
+                    stops teaching what the store would have to hold. */}
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[26rem] table-fixed border-collapse">
+                    <colgroup>
+                      <col style={{ width: '22%' }} />
+                      <col style={{ width: '34%' }} />
+                      <col style={{ width: '28%' }} />
+                      <col style={{ width: '16%' }} />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th className={cn(positionsUi.th, 'text-left')}>When</th>
+                        <th className={cn(positionsUi.th, 'text-left')}>Limit</th>
+                        <th className={cn(positionsUi.th, 'text-left')}>Resolution</th>
+                        <th className={positionsUi.th}>Open for</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')} colSpan={4}>
+                          <span className="inline-flex items-start gap-1.5 text-dense-meta leading-normal text-muted-foreground">
+                            <StatusLamp lamp="gray" variant="dot" title="No row" className="mt-1 shrink-0" />
+                            No row, for the last fourteen days or any other window — an empty table here would read as a
+                            clean record rather than as no record.
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
                 <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.history}</p>
               </section>
             </div>

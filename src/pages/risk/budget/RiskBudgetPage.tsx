@@ -25,6 +25,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { PositionsStat } from '@/components/positions/PositionsStat'
+
+/** Mon–Fri and today, the days the design's week band draws. */
+const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'today'] as const
 import { fmtPct0 } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
@@ -85,6 +88,9 @@ export default function RiskBudgetPage() {
       }),
     [netLiquidation],
   )
+
+  /** The week, which the design reads as spent-against-cap rather than as a third line. */
+  const weekly = useMemo(() => lines.find((l) => l.key === 'weekly') ?? null, [lines])
 
   /** The lines that do exist somewhere, so the page is not only what is missing. */
   const enforced = useMemo(
@@ -153,6 +159,9 @@ export default function RiskBudgetPage() {
               <Link to="/risk/sizing" className={positionsUi.link}>
                 Sizing →
               </Link>
+              <Link to="/trade/rules" className={positionsUi.link}>
+                Edit policy in Rules →
+              </Link>
             </span>
           }
         />
@@ -168,24 +177,34 @@ export default function RiskBudgetPage() {
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>The lines</span>
                 <span className={positionsUi.panelTitle}>none of the three is written</span>
+                <DenseTag variant="warning" size="cell">
+                  ⚠ no line, nothing spent
+                </DenseTag>
                 <span className="ml-auto text-dense-meta text-muted-foreground">
                   a percentage of net liquidation, which is {netLiquidation > 0 ? fmtMvAbbrev(netLiquidation) : 'unread'}
                 </span>
               </header>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,13rem),1fr))] gap-x-4 gap-y-2 px-3 py-2.5">
-                {lines.map((l) => (
-                  <PositionsStat
-                    key={l.key}
-                    cap={l.label}
-                    value={l.amount == null ? 'unwritten' : fmtMvAbbrev(l.amount)}
-                    ink={l.amount == null ? 'text-muted-foreground' : undefined}
-                    sub={
-                      l.noLine
-                        ? `${l.scope} · ${l.noLine}`
-                        : `${l.scope} · ${l.pct == null ? '' : fmtPct0(l.pct)} of net liq`
-                    }
-                  />
-                ))}
+              {/* The design's five, in its order: the per-trade line, the day's
+                  line, what the day has spent, what it has left, and — apart on
+                  the right — the week as spent against its own cap. The weekly
+                  line is that last cell rather than a fourth line of its own,
+                  which is how the design reads it. */}
+              <div className="flex flex-wrap items-start gap-x-7 gap-y-2 px-3 py-2.5">
+                {lines
+                  .filter((l) => l.key !== 'weekly')
+                  .map((l) => (
+                    <PositionsStat
+                      key={l.key}
+                      cap={l.label}
+                      value={l.amount == null ? 'unwritten' : fmtMvAbbrev(l.amount)}
+                      ink={l.amount == null ? 'text-muted-foreground' : undefined}
+                      sub={
+                        l.noLine
+                          ? `${l.scope} · ${l.noLine}`
+                          : `${l.scope} · ${l.pct == null ? '' : fmtPct0(l.pct)} of net liq`
+                      }
+                    />
+                  ))}
                 <PositionsStat
                   cap="Spent today"
                   value="—"
@@ -198,6 +217,18 @@ export default function RiskBudgetPage() {
                   ink="text-muted-foreground"
                   sub="neither side of the subtraction exists"
                 />
+                <span className="ml-auto flex">
+                  <PositionsStat
+                    cap="Week"
+                    value={weekly?.spent == null ? '—' : fmtMvAbbrev(weekly.spent)}
+                    ink="text-muted-foreground"
+                    sub={
+                      weekly?.amount == null
+                        ? `Mon–today · weekly cap ${weekly?.noLine ?? 'unwritten'}`
+                        : `Mon–today · weekly cap ${fmtMvAbbrev(weekly.amount)}`
+                    }
+                  />
+                </span>
               </div>
               <p className={cn(FOOT, 'm-0')}>{RISK_BUDGET_UNRECORDED.policy}</p>
             </section>
@@ -248,6 +279,38 @@ export default function RiskBudgetPage() {
                 </table>
               </div>
               <p className={cn(FOOT, 'm-0')}>{RISK_BUDGET_UNRECORDED.spend}</p>
+            </section>
+
+            {/* The design puts this beside the spend table: five days and today,
+                each against the day's cap. Both sides of every bar are missing
+                here — the cap is unwritten and no decision is recorded — so the
+                days are drawn and named, and the bars are left empty rather
+                than filled to a length nobody measured. */}
+            <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="This week">
+              <header className={positionsUi.panelHead}>
+                <span className={positionsUi.cap}>This week</span>
+                <span className={positionsUi.panelTitle}>daily spend vs cap</span>
+                <DenseTag variant="warning" size="cell">
+                  ⚠ neither side of the bar exists
+                </DenseTag>
+                <span className="ml-auto text-dense-meta text-muted-foreground">
+                  velocity limits live on Limits &amp; Breaches
+                </span>
+              </header>
+              <div className="flex flex-col gap-2 px-3 py-2.5">
+                {WEEK_DAYS.map((d) => (
+                  <div key={d} className="grid grid-cols-[2.75rem_minmax(0,1fr)_4rem] items-center gap-2.5">
+                    <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{d}</span>
+                    <span className="block h-1.75 overflow-hidden rounded-[3px] bg-[var(--sk-surface)]" />
+                    <span className={cn(positionsUi.mono, 'text-right text-dense-meta text-muted-foreground')}>—</span>
+                  </div>
+                ))}
+              </div>
+              <p className={cn(FOOT, 'm-0')}>
+                A bar needs a day&rsquo;s spend and the day&rsquo;s cap. Neither is written on this side, so the week
+                shows its shape and no lengths — a filled bar here would be the page inventing the very number it
+                exists to watch.
+              </p>
             </section>
 
             <PositionsTier label="Policy" note="where these numbers would come from, and which of them exist" />

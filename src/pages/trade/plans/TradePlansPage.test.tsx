@@ -33,6 +33,7 @@ vi.mock('@/hooks/useStrategies', () => ({
   useStructures: () => ({ data: { items: [] } }),
   useStrategyInstances: () => ({ data: { items: [] } }),
   useOpportunities: () => ({ data: { items: [] } }),
+  useAllocations: () => ({ data: { items: [] } }),
 }))
 
 import TradePlansPage from './TradePlansPage'

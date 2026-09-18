@@ -474,7 +474,7 @@ export const ROUTES: readonly RouteEntry[] = [
     symbolScope: true,
     design: {
       state: 'reviewing',
-      rev: '2026-09-15.5',
+      rev: '2026-09-18.1',
       note: DESIGN_NOTES['/trade/plans'],
     },
   },

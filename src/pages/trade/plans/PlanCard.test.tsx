@@ -55,6 +55,7 @@ vi.mock('@/hooks/useStrategies', () => ({
       ],
     },
   }),
+  useAllocations: () => ({ data: { items: [] } }),
 }))
 
 vi.mock('@/hooks/useStrategyPlans', () => ({
@@ -112,5 +113,34 @@ describe('PlanCard link fill', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Link fill' }))
     expect(screen.getByText('MU cash-secured put')).toBeTruthy()
     expect(screen.queryByText('Premium MU lookalike book')).toBeNull()
+  })
+})
+
+describe('PlanCard · the reserved order route', () => {
+  function renderCard() {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter>
+          <PlanCard plan={intendedMu()} onClose={() => undefined} onEdit={() => undefined} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+  }
+
+  it('draws Send to IB on an intent and leaves it disabled', () => {
+    // Drawn rather than hidden: omitting it reads as "there is no such thing"
+    // when the truth is that it exists and is not connected. D10 governs until
+    // it does.
+    renderCard()
+    const send = screen.getByRole('button', { name: /Send to IB/ })
+    expect(send.hasAttribute('disabled')).toBe(true)
+    expect(send.textContent).toContain('not wired')
+  })
+
+  it('says a plan no opportunity covers is outside the rules', () => {
+    renderCard()
+    expect(screen.getByText(/No opportunity covers MU/)).toBeTruthy()
+    expect(screen.getByText('OUTSIDE RULES')).toBeTruthy()
   })
 })

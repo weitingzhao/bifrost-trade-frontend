@@ -9,7 +9,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
-import { useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
+import { useAllocations, useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
 import {
   useCancelStrategyPlan,
   useIntendStrategyPlan,
@@ -21,6 +21,10 @@ import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
 import { NOT_COMPUTED, NOT_COMPUTED_HINT } from './PlansTable'
 import { planActions, planStatusVariant } from './planRows'
+import { SEND_TO_IB, planLineage } from './planLineage'
+
+/** One spelling of the chain chips' link, used three times in the Rules row. */
+const LINK = 'text-dense-meta text-primary hover:underline'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -158,6 +162,18 @@ export function PlanCard({
   const intend = useIntendStrategyPlan()
   const cancel = useCancelStrategyPlan()
   const actions = planActions(plan.effective_status)
+
+  /**
+   * Which rule covers this plan. A hand plan still goes through — it just says
+   * so, because the daemon's book and the hand book have to stay
+   * distinguishable (design DECISIONS 2026-09-18).
+   */
+  const opportunities = useOpportunities()
+  const allocations = useAllocations()
+  const lineage = useMemo(
+    () => planLineage(plan, opportunities.data?.items ?? [], allocations.data?.items ?? []),
+    [plan, opportunities.data?.items, allocations.data?.items],
+  )
   const exit = planExitSummary(plan)
   const credit = planEstCredit(plan)
 
@@ -224,6 +240,45 @@ export function PlanCard({
             <p className="text-dense-meta">{plan.rationale}</p>
           </Section>
         ) : null}
+
+        <Section title="Rules">
+          <p
+            className={cn(
+              'text-dense-meta leading-normal text-pretty',
+              lineage.outsideRules ? 'text-warning' : 'text-secondary-foreground',
+            )}
+          >
+            {lineage.read}
+          </p>
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 pt-0.5 text-dense-meta">
+            {lineage.structure ? (
+              <Link to={`/trade/rules?pick=structure:${lineage.structure.id}`} className={LINK}>
+                {lineage.structure.name}
+              </Link>
+            ) : null}
+            {lineage.opportunity ? (
+              <>
+                <span className="text-muted-foreground">→</span>
+                <Link to={`/trade/rules?pick=opportunity:${lineage.opportunity.id}`} className={LINK}>
+                  {lineage.opportunity.name}
+                </Link>
+              </>
+            ) : null}
+            {lineage.allocation ? (
+              <>
+                <span className="text-muted-foreground">→</span>
+                <Link to={`/trade/rules?pick=allocation:${lineage.allocation.id}`} className={LINK}>
+                  {lineage.allocation.name}
+                </Link>
+              </>
+            ) : null}
+            {lineage.outsideRules ? (
+              <DenseTag variant="warning" size="cell">
+                OUTSIDE RULES
+              </DenseTag>
+            ) : null}
+          </div>
+        </Section>
 
         <Section title="Source">
           <Field label="Kind" value={plan.source_kind} />
@@ -320,6 +375,18 @@ export function PlanCard({
               onClick={() => setPicking((open) => !open)}
             >
               Link fill
+            </Button>
+          ) : null}
+          {actions.canIntend || plan.effective_status === 'intended' ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled
+              title={SEND_TO_IB.title}
+              className="h-7 cursor-not-allowed text-dense-meta opacity-50"
+            >
+              {SEND_TO_IB.label}
             </Button>
           ) : null}
           {actions.canCancel ? (

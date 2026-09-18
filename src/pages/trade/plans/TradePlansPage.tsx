@@ -5,9 +5,12 @@
  * the server (`strategy_plan`, core 0.22.0), so a plan written on one machine is
  * there on the next, and Review has something to compare a fill against.
  *
- * Two things in the prototype are absent on purpose. `Import from Inbox` and
- * `Create order intent` both write order intents, which D10 forbids; an
- * unresponsive button would be worse than no button. And `Cash / margin` /
+ * `Import from Inbox` is absent on purpose: it writes an order intent, which
+ * D10 forbids, and an unresponsive button would be worse than no button. The
+ * design's own reserved action is different — it keeps a `Send to IB` on every
+ * intent and marks it `not wired` (DECISIONS 2026-09-18), so that one is drawn
+ * and disabled rather than hidden: the desk copies and TWS places, and omitting
+ * it would read as "there is no such thing" rather than "it is not connected". And `Cash / margin` /
  * `Pressure after` are grey: nothing computes what one plan would cost in
  * margin, so the column says so.
  */
@@ -86,7 +89,7 @@ export default function TradePlansPage() {
     <PageShell padding="compact" className="space-y-3">
       <PageHeader
         title="Plans"
-        description="Structured plans — what I intend, how I exit, what filled. Advisory only; nothing here places an order."
+        description="Every trade you mean to make, from idea to fill: what I intend, how I exit, what filled, and which rule covers it. Advisory only — nothing here places an order today, and the Send to IB action reserved on each intent is not wired (D10)."
         actions={
           <Button
             type="button"

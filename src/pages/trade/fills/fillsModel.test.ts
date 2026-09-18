@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Execution } from '@/types/positions'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
-import { buildFillRows, buildPlanRows, orphanReason, scopeFills, summarize } from './fillsModel'
+import { buildFillRows, buildPlanRows, importRows, orphanReason, scopeFills, summarize } from './fillsModel'
 
 const T0 = 1_780_000_000
 
@@ -121,5 +121,48 @@ describe('buildPlanRows', () => {
       limit: 3.4,
       filled: false,
     })
+  })
+})
+
+describe('importRows', () => {
+  const FRESH = [
+    { source: 'flex_trades', account_id: 'U1', days_since_latest: 1.3 },
+    { source: 'flex_trades', account_id: 'U2', days_since_latest: 22.2 },
+    { source: 'tws_client', account_id: 'U1', days_since_latest: 125.7 },
+  ]
+
+  it('reads a quiet TWS as idle, never as degraded — Flex is the record, TWS the supplement', () => {
+    const [tws] = importRows({ freshness: FRESH, flexRunTs: null, todayBySource: new Map(), todayUtc: '2026-09-18' })
+    expect(tws.lamp).toBe('gray')
+    expect(tws.sub).toMatch(/newest 126d ago/)
+  })
+
+  it('greens the Flex row when its own coverage stamp is from today', () => {
+    const rows = importRows({
+      freshness: FRESH,
+      flexRunTs: '2026-09-18T10:30:20Z',
+      todayBySource: new Map([['flex_trades', 3]]),
+      todayUtc: '2026-09-18',
+    })
+    const flex = rows.find((r) => r.key === 'flex')!
+    expect(flex.lamp).toBe('green')
+    expect(flex.title).toBe('Flex · 3 rows today')
+    expect(flex.when).toBe('10:30Z')
+  })
+
+  it('ambers a Flex pull that has not run today, naming the day it last did', () => {
+    const flex = importRows({ freshness: FRESH, flexRunTs: '2026-09-16T10:30:00Z', todayBySource: new Map(), todayUtc: '2026-09-18' }).find(
+      (r) => r.key === 'flex',
+    )!
+    expect(flex.lamp).toBe('yellow')
+    expect(flex.sub).toContain('2026-09-16')
+  })
+
+  it('keeps corporate actions grey and says grey means unknown, not down', () => {
+    const corp = importRows({ freshness: [], flexRunTs: null, todayBySource: new Map(), todayUtc: '2026-09-18' }).find(
+      (r) => r.key === 'corp',
+    )!
+    expect(corp.lamp).toBe('gray')
+    expect(corp.sub).toMatch(/unknown, not down/)
   })
 })

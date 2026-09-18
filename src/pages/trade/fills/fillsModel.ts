@@ -57,6 +57,80 @@ export const FILLS_UNRECORDED = {
     'An order that filled is gone from IB’s open list the moment it fills, and nothing on this side keeps the ones that did. Today’s fills are below; today’s working orders are above; the two do not join.',
 } as const
 
+/**
+ * The Imports lane — how each path fills arrive by is doing today.
+ *
+ * The design's three rows, on the readings this side actually has: the
+ * executions-freshness endpoint knows the newest fill per source and account,
+ * the Flex plugin stamps its own coverage run, and corporate actions report no
+ * freshness at all — which the row says, because grey means unknown, not down.
+ */
+export interface ImportRow {
+  key: string
+  title: string
+  sub: string
+  when: string
+  lamp: 'green' | 'yellow' | 'gray'
+}
+
+export function importRows(args: {
+  /** Per source × account, from /executions/freshness. */
+  freshness: readonly { source: string; account_id: string; days_since_latest: number | null }[]
+  /** The Flex plugin's own flex-trades coverage stamp (ISO), or null unread. */
+  flexRunTs: string | null
+  /** Fills in today's trade date, by source — from the rows already built. */
+  todayBySource: ReadonlyMap<string, number>
+  todayUtc: string
+}): ImportRow[] {
+  const newestDays = (source: string): number | null => {
+    const days = args.freshness
+      .filter((f) => f.source === source)
+      .map((f) => f.days_since_latest)
+      .filter((d): d is number => d != null)
+    return days.length === 0 ? null : Math.min(...days)
+  }
+
+  const twsToday = args.todayBySource.get('tws_client') ?? 0
+  const twsDays = newestDays('tws_client')
+  const flexToday = args.todayBySource.get('flex_trades') ?? 0
+  const flexDays = newestDays('flex_trades')
+  const flexRanToday = args.flexRunTs != null && args.flexRunTs.slice(0, 10) === args.todayUtc
+
+  return [
+    {
+      key: 'tws',
+      title: twsToday > 0 ? `TWS · ${twsToday} execution${twsToday === 1 ? '' : 's'} today` : 'TWS · nothing today',
+      sub:
+        twsDays == null
+          ? 'no TWS fill on record'
+          : `newest ${Math.round(twsDays)}d ago — TWS rows only arrive when the terminal fetch is run`,
+      when: twsToday > 0 ? 'today' : '—',
+      // Idle is not degraded: Flex is the statement of record and TWS the
+      // intraday supplement, so a quiet TWS is the normal state of this book.
+      lamp: twsToday > 0 ? 'green' : 'gray',
+    },
+    {
+      key: 'flex',
+      title: flexToday > 0 ? `Flex · ${flexToday} row${flexToday === 1 ? '' : 's'} today` : 'Flex · no row today',
+      sub:
+        args.flexRunTs == null
+          ? 'the plugin reported no coverage run'
+          : flexRanToday
+            ? `pull ran today${flexDays == null ? '' : ` · newest fill ${flexDays < 1 ? 'under a day' : `${Math.round(flexDays)}d`} old`}`
+            : `last pull ${args.flexRunTs.slice(0, 10)} — the daily import has not run today`,
+      when: args.flexRunTs == null ? '—' : `${args.flexRunTs.slice(11, 16)}Z`,
+      lamp: args.flexRunTs == null ? 'gray' : flexRanToday ? 'green' : 'yellow',
+    },
+    {
+      key: 'corp',
+      title: 'Corporate actions',
+      sub: 'no freshness is reported for this feed — grey means unknown, not down',
+      when: '—',
+      lamp: 'gray',
+    },
+  ]
+}
+
 const SELL = /^(s|sell|sld)$/i
 
 function sideWord(e: Execution): string {

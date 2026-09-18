@@ -28,7 +28,9 @@ import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
 import { fetchStrategyPlans } from '@/api/strategyPlans'
 import { useExecutionsCanonical } from '@/hooks/useExecutions'
 import { useOpenOrders } from '@/hooks/useOpenOrders'
-import { FILLS_UNRECORDED, buildFillRows, buildPlanRows, scopeFills, summarize } from './fillsModel'
+import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
+import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
+import { FILLS_UNRECORDED, buildFillRows, buildPlanRows, importRows, scopeFills, summarize } from './fillsModel'
 
 const PAGE_LEAD =
   'The work side of the ledger: what IB is working right now, what came back, and which fills still need a home. Nothing here sends an order — TWS does that, and the reserved Send action lives on Plans, not wired.'
@@ -62,8 +64,17 @@ export default function FillsPage() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   })
 
+  /**
+   * The design opens on the actionable subset — `Show: Needs a home` — because
+   * this page is the work list, not the record. `All` and `Linked` stay one
+   * click away, and the empty state names the filter so a filtered-quiet table
+   * never reads as a quiet book.
+   */
+  const [show, setShow] = useState('needs')
   const execQuery = useExecutionsCanonical()
   const ordersQuery = useOpenOrders()
+  const freshnessQuery = useExecutionsFreshness()
+  const flexQuery = useFlexCoverageFreshness()
   const plansQuery = useQuery({
     queryKey: ['strategy', 'plans', 'fills'],
     queryFn: () => fetchStrategyPlans({}),
@@ -75,8 +86,26 @@ export default function FillsPage() {
     [execQuery.data?.items, plans],
   )
   const days = WINDOWS.find((w) => w.value === windowKey)?.days ?? null
-  const rows = useMemo(() => scopeFills(all, days, today), [all, days, today])
-  const summary = useMemo(() => summarize(rows, all), [rows, all])
+  const windowRows = useMemo(() => scopeFills(all, days, today), [all, days, today])
+  const rows = useMemo(
+    () => (show === 'all' ? windowRows : windowRows.filter((r) => (show === 'needs' ? r.state === 'orphan' : r.state === 'linked'))),
+    [windowRows, show],
+  )
+  const summary = useMemo(() => summarize(windowRows, all), [windowRows, all])
+  const imports = useMemo(() => {
+    const todayBySource = new Map<string, number>()
+    for (const r of windowRows) {
+      if (r.tradeDate === today) todayBySource.set(r.source, (todayBySource.get(r.source) ?? 0) + 1)
+    }
+    const flexRun =
+      (flexQuery.data?.dimensions ?? []).find((d) => d.dimension === 'flex-trades')?.updated_at ?? null
+    return importRows({
+      freshness: freshnessQuery.data?.items ?? [],
+      flexRunTs: flexRun,
+      todayBySource,
+      todayUtc: new Date().toISOString().slice(0, 10),
+    })
+  }, [windowRows, today, flexQuery.data?.dimensions, freshnessQuery.data?.items])
   const planRows = useMemo(() => buildPlanRows(plans), [plans])
   const orders = ordersQuery.data ?? []
 
@@ -120,6 +149,8 @@ export default function FillsPage() {
           </div>
         ) : (
           <>
+            <div className="flex flex-wrap items-start gap-3">
+              <div className="flex min-w-0 flex-[999_1_40rem] flex-col gap-3">
             <PositionsTier label="Open orders in IB" note="what the broker is working right now · TWS sends, this reads" />
             <section className={positionsUi.panel} aria-label="Open orders in IB">
               <header className={positionsUi.panelHead}>
@@ -198,29 +229,42 @@ export default function FillsPage() {
                 <span className={positionsUi.panelTitle}>
                   {summary.rows} {summary.rows === 1 ? 'fill' : 'fills'}
                 </span>
-                <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
-                  <StatusLamp lamp="green" variant="dot" title="Linked to an instance" />
-                  {summary.linked} linked
-                </span>
+                <SegmentControl
+                  size="xs"
+                  ariaLabel="Show"
+                  value={show}
+                  onChange={setShow}
+                  options={[
+                    { value: 'needs', label: 'Needs a home' },
+                    { value: 'linked', label: 'Linked' },
+                    { value: 'all', label: 'All' },
+                  ]}
+                />
                 <span
                   className={cn(
-                    'inline-flex items-center gap-1.5 text-dense-meta',
+                    'ml-auto text-dense-meta',
                     summary.orphan > 0 ? 'text-warning' : 'text-muted-foreground',
                   )}
                 >
-                  <StatusLamp lamp={summary.orphan > 0 ? 'yellow' : 'gray'} variant="dot" title="Nothing claims it" />
-                  {summary.orphan} with no home
-                </span>
-                <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>
-                  {summary.bySource.map((s) => `${SOURCE_LABEL[s.source] ?? s.source} ${s.n}`).join(' · ')}
+                  {summary.orphan > 0
+                    ? `${summary.orphan} ${summary.orphan === 1 ? 'fill' : 'fills'} without a plan or instance`
+                    : 'everything has a home'}
                 </span>
               </header>
               {rows.length === 0 ? (
                 <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground text-pretty">
-                  Nothing came back in this window
-                  {summary.newestTradeDate
-                    ? ` — the newest fill the book has is ${fmtIsoDateToken(summary.newestTradeDate)}.`
-                    : '.'}
+                  {windowRows.length === 0 ? (
+                    <>
+                      Nothing came back in this window
+                      {summary.newestTradeDate
+                        ? ` — the newest fill the book has is ${fmtIsoDateToken(summary.newestTradeDate)}.`
+                        : '.'}
+                    </>
+                  ) : show === 'needs' ? (
+                    <>Every fill in this window has a home — {windowRows.length} linked, behind Show: Linked.</>
+                  ) : (
+                    <>No linked fill in this window — {windowRows.length} without a home, behind Show: Needs a home.</>
+                  )}
                 </p>
               ) : (
                 <div className="overflow-x-auto">
@@ -314,9 +358,14 @@ export default function FillsPage() {
               </div>
             </section>
 
-            <PositionsTier label="Intended plans" note="what was written down before the fill" />
+              </div>
+
+              {/* The design's right rail: what has not gone out yet, and how
+                  each import path is doing today. */}
+              <aside className="flex min-w-0 max-w-[27.5rem] flex-[1_1_21.25rem] flex-col gap-3">
             <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Intended plans">
               <header className={positionsUi.panelHead}>
+                <span className={positionsUi.cap}>Not yet sent</span>
                 <span className={positionsUi.panelTitle}>
                   {planRows.length} {planRows.length === 1 ? 'plan' : 'plans'}
                 </span>
@@ -330,59 +379,66 @@ export default function FillsPage() {
               {planRows.length === 0 ? (
                 <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No plan has been written.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  {/* §14.6: six columns, the design's 700 floor. */}
-                  <table className="w-full min-w-[700px] table-fixed border-collapse">
-                    <colgroup>
-                      <col style={{ width: '10%' }} />
-                      <col style={{ width: '12%' }} />
-                      <col style={{ width: '24%' }} />
-                      <col style={{ width: '14%' }} />
-                      <col style={{ width: '20%' }} />
-                      <col style={{ width: '20%' }} />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th className={cn(positionsUi.th, 'text-left')}>Plan</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Symbol</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Structure</th>
-                        <th className={positionsUi.th}>Limit</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Target · stop</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>State</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {planRows.map((p) => (
-                        <tr key={p.id}>
-                          <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-instance)]')}>
-                            TP-{String(p.id).padStart(4, '0')}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left font-bold text-[var(--color-entity-option)]')}>
-                            {p.symbol || '—'}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans text-secondary-foreground')}>
-                            {p.structure ?? '—'}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-muted-foreground')}>
-                            {p.limit == null ? '—' : fmtUsd(p.limit)}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
-                            {[p.target, p.stop].filter(Boolean).join(' · ') || 'none written'}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans')}>
-                            <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
-                              <StatusLamp lamp={p.filled ? 'green' : 'gray'} variant="dot" title={p.status} />
-                              {p.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                // Stacked rows, not the record's table: this rail is 340–440px
+                // and the design stacks a plan's facts for the same reason.
+                planRows.map((p) => (
+                  <div key={p.id} className="flex flex-col gap-0.5 border-b border-border/55 px-3 py-2 last:border-b-0">
+                    <span className="flex flex-wrap items-baseline gap-x-2">
+                      <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-instance)]')}>
+                        TP-{String(p.id).padStart(4, '0')}
+                      </span>
+                      <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>
+                        {p.symbol || '—'}
+                      </span>
+                      <span className="min-w-0 text-dense-meta text-secondary-foreground">{p.structure ?? '—'}</span>
+                      <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>
+                        {p.limit == null ? 'no limit' : fmtUsd(p.limit)}
+                      </span>
+                    </span>
+                    <span className="flex flex-wrap items-center gap-x-2 text-dense-meta text-muted-foreground">
+                      <StatusLamp lamp={p.filled ? 'green' : 'gray'} variant="dot" title={p.status} />
+                      <span>{p.status}</span>
+                      <span className="min-w-0 text-pretty">
+                        {[p.target, p.stop].filter(Boolean).join(' · ') || 'no exit written'}
+                      </span>
+                    </span>
+                  </div>
+                ))
               )}
               <p className={cn(FOOT, 'm-0')}>{FILLS_UNRECORDED.plan}</p>
             </section>
+
+            <section className={positionsUi.panel} aria-label="Imports">
+              <header className={positionsUi.panelHead}>
+                <span className={positionsUi.cap}>Imports</span>
+                <span className={positionsUi.panelTitle}>Today</span>
+              </header>
+              {imports.map((i) => (
+                <div
+                  key={i.key}
+                  className="grid grid-cols-[0.75rem_minmax(0,1fr)_auto] items-start gap-2.5 border-b border-border/55 px-3 py-2 last:border-b-0"
+                >
+                  <span className="pt-1">
+                    <StatusLamp lamp={i.lamp} variant="dot" title={i.title} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-dense-body leading-normal text-foreground">{i.title}</span>
+                    <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
+                      {i.sub}
+                    </span>
+                  </span>
+                  <span className={cn(positionsUi.mono, 'whitespace-nowrap text-dense-meta text-muted-foreground')}>
+                    {i.when}
+                  </span>
+                </div>
+              ))}
+              <p className={cn(FOOT, 'm-0')}>
+                Freshness per path, from the sources&rsquo; own stamps — Flex is the statement of record, TWS the
+                intraday supplement, and a quiet TWS is this book&rsquo;s normal state.
+              </p>
+            </section>
+              </aside>
+            </div>
 
             <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> This page is the desk&rsquo;s

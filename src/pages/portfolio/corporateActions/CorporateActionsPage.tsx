@@ -303,7 +303,7 @@ export default function CorporateActionsPage() {
                 />
               ) : null}
               <DenseTag variant={reach.ahead > 0 ? 'info' : 'warning'} size="cell">
-                {reach.ahead > 0 ? `${reach.ahead} ahead` : '⚠ backfill only'}
+                {reach.ahead > 0 ? `${reach.ahead} ahead` : '⚠ none declared ahead'}
               </DenseTag>
               <Link to="/trade/assignment" className={positionsUi.link}>
                 assignment risk → Assignment
@@ -324,7 +324,7 @@ export default function CorporateActionsPage() {
                 <span className={positionsUi.cap}>The feed</span>
                 <span className={positionsUi.panelTitle}>what it can and cannot say</span>
                 <DenseTag variant="warning" size="cell">
-                  ⚠ nothing ahead of today
+                  ⚠ none declared ahead
                 </DenseTag>
               </header>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,11rem),1fr))] gap-x-4 gap-y-2 px-3 py-2.5">
@@ -350,7 +350,7 @@ export default function CorporateActionsPage() {
                   cap="Dated ahead"
                   value={String(reach.ahead)}
                   ink={reach.ahead === 0 ? 'text-warning' : undefined}
-                  sub={reach.ahead === 0 ? 'a backfill, not a calendar' : `inside and beyond ${CALENDAR_DAYS} days`}
+                  sub={reach.ahead === 0 ? 'none of these names has declared one' : `inside and beyond ${CALENDAR_DAYS} days`}
                 />
                 <PositionsStat
                   cap="Backfilled thinly"
@@ -516,7 +516,7 @@ export default function CorporateActionsPage() {
                 </span>
                 {ahead.length === 0 ? (
                   <DenseTag variant="warning" size="cell">
-                    ⚠ the feed carries no future date
+                    ⚠ none declared ahead
                   </DenseTag>
                 ) : null}
                 <span className="ml-auto inline-flex items-center gap-2">
@@ -536,14 +536,15 @@ export default function CorporateActionsPage() {
               </header>
               {ahead.length === 0 ? (
                 <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                  {reach.rows} rows reached {reach.covered} of the {reach.asked} names this book touches, and every one
-                  of them is dated on or before today. A calendar drawn from them would be empty for a reason that has
-                  nothing to do with whether an ex-date is coming.
+                  {reach.rows} rows reached {reach.covered} of the {reach.asked} names this book touches, and not one
+                  of them is dated after today. The pull that fetched them asks the whole market for a −7 / +60 day
+                  window every night, so this is not the feed failing to look ahead — it is that none of these issuers
+                  has declared its next ex-date yet.
                 </p>
               ) : null}
               <div className={cn('overflow-x-auto', ahead.length === 0 && 'border-t border-border')}>
                 {/* §14.6: seven columns, held at 980 — above the design's 900 floor. The shape stays drawn
-                    when the feed carries no future date, the way the other marked bands keep theirs. */}
+                    when no event is dated ahead, the way the other marked bands keep theirs. */}
                 <table className="w-full min-w-[980px] table-fixed border-collapse">
                   <colgroup>
                     <col style={{ width: '10%' }} />
@@ -581,7 +582,7 @@ export default function CorporateActionsPage() {
                         <td
                           className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-muted-foreground')}
                         >
-                          nothing to place — every row the feed holds is dated on or before today
+                          nothing to place — no ex-date has been declared on these names yet
                         </td>
                       </tr>
                     ) : null}

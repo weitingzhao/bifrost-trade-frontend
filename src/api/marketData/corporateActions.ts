@@ -3,10 +3,12 @@
  *
  * One symbol per call — the plugin's endpoint takes `symbol`, not a list — so
  * the caller fans out over the book and the query cache holds one entry per
- * name. Measured 2026-09-17 on DEV: deep history (INTC back to 1980) and not
- * one row dated ahead of today, on any of the 28 symbols checked including the
- * largest payers. The feed is a backfill of what happened, not a calendar of
- * what is coming, and the page that reads it has to say so.
+ * name. Measured 2026-09-17 on DEV: deep history (INTC back to 1980) and not one
+ * row dated ahead of today on any of the 28 symbols checked. That is the book's
+ * quiet period, not the feed's reach — the plugin's nightly whole-market pull
+ * asks for a −7 / +60 day window (3,736 dividend rows that night), and names
+ * that declare early do come back dated ahead. A dividend simply does not exist
+ * until its issuer declares it.
  *
  * Nothing here writes.
  */

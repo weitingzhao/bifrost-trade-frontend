@@ -165,14 +165,14 @@ export const HISTORY_DAYS = 90
 
 export const CORPORATE_ACTIONS_UNRECORDED = {
   forward:
-    'Nothing in the feed is dated ahead of today. Every row it holds — for this book and for the largest payers checked beside it — is an event that already happened, so what is stored is a backfill rather than a calendar. An empty Next 30 days would read as “nothing is coming”; it means “nothing is known”.',
+    'The feed does reach ahead: the plugin pulls the whole market every night over a −7 / +60 day window, and names whose issuers declare early come back with an ex-date in the future. None of these names carries one today, because a dividend exists only once it is declared — a monthly ETF declares a day or two before its ex-date, a quarterly payer two to four weeks. An empty Next 30 days therefore reads as “nothing is coming”, and means “nothing has been declared yet”.',
   contract:
-    'A split rewrites a strike and a multiplier overnight, and the ticker does not change, so a leg can be a different contract on the same name the next morning. With no dated event ahead, nothing here can say a leg will be reshaped — or that it will not.',
+    'A split rewrites a strike and a multiplier overnight, and the ticker does not change, so a leg can be a different contract on the same name the next morning. With no split dated ahead on any of these names, nothing here can say a leg will be reshaped — or that it will not. A merger or a spin-off would reshape one too, and neither is a thing this feed reports at all: the vendor sells dividends and splits, and what an event turns a contract into is the broker’s record, not the market’s.',
   assignment:
-    'The extrinsic-versus-dividend test lives on Assignment. This panel reads it rather than recomputing it: if the two ever disagree, this page is wrong first. The test needs a dividend dated before the leg’s expiry, and the feed has none.',
+    'The extrinsic-versus-dividend test lives on Assignment. This panel reads it rather than recomputing it: if the two ever disagree, this page is wrong first. The test needs a dividend dated before the leg’s expiry, and none of these names has declared one yet.',
   cash: 'A dividend already booked as cash is on Transfer & Pay. What is here is the event, not the payment — and the amount against the book is computed on today’s share count, not the count on the ex-date.',
   watchlist:
-    'The calendar covers the watchlist as well as the book, because a split distorts a name\u2019s chain and its backtest whether or not the book holds it. Held or watched, the rows are drawn from the same feed \u2014 which carries no future date for either.',
+    'The calendar covers the watchlist as well as the book, because a split distorts a name\u2019s chain and its backtest whether or not the book holds it. Held or watched, the rows are drawn from the same feed \u2014 which will carry an ex-date for either as soon as its issuer declares one.',
 } as const
 
 function kindOf(actionType: string): CorporateActionKind {

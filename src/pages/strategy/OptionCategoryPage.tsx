@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
@@ -8,47 +8,27 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { LayoutGrid, Plus, Settings2 } from 'lucide-react'
 import type {
   StrategyTemplateRow,
-  StrategyTemplateDetail,
-  StructureTypeLegPayload,
-  MetaParamPayload,
   StrategyDimRow,
 } from '@/types/positions'
-import {
-  createTemplate,
-  updateTemplate,
-  deleteTemplate,
-  replaceTemplateLegs,
-  replaceTemplateParams,
-  replaceTemplateCharacteristics,
-  createDim,
-  deleteDim,
-} from '@/api/strategy'
+import { createTemplate, createDim, deleteDim, updateTemplate } from '@/api/strategy'
 import {
   useOptionCategoryTemplates,
   useOptionCategoryDims,
-  useOptionCategoryTemplateDetail,
-  useOptionCategoryFormOptions,
   TEMPLATES_KEY,
-  TEMPLATE_DETAIL_KEY,
   DIMS_KEY,
 } from '@/hooks/useOptionCategory'
-import { DIM_TYPES, type DimType } from '@/pages/strategy/optionCategory/constants'
+import { DIM_TYPES, type DimType } from '@/components/strategy/templates/constants'
 import { OptionCategorySidebar } from '@/pages/strategy/optionCategory/OptionCategorySidebar'
-import { OptionCategoryTemplateInfoSection } from '@/pages/strategy/optionCategory/OptionCategoryTemplateInfoSection'
-import { OptionCategoryLegsSection } from '@/pages/strategy/optionCategory/OptionCategoryLegsSection'
-import { OptionCategoryMetaTable } from '@/pages/strategy/optionCategory/OptionCategoryMetaTable'
-import { OptionCategoryCharacteristicsSection } from '@/pages/strategy/optionCategory/OptionCategoryCharacteristicsSection'
+import { TemplateEditor } from '@/components/strategy/templates/TemplateEditor'
 import { OptionCategoryCreateDialog } from '@/pages/strategy/optionCategory/OptionCategoryCreateDialog'
 import { OptionCategoryDimensionsDialog } from '@/pages/strategy/optionCategory/OptionCategoryDimensionsDialog'
 import {
   OPTION_CATEGORY_INFO,
-  optionCategoryDetailContentClass,
   optionCategoryDetailEmptyClass,
-  optionCategoryDetailLoadingClass,
   optionCategoryDetailMainClass,
   optionCategoryLayoutClass,
   optionCategoryPageHeaderClass,
-} from '@/pages/strategy/optionCategory/optionCategoryUi'
+} from '@/components/strategy/templates/optionCategoryUi'
 
 export default function OptionCategoryPage() {
   const queryClient = useQueryClient()
@@ -76,27 +56,13 @@ export default function OptionCategoryPage() {
   const [newDimLabel, setNewDimLabel] = useState('')
 
   const [feedback, setFeedback] = useState<{ section: string; ok: boolean } | null>(null)
-  const [detail, setDetail] = useState<StrategyTemplateDetail | null>(null)
 
   const { data: templatesData, isLoading: templatesLoading, isError: templatesError } =
     useOptionCategoryTemplates()
   const { data: dimsData } = useOptionCategoryDims()
-  const { data: detailData, isLoading: detailLoading } = useOptionCategoryTemplateDetail(selectedId)
-  const { paramKinds, legRoles, legDirs, legOrs } = useOptionCategoryFormOptions()
 
-  const paramKindOpts = paramKinds.data?.options ?? []
-  const legRoleOpts = legRoles.data?.options ?? []
-  const legDirOpts = legDirs.data?.options ?? []
-  const legOrOpts = legOrs.data?.options ?? []
   const dimsByType = dimsData?.by_type ?? {}
   const templates = templatesData?.items ?? []
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (detailData) setDetail(detailData)
-    else if (selectedId == null) setDetail(null)
-  }, [detailData, selectedId])
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const activeDimFilterCount = Object.values(dimFilters).filter(Boolean).length
   const hasFilter = activeDimFilterCount > 0 || searchText.trim().length > 0
@@ -151,93 +117,9 @@ export default function OptionCategoryPage() {
     }
   }
 
-  async function saveInfo() {
-    if (!detail) return
-    try {
-      const code = detail.template_code.trim().toLowerCase().replace(/\s+/g, '_')
-      if (!code || !/^[a-z][a-z0-9_]*$/.test(code)) {
-        showFeedback('info', false)
-        return
-      }
-      await updateTemplate(detail.strategy_template_id, {
-        template_code: code,
-        display_name: detail.display_name,
-        dim_direction: detail.dim_direction,
-        dim_structure: detail.dim_structure,
-        dim_coverage: detail.dim_coverage,
-        dim_risk: detail.dim_risk,
-        dim_volatility: detail.dim_volatility,
-        dim_time: detail.dim_time,
-        explanation: detail.explanation,
-        typical_use: detail.typical_use,
-        example: detail.example,
-        nature: detail.nature,
-        sort_order: detail.sort_order,
-        is_active: detail.is_active,
-      })
-      await queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY })
-      await queryClient.invalidateQueries({
-        queryKey: [...TEMPLATE_DETAIL_KEY, detail.strategy_template_id],
-      })
-      showFeedback('info', true)
-    } catch {
-      showFeedback('info', false)
-    }
-  }
 
-  async function saveLegs() {
-    if (!detail) return
-    try {
-      const legs: StructureTypeLegPayload[] = (detail.legs ?? []).map((l, i) => ({
-        role: l.role,
-        direction: l.direction,
-        option_right:
-          l.option_right === null || l.option_right === undefined ? '' : String(l.option_right),
-        quantity_default: l.quantity ?? 1,
-        sort_order: i,
-      }))
-      await replaceTemplateLegs(detail.strategy_template_id, legs)
-      await queryClient.invalidateQueries({
-        queryKey: [...TEMPLATE_DETAIL_KEY, detail.strategy_template_id],
-      })
-      showFeedback('legs', true)
-    } catch {
-      showFeedback('legs', false)
-    }
-  }
 
-  async function saveParams() {
-    if (!detail) return
-    try {
-      const items: MetaParamPayload[] = (detail.meta_params ?? []).map((p) => ({
-        meta_key: p.meta_key,
-        display_label: p.display_label,
-        default_value_text: p.default_value_text,
-        param_kind: p.param_kind ?? 'fixed',
-        sort_order: p.sort_order,
-      }))
-      await replaceTemplateParams(detail.strategy_template_id, items)
-      await queryClient.invalidateQueries({
-        queryKey: [...TEMPLATE_DETAIL_KEY, detail.strategy_template_id],
-      })
-      showFeedback('params', true)
-    } catch {
-      showFeedback('params', false)
-    }
-  }
 
-  async function saveCharacteristics() {
-    if (!detail) return
-    try {
-      await replaceTemplateCharacteristics(detail.strategy_template_id, detail.characteristics ?? [])
-      await queryClient.invalidateQueries({
-        queryKey: [...TEMPLATE_DETAIL_KEY, detail.strategy_template_id],
-      })
-      showFeedback('chars', true)
-    } catch {
-      showFeedback('chars', false)
-    }
-  }
 
   async function handleCreate() {
     const code = newCode.trim().toLowerCase().replace(/\s+/g, '_')
@@ -273,19 +155,6 @@ export default function OptionCategoryPage() {
     await queryClient.invalidateQueries({ queryKey: DIMS_KEY })
   }
 
-  function openDeleteTemplate() {
-    if (!detail) return
-    setConfirmState({
-      title: 'Delete template',
-      message: `Delete template "${detail.display_name}"? This fails if any structure references it.`,
-      confirmLabel: 'Confirm delete',
-      action: async () => {
-        await deleteTemplate(detail.strategy_template_id)
-        setSelectedId(null)
-        await queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY })
-      },
-    })
-  }
 
   function openDeleteDim(row: StrategyDimRow) {
     setConfirmState({
@@ -380,46 +249,9 @@ export default function OptionCategoryPage() {
               <LayoutGrid className="h-12 w-12 opacity-20" />
               <p className="text-sm">Select a template from the sidebar</p>
             </div>
-          ) : detailLoading && !detail ? (
-            <div className={optionCategoryDetailLoadingClass}>
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          ) : detail ? (
-            <div className={optionCategoryDetailContentClass}>
-              <OptionCategoryTemplateInfoSection
-                detail={detail}
-                dimsByType={dimsByType}
-                feedback={feedback}
-                onDetailChange={setDetail}
-                onSave={() => void saveInfo()}
-                onDelete={openDeleteTemplate}
-              />
-              <OptionCategoryLegsSection
-                detail={detail}
-                legRoleOpts={legRoleOpts}
-                legDirOpts={legDirOpts}
-                legOrOpts={legOrOpts}
-                feedback={feedback}
-                onDetailChange={setDetail}
-                onSave={() => void saveLegs()}
-              />
-              <OptionCategoryMetaTable
-                detail={detail}
-                paramKindOpts={paramKindOpts}
-                feedback={feedback}
-                onDetailChange={setDetail}
-                onSave={() => void saveParams()}
-              />
-              <OptionCategoryCharacteristicsSection
-                detail={detail}
-                feedback={feedback}
-                onDetailChange={setDetail}
-                onSave={() => void saveCharacteristics()}
-              />
-            </div>
-          ) : null}
+          ) : (
+            <TemplateEditor templateId={selectedId} onDeleted={() => setSelectedId(null)} />
+          )}
         </main>
       </div>
 

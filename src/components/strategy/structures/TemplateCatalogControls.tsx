@@ -28,6 +28,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { createDim, createTemplate } from '@/api/strategy'
 import { useOptionCategoryDims, DIMS_KEY } from '@/hooks/useOptionCategory'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { TemplateEditor } from '@/components/strategy/templates/TemplateEditor'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
 
@@ -40,10 +41,23 @@ export function toTemplateCode(raw: string): string {
   return raw.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
 }
 
-export function TemplateCatalogControls({ onCreated }: { onCreated: (templateId: number) => void }) {
+export function TemplateCatalogControls({
+  onCreated,
+  editableTemplateId = null,
+}: {
+  onCreated: (templateId: number) => void
+  /**
+   * The template this structure is on. Given, the catalog can edit it in
+   * place — its legs, its parameters, its characteristics and the six
+   * dimensions this structure inherits — which is what being told to go to
+   * another page to fix the template you just picked used to cost.
+   */
+  editableTemplateId?: number | null
+}) {
   const qc = useQueryClient()
   const [newOpen, setNewOpen] = useState(false)
   const [dimsOpen, setDimsOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
@@ -99,7 +113,25 @@ export function TemplateCatalogControls({ onCreated }: { onCreated: (templateId:
         >
           {dimsOpen ? 'Hide dimensions' : 'Dimensions…'}
         </Button>
+        {editableTemplateId != null ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-6.5 text-dense-meta"
+            aria-expanded={editOpen}
+            onClick={() => setEditOpen((v) => !v)}
+          >
+            {editOpen ? 'Hide template' : 'Edit this template…'}
+          </Button>
+        ) : null}
       </div>
+
+      {editOpen && editableTemplateId != null ? (
+        <div className="rounded-md border border-border bg-[var(--sk-raised2)] p-2.5">
+          <TemplateEditor templateId={editableTemplateId} onDeleted={() => setEditOpen(false)} />
+        </div>
+      ) : null}
 
       {dimsOpen ? (
         <div className="flex flex-col gap-2 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2">

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select'
 import { GripVertical, LayoutGrid, Search, X } from 'lucide-react'
 import type { StrategyTemplateRow } from '@/types/positions'
-import { DIM_TYPES, DIM_LABELS, DIM_ICONS, type DimType } from '@/pages/strategy/optionCategory/constants'
+import { DIM_TYPES, DIM_LABELS, DIM_ICONS, type DimType } from '@/components/strategy/templates/constants'
 import type { StrategyDimRow } from '@/types/positions'
 import {
   optionCategoryReorderHintClass,
@@ -23,7 +23,7 @@ import {
   optionCategorySidebarListClass,
   optionCategorySidebarRowClass,
   optionCategorySidebarSearchClass,
-} from '@/pages/strategy/optionCategory/optionCategoryUi'
+} from '@/components/strategy/templates/optionCategoryUi'
 
 export interface OptionCategorySidebarProps {
   searchText: string

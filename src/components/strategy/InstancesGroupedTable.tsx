@@ -82,11 +82,21 @@ interface Props {
   detailViewMode: 'accordion' | 'multi'
   collapsedGroups: Record<string, boolean>
   onToggleGroup: (key: string) => void
-  onDelete: (instance: StrategyInstance) => void
+  /** Optional: Trade › Rules deletes from the chain's own detail actions. */
+  onDelete?: (instance: StrategyInstance) => void
   onViewDetail?: (instance: StrategyInstance) => void
   onCompare?: (instance: StrategyInstance) => void
   activeDetailId?: number | null
   compareId?: number | null
+  /**
+   * Offer ⇄ on every row rather than only while a detail is open.
+   *
+   * Strategy › Instances opened the sheet first and compared against what was
+   * open, so its ⇄ needs a detail. Trade › Rules has no sheet of its own — the
+   * sheet is on Positions — so the first ⇄ *holds* an instance and the second
+   * opens the pair. Opt-in so the older behaviour is unchanged.
+   */
+  compareAnywhere?: boolean
 }
 
 function signedClass(n: number | null | undefined): string {
@@ -293,6 +303,7 @@ export function InstancesGroupedTable({
   onCompare,
   activeDetailId,
   compareId,
+  compareAnywhere = false,
 }: Props) {
   const [sort, setSort] = useState<{ column: SortColumn; dir: SortDir } | null>(null)
 
@@ -489,23 +500,33 @@ export function InstancesGroupedTable({
                   >
                     <Eye className="h-3.5 w-3.5" />
                   </IconActionButton>
-                  {activeDetailId != null && activeDetailId !== inst.strategy_instance_id && (
+                  {(
+                    compareAnywhere
+                      ? (activeDetailId ?? compareId ?? null) !== inst.strategy_instance_id
+                      : activeDetailId != null && activeDetailId !== inst.strategy_instance_id
+                  ) && (
                     <IconActionButton
-                      title="Compare side-by-side"
+                      title={
+                        compareAnywhere && compareId == null
+                          ? 'Hold for comparison'
+                          : 'Compare side-by-side'
+                      }
                       ariaLabel="Compare side-by-side"
                       onClick={() => onCompare?.(inst)}
                     >
                       <Columns2 className="h-3.5 w-3.5" />
                     </IconActionButton>
                   )}
-                  <IconActionButton
-                    title="Delete instance"
-                    ariaLabel="Delete instance"
-                    tone="danger"
-                    onClick={() => onDelete(inst)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </IconActionButton>
+                  {onDelete ? (
+                    <IconActionButton
+                      title="Delete instance"
+                      ariaLabel="Delete instance"
+                      tone="danger"
+                      onClick={() => onDelete(inst)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </IconActionButton>
+                  ) : null}
                 </div>
               </DenseTableCell>
               <DenseTableCell className={cn(instancesColIdClass, denseTableNumCell, 'text-muted-foreground')}>

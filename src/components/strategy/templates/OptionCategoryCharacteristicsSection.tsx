@@ -1,14 +1,14 @@
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import type { StrategyTemplateDetail } from '@/types/positions'
-import { SaveFeedback } from '@/pages/strategy/optionCategory/SaveFeedback'
+import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
 import {
   optionCategorySectionActionsClass,
   optionCategorySectionBodyCompactClass,
   optionCategorySectionHeaderClass,
   optionCategorySectionTitleClass,
-} from '@/pages/strategy/optionCategory/optionCategoryUi'
-import { optionCategoryTextareaClass } from '@/pages/strategy/optionCategory/optionCategoryFormUi'
+} from '@/components/strategy/templates/optionCategoryUi'
+import { optionCategoryTextareaClass } from '@/components/strategy/templates/optionCategoryFormUi'
 
 export interface OptionCategoryCharacteristicsSectionProps {
   detail: StrategyTemplateDetail

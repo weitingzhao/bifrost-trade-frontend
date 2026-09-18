@@ -54,18 +54,26 @@ interface Props {
   totalCount: number
   onChange: (patch: Partial<InstanceListFilterValues>) => void
   onClear: () => void
-  accounts: string[]
-  accountFilter: string
-  onAccountFilterChange: (accountId: string) => void
-  opportunities: StrategyOpportunity[]
-  opportunityIdFilter: number | ''
-  onOpportunityIdFilterChange: (id: number | '') => void
-  oppsFetching: boolean
-  instancesForOpportunity: StrategyInstance[]
-  instanceIdFilter: number | ''
-  onInstanceIdFilterChange: (id: number | '') => void
-  detailViewMode: DetailViewMode
-  onDetailViewModeChange: (mode: DetailViewMode) => void
+  /**
+   * The account / opportunity / instance pickers, and the accordion switch.
+   *
+   * Optional since 2026-09-18: Trade › Rules shows this list under a chain node
+   * that has already narrowed by opportunity and allocation, so offering the
+   * same narrowing twice would let a reader set the two against each other.
+   * Omitting them drops those controls and keeps the rest.
+   */
+  accounts?: string[]
+  accountFilter?: string
+  onAccountFilterChange?: (accountId: string) => void
+  opportunities?: StrategyOpportunity[]
+  opportunityIdFilter?: number | ''
+  onOpportunityIdFilterChange?: (id: number | '') => void
+  oppsFetching?: boolean
+  instancesForOpportunity?: StrategyInstance[]
+  instanceIdFilter?: number | ''
+  onInstanceIdFilterChange?: (id: number | '') => void
+  detailViewMode?: DetailViewMode
+  onDetailViewModeChange?: (mode: DetailViewMode) => void
   onExpandAll: () => void
   onCollapseAll: () => void
   showGroupToolbar: boolean
@@ -170,6 +178,7 @@ export function InstanceListFilters({
         <div className={instancesFilterPanelClass}>
           <div className={instancesFilterPrimaryRowClass}>
             <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+              {onAccountFilterChange ? (
               <div className={instancesInlineFieldClass}>
                 <Label htmlFor="instances-account" className={instancesFieldLabelClass}>Account</Label>
                 <Select
@@ -181,28 +190,31 @@ export function InstanceListFilters({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__all__">All accounts</SelectItem>
-                    {accounts.map((id) => (
+                    {(accounts ?? []).map((id) => (
                       <SelectItem key={id} value={id} className="text-xs font-mono">{id}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              ) : null}
 
+              {onOpportunityIdFilterChange ? (
               <div className={instancesInlineFieldClass}>
                 <span className={instancesFieldLabelClass}>Strategy</span>
                 <StrategyOpportunityCombobox
-                  opportunities={opportunities}
-                  value={opportunityIdFilter}
+                  opportunities={opportunities ?? []}
+                  value={opportunityIdFilter ?? ''}
                   disabled={oppsFetching}
                   className="min-w-[10rem]"
                   onChange={(id) => {
                     onOpportunityIdFilterChange(id)
-                    onInstanceIdFilterChange('')
+                    onInstanceIdFilterChange?.('')
                   }}
                 />
               </div>
+              ) : null}
 
-              {opportunityIdFilter !== '' && (
+              {onInstanceIdFilterChange && opportunityIdFilter !== '' && opportunityIdFilter != null && (
                 <div className={instancesInlineFieldClass}>
                   <Label htmlFor="instances-instance" className={instancesFieldLabelClass}>Instance</Label>
                   <Select
@@ -214,7 +226,7 @@ export function InstanceListFilters({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">All</SelectItem>
-                      {instancesForOpportunity.map((si) => (
+                      {(instancesForOpportunity ?? []).map((si) => (
                         <SelectItem key={si.strategy_instance_id} value={String(si.strategy_instance_id)}>
                           {si.label?.trim() || `#${si.strategy_instance_id}`}
                         </SelectItem>
@@ -333,6 +345,7 @@ export function InstanceListFilters({
 
           {showGroupToolbar && (
             <div className={instancesFilterFooterClass}>
+              {onDetailViewModeChange ? (
               <div className={instancesToolbarClass}>
                 <span className={instancesToolbarLabelClass}>
                   View
@@ -347,14 +360,15 @@ export function InstanceListFilters({
                 <SegmentControl
                   size="sm"
                   ariaLabel="Detail view mode"
-                  value={detailViewMode}
-                  onChange={(v) => onDetailViewModeChange(v as DetailViewMode)}
+                  value={detailViewMode ?? 'multi'}
+                  onChange={(v) => onDetailViewModeChange?.(v as DetailViewMode)}
                   options={[
                     { value: 'accordion', label: 'Accordion' },
                     { value: 'multi', label: 'Multi' },
                   ]}
                 />
               </div>
+              ) : null}
               <div className={instancesToolbarClass}>
                 <span className={instancesToolbarLabelClass}>Groups</span>
                 <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onExpandAll}>

@@ -21,13 +21,13 @@ import type {
   StructureTypeConfigOption,
 } from '@/types/positions'
 import { fetchMetaKeyOptions, fetchMetaValueOptions } from '@/api/strategy'
-import { SaveFeedback } from '@/pages/strategy/optionCategory/SaveFeedback'
+import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
 import {
   optionCategoryEmptyHintClass,
   optionCategorySectionBodyCompactClass,
   optionCategorySectionHeaderClass,
   optionCategorySectionTitleClass,
-} from '@/pages/strategy/optionCategory/optionCategoryUi'
+} from '@/components/strategy/templates/optionCategoryUi'
 import {
   optionCategoryInlineInputDefaultClass,
   optionCategoryInlineInputLabelClass,
@@ -37,8 +37,8 @@ import {
   optionCategoryMetaFooterClass,
   optionCategoryMetaTableClass,
   optionCategoryTableCellSelectClass,
-} from '@/pages/strategy/optionCategory/optionCategoryFormUi'
-import { OptionCategoryMetaColgroup } from '@/pages/strategy/optionCategory/optionCategoryTableColgroups'
+} from '@/components/strategy/templates/optionCategoryFormUi'
+import { OptionCategoryMetaColgroup } from '@/components/strategy/templates/optionCategoryTableColgroups'
 
 export interface OptionCategoryMetaTableProps {
   detail: StrategyTemplateDetail

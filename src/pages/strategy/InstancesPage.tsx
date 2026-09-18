@@ -14,18 +14,12 @@ import { createCollapsedGroupsState } from '@/utils/instanceGroupCollapse'
 import { InstanceCreateModal } from '@/components/strategy/InstanceCreateModal'
 import { InstanceDeleteModal } from '@/components/strategy/InstanceDeleteModal'
 import { InstanceDetailSidebar } from '@/components/strategy/InstanceDetailSidebar'
-import {
-  InstanceListFilters,
-  type SinceFilter,
-} from '@/components/strategy/InstanceListFilters'
+import { InstanceListFilters } from '@/components/strategy/InstanceListFilters'
 import { useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
-import { useInstanceMetrics } from '@/hooks/useInstanceMetrics'
+import { useInstanceBook } from '@/hooks/useInstanceBook'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { INSTANCE_COMPARE_MAX_WIDTH_PX } from '@/constants/instanceDetailSidebar'
-import { computeInstancePositionStatus } from '@/utils/instanceListMetrics'
-import type { InstanceListMetricsEntry } from '@/hooks/useInstanceMetrics'
-import { primaryUnderlyingFromExecutions } from '@/components/positions/linkExecutionModalHelpers'
 import {
   applyInstancesUrlPatch,
   parseInstancesSearchParams,
@@ -34,54 +28,6 @@ import type { StrategyInstance } from '@/types/positions'
 
 const INSTANCES_INFO =
   'Running strategy instances per account; create from an opportunity, inspect PnL and executions, or open the instance sheet.'
-
-function ymdUtcMonthsAgo(months: number): string {
-  const d = new Date()
-  const utc = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - months, d.getUTCDate()))
-  return utc.toISOString().slice(0, 10)
-}
-
-function ymdUtcYtdStart(): string {
-  return `${new Date().getUTCFullYear()}-01-01`
-}
-
-function ymdUtcToday(): string {
-  return new Date().toISOString().slice(0, 10)
-}
-
-function sinceThresholdYmd(v: SinceFilter): string | null {
-  if (v === '1m') return ymdUtcMonthsAgo(1)
-  if (v === 'q') return ymdUtcMonthsAgo(3)
-  if (v === 'half') return ymdUtcMonthsAgo(6)
-  if (v === '1y') return ymdUtcMonthsAgo(12)
-  if (v === 'ytd') return ymdUtcYtdStart()
-  return null
-}
-
-/**
- * Accordion / filter symbol = instance underlying from executions.
- * Multi-symbol Opportunity books must NOT use symbols[0] (that collapses every
- * instance under the first ticker in the book).
- */
-function getInstanceSymbol(
-  inst: StrategyInstance,
-  opportunities: { strategy_opportunity_id: number; scope_type: string | null; symbols: string[] }[],
-  metricsMap: Map<number, InstanceListMetricsEntry>,
-): string {
-  const entry = metricsMap.get(inst.strategy_instance_id)
-  if (entry?.status === 'ready') {
-    const fromExec = primaryUnderlyingFromExecutions(entry.sliced)
-    if (fromExec) return fromExec
-  }
-  // Single-symbol opp only — safe fallback while metrics load / empty instance
-  const opp = opportunities.find((o) => o.strategy_opportunity_id === inst.strategy_opportunity_id)
-  if (!opp) return '—'
-  const st = (opp.scope_type ?? '').trim()
-  if (st !== 'explicit_symbols' && st !== 'watchlist_stk') return '—'
-  const sym = opp.symbols?.filter((s) => s?.trim()) ?? []
-  if (sym.length === 1) return sym[0].trim().toUpperCase()
-  return '—'
-}
 
 function parseUrlInstanceId(param: string | undefined): number | null {
   if (!param) return null
@@ -143,7 +89,6 @@ export default function InstancesPage() {
   const [metricsRefreshKey, setMetricsRefreshKey] = useState(0)
 
   const allInstances = useMemo(() => data?.items ?? [], [data])
-  const metricsMap = useInstanceMetrics(allInstances, metricsRefreshKey)
 
   const detailTarget = useMemo(() => {
     if (urlInstanceId == null) return null
@@ -186,134 +131,13 @@ export default function InstancesPage() {
     return allInstances.filter((i) => i.strategy_opportunity_id === opportunityIdFilter)
   }, [allInstances, opportunityIdFilter])
 
-  const instancePositionMeta = useMemo(() => {
-    const map = new Map<number, { rights: Set<'C' | 'P'>; expiryMonths: Set<string> }>()
-    for (const inst of allInstances) {
-      const entry = metricsMap.get(inst.strategy_instance_id)
-      if (entry?.status !== 'ready') continue
-      if (!map.has(inst.strategy_instance_id)) {
-        map.set(inst.strategy_instance_id, { rights: new Set(), expiryMonths: new Set() })
-      }
-      const meta = map.get(inst.strategy_instance_id)!
-      for (const e of entry.sliced) {
-        if ((e.sec_type ?? '').toUpperCase() !== 'OPT') continue
-        const right = (e.option_right ?? e.right ?? '').toUpperCase().charAt(0)
-        if (right === 'C' || right === 'P') meta.rights.add(right)
-        const exp = (e.expiry ?? '').replace(/\D/g, '')
-        const ym = exp.length >= 6 ? `${exp.slice(0, 4)}-${exp.slice(4, 6)}` : null
-        if (ym) meta.expiryMonths.add(ym)
-      }
-    }
-    return map
-  }, [allInstances, metricsMap])
-
-  const filterOptions = useMemo(() => {
-    const structures = new Set<string>()
-    const symbols = new Set<string>()
-    const rights = new Set<'C' | 'P'>()
-    const expiryMonths = new Set<string>()
-    for (const inst of allInstances) {
-      const sn = (inst.strategy_structure_name ?? '').trim()
-      if (sn) structures.add(sn)
-      const sym = getInstanceSymbol(inst, opportunities, metricsMap)
-      if (sym !== '—') symbols.add(sym)
-      const meta = instancePositionMeta.get(inst.strategy_instance_id)
-      if (meta) {
-        for (const r of meta.rights) rights.add(r)
-        for (const m of meta.expiryMonths) expiryMonths.add(m)
-      }
-    }
-    return {
-      structures: Array.from(structures).sort(),
-      symbols: Array.from(symbols).sort(),
-      rights: Array.from(rights).sort(),
-      expiryMonths: Array.from(expiryMonths).sort(),
-    }
-  }, [allInstances, opportunities, instancePositionMeta, metricsMap])
-
-  const filtered = useMemo(() => {
-    let list = allInstances
-
-    if (instanceIdFilter !== '') {
-      list = list.filter((inst) => inst.strategy_instance_id === instanceIdFilter)
-    }
-
-    if (filterValues.structure) {
-      list = list.filter((inst) => (inst.strategy_structure_name ?? '').trim() === filterValues.structure)
-    }
-
-    if (filterValues.symbol) {
-      list = list.filter(
-        (inst) => getInstanceSymbol(inst, opportunities, metricsMap) === filterValues.symbol,
-      )
-    }
-
-    if (filterValues.right) {
-      list = list.filter((inst) => {
-        const meta = instancePositionMeta.get(inst.strategy_instance_id)
-        return meta?.rights.has(filterValues.right as 'C' | 'P') ?? false
-      })
-    }
-
-    if (filterValues.expiry) {
-      list = list.filter((inst) => {
-        const meta = instancePositionMeta.get(inst.strategy_instance_id)
-        return meta?.expiryMonths.has(filterValues.expiry) ?? false
-      })
-    }
-
-    if (filterValues.status) {
-      list = list.filter((inst) => {
-        const entry = metricsMap.get(inst.strategy_instance_id)
-        if (!entry || entry.status !== 'ready') return false
-        const ps = computeInstancePositionStatus(entry.sliced)
-        return filterValues.status === 'open' ? ps === 'open' : ps === 'closed'
-      })
-    }
-
-    if (filterValues.since) {
-      const threshold = sinceThresholdYmd(filterValues.since)
-      if (threshold) {
-        const thresholdTs = new Date(threshold).getTime() / 1000
-        list = list.filter((inst) => {
-          if (inst.opened_at_epoch == null) return false
-          return inst.opened_at_epoch >= thresholdTs
-        })
-      }
-    }
-
-    return list
-  }, [
-    allInstances,
-    instanceIdFilter,
-    filterValues,
-    metricsMap,
+  const { metricsMap, filterOptions, filtered, groups: groupedItems, sinceRangeText } = useInstanceBook({
+    instances: allInstances,
     opportunities,
-    instancePositionMeta,
-  ])
-
-  const groupedItems = useMemo(() => {
-    const groups: { key: string; label: string; rows: StrategyInstance[] }[] = []
-    const indexByKey = new Map<string, number>()
-    for (const inst of filtered) {
-      const sym = getInstanceSymbol(inst, opportunities, metricsMap)
-      const idx = indexByKey.get(sym)
-      if (idx == null) {
-        indexByKey.set(sym, groups.length)
-        groups.push({ key: sym, label: sym, rows: [inst] })
-      } else {
-        groups[idx].rows.push(inst)
-      }
-    }
-    return groups
-  }, [filtered, opportunities, metricsMap])
-
-  const sinceRangeText = useMemo(() => {
-    if (!filterValues.since) return null
-    const start = sinceThresholdYmd(filterValues.since)
-    if (!start) return null
-    return `${start} ~ ${ymdUtcToday()}`
-  }, [filterValues.since])
+    values: filterValues,
+    instanceId: instanceIdFilter,
+    metricsRefreshKey,
+  })
 
   const clearAllFilters = useCallback(() => {
     patchUrl({

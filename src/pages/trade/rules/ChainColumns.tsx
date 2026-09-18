@@ -6,13 +6,11 @@
  * back. A card that is *not* lit is the answer to "what is this connected to",
  * so the dim has to be readable rather than invisible.
  */
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { pnlColorClass } from '@/utils/dailyChange'
-import { fmtUsd } from '@/utils/positions'
-import { fmtIsoDateToken } from '@/lib/format'
 import type { ChainCard, ChainColumn, ChainDetail, ChainSelection } from './rulesChain'
 
 /** Each column caps at this many cards before it offers the rest. */
@@ -104,16 +102,21 @@ const TONE: Record<'success' | 'warning' | 'danger', string> = {
 
 export function ChainDetailPanel({
   detail,
-  onPick,
   actions,
+  rows,
 }: {
   detail: ChainDetail
-  onPick: (sel: ChainSelection) => void
   /**
    * What this kind of thing can have done to it — the sheets behind the card,
    * plus the odd link to the page that settles something about it.
    */
   actions: { label: string; onClick?: () => void; to?: string; disabled?: boolean; title?: string }[]
+  /**
+   * What the picked thing is running — the instance list, filters and all.
+   * Passed in rather than drawn here: it is the same list Strategy › Instances
+   * showed, and one list read twice is the point.
+   */
+  rows?: ReactNode
 }) {
   return (
     <section className={cn(positionsUi.panel, 'border-[var(--sk-line2)]')} aria-label="Selected">
@@ -161,57 +164,7 @@ export function ChainDetailPanel({
           </div>
         ))}
       </div>
-      {detail.rows.length > 0 ? (
-        // A structure can carry the whole book's history — capped and scrolled
-        // for the same reason the columns are.
-        <div className="max-h-[22rem] overflow-auto border-t border-border">
-          <table className="w-full min-w-[42rem] border-collapse">
-            <thead>
-              <tr>
-                <th className={cn(positionsUi.th, 'text-left')}>Instance</th>
-                <th className={cn(positionsUi.th, 'text-left')}>Symbol</th>
-                <th className={cn(positionsUi.th, 'text-left')}>Structure</th>
-                <th className={cn(positionsUi.th, 'text-left w-[7rem]')}>Opened</th>
-                <th className={cn(positionsUi.th, 'w-[5rem]')}>Fills</th>
-                <th className={cn(positionsUi.th, 'w-[8rem]')}>Realised</th>
-                <th className={cn(positionsUi.th, 'text-left w-[6rem]')}>State</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detail.rows.map((r) => (
-                <tr
-                  key={r.id}
-                  className="cursor-pointer hover:[&>td]:bg-[var(--sk-raised2)]"
-                  onClick={() => onPick({ kind: 'instance', id: r.id })}
-                >
-                  <td className={cn(positionsUi.td, 'text-left')}>{r.label}</td>
-                  <td className={cn(positionsUi.td, 'text-left font-semibold text-foreground')}>{r.symbolish}</td>
-                  <td className={cn(positionsUi.td, 'text-left font-sans text-secondary-foreground')}>
-                    {r.structureName}
-                  </td>
-                  <td className={cn(positionsUi.td, 'text-left text-muted-foreground')}>
-                    {r.openedOn ? fmtIsoDateToken(r.openedOn) : '—'}
-                  </td>
-                  <td className={positionsUi.td}>{r.fills}</td>
-                  <td
-                    className={cn(
-                      positionsUi.td,
-                      r.realised == null ? 'text-muted-foreground' : pnlColorClass(r.realised),
-                    )}
-                  >
-                    {r.realised == null ? 'open' : fmtUsd(r.realised, true)}
-                  </td>
-                  <td className={cn(positionsUi.td, 'text-left')}>
-                    <DenseTag variant={r.closed ? 'neutral' : 'success'} size="cell">
-                      {r.closed ? 'closed' : 'open'}
-                    </DenseTag>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+      {rows}
     </section>
   )
 }

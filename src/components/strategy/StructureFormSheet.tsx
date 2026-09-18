@@ -989,7 +989,7 @@ function StructureTemplateStep({
       {/* The catalog has no route of its own (design 2026-09-12): a structure's
           six dimensions come from its template, so choosing one is the
           categorising act and the catalog belongs where that choice is made. */}
-      <TemplateCatalogControls onCreated={onTemplateSelect} />
+      <TemplateCatalogControls onCreated={onTemplateSelect} editableTemplateId={selectedTemplateId} />
       <StructureTemplateFilters
         tplFilterSearch={tplFilterSearch}
         tplDimFilters={tplDimFilters}
@@ -1290,7 +1290,10 @@ function StructureCopyForm({
         </div>
         <div className={styles.copyTemplateBlock}>
           <label className={styles.detailsLabel}>Template — the catalog (was Option Category)</label>
-          <TemplateCatalogControls onCreated={(id) => onTemplateSelect(id)} />
+          <TemplateCatalogControls
+            onCreated={(id) => onTemplateSelect(id)}
+            editableTemplateId={formPayload.strategy_template_id ?? null}
+          />
           <StructureTemplateFilters
             compact
             tplFilterSearch={tplFilterSearch}

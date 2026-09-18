@@ -15,14 +15,14 @@ import {
 } from '@/components/data-display'
 import { X } from 'lucide-react'
 import type { StructureLeg, StrategyTemplateDetail, StructureTypeConfigOption } from '@/types/positions'
-import { SaveFeedback } from '@/pages/strategy/optionCategory/SaveFeedback'
+import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
 import {
   optionCategoryEmptyHintClass,
   optionCategorySectionActionsClass,
   optionCategorySectionBodyCompactClass,
   optionCategorySectionHeaderClass,
   optionCategorySectionTitleClass,
-} from '@/pages/strategy/optionCategory/optionCategoryUi'
+} from '@/components/strategy/templates/optionCategoryUi'
 import {
   optionCategoryInlineInputQtyClass,
   optionCategoryInlineSelectDirClass,
@@ -30,8 +30,8 @@ import {
   optionCategoryInlineSelectRoleClass,
   optionCategoryLegsTableClass,
   optionCategoryTableCellSelectClass,
-} from '@/pages/strategy/optionCategory/optionCategoryFormUi'
-import { OptionCategoryLegsColgroup } from '@/pages/strategy/optionCategory/optionCategoryTableColgroups'
+} from '@/components/strategy/templates/optionCategoryFormUi'
+import { OptionCategoryLegsColgroup } from '@/components/strategy/templates/optionCategoryTableColgroups'
 
 export interface OptionCategoryLegsSectionProps {
   detail: StrategyTemplateDetail

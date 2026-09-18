@@ -10,17 +10,17 @@ import {
 import { IconActionButton } from '@/components/data-display'
 import { X } from 'lucide-react'
 import type { StrategyDimRow } from '@/types/positions'
-import { DIM_TYPES, DIM_LABELS, DIM_ICONS, type DimType } from '@/pages/strategy/optionCategory/constants'
+import { DIM_TYPES, DIM_LABELS, DIM_ICONS, type DimType } from '@/components/strategy/templates/constants'
 import {
   optionCategoryDimsDialogAddRowClass,
   optionCategoryDimsDialogGridClass,
   optionCategoryEmptyHintClass,
-} from '@/pages/strategy/optionCategory/optionCategoryUi'
+} from '@/components/strategy/templates/optionCategoryUi'
 import {
   optionCategoryCompactSelectClass,
   optionCategoryDimsColumnTitleClass,
   optionCategoryMonoCodeClass,
-} from '@/pages/strategy/optionCategory/optionCategoryFormUi'
+} from '@/components/strategy/templates/optionCategoryFormUi'
 
 export interface OptionCategoryDimensionsDialogProps {
   open: boolean

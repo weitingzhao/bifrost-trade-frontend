@@ -1,6 +1,6 @@
 import {
   optionCategorySaveFeedbackClass,
-} from '@/pages/strategy/optionCategory/optionCategoryUi'
+} from '@/components/strategy/templates/optionCategoryUi'
 
 export function SaveFeedback({
   section,

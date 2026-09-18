@@ -7,14 +7,14 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import type { StrategyDimRow, StrategyTemplateDetail } from '@/types/positions'
-import { DIM_TYPES, DIM_LABELS, DIM_ICONS } from '@/pages/strategy/optionCategory/constants'
-import { SaveFeedback } from '@/pages/strategy/optionCategory/SaveFeedback'
+import { DIM_TYPES, DIM_LABELS, DIM_ICONS } from '@/components/strategy/templates/constants'
+import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
 import {
   optionCategorySectionActionsClass,
   optionCategorySectionBodyClass,
   optionCategorySectionHeaderClass,
   optionCategorySectionTitleClass,
-} from '@/pages/strategy/optionCategory/optionCategoryUi'
+} from '@/components/strategy/templates/optionCategoryUi'
 import {
   optionCategoryCompactInputClass,
   optionCategoryCompactInputMonoClass,
@@ -24,7 +24,7 @@ import {
   optionCategoryDimSectionLabelClass,
   optionCategoryFieldLabelClass,
   optionCategoryFormGridClass,
-} from '@/pages/strategy/optionCategory/optionCategoryFormUi'
+} from '@/components/strategy/templates/optionCategoryFormUi'
 
 export interface OptionCategoryTemplateInfoSectionProps {
   detail: StrategyTemplateDetail

@@ -118,8 +118,12 @@ export default function PositionsPage() {
   const [params, setParams] = useSearchParams()
   const instanceParam = Number(params.get('instance'))
   const urlInstanceId = Number.isFinite(instanceParam) && instanceParam > 0 ? instanceParam : null
+  const vsParam = Number(params.get('vs'))
+  const urlCompareId = Number.isFinite(vsParam) && vsParam > 0 ? vsParam : null
   const [inspector, setInspector] = useState<InspectorState>(
-    urlInstanceId == null ? { type: null } : { type: 'strategy', id: urlInstanceId },
+    urlInstanceId == null
+      ? { type: null }
+      : { type: 'strategy', id: urlInstanceId, compareId: urlCompareId },
   )
   const [pressureOpen, setPressureOpen] = useState(true)
   // The one slot beside the grid: one thing at a time, on the face that answers it.
@@ -135,6 +139,7 @@ export default function PositionsPage() {
         (prev) => {
           const next = new URLSearchParams(prev)
           next.delete('instance')
+          next.delete('vs')
           return next
         },
         { replace: true },

@@ -29,6 +29,13 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import type { PrefillData } from '@/components/strategy/OpportunityFormModal'
 import { opportunityCopyPrefill, opportunityDetailKey } from '@/components/strategy/opportunityCopy'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { InstanceListFilters } from '@/components/strategy/InstanceListFilters'
+import { InstancesGroupedTable } from '@/components/strategy/InstancesGroupedTable'
+import { useInstanceBook } from '@/hooks/useInstanceBook'
+import { createCollapsedGroupsState } from '@/utils/instanceGroupCollapse'
+import type { InstanceListFilterValues } from '@/components/strategy/InstanceListFilters'
 import { fetchOpportunityDetail } from '@/api/strategy'
 import { useRulesChain } from '@/hooks/useRulesChain'
 import { SetActiveDialog } from './SetActiveDialog'
@@ -104,6 +111,37 @@ export default function TradeRulesPage() {
   const [duplicating, setDuplicating] = useState(false)
 
   /**
+   * The instance list's filters, with the metrics table they belonged to.
+   *
+   * Held in component state rather than the URL, unlike everything else on this
+   * page. The chain's address is `?pick=`; this is a narrowing *within* what
+   * was picked. Reusing the old page's URL sync was the first attempt and it
+   * encodes that page's defaults — it drops `since=q` from the URL as its
+   * default and drops an empty `since` too, so this page's All and that page's
+   * quarter would have become the same address meaning different things. The
+   * one thing that genuinely needs an address is a single instance, and that
+   * is `Open sheet →` on Positions.
+   *
+   * All, not a quarter: the column says "every one of them, whatever the filter
+   * shows", and a default window would make that sentence false.
+   */
+  const [instanceFilters, setInstanceFilters] = useState<InstanceListFilterValues>({
+    status: '',
+    structure: '',
+    symbol: '',
+    right: '',
+    expiry: '',
+    since: '',
+  })
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+  /**
+   * Held for comparison. The two open side by side in the shared sheet, which
+   * is where the sheet is — so the pair has an address (`?instance=&vs=`) and
+   * the chain keeps only the pick.
+   */
+  const [compareWith, setCompareWith] = useState<number | null>(null)
+
+  /**
    * A copy carries the whole rule, so the detail is fetched first — the list
    * row has neither the symbols nor the entry conditions, and a copy missing
    * its conditions would be a different rule under the same name.
@@ -148,6 +186,21 @@ export default function TradeRulesPage() {
   // The detail is the record, so it keeps the closed history the filter hides —
   // and names the active count wherever the two numbers differ.
   const detail = useMemo(() => detailOf(sel, data, visible, daemon), [sel, data, visible, daemon])
+
+  /**
+   * The picked thing's instances, as records — the chain reads them as
+   * `InstanceReading`, the list needs the server's own rows.
+   */
+  const scopedInstances = useMemo(() => {
+    const ids = new Set((detail?.rows ?? []).map((r) => r.id))
+    return rawInstances.filter((i) => ids.has(i.strategy_instance_id))
+  }, [detail?.rows, rawInstances])
+
+  const book = useInstanceBook({
+    instances: scopedInstances,
+    opportunities: data.opportunities,
+    values: instanceFilters,
+  })
 
   /**
    * What the selected thing can have done to it. A gate has no column of its
@@ -251,6 +304,28 @@ export default function TradeRulesPage() {
               <Link to="/review/playbook-stats" className={positionsUi.link}>
                 Does it pay? Playbook stats →
               </Link>
+              {/* The snapshot is what the reader is looking at, not the whole
+                  rulebook: the chain plus whatever the selection narrows it to,
+                  so the chat starts where the eye is. */}
+              <AskCopilotButton
+                originPage="trade-rules"
+                originLabel="Trade Rules"
+                size="dense"
+                snapshot={compactSnapshot({
+                  structures: data.structures.length,
+                  opportunities: data.opportunities.length,
+                  opportunities_in_no_allocation: orphanOpps || undefined,
+                  allocations: data.allocations.length,
+                  gates: data.gates.length,
+                  gates_carried_by_no_allocation: looseGates.length || undefined,
+                  instances_open: data.instances.filter((i) => !i.closed).length,
+                  instances_closed: data.instances.filter((i) => i.closed).length,
+                  daemon_allocation_id: daemon.allocationId ?? undefined,
+                  selected: sel == null ? undefined : `${sel.kind}:${sel.id}`,
+                  instances_in_view: scopedInstances.length || undefined,
+                })}
+                suggestedPrompt="这条规则链目前的结构合理吗？哪些机会没有被配置覆盖，哪些闸门形同虚设？"
+              />
             </span>
           }
         />
@@ -342,7 +417,74 @@ export default function TradeRulesPage() {
             </div>
 
             {detail ? (
-              <ChainDetailPanel detail={detail} onPick={pick} actions={detailActions(detail.kind)} />
+              <ChainDetailPanel
+                detail={detail}
+                actions={detailActions(detail.kind)}
+                rows={
+                  scopedInstances.length === 0 ? null : (
+                    <div className="flex flex-col gap-2 border-t border-border px-3 py-2.5">
+                      <InstanceListFilters
+                        options={book.filterOptions}
+                        values={instanceFilters}
+                        sinceRangeText={book.sinceRangeText}
+                        filteredCount={book.filtered.length}
+                        totalCount={scopedInstances.length}
+                        onChange={(patch) => setInstanceFilters((prev) => ({ ...prev, ...patch }))}
+                        onClear={() =>
+                          setInstanceFilters({ status: '', structure: '', symbol: '', right: '', expiry: '', since: '' })
+                        }
+                        onExpandAll={() =>
+                          setCollapsedGroups((prev) =>
+                            createCollapsedGroupsState(book.groups, 'multi', prev, 'expandAll'),
+                          )
+                        }
+                        onCollapseAll={() =>
+                          setCollapsedGroups((prev) =>
+                            createCollapsedGroupsState(book.groups, 'multi', prev, 'collapseAll'),
+                          )
+                        }
+                        showGroupToolbar={book.groups.length > 0}
+                      />
+                      <InstancesGroupedTable
+                        groups={book.groups}
+                        metricsMap={book.metricsMap}
+                        detailViewMode="multi"
+                        collapsedGroups={collapsedGroups}
+                        onToggleGroup={(key) =>
+                          setCollapsedGroups((prev) =>
+                            createCollapsedGroupsState(book.groups, 'multi', prev, 'toggle', key),
+                          )
+                        }
+                        onViewDetail={(inst) =>
+                          navigate(`/portfolio/positions?instance=${inst.strategy_instance_id}`)
+                        }
+                        onCompare={(inst) => {
+                          const id = inst.strategy_instance_id
+                          if (compareWith == null || compareWith === id) {
+                            setCompareWith(compareWith === id ? null : id)
+                            return
+                          }
+                          navigate(`/portfolio/positions?instance=${compareWith}&vs=${id}`)
+                        }}
+                        activeDetailId={sel?.kind === 'instance' ? sel.id : null}
+                        compareId={compareWith}
+                        compareAnywhere
+                      />
+                      {compareWith != null ? (
+                        <p className="m-0 flex flex-wrap items-center gap-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                          <span className="font-semibold text-secondary-foreground">
+                            #{compareWith} is held for comparison.
+                          </span>
+                          Pick a second instance’s ⇄ to open the two side by side in the shared sheet.
+                          <button type="button" className={positionsUi.btn} onClick={() => setCompareWith(null)}>
+                            Drop it
+                          </button>
+                        </p>
+                      ) : null}
+                    </div>
+                  )
+                }
+              />
             ) : null}
 
             <RulesSheets sheet={sheet} onClose={() => setSheet(NO_SHEET)} status={status.data} />

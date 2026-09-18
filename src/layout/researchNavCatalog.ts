@@ -142,29 +142,20 @@ export const WORKBENCH_PAGE = route('Workbench', '/research/workbench', Wrench)
 /** The seat overview — the three postures side by side. */
 export const OVERVIEW_PAGE = route('Overview', '/research/overview', LayoutGrid)
 
-/**
- * The page the Workbench seat lifts out of `Data`.
- *
- * By path, not by position. It was `data.items[1]`, which was Signal Health
- * when it was written and became Lens Coverage the moment a row was inserted
- * above it (`5079379`, 39 commits later) — so the seat quietly lifted the
- * wrong page and buried the one the comment names. An index into a list
- * someone else maintains is not a reference to anything.
- */
-export const WORKBENCH_LIFTED_FROM_DATA = '/research/signal-health'
-
 export const BENCHES: Bench[] = [
   {
     id: 'discover',
     label: 'Discover',
+    // The design's Discover holds two homes — Ratings (Stocks · Underlyings)
+    // and Screener (Stocks · Contracts) — and neither home page is built yet,
+    // so the fold carries their existing children flat, in the design's order
+    // and under the design's labels. When `/research/ratings` and
+    // `/research/screener` land (batch R6), they become the two homes here.
     icon: Compass,
-    // Option Screener sits here, not under Data: the design's Discover ›
-    // Screener holds Stocks and Contracts, and this page is Contracts. Data is
-    // for what the desk knows about the feed, not for picking contracts.
     items: [
-      route('Stock Explorer', '/research/explorer', Compass),
-      route('Option Screener', '/research/contract-screener', ListFilter),
-      route('Option Scan', '/research/scan', ScanSearch),
+      route('Underlyings', '/research/scan', ScanSearch),
+      route('Stocks', '/research/explorer', Compass),
+      route('Contracts', '/research/contract-screener', ListFilter),
     ],
   },
   {
@@ -173,7 +164,8 @@ export const BENCHES: Bench[] = [
     icon: Radar,
     // Six rows became one page with six tabs. A row per tab would put the
     // reader back where the merge found them — leaving the name to read
-    // another of its faces.
+    // another of its faces. The design's Compare and History rows join when
+    // those pages exist (batch R7).
     items: [route('Symbol', '/research/symbol', BookOpen)],
   },
   {
@@ -185,21 +177,19 @@ export const BENCHES: Bench[] = [
   {
     id: 'data',
     label: 'Data',
+    // The design's order — Signal Health leads (shell-registry `fold:data`),
+    // which also ends the bench's old habit of lifting it out of the fold.
+    // The last two rows are this side's own: Stock Screener is `staging`
+    // (no design home yet, Owner to place), and Data Readiness is the one
+    // business row that earns a `/system/*` crossing — kept off the front so
+    // the fold's heading never leaves the domain.
     icon: Server,
-    // Data Readiness is last, and that is load-bearing: a fold's heading
-    // borrows its first child's route (`fold()` below), and this row is the
-    // one business row that points into `/system/*`. First, it made clicking
-    // the Research heading `Data` navigate to a System page and swap the whole
-    // sidebar for the System tree — the heading of a Research section threw
-    // you out of Research. Kept as a row, because "is the data there" is asked
-    // from the bench as often as from the machine room; moved off the front,
-    // because a heading is not the place to leave the domain.
     items: [
-      route('Lens Coverage', '/research/lens-coverage', Radar),
       route('Signal Health', '/research/signal-health', Activity),
-      route('Stock Watchlist', '/research/watchlist', Star),
-      route('Stock Screener', '/research/stock-screener', ListFilter),
+      route('Lens Coverage', '/research/lens-coverage', Radar),
+      route('Watchlist', '/research/watchlist', Star),
       route('Contract Greeks', '/research/greeks', Wand2),
+      route('Stock Screener', '/research/stock-screener', ListFilter),
       route('Stock Data Readiness', '/system/data-readiness', Server),
     ],
   },
@@ -249,9 +239,15 @@ export interface SeatNavContext {
  * the next — React keeps state by key, and the same key across two layouts
  * read as the layout remembering something it never chose.
  */
-function fold(seat: ResearchSeat, label: string, icon: IconComponent, items: ShellNavItem[]): ShellNavItem {
+function fold(
+  seat: ResearchSeat,
+  label: string,
+  icon: IconComponent,
+  items: ShellNavItem[],
+  to?: string,
+): ShellNavItem {
   const first = items[0]
-  return { id: `fold:${seat}:${label}`, label, icon, to: first?.to ?? first?.id, children: items }
+  return { id: `fold:${seat}:${label}`, label, icon, to: to ?? first?.to ?? first?.id, children: items }
 }
 
 /**
@@ -322,23 +318,22 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
         COPILOT_ITEM,
         MARKET_ITEM,
       ]
-    case 'workbench': {
-      // Signal Health rides up out of Data: on this seat it is the first thing
-      // you check before trusting anything else on the bench.
-      const health = data.items.find((i) => i.to === WORKBENCH_LIFTED_FROM_DATA)!
+    case 'workbench':
+      // The design's Workbench home carries exactly four folds (shell-registry
+      // SEAT_HOME.workbench): Discover · Analyze · Validate · Data. Validate's
+      // heading lands on Backtest by the design's own `to`, not on its first
+      // row.
       return [
         OVERVIEW_PAGE,
         home(seat, 'Workbench', WORKBENCH_PAGE, [
-          ...discover.items,
-          health,
+          fold(seat, discover.label, discover.icon, discover.items),
           fold(seat, analyze.label, analyze.icon, analyze.items),
-          fold(seat, validate.label, validate.icon, validate.items),
-          fold(seat, data.label, data.icon, data.items.filter((i) => i !== health)),
+          fold(seat, validate.label, validate.icon, validate.items, '/research/backtest'),
+          fold(seat, data.label, data.icon, data.items),
         ]),
         COPILOT_ITEM,
         MARKET_ITEM,
       ]
-    }
   }
 }
 

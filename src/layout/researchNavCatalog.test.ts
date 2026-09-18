@@ -12,7 +12,6 @@ import { RESEARCH_SEATS } from '@/lib/research/seat'
 import { isSystemRoute } from './routeRegistry'
 import {
   allResearchRoutes,
-  BENCHES,
   buildResearchNavGroup,
   COPILOT_PAGES,
   MARKET_PAGES,
@@ -20,7 +19,6 @@ import {
   SEATLESS_ROUTES,
   seatItems,
   staticResearchSubGroups,
-  WORKBENCH_LIFTED_FROM_DATA,
 } from './researchNavCatalog'
 import type { ShellNavItem } from '@bifrost/ui'
 
@@ -136,26 +134,41 @@ describe('a seat carries its own pages and no others', () => {
     }
   })
 
-  it('lifts Signal Health out of Data on the bench, and only that one', () => {
-    // It lifted by index. `data.items[1]` was Signal Health when that was
-    // written and became Lens Coverage as soon as a row was inserted above it,
-    // so the bench showed the wrong page for 39 commits and nothing here
-    // noticed. The lift is by path now; this pins which page.
-    expect(WORKBENCH_LIFTED_FROM_DATA).toBe('/research/signal-health')
+  it('shapes the bench as the design does: four folds under the home, nothing flat', () => {
+    // shell-registry SEAT_HOME.workbench (R0, 2026-09-18). The old lift of
+    // Signal Health out of Data retired with it — the design leads Data with
+    // that page instead.
     const top = seatItems('workbench', ctx).find((i) => i.to === HOMES.workbench)?.children ?? []
-    const lifted = top.filter((i) => !i.id.startsWith('fold:')).map((i) => i.to)
-    expect(lifted).toContain(WORKBENCH_LIFTED_FROM_DATA)
+    expect(top.map((i) => [i.label, i.id.startsWith('fold:workbench:')])).toEqual([
+      ['Discover', true],
+      ['Analyze', true],
+      ['Validate', true],
+      ['Data', true],
+    ])
+  })
 
-    const data = flatten(seatItems('workbench', ctx)).find((i) => i.label === 'Data')
-    const inFold = (data?.children ?? []).map((i) => i.to)
-    expect(inFold, 'the lifted page is still in the fold as well').not.toContain(
-      WORKBENCH_LIFTED_FROM_DATA,
-    )
-    // Everything else stays put — a lift is one page, not a habit.
-    const bench = BENCHES.find((b) => b.id === 'data')!
-    expect([...inFold, WORKBENCH_LIFTED_FROM_DATA].sort()).toEqual(
-      bench.items.map((i) => i.to).sort(),
-    )
+  it('carries the design labels and order inside Discover and Data', () => {
+    const rows = (label: string) =>
+      (flatten(seatItems('workbench', ctx)).find((i) => i.label === label)?.children ?? []).map(
+        (i) => [i.label, i.to],
+      )
+    // Ratings and Screener homes are unbuilt; their existing children stand
+    // flat in the design's order until R6 builds the homes.
+    expect(rows('Discover')).toEqual([
+      ['Underlyings', '/research/scan'],
+      ['Stocks', '/research/explorer'],
+      ['Contracts', '/research/contract-screener'],
+    ])
+    expect(rows('Data')).toEqual([
+      ['Signal Health', '/research/signal-health'],
+      ['Lens Coverage', '/research/lens-coverage'],
+      ['Watchlist', '/research/watchlist'],
+      ['Contract Greeks', '/research/greeks'],
+      // This side's own two rows, after the design's four: staging and the
+      // one earned /system crossing.
+      ['Stock Screener', '/research/stock-screener'],
+      ['Stock Data Readiness', '/system/data-readiness'],
+    ])
   })
 
   it('carries no other seat as a row', () => {
@@ -208,11 +221,15 @@ describe('no page lights two rows', () => {
     expect(flatten(seatItems('autopilot', { objectives: [] })).filter((i) => i.label === 'Objectives')).toEqual([])
   })
 
-  it('folded categories land on their first page and carry the rest', () => {
+  it('folded categories land where the design points them and carry the rest', () => {
     const folds = flatten(seatItems('workbench', ctx)).filter((i) => i.id.startsWith('fold:'))
-    expect(folds.map((f) => f.label)).toEqual(['Analyze', 'Validate', 'Data', 'Copilot', 'Market'])
+    expect(folds.map((f) => f.label)).toEqual(['Discover', 'Analyze', 'Validate', 'Data', 'Copilot', 'Market'])
     for (const f of folds) {
-      expect(f.to, f.label).toBe(f.children?.[0].to)
+      // Validate is the design's own exception: its heading lands on Backtest
+      // (shell-registry `fold:validate`, to: '/research/backtest') while
+      // Signal Decay stays the first row.
+      const target = f.label === 'Validate' ? '/research/backtest' : f.children?.[0].to
+      expect(f.to, f.label).toBe(target)
     }
     // Seat-keyed, so an open fold in one seat is not an open fold in the next
     // — except Copilot and Market, which are the same fold in every seat and

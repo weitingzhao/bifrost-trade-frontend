@@ -425,7 +425,7 @@ export const ROUTES: readonly RouteEntry[] = [
   {
     path: '/trade/fills',
     label: 'Orders & Fills',
-    crumbs: TRADE,
+    crumbs: TRADE_DESK,
     design: {
       state: 'reviewing',
       rev: '2026-09-18.1',
@@ -435,7 +435,7 @@ export const ROUTES: readonly RouteEntry[] = [
   {
     path: '/trade/assignment',
     label: 'Assignment',
-    crumbs: TRADE,
+    crumbs: TRADE_DESK,
     design: {
       state: 'aligned',
       rev: '2026-09-17.1',
@@ -465,7 +465,7 @@ export const ROUTES: readonly RouteEntry[] = [
   {
     path: '/trade/expiration',
     label: 'Expiration',
-    crumbs: TRADE,
+    crumbs: TRADE_DESK,
     design: {
       state: 'reviewing',
       rev: '2026-09-17.1',
@@ -475,12 +475,12 @@ export const ROUTES: readonly RouteEntry[] = [
   {
     path: '/trade/playbook',
     label: 'Playbook',
-    crumbs: TRADE,
+    crumbs: TRADE_DESK,
   },
   {
     path: '/trade/plans',
     label: 'Plans',
-    crumbs: TRADE,
+    crumbs: TRADE_DESK,
     symbolScope: true,
     design: {
       state: 'reviewing',

@@ -25,6 +25,7 @@ import {
 } from '@/components/layout/inspectorDock'
 import { Button } from '@/components/ui/button'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { PositionsStat } from '@/components/positions/PositionsStat'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { PlanCard } from './PlanCard'
@@ -131,6 +132,43 @@ export default function TradePlansPage() {
           </Button>
         ) : null}
       </div>
+
+      {/* The design's four-cell strip. Two of them count plans, which this
+          side has; two ask what the open intents would consume if they all
+          filled, and no plan field carries an intent's collateral — the same
+          gap Risk › Sizing marks on its own strip, said once here rather than
+          guessed at per cell. */}
+      {query.isLoading ? null : (
+        <div className="flex flex-wrap items-start gap-x-7 gap-y-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2.5">
+          <PositionsStat
+            cap="Open plans"
+            value={String(counts.draft + counts.intended)}
+            sub={`${counts.draft} draft · ${counts.intended} intended`}
+          />
+          <PositionsStat
+            cap="Awaiting fill"
+            value={String(counts.intended)}
+            ink={counts.intended > 0 ? 'text-warning' : undefined}
+            sub={
+              counts.intended === 0
+                ? 'nothing is out — the desk copies, TWS places'
+                : 'copy each into TWS, or let it lapse'
+            }
+          />
+          <PositionsStat
+            cap="Cash if all fill"
+            value="—"
+            ink="text-muted-foreground"
+            sub="a plan stores its target, stop and limit — never its collateral"
+          />
+          <PositionsStat
+            cap="Pressure if all fill"
+            value="—"
+            ink="text-muted-foreground"
+            sub="needs the cash above before it can be added to today’s"
+          />
+        </div>
+      )}
 
       {query.isError ? (
         <QueryErrorAlert error={query.error} onRetry={() => void query.refetch()} />

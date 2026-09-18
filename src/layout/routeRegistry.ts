@@ -251,7 +251,7 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: PORTFOLIO,
     symbolScope: true,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.1',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
@@ -302,7 +302,7 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/review',
     label: 'Queue',
     crumbs: REVIEW,
-    design: { state: 'reviewing', rev: '2026-09-17.1', note: DESIGN_NOTES['/review'] },
+    design: { state: 'aligned', rev: '2026-09-17.1', note: DESIGN_NOTES['/review'] },
   },
   {
     path: '/review/fit',
@@ -320,7 +320,7 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/review/playbook-stats',
     label: 'Playbook stats',
     crumbs: REVIEW,
-    design: { state: 'reviewing', rev: '2026-09-18.1', note: DESIGN_NOTES['/review/playbook-stats'] },
+    design: { state: 'aligned', rev: '2026-09-18.1', note: DESIGN_NOTES['/review/playbook-stats'] },
   },
   {
     path: '/review/proposals',

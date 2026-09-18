@@ -125,8 +125,10 @@ describe('design adoption', () => {
     // keeps the thesis table's shape with a NO HYPOTHESIS STORE row, and the
     // second stopped blaming its feed for a calendar the issuers have not
     // declared yet.
-    expect(counts.aligned + counts.byState.stale).toBe(21)
-    expect(counts.aligned).toBe(21)
+    // Positions, the Review Queue and Playbook stats signed off 2026-09-18
+    // once the Strategy pages retired, which emptied both groups' queues.
+    expect(counts.aligned + counts.byState.stale).toBe(24)
+    expect(counts.aligned).toBe(24)
     // Empty again: every page Package 2026-09-18.1 moved has now been re-walked
     // against it. A stale row was never work lost — the page is built, and what
     // was stale is the comparison.
@@ -198,8 +200,10 @@ describe('design adoption', () => {
     // stores one (stale 1→0, reviewing 9→10). Then the Desk is built from
     // nothing on the Owner's ruling of 2026-09-18 — three lanes, and the hedge
     // menu moved onto it from Strategy › Instances rather than armed there
-    // (unbuilt 24→23, reviewing 10→11).
-    expect(counts.byState.reviewing).toBe(11)
+    // (unbuilt 24→23, reviewing 10→11). The Owner then signed off Portfolio and
+    // Review together, the same day the seven Strategy pages retired
+    // (aligned 21→24, reviewing 11→8): what is left waiting is Risk and Trade.
+    expect(counts.byState.reviewing).toBe(8)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -214,14 +218,17 @@ describe('design adoption', () => {
       '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/pnl-explain',
+      '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
       '/research/copilot/trading',
       '/research/loop/decisions',
       '/research/symbol',
+      '/review',
       '/review/fit',
       '/review/habits',
+      '/review/playbook-stats',
       '/review/proposals',
       '/risk/margin',
       '/risk/portfolio',
@@ -229,9 +236,6 @@ describe('design adoption', () => {
       '/trade/assignment',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/portfolio/positions',
-      '/review',
-      '/review/playbook-stats',
       '/risk/budget',
       '/risk/limits',
       '/risk/sizing',
@@ -330,10 +334,11 @@ describe('adoptionByGroup', () => {
     // 2026-09-18.1 moved Positions, which is what a group being "done" is
     // always one design round away from. The summary counts against every row
     // the group owns, so the group reads 8 of 9 rather than staying at nine
-    // because nine pages happen to carry a tag. Positions has since been
-    // re-walked, so the one left is waiting for a look rather than for work.
-    expect(portfolio).toMatchObject({ total: 9, aligned: 8, left: 1 })
-    expect(portfolio?.byState.reviewing).toBe(1)
+    // because nine pages happen to carry a tag. Positions was re-walked and
+    // signed off on 2026-09-18, so the group is whole again — until the next
+    // design round moves one of them.
+    expect(portfolio).toMatchObject({ total: 9, aligned: 9, left: 0 })
+    expect(portfolio?.byState.reviewing).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

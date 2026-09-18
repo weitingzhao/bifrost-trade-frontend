@@ -28,13 +28,16 @@ import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
 import { daysTo } from '@/utils/optionTicker'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtPct0 } from '@/utils/positions'
+import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 import { limitRules, openBreaches, withHeadroom } from '@/pages/risk/limits/limitsModel'
-import type { HomeCheck, HomeRow } from './todayModel'
+import type { HomeCheck, HomeRow, TapeRow } from './todayModel'
 
 /** Inside this many days, an expiry is a decision rather than a date. */
 const EXPIRY_WINDOW_DAYS = 2
 /** Within this much of the strike at expiry, a leg is a pin rather than a position. */
 const PIN_BAND = 0.01
+/** The benchmark every β on this side is measured against. */
+const BENCHMARK_SYMBOL = 'SPY'
 
 function row(
   check: Omit<HomeCheck, 'rows' | 'cannotRun'>,
@@ -341,8 +344,39 @@ export function useTodayChecks(accountFilter: string) {
     return out
   }, [assignment.legs, eventsAhead, breaches, plansQuery.data?.items, execQuery.data?.items, today])
 
+  /**
+   * The ambient tape: what a short-premium book watches on open.
+   *
+   * The design's rule, not a quote board — the benchmark β is measured
+   * against, then the names carrying the most exposure, with a note on each
+   * saying why it is there. Quotes come from the same map the Positions page
+   * reads; outside the session the cache is empty and the rows say so rather
+   * than showing a stale last as though it were live.
+   */
+  const tape = useMemo<TapeRow[]>(() => {
+    const top = exposure.rows.filter((r) => r.betaDeltaDollars != null).slice(0, 4)
+    const itm = new Set(assignment.legs.filter((l) => l.itm === true).map((l) => l.symbol))
+    const rowFor = (symbol: string, note: string): TapeRow => {
+      const q = book.quotesBySymbol[symbol]
+      // A quote carries no prior close; the benchmark map is where it lives.
+      const base = resolveDailyBasePrice(null, book.benchBySymbol[symbol])
+      const { dailyPct } = computeDailyChange(q?.last ?? null, base)
+      return { symbol, last: q?.last ?? null, changePct: dailyPct, note }
+    }
+    return [
+      rowFor(BENCHMARK_SYMBOL, 'β is measured against it'),
+      ...top.map((r, i) =>
+        rowFor(
+          r.symbol,
+          itm.has(r.symbol) ? 'through the strike' : i === 0 ? 'largest β-weighted Δ$' : 'top exposure',
+        ),
+      ),
+    ]
+  }, [exposure.rows, assignment.legs, book.quotesBySymbol, book.benchBySymbol])
+
   return {
     checks,
+    tape,
     today,
     accountIds: exposure.accountIds,
     book,

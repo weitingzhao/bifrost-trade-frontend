@@ -4,6 +4,7 @@ import {
   blindSpots,
   countByUrgency,
   segmentViews,
+  sessionLabel,
   sessionSegment,
   type HomeCheck,
 } from './todayModel'
@@ -92,7 +93,22 @@ describe('sessionSegment', () => {
     expect(sessionSegment('09:30')).toBe('rth')
     expect(sessionSegment('15:29')).toBe('rth')
     expect(sessionSegment('15:30')).toBe('close')
-    expect(sessionSegment('20:00')).toBe('close')
+    expect(sessionSegment('15:59')).toBe('close')
+  })
+
+  it('points at the next open once the bell has gone', () => {
+    // Marking Pre-close as the live window at ten at night puts the reader's
+    // eye on a deadline that passed six hours ago.
+    expect(sessionSegment('16:00')).toBe('pre')
+    expect(sessionSegment('22:24')).toBe('pre')
+  })
+
+  it('names the moment as well as the window', () => {
+    expect(sessionLabel('02:00')).toBe('overnight')
+    expect(sessionLabel('08:00')).toBe('pre-open')
+    expect(sessionLabel('09:59')).toBe('regular hours')
+    expect(sessionLabel('15:45')).toBe('closing auction')
+    expect(sessionLabel('22:24')).toBe('after hours')
   })
 })
 

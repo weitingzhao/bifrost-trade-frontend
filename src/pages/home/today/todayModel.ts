@@ -110,11 +110,37 @@ export const HOME_LAYERS: Record<HomeLayer, { label: string; ink: string }> = {
 export const HOME_NOT_HERE =
   'Not an overview dashboard. Every row above is something to do, with a deep link into the layer that owns it — marks, greeks, P&L and candidate scores live in those layers and are not mirrored here. A row that is only a number would make this a board, and a board does not answer the 15:45 question.'
 
-/** Which part of the session a wall-clock `HH:MM` falls in. */
+/**
+ * Which part of the session a wall-clock `HH:MM` falls in.
+ *
+ * After the bell the answer is `pre` rather than `close`: the last half hour
+ * is over, and the next thing that needs a decision is the next open. Marking
+ * Pre-close as the live window at ten at night would put the reader's eye on a
+ * deadline that has already passed.
+ */
 export function sessionSegment(hhmm: string): HomeSegment {
   if (hhmm < '09:30') return 'pre'
   if (hhmm < '15:30') return 'rth'
-  return 'close'
+  if (hhmm < '16:00') return 'close'
+  return 'pre'
+}
+
+/** What to call the moment, in the register the strip uses. */
+export function sessionLabel(hhmm: string): string {
+  if (hhmm < '04:00') return 'overnight'
+  if (hhmm < '09:30') return 'pre-open'
+  if (hhmm < '15:30') return 'regular hours'
+  if (hhmm < '16:00') return 'closing auction'
+  return 'after hours'
+}
+
+/** One row of the ambient tape: what the book watches, not a quote board. */
+export interface TapeRow {
+  symbol: string
+  last: number | null
+  changePct: number | null
+  /** Why this name is on the tape at all. */
+  note: string
 }
 
 export function segmentViews(checks: readonly HomeCheck[], nowSeg: HomeSegment): HomeSegmentView[] {

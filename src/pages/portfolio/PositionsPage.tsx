@@ -8,7 +8,7 @@
  * Backing — reached from the gauges and the rings, with the same scope.
  */
 import { useState, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
@@ -106,7 +106,21 @@ export default function PositionsPage() {
   const [linkContext, setLinkContext] = useState<LinkExecutionContext | null>(null)
   const [closeTarget, setCloseTarget] = useState<{ exec: Execution; netQty: number } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
-  const [inspector, setInspector] = useState<InspectorState>({ type: null })
+  /**
+   * The instance sheet, addressable.
+   *
+   * `?instance=<id>` opens it on any instance, open or closed — the sidebar
+   * fetches the record itself rather than reading the open book. Without this
+   * the sheet could only be reached by clicking a row in the open book, which
+   * left every closed instance's history with no entrance at all once Strategy
+   * › Instances (which had `?instance=`) retires. Trade › Rules links here.
+   */
+  const [params, setParams] = useSearchParams()
+  const instanceParam = Number(params.get('instance'))
+  const urlInstanceId = Number.isFinite(instanceParam) && instanceParam > 0 ? instanceParam : null
+  const [inspector, setInspector] = useState<InspectorState>(
+    urlInstanceId == null ? { type: null } : { type: 'strategy', id: urlInstanceId },
+  )
   const [pressureOpen, setPressureOpen] = useState(true)
   // The one slot beside the grid: one thing at a time, on the face that answers it.
   const [face, setFace] = useState<PositionsFace>('risk')
@@ -114,7 +128,19 @@ export default function PositionsPage() {
   const [faceContract, setFaceContract] = useState<OpenOptionPosition | null>(null)
   const [faceRisk, setFaceRisk] = useState<FaceRisk | null>(null)
   const [faceExec, setFaceExec] = useState<Execution | null>(null)
-  const closeInspector = () => setInspector({ type: null })
+  const closeInspector = () => {
+    setInspector({ type: null })
+    if (urlInstanceId != null) {
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('instance')
+          return next
+        },
+        { replace: true },
+      )
+    }
+  }
 
   const filteredInstanceGroups = useMemo(() => {
     const groups = sortInstanceGroupOptions(

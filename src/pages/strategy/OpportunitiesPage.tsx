@@ -30,6 +30,7 @@ import { useOpportunities } from '@/hooks/useStrategies'
 import { putOpportunity, fetchOpportunityDetail } from '@/api/strategy'
 import { fetchOrderIntents, type OrderIntentPayload } from '@/api/research/orderIntents'
 import { mapIntentToPrefill } from '@/components/strategy/orderIntentPrefill'
+import { opportunityCopyPrefill, opportunityDetailKey } from '@/components/strategy/opportunityCopy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { opportunityDetailToPayload, opportunityIsActive } from '@/utils/strategyFormUtils'
 import type { StrategyOpportunity, EntryCondition } from '@/types/positions'
@@ -135,19 +136,11 @@ export default function OpportunitiesPage() {
     setCopyLoadingId(opp.strategy_opportunity_id)
     try {
       const detail = await queryClient.fetchQuery({
-        queryKey: ['strategy', 'opportunity-detail', opp.strategy_opportunity_id],
+        queryKey: opportunityDetailKey(opp.strategy_opportunity_id),
         queryFn: () => fetchOpportunityDetail(opp.strategy_opportunity_id),
         staleTime: 120_000,
       })
-      setPrefillData({
-        name: `${detail.name} (copy)`,
-        structureId: detail.strategy_structure_id != null ? String(detail.strategy_structure_id) : '',
-        gateSafetyId: detail.default_gate_safety_strategy_id != null
-          ? String(detail.default_gate_safety_strategy_id) : '',
-        scopeType: detail.scope_type ?? '',
-        symbols: detail.symbols ?? [],
-        conditions: detail.entry_conditions ?? [],
-      })
+      setPrefillData(opportunityCopyPrefill(detail))
       setEditTarget(undefined)
       setModalOpen(true)
     } finally {

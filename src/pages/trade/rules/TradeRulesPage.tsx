@@ -20,6 +20,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
@@ -27,6 +28,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import type { PrefillData } from '@/components/strategy/OpportunityFormModal'
+import { opportunityCopyPrefill, opportunityDetailKey } from '@/components/strategy/opportunityCopy'
+import { fetchOpportunityDetail } from '@/api/strategy'
 import { useRulesChain } from '@/hooks/useRulesChain'
 import { SetActiveDialog } from './SetActiveDialog'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -36,6 +39,7 @@ import {
   buildChain,
   detailOf,
   formatPick,
+  orphanGates,
   orphanOpportunities,
   parsePick,
   visibleChain,
@@ -96,6 +100,27 @@ export default function TradeRulesPage() {
     [status.data?.strategy?.active?.allocation?.id],
   )
   const [setActiveFor, setSetActiveFor] = useState<number | null | undefined>(undefined)
+  const qc = useQueryClient()
+  const [duplicating, setDuplicating] = useState(false)
+
+  /**
+   * A copy carries the whole rule, so the detail is fetched first — the list
+   * row has neither the symbols nor the entry conditions, and a copy missing
+   * its conditions would be a different rule under the same name.
+   */
+  async function duplicateOpportunity(id: number) {
+    setDuplicating(true)
+    try {
+      const detail = await qc.fetchQuery({
+        queryKey: opportunityDetailKey(id),
+        queryFn: () => fetchOpportunityDetail(id),
+        staleTime: 120_000,
+      })
+      setSheet({ kind: 'opportunity', prefill: opportunityCopyPrefill(detail) })
+    } finally {
+      setDuplicating(false)
+    }
+  }
 
   const columns = useMemo(
     () => buildChain(data, sel, activeOnly === 'active', daemon),
@@ -108,6 +133,9 @@ export default function TradeRulesPage() {
   // problem, not a subtlety.
   const visible = useMemo(() => visibleChain(data, activeOnly === 'active'), [data, activeOnly])
   const orphanOpps = orphanOpportunities(visible)
+  // A gate is drawn through the allocation that carries it, so one nothing
+  // carries would not be drawn at all — and it is still in the rulebook.
+  const looseGates = orphanGates(data)
   /**
    * The strategy service intermittently answers HTTP 200 with an empty list,
    * and the same call seconds later returns the lot (measured 2026-09-18 on DEV,
@@ -136,7 +164,15 @@ export default function TradeRulesPage() {
     }
     if (kind === 'opportunity') {
       const initial = data.opportunities.find((o) => o.strategy_opportunity_id === sel.id)
-      return [{ label: 'Edit', onClick: () => setSheet({ kind: 'opportunity', initial }) }]
+      return [
+        { label: 'Edit', onClick: () => setSheet({ kind: 'opportunity', initial }) },
+        {
+          label: duplicating ? 'Copying…' : 'Duplicate',
+          onClick: () => void duplicateOpportunity(sel.id),
+          disabled: duplicating,
+          title: 'Open a new opportunity prefilled from this one — structure, gate, scope and conditions',
+        },
+      ]
     }
     if (kind === 'allocation') {
       const gateId = data.allocations.find((a) => a.strategy_allocation_id === sel.id)?.gate_safety_strategy_id
@@ -155,7 +191,15 @@ export default function TradeRulesPage() {
         { label: 'Edit', onClick: () => setSheet({ kind: 'allocation', mode: 'edit', editId: sel.id }) },
         ...(gateId == null
           ? []
-          : [{ label: 'Edit gate', onClick: () => setSheet({ kind: 'gate', mode: { kind: 'edit' as const, id: gateId } }) }]),
+          : [
+              { label: 'Edit gate', onClick: () => setSheet({ kind: 'gate', mode: { kind: 'edit' as const, id: gateId } }) },
+              {
+                label: 'Copy gate',
+                onClick: () => setSheet({ kind: 'gate', mode: { kind: 'copy' as const, id: gateId } }),
+                title: 'Start a new gate from this one — the sixteen fields, under a new name',
+              },
+            ]),
+        { label: '＋ New gate', onClick: () => setSheet({ kind: 'gate', mode: { kind: 'create' as const } }) },
         { label: 'Breaches → Risk Limits', to: '/risk/limits' },
       ]
     }
@@ -168,6 +212,9 @@ export default function TradeRulesPage() {
       // action rather than behind it.
       const blocked = (reading?.fills ?? 0) > 0
       return [
+        // The shared sheet (Positions) — its Overview, PnL, executions and
+        // chart. Addressable by id, so a closed instance has an entrance too.
+        { label: 'Open sheet →', to: `/portfolio/positions?instance=${sel.id}` },
         {
           label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete…',
           onClick: () => {
@@ -258,6 +305,26 @@ export default function TradeRulesPage() {
                 </span>{' '}
                 Nothing tells the daemon to run them, and an instance opened under one inherits no gate — which is
                 what &ldquo;ran outside rules&rdquo; means on the instance detail below.
+              </p>
+            ) : null}
+
+            {looseGates.length > 0 ? (
+              <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                <span className="font-semibold text-secondary-foreground">
+                  {looseGates.length} {looseGates.length === 1 ? 'gate is' : 'gates are'} carried by no allocation.
+                </span>
+                A gate’s scope is an allocation, so these bound nothing — they are listed because they are still in the
+                rulebook and nothing else on this page would draw them.
+                {looseGates.map((g) => (
+                  <button
+                    key={g.gate_safety_strategy_id}
+                    type="button"
+                    className={positionsUi.btn}
+                    onClick={() => setSheet({ kind: 'gate', mode: { kind: 'edit', id: g.gate_safety_strategy_id } })}
+                  >
+                    {g.name} · v{g.version}
+                  </button>
+                ))}
               </p>
             ) : null}
 

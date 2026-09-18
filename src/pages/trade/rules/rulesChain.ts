@@ -36,6 +36,7 @@ import { type InstanceReading } from '@/utils/strategyInstances'
 export type { ChainData } from '@/hooks/useRulesChain'
 import type { ChainData } from '@/hooks/useRulesChain'
 import type {
+  GateSafetyItem,
   StrategyOpportunity,
   StrategyStructure,
 } from '@/types/strategy'
@@ -197,6 +198,21 @@ export function plural(n: number, one: string, many = `${one}s`): string {
 export function orphanOpportunities(d: ChainData): number {
   const allocated = new Set(d.allocations.flatMap((a) => a.strategy_opportunity_ids ?? []))
   return d.opportunities.filter((o) => !allocated.has(o.strategy_opportunity_id)).length
+}
+
+/**
+ * Gates no allocation carries.
+ *
+ * A gate's scope *is* an allocation, so one that nothing carries bounds
+ * nothing — and the chain, which draws gates through their allocation, would
+ * otherwise not draw it at all. An unreachable rule is worse than a listed
+ * one: it is still in the rulebook, it still has a version, and it is the kind
+ * of thing that gets edited by accident later because nobody knew it was
+ * there.
+ */
+export function orphanGates(d: ChainData): GateSafetyItem[] {
+  const carried = new Set(d.allocations.map((a) => a.gate_safety_strategy_id).filter((v): v is number => v != null))
+  return d.gates.filter((g) => !carried.has(g.gate_safety_strategy_id))
 }
 
 /**

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,15 @@ interface FormState {
   gateSafetyId: number | null
   maxPositions: string
   maxBpPct: string
+  /**
+   * On the books — whether this allocation may be picked at all. A different
+   * fact from the one the daemon's config holds about which allocation it
+   * runs, which is `Set active` on Trade › Rules. Edited here because it is
+   * part of the definition; until 2026-09-18 it was editable on the retiring
+   * Strategy › Allocations page and nowhere else, so an allocation taken off
+   * the books could not be put back from the chain.
+   */
+  isActive: boolean
 }
 
 const EMPTY_FORM: FormState = {
@@ -45,6 +55,7 @@ const EMPTY_FORM: FormState = {
   gateSafetyId: null,
   maxPositions: '',
   maxBpPct: '',
+  isActive: true,
 }
 
 function allocationToForm(a: StrategyAllocation): FormState {
@@ -54,6 +65,7 @@ function allocationToForm(a: StrategyAllocation): FormState {
     gateSafetyId: a.gate_safety_strategy_id ?? null,
     maxPositions: a.max_positions != null ? String(a.max_positions) : '',
     maxBpPct: a.max_bp_pct != null ? String(a.max_bp_pct) : '',
+    isActive: a.is_active ?? true,
   }
 }
 
@@ -64,11 +76,12 @@ function formToPayload(f: FormState): AllocationPayload {
     gate_safety_strategy_id: f.gateSafetyId,
     max_positions: f.maxPositions !== '' ? Number(f.maxPositions) : null,
     max_bp_pct: f.maxBpPct !== '' ? Number(f.maxBpPct) : null,
+    is_active: f.isActive,
   }
 }
 
 function createPayload(f: FormState): AllocationPayload {
-  return { ...formToPayload(f), is_active: true }
+  return formToPayload(f)
 }
 
 export interface AllocationFormModalProps {
@@ -271,6 +284,22 @@ export function AllocationFormModal({
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">On the books</Label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <Switch
+                  checked={form.isActive}
+                  onCheckedChange={(checked) => setForm((f) => ({ ...f, isActive: checked }))}
+                  aria-label="On the books"
+                />
+                <span>{form.isActive ? 'Available' : 'Off the books'}</span>
+              </label>
+              <p className="text-xs text-muted-foreground text-pretty">
+                Whether it may be picked at all — a plan under an allocation that is off the books runs outside the
+                rules. Which allocation the daemon actually runs is a separate act: Set active, on Trade › Rules.
+              </p>
             </div>
           </div>
         )}

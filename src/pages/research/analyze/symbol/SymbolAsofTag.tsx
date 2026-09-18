@@ -8,7 +8,7 @@
  * 2026-09-13 ⑤); the Ops doctor's flag joins this component later, when its
  * endpoint is cached.
  */
-import { AsofTag } from '@/components/research/AsofTag'
+import { AsofTag } from '@/components/AsofTag'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useSignalHealthSummary } from '@/hooks/useCopilotStanding'
 import { failedLensFlag, healthFlag, oldestAsof } from '@/lib/asofTag'

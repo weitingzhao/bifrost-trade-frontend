@@ -11,6 +11,7 @@ import { buildEquityGrowthChart, DEFAULT_LAYERS_VISIBLE, type GrowthLayer, type 
 import { buildFiBarChart } from '@/utils/ledger/fiBarChart'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { PageHeader, PageShell } from '@/components/layout'
+import { AsofTag } from '@/components/AsofTag'
 import { EquityGrowthCard } from '@/pages/portfolio/performance/components/EquityGrowthCard'
 import MonthlyPnLTable from '@/pages/portfolio/performance/components/MonthlyPnLTable'
 import OptionsModeBridgePanel from '@/pages/portfolio/performance/components/OptionsModeBridgePanel'
@@ -271,7 +272,16 @@ export default function PerformancePage() {
       <section className={perfUi.pageCard} aria-label="Performance">
         <PageHeader
           breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Performance</p>}
-          title="Performance"
+          title={
+            <span className="inline-flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+              Performance
+              {/* Grey, and it will stay grey until something reports a session. The page's own
+                  `optAsOf.asOfDateStr` is `chicagoTodayDateStr()` — the browser's clock, not a
+                  reading — and printing a clock as a session is the mistake this badge exists
+                  to prevent. Accounts is where the book's freshness is actually judged. */}
+              <AsofTag asof={null} judgedBy="Account Sync" href="/portfolio/accounts" />
+            </span>
+          }
           titleSize="large"
           description={PAGE_LEAD}
           actions={

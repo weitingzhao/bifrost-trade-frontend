@@ -48,11 +48,11 @@ export function useTradeMarkPath(trade: ReviewTrade | null) {
       if (!trade || !optionTicker || !from || !to) return EMPTY
       const [bars, underlying] = await Promise.all([
         fetchOptionDailyBars(optionTicker, from, to),
-        fetchStockDailyCloses(trade.symbol, from, to).catch(() => [] as DailyBar[]),
+        fetchStockDailyCloses(trade.underlying, from, to).catch(() => [] as DailyBar[]),
       ])
       return {
         path: buildMarkPath(trade, bars),
-        expiryBranch: buildExpiryBranch(trade, underlying),
+        expiryBranch: buildExpiryBranch(trade, underlying, today()),
         underlying,
         optionTicker,
       }

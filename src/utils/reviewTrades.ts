@@ -20,7 +20,7 @@
 import { buildOptExecutionGroups, isOptionExpired, type OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
 import { daysBetween } from '@/lib/isoDate'
-import { daysTo } from '@/utils/optionTicker'
+import { daysTo, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import type { Execution } from '@/types/positions'
 
 export type ExitKind = 'closed' | 'expired'
@@ -41,7 +41,10 @@ export interface ReviewTrade {
   contractKey: string
   /** The §14.4 contract token. */
   label: string
+  /** The broker's OCC symbol for the contract. */
   symbol: string
+  /** The underlying root — what the market-data warehouse and every link key off. */
+  underlying: string
   accountId: string
   /** Expiry, `YYYY-MM-DD`. */
   expiry: string
@@ -86,13 +89,13 @@ export const REVIEW_GAPS = [
     key: 'plan-cost',
     label: 'Plan quality',
     sub: 'plan exit vs best mark printed',
-    needs: 'the planned exit and the best mark — the second needs a daily mark through the holding period',
+    needs: 'the planned exit — the best mark it would be measured against is read off the contract’s own daily bars',
   },
 ] as const
 
 export const REVIEW_UNRECORDED = {
   plan: 'Review’s method needs the plan a trade was opened under — what it was aiming at, and when it said to be out. Trade Plans stores both, but no plan has ever been linked to a position, so for every closed trade here the planned exit is unknown. That makes discipline (realised against the plan’s own exit) and plan cost (the plan’s exit against the best mark) uncomputable, not zero.',
-  path: 'The second missing half is the mark through the holding period. Without it there is no best mark, no worst mark and no peak given back — so the questions that turn on *when* inside a trade (cut-loss latency, gave back the peak, maximum adverse excursion) cannot be asked at all. A daily position mark is what closes this, and it closes most of this group at once.',
+  path: 'The mark through the holding period is here: market.option_daily carries each contract’s own daily bars, and marking the position against them lands on the Ledger’s realised figure to the cent on 64 of the 67 closed trades. So the best mark, the worst mark, what share of the peak was landed and how long a loser sat past its low are readings, not gaps. What they cannot become is discipline — that is the exit against the *planned* bar, and no plan is linked to a position.',
   reviewed:
     'Nothing records that a trade was reviewed, so reviewed and unreviewed read the same and every closed trade sits in the queue for ever. The count below is closed trades, not a backlog.',
   regime:
@@ -191,6 +194,7 @@ export function buildReviewTrades(executions: readonly Execution[]): {
       contractKey: g.contract_key,
       label: shortOptContractKey(g.contract_key),
       symbol: g.symbol,
+      underlying: extractUnderlyingRootSymbol(g.symbol),
       accountId: g.account_id,
       expiry: isoExpiry(g.expiry),
       strike: g.strike,

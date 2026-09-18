@@ -1,11 +1,15 @@
 /**
- * One closed trade read against what it was meant to be — the panels the
- * design draws in the Queue's Review slot and on the Single trade page.
+ * What the trade did, and the two gaps a single P&L number blurs.
  *
- * The Queue draws its own compact panel — the design gives the two surfaces
- * different shapes — so what the two share is the model: one ReviewTrade, and
- * REVIEW_GAPS wording the two gaps once, so they cannot describe the same
- * missing number differently.
+ * Single trade draws this above the path panels; the Queue draws its own
+ * compact version in the Review slot. What the two share is the model — one
+ * ReviewTrade and REVIEW_GAPS — so they cannot describe the same missing
+ * number differently.
+ *
+ * Both gaps are measured from the plan's own exit, and no plan is linked to a
+ * position, so both stay marked. Plan quality's *other* end — the best mark —
+ * is no longer missing, and the panel says which half is which rather than
+ * lumping them together.
  */
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
@@ -17,12 +21,26 @@ import { PositionsStat } from '@/components/positions/PositionsStat'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
-import { REVIEW_GAPS, REVIEW_UNRECORDED, type ReviewTrade } from '@/utils/reviewTrades'
+import { REVIEW_GAPS, type ReviewTrade } from '@/utils/reviewTrades'
+import type { MarkPath } from '@/utils/reviewMarkPath'
 
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
-export function ReviewTradeFit({ trade, tier = true }: { trade: ReviewTrade; tier?: boolean }) {
+export function ReviewTradeFit({
+  trade,
+  markPath,
+  pathLoading = false,
+  tier = true,
+}: {
+  trade: ReviewTrade
+  markPath?: MarkPath | null
+  /** The marks are still in flight — a loading state must not read as "not recorded". */
+  pathLoading?: boolean
+  tier?: boolean
+}) {
+  const markMissing = pathLoading ? '…' : 'n/c'
+  const markSub = pathLoading ? 'reading the contract’s daily bars' : 'no daily bar for this window'
   return (
     <>
       <section className={positionsUi.panel} aria-label="What the trade did">
@@ -59,6 +77,24 @@ export function ReviewTradeFit({ trade, tier = true }: { trade: ReviewTrade; tie
             ink={trade.creditKept == null ? 'text-muted-foreground' : undefined}
             sub={trade.creditKept == null ? 'no credit was taken in' : '1 − exit ÷ entry'}
           />
+          <PositionsStat
+            cap="Best mark"
+            value={markPath == null ? markMissing : fmtUsd(markPath.best, true)}
+            ink={markPath == null ? 'text-muted-foreground' : pnlColorClass(markPath.best)}
+            sub={markPath == null ? markSub : `${fmtIsoDateToken(markPath.bestDate)} · landed ${fmtPct0(markPath.captureOfBest)}`}
+          />
+          <PositionsStat
+            cap="Worst mark"
+            value={markPath == null ? markMissing : fmtUsd(markPath.worst, true)}
+            ink={markPath == null ? 'text-muted-foreground' : pnlColorClass(markPath.worst)}
+            sub={
+              markPath == null
+                ? markSub
+                : markPath.everUnderwater
+                  ? `${fmtIsoDateToken(markPath.worstDate)} · the risk actually carried`
+                  : 'never marked below the entry'
+            }
+          />
         </div>
         <p className={cn(FOOT, 'm-0')}>
           Fills-based and fees included, the same figures the{' '}
@@ -77,36 +113,21 @@ export function ReviewTradeFit({ trade, tier = true }: { trade: ReviewTrade; tie
               <span className={positionsUi.cap}>{g.label}</span>
               <span className={positionsUi.panelTitle}>n/c</span>
               <DenseTag variant="warning" size="cell">
-                ⚠ cannot be taken
+                ⚠ NO PLAN
               </DenseTag>
             </header>
             <p className="m-0 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">{g.sub}</p>
             <p className="m-0 px-3 pb-2.5 text-dense-meta leading-normal text-secondary-foreground text-pretty">
-              <span className="inline-flex items-center gap-1.5">
-                <StatusLamp lamp="gray" variant="dot" title="Missing" />
-                Needs {g.needs}.
+              <span className="inline-flex items-start gap-1.5">
+                <span className="pt-1">
+                  <StatusLamp lamp="gray" variant="dot" title="Missing" />
+                </span>
+                <span>Needs {g.needs}.</span>
               </span>
             </p>
           </section>
         ))}
       </div>
-
-      <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Tags">
-        <header className={positionsUi.panelHead}>
-          <span className={positionsUi.cap}>Tags</span>
-          <span className={positionsUi.panelTitle}>none can be derived</span>
-          <DenseTag variant="warning" size="cell">
-            ⚠ every tag turns on the plan or the path
-          </DenseTag>
-        </header>
-        <p className="m-0 px-3 py-2.5 text-xs leading-normal text-secondary-foreground text-pretty">
-          The design derives a trade&rsquo;s tags from its own series — exited early, held past plan, gave back the
-          peak, slow cut. Each is a statement about <em>when</em> inside the trade, measured against either the planned
-          bar or the best mark, and this side has neither. A tag guessed from the close alone would be an opinion
-          presented as a derivation, which is the one thing a review page cannot afford.
-        </p>
-        <p className={cn(FOOT, 'm-0')}>{REVIEW_UNRECORDED.path}</p>
-      </section>
     </>
   )
 }

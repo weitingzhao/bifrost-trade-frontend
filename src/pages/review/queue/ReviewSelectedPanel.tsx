@@ -18,7 +18,6 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
-import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { REVIEW_GAPS, REVIEW_UNRECORDED, type ReviewTrade } from '@/utils/reviewTrades'
 
 /** The tags the design offers by hand. Each would write, and nothing stores one. */
@@ -39,7 +38,7 @@ export function ReviewSelectedPanel({ trade }: { trade: ReviewTrade }) {
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>Review</span>
         <span className={cn(positionsUi.mono, 'font-bold text-sky-300')}>
-          {extractUnderlyingRootSymbol(trade.symbol)}
+          {trade.underlying}
         </span>
         <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>· {trade.label}</span>
         <span className={cn(positionsUi.mono, 'ml-auto text-sm font-bold', pnlColorClass(trade.realised))}>

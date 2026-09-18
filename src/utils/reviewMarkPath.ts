@@ -155,17 +155,32 @@ export function buildMarkPath(trade: ReviewTrade, bars: readonly DailyBar[]): Ma
   }
 }
 
+/** A holiday can push the last session a few days back from a Friday expiry. */
+const EXPIRY_SESSION_SLACK_DAYS = 4
+
 /**
  * The do-nothing branch.
  *
  * At expiry a contract is worth its intrinsic value and nothing else, so this
- * one counterfactual is exact rather than modelled — provided expiry has passed
- * and the underlying's close that session is on hand.
+ * one counterfactual is exact rather than modelled — but only once expiry has
+ * actually passed. A contract still running has no settlement price, and the
+ * latest close is not one: pricing it there would put a number under "held to
+ * expiry" that is really "held until today", which is a different branch and a
+ * different argument.
  */
-export function buildExpiryBranch(trade: ReviewTrade, underlying: readonly DailyBar[]): ExpiryBranch | null {
+export function buildExpiryBranch(
+  trade: ReviewTrade,
+  underlying: readonly DailyBar[],
+  today: string,
+): ExpiryBranch | null {
   if (!trade.expiry || !trade.openedOn) return null
+  if (trade.expiry >= today) return null
   const atExpiry = underlying.filter((b) => b.close != null && b.date <= trade.expiry).pop()
   if (atExpiry == null) return null
+  // The close has to be the expiry session's, not the last one before the
+  // window ran out.
+  const lag = daysBetween(atExpiry.date, trade.expiry)
+  if (lag == null || lag > EXPIRY_SESSION_SLACK_DAYS) return null
 
   const opened = trade.openedOn
   const openingFills = trade.fills.filter((f) => f.date != null && f.date <= opened)

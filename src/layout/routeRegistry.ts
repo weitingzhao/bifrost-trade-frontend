@@ -308,7 +308,7 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/review/fit',
     label: 'Single trade',
     crumbs: REVIEW,
-    design: { state: 'reviewing', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/fit'] },
+    design: { state: 'reviewing', rev: '2026-09-18.1', note: DESIGN_NOTES['/review/fit'] },
   },
   {
     path: '/review/habits',

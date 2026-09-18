@@ -23,7 +23,8 @@ function shortPut(fills: ReviewFill[] = [fill('2026-08-03', 'sell', 1, 10), fill
   return {
     contractKey: 'DDOG  261016P00200000|OPT|20261016|200.0|P',
     label: 'DDOG 26-10-16 P200',
-    symbol: 'DDOG',
+    symbol: 'DDOG  261016P00200000',
+    underlying: 'DDOG',
     accountId: 'U1',
     expiry: '2026-10-16',
     strike: 200,
@@ -114,8 +115,10 @@ describe('buildMarkPath', () => {
 })
 
 describe('buildExpiryBranch', () => {
+  const AFTER = '2026-10-19'
+
   it('prices the do-nothing branch at intrinsic, which at expiry is exact', () => {
-    const branch = buildExpiryBranch(shortPut(), [bar('2026-10-15', 210), bar('2026-10-16', 190)])
+    const branch = buildExpiryBranch(shortPut(), [bar('2026-10-15', 210), bar('2026-10-16', 190)], AFTER)
     // Short 1 put struck 200, underlying 190 → 10.00 intrinsic against a 10.00 credit.
     expect(branch).not.toBeNull()
     expect(branch!.underlying).toBe(190)
@@ -124,12 +127,24 @@ describe('buildExpiryBranch', () => {
   })
 
   it('is worthless-expiry when the underlying finishes out of the money', () => {
-    const branch = buildExpiryBranch(shortPut(), [bar('2026-10-16', 240)])!
+    const branch = buildExpiryBranch(shortPut(), [bar('2026-10-16', 240)], AFTER)!
     expect(branch.intrinsic).toBe(0)
     expect(branch.pl).toBeCloseTo(1000, 6)
   })
 
   it('is null when no session at or before expiry has a close', () => {
-    expect(buildExpiryBranch(shortPut(), [bar('2026-10-19', 190)])).toBeNull()
+    expect(buildExpiryBranch(shortPut(), [bar('2026-10-19', 190)], AFTER)).toBeNull()
+  })
+
+  it('refuses to price a contract that has not expired', () => {
+    // The window stops at today, so the last close is today's, not settlement's.
+    // Pricing there would label "held until today" as "held to expiry".
+    expect(buildExpiryBranch(shortPut(), [bar('2026-09-17', 236)], '2026-09-18')).toBeNull()
+  })
+
+  it('refuses a close too far before expiry to be its session', () => {
+    expect(buildExpiryBranch(shortPut(), [bar('2026-10-09', 190)], AFTER)).toBeNull()
+    // A holiday-shifted expiry is still within the slack.
+    expect(buildExpiryBranch(shortPut(), [bar('2026-10-14', 190)], AFTER)).not.toBeNull()
   })
 })

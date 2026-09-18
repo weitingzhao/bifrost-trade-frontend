@@ -178,9 +178,11 @@ describe('design adoption', () => {
       '/home',
       '/portfolio/accounts',
       '/portfolio/backing',
+      '/portfolio/corporate-actions',
       '/portfolio/ledger',
       '/portfolio/outcome',
       '/portfolio/performance',
+      '/portfolio/pnl-explain',
       '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
@@ -196,8 +198,6 @@ describe('design adoption', () => {
       '/trade/fills',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/portfolio/corporate-actions',
-      '/portfolio/pnl-explain',
       '/review',
       '/review/fit',
       '/review/habits',

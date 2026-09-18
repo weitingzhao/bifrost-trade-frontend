@@ -16,7 +16,7 @@
  * all: the grid keeps its columns and carries a marker, because one blended
  * win rate flatters a play that only works in one regime.
  */
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -29,7 +29,13 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { useReviewHabits } from '@/hooks/useReviewHabits'
 import { THIN_SAMPLE } from '@/utils/reviewTrades'
+import { SINCE_OPTIONS, sinceEpoch, type SinceFilter } from '@/utils/sinceWindow'
+import { useWinRate } from '@/hooks/useStrategies'
+import { useQuery } from '@tanstack/react-query'
+import { fetchStructures } from '@/api/strategy'
 import { PlaybookRegimeGrid } from './PlaybookRegimeGrid'
+import { StructureFormulas, StructureTable } from './StructureTable'
+import { cutDisagreement, structureRows } from './structureCut'
 import { DECAY_PROFIT_FACTOR, sizeCapFor } from './sizeCap'
 
 const PAGE_LEAD =
@@ -45,6 +51,50 @@ function capClass(tone: 'success' | 'warning' | 'danger'): string {
 
 export default function PlaybookStatsPage() {
   const [accountFilter, setAccountFilter] = useState('all')
+  /**
+   * The design's grouping switch (DECISIONS 2026-09-18): Win Rate folds in here
+   * as a cut, not as a second page. The two cuts read different services and do
+   * not reconcile — see `structureCut.ts`.
+   */
+  const [cut, setCut] = useState('play')
+  const [since, setSince] = useState<SinceFilter>('')
+  const byStructure = cut === 'structure'
+  /**
+   * Asked only when its cut is showing.
+   *
+   * Not only to save a call: measured 2026-09-18 on DEV, the win-rate service
+   * answers HTTP 200 with an empty body when it is called alongside the dozen
+   * reads this page makes at mount, and answers in full a few seconds later. A
+   * successful empty is indistinguishable from "nothing has closed", so the
+   * safest thing is not to ask it while the page is busy — and to hold whatever
+   * it does answer against the rulebook's own count.
+   */
+  const winRate = useWinRate(useMemo(() => ({ sinceTs: sinceEpoch(since) }), [since]), {
+    enabled: byStructure,
+  })
+  const structures = useMemo(
+    () => structureRows(winRate.data?.structures ?? [], winRate.data?.totals_all),
+    [winRate.data],
+  )
+  /**
+   * The rulebook's own count, as a check on the one above.
+   *
+   * Measured 2026-09-18 on DEV: the win-rate service answers HTTP 200 with an
+   * empty body when it is called alongside the rest of this page's queries, and
+   * the same call a few seconds later returns all six structures. A successful
+   * empty response is indistinguishable from "nothing has closed" — so the page
+   * holds it against the catalog, and when structures exist but the service
+   * returned none, it says the service answered empty instead of drawing a
+   * table of nothing.
+   */
+  const catalogQuery = useQuery({
+    queryKey: ['strategy', 'structures'],
+    queryFn: () => fetchStructures(),
+    staleTime: 60_000,
+    enabled: byStructure,
+  })
+  const catalogCount = catalogQuery.data?.items.length ?? 0
+  const serviceEmpty = winRate.isSuccess && structures.length === 0 && catalogCount > 0
   const { trades, plays, accountIds, pathRequests, pathsLoading, loading, error, refetch } =
     useReviewHabits(accountFilter)
   const thin = plays.filter((p) => p.thin).length
@@ -85,21 +135,98 @@ export default function PlaybookStatsPage() {
           </div>
         ) : (
           <>
-            <section className={positionsUi.panel} aria-label="By play">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2">
+              <span className={positionsUi.cap}>Cut</span>
+              <SegmentControl
+                size="xs"
+                ariaLabel="Cut"
+                value={cut}
+                onChange={setCut}
+                options={[
+                  { value: 'play', label: 'Play' },
+                  { value: 'structure', label: 'Structure' },
+                ]}
+              />
+              {byStructure ? (
+                <>
+                  <span aria-hidden className="h-4 w-px bg-border" />
+                  <span className={positionsUi.cap}>Closed since</span>
+                  <SegmentControl
+                    size="xs"
+                    ariaLabel="Closed since"
+                    value={since}
+                    onChange={(v) => setSince(v as SinceFilter)}
+                    options={SINCE_OPTIONS.map(({ key, label }) => ({ value: key, label }))}
+                  />
+                </>
+              ) : null}
+              <span className="ml-auto text-dense-meta text-muted-foreground">
+                {byStructure
+                  ? 'closed instances, via the strategy service · totals first'
+                  : 'closed contracts, via the Trade Ledger'}
+              </span>
+            </div>
+
+            <section className={positionsUi.panel} aria-label={byStructure ? 'By structure' : 'By play'}>
               <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>By play</span>
-                <span className={positionsUi.panelTitle}>{plays.length} plays</span>
-                {thin > 0 ? (
+                <span className={positionsUi.cap}>{byStructure ? 'By structure' : 'By play'}</span>
+                <span className={positionsUi.panelTitle}>
+                  {byStructure
+                    ? `${structures.filter((r) => !r.totals).length} structures`
+                    : `${plays.length} plays`}
+                </span>
+                {!byStructure && thin > 0 ? (
                   <span className="inline-flex items-center gap-1.5 text-dense-meta text-warning">
                     <StatusLamp lamp="yellow" variant="dot" title="Thin sample" />
                     {thin} under {THIN_SAMPLE} trades
                   </span>
                 ) : null}
                 <span className="ml-auto text-dense-meta text-muted-foreground">
-                  credit kept = 1 − exit ÷ entry premium · MAE from {pathRequests} daily-bar reads · nothing enforces
-                  the cap
+                  {byStructure
+                    ? 'win rate over what resolved, not over n · no regime cut on this service'
+                    : `credit kept = 1 − exit ÷ entry premium · MAE from ${pathRequests} daily-bar reads · nothing enforces the cap`}
                 </span>
               </header>
+              {byStructure ? (
+                winRate.isPending || catalogQuery.isPending ? (
+                  <Skeleton className="m-3 h-40 rounded-md" />
+                ) : serviceEmpty ? (
+                  <div className="px-3 py-3">
+                    <p className="m-0 inline-flex items-start gap-1.5 text-dense-body leading-normal text-secondary-foreground text-pretty">
+                      <span className="pt-1">
+                        <StatusLamp lamp="yellow" variant="dot" title="Answered empty" />
+                      </span>
+                      <span>
+                        The strategy service answered with no rows, and the rulebook has {catalogCount} structures —
+                        so this is the service answering empty, not a book with nothing closed in it. It does this
+                        when it is called alongside the rest of this page&rsquo;s reads and answers normally a moment
+                        later.
+                      </span>
+                    </p>
+                    <button
+                      type="button"
+                      className={cn(positionsUi.btn, 'mt-2')}
+                      onClick={() => void winRate.refetch()}
+                    >
+                      Ask again
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <StructureTable rows={structures} />
+                    <StructureFormulas />
+                    <p className={cn(FOOT, 'm-0')}>
+                      {cutDisagreement(
+                        plays.length,
+                        trades.length,
+                        structures.filter((r) => !r.totals).length,
+                        structures.find((r) => r.totals)?.n ?? 0,
+                      )}
+                    </p>
+                  </>
+                )
+              ) : (
+                <>
               <div className="overflow-x-auto">
                 {/* §14.6: the design's twelve columns; its own floor is 1120 and
                     the two extra columns need another 240 of it. */}
@@ -183,10 +310,13 @@ export default function PlaybookStatsPage() {
                   </tbody>
                 </table>
               </div>
-              <p className={cn(FOOT, 'm-0')}>
-                Every play here is under {THIN_SAMPLE} trades, so every band is wide — that is the reading, not a
-                shortcoming of the table. A win rate quoted as a point on eleven trades is a guess wearing a number.
-              </p>
+                  <p className={cn(FOOT, 'm-0')}>
+                    Every play here is under {THIN_SAMPLE} trades, so every band is wide — that is the reading, not a
+                    shortcoming of the table. A win rate quoted as a point on eleven trades is a guess wearing a
+                    number.
+                  </p>
+                </>
+              )}
             </section>
 
             <div className={positionsUi.bandGrid}>

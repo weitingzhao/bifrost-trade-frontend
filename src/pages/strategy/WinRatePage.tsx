@@ -19,35 +19,10 @@ import {
   winRateSinceLabelClass,
   winRateStructureGridClass,
 } from '@/components/strategy/winRate/winRateUi'
-
-export type SinceFilter = '' | '1m' | 'q' | 'half' | '1y' | 'ytd'
-
-const SINCE_OPTIONS: { key: SinceFilter; label: string }[] = [
-  { key: '', label: 'All' },
-  { key: '1m', label: '1m' },
-  { key: 'q', label: 'Q' },
-  { key: 'half', label: '6m' },
-  { key: '1y', label: '1y' },
-  { key: 'ytd', label: 'YTD' },
-]
+import { SINCE_OPTIONS, sinceEpoch, type SinceFilter } from '@/utils/sinceWindow'
 
 const WIN_RATE_INFO =
   'Per-structure win-rate from instances with executions. Underlying cost matches Instance detail (sell OPT: strike × |qty| × 100 per instance; allocation splits qty when present). P&L: Total profit = sum of execution Net PnL where net > 0; Total loss = sum where net < 0 — same formulas for every structure.'
-
-function sinceEpoch(filter: SinceFilter): number | undefined {
-  if (!filter) return undefined
-  const now = new Date()
-  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-  if (filter === '1m') d.setUTCMonth(d.getUTCMonth() - 1)
-  else if (filter === 'q') d.setUTCMonth(d.getUTCMonth() - 3)
-  else if (filter === 'half') d.setUTCMonth(d.getUTCMonth() - 6)
-  else if (filter === '1y') d.setUTCFullYear(d.getUTCFullYear() - 1)
-  else if (filter === 'ytd') {
-    d.setUTCMonth(0)
-    d.setUTCDate(1)
-  }
-  return Math.floor(d.getTime() / 1000)
-}
 
 export default function WinRatePage() {
   const navigate = useNavigate()

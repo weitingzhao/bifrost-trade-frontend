@@ -60,10 +60,14 @@ export function useAllocations() {
   })
 }
 
-export function useWinRate(params?: { sinceTs?: number; untilTs?: number }) {
+export function useWinRate(
+  params?: { sinceTs?: number; untilTs?: number },
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: [...QUERY_KEYS.strategy.winRate, params?.sinceTs ?? null, params?.untilTs ?? null],
     queryFn: () => fetchWinRate(params),
     staleTime: 60_000,
+    enabled: options?.enabled ?? true,
   })
 }

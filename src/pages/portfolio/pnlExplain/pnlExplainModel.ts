@@ -44,12 +44,65 @@ export const PNL_UNEXPLAINED_THRESHOLD = 0.05
 /** The readings this page cannot make, and what would have to exist first. */
 export const PNL_UNRECORDED = {
   snapshot:
-    'The four attributions need a per-day snapshot of positions, marks and vendor Greeks. Nothing stores one, so Δ, Γ, vega and θ have no reading — and neither does the difference they define.',
+    'The four attributions need a per-day snapshot of positions, marks and vendor Greeks. Nothing stores one, so Δ, Γ, vega and θ have no reading — and neither does the difference they define. What is missing is not the market: the benchmark carries each name’s prior close, so today’s move is readable. It is the position and its Greeks as they stood at that close.',
   hypothesis:
     'Judging a thesis needs both that snapshot and a store of hypotheses with what each should earn from. Neither exists yet.',
   symbol:
     'Cash rows carry an account and a description, never a symbol, so these cannot be placed against a name.',
 } as const
+
+/**
+ * The five lines the design stacks, with what each needs and what is in hand.
+ *
+ * The panel is marked as a whole, but the five are not blocked for the same
+ * reason, and a reader deciding what to build next needs to know which.
+ * Today's price move per name *is* available — the benchmark carries each
+ * name's prior close — so what is missing is never the market. It is the
+ * position and its Greeks as they stood at that close.
+ */
+export const ATTRIBUTION_LINES: {
+  key: string
+  label: string
+  what: string
+  needs: string
+  inHand: string
+}[] = [
+  {
+    key: 'delta',
+    label: 'Δ · direction',
+    what: 'the move times the position delta — the shares plus the deltas of the legs, net',
+    needs: 'the delta as it stood at yesterday’s close',
+    inHand: 'today’s move per name, and the delta as it stands now',
+  },
+  {
+    key: 'gamma',
+    label: 'Γ · convexity',
+    what: 'what the move did beyond delta',
+    needs: 'the same prior-close snapshot — gamma is read against the delta it moved',
+    inHand: 'gamma on the priced legs',
+  },
+  {
+    key: 'vega',
+    label: 'Vega · vol marks',
+    what: 'IV re-marks on the open legs',
+    needs: 'yesterday’s implied vol per leg — no IV history reaches the legs in this book',
+    inHand: 'vega on the priced legs',
+  },
+  {
+    key: 'theta',
+    label: 'Θ · carry',
+    what: 'decay collected over the window',
+    needs: 'a theta per day to accumulate over a window longer than one session',
+    inHand: 'theta on the priced legs, as it stands now',
+  },
+  {
+    key: 'unexplained',
+    label: 'Unexplained',
+    what: 'everything the four cannot account for — defined as the difference, never measured',
+    needs: 'all four above; a difference of four unknowns is not a residual',
+    inHand: 'nothing until they are taken',
+  },
+]
 
 const ASSET_CLASSES = ['opt', 'stocks', 'fixed_income', 'cash_like'] as const
 

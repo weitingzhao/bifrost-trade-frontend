@@ -31,6 +31,7 @@ import { getTransactions } from '@/api/trading'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
 import {
+  ATTRIBUTION_LINES,
   PNL_UNEXPLAINED_THRESHOLD,
   PNL_UNRECORDED,
   bookGapFills,
@@ -42,15 +43,6 @@ import {
 
 const PAGE_LEAD =
   'Why the number moved, and what part of it nothing can account for. The amount itself belongs to Performance; this page only takes it apart.'
-
-/** The four attributions, in the order the design stacks them. */
-const COMPONENTS: { label: string; title: string }[] = [
-  { label: 'Δ · direction', title: 'spot moves × position delta — the shares and the deltas of the legs' },
-  { label: 'Γ · convexity', title: 'what the move did beyond delta' },
-  { label: 'Vega · vol marks', title: 'IV re-marks on the open legs' },
-  { label: 'Θ · carry', title: 'decay collected over the window' },
-  { label: 'Unexplained', title: 'everything the four cannot account for' },
-]
 
 const READING_TONE: Record<string, string> = {
   'worth a look': 'text-warning',
@@ -205,7 +197,10 @@ export default function PnlExplainPage() {
               </p>
             </section>
 
-            <PositionsTier label="Leads" note="available today — this half needs no Greeks" />
+            <PositionsTier
+              label="Unexplained"
+              note="available today — this half needs no Greeks, only the daily marks"
+            />
             <section className={positionsUi.panel} aria-label="What nothing accounts for">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>What nothing accounts for</span>
@@ -293,7 +288,9 @@ export default function PnlExplainPage() {
               <div className={cn(FOOT, 'flex flex-wrap gap-x-4 gap-y-1')}>
                 <span>
                   Threshold: amber past {(PNL_UNEXPLAINED_THRESHOLD * 100).toFixed(0)}% of the window&rsquo;s own P&amp;L.
-                  Below it, a residual is normal.
+                  The design takes the same {(PNL_UNEXPLAINED_THRESHOLD * 100).toFixed(0)}% of <em>a name&rsquo;s</em>{' '}
+                  own P&amp;L, which is a sharper test and the one worth having — it needs a per-name day P&amp;L, and
+                  that needs the same daily marks the band below is waiting on.
                 </span>
                 <span className="ml-auto">
                   Each cause is a candidate the named page can confirm or rule out. Nothing here is asserted as the
@@ -316,20 +313,35 @@ export default function PnlExplainPage() {
                   the shape below is the design&rsquo;s, the figures are not a reading
                 </span>
               </header>
-              <div className="flex flex-col gap-1.75 px-3.5 py-2.75">
-                {COMPONENTS.map((c) => (
-                  <div key={c.label} className="grid grid-cols-[7.25rem_minmax(0,1fr)_6rem] items-center gap-2.5" title={c.title}>
-                    <span className="text-dense-meta leading-normal text-muted-foreground">{c.label}</span>
-                    <span className="relative block h-3">
-                      <span className="absolute inset-y-0 left-1/2 w-px bg-[var(--sk-line2)]" />
+              <div className="flex flex-col">
+                {ATTRIBUTION_LINES.map((c) => (
+                  <div
+                    key={c.key}
+                    className="grid grid-cols-[8rem_minmax(0,1fr)_5rem] items-start gap-x-3 gap-y-0.5 border-b border-border/55 px-3.5 py-2 last:border-b-0"
+                  >
+                    <span className="inline-flex items-center gap-1.5 text-xs leading-normal font-semibold text-foreground">
+                      <StatusLamp lamp="gray" variant="dot" title="No reading" />
+                      {c.label}
                     </span>
-                    <span className={cn(positionsUi.mono, 'text-right text-xs text-muted-foreground')}>—</span>
+                    <span className="min-w-0">
+                      <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
+                        {c.what}
+                      </span>
+                      <span className="block text-dense-meta leading-normal text-pretty">
+                        <span className="text-warning">Needs</span>{' '}
+                        <span className="text-secondary-foreground">{c.needs}</span>
+                        <span className="text-muted-foreground"> · in hand: {c.inHand}</span>
+                      </span>
+                    </span>
+                    <span className={cn(positionsUi.mono, 'text-right text-xs text-muted-foreground')}>n/c</span>
                   </div>
                 ))}
-                <p className="m-0 border-t border-border/60 pt-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                  Over a window, θ should accumulate roughly with the number of sessions, and on a covered book Δ and
-                  vega routinely offset — that is the trade working, not a loss. Neither line can be drawn without a
-                  per-day snapshot to difference against.
+                <p className="m-0 border-t border-border/60 px-3.5 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                  The bars the design draws are the five above, signed and to scale. None is drawn here because none is
+                  read: over a window θ should accumulate roughly with the number of sessions, and on a covered book Δ
+                  and vega routinely offset — that is the trade working, not a loss — and neither statement can be made
+                  without a prior-close snapshot to difference against. A bar drawn to an invented figure would make the
+                  one page whose premise is <em>one number, one source</em> the page that invents one.
                 </p>
               </div>
               <div className="overflow-x-auto border-t border-border">

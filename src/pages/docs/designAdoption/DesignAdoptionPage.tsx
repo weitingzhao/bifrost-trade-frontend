@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
@@ -11,11 +12,13 @@ import {
   DenseTableRow,
   DenseTag,
   EmptyState,
+  ExpandToggleCell,
   type DenseTagVariant,
 } from '@/components/data-display'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ADOPTION_SECTIONS,
+  adoptionByGroup,
   adoptionCounts,
   adoptionRows,
   DESIGN_REV,
@@ -31,6 +34,12 @@ import {
  * are generated — the design's route table from its own `shell-registry.js`,
  * the app's from `routeRegistry.ts` — so nothing here is a checklist that can
  * quietly go out of date.
+ *
+ * The notes are long on purpose (they are the record of each walk), which made
+ * the page unreadable when every one of them was printed inline: 96 rows, the
+ * tallest of them 956px. A note now opens under its row, and the two panels
+ * above answer the questions that used to need a scroll — the whole shape, and
+ * how far one group has to go.
  */
 
 /** Reserve the lamp colours for state; a count is not a fault. */
@@ -45,63 +54,157 @@ const TAG: Record<AdoptionState, DenseTagVariant> = {
   backlog: 'neutral',
 }
 
+/** The bar's inks, in the order the sections are listed. */
+const BAR: Record<AdoptionState, string> = {
+  aligned: 'bg-lamp-green',
+  reviewing: 'bg-info',
+  stale: 'bg-warning',
+  pending: 'bg-[var(--sk-line2)]',
+  unbuilt: 'bg-[var(--sk-surface)]',
+  moving: 'bg-info/45',
+  staging: 'bg-warning/45',
+  backlog: 'bg-[var(--sk-raised2)]',
+}
+
 function trail(row: AdoptionRow): string {
   return [...row.crumbs, row.label].join(' / ')
 }
 
+/** One stacked bar over the eight states — the whole readout at a glance. */
+function ShapeBar({ byState, total }: { byState: Record<AdoptionState, number>; total: number }) {
+  if (total <= 0) return null
+  return (
+    <span className="flex h-1.5 w-full overflow-hidden rounded-sm bg-[var(--sk-surface)]">
+      {ADOPTION_SECTIONS.map((s) =>
+        byState[s.state] > 0 ? (
+          <span
+            key={s.state}
+            className={cn('block h-full', BAR[s.state])}
+            style={{ width: `${(byState[s.state] / total) * 100}%` }}
+            title={`${byState[s.state]} ${s.state}`}
+          />
+        ) : null,
+      )}
+    </span>
+  )
+}
+
+/** What is left in a group, named rather than summed into one number. */
+function leftLabel(byState: Record<AdoptionState, number>): string {
+  const parts = ADOPTION_SECTIONS.filter((s) => s.state !== 'aligned' && s.state !== 'backlog')
+    .filter((s) => byState[s.state] > 0)
+    .map((s) => `${byState[s.state]} ${s.title.toLowerCase()}`)
+  return parts.length === 0 ? 'nothing left' : parts.join(' · ')
+}
+
 function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
+  const [open, setOpen] = useState<string | null>(null)
   const showsFile = state === 'unbuilt'
   const showsApp = state === 'backlog'
+  const hasNotes = !showsFile && !showsApp
   return (
     <DenseDataTable>
+      {/* The table lays out fixed, so the narrow columns are sized here and the
+          note cell takes whatever is left of the row. */}
+      <colgroup>
+        {hasNotes ? <col style={{ width: 34 }} /> : null}
+        <col style={{ width: 260 }} />
+        <col style={{ width: 240 }} />
+        {hasNotes ? <col style={{ width: 96 }} /> : null}
+        <col />
+      </colgroup>
       <DenseTableHeader>
         <DenseTableHeadRow>
-          <DenseTableHead>Page</DenseTableHead>
-          <DenseTableHead>Route</DenseTableHead>
+          {hasNotes ? <DenseTableHead aria-label="Open the walk note" /> : null}
+          <DenseTableHead className="whitespace-nowrap">Page</DenseTableHead>
+          <DenseTableHead className="whitespace-nowrap">Route</DenseTableHead>
+          {hasNotes ? <DenseTableHead className="whitespace-nowrap">Rev</DenseTableHead> : null}
           <DenseTableHead>{showsFile ? 'Prototype' : showsApp ? 'App' : 'Note'}</DenseTableHead>
         </DenseTableHeadRow>
       </DenseTableHeader>
       <DenseTableBody>
-        {rows.map((r) => (
-          <DenseTableRow key={r.path}>
-            <DenseTableCell>
-              <span className="mr-2">
-                {r.inApp ? (
-                  <Link to={r.path} className="text-link hover:underline">
-                    {trail(r)}
-                  </Link>
+        {rows.map((r) => {
+          const expanded = open === r.path
+          return [
+            <DenseTableRow key={r.path}>
+              {hasNotes ? (
+                <DenseTableCell>
+                  {r.note ? (
+                    <ExpandToggleCell
+                      expanded={expanded}
+                      onToggle={() => setOpen(expanded ? null : r.path)}
+                      label={`Walk note for ${trail(r)}`}
+                    />
+                  ) : null}
+                </DenseTableCell>
+              ) : null}
+              <DenseTableCell className="max-w-0 truncate whitespace-nowrap">
+                <span className="mr-2">
+                  {r.inApp ? (
+                    <Link to={r.path} className="text-link hover:underline">
+                      {trail(r)}
+                    </Link>
+                  ) : (
+                    trail(r)
+                  )}
+                </span>
+                {/* NEW is this round's work; OLD is an early round a later
+                    contract may have overtaken, so aligning to it can align to
+                    something already superseded. */}
+                {r.design?.round ? (
+                  <DenseTag variant={r.design.round === 'NEW' ? 'info' : 'neutral'}>
+                    {r.design.round}
+                  </DenseTag>
+                ) : null}
+              </DenseTableCell>
+              <DenseTableCell className="max-w-0 truncate whitespace-nowrap">
+                <div className="truncate font-mono text-dense-caption text-muted-foreground">{r.path}</div>
+                {r.aliasOf?.length ? (
+                  <div className="text-dense-caption text-muted-foreground">
+                    also answers {r.aliasOf.join(', ')}
+                  </div>
+                ) : null}
+              </DenseTableCell>
+              {hasNotes ? (
+                <DenseTableCell className="whitespace-nowrap font-mono text-dense-caption text-muted-foreground">
+                  {r.rev ?? '—'}
+                </DenseTableCell>
+              ) : null}
+              {/* `max-w-0` with `w-full` is what lets a truncating cell stop
+                  contributing its full text to an auto table's column widths. */}
+              <DenseTableCell className="max-w-0 text-muted-foreground">
+                {showsFile ? (
+                  <span className="font-mono text-dense-caption">{r.design?.file}</span>
+                ) : showsApp ? (
+                  <span className="text-dense-caption">{r.inApp ? 'page here' : 'no page here'}</span>
+                ) : r.note ? (
+                  // One line of the walk, with the rest a click away — the notes
+                  // run to three thousand characters and are the record, not a
+                  // caption.
+                  <button
+                    type="button"
+                    className="block w-full cursor-pointer truncate text-left text-dense-caption hover:text-foreground"
+                    onClick={() => setOpen(expanded ? null : r.path)}
+                    title="Open the walk note"
+                  >
+                    {r.note}
+                  </button>
                 ) : (
-                  trail(r)
+                  <span className="text-dense-caption">{r.rev ? `walked against rev ${r.rev}` : ''}</span>
                 )}
-              </span>
-              {/* NEW is this round's work; OLD is an early round a later
-                  contract may have overtaken, so aligning to it can align to
-                  something already superseded. */}
-              {r.design?.round ? (
-                <DenseTag variant={r.design.round === 'NEW' ? 'info' : 'neutral'}>
-                  {r.design.round}
-                </DenseTag>
-              ) : null}
-            </DenseTableCell>
-            <DenseTableCell>
-              <div className="font-mono text-dense-caption text-muted-foreground">{r.path}</div>
-              {r.aliasOf?.length ? (
-                <div className="text-dense-caption text-muted-foreground">
-                  also answers {r.aliasOf.join(', ')}
-                </div>
-              ) : null}
-            </DenseTableCell>
-            <DenseTableCell className="text-muted-foreground">
-              {showsFile ? (
-                <span className="font-mono text-dense-caption">{r.design?.file}</span>
-              ) : showsApp ? (
-                <span className="text-dense-caption">{r.inApp ? 'page here' : 'no page here'}</span>
-              ) : (
-                (r.note ?? (r.rev ? `walked against rev ${r.rev}` : ''))
-              )}
-            </DenseTableCell>
-          </DenseTableRow>
-        ))}
+              </DenseTableCell>
+            </DenseTableRow>,
+            expanded && r.note ? (
+              <DenseTableRow key={`${r.path}:note`}>
+                <DenseTableCell colSpan={5} className="bg-[var(--sk-raised2)]">
+                  <p className="m-0 max-w-[110ch] py-1 text-dense-caption leading-normal text-secondary-foreground text-pretty">
+                    {r.note}
+                  </p>
+                </DenseTableCell>
+              </DenseTableRow>
+            ) : null,
+          ]
+        })}
       </DenseTableBody>
     </DenseDataTable>
   )
@@ -110,12 +213,14 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
 export default function DesignAdoptionPage() {
   const rows = useMemo(() => adoptionRows(), [])
   const counts = useMemo(() => adoptionCounts(rows), [rows])
+  const groups = useMemo(() => adoptionByGroup(rows), [rows])
   const byState = useMemo(() => {
     const m = new Map<AdoptionState, AdoptionRow[]>()
     for (const r of rows) m.set(r.state, [...(m.get(r.state) ?? []), r])
     for (const list of m.values()) list.sort((a, b) => trail(a).localeCompare(trail(b)))
     return m
   }, [rows])
+  const adoptable = rows.filter((r) => r.state !== 'backlog').length
 
   return (
     <PageShell>
@@ -141,12 +246,80 @@ export default function DesignAdoptionPage() {
       />
 
       <Card variant="elevated">
-        <CardContent className="py-3 text-dense-body text-muted-foreground">
-          The denominator is the {counts.designed} design routes that have a prototype, not the
-          app’s page count: {counts.byState.unbuilt} of them have no page here at all, so counting
-          against the app would read near complete with much of the design unbuilt. The design’s
-          other {counts.stubs} routes are in its menu with no prototype behind them — listed last as
-          its backlog, and nothing this side can adopt.
+        <CardContent className="space-y-2 py-3">
+          <ShapeBar byState={counts.byState} total={adoptable} />
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {ADOPTION_SECTIONS.map((s) => (
+              <span key={s.state} className="inline-flex items-center gap-1.5 text-dense-caption">
+                <span className={cn('inline-block h-2 w-2 rounded-[2px]', BAR[s.state])} aria-hidden />
+                <span className="text-muted-foreground">{s.title}</span>
+                <span className="font-mono tabular-nums text-foreground">{counts.byState[s.state]}</span>
+              </span>
+            ))}
+          </div>
+          <p className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
+            The denominator in the header is the {counts.designed} design routes that have a
+            prototype, not the app’s page count: {counts.byState.unbuilt} of them have no page here
+            at all, so counting against the app would read near complete with much of the design
+            unbuilt. The bar is wider than that — it counts every row on this page except the
+            design’s own {counts.stubs} stubs, so the {counts.byState.staging} app pages the design
+            has no home for are visible as work rather than invisible.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card variant="elevated">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <span>By group</span>
+            <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
+              {groups.filter((g) => g.left === 0).length} of {groups.length} done
+            </span>
+          </CardTitle>
+          <p className="text-dense-caption text-muted-foreground">
+            Closest to done first. A group reads finished only when nothing is left in it — not when
+            the pages someone happens to have walked are all aligned.
+          </p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div role="table" className="w-full">
+            <div
+              role="row"
+              className="grid grid-cols-[minmax(7rem,12rem)_5rem_9rem_minmax(0,1fr)] gap-3 border-b border-border px-1 pb-1 text-dense-caption uppercase tracking-wide text-muted-foreground"
+            >
+              <span role="columnheader">Group</span>
+              <span role="columnheader">In place</span>
+              <span role="columnheader">Progress</span>
+              <span role="columnheader">What is left</span>
+            </div>
+            {groups.map((g) => (
+              <div
+                key={g.group}
+                role="row"
+                className="grid grid-cols-[minmax(7rem,12rem)_5rem_9rem_minmax(0,1fr)] items-center gap-3 border-b border-border/55 px-1 py-1.5 last:border-b-0"
+              >
+                <span role="cell" className="truncate text-sm font-semibold text-foreground">
+                  {g.group}
+                </span>
+                <span role="cell" className="font-mono text-dense-caption tabular-nums">
+                  <span className={g.left === 0 ? 'text-lamp-green' : 'text-foreground'}>{g.aligned}</span>
+                  <span className="text-muted-foreground"> / {g.total}</span>
+                </span>
+                <span role="cell">
+                  <ShapeBar byState={g.byState} total={g.total} />
+                </span>
+                <span role="cell" className="min-w-0 text-dense-caption text-muted-foreground">
+                  {leftLabel(g.byState)}
+                  {g.byState.backlog > 0 ? (
+                    <span className="text-muted-foreground">
+                      {' · '}
+                      {g.byState.backlog} in the design’s own backlog
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

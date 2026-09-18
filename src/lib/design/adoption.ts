@@ -196,6 +196,64 @@ export function adoptionCounts(rows: readonly AdoptionRow[]): AdoptionCounts {
   }
 }
 
+/**
+ * The same rows, summed by the group the nav puts them in.
+ *
+ * Added because the readout could answer "how far along is the whole design"
+ * and "what is left on this one page", but not the question actually asked of
+ * it — "is Portfolio done?" — without reading 96 rows.
+ *
+ * The denominator here is every row on the page except the design's own
+ * backlog, which is deliberately wider than the header's: the header counts
+ * design routes that have a prototype, so it cannot see the ten app pages the
+ * design has no home for. Those are work left, and they are counted here.
+ */
+export interface AdoptionGroup {
+  group: string
+  /** Rows in this group that are ours to move — everything but the design's backlog. */
+  total: number
+  aligned: number
+  /** Everything that is not yet in place. */
+  left: number
+  byState: Record<AdoptionState, number>
+}
+
+export function adoptionByGroup(rows: readonly AdoptionRow[]): AdoptionGroup[] {
+  const by = new Map<string, AdoptionGroup>()
+  for (const r of rows) {
+    // A page with no crumbs is the shell's own front door.
+    const group = r.crumbs[0] ?? 'Home'
+    const g =
+      by.get(group) ??
+      ({
+        group,
+        total: 0,
+        aligned: 0,
+        left: 0,
+        byState: {
+          aligned: 0,
+          reviewing: 0,
+          stale: 0,
+          pending: 0,
+          moving: 0,
+          staging: 0,
+          unbuilt: 0,
+          backlog: 0,
+        },
+      } as AdoptionGroup)
+    g.byState[r.state] += 1
+    if (r.state !== 'backlog') {
+      g.total += 1
+      if (r.state === 'aligned') g.aligned += 1
+      else g.left += 1
+    }
+    by.set(group, g)
+  }
+  // Closest to done first: a group with nothing left reads as finished, and the
+  // one being walked now sits at the top of the work.
+  return [...by.values()].sort((a, b) => a.left - b.left || a.group.localeCompare(b.group))
+}
+
 export const ADOPTION_SECTIONS: { state: AdoptionState; title: string; blurb: string }[] = [
   { state: 'aligned', title: 'In place', blurb: 'Walked against the design and matching.' },
   {

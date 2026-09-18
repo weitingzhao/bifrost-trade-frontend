@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { PAGE_ROUTES } from '@/layout/routeRegistry'
-import { adoptionCounts, adoptionRows, DESIGN_REV } from './adoption'
+import { adoptionByGroup, adoptionCounts, adoptionRows, DESIGN_REV } from './adoption'
 import { DESIGN_ROUTES } from './designRoutes.generated'
 import { revIsNewer } from './rev'
 
@@ -117,9 +117,9 @@ describe('design adoption', () => {
     // Portfolio walk: every page in that group is now in place (aligned 11→13).
     // Stress & Scenario signed off the same day (aligned 13→14), then Orders
     // & Fills (aligned 14→15), then Margin & Buying Power (aligned 15→16)
-    // and Assignment (16→17).
-    expect(counts.aligned + counts.byState.stale).toBe(17)
-    expect(counts.aligned).toBe(17)
+    // and Assignment (16→17), then Limits & Breaches (17→18).
+    expect(counts.aligned + counts.byState.stale).toBe(18)
+    expect(counts.aligned).toBe(18)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -151,8 +151,9 @@ describe('design adoption', () => {
     // look (reviewing 4→3). Assignment is Expiration's other half
     // (unbuilt 36→35, reviewing 3→4), then aligned on the Owner's look
     // (reviewing 4→3). Limits & Breaches closes the readable part of Risk
-    // (unbuilt 35→34, reviewing 3→4).
-    expect(counts.byState.reviewing).toBe(4)
+    // (unbuilt 35→34, reviewing 3→4), then aligned on the Owner's look after it
+    // was rebuilt to carry all twelve rules (reviewing 4→3).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -171,6 +172,7 @@ describe('design adoption', () => {
       '/research/copilot/trading',
       '/research/loop/decisions',
       '/research/symbol',
+      '/risk/limits',
       '/risk/margin',
       '/risk/portfolio',
       '/risk/stress',
@@ -179,7 +181,6 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/pnl-explain',
-      '/risk/limits',
       '/trade/expiration',
       '/trade/plans',
     ])
@@ -254,5 +255,31 @@ describe('design adoption', () => {
       expect(row.rev, row.path).toBeTruthy()
       expect(revIsNewer(row.design?.rev, row.rev), row.path).toBe(false)
     }
+  })
+})
+
+describe('adoptionByGroup', () => {
+  it('counts a group against every row it owns, not only the ones walked so far', () => {
+    const groups = adoptionByGroup(rows)
+    const portfolio = groups.find((g) => g.group === 'Portfolio')
+    // The question the summary exists to answer: Portfolio is not finished.
+    // Seven pages are in place, P&L Explain waits for the Owner's look, and
+    // Corporate Actions has no page at all — a reading of "7 aligned" alone
+    // would have said the group was done.
+    expect(portfolio).toMatchObject({ total: 9, aligned: 7, left: 2 })
+    expect(portfolio?.byState.reviewing).toBe(1)
+    expect(portfolio?.byState.unbuilt).toBe(1)
+
+    // The design's own backlog is nobody's work here, so it stays out of the
+    // denominator: System's four `/docs/*` stubs do not make it read worse.
+    const system = groups.find((g) => g.group === 'System')
+    expect(system?.byState.backlog).toBe(4)
+    expect(system?.total).toBe(rows.filter((r) => r.crumbs[0] === 'System' && r.state !== 'backlog').length)
+
+    // Every row lands in exactly one group, and the totals reconcile.
+    expect(groups.reduce((n, g) => n + g.total + g.byState.backlog, 0)).toBe(rows.length)
+    expect(groups.reduce((n, g) => n + g.aligned, 0)).toBe(counts.aligned)
+    // Closest to done first, so the group being walked sits at the top.
+    expect(groups.map((g) => g.left)).toEqual([...groups.map((g) => g.left)].sort((a, b) => a - b))
   })
 })

@@ -117,9 +117,10 @@ describe('design adoption', () => {
     // Portfolio walk: every page in that group is now in place (aligned 11→13).
     // Stress & Scenario signed off the same day (aligned 13→14), then Orders
     // & Fills (aligned 14→15), then Margin & Buying Power (aligned 15→16)
-    // and Assignment (16→17), then Limits & Breaches (17→18).
-    expect(counts.aligned + counts.byState.stale).toBe(18)
-    expect(counts.aligned).toBe(18)
+    // and Assignment (16→17), then Limits & Breaches (17→18). Today signed off
+    // after it was re-laid out to the design's shape (18→19).
+    expect(counts.aligned + counts.byState.stale).toBe(19)
+    expect(counts.aligned).toBe(19)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -157,14 +158,15 @@ describe('design adoption', () => {
     // Today closes the Home group the same day (unbuilt 33→32, reviewing 4→5),
     // then Risk Budget and Sizing close the Risk group (unbuilt 32→30,
     // reviewing 5→7), then all five Review pages at once (unbuilt 30→25,
-    // reviewing 7→12).
-    expect(counts.byState.reviewing).toBe(12)
+    // reviewing 7→12), and Today was signed off (reviewing 12→11).
+    expect(counts.byState.reviewing).toBe(11)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
         .map((r) => r.path)
         .sort(),
     ).toEqual([
+      '/home',
       '/portfolio/accounts',
       '/portfolio/backing',
       '/portfolio/ledger',
@@ -185,7 +187,6 @@ describe('design adoption', () => {
       '/trade/fills',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/home',
       '/portfolio/corporate-actions',
       '/portfolio/pnl-explain',
       '/review',

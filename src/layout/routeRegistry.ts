@@ -229,7 +229,7 @@ export const ROUTES: readonly RouteEntry[] = [
     // day, so it carries no breadcrumb trail of its own.
     crumbs: [],
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-17.1',
       note: DESIGN_NOTES['/home'],
     },

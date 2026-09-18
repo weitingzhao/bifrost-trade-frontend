@@ -540,71 +540,90 @@ export default function CorporateActionsPage() {
                   of them is dated on or before today. A calendar drawn from them would be empty for a reason that has
                   nothing to do with whether an ex-date is coming.
                 </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  {/* §14.6: seven columns, the design's 980 floor. */}
-                  <table className="w-full min-w-[980px] table-fixed border-collapse">
-                    <colgroup>
-                      <col style={{ width: '10%' }} />
-                      <col style={{ width: '13%' }} />
-                      <col style={{ width: '13%' }} />
-                      <col style={{ width: '14%' }} />
-                      <col style={{ width: '12%' }} />
-                      <col style={{ width: '16%' }} />
-                      <col style={{ width: '22%' }} />
-                    </colgroup>
-                    <thead>
+              ) : null}
+              <div className={cn('overflow-x-auto', ahead.length === 0 && 'border-t border-border')}>
+                {/* §14.6: seven columns, held at 980 — above the design's 900 floor. The shape stays drawn
+                    when the feed carries no future date, the way the other marked bands keep theirs. */}
+                <table className="w-full min-w-[980px] table-fixed border-collapse">
+                  <colgroup>
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '13%' }} />
+                    <col style={{ width: '13%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '16%' }} />
+                    <col style={{ width: '22%' }} />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th className={cn(positionsUi.th, 'text-left')}>Symbol</th>
+                      <th className={cn(positionsUi.th, 'text-left')}>Event</th>
+                      <th className={positionsUi.th}>Ex / effective</th>
+                      <th className={positionsUi.th}>Amount · ratio</th>
+                      <th className={positionsUi.th}>Held</th>
+                      <th className={cn(positionsUi.th, 'text-left')}>Reshapes a contract</th>
+                      <th className={cn(positionsUi.th, 'text-left')}>Where it lands</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ahead.length === 0 ? (
                       <tr>
-                        <th className={cn(positionsUi.th, 'text-left')}>Symbol</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Event</th>
-                        <th className={positionsUi.th}>Ex / effective</th>
-                        <th className={positionsUi.th}>Amount · ratio</th>
-                        <th className={positionsUi.th}>Held</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Reshapes a contract</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Where it lands</th>
+                        <td className={cn(positionsUi.td, 'pl-2 text-left')}>
+                          <span className="inline-flex h-4 items-center rounded-[3px] border border-border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] text-muted-foreground">
+                            NO FUTURE-DATED EVENT
+                          </span>
+                        </td>
+                        {['event', 'date', 'amount', 'held', 'reshapes'].map((k) => (
+                          <td key={k} className={cn(positionsUi.td, 'text-muted-foreground')}>
+                            —
+                          </td>
+                        ))}
+                        <td
+                          className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-muted-foreground')}
+                        >
+                          nothing to place — every row the feed holds is dated on or before today
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {calendarRows.map((e) => (
-                        <tr key={e.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                          <td className={cn(positionsUi.td, 'pl-2 text-left font-mono font-bold text-sky-300')}>
-                            {e.symbol}
-                            {bookSymbols.has(e.symbol) ? null : (
-                              <span className="ml-1.5 font-sans text-dense-meta font-normal text-muted-foreground">
-                                watchlist
-                              </span>
-                            )}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
-                            {kindLabel(e)}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-foreground')}>
-                            {fmtIsoDateToken(e.exDate ?? '')}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-secondary-foreground')}>{amountLabel(e)}</td>
-                          <td className={cn(positionsUi.td, e.shares ? 'text-foreground' : 'text-muted-foreground')}>
-                            {e.shares == null || e.shares === 0 ? 'legs only' : fmtShares(e.shares)}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
-                            {e.touchesAContract ? 'yes — see above' : 'no open leg'}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
-                            {e.kind === 'dividend' ? (
-                              <Link to="/portfolio/transfer" className={positionsUi.link}>
-                                Transfer &amp; Pay
-                              </Link>
-                            ) : (
-                              <Link to="/portfolio/positions" className={positionsUi.link}>
-                                Positions
-                              </Link>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ) : null}
+                    {calendarRows.map((e) => (
+                      <tr key={e.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                        <td className={cn(positionsUi.td, 'pl-2 text-left font-mono font-bold text-sky-300')}>
+                          {e.symbol}
+                          {bookSymbols.has(e.symbol) ? null : (
+                            <span className="ml-1.5 font-sans text-dense-meta font-normal text-muted-foreground">
+                              watchlist
+                            </span>
+                          )}
+                        </td>
+                        <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
+                          {kindLabel(e)}
+                        </td>
+                        <td className={cn(positionsUi.td, 'text-foreground')}>
+                          {fmtIsoDateToken(e.exDate ?? '')}
+                        </td>
+                        <td className={cn(positionsUi.td, 'text-secondary-foreground')}>{amountLabel(e)}</td>
+                        <td className={cn(positionsUi.td, e.shares ? 'text-foreground' : 'text-muted-foreground')}>
+                          {e.shares == null || e.shares === 0 ? 'legs only' : fmtShares(e.shares)}
+                        </td>
+                        <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
+                          {e.touchesAContract ? 'yes — see above' : 'no open leg'}
+                        </td>
+                        <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
+                          {e.kind === 'dividend' ? (
+                            <Link to="/portfolio/transfer" className={positionsUi.link}>
+                              Transfer &amp; Pay
+                            </Link>
+                          ) : (
+                            <Link to="/portfolio/positions" className={positionsUi.link}>
+                              Positions
+                            </Link>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               <p className={cn(FOOT, 'm-0')}>{CORPORATE_ACTIONS_UNRECORDED.watchlist}</p>
             </section>
 

@@ -40,9 +40,10 @@ describe('layerForPath', () => {
 
   it('splits the app across the layers it has pages for today', () => {
     // /trade/plans (C1-c) put a real page on the execution layer; /risk/portfolio
-    // (2026-09-17) put the first one on the risk layer, and Today put one on the
-    // home layer the same day. Only review still has a design route and no page.
+    // (2026-09-17) put the first one on the risk layer, Today put one on the
+    // home layer the same day, and the five Review pages closed the last gap:
+    // every layer the design names now has at least one page here.
     const seen = new Set(PAGE_ROUTES.map((r) => layerForPath(r.path)))
-    expect([...seen].sort()).toEqual(['analysis', 'base', 'execution', 'home', 'result', 'risk'])
+    expect([...seen].sort()).toEqual(['analysis', 'base', 'execution', 'home', 'result', 'review', 'risk'])
   })
 })

@@ -82,6 +82,7 @@ import {
   PORTFOLIO,
   RESEARCH,
   RISK,
+  REVIEW,
   STRATEGY,
   SYSTEM_CONFIG,
   SYSTEM_DATA,
@@ -295,6 +296,37 @@ export const ROUTES: readonly RouteEntry[] = [
       rev: '2026-09-17.1',
       note: DESIGN_NOTES['/portfolio/corporate-actions'],
     },
+  },
+  // ── Review ─────────────────────────────────────────────────
+  {
+    path: '/review',
+    label: 'Queue',
+    crumbs: REVIEW,
+    design: { state: 'reviewing', rev: '2026-09-17.1', note: DESIGN_NOTES['/review'] },
+  },
+  {
+    path: '/review/fit',
+    label: 'Single trade',
+    crumbs: REVIEW,
+    design: { state: 'reviewing', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/fit'] },
+  },
+  {
+    path: '/review/habits',
+    label: 'Habits',
+    crumbs: REVIEW,
+    design: { state: 'reviewing', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/habits'] },
+  },
+  {
+    path: '/review/playbook-stats',
+    label: 'Playbook stats',
+    crumbs: REVIEW,
+    design: { state: 'reviewing', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/playbook-stats'] },
+  },
+  {
+    path: '/review/proposals',
+    label: 'Rule proposals',
+    crumbs: REVIEW,
+    design: { state: 'reviewing', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/proposals'] },
   },
   // ── Risk ───────────────────────────────────────────────────────────────
   {

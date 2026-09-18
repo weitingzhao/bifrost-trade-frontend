@@ -128,6 +128,26 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/portfolio/backing/BackingPage')),
       },
       {
+        path: 'review',
+        lazy: lazyPage(() => import('@/pages/review/queue/ReviewQueuePage')),
+      },
+      {
+        path: 'review/fit',
+        lazy: lazyPage(() => import('@/pages/review/fit/ReviewFitPage')),
+      },
+      {
+        path: 'review/habits',
+        lazy: lazyPage(() => import('@/pages/review/habits/ReviewHabitsPage')),
+      },
+      {
+        path: 'review/playbook-stats',
+        lazy: lazyPage(() => import('@/pages/review/playbookStats/PlaybookStatsPage')),
+      },
+      {
+        path: 'review/proposals',
+        lazy: lazyPage(() => import('@/pages/review/proposals/RuleProposalsPage')),
+      },
+      {
         path: 'risk/budget',
         lazy: lazyPage(() => import('@/pages/risk/budget/RiskBudgetPage')),
       },

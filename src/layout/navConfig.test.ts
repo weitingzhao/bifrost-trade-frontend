@@ -20,11 +20,14 @@ describe('Trade nav', () => {
     // design files it as its own group of six, after Portfolio.
     // Home joined 2026-09-17 at the head, where the design's order puts it: it
     // belongs to no layer and cuts across all five by time of day.
-    expect(NAV_GROUPS.map((g) => g.label).slice(0, 6)).toEqual([
+    // Review joined 2026-09-17 with all five of its rows, filed after Risk as
+    // the design has it: what was closed, and what it argues for.
+    expect(NAV_GROUPS.map((g) => g.label).slice(0, 7)).toEqual([
       'Home',
       'Trade',
       'Portfolio',
       'Risk',
+      'Review',
       'Research',
       'Strategy',
     ])

@@ -138,6 +138,19 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     ],
   },
   {
+    label: 'Review',
+    icon: Trophy,
+    // The design files Review as its own group after Risk: what was closed, and
+    // what it argues for. Five rows, built together 2026-09-17.
+    items: [
+      route('Queue', '/review', ListChecks),
+      route('Single trade', '/review/fit', Target),
+      route('Habits', '/review/habits', Activity),
+      route('Playbook stats', '/review/playbook-stats', BarChart2),
+      route('Rule proposals', '/review/proposals', ListTodo),
+    ],
+  },
+  {
     label: 'Research',
     icon: BookOpen,
     // Grouped by how much the system does for the Owner, top down. The

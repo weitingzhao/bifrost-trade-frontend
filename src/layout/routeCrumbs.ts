@@ -9,6 +9,7 @@ export const MARKET = ['Research', 'Market'] as const
 export const PORTFOLIO = ['Portfolio'] as const
 export const TRADE = ['Trade'] as const
 export const RISK = ['Risk'] as const
+export const REVIEW = ['Review'] as const
 export const RESEARCH = ['Research'] as const
 export const AUTOPILOT = ['Research', 'Autopilot'] as const
 export const COPILOT = ['Research', 'Copilot'] as const

@@ -156,8 +156,9 @@ describe('design adoption', () => {
     // is the last page of the Portfolio group (unbuilt 34→33, reviewing 3→4).
     // Today closes the Home group the same day (unbuilt 33→32, reviewing 4→5),
     // then Risk Budget and Sizing close the Risk group (unbuilt 32→30,
-    // reviewing 5→7).
-    expect(counts.byState.reviewing).toBe(7)
+    // reviewing 5→7), then all five Review pages at once (unbuilt 30→25,
+    // reviewing 7→12).
+    expect(counts.byState.reviewing).toBe(12)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -187,6 +188,11 @@ describe('design adoption', () => {
       '/home',
       '/portfolio/corporate-actions',
       '/portfolio/pnl-explain',
+      '/review',
+      '/review/fit',
+      '/review/habits',
+      '/review/playbook-stats',
+      '/review/proposals',
       '/risk/budget',
       '/risk/sizing',
       '/trade/expiration',
@@ -220,7 +226,7 @@ describe('design adoption', () => {
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
-    expect(counts.byState.unbuilt).toBe(30)
+    expect(counts.byState.unbuilt).toBe(25)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.

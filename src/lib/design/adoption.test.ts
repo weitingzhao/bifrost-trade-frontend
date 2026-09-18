@@ -118,9 +118,15 @@ describe('design adoption', () => {
     // Stress & Scenario signed off the same day (aligned 13→14), then Orders
     // & Fills (aligned 14→15), then Margin & Buying Power (aligned 15→16)
     // and Assignment (16→17), then Limits & Breaches (17→18). Today signed off
-    // after it was re-laid out to the design's shape (18→19).
-    expect(counts.aligned + counts.byState.stale).toBe(19)
-    expect(counts.aligned).toBe(19)
+    // after it was re-laid out to the design's shape (18→19). P&L Explain and
+    // Corporate Actions signed off 2026-09-18, the last two Portfolio pages
+    // waiting for a look (19→21) — both were built from nothing, and both
+    // spent their review carrying a band that could not read: the first now
+    // keeps the thesis table's shape with a NO HYPOTHESIS STORE row, and the
+    // second stopped blaming its feed for a calendar the issuers have not
+    // declared yet.
+    expect(counts.aligned + counts.byState.stale).toBe(21)
+    expect(counts.aligned).toBe(21)
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -158,8 +164,11 @@ describe('design adoption', () => {
     // Today closes the Home group the same day (unbuilt 33→32, reviewing 4→5),
     // then Risk Budget and Sizing close the Risk group (unbuilt 32→30,
     // reviewing 5→7), then all five Review pages at once (unbuilt 30→25,
-    // reviewing 7→12), and Today was signed off (reviewing 12→11).
-    expect(counts.byState.reviewing).toBe(11)
+    // reviewing 7→12), and Today was signed off (reviewing 12→11). P&L Explain
+    // and Corporate Actions were signed off together 2026-09-18 (11→9), which
+    // emptied Portfolio's queue: every page still waiting for a look is now
+    // outside that group.
+    expect(counts.byState.reviewing).toBe(9)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -277,13 +286,13 @@ describe('adoptionByGroup', () => {
   it('counts a group against every row it owns, not only the ones walked so far', () => {
     const groups = adoptionByGroup(rows)
     const portfolio = groups.find((g) => g.group === 'Portfolio')
-    // The question the summary exists to answer: Portfolio is not finished.
-    // Seven pages are in place and two wait for the Owner's look — a reading of
-    // "7 aligned" alone would have said the group was done.
-    expect(portfolio).toMatchObject({ total: 9, aligned: 7, left: 2 })
-    // Corporate Actions was the group's last unbuilt page; it is now built and
-    // waiting for the Owner's look, so the two left are both `reviewing`.
-    expect(portfolio?.byState.reviewing).toBe(2)
+    // The question the summary exists to answer. Portfolio is the first group
+    // to finish: nine pages, all walked and all signed off, the last two being
+    // P&L Explain and Corporate Actions on 2026-09-18. The summary still counts
+    // against every row the group owns, which is why a finished group reads
+    // nine of nine rather than however many happen to be tagged.
+    expect(portfolio).toMatchObject({ total: 9, aligned: 9, left: 0 })
+    expect(portfolio?.byState.reviewing).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

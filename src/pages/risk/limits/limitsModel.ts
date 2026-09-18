@@ -13,8 +13,17 @@
  * either, it says which of the two is missing.
  */
 
-export type LimitKind = 'hard' | 'soft'
-export type LimitGroup = 'Concentration' | 'Velocity' | 'Margin' | 'Greeks' | 'Event'
+/**
+ * `gate` is the third kind, and it is not a severity — it is a *scope*.
+ *
+ * Design DECISIONS 2026-09-18 collapsed gates and limits into one model: a gate
+ * is a limit whose scope is an allocation, enforced by the daemon before the
+ * action happens rather than noticed after it. So it breaches like any other
+ * line, but there is nothing to acknowledge — the open simply does not happen,
+ * and the attempt is what lands here. The definition lives in Trade › Rules.
+ */
+export type LimitKind = 'hard' | 'soft' | 'gate'
+export type LimitGroup = 'Concentration' | 'Velocity' | 'Margin' | 'Greeks' | 'Event' | 'Gate'
 
 /** How a reading is printed — the three shapes the book actually holds. */
 export type LimitUnit = 'pct' | 'usd' | 'count'
@@ -64,7 +73,14 @@ export const LIMITS_UNRECORDED = {
 /** Over this share of a limit, a line is worth seeing before it is crossed. */
 export const LIMIT_WATCH = 0.8
 
-export const LIMIT_GROUPS: readonly LimitGroup[] = ['Concentration', 'Velocity', 'Margin', 'Greeks', 'Event']
+export const LIMIT_GROUPS: readonly LimitGroup[] = [
+  'Concentration',
+  'Velocity',
+  'Margin',
+  'Greeks',
+  'Event',
+  'Gate',
+]
 
 export interface LimitReadings {
   topNameShare: number | null
@@ -300,6 +316,138 @@ export function watching(rows: readonly LimitRow[], floor: number = LIMIT_WATCH)
 /** Rules the app can read but nobody has drawn a line for. */
 export function unwritten(rows: readonly LimitRow[]): LimitRow[] {
   return rows.filter((r) => r.limit == null && r.current != null)
+}
+
+/** What the Gate group needs: the active allocation, its gate, and what they read now. */
+export interface GateReadings {
+  allocationName: string | null
+  gateName: string | null
+  gateVersion: number | null
+  /** `guard.risk` as the record stores it. */
+  guard: Record<string, unknown> | null
+  /** Instances open under the allocation right now. */
+  openInstances: number | null
+  /** The allocation's own ceiling on concurrent instances. */
+  maxPositions: number | null
+  /** Realised on the allocation's instances today. */
+  lossToday: number | null
+  /** True when the gate is configured for paper trading. */
+  paperTrade: boolean | null
+}
+
+/** One numeric guard off the gate record, or null when the record has no such line. */
+function guardNumber(guard: Record<string, unknown> | null, key: string): number | null {
+  const v = guard?.[key]
+  return typeof v === 'number' && Number.isFinite(v) ? v : null
+}
+
+/**
+ * The Gate group — the only limits in this book that anybody has actually
+ * written down.
+ *
+ * Every other group's line is missing because the design edits limits in Trade
+ * › Rules and that store does not exist. The gate's store *does*: it is
+ * versioned, attached to the allocation the daemon runs, and read here as it
+ * stands. Which makes the group's real reading uncomfortable and worth having —
+ * the written limits bound a daemon that is frozen (D10) and set to paper.
+ */
+export function gateLimitRules(r: GateReadings): LimitRule[] {
+  if (r.gateName == null) return []
+  const rules: LimitRule[] = []
+  const inRules = { label: 'Trade › Rules', to: '/trade/rules' }
+
+  if (r.maxPositions != null) {
+    rules.push({
+      key: 'gate-open-instances',
+      group: 'Gate',
+      name: 'Open instances',
+      kind: 'gate',
+      scope: 'allocation',
+      unit: 'count',
+      current: r.openInstances,
+      limit: r.maxPositions,
+      bound: 'ceiling',
+      onBreach: 'the daemon does not open another — nothing to acknowledge',
+      citedFrom: inRules,
+      noReading: r.openInstances == null ? 'no instance under this allocation carries a fill' : null,
+    })
+  }
+
+  const dailyLoss = guardNumber(r.guard, 'max_daily_loss_usd')
+  if (dailyLoss != null) {
+    rules.push({
+      key: 'gate-daily-loss',
+      group: 'Gate',
+      name: 'Daily loss on the allocation',
+      kind: 'gate',
+      scope: 'allocation',
+      unit: 'usd',
+      // A loss is a limit on how far *down* the day may go, so the reading is
+      // the loss itself: a profitable day is zero consumed, not negative.
+      current: r.lossToday == null ? null : Math.max(0, -r.lossToday),
+      limit: dailyLoss,
+      bound: 'ceiling',
+      onBreach: 'the daemon halts opens for the day',
+      citedFrom: inRules,
+      noReading: r.lossToday == null ? 'nothing closed under this allocation today' : null,
+    })
+  }
+
+  const netDelta = guardNumber(r.guard, 'max_net_delta_shares')
+  if (netDelta != null) {
+    rules.push({
+      key: 'gate-net-delta',
+      group: 'Gate',
+      name: 'Net Δ on the allocation',
+      kind: 'gate',
+      scope: 'allocation',
+      unit: 'count',
+      current: null,
+      limit: netDelta,
+      bound: 'ceiling',
+      onBreach: 'a hedge intent is issued',
+      citedFrom: inRules,
+      noReading: 'Δ is computed for the book, not per allocation — no reading is scoped to one',
+    })
+  }
+
+  const posShares = guardNumber(r.guard, 'max_position_shares')
+  if (posShares != null) {
+    rules.push({
+      key: 'gate-position-shares',
+      group: 'Gate',
+      name: 'Shares in one position',
+      kind: 'gate',
+      scope: 'allocation',
+      unit: 'count',
+      current: null,
+      limit: posShares,
+      bound: 'ceiling',
+      onBreach: 'the daemon does not add to the name',
+      citedFrom: inRules,
+      noReading: 'positions are not attributed to an allocation on this side',
+    })
+  }
+
+  const hedges = guardNumber(r.guard, 'max_daily_hedge_count')
+  if (hedges != null) {
+    rules.push({
+      key: 'gate-daily-hedges',
+      group: 'Gate',
+      name: 'Hedges today',
+      kind: 'gate',
+      scope: 'allocation',
+      unit: 'count',
+      current: null,
+      limit: hedges,
+      bound: 'ceiling',
+      onBreach: 'the daemon stops hedging for the day',
+      citedFrom: inRules,
+      noReading: 'the daemon does not hedge — execution is frozen (D10) and the gate is set to paper',
+    })
+  }
+
+  return rules
 }
 
 export interface GateParam {

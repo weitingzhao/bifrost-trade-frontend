@@ -78,6 +78,8 @@ const caps: SizingCaps = {
   nameBetaDelta: 20_000,
   bookBetaDelta: 200_000,
   concentrationCeiling: 0.35,
+  gateRoom: null,
+  gateApplies: false,
 }
 
 describe('sizeCandidate', () => {
@@ -133,5 +135,41 @@ describe('sizeCandidate', () => {
     expect(r.n).toBeNull()
     expect(r.binding).toBeNull()
     expect(r.missing).toHaveLength(3)
+  })
+})
+
+describe('sizeCandidate · the gate cap', () => {
+  it('is silent on a hand plan, which is under no allocation', () => {
+    const r = sizeCandidate(caps)
+    expect(r.nByGate).toBeNull()
+    // Not applicable is not the same as missing: a hand plan must not read as
+    // constrained by a rule it is not under.
+    expect(r.missing.map((m) => m.cap)).not.toContain('gate')
+  })
+
+  it('caps to the room left when an opportunity covers the candidate', () => {
+    const r = sizeCandidate({ ...caps, gateApplies: true, gateRoom: 1 })
+    expect(r.nByGate).toBe(1)
+    expect(r.n).toBe(1)
+    expect(r.binding).toBe('gate')
+  })
+
+  it('floors the room like every other cap', () => {
+    expect(sizeCandidate({ ...caps, gateApplies: true, gateRoom: 2.9 }).nByGate).toBe(2)
+    expect(sizeCandidate({ ...caps, gateApplies: true, gateRoom: -3 }).nByGate).toBe(0)
+  })
+
+  it('reports the cap missing when the gate applies and nothing reads it', () => {
+    const r = sizeCandidate({ ...caps, gateApplies: true, gateRoom: null })
+    expect(r.nByGate).toBeNull()
+    expect(r.missing.find((m) => m.cap === 'gate')).toBeTruthy()
+    // The other caps still bind — a missing cap never widens the answer.
+    expect(r.n).toBe(3)
+  })
+
+  it('does not bind when another cap is tighter', () => {
+    const r = sizeCandidate({ ...caps, gateApplies: true, gateRoom: 99 })
+    expect(r.nByGate).toBe(99)
+    expect(r.binding).not.toBe('gate')
   })
 })

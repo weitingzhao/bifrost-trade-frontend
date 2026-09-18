@@ -33,17 +33,24 @@ import { rollupMargin } from '@/utils/marginPressure'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
 import { useExecutionsCanonical } from '@/hooks/useExecutions'
-import { fetchGateSafety, fetchGateSafetyFull } from '@/api/strategy'
+import { readInstances } from '@/utils/strategyInstances'
+import {
+  fetchAllocations,
+  fetchGateSafety,
+  fetchGateSafetyFull,
+  fetchStrategyInstances,
+} from '@/api/strategy'
 import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import {
   LIMITS_UNRECORDED,
   LIMIT_GROUPS,
-  gateParams,
+  gateLimitRules,
   limitRules,
   openBreaches,
   unwritten,
   watching,
   withHeadroom,
+  type GateReadings,
   type LimitRow,
 } from './limitsModel'
 
@@ -140,10 +147,78 @@ export default function RiskLimitsPage() {
     return n
   }, [book.isLoading, book.filteredOptions])
 
+  /**
+   * The gate the daemon runs under — the only limits in this book anyone has
+   * written down. Design DECISIONS 2026-09-18: a gate is a limit at scope =
+   * allocation, defined in Trade › Rules and read here.
+   */
+  const allocationsQuery = useQuery({
+    queryKey: ['strategy', 'allocations'],
+    queryFn: () => fetchAllocations(),
+  })
+  const instancesQuery = useQuery({
+    queryKey: ['strategy', 'instances'],
+    queryFn: () => fetchStrategyInstances(),
+  })
+  const gatesQuery = useQuery({ queryKey: ['strategy', 'gate-safety'], queryFn: fetchGateSafety })
+
+  const allocation = (allocationsQuery.data?.items ?? []).find((a) => a.is_active) ?? null
+  // The allocation names its own gate; the active-gate list is the fallback for
+  // an allocation that carries none.
+  const gateId =
+    allocation?.gate_safety_strategy_id ??
+    (gatesQuery.data?.items ?? []).find((g) => g.is_active)?.gate_safety_strategy_id ??
+    null
+  const gateFullQuery = useQuery({
+    queryKey: ['strategy', 'gate-safety', gateId],
+    queryFn: () => fetchGateSafetyFull(gateId!),
+    enabled: gateId != null,
+  })
+
+  const gateReadings = useMemo<GateReadings>(() => {
+    const gate = gateFullQuery.data ?? null
+    const guard = ((gate?.gates as Record<string, unknown> | undefined)?.guard as
+      | Record<string, unknown>
+      | undefined)?.risk as Record<string, unknown> | undefined
+    if (allocation == null || gate == null) {
+      return {
+        allocationName: allocation?.name ?? null,
+        gateName: gate?.name ?? null,
+        gateVersion: gate?.version ?? null,
+        guard: guard ?? null,
+        openInstances: null,
+        maxPositions: allocation?.max_positions ?? null,
+        lossToday: null,
+        paperTrade: typeof guard?.paper_trade === 'boolean' ? (guard.paper_trade as boolean) : null,
+      }
+    }
+    const oppIds = new Set(allocation.strategy_opportunity_ids ?? [])
+    const mine = readInstances(instancesQuery.data?.items ?? [], execQuery.data?.items ?? []).filter((i) =>
+      oppIds.has(i.opportunityId),
+    )
+    const today = new Date().toISOString().slice(0, 10)
+    const closedToday = mine.filter((i) => i.closed && i.openedOn != null)
+    const todayFills = (execQuery.data?.items ?? []).filter(
+      (e) => (e.trade_date ?? '').slice(0, 10) === today && e.strategy_instance_id != null,
+    )
+    return {
+      allocationName: allocation.name,
+      gateName: gate.name,
+      gateVersion: gate.version,
+      guard: guard ?? null,
+      openInstances: mine.filter((i) => !i.closed).length,
+      maxPositions: allocation.max_positions ?? null,
+      // Nothing settled under the allocation today is a reading of zero loss,
+      // not an absence — but only once a fill today exists to say so.
+      lossToday: todayFills.length === 0 ? null : closedToday.reduce((a, i) => a + (i.realised ?? 0), 0),
+      paperTrade: typeof guard?.paper_trade === 'boolean' ? (guard.paper_trade as boolean) : null,
+    }
+  }, [allocation, gateFullQuery.data, instancesQuery.data?.items, execQuery.data?.items])
+
   const rows = useMemo(
     () =>
-      withHeadroom(
-        limitRules({
+      withHeadroom([
+        ...limitRules({
           topNameShare: exposure[0]?.share ?? null,
           concentrationFloor: RISK_CONCENTRATION_FLOOR,
           clusterShare: clusters.find((c) => c.members.length > 1)?.share ?? null,
@@ -159,8 +234,9 @@ export default function RiskLimitsPage() {
           shortGamma: legs.length > 0 ? totals.gamma : null,
           nakedShortPuts,
         }),
-      ),
-    [exposure, clusters, velocity, margin, ceiling, judgment, totals, legs.length, nakedShortPuts],
+        ...gateLimitRules(gateReadings),
+      ]),
+    [exposure, clusters, velocity, margin, ceiling, judgment, totals, legs.length, nakedShortPuts, gateReadings],
   )
 
   const breaches = openBreaches(rows)
@@ -169,15 +245,6 @@ export default function RiskLimitsPage() {
   const held = rows.filter((r) => r.use != null).length
   const withLine = rows.filter((r) => r.limit != null).length
 
-  /** The daemon's own stored parameters: real limits, on an engine that is frozen. */
-  const gatesQuery = useQuery({ queryKey: ['strategy', 'gate-safety'], queryFn: fetchGateSafety })
-  const activeGate = (gatesQuery.data?.items ?? []).find((g) => g.is_active) ?? null
-  const gateFullQuery = useQuery({
-    queryKey: ['strategy', 'gate-safety', activeGate?.gate_safety_strategy_id],
-    queryFn: () => fetchGateSafetyFull(activeGate!.gate_safety_strategy_id),
-    enabled: activeGate != null,
-  })
-  const params = useMemo(() => gateParams(gateFullQuery.data?.gates), [gateFullQuery.data?.gates])
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -249,7 +316,11 @@ export default function RiskLimitsPage() {
                     className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border/55 px-3 py-2 last:border-b-0"
                   >
                     <span className="inline-flex items-center gap-1.5 text-xs leading-normal font-semibold text-foreground">
-                      <StatusLamp lamp={r.kind === 'hard' ? 'red' : 'yellow'} variant="dot" title={r.kind} />
+                      <StatusLamp
+                        lamp={r.kind === 'hard' ? 'red' : r.kind === 'gate' ? 'gray' : 'yellow'}
+                        variant="dot"
+                        title={r.kind}
+                      />
                       {r.name}
                     </span>
                     <span className={cn(positionsUi.mono, 'text-xs text-warning')}>
@@ -333,8 +404,17 @@ export default function RiskLimitsPage() {
                             >
                               {r.name}
                               {r.breached ? (
-                                <span className="ml-1.5 inline-flex h-4 items-center rounded-[3px] border border-lamp-red/45 px-1 font-mono text-dense-micro font-bold text-lamp-red">
-                                  BREACH
+                                <span
+                                  className={cn(
+                                    'ml-1.5 inline-flex h-4 items-center rounded-[3px] border px-1 font-mono text-dense-micro font-bold',
+                                    // The design's gate violet is the Strategy
+                                    // entity hue it already had: #a78bfa in dark.
+                                    r.kind === 'gate'
+                                      ? 'border-[var(--color-entity-strategy)]/45 text-[var(--color-entity-strategy)]'
+                                      : 'border-lamp-red/45 text-lamp-red',
+                                  )}
+                                >
+                                  {r.kind === 'gate' ? 'GATE HIT' : 'BREACH'}
                                 </span>
                               ) : null}
                             </td>
@@ -344,7 +424,9 @@ export default function RiskLimitsPage() {
                                   'inline-flex h-4 items-center rounded-[3px] border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em]',
                                   r.kind === 'hard'
                                     ? 'border-lamp-red/45 text-lamp-red'
-                                    : 'border-border text-muted-foreground',
+                                    : r.kind === 'gate'
+                                      ? 'border-[var(--color-entity-strategy)]/45 text-[var(--color-entity-strategy)]'
+                                      : 'border-border text-muted-foreground',
                                 )}
                               >
                                 {r.kind.toUpperCase()}
@@ -478,55 +560,40 @@ export default function RiskLimitsPage() {
               label="The daemon’s gate"
               note="not one of the twelve — stored parameters the trading engine would read, edited on Gates"
             />
-            <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="The daemon's gate">
+            <section className={positionsUi.panel} aria-label="The daemon's gate">
               <header className={positionsUi.panelHead}>
-                <span className={positionsUi.panelTitle}>{activeGate?.name ?? 'no active gate'}</span>
-                <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                  {params.length} parameters
+                <span className={positionsUi.cap}>The gate</span>
+                <span className={positionsUi.panelTitle}>
+                  {gateReadings.gateName == null
+                    ? 'no allocation is active'
+                    : `${gateReadings.gateName} · v${gateReadings.gateVersion}`}
                 </span>
-                <DenseTag variant="warning" size="cell">
-                  ⚠ the engine is frozen
-                </DenseTag>
-                <Link to="/strategy/gates" className={cn(positionsUi.link, 'ml-auto')}>
-                  Gates →
+                {gateReadings.paperTrade ? (
+                  <DenseTag variant="warning" size="cell">
+                    ⚠ PAPER TRADE
+                  </DenseTag>
+                ) : null}
+                <Link to="/trade/rules" className={cn(positionsUi.link, 'ml-auto')}>
+                  Definition · Trade › Rules →
                 </Link>
               </header>
-              {params.length === 0 ? (
-                <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No gate is active.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  {/* §14.6: three columns, a 560 floor. */}
-                  <table className="w-full min-w-[560px] table-fixed border-collapse">
-                    <colgroup>
-                      <col style={{ width: '16%' }} />
-                      <col style={{ width: '54%' }} />
-                      <col style={{ width: '30%' }} />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th className={cn(positionsUi.th, 'text-left')}>Section</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Parameter</th>
-                        <th className={positionsUi.th}>Value</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {params.map((p) => (
-                        <tr key={`${p.section}.${p.key}`} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                          <td className={cn(positionsUi.td, 'pl-2 text-left font-sans text-muted-foreground')}>
-                            {p.section}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left text-secondary-foreground')}>{p.key}</td>
-                          <td className={cn(positionsUi.td, 'text-foreground')}>{p.value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <p className="m-0 px-3 py-2.5 text-dense-body leading-normal text-secondary-foreground text-pretty">
+                {gateReadings.gateName == null ? (
+                  'No allocation is active, so no gate applies and the Gate group above is empty.'
+                ) : (
+                  <>
+                    The gate&rsquo;s lines are in the table above, in the Gate group — a gate is a limit whose scope
+                    is an allocation ({gateReadings.allocationName}), enforced by the daemon before the action
+                    happens rather than noticed after it, so a hit is logged and there is nothing to acknowledge.
+                    Its <em>definition</em> lives in Trade › Rules; this page only reads it.
+                  </>
+                )}
+              </p>
               <p className={cn(FOOT, 'm-0')}>
-                These are the daemon&rsquo;s own stored parameters, not the twelve rules above: they bind an engine that
-                is frozen under D10 and configured for paper trading, so nothing in this table can trip today. They are
-                edited on Gates, never here.
+                These are the only limits in this book anybody has written down — and they bound a daemon that is
+                frozen (D10)
+                {gateReadings.paperTrade ? ' and configured for paper trading' : ''}. Every other group&rsquo;s line
+                is missing because the store the design edits them in does not exist yet.
               </p>
             </section>
 

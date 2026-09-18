@@ -345,7 +345,7 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: RISK,
     design: {
       state: 'reviewing',
-      rev: '2026-09-15.8',
+      rev: '2026-09-18.1',
       note: DESIGN_NOTES['/risk/budget'],
     },
   },
@@ -355,7 +355,7 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: RISK,
     design: {
       state: 'reviewing',
-      rev: '2026-09-17.1',
+      rev: '2026-09-18.1',
       note: DESIGN_NOTES['/risk/sizing'],
     },
   },
@@ -364,8 +364,8 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Limits & Breaches',
     crumbs: RISK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      state: 'reviewing',
+      rev: '2026-09-18.1',
       note: DESIGN_NOTES['/risk/limits'],
     },
   },

@@ -1,11 +1,11 @@
 /**
- * Risk · Sizing — how big, in three caps, the smallest of which wins.
+ * Risk · Sizing — how big, in four caps, the smallest of which wins.
  *
  * The design's rule is the whole page: `n = min(risk cap, margin cap,
  * concentration cap)`, and an override may only size *down* — sizing up means
  * changing the cap itself, in Rules.
  *
- * Two of the three caps are real here. The margin cap is the room to the 85%
+ * Two of the four caps are real here. The margin cap is the room to the 85%
  * backing gate, which Backing & Model computes and this page cites; the
  * concentration cap is the share of β-weighted Δ$ one name may carry, which
  * Exposure computes and Limits holds against its line — and on this book the
@@ -18,6 +18,7 @@
  * empty table that reads as "nothing worth sizing".
  */
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -30,12 +31,15 @@ import { PositionsStat } from '@/components/positions/PositionsStat'
 import { fmtPct0 } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
+import { fetchAllocations, fetchStrategyInstances } from '@/api/strategy'
+import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { readInstances } from '@/utils/strategyInstances'
 import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
 import { RISK_BUDGET_UNRECORDED } from '@/utils/riskBudget'
 
 const PAGE_LEAD =
-  'How big — three caps per candidate, and the smallest wins. Candidates arrive from Compare and from Plans; nothing is sized here without one.'
+  'How big — four caps per candidate, and the smallest wins. Candidates arrive from Compare and from Plans; nothing is sized here without one. The gate cap reads the active allocation in Trade › Rules, and does not apply to a hand plan, which is under no allocation.'
 
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
@@ -56,11 +60,43 @@ const CAPS = [
     label: 'Concentration cap',
     math: 'n ≤ the contracts that keep the name inside its share of β-Δ$',
   },
+  {
+    key: 'gate',
+    label: 'Gate cap',
+    math: 'n ≤ the room left under the active allocation’s gate · Trade › Rules',
+  },
 ] as const
 
 export default function RiskSizingPage() {
   const [accountFilter, setAccountFilter] = useState('all')
   const { status, statusLoading, accountIds, judgment, rows: exposure } = useRiskExposure(accountFilter)
+
+  /**
+   * The fourth cap (design DECISIONS 2026-09-18): room under the active
+   * allocation's gate. It is a real, stored line — unlike the risk cap, which
+   * nobody has written — and it applies only to a candidate an opportunity
+   * covers. A hand plan is under no allocation and the cap is silent for it.
+   */
+  const allocationsQuery = useQuery({
+    queryKey: ['strategy', 'allocations'],
+    queryFn: () => fetchAllocations(),
+  })
+  const instancesQuery = useQuery({
+    queryKey: ['strategy', 'instances'],
+    queryFn: () => fetchStrategyInstances(),
+  })
+  const execQuery = useExecutionsCanonical()
+  const allocation = (allocationsQuery.data?.items ?? []).find((a) => a.is_active) ?? null
+  const gateOpen = useMemo(() => {
+    if (allocation == null) return null
+    const oppIds = new Set(allocation.strategy_opportunity_ids ?? [])
+    return readInstances(instancesQuery.data?.items ?? [], execQuery.data?.items ?? []).filter(
+      (i) => !i.closed && oppIds.has(i.opportunityId),
+    ).length
+  }, [allocation, instancesQuery.data?.items, execQuery.data?.items])
+  const gateMax = allocation?.max_positions ?? null
+  const gateName = allocation?.name ?? null
+  const gateRoom = gateOpen == null || gateMax == null ? null : Math.max(0, gateMax - gateOpen)
 
   const netLiquidation = useMemo(
     () =>
@@ -109,12 +145,14 @@ export default function RiskSizingPage() {
           </div>
         ) : (
           <>
-            <section className={positionsUi.panel} aria-label="The three caps">
+            <section className={positionsUi.panel} aria-label="The four caps">
               <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>The three caps</span>
-                <span className={positionsUi.panelTitle}>two are readable, one has no line</span>
+                <span className={positionsUi.cap}>The four caps</span>
+                <span className={positionsUi.panelTitle}>
+                  {gateRoom == null ? 'two are readable, one has no line' : 'three are readable, one has no line'}
+                </span>
                 <span className="ml-auto text-dense-meta text-muted-foreground">
-                  the smallest of the three is the size
+                  the smallest of the four is the size
                 </span>
               </header>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,13rem),1fr))] gap-x-4 gap-y-2 px-3 py-2.5">
@@ -144,6 +182,16 @@ export default function RiskSizingPage() {
                       : `${topName.symbol} is at ${fmtPct0(topName.share)}${overCeiling ? ' — already over' : ''}`
                   }
                   ink={overCeiling ? 'text-lamp-red' : undefined}
+                />
+                <PositionsStat
+                  cap="Gate room"
+                  value={gateRoom == null ? '—' : String(gateRoom)}
+                  ink={gateRoom === 0 ? 'text-warning' : undefined}
+                  sub={
+                    gateRoom == null
+                      ? 'no allocation is active, so no gate applies'
+                      : `${gateOpen} of ${gateMax} instances open · ${gateName}`
+                  }
                 />
               </div>
               <p className={cn(FOOT, 'm-0')}>
@@ -175,7 +223,7 @@ export default function RiskSizingPage() {
 
             <PositionsTier
               label="Sizing worksheet"
-              note="n = min(three caps) · an override may size down only — sizing up means changing the cap in Rules"
+              note="n = min(four caps) · an override may size down only — sizing up means changing the cap in Rules"
             />
             <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Sizing worksheet">
               <header className={positionsUi.panelHead}>
@@ -188,19 +236,21 @@ export default function RiskSizingPage() {
                 </span>
               </header>
               <div className="overflow-x-auto">
-                {/* §14.6: ten columns, the design's 1120 floor. */}
-                <table className="w-full min-w-[1120px] table-fixed border-collapse">
+                {/* §14.6: eleven columns since the gate cap joined; the
+                    design's floor was 1120 for ten. */}
+                <table className="w-full min-w-[1220px] table-fixed border-collapse">
                   <colgroup>
-                    <col style={{ width: '18%' }} />
-                    <col style={{ width: '10%' }} />
-                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '17%' }} />
                     <col style={{ width: '9%' }} />
                     <col style={{ width: '9%' }} />
-                    <col style={{ width: '9%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '8%' }} />
                     <col style={{ width: '11%' }} />
                     <col style={{ width: '8%' }} />
-                    <col style={{ width: '10%' }} />
-                    <col style={{ width: '6%' }} />
+                    <col style={{ width: '9%' }} />
+                    <col style={{ width: '5%' }} />
                   </colgroup>
                   <thead>
                     <tr>
@@ -210,6 +260,7 @@ export default function RiskSizingPage() {
                       <th className={positionsUi.th}>n by risk</th>
                       <th className={positionsUi.th}>n by margin</th>
                       <th className={positionsUi.th}>n by conc.</th>
+                      <th className={positionsUi.th}>n by gate</th>
                       <th className={cn(positionsUi.th, 'text-left')}>Binding</th>
                       <th className={positionsUi.th}>Size</th>
                       <th className={positionsUi.th}>Total at risk</th>
@@ -218,7 +269,7 @@ export default function RiskSizingPage() {
                   </thead>
                   <tbody>
                     <tr>
-                      <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')} colSpan={10}>
+                      <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')} colSpan={11}>
                         <span className="inline-flex items-start gap-1.5 text-dense-meta leading-normal text-muted-foreground">
                           <StatusLamp lamp="gray" variant="dot" title="No candidate" className="mt-1 shrink-0" />
                           No candidate reaches this page. Compare, which the design feeds it from, is not built on this

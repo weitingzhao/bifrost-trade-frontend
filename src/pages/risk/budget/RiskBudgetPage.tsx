@@ -15,6 +15,7 @@
  * which parts of the policy exist somewhere and which exist nowhere.
  */
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -30,6 +31,9 @@ import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
 import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
+import { fetchAllocations, fetchStrategyInstances } from '@/api/strategy'
+import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { readInstances } from '@/utils/strategyInstances'
 import { RISK_BUDGET_UNRECORDED, UNWRITTEN_POLICY, budgetLines } from '@/utils/riskBudget'
 
 const PAGE_LEAD =
@@ -42,6 +46,26 @@ export default function RiskBudgetPage() {
   const [accountFilter, setAccountFilter] = useState('all')
   const { status, statusLoading, accountIds, judgment, rows: exposure } = useRiskExposure(accountFilter)
   const { ceiling } = usePressureCeiling()
+
+  /** The daemon's allocation — one pool with hand plans, its own gate on top. */
+  const allocationsQuery = useQuery({
+    queryKey: ['strategy', 'allocations'],
+    queryFn: () => fetchAllocations(),
+  })
+  const instancesQuery = useQuery({
+    queryKey: ['strategy', 'instances'],
+    queryFn: () => fetchStrategyInstances(),
+  })
+  const execQuery = useExecutionsCanonical()
+  const allocation = (allocationsQuery.data?.items ?? []).find((a) => a.is_active) ?? null
+  const gateMax = allocation?.max_positions ?? null
+  const gateOpen = useMemo(() => {
+    if (allocation == null) return null
+    const oppIds = new Set(allocation.strategy_opportunity_ids ?? [])
+    return readInstances(instancesQuery.data?.items ?? [], execQuery.data?.items ?? []).filter(
+      (i) => !i.closed && oppIds.has(i.opportunityId),
+    ).length
+  }, [allocation, instancesQuery.data?.items, execQuery.data?.items])
 
   const netLiquidation = useMemo(
     () =>
@@ -80,6 +104,17 @@ export default function RiskBudgetPage() {
         where: 'per underlying',
         by: { label: 'Limits & Breaches', to: '/risk/limits' },
         now: exposure[0]?.share == null ? '—' : fmtPct0(exposure[0].share),
+      },
+      // Design DECISIONS 2026-09-18: one pool. The daemon's allocation spends
+      // the same budget a hand plan does; what is narrower about it is its gate,
+      // which is a limit at scope = allocation rather than a second budget.
+      {
+        key: 'daemon-book',
+        name: 'Daemon book · the active allocation',
+        value: gateMax == null ? 'no allocation' : `${gateMax} instances`,
+        where: 'the same pool, hand and daemon alike',
+        by: { label: 'Trade › Rules', to: '/trade/rules' },
+        now: gateOpen == null ? '—' : `${gateOpen} open`,
       },
       {
         key: 'pressure',
@@ -274,8 +309,11 @@ export default function RiskBudgetPage() {
                 </table>
               </div>
               <p className={cn(FOOT, 'm-0')}>
-                The three risk-budget lines exist nowhere; the three below them exist and are read on the pages named.
-                That is the whole difference between a policy this app enforces and one the design has only drawn.
+                The three risk-budget lines exist nowhere; the ones below them exist and are read on the pages named.
+                That is the whole difference between a policy this app enforces and one the design has only drawn. The
+                daemon&rsquo;s allocation is on that list because it spends this same budget — one pool, hand and
+                daemon alike. What is narrower about it is its <em>gate</em>, which is a limit at scope = allocation
+                rather than a second budget: defined in Trade › Rules, its hits land on Limits &amp; Breaches.
               </p>
             </section>
 

@@ -120,14 +120,30 @@ export interface SizingCaps {
   nameBetaDelta: number | null
   bookBetaDelta: number | null
   concentrationCeiling: number
+  /**
+   * Room left under the active allocation's gate, in contracts.
+   *
+   * The fourth cap (design DECISIONS 2026-09-18). A gate is a limit at scope =
+   * allocation, so it only applies to a candidate an opportunity covers; a hand
+   * plan is outside every allocation and the cap does not apply to it at all.
+   * `null` is that case — *not applicable*, which is a different answer from
+   * *could not be computed*, and the one place this model must not conflate
+   * them: treating "no gate applies" as a missing cap would make a hand plan
+   * look constrained by a rule it is not under.
+   */
+  gateRoom: number | null
+  /** True when an opportunity covers the candidate and a gate therefore applies. */
+  gateApplies: boolean
 }
 
-export type BindingCap = 'risk' | 'margin' | 'concentration'
+export type BindingCap = 'risk' | 'margin' | 'concentration' | 'gate'
 
 export interface SizingResult {
   nByRisk: number | null
   nByMargin: number | null
   nByConcentration: number | null
+  /** Null when no gate applies — see `SizingCaps.gateRoom`. */
+  nByGate: number | null
   /** The smallest cap that could be computed. Null when none could. */
   n: number | null
   binding: BindingCap | null
@@ -172,16 +188,25 @@ export function sizeCandidate(c: SizingCaps): SizingResult {
     nByConcentration = slope <= 0 ? 0 : Math.max(0, Math.floor(room / slope))
   }
 
+  // A gate that does not apply is silent: it neither caps nor reports missing.
+  let nByGate: number | null = null
+  if (c.gateApplies) {
+    if (c.gateRoom == null) missing.push({ cap: 'gate', why: 'the gate applies, but nothing reads the room left under it' })
+    else nByGate = Math.max(0, Math.floor(c.gateRoom))
+  }
+
   const caps: { cap: BindingCap; n: number }[] = []
   if (nByRisk != null) caps.push({ cap: 'risk', n: nByRisk })
   if (nByMargin != null) caps.push({ cap: 'margin', n: nByMargin })
   if (nByConcentration != null) caps.push({ cap: 'concentration', n: nByConcentration })
+  if (nByGate != null) caps.push({ cap: 'gate', n: nByGate })
   const smallest = caps.length === 0 ? null : caps.reduce((a, b) => (b.n < a.n ? b : a))
 
   return {
     nByRisk,
     nByMargin,
     nByConcentration,
+    nByGate,
     n: smallest?.n ?? null,
     binding: smallest?.cap ?? null,
     missing,

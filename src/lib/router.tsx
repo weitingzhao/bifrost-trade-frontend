@@ -128,6 +128,14 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/portfolio/backing/BackingPage')),
       },
       {
+        path: 'risk/budget',
+        lazy: lazyPage(() => import('@/pages/risk/budget/RiskBudgetPage')),
+      },
+      {
+        path: 'risk/sizing',
+        lazy: lazyPage(() => import('@/pages/risk/sizing/RiskSizingPage')),
+      },
+      {
         path: 'home',
         lazy: lazyPage(() => import('@/pages/home/today/TodayPage')),
       },

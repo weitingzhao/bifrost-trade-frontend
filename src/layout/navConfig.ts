@@ -133,6 +133,8 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       route('Stress & Scenario', '/risk/stress', Activity),
       route('Margin & Buying Power', '/risk/margin', Database),
       route('Limits & Breaches', '/risk/limits', ListChecks),
+      route('Risk Budget', '/risk/budget', Blocks),
+      route('Sizing', '/risk/sizing', Layers2),
     ],
   },
   {

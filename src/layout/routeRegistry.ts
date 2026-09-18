@@ -308,6 +308,26 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    path: '/risk/budget',
+    label: 'Risk Budget',
+    crumbs: RISK,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-15.8',
+      note: DESIGN_NOTES['/risk/budget'],
+    },
+  },
+  {
+    path: '/risk/sizing',
+    label: 'Sizing',
+    crumbs: RISK,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/risk/sizing'],
+    },
+  },
+  {
     path: '/risk/limits',
     label: 'Limits & Breaches',
     crumbs: RISK,

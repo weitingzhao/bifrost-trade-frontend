@@ -199,7 +199,29 @@ export function orphanOpportunities(d: ChainData): number {
   return d.opportunities.filter((o) => !allocated.has(o.strategy_opportunity_id)).length
 }
 
-export function buildChain(full: ChainData, sel: ChainSelection | null, activeOnly: boolean): ChainColumn[] {
+/**
+ * Two stores, two questions — kept apart on purpose.
+ *
+ * `strategy_allocation.is_active` says an allocation is **on the books**: it may
+ * be picked, and a plan under an inactive one runs outside the rules. The
+ * settings row the daemon loads (`POST /config/active-strategy`) says which one
+ * it actually **runs** on its next start. They are written by different calls
+ * and can disagree — two allocations can both be on the books while the daemon
+ * is on one of them — so a card that printed "active · the daemon runs this"
+ * from the row flag alone was attributing a daemon behaviour to a rulebook
+ * field. It now says which is which.
+ */
+export interface DaemonPick {
+  /** What the daemon's own config points at. Null when nothing is set. */
+  allocationId: number | null
+}
+
+export function buildChain(
+  full: ChainData,
+  sel: ChainSelection | null,
+  activeOnly: boolean,
+  daemon?: DaemonPick,
+): ChainColumn[] {
   const d = visibleChain(full, activeOnly)
   const lit = lineageOf(sel, d)
   const dim = (on: boolean) => sel != null && !on
@@ -264,11 +286,15 @@ export function buildChain(full: ChainData, sel: ChainSelection | null, activeOn
         sub: gate
           ? `gate ${gate.name} · v${gate.version}${limits.length ? ` · ${limits.join(' · ')}` : ''}`
           : `no gate${limits.length ? ` · ${limits.join(' · ')}` : ''}`,
-        tag: a.is_active ? 'active' : 'inactive',
+        tag: a.is_active ? 'on the books' : 'off the books',
         tagVariant: a.is_active ? ('success' as const) : ('neutral' as const),
         facts: [
           plural((a.strategy_opportunity_ids ?? []).length, 'opportunity', 'opportunities'),
-          a.is_active ? 'the daemon runs this' : 'plans under it run outside rules',
+          daemon?.allocationId === a.strategy_allocation_id
+            ? 'the daemon runs this'
+            : a.is_active
+              ? 'on the books · not what the daemon runs'
+              : 'plans under it run outside rules',
         ],
       lit: lit.allocation.has(a.strategy_allocation_id),
       selected: sel?.kind === 'allocation' && sel.id === a.strategy_allocation_id,
@@ -326,7 +352,12 @@ export interface ChainDetail {
  * contradiction unless the second number is named. Where the two differ, both
  * are stated.
  */
-export function detailOf(sel: ChainSelection | null, d: ChainData, visible?: ChainData): ChainDetail | null {
+export function detailOf(
+  sel: ChainSelection | null,
+  d: ChainData,
+  visible?: ChainData,
+  daemon?: DaemonPick,
+): ChainDetail | null {
   if (sel == null) return null
   const v = visible ?? d
   /** `9 opportunities use it · 2 active` when the filter hides some. */
@@ -411,10 +442,31 @@ export function detailOf(sel: ChainSelection | null, d: ChainData, visible?: Cha
         .join(' · '),
       facts: [
         {
-          k: 'State',
+          k: 'On the books',
           v: a.is_active ? 'active' : 'inactive',
-          note: a.is_active ? 'the daemon runs this' : 'plans under it run outside rules',
+          note: a.is_active
+            ? 'it may be picked — this is the rulebook flag, not what the daemon is on'
+            : 'plans under it run outside rules',
           tone: a.is_active ? ('success' as const) : ('warning' as const),
+        },
+        {
+          k: 'The daemon runs',
+          // "another" would claim a different allocation exists; when nothing
+          // is set, nothing is set.
+          v:
+            daemon?.allocationId == null
+              ? 'nothing'
+              : daemon.allocationId === a.strategy_allocation_id
+                ? 'this one'
+                : 'another',
+          note:
+            daemon?.allocationId == null
+              ? 'nothing is set — the daemon has no allocation to load on its next start'
+              : daemon.allocationId === a.strategy_allocation_id
+                ? 'its config points here, and it loads that on its next start'
+                : `its config points at #${daemon.allocationId} — Set active writes this one there`,
+          tone:
+            daemon?.allocationId === a.strategy_allocation_id ? ('success' as const) : ('warning' as const),
         },
         {
           k: 'Gate',

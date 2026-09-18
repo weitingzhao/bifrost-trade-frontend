@@ -18,6 +18,7 @@ import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { StructureWizardStepper } from '@/components/strategy/structures/StructureWizardStepper'
 import styles from '@/components/strategy/structures/structuresForm.module.css'
 import { fetchStructure, fetchTemplateDetail } from '@/api/strategy'
+import { TemplateCatalogControls } from '@/components/strategy/structures/TemplateCatalogControls'
 import {
   useCreateStructure,
   useStructureTemplates,
@@ -984,7 +985,11 @@ function StructureTemplateStep({
 }: StructureTemplateStepProps) {
   return (
     <div className={styles.wizardStep}>
-      <h4 className={styles.formGroupTitle}>Choose template</h4>
+      <h4 className={styles.formGroupTitle}>Choose template — the catalog (was Option Category)</h4>
+      {/* The catalog has no route of its own (design 2026-09-12): a structure's
+          six dimensions come from its template, so choosing one is the
+          categorising act and the catalog belongs where that choice is made. */}
+      <TemplateCatalogControls onCreated={onTemplateSelect} />
       <StructureTemplateFilters
         tplFilterSearch={tplFilterSearch}
         tplDimFilters={tplDimFilters}
@@ -1284,7 +1289,8 @@ function StructureCopyForm({
           </div>
         </div>
         <div className={styles.copyTemplateBlock}>
-          <label className={styles.detailsLabel}>Template</label>
+          <label className={styles.detailsLabel}>Template — the catalog (was Option Category)</label>
+          <TemplateCatalogControls onCreated={(id) => onTemplateSelect(id)} />
           <StructureTemplateFilters
             compact
             tplFilterSearch={tplFilterSearch}
@@ -1321,6 +1327,10 @@ function StructureCopyForm({
           {copyTemplateSelectOptions.length === 0 && (
             <p className={styles.formHint}>No templates match filters. Clear filters to see all.</p>
           )}
+          <p className={styles.formHint}>
+            Dimensions come from the linked template — change the template and the six dims follow. The catalog has no
+            route of its own (design 2026-09-12).
+          </p>
         </div>
       </div>
 

@@ -359,3 +359,47 @@ describe('parsePick and formatPick', () => {
     expect(parsePick('instance:abc')).toBeNull()
   })
 })
+
+describe('two stores, two questions', () => {
+  // `strategy_allocation.is_active` says an allocation may be picked. The
+  // settings row the daemon loads says which one it runs. They are written by
+  // different calls, so a card that read one and claimed the other would
+  // attribute a daemon behaviour to a rulebook field.
+  const allocId = ALLOC.strategy_allocation_id
+
+  function allocationCard(daemon?: { allocationId: number | null }) {
+    return buildChain(DATA, null, false, daemon)[2].cards[0]
+  }
+
+  it('tags the card from the rulebook flag, not from what the daemon is on', () => {
+    expect(allocationCard({ allocationId: null }).tag).toBe('on the books')
+  })
+
+  it('says an on-the-books allocation is not what runs, when the daemon is elsewhere', () => {
+    expect(allocationCard({ allocationId: allocId + 99 }).facts).toContain('on the books · not what the daemon runs')
+  })
+
+  it('says the daemon runs it only when its config actually points there', () => {
+    expect(allocationCard({ allocationId: allocId }).facts).toContain('the daemon runs this')
+  })
+
+  it('reads nothing set as nothing, never as another allocation', () => {
+    const d = detailOf({ kind: 'allocation', id: allocId }, DATA, undefined, { allocationId: null })!
+    const runs = d.facts.find((f) => f.k === 'The daemon runs')!
+    expect(runs.v).toBe('nothing')
+    expect(runs.note).toMatch(/no allocation to load/)
+  })
+
+  it('names the allocation the daemon is on when it is a different one', () => {
+    const d = detailOf({ kind: 'allocation', id: allocId }, DATA, undefined, { allocationId: 42 })!
+    const runs = d.facts.find((f) => f.k === 'The daemon runs')!
+    expect(runs.v).toBe('another')
+    expect(runs.note).toContain('#42')
+  })
+
+  it('keeps the on-the-books fact about the flag alone', () => {
+    const d = detailOf({ kind: 'allocation', id: allocId }, DATA, undefined, { allocationId: 42 })!
+    const books = d.facts.find((f) => f.k === 'On the books')!
+    expect(books.note).toMatch(/not what the daemon is on/)
+  })
+})

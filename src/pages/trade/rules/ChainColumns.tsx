@@ -6,6 +6,7 @@
  * back. A card that is *not* lit is the answer to "what is this connected to",
  * so the dim has to be readable rather than invisible.
  */
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -108,8 +109,11 @@ export function ChainDetailPanel({
 }: {
   detail: ChainDetail
   onPick: (sel: ChainSelection) => void
-  /** What this kind of thing can have done to it — the sheets behind the card. */
-  actions: { label: string; onClick: () => void; disabled?: boolean; title?: string }[]
+  /**
+   * What this kind of thing can have done to it — the sheets behind the card,
+   * plus the odd link to the page that settles something about it.
+   */
+  actions: { label: string; onClick?: () => void; to?: string; disabled?: boolean; title?: string }[]
 }) {
   return (
     <section className={cn(positionsUi.panel, 'border-[var(--sk-line2)]')} aria-label="Selected">
@@ -118,18 +122,24 @@ export function ChainDetailPanel({
         <span className={positionsUi.panelTitle}>{detail.title}</span>
         <span className="min-w-0 text-dense-meta text-muted-foreground">{detail.lineage}</span>
         <span className="ml-auto flex flex-wrap gap-1.5">
-          {actions.map((a) => (
-            <button
-              key={a.label}
-              type="button"
-              className={cn(positionsUi.btn, a.disabled && 'cursor-not-allowed opacity-50')}
-              disabled={a.disabled}
-              title={a.title}
-              onClick={a.onClick}
-            >
-              {a.label}
-            </button>
-          ))}
+          {actions.map((a) =>
+            a.to ? (
+              <Link key={a.label} to={a.to} className={cn(positionsUi.btn, 'no-underline')} title={a.title}>
+                {a.label}
+              </Link>
+            ) : (
+              <button
+                key={a.label}
+                type="button"
+                className={cn(positionsUi.btn, a.disabled && 'cursor-not-allowed opacity-50')}
+                disabled={a.disabled}
+                title={a.title}
+                onClick={a.onClick}
+              >
+                {a.label}
+              </button>
+            ),
+          )}
         </span>
       </header>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-x-3.5 gap-y-2 px-3 py-2.5">

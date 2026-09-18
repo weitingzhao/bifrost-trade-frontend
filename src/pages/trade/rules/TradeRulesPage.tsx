@@ -28,6 +28,7 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import type { PrefillData } from '@/components/strategy/OpportunityFormModal'
 import { useRulesChain } from '@/hooks/useRulesChain'
+import { SetActiveDialog } from './SetActiveDialog'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { ChainColumnList, ChainDetailPanel } from './ChainColumns'
 import { NO_SHEET, RulesSheets, type RulesSheet } from './RulesSheets'
@@ -51,13 +52,6 @@ const PAGE_LEAD =
  * chain does not, so the link stays until someone decides they are redundant
  * (design absence is not deletion — the Owner rules on that, not this page).
  */
-const FULL_LIST: Record<string, { to: string; label: string }> = {
-  structure: { to: '/strategy/structures', label: 'All structures →' },
-  opportunity: { to: '/strategy/opportunities', label: 'All opportunities →' },
-  allocation: { to: '/strategy/allocations', label: 'All allocations →' },
-  instance: { to: '/strategy/instances', label: 'All instances →' },
-}
-
 /** What each column's ＋ New opens. */
 const NEW_SHEET: Record<string, RulesSheet> = {
   structure: { kind: 'structure', mode: { kind: 'create' } },
@@ -93,9 +87,19 @@ export default function TradeRulesPage() {
   const status = useMonitorStatus()
   const { data, rawInstances, loading, error, refetch } = useRulesChain()
 
+  /**
+   * What the daemon's own config points at — a different store from the
+   * allocation row's `is_active`, and the one `Set active` writes.
+   */
+  const daemon = useMemo(
+    () => ({ allocationId: status.data?.strategy?.active?.allocation?.id ?? null }),
+    [status.data?.strategy?.active?.allocation?.id],
+  )
+  const [setActiveFor, setSetActiveFor] = useState<number | null | undefined>(undefined)
+
   const columns = useMemo(
-    () => buildChain(data, sel, activeOnly === 'active'),
-    [data, sel, activeOnly],
+    () => buildChain(data, sel, activeOnly === 'active', daemon),
+    [data, sel, activeOnly, daemon],
   )
 
 
@@ -115,7 +119,7 @@ export default function TradeRulesPage() {
   const instancesEmpty = data.opportunities.length > 0 && data.instances.length === 0
   // The detail is the record, so it keeps the closed history the filter hides —
   // and names the active count wherever the two numbers differ.
-  const detail = useMemo(() => detailOf(sel, data, visible), [sel, data, visible])
+  const detail = useMemo(() => detailOf(sel, data, visible, daemon), [sel, data, visible, daemon])
 
   /**
    * What the selected thing can have done to it. A gate has no column of its
@@ -136,11 +140,23 @@ export default function TradeRulesPage() {
     }
     if (kind === 'allocation') {
       const gateId = data.allocations.find((a) => a.strategy_allocation_id === sel.id)?.gate_safety_strategy_id
+      const isDaemons = daemon.allocationId === sel.id
       return [
+        // The one active switch the design keeps. It edits the daemon's config,
+        // not the allocation's own on-the-books flag, and it is a separate act
+        // from saving the definition (design DECISIONS 2026-09-18).
+        {
+          label: isDaemons ? 'Clear active' : 'Set active',
+          onClick: () => setSetActiveFor(isDaemons ? null : sel.id),
+          title: isDaemons
+            ? 'The daemon is on this one — clearing leaves it with no allocation to load'
+            : 'Write this allocation into the config the daemon loads on its next start',
+        },
         { label: 'Edit', onClick: () => setSheet({ kind: 'allocation', mode: 'edit', editId: sel.id }) },
         ...(gateId == null
           ? []
           : [{ label: 'Edit gate', onClick: () => setSheet({ kind: 'gate', mode: { kind: 'edit' as const, id: gateId } }) }]),
+        { label: 'Breaches → Risk Limits', to: '/risk/limits' },
       ]
     }
     if (kind === 'instance') {
@@ -247,18 +263,14 @@ export default function TradeRulesPage() {
 
             <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18.75rem),1fr))] items-start gap-3">
               {columns.map((column) => (
-                <div key={column.key} className="flex min-w-0 flex-col gap-2">
-                  <ChainColumnList
-                    column={column}
-                    expanded={Boolean(expanded[column.key])}
-                    onExpand={() => setExpanded((e) => ({ ...e, [column.key]: true }))}
-                    onPick={pick}
-                    onNew={() => setSheet(NEW_SHEET[column.key])}
-                  />
-                  <Link to={FULL_LIST[column.key].to} className={cn(positionsUi.link, 'px-0.5')}>
-                    {FULL_LIST[column.key].label}
-                  </Link>
-                </div>
+                <ChainColumnList
+                  key={column.key}
+                  column={column}
+                  expanded={Boolean(expanded[column.key])}
+                  onExpand={() => setExpanded((e) => ({ ...e, [column.key]: true }))}
+                  onPick={pick}
+                  onNew={() => setSheet(NEW_SHEET[column.key])}
+                />
               ))}
             </div>
 
@@ -267,6 +279,14 @@ export default function TradeRulesPage() {
             ) : null}
 
             <RulesSheets sheet={sheet} onClose={() => setSheet(NO_SHEET)} status={status.data} />
+
+            <SetActiveDialog
+              open={setActiveFor !== undefined}
+              data={data}
+              allocationId={setActiveFor ?? null}
+              currentStructureId={status.data?.strategy?.active?.structure?.id ?? null}
+              onClose={() => setSetActiveFor(undefined)}
+            />
 
             <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing writes from a card

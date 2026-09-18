@@ -254,6 +254,18 @@ export async function fetchTemplateDetail(id: number): Promise<StrategyTemplateD
   return res.json() as Promise<StrategyTemplateDetail>
 }
 
+/** The server's own `detail`, when it sent one; the status otherwise. */
+async function detailOrStatus(res: Response): Promise<string> {
+  try {
+    const body = (await res.json()) as { detail?: unknown; error?: unknown }
+    const detail = body.detail ?? body.error
+    if (typeof detail === 'string' && detail.trim()) return detail
+  } catch {
+    /* not JSON — the status is all there is */
+  }
+  return String(res.status)
+}
+
 export async function createTemplate(
   payload: Record<string, unknown>,
 ): Promise<{ strategy_template_id: number }> {
@@ -262,7 +274,9 @@ export async function createTemplate(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
-  if (!res.ok) throw new Error(`POST /strategies/templates: ${res.status}`)
+  // The server says *why* — `Invalid structure code: custom`, a duplicate code
+  // — and a bare 400 makes the reader guess at something already known.
+  if (!res.ok) throw new Error(`POST /strategies/templates: ${await detailOrStatus(res)}`)
   return res.json()
 }
 

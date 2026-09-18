@@ -243,10 +243,12 @@ export default function OptionCategoryPage() {
     const code = newCode.trim().toLowerCase().replace(/\s+/g, '_')
     if (!code) return
     try {
+      // `custom` is not a code in the dim_structure dictionary, and the server
+      // validates against it: this call answered 400 every time (measured on
+      // DEV 2026-09-18). A new template simply has no dimensions yet.
       const { strategy_template_id } = await createTemplate({
         template_code: code,
         display_name: newName.trim() || code,
-        dim_structure: 'custom',
         sort_order: 100,
       })
       setCreateDialogOpen(false)

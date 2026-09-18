@@ -29,6 +29,7 @@ import {
 import { useOpportunities } from '@/hooks/useStrategies'
 import { putOpportunity, fetchOpportunityDetail } from '@/api/strategy'
 import { fetchOrderIntents, type OrderIntentPayload } from '@/api/research/orderIntents'
+import { mapIntentToPrefill } from '@/components/strategy/orderIntentPrefill'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { opportunityDetailToPayload, opportunityIsActive } from '@/utils/strategyFormUtils'
 import type { StrategyOpportunity, EntryCondition } from '@/types/positions'
@@ -163,31 +164,6 @@ export default function OpportunitiesPage() {
       }, 2000)
     } catch {
       /* clipboard may be unavailable */
-    }
-  }
-
-  function mapIntentToPrefill(payload: OrderIntentPayload): PrefillData {
-    const template = String(payload.strategy_template ?? '').trim()
-    const hypId = String(payload.hypothesis_id ?? '').trim()
-    const shortHyp = hypId ? hypId.slice(0, 8) : ''
-    const legs = Array.isArray(payload.legs) ? (payload.legs as Array<{ symbol?: string }>) : []
-    const symbolSet = new Set<string>()
-    for (const leg of legs) {
-      const s = leg?.symbol
-      if (typeof s === 'string' && s.trim()) symbolSet.add(s.trim().toUpperCase())
-    }
-    const symbols = Array.from(symbolSet)
-    const scopeType = symbols.length > 1 ? 'watchlist' : symbols.length === 1 ? 'symbol' : ''
-    const nameParts = ['Research proposal']
-    if (template) nameParts.push(template)
-    if (shortHyp) nameParts.push(shortHyp)
-    return {
-      name: nameParts.join(' · '),
-      structureId: '',
-      gateSafetyId: '',
-      scopeType,
-      symbols,
-      conditions: [],
     }
   }
 

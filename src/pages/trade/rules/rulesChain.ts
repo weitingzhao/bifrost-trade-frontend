@@ -33,9 +33,9 @@
  */
 export { readInstances, type InstanceReading } from '@/utils/strategyInstances'
 import { type InstanceReading } from '@/utils/strategyInstances'
+export type { ChainData } from '@/hooks/useRulesChain'
+import type { ChainData } from '@/hooks/useRulesChain'
 import type {
-  GateSafetyItem,
-  StrategyAllocation,
   StrategyOpportunity,
   StrategyStructure,
 } from '@/types/strategy'
@@ -87,14 +87,6 @@ export interface ChainColumn {
   title: string
   count: string
   cards: ChainCard[]
-}
-
-export interface ChainData {
-  structures: readonly StrategyStructure[]
-  opportunities: readonly StrategyOpportunity[]
-  allocations: readonly StrategyAllocation[]
-  gates: readonly GateSafetyItem[]
-  instances: readonly InstanceReading[]
 }
 
 interface Lit {

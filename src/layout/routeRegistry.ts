@@ -88,6 +88,7 @@ import {
   SYSTEM_DATA,
   SYSTEM_RUNTIME,
   TRADE,
+  TRADE_DESK,
   VALIDATE,
 } from './routeCrumbs'
 
@@ -443,9 +444,19 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    path: '/trade/desk',
+    label: 'Desk',
+    crumbs: TRADE,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-18.1',
+      note: DESIGN_NOTES['/trade/desk'],
+    },
+  },
+  {
     path: '/trade/rules',
     label: 'Rules',
-    crumbs: TRADE,
+    crumbs: TRADE_DESK,
     design: {
       state: 'reviewing',
       rev: '2026-09-18.1',

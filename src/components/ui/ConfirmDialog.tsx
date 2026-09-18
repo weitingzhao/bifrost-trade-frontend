@@ -27,6 +27,12 @@ export interface ConfirmDialogProps {
    * `destructive` (the default) so red still means gone.
    */
   confirmVariant?: 'default' | 'destructive'
+  /**
+   * Holds the confirm shut until the caller says the reader has acknowledged
+   * something — an irreversible action whose consequence is not obvious from
+   * its name. Distinct from `confirming`, which means the action is running.
+   */
+  confirmDisabled?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
@@ -40,6 +46,7 @@ export function ConfirmDialog({
   bodyExtra,
   stackLayer = 'elevated',
   confirmVariant = 'destructive',
+  confirmDisabled = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -55,7 +62,7 @@ export function ConfirmDialog({
           <Button variant="outline" disabled={confirming} onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant={confirmVariant} disabled={confirming} onClick={onConfirm}>
+          <Button variant={confirmVariant} disabled={confirming || confirmDisabled} onClick={onConfirm}>
             {confirming ? '…' : confirmLabel}
           </Button>
         </DialogFooter>

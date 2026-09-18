@@ -18,15 +18,16 @@
  * what the sheets are. D10 is not in play here: a rule is a rulebook entry, not
  * an order.
  */
-import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { useRulesChain } from './useRulesChain'
+import type { PrefillData } from '@/components/strategy/OpportunityFormModal'
+import { useRulesChain } from '@/hooks/useRulesChain'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { ChainColumnList, ChainDetailPanel } from './ChainColumns'
 import { NO_SHEET, RulesSheets, type RulesSheet } from './RulesSheets'
@@ -72,7 +73,23 @@ export default function TradeRulesPage() {
   const [params, setParams] = useSearchParams()
   const sel = parsePick(params.get('pick'))
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [sheet, setSheet] = useState<RulesSheet>(NO_SHEET)
+  // The Desk's Decide lane hands a Research proposal over as a prefilled New
+  // opportunity (design DECISIONS 2026-09-18). It arrives in router state
+  // rather than the URL because it is a form's worth of fields, and the sheet
+  // opens from the first render rather than from an effect — a form that
+  // appeared one frame late would read as a click that missed.
+  const location = useLocation()
+  const navigate = useNavigate()
+  const handedPrefill = (location.state as { opportunityPrefill?: PrefillData } | null)?.opportunityPrefill
+  const [sheet, setSheet] = useState<RulesSheet>(() =>
+    handedPrefill == null ? NO_SHEET : { kind: 'opportunity', prefill: handedPrefill },
+  )
+  // Consumed once: the entry stays in history, so without this a Back to this
+  // page would re-open the sheet on a proposal already turned into a rule.
+  useEffect(() => {
+    if (handedPrefill == null) return
+    navigate(location.pathname + location.search, { replace: true, state: null })
+  }, [handedPrefill, navigate, location.pathname, location.search])
   const status = useMonitorStatus()
   const { data, rawInstances, loading, error, refetch } = useRulesChain()
 

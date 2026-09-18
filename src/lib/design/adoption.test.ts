@@ -195,8 +195,11 @@ describe('design adoption', () => {
     // real — leaving Positions as the only page the design has moved past.
     // Positions closes it: the Instance row on the Risk profile face, where the
     // rename is a real PATCH and the status is a reading, because no column
-    // stores one (stale 1→0, reviewing 9→10).
-    expect(counts.byState.reviewing).toBe(10)
+    // stores one (stale 1→0, reviewing 9→10). Then the Desk is built from
+    // nothing on the Owner's ruling of 2026-09-18 — three lanes, and the hedge
+    // menu moved onto it from Strategy › Instances rather than armed there
+    // (unbuilt 24→23, reviewing 10→11).
+    expect(counts.byState.reviewing).toBe(11)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -232,6 +235,7 @@ describe('design adoption', () => {
       '/risk/budget',
       '/risk/limits',
       '/risk/sizing',
+      '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
       '/trade/plans',
@@ -265,7 +269,8 @@ describe('design adoption', () => {
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
-    expect(counts.byState.unbuilt).toBe(24)
+    // 24 until Trade › Desk was built 2026-09-18.
+    expect(counts.byState.unbuilt).toBe(23)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.

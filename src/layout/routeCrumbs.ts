@@ -8,6 +8,8 @@
 export const MARKET = ['Research', 'Market'] as const
 export const PORTFOLIO = ['Portfolio'] as const
 export const TRADE = ['Trade'] as const
+/** Rules is read from the Desk: the design's own trail is Trade › Desk › Rules. */
+export const TRADE_DESK = ['Trade', 'Desk'] as const
 export const RISK = ['Risk'] as const
 export const REVIEW = ['Review'] as const
 export const RESEARCH = ['Research'] as const

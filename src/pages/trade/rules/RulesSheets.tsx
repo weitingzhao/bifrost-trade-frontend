@@ -20,7 +20,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { AllocationFormModal } from '@/components/strategy/AllocationFormModal'
 import { InstanceCreateModal } from '@/components/strategy/InstanceCreateModal'
-import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
+import { OpportunityFormModal, type PrefillData } from '@/components/strategy/OpportunityFormModal'
 import { StructureFormSheet, type StructureFormMode } from '@/components/strategy/StructureFormSheet'
 import { GateSafetyFormSheet, type GateSheetMode } from '@/components/strategy/gates/GateSafetyFormSheet'
 import type { StatusResponse } from '@/types/monitor'
@@ -31,7 +31,7 @@ import type { StrategyInstance, StrategyOpportunity } from '@/types/strategy'
 export type RulesSheet =
   | { kind: 'none' }
   | { kind: 'structure'; mode: StructureFormMode }
-  | { kind: 'opportunity'; initial?: StrategyOpportunity }
+  | { kind: 'opportunity'; initial?: StrategyOpportunity; prefill?: PrefillData }
   | { kind: 'allocation'; mode: 'create' | 'edit'; editId: number | null }
   | { kind: 'gate'; mode: GateSheetMode }
   | { kind: 'instance' }
@@ -64,7 +64,7 @@ export function RulesSheets({
     return <StructureFormSheet mode={sheet.mode} onClose={onClose} onSaved={saved} />
   }
   if (sheet.kind === 'opportunity') {
-    return <OpportunityFormModal open onClose={saved} initial={sheet.initial} />
+    return <OpportunityFormModal open onClose={saved} initial={sheet.initial} prefill={sheet.prefill} />
   }
   if (sheet.kind === 'allocation') {
     return (

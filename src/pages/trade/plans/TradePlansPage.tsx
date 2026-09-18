@@ -50,7 +50,10 @@ export default function TradePlansPage() {
   const filter: PlanFilterValue = isPlanFilter(statusParam) ? statusParam : 'all'
   const planParam = Number(params.get('plan'))
   const openId = Number.isFinite(planParam) && planParam > 0 ? planParam : null
-  const [form, setForm] = useState<Form>(null)
+  // `?new=1` opens the form on arrival — the Desk's "＋ Plan a trade" lands
+  // here, and a button that only exists on this page would have made the desk
+  // a signpost rather than a start.
+  const [form, setForm] = useState<Form>(params.get('new') === '1' ? { kind: 'new' } : null)
 
   const query = useStrategyPlans({ symbol: symbol || undefined })
   const plans = useMemo(() => query.data?.items ?? [], [query.data])

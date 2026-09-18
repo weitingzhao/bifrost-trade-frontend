@@ -20,10 +20,7 @@ import {
 } from '@/components/strategy/InstanceListFilters'
 import { useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
 import { useInstanceMetrics } from '@/hooks/useInstanceMetrics'
-import { useQueryClient } from '@tanstack/react-query'
-import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { HedgeControlCard } from '@/pages/strategy/hedge/HedgeControlCard'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { INSTANCE_COMPARE_MAX_WIDTH_PX } from '@/constants/instanceDetailSidebar'
 import { computeInstancePositionStatus } from '@/utils/instanceListMetrics'
@@ -126,7 +123,6 @@ export default function InstancesPage() {
   }, [location.state, patchUrl])
 
   const { data: status } = useMonitorStatus()
-  const queryClient = useQueryClient()
   const { data: oppsData, isFetching: oppsFetching } = useOpportunities()
 
   const accounts = useMemo(
@@ -410,12 +406,11 @@ export default function InstancesPage() {
         }
       />
 
-      {/* The daemon executes these instances; suspending it or flattening the
-          book belongs with them, not in a health console. */}
-      <HedgeControlCard
-        data={status}
-        onInvalidate={() => void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status })}
-      />
+      {/* Hedging moved to Trade › Desk on 2026-09-18 (Owner ruling, option A).
+          It came here from the Daemon page because suspending the daemon is a
+          trading decision rather than telemetry; the desk is where trading
+          decisions are made, and one control in two places is worse than the
+          wrong place. */}
 
       {isError && (
         <QueryErrorAlert error={error} onRetry={() => void refetch()} />

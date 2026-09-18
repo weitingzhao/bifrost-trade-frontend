@@ -96,9 +96,13 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // 2026-09-18 as the home of the seven Strategy pages; those stay routed
     // until their edit sheets are built, and their nav rows go with the sheets.
     // Plans stays a route, not a row.
+    //
+    // Desk is the group's home with Rules beneath it, which is the design's own
+    // crumb trail (Trade › Desk › Rules): the desk is what you act from, the
+    // chain is what it is checked against.
     items: [
+      home('Desk', '/trade/desk', Briefcase, [route('Rules', '/trade/rules', Workflow)]),
       route('Orders & Fills', '/trade/fills', ListChecks),
-      route('Rules', '/trade/rules', Workflow),
       route('Expiration', '/trade/expiration', CalendarClock),
       route('Assignment', '/trade/assignment', ShieldAlert),
       route('Playbook', '/trade/playbook', BookOpen),

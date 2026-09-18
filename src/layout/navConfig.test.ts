@@ -34,14 +34,18 @@ describe('Trade nav', () => {
     // Expiration joined 2026-09-17, above Playbook: what expires next is the
     // thing a desk opens the group for. Rules joined 2026-09-18 as the home of
     // the seven Strategy pages; those keep their own group until their edit
-    // sheets are built, so for now both are in the tree.
+    // sheets are built, so for now both are in the tree. Desk took the head of
+    // the group the same day with Rules beneath it, which is the design's own
+    // crumb trail (Trade › Desk › Rules): the desk is what you act from, the
+    // chain is what it is checked against.
     expect(trade.items!.map((i) => [i.label, i.to])).toEqual([
+      ['Desk', '/trade/desk'],
       ['Orders & Fills', '/trade/fills'],
-      ['Rules', '/trade/rules'],
       ['Expiration', '/trade/expiration'],
       ['Assignment', '/trade/assignment'],
       ['Playbook', '/trade/playbook'],
     ])
+    expect(trade.items![0].children!.map((c) => [c.label, c.to])).toEqual([['Rules', '/trade/rules']])
     const entry = routeFor('/trade/playbook')
     expect(entry.path).toBe('/trade/playbook')
     expect(entry.redirect ?? false).toBe(false)

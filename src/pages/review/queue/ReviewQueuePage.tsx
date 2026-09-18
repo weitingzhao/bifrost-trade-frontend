@@ -139,6 +139,7 @@ export default function ReviewQueuePage() {
   const [accountFilter, setAccountFilter] = useState('all')
   const [since, setSince] = useState('all')
   const [picked, setPicked] = useState<string | null>(null)
+  const [cell, setCell] = useState<string | null>(null)
   const { trades, expiredUnbooked, accountIds, loading, error, refetch } = useReviewTrades(accountFilter)
 
   // The window first, so every figure on the page is about the same set of trades.
@@ -147,7 +148,12 @@ export default function ReviewQueuePage() {
     return cut == null ? trades : trades.filter((t) => (t.closedOn ?? '') >= cut)
   }, [trades, since])
 
-  const selected = useMemo(() => rows.find((t) => t.contractKey === picked) ?? null, [rows, picked])
+  // A cell is a claim about the plan and the path. Neither reaches this side, so no
+  // trade can be placed in one — the filter works, and answers with nothing every time.
+  const queueRows = useMemo(() => (cell == null ? rows : rows.filter(() => false)), [rows, cell])
+  const cellName = QUADRANTS.find((q) => q.key === cell)?.name ?? null
+
+  const selected = useMemo(() => queueRows.find((t) => t.contractKey === picked) ?? null, [queueRows, picked])
   const realised = useMemo(() => rows.reduce((a, t) => a + t.realised, 0), [rows])
   const shortOfFloor = Math.max(0, SAMPLE_FLOOR - rows.length)
 
@@ -246,27 +252,38 @@ export default function ReviewQueuePage() {
                 <DenseTag variant="warning" size="cell">
                   ⚠ both axes are missing
                 </DenseTag>
-                <span className="ml-auto text-dense-meta text-muted-foreground">
-                  the design filters the queue from a cell — no trade can be placed in one
-                </span>
+                <span className="ml-auto text-dense-meta text-muted-foreground">click a cell to filter the queue</span>
               </header>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))] gap-2 px-3 py-2.5">
                 {QUADRANTS.map((q) => (
-                  <div key={q.key} className="min-w-0 rounded-md border border-border px-3 py-2">
-                    <div className="flex flex-wrap items-baseline gap-x-2">
+                  <button
+                    key={q.key}
+                    type="button"
+                    aria-pressed={cell === q.key}
+                    onClick={() => setCell((cur) => (cur === q.key ? null : q.key))}
+                    className={cn(
+                      'min-w-0 cursor-pointer rounded-md border bg-transparent px-3 py-2 text-left font-[inherit]',
+                      cell === q.key ? 'border-primary' : 'border-border hover:border-border/80',
+                    )}
+                  >
+                    <span className="flex flex-wrap items-baseline gap-x-2">
                       <span className="text-dense-body font-semibold text-foreground">{q.name}</span>
-                      <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>n —</span>
-                    </div>
-                    <p className={cn(positionsUi.mono, 'm-0 pt-0.5 text-dense-meta text-muted-foreground')}>
+                      <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>n 0</span>
+                    </span>
+                    <span className={cn(positionsUi.mono, 'block pt-0.5 text-dense-meta text-muted-foreground')}>
                       discipline n/c · plan cost n/c
-                    </p>
-                    <p className={cn('m-0 pt-1 text-dense-meta leading-normal text-pretty', q.tone)}>{q.action}</p>
-                  </div>
+                    </span>
+                    <span className={cn('block pt-1 text-dense-meta leading-normal text-pretty', q.tone)}>
+                      {q.action}
+                    </span>
+                  </button>
                 ))}
               </div>
               <p className={cn(FOOT, 'm-0')}>
                 Plan quality is the plan&rsquo;s target against the best mark the trade printed; adherence is the exit
-                landing on the planned one. {REVIEW_UNRECORDED.plan}
+                landing within three bars of the planned one. The design leaves a plan-less trade out of the grid
+                entirely — adherence needs a plan to adhere to — and on this side that is every one of them, which is
+                why each cell reads n 0 and picking one empties the queue. {REVIEW_UNRECORDED.plan}
               </p>
             </section>
 
@@ -277,9 +294,16 @@ export default function ReviewQueuePage() {
                 <header className={positionsUi.panelHead}>
                   <span className={positionsUi.cap}>Queue</span>
                   <span className={positionsUi.panelTitle}>
-                    {since === 'all' ? 'All closed' : `Closed in the last ${SINCE_LABEL[since]}`}
+                    {cellName ?? (since === 'all' ? 'All closed' : `Closed in the last ${SINCE_LABEL[since]}`)}
                   </span>
-                  <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{rows.length}</span>
+                  <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
+                    {queueRows.length}
+                  </span>
+                  {cellName ? (
+                    <button type="button" className={positionsUi.link} onClick={() => setCell(null)}>
+                      clear cell filter
+                    </button>
+                  ) : null}
                   <span className="ml-auto text-dense-meta text-muted-foreground">click a row to review it</span>
                 </header>
                 <div className="overflow-x-auto">
@@ -318,17 +342,19 @@ export default function ReviewQueuePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {rows.length === 0 ? (
+                      {queueRows.length === 0 ? (
                         <tr>
                           <td
                             colSpan={11}
-                            className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}
+                            className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-muted-foreground')}
                           >
-                            Nothing closed in this window.
+                            {cellName
+                              ? `No trade can be placed in “${cellName}”. Both axes need the plan a trade was opened under, and none of these ${rows.length} has one — clear the cell filter to see them again.`
+                              : 'Nothing closed in this window.'}
                           </td>
                         </tr>
                       ) : (
-                        rows.map((t) => (
+                        queueRows.map((t) => (
                           <QueueRow
                             key={t.contractKey}
                             t={t}

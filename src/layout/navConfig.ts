@@ -8,6 +8,7 @@ import {
   CalendarClock,
   Briefcase,
   ClipboardList,
+  List,
   Cpu,
   Database,
   Layers,
@@ -88,21 +89,20 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Trade',
     icon: Briefcase,
-    // Design group order is Home · Trade · Portfolio · Research · … (Owner (a),
-    // 2026-09-14). Playbook moved here from the Copilot fold. Rules joined
-    // 2026-09-18 as the home of the seven Strategy pages; those stay routed
-    // until their edit sheets are built, and their nav rows go with the sheets.
-    // Plans stays a route, not a row.
-    //
-    // Desk is the group's home with Rules beneath it, which is the design's own
-    // crumb trail (Trade › Desk › Rules): the desk is what you act from, the
-    // chain is what it is checked against.
+    // The design's shape exactly (shell-registry `G.Trade`): one home row,
+    // the Desk, with all six pages beneath it — Plans first, because a trade
+    // starts as a plan, and Assignment last, because that is where one ends
+    // when it goes to stock. An earlier note here said "Plans stays a route,
+    // not a row"; the design says the opposite, and the design wins.
     items: [
-      home('Desk', '/trade/desk', Briefcase, [route('Rules', '/trade/rules', Workflow)]),
-      route('Orders & Fills', '/trade/fills', ListChecks),
-      route('Expiration', '/trade/expiration', CalendarClock),
-      route('Assignment', '/trade/assignment', ShieldAlert),
-      route('Playbook', '/trade/playbook', BookOpen),
+      home('Desk', '/trade/desk', Briefcase, [
+        route('Plans', '/trade/plans', ClipboardList),
+        route('Orders & Fills', '/trade/fills', ListChecks),
+        route('Rules', '/trade/rules', Workflow),
+        route('Playbook', '/trade/playbook', BookOpen),
+        route('Expiration', '/trade/expiration', CalendarClock),
+        route('Assignment', '/trade/assignment', ArrowLeftRight),
+      ]),
     ],
   },
   {
@@ -121,7 +121,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         route('Outcome', '/portfolio/outcome', Target),
       ]),
       home('Accounts', '/portfolio/accounts', LayoutDashboard, [
-        route('Trade Ledger', '/portfolio/ledger', ClipboardList),
+        route('Trade Ledger', '/portfolio/ledger', List),
         route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
         route('Corporate Actions', '/portfolio/corporate-actions', Split),
       ]),

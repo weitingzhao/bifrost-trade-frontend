@@ -138,9 +138,13 @@ describe('design adoption', () => {
     // (aligned 27→32). The same evening the Owner opened Plans against the
     // prototype and found the walk had covered the handoff diff, not the whole
     // page — scope bar, inbox signpost, inspector sections, footnotes. The
-    // sign-off is withdrawn while it is rebuilt (aligned 32→31).
-    expect(counts.aligned + counts.byState.stale).toBe(31)
-    expect(counts.aligned).toBe(31)
+    // sign-off is withdrawn while it is rebuilt (aligned 32→31). Rebuilt the
+    // same evening — and Playbook's own second look dissolved two of its
+    // "deliberate" divergences by reading the server — the Owner signed both
+    // off together (aligned 31→33). Trade joins Home, Portfolio, Review and
+    // Risk as a finished group.
+    expect(counts.aligned + counts.byState.stale).toBe(33)
+    expect(counts.aligned).toBe(33)
     // Empty again: every page Package 2026-09-18.1 moved has now been re-walked
     // against it. A stale row was never work lost — the page is built, and what
     // was stale is the comparison.
@@ -221,9 +225,11 @@ describe('design adoption', () => {
     // walked — was walked and built the same day against its page rev
     // 2026-09-17.1 (pending 17→16, reviewing 0→1). Plans rejoined it the same
     // evening: the Owner's look found the page thinner than its prototype, so
-    // its sign-off is withdrawn while the full walk is built (aligned 32→31,
-    // reviewing 1→2) — Trade waits on two looks.
-    expect(counts.byState.reviewing).toBe(2)
+    // its sign-off was withdrawn while the full walk was built (aligned 32→31,
+    // reviewing 1→2). Both were rebuilt against their prototypes and signed
+    // off together 2026-09-18 (aligned 31→33, reviewing 2→0): every walked
+    // page is in place, and Trade closes at 7/7.
+    expect(counts.byState.reviewing).toBe(0)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -260,12 +266,11 @@ describe('design adoption', () => {
       '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
-      '/trade/rules',
-    ])
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/trade/plans',
       '/trade/playbook',
+      '/trade/rules',
     ])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
     // carried had a home — they are redirects now, and a redirect is not a row

@@ -172,6 +172,11 @@ export default function OutcomePage() {
                 <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
                   on an opportunity <Money v={attributed} /> · on none <Money v={total - attributed} />
                 </span>
+                {/* The cut this page deliberately does not make. Review computes the rate per
+                    play; two pages computing one rate is how they start disagreeing. */}
+                <Link to="/review/playbook-stats" className={cn(positionsUi.link, 'ml-auto')}>
+                  play &amp; behaviour → Review Playbook Stats
+                </Link>
               </header>
               {groups.length === 0 ? (
                 <p className={cn('m-0 px-3 py-3 text-dense-meta text-muted-foreground')}>

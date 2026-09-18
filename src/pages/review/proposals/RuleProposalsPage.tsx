@@ -6,12 +6,17 @@
  * a change to a rule, and the change is then measured against the trades that
  * follow it. Every link needs the one before it.
  *
- * This page has no rows, and the reason is worth more than a row would be:
- * four of the seven habits cannot be measured at all here, the three that can
- * carry no cost figure — a cost is what the habit did against what the plan
- * would have produced — and nothing stores a proposal, its decision or its
- * outcome. A proposal generated from an unmeasured habit is a rule change
- * argued from nothing, which is worse than no proposal.
+ * One of the four now has its argument. The give-back on winners is measured
+ * off each contract's daily marks and carries a cost in dollars, which is
+ * exactly what a proposal needs; the other three are still waiting on a habit
+ * or on the cost that a linked plan would supply.
+ *
+ * What none of them can be is a *diff*, and that is the link the design cares
+ * about most: a diff subtracts from the rule's current text, and no rules store
+ * exists on this side. So each card draws its `+` line and marks its `−`, and
+ * the three decisions are drawn disabled rather than hidden — a page that omits
+ * them reads as "nothing to decide", when the truth is that there is something
+ * to decide and nowhere to record it.
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -24,7 +29,8 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { useReviewHabits } from '@/hooks/useReviewHabits'
-import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
+import { ProposalCard } from './ProposalCard'
+import { buildProposals, proposalChain } from './proposalsModel'
 
 const PAGE_LEAD =
   'What the habits argue for, before any of it becomes a rule. A proposal needs a habit with a cost and a sample — and it needs somewhere to be accepted or refused.'
@@ -32,54 +38,12 @@ const PAGE_LEAD =
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
-/** The chain, and which link is missing. */
-const CHAIN = [
-  {
-    key: 'habit',
-    step: 'A habit',
-    what: 'a behaviour repeated across enough trades to be a pattern rather than an anecdote',
-    state: 'partial',
-    note: 'Three of seven are measured here; the other four need a plan or a mark path.',
-    to: '/review/habits',
-  },
-  {
-    key: 'cost',
-    step: 'Its cost',
-    what: 'what the behaviour did to P&L against what the plan would have produced',
-    state: 'missing',
-    note: 'No plan is linked to a position, so the subtraction that turns a tendency into a cost cannot be made.',
-    to: '/trade/plans',
-  },
-  {
-    key: 'proposal',
-    step: 'A proposal',
-    what: 'a specific change to a specific rule, with the habit and its cost attached',
-    state: 'missing',
-    note: 'Nothing stores a proposal, so one written here would not survive the page being closed.',
-    to: '/trade/plans',
-  },
-  {
-    key: 'decision',
-    step: 'Accepted or refused',
-    what: 'a decision, dated, so the rule’s history says why it reads the way it does',
-    state: 'missing',
-    note: 'The Rules engine the design edits is not built on this side.',
-    to: '/risk/limits',
-  },
-  {
-    key: 'outcome',
-    step: 'Measured after',
-    what: 'the trades that followed the change, against the ones before it',
-    state: 'missing',
-    note: 'Needs the decision to be dated, so there is a before and an after to split on.',
-    to: '/review/playbook-stats',
-  },
-] as const
-
 export default function RuleProposalsPage() {
   const [accountFilter] = useState('all')
-  const { trades, habits, loading, error, refetch } = useReviewHabits(accountFilter)
-  const measurable = useMemo(() => habits.filter((h) => h.value != null).length, [habits])
+  const { trades, habits, paths, pathsLoading, loading, error, refetch } = useReviewHabits(accountFilter)
+  const proposals = useMemo(() => buildProposals(habits, trades, paths), [habits, trades, paths])
+  const chain = useMemo(() => proposalChain(habits, proposals), [habits, proposals])
+  const argued = proposals.filter((p) => p.state === 'argued').length
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -91,8 +55,8 @@ export default function RuleProposalsPage() {
           description={PAGE_LEAD}
           actions={
             <span className="flex flex-wrap items-center gap-2.5">
-              <DenseTag variant="warning" size="cell">
-                ⚠ 0 proposals — and none can be generated
+              <DenseTag variant={argued > 0 ? 'success' : 'warning'} size="cell">
+                {argued} of {proposals.length} argued · none can be written as a diff
               </DenseTag>
               <Link to="/review/habits" className={positionsUi.link}>
                 Habits →
@@ -106,34 +70,23 @@ export default function RuleProposalsPage() {
           <Skeleton className="h-48 w-full rounded-md" />
         ) : (
           <>
-            <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Proposals">
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>Open proposals</span>
-                <span className={positionsUi.panelTitle}>none</span>
-                <span className="ml-auto text-dense-meta text-muted-foreground">
-                  {measurable} of {habits.length} habits measurable · {trades.length} closed trades behind them
-                </span>
-              </header>
-              <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                A proposal is generated, not written by hand: a habit that has cost something repeatedly becomes an
-                argument for changing a rule, and the argument carries the habit, its cost and its sample so the change
-                can be judged rather than taken on faith. None of the three parts is available here — which is a
-                different statement from &ldquo;no rule needs changing&rdquo;.
-              </p>
-              <p className={cn(FOOT, 'm-0')}>{REVIEW_UNRECORDED.proposals}</p>
-            </section>
+            <div className="flex flex-col gap-2.5">
+              {proposals.map((p) => (
+                <ProposalCard key={p.key} proposal={p} />
+              ))}
+            </div>
 
             <PositionsTier label="The chain" note="each link needs the one before it — and where it breaks" />
             <section className={positionsUi.panel} aria-label="The chain">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>
-                  1 of {CHAIN.length} links is partly in place
+                  {chain.filter((c) => c.state === 'partial').length} of {chain.length} links are partly in place
                 </span>
                 <span className="ml-auto text-dense-meta text-muted-foreground">
-                  the break is at the second link, and everything after it follows
+                  the break is at the third link now, and everything after it follows
                 </span>
               </header>
-              {CHAIN.map((c) => (
+              {chain.map((c) => (
                 <div
                   key={c.key}
                   className="grid grid-cols-[9.5rem_minmax(0,1fr)] gap-x-3 gap-y-1 border-b border-border/55 px-3 py-2 last:border-b-0"
@@ -161,8 +114,9 @@ export default function RuleProposalsPage() {
                 </div>
               ))}
               <p className={cn(FOOT, 'm-0')}>
-                One store closes most of this at once: a plan linked to the position gives the cost, and a cost is what
-                turns three measured tendencies into arguments.
+                {pathsLoading
+                  ? 'Reading each contract’s daily marks — the link that says which habits carry a cost.'
+                  : 'Two stores close the rest: a plan linked to a position turns the remaining tendencies into costs, and a rules store gives every diff its missing half.'}
               </p>
             </section>
 

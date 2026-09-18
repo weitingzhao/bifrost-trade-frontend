@@ -101,9 +101,6 @@ export const REVIEW_UNRECORDED = {
     'Nothing records that a trade was reviewed, so reviewed and unreviewed read the same and every closed trade sits in the queue for ever. The count below is closed trades, not a backlog.',
   regime:
     'The design buckets a play’s record by market regime, so a play is only quoted for the regime you are in. No regime read reaches this side, so the rows are the whole sample rather than the relevant slice — which flatters a play that only works in one regime.',
-  cap: 'The size cap a play earns is a policy — full allowance, half under twenty trades, none under a profit factor of 1.2 — and that policy has no store on this side, the same one Risk Budget is missing. The stats below are what such a rule would read; nothing reads them yet.',
-  proposals:
-    'A rule proposal is generated from a habit that has cost something repeatedly: the habit names the behaviour, its cost and its sample, and the proposal turns that into a change to a rule. Five of the seven habits cannot be measured here, and nothing stores a proposal or its outcome, so this page has the shape and no rows.',
 } as const
 
 /** A closed trade's own fills, earliest first. */

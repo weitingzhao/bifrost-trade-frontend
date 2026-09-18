@@ -6,15 +6,15 @@
  * held, and what the gross win was against the gross loss. All of that is in the
  * ledger.
  *
- * Two of the design's columns are not. Maximum adverse excursion needs the mark
- * through the holding period, and the size cap a play earns is a policy with no
- * store on this side — the same one Risk Budget is missing. Both keep their
- * column and say so.
+ * Maximum adverse excursion — the design's eleventh column, and the one that
+ * separates a play that wins often and hurts badly on the way from one that
+ * never moves against you — is read from each contract's own daily bars.
  *
- * The design's other half — a play's record bucketed by market regime, so a
- * play is only quoted for the regime you are in — has no regime read on this
- * side at all. It is marked rather than drawn flat, because a single blended
- * number flatters a play that only works in one regime.
+ * The size cap is a policy whose inputs are real here and whose store is not,
+ * so the column shows what the design's own stated rule would produce and says
+ * plainly that nothing reads it. The regime half has no read on this side at
+ * all: the grid keeps its columns and carries a marker, because one blended
+ * win rate flatters a play that only works in one regime.
  */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -25,11 +25,12 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
-import { useReviewTrades } from '@/hooks/useReviewTrades'
-import { REVIEW_UNRECORDED, THIN_SAMPLE } from '@/utils/reviewTrades'
+import { useReviewHabits } from '@/hooks/useReviewHabits'
+import { THIN_SAMPLE } from '@/utils/reviewTrades'
+import { PlaybookRegimeGrid } from './PlaybookRegimeGrid'
+import { DECAY_PROFIT_FACTOR, sizeCapFor } from './sizeCap'
 
 const PAGE_LEAD =
   'What each play has actually done — closed trades from the ledger, fills-based and fees included. Under twenty trades the band is the reading, not the point.'
@@ -37,9 +38,15 @@ const PAGE_LEAD =
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
+/** §14.7: the cap is a state, not a signed number, so it takes a lamp colour. */
+function capClass(tone: 'success' | 'warning' | 'danger'): string {
+  return tone === 'success' ? 'text-success' : tone === 'warning' ? 'text-warning' : 'text-danger'
+}
+
 export default function PlaybookStatsPage() {
   const [accountFilter, setAccountFilter] = useState('all')
-  const { trades, plays, accountIds, loading, error, refetch } = useReviewTrades(accountFilter)
+  const { trades, plays, accountIds, pathRequests, pathsLoading, loading, error, refetch } =
+    useReviewHabits(accountFilter)
   const thin = plays.filter((p) => p.thin).length
 
   return (
@@ -89,23 +96,27 @@ export default function PlaybookStatsPage() {
                   </span>
                 ) : null}
                 <span className="ml-auto text-dense-meta text-muted-foreground">
-                  credit kept = 1 − exit ÷ entry premium
+                  credit kept = 1 − exit ÷ entry premium · MAE from {pathRequests} daily-bar reads · nothing enforces
+                  the cap
                 </span>
               </header>
               <div className="overflow-x-auto">
-                {/* §14.6: ten columns, the design's 1120 floor. */}
-                <table className="w-full min-w-[1120px] table-fixed border-collapse">
+                {/* §14.6: the design's twelve columns; its own floor is 1120 and
+                    the two extra columns need another 240 of it. */}
+                <table className="w-full min-w-[1360px] table-fixed border-collapse">
                   <colgroup>
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '5%' }} />
-                    <col style={{ width: '7%' }} />
-                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '17%' }} />
+                    <col style={{ width: '4%' }} />
+                    <col style={{ width: '6%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '6%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '8%' }} />
                     <col style={{ width: '9%' }} />
-                    <col style={{ width: '7%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '11%' }} />
                   </colgroup>
                   <thead>
                     <tr>
@@ -118,7 +129,9 @@ export default function PlaybookStatsPage() {
                       <th className={positionsUi.th}>Avg P&amp;L</th>
                       <th className={positionsUi.th}>Best</th>
                       <th className={positionsUi.th}>Worst</th>
+                      <th className={positionsUi.th}>MAE</th>
                       <th className={positionsUi.th}>Profit factor</th>
+                      <th className={cn(positionsUi.th, 'text-left')}>Size cap it would earn</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -146,6 +159,9 @@ export default function PlaybookStatsPage() {
                         <td className={cn(positionsUi.td, pnlColorClass(p.avgRealised))}>{fmtUsd(p.avgRealised)}</td>
                         <td className={cn(positionsUi.td, pnlColorClass(p.best))}>{fmtUsd(p.best)}</td>
                         <td className={cn(positionsUi.td, pnlColorClass(p.worst))}>{fmtUsd(p.worst)}</td>
+                        <td className={cn(positionsUi.td, p.mae == null ? 'text-muted-foreground' : pnlColorClass(p.mae))}>
+                          {p.mae == null ? (pathsLoading ? '…' : 'n/c') : fmtUsd(p.mae)}
+                        </td>
                         <td
                           className={cn(
                             positionsUi.td,
@@ -158,6 +174,10 @@ export default function PlaybookStatsPage() {
                         >
                           {p.profitFactor == null ? 'no loser yet' : p.profitFactor.toFixed(2)}
                         </td>
+                        <td className={cn(positionsUi.td, 'whitespace-normal text-left font-sans')}>
+                          <span className={capClass(sizeCapFor(p).tone)}>{sizeCapFor(p).label}</span>{' '}
+                          <span className="text-muted-foreground">— {sizeCapFor(p).why}</span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -169,56 +189,45 @@ export default function PlaybookStatsPage() {
               </p>
             </section>
 
-            <PositionsTier label="What this table cannot say" note="two columns and one whole half of the design" />
             <div className={positionsUi.bandGrid}>
-              <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="By regime">
-                <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>Play × regime</span>
-                  <span className={positionsUi.panelTitle}>no regime reaches this side</span>
-                  <DenseTag variant="warning" size="cell">
-                    ⚠ the sample is not sliced
-                  </DenseTag>
-                </header>
-                <p className="m-0 px-3 py-2.5 text-xs leading-normal text-secondary-foreground text-pretty">
-                  The pattern the design is after is that short-premium plays lose their edge in a vol spike and earn it
-                  back in calm-but-high-IV. Every row above is the whole sample instead, which is the one reading that
-                  can flatter a play that only works in one regime.
-                </p>
-                <p className={cn(FOOT, 'm-0')}>{REVIEW_UNRECORDED.regime}</p>
-              </section>
+              <PlaybookRegimeGrid plays={plays} />
 
-              <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Size cap and MAE">
+              <section className={positionsUi.panel} aria-label="Where conviction comes from">
                 <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>Two columns</span>
-                  <span className={positionsUi.panelTitle}>MAE and the size cap a play earns</span>
+                  <span className={positionsUi.cap}>Where conviction comes from</span>
+                  <span className={positionsUi.panelTitle}>stats → size cap</span>
                   <DenseTag variant="warning" size="cell">
-                    ⚠ neither is stored
+                    ⚠ NO CAP STORE
                   </DenseTag>
                 </header>
-                <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-2.5 border-b border-border/55 px-3 py-2">
-                  <span className="text-dense-caption font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
-                    MAE
-                  </span>
-                  <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
-                    The worst a trade went before it came back needs the mark through the holding period, which nothing
-                    stores. Without it a play that wins often and hurts badly on the way reads the same as one that
-                    never moves against you.
-                  </span>
+                <div className="flex flex-col gap-2 px-3 py-2.5 text-dense-body leading-normal text-secondary-foreground">
+                  <p className="m-0 text-pretty">
+                    The rule the last column applies is the design&rsquo;s own: full backing allowance, half under{' '}
+                    {THIN_SAMPLE} trades, none under a profit factor of {DECAY_PROFIT_FACTOR}. Its inputs are real —
+                    they are the columns to its left.
+                  </p>
+                  <p className="m-0 text-pretty">
+                    A cap respects the band, not the point. The 95% band on an eleven-trade sample spans dozens of
+                    points, which is why n alone withdraws half the allowance regardless of how good the win rate
+                    looks.
+                  </p>
+                  <p className="m-0 inline-flex items-start gap-1.5 text-pretty">
+                    <span className="pt-1">
+                      <StatusLamp lamp="gray" variant="dot" title="No store" />
+                    </span>
+                    <span className="text-muted-foreground">
+                      Nothing on this side reads a cap, writes one or enforces one — the same store{' '}
+                      <Link to="/risk/budget" className={positionsUi.link}>
+                        Risk Budget
+                      </Link>{' '}
+                      is missing. The column says what the rule would produce, not what is in force.
+                    </span>
+                  </p>
                 </div>
-                <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-2.5 px-3 py-2">
-                  <span className="text-dense-caption font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
-                    Size cap
-                  </span>
-                  <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
-                    Full allowance, half under {THIN_SAMPLE} trades, none under a profit factor of 1.2 — a policy, and
-                    the same store{' '}
-                    <Link to="/risk/budget" className={positionsUi.link}>
-                      Risk Budget
-                    </Link>{' '}
-                    is missing. The stats above are what such a rule would read; nothing reads them yet.
-                  </span>
-                </div>
-                <p className={cn(FOOT, 'm-0')}>{REVIEW_UNRECORDED.cap}</p>
+                <p className={cn(FOOT, 'm-0')}>
+                  Closed trades only, fills-based, fees included. An open position never counts toward a win rate —
+                  that is how a book talks itself into holding losers.
+                </p>
               </section>
             </div>
 

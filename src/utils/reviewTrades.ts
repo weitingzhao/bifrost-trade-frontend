@@ -21,6 +21,7 @@ import { buildOptExecutionGroups, isOptionExpired, type OptExecutionGroup } from
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
 import { daysBetween } from '@/lib/isoDate'
 import { daysTo, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
+import type { MarkPath } from '@/utils/reviewMarkPath'
 import type { Execution } from '@/types/positions'
 
 export type ExitKind = 'closed' | 'expired'
@@ -244,6 +245,17 @@ export interface PlayStat {
   worst: number
   /** Gross win over gross loss. Null when the play has never lost. */
   profitFactor: number | null
+  /**
+   * Median maximum adverse excursion — the middle of how far against me the
+   * play's positions marked before they closed. Null when no trade in the play
+   * has a mark path.
+   *
+   * It is the column that separates a play that wins often and hurts badly on
+   * the way from one that never moves against you; a win rate cannot.
+   */
+  mae: number | null
+  /** The single worst excursion in the play — the one that would have been sat through. */
+  maeWorst: number | null
 }
 
 /**
@@ -274,7 +286,10 @@ function mean(values: readonly number[]): number | null {
 }
 
 /** What each play has actually done, largest sample first. */
-export function playbookStats(trades: readonly ReviewTrade[]): PlayStat[] {
+export function playbookStats(
+  trades: readonly ReviewTrade[],
+  paths: Map<string, MarkPath> = new Map(),
+): PlayStat[] {
   const byPlay = new Map<string, ReviewTrade[]>()
   for (const t of trades) {
     const play = t.play ?? 'no play recorded'
@@ -284,6 +299,10 @@ export function playbookStats(trades: readonly ReviewTrade[]): PlayStat[] {
   for (const [play, list] of byPlay) {
     const wins = list.filter((t) => t.win).length
     const band = winRateBand(wins, list.length)
+    const excursions = list
+      .map((t) => paths.get(t.contractKey))
+      .filter((p): p is MarkPath => p != null)
+      .map((p) => Math.min(0, p.worst))
     const grossWin = list.filter((t) => t.realised > 0).reduce((a, t) => a + t.realised, 0)
     const grossLoss = list.filter((t) => t.realised < 0).reduce((a, t) => a - t.realised, 0)
     out.push({
@@ -302,6 +321,8 @@ export function playbookStats(trades: readonly ReviewTrade[]): PlayStat[] {
       best: Math.max(...list.map((t) => t.realised)),
       worst: Math.min(...list.map((t) => t.realised)),
       profitFactor: grossLoss > 0 ? grossWin / grossLoss : null,
+      mae: median(excursions),
+      maeWorst: excursions.length === 0 ? null : Math.min(...excursions),
     })
   }
   return out.sort((a, b) => b.n - a.n || a.play.localeCompare(b.play))

@@ -163,3 +163,37 @@ describe('playbookStats', () => {
     expect(cc.worst).toBe(-200)
   })
 })
+
+describe('playbookStats MAE', () => {
+  it('is the median excursion across the play, and the worst one beside it', () => {
+    const { trades } = buildReviewTrades([...shortTrade, ...debitTrade])
+    const paths = new Map(
+      trades.map((t, i) => [
+        t.contractKey,
+        {
+          held: [],
+          ifHeld: [],
+          best: 100,
+          bestDate: '2026-01-01',
+          worst: i === 0 ? -500 : -1500,
+          worstDate: '2026-01-01',
+          realised: t.realised,
+          captureOfBest: 0.5,
+          cutLatencyDays: 2,
+          everUnderwater: true,
+          bars: 5,
+          businessDays: 5,
+        },
+      ]),
+    )
+    const all = playbookStats(trades, paths)
+    const excursions = all.flatMap((p) => (p.mae == null ? [] : [p.mae]))
+    expect(excursions.sort()).toEqual([-1500, -500].sort())
+    expect(all.every((p) => p.maeWorst != null && p.maeWorst <= (p.mae as number))).toBe(true)
+  })
+
+  it('is null rather than zero when no trade in the play has a path', () => {
+    const { trades } = buildReviewTrades([...shortTrade])
+    expect(playbookStats(trades).every((p) => p.mae == null && p.maeWorst == null)).toBe(true)
+  })
+})

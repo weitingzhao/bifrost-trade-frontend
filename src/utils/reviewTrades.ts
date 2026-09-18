@@ -17,7 +17,12 @@
  * Grouping is the Ledger's own (`buildOptExecutionGroups`) rather than a second
  * pass over the fills, so a trade here and a row there are the same trade.
  */
-import { buildOptExecutionGroups, isOptionExpired, type OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
+import {
+  buildOptExecutionGroups,
+  isBuySide,
+  isOptionExpired,
+  type OptExecutionGroup,
+} from '@/utils/ledger/optExecutionGroups'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
 import { daysBetween } from '@/lib/isoDate'
 import { daysTo, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
@@ -108,10 +113,6 @@ function orderedTrades(g: OptExecutionGroup): Execution[] {
   return [...g.trades].sort((a, b) => (a.time ?? 0) - (b.time ?? 0) || (a.trade_date ?? '').localeCompare(b.trade_date ?? ''))
 }
 
-function isBuy(side: string | undefined): boolean {
-  return (side ?? '').toUpperCase().startsWith('B')
-}
-
 function dateSpan(trades: readonly Execution[]): { first: string | null; last: string | null } {
   // A journal-closed leg carries no trade date; falling back to its epoch is
   // what keeps two of the book's closed trades from reading as never closed.
@@ -142,7 +143,7 @@ function toFill(e: Execution): ReviewFill {
   const qty = Number.isFinite(rawQty) ? Math.abs(rawQty) : 0
   const price = Number(e.price) || 0
   const commission = Number(e.commission) || 0
-  const buy = isBuy(e.side)
+  const buy = isBuySide(e.side)
   return {
     date: (e.trade_date ?? '').slice(0, 10) || epochDate(e.time),
     side: buy ? 'buy' : 'sell',
@@ -184,7 +185,7 @@ export function buildReviewTrades(executions: readonly Execution[]): {
     }
     const ordered = orderedTrades(g)
     const opener = ordered[0]
-    const shortPremium = opener != null && !isBuy(opener.side)
+    const shortPremium = opener != null && !isBuySide(opener.side)
     const { first, last } = dateSpan(ordered)
     const entryPremium = shortPremium ? g.sell_premium : g.buy_cost
     const exitPremium = shortPremium ? g.buy_cost : g.sell_premium

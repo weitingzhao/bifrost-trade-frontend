@@ -1,3 +1,4 @@
+import { isBuySide } from './optExecutionGroups'
 import type { Execution } from '@/types/positions'
 import type { BackendOptPair, OptionStockLinkSummary } from '@/types/trading'
 import { realizedPnlFifoMatchPlusStock } from './ledgerOptHelpers'
@@ -18,11 +19,6 @@ export function normalizeStrike(s: number | string | null | undefined): string {
   if (s == null) return '—'
   const n = typeof s === 'string' ? parseFloat(s) : s
   return Number.isFinite(n) ? String(n) : String(s).trim()
-}
-
-function isBuy(side: string): boolean {
-  const s = side.toUpperCase()
-  return s === 'BUY' || s === 'BOT' || s === 'B'
 }
 
 /**
@@ -202,9 +198,9 @@ export function computeOptPairsFromExecutions(
   for (const [, group] of grouped) {
     const sorted = [...group].sort(sortExec)
     const work: WorkItem[] = sorted
-      .filter((e) => isBuy(e.side) || !isBuy(e.side))
+      .filter((e) => isBuySide(e.side) || !isBuySide(e.side))
       .map((e) => ({
-        side: isBuy(e.side) ? 'buy' as const : 'sell' as const,
+        side: isBuySide(e.side) ? 'buy' as const : 'sell' as const,
         price: e.price,
         remQty: Math.abs(e.quantity ?? e.qty),
         remComm: Math.abs(e.commission ?? 0),

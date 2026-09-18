@@ -21,8 +21,13 @@ export interface OptExecutionGroup {
   trades: Execution[]
 }
 
-function isBuySide(side: string): boolean {
-  const s = side.toUpperCase()
+/**
+ * The broker writes a buy as BUY, BOT or B, and four modules had each written
+ * this out again. One spelling of the rule, exported from the module that
+ * defines what a contract group is.
+ */
+export function isBuySide(side: string | undefined): boolean {
+  const s = (side ?? '').toUpperCase()
   return s === 'BUY' || s === 'BOT' || s === 'B'
 }
 

@@ -32,9 +32,12 @@ describe('Trade nav', () => {
       'Strategy',
     ])
     // Expiration joined 2026-09-17, above Playbook: what expires next is the
-    // thing a desk opens the group for.
+    // thing a desk opens the group for. Rules joined 2026-09-18 as the home of
+    // the seven Strategy pages; those keep their own group until their edit
+    // sheets are built, so for now both are in the tree.
     expect(trade.items!.map((i) => [i.label, i.to])).toEqual([
       ['Orders & Fills', '/trade/fills'],
+      ['Rules', '/trade/rules'],
       ['Expiration', '/trade/expiration'],
       ['Assignment', '/trade/assignment'],
       ['Playbook', '/trade/playbook'],

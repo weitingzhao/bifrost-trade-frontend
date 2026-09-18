@@ -31,6 +31,7 @@ import {
   Target,
   TrendingUp,
   Trophy,
+  Workflow,
 } from 'lucide-react'
 import { getAllNavItems, type ShellNavGroup, type ShellNavItem } from '@bifrost/ui'
 import { staticResearchSubGroups } from './researchNavCatalog'
@@ -91,10 +92,13 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     label: 'Trade',
     icon: Briefcase,
     // Design group order is Home · Trade · Portfolio · Research · … (Owner (a),
-    // 2026-09-14). Playbook moved here from the Copilot fold; the group is one
-    // row until the rest of Trade is built. Plans stays a route, not a row.
+    // 2026-09-14). Playbook moved here from the Copilot fold. Rules joined
+    // 2026-09-18 as the home of the seven Strategy pages; those stay routed
+    // until their edit sheets are built, and their nav rows go with the sheets.
+    // Plans stays a route, not a row.
     items: [
       route('Orders & Fills', '/trade/fills', ListChecks),
+      route('Rules', '/trade/rules', Workflow),
       route('Expiration', '/trade/expiration', CalendarClock),
       route('Assignment', '/trade/assignment', ShieldAlert),
       route('Playbook', '/trade/playbook', BookOpen),

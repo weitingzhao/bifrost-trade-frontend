@@ -186,7 +186,11 @@ describe('design adoption', () => {
     // the unified limit model. Four of those are pages that had been signed
     // off, so they read stale until the diff is walked (aligned 25→21,
     // stale 0→4), and Portfolio stops being a finished group.
-    expect(counts.byState.reviewing).toBe(5)
+    //
+    // Trade › Rules is the first page built against that package: the read side
+    // of the four-column chain, and the home the seven Strategy pages move into
+    // (unbuilt 25→24, reviewing 5→6).
+    expect(counts.byState.reviewing).toBe(6)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -221,6 +225,7 @@ describe('design adoption', () => {
       '/risk/sizing',
       '/trade/expiration',
       '/trade/plans',
+      '/trade/rules',
     ])
     // Seven Strategy pages, Momentum Radar and SEPA Daily Core, which the design
     // dissolves elsewhere, plus Backtest, handed to Lab. Symbol and Plans left:
@@ -250,7 +255,7 @@ describe('design adoption', () => {
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
-    expect(counts.byState.unbuilt).toBe(25)
+    expect(counts.byState.unbuilt).toBe(24)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.

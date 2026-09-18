@@ -1,3 +1,4 @@
+import { isBuySide } from '@/utils/ledger/optExecutionGroups'
 import type { PerformanceSummary, RawExecution } from '@/types/trading'
 
 export type PositionStatus = 'no_fills' | 'open' | 'closed'
@@ -17,11 +18,6 @@ export interface InstanceMetrics {
 function isSellSide(side: string): boolean {
   const s = side.toUpperCase()
   return s === 'SELL' || s === 'SLD' || s === 'S'
-}
-
-function isBuySide(side: string): boolean {
-  const s = side.toUpperCase()
-  return s === 'BUY' || s === 'BOT' || s === 'B'
 }
 
 /**

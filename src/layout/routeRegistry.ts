@@ -443,6 +443,16 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    path: '/trade/rules',
+    label: 'Rules',
+    crumbs: TRADE,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-18.1',
+      note: DESIGN_NOTES['/trade/rules'],
+    },
+  },
+  {
     path: '/trade/expiration',
     label: 'Expiration',
     crumbs: TRADE,

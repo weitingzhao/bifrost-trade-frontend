@@ -37,6 +37,16 @@ function RedirectKeepingQuery({ to }: { to: string }) {
   return <Navigate to={redirectTargetFor(to, location.search, location.hash)} replace />
 }
 
+/**
+ * Where the app opens (Owner, 2026-09-17).
+ *
+ * The design files Home first because it belongs to no layer: it says what
+ * needs a decision now, and every row on it leads into the layer that owns the
+ * figure behind it. Exported so the one place that decides the front door is
+ * the one place a test can pin.
+ */
+export const INDEX_ROUTE = '/home'
+
 export function redirectRoutes(): RouteObject[] {
   return REDIRECT_ROUTES.map((entry) => ({
     path: entry.path.slice(1),
@@ -55,7 +65,7 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     errorElement: <RouteErrorPage />,
     children: [
-      { index: true, element: <Navigate to="/research" replace /> },
+      { index: true, element: <Navigate to={INDEX_ROUTE} replace /> },
       ...redirectRoutes(),
       {
         path: 'research/overview',

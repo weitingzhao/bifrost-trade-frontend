@@ -7,9 +7,9 @@
  * Design 2026-09-15, so nothing hand-rolls the forward any more.
  */
 import { render, screen, waitFor } from '@testing-library/react'
-import { createMemoryRouter, RouterProvider, useLocation } from 'react-router-dom'
+import { createMemoryRouter, Navigate, RouterProvider, useLocation } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
-import { redirectRoutes } from './router'
+import { INDEX_ROUTE, redirectRoutes } from './router'
 
 function LocationProbe() {
   const location = useLocation()
@@ -39,5 +39,24 @@ describe('registry-derived redirects', () => {
   it('keeps the view the registry row names, and the hash', async () => {
     const coverage = landOn('/settings/coverage/option?q=nv', '/system/coverage')
     await waitFor(() => expect(coverage.textContent).toBe('/system/coverage?view=option&q=nv'))
+  })
+})
+
+describe('the front door', () => {
+  it('opens on Today, and Today is a page rather than another redirect', async () => {
+    // Owner, 2026-09-17: the app opens on the action surface. Pinned here
+    // because a front door that quietly moves is the kind of change nobody
+    // notices until they are looking for a page that used to be first.
+    expect(INDEX_ROUTE).toBe('/home')
+    const router = createMemoryRouter(
+      [
+        { path: '/', element: <Navigate to={INDEX_ROUTE} replace /> },
+        ...redirectRoutes(),
+        { path: INDEX_ROUTE.slice(1), element: <LocationProbe /> },
+      ],
+      { initialEntries: ['/'] },
+    )
+    render(<RouterProvider router={router} />)
+    await waitFor(() => expect(screen.getByTestId('landing').textContent).toBe(INDEX_ROUTE))
   })
 })

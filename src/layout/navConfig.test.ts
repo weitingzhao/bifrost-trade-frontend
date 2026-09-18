@@ -88,6 +88,24 @@ describe('Portfolio nav', () => {
   })
 })
 
+describe('Risk nav', () => {
+  it('reads forwards through a decision, which is the design’s own order', () => {
+    // shell-registry `G.Risk`. The app had the reverse — the measurements
+    // first — which is the order you read after the fact rather than before.
+    const risk = NAV_GROUPS.find((g) => g.label === 'Risk')!
+    expect(risk.items!.map((i) => i.to)).toEqual([
+      '/risk/sizing',
+      '/risk/budget',
+      '/risk/limits',
+      '/risk/margin',
+      '/risk/portfolio',
+      '/risk/stress',
+    ])
+    // Flat, like the design: no page in this group is read through another.
+    expect(risk.items!.every((i) => !i.children?.length)).toBe(true)
+  })
+})
+
 describe('Strategy, retired', () => {
   it('has no group of its own — the seven pages dissolved into the chain', () => {
     // Design DECISIONS 2026-09-12 and 2026-09-18. The group went on

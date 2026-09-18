@@ -126,7 +126,15 @@ describe('design adoption', () => {
     // second stopped blaming its feed for a calendar the issuers have not
     // declared yet.
     expect(counts.aligned + counts.byState.stale).toBe(25)
-    expect(counts.aligned).toBe(25)
+    expect(counts.aligned).toBe(21)
+    // The four the design moved past their walk. They are not work lost — the
+    // page is built, and what is stale is the comparison.
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
+      '/portfolio/positions',
+      '/review/playbook-stats',
+      '/risk/limits',
+      '/trade/fills',
+    ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -171,6 +179,13 @@ describe('design adoption', () => {
     // trade, Habits, Playbook stats and Rule proposals — were signed off the
     // same day (aligned 21→25, reviewing 9→5). The Queue is not among them: it
     // was walked at page rev 2026-09-17.1 and still waits for its own look.
+    //
+    // Package 2026-09-18.1 then moved nine routes' own rev the same evening —
+    // trade desk/plans/fills/rules, risk limits/sizing/budget, review
+    // playbook-stats and portfolio positions — for the Strategy dissolution and
+    // the unified limit model. Four of those are pages that had been signed
+    // off, so they read stale until the diff is walked (aligned 25→21,
+    // stale 0→4), and Portfolio stops being a finished group.
     expect(counts.byState.reviewing).toBe(5)
     expect(
       rows
@@ -186,7 +201,6 @@ describe('design adoption', () => {
       '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/pnl-explain',
-      '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/copilot',
@@ -195,14 +209,11 @@ describe('design adoption', () => {
       '/research/symbol',
       '/review/fit',
       '/review/habits',
-      '/review/playbook-stats',
       '/review/proposals',
-      '/risk/limits',
       '/risk/margin',
       '/risk/portfolio',
       '/risk/stress',
       '/trade/assignment',
-      '/trade/fills',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/review',
@@ -273,8 +284,10 @@ describe('design adoption', () => {
     // The Owner re-signed all five on the colour look, so none stays stale.
     // Package 2026-09-17.4 fixed the header the app reads (P1), so DESIGN_REV
     // finally moves with the body instead of lagging it by two revs.
-    expect(DESIGN_REV).toBe('2026-09-17.2')
-    expect(counts.byState.stale).toBe(0)
+    expect(DESIGN_REV).toBe('2026-09-18.1')
+    // Not zero any more, and that is the point: the four that read stale are
+    // exactly the four whose *own* rev moved, not the whole walked set.
+    expect(counts.byState.stale).toBe(4)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design
@@ -289,12 +302,13 @@ describe('adoptionByGroup', () => {
   it('counts a group against every row it owns, not only the ones walked so far', () => {
     const groups = adoptionByGroup(rows)
     const portfolio = groups.find((g) => g.group === 'Portfolio')
-    // The question the summary exists to answer. Portfolio is the first group
-    // to finish: nine pages, all walked and all signed off, the last two being
-    // P&L Explain and Corporate Actions on 2026-09-18. The summary still counts
-    // against every row the group owns, which is why a finished group reads
-    // nine of nine rather than however many happen to be tagged.
-    expect(portfolio).toMatchObject({ total: 9, aligned: 9, left: 0 })
+    // The question the summary exists to answer. Portfolio was the first group
+    // to finish — nine pages, all walked and all signed off — and then Package
+    // 2026-09-18.1 moved Positions, which is what a group being "done" is
+    // always one design round away from. The summary counts against every row
+    // the group owns, so the group reads 8 of 9 rather than staying at nine
+    // because nine pages happen to carry a tag.
+    expect(portfolio).toMatchObject({ total: 9, aligned: 8, left: 1 })
     expect(portfolio?.byState.reviewing).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 

@@ -308,25 +308,25 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/review/fit',
     label: 'Single trade',
     crumbs: REVIEW,
-    design: { state: 'aligned', rev: '2026-09-18.1', note: DESIGN_NOTES['/review/fit'] },
+    design: { state: 'aligned', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/fit'] },
   },
   {
     path: '/review/habits',
     label: 'Habits',
     crumbs: REVIEW,
-    design: { state: 'aligned', rev: '2026-09-18.1', note: DESIGN_NOTES['/review/habits'] },
+    design: { state: 'aligned', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/habits'] },
   },
   {
     path: '/review/playbook-stats',
     label: 'Playbook stats',
     crumbs: REVIEW,
-    design: { state: 'aligned', rev: '2026-09-18.1', note: DESIGN_NOTES['/review/playbook-stats'] },
+    design: { state: 'aligned', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/playbook-stats'] },
   },
   {
     path: '/review/proposals',
     label: 'Rule proposals',
     crumbs: REVIEW,
-    design: { state: 'aligned', rev: '2026-09-18.1', note: DESIGN_NOTES['/review/proposals'] },
+    design: { state: 'aligned', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/proposals'] },
   },
   // ── Risk ───────────────────────────────────────────────────────────────
   {

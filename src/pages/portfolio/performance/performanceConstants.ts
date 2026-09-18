@@ -15,6 +15,9 @@ export const OTF_STK_UNREALIZED_HELP =
   'Realized: FIFO matched lots (buy vs sell) within the time range. Unrealized: open lots — long (remaining buys) is positive cost-style; short (remaining sells) is negative — opposite sign convention to option legs. Shares × price, no multiplier. Trade date uses exec date when trade_date is missing.'
 
 export const TIME_RANGE_OPTIONS: { id: PerformanceTimeRange; label: string }[] = [
+  // The design's four are Month / Quarter / Half / Year; 3 Years is production's own
+  // and is kept. P&L Explain reads this same list, so the two pages cite one window.
+  { id: 'month', label: 'Month' },
   { id: 'quarter', label: 'Quarter' },
   { id: 'halfyear', label: 'Half year' },
   { id: 'year', label: 'Year' },

@@ -54,6 +54,7 @@ function fiBarUsdAbbrev(v: number): string {
 /** Align FI bar grain to Time Range so Year / 3Y are not 12–36 squeezed months. */
 export function fiBarBucketForTimeRange(timeRange: PerformanceTimeRange): FiBarBucket {
   switch (timeRange) {
+    case 'month':
     case 'quarter':
     case 'halfyear':
       return 'month'

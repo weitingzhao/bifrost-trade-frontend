@@ -4,7 +4,7 @@ import { realizedPnlFifoMatchPlusStock } from './ledgerOptHelpers'
 
 const QTY_EPS = 1e-9
 
-export type PerformanceTimeRange = 'quarter' | 'halfyear' | 'year' | '3year'
+export type PerformanceTimeRange = 'month' | 'quarter' | 'halfyear' | 'year' | '3year'
 
 export function optionRightToFull(r: string | null | undefined): string {
   if (!r) return '—'
@@ -98,6 +98,8 @@ export function dateStrMinusDays(dateStr: string, days: number): string {
 // --- Time ranges for Performance Calendar ---
 
 const MONTHS_BACK: Record<PerformanceTimeRange, number> = {
+  // The calendar month the page is on, and nothing before it.
+  month: 0,
   quarter: 2,
   halfyear: 5,
   year: 11,

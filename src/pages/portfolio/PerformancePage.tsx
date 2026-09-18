@@ -53,6 +53,7 @@ function todayIso(): string {
 }
 
 const RANGE_WORD: Record<PerformanceTimeRange, string> = {
+  month: 'this month',
   quarter: 'this quarter',
   halfyear: 'half year',
   year: 'year',

@@ -26,7 +26,10 @@ export function tabHint(
   if (tab === 'rules') {
     if (!data.rules) return null
     const active = data.rules.filter((r) => r.active !== false).length
-    return `${active} active — what Copilot reads back`
+    // Soft delete, verified in the repository: retire sets active=false and the
+    // list endpoint returns retired rows, dimmed below. (The design adds "in
+    // stats", but Playbook stats reads trade outcomes, not this store.)
+    return `${active} active — retired ones keep their history`
   }
   if (tab === 'notes') {
     if (!data.notes) return null
@@ -36,10 +39,40 @@ export function tabHint(
   return `${data.cases.length} case studies — click to open lessons`
 }
 
-/** The only date a rule carries is updated_at; "added" would overclaim. */
-export function ruleMeta(rule: Pick<PlaybookRule, 'updated_at'>): string | null {
-  const day = rule.updated_at?.slice(0, 10)
-  return day ? `updated ${day}` : null
+/**
+ * "added 2026-08-12" — the design's stamp, from the row's own created_at
+ * (verified in the repository columns). The "cited by Copilot N×" segment has
+ * no store behind it, so it is not written.
+ */
+export function ruleMeta(rule: Pick<PlaybookRule, 'created_at' | 'updated_at'>): string | null {
+  const added = rule.created_at?.slice(0, 10)
+  if (added) return `added ${added}`
+  const updated = rule.updated_at?.slice(0, 10)
+  return updated ? `updated ${updated}` : null
+}
+
+/**
+ * The design's per-category inks, landed on the tag variants the system
+ * already has: sky for entry/exit, amber for sizing, rose for risk, the
+ * strategy purple for hedge/regime, muted for the rest.
+ */
+export function categoryTagVariant(
+  category: string,
+): 'info' | 'warning' | 'danger' | 'strategy' | 'neutral' {
+  switch (category) {
+    case 'entry':
+    case 'exit':
+      return 'info'
+    case 'sizing':
+      return 'warning'
+    case 'risk':
+      return 'danger'
+    case 'hedge':
+    case 'regime':
+      return 'strategy'
+    default:
+      return 'neutral'
+  }
 }
 
 /** A note filed today reads as its time; any other day reads as the date. */

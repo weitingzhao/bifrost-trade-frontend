@@ -19,7 +19,9 @@ export type PlaybookRule = {
   body_md: string
   tags?: string[]
   active?: boolean
+  created_at?: string
   updated_at?: string
+  retired_at?: string | null
 }
 
 export type PlaybookNote = {

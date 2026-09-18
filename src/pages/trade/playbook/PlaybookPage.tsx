@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils'
 import {
   CATEGORIES,
   caseHeadline,
+  categoryTagVariant,
   caseMeta,
   hasTradeRef,
   noteWhen,
@@ -196,12 +197,25 @@ export function PlaybookPage() {
               onChange={(e) => setNewRuleTitle(e.target.value)}
               className="h-8"
             />
-            <SegmentControl
-              ariaLabel="Rule category"
-              value={newRuleCategory}
-              onChange={setNewRuleCategory}
-              options={CATEGORIES.map((c) => ({ value: c, label: c }))}
-            />
+            <div role="radiogroup" aria-label="Rule category" className="flex flex-wrap items-center gap-2">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={newRuleCategory === c}
+                  onClick={() => setNewRuleCategory(c)}
+                  className={cn(
+                    'rounded border px-2 py-0.5 font-mono text-dense-micro font-semibold',
+                    newRuleCategory === c
+                      ? 'border-primary text-primary'
+                      : 'border-border text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
             <textarea
               className="min-h-[100px] w-full rounded border border-border bg-background p-2 text-dense-label"
               placeholder="Markdown body — the rule, the reason, the tell that you are about to break it"
@@ -235,7 +249,7 @@ export function PlaybookPage() {
                   className={cn('p-3', retired && 'opacity-45')}
                 >
                   <div className="flex items-baseline gap-2.5">
-                    <DenseTag variant="category">{rule.category}</DenseTag>
+                    <DenseTag variant={categoryTagVariant(rule.category)}>{rule.category}</DenseTag>
                     <span className="text-dense-label font-medium">{rule.title}</span>
                     <span className="ml-auto">
                       {retired ? (
@@ -395,7 +409,7 @@ export function PlaybookPage() {
               {(searchQry.data.rules ?? []).map((r) => (
                 <Card key={r.id} variant="elevated" className="p-3">
                   <div className="flex items-baseline gap-2.5">
-                    <DenseTag variant="category">{r.category}</DenseTag>
+                    <DenseTag variant={categoryTagVariant(r.category)}>{r.category}</DenseTag>
                     <span className="text-dense-label font-medium">{r.title}</span>
                   </div>
                   <MarkdownContent className="mt-1">{r.body_md}</MarkdownContent>

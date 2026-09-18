@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   caseHeadline,
   caseMeta,
+  categoryTagVariant,
   hasTradeRef,
   noteWhen,
   outcomeTone,
@@ -24,7 +25,7 @@ describe('tabHint', () => {
       { id: 'a', title: 't', category: 'risk', body_md: 'b' },
       { id: 'b', title: 't', category: 'risk', body_md: 'b', active: false },
     ]
-    expect(tabHint('rules', { rules })).toBe('1 active — what Copilot reads back')
+    expect(tabHint('rules', { rules })).toBe('1 active — retired ones keep their history')
   })
 
   it('reads the other tabs from their own lists', () => {
@@ -37,9 +38,23 @@ describe('tabHint', () => {
 })
 
 describe('rule and note stamps', () => {
-  it('calls the rule date what it is — updated, not added', () => {
+  it('stamps the design\u2019s added date from created_at, falling back to updated', () => {
+    expect(ruleMeta({ created_at: '2026-08-12T08:00:00Z', updated_at: '2026-09-12T08:00:00Z' })).toBe(
+      'added 2026-08-12',
+    )
     expect(ruleMeta({ updated_at: '2026-09-12T08:00:00Z' })).toBe('updated 2026-09-12')
     expect(ruleMeta({})).toBeNull()
+  })
+
+  it('lands each category on the design\u2019s ink via an existing tag variant', () => {
+    expect(categoryTagVariant('risk')).toBe('danger')
+    expect(categoryTagVariant('sizing')).toBe('warning')
+    expect(categoryTagVariant('entry')).toBe('info')
+    expect(categoryTagVariant('exit')).toBe('info')
+    expect(categoryTagVariant('hedge')).toBe('strategy')
+    expect(categoryTagVariant('regime')).toBe('strategy')
+    expect(categoryTagVariant('general')).toBe('neutral')
+    expect(categoryTagVariant('whatever')).toBe('neutral')
   })
 
   it('reads today as a time and any other day as the date', () => {

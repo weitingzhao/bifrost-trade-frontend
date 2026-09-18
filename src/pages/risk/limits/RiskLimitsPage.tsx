@@ -1,19 +1,21 @@
 /**
- * Risk · Limits & Breaches — the limits that exist, and what they read now.
+ * Risk · Limits & Breaches — the whole limit book, and what each rule reads.
  *
- * Two kinds, kept apart because they bind different things. The house lines are
- * the ones this app already enforces and already draws elsewhere, each carrying
- * the reading from the page that owns it (§14.2). The gate is the daemon's own
- * parameter set: real, stored, and binding an engine that is frozen under D10
- * and configured for paper trading, so nothing there can trip today.
+ * Twelve rules in five groups, as the design draws them. Three carry a number
+ * this app actually stores. Seven carry a live reading and no line, because the
+ * Rules engine that would hold the lines is not built; the last two can read
+ * neither side and say which half is missing. All twelve stay on the page: a
+ * limit book with the unwritten rules removed would read as a complete book,
+ * which is the one thing it must not do.
  *
- * What does not exist is a record of when a limit was crossed. A breach is
- * computable right now; a history of breaches has no store, and an empty table
- * would read as a clean record rather than as no record at all.
+ * Every reading is computed on the page that owns it and cited back to it
+ * (§14.2) — the exposure numbers come from the same hook Portfolio Exposure
+ * draws from, not from a second derivation. Nothing here writes: not a limit,
+ * not an acknowledgement.
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
@@ -23,117 +25,151 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { fmtPct0 } from '@/utils/positions'
-import { HOUSE_GATE_PCT, backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment'
+import { fmtIsoDateToken } from '@/lib/format'
+import { fmtMvAbbrev } from '@/utils/positionsCharts'
+import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
+import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
 import { rollupMargin } from '@/utils/marginPressure'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
-import { fetchModelAnalysis } from '@/api/portfolio'
-import { fetchGateSafetyFull, fetchGateSafety } from '@/api/strategy'
-import { fetchRiskBeta } from '@/api/research/riskStats'
-import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { usePositionsBook } from '@/hooks/usePositionsBook'
-import { RISK_CONCENTRATION_FLOOR, buildRiskExposureRows } from '@/pages/risk/portfolio/riskExposureModel'
-import { LIMITS_UNRECORDED, breached, gateParams, houseLimits, watching, type LimitRow } from './limitsModel'
+import { useRiskExposure } from '@/hooks/useRiskExposure'
+import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { fetchGateSafety, fetchGateSafetyFull } from '@/api/strategy'
+import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
+import {
+  LIMITS_UNRECORDED,
+  LIMIT_GROUPS,
+  gateParams,
+  limitRules,
+  openBreaches,
+  unwritten,
+  watching,
+  withHeadroom,
+  type LimitRow,
+} from './limitsModel'
 
 const PAGE_LEAD =
-  'The limits that exist and what they read right now. A hard line is one something acts on; a soft line asks to be acknowledged. Every reading here belongs to another page — this one only holds them against a number.'
+  'A hard limit is one something would act on; a soft limit asks to be acknowledged. Every reading belongs to the page that computes it — this one only holds each against a line, and writes nothing.'
 
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
-function limitUseLabel(row: LimitRow): string {
-  if (row.use == null) return '—'
-  return fmtPct0(row.use)
-}
+/** A week of fills, counted back from the newest session the book has. */
+const WEEK_MS = 6 * 86_400_000
 
-function currentLabel(row: LimitRow): string {
-  if (row.current == null) return '—'
-  // Every house line here is a ratio except the counts, which have no ceiling.
-  return row.ceiling == null ? String(row.current) : fmtPct0(row.current)
+const ESCALATION: { kind: string; tone: string; what: string }[] = [
+  {
+    kind: 'SOFT',
+    tone: 'text-warning',
+    what: 'A badge, and an acknowledgement to silence it. Nothing stores the acknowledgement, so a soft breach stays visible here until the reading itself moves back inside the line.',
+  },
+  {
+    kind: 'HARD',
+    tone: 'text-lamp-red',
+    what: 'Blocks the offending action at the Rules engine and lands a derisk ticket in Trade Plans. That engine is not built, so a hard breach on this page is a reading, not a block.',
+  },
+  {
+    kind: 'AUTO',
+    tone: 'text-loss',
+    what: 'The backing gate only: Rules would trim the largest margin user without asking. Nothing trims anything today — the trading daemon is frozen (D10) and configured for paper trading.',
+  },
+]
+
+function fmtReading(row: LimitRow, v: number | null): string {
+  if (v == null) return '—'
+  if (row.unit === 'pct') return fmtPct0(v)
+  if (row.unit === 'usd') return fmtMvAbbrev(v)
+  return String(v)
 }
 
 export default function RiskLimitsPage() {
-  const { data: status, isLoading: statusLoading } = useMonitorStatus()
+  const [accountFilter, setAccountFilter] = useState('all')
   const { ceiling } = usePressureCeiling()
-  const [section, setSection] = useState('house')
+  const { status, statusLoading, accountIds, modelQueries, book, legs, rows: exposure, totals, clusters, judgment, error } =
+    useRiskExposure(accountFilter)
 
-  const accountIds = useMemo(
-    () => (status?.portfolio?.accounts ?? []).map((a) => (a.account_id ?? '').trim()).filter(Boolean),
-    [status],
+  const margin = useMemo(
+    () =>
+      rollupMargin(
+        (status?.portfolio?.accounts ?? []).filter(
+          (a) => accountFilter === 'all' || (a.account_id ?? '').trim() === accountFilter,
+        ),
+      ),
+    [status, accountFilter],
   )
-  const modelQueries = useQueries({
-    queries: accountIds.map((id) => ({
-      queryKey: ['portfolio', 'model-analysis', id],
-      queryFn: () => fetchModelAnalysis(id),
-      enabled: Boolean(id),
-    })),
-  })
-  const modelStamp = modelQueries.map((q) => q.dataUpdatedAt).join(',')
 
-  /** Naked short calls, as the model service counts them — not the ITM count. */
-  const nakedShortCalls = useMemo(() => {
-    let n = 0
-    let seen = false
-    for (const q of modelQueries) {
-      for (const u of q.data?.per_underlying ?? []) {
-        const c = Number(u.naked_short_call_contracts ?? 0)
-        if (Number.isFinite(c)) {
-          n += c
-          seen = true
+  /** Velocity, read off the same fills Orders & Fills lists. */
+  const execQuery = useExecutionsCanonical()
+  const velocity = useMemo(() => {
+    const dated = (execQuery.data?.items ?? []).filter((e) => (e.trade_date ?? '').length >= 8)
+    if (dated.length === 0) return { contracts: null, date: null, newNames: null }
+    const newest = dated.reduce((a, e) => ((e.trade_date ?? '') > a ? (e.trade_date ?? '') : a), '')
+    const weekFloor = new Date(Date.parse(`${newest.slice(0, 10)}T00:00:00Z`) - WEEK_MS).toISOString().slice(0, 10)
+    let contracts = 0
+    const inWeek = new Set<string>()
+    const before = new Set<string>()
+    for (const e of dated) {
+      const day = (e.trade_date ?? '').slice(0, 10)
+      const symbol = extractUnderlyingRootSymbol(e.symbol)
+      if (day >= weekFloor) {
+        if (symbol) inWeek.add(symbol)
+        if (day === newest.slice(0, 10) && (e.sec_type ?? '').toUpperCase() === 'OPT') {
+          contracts += Math.abs(Number(e.quantity ?? e.qty ?? 0)) || 0
         }
-      }
+      } else if (symbol) before.add(symbol)
     }
-    return seen ? n : null
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modelStamp])
+    return { contracts, date: newest.slice(0, 10), newNames: [...inWeek].filter((s) => !before.has(s)).length }
+  }, [execQuery.data?.items])
 
-  const model = useMemo(() => {
-    const by = new Map<string, { symbol: string; spot: number | null; deltaShares: number | null; deltaDollars: number | null; degraded: boolean; reason: string | null }>()
-    for (const q of modelQueries) {
-      for (const u of q.data?.per_underlying ?? []) {
-        const symbol = (u.symbol ?? '').trim().toUpperCase()
-        if (!symbol) continue
-        const g = u.greeks ?? {}
-        const prev = by.get(symbol)
-        by.set(symbol, {
-          symbol,
-          spot: u.spot ?? prev?.spot ?? null,
-          deltaShares: null,
-          deltaDollars:
-            g.delta_dollars == null && prev?.deltaDollars == null ? null : (prev?.deltaDollars ?? 0) + (g.delta_dollars ?? 0),
-          degraded: Boolean(g.degraded),
-          reason: g.reason ?? null,
-        })
-      }
+  /**
+   * Naked in the options sense: short puts with no long put in the same name
+   * behind them. Whether what remains is cash-secured is Backing's question.
+   */
+  const nakedShortPuts = useMemo(() => {
+    if (book.isLoading) return null
+    const shortBy = new Map<string, number>()
+    const longBy = new Map<string, number>()
+    for (const p of book.filteredOptions) {
+      if ((p.right ?? '').toUpperCase() !== 'P') continue
+      const symbol = extractUnderlyingRootSymbol(p.symbol)
+      const qty = Number(p.qty ?? 0)
+      if (qty < 0) shortBy.set(symbol, (shortBy.get(symbol) ?? 0) + Math.abs(qty))
+      else if (qty > 0) longBy.set(symbol, (longBy.get(symbol) ?? 0) + qty)
     }
-    return [...by.values()]
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modelStamp])
+    let n = 0
+    for (const [symbol, short] of shortBy) n += Math.max(0, short - (longBy.get(symbol) ?? 0))
+    return n
+  }, [book.isLoading, book.filteredOptions])
 
-  const symbols = useMemo(() => model.map((m) => m.symbol).sort(), [model])
-  const betaQuery = useQuery({
-    queryKey: ['research', 'risk', 'beta', symbols.join(','), '60'],
-    queryFn: () => fetchRiskBeta(symbols, 'SPY', [60]),
-    enabled: symbols.length > 0,
-    staleTime: 60 * 60_000,
-  })
-  const betaBySymbol = useMemo(() => {
-    const by = new Map<string, { beta: number | null; n: number }>()
-    for (const it of betaQuery.data?.items ?? []) by.set(it.symbol.trim().toUpperCase(), { beta: it.beta, n: it.n })
-    return by
-  }, [betaQuery.data?.items])
-
-  const { rows: exposure } = useMemo(
-    () => buildRiskExposureRows({ model, betaBySymbol, greeks: new Map() }),
-    [model, betaBySymbol],
+  const rows = useMemo(
+    () =>
+      withHeadroom(
+        limitRules({
+          topNameShare: exposure[0]?.share ?? null,
+          concentrationFloor: RISK_CONCENTRATION_FLOOR,
+          clusterShare: clusters.find((c) => c.members.length > 1)?.share ?? null,
+          contractsToday: velocity.contracts,
+          contractsTodayDate: velocity.date ? fmtIsoDateToken(velocity.date) : null,
+          newUnderlyingsThisWeek: velocity.newNames,
+          buyingPowerBuffer: margin.pressure == null ? null : 1 - margin.pressure,
+          bufferFloor: 1 - ceiling,
+          backingUsed: judgment?.usedPct ?? null,
+          backingGate: HOUSE_GATE_PCT,
+          maintenanceOverNlv: margin.netLiquidation > 0 ? margin.maintMarginReq / margin.netLiquidation : null,
+          netBetaDelta: totals.withBetaDelta > 0 ? totals.betaDeltaDollars : null,
+          shortGamma: legs.length > 0 ? totals.gamma : null,
+          nakedShortPuts,
+        }),
+      ),
+    [exposure, clusters, velocity, margin, ceiling, judgment, totals, legs.length, nakedShortPuts],
   )
 
-  const book = usePositionsBook({ accountFilter: { host: true, secondary: true }, filterSymbol: '', filterExpiry: '' }, 0)
-  const judgment = useMemo(
-    () => (book.alarm ? deriveBackingJudgment(backingPoolUsage(book.alarm.book)) : null),
-    [book.alarm],
-  )
-  const margin = useMemo(() => rollupMargin(status?.portfolio?.accounts ?? []), [status])
+  const breaches = openBreaches(rows)
+  const near = watching(rows)
+  const noLine = unwritten(rows)
+  const held = rows.filter((r) => r.use != null).length
+  const withLine = rows.filter((r) => r.limit != null).length
 
+  /** The daemon's own stored parameters: real limits, on an engine that is frozen. */
   const gatesQuery = useQuery({ queryKey: ['strategy', 'gate-safety'], queryFn: fetchGateSafety })
   const activeGate = (gatesQuery.data?.items ?? []).find((g) => g.is_active) ?? null
   const gateFullQuery = useQuery({
@@ -142,26 +178,6 @@ export default function RiskLimitsPage() {
     enabled: activeGate != null,
   })
   const params = useMemo(() => gateParams(gateFullQuery.data?.gates), [gateFullQuery.data?.gates])
-
-  const rows = useMemo(
-    () =>
-      houseLimits({
-        backingUsedPct: judgment?.usedPct ?? null,
-        backingGatePct: HOUSE_GATE_PCT,
-        topNameShare: exposure[0]?.share ?? null,
-        concentrationFloor: RISK_CONCENTRATION_FLOOR,
-        pressure: margin.pressure,
-        pressureCeiling: ceiling,
-        nakedShortCalls,
-        nakedShortCallLimit: null,
-      }),
-    [judgment, exposure, margin.pressure, ceiling, nakedShortCalls],
-  )
-  const over = breached(rows)
-  const near = watching(rows)
-
-  const loading = statusLoading
-  const error = modelQueries.find((q) => q.error)?.error ?? null
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -173,167 +189,278 @@ export default function RiskLimitsPage() {
           description={PAGE_LEAD}
           actions={
             <span className="flex flex-wrap items-center gap-2.5">
-              <SegmentControl
-                size="xs"
-                ariaLabel="Which limits"
-                value={section}
-                onChange={setSection}
-                options={[
-                  { value: 'house', label: 'House lines' },
-                  { value: 'gate', label: 'The daemon’s gate' },
-                ]}
-              />
-              <span
-                className={cn(
-                  positionsUi.mono,
-                  'text-dense-meta',
-                  over.length > 0 ? 'text-warning' : 'text-muted-foreground',
-                )}
-              >
-                {over.length} over · {near.length} close
+              {accountIds.length > 1 ? (
+                <SegmentControl
+                  size="xs"
+                  ariaLabel="Account"
+                  value={accountFilter}
+                  onChange={setAccountFilter}
+                  options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+                />
+              ) : null}
+              <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
+                {rows.length} rules · {withLine} with a line
               </span>
+              <Link to="/strategy/gates" className={positionsUi.link}>
+                Rules engine →
+              </Link>
             </span>
           }
         />
 
-        {error ? <QueryErrorAlert error={error} onRetry={() => modelQueries.forEach((q) => void q.refetch())} /> : null}
-        {loading ? (
+        {error ? (
+          <QueryErrorAlert error={error} onRetry={() => modelQueries.forEach((q) => void q.refetch())} />
+        ) : null}
+        {statusLoading ? (
           <div className="flex flex-col gap-3">
             <Skeleton className="h-20 w-full rounded-md" />
-            <Skeleton className="h-48 w-full rounded-md" />
+            <Skeleton className="h-64 w-full rounded-md" />
           </div>
-        ) : section === 'house' ? (
+        ) : (
           <>
+            <section
+              className={cn(positionsUi.panel, breaches.length > 0 && 'border-lamp-red/45')}
+              aria-label="Open breaches"
+            >
+              <header className={positionsUi.panelHead}>
+                <span className={positionsUi.cap}>Open breaches</span>
+                <span className={positionsUi.panelTitle}>
+                  {breaches.length === 0 ? 'nothing is over a line' : `${breaches.length} open`}
+                </span>
+                {near.length > 0 ? (
+                  <span className="inline-flex items-center gap-1.5 text-dense-meta text-warning">
+                    <StatusLamp lamp="yellow" variant="dot" title="Close to the line" />
+                    {near.length} close
+                  </span>
+                ) : null}
+                <span className="ml-auto text-dense-meta text-muted-foreground">
+                  computed from the readings — no queue stores it
+                </span>
+              </header>
+              {breaches.length === 0 ? (
+                <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                  Every rule that has both a reading and a line is inside it — {held} of {rows.length}. The other{' '}
+                  {rows.length - held} cannot be breached, because nothing has drawn the line.
+                </p>
+              ) : (
+                breaches.map((r) => (
+                  <div
+                    key={r.key}
+                    className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border/55 px-3 py-2 last:border-b-0"
+                  >
+                    <span className="inline-flex items-center gap-1.5 text-xs leading-normal font-semibold text-foreground">
+                      <StatusLamp lamp={r.kind === 'hard' ? 'red' : 'yellow'} variant="dot" title={r.kind} />
+                      {r.name}
+                    </span>
+                    <span className={cn(positionsUi.mono, 'text-xs text-warning')}>
+                      {fmtReading(r, r.current)} against {fmtReading(r, r.limit)}
+                    </span>
+                    <span className="min-w-0 flex-[1_1_10rem] text-dense-meta leading-normal text-muted-foreground text-pretty">
+                      {r.onBreach}
+                    </span>
+                    {r.citedFrom ? (
+                      <Link to={r.citedFrom.to} className={positionsUi.link}>
+                        {r.citedFrom.label} →
+                      </Link>
+                    ) : null}
+                  </div>
+                ))
+              )}
+              <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.ack}</p>
+            </section>
+
             <PositionsTier
-              label="House lines"
-              note="each reading belongs to another page — this one holds it against a number"
+              label="All limits"
+              note="headroom is the distance to the line at today’s book — a rule with no line keeps its reading and says so"
             />
-            <section className={positionsUi.panel} aria-label="House lines">
+            <section className={positionsUi.panel} aria-label="All limits">
+              <header className={positionsUi.panelHead}>
+                <span className={positionsUi.panelTitle}>{rows.length} rules · 5 groups</span>
+                <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
+                  <StatusLamp lamp="gray" variant="dot" title="No line written" />
+                  {noLine.length} read but have no line
+                </span>
+                <span className="ml-auto text-dense-meta text-muted-foreground">
+                  the design edits these in the Rules engine — this page reads, never writes
+                </span>
+              </header>
               <div className="overflow-x-auto">
-                {/* §14.6: seven columns, the design's 900 floor. */}
-                <table className="w-full min-w-[900px] table-fixed border-collapse">
+                {/* §14.6: seven columns, the design's 1040 floor. */}
+                <table className="w-full min-w-[1040px] table-fixed border-collapse">
                   <colgroup>
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '7%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '21%' }} />
+                    <col style={{ width: '6%' }} />
+                    <col style={{ width: '9%' }} />
+                    <col style={{ width: '9%' }} />
+                    <col style={{ width: '18%' }} />
+                    <col style={{ width: '21%' }} />
                     <col style={{ width: '16%' }} />
-                    <col style={{ width: '19%' }} />
-                    <col style={{ width: '14%' }} />
                   </colgroup>
                   <thead>
                     <tr>
                       <th className={cn(positionsUi.th, 'text-left')}>Limit</th>
                       <th className={cn(positionsUi.th, 'text-left')}>Kind</th>
-                      <th className={positionsUi.th}>Now</th>
-                      <th className={positionsUi.th}>Line</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Of the limit</th>
+                      <th className={positionsUi.th}>Current</th>
+                      <th className={positionsUi.th}>Limit</th>
+                      <th className={cn(positionsUi.th, 'text-left')}>Headroom</th>
                       <th className={cn(positionsUi.th, 'text-left')}>On breach</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Reading from</th>
+                      <th className={cn(positionsUi.th, 'text-left')}>Scope</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map((r) => {
-                      const isOver = r.use != null && r.use > 1
-                      const isNear = r.use != null && r.use > 0.8 && r.use <= 1
-                      return (
-                        <tr key={r.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                          <td className={cn(positionsUi.td, 'pl-2 text-left font-sans font-semibold whitespace-normal text-foreground')}>
-                            {r.name}{' '}
-                            <span className="font-normal text-dense-meta text-muted-foreground">{r.scope}</span>
+                    {LIMIT_GROUPS.flatMap((group) => {
+                      const inGroup = rows.filter((r) => r.group === group)
+                      if (inGroup.length === 0) return []
+                      return [
+                        <tr key={group} className="bg-[var(--sk-raised2)]">
+                          <td
+                            className={cn(
+                              positionsUi.td,
+                              'pl-2 text-left font-sans text-dense-caption font-bold uppercase tracking-[0.12em] text-primary/90',
+                            )}
+                            colSpan={7}
+                          >
+                            {group}
                           </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans')}>
-                            <span
+                        </tr>,
+                        ...inGroup.map((r) => (
+                          <tr key={r.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                            <td
                               className={cn(
-                                'inline-flex h-4 items-center rounded-[3px] border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em]',
-                                r.kind === 'hard' ? 'border-lamp-red/45 text-lamp-red' : 'border-border text-muted-foreground',
+                                positionsUi.td,
+                                'pl-2 text-left font-sans whitespace-normal leading-normal text-foreground',
                               )}
                             >
-                              {r.kind.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className={cn(positionsUi.td, isOver ? 'text-warning' : 'text-foreground')}>
-                            {currentLabel(r)}
-                          </td>
-                          <td className={cn(positionsUi.td, 'whitespace-normal text-muted-foreground')}>{r.limit}</td>
-                          <td className={cn(positionsUi.td, 'text-left')}>
-                            {r.use == null ? (
-                              <span className="inline-flex items-start gap-1.5 whitespace-normal text-dense-meta leading-normal text-muted-foreground">
-                                <StatusLamp lamp="gray" variant="dot" title="No reading" className="mt-1 shrink-0" />
-                                {r.noReading ?? 'no reading'}
+                              {r.name}
+                              {r.breached ? (
+                                <span className="ml-1.5 inline-flex h-4 items-center rounded-[3px] border border-lamp-red/45 px-1 font-mono text-dense-micro font-bold text-lamp-red">
+                                  BREACH
+                                </span>
+                              ) : null}
+                            </td>
+                            <td className={cn(positionsUi.td, 'text-left font-sans')}>
+                              <span
+                                className={cn(
+                                  'inline-flex h-4 items-center rounded-[3px] border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em]',
+                                  r.kind === 'hard'
+                                    ? 'border-lamp-red/45 text-lamp-red'
+                                    : 'border-border text-muted-foreground',
+                                )}
+                              >
+                                {r.kind.toUpperCase()}
                               </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-2">
-                                <span className="inline-block h-1.5 w-20 overflow-hidden rounded-sm bg-[var(--sk-surface)]">
-                                  <span
-                                    className={cn('block h-full', isOver ? 'bg-lamp-red' : isNear ? 'bg-warning' : 'bg-[var(--sk-line2)]')}
-                                    style={{ width: `${Math.min(100, Math.round(r.use * 100))}%` }}
+                            </td>
+                            <td
+                              className={cn(
+                                positionsUi.td,
+                                r.current == null
+                                  ? 'text-muted-foreground'
+                                  : r.breached
+                                    ? 'text-lamp-red'
+                                    : 'text-foreground',
+                              )}
+                            >
+                              {fmtReading(r, r.current)}
+                            </td>
+                            <td
+                              className={cn(
+                                positionsUi.td,
+                                r.limit == null ? 'text-muted-foreground' : 'text-secondary-foreground',
+                              )}
+                            >
+                              {r.limit == null ? 'unwritten' : fmtReading(r, r.limit)}
+                            </td>
+                            <td className={cn(positionsUi.td, 'text-left')}>
+                              {r.use == null || r.headroom == null ? (
+                                <span className="inline-flex items-start gap-1.5 whitespace-normal text-dense-meta leading-normal text-muted-foreground">
+                                  <StatusLamp
+                                    lamp="gray"
+                                    variant="dot"
+                                    title={r.current == null ? 'No reading' : 'No line'}
+                                    className="mt-1 shrink-0"
                                   />
+                                  {r.noReading ?? 'no line written'}
                                 </span>
-                                <span className={cn(positionsUi.mono, 'text-dense-meta', isOver ? 'text-warning' : 'text-muted-foreground')}>
-                                  {limitUseLabel(r)}
+                              ) : (
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="inline-block h-1.5 w-20 shrink-0 overflow-hidden rounded-sm bg-[var(--sk-surface)]">
+                                    <span
+                                      className={cn(
+                                        'block h-full',
+                                        r.breached ? 'bg-lamp-red' : r.use > 0.8 ? 'bg-warning' : 'bg-[var(--sk-line2)]',
+                                      )}
+                                      style={{ width: `${Math.min(100, Math.round(r.use * 100))}%` }}
+                                    />
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      positionsUi.mono,
+                                      'text-dense-meta',
+                                      r.breached ? 'text-lamp-red' : r.use > 0.8 ? 'text-warning' : 'text-muted-foreground',
+                                    )}
+                                  >
+                                    {r.breached ? `over by ${fmtPct0(r.use - 1)}` : `${fmtPct0(r.headroom)} left`}
+                                  </span>
                                 </span>
-                              </span>
-                            )}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-muted-foreground')}>
-                            {r.onBreach}
-                          </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans')}>
-                            <Link to={r.citedFrom.to} className={positionsUi.link}>
-                              {r.citedFrom.label} →
-                            </Link>
-                          </td>
-                        </tr>
-                      )
+                              )}
+                            </td>
+                            <td
+                              className={cn(
+                                positionsUi.td,
+                                'text-left font-sans whitespace-normal leading-normal text-muted-foreground',
+                              )}
+                            >
+                              {r.onBreach}
+                            </td>
+                            <td
+                              className={cn(
+                                positionsUi.td,
+                                'text-left font-sans whitespace-normal leading-normal text-muted-foreground',
+                              )}
+                            >
+                              {r.scope}
+                              {r.citedFrom ? (
+                                <>
+                                  {' · '}
+                                  <Link to={r.citedFrom.to} className={positionsUi.link}>
+                                    {r.citedFrom.label}
+                                  </Link>
+                                </>
+                              ) : null}
+                            </td>
+                          </tr>
+                        )),
+                      ]
                     })}
                   </tbody>
                 </table>
               </div>
-              <p className={cn(FOOT, 'm-0')}>
-                A line exactly at its limit is not yet crossed. The pressure ceiling is the one the Owner sets on{' '}
-                <Link to="/portfolio/backing" className={positionsUi.link}>
-                  Backing &amp; Model
-                </Link>
-                , and it is the broker&rsquo;s cushion it bounds — not the house gate, which is pool usage.
-              </p>
+              <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.store}</p>
             </section>
 
             <div className={positionsUi.bandGrid}>
-              <section className={cn(positionsUi.panel, over.length > 0 && 'border-warning/40')} aria-label="Over the line">
+              <section className={positionsUi.panel} aria-label="Escalation">
                 <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>Over the line</span>
-                  <span className={positionsUi.panelTitle}>{over.length === 0 ? 'nothing is over' : `${over.length} now`}</span>
+                  <span className={positionsUi.cap}>Escalation</span>
+                  <span className={positionsUi.panelTitle}>what a breach does</span>
                 </header>
-                {over.length === 0 ? (
-                  <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground text-pretty">
-                    Every line with a reading is inside it. {near.length > 0 ? `${near.length} is close.` : ''}
-                  </p>
-                ) : (
-                  over.map((r) => (
-                    <div key={r.key} className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 border-b border-border/55 px-3 py-1.75 last:border-b-0">
-                      <span className="inline-flex items-center gap-1.5 text-xs leading-normal text-foreground">
-                        <StatusLamp lamp={r.kind === 'hard' ? 'red' : 'yellow'} variant="dot" title={r.kind} />
-                        {r.name}
-                      </span>
-                      <span className={cn(positionsUi.mono, 'text-xs font-semibold text-warning')}>
-                        {currentLabel(r)} against {r.limit}
-                      </span>
-                      <span className="min-w-0 flex-[1_1_10rem] text-dense-meta text-muted-foreground text-pretty">
-                        {r.onBreach}
-                      </span>
-                      <Link to={r.citedFrom.to} className={positionsUi.link}>
-                        {r.citedFrom.label} →
-                      </Link>
-                    </div>
-                  ))
-                )}
-                <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.ack}</p>
+                {ESCALATION.map((e) => (
+                  <div
+                    key={e.kind}
+                    className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-2.5 border-b border-border/55 px-3 py-2 last:border-b-0"
+                  >
+                    <span className={cn(positionsUi.mono, 'text-dense-caption font-bold tracking-[0.08em]', e.tone)}>
+                      {e.kind}
+                    </span>
+                    <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">{e.what}</span>
+                  </div>
+                ))}
+                <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.rules}</p>
               </section>
 
-              <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="History">
+              <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Recent history">
                 <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>History</span>
+                  <span className={positionsUi.cap}>Recent history</span>
                   <span className={positionsUi.panelTitle}>when a line was crossed</span>
                   <DenseTag variant="warning" size="cell">
                     ⚠ nothing records it
@@ -346,10 +473,11 @@ export default function RiskLimitsPage() {
                 <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.history}</p>
               </section>
             </div>
-          </>
-        ) : (
-          <>
-            <PositionsTier label="The daemon’s gate" note="stored limits on an engine that is not running" />
+
+            <PositionsTier
+              label="The daemon’s gate"
+              note="not one of the twelve — stored parameters the trading engine would read, edited on Gates"
+            />
             <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="The daemon's gate">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>{activeGate?.name ?? 'no active gate'}</span>
@@ -395,19 +523,21 @@ export default function RiskLimitsPage() {
                   </table>
                 </div>
               )}
-              <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.daemon}</p>
+              <p className={cn(FOOT, 'm-0')}>
+                These are the daemon&rsquo;s own stored parameters, not the twelve rules above: they bind an engine that
+                is frozen under D10 and configured for paper trading, so nothing in this table can trip today. They are
+                edited on Gates, never here.
+              </p>
             </section>
+
+            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+              <span className="font-semibold text-secondary-foreground">Boundary.</span> This page holds readings
+              against lines. Each reading is computed on the page named beside it, and the lines belong to a Rules
+              engine that does not exist yet — which is why {noLine.length} of the {rows.length} rules have a reading
+              and nothing to hold it against.
+            </p>
           </>
         )}
-
-        <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-          <span className="font-semibold text-secondary-foreground">Boundary.</span> This page holds readings against
-          numbers. Every reading is computed on the page that owns it, and the gate&rsquo;s parameters are edited on{' '}
-          <Link to="/strategy/gates" className={positionsUi.link}>
-            Gates
-          </Link>
-          , never here.
-        </p>
       </section>
     </PageShell>
   )

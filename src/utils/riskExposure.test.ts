@@ -8,7 +8,7 @@ import {
   riskByExpiry,
   type LegGreeks,
   type RiskExposureRow,
-} from './riskExposureModel'
+} from './riskExposure'
 
 function leg(over: Partial<LegGreeks> & Pick<LegGreeks, 'underlying'>): LegGreeks {
   return { expiry: '20261016', gamma: 1, theta: -2, vega: 3, ...over }

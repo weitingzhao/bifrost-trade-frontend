@@ -10,7 +10,7 @@
  */
 import { cn } from '@/lib/utils'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { RISK_CLUSTER_RHO, RISK_UNRECORDED, type RiskCluster } from './riskExposureModel'
+import { RISK_CLUSTER_RHO, RISK_UNRECORDED, type RiskCluster } from '@/utils/riskExposure'
 
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'

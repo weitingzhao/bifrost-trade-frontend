@@ -13,7 +13,6 @@
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQueries } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
@@ -31,184 +30,39 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
-import { QUERY_KEYS } from '@/constants/queryKeys'
-import { fetchModelAnalysis } from '@/api/portfolio'
-import { fetchRiskBeta, fetchRiskCorrelation } from '@/api/research/riskStats'
-import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { usePositionsBook } from '@/hooks/usePositionsBook'
-import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment'
-import { buildOptionTicker } from '@/utils/optionTicker'
-import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
-import {
-  RISK_CONCENTRATION_FLOOR,
-  RISK_UNRECORDED,
-  buildRiskExposureRows,
-  correlationClusters,
-  effectiveIndependentPositions,
-  greeksByUnderlying,
-  riskByExpiry,
-  type LegGreeks,
-  type UnderlyingModelRow,
-} from './riskExposureModel'
+import { BETA_WINDOWS, CORR_WINDOW, useRiskExposure } from '@/hooks/useRiskExposure'
+import { RISK_CONCENTRATION_FLOOR, RISK_UNRECORDED } from '@/utils/riskExposure'
 
 const PAGE_LEAD =
   'Net book exposure, β-weighted to SPY. What each position is worth and what backs it is Backing & Model’s; this page asks how much of the book is one bet.'
-
-const BETA_WINDOWS = [60, 252] as const
-const CORR_WINDOW = 60
 
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 
 export default function RiskPortfolioPage() {
-  const { data: status, isLoading: statusLoading } = useMonitorStatus()
   const [accountFilter, setAccountFilter] = useState('all')
-
-  const accountIds = useMemo(
-    () => (status?.portfolio?.accounts ?? []).map((a) => (a.account_id ?? '').trim()).filter(Boolean),
-    [status],
-  )
-  const scoped = useMemo(
-    () => (accountFilter === 'all' ? accountIds : accountIds.filter((a) => a === accountFilter)),
-    [accountIds, accountFilter],
-  )
-
-  const modelQueries = useQueries({
-    queries: scoped.map((id) => ({
-      queryKey: [...QUERY_KEYS.portfolio.modelAnalysis, id],
-      queryFn: () => fetchModelAnalysis(id),
-      enabled: Boolean(id),
-    })),
-  })
-
-  /**
-   * The model queries rebuild their array every render, so the memos below key
-   * on what actually moved: the scope, and the moment each answer last landed.
-   */
-  const scopeKey = scoped.join(',')
-  const modelStamp = modelQueries.map((q) => q.dataUpdatedAt).join(',')
-
-  /**
-   * One row per underlying, with the per-account Δ$ summed — the model service's
-   * own figures added together, not a second derivation of them.
-   */
-  const model = useMemo<UnderlyingModelRow[]>(() => {
-    const by = new Map<string, UnderlyingModelRow>()
-    for (const q of modelQueries) {
-      for (const u of q.data?.per_underlying ?? []) {
-        const symbol = (u.symbol ?? '').trim().toUpperCase()
-        if (!symbol) continue
-        const g = u.greeks ?? {}
-        const prev = by.get(symbol)
-        const dd = g.delta_dollars ?? null
-        const ds = g.delta ?? null
-        by.set(symbol, {
-          symbol,
-          spot: u.spot ?? prev?.spot ?? null,
-          deltaShares: ds == null && prev?.deltaShares == null ? null : (prev?.deltaShares ?? 0) + (ds ?? 0),
-          deltaDollars: dd == null && prev?.deltaDollars == null ? null : (prev?.deltaDollars ?? 0) + (dd ?? 0),
-          degraded: Boolean(g.degraded) || Boolean(prev?.degraded),
-          reason: g.reason ?? prev?.reason ?? null,
-        })
-      }
-    }
-    return [...by.values()]
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modelStamp, scopeKey])
-
-  const symbols = useMemo(() => model.map((m) => m.symbol).sort(), [model])
-
-  const [betaQuery, corrQuery] = useQueries({
-    queries: [
-      {
-        queryKey: ['research', 'risk', 'beta', symbols.join(','), BETA_WINDOWS.join(',')],
-        queryFn: () => fetchRiskBeta(symbols, 'SPY', [...BETA_WINDOWS]),
-        enabled: symbols.length > 0,
-        staleTime: 60 * 60_000,
-      },
-      {
-        queryKey: ['research', 'risk', 'correlation', symbols.join(','), CORR_WINDOW],
-        queryFn: () => fetchRiskCorrelation(symbols, CORR_WINDOW),
-        enabled: symbols.length > 1,
-        staleTime: 60 * 60_000,
-      },
-    ],
-  })
-
-  const book = usePositionsBook(
-    {
-      accountFilter:
-        accountFilter === 'all'
-          ? { host: true, secondary: true }
-          : { host: accountFilter === accountIds[0], secondary: accountFilter !== accountIds[0] },
-      filterSymbol: '',
-      filterExpiry: '',
-    },
-    0,
-  )
-
-  /** The vendor legs, as the Positions page priced them — one rollup, cited twice. */
-  const legs = useMemo<LegGreeks[]>(() => {
-    const out: LegGreeks[] = []
-    for (const g of book.scopedInstanceGroups ?? []) {
-      for (const p of g.options ?? []) {
-        const underlying = extractUnderlyingRootSymbol(p.symbol)
-        const ticker = buildOptionTicker({
-          underlying,
-          expiry: p.expiry,
-          strike: p.strike,
-          right: p.right,
-        })
-        const priced = ticker ? book.greeks.byTicker.get(ticker) : undefined
-        if (!priced) continue
-        out.push({ underlying, expiry: p.expiry, gamma: priced.gamma, theta: priced.theta, vega: priced.vega })
-      }
-    }
-    return out
-  }, [book.scopedInstanceGroups, book.greeks.byTicker])
-
-  const betaBySymbol = useMemo(() => {
-    const by = new Map<string, { beta: number | null; n: number }>()
-    for (const it of betaQuery.data?.items ?? []) {
-      // The shorter window is the one the table shows: it is the book's β now.
-      if (it.window !== BETA_WINDOWS[0]) continue
-      by.set(it.symbol.trim().toUpperCase(), { beta: it.beta, n: it.n })
-    }
-    return by
-  }, [betaQuery.data?.items])
-
-  const betaLong = useMemo(() => {
-    const by = new Map<string, number | null>()
-    for (const it of betaQuery.data?.items ?? []) {
-      if (it.window !== BETA_WINDOWS[1]) continue
-      by.set(it.symbol.trim().toUpperCase(), it.beta)
-    }
-    return by
-  }, [betaQuery.data?.items])
-
-  const { rows, totals } = useMemo(
-    () => buildRiskExposureRows({ model, betaBySymbol, greeks: greeksByUnderlying(legs) }),
-    [model, betaBySymbol, legs],
-  )
-  const expiries = useMemo(() => riskByExpiry(legs), [legs])
-  const enp = useMemo(
-    () => effectiveIndependentPositions(rows, corrQuery.data?.matrix ?? null),
-    [rows, corrQuery.data?.matrix],
-  )
-  const clusters = useMemo(
-    () => correlationClusters(rows, corrQuery.data?.matrix ?? null),
-    [rows, corrQuery.data?.matrix],
-  )
-  const corrSymbols = useMemo(
-    () => (corrQuery.data?.symbols ?? []).filter((s) => rows.some((r) => r.symbol === s)),
-    [corrQuery.data?.symbols, rows],
-  )
-
-  const judgment = useMemo(
-    () => (book.alarm ? deriveBackingJudgment(backingPoolUsage(book.alarm.book)) : null),
-    [book.alarm],
-  )
+  const {
+    status,
+    statusLoading,
+    accountIds,
+    modelQueries,
+    modelStamp,
+    scopeKey,
+    betaQuery,
+    corrQuery,
+    betaLong,
+    corrSymbols,
+    book,
+    legs,
+    rows,
+    totals,
+    expiries,
+    enp,
+    clusters,
+    judgment,
+    error,
+  } = useRiskExposure(accountFilter)
   const netLiq = useMemo(
     () =>
       (status?.portfolio?.accounts ?? [])
@@ -244,7 +98,6 @@ export default function RiskPortfolioPage() {
   const maxStress = Math.max(1, ...stress.cells.map((c) => Math.abs(c.pnl)))
 
   const loading = statusLoading || modelQueries.some((q) => q.isLoading)
-  const error = modelQueries.find((q) => q.error)?.error ?? null
 
   return (
     <PageShell padding="compact" className="space-y-3">

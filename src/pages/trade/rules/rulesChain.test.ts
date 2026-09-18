@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   buildChain,
   detailOf,
+  formatPick,
+  parsePick,
   lineageOf,
   orphanOpportunities,
   plural,
@@ -333,5 +335,27 @@ describe('plural', () => {
     expect(plural(9, 'opportunity', 'opportunities')).toBe('9 opportunities')
     expect(plural(1, 'fill')).toBe('1 fill')
     expect(plural(0, 'fill')).toBe('0 fills')
+  })
+})
+
+describe('parsePick and formatPick', () => {
+  it('round-trips a selection through the URL', () => {
+    for (const sel of [
+      { kind: 'instance' as const, id: 142 },
+      { kind: 'structure' as const, id: 1 },
+      { kind: 'opportunity' as const, id: 7 },
+      { kind: 'allocation' as const, id: 3 },
+    ]) {
+      expect(parsePick(formatPick(sel))).toEqual(sel)
+    }
+  })
+
+  it('refuses anything that is not a link in the chain', () => {
+    // A bad `?pick=` must open the page unlit, not throw and not guess.
+    expect(parsePick(null)).toBeNull()
+    expect(parsePick('')).toBeNull()
+    expect(parsePick('instance')).toBeNull()
+    expect(parsePick('plan:3')).toBeNull()
+    expect(parsePick('instance:abc')).toBeNull()
   })
 })

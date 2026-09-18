@@ -7,7 +7,9 @@
  * questions, and the Ledger owns the reconciliation (§14.2).
  *
  * Nothing here sends an order. Orders are worked in TWS; this page reads what
- * IB is working and what came back (D10).
+ * IB is working and what came back. The design reserves a Send action and marks
+ * it `not wired`, and it lives on Plans rather than here — D10 governs either
+ * way (design DECISIONS 2026-09-18).
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -29,7 +31,7 @@ import { useOpenOrders } from '@/hooks/useOpenOrders'
 import { FILLS_UNRECORDED, buildFillRows, buildPlanRows, scopeFills, summarize } from './fillsModel'
 
 const PAGE_LEAD =
-  'The work side of the ledger: what IB is working right now, what came back, and which fills still need a home. Nothing here sends an order — TWS does that.'
+  'The work side of the ledger: what IB is working right now, what came back, and which fills still need a home. Nothing here sends an order — TWS does that, and the reserved Send action lives on Plans, not wired.'
 
 const WINDOWS: { value: string; label: string; days: number | null }[] = [
   { value: 'today', label: 'Today', days: 1 },
@@ -129,8 +131,11 @@ export default function FillsPage() {
                     ⚠ the broker did not answer
                   </DenseTag>
                 ) : null}
-                <span className="ml-auto text-dense-meta text-muted-foreground">
-                  nothing on this page places or cancels one
+                <span className="ml-auto inline-flex items-center gap-2.5 text-dense-meta text-muted-foreground">
+                  read from the broker · cancel and amend in TWS
+                  <Link to="/market/live" className={positionsUi.link}>
+                    Live →
+                  </Link>
                 </span>
               </header>
               {orders.length === 0 ? (
@@ -270,9 +275,17 @@ export default function FillsPage() {
                             {r.state === 'linked' ? (
                               <span className="inline-flex flex-wrap items-center gap-1.5 text-dense-meta">
                                 <StatusLamp lamp="green" variant="dot" title="Linked" />
-                                <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-instance)]')}>
+                                {/* The chain opens already lit on this instance. */}
+                                <Link
+                                  to={`/trade/rules?pick=instance:${r.instanceId}`}
+                                  className={cn(
+                                    positionsUi.mono,
+                                    'font-bold text-[var(--color-entity-instance)] hover:underline',
+                                  )}
+                                  title="Open it in the rules chain"
+                                >
                                   #{r.instanceId}
-                                </span>
+                                </Link>
                                 <span className="text-muted-foreground">
                                   {r.opportunityName ?? r.instanceLabel ?? 'on an instance'}
                                 </span>

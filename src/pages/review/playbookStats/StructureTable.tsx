@@ -37,7 +37,14 @@ function serviceBig(v: number | null): string {
   return v == null ? '—' : fmtMvAbbrev(v)
 }
 
-export function StructureTable({ rows }: { rows: readonly StructureRow[] }) {
+export function StructureTable({
+  rows,
+  idByName,
+}: {
+  rows: readonly StructureRow[]
+  /** The rulebook's own id for each shape, so a row can open the chain lit on it. */
+  idByName: ReadonlyMap<string, number>
+}) {
   return (
     <div className="overflow-x-auto">
       {/* §14.6: twelve columns; Invested carries two lines and the average
@@ -84,10 +91,14 @@ export function StructureTable({ rows }: { rows: readonly StructureRow[] }) {
               )}
             >
               <td className={cn(positionsUi.td, 'pl-2 whitespace-normal text-left font-sans text-foreground')}>
-                {r.totals ? (
+                {r.totals || !idByName.has(r.name) ? (
                   r.name
                 ) : (
-                  <Link to="/trade/rules" className={positionsUi.link} title="Open the chain with this shape">
+                  <Link
+                    to={`/trade/rules?pick=structure:${idByName.get(r.name)}`}
+                    className={positionsUi.link}
+                    title="Open the chain lit on this shape"
+                  >
                     {r.name}
                   </Link>
                 )}

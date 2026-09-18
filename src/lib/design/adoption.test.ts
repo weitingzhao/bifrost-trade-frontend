@@ -125,13 +125,12 @@ describe('design adoption', () => {
     // keeps the thesis table's shape with a NO HYPOTHESIS STORE row, and the
     // second stopped blaming its feed for a calendar the issuers have not
     // declared yet.
-    expect(counts.aligned + counts.byState.stale).toBe(23)
+    expect(counts.aligned + counts.byState.stale).toBe(22)
     expect(counts.aligned).toBe(21)
     // The four the design moved past their walk. They are not work lost — the
     // page is built, and what is stale is the comparison.
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/portfolio/positions',
-      '/trade/fills',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -192,8 +191,10 @@ describe('design adoption', () => {
     // `reviewing`, Sizing and Budget are re-stamped at .18.1 — so the stale set
     // is three and Risk waits on one look for all three. Playbook Stats is
     // re-walked next, absorbing Win Rate as a grouping switch, which takes the
-    // stale set to two and Review back to waiting on two looks.
-    expect(counts.byState.reviewing).toBe(8)
+    // stale set to two and Review back to waiting on two looks. Orders & Fills
+    // follows — the order boundary stated in full and every fake jump made
+    // real — leaving Positions as the only page the design has moved past.
+    expect(counts.byState.reviewing).toBe(9)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -229,6 +230,7 @@ describe('design adoption', () => {
       '/risk/limits',
       '/risk/sizing',
       '/trade/expiration',
+      '/trade/fills',
       '/trade/plans',
       '/trade/rules',
     ])
@@ -298,7 +300,7 @@ describe('design adoption', () => {
     // Not zero any more, and that is the point: the ones that read stale are
     // exactly those whose *own* rev moved, not the whole walked set — and the
     // count falls as each is re-walked (4 → 3 when Risk Limits was).
-    expect(counts.byState.stale).toBe(2)
+    expect(counts.byState.stale).toBe(1)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

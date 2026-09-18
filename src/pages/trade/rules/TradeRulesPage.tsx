@@ -17,7 +17,7 @@
  * confirmation, not behind a card click.
  */
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
@@ -26,7 +26,15 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { useRulesChain } from './useRulesChain'
 import { ChainColumnList, ChainDetailPanel } from './ChainColumns'
-import { buildChain, detailOf, orphanOpportunities, visibleChain, type ChainSelection } from './rulesChain'
+import {
+  buildChain,
+  detailOf,
+  formatPick,
+  orphanOpportunities,
+  parsePick,
+  visibleChain,
+  type ChainSelection,
+} from './rulesChain'
 
 const PAGE_LEAD =
   'One chain, read left to right: a Structure is a shape, an Opportunity is when to use it, an Allocation is what the daemon is told to run, an Instance is one running. Pick anything and its lineage lights up. A gate is a limit whose scope is an allocation — defined here, its breaches land on Risk › Limits.'
@@ -41,7 +49,10 @@ const EDITORS: Record<string, { to: string; label: string }> = {
 
 export default function TradeRulesPage() {
   const [activeOnly, setActiveOnly] = useState('active')
-  const [sel, setSel] = useState<ChainSelection | null>(null)
+  // The selection lives in the URL so another page can open the chain already
+  // lit on the link it means (§ URL state, CLAUDE.md).
+  const [params, setParams] = useSearchParams()
+  const sel = parsePick(params.get('pick'))
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const { data, loading, error, refetch } = useRulesChain()
 
@@ -56,12 +67,23 @@ export default function TradeRulesPage() {
   // problem, not a subtlety.
   const visible = useMemo(() => visibleChain(data, activeOnly === 'active'), [data, activeOnly])
   const orphanOpps = orphanOpportunities(visible)
+  /**
+   * The strategy service intermittently answers HTTP 200 with an empty list,
+   * and the same call seconds later returns the lot (measured 2026-09-18 on DEV,
+   * on both `/instances` and `/win-rate`). An empty 200 is indistinguishable
+   * from an empty book — so when the rulebook has opportunities but the service
+   * returned no instance at all, the page says the service answered empty
+   * instead of printing "0 open · 0 closed" over a book with eighty-seven.
+   */
+  const instancesEmpty = data.opportunities.length > 0 && data.instances.length === 0
   // The detail is the record, so it keeps the closed history the filter hides —
   // and names the active count wherever the two numbers differ.
   const detail = useMemo(() => detailOf(sel, data, visible), [sel, data, visible])
 
-  const pick = (next: ChainSelection) =>
-    setSel((cur) => (cur && cur.kind === next.kind && cur.id === next.id ? null : next))
+  const pick = (next: ChainSelection) => {
+    const same = sel != null && sel.kind === next.kind && sel.id === next.id
+    setParams(same ? {} : { pick: formatPick(next) }, { replace: true })
+  }
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -99,7 +121,7 @@ export default function TradeRulesPage() {
             {sel ? 'Lineage lit; everything else dimmed. Click it again to release.' : 'Click any card to light its lineage across the four columns.'}
           </span>
           {sel ? (
-            <button type="button" className={cn(positionsUi.link, 'ml-auto')} onClick={() => setSel(null)}>
+            <button type="button" className={cn(positionsUi.link, 'ml-auto')} onClick={() => setParams({}, { replace: true })}>
               Clear selection
             </button>
           ) : null}
@@ -114,6 +136,18 @@ export default function TradeRulesPage() {
           </div>
         ) : (
           <>
+            {instancesEmpty ? (
+              <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-warning/40 bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                <span className="font-semibold text-warning">The strategy service returned no instances.</span>
+                The rulebook has {data.opportunities.length} opportunities, so this is the service answering empty
+                rather than a chain with nothing running — it does that now and then and answers in full a moment
+                later.
+                <button type="button" className={positionsUi.btn} onClick={refetch}>
+                  Ask again
+                </button>
+              </p>
+            ) : null}
+
             {orphanOpps > 0 ? (
               <p className="m-0 rounded-md border border-warning/40 bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
                 <span className="font-semibold text-warning">

@@ -94,6 +94,12 @@ export default function PlaybookStatsPage() {
     enabled: byStructure,
   })
   const catalogCount = catalogQuery.data?.items.length ?? 0
+  // The win-rate service names a structure; the rulebook gives it an id. The
+  // join is what makes a row a link rather than a label.
+  const structureIds = useMemo(
+    () => new Map((catalogQuery.data?.items ?? []).map((x) => [x.name, x.strategy_structure_id])),
+    [catalogQuery.data?.items],
+  )
   const serviceEmpty = winRate.isSuccess && structures.length === 0 && catalogCount > 0
   const { trades, plays, accountIds, pathRequests, pathsLoading, loading, error, refetch } =
     useReviewHabits(accountFilter)
@@ -213,7 +219,7 @@ export default function PlaybookStatsPage() {
                   </div>
                 ) : (
                   <>
-                    <StructureTable rows={structures} />
+                    <StructureTable rows={structures} idByName={structureIds} />
                     <StructureFormulas />
                     <p className={cn(FOOT, 'm-0')}>
                       {cutDisagreement(

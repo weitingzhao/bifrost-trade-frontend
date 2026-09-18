@@ -109,6 +109,42 @@ export default function RiskSizingPage() {
   const topName = exposure[0] ?? null
   const overCeiling = topName?.share != null && topName.share > RISK_CONCENTRATION_FLOOR
 
+  /**
+   * What each cap reads today, and the ceiling it yields.
+   *
+   * Only the gate is candidate-independent: it counts instances open under the
+   * active allocation against that allocation's own `max_positions`, so it has
+   * a number with no candidate on the page. The other three divide by a max
+   * loss or a margin per contract, which a candidate carries — so they read
+   * their line and say what the ceiling waits on, rather than printing one.
+   */
+  const capReadings: Record<(typeof CAPS)[number]['key'], { note: string; n: number | null }> = {
+    risk: { note: 'No per-trade risk line is written, so this cap bounds nothing — Risk Budget.', n: null },
+    margin: {
+      note:
+        judgment?.spendable == null
+          ? 'The backing pool did not price, so the room to the gate is unread.'
+          : `${fmtMvAbbrev(judgment.spendable)} to the ${fmtPct0(HOUSE_GATE_PCT)} gate — the ceiling needs a margin per contract.`,
+      n: null,
+    },
+    concentration: {
+      note:
+        topName?.share == null
+          ? 'No name carries a β-weighted Δ$, so no share can be taken.'
+          : overCeiling
+            ? `${topName.symbol} is at ${fmtPct0(topName.share)} of ${fmtPct0(RISK_CONCENTRATION_FLOOR)} — this cap allows nothing in that name today.`
+            : `${topName.symbol} is the largest at ${fmtPct0(topName.share)} of ${fmtPct0(RISK_CONCENTRATION_FLOOR)}.`,
+      n: overCeiling ? 0 : null,
+    },
+    gate: {
+      note:
+        gateRoom == null
+          ? 'No allocation is active, so no gate applies — a hand plan is under none either way.'
+          : `${gateName} · ${gateOpen} of ${gateMax} instances open — ${gateRoom} left.`,
+      n: gateRoom,
+    },
+  }
+
   return (
     <PageShell padding="compact" className="space-y-3">
       <section className={positionsUi.pageCard} aria-label="Sizing">
@@ -149,13 +185,19 @@ export default function RiskSizingPage() {
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>The four caps</span>
                 <span className={positionsUi.panelTitle}>
-                  {gateRoom == null ? 'two are readable, one has no line' : 'three are readable, one has no line'}
+                  {judgment?.spendable == null ? 'one is readable, three have no line' : 'two are readable, two have no line'}
                 </span>
                 <span className="ml-auto text-dense-meta text-muted-foreground">
                   the smallest of the four is the size
                 </span>
               </header>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,13rem),1fr))] gap-x-4 gap-y-2 px-3 py-2.5">
+              {/* The design's four cells, in its order: what one trade may
+                  lose, what is left of today, what the broker leaves room for,
+                  and the ceiling one name may not pass. Backing used is a
+                  sub-line of the margin cell rather than a cell of its own, and
+                  gate room lives in Why this size, which is where the design
+                  reads it. */}
+              <div className="flex flex-wrap items-start gap-x-6 gap-y-2 px-3 py-2.5">
                 <PositionsStat
                   cap="Risk budget / trade"
                   value="unwritten"
@@ -163,36 +205,33 @@ export default function RiskSizingPage() {
                   sub={`no line written · net liq ${netLiquidation > 0 ? fmtMvAbbrev(netLiquidation) : 'unread'}`}
                 />
                 <PositionsStat
+                  cap="Budget left today"
+                  value="—"
+                  ink="text-muted-foreground"
+                  sub="no daily cap written, and nothing records a sizing decision"
+                />
+                <PositionsStat
                   cap="Margin headroom"
                   value={judgment?.spendable == null ? '—' : fmtMvAbbrev(judgment.spendable)}
-                  sub={`to the ${fmtPct0(HOUSE_GATE_PCT)} backing gate`}
-                />
-                <PositionsStat
-                  cap="Backing used"
-                  value={judgment?.usedPct == null ? '—' : fmtPct0(judgment.usedPct)}
                   ink={judgment?.overGate ? 'text-warning' : undefined}
-                  sub="of the pool — Backing & Model"
-                />
-                <PositionsStat
-                  cap="Concentration ceiling"
-                  value={fmtPct0(RISK_CONCENTRATION_FLOOR)}
                   sub={
-                    topName?.share == null
-                      ? 'no name carries a β-weighted Δ$'
-                      : `${topName.symbol} is at ${fmtPct0(topName.share)}${overCeiling ? ' — already over' : ''}`
-                  }
-                  ink={overCeiling ? 'text-lamp-red' : undefined}
-                />
-                <PositionsStat
-                  cap="Gate room"
-                  value={gateRoom == null ? '—' : String(gateRoom)}
-                  ink={gateRoom === 0 ? 'text-warning' : undefined}
-                  sub={
-                    gateRoom == null
-                      ? 'no allocation is active, so no gate applies'
-                      : `${gateOpen} of ${gateMax} instances open · ${gateName}`
+                    judgment?.usedPct == null
+                      ? `to the ${fmtPct0(HOUSE_GATE_PCT)} backing gate`
+                      : `to the ${fmtPct0(HOUSE_GATE_PCT)} backing gate · ${fmtPct0(judgment.usedPct)} of the pool used`
                   }
                 />
+                <span className="ml-auto flex">
+                  <PositionsStat
+                    cap="Concentration ceiling"
+                    value={fmtPct0(RISK_CONCENTRATION_FLOOR)}
+                    sub={
+                      topName?.share == null
+                        ? 'no name carries a β-weighted Δ$'
+                        : `single-name β-Δ share · ${topName.symbol} at ${fmtPct0(topName.share)}${overCeiling ? ' — already over' : ''}`
+                    }
+                    ink={overCeiling ? 'text-lamp-red' : undefined}
+                  />
+                </span>
               </div>
               <p className={cn(FOOT, 'm-0')}>
                 {overCeiling ? (
@@ -293,19 +332,44 @@ export default function RiskSizingPage() {
                   <span className={positionsUi.cap}>Why this size</span>
                   <span className={positionsUi.panelTitle}>the smallest cap wins</span>
                 </header>
-                {CAPS.map((c) => (
-                  <div
-                    key={c.key}
-                    className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2.5 border-b border-border/55 px-3 py-2 last:border-b-0"
-                  >
-                    <span className="text-dense-caption font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
-                      {c.label}
-                    </span>
-                    <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>
-                      {c.math}
-                    </span>
-                  </div>
-                ))}
+                {/* The design gives each cap its live reading and the `n ≤` it
+                    yields. Only the gate cap can be read without a candidate —
+                    the other three need a max loss or a margin per contract —
+                    so the rest carry the reading and say what the number waits
+                    on rather than printing a ceiling nobody computed. */}
+                {CAPS.map((c) => {
+                  const reading = capReadings[c.key]
+                  return (
+                    <div
+                      key={c.key}
+                      className={cn(
+                        'grid grid-cols-[7.5rem_minmax(0,1fr)_4.5rem] items-baseline gap-2.5 border-b border-border/55 px-3 py-2 last:border-b-0',
+                        c.key === 'gate' && 'border-l-2 border-l-warning/60',
+                      )}
+                    >
+                      <span className="text-dense-caption font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
+                        {c.label}
+                      </span>
+                      <span className="flex min-w-0 flex-col">
+                        <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>
+                          {c.math}
+                        </span>
+                        <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
+                          {reading.note}
+                        </span>
+                      </span>
+                      <span
+                        className={cn(
+                          positionsUi.mono,
+                          'text-right text-dense-body font-semibold',
+                          reading.n == null ? 'text-muted-foreground' : 'text-foreground',
+                        )}
+                      >
+                        {reading.n == null ? 'n ≤ —' : `n ≤ ${reading.n}`}
+                      </span>
+                    </div>
+                  )
+                })}
                 <p className={cn(FOOT, 'm-0')}>
                   A cap that cannot be computed is never treated as unlimited: the worksheet names it instead, because a
                   sizing tool that sizes up on missing data is worse than one that refuses.

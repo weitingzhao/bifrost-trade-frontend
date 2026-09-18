@@ -18,7 +18,10 @@ describe('Trade nav', () => {
     // Trade · Portfolio · Research · …, one row until the rest of Trade exists.
     // Risk joined 2026-09-17 with its first built row (Portfolio Exposure); the
     // design files it as its own group of six, after Portfolio.
-    expect(NAV_GROUPS.map((g) => g.label).slice(0, 5)).toEqual([
+    // Home joined 2026-09-17 at the head, where the design's order puts it: it
+    // belongs to no layer and cuts across all five by time of day.
+    expect(NAV_GROUPS.map((g) => g.label).slice(0, 6)).toEqual([
+      'Home',
       'Trade',
       'Portfolio',
       'Risk',

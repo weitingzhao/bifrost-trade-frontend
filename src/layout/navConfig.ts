@@ -14,6 +14,7 @@ import {
   Layers,
   Layers2,
   ListChecks,
+  ListTodo,
   LayoutDashboard,
   LineChart,
   Network,
@@ -79,6 +80,13 @@ function fold(
  * It lives in `researchNavCatalog.ts` now, in all three seats.
  */
 export const NAV_GROUPS: ShellNavGroup[] = [
+  {
+    // Design group order is Home · Trade · Portfolio · Research · … and Home is
+    // one row: it belongs to no layer, and cuts across all five by time of day.
+    label: 'Home',
+    icon: ListTodo,
+    items: [route('Today', '/home', ListTodo)],
+  },
   {
     label: 'Trade',
     icon: Briefcase,

@@ -220,6 +220,19 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/market/live', label: 'Live', crumbs: MARKET },
   { path: '/research/event-radar', label: 'Event Radar', crumbs: MARKET },
 
+  // ── Today ──────────────────────────────────────────────────
+  {
+    path: '/home',
+    label: 'Today',
+    // The design files it under no layer: it cuts across all five by time of
+    // day, so it carries no breadcrumb trail of its own.
+    crumbs: [],
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/home'],
+    },
+  },
   // ── Portfolio ──────────────────────────────────────────────────────────
   {
     path: '/portfolio/performance',

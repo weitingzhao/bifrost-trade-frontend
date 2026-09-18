@@ -28,9 +28,20 @@ import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
 import { fetchStrategyPlans } from '@/api/strategyPlans'
 import { useExecutionsCanonical } from '@/hooks/useExecutions'
 import { useOpenOrders } from '@/hooks/useOpenOrders'
+import { useQueryClient } from '@tanstack/react-query'
+import { updateExecution } from '@/api/trading'
+import { useOpportunities, useStrategyInstances } from '@/hooks/useStrategies'
 import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
 import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
-import { FILLS_UNRECORDED, buildFillRows, buildPlanRows, importRows, scopeFills, summarize } from './fillsModel'
+import {
+  FILLS_UNRECORDED,
+  belongCandidates,
+  buildFillRows,
+  buildPlanRows,
+  importRows,
+  scopeFills,
+  summarize,
+} from './fillsModel'
 
 const PAGE_LEAD =
   'The work side of the ledger: what IB is working right now, what came back, and which fills still need a home. Nothing here sends an order — TWS does that, and the reserved Send action lives on Plans, not wired.'
@@ -75,6 +86,14 @@ export default function FillsPage() {
   const ordersQuery = useOpenOrders()
   const freshnessQuery = useExecutionsFreshness()
   const flexQuery = useFlexCoverageFreshness()
+  const instancesQuery = useStrategyInstances()
+  const oppsQuery = useOpportunities()
+  const queryClient = useQueryClient()
+  /** The fill the belong panel is about — a row click, cleared on Esc or Leave. */
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [pickedCandidate, setPickedCandidate] = useState<number | null>(null)
+  const [linking, setLinking] = useState(false)
+  const [linkError, setLinkError] = useState<string | null>(null)
   const plansQuery = useQuery({
     queryKey: ['strategy', 'plans', 'fills'],
     queryFn: () => fetchStrategyPlans({}),
@@ -108,6 +127,52 @@ export default function FillsPage() {
   }, [windowRows, today, flexQuery.data?.dimensions, freshnessQuery.data?.items])
   const planRows = useMemo(() => buildPlanRows(plans), [plans])
   const orders = ordersQuery.data ?? []
+
+  const selectedRow = useMemo(() => windowRows.find((r) => r.key === selectedKey) ?? null, [windowRows, selectedKey])
+  const candidates = useMemo(
+    () =>
+      selectedRow == null || selectedRow.state === 'linked'
+        ? []
+        : belongCandidates({
+            row: selectedRow,
+            executions: execQuery.data?.items ?? [],
+            instances: instancesQuery.data?.items ?? [],
+            opportunities: oppsQuery.data?.items ?? [],
+          }),
+    [selectedRow, execQuery.data?.items, instancesQuery.data?.items, oppsQuery.data?.items],
+  )
+
+  function selectRow(key: string) {
+    setSelectedKey((prev) => (prev === key ? null : key))
+    setPickedCandidate(null)
+    setLinkError(null)
+  }
+
+  /**
+   * The same write the Positions link modal makes — one write path into the
+   * ledger, whichever page starts it. A link is a ledger fact, not an order.
+   */
+  async function confirmLink() {
+    if (selectedRow?.execId == null || pickedCandidate == null) return
+    const chosen = candidates.find((c) => c.instanceId === pickedCandidate)
+    if (!chosen) return
+    setLinking(true)
+    setLinkError(null)
+    try {
+      const res = await updateExecution(selectedRow.execId, {
+        strategy_opportunity_id: chosen.opportunityId,
+        strategy_instance_id: chosen.instanceId,
+      })
+      if (!res.ok) throw new Error(res.error ?? 'The link was refused')
+      await queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
+      setSelectedKey(null)
+      setPickedCandidate(null)
+    } catch (e) {
+      setLinkError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLinking(false)
+    }
+  }
 
   const loading = execQuery.isLoading
   const error = execQuery.error ?? null
@@ -296,7 +361,14 @@ export default function FillsPage() {
                     </thead>
                     <tbody>
                       {rows.map((r) => (
-                        <tr key={r.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                        <tr
+                          key={r.key}
+                          onClick={() => selectRow(r.key)}
+                          className={cn(
+                            'cursor-pointer hover:[&>td]:bg-[var(--sk-raised2)]',
+                            r.key === selectedKey && '[&>td]:bg-primary/10',
+                          )}
+                        >
                           <td className={cn(positionsUi.td, 'text-secondary-foreground')}>
                             {r.tradeDate ? fmtIsoDateToken(r.tradeDate) : '—'}
                           </td>
@@ -363,6 +435,114 @@ export default function FillsPage() {
               {/* The design's right rail: what has not gone out yet, and how
                   each import path is doing today. */}
               <aside className="flex min-w-0 max-w-[27.5rem] flex-[1_1_21.25rem] flex-col gap-3">
+            <section
+              className={cn(positionsUi.panel, selectedRow?.state === 'orphan' && 'border-[var(--sk-line2)]')}
+              aria-label="Where does this fill belong?"
+            >
+              <header className={positionsUi.panelHead}>
+                <span className={positionsUi.panelTitle}>Where does this fill belong?</span>
+                {selectedRow ? (
+                  <button type="button" className={cn(positionsUi.btn, 'ml-auto')} onClick={() => selectRow(selectedRow.key)}>
+                    ✕
+                  </button>
+                ) : null}
+              </header>
+              {selectedRow == null ? (
+                <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                  Pick a fill in the table — its candidates open here, strongest reason first. A link is a ledger
+                  write, never an order.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2 px-3 py-2.5">
+                  <div className="flex flex-wrap items-baseline gap-x-2 text-dense-meta">
+                    <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>
+                      {contractToken(selectedRow)}
+                    </span>
+                    <span className={selectedRow.side === 'SELL' ? 'text-warning' : 'text-secondary-foreground'}>
+                      {selectedRow.side} {selectedRow.qty}
+                    </span>
+                    <span className="text-muted-foreground">@ {fmtUsd(selectedRow.price)}</span>
+                    <span className={cn(positionsUi.mono, 'ml-auto text-muted-foreground')}>
+                      {selectedRow.accountId || 'no account'} · {SOURCE_LABEL[selectedRow.source] ?? selectedRow.source}
+                    </span>
+                  </div>
+                  {selectedRow.state === 'linked' ? (
+                    <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                      Already claimed by{' '}
+                      <Link to={`/trade/rules?pick=instance:${selectedRow.instanceId}`} className={positionsUi.link}>
+                        #{selectedRow.instanceId}
+                      </Link>{' '}
+                      — relinking and unlinking are the Ledger&rsquo;s writes.
+                    </p>
+                  ) : candidates.length === 0 ? (
+                    <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                      No instance argues for it: nothing holds this contract, and no opportunity in{' '}
+                      {selectedRow.accountId || 'this account'} covers {selectedRow.symbol}. Create the rule first —{' '}
+                      <Link to="/trade/rules" className={positionsUi.link}>
+                        Trade › Rules
+                      </Link>{' '}
+                      — or leave it a hand fill.
+                    </p>
+                  ) : (
+                    <>
+                      {candidates.map((c) => (
+                        <button
+                          key={c.instanceId}
+                          type="button"
+                          onClick={() => setPickedCandidate((prev) => (prev === c.instanceId ? null : c.instanceId))}
+                          className={cn(
+                            'grid cursor-pointer grid-cols-[0.875rem_minmax(0,1fr)] items-start gap-2.5 rounded-md border bg-[var(--sk-raised)] px-2.5 py-2 text-left',
+                            pickedCandidate === c.instanceId
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-[var(--sk-line2)]',
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'mt-0.5 h-3 w-3 rounded-full border',
+                              pickedCandidate === c.instanceId ? 'border-primary bg-primary' : 'border-[var(--sk-line2)]',
+                            )}
+                            aria-hidden
+                          />
+                          <span className="min-w-0">
+                            <span className="flex flex-wrap items-baseline gap-x-2">
+                              <span className="min-w-0 text-dense-body font-semibold leading-normal text-foreground">
+                                {c.label}
+                              </span>
+                              <DenseTag variant={c.tag === 'same contract' ? 'success' : 'info'} size="cell">
+                                {c.tag}
+                              </DenseTag>
+                            </span>
+                            <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
+                              {c.why}
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+                      {linkError ? <p className="m-0 text-dense-meta text-danger text-pretty">{linkError}</p> : null}
+                      <span className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          className={cn(positionsUi.btn, pickedCandidate != null && 'border-primary text-primary')}
+                          disabled={pickedCandidate == null || linking}
+                          onClick={() => void confirmLink()}
+                        >
+                          {linking ? 'Linking…' : 'Confirm link'}
+                        </button>
+                        <button type="button" className={positionsUi.btn} onClick={() => selectRow(selectedRow.key)}>
+                          Leave unlinked
+                        </button>
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
+              <p className={cn(FOOT, 'm-0')}>
+                The same write the Positions link modal makes — one path into the ledger, whichever page starts it.
+                Leaving a fill unlinked is not recorded anywhere, so it will still be here tomorrow.
+              </p>
+            </section>
+
             <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Intended plans">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>Not yet sent</span>

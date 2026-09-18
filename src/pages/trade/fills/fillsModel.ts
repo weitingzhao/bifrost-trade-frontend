@@ -10,6 +10,7 @@
  * them (D10).
  */
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
+import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
 import type { Execution } from '@/types/positions'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 
@@ -18,6 +19,8 @@ export type FillState = 'linked' | 'orphan'
 
 export interface FillRow {
   key: string
+  /** The ledger row id the link write needs; null on a row the server sent without one. */
+  execId: number | null
   /** Unix seconds; null when the source did not stamp one. */
   time: number | null
   tradeDate: string | null
@@ -131,6 +134,78 @@ export function importRows(args: {
   ]
 }
 
+// ── Where does this fill belong? ─────────────────────────────────────────────
+
+/**
+ * A candidate home for an orphan fill, strongest reason first.
+ *
+ * Two reasons exist on this side, and they are kept distinct on the card
+ * because they argue differently: an instance that already holds fills on the
+ * *same contract* is almost certainly the home; an instance whose opportunity
+ * merely *covers the symbol* is a legal home among several. The account must
+ * match either way — a fill cannot belong to another account's instance.
+ */
+export interface BelongCandidate {
+  instanceId: number
+  opportunityId: number | null
+  label: string
+  why: string
+  tag: 'same contract' | 'covers the symbol'
+}
+
+export function belongCandidates(args: {
+  row: Pick<FillRow, 'execId' | 'contractKey' | 'symbol' | 'accountId'>
+  executions: readonly Execution[]
+  instances: readonly {
+    strategy_instance_id: number
+    strategy_opportunity_id: number
+    account_id: string
+    label?: string | null
+    strategy_opportunity_name?: string | null
+  }[]
+  opportunities: readonly { strategy_opportunity_id: number; name: string; symbols?: string[] | null }[]
+}): BelongCandidate[] {
+  const { row } = args
+  const out: BelongCandidate[] = []
+  const seen = new Set<number>()
+
+  // Same contract first: another fill on this exact contract already claimed.
+  const peers = collectPeerInstancePicks(
+    args.executions.filter((e) => (e.contract_key ?? '') !== '' && e.contract_key === row.contractKey),
+    row.execId ?? -1,
+  )
+  for (const peer of peers) {
+    if (seen.has(peer.strategy_instance_id)) continue
+    seen.add(peer.strategy_instance_id)
+    out.push({
+      instanceId: peer.strategy_instance_id,
+      opportunityId: peer.strategy_opportunity_id,
+      label: peer.label,
+      why: 'already holds fills on this exact contract',
+      tag: 'same contract',
+    })
+  }
+
+  // Then instances whose opportunity covers the symbol, in this account.
+  const symbol = row.symbol.trim().toUpperCase()
+  for (const inst of args.instances) {
+    if (seen.has(inst.strategy_instance_id)) continue
+    if (row.accountId && (inst.account_id ?? '').trim() !== row.accountId) continue
+    const opp = args.opportunities.find((o) => o.strategy_opportunity_id === inst.strategy_opportunity_id)
+    if (!opp?.symbols?.some((sym) => sym.trim().toUpperCase() === symbol)) continue
+    seen.add(inst.strategy_instance_id)
+    out.push({
+      instanceId: inst.strategy_instance_id,
+      opportunityId: inst.strategy_opportunity_id,
+      label: `${opp.name} · ${inst.label?.trim() || `#${inst.strategy_instance_id}`}`,
+      why: `${opp.name} covers ${symbol}`,
+      tag: 'covers the symbol',
+    })
+  }
+
+  return out
+}
+
 const SELL = /^(s|sell|sld)$/i
 
 function sideWord(e: Execution): string {
@@ -167,6 +242,7 @@ export function buildFillRows(
       const linked = e.strategy_instance_id != null
       return {
         key: execKey(e),
+        execId: e.account_executions_id ?? null,
         time: e.time ?? null,
         tradeDate: e.trade_date ?? null,
         symbol: extractUnderlyingRootSymbol(e.symbol),

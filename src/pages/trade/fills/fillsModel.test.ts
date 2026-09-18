@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Execution } from '@/types/positions'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
-import { buildFillRows, buildPlanRows, importRows, orphanReason, scopeFills, summarize } from './fillsModel'
+import { belongCandidates, buildFillRows, buildPlanRows, importRows, orphanReason, scopeFills, summarize } from './fillsModel'
 
 const T0 = 1_780_000_000
 
@@ -164,5 +164,46 @@ describe('importRows', () => {
     )!
     expect(corp.lamp).toBe('gray')
     expect(corp.sub).toMatch(/unknown, not down/)
+  })
+})
+
+describe('belongCandidates', () => {
+  const instances = [
+    { strategy_instance_id: 158, strategy_opportunity_id: 7, account_id: 'U1', label: null },
+    { strategy_instance_id: 121, strategy_opportunity_id: 7, account_id: 'U1', label: 'CC book' },
+    { strategy_instance_id: 99, strategy_opportunity_id: 7, account_id: 'U2', label: 'other account' },
+  ]
+  const opportunities = [{ strategy_opportunity_id: 7, name: 'CC 10% OTM book', symbols: ['RKLB', 'MU'] }]
+  const row = { execId: 7898, contractKey: 'RKLB|OPT|20261218|90.0|C', symbol: 'RKLB', accountId: 'U1' }
+
+  it('argues same-contract first — a peer fill already claimed is the strongest reason', () => {
+    const peer = fill({
+      exec_id: 'p1',
+      account_executions_id: 500,
+      contract_key: 'RKLB|OPT|20261218|90.0|C',
+      strategy_instance_id: 158,
+      strategy_opportunity_id: 7,
+      strategy_opportunity_name: 'CC 10% OTM book',
+    })
+    const out = belongCandidates({ row, executions: [peer], instances, opportunities })
+    expect(out[0]).toMatchObject({ instanceId: 158, tag: 'same contract' })
+    // 158 is not offered twice under the weaker reason.
+    expect(out.filter((c) => c.instanceId === 158)).toHaveLength(1)
+  })
+
+  it('offers coverage only inside the fill’s own account — a fill cannot belong elsewhere', () => {
+    const out = belongCandidates({ row, executions: [], instances, opportunities })
+    expect(out.map((c) => c.instanceId)).toEqual([158, 121])
+    expect(out.every((c) => c.tag === 'covers the symbol')).toBe(true)
+  })
+
+  it('argues nothing when no rule covers the symbol', () => {
+    const out = belongCandidates({
+      row: { ...row, symbol: 'GOOG' },
+      executions: [],
+      instances,
+      opportunities,
+    })
+    expect(out).toEqual([])
   })
 })

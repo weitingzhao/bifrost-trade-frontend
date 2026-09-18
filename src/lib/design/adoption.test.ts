@@ -127,8 +127,13 @@ describe('design adoption', () => {
     // declared yet.
     // Positions, the Review Queue and Playbook stats signed off 2026-09-18
     // once the Strategy pages retired, which emptied both groups' queues.
-    expect(counts.aligned + counts.byState.stale).toBe(24)
-    expect(counts.aligned).toBe(24)
+    // Limits, Sizing and Budget followed the same day, after the three were
+    // walked cell by cell against their prototypes — Sizing's strip was five
+    // cells where the design has four, Budget was missing the week ratio and
+    // the daily band, Limits had dropped its history table and its
+    // acknowledgement slot. That closes Risk (aligned 24→27).
+    expect(counts.aligned + counts.byState.stale).toBe(27)
+    expect(counts.aligned).toBe(27)
     // Empty again: every page Package 2026-09-18.1 moved has now been re-walked
     // against it. A stale row was never work lost — the page is built, and what
     // was stale is the comparison.
@@ -202,8 +207,9 @@ describe('design adoption', () => {
     // menu moved onto it from Strategy › Instances rather than armed there
     // (unbuilt 24→23, reviewing 10→11). The Owner then signed off Portfolio and
     // Review together, the same day the seven Strategy pages retired
-    // (aligned 21→24, reviewing 11→8): what is left waiting is Risk and Trade.
-    expect(counts.byState.reviewing).toBe(8)
+    // (aligned 21→24, reviewing 11→8), then Risk the same day (24→27,
+    // reviewing 8→5): what is left waiting is the five Trade pages.
+    expect(counts.byState.reviewing).toBe(5)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -230,15 +236,15 @@ describe('design adoption', () => {
       '/review/habits',
       '/review/playbook-stats',
       '/review/proposals',
+      '/risk/budget',
+      '/risk/limits',
       '/risk/margin',
       '/risk/portfolio',
+      '/risk/sizing',
       '/risk/stress',
       '/trade/assignment',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/risk/budget',
-      '/risk/limits',
-      '/risk/sizing',
       '/trade/desk',
       '/trade/expiration',
       '/trade/fills',

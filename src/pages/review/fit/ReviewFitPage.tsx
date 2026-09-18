@@ -21,7 +21,7 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtIsoDateToken } from '@/lib/format'
 import { useReviewTrades } from '@/hooks/useReviewTrades'
 import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
-import { ReviewTradeFit } from '@/components/review/ReviewTradeFit'
+import { ReviewTradeFit } from './ReviewTradeFit'
 
 const PAGE_LEAD =
   'One closed trade, read against what it was meant to be. The trade itself comes from its own fills; the two gaps need the plan it was opened under.'

@@ -2,10 +2,10 @@
  * One closed trade read against what it was meant to be — the panels the
  * design draws in the Queue's Review slot and on the Single trade page.
  *
- * It lives here rather than on either page because both show it, and two
- * copies of a review would be two reviews: the day the planned exit finally
- * reaches a position, one of them would get the number and the other would
- * keep saying it cannot be taken.
+ * The Queue draws its own compact panel — the design gives the two surfaces
+ * different shapes — so what the two share is the model: one ReviewTrade, and
+ * REVIEW_GAPS wording the two gaps once, so they cannot describe the same
+ * missing number differently.
  */
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
@@ -17,26 +17,10 @@ import { PositionsStat } from '@/components/positions/PositionsStat'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
-import { REVIEW_UNRECORDED, type ReviewTrade } from '@/utils/reviewTrades'
+import { REVIEW_GAPS, REVIEW_UNRECORDED, type ReviewTrade } from '@/utils/reviewTrades'
 
 const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
-
-/** The two gaps the design takes, and what each one needs. */
-const REVIEW_GAPS = [
-  {
-    key: 'discipline',
-    label: 'Discipline',
-    sub: 'actual against my own plan exit',
-    needs: 'the planned exit — Trade Plans stores one, but no plan has ever been linked to a position',
-  },
-  {
-    key: 'plan-cost',
-    label: 'Plan quality',
-    sub: 'plan exit against the best mark printed',
-    needs: 'the planned exit and the best mark — the second needs a daily mark through the holding period',
-  },
-] as const
 
 export function ReviewTradeFit({ trade, tier = true }: { trade: ReviewTrade; tier?: boolean }) {
   return (

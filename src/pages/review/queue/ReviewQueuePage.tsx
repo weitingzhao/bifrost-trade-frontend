@@ -28,7 +28,7 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { useReviewTrades } from '@/hooks/useReviewTrades'
 import { REVIEW_UNRECORDED, type ReviewTrade } from '@/utils/reviewTrades'
-import { ReviewTradeFit } from '@/components/review/ReviewTradeFit'
+import { ReviewSelectedPanel } from './ReviewSelectedPanel'
 
 const PAGE_LEAD =
   'Closed trades, newest first, each row carrying the gap between what the plan said and what I did. Reviewing here is what produces the labels — Habits is empty arithmetic without it.'
@@ -351,20 +351,7 @@ export default function ReviewQueuePage() {
               <div className="flex min-w-0 flex-[1_1_22.5rem] flex-col gap-3">
                 <PositionsTier label="Review" note={selected ? 'the trade picked in the queue' : 'pick a row'} />
                 {selected ? (
-                  <>
-                    <ReviewTradeFit trade={selected} tier={false} />
-                    <p className={cn(FOOT, 'm-0 rounded-md border border-border')}>
-                      <Link
-                        to={`/review/fit?trade=${encodeURIComponent(selected.contractKey)}`}
-                        className={positionsUi.link}
-                      >
-                        Open fit →
-                      </Link>
-                      <span className="pl-2">
-                        Confirming a review would write, and nothing on this side stores one.
-                      </span>
-                    </p>
-                  </>
+                  <ReviewSelectedPanel trade={selected} />
                 ) : (
                   <p className="m-0 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
                     No trade picked. Click a row in the queue to read it here.

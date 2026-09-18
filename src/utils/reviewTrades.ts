@@ -55,6 +55,22 @@ export interface ReviewTrade {
   creditKept: number | null
 }
 
+/** The two gaps a single P&L blurs, worded once for every surface that shows them. */
+export const REVIEW_GAPS = [
+  {
+    key: 'discipline',
+    label: 'Discipline',
+    sub: 'actual vs my own plan exit',
+    needs: 'the planned exit — Trade Plans stores one, but no plan has ever been linked to a position',
+  },
+  {
+    key: 'plan-cost',
+    label: 'Plan quality',
+    sub: 'plan exit vs best mark printed',
+    needs: 'the planned exit and the best mark — the second needs a daily mark through the holding period',
+  },
+] as const
+
 export const REVIEW_UNRECORDED = {
   plan: 'Review’s method needs the plan a trade was opened under — what it was aiming at, and when it said to be out. Trade Plans stores both, but no plan has ever been linked to a position, so for every closed trade here the planned exit is unknown. That makes discipline (realised against the plan’s own exit) and plan cost (the plan’s exit against the best mark) uncomputable, not zero.',
   path: 'The second missing half is the mark through the holding period. Without it there is no best mark, no worst mark and no peak given back — so the questions that turn on *when* inside a trade (cut-loss latency, gave back the peak, maximum adverse excursion) cannot be asked at all. A daily position mark is what closes this, and it closes most of this group at once.',

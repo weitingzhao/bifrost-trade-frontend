@@ -226,3 +226,19 @@ describe('the old names', () => {
     }
   })
 })
+
+const review = NAV_GROUPS.find((g) => g.label === 'Review')!
+
+describe('Review nav', () => {
+  it('is Queue with the other four beneath it, open from the first look', () => {
+    expect(review.items!.map((i) => i.to)).toEqual(['/review'])
+    const [queue] = review.items!
+    expect(queue.defaultOpen).toBe(true)
+    expect(queue.children?.map((c) => c.to)).toEqual([
+      '/review/fit',
+      '/review/habits',
+      '/review/playbook-stats',
+      '/review/proposals',
+    ])
+  })
+})

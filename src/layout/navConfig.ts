@@ -141,13 +141,16 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     label: 'Review',
     icon: Trophy,
     // The design files Review as its own group after Risk: what was closed, and
-    // what it argues for. Five rows, built together 2026-09-17.
+    // what it argues for. Queue is the root and the other four hang off it
+    // (shell-registry.js:197) — reviewing a trade there is what produces the
+    // labels the rest of the group counts.
     items: [
-      route('Queue', '/review', ListChecks),
-      route('Single trade', '/review/fit', Target),
-      route('Habits', '/review/habits', Activity),
-      route('Playbook stats', '/review/playbook-stats', BarChart2),
-      route('Rule proposals', '/review/proposals', ListTodo),
+      home('Queue', '/review', ListChecks, [
+        route('Single trade', '/review/fit', Target),
+        route('Habits', '/review/habits', Activity),
+        route('Playbook stats', '/review/playbook-stats', BarChart2),
+        route('Rule proposals', '/review/proposals', ListTodo),
+      ]),
     ],
   },
   {

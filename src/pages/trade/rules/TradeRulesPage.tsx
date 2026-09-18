@@ -8,13 +8,15 @@
  * one of those opportunities sits in no allocation, and that every instance
  * under it therefore ran under no gate.
  *
- * This is the **read** side. The five edit sheets the design draws behind each
- * column are the seven pages' CRUD, and they come next; until then each column
- * links out to the page that still owns its editing, so nothing is stranded.
+ * The edit sheets behind each column are the seven pages' own forms, opened
+ * from here rather than rewritten (see `RulesSheets.tsx`): a rule edited from
+ * the chain and one edited from the old page are the same write with the same
+ * validation.
  *
- * Nothing here writes, and that is not only D10: activating an allocation is
- * what the daemon reads on its next start, so it belongs behind a form with a
- * confirmation, not behind a card click.
+ * Nothing writes from a card click. Activating an allocation is what the daemon
+ * reads on its next start, so it lives behind a form with a confirm — which is
+ * what the sheets are. D10 is not in play here: a rule is a rulebook entry, not
+ * an order.
  */
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -25,7 +27,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { useRulesChain } from './useRulesChain'
+import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { ChainColumnList, ChainDetailPanel } from './ChainColumns'
+import { NO_SHEET, RulesSheets, type RulesSheet } from './RulesSheets'
 import {
   buildChain,
   detailOf,
@@ -39,12 +43,26 @@ import {
 const PAGE_LEAD =
   'One chain, read left to right: a Structure is a shape, an Opportunity is when to use it, an Allocation is what the daemon is told to run, an Instance is one running. Pick anything and its lineage lights up. A gate is a limit whose scope is an allocation — defined here, its breaches land on Risk › Limits.'
 
-/** Where each column's editing still lives until its sheet is built. */
-const EDITORS: Record<string, { to: string; label: string }> = {
-  structure: { to: '/strategy/structures', label: 'Edit structures →' },
-  opportunity: { to: '/strategy/opportunities', label: 'Edit opportunities →' },
-  allocation: { to: '/strategy/allocations', label: 'Edit allocations · gates →' },
+/**
+ * The old page for each column, kept as a way out rather than as the editor.
+ *
+ * The sheets are the editor now; these still list, filter and sort in ways the
+ * chain does not, so the link stays until someone decides they are redundant
+ * (design absence is not deletion — the Owner rules on that, not this page).
+ */
+const FULL_LIST: Record<string, { to: string; label: string }> = {
+  structure: { to: '/strategy/structures', label: 'All structures →' },
+  opportunity: { to: '/strategy/opportunities', label: 'All opportunities →' },
+  allocation: { to: '/strategy/allocations', label: 'All allocations →' },
   instance: { to: '/strategy/instances', label: 'All instances →' },
+}
+
+/** What each column's ＋ New opens. */
+const NEW_SHEET: Record<string, RulesSheet> = {
+  structure: { kind: 'structure', mode: { kind: 'create' } },
+  opportunity: { kind: 'opportunity' },
+  allocation: { kind: 'allocation', mode: 'create', editId: null },
+  instance: { kind: 'instance' },
 }
 
 export default function TradeRulesPage() {
@@ -54,7 +72,9 @@ export default function TradeRulesPage() {
   const [params, setParams] = useSearchParams()
   const sel = parsePick(params.get('pick'))
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const { data, loading, error, refetch } = useRulesChain()
+  const [sheet, setSheet] = useState<RulesSheet>(NO_SHEET)
+  const status = useMonitorStatus()
+  const { data, rawInstances, loading, error, refetch } = useRulesChain()
 
   const columns = useMemo(
     () => buildChain(data, sel, activeOnly === 'active'),
@@ -79,6 +99,56 @@ export default function TradeRulesPage() {
   // The detail is the record, so it keeps the closed history the filter hides —
   // and names the active count wherever the two numbers differ.
   const detail = useMemo(() => detailOf(sel, data, visible), [sel, data, visible])
+
+  /**
+   * What the selected thing can have done to it. A gate has no column of its
+   * own, so editing it hangs off the allocation that applies it — which is
+   * where its scope lives (design DECISIONS 2026-09-18).
+   */
+  const detailActions = (kind: ChainSelection['kind']) => {
+    if (sel == null) return []
+    if (kind === 'structure') {
+      return [
+        { label: 'Edit', onClick: () => setSheet({ kind: 'structure', mode: { kind: 'edit', id: sel.id } }) },
+        { label: 'Duplicate', onClick: () => setSheet({ kind: 'structure', mode: { kind: 'copy', id: sel.id } }) },
+      ]
+    }
+    if (kind === 'opportunity') {
+      const initial = data.opportunities.find((o) => o.strategy_opportunity_id === sel.id)
+      return [{ label: 'Edit', onClick: () => setSheet({ kind: 'opportunity', initial }) }]
+    }
+    if (kind === 'allocation') {
+      const gateId = data.allocations.find((a) => a.strategy_allocation_id === sel.id)?.gate_safety_strategy_id
+      return [
+        { label: 'Edit', onClick: () => setSheet({ kind: 'allocation', mode: 'edit', editId: sel.id }) },
+        ...(gateId == null
+          ? []
+          : [{ label: 'Edit gate', onClick: () => setSheet({ kind: 'gate', mode: { kind: 'edit' as const, id: gateId } }) }]),
+      ]
+    }
+    if (kind === 'instance') {
+      const reading = data.instances.find((i) => i.id === sel.id)
+      const record = rawInstances.find((i) => i.strategy_instance_id === sel.id)
+      if (record == null) return []
+      // The guard the design asks for, and the honest form of it: an instance
+      // the fills have claimed cannot be deleted, and the reason is on the
+      // action rather than behind it.
+      const blocked = (reading?.fills ?? 0) > 0
+      return [
+        {
+          label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete…',
+          onClick: () => {
+            if (!blocked) setSheet({ kind: 'instanceDelete', instance: record })
+          },
+          disabled: blocked,
+          title: blocked
+            ? 'Unlink its fills on the Trade Ledger first — deleting an instance under them would orphan the fills'
+            : undefined,
+        },
+      ]
+    }
+    return []
+  }
 
   const pick = (next: ChainSelection) => {
     const same = sel != null && sel.kind === next.kind && sel.id === next.id
@@ -166,21 +236,28 @@ export default function TradeRulesPage() {
                     expanded={Boolean(expanded[column.key])}
                     onExpand={() => setExpanded((e) => ({ ...e, [column.key]: true }))}
                     onPick={pick}
+                    onNew={() => setSheet(NEW_SHEET[column.key])}
                   />
-                  <Link to={EDITORS[column.key].to} className={cn(positionsUi.link, 'px-0.5')}>
-                    {EDITORS[column.key].label}
+                  <Link to={FULL_LIST[column.key].to} className={cn(positionsUi.link, 'px-0.5')}>
+                    {FULL_LIST[column.key].label}
                   </Link>
                 </div>
               ))}
             </div>
 
-            {detail ? <ChainDetailPanel detail={detail} onPick={pick} /> : null}
+            {detail ? (
+              <ChainDetailPanel detail={detail} onPick={pick} actions={detailActions(detail.kind)} />
+            ) : null}
+
+            <RulesSheets sheet={sheet} onClose={() => setSheet(NO_SHEET)} status={status.data} />
 
             <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-              <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing on this page writes.
-              The edit sheets the design puts behind each column are the seven Strategy pages&rsquo; CRUD and are not
-              built yet, so each column links to the page that still owns its editing. Activating an allocation is
-              what the daemon reads on its next start, so it stays behind a form rather than a card click.
+              <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing writes from a card
+              click. Editing opens the Strategy pages&rsquo; own forms, so a rule changed here and one changed there
+              are the same write with the same validation. Activating an allocation is what the daemon reads on its
+              next start, which is why it sits behind a form with a confirm. An instance the fills have claimed
+              cannot be deleted at all — unlink them on the Trade Ledger first, or the fills are orphaned. None of
+              this is an order: D10 governs the desk, not the rulebook.
             </p>
           </>
         )}

@@ -70,6 +70,8 @@ export function useRulesChain() {
 
   return {
     data,
+    /** The server's own instance records — what a delete sheet needs to act on. */
+    rawInstances: raw.rawInstances,
     loading: chain.isLoading || execQuery.isLoading,
     error: chain.error ?? execQuery.error ?? null,
     refetch: () => {

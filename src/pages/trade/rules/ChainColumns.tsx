@@ -22,11 +22,14 @@ export function ChainColumnList({
   expanded,
   onExpand,
   onPick,
+  onNew,
 }: {
   column: ChainColumn
   expanded: boolean
   onExpand: () => void
   onPick: (sel: ChainSelection) => void
+  /** Opens this column's edit sheet on a new one. */
+  onNew: () => void
 }) {
   const hidden = expanded ? 0 : Math.max(0, column.cards.length - COLUMN_CAP)
   const shown = expanded ? column.cards : column.cards.slice(0, COLUMN_CAP)
@@ -39,6 +42,9 @@ export function ChainColumnList({
         </span>
         <span className="text-dense-body font-semibold text-foreground">{column.title}</span>
         <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{column.count}</span>
+        <button type="button" className={cn(positionsUi.link, 'ml-auto')} onClick={onNew}>
+          ＋ New
+        </button>
       </header>
       <div className="flex max-h-[60vh] min-w-0 flex-col gap-2 overflow-y-auto pr-0.5">
         {shown.length === 0 ? (
@@ -98,9 +104,12 @@ const TONE: Record<'success' | 'warning' | 'danger', string> = {
 export function ChainDetailPanel({
   detail,
   onPick,
+  actions,
 }: {
   detail: ChainDetail
   onPick: (sel: ChainSelection) => void
+  /** What this kind of thing can have done to it — the sheets behind the card. */
+  actions: { label: string; onClick: () => void; disabled?: boolean; title?: string }[]
 }) {
   return (
     <section className={cn(positionsUi.panel, 'border-[var(--sk-line2)]')} aria-label="Selected">
@@ -108,6 +117,20 @@ export function ChainDetailPanel({
         <span className={positionsUi.cap}>{detail.kind}</span>
         <span className={positionsUi.panelTitle}>{detail.title}</span>
         <span className="min-w-0 text-dense-meta text-muted-foreground">{detail.lineage}</span>
+        <span className="ml-auto flex flex-wrap gap-1.5">
+          {actions.map((a) => (
+            <button
+              key={a.label}
+              type="button"
+              className={cn(positionsUi.btn, a.disabled && 'cursor-not-allowed opacity-50')}
+              disabled={a.disabled}
+              title={a.title}
+              onClick={a.onClick}
+            >
+              {a.label}
+            </button>
+          ))}
+        </span>
       </header>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-x-3.5 gap-y-2 px-3 py-2.5">
         {detail.facts.map((f) => (

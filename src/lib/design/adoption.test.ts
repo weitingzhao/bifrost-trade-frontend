@@ -131,9 +131,13 @@ describe('design adoption', () => {
     // walked cell by cell against their prototypes — Sizing's strip was five
     // cells where the design has four, Budget was missing the week ratio and
     // the daily band, Limits had dropped its history table and its
-    // acknowledgement slot. That closes Risk (aligned 24→27).
-    expect(counts.aligned + counts.byState.stale).toBe(27)
-    expect(counts.aligned).toBe(27)
+    // acknowledgement slot. That closes Risk (aligned 24→27). Then the five
+    // Trade pages — Desk, Plans, Orders & Fills, Rules, Expiration — signed off
+    // together 2026-09-18, after the sidebar itself was re-cut to the design's
+    // shape (one Desk home row carrying all six) and Playbook was walked
+    // (aligned 27→32). Trade now waits on one look: Playbook's own.
+    expect(counts.aligned + counts.byState.stale).toBe(32)
+    expect(counts.aligned).toBe(32)
     // Empty again: every page Package 2026-09-18.1 moved has now been re-walked
     // against it. A stale row was never work lost — the page is built, and what
     // was stale is the comparison.
@@ -208,8 +212,13 @@ describe('design adoption', () => {
     // (unbuilt 24→23, reviewing 10→11). The Owner then signed off Portfolio and
     // Review together, the same day the seven Strategy pages retired
     // (aligned 21→24, reviewing 11→8), then Risk the same day (24→27,
-    // reviewing 8→5): what is left waiting is the five Trade pages.
-    expect(counts.byState.reviewing).toBe(5)
+    // reviewing 8→5): what was left waiting was the five Trade pages, signed off
+    // together 2026-09-18 once the Trade sidebar matched the design's shape
+    // (aligned 27→32, reviewing 5→0). Playbook — the one Trade page never
+    // walked — was walked and built the same day against its page rev
+    // 2026-09-17.1 (pending 17→16, reviewing 0→1), and is now the group's
+    // only open look.
+    expect(counts.byState.reviewing).toBe(1)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -243,13 +252,14 @@ describe('design adoption', () => {
       '/risk/sizing',
       '/risk/stress',
       '/trade/assignment',
-    ])
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
       '/trade/plans',
       '/trade/rules',
+    ])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/trade/playbook',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
@@ -284,8 +294,8 @@ describe('design adoption', () => {
     expect(counts.byState.unbuilt).toBe(23)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
-    // 18 since Performance joined `reviewing`.
-    expect(counts.byState.pending).toBe(17)
+    // 18 since Performance joined `reviewing`; 16 since Playbook did.
+    expect(counts.byState.pending).toBe(16)
     expect(counts.byState.backlog).toBe(4)
   })
 

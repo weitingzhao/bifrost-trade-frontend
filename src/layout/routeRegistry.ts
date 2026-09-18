@@ -427,7 +427,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Orders & Fills',
     crumbs: TRADE_DESK,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.1',
       note: DESIGN_NOTES['/trade/fills'],
     },
@@ -447,7 +447,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Desk',
     crumbs: TRADE,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.1',
       note: DESIGN_NOTES['/trade/desk'],
     },
@@ -457,7 +457,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Rules',
     crumbs: TRADE_DESK,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.1',
       note: DESIGN_NOTES['/trade/rules'],
     },
@@ -467,7 +467,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Expiration',
     crumbs: TRADE_DESK,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-17.1',
       note: DESIGN_NOTES['/trade/expiration'],
     },
@@ -476,6 +476,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/trade/playbook',
     label: 'Playbook',
     crumbs: TRADE_DESK,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/trade/playbook'],
+    },
   },
   {
     path: '/trade/plans',
@@ -483,7 +488,7 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: TRADE_DESK,
     symbolScope: true,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.1',
       note: DESIGN_NOTES['/trade/plans'],
     },

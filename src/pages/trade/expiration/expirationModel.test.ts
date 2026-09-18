@@ -2,7 +2,7 @@ import { daysTo } from '@/utils/optionTicker'
 import { describe, expect, it } from 'vitest'
 import type { PositionAttribution } from '@/types/positions'
 import { cushionPct } from '@/utils/optionMoneyness'
-import { buildExpiryLegs, groupByExpiry } from './expirationModel'
+import { buildExpiryLegs, decisionEffect, groupByExpiry, settleImpact, type ExpiryLeg } from './expirationModel'
 
 function leg(over: Partial<PositionAttribution>): PositionAttribution {
   return {
@@ -122,5 +122,85 @@ describe('daysTo', () => {
     expect(daysTo('20260917', '2026-09-17')).toBe(0)
     expect(daysTo('20260910', '2026-09-17')).toBe(-7)
     expect(daysTo('', '2026-09-17')).toBeNull()
+  })
+})
+
+describe('decisionEffect', () => {
+  const shortPut: ExpiryLeg = {
+    contractKey: 'SMCI|OPT|20260918|40.0|P',
+    symbol: 'SMCI',
+    expiry: '20260918',
+    strike: 40,
+    right: 'P',
+    qty: -2,
+    mark: 1.85,
+    markAsOf: '2026-09-17',
+    spot: 41.4,
+    cushionPct: 0.034,
+    itm: false,
+    closeCost: 370,
+    entryCost: 500,
+    thetaPerDay: 12,
+    instanceId: null,
+    structure: null,
+    accounts: ['U1'],
+  }
+
+  it('prices a close at the dated mark, as a payment', () => {
+    expect(decisionEffect(shortPut, 'close')).toEqual({ text: 'pay $370 at the dated mark', tone: 'down' })
+  })
+
+  it('keeps the credit when an OTM short expires', () => {
+    expect(decisionEffect(shortPut, 'expire').text).toBe('expires worthless — credit kept')
+  })
+
+  it('says what an ITM short put takes in cash', () => {
+    const itm = { ...shortPut, itm: true }
+    expect(decisionEffect(itm, 'expire')).toEqual({ text: 'assigns — takes $8,000 cash', tone: 'warn' })
+  })
+
+  it('says an ITM short call delivers shares, not cash', () => {
+    const call = { ...shortPut, right: 'C' as const, itm: true }
+    expect(decisionEffect(call, 'expire').text).toBe('assigns — delivers 200 sh')
+  })
+
+  it('refuses to quote a roll — the vendor snapshot has no bid or ask', () => {
+    expect(decisionEffect(shortPut, 'roll').tone).toBe('muted')
+  })
+
+  it('cannot say how a spotless leg settles', () => {
+    const blind = { ...shortPut, itm: null }
+    expect(decisionEffect(blind, 'expire').text).toMatch(/no spot/)
+  })
+
+  describe('settleImpact', () => {
+    const second = { ...shortPut, contractKey: 'B', itm: true, entryCost: 300 }
+
+    it('adds up only what was decided — undecided legs are not assumed to expire', () => {
+      const impact = settleImpact([shortPut, second], new Map([['B', 'expire']]))
+      expect(impact.decided).toBe(1)
+      expect(impact.creditsKept).toBe(300)
+      expect(impact.assignCash).toBe(8000)
+    })
+
+    it('counts a plan per roll or close, and none for expire or assign', () => {
+      const impact = settleImpact(
+        [shortPut, second],
+        new Map([
+          [shortPut.contractKey, 'close'],
+          ['B', 'assign'],
+        ]),
+      )
+      expect(impact.planCount).toBe(1)
+      expect(impact.closePaid).toBe(370)
+      expect(impact.thetaLost).toBe(12)
+    })
+
+    it('counts a leg with no entry cost instead of zeroing it', () => {
+      const blind = { ...shortPut, entryCost: null }
+      const impact = settleImpact([blind], new Map([[blind.contractKey, 'expire']]))
+      expect(impact.creditsKept).toBe(0)
+      expect(impact.creditsUnknown).toBe(1)
+    })
   })
 })

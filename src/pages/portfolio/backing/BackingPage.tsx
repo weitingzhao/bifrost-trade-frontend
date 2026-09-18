@@ -52,6 +52,28 @@ import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment
 
 const SORTS: readonly ObligationsSort[] = ['cash', 'calls', 'spare', 'symbol']
 
+/** Who reads this page's figures, and what each of them may not recompute. */
+const BACKING_CITATIONS = [
+  {
+    what: 'Backing used, the 85% house gate, the space under it',
+    note: 'Risk › Portfolio Exposure cites these; its gate hit point stays unknown until this page computes one.',
+    label: 'Risk Portfolio →',
+    to: '/risk/portfolio',
+  },
+  {
+    what: 'Account Cushion and pressure',
+    note: 'Risk › Margin adds the per-position view once the broker reports it. Same three rulers, one computation.',
+    label: 'Risk Margin →',
+    to: '/risk/margin',
+  },
+  {
+    what: 'Space under the gate, as a sizing budget',
+    note: 'Risk › Sizing spends this number; it never recomputes it.',
+    label: 'Risk Sizing →',
+    to: '/risk/sizing',
+  },
+] as const
+
 export default function BackingPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -376,6 +398,30 @@ export default function BackingPage() {
         />
 
         {backingBody}
+
+        {/* The design's Cited elsewhere: who reads this page's figures. Written down
+            because a number with a second computation somewhere else is how two pages
+            start disagreeing — each row names the reader and what it may not redo. */}
+        <section className={positionsUi.panel} aria-label="Cited elsewhere">
+          <header className={positionsUi.panelHead}>
+            <span className={positionsUi.cap}>Cited elsewhere</span>
+            <span className={positionsUi.panelTitle}>who reads these numbers</span>
+          </header>
+          {BACKING_CITATIONS.map((c) => (
+            <div
+              key={c.to}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 border-b border-border/55 px-3 py-1.5 last:border-b-0"
+            >
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-dense-body leading-normal text-foreground">{c.what}</span>
+                <span className={cn(positionsUi.panelNote, 'text-pretty')}>{c.note}</span>
+              </span>
+              <Link to={c.to} className={positionsUi.link}>
+                {c.label}
+              </Link>
+            </div>
+          ))}
+        </section>
 
         <PositionsTier label="Model" note="hypothetical · one account at a time, never summed" />
         <div id={BACKING_ANCHOR_ID.model}>

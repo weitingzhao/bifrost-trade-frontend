@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ModelBandSection, type ModelBandProps } from './ModelBandSection'
 import { modelBandScopeSentence } from './modelBandScope'
@@ -31,9 +32,11 @@ function renderBand(over: Partial<ModelBandProps> = {}) {
     ...over,
   }
   const utils = render(
-    <TooltipProvider>
+    <MemoryRouter>
+      <TooltipProvider>
       <ModelBandSection {...props} />
-    </TooltipProvider>,
+    </TooltipProvider>
+    </MemoryRouter>,
   )
   return { ...utils, props, band: screen.getByTestId('model-band') }
 }
@@ -95,6 +98,7 @@ describe('ModelBandSection', () => {
 
     const onRefresh = vi.fn()
     rerender(
+      <MemoryRouter>
       <TooltipProvider>
         <ModelBandSection
           accounts={accounts}
@@ -108,7 +112,8 @@ describe('ModelBandSection', () => {
           onRefresh={onRefresh}
           table={{ open: false, expandedSymbol: null, onToggle: vi.fn(), onToggleSymbol: vi.fn() }}
         />
-      </TooltipProvider>,
+      </TooltipProvider>
+    </MemoryRouter>,
     )
     expect(screen.getByText(/model-analysis: 503/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Retry/ }))

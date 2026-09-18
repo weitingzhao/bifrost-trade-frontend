@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { ModelAnalysisResponse } from '@/types/modelAnalysis'
 import { fmtUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -201,6 +202,11 @@ export function AccountStressSection({ data }: AccountStressProps) {
           <StatusLamp lamp="gray" variant="dot" title="Unknown — not a fault" />
           the IV axis is not wired, so every row is intrinsic-only
         </span>
+        {/* A different ruler, named so the two are not read as one: this grid is
+            intrinsic at expiry, Risk Stress reprices the whole book one day out. */}
+        <Link to="/risk/stress" className={cn(positionsUi.link, 'ml-auto')}>
+          one-day reprice → Risk Stress
+        </Link>
       </div>
 
       {open ? (

@@ -4,6 +4,7 @@
  * the headline beside it, the rest of the reasoning, the rows the total was
  * summed from, and what each gauge segment means along the foot.
  */
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import type { Explanation } from '@/utils/bookExplanations'
 import { positionsUi } from './positionsUi'
@@ -61,6 +62,13 @@ export function ExplanationBlock({
               ))}
             </dl>
           ) : null}
+        </div>
+      ) : null}
+      {explanation.out ? (
+        <div className="border-t border-border/60 px-2.5 py-1.25">
+          <Link to={explanation.out.to} className={positionsUi.link}>
+            {explanation.out.label}
+          </Link>
         </div>
       ) : null}
       {explanation.scale && explanation.scale.length > 0 ? (

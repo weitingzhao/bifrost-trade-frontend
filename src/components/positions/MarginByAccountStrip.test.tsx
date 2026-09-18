@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { MarginByAccountStrip } from './MarginByAccountStrip'
 import { rollupMargin } from '@/utils/marginPressure'
 
@@ -33,12 +34,14 @@ const BOTH = { host: true, secondary: true }
 
 function renderStrip(accounts: Parameters<typeof rollupMargin>[0], filter = BOTH) {
   return render(
-    <MarginByAccountStrip
-      margin={rollupMargin(accounts)}
-      hostId={HOST.account_id}
-      secondaryId={SECONDARY.account_id}
-      accountFilter={filter}
-    />
+    <MemoryRouter>
+      <MarginByAccountStrip
+        margin={rollupMargin(accounts)}
+        hostId={HOST.account_id}
+        secondaryId={SECONDARY.account_id}
+        accountFilter={filter}
+      />
+    </MemoryRouter>,
   )
 }
 

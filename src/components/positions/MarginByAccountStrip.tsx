@@ -21,6 +21,7 @@ import {
 } from '@/utils/marginByAccount'
 
 import { DerivationBlock } from './DerivationBlock'
+import { Link } from 'react-router-dom'
 import { positionsUi } from './positionsUi'
 import { holdingsOf, marginDerivation } from '@/utils/marginDerivation'
 import type { LivePositionRow } from '@/types/positions'
@@ -178,6 +179,9 @@ export function MarginByAccountStrip({
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>Margin by account</span>
         <span className={positionsUi.panelNote}>cockpit pressure: accounts in scope · ? walks the broker fields behind a row</span>
+        <Link to="/risk/margin" className={cn(positionsUi.link, 'ml-auto')}>
+          per-position margin · Risk Margin →
+        </Link>
       </header>
       {rows.length === 0 ? (
         <p className="m-0 px-3 py-2 text-dense-body text-warning leading-normal">n/a — no funded account reported margin</p>

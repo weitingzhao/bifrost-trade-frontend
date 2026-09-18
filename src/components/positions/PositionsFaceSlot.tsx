@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { OptionContractDetailFromOpenPosition } from '@/components/optionDiscovery/OptionContractDetailFromOpenPosition'
 import { RiskProfileDetail } from './RiskProfileDetail'
+import { Link } from 'react-router-dom'
 import { positionsUi } from './positionsUi'
 import type { Execution, OpenOptionPosition } from '@/types/positions'
 import type { QuoteItem } from '@/types/market'
@@ -167,11 +168,16 @@ export function PositionsFaceSlot({
               <DenseTag variant="info" size="cell">
                 this instance · at expiry
               </DenseTag>
-              {risk.onOpenInstance ? (
-                <button type="button" className={cn(positionsUi.link, 'ml-auto')} onClick={risk.onOpenInstance}>
-                  instance detail →
-                </button>
-              ) : null}
+              <span className="ml-auto flex flex-wrap items-baseline gap-x-3">
+                {risk.onOpenInstance ? (
+                  <button type="button" className={positionsUi.link} onClick={risk.onOpenInstance}>
+                    instance detail →
+                  </button>
+                ) : null}
+                <Link to="/risk/stress" className={positionsUi.link}>
+                  whole-book stress · Risk Stress →
+                </Link>
+              </span>
             </div>
             <RiskProfileDetail profile={risk.profile} hideHeading variant="instanceDetail" />
           </div>

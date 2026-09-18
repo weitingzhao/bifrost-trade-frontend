@@ -47,6 +47,8 @@ export interface Explanation {
   rows?: ExplanationRow[]
   /** What each of the four segments means. */
   scale?: string[]
+  /** The page that answers the question this one deliberately does not. */
+  out?: { label: string; to: string }
 }
 
 export interface ExplainInputs {
@@ -144,7 +146,9 @@ export function explainBook(topic: ExplainTopic, input: ExplainInputs): Explanat
         : null
       return {
         title: 'Risk',
+        out: { label: 'net exposure & β-Δ · Risk Portfolio →', to: '/risk/portfolio' },
         lines: [
+          'How close a short leg is to being run over. This is jeopardy, not exposure — net exposure and β-weighted Δ live on Risk Portfolio.',
           `${c.itm} in the money: short legs whose strike the spot has already passed. ${c.near7d} expiring within 7 days${c.zeroDte > 0 ? ` (${c.zeroDte} today)` : ''}${c.past > 0 ? `, ${c.past} still open past expiry` : ''}.`,
           `Cushion = distance from spot to the short strike as a share of the strike; the tightest is ${c.tightest == null ? 'n/a' : pct1(c.tightest)} against your ${pct1(tightPct)} line.`,
           `Spot: live last while the market trades, else the latest daily close (dated), else the broker's mark if newer${priced ? ` — today ${priced}` : ''}. An unpriced leg is left out of every count and is not known to be safe.`,

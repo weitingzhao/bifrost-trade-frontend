@@ -19,10 +19,23 @@
  */
 import { buildOptExecutionGroups, isOptionExpired, type OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
+import { daysBetween } from '@/lib/isoDate'
 import { daysTo } from '@/utils/optionTicker'
 import type { Execution } from '@/types/positions'
 
 export type ExitKind = 'closed' | 'expired'
+
+/** One fill, as Review reads it — enough to price the position on any day it was open. */
+export interface ReviewFill {
+  /** The fill's own trade date. Null on a journal-closed leg, which carries only an epoch. */
+  date: string | null
+  side: 'buy' | 'sell'
+  qty: number
+  price: number
+  commission: number
+  /** Signed cash: premium in is positive, premium out and commission negative. */
+  cash: number
+}
 
 export interface ReviewTrade {
   contractKey: string
@@ -30,6 +43,12 @@ export interface ReviewTrade {
   label: string
   symbol: string
   accountId: string
+  /** Expiry, `YYYY-MM-DD`. */
+  expiry: string
+  strike: number
+  right: string
+  /** Every fill on this contract, earliest first. */
+  fills: ReviewFill[]
   /** The play this trade belonged to, from the fills' own opportunity name. */
   play: string | null
   openedOn: string | null
@@ -93,15 +112,50 @@ function isBuy(side: string | undefined): boolean {
 }
 
 function dateSpan(trades: readonly Execution[]): { first: string | null; last: string | null } {
-  const dates = trades.map((t) => (t.trade_date ?? '').slice(0, 10)).filter(Boolean).sort()
+  // A journal-closed leg carries no trade date; falling back to its epoch is
+  // what keeps two of the book's closed trades from reading as never closed.
+  const dates = trades
+    .map((t) => (t.trade_date ?? '').slice(0, 10) || epochDate(t.time) || '')
+    .filter(Boolean)
+    .sort()
   return { first: dates[0] ?? null, last: dates[dates.length - 1] ?? null }
 }
 
-function daysBetween(a: string, b: string): number | null {
-  const x = Date.parse(`${a}T00:00:00Z`)
-  const y = Date.parse(`${b}T00:00:00Z`)
-  if (!Number.isFinite(x) || !Number.isFinite(y)) return null
-  return Math.round((y - x) / 86_400_000)
+/** `20261016` → `2026-10-16`; already-ISO values pass through. */
+function isoExpiry(raw: string | null | undefined): string {
+  const digits = (raw ?? '').replace(/\D/g, '')
+  return digits.length >= 8 ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}` : ''
+}
+
+/**
+ * One execution as a fill.
+ *
+ * The cash convention is the Ledger's own (`buildOptExecutionGroups`): a buy
+ * costs price × qty × 100 **plus** commission, a sell brings in price × qty ×
+ * 100 **minus** commission. Summing `cash` over a flat contract therefore lands
+ * exactly on its realised P&L, which is what lets the mark path end on the same
+ * number the Ledger shows (§14.2).
+ */
+function toFill(e: Execution): ReviewFill {
+  const rawQty = Number(e.quantity ?? e.qty)
+  const qty = Number.isFinite(rawQty) ? Math.abs(rawQty) : 0
+  const price = Number(e.price) || 0
+  const commission = Number(e.commission) || 0
+  const buy = isBuy(e.side)
+  return {
+    date: (e.trade_date ?? '').slice(0, 10) || epochDate(e.time),
+    side: buy ? 'buy' : 'sell',
+    qty,
+    price,
+    commission,
+    cash: buy ? -(price * qty * 100 + commission) : price * qty * 100 - commission,
+  }
+}
+
+/** A journal-closed leg carries no trade date, only the epoch its book-out was stamped with. */
+function epochDate(time: number | null | undefined): string | null {
+  if (typeof time !== 'number' || !Number.isFinite(time) || time <= 0) return null
+  return new Date(time * 1000).toISOString().slice(0, 10)
 }
 
 /**
@@ -138,6 +192,10 @@ export function buildReviewTrades(executions: readonly Execution[]): {
       label: shortOptContractKey(g.contract_key),
       symbol: g.symbol,
       accountId: g.account_id,
+      expiry: isoExpiry(g.expiry),
+      strike: g.strike,
+      right: (g.option_right || '').toUpperCase().slice(0, 1),
+      fills: ordered.map(toFill),
       play: ordered.find((t) => t.strategy_opportunity_name)?.strategy_opportunity_name ?? null,
       openedOn: first,
       closedOn: last,

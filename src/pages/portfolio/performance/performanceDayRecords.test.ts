@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PerformanceDayPnLBulkResult } from '@/types/trading'
-import { buildDayStats, daysBetween, fmtCellMoney } from './performanceDayRecords'
+import { daysBetween } from '@/lib/isoDate'
+import { buildDayStats, fmtCellMoney } from './performanceDayRecords'
 
 // Invented figures.
 const bulk = {

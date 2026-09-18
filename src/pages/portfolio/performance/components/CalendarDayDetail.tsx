@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { fmtIsoDateToken, fmtOccContractToken, fmtUsd } from '@/lib/format'
 import { DenseTag } from '@/components/data-display'
-import { daysBetween } from '@/pages/portfolio/performance/performanceDayRecords'
+import { daysBetween } from '@/lib/isoDate'
 import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
 import {
   Dialog,
@@ -523,7 +523,7 @@ function ContractGroup({
   const matches = isRealized ? pairs.map((p) => matchLegs(p, execById)) : []
   const slippage = tabPnl - pairNetSum
   const earliestOpen = matches.map((m) => m.open.date).filter(Boolean).sort()[0]
-  const outsideDays = earliestOpen && earliestOpen < rangeStart ? daysBetween(earliestOpen, rangeStart) : 0
+  const outsideDays = earliestOpen && earliestOpen < rangeStart ? (daysBetween(earliestOpen, rangeStart) ?? 0) : 0
 
   return (
     <div className="overflow-hidden rounded-sm border border-border">

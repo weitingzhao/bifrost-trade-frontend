@@ -14,6 +14,7 @@
  * backfill of what happened. The page says that rather than drawing an empty
  * calendar, which would read as "nothing is coming".
  */
+import { daysBetween } from '@/lib/isoDate'
 
 export type CorporateActionKind = 'dividend' | 'split' | 'other'
 
@@ -182,13 +183,6 @@ function kindOf(actionType: string): CorporateActionKind {
   return 'other'
 }
 
-/** Whole days between two ISO dates, positive when `to` is later. */
-export function daysBetween(fromIso: string, toIso: string): number | null {
-  const a = Date.parse(`${fromIso.slice(0, 10)}T00:00:00Z`)
-  const b = Date.parse(`${toIso.slice(0, 10)}T00:00:00Z`)
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return null
-  return Math.round((b - a) / 86_400_000)
-}
 
 /**
  * A strike after a split, read `from : to` — a 1 : 10 forward split takes a

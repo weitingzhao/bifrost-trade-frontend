@@ -46,13 +46,6 @@ export function buildDayStats(bulk: PerformanceDayPnLBulkResult | undefined, day
   ]
 }
 
-/** Whole days between two `YYYY-MM-DD` dates, `later − earlier`. */
-export function daysBetween(earlier: string, later: string): number {
-  const a = Date.UTC(Number(earlier.slice(0, 4)), Number(earlier.slice(5, 7)) - 1, Number(earlier.slice(8, 10)))
-  const b = Date.UTC(Number(later.slice(0, 4)), Number(later.slice(5, 7)) - 1, Number(later.slice(8, 10)))
-  return Math.round((b - a) / 86_400_000)
-}
-
 /** `$1.1k` · `-$513` · `$953`: a calendar cell has room for three or four characters of figure. */
 export function fmtCellMoney(v: number): string {
   const sign = v < 0 ? '-' : ''

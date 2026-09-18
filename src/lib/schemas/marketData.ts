@@ -72,3 +72,45 @@ export const CorporateActionsResponseSchema = z
     count: z.number(),
   })
   .passthrough()
+
+/**
+ * One option contract's daily OHLCV, and one underlying's.
+ *
+ * These are what let Review read a trade's own path rather than only its two
+ * ends. Same boundary as the snapshots above — a third-party ingest on its own
+ * release chain — and the same treatment: the shape is checked, the numbers are
+ * nullable where the vendor genuinely leaves them out, and a bar that fails to
+ * parse drops rather than becoming a zero on a P&L curve.
+ */
+export const OptionDailyBarSchema = z
+  .object({
+    option_ticker: z.string(),
+    bar_date: z.string(),
+    open: z.number().nullable(),
+    high: z.number().nullable(),
+    low: z.number().nullable(),
+    close: z.number().nullable(),
+  })
+  .passthrough()
+
+export const OptionDailyResponseSchema = z
+  .object({
+    ok: z.boolean(),
+    rows: z.array(OptionDailyBarSchema),
+  })
+  .passthrough()
+
+export const StockDailyBarSchema = z
+  .object({
+    symbol: z.string(),
+    bar_time: z.string(),
+    close: z.number().nullable(),
+  })
+  .passthrough()
+
+export const StockDailyResponseSchema = z
+  .object({
+    ok: z.boolean(),
+    data: z.record(z.string(), z.array(StockDailyBarSchema)),
+  })
+  .passthrough()

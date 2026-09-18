@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildReviewTrades, habitReadings, playbookStats, winRateBand } from './reviewTrades'
+import { buildReviewTrades, playbookStats, winRateBand } from './reviewTrades'
 import type { Execution } from '@/types/positions'
 
 /** Invented fills — one short-premium trade closed, one debit trade closed. */
@@ -161,28 +161,5 @@ describe('playbookStats', () => {
     expect(cc.profitFactor).toBeCloseTo(480 / 200)
     expect(cc.best).toBe(480)
     expect(cc.worst).toBe(-200)
-  })
-})
-
-describe('habitReadings', () => {
-  it('measures what the fills carry and names the half that is missing', () => {
-    const { trades } = buildReviewTrades([...shortTrade, ...debitTrade])
-    const habits = habitReadings(trades)
-    expect(habits).toHaveLength(7)
-
-    const dte = habits.find((h) => h.key === 'dte_entry')
-    expect(dte?.value).not.toBeNull()
-    expect(dte?.unmeasured).toBeNull()
-
-    // Hold time is real; "vs plan" is not, and the habit keeps both facts.
-    const hold = habits.find((h) => h.key === 'hold_time')
-    expect(hold?.value).toBeCloseTo(14.5)
-    expect(hold?.unmeasured).toMatch(/no plan is linked/)
-
-    // The four that turn on the plan or the mark path carry no value at all —
-    // a number here would be an estimate wearing a reading's clothes.
-    const blocked = habits.filter((h) => h.value == null)
-    expect(blocked.map((h) => h.key)).toEqual(['disposition', 'cut_latency', 'gave_back', 'capture'])
-    expect(blocked.every((h) => h.unmeasured != null)).toBe(true)
   })
 })

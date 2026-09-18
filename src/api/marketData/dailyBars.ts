@@ -102,3 +102,36 @@ export async function fetchStockDailyCloses(symbol: string, from: string, to: st
     .filter((b) => b.date >= from && b.date <= to)
     .sort((a, b) => a.date.localeCompare(b.date))
 }
+
+/**
+ * Every contract on one underlying and one expiry, over a window.
+ *
+ * The book-wide pages need a path for all 67 closed trades, and asking per
+ * contract is the wrong shape twice over: it is 67 round trips, and the
+ * per-contract predicate measures 1.4s against 0.17s for this one. Scoping by
+ * underlying and expiry instead is 46 requests that each come back in a
+ * sixth of the time.
+ *
+ * It is also the only bounded form. A whole-symbol query over the book's window
+ * hits the endpoint's 5,000-row ceiling on every large name — silent truncation,
+ * which on a P&L curve reads as a position that stopped existing.
+ */
+export async function fetchOptionDailyByExpiry(
+  symbol: string,
+  expiry: string,
+  from: string,
+  to: string,
+): Promise<Map<string, DailyBar[]>> {
+  const qs = new URLSearchParams({ symbol, expiry, from, to, limit: '5000' })
+  const res = await fetch(marketDataPluginUrl(`/market/options/daily?${qs}`))
+  if (!res.ok) throw new Error(`market-data /options/daily: ${res.status}`)
+  const j = validateOptionDaily(await res.json()) as Partial<OptionDailyResponse>
+  const byTicker = new Map<string, DailyBar[]>()
+  for (const r of Array.isArray(j.rows) ? j.rows : []) {
+    const list = byTicker.get(r.option_ticker) ?? []
+    list.push({ date: String(r.bar_date).slice(0, 10), open: r.open, high: r.high, low: r.low, close: r.close })
+    byTicker.set(r.option_ticker, list)
+  }
+  for (const list of byTicker.values()) list.sort((a, b) => a.date.localeCompare(b.date))
+  return byTicker
+}

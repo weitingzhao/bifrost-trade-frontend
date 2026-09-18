@@ -8,7 +8,7 @@
  */
 import { useMemo } from 'react'
 import { useExecutionsCanonical } from '@/hooks/useExecutions'
-import { buildReviewTrades, habitReadings, playbookStats } from '@/utils/reviewTrades'
+import { buildReviewTrades, playbookStats } from '@/utils/reviewTrades'
 
 export function useReviewTrades(accountFilter: string) {
   const execQuery = useExecutionsCanonical()
@@ -20,7 +20,6 @@ export function useReviewTrades(accountFilter: string) {
 
   const { trades, expiredUnbooked } = useMemo(() => buildReviewTrades(scoped), [scoped])
   const plays = useMemo(() => playbookStats(trades), [trades])
-  const habits = useMemo(() => habitReadings(trades), [trades])
 
   const accountIds = useMemo(
     () => [...new Set((execQuery.data?.items ?? []).map((e) => (e.account_id ?? '').trim()).filter(Boolean))].sort(),
@@ -31,7 +30,6 @@ export function useReviewTrades(accountFilter: string) {
     trades,
     expiredUnbooked,
     plays,
-    habits,
     accountIds,
     loading: execQuery.isLoading,
     error: execQuery.error ?? null,

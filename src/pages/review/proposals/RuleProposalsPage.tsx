@@ -23,7 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
-import { useReviewTrades } from '@/hooks/useReviewTrades'
+import { useReviewHabits } from '@/hooks/useReviewHabits'
 import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
 
 const PAGE_LEAD =
@@ -78,7 +78,7 @@ const CHAIN = [
 
 export default function RuleProposalsPage() {
   const [accountFilter] = useState('all')
-  const { trades, habits, loading, error, refetch } = useReviewTrades(accountFilter)
+  const { trades, habits, loading, error, refetch } = useReviewHabits(accountFilter)
   const measurable = useMemo(() => habits.filter((h) => h.value != null).length, [habits])
 
   return (

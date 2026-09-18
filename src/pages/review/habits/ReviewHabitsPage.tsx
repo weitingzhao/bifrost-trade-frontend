@@ -1,16 +1,19 @@
 /**
- * Review · Habits — the tendencies across closed trades, and their cost.
+ * Review · Habits — measured tendencies over the closed book, each with its
+ * sample, its distribution and what it cost.
  *
- * The design names seven. Three can be measured from the fills alone — how long
- * a trade is held, how far out it is written, and what share of the credit it
- * keeps. The other four turn on the plan or on the mark through the holding
- * period, and every one of them keeps its row and says which half is missing.
+ * The design names seven. Four are readings here: how long trades are held, how
+ * far out they are written, what share of the best mark winners actually land,
+ * and how long a loser stays open past its worst mark — the last two only since
+ * the contract's own daily bars turned out to be available. A fifth, the share
+ * of the credit kept, the fills answer outright.
  *
- * The temptation on this page is to show the three and quietly drop the four,
- * which would read as a short list of tendencies rather than a long one mostly
- * unmeasured — and the second is the true state of the book. A habit is a claim
- * about repeated behaviour, so a habit with no sample is worse than absent: it
- * invites a change to a rule on the strength of nothing.
+ * The rest divide by the plan, and so does every cost figure on the page: a
+ * habit's cost is what it did against what the plan would have produced. Those
+ * rows keep their place and name what they need. The temptation is to show the
+ * answerable ones and quietly drop the rest, which would read as a short list
+ * of tendencies rather than a long one partly unmeasured — and the second is
+ * the true state of the book.
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -21,27 +24,85 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
-import { useReviewTrades } from '@/hooks/useReviewTrades'
-import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
+import { pnlColorClass } from '@/utils/dailyChange'
+import { fmtUsd } from '@/utils/positions'
+import { daysBetween } from '@/lib/isoDate'
+import { useReviewHabits } from '@/hooks/useReviewHabits'
+import { THIN_SAMPLE } from '@/utils/reviewTrades'
+import { habitReadings, type HabitReading } from '@/utils/reviewHabits'
+import { HabitStrip } from './HabitStrip'
+import { CostSplit, NotClaimed, PlanAdherenceQuadrants } from './HabitsAside'
 
 const PAGE_LEAD =
-  'What I do repeatedly, and what it costs. A habit is a claim about a pattern, so it needs a sample — and four of the seven have none on this side.'
+  'Measured tendencies over the closed book — each one a distribution, a sample count, and what it cost or earned. No scores and no trader archetypes: a label you cannot falsify is not a finding.'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+const WINDOWS = [
+  { value: 'q', label: '3M', days: 92 },
+  { value: 'half', label: '6M', days: 183 },
+  { value: 'all', label: 'All', days: null },
+] as const
 
-function fmtValue(unit: string, v: number): string {
-  if (unit === 'of credit') return `${(v * 100).toFixed(0)}%`
-  return v.toFixed(unit === 'days' ? 0 : 1)
+/** The design's second filter. Both of its narrower bases need a store this side has not got. */
+const BASES = [
+  { value: 'all', label: 'All closed' },
+  { value: 'reviewed', label: 'Reviewed only', disabled: true },
+  { value: 'planned', label: 'Has a plan', disabled: true },
+]
+
+function fmtFor(h: HabitReading): (v: number) => string {
+  if (h.kind === 'share') return (v) => `${(v * 100).toFixed(0)}%`
+  if (h.kind === 'days') return (v) => v.toFixed(v < 10 ? 1 : 0)
+  return (v) => v.toFixed(0)
 }
 
 export default function ReviewHabitsPage() {
   const [accountFilter, setAccountFilter] = useState('all')
-  const { trades, habits, accountIds, loading, error, refetch } = useReviewTrades(accountFilter)
+  const [window, setWindow] = useState<string>('all')
+  const {
+    trades,
+    paths,
+    accountIds,
+    withoutPath,
+    pathRequests,
+    pathsLoading,
+    loading,
+    error,
+    refetch,
+  } = useReviewHabits(accountFilter)
 
-  const measured = useMemo(() => habits.filter((h) => h.value != null), [habits])
-  const unmeasured = useMemo(() => habits.filter((h) => h.value == null), [habits])
+  const today = new Date().toISOString().slice(0, 10)
+  const inWindow = useMemo(() => {
+    const days = WINDOWS.find((w) => w.value === window)?.days
+    if (days == null) return trades
+    return trades.filter((t) => {
+      const age = t.closedOn ? daysBetween(t.closedOn, today) : null
+      return age != null && age <= days
+    })
+  }, [trades, window, today])
+
+  // The window narrows the sample, so it has to narrow the readings too — a
+  // gate that says "12 closed trades" above tendencies computed over 67 is the
+  // worst of both.
+  const habits = useMemo(() => habitReadings(inWindow, paths), [inWindow, paths])
+  const measured = habits.filter((h) => h.value != null)
+  const pending = pathsLoading && habits.some((h) => h.needsPath && h.value == null)
+  const n = inWindow.length
+  const gate =
+    n === 0
+      ? { lamp: 'gray' as const, title: 'No closed trade in this window', sub: 'Widen the window, or wait for a trade to close.' }
+      : n < THIN_SAMPLE
+        ? {
+            lamp: 'yellow' as const,
+            title: `${n} closed trades — under the floor of ${THIN_SAMPLE}`,
+            sub: 'Every reading below is the band rather than the point. A tendency read off this few trades is a description of this few trades.',
+          }
+        : {
+            lamp: 'green' as const,
+            title: `${n} closed trades — over the floor of ${THIN_SAMPLE}`,
+            sub: pending
+              ? `Reading each contract's own daily bars over ${pathRequests} requests, one per underlying and expiry.`
+              : `${measured.length} of the ${habits.length} tendencies have a reading; the rest name what they need. Paths read over ${pathRequests} requests, one per underlying and expiry.`,
+          }
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -53,96 +114,97 @@ export default function ReviewHabitsPage() {
           description={PAGE_LEAD}
           actions={
             <span className="flex flex-wrap items-center gap-2.5">
-              {accountIds.length > 1 ? (
-                <SegmentControl
-                  size="xs"
-                  ariaLabel="Account"
-                  value={accountFilter}
-                  onChange={setAccountFilter}
-                  options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
-                />
-              ) : null}
-              <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                {measured.length} of {habits.length} measurable · {trades.length} closed trades
-              </span>
               <Link to="/review" className={positionsUi.link}>
                 ← Queue
+              </Link>
+              <Link to="/review/proposals" className={positionsUi.link}>
+                Proposals →
               </Link>
             </span>
           }
         />
 
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2">
+          <span className={positionsUi.cap}>Window</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Window"
+            value={window}
+            onChange={setWindow}
+            options={WINDOWS.map((w) => ({ value: w.value, label: w.label }))}
+          />
+          <span aria-hidden className="h-4 w-px bg-border" />
+          <span className={positionsUi.cap}>Basis</span>
+          <SegmentControl size="xs" ariaLabel="Basis" value="all" onChange={() => {}} options={BASES} />
+          <DenseTag variant="warning" size="cell">
+            ⚠ NO REVIEW OR PLAN STORE
+          </DenseTag>
+          {accountIds.length > 1 ? (
+            <>
+              <span aria-hidden className="h-4 w-px bg-border" />
+              <span className={positionsUi.cap}>Account</span>
+              <SegmentControl
+                size="xs"
+                ariaLabel="Account"
+                value={accountFilter}
+                onChange={setAccountFilter}
+                options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+              />
+            </>
+          ) : null}
+          <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>
+            n <span className={n < THIN_SAMPLE ? 'text-warning' : 'text-foreground'}>{n}</span> / floor{' '}
+            {THIN_SAMPLE}
+          </span>
+        </div>
+
         {error ? <QueryErrorAlert error={error} onRetry={refetch} /> : null}
         {loading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-48 w-full rounded-md" />
-          </div>
+          <Skeleton className="h-48 w-full rounded-md" />
         ) : (
           <>
-            <PositionsTier label="Measured" note="what the fills alone can say about how this book trades" />
-            <section className={positionsUi.panel} aria-label="Measured habits">
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.panelTitle}>{measured.length} habits with a sample</span>
-                <span className="ml-auto text-dense-meta text-muted-foreground">
-                  across {trades.length} closed trades
+            <section className={positionsUi.panel} aria-label="Sample gate">
+              <div className="grid grid-cols-[0.875rem_minmax(0,1fr)] items-start gap-3 px-3 py-2.5">
+                <span className="pt-1">
+                  <StatusLamp lamp={gate.lamp} variant="dot" title={gate.title} />
                 </span>
-              </header>
-              {measured.map((h) => (
-                <div key={h.key} className="border-b border-border/55 px-3 py-2 last:border-b-0">
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="text-xs leading-normal font-semibold text-foreground">{h.label}</span>
-                    <span className={cn(positionsUi.mono, 'text-sm text-foreground')}>
-                      {fmtValue(h.unit, h.value as number)}
-                    </span>
-                    <span className="text-dense-meta text-muted-foreground">{h.unit}</span>
-                    <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>n {h.n}</span>
-                  </div>
-                  <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">{h.read}</p>
-                  {h.unmeasured ? (
-                    <p className="m-0 inline-flex flex-wrap items-baseline gap-x-1.5 text-dense-meta leading-normal text-warning text-pretty">
-                      <StatusLamp lamp="yellow" variant="dot" title="Half missing" />
-                      <span className="text-muted-foreground">Not measured: {h.unmeasured}.</span>
-                    </p>
-                  ) : null}
-                </div>
-              ))}
-              <p className={cn(FOOT, 'm-0')}>
-                None of these three carries a cost figure. A habit&rsquo;s cost is what it did to P&amp;L against what
-                the plan would have produced, and that subtraction needs the plan.
-              </p>
+                <span className="min-w-0">
+                  <span className="block text-dense-body font-semibold text-foreground">{gate.title}</span>
+                  <span className="block pt-0.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                    {gate.sub}
+                  </span>
+                </span>
+              </div>
             </section>
 
-            <PositionsTier label="Unmeasured" note="the four that need a plan or a mark path, and what each needs" />
-            <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Unmeasured habits">
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.panelTitle}>{unmeasured.length} habits with no sample</span>
-                <DenseTag variant="warning" size="cell">
-                  ⚠ kept, not dropped
-                </DenseTag>
-                <span className="ml-auto text-dense-meta text-muted-foreground">
-                  a habit with no sample invites a rule change on the strength of nothing
-                </span>
-              </header>
-              {unmeasured.map((h) => (
-                <div key={h.key} className="border-b border-border/55 px-3 py-2 last:border-b-0">
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="inline-flex items-center gap-1.5 text-xs leading-normal font-semibold text-foreground">
-                      <StatusLamp lamp="gray" variant="dot" title="Unmeasured" />
-                      {h.label}
+            <div className="flex flex-wrap items-start gap-3">
+              <div className="flex min-w-0 flex-[999_1_38rem] flex-col gap-3">
+                <section className={positionsUi.panel} aria-label="Tendencies">
+                  <header className={positionsUi.panelHead}>
+                    <span className={positionsUi.cap}>Tendencies</span>
+                    <span className={positionsUi.panelTitle}>Each with its sample and its consequence</span>
+                    <span className="ml-auto text-dense-meta text-muted-foreground">
+                      dots are trades · green earned, red lost
                     </span>
-                    <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                      {h.n} trades would be in the sample
-                    </span>
-                  </div>
-                  <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">{h.read}</p>
-                  <p className="m-0 text-dense-meta leading-normal text-secondary-foreground text-pretty">
-                    Needs {h.unmeasured}.
-                  </p>
-                </div>
-              ))}
-              <p className={cn(FOOT, 'm-0')}>{REVIEW_UNRECORDED.plan}</p>
-              <p className={cn(FOOT, 'm-0')}>{REVIEW_UNRECORDED.path}</p>
-            </section>
+                  </header>
+                  {habits.map((h) => (
+                    <HabitRow key={h.key} habit={h} loading={pathsLoading && Boolean(h.needsPath)} />
+                  ))}
+                </section>
+              </div>
+
+              <aside className="flex min-w-0 max-w-[26.875rem] flex-[1_1_20.625rem] flex-col gap-3">
+                <PlanAdherenceQuadrants closed={n} />
+                <CostSplit />
+                <NotClaimed
+                  measured={measured.length}
+                  total={habits.length}
+                  closed={n}
+                  withoutPath={withoutPath.length}
+                  pathRequests={pathRequests}
+                />
+              </aside>
+            </div>
 
             <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> A habit here is a reading, not
@@ -156,5 +218,80 @@ export default function ReviewHabitsPage() {
         )}
       </section>
     </PageShell>
+  )
+}
+
+function HabitRow({ habit, loading }: { habit: HabitReading; loading: boolean }) {
+  const fmt = fmtFor(habit)
+  const thin = habit.value != null && habit.n < THIN_SAMPLE
+  return (
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] items-start gap-x-4 gap-y-2 border-b border-border/55 px-3 py-2.5 last:border-b-0">
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span
+            className={cn(
+              'text-dense-body font-semibold',
+              habit.value == null ? 'text-muted-foreground' : 'text-foreground',
+            )}
+          >
+            {habit.value == null ? (
+              <span className="inline-flex items-center gap-1.5">
+                <StatusLamp lamp="gray" variant="dot" title="Unmeasured" />
+                {habit.label}
+              </span>
+            ) : (
+              habit.label
+            )}
+          </span>
+          <DenseTag variant={habit.value == null ? 'neutral' : thin ? 'warning' : 'success'} size="cell">
+            n {habit.n}
+          </DenseTag>
+        </div>
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span
+            className={cn(
+              positionsUi.mono,
+              'text-lg font-bold',
+              habit.value == null ? 'text-muted-foreground' : 'text-foreground',
+            )}
+          >
+            {habit.value == null ? (loading ? '…' : 'n/c') : fmt(habit.value)}
+          </span>
+          <span className="text-dense-meta text-muted-foreground">{habit.unit}</span>
+          {habit.ci ? (
+            <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
+              {habit.ciLabel} {fmt(habit.ci[0])} – {fmt(habit.ci[1])}
+            </span>
+          ) : null}
+          <span className="text-dense-caption uppercase tracking-[0.1em] text-muted-foreground">{habit.stat}</span>
+        </div>
+        <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
+          {loading && habit.value == null ? 'Reading this contract’s daily bars…' : habit.read}
+        </p>
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span
+            className={cn(
+              positionsUi.mono,
+              'text-dense-body font-semibold',
+              habit.consequence == null ? 'text-muted-foreground' : pnlColorClass(habit.consequence),
+            )}
+          >
+            {habit.consequence == null ? 'no cost' : fmtUsd(habit.consequence, true)}
+          </span>
+          <span className="min-w-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            {habit.consequenceLabel}
+          </span>
+        </div>
+        {habit.unmeasured ? (
+          <p className="m-0 inline-flex items-start gap-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <span className="pt-1">
+              <StatusLamp lamp={habit.value == null ? 'gray' : 'yellow'} variant="dot" title="Not measured" />
+            </span>
+            <span>Not measured: {habit.unmeasured}.</span>
+          </p>
+        ) : null}
+      </div>
+      <HabitStrip habit={habit} fmt={fmt} />
+    </div>
   )
 }

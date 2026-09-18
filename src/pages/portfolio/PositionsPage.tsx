@@ -56,6 +56,7 @@ import {
   type PositionsFace,
 } from '@/components/positions/PositionsFaceSlot'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
+import { readInstances } from '@/utils/strategyInstances'
 import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
 import type { AlarmTarget } from '@/hooks/usePositionsAlarm'
@@ -202,11 +203,30 @@ export default function PositionsPage() {
     setFace('contract')
     setFaceOpen(true)
   }, [])
-  const openRiskFace = useCallback((id: number, ctx?: { title: string; profile: RiskProfile | null }) => {
-    setFaceRisk({ title: ctx?.title ?? `Strategy #${id}`, profile: ctx?.profile ?? null, onOpenInstance: () => setInspector({ type: 'strategy', id }) })
-    setFace('risk')
-    setFaceOpen(true)
-  }, [])
+  const instanceById = useMemo(
+    () => new Map(book.instances.map((i) => [i.strategy_instance_id, i])),
+    [book.instances],
+  )
+  const openRiskFace = useCallback(
+    (id: number, ctx?: { title: string; profile: RiskProfile | null }) => {
+      // running / closed by the Ledger's own rule, on this instance's own
+      // fills — the sheet renames it, it never writes its state.
+      const record = instanceById.get(id)
+      const reading = record ? readInstances([record], book.executionsFinal)[0] : null
+      setFaceRisk({
+        title: ctx?.title ?? `Strategy #${id}`,
+        profile: ctx?.profile ?? null,
+        onOpenInstance: () => setInspector({ type: 'strategy', id }),
+        instance:
+          record && reading
+            ? { id, label: record.label ?? '', status: reading.closed ? 'closed' : 'running' }
+            : null,
+      })
+      setFace('risk')
+      setFaceOpen(true)
+    },
+    [instanceById, book.executionsFinal],
+  )
   /** A face button runs the write it names, on the fill the face is about. */
   const openLedgerMode = useCallback(
     (mode: LedgerMode) => {

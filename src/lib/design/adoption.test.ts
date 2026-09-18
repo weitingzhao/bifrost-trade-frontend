@@ -125,13 +125,12 @@ describe('design adoption', () => {
     // keeps the thesis table's shape with a NO HYPOTHESIS STORE row, and the
     // second stopped blaming its feed for a calendar the issuers have not
     // declared yet.
-    expect(counts.aligned + counts.byState.stale).toBe(22)
+    expect(counts.aligned + counts.byState.stale).toBe(21)
     expect(counts.aligned).toBe(21)
-    // The four the design moved past their walk. They are not work lost — the
-    // page is built, and what is stale is the comparison.
-    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
-      '/portfolio/positions',
-    ])
+    // Empty again: every page Package 2026-09-18.1 moved has now been re-walked
+    // against it. A stale row was never work lost — the page is built, and what
+    // was stale is the comparison.
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -194,7 +193,10 @@ describe('design adoption', () => {
     // stale set to two and Review back to waiting on two looks. Orders & Fills
     // follows — the order boundary stated in full and every fake jump made
     // real — leaving Positions as the only page the design has moved past.
-    expect(counts.byState.reviewing).toBe(9)
+    // Positions closes it: the Instance row on the Risk profile face, where the
+    // rename is a real PATCH and the status is a reading, because no column
+    // stores one (stale 1→0, reviewing 9→10).
+    expect(counts.byState.reviewing).toBe(10)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -224,6 +226,7 @@ describe('design adoption', () => {
       '/trade/assignment',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/portfolio/positions',
       '/review',
       '/review/playbook-stats',
       '/risk/budget',
@@ -297,10 +300,11 @@ describe('design adoption', () => {
     // Package 2026-09-17.4 fixed the header the app reads (P1), so DESIGN_REV
     // finally moves with the body instead of lagging it by two revs.
     expect(DESIGN_REV).toBe('2026-09-18.1')
-    // Not zero any more, and that is the point: the ones that read stale are
-    // exactly those whose *own* rev moved, not the whole walked set — and the
-    // count falls as each is re-walked (4 → 3 when Risk Limits was).
-    expect(counts.byState.stale).toBe(1)
+    // Back to zero, and the path there is the point: the ones that read stale
+    // were exactly those whose *own* rev moved, not the whole walked set, and
+    // the count fell as each was re-walked (4 → 3 when Risk Limits was, → 0
+    // when Positions was).
+    expect(counts.byState.stale).toBe(0)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design
@@ -320,9 +324,10 @@ describe('adoptionByGroup', () => {
     // 2026-09-18.1 moved Positions, which is what a group being "done" is
     // always one design round away from. The summary counts against every row
     // the group owns, so the group reads 8 of 9 rather than staying at nine
-    // because nine pages happen to carry a tag.
+    // because nine pages happen to carry a tag. Positions has since been
+    // re-walked, so the one left is waiting for a look rather than for work.
     expect(portfolio).toMatchObject({ total: 9, aligned: 8, left: 1 })
-    expect(portfolio?.byState.reviewing).toBe(0)
+    expect(portfolio?.byState.reviewing).toBe(1)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

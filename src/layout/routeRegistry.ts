@@ -251,8 +251,8 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: PORTFOLIO,
     symbolScope: true,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      state: 'reviewing',
+      rev: '2026-09-18.1',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },

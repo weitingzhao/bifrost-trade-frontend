@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { OptionContractDetailFromOpenPosition } from '@/components/optionDiscovery/OptionContractDetailFromOpenPosition'
 import { RiskProfileDetail } from './RiskProfileDetail'
+import { InstanceAdminRow, type InstanceAdminReading } from './InstanceAdminRow'
 import { Link } from 'react-router-dom'
 import { positionsUi } from './positionsUi'
 import type { Execution, OpenOptionPosition } from '@/types/positions'
@@ -80,6 +81,8 @@ export interface FaceRisk {
   profile: RiskProfile | null
   /** The instance's own sheet, which carries far more than the payoff. */
   onOpenInstance?: () => void
+  /** Rename it from here; its status is a reading. Absent when the row is not an instance. */
+  instance?: InstanceAdminReading | null
 }
 
 export interface FaceLedger {
@@ -179,6 +182,7 @@ export function PositionsFaceSlot({
                 </Link>
               </span>
             </div>
+            {risk.instance ? <InstanceAdminRow key={risk.instance.id} instance={risk.instance} /> : null}
             <RiskProfileDetail profile={risk.profile} hideHeading variant="instanceDetail" />
           </div>
         ) : (

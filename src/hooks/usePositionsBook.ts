@@ -127,6 +127,8 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
   const opportunities = useMemo(() => oppsData?.items ?? [], [oppsData?.items])
   const structures = useMemo(() => structsData?.items ?? [], [structsData?.items])
   const attributions = useMemo(() => attrData?.items ?? [], [attrData])
+  /** The instance records themselves — the sheet renames one from its own row. */
+  const instances = useMemo(() => instancesData?.items ?? [], [instancesData?.items])
   const instanceStructureById = useMemo(() => {
     const map = new Map<number, number | null | undefined>()
     for (const inst of instancesData?.items ?? []) {
@@ -275,6 +277,7 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
     opportunities,
     structures,
     attributions,
+    instances,
     instanceStructureById,
     instanceAllGroups,
     scopedInstanceGroups,

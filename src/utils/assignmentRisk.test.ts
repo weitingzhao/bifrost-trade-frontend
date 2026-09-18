@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PositionAttribution } from '@/types/positions'
-import { assignmentTotals, buildAssignmentLegs, thinExtrinsic } from './assignmentModel'
+import { assignmentTotals, buildAssignmentLegs, thinExtrinsic } from './assignmentRisk'
 
 function leg(over: Partial<PositionAttribution>): PositionAttribution {
   return {

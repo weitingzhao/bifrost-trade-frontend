@@ -64,3 +64,19 @@ export function extractUnderlyingRootSymbol(raw: string | null | undefined): str
   }
   return beforeSpace ? beforeSpace.toUpperCase() : ''
 }
+
+/**
+ * Calendar days from today to an expiry, or null when either is unreadable.
+ *
+ * Shared because three pages ask it of the same contract — Expiration for the
+ * ladder, Assignment for the window, Corporate Actions for whether an event
+ * lands before a leg dies — and two copies would eventually disagree about
+ * which side of midnight a date sits on.
+ */
+export function daysTo(expiry: string, todayIso: string): number | null {
+  const e = expiry.replace(/\D/g, '').slice(0, 8)
+  const t = todayIso.replace(/\D/g, '').slice(0, 8)
+  if (e.length !== 8 || t.length !== 8) return null
+  const toUtc = (s: string) => Date.UTC(Number(s.slice(0, 4)), Number(s.slice(4, 6)) - 1, Number(s.slice(6, 8)))
+  return Math.round((toUtc(e) - toUtc(t)) / 86_400_000)
+}

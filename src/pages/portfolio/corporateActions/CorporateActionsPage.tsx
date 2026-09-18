@@ -15,7 +15,7 @@
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQueries } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
@@ -30,6 +30,8 @@ import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
+import { useAssignmentLegs } from '@/hooks/useAssignmentLegs'
+import { fetchWatchlist } from '@/api/market'
 import { fetchCorporateActions, type CorporateActionRow } from '@/api/marketData/corporateActions'
 import {
   CALENDAR_DAYS,
@@ -38,8 +40,10 @@ import {
   buildBookEvents,
   feedReach,
   recentHistory,
+  sliceByUnderlying,
   upcoming,
   type BookEvent,
+  type UnderlyingSlice,
 } from './corporateActionsModel'
 
 const PAGE_LEAD =
@@ -73,6 +77,46 @@ function fmtPerShare(v: number): string {
 function fmtShares(v: number): string {
   const s = v.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')
   return Number(s).toLocaleString('en-US', { maximumFractionDigits: 4 })
+}
+
+/**
+ * How many of a name's shares already stand behind a call.
+ *
+ * The sentence the design prints under a split ("coverage ratio unchanged:
+ * 3,200 of 5,200 shares back the calls"). The numbers are Backing & Model's,
+ * passed through the slice rather than recomputed here.
+ */
+function coverageLine(sl: UnderlyingSlice): string {
+  const shortCalls = sl.roles.find((r) => r.role === 'Short calls')
+  if (!shortCalls) return sl.shares > 0 ? 'no short call to back' : 'nothing held in shares'
+  // No shares is a fact, not a missing reading — say which it is.
+  if (sl.shares === 0) return `${shortCalls.contracts} short calls with no shares behind them`
+  if (sl.backing == null) return 'Backing has no reading for this name'
+  return `${fmtShares(sl.backing)} of ${fmtShares(sl.shares)} shares back the calls${
+    sl.spare != null && sl.spare > 0 ? ` · ${fmtShares(sl.spare)} spare` : ''
+  }`
+}
+
+/**
+ * What a past event did to the book, in the design's own register.
+ *
+ * Only what can be said from today's position: the size against the shares
+ * held now, and whether a contract on that name is open at all. Whether a leg
+ * was open on the ex-date is a different question, and the book carries no
+ * position history to answer it — so the sentence does not try.
+ */
+function historyMeaning(e: BookEvent, hasLeg: boolean): string {
+  const size =
+    e.onTodaysHolding == null || e.shares == null || e.amount == null
+      ? 'no share count to size it against'
+      : `${fmtUsd(e.onTodaysHolding)} = ${fmtShares(e.shares)} sh × ${fmtPerShare(e.amount)} on today’s holding`
+  const paid = e.paymentDate ? ` · paid ${fmtIsoDateToken(e.paymentDate)}` : ''
+  if (e.kind === 'split') {
+    return hasLeg
+      ? `${size}${paid} · a leg is open on this name, so its strike and count were restruck`
+      : `${size}${paid} · no option leg is open on this name today`
+  }
+  return `${size}${paid}${hasLeg ? ' · an option leg is open on this name' : ''}`
 }
 
 function amountLabel(e: BookEvent): string {
@@ -120,6 +164,7 @@ export default function CorporateActionsPage() {
       book.filteredOptions
         .map((p) => ({
           contractKey: p.contract_key,
+          label: shortOptContractKey(p.contract_key),
           symbol: extractUnderlyingRootSymbol(p.symbol),
           expiry: p.expiry,
           strike: p.strike,
@@ -131,13 +176,44 @@ export default function CorporateActionsPage() {
   )
   const legSymbols = useMemo(() => new Set(legs.map((l) => l.symbol)), [legs])
 
+  /** Shares already standing behind a short call — Backing & Model's own reading. */
+  const coverBySymbol = useMemo(() => {
+    const by = new Map<string, { backing: number; spare: number }>()
+    for (const r of book.coverRows) {
+      const prev = by.get(r.symbol)
+      by.set(r.symbol, {
+        backing: (prev?.backing ?? 0) + r.backing,
+        spare: (prev?.spare ?? 0) + r.spare,
+      })
+    }
+    return by
+  }, [book.coverRows])
+
   /**
-   * Every name the book touches, shares and legs alike: a split on a name held
-   * only through an option still rewrites that contract.
+   * The design watches the watchlist too: a split distorts a name's chain and
+   * its backtest whether or not the book holds it.
    */
-  const symbols = useMemo(
-    () => [...new Set([...sharesBySymbol.keys(), ...legSymbols])].sort(),
+  const watchQuery = useQuery({ queryKey: ['market', 'watchlist'], queryFn: fetchWatchlist })
+  const watchSymbols = useMemo(() => {
+    const out = new Set<string>()
+    for (const i of watchQuery.data?.items ?? []) {
+      const symbol = (i.symbol ?? '').trim().toUpperCase()
+      if (symbol) out.add(symbol)
+    }
+    return out
+  }, [watchQuery.data?.items])
+
+  /**
+   * Every name the book touches, shares and legs alike, plus the watchlist: a
+   * split on a name held only through an option still rewrites that contract.
+   */
+  const bookSymbols = useMemo(
+    () => new Set([...sharesBySymbol.keys(), ...legSymbols]),
     [sharesBySymbol, legSymbols],
+  )
+  const symbols = useMemo(
+    () => [...new Set([...bookSymbols, ...watchSymbols])].sort(),
+    [bookSymbols, watchSymbols],
   )
 
   const feedQueries = useQueries({
@@ -173,9 +249,37 @@ export default function CorporateActionsPage() {
     [bySymbol, sharesBySymbol, legSymbols, today],
   )
   const ahead = useMemo(() => upcoming(events), [events])
-  const history = useMemo(() => recentHistory(events), [events])
+  const history = useMemo(() => recentHistory(events).filter((e) => bookSymbols.has(e.symbol)), [events, bookSymbols])
   const reshaping = useMemo(() => ahead.filter((e) => e.touchesAContract), [ahead])
-  const shortCalls = useMemo(() => legs.filter((l) => l.right === 'C' && l.qty < 0), [legs])
+  const eventBySymbol = useMemo(() => {
+    const by = new Map<string, BookEvent>()
+    // The nearest one: it is the deadline, and the panel is about a window.
+    for (const e of [...ahead].reverse()) by.set(e.symbol, e)
+    return by
+  }, [ahead])
+  const slices = useMemo(
+    () => sliceByUnderlying({ legs, sharesBySymbol, coverBySymbol, eventBySymbol }),
+    [legs, sharesBySymbol, coverBySymbol, eventBySymbol],
+  )
+
+  /**
+   * The extrinsic per short call, read off Assignment's own computation.
+   *
+   * The design's words: this panel reads the test, it does not recompute it.
+   * Both pages call one hook, so there is nothing that could disagree.
+   */
+  const assignment = useAssignmentLegs()
+  const shortCalls = useMemo(
+    () => assignment.legs.filter((l) => l.right === 'C'),
+    [assignment.legs],
+  )
+
+  const [calendarShow, setCalendarShow] = useState('all')
+  const calendarRows = useMemo(() => {
+    if (calendarShow === 'book') return ahead.filter((e) => bookSymbols.has(e.symbol))
+    if (calendarShow === 'reshaping') return reshaping
+    return ahead
+  }, [ahead, reshaping, bookSymbols, calendarShow])
 
   const loading = statusLoading || feedLoading
 
@@ -306,44 +410,87 @@ export default function CorporateActionsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {legs.map((l) => {
-                        const hit = reshaping.find((e) => e.symbol === l.symbol)
-                        return (
-                          <tr key={l.contractKey} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                            {/* §14.4: the contract token, not the OCC string. */}
-                            <td
-                              className={cn(
-                                positionsUi.td,
-                                'pl-2 text-left font-bold text-[var(--color-entity-option)]',
-                              )}
-                            >
-                              {shortOptContractKey(l.contractKey)}
+                      {slices.flatMap((sl) => {
+                        const ev = sl.event
+                        return [
+                          <tr key={sl.symbol} className="bg-[var(--sk-raised2)]">
+                            <td className={cn(positionsUi.td, 'pl-2 text-left')} colSpan={6}>
+                              <span className="inline-flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                                <span className="font-mono text-xs font-bold text-sky-300">{sl.symbol}</span>
+                                {ev ? (
+                                  <>
+                                    <DenseTag variant="info" size="cell">
+                                      {ev.kind}
+                                    </DenseTag>
+                                    <span className={cn(positionsUi.mono, 'text-dense-meta text-warning')}>
+                                      {amountLabel(ev)} · effective {fmtIsoDateToken(ev.exDate ?? '')} · in{' '}
+                                      {ev.daysAway} days
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
+                                    <StatusLamp lamp="gray" variant="dot" title="No event known" />
+                                    no event known ahead of today
+                                  </span>
+                                )}
+                              </span>
                             </td>
-                            <td className={cn(positionsUi.td, 'text-foreground')}>{fmtUsd(l.strike)}</td>
+                          </tr>,
+                          ...sl.roles.map((r) => (
+                            <tr key={`${sl.symbol}:${r.role}`} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                              <td className={cn(positionsUi.td, 'pl-4 text-left font-sans text-secondary-foreground')}>
+                                {r.role}
+                              </td>
+                              {/* §14.4: the contract token, not the OCC string. */}
+                              <td
+                                className={cn(
+                                  positionsUi.td,
+                                  'font-bold text-[var(--color-entity-option)]',
+                                )}
+                              >
+                                {r.label ?? `${r.distinct} contracts`}
+                              </td>
+                              <td className={cn(positionsUi.td, 'text-muted-foreground')}>
+                                {ev ? 'see the event' : 'unchanged'}
+                              </td>
+                              <td className={cn(positionsUi.td, 'text-foreground')}>{r.contracts}</td>
+                              <td className={cn(positionsUi.td, 'text-muted-foreground')}>
+                                {STANDARD_MULTIPLIER}
+                              </td>
+                              <td
+                                className={cn(
+                                  positionsUi.td,
+                                  'text-left font-sans whitespace-normal leading-normal text-muted-foreground',
+                                )}
+                              >
+                                {ev
+                                  ? `${kindLabel(ev)} lands before ${fmtIsoDateToken(r.nearestExpiry ?? '')}`
+                                  : `nothing dated ahead of today reaches ${fmtIsoDateToken(r.nearestExpiry ?? '')}`}
+                              </td>
+                            </tr>
+                          )),
+                          <tr key={`${sl.symbol}:shares`} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                            <td className={cn(positionsUi.td, 'pl-4 text-left font-sans text-secondary-foreground')}>
+                              Shares
+                            </td>
+                            <td className={cn(positionsUi.td, sl.shares > 0 ? 'text-foreground' : 'text-muted-foreground')}>
+                              {sl.shares > 0 ? `${fmtShares(sl.shares)} sh` : 'none'}
+                            </td>
                             <td className={cn(positionsUi.td, 'text-muted-foreground')}>
-                              {hit ? fmtUsd(l.strike) : 'unchanged'}
+                              {ev ? 'see the event' : 'unchanged'}
                             </td>
-                            <td className={cn(positionsUi.td, l.qty < 0 ? 'text-warning' : 'text-foreground')}>
-                              {l.qty}
-                            </td>
-                            <td className={cn(positionsUi.td, 'text-muted-foreground')}>{STANDARD_MULTIPLIER}</td>
+                            <td className={cn(positionsUi.td, 'text-muted-foreground')}>—</td>
+                            <td className={cn(positionsUi.td, 'text-muted-foreground')}>—</td>
                             <td
                               className={cn(
                                 positionsUi.td,
                                 'text-left font-sans whitespace-normal leading-normal text-muted-foreground',
                               )}
                             >
-                              {hit ? (
-                                `${kindLabel(hit)} on ${hit.symbol}, ex ${fmtIsoDateToken(hit.exDate ?? '')}`
-                              ) : (
-                                <span className="inline-flex items-start gap-1.5">
-                                  <StatusLamp lamp="gray" variant="dot" title="No event known" className="mt-1 shrink-0" />
-                                  nothing dated ahead of today reaches {fmtIsoDateToken(l.expiry)}
-                                </span>
-                              )}
+                              {coverageLine(sl)}
                             </td>
-                          </tr>
-                        )
+                          </tr>,
+                        ]
                       })}
                     </tbody>
                   </table>
@@ -354,7 +501,7 @@ export default function CorporateActionsPage() {
 
             <PositionsTier
               label="Calendar"
-              note={`the book’s names only — ${CALENDAR_DAYS} days ahead, and ${HISTORY_DAYS} behind`}
+              note={`book and watchlist \u00b7 a watchlist name matters because a split distorts its chain and its backtest`}
             />
             <section
               className={cn(positionsUi.panel, ahead.length === 0 && 'border-warning/40')}
@@ -363,13 +510,29 @@ export default function CorporateActionsPage() {
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>Next {CALENDAR_DAYS} days</span>
                 <span className={positionsUi.panelTitle}>
-                  {ahead.length === 0 ? 'nothing is known, which is not nothing is coming' : `${ahead.length} events`}
+                  {ahead.length === 0
+                    ? 'nothing is known, which is not nothing is coming'
+                    : `${calendarRows.length} of ${ahead.length} events`}
                 </span>
                 {ahead.length === 0 ? (
                   <DenseTag variant="warning" size="cell">
                     ⚠ the feed carries no future date
                   </DenseTag>
                 ) : null}
+                <span className="ml-auto inline-flex items-center gap-2">
+                  <span className={positionsUi.cap}>Show</span>
+                  <SegmentControl
+                    size="xs"
+                    ariaLabel="Which events"
+                    value={calendarShow}
+                    onChange={setCalendarShow}
+                    options={[
+                      { value: 'all', label: 'All' },
+                      { value: 'book', label: 'Book only' },
+                      { value: 'reshaping', label: 'Reshaping' },
+                    ]}
+                  />
+                </span>
               </header>
               {ahead.length === 0 ? (
                 <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
@@ -402,10 +565,15 @@ export default function CorporateActionsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {ahead.map((e) => (
+                      {calendarRows.map((e) => (
                         <tr key={e.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
                           <td className={cn(positionsUi.td, 'pl-2 text-left font-mono font-bold text-sky-300')}>
                             {e.symbol}
+                            {bookSymbols.has(e.symbol) ? null : (
+                              <span className="ml-1.5 font-sans text-dense-meta font-normal text-muted-foreground">
+                                watchlist
+                              </span>
+                            )}
                           </td>
                           <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
                             {kindLabel(e)}
@@ -462,9 +630,15 @@ export default function CorporateActionsPage() {
                       <span className={cn(positionsUi.mono, 'text-xs font-bold text-[var(--color-entity-option)]')}>
                         {shortOptContractKey(l.contractKey)}
                       </span>
+                      {/* Assignment's own extrinsic, through the shared hook. */}
+                      <span className={cn(positionsUi.mono, 'text-dense-meta text-secondary-foreground')}>
+                        extrinsic {l.extrinsic == null ? 'n/c' : fmtUsd(l.extrinsic)} vs dividend —
+                      </span>
                       <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
                         <StatusLamp lamp="gray" variant="dot" title="No dividend known" />
-                        no dividend dated before {fmtIsoDateToken(l.expiry)}
+                        {l.extrinsic == null
+                          ? 'the vendor priced no close, so there is no time value to weigh either'
+                          : `no dividend dated before ${fmtIsoDateToken(l.expiry)} — nothing to weigh it against`}
                       </span>
                     </div>
                   ))
@@ -494,15 +668,14 @@ export default function CorporateActionsPage() {
                         {fmtIsoDateToken(e.exDate ?? '')}
                       </span>
                       <span className={cn(positionsUi.mono, 'text-xs font-bold text-sky-300')}>{e.symbol}</span>
-                      <span className="text-dense-meta text-muted-foreground">{kindLabel(e)}</span>
+                      <DenseTag variant={e.kind === 'split' ? 'category' : 'neutral'} size="cell">
+                        {e.kind === 'split' ? 'SPLIT' : 'DIV'}
+                      </DenseTag>
                       <span className={cn(positionsUi.mono, 'text-xs text-secondary-foreground')}>
                         {amountLabel(e)}
                       </span>
                       <span className="min-w-0 flex-[1_1_9rem] text-dense-meta text-muted-foreground text-pretty">
-                        {e.onTodaysHolding == null || e.shares == null || e.amount == null
-                          ? 'no share count to size it against'
-                          : `${fmtUsd(e.onTodaysHolding)} = ${fmtShares(e.shares)} sh × ${fmtPerShare(e.amount)} today`}
-                        {e.paymentDate ? ` · paid ${fmtIsoDateToken(e.paymentDate)}` : ''}
+                        {historyMeaning(e, legSymbols.has(e.symbol))}
                       </span>
                     </div>
                   ))

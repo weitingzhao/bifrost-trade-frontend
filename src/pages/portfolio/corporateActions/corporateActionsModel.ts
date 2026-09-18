@@ -61,12 +61,103 @@ export interface BookEvent {
 /** One open leg, as the contract stands before any event. */
 export interface OpenLeg {
   contractKey: string
+  /** The §14.4 contract token, built by the caller. */
+  label: string
   symbol: string
   expiry: string
   strike: number
   right: string
   qty: number
-  multiplier: number
+}
+
+/**
+ * Legs of one kind on one name, as the design's table rows them.
+ *
+ * The design does not list contracts one per line: it says "Short calls" and
+ * gives the count, because an event acts on the role, not on each ticket. A
+ * role that is one contract carries its token; a role spread over strikes says
+ * how many.
+ */
+export interface LegRole {
+  role: string
+  /** Contracts, as a positive count. */
+  contracts: number
+  /** Set when the role is a single contract — then the token is the reading. */
+  label: string | null
+  distinct: number
+  nearestExpiry: string | null
+}
+
+/**
+ * One name, with everything an event would land on: the option roles, the
+ * shares, and how many of those shares are already standing behind a call.
+ *
+ * `backing` and `spare` are Backing & Model's own reading, passed in rather
+ * than recomputed — the coverage sentence the design prints ("3,200 of 5,200
+ * shares back the calls") has to be the same number that page shows.
+ */
+export interface UnderlyingSlice {
+  symbol: string
+  roles: LegRole[]
+  shares: number
+  backing: number | null
+  spare: number | null
+  /** The event dated ahead that would reshape this name, when there is one. */
+  event: BookEvent | null
+}
+
+function roleOf(leg: OpenLeg): string {
+  const side = leg.qty < 0 ? 'Short' : 'Long'
+  const kind = leg.right === 'C' ? 'calls' : leg.right === 'P' ? 'puts' : 'legs'
+  return `${side} ${kind}`
+}
+
+/**
+ * The book sliced the way an event reads it: one row per name, roles inside.
+ *
+ * Names with a leg come first and are ordered by the nearest expiry, because a
+ * leg that dies sooner is the one an event has less room to be answered in.
+ */
+export function sliceByUnderlying(input: {
+  legs: readonly OpenLeg[]
+  sharesBySymbol: ReadonlyMap<string, number>
+  coverBySymbol: ReadonlyMap<string, { backing: number; spare: number }>
+  eventBySymbol: ReadonlyMap<string, BookEvent>
+}): UnderlyingSlice[] {
+  const bySymbol = new Map<string, OpenLeg[]>()
+  for (const l of input.legs) {
+    bySymbol.set(l.symbol, [...(bySymbol.get(l.symbol) ?? []), l])
+  }
+  const out: UnderlyingSlice[] = []
+  for (const [symbol, legs] of bySymbol) {
+    const byRole = new Map<string, OpenLeg[]>()
+    for (const l of legs) byRole.set(roleOf(l), [...(byRole.get(roleOf(l)) ?? []), l])
+    const cover = input.coverBySymbol.get(symbol) ?? null
+    out.push({
+      symbol,
+      roles: [...byRole.entries()]
+        .map(([role, list]) => ({
+          role,
+          contracts: list.reduce((n, l) => n + Math.abs(l.qty), 0),
+          label: list.length === 1 ? list[0].label : null,
+          distinct: list.length,
+          nearestExpiry: list.reduce<string | null>(
+            (a, l) => (a == null || l.expiry < a ? l.expiry : a),
+            null,
+          ),
+        }))
+        .sort((a, b) => a.role.localeCompare(b.role)),
+      shares: input.sharesBySymbol.get(symbol) ?? 0,
+      backing: cover?.backing ?? null,
+      spare: cover?.spare ?? null,
+      event: input.eventBySymbol.get(symbol) ?? null,
+    })
+  }
+  return out.sort((a, b) => {
+    const ea = a.roles.reduce<string | null>((x, r) => (x == null || (r.nearestExpiry ?? '') < x ? r.nearestExpiry : x), null)
+    const eb = b.roles.reduce<string | null>((x, r) => (x == null || (r.nearestExpiry ?? '') < x ? r.nearestExpiry : x), null)
+    return (ea ?? '').localeCompare(eb ?? '') || a.symbol.localeCompare(b.symbol)
+  })
 }
 
 export const CALENDAR_DAYS = 30
@@ -81,7 +172,7 @@ export const CORPORATE_ACTIONS_UNRECORDED = {
     'The extrinsic-versus-dividend test lives on Assignment. This panel reads it rather than recomputing it: if the two ever disagree, this page is wrong first. The test needs a dividend dated before the leg’s expiry, and the feed has none.',
   cash: 'A dividend already booked as cash is on Transfer & Pay. What is here is the event, not the payment — and the amount against the book is computed on today’s share count, not the count on the ex-date.',
   watchlist:
-    'The design also watches names that are not held, because a split distorts a chain and a backtest whether or not the book holds it. Nothing here reads the watchlist yet; the calendar covers the book only.',
+    'The calendar covers the watchlist as well as the book, because a split distorts a name\u2019s chain and its backtest whether or not the book holds it. Held or watched, the rows are drawn from the same feed \u2014 which carries no future date for either.',
 } as const
 
 function kindOf(actionType: string): CorporateActionKind {

@@ -13,7 +13,7 @@
  * with future events, and a decision written from here would be a new write
  * path — the page links to Trade Plans instead (D10).
  */
-import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
+import { extractUnderlyingRootSymbol, daysTo } from '@/utils/optionTicker'
 import { cushionPct } from '@/utils/optionMoneyness'
 import type { PositionAttribution } from '@/types/positions'
 
@@ -153,11 +153,3 @@ export function groupByExpiry(legs: readonly ExpiryLeg[], todayIso: string): Exp
   return [...by.values()].sort((a, b) => a.expiry.localeCompare(b.expiry))
 }
 
-/** Calendar days from today to an expiry, or null when either is unreadable. */
-export function daysTo(expiry: string, todayIso: string): number | null {
-  const e = expiry.replace(/\D/g, '').slice(0, 8)
-  const t = todayIso.replace(/\D/g, '').slice(0, 8)
-  if (e.length !== 8 || t.length !== 8) return null
-  const toUtc = (s: string) => Date.UTC(Number(s.slice(0, 4)), Number(s.slice(4, 6)) - 1, Number(s.slice(6, 8)))
-  return Math.round((toUtc(e) - toUtc(t)) / 86_400_000)
-}

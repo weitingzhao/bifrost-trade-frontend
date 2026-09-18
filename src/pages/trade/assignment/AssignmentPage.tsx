@@ -12,9 +12,7 @@
  * symbol in this book. The page marks that rather than letting a quiet column
  * read as safety.
  */
-import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQueries } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
@@ -27,19 +25,8 @@ import { fmtUsd } from '@/utils/positions'
 import { fmtCushionPct } from '@/utils/optionMoneyness'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
-import { buildOptionTicker, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
-import { fetchModelAnalysis } from '@/api/portfolio'
-import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { usePositionAttribution } from '@/hooks/usePositionAttribution'
-import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
-import { daysTo } from '@/pages/trade/expiration/expirationModel'
-import {
-  ASSIGNMENT_UNRECORDED,
-  THIN_EXTRINSIC,
-  assignmentTotals,
-  buildAssignmentLegs,
-  thinExtrinsic,
-} from './assignmentModel'
+import { useAssignmentLegs } from '@/hooks/useAssignmentLegs'
+import { ASSIGNMENT_UNRECORDED, THIN_EXTRINSIC } from '@/utils/assignmentRisk'
 
 const PAGE_LEAD =
   'What can be exercised against you, and what the book becomes if it is. Only a short can be assigned — a long is exercised by its holder, who is you.'
@@ -48,93 +35,8 @@ const FOOT =
   'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 export default function AssignmentPage() {
-  const { data: status, isLoading: statusLoading } = useMonitorStatus()
-  const attrQuery = usePositionAttribution()
-  const [today] = useState(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  })
+  const { attrQuery, legs, totals, thin, loading, error } = useAssignmentLegs()
 
-  const attributions = useMemo(() => attrQuery.data?.items ?? [], [attrQuery.data?.items])
-  const accountIds = useMemo(
-    () => (status?.portfolio?.accounts ?? []).map((a) => (a.account_id ?? '').trim()).filter(Boolean),
-    [status],
-  )
-  const modelQueries = useQueries({
-    queries: accountIds.map((id) => ({
-      queryKey: ['portfolio', 'model-analysis', id],
-      queryFn: () => fetchModelAnalysis(id),
-      enabled: Boolean(id),
-    })),
-  })
-  const modelStamp = modelQueries.map((q) => q.dataUpdatedAt).join(',')
-
-  const spotBySymbol = useMemo(() => {
-    const by = new Map<string, number | null>()
-    for (const q of modelQueries) {
-      for (const u of q.data?.per_underlying ?? []) {
-        const symbol = (u.symbol ?? '').trim().toUpperCase()
-        if (symbol && u.spot != null) by.set(symbol, u.spot)
-      }
-    }
-    return by
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modelStamp])
-
-  const greekLegs = useMemo<GreekLeg[]>(
-    () =>
-      attributions
-        .filter((a) => (a.sec_type ?? '').toUpperCase() === 'OPT')
-        .map((a) => ({
-          underlying: extractUnderlyingRootSymbol(a.symbol),
-          expiry: a.expiry ?? '',
-          strike: Number(a.strike ?? 0),
-          right: a.option_right ?? '',
-          qty: Number(a.position_qty ?? 0),
-        })),
-    [attributions],
-  )
-  const greeks = useOptionGreeks(greekLegs)
-
-  /** The vendor's close and delta, keyed the way the attribution rows are. */
-  const { markByKey, deltaByKey } = useMemo(() => {
-    const marks = new Map<string, { close: number | null; asOf: string | null }>()
-    const deltas = new Map<string, number | null>()
-    for (const a of attributions) {
-      if ((a.sec_type ?? '').toUpperCase() !== 'OPT') continue
-      const ticker = buildOptionTicker({
-        underlying: extractUnderlyingRootSymbol(a.symbol),
-        expiry: a.expiry ?? '',
-        strike: Number(a.strike ?? 0),
-        right: a.option_right ?? '',
-      })
-      const key = a.contract_key ?? ''
-      const close = ticker ? greeks.closeByTicker.get(ticker) : undefined
-      if (close) marks.set(key, close)
-      const g = ticker ? greeks.byTicker.get(ticker) : undefined
-      // The rollup scales delta by the position; per contract is what reads as odds.
-      const contracts = Math.abs(Number(a.position_qty ?? 0)) || 0
-      if (g?.delta != null && contracts > 0) deltas.set(key, g.delta / (contracts * 100))
-    }
-    return { markByKey: marks, deltaByKey: deltas }
-  }, [attributions, greeks.closeByTicker, greeks.byTicker])
-
-  const legs = useMemo(
-    () =>
-      buildAssignmentLegs({
-        attributions,
-        markByKey,
-        deltaByKey,
-        spotBySymbol,
-        dteByExpiry: (expiry) => daysTo(expiry, today),
-      }),
-    [attributions, markByKey, deltaByKey, spotBySymbol, today],
-  )
-  const totals = assignmentTotals(legs)
-  const thin = thinExtrinsic(legs)
-
-  const loading = statusLoading || attrQuery.isLoading
-  const error = attrQuery.error ?? null
 
   return (
     <PageShell padding="compact" className="space-y-3">

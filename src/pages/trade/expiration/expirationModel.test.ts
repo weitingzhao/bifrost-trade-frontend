@@ -1,7 +1,8 @@
+import { daysTo } from '@/utils/optionTicker'
 import { describe, expect, it } from 'vitest'
 import type { PositionAttribution } from '@/types/positions'
 import { cushionPct } from '@/utils/optionMoneyness'
-import { buildExpiryLegs, daysTo, groupByExpiry } from './expirationModel'
+import { buildExpiryLegs, groupByExpiry } from './expirationModel'
 
 function leg(over: Partial<PositionAttribution>): PositionAttribution {
   return {

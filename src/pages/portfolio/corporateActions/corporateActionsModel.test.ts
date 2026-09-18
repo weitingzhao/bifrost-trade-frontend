@@ -5,6 +5,7 @@ import {
   feedReach,
   recentHistory,
   splitAdjustedQty,
+  sliceByUnderlying,
   splitAdjustedStrike,
   upcoming,
   type FeedRow,
@@ -145,5 +146,68 @@ describe('daysBetween', () => {
     expect(daysBetween(TODAY, '2026-09-25')).toBe(8)
     expect(daysBetween(TODAY, '2026-09-10')).toBe(-7)
     expect(daysBetween(TODAY, 'not-a-date')).toBeNull()
+  })
+})
+
+describe('sliceByUnderlying', () => {
+  const legs = [
+    { contractKey: 'a', label: 'ZEBR 18DEC26 90C', symbol: 'ZEBR', expiry: '20261218', strike: 90, right: 'C', qty: -16 },
+    { contractKey: 'b', label: 'QUOK 16OCT26 40C', symbol: 'QUOK', expiry: '20261016', strike: 40, right: 'C', qty: -5 },
+    { contractKey: 'c', label: 'QUOK 16OCT26 50C', symbol: 'QUOK', expiry: '20261016', strike: 50, right: 'C', qty: -4 },
+    { contractKey: 'd', label: 'QUOK 20NOV26 30P', symbol: 'QUOK', expiry: '20261120', strike: 30, right: 'P', qty: 2 },
+  ]
+
+  it('rows an event’s subject by role, not one line per ticket', () => {
+    const [first, second] = sliceByUnderlying({
+      legs,
+      sharesBySymbol: new Map([['ZEBR', 5200]]),
+      coverBySymbol: new Map([['ZEBR', { backing: 3200, spare: 2000 }]]),
+      eventBySymbol: new Map(),
+    })
+    // The nearest expiry leads: a leg that dies sooner leaves less room to act.
+    expect(first.symbol).toBe('QUOK')
+    expect(second.symbol).toBe('ZEBR')
+
+    const shortCalls = first.roles.find((r) => r.role === 'Short calls')
+    expect(shortCalls).toMatchObject({ contracts: 9, distinct: 2 })
+    // Two strikes is not one contract, so there is no single token to print.
+    expect(shortCalls?.label).toBeNull()
+    expect(first.roles.map((r) => r.role)).toEqual(['Long puts', 'Short calls'])
+
+    // One contract in the role: the token is the reading.
+    expect(second.roles[0]).toMatchObject({ role: 'Short calls', contracts: 16, label: 'ZEBR 18DEC26 90C' })
+    expect(second).toMatchObject({ shares: 5200, backing: 3200, spare: 2000 })
+  })
+
+  it('leaves backing null when Backing has no reading, rather than calling it zero', () => {
+    // Zero would read as "nothing backs these calls", which is a judgement the
+    // page has no basis for making.
+    const [quok] = sliceByUnderlying({
+      legs: legs.slice(1),
+      sharesBySymbol: new Map(),
+      coverBySymbol: new Map(),
+      eventBySymbol: new Map(),
+    })
+    expect(quok.backing).toBeNull()
+    expect(quok.spare).toBeNull()
+    expect(quok.shares).toBe(0)
+  })
+
+  it('hands each name its own pending event and nothing else', () => {
+    const events = buildBookEvents({
+      rows,
+      sharesBySymbol: shares,
+      legSymbols: new Set(['ZEBR']),
+      today: TODAY,
+    })
+    const split = upcoming(events)[0]
+    const slices = sliceByUnderlying({
+      legs,
+      sharesBySymbol: shares,
+      coverBySymbol: new Map(),
+      eventBySymbol: new Map([[split.symbol, split]]),
+    })
+    expect(slices.find((s) => s.symbol === 'ZEBR')?.event?.exDate).toBe('2026-09-25')
+    expect(slices.find((s) => s.symbol === 'QUOK')?.event).toBeNull()
   })
 })

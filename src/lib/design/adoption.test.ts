@@ -152,8 +152,9 @@ describe('design adoption', () => {
     // (unbuilt 36→35, reviewing 3→4), then aligned on the Owner's look
     // (reviewing 4→3). Limits & Breaches closes the readable part of Risk
     // (unbuilt 35→34, reviewing 3→4), then aligned on the Owner's look after it
-    // was rebuilt to carry all twelve rules (reviewing 4→3).
-    expect(counts.byState.reviewing).toBe(3)
+    // was rebuilt to carry all twelve rules (reviewing 4→3). Corporate Actions
+    // is the last page of the Portfolio group (unbuilt 34→33, reviewing 3→4).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -180,6 +181,7 @@ describe('design adoption', () => {
       '/trade/fills',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/portfolio/corporate-actions',
       '/portfolio/pnl-explain',
       '/trade/expiration',
       '/trade/plans',
@@ -212,7 +214,7 @@ describe('design adoption', () => {
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
     expect(counts.designed).toBe(78)
-    expect(counts.byState.unbuilt).toBe(34)
+    expect(counts.byState.unbuilt).toBe(33)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`.
@@ -263,12 +265,13 @@ describe('adoptionByGroup', () => {
     const groups = adoptionByGroup(rows)
     const portfolio = groups.find((g) => g.group === 'Portfolio')
     // The question the summary exists to answer: Portfolio is not finished.
-    // Seven pages are in place, P&L Explain waits for the Owner's look, and
-    // Corporate Actions has no page at all — a reading of "7 aligned" alone
-    // would have said the group was done.
+    // Seven pages are in place and two wait for the Owner's look — a reading of
+    // "7 aligned" alone would have said the group was done.
     expect(portfolio).toMatchObject({ total: 9, aligned: 7, left: 2 })
-    expect(portfolio?.byState.reviewing).toBe(1)
-    expect(portfolio?.byState.unbuilt).toBe(1)
+    // Corporate Actions was the group's last unbuilt page; it is now built and
+    // waiting for the Owner's look, so the two left are both `reviewing`.
+    expect(portfolio?.byState.reviewing).toBe(2)
+    expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the
     // denominator: System's four `/docs/*` stubs do not make it read worse.

@@ -25,6 +25,7 @@ import {
   Settings,
   Shield,
   ShieldAlert,
+  Split,
   Star,
   Target,
   TrendingUp,
@@ -109,6 +110,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       home('Accounts', '/portfolio/accounts', LayoutDashboard, [
         route('Trade Ledger', '/portfolio/ledger', ClipboardList),
         route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
+        route('Corporate Actions', '/portfolio/corporate-actions', Split),
       ]),
     ],
   },

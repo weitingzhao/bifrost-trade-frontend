@@ -56,7 +56,13 @@ describe('Portfolio nav', () => {
       '/portfolio/backing',
       '/portfolio/outcome',
     ])
-    expect(accounts.children?.map((c) => c.to)).toEqual(['/portfolio/ledger', '/portfolio/transfer'])
+    // Corporate Actions sits with the ledger, where the design files it: what
+    // the broker did to the book, beside what was traded and what cash moved.
+    expect(accounts.children?.map((c) => c.to)).toEqual([
+      '/portfolio/ledger',
+      '/portfolio/transfer',
+      '/portfolio/corporate-actions',
+    ])
     expect([performance.defaultOpen, accounts.defaultOpen]).toEqual([true, true])
   })
   it('does not carry the Copilot — its pages live under Research, in the seat-free fold', () => {

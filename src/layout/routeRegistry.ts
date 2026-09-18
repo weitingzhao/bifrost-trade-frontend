@@ -273,6 +273,16 @@ export const ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/portfolio/outcome'],
     },
   },
+  {
+    path: '/portfolio/corporate-actions',
+    label: 'Corporate Actions',
+    crumbs: PORTFOLIO,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/portfolio/corporate-actions'],
+    },
+  },
   // ── Risk ───────────────────────────────────────────────────────────────
   {
     path: '/risk/portfolio',

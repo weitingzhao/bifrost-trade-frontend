@@ -2,19 +2,20 @@
  * The Research pages as a catalog, and the sidebar group each seat builds
  * from it.
  *
- * Each seat carries its own pages and no others. Every page belongs to exactly
- * one seat, and the rail above the menu is how you move between them — so the
- * menu answers "what can I do from here", not "what exists in Research".
+ * Each seat carries its own pages and no others, and the seat follows the
+ * route (`seatForRoute`) — there is no rail: the Vision-baseline registry
+ * draws no switcher, the home row itself is the seat. You cross by the
+ * design's own doors — Overview's operator cards, ⌘K, any page of the other
+ * seat — so the menu answers "what can I do from here", not "what exists in
+ * Research".
  *
  * It used to carry all twenty-seven pages in every seat, the other two seats
- * folded into a row each. That made every menu mostly other menus: sitting in
- * Autopilot, two of the four top-level rows were Copilot and Workbench, which
- * the rail already offers one click away (Owner, 2026-09-08: "why do the
- * Copilot and Workbench menus appear under the Autopilot view?").
- *
- * Nothing became unreachable, because the seat now follows the route: land on
- * a page belonging to another seat and the rail moves with you
- * (`seatForRoute`). One page, one row, one lit seat.
+ * folded into a row each — every menu mostly other menus (Owner, 2026-09-08:
+ * "why do the Copilot and Workbench menus appear under the Autopilot view?").
+ * A rail then switched seats from the group top until the Vision baseline
+ * retired it (2026-09-19): nothing is unreachable without it, because landing
+ * on another seat's page moves the seat with you. One page, one row, one lit
+ * seat.
  *
  * There are no section headings either. A heading you cannot click costs a row
  * and answers nothing, and the three that were here — "Now", "Objects",
@@ -22,7 +23,6 @@
  * the same job and was a link. The home page is the heading, which is how
  * Portfolio has read since 2026-09-07. The chevron folds; the row navigates.
  */
-import type { ReactNode } from 'react'
 import {
   Activity,
   BookOpen,
@@ -258,7 +258,6 @@ export interface ObjectiveNavRow {
 
 export interface SeatNavContext {
   objectives: ObjectiveNavRow[]
-  prefix?: ReactNode
 }
 
 /**
@@ -433,7 +432,6 @@ export function buildResearchNavGroup(seat: ResearchSeat, ctx: SeatNavContext): 
   return {
     label: 'Research',
     icon: BookOpen,
-    prefix: ctx.prefix,
     items: seatItems(seat, ctx),
   }
 }

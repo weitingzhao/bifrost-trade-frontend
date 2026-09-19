@@ -5,13 +5,11 @@
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
-import { StatusLamp } from '@/components/StatusLamp'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { setResearchSeat, useResearchSeat } from '@/lib/research/seat'
 import { objectivePath } from '@/lib/harness/objectivePolicy'
 import type { ShellNavGroup, ShellNavItem } from '@bifrost/ui'
 import { AUTOPILOT_PAGES, buildResearchNavGroup, seatForRoute } from './researchNavCatalog'
-import { ResearchSeatRail } from './ResearchSeatRail'
 
 export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: ShellNavItem) => ReactNode } {
   const seat = useResearchSeat()
@@ -29,11 +27,14 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
     if (owner != null && owner !== seat) setResearchSeat(owner)
   }, [pathname, seat])
 
+  // No rail. The 09-14 design carried a Workbench/Autopilot switcher at the
+  // group top; the Vision-baseline registry draws none — the seat is the home
+  // row itself, moved by the route. The ways across are the design's own:
+  // Overview's operator cards, ⌘K, and any page of the other seat.
   const group = useMemo(
     () =>
       buildResearchNavGroup(seat, {
         objectives: (standing?.objectives ?? []).map((o) => ({ id: o.id, title: o.title ?? o.id })),
-        prefix: <ResearchSeatRail />,
       }),
     [seat, standing],
   )
@@ -54,10 +55,17 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
           </DenseTag>,
         )
       }
-      byPath.set(
-        AUTOPILOT_PAGES.autopilot.to!,
-        <StatusLamp lamp={standing.trust.matrix_l0 ? 'green' : 'yellow'} variant="dot" title={standing.trust.note} />,
-      )
+      // The design's chip on the home row is the word, not a lamp: `running`
+      // while a run is in flight, nothing when the loop is idle. Trust moved
+      // to where it is judged — the console's standing and the leash panel.
+      if (standing.objectives.some((o) => o.last_run?.status === 'running')) {
+        byPath.set(
+          AUTOPILOT_PAGES.autopilot.to!,
+          <DenseTag variant="success" size="cell" title="A loop run is in flight">
+            running
+          </DenseTag>,
+        )
+      }
       for (const o of standing.objectives) {
         if (o.pending_memos > 0) {
           byPath.set(

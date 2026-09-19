@@ -80,8 +80,10 @@ function fold(
  */
 export const NAV_GROUPS: ShellNavGroup[] = [
   {
-    // Design group order is Home · Trade · Portfolio · Research · … and Home is
-    // one row: it belongs to no layer, and cuts across all five by time of day.
+    // Home is one row: it belongs to no layer, and cuts across all five by
+    // time of day. The groups below are declared in lifecycle order; the
+    // sidebar re-orders them per the design's loop/reach modes (`navOrder.ts`)
+    // and replaces their icons with the lifecycle numerals.
     label: 'Home',
     icon: ListTodo,
     items: [route('Today', '/home', ListTodo)],

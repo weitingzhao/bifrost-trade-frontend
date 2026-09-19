@@ -9,7 +9,9 @@ import { LiveNavLamp } from '@/components/layout/LiveNavLamp'
 import { NavSubItemIcon } from '@/components/layout/SystemNavIcon'
 import { SystemNavLampProvider } from '@/components/layout/SystemNavLampProvider'
 import { STORAGE_KEYS } from '@/constants/storage'
+import { lifecycleMark } from './LifecycleMark'
 import { NAV_GROUPS, SYSTEM_NAV_GROUPS } from './navConfig'
+import { LIFECYCLE, orderGroups, useNavOrder } from './navOrder'
 import { isSystemRoute } from './routeRegistry'
 import { ScopeMark } from './ScopeMark'
 import { useResearchNavGroup } from './useResearchNavGroup'
@@ -50,14 +52,32 @@ export function AppSidebar() {
   // whole point: the old `SettingsLayout` swapped the tree by growing a second
   // shell around it, and took all of that with it.
   const inSystem = isSystemRoute(location.pathname)
-  // Same groups, same order; only Research is re-laid for the seat.
-  const navGroups = useMemo(
-    () =>
-      inSystem
-        ? SYSTEM_NAV_GROUPS
-        : NAV_GROUPS.map((g) => (g.label === 'Research' ? research.group : g)),
-    [inSystem, research.group],
-  )
+  const order = useNavOrder()
+  // Research is re-laid for the seat; then the six groups take the design's
+  // order (`loop` rests: Home, then the lifecycle chain) and their icons
+  // become the lifecycle numerals — in loop order the numerals draw the
+  // spine, and Home's dot marks the row that belongs to no layer.
+  const navGroups = useMemo(() => {
+    if (inSystem) return SYSTEM_NAV_GROUPS
+    const swapped = NAV_GROUPS.map((g) => (g.label === 'Research' ? research.group : g))
+    const ordered = orderGroups(swapped, order)
+    const chain = ordered.filter((g) => LIFECYCLE[g.label] != null)
+    return ordered.map((g) => {
+      const n = LIFECYCLE[g.label]
+      if (n == null) {
+        return g.label === 'Home' ? { ...g, icon: lifecycleMark('·') } : g
+      }
+      const i = chain.indexOf(g)
+      return {
+        ...g,
+        icon: lifecycleMark(String(n), {
+          spine: order === 'loop',
+          first: i === 0,
+          last: i === chain.length - 1,
+        }),
+      }
+    })
+  }, [inSystem, research.group, order])
 
   return (
     <SystemNavLampProvider>

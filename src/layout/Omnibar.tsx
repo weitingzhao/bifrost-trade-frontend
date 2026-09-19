@@ -28,6 +28,7 @@ import { useSymbolSearch } from '@/hooks/useSymbolSearch'
 import { omnibar, omnibarStore, parseQuery, readRecentPaths } from '@/lib/omnibar'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { useSymbolContext } from '@/lib/symbolContext'
+import { NAV_ORDERS, ORDER_LABEL, ORDER_WHY, setNavOrder, useNavOrder, type NavOrder } from './navOrder'
 import { PAGE_ROUTES, routeFor } from './routeRegistry'
 import { SHORTCUTS } from '@/lib/cockpit/shortcuts'
 import { matches, trail } from './omnibarMatch'
@@ -68,6 +69,7 @@ export function Omnibar() {
   const { toggleSidebar } = useSidebar()
   const pins = useCockpitPins()
   const universe = useSymbolPickerUniverse()
+  const currentOrder = useNavOrder()
 
   const { mode, term } = parseQuery(raw)
   const tickerTerm = mode === 'all' ? term : ''
@@ -260,6 +262,17 @@ export function Omnibar() {
                 <X /> Clear symbol {symbol}
               </CommandItem>
             )}
+            {/* The design's own placement (shell-registry `commands()`): the
+                order switch is a thing you do, not a place you go — a sidebar
+                row that reorders the rows it sits in is a preference dressed
+                as a destination. */}
+            {(Object.keys(NAV_ORDERS) as NavOrder[]).map((k) => (
+              <CommandItem key={`cmd-navorder-${k}`} value={`cmd-navorder-${k}`} title={ORDER_WHY[k]} onSelect={() => run(() => setNavOrder(k))}>
+                <PanelLeft /> Menu order · {ORDER_LABEL[k]}
+                <span className="truncate text-muted-foreground">{ORDER_WHY[k]}</span>
+                <CommandShortcut>{k === currentOrder ? 'current' : 'set'}</CommandShortcut>
+              </CommandItem>
+            ))}
           </CommandGroup>
         )}
       </CommandList>

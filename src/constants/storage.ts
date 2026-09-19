@@ -2,6 +2,8 @@
 export const STORAGE_KEYS = {
   sidebarAccordion: 'bifrost-sidebar-accordion',
   sidebarOpenGroups: 'bifrost-sidebar-open-groups',
+  // The sidebar's group order — the design's own key (`shell-registry.js`).
+  navOrder: 'bifrost.navorder',
   // The System tree keeps its own folds. Sharing one key had two costs: the
   // stored business set has no `System` entry, so the group rendered closed
   // however `defaultOpen` was set (a stored set wins over the defaults

@@ -105,7 +105,7 @@ export const ROUTES: readonly RouteEntry[] = [
   },
   {
     path: '/research/workbench',
-    label: 'Workbench',
+    label: 'Pipeline',
     crumbs: RESEARCH,
     design: {
       state: 'reviewing',

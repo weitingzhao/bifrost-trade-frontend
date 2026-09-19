@@ -41,13 +41,13 @@ export default function WorkbenchPage() {
   return (
     <PageShell padding="default" className="space-y-3">
       <PageHeader
-        title="Workbench"
-        description="Level 1 · by hand. You open the pages; the same warehouse the Copilot and the Autopilot read. Advisory only, D10 BLOCKED."
+        title="Pipeline"
+        description="Your hand on the stations — Discover · Analyze · Validate · Data, the same pipeline the loop runs. Advisory only, D10 BLOCKED."
         actions={
           <div className="flex items-center gap-2">
             <AskCopilotButton
               originPage="research-workbench"
-              originLabel="Workbench"
+              originLabel="Pipeline"
               snapshot={compactSnapshot({
                 active_hypotheses: activeCount,
                 discoveries: home.totalDiscoveries,
@@ -84,7 +84,7 @@ export default function WorkbenchPage() {
           <span className="text-muted-foreground">operator</span>
         </span>
         <span className="text-dense-meta text-muted-foreground">
-          the rail follows the route; this page is what makes Workbench your seat
+          the stations all three operators run — your hand is the one at the controls here
         </span>
       </div>
 

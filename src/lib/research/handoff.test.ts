@@ -21,8 +21,7 @@ describe('workbenchStops', () => {
     )
   })
 
-  it('every stop lands in the Workbench seat, and an empty symbol has no stops', () => {
-    expect(workbenchStops('NVDA').every((s) => s.seat === 'workbench')).toBe(true)
+  it('an empty symbol has no stops', () => {
     expect(workbenchStops('  ')).toEqual([])
   })
 })

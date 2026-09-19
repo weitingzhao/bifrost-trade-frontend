@@ -128,7 +128,7 @@ export default function ResearchOverviewPage() {
       op: 'hand',
       label: 'Workbench',
       role: 'you at the stations',
-      home: { label: 'Workbench →', to: '/research/workbench' },
+      home: { label: 'Pipeline →', to: '/research/workbench' },
       cells: [
         { k: 'verdicts today', v: '—', tone: 'muted', tip: 'Hand verdicts — the same artifact a judge writes. No verdict store exists yet; it lands in W2 and your calls start counting then.' },
         { k: 'record · 20d', v: '—', tone: 'muted', tip: 'Your settled hit rate, scored by the same rule as the judges. Starts accruing when the verdict store lands (W2).' },

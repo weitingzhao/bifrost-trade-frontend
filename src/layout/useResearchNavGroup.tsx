@@ -2,41 +2,26 @@
  * The Research group as the current seat lays it out, with live objectives
  * under "Objects" and the badges the seat cares about.
  */
-import { useEffect, useMemo, type ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useMemo, type ReactNode } from 'react'
 import { DenseTag } from '@/components/data-display'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
-import { setResearchSeat, useResearchSeat } from '@/lib/research/seat'
 import { objectivePath } from '@/lib/harness/objectivePolicy'
 import type { ShellNavGroup, ShellNavItem } from '@bifrost/ui'
-import { AUTOPILOT_PAGES, buildResearchNavGroup, seatForRoute } from './researchNavCatalog'
+import { AUTOPILOT_PAGES, buildResearchNavGroup } from './researchNavCatalog'
 
 export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: ShellNavItem) => ReactNode } {
-  const seat = useResearchSeat()
-  const { pathname } = useLocation()
   const standingQ = useAutopilotStanding()
   const standing = standingQ.data
 
-  // The seat follows the route. Each seat carries only its own pages, so
-  // landing on another seat's page — a link out of a memo, a deep link, the
-  // back button — would otherwise leave the sidebar showing a menu the current
-  // page is not in. Overview and the Research root are seatless and leave the
-  // rail where it was.
-  useEffect(() => {
-    const owner = seatForRoute(pathname)
-    if (owner != null && owner !== seat) setResearchSeat(owner)
-  }, [pathname, seat])
-
-  // No rail. The 09-14 design carried a Workbench/Autopilot switcher at the
-  // group top; the Vision-baseline registry draws none — the seat is the home
-  // row itself, moved by the route. The ways across are the design's own:
-  // Overview's operator cards, ⌘K, and any page of the other seat.
+  // One tree, both homes (Owner ruling 2026-09-19 on Vision §15 Q2): the
+  // Autopilot engine and the Pipeline stations stand together; nothing swaps
+  // under the reader.
   const group = useMemo(
     () =>
-      buildResearchNavGroup(seat, {
+      buildResearchNavGroup({
         objectives: (standing?.objectives ?? []).map((o) => ({ id: o.id, title: o.title ?? o.id })),
       }),
-    [seat, standing],
+    [standing],
   )
 
   const extras = useMemo(() => {

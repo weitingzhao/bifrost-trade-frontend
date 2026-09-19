@@ -2,7 +2,6 @@ import { Suspense, useEffect, useState, type CSSProperties } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAmbientPageContext } from '@/hooks/useAmbientPageContext'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
-import { useResearchSeatDeepLink } from '@/hooks/useResearchSeatDeepLink'
 import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
 import { GlobalMarketStatusBar, SkipToContent } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
@@ -47,7 +46,6 @@ export function AppLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   useCopilotDeepLink()
-  useResearchSeatDeepLink()
   useHeldSymbolSync()
   // After the held-symbol sync: the page context reads the URL the sync just settled.
   useAmbientPageContext()

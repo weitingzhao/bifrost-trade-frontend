@@ -32,7 +32,8 @@ describe('ambientPageContext', () => {
   it('is route-only on a bare page', () => {
     expect(ambientPageContext('/research/workbench', '', null)).toEqual({
       originPage: '/research/workbench',
-      originLabel: 'Workbench',
+      // The route's label took the Vision name with the seat retirement.
+      originLabel: 'Pipeline',
     })
   })
 })

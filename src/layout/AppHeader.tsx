@@ -1,7 +1,5 @@
 import { Search } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
-import { DenseTag } from '@/components/data-display'
-import { SEAT_META, useResearchSeat } from '@/lib/research/seat'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
@@ -15,16 +13,6 @@ import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 interface AppHeaderProps {
   inbox: InboxSummary
   onOpenInbox: () => void
-}
-
-function ResearchSeatChip() {
-  const seat = useResearchSeat()
-  const m = SEAT_META[seat]
-  return (
-    <DenseTag variant="neutral" size="cell" title={`${m.level} — ${m.claim}`} className="hidden md:inline-flex">
-      {m.label} seat
-    </DenseTag>
-  )
 }
 
 export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
@@ -71,7 +59,6 @@ export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
       </button>
 
       <SymbolChip />
-      {location.pathname.startsWith('/research') ? <ResearchSeatChip /> : null}
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
         {/* One bell. There were two here — a Radar for analyze alerts with a

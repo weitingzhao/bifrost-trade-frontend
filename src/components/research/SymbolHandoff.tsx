@@ -4,7 +4,6 @@
  */
 import { Link } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
-import { setResearchSeat } from '@/lib/research/seat'
 import { workbenchStops } from '@/lib/research/handoff'
 
 export function SymbolHandoff({
@@ -29,7 +28,6 @@ export function SymbolHandoff({
             key={stop.id}
             to={stop.to}
             title={stop.why}
-            onClick={() => setResearchSeat(stop.seat)}
             className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-secondary/60 px-2 py-0.5 text-dense-caption transition-colors hover:border-primary/40 hover:bg-primary/10"
           >
             <ExternalLink className="size-3 text-muted-foreground" aria-hidden />

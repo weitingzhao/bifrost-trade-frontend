@@ -148,10 +148,13 @@ describe('design adoption', () => {
     // Decision Inbox (patch cards, the six verbs, ?card=), Symbol (the verdict
     // panel and the verbs), Copilot Desk and Personas (the anchored dock and
     // the Track record table) — each claimed by a batch of the Vision plan
-    // (aligned 33→29, stale 0→4). The sum still reconciles to the 33 the walk
-    // had reached: a stale row is a comparison that moved, not work lost.
-    expect(counts.aligned + counts.byState.stale).toBe(33)
-    expect(counts.aligned).toBe(29)
+    // (aligned 33→29, stale 0→4); the sum still reconciled to the 33 the walk
+    // had reached, a stale row being a comparison that moved, not work lost.
+    // Overview is the first page signed off against the baseline
+    // (2026-09-19, after the same look retired the seat rail and set the
+    // loop group order): reviewing→aligned grows the walked set to 34.
+    expect(counts.aligned + counts.byState.stale).toBe(34)
+    expect(counts.aligned).toBe(30)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -250,8 +253,9 @@ describe('design adoption', () => {
     // move) and walked Overview (rebuilt: dial strip, operator cards, six
     // stations, the Book, Today, Health) and the Workbench home (context
     // strip only — the prototype's own ruling that the seat home is not
-    // redesigned) for the first time (pending 16→14, reviewing 3→5).
-    expect(counts.byState.reviewing).toBe(5)
+    // redesigned) for the first time (pending 16→14, reviewing 3→5). Overview
+    // left for aligned on the Owner's look 2026-09-19 (reviewing 5→4).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -269,6 +273,7 @@ describe('design adoption', () => {
       '/portfolio/positions',
       '/portfolio/transfer',
       '/research/copilot/trading',
+      '/research/overview',
       '/review',
       '/review/fit',
       '/review/habits',
@@ -292,7 +297,6 @@ describe('design adoption', () => {
       '/research/loop/candidates',
       '/research/loop/harness',
       '/research/loop/hypotheses',
-      '/research/overview',
       '/research/workbench',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core

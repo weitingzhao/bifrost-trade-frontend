@@ -54,6 +54,14 @@ const DESCRIPTION =
   'who write the same artifacts: your hand, the loop, the Copilot. How much passes without you is ' +
   'one dial. Advisory only, D10 BLOCKED at every level.'
 
+/** `research_stock_signal_schedule` reads as machine ID; the panel wants the engine's name. */
+function scheduleName(name: string): string {
+  return name
+    .replace(/^(research|bifrost)[_-]/, '')
+    .replace(/[_-](schedule|job)$/, '')
+    .replace(/[_-]+/g, ' ')
+}
+
 function nextRunText(iso: string | undefined): string {
   if (!iso) return '—'
   const d = new Date(iso)
@@ -268,6 +276,16 @@ export default function ResearchOverviewPage() {
       actions: [{ label: 'Decision Inbox →', to: '/research/loop/decisions' }],
     })
   }
+  for (const h of hypsToday.slice(0, 2)) {
+    const op = operatorOf(h.origin_page)
+    today.push({
+      op,
+      title: `${op === 'hand' ? 'You' : op === 'loop' ? 'The loop' : 'The Copilot'} · hypothesis · ${h.title}`,
+      when: h.created_at ? fmtIsoTs(h.created_at) : '',
+      sub: h.origin_page ? `Born on ${h.origin_page}. Settles by the outcome rule at its horizon.` : 'Settles by the outcome rule at its horizon.',
+      actions: [{ label: 'Hypothesis Board →', to: '/research/loop/hypotheses' }],
+    })
+  }
   const brief = copilotQ.data?.brief
   if (brief && isToday(brief.created_at, nowIso)) {
     today.push({
@@ -281,7 +299,7 @@ export default function ResearchOverviewPage() {
 
   // ── Health ─────────────────────────────────────────────────────────────
   const health: HealthCell[] = (orchQ.data?.schedules ?? []).slice(0, 4).map((s) => ({
-    k: s.name,
+    k: scheduleName(s.name),
     v: `${s.status.toLowerCase()}${s.last_run_status ? ` · last ${s.last_run_status.toLowerCase()}` : ''}`,
     lamp: s.status === 'RUNNING' ? (s.last_run_status === 'FAILURE' ? 'yellow' : 'green') : 'gray',
     tip: s.last_run_ended_at ? `Last run ended ${fmtIsoTs(s.last_run_ended_at)}` : 'Never ran.',

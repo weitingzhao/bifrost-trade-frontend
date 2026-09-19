@@ -54,6 +54,7 @@ import { NewObjectiveDialog } from '@/components/research/NewObjectiveDialog'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
 import { LeashPanel } from '@/pages/research/loop/LeashPanel'
+import { ReachTodayStrip, reachToday } from '@/pages/research/loop/ReachTodayStrip'
 import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
@@ -385,6 +386,16 @@ export default function HarnessConsolePage() {
       {/* Whether the thing is switched on — before any objective. */}
       {standingQ.data ? <AutopilotKpis standing={standingQ.data} /> : null}
 
+      {/* The design's reach: today's widest run as a funnel. The warehouse
+          strip below it is this side's own capability — what the loop could
+          see, kept beside what it did see (its destination is the Owner's). */}
+      <ReachTodayStrip
+        reach={reachToday(
+          runs,
+          standingQ.data?.pending_drafts ?? standingQ.data?.pending_memos ?? null,
+          new Date().toISOString().slice(0, 10),
+        )}
+      />
       <UniverseReachStrip />
 
       {/* The design mounts the leash here too (Rev 2026-09-18.2): what a run

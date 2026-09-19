@@ -4,25 +4,87 @@
  * The design's aside, filled from the runtime instead of its static text: the
  * trust grant the leash needs, the four conditions from `leash.py`, and each
  * active objective's floor against its settled record. See `leash.ts`.
+ *
+ * Two homes, one truth (Rev 2026-09-18.2): the Inbox keeps the tall aside;
+ * the console mounts the design's compact two-column panel — conditions on
+ * the left, per-objective standing tags on the right — because on the page
+ * that runs the loop the panel sits between the standing and the objectives,
+ * not in a rail.
  */
 import { Link } from 'react-router-dom'
+import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { useActiveObjectives, useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { objectivePath } from '@/lib/harness/objectivePolicy'
-import { LEASH_CONDITIONS, MIN_SOURCE_JUDGED, objectiveLeash } from '@/pages/research/loop/leash'
+import {
+  DEFAULT_MIN_SOURCE_HIT_RATE,
+  LEASH_CONDITIONS,
+  MIN_SOURCE_JUDGED,
+  objectiveLeash,
+  type ObjectiveLeash,
+} from '@/pages/research/loop/leash'
 
 const leashPct = (x: number) => `${Math.round(x * 100)}%`
 
-/**
- * `home` — where the panel stands. On the Decision Inbox it links out to the
- * console; on the console itself (the design mounts it there too,
- * Rev 2026-09-18.2) the link would point at the page it is on, so it goes.
- */
+const STANDING_TAG: Record<ObjectiveLeash['standing'], { label: string; variant: 'success' | 'warning' | 'neutral' }> = {
+  clears: { label: 'CLEARS', variant: 'success' },
+  below: { label: 'BELOW', variant: 'warning' },
+  'no-record': { label: 'NO RECORD', variant: 'neutral' },
+}
+
 export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = {}) {
   const standing = useAutopilotStanding()
   const objectivesQ = useActiveObjectives()
   const trust = standing.data?.trust
   const rows = objectiveLeash(objectivesQ.data?.items ?? [], standing.data?.objectives ?? [])
+  const armed = Boolean(trust?.matrix_l0)
+
+  if (home === 'console') {
+    return (
+      <section className="overflow-hidden rounded-lg border border-border bg-background">
+        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
+          <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Leash</span>
+          <span className="text-dense-body font-semibold">what a run accepts without you</span>
+          <span className="ml-auto text-dense-meta text-muted-foreground">
+            all four must hold, and only while Trust grants L0 · accepting opens a hypothesis, never an order
+          </span>
+        </header>
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <ol className="list-decimal space-y-1 border-b border-border/50 py-2.5 pl-9 pr-3 text-dense-label leading-relaxed text-foreground/85 lg:border-b-0 lg:border-r">
+            {LEASH_CONDITIONS.map((c) => (
+              <li key={c.id}>{c.text}</li>
+            ))}
+          </ol>
+          <div className="flex flex-col gap-2 px-3 py-2.5">
+            {rows.length === 0 ? (
+              <span className="text-dense-meta text-muted-foreground">No active objectives.</span>
+            ) : (
+              rows.map((o) => (
+                <div key={o.id} className="flex flex-wrap items-baseline gap-2">
+                  <DenseTag variant={STANDING_TAG[o.standing].variant} size="cell">
+                    {STANDING_TAG[o.standing].label}
+                  </DenseTag>
+                  <Link to={objectivePath(o.id)} className="text-dense-label font-semibold hover:underline">
+                    {o.title}
+                  </Link>
+                  <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">
+                    {o.hitRate != null && o.judged >= MIN_SOURCE_JUDGED
+                      ? `${leashPct(o.hitRate)} on ${o.judged} settled · floor ${leashPct(o.floor)}${o.floorIsDefault ? ' (default)' : ''}`
+                      : `${o.judged} settled of ${MIN_SOURCE_JUDGED} needed — every batch waits for you`}
+                  </span>
+                </div>
+              ))
+            )}
+            <span className="text-dense-micro text-muted-foreground">
+              {armed
+                ? `Floor default ${leashPct(DEFAULT_MIN_SOURCE_HIT_RATE)} when an objective sets none. Accepting a candidate opens a hypothesis — never an order (D10).`
+                : 'Trust is not L0 — the four conditions are moot until it is; every batch waits in the Inbox.'}
+            </span>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <aside className="space-y-3 rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-dense-meta">
@@ -96,11 +158,9 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
         <p>Plans, intents, orders — D10. Accepting a candidate opens a hypothesis, nothing more.</p>
       </div>
 
-      {home === 'inbox' ? (
-        <Link to="/research/loop/harness" className="inline-block text-primary hover:underline">
-          Autopilot →
-        </Link>
-      ) : null}
+      <Link to="/research/loop/harness" className="inline-block text-primary hover:underline">
+        Autopilot →
+      </Link>
     </aside>
   )
 }

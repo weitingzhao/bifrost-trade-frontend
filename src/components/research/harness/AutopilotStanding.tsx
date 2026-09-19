@@ -29,22 +29,43 @@ export function AutopilotKpis({ standing }: { standing: AutopilotStanding }) {
   // Re-running an objective proposes the same names again; the Inbox has folded
   // those into one call for a while, and this counted the rows.
   const folded = Math.max(0, (standing.pending_drafts ?? standing.pending_memos) - standing.pending_memos)
+  // Five cells in the design's order (Research Autopilot Console.dc.html,
+  // Rev 2026-09-18.2): the drafts stand beside the calls they fold into
+  // instead of inside their tooltip.
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-      <Kpi label="Trust · cluster matrix" title={t.note}>
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <Kpi label="Next run" title="The nearest scheduled objective. Run now on any objective does not move its schedule.">
+        <span className="text-base">{fmtNext(standing.next_run_at)}</span>
+      </Kpi>
+      <Kpi label="Trust" title={t.note}>
         <span className="flex items-center gap-1.5">
           <StatusLamp lamp={t.matrix_l0 ? 'green' : 'yellow'} variant="dot" title={t.note} />
           <span className="font-mono text-lg font-semibold">{t.matrix_level ?? '—'}</span>
           <span className="text-dense-label text-muted-foreground">
-            {t.matrix_l0 ? 'auto-accept armed' : 'auto-accept off'}
+            {t.matrix_l0 ? 'leash may accept' : 'nothing auto-approved'}
           </span>
         </span>
       </Kpi>
-      <Kpi label="Next unattended run" title="Weekdays 13:30 UTC, every active objective">
-        <span className="text-base">{fmtNext(standing.next_run_at)}</span>
+      <Kpi label="Awaiting you" title="Rated memos with no decision yet. The Decision Inbox reads the same queue.">
+        <span className="font-mono text-lg font-semibold tabular-nums text-warning">{standing.pending_memos}</span>
+        <span className="text-dense-label text-muted-foreground">
+          {standing.pending_memos === 1 ? 'call' : 'calls'}
+          {standing.best_conviction > 0 ? ` · best ${stars(standing.best_conviction).replace(/☆+$/, '')}` : ''}
+        </span>
       </Kpi>
       <Kpi
-        label="Purse today"
+        label="Drafts"
+        title="Draft rows in the Inbox; repeats of the same objective proposing the same names fold into the call above them."
+      >
+        <span className="font-mono text-lg font-semibold tabular-nums">
+          {standing.pending_drafts ?? standing.pending_memos}
+        </span>
+        <span className="text-dense-label text-muted-foreground">
+          {folded > 0 ? `${folded} fold into the calls` : 'in the Inbox'}
+        </span>
+      </Kpi>
+      <Kpi
+        label="Spend today"
         title={p.providers.map((x) => `${x.provider} ${fmtUsd(x.spent_usd)} of ${fmtUsd(x.cap_usd)}`).join(' · ')}
       >
         <span className="font-mono text-lg font-semibold tabular-nums">
@@ -55,21 +76,6 @@ export function AutopilotKpis({ standing }: { standing: AutopilotStanding }) {
             {exhausted.join(', ')} spent
           </DenseTag>
         ) : null}
-      </Kpi>
-      <Kpi
-        label="Waiting on you"
-        title={
-          folded > 0
-            ? `${standing.pending_drafts} draft rows in the Inbox; ${folded} are the same objective proposing the same names again and fold into the call above it.`
-            : 'Candidate batches still pending in the Decision Inbox'
-        }
-      >
-        <span className="font-mono text-lg font-semibold tabular-nums">{standing.pending_memos}</span>
-        <span className="text-dense-label text-muted-foreground">
-          {standing.pending_memos === 1 ? 'call' : 'calls'}
-          {standing.best_conviction > 0 ? ` · best ${stars(standing.best_conviction).replace(/☆+$/, '')}` : ''}
-          {folded > 0 ? ` · ${folded} repeat${folded === 1 ? '' : 's'} folded` : ''}
-        </span>
       </Kpi>
     </div>
   )

@@ -12,6 +12,7 @@ import { RESEARCH_SEATS } from '@/lib/research/seat'
 import { isSystemRoute } from './routeRegistry'
 import {
   allResearchRoutes,
+  BOOK_PAGES,
   buildResearchNavGroup,
   COPILOT_PAGES,
   MARKET_PAGES,
@@ -86,6 +87,9 @@ describe('a seat carries its own pages and no others', () => {
         OVERVIEW,
         MARKET_PAGES.live.to,
         MARKET_PAGES.radar.to,
+        '/research/loop/hypotheses',
+        '/research/loop/candidates',
+        '/research/watchlist',
         '/research/copilot',
         '/research/daily-brief',
         '/research/agent-personas',
@@ -100,15 +104,16 @@ describe('a seat carries its own pages and no others', () => {
     }
   })
 
-  it('brackets the open seat home with the seatless rows: Overview, home, Copilot, Market', () => {
-    // The design's order since 2026-09-14 (`navGroups` in shell-registry.js):
-    // Overview and the two seat-free folds state facts, so they sit either
-    // side of the workflow.
+  it('brackets the open seat home with the seatless rows: Overview, home, Book, Copilot, Market', () => {
+    // The design's order (`navGroups` in shell-registry.js, Rev 2026-09-18.2):
+    // Overview, the seat home, then the three seat-free folds — the Book, the
+    // Copilot sediment, the tape. Facts bracket the workflow.
     for (const seat of RESEARCH_SEATS) {
       const items = seatItems(seat, ctx)
       expect(items.map((i) => i.to), seat).toEqual([
         OVERVIEW,
         HOMES[seat],
+        BOOK_PAGES.hypotheses.to,
         COPILOT_PAGES.desk.to,
         MARKET_PAGES.live.to,
       ])
@@ -132,6 +137,30 @@ describe('a seat carries its own pages and no others', () => {
         ['Personas', '/research/agent-personas'],
       ])
     }
+  })
+
+  it('carries The Book in both seats — the object layer belongs to no posture', () => {
+    // Vision §1.1 (Rev 2026-09-18.2): hypotheses are born on Symbol and
+    // Review as often as in the loop, so the Book moved out of the Autopilot
+    // seat. Same id everywhere, the design's own `fold:book`; Watchlist moved
+    // in from Data — a watchlist row is a standing nomination.
+    for (const seat of RESEARCH_SEATS) {
+      const fold = flatten(seatItems(seat, ctx)).find((i) => i.id === 'fold:book')
+      expect(fold, seat).toBeTruthy()
+      expect(fold!.label, seat).toBe('The Book')
+      expect(fold!.children?.map((c) => [c.label, c.to]), seat).toEqual([
+        ['Hypothesis Board', '/research/loop/hypotheses'],
+        ['Candidate Pool', '/research/loop/candidates'],
+        ['Watchlist', '/research/watchlist'],
+      ])
+    }
+  })
+
+  it('keeps the Autopilot seat to the engine: Inbox and the objectives', () => {
+    // Rev 2026-09-18.2 — the seat's former Hypotheses and Candidates rows now
+    // live in the Book; what remains under the console is what the loop runs.
+    const home = seatItems('autopilot', ctx).find((i) => i.to === HOMES.autopilot)
+    expect(home?.children?.map((c) => c.label)).toEqual(['Decision Inbox', 'Objectives'])
   })
 
   it('shapes the bench as the design does: four folds under the home, nothing flat', () => {
@@ -162,9 +191,9 @@ describe('a seat carries its own pages and no others', () => {
     expect(rows('Data')).toEqual([
       ['Signal Health', '/research/signal-health'],
       ['Lens Coverage', '/research/lens-coverage'],
-      ['Watchlist', '/research/watchlist'],
+      // Watchlist left for The Book (Rev 2026-09-18.2).
       ['Contract Greeks', '/research/greeks'],
-      // This side's own two rows, after the design's four: staging and the
+      // This side's own two rows, after the design's three: staging and the
       // one earned /system crossing.
       ['Stock Screener', '/research/stock-screener'],
       ['Stock Data Readiness', '/system/data-readiness'],
@@ -223,7 +252,7 @@ describe('no page lights two rows', () => {
 
   it('folded categories land where the design points them and carry the rest', () => {
     const folds = flatten(seatItems('workbench', ctx)).filter((i) => i.id.startsWith('fold:'))
-    expect(folds.map((f) => f.label)).toEqual(['Discover', 'Analyze', 'Validate', 'Data', 'Copilot', 'Market'])
+    expect(folds.map((f) => f.label)).toEqual(['Discover', 'Analyze', 'Validate', 'Data', 'The Book', 'Copilot', 'Market'])
     for (const f of folds) {
       // Validate is the design's own exception: its heading lands on Backtest
       // (shell-registry `fold:validate`, to: '/research/backtest') while
@@ -232,12 +261,14 @@ describe('no page lights two rows', () => {
       expect(f.to, f.label).toBe(target)
     }
     // Seat-keyed, so an open fold in one seat is not an open fold in the next
-    // — except Copilot and Market, which are the same fold in every seat and
-    // keep one id each.
-    const perSeat = folds.filter((f) => f.label !== 'Market' && f.label !== 'Copilot')
+    // — except the Book, Copilot and Market, which are the same fold in every
+    // seat and keep one id each.
+    const shared = new Set(['The Book', 'Copilot', 'Market'])
+    const perSeat = folds.filter((f) => !shared.has(f.label))
     expect(perSeat.every((f) => f.id.startsWith('fold:workbench:'))).toBe(true)
     expect(flatten(seatItems('autopilot', ctx)).some((i) => i.id === 'fold:market')).toBe(true)
     expect(flatten(seatItems('autopilot', ctx)).some((i) => i.id === 'fold:copilot')).toBe(true)
+    expect(flatten(seatItems('autopilot', ctx)).some((i) => i.id === 'fold:book')).toBe(true)
   })
 })
 
@@ -288,6 +319,7 @@ describe('the seat-less layout', () => {
     expect(staticResearchSubGroups().map((s) => s.label)).toEqual([
       '',
       'Market',
+      'The Book',
       'Autopilot · unattended',
       'Copilot · on request',
       'Workbench · Discover',

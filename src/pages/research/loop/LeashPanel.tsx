@@ -13,7 +13,12 @@ import { LEASH_CONDITIONS, MIN_SOURCE_JUDGED, objectiveLeash } from '@/pages/res
 
 const leashPct = (x: number) => `${Math.round(x * 100)}%`
 
-export function LeashPanel() {
+/**
+ * `home` — where the panel stands. On the Decision Inbox it links out to the
+ * console; on the console itself (the design mounts it there too,
+ * Rev 2026-09-18.2) the link would point at the page it is on, so it goes.
+ */
+export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = {}) {
   const standing = useAutopilotStanding()
   const objectivesQ = useActiveObjectives()
   const trust = standing.data?.trust
@@ -91,9 +96,11 @@ export function LeashPanel() {
         <p>Plans, intents, orders — D10. Accepting a candidate opens a hypothesis, nothing more.</p>
       </div>
 
-      <Link to="/research/loop/harness" className="inline-block text-primary hover:underline">
-        Autopilot →
-      </Link>
+      {home === 'inbox' ? (
+        <Link to="/research/loop/harness" className="inline-block text-primary hover:underline">
+          Autopilot →
+        </Link>
+      ) : null}
     </aside>
   )
 }

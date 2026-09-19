@@ -53,6 +53,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 import { NewObjectiveDialog } from '@/components/research/NewObjectiveDialog'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
+import { LeashPanel } from '@/pages/research/loop/LeashPanel'
 import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
@@ -386,6 +387,11 @@ export default function HarnessConsolePage() {
 
       <UniverseReachStrip />
 
+      {/* The design mounts the leash here too (Rev 2026-09-18.2): what a run
+          accepts without you belongs on the console that runs it, not only on
+          the Inbox that catches what it held. Same component, both pages. */}
+      <LeashPanel home="console" />
+
       <CollapsibleGroup variant="card" className="min-w-0">
         <CollapsibleGroupHeader
           expanded={policyOpen}
@@ -438,7 +444,7 @@ export default function HarnessConsolePage() {
             title={objStatus === 'archived' ? 'No archived objectives' : 'No active objectives'}
             description={
               objStatus === 'archived'
-                ? 'Nothing retired yet. Archived objectives are restored from here.'
+                ? 'Nothing retired yet. Archived objectives are restored from here — their runs, funnels and candidates stay.'
                 : 'Click New Objective to create one. Harness proposes candidates; Owner approves in Decision Inbox or Copilot.'
             }
           />
@@ -481,6 +487,15 @@ export default function HarnessConsolePage() {
               })}
           </ul>
         )}
+
+        {/* The section's ground rules, stated once (the design's own closing
+            line): folding, the bill, and what deletion can and cannot take. */}
+        <p className="text-dense-caption leading-relaxed text-muted-foreground">
+          Identical re-runs fold into one row but not out of the bill. A run whose objective was
+          archived stays listed here — silent disappearance is the failure this console exists to
+          prevent. Deleting a run takes its funnel and trace; candidates with a settled outcome are
+          kept, because that measurement is what the leash reads.
+        </p>
 
         {orphanGroups.length > 0 ? (
           <div className="space-y-1">

@@ -246,10 +246,12 @@ describe('design adoption', () => {
     // (pending 16→13, reviewing 0→3). Package 2026-09-19.1 replaced all three
     // walks' baselines the next day — harness now has its own Console
     // prototype, the Board and the Pool gained operator tags and the verb row
-    // — so reviewing holds at 3 while each note names the W1 re-walk;
-    // `reviewing` does not compute stale on its own, which is why the notes
-    // have to.
-    expect(counts.byState.reviewing).toBe(3)
+    // — so W1 re-walked all three against .18.2 (reviewing holds at 3, revs
+    // move) and walked Overview (rebuilt: dial strip, operator cards, six
+    // stations, the Book, Today, Health) and the Workbench home (context
+    // strip only — the prototype's own ruling that the seat home is not
+    // redesigned) for the first time (pending 16→14, reviewing 3→5).
+    expect(counts.byState.reviewing).toBe(5)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -290,6 +292,8 @@ describe('design adoption', () => {
       '/research/loop/candidates',
       '/research/loop/harness',
       '/research/loop/hypotheses',
+      '/research/overview',
+      '/research/workbench',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
@@ -334,8 +338,9 @@ describe('design adoption', () => {
     // the Autopilot tree did (R1); 16 since Package 2026-09-19.1 seeded the two
     // objective rows and the runs stem, which the app answers at `:param`
     // routes (the objective page, the run redirect into the console drawer) —
-    // built, designed, not yet walked.
-    expect(counts.byState.pending).toBe(16)
+    // built, designed, not yet walked. 14 since W1 walked Overview and the
+    // Workbench home.
+    expect(counts.byState.pending).toBe(14)
     expect(
       rows
         .filter((r) => r.via)

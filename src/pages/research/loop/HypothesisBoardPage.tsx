@@ -30,6 +30,7 @@ import { resolutionLine } from '@/lib/hypothesisResolution'
 import { salientThesis, splitTitleRef } from '@/lib/hypothesisCardModel'
 import type { Hypothesis, HypothesisStatus } from '@/api/researchHypothesis'
 import { cn } from '@/lib/utils'
+import { OPERATOR_CHIP, operatorOf } from '@/lib/research/operatorOf'
 import {
   ageOf,
   BOARD_LANES,
@@ -76,7 +77,16 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
         {hypothesis.origin_page ? `Born on ${hypothesis.origin_page}. ` : ''}
         {salientThesis(hypothesis.thesis)}
       </p>
-      <div className="flex items-baseline gap-3 border-t border-border/60 pt-1.5">
+      <div className="flex items-baseline gap-2 border-t border-border/60 pt-1.5">
+        <span
+          className={cn(
+            'rounded border px-1 font-mono text-dense-micro font-bold',
+            OPERATOR_CHIP[operatorOf(hypothesis.origin_page)],
+          )}
+          title="Who wrote this hypothesis — the Book keeps every operator's, side by side. Read off the birthplace until provenance is stored (W2)."
+        >
+          {operatorOf(hypothesis.origin_page)}
+        </span>
         <span
           className={cn(
             'min-w-0 truncate font-mono text-dense-caption',

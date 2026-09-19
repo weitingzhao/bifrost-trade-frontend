@@ -55,8 +55,34 @@ function route(label: string, to: string, icon: LucideIcon, children?: ShellNavI
 export const AUTOPILOT_PAGES = {
   autopilot: route('Autopilot', '/research/loop/harness', Terminal),
   inbox: route('Decision Inbox', '/research/loop/decisions', ClipboardList),
+}
+
+/**
+ * The object layer — hypotheses, candidates, the watchlist — out of the seat
+ * (Vision §1.1, Rev 2026-09-18.2). A hypothesis is born on Symbol, Compare or
+ * Review as often as in the loop; kept under Autopilot, your own beliefs had
+ * no menu row while you worked the bench. The loop is only the most diligent
+ * writer, so the Book belongs to all three operators and to no seat. Paths
+ * keep the `/research/loop/` stem — deep links and app routes stay valid —
+ * but the crumbs and the rail no longer claim them.
+ */
+export const BOOK_PAGES = {
   hypotheses: route('Hypothesis Board', '/research/loop/hypotheses', BookOpen),
   candidates: route('Candidate Pool', '/research/loop/candidates', ListFilter),
+  watchlist: route('Watchlist', '/research/watchlist', Star),
+}
+
+/**
+ * Seat-free like Market and Copilot: one id in every seat (`fold:book`, the
+ * design's own), the row borrowing its first child's route. The design's
+ * Journal row joins beside it when the page exists (batch W4).
+ */
+export const BOOK_ITEM: ShellNavItem = {
+  id: 'fold:book',
+  label: 'The Book',
+  to: BOOK_PAGES.hypotheses.to,
+  icon: BookOpen,
+  children: Object.values(BOOK_PAGES),
 }
 
 /**
@@ -149,8 +175,10 @@ export const BENCHES: Bench[] = [
     // The design's Discover holds two homes — Ratings (Stocks · Underlyings)
     // and Screener (Stocks · Contracts) — and neither home page is built yet,
     // so the fold carries their existing children flat, in the design's order
-    // and under the design's labels. When `/research/ratings` and
-    // `/research/screener` land (batch R6), they become the two homes here.
+    // and under the design's labels. Folding now would point each heading at
+    // its only child's route — two rows, one page, the double-selection the
+    // Owner retired on 2026-09-08. `/research/screener` becomes a home in W3,
+    // `/research/ratings` in the W5 sweep.
     icon: Compass,
     items: [
       route('Underlyings', '/research/scan', ScanSearch),
@@ -187,7 +215,8 @@ export const BENCHES: Bench[] = [
     items: [
       route('Signal Health', '/research/signal-health', Activity),
       route('Lens Coverage', '/research/lens-coverage', Radar),
-      route('Watchlist', '/research/watchlist', Star),
+      // Watchlist left for The Book (Rev 2026-09-18.2): a watchlist row is a
+      // standing nomination, which makes it object layer, not data plumbing.
       route('Contract Greeks', '/research/greeks', Wand2),
       route('Stock Screener', '/research/stock-screener', ListFilter),
       route('Stock Data Readiness', '/system/data-readiness', Server),
@@ -200,6 +229,7 @@ export function allResearchRoutes(): string[] {
   return [
     OVERVIEW_PAGE,
     ...Object.values(AUTOPILOT_PAGES),
+    ...Object.values(BOOK_PAGES),
     ...Object.values(COPILOT_PAGES),
     WORKBENCH_PAGE,
     ...BENCHES.flatMap((b) => b.items),
@@ -212,6 +242,7 @@ export function staticResearchSubGroups(): ShellNavSubGroup[] {
   return [
     { label: '', items: [OVERVIEW_PAGE] },
     { label: 'Market', items: Object.values(MARKET_PAGES) },
+    { label: 'The Book', items: Object.values(BOOK_PAGES) },
     { label: 'Autopilot · unattended', items: Object.values(AUTOPILOT_PAGES) },
     { label: 'Copilot · on request', items: Object.values(COPILOT_PAGES) },
     { label: 'Workbench · Discover', items: [WORKBENCH_PAGE, ...BENCHES[0].items] },
@@ -307,14 +338,13 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
 
   switch (seat) {
     case 'autopilot':
+      // The seat is the engine only (Rev 2026-09-18.2): Inbox and the
+      // objectives. Its former Hypotheses and Candidates rows sit in the
+      // seat-free Book below — the loop writes them, it does not own them.
       return [
         OVERVIEW_PAGE,
-        home(seat, 'Autopilot', A.autopilot, [
-          A.inbox,
-          ...objectivesItem(seat, ctx.objectives),
-          A.hypotheses,
-          A.candidates,
-        ]),
+        home(seat, 'Autopilot', A.autopilot, [A.inbox, ...objectivesItem(seat, ctx.objectives)]),
+        BOOK_ITEM,
         COPILOT_ITEM,
         MARKET_ITEM,
       ]
@@ -331,6 +361,7 @@ export function seatItems(seat: ResearchSeat, ctx: SeatNavContext): ShellNavItem
           fold(seat, validate.label, validate.icon, validate.items, '/research/backtest'),
           fold(seat, data.label, data.icon, data.items),
         ]),
+        BOOK_ITEM,
         COPILOT_ITEM,
         MARKET_ITEM,
       ]
@@ -366,6 +397,10 @@ const RESEARCH_ROOT = '/research'
 export const SEATLESS_ROUTES: readonly string[] = [
   OVERVIEW_PAGE.to!,
   ...Object.values(MARKET_PAGES).map((p) => p.to!),
+  // The Book stands in both seats (Vision §12): landing on a hypothesis from
+  // the bench must not drag the rail to Autopilot — the object layer belongs
+  // to every operator, so it moves no seat.
+  ...Object.values(BOOK_PAGES).map((p) => p.to!),
   // The Copilot fold's pages stand in both seats, as Market's do (§11.0).
   ...Object.values(COPILOT_PAGES).map((p) => p.to!),
   // Not a menu row — a deep-link alias reached from the empty state's "The

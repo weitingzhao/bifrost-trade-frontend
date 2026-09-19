@@ -14,6 +14,8 @@ export const RISK = ['Risk'] as const
 export const REVIEW = ['Review'] as const
 export const RESEARCH = ['Research'] as const
 export const AUTOPILOT = ['Research', 'Autopilot'] as const
+/** The object layer is seat-free (Vision §12): its trail names the Book, not the loop. */
+export const THE_BOOK = ['Research', 'The Book'] as const
 export const COPILOT = ['Research', 'Copilot'] as const
 export const DISCOVER = ['Research', 'Discover'] as const
 export const ANALYZE = ['Research', 'Analyze'] as const

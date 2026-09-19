@@ -86,14 +86,33 @@ import {
   SYSTEM_CONFIG,
   SYSTEM_DATA,
   SYSTEM_RUNTIME,
+  THE_BOOK,
   TRADE,
   TRADE_DESK,
   VALIDATE,
 } from './routeCrumbs'
 
 export const ROUTES: readonly RouteEntry[] = [
-  { path: '/research/overview', label: 'Overview', crumbs: RESEARCH },
-  { path: '/research/workbench', label: 'Workbench', crumbs: RESEARCH },
+  {
+    path: '/research/overview',
+    label: 'Overview',
+    crumbs: RESEARCH,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-18.2',
+      note: DESIGN_NOTES['/research/overview'],
+    },
+  },
+  {
+    path: '/research/workbench',
+    label: 'Workbench',
+    crumbs: RESEARCH,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-18.2',
+      note: DESIGN_NOTES['/research/workbench'],
+    },
+  },
 
   // ── Research · Autopilot ───────────────────────────────────────────────
   {
@@ -102,7 +121,7 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: RESEARCH,
     design: {
       state: 'reviewing',
-      rev: '2026-09-14.1',
+      rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/loop/harness'],
     },
   },
@@ -119,20 +138,20 @@ export const ROUTES: readonly RouteEntry[] = [
   {
     path: '/research/loop/hypotheses',
     label: 'Hypothesis Board',
-    crumbs: AUTOPILOT,
+    crumbs: THE_BOOK,
     design: {
       state: 'reviewing',
-      rev: '2026-09-17.1',
+      rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/loop/hypotheses'],
     },
   },
   {
     path: '/research/loop/candidates',
     label: 'Candidate Pool',
-    crumbs: AUTOPILOT,
+    crumbs: THE_BOOK,
     design: {
       state: 'reviewing',
-      rev: '2026-09-17.1',
+      rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/loop/candidates'],
     },
   },
@@ -227,7 +246,7 @@ export const ROUTES: readonly RouteEntry[] = [
   // ── Research · Workbench · Data ────────────────────────────────────────
   { path: '/research/lens-coverage', label: 'Lens Coverage', crumbs: DATA },
   { path: '/research/signal-health', label: 'Signal Health', crumbs: DATA },
-  { path: '/research/watchlist', label: 'Stock Watchlist', crumbs: DATA },
+  { path: '/research/watchlist', label: 'Stock Watchlist', crumbs: THE_BOOK },
   {
     path: '/research/stock-screener',
     label: 'Stock Screener',

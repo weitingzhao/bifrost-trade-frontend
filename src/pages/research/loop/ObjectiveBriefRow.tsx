@@ -59,8 +59,15 @@ export function ObjectiveRows({
   brief: AutopilotObjective | null
   onOpenMemo: (runId: string) => void
 }) {
-  // Re-runs are folded into their row but not out of the bill.
+  // Re-runs are folded into their row but not out of the bill. The design's
+  // cell is today's spend; the whole listed window rides in the tooltip.
   const spend = groups.reduce((sum, g) => sum + groupSpend(g).total_usd, 0)
+  const todayKey = new Date().toISOString().slice(0, 10)
+  const spendToday = groups.reduce(
+    (sum, g) =>
+      (g.run.started_at ?? '').slice(0, 10) === todayKey ? sum + groupSpend(g).total_usd : sum,
+    0,
+  )
   const memo = brief?.last_memo ?? null
   const foldedHere = Math.max(0, (brief?.pending_drafts ?? brief?.pending_memos ?? 0) - (brief?.pending_memos ?? 0))
   const rec = brief?.track_record ?? null
@@ -128,9 +135,15 @@ export function ObjectiveRows({
                 <span className="text-muted-foreground">none settled yet</span>
               )}
             </Fact>
-            <Fact label="Cost, 30 days">
-              <span className="font-mono text-base font-semibold tabular-nums">{spend > 0 ? fmtUsd(spend) : '$0'}</span>
-              <span className="text-muted-foreground"> · {groups.length} run{groups.length === 1 ? '' : 's'}</span>
+            <Fact label="Spend today">
+              <span
+                title={`${fmtUsd(spend)} across the ${groups.length} listed run${groups.length === 1 ? '' : 's'}.`}
+              >
+                <span className="font-mono text-base font-semibold tabular-nums">
+                  {spendToday > 0 ? fmtUsd(spendToday) : '$0'}
+                </span>
+                <span className="text-muted-foreground"> · {fmtUsd(spend)} listed</span>
+              </span>
             </Fact>
             {/* The call is what waits on the Owner; the run count that used to
                 sit here answered a different question and is kept in the title. */}

@@ -10,6 +10,7 @@ import type { CandidateOutcomeRow } from '@/api/research/candidateOutcome'
 import { CandidateOutcomeSummary } from '@/components/research/CandidateOutcomeSummary'
 import { useCandidateOutcomeByCandidate } from '@/hooks/useCandidateOutcome'
 import { cn } from '@/lib/utils'
+import { OPERATOR_CHIP, sourceOperatorOf } from '@/lib/research/operatorOf'
 import { fmtPctSigned } from '@/lib/format'
 import { labHref } from '@/lib/analyzeHubs'
 import {
@@ -254,7 +255,18 @@ export default function CandidatePoolPage() {
                     </div>
                   </DenseTableCell>
                   <DenseTableCell>
-                    <DenseTag variant="neutral">{row.source}</DenseTag>
+                    <span className="flex items-center gap-1.5">
+                      <DenseTag variant="neutral">{row.source}</DenseTag>
+                      <span
+                        className={cn(
+                          'rounded border px-1 font-mono text-dense-micro font-bold',
+                          OPERATOR_CHIP[sourceOperatorOf(row.source)],
+                        )}
+                        title="The operator behind this nomination — the design's own rule: YOU → hand, CURATOR → loop, a screen → hand."
+                      >
+                        {sourceOperatorOf(row.source)}
+                      </span>
+                    </span>
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>{fmtScore(row.score)}</DenseTableCell>
                   <DenseTableCell className="font-mono tabular-nums text-dense-meta">

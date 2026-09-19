@@ -143,12 +143,21 @@ describe('design adoption', () => {
     // "deliberate" divergences by reading the server — the Owner signed both
     // off together (aligned 31→33). Trade joins Home, Portfolio, Review and
     // Risk as a finished group.
+    // Package 2026-09-19.1 (the Research Vision baseline) then moved twelve
+    // Research routes to Rev 2026-09-18.2. Four signed-off pages read stale —
+    // Decision Inbox (patch cards, the six verbs, ?card=), Symbol (the verdict
+    // panel and the verbs), Copilot Desk and Personas (the anchored dock and
+    // the Track record table) — each claimed by a batch of the Vision plan
+    // (aligned 33→29, stale 0→4). The sum still reconciles to the 33 the walk
+    // had reached: a stale row is a comparison that moved, not work lost.
     expect(counts.aligned + counts.byState.stale).toBe(33)
-    expect(counts.aligned).toBe(33)
-    // Empty again: every page Package 2026-09-18.1 moved has now been re-walked
-    // against it. A stale row was never work lost — the page is built, and what
-    // was stale is the comparison.
-    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
+    expect(counts.aligned).toBe(29)
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
+      '/research/agent-personas',
+      '/research/copilot',
+      '/research/loop/decisions',
+      '/research/symbol',
+    ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -234,7 +243,12 @@ describe('design adoption', () => {
     // only the context strip is new), Hypothesis Board (rebuilt to the card
     // grid, lanes in the server's vocabulary) and Candidate Pool (strip, age,
     // trued footnotes) — walked and built, waiting on the Owner's look
-    // (pending 16→13, reviewing 0→3).
+    // (pending 16→13, reviewing 0→3). Package 2026-09-19.1 replaced all three
+    // walks' baselines the next day — harness now has its own Console
+    // prototype, the Board and the Pool gained operator tags and the verb row
+    // — so reviewing holds at 3 while each note names the W1 re-walk;
+    // `reviewing` does not compute stale on its own, which is why the notes
+    // have to.
     expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
@@ -252,11 +266,7 @@ describe('design adoption', () => {
       '/portfolio/pnl-explain',
       '/portfolio/positions',
       '/portfolio/transfer',
-      '/research/agent-personas',
-      '/research/copilot',
       '/research/copilot/trading',
-      '/research/loop/decisions',
-      '/research/symbol',
       '/review',
       '/review/fit',
       '/review/habits',
@@ -309,14 +319,33 @@ describe('design adoption', () => {
     // only four stubs left (all `/docs/*` reference pages, deliberately last).
     // The denominator nearly doubled, so "to build" grew with it: those pages
     // now have a design to build against, which they did not before.
-    expect(counts.designed).toBe(78)
-    // 24 until Trade › Desk was built 2026-09-18.
-    expect(counts.byState.unbuilt).toBe(23)
+    // Package 2026-09-19.1 grew it again (78→84): Journal, the Narrative lens,
+    // the Artifact Dock concept page, the two objective fixture rows and the
+    // runs stem.
+    expect(counts.designed).toBe(84)
+    // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
+    // added Journal, Narrative and the Artifact Dock concept page — all three
+    // designed with no app page yet (Journal and Narrative are Vision batches
+    // W4/W5; the concept page is the design's own reference).
+    expect(counts.byState.unbuilt).toBe(26)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since
-    // the Autopilot tree did (R1).
-    expect(counts.byState.pending).toBe(13)
+    // the Autopilot tree did (R1); 16 since Package 2026-09-19.1 seeded the two
+    // objective rows and the runs stem, which the app answers at `:param`
+    // routes (the objective page, the run redirect into the console drawer) —
+    // built, designed, not yet walked.
+    expect(counts.byState.pending).toBe(16)
+    expect(
+      rows
+        .filter((r) => r.via)
+        .map((r) => r.path)
+        .sort(),
+    ).toEqual([
+      '/research/loop/objectives/obj-daily-stock',
+      '/research/loop/objectives/obj-earnings-iv',
+      '/research/loop/runs',
+    ])
     expect(counts.byState.backlog).toBe(4)
   })
 
@@ -346,12 +375,13 @@ describe('design adoption', () => {
     // The Owner re-signed all five on the colour look, so none stays stale.
     // Package 2026-09-17.4 fixed the header the app reads (P1), so DESIGN_REV
     // finally moves with the body instead of lagging it by two revs.
-    expect(DESIGN_REV).toBe('2026-09-18.1')
-    // Back to zero, and the path there is the point: the ones that read stale
-    // were exactly those whose *own* rev moved, not the whole walked set, and
-    // the count fell as each was re-walked (4 → 3 when Risk Limits was, → 0
-    // when Positions was).
-    expect(counts.byState.stale).toBe(0)
+    expect(DESIGN_REV).toBe('2026-09-19.1')
+    // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
+    // Vision redesign touches — twelve Research routes to .18.2 — and only the
+    // four that were signed off read stale; the rest of the walked set holds.
+    // Each stale note names the batch that re-walks it (W2/W3), the same way
+    // the count fell 4 → 0 across the .18.1 round.
+    expect(counts.byState.stale).toBe(4)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

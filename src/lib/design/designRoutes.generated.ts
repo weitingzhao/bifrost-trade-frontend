@@ -5,7 +5,7 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 82 routes, 78 with a designed page,
+ * Derived, not typed: 88 routes, 84 with a designed page,
  * 4 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
@@ -38,7 +38,7 @@ export interface DesignRoute {
   group: string | null
 }
 
-export const DESIGN_REV = "2026-09-18.1"
+export const DESIGN_REV = "2026-09-19.1"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},
@@ -47,16 +47,16 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/risk/portfolio","label":"Portfolio Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Risk"},
   {"path":"/portfolio/pnl-explain","label":"P&L Explain","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio PnL Explain.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
   {"path":"/trade/expiration","label":"Expiration","crumbs":["Trade","Desk"],"designed":true,"file":"Trade Expiration.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Trade"},
-  {"path":"/research/overview","label":"Overview","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-14.1","inNav":true,"group":"Research"},
-  {"path":"/research/workbench","label":"Workbench","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-14.1","inNav":true,"group":"Research"},
+  {"path":"/research/overview","label":"Overview","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/workbench","label":"Workbench","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-18.2","inNav":true,"group":"Research"},
   {"path":"/research/ratings","label":"Ratings","crumbs":["Research","Workbench","Discover"],"designed":true,"file":"Research Scan.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Research"},
   {"path":"/research/ratings/stocks","label":"Stocks","crumbs":["Research","Workbench","Discover","Ratings"],"designed":true,"file":"Research Ratings Stocks.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Research"},
   {"path":"/research/scan","label":"Underlyings","crumbs":["Research","Workbench","Discover","Ratings"],"designed":true,"file":"Research Scan.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Research"},
-  {"path":"/research/screener","label":"Screener","crumbs":["Research","Workbench","Discover"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Research"},
-  {"path":"/research/explorer","label":"Stocks","crumbs":["Research","Workbench","Discover","Screener"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Research"},
+  {"path":"/research/screener","label":"Screener","crumbs":["Research","Workbench","Discover"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/explorer","label":"Stocks","crumbs":["Research","Workbench","Discover","Screener"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-18.2","inNav":true,"group":"Research"},
   {"path":"/research/contract-screener","label":"Contracts","crumbs":["Research","Workbench","Discover","Screener"],"designed":true,"file":"Research Contract Screener.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Research"},
   {"path":"/research/event-radar","label":"Alerts","crumbs":["Research","Market"],"designed":true,"file":"Research Event Radar.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
-  {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Workbench","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":true,"group":"Research"},
+  {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Workbench","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-18.2","inNav":true,"group":"Research"},
   {"path":"/research/vol-regime","label":"Vol Regime","crumbs":["Research","Workbench","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null},
   {"path":"/research/dealer-levels","label":"Dealer Levels","crumbs":["Research","Workbench","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null},
   {"path":"/research/scenario","label":"Scenario","crumbs":["Research","Workbench","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null},
@@ -72,20 +72,25 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/lab/calibration","label":"Calibration","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Calibration.dc.html","round":"LAB","rev":"2026-09-12.3","inNav":true,"group":"Research"},
   {"path":"/research/lab/discover-model","label":"Discover model","crumbs":["Research","Lab"],"designed":true,"file":"Research Lab Discover Model.dc.html","round":"LAB","rev":"2026-09-12.3","inNav":true,"group":"Research"},
   {"path":"/review/playbook-stats","label":"Playbook stats","crumbs":["Review"],"designed":true,"file":"Review Playbook Stats.dc.html","round":"NEW","rev":"2026-09-18.1","inNav":true,"group":"Review"},
+  {"path":"/research/journal","label":"Journal","crumbs":["Research"],"designed":true,"file":"Research Journal.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"Research"},
   {"path":"/research/signal-decay","label":"Signal Decay","crumbs":["Research","Workbench","Validate"],"designed":true,"file":"Research Signal Decay.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
   {"path":"/research/backtest","label":"Backtest","crumbs":["Research","Workbench","Validate"],"designed":true,"file":"Research Backtest.dc.html","round":"LAB","rev":"2026-09-17.1","inNav":true,"group":"Research"},
   {"path":"/research/signal-health","label":"Signal Health","crumbs":["Research","Workbench","Data"],"designed":true,"file":"Research Signal Health.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
   {"path":"/research/lens-coverage","label":"Lens Coverage","crumbs":["Research","Workbench","Data"],"designed":true,"file":"Research Lens Coverage.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Research"},
-  {"path":"/research/watchlist","label":"Watchlist","crumbs":["Research","Workbench","Data"],"designed":true,"file":"Research Watchlist.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
+  {"path":"/research/watchlist","label":"Watchlist","crumbs":["Research","The Book"],"designed":true,"file":"Research Watchlist.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"Research"},
   {"path":"/research/greeks","label":"Contract Greeks","crumbs":["Research","Workbench","Data"],"designed":true,"file":"Research Contract Greeks.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
-  {"path":"/research/copilot","label":"Desk","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-15.5","inNav":true,"group":"Research"},
+  {"path":"/research/narrative","label":"Narrative","crumbs":["Research","Workbench","Data"],"designed":true,"file":"Research Narrative Lens.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/copilot","label":"Desk","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-18.2","inNav":true,"group":"Research"},
   {"path":"/research/daily-brief","label":"Daily Brief","crumbs":["Research","Copilot"],"designed":true,"file":"Research Daily Brief.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
   {"path":"/research/copilot/trading","label":"Book starters","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-15.5","inNav":false,"group":null},
-  {"path":"/research/agent-personas","label":"Personas","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-15.5","inNav":true,"group":"Research"},
-  {"path":"/research/loop/harness","label":"Autopilot","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-14.1","inNav":true,"group":"Research"},
-  {"path":"/research/loop/decisions","label":"Decision Inbox","crumbs":["Research","Autopilot"],"designed":true,"file":"Research Autopilot Decisions.dc.html","round":"OLD","rev":"2026-09-13.1","inNav":true,"group":"Research"},
-  {"path":"/research/loop/hypotheses","label":"Hypothesis Board","crumbs":["Research","Autopilot"],"designed":true,"file":"Research Hypothesis Board.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
-  {"path":"/research/loop/candidates","label":"Candidate Pool","crumbs":["Research","Autopilot"],"designed":true,"file":"Research Candidate Pool.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
+  {"path":"/research/agent-personas","label":"Personas","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/loop/harness","label":"Autopilot","crumbs":["Research"],"designed":true,"file":"Research Autopilot Console.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/loop/objectives/obj-daily-stock","label":"Daily loop · stocks","crumbs":["Research","Autopilot","Objectives"],"designed":true,"file":"Research Autopilot Console.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/loop/objectives/obj-earnings-iv","label":"Earnings-week IV","crumbs":["Research","Autopilot","Objectives"],"designed":true,"file":"Research Autopilot Console.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/loop/runs","label":"Loop Run","crumbs":["Research","Autopilot"],"designed":true,"file":"Research Autopilot Console.dc.html","round":null,"rev":"2026-09-18.2","inNav":false,"group":null},
+  {"path":"/research/loop/decisions","label":"Decision Inbox","crumbs":["Research","Autopilot"],"designed":true,"file":"Research Autopilot Decisions.dc.html","round":"OLD","rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/loop/hypotheses","label":"Hypothesis Board","crumbs":["Research","The Book"],"designed":true,"file":"Research Hypothesis Board.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/loop/candidates","label":"Candidate Pool","crumbs":["Research","The Book"],"designed":true,"file":"Research Candidate Pool.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"Research"},
   {"path":"/trade/desk","label":"Desk","crumbs":["Trade"],"designed":true,"file":"Trade Desk.dc.html","round":"OLD","rev":"2026-09-18.1","inNav":true,"group":"Trade"},
   {"path":"/trade/plans","label":"Plans","crumbs":["Trade","Desk"],"designed":true,"file":"Trade Plans.dc.html","round":"OLD","rev":"2026-09-18.1","inNav":true,"group":"Trade"},
   {"path":"/trade/fills","label":"Orders & Fills","crumbs":["Trade","Desk"],"designed":true,"file":"Trade Fills.dc.html","round":"OLD","rev":"2026-09-18.1","inNav":true,"group":"Trade"},
@@ -123,4 +128,5 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/docs/gaps","label":"Gap Review","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Gaps.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"System"},
   {"path":"/docs/options-kit","label":"Options Kit","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Options Kit.dc.html","round":null,"rev":"2026-09-17.2","inNav":true,"group":"System"},
   {"path":"/docs/drilldown","label":"Drill-down","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Drilldown.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"System"},
+  {"path":"/docs/research-vision","label":"Research Vision · dock","crumbs":["System","Reference","Design"],"designed":true,"file":"Research Artifact Dock.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"System"},
 ]

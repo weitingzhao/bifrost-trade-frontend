@@ -65,11 +65,29 @@ export interface AdoptionRow {
    * work left would have inflated the backlog by five.
    */
   aliasOf?: readonly string[]
+  /** The app's `:param` route that answers this design fixture row. */
+  via?: string
   /** Whether the app has a page at this path (false for rows only the design has). */
   inApp: boolean
 }
 
 const DESIGN_BY_PATH = new Map(DESIGN_ROUTES.map((d) => [d.path, d]))
+
+/**
+ * Design rows the app answers with a parametrized page.
+ *
+ * The design's registry cannot hold `:id`, so it seeds concrete fixture rows —
+ * two objectives so its menu and crumbs resolve, and a dry `/runs` stem whose
+ * per-run form is `?run=`. The app's answer to all three is a real page at a
+ * `:param` route (the objective page, and the run redirect into the console's
+ * drawer). Counted as `unbuilt`, built pages would have sat in "to build";
+ * these rows take their state from the param route instead.
+ */
+const PARAM_COVERED: Record<string, string> = {
+  '/research/loop/objectives/obj-daily-stock': '/research/loop/objectives/:objectiveId',
+  '/research/loop/objectives/obj-earnings-iv': '/research/loop/objectives/:objectiveId',
+  '/research/loop/runs': '/research/loop/runs/:runId',
+}
 
 /**
  * Design routes the app answers with a redirect, grouped by where they land.
@@ -146,6 +164,20 @@ export function adoptionRows(): AdoptionRow[] {
   const covered = new Set([...rows.map((r) => r.path), ...[...byTarget.values()].flat()])
   for (const d of DESIGN_ROUTES) {
     if (covered.has(d.path)) continue
+    const via = PARAM_COVERED[d.path]
+    const viaRoute = via ? PAGE_ROUTES.find((r) => r.path === via) : undefined
+    if (viaRoute) {
+      rows.push({
+        path: d.path,
+        label: d.label,
+        crumbs: d.crumbs,
+        state: stateOf(viaRoute, d),
+        design: d,
+        via,
+        inApp: true,
+      })
+      continue
+    }
     rows.push({
       path: d.path,
       label: d.label,

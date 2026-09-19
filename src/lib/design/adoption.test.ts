@@ -229,7 +229,13 @@ describe('design adoption', () => {
     // reviewing 1→2). Both were rebuilt against their prototypes and signed
     // off together 2026-09-18 (aligned 31→33, reviewing 2→0): every walked
     // page is in place, and Trade closes at 7/7.
-    expect(counts.byState.reviewing).toBe(0)
+    // Batch R1 of the Research walk (2026-09-18): the Autopilot tree —
+    // harness (the prototype's own ruling: the seat home is not redesigned,
+    // only the context strip is new), Hypothesis Board (rebuilt to the card
+    // grid, lanes in the server's vocabulary) and Candidate Pool (strip, age,
+    // trued footnotes) — walked and built, waiting on the Owner's look
+    // (pending 16→13, reviewing 0→3).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -270,7 +276,11 @@ describe('design adoption', () => {
       '/trade/playbook',
       '/trade/rules',
     ])
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/research/loop/candidates',
+      '/research/loop/harness',
+      '/research/loop/hypotheses',
+    ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
     // carried had a home — they are redirects now, and a redirect is not a row
@@ -304,8 +314,9 @@ describe('design adoption', () => {
     expect(counts.byState.unbuilt).toBe(23)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
-    // 18 since Performance joined `reviewing`; 16 since Playbook did.
-    expect(counts.byState.pending).toBe(16)
+    // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since
+    // the Autopilot tree did (R1).
+    expect(counts.byState.pending).toBe(13)
     expect(counts.byState.backlog).toBe(4)
   })
 

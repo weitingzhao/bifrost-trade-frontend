@@ -9,6 +9,7 @@ import { PageHeader, PageShell } from '@/components/layout'
 import type { CandidateOutcomeRow } from '@/api/research/candidateOutcome'
 import { CandidateOutcomeSummary } from '@/components/research/CandidateOutcomeSummary'
 import { useCandidateOutcomeByCandidate } from '@/hooks/useCandidateOutcome'
+import { cn } from '@/lib/utils'
 import { fmtPctSigned } from '@/lib/format'
 import { labHref } from '@/lib/analyzeHubs'
 import {
@@ -73,7 +74,25 @@ function CandidateOutcomeCell({ outcome }: { outcome?: CandidateOutcomeRow }) {
   )
 }
 
+/** 'new' the day it landed, amber once its ttl is within two days — the design's age cell on real fields. */
+function candidateAge(
+  row: Pick<ResearchCandidate, 'created_at' | 'ttl_at' | 'status'>,
+  nowIso: string,
+): { label: string; tone: 'fresh' | 'expiring' | 'quiet' } {
+  const now = Date.parse(nowIso)
+  const born = Date.parse(row.created_at)
+  const days = Number.isFinite(born) ? Math.max(0, Math.floor((now - born) / 86_400_000)) : null
+  const label = days == null ? '—' : days === 0 ? 'new' : `${days}d`
+  if (days === 0 && row.status === 'open') return { label, tone: 'fresh' }
+  const ttl = row.ttl_at ? Date.parse(row.ttl_at) : NaN
+  if (row.status === 'open' && Number.isFinite(ttl) && ttl - now < 2 * 86_400_000) {
+    return { label, tone: 'expiring' }
+  }
+  return { label, tone: 'quiet' }
+}
+
 export default function CandidatePoolPage() {
+  const nowIso = new Date().toISOString()
   const [status, setStatus] = useState<StatusFilter>('open')
   const [dismissTarget, setDismissTarget] = useState<ResearchCandidate | null>(null)
 
@@ -92,6 +111,15 @@ export default function CandidatePoolPage() {
     () => items.filter((c) => c.status === 'open').length,
     [items],
   )
+
+  /** The newest trade_date in view and how many rows it brought. */
+  const latestBatch = useMemo(() => {
+    const dated = items.filter((c) => c.trade_date)
+    if (dated.length === 0) return null
+    const sorted = dated.map((c) => c.trade_date).sort()
+    const date = sorted[sorted.length - 1]
+    return { date, n: dated.filter((c) => c.trade_date === date).length }
+  }, [items])
 
   async function handlePromote(row: ResearchCandidate) {
     if (row.status !== 'open' || promote.isPending) return
@@ -117,8 +145,56 @@ export default function CandidatePoolPage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Candidate Pool"
-        description="Staging queue for symbols before promotion to a Hypothesis. Observe-only (D10)."
+        description="What the loop is considering — the Curator screens in, ttl expiry screens out, you promote (Add to Pool from Scan and the discovery pages). Observe-only (D10)."
+        actions={
+          <Link
+            to="/research/loop/decisions"
+            className="whitespace-nowrap text-dense-label text-primary hover:underline"
+          >
+            Decision Inbox →
+          </Link>
+        }
       />
+
+      {/* The design's strip over the pool. `Above promote line` keeps its
+          sentence and no number — no fit line exists to be above. */}
+      <div className="flex flex-wrap items-start gap-x-7 gap-y-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2.5">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
+            In pool
+          </span>
+          <span className="font-mono text-base font-bold">{openCount}</span>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
+            Latest batch
+          </span>
+          <span className="font-mono text-dense-label font-semibold text-secondary-foreground">
+            {latestBatch ? latestBatch.date : '—'}
+          </span>
+          <span className="text-dense-caption text-muted-foreground">
+            {latestBatch ? `+${latestBatch.n} in` : 'nothing dated'}
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
+            Above promote line
+          </span>
+          <span className="font-mono text-base font-bold text-muted-foreground">—</span>
+          <span className="text-dense-caption text-muted-foreground">
+            no promote line exists — promotion is always yours; the loop only proposes
+          </span>
+        </div>
+        <div className="ml-auto flex max-w-[22rem] flex-col gap-0.5">
+          <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
+            Pool policy
+          </span>
+          <span className="text-dense-caption leading-normal text-muted-foreground">
+            a candidate carries a ttl_at and expiry screens it out as expired; Promote writes a
+            Hypothesis and the row keeps the link
+          </span>
+        </div>
+      </div>
 
       <CandidateOutcomeSummary />
 
@@ -153,6 +229,7 @@ export default function CandidatePoolPage() {
               <DenseTableHead>Source</DenseTableHead>
               <DenseTableHead className="text-right">Score</DenseTableHead>
               <DenseTableHead>Trade date</DenseTableHead>
+              <DenseTableHead>Age</DenseTableHead>
               <DenseTableHead>Tags</DenseTableHead>
               <DenseTableHead>Book</DenseTableHead>
               <DenseTableHead>Status</DenseTableHead>
@@ -182,6 +259,19 @@ export default function CandidatePoolPage() {
                   <DenseTableCell className={denseTableNumCell}>{fmtScore(row.score)}</DenseTableCell>
                   <DenseTableCell className="font-mono tabular-nums text-dense-meta">
                     {row.trade_date || '—'}
+                  </DenseTableCell>
+                  <DenseTableCell
+                    className={cn(
+                      'font-mono text-dense-micro',
+                      candidateAge(row, nowIso).tone === 'fresh'
+                        ? 'text-success'
+                        : candidateAge(row, nowIso).tone === 'expiring'
+                          ? 'text-warning'
+                          : 'text-muted-foreground',
+                    )}
+                    title={row.ttl_at ? `ttl ${row.ttl_at.slice(0, 10)}` : 'no ttl'}
+                  >
+                    {candidateAge(row, nowIso).label}
                   </DenseTableCell>
                   <DenseTableCell>
                     <div className="flex flex-wrap gap-1">
@@ -248,6 +338,12 @@ export default function CandidatePoolPage() {
           </DenseTableBody>
         </DenseDataTable>
       )}
+
+      <p className="text-dense-caption leading-normal text-muted-foreground">
+        Score is the loop's composite at ingest — it ranks attention, it does not size or trade
+        anything (D10). Promote writes a Hypothesis directly and the row keeps the link; Dismiss
+        and ttl expiry keep history.
+      </p>
 
       <ConfirmDialog
         open={dismissTarget != null}

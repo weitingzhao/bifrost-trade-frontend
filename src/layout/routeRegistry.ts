@@ -96,7 +96,16 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/workbench', label: 'Workbench', crumbs: RESEARCH },
 
   // ── Research · Autopilot ───────────────────────────────────────────────
-  { path: '/research/loop/harness', label: 'Autopilot', crumbs: RESEARCH },
+  {
+    path: '/research/loop/harness',
+    label: 'Autopilot',
+    crumbs: RESEARCH,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-14.1',
+      note: DESIGN_NOTES['/research/loop/harness'],
+    },
+  },
   {
     path: '/research/loop/decisions',
     label: 'Decision Inbox',
@@ -107,8 +116,26 @@ export const ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/research/loop/decisions'],
     },
   },
-  { path: '/research/loop/hypotheses', label: 'Hypothesis Board', crumbs: AUTOPILOT },
-  { path: '/research/loop/candidates', label: 'Candidate Pool', crumbs: AUTOPILOT },
+  {
+    path: '/research/loop/hypotheses',
+    label: 'Hypothesis Board',
+    crumbs: AUTOPILOT,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/research/loop/hypotheses'],
+    },
+  },
+  {
+    path: '/research/loop/candidates',
+    label: 'Candidate Pool',
+    crumbs: AUTOPILOT,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/research/loop/candidates'],
+    },
+  },
   { path: '/research/loop/objectives/:objectiveId', label: 'Objective', crumbs: AUTOPILOT },
   { path: '/research/loop/runs/:runId', label: 'Loop Run', crumbs: AUTOPILOT },
 

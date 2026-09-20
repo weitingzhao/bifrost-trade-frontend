@@ -329,13 +329,21 @@ describe('design adoption', () => {
     // now have a design to build against, which they did not before.
     // Package 2026-09-19.1 grew it again (78→84): Journal, the Narrative lens,
     // the Artifact Dock concept page, the two objective fixture rows and the
-    // runs stem.
-    expect(counts.designed).toBe(84)
+    // runs stem. Package 2026-09-20.1 grew it to 88: the Review Objectives
+    // closing page, the Research menu reference, and the two objective rows
+    // repointed at their own page rather than the Console. Nothing was
+    // removed, and no already-walked page moved rev — the Lab dissolution and
+    // the Discover flattening change where Research pages *live*, not what
+    // any aligned page concludes.
+    expect(counts.designed).toBe(88)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three
     // designed with no app page yet (Journal and Narrative are Vision batches
-    // W4/W5; the concept page is the design's own reference).
-    expect(counts.byState.unbuilt).toBe(26)
+    // W4/W5; the concept page is the design's own reference). 30 since Package
+    // 2026-09-20.1: Review Objectives and the Research menu reference are new
+    // pages, and the two Lab routes that moved to System › Data took their
+    // unbuilt state with them rather than being counted twice.
+    expect(counts.byState.unbuilt).toBe(30)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since
@@ -384,7 +392,10 @@ describe('design adoption', () => {
     // The Owner re-signed all five on the colour look, so none stays stale.
     // Package 2026-09-17.4 fixed the header the app reads (P1), so DESIGN_REV
     // finally moves with the body instead of lagging it by two revs.
-    expect(DESIGN_REV).toBe('2026-09-19.1')
+    // Package 2026-09-20.1 @ Rev .11 is a full baseline. The .11 round bumps
+    // only the global Rev — the glyph table is shell, not page — so the 28
+    // aligned pages hold and `stale` does not move.
+    expect(DESIGN_REV).toBe('2026-09-20.11')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

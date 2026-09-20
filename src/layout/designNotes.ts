@@ -117,7 +117,36 @@ export const DESIGN_NOTES: Record<string, string> = {
   '/research/screener':
     "Owner ruled 2026-09-20 which of this side's pages the design's Stock screen is, and the page took the design's own path with the name. The evidence is the prototype's content, not the label: Research Screener.dc.html is universe -> criteria stages (AND between stages, OR inside one, 'at least N of these') -> results -> lineage v1->v2, and only this page has any of the three. Stock Explorer has no criteria of its own; it is a tab shell over SEPA Daily Core, Momentum Radar and Event Radar, all three of which the design redistributed (the first two are lenses of Stock ratings' composite, the third moved to Home as Alerts). An earlier note in routeRegistry read the design's Screener as our Explorer; that reading is withdrawn. The page itself is unchanged in this move — path, label and menu row only — so it is `reviewing` against 2026-09-20.10 and has not been walked against the prototype cell by cell yet. The old `/research/stock-screener` address redirects here; `/research/screener` stopped being a redirect to the Option Screener, which means an option-screener bookmark written before 2026-09-15 now lands on a stock screen.",
   '/research/book':
-    "Built 2026-09-20 against Research Book.dc.html (Rev 2026-09-20.24), the fold's own page. Four parallel children and none of them is The Book, so it gets a page rather than an alias. It answers what the four cannot, because every judgment on it is a cross-table one: a watchlist name no hypothesis is about, a candidate past its expiry, a belief with no settled position behind it. Census is the funnel widest-first; Waiting on you is those three judgments, oldest first, each with its reason; Four views navigates and says the page only counts — a hypothesis or candidate is born beside its evidence, on Symbol, Compare or Review. Measured on DEV before building: 22 watchlist names of which 4 carry a thesis, 62 candidates (2 open, 10 promoted, 7 dismissed, 43 expired), 29 hypotheses all active, and 0 of them carrying an opportunity id. Two honest divergences. The hypothesis lanes are the store's own — active / validated / rejected / archived — not the design's active / testing / parked / retired: printing the design's words over these counts would make `parked` mean `archived`, and those are opposite claims. And the Journal band shows a dash with its reason rather than a zero, because there is no artifact store on this side and a zero is a count while 'nothing counts this' is not. Thin record currently catches every active hypothesis, which is the broken lineage bridge (REQUEST R5) reading through.",
+    "Built 2026-09-20 against Research Book.dc.html (Rev 2026-09-20.24), the fold's own page, "
+    + 'then re-walked the same day after /risk and /portfolio, section by section. Four parallel '
+    + 'children and none of them is The Book, so it gets a page rather than an alias. It answers '
+    + 'what the four cannot, because every judgment on it is a cross-table one: a watchlist name '
+    + 'no hypothesis is about, a candidate past its expiry, a belief with no settled position '
+    + 'behind it. Measured on DEV before building: 22 watchlist names of which 4 carry a thesis, '
+    + '62 candidates (2 open, 10 promoted, 7 dismissed, 43 expired), 29 hypotheses all active, '
+    + 'and 0 of them carrying an opportunity id. The second pass: Census leads with the count as '
+    + 'a number in the band’s own colour, says what each state is, and prints the split as tags '
+    + 'rather than text. Waiting on you carries its own verdict in the header with the panel '
+    + 'tinted behind it, and took the design’s five columns — Where, Scope, What is waiting, '
+    + 'Reason, Age — so a row says which of the three tables it lives in instead of leaving that '
+    + 'to the tag; the age ink turns amber at four days and red at eight, the design’s own '
+    + 'thresholds. Four views became rows with the size of what each one holds beside it, which '
+    + 'is the difference between a list of where to click and a list of what is worth clicking. '
+    + 'An `as of` chip joined the header, reading the *stalest* of the three queries rather than '
+    + 'the freshest: the census is a claim across all three, so it is only as current as the one '
+    + 'that answered longest ago. Four honest divergences. The hypothesis lanes are the store’s '
+    + 'own — active / validated / rejected / archived — not the design’s active / testing / '
+    + 'parked / retired: printing the design’s words over these counts would make `parked` mean '
+    + '`archived`, and those are opposite claims. The empty lanes keep their rows where the '
+    + 'design filters them out, because on DEV all three settled lanes read zero and that is the '
+    + 'reading — nothing has ever settled. The Journal band shows a dash with its reason rather '
+    + 'than a zero, and its row in Four views does not link anywhere: there is no artifact store '
+    + 'and no page, and answering a click about history with the Hypothesis Board would be worse '
+    + 'than not linking. And a candidate’s waiting row says who nominated it and what the loop '
+    + 'scored it, where the design prints a vehicle no column stores. Thin record currently '
+    + 'catches every active hypothesis, which is the broken lineage bridge (REQUEST R5) reading '
+    + 'through; the panel names that cause above its rows rather than leaving 29 identical '
+    + 'sentences to be read as 29 problems.',
   '/portfolio':
     "Built 2026-09-20 against Portfolio Overview.dc.html (Rev 2026-09-20.19), the layer's own "
     + 'page, then re-walked the same day beside the prototype for the same reason as /risk: the '
@@ -148,7 +177,8 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'have and there is nothing to display. And only one open-options figure is printed — '
     + 'unmatched premium as of today, the design’s own — where the page had also carried the '
     + 'range’s summed mark beside it; two numbers a few dollars apart under one word read as an '
-    + 'inconsistency rather than as two measures.',
+    + 'inconsistency rather than as two measures. '
+    + 'Owner signed off 2026-09-20 on local DEV (:5173) at this rev.',
   '/risk':
     "Built 2026-09-20 against Risk Overview.dc.html (Rev 2026-09-20.19), the layer's own page, "
     + "then re-walked the same day on the Owner's reading that the first build was not close enough. "

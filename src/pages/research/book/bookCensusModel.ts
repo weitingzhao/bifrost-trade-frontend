@@ -40,12 +40,19 @@ export function thesisNames(hypotheses: readonly Hypothesis[]): Set<string> {
 /** The store's lanes. See the note in `census` on why these are not the design's. */
 const HYPOTHESIS_LANES = ['active', 'validated', 'rejected', 'archived'] as const
 
+export type BandTagVariant = 'success' | 'info' | 'danger' | 'neutral' | 'category'
+
 export interface CensusBand {
   label: string
   n: number
+  /** What this state *is*, in a reader's words — the design's own sentence. */
+  what: string
+  /** The band's own colour, so the four counts read as a sequence. */
+  ink: string
   /** Null when the split cannot be read, which is different from a split of zeroes. */
-  parts: { label: string; n: number }[] | null
-  to: string
+  parts: { label: string; n: number; variant: BandTagVariant }[] | null
+  /** Null when there is no page for this state yet. */
+  to: string | null
   /** What is missing, when `parts` is null. */
   missing?: string
 }
@@ -75,40 +82,59 @@ export function census(
   const byStatus = new Map<string, number>()
   for (const h of hypotheses) byStatus.set(h.status, (byStatus.get(h.status) ?? 0) + 1)
 
+  const noThesis = names.length - onWatch
   return [
     {
       label: 'Watchlist',
       n: names.length,
+      what: 'Names with a thesis attached — the widest end of the book.',
+      ink: 'text-sky-300',
       parts: [
-        { label: 'with a thesis', n: onWatch },
-        { label: 'no thesis', n: names.length - onWatch },
+        { label: `${onWatch} with thesis`, n: onWatch, variant: 'info' },
+        { label: `${noThesis} without`, n: noThesis, variant: noThesis > 0 ? 'danger' : 'neutral' },
       ],
       to: '/research/watchlist',
     },
     {
       label: 'Candidates',
       n: candidates.filter((c) => c.status === 'open').length,
-      parts: ['you', 'curator', 'screen'].map((k) => ({ label: k, n: bySource.get(k) ?? 0 })),
+      what: 'What the loop is considering. The Curator screens in, expiry screens out, you promote.',
+      ink: 'text-violet-300',
+      parts: ['you', 'curator', 'screen'].map((k) => ({
+        label: `${k} ${bySource.get(k) ?? 0}`,
+        n: bySource.get(k) ?? 0,
+        variant: (k === 'you' ? 'success' : k === 'curator' ? 'category' : 'info') as BandTagVariant,
+      })),
       to: '/research/loop/candidates',
     },
     {
       label: 'Hypotheses',
       n: hypotheses.length,
+      what: 'Tradable beliefs, each with its evidence and its settled record.',
+      ink: 'text-lime-300',
       // The store's own four, not the design's. The design's lanes are
       // active / testing / parked / retired; this side settles a belief into
       // validated or rejected and archives it, which is a different sentence
       // about the same object. Printing the design's words over these counts
       // would make `parked` mean `archived`, and those are opposite claims —
       // one is set aside, the other is finished with.
-      parts: HYPOTHESIS_LANES.map((k) => ({ label: k, n: byStatus.get(k) ?? 0 })),
+      parts: HYPOTHESIS_LANES.map((k) => ({
+        label: `${k} ${byStatus.get(k) ?? 0}`,
+        n: byStatus.get(k) ?? 0,
+        variant: (k === 'active' ? 'success' : k === 'validated' ? 'info' : 'neutral') as BandTagVariant,
+      })),
       to: '/research/loop/hypotheses',
     },
     {
       label: 'Journal',
       n: 0,
+      what: 'History. Append-only — every artifact, its branches, and what it settled to.',
+      ink: 'text-foreground',
       parts: null,
       missing: 'no artifact store on this side — the lineage tree has nothing to count yet',
-      to: '/research/loop/hypotheses',
+      // No page either: linking this band to the Hypothesis Board would answer
+      // a click about history with a list of beliefs.
+      to: null,
     },
   ]
 }
@@ -134,12 +160,27 @@ export function dominantCause(stuck: readonly Stuck[]): { kind: StuckKind; n: nu
 export interface Stuck {
   key: string
   kind: StuckKind
-  subject: string
-  /** Why this is stuck, in the words the reader would use. */
+  /** Which of the three tables the row lives in. */
+  where: 'Watchlist' | 'Candidate' | 'Hypothesis'
+  /** The symbol it is about, or BOOK for a belief about the whole book. */
+  scope: string
+  /** What is waiting, in one line. */
+  what: string
+  /** Why this is stuck, in the words the reader would use. Carried as the tip. */
   why: string
   /** Days it has been in this state; drives the order. */
   ageDays: number | null
   to: string
+}
+
+/**
+ * How loudly an age reads. The design's thresholds, and its reasoning: under
+ * four days nothing has gone wrong yet, over eight it has been ignored.
+ */
+export function stuckAgeTone(days: number | null): 'old' | 'aging' | 'plain' {
+  if (days == null) return 'plain'
+  if (days >= 8) return 'old'
+  return days >= 4 ? 'aging' : 'plain'
 }
 
 function daysSince(iso: string | null | undefined, now: number): number | null {
@@ -187,7 +228,9 @@ export function waitingOnYou(
     out.push({
       key: `thesis:${symbol}`,
       kind: 'no thesis',
-      subject: symbol,
+      where: 'Watchlist',
+      scope: symbol,
+      what: 'watched with no thesis written',
       why: 'On the watchlist with no hypothesis about it — every page that reads the list carries it anyway.',
       ageDays: at > 0 ? Math.floor((now - at) / 86_400_000) : null,
       to: '/research/watchlist',
@@ -200,10 +243,16 @@ export function waitingOnYou(
     // `daysSince` counts forward from the stamp, so a future expiry is
     // negative — at or past zero is the row that needs answering.
     if (left == null || left < 0) continue
+    const who = c.source === 'harness' ? 'curator' : c.source === 'copilot' ? 'you' : 'screen'
     out.push({
       key: `pool:${c.id}`,
       kind: 'aging in pool',
-      subject: c.symbol,
+      where: 'Candidate',
+      scope: c.symbol,
+      // The design prints the vehicle here; no column stores one on this side,
+      // so the row says who nominated it and what the loop scored it, which
+      // is what the pool actually holds.
+      what: `${who} nomination${c.score == null ? '' : ` · score ${c.score.toFixed(2)}`}`,
       why: `Open in the pool past its expiry. A candidate left alone is not neutral — the market moved while it sat.`,
       ageDays: daysSince(c.created_at, now),
       to: '/research/loop/candidates',
@@ -218,7 +267,11 @@ export function waitingOnYou(
     out.push({
       key: `thin:${h.id}`,
       kind: 'thin record',
-      subject: h.title,
+      where: 'Hypothesis',
+      // A belief about no particular name is about the book, which the design
+      // writes as BOOK rather than leaving the cell empty.
+      scope: (h.symbols ?? []).map((x) => String(x).trim().toUpperCase()).find(Boolean) ?? 'BOOK',
+      what: h.title,
       why: 'No settled position is linked to it, so it has no record to size against — however long it has been open.',
       ageDays: daysSince(h.created_at, now),
       to: '/research/loop/hypotheses',
@@ -226,4 +279,49 @@ export function waitingOnYou(
   }
 
   return out.sort((a, b) => (b.ageDays ?? -1) - (a.ageDays ?? -1))
+}
+
+export interface BookView {
+  name: string
+  what: string
+  /** The count this view holds, printed beside it. Null when nothing counts it. */
+  meta: string
+  to: string | null
+}
+
+/**
+ * The four views, each with the size of what it holds.
+ *
+ * The count belongs beside the name for the same reason the census exists: a
+ * list of four page names says where to click, and says nothing about which
+ * of them is worth clicking today.
+ */
+export function bookViews(bands: readonly CensusBand[]): BookView[] {
+  const n = (label: string) => bands.find((b) => b.label === label)?.n ?? 0
+  return [
+    {
+      name: 'Hypothesis Board',
+      what: 'Every tradable belief, with its evidence and its record. Born next to evidence, never typed in.',
+      meta: `${n('Hypotheses')} beliefs`,
+      to: '/research/loop/hypotheses',
+    },
+    {
+      name: 'Candidate Pool',
+      what: 'What the loop is considering right now, with who nominated it and what it scored at ingest.',
+      meta: `${n('Candidates')} open`,
+      to: '/research/loop/candidates',
+    },
+    {
+      name: 'Watchlist',
+      what: 'Names with a thesis attached — pinned from the screen, from Symbol or from an Inspector.',
+      meta: `${n('Watchlist')} names`,
+      to: '/research/watchlist',
+    },
+    {
+      name: 'Journal',
+      what: 'The history layer: every artifact, whoever wrote it, with its branches and what it settled to.',
+      meta: 'no page yet',
+      to: null,
+    },
+  ]
 }

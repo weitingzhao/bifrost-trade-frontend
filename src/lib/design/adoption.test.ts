@@ -161,8 +161,8 @@ describe('design adoption', () => {
     // Research Overview, the Trade Desk and the Review Queue are each now the
     // layer itself rather than its first row — so they leave `aligned` for
     // `stale` without leaving the walked set.
-    expect(counts.aligned + counts.byState.stale).toBe(34)
-    expect(counts.aligned).toBe(27)
+    expect(counts.aligned + counts.byState.stale).toBe(35)
+    expect(counts.aligned).toBe(28)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -268,8 +268,11 @@ describe('design adoption', () => {
     // left for aligned on the Owner's look 2026-09-19 (reviewing 5→4).
     // 9: the three layer pages, `/research/screener` after the Owner's
     // naming ruling, and `/review/objectives` — built on option (c) with its
-    // chain honestly broken.
-    expect(counts.byState.reviewing).toBe(9)
+    // chain honestly broken. Then `/risk` and `/portfolio` were re-walked
+    // section by section against their prototypes on the Owner's reading that
+    // the first builds were not close enough, and `/portfolio` was signed off
+    // at the end of that pass (reviewing 9→8, aligned 27→28).
+    expect(counts.byState.reviewing).toBe(8)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -277,6 +280,7 @@ describe('design adoption', () => {
         .sort(),
     ).toEqual([
       '/home',
+      '/portfolio',
       '/portfolio/accounts',
       '/portfolio/backing',
       '/portfolio/corporate-actions',
@@ -309,7 +313,6 @@ describe('design adoption', () => {
       '/trade/rules',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/portfolio',
       '/research/book',
       '/research/loop/candidates',
       '/research/loop/harness',
@@ -455,10 +458,11 @@ describe('adoptionByGroup', () => {
     // signed off on 2026-09-18, so the group is whole again — until the next
     // design round moves one of them.
     // And the next round did: `/portfolio` joined as the layer's own overview
-    // page (§5a.1). It is built and waiting on a look, so the group is 9 of 10
-    // aligned with one in `reviewing` rather than one unbuilt.
-    expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
-    expect(portfolio?.byState.reviewing).toBe(1)
+    // page (§5a.1). It was built, re-walked section by section against the
+    // prototype, and signed off 2026-09-20 — so the group is whole again at
+    // ten of ten, with nothing left waiting on a look.
+    expect(portfolio).toMatchObject({ total: 10, aligned: 10, left: 0 })
+    expect(portfolio?.byState.reviewing).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

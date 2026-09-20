@@ -88,17 +88,18 @@ describe('one tree, both homes', () => {
       (flatten(researchItems(ctx)).find((i) => i.label === label)?.children ?? []).map(
         (i) => [i.label, i.to],
       )
-    // Ratings and Screener homes are unbuilt; their existing children stand
-    // flat in the design's order until W3/W5 build the homes. Stock Screener
-    // joined from the dissolved Data fold: the design's `/research/screener`
-    // and `/research/explorer` are both labelled "Stock screen", so which of
-    // the app's two pages that names is the Owner's to settle — until then
-    // both keep the names they have.
+    // Three of the design's four. Stock ratings — the composite with the
+    // weight sliders — is unbuilt and leads the fold when it lands.
+    //
+    // The Owner settled the Stock screen on 2026-09-20 by what the prototype
+    // holds rather than what it is labelled: universe, criteria stages and
+    // lineage, none of which Stock Explorer has. Explorer left the fold with
+    // that ruling — it is a tab shell over three subjects the design
+    // redistributed — and keeps its route.
     expect(rows('Discover')).toEqual([
       ['Vol ratings', '/research/scan'],
-      ['Stock Explorer', '/research/explorer'],
+      ['Stock screen', '/research/screener'],
       ['Option screen', '/research/contract-screener'],
-      ['Stock Screener', '/research/stock-screener'],
     ])
     // Data is gone. Signal Health and Lens Coverage are System rows now, and
     // Contract Greeks holds no row at all — it is a tab of Symbol.

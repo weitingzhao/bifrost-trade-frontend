@@ -57,9 +57,9 @@ export const REDIRECTS: readonly RouteEntry[] = [
   },
   {
     path: '/research/sepa',
-    label: 'Stock Screener',
-    crumbs: DATA,
-    redirect: '/research/stock-screener',
+    label: 'Stock screen',
+    crumbs: DISCOVER,
+    redirect: '/research/screener',
   },
   // Went to `/settings/data-readiness`, which is itself a redirect — two hops
   // and two history entries. Points at the page now; the test forbids the shape.
@@ -85,14 +85,19 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     redirect: '/research/scan',
   },
-  // The Option Screener's own path until 2026-09-15. It stays a redirect so
-  // saved links keep working, and it is left free for the design's screener
-  // home — which is a different prototype, and unbuilt.
+  // `/research/screener` was the Option Screener's path until 2026-09-15 and
+  // then a redirect to it. It is the **Stock screen** now (Owner ruling
+  // 2026-09-20): the design's own address for that page, and reading the
+  // prototype settled which of this side's pages it means. So it is a real
+  // route again, not a redirect — and an option-screener bookmark from before
+  // 2026-09-15 now lands on a stock screen. Five days of history against a
+  // permanent fork between the design's address book and this one; the fork
+  // costs more.
   {
-    path: '/research/screener',
-    label: 'Option Screener',
-    crumbs: DATA,
-    redirect: '/research/contract-screener',
+    path: '/research/stock-screener',
+    label: 'Stock screen',
+    crumbs: DISCOVER,
+    redirect: '/research/screener',
   },
   { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
   { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE, redirect: '/research/symbol' },

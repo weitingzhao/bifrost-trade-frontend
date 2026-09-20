@@ -222,12 +222,12 @@ export default function StockScreenerPage() {
   return (
     <PageShell className="flex w-full min-w-0 flex-col gap-2">
       <PageHeader
-        title="Stock Screener"
+        title="Stock screen"
         description="Discover symbols by SEPA conditions and inspect their daily readiness snapshot."
         actions={
           <AskCopilotButton
             originPage="sepa"
-            originLabel="Stock Screener"
+            originLabel="Stock screen"
             symbol={
               inspector?.symbol ||
               symbolText.split(/[,\s]+/).map((s) => s.trim().toUpperCase()).find(Boolean)

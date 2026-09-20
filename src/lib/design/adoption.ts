@@ -95,10 +95,12 @@ const PARAM_COVERED: Record<string, string> = {
  * A design path the app redirects to a real page is adopted through that page —
  * but only when both paths are the same prototype. The six retired Analyze hubs
  * all resolve to `Research Symbol.dc.html`, so the Symbol page really does
- * answer for them. A redirect between two different prototypes does not:
- * `/research/screener` is the design's screener home and
- * `/research/contract-screener` is Contracts, and forwarding one to the other
- * would have marked the home adopted by a page that was never built.
+ * answer for them. A redirect between two different prototypes does not, which
+ * is why `/research/screener` was left forwarding to the Option Screener and
+ * counted as nobody's: the two are different prototypes, and forwarding one to
+ * the other would have marked the Stock screen adopted by a page that was never
+ * built. It is a real route now (Owner ruling 2026-09-20) and answers for
+ * itself.
  *
  * Only redirects whose target is itself a page count — a redirect to a path the
  * app does not have covers nothing.

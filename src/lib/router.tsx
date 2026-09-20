@@ -233,7 +233,7 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/discover/DailyBriefPage')),
       },
       {
-        path: 'research/stock-screener',
+        path: 'research/screener',
         lazy: lazyPage(() => import('@/pages/research/data/StockScreenerPage')),
       },
       {

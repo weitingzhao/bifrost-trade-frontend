@@ -53,14 +53,17 @@ describe('design adoption', () => {
   })
 
   it('only calls a redirect an alias when both paths are the same prototype', () => {
-    // `/research/screener` is the design's screener home
+    // `/research/screener` is the design's Stock screen
     // (`Research Screener.dc.html`); the app's Option Screener is its Contracts
     // page (`Research Contract Screener.dc.html`) and moved onto its own path
-    // on 2026-09-15. Counting the forward as adoption would have retired the
-    // home from "to build" without anyone building it.
+    // on 2026-09-15. While the first forwarded to the second, counting the
+    // forward as adoption would have retired the Stock screen from "to build"
+    // without anyone building it — which is the rule this test pins. The Owner
+    // ruled on 2026-09-20 that this side's SEPA-conditions page *is* that
+    // screen, so it holds the path itself now and answers for itself.
     const home = rows.find((r) => r.path === '/research/screener')
-    expect(home?.state).toBe('unbuilt')
-    expect(home?.inApp).toBe(false)
+    expect(home?.state).toBe('reviewing')
+    expect(home?.inApp).toBe(true)
     const contracts = rows.find((r) => r.path === '/research/contract-screener')
     expect(contracts?.state).toBe('pending')
     expect(contracts?.aliasOf).toBeUndefined()
@@ -263,9 +266,11 @@ describe('design adoption', () => {
     // strip only — the prototype's own ruling that the seat home is not
     // redesigned) for the first time (pending 16→14, reviewing 3→5). Overview
     // left for aligned on the Owner's look 2026-09-19 (reviewing 5→4).
-    // 7 since the three layer pages were built — `/risk`, `/portfolio` and
-    // `/research/book`, each waiting on a look.
-    expect(counts.byState.reviewing).toBe(7)
+    // 8: the three layer pages, plus `/research/screener` — the Owner's
+    // 2026-09-20 ruling gave this side's SEPA-conditions page the design's
+    // path and name, and the page has not been walked against the prototype
+    // cell by cell yet.
+    expect(counts.byState.reviewing).toBe(8)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -310,6 +315,7 @@ describe('design adoption', () => {
       '/research/loop/candidates',
       '/research/loop/harness',
       '/research/loop/hypotheses',
+      '/research/screener',
       '/research/workbench',
       '/risk',
     ])
@@ -320,11 +326,12 @@ describe('design adoption', () => {
     expect(counts.byState.moving).toBe(3)
     // Rev 2026-09-15.13 collapsed nine `/system/*` routes into `/system/status`
     // and `/settings` (the Owner's OLTP/OLAP/Ops ruling). The app still has the
-    // nine pages, so each one asks where it goes — that is nine new rows in "to
-    // ask", beside `/research/stock-screener`, which is still waiting on Design.
-    expect(counts.byState.staging).toBe(10)
+    // nine pages, so each one asks where it goes — that is nine rows in "to
+    // ask". `/research/stock-screener` used to be the tenth; the Owner's
+    // 2026-09-20 ruling answered it, so the page holds the design's own path
+    // and nothing here is waiting on Design any more.
+    expect(counts.byState.staging).toBe(9)
     expect(rows.filter((r) => r.state === 'staging').map((r) => r.path).sort()).toEqual([
-      '/research/stock-screener',
       '/system/api',
       '/system/coverage',
       '/system/daemon',
@@ -363,8 +370,9 @@ describe('design adoption', () => {
     // `/research/ratings` became a redirect to Vol ratings — the design
     // carries it as an alias of that same page, so it is answered, not built.
     // 32 with Package 2026-09-20.3's three layer overview pages, back to 29
-    // once all three were built.
-    expect(counts.byState.unbuilt).toBe(29)
+    // once all three were built, and 28 when the Owner's ruling gave the Stock
+    // screen to a page that exists.
+    expect(counts.byState.unbuilt).toBe(28)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

@@ -191,19 +191,17 @@ export const BENCHES: Bench[] = [
     // Owner retired on 2026-09-08. `/research/screener` becomes a home in W3,
     // `/research/ratings` in the W5 sweep.
     icon: foldGlyph('Discover') ?? Compass,
+    // The design's four rows, three of which this side has. Stock ratings —
+    // the composite with the weight sliders — is unbuilt and leads the fold
+    // when it lands.
+    //
+    // Stock Explorer left this list on 2026-09-20 (Owner ruling): it is a tab
+    // shell over SEPA, Momentum and Event Radar, and the design redistributed
+    // all three, so it answers to no row here. Its route stays.
     items: [
       route('Vol ratings', '/research/scan', ScanSearch),
-      route('Stock Explorer', '/research/explorer', Compass),
+      route('Stock screen', '/research/screener', ListFilter),
       route('Option screen', '/research/contract-screener', ListFilter),
-      // This side's own, and it lands here because Discover is where the
-      // screeners are. Its design home is genuinely unresolved rather than
-      // merely unbuilt: the design labels BOTH `/research/screener` and
-      // `/research/explorer` "Stock screen", and this page — SEPA conditions,
-      // tiers, no symbol — has as good a claim to that name as Explorer does.
-      // Naming one of them "Stock screen" now would put two menu rows in a
-      // fight over it, so both keep the names they have until the Owner says
-      // which page the design means.
-      route('Stock Screener', '/research/stock-screener', ListFilter),
     ],
   },
   {

@@ -66,7 +66,12 @@ export default function ResearchBlueprintPage() {
       ) : q.isLoading || !doc ? (
         <Skeleton className="h-96 w-full rounded-md" />
       ) : (
-        <article className="max-w-4xl">
+        // A centred document, not a left-aligned page container: the
+        // distinction §5a.3 draws is `margin: 0 auto` — with it a measure is
+        // typography, without it it is a dead strip down the right of a wide
+        // screen. This is prose, so it keeps the measure and gains the
+        // centring it was missing.
+        <article className="mx-auto max-w-4xl">
           <MarkdownContent className="prose prose-sm prose-invert max-w-none [&_table]:text-dense-meta [&_pre]:text-dense-micro">
             {doc.markdown}
           </MarkdownContent>

@@ -291,13 +291,16 @@ export default function DecisionInboxPage() {
           }
         />
       ) : (
-        // Cards were capped at 48rem, using 57% of the canvas while candidate
-        // rows wrapped inside them. Width belongs to the content that needs it:
-        // the batch rows take it, prose and the policy diff cap themselves.
+        // No cap at all (design §5a.3): a page container fills the pane and
+        // only continuous text is measured. The cards were capped at 48rem,
+        // then at 80rem, and both were the same mistake at different sizes —
+        // width belongs to the content that needs it, and the content that
+        // does not need it already carries its own measure (`max-w-prose` on
+        // the card's prose and its policy diff).
         //
         // Gap is 4, not 2: at 2 the space between two decisions matched the
         // space between a card's own lines, so eleven cards read as one wall.
-        <div className="max-w-7xl space-y-4">
+        <div className="space-y-4">
           {groups.map(({ draft, superseded }) => {
             // A card that would write nothing on Approve keeps its content and
             // its colour, at lower weight — the calls that matter sit forward,

@@ -33,7 +33,7 @@ import {
 } from 'lucide-react'
 import { getAllNavItems, type ShellNavGroup, type ShellNavItem } from '@bifrost/ui'
 import { foldGlyph, routeGlyph } from '@/lib/design/glyphs'
-import { staticResearchSubGroups } from './researchNavCatalog'
+import { MARKET_PAGES, staticResearchSubGroups } from './researchNavCatalog'
 
 export { getAllNavItems }
 
@@ -97,7 +97,18 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // and replaces their icons with the lifecycle numerals.
     label: 'Home',
     icon: ListTodo,
-    items: [route('Today', '/home', ListTodo)],
+    // Live, Alerts and Events moved here from Research (design §5a.1). The
+    // old placement read the content — these state the market's facts, and
+    // that is Research's subject — and missed the axis: Home is organised by
+    // time of day, and these three are the market's own clock. What is
+    // trading now, what I armed and what has fired, what arrives inside
+    // thirty days. Their routes did not move, so every deep link still works.
+    //
+    // `Today` is still a row of its own here. The design makes the layer
+    // heading itself the page (§5a.1) and this shell has no navigable group
+    // header yet; until it does, dropping the row would take Today out of the
+    // tree rather than promote it.
+    items: [route('Today', '/home', ListTodo), ...Object.values(MARKET_PAGES)],
   },
   {
     label: 'Trade',

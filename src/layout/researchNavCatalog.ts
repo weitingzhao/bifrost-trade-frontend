@@ -89,23 +89,40 @@ export const BOOK_ITEM: ShellNavItem = {
  * empty state's "The book" group, its route kept as a deep-link alias.
  */
 export const COPILOT_PAGES = {
-  desk: route('Desk', '/research/copilot', MessageCircle),
   brief: route('Daily Brief', '/research/daily-brief', ClipboardList),
   personas: route('Personas', '/research/agent-personas', Users),
 }
 
+/** The Desk itself — the fold's own page since §5a, not a row beneath it. */
+export const COPILOT_DESK = '/research/copilot'
+
+/**
+ * A dual row, not a container (design §5a, 2026-09-20).
+ *
+ * It used to carry a `Desk` child whose route was the fold's own `to` — the
+ * fold was an alias of the row directly beneath it, so clicking `Copilot`
+ * selected `Desk` and left two rows lit for one page. The Desk is the fold
+ * now: the label goes there, the caret opens Daily Brief and Personas.
+ *
+ * The id is the path, not `fold:copilot`. The sidebar matches the active row
+ * by id alone, so a fold that grew into a page but kept a `fold:*` id never
+ * lights while you are standing on it.
+ */
 export const COPILOT_ITEM: ShellNavItem = {
-  id: 'fold:copilot',
+  id: COPILOT_DESK,
   label: 'Copilot',
-  to: COPILOT_PAGES.desk.to,
-  icon: foldGlyph('Copilot') ?? MessageCircle,
+  to: COPILOT_DESK,
+  icon: routeGlyph(COPILOT_DESK) ?? foldGlyph('Copilot') ?? MessageCircle,
   children: Object.values(COPILOT_PAGES),
 }
 
 /**
- * The tape. Facts, not work, so it closes the group the way the design's
- * registry draws it (`fold:market`): the market's state is worth knowing from
- * any row above it, and none of them owns it.
+ * The tape — under **Home** since design §5a.1, not Research.
+ *
+ * The old ruling read the content (these state the market's facts, and facts
+ * about the market are Research's subject) and missed the axis: Home is
+ * organised by time of day, and these three are the market's own clock. The
+ * routes are untouched; only where they hang changed.
  */
 export const MARKET_PAGES = {
   live: route('Live', '/market/live', Activity),
@@ -206,15 +223,17 @@ export function allResearchRoutes(): string[] {
     ...Object.values(COPILOT_PAGES),
     WORKBENCH_PAGE,
     ...BENCHES.flatMap((b) => b.items),
-    ...Object.values(MARKET_PAGES),
-  ].map((i) => i.to ?? i.id)
+  ]
+    .map((i) => i.to ?? i.id)
+    // The Copilot Desk is the fold itself, not a row, so it is not in
+    // COPILOT_PAGES; Market's three rows moved to Home (§5a.1).
+    .concat(COPILOT_DESK)
 }
 
 /** The flat layout the top nav and the home page read. */
 export function staticResearchSubGroups(): ShellNavSubGroup[] {
   return [
     { label: '', items: [OVERVIEW_PAGE] },
-    { label: 'Market', items: Object.values(MARKET_PAGES) },
     { label: 'The Book', items: Object.values(BOOK_PAGES) },
     { label: 'Autopilot · unattended', items: Object.values(AUTOPILOT_PAGES) },
     { label: 'Copilot · on request', items: Object.values(COPILOT_PAGES) },
@@ -283,7 +302,6 @@ export function researchItems(ctx: ResearchNavContext): ShellNavItem[] {
     ]),
     BOOK_ITEM,
     COPILOT_ITEM,
-    MARKET_ITEM,
   ]
 }
 

@@ -163,8 +163,12 @@ export const ROUTES: readonly RouteEntry[] = [
   // title stays "Copilot Desk" (Design ②: the two are compatible).
   {
     path: '/research/copilot',
-    label: 'Desk',
-    crumbs: COPILOT,
+    // The Desk is the Copilot itself since §5a: the fold's `to` was this page
+    // and its first child was this page, so two rows lit for one. The row that
+    // remains is named for what it is, and the trail loses the level that no
+    // longer exists.
+    label: 'Copilot',
+    crumbs: RESEARCH,
     design: {
       state: 'aligned',
       rev: '2026-09-15.5',

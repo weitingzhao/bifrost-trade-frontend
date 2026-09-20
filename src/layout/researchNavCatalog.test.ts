@@ -12,8 +12,7 @@ import {
   allResearchRoutes,
   BOOK_PAGES,
   buildResearchNavGroup,
-  COPILOT_PAGES,
-  MARKET_PAGES,
+  COPILOT_DESK,
   researchItems,
   staticResearchSubGroups,
 } from './researchNavCatalog'
@@ -45,14 +44,15 @@ function routesOf(items: ShellNavItem[]): string[] {
 }
 
 describe('one tree, both homes', () => {
-  it('stands the six rows in the design order: Overview, engine, stations, Book, Copilot, Market', () => {
+  it('stands five rows in the design order: Overview, engine, stations, Book, Copilot', () => {
+    // Market left for Home (§5a.1): Home is organised by time of day, and
+    // Live · Alerts · Events are the market's own clock.
     expect(researchItems(ctx).map((i) => i.to)).toEqual([
       OVERVIEW,
       AUTOPILOT_HOME,
       PIPELINE_HOME,
       BOOK_PAGES.hypotheses.to,
-      COPILOT_PAGES.desk.to,
-      MARKET_PAGES.live.to,
+      COPILOT_DESK,
     ])
   })
 
@@ -114,11 +114,14 @@ describe('one tree, both homes', () => {
     ])
   })
 
-  it('carries the Copilot fold: Desk · Daily Brief · Personas, the design id', () => {
-    const fold = flatten(researchItems(ctx)).find((i) => i.id === 'fold:copilot')
-    expect(fold?.label).toBe('Copilot')
+  it('makes Copilot a page with pages under it, not a container', () => {
+    // §5a: the fold's `to` was its own first child, so clicking Copilot
+    // selected Desk and two rows lit for one page. The Desk is the fold now,
+    // and the id is the path — the sidebar matches the active row by id
+    // alone, so a `fold:*` id would never light while you stood on it.
+    const fold = flatten(researchItems(ctx)).find((i) => i.label === 'Copilot')
+    expect([fold?.id, fold?.to]).toEqual([COPILOT_DESK, COPILOT_DESK])
     expect(fold?.children?.map((c) => [c.label, c.to])).toEqual([
-      ['Desk', '/research/copilot'],
       ['Daily Brief', '/research/daily-brief'],
       ['Personas', '/research/agent-personas'],
     ])
@@ -159,6 +162,8 @@ describe('no page lights two rows', () => {
   })
 
   it('folded categories land where the design points them', () => {
+    // Copilot left this list when it became a dual row (§5a) and Market left
+    // the group entirely (§5a.1) — a `fold:` id now means a true container.
     const folds = flatten(researchItems(ctx)).filter((i) => i.id.startsWith('fold:'))
     expect(folds.map((f) => f.label)).toEqual([
       'Objectives',
@@ -166,8 +171,6 @@ describe('no page lights two rows', () => {
       'Analyze',
       'Validate',
       'The Book',
-      'Copilot',
-      'Market',
     ])
     for (const f of folds) {
       // Validate is the design's own exception: its heading lands on Backtest
@@ -182,7 +185,6 @@ describe('the seat-less layout', () => {
   it('lists the levels top down for the top nav and the home page', () => {
     expect(staticResearchSubGroups().map((s) => s.label)).toEqual([
       '',
-      'Market',
       'The Book',
       'Autopilot · unattended',
       'Copilot · on request',

@@ -121,12 +121,14 @@ export function AppSidebar() {
         // section that owns it (an objective lights Autopilot).
         activeId={pins.some((p) => p.to === location.pathname) ? `pin:${location.pathname}` : location.pathname}
         matchActive={shellNavMatchByPathPrefix}
-        // A fold opens on the row, not only on its chevron (design ruling
-        // 2026-09-15). Closed → open and stop; open and you are on its page →
-        // fold it; open and you are elsewhere → go. The tree here is three
-        // levels deep in places, so the chevron was carrying far more traffic
-        // than a 24×20 target should.
-        expandParentRowOnFirstClick
+        // The three-kind row grammar (design §5a, 2026-09-20). It replaces
+        // the 2026-09-15 rule this side had adopted a day earlier — every
+        // parent "expands first, navigates second" — which the design itself
+        // then overturned: one row doing two things by a state the reader
+        // cannot see is what made the tree feel split. Now a container row
+        // only opens, a page-with-children splits label from caret, and the
+        // caret's frame says which you are looking at.
+        navRowSyntax
         onSelect={(item: ShellNavItem) => {
           navigate(item.to ?? item.id)
         }}

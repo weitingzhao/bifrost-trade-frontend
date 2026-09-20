@@ -5,11 +5,24 @@
  * they are not inline: two files need the same tuples and a second copy would
  * drift.
  */
-export const MARKET = ['Research', 'Market'] as const
+/**
+ * Live · Alerts · Events sit under Home since design §5a.1.
+ *
+ * The earlier ruling filed them under Research on the argument that they
+ * state the market's facts, and Research is where facts about the market
+ * live. That read the content and missed the axis: Home is organised by time
+ * of day, and these three are the market's own clock — what is trading now,
+ * what I armed and what has fired, what arrives in the next thirty days.
+ * The routes do not move; only the trail does.
+ */
+export const MARKET = ['Home'] as const
 export const PORTFOLIO = ['Portfolio'] as const
 export const TRADE = ['Trade'] as const
-/** Rules is read from the Desk: the design's own trail is Trade › Desk › Rules. */
-export const TRADE_DESK = ['Trade', 'Desk'] as const
+/**
+ * Flattened to one level: Desk is no longer a row inside Trade — it *is*
+ * Trade (§5a.1), so its six pages hang off the layer directly.
+ */
+export const TRADE_DESK = ['Trade'] as const
 export const RISK = ['Risk'] as const
 export const REVIEW = ['Review'] as const
 export const RESEARCH = ['Research'] as const

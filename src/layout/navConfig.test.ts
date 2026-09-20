@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { NAV_GROUPS, SYSTEM_NAV_GROUPS } from './navConfig'
 import { isSystemRoute, routeFor } from './routeRegistry'
-import { COPILOT_PAGES } from './researchNavCatalog'
+import { COPILOT_DESK } from './researchNavCatalog'
 
 const trade = NAV_GROUPS.find((g) => g.label === 'Trade')!
 const portfolio = NAV_GROUPS.find((g) => g.label === 'Portfolio')!
@@ -80,7 +80,8 @@ describe('Portfolio nav', () => {
   it('does not carry the Copilot — its pages live under Research, in the seat-free fold', () => {
     const all = routesOf(portfolio)
     expect(all.some((to) => to?.includes('copilot'))).toBe(false)
-    expect(COPILOT_PAGES.desk.to).toBe('/research/copilot')
+    // The Desk is the Copilot fold itself now (§5a), not a row beneath it.
+    expect(COPILOT_DESK).toBe('/research/copilot')
     // Out of the menu (Design 2026-09-14 ①) but still a route — reached from
     // the panel empty state's "all starters →" link.
     expect(routeFor('/research/copilot/trading').path).toBe('/research/copilot/trading')

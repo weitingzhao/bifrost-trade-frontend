@@ -162,6 +162,15 @@ function generate(pkg) {
    * quietly wrong shape, which is worse than failing here.
    */
   function glyphPath(node, where) {
+    // A group row's glyph arrives wrapped: since Rev 2026-09-20.12 the registry
+    // puts it inside `<span data-navrow="group">`, which is the hook its CSS
+    // uses to give container rows their unboxed caret. Unwrap that one marker
+    // by name rather than descending through anything — a different wrapper is
+    // a change worth failing on.
+    if (node && node.__el === 'span' && node.props?.['data-navrow']) {
+      const inner = (node.children ?? [])[0]
+      node = typeof inner?.__el === 'function' ? inner.__el(inner.props ?? {}) : inner
+    }
     if (!node || node.__el !== 'svg') throw new Error(`${where}: glyph did not render an <svg>.`)
     const paths = (node.children ?? []).filter((c) => c && c.__el === 'path')
     if (paths.length !== 1) throw new Error(`${where}: expected one <path>, found ${paths.length}.`)
@@ -186,10 +195,23 @@ function generate(pkg) {
     // Since 2026-09-13 the design's Research group carries only the current
     // seat's pages. Asking for one seat would drop every other seat's pages out
     // of the menu; a page is in the nav if any seat shows it.
-    for (const seat of SEATS) {
-      for (const g of R.navGroups({ route: '/home', seat })) walk(g.items, g.label, [])
+    // A layer header carries its own page since Rev 2026-09-20.14 — Home,
+    // Trade, Research and Review are `dual` rows whose group heading *is* the
+    // route. Walking only `g.items` marked those four as "not in the nav"
+    // while they sat at the top of it.
+    const layer = (g, group) => {
+      if (g.to) found.push({ path: g.to, label: g.label, group, trail: [] })
     }
-    for (const g of R.systemGroups()) walk(g.items, 'System', [])
+    for (const seat of SEATS) {
+      for (const g of R.navGroups({ route: '/home', seat })) {
+        layer(g, g.label)
+        walk(g.items, g.label, [])
+      }
+    }
+    for (const g of R.systemGroups()) {
+      layer(g, 'System')
+      walk(g.items, 'System', [])
+    }
     return found
   }
 

@@ -153,13 +153,21 @@ describe('design adoption', () => {
     // Overview is the first page signed off against the baseline
     // (2026-09-19, after the same look retired the seat rail and set the
     // loop group order): reviewing→aligned grows the walked set to 34.
+    // Still 34 walked; the split inside it moved. Package 2026-09-20.3 turned
+    // three walked pages into the headings of their own layers (§5a.1) — the
+    // Research Overview, the Trade Desk and the Review Queue are each now the
+    // layer itself rather than its first row — so they leave `aligned` for
+    // `stale` without leaving the walked set.
     expect(counts.aligned + counts.byState.stale).toBe(34)
-    expect(counts.aligned).toBe(30)
+    expect(counts.aligned).toBe(27)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
       '/research/loop/decisions',
+      '/research/overview',
       '/research/symbol',
+      '/review',
+      '/trade/desk',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -273,8 +281,10 @@ describe('design adoption', () => {
       '/portfolio/positions',
       '/portfolio/transfer',
       '/research/copilot/trading',
-      '/research/overview',
-      '/review',
+      // `/research/overview`, `/review` and `/trade/desk` left this list for
+      // `stale`: each became the heading of its own layer in Package
+      // 2026-09-20.3 (§5a.1), which is a change to the page, not only to the
+      // tree around it.
       '/review/fit',
       '/review/habits',
       '/review/playbook-stats',
@@ -286,7 +296,6 @@ describe('design adoption', () => {
       '/risk/sizing',
       '/risk/stress',
       '/trade/assignment',
-      '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
       '/trade/plans',
@@ -335,7 +344,10 @@ describe('design adoption', () => {
     // removed, and no already-walked page moved rev — the Lab dissolution and
     // the Discover flattening change where Research pages *live*, not what
     // any aligned page concludes.
-    expect(counts.designed).toBe(88)
+    // Package 2026-09-20.3 grew it to 91: the three layer overview pages —
+    // `/risk`, `/portfolio` and `/research/book` — which exist because a
+    // layer that is only a container cannot be its own first child (§5a.1).
+    expect(counts.designed).toBe(91)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three
     // designed with no app page yet (Journal and Narrative are Vision batches
@@ -345,7 +357,8 @@ describe('design adoption', () => {
     // unbuilt state with them rather than being counted twice. 29 since
     // `/research/ratings` became a redirect to Vol ratings — the design
     // carries it as an alias of that same page, so it is answered, not built.
-    expect(counts.byState.unbuilt).toBe(29)
+    // 32 with Package 2026-09-20.3's three layer overview pages.
+    expect(counts.byState.unbuilt).toBe(32)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since
@@ -397,13 +410,14 @@ describe('design adoption', () => {
     // Package 2026-09-20.1 @ Rev .11 is a full baseline. The .11 round bumps
     // only the global Rev — the glyph table is shell, not page — so the 28
     // aligned pages hold and `stale` does not move.
-    expect(DESIGN_REV).toBe('2026-09-20.11')
+    expect(DESIGN_REV).toBe('2026-09-20.24')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
     // Each stale note names the batch that re-walks it (W2/W3), the same way
     // the count fell 4 → 0 across the .18.1 round.
-    expect(counts.byState.stale).toBe(4)
+    // 4 → 7: Package 2026-09-20.3 moved three more walked pages' own revs.
+    expect(counts.byState.stale).toBe(7)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design
@@ -426,9 +440,12 @@ describe('adoptionByGroup', () => {
     // because nine pages happen to carry a tag. Positions was re-walked and
     // signed off on 2026-09-18, so the group is whole again — until the next
     // design round moves one of them.
-    expect(portfolio).toMatchObject({ total: 9, aligned: 9, left: 0 })
+    // And the next round did: `/portfolio` joined as the layer's own overview
+    // page (§5a.1), so the group is 9 of 10 until that page exists.
+    expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
     expect(portfolio?.byState.reviewing).toBe(0)
-    expect(portfolio?.byState.unbuilt).toBe(0)
+    // The one left is `/portfolio` itself — designed, not built.
+    expect(portfolio?.byState.unbuilt).toBe(1)
 
     // The design's own backlog is nobody's work here, so it stays out of the
     // denominator: System's four `/docs/*` stubs do not make it read worse.

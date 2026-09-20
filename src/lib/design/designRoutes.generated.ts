@@ -38,6 +38,27 @@ export interface DesignRoute {
   group: string | null
 }
 
+/**
+ * A reading page and the method page that is its back.
+ *
+ * The design dissolved Lab on 2026-09-20: the four mirror pages are not
+ * siblings of their readings, they are the same subject shown open. Same
+ * path root, same endpoint, so the switch belongs to the page and not to the
+ * tree — and this table is read from the registry rather than typed, because
+ * a hand-kept copy of a pairing is exactly the thing that drifts.
+ */
+export interface DesignFace {
+  reading: string
+  method: string
+}
+
+export const DESIGN_FACES: readonly DesignFace[] = [
+  {"reading":"/research/ratings/stocks","method":"/research/lab/today"},
+  {"reading":"/research/screener","method":"/research/lab/screener"},
+  {"reading":"/research/symbol","method":"/research/lab/symbol"},
+  {"reading":"/research/history","method":"/research/lab/history"},
+]
+
 export const DESIGN_REV = "2026-09-20.11"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [

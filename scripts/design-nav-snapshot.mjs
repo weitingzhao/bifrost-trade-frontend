@@ -160,6 +160,9 @@ function generate(pkg) {
     return found
   }
 
+  /** The design's `FACES` pairs, straight off the registry. */
+  const faces = (R.FACES ?? []).map(([reading, method]) => ({ reading, method }))
+
   const inNav = new Map(rows().map((r) => [r.path, r]))
   const all = R.routes ?? R.ROUTES ?? []
 
@@ -225,6 +228,24 @@ export interface DesignRoute {
   group: string | null
 }
 
+/**
+ * A reading page and the method page that is its back.
+ *
+ * The design dissolved Lab on 2026-09-20: the four mirror pages are not
+ * siblings of their readings, they are the same subject shown open. Same
+ * path root, same endpoint, so the switch belongs to the page and not to the
+ * tree — and this table is read from the registry rather than typed, because
+ * a hand-kept copy of a pairing is exactly the thing that drifts.
+ */
+export interface DesignFace {
+  reading: string
+  method: string
+}
+
+export const DESIGN_FACES: readonly DesignFace[] = [
+${faces.map((f) => '  ' + JSON.stringify(f) + ',').join('\n')}
+]
+
 export const DESIGN_REV = ${JSON.stringify(revOf(pkg))}
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
@@ -232,7 +253,7 @@ ${entries.map((e) => '  ' + JSON.stringify(e) + ',').join('\n')}
 ]
 `
   writeFileSync(out, body)
-  console.log(`${entries.length} routes (${designed} designed) -> ${out}`)
+  console.log(`${entries.length} routes (${designed} designed, ${faces.length} faces) -> ${out}`)
 }
 
 const invoked = process.argv[1] ? resolve(process.argv[1]) : ''

@@ -20,7 +20,7 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { SegmentControl } from '@/components/data-display'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
 import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
@@ -106,6 +106,10 @@ export default function SymbolPage() {
           description={TAB_DESCRIPTION[active]}
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              {/* Reading | Method: this page's back is the Symbol method face
+                  (design 2026-09-20.4). It sits with the page's own controls
+                  because a face is a view of the page, not a place. */}
+              <PageFaceSwitch path={SYMBOL_PATH} />
               {symbol ? (
                 <PlanThisButton
                   symbol={symbol}

@@ -6,5 +6,6 @@ export {
 } from './PageHeader'
 export { PageRouteFallback } from './PageRouteFallback'
 export { PageSection, type PageSectionProps } from './PageSection'
+export { PageFaceSwitch } from './PageFaceSwitch'
 export { GlobalMarketStatusBar } from './GlobalMarketStatusBar'
 export { SkipToContent } from './SkipToContent'

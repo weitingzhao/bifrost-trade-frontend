@@ -48,6 +48,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { useRowLink } from '@/hooks/useRowLink'
 import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
 import { usePerformanceBulk } from '@/hooks/usePerformanceBulk'
 import { usePerformanceQuery } from '@/hooks/usePerformanceQuery'
@@ -127,6 +128,7 @@ const TONE_INK: Record<string, string> = {
 }
 
 export default function PortfolioOverviewPage() {
+  const rowLink = useRowLink()
   const status = useMonitorStatus()
   const freshness = useExecutionsFreshness()
   // The quarter ends with the month you are in, and the range machinery is
@@ -256,17 +258,19 @@ export default function PortfolioOverviewPage() {
             </DenseTableHeader>
             <DenseTableBody>
               {rows.map((r) => (
+                // The whole row opens Accounts, where this pair is drawn in
+                // full beside the broker's own clocks — the design's behaviour,
+                // and the only one that makes a six-column row clickable at all.
                 <DenseTableRow
                   key={r.key}
-                  title={`${r.source} on ${r.role || 'this account'} (${r.accountId}) — ${r.meaning}`}
+                  title={`${r.source} on ${r.role || 'this account'} (${r.accountId}) — ${r.meaning} Opens Accounts.`}
+                  {...rowLink('/portfolio/accounts')}
                 >
                   <DenseTableCell className="max-w-none pr-0">
                     <StatusLamp lamp={STATE_LAMP[r.state]} variant="dot" className="h-2.5 w-2.5" />
                   </DenseTableCell>
                   <DenseTableCell className="max-w-none whitespace-nowrap font-mono">
-                    <Link to="/portfolio/accounts" className="hover:underline">
-                      {r.source}
-                    </Link>
+                    {r.source}
                   </DenseTableCell>
                   <DenseTableCell className="max-w-none whitespace-nowrap">
                     <span className="block text-dense-label">{r.role || '—'}</span>

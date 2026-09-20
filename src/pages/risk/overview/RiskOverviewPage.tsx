@@ -44,7 +44,8 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { cn } from '@/lib/utils'
 import { fmtPct0 } from '@/utils/positions'
 import { useLimitBook } from '@/hooks/useLimitBook'
-import { fmtReading, openBreaches, type LimitKind } from '@/utils/limitsModel'
+import { useRowLink } from '@/hooks/useRowLink'
+import { fmtReading, openBreaches, type LimitKind, type LimitRow } from '@/utils/limitsModel'
 import {
   LIMIT_GROUP_STRIPE,
   RISK_BAR_CEILING,
@@ -114,8 +115,23 @@ function SpentBar({ row }: { row: SpentLine }) {
   )
 }
 
+/** An unranked rule's name, pointing at whichever page would read it. */
+function UnrankedName({ row }: { row: LimitRow }) {
+  const owner = row.citedFrom ?? OWNER_FALLBACK
+  return (
+    <Link
+      to={owner.to}
+      className="text-foreground/70 hover:text-foreground hover:underline"
+      title={`${row.name} — ${row.scope}. Read on ${owner.label}.`}
+    >
+      {row.name}
+    </Link>
+  )
+}
+
 export default function RiskOverviewPage() {
   const [accountFilter, setAccountFilter] = useState('all')
+  const rowLink = useRowLink()
   const { rows, accountIds, statusLoading, error } = useLimitBook(accountFilter)
 
   const lines = spentLines(rows)
@@ -298,10 +314,11 @@ export default function RiskOverviewPage() {
                 return (
                   <DenseTableRow
                     key={r.key}
-                    // What happens on breach is the row's own footnote: it is a
-                    // sentence, not a column, and the page it belongs to is one
-                    // click away on the name.
-                    title={`${r.name} — ${fmtReading(r, r.current)} against ${capLabel(r)} (${r.kind}, ${r.scope}). On breach: ${r.onBreach}.`}
+                    // The whole row opens the page that owns the reading — the
+                    // design's own behaviour. On breach is the row's footnote:
+                    // a sentence, not a column, so it rides in the tooltip.
+                    title={`${r.name} — ${fmtReading(r, r.current)} against ${capLabel(r)} (${r.kind}, ${r.scope}). On breach: ${r.onBreach}. Opens ${(r.citedFrom ?? OWNER_FALLBACK).label}.`}
+                    {...rowLink((r.citedFrom ?? OWNER_FALLBACK).to)}
                   >
                     <DenseTableCell className="max-w-none pr-0">
                       <span
@@ -310,12 +327,7 @@ export default function RiskOverviewPage() {
                       />
                     </DenseTableCell>
                     <DenseTableCell className="max-w-none whitespace-nowrap">
-                      <Link
-                        to={(r.citedFrom ?? OWNER_FALLBACK).to}
-                        className="block text-dense-label hover:underline"
-                      >
-                        {r.name}
-                      </Link>
+                      <span className="block text-dense-label">{r.name}</span>
                       <span className="block font-mono text-dense-caption text-muted-foreground">
                         {r.group} · {r.scope}
                       </span>
@@ -372,18 +384,31 @@ export default function RiskOverviewPage() {
             A rule with no line cannot be spent and a rule with no reading cannot be measured.
             Neither is the same as being inside its limit, so neither sits in the table above.
           </p>
+          {/* Each name opens the page that owns it. A rule that cannot be
+              ranked here is still a rule you can go and look at, and thirteen
+              of them as flat text was thirteen dead ends. */}
           {noLine.length > 0 ? (
-            <p>
-              <span className="text-foreground/80">No line written</span> ({noLine.length}) —{' '}
-              <span className="text-muted-foreground">{noLine.map((r) => r.name).join(' · ')}</span>
+            <p className="flex flex-wrap items-baseline gap-x-1.5">
+              <span className="text-foreground/80">No line written</span>
+              <span className="text-muted-foreground">({noLine.length}) —</span>
+              {noLine.map((r, i) => (
+                <span key={r.key} className="text-muted-foreground">
+                  <UnrankedName row={r} />
+                  {i < noLine.length - 1 ? ' ·' : ''}
+                </span>
+              ))}
             </p>
           ) : null}
           {noReading.length > 0 ? (
-            <p>
-              <span className="text-foreground/80">Nothing to read</span> ({noReading.length}) —{' '}
-              <span className="text-muted-foreground">
-                {noReading.map((r) => `${r.name} (${r.noReading ?? 'no reading'})`).join(' · ')}
-              </span>
+            <p className="flex flex-wrap items-baseline gap-x-1.5">
+              <span className="text-foreground/80">Nothing to read</span>
+              <span className="text-muted-foreground">({noReading.length}) —</span>
+              {noReading.map((r, i) => (
+                <span key={r.key} className="text-muted-foreground">
+                  <UnrankedName row={r} /> ({r.noReading ?? 'no reading'})
+                  {i < noReading.length - 1 ? ' ·' : ''}
+                </span>
+              ))}
             </p>
           ) : null}
         </div>

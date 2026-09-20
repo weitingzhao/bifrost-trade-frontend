@@ -189,7 +189,10 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'unmatched premium as of today, the design’s own — where the page had also carried the '
     + 'range’s summed mark beside it; two numbers a few dollars apart under one word read as an '
     + 'inconsistency rather than as two measures. '
-    + 'Owner signed off 2026-09-20 on local DEV (:5173) at this rev.',
+    + 'Owner signed off 2026-09-20 on local DEV (:5173) at this rev. Interaction sweep the '
+    + 'same day, after the same gap was found on The Book: every Trust row now opens '
+    + 'Accounts, where the pair is drawn in full beside the broker’s clocks, instead of only '
+    + 'the source cell being a link. Verified by clicking.',
   '/risk':
     "Built 2026-09-20 against Risk Overview.dc.html (Rev 2026-09-20.19), the layer's own page, "
     + "then re-walked the same day on the Owner's reading that the first build was not close enough. "
@@ -216,7 +219,13 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'children each own theirs. And a panel the design does not draw — what could not be ranked, with '
     + 'which half each is missing — because a page claiming a complete ordering has to say what it '
     + 'left out of it; on DEV that is 13 of 17, which is why this page ranks four rows where the '
-    + 'prototype ranks fourteen.',
+    + 'prototype ranks fourteen. '
+    + 'Interaction sweep 2026-09-20, after the Owner found The Book read right and did not '
+    + 'behave: every Headroom row now opens the page that owns its reading — the prototype’s '
+    + 'own behaviour, with the destination named in the tooltip — rather than only the name '
+    + 'being a link, and the thirteen unranked rules stopped being flat text: each name opens '
+    + 'whichever page would read it, because a rule that cannot be ranked here is still a rule '
+    + 'you can go and look at. Both verified by clicking, not by reading the markup.',
   '/risk/limits':
     'Walked 2026-09-17 and re-walked 2026-09-18 against Risk Limits.dc.html at page rev 2026-09-18.1, on local DEV (:5173). Package 2026-09-18.1 collapsed gates and limits into **one model**: a gate is a limit whose scope is an allocation, defined in Trade \u203a Rules and read here, and a hit is logged rather than acknowledged because the daemon blocked the action before it happened. So the gate stopped being a parameter dump at the foot of the page and became the sixth group in the limit book, badged GATE HIT in the Strategy entity violet the design picked (#a78bfa in dark \u2014 already a token, no new colour). The uncomfortable reading that falls out, and the one worth having: **these are the only limits in this book anybody has written down.** Nine of the other twelve rules have no line because the store the design edits them in does not exist; the gate\u2019s store does \u2014 versioned, attached to the allocation the daemon runs \u2014 and every line in the group is real. They bound a daemon that is frozen (D10) and whose guard says paper_trade. Five gate rows are drawn from what the record actually stores (`guard.risk` plus the allocation\u2019s own ceiling), not from the prototype\u2019s fixture. One reads live: **open instances, 9 of 10** on DEV. The other four say which half is missing and why \u2014 \u0394 is computed for the book and not per allocation, positions are not attributed to an allocation, the daemon does not hedge. A loss limit is read as a loss, so a profitable day consumes none of it rather than a negative share. Tested. The definition panel now points at Trade \u203a Rules instead of listing the parameters, which is the ruling\u2019s other half. Re-walked 2026-09-18 beside the prototype, cell by cell. Two things came back. **Recent history keeps the design\u2019s four columns** \u2014 When, Limit, Resolution, Open for \u2014 over a single marked row, where the page had replaced the table with a sentence: a band that drops its shape stops teaching what the store would have to hold, and the sentence alone could not say that the missing thing is a *duration* and a *resolution*. **The acknowledgement slot is drawn on every breach**, as the design draws it, and the severity fills it: a hard line reads `hard \u2014 cannot ack` because it is brought back inside the line rather than acknowledged, a gate hit reads `gate \u2014 logged, not acked` because the daemon logs it itself, and a soft breach reads `Acknowledge \u00b7 not stored`. All three are disabled, for the reason the footer already gave \u2014 acknowledging is a write and nothing stores one \u2014 but a row with no slot at all reads as nothing to decide, which is the mistake the Plans and Rule-proposals bands avoid the same way. Everything else matched: the open breach panel, the seven-column limit table with its five groups, Escalation, and the gate panel. One deliberate divergence stands: the design names the breach queue as a registry that is the source of truth, and this side has no queue \u2014 the breaches are computed from the readings each time, and the header says so. Owner signed off 2026-09-18 on local DEV (:5173) at this rev.',
 }

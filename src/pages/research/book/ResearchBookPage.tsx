@@ -21,7 +21,7 @@
  * views became rows with the size of what each one holds.
  */
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
 import {
@@ -41,6 +41,7 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { cn } from '@/lib/utils'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
+import { useRowLink } from '@/hooks/useRowLink'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { fetchCandidates } from '@/api/research/candidates'
@@ -135,7 +136,7 @@ export default function ResearchBookPage() {
   const cause = useMemo(() => dominantCause(stuck), [stuck])
 
   const loading = watch.isLoading || hypotheses.isLoading || candidates.isLoading
-  const navigate = useNavigate()
+  const rowLink = useRowLink()
 
   /**
    * As of the *stalest* of the three reads, not the freshest.
@@ -246,20 +247,7 @@ export default function ResearchBookPage() {
                 // The whole row opens the table it lives in — the design's own
                 // behaviour, and the only one that makes a five-column row
                 // worth reading before you click it.
-                <DenseTableRow
-                  key={s.key}
-                  title={s.why}
-                  role="button"
-                  tabIndex={0}
-                  className="cursor-pointer"
-                  onClick={() => navigate(s.to)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      navigate(s.to)
-                    }
-                  }}
-                >
+                <DenseTableRow key={s.key} title={s.why} {...rowLink(s.to)}>
                   <DenseTableCell className="max-w-none whitespace-nowrap text-muted-foreground">
                     {s.where}
                   </DenseTableCell>

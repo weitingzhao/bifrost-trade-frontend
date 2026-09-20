@@ -201,7 +201,10 @@ export const ROUTES: readonly RouteEntry[] = [
 
   // ── Research · Workbench · Discover ────────────────────────────────────
   { path: '/research/explorer', label: 'Stock Explorer', crumbs: DISCOVER, scope: 'underlying' },
-  { path: '/research/scan', label: 'Option Scan', crumbs: DISCOVER, scope: 'contract' },
+  // "Vol ratings", the design's own label since package 2026-09-20.1: the page
+  // rates the vol on a name, and "Option Scan" described the machinery rather
+  // than the reading. `/research/ratings` is its alias in the design registry.
+  { path: '/research/scan', label: 'Vol ratings', crumbs: DISCOVER, scope: 'contract' },
   {
     path: '/research/momentum-radar',
     label: 'Momentum Radar',
@@ -247,9 +250,11 @@ export const ROUTES: readonly RouteEntry[] = [
   },
 
   // ── Research · Workbench · Data ────────────────────────────────────────
-  { path: '/research/lens-coverage', label: 'Lens Coverage', crumbs: DATA },
-  { path: '/research/signal-health', label: 'Signal Health', crumbs: DATA },
-  { path: '/research/watchlist', label: 'Stock Watchlist', crumbs: THE_BOOK },
+  // Plumbing: neither takes a symbol, and what they answer is whether the
+  // machinery is filling up — which is System's question, not Research's.
+  { path: '/research/lens-coverage', label: 'Lens Coverage', crumbs: SYSTEM_DATA },
+  { path: '/research/signal-health', label: 'Signal Health', crumbs: SYSTEM_DATA },
+  { path: '/research/watchlist', label: 'Watchlist', crumbs: THE_BOOK },
   {
     path: '/research/stock-screener',
     label: 'Stock Screener',
@@ -263,8 +268,13 @@ export const ROUTES: readonly RouteEntry[] = [
   // this page is Contracts (Design 2026-09-15). `/research/screener` is the
   // design's screener home, which the app has not built, so the page moves off
   // that path rather than squatting on it.
-  { path: '/research/contract-screener', label: 'Option Screener', crumbs: DISCOVER },
-  { path: '/research/greeks', label: 'Contract Greeks', crumbs: DATA, scope: 'contract' },
+  { path: '/research/contract-screener', label: 'Option screen', crumbs: DISCOVER },
+  // Analyze, not Data. The design's rule (shell-registry, Discover fold): a
+  // page that takes a symbol is a read and joins Analyze; a page that takes
+  // none is pipeline plumbing and goes to System › Data. Greeks takes a
+  // contract, so it reads — and it holds no menu row, because it is a tab of
+  // Symbol and the tree gives places, not tabs.
+  { path: '/research/greeks', label: 'Contract Greeks', crumbs: ANALYZE, scope: 'contract' },
 
   // ── Research · Market ──────────────────────────────────────────────────
   { path: '/market/live', label: 'Live', crumbs: MARKET },
@@ -708,6 +718,25 @@ export function routeFor(pathname: string): RouteEntry {
  * the old `SettingsLayout` did: grow a second navigation shell that also
  * dropped the breadcrumb, the Omnibar, the Lens and Alerts.
  */
+/**
+ * Pages that live in the System tree but kept a Research path.
+ *
+ * The design places Signal Health and Lens Coverage under System › Data while
+ * leaving their routes where they are — its shell decides which tree to show
+ * from the menu group, and this one decides from the path prefix. Without this
+ * set, clicking either row from the System tree would swap the sidebar back to
+ * the business tree on arrival: you would land on the page you asked for with
+ * the menu you just left.
+ *
+ * Kept as an explicit list rather than a prefix rule, because it is a list of
+ * exceptions and should stay short enough to read.
+ */
+const SYSTEM_TREE_PAGES: ReadonlySet<string> = new Set([
+  '/research/signal-health',
+  '/research/lens-coverage',
+])
+
 export function isSystemRoute(pathname: string): boolean {
-  return pathname.startsWith('/system/') || pathname.startsWith('/docs/')
+  if (pathname.startsWith('/system/') || pathname.startsWith('/docs/')) return true
+  return SYSTEM_TREE_PAGES.has(pathname.replace(/\/+$/, ''))
 }

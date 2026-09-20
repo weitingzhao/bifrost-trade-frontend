@@ -79,7 +79,7 @@ export default function OptionScreenerPage() {
   return (
     <PageShell className="space-y-3">
       <PageHeader
-        title="Option Screener"
+        title="Option screen"
         description="Screen options contracts by structure type and filters"
         actions={
           <AskCopilotButton

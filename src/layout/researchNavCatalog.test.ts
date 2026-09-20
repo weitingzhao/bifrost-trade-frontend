@@ -73,34 +73,35 @@ describe('one tree, both homes', () => {
     // route keeps its path; only the name and the standing changed.
     const home = researchItems(ctx).find((i) => i.to === PIPELINE_HOME)
     expect(home?.label).toBe('Pipeline')
+    // Three folds, not four: package 2026-09-20.1 dissolved Data by the rule
+    // that a page taking no symbol is plumbing and belongs to System.
     expect(home?.children?.map((i) => [i.label, i.id.startsWith('fold:')])).toEqual([
       ['Discover', true],
       ['Analyze', true],
       ['Validate', true],
-      ['Data', true],
     ])
   })
 
-  it('carries the design labels and order inside Discover and Data', () => {
+  it('carries the design labels and order inside Discover', () => {
     const rows = (label: string) =>
       (flatten(researchItems(ctx)).find((i) => i.label === label)?.children ?? []).map(
         (i) => [i.label, i.to],
       )
     // Ratings and Screener homes are unbuilt; their existing children stand
-    // flat in the design's order until W3/W5 build the homes.
+    // flat in the design's order until W3/W5 build the homes. Stock Screener
+    // joined from the dissolved Data fold: the design's `/research/screener`
+    // and `/research/explorer` are both labelled "Stock screen", so which of
+    // the app's two pages that names is the Owner's to settle — until then
+    // both keep the names they have.
     expect(rows('Discover')).toEqual([
-      ['Underlyings', '/research/scan'],
-      ['Stocks', '/research/explorer'],
-      ['Contracts', '/research/contract-screener'],
-    ])
-    expect(rows('Data')).toEqual([
-      ['Signal Health', '/research/signal-health'],
-      ['Lens Coverage', '/research/lens-coverage'],
-      // Watchlist left for The Book (Rev 2026-09-18.2).
-      ['Contract Greeks', '/research/greeks'],
+      ['Vol ratings', '/research/scan'],
+      ['Stock Explorer', '/research/explorer'],
+      ['Option screen', '/research/contract-screener'],
       ['Stock Screener', '/research/stock-screener'],
-      ['Stock Data Readiness', '/system/data-readiness'],
     ])
+    // Data is gone. Signal Health and Lens Coverage are System rows now, and
+    // Contract Greeks holds no row at all — it is a tab of Symbol.
+    expect(rows('Data')).toEqual([])
   })
 
   it('carries The Book — the object layer belongs to every operator', () => {
@@ -164,7 +165,6 @@ describe('no page lights two rows', () => {
       'Discover',
       'Analyze',
       'Validate',
-      'Data',
       'The Book',
       'Copilot',
       'Market',
@@ -189,7 +189,6 @@ describe('the seat-less layout', () => {
       'Pipeline · Discover',
       'Pipeline · Analyze',
       'Pipeline · Validate',
-      'Pipeline · Data',
     ])
   })
 })

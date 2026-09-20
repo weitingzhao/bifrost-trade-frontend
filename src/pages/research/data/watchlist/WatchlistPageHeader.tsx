@@ -44,7 +44,7 @@ export function WatchlistPageHeader({
 
   return (
     <PageHeader
-      title="Stock Watchlist"
+      title="Watchlist"
       description="Watching → Sizing → Positions. Use the inspector on symbol click for fundamentals and technicals."
       className="max-w-none [&>div:last-child]:items-start"
       actions={

@@ -296,7 +296,7 @@ export default function ScanPage() {
   return (
     <PageShell padding="compact">
       <PageHeader
-        title="Scan"
+        title="Vol ratings"
         titleSize="default"
         description="Watchlist ∪ holdings cross-lens scanner (materialized daily)."
         actions={

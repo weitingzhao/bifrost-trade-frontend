@@ -181,7 +181,7 @@ describe('System nav', () => {
     }
   })
 
-  it('is not a ninth business group, and exactly one business row crosses into it', () => {
+  it('is not a ninth business group, and no business row crosses into it', () => {
     expect(NAV_GROUPS.some((g) => g.label === 'System')).toBe(false)
     const business = NAV_GROUPS.flatMap((g) => [
       ...(g.items ?? []).flatMap((i) => [i.to, ...(i.children?.map((c) => c.to) ?? [])]),
@@ -190,13 +190,12 @@ describe('System nav', () => {
       ),
     ])
     // Clicking one of these swaps the sidebar out from under the reader, so
-    // the set is pinned rather than merely allowed. Data Readiness earns it:
-    // the page is Research's, but "is the data there" is asked from both
-    // sides. It already left the business shell before this — it pointed at
-    // `/settings/data-readiness`, which opened the second shell entirely.
-    expect(business.filter((to) => to != null && isSystemRoute(to))).toEqual([
-      '/system/data-readiness',
-    ])
+    // the set is pinned rather than merely allowed — and it is now empty.
+    // Data Readiness used to earn the crossing, on the argument that "is the
+    // data there" is asked from both sides; what it actually had was a second
+    // row for a page System already listed. The design's Data move (package
+    // 2026-09-20.1) retired the duplicate rather than the argument.
+    expect(business.filter((to) => to != null && isSystemRoute(to))).toEqual([])
   })
 })
 

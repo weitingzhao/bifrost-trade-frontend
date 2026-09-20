@@ -30,12 +30,10 @@ import {
   MessageCircle,
   Radar,
   ScanSearch,
-  Server,
   Star,
   Target,
   Terminal,
   Users,
-  Wand2,
   Wrench,
   type LucideIcon,
 } from 'lucide-react'
@@ -129,7 +127,7 @@ export const MARKET_ITEM: ShellNavItem = {
 }
 
 export interface Bench {
-  id: 'discover' | 'analyze' | 'validate' | 'data'
+  id: 'discover' | 'analyze' | 'validate'
   label: string
   /** The design's fold glyph where it has one; a lucide icon otherwise. */
   icon: IconComponent
@@ -142,6 +140,18 @@ export const WORKBENCH_PAGE = route('Pipeline', '/research/workbench', Wrench)
 /** The module's standing — one dial, three operators, six stations, one book. */
 export const OVERVIEW_PAGE = route('Overview', '/research/overview', LayoutGrid)
 
+/**
+ * Pipeline's folds. Three, since package 2026-09-20.1 dissolved Data.
+ *
+ * The design's rule for where a Research page lives is in `shell-registry.js`
+ * beside the Discover fold and it is about what the page takes: **a page that
+ * takes a symbol is a read and joins Analyze; a page that takes none is
+ * pipeline plumbing and moves to System › Data.** So Contract Greeks reads
+ * (and holds no row at all — it is a tab of Symbol), while Signal Health and
+ * Lens Coverage are plumbing and left for System. What remained of Data after
+ * that was one row, and a fold with one row is a heading pretending to be a
+ * place.
+ */
 export const BENCHES: Bench[] = [
   {
     id: 'discover',
@@ -155,9 +165,18 @@ export const BENCHES: Bench[] = [
     // `/research/ratings` in the W5 sweep.
     icon: foldGlyph('Discover') ?? Compass,
     items: [
-      route('Underlyings', '/research/scan', ScanSearch),
-      route('Stocks', '/research/explorer', Compass),
-      route('Contracts', '/research/contract-screener', ListFilter),
+      route('Vol ratings', '/research/scan', ScanSearch),
+      route('Stock Explorer', '/research/explorer', Compass),
+      route('Option screen', '/research/contract-screener', ListFilter),
+      // This side's own, and it lands here because Discover is where the
+      // screeners are. Its design home is genuinely unresolved rather than
+      // merely unbuilt: the design labels BOTH `/research/screener` and
+      // `/research/explorer` "Stock screen", and this page — SEPA conditions,
+      // tiers, no symbol — has as good a claim to that name as Explorer does.
+      // Naming one of them "Stock screen" now would put two menu rows in a
+      // fight over it, so both keep the names they have until the Owner says
+      // which page the design means.
+      route('Stock Screener', '/research/stock-screener', ListFilter),
     ],
   },
   {
@@ -175,25 +194,6 @@ export const BENCHES: Bench[] = [
     label: 'Validate',
     icon: foldGlyph('Validate') ?? History,
     items: [route('Signal Decay', '/research/signal-decay', Activity), route('Backtest', '/research/backtest', History)],
-  },
-  {
-    id: 'data',
-    label: 'Data',
-    // The design's order — Signal Health leads (shell-registry `fold:data`).
-    // Watchlist left for The Book (Rev 2026-09-18.2): a watchlist row is a
-    // standing nomination, which makes it object layer, not data plumbing.
-    // The last two rows are this side's own: Stock Screener is `staging`
-    // (no design home yet, Owner to place), and Data Readiness is the one
-    // business row that earns a `/system/*` crossing — kept off the front so
-    // the fold's heading never leaves the domain.
-    icon: foldGlyph('Data') ?? Server,
-    items: [
-      route('Signal Health', '/research/signal-health', Activity),
-      route('Lens Coverage', '/research/lens-coverage', Radar),
-      route('Contract Greeks', '/research/greeks', Wand2),
-      route('Stock Screener', '/research/stock-screener', ListFilter),
-      route('Stock Data Readiness', '/system/data-readiness', Server),
-    ],
   },
 ]
 
@@ -272,7 +272,7 @@ function objectivesItem(objectives: ObjectiveNavRow[]): ShellNavItem[] {
  * that reading order now that both stand.
  */
 export function researchItems(ctx: ResearchNavContext): ShellNavItem[] {
-  const [discover, analyze, validate, data] = BENCHES
+  const [discover, analyze, validate] = BENCHES
   return [
     OVERVIEW_PAGE,
     home(AUTOPILOT_PAGES.autopilot, [AUTOPILOT_PAGES.inbox, ...objectivesItem(ctx.objectives)]),
@@ -280,7 +280,6 @@ export function researchItems(ctx: ResearchNavContext): ShellNavItem[] {
       fold(discover.id, discover.label, discover.icon, discover.items),
       fold(analyze.id, analyze.label, analyze.icon, analyze.items),
       fold(validate.id, validate.label, validate.icon, validate.items, '/research/backtest'),
-      fold(data.id, data.label, data.icon, data.items),
     ]),
     BOOK_ITEM,
     COPILOT_ITEM,

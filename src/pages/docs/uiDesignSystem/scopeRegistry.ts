@@ -84,9 +84,9 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/portfolio/ledger', label: 'Trade Ledger', domain: 'portfolio', pathGlobs: ['pages/portfolio/TradeLedgerPage.tsx', 'pages/portfolio/ledger/**'] },
   { route: '/portfolio/transfer', label: 'Transfer & Pay', domain: 'portfolio', pathGlobs: ['pages/portfolio/TransferPayPage.tsx'] },
 
-  { route: '/research/watchlist', label: 'Stock Watchlist', domain: 'research', pathGlobs: ['pages/research/data/StockWatchlistPage.tsx', 'pages/research/data/watchlist/**'] },
+  { route: '/research/watchlist', label: 'Watchlist', domain: 'research', pathGlobs: ['pages/research/data/StockWatchlistPage.tsx', 'pages/research/data/watchlist/**'] },
   { route: '/research/stock-screener', label: 'Stock Screener', domain: 'research', pathGlobs: ['pages/research/data/StockScreenerPage.tsx', 'pages/research/data/stockScreener/**'] },
-  { route: '/research/contract-screener', label: 'Option Screener', domain: 'research', pathGlobs: ['pages/research/data/ScreenerPage.tsx', 'pages/research/data/optionScreener/**'] },
+  { route: '/research/contract-screener', label: 'Option screen', domain: 'research', pathGlobs: ['pages/research/data/ScreenerPage.tsx', 'pages/research/data/optionScreener/**'] },
   { route: '/system/data-readiness', label: 'Data Readiness', domain: 'system', pathGlobs: ['pages/research/data/StockDataPage.tsx', 'pages/research/data/stockDataReadiness/**'] },
   { route: '/research/discovery', label: 'Option Discovery', domain: 'research', pathGlobs: ['pages/research/analyze/DiscoveryPage.tsx'] },
   { route: '/research/vol-regime', label: 'Vol Regime', domain: 'research', pathGlobs: ['pages/research/analyze/volRegime/**', 'pages/research/analyze/hub/**', 'utils/ivRadar/**', 'hooks/useIvRadarData.ts', 'hooks/useHoldingSymbols.ts', 'api/research/ivRadar.ts'] },

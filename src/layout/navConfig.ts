@@ -207,10 +207,19 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
     icon: Settings,
     defaultOpen: true,
     items: [
+      // Signal Health and Lens Coverage arrived from Research (design package
+      // 2026-09-20.1). The design's rule is about what a page takes: one that
+      // takes a symbol is a read and stays in Research › Analyze; one that
+      // takes none is pipeline plumbing, and what these two answer is whether
+      // the machinery is filling up — System's question. Data Readiness was
+      // already here and had a second row under Research pointing at this same
+      // `/system/*` path; that duplicate is gone with the move.
       fold('system:data', 'Data', '/system/coverage', Database, [
         route('Coverage', '/system/coverage', BarChart2),
         route('Feed', '/system/feed', Radio),
         route('Data Readiness', '/system/data-readiness', Database),
+        route('Signal Health', '/research/signal-health', Activity),
+        route('Lens Coverage', '/research/lens-coverage', Radar),
       ]),
       fold('system:runtime', 'Runtime', '/system/topology', Cpu, [
         route('Topology', '/system/topology', Network),

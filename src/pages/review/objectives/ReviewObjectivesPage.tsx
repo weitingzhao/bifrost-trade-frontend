@@ -22,7 +22,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
+import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -32,7 +32,6 @@ import {
   DenseTableHeader,
   DenseTableRow,
   DenseTag,
-  SegmentControl,
   denseTableNumCell,
 } from '@/components/data-display'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -48,6 +47,8 @@ import { useObjectiveScope, ALL_OBJECTIVES } from '@/lib/objectiveScope'
 import {
   BROKEN_LINK,
   VERDICT_FLOOR,
+  chainAction,
+  chainWindow,
   objectiveChain,
   widestGate,
   type ChainRow,
@@ -72,9 +73,31 @@ function Num({ v, money = false }: { v: number | null; money?: boolean }) {
   return <>{v}</>
 }
 
+/** The design's last column: what this row argues for, or why it argues for nothing. */
+function ChainActionCell({ row }: { row: ChainRow }) {
+  const a = chainAction(row)
+  if (a.to == null) {
+    // Not a link, because there is nowhere for it to go — and it says why on
+    // hover rather than looking like a control that does nothing.
+    return (
+      <span className="text-dense-meta text-muted-foreground" title={a.why}>
+        {a.label}
+      </span>
+    )
+  }
+  return (
+    <Link to={a.to} className="text-dense-meta text-primary hover:underline" title={a.why}>
+      {a.label}
+    </Link>
+  )
+}
+
 function ChainTable({ rows, scoped }: { rows: ChainRow[]; scoped: string }) {
   return (
-    <DenseDataTable wrapClassName="rounded-none border-0" scrollX={false}>
+    // Nine columns do not fit a narrow pane, and crushing them turns the
+    // headers into `OBJECTIV` and clips a five-figure total mid-number. The
+    // design's own answer: keep the shape and let the panel scroll sideways.
+    <DenseDataTable wrapClassName="rounded-none border-0" tableClassName="min-w-[880px]">
       <DenseTableHeader>
         <DenseTableHeadRow>
           <DenseTableHead>Objective</DenseTableHead>
@@ -84,7 +107,8 @@ function ChainTable({ rows, scoped }: { rows: ChainRow[]; scoped: string }) {
           <DenseTableHead className="text-right">Settled</DenseTableHead>
           <DenseTableHead className="text-right">Hit</DenseTableHead>
           <DenseTableHead className="text-right">Net</DenseTableHead>
-          <DenseTableHead>Verdict</DenseTableHead>
+          <DenseTableHead className="w-32 max-w-none">Verdict</DenseTableHead>
+          <DenseTableHead className="w-36 max-w-none" />
         </DenseTableHeadRow>
       </DenseTableHeader>
       <DenseTableBody>
@@ -103,7 +127,9 @@ function ChainTable({ rows, scoped }: { rows: ChainRow[]; scoped: string }) {
               ) : (
                 <span className="font-medium">{r.title}</span>
               )}
-              <span className="ml-2 text-dense-micro text-muted-foreground">{r.state}</span>
+              <DenseTag variant="neutral" size="cell" className="ml-2">
+                {r.state}
+              </DenseTag>
             </DenseTableCell>
             <DenseTableCell className={denseTableNumCell}><Num v={r.proposed} /></DenseTableCell>
             <DenseTableCell className={denseTableNumCell}><Num v={r.accepted} /></DenseTableCell>
@@ -111,14 +137,23 @@ function ChainTable({ rows, scoped }: { rows: ChainRow[]; scoped: string }) {
             <DenseTableCell className={denseTableNumCell}><Num v={r.settled} /></DenseTableCell>
             <DenseTableCell className={denseTableNumCell}>
               {r.hit == null ? <span className="text-muted-foreground">—</span> : fmtPct0(r.hit)}
+              {/* The design prints each objective's own hit floor here. This
+                  side stores none, and the settled-count floor is a different
+                  claim, so the cell says which rather than borrowing it. */}
+              <span className="block text-dense-micro font-normal text-muted-foreground">
+                {r.hitFloor == null ? 'no floor set' : `floor ${fmtPct0(r.hitFloor)}`}
+              </span>
             </DenseTableCell>
             <DenseTableCell className={denseTableNumCell}><Num v={r.net} money /></DenseTableCell>
-            <DenseTableCell>
+            <DenseTableCell className="max-w-none">
               <span title={r.why}>
                 <DenseTag variant={VERDICT_TAG[r.verdict].variant} size="cell">
                   {r.verdict}
                 </DenseTag>
               </span>
+            </DenseTableCell>
+            <DenseTableCell className="max-w-none whitespace-nowrap">
+              <ChainActionCell row={r} />
             </DenseTableCell>
           </DenseTableRow>
         ))}
@@ -155,26 +190,58 @@ export default function ReviewObjectivesPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
-        breadcrumb={<p className="text-xs font-medium text-primary/90">Review</p>}
-        title="Objectives"
-        titleSize="large"
-        description={LEAD}
-        actions={
-          chain.rows.length > 1 ? (
-            <SegmentControl
-              size="xs"
-              ariaLabel="Objective scope"
-              value={objective}
-              onChange={setObjective}
-              options={[
-                { value: ALL_OBJECTIVES, label: 'All' },
-                ...chain.rows.map((r) => ({ value: r.id, label: r.title })),
-              ]}
-            />
-          ) : undefined
-        }
-      />
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="min-w-0 max-w-[84ch] flex-[1_1_420px]">
+          <PageHeader
+            breadcrumb={<p className="text-xs font-medium text-primary/90">Review</p>}
+            title="Objectives · did the machine earn its keep"
+            titleSize="large"
+            description={LEAD}
+          />
+        </div>
+        <div className="ml-auto flex flex-none items-center gap-2 pt-1">
+          {/* What the figures below are true of. Derived, not the design's
+              `trailing 90d`: this side reads every canonical execution with no
+              window, and a caption that lies about its own numbers is worse
+              than a longer one. */}
+          <span className="font-mono text-dense-meta text-muted-foreground">
+            {chainWindow(review.trades)}
+          </span>
+          <Link
+            to="/research/loop/harness"
+            className="inline-flex h-[22px] items-center rounded-sm border border-border px-2 text-dense-meta hover:border-foreground/30 hover:text-foreground"
+          >
+            Autopilot Console →
+          </Link>
+        </div>
+      </div>
+
+      {/* The scope is the shell's, set in the Lens — this page reflects it and
+          offers the way out, rather than growing a second control that can
+          disagree with the first. */}
+      {objective !== ALL_OBJECTIVES ? (
+        // The violet is the Lens's own objective ink, not the prototype's:
+        // the control that sets this scope is one glance away in the top bar,
+        // and two violets for one idea is two ideas.
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-md border-[var(--color-entity-strategy)]/40 border bg-[var(--color-entity-strategy)]/[0.07] px-3 py-1.5">
+          <span className={cn(SECTION_CAP_CLASS, 'text-[var(--color-entity-strategy)]')}>
+            Objective scope
+          </span>
+          <span className="text-dense-label">
+            {chain.rows.find((r) => r.id === objective)?.title ?? objective}
+          </span>
+          <span className="text-dense-meta text-muted-foreground">
+            its row is lit; the others are dimmed, because the comparison is the point of this page
+          </span>
+          <button
+            type="button"
+            onClick={() => setObjective(ALL_OBJECTIVES)}
+            className="ml-auto cursor-pointer text-dense-meta text-[var(--color-entity-strategy)] hover:underline"
+          >
+            Clear
+          </button>
+        </div>
+      ) : null}
 
       {objectivesQ.isError ? <QueryErrorAlert error={objectivesQ.error} /> : null}
       {review.error ? <QueryErrorAlert error={review.error} /> : null}
@@ -198,41 +265,56 @@ export default function ReviewObjectivesPage() {
         </section>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-2">
         {[
           {
             label: 'Machines earning',
             value: `${earning} of ${chain.rows.length}`,
             sub: 'by settled money',
+            ink: earning > 0 ? 'text-[var(--color-profit)]' : '',
+            tip: `An objective earns when it clears the floor it set itself AND is net positive on settled trades. Both, because either alone can lie. ${VERDICT_FLOOR} settled trades are needed before a hit rate is a claim at all.`,
           },
           {
-            label: 'Settled, attributed',
-            value: chain.wired ? '—' : '0',
-            sub: `of ${chain.unattributed.settled ?? 0} closed trades`,
+            label: 'Net from objectives',
+            value: chain.wired ? fmtUsd(0) : '—',
+            sub: `0 of ${chain.unattributed.settled ?? 0} settled attributed`,
+            ink: 'text-muted-foreground',
+            tip: `Realised on settled positions whose lineage reaches a run. Nothing reaches one: ${BROKEN_LINK} is empty on every hypothesis, so this is unknown rather than zero.`,
           },
           {
-            label: 'Verdict floor',
-            value: `${VERDICT_FLOOR}`,
-            sub: 'settled trades before a hit rate is a claim',
-          },
-          {
-            label: 'Unattributed net',
+            label: 'Unattributed',
             value: fmtUsd(chain.unattributed.net ?? 0),
-            sub: 'real money, not evidence about any machine',
+            sub: `${chain.unattributed.settled ?? 0} settled`,
+            ink: pnlColorClass(chain.unattributed.net ?? 0),
+            tip: 'Real money with no machine behind it. Shown so the rates above stay honest — hiding it would make every one of them wrong.',
+          },
+          {
+            label: 'Patches argued for',
+            value: '0',
+            sub: "by this quarter's record",
+            ink: 'text-muted-foreground',
+            tip: 'A patch drafted from settled evidence, waiting to be sent to the Decision Inbox. None can be drafted while no settled trade can be attributed to an objective.',
           },
         ].map((k) => (
-          <div key={k.label} className="bg-card px-3 py-2">
-            <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">{k.label}</div>
-            <div className="font-mono text-dense-body font-semibold tabular-nums">{k.value}</div>
-            <div className="text-dense-micro leading-snug text-muted-foreground">{k.sub}</div>
+          <div
+            key={k.label}
+            title={k.tip}
+            className="flex flex-col gap-0.5 rounded-md border border-border bg-card px-3 py-2"
+          >
+            <span className={SECTION_CAP_CLASS}>{k.label}</span>
+            <span className="flex items-baseline gap-1.5">
+              <span className={cn('font-mono text-base font-semibold tabular-nums', k.ink)}>
+                {k.value}
+              </span>
+              <span className="text-dense-caption text-muted-foreground">{k.sub}</span>
+            </span>
           </div>
         ))}
       </div>
 
       <SectionPanel
-        cap="The chain, per objective"
-        title="each column is the previous one after a gate"
-        note="the shape of the fall is the finding"
+        title="The chain, per objective"
+        note="each column is the previous one after a gate — the shape of the fall is the finding"
       >
         {loading ? <Skeleton className="m-3 h-32 rounded-md" /> : <ChainTable rows={rows} scoped={objective} />}
         <p className="border-t border-border/60 px-3 py-1.5 text-dense-meta leading-snug text-muted-foreground">
@@ -247,7 +329,10 @@ export default function ReviewObjectivesPage() {
       </SectionPanel>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <SectionPanel cap="Where they die" title="the widest gate this side records">
+        <SectionPanel
+          title="Where they die"
+          note="the widest gate this side records, per objective"
+        >
           {loading ? (
             <Skeleton className="m-3 h-20 rounded-md" />
           ) : (
@@ -255,19 +340,44 @@ export default function ReviewObjectivesPage() {
               {chain.rows.map((r) => {
                 const g = widestGate(r)
                 return (
-                  <div key={r.id} className="space-y-0.5 px-3 py-2">
+                  <div key={r.id} className="flex flex-col gap-1 px-3 py-2">
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-dense-label font-medium">{r.title}</span>
-                      <DenseTag variant="neutral" size="cell">
+                      <span className="text-dense-label">{r.title}</span>
+                      <span
+                        className={cn(
+                          'ml-auto font-mono text-dense-meta tabular-nums',
+                          g.share == null
+                            ? 'text-muted-foreground'
+                            : g.share > 0.8
+                              ? 'text-warning'
+                              : g.share > 0.5
+                                ? 'text-sky-300'
+                                : 'text-muted-foreground',
+                        )}
+                      >
                         {g.label}
-                      </DenseTag>
-                      {g.share != null ? (
-                        <span className="ml-auto font-mono text-dense-label tabular-nums">
-                          {fmtPct0(g.share)}
-                        </span>
-                      ) : null}
+                        {g.share == null ? '' : ` · ${fmtPct0(g.share)}`}
+                      </span>
                     </div>
-                    <p className="text-dense-meta leading-snug text-muted-foreground">{g.note}</p>
+                    {/* How wide the gate is, drawn. A share stated only in
+                        words makes two objectives incomparable at a glance,
+                        which is the whole job of this panel. */}
+                    <span className="block h-1.5 overflow-hidden rounded-sm bg-muted">
+                      {g.share != null ? (
+                        <span
+                          className={cn(
+                            'block h-full rounded-sm',
+                            g.share > 0.8
+                              ? 'bg-warning'
+                              : g.share > 0.5
+                                ? 'bg-sky-300'
+                                : 'bg-foreground/45',
+                          )}
+                          style={{ width: `${Math.max(2, g.share * 100)}%` }}
+                        />
+                      ) : null}
+                    </span>
+                    <p className="text-dense-meta leading-relaxed text-muted-foreground">{g.note}</p>
                   </div>
                 )
               })}
@@ -275,7 +385,12 @@ export default function ReviewObjectivesPage() {
           )}
         </SectionPanel>
 
-        <SectionPanel cap="↺ 5 → 1" title="the return edge" note="where a verdict becomes a change">
+        <SectionPanel
+          cap="↺ 5 → 1"
+          title="The return edge"
+          note="this is where a verdict becomes a change"
+          className="border-[var(--color-entity-strategy)]/40"
+        >
           <div className="space-y-2 px-3 py-2 text-dense-meta">
             <p className="max-w-[78ch] text-muted-foreground">
               Nothing argues for a change yet, and the reason is the one above: a patch has to carry

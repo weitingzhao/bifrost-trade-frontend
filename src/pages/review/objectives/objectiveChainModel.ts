@@ -50,6 +50,15 @@ export interface ChainRow {
   id: string
   title: string
   state: string
+  /**
+   * The hit rate this objective set itself, when it set one.
+   *
+   * The design carries one per objective and prints it under the Hit column.
+   * Nothing on this side stores it — `VERDICT_FLOOR` is a *count* of settled
+   * trades, which is a different claim — so the cell says so rather than
+   * borrowing the count and printing it as a percentage.
+   */
+  hitFloor: number | null
   /** Counts, or null where the link is missing. */
   proposed: number | null
   accepted: number | null
@@ -136,6 +145,7 @@ export function objectiveChain(input: ChainInput): {
       id: o.id,
       title: o.title ?? o.id,
       state: o.status ?? '—',
+      hitFloor: null,
       proposed,
       accepted,
       traded: wired ? 0 : null,
@@ -156,6 +166,7 @@ export function objectiveChain(input: ChainInput): {
     id: 'unattributed',
     title: 'Unattributed',
     state: '—',
+    hitFloor: null,
     proposed: null,
     accepted: null,
     traded: null,
@@ -166,7 +177,9 @@ export function objectiveChain(input: ChainInput): {
     why: wired
       ? 'Hand-opened, or a plan edited past the point where its lineage could be traced back to a run. Real money, and not evidence about any objective.'
       : `Every settled trade is here, because \`${BROKEN_LINK}\` is empty on every hypothesis — nothing on this side ties a position back to the objective that proposed it. Real money, and not yet evidence about any machine.`,
-    to: '/review',
+    // Outcome is where settled money is read by where the idea came from,
+    // which is the question this row raises. The design sends it there too.
+    to: '/portfolio/outcome',
   }
 
   return { rows, unattributed, wired }
@@ -194,4 +207,61 @@ export function widestGate(row: ChainRow): { label: string; share: number | null
     share: held / row.proposed,
     note: `${held} of ${row.proposed} nominations were never promoted. It is the only gate this side records per objective — the loop's earlier stages (universe, screen, judge) are counted per run, not per objective, so a narrower gate could be hiding inside them.`,
   }
+}
+
+/**
+ * The row's own next move — the design's last column.
+ *
+ * The design offers `Draft patch →` where settled evidence argues for a
+ * change. Nothing on this side can: a patch has to carry the evidence that
+ * argued for it, and no settled trade can be attributed. So the column stays
+ * and says which of the four situations the row is in, rather than printing
+ * `Nothing to change` over a row nobody could judge — those are opposite
+ * claims, and the design's own wording only fits the first.
+ */
+export function chainAction(row: ChainRow): { label: string; to: string | null; why: string } {
+  if (row.verdict === 'NOT A MACHINE') {
+    return {
+      label: 'Why →',
+      to: row.to,
+      why: 'Real money with no machine behind it. Read by where the idea came from on Outcome.',
+    }
+  }
+  if (row.verdict === 'NO VERDICT') {
+    return {
+      label: 'No evidence yet',
+      to: null,
+      why: `${row.why} A patch has to carry the settled evidence that argued for it, so there is nothing to draft from this row.`,
+    }
+  }
+  if (row.verdict === 'DID NOT EARN') {
+    return {
+      label: 'Draft patch →',
+      to: null,
+      why: 'A losing record is what argues for a change — but drafting one needs a patch store, and there is none on this side yet.',
+    }
+  }
+  return {
+    label: 'Nothing to change',
+    to: null,
+    why: 'It clears its floor and the gate that removes the most is doing its job.',
+  }
+}
+
+/**
+ * What the window at the top of the page is true of.
+ *
+ * The design writes `trailing 90d`. This side reads every canonical execution
+ * with no window at all, so the string is derived from the trades themselves —
+ * printing the design's 90 days over an all-time read would be a caption that
+ * lies about its own figures.
+ */
+export function chainWindow(trades: readonly ReviewTrade[]): string {
+  const days = trades.map((t) => t.closedOn).filter(Boolean).sort()
+  if (days.length === 0) return 'settled trades · nothing closed yet · all accounts'
+  const first = days[0]
+  const last = days[days.length - 1]
+  return first === last
+    ? `settled trades · ${first} · all accounts`
+    : `settled trades · ${first} → ${last} · all accounts`
 }

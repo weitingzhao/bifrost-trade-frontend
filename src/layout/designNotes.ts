@@ -113,7 +113,45 @@ export const DESIGN_NOTES: Record<string, string> = {
   '/risk/sizing':
     'Walked 2026-09-17 and re-walked 2026-09-18 against Risk Sizing.dc.html at page rev 2026-09-18.1, on local DEV (:5173). The design added a **fourth cap** \u2014 n by gate, the room left under the active allocation\u2019s gate \u2014 so the rule is now n = min(risk, margin, concentration, gate). Three of the four are readable here (margin, concentration and now gate); the risk cap still has no line written anywhere. The gate cap is the first one whose limit is genuinely stored rather than assumed, and on DEV it reads 1: nine of the allocation\u2019s ten instances are open. The distinction the model must not blur, and the one it is tested on: a gate that **does not apply** is silent, while a cap that **cannot be computed** is reported missing. A hand plan is under no allocation, so the gate is not a constraint on it \u2014 treating the two the same would make a hand plan read as bounded by a rule it is not under, and treating a missing cap as unlimited is the one failure mode a sizing tool cannot have. The worksheet still has no rows, for the reason it had before: Compare is not built and nothing is intended in Plans. Eleven columns now, 0 cells clipped at the raised floor. Re-aligned 2026-09-18 after the Owner set the page beside the prototype. The strip was five cells and the design\u2019s is four, in this order: what one trade may lose, what is left of today, what the broker leaves room for, and \u2014 set apart on the right \u2014 the ceiling one name may not pass. **Budget left today** was missing entirely and is drawn now, marked: no daily open-risk cap is written and nothing records a sizing decision, so both halves of it are unreadable rather than one. **Backing used** stopped being a cell of its own and became the margin cell\u2019s sub-line, which is where the design reads it (`to backing gate 85%`), and **Gate room** left the strip for Why this size, which is where the design reads *that*. Why this size now carries what the design gives it: each cap\u2019s live reading beside its formula, and the ceiling it yields. Only the gate cap can be read with no candidate on the page \u2014 it counts instances open under the active allocation against that allocation\u2019s own max_positions, so it is the one row with a real number (`n \u2264 1`); concentration reads `n \u2264 0` because the largest name is already past its share; risk and margin divide by a max loss or a margin per contract, which only a candidate carries, so they read their line and say what the ceiling waits on instead of printing one. The design\u2019s `Compare \u2192` header link is still not drawn: `/research/compare` is designed and unbuilt on this side, and a link to a page that does not exist is worse than the sentence the empty worksheet already carries. Owner signed off 2026-09-18 on local DEV (:5173) at this rev.',
   '/review/objectives':
-    "Built 2026-09-20 against Review Objectives.dc.html (Rev 2026-09-20.5) on the Owner's option (c): build the honest version now, and file the backfill as a request. The chain the design reads is proposed -> accepted -> traded -> settled, and on this side it breaks at `traded`. Measured first: 1 objective, 29 runs, 62 candidates (10 with a hypothesis_id), 29 hypotheses of which ZERO carry a linked_opportunity_id, against 25 opportunity ids on the settled side — intersection zero. So the four columns after `accepted` read em-dash rather than zero (a zero would say 'it traded nothing'; what is true is 'we cannot tell'), every verdict is NO VERDICT, and every closed trade sits in the Unattributed row. The design makes that row a hard requirement for exactly this reason — a chain with a missing link is a fact about the record, not a rounding error — and here it holds the whole book rather than a remainder. The page names the missing field, `hypothesis.linked_opportunity_ids`, which is the thing only a built page can say and the whole argument for (c); the request is R5 in REQUEST-research-data-2026-09-20.md. Divergences: 'Where they die' reports the proposed-to-accepted drop and says the loop's earlier stages are counted per run rather than per objective, instead of naming a gate it cannot measure; the return edge is prose rather than a patch button, because a patch must carry settled evidence and there is none to carry.",
+    "Built 2026-09-20 against Review Objectives.dc.html (Rev 2026-09-20.5) on the Owner's "
+    + "option (c): build the honest version now, and file the backfill as a request. Re-walked "
+    + 'the same day under the interaction standard, section by section. The chain the design '
+    + 'reads is proposed -> accepted -> traded -> settled, and on this side it breaks at '
+    + '`traded`. Measured first: 1 objective, 29 runs, 62 candidates (10 with a hypothesis_id), '
+    + '29 hypotheses of which ZERO carry a linked_opportunity_id, against 25 opportunity ids on '
+    + 'the settled side — intersection zero. So the four columns after `accepted` read em-dash '
+    + "rather than zero (a zero would say 'it traded nothing'; what is true is 'we cannot "
+    + "tell'), every verdict is NO VERDICT, and every closed trade sits in the Unattributed "
+    + 'row. The design makes that row a hard requirement for exactly this reason — a chain with '
+    + 'a missing link is a fact about the record, not a rounding error — and here it holds the '
+    + 'whole book rather than a remainder. The page names the missing field, '
+    + '`hypothesis.linked_opportunity_ids`, which is the thing only a built page can say and '
+    + 'the whole argument for (c); the request is R5 in REQUEST-research-data-2026-09-20.md. '
+    + 'The second pass landed the rest of the prototype. The header took the design’s full '
+    + 'title and gained the two things beside it: the window the figures are true of, and the '
+    + 'way out to the Autopilot Console. The page’s own objective SegmentControl was removed — '
+    + 'the scope is the shell’s, set in the Lens, and a second control for one idea is a second '
+    + 'idea; what stands in its place is the design’s violet banner, which names the scope and '
+    + 'offers Clear, in the Lens’s own objective ink rather than the prototype’s. The four KPIs '
+    + 'became the design’s four, each carrying its tip. The chain table gained the state tag, '
+    + 'the floor line under Hit, and the design’s last column — what this row argues for. And '
+    + 'Where they die gained its bar, because a share stated only in words leaves two '
+    + 'objectives incomparable at a glance, which is the panel’s whole job. Divergences. The '
+    + 'window reads the span the trades actually cover, not the design’s trailing 90d: this '
+    + 'side reads every canonical execution with no window, and a caption that lies about its '
+    + 'own figures is worse than a longer one. The Hit floor prints `no floor set`, because the '
+    + 'design’s per-objective hit floor has no column here and VERDICT_FLOOR is a count of '
+    + 'settled trades — a different claim, not a substitute. The action column never prints '
+    + "'Nothing to change' over a row nobody could judge; a NO VERDICT row reads 'No evidence "
+    + "yet' and says why on hover, and nothing on the page is drawn as a control that does "
+    + 'nothing. `Where they die` reports the proposed-to-accepted drop and says the loop’s '
+    + 'earlier stages are counted per run rather than per objective, instead of naming a gate '
+    + 'it cannot measure; the return edge is prose rather than patch cards, because a patch '
+    + 'must carry settled evidence and there is none to carry. Interaction sweep: all five '
+    + 'links resolve — the objective title opens its own page, the unattributed row and its '
+    + 'Why open Outcome, and Clear empties the shell scope — each verified by clicking. The '
+    + 'nine-column table keeps its shape and scrolls sideways at a narrow pane rather than '
+    + 'crushing its headers, which is the design’s own min-width.',
   '/research/screener':
     "Owner ruled 2026-09-20 which of this side's pages the design's Stock screen is, and the page took the design's own path with the name. The evidence is the prototype's content, not the label: Research Screener.dc.html is universe -> criteria stages (AND between stages, OR inside one, 'at least N of these') -> results -> lineage v1->v2, and only this page has any of the three. Stock Explorer has no criteria of its own; it is a tab shell over SEPA Daily Core, Momentum Radar and Event Radar, all three of which the design redistributed (the first two are lenses of Stock ratings' composite, the third moved to Home as Alerts). An earlier note in routeRegistry read the design's Screener as our Explorer; that reading is withdrawn. The page itself is unchanged in this move — path, label and menu row only — so it is `reviewing` against 2026-09-20.10 and has not been walked against the prototype cell by cell yet. The old `/research/stock-screener` address redirects here; `/research/screener` stopped being a redirect to the Option Screener, which means an option-screener bookmark written before 2026-09-15 now lands on a stock screen.",
   '/research/book':

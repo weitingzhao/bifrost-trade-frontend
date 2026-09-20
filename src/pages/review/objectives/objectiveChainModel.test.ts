@@ -3,7 +3,15 @@ import type { ResearchObjective } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import type { ReviewTrade } from '@/utils/reviewTrades'
-import { BROKEN_LINK, lineageIsWired, objectiveChain, widestGate } from './objectiveChainModel'
+import {
+  BROKEN_LINK,
+  chainAction,
+  chainWindow,
+  lineageIsWired,
+  objectiveChain,
+  widestGate,
+  type ChainRow,
+} from './objectiveChainModel'
 
 const obj = (id: string): ResearchObjective =>
   ({ id, title: `${id} machine`, status: 'active' }) as ResearchObjective
@@ -92,5 +100,44 @@ describe('widestGate', () => {
       label: 'never ran',
       share: null,
     })
+  })
+})
+
+describe('chainAction', () => {
+  const row = (over: Partial<ChainRow>): ChainRow =>
+    ({ id: 'r', title: 't', verdict: 'NO VERDICT', why: 'because.', to: null, ...over }) as ChainRow
+
+  it('sends the unattributed row where settled money is read by source of idea', () => {
+    const a = chainAction(row({ verdict: 'NOT A MACHINE', to: '/portfolio/outcome' }))
+    expect(a).toMatchObject({ label: 'Why →', to: '/portfolio/outcome' })
+  })
+
+  it('never prints "Nothing to change" over a row nobody could judge', () => {
+    // The design's wording fits an objective that clears its floor. On a row
+    // with no verdict it would be the opposite claim.
+    const a = chainAction(row({ verdict: 'NO VERDICT' }))
+    expect(a.label).toBe('No evidence yet')
+    expect(a.to).toBeNull()
+    expect(a.why).toContain('because.')
+  })
+
+  it('draws no link where there is nothing to draft from', () => {
+    // A patch has to carry evidence, and there is no patch store either way.
+    expect(chainAction(row({ verdict: 'DID NOT EARN' })).to).toBeNull()
+    expect(chainAction(row({ verdict: 'EARNING' })).label).toBe('Nothing to change')
+  })
+})
+
+describe('chainWindow', () => {
+  it('states the span the figures are actually true of, not the design’s 90 days', () => {
+    // This side reads every canonical execution with no window at all.
+    const t = (closedOn: string) => ({ closedOn, realised: 0, win: true }) as ReviewTrade
+    expect(chainWindow([t('2026-09-01'), t('2026-02-13'), t('2026-09-18')])).toBe(
+      'settled trades · 2026-02-13 → 2026-09-18 · all accounts',
+    )
+  })
+
+  it('says nothing closed rather than printing an empty range', () => {
+    expect(chainWindow([])).toContain('nothing closed yet')
   })
 })

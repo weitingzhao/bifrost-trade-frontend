@@ -13,6 +13,10 @@
  * reader's words, and the **note** is the scope or the count the numbers are
  * true within. A panel whose note is really a second title has lost that.
  *
+ * The cap is optional because the prototypes draw headers both ways — a panel
+ * whose title already names the reading ("Where they die") does not want the
+ * same words twice in two sizes.
+ *
  * **action** holds the way out of the panel. It takes the right edge, which
  * is the note's usual place, so a panel with both prints the note beside the
  * title instead — the note is part of the sentence the header makes, and the
@@ -54,7 +58,7 @@ export function SectionPanel({
   className,
   children,
 }: {
-  cap: string
+  cap?: string
   title: ReactNode
   note?: ReactNode
   action?: ReactNode
@@ -76,7 +80,9 @@ export function SectionPanel({
           tone == null ? 'bg-secondary/40' : TONE_HEADER[tone],
         )}
       >
-        <span className={cn(SECTION_CAP_CLASS, tone != null && TONE_CAP[tone])}>{cap}</span>
+        {cap != null ? (
+          <span className={cn(SECTION_CAP_CLASS, tone != null && TONE_CAP[tone])}>{cap}</span>
+        ) : null}
         <h2 className="text-dense-body font-semibold">{title}</h2>
         {note != null ? (
           <span className={cn('text-dense-meta text-muted-foreground', action == null && 'ml-auto')}>

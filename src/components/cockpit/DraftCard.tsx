@@ -283,6 +283,15 @@ export function DraftCard({
                 <Link to={effect.to} className="hover:underline">
                   {effect.label}
                 </Link>
+                {/* The design writes the negative half of every `writes`
+                    string, and it is the half that matters under D10: a
+                    reader answering a queue fast needs to know that none of
+                    these answers can become an order. Worded as "never an
+                    order" rather than the design's "nothing to Trade"
+                    because a playbook entry does land under Trade — it is a
+                    note, not an order, and the looser wording would be
+                    false on exactly that kind. */}
+                {' · never an order (D10)'}
               </>
             ) : (
               'Approve only records your answer — nothing is written'

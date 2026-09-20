@@ -365,21 +365,23 @@ export default function HarnessConsolePage() {
         }
       />
 
-      {/* The design's seat-context strip (Research Overview.dc.html, the seat
-          homes): the seat as a tag on the page. The prototype's "visiting"
-          note has no case here — the rail follows the route, so landing on
-          this page is what makes Autopilot the seat. */}
+      {/* The design's context strip. It said "seat" until the seat model was
+          retired (Owner 2026-09-19) — what the tag is actually for is naming
+          which operator writes here, so it reads "the engine" now, the same
+          words the Decision Inbox uses over the queue this page fills. */}
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 rounded-md border border-border bg-background px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
           Context
         </span>
         <span className="inline-flex items-center gap-1.5 rounded border border-border px-2 py-0.5 text-dense-meta">
           <span className="font-mono font-bold text-primary">L3</span>
-          <span className="text-muted-foreground">autopilot seat</span>
+          {/* "the engine", not "autopilot seat": the seat model was retired
+              on 2026-09-19 and the design's chip was reworded with it. */}
+          <span className="text-muted-foreground">the engine</span>
         </span>
         <span className="text-dense-meta text-muted-foreground">
-          it runs, judges and rates; you approve — the rail follows the route, so this page is what
-          makes Autopilot your seat
+          it runs, judges and rates; you approve — every call it cannot make on its own waits in the
+          Decision Inbox
         </span>
       </div>
 

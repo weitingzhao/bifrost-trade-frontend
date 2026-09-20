@@ -1,8 +1,19 @@
 /**
- * Decision Inbox — Research Loop v1.
- * `/research/loop/decisions`
+ * Decision Inbox — `/research/loop/decisions`.
  *
- * Surfaces pending AI drafts (Morning / EOD / hypothesis suggestions).
+ * Design: `Research Autopilot Decisions.dc.html`. Walked 2026-09-20 against
+ * package 2026-09-20.1, whose one ruling for this page is a narrative
+ * retirement rather than a layout: **approving is not a handoff to the Desk.**
+ * It accepts research into The Book — a candidate enters the pool, a
+ * hypothesis opens, a patch merges into its policy — and nothing here reaches
+ * Trade, because an order is the Owner's to originate (D10). Every surface on
+ * the page that used to imply otherwise says so now: the header, the rail, and
+ * the line under each card's buttons.
+ *
+ * What the page shows is still what the server does, not what the prototype
+ * draws: `approveEffect` reads the branches of `apply_draft_approval`, so a
+ * kind whose approval writes nothing says that instead of naming a
+ * destination the design imagined for it.
  */
 import { useMemo, useState } from 'react'
 import { Inbox } from 'lucide-react'
@@ -13,7 +24,7 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
+import { ApprovalsLanded, landedApproval, type LandedApproval } from '@/pages/research/loop/ApprovalsLanded'
 import { DraftCard } from '@/components/cockpit/DraftCard'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
 import {
@@ -33,6 +44,9 @@ import {
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
 import { unreadCount, useReadDrafts } from '@/pages/research/loop/inboxRead'
 import { LeashPanel } from '@/pages/research/loop/LeashPanel'
+
+/** Enough to see a working session's worth without the rail outgrowing the queue. */
+const LANDED_MAX = 8
 
 type View = 'decisions' | 'briefings' | 'all'
 type Narrow = 'any' | 'loop' | DraftKind
@@ -103,9 +117,10 @@ export default function DecisionInboxPage() {
   const query = useResearchDrafts({ status: 'pending', kind: apiKind, limit: DRAFTS_PAGE_MAX })
   const approve = useApproveDraft()
   const dismiss = useDismissDraft()
-  // The card leaves on approval (no Undo — the server cannot take it back);
-  // this strip above the queue is the confirmation, gone after a few seconds.
-  const approvedStrip = useApprovedStripState(approve.data)
+  // The card leaves on approval and the server cannot take one back, so what
+  // was accepted is only ever recorded here. The rail keeps the session's
+  // list; the six-second strip belongs to the two surfaces that have no rail.
+  const [landed, setLanded] = useState<LandedApproval[]>([])
 
   const digest = (query.data?.rows ?? []).find(isDailyDigest)
 
@@ -175,11 +190,18 @@ export default function DecisionInboxPage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Decision Inbox"
-        description="Drafts that need a call. The daily digest and other agent posts live under Briefings."
+        description="Drafts that need a call. Approving accepts the draft into The Book — a candidate enters the pool, a hypothesis opens, a patch merges into its policy. Nothing is handed to Trade: an order is yours to originate, always (D10). Posts that only need reading live under Briefings and have no Approve button."
         actions={<NewDraftDialog />}
       />
 
       <div className="flex flex-wrap items-center gap-2">
+        {/* The design's chip. It reads "the engine", not "autopilot seat": the
+            seat model was retired on 2026-09-19, and what the tag is for is
+            saying which operator wrote the queue you are looking at. */}
+        <span className="inline-flex h-5.5 shrink-0 items-center gap-1.5 rounded border border-border px-2 text-dense-micro">
+          <span className="font-mono font-bold text-primary">L3</span>
+          <span className="text-muted-foreground">the engine</span>
+        </span>
         <span className="text-dense-meta font-medium text-muted-foreground shrink-0">View:</span>
         <SegmentControl value={view} onChange={(v) => setView(v as View)} options={VIEW_OPTIONS} />
         <Select value={narrow} onValueChange={(v) => setNarrow(v as Narrow)}>
@@ -241,8 +263,6 @@ export default function DecisionInboxPage() {
 
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
       {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}
-      <ApprovedStrip state={approvedStrip} />
-
       {/* The queue, and beside it the leash: what reaches this page is what the
           leash did not accept on its own, so the rule sits next to its result. */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
@@ -254,13 +274,13 @@ export default function DecisionInboxPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           icon={<Inbox />}
-          title={view === 'decisions' && narrow === 'any' ? 'Nothing to decide' : 'Inbox clear'}
+          title={view === 'decisions' && narrow === 'any' ? 'Nothing needs a call' : 'Nothing waiting'}
           description={
             view === 'decisions' && narrow === 'any' && counts.briefings > 0
               ? `No draft needs a call. ${counts.briefings} agent briefing${counts.briefings === 1 ? '' : 's'} waiting under Briefings.`
               : narrow !== 'any'
                 ? `No pending ${narrowLabel.toLowerCase()}.`
-                : 'No pending drafts. Morning Prep / EOD agents write here when they run.'
+                : 'Every decision draft has a verdict. Approved ones are in The Book; the leash accepted the rest on its own.'
           }
           action={
             view === 'decisions' && narrow === 'any' && counts.briefings > 0 ? (
@@ -290,7 +310,16 @@ export default function DecisionInboxPage() {
                   muted={!actionable}
                   approving={approve.isPending && approve.variables === draft.id}
                   dismissing={dismiss.isPending && dismiss.variables === draft.id}
-                  onApprove={() => approve.mutate(draft.id)}
+                  onApprove={() =>
+                    approve.mutate(draft.id, {
+                      // The rail lists this session's approvals, so what the
+                      // server says it wrote is recorded as it answers —
+                      // reading it back off the queue is impossible, because
+                      // an approved draft leaves the queue.
+                      onSuccess: (result) =>
+                        setLanded((prev) => [landedApproval(result), ...prev].slice(0, LANDED_MAX)),
+                    })
+                  }
                   onDismiss={() => dismiss.mutate(draft.id)}
                   // Briefings are read, decisions are answered: only a briefing can be marked read.
                   read={BRIEFING_KINDS.has(draft.kind) ? read.has(draft.id) : undefined}
@@ -326,7 +355,10 @@ export default function DecisionInboxPage() {
         </div>
       )}
       </div>
-      <LeashPanel />
+      <div className="space-y-3">
+        <ApprovalsLanded landed={landed} />
+        <LeashPanel />
+      </div>
       </div>
     </PageShell>
   )

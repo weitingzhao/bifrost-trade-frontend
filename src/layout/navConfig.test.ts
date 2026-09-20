@@ -244,13 +244,16 @@ describe('the old names', () => {
 const review = NAV_GROUPS.find((g) => g.label === 'Review')!
 
 describe('Review nav', () => {
-  it('is the Queue as its heading, with the other four beneath it', () => {
+  it('is the Queue as its heading, with the other five beneath it', () => {
     // §5a.1: the heading is the page. The Queue row retired into it.
+    // Objectives joined 2026-09-20 in the design's own position — fourth, so
+    // the closing page sits after what it reads and before what it argues for.
     expect(review.to).toBe('/review')
     expect(review.items!.map((c) => c.to)).toEqual([
       '/review/fit',
       '/review/habits',
       '/review/playbook-stats',
+      '/review/objectives',
       '/review/proposals',
     ])
   })

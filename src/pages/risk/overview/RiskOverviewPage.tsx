@@ -18,7 +18,7 @@
  */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -89,31 +89,6 @@ function SpentBar({ row }: { row: SpentLine }) {
   )
 }
 
-function Panel({
-  cap,
-  title,
-  note,
-  children,
-}: {
-  cap: string
-  title: string
-  note?: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card">
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          {cap}
-        </span>
-        <h2 className="text-dense-body font-semibold">{title}</h2>
-        {note ? <span className="ml-auto text-dense-meta text-muted-foreground">{note}</span> : null}
-      </header>
-      {children}
-    </section>
-  )
-}
-
 /** One line, stated the way a reader acts on it: reading, line, consequence. */
 function LineFacts({ row }: { row: LimitRow }) {
   const owner = row.citedFrom ?? OWNER_FALLBACK
@@ -167,7 +142,7 @@ export default function RiskOverviewPage() {
       {error ? <QueryErrorAlert error={error} /> : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <Panel cap="Over the line" title="what is already crossed" note={`${breaches.length} open`}>
+        <SectionPanel cap="Over the line" title="what is already crossed" note={`${breaches.length} open`}>
           {statusLoading ? (
             <Skeleton className="m-3 h-14 rounded-md" />
           ) : breaches.length === 0 ? (
@@ -182,9 +157,9 @@ export default function RiskOverviewPage() {
               ))}
             </div>
           )}
-        </Panel>
+        </SectionPanel>
 
-        <Panel
+        <SectionPanel
           cap="Binds next"
           title="what stops you first"
           note={next ? `${fmtPct0(next.use)} spent` : undefined}
@@ -203,10 +178,10 @@ export default function RiskOverviewPage() {
           ) : (
             <LineFacts row={next} />
           )}
-        </Panel>
+        </SectionPanel>
       </div>
 
-      <Panel
+      <SectionPanel
         cap="The book"
         title="every constraint, by how much of it is spent"
         note={`${lines.length} ranked · scale to ${RISK_BAR_CEILING}× the line`}
@@ -255,12 +230,12 @@ export default function RiskOverviewPage() {
             </DenseTableBody>
           </DenseDataTable>
         )}
-      </Panel>
+      </SectionPanel>
 
       {/* The honest half of "every constraint": the ones that could not be
           ranked, and which half each is missing. A page that claims a complete
           ordering has to say what it left out of it. */}
-      <Panel
+      <SectionPanel
         cap="Not on the ruler"
         title="what could not be ranked"
         note={`${noLine.length + noReading.length} of ${rows.length}`}
@@ -285,7 +260,7 @@ export default function RiskOverviewPage() {
             </p>
           ) : null}
         </div>
-      </Panel>
+      </SectionPanel>
     </PageShell>
   )
 }

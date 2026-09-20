@@ -184,6 +184,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       route('Single trade', '/review/fit', Target),
       route('Habits', '/review/habits', Activity),
       route('Playbook stats', '/review/playbook-stats', BarChart2),
+      route('Objectives', '/review/objectives', Target),
       route('Rule proposals', '/review/proposals', ListTodo),
     ],
   },

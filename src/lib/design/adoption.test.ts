@@ -266,11 +266,10 @@ describe('design adoption', () => {
     // strip only — the prototype's own ruling that the seat home is not
     // redesigned) for the first time (pending 16→14, reviewing 3→5). Overview
     // left for aligned on the Owner's look 2026-09-19 (reviewing 5→4).
-    // 8: the three layer pages, plus `/research/screener` — the Owner's
-    // 2026-09-20 ruling gave this side's SEPA-conditions page the design's
-    // path and name, and the page has not been walked against the prototype
-    // cell by cell yet.
-    expect(counts.byState.reviewing).toBe(8)
+    // 9: the three layer pages, `/research/screener` after the Owner's
+    // naming ruling, and `/review/objectives` — built on option (c) with its
+    // chain honestly broken.
+    expect(counts.byState.reviewing).toBe(9)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -317,6 +316,7 @@ describe('design adoption', () => {
       '/research/loop/hypotheses',
       '/research/screener',
       '/research/workbench',
+      '/review/objectives',
       '/risk',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
@@ -370,9 +370,9 @@ describe('design adoption', () => {
     // `/research/ratings` became a redirect to Vol ratings — the design
     // carries it as an alias of that same page, so it is answered, not built.
     // 32 with Package 2026-09-20.3's three layer overview pages, back to 29
-    // once all three were built, and 28 when the Owner's ruling gave the Stock
-    // screen to a page that exists.
-    expect(counts.byState.unbuilt).toBe(28)
+    // once all three were built, 28 when the Owner's ruling gave the Stock
+    // screen to a page that exists, and 27 with Review Objectives.
+    expect(counts.byState.unbuilt).toBe(27)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

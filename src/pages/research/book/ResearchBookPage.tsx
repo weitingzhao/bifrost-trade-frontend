@@ -17,7 +17,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -59,31 +59,6 @@ const VIEWS = [
   { label: 'Journal', to: '/research/loop/hypotheses', what: 'the lineage tree — no store yet' },
 ]
 
-function Panel({
-  cap,
-  title,
-  note,
-  children,
-}: {
-  cap: string
-  title: string
-  note?: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card">
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          {cap}
-        </span>
-        <h2 className="text-dense-body font-semibold">{title}</h2>
-        {note ? <span className="ml-auto text-dense-meta text-muted-foreground">{note}</span> : null}
-      </header>
-      {children}
-    </section>
-  )
-}
-
 export default function ResearchBookPage() {
   const watch = useWatchlist()
   const hypotheses = useHypothesisList({ limit: 200 })
@@ -124,7 +99,7 @@ export default function ResearchBookPage() {
       {hypotheses.isError ? <QueryErrorAlert error={hypotheses.error} /> : null}
       {candidates.isError ? <QueryErrorAlert error={candidates.error} /> : null}
 
-      <Panel cap="Census" title="four states, widest first" note="the shape is the reading">
+      <SectionPanel cap="Census" title="four states, widest first" note="the shape is the reading">
         {loading ? (
           <Skeleton className="m-3 h-24 rounded-md" />
         ) : (
@@ -160,9 +135,9 @@ export default function ResearchBookPage() {
             ))}
           </div>
         )}
-      </Panel>
+      </SectionPanel>
 
-      <Panel
+      <SectionPanel
         cap="Waiting on you"
         title="what is stuck, and why"
         note={`${stuck.length} across three tables · oldest first`}
@@ -219,9 +194,9 @@ export default function ResearchBookPage() {
             </DenseTableBody>
           </DenseDataTable>
         )}
-      </Panel>
+      </SectionPanel>
 
-      <Panel cap="Four views" title="where each table is drawn in full">
+      <SectionPanel cap="Four views" title="where each table is drawn in full">
         <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
           {VIEWS.map((v) => (
             <Link
@@ -250,7 +225,7 @@ export default function ResearchBookPage() {
           </Link>{' '}
           — never typed in here.
         </p>
-      </Panel>
+      </SectionPanel>
     </PageShell>
   )
 }

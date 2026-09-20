@@ -66,8 +66,15 @@ describe('scopeRouteLabel', () => {
     // `routeFor()` alone answers with the application's title for an unknown
     // path, so the Lens's footer used to read "… Hypothesis Board · Bifrost
     // Trade" — a sentence that names the product where it meant a page.
-    expect(scopeRouteLabel('/review/objectives')).toBe('Objectives')
-    expect(scopeRouteLabel('/review/objectives')).not.toBe(routeFor('/review/objectives').label)
+    //
+    // `/review/objectives` was the example until it was built on 2026-09-20;
+    // any design route this side has no page for exercises the same fall-back,
+    // so the test moved to one that is still unbuilt rather than being dropped.
+    expect(scopeRouteLabel('/research/journal')).toBe('Journal')
+    expect(scopeRouteLabel('/research/journal')).not.toBe(routeFor('/research/journal').label)
+    // And the built one now answers with this side's own label, which is the
+    // other half of the same rule.
+    expect(scopeRouteLabel('/review/objectives')).toBe(routeFor('/review/objectives').label)
   })
 
   it('answers with the path when neither side knows it', () => {

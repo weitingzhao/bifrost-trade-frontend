@@ -24,7 +24,7 @@
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -61,31 +61,6 @@ const STATE_TAG: Record<FreshnessState, { label: string; variant: 'success' | 'w
 
 /** Oldest first: the board exists to surface the row a badge would hide. */
 const STATE_ORDER: Record<FreshnessState, number> = { dry: 0, behind: 1, noReading: 2, current: 3 }
-
-function Panel({
-  cap,
-  title,
-  note,
-  children,
-}: {
-  cap: string
-  title: string
-  note?: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card">
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          {cap}
-        </span>
-        <h2 className="text-dense-body font-semibold">{title}</h2>
-        {note ? <span className="ml-auto text-dense-meta text-muted-foreground">{note}</span> : null}
-      </header>
-      {children}
-    </section>
-  )
-}
 
 export default function PortfolioOverviewPage() {
   const status = useMonitorStatus()
@@ -142,7 +117,7 @@ export default function PortfolioOverviewPage() {
       {status.isError ? <QueryErrorAlert error={status.error} /> : null}
       {freshness.isError ? <QueryErrorAlert error={freshness.error} /> : null}
 
-      <Panel
+      <SectionPanel
         cap="Can it be trusted"
         title="every account × source, oldest first"
         note={
@@ -195,9 +170,9 @@ export default function PortfolioOverviewPage() {
           </Link>
           . These rows are that page's, read here rather than rebuilt.
         </p>
-      </Panel>
+      </SectionPanel>
 
-      <Panel
+      <SectionPanel
         cap="Where it came from"
         title="this quarter, by who earned it"
         note={bulk.data != null ? `realised · quarter to ${anchorMonth}` : undefined}
@@ -248,7 +223,7 @@ export default function PortfolioOverviewPage() {
             </p>
           </>
         )}
-      </Panel>
+      </SectionPanel>
     </PageShell>
   )
 }

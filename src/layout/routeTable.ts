@@ -444,6 +444,16 @@ export const ROUTES: readonly RouteEntry[] = [
     design: { state: 'aligned', rev: '2026-09-18.1', note: DESIGN_NOTES['/review/playbook-stats'] },
   },
   {
+    path: '/review/objectives',
+    label: 'Objectives',
+    crumbs: REVIEW,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.5',
+      note: DESIGN_NOTES['/review/objectives'],
+    },
+  },
+  {
     path: '/review/proposals',
     label: 'Rule proposals',
     crumbs: REVIEW,

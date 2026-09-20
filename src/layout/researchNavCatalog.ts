@@ -39,11 +39,18 @@ import {
   Wrench,
   type LucideIcon,
 } from 'lucide-react'
-import type { ShellNavGroup, ShellNavItem, ShellNavSubGroup } from '@bifrost/ui'
+import type { IconComponent, ShellNavGroup, ShellNavItem, ShellNavSubGroup } from '@bifrost/ui'
+import { foldGlyph, routeGlyph } from '@/lib/design/glyphs'
 import { objectivePath } from '@/lib/harness/objectivePolicy'
 
+/**
+ * The design's glyph for this route when it has one, the lucide icon as the
+ * fallback. Folded to an icon rail the shape is the only thing left to read,
+ * and the design redrew the set so that no two rows share one — see
+ * `lib/design/glyphs.tsx` for why a near-synonym from a library undoes that.
+ */
 function route(label: string, to: string, icon: LucideIcon, children?: ShellNavItem[]): ShellNavItem {
-  return { id: to, label, to, icon, children }
+  return { id: to, label, to, icon: routeGlyph(to) ?? icon, children }
 }
 
 // ── The pages ────────────────────────────────────────────────────────────
@@ -72,7 +79,7 @@ export const BOOK_ITEM: ShellNavItem = {
   id: 'fold:book',
   label: 'The Book',
   to: BOOK_PAGES.hypotheses.to,
-  icon: BookOpen,
+  icon: foldGlyph('The Book') ?? BookOpen,
   children: Object.values(BOOK_PAGES),
 }
 
@@ -93,7 +100,7 @@ export const COPILOT_ITEM: ShellNavItem = {
   id: 'fold:copilot',
   label: 'Copilot',
   to: COPILOT_PAGES.desk.to,
-  icon: MessageCircle,
+  icon: foldGlyph('Copilot') ?? MessageCircle,
   children: Object.values(COPILOT_PAGES),
 }
 
@@ -117,14 +124,15 @@ export const MARKET_ITEM: ShellNavItem = {
   id: 'fold:market',
   label: 'Market',
   to: MARKET_PAGES.live.to,
-  icon: Activity,
+  icon: foldGlyph('Market') ?? Activity,
   children: [MARKET_PAGES.live, MARKET_PAGES.radar],
 }
 
 export interface Bench {
   id: 'discover' | 'analyze' | 'validate' | 'data'
   label: string
-  icon: LucideIcon
+  /** The design's fold glyph where it has one; a lucide icon otherwise. */
+  icon: IconComponent
   items: ShellNavItem[]
 }
 
@@ -145,7 +153,7 @@ export const BENCHES: Bench[] = [
     // its only child's route — two rows, one page, the double-selection the
     // Owner retired on 2026-09-08. `/research/screener` becomes a home in W3,
     // `/research/ratings` in the W5 sweep.
-    icon: Compass,
+    icon: foldGlyph('Discover') ?? Compass,
     items: [
       route('Underlyings', '/research/scan', ScanSearch),
       route('Stocks', '/research/explorer', Compass),
@@ -155,7 +163,7 @@ export const BENCHES: Bench[] = [
   {
     id: 'analyze',
     label: 'Analyze',
-    icon: Radar,
+    icon: foldGlyph('Analyze') ?? Radar,
     // Six rows became one page with six tabs. A row per tab would put the
     // reader back where the merge found them — leaving the name to read
     // another of its faces. The design's Compare and History rows join when
@@ -165,7 +173,7 @@ export const BENCHES: Bench[] = [
   {
     id: 'validate',
     label: 'Validate',
-    icon: History,
+    icon: foldGlyph('Validate') ?? History,
     items: [route('Signal Decay', '/research/signal-decay', Activity), route('Backtest', '/research/backtest', History)],
   },
   {
@@ -178,7 +186,7 @@ export const BENCHES: Bench[] = [
     // (no design home yet, Owner to place), and Data Readiness is the one
     // business row that earns a `/system/*` crossing — kept off the front so
     // the fold's heading never leaves the domain.
-    icon: Server,
+    icon: foldGlyph('Data') ?? Server,
     items: [
       route('Signal Health', '/research/signal-health', Activity),
       route('Lens Coverage', '/research/lens-coverage', Radar),
@@ -231,7 +239,7 @@ export interface ResearchNavContext {
  * the design's own `to`). For a category that owns no page, this is as close
  * to a home as it gets: the row still goes somewhere.
  */
-function fold(id: string, label: string, icon: LucideIcon, items: ShellNavItem[], to?: string): ShellNavItem {
+function fold(id: string, label: string, icon: IconComponent, items: ShellNavItem[], to?: string): ShellNavItem {
   const first = items[0]
   return { id: `fold:${id}`, label, icon, to: to ?? first?.to ?? first?.id, children: items }
 }

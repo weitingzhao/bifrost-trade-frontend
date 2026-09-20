@@ -32,18 +32,27 @@ import {
   Workflow,
 } from 'lucide-react'
 import { getAllNavItems, type ShellNavGroup, type ShellNavItem } from '@bifrost/ui'
+import { foldGlyph, routeGlyph } from '@/lib/design/glyphs'
 import { staticResearchSubGroups } from './researchNavCatalog'
 
 export { getAllNavItems }
 
-/** Trade route nav item — `id` and `to` both set to the path. */
+/**
+ * Trade route nav item — `id` and `to` both set to the path.
+ *
+ * The glyph comes from the design's own table when it has one for this route,
+ * and the `icon` argument is the fallback for rows the design's menu does not
+ * carry. That order, and not the reverse: the set was redrawn so no two rows
+ * share a shape, so a library icon that merely means the right thing is the
+ * one choice that can undo it.
+ */
 function route(
   label: string,
   to: string,
   icon: LucideIcon,
   children?: ShellNavItem[],
 ): ShellNavItem {
-  return { id: to, label, to, icon, children }
+  return { id: to, label, to, icon: routeGlyph(to) ?? icon, children }
 }
 
 /** A home page: a route whose pages beneath it start open. */
@@ -66,7 +75,9 @@ function fold(
   icon: LucideIcon,
   children: ShellNavItem[],
 ): ShellNavItem {
-  return { id, label, to, icon, children, defaultOpen: true }
+  // Keyed by label, because a heading borrows a child's route to be clickable
+  // — the path would fetch the child's shape, not the heading's.
+  return { id, label, to, icon: foldGlyph(label) ?? icon, children, defaultOpen: true }
 }
 
 /**

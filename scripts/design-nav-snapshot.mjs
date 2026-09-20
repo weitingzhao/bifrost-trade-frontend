@@ -103,7 +103,10 @@ function revOf(dir) {
 function generate(pkg) {
   const store = {}
   globalThis.window = {
-    React: { createElement: (t) => ({ __el: t }) },
+    // Props and children too: the nav rows carry their glyph as a component,
+    // and calling it is how the glyph table is read. Asking the registry the
+    // way a prototype does beats a second parser for the SVG.
+    React: { createElement: (t, p, ...c) => ({ __el: t, props: p ?? {}, children: c.flat() }) },
     localStorage: { getItem: (k) => store[k] ?? null, setItem: (k, v) => (store[k] = v) },
     location: { hash: '' },
     addEventListener() {},
@@ -135,6 +138,36 @@ function generate(pkg) {
   /** The design's Research seats — the keys of `SEAT_HOME` in `shell-registry.js`. Copilot left the rail 2026-09-14 (§11.0). */
   const SEATS = ['workbench', 'lab', 'autopilot']
 
+  /**
+   * The design's glyph table, by name.
+   *
+   * `ic` is private to the registry, and the names matter — the design's own
+   * handoff names the six with no lucide equivalent, and the app wants to say
+   * `payoff` rather than paste a path. So the table is read from the source
+   * text, and then every glyph the executed tree hands back is checked against
+   * it: an unmatched path fails the sync rather than landing here nameless.
+   */
+  function glyphTable(text) {
+    const table = new Map()
+    for (const m of text.matchAll(/(\w+):\s*icon\('([^']+)'\)/g)) table.set(m[2], m[1])
+    if (table.size === 0) throw new Error('shell-registry.js: no `name: icon(...)` pairs found — the glyph table moved.')
+    return table
+  }
+
+  /**
+   * One path in the SVG, or the sync is reading something it does not model.
+   *
+   * Every glyph in the design is a single `<path>` at viewBox 24 with round
+   * caps. Rendering a second element as though it were the first would draw a
+   * quietly wrong shape, which is worse than failing here.
+   */
+  function glyphPath(node, where) {
+    if (!node || node.__el !== 'svg') throw new Error(`${where}: glyph did not render an <svg>.`)
+    const paths = (node.children ?? []).filter((c) => c && c.__el === 'path')
+    if (paths.length !== 1) throw new Error(`${where}: expected one <path>, found ${paths.length}.`)
+    return String(paths[0].props?.d ?? '')
+  }
+
   /** Every row the design's sidebar renders, with the group and fold it sits in. */
   function rows() {
     const found = []
@@ -146,7 +179,7 @@ function generate(pkg) {
         // child's route so that clicking it goes somewhere). Only the home is a
         // route of its own — the same distinction `navConfig.ts` draws.
         const borrows = kids.length > 0 && it.to === kids[0]?.to
-        if (it.to && !borrows) found.push({ path: it.to, label: it.label, group, trail })
+        if (it.to && !borrows) found.push({ path: it.to, label: it.label, group, trail, icon: it.icon })
         walk(kids, group, borrows ? [...trail, it.label] : trail)
       }
     }
@@ -159,6 +192,47 @@ function generate(pkg) {
     for (const g of R.systemGroups()) walk(g.items, 'System', [])
     return found
   }
+
+  /**
+   * Every row's glyph, by route — and every fold header's, by its label.
+   *
+   * The design's own handoff makes this load-bearing rather than decorative:
+   * folded to an icon rail, the glyph is the *only* readable thing, and the
+   * set was redrawn so no two rows share a shape. Taking a near-synonym from
+   * an icon library would quietly collide two of them again, so the shape
+   * comes from the design and nothing here chooses one.
+   *
+   * A fold is told from a page by its id: `r()` keys a row by its own path, so
+   * a row whose id is not its path is a heading that borrowed a route to be
+   * clickable. The `borrows` heuristic in `rows()` cannot be used here — the
+   * Validate fold points at its *second* child — and a heading and a page
+   * sharing a path carry different shapes.
+   */
+  function glyphs(table) {
+    const byRoute = new Map()
+    const byFold = new Map()
+    const walk = (items) => {
+      for (const it of items ?? []) {
+        if (it.icon) {
+          const d = glyphPath(it.icon({ className: '' }), it.label)
+          const name = table.get(d)
+          if (!name) throw new Error(`${it.label}: glyph is not in the registry's \`ic\` table.`)
+          if (it.id !== it.to) byFold.set(it.label, name)
+          else byRoute.set(it.to, name)
+        }
+        walk(it.children)
+      }
+    }
+    for (const seat of SEATS) for (const g of R.navGroups({ route: '/home', seat })) walk(g.items)
+    for (const g of R.systemGroups()) walk(g.items)
+    return { byRoute, byFold }
+  }
+
+  const GLYPH_NAMES = glyphTable(src)
+  const glyph = glyphs(GLYPH_NAMES)
+  /** name -> path data, only for the shapes the tree actually uses. */
+  const glyphUsed = [...new Set([...glyph.byRoute.values(), ...glyph.byFold.values()])].sort()
+  const dByName = new Map([...GLYPH_NAMES].map(([d, name]) => [name, d]))
 
   /** The design's `FACES` pairs, straight off the registry. */
   const faces = (R.FACES ?? []).map(([reading, method]) => ({ reading, method }))
@@ -291,6 +365,37 @@ export const DESIGN_SYM_TARGET: readonly string[] = [
 ${symTarget.map((p) => '  ' + JSON.stringify(p) + ',').join('\n')}
 ]
 
+/**
+ * The design's menu glyphs — the shape, not a library's name for it.
+ *
+ * Folded to an icon rail the glyph is the only readable thing on a row, so the
+ * set was drawn so that no two rows share one. Six of them have no equivalent
+ * in any icon library at all (\`payoff\`, \`smile\`, \`ladder\`, \`valve\`,
+ * \`rotor\`, \`pillars\`), which is the reason this is path data rather than a
+ * table of imports: reaching for the nearest library name would put two rows
+ * back on one shape.
+ *
+ * Every one is a single path on a 24 viewBox with round caps — \`Glyph\` in
+ * \`src/lib/design/glyphs.tsx\` is the only thing that should read this.
+ */
+export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
+${glyphUsed.map((n) => '  ' + JSON.stringify(n) + ': ' + JSON.stringify(dByName.get(n)) + ',').join('\n')}
+}
+
+/** Which glyph each row carries, by route. */
+export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
+${[...glyph.byRoute].sort(([a], [b]) => (a < b ? -1 : 1)).map(([path, name]) => '  ' + JSON.stringify(path) + ': ' + JSON.stringify(name) + ',').join('\n')}
+}
+
+/**
+ * And each fold heading's, by its label. Keyed by label rather than by route
+ * because a heading borrows a child's path to be clickable, so two rows share
+ * it while carrying different shapes.
+ */
+export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
+${[...glyph.byFold].sort(([a], [b]) => (a < b ? -1 : 1)).map(([label, name]) => '  ' + JSON.stringify(label) + ': ' + JSON.stringify(name) + ',').join('\n')}
+}
+
 export const DESIGN_REV = ${JSON.stringify(revOf(pkg))}
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
@@ -298,7 +403,10 @@ ${entries.map((e) => '  ' + JSON.stringify(e) + ',').join('\n')}
 ]
 `
   writeFileSync(out, body)
-  console.log(`${entries.length} routes (${designed} designed, ${faces.length} faces, ${objTarget.length} objective-scoped) -> ${out}`)
+  console.log(
+    `${entries.length} routes (${designed} designed, ${faces.length} faces, ${objTarget.length} objective-scoped, ` +
+      `${glyphUsed.length} glyphs over ${glyph.byRoute.size} rows + ${glyph.byFold.size} folds) -> ${out}`,
+  )
 }
 
 const invoked = process.argv[1] ? resolve(process.argv[1]) : ''

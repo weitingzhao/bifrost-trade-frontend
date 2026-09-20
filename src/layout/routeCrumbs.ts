@@ -17,9 +17,19 @@ export const AUTOPILOT = ['Research', 'Autopilot'] as const
 /** The object layer is seat-free (Vision §12): its trail names the Book, not the loop. */
 export const THE_BOOK = ['Research', 'The Book'] as const
 export const COPILOT = ['Research', 'Copilot'] as const
-export const DISCOVER = ['Research', 'Discover'] as const
-export const ANALYZE = ['Research', 'Analyze'] as const
-export const VALIDATE = ['Research', 'Validate'] as const
+/**
+ * The three Pipeline folds carry Pipeline in the trail.
+ *
+ * The Workbench seat became **Pipeline** when the seats were retired (Owner
+ * 2026-09-19), and the sidebar has nested these three under it since. The
+ * trails had not followed, so a reader standing on Symbol was told
+ * `Research / Analyze` while the tree beside them said
+ * `Research / Pipeline / Analyze` — the breadcrumb's one job is to say where
+ * you are, and it was naming a level the menu no longer has.
+ */
+export const DISCOVER = ['Research', 'Pipeline', 'Discover'] as const
+export const ANALYZE = ['Research', 'Pipeline', 'Analyze'] as const
+export const VALIDATE = ['Research', 'Pipeline', 'Validate'] as const
 export const DATA = ['Research', 'Data'] as const
 export const STRATEGY = ['Strategy'] as const
 // One group, three folds. `/settings` and `/operations` were two names for one

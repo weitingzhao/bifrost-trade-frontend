@@ -55,7 +55,10 @@ describe('route registry', () => {
   it('resolves dynamic segments', () => {
     expect(routeFor('/research/loop/objectives/obj-1').label).toBe('Objective')
     expect(routeFor('/research/loop/runs/42').label).toBe('Loop Run')
-    expect(routeFor('/research/signal-decay/AAPL').crumbs).toEqual(['Research', 'Validate'])
+    // Pipeline joined the trail when the Workbench seat was renamed to it
+    // (design package 2026-09-20.1): the folds are nested under Pipeline in
+    // the tree, so the breadcrumb names the same three levels.
+    expect(routeFor('/research/signal-decay/AAPL').crumbs).toEqual(['Research', 'Pipeline', 'Validate'])
     expect(routeFor('/strategy/instances/7').label).toBe('Instances')
   })
 

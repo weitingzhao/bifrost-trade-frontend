@@ -13,7 +13,7 @@ import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useLensRegistry } from '@/hooks/useLensRegistry'
-import { ANALYZE_HUB } from '@/lib/analyzeHubs'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { canonicalLens, placeholderExhibits, regimeItems, RIBBON_LENSES } from '@/lib/regimeRibbon'
 import { cn } from '@/lib/utils'
@@ -51,9 +51,13 @@ export function CompositeRegimeRibbon({
       )}
       data-testid="composite-regime-ribbon"
     >
+      {/* Straight to the page, not through `/research/dossier`. That path is a
+          redirect this app keeps for old links and muscle memory, and the
+          design deleted it from its own registry in package 2026-09-20.1 — a
+          link inside the app has no reason to bounce through it. */}
       <Link
-        to={withSymbolParam(ANALYZE_HUB.dossier, sym)}
-        title="Open the dossier — every face of this symbol"
+        to={withSymbolParam(SYMBOL_PATH, sym)}
+        title="Open the symbol — every face of this name"
         className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground no-underline hover:text-foreground"
       >
         {`${sym || '—'} regime`}

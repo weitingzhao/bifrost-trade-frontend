@@ -1,23 +1,31 @@
-import { Search } from 'lucide-react'
+/**
+ * The top bar: where you are, and what you are looking through.
+ *
+ * Design 2026-09-20.8 divided the three horizontal bars by job — **TopBar =
+ * position and focus**, StatusBar = health and alerts, sidebar foot = where to
+ * go — and cut this one to four items on the finding that its extras were all
+ * duplicates. Two went: a System button whose lamp the status bar already
+ * carried, and an alert bell whose count the status bar already carried (and
+ * which collided with the Decision Inbox on the word). What is left is
+ * breadcrumb · ⌘K · Lens · Copilot, and none of the four repeats anything
+ * else on screen.
+ */
+import { MessageSquare, Search } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { omnibar } from '@/lib/omnibar'
-import { InboxBell } from './InboxBell'
-import type { InboxSummary } from '@/hooks/useInbox'
+import { useCopilotDock } from '@/hooks/useCopilotDock'
 import { routeFor } from './routeRegistry'
 import { Lens } from './Lens'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
-interface AppHeaderProps {
-  inbox: InboxSummary
-  onOpenInbox: () => void
-}
-
-export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
+export function AppHeader() {
   const location = useLocation()
   const { label, crumbs } = routeFor(location.pathname)
+  const copilot = useCopilotDock()
 
   return (
     <header
@@ -61,16 +69,35 @@ export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
       {/* One control for every scope the shell carries (design 2026-09-20.8:
           TopBar = position and focus). It replaces the standalone symbol chip
           rather than sitting beside it — two controls for one idea is the
-          duplication that ruling removed. */}
+          duplication that ruling removed.
+
+          The alert bell that used to sit to its right is gone with it. */}
       <Lens />
 
-      <div className="ml-auto flex shrink-0 items-center gap-1">
-        {/* One bell. There were two here — a Radar for analyze alerts with a
-            popover of its own, and this one for system messages — either of
-            which could be showing a count with no way to tell which mattered
-            more. Both are groups inside the Inbox now. */}
-        <InboxBell summary={inbox} onOpen={onOpenInbox} />
-      </div>
+      {/* The fourth item. ⌘J was the only way to it, which made the Copilot
+          discoverable to whoever already knew about it — the design puts it on
+          the bar for the same reason the Omnibar shows its own key. */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={copilot.toggle}
+            aria-pressed={copilot.open}
+            className={cn(
+              'inline-flex h-6 shrink-0 items-center gap-1.25 rounded border px-1.75 text-dense-micro transition-colors',
+              copilot.open
+                ? 'border-primary/45 bg-primary/[0.08] text-primary'
+                : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
+            )}
+          >
+            <MessageSquare className="h-3 w-3" aria-hidden />
+            <span className="hidden lg:inline">Copilot</span>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {copilot.open ? 'Close the Research Copilot' : 'Open the Research Copilot'} · ⌘J
+        </TooltipContent>
+      </Tooltip>
     </header>
   )
 }

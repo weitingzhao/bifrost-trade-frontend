@@ -21,7 +21,7 @@ describe('shouldToast', () => {
 
   it('stays quiet for a slot reconnecting or coming back', () => {
     // These are the two that used to fire a toast every time and were given a
-    // 30-second auto-dismiss to make them stop. They belong in the Inbox.
+    // 30-second auto-dismiss to make them stop. They belong in Alerts.
     expect(shouldToast(msg('ib.connection', 'warning'))).toBe(false)
     expect(shouldToast(msg('ib.connection', 'success'))).toBe(false)
     expect(shouldToast(msg('ib.connection', 'info'))).toBe(false)

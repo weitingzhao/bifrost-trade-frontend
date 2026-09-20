@@ -29,7 +29,7 @@ import { daysTo } from '@/utils/optionTicker'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtPct0 } from '@/utils/positions'
 import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
-import { limitRules, openBreaches, withHeadroom } from '@/pages/risk/limits/limitsModel'
+import { limitRules, openBreaches, withHeadroom } from '@/utils/limitsModel'
 import type { HomeCheck, HomeRow, TapeRow } from './todayModel'
 
 /** Inside this many days, an expiry is a decision rather than a date. */

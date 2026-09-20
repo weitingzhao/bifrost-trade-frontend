@@ -703,7 +703,7 @@ export function routeFor(pathname: string): RouteEntry {
  * reasons — one is the desk, the other is the machine under it — and a reader
  * inside System is not scanning for a position. What it must NOT do is what
  * the old `SettingsLayout` did: grow a second navigation shell that also
- * dropped the breadcrumb, the Omnibar, the symbol chip and the Inbox.
+ * dropped the breadcrumb, the Omnibar, the Lens and Alerts.
  */
 export function isSystemRoute(pathname: string): boolean {
   return pathname.startsWith('/system/') || pathname.startsWith('/docs/')

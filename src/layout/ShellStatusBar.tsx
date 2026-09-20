@@ -21,15 +21,22 @@
  * it would put a second delta on screen disagreeing with Backing & Model. Worth
  * revisiting if D10 unlocks — hedging would make it drive an immediate decision
  * — or if it is given a band.
+ *
+ * Since 2026-09-20 this bar owns both panels the top bar used to duplicate:
+ * the system lamp opens the service table, and the count chip — now named
+ * **Alerts** — opens the four groups upward. The division the design settled
+ * is TopBar = position and focus, StatusBar = health and alerts, sidebar foot
+ * = where to go.
  */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Inbox, ShieldAlert } from 'lucide-react'
+import { Bell, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePlatformPlugins } from '@/hooks/usePlatformPlugins'
 import { useBookCushion } from '@/hooks/useBookCushion'
 import { SystemPopover } from './SystemPopover'
-import type { InboxSummary } from '@/hooks/useInbox'
+import { AlertsPopover } from '@/components/MessageCenter/AlertsPopover'
+import type { AlertGroup, AlertsSummary } from '@/hooks/useAlerts'
 import { SHELL_STATUS_BAR_HEIGHT_CLASS } from './shellChrome'
 
 /** Wall clock to the minute — the anchor every other reading on the page is "as of". */
@@ -50,11 +57,12 @@ function pctLabel(pct: number): string {
 }
 
 interface ShellStatusBarProps {
-  inbox: InboxSummary
-  onOpenInbox: () => void
+  groups: AlertGroup[]
+  alerts: AlertsSummary
+  onDismissAll: () => void
 }
 
-export function ShellStatusBar({ inbox, onOpenInbox }: ShellStatusBarProps) {
+export function ShellStatusBar({ groups, alerts, onDismissAll }: ShellStatusBarProps) {
   const clock = useWallClock()
   // The bar is the always-on reader; System › Platform polls the same query
   // key while it is open, so this stays one request either way.
@@ -122,18 +130,28 @@ export function ShellStatusBar({ inbox, onOpenInbox }: ShellStatusBarProps) {
           </button>
         </SystemPopover>
 
-        <button
-          type="button"
-          onClick={onOpenInbox}
-          className={segmentClass}
-          title={inbox.incomplete ? `Inbox — ${inbox.unreachable.join(', ')} unreachable, the count may be short` : 'Inbox'}
-        >
-          <Inbox className="h-3 w-3" aria-hidden />
-          <span className="font-mono tabular-nums">
-            {inbox.count}
-            {inbox.incomplete ? '+?' : ''}
-          </span>
-        </button>
+        {/* The design's `◍ Alerts` chip, drawn with the app's own bell — same
+            signifier, one icon language. The `+?` is the load-bearing part:
+            a source that could not be reached must not come out looking like
+            an all-clear, so the count says it is a floor. */}
+        <AlertsPopover groups={groups} count={alerts.count} onDismissAll={onDismissAll}>
+          <button
+            type="button"
+            className={segmentClass}
+            title={
+              alerts.incomplete
+                ? `Alerts — ${alerts.unreachable.join(', ')} unreachable, the count may be short`
+                : 'Alerts — risk limits, analyze, system, platform'
+            }
+          >
+            <Bell className="h-3 w-3" aria-hidden />
+            <span>Alerts</span>
+            <span className="font-mono tabular-nums">
+              {alerts.count}
+              {alerts.incomplete ? '+?' : ''}
+            </span>
+          </button>
+        </AlertsPopover>
       </div>
     </footer>
   )

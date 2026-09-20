@@ -22,6 +22,9 @@
  * line, but there is nothing to acknowledge — the open simply does not happen,
  * and the attempt is what lands here. The definition lives in Trade › Rules.
  */
+import { fmtPct0 } from '@/utils/positions'
+import { fmtMvAbbrev } from '@/utils/positionsCharts'
+
 export type LimitKind = 'hard' | 'soft' | 'gate'
 export type LimitGroup = 'Concentration' | 'Velocity' | 'Margin' | 'Greeks' | 'Event' | 'Gate'
 
@@ -303,6 +306,21 @@ export function withHeadroom(rules: readonly LimitRule[]): LimitRow[] {
       headroom: 1 - use,
     }
   })
+}
+
+/**
+ * A reading in its own unit.
+ *
+ * One printer, because the limit and the current value have to look like the
+ * same kind of thing on every surface that shows them — the page's table, the
+ * status bar's Alerts panel, and Today's checks all print this pair, and a
+ * percentage rendered three ways is three chances to read the wrong one.
+ */
+export function fmtReading(row: Pick<LimitRule, 'unit'>, v: number | null): string {
+  if (v == null) return '—'
+  if (row.unit === 'pct') return fmtPct0(v)
+  if (row.unit === 'usd') return fmtMvAbbrev(v)
+  return String(v)
 }
 
 export function openBreaches(rows: readonly LimitRow[]): LimitRow[] {

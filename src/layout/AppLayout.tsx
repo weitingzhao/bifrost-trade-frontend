@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState, type CSSProperties } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { useAmbientPageContext } from '@/hooks/useAmbientPageContext'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
 import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
@@ -10,9 +10,8 @@ import { AppHeader } from './AppHeader'
 import { ShellStatusBar } from './ShellStatusBar'
 import { initialSidebarOpen, SHELL_SIDEBAR_WIDTH } from './shellChrome'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
-import { InboxDrawer } from '@/components/MessageCenter/InboxDrawer'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
-import { useInbox } from '@/hooks/useInbox'
+import { useAlerts } from '@/hooks/useAlerts'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
 import { CopilotDock } from '@/components/copilot/CopilotDock'
@@ -44,18 +43,16 @@ function BoundedOutlet() {
 
 export function AppLayout() {
   const { pathname } = useLocation()
-  const navigate = useNavigate()
   useCopilotDeepLink()
   useHeldSymbolSync()
   // After the held-symbol sync: the page context reads the URL the sync just settled.
   useAmbientPageContext()
   useRecentPagesTrail()
   const showMarketStrip = shouldShowGlobalMarketStrip(pathname)
-  // One SSE subscription, two readers: the Inbox groups it by source, the
-  // toast stack decides which of it is allowed to interrupt.
+  // One SSE subscription, two readers: Alerts groups it by source, the toast
+  // stack decides which of it is allowed to interrupt.
   const stream = useSystemMessages()
-  const { groups, summary } = useInbox(stream)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const { groups, summary } = useAlerts(stream)
   const [inspectorSlot, setInspectorSlot] = useState<HTMLElement | null>(null)
 
   // The layer the current group belongs to, stamped on the root so the ramp in
@@ -65,24 +62,6 @@ export function AppLayout() {
     document.documentElement.dataset.layer = layerForPath(pathname)
   }, [pathname])
   useCockpitKeybinds()
-
-  const msgCenter = (
-    <>
-      <MessageToastStack
-        messages={stream.messages}
-        dismissedIds={stream.dismissedIds}
-        onDismiss={stream.dismissMessage}
-      />
-      <InboxDrawer
-        open={drawerOpen}
-        groups={groups}
-        count={summary.count}
-        onDismissAll={stream.dismissAll}
-        onClose={() => setDrawerOpen(false)}
-        onNavigate={navigate}
-      />
-    </>
-  )
 
   return (
     <InspectorSlotContext.Provider value={inspectorSlot}>
@@ -96,7 +75,7 @@ export function AppLayout() {
         <AppSidebar />
         {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport */}
         <SidebarInset className="h-svh overflow-hidden bg-card">
-          <AppHeader inbox={summary} onOpenInbox={() => setDrawerOpen(true)} />
+          <AppHeader />
           <GlobalMarketStatusBar enabled={showMarketStrip} />
           <main
             id="main-content"
@@ -105,7 +84,9 @@ export function AppLayout() {
           >
             <BoundedOutlet />
           </main>
-          <ShellStatusBar inbox={summary} onOpenInbox={() => setDrawerOpen(true)} />
+          {/* The alerts panel hangs off this bar's own chip — one trigger, so
+            it can be a popover instead of the drawer two triggers forced. */}
+          <ShellStatusBar groups={groups} alerts={summary} onDismissAll={stream.dismissAll} />
         </SidebarInset>
         {/* A docked inspector portals in here — a page opens it, but a panel that
           takes width from the content has to be the content's sibling, not its
@@ -118,7 +99,11 @@ export function AppLayout() {
           takes its space from the content instead of covering it. */}
         <CopilotDock />
         <Omnibar />
-        {msgCenter}
+        <MessageToastStack
+          messages={stream.messages}
+          dismissedIds={stream.dismissedIds}
+          onDismiss={stream.dismissMessage}
+        />
       </SidebarProvider>
     </InspectorSlotContext.Provider>
   )

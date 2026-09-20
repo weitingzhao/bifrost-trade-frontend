@@ -48,7 +48,7 @@ export function useSystemMessages() {
   // workaround for the toast: every message interrupted, so the noisiest topic
   // was given a timer to make it stop. Now that it never toasts (see
   // `toastPolicy.ts`), the timer would leave it neither shown nor kept — it
-  // would vanish from the Inbox count half a minute after arriving, which is
+  // would vanish from the Alerts count half a minute after arriving, which is
   // the one place it was supposed to end up. `CLIENT_TTL_SEC` still bounds the
   // list; dismissal is the reader's call again.
   const dismissMessage = useCallback((id: string) => {

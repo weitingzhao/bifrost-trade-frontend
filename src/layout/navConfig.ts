@@ -183,7 +183,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
  * This replaces the business tree rather than joining it as a ninth group
  * (`isSystemRoute` in `routeRegistry.ts` decides which one renders). Before,
  * it was `SettingsLayout`: a second navigation aside that took the breadcrumb,
- * the Omnibar, the symbol chip and the Inbox with it every time you opened a
+ * the Omnibar, the Lens and Alerts with it every time you opened a
  * settings page. Same rows, one shell.
  *
  * `Data` / `Runtime` / `Configuration` split by what a row can tell you: what

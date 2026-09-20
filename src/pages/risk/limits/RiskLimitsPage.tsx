@@ -26,7 +26,7 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { fmtPct0 } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
-import { fmtMvAbbrev } from '@/utils/positionsCharts'
+
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
 import { rollupMargin } from '@/utils/marginPressure'
@@ -44,6 +44,7 @@ import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import {
   LIMITS_UNRECORDED,
   LIMIT_GROUPS,
+  fmtReading,
   gateLimitRules,
   limitRules,
   openBreaches,
@@ -51,8 +52,8 @@ import {
   watching,
   withHeadroom,
   type GateReadings,
-  type LimitRow,
-} from './limitsModel'
+
+} from '@/utils/limitsModel'
 
 const PAGE_LEAD =
   'A hard limit is one something would act on; a soft limit asks to be acknowledged. Every reading belongs to the page that computes it — this one only holds each against a line, and writes nothing.'
@@ -80,13 +81,6 @@ const ESCALATION: { kind: string; tone: string; what: string }[] = [
     what: 'The backing gate only: Rules would trim the largest margin user without asking. Nothing trims anything today — the trading daemon is frozen (D10) and configured for paper trading.',
   },
 ]
-
-function fmtReading(row: LimitRow, v: number | null): string {
-  if (v == null) return '—'
-  if (row.unit === 'pct') return fmtPct0(v)
-  if (row.unit === 'usd') return fmtMvAbbrev(v)
-  return String(v)
-}
 
 export default function RiskLimitsPage() {
   const [accountFilter, setAccountFilter] = useState('all')

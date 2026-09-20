@@ -311,8 +311,8 @@ export const router = createBrowserRouter([
       // ── System ───────────────────────────────────────────────────────
       // One shell: these render inside AppLayout like every other page. They
       // used to sit under a `SettingsLayout` that grew a navigation aside of
-      // its own, which cost the breadcrumb, the Omnibar, the symbol chip and
-      // the Inbox the moment you opened one of them.
+      // its own, which cost the breadcrumb, the Omnibar, the Lens and
+      // Alerts the moment you opened one of them.
       {
         path: 'system/coverage',
         lazy: lazyPage(() => import('@/pages/system/CoveragePage')),

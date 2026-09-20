@@ -13,7 +13,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Archive, ArchiveRestore, ArrowLeft, Play } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHeader, PageShell, PinButton } from '@/components/layout'
 import { DenseTag, EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -113,6 +113,10 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
         }
         actions={
           <div className="flex items-center gap-2">
+            {/* The shelf's entry point (design 2026-09-20.2): going straight
+                to the same machine every day is a shortcut, and a shortcut is
+                something you put there — not a shape the tree claims to have. */}
+            <PinButton to={`/research/loop/objectives/${obj.id}`} label={obj.title} />
             <Button
               type="button"
               size="sm"

@@ -16,6 +16,8 @@ import { isSystemRoute } from './routeRegistry'
 import { ScopeMark } from './ScopeMark'
 import { useResearchNavGroup } from './useResearchNavGroup'
 import { useMemo } from 'react'
+import { Pin as PinIcon } from 'lucide-react'
+import { SHELF_GROUP, isStalePin, usePins } from '@/lib/pins'
 import { TradeSidebarFooter } from './TradeSidebarFooter'
 
 const LIVE_NAV_PATH = '/market/live'
@@ -53,6 +55,7 @@ export function AppSidebar() {
   // shell around it, and took all of that with it.
   const inSystem = isSystemRoute(location.pathname)
   const order = useNavOrder()
+  const { pins } = usePins()
   // Research is re-laid for the seat; then the six groups take the design's
   // order (`loop` rests: Home, then the lifecycle chain) and their icons
   // become the lifecycle numerals — in loop order the numerals draw the
@@ -62,7 +65,7 @@ export function AppSidebar() {
     const swapped = NAV_GROUPS.map((g) => (g.label === 'Research' ? research.group : g))
     const ordered = orderGroups(swapped, order)
     const chain = ordered.filter((g) => LIFECYCLE[g.label] != null)
-    return ordered.map((g) => {
+    const marked = ordered.map((g) => {
       const n = LIFECYCLE[g.label]
       if (n == null) {
         return g.label === 'Home' ? { ...g, icon: lifecycleMark('·') } : g
@@ -77,7 +80,29 @@ export function AppSidebar() {
         }),
       }
     })
-  }, [inSystem, research.group, order])
+    // The shelf goes last, on purpose. Frequency argues for the top; honesty
+    // argues for the bottom, because above the five layers a pin reads as a
+    // sixth layer — the one claim a pin must not make. It carries the pin
+    // glyph rather than a lifecycle numeral: it is a shortcut, not a step.
+    if (pins.length > 0) {
+      marked.push({
+        label: SHELF_GROUP,
+        icon: PinIcon,
+        defaultOpen: true,
+        items: pins.map((p) => ({
+          id: `pin:${p.to}`,
+          label: p.label,
+          to: p.to,
+          icon: PinIcon,
+          // A pin to a page the app no longer has keeps its row and says so.
+          // A shortcut that evaporates leaves the reader wondering whether
+          // they imagined it.
+          badge: isStalePin(p) ? 'stale' : undefined,
+        })),
+      })
+    }
+    return marked
+  }, [inSystem, research.group, order, pins])
 
   return (
     <SystemNavLampProvider>
@@ -91,7 +116,10 @@ export function AppSidebar() {
         key={inSystem ? 'system' : 'business'}
         productName="Bifrost Trade"
         navGroups={navGroups}
-        activeId={location.pathname}
+        // A pinned page lights its shelf row instead of its home row: two lit
+        // rows for one page reads as a bug. Unpinned, it falls back to the
+        // section that owns it (an objective lights Autopilot).
+        activeId={pins.some((p) => p.to === location.pathname) ? `pin:${location.pathname}` : location.pathname}
         matchActive={shellNavMatchByPathPrefix}
         onSelect={(item: ShellNavItem) => {
           navigate(item.to ?? item.id)

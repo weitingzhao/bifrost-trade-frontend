@@ -12,33 +12,45 @@
  * vocabulary ("Over the line", "Census"), the **title** says what it shows in
  * a reader's words, and the **note** is the scope or the count the numbers
  * are true within. A panel whose note is really a second title has lost that.
+ *
+ * A fourth slot, **action**, holds a link out of the panel. It takes the
+ * right edge, which is the note's usual place, so a panel with both prints
+ * the note beside the title instead — the note is part of the sentence the
+ * header makes, and the way out is not.
  */
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+
+/** The caption grammar, for the panels the design draws without a header bar. */
+export const SECTION_CAP_CLASS =
+  'text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground'
 
 export function SectionPanel({
   cap,
   title,
   note,
+  action,
   className,
   children,
 }: {
   cap: string
   title: string
   note?: ReactNode
+  action?: ReactNode
   className?: string
   children: ReactNode
 }) {
   return (
     <section className={cn('overflow-hidden rounded-lg border border-border bg-card', className)}>
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          {cap}
-        </span>
+        <span className={SECTION_CAP_CLASS}>{cap}</span>
         <h2 className="text-dense-body font-semibold">{title}</h2>
         {note != null ? (
-          <span className="ml-auto text-dense-meta text-muted-foreground">{note}</span>
+          <span className={cn('text-dense-meta text-muted-foreground', action == null && 'ml-auto')}>
+            {note}
+          </span>
         ) : null}
+        {action != null ? <span className="ml-auto text-dense-meta">{action}</span> : null}
       </header>
       {children}
     </section>

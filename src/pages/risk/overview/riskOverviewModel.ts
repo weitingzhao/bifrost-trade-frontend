@@ -11,7 +11,7 @@
  * It computes nothing. `useLimitBook` assembles the book once; this file
  * filters, sorts and decides what the bar should be long enough to show.
  */
-import type { LimitRow } from '@/utils/limitsModel'
+import { fmtReading, type LimitGroup, type LimitRow } from '@/utils/limitsModel'
 
 /**
  * How far the bar's track runs, as a multiple of the line.
@@ -63,4 +63,71 @@ export function unranked(rows: readonly LimitRow[]): {
     noLine: rows.filter((r) => r.limit == null && r.current != null),
     noReading: rows.filter((r) => r.current == null),
   }
+}
+
+/**
+ * Where the ink turns amber — this page's own threshold, not the book's.
+ *
+ * `LIMIT_WATCH` (0.8) answers a different question on Limits & Breaches: *is
+ * this worth seeing before it is crossed.* Here the question is *is this the
+ * one about to bind*, and the design draws that at nine tenths. Two numbers
+ * because they are two questions; both are named rather than inlined.
+ */
+export const RISK_NEAR_LINE = 0.9
+
+/** Red, amber or plain — one function, so the bar, the reading and the % agree. */
+export function lineTone(use: number): 'over' | 'near' | 'plain' {
+  if (use >= 1) return 'over'
+  return use >= RISK_NEAR_LINE ? 'near' : 'plain'
+}
+
+/**
+ * The family stripe down the left of each row.
+ *
+ * The design colours by family, not by severity: severity is already the bar,
+ * the reading and the kind tag, and a fourth encoding of it would say nothing
+ * new. What the stripe adds is *which kind of constraint this is* — so a
+ * reader can see at a glance that the top three rows are all Concentration.
+ */
+export const LIMIT_GROUP_STRIPE: Record<LimitGroup, string> = {
+  Concentration: 'bg-rose-300',
+  Velocity: 'bg-sky-300',
+  Margin: 'bg-lime-400',
+  Greeks: 'bg-stone-300',
+  Event: 'bg-violet-300/60',
+  Gate: 'bg-violet-400',
+}
+
+/** The line as the Cap column prints it — a floor says so, a ceiling is bare. */
+export function capLabel(row: LimitRow): string {
+  if (row.limit == null) return '—'
+  const v = fmtReading(row, row.limit)
+  return row.bound === 'floor' ? `floor ${v}` : v
+}
+
+/**
+ * A crossed line in one line: what it reads, what it may not cross, where.
+ *
+ * The design writes this as prose per breach ("NVDA is 38% of portfolio delta
+ * · limit 30%") because the panel is read at a glance, not scanned. This side
+ * has the scope as a field rather than inside the sentence, so it ends the
+ * line instead of being folded into the noun.
+ */
+export function breachDetail(row: LimitRow): string {
+  const line = row.limit == null ? 'no line' : capLabel(row)
+  return `${fmtReading(row, row.current)} against ${line} · ${row.scope}`
+}
+
+/**
+ * How hard the panel should shout: red if anything that *blocks* is crossed.
+ *
+ * The design carries a severity per breach; this side derives it from what the
+ * house already says happens — a hard line blocks the trade, a soft one asks
+ * you to acknowledge it, and a gate is refused by the daemon before it
+ * happens. Red is reserved for the first, so an amber panel means every
+ * crossed line is one you may still choose to live with.
+ */
+export function breachTone(breached: readonly LimitRow[]): 'over' | 'near' | null {
+  if (breached.length === 0) return null
+  return breached.some((r) => r.kind === 'hard') ? 'over' : 'near'
 }

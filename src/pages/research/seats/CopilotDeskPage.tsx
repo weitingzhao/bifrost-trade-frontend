@@ -68,10 +68,16 @@ export default function CopilotDeskPage() {
         <ResearchAuthGap error={standingQ.error} onRetry={() => void standingQ.refetch()} />
       ) : null}
 
-      {/* Design dissolved the three tiles into what each counts (Copilot Desk response ⑫):
-          the digest's status lives on the digest panel, today's conversations on the
-          Threads heading. This one's home is the Writes panel, which waits on a
-          Research read route — so it stays until that panel exists (Owner, 2026-09-13). */}
+      {/* Design dissolved the three tiles into what each counts (Copilot Desk
+          response ⑫): the digest's status lives on the digest panel, today's
+          conversations on the Threads heading. This one's home is the design's
+          Writes table — kind · change · thread · result — and that table needs
+          a row-level read of the chat's write ledger. Measured 2026-09-20 on
+          DEV: `/research/copilot/standing` returns the three counts and
+          nothing else, and `/research/drafts` distinguishes `generated_by`
+          (owner · harness · morning_agent · eod_agent) but carries no chat
+          origin, so the rows cannot be reconstructed from it. The tile stays
+          until that read exists. */}
       <div className="flex">
         <Fact label="Chat asked to write" title="Writes the chat proposed today, by what happened to them in the ledger">
           <span className="font-mono text-lg font-semibold tabular-nums">{a.proposed ?? 0}</span>
@@ -115,7 +121,7 @@ export default function CopilotDeskPage() {
             <ul className="mt-2 space-y-1.5 text-dense-label">
               <li>
                 <Link to="/research/agent-personas" className="inline-flex items-center gap-2 hover:underline">
-                  <Users className="size-3.5 text-muted-foreground" /> Agent Personas
+                  <Users className="size-3.5 text-muted-foreground" /> Personas
                 </Link>
                 <span className="text-muted-foreground"> — who judges, and how each one argues.</span>
               </li>

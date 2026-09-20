@@ -32,7 +32,7 @@ function renderPage() {
 describe('AgentPersonaPage language', () => {
   it('renders English chrome with no UI-language switch', async () => {
     renderPage()
-    expect(await screen.findByRole('heading', { name: 'Agent Personas' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Personas' })).toBeTruthy()
     expect(screen.queryByText('界面')).toBeNull()
     expect(screen.queryByText(/为每位 Copilot 专家定义交易人格/)).toBeNull()
     expect(screen.queryByLabelText('UI')).toBeNull()

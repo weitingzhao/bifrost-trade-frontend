@@ -361,7 +361,7 @@ export const PAGE_COPY: Record<
   }
 > = {
   zh: {
-    title: 'Agent Personas',
+    title: 'Personas',
     description:
       '为每位 Copilot 专家定义交易人格（Owner 作用域）。支持中英文 Markdown；默认模板为中文。每次对话都会叠加到系统指令。两条脊柱：Policy 决定「选什么」，Personas 决定「怎么评」。',
     personaLabel: 'Persona（Markdown）',
@@ -415,7 +415,7 @@ export const PAGE_COPY: Record<
     cannot: 'Cannot',
   },
   en: {
-    title: 'Agent Personas',
+    title: 'Personas',
     description:
       'Owner-scoped trading personas for each Copilot specialist. Markdown in Chinese or English; defaults are Chinese templates. Two spines: Policy picks what; Personas judge how.',
     personaLabel: 'Persona (markdown)',

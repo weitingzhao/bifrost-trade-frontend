@@ -187,7 +187,10 @@ export const ROUTES: readonly RouteEntry[] = [
   },
   {
     path: '/research/agent-personas',
-    label: 'Agent Personas',
+    // The design's own label since the Copilot fold was drawn: under
+    // Research › Copilot, "Personas" is already unambiguous, and the sidebar
+    // row has read that way all along.
+    label: 'Personas',
     crumbs: COPILOT,
     design: {
       state: 'aligned',

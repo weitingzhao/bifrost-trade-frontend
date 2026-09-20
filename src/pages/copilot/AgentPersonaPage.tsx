@@ -24,6 +24,7 @@ import {
   SegmentControl,
 } from '@/components/data-display'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { JudgeTrackRecord } from '@/pages/copilot/personas/JudgeTrackRecord'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -569,6 +570,13 @@ export function AgentPersonaPage() {
       />
 
       <p className="text-dense-caption text-muted-foreground">{copy.originPick}</p>
+
+      {/* Design `Research Copilot.dc.html`, the Personas face: who answers is
+          one question, how often they are right is the other, and the second
+          one is what decides whether a judge should keep its weight. It sits
+          above the editor because a record you have not read is a poor reason
+          to change a preference. */}
+      <JudgeTrackRecord />
 
       {isLoading ? (
         <p className="text-dense-meta text-muted-foreground">Loading personas…</p>

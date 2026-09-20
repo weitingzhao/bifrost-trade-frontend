@@ -299,6 +299,12 @@ export const router = createBrowserRouter([
         path: 'research/loop/candidates',
         lazy: lazyPage(() => import('@/pages/research/loop/CandidatePoolPage')),
       },
+      // The fold's own page (design §5a.4): four parallel children and none
+      // of them is The Book.
+      {
+        path: 'research/book',
+        lazy: lazyPage(() => import('@/pages/research/book/ResearchBookPage')),
+      },
       {
         path: 'research/loop/hypotheses',
         lazy: lazyPage(() => import('@/pages/research/loop/HypothesisBoardPage')),

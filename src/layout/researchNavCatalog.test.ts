@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest'
 import { isSystemRoute } from './routeRegistry'
 import {
   allResearchRoutes,
-  BOOK_PAGES,
+  BOOK_PAGE,
   buildResearchNavGroup,
   COPILOT_DESK,
   researchItems,
@@ -51,7 +51,7 @@ describe('one tree, both homes', () => {
       OVERVIEW,
       AUTOPILOT_HOME,
       PIPELINE_HOME,
-      BOOK_PAGES.hypotheses.to,
+      BOOK_PAGE,
       COPILOT_DESK,
     ])
   })
@@ -104,9 +104,12 @@ describe('one tree, both homes', () => {
     expect(rows('Data')).toEqual([])
   })
 
-  it('carries The Book — the object layer belongs to every operator', () => {
-    const fold = flatten(researchItems(ctx)).find((i) => i.id === 'fold:book')
-    expect(fold?.label).toBe('The Book')
+  it('carries The Book — a page of its own, with the object layer under it', () => {
+    // §5a.4: four parallel children and none of them is The Book, so the fold
+    // stopped aliasing its first child and got a page. Keyed by path, like
+    // every dual row, so it lights while you stand on it.
+    const fold = flatten(researchItems(ctx)).find((i) => i.label === 'The Book')
+    expect([fold?.id, fold?.to]).toEqual([BOOK_PAGE, BOOK_PAGE])
     expect(fold?.children?.map((c) => [c.label, c.to])).toEqual([
       ['Hypothesis Board', '/research/loop/hypotheses'],
       ['Candidate Pool', '/research/loop/candidates'],
@@ -170,7 +173,6 @@ describe('no page lights two rows', () => {
       'Discover',
       'Analyze',
       'Validate',
-      'The Book',
     ])
     for (const f of folds) {
       // Validate is the design's own exception: its heading lands on Backtest

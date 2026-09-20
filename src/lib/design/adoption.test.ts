@@ -263,9 +263,9 @@ describe('design adoption', () => {
     // strip only — the prototype's own ruling that the seat home is not
     // redesigned) for the first time (pending 16→14, reviewing 3→5). Overview
     // left for aligned on the Owner's look 2026-09-19 (reviewing 5→4).
-    // 6 since `/risk` and `/portfolio` were built — the layer pages, each
-    // waiting on a look.
-    expect(counts.byState.reviewing).toBe(6)
+    // 7 since the three layer pages were built — `/risk`, `/portfolio` and
+    // `/research/book`, each waiting on a look.
+    expect(counts.byState.reviewing).toBe(7)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -306,6 +306,7 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio',
+      '/research/book',
       '/research/loop/candidates',
       '/research/loop/harness',
       '/research/loop/hypotheses',
@@ -361,9 +362,9 @@ describe('design adoption', () => {
     // unbuilt state with them rather than being counted twice. 29 since
     // `/research/ratings` became a redirect to Vol ratings — the design
     // carries it as an alias of that same page, so it is answered, not built.
-    // 32 with Package 2026-09-20.3's three layer overview pages; 30 once
-    // `/risk` and `/portfolio` were built.
-    expect(counts.byState.unbuilt).toBe(30)
+    // 32 with Package 2026-09-20.3's three layer overview pages, back to 29
+    // once all three were built.
+    expect(counts.byState.unbuilt).toBe(29)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

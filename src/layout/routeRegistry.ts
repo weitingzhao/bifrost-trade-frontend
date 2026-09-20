@@ -136,6 +136,19 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // The fold's own page (design §5a.4). Four parallel children and none of
+    // them is The Book, so promoting one would make the fold an alias of one
+    // of its own siblings.
+    path: '/research/book',
+    label: 'The Book',
+    crumbs: RESEARCH,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.24',
+      note: DESIGN_NOTES['/research/book'],
+    },
+  },
+  {
     path: '/research/loop/hypotheses',
     label: 'Hypothesis Board',
     crumbs: THE_BOOK,

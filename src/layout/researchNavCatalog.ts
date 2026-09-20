@@ -73,10 +73,20 @@ export const BOOK_PAGES = {
 }
 
 /** One id, the design's own `fold:book`. The Journal row joins beside it in W4. */
+/**
+ * A dual row since §5a.4: the fold has a page of its own now.
+ *
+ * It was a container because its `to` was an alias of its first child — four
+ * parallel children and none of them is The Book. `/research/book` is the
+ * fold's own page, so `navRowKind` reads it as dual without anything being
+ * hand-set, and the id is the path so the row lights while you stand on it.
+ */
+export const BOOK_PAGE = '/research/book'
+
 export const BOOK_ITEM: ShellNavItem = {
-  id: 'fold:book',
+  id: BOOK_PAGE,
   label: 'The Book',
-  to: BOOK_PAGES.hypotheses.to,
+  to: BOOK_PAGE,
   icon: foldGlyph('The Book') ?? BookOpen,
   children: Object.values(BOOK_PAGES),
 }
@@ -225,9 +235,10 @@ export function allResearchRoutes(): string[] {
     ...BENCHES.flatMap((b) => b.items),
   ]
     .map((i) => i.to ?? i.id)
-    // The Copilot Desk is the fold itself, not a row, so it is not in
-    // COPILOT_PAGES; Market's three rows moved to Home (§5a.1).
-    .concat(COPILOT_DESK)
+    // Two folds are pages of their own and so are not rows in any PAGES map:
+    // the Copilot Desk (§5a) and The Book (§5a.4). Market's three rows moved
+    // to Home (§5a.1).
+    .concat(COPILOT_DESK, BOOK_PAGE)
 }
 
 /** The flat layout the top nav and the home page read. */

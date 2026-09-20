@@ -40,6 +40,7 @@ import { stars } from '@/lib/harness/rating'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { PERSONAS, SCHEDULES } from '@/lib/harness/objectivePolicy'
 import { ObjectivePolicyEditor } from '@/pages/research/loop/ObjectivePolicyEditor'
+import { ObjectiveLap } from '@/pages/research/loop/ObjectiveLap'
 import { ObjectiveRunsSection } from '@/pages/research/loop/ObjectiveRunsSection'
 
 const TEXTAREA_CLASS =
@@ -164,6 +165,10 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
       </p>
 
       <Standing brief={brief} archived={archived} onOpenMemo={(runId) => navigate(loopPipelinePath(runId, { live: false }))} />
+
+      {/* Under the standing, as the design places it: the row above says how
+          this machine is doing, this one says where its work is. */}
+      <ObjectiveLap objectiveId={obj.id} brief={brief} />
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <IdentityCard

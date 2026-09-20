@@ -161,7 +161,9 @@ export default function ReviewQueuePage() {
     <PageShell padding="compact" className="space-y-3">
       <section className={positionsUi.pageCard} aria-label="Review Queue">
         <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Review / Queue</p>}
+          // One level: the Queue is the Review layer's own page (§5a.1), so
+          // naming Review twice would name the same place twice.
+          breadcrumb={<p className="text-xs text-primary/90 font-medium">Review</p>}
           title="Review"
           titleSize="large"
           description={PAGE_LEAD}

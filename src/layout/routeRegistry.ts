@@ -87,7 +87,6 @@ import {
   SYSTEM_DATA,
   SYSTEM_RUNTIME,
   THE_BOOK,
-  TRADE,
   TRADE_DESK,
   VALIDATE,
 } from './routeCrumbs'
@@ -95,8 +94,11 @@ import {
 export const ROUTES: readonly RouteEntry[] = [
   {
     path: '/research/overview',
-    label: 'Overview',
-    crumbs: RESEARCH,
+    // A layer's own page carries no trail and the layer's name (§5a.1 ·
+    // .23): the heading *is* this page, so "Trade › Trade" would name the
+    // same level twice.
+    label: 'Research',
+    crumbs: [],
     design: {
       state: 'aligned',
       rev: '2026-09-18.2',
@@ -388,8 +390,11 @@ export const ROUTES: readonly RouteEntry[] = [
   // ── Review ─────────────────────────────────────────────────
   {
     path: '/review',
-    label: 'Queue',
-    crumbs: REVIEW,
+    // A layer's own page carries no trail and the layer's name (§5a.1 ·
+    // .23): the heading *is* this page, so "Trade › Trade" would name the
+    // same level twice.
+    label: 'Review',
+    crumbs: [],
     design: { state: 'aligned', rev: '2026-09-17.1', note: DESIGN_NOTES['/review'] },
   },
   {
@@ -545,8 +550,11 @@ export const ROUTES: readonly RouteEntry[] = [
   },
   {
     path: '/trade/desk',
-    label: 'Desk',
-    crumbs: TRADE,
+    // A layer's own page carries no trail and the layer's name (§5a.1 ·
+    // .23): the heading *is* this page, so "Trade › Trade" would name the
+    // same level twice.
+    label: 'Trade',
+    crumbs: [],
     design: {
       state: 'aligned',
       rev: '2026-09-18.1',

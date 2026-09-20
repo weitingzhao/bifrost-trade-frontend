@@ -44,11 +44,12 @@ function routesOf(items: ShellNavItem[]): string[] {
 }
 
 describe('one tree, both homes', () => {
-  it('stands five rows in the design order: Overview, engine, stations, Book, Copilot', () => {
+  it('stands four rows in the design order: engine, stations, Book, Copilot', () => {
     // Market left for Home (§5a.1): Home is organised by time of day, and
-    // Live · Alerts · Events are the market's own clock.
+    // Live · Alerts · Events are the market's own clock. Overview left the
+    // list in the same round — it is the layer's heading now, not a row in it.
+    expect(buildResearchNavGroup(ctx).to).toBe(OVERVIEW)
     expect(researchItems(ctx).map((i) => i.to)).toEqual([
-      OVERVIEW,
       AUTOPILOT_HOME,
       PIPELINE_HOME,
       BOOK_PAGE,
@@ -131,7 +132,10 @@ describe('one tree, both homes', () => {
   })
 
   it('reaches every route the catalog knows, each exactly once', () => {
-    const routes = routesOf(researchItems(ctx)).filter(
+    const group = buildResearchNavGroup(ctx)
+    // The group's own heading is a route too (§5a.1) — the Overview — so the
+    // reach is the rows plus it, not the rows alone.
+    const routes = [group.to as string, ...routesOf(researchItems(ctx))].filter(
       (r) => !r.startsWith('/research/loop/objectives/'),
     )
     expect(new Set(routes).size).toBe(routes.length)

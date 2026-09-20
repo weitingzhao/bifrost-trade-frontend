@@ -227,6 +227,8 @@ export const BENCHES: Bench[] = [
 /** Every Research route the catalog knows, in one flat list. */
 export function allResearchRoutes(): string[] {
   return [
+    // Overview is the group's heading, not one of its rows (§5a.1), but it is
+    // still a Research route this catalog answers for.
     OVERVIEW_PAGE,
     ...Object.values(AUTOPILOT_PAGES),
     ...Object.values(BOOK_PAGES),
@@ -304,7 +306,7 @@ function objectivesItem(objectives: ObjectiveNavRow[]): ShellNavItem[] {
 export function researchItems(ctx: ResearchNavContext): ShellNavItem[] {
   const [discover, analyze, validate] = BENCHES
   return [
-    OVERVIEW_PAGE,
+    // Overview is the layer heading now (§5a.1), not a row inside it.
     home(AUTOPILOT_PAGES.autopilot, [AUTOPILOT_PAGES.inbox, ...objectivesItem(ctx.objectives)]),
     home(WORKBENCH_PAGE, [
       fold(discover.id, discover.label, discover.icon, discover.items),
@@ -320,6 +322,9 @@ export function buildResearchNavGroup(ctx: ResearchNavContext): ShellNavGroup {
   return {
     label: 'Research',
     icon: BookOpen,
+    // The heading is the Overview (§5a.1): the layer's own page, so the word
+    // goes there and only the chevron folds.
+    to: OVERVIEW_PAGE.to,
     items: researchItems(ctx),
   }
 }

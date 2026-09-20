@@ -97,6 +97,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // and replaces their icons with the lifecycle numerals.
     label: 'Home',
     icon: ListTodo,
+    to: '/home',
     // Live, Alerts and Events moved here from Research (design §5a.1). The
     // old placement read the content — these state the market's facts, and
     // that is Research's subject — and missed the axis: Home is organised by
@@ -104,44 +105,37 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // trading now, what I armed and what has fired, what arrives inside
     // thirty days. Their routes did not move, so every deep link still works.
     //
-    // `Today` is still a row of its own here. The design makes the layer
-    // heading itself the page (§5a.1) and this shell has no navigable group
-    // header yet; until it does, dropping the row would take Today out of the
-    // tree rather than promote it.
-    items: [route('Today', '/home', ListTodo), ...Object.values(MARKET_PAGES)],
+    // The heading is Today (§5a.1): the layer wrapped exactly one row and
+    // that row was the layer, so the row is gone and the word goes there.
+    items: [...Object.values(MARKET_PAGES)],
   },
   {
     label: 'Trade',
     icon: Briefcase,
-    // The design's shape exactly (shell-registry `G.Trade`): one home row,
-    // the Desk, with all six pages beneath it — Plans first, because a trade
-    // starts as a plan, and Assignment last, because that is where one ends
-    // when it goes to stock. An earlier note here said "Plans stays a route,
-    // not a row"; the design says the opposite, and the design wins.
+    // The heading is the Desk (§5a.1). The layer wrapped one row and that row
+    // was the layer, so its six pages come up a level: Plans first, because a
+    // trade starts as a plan, and Assignment last, because that is where one
+    // ends when it goes to stock.
+    to: '/trade/desk',
     items: [
-      home('Desk', '/trade/desk', Briefcase, [
-        route('Plans', '/trade/plans', ClipboardList),
-        route('Orders & Fills', '/trade/fills', ListChecks),
-        route('Rules', '/trade/rules', Workflow),
-        route('Playbook', '/trade/playbook', BookOpen),
-        route('Expiration', '/trade/expiration', CalendarClock),
-        route('Assignment', '/trade/assignment', ArrowLeftRight),
-      ]),
+      route('Plans', '/trade/plans', ClipboardList),
+      route('Orders & Fills', '/trade/fills', ListChecks),
+      route('Rules', '/trade/rules', Workflow),
+      route('Playbook', '/trade/playbook', BookOpen),
+      route('Expiration', '/trade/expiration', CalendarClock),
+      route('Assignment', '/trade/assignment', ArrowLeftRight),
     ],
   },
   {
     label: 'Portfolio',
     icon: LayoutDashboard,
+    to: '/portfolio',
     // Two homes, each with its pages beneath, and no section labels — the
     // homes are the labels (Owner decision, 2026-09-07). Performance is the
     // book: how it is doing, then what is in it, then what backs it. Accounts
     // is the ledger: what the broker says, then what was traded, then what
     // cash moved. The Trading Copilot lives with the Copilot seat under Research.
-    // The layer's own page, first, for the same reason Risk has one: the
-    // design makes the layer *heading* this page (§5a.1) and this shell's
-    // headings do not navigate yet.
     items: [
-      route('Portfolio', '/portfolio', LayoutDashboard),
       home('Performance', '/portfolio/performance', LineChart, [
         route('Positions', '/portfolio/positions', TrendingUp),
         route('P&L Explain', '/portfolio/pnl-explain', PieChart),
@@ -158,6 +152,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Risk',
     icon: ShieldAlert,
+    to: '/risk',
     // The design's own order (shell-registry `G.Risk`), adopted 2026-09-18.
     //
     // It reads forwards through a decision rather than backwards from a
@@ -165,12 +160,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // am I not allowed to do, what does the broker say I can do, what am I
     // holding, and what happens if it moves. The app had the reverse — the
     // measurements first — which is the order you read *after* the fact.
-    // The layer's own page. The design makes the layer *heading* this page
-    // (§5a.1); this shell's group headings are not navigable yet, so until
-    // they are it is the first row — a page with no way in is worse than a
-    // row the design will later absorb.
     items: [
-      route('Risk', '/risk', ShieldAlert),
       route('Sizing', '/risk/sizing', Target),
       route('Risk Budget', '/risk/budget', Layers2),
       route('Limits & Breaches', '/risk/limits', ListChecks),
@@ -185,22 +175,23 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Review',
     icon: Trophy,
-    // The design files Review as its own group after Risk: what was closed, and
-    // what it argues for. Queue is the root and the other four hang off it
-    // (shell-registry.js:197) — reviewing a trade there is what produces the
-    // labels the rest of the group counts.
+    // The design files Review as its own group after Risk: what was closed,
+    // and what it argues for. The heading is the Queue (§5a.1) — reviewing a
+    // trade there is what produces the labels the rest of the group counts —
+    // and its four pages come up a level with it.
+    to: '/review',
     items: [
-      home('Queue', '/review', ListChecks, [
-        route('Single trade', '/review/fit', Target),
-        route('Habits', '/review/habits', Activity),
-        route('Playbook stats', '/review/playbook-stats', BarChart2),
-        route('Rule proposals', '/review/proposals', ListTodo),
-      ]),
+      route('Single trade', '/review/fit', Target),
+      route('Habits', '/review/habits', Activity),
+      route('Playbook stats', '/review/playbook-stats', BarChart2),
+      route('Rule proposals', '/review/proposals', ListTodo),
     ],
   },
   {
     label: 'Research',
     icon: BookOpen,
+    // The heading is the Overview (§5a.1); the Overview row retires into it.
+    to: '/research/overview',
     // Grouped by how much the system does for the Owner, top down. The
     // sidebar re-lays this group per seat (researchNavCatalog.ts); this is
     // the seat-less layout the top nav and the home page read.

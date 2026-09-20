@@ -31,13 +31,12 @@ describe('Trade nav', () => {
       'Review',
       'Research',
     ])
-    // The design's shape exactly (shell-registry `G.Trade`, adopted in full on
-    // 2026-09-18 after the Owner caught the menu lagging the pages): one home
-    // row, the Desk, with all six pages beneath it — Plans first, because a
-    // trade starts as a plan, and Assignment last, where one ends when it goes
-    // to stock.
-    expect(trade.items!.map((i) => [i.label, i.to])).toEqual([['Desk', '/trade/desk']])
-    expect(trade.items![0].children!.map((c) => [c.label, c.to])).toEqual([
+    // The heading is the Desk (§5a.1): the layer wrapped exactly one row and
+    // that row was the layer, so the six pages came up a level. Plans first,
+    // because a trade starts as a plan, and Assignment last, where one ends
+    // when it goes to stock.
+    expect(trade.to).toBe('/trade/desk')
+    expect(trade.items!.map((c) => [c.label, c.to])).toEqual([
       ['Plans', '/trade/plans'],
       ['Orders & Fills', '/trade/fills'],
       ['Rules', '/trade/rules'],
@@ -60,12 +59,11 @@ describe('Trade nav', () => {
 describe('Portfolio nav', () => {
   it('is two homes with their pages beneath and no section labels: the book under Performance, the ledger under Accounts', () => {
     expect(portfolio.subGroups).toBeUndefined()
-    // The layer's own page leads, as it does under Risk: the design makes the
-    // *heading* this page (§5a.1), and until this shell's headings navigate
-    // it is the first row.
-    const [, performance, accounts] = portfolio.items!
+    // The layer's own page is its heading now (§5a.1), so the stand-in row
+    // retired and the two folds are the whole list again.
+    expect(portfolio.to).toBe('/portfolio')
+    const [performance, accounts] = portfolio.items!
     expect(portfolio.items!.map((i) => i.to)).toEqual([
-      '/portfolio',
       '/portfolio/performance',
       '/portfolio/accounts',
     ])
@@ -100,10 +98,9 @@ describe('Risk nav', () => {
     // shell-registry `G.Risk`. The app had the reverse — the measurements
     // first — which is the order you read after the fact rather than before.
     const risk = NAV_GROUPS.find((g) => g.label === 'Risk')!
+    // The layer's own page is its heading (§5a.1); the six rows are the six.
+    expect(risk.to).toBe('/risk')
     expect(risk.items!.map((i) => i.to)).toEqual([
-      // The layer's own page leads. The design makes the *heading* this page
-      // (§5a.1); until this shell's headings navigate, it is the first row.
-      '/risk',
       '/risk/sizing',
       '/risk/budget',
       '/risk/limits',
@@ -247,11 +244,10 @@ describe('the old names', () => {
 const review = NAV_GROUPS.find((g) => g.label === 'Review')!
 
 describe('Review nav', () => {
-  it('is Queue with the other four beneath it, open from the first look', () => {
-    expect(review.items!.map((i) => i.to)).toEqual(['/review'])
-    const [queue] = review.items!
-    expect(queue.defaultOpen).toBe(true)
-    expect(queue.children?.map((c) => c.to)).toEqual([
+  it('is the Queue as its heading, with the other four beneath it', () => {
+    // §5a.1: the heading is the page. The Queue row retired into it.
+    expect(review.to).toBe('/review')
+    expect(review.items!.map((c) => c.to)).toEqual([
       '/review/fit',
       '/review/habits',
       '/review/playbook-stats',

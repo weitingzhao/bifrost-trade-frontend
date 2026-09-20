@@ -21,7 +21,7 @@
  * views became rows with the size of what each one holds.
  */
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
 import {
@@ -39,6 +39,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { cn } from '@/lib/utils'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { fetchCandidates } from '@/api/research/candidates'
@@ -94,7 +96,11 @@ function CensusCell({ band }: { band: CensusBand }) {
   const cls =
     'flex min-w-0 flex-col gap-1.5 border-r border-border/60 px-3 py-2.5 text-left last:border-r-0'
   return band.to == null ? (
-    <div className={cls}>{body}</div>
+    // Not a link, and it says so on hover rather than looking like one that
+    // silently does nothing.
+    <div className={cls} title={`${band.label} has no page on this side yet — ${band.missing ?? ''}`}>
+      {body}
+    </div>
   ) : (
     <Link to={band.to} className={cn(cls, 'hover:bg-secondary/40')}>
       {body}
@@ -113,7 +119,7 @@ export default function ResearchBookPage() {
     staleTime: 60_000,
   })
 
-  const items = watch.data?.items ?? []
+  const items = useMemo(() => watch.data?.items ?? [], [watch.data])
   const hyp = useMemo(() => hypotheses.data?.rows ?? [], [hypotheses.data])
   const cand = useMemo(() => candidates.data?.items ?? [], [candidates.data])
 
@@ -129,6 +135,7 @@ export default function ResearchBookPage() {
   const cause = useMemo(() => dominantCause(stuck), [stuck])
 
   const loading = watch.isLoading || hypotheses.isLoading || candidates.isLoading
+  const navigate = useNavigate()
 
   /**
    * As of the *stalest* of the three reads, not the freshest.
@@ -236,18 +243,50 @@ export default function ResearchBookPage() {
             </DenseTableHeader>
             <DenseTableBody>
               {stuck.map((s) => (
-                <DenseTableRow key={s.key} title={s.why}>
+                // The whole row opens the table it lives in — the design's own
+                // behaviour, and the only one that makes a five-column row
+                // worth reading before you click it.
+                <DenseTableRow
+                  key={s.key}
+                  title={s.why}
+                  role="button"
+                  tabIndex={0}
+                  className="cursor-pointer"
+                  onClick={() => navigate(s.to)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate(s.to)
+                    }
+                  }}
+                >
                   <DenseTableCell className="max-w-none whitespace-nowrap text-muted-foreground">
                     {s.where}
                   </DenseTableCell>
                   <DenseTableCell className="max-w-none whitespace-nowrap font-mono">
-                    {s.scope}
+                    {/* The ticker is its own destination: the row goes to the
+                        table, the symbol goes to the name. Without this the
+                        only way from a stuck row to the evidence behind it is
+                        to retype the ticker. */}
+                    {s.symbol == null ? (
+                      <span
+                        className="text-muted-foreground"
+                        title="A belief about the whole book rather than one name — there is no symbol page to open."
+                      >
+                        {s.scope}
+                      </span>
+                    ) : (
+                      <Link
+                        to={withSymbolParam(SYMBOL_PATH, s.symbol)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-semibold text-entity-symbol hover:underline"
+                        title={`Open ${s.symbol} on Symbol`}
+                      >
+                        {s.scope}
+                      </Link>
+                    )}
                   </DenseTableCell>
-                  <DenseTableCell>
-                    <Link to={s.to} className="hover:underline">
-                      {s.what}
-                    </Link>
-                  </DenseTableCell>
+                  <DenseTableCell>{s.what}</DenseTableCell>
                   <DenseTableCell className="max-w-none">
                     <DenseTag variant={KIND_TAG[s.kind].variant} size="cell">
                       {KIND_TAG[s.kind].label}
@@ -276,7 +315,10 @@ export default function ResearchBookPage() {
             className="flex flex-wrap items-baseline gap-3 border-b border-border/60 px-3 py-2.5"
           >
             {v.to == null ? (
-              <span className="w-36 flex-none text-dense-body font-semibold text-muted-foreground">
+              <span
+                className="w-36 flex-none text-dense-body font-semibold text-muted-foreground"
+                title="No page on this side yet. Sending this click to the Hypothesis Board would answer a question about history with a list of beliefs."
+              >
                 {v.name}
               </span>
             ) : (

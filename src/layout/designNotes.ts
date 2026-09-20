@@ -146,7 +146,18 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'scored it, where the design prints a vehicle no column stores. Thin record currently '
     + 'catches every active hypothesis, which is the broken lineage bridge (REQUEST R5) reading '
     + 'through; the panel names that cause above its rows rather than leaving 29 identical '
-    + 'sentences to be read as 29 problems.',
+    + 'sentences to be read as 29 problems. '
+    + 'Owner review 2026-09-20: the layout aligned but the page did not behave like one — '
+    + 'a ticker was text. Three interactions landed after it. The whole stuck row opens the '
+    + 'table it lives in, which is the prototype’s own behaviour and the only thing that makes '
+    + 'a five-column row worth reading before you click it; keyboard reaches it the way the '
+    + 'ledger’s rows do. The Scope cell is its own destination — the ticker opens that name on '
+    + 'Symbol through withSymbolParam, so the way from a stuck row to the evidence behind it '
+    + 'is a click rather than retyping it; a belief about the whole book reads BOOK and is not '
+    + 'a link, decided from a symbol field rather than by matching that word. And the two '
+    + 'places Journal appears say on hover why they go nowhere instead of looking like links '
+    + 'that silently do nothing. No deep link into the three tables: none of them reads a row '
+    + 'parameter, and a link carrying one they ignore is the failure this pass was fixing.',
   '/portfolio':
     "Built 2026-09-20 against Portfolio Overview.dc.html (Rev 2026-09-20.19), the layer's own "
     + 'page, then re-walked the same day beside the prototype for the same reason as /risk: the '

@@ -164,6 +164,14 @@ export interface Stuck {
   where: 'Watchlist' | 'Candidate' | 'Hypothesis'
   /** The symbol it is about, or BOOK for a belief about the whole book. */
   scope: string
+  /**
+   * The ticker behind `scope`, or null when there is not one.
+   *
+   * Kept apart from the label so the cell does not have to decide by matching
+   * the string 'BOOK': a belief about the whole book has no symbol page to
+   * open, and that is a fact about the row, not about how it is spelled.
+   */
+  symbol: string | null
   /** What is waiting, in one line. */
   what: string
   /** Why this is stuck, in the words the reader would use. Carried as the tip. */
@@ -181,6 +189,11 @@ export function stuckAgeTone(days: number | null): 'old' | 'aging' | 'plain' {
   if (days == null) return 'plain'
   if (days >= 8) return 'old'
   return days >= 4 ? 'aging' : 'plain'
+}
+
+/** The first real ticker a belief names, or null when it is about the book. */
+function hypothesisSymbol(h: Hypothesis): string | null {
+  return (h.symbols ?? []).map((x) => String(x).trim().toUpperCase()).find(Boolean) ?? null
 }
 
 function daysSince(iso: string | null | undefined, now: number): number | null {
@@ -230,6 +243,7 @@ export function waitingOnYou(
       kind: 'no thesis',
       where: 'Watchlist',
       scope: symbol,
+      symbol,
       what: 'watched with no thesis written',
       why: 'On the watchlist with no hypothesis about it — every page that reads the list carries it anyway.',
       ageDays: at > 0 ? Math.floor((now - at) / 86_400_000) : null,
@@ -249,6 +263,7 @@ export function waitingOnYou(
       kind: 'aging in pool',
       where: 'Candidate',
       scope: c.symbol,
+      symbol: c.symbol.trim().toUpperCase() || null,
       // The design prints the vehicle here; no column stores one on this side,
       // so the row says who nominated it and what the loop scored it, which
       // is what the pool actually holds.
@@ -270,7 +285,8 @@ export function waitingOnYou(
       where: 'Hypothesis',
       // A belief about no particular name is about the book, which the design
       // writes as BOOK rather than leaving the cell empty.
-      scope: (h.symbols ?? []).map((x) => String(x).trim().toUpperCase()).find(Boolean) ?? 'BOOK',
+      scope: hypothesisSymbol(h) ?? 'BOOK',
+      symbol: hypothesisSymbol(h),
       what: h.title,
       why: 'No settled position is linked to it, so it has no record to size against — however long it has been open.',
       ageDays: daysSince(h.created_at, now),

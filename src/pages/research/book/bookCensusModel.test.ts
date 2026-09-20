@@ -213,6 +213,15 @@ describe('the stuck row’s columns', () => {
     expect(out[0]).toMatchObject({ where: 'Hypothesis', scope: 'BOOK' })
     expect(waitingOnYou([], [hyp('h2', ['nvda'])], [], NOW)[0].scope).toBe('NVDA')
   })
+
+  it('carries the ticker apart from the label, so BOOK is not a link', () => {
+    // The cell must not decide this by matching the string 'BOOK': whether
+    // there is a symbol page to open is a fact about the row.
+    expect(waitingOnYou([], [hyp('h1', [])], [], NOW)[0].symbol).toBeNull()
+    expect(waitingOnYou([], [hyp('h2', ['nvda'])], [], NOW)[0].symbol).toBe('NVDA')
+    expect(waitingOnYou([watch('PLTR', 'STK', 40)], [], [], NOW)[0].symbol).toBe('PLTR')
+    expect(waitingOnYou([], [], [cand('a', { ttl_at: day(2) })], NOW)[0].symbol).toBe('A')
+  })
 })
 
 describe('bookViews', () => {

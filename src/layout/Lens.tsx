@@ -28,6 +28,7 @@ import { useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Check, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SHELL_TOP_BAR_CONTROL_CLASS } from './shellChrome'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { fetchObjectives } from '@/api/research/harness'
 import { useSymbolContext } from '@/lib/symbolContext'
@@ -78,11 +79,15 @@ export function Lens() {
         <button
           type="button"
           title="Lens — the scopes this shell carries. A lit token means this page reads it; a dim one is held for the next page that does."
+          // Same frame as every other control on the bar (`shellChrome`),
+          // so the Lens reads as one of the row rather than as a chip that
+          // wandered up from a page toolbar.
           className={cn(
-            'hidden h-6 items-center gap-1.5 rounded border px-1.5 transition-colors sm:inline-flex',
+            SHELL_TOP_BAR_CONTROL_CLASS,
+            'hidden gap-1.5 sm:inline-flex',
             !isAll
               ? 'border-[var(--color-entity-strategy)]/55 bg-[var(--color-entity-strategy)]/[0.08]'
-              : 'border-border hover:bg-secondary',
+              : 'hover:bg-secondary',
           )}
         >
           {/* The design's aperture glyph, and the word. Together they say the

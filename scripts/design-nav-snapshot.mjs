@@ -163,6 +163,30 @@ function generate(pkg) {
   /** The design's `FACES` pairs, straight off the registry. */
   const faces = (R.FACES ?? []).map(([reading, method]) => ({ reading, method }))
 
+  /**
+   * Which routes read the objective scope, and which are ruled to.
+   *
+   * Two lists on purpose, and the distinction is the Lens's whole contract:
+   * `wired` is what actually filters today, `target` is the reach the Owner
+   * ruled. A route joins `wired` in the same change that teaches its page to
+   * filter — never before, because a lit token on a page that then ignores the
+   * scope is the shell saying something false.
+   */
+  // `OBJ_SCOPE` itself is private to the registry; `objectiveScope()` is its
+  // public reader, so the wired set is asked rather than reached into.
+  const objWired = (R.ROUTES ?? [])
+    .map((r) => r.path)
+    .filter((path) => R.objectiveScope?.(path))
+    .sort()
+  const objTarget = (R.ROUTES ?? [])
+    .map((r) => r.path)
+    .filter((path) => R.objectives?.planned?.(path) || R.objectiveScope?.(path))
+    .sort()
+  const symTarget = (R.ROUTES ?? [])
+    .map((r) => r.path)
+    .filter((path) => R.symbolPlanned?.(path))
+    .sort()
+
   const inNav = new Map(rows().map((r) => [r.path, r]))
   const all = R.routes ?? R.ROUTES ?? []
 
@@ -246,6 +270,27 @@ export const DESIGN_FACES: readonly DesignFace[] = [
 ${faces.map((f) => '  ' + JSON.stringify(f) + ',').join('\n')}
 ]
 
+/**
+ * Routes that read the objective scope today — the Lens lights its token only
+ * for these.
+ */
+export const DESIGN_OBJ_WIRED: readonly string[] = [
+${objWired.map((p) => '  ' + JSON.stringify(p) + ',').join('\n')}
+]
+
+/**
+ * Routes ruled to read it, wired or not. A route here but not in
+ * \`DESIGN_OBJ_WIRED\` is the honest third state: held, not wired yet.
+ */
+export const DESIGN_OBJ_TARGET: readonly string[] = [
+${objTarget.map((p) => '  ' + JSON.stringify(p) + ',').join('\n')}
+]
+
+/** The same three-state honesty for the symbol scope: ruled reach, wired or not. */
+export const DESIGN_SYM_TARGET: readonly string[] = [
+${symTarget.map((p) => '  ' + JSON.stringify(p) + ',').join('\n')}
+]
+
 export const DESIGN_REV = ${JSON.stringify(revOf(pkg))}
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
@@ -253,7 +298,7 @@ ${entries.map((e) => '  ' + JSON.stringify(e) + ',').join('\n')}
 ]
 `
   writeFileSync(out, body)
-  console.log(`${entries.length} routes (${designed} designed, ${faces.length} faces) -> ${out}`)
+  console.log(`${entries.length} routes (${designed} designed, ${faces.length} faces, ${objTarget.length} objective-scoped) -> ${out}`)
 }
 
 const invoked = process.argv[1] ? resolve(process.argv[1]) : ''

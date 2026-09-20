@@ -7,7 +7,7 @@ import { omnibar } from '@/lib/omnibar'
 import { InboxBell } from './InboxBell'
 import type { InboxSummary } from '@/hooks/useInbox'
 import { routeFor } from './routeRegistry'
-import { SymbolChip } from './SymbolChip'
+import { Lens } from './Lens'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
 interface AppHeaderProps {
@@ -58,7 +58,11 @@ export function AppHeader({ inbox, onOpenInbox }: AppHeaderProps) {
         <kbd className="ml-auto font-mono opacity-70">⌘K</kbd>
       </button>
 
-      <SymbolChip />
+      {/* One control for every scope the shell carries (design 2026-09-20.8:
+          TopBar = position and focus). It replaces the standalone symbol chip
+          rather than sitting beside it — two controls for one idea is the
+          duplication that ruling removed. */}
+      <Lens />
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
         {/* One bell. There were two here — a Radar for analyze alerts with a

@@ -59,6 +59,50 @@ export const DESIGN_FACES: readonly DesignFace[] = [
   {"reading":"/research/history","method":"/research/lab/history"},
 ]
 
+/**
+ * Routes that read the objective scope today — the Lens lights its token only
+ * for these.
+ */
+export const DESIGN_OBJ_WIRED: readonly string[] = [
+  "/research/loop/candidates",
+  "/research/loop/harness",
+  "/research/loop/hypotheses",
+  "/review/objectives",
+]
+
+/**
+ * Routes ruled to read it, wired or not. A route here but not in
+ * `DESIGN_OBJ_WIRED` is the honest third state: held, not wired yet.
+ */
+export const DESIGN_OBJ_TARGET: readonly string[] = [
+  "/portfolio/outcome",
+  "/portfolio/positions",
+  "/research/journal",
+  "/research/loop/candidates",
+  "/research/loop/decisions",
+  "/research/loop/harness",
+  "/research/loop/hypotheses",
+  "/research/loop/runs",
+  "/research/watchlist",
+  "/review",
+  "/review/fit",
+  "/review/objectives",
+  "/review/playbook-stats",
+  "/trade/desk",
+  "/trade/plans",
+]
+
+/** The same three-state honesty for the symbol scope: ruled reach, wired or not. */
+export const DESIGN_SYM_TARGET: readonly string[] = [
+  "/portfolio/outcome",
+  "/research/journal",
+  "/research/loop/candidates",
+  "/research/loop/hypotheses",
+  "/research/watchlist",
+  "/trade/desk",
+  "/trade/fills",
+]
+
 export const DESIGN_REV = "2026-09-20.11"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [

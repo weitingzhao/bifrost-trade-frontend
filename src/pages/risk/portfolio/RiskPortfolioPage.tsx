@@ -29,7 +29,7 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
-import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { BETA_WINDOWS, CORR_WINDOW, useRiskExposure } from '@/hooks/useRiskExposure'
 import { RISK_CONCENTRATION_FLOOR, RISK_UNRECORDED } from '@/utils/riskExposure'
 

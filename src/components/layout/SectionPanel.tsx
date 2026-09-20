@@ -7,16 +7,21 @@
  * copies of a header row is also four chances for them to drift apart, and
  * these four sit one click from each other.
  *
- * The three slots each carry a different kind of thing, and keeping them
- * apart is the whole point: the **cap** names the reading in the page's own
- * vocabulary ("Over the line", "Census"), the **title** says what it shows in
- * a reader's words, and the **note** is the scope or the count the numbers
- * are true within. A panel whose note is really a second title has lost that.
+ * The slots each carry a different kind of thing, and keeping them apart is
+ * the whole point: the **cap** names the reading in the page's own vocabulary
+ * ("Trust", "Headroom", "Census"), the **title** says what it shows in a
+ * reader's words, and the **note** is the scope or the count the numbers are
+ * true within. A panel whose note is really a second title has lost that.
  *
- * A fourth slot, **action**, holds a link out of the panel. It takes the
- * right edge, which is the note's usual place, so a panel with both prints
- * the note beside the title instead — the note is part of the sentence the
- * header makes, and the way out is not.
+ * **action** holds the way out of the panel. It takes the right edge, which
+ * is the note's usual place, so a panel with both prints the note beside the
+ * title instead — the note is part of the sentence the header makes, and the
+ * way out is not.
+ *
+ * **tone** is for the panel whose header is itself a verdict: the Portfolio
+ * layer page goes amber when a source has gone quiet, the way a breach panel
+ * goes red. It is a meaning, not a colour — the component decides how amber
+ * looks, so two panels saying the same thing cannot say it differently.
  */
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
@@ -25,25 +30,53 @@ import { cn } from '@/lib/utils'
 export const SECTION_CAP_CLASS =
   'text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground'
 
+export type SectionPanelTone = 'warning' | 'danger'
+
+const TONE_PANEL: Record<SectionPanelTone, string> = {
+  warning: 'border-warning/40',
+  danger: 'border-destructive/40',
+}
+const TONE_HEADER: Record<SectionPanelTone, string> = {
+  warning: 'bg-warning/[0.07]',
+  danger: 'bg-destructive/[0.07]',
+}
+const TONE_CAP: Record<SectionPanelTone, string> = {
+  warning: 'text-warning',
+  danger: 'text-destructive',
+}
+
 export function SectionPanel({
   cap,
   title,
   note,
   action,
+  tone,
   className,
   children,
 }: {
   cap: string
-  title: string
+  title: ReactNode
   note?: ReactNode
   action?: ReactNode
+  tone?: SectionPanelTone
   className?: string
   children: ReactNode
 }) {
   return (
-    <section className={cn('overflow-hidden rounded-lg border border-border bg-card', className)}>
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className={SECTION_CAP_CLASS}>{cap}</span>
+    <section
+      className={cn(
+        'overflow-hidden rounded-lg border bg-card',
+        tone == null ? 'border-border' : TONE_PANEL[tone],
+        className,
+      )}
+    >
+      <header
+        className={cn(
+          'flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2',
+          tone == null ? 'bg-secondary/40' : TONE_HEADER[tone],
+        )}
+      >
+        <span className={cn(SECTION_CAP_CLASS, tone != null && TONE_CAP[tone])}>{cap}</span>
         <h2 className="text-dense-body font-semibold">{title}</h2>
         {note != null ? (
           <span className={cn('text-dense-meta text-muted-foreground', action == null && 'ml-auto')}>

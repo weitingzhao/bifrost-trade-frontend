@@ -4,6 +4,7 @@ import { usePerformanceBulk } from '@/hooks/usePerformanceBulk'
 import { usePerformanceQuery } from '@/hooks/usePerformanceQuery'
 import {
   getTimeRangeDates,
+  getTimeRangeStamps,
   type PerformanceTimeRange,
 } from '@/utils/ledger/performanceUtils'
 import { sumStkPositionMarketValueForBucket } from '@/utils/ledger/stkBuckets'
@@ -24,7 +25,7 @@ import { PerformanceTier } from '@/pages/portfolio/performance/PerformanceTier'
 import { PerformanceLayerChips, type LayerChipValues } from '@/pages/portfolio/performance/PerformanceLayerChips'
 import { PerformanceReadingPanel } from '@/pages/portfolio/performance/PerformanceReadingPanel'
 import { PerformanceReturnBasis } from '@/pages/portfolio/performance/PerformanceReturnBasis'
-import { buildReadingMetrics, buildScopeNote } from '@/pages/portfolio/performance/performanceReading'
+import { buildReadingMetrics, buildScopeNote } from '@/utils/performanceReading'
 import { perfUi } from '@/pages/portfolio/performance/performanceUi'
 import {
   PERFORMANCE_TREES,
@@ -86,10 +87,9 @@ export default function PerformancePage() {
     [timeRange, calendarMonth],
   )
 
-  const sinceTs = useMemo(() => Math.floor(new Date(sinceStr).getTime() / 1000), [sinceStr])
-  const untilTs = useMemo(
-    () => Math.floor(new Date(untilStr + 'T23:59:59').getTime() / 1000),
-    [untilStr],
+  const { sinceTs, untilTs } = useMemo(
+    () => getTimeRangeStamps(timeRange, calendarMonth),
+    [timeRange, calendarMonth],
   )
 
   const oppQuery = useOpportunities()

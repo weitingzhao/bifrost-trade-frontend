@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { pnlColorClass } from '@/utils/dailyChange'
-import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataStateBlock } from '@/components/data-display'
 import { dataState } from '@/lib/dataState'

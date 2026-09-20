@@ -27,7 +27,7 @@ import { BackingHeadroomPanel } from '@/components/positions/BackingHeadroomPane
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { fmtPct0 } from '@/utils/positions'
 import { pnlColorClass } from '@/utils/dailyChange'
-import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { rollupMargin } from '@/utils/marginPressure'
 import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment'
 import { fetchModelAnalysis } from '@/api/portfolio'

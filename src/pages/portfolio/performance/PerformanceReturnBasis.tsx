@@ -4,7 +4,7 @@ import { DenseTag } from '@/components/data-display'
 import { fmtUsdRound } from '@/lib/format'
 import { pnlColorClass } from '@/utils/dailyChange'
 import type { PerformanceResponse } from '@/types/trading'
-import { fmtSignedUsd0 } from './performanceReading'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { perfUi } from './performanceUi'
 
 type BasisRow = { op: string; label: string; value: string; recorded: boolean; strong?: boolean; flow?: boolean }

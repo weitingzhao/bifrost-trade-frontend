@@ -119,7 +119,36 @@ export const DESIGN_NOTES: Record<string, string> = {
   '/research/book':
     "Built 2026-09-20 against Research Book.dc.html (Rev 2026-09-20.24), the fold's own page. Four parallel children and none of them is The Book, so it gets a page rather than an alias. It answers what the four cannot, because every judgment on it is a cross-table one: a watchlist name no hypothesis is about, a candidate past its expiry, a belief with no settled position behind it. Census is the funnel widest-first; Waiting on you is those three judgments, oldest first, each with its reason; Four views navigates and says the page only counts — a hypothesis or candidate is born beside its evidence, on Symbol, Compare or Review. Measured on DEV before building: 22 watchlist names of which 4 carry a thesis, 62 candidates (2 open, 10 promoted, 7 dismissed, 43 expired), 29 hypotheses all active, and 0 of them carrying an opportunity id. Two honest divergences. The hypothesis lanes are the store's own — active / validated / rejected / archived — not the design's active / testing / parked / retired: printing the design's words over these counts would make `parked` mean `archived`, and those are opposite claims. And the Journal band shows a dash with its reason rather than a zero, because there is no artifact store on this side and a zero is a count while 'nothing counts this' is not. Thin record currently catches every active hypothesis, which is the broken lineage bridge (REQUEST R5) reading through.",
   '/portfolio':
-    "Built 2026-09-20 against Portfolio Overview.dc.html (Rev 2026-09-20.19), the layer's own page. Two folds and neither is Portfolio, so the layer gets a page rather than an alias. It answers what the seven children cannot: can today's book be trusted, and where did the money come from. Freshness leads, and the order is the argument — every figure below inherits the staleness of the source it read and no page says so on its own; the board is per account x source, oldest first, because a badge that takes the freshest account hides exactly the one you need to see. Then this quarter by who earned it: Options, Stocks, FI stream, Cash-like, over Performance's own range machinery so the two cannot disagree about which days are in the quarter. It computes nothing: buildFreshnessRows is the Accounts page's and computeByDayRangeTotals is Performance's, and both moved to src/utils/ when this page became their second reader. Divergences: realised only, with the open options mark named beside it rather than folded into the total (adding them would make this figure disagree with Performance); the design's three chip blocks are two panels here, because Capital and Positions answer the same question on this side and a third block listing links would repeat the sidebar.",
+    "Built 2026-09-20 against Portfolio Overview.dc.html (Rev 2026-09-20.19), the layer's own "
+    + 'page, then re-walked the same day beside the prototype for the same reason as /risk: the '
+    + 'first build had the two readings and neither the verdict above them nor the layer beneath. '
+    + 'Two folds and neither is Portfolio, so the layer gets a page rather than an alias. It '
+    + "answers what the seven children cannot: can today's book be trusted, and where did the "
+    + 'money come from. Freshness leads, and the order is the argument — every figure below '
+    + 'inherits the staleness of the source it read and no page says so on its own. It computes '
+    + 'nothing: buildFreshnessRows is the Accounts page’s, computeByDayRangeTotals and '
+    + 'buildReadingMetrics are Performance’s, and getTimeRangeStamps was extracted so the two '
+    + 'pages cannot disagree about where the quarter ends (Performance had that conversion '
+    + 'inline). The second pass took the prototype section by section. Trust is now a verdict in '
+    + 'its header — how many sources are over a month old, counted apart from how many never '
+    + 'wrote at all, because a gap in the setup and a gap in the record are different failures — '
+    + 'with the panel tinted behind it, a lamp per row, the account’s role over its id, and an '
+    + 'age bar measured against the oldest row rather than a ceiling in days. The board sorts by '
+    + 'age, not severity: the journal is the oldest row on DEV and carries no threshold, and '
+    + 'burying it under a two-day lag would make the header’s own claim false — the no-reading '
+    + 'tag is what says no threshold applies. Where it came from gained the design’s dot, big '
+    + 'figure and basis line per layer, the ASOF and capital-base note, and the six-figure strip '
+    + 'under it quoted from Performance’s reading rather than derived a second time from the '
+    + 'by-day numbers above. Three areas was missing entirely and is now drawn: Capital, '
+    + 'Positions, Accounts, each with its question and its pages, closing on what belongs to '
+    + 'Review and to Risk instead. Divergences. The layer colours are the equity curve’s, not the '
+    + 'prototype’s: Performance is one click away and has drawn Options green and FI amber for as '
+    + 'long as it has existed, so a reader who learns a colour there meets the same one here. No '
+    + 'scope chip, because the design reads it from a shell-wide account scope this side does not '
+    + 'have and there is nothing to display. And only one open-options figure is printed — '
+    + 'unmatched premium as of today, the design’s own — where the page had also carried the '
+    + 'range’s summed mark beside it; two numbers a few dollars apart under one word read as an '
+    + 'inconsistency rather than as two measures.',
   '/risk':
     "Built 2026-09-20 against Risk Overview.dc.html (Rev 2026-09-20.19), the layer's own page, "
     + "then re-walked the same day on the Owner's reading that the first build was not close enough. "

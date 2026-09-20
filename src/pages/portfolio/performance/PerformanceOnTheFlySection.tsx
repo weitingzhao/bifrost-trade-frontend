@@ -7,7 +7,7 @@ import { usePerformanceOnTheFly } from '@/hooks/usePerformanceOnTheFly'
 import type { PerformanceTimeRange } from '@/utils/ledger/performanceUtils'
 import { fmtChicagoTime } from '@/pages/portfolio/performance/performanceFormatters'
 import { OTF_STK_UNREALIZED_HELP } from '@/pages/portfolio/performance/performanceConstants'
-import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { buildOtfRows, otfCountLabel, type OtfRow } from '@/pages/portfolio/performance/performanceOnTheFly'
 
 interface PerformanceOnTheFlySectionProps {

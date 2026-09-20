@@ -20,6 +20,14 @@ export interface FreshnessRow {
   source: string
   /** Newest record, as an age. */
   age: string
+  /**
+   * The same age as a number, or null when the source has never written.
+   *
+   * The label is for reading and this is for ranking: the Portfolio layer page
+   * draws a bar per row against the oldest one, and parsing `age` back out of
+   * its own string would be a second definition of the same figure.
+   */
+  days: number | null
   reading: string
   state: FreshnessState
   meaning: string
@@ -68,6 +76,7 @@ export function buildFreshnessRows(
         role: roles[accountId] ?? '',
         source,
         age: ageLabel(days),
+        days: days != null && Number.isFinite(days) ? days : null,
       }
 
       if (source === JOURNAL) {

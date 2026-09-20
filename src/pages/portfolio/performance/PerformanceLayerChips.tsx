@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { GROWTH_LAYERS, type GrowthLayer, type OptionsPnLMode } from '@/utils/ledger/equityGrowthChart'
-import { fmtSignedUsd0 } from './performanceReading'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { perfUi } from './performanceUi'
 
 const LAYER_SUB: Record<GrowthLayer, string> = {

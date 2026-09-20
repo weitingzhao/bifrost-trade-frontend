@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { fmtIsoDateToken, fmtOccContractToken, fmtUsd } from '@/lib/format'
 import { DenseTag } from '@/components/data-display'
 import { daysBetween } from '@/lib/isoDate'
-import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import {
   Dialog,
   DialogContent,

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
-import type { ReadingMetric, ReadingTone } from './performanceReading'
+import type { ReadingMetric, ReadingTone } from '@/utils/performanceReading'
 import { perfUi } from './performanceUi'
 
 function toneClass(m: ReadingMetric): string {

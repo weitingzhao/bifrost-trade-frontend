@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PerformanceResponse } from '@/types/trading'
-import { buildReadingMetrics, fmtSignedUsd0 } from './performanceReading'
+import { buildReadingMetrics, fmtSignedUsd0 } from '@/utils/performanceReading'
 
 // Invented figures.
 const perf = {

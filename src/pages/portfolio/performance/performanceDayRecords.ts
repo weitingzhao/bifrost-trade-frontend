@@ -1,7 +1,7 @@
 import type { Execution } from '@/types/positions'
 import type { PerformanceDayPnLBulkResult } from '@/types/trading'
 import { executionDateStr } from '@/utils/ledger/performanceUtils'
-import { fmtSignedUsd0 } from './performanceReading'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
 
 export interface DayStat {
   label: string

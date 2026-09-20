@@ -24,7 +24,7 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
-import { fmtSignedUsd0 } from '@/pages/portfolio/performance/performanceReading'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { useExecutionsFinal } from '@/hooks/useExecutions'
 import { useOpportunities } from '@/hooks/useStrategies'
 import {

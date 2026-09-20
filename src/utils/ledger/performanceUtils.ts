@@ -120,6 +120,26 @@ export function getTimeRangeDates(
   return { sinceStr, untilStr }
 }
 
+/**
+ * The same range as seconds, for the endpoints that take timestamps.
+ *
+ * Where the range *ends* is a definition, not an arithmetic detail: the last
+ * day runs to 23:59:59 local, so a fill at the close is inside the quarter.
+ * Performance and the Portfolio layer page both ask the summary endpoint for
+ * this range, and two copies of that definition is two quarters that can
+ * disagree by a day.
+ */
+export function getTimeRangeStamps(
+  timeRange: PerformanceTimeRange,
+  calendarMonth: string,
+): { sinceTs: number; untilTs: number } {
+  const { sinceStr, untilStr } = getTimeRangeDates(timeRange, calendarMonth)
+  return {
+    sinceTs: Math.floor(new Date(sinceStr).getTime() / 1000),
+    untilTs: Math.floor(new Date(`${untilStr}T23:59:59`).getTime() / 1000),
+  }
+}
+
 export function listDateStrings(sinceStr: string, untilStr: string): string[] {
   const dates: string[] = []
   const [sy, sm, sd] = sinceStr.split('-').map(Number)

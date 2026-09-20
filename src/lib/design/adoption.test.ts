@@ -342,8 +342,10 @@ describe('design adoption', () => {
     // W4/W5; the concept page is the design's own reference). 30 since Package
     // 2026-09-20.1: Review Objectives and the Research menu reference are new
     // pages, and the two Lab routes that moved to System › Data took their
-    // unbuilt state with them rather than being counted twice.
-    expect(counts.byState.unbuilt).toBe(30)
+    // unbuilt state with them rather than being counted twice. 29 since
+    // `/research/ratings` became a redirect to Vol ratings — the design
+    // carries it as an alias of that same page, so it is answered, not built.
+    expect(counts.byState.unbuilt).toBe(29)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

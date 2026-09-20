@@ -75,6 +75,16 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     redirect: '/research/scan',
   },
+  // The design carries `/research/ratings` as an alias of the same page, with
+  // the name the page now has. Both spellings reach Vol ratings, which is the
+  // point of an alias — the design's registry and this one disagree about the
+  // canonical path and agree about the destination.
+  {
+    path: '/research/ratings',
+    label: 'Vol ratings',
+    crumbs: DISCOVER,
+    redirect: '/research/scan',
+  },
   // The Option Screener's own path until 2026-09-15. It stays a redirect so
   // saved links keep working, and it is left free for the design's screener
   // home — which is a different prototype, and unbuilt.

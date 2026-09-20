@@ -121,6 +121,12 @@ export function AppSidebar() {
         // section that owns it (an objective lights Autopilot).
         activeId={pins.some((p) => p.to === location.pathname) ? `pin:${location.pathname}` : location.pathname}
         matchActive={shellNavMatchByPathPrefix}
+        // A fold opens on the row, not only on its chevron (design ruling
+        // 2026-09-15). Closed → open and stop; open and you are on its page →
+        // fold it; open and you are elsewhere → go. The tree here is three
+        // levels deep in places, so the chevron was carrying far more traffic
+        // than a 24×20 target should.
+        expandParentRowOnFirstClick
         onSelect={(item: ShellNavItem) => {
           navigate(item.to ?? item.id)
         }}

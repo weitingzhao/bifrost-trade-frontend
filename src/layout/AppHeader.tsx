@@ -48,7 +48,9 @@ export function AppHeader() {
         {crumbs?.map((crumb) => (
           <span key={crumb} className="hidden shrink-0 items-center gap-1.5 text-muted-foreground sm:flex">
             {crumb}
-            <span aria-hidden="true" className="text-border">/</span>
+            {/* `›`, the design's own separator. A slash reads as a path; the
+                trail is a place inside a place. */}
+            <span aria-hidden="true" className="text-border">›</span>
           </span>
         ))}
         <span aria-current="page" className="min-w-0 truncate font-medium">
@@ -92,6 +94,12 @@ export function AppHeader() {
           >
             <MessageSquare className="h-3 w-3" aria-hidden />
             <span className="hidden lg:inline">Copilot</span>
+            {/* The design prints the key on the button, as the Omnibar does:
+                a control whose shortcut is invisible is a shortcut only for
+                whoever already knew it. */}
+            <kbd className="hidden rounded border border-border px-1 font-mono text-dense-micro text-muted-foreground lg:inline">
+              ⌘J
+            </kbd>
           </button>
         </TooltipTrigger>
         <TooltipContent side="bottom">

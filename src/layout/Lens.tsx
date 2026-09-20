@@ -85,6 +85,12 @@ export function Lens() {
               : 'border-border hover:bg-secondary',
           )}
         >
+          {/* The design's aperture glyph, and the word. Together they say the
+              chip is a lens rather than a filter chip like the ones on a
+              page — this one is the shell's. */}
+          <span aria-hidden className={cn('text-dense-micro', isAll ? 'text-muted-foreground/70' : 'text-[var(--color-entity-strategy)]')}>
+            ◎
+          </span>
           <span
             className={cn(
               'text-dense-micro font-semibold uppercase tracking-[0.08em]',

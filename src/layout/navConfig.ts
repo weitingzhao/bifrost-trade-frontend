@@ -137,7 +137,11 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // book: how it is doing, then what is in it, then what backs it. Accounts
     // is the ledger: what the broker says, then what was traded, then what
     // cash moved. The Trading Copilot lives with the Copilot seat under Research.
+    // The layer's own page, first, for the same reason Risk has one: the
+    // design makes the layer *heading* this page (§5a.1) and this shell's
+    // headings do not navigate yet.
     items: [
+      route('Portfolio', '/portfolio', LayoutDashboard),
       home('Performance', '/portfolio/performance', LineChart, [
         route('Positions', '/portfolio/positions', TrendingUp),
         route('P&L Explain', '/portfolio/pnl-explain', PieChart),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { accountRoles, buildFreshnessRows, daysFor } from './accountsFreshnessRows'
+import { accountRoles, buildFreshnessRows, daysFor } from '@/utils/accountsFreshnessRows'
 import type { ExecutionFreshnessItem } from '@/types/trading'
 
 // The five rows `/api/trading/executions/freshness` returns on DEV, 2026-09-16.

@@ -253,8 +253,13 @@ export interface AdoptionGroup {
 export function adoptionByGroup(rows: readonly AdoptionRow[]): AdoptionGroup[] {
   const by = new Map<string, AdoptionGroup>()
   for (const r of rows) {
-    // A page with no crumbs is the shell's own front door.
-    const group = r.crumbs[0] ?? 'Home'
+    // A page with no crumbs is either the shell's own front door or a layer's
+    // own page. The design flattened the layer pages' trails to one level
+    // (Rev 2026-09-20.23) so that `/risk` does not read "Risk › Risk" — but it
+    // is still a Risk row, and its group is the one the design's tree puts it
+    // in. Without this fall-back every layer page lands under Home and the
+    // group it belongs to under-counts itself by one.
+    const group = r.crumbs[0] ?? r.design?.group ?? 'Home'
     const g =
       by.get(group) ??
       ({

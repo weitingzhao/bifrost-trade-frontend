@@ -60,8 +60,15 @@ describe('Trade nav', () => {
 describe('Portfolio nav', () => {
   it('is two homes with their pages beneath and no section labels: the book under Performance, the ledger under Accounts', () => {
     expect(portfolio.subGroups).toBeUndefined()
-    const [performance, accounts] = portfolio.items!
-    expect(portfolio.items!.map((i) => i.to)).toEqual(['/portfolio/performance', '/portfolio/accounts'])
+    // The layer's own page leads, as it does under Risk: the design makes the
+    // *heading* this page (§5a.1), and until this shell's headings navigate
+    // it is the first row.
+    const [, performance, accounts] = portfolio.items!
+    expect(portfolio.items!.map((i) => i.to)).toEqual([
+      '/portfolio',
+      '/portfolio/performance',
+      '/portfolio/accounts',
+    ])
     expect(performance.children?.map((c) => c.to)).toEqual([
       '/portfolio/positions',
       '/portfolio/pnl-explain',

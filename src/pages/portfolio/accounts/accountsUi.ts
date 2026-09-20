@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
 import { lampDotClass, lampTextClass, type LampTone } from '@/lib/lampTone'
 import type { ClockTone } from '@/utils/accountsClocks'
-import type { FreshnessState } from './accountsFreshnessRows'
+import type { FreshnessState } from '@/utils/accountsFreshnessRows'
 import type { StockBucket } from '@/utils/positionsGrouping'
 
 /** Inner surface — same card the Transfer page sits on. */

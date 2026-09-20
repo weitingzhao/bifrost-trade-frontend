@@ -13,7 +13,7 @@
 import { summaryNum } from '@/utils/marginPressure'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import type { ExecutionFreshnessItem } from '@/types/trading'
-import { accountRoles, daysFor } from './accountsFreshnessRows'
+import { accountRoles, daysFor } from '@/utils/accountsFreshnessRows'
 
 /**
  * Owner's ruling: the third account stands idle long-term and is not expected to

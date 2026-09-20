@@ -14,7 +14,7 @@ import {
 import { cn } from '@/lib/utils'
 import { clockLabel } from '@/utils/accountsFreshness'
 import { fetchedStamp } from '@/utils/accountsClocks'
-import type { FreshnessRow } from './accountsFreshnessRows'
+import type { FreshnessRow } from '@/utils/accountsFreshnessRows'
 import { accountsUi, freshnessToneDot, freshnessToneText } from './accountsUi'
 
 const COLS = 5

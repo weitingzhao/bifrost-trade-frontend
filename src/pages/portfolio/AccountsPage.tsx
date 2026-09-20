@@ -25,7 +25,7 @@ import {
 } from '@/utils/accountsFreshness'
 import { cn } from '@/lib/utils'
 import { flexClockReading, ibClockReading } from '@/utils/accountsClocks'
-import { accountRoles, buildFreshnessRows } from './accounts/accountsFreshnessRows'
+import { accountRoles, buildFreshnessRows } from '@/utils/accountsFreshnessRows'
 import { buildBrokerRows, unrealizedPnlTotal } from './accounts/accountsBrokerRows'
 import { AccountsClockBadge } from './accounts/AccountsClockBadge'
 import { AccountsFreshnessBand } from './accounts/AccountsFreshnessBand'

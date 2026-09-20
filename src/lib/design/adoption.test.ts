@@ -263,8 +263,9 @@ describe('design adoption', () => {
     // strip only — the prototype's own ruling that the seat home is not
     // redesigned) for the first time (pending 16→14, reviewing 3→5). Overview
     // left for aligned on the Owner's look 2026-09-19 (reviewing 5→4).
-    // 5 since `/risk` was built — the layer's own page, waiting on a look.
-    expect(counts.byState.reviewing).toBe(5)
+    // 6 since `/risk` and `/portfolio` were built — the layer pages, each
+    // waiting on a look.
+    expect(counts.byState.reviewing).toBe(6)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -304,6 +305,7 @@ describe('design adoption', () => {
       '/trade/rules',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/portfolio',
       '/research/loop/candidates',
       '/research/loop/harness',
       '/research/loop/hypotheses',
@@ -359,9 +361,9 @@ describe('design adoption', () => {
     // unbuilt state with them rather than being counted twice. 29 since
     // `/research/ratings` became a redirect to Vol ratings — the design
     // carries it as an alias of that same page, so it is answered, not built.
-    // 32 with Package 2026-09-20.3's three layer overview pages; 31 once
-    // `/risk` was built.
-    expect(counts.byState.unbuilt).toBe(31)
+    // 32 with Package 2026-09-20.3's three layer overview pages; 30 once
+    // `/risk` and `/portfolio` were built.
+    expect(counts.byState.unbuilt).toBe(30)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since
@@ -444,11 +446,11 @@ describe('adoptionByGroup', () => {
     // signed off on 2026-09-18, so the group is whole again — until the next
     // design round moves one of them.
     // And the next round did: `/portfolio` joined as the layer's own overview
-    // page (§5a.1), so the group is 9 of 10 until that page exists.
+    // page (§5a.1). It is built and waiting on a look, so the group is 9 of 10
+    // aligned with one in `reviewing` rather than one unbuilt.
     expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
-    expect(portfolio?.byState.reviewing).toBe(0)
-    // The one left is `/portfolio` itself — designed, not built.
-    expect(portfolio?.byState.unbuilt).toBe(1)
+    expect(portfolio?.byState.reviewing).toBe(1)
+    expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the
     // denominator: System's four `/docs/*` stubs do not make it read worse.

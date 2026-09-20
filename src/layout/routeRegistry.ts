@@ -299,6 +299,18 @@ export const ROUTES: readonly RouteEntry[] = [
   },
   // ── Portfolio ──────────────────────────────────────────────────────────
   {
+    // The layer's own page (design §5a.1). Two folds and neither is Portfolio,
+    // so promoting one would make the layer an alias of its own child.
+    path: '/portfolio',
+    label: 'Portfolio',
+    crumbs: [],
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.19',
+      note: DESIGN_NOTES['/portfolio'],
+    },
+  },
+  {
     path: '/portfolio/performance',
     label: 'Performance',
     crumbs: PORTFOLIO,

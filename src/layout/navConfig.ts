@@ -161,7 +161,12 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // am I not allowed to do, what does the broker say I can do, what am I
     // holding, and what happens if it moves. The app had the reverse — the
     // measurements first — which is the order you read *after* the fact.
+    // The layer's own page. The design makes the layer *heading* this page
+    // (§5a.1); this shell's group headings are not navigable yet, so until
+    // they are it is the first row — a page with no way in is worse than a
+    // row the design will later absorb.
     items: [
+      route('Risk', '/risk', ShieldAlert),
       route('Sizing', '/risk/sizing', Target),
       route('Risk Budget', '/risk/budget', Layers2),
       route('Limits & Breaches', '/risk/limits', ListChecks),

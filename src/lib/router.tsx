@@ -123,6 +123,12 @@ export const router = createBrowserRouter([
         path: 'risk/stress',
         lazy: lazyPage(() => import('@/pages/risk/stress/RiskStressPage')),
       },
+      // The layer's own page (design §5a.1): six parallel children, none of
+      // which can stand for the layer, so the layer gets a page.
+      {
+        path: 'risk',
+        lazy: lazyPage(() => import('@/pages/risk/overview/RiskOverviewPage')),
+      },
       {
         path: 'risk/margin',
         lazy: lazyPage(() => import('@/pages/risk/margin/RiskMarginPage')),

@@ -263,7 +263,8 @@ describe('design adoption', () => {
     // strip only — the prototype's own ruling that the seat home is not
     // redesigned) for the first time (pending 16→14, reviewing 3→5). Overview
     // left for aligned on the Owner's look 2026-09-19 (reviewing 5→4).
-    expect(counts.byState.reviewing).toBe(4)
+    // 5 since `/risk` was built — the layer's own page, waiting on a look.
+    expect(counts.byState.reviewing).toBe(5)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -307,6 +308,7 @@ describe('design adoption', () => {
       '/research/loop/harness',
       '/research/loop/hypotheses',
       '/research/workbench',
+      '/risk',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
@@ -357,8 +359,9 @@ describe('design adoption', () => {
     // unbuilt state with them rather than being counted twice. 29 since
     // `/research/ratings` became a redirect to Vol ratings — the design
     // carries it as an alias of that same page, so it is answered, not built.
-    // 32 with Package 2026-09-20.3's three layer overview pages.
-    expect(counts.byState.unbuilt).toBe(32)
+    // 32 with Package 2026-09-20.3's three layer overview pages; 31 once
+    // `/risk` was built.
+    expect(counts.byState.unbuilt).toBe(31)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

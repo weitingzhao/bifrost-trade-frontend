@@ -94,6 +94,9 @@ describe('Risk nav', () => {
     // first — which is the order you read after the fact rather than before.
     const risk = NAV_GROUPS.find((g) => g.label === 'Risk')!
     expect(risk.items!.map((i) => i.to)).toEqual([
+      // The layer's own page leads. The design makes the *heading* this page
+      // (§5a.1); until this shell's headings navigate, it is the first row.
+      '/risk',
       '/risk/sizing',
       '/risk/budget',
       '/risk/limits',

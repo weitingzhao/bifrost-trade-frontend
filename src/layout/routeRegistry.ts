@@ -413,6 +413,19 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // The layer's own page (design §5a.1). Risk has six parallel children and
+    // none of them is Risk, so promoting one would make the layer an alias of
+    // its own child — the disease taken off Discover and Ratings.
+    path: '/risk',
+    label: 'Risk',
+    crumbs: [],
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.19',
+      note: DESIGN_NOTES['/risk'],
+    },
+  },
+  {
     path: '/risk/sizing',
     label: 'Sizing',
     crumbs: RISK,

@@ -175,9 +175,10 @@ describe('design adoption', () => {
     // the Journal, built and walked the same day: The Book's index, joined out
     // of five stores because no artifact store exists on this side. 43 with
     // the Candidate Pool, whose walk found the page's two verbs squeezed to
-    // sixteen pixels by a fixed table with no column widths.
-    expect(counts.aligned + counts.byState.stale).toBe(43)
-    expect(counts.aligned).toBe(36)
+    // sixteen pixels by a fixed table with no column widths. 44 with the
+    // Hypothesis Board, whose scope had resolved down one road only.
+    expect(counts.aligned + counts.byState.stale).toBe(44)
+    expect(counts.aligned).toBe(37)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -309,8 +310,10 @@ describe('design adoption', () => {
     // exists on this side. Then Stock ratings was signed off the same day
     // (reviewing 5→4, aligned 33→34), and the Journal after its own walk
     // (reviewing 4→3, aligned 34→35), and the Candidate Pool after its
-    // own (reviewing 3→2, aligned 35→36).
-    expect(counts.byState.reviewing).toBe(2)
+    // own (reviewing 3→2, aligned 35→36), and the Hypothesis Board last
+    // (reviewing 2→1, aligned 36→37) — what is left in `reviewing` is
+    // Pipeline alone.
+    expect(counts.byState.reviewing).toBe(1)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -333,6 +336,7 @@ describe('design adoption', () => {
       '/research/journal',
       '/research/loop/candidates',
       '/research/loop/harness',
+      '/research/loop/hypotheses',
       '/research/ratings/stocks',
       '/research/screener',
       // `/research/overview`, `/review` and `/trade/desk` left this list for
@@ -359,7 +363,6 @@ describe('design adoption', () => {
       '/trade/rules',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/research/loop/hypotheses',
       '/research/workbench',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core

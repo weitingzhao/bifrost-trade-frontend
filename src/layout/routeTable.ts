@@ -167,7 +167,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Hypothesis Board',
     crumbs: THE_BOOK,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/loop/hypotheses'],
     },

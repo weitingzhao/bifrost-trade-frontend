@@ -62,7 +62,7 @@ describe('design adoption', () => {
     // ruled on 2026-09-20 that this side's SEPA-conditions page *is* that
     // screen, so it holds the path itself now and answers for itself.
     const home = rows.find((r) => r.path === '/research/screener')
-    expect(home?.state).toBe('reviewing')
+    expect(home?.state).toBe('aligned')
     expect(home?.inApp).toBe(true)
     const contracts = rows.find((r) => r.path === '/research/contract-screener')
     expect(contracts?.state).toBe('pending')
@@ -161,8 +161,8 @@ describe('design adoption', () => {
     // Research Overview, the Trade Desk and the Review Queue are each now the
     // layer itself rather than its first row — so they leave `aligned` for
     // `stale` without leaving the walked set.
-    expect(counts.aligned + counts.byState.stale).toBe(36)
-    expect(counts.aligned).toBe(29)
+    expect(counts.aligned + counts.byState.stale).toBe(37)
+    expect(counts.aligned).toBe(30)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -275,8 +275,11 @@ describe('design adoption', () => {
     // objectives` followed: re-walked under the interaction standard — the
     // page's duplicate objective control dropped for the shell's own scope,
     // the design's last column and floor line added, every link clicked — and
-    // signed off (reviewing 8→7, aligned 28→29).
-    expect(counts.byState.reviewing).toBe(7)
+    // signed off (reviewing 8→7, aligned 28→29). `/research/screener` follows,
+    // signed off knowing it is unfinished — the funnel, the rail and the loop
+    // are enough to use, and its note lists what a later round still owes
+    // (reviewing 7→6, aligned 29→30).
+    expect(counts.byState.reviewing).toBe(6)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -295,6 +298,7 @@ describe('design adoption', () => {
       '/portfolio/positions',
       '/portfolio/transfer',
       '/research/copilot/trading',
+      '/research/screener',
       // `/research/overview`, `/review` and `/trade/desk` left this list for
       // `stale`: each became the heading of its own layer in Package
       // 2026-09-20.3 (§5a.1), which is a change to the page, not only to the
@@ -322,7 +326,6 @@ describe('design adoption', () => {
       '/research/loop/candidates',
       '/research/loop/harness',
       '/research/loop/hypotheses',
-      '/research/screener',
       '/research/workbench',
       '/risk',
     ])

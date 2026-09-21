@@ -225,7 +225,16 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'the funnel’s header beside Clear, runs the preview and applies it in one press '
     + '(`runFilter`, awaited — syncing the two through an effect is where a cascading render '
     + 'starts), and the panel reports how many names landed. Verified by clicking: a preset '
-    + 'fills Results with its names, a chip lights and Run fills Results from it.',
+    + 'fills Results with its names, a chip lights and Run fills Results from it. '
+    + '**Signed off 2026-09-20 knowing it is not finished.** The Owner’s call: the funnel, '
+    + 'the rail and the loop are enough to use, and the rest waits for another round rather '
+    + 'than holding the queue. What is still open, so the state does not read as done: the '
+    + 'artifact id and the v1->v2 lineage strip; the Explain provenance panel; Rank by, '
+    + 'which is blocked on Stock ratings being unbuilt; the Capture verbs per row; the '
+    + '“Rule that would take it” column; the Why-it-passed panel; and the four stages that '
+    + 'stay marked (Structure, Quality, Catalyst, Options). The page’s earlier arrangement '
+    + 'of the same conditions — two hero cards and two collapsible filter panels — stays '
+    + 'below the funnel by the Owner’s decision, not by omission.',
   '/research/book':
     "Built 2026-09-20 against Research Book.dc.html (Rev 2026-09-20.24), the fold's own page, "
     + 'then re-walked the same day after /risk and /portfolio, section by section. Four parallel '

@@ -306,7 +306,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Stock screen',
     crumbs: DISCOVER,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.10',
       note: DESIGN_NOTES['/research/screener'],
     },

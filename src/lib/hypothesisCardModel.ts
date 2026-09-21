@@ -108,3 +108,27 @@ export function rankTags(tags: readonly string[]): string[] {
   for (const t of tags) (PLUMBING_TAGS.has(t.toLowerCase()) ? sink : keep).push(t)
   return [...keep, ...sink]
 }
+
+
+/**
+ * The card's evidence line, cut to the shape the design draws.
+ *
+ * The design's is one short sentence — *"Born on Symbol · Volatility (28
+ * Aug). Dealer put wall 165 + IV rank 64th at entry."* — about eighty-five
+ * characters. Measured on DEV 2026-09-21 the theses this side stores run to
+ * 1538 characters over ten sentences, median 194, and the *first sentence
+ * alone* is around 150. There is no summary field to fall back on, so the
+ * card was printing the whole wall behind a three-line clamp and cutting it
+ * mid-word.
+ *
+ * One sentence is the closest honest cut: it is the qualifying statement with
+ * the numbers in it, which is what the design's line carries. The rest is not
+ * dropped — the card keeps the full thesis in its `title`, and the
+ * destination link opens the page that owns it.
+ */
+export function cardEvidence(thesis: string | null | undefined): string {
+  const salient = salientThesis(thesis)
+  if (!salient) return ''
+  const [first] = sentences(salient)
+  return first ?? salient
+}

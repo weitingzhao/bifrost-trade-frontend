@@ -21,7 +21,6 @@ import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookOpen } from 'lucide-react'
 import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
-import { HypothesisDraftQueue } from './HypothesisDraftQueue'
 import { DenseTag, EmptyState, type DenseTagVariant } from '@/components/data-display'
 import { Card } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
@@ -34,7 +33,7 @@ import {
 } from '@/api/researchDrafts'
 import { draftTitle } from '@/lib/harness/draftText'
 import { resolutionLine } from '@/lib/hypothesisResolution'
-import { salientThesis, splitTitleRef } from '@/lib/hypothesisCardModel'
+import { cardEvidence, splitTitleRef } from '@/lib/hypothesisCardModel'
 import type { Hypothesis, HypothesisStatus } from '@/api/researchHypothesis'
 import { cn } from '@/lib/utils'
 import { OPERATOR_CHIP, operatorOf } from '@/lib/research/operatorOf'
@@ -73,7 +72,9 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
       className={cn('space-y-1.5 p-3', hypothesis.status === 'archived' && 'opacity-60')}
     >
       <div className="flex items-baseline gap-2">
-        <DenseTag variant={STATUS_VARIANT[hypothesis.status]}>{hypothesis.status}</DenseTag>
+        <DenseTag variant={STATUS_VARIANT[hypothesis.status]}>
+          {hypothesis.status.toUpperCase()}
+        </DenseTag>
         <span className="font-mono text-dense-meta font-bold text-entity-symbol">
           {scopeOf(hypothesis)}
         </span>
@@ -82,11 +83,39 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
         </span>
       </div>
       <p className="text-dense-label font-medium leading-snug">{title}</p>
-      <p className="line-clamp-3 text-dense-meta leading-normal text-muted-foreground">
+      {/* One sentence, as the design draws it — see `cardEvidence` for why
+          the whole thesis cannot be the card's evidence line. The full text
+          is on the element, so nothing is lost by the cut. */}
+      <p
+        className="line-clamp-2 text-dense-meta leading-normal text-muted-foreground"
+        title={hypothesis.thesis ?? undefined}
+      >
         {hypothesis.origin_page ? `Born on ${hypothesis.origin_page}. ` : ''}
-        {salientThesis(hypothesis.thesis)}
+        {cardEvidence(hypothesis.thesis)}
       </p>
+      {/* The design's own order: what it is worth, what is riding on it, who
+          wrote it, where it lives. The record leads because that is the
+          column a reader scans down. */}
       <div className="flex items-baseline gap-2 border-t border-border/60 pt-1.5">
+        <span
+          className={cn(
+            'min-w-0 shrink truncate font-mono text-dense-caption',
+            settled ? 'text-foreground' : 'text-muted-foreground',
+          )}
+          title={record ?? 'no settled record — the outcome rule has not ruled'}
+        >
+          {record ?? '— unsettled'}
+        </span>
+        {/* The design's stake — "backing: 2 short puts", "1 CSP · $1.2k
+            risk". Marked, not dropped: not one of the 53 hypotheses links an
+            opportunity, so nothing on this side knows what is riding on a
+            belief. */}
+        <span
+          className="whitespace-nowrap text-dense-caption text-muted-foreground/50"
+          title="What is riding on this belief. No hypothesis on this side links an opportunity or a position, so nothing records a stake."
+        >
+          no stake recorded
+        </span>
         <span
           className={cn(
             'rounded border px-1 font-mono text-dense-micro font-bold',
@@ -95,15 +124,6 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
           title="Who wrote this hypothesis — the Book keeps every operator's, side by side. Read off the birthplace until provenance is stored (W2)."
         >
           {operatorOf(hypothesis.origin_page)}
-        </span>
-        <span
-          className={cn(
-            'min-w-0 truncate font-mono text-dense-caption',
-            settled ? 'text-foreground' : 'text-muted-foreground',
-          )}
-          title={record ?? 'no settled record — the outcome rule has not ruled'}
-        >
-          {record ?? '— unsettled'}
         </span>
         <Link
           to={dest?.to ?? backtestTo}
@@ -118,15 +138,28 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
 
 function SuggestionQueue() {
   const qc = useQueryClient()
+  /**
+   * Two kinds feed one queue. `hypothesis_suggestion` is what the Copilot
+   * writes from a note or a reading; `hypothesis_draft` is what an agent
+   * writes from a run. Both are answered the same way, so they are one list
+   * rather than two panels saying the same thing.
+   */
   const drafts = useQuery({
-    queryKey: ['research', 'drafts', 'hypothesis_suggestion'],
-    queryFn: () => listResearchDrafts({ kind: 'hypothesis_suggestion', status: 'pending' }),
+    queryKey: ['research', 'drafts', 'hypothesis-queue'],
+    queryFn: async () => {
+      const pages = await Promise.all(
+        (['hypothesis_suggestion', 'hypothesis_draft'] as const).map((kind) =>
+          listResearchDrafts({ kind, status: 'pending' }),
+        ),
+      )
+      return { rows: pages.flatMap((p) => p.rows) }
+    },
   })
   const act = useMutation({
     mutationFn: ({ id, verb }: { id: string; verb: 'approve' | 'dismiss' }) =>
       verb === 'approve' ? approveResearchDraft(id) : dismissResearchDraft(id),
     onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: ['research', 'drafts', 'hypothesis_suggestion'] }),
+      void qc.invalidateQueries({ queryKey: ['research', 'drafts', 'hypothesis-queue'] }),
   })
   const rows = drafts.data?.rows ?? []
   if (rows.length === 0) return null
@@ -140,7 +173,7 @@ function SuggestionQueue() {
           {rows.length} draft{rows.length > 1 ? 's' : ''} awaiting your call
         </span>
         <span className="ml-auto text-dense-caption text-muted-foreground">
-          hypothesis_suggestion queue · the same card as every other write (§11.3)
+          the hypothesis queue · the same card as every other write (§11.3)
         </span>
       </header>
       <div className="space-y-2.5 px-3 py-2.5">
@@ -275,10 +308,6 @@ export default function HypothesisBoardPage() {
           </Link>
         }
       />
-
-      {/* The design's own order: what is waiting on you before what is
-          already on the board. */}
-      <HypothesisDraftQueue />
 
       {scope != null ? (
         <ObjectiveScopeBanner

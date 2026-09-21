@@ -165,7 +165,21 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'queue nobody can see is indistinguishable from one that does not exist. Swept: 10 links, '
     + 'the Playbook stats link and one Backtest deep link per card carrying tab, hypothesis_id '
     + 'and symbols \u2014 all three read by that page; no horizontal overflow at 1500 or 1024. '
-    + 'Awaiting the Owner\u2019s read.',
+    + 'Read against the prototype card by card after that, and the cards were the wrong shape. '
+    + 'Three fixes. The state tag reads ACTIVE rather than active, as the design sets it. The '
+    + 'evidence line is one sentence: the design\u2019s is about eighty-five characters, and the '
+    + 'theses this side stores run to 1538 over ten sentences (median 194, first sentence alone '
+    + 'about 150), so the card had been printing the whole wall behind a three-line clamp and '
+    + 'cutting it mid-word \u2014 cardEvidence takes the first sentence of the salient part and the '
+    + 'full thesis stays on the element\u2019s title, so nothing is lost by the cut. And the record '
+    + 'row is in the design\u2019s order now \u2014 record, stake, operator, destination \u2014 where it had '
+    + 'led with the operator; the record is the column a reader scans down. The stake is marked '
+    + 'rather than dropped: not one of the 53 hypotheses links an opportunity, so nothing on '
+    + 'this side knows what is riding on a belief. '
+    + 'One correction to the entry above: the Copilot queue panel was **already built here** as '
+    + 'SuggestionQueue, and the walk added a second copy of it before noticing. The duplicate '
+    + 'is gone; the original gained the second kind (hypothesis_draft beside '
+    + 'hypothesis_suggestion) instead. Awaiting the Owner\u2019s read.',
   '/research/loop/candidates':
     'Walked 2026-09-18 against Research Candidate Pool.dc.html at page rev 2026-09-17.1, on local DEV (:5173) \u2014 batch R1. Built: the design\u2019s header sentence trued up (the Curator screens in \u2014 the console\u2019s own Curate action \u2014 ttl expiry screens out, you promote; \u201cAdd to Pool\u201d lives on Scan and the discovery pages, not on every Inspector) with the Decision Inbox \u2192 link; the strip over the pool \u2014 In pool, Latest batch (newest trade_date and its count), Above promote line kept as the design\u2019s sentence with no number because no promote line exists, and Pool policy stated on the real mechanism (ttl_at \u2192 expired; Promote writes a Hypothesis and the row keeps the link); an Age column from created_at, green the day a row lands and amber once its ttl is inside two days, the ttl date in the title; and the design\u2019s footnote rewritten to what the number is \u2014 Score is the loop\u2019s composite at ingest, it ranks attention and sizes nothing (D10) \u2014 because the prototype\u2019s Fit (\u201cactive hypotheses\u2019 entry conditions, weighted by settled record\u201d) is an algorithm nobody has built. Diverged knowingly: no Fit bar (the score\u2019s scale is not a percentage and a bar to an unknown scale would invent one); source tags stay neutral until the value set is worth colouring; the vehicle and thesis-sketch columns have no fields \u2014 tags, lens snapshot and T+5 vs SPY are the real columns this side has, and they stay. Kept beyond the design: the outcome summary strip, the Book column, trade-date column and the confirm-on-dismiss dialog. Rev 2026-09-18.2 makes each row a nomination artifact with an operator/parent line and the six verbs; W1 covers the operator line, the verbs W3. W1 (2026-09-19): the .2 delta landed — each row’s Source cell carries the operator chip by the design’s own rule (YOU → hand, CURATOR → loop, a screen → hand); crumbs and menu moved to The Book. The .2 prototype’s new footnote claims promote writes to the Watchlist through the proposal-card queue — the server still says otherwise (candidates.py: promote writes a hypothesis directly, no queue), so the trued sentence stays. The verb row and the per-row operator/parent line wait for the verbs component (W3). '
     + 'Objective scope wired 2026-09-21, after the same bug was found on the Hypothesis Board: '

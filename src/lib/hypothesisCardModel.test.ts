@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { rankTags, salientThesis, splitTitleRef } from './hypothesisCardModel'
+import { cardEvidence, rankTags, salientThesis, splitTitleRef } from './hypothesisCardModel'
 
 // Verbatim from /research/hypothesis/summary/active, 2026-09-09.
 const SCSC =
@@ -102,5 +102,35 @@ describe('rankTags', () => {
 
   it('handles an empty list', () => {
     expect(rankTags([])).toEqual([])
+  })
+})
+
+
+describe('cardEvidence', () => {
+  it('keeps one sentence where the thesis runs to ten', () => {
+    // Measured on DEV: theses reach 1538 characters over ten sentences while
+    // the design's evidence line is about eighty-five.
+    const long =
+      'VNCE re-qualifies on the funnel: SEPA score 71.75, path SETUP. Components are 3-of-4 price-derived. A third sentence. A fourth.'
+    expect(cardEvidence(long)).toBe('VNCE re-qualifies on the funnel: SEPA score 71.75, path SETUP.')
+  })
+
+  it('leads with the sentence that carries the numbers', () => {
+    // `salientThesis` drops a throat-clearing opener; this takes the first of
+    // what is left, so the card does not spend its one line on preamble.
+    expect(cardEvidence('This is a thought about it. SEPA score 71.75 clears the floor. And more.')).toBe(
+      'SEPA score 71.75 clears the floor.',
+    )
+  })
+
+  it('answers empty rather than throwing on nothing', () => {
+    expect(cardEvidence(null)).toBe('')
+    expect(cardEvidence('   ')).toBe('')
+  })
+
+  it('keeps a one-sentence thesis whole', () => {
+    expect(cardEvidence('Dealer put wall 165 holds through OPEX.')).toBe(
+      'Dealer put wall 165 holds through OPEX.',
+    )
   })
 })

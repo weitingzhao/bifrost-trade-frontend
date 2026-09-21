@@ -374,11 +374,13 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'argument about one can be sent to someone; Escape closes it and clears the param; links '
     + 'inside a row stopPropagation; no horizontal overflow at 1024 — the table scrolls inside '
     + 'its own wrapper. An empty list names the filter that emptied it rather than showing '
-    + 'nothing. Still open for the Owner: the design’s panels sit on the inset surface '
-    + '(var(--background), darker than the page) with a lighter header, while SectionPanel puts '
-    + 'them on bg-card — the same colour as the canvas — which is why the page reads flatter '
-    + 'than the prototype. That is four signed-off pages’ component, not this page’s, so it is '
-    + 'raised rather than changed. Awaiting the Owner’s read.',
+    + 'nothing. One thing this page surfaced and the component fixed: SectionPanel painted its '
+    + 'body bg-card, the canvas colour, so every panel was the same shade as the page behind it '
+    + 'and the whole page read flat. The design’s panel is a well — body on --sk-ground '
+    + '(bg-background), header on --sk-surface (bg-secondary), which exist here value for value '
+    + '— and the Owner chose to change the component rather than override it here, so Portfolio, '
+    + 'Risk, The Book and Review › Objectives gained the same depth in the same commit. '
+    + 'Awaiting the Owner’s read.',
   '/research/screener':
     "Owner ruled 2026-09-20 which of this side's pages the design's Stock screen is, and the "
     + "page took the design's own path with the name. The evidence is the prototype's content, "

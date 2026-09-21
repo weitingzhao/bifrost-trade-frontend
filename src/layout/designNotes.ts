@@ -138,7 +138,12 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'Swept again 2026-09-21: every link resolves and the Copilot draft panel is correctly '
     + 'absent — the drafts endpoint has zero pending `hypothesis_suggestion` rows on DEV, and '
     + 'the design draws that panel conditionally too. What is still owed is the verb row and '
-    + 'the per-card operator/parent line, both waiting on the shared verbs component.',
+    + 'the per-card operator/parent line, both waiting on the shared verbs component. '
+    + 'Owner ruled 2026-09-21 (option B): the six-verb row is **its own piece of work, not a '
+    + 'walk’s**. What each verb writes and where it lands — Explain, Challenge, Fork, Extend, '
+    + 'Settle, Distill — is a product decision that has to be settled before a shared component '
+    + 'can be built, and a walk that guessed at it would bake the guess into two pages at once. '
+    + 'So it stays recorded as owed here rather than counted as a gap this page can close.',
   '/research/loop/candidates':
     'Walked 2026-09-18 against Research Candidate Pool.dc.html at page rev 2026-09-17.1, on local DEV (:5173) \u2014 batch R1. Built: the design\u2019s header sentence trued up (the Curator screens in \u2014 the console\u2019s own Curate action \u2014 ttl expiry screens out, you promote; \u201cAdd to Pool\u201d lives on Scan and the discovery pages, not on every Inspector) with the Decision Inbox \u2192 link; the strip over the pool \u2014 In pool, Latest batch (newest trade_date and its count), Above promote line kept as the design\u2019s sentence with no number because no promote line exists, and Pool policy stated on the real mechanism (ttl_at \u2192 expired; Promote writes a Hypothesis and the row keeps the link); an Age column from created_at, green the day a row lands and amber once its ttl is inside two days, the ttl date in the title; and the design\u2019s footnote rewritten to what the number is \u2014 Score is the loop\u2019s composite at ingest, it ranks attention and sizes nothing (D10) \u2014 because the prototype\u2019s Fit (\u201cactive hypotheses\u2019 entry conditions, weighted by settled record\u201d) is an algorithm nobody has built. Diverged knowingly: no Fit bar (the score\u2019s scale is not a percentage and a bar to an unknown scale would invent one); source tags stay neutral until the value set is worth colouring; the vehicle and thesis-sketch columns have no fields \u2014 tags, lens snapshot and T+5 vs SPY are the real columns this side has, and they stay. Kept beyond the design: the outcome summary strip, the Book column, trade-date column and the confirm-on-dismiss dialog. Rev 2026-09-18.2 makes each row a nomination artifact with an operator/parent line and the six verbs; W1 covers the operator line, the verbs W3. W1 (2026-09-19): the .2 delta landed — each row’s Source cell carries the operator chip by the design’s own rule (YOU → hand, CURATOR → loop, a screen → hand); crumbs and menu moved to The Book. The .2 prototype’s new footnote claims promote writes to the Watchlist through the proposal-card queue — the server still says otherwise (candidates.py: promote writes a hypothesis directly, no queue), so the trued sentence stays. The verb row and the per-row operator/parent line wait for the verbs component (W3). '
     + 'Objective scope wired 2026-09-21, after the same bug was found on the Hypothesis Board: '
@@ -182,7 +187,12 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'shared component that does not exist and are a product decision (what each of the six '
     + 'writes, and where it lands) rather than a walk’s work; the vehicle has no field. '
     + 'Everything else on the page is this side’s own and stays: the outcome strip, the Book '
-    + 'column, Status, T+5 vs SPY and the confirm-on-dismiss dialog.',
+    + 'column, Status, T+5 vs SPY and the confirm-on-dismiss dialog. '
+    + 'Owner ruled 2026-09-21 (option B): the six-verb row is **its own piece of work, not a '
+    + 'walk’s**. What each verb writes and where it lands — Explain, Challenge, Fork, Extend, '
+    + 'Settle, Distill — is a product decision that has to be settled before a shared component '
+    + 'can be built, and a walk that guessed at it would bake the guess into two pages at once. '
+    + 'So it stays recorded as owed here rather than counted as a gap this page can close.',
   '/strategy/instances':
     'Trade › Rules — the Instances column of the lineage chain; its running-state summary also lands on the Desk status strip',
   '/strategy/win-rate':

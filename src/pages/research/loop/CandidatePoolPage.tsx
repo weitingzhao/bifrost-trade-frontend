@@ -4,11 +4,12 @@
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, ListFilter, X } from 'lucide-react'
-import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
+import { ArrowUpRight, ListFilter } from 'lucide-react'
+import { ObjectiveScopeBanner, PageHeader, PageShell, SectionPanel } from '@/components/layout'
 import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import {
+  candidateOwnTags,
   candidateRunId,
   candidateSketch,
   curatorRunReading,
@@ -37,7 +38,6 @@ import {
   DenseTableRow,
   DenseTag,
   EmptyState,
-  IconActionButton,
   SegmentControl,
   denseTableEntityCell,
   denseTableNumCell,
@@ -273,23 +273,37 @@ export default function CandidatePoolPage() {
 
       <CandidateOutcomeSummary />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-dense-meta font-medium text-muted-foreground shrink-0">Status:</span>
-        <SegmentControl
-          value={status}
-          onChange={(v) => setStatus(v as StatusFilter)}
-          options={STATUS_OPTIONS}
-        />
-        <span className="text-dense-meta text-muted-foreground ml-auto">
-          {query.data?.count ?? 0} shown
-          {status === 'open' || status === 'all' ? ` · ${openCount} open in view` : null}
-        </span>
-      </div>
-
+      {/* The design puts the pool in a panel of its own with the ranking rule
+          in its header, and the app had it bare on the canvas with the filter
+          floating above. The Status filter is the panel's action — it decides
+          what the panel contains, which is exactly what an action is for. */}
+      <SectionPanel
+        cap="Pool"
+        title={
+          status === 'open'
+            ? 'ranked by the loop’s score · advisory, not a signal'
+            : `${STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status} · ranked by the loop’s score`
+        }
+        note={
+          <>
+            {query.data?.count ?? 0} shown
+            {status === 'open' || status === 'all' ? ` · ${openCount} open in view` : null}
+          </>
+        }
+        action={
+          <SegmentControl
+            size="xs"
+            ariaLabel="Status"
+            value={status}
+            onChange={(v) => setStatus(v as StatusFilter)}
+            options={STATUS_OPTIONS}
+          />
+        }
+      >
       {query.isError ? (
         <QueryErrorAlert error={query.error} />
       ) : query.isLoading ? (
-        <Skeleton className="h-64 w-full rounded-md" />
+        <Skeleton className="m-3 h-64 rounded-md" />
       ) : items.length === 0 ? (
         <EmptyState
           icon={<ListFilter />}
@@ -297,20 +311,31 @@ export default function CandidatePoolPage() {
           description="Add symbols from Scan (Add to Pool) or other discovery pages."
         />
       ) : (
-        <DenseDataTable tableClassName="min-w-[900px]">
+        <DenseDataTable wrapClassName="rounded-none border-0 overflow-x-auto" tableClassName="min-w-[900px]">
           <DenseTableHeader>
             <DenseTableHeadRow>
-              <DenseTableHead>Symbol</DenseTableHead>
-              <DenseTableHead>Source</DenseTableHead>
-              <DenseTableHead className="text-right">Score</DenseTableHead>
-              <DenseTableHead>Trade date</DenseTableHead>
-              <DenseTableHead>Age</DenseTableHead>
+              {/* Widths, because the table lays out fixed: with none set it
+                  split ten ways evenly and squeezed Actions — the page's two
+                  verbs — to sixteen pixels. Each needs `max-w-none` beside it;
+                  `DenseTableHead` carries `max-w-0`, which silently wins
+                  otherwise. Why takes what is left, which is right: it is the
+                  only cell that wraps. */}
+              <DenseTableHead className="w-24 max-w-none">Symbol</DenseTableHead>
+              <DenseTableHead className="w-28 max-w-none">Source</DenseTableHead>
+              <DenseTableHead className="w-20 max-w-none text-right">Score</DenseTableHead>
+              <DenseTableHead className="w-24 max-w-none">Trade date</DenseTableHead>
+              <DenseTableHead className="w-16 max-w-none">Age</DenseTableHead>
               <DenseTableHead>Why</DenseTableHead>
-              <DenseTableHead>Tags</DenseTableHead>
-              <DenseTableHead>Book</DenseTableHead>
-              <DenseTableHead>Status</DenseTableHead>
-              <DenseTableHead className="text-right">T+5 vs SPY</DenseTableHead>
-              <DenseTableHead className="w-24">Actions</DenseTableHead>
+              <DenseTableHead className="w-28 max-w-none">Tags</DenseTableHead>
+              <DenseTableHead className="w-24 max-w-none">Book</DenseTableHead>
+              {/* A column whose every cell repeats the filter you just chose
+                  is a column of noise, and here it was pushing the page's two
+                  verbs off the right edge. It comes back under All. */}
+              {status === 'all' ? (
+                <DenseTableHead className="w-24 max-w-none">Status</DenseTableHead>
+              ) : null}
+              <DenseTableHead className="w-24 max-w-none text-right">T+5 vs SPY</DenseTableHead>
+              <DenseTableHead className="w-32 max-w-none">Actions</DenseTableHead>
             </DenseTableHeadRow>
           </DenseTableHeader>
           <DenseTableBody>
@@ -409,19 +434,30 @@ export default function CandidatePoolPage() {
                       </span>
                     )}
                   </DenseTableCell>
-                  <DenseTableCell>
+                  {/* Only the tags this row does not already say elsewhere —
+                      see `candidateOwnTags`. An empty cell means they were all
+                      repeats of Source or the Why's data_source. */}
+                  <DenseTableCell
+                    title={
+                      (row.tags?.length ?? 0) > candidateOwnTags(row).length
+                        ? `Also tagged ${(row.tags ?? []).join(', ')} — the repeats of Source and data_source are not printed twice.`
+                        : undefined
+                    }
+                  >
                     <div className="flex flex-wrap gap-1">
-                      {(row.tags ?? []).slice(0, 4).map((t) => (
-                        <DenseTag key={t} variant="neutral">
-                          {t}
-                        </DenseTag>
-                      ))}
-                      {(row.tags?.length ?? 0) > 4 ? (
+                      {candidateOwnTags(row)
+                        .slice(0, 4)
+                        .map((t) => (
+                          <DenseTag key={t} variant="neutral">
+                            {t}
+                          </DenseTag>
+                        ))}
+                      {candidateOwnTags(row).length > 4 ? (
                         <span className="text-dense-micro text-muted-foreground">
-                          +{(row.tags?.length ?? 0) - 4}
+                          +{candidateOwnTags(row).length - 4}
                         </span>
                       ) : null}
-                      {(row.tags?.length ?? 0) === 0 ? (
+                      {candidateOwnTags(row).length === 0 ? (
                         <span className="text-muted-foreground">—</span>
                       ) : null}
                     </div>
@@ -429,43 +465,52 @@ export default function CandidatePoolPage() {
                   <DenseTableCell>
                     <PortfolioTag symbol={row.symbol} variant="inline" />
                   </DenseTableCell>
-                  <DenseTableCell>
-                    <DenseTag
-                      variant={
-                        row.status === 'open'
-                          ? 'info'
-                          : row.status === 'promoted'
-                            ? 'success'
-                            : row.status === 'dismissed'
-                              ? 'danger'
-                              : 'neutral'
-                      }
-                    >
-                      {row.status}
-                    </DenseTag>
-                  </DenseTableCell>
+                  {status === 'all' ? (
+                    <DenseTableCell>
+                      <DenseTag
+                        variant={
+                          row.status === 'open'
+                            ? 'info'
+                            : row.status === 'promoted'
+                              ? 'success'
+                              : row.status === 'dismissed'
+                                ? 'danger'
+                                : 'neutral'
+                        }
+                      >
+                        {row.status}
+                      </DenseTag>
+                    </DenseTableCell>
+                  ) : null}
                   <DenseTableCell className={denseTableNumCell}>
                     <CandidateOutcomeCell outcome={outcomeByCandidate?.get(row.id)} />
                   </DenseTableCell>
                   <DenseTableCell>
-                    <div className="flex items-center gap-0.5">
-                      <IconActionButton
-                        title="Promote to Hypothesis"
-                        ariaLabel={`Promote ${row.symbol}`}
+                    {/* The design writes these as words — `◫ Promote` and
+                        `Drop` — and they are the point of the page. Two
+                        unlabelled 28px icons at the far right of a table that
+                        scrolls is the wrong weight for the one action this
+                        list exists to offer. */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
                         disabled={!canAct || rowBusy}
                         onClick={() => void handlePromote(row)}
+                        title="Promote to Hypothesis — writes one and keeps the link on this row"
+                        className="inline-flex items-center gap-1 whitespace-nowrap rounded px-1 text-dense-meta text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground/50 disabled:no-underline"
                       >
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </IconActionButton>
-                      <IconActionButton
-                        title="Dismiss"
-                        ariaLabel={`Dismiss ${row.symbol}`}
-                        tone="danger"
+                        <ArrowUpRight className="h-3 w-3" />
+                        Promote
+                      </button>
+                      <button
+                        type="button"
                         disabled={!canAct || rowBusy}
                         onClick={() => setDismissTarget(row)}
+                        title="Drop from the open pool — status becomes dismissed, history is kept"
+                        className="whitespace-nowrap rounded px-1 text-dense-meta text-muted-foreground hover:text-destructive hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground/40 disabled:no-underline"
                       >
-                        <X className="h-3.5 w-3.5" />
-                      </IconActionButton>
+                        Drop
+                      </button>
                     </div>
                   </DenseTableCell>
                 </DenseTableRow>
@@ -475,15 +520,21 @@ export default function CandidatePoolPage() {
         </DenseDataTable>
       )}
 
-      <p className="text-dense-caption leading-normal text-muted-foreground">
+      <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-normal text-muted-foreground">
         Score is the loop's composite at ingest — it ranks attention, it does not size or trade
         anything (D10); its bar is drawn against the best score in view, because nothing documents
         the composite's own ceiling. <span className="text-foreground/80">Why</span> is the lens
         snapshot the run attached when it proposed the name — this side's version of the design's
         thesis sketch, which is a record of what fired rather than prose anybody wrote. Promote
         writes a Hypothesis directly and the row keeps the link; Dismiss and ttl expiry keep
-        history.
+        history. The design ranks this list by <span className="text-foreground/80">Fit</span> —
+        how many of the active hypotheses’ entry conditions a name satisfies, weighted by each
+        hypothesis’s settled record. Both halves are empty on this side, not merely unbuilt: none
+        of the 29 active hypotheses links an opportunity, so no entry condition is attached to
+        any of them, and none carries a resolution, so there is no settled record to weight by.
+        Until one of those fills, a Fit percentage would be a number with nothing behind it.
       </p>
+      </SectionPanel>
 
       <ConfirmDialog
         open={dismissTarget != null}

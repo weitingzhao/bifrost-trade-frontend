@@ -192,7 +192,31 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'walk’s**. What each verb writes and where it lands — Explain, Challenge, Fork, Extend, '
     + 'Settle, Distill — is a product decision that has to be settled before a shared component '
     + 'can be built, and a walk that guessed at it would bake the guess into two pages at once. '
-    + 'So it stays recorded as owed here rather than counted as a gap this page can close.',
+    + 'So it stays recorded as owed here rather than counted as a gap this page can close.'
+    + 'Walked again 2026-09-21 beside the prototype at 1500px, and it found four things. '
+    + 'The pool table sat bare on the canvas with its Status filter floating above it; the '
+    + 'design puts it in a panel with the ranking rule in the header, and the filter is that '
+    + 'panel\u2019s action \u2014 it decides what the panel contains, which is what an action is for. '
+    + 'Second, the table laid out fixed with no column widths, so it split ten ways evenly and '
+    + 'squeezed **Actions to sixteen pixels**: the page\u2019s two verbs were a pair of unlabelled '
+    + '28px icons at the clipped right edge of a table that had to scroll. Widths are explicit '
+    + 'now, each with max-w-none beside it because DenseTableHead carries max-w-0 and wins '
+    + 'silently otherwise, and Why takes what is left since it is the only cell that wraps. '
+    + 'Third, the verbs read as the design\u2019s own words, Promote and Drop, rather than as '
+    + 'icons. Fourth, the width they needed came from two columns that were repeating '
+    + 'themselves: Status printed the filter you had just chosen on every row (it returns '
+    + 'under All), and Tags printed Source and the Why cell\u2019s data_source again \u2014 measured, '
+    + '58 of the 64 tagged candidates on DEV carry *only* those two, so every one of those '
+    + 'rows said both twice. candidateOwnTags drops a tag the same row already shows and keeps '
+    + 'the six rows whose tags say something (iv-hot, pivot, d4-acceptance); the full list '
+    + 'stays in the cell\u2019s title. The table fits its panel now with nothing clipped, and at '
+    + '1024 it scrolls inside its own wrapper rather than the page. '
+    + 'Fit re-measured and still absent, now with both halves named: the design ranks by how '
+    + 'many of the active hypotheses\u2019 entry conditions a name satisfies, weighted by each '
+    + 'hypothesis\u2019s settled record \u2014 none of the 29 active hypotheses links an opportunity, '
+    + 'so no entry condition is attached to any of them, and none carries a resolution, so '
+    + 'there is no settled record to weight by. A Fit percentage would be a number with '
+    + 'nothing behind it, and the footnote says so. Awaiting the Owner\u2019s read.',
   '/strategy/instances':
     'Trade › Rules — the Instances column of the lineage chain; its running-state summary also lands on the Desk status strip',
   '/strategy/win-rate':

@@ -6,6 +6,7 @@ import {
   draftObjectiveId,
   hypothesisRunId,
   objectiveLap,
+  candidateOwnTags,
   candidateRunId,
   candidateSketch,
   curatorRunReading,
@@ -226,5 +227,35 @@ describe('candidateRunId', () => {
     expect(candidateRunId({ source_ref: { run_id: 'run_1' } } as never)).toBe('run_1')
     expect(candidateRunId({ source_ref: { objective_id: 'o' } } as never)).toBeNull()
     expect(candidateRunId({ source_ref: null } as never)).toBeNull()
+  })
+})
+
+
+describe('candidateOwnTags', () => {
+  const row = (over: Record<string, unknown> = {}) =>
+    ({ tags: [], source: 'harness', lens_snapshot: {}, ...over }) as never
+
+  it('drops a tag the row already says in Source', () => {
+    expect(candidateOwnTags(row({ tags: ['harness', 'iv-hot'] }))).toEqual(['iv-hot'])
+  })
+
+  it('drops a tag the Why cell already prints as data_source', () => {
+    expect(
+      candidateOwnTags(
+        row({ tags: ['stock_composite', 'pivot'], lens_snapshot: { data_source: 'stock_composite' } }),
+      ),
+    ).toEqual(['pivot'])
+  })
+
+  it('matches without caring about case', () => {
+    expect(candidateOwnTags(row({ tags: ['HARNESS'] }))).toEqual([])
+  })
+
+  it('keeps everything on a row that repeats nothing', () => {
+    expect(candidateOwnTags(row({ tags: ['iv-hot', 'pivot'] }))).toEqual(['iv-hot', 'pivot'])
+  })
+
+  it('answers empty for an untagged row rather than throwing', () => {
+    expect(candidateOwnTags(row({ tags: undefined }))).toEqual([])
   })
 })

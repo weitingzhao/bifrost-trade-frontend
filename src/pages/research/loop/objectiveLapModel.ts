@@ -325,3 +325,29 @@ export function candidateRunId(row: Pick<ResearchCandidate, 'source_ref'>): stri
   const id = (ref as Record<string, unknown>).run_id
   return typeof id === 'string' && id ? id : null
 }
+
+/**
+ * The tags a candidate row carries that its other columns do not already say.
+ *
+ * Measured on DEV 2026-09-21: 58 of the 64 candidates carrying tags carry
+ * *only* `harness` and `stock_composite` — which are exactly the Source cell
+ * and the `data_source` the Why cell prints. Every one of those rows said
+ * both twice, and the width it cost pushed Promote and Drop off the right
+ * edge of a table that has to scroll.
+ *
+ * So a tag is dropped when the same row already shows it elsewhere, and the
+ * column keeps the six rows whose tags say something — `iv-hot`, `pivot`,
+ * `d4-acceptance`. An empty cell here means the tags were all repeats, not
+ * that the row was untagged.
+ */
+export function candidateOwnTags(
+  row: Pick<ResearchCandidate, 'tags' | 'source' | 'lens_snapshot'>,
+): string[] {
+  const ls = (row.lens_snapshot ?? {}) as Record<string, unknown>
+  const shownElsewhere = new Set(
+    [row.source, typeof ls.data_source === 'string' ? ls.data_source : null]
+      .filter((v): v is string => !!v)
+      .map((v) => v.toLowerCase()),
+  )
+  return (row.tags ?? []).filter((t) => !shownElsewhere.has(t.toLowerCase()))
+}

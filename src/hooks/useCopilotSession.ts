@@ -53,6 +53,17 @@ export type CopilotUiMessage = {
   origin?: 'model' | 'app'
   /** The model that produced it, when known. Persisted frames do not record one. */
   model?: string
+  /**
+   * What the turn took and what it cost — the design prints `1.9s · $0.06`
+   * beside the signature (Research Copilot.dc.html).
+   *
+   * Both are only knowable while the turn streams: the elapsed time is
+   * measured here, and the cost arrives on the `done` event. Persisted
+   * history records neither, and says nothing rather than borrowing a
+   * plausible number — the same rule the provider follows.
+   */
+  elapsedMs?: number
+  costUsd?: number
 }
 
 export type AgentTrailEntry = {
@@ -84,6 +95,8 @@ type CopilotState = {
 }
 
 let abort: AbortController | null = null
+/** When the turn in flight started, for the elapsed time on its signature. */
+let turnStartedAt: number | null = null
 let msgSeq = 0
 
 function nextId(prefix: string) {
@@ -283,8 +296,11 @@ function applyEvent(ev: CopilotSseEvent) {
 
   if (ev.event === 'done') {
     pushTrace('done')
+    const elapsedMs = turnStartedAt == null ? undefined : Date.now() - turnStartedAt
+    turnStartedAt = null
+    const costUsd = typeof ev.cost_usd === 'number' ? ev.cost_usd : undefined
     const msgs = store.getState().messages.map((m) =>
-      m.streaming ? { ...m, streaming: false } : m,
+      m.streaming ? { ...m, streaming: false, elapsedMs, costUsd } : m,
     )
     store.setState({ messages: msgs, streaming: false })
     abort = null
@@ -352,6 +368,7 @@ export const copilotSessionStore = {
       traceEvents: [],
     })
     pendingToolTrace = new Map()
+    turnStartedAt = Date.now()
 
     const history: CopilotChatMessage[] = [...prev, userMsg]
       .filter((m) => m.role === 'user' || m.role === 'assistant')

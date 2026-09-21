@@ -14,20 +14,36 @@ export function copilotPersonaForOrigin(pathname: string): string | null {
   return null
 }
 
-export type CopilotPersonaChipSource = 'triage' | 'default'
+export type CopilotPersonaChipSource = 'triage' | 'answered' | 'default'
 
 export function copilotPersonaChipSource(
   activeAgent: string | null | undefined,
+  answered?: string | null,
 ): CopilotPersonaChipSource | null {
-  return activeAgent?.trim() ? 'triage' : 'default'
+  if (activeAgent?.trim()) return 'triage'
+  if (answered?.trim()) return 'answered'
+  return 'default'
 }
 
+/**
+ * Three readings, in order of what the chip can honestly claim.
+ *
+ * 1. the agent triage handed the live stream to;
+ * 2. **who answered the thread you are reading** — an opened thread has no
+ *    live agent, and until 2026-09-21 the header said nothing at all on one,
+ *    while the Threads table's PERSONA column had known all along;
+ * 3. this page's default, labelled as a default so it cannot be read as an
+ *    answer.
+ */
 export function copilotVisiblePersona(
   activeAgent: string | null | undefined,
   pathname: string,
+  answered?: string | null,
 ): string | null {
   const live = activeAgent?.trim()
   if (live) return live
+  const spoke = answered?.trim()
+  if (spoke) return spoke
   return copilotPersonaForOrigin(pathname)
 }
 
@@ -41,5 +57,6 @@ export function copilotPersonaChipText(
   source: CopilotPersonaChipSource,
 ): string {
   const label = copilotPersonaChipLabel(agentId)
-  return source === 'triage' ? `as ${label}` : `default · ${label}`
+  if (source === 'default') return `default · ${label}`
+  return `as ${label}`
 }

@@ -19,17 +19,8 @@
 import type { CopilotSessionSummary, PersistedCopilotFrame } from '@/api/researchCopilotSessions'
 import { nyDate } from '@/pages/research/seats/agentActivity'
 
-/**
- * Who answered a thread: the specialists that spoke, in the order they first
- * did; `triage` when it answered alone; null when no agent spoke at all — a
- * thread whose only frame is the question, as when the chosen model had no key.
- */
-export function threadPersona(frames: readonly PersistedCopilotFrame[]): string[] | null {
-  const spoke = [...new Set(frames.map((f) => f.agent).filter((a): a is string => Boolean(a)))]
-  if (spoke.length === 0) return null
-  const specialists = spoke.filter((a) => a !== 'triage')
-  return specialists.length > 0 ? specialists : ['triage']
-}
+/** Moved to `lib/copilot/threadPersona` when the dock became its second reader. */
+export { threadPersona } from '@/lib/copilot/threadPersona'
 
 /**
  * How many times the reader asked. Prefer server ``turns`` (D5); fall back to

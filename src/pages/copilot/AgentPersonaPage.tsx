@@ -1,13 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import {
   AGENT_RELEVANT_SLOTS,
-  fetchAgentPersonas,
   resetAgentPersona,
   updateAgentPersona,
   type AgentPersona,
   type PersonaPreferences,
 } from '@/api/agentPersona'
+import { useAgentPersonas } from '@/hooks/useAgentPersonas'
+import { CopilotTabs } from '@/components/research/CopilotTabs'
 import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { AgentInteractionsCard } from '@/components/copilot/AgentInteractionsCard'
@@ -534,10 +535,7 @@ export function AgentPersonaPage() {
   const [selected, setSelected] = useState<string | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['agent-personas'],
-    queryFn: fetchAgentPersonas,
-  })
+  const { data, isLoading, isError, error } = useAgentPersonas()
 
   const agents = useMemo(() => data ?? [], [data])
   const activeAgentName =
@@ -568,6 +566,11 @@ export function AgentPersonaPage() {
         description={copy.description}
         actions={<ResearchUserSwitcher />}
       />
+
+      {/* The same strip the desk carries: Personas is the Copilot's third
+          face, and its own route — §5a.5 then reads this page's h1 off that
+          route's label rather than the file's first title. */}
+      <CopilotTabs active="personas" />
 
       <p className="text-dense-caption text-muted-foreground">{copy.originPick}</p>
 

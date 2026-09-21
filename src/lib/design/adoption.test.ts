@@ -188,12 +188,12 @@ describe('design adoption', () => {
     // looks. The Desk is the third and moves the same way (44→43). The Owner
     // signed both off 2026-09-21, which closes the batch: the three layer
     // heads §5a.1 moved are answered and back in the sum (43→45, aligned
-    // 39→41).
-    expect(counts.aligned + counts.byState.stale).toBe(45)
+    // 39→41). Then the second batch left the sum while it waits for a look:
+    // the Copilot and its Personas face, one prototype and one cause
+    // (45→43).
+    expect(counts.aligned + counts.byState.stale).toBe(43)
     expect(counts.aligned).toBe(41)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
-      '/research/agent-personas',
-      '/research/copilot',
       '/research/loop/decisions',
       '/research/symbol',
     ])
@@ -333,8 +333,10 @@ describe('design adoption', () => {
     // unchanged at .23, and an interaction sweep that found sixty-eight
     // mouse-only rows. The Trade Desk closes the batch — the three layer
     // heads §5a.1 moved, walked together because one section moved them. Both
-    // were signed off the same day, so nothing waits on a look.
-    expect(counts.byState.reviewing).toBe(0)
+    // were signed off the same day, so nothing waits on a look. Then batch
+    // two: the Copilot gained the design's three-face tab strip and the
+    // Personas page became its third face.
+    expect(counts.byState.reviewing).toBe(2)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -389,7 +391,10 @@ describe('design adoption', () => {
     // Empty for the first time since the Research walk began: every page this
     // side has walked and built is either in place or waiting on a rev, not on
     // a look.
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/research/agent-personas',
+      '/research/copilot',
+    ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
     // carried had a home — they are redirects now, and a redirect is not a row
@@ -513,8 +518,9 @@ describe('design adoption', () => {
     // first of the seven to be answered rather than counted. 6 → 5 with
     // Review, the second, and 5 → 4 with the Trade Desk: the three §5a.1
     // layer heads are answered, and what is left in `stale` is the four
-    // Research pages the Vision redesign moved.
-    expect(counts.byState.stale).toBe(4)
+    // Research pages the Vision redesign moved. 4 → 2 with the Copilot pair,
+    // re-walked together because they are one prototype.
+    expect(counts.byState.stale).toBe(2)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

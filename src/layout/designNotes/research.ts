@@ -12,11 +12,39 @@ export const RESEARCH_NOTES: Record<string, string> = {
   '/research/loop/decisions':
     'Walked 2026-09-13 against Research Autopilot Decisions.dc.html (OLD) and the design response of that day; digest actions, kind colour and the approval strip changed 2026-09-14. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page). Package 2026-09-19.1 moved the page to Rev 2026-09-18.2 — patch cards with a structured diff and evidence, the six-verb row, the ?card= deep link — so the sign-off reads stale; the re-walk is batch W3 of the Vision plan.',
   '/research/copilot':
-    'Walked 2026-09-13 against Research Copilot.dc.html (REDO), six steps built; Threads Origin / Symbol / Writes / Cost and Ran today next tick restored 2026-09-14. Owner 2026-09-15: three tiles stay dissolved (Design ⑫); Desk is dark-only (R8). Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 anchors the dock to an artifact (anchored bar under the panel head, verb turns as ordinary assistant messages) and gives Personas a Track record table, so this sign-off reads stale; the dock re-walk is W3, the record table lands with the verdict store in W2.',
+    'Walked 2026-09-13 against Research Copilot.dc.html (REDO), six steps built; Threads Origin / Symbol / Writes / Cost and Ran today next tick restored 2026-09-14. Owner 2026-09-15: three tiles stay dissolved (Design ⑫); Desk is dark-only (R8). Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 anchors the dock to an artifact (anchored bar under the panel head, verb turns as ordinary assistant messages) and gives Personas a Track record table, so this sign-off reads stale; the dock re-walk is W3, the record table lands with the verdict store in W2.'
+    + ' '
+    + 'RE-WALKED 2026-09-21 against Rev 2026-09-20.20. Two things moved. The fold ate its Desk row '
+    + '(the Trade\u203aDesk rule one level down), which this side had already landed \u2014 the row that '
+    + 'remains is the page. And the prototype put the Copilot\u2019s three faces under one header as a '
+    + 'sticky TAB STRIP: Today \u00b7 Threads \u00b7 Personas, with counts. Built: `CopilotTabs`, shared with the '
+    + 'Personas page. Today and Threads are `?tab=` on this route and Personas is a link, because that '
+    + 'is what the design does \u2014 its own `route` is `tab === personas ? /research/agent-personas : '
+    + '/research/copilot` \u2014 and \u00a75a.5 then reads each page\u2019s h1 off the route you are standing on. '
+    + 'Threads left the column beside the digest for a face of its own; the table is eight columns wide '
+    + 'and was reading squeezed. '
+    + 'The counts come from the queries that already own them, so the strip costs no request the pages '
+    + 'did not make: pending drafts (363 on DEV \u2014 the same queue the Inbox counts), today\u2019s sessions '
+    + 'off the standing, and the persona list (9). The persona query moved into `useAgentPersonas` for '
+    + 'that second reader rather than being typed twice. '
+    + 'Still not built, with its reason unchanged: the design\u2019s **Writes** table (kind \u00b7 change \u00b7 '
+    + 'thread \u00b7 result). `/research/copilot/standing` returns three counts and `/research/drafts` carries '
+    + 'no chat origin, so the rows cannot be reconstructed \u2014 the tile that counts them stays until that '
+    + 'read exists. Kept beyond the design and now partly repeated by the strip: **What it works from**, '
+    + 'the only place that says what the Copilot reads *from*. Its fate is the Owner\u2019s to call. '
+    + 'Swept: every link resolves, both faces and Personas; no horizontal overflow at the pane width.',
   '/research/copilot/trading':
     'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner signed off on STG 2026-09-15 after L1/L2.',
   '/research/agent-personas':
-    'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 adds the Track record table — you · hand verdicts beside the four judges, same 20d rule, n<10 amber — so the sign-off reads stale until W2 builds the verdict store and the table over it.',
+    'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 adds the Track record table — you · hand verdicts beside the four judges, same 20d rule, n<10 amber — so the sign-off reads stale until W2 builds the verdict store and the table over it.'
+    + ' '
+    + 'RE-WALKED 2026-09-21 against Rev 2026-09-18.2, as the Copilot\u2019s third face rather than a page '
+    + 'on its own: the same tab strip the desk carries now sits under this header, with Personas '
+    + 'current. The h1 still reads this route\u2019s own label (\u00a75a.5), which is what the design does with '
+    + 'three rows landing on one file. The persona list is read through `useAgentPersonas`, one key '
+    + 'shared with the strip\u2019s count, so the tab and the page cannot disagree about how many operators '
+    + 'there are. Nothing else on the page moved at .18.2. Swept: the three tab links resolve; no '
+    + 'horizontal overflow.',
   '/research/symbol':
     'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page). Re-stamped on Rev 2026-09-17.1 (§14.7 colours only: green / red direction, unrealized orange, applied in e05dce2); Owner re-signed after the colour look 2026-09-17. Rev 2026-09-18.2 replaces the header keys with the six verbs, adds the Your verdict panel and seats you · hand verdicts in the Record table, so the sign-off reads stale; the verdict panel and record row are W2, the verbs W3.',
   '/research/backtest':

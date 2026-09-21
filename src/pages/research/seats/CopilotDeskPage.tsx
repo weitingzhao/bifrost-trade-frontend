@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Users } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
+import { CopilotTabs, useCopilotTab } from '@/components/research/CopilotTabs'
 import { DenseTag, EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
@@ -33,6 +34,7 @@ import { spendAgainstCap } from '@/pages/research/seats/deskHeader'
 export default function CopilotDeskPage() {
   const standingQ = useCopilotStanding()
   const s = standingQ.data
+  const tab = useCopilotTab()
   const a = s?.approvals ?? {}
   const spent = s ? spendAgainstCap(s.usage).spent : 0
 
@@ -64,6 +66,10 @@ export default function CopilotDeskPage() {
         }
       />
 
+      {/* The design's three faces under one header (Rev 2026-09-20.20): Today
+          and Threads are views of this route, Personas is its own. */}
+      <CopilotTabs active={tab} />
+
       {standingQ.isError ? (
         <ResearchAuthGap error={standingQ.error} onRetry={() => void standingQ.refetch()} />
       ) : null}
@@ -87,6 +93,23 @@ export default function CopilotDeskPage() {
         </Fact>
       </div>
 
+      {tab === 'threads' ? (
+        <section className="min-w-0 space-y-2">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-dense-body font-semibold">Threads</h2>
+            <span
+              className="font-mono text-dense-meta tabular-nums text-muted-foreground"
+              title="Conversations that moved today — the table below lists every thread, not only today's"
+            >
+              {s ? `${s.sessions.today} today` : '—'}
+            </span>
+          </div>
+          {/* The design gives the threads a face of their own, and the table
+              is wide: eight columns, one of them the thread's own title. */}
+          <Threads />
+        </section>
+      ) : (
+        <>
       {/* First, as in the design's Today: what is waiting for an answer comes
           before what already happened. */}
       <WaitingOnYou />
@@ -104,18 +127,10 @@ export default function CopilotDeskPage() {
             </div>
             <RanToday />
           </section>
-          <section className="space-y-2">
-            <div className="flex items-baseline gap-2">
-              <h2 className="text-dense-body font-semibold">Threads</h2>
-              <span
-                className="font-mono text-dense-meta tabular-nums text-muted-foreground"
-                title="Conversations that moved today — every thread, not only the latest shown below"
-              >
-                {s ? `${s.sessions.today} today` : '—'}
-              </span>
-            </div>
-            <Threads />
-          </section>
+          {/* Kept beyond the design, and the tab strip now repeats one of its
+              three rows: it is the only place that says what the Copilot
+              reads *from*, which the strip does not. Its fate is the Owner's
+              to call. */}
           <section className="rounded-lg border border-border bg-secondary/40 px-4 py-3">
             <h2 className="text-dense-body font-semibold">What it works from</h2>
             <ul className="mt-2 space-y-1.5 text-dense-label">
@@ -141,6 +156,8 @@ export default function CopilotDeskPage() {
           </section>
         </div>
       </div>
+        </>
+      )}
     </PageShell>
   )
 }

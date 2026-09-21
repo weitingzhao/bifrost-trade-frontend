@@ -213,8 +213,8 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Copilot',
     crumbs: RESEARCH,
     design: {
-      state: 'aligned',
-      rev: '2026-09-15.5',
+      state: 'reviewing',
+      rev: '2026-09-20.20',
       note: DESIGN_NOTES['/research/copilot'],
     },
   },
@@ -240,8 +240,8 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Personas',
     crumbs: COPILOT,
     design: {
-      state: 'aligned',
-      rev: '2026-09-15.5',
+      state: 'reviewing',
+      rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/agent-personas'],
     },
   },
